@@ -16,6 +16,17 @@ elif sys.platform.lower().startswith("win32"):
     import _psmswindows
     _platform_impl = _psmswindows.Impl()
 
+
+class ProcessInfo(object):
+    """Class that allows the process information to be passed
+    between external code and psutil.  Used directly by the
+    Process class"""
+    def __init__(self, pid, name, path):
+        self.pid = pid
+        self.name = name
+        self.path = path
+
+
 def get_process_list():
     """returns a list of all running processes on the 
     local machine"""
@@ -23,3 +34,5 @@ def get_process_list():
     #each process
     pidList = _platform_impl.get_pid_list();
     pass
+
+get_process_list()
