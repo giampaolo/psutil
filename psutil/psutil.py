@@ -11,6 +11,10 @@ if sys.platform.lower().startswith("linux"):
     import _pslinux
     _platform_impl = _pslinux.Impl()
 
+#the windows implementation requires the _psutil_mswindows c module
+elif sys.platform.lower().startswith("win32"):
+    import _psmswindows
+    _platform_impl = _psmswindows.Impl()
 
 def get_process_list():
     """returns a list of all running processes on the 
