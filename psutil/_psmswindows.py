@@ -1,6 +1,6 @@
 import _psutil_mswindows
 
-class Impl:
+class Impl(object):
     def process_exists(self, pid):
         """Checks whether or not a process exists with the given PID"""
         pass
@@ -15,5 +15,4 @@ class Impl:
         
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system"""
-        for id in _psutil_mswindows.get_pid_list():
-            print id
+        return _psutil_mswindows.get_pid_list()

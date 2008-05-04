@@ -1,5 +1,5 @@
 
-class Impl:
+class Impl(object):
     def process_exists(self, pid):
         pass
         
