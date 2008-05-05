@@ -20,7 +20,9 @@ elif sys.platform.lower().startswith("win32"):
 elif sys.platform.lower().startswith("darwin"):
     import _psosx
     _platform_impl = _psosx.Impl()
-
+else:
+    raise ImportError, 'no os specific module found'
+    
 
 class ProcessInfo(object):
     """Class that allows the process information to be passed
@@ -64,8 +66,9 @@ class Process(object):
 
 
 def get_process_list():
-    """returns a list of all running processes on the 
-    local machine"""
+    """Return a list of Process class instances for all running 
+    processes on the local machine.
+    """
     pidList = _platform_impl.get_pid_list();
     
     #for each PID, create a proxyied Process object

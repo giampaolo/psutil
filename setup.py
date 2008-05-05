@@ -27,8 +27,12 @@ if sys.platform.lower().startswith("darwin"):
 
 if sys.platform.lower().startswith("linux"):
     # build Linux module
-    # TODO: no compilation needed here
-    pass
+    # XXX - no compilation needed here
+    setup(name = 'psutil',
+          version = '1.0',
+          description = 'Linux implementation',
+          packages=['psutil']
+          )
 
 
 setup(name='psutil',
