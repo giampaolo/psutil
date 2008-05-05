@@ -11,10 +11,15 @@ if sys.platform.lower().startswith("linux"):
     import _pslinux
     _platform_impl = _pslinux.Impl()
 
-#the windows implementation requires the _psutil_mswindows c module
+#the windows implementation requires the _psutil_mswindows C module
 elif sys.platform.lower().startswith("win32"):
     import _psmswindows
     _platform_impl = _psmswindows.Impl()
+
+# OS X implementation requires _psutil_osx C module
+elif sys.platform.lower().startswith("darwin"):
+    import _psosx
+    _platform_impl = _psosx.Impl()
 
 
 class ProcessInfo(object):

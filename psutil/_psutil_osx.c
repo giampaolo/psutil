@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <sys/sysctl.h>
 
+#include <Python.h>
+
 typedef struct kinfo_proc kinfo_proc;
 
 static int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
@@ -118,6 +120,7 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
         procList++;
     }
     
+    return retlist;
 }
 
 static PyMethodDef PsutilMethods[] =
@@ -130,7 +133,7 @@ static PyMethodDef PsutilMethods[] =
  
 PyMODINIT_FUNC
  
-init_psutil_mswindows(void)
+init_psutil_osx(void)
 {
-     (void) Py_InitModule("_psutil_mswindows", PsutilMethods);
+     (void) Py_InitModule("_psutil_osx", PsutilMethods);
 }
