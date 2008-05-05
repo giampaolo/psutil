@@ -1,5 +1,7 @@
 import os
 import signal
+import psutil
+
 
 class Impl(object):
     def process_exists(self, pid):
@@ -8,7 +10,9 @@ class Impl(object):
         
     def get_process_info(self, pid):
         """Returns a process info class."""
-        raise NotImplementedError
+        path = os.readlink("/proc/%s/exe" %pid)
+        name = os.path.basename(path)
+        return psutil.ProcessInfo(pid, name, path)
         
     def kill_process(self, pid, sig=signal.SIGKILL):
         """Terminates the process with the given PID"""
@@ -17,4 +21,3 @@ class Impl(object):
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system"""
         return [x for x in os.listdir('/proc') if x.isdigit()]
-        
