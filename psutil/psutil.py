@@ -39,7 +39,7 @@ class Process(object):
     def __init__(self, pid):
         self._procinfo = ProcessInfo(pid)
         self.is_proxy = True
-        
+               
     def deproxy(self):
         if self.is_proxy:
             self._procinfo = _platform_impl.get_process_info(self._procinfo.pid)
@@ -55,6 +55,11 @@ class Process(object):
     def get_path(self):
         self.deproxy()
         return self._procinfo.path
+
+    # TODO: provide an interface to the sig argument of the underlying
+    # method
+    def kill(self):         
+        _platform_impl.kill_process(self.pid)
     
     def __str__(self):
         try:

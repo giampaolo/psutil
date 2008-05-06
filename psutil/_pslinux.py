@@ -20,4 +20,4 @@ class Impl(object):
         
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system"""
-        return [x for x in os.listdir('/proc') if x.isdigit()]
+        return [int(x) for x in os.listdir('/proc') if x.isdigit()]
