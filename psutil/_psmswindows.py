@@ -7,7 +7,7 @@ class Impl(object):
         
     def get_process_info(self, pid):
         """Returns a process info class for the given PID"""
-        raise NotImplementedError
+        raise _psutil_mswindows.get_process_info(pid)
         
     def kill_process(self, pid):
         """Terminates the process with the given PID"""
