@@ -62,11 +62,11 @@ class Process(object):
         _platform_impl.kill_process(self.pid)
     
     def __str__(self):
-        try:
+        #try:
             return "psutil.Process [PID: %s; NAME: '%s'; PATH: '%s']" % (self.pid,  self.name, self.path)
-        except:
+        #except:
             #FIXME:  Probably a permission error
-            return "psutil.Process [PID: %s; NAME: '?'; PATH: '?']" % self.pid
+            #return "psutil.Process [PID: %s; NAME: '?'; PATH: '?']" % self.pid
     
     pid = property(get_pid)
     name = property(get_name)
@@ -89,8 +89,8 @@ def get_process_list():
     return retProcesses
 
 
-#if __name__ == "__main__":
-#    processes = get_process_list()
-#    
-#    for proc in processes:
-#        print proc
+if __name__ == "__main__":
+    processes = get_process_list()
+    
+    for proc in processes:
+        print proc

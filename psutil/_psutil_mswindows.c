@@ -26,8 +26,9 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 		if (! EnumProcesses(procArray, procArrayByteSz, &enumReturnSz))
 		{
 			free(procArray);
-
 			/* Throw exception to python */
+			PyErr_SetString(PyExc_RuntimeError, "EnumProcesses failed");
+			return NULL;
 		}
 		else if (enumReturnSz == procArrayByteSz)
 		{
@@ -59,12 +60,31 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	//the argument passed should be a process id
 	long pid;
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		//TODO:  throw exception
+		PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
 	}
 
 	//get the process information that we need
 	//(name, path, arguments)
+	TCHAR processName[MAX_PATH] = TEXT("<unknown>");
 
+	// Get a handle to the process.
+	HANDLE hProcess = OpenProcess( PROCESS_QUERY_INFORMATION |
+								   PROCESS_VM_READ,
+								   FALSE, pid );
+
+	// Get the process name.
+	if (NULL != hProcess ) {
+		HMODULE hMod;
+		DWORD cbNeeded;
+
+		if ( EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded) ) {
+			GetModuleBaseName( hProcess, hMod, processName,
+							   sizeof(processName)/sizeof(TCHAR) );
+		}
+	}
+
+	PyObject* infoTuple = Py_BuildValue("ls", pid, processName);
+	return infoTuple;
 }
 
 static PyMethodDef PsutilMethods[] =
