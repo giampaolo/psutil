@@ -6,8 +6,11 @@ class Impl(object):
         return pid in self.get_pid_list()
         
     def get_process_info(self, pid):
-        """Returns a process info class for the given PID"""
-        raise NotImplementedError
+        import psutil
+        """Returns a tuple that can be passed to the psutil.ProcessInfo class
+        constructor"""
+        infoTuple = _psutil_osx.get_process_info(pid)
+        return psutil.ProcessInfo(*infoTuple)
         
     def kill_process(self, pid):
         """Terminates the process with the given PID"""

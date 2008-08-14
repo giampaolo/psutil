@@ -7,15 +7,17 @@
 
 #include <Python.h>
 
-typedef struct kinfo_proc kinfo_proc;
 
-static int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
-    // Returns a list of all BSD processes on the system.  This routine
-    // allocates the list and puts it in *procList and a count of the
-    // number of entries in *procCount.  You are responsible for freeing
-    // this list (use "free" from System framework).
-    // On success, the function returns 0.
-    // On error, the function returns a BSD errno value.
+/*
+ * Returns a list of all BSD processes on the system.  This routine
+ * allocates the list and puts it in *procList and a count of the
+ * number of entries in *procCount.  You are responsible for freeing
+ * this list (use "free" from System framework).
+ * On success, the function returns 0.
+ * On error, the function returns a BSD errno value.
+ */
+typedef struct kinfo_proc kinfo_proc;
+static int GetBSDProcessList(kinfo_proc **procList, size_t *procCount) 
 {
     int                 err;
     kinfo_proc *        result;
@@ -31,23 +33,22 @@ static int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
 
     *procCount = 0;
 
-    // We start by calling sysctl with result == NULL and length == 0.
-    // That will succeed, and set length to the appropriate length.
-    // We then allocate a buffer of that size and call sysctl again
-    // with that buffer.  If that succeeds, we're done.  If that fails
-    // with ENOMEM, we have to throw away our buffer and loop.  Note
-    // that the loop causes use to call sysctl with NULL again; this
-    // is necessary because the ENOMEM failure case sets length to
-    // the amount of data returned, not the amount of data that
-    // could have been returned.
-
+    /*
+     * We start by calling sysctl with result == NULL and length == 0.
+     * That will succeed, and set length to the appropriate length.
+     * We then allocate a buffer of that size and call sysctl again
+     * with that buffer.  If that succeeds, we're done.  If that fails
+     * with ENOMEM, we have to throw away our buffer and loop.  Note
+     * that the loop causes use to call sysctl with NULL again; this
+     * is necessary because the ENOMEM failure case sets length to
+     * the amount of data returned, not the amount of data that
+     * could have been returned.
+     */
     result = NULL;
     done = false;
     do {
         assert(result == NULL);
-
         // Call sysctl with a NULL buffer.
-
         length = 0;
         err = sysctl( (int *) name, (sizeof(name) / sizeof(*name)) - 1,
                       NULL, &length,
@@ -58,7 +59,6 @@ static int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
 
         // Allocate an appropriately sized buffer based on the results
         // from the previous call.
-
         if (err == 0) {
             result = malloc(length);
             if (result == NULL) {
@@ -68,7 +68,6 @@ static int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
 
         // Call sysctl again with the new buffer.  If we get an ENOMEM
         // error, toss away our buffer and start again.
-
         if (err == 0) {
             err = sysctl( (int *) name, (sizeof(name) / sizeof(*name)) - 1,
                           result, &length,
@@ -88,7 +87,6 @@ static int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
     } while (err == 0 && ! done);
 
     // Clean up and establish post conditions.
-
     if (err != 0 && result != NULL) {
         free(result);
         result = NULL;
@@ -103,6 +101,9 @@ static int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
     return err;
 }
 
+/*
+ * Return a Python list of all the PIDs running on the system.
+ */
 static PyObject* get_pid_list(PyObject* self, PyObject* args)
 {
     kinfo_proc *procList = NULL;
@@ -123,11 +124,55 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
     return retlist;
 }
 
+
+static PyObject* get_process_info(PyObject* self, PyObject* args)
+{
+
+    int i, mib[4];
+    size_t len;
+    struct kinfo_proc kp;
+	long pid;
+    PyObject* infoTuple = Py_BuildValue("ls", pid, "<unknown>");
+
+	//the argument passed should be a process id
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
+		PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+	}
+	
+	//get the process information that we need
+	//(name, path, arguments)
+ 
+    /* Fill out the first three components of the mib */
+    len = 4;
+    sysctlnametomib("kern.proc.pid", mib, &len);
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    //now the PID we want
+    mib[3] = pid;
+    
+    //fetch the info with sysctl()
+    len = sizeof(kp);
+    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
+        /* perror("sysctl"); */
+        // will be set to <unknown> in case this errors
+    } else if (len > 0) {
+        infoTuple = Py_BuildValue("ls", pid, kp.kp_proc.p_comm);
+    }
+
+	return infoTuple;
+}
+
+
+/*
+ * define the psutil C module methods and initialize the module.
+ */
 static PyMethodDef PsutilMethods[] =
 {
      {"get_pid_list", get_pid_list, METH_VARARGS, 
      	"Returns a python list of PIDs currently running on the host system"},
-     	
+     {"get_process_info", get_process_info, METH_VARARGS,
+       	"Returns a psutil.ProcessInfo object for the given PID"},
      {NULL, NULL, 0, NULL}
 };
  
