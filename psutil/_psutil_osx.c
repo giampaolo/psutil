@@ -180,7 +180,7 @@ static int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObje
 
     size = (size_t)argmax;
     if (sysctl(mib, 3, procargs, &size, NULL, 0) == -1) {
-        perror(NULL);
+        //perror(NULL);
         // goto ERROR_B;
         free(procargs);
         return 1;       /* Insufficient privileges */
