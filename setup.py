@@ -6,7 +6,7 @@ from distutils.core import setup, Extension
 # Windows
 if sys.platform.lower().startswith("win"):
     # build Windows module
-    module1 = Extension('_psutil_mswindows', sources = ['psutil/_psutil_mswindows.c'],
+    module1 = Extension('psutil/_psutil_mswindows', sources = ['psutil/_psutil_mswindows.c'],
                         define_macros=[('_WIN32_WINNT', '0x0500')],
                         libraries=["psapi"])
 
@@ -19,7 +19,7 @@ if sys.platform.lower().startswith("win"):
 # OS X
 if sys.platform.lower().startswith("darwin"): 
     # build OS X module
-    module2 = Extension('_psutil_osx', sources = ['psutil/_psutil_osx.c'],)
+    module2 = Extension('psutil/_psutil_osx', sources = ['psutil/_psutil_osx.c'],)
     setup (name = 'PsutilOSX',
             version = '1.0',
             description = 'OS X implementation',
