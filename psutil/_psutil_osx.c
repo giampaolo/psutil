@@ -111,7 +111,6 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
     size_t idx;
     PyObject* retlist = PyList_New(0);
 
-
     GetBSDProcessList(&procList, &num_processes);
 
     //printf("%i\n", procList->kp_proc.p_pid);
@@ -125,6 +124,211 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 }
 
 
+
+/*
+ * Borrowed from psi Python System Information project
+ * 
+ * Get command arguments and environment variables.
+ *
+ * Based on code from ps.
+ *
+ * Returns:
+ *      0 for success;
+ *      -1 for failure (Exception raised);
+ *      1 for insufficient privileges.
+ */
+static int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObject **envdict)
+{
+    PyObject    *arg;
+    char        *arg_start;
+    int         mib[3], argmax, nargs, c = 0;
+    size_t      size;
+    char        *procargs, *sp, *np, *cp;
+    PyObject    *val;
+    char        *val_start;
+
+    *arglist = Py_BuildValue("[]");     /* empty list */
+    if (*arglist == NULL)
+        return -1;
+
+    *envdict = Py_BuildValue("{}");     /* empty dict */
+    if (*envdict == NULL)
+        return -1;
+
+    /* Get the maximum process arguments size. */
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_ARGMAX;
+
+    size = sizeof(argmax);
+    if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1) {
+        return 1;
+    }
+
+    /* Allocate space for the arguments. */
+    procargs = (char *)malloc(argmax);
+    if (procargs == NULL) {
+        PyErr_Format(PyExc_MemoryError, "Cannot allocate memory for procargs");
+        return -1;
+    }
+
+    /*
+     * Make a sysctl() call to get the raw argument space of the process.
+     */
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROCARGS2;
+    mib[2] = pid;
+
+    size = (size_t)argmax;
+    if (sysctl(mib, 3, procargs, &size, NULL, 0) == -1) {
+        perror(NULL);
+        // goto ERROR_B;
+        free(procargs);
+        return 1;       /* Insufficient privileges */
+    }
+
+    memcpy(&nargs, procargs, sizeof(nargs));
+    cp = procargs + sizeof(nargs);
+
+    /* Save the exec_path */
+    *exec_path = Py_BuildValue("s", cp);
+    if (*exec_path == NULL)
+        goto ERROR_C;   /* Exception */
+
+    /* Skip over the exec_path. */
+    for (; cp < &procargs[size]; cp++) {
+        if (*cp == '\0') {
+            /* End of exec_path reached. */
+            break;
+        }
+    }
+    if (cp == &procargs[size]) {
+        goto ERROR_B;
+    }
+
+    /* Skip trailing '\0' characters. */
+    for (; cp < &procargs[size]; cp++) {
+        if (*cp != '\0') {
+            /* Beginning of first argument reached. */
+            break;
+        }
+    }
+    if (cp == &procargs[size]) {
+        goto ERROR_B;
+    }
+    /* Save where the argv[0] string starts. */
+    sp = cp;
+
+    /*
+     * Iterate through the '\0'-terminated strings and add each string
+     * to the Python List arglist as a Python string.
+     * Stop when nargs strings have been extracted.  That should be all
+     * the arguments.  The rest of the strings will be environment
+     * strings for the command.
+     */
+    for (arg_start = cp; c < nargs && cp < &procargs[size]; cp++) {
+        if (*cp == '\0') {
+            /* Fetch next argument */
+            c++;
+            arg = Py_BuildValue("s", arg_start);
+            if (arg == NULL)
+                goto ERROR_C;   /* Exception */
+            PyList_Append(*arglist, arg);
+            
+            arg_start = cp + 1;
+        }
+    }
+
+    /*
+     * Continue extracting '\0'-terminated strings and save in Python
+     * dictionary of environment settings.
+     */
+    np = cp;
+    val_start = NULL;
+    for (arg_start = cp; cp < &procargs[size]; cp++) {
+        if (*cp == '\0') {
+            if (np != NULL) {
+                if (&np[1] == cp || val_start == NULL) {
+                    /*
+                     * Two '\0' characters in a row.
+                     * This should normally only
+                     * happen after all the strings
+                     * have been seen, but in any
+                     * case, stop parsing.
+                     */
+                    break;
+                }
+                /* Fetch next environment string. */
+                arg = Py_BuildValue("s", arg_start);
+                if (arg == NULL)
+                    goto ERROR_C;   /* Exception */
+             
+                val = Py_BuildValue("s", val_start);
+                if (val == NULL)
+                    goto ERROR_C;   /* Exception */
+
+                PyDict_SetItem(*envdict, arg, val);
+            }
+            /* Note location of current '\0'. */
+            np = cp;
+            arg_start = cp + 1;
+            val_start = NULL;
+        } else if (val_start == NULL && *cp == '=') {
+            /* start of environment value */
+            *cp = '\0';     /* terminate the environment variable name */
+            val_start = cp + 1;
+        }
+    }
+
+    /*
+     * sp points to the beginning of the arguments/environment string, and
+     * np should point to the '\0' terminator for the string.
+     */
+    if (np == NULL || np == sp) {
+        /* Empty or unterminated string. */
+        goto ERROR_B;
+    }
+
+    /* Make a copy of the string. */
+/*    asprintf(args, "%s", sp);*/
+
+    /* Clean up. */
+    free(procargs);
+    return 0;
+
+    ERROR_B:
+    PyErr_Format(PyExc_SystemError, "getcmdargs() failure.");
+    ERROR_C:
+    free(procargs);
+    return -1;
+}
+
+
+/* return process args as a python list */
+static PyObject* get_arg_list(long pid)
+{
+    int r;
+    PyObject *cmd_args = NULL;
+    PyObject *command_path = NULL;
+    PyObject *env = NULL;
+    PyObject *argList = PyList_New(0);
+
+    /* Fetch the command-line arguments and environment variables */
+    //printf("pid: %ld\n", pid);
+    if (pid < 1) {
+        return argList;
+    } 
+
+    r = getcmdargs(pid, &command_path, &cmd_args, &env);
+    if (r == 0) {
+        //PySequence_Tuple(args);
+        argList = PySequence_List(cmd_args);
+    }
+
+    //printf("r = %i\n", r);
+    return argList;
+}
+
+
 static PyObject* get_process_info(PyObject* self, PyObject* args)
 {
 
@@ -132,7 +336,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 	long pid;
-    PyObject* infoTuple = Py_BuildValue("ls", pid, "<unknown>");
+    PyObject* infoTuple = Py_BuildValue("lssN", pid, "<unknown>", "<unknown>", PyList_New(0));
 
 	//the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
@@ -157,11 +361,12 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         /* perror("sysctl"); */
         // will be set to <unknown> in case this errors
     } else if (len > 0) {
-        infoTuple = Py_BuildValue("ls", pid, kp.kp_proc.p_comm);
+        infoTuple = Py_BuildValue("lssN", pid, kp.kp_proc.p_comm, "<unknown>", get_arg_list(pid));
     }
 
 	return infoTuple;
 }
+
 
 
 /*

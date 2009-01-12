@@ -46,6 +46,13 @@ class TestCase(unittest.TestCase):
         time.sleep(0.1)  # XXX: provisional, fix needed
         self.assertEqual(psutil.Process(self.proc.pid).path, sys.executable)
         
+    def test_args(self):
+        devnull = open(os.devnull, 'r+') 
+        self.proc = subprocess.Popen(sys.executable, stdout=devnull, 
+                                     stderr=devnull)
+        time.sleep(0.1)  # XXX: provisional, fix needed
+        self.assertEqual(psutil.Process(self.proc.pid).args, [sys.executable])
+
     def test_name(self):
         devnull = open(os.devnull, 'r+') 
         self.proc = subprocess.Popen(sys.executable, stdout=devnull, 
