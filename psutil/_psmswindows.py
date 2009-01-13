@@ -12,7 +12,7 @@ class Impl(object):
         infoTuple = _psutil_mswindows.get_process_info(pid)
         return psutil.ProcessInfo(*infoTuple) 
         
-    def kill_process(self, pid):
+    def kill_process(self, pid, sig=None):
         """Terminates the process with the given PID"""
         return _psutil_mswindows.kill_process(pid)
         
