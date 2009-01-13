@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <Psapi.h>
 
-BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
+static BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
 {
     TOKEN_PRIVILEGES tp;
     LUID luid;
@@ -58,7 +58,7 @@ BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
     return TRUE;
 }
 
-int SetSeDebug() 
+static int SetSeDebug() 
 { 
     HANDLE hToken;
     if(!OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken)){
@@ -85,7 +85,7 @@ int SetSeDebug()
 }
 
 
-int UnsetSeDebug()
+static int UnsetSeDebug()
 {
     HANDLE hToken;
     if(!OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken)){
@@ -171,7 +171,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
     long pid;
-    int ret;
+    PyObject* ret;
     ret = PyInt_FromLong(0);
     SetSeDebug();
     if (! PyArg_ParseTuple(args, "l", &pid)) {
