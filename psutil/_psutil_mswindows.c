@@ -115,7 +115,9 @@ static int UnsetSeDebug()
 
 static PyObject* get_pid_list(PyObject* self, PyObject* args)
 {
+	PyObject* retlist = PyList_New(0);
 	int procArraySz = 1024;
+	DWORD i;
 
 	/* Win32 SDK says the only way to know if our process array
 	 * wasn't large enough is to check the returned size and make
@@ -124,13 +126,17 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 
 	/* Stores the actual array */
 	DWORD* procArray = NULL;
-	/* Stores the byte size of the returned array from enumprocesses */
+	DWORD procArrayByteSz;
+	
+    /* Stores the byte size of the returned array from enumprocesses */
 	DWORD enumReturnSz = 0;
+	
+    DWORD numberOfReturnedPIDs;
 
 	do {
 		free(procArray);
 
-		DWORD procArrayByteSz = procArraySz * sizeof(DWORD);
+        procArrayByteSz = procArraySz * sizeof(DWORD);
 		procArray = malloc(procArrayByteSz);
 
 
@@ -152,10 +158,9 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 	} while(enumReturnSz == procArraySz * sizeof(DWORD));
 
 	/* The number of elements is the returned size / size of each element */
-	DWORD numberOfReturnedPIDs = enumReturnSz / sizeof(DWORD);
+    numberOfReturnedPIDs = enumReturnSz / sizeof(DWORD);
 
-	PyObject* retlist = PyList_New(0);
-	int i;
+    retlist = PyList_New(0);
     for (i = 0; i < numberOfReturnedPIDs; i++) {
         PyList_Append(retlist, Py_BuildValue("i", procArray[i]) );
     }
@@ -207,22 +212,26 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 {
 	//the argument passed should be a process id
 	long pid;
+    HANDLE hProcess;
+    PyObject* infoTuple; 
+	TCHAR processName[MAX_PATH] = TEXT("<unknown>");
+
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
 		PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
 	}
 
 	//get the process information that we need
 	//(name, path, arguments)
-	TCHAR processName[MAX_PATH] = TEXT("<unknown>");
 
 	// Get a handle to the process.
-	HANDLE hProcess = OpenProcess( PROCESS_QUERY_INFORMATION |
-								   PROCESS_VM_READ,
-								   FALSE, pid );
+	hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | 
+        PROCESS_VM_READ, 
+        FALSE, 
+        pid 
+    );
 
 	// Get the process name.
 	if (NULL != hProcess ) {
-
 		HMODULE hMod;
 		DWORD cbNeeded;
 		if ( EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded) ) {
@@ -231,7 +240,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 		}
 	}
 
-	PyObject* infoTuple = Py_BuildValue("ls", pid, processName);
+	infoTuple = Py_BuildValue("ls", pid, processName);
 	return infoTuple;
 }
 
