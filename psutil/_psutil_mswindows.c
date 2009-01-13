@@ -171,7 +171,8 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
     long pid;
-    int ret = Py_BuildValue("i", ret);
+    int ret;
+    ret = PyInt_FromLong(0);
     SetSeDebug();
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
@@ -198,7 +199,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     }
     
     UnsetSeDebug();
-    return Py_BuildValue("i", 1);
+    return PyInt_FromLong(1);
 }
 
 
