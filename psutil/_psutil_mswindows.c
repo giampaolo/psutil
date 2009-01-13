@@ -1,6 +1,6 @@
 #include <Python.h>
 #include <windows.h>
-#include <psapi.h>
+#include <Psapi.h>
 
 BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
 {
@@ -58,7 +58,7 @@ BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
     return TRUE;
 }
 
-int SetSeDebug() {
+int SetSeDebug() 
 { 
     HANDLE hToken;
     if(!OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken)){
@@ -171,33 +171,34 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
     long pid;
+    int ret = Py_BuildValue("i", ret);
     SetSeDebug();
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
         UnsetSeDebug();
-        return Py_BuildValue(0);
+        return ret;
     }
 
     if (pid < 0) {
         UnsetSeDebug();
-        return Py_BuildValue(0);
+        return ret;
     }
 
     //get a process handle
     hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
     if(hProcess == NULL){
         UnsetSeDebug();
-        return Py_BuildValue(0);
+        return ret;
     }
     
     //kill the process
     if(!TerminateProcess(hProcess, 0)){
         UnsetSeDebug();
-        return Py_BuildValue(0);
+        return ret;
     }
     
     UnsetSeDebug();
-    return Py_BuildValue(1);
+    return Py_BuildValue("i", 1);
 }
 
 
