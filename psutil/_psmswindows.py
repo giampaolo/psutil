@@ -14,7 +14,7 @@ class Impl(object):
         
     def kill_process(self, pid):
         """Terminates the process with the given PID"""
-        raise NotImplementedError
+        return _psutil_mswindows.kill_process(pid)
         
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system"""

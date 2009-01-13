@@ -66,8 +66,8 @@ class Process(object):
 
     # TODO: provide an interface to the sig argument of the underlying
     # method
-    def kill(self):         
-        _platform_impl.kill_process(self.pid)
+    def kill(self, sig=None):         
+        _platform_impl.kill_process(self.pid, sig)
     
     def __str__(self):
         #try:

@@ -1,6 +1,117 @@
 #include <Python.h>
 #include <windows.h>
-#include <Psapi.h>
+#include <psapi.h>
+
+BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
+{
+    TOKEN_PRIVILEGES tp;
+    LUID luid;
+    TOKEN_PRIVILEGES tpPrevious;
+    DWORD cbPrevious=sizeof(TOKEN_PRIVILEGES);
+
+    if(!LookupPrivilegeValue( NULL, Privilege, &luid )) return FALSE;
+
+    //
+    // first pass.  get current privilege setting
+    //
+    tp.PrivilegeCount = 1;
+    tp.Privileges[0].Luid = luid;
+    tp.Privileges[0].Attributes = 0;
+
+    AdjustTokenPrivileges(
+        hToken,
+        FALSE,
+        &tp,
+        sizeof(TOKEN_PRIVILEGES),
+        &tpPrevious,
+        &cbPrevious
+    );
+
+    if (GetLastError() != ERROR_SUCCESS) return FALSE;
+
+    // 
+    // second pass. set privilege based on previous setting
+    //
+    tpPrevious.PrivilegeCount = 1;
+    tpPrevious.Privileges[0].Luid = luid;
+
+    if(bEnablePrivilege) {
+        tpPrevious.Privileges[0].Attributes |= (SE_PRIVILEGE_ENABLED);
+    }
+    
+    else {
+        tpPrevious.Privileges[0].Attributes ^= (SE_PRIVILEGE_ENABLED &
+                tpPrevious.Privileges[0].Attributes);
+    }
+
+    AdjustTokenPrivileges(
+        hToken,
+        FALSE,
+        &tpPrevious,
+        cbPrevious,
+        NULL,
+        NULL
+    );
+
+    if (GetLastError() != ERROR_SUCCESS) return FALSE;
+
+    return TRUE;
+}
+
+int SetSeDebug() {
+{ 
+    HANDLE hToken;
+    if(!OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken)){
+        if (GetLastError() == ERROR_NO_TOKEN){
+            if (!ImpersonateSelf(SecurityImpersonation)){
+                //Log2File("Error setting impersonation [SetSeDebug()]", L_DEBUG);
+                return 0;
+            }
+            if(!OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken)){
+                //Log2File("Error Opening Thread Token", L_DEBUG);
+                return 0;
+            }
+        }
+    }
+
+    // enable SeDebugPrivilege (open any process)
+    if(!SetPrivilege(hToken, SE_DEBUG_NAME, TRUE)){
+        //Log2File("Error setting SeDebug Privilege [SetPrivilege()]", L_WARN);
+        return 0;
+    }
+
+    CloseHandle(hToken);
+    return 1;
+}
+
+
+int UnsetSeDebug()
+{
+    HANDLE hToken;
+    if(!OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken)){
+        if(GetLastError() == ERROR_NO_TOKEN){
+            if(!ImpersonateSelf(SecurityImpersonation)){
+                //Log2File("Error setting impersonation! [UnsetSeDebug()]", L_DEBUG);
+                return 0;
+            }
+
+            if(!OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken)){
+                //Log2File("Error Opening Thread Token! [UnsetSeDebug()]", L_DEBUG);
+                return 0;
+            }
+        }
+    }
+
+    //now disable SeDebug
+    if(!SetPrivilege(hToken, SE_DEBUG_NAME, FALSE)){
+        //Log2File("Error unsetting SeDebug Privilege [SetPrivilege()]", L_WARN);
+        return 0;
+    }
+
+    CloseHandle(hToken);
+    return 1;
+}
+
 
 static PyObject* get_pid_list(PyObject* self, PyObject* args)
 {
@@ -55,6 +166,40 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
     return retlist;
 }
 
+
+static PyObject* kill_process(PyObject* self, PyObject* args)
+{
+    SetSeDebug();
+    long pid;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+        UnsetSeDebug();
+        return Py_BuildValue(0);
+    }
+
+    if (pid < 0) {
+        UnsetSeDebug();
+        return Py_BuildValue(0);
+    }
+
+    //get a process handle
+    hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, PID);
+    if(hProcess == NULL){
+        UnsetSeDebug();
+        return Py_BuildValue(0);
+    }
+    
+    //kill the process
+    if(!TerminateProcess(hProcess, 0)){
+        UnsetSeDebug();
+        return Py_BuildValue(0);
+    }
+    
+    UnsetSeDebug();
+    return Py_BuildValue(1);
+}
+
+
 static PyObject* get_process_info(PyObject* self, PyObject* args)
 {
 	//the argument passed should be a process id
@@ -74,12 +219,12 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 
 	// Get the process name.
 	if (NULL != hProcess ) {
+
 		HMODULE hMod;
 		DWORD cbNeeded;
-
 		if ( EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded) ) {
-			GetModuleBaseName( hProcess, hMod, processName,
-							   sizeof(processName)/sizeof(TCHAR) );
+		    GetModuleBaseName( hProcess, hMod, processName,
+                sizeof(processName)/sizeof(TCHAR) );
 		}
 	}
 
@@ -93,6 +238,8 @@ static PyMethodDef PsutilMethods[] =
      	"Returns a python list of PIDs currently running on the host system"},
      {"get_process_info", get_process_info, METH_VARARGS,
        	"Returns a psutil.ProcessInfo object for the given PID"},
+     {"kill_process", kill_process, METH_VARARGS,
+         "Kill the process identified by the given PID"},
      {NULL, NULL, 0, NULL}
 };
 

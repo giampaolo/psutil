@@ -314,7 +314,7 @@ static PyObject* get_arg_list(long pid)
 
     /* Fetch the command-line arguments and environment variables */
     //printf("pid: %ld\n", pid);
-    if (pid < 1) {
+    if (pid < 0) {
         return argList;
     } 
 
@@ -332,7 +332,7 @@ static PyObject* get_arg_list(long pid)
 static PyObject* get_process_info(PyObject* self, PyObject* args)
 {
 
-    int i, mib[4];
+    int mib[4];
     size_t len;
     struct kinfo_proc kp;
 	long pid;
@@ -341,6 +341,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	//the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
 		PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+        //return Py_BuildValue("");
 	}
 	
 	//get the process information that we need
