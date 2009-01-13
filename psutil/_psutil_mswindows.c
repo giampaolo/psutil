@@ -169,8 +169,9 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 
 static PyObject* kill_process(PyObject* self, PyObject* args)
 {
-    SetSeDebug();
+    HANDLE hProcess;
     long pid;
+    SetSeDebug();
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
         UnsetSeDebug();
@@ -183,7 +184,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     }
 
     //get a process handle
-    hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, PID);
+    hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
     if(hProcess == NULL){
         UnsetSeDebug();
         return Py_BuildValue(0);
