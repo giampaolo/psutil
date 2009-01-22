@@ -11,6 +11,9 @@ from test import test_support
 import psutil
 
 
+PYTHON = os.path.realpath(sys.executable)
+
+
 class TestCase(unittest.TestCase):
     
     def setUp(self):
@@ -30,36 +33,36 @@ class TestCase(unittest.TestCase):
         
     def test_kill(self):
         devnull = open(os.devnull, 'r+')
-        proc = subprocess.Popen(sys.executable, stdout=devnull, stderr=devnull)
+        proc = subprocess.Popen(PYTHON, stdout=devnull, stderr=devnull)
         psutil.Process(proc.pid).kill()
         
     def test_pid(self):
         devnull = open(os.devnull, 'r+') 
-        self.proc = subprocess.Popen(sys.executable, stdout=devnull, 
+        self.proc = subprocess.Popen(PYTHON, stdout=devnull, 
                                      stderr=devnull)
         self.assertEqual(psutil.Process(self.proc.pid).pid, self.proc.pid)
 
     def test_path(self):
         devnull = open(os.devnull, 'r+') 
-        self.proc = subprocess.Popen(sys.executable, stdout=devnull, 
+        self.proc = subprocess.Popen(PYTHON, stdout=devnull, 
                                      stderr=devnull)
         time.sleep(0.1)  # XXX: provisional, fix needed
-        self.assertEqual(psutil.Process(self.proc.pid).path, sys.executable)
+        self.assertEqual(psutil.Process(self.proc.pid).path, PYTHON)
         
     def test_cmdline(self):
         devnull = open(os.devnull, 'r+')
-        self.proc = subprocess.Popen([sys.executable, "-E"],
+        self.proc = subprocess.Popen([PYTHON, "-E"],
                                      stdout=devnull, stderr=devnull)
         time.sleep(0.1)  # XXX: provisional, fix needed
-        self.assertEqual(psutil.Process(self.proc.pid).cmdline, sys.executable + " -E")
+        self.assertEqual(psutil.Process(self.proc.pid).cmdline, PYTHON + " -E")
 
     def test_name(self):
         devnull = open(os.devnull, 'r+') 
-        self.proc = subprocess.Popen(sys.executable, stdout=devnull, 
+        self.proc = subprocess.Popen(PYTHON, stdout=devnull, 
                                      stderr=devnull)
         time.sleep(0.1)  # XXX: provisional, fix needed
         self.assertEqual(psutil.Process(self.proc.pid).name, 
-                         os.path.basename(sys.executable))        
+                         os.path.basename(PYTHON))        
 
 
 def test_main():
