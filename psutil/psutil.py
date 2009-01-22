@@ -28,14 +28,14 @@ class ProcessInfo(object):
     """Class that allows the process information to be passed
     between external code and psutil.  Used directly by the
     Process class"""
-    def __init__(self, pid, name=None, path=None, args=None):
+    def __init__(self, pid, name=None, path=None, cmdline=None):
         self.pid = pid
         self.name = name
         self.path = path
-        self.args = args
-        if args and (path == "<unknown>"):
+        self.cmdline = cmdline
+        if cmdline and (cmdline == "<unknown>"):
             import os
-            self.path = args[0]
+            self.cmdline = cmdline[0]
             
 
 class Process(object):
@@ -60,9 +60,9 @@ class Process(object):
         self.deproxy()
         return self._procinfo.path
 
-    def get_args(self):
+    def get_cmdline(self):
         self.deproxy()
-        return self._procinfo.args
+        return self._procinfo.cmdline
 
     # TODO: provide an interface to the sig argument of the underlying
     # method
@@ -71,7 +71,8 @@ class Process(object):
     
     def __str__(self):
         #try:
-            return "psutil.Process [PID: %s; NAME: '%s'; PATH: '%s'; ARGS: '%s']" % (self.pid, self.name, self.path, self.args)
+            return "psutil.Process [PID: %s; NAME: '%s'; PATH: '%s'; CMDLINE: '%s']" \
+                    %(self.pid, self.name, self.path, self.cmdline)
         #except:
             #FIXME:  Probably a permission error
             #return "psutil.Process [PID: %s; NAME: '?'; PATH: '?']" % self.pid
@@ -79,7 +80,7 @@ class Process(object):
     pid = property(get_pid)
     name = property(get_name)
     path = property(get_path)
-    args = property(get_args)
+    cmdline = property(get_cmdline)
     
 
 

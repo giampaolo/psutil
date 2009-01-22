@@ -15,10 +15,10 @@ class Impl(object):
         name = os.path.basename(path)
         f = open("/proc/%s/cmdline" %pid)
         try:
-            args = f.read().replace('\x00', ' ').strip()
+            cmdline = f.read().replace('\x00', ' ').strip()
         finally:
             f.close()
-        return psutil.ProcessInfo(pid, name, path, args)
+        return psutil.ProcessInfo(pid, name, path, cmdline)
 
     def kill_process(self, pid, sig=signal.SIGKILL):
         """Terminates the process with the given PID"""
