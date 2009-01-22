@@ -13,8 +13,13 @@ class Impl(object):
         """Returns a process info class."""
         path = os.readlink("/proc/%s/exe" %pid)
         name = os.path.basename(path)
-        return psutil.ProcessInfo(pid, name, path)
-        
+        f = open("/proc/%s/cmdline" %pid)
+        try:
+            args = f.read().replace('\x00', ' ').strip()
+        finally:
+            f.close()
+        return psutil.ProcessInfo(pid, name, path, args)
+
     def kill_process(self, pid, sig=signal.SIGKILL):
         """Terminates the process with the given PID"""
         if sig is None:

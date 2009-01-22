@@ -47,11 +47,11 @@ class TestCase(unittest.TestCase):
         self.assertEqual(psutil.Process(self.proc.pid).path, sys.executable)
         
     def test_args(self):
-        devnull = open(os.devnull, 'r+') 
-        self.proc = subprocess.Popen(sys.executable, stdout=devnull, 
-                                     stderr=devnull)
+        devnull = open(os.devnull, 'r+')
+        self.proc = subprocess.Popen([sys.executable, "-E"],
+                                     stdout=devnull, stderr=devnull)
         time.sleep(0.1)  # XXX: provisional, fix needed
-        self.assertEqual(psutil.Process(self.proc.pid).args, [sys.executable])
+        self.assertEqual(psutil.Process(self.proc.pid).args, sys.executable + " -E")
 
     def test_name(self):
         devnull = open(os.devnull, 'r+') 
