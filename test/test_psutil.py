@@ -12,6 +12,7 @@ import psutil
 
 
 PYTHON = os.path.realpath(sys.executable)
+DEVNULL = open(os.devnull, 'r+') 
 
 
 class TestCase(unittest.TestCase):
@@ -32,34 +33,25 @@ class TestCase(unittest.TestCase):
             self.assertTrue(os.getpid() in pids)
         
     def test_kill(self):
-        devnull = open(os.devnull, 'r+')
-        proc = subprocess.Popen(PYTHON, stdout=devnull, stderr=devnull)
+        proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         psutil.Process(proc.pid).kill()
         
     def test_pid(self):
-        devnull = open(os.devnull, 'r+') 
-        self.proc = subprocess.Popen(PYTHON, stdout=devnull, 
-                                     stderr=devnull)
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         self.assertEqual(psutil.Process(self.proc.pid).pid, self.proc.pid)
 
     def test_path(self):
-        devnull = open(os.devnull, 'r+') 
-        self.proc = subprocess.Popen(PYTHON, stdout=devnull, 
-                                     stderr=devnull)
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
         self.assertEqual(psutil.Process(self.proc.pid).path, PYTHON)
         
     def test_cmdline(self):
-        devnull = open(os.devnull, 'r+')
-        self.proc = subprocess.Popen([PYTHON, "-E"],
-                                     stdout=devnull, stderr=devnull)
+        self.proc = subprocess.Popen([PYTHON, "-E"], stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
         self.assertEqual(psutil.Process(self.proc.pid).cmdline, PYTHON + " -E")
 
     def test_name(self):
-        devnull = open(os.devnull, 'r+') 
-        self.proc = subprocess.Popen(PYTHON, stdout=devnull, 
-                                     stderr=devnull)
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL,  stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
         self.assertEqual(psutil.Process(self.proc.pid).name, 
                          os.path.basename(PYTHON))        
@@ -69,12 +61,8 @@ def test_main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(TestCase))
     unittest.TextTestRunner(verbosity=2).run(test_suite)
-    try:
-        from test.test_support import reap_children
-    except ImportError:
-        pass
-    else:
-        reap_children()
+    test_support.reap_children()
+    DEVNULL.close()
 
 if __name__ == '__main__':
     test_main()
