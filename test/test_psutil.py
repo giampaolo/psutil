@@ -6,6 +6,7 @@ import os
 import sys
 import subprocess
 import time
+import signal
 from test import test_support
 
 import psutil
@@ -23,7 +24,10 @@ class TestCase(unittest.TestCase):
     def tearDown(self):
         if self.proc is not None:
             try:
-                psutil.Process(self.proc.pid).kill()
+                if hasattr(os, 'kill'):
+                    os.kill(self.proc.pid, signal.SIGKILL)
+                else:
+                    psutil.Process(self.proc.pid).kill()
             finally:
                 self.proc = None        
     
@@ -33,8 +37,9 @@ class TestCase(unittest.TestCase):
             self.assertTrue(os.getpid() in pids)
         
     def test_kill(self):
-        proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        psutil.Process(proc.pid).kill()
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        psutil.Process(self.proc.pid).kill()
+        self.proc = None
         
     def test_pid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
