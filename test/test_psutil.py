@@ -59,7 +59,15 @@ class TestCase(unittest.TestCase):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL,  stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
         self.assertEqual(psutil.Process(self.proc.pid).name, os.path.basename(PYTHON))        
-
+        
+    def test_fetch_all(self):
+        for p in psutil.get_process_list():
+            p.pid
+            p.name
+            p.path
+            p.cmdline
+            str(p)  # test __str__
+            
 
 def test_main():
     test_suite = unittest.TestSuite()
