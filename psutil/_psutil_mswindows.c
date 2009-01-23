@@ -2,6 +2,8 @@
 #include <windows.h>
 #include <Psapi.h>
 
+#include <NTProcessInfo.h>
+
 static BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
 {
     TOKEN_PRIVILEGES tp;
@@ -243,6 +245,36 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	infoTuple = Py_BuildValue("ls", pid, processName);
 	return infoTuple;
 }
+
+
+/*
+ * Get the argument list for a process (command line) based on the PID
+ * 
+ * returns a Python list object.
+ */
+static PyObject* get_arg_list(long pid)
+{
+    int r;
+    smPROCESSINFO ppi;
+    PyObject *argList = PyList_New(0);
+
+    /* Fetch the command-line arguments and environment variables */
+    //printf("pid: %ld\n", pid);
+    if (pid < 0) {
+        return argList;
+    } 
+
+    
+    r = sm_GetNtProcessInfo(pid, ppi);
+    if (r) {
+        //PySequence_Tuple(args);
+        argList = PySequence_List(ppi.szCmdLine);
+    }
+
+    //printf("r = %i\n", r);
+    return argList;   
+}
+
 
 static PyMethodDef PsutilMethods[] =
 {
