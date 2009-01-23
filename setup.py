@@ -6,9 +6,10 @@ from distutils.core import setup, Extension
 # Windows
 if sys.platform.lower().startswith("win"):
     # build Windows module
-    module1 = Extension('_psutil_mswindows', sources = ['psutil/_psutil_mswindows.c'],
-                        define_macros=[('_WIN32_WINNT', '0x0500')],
-                        libraries=["psapi", "kernel32", "advapi32"])
+    module1 = Extension('_psutil_mswindows', sources = ['psutil/_psutil_mswindows.c', 'psutil/NTProcessInfo.c'],
+        include_dirs=['psutil'],
+        define_macros=[('_WIN32_WINNT', '0x0500')],
+        libraries=["psapi", "kernel32", "advapi32"])
 
     setup (name = 'PsutilMswindows',
             version = '1.0',

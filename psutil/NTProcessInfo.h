@@ -12,10 +12,13 @@
 #ifndef _ORIONSCORPION_NTPROCESSINFO_H_
 #define _ORIONSCORPION_NTPROCESSINFO_H_
 
+#define _X86_ 
+
 #pragma once
 
 #include <winternl.h>
 #include <psapi.h>
+#include <windows.h>
 
 #define STRSAFE_LIB
 #include <strsafe.h>
