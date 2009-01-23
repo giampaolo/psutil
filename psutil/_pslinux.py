@@ -10,9 +10,11 @@ class Impl(object):
     def get_process_info(self, pid):
         """Returns a process info class."""
         import psutil
-        exe = os.readlink("/proc/%s/exe" %pid)
-        path = os.path.dirname(exe)
-        name = os.path.basename(exe)
+        try:            
+            exe = os.readlink("/proc/%s/exe" %pid)
+        except OSError:
+            exe = '<unknown>'           
+        path, name = os.path.split(exe)
         f = open("/proc/%s/cmdline" %pid)
         try:
             # return the args as a list, dropping the last line (always empty)
