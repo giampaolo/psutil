@@ -26,13 +26,11 @@ class Impl(object):
         import csv
         from subprocess import Popen,PIPE
 
-        wmic_cmd = "WMIC PROCESS WHERE ProcessId=\'%s\' GET CommandLine /FORMAT:csv" % (pid)
+        wmic_cmd = "WMIC PROCESS WHERE ProcessId=\'%s\' GET CommandLine /VALUE" % (pid)
         p = Popen([wmic_cmd], shell=True, stdout=PIPE, stdin=PIPE)
-        #TODO: fix this ugly parsing mess
-        wmic_output = p.communicate()[0].strip()
-        wmic_output = wmic_output.splitlines()[-1]
-        wmic_output = wmic_output.split(',')[1]
-        arg_list = []
+        wmic_output = p.communicate()[0].strip() # stdout w/whitespace trimmed
+        wmic_output = wmic_output.replace("CommandLine=", "") # cmdline value only
+        arg_list = "<unknown>"
         if wmic_output:
             arg_list = csv.reader([wmic_output], delimiter=" ").next()
         return arg_list
