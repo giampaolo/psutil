@@ -48,18 +48,17 @@ class TestCase(unittest.TestCase):
     def test_path(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
-        self.assertEqual(psutil.Process(self.proc.pid).path, PYTHON)
+        self.assertEqual(psutil.Process(self.proc.pid).path, os.path.dirname(PYTHON))
         
     def test_cmdline(self):
         self.proc = subprocess.Popen([PYTHON, "-E"], stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
-        self.assertEqual(psutil.Process(self.proc.pid).cmdline, PYTHON + " -E")
+        self.assertEqual(psutil.Process(self.proc.pid).cmdline, [PYTHON, "-E"])
 
     def test_name(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL,  stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
-        self.assertEqual(psutil.Process(self.proc.pid).name, 
-                         os.path.basename(PYTHON))        
+        self.assertEqual(psutil.Process(self.proc.pid).name, os.path.basename(PYTHON))        
 
 
 def test_main():

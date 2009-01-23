@@ -14,7 +14,8 @@ class Impl(object):
         name = os.path.basename(path)
         f = open("/proc/%s/cmdline" %pid)
         try:
-            cmdline = f.read().replace('\x00', ' ').strip()
+            # return the args as a list, dropping the last line (always empty)
+            cmdline = f.read().split('\x00', ' ')[:-1]
         finally:
             f.close()
         return psutil.ProcessInfo(pid, name, path, cmdline)
