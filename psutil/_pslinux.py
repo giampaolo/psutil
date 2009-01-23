@@ -1,8 +1,6 @@
 import os
 import signal
 
-import psutil
-
 
 class Impl(object):
     def process_exists(self, pid):
@@ -11,6 +9,7 @@ class Impl(object):
         
     def get_process_info(self, pid):
         """Returns a process info class."""
+        import psutil
         path = os.readlink("/proc/%s/exe" %pid)
         name = os.path.basename(path)
         f = open("/proc/%s/cmdline" %pid)

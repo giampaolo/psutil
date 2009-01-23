@@ -37,4 +37,4 @@ class Impl(object):
             arg_list = csv.reader([wmic_output], delimiter=" ").next()
         return arg_list
 
-        
+
