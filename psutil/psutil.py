@@ -33,9 +33,10 @@ class ProcessInfo(object):
         self.name = name
         self.path = path
         self.cmdline = cmdline
-        if cmdline and (cmdline == "<unknown>"):
+        # if we have the cmdline but not the path, figure it out from argv[0]
+        if cmdline and (path == "<unknown>"):
             import os
-            self.cmdline = cmdline[0]
+            self.path = os.path.dirname(cmdline[0])
             
 
 class Process(object):

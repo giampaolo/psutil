@@ -240,7 +240,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 		}
 	}
 
-	infoTuple = Py_BuildValue("lssN", pid, processName, "<unknown>", "<unknown>");
+	infoTuple = Py_BuildValue("lsss", pid, processName, "<unknown>", "<unknown>");
 	return infoTuple;
 }
 

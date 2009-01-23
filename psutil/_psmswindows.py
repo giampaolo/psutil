@@ -9,11 +9,9 @@ class Impl(object):
         import psutil
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor"""
-
         infoTuple = _psutil_mswindows.get_process_info(pid)
-        ret = psutil.ProcessInfo(infoTuple[0:1] + (self.get_cmdline(pid),))
-        #psutil.ProcessInfo(*infoTuple) 
-        return ret 
+        infoTuple = infoTuple[0:-1] + (self.get_cmdline(pid),)
+        return psutil.ProcessInfo(*infoTuple) 
         
     def kill_process(self, pid, sig=None):
         """Terminates the process with the given PID"""
@@ -25,14 +23,18 @@ class Impl(object):
 
     def get_cmdline(self, pid):
         """Return the cmdline for a process with a given PID"""
+        import csv
         from subprocess import Popen,PIPE
+
         wmic_cmd = "WMIC PROCESS WHERE ProcessId=\'%s\' GET CommandLine /FORMAT:csv" % (pid)
-        #print 'wmic_cmd:', wmic_cmd
-        #wmic_output = "foo"
         p = Popen([wmic_cmd], shell=True, stdout=PIPE, stdin=PIPE)
+        #TODO: fix this ugly parsing mess
         wmic_output = p.communicate()[0].strip()
         wmic_output = wmic_output.splitlines()[-1]
         wmic_output = wmic_output.split(',')[1]
-        #print wmic_output
-        return wmic_output
+        arg_list = []
+        if wmic_output:
+            arg_list = csv.reader([wmic_output], delimiter=" ").next()
+        return arg_list
+
         

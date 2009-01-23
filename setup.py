@@ -7,7 +7,7 @@ from distutils.core import setup, Extension
 if sys.platform.lower().startswith("win"):
     # build Windows module
     module1 = Extension('_psutil_mswindows', sources = ['psutil/_psutil_mswindows.c'],
-        include_dirs=['psutil'],
+        include_dirs=['psutil', 'D:/WINDDK/3790.1830/inc/wxp', 'D:/WINDDK/3790.1830/inc/crt'],
         define_macros=[('_WIN32_WINNT', '0x0500')],
         libraries=["psapi", "kernel32", "advapi32"])
 
