@@ -72,7 +72,8 @@ class Process(object):
     
     def __str__(self):
         return "psutil.Process [PID:%s; NAME:'%s'; PATH:'%s'; CMDLINE:'%s']" \
-                              %(self.pid, self.name, self.path, self.cmdline)
+            %(self.pid, self.name, self.path, self.cmdline)
+
     
     pid = property(get_pid)
     name = property(get_name)

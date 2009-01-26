@@ -10,7 +10,6 @@ class Impl(object):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor"""
         infoTuple = _psutil_mswindows.get_process_info(pid)
-        infoTuple = infoTuple[0:-1] + (self.get_cmdline(pid),)
         return psutil.ProcessInfo(*infoTuple) 
         
     def kill_process(self, pid, sig=None):
@@ -20,19 +19,4 @@ class Impl(object):
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system"""
         return _psutil_mswindows.get_pid_list()
-
-    def get_cmdline(self, pid):
-        """Return the cmdline for a process with a given PID"""
-        import csv
-        from subprocess import Popen,PIPE
-
-        wmic_cmd = "WMIC PROCESS WHERE ProcessId=\'%s\' GET CommandLine /VALUE" % (pid)
-        p = Popen([wmic_cmd], shell=True, stdout=PIPE, stdin=PIPE)
-        wmic_output = p.communicate()[0].strip() # stdout w/whitespace trimmed
-        wmic_output = wmic_output.replace("CommandLine=", "") # cmdline value only
-        arg_list = "<unknown>"
-        if wmic_output:
-            arg_list = csv.reader([wmic_output], delimiter=" ").next()
-        return arg_list
-
 
