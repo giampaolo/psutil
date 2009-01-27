@@ -24,6 +24,8 @@ class Impl(object):
 
     def kill_process(self, pid, sig=signal.SIGKILL):
         """Terminates the process with the given PID."""
+        if sig is None:
+            sig = signal.SIGKILL
         os.kill(pid, sig)
 
     def get_pid_list(self):
