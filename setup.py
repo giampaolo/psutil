@@ -21,7 +21,7 @@ if sys.platform.lower().startswith("win"):
 
 # OS X
 if sys.platform.lower().startswith("darwin"):
-    module = Extension('psutil/_psutil_osx',
+    module = Extension('_psutil_osx',
                        sources = ['psutil/_psutil_osx.c'],)
 
     setup(name='PsutilOSX',
