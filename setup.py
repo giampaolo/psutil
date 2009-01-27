@@ -26,12 +26,32 @@ def main():
     setup_args = dict(
         name='psutil',
         version='0.1.0',
-        description='Python Process Management Library',
+        description='A process utilities module for Python',
+        long_description="""
+psutil is a module providing convenience functions for managing processes in a
+portable way by using Python.""",
         author='Giampaolo Rodola, Dave Daeschler, Jay Loden',
         author_email='psutil-dev@googlegroups.com',
         url='http://code.google.com/p/psutil/',
+        platforms='Platform Independent',
         license='License :: OSI Approved :: BSD License',
         packages=['psutil'],
+        classifiers=[
+              'Development Status :: 2 - Pre-Alpha',
+              'Environment :: Console',
+              'Operating System :: MacOS',
+              'Operating System :: Microsoft :: Windows',
+              'Operating System :: POSIX :: Linux',
+              'Operating System :: OS Independent',
+              'Programming Language :: Python',
+              'Topic :: System :: Monitoring',
+              'Topic :: System :: Systems Administration',
+              'Topic :: Utilities',
+              'Topic :: Software Development :: Libraries :: Python Modules',
+              'Intended Audience :: Developers',
+              'Intended Audience :: System Administrators',
+              'License :: OSI Approved :: MIT License',
+              ],
         )
     if extensions is not None:
         setup_args["ext_modules"] = [extensions]
