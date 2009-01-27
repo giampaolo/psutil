@@ -96,8 +96,14 @@ def get_process_list():
         retProcesses.append(Process(pid))
     return retProcesses
 
+def test():
+    processes = get_process_list()
+    print "%-5s  %-15s %-25s %-20s" %("PID", "NAME", "PATH", "COMMAND LINE")
+    for proc in processes:
+        print "%-5s  %-15s %-25s %-20s" %(proc.pid, proc.name, proc.path or \
+                                        "<unknown>", ' '.join(proc.cmdline) or \
+                                        "<unknown>"
+                                        )
 
 if __name__ == "__main__":
-    processes = get_process_list()
-    for proc in processes:
-        print proc
+    test()
