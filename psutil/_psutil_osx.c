@@ -336,14 +336,16 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 	long pid;
-    PyObject* infoTuple = Py_BuildValue("lssN", pid, "<unknown>", "<unknown>", PyList_New(0));
+    PyObject* infoTuple;
 
 	//the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+		PyErr_SetString(PyExc_RuntimeError, "get_process_info(): Invalid argument");
         //return Py_BuildValue("");
 	}
 	
+    infoTuple = Py_BuildValue("lssN", pid, "<unknown>", "<unknown>", PyList_New(0));
+
 	//get the process information that we need
 	//(name, path, arguments)
  
