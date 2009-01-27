@@ -57,7 +57,7 @@ static PyObject* get_arg_list(long pid)
     PVOID rtlUserProcParamsAddress;
     UNICODE_STRING commandLine;
     WCHAR *commandLineContents;
-    PyObject *argList = Py_BuildValue("s", "<unknown>");
+    PyObject *argList = Py_BuildValue("[]");
 
     if ((processHandle = OpenProcess(
         PROCESS_QUERY_INFORMATION | /* required for NtQueryInformationProcess */
