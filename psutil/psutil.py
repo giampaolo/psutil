@@ -75,7 +75,7 @@ class Process(object):
         _platform_impl.kill_process(self.pid, sig)
 
     def __str__(self):
-        return "psutil.Process [PID:%s; NAME:'%s'; PATH:'%s'; CMDLINE:'%s']" \
+        return "psutil.Process <PID:%s; NAME:'%s'; PATH:'%s'; CMDLINE:%s>" \
             %(self.pid, self.name, self.path, self.cmdline)
 
     pid = property(get_pid)
