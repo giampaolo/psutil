@@ -45,5 +45,6 @@ setup(name='psutil',
       author='Giampaolo Rodola, Dave Daeschler, Jay Loden',
       author_email='psutil-dev@googlegroups.com',
       url='http://code.google.com/p/psutil/',
+      license='License :: OSI Approved :: BSD License',
       packages=['psutil'],
       )
