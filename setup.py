@@ -13,7 +13,7 @@ if sys.platform.lower().startswith("win"):
                        libraries=["psapi", "kernel32", "advapi32", "shell32"])
 
     setup(name='PsutilMswindows',
-         version='1.0',
+         version='0.1.0',
          description='Windows implementation',
          ext_modules=[module]
          )
