@@ -13,14 +13,14 @@ import psutil
 
 
 PYTHON = os.path.realpath(sys.executable)
-DEVNULL = open(os.devnull, 'r+') 
+DEVNULL = open(os.devnull, 'r+')
 
 
 class TestCase(unittest.TestCase):
-    
+
     def setUp(self):
         self.proc = None
-        
+
     def tearDown(self):
         if self.proc is not None:
             try:
@@ -29,18 +29,18 @@ class TestCase(unittest.TestCase):
                 else:
                     psutil.Process(self.proc.pid).kill()
             finally:
-                self.proc = None        
-    
-    def test_get_process_list(self):           
+                self.proc = None
+
+    def test_get_process_list(self):
         pids = [x.pid for x in psutil.get_process_list()]
         if hasattr(os, 'getpid'):
             self.assertTrue(os.getpid() in pids)
-        
+
     def test_kill(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         psutil.Process(self.proc.pid).kill()
         self.proc = None
-        
+
     def test_pid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         self.assertEqual(psutil.Process(self.proc.pid).pid, self.proc.pid)
@@ -49,7 +49,7 @@ class TestCase(unittest.TestCase):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
         self.assertEqual(psutil.Process(self.proc.pid).path, os.path.dirname(PYTHON))
-        
+
     def test_cmdline(self):
         self.proc = subprocess.Popen([PYTHON, "-E"], stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
@@ -58,8 +58,8 @@ class TestCase(unittest.TestCase):
     def test_name(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL,  stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
-        self.assertEqual(psutil.Process(self.proc.pid).name, os.path.basename(PYTHON))        
-        
+        self.assertEqual(psutil.Process(self.proc.pid).name, os.path.basename(PYTHON))
+
     def test_fetch_all(self):
         for p in psutil.get_process_list():
             p.pid
@@ -67,15 +67,16 @@ class TestCase(unittest.TestCase):
             p.path
             p.cmdline
             str(p)  # test __str__
-            
+
 
 def test_main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(TestCase))
     unittest.TextTestRunner(verbosity=2).run(test_suite)
-    test_support.reap_children()
+    if hasattr(test_support, "reap_children"):  # python 2.5 and >
+        test_support.reap_children()
     DEVNULL.close()
 
 if __name__ == '__main__':
     test_main()
-    
+
