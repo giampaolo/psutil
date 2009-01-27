@@ -37,11 +37,7 @@ class Impl(object):
         f = open("/proc/%s/cmdline" %pid)
         try:
             # return the args as a list
-            cmdline = f.read().strip('\x00')
-            if cmdline:
-                cmdline = cmdline.split('\x00')
-            else:
-                cmdline = []
+            cmdline = [x for x in f.read().split('\x00') if x]
         finally:
             f.close()
 
