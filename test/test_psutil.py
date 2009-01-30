@@ -63,12 +63,16 @@ class TestCase(unittest.TestCase):
     def test_uid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
-        self.assertEqual(psutil.Process(self.proc.pid).uid, os.getuid())
+        uid = psutil.Process(self.proc.pid).uid
+        self.assertEqual(uid, os.getuid())
+        self.assert_(isinstance(uid, int))
 
     def test_gid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
-        self.assertEqual(psutil.Process(self.proc.pid).gid, os.getgid())
+        gid = psutil.Process(self.proc.pid).gid
+        self.assertEqual(gid, os.getgid())
+        self.assert_(isinstance(gid, int))
 
     def test_fetch_all(self):
         for p in psutil.get_process_list():
