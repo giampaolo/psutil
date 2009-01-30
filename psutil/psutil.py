@@ -71,6 +71,14 @@ class Process(object):
         self.deproxy()
         return self._procinfo.cmdline
 
+    def get_uid(self):
+        # XXX - provide a cache to save the value
+        return _platform_impl.get_process_uid(self.pid)
+
+    def get_gid(self):
+        # XXX - provide a cache to save the value
+        return _platform_impl.get_process_gid(self.pid)
+
     def kill(self, sig=None):
         _platform_impl.kill_process(self.pid, sig)
 
@@ -82,6 +90,8 @@ class Process(object):
     name = property(get_name)
     path = property(get_path)
     cmdline = property(get_cmdline)
+    uid = property(get_uid)
+    gid = property(get_gid)
 
 
 def get_process_list():

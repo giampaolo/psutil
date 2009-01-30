@@ -52,3 +52,23 @@ class Impl(object):
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
         return [int(x) for x in os.listdir('/proc') if x.isdigit()]
+
+    def get_process_uid(self, pid):
+        # XXX - something faster than readlines() could be used
+        f = open("/proc/%s/status" %pid)
+        for line in f.readlines():
+            if line.startswith('Uid:'):
+                # Uid line provides 4 values which stand for real,
+                # effective, saved set, and file system UIDs.
+                # We want to provide real UID only.
+                return int(line.split()[1])
+
+    def get_process_gid(self, pid):
+        # XXX - something faster than readlines() could be used
+        f = open("/proc/%s/status" %pid)
+        for line in f.readlines():
+            if line.startswith('Gid:'):
+                # Uid line provides 4 values which stand for real,
+                # effective, saved set, and file system GIDs.
+                # We want to provide real GID only.
+                return int(line.split()[1])
