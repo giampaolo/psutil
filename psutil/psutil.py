@@ -57,29 +57,37 @@ class Process(object):
             self.is_proxy = False
 
     def get_pid(self):
+        "The process pid."
         return self._procinfo.pid
 
     def get_name(self):
+        "The process name."
         self.deproxy()
         return self._procinfo.name
 
     def get_path(self):
+        "The process path."
         self.deproxy()
         return self._procinfo.path
 
     def get_cmdline(self):
+        "The command line process has been called with."
         self.deproxy()
         return self._procinfo.cmdline
 
     def get_uid(self):
+        """The real user id of the current process."""
         # XXX - provide a cache to save the value
         return _platform_impl.get_process_uid(self.pid)
 
     def get_gid(self):
+        """The real group id of the current process."""
         # XXX - provide a cache to save the value
         return _platform_impl.get_process_gid(self.pid)
 
     def kill(self, sig=None):
+        """Kill the current process by using signal sig (defaults to SIGKILL).
+        """
         _platform_impl.kill_process(self.pid, sig)
 
     def __str__(self):
