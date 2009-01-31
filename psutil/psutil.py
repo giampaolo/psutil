@@ -34,7 +34,7 @@ class ProcessInfo(object):
     Process class.
     """
 
-    def __init__(self, pid, name=None, path=None, cmdline=None):
+    def __init__(self, pid, name=None, path=None, cmdline=None, uid=None, gid=None):
         self.pid = pid
         self.name = name
         self.path = path
@@ -42,6 +42,8 @@ class ProcessInfo(object):
         # if we have the cmdline but not the path, figure it out from argv[0]
         if cmdline and (path == "<unknown>"):
             self.path = os.path.dirname(cmdline[0])
+        self.uid = uid
+        self.gid = gid
 
 
 class Process(object):
@@ -77,13 +79,13 @@ class Process(object):
 
     def get_uid(self):
         """The real user id of the current process."""
-        # XXX - provide a cache to save the value
-        return _platform_impl.get_process_uid(self.pid)
+        self.deproxy()
+        return self._procinfo.uid
 
     def get_gid(self):
         """The real group id of the current process."""
-        # XXX - provide a cache to save the value
-        return _platform_impl.get_process_gid(self.pid)
+        self.deproxy()
+        return self._procinfo.gid
 
     def kill(self, sig=None):
         """Kill the current process by using signal sig (defaults to SIGKILL).
@@ -91,8 +93,8 @@ class Process(object):
         _platform_impl.kill_process(self.pid, sig)
 
     def __str__(self):
-        return "psutil.Process <PID:%s; NAME:'%s'; PATH:'%s'; CMDLINE:%s>" \
-            %(self.pid, self.name, self.path, self.cmdline)
+        return "psutil.Process <PID:%s; NAME:'%s'; PATH:'%s'; CMDLINE:%s; UID:%s; GID:%s;>" \
+            %(self.pid, self.name, self.path, self.cmdline, self.uid, self.gid)
 
     pid = property(get_pid)
     name = property(get_name)
@@ -116,12 +118,13 @@ def get_process_list():
 
 def test():
     processes = get_process_list()
-    print "%-5s  %-15s %-25s %-20s" %("PID", "NAME", "PATH", "COMMAND LINE")
+    print "%-5s  %-15s %-25s %-20s %-5s %-5s" %("PID", "NAME", "PATH", "COMMAND LINE", "UID", "GID")
     for proc in processes:
-        print "%-5s  %-15s %-25s %-20s" %(proc.pid, proc.name, proc.path or \
+        print "%-5s  %-15s %-25s %-20s %-5s %-5s" %(proc.pid, proc.name, proc.path or \
                                         "<unknown>", ' '.join(proc.cmdline) or \
-                                        "<unknown>"
+                                        "<unknown>", proc.uid, proc.gid,
                                         )
 
 if __name__ == "__main__":
     test()
+
