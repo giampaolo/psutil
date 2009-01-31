@@ -41,7 +41,9 @@ class Impl(object):
         finally:
             f.close()
 
-        return psutil.ProcessInfo(pid, name, path, cmdline, get_process_uid(), get_process_gid())
+        return psutil.ProcessInfo(pid, name, path, cmdline,
+                                  self.get_process_uid(pid),
+                                  self.get_process_gid(pid))
 
     def kill_process(self, pid, sig=signal.SIGKILL):
         """Terminates the process with the given PID."""
