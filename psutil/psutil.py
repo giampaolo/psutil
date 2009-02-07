@@ -87,6 +87,10 @@ class Process(object):
         self.deproxy()
         return self._procinfo.gid
 
+    def get_tcp_connections(self):
+        "Get TCP connections used by the current process."
+        return _platform_impl.get_tcp_connections(self.pid)
+
     def kill(self, sig=None):
         """Kill the current process by using signal sig (defaults to SIGKILL).
         """

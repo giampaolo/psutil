@@ -3,6 +3,7 @@
 
 import os
 import signal
+import socket
 
 
 class Impl(object):
@@ -74,3 +75,51 @@ class Impl(object):
                 # effective, saved set, and file system GIDs.
                 # We want to provide real GID only.
                 return int(line.split()[1])
+
+    def get_tcp_connections(self, pid):
+        returning_list = []
+        descriptors = []
+        for name in os.listdir("/proc/%s/fd" %pid):
+            try:
+                fd = os.readlink("/proc/%s/fd/%s" %(pid, name))
+            except OSError:
+                continue
+            if fd.startswith('socket:['):
+                # the process is using a TCP connection
+                descriptors.append(fd[8:][:-1])  # extract the fd number
+
+        if not descriptors:
+            # no TCP connections for this process
+            return []
+
+        f = open("/proc/net/tcp")
+        f.readline()  # skip the first line
+        for line in f:
+            sl, local_address, rem_address, status, txrx_queue, trtm, retrnsmt,\
+            uid, timeout, inode = line.split()[:10]
+            if inode in descriptors:
+                # XXX - need to figure out how to represent connection
+                # "status" so that we can include it too
+                returning_list.append([_convert_address(local_address),
+                                       _convert_address(rem_address)])
+        return returning_list
+
+
+def _convert_address(addr):
+    """Accept an "ip:port" address as displayed in /proc/net/*
+    and convert it into a human readable form.
+
+    Example: "0500000A:0016" -> "10.0.0.5:22"
+
+    The IP address portion is a little-endian four-byte hexadecimal
+    number; that is, the least significant byte is listed first,
+    so we need to reverse the order of the bytes to convert it
+    to an IP address.
+    The port number is a simple two-byte hexadecimal number.
+    """
+    ip, port = addr.split(':')
+    ip = socket.inet_ntoa(ip.decode('hex')[::-1])
+    port = int(port, 16)
+    return "%s:%d" %(ip, port)
+
+

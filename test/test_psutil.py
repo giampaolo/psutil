@@ -7,6 +7,7 @@ import sys
 import subprocess
 import time
 import signal
+import socket
 from test import test_support
 
 import psutil
@@ -14,6 +15,15 @@ import psutil
 
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
+
+
+def find_unused_port(family=socket.AF_INET, socktype=socket.SOCK_STREAM):
+    "Bind the socket to a free port and return the port number."
+    tempsock = socket.socket(family, socktype)
+    port = test_support.bind_port(tempsock)
+    tempsock.close()
+    del tempsock
+    return port
 
 
 class TestCase(unittest.TestCase):
@@ -74,6 +84,20 @@ class TestCase(unittest.TestCase):
         self.assertEqual(gid, os.getgid())
         self.assert_(isinstance(gid, int))
 
+    def test_get_tcp_connections(self):
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        time.sleep(0.1)  # XXX: provisional, fix needed
+        self.assertEqual(psutil.Process(self.proc.pid).get_tcp_connections(), [])
+
+        ip = "127.0.0.1"
+        port = find_unused_port()
+        arg = """import socket; s = socket.socket(); s.bind(("%s", %s)); s.listen(1); s.accept()""" %(ip, port)
+        self.proc = subprocess.Popen([PYTHON, "-c", arg], stdout=DEVNULL, stderr=DEVNULL)
+        time.sleep(0.1)  # XXX: provisional, fix needed
+        cons = psutil.Process(self.proc.pid).get_tcp_connections()
+        self.assertEqual(len(cons), 1)
+        self.assertEqual(cons[0][0], "%s:%s" %(ip, port))
+
     def test_fetch_all(self):
         for p in psutil.get_process_list():
             p.pid
@@ -82,6 +106,7 @@ class TestCase(unittest.TestCase):
             p.cmdline
             p.uid
             p.gid
+            p.get_tcp_connections()
             str(p)  # test __str__
 
 
