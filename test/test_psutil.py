@@ -91,12 +91,17 @@ class TestCase(unittest.TestCase):
 
         ip = "127.0.0.1"
         port = find_unused_port()
-        arg = """import socket; s = socket.socket(); s.bind(("%s", %s)); s.listen(1); s.accept()""" %(ip, port)
+        arg = "import socket;" \
+              "s = socket.socket();" \
+              "s.bind(('%s', %s));" %(ip, port) + \
+              "s.listen(1);" \
+              "s.accept()"
         self.proc = subprocess.Popen([PYTHON, "-c", arg], stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
         cons = psutil.Process(self.proc.pid).get_tcp_connections()
         self.assertEqual(len(cons), 1)
         self.assertEqual(cons[0][0], "%s:%s" %(ip, port))
+        self.assertEqual(cons[0][2], "LISTEN")
 
     def test_fetch_all(self):
         for p in psutil.get_process_list():

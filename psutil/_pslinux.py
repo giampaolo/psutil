@@ -6,6 +6,21 @@ import signal
 import socket
 
 
+# ...from include/net/tcp_states.h
+# http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
+socket_status_table = {"01" : "ESTABLISHED",
+                       "02" : "SYN_SENT",
+                       "03" : "SYN_RECV",
+                       "04" : "FIN_WAIT1",
+                       "05" : "FIN_WAIT2",
+                       "06" : "TIME_WAIT",
+                       "07" : "CLOSE",
+                       "08" : "CLOSE_WAIT",
+                       "09" : "LAST_ACK",
+                       "0A" : "LISTEN",
+                       "0B" : "CLOSING"
+                       }
+
 class Impl(object):
 
     def process_exists(self, pid):
@@ -98,10 +113,10 @@ class Impl(object):
             sl, local_address, rem_address, status, txrx_queue, trtm, retrnsmt,\
             uid, timeout, inode = line.split()[:10]
             if inode in descriptors:
-                # XXX - need to figure out how to represent connection
-                # "status" so that we can include it too
                 returning_list.append([_convert_address(local_address),
-                                       _convert_address(rem_address)])
+                                       _convert_address(rem_address),
+                                       socket_status_table[status]
+                                       ])
         return returning_list
 
 
