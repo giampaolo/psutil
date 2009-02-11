@@ -27,3 +27,43 @@ class Impl(object):
         """Returns a list of PIDs currently running on the system."""
         return _psutil_mswindows.get_pid_list()
 
+    def get_tcp_connections(self, pid):
+        # XXX - provisonal: use netstat and parse its output
+        from subprocess import Popen, PIPE
+
+        pid = str(pid)
+        p = Popen(['netstat -ano -p tcp'], shell=True, stdout=PIPE, stdin=PIPE)
+        output = p.communicate()[0].strip()  # stdout w/whitespace trimmed
+        p.wait()
+
+        if pid not in output:
+            return []
+
+        returning_list = []
+        for line in output.split('\r\n'):
+            if line.startswith('  TCP'):
+                proto, local_addr, rem_addr, status, _pid = line.split()
+                if _pid == pid:
+                    returning_list.append([local_addr, rem_addr, status])
+        return returning_list
+
+    def get_udp_connections(self, pid):
+        # XXX - provisonal: use netstat and parse its output
+        from subprocess import Popen, PIPE
+
+        pid = str(pid)
+        p = Popen(['netstat -ano -p udp'], shell=True, stdout=PIPE)
+        output = p.communicate()[0].strip()  # stdout w/whitespace trimmed
+        p.wait()
+
+        if pid not in output:
+            return []
+
+        returning_list = []
+        for line in output.split('\r\n'):
+            if line.startswith('  UDP'):
+                proto, local_addr, rem_addr, _pid = line.split()
+                if _pid == pid:
+                    returning_list.append([local_addr, rem_addr])
+        return returning_list
+

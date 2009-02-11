@@ -88,6 +88,7 @@ class TestCase(unittest.TestCase):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
         self.assertEqual(psutil.Process(self.proc.pid).get_tcp_connections(), [])
+        psutil.Process(self.proc.pid).kill()
 
         ip = "127.0.0.1"
         port = find_unused_port()
@@ -107,6 +108,7 @@ class TestCase(unittest.TestCase):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
         self.assertEqual(psutil.Process(self.proc.pid).get_udp_connections(), [])
+        psutil.Process(self.proc.pid).kill()
 
         ip = "127.0.0.1"
         port = find_unused_port(socktype=socket.SOCK_DGRAM)
