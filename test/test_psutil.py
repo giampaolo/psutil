@@ -103,6 +103,23 @@ class TestCase(unittest.TestCase):
         self.assertEqual(cons[0][0], "%s:%s" %(ip, port))
         self.assertEqual(cons[0][2], "LISTEN")
 
+    def test_get_udp_connections(self):
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        time.sleep(0.1)  # XXX: provisional, fix needed
+        self.assertEqual(psutil.Process(self.proc.pid).get_udp_connections(), [])
+
+        ip = "127.0.0.1"
+        port = find_unused_port(socktype=socket.SOCK_DGRAM)
+        arg = "import socket;" \
+              "s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);" \
+              "s.bind(('%s', %s));" %(ip, port) + \
+              "s.recvfrom(1024)"
+        self.proc = subprocess.Popen([PYTHON, "-c", arg], stdout=DEVNULL, stderr=DEVNULL)
+        time.sleep(0.1)  # XXX: provisional, fix needed
+        cons = psutil.Process(self.proc.pid).get_udp_connections()
+        self.assertEqual(len(cons), 1)
+        self.assertEqual(cons[0][0], "%s:%s" %(ip, port))
+
     def test_fetch_all(self):
         for p in psutil.get_process_list():
             p.pid
@@ -112,6 +129,7 @@ class TestCase(unittest.TestCase):
             p.uid
             p.gid
             p.get_tcp_connections()
+            p.get_udp_connections()
             str(p)  # test __str__
 
 

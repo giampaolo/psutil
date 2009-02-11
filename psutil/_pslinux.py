@@ -119,6 +119,33 @@ class Impl(object):
                                        ])
         return returning_list
 
+    def get_udp_connections(self, pid):
+        returning_list = []
+        descriptors = []
+        for name in os.listdir("/proc/%s/fd" %pid):
+            try:
+                fd = os.readlink("/proc/%s/fd/%s" %(pid, name))
+            except OSError:
+                continue
+            if fd.startswith('socket:['):
+                # the process is using a TCP connection
+                descriptors.append(fd[8:][:-1])  # extract the fd number
+
+        if not descriptors:
+            # no UDP connections for this process
+            return []
+
+        f = open("/proc/net/udp")
+        f.readline()  # skip the first line
+        for line in f:
+            sl, local_address, rem_address, status, txrx_queue, trtm, retrnsmt,\
+            uid, timeout, inode = line.split()[:10]
+            if inode in descriptors:
+                returning_list.append([_convert_address(local_address),
+                                       _convert_address(rem_address),
+                                       ])
+        return returning_list
+
 
 def _convert_address(addr):
     """Accept an "ip:port" address as displayed in /proc/net/*
@@ -138,3 +165,4 @@ def _convert_address(addr):
     return "%s:%d" %(ip, port)
 
 
+##print Impl().get_udp_connections(4302)

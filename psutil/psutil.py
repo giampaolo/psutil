@@ -91,6 +91,10 @@ class Process(object):
         "Get TCP connections used by the current process."
         return _platform_impl.get_tcp_connections(self.pid)
 
+    def get_udp_connections(self):
+        "Get udp connections used by the current process."
+        return _platform_impl.get_udp_connections(self.pid)
+
     def kill(self, sig=None):
         """Kill the current process by using signal sig (defaults to SIGKILL).
         """
