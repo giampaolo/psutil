@@ -1,0 +1,3 @@
+include HISTORY 
+inlcude LICENSE
+recursive-include docs *
