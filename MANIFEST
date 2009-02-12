@@ -1,5 +1,7 @@
 HISTORY
 LICENSE
+MANIFEST
+MANIFEST.in
 setup.py
 docs/class_diagram.dia
 docs/class_diagram.png
@@ -10,5 +12,7 @@ psutil/__init__.py
 psutil/_pslinux.py
 psutil/_psmswindows.py
 psutil/_psosx.py
+psutil/_psutil_mswindows.c
+psutil/_psutil_osx.c
 psutil/psutil.py
 test/test_psutil.py

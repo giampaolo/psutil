@@ -1,3 +1,5 @@
-include HISTORY 
-inlcude LICENSE
+include HISTORY LICENSE MANIFEST MANIFEST.in
 recursive-include docs *
+recursive-include psutil *
+recursive-include test *
+global-exclude *.pyc *.pyo *.exe 
