@@ -344,7 +344,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         //return Py_BuildValue("");
 	}
 	
-    infoTuple = Py_BuildValue("lssNNN", pid, "<unknown>", "<unknown>", PyList_New(0), Py_BuildValue(""), Py_BuildValue(""));
+    infoTuple = Py_BuildValue("lNssNNN", pid, Py_BuildValue(""), "<unknown>", "<unknown>", PyList_New(0), Py_BuildValue(""), Py_BuildValue(""));
 
 	//get the process information that we need
 	//(name, path, arguments)
@@ -364,7 +364,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         /* perror("sysctl"); */
         // will be set to <unknown> in case this errors
     } else if (len > 0) {
-        infoTuple = Py_BuildValue("lssNll", pid, kp.kp_proc.p_comm, "<unknown>", get_arg_list(pid), kp.kp_eproc.e_pcred.p_ruid, kp.kp_eproc.e_pcred.p_rgid);
+        infoTuple = Py_BuildValue("llssNll", pid, kp.kp_eproc.e_ppid, kp.kp_proc.p_comm, "<unknown>", get_arg_list(pid), kp.kp_eproc.e_pcred.p_ruid, kp.kp_eproc.e_pcred.p_rgid);
     }
 
 	return infoTuple;

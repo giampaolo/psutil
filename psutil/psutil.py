@@ -34,8 +34,9 @@ class ProcessInfo(object):
     Process class.
     """
 
-    def __init__(self, pid, name=None, path=None, cmdline=None, uid=None, gid=None):
+    def __init__(self, pid, ppid=None, name=None, path=None, cmdline=None, uid=None, gid=None):
         self.pid = pid
+        self.ppid = ppid
         self.name = name
         self.path = path
         self.cmdline = cmdline
@@ -62,6 +63,12 @@ class Process(object):
     def pid(self):
         "The process pid."
         return self._procinfo.pid
+   
+    @property
+    def ppid(self):
+        "The process parent pid."
+        self.deproxy()
+        return self._procinfo.ppid
 
     @property
     def name(self):
@@ -107,8 +114,8 @@ class Process(object):
         _platform_impl.kill_process(self.pid, sig)
 
     def __str__(self):
-        return "psutil.Process <PID:%s; NAME:'%s'; PATH:'%s'; CMDLINE:%s; UID:%s; GID:%s;>" \
-            %(self.pid, self.name, self.path, self.cmdline, self.uid, self.gid)
+        return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; CMDLINE:%s; UID:%s; GID:%s;>" \
+            %(self.pid, self.ppid, self.name, self.path, self.cmdline, self.uid, self.gid)
 
 
 def get_process_list():
@@ -125,9 +132,9 @@ def get_process_list():
 
 def test():
     processes = get_process_list()
-    print "%-5s  %-15s %-25s %-20s %-5s %-5s" %("PID", "NAME", "PATH", "COMMAND LINE", "UID", "GID")
+    print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s" %("PID", "PPID", "NAME", "PATH", "COMMAND LINE", "UID", "GID")
     for proc in processes:
-        print "%-5s  %-15s %-25s %-20s %-5s %-5s" %(proc.pid, proc.name, proc.path or \
+        print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s" %(proc.pid, proc.ppid, proc.name, proc.path or \
                                         "<unknown>", ' '.join(proc.cmdline) or \
                                         "<unknown>", proc.uid, proc.gid,
                                         )

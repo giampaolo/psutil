@@ -57,7 +57,7 @@ class Impl(object):
         finally:
             f.close()
 
-        return psutil.ProcessInfo(pid, name, path, cmdline,
+        return psutil.ProcessInfo(pid, self.get_ppid(pid), name, path, cmdline,
                                   self.get_process_uid(pid),
                                   self.get_process_gid(pid))
 
@@ -70,6 +70,13 @@ class Impl(object):
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
         return [int(x) for x in os.listdir('/proc') if x.isdigit()]
+
+    def get_ppid(self, pid):
+        f = open("/proc/%s/status" % pid)
+        for line in f:
+            if line.startswith("PPid:"):
+                # PPid: nnnn
+                return int(line.replace("PPid: "))
 
     def get_process_uid(self, pid):
         # XXX - something faster than readlines() could be used

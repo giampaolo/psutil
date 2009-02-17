@@ -372,7 +372,8 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 		}
 	}
 
-	infoTuple = Py_BuildValue("lssNNN", pid, processName, "<unknown>", get_arg_list(pid), Py_BuildValue(""), Py_BuildValue(""));
+    //TODO: get actual ppid
+	infoTuple = Py_BuildValue("lNssNNN", pid, Py_BuildValue(""), processName, "<unknown>", get_arg_list(pid), Py_BuildValue(""), Py_BuildValue(""));
 	return infoTuple;
 }
 
