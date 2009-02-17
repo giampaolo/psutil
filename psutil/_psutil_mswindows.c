@@ -1,6 +1,7 @@
 #include <Python.h>
 #include <windows.h>
 #include <Psapi.h>
+#include <tlhelp32.h>
 
 /* 
  * Code taken from 
@@ -45,6 +46,26 @@ PVOID GetPebAddress(HANDLE ProcessHandle)
 
     NtQueryInformationProcess(ProcessHandle, 0, &pbi, sizeof(pbi), NULL);
     return pbi.PebBaseAddress;
+}
+
+
+static PyObject* get_ppid(long pid)
+{
+    PyObject *ppid = Py_BuildValue("");
+	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	PROCESSENTRY32 pe = { 0 };
+	pe.dwSize = sizeof(PROCESSENTRY32);    
+
+	if( Process32First(h, &pe)) {
+	    do {
+			if (pe.th32ProcessID == pid) {
+				//printf("PID: %i; PPID: %i\n", pid, pe.th32ParentProcessID);
+                ppid = Py_BuildValue("l", pe.th32ParentProcessID);
+			}
+		} while( Process32Next(h, &pe));
+	}
+
+    return ppid;
 }
 
 
@@ -372,8 +393,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 		}
 	}
 
-    //TODO: get actual ppid
-	infoTuple = Py_BuildValue("lNssNNN", pid, Py_BuildValue(""), processName, "<unknown>", get_arg_list(pid), Py_BuildValue(""), Py_BuildValue(""));
+	infoTuple = Py_BuildValue("lNssNll", pid, get_ppid(pid), processName, "<unknown>", get_arg_list(pid), -1, -1);
 	return infoTuple;
 }
 

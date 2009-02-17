@@ -17,8 +17,7 @@ class Impl(object):
         # XXX - figure out why it can't be imported globally (see r54)
         import psutil
         infoTuple = _psutil_mswindows.get_process_info(pid)
-        pid, name, path, cmdline, uid, gid = infoTuple
-        return psutil.ProcessInfo(pid, name, path, cmdline, -1, -1)
+        return psutil.ProcessInfo(*infoTuple)
 
     def kill_process(self, pid, sig=None):
         """Terminates the process with the given PID."""
