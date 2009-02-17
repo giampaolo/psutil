@@ -71,20 +71,29 @@ class Process(object):
         return self._procinfo.ppid
 
     @property
+    def parent(self):
+        """Return the parent process as a Process object. If no ppid is known
+        then return None."""
+        self.deproxy()
+        if self.ppid is not None:
+            return Process(self.ppid) 
+        return None
+
+    @property
     def name(self):
-        "The process name."
+        """The process name."""
         self.deproxy()
         return self._procinfo.name
 
     @property
     def path(self):
-        "The process path."
+        """The process path."""
         self.deproxy()
         return self._procinfo.path
 
     @property
     def cmdline(self):
-        "The command line process has been called with."
+        """The command line process has been called with."""
         self.deproxy()
         return self._procinfo.cmdline
 
