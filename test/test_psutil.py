@@ -92,6 +92,12 @@ class TestCase(unittest.TestCase):
             # we expect it to be -1
             self.assertEqual(gid, -1)
 
+    def test_ppid(self):
+        this_parent = os.getpid()
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(self.proc.pid)
+        self.assertEqual(p.ppid, this_parent)
+
     def test_get_tcp_connections(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
@@ -133,6 +139,7 @@ class TestCase(unittest.TestCase):
     def test_fetch_all(self):
         for p in psutil.get_process_list():
             p.pid
+            p.ppid
             p.name
             p.path
             p.cmdline
