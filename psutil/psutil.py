@@ -58,31 +58,37 @@ class Process(object):
             self._procinfo = _platform_impl.get_process_info(self._procinfo.pid)
             self.is_proxy = False
 
-    def get_pid(self):
+    @property
+    def pid(self):
         "The process pid."
         return self._procinfo.pid
 
-    def get_name(self):
+    @property
+    def name(self):
         "The process name."
         self.deproxy()
         return self._procinfo.name
 
-    def get_path(self):
+    @property
+    def path(self):
         "The process path."
         self.deproxy()
         return self._procinfo.path
 
-    def get_cmdline(self):
+    @property
+    def cmdline(self):
         "The command line process has been called with."
         self.deproxy()
         return self._procinfo.cmdline
 
-    def get_uid(self):
+    @property
+    def uid(self):
         """The real user id of the current process."""
         self.deproxy()
         return self._procinfo.uid
 
-    def get_gid(self):
+    @property
+    def gid(self):
         """The real group id of the current process."""
         self.deproxy()
         return self._procinfo.gid
@@ -103,13 +109,6 @@ class Process(object):
     def __str__(self):
         return "psutil.Process <PID:%s; NAME:'%s'; PATH:'%s'; CMDLINE:%s; UID:%s; GID:%s;>" \
             %(self.pid, self.name, self.path, self.cmdline, self.uid, self.gid)
-
-    pid = property(get_pid)
-    name = property(get_name)
-    path = property(get_path)
-    cmdline = property(get_cmdline)
-    uid = property(get_uid)
-    gid = property(get_gid)
 
 
 def get_process_list():
