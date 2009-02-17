@@ -149,6 +149,20 @@ class TestCase(unittest.TestCase):
             p.get_udp_connections()
             str(p)  # test __str__
 
+    def test_types(self):
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(self.proc.pid)
+        self.assert_(isinstance(p.pid, int))
+        self.assert_(isinstance(p.ppid, int))
+        self.assert_(isinstance(p.name, str))
+        self.assert_(isinstance(p.path, str))
+        self.assert_(isinstance(p.cmdline, list))
+        self.assert_(isinstance(p.uid, int))
+        self.assert_(isinstance(p.gid, int))
+        self.assert_(isinstance(p.get_tcp_connections(), list))
+        self.assert_(isinstance(p.get_udp_connections(), list))
+        self.assert_(isinstance(psutil.get_process_list(), list))
+
 
 def test_main():
     test_suite = unittest.TestSuite()
