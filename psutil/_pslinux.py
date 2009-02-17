@@ -76,7 +76,7 @@ class Impl(object):
         for line in f:
             if line.startswith("PPid:"):
                 # PPid: nnnn
-                return int(line.replace("PPid: "))
+                return int(line.split()[1])
 
     def get_process_uid(self, pid):
         # XXX - something faster than readlines() could be used
