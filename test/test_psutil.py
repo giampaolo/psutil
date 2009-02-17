@@ -92,11 +92,12 @@ class TestCase(unittest.TestCase):
             # we expect it to be -1
             self.assertEqual(gid, -1)
 
-    def test_ppid(self):
+    def test_parent_ppid(self):
         this_parent = os.getpid()
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         p = psutil.Process(self.proc.pid)
         self.assertEqual(p.ppid, this_parent)
+        self.assertEqual(p.parent.pid, this_parent)
 
     def test_get_tcp_connections(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
@@ -140,6 +141,7 @@ class TestCase(unittest.TestCase):
         for p in psutil.get_process_list():
             p.pid
             p.ppid
+            p.parent
             p.name
             p.path
             p.cmdline
@@ -154,6 +156,7 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(self.proc.pid)
         self.assert_(isinstance(p.pid, int))
         self.assert_(isinstance(p.ppid, int))
+        self.assert_(isinstance(p.parent, psutil.Process))
         self.assert_(isinstance(p.name, str))
         self.assert_(isinstance(p.path, str))
         self.assert_(isinstance(p.cmdline, list))
@@ -162,6 +165,7 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.get_tcp_connections(), list))
         self.assert_(isinstance(p.get_udp_connections(), list))
         self.assert_(isinstance(psutil.get_process_list(), list))
+        self.assert_(isinstance(psutil.get_process_list()[0], psutil.Process))
 
 
 def test_main():
