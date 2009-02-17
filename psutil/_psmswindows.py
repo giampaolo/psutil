@@ -17,7 +17,8 @@ class Impl(object):
         # XXX - figure out why it can't be imported globally (see r54)
         import psutil
         infoTuple = _psutil_mswindows.get_process_info(pid)
-        return psutil.ProcessInfo(*infoTuple)
+        pid, name, path, cmdline, uid, gid = infoTuple
+        return psutil.ProcessInfo(pid, name, path, cmdline, -1, -1)
 
     def kill_process(self, pid, sig=None):
         """Terminates the process with the given PID."""
@@ -26,6 +27,14 @@ class Impl(object):
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
         return _psutil_mswindows.get_pid_list()
+
+    def get_process_uid(self, pid):
+        # UID doesn't make sense on Windows
+        return -1
+
+    def get_process_gid(self, pid):
+        # GID doesn't make sense on Windows
+        return -1
 
     def get_tcp_connections(self, pid):
         # XXX - provisonal: use netstat and parse its output

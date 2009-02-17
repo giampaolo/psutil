@@ -74,15 +74,23 @@ class TestCase(unittest.TestCase):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
         uid = psutil.Process(self.proc.pid).uid
-        self.assertEqual(uid, os.getuid())
-        self.assert_(isinstance(uid, int))
+        if hasattr(os, 'getuid'):
+            self.assertEqual(uid, os.getuid())
+        else:
+            # On those platforms where UID doesn't make sense (Windows)
+            # we expect it to be -1
+            self.assertEqual(uid, -1)
 
     def test_gid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
         gid = psutil.Process(self.proc.pid).gid
-        self.assertEqual(gid, os.getgid())
-        self.assert_(isinstance(gid, int))
+        if hasattr(os, 'getgid'):
+            self.assertEqual(gid, os.getgid())
+        else:
+            # On those platforms where GID doesn't make sense (Windows)
+            # we expect it to be -1
+            self.assertEqual(gid, -1)
 
     def test_get_tcp_connections(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)

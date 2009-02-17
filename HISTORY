@@ -1,3 +1,8 @@
+0.1.1 - 2009-XX-XX
+------------------
+
+ * Issue 9: psutil is now able to determine process UID and GID.
+
 
 0.1.0 - 2009-01-27
 ------------------
