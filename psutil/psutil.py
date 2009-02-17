@@ -74,7 +74,6 @@ class Process(object):
     def parent(self):
         """Return the parent process as a Process object. If no ppid is known
         then return None."""
-        self.deproxy()
         if self.ppid is not None:
             return Process(self.ppid) 
         return None
