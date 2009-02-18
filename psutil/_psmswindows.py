@@ -27,14 +27,6 @@ class Impl(object):
         """Returns a list of PIDs currently running on the system."""
         return _psutil_mswindows.get_pid_list()
 
-    def get_process_uid(self, pid):
-        # UID doesn't make sense on Windows
-        return -1
-
-    def get_process_gid(self, pid):
-        # GID doesn't make sense on Windows
-        return -1
-
     def get_tcp_connections(self, pid):
         # XXX - provisonal: use netstat and parse its output
         from subprocess import Popen, PIPE
