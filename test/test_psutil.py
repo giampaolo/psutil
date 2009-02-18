@@ -109,18 +109,6 @@ class TestCase(unittest.TestCase):
         self.assertEqual(p.ppid, this_parent)
         self.assertEqual(p.parent.pid, this_parent)
 
-    def test_fetch_all(self):
-        for p in psutil.get_process_list():
-            p.pid
-            p.ppid
-            p.parent
-            p.name
-            p.path
-            p.cmdline
-            p.uid
-            p.gid
-            str(p)  # test __str__
-
     def test_get_pid_list(self):
         self.assertEqual([x.pid for x in psutil.get_process_list()], psutil.get_pid_list())
 
