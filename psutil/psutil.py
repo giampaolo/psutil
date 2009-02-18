@@ -28,6 +28,10 @@ else:
     raise ImportError('no os specific module found')
 
 
+class NoSuchProcess(Exception):
+    """No process with the given PID/parameter was found in the current process
+    list."""
+
 class ProcessInfo(object):
     """Class that allows the process information to be passed
     between external code and psutil.  Used directly by the
@@ -46,11 +50,12 @@ class ProcessInfo(object):
         self.uid = uid
         self.gid = gid
 
-
 class Process(object):
     """Represents an OS process."""
 
     def __init__(self, pid):
+        if not pid_exists(pid):
+            raise NoSuchProcess("No process found with PID %s" % pid)
         self._procinfo = ProcessInfo(pid)
         self.is_proxy = True
 
@@ -135,13 +140,12 @@ class Process(object):
         _platform_impl.kill_process(self.pid, sig)
 
     def is_running(self):
-        """Compares the current Process against the running processes to 
-        determine if the process exists."""
-        for each in _platform_impl.get_pid_list():
-            if self == Process(each):
-                return True
-        return False
-
+        """Return whether the current process is running in the current process list."""
+        try:
+            new_proc = Process(self.pid)
+        except NoSuchProcess:
+            return False
+        return (self == new_proc)
 
 
 def pid_exists(pid):
@@ -163,6 +167,7 @@ def get_process_list():
     for pid in pidList:
         retProcesses.append(Process(pid))
     return retProcesses
+
 
 def test():
     processes = get_process_list()
