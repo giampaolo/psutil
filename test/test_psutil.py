@@ -59,6 +59,7 @@ class TestCase(unittest.TestCase):
 
     def test_eq(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        time.sleep(0.1)  # XXX: provisional, fix needed
         self.assertTrue(psutil.Process(self.proc.pid) == psutil.Process(self.proc.pid))
 
     def test_is_running(self):
