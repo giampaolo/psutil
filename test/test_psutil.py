@@ -68,6 +68,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(p.is_running())
         psutil.Process(self.proc.pid).kill()
         self.proc.wait()
+        time.sleep(0.1) # FIXME: why is this needed?
         try:
             self.assertFalse(p.is_running())
         finally:

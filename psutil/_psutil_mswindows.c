@@ -8,7 +8,6 @@
 #include <Psapi.h>
 #include <Python.h>
 
-#include "_psutil.h"
 #include "_psutil_mswindows.h"
 #include "arch/mswindows/security.h"
 #include "arch/mswindows/process_info.h"
