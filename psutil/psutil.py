@@ -118,9 +118,13 @@ class Process(object):
             %(self.pid, self.ppid, self.name, self.path, self.cmdline, self.uid, self.gid)
 
 
-def is_running(pid):
+def pid_exists(pid):
+    """Check whether the given PID exists in the current process list."""
     return pid in _platform_impl.get_pid_list()
 
+def get_pid_list():
+    """Return a list of current running PIDs."""
+    return _platform_impl.get_pid_list()
 
 def get_process_list():
     """Return a list of Process class instances for all running

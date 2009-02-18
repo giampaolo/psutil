@@ -50,7 +50,7 @@ class TestCase(unittest.TestCase):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         psutil.Process(self.proc.pid).kill()
         self.proc.wait()
-        self.assertFalse(psutil.is_running(self.proc.pid))
+        self.assertFalse(psutil.pid_exists(self.proc.pid) and psutil.Process(self.proc.pid).name == PYTHON)
         self.proc = None
 
     def test_pid(self):
@@ -112,6 +112,9 @@ class TestCase(unittest.TestCase):
             p.uid
             p.gid
             str(p)  # test __str__
+
+    def test_get_pid_list(self):
+        self.assertEqual([x.pid for x in psutil.get_process_list()], psutil.get_pid_list())
 
     def test_types(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
