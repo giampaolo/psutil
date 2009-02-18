@@ -50,8 +50,7 @@ class TestCase(unittest.TestCase):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         psutil.Process(self.proc.pid).kill()
         self.proc.wait()
-        pids = [x.pid for x in psutil.get_process_list()]
-        self.assertTrue(self.proc.pid not in pids)
+        self.assertFalse(psutil.is_running(self.proc.pid))
         self.proc = None
 
     def test_pid(self):

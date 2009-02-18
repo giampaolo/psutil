@@ -118,6 +118,10 @@ class Process(object):
             %(self.pid, self.ppid, self.name, self.path, self.cmdline, self.uid, self.gid)
 
 
+def is_running(pid):
+    return pid in _platform_impl.get_pid_list()
+
+
 def get_process_list():
     """Return a list of Process class instances for all running
     processes on the local machine.
