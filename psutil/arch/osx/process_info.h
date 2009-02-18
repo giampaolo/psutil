@@ -7,6 +7,9 @@
 
 #include <Python.h>
 
+
+typedef struct kinfo_proc kinfo_proc;
+
 int GetBSDProcessList(kinfo_proc **procList, size_t *procCount);
 int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObject **envdict);
 PyObject* get_arg_list(long pid);

@@ -8,9 +8,34 @@
 #include <Psapi.h>
 #include <Python.h>
 
+#include "_psutil.h"
 #include "_psutil_mswindows.h"
 #include "arch/mswindows/security.h"
 #include "arch/mswindows/process_info.h"
+
+
+static PyMethodDef PsutilMethods[] =
+{
+     {"get_pid_list", get_pid_list, METH_VARARGS,
+     	"Returns a python list of PIDs currently running on the host system"},
+     {"get_process_info", get_process_info, METH_VARARGS,
+       	"Returns a psutil.ProcessInfo object for the given PID"},
+     {"kill_process", kill_process, METH_VARARGS,
+         "Kill the process identified by the given PID"},
+     {NULL, NULL, 0, NULL}
+};
+
+static PyObject *NoSuchProcessException;
+
+PyMODINIT_FUNC
+init_psutil_mswindows(void)
+{
+     PyObject *m;
+     m = Py_InitModule("_psutil_mswindows", PsutilMethods);
+     NoSuchProcessException = PyErr_NewException("psutil.NoSuchProcess", NULL, NULL);
+     Py_INCREF(NoSuchProcessException);
+     PyModule_AddObject(m, "err", NoSuchProcessException);
+}
 
 
 static PyObject* get_pid_list(PyObject* self, PyObject* args)
@@ -108,6 +133,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 }
 
 
+
 static PyObject* get_process_info(PyObject* self, PyObject* args)
 {
 	//the argument passed should be a process id
@@ -119,7 +145,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     SetSeDebug();
 
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+        return PyErr_Format(PyExc_RuntimeError, "get_process_info(): Invalid argument - no PID provided.");
 	}
 
 	//get the process information that we need
@@ -132,34 +158,22 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         pid 
     );
 
+    if (NULL == hProcess) {
+        return PyErr_SetFromWindowsErr(NULL);
+    }
+
 	// Get the process name.
-	if (NULL != hProcess ) {
+    else {
 		HMODULE hMod;
 		DWORD cbNeeded;
 		if ( EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded) ) {
 		    GetModuleBaseName( hProcess, hMod, processName,
                 sizeof(processName)/sizeof(TCHAR) );
 		}
-	}
+	} 
 
 	infoTuple = Py_BuildValue("lNssNll", pid, get_ppid(pid), processName, "<unknown>", get_arg_list(pid), -1, -1);
 	return infoTuple;
 }
 
-static PyMethodDef PsutilMethods[] =
-{
-     {"get_pid_list", get_pid_list, METH_VARARGS,
-     	"Returns a python list of PIDs currently running on the host system"},
-     {"get_process_info", get_process_info, METH_VARARGS,
-       	"Returns a psutil.ProcessInfo object for the given PID"},
-     {"kill_process", kill_process, METH_VARARGS,
-         "Kill the process identified by the given PID"},
-     {NULL, NULL, 0, NULL}
-};
 
-PyMODINIT_FUNC
-
-init_psutil_mswindows(void)
-{
-     (void) Py_InitModule("_psutil_mswindows", PsutilMethods);
-}

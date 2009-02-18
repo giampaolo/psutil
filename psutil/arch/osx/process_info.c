@@ -13,6 +13,7 @@
 #include <sys/sysctl.h>
 
 #include <Python.h>
+#include "process_info.h"
 
 
 /*
@@ -23,8 +24,6 @@
  * On success, the function returns 0.
  * On error, the function returns a BSD errno value.
  */
-typedef struct kinfo_proc kinfo_proc;
-
 int GetBSDProcessList(kinfo_proc **procList, size_t *procCount) 
 {
     int                 err;
@@ -295,7 +294,7 @@ PyObject* get_arg_list(long pid)
     PyObject *cmd_args = NULL;
     PyObject *command_path = NULL;
     PyObject *env = NULL;
-    PyObject *argList = PyList_New(0);
+    PyObject *argList = Py_BuildValue("[]");
 
     /* Fetch the command-line arguments and environment variables */
     //printf("pid: %ld\n", pid);

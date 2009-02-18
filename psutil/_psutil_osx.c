@@ -13,9 +13,34 @@
 
 #include <Python.h>
 #include "_psutil_osx.h"
+#include "arch/osx/process_info.h"
 
 
-typedef struct kinfo_proc kinfo_proc;
+/*
+ * define the psutil C module methods and initialize the module.
+ */
+static PyMethodDef PsutilMethods[] =
+{
+     {"get_pid_list", get_pid_list, METH_VARARGS, 
+     	"Returns a python list of PIDs currently running on the host system"},
+     {"get_process_info", get_process_info, METH_VARARGS,
+       	"Returns a psutil.ProcessInfo object for the given PID"},
+     {NULL, NULL, 0, NULL}
+};
+
+
+static PyObject *NoSuchProcessException;
+ 
+PyMODINIT_FUNC
+init_psutil_osx(void)
+{
+     PyObject *m;
+     m = Py_InitModule("_psutil_osx", PsutilMethods);
+     NoSuchProcessException = PyErr_NewException("psutil.NoSuchProcess", NULL, NULL);
+     Py_INCREF(NoSuchProcessException);
+     PyModule_AddObject(m, "err", NoSuchProcessException);
+}
+
 
 /*
  * Return a Python list of all the PIDs running on the system.
@@ -40,6 +65,23 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 }
 
 
+static int pid_exists(pid) {
+    kinfo_proc *procList = NULL;
+    size_t num_processes;
+    size_t idx;
+
+    GetBSDProcessList(&procList, &num_processes);
+
+    for (idx=0; idx < num_processes; idx++) {
+        if (pid == procList->kp_proc.p_pid) {
+            return 1;
+        }
+        procList++;
+    }
+    return 0;
+}
+
+
 static PyObject* get_process_info(PyObject* self, PyObject* args)
 {
 
@@ -51,14 +93,12 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 
 	//the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		PyErr_SetString(PyExc_RuntimeError, "get_process_info(): Invalid argument");
-        //return Py_BuildValue("");
+		return PyErr_Format(PyExc_RuntimeError, "get_process_info(): Invalid argument - no PID provided.");
 	}
-	
+
     infoTuple = Py_BuildValue("lNssNNN", pid, Py_BuildValue(""), "<unknown>", "<unknown>", PyList_New(0), Py_BuildValue(""), Py_BuildValue(""));
 
 	//get the process information that we need
-	//(name, path, arguments)
  
     /* Fill out the first three components of the mib */
     len = 4;
@@ -71,9 +111,15 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     
     //fetch the info with sysctl()
     len = sizeof(kp);
+
+    if (! pid_exists(pid) ){
+        return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+    } 
+
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
         /* perror("sysctl"); */
         // will be set to <unknown> in case this errors
+        return PyErr_SetFromErrno(NULL);
     } else if (len > 0) {
         infoTuple = Py_BuildValue("llssNll", pid, kp.kp_eproc.e_ppid, kp.kp_proc.p_comm, "<unknown>", get_arg_list(pid), kp.kp_eproc.e_pcred.p_ruid, kp.kp_eproc.e_pcred.p_rgid);
     }
@@ -81,22 +127,3 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	return infoTuple;
 }
 
-
-/*
- * define the psutil C module methods and initialize the module.
- */
-static PyMethodDef PsutilMethods[] =
-{
-     {"get_pid_list", get_pid_list, METH_VARARGS, 
-     	"Returns a python list of PIDs currently running on the host system"},
-     {"get_process_info", get_process_info, METH_VARARGS,
-       	"Returns a psutil.ProcessInfo object for the given PID"},
-     {NULL, NULL, 0, NULL}
-};
- 
-PyMODINIT_FUNC
- 
-init_psutil_osx(void)
-{
-     (void) Py_InitModule("_psutil_osx", PsutilMethods);
-}
