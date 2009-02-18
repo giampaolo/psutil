@@ -64,8 +64,15 @@ class TestCase(unittest.TestCase):
 
     def test_is_running(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        self.assertTrue(psutil.Process(self.proc.pid).is_running())
-        
+        p = psutil.Process(self.proc.pid)
+        self.assertTrue(p.is_running())
+        psutil.Process(self.proc.pid).kill()
+        self.proc.wait()
+        try:
+            self.assertFalse(p.is_running())
+        finally:
+            self.proc = None
+
     def test_path(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
