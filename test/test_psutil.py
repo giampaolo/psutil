@@ -57,6 +57,14 @@ class TestCase(unittest.TestCase):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         self.assertEqual(psutil.Process(self.proc.pid).pid, self.proc.pid)
 
+    def test_eq(self):
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        self.assertTrue(psutil.Process(self.proc.pid) == psutil.Process(self.proc.pid))
+
+    def test_is_running(self):
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        self.assertTrue(psutil.Process(self.proc.pid).is_running())
+        
     def test_path(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
