@@ -49,6 +49,9 @@ class TestCase(unittest.TestCase):
     def test_kill(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         psutil.Process(self.proc.pid).kill()
+        self.proc.wait()
+        pids = [x.pid for x in psutil.get_process_list()]
+        self.assertTrue(self.proc.pid not in pids)
         self.proc = None
 
     def test_pid(self):
