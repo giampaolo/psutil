@@ -99,44 +99,6 @@ class TestCase(unittest.TestCase):
         self.assertEqual(p.ppid, this_parent)
         self.assertEqual(p.parent.pid, this_parent)
 
-    def test_get_tcp_connections(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        time.sleep(0.1)  # XXX: provisional, fix needed
-        self.assertEqual(psutil.Process(self.proc.pid).get_tcp_connections(), [])
-        psutil.Process(self.proc.pid).kill()
-
-        ip = "127.0.0.1"
-        port = find_unused_port()
-        arg = "import socket;" \
-              "s = socket.socket();" \
-              "s.bind(('%s', %s));" %(ip, port) + \
-              "s.listen(1);" \
-              "s.accept()"
-        self.proc = subprocess.Popen([PYTHON, "-c", arg], stdout=DEVNULL, stderr=DEVNULL)
-        time.sleep(0.1)  # XXX: provisional, fix needed
-        cons = psutil.Process(self.proc.pid).get_tcp_connections()
-        self.assertEqual(len(cons), 1)
-        self.assertEqual(cons[0][0], "%s:%s" %(ip, port))
-        self.assertEqual(cons[0][2], "LISTEN")
-
-    def test_get_udp_connections(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        time.sleep(0.1)  # XXX: provisional, fix needed
-        self.assertEqual(psutil.Process(self.proc.pid).get_udp_connections(), [])
-        psutil.Process(self.proc.pid).kill()
-
-        ip = "127.0.0.1"
-        port = find_unused_port(socktype=socket.SOCK_DGRAM)
-        arg = "import socket;" \
-              "s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM);" \
-              "s.bind(('%s', %s));" %(ip, port) + \
-              "s.recvfrom(1024)"
-        self.proc = subprocess.Popen([PYTHON, "-c", arg], stdout=DEVNULL, stderr=DEVNULL)
-        time.sleep(0.1)  # XXX: provisional, fix needed
-        cons = psutil.Process(self.proc.pid).get_udp_connections()
-        self.assertEqual(len(cons), 1)
-        self.assertEqual(cons[0][0], "%s:%s" %(ip, port))
-
     def test_fetch_all(self):
         for p in psutil.get_process_list():
             p.pid
@@ -147,8 +109,6 @@ class TestCase(unittest.TestCase):
             p.cmdline
             p.uid
             p.gid
-            p.get_tcp_connections()
-            p.get_udp_connections()
             str(p)  # test __str__
 
     def test_types(self):
@@ -162,8 +122,6 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.cmdline, list))
         self.assert_(isinstance(p.uid, int))
         self.assert_(isinstance(p.gid, int))
-        self.assert_(isinstance(p.get_tcp_connections(), list))
-        self.assert_(isinstance(p.get_udp_connections(), list))
         self.assert_(isinstance(psutil.get_process_list(), list))
         self.assert_(isinstance(psutil.get_process_list()[0], psutil.Process))
 
