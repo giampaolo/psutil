@@ -54,19 +54,40 @@ class Process(object):
         self._procinfo = ProcessInfo(pid)
         self.is_proxy = True
 
+    def __str__(self):
+        return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; CMDLINE:%s; UID:%s; GID:%s;>" \
+            %(self.pid, self.ppid, self.name, self.path, self.cmdline, self.uid, self.gid)
+
     def deproxy(self):
         if self.is_proxy:
             self._procinfo = _platform_impl.get_process_info(self._procinfo.pid)
             self.is_proxy = False
 
+    def __eq__(self, other):
+        """Test for equality with another Process object based on PID, name etc."""
+        if self.pid != other.pid:
+            return False
+
+        self.deproxy()
+        # check all non-callable and non-private attributes for equality
+        # if the attribute is missing from other then return False
+        for attr in dir(self._procinfo):
+            if not callable(attr) and not attr.startswith("_"):
+                if not hasattr(other, attr):
+                    return False
+                if getattr(self._procinfo, attr) != getattr(other._procinfo, attr):
+                    return False
+        return True
+            
+
     @property
     def pid(self):
-        "The process pid."
+        """The process pid."""
         return self._procinfo.pid
    
     @property
     def ppid(self):
-        "The process parent pid."
+        """The process parent pid."""
         self.deproxy()
         return self._procinfo.ppid
 
@@ -113,9 +134,14 @@ class Process(object):
         """
         _platform_impl.kill_process(self.pid, sig)
 
-    def __str__(self):
-        return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; CMDLINE:%s; UID:%s; GID:%s;>" \
-            %(self.pid, self.ppid, self.name, self.path, self.cmdline, self.uid, self.gid)
+    def is_running(self):
+        """Compares the current Process against the running processes to 
+        determine if the process exists."""
+        for each in _platform_impl.get_pid_list():
+            if self == Process(each):
+                return True
+        return False
+
 
 
 def pid_exists(pid):
