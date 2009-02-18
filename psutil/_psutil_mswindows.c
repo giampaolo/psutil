@@ -5,6 +5,7 @@
  */
 
 #include <windows.h>
+#include <Psapi.h>
 #include <Python.h>
 
 #include "_psutil_mswindows.h"
