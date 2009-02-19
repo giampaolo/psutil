@@ -144,6 +144,35 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(psutil.get_pid_list()[0], int))
         self.assert_(isinstance(psutil.pid_exists(1), bool))
 
+    def test_no_such_process(self):
+        # Refers to Issue #12
+        self.assertRaises(psutil.NoSuchProcess, psutil.Process, -1)
+
+    def test_zombie_process(self):
+        # Test that NoSuchProcess exception gets raised in the event the
+        # process dies after we create the Process object.
+        # Example:
+        #  >>> proc = Process(1234)
+        #  >>> time.sleep(5)  # time-consuming task, process dies in meantime
+        #  >>> proc.name
+        # Refers to Issue #15
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(self.proc.pid)
+        p.kill()
+        self.proc.wait()
+        self.proc = None
+        time.sleep(0.1)  # XXX - maybe not necessary; verify
+
+        self.assertRaises(psutil.NoSuchProcess, getattr, p, "pid")
+        self.assertRaises(psutil.NoSuchProcess, getattr, p, "ppid")
+        self.assertRaises(psutil.NoSuchProcess, getattr, p, "parent")
+        self.assertRaises(psutil.NoSuchProcess, getattr, p, "name")
+        self.assertRaises(psutil.NoSuchProcess, getattr, p, "path")
+        self.assertRaises(psutil.NoSuchProcess, getattr, p, "cmdline")
+        self.assertRaises(psutil.NoSuchProcess, getattr, p, "uid")
+        self.assertRaises(psutil.NoSuchProcess, getattr, p, "gid")
+        self.assertRaises(psutil.NoSuchProcess, p.kill)
+
 
 def test_main():
     test_suite = unittest.TestSuite()
