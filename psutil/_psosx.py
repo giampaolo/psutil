@@ -9,10 +9,6 @@ import _psutil_osx
 
 class Impl(object):
 
-    def process_exists(self, pid):
-        """Checks whether or not a process exists with the given PID."""
-        return pid in self.get_pid_list()
-
     def get_process_info(self, pid):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.

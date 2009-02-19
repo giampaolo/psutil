@@ -8,10 +8,6 @@ import socket
 
 class Impl(object):
 
-    def process_exists(self, pid):
-        """Checks whether or not a process exists with the given PID."""
-        return pid in self.get_pid_list()
-
     def get_process_info(self, pid):
         """Returns a process info class."""
         # XXX - figure out why it can't be imported globally (see r54)
