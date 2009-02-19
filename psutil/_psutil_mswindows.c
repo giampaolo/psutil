@@ -37,11 +37,8 @@ init_psutil_mswindows(void)
 }
 
 
-static PyObject* get_pid_list(PyObject* self, PyObject* args)
-{
-	PyObject* retlist = PyList_New(0);
+DWORD* get_pids(DWORD *numberOfReturnedPIDs){
 	int procArraySz = 1024;
-	DWORD i;
 
 	/* Win32 SDK says the only way to know if our process array
 	 * wasn't large enough is to check the returned size and make
@@ -49,14 +46,12 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 	 * If it does we allocate a larger array and try again*/
 
 	/* Stores the actual array */
-	DWORD* procArray = NULL;
+	DWORD *procArray = NULL;
 	DWORD procArrayByteSz;
 	
     /* Stores the byte size of the returned array from enumprocesses */
 	DWORD enumReturnSz = 0;
 	
-    DWORD numberOfReturnedPIDs;
-
 	do {
 		free(procArray);
 
@@ -82,15 +77,53 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 	} while(enumReturnSz == procArraySz * sizeof(DWORD));
 
 	/* The number of elements is the returned size / size of each element */
-    numberOfReturnedPIDs = enumReturnSz / sizeof(DWORD);
+    *numberOfReturnedPIDs = enumReturnSz / sizeof(DWORD);
 
-    retlist = PyList_New(0);
-    for (i = 0; i < numberOfReturnedPIDs; i++) {
-        PyList_Append(retlist, Py_BuildValue("i", procArray[i]) );
+    return procArray;
+}
+
+
+int pid_exists(DWORD pid)
+{
+    DWORD *proclist = NULL;
+    DWORD numberOfReturnedPIDs;
+    DWORD i;
+    
+    proclist = get_pids(&numberOfReturnedPIDs);
+    if (NULL == proclist) {
+		PyErr_SetString(PyExc_RuntimeError, "get_pids() failed for pid_exists()");
+        return -1;
     }
 
-    //free C array
-    free(procArray);
+    for (i = 0; i < numberOfReturnedPIDs; i++) {
+        if (pid == proclist[i]) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+
+static PyObject* get_pid_list(PyObject* self, PyObject* args)
+{
+    DWORD *proclist = NULL;
+    DWORD numberOfReturnedPIDs;
+    DWORD i;
+	PyObject* retlist = PyList_New(0);
+    
+    proclist = get_pids(&numberOfReturnedPIDs);
+    if (NULL == proclist) {
+		PyErr_SetString(PyExc_RuntimeError, "get_pids() failed in get_pid_list()");
+        return NULL;
+    }
+
+    for (i = 0; i < numberOfReturnedPIDs; i++) {
+        PyList_Append(retlist, Py_BuildValue("i", proclist[i]) );
+    }
+
+    //free C array allocated for PIDs
+    free(proclist);
 
     return retlist;
 }
@@ -137,6 +170,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 {
 	//the argument passed should be a process id
 	long pid;
+    int pid_return;
     HANDLE hProcess;
     PyObject* infoTuple; 
 	TCHAR processName[MAX_PATH] = TEXT("<unknown>");
@@ -150,6 +184,15 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	//get the process information that we need
 	//(name, path, arguments)
 
+    pid_return = pid_exists(pid);
+    if (pid_return == 0) {
+        return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
+    } 
+
+    else if (pid_return == -1) {
+        return NULL; //exception raised from within pid_exists()
+    }
+
 	// Get a handle to the process.
 	hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | 
         PROCESS_VM_READ, 
@@ -158,18 +201,16 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     );
 
     if (NULL == hProcess) {
-        return PyErr_SetFromWindowsErr(NULL);
+        return PyErr_SetFromWindowsErr(0);
     }
 
 	// Get the process name.
-    else {
-		HMODULE hMod;
-		DWORD cbNeeded;
-		if ( EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded) ) {
-		    GetModuleBaseName( hProcess, hMod, processName,
-                sizeof(processName)/sizeof(TCHAR) );
-		}
-	} 
+    HMODULE hMod;
+    DWORD cbNeeded;
+    if ( EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded) ) {
+        GetModuleBaseName( hProcess, hMod, processName,
+            sizeof(processName)/sizeof(TCHAR) );
+    }
 
 	infoTuple = Py_BuildValue("lNssNll", pid, get_ppid(pid), processName, "<unknown>", get_arg_list(pid), -1, -1);
 	return infoTuple;

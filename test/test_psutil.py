@@ -163,7 +163,6 @@ class TestCase(unittest.TestCase):
         self.proc = None
         time.sleep(0.1)  # XXX - maybe not necessary; verify
 
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "pid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "ppid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "parent")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "name")
@@ -171,7 +170,6 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "cmdline")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "uid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "gid")
-        self.assertRaises(psutil.NoSuchProcess, p.kill)
 
 
 def test_main():
