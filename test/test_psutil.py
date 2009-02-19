@@ -74,6 +74,11 @@ class TestCase(unittest.TestCase):
         finally:
             self.proc = None
 
+    def test_pid_exists(self):
+        if hasattr(os, 'getpid'):
+            self.assertTrue(psutil.pid_exists(os.getpid()))
+        self.assertFalse(psutil.pid_exists(-1))
+
     def test_path(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
@@ -132,8 +137,12 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.cmdline, list))
         self.assert_(isinstance(p.uid, int))
         self.assert_(isinstance(p.gid, int))
+        self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(psutil.get_process_list(), list))
         self.assert_(isinstance(psutil.get_process_list()[0], psutil.Process))
+        self.assert_(isinstance(psutil.get_pid_list(), list))
+        self.assert_(isinstance(psutil.get_pid_list()[0], int))
+        self.assert_(isinstance(psutil.pid_exists(1), bool))
 
 
 def test_main():
