@@ -75,7 +75,16 @@ class Impl(object):
         return [int(x) for x in os.listdir('/proc') if x.isdigit()]
 
     def pid_exists(self, pid):
-        return os.path.exists('/proc/%s' %pid)
+        """ Check For the existence of a unix pid."""
+        if pid < 0:
+            return False
+
+        try:
+            os.kill(pid, 0)
+        except OSError, e:
+            return e.errno == errno.EPERM
+        else:
+            return True
 
     def get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)
