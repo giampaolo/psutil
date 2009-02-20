@@ -161,7 +161,10 @@ def get_process_list():
     # it will lazy init it's name and path later if required
     retProcesses = []
     for pid in pidList:
-        retProcesses.append(Process(pid))
+        try:
+            retProcesses.append(Process(pid))
+        except NoSuchProcess:
+            continue
     return retProcesses
 
 
