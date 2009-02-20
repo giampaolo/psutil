@@ -84,7 +84,6 @@ class Process(object):
                     return False
         return True
             
-
     @property
     def pid(self):
         """The process pid."""
@@ -150,7 +149,7 @@ class Process(object):
 
 def pid_exists(pid):
     """Check whether the given PID exists in the current process list."""
-    return pid in _platform_impl.get_pid_list()
+    return _platform_impl.pid_exists(pid)
 
 def get_pid_list():
     """Return a list of current running PIDs."""

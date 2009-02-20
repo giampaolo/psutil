@@ -74,6 +74,9 @@ class Impl(object):
         """Returns a list of PIDs currently running on the system."""
         return [int(x) for x in os.listdir('/proc') if x.isdigit()]
 
+    def pid_exists(self, pid):
+        return os.path.exists('/proc/%s' %pid)
+
     def get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)
         for line in f:

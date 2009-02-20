@@ -23,3 +23,6 @@ class Impl(object):
         """Returns a list of PIDs currently running on the system."""
         return _psutil_mswindows.get_pid_list()
 
+    def pid_exists(self, pid):
+        return pid in _psutil_mswindows.get_pid_list()
+
