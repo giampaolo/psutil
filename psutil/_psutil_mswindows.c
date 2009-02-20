@@ -136,7 +136,9 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     int pid_return;
     PyObject* ret;
     ret = PyInt_FromLong(0);
+    
     SetSeDebug();
+
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
         UnsetSeDebug();
@@ -145,10 +147,12 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 
     pid_return = pid_exists(pid);
     if (pid_return == 0) {
+        UnsetSeDebug();
         return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
     } 
 
     if (pid_return == -1) {
+        UnsetSeDebug();
         return NULL; //exception raised from within pid_exists()
     }
 
@@ -159,13 +163,15 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 
     //get a process handle
     hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-    if(hProcess == NULL){
+    if (hProcess == NULL) {
+        PyErr_SetFromWindowsErr(0);
         UnsetSeDebug();
         return ret;
     }
     
     //kill the process
-    if(!TerminateProcess(hProcess, 0)){
+    if (! TerminateProcess(hProcess, 0) ){
+        PyErr_SetFromWindowsErr(0);
         UnsetSeDebug();
         return ret;
     }
@@ -188,22 +194,32 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     SetSeDebug();
 
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
+        UnsetSeDebug();
         return PyErr_Format(PyExc_RuntimeError, "get_process_info(): Invalid argument - no PID provided.");
 	}
+
+    //special case for PID 0 (System Idle Process)
+    if (0 == pid) {
+	    infoTuple = Py_BuildValue("llssNll", pid, 0, "System Idle Process", "<unknown>", Py_BuildValue("[]"), -1, -1);
+        UnsetSeDebug();
+        return infoTuple;
+    }
 
 	//get the process information that we need
 	//(name, path, arguments)
 
     pid_return = pid_exists(pid);
     if (pid_return == 0) {
+        UnsetSeDebug();
         return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
     } 
 
     else if (pid_return == -1) {
+        UnsetSeDebug();
         return NULL; //exception raised from within pid_exists()
     }
 
-	// Get a handle to the process.
+	//get a handle to the process or throw an exception
 	hProcess = OpenProcess( PROCESS_QUERY_INFORMATION | 
         PROCESS_VM_READ, 
         FALSE, 
@@ -211,10 +227,12 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     );
 
     if (NULL == hProcess) {
-        return PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromWindowsErr(0);
+        UnsetSeDebug();
+        return NULL;
     }
 
-	// Get the process name.
+	//get the process name
     HMODULE hMod;
     DWORD cbNeeded;
     if ( EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded) ) {
@@ -223,6 +241,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     }
 
 	infoTuple = Py_BuildValue("lNssNll", pid, get_ppid(pid), processName, "<unknown>", get_arg_list(pid), -1, -1);
+    UnsetSeDebug();
 	return infoTuple;
 }
 
