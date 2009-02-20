@@ -20,9 +20,16 @@ class Impl(object):
 
     def kill_process(self, pid, sig=signal.SIGKILL):
         """Terminates the process with the given PID."""
+        # XXX - figure out why it can't be imported globally (see r54)
+        import psutil
         if sig is None:
             sig = signal.SIGKILL
-        os.kill(pid, sig)
+        try:
+            os.kill(pid, sig)
+        except OSError, err:
+            if err.errno == errno.ESRCH:
+                raise psutil.NoSuchProcess(pid)
+            raise
 
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""

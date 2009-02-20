@@ -4,15 +4,32 @@
 import os
 import signal
 import socket
+import errno
+
+import psutil
+
+
+def prevent_zombie(method):
+    """Call method(self, pid) into a try/except clause so that if an
+    IOError "No such file" exception is raised we assume the process
+    has died and raise psutil.NoSuchProcess instead.
+    """
+    def wrapper(self, pid, *args, **kwargs):
+        try:
+            return method(self, pid, *args, **kwargs)
+        except IOError, err:
+            if err.errno == errno.ENOENT:  # no such file or directory
+                if not pid in self.get_pid_list():
+                    raise psutil.NoSuchProcess(pid)
+            raise
+    return wrapper
 
 
 class Impl(object):
 
+    @prevent_zombie
     def get_process_info(self, pid):
         """Returns a process info class."""
-        # XXX - figure out why it can't be imported globally (see r54)
-        import psutil
-
         # determine executable
         try:
             _exe = os.readlink("/proc/%s/exe" %pid)
@@ -46,7 +63,12 @@ class Impl(object):
         """Terminates the process with the given PID."""
         if sig is None:
             sig = signal.SIGKILL
-        os.kill(pid, sig)
+        try:
+            os.kill(pid, sig)
+        except OSError, err:
+            if err.errno == errno.ESRCH:
+                raise psutil.NoSuchProcess(pid)
+            raise
 
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
