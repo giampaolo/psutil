@@ -132,12 +132,16 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObject **en
     char        *val_start;
 
     *arglist = Py_BuildValue("[]");     /* empty list */
-    if (*arglist == NULL)
+    if (*arglist == NULL) {
+        PyErr_SetString(PyExc_SystemError, "getcmdargs(): failed to build empty list");
         return -1;
+    }
 
     *envdict = Py_BuildValue("{}");     /* empty dict */
-    if (*envdict == NULL)
+    if (*envdict == NULL) {
+        PyErr_SetString(PyExc_SystemError, "getcmdargs(): failed to build empty dict");
         return -1;
+    }
 
     /* Get the maximum process arguments size. */
     mib[0] = CTL_KERN;
@@ -145,13 +149,14 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObject **en
 
     size = sizeof(argmax);
     if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1) {
+        PyErr_SetFromErrno(NULL);
         return 1;
     }
 
     /* Allocate space for the arguments. */
     procargs = (char *)malloc(argmax);
     if (procargs == NULL) {
-        PyErr_Format(PyExc_MemoryError, "Cannot allocate memory for procargs");
+        PyErr_SetString(PyExc_MemoryError, "getcmdargs(): Cannot allocate memory for procargs");
         return -1;
     }
 
@@ -167,6 +172,7 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObject **en
         //perror(NULL);
         // goto ERROR_B;
         free(procargs);
+        PyErr_SetFromErrno(NULL);
         return 1;       /* Insufficient privileges */
     }
 
@@ -280,8 +286,9 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObject **en
     return 0;
 
     ERROR_B:
-    PyErr_Format(PyExc_SystemError, "getcmdargs() failure.");
+    PyErr_SetString(PyExc_MemoryError, "getcmdargs() failure to allocate memory.");
     ERROR_C:
+    PyErr_SetString(PyExc_SystemError, "getcmdargs(): failed to parse string values.");
     free(procargs);
     return -1;
 }
@@ -294,7 +301,7 @@ PyObject* get_arg_list(long pid)
     PyObject *cmd_args = NULL;
     PyObject *command_path = NULL;
     PyObject *env = NULL;
-    PyObject *argList = Py_BuildValue("[]");
+    PyObject *argList = Py_BuildValue("");
 
     /* Fetch the command-line arguments and environment variables */
     //printf("pid: %ld\n", pid);
@@ -308,7 +315,6 @@ PyObject* get_arg_list(long pid)
         argList = PySequence_List(cmd_args);
     }
 
-    //printf("r = %i\n", r);
-    return argList;
+    return argList; 
 }
 

@@ -90,14 +90,12 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 	long pid;
-    PyObject* infoTuple;
+    PyObject* arglist = Py_BuildValue("");
 
 	//the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError, "get_process_info(): Invalid argument - no PID provided.");
+		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
 	}
-
-    infoTuple = Py_BuildValue("lNssNNN", pid, Py_BuildValue(""), "<unknown>", "<unknown>", PyList_New(0), Py_BuildValue(""), Py_BuildValue(""));
 
 	//get the process information that we need
  
@@ -118,14 +116,21 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
     } 
 
+    // now read the data from sysctl
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
-        /* perror("sysctl"); */
-        // will be set to <unknown> in case this errors
+        // raise an exception and throw errno as the error
         return PyErr_SetFromErrno(NULL);
-    } else if (len > 0) {
-        infoTuple = Py_BuildValue("llssNll", pid, kp.kp_eproc.e_ppid, kp.kp_proc.p_comm, "<unknown>", get_arg_list(pid), kp.kp_eproc.e_pcred.p_ruid, kp.kp_eproc.e_pcred.p_rgid);
+    } 
+    
+    if (len > 0) {
+        arglist = get_arg_list(pid);
+        if (Py_None == arglist) {
+            return NULL; //exception should already be set from getcmdargs()
+        }
+
+        return Py_BuildValue("llssNll", pid, kp.kp_eproc.e_ppid, kp.kp_proc.p_comm, "<unknown>", arglist, kp.kp_eproc.e_pcred.p_ruid, kp.kp_eproc.e_pcred.p_rgid);
     }
 
-	return infoTuple;
+	return PyErr_Format(PyExc_SystemError, "Failed to retrieve process information.");
 }
 
