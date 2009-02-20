@@ -48,7 +48,9 @@ class TestCase(unittest.TestCase):
 
     def test_kill(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        psutil.Process(self.proc.pid).kill()
+        time.sleep(.1) # XXX: provisional, fix needed
+        p = psutil.Process(self.proc.pid)
+        p.kill()
         self.proc.wait()
         self.assertFalse(psutil.pid_exists(self.proc.pid) and psutil.Process(self.proc.pid).name == PYTHON)
         self.proc = None

@@ -133,6 +133,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
     long pid;
+    int pid_return;
     PyObject* ret;
     ret = PyInt_FromLong(0);
     SetSeDebug();
@@ -140,6 +141,15 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
         UnsetSeDebug();
         return ret;
+    }
+
+    pid_return = pid_exists(pid);
+    if (pid_return == 0) {
+        return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
+    } 
+
+    if (pid_return == -1) {
+        return NULL; //exception raised from within pid_exists()
     }
 
     if (pid < 0) {
