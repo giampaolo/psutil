@@ -3,6 +3,7 @@
 
 import _psutil_mswindows
 
+NoSuchProcess = _psutil_mswindows.NoSuchProcess
 
 class Impl(object):
 

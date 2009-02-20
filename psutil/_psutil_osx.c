@@ -36,9 +36,9 @@ init_psutil_osx(void)
 {
      PyObject *m;
      m = Py_InitModule("_psutil_osx", PsutilMethods);
-     NoSuchProcessException = PyErr_NewException("psutil.NoSuchProcess", NULL, NULL);
+     NoSuchProcessException = PyErr_NewException("_psutil_osx.NoSuchProcess", NULL, NULL);
      Py_INCREF(NoSuchProcessException);
-     PyModule_AddObject(m, "err", NoSuchProcessException);
+     PyModule_AddObject(m, "NoSuchProcess", NoSuchProcessException);
 }
 
 
@@ -60,7 +60,7 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
         PyList_Append(retlist, Py_BuildValue("i", procList->kp_proc.p_pid));
         procList++;
     }
-    
+   
     return retlist;
 }
 
@@ -78,6 +78,7 @@ static int pid_exists(pid) {
         }
         procList++;
     }
+    
     return 0;
 }
 
@@ -113,6 +114,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     len = sizeof(kp);
 
     if (! pid_exists(pid) ){
+        //return PyErr_Format(PyExc_RuntimeError, "No process found with pid %lu", pid);
         return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
     } 
 

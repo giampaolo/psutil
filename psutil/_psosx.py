@@ -3,9 +3,11 @@
 
 import os
 import signal
+import errno
 
 import _psutil_osx
 
+NoSuchProcess = _psutil_osx.NoSuchProcess
 
 class Impl(object):
 
@@ -36,5 +38,14 @@ class Impl(object):
         return _psutil_osx.get_pid_list()
 
     def pid_exists(self, pid):
-        return pid in _psutil_osx.get_pid_list()
+        """ Check For the existence of a unix pid."""
+        if pid < 0:
+            return False
+
+        try:
+            os.kill(pid, 0)
+        except OSError, e:
+            return e.errno == errno.EPERM
+        else:
+            return True
 

@@ -31,9 +31,9 @@ init_psutil_mswindows(void)
 {
      PyObject *m;
      m = Py_InitModule("_psutil_mswindows", PsutilMethods);
-     NoSuchProcessException = PyErr_NewException("psutil.NoSuchProcess", NULL, NULL);
+     NoSuchProcessException = PyErr_NewException("_psutil_mswindows.NoSuchProcess", NULL, NULL);
      Py_INCREF(NoSuchProcessException);
-     PyModule_AddObject(m, "err", NoSuchProcessException);
+     PyModule_AddObject(m, "NoSuchProcess", NoSuchProcessException);
 }
 
 

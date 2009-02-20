@@ -8,29 +8,26 @@ processes in a portable way by using Python.
 import sys
 import os
 
+# this exception get overriden by the platform specific modules if necessary
+class NoSuchProcess(Exception):
+    """No process was found for the given parameters."""
 
 # the linux implementation has the majority of it's functionality
 # implemented in python via /proc
 if sys.platform.lower().startswith("linux"):
-    import _pslinux
-    _platform_impl = _pslinux.Impl()
+    from _pslinux import *
 
 # the windows implementation requires the _psutil_mswindows C module
 elif sys.platform.lower().startswith("win32"):
-    import _psmswindows
-    _platform_impl = _psmswindows.Impl()
+    from _psmswindows import *
 
 # OS X implementation requires _psutil_osx C module
 elif sys.platform.lower().startswith("darwin"):
-    import _psosx
-    _platform_impl = _psosx.Impl()
+    from _psosx import *
 else:
     raise ImportError('no os specific module found')
 
-
-class NoSuchProcess(Exception):
-    """No process with the given PID/parameter was found in the current process
-    list."""
+_platform_impl = Impl()
 
 class ProcessInfo(object):
     """Class that allows the process information to be passed
