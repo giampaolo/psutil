@@ -171,8 +171,8 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObject **en
     if (sysctl(mib, 3, procargs, &size, NULL, 0) == -1) {
         //perror(NULL);
         // goto ERROR_B;
+        PyErr_SetFromErrno(PyExc_OSError);
         free(procargs);
-        PyErr_SetFromErrno(NULL);
         return 1;       /* Insufficient privileges */
     }
 
@@ -302,6 +302,11 @@ PyObject* get_arg_list(long pid)
     PyObject *command_path = NULL;
     PyObject *env = NULL;
     PyObject *argList = Py_BuildValue("");
+
+    //special case for PID 0 (kernel_task) where cmdline cannot be fetched
+    if (pid == 0) {
+        return Py_BuildValue("[]");
+    }
 
     /* Fetch the command-line arguments and environment variables */
     //printf("pid: %ld\n", pid);

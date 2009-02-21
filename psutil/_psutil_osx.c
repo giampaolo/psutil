@@ -97,8 +97,6 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
 	}
 
-	//get the process information that we need
- 
     /* Fill out the first three components of the mib */
     len = 4;
     sysctlnametomib("kern.proc.pid", mib, &len);
@@ -112,7 +110,6 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     len = sizeof(kp);
 
     if (! pid_exists(pid) ){
-        //return PyErr_Format(PyExc_RuntimeError, "No process found with pid %lu", pid);
         return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
     } 
 
