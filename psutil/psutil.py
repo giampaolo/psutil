@@ -42,7 +42,7 @@ class ProcessInfo(object):
         self.path = path
         self.cmdline = cmdline
         # if we have the cmdline but not the path, figure it out from argv[0]
-        if cmdline and (path == "<unknown>"):
+        if cmdline and not path:
             self.path = os.path.dirname(cmdline[0])
         self.uid = uid
         self.gid = gid

@@ -128,7 +128,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
             return NULL; //exception should already be set from getcmdargs()
         }
 
-        return Py_BuildValue("llssNll", pid, kp.kp_eproc.e_ppid, kp.kp_proc.p_comm, "<unknown>", arglist, kp.kp_eproc.e_pcred.p_ruid, kp.kp_eproc.e_pcred.p_rgid);
+        return Py_BuildValue("llssNll", pid, kp.kp_eproc.e_ppid, kp.kp_proc.p_comm, "", arglist, kp.kp_eproc.e_pcred.p_ruid, kp.kp_eproc.e_pcred.p_rgid);
     }
 
 	return PyErr_Format(PyExc_SystemError, "Failed to retrieve process information.");

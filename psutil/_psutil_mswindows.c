@@ -188,7 +188,11 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	long pid;
     int pid_return;
     HANDLE hProcess;
+    HMODULE hMod;
+    DWORD cbNeeded;
     PyObject* infoTuple; 
+    PyObject* ppid;
+    PyObject* arglist;
 	TCHAR processName[MAX_PATH] = TEXT("<unknown>");
 
     SetSeDebug();
@@ -200,7 +204,14 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 
     //special case for PID 0 (System Idle Process)
     if (0 == pid) {
-	    infoTuple = Py_BuildValue("llssNll", pid, 0, "System Idle Process", "<unknown>", Py_BuildValue("[]"), -1, -1);
+	    infoTuple = Py_BuildValue("llssNll", pid, 0, "System Idle Process", "", Py_BuildValue("[]"), -1, -1);
+        UnsetSeDebug();
+        return infoTuple;
+    }
+
+    //special case for PID 4 (System)
+    if (4 == pid) {
+	    infoTuple = Py_BuildValue("llssNll", pid, 0, "System", "", Py_BuildValue("[]"), -1, -1);
         UnsetSeDebug();
         return infoTuple;
     }
@@ -233,14 +244,30 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     }
 
 	//get the process name
-    HMODULE hMod;
-    DWORD cbNeeded;
     if ( EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded) ) {
-        GetModuleBaseName( hProcess, hMod, processName,
-            sizeof(processName)/sizeof(TCHAR) );
+        if (! GetModuleBaseName( hProcess, hMod, processName, sizeof(processName)/sizeof(TCHAR) ) ) {
+            PyErr_SetFromWindowsErr(0);
+            UnsetSeDebug();
+            return NULL;
+        }
+    } 
+    //NOTE: sometimes EnumProcessModules fails with a err 299 
+    //"Only part of a ReadProcessMemory or WriteProcessMemory request was completed"
+    //not sure what this is from, but it should be ignored for now.
+
+    ppid = get_ppid(pid);
+    if ( Py_None == ppid ) {
+        UnsetSeDebug();
+        return NULL;  //exception string set in get_ppid()
     }
 
-	infoTuple = Py_BuildValue("lNssNll", pid, get_ppid(pid), processName, "<unknown>", get_arg_list(pid), -1, -1);
+    arglist = get_arg_list(pid);
+    if ( Py_None == arglist ) {
+        UnsetSeDebug();
+        return NULL;  //exception string set in get_arg_list()
+    }
+
+	infoTuple = Py_BuildValue("lNssNll", pid, ppid, processName, "", arglist, -1, -1);
     UnsetSeDebug();
 	return infoTuple;
 }
