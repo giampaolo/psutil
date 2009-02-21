@@ -66,6 +66,7 @@ class TestCase(unittest.TestCase):
 
     def test_is_running(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        time.sleep(0.1)  # XXX: provisional, fix needed
         p = psutil.Process(self.proc.pid)
         self.assertTrue(p.is_running())
         psutil.Process(self.proc.pid).kill()
@@ -173,6 +174,14 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "uid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "gid")
         self.assertRaises(psutil.NoSuchProcess, p.kill)
+
+    if sys.platform.lower().startswith("win32"):
+        def test_pid_0(self):
+            p = psutil.Process(0)
+            self.assertEqual(p.name, 'System Idle Process')
+            # use __str__ to access all common properties to check
+            # that nothing strange happens
+            str(p)
 
 
 def test_main():
