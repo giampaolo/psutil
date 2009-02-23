@@ -142,7 +142,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
         UnsetSeDebug();
-        return ret;
+        return NULL;
     }
 
     pid_return = pid_exists(pid);
@@ -158,7 +158,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 
     if (pid < 0) {
         UnsetSeDebug();
-        return ret;
+        return NULL;
     }
 
     //get a process handle
@@ -166,14 +166,14 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     if (hProcess == NULL) {
         PyErr_SetFromWindowsErr(0);
         UnsetSeDebug();
-        return ret;
+        return NULL;
     }
     
     //kill the process
     if (! TerminateProcess(hProcess, 0) ){
         PyErr_SetFromWindowsErr(0);
         UnsetSeDebug();
-        return ret;
+        return NULL;
     }
     
     UnsetSeDebug();
