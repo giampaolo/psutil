@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # _psmswindows.py
 
+import psutil
 import _psutil_mswindows
 
 NoSuchProcess = _psutil_mswindows.NoSuchProcess
@@ -11,8 +12,6 @@ class Impl(object):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.
         """
-        # XXX - figure out why it can't be imported globally (see r54)
-        import psutil
         infoTuple = _psutil_mswindows.get_process_info(pid)
         return psutil.ProcessInfo(*infoTuple)
 
