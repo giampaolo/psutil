@@ -97,10 +97,12 @@ int pid_exists(DWORD pid)
 
     for (i = 0; i < numberOfReturnedPIDs; i++) {
         if (pid == proclist[i]) {
+            free(proclist);
             return 1;
         }
     }
 
+    free(proclist);
     return 0;
 }
 
