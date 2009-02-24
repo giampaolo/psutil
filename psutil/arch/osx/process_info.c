@@ -15,6 +15,9 @@
 #include <Python.h>
 #include "process_info.h"
 
+#define ARGS_ACCESS_DENIED -2
+
+
 
 /*
  * Returns a list of all BSD processes on the system.  This routine
@@ -169,11 +172,14 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObject **en
 
     size = (size_t)argmax;
     if (sysctl(mib, 3, procargs, &size, NULL, 0) == -1) {
-        //perror(NULL);
-        // goto ERROR_B;
+        if (22 == errno) { //invalid parameter == access denied for some reason
+            free(procargs);
+            return -2;       /* Insufficient privileges */
+        }
+        
         PyErr_SetFromErrno(PyExc_OSError);
         free(procargs);
-        return 1;       /* Insufficient privileges */
+        return -1;
     }
 
     memcpy(&nargs, procargs, sizeof(nargs));
@@ -318,6 +324,10 @@ PyObject* get_arg_list(long pid)
     if (r == 0) {
         //PySequence_Tuple(args);
         argList = PySequence_List(cmd_args);
+    }
+
+    if (r == ARGS_ACCESS_DENIED) { //-2
+        argList = Py_BuildValue("[]");
     }
 
     return argList; 
