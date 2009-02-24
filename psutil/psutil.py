@@ -12,6 +12,10 @@ import os
 class NoSuchProcess(Exception):
     """No process was found for the given parameters."""
 
+class InsufficientPrivileges(Exception):
+    """Not enough privileges to execute the requested action."""
+
+
 # the linux implementation has the majority of it's functionality
 # implemented in python via /proc
 if sys.platform.lower().startswith("linux"):
@@ -163,7 +167,7 @@ def get_process_list():
     for pid in pidList:
         try:
             retProcesses.append(Process(pid))
-        except NoSuchProcess:
+        except (NoSuchProcess, InsufficientPrivileges):
             continue
     return retProcesses
 

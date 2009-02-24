@@ -197,6 +197,11 @@ class TestCase(unittest.TestCase):
         def test_unix_pid_exists_0(self):
             self.assertFalse(psutil.pid_exists(0))
 
+        if hasattr(os, 'getuid') and os.getuid() > 0:
+            def test_insufficient_privileges(self):
+                p = psutil.Process(1)
+                self.assertRaises(psutil.InsufficientPrivileges, p.kill)
+
 
 
 def test_main():

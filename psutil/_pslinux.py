@@ -25,9 +25,25 @@ def prevent_zombie(method):
     return wrapper
 
 
+def wrap_privileges(callable):
+    """Call callable into a try/except clause so that if an
+    OSError EPERM exception is raised we translate it into
+    psutil.InsufficientPrivileges.
+    """
+    def wrapper(*args, **kwargs):
+        try:
+            return callable(*args, **kwargs)
+        except OSError, err:
+            if err.errno == errno.EPERM:
+                raise psutil.InsufficientPrivileges
+            raise
+    return wrapper
+
+
 class Impl(object):
 
     @prevent_zombie
+    @wrap_privileges
     def get_process_info(self, pid):
         """Returns a process info class."""
         # determine executable
@@ -59,6 +75,7 @@ class Impl(object):
                                   self.get_process_uid(pid),
                                   self.get_process_gid(pid))
 
+    @wrap_privileges
     def kill_process(self, pid, sig=signal.SIGKILL):
         """Terminates the process with the given PID."""
         if sig is None:

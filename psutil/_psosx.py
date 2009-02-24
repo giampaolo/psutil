@@ -9,8 +9,27 @@ import _psutil_osx
 
 NoSuchProcess = _psutil_osx.NoSuchProcess
 
+
+def wrap_privileges(callable):
+    """Call callable into a try/except clause so that if an
+    OSError EPERM exception is raised we translate it into
+    psutil.InsufficientPrivileges.
+    """
+    def wrapper(*args, **kwargs):
+        # XXX - figure out why it can't be imported globally
+        import psutil
+        try:
+            return callable(*args, **kwargs)
+        except OSError, err:
+            if err.errno == errno.EPERM:
+                raise psutil.InsufficientPrivileges
+            raise
+    return wrapper
+
+
 class Impl(object):
 
+    @wrap_privileges
     def get_process_info(self, pid):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.
@@ -20,6 +39,7 @@ class Impl(object):
         infoTuple = _psutil_osx.get_process_info(pid)
         return psutil.ProcessInfo(*infoTuple)
 
+    @wrap_privileges
     def kill_process(self, pid, sig=signal.SIGKILL):
         """Terminates the process with the given PID."""
         # XXX - figure out why it can't be imported globally (see r54)
