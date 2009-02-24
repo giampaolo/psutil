@@ -57,11 +57,13 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    //printf("%i\n", proclist->kp_proc.p_pid);
-    for (idx=0; idx < num_processes; idx++) {
-        //printf("%i: %s\n", proclist->kp_proc.p_pid, proclist->kp_proc.p_comm);
-        PyList_Append(retlist, Py_BuildValue("i", proclist->kp_proc.p_pid));
-        proclist++;
+    if (num_processes > 0) {
+        PyList_Append(retlist, Py_BuildValue("i", 0));
+        for (idx=0; idx < num_processes; idx++) {
+            //printf("%i: %s\n", proclist->kp_proc.p_pid, proclist->kp_proc.p_comm);
+            PyList_Append(retlist, Py_BuildValue("i", proclist->kp_proc.p_pid));
+            proclist++;
+        }
     }
     
     return retlist;
