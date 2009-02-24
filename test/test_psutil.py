@@ -127,7 +127,9 @@ class TestCase(unittest.TestCase):
         self.assertEqual(p.parent.pid, this_parent)
 
     def test_get_pid_list(self):
-        self.assertEqual([x.pid for x in psutil.get_process_list()], psutil.get_pid_list())
+        plist = [x.pid for x in psutil.get_process_list()]
+        pidlist = psutil.get_pid_list()
+        self.assertEqual(plist.sort(), pidlist.sort())
 
     def test_types(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)

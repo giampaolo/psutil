@@ -47,20 +47,23 @@ init_psutil_osx(void)
  */
 static PyObject* get_pid_list(PyObject* self, PyObject* args)
 {
-    kinfo_proc *procList = NULL;
+    kinfo_proc *proclist = NULL;
     size_t num_processes;
     size_t idx;
     PyObject* retlist = PyList_New(0);
 
-    GetBSDProcessList(&procList, &num_processes);
-
-    //printf("%i\n", procList->kp_proc.p_pid);
-    for (idx=0; idx < num_processes; idx++) {
-        //printf("%i: %s\n", procList->kp_proc.p_pid, procList->kp_proc.p_comm);
-        PyList_Append(retlist, Py_BuildValue("i", procList->kp_proc.p_pid));
-        procList++;
+    if (GetBSDProcessList(&proclist, &num_processes) != 0) {
+        PyErr_SetString(PyExc_RuntimeError, "failed to retrieve process list.");
+        return NULL;
     }
-   
+
+    //printf("%i\n", proclist->kp_proc.p_pid);
+    for (idx=0; idx < num_processes; idx++) {
+        //printf("%i: %s\n", proclist->kp_proc.p_pid, proclist->kp_proc.p_comm);
+        PyList_Append(retlist, Py_BuildValue("i", proclist->kp_proc.p_pid));
+        proclist++;
+    }
+    
     return retlist;
 }
 
