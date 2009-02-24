@@ -19,7 +19,7 @@ def prevent_zombie(method):
             return method(self, pid, *args, **kwargs)
         except IOError, err:
             if err.errno == errno.ENOENT:  # no such file or directory
-                if not pid in self.get_pid_list():
+                if not self.pid_exists(pid):
                     raise psutil.NoSuchProcess(pid)
             raise
     return wrapper
@@ -76,7 +76,7 @@ class Impl(object):
 
     def pid_exists(self, pid):
         """ Check For the existence of a unix pid."""
-        if pid < 0:
+        if pid <= 0:
             return False
 
         try:

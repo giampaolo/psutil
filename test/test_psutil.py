@@ -175,13 +175,26 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "gid")
         self.assertRaises(psutil.NoSuchProcess, p.kill)
 
+    # --- OS specific tests
+
+    # Windows tests
+
     if sys.platform.lower().startswith("win32"):
-        def test_pid_0(self):
+
+        def test_windows_pid_0(self):
             p = psutil.Process(0)
             self.assertEqual(p.name, 'System Idle Process')
             # use __str__ to access all common properties to check
             # that nothing strange happens
             str(p)
+
+    # UNIX tests
+
+    if not sys.platform.lower().startswith("win32"):
+
+        def test_unix_pid_exists_0(self):
+            self.assertFalse(psutil.pid_exists(0))
+
 
 
 def test_main():

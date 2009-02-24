@@ -39,7 +39,7 @@ class Impl(object):
 
     def pid_exists(self, pid):
         """ Check For the existence of a unix pid."""
-        if pid < 0:
+        if pid <= 0:
             return False
 
         try:
