@@ -46,6 +46,10 @@ class Impl(object):
     @wrap_privileges
     def get_process_info(self, pid):
         """Returns a process info class."""
+        if pid == 0:
+            # special case for 0 (kernel process) PID
+            return psutil.ProcessInfo(pid, 0, 'sched', '', [], 0, 0)
+
         # determine executable
         try:
             _exe = os.readlink("/proc/%s/exe" %pid)
@@ -89,7 +93,10 @@ class Impl(object):
 
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
-        return [int(x) for x in os.listdir('/proc') if x.isdigit()]
+        pids = [int(x) for x in os.listdir('/proc') if x.isdigit()]
+        # special case for 0 (kernel process) PID
+        pids.insert(0, 0)
+        return pids
 
     def pid_exists(self, pid):
         """ Check For the existence of a unix pid."""

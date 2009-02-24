@@ -188,7 +188,9 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(0)
         if sys.platform.lower().startswith("win32"):
             self.assertEqual(p.name, 'System Idle Process')
-        # XXX - add test cases for OS X and Linux
+        elif sys.platform.lower().startswith("linux"):
+            self.assertEqual(p.name, 'sched')
+        # XXX - add test cases for OS X
         # ...
 
         # use __str__ to access all common Process properties to check
