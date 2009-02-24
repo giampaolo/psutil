@@ -76,8 +76,18 @@ static int pid_exists(pid) {
     size_t num_processes;
     size_t idx;
 
-    GetBSDProcessList(&procList, &num_processes);
+    //special case for PID 0, kernel_task
+    if (pid == 0) {
+        return 1;
+    }
 
+    //save some time if it's an invalid PID
+    if (pid < 0) {
+        return 0;
+    }
+
+    GetBSDProcessList(&procList, &num_processes);
+    
     for (idx=0; idx < num_processes; idx++) {
         if (pid == procList->kp_proc.p_pid) {
             return 1;
