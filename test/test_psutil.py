@@ -177,18 +177,30 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "gid")
         self.assertRaises(psutil.NoSuchProcess, p.kill)
 
-    # --- OS specific tests
-
-    # Windows tests
-
-    if sys.platform.lower().startswith("win32"):
-
-        def test_windows_pid_0(self):
-            p = psutil.Process(0)
-            self.assertEqual(p.name, 'System Idle Process')
-            # use __str__ to access all common properties to check
-            # that nothing strange happens
+    # XXX - provisional
+    def test_fetch_all(self):
+        for p in psutil.get_process_list():
             str(p)
+
+    def test_pid_0(self):
+        # Process(0) is supposed work on all platforms even if with
+        # some differences
+        p = psutil.Process(0)
+        if sys.platform.lower().startswith("win32"):
+            self.assertEqual(p.name, 'System Idle Process')
+        # XXX - add test cases for OS X and Linux
+        # ...
+
+        # use __str__ to access all common Process properties to check
+        # that nothing strange happens
+        str(p)
+
+        # PID 0 is supposed to be available on all platforms
+        self.assertTrue(0 in psutil.get_pid_list())
+        self.assertTrue(psutil.pid_exists(0))
+
+
+    # --- OS specific tests
 
     # UNIX tests
 
