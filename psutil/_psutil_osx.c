@@ -58,6 +58,7 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
     }
 
     if (num_processes > 0) {
+        //special case for 0 (kernel_task) PID since it is not provided in get_pids
         PyList_Append(retlist, Py_BuildValue("i", 0));
         for (idx=0; idx < num_processes; idx++) {
             //printf("%i: %s\n", proclist->kp_proc.p_pid, proclist->kp_proc.p_comm);
