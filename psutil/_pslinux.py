@@ -28,14 +28,14 @@ def prevent_zombie(method):
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if an
     OSError EPERM exception is raised we translate it into
-    psutil.InsufficientPrivileges.
+    psutil.AccessDenied.
     """
     def wrapper(*args, **kwargs):
         try:
             return callable(*args, **kwargs)
         except OSError, err:
             if err.errno == errno.EPERM:
-                raise psutil.InsufficientPrivileges
+                raise psutil.AccessDenied
             raise
     return wrapper
 

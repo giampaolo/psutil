@@ -12,7 +12,7 @@ ERROR_ACCESS_DENIED = 5
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if a
     WindowsError 5 AccessDenied exception is raised we translate it
-    into psutil.InsufficientPrivileges
+    into psutil.AccessDenied
     """
     def wrapper(*args, **kwargs):
         # XXX - figure out why it can't be imported globally
@@ -21,7 +21,7 @@ def wrap_privileges(callable):
             return callable(*args, **kwargs)
         except WindowsError, err:
             if err.errno == ERROR_ACCESS_DENIED:
-                raise psutil.InsufficientPrivileges
+                raise psutil.AccessDenied
             raise
     return wrapper
 

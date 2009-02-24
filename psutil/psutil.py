@@ -12,8 +12,8 @@ import os
 class NoSuchProcess(Exception):
     """No process was found for the given parameters."""
 
-class InsufficientPrivileges(Exception):
-    """Not enough privileges to execute the requested action."""
+class AccessDenied(Exception):
+    """Exception raised when permission to perform an action is denied."""
 
 
 # the linux implementation has the majority of it's functionality
@@ -84,12 +84,12 @@ class Process(object):
                 if getattr(self._procinfo, attr) != getattr(other._procinfo, attr):
                     return False
         return True
-            
+
     @property
     def pid(self):
         """The process pid."""
         return self._procinfo.pid
-   
+
     @property
     def ppid(self):
         """The process parent pid."""
@@ -101,7 +101,7 @@ class Process(object):
         """Return the parent process as a Process object. If no ppid is known
         then return None."""
         if self.ppid is not None:
-            return Process(self.ppid) 
+            return Process(self.ppid)
         return None
 
     @property
@@ -167,7 +167,7 @@ def get_process_list():
     for pid in pidList:
         try:
             retProcesses.append(Process(pid))
-        except (NoSuchProcess, InsufficientPrivileges):
+        except (NoSuchProcess, AccessDenied):
             continue
     return retProcesses
 

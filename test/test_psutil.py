@@ -195,9 +195,9 @@ class TestCase(unittest.TestCase):
     if not sys.platform.lower().startswith("win32"):
 
         if hasattr(os, 'getuid') and os.getuid() > 0:
-            def test_insufficient_privileges(self):
+            def test_access_denied(self):
                 p = psutil.Process(1)
-                self.assertRaises(psutil.InsufficientPrivileges, p.kill)
+                self.assertRaises(psutil.AccessDenied, p.kill)
 
 
 
