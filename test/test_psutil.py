@@ -204,7 +204,7 @@ class TestCase(unittest.TestCase):
 
     # --- OS specific tests
 
-    # UNIX tests
+    # UNIX specific tests
 
     if not sys.platform.lower().startswith("win32"):
 
@@ -213,6 +213,12 @@ class TestCase(unittest.TestCase):
                 p = psutil.Process(1)
                 self.assertRaises(psutil.AccessDenied, p.kill)
 
+    # Windows specific tests
+
+    if sys.platform.lower().startswith("win32"):
+        def test_issue_24(self):
+            p = psutil.Process(0)
+            self.assertRaises(psutil.AccessDenied, p.kill)
 
 
 def test_main():

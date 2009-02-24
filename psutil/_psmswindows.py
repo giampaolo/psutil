@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # _psmswindows.py
 
+import errno
+
 import _psutil_mswindows
+
 
 NoSuchProcess = _psutil_mswindows.NoSuchProcess
 
@@ -41,7 +44,15 @@ class Impl(object):
     @wrap_privileges
     def kill_process(self, pid, sig=None):
         """Terminates the process with the given PID."""
-        return _psutil_mswindows.kill_process(pid)
+        # XXX - figure out why it can't be imported globally
+        import psutil
+        try:
+            return _psutil_mswindows.kill_process(pid)
+        except OSError, err:
+            # work around issue #24
+            if (pid == 0) and (err.errno == errno.EINVAL):
+                raise psutil.AccessDenied
+            raise
 
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
