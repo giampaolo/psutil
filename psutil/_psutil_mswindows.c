@@ -21,6 +21,8 @@ static PyMethodDef PsutilMethods[] =
        	"Returns a psutil.ProcessInfo object for the given PID"},
      {"kill_process", kill_process, METH_VARARGS,
          "Kill the process identified by the given PID"},
+     {"pid_exists", pid_exists, METH_VARARGS,
+         "Determine if the process exists in the current process list."},
      {NULL, NULL, 0, NULL}
 };
 
@@ -83,7 +85,7 @@ DWORD* get_pids(DWORD *numberOfReturnedPIDs){
 }
 
 
-int pid_exists(DWORD pid)
+int is_running(DWORD pid)
 {
     DWORD *proclist = NULL;
     DWORD numberOfReturnedPIDs;
@@ -91,7 +93,7 @@ int pid_exists(DWORD pid)
     
     proclist = get_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
-		PyErr_SetString(PyExc_RuntimeError, "get_pids() failed for pid_exists()");
+		PyErr_SetString(PyExc_RuntimeError, "get_pids() failed for is_running()");
         return -1;
     }
 
@@ -104,6 +106,24 @@ int pid_exists(DWORD pid)
 
     free(proclist);
     return 0;
+}
+
+
+static PyObject* pid_exists(PyObject* self, PyObject* args)
+{
+    long pid;
+    int status;
+
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+	}
+
+    status = is_running(pid);
+    if (-1 == status) {
+        return NULL; //exception raised in is_running()
+    }
+    
+    return PyBool_FromLong(status);
 }
 
 
@@ -147,7 +167,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    pid_return = pid_exists(pid);
+    pid_return = is_running(pid);
     if (pid_return == 0) {
         UnsetSeDebug();
         return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
@@ -155,7 +175,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 
     if (pid_return == -1) {
         UnsetSeDebug();
-        return NULL; //exception raised from within pid_exists()
+        return NULL; //exception raised from within is_running()
     }
 
     if (pid < 0) {
@@ -221,7 +241,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	//get the process information that we need
 	//(name, path, arguments)
 
-    pid_return = pid_exists(pid);
+    pid_return = is_running(pid);
     if (pid_return == 0) {
         UnsetSeDebug();
         return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
@@ -229,7 +249,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 
     else if (pid_return == -1) {
         UnsetSeDebug();
-        return NULL; //exception raised from within pid_exists()
+        return NULL; //exception raised from within is_running()
     }
 
 	//get a handle to the process or throw an exception

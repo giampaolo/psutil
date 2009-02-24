@@ -24,5 +24,5 @@ class Impl(object):
         return _psutil_mswindows.get_pid_list()
 
     def pid_exists(self, pid):
-        return pid in _psutil_mswindows.get_pid_list()
+        return _psutil_mswindows.pid_exists(pid)
 
