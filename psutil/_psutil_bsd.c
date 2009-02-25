@@ -73,10 +73,7 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 }
 
 
-static int pid_exists(pid) {
-    kinfo_proc *procList = NULL;
-    size_t num_processes;
-    size_t idx;
+static int pid_exists(long pid) {
     int kill_ret;
 
     //save some time if it's an invalid PID

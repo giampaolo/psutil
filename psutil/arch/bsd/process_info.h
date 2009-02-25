@@ -9,8 +9,8 @@
 
 typedef struct kinfo_proc kinfo_proc;
 
-int get_proc_list();
-char *getcmdargs();
-char *getcmdpath();
+int get_proc_list(struct kinfo_proc **procList, size_t *procCount);
+char *getcmdargs(long pid, size_t *argsize);
+char *getcmdpath(long pid, size_t *pathsize);
 PyObject* get_arg_list(long pid);
 

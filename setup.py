@@ -18,7 +18,7 @@ elif sys.platform.lower().startswith("darwin"):
                            sources = ['psutil/_psutil_osx.c', 'psutil/arch/osx/process_info.c']
                            )
 
-# 
+# FreeBSD
 elif sys.platform.lower().startswith("freebsd"):
     extensions = Extension('_psutil_bsd',
                            sources = ['psutil/_psutil_bsd.c', 'psutil/arch/bsd/process_info.c']

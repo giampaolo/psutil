@@ -167,8 +167,9 @@ char *getcmdargs(long pid, size_t *argsize)
     char        *arg_start;
     int         mib[3], nargs, c = 0;
     size_t      size, argmax;
-    char        *procargs, *sp, *np, *cp;
-    char        *val_start;
+    char        *procargs, *sp, *cp;
+    //char        *val_start;
+    char        *np;
 
     /* Get the maximum process arguments size. */
     mib[0] = CTL_KERN;
@@ -244,12 +245,9 @@ char *getcmdargs(long pid, size_t *argsize)
 /* returns the command line as a python list object */
 PyObject* get_arg_list(long pid) 
 {
-    char c;
     char *argstr = NULL;
     int pos = 0;
     size_t argsize = 0;
-    size_t num_processes;
-    struct kinfo_proc *procList = NULL;
     PyObject *retlist = Py_BuildValue("[]");
 
     if (pid < 0) {
