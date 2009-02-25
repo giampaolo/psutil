@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <signal.h>
 #include <sys/sysctl.h>
 
 #include <Python.h>
@@ -75,24 +76,17 @@ static int pid_exists(pid) {
     kinfo_proc *procList = NULL;
     size_t num_processes;
     size_t idx;
-
-    //special case for PID 0, kernel_task
-    if (pid == 0) {
-        return 1;
-    }
+    int kill_ret;
 
     //save some time if it's an invalid PID
     if (pid < 0) {
         return 0;
     }
 
-    GetBSDProcessList(&procList, &num_processes);
-    
-    for (idx=0; idx < num_processes; idx++) {
-        if (pid == procList->kp_proc.p_pid) {
-            return 1;
-        }
-        procList++;
+    //if kill returns success of permission denied we know it's a valid PID
+    kill_ret = kill(pid , 0);
+    if ( (0 == kill_ret) || (EPERM == errno) ) {
+        return 1;
     }
     
     return 0;
