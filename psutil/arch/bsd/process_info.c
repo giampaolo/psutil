@@ -164,7 +164,6 @@ char *getcmdpath(long pid, size_t *pathsize)
  */
 char *getcmdargs(long pid, size_t *argsize) 
 {
-    char *arg_start;
     int mib[3];
     size_t size, argmax;
     char *procargs = NULL;
