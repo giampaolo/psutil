@@ -28,6 +28,10 @@ elif sys.platform.lower().startswith("win32"):
 # OS X implementation requires _psutil_osx C module
 elif sys.platform.lower().startswith("darwin"):
     from _psosx import *
+
+# BSD implementation requires _psutil_bsd C module
+elif sys.platform.lower().startswith("freebsd"):
+    from _psbsd import *
 else:
     raise ImportError('no os specific module found')
 
