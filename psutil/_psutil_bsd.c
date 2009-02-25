@@ -144,7 +144,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         }
 
         //hooray, we got all the data, so return it as a tuple to be passed to ProcessInfo() constructor
-        return Py_BuildValue("llssNll", pid, kp.ki_ppid, kp.ki_comm, "", arglist, kp.ki_uid, kp.ki_pgid);
+        return Py_BuildValue("llssNll", pid, kp.ki_ppid, kp.ki_comm, "", arglist, kp.ki_ruid, kp.ki_rgid);
     }
 
     //something went wrong, throw an error

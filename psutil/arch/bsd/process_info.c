@@ -162,11 +162,11 @@ char *getcmdpath(long pid, size_t *pathsize)
  *      -1 for failure (Exception raised);
  *      1 for insufficient privileges.
  */
-char *getcmdargs(long pid, int *argsize) 
+char *getcmdargs(long pid, size_t *argsize) 
 {
     char        *arg_start;
-    int         mib[3], argmax, nargs, c = 0;
-    size_t      size;
+    int         mib[3], nargs, c = 0;
+    size_t      size, argmax;
     char        *procargs, *sp, *np, *cp;
     char        *val_start;
 
@@ -195,7 +195,7 @@ char *getcmdargs(long pid, int *argsize)
     mib[2] = KERN_PROC_ARGS;
     mib[3] = pid;
 
-    size = (size_t)argmax;
+    size = argmax;
     if (sysctl(mib, 4, procargs, &size, NULL, 0) == -1) {
         //printf("sysctl(%lu): %s\n", pid, strerror(errno));
         //perror("sysctl (raw args) for PID ");
@@ -247,7 +247,7 @@ PyObject* get_arg_list(long pid)
     char c;
     char *argstr = NULL;
     int pos = 0;
-    int argsize = 0;
+    size_t argsize = 0;
     size_t num_processes;
     struct kinfo_proc *procList = NULL;
     PyObject *retlist = Py_BuildValue("[]");
