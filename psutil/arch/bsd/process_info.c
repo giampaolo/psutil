@@ -164,12 +164,10 @@ char *getcmdpath(long pid, size_t *pathsize)
  */
 char *getcmdargs(long pid, size_t *argsize) 
 {
-    char        *arg_start;
-    int         mib[3], nargs, c = 0;
-    size_t      size, argmax;
-    char        *procargs, *sp, *cp;
-    //char        *val_start;
-    char        *np;
+    char *arg_start;
+    int mib[3];
+    size_t size, argmax;
+    char *procargs = NULL;
 
     /* Get the maximum process arguments size. */
     mib[0] = CTL_KERN;
@@ -204,40 +202,8 @@ char *getcmdargs(long pid, size_t *argsize)
         return NULL;       /* Insufficient privileges */
     }
 
-    //return the length of arguments
+    //return string and set the length of arguments
     *argsize = size;
-    
-    memcpy(&nargs, procargs, sizeof(nargs));
-    cp = procargs + sizeof(nargs);
-
-    /* Skip trailing '\0' characters. */
-    for (; cp < &procargs[size]; cp++) {
-        if (*cp != '\0') {
-            /* Beginning of first argument reached. */
-            break;
-        }
-    }
-
-    
-    /* Save where the argv[0] string starts. */
-    sp = cp;
-
-    /*
-     * Iterate through the '\0'-terminated strings and add each string
-     * to the Python List arglist as a Python string.
-     * Stop when nargs strings have been extracted.  That should be all
-     * the arguments.  The rest of the strings will be environment
-     * strings for the command.
-     */
-    for (arg_start = cp; c < nargs && cp < &procargs[size]; cp++) {
-        if (*cp == '\0') {
-            /* Fetch next argument */
-            c++;
-            //printf("arg: %s\n", arg_start); 
-            arg_start = cp + 1;
-        }
-    }
-
     return procargs;
 }
 
