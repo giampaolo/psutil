@@ -117,7 +117,7 @@ PyObject* get_arg_list(long pid)
 
     //null-terminate the string to prevent wcslen from returning incorrect length
     //the length specifier is in characters, but commandLine.Length is in bytes
-    commandLineContents[(commandLine.Length/sizeof(WCHAR))] = NULL;
+    commandLineContents[(commandLine.Length/sizeof(WCHAR))] = '\0';
    
     //attemempt tp parse the command line using Win32 API, fall back on string
     //cmdline version otherwise
