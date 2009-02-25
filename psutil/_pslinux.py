@@ -64,7 +64,7 @@ class Impl(object):
         if os.path.isabs(_exe):
             path, name = os.path.split(_exe)
         else:
-            path = '<unknown>'
+            path = ''
             name = _exe
 
         # determine cmdline
