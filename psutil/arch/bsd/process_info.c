@@ -30,10 +30,10 @@
  */
 int get_proc_list(struct kinfo_proc **procList, size_t *procCount) 
 {
-    int                 err;
-    struct kinfo_proc *        result;
-    int                done;
-    static const int    name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
+    int err;
+    struct kinfo_proc * result;
+    int done;
+    static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
     // Declaring name as const requires us to cast it when passing it to
     // sysctl because the prototype doesn't include the const modifier.
     size_t              length;
@@ -102,10 +102,9 @@ int get_proc_list(struct kinfo_proc **procList, size_t *procCount)
         free(result);
         result = NULL;
     }
+
     *procList = result;
-    if (err == 0) {
-        *procCount = length / sizeof(struct kinfo_proc);
-    }
+    *procCount = length / sizeof(struct kinfo_proc);
 
     assert( (err == 0) == (*procList != NULL) );
 
@@ -214,11 +213,13 @@ PyObject* get_arg_list(long pid)
     int pos = 0;
     size_t argsize = 0;
     PyObject *retlist = Py_BuildValue("[]");
+    PyObject *item = NULL;
 
     if (pid < 0) {
         return retlist;
     }
 
+    //this leaks memory (grrr)
     argstr = getcmdargs(pid, &argsize);
     
     if (NULL == argstr) {
@@ -230,16 +231,20 @@ PyObject* get_arg_list(long pid)
         //ignore other errors for now, since we don't want to bail on get_process_info() if 
         //cmdline is the only thing we couldn't get. In that case, we just return an empty list
         //return PyErr_Format(PyExc_RuntimeError, "getcmdargs() failed for pid %lu", pid);
+        return retlist;
     }
 
     //args are returned as a flattened string with \0 separators between arguments
     //add each string to the list then step forward to the next separator 
     if (argsize > 0) {
         while(pos < argsize) {
-            PyList_Append(retlist, Py_BuildValue("s", &argstr[pos]));
+            item = Py_BuildValue("s", &argstr[pos]);
+            PyList_Append(retlist, item); 
+            Py_DECREF(item);
             pos = pos + strlen(&argstr[pos]) + 1;
         }
     }
 
+    free(argstr);
     return retlist;
 }

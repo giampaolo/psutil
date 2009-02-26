@@ -51,24 +51,33 @@ init_psutil_bsd(void)
 static PyObject* get_pid_list(PyObject* self, PyObject* args)
 {
     kinfo_proc *proclist = NULL;
+    kinfo_proc *orig_address = NULL;
     size_t num_processes;
     size_t idx;
     PyObject* retlist = PyList_New(0);
+    PyObject* pid;
 
     if (get_proc_list(&proclist, &num_processes) != 0) {
+        Py_DECREF(retlist);
         PyErr_SetString(PyExc_RuntimeError, "failed to retrieve process list.");
         return NULL;
     }
 
     if (num_processes > 0) {
+        orig_address = proclist; //save so we can free it after we're done
         //special case for 0 (kernel_task) PID since it is not provided in get_proc_list
-        PyList_Append(retlist, Py_BuildValue("i", 0));
+        pid = Py_BuildValue("i", 0);
+        PyList_Append(retlist, pid);
+        Py_XDECREF(pid);
         for (idx=0; idx < num_processes; idx++) {
-            PyList_Append(retlist, Py_BuildValue("i", proclist->ki_pid));
+            pid = Py_BuildValue("i", proclist->ki_pid);
+            PyList_Append(retlist, pid);
+            Py_XDECREF(pid);
             proclist++;
         }
+        free(orig_address);
     }
-    
+   
     return retlist;
 }
 
@@ -98,7 +107,8 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 	long pid;
-    PyObject* arglist = Py_BuildValue("[]");
+    PyObject* infoTuple = NULL;
+    PyObject* arglist = NULL;
 
 	//the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
@@ -127,7 +137,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     len = sizeof(kp);
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
         // raise an exception if it failed, since we won't get any data
-        return PyErr_SetFromErrno(NULL);
+        return PyErr_SetFromErrno(PyExc_OSError);
     } 
 
     if (len > 0) { //if 0 then no data was retrieved
@@ -141,7 +151,11 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         }
 
         //hooray, we got all the data, so return it as a tuple to be passed to ProcessInfo() constructor
-        return Py_BuildValue("llssNll", pid, kp.ki_ppid, kp.ki_comm, "", arglist, kp.ki_ruid, kp.ki_rgid);
+        infoTuple = Py_BuildValue("llssNll", pid, kp.ki_ppid, kp.ki_comm, "", arglist, kp.ki_ruid, kp.ki_rgid);
+        if (NULL == infoTuple) {
+            PyErr_SetString(PyExc_RuntimeError, "Failed to build process information tuple!");
+        }    
+        return infoTuple;
     }
 
     //something went wrong, throw an error
