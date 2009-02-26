@@ -89,6 +89,14 @@ class Process(object):
                     return False
         return True
 
+    def __lt__(self, other):
+        """Called for Process object "<" comparisons based on PID."""
+        return self.pid < other.pid
+
+    def __gt__(self, other):
+        """Called for Process object ">" comparisons based on PID."""
+        return self.pid > other.pid
+
     def deproxy(self):
         if self.is_proxy:
             self._procinfo = _platform_impl.get_process_info(self._procinfo.pid)

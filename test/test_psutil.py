@@ -61,6 +61,23 @@ class TestCase(unittest.TestCase):
         time.sleep(0.1)  # XXX: provisional, fix needed
         self.assertTrue(psutil.Process(self.proc.pid) == psutil.Process(self.proc.pid))
 
+    def test_rich_comparisons(self):
+        pids = psutil.get_pid_list()
+        pids.sort()
+        smaller_process = psutil.Process(pids.pop(0))
+        for pid in pids[::-1]:
+            try:
+                greater_process = psutil.Process(pid)
+            except psutil.NoSuchProcess:  # prevent zombie process
+                continue
+            else:
+                break
+
+        self.assertTrue(smaller_process < greater_process)
+        self.assertTrue(greater_process > smaller_process)
+        self.assertFalse(smaller_process > greater_process)
+        self.assertFalse(greater_process < smaller_process)
+
     def test_is_running(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         time.sleep(0.1)  # XXX: provisional, fix needed
