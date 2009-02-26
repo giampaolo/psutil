@@ -124,25 +124,19 @@ int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
  *      -1 for failure (Exception raised);
  *      1 for insufficient privileges.
  */
-int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObject **envdict)
+int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
 {
-    PyObject    *arg;
     char        *arg_start;
     int         mib[3], argmax, nargs, c = 0;
     size_t      size;
     char        *procargs, *sp, *np, *cp;
+    PyObject    *arg;
     PyObject    *val;
     char        *val_start;
 
     *arglist = Py_BuildValue("[]");     /* empty list */
     if (*arglist == NULL) {
         PyErr_SetString(PyExc_SystemError, "getcmdargs(): failed to build empty list");
-        return -1;
-    }
-
-    *envdict = Py_BuildValue("{}");     /* empty dict */
-    if (*envdict == NULL) {
-        PyErr_SetString(PyExc_SystemError, "getcmdargs(): failed to build empty dict");
         return -1;
     }
 
@@ -193,10 +187,11 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObject **en
     /* Skip over the exec_path. */
     for (; cp < &procargs[size]; cp++) {
         if (*cp == '\0') {
-            /* End of exec_path reached. */
+            //End of exec_path reached.
             break;
         }
     }
+
     if (cp == &procargs[size]) {
         goto ERROR_B;
     }
@@ -208,9 +203,11 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObject **en
             break;
         }
     }
+
     if (cp == &procargs[size]) {
         goto ERROR_B;
     }
+
     /* Save where the argv[0] string starts. */
     sp = cp;
 
@@ -229,49 +226,9 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObject **en
             if (arg == NULL)
                 goto ERROR_C;   /* Exception */
             PyList_Append(*arglist, arg);
+            Py_DECREF(arg);
             
             arg_start = cp + 1;
-        }
-    }
-
-    /*
-     * Continue extracting '\0'-terminated strings and save in Python
-     * dictionary of environment settings.
-     */
-    np = cp;
-    val_start = NULL;
-    for (arg_start = cp; cp < &procargs[size]; cp++) {
-        if (*cp == '\0') {
-            if (np != NULL) {
-                if (&np[1] == cp || val_start == NULL) {
-                    /*
-                     * Two '\0' characters in a row.
-                     * This should normally only
-                     * happen after all the strings
-                     * have been seen, but in any
-                     * case, stop parsing.
-                     */
-                    break;
-                }
-                /* Fetch next environment string. */
-                arg = Py_BuildValue("s", arg_start);
-                if (arg == NULL)
-                    goto ERROR_C;   /* Exception */
-             
-                val = Py_BuildValue("s", val_start);
-                if (val == NULL)
-                    goto ERROR_C;   /* Exception */
-
-                PyDict_SetItem(*envdict, arg, val);
-            }
-            /* Note location of current '\0'. */
-            np = cp;
-            arg_start = cp + 1;
-            val_start = NULL;
-        } else if (val_start == NULL && *cp == '=') {
-            /* start of environment value */
-            *cp = '\0';     /* terminate the environment variable name */
-            val_start = cp + 1;
         }
     }
 
@@ -279,23 +236,28 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist, PyObject **en
      * sp points to the beginning of the arguments/environment string, and
      * np should point to the '\0' terminator for the string.
      */
+    
     if (np == NULL || np == sp) {
-        /* Empty or unterminated string. */
+        //Empty or unterminated string.
         goto ERROR_B;
     }
 
-    /* Make a copy of the string. */
-/*    asprintf(args, "%s", sp);*/
+    //Make a copy of the string.
+    //asprintf(args, "%s", sp);
 
-    /* Clean up. */
+    //Clean up.
     free(procargs);
     return 0;
 
     ERROR_B:
     PyErr_SetString(PyExc_MemoryError, "getcmdargs() failure to allocate memory.");
+
     ERROR_C:
     PyErr_SetString(PyExc_SystemError, "getcmdargs(): failed to parse string values.");
-    free(procargs);
+
+    if (NULL != procargs) {
+        free(procargs);
+    }
     return -1;
 }
 
@@ -306,11 +268,11 @@ PyObject* get_arg_list(long pid)
     int r;
     PyObject *cmd_args = NULL;
     PyObject *command_path = NULL;
-    PyObject *env = NULL;
     PyObject *argList = Py_BuildValue("");
 
     //special case for PID 0 (kernel_task) where cmdline cannot be fetched
     if (pid == 0) {
+        Py_DECREF(argList);
         return Py_BuildValue("[]");
     }
 
@@ -320,14 +282,19 @@ PyObject* get_arg_list(long pid)
         return argList;
     } 
 
-    r = getcmdargs(pid, &command_path, &cmd_args, &env);
+    r = getcmdargs(pid, &command_path, &cmd_args);
     if (r == 0) {
         //PySequence_Tuple(args);
         argList = PySequence_List(cmd_args);
+        Py_XDECREF(cmd_args);
+        Py_XDECREF(command_path);
     }
 
     if (r == ARGS_ACCESS_DENIED) { //-2
-        argList = Py_BuildValue("[]");
+        Py_XDECREF(cmd_args);
+        Py_XDECREF(command_path);
+        Py_DECREF(argList);
+        return Py_BuildValue("[]");
     }
 
     return argList; 

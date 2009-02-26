@@ -49,30 +49,40 @@ init_psutil_osx(void)
 static PyObject* get_pid_list(PyObject* self, PyObject* args)
 {
     kinfo_proc *proclist = NULL;
+    kinfo_proc *orig_address = NULL;
     size_t num_processes;
     size_t idx;
-    PyObject* retlist = PyList_New(0);
+    PyObject *pid;
+    PyObject *retlist = PyList_New(0);
 
     if (GetBSDProcessList(&proclist, &num_processes) != 0) {
+        Py_DECREF(retlist);
         PyErr_SetString(PyExc_RuntimeError, "failed to retrieve process list.");
         return NULL;
     }
 
     if (num_processes > 0) {
+        //save the address of proclist so we can free it later
+        orig_address = proclist;
         //special case for 0 (kernel_task) PID since it is not provided in get_pids
-        PyList_Append(retlist, Py_BuildValue("i", 0));
+        pid = Py_BuildValue("i", 0);
+        PyList_Append(retlist, pid);
+        Py_XDECREF(pid);
         for (idx=0; idx < num_processes; idx++) {
             //printf("%i: %s\n", proclist->kp_proc.p_pid, proclist->kp_proc.p_comm);
-            PyList_Append(retlist, Py_BuildValue("i", proclist->kp_proc.p_pid));
+            pid = Py_BuildValue("i", proclist->kp_proc.p_pid);
+            PyList_Append(retlist, pid);
+            Py_XDECREF(pid);
             proclist++;
         }
     }
     
+    free(orig_address);
     return retlist;
 }
 
 
-static int pid_exists(pid) {
+static int pid_exists(long pid) {
     kinfo_proc *procList = NULL;
     size_t num_processes;
     size_t idx;
@@ -100,7 +110,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 	long pid;
-    PyObject* arglist = Py_BuildValue("");
+    PyObject* arglist = NULL;
 
 	//the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
