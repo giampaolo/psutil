@@ -8,6 +8,7 @@ import subprocess
 import time
 import signal
 import socket
+import types
 from test import test_support
 
 import psutil
@@ -43,6 +44,11 @@ class TestCase(unittest.TestCase):
 
     def test_get_process_list(self):
         pids = [x.pid for x in psutil.get_process_list()]
+        if hasattr(os, 'getpid'):
+            self.assertTrue(os.getpid() in pids)
+
+    def test_process_iter(self):
+        pids = [x.pid for x in psutil.process_iter()]
         if hasattr(os, 'getpid'):
             self.assertTrue(os.getpid() in pids)
 
@@ -145,6 +151,8 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(psutil.get_process_list(), list))
         self.assert_(isinstance(psutil.get_process_list()[0], psutil.Process))
+        self.assert_(isinstance(psutil.process_iter(), types.GeneratorType))
+        self.assert_(isinstance(psutil.process_iter().next(), psutil.Process))
         self.assert_(isinstance(psutil.get_pid_list(), list))
         self.assert_(isinstance(psutil.get_pid_list()[0], int))
         self.assert_(isinstance(psutil.pid_exists(1), bool))
@@ -179,7 +187,7 @@ class TestCase(unittest.TestCase):
 
     # XXX - provisional
     def test_fetch_all(self):
-        for p in psutil.get_process_list():
+        for p in psutil.process_iter():
             str(p)
 
     def test_pid_0(self):

@@ -160,20 +160,24 @@ def get_pid_list():
     """Return a list of current running PIDs."""
     return _platform_impl.get_pid_list()
 
+def process_iter():
+    """Return an iterator yileding a Process class instances for all
+    running processes on the local machine.
+    """
+    pids = _platform_impl.get_pid_list();
+    # for each PID, create a proxyied Process object
+    # it will lazy init it's name and path later if required
+    for pid in pids:
+        try:
+            yield Process(pid)
+        except (NoSuchProcess, AccessDenied):
+            continue
+
 def get_process_list():
     """Return a list of Process class instances for all running
     processes on the local machine.
     """
-    pidList = _platform_impl.get_pid_list();
-    # for each PID, create a proxyied Process object
-    # it will lazy init it's name and path later if required
-    retProcesses = []
-    for pid in pidList:
-        try:
-            retProcesses.append(Process(pid))
-        except (NoSuchProcess, AccessDenied):
-            continue
-    return retProcesses
+    return list(process_iter())
 
 
 def test():
