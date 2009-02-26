@@ -206,8 +206,10 @@ class TestCase(unittest.TestCase):
             self.assertEqual(p.name, 'System Idle Process')
         elif sys.platform.lower().startswith("linux"):
             self.assertEqual(p.name, 'sched')
-        # XXX - add test cases for OS X
-        # ...
+        elif sys.platform.lower().startswith("freebsd"):
+            self.assertEqual(p.name, 'swapper')
+        elif sys.platform.lower().startswith("darwin"):
+            self.assertEqual(p.name, 'kernel_task')
 
         # use __str__ to access all common Process properties to check
         # that nothing strange happens
