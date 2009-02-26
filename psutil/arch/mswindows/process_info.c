@@ -61,7 +61,7 @@ PVOID GetPebAddress(HANDLE ProcessHandle)
 
 /* 
  * returns a Python list representing the arguments for the process 
- * with given pid 
+ * with given pid or NULL on error.
  */
 PyObject* get_arg_list(long pid)
 {
@@ -72,7 +72,10 @@ PyObject* get_arg_list(long pid)
     PVOID rtlUserProcParamsAddress;
     UNICODE_STRING commandLine;
     WCHAR *commandLineContents;
-    PyObject *argList = Py_BuildValue("[]");
+    PyObject *arg = NULL;
+    PyObject *arg_from_wchar = NULL;
+    PyObject *argList = NULL;
+
 
     if ((processHandle = OpenProcess(
         PROCESS_QUERY_INFORMATION | /* required for NtQueryInformationProcess */
@@ -90,6 +93,7 @@ PyObject* get_arg_list(long pid)
         &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
     {
         //printf("Could not read the address of ProcessParameters!\n");
+        CloseHandle(processHandle);
         return argList;
     }
 
@@ -98,8 +102,10 @@ PyObject* get_arg_list(long pid)
         &commandLine, sizeof(commandLine), NULL))
     {
         //printf("Could not read CommandLine!\n");
+        CloseHandle(processHandle);
         return argList;
     }
+
 
     /* allocate memory to hold the command line */
     commandLineContents = (WCHAR *)malloc(commandLine.Length+1);
@@ -109,6 +115,8 @@ PyObject* get_arg_list(long pid)
         commandLineContents, commandLine.Length, NULL))
     {
         //printf("Could not read the command line string!\n");
+        CloseHandle(processHandle);
+        free(commandLineContents);
         return argList;
     }
 
@@ -128,20 +136,24 @@ PyObject* get_arg_list(long pid)
         argList = Py_BuildValue("N", PyUnicode_AsUTF8String(PyUnicode_FromWideChar(commandLineContents, commandLine.Length/2)));
     } 
     
+    
     else {
         //arglist parsed as array of UNICODE_STRING, so convert each to Python
         //string object and add to arg list
         argList = Py_BuildValue("[]");
         for( i=0; i<nArgs; i++) {
             //printf("%d: %.*S (%d characters)\n", i, wcslen(szArglist[i]), szArglist[i], wcslen(szArglist[i]));
-            PyList_Append(argList, Py_BuildValue("N", PyUnicode_AsUTF8String(PyUnicode_FromWideChar(szArglist[i], wcslen(szArglist[i])))));
+            arg_from_wchar = PyUnicode_FromWideChar(szArglist[i], wcslen(szArglist[i]));
+            arg = PyUnicode_AsUTF8String(arg_from_wchar);
+            Py_XDECREF(arg_from_wchar);
+            PyList_Append(argList, arg);
+            Py_XDECREF(arg);
         }
     } 
-    
+   
     LocalFree(szArglist);
-    CloseHandle(processHandle);
     free(commandLineContents);
-
+    CloseHandle(processHandle);
     return argList;
 }
 
@@ -149,7 +161,6 @@ PyObject* get_arg_list(long pid)
 /* returns parent pid (as a Python int) for given pid or None on failure */
 PyObject* get_ppid(long pid)
 {
-    PyObject *ppid = Py_BuildValue("");
 	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	PROCESSENTRY32 pe = { 0 };
 	pe.dwSize = sizeof(PROCESSENTRY32);    
@@ -158,11 +169,13 @@ PyObject* get_ppid(long pid)
 	    do {
 			if (pe.th32ProcessID == pid) {
 				//printf("PID: %i; PPID: %i\n", pid, pe.th32ParentProcessID);
-                ppid = Py_BuildValue("l", pe.th32ParentProcessID);
+                CloseHandle(h);
+                return Py_BuildValue("l", pe.th32ParentProcessID);
 			}
 		} while( Process32Next(h, &pe));
 	}
-
-    return ppid;
+    
+    CloseHandle(h);
+    return NULL;
 }
 

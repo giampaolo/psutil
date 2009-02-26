@@ -132,16 +132,20 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
     DWORD *proclist = NULL;
     DWORD numberOfReturnedPIDs;
     DWORD i;
+    PyObject* pid = NULL;
 	PyObject* retlist = PyList_New(0);
     
     proclist = get_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
+        Py_DECREF(retlist);
 		PyErr_SetString(PyExc_RuntimeError, "get_pids() failed in get_pid_list()");
         return NULL;
     }
 
     for (i = 0; i < numberOfReturnedPIDs; i++) {
-        PyList_Append(retlist, Py_BuildValue("i", proclist[i]) );
+        pid = Py_BuildValue("i", proclist[i]);
+        PyList_Append(retlist, pid);
+        Py_XDECREF(pid);
     }
 
     //free C array allocated for PIDs
@@ -189,9 +193,11 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     //kill the process
     if (! TerminateProcess(hProcess, 0) ){
         PyErr_SetFromWindowsErr(0);
+        CloseHandle(hProcess);
         return NULL;
     }
-    
+   
+    CloseHandle(hProcess);
     return PyInt_FromLong(1);
 }
 
@@ -218,13 +224,15 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 
     //special case for PID 0 (System Idle Process)
     if (0 == pid) {
-	    infoTuple = Py_BuildValue("llssNll", pid, 0, "System Idle Process", "", Py_BuildValue("[]"), -1, -1);
+        arglist = Py_BuildValue("[]");
+	    infoTuple = Py_BuildValue("llssNll", pid, 0, "System Idle Process", "", arglist, -1, -1);
         return infoTuple;
     }
 
     //special case for PID 4 (System)
     if (4 == pid) {
-	    infoTuple = Py_BuildValue("llssNll", pid, 0, "System", "", Py_BuildValue("[]"), -1, -1);
+        arglist = Py_BuildValue("[]");
+	    infoTuple = Py_BuildValue("llssNll", pid, 0, "System", "", arglist, -1, -1);
         return infoTuple;
     }
 
@@ -256,6 +264,8 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     if ( EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded) ) {
         if (! GetModuleBaseName( hProcess, hMod, processName, sizeof(processName)/sizeof(TCHAR) ) ) {
             PyErr_SetFromWindowsErr(0);
+            CloseHandle(hMod);
+            CloseHandle(hProcess);
             return NULL;
         }
     } 
@@ -264,16 +274,22 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     //not sure what this is from, but it should be ignored for now.
 
     ppid = get_ppid(pid);
-    if ( Py_None == ppid ) {
+    if ( NULL == ppid ) {
+        CloseHandle(hMod);
+        CloseHandle(hProcess);
         return NULL;  //exception string set in get_ppid()
     }
-
+    
     arglist = get_arg_list(pid);
-    if ( Py_None == arglist ) {
-        return NULL;  //exception string set in get_arg_list()
+    if ( NULL == arglist ) {
+        // carry on anyway if we couldn't get the arg list
+        arglist = Py_BuildValue("[]");
     }
 
 	infoTuple = Py_BuildValue("lNssNll", pid, ppid, processName, "", arglist, -1, -1);
+
+    CloseHandle(hProcess);
+    CloseHandle(hMod);
 	return infoTuple;
 }
 
