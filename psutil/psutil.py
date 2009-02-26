@@ -62,6 +62,8 @@ class Process(object):
     """Represents an OS process."""
 
     def __init__(self, pid):
+        if not isinstance(pid, int):
+            raise ValueError("An integer is required")
         if not pid_exists(pid):
             raise NoSuchProcess("No process found with PID %s" % pid)
         self._procinfo = ProcessInfo(pid)

@@ -169,6 +169,9 @@ class TestCase(unittest.TestCase):
         # Refers to Issue #12
         self.assertRaises(psutil.NoSuchProcess, psutil.Process, -1)
 
+    def test_invalid_pid(self):
+        self.assertRaises(ValueError, psutil.Process, "1")
+
     def test_zombie_process(self):
         # Test that NoSuchProcess exception gets raised in the event the
         # process dies after we create the Process object.
