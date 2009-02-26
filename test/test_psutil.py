@@ -18,6 +18,19 @@ PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 
 
+def wait_for_pid(pid, timeout=1):
+    """Wait for pid to show up in the process list then return.
+    Used in the test suite to give time the sub process to initialize.
+    """
+    raise_at = time.time() + timeout
+    while 1:
+        if pid in psutil.get_pid_list():
+            return
+        time.sleep(0.0001)
+        if time.time() >= raise_at:
+            raise RuntimeError("Timed out")
+
+
 class TestCase(unittest.TestCase):
 
     def setUp(self):
@@ -45,7 +58,7 @@ class TestCase(unittest.TestCase):
 
     def test_kill(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        time.sleep(.1) # XXX: provisional, fix needed
+        wait_for_pid(self.proc.pid)
         p = psutil.Process(self.proc.pid)
         p.kill()
         self.proc.wait()
@@ -58,7 +71,7 @@ class TestCase(unittest.TestCase):
 
     def test_eq(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        time.sleep(0.1)  # XXX: provisional, fix needed
+        wait_for_pid(self.proc.pid)
         self.assertTrue(psutil.Process(self.proc.pid) == psutil.Process(self.proc.pid))
 
     def test_rich_comparisons(self):
@@ -80,12 +93,12 @@ class TestCase(unittest.TestCase):
 
     def test_is_running(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        time.sleep(0.1)  # XXX: provisional, fix needed
+        wait_for_pid(self.proc.pid)
         p = psutil.Process(self.proc.pid)
         self.assertTrue(p.is_running())
         psutil.Process(self.proc.pid).kill()
         self.proc.wait()
-        time.sleep(0.1) # FIXME: why is this needed?
+##        wait_for_pid(self.proc.pid) # FIXME: why is this needed?
         try:
             self.assertFalse(p.is_running())
         finally:
@@ -98,22 +111,22 @@ class TestCase(unittest.TestCase):
 
     def test_path(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        time.sleep(0.1)  # XXX: provisional, fix needed
+        wait_for_pid(self.proc.pid)
         self.assertEqual(psutil.Process(self.proc.pid).path, os.path.dirname(PYTHON))
 
     def test_cmdline(self):
         self.proc = subprocess.Popen([PYTHON, "-E"], stdout=DEVNULL, stderr=DEVNULL)
-        time.sleep(0.1)  # XXX: provisional, fix needed
+        wait_for_pid(self.proc.pid)
         self.assertEqual(psutil.Process(self.proc.pid).cmdline, [PYTHON, "-E"])
 
     def test_name(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL,  stderr=DEVNULL)
-        time.sleep(0.1)  # XXX: provisional, fix needed
+        wait_for_pid(self.proc.pid)
         self.assertEqual(psutil.Process(self.proc.pid).name, os.path.basename(PYTHON))
 
     def test_uid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        time.sleep(0.1)  # XXX: provisional, fix needed
+        wait_for_pid(self.proc.pid)
         uid = psutil.Process(self.proc.pid).uid
         if hasattr(os, 'getuid'):
             self.assertEqual(uid, os.getuid())
@@ -124,7 +137,7 @@ class TestCase(unittest.TestCase):
 
     def test_gid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        time.sleep(0.1)  # XXX: provisional, fix needed
+        wait_for_pid(self.proc.pid)
         gid = psutil.Process(self.proc.pid).gid
         if hasattr(os, 'getgid'):
             self.assertEqual(gid, os.getgid())
@@ -185,7 +198,7 @@ class TestCase(unittest.TestCase):
         p.kill()
         self.proc.wait()
         self.proc = None
-        time.sleep(0.1)  # XXX - maybe not necessary; verify
+##        wait_for_pid(self.proc.pid)  # XXX - maybe not necessary; verify
 
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "ppid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "parent")
