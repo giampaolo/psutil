@@ -3,7 +3,6 @@
 
 import os
 import signal
-import socket
 import errno
 
 import psutil
@@ -75,9 +74,9 @@ class Impl(object):
         finally:
             f.close()
 
-        return psutil.ProcessInfo(pid, self.get_ppid(pid), name, path, cmdline,
-                                  self.get_process_uid(pid),
-                                  self.get_process_gid(pid))
+        return psutil.ProcessInfo(pid, self._get_ppid(pid), name, path, cmdline,
+                                  self._get_process_uid(pid),
+                                  self._get_process_gid(pid))
 
     @wrap_privileges
     def kill_process(self, pid, sig=signal.SIGKILL):
@@ -99,7 +98,7 @@ class Impl(object):
         return pids
 
     def pid_exists(self, pid):
-        """ Check For the existence of a unix pid."""
+        """Check For the existence of a unix pid."""
         if pid < 0:
             return False
 
@@ -110,30 +109,33 @@ class Impl(object):
         else:
             return True
 
-    def get_ppid(self, pid):
+    def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)
         for line in f:
             if line.startswith("PPid:"):
                 # PPid: nnnn
+                f.close()
                 return int(line.split()[1])
 
-    def get_process_uid(self, pid):
+    def _get_process_uid(self, pid):
         # XXX - something faster than readlines() could be used
         f = open("/proc/%s/status" %pid)
-        for line in f.readlines():
+        for line in f:
             if line.startswith('Uid:'):
                 # Uid line provides 4 values which stand for real,
                 # effective, saved set, and file system UIDs.
                 # We want to provide real UID only.
+                f.close()
                 return int(line.split()[1])
 
-    def get_process_gid(self, pid):
+    def _get_process_gid(self, pid):
         # XXX - something faster than readlines() could be used
         f = open("/proc/%s/status" %pid)
-        for line in f.readlines():
+        for line in f:
             if line.startswith('Gid:'):
                 # Uid line provides 4 values which stand for real,
                 # effective, saved set, and file system GIDs.
                 # We want to provide real GID only.
+                f.close()
                 return int(line.split()[1])
 

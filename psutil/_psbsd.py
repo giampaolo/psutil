@@ -58,7 +58,7 @@ class Impl(object):
         return _psutil_bsd.get_pid_list()
 
     def pid_exists(self, pid):
-        """ Check For the existence of a unix pid."""
+        """Check For the existence of a unix pid."""
         if pid < 0:
             return False
 

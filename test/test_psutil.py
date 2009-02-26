@@ -18,15 +18,6 @@ PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 
 
-def find_unused_port(family=socket.AF_INET, socktype=socket.SOCK_STREAM):
-    "Bind the socket to a free port and return the port number."
-    tempsock = socket.socket(family, socktype)
-    port = test_support.bind_port(tempsock)
-    tempsock.close()
-    del tempsock
-    return port
-
-
 class TestCase(unittest.TestCase):
 
     def setUp(self):
@@ -224,6 +215,7 @@ class TestCase(unittest.TestCase):
     # Windows specific tests
 
     if sys.platform.lower().startswith("win32"):
+
         def test_issue_24(self):
             p = psutil.Process(0)
             self.assertRaises(psutil.AccessDenied, p.kill)

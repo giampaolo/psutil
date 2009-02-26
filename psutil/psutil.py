@@ -37,13 +37,15 @@ else:
 
 _platform_impl = Impl()
 
+
 class ProcessInfo(object):
     """Class that allows the process information to be passed
     between external code and psutil.  Used directly by the
     Process class.
     """
 
-    def __init__(self, pid, ppid=None, name=None, path=None, cmdline=None, uid=None, gid=None):
+    def __init__(self, pid, ppid=None, name=None, path=None, cmdline=None,
+                       uid=None, gid=None):
         self.pid = pid
         self.ppid = ppid
         self.name = name
@@ -55,6 +57,7 @@ class ProcessInfo(object):
         self.uid = uid
         self.gid = gid
 
+
 class Process(object):
     """Represents an OS process."""
 
@@ -65,16 +68,13 @@ class Process(object):
         self.is_proxy = True
 
     def __str__(self):
-        return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; CMDLINE:%s; UID:%s; GID:%s;>" \
-            %(self.pid, self.ppid, self.name, self.path, self.cmdline, self.uid, self.gid)
-
-    def deproxy(self):
-        if self.is_proxy:
-            self._procinfo = _platform_impl.get_process_info(self._procinfo.pid)
-            self.is_proxy = False
+        return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; " \
+               "CMDLINE:%s; UID:%s; GID:%s;>" %(self.pid, self.ppid, self.name,\
+               self.path, self.cmdline, self.uid, self.gid)
 
     def __eq__(self, other):
-        """Test for equality with another Process object based on PID, name etc."""
+        """Test for equality with another Process object based on PID,
+        name etc."""
         if self.pid != other.pid:
             return False
 
@@ -88,6 +88,11 @@ class Process(object):
                 if getattr(self._procinfo, attr) != getattr(other._procinfo, attr):
                     return False
         return True
+
+    def deproxy(self):
+        if self.is_proxy:
+            self._procinfo = _platform_impl.get_process_info(self._procinfo.pid)
+            self.is_proxy = False
 
     @property
     def pid(self):
@@ -138,18 +143,19 @@ class Process(object):
         self.deproxy()
         return self._procinfo.gid
 
-    def kill(self, sig=None):
-        """Kill the current process by using signal sig (defaults to SIGKILL).
-        """
-        _platform_impl.kill_process(self.pid, sig)
-
     def is_running(self):
-        """Return whether the current process is running in the current process list."""
+        """Return whether the current process is running in the current process
+        list."""
         try:
             new_proc = Process(self.pid)
         except NoSuchProcess:
             return False
         return (self == new_proc)
+
+    def kill(self, sig=None):
+        """Kill the current process by using signal sig (defaults to SIGKILL).
+        """
+        _platform_impl.kill_process(self.pid, sig)
 
 
 def pid_exists(pid):
@@ -161,7 +167,7 @@ def get_pid_list():
     return _platform_impl.get_pid_list()
 
 def process_iter():
-    """Return an iterator yileding a Process class instances for all
+    """Return an iterator yielding a Process class instances for all
     running processes on the local machine.
     """
     pids = _platform_impl.get_pid_list();
@@ -182,12 +188,12 @@ def get_process_list():
 
 def test():
     processes = get_process_list()
-    print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s" %("PID", "PPID", "NAME", "PATH", "COMMAND LINE", "UID", "GID")
+    print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s" \
+          %("PID", "PPID", "NAME", "PATH", "COMMAND LINE", "UID", "GID")
     for proc in processes:
-        print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s" %(proc.pid, proc.ppid, proc.name, proc.path or \
-                                        "<unknown>", ' '.join(proc.cmdline) or \
-                                        "<unknown>", proc.uid, proc.gid,
-                                        )
+        print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s" \
+              %(proc.pid, proc.ppid, proc.name, proc.path or "<unknown>", \
+              ' '.join(proc.cmdline) or "<unknown>", proc.uid, proc.gid)
 
 if __name__ == "__main__":
     test()
