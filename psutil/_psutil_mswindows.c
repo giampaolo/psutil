@@ -211,9 +211,11 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     HANDLE hProcess;
     HMODULE hMod;
     DWORD cbNeeded;
+    DWORD last_err;
     PyObject* infoTuple; 
     PyObject* ppid;
     PyObject* arglist;
+    BOOL enum_mod_retval;
 	TCHAR processName[MAX_PATH] = TEXT("<unknown>");
 
     SetSeDebug();
@@ -260,18 +262,36 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         return NULL;
     }
 
-	//get the process name
-    if ( EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded) ) {
-        if (! GetModuleBaseName( hProcess, hMod, processName, sizeof(processName)/sizeof(TCHAR) ) ) {
-            PyErr_SetFromWindowsErr(0);
-            CloseHandle(hMod);
-            CloseHandle(hProcess);
-            return NULL;
-        }
-    } 
+	//Get the process module list so we can get the process name
     //NOTE: sometimes EnumProcessModules fails with a err 299 
     //"Only part of a ReadProcessMemory or WriteProcessMemory request was completed"
-    //not sure what this is from, but it should be ignored for now.
+    //if that happens try again until we can get the data
+    enum_mod_retval = EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded); 
+    last_err = GetLastError();
+    if (! enum_mod_retval) {
+        while (0 == enum_mod_retval) {
+            if (last_err == ERROR_PARTIAL_COPY) {
+                enum_mod_retval = EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded); 
+                continue;
+            }
+            
+            else {
+                PyErr_SetFromWindowsErr(last_err);
+                CloseHandle(hMod);
+                CloseHandle(hProcess);
+                return NULL;
+            }
+            last_err = GetLastError();
+        }
+    }
+   
+    //EnumProcessModules succeeded, move on to get the process name
+    if (! GetModuleBaseName( hProcess, hMod, processName, sizeof(processName)/sizeof(TCHAR) ) ) {
+        PyErr_SetFromWindowsErr(0);
+        CloseHandle(hMod);
+        CloseHandle(hProcess);
+        return NULL;
+    }
 
     ppid = get_ppid(pid);
     if ( NULL == ppid ) {
