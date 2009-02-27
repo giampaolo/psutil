@@ -8,9 +8,6 @@ import _psutil_mswindows
 
 NoSuchProcess = _psutil_mswindows.NoSuchProcess
 
-# http://msdn.microsoft.com/library/default.asp?url=/library/en-us/debug/base/system_error_codes.asp
-ERROR_ACCESS_DENIED = 5
-
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if a
@@ -22,8 +19,8 @@ def wrap_privileges(callable):
         import psutil
         try:
             return callable(*args, **kwargs)
-        except WindowsError, err:
-            if err.errno == ERROR_ACCESS_DENIED:
+        except OSError, err:
+            if err.errno == errno.EACCES:
                 raise psutil.AccessDenied
             raise
     return wrapper
