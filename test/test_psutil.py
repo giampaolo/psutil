@@ -63,8 +63,8 @@ class TestCase(unittest.TestCase):
         name = p.name
         p.kill()
         self.proc.wait()
-        self.assertFalse(psutil.pid_exists(self.proc.pid) and name == PYTHON)
         self.proc = None
+        self.assertFalse(psutil.pid_exists(self.proc.pid) and name == PYTHON)
 
     def test_pid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
@@ -82,11 +82,9 @@ class TestCase(unittest.TestCase):
         self.assertTrue(p.is_running())
         psutil.Process(self.proc.pid).kill()
         self.proc.wait()
+        self.proc = None
 ##        wait_for_pid(self.proc.pid) # FIXME: why is this needed?
-        try:
-            self.assertFalse(p.is_running())
-        finally:
-            self.proc = None
+        self.assertFalse(p.is_running())
 
     def test_pid_exists(self):
         if hasattr(os, 'getpid'):
