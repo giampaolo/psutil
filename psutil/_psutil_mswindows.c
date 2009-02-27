@@ -170,6 +170,10 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
         return NULL;
     }
 
+    if (pid < 0) {
+        return NULL;
+    }
+
     pid_return = is_running(pid);
     if (pid_return == 0) {
         return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
@@ -179,12 +183,8 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
         return NULL; //exception raised from within is_running()
     }
 
-    if (pid < 0) {
-        return NULL;
-    }
-
     //get a process handle
-    hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+    hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
     if (hProcess == NULL) {
         PyErr_SetFromWindowsErr(0);
         return NULL;

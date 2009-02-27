@@ -60,9 +60,10 @@ class TestCase(unittest.TestCase):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         wait_for_pid(self.proc.pid)
         p = psutil.Process(self.proc.pid)
+        name = p.name
         p.kill()
         self.proc.wait()
-        self.assertFalse(psutil.pid_exists(self.proc.pid) and psutil.Process(self.proc.pid).name == PYTHON)
+        self.assertFalse(psutil.pid_exists(self.proc.pid) and name == PYTHON)
         self.proc = None
 
     def test_pid(self):
