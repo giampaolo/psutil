@@ -58,13 +58,14 @@ class TestCase(unittest.TestCase):
 
     def test_kill(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
-        p = psutil.Process(self.proc.pid)
+        test_pid = self.proc.pid
+        wait_for_pid(test_pid)
+        p = psutil.Process(test_pid)
         name = p.name
         p.kill()
         self.proc.wait()
         self.proc = None
-        self.assertFalse(psutil.pid_exists(self.proc.pid) and name == PYTHON)
+        self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_pid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
