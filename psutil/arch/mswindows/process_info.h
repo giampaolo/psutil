@@ -10,6 +10,9 @@
 
 
 PVOID GetPebAddress(HANDLE ProcessHandle);
+HANDLE handle_from_pid(long pid);
+BOOL is_running(HANDLE hProcess);
 PyObject* get_arg_list(long pid);
 PyObject* get_ppid(long pid);
+PyObject* get_name(long pid);
 

@@ -10,6 +10,8 @@
 #include <Psapi.h>
 #include <tlhelp32.h>
 
+#include "process_info.h"
+
 
 /* 
  * NtQueryInformationProcess code taken from 
@@ -77,11 +79,8 @@ PyObject* get_arg_list(long pid)
     PyObject *argList = NULL;
 
 
-    if ((processHandle = OpenProcess(
-        PROCESS_QUERY_INFORMATION | /* required for NtQueryInformationProcess */
-        PROCESS_VM_READ, /* required for ReadProcessMemory */
-        FALSE, pid)) == 0)
-    {
+    processHandle = handle_from_pid(pid);
+    if(NULL == processHandle) {
         //printf("Could not open process!\n");
         return argList;
     }
@@ -156,6 +155,169 @@ PyObject* get_arg_list(long pid)
     CloseHandle(processHandle);
     return argList;
 }
+
+
+
+DWORD* get_pids(DWORD *numberOfReturnedPIDs){
+	int procArraySz = 1024;
+
+	/* Win32 SDK says the only way to know if our process array
+	 * wasn't large enough is to check the returned size and make
+	 * sure that it doesn't match the size of the array.
+	 * If it does we allocate a larger array and try again*/
+
+	/* Stores the actual array */
+	DWORD *procArray = NULL;
+	DWORD procArrayByteSz;
+	
+    /* Stores the byte size of the returned array from enumprocesses */
+	DWORD enumReturnSz = 0;
+	
+	do {
+		free(procArray);
+
+        procArrayByteSz = procArraySz * sizeof(DWORD);
+		procArray = malloc(procArrayByteSz);
+
+
+		if (! EnumProcesses(procArray, procArrayByteSz, &enumReturnSz))
+		{
+			free(procArray);
+			/* Throw exception to python */
+			PyErr_SetString(PyExc_RuntimeError, "EnumProcesses failed");
+			return NULL;
+		}
+		else if (enumReturnSz == procArrayByteSz)
+		{
+			/* Process list was too large.  Allocate more space*/
+			procArraySz += 1024;
+		}
+
+		/* else we have a good list */
+
+	} while(enumReturnSz == procArraySz * sizeof(DWORD));
+
+	/* The number of elements is the returned size / size of each element */
+    *numberOfReturnedPIDs = enumReturnSz / sizeof(DWORD);
+
+    return procArray;
+}
+
+
+int pid_in_proclist(DWORD pid)
+{
+    DWORD *proclist = NULL;
+    DWORD numberOfReturnedPIDs;
+    DWORD i;
+    
+    proclist = get_pids(&numberOfReturnedPIDs);
+    if (NULL == proclist) {
+		PyErr_SetString(PyExc_RuntimeError, "get_pids() failed for pid_in_proclist()");
+        return -1;
+    }
+
+    for (i = 0; i < numberOfReturnedPIDs; i++) {
+        if (pid == proclist[i]) {
+            free(proclist);
+            return 1;
+        }
+    }
+
+    free(proclist);
+    return 0;
+}
+
+
+//Get a process handle from a pid with PROCESS_QUERY_INFORMATION rights
+HANDLE handle_from_pid(long pid)
+{
+    return OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+}
+
+
+//Check exit code from a process handle. Return FALSE on an error also
+BOOL is_running(HANDLE hProcess) 
+{
+    DWORD dwCode;
+
+    if (NULL == hProcess) {
+        return FALSE;
+    }
+
+    if (GetExitCodeProcess(hProcess, &dwCode)) {
+        return (dwCode == STILL_ACTIVE);
+    }
+    return FALSE;
+}
+
+
+//Return None to represent NoSuchProcess, else return NULL for 
+//other exception or the name as a Python string
+PyObject* get_name(long pid) 
+{
+    HANDLE hProcess;
+    HMODULE hMod;
+    DWORD eaccess_cnt;
+    DWORD cbNeeded;
+    DWORD last_err;
+    BOOL enum_mod_retval;
+	TCHAR processName[MAX_PATH] = TEXT("<unknown>");
+    
+    hProcess = handle_from_pid(pid);
+    if (NULL == hProcess) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+
+	//Get the process module list so we can get the process name
+    //NOTE: sometimes EnumProcessModules fails with a err 299 
+    //"Only part of a ReadProcessMemory or WriteProcessMemory request was completed"
+    //if that happens try again until we can get the data
+    eaccess_cnt = 0; //keep track of access denied errors 
+    enum_mod_retval = EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded); 
+    last_err = GetLastError();
+    if (! enum_mod_retval) {
+        while ( (0 == enum_mod_retval) && (! eaccess_cnt ) ) {
+            if (last_err == ERROR_PARTIAL_COPY) {
+                enum_mod_retval = EnumProcessModules( hProcess, &hMod, sizeof(hMod), &cbNeeded); 
+                last_err = GetLastError();
+                continue;
+            }
+
+            /*
+             * ACCESS_DENIED can be returned if the process has died. If we
+             * see ERROR_ACCESS_DENIED, check the exit code of the process 
+             * to see if it is still running and if not, throw NoSuchProcess.
+             */
+            if (last_err == ERROR_ACCESS_DENIED) {
+                //potentially swallows an error from GetExitCodePRocess
+                if (! is_running(hProcess)) { 
+                    CloseHandle(hProcess);
+                    CloseHandle(hMod);
+                    //special case, return NONE if NoSuchProcess
+                    return Py_BuildValue("");
+                }
+            }
+            
+            PyErr_SetFromWindowsErr(last_err);
+            CloseHandle(hMod);
+            CloseHandle(hProcess);
+            return NULL;
+        }
+    }
+   
+    //EnumProcessModules succeeded, move on to get the process name
+    if (! GetModuleBaseName( hProcess, hMod, processName, sizeof(processName)/sizeof(TCHAR) ) ) {
+        PyErr_SetFromWindowsErr(0);
+        CloseHandle(hMod);
+        CloseHandle(hProcess);
+        return NULL;
+    }
+
+    return Py_BuildValue("s", processName);
+}
+
+
 
 
 /* returns parent pid (as a Python int) for given pid or None on failure */
