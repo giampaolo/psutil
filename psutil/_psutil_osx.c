@@ -129,13 +129,17 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     //fetch the info with sysctl()
     len = sizeof(kp);
 
+    //sysctl doesn't always return an error for nonexistent PID so check first
     if (! pid_exists(pid) ){
         return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
     } 
 
-    // now read the data from sysctl
+    //now read the data from sysctl
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
         // raise an exception and throw errno as the error
+        if (ESRCH == errno) { //no such process
+            return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+        } 
         return PyErr_SetFromErrno(NULL);
     } 
     
@@ -148,6 +152,6 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         return Py_BuildValue("llssNll", pid, kp.kp_eproc.e_ppid, kp.kp_proc.p_comm, "", arglist, kp.kp_eproc.e_pcred.p_ruid, kp.kp_eproc.e_pcred.p_rgid);
     }
 
-	return PyErr_Format(PyExc_SystemError, "Failed to retrieve process information.");
+	return PyErr_Format(PyExc_RuntimeError, "Failed to retrieve process information.");
 }
 
