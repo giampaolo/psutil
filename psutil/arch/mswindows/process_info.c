@@ -204,6 +204,39 @@ DWORD* get_pids(DWORD *numberOfReturnedPIDs){
 }
 
 
+int pid_is_running(DWORD pid)
+{
+    HANDLE hProcess;
+    DWORD exitCode;
+    
+    //Special case for PID 0 System Idle Process
+    if (pid == 0) {
+        return 1;
+    }
+
+    if (pid < 0) {
+        return 0;
+    }
+
+    hProcess = handle_from_pid(pid);
+    if (NULL == hProcess) {
+        if (GetLastError() == ERROR_INVALID_PARAMETER) { //invalid parameter is no such process
+            return 0; 
+        }
+        PyErr_SetFromWindowsErr(0);
+        return -1;
+    }
+
+    if (GetExitCodeProcess(hProcess, &exitCode)) {
+        return (exitCode == STILL_ACTIVE);
+    }
+
+    printf("GetExitCode() failed\n");
+    PyErr_SetFromWindowsErr(0);
+    return -1;
+}
+
+
 int pid_in_proclist(DWORD pid)
 {
     DWORD *proclist = NULL;
@@ -229,7 +262,7 @@ int pid_in_proclist(DWORD pid)
 
 
 //Get a process handle from a pid with PROCESS_QUERY_INFORMATION rights
-HANDLE handle_from_pid(long pid)
+HANDLE handle_from_pid(DWORD pid)
 {
     return OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
 }

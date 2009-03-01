@@ -49,9 +49,9 @@ static PyObject* pid_exists(PyObject* self, PyObject* args)
         return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
 	}
 
-    status = pid_in_proclist(pid);
+    status = pid_is_running(pid);
     if (-1 == status) {
-        return NULL; //exception raised in pid_in_proclist()
+        return NULL; //exception raised in pid_is_running()
     }
     
     return PyBool_FromLong(status);
@@ -105,13 +105,13 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    pid_return = pid_in_proclist(pid);
+    pid_return = pid_is_running(pid);
     if (pid_return == 0) {
         return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
     } 
 
     if (pid_return == -1) {
-        return NULL; //exception raised from within pid_in_proclist()
+        return NULL; //exception raised from within pid_is_running()
     }
 
     //get a process handle
@@ -165,13 +165,13 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     }
 
     //check if the process exists before we waste time trying to read info
-    pid_return = pid_in_proclist(pid);
+    pid_return = pid_is_running(pid);
     if (pid_return == 0) {
         return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
     } 
 
     if (pid_return == -1) {
-        return NULL; //exception raised from within pid_in_proclist()
+        return NULL; //exception raised from within pid_is_running()
     }
 
 
