@@ -121,10 +121,6 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         return Py_BuildValue("llssNll", pid, 0, "swapper", "", Py_BuildValue("[]"), 0, 0);
     }
 
-    if (! pid_exists(pid) ){
-        return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
-    } 
-
     //build the mib to pass to sysctl to tell it what PID and what info we want
     len = 4;
     sysctlnametomib("kern.proc.pid", mib, &len);
@@ -137,6 +133,9 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     len = sizeof(kp);
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
         // raise an exception if it failed, since we won't get any data
+        if (ESRCH == errno) {
+            return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+        }
         return PyErr_SetFromErrno(PyExc_OSError);
     } 
 
