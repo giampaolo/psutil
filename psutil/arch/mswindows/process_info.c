@@ -231,7 +231,6 @@ int pid_is_running(DWORD pid)
         return (exitCode == STILL_ACTIVE);
     }
 
-    printf("GetExitCode() failed\n");
     PyErr_SetFromWindowsErr(0);
     return -1;
 }
