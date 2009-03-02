@@ -105,7 +105,6 @@ static int pid_exists(long pid) {
 
 static PyObject* get_process_info(PyObject* self, PyObject* args)
 {
-
     int mib[4];
     size_t len;
     struct kinfo_proc kp;
@@ -118,8 +117,6 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	}
 
     /* Fill out the first three components of the mib */
-    len = 4;
-    sysctlnametomib("kern.proc.pid", mib, &len);
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
@@ -129,11 +126,6 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     //fetch the info with sysctl()
     len = sizeof(kp);
 
-    //sysctl doesn't always return an error for nonexistent PID so check first
-    if (! pid_exists(pid) ){
-        return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
-    } 
-
     //now read the data from sysctl
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
         // raise an exception and throw errno as the error
@@ -142,7 +134,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         } 
         return PyErr_SetFromErrno(NULL);
     } 
-    
+
     if (len > 0) {
         arglist = get_arg_list(pid);
         if (Py_None == arglist) {
@@ -150,8 +142,17 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         }
 
         return Py_BuildValue("llssNll", pid, kp.kp_eproc.e_ppid, kp.kp_proc.p_comm, "", arglist, kp.kp_eproc.e_pcred.p_ruid, kp.kp_eproc.e_pcred.p_rgid);
+    } 
+
+    /*
+     * if sysctl succeeds but len is zero, raise NoSuchProcess as this only 
+     * appears to happen when the process has gone away.
+     */
+    else {
+        return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
     }
 
+    //something went wrong if we get to this, so throw an exception
 	return PyErr_Format(PyExc_RuntimeError, "Failed to retrieve process information.");
 }
 
