@@ -64,6 +64,8 @@ class Process(object):
     """Represents an OS process."""
 
     def __init__(self, pid):
+        """Create a new Process object, raises NoSuchProcess if the PID does
+        not exist, and ValueError if the parameter is not an integer PID."""
         if not isinstance(pid, int):
             raise ValueError("An integer is required")
         if not pid_exists(pid):
@@ -95,6 +97,14 @@ class Process(object):
         return True
 
     def deproxy(self):
+        """Used internally by Process properties. The first call to deproxy()
+        initializes the ProcessInfo object in self._procinfo with process data
+        read from platform-specific module's get_process_info() method. 
+        
+        This method becomes a NO-OP after the first property is accessed. 
+        Property data is filled in from the ProcessInfo object created, and
+        further calls to deproxy() simply return immediately without calling
+        get_process_info()."""
         if self.is_proxy:
             self._procinfo = _platform_impl.get_process_info(self._procinfo.pid)
             self.is_proxy = False
@@ -165,6 +175,8 @@ class Process(object):
         list."""
         try:
             new_proc = Process(self.pid)
+            # calls get_process_info() which may in turn trigger NSP exception
+            str(new_proc) 
         except NoSuchProcess:
             return False
         return (self == new_proc)
