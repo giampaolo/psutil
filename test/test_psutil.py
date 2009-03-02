@@ -212,9 +212,12 @@ class TestCase(unittest.TestCase):
         elif sys.platform.lower().startswith("darwin"):
             self.assertEqual(p.name, 'kernel_task')
 
-        if not sys.platform.lower().startswith("win32"):
+        if sys.platform.lower() in ("linux", "darwin"):
             self.assertEqual(p.username, 'root')
             self.assertEqual(p.groupname, 'root')
+        elif "freebsd" in sys.platform.lower():
+            self.assertEqual(p.username, 'root')
+            self.assertEqual(p.groupname, 'wheel')
 
         # use __str__ to access all common Process properties to check
         # that nothing strange happens
