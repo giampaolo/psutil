@@ -25,6 +25,8 @@ def wait_for_pid(pid, timeout=1):
     raise_at = time.time() + timeout
     while 1:
         if pid in psutil.get_pid_list():
+		    # give it one more iteration to allow full initialization
+            time.sleep(0.0001)
             return
         time.sleep(0.0001)
         if time.time() >= raise_at:

@@ -181,30 +181,33 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         return NULL;  //exception string set in get_ppid()
     }
     
-    //get_name() is the only one that can return an error 
-    //to let us know the process has disappeared, so do it 
-    //after ppid, but before get_arg_list
     name = get_name(pid);
     if ( NULL == name ) {
         return NULL;  //exception string set in get_name()
     }
 
-    //If get_name returns None that means the process is dead
+    //If get_name or get_pid returns None that means the process is dead
     if (Py_None == name) {
         return PyErr_Format(NoSuchProcessException, "Process with pid %lu has disappeared", pid); 
     }
 
-    //this has to be the last attribute fetched. May fail 
-    //any of several ReadProcessMemory calls etc. and not indicate
-    //a real problem so we ignore any errors and just live without
-    //commandline args if we got an error.
+    if (Py_None == ppid) {
+        return PyErr_Format(NoSuchProcessException, "Process with pid %lu has disappeared", pid); 
+    }
+
+    //May fail any of several ReadProcessMemory calls etc. and not indicate
+    //a real problem so we ignore any errors and just live without commandline
     arglist = get_arg_list(pid);
     if ( NULL == arglist ) {
-        // carry on anyway if we couldn't get the arg list
+        // carry on anyway, clear any exceptions too
+        PyErr_Clear();
         arglist = Py_BuildValue("[]");
     }
 
 	infoTuple = Py_BuildValue("lNNsNll", pid, ppid, name, "", arglist, -1, -1);
+    if (infoTuple == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "error building info tuple");
+    }
 	return infoTuple;
 }
 
