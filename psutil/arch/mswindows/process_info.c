@@ -308,8 +308,15 @@ PyObject* get_name(long pid)
     
     hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
+        if (GetLastError() == ERROR_ACCESS_DENIED) {
+            //try again without PROCESS_VM_READ right requested
+            hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
+        }
+        
+        if (NULL == hProcess) {
+            PyErr_SetFromWindowsErr(0);
+            return NULL;
+        }
     }
 
 	//Get the process module list so we can get the process name
