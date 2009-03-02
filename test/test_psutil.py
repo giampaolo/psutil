@@ -200,8 +200,17 @@ class TestCase(unittest.TestCase):
 
     # XXX - provisional
     def test_fetch_all(self):
+        valid_procs = 0
         for p in psutil.process_iter():
-            str(p)
+            try:
+                str(p)
+                valid_procs += 1
+            except psutil.NoSuchProcess, psutil.AccessDenied:
+                continue
+        
+        # we should always have a non-empty list, not including PID 0 etc. 
+        # special cases.
+        self.assertTrue(valid_procs > 2)
 
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms even if with
