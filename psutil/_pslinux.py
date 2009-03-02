@@ -4,6 +4,8 @@
 import os
 import signal
 import errno
+import pwd
+import grp
 
 import psutil
 
@@ -47,7 +49,7 @@ class Impl(object):
         """Returns a process info class."""
         if pid == 0:
             # special case for 0 (kernel process) PID
-            return psutil.ProcessInfo(pid, 0, 'sched', '', [], 0, 0)
+            return psutil.ProcessInfo(pid, 0, 'sched', '', [], 0, 0, 'root', 'root')
 
         # determine executable
         try:
@@ -74,9 +76,13 @@ class Impl(object):
         finally:
             f.close()
 
+        uid = self._get_process_uid(pid)
+        gid = self._get_process_gid(pid)
+        username = pwd.getpwuid(uid).pw_name
+        groupname = grp.getgrgid(gid).gr_name
+
         return psutil.ProcessInfo(pid, self._get_ppid(pid), name, path, cmdline,
-                                  self._get_process_uid(pid),
-                                  self._get_process_gid(pid))
+                                  uid, gid, username, groupname)
 
     @wrap_privileges
     def kill_process(self, pid, sig=signal.SIGKILL):

@@ -45,7 +45,7 @@ class ProcessInfo(object):
     """
 
     def __init__(self, pid, ppid=None, name=None, path=None, cmdline=None,
-                       uid=None, gid=None):
+                       uid=None, gid=None, username=None, groupname=None):
         self.pid = pid
         self.ppid = ppid
         self.name = name
@@ -56,6 +56,8 @@ class ProcessInfo(object):
             self.path = os.path.dirname(cmdline[0])
         self.uid = uid
         self.gid = gid
+        self.username = username
+        self.groupname = groupname
 
 
 class Process(object):
@@ -71,8 +73,9 @@ class Process(object):
 
     def __str__(self):
         return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; " \
-               "CMDLINE:%s; UID:%s; GID:%s;>" %(self.pid, self.ppid, self.name,\
-               self.path, self.cmdline, self.uid, self.gid)
+               "CMDLINE:%s; UID:%s; GID:%s; USERNAME:%s; GROUPNAME:%s>" \
+               %(self.pid, self.ppid, self.name, self.path, self.cmdline, \
+                 self.uid, self.gid, self.username, self.groupname)
 
     def __eq__(self, other):
         """Test for equality with another Process object based on PID,
@@ -145,6 +148,18 @@ class Process(object):
         self.deproxy()
         return self._procinfo.gid
 
+    @property
+    def username(self):
+        """The real username of the current process."""
+        self.deproxy()
+        return self._procinfo.username
+
+    @property
+    def groupname(self):
+        """The real groupname of the current process."""
+        self.deproxy()
+        return self._procinfo.groupname
+
     def is_running(self):
         """Return whether the current process is running in the current process
         list."""
@@ -190,12 +205,14 @@ def get_process_list():
 
 def test():
     processes = get_process_list()
-    print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s" \
-          %("PID", "PPID", "NAME", "PATH", "COMMAND LINE", "UID", "GID")
+    print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s %-5s %-5s" \
+          %("PID", "PPID", "NAME", "PATH", "COMMAND LINE", "UID", "GID", \
+            "USER", "GROUP")
     for proc in processes:
-        print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s" \
+        print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s %-5s %-5s" \
               %(proc.pid, proc.ppid, proc.name, proc.path or "<unknown>", \
-              ' '.join(proc.cmdline) or "<unknown>", proc.uid, proc.gid)
+              ' '.join(proc.cmdline) or "<unknown>", proc.uid, proc.gid, \
+              proc.username, proc.groupname)
 
 if __name__ == "__main__":
     test()

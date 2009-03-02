@@ -152,6 +152,8 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.cmdline, list))
         self.assert_(isinstance(p.uid, int))
         self.assert_(isinstance(p.gid, int))
+        self.assert_(isinstance(p.username, str))
+        self.assert_(isinstance(p.groupname, str))
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(psutil.get_process_list(), list))
         self.assert_(isinstance(psutil.get_process_list()[0], psutil.Process))
@@ -198,7 +200,7 @@ class TestCase(unittest.TestCase):
             str(p)
 
     def test_pid_0(self):
-        # Process(0) is supposed work on all platforms even if with
+        # Process(0) is supposed to work on all platforms even if with
         # some differences
         p = psutil.Process(0)
         if sys.platform.lower().startswith("win32"):
@@ -209,6 +211,10 @@ class TestCase(unittest.TestCase):
             self.assertEqual(p.name, 'swapper')
         elif sys.platform.lower().startswith("darwin"):
             self.assertEqual(p.name, 'kernel_task')
+
+        if not sys.platform.lower().startswith("win32"):
+            self.assertEqual(p.username, 'root')
+            self.assertEqual(p.groupname, 'root')
 
         # use __str__ to access all common Process properties to check
         # that nothing strange happens
@@ -226,15 +232,30 @@ class TestCase(unittest.TestCase):
     if not sys.platform.lower().startswith("win32"):
 
         if hasattr(os, 'getuid') and os.getuid() > 0:
-            def test_access_denied(self):
+            def test_unix_access_denied(self):
                 p = psutil.Process(1)
                 self.assertRaises(psutil.AccessDenied, p.kill)
+
+        def test_unix_username(self):
+            import pwd
+            self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+            p = psutil.Process(self.proc.pid)
+            user = pwd.getpwuid(p.uid).pw_name
+            self.assertEqual(p.username, user)
+
+        def test_unix_groupname(self):
+            import grp
+            self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+            p = psutil.Process(self.proc.pid)
+            group = grp.getgrgid(p.gid).gr_name
+            self.assertEqual(p.groupname, group)
+
 
     # Windows specific tests
 
     if sys.platform.lower().startswith("win32"):
 
-        def test_issue_24(self):
+        def test_windows_issue_24(self):
             p = psutil.Process(0)
             self.assertRaises(psutil.AccessDenied, p.kill)
 
