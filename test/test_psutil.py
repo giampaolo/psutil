@@ -214,10 +214,13 @@ class TestCase(unittest.TestCase):
         elif sys.platform.lower().startswith("darwin"):
             self.assertEqual(p.name, 'kernel_task')
 
-        if sys.platform.lower() in ("linux", "darwin"):
+        if sys.platform.lower() in ("linux"):
             self.assertEqual(p.username, 'root')
             self.assertEqual(p.groupname, 'root')
         elif "freebsd" in sys.platform.lower():
+            self.assertEqual(p.username, 'root')
+            self.assertEqual(p.groupname, 'wheel')
+        elif "darwin" in sys.platform.lower():
             self.assertEqual(p.username, 'root')
             self.assertEqual(p.groupname, 'wheel')
 
