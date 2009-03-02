@@ -140,6 +140,8 @@ class TestCase(unittest.TestCase):
         plist = [x.pid for x in psutil.get_process_list()]
         pidlist = psutil.get_pid_list()
         self.assertEqual(plist.sort(), pidlist.sort())
+        # make sure every pid is unique
+        self.assertEqual(len(pidlist), len(set(pidlist)))
 
     def test_types(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)

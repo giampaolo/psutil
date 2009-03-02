@@ -65,10 +65,6 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 
     if (num_processes > 0) {
         orig_address = proclist; //save so we can free it after we're done
-        //special case for 0 (kernel_task) PID since it is not provided in get_proc_list
-        pid = Py_BuildValue("i", 0);
-        PyList_Append(retlist, pid);
-        Py_XDECREF(pid);
         for (idx=0; idx < num_processes; idx++) {
             pid = Py_BuildValue("i", proclist->ki_pid);
             PyList_Append(retlist, pid);
