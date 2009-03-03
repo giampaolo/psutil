@@ -4,8 +4,6 @@
 import os
 import signal
 import errno
-import pwd
-import grp
 
 import _psutil_osx
 
@@ -38,11 +36,8 @@ class Impl(object):
         """
         # XXX - figure out why it can't be imported globally (see r54)
         import psutil
-        pid, ppid, name, path, cmdline, uid, gid = _psutil_osx.get_process_info(pid)
-        username = pwd.getpwuid(uid).pw_name
-        groupname = grp.getgrgid(gid).gr_name
-        return psutil.ProcessInfo(pid, ppid, name, path, cmdline, uid, gid,
-                                  username, groupname)
+        infoTuple = _psutil_osx.get_process_info(pid)
+        return psutil.ProcessInfo(*infoTuple)
 
     @wrap_privileges
     def kill_process(self, pid, sig=signal.SIGKILL):
