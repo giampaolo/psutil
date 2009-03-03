@@ -90,16 +90,27 @@ class Process(object):
         if self.pid != other.pid:
             return False
 
+        # make sure both objects are initialized
         self.deproxy()
         other.deproxy()
         # check all non-callable and non-private attributes for equality
         # if the attribute is missing from other then return False
-        for attr in dir(self._procinfo):
-            if not callable(attr) and not attr.startswith("_"):
-                if not hasattr(other._procinfo, attr):
-                    return False
-                if getattr(self._procinfo, attr) != getattr(other._procinfo, attr):
-                    return False
+        for attr in dir(self):
+            attrobj = getattr(self, attr)
+            # skip private attributes
+            if attr.startswith("_"):
+                continue 
+            
+            # skip methods and Process objects 
+            if callable(attrobj) or isinstance(attrobj, Process):
+                continue
+            
+            # attribute doesn't exist or isn't equal, so return False
+            if not hasattr(other, attr):
+                return False
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+                
         return True
 
     def deproxy(self):
