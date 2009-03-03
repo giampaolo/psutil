@@ -49,7 +49,7 @@ class Impl(object):
         """Returns a process info class."""
         if pid == 0:
             # special case for 0 (kernel process) PID
-            return psutil.ProcessInfo(pid, 0, 'sched', '', [], 0, 0, 'root', 'root')
+            return psutil.ProcessInfo(pid, 0, 'sched', '', [], 0, 0)
 
         # determine executable
         try:
