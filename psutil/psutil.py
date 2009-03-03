@@ -7,6 +7,11 @@ processes in a portable way by using Python.
 
 import sys
 import os
+try:
+    import pwd, grp
+except ImportError:
+    pwd = grp = None
+
 
 # this exception get overriden by the platform specific modules if necessary
 class NoSuchProcess(Exception):
@@ -86,11 +91,12 @@ class Process(object):
             return False
 
         self.deproxy()
+        other.deproxy()
         # check all non-callable and non-private attributes for equality
         # if the attribute is missing from other then return False
         for attr in dir(self._procinfo):
             if not callable(attr) and not attr.startswith("_"):
-                if not hasattr(other, attr):
+                if not hasattr(other._procinfo, attr):
                     return False
                 if getattr(self._procinfo, attr) != getattr(other._procinfo, attr):
                     return False
@@ -162,13 +168,25 @@ class Process(object):
     def username(self):
         """The real username of the current process."""
         self.deproxy()
-        return self._procinfo.username
+    	if self._procinfo.username is not None:
+    		return self._procinfo.username
+        if pwd is not None:
+            self._procinfo.username = pwd.getpwuid(self._procinfo.uid).pw_name
+        else:
+            self._procinfo.username =  _platform_impl.get_username(self.pid)
+    	return self._procinfo.username
 
     @property
     def groupname(self):
         """The real groupname of the current process."""
         self.deproxy()
-        return self._procinfo.groupname
+    	if self._procinfo.groupname is not None:
+    		return self._procinfo.groupname
+        if grp is not None:
+            self._procinfo.groupname = grp.getgrgid(self._procinfo.uid).gr_name
+        else:
+            self._procinfo.groupname =  _platform_impl.get_group(self.pid)
+    	return self._procinfo.groupname
 
     def is_running(self):
         """Return whether the current process is running in the current process

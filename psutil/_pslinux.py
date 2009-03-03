@@ -76,13 +76,9 @@ class Impl(object):
         finally:
             f.close()
 
-        uid = self._get_process_uid(pid)
-        gid = self._get_process_gid(pid)
-        username = pwd.getpwuid(uid).pw_name
-        groupname = grp.getgrgid(gid).gr_name
-
         return psutil.ProcessInfo(pid, self._get_ppid(pid), name, path, cmdline,
-                                  uid, gid, username, groupname)
+                                  self._get_process_uid(pid),
+                                  self._get_process_gid(pid))
 
     @wrap_privileges
     def kill_process(self, pid, sig=signal.SIGKILL):
