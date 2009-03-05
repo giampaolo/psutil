@@ -50,7 +50,7 @@ class ProcessInfo(object):
     """
 
     def __init__(self, pid, ppid=None, name=None, path=None, cmdline=None,
-                       uid=None, gid=None):
+                       uid=None, gid=None, username=None, groupname=None):
         self.pid = pid
         self.ppid = ppid
         self.name = name
@@ -61,8 +61,8 @@ class ProcessInfo(object):
             self.path = os.path.dirname(cmdline[0])
         self.uid = uid
         self.gid = gid
-        self.username = None
-        self.groupname = None
+        self.username = username
+        self.groupname = groupname
 
 
 class Process(object):
