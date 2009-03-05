@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-# psutil.py
+#
+# $Id$
+#
 
 """psutil is a module providing convenience functions for managing
 processes in a portable way by using Python.

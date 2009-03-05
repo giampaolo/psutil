@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-# _pslinux.py
+#
+# $Id$
+#
 
 import os
 import signal

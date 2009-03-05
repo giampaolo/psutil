@@ -1,5 +1,5 @@
 /*
- * $Id
+ * $Id$
  *
  * OS X platform-specific module methods for _psutil_osx
  */

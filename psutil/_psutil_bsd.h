@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * OS X platform-specific module methods for _psutil_osx
+ * BSD platform-specific module methods for _psutil_bsd
  */
 
 #include <Python.h>

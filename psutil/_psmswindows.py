@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-# _psmswindows.py
+#
+# $Id$
+#
 
 import errno
 

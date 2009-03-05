@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-# setup.py
+#
+# $Id$
+#
 
 import sys
 from distutils.core import setup, Extension
