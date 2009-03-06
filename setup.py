@@ -6,24 +6,27 @@
 import sys
 from distutils.core import setup, Extension
 
-
 # Windows
 if sys.platform.lower().startswith("win"):
     extensions = Extension('_psutil_mswindows',
-                           sources=['psutil/_psutil_mswindows.c', 'psutil/arch/mswindows/process_info.c', 'psutil/arch/mswindows/security.c'],
+                           sources=['psutil/_psutil_mswindows.c',
+                                    'psutil/arch/mswindows/process_info.c',
+                                    'psutil/arch/mswindows/security.c'],
                            define_macros=[('_WIN32_WINNT', '0x0500')],
                            libraries=["psapi", "kernel32", "advapi32", "shell32"]
                            )
 # OS X
 elif sys.platform.lower().startswith("darwin"):
     extensions = Extension('_psutil_osx',
-                           sources = ['psutil/_psutil_osx.c', 'psutil/arch/osx/process_info.c']
+                           sources = ['psutil/_psutil_osx.c',
+                                      'psutil/arch/osx/process_info.c']
                            )
 
 # FreeBSD
 elif sys.platform.lower().startswith("freebsd"):
     extensions = Extension('_psutil_bsd',
-                           sources = ['psutil/_psutil_bsd.c', 'psutil/arch/bsd/process_info.c']
+                           sources = ['psutil/_psutil_bsd.c',
+                                      'psutil/arch/bsd/process_info.c']
                            )
 
 # Others
@@ -34,7 +37,7 @@ else:
 def main():
     setup_args = dict(
         name='psutil',
-        version='0.1.0',
+        version='0.1.1',
         description='A process utilities module for Python',
         long_description="""
 psutil is a module providing convenience functions for managing processes in a
