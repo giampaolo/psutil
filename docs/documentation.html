@@ -2,36 +2,71 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<title>psutil - Documentation</title>
+<title>psutil API Reference</title>
 </head>
 
 <body>
 <h1><a name="API_reference" id="API_reference">API reference</a></h1>
-<p><a name="API_reference" id="API_reference">class psutil.<strong>Process(</strong><em>pid</em><strong>)</strong> </a></p>
-<blockquote><a name="API_reference" id="API_reference">A class which represents an OS process. </a></blockquote>
+<h2><a name="Exceptions" id="Exceptions">Exceptions</a></h2>
+<p><a name="Exceptions" id="Exceptions">psutil.<strong>NoSuchProcess</strong></a></p>
+<blockquote>Raised when no process with the given PID/parameter was found in the current process list. </blockquote>
+<p>psutil.<strong>AccessDenied</strong></p>
+<blockquote>Exception raised when permission to perform an action is denied. </blockquote>
+<hr />
+<h2><a name="Classes" id="Classes">Classes</a></h2>
+<p><a name="Classes" id="Classes">psutil.<strong>Process(</strong><em>pid</em><strong>)</strong> </a></p>
+<blockquote><a name="Classes" id="Classes">A class which represents an OS process. </a></blockquote>
 <ul>
-  <li><a name="API_reference" id="API_reference"><strong>pid</strong><br />
+  <li><a name="Classes" id="Classes"><strong>pid</strong><br />
     The process pid. </a></li>
 </ul>
 <ul>
-  <li><a name="API_reference" id="API_reference"><strong>name</strong><br />
+  <li><a name="Classes" id="Classes"><strong>ppid</strong><br />
+    The process parent pid. </a></li>
+</ul>
+<ul>
+  <li><a name="Classes" id="Classes"><strong>parent</strong><br />
+    Return the parent process as a Process object. If no ppid is known then return None. </a></li>
+</ul>
+<ul>
+  <li><a name="Classes" id="Classes"><strong>name</strong><br />
     The process name. </a></li>
 </ul>
 <ul>
-  <li><a name="API_reference" id="API_reference"><strong>path</strong><br />
+  <li><a name="Classes" id="Classes"><strong>path</strong><br />
     The process path. </a></li>
 </ul>
 <ul>
-  <li><a name="API_reference" id="API_reference"><strong>cmdline</strong><br />
+  <li><a name="Classes" id="Classes"><strong>cmdline</strong><br />
     The command line process has been called with. </a></li>
 </ul>
 <ul>
-  <li><a name="API_reference" id="API_reference"><strong>kill([</strong><em>sig</em><strong>])</strong><br />
+  <li><a name="Classes" id="Classes"><strong>uid</strong><br />
+    The real user id of the current process.  Where uid doesn't make sense (<em>Windows</em>) always return -1. </a></li>
+</ul>
+<ul>
+  <li><a name="Classes" id="Classes"><strong>gid</strong><br />
+    The real group id of the current process.  Where gid doesn't make sense (<em>Windows</em>) always return -1. </a></li>
+</ul>
+<ul>
+  <li><a name="Classes" id="Classes"><strong>is_running()</strong><br />
+    Return whether the current process is running in the current process list. </a></li>
+</ul>
+<ul>
+  <li><a name="Classes" id="Classes"><strong>kill([</strong><em>sig</em><strong>])</strong><br />
     Kill the current process by using signal <em>sig</em> (defaults to SIGKILL). </a></li>
 </ul>
 <hr />
-<p><a name="API_reference" id="API_reference">function <strong>get_process_list()</strong><br />
-</a></p>
-<blockquote><a name="API_reference" id="API_reference">Return a list of Process class instances for all running processes on the local machine. </a></blockquote>
+<h2><a name="Functions" id="Functions">Functions</a></h2>
+<p><a name="Functions" id="Functions">psutil.<strong>get_pid_list()</strong></a></p>
+<blockquote><a name="Functions" id="Functions">Return a list of current running PIDs. </a></blockquote>
+<p><a name="Functions" id="Functions">psutil.<strong>pid_exists(</strong><em>pid</em><strong>)</strong></a></p>
+<blockquote><a name="Functions" id="Functions">Check whether the given PID exists in the current process list. </a></blockquote>
+<p><a name="Functions" id="Functions">psutil.<strong>process_iter()</strong></a></p>
+<blockquote>
+  <p><a name="Functions" id="Functions">Return an iterator yielding a Process class instances for all running processes on the local machine. </a></p>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+</blockquote>
 </body>
 </html>

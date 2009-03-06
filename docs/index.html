@@ -9,18 +9,11 @@
 <div id="wikicontent">
   <h1>Python process utilities (psutil) </h1>
   <h1><a name="Summary" id="Summary">Summary</a></h1>
-  <p><a name="Summary" id="Summary">psutil is a module providing convenience functions for managing processes in a portable way by using Python. </a></p>
+  <p><a name="Summary" id="Summary">psutil is a module providing an interface for retrieving information on running processes in a portable way by using Python. </a></p>
+  <p><a name="Summary" id="Summary">It currently supports Linux, OS X, FreeBSD and Windows. </a></p>
   <p><a href="http://code.google.com/p/psutil/">http://code.google.com/p/psutil/</a></p>
   <h1><a name="Example_usages" id="Example_usages">Example usages</a></h1>
-  <pre><a name="Example_usages" id="Example_usages">&gt;&gt;&gt; import psutil  
-&gt;&gt;&gt; p = psutil.Process(3084)  
-&gt;&gt;&gt; p.name  
-'python'  
-&gt;&gt;&gt; p.path  
-'/usr/bin'  
-&gt;&gt;&gt; p.cmdline  
-['/usr/bin/python', '-O']</a>
-&gt;&gt;&gt; psutil.test()<br />'PID    NAME            PATH         COMMAND LINE<br /> 1      init            /sbin        /sbin/init<br /> 2      kthreadd        &lt;unknown&gt;    &lt;unknown&gt;<br /> 3      migration/0     &lt;unknown&gt;    &lt;unknown&gt;<br /> 2359   udevd           /sbin        /sbin/udevd --daemon<br /> 4229   syslogd         /sbin        /sbin/syslogd -u syslog<br /> 4249   klogd           /sbin        /sbin/klogd -P /var/run/klogd/kmsg<br /> 4267   dbus-daemon     /bin         /bin/dbus-daemon --system<br />...<br />&gt;&gt;&gt;</pre>
+  <pre><a name="Example_usage" id="Example_usage">&gt;&gt;&gt; psutil.get_pid_list()<br />[1, 2, 3, 4, 5, 6, 7, 46, 48, 50, 51, 178, 182, 222, 223, 224,<br />268, 1215, 1216, 1220, 1221, 1243, 1244, 1301, 1601, 2237, 2355,<br />2637, 2774, 3932, 4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245, <br />4263, 4282, 4306, 4311, 4312, 4313, 4314, 4337, 4339, 4357, 4358, <br />4363, 4383, 4395, 4408, 4433, 4443, 4445, 4446, 5167, 5234, 5235, <br />5252, 5318, 5424, 5644, 6987, 7054, 7055, 7071]<br />&gt;&gt;&gt; p = psutil.Process(7055)<br />&gt;&gt;&gt; p.name<br />'python'<br />&gt;&gt;&gt; p.path<br />'/usr/bin'<br />&gt;&gt;&gt; p.cmdline<br />['/usr/bin/python', '-O']<br />&gt;&gt;&gt; p.uid<br />1000<br />&gt;&gt;&gt; p.gid<br />1000<br />&gt;&gt;&gt;</a></pre>
   <h1><a name="Mailing_lists" id="Mailing_lists">Mailing lists</a></h1>
   <p><a name="Mailing_lists" id="Mailing_lists"><strong>Users</strong><br />
   </a><a href="http://groups.google.com/group/psutil/topics" rel="nofollow">http://groups.google.com/group/psutil/topics</a> </p>
