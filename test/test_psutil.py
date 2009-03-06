@@ -158,8 +158,6 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.cmdline, list))
         self.assert_(isinstance(p.uid, int))
         self.assert_(isinstance(p.gid, int))
-        self.assert_(isinstance(p.username, str))
-        self.assert_(isinstance(p.groupname, str))
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(psutil.get_process_list(), list))
         self.assert_(isinstance(psutil.get_process_list()[0], psutil.Process))
@@ -227,16 +225,6 @@ class TestCase(unittest.TestCase):
         elif sys.platform.lower().startswith("darwin"):
             self.assertEqual(p.name, 'kernel_task')
 
-        if sys.platform.lower() in ("linux"):
-            self.assertEqual(p.username, 'root')
-            self.assertEqual(p.groupname, 'root')
-        elif "freebsd" in sys.platform.lower():
-            self.assertEqual(p.username, 'root')
-            self.assertEqual(p.groupname, 'wheel')
-        elif "darwin" in sys.platform.lower():
-            self.assertEqual(p.username, 'root')
-            self.assertEqual(p.groupname, 'wheel')
-
         # use __str__ to access all common Process properties to check
         # that nothing strange happens
         str(p)
@@ -256,21 +244,6 @@ class TestCase(unittest.TestCase):
             def test_unix_access_denied(self):
                 p = psutil.Process(1)
                 self.assertRaises(psutil.AccessDenied, p.kill)
-
-        def test_unix_username(self):
-            import pwd
-            self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-            p = psutil.Process(self.proc.pid)
-            user = pwd.getpwuid(p.uid).pw_name
-            self.assertEqual(p.username, user)
-
-        def test_unix_groupname(self):
-            import grp
-            self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-            p = psutil.Process(self.proc.pid)
-            group = grp.getgrgid(p.gid).gr_name
-            self.assertEqual(p.groupname, group)
-
 
     # Windows specific tests
 
