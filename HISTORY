@@ -1,7 +1,32 @@
-0.1.1 - 2009-XX-XX
+0.1.1 - 2009-03-06
 ------------------
+NEW FEATURES
+ * Issue 4: FreeBSD support for all functions of psutil
+ * Issue 9: Process.uid and Process.gid now retrieve process UID and GID.
+ * Issue 11: Support for parent/ppid - Process.parent property returns a
+   Process object representing the parent process, and Process.ppid returns
+	 the parent PID.
+ * Issue 12 & 15: NoSuchProcess exception now raised when creating an object
+   for a nonexistent process, or when retrieving information about a process
+	 that has gone away.
+ * Issue 21: AccessDenied exception created for raising access denied errors
+   from OSError or WindowsError on individual platforms.
+ * Issue 26: psutil.process_iter() function to iterate over processes as
+   Process objects with a generator.
+ * Process objects can now also be compared with == operator for equality
+   (PID, name, command line are compared).
 
- * Issue 9: psutil is now able to determine process UID and GID.
+BUGFIXES
+ * Issue 16: Special case for Windows' "System Idle Process" (PID 0) which
+   otherwise would return an "invalid parameter" exception.
+ * Issue 17: get_process_list() ignores NoSuchProcess and AccessDenied
+   exceptions during building of the list.
+ * Issue 22: Process(0).kill() was failing on Windows with an unset exception 
+ * Issue 23: Special case for pid_exists(0)
+ * Issue 24: Process(0).kill() now raises AccessDenied exception instead of
+   WindowsError.
+ * Issue 30: psutil.get_pid_list() was returning two instances of PID 0 on OS
+   X and FreeBSD platforms.
 
 
 0.1.0 - 2009-01-27
