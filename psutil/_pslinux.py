@@ -11,6 +11,9 @@ import grp
 
 import psutil
 
+# obtained through sysconf(_SC_CLK_TCK)
+TICKS = 100
+
 
 def prevent_zombie(method):
     """Call method(self, pid) into a try/except clause so that if an
@@ -112,6 +115,22 @@ class Impl(object):
             return e.errno == errno.EPERM
         else:
             return True
+
+    @prevent_zombie
+    @wrap_privileges
+    def get_cpu_times(self, pid):
+        if pid == 0:
+            # special case for 0 (kernel process) PID
+            return (0.0, 0.0)
+        f = open("/proc/%s/stat" %pid)
+        st = f.read().strip()
+        f.close()
+        # ignore the first two values ("pid (exe)")
+        st = st[st.find(')') + 2:]
+        values = st.split(' ')
+        utime = float(values[11]) / TICKS
+        stime = float(values[12]) / TICKS
+        return (stime, utime)
 
     def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)
