@@ -179,10 +179,10 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 
 	return Py_BuildValue(
 		"(dd)",
-		(double)(ftKernel.dwHighDateTime*429.4967296 + \
-		         ftKernel.dwLowDateTime*1e-7),
 		(double)(ftUser.dwHighDateTime*429.4967296 + \
-		         ftUser.dwLowDateTime*1e-7)
+		         ftUser.dwLowDateTime*1e-7),      
+		(double)(ftKernel.dwHighDateTime*429.4967296 + \
+		         ftKernel.dwLowDateTime*1e-7)
         );
 }
 

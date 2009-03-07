@@ -176,7 +176,10 @@ class Process(object):
         return self._procinfo.gid
 
     def get_cpu_times(self):
-        """Return a tuple whose values are CPU kernel and user times."""
+        """Return a tuple whose values are process CPU user and system time.        
+        These are the same first two values that os.times() returns
+        for the current process.
+        """
         return _platform_impl.get_cpu_times(self.pid)
 
     def is_running(self):

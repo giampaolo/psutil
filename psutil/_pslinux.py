@@ -130,7 +130,7 @@ class Impl(object):
         values = st.split(' ')
         utime = float(values[11]) / TICKS
         stime = float(values[12]) / TICKS
-        return (stime, utime)
+        return (utime, stime)
 
     def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)

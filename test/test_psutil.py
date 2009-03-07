@@ -72,14 +72,13 @@ class TestCase(unittest.TestCase):
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_get_cpu_times(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL,  stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
-        times = psutil.Process(self.proc.pid).get_cpu_times()
-        self.assertEqual(len(times), 2)
-        # make sure returning floats can be used with strftime
-        kernel, user = times
-        time.strftime("%H:%M:%S", time.gmtime(kernel))
-        time.strftime("%H:%M:%S", time.gmtime(user))
+        user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()        
+        utime, ktime = os.times()[:2]        
+        self.assertEqual(user_time, utime)        
+        self.assertEqual(kernel_time, ktime)
+        # make sure returned values can be pretty printed with strftime          
+        time.strftime("%H:%M:%S", time.gmtime(user_time))
+        time.strftime("%H:%M:%S", time.gmtime(kernel_time))
 
     def test_pid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
