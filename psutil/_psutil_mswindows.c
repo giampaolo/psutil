@@ -146,6 +146,11 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
         return NULL;
     }
 
+    // special case for PID 0
+    if (0 == pid){
+	   return Py_BuildValue("(dd)", 0.0, 0.0);
+    }
+
     hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
     if (hProcess == NULL){
         CloseHandle(hProcess);

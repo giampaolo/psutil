@@ -80,9 +80,9 @@ class Process(object):
 
     def __str__(self):
         return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; " \
-               "CMDLINE:%s; UID:%s; GID:%s;>" \
+               "CMDLINE:%s; UID:%s; GID:%s; CPUTIMES:%s>" \
                %(self.pid, self.ppid, self.name, self.path, self.cmdline, \
-                 self.uid, self.gid)
+                 self.uid, self.gid, self.get_cpu_times())
 
     def __eq__(self, other):
         """Test for equality with another Process object based on PID,
@@ -99,26 +99,26 @@ class Process(object):
             attrobj = getattr(self, attr)
             # skip private attributes
             if attr.startswith("_"):
-                continue 
-            
-            # skip methods and Process objects 
+                continue
+
+            # skip methods and Process objects
             if callable(attrobj) or isinstance(attrobj, Process):
                 continue
-            
+
             # attribute doesn't exist or isn't equal, so return False
             if not hasattr(other, attr):
                 return False
             if getattr(self, attr) != getattr(other, attr):
                 return False
-                
+
         return True
 
     def deproxy(self):
         """Used internally by Process properties. The first call to deproxy()
         initializes the ProcessInfo object in self._procinfo with process data
-        read from platform-specific module's get_process_info() method. 
-        
-        This method becomes a NO-OP after the first property is accessed. 
+        read from platform-specific module's get_process_info() method.
+
+        This method becomes a NO-OP after the first property is accessed.
         Property data is filled in from the ProcessInfo object created, and
         further calls to deproxy() simply return immediately without calling
         get_process_info()."""
@@ -226,7 +226,7 @@ def get_process_list():
 
 def test():
     processes = get_process_list()
-    print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s %-5s %-5s" \
+    print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s" \
           %("PID", "PPID", "NAME", "PATH", "COMMAND LINE", "UID", "GID")
     for proc in processes:
         print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s" \
