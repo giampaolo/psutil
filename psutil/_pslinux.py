@@ -11,8 +11,8 @@ import grp
 
 import psutil
 
-# obtained through sysconf(_SC_CLK_TCK)
-TICKS = 100
+# Number of clock ticks per second
+CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
 
 
 def prevent_zombie(method):
@@ -128,8 +128,8 @@ class Impl(object):
         # ignore the first two values ("pid (exe)")
         st = st[st.find(')') + 2:]
         values = st.split(' ')
-        utime = float(values[11]) / TICKS
-        stime = float(values[12]) / TICKS
+        utime = float(values[11]) / CLOCK_TICKS
+        stime = float(values[12]) / CLOCK_TICKS
         return (utime, stime)
 
     def _get_ppid(self, pid):
