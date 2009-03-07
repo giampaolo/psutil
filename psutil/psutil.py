@@ -78,8 +78,8 @@ class Process(object):
             raise NoSuchProcess("No process found with PID %s" % pid)
         self._procinfo = ProcessInfo(pid)
         self.is_proxy = True
-        self.last_sys_time = time.clock()
-        self.last_user_time, self.last_kern_time = self.get_cpu_times()
+        self._last_sys_time = time.clock()
+        self._last_user_time, self._last_kern_time = self.get_cpu_times()
 
 
     def __str__(self):
@@ -187,15 +187,16 @@ class Process(object):
         Process object."""
         now = time.clock()
         user_t, kern_t = self.get_cpu_times()
-        total_proc_time = float((user_t - self.last_user_time) + (kern_t - self.last_kern_time))
+        total_proc_time = float((user_t - self._last_user_time) + \
+                                (kern_t - self._last_kern_time))
         try: 
-            percent = total_proc_time / float((now - self.last_sys_time))
+            percent = total_proc_time / float((now - self._last_sys_time))
         except ZeroDivisionError:
             percent = 0.000
 
         # reset the values 
-        self.last_sys_time = time.clock()
-        self.last_user_time, self.last_kern_time = self.get_cpu_times()
+        self._last_sys_time = time.clock()
+        self._last_user_time, self._last_kern_time = self.get_cpu_times()
 
         return percent * 100.0
 
