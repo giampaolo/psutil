@@ -153,14 +153,21 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 
     hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
     if (hProcess == NULL){
-        CloseHandle(hProcess);
         PyErr_SetFromWindowsErr(0);
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            //bad PID so no such process
+            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
+        }
         return NULL;
     }
 
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
-        CloseHandle(hProcess);
         PyErr_SetFromWindowsErr(0);
+        if (GetLastError() == ERROR_ACCESS_DENIED) {
+            //usually means the process has died so we throw a NoSuchProcess here 
+            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
+        }
+        CloseHandle(hProcess);
         return NULL;
     }
 

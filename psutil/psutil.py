@@ -9,6 +9,7 @@ processes in a portable way by using Python.
 
 import sys
 import os
+import time
 try:
     import pwd, grp
 except ImportError:
@@ -77,6 +78,9 @@ class Process(object):
             raise NoSuchProcess("No process found with PID %s" % pid)
         self._procinfo = ProcessInfo(pid)
         self.is_proxy = True
+        self.last_sys_time = time.clock()
+        self.last_user_time, self.last_kern_time = self.get_cpu_times()
+
 
     def __str__(self):
         return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; " \
@@ -174,6 +178,27 @@ class Process(object):
         """The real group id of the current process."""
         self.deproxy()
         return self._procinfo.gid
+
+    def get_cpu_percent(self):
+        """Compare process times to system time elapsed since last call and 
+        calculate CPU utilization as a percentage. It is recommended for 
+        accuracy that this function be called with at least 1 second between 
+        calls. The initial delta is calculated from the instantiation of the 
+        Process object."""
+        now = time.clock()
+        user_t, kern_t = self.get_cpu_times()
+        total_proc_time = float((user_t - self.last_user_time) + (kern_t - self.last_kern_time))
+        try: 
+            percent = total_proc_time / float((now - self.last_sys_time))
+        except ZeroDivisionError:
+            percent = 0.000
+
+        # reset the values 
+        self.last_sys_time = time.clock()
+        self.last_user_time, self.last_kern_time = self.get_cpu_times()
+
+        return percent * 100.0
+
 
     def get_cpu_times(self):
         """Return a tuple whose values are process CPU user and system time.        
