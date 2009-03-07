@@ -60,3 +60,8 @@ class Impl(object):
     def pid_exists(self, pid):
         return _psutil_mswindows.pid_exists(pid)
 
+    @wrap_privileges
+    def get_cpu_times(self, pid):
+        return _psutil_mswindows.get_process_cpu_times(pid)
+
+

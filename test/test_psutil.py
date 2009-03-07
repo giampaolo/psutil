@@ -71,6 +71,16 @@ class TestCase(unittest.TestCase):
         self.proc = None
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
+    def test_get_cpu_times(self):
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL,  stderr=DEVNULL)
+        wait_for_pid(self.proc.pid)
+        times = psutil.Process(self.proc.pid).get_cpu_times()
+        self.assertEqual(len(times), 2)
+        # make sure returning floats can be used with strftime
+        kernel, user = times
+        time.strftime("%H:%M:%S", time.gmtime(kernel))
+        time.strftime("%H:%M:%S", time.gmtime(user))
+
     def test_pid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         self.assertEqual(psutil.Process(self.proc.pid).pid, self.proc.pid)
@@ -159,6 +169,9 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.uid, int))
         self.assert_(isinstance(p.gid, int))
         self.assert_(isinstance(p.is_running(), bool))
+        self.assert_(isinstance(p.get_cpu_times(), tuple))
+        self.assert_(isinstance(p.get_cpu_times()[0], float))
+        self.assert_(isinstance(p.get_cpu_times()[1], float))
         self.assert_(isinstance(psutil.get_process_list(), list))
         self.assert_(isinstance(psutil.get_process_list()[0], psutil.Process))
         self.assert_(isinstance(psutil.process_iter(), types.GeneratorType))

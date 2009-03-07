@@ -23,6 +23,8 @@ static PyMethodDef PsutilMethods[] =
          "Kill the process identified by the given PID"},
      {"pid_exists", pid_exists, METH_VARARGS,
          "Determine if the process exists in the current process list."},
+     {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
+         "Return process CPU kernel/user times."},
      {NULL, NULL, 0, NULL}
 };
 
@@ -131,6 +133,54 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     CloseHandle(hProcess);
     return PyInt_FromLong(1);
 }
+
+
+static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
+{
+    long        pid;
+    HANDLE      hProcess;
+    FILETIME    ftCreate, ftExit, ftKernel, ftUser;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+        return NULL;
+    }
+
+    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    if (hProcess == NULL){
+        CloseHandle(hProcess);
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+
+    if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
+        CloseHandle(hProcess);
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+
+    CloseHandle(hProcess);
+
+    /*
+    user and kernel times are represented as a FILETIME structure wich contains
+    a 64-bit value representing the number of 100-nanosecond intervals since
+    January 1, 1601 (UTC).
+    http://msdn.microsoft.com/en-us/library/ms724284(VS.85).aspx
+
+    To convert it into a float representing the seconds that the process has
+    executed in user/kernel mode I borrowed the code below from Python's
+    Modules/posixmodule.c
+    */
+
+	return Py_BuildValue(
+		"(dd)",
+		(double)(ftKernel.dwHighDateTime*429.4967296 + \
+		         ftKernel.dwLowDateTime*1e-7),
+		(double)(ftUser.dwHighDateTime*429.4967296 + \
+		         ftUser.dwLowDateTime*1e-7)
+        );
+}
+
 
 
 

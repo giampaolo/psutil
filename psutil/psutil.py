@@ -175,6 +175,10 @@ class Process(object):
         self.deproxy()
         return self._procinfo.gid
 
+    def get_cpu_times(self):
+        """Return a tuple whose values are CPU kernel and user times."""
+        return _platform_impl.get_cpu_times(self.pid)
+
     def is_running(self):
         """Return whether the current process is running in the current process
         list."""
