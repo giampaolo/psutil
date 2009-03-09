@@ -1,0 +1,71 @@
+
+Introduction
+============
+
+psutil is a module providing an interface for retrieving information on running 
+processes in a portable way by using Python.
+It currently supports Linux, OS X, FreeBSD and Windows.
+
+psutil website is at http://code.google.com/p/psutil/
+
+The following document describes how to compile and install psutil from sources 
+on different platforms.
+
+
+Using easy_install
+==================
+
+The easiest way to install psutil from sources is using easy_install. 
+Get the latest easy_install version from http://pypi.python.org/pypi/setuptools
+and just run:
+
+ > python easy_install psutil
+
+This should get the most updated psutil version from the Python pypi repository, 
+unpack it, compile it and install it automatically.
+
+
+Installing on Windows using mingw32
+===================================
+
+After the mingw [1] environment is properly set up on your system you can 
+compile Windows sources by entering:
+
+ > setup.py build -c mingw32
+
+To compile and install just append the "install" keyword at the end of the
+command line above, like this:
+
+ > setup.py build -c mingw32 install
+
+It might be possible that distutils will complain about missing gcc executable.
+That means you have to add mingw bin PATH variable first.
+Entering this line in the command prompt should do the work:
+
+ > SET PATH=C:\MinGW\bin;%PATH%
+
+[1] http://www.mingw.org/
+
+
+Installing on Windows using Visual Studio
+=========================================
+
+...
+
+
+Installing on OS X
+==================
+
+...
+
+
+Installing on FreeBSD
+=====================
+
+...
+
+
+Installing on Linux
+===================
+
+...
