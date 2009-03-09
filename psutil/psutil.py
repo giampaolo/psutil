@@ -240,6 +240,10 @@ def get_pid_list():
     """Return a list of current running PIDs."""
     return _platform_impl.get_pid_list()
 
+def get_num_cpus():
+    """Return the number of CPUs."""
+    return _platform_impl.get_num_cpus()
+
 def process_iter():
     """Return an iterator yielding a Process class instances for all
     running processes on the local machine.

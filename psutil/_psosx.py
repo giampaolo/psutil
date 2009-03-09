@@ -55,6 +55,10 @@ class Impl(object):
                 raise psutil.NoSuchProcess(pid)
             raise
 
+    def get_num_cpus(self):
+        """Returns the number of CPUs available on the system."""
+        return _psutil_osx.get_num_cpus()
+
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
         return _psutil_osx.get_pid_list()

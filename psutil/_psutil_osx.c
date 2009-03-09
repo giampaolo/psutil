@@ -26,6 +26,8 @@ static PyMethodDef PsutilMethods[] =
      	"Returns a python list of PIDs currently running on the host system"},
      {"get_process_info", get_process_info, METH_VARARGS,
        	"Returns a psutil.ProcessInfo object for the given PID"},
+     {"get_num_cpus", get_num_cpus, METH_VARARGS,
+       	"Returns the number of CPUs on the system"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -152,3 +154,23 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	return PyErr_Format(PyExc_RuntimeError, "Failed to retrieve process information.");
 }
 
+
+// returns he number of CPUs on the system, needed for CPU utilization % calc
+static PyObject* get_num_cpus(PyObject* self, PyObject* args)
+{
+    
+    int mib[2];
+    int ncpu;
+    size_t len;
+    
+    mib[0] = CTL_HW;
+    mib[1] = HW_NCPU;
+    len = sizeof(ncpu);
+
+    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    return Py_BuildValue("i", ncpu);
+}
