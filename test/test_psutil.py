@@ -249,7 +249,9 @@ class TestCase(unittest.TestCase):
 
         # use __str__ to access all common Process properties to check
         # that nothing strange happens
-        str(p)
+        str(p)        
+                
+        self.assertTrue(p.create_time >= 0.0)
 
         # PID 0 is supposed to be available on all platforms
         self.assertTrue(0 in psutil.get_pid_list())
@@ -273,7 +275,11 @@ class TestCase(unittest.TestCase):
 
         def test_windows_issue_24(self):
             p = psutil.Process(0)
-            self.assertRaises(psutil.AccessDenied, p.kill)
+            self.assertRaises(psutil.AccessDenied, p.kill)            
+                        
+        def test_windows_pid_4(self):        
+            p = psutil.Process(0)            
+            self.assertTrue(p.create_time >= 0.0)
 
 
 def test_main():

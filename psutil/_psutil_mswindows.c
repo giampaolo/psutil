@@ -207,9 +207,9 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
         return NULL;
     }    
 
-    // special case for PID 0    
-    // XXX - 0.0 means year 1970. Should we return current time instead?
-    if (0 == pid){
+    // special case for PIDs 0 and 4    
+    // XXX - 0.0 means year 1970. Should we return uptime instead?
+    if ( (0 == pid) || (4 == pid) ){
 	   return Py_BuildValue("d", 0.0);
     }
 
