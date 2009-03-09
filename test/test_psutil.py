@@ -79,6 +79,15 @@ class TestCase(unittest.TestCase):
         # make sure returned values can be pretty printed with strftime          
         time.strftime("%H:%M:%S", time.gmtime(user_time))
         time.strftime("%H:%M:%S", time.gmtime(kernel_time))
+                
+    def test_create_time(self):    
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)        
+        now = time.time()   
+        wait_for_pid(self.proc.pid)           
+        p = psutil.Process(self.proc.pid)                       
+        self.assertEqual(int(now), int(p.create_time))        
+        # make sure returned value can be pretty printed with strftime        
+        time.strftime("Y m d %H:%M:%S", time.gmtime(p.create_time))
 
     def test_pid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
@@ -167,6 +176,7 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.cmdline, list))
         self.assert_(isinstance(p.uid, int))
         self.assert_(isinstance(p.gid, int))
+        self.assert_(isinstance(p.create_time, float))
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(p.get_cpu_times(), tuple))
         self.assert_(isinstance(p.get_cpu_times()[0], float))

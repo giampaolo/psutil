@@ -25,6 +25,8 @@ static PyMethodDef PsutilMethods[] =
          "Determine if the process exists in the current process list."},
      {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
          "Return process CPU kernel/user times."},
+     {"get_process_create_time", get_process_create_time, METH_VARARGS,
+         "Return process creation time."},
      {NULL, NULL, 0, NULL}
 };
 
@@ -194,6 +196,56 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 }
 
 
+static PyObject* get_process_create_time(PyObject* self, PyObject* args)
+{
+    long        pid;
+    HANDLE      hProcess;
+    FILETIME    ftCreate, ftExit, ftKernel, ftUser;    
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+        return NULL;
+    }    
+
+    // special case for PID 0    
+    // XXX - 0.0 means year 1970. Should we return current time instead?
+    if (0 == pid){
+	   return Py_BuildValue("d", 0.0);
+    }
+
+    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    if (hProcess == NULL){
+        PyErr_SetFromWindowsErr(0);
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            //bad PID so no such process
+            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
+        }
+        return NULL;
+    }
+
+    if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
+        PyErr_SetFromWindowsErr(0);
+        if (GetLastError() == ERROR_ACCESS_DENIED) {
+            //usually means the process has died so we throw a NoSuchProcess here 
+            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
+        }
+        CloseHandle(hProcess);
+        return NULL;
+    }
+
+    CloseHandle(hProcess);
+
+    /*
+    Convert the FILETIME structure to a Unix time.
+    It's the best I could find by googling and borrowing code here and there.
+    The time returned has a precision of 1 second. 
+    */
+    LONGLONG unix_time;
+    unix_time = ((LONGLONG)ftCreate.dwHighDateTime) << 32;          
+    unix_time += ftCreate.dwLowDateTime - 116444736000000000;
+    unix_time /= 10000000;    
+    return Py_BuildValue("f", (float)unix_time);
+}
 
 
 static PyObject* get_process_info(PyObject* self, PyObject* args)

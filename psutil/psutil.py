@@ -84,9 +84,9 @@ class Process(object):
 
     def __str__(self):
         return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; " \
-               "CMDLINE:%s; UID:%s; GID:%s; CPUTIMES:%s>" \
+               "CMDLINE:%s; UID:%s; GID:%s; CPUTIMES:%s; CREATETIME:%s>" \
                %(self.pid, self.ppid, self.name, self.path, self.cmdline, \
-                 self.uid, self.gid, self.get_cpu_times())
+                 self.uid, self.gid, self.get_cpu_times(), self.create_time)
 
     def __eq__(self, other):
         """Test for equality with another Process object based on PID,
@@ -179,6 +179,14 @@ class Process(object):
         self.deproxy()
         return self._procinfo.gid
 
+    @property
+    def create_time(self):    
+        """The process creation time as a floating point number 
+        expressed in seconds since the epoch, in UTC.
+        """        
+        # XXX - caching code to be implemented
+        return _platform_impl.get_process_create_time(self.pid)       
+
     def get_cpu_percent(self):
         """Compare process times to system time elapsed since last call and 
         calculate CPU utilization as a percentage. It is recommended for 
@@ -199,7 +207,6 @@ class Process(object):
         self._last_user_time, self._last_kern_time = self.get_cpu_times()
 
         return percent * 100.0
-
 
     def get_cpu_times(self):
         """Return a tuple whose values are process CPU user and system time.        
