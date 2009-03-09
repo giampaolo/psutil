@@ -27,6 +27,8 @@ static PyMethodDef PsutilMethods[] =
          "Return process CPU kernel/user times."},
      {"get_process_create_time", get_process_create_time, METH_VARARGS,
          "Return process creation time."},
+     {"get_num_cpus", get_num_cpus, METH_VARARGS,
+         "Returns the number of CPUs on the system"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -245,6 +247,20 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     unix_time += ftCreate.dwLowDateTime - 116444736000000000;
     unix_time /= 10000000;    
     return Py_BuildValue("f", (float)unix_time);
+}
+
+
+static PyObject* get_num_cpus(PyObject* self, PyObject* args)
+{
+    SYSTEM_INFO system_info;    
+    system_info.dwNumberOfProcessors = 0;  
+         
+    GetSystemInfo(&system_info);    
+    if (system_info.dwNumberOfProcessors == 0){        
+        // GetSystemInfo failed for some reason; return 1 as default
+        return Py_BuildValue("i", 1);        
+    }
+    return Py_BuildValue("i", system_info.dwNumberOfProcessors);    
 }
 
 
