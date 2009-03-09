@@ -28,6 +28,10 @@ static PyMethodDef PsutilMethods[] =
      	"Returns a python list of PIDs currently running on the host system"},
      {"get_process_info", get_process_info, METH_VARARGS,
        	"Returns a psutil.ProcessInfo object for the given PID"},
+     {"get_cpu_times", get_cpu_times, METH_VARARGS,
+       	"Returns tuple of user/kern time for the given PID"},
+     {"get_num_cpus", get_num_cpus, METH_VARARGS,
+       	"Returns number of CPUs on the system"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -157,3 +161,85 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	return PyErr_Format(PyExc_RuntimeError, "Failed to retrieve process information.");
 }
 
+//convert a timeval struct to a double
+#define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
+
+//returns rusage usertime and systemtime for a process
+static PyObject* get_cpu_times(PyObject* self, PyObject* args)
+{
+
+    int mib[4];
+    size_t len;
+    struct kinfo_proc kp;
+	long pid;
+    long secs, psecs;
+    double user_t, sys_t;
+    char obuff[128];
+    PyObject* timeTuple = NULL;
+
+	//the argument passed should be a process id
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
+		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+	}
+
+    /*
+    if (0 == pid) {
+        //USER   PID %CPU %MEM   VSZ   RSS  TT  STAT STARTED      TIME COMMAND
+        //root     0  0.0  0.0     0     0  ??  DLs  12:22AM   0:00.13 [swapper]
+        return Py_BuildValue("llssNll", pid, 0, "swapper", "", Py_BuildValue("[]"), 0, 0);
+    }*/
+
+    //build the mib to pass to sysctl to tell it what PID and what info we want
+    len = 4;
+    sysctlnametomib("kern.proc.pid", mib, &len);
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = pid;
+    
+    //fetch the info with sysctl()
+    len = sizeof(kp);
+    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
+        // raise an exception if it failed, since we won't get any data
+        if (ESRCH == errno) {
+            return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+        }
+        return PyErr_SetFromErrno(PyExc_OSError);
+    } 
+
+    if (len > 0) { //if 0 then no data was retrieved
+        user_t = TV2DOUBLE(kp.ki_rusage.ru_utime);
+        sys_t = TV2DOUBLE(kp.ki_rusage.ru_stime);
+
+        //convert from microseconds to seconds
+        timeTuple = Py_BuildValue("(dd)", user_t, sys_t);
+        if (NULL == timeTuple) {
+            PyErr_SetString(PyExc_RuntimeError, "Failed to build process CPU times tuple!");
+        }    
+        return timeTuple;
+    }
+
+    //something went wrong, throw an error
+	return PyErr_Format(PyExc_RuntimeError, "Failed to retrieve process CPU times.");
+}
+
+
+// returns he number of CPUs on the system, needed for CPU utilization % calc
+static PyObject* get_num_cpus(PyObject* self, PyObject* args)
+{
+    
+    int mib[2];
+    int ncpu;
+    size_t len;
+    
+    mib[0] = CTL_HW;
+    mib[1] = HW_NCPU;
+    len = sizeof(ncpu);
+
+    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    return Py_BuildValue("i", ncpu);
+}

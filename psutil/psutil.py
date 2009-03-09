@@ -78,7 +78,7 @@ class Process(object):
             raise NoSuchProcess("No process found with PID %s" % pid)
         self._procinfo = ProcessInfo(pid)
         self.is_proxy = True
-        self._last_sys_time = time.clock()
+        self._last_sys_time = time.time()
         self._last_user_time, self._last_kern_time = self.get_cpu_times()
 
 
@@ -193,7 +193,7 @@ class Process(object):
         accuracy that this function be called with at least 1 second between 
         calls. The initial delta is calculated from the instantiation of the 
         Process object."""
-        now = time.clock()
+        now = time.time()
         user_t, kern_t = self.get_cpu_times()
         total_proc_time = float((user_t - self._last_user_time) + \
                                 (kern_t - self._last_kern_time))
@@ -203,7 +203,7 @@ class Process(object):
             percent = 0.000
 
         # reset the values 
-        self._last_sys_time = time.clock()
+        self._last_sys_time = time.time()
         self._last_user_time, self._last_kern_time = self.get_cpu_times()
 
         return percent * 100.0

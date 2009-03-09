@@ -57,6 +57,11 @@ class Impl(object):
                 raise psutil.NoSuchProcess(pid)
             raise
 
+    @wrap_privileges
+    def get_cpu_times(self, pid):
+        """return a tuple containing process user/kernel time."""
+        return _psutil_bsd.get_cpu_times(pid)
+
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
         return _psutil_bsd.get_pid_list()
