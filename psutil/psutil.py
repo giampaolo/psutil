@@ -64,6 +64,7 @@ class ProcessInfo(object):
             self.path = os.path.dirname(cmdline[0])
         self.uid = uid
         self.gid = gid
+        self.create = None
 
 
 class Process(object):
@@ -80,7 +81,6 @@ class Process(object):
         self.is_proxy = True
         self._last_sys_time = time.time()
         self._last_user_time, self._last_kern_time = self.get_cpu_times()
-
 
     def __str__(self):
         return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; " \
@@ -125,7 +125,8 @@ class Process(object):
         This method becomes a NO-OP after the first property is accessed.
         Property data is filled in from the ProcessInfo object created, and
         further calls to deproxy() simply return immediately without calling
-        get_process_info()."""
+        get_process_info().
+        """
         if self.is_proxy:
             self._procinfo = _platform_impl.get_process_info(self._procinfo.pid)
             self.is_proxy = False
@@ -183,9 +184,10 @@ class Process(object):
     def create_time(self):    
         """The process creation time as a floating point number 
         expressed in seconds since the epoch, in UTC.
-        """        
-        # XXX - caching code to be implemented
-        return _platform_impl.get_process_create_time(self.pid)       
+        """
+        if self._procinfo.create is None:        
+            self._procinfo.create = _platform_impl.get_process_create_time(self.pid)             
+        return self._procinfo.create
 
     def get_cpu_percent(self):
         """Compare process times to system time elapsed since last call and 
