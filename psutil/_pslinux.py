@@ -14,6 +14,16 @@ import psutil
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
 
+def _get_uptime():
+    """Return system boot time (epoch in seconds)"""
+    f = open('/proc/stat', 'r')
+    for line in f:
+        if line.startswith('btime'):
+            f.close()    
+            return float(line.strip().split()[1])
+                    
+UPTIME = _get_uptime()
+
 
 def prevent_zombie(method):
     """Call method(self, pid) into a try/except clause so that if an
@@ -130,7 +140,27 @@ class Impl(object):
         values = st.split(' ')
         utime = float(values[11]) / CLOCK_TICKS
         stime = float(values[12]) / CLOCK_TICKS
-        return (utime, stime)
+        return (utime, stime)        
+
+    @prevent_zombie
+    @wrap_privileges        
+    def get_process_create_time(self, pid):          
+        if pid == 0:
+            # special case for 0 (kernel process) PID            
+            # XXX - return 0.0 (year 1970) for now, decide what to do later
+            return 0.0          
+        f = open("/proc/%s/stat" %pid)
+        st = f.read().strip()
+        f.close()
+        # ignore the first two values ("pid (exe)")
+        st = st[st.find(')') + 2:]
+        values = st.split(' ')                      
+        # According to documentation, starttime is in field 21 and the 
+        # unit is jiffies (clock ticks).        
+        # We first divide it for clock ticks and then add uptime returning        
+        # seconds since the epoch, in UTC.
+        starttime = (float(values[19]) / CLOCK_TICKS) + UPTIME
+        return starttime
 
     def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)
