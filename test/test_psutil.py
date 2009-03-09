@@ -73,21 +73,36 @@ class TestCase(unittest.TestCase):
 
     def test_get_cpu_times(self):
         user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()        
-        utime, ktime = os.times()[:2]        
-        self.assertEqual(user_time, utime)        
-        self.assertEqual(kernel_time, ktime)
+        utime, ktime = os.times()[:2]      
+          
+        # Use os.times()[:2] as base values to compare our results 
+        # using a tolerance  of +/- 0.1 seconds. 
+        # It will fail if the difference between the values is > 0.1s. 
+        if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
+            self.fail("expected: %s, found: %s" %(utime, user_time))     
+              
+        if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
+            self.fail("expected: %s, found: %s" %(ktime, kernel_time))
+
         # make sure returned values can be pretty printed with strftime          
-        time.strftime("%H:%M:%S", time.gmtime(user_time))
-        time.strftime("%H:%M:%S", time.gmtime(kernel_time))
+        time.strftime("%H:%M:%S", time.localtime(user_time))
+        time.strftime("%H:%M:%S", time.localtime(kernel_time))
                 
     def test_create_time(self):    
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)        
         now = time.time()   
         wait_for_pid(self.proc.pid)           
-        p = psutil.Process(self.proc.pid)                       
-        self.assertEqual(int(now), int(p.create_time))        
+        p = psutil.Process(self.proc.pid)        
+        create_time = p.create_time
+
+        # Use time.time() as base value to compare our result using a 
+        # tolerance of +/- 1 second. 
+        # It will fail if the difference between the values is > 1s. 
+        if (max([now, create_time]) - min([now, create_time])) > 1:
+            self.fail("expected: %s, found: %s" %(now, create_time))       
+
         # make sure returned value can be pretty printed with strftime        
-        time.strftime("Y m d %H:%M:%S", time.gmtime(p.create_time))
+        time.strftime("Y m d %H:%M:%S", time.localtime(p.create_time))
 
     def test_pid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
