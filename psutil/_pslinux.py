@@ -11,8 +11,6 @@ import grp
 
 import psutil
 
-# Number of clock ticks per second
-CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
 
 def _get_uptime():
     """Return system boot time (epoch in seconds)"""
@@ -21,8 +19,22 @@ def _get_uptime():
         if line.startswith('btime'):
             f.close()    
             return float(line.strip().split()[1])
-                    
+                
+def _get_num_cpus():
+    """Returned the number of CPUs on the system"""
+    num = 0
+    f = open('/proc/cpuinfo', 'r')
+    for line in f:
+        if line.startswith('processor'):
+            num += 1            
+    f.close()    
+    return num
+
+
+# Number of clock ticks per second
+CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])                    
 UPTIME = _get_uptime()
+NUM_CPUS = _get_num_cpus()
 
 
 def prevent_zombie(method):
@@ -161,6 +173,9 @@ class Impl(object):
         # seconds since the epoch, in UTC.
         starttime = (float(values[19]) / CLOCK_TICKS) + UPTIME
         return starttime
+        
+    def get_num_cpus(self):    
+        return NUM_CPUS
 
     def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)
