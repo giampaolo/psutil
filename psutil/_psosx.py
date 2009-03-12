@@ -11,6 +11,8 @@ import _psutil_osx
 
 NoSuchProcess = _psutil_osx.NoSuchProcess
 
+NUM_CPUS = _psutil_osx.get_num_cpus()
+
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if an
@@ -54,10 +56,6 @@ class Impl(object):
             if err.errno == errno.ESRCH:
                 raise psutil.NoSuchProcess(pid)
             raise
-
-    def get_num_cpus(self):
-        """Returns the number of CPUs available on the system."""
-        return _psutil_osx.get_num_cpus()
 
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""

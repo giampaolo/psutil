@@ -10,6 +10,8 @@ import _psutil_mswindows
 
 NoSuchProcess = _psutil_mswindows.NoSuchProcess
 
+NUM_CPUS = _psutil_mswindows.get_num_cpus()
+
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if a
@@ -67,7 +69,4 @@ class Impl(object):
     @wrap_privileges
     def get_cpu_times(self, pid):
         return _psutil_mswindows.get_process_cpu_times(pid)
-
-    def get_num_cpus(self):
-        return _psutil_mswindows.get_num_cpus()
 

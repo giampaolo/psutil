@@ -13,6 +13,8 @@ import _psutil_bsd
 
 NoSuchProcess = _psutil_bsd.NoSuchProcess
 
+NUM_CPUS = _psutil_osx.get_num_cpus()
+
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if an

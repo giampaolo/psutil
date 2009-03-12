@@ -174,9 +174,6 @@ class Impl(object):
         starttime = (float(values[19]) / CLOCK_TICKS) + UPTIME
         return starttime
 
-    def get_num_cpus(self):
-        return NUM_CPUS
-
     def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)
         for line in f:
