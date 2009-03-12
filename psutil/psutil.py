@@ -181,37 +181,37 @@ class Process(object):
         return self._procinfo.gid
 
     @property
-    def create_time(self):    
-        """The process creation time as a floating point number 
+    def create_time(self):
+        """The process creation time as a floating point number
         expressed in seconds since the epoch, in UTC.
         """
-        if self._procinfo.create is None:        
-            self._procinfo.create = _platform_impl.get_process_create_time(self.pid)             
+        if self._procinfo.create is None:
+            self._procinfo.create = _platform_impl.get_process_create_time(self.pid)
         return self._procinfo.create
 
     def get_cpu_percent(self):
-        """Compare process times to system time elapsed since last call and 
-        calculate CPU utilization as a percentage. It is recommended for 
-        accuracy that this function be called with at least 1 second between 
-        calls. The initial delta is calculated from the instantiation of the 
+        """Compare process times to system time elapsed since last call and
+        calculate CPU utilization as a percentage. It is recommended for
+        accuracy that this function be called with at least 1 second between
+        calls. The initial delta is calculated from the instantiation of the
         Process object."""
         now = time.time()
         user_t, kern_t = self.get_cpu_times()
         total_proc_time = float((user_t - self._last_user_time) + \
                                 (kern_t - self._last_kern_time))
-        try: 
+        try:
             percent = total_proc_time / float((now - self._last_sys_time))
         except ZeroDivisionError:
             percent = 0.000
 
-        # reset the values 
+        # reset the values
         self._last_sys_time = time.time()
         self._last_user_time, self._last_kern_time = self.get_cpu_times()
 
         return percent * 100.0
 
     def get_cpu_times(self):
-        """Return a tuple whose values are process CPU user and system time.        
+        """Return a tuple whose values are process CPU user and system time.
         These are the same first two values that os.times() returns
         for the current process.
         """

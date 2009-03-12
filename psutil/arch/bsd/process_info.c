@@ -28,7 +28,7 @@
  * On success, the function returns 0.
  * On error, the function returns a BSD errno value.
  */
-int get_proc_list(struct kinfo_proc **procList, size_t *procCount) 
+int get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 {
     int err;
     struct kinfo_proc * result;
@@ -112,7 +112,7 @@ int get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 }
 
 
-char *getcmdpath(long pid, size_t *pathsize) 
+char *getcmdpath(long pid, size_t *pathsize)
 {
     int  mib[4];
     char *path;
@@ -132,7 +132,7 @@ char *getcmdpath(long pid, size_t *pathsize)
         return NULL;
     }
 
-    path = malloc(size);                       
+    path = malloc(size);
     if (path == NULL) {
         //perror("sysctl/malloc");
         return NULL;
@@ -151,7 +151,7 @@ char *getcmdpath(long pid, size_t *pathsize)
 
 /*
  * Borrowed from psi Python System Information project
- * 
+ *
  * Get command arguments and environment variables.
  *
  * Based on code from ps.
@@ -161,7 +161,7 @@ char *getcmdpath(long pid, size_t *pathsize)
  *      -1 for failure (Exception raised);
  *      1 for insufficient privileges.
  */
-char *getcmdargs(long pid, size_t *argsize) 
+char *getcmdargs(long pid, size_t *argsize)
 {
     int mib[3];
     size_t size, argmax;
@@ -207,7 +207,7 @@ char *getcmdargs(long pid, size_t *argsize)
 
 
 /* returns the command line as a python list object */
-PyObject* get_arg_list(long pid) 
+PyObject* get_arg_list(long pid)
 {
     char *argstr = NULL;
     int pos = 0;
@@ -221,25 +221,25 @@ PyObject* get_arg_list(long pid)
 
     //this leaks memory (grrr)
     argstr = getcmdargs(pid, &argsize);
-    
+
     if (NULL == argstr) {
         if (ESRCH == errno) {
             PyErr_Format(PyExc_RuntimeError, "getcmdargs() failed - no process found with pid %lu", pid);
             return NULL;
         }
-        
-        //ignore other errors for now, since we don't want to bail on get_process_info() if 
+
+        //ignore other errors for now, since we don't want to bail on get_process_info() if
         //cmdline is the only thing we couldn't get. In that case, we just return an empty list
         //return PyErr_Format(PyExc_RuntimeError, "getcmdargs() failed for pid %lu", pid);
         return retlist;
     }
 
     //args are returned as a flattened string with \0 separators between arguments
-    //add each string to the list then step forward to the next separator 
+    //add each string to the list then step forward to the next separator
     if (argsize > 0) {
         while(pos < argsize) {
             item = Py_BuildValue("s", &argstr[pos]);
-            PyList_Append(retlist, item); 
+            PyList_Append(retlist, item);
             Py_DECREF(item);
             pos = pos + strlen(&argstr[pos]) + 1;
         }

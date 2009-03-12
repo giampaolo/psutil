@@ -17,22 +17,22 @@ def _get_uptime():
     f = open('/proc/stat', 'r')
     for line in f:
         if line.startswith('btime'):
-            f.close()    
+            f.close()
             return float(line.strip().split()[1])
-                
+
 def _get_num_cpus():
     """Returned the number of CPUs on the system"""
     num = 0
     f = open('/proc/cpuinfo', 'r')
     for line in f:
         if line.startswith('processor'):
-            num += 1            
-    f.close()    
+            num += 1
+    f.close()
     return num
 
 
 # Number of clock ticks per second
-CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])                    
+CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
 UPTIME = _get_uptime()
 NUM_CPUS = _get_num_cpus()
 
@@ -152,29 +152,29 @@ class Impl(object):
         values = st.split(' ')
         utime = float(values[11]) / CLOCK_TICKS
         stime = float(values[12]) / CLOCK_TICKS
-        return (utime, stime)        
+        return (utime, stime)
 
     @prevent_zombie
-    @wrap_privileges        
-    def get_process_create_time(self, pid):          
+    @wrap_privileges
+    def get_process_create_time(self, pid):
         if pid == 0:
-            # special case for 0 (kernel process) PID            
+            # special case for 0 (kernel process) PID
             # XXX - return 0.0 (year 1970) for now, decide what to do later
-            return 0.0          
+            return 0.0
         f = open("/proc/%s/stat" %pid)
         st = f.read().strip()
         f.close()
         # ignore the first two values ("pid (exe)")
         st = st[st.find(')') + 2:]
-        values = st.split(' ')                      
-        # According to documentation, starttime is in field 21 and the 
-        # unit is jiffies (clock ticks).        
-        # We first divide it for clock ticks and then add uptime returning        
+        values = st.split(' ')
+        # According to documentation, starttime is in field 21 and the
+        # unit is jiffies (clock ticks).
+        # We first divide it for clock ticks and then add uptime returning
         # seconds since the epoch, in UTC.
         starttime = (float(values[19]) / CLOCK_TICKS) + UPTIME
         return starttime
-        
-    def get_num_cpus(self):    
+
+    def get_num_cpus(self):
         return NUM_CPUS
 
     def _get_ppid(self, pid):

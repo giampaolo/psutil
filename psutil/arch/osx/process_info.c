@@ -27,7 +27,7 @@
  * On success, the function returns 0.
  * On error, the function returns a BSD errno value.
  */
-int GetBSDProcessList(kinfo_proc **procList, size_t *procCount) 
+int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
 {
     int                 err;
     kinfo_proc *        result;
@@ -114,7 +114,7 @@ int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
 
 /*
  * Borrowed from psi Python System Information project
- * 
+ *
  * Get command arguments and environment variables.
  *
  * Based on code from ps.
@@ -170,7 +170,7 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
             free(procargs);
             return -2;       /* Insufficient privileges */
         }
-        
+
         PyErr_SetFromErrno(PyExc_OSError);
         free(procargs);
         return -1;
@@ -227,7 +227,7 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
                 goto ERROR_C;   /* Exception */
             PyList_Append(*arglist, arg);
             Py_DECREF(arg);
-            
+
             arg_start = cp + 1;
         }
     }
@@ -236,7 +236,7 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
      * sp points to the beginning of the arguments/environment string, and
      * np should point to the '\0' terminator for the string.
      */
-    
+
     if (np == NULL || np == sp) {
         //Empty or unterminated string.
         goto ERROR_B;
@@ -280,7 +280,7 @@ PyObject* get_arg_list(long pid)
     //printf("pid: %ld\n", pid);
     if (pid < 0) {
         return argList;
-    } 
+    }
 
     r = getcmdargs(pid, &command_path, &cmd_args);
     if (r == 0) {
@@ -297,6 +297,6 @@ PyObject* get_arg_list(long pid)
         return Py_BuildValue("[]");
     }
 
-    return argList; 
+    return argList;
 }
 

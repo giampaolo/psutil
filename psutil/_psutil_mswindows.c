@@ -1,6 +1,6 @@
 /*
- * $Id$ 
- * 
+ * $Id$
+ *
  * Windows platform-specific module methods for _psutil_mswindows
  */
 
@@ -59,7 +59,7 @@ static PyObject* pid_exists(PyObject* self, PyObject* args)
     if (-1 == status) {
         return NULL; //exception raised in pid_is_running()
     }
-    
+
     return PyBool_FromLong(status);
 }
 
@@ -71,7 +71,7 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
     DWORD i;
     PyObject* pid = NULL;
 	PyObject* retlist = PyList_New(0);
-    
+
     proclist = get_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
         Py_DECREF(retlist);
@@ -99,7 +99,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     int pid_return;
     PyObject* ret;
     ret = PyInt_FromLong(0);
-    
+
     SetSeDebug();
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
@@ -113,8 +113,8 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 
     pid_return = pid_is_running(pid);
     if (pid_return == 0) {
-        return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
-    } 
+        return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+    }
 
     if (pid_return == -1) {
         return NULL; //exception raised from within pid_is_running()
@@ -126,14 +126,14 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
-    
+
     //kill the process
     if (! TerminateProcess(hProcess, 0) ){
         PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
         return NULL;
     }
-   
+
     CloseHandle(hProcess);
     return PyInt_FromLong(1);
 }
@@ -160,7 +160,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             //bad PID so no such process
-            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
+            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
         }
         return NULL;
     }
@@ -168,8 +168,8 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
-            //usually means the process has died so we throw a NoSuchProcess here 
-            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
+            //usually means the process has died so we throw a NoSuchProcess here
+            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
         }
         CloseHandle(hProcess);
         return NULL;
@@ -191,7 +191,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 	return Py_BuildValue(
 		"(dd)",
 		(double)(ftUser.dwHighDateTime*429.4967296 + \
-		         ftUser.dwLowDateTime*1e-7),      
+		         ftUser.dwLowDateTime*1e-7),
 		(double)(ftKernel.dwHighDateTime*429.4967296 + \
 		         ftKernel.dwLowDateTime*1e-7)
         );
@@ -202,14 +202,14 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 {
     long        pid;
     HANDLE      hProcess;
-    FILETIME    ftCreate, ftExit, ftKernel, ftUser;    
+    FILETIME    ftCreate, ftExit, ftKernel, ftUser;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
         return NULL;
-    }    
+    }
 
-    // special case for PIDs 0 and 4    
+    // special case for PIDs 0 and 4
     // XXX - 0.0 means year 1970. Should we return uptime instead?
     if ( (0 == pid) || (4 == pid) ){
 	   return Py_BuildValue("d", 0.0);
@@ -220,7 +220,7 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             //bad PID so no such process
-            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
+            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
         }
         return NULL;
     }
@@ -228,8 +228,8 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
-            //usually means the process has died so we throw a NoSuchProcess here 
-            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
+            //usually means the process has died so we throw a NoSuchProcess here
+            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
         }
         CloseHandle(hProcess);
         return NULL;
@@ -240,27 +240,27 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     /*
     Convert the FILETIME structure to a Unix time.
     It's the best I could find by googling and borrowing code here and there.
-    The time returned has a precision of 1 second. 
+    The time returned has a precision of 1 second.
     */
     LONGLONG unix_time;
-    unix_time = ((LONGLONG)ftCreate.dwHighDateTime) << 32;          
+    unix_time = ((LONGLONG)ftCreate.dwHighDateTime) << 32;
     unix_time += ftCreate.dwLowDateTime - 116444736000000000;
-    unix_time /= 10000000;    
+    unix_time /= 10000000;
     return Py_BuildValue("f", (float)unix_time);
 }
 
 
 static PyObject* get_num_cpus(PyObject* self, PyObject* args)
 {
-    SYSTEM_INFO system_info;    
-    system_info.dwNumberOfProcessors = 0;  
-         
-    GetSystemInfo(&system_info);    
-    if (system_info.dwNumberOfProcessors == 0){        
+    SYSTEM_INFO system_info;
+    system_info.dwNumberOfProcessors = 0;
+
+    GetSystemInfo(&system_info);
+    if (system_info.dwNumberOfProcessors == 0){
         // GetSystemInfo failed for some reason; return 1 as default
-        return Py_BuildValue("i", 1);        
+        return Py_BuildValue("i", 1);
     }
-    return Py_BuildValue("i", system_info.dwNumberOfProcessors);    
+    return Py_BuildValue("i", system_info.dwNumberOfProcessors);
 }
 
 
@@ -269,7 +269,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	//the argument passed should be a process id
 	long pid;
     int pid_return;
-    PyObject* infoTuple; 
+    PyObject* infoTuple;
     PyObject* ppid;
     PyObject* arglist;
     PyObject* name;
@@ -297,8 +297,8 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     //check if the process exists before we waste time trying to read info
     pid_return = pid_is_running(pid);
     if (pid_return == 0) {
-        return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid); 
-    } 
+        return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+    }
 
     if (pid_return == -1) {
         return NULL; //exception raised from within pid_is_running()
@@ -310,7 +310,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     if ( NULL == ppid ) {
         return NULL;  //exception string set in get_ppid()
     }
-    
+
     name = get_name(pid);
     if ( NULL == name ) {
         return NULL;  //exception string set in get_name()
@@ -318,11 +318,11 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 
     //If get_name or get_pid returns None that means the process is dead
     if (Py_None == name) {
-        return PyErr_Format(NoSuchProcessException, "Process with pid %lu has disappeared", pid); 
+        return PyErr_Format(NoSuchProcessException, "Process with pid %lu has disappeared", pid);
     }
 
     if (Py_None == ppid) {
-        return PyErr_Format(NoSuchProcessException, "Process with pid %lu has disappeared", pid); 
+        return PyErr_Format(NoSuchProcessException, "Process with pid %lu has disappeared", pid);
     }
 
     //May fail any of several ReadProcessMemory calls etc. and not indicate

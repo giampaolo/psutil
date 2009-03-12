@@ -1,7 +1,7 @@
-/* 
+/*
  * $Id$
  *
- * Helper functions related to fetching process information. Used by _psutil_mswindows 
+ * Helper functions related to fetching process information. Used by _psutil_mswindows
  * module methods.
  */
 

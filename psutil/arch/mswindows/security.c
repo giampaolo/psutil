@@ -1,7 +1,7 @@
 /*
  * $Id$
  *
- * Security related functions for Windows platform (Set privileges such as 
+ * Security related functions for Windows platform (Set privileges such as
  * SeDebug), as well as security helper functions.
  */
 
@@ -35,7 +35,7 @@ BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
 
     if (GetLastError() != ERROR_SUCCESS) return FALSE;
 
-    // 
+    //
     // second pass. set privilege based on previous setting
     //
     tpPrevious.PrivilegeCount = 1;
@@ -44,7 +44,7 @@ BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
     if(bEnablePrivilege) {
         tpPrevious.Privileges[0].Attributes |= (SE_PRIVILEGE_ENABLED);
     }
-    
+
     else {
         tpPrevious.Privileges[0].Attributes ^= (SE_PRIVILEGE_ENABLED &
                 tpPrevious.Privileges[0].Attributes);
@@ -65,8 +65,8 @@ BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
 }
 
 
-int SetSeDebug() 
-{ 
+int SetSeDebug()
+{
     HANDLE hToken;
     if(!OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken)){
         if (GetLastError() == ERROR_NO_TOKEN){

@@ -1,6 +1,6 @@
 /*
- * $Id$ 
- * 
+ * $Id$
+ *
  * Windows platform-specific module methods for _psutil_mswindows
  *
  */

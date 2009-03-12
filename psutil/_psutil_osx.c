@@ -22,7 +22,7 @@
  */
 static PyMethodDef PsutilMethods[] =
 {
-     {"get_pid_list", get_pid_list, METH_VARARGS, 
+     {"get_pid_list", get_pid_list, METH_VARARGS,
      	"Returns a python list of PIDs currently running on the host system"},
      {"get_process_info", get_process_info, METH_VARARGS,
        	"Returns a psutil.ProcessInfo object for the given PID"},
@@ -33,7 +33,7 @@ static PyMethodDef PsutilMethods[] =
 
 
 static PyObject *NoSuchProcessException;
- 
+
 PyMODINIT_FUNC
 init_psutil_osx(void)
 {
@@ -74,7 +74,7 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
             proclist++;
         }
     }
-    
+
     free(orig_address);
     return retlist;
 }
@@ -96,7 +96,7 @@ static int pid_exists(long pid) {
     if ( (0 == kill_ret) || (EPERM == errno) ) {
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -120,7 +120,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     mib[2] = KERN_PROC_PID;
     //now the PID we want
     mib[3] = pid;
-    
+
     //fetch the info with sysctl()
     len = sizeof(kp);
 
@@ -129,9 +129,9 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         // raise an exception and throw errno as the error
         if (ESRCH == errno) { //no such process
             return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
-        } 
+        }
         return PyErr_SetFromErrno(NULL);
-    } 
+    }
 
     if (len > 0) {
         arglist = get_arg_list(pid);
@@ -140,10 +140,10 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         }
 
         return Py_BuildValue("llssNll", pid, kp.kp_eproc.e_ppid, kp.kp_proc.p_comm, "", arglist, kp.kp_eproc.e_pcred.p_ruid, kp.kp_eproc.e_pcred.p_rgid);
-    } 
+    }
 
     /*
-     * if sysctl succeeds but len is zero, raise NoSuchProcess as this only 
+     * if sysctl succeeds but len is zero, raise NoSuchProcess as this only
      * appears to happen when the process has gone away.
      */
     else {
@@ -158,11 +158,11 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 // returns he number of CPUs on the system, needed for CPU utilization % calc
 static PyObject* get_num_cpus(PyObject* self, PyObject* args)
 {
-    
+
     int mib[2];
     int ncpu;
     size_t len;
-    
+
     mib[0] = CTL_HW;
     mib[1] = HW_NCPU;
     len = sizeof(ncpu);

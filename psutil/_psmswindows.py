@@ -34,7 +34,7 @@ class Impl(object):
     def get_process_info(self, pid):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.
-        """        
+        """
         # XXX - figure out why it can't be imported globally
         import psutil
         infoTuple = _psutil_mswindows.get_process_info(pid)
@@ -59,7 +59,7 @@ class Impl(object):
 
     def pid_exists(self, pid):
         return _psutil_mswindows.pid_exists(pid)
-        
+
     @wrap_privileges
     def get_process_create_time(self, pid):
         return _psutil_mswindows.get_process_create_time(pid)
@@ -67,7 +67,7 @@ class Impl(object):
     @wrap_privileges
     def get_cpu_times(self, pid):
         return _psutil_mswindows.get_process_cpu_times(pid)
-        
-    def get_num_cpus(self):    
+
+    def get_num_cpus(self):
         return _psutil_mswindows.get_num_cpus()
-        
+

@@ -24,7 +24,7 @@
  */
 static PyMethodDef PsutilMethods[] =
 {
-     {"get_pid_list", get_pid_list, METH_VARARGS, 
+     {"get_pid_list", get_pid_list, METH_VARARGS,
      	"Returns a python list of PIDs currently running on the host system"},
      {"get_process_info", get_process_info, METH_VARARGS,
        	"Returns a psutil.ProcessInfo object for the given PID"},
@@ -37,7 +37,7 @@ static PyMethodDef PsutilMethods[] =
 
 
 static PyObject *NoSuchProcessException;
- 
+
 PyMODINIT_FUNC
 init_psutil_bsd(void)
 {
@@ -77,7 +77,7 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
         }
         free(orig_address);
     }
-   
+
     return retlist;
 }
 
@@ -95,7 +95,7 @@ static int pid_exists(long pid) {
     if ( (0 == kill_ret) || (EPERM == errno) ) {
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -128,7 +128,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
-    
+
     //fetch the info with sysctl()
     len = sizeof(kp);
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
@@ -137,11 +137,11 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
             return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
         }
         return PyErr_SetFromErrno(PyExc_OSError);
-    } 
+    }
 
     if (len > 0) { //if 0 then no data was retrieved
 
-        //get the commandline, since we got everything else 
+        //get the commandline, since we got everything else
         arglist = get_arg_list(pid);
 
         //get_arg_list() returns NULL only if getcmdargs failed with ESRCH (no process with that PID)
@@ -153,7 +153,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         infoTuple = Py_BuildValue("llssNll", pid, kp.ki_ppid, kp.ki_comm, "", arglist, kp.ki_ruid, kp.ki_rgid);
         if (NULL == infoTuple) {
             PyErr_SetString(PyExc_RuntimeError, "Failed to build process information tuple!");
-        }    
+        }
         return infoTuple;
     }
 
@@ -196,7 +196,7 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
-    
+
     //fetch the info with sysctl()
     len = sizeof(kp);
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
@@ -205,7 +205,7 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
             return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
         }
         return PyErr_SetFromErrno(PyExc_OSError);
-    } 
+    }
 
     if (len > 0) { //if 0 then no data was retrieved
         user_t = TV2DOUBLE(kp.ki_rusage.ru_utime);
@@ -215,7 +215,7 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
         timeTuple = Py_BuildValue("(dd)", user_t, sys_t);
         if (NULL == timeTuple) {
             PyErr_SetString(PyExc_RuntimeError, "Failed to build process CPU times tuple!");
-        }    
+        }
         return timeTuple;
     }
 
@@ -227,11 +227,11 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
 // returns he number of CPUs on the system, needed for CPU utilization % calc
 static PyObject* get_num_cpus(PyObject* self, PyObject* args)
 {
-    
+
     int mib[2];
     int ncpu;
     size_t len;
-    
+
     mib[0] = CTL_HW;
     mib[1] = HW_NCPU;
     len = sizeof(ncpu);
