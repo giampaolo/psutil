@@ -1,1 +1,1 @@
-from psutil import *
+from _psutil import *
