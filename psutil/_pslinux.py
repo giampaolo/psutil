@@ -21,7 +21,7 @@ def _get_uptime():
             return float(line.strip().split()[1])
 
 def _get_num_cpus():
-    """Returned the number of CPUs on the system"""
+    """Return the number of CPUs on the system"""
     num = 0
     f = open('/proc/cpuinfo', 'r')
     for line in f:
@@ -32,8 +32,8 @@ def _get_num_cpus():
 
 
 # Number of clock ticks per second
-CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
-UPTIME = _get_uptime()
+_CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
+_UPTIME = _get_uptime()
 NUM_CPUS = _get_num_cpus()
 
 
@@ -150,8 +150,8 @@ class Impl(object):
         # ignore the first two values ("pid (exe)")
         st = st[st.find(')') + 2:]
         values = st.split(' ')
-        utime = float(values[11]) / CLOCK_TICKS
-        stime = float(values[12]) / CLOCK_TICKS
+        utime = float(values[11]) / _CLOCK_TICKS
+        stime = float(values[12]) / _CLOCK_TICKS
         return (utime, stime)
 
     @prevent_zombie
@@ -171,7 +171,7 @@ class Impl(object):
         # unit is jiffies (clock ticks).
         # We first divide it for clock ticks and then add uptime returning
         # seconds since the epoch, in UTC.
-        starttime = (float(values[19]) / CLOCK_TICKS) + UPTIME
+        starttime = (float(values[19]) / _CLOCK_TICKS) + _UPTIME
         return starttime
 
     def _get_ppid(self, pid):
