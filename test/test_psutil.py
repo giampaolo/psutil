@@ -121,7 +121,6 @@ class TestCase(unittest.TestCase):
         psutil.Process(self.proc.pid).kill()
         self.proc.wait()
         self.proc = None
-##        wait_for_pid(self.proc.pid) # FIXME: why is this needed?
         self.assertFalse(p.is_running())
 
     def test_pid_exists(self):
@@ -195,7 +194,8 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(p.get_cpu_times(), tuple))
         self.assert_(isinstance(p.get_cpu_times()[0], float))
-        self.assert_(isinstance(p.get_cpu_times()[1], float))
+        self.assert_(isinstance(p.get_cpu_times()[1], float))        
+        self.assert_(isinstance(p.get_cpu_percent(), float))
         self.assert_(isinstance(psutil.get_process_list(), list))
         self.assert_(isinstance(psutil.get_process_list()[0], psutil.Process))
         self.assert_(isinstance(psutil.process_iter(), types.GeneratorType))
@@ -224,7 +224,6 @@ class TestCase(unittest.TestCase):
         p.kill()
         self.proc.wait()
         self.proc = None
-##        wait_for_pid(self.proc.pid)  # XXX - maybe not necessary; verify
 
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "ppid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "parent")
@@ -233,12 +232,8 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "cmdline")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "uid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "gid")
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "create_time")        
-        self.assertRaises(psutil.NoSuchProcess, p.get_cpu_times)        
-        self.assertRaises(psutil.NoSuchProcess, p.get_cpu_percent)
         self.assertRaises(psutil.NoSuchProcess, p.kill)
 
-    # XXX - provisional
     def test_fetch_all(self):
         valid_procs = 0
         for p in psutil.process_iter():
