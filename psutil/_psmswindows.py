@@ -4,6 +4,7 @@
 #
 
 import errno
+import time
 
 import _psutil_mswindows
 
@@ -13,6 +14,7 @@ from error import *
 # module level constants (gets pushed up to psutil module)
 NoSuchProcess = _psutil_mswindows.NoSuchProcess
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
+_UPTIME = _psutil_mswindows.get_system_uptime(time.time())
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if a
@@ -59,6 +61,9 @@ class Impl(object):
 
     @wrap_privileges
     def get_process_create_time(self, pid):
+        # special case for kernel process PIDs; return system uptime
+        if pid in (0, 4):
+            return _UPTIME
         return _psutil_mswindows.get_process_create_time(pid)
 
     @wrap_privileges

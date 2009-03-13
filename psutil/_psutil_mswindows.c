@@ -29,6 +29,8 @@ static PyMethodDef PsutilMethods[] =
          "Return process creation time."},
      {"get_num_cpus", get_num_cpus, METH_VARARGS,
          "Returns the number of CPUs on the system"},
+     {"get_system_uptime", get_system_uptime, METH_VARARGS,
+         "Return system uptime"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -44,6 +46,20 @@ init_psutil_mswindows(void)
      PyModule_AddObject(m, "NoSuchProcess", NoSuchProcessException);
 }
 
+
+static PyObject* get_system_uptime(PyObject* self, PyObject* args)
+{
+    long uptime;
+    float current_time;
+	if (! PyArg_ParseTuple(args, "f", &current_time)){
+        return PyErr_Format(PyExc_RuntimeError,
+                            "Invalid argument - no PID provided.");
+	}
+    // XXX - By using GetTickCount() time will wrap around to zero if the
+    // system is run continuously for 49.7 days.
+    uptime = GetTickCount() / 1000;
+    return Py_BuildValue("f", current_time - uptime);
+}
 
 
 static PyObject* pid_exists(PyObject* self, PyObject* args)

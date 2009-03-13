@@ -141,9 +141,9 @@ class Impl(object):
     @prevent_zombie
     @wrap_privileges
     def get_cpu_times(self, pid):
+        # special case for 0 (kernel processes) PID; return system uptime
         if pid == 0:
-            # special case for 0 (kernel process) PID
-            return (0.0, 0.0)
+            return _UPTIME
         f = open("/proc/%s/stat" %pid)
         st = f.read().strip()
         f.close()
