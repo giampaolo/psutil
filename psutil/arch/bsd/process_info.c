@@ -5,6 +5,7 @@
  * module methods.
  */
 
+#include <Python.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -14,8 +15,6 @@
 #include <sys/sysctl.h>
 #include <sys/user.h>
 #include <sys/proc.h>
-
-#include <Python.h>
 
 #include "process_info.h"
 

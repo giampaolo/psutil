@@ -4,6 +4,7 @@
  * OS X platform-specific module methods for _psutil_osx
  */
 
+#include <Python.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -12,7 +13,6 @@
 #include <signal.h>
 #include <sys/sysctl.h>
 
-#include <Python.h>
 #include "_psutil_osx.h"
 #include "arch/osx/process_info.h"
 

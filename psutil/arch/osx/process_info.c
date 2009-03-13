@@ -5,6 +5,7 @@
  * module methods.
  */
 
+#include <Python.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -12,7 +13,6 @@
 #include <stdio.h>
 #include <sys/sysctl.h>
 
-#include <Python.h>
 #include "process_info.h"
 
 #define ARGS_ACCESS_DENIED -2

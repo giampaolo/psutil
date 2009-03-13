@@ -4,9 +4,9 @@
  * Windows platform-specific module methods for _psutil_mswindows
  */
 
+#include <Python.h>
 #include <windows.h>
 #include <Psapi.h>
-#include <Python.h>
 
 #include "_psutil_mswindows.h"
 #include "arch/mswindows/security.h"

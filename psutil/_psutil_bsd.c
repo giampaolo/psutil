@@ -4,6 +4,7 @@
  * FreeBSD platform-specific module methods for _psutil_bsd
  */
 
+#include <Python.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -14,7 +15,6 @@
 #include <sys/user.h>
 #include <sys/proc.h>
 
-#include <Python.h>
 #include "_psutil_bsd.h"
 #include "arch/bsd/process_info.h"
 
