@@ -9,8 +9,8 @@ import errno
 import pwd
 import grp
 
-import psutil
-
+# import psutil exceptions we can override with our own
+from error import *
 
 def _get_uptime():
     """Return system boot time (epoch in seconds)"""
@@ -48,7 +48,7 @@ def prevent_zombie(method):
         except IOError, err:
             if err.errno == errno.ENOENT:  # no such file or directory
                 if not self.pid_exists(pid):
-                    raise psutil.NoSuchProcess(pid)
+                    raise NoSuchProcess(pid)
             raise
     return wrapper
 
@@ -63,7 +63,7 @@ def wrap_privileges(callable):
             return callable(*args, **kwargs)
         except OSError, err:
             if err.errno == errno.EPERM:
-                raise psutil.AccessDenied
+                raise AccessDenied
             raise
     return wrapper
 
@@ -76,7 +76,7 @@ class Impl(object):
         """Returns a process info class."""
         if pid == 0:
             # special case for 0 (kernel process) PID
-            return psutil.ProcessInfo(pid, 0, 'sched', '', [], 0, 0)
+            return (pid, 0, 'sched', '', [], 0, 0)
 
         # determine executable
         try:
@@ -103,7 +103,7 @@ class Impl(object):
         finally:
             f.close()
 
-        return psutil.ProcessInfo(pid, self._get_ppid(pid), name, path, cmdline,
+        return (pid, self._get_ppid(pid), name, path, cmdline,
                                   self._get_process_uid(pid),
                                   self._get_process_gid(pid))
 
@@ -116,7 +116,7 @@ class Impl(object):
             os.kill(pid, sig)
         except OSError, err:
             if err.errno == errno.ESRCH:
-                raise psutil.NoSuchProcess(pid)
+                raise NoSuchProcess(pid)
             raise
 
     def get_pid_list(self):

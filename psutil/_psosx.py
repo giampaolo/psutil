@@ -9,10 +9,12 @@ import errno
 
 import _psutil_osx
 
+# import psutil exceptions we can override with our own
+from error import *
+
+# module level constants (gets pushed up to psutil module)
 NoSuchProcess = _psutil_osx.NoSuchProcess
-
 NUM_CPUS = _psutil_osx.get_num_cpus()
-
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if an
@@ -20,13 +22,11 @@ def wrap_privileges(callable):
     psutil.AccessDenied.
     """
     def wrapper(*args, **kwargs):
-        # XXX - figure out why it can't be imported globally
-        import psutil
         try:
             return callable(*args, **kwargs)
         except OSError, err:
             if err.errno == errno.EPERM:
-                raise psutil.AccessDenied
+                raise AccessDenied
             raise
     return wrapper
 
@@ -38,24 +38,29 @@ class Impl(object):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.
         """
-        # XXX - figure out why it can't be imported globally (see r54)
-        import psutil
         infoTuple = _psutil_osx.get_process_info(pid)
-        return psutil.ProcessInfo(*infoTuple)
+        return infoTuple
 
     @wrap_privileges
     def kill_process(self, pid, sig=signal.SIGKILL):
         """Terminates the process with the given PID."""
-        # XXX - figure out why it can't be imported globally (see r54)
-        import psutil
         if sig is None:
             sig = signal.SIGKILL
         try:
             os.kill(pid, sig)
         except OSError, err:
             if err.errno == errno.ESRCH:
-                raise psutil.NoSuchProcess(pid)
+                raise NoSuchProcess(pid)
             raise
+
+    def get_cpu_times(self, pid):
+        #FIXME: write a real function
+        return (0.0, 0.0)
+
+    def get_process_create_time(self, pid):
+        #FIXME: write a real function
+        return 0.0
+
 
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""

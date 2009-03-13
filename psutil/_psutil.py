@@ -25,34 +25,26 @@ try:
 except ImportError:
     pwd = grp = None
 
+# exceptions are imported here, but may be overriden by platform
+# module implementation later
+from error import *
 
-# this exception get overriden by the platform specific modules if necessary
-class NoSuchProcess(Exception):
-    """No process was found for the given parameters."""
-
-class AccessDenied(Exception):
-    """Exception raised when permission to perform an action is denied."""
-
-
-# the linux implementation has the majority of it's functionality
-# implemented in python via /proc
+# import the appropriate module for our platform only
 if sys.platform.lower().startswith("linux"):
     from _pslinux import *
 
-# the windows implementation requires the _psutil_mswindows C module
 elif sys.platform.lower().startswith("win32"):
     from _psmswindows import *
 
-# OS X implementation requires _psutil_osx C module
 elif sys.platform.lower().startswith("darwin"):
     from _psosx import *
 
-# BSD implementation requires _psutil_bsd C module
 elif sys.platform.lower().startswith("freebsd"):
     from _psbsd import *
 else:
     raise ImportError('no os specific module found')
 
+# platform-specific modules define an Impl implementation class
 _platform_impl = Impl()
 
 
@@ -138,7 +130,9 @@ class Process(object):
         get_process_info().
         """
         if self.is_proxy:
-            self._procinfo = _platform_impl.get_process_info(self._procinfo.pid)
+            # get_process_info returns a tuple we use as the arguments
+            # to the ProcessInfo constructor
+            self._procinfo = ProcessInfo(*_platform_impl.get_process_info(self._procinfo.pid))
             self.is_proxy = False
 
     @property

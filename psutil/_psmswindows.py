@@ -7,11 +7,12 @@ import errno
 
 import _psutil_mswindows
 
+# import psutil exceptions we can override with our own
+from error import *
 
+# module level constants (gets pushed up to psutil module)
 NoSuchProcess = _psutil_mswindows.NoSuchProcess
-
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
-
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if a
@@ -19,13 +20,11 @@ def wrap_privileges(callable):
     into psutil.AccessDenied
     """
     def wrapper(*args, **kwargs):
-        # XXX - figure out why it can't be imported globally
-        import psutil
         try:
             return callable(*args, **kwargs)
         except OSError, err:
             if err.errno == errno.EACCES:
-                raise psutil.AccessDenied
+                raise AccessDenied
             raise
     return wrapper
 
@@ -37,22 +36,18 @@ class Impl(object):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.
         """
-        # XXX - figure out why it can't be imported globally
-        import psutil
         infoTuple = _psutil_mswindows.get_process_info(pid)
-        return psutil.ProcessInfo(*infoTuple)
+        return infoTuple
 
     @wrap_privileges
     def kill_process(self, pid, sig=None):
         """Terminates the process with the given PID."""
-        # XXX - figure out why it can't be imported globally
-        import psutil
         try:
             return _psutil_mswindows.kill_process(pid)
         except OSError, err:
             # work around issue #24
             if (pid == 0) and (err.errno == errno.EINVAL):
-                raise psutil.AccessDenied
+                raise AccessDenied
             raise
 
     def get_pid_list(self):
