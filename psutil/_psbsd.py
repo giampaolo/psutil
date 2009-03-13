@@ -16,7 +16,7 @@ from error import *
 
 # module level constants (gets pushed up to psutil module)
 NoSuchProcess = _psutil_bsd.NoSuchProcess
-NUM_CPUS = _psutil_osx.get_num_cpus()
+NUM_CPUS = _psutil_bsd.get_num_cpus()
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if an
@@ -59,6 +59,10 @@ class Impl(object):
     def get_cpu_times(self, pid):
         """return a tuple containing process user/kernel time."""
         return _psutil_bsd.get_cpu_times(pid)
+
+    def get_process_create_time(self, pid):
+        #FIXME: write a real function
+        return 0.0
 
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
