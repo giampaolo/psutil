@@ -10,6 +10,7 @@ processes in a portable way by using Python.
 __all__ = [
     "NoSuchProcess",
     "AccessDenied",
+    "NUM_CPUS",
     "ProcessInfo",
     "Process",
     "pid_exists",
@@ -81,14 +82,20 @@ class Process(object):
             raise NoSuchProcess("No process found with PID %s" % pid)
         self._procinfo = ProcessInfo(pid)
         self.is_proxy = True
-        self._last_sys_time = time.time()
-        self._last_user_time, self._last_kern_time = self.get_cpu_times()
+        # try to init CPU times, if it raises AccessDenied then suppress it so
+        # it won't interrupt the constructor. First call to get_cpu_percent()
+        # will trigger the AccessDenied exception instead.
+        try:
+            self._last_sys_time = time.time()
+            self._last_user_time, self._last_kern_time = self.get_cpu_times()
+        except AccessDenied:
+            pass
 
     def __str__(self):
         return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; " \
-               "CMDLINE:%s; UID:%s; GID:%s; CPUTIMES:%s; CREATETIME:%s>" \
+               "CMDLINE:%s; UID:%s; GID:%s;>" \
                %(self.pid, self.ppid, self.name, self.path, self.cmdline, \
-                 self.uid, self.gid, self.get_cpu_times(), self.create_time)
+                 self.uid, self.gid)
 
     def __eq__(self, other):
         """Test for equality with another Process object based on PID,
@@ -200,7 +207,9 @@ class Process(object):
         calls. The initial delta is calculated from the instantiation of the
         Process object."""
         now = time.time()
+        # will raise AccessDenied on OS X if not root or in procmod group
         user_t, kern_t = self.get_cpu_times()
+
         total_proc_time = float((user_t - self._last_user_time) + \
                                 (kern_t - self._last_kern_time))
         try:
