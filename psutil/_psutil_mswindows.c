@@ -201,6 +201,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 {
     long        pid;
+    long long unix_time;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
 
@@ -242,9 +243,8 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     It's the best I could find by googling and borrowing code here and there.
     The time returned has a precision of 1 second.
     */
-    LONGLONG unix_time;
     unix_time = ((LONGLONG)ftCreate.dwHighDateTime) << 32;
-    unix_time += ftCreate.dwLowDateTime - 116444736000000000;
+    unix_time += ftCreate.dwLowDateTime - 116444736000000000LL;
     unix_time /= 10000000;
     return Py_BuildValue("f", (float)unix_time);
 }
