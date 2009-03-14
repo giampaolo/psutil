@@ -141,9 +141,9 @@ class Impl(object):
     @prevent_zombie
     @wrap_privileges
     def get_cpu_times(self, pid):
-        # special case for 0 (kernel processes) PID; return system uptime
+        # special case for 0 (kernel process) PID
         if pid == 0:
-            return _UPTIME
+            return (0.0, 0.0)
         f = open("/proc/%s/stat" %pid)
         st = f.read().strip()
         f.close()
@@ -157,10 +157,9 @@ class Impl(object):
     @prevent_zombie
     @wrap_privileges
     def get_process_create_time(self, pid):
+        # special case for 0 (kernel processes) PID; return system uptime
         if pid == 0:
-            # special case for 0 (kernel process) PID
-            # XXX - return 0.0 (year 1970) for now, decide what to do later
-            return 0.0
+            return _UPTIME
         f = open("/proc/%s/stat" %pid)
         st = f.read().strip()
         f.close()
