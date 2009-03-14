@@ -4,8 +4,6 @@
 #
 
 import errno
-import time
-
 import _psutil_mswindows
 
 # import psutil exceptions we can override with our own
@@ -14,7 +12,7 @@ from error import *
 # module level constants (gets pushed up to psutil module)
 NoSuchProcess = _psutil_mswindows.NoSuchProcess
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
-_UPTIME = _psutil_mswindows.get_system_uptime(time.time())
+_UPTIME = _psutil_mswindows.get_system_uptime()
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if a

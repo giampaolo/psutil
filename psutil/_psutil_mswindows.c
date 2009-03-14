@@ -7,6 +7,7 @@
 #include <Python.h>
 #include <windows.h>
 #include <Psapi.h>
+#include <time.h>
 
 #include "_psutil_mswindows.h"
 #include "arch/mswindows/security.h"
@@ -49,16 +50,11 @@ init_psutil_mswindows(void)
 
 static PyObject* get_system_uptime(PyObject* self, PyObject* args)
 {
-    long uptime;
-    float current_time;
-	if (! PyArg_ParseTuple(args, "f", &current_time)){
-        return PyErr_Format(PyExc_RuntimeError,
-                            "Invalid argument - no PID provided.");
-	}
+    float uptime;
     // XXX - By using GetTickCount() time will wrap around to zero if the
     // system is run continuously for 49.7 days.
-    uptime = GetTickCount() / 1000;
-    return Py_BuildValue("f", current_time - uptime);
+    uptime = GetTickCount() / 1000.00;
+    return Py_BuildValue("f", (float)time(NULL) - uptime);
 }
 
 
