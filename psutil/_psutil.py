@@ -221,7 +221,7 @@ class Process(object):
         self._last_sys_time = time.time()
         self._last_user_time, self._last_kern_time = self.get_cpu_times()
 
-        return percent * 100.0
+        return (percent * 100.0) / NUM_CPUS
 
     def get_cpu_times(self):
         """Return a tuple whose values are process CPU user and system time.
