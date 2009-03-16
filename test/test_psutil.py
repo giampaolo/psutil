@@ -102,7 +102,7 @@ class TestCase(unittest.TestCase):
             self.fail("expected: %s, found: %s" %(now, create_time))
 
         # make sure returned value can be pretty printed with strftime
-        time.strftime("Y m d %H:%M:%S", time.localtime(p.create_time))
+        time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
 
     def test_pid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
@@ -292,6 +292,10 @@ class TestCase(unittest.TestCase):
 
         def test_windows_pid_4(self):
             p = psutil.Process(0)
+            self.assertEqual(p.name, 'System')
+            # use __str__ to access all common Process properties to check
+            # that nothing strange happens
+            str(p)
             self.assertTrue(p.create_time >= 0.0)
 
 
