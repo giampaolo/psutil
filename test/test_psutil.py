@@ -292,7 +292,7 @@ class TestCase(unittest.TestCase):
 
         def test_windows_pid_4(self):
             p = psutil.Process(0)
-            self.assertEqual(p.name, 'System')
+            self.assertEqual(p.name, 'System Idle Process')
             # use __str__ to access all common Process properties to check
             # that nothing strange happens
             str(p)

@@ -51,10 +51,30 @@ init_psutil_mswindows(void)
 static PyObject* get_system_uptime(PyObject* self, PyObject* args)
 {
     float uptime;
+    time_t pt;
+    FILETIME fileTime;
+    long long ll;
+
+    GetSystemTimeAsFileTime(&fileTime);
+
+    // HUGE thanks to:
+    // http://johnstewien.spaces.live.com/blog/cns!E6885DB5CEBABBC8!831.entry
+    //
+    // This function converts the FILETIME structure to the 32 bit
+    // Unix time structure.
+    // The time_t is a 32-bit value for the number of seconds since
+    // January 1, 1970. A FILETIME is a 64-bit for the number of
+    // 100-nanosecond periods since January 1, 1601. Convert by
+    // subtracting the number of 100-nanosecond period betwee 01-01-1970
+    // and 01-01-1601, from time_t the divide by 1e+7 to get to the same
+    // base granularity.
+    ll = (((LONGLONG)(fileTime.dwHighDateTime)) << 32) + fileTime.dwLowDateTime;
+    pt = (time_t)((ll - 116444736000000000ull)/10000000ull);
+
     // XXX - By using GetTickCount() time will wrap around to zero if the
     // system is run continuously for 49.7 days.
     uptime = GetTickCount() / 1000.00;
-    return Py_BuildValue("f", (float)time(NULL) - uptime);
+    return Py_BuildValue("f", (float)pt - uptime);
 }
 
 
