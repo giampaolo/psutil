@@ -299,24 +299,25 @@ class TestCase(unittest.TestCase):
             self.assertTrue(p.create_time >= 0.0)
 
 
-class LimitedUserTestCase(TestCase):
-    """Repeat the previous tests by using a limited user.
-    Executed only on UNIX and only if the user who run the test script
-    is root.
-    """
-    # the uid/gid the test suite runs under
-    PROCESS_UID = os.getuid()
-    PROCESS_GID = os.getgid()
+if hasattr(os, 'getuid'):
+    class LimitedUserTestCase(TestCase):
+        """Repeat the previous tests by using a limited user.
+        Executed only on UNIX and only if the user who run the test script
+        is root.
+        """
+        # the uid/gid the test suite runs under
+        PROCESS_UID = os.getuid()
+        PROCESS_GID = os.getgid()
 
-    def setUp(self):
-        os.setegid(1000)
-        os.seteuid(1000)
-        TestCase.setUp(self)
+        def setUp(self):
+            os.setegid(1000)
+            os.seteuid(1000)
+            TestCase.setUp(self)
 
-    def tearDown(self):
-        os.setegid(self.PROCESS_UID)
-        os.seteuid(self.PROCESS_GID)
-        TestCase.tearDown(self)
+        def tearDown(self):
+            os.setegid(self.PROCESS_UID)
+            os.seteuid(self.PROCESS_GID)
+            TestCase.tearDown(self)
 
 
 def test_main():
