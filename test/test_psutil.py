@@ -291,8 +291,8 @@ class TestCase(unittest.TestCase):
             self.assertRaises(psutil.AccessDenied, p.kill)
 
         def test_windows_pid_4(self):
-            p = psutil.Process(0)
-            self.assertEqual(p.name, 'System Idle Process')
+            p = psutil.Process(4)
+            self.assertEqual(p.name, 'System')
             # use __str__ to access all common Process properties to check
             # that nothing strange happens
             str(p)
