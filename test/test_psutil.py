@@ -72,36 +72,36 @@ class TestCase(unittest.TestCase):
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_get_cpu_times(self):
-        user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()        
-        utime, ktime = os.times()[:2]      
-          
-        # Use os.times()[:2] as base values to compare our results 
-        # using a tolerance  of +/- 0.1 seconds. 
-        # It will fail if the difference between the values is > 0.1s. 
+        user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()
+        utime, ktime = os.times()[:2]
+
+        # Use os.times()[:2] as base values to compare our results
+        # using a tolerance  of +/- 0.1 seconds.
+        # It will fail if the difference between the values is > 0.1s.
         if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
-            self.fail("expected: %s, found: %s" %(utime, user_time))     
-              
+            self.fail("expected: %s, found: %s" %(utime, user_time))
+
         if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
             self.fail("expected: %s, found: %s" %(ktime, kernel_time))
 
-        # make sure returned values can be pretty printed with strftime          
+        # make sure returned values can be pretty printed with strftime
         time.strftime("%H:%M:%S", time.localtime(user_time))
         time.strftime("%H:%M:%S", time.localtime(kernel_time))
-                
-    def test_create_time(self):    
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)        
-        now = time.time()   
-        wait_for_pid(self.proc.pid)           
-        p = psutil.Process(self.proc.pid)        
+
+    def test_create_time(self):
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        now = time.time()
+        wait_for_pid(self.proc.pid)
+        p = psutil.Process(self.proc.pid)
         create_time = p.create_time
 
-        # Use time.time() as base value to compare our result using a 
-        # tolerance of +/- 1 second. 
-        # It will fail if the difference between the values is > 1s. 
+        # Use time.time() as base value to compare our result using a
+        # tolerance of +/- 1 second.
+        # It will fail if the difference between the values is > 1s.
         if (max([now, create_time]) - min([now, create_time])) > 1:
-            self.fail("expected: %s, found: %s" %(now, create_time))       
+            self.fail("expected: %s, found: %s" %(now, create_time))
 
-        # make sure returned value can be pretty printed with strftime        
+        # make sure returned value can be pretty printed with strftime
         time.strftime("Y m d %H:%M:%S", time.localtime(p.create_time))
 
     def test_pid(self):
@@ -194,7 +194,7 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(p.get_cpu_times(), tuple))
         self.assert_(isinstance(p.get_cpu_times()[0], float))
-        self.assert_(isinstance(p.get_cpu_times()[1], float))        
+        self.assert_(isinstance(p.get_cpu_times()[1], float))
         self.assert_(isinstance(p.get_cpu_percent(), float))
         self.assert_(isinstance(psutil.get_process_list(), list))
         self.assert_(isinstance(psutil.get_process_list()[0], psutil.Process))
@@ -242,8 +242,8 @@ class TestCase(unittest.TestCase):
                 valid_procs += 1
             except psutil.NoSuchProcess, psutil.AccessDenied:
                 continue
-        
-        # we should always have a non-empty list, not including PID 0 etc. 
+
+        # we should always have a non-empty list, not including PID 0 etc.
         # special cases.
         self.assertTrue(valid_procs > 2)
 
@@ -262,8 +262,8 @@ class TestCase(unittest.TestCase):
 
         # use __str__ to access all common Process properties to check
         # that nothing strange happens
-        str(p)        
-                
+        str(p)
+
         self.assertTrue(p.create_time >= 0.0)
 
         # PID 0 is supposed to be available on all platforms
@@ -288,16 +288,38 @@ class TestCase(unittest.TestCase):
 
         def test_windows_issue_24(self):
             p = psutil.Process(0)
-            self.assertRaises(psutil.AccessDenied, p.kill)            
-                        
-        def test_windows_pid_4(self):        
-            p = psutil.Process(0)            
+            self.assertRaises(psutil.AccessDenied, p.kill)
+
+        def test_windows_pid_4(self):
+            p = psutil.Process(0)
             self.assertTrue(p.create_time >= 0.0)
+
+
+class LimitedUserTestCase(TestCase):
+    """Repeat the previous tests by using a limited user.
+    Executed only on UNIX and only if the user who run the test script
+    is root.
+    """
+    # the uid/gid the test suite runs under
+    PROCESS_UID = os.getuid()
+    PROCESS_GID = os.getgid()
+
+    def setUp(self):
+        os.setegid(1000)
+        os.seteuid(1000)
+        TestCase.setUp(self)
+
+    def tearDown(self):
+        os.setegid(self.PROCESS_UID)
+        os.seteuid(self.PROCESS_GID)
+        TestCase.tearDown(self)
 
 
 def test_main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(TestCase))
+    if hasattr(os, 'getuid') and os.getuid() == 0:
+        test_suite.addTest(unittest.makeSuite(LimitedUserTestCase))
     unittest.TextTestRunner(verbosity=2).run(test_suite)
     if hasattr(test_support, "reap_children"):  # python 2.5 and >
         test_support.reap_children()
