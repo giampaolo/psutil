@@ -264,7 +264,15 @@ class TestCase(unittest.TestCase):
         # that nothing strange happens
         str(p)
 
-        self.assertTrue(p.create_time >= 0.0)
+        # test PID 0 special case where create_time is supposed to be
+        # equal to system uptime
+        # XXX - does this work also on OS X?
+        if sys.platform.lower().startswith("freebsd"):
+            sp = subprocess.Popen(["sysctl", "-x", "kern.boottime"],
+                                  stdout=subprocess.PIPE)
+            output = sp.communicate()[0]
+            uptime = output[output.find('= ') + 2:].split(',')[0]
+            self.assertEqual(int(p.create_time), int(uptime))
 
         # PID 0 is supposed to be available on all platforms
         self.assertTrue(0 in psutil.get_pid_list())
