@@ -32,6 +32,8 @@ static PyMethodDef PsutilMethods[] =
        	"Returns tuple of user/kern time for the given PID"},
      {"get_num_cpus", get_num_cpus, METH_VARARGS,
        	"Returns number of CPUs on the system"},
+     {"get_system_uptime", get_system_uptime, METH_VARARGS,
+         "Return system uptime"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -46,6 +48,19 @@ init_psutil_bsd(void)
      NoSuchProcessException = PyErr_NewException("_psutil_bsd.NoSuchProcess", NULL, NULL);
      Py_INCREF(NoSuchProcessException);
      PyModule_AddObject(m, "NoSuchProcess", NoSuchProcessException);
+}
+
+
+static PyObject* get_system_uptime(PyObject* self, PyObject* args)
+{
+    size_t len;
+    struct timeval tv;
+
+    len = sizeof(tv);
+    if (sysctlbyname("kern.boottime", &tv, &len, NULL, 0) < 0) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+    return Py_BuildValue("f", (float)tv.tv_sec);
 }
 
 

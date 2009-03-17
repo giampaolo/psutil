@@ -11,4 +11,4 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args);
 static PyObject* get_process_info(PyObject* self, PyObject* args);
 static PyObject* get_cpu_times(PyObject* self, PyObject* args);
 static PyObject* get_num_cpus(PyObject* self, PyObject* args);
-
+static PyObject* get_system_uptime(PyObject* self, PyObject* args);
