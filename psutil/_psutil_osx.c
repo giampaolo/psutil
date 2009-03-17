@@ -28,6 +28,8 @@ static PyMethodDef PsutilMethods[] =
        	"Returns a psutil.ProcessInfo object for the given PID"},
      {"get_num_cpus", get_num_cpus, METH_VARARGS,
        	"Returns the number of CPUs on the system"},
+     {"get_system_uptime", get_system_uptime, METH_VARARGS,
+         "Return system uptime"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -173,4 +175,22 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args)
     }
 
     return Py_BuildValue("i", ncpu);
+}
+
+
+static PyObject* get_system_uptime(PyObject* self, PyObject* args)
+{
+    int mib[2];
+    size_t size;
+    struct timeval boottime;
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_BOOTTIME;
+    size = sizeof(boottime);
+
+    if (sysctl(mib, 2, &boottime, &size, NULL, 0) == -1) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+     }
+
+    return Py_BuildValue("f", (float)boottime.tv_sec);
 }
