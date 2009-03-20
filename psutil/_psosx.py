@@ -59,8 +59,9 @@ class Impl(object):
         return (0.0, 0.0)
 
     def get_process_create_time(self, pid):
-        #FIXME: write a real function
-        return 0.0
+        """Return the start time of the process as a number of seconds since
+        the epoch."""
+        return _psutil_osx.get_process_create_time(pid)
 
 
     def get_pid_list(self):
