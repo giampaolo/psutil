@@ -15,7 +15,7 @@ from error import *
 # module level constants (gets pushed up to psutil module)
 NoSuchProcess = _psutil_osx.NoSuchProcess
 NUM_CPUS = _psutil_osx.get_num_cpus()
-_UPTIME = _psutil_osx.get_system_uptime()
+
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if an

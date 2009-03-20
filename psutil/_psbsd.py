@@ -17,7 +17,6 @@ from error import *
 # module level constants (gets pushed up to psutil module)
 NoSuchProcess = _psutil_bsd.NoSuchProcess
 NUM_CPUS = _psutil_bsd.get_num_cpus()
-_UPTIME = _psutil_bsd.get_system_uptime()
 
 
 def wrap_privileges(callable):
@@ -63,7 +62,6 @@ class Impl(object):
         return _psutil_bsd.get_cpu_times(pid)
 
     def get_process_create_time(self, pid):
-        # special case for 0 (kernel processes) PID; return system uptime
         return _psutil_bsd.get_process_create_time(pid)
 
     def get_pid_list(self):
