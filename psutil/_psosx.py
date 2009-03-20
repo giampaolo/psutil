@@ -55,8 +55,7 @@ class Impl(object):
             raise
 
     def get_cpu_times(self, pid):
-        #FIXME: write a real function
-        return (0.0, 0.0)
+        return _psutil_osx.get_process_cpu_times(pid)
 
     def get_process_create_time(self, pid):
         """Return the start time of the process as a number of seconds since

@@ -13,6 +13,12 @@
 #include <signal.h>
 #include <sys/sysctl.h>
 
+#include <mach/task.h>
+#include <mach/mach_init.h>
+#include <mach/mach_traps.h>
+#include <mach/mach_types.h>
+#include <mach/shared_memory_server.h>
+
 #include "_psutil_osx.h"
 #include "arch/osx/process_info.h"
 
@@ -39,6 +45,7 @@ static PyMethodDef PsutilMethods[] =
 
 
 static PyObject *NoSuchProcessException;
+static PyObject *AccessDeniedException;
 
 PyMODINIT_FUNC
 init_psutil_osx(void)
@@ -48,6 +55,9 @@ init_psutil_osx(void)
      NoSuchProcessException = PyErr_NewException("_psutil_osx.NoSuchProcess", NULL, NULL);
      Py_INCREF(NoSuchProcessException);
      PyModule_AddObject(m, "NoSuchProcess", NoSuchProcessException);
+     AccessDeniedException = PyErr_NewException("_psutil_osx.AccessDenied", NULL, NULL);
+     Py_INCREF(AccessDeniedException);
+     PyModule_AddObject(m, "AccessDenied", AccessDeniedException);
 }
 
 
@@ -204,8 +214,97 @@ static PyObject* get_system_uptime(PyObject* self, PyObject* args)
 
 static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 {
-    return Py_BuildValue("(dd)", 0.0, 0.0);
+    long pid;
+    int t_utime, t_utime_ms;
+    int t_stime, t_stime_ms;
+    int t_cpu;
+    unsigned int thread_count;
+    thread_array_t thread_list = NULL;
+    unsigned int info_count = TASK_BASIC_INFO_COUNT;
+    task_port_t task = (task_port_t)NULL;
+    time_value_t user_time, system_time;
+    struct task_basic_info tasks_info;
+    struct task_thread_times_info task_times;
+
+
+    //the argument passed should be a process id
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
+		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+	}
+
+
+    /* task_for_pid() requires special privileges
+     * "This function can be called only if the process is owned by the
+     * procmod group or if the caller is root."
+     * - http://developer.apple.com/documentation/MacOSX/Conceptual/universal_binary/universal_binary_tips/chapter_5_section_19.html
+     */
+    if (task_for_pid(mach_task_self(), pid, &task) == KERN_SUCCESS) {
+        info_count = TASK_BASIC_INFO_COUNT;
+        if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count) != KERN_SUCCESS) {
+            return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu\n", pid);
+        }
+
+        info_count = TASK_THREAD_TIMES_INFO_COUNT;
+        if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&task_times, &info_count) != KERN_SUCCESS) {
+            return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_THREAD_TIMES_INFO) failed for pid %lu\n", pid);
+        }
+    }
+
+    /* Some stats need to be fetched from all the threads for the process
+    */
+    if (task) {
+        if (task_threads(task, &thread_list, &(thread_count)) != KERN_SUCCESS) {
+            return PyErr_Format(PyExc_RuntimeError, "task_threads() failed for pid %lu\n", pid);
+        }
+
+        else {
+            /* sum the stats from each thread */
+            int i;
+            t_utime = 0;
+            t_utime_ms = 0;
+            t_stime = 0;
+            t_stime_ms = 0;
+            t_cpu = 0;
+
+            for(i = 0; i < thread_count; i++) {
+                struct thread_basic_info t_info;
+                unsigned int icount = THREAD_BASIC_INFO_COUNT;
+
+                if(thread_info(thread_list[i], THREAD_BASIC_INFO, (thread_info_t)&t_info, &icount) != KERN_SUCCESS) {
+                    return PyErr_Format(PyExc_RuntimeError, "thread_info() failed for pid %lu\n", pid);
+                }
+
+                else {
+                    t_utime += t_info.user_time.seconds;
+                    t_utime_ms += t_info.user_time.microseconds;
+                    t_stime += t_info.system_time.seconds;
+                    t_stime_ms += t_info.system_time.microseconds;
+                    t_cpu += t_info.cpu_usage;
+                }
+            }
+        }
+    }
+
+    /*
+    //XXX: throwing false access denied errors so we'll ignore this for now
+    else {
+        //return PyErr_Format(AccessDeniedException, "Access denied to CPU times for PID %lu", pid);
+    }
+    */
+
+    float user_t = -1.0;
+    float sys_t = -1.0;
+    user_time = tasks_info.user_time;
+    system_time = tasks_info.system_time;
+
+    time_value_add(&user_time, &task_times.user_time);
+    time_value_add(&system_time, &task_times.system_time);
+
+    user_t = (float)user_time.seconds + ((float)user_time.microseconds / 1000000.0);
+    sys_t = (float)system_time.seconds + ((float)system_time.microseconds / 1000000.0);
+    return Py_BuildValue("(dd)", user_t, sys_t);
 }
+
 
 static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 {
