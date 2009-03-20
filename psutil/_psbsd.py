@@ -64,10 +64,7 @@ class Impl(object):
 
     def get_process_create_time(self, pid):
         # special case for 0 (kernel processes) PID; return system uptime
-        if pid == 0:
-            return _UPTIME
-        #FIXME: write a real function
-        return 0.0
+        return _psutil_bsd.get_process_create_time(pid)
 
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""

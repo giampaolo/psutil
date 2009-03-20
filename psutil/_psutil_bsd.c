@@ -32,6 +32,8 @@ static PyMethodDef PsutilMethods[] =
        	"Returns tuple of user/kern time for the given PID"},
      {"get_num_cpus", get_num_cpus, METH_VARARGS,
        	"Returns number of CPUs on the system"},
+     {"get_process_create_time", get_process_create_time, METH_VARARGS,
+         "Return process creation time."},
      {"get_system_uptime", get_system_uptime, METH_VARARGS,
          "Return system uptime"},
      {NULL, NULL, 0, NULL}
@@ -197,13 +199,6 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
 		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
 	}
 
-    /*
-    if (0 == pid) {
-        //USER   PID %CPU %MEM   VSZ   RSS  TT  STAT STARTED      TIME COMMAND
-        //root     0  0.0  0.0     0     0  ??  DLs  12:22AM   0:00.13 [swapper]
-        return Py_BuildValue("llssNll", pid, 0, "swapper", "", Py_BuildValue("[]"), 0, 0);
-    }*/
-
     //build the mib to pass to sysctl to tell it what PID and what info we want
     len = 4;
     sysctlnametomib("kern.proc.pid", mib, &len);
@@ -258,3 +253,34 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args)
 
     return Py_BuildValue("i", ncpu);
 }
+
+
+static PyObject* get_process_create_time(PyObject* self, PyObject* args)
+{
+    int mib[4];
+    long pid;
+    size_t len;
+    struct kinfo_proc kp;
+
+	//the argument passed should be a process id
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
+		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+	}
+
+    len = 4;
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = pid;
+    len = sizeof(kp);
+    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+
+    if (len > 0) {
+        return Py_BuildValue("d", TV2DOUBLE(kp.ki_start));
+    }
+
+    return PyErr_Format(PyExc_RuntimeError, "Unable to read process start time.");
+}
+
