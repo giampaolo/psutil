@@ -16,7 +16,6 @@
 #include <mach/task.h>
 #include <mach/mach_init.h>
 #include <mach/mach_traps.h>
-#include <mach/mach_types.h>
 #include <mach/shared_memory_server.h>
 
 #include "_psutil_osx.h"
