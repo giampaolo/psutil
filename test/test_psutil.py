@@ -71,22 +71,27 @@ class TestCase(unittest.TestCase):
         self.proc = None
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
-    def test_get_cpu_times(self):
-        user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()
-        utime, ktime = os.times()[:2]
+    # Disabled on OS X and *BSD because os.times() is broken, see:
+    # http://bugs.python.org/issue1040026
 
-        # Use os.times()[:2] as base values to compare our results
-        # using a tolerance  of +/- 0.1 seconds.
-        # It will fail if the difference between the values is > 0.1s.
-        if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
-            self.fail("expected: %s, found: %s" %(utime, user_time))
+    if not sys.platform.lower().startswith("darwin") \
+    and not sys.platform.lower().startswith("freebsd"):
+        def test_get_cpu_times(self):
+            user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()
+            utime, ktime = os.times()[:2]
 
-        #if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
-        #    self.fail("expected: %s, found: %s" %(ktime, kernel_time))
+            # Use os.times()[:2] as base values to compare our results
+            # using a tolerance  of +/- 0.1 seconds.
+            # It will fail if the difference between the values is > 0.1s.
+            if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
+                self.fail("expected: %s, found: %s" %(utime, user_time))
 
-        # make sure returned values can be pretty printed with strftime
-        time.strftime("%H:%M:%S", time.localtime(user_time))
-        time.strftime("%H:%M:%S", time.localtime(kernel_time))
+            if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
+                self.fail("expected: %s, found: %s" %(ktime, kernel_time))
+
+            # make sure returned values can be pretty printed with strftime
+            time.strftime("%H:%M:%S", time.localtime(user_time))
+            time.strftime("%H:%M:%S", time.localtime(kernel_time))
 
     def test_create_time(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
@@ -263,16 +268,6 @@ class TestCase(unittest.TestCase):
         # use __str__ to access all common Process properties to check
         # that nothing strange happens
         str(p)
-
-        # test PID 0 special case where create_time is supposed to be
-        # equal to system uptime
-        # XXX - does this work also on OS X?
-        if sys.platform.lower().startswith("freebsd"):
-            sp = subprocess.Popen(["sysctl", "-x", "kern.boottime"],
-                                  stdout=subprocess.PIPE)
-            output = sp.communicate()[0]
-            uptime = output[output.find('= ') + 2:].split(',')[0]
-            self.assertEqual(int(p.create_time), int(uptime))
 
         # PID 0 is supposed to be available on all platforms
         self.assertTrue(0 in psutil.get_pid_list())
