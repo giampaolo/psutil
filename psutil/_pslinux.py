@@ -173,6 +173,21 @@ class Impl(object):
         starttime = (float(values[19]) / _CLOCK_TICKS) + _UPTIME
         return starttime
 
+    @prevent_zombie
+    @wrap_privileges
+    def get_memory_info(self, pid):
+        f = open("/proc/%s/status" % pid)
+        virtual_size = None
+        resident_size = None
+        for line in f:
+            if (virtual_size is None) and line.startswith("VmSize:"):
+                virtual_size = int(line.split()[1])
+            elif line.startswith("VmRSS"):
+                resident_size = int(line.split()[1])
+                break
+        f.close()
+        return (virtual_size * 1024, resident_size * 1024)
+
     def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)
         for line in f:
