@@ -35,6 +35,9 @@ def _get_num_cpus():
 _CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
 _UPTIME = _get_uptime()
 NUM_CPUS = _get_num_cpus()
+# XXX - real implementation needed
+TOTAL_PHYMEM = 0
+TOTAL_VIRTMEM = 0
 
 
 def prevent_zombie(method):
