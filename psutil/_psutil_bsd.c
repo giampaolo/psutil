@@ -36,6 +36,10 @@ static PyMethodDef PsutilMethods[] =
          "Return process creation time."},
      {"get_memory_info", get_memory_info, METH_VARARGS,
          "Return a tuple of RSS/VMS memory information"},
+     {"get_total_phymem", get_total_phymem, METH_VARARGS,
+         "Return the total amount of physical memory, in bytes"},
+     {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
+         "Return the total amount of virtual memory, in bytes"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -308,4 +312,30 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     }
 
     return PyErr_Format(PyExc_RuntimeError, "Unable to read process start time.");
+}
+
+
+static PyObject* get_total_phymem(PyObject* self, PyObject* args)
+{
+    int mib[2];
+    int total_phymem;
+    size_t len;
+
+    mib[0] = CTL_HW;
+    mib[1] = HW_PHYSMEM;
+    len = sizeof(total_phymem);
+
+    if (sysctl(mib, 2, &total_phymem, &len, NULL, 0) == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    return Py_BuildValue("i", total_phymem);
+}
+
+
+static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
+{
+    //FIXME: write a real function here to retrieve total virtual memory
+    return Py_BuildValue("i", 0);
 }

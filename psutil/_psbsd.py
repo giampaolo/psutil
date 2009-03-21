@@ -18,8 +18,8 @@ from error import *
 NoSuchProcess = _psutil_bsd.NoSuchProcess
 NUM_CPUS = _psutil_bsd.get_num_cpus()
 # XXX - real implementation needed
-TOTAL_PHYMEM = 0
-TOTAL_VIRTMEM = 0
+TOTAL_PHYMEM = _psutil_bsd.get_total_phymem()
+TOTAL_VIRTMEM = _psutil_bsd.get_total_virtmem()
 
 
 def wrap_privileges(callable):
