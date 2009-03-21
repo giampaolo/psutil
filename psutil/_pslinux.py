@@ -179,6 +179,9 @@ class Impl(object):
     @prevent_zombie
     @wrap_privileges
     def get_memory_info(self, pid):
+        # special case for 0 (kernel processes) PID
+        if pid == 0:
+            return (0, 0)
         f = open("/proc/%s/status" % pid)
         virtual_size = None
         resident_size = None

@@ -44,6 +44,9 @@ class Impl(object):
     @wrap_privileges
     def get_memory_info(self, pid):
         """Returns a tuple or RSS/VMS memory usage in bytes."""
+        # special case for 0 (kernel processes) PID
+        if pid == 0:
+            return (0, 0)
         return _psutil_mswindows.get_memory_info(pid)
 
     @wrap_privileges

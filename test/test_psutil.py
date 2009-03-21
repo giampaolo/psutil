@@ -109,6 +109,14 @@ class TestCase(unittest.TestCase):
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
 
+    def test_get_memory_info(self):
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        wait_for_pid(self.proc.pid)
+        p = psutil.Process(self.proc.pid)
+        rss, vms = p.get_memory_info()
+        self.assertTrue(rss > 0)
+        self.assertTrue(vms > 0)
+
     def test_pid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         self.assertEqual(psutil.Process(self.proc.pid).pid, self.proc.pid)
@@ -201,6 +209,9 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.get_cpu_times()[0], float))
         self.assert_(isinstance(p.get_cpu_times()[1], float))
         self.assert_(isinstance(p.get_cpu_percent(), float))
+        self.assert_(isinstance(p.get_memory_info(), tuple))
+        self.assert_(isinstance(p.get_memory_info()[0], int))
+        self.assert_(isinstance(p.get_memory_info()[1], int))
         self.assert_(isinstance(psutil.get_process_list(), list))
         self.assert_(isinstance(psutil.get_process_list()[0], psutil.Process))
         self.assert_(isinstance(psutil.process_iter(), types.GeneratorType))
@@ -238,6 +249,7 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "uid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "gid")
         self.assertRaises(psutil.NoSuchProcess, p.kill)
+        self.assertRaises(psutil.NoSuchProcess, p.get_memory_info)
 
     def test_fetch_all(self):
         valid_procs = 0
@@ -268,6 +280,8 @@ class TestCase(unittest.TestCase):
         # use __str__ to access all common Process properties to check
         # that nothing strange happens
         str(p)
+
+        p.get_memory_info()
 
         # PID 0 is supposed to be available on all platforms
         self.assertTrue(0 in psutil.get_pid_list())
@@ -300,6 +314,7 @@ class TestCase(unittest.TestCase):
             # that nothing strange happens
             str(p)
             self.assertTrue(p.create_time >= 0.0)
+            self.assertTrue(p.get_memory_info >= 0)
 
 
 if hasattr(os, 'getuid'):
