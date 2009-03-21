@@ -149,7 +149,7 @@ class TestCase(unittest.TestCase):
                 sock = socket.socket()
                 sock.connect((ip, port))
             except socket.error, err:
-                if err.errno == errno.ECONNREFUSED:
+                if err[0] == errno.ECONNREFUSED:
                     continue
                 raise
             else:
