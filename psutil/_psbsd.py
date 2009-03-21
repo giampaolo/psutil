@@ -22,7 +22,6 @@ TOTAL_PHYMEM = 0
 TOTAL_VIRTMEM = 0
 
 
-
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if an
     OSError EPERM exception is raised we translate it into
@@ -34,6 +33,20 @@ def wrap_privileges(callable):
         except OSError, err:
             if err.errno == errno.EPERM:
                 raise AccessDenied
+            raise
+    return wrapper
+
+def prevent_zombie(method):
+    """Call method(self, pid) into a try/except clause so that if an
+    OSError "No such process" exception is raised we assume the process
+    has died and raise psutil.NoSuchProcess instead.
+    """
+    def wrapper(self, pid, *args, **kwargs):
+        try:
+            return method(self, pid, *args, **kwargs)
+        except OSError, err:
+            if err.errno == errno.ESRCH:
+                raise NoSuchProcess(pid)
             raise
     return wrapper
 
@@ -66,6 +79,7 @@ class Impl(object):
         return _psutil_bsd.get_cpu_times(pid)
 
     @wrap_privileges
+    @prevent_zombie
     def get_memory_info(self, pid):
         """Return a tuple with the process' RSS and VMS size."""
         return _psutil_bsd.get_memory_info(pid)

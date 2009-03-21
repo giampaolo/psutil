@@ -249,7 +249,11 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "uid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "gid")
         self.assertRaises(psutil.NoSuchProcess, p.kill)
-        self.assertRaises(psutil.NoSuchProcess, p.get_memory_info)
+        # XXX - these tests are supposed to work everywhere except
+        # Windows which keeps returning info for a dead process.
+        if not sys.platform.lower().startswith("win32"):
+            self.assertRaises(psutil.NoSuchProcess, p.get_cpu_times)
+            self.assertRaises(psutil.NoSuchProcess, p.get_memory_info)
 
     def test_fetch_all(self):
         valid_procs = 0
