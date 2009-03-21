@@ -30,14 +30,29 @@ def _get_num_cpus():
     f.close()
     return num
 
+def _get_total_phymem():
+    """Return total physical system memory"""
+    f = open('/proc/meminfo', 'r')
+    for line in f:
+        if line.startswith('MemTotal:'):
+            f.close()
+            return int(line.split()[1]) * 1024
+
+def _get_total_virtmem():
+    """Return total physical system memory"""
+    f = open('/proc/meminfo', 'r')
+    for line in f:
+        if line.startswith('VmallocTotal:'):
+            f.close()
+            return int(line.split()[1]) * 1024
+
 
 # Number of clock ticks per second
 _CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
 _UPTIME = _get_uptime()
 NUM_CPUS = _get_num_cpus()
-# XXX - real implementation needed
-TOTAL_PHYMEM = 0
-TOTAL_VIRTMEM = 0
+TOTAL_PHYMEM = _get_total_phymem()
+TOTAL_VIRTMEM = _get_total_virtmem()
 
 
 def prevent_zombie(method):
