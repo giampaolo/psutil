@@ -137,6 +137,7 @@ class TestCase(unittest.TestCase):
 
         # step 1 - get a base value to compare our results
         rss1, vms1 = p.get_memory_info()
+        percent1 = p.get_memory_percent()
         self.assertTrue(rss1 > 0)
         self.assertTrue(vms1 > 0)
 
@@ -158,9 +159,15 @@ class TestCase(unittest.TestCase):
                 break
 
         rss2, vms2 = p.get_memory_info()
+        percent2 = p.get_memory_percent()
         # make sure that the memory usage bumped up
         self.assertTrue(rss2 > rss1)
         self.assertTrue(vms2 >= vms1)  # vms might be equal
+        self.assertTrue(percent2 > percent1)
+
+    def test_get_memory_percent(self):
+        p = psutil.Process(os.getpid())
+        self.assertTrue(p.get_memory_percent() > 0.0)
 
     def test_pid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
@@ -257,6 +264,7 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.get_memory_info(), tuple))
         self.assert_(isinstance(p.get_memory_info()[0], int))
         self.assert_(isinstance(p.get_memory_info()[1], int))
+        self.assert_(isinstance(p.get_memory_percent(), float))
         self.assert_(isinstance(psutil.get_process_list(), list))
         self.assert_(isinstance(psutil.get_process_list()[0], psutil.Process))
         self.assert_(isinstance(psutil.process_iter(), types.GeneratorType))
@@ -298,13 +306,20 @@ class TestCase(unittest.TestCase):
         # Windows which keeps returning info for a dead process.
         if not sys.platform.lower().startswith("win32"):
             self.assertRaises(psutil.NoSuchProcess, p.get_cpu_times)
+            self.assertRaises(psutil.NoSuchProcess, p.get_cpu_percent)
             self.assertRaises(psutil.NoSuchProcess, p.get_memory_info)
+            self.assertRaises(psutil.NoSuchProcess, p.get_memory_percent)
+        self.assertFalse(p.is_running())
 
     def test_fetch_all(self):
         valid_procs = 0
         for p in psutil.process_iter():
             try:
                 str(p)
+                p.get_cpu_times()
+                p.get_cpu_percent()
+                p.get_memory_info()
+                p.get_memory_percent()
                 valid_procs += 1
             except psutil.NoSuchProcess, psutil.AccessDenied:
                 continue
