@@ -243,6 +243,16 @@ class Process(object):
         """
         return _platform_impl.get_memory_info(self.pid)
 
+    def get_memory_percent(self):
+        """Compare physical system memory to process resident memory and
+        calculate process memory utilization as a percentage.
+        """
+        rss = _platform_impl.get_memory_info(self.pid)[0]
+        try:
+            return (rss / float(TOTAL_PHYMEM)) * 100
+        except ZeroDivisionError:
+            return 0.0
+
     def is_running(self):
         """Return whether the current process is running in the current process
         list."""
