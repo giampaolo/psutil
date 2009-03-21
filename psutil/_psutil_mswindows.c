@@ -401,7 +401,7 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
         return PyErr_SetFromWindowsErr(0);
     }
 
-    return Py_BuildValue("(ll)", counters.WorkingSetSize, counters.PeakPagefileUsage);
+    return Py_BuildValue("(ll)", counters.WorkingSetSize, counters.PagefileUsage);
 }
 
 
