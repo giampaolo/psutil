@@ -15,9 +15,8 @@ from error import *
 # module level constants (gets pushed up to psutil module)
 NoSuchProcess = _psutil_osx.NoSuchProcess
 NUM_CPUS = _psutil_osx.get_num_cpus()
-# XXX - real implementation needed
-TOTAL_PHYMEM = 0
-TOTAL_VIRTMEM = 0
+TOTAL_PHYMEM = _psutil_osx.get_total_phymem()
+TOTAL_VIRTMEM = _psutil_osx.get_total_virtmem()
 
 
 def wrap_privileges(callable):
