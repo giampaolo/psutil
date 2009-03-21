@@ -34,6 +34,10 @@ static PyMethodDef PsutilMethods[] =
          "Return system uptime"},
      {"get_memory_info", get_memory_info, METH_VARARGS,
          "Return a tuple of RSS/VMS memory information"},
+     {"get_total_phymem", get_total_phymem, METH_VARARGS,
+         "Return the total amount of physical memory, in bytes"},
+     {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
+         "Return the total amount of virtual memory, in bytes"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -400,3 +404,34 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     return Py_BuildValue("(ll)", counters.WorkingSetSize, counters.PeakPagefileUsage);
 }
 
+
+/*
+ * Return the total physical memory size in bytes
+ */
+static PyObject* get_total_phymem(PyObject* self, PyObject* args)
+{
+    MEMORYSTATUSEX memInfo;
+    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+
+    if (! GlobalMemoryStatusEx(&memInfo) ) {
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    return Py_BuildValue("l", memInfo.ullTotalPhys);
+}
+
+
+/*
+ * Return the total virtual memory size, in bytes
+ */
+static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
+{
+    MEMORYSTATUSEX memInfo;
+    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+
+    if (! GlobalMemoryStatusEx(&memInfo) ) {
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    return Py_BuildValue("l", memInfo.ullTotalPageFile);
+}

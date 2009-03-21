@@ -13,6 +13,8 @@ from error import *
 NoSuchProcess = _psutil_mswindows.NoSuchProcess
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
 _UPTIME = _psutil_mswindows.get_system_uptime()
+TOTAL_PHYMEM = _psutil_mswindows.get_total_phymem()
+TOTAL_VIRTMEM = _psutil_mswindows.get_total_virtmem()
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if a

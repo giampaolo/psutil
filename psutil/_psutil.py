@@ -11,6 +11,8 @@ __all__ = [
     "NoSuchProcess",
     "AccessDenied",
     "NUM_CPUS",
+    "TOTAL_PHYMEM",
+    "TOTAL_VIRTMEM",
     "ProcessInfo",
     "Process",
     "pid_exists",

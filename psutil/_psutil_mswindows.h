@@ -16,4 +16,6 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args);
 static PyObject* get_num_cpus(PyObject* self, PyObject* args);
 static PyObject* get_system_uptime(PyObject* self, PyObject* args);
 static PyObject* get_memory_info(PyObject* self, PyObject* args);
+static PyObject* get_total_phymem(PyObject* self, PyObject* args);
+static PyObject* get_total_virtmem(PyObject* self, PyObject* args);
 
