@@ -32,6 +32,8 @@ static PyMethodDef PsutilMethods[] =
          "Returns the number of CPUs on the system"},
      {"get_system_uptime", get_system_uptime, METH_VARARGS,
          "Return system uptime"},
+     {"get_memory_info", get_memory_info, METH_VARARGS,
+         "Return a tuple of RSS/VMS memory information"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -373,4 +375,28 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	return infoTuple;
 }
 
+/*
+ * Return the RSS and VMS as a tuple.
+ */
+static PyObject* get_memory_info(PyObject* self, PyObject* args)
+{
+    HANDLE hProcess;
+    PROCESS_MEMORY_COUNTERS counters;
+    DWORD pid;
+
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+	}
+
+    hProcess = handle_from_pid(pid);
+    if (NULL == hProcess) {
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    if (! GetProcessMemoryInfo(hProcess, &counters, sizeof(counters)) ) {
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    return Py_BuildValue("(ll)", counters.WorkingSetSize, counters.PeakPagefileUsage);
+}
 

@@ -40,6 +40,11 @@ class Impl(object):
         return infoTuple
 
     @wrap_privileges
+    def get_memory_info(self, pid):
+        """Returns a tuple or RSS/VMS memory usage in bytes."""
+        return _psutil_mswindows.get_memory_info(pid)
+
+    @wrap_privileges
     def kill_process(self, pid, sig=None):
         """Terminates the process with the given PID."""
         try:
