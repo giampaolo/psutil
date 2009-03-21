@@ -11,6 +11,7 @@ import time
 import signal
 import socket
 import types
+import errno
 from test import test_support
 
 import psutil
@@ -33,6 +34,14 @@ def wait_for_pid(pid, timeout=1):
         time.sleep(0.0001)
         if time.time() >= raise_at:
             raise RuntimeError("Timed out")
+
+def find_unused_port(family=socket.AF_INET, socktype=socket.SOCK_STREAM):
+    "Bind the socket to a free port and return the port number."
+    tempsock = socket.socket(family, socktype)
+    port = test_support.bind_port(tempsock)
+    tempsock.close()
+    del tempsock
+    return port
 
 
 class TestCase(unittest.TestCase):
@@ -110,12 +119,48 @@ class TestCase(unittest.TestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
 
     def test_get_memory_info(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        ip = "127.0.0.1"
+        port = find_unused_port()
+        # open a socket accepting connections; once connection takes
+        # place allocates some memory and send some data
+        arg = "import socket;" \
+              "sock = socket.socket();" \
+              "sock.bind(('%s', %s));" %(ip, port) + \
+              "sock.listen(1);" \
+              "conn, addr = sock.accept();" \
+              "string = 's' * 1024000;" \
+              "conn.sendall('sentinel - memory allocated');" \
+              "raw_input();"
+        self.proc = subprocess.Popen([PYTHON, "-c", arg], stdout=DEVNULL)
         wait_for_pid(self.proc.pid)
         p = psutil.Process(self.proc.pid)
-        rss, vms = p.get_memory_info()
-        self.assertTrue(rss > 0)
-        self.assertTrue(vms > 0)
+
+        # step 1 - get a base value to compare our results
+        rss1, vms1 = p.get_memory_info()
+        self.assertTrue(rss1 > 0)
+        self.assertTrue(vms1 > 0)
+
+        # step 2 - by connecting to the socket we make the subprocess
+        # allocates some memory ("string = 's' * 1024000"); although
+        # we can't test the exact difference in bytes we can at least
+        # make sure that the memory usage bumped up.
+        while 1:
+            try:
+                sock = socket.socket()
+                sock.connect((ip, port))
+            except socket.error, err:
+                if err.errno == errno.ECONNREFUSED:
+                    continue
+                raise
+            else:
+                # sentinel - blocks until subprocess has allocated memory
+                sock.recv(1024)
+                break
+
+        rss2, vms2 = p.get_memory_info()
+        # make sure that the memory usage bumped up
+        self.assertTrue(rss2 > rss1)
+        self.assertTrue(vms2 >= vms1)  # vms might be equal
 
     def test_pid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
