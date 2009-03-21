@@ -366,7 +366,9 @@ class TestCase(unittest.TestCase):
             # that nothing strange happens
             str(p)
             self.assertTrue(p.create_time >= 0.0)
-            self.assertTrue(p.get_memory_info >= 0)
+            rss, vms = p.get_memory_info()
+            self.assertTrue(rss > 0)
+            self.assertEqual(vms, 0)
 
 
 if hasattr(os, 'getuid'):
