@@ -34,6 +34,8 @@ static PyMethodDef PsutilMethods[] =
        	"Returns number of CPUs on the system"},
      {"get_process_create_time", get_process_create_time, METH_VARARGS,
          "Return process creation time."},
+     {"get_memory_info", get_memory_info, METH_VARARGS,
+         "Return a tuple of RSS/VMS memory information"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -269,3 +271,41 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     return PyErr_Format(PyExc_RuntimeError, "Unable to read process start time.");
 }
 
+
+//borrowed from compat/linprocfs/linprocfs.c
+#define B2K(x) ((x) >> 10)                 /* bytes to kbytes */
+#define B2P(x) ((x) >> PAGE_SHIFT)         /* bytes to pages */
+#define P2B(x) ((x) << PAGE_SHIFT)         /* pages to bytes */
+#define P2K(x) ((x) << (PAGE_SHIFT - 10))  /* pages to kbytes */
+
+/*
+ * Returns a tuple of RSS and VMS memory usage
+ */
+static PyObject* get_memory_info(PyObject* self, PyObject* args)
+{
+    int mib[4];
+    long pid;
+    size_t len;
+    struct kinfo_proc kp;
+
+    //the argument passed should be a process id
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
+		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+	}
+
+    len = 4;
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = pid;
+    len = sizeof(kp);
+    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+
+    if (len > 0) {
+        return Py_BuildValue("(ll)", P2B(kp.ki_rssize), (long)kp.ki_size);
+    }
+
+    return PyErr_Format(PyExc_RuntimeError, "Unable to read process start time.");
+}

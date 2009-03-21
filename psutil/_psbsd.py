@@ -61,6 +61,11 @@ class Impl(object):
         """return a tuple containing process user/kernel time."""
         return _psutil_bsd.get_cpu_times(pid)
 
+    @wrap_privileges
+    def get_memory_info(self, pid):
+        """Return a tuple with the process' RSS and VMS size."""
+        return _psutil_bsd.get_memory_info(pid)
+
     def get_process_create_time(self, pid):
         return _psutil_bsd.get_process_create_time(pid)
 
