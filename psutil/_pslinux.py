@@ -198,11 +198,13 @@ class Impl(object):
         if pid == 0:
             return (0, 0)
         f = open("/proc/%s/status" % pid)
-        virtual_size = None
-        resident_size = None
+        virtual_size = 0
+        resident_size = 0
+        _flag = False
         for line in f:
-            if (virtual_size is None) and line.startswith("VmSize:"):
+            if (not _flag) and line.startswith("VmSize:"):
                 virtual_size = int(line.split()[1])
+                _flag = True
             elif line.startswith("VmRSS"):
                 resident_size = int(line.split()[1])
                 break
