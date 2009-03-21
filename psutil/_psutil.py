@@ -233,8 +233,14 @@ class Process(object):
         return _platform_impl.get_cpu_times(self.pid)
 
     def get_memory_info(self):
-        """Return a tuple representing RSS (Resident Set Size) and VMS (Virtual
-        Memory Size) in bytes."""
+        """Return a tuple representing RSS (Resident Set Size) and VMS
+        (Virtual Memory Size) in bytes.
+
+        On UNIX RSS and VMS are the same values shown by ps.
+
+        On Windows RSS and VMS refer to "Mem Usage" and "VM Size" columns
+        of taskmgr.exe.
+        """
         return _platform_impl.get_memory_info(self.pid)
 
     def is_running(self):
