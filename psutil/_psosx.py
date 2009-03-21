@@ -54,6 +54,11 @@ class Impl(object):
                 raise NoSuchProcess(pid)
             raise
 
+    @wrap_privileges
+    def get_memory_info(self, pid):
+        """Return a tuple with the process' RSS and VMS size."""
+        return _psutil_osx.get_memory_info(pid)
+
     def get_cpu_times(self, pid):
         return _psutil_osx.get_process_cpu_times(pid)
 

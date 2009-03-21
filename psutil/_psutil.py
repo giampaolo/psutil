@@ -230,6 +230,11 @@ class Process(object):
         """
         return _platform_impl.get_cpu_times(self.pid)
 
+    def get_memory_info(self):
+        """Return a tuple representing RSS (Resident Set Size) and VMS (Virtual
+        Memory Size) in bytes."""
+        return _platform_impl.get_memory_info(self.pid)
+
     def is_running(self):
         """Return whether the current process is running in the current process
         list."""

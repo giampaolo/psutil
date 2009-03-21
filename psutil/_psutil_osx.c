@@ -37,6 +37,8 @@ static PyMethodDef PsutilMethods[] =
          "Return process CPU kernel/user times."},
      {"get_process_create_time", get_process_create_time, METH_VARARGS,
          "Return process creation time."},
+     {"get_memory_info", get_memory_info, METH_VARARGS,
+         "Return a tuple of RSS/VMS memory information"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -313,4 +315,42 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     }
 
     return PyErr_Format(PyExc_RuntimeError, "Unable to read process start time.");
+}
+
+
+/*
+ * Returns a tuple of RSS and VMS memory usage
+ */
+static PyObject* get_memory_info(PyObject* self, PyObject* args)
+{
+
+    long pid;
+    unsigned int info_count = TASK_BASIC_INFO_COUNT;
+    task_port_t task = (task_port_t)NULL;
+    time_value_t user_time, system_time;
+    struct task_basic_info tasks_info;
+
+    //the argument passed should be a process id
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
+		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+	}
+
+
+    /* task_for_pid() requires special privileges
+     * "This function can be called only if the process is owned by the
+     * procmod group or if the caller is root."
+     * - http://developer.apple.com/documentation/MacOSX/Conceptual/universal_binary/universal_binary_tips/chapter_5_section_19.html
+     */
+    if (task_for_pid(mach_task_self(), pid, &task) == KERN_SUCCESS) {
+        info_count = TASK_BASIC_INFO_COUNT;
+        if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count) != KERN_SUCCESS) {
+            return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu\n", pid);
+        }
+    }
+
+    else {
+        return PyErr_Format(PyExc_RuntimeError, "task_for_pid() failed for pid %lu\n", pid);
+    }
+
+    return Py_BuildValue("(ll)", tasks_info.resident_size, tasks_info.virtual_size);
 }
