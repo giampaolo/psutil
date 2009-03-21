@@ -285,7 +285,11 @@ class TestCase(unittest.TestCase):
         # that nothing strange happens
         str(p)
 
-        p.get_memory_info()
+        try:
+            p.get_memory_info()
+        except psutil.AccessDenied:
+            # ignore this since it could be a real error on OS X especially
+            pass
 
         # PID 0 is supposed to be available on all platforms
         self.assertTrue(0 in psutil.get_pid_list())

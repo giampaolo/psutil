@@ -14,6 +14,7 @@ from error import *
 
 # module level constants (gets pushed up to psutil module)
 NoSuchProcess = _psutil_osx.NoSuchProcess
+AccessDenied = _psutil_osx.AccessDenied
 NUM_CPUS = _psutil_osx.get_num_cpus()
 TOTAL_PHYMEM = _psutil_osx.get_total_phymem()
 TOTAL_VIRTMEM = _psutil_osx.get_total_virtmem()

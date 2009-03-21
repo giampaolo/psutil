@@ -200,6 +200,7 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args)
 static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 {
     long pid;
+    int err;
     int t_utime, t_utime_ms;
     int t_stime, t_stime_ms;
     int t_cpu;
@@ -223,23 +224,31 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
      * procmod group or if the caller is root."
      * - http://developer.apple.com/documentation/MacOSX/Conceptual/universal_binary/universal_binary_tips/chapter_5_section_19.html
      */
-    if (task_for_pid(mach_task_self(), pid, &task) == KERN_SUCCESS) {
+    err = task_for_pid(mach_task_self(), pid, &task);
+    if ( err == KERN_SUCCESS) {
         info_count = TASK_BASIC_INFO_COUNT;
         if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count) != KERN_SUCCESS) {
-            return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu\n", pid);
+            return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu", pid);
         }
 
         info_count = TASK_THREAD_TIMES_INFO_COUNT;
         if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&task_times, &info_count) != KERN_SUCCESS) {
-            return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_THREAD_TIMES_INFO) failed for pid %lu\n", pid);
+            return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_THREAD_TIMES_INFO) failed for pid %lu", pid);
         }
+    }
+
+    else { //task_for_pid failed
+        if (!pid_exists(pid)) {
+            return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+        }
+        return PyErr_Format(AccessDeniedException, "task_for_pid() failed for pid %lu with error %i", pid, err);
     }
 
     /* Some stats need to be fetched from all the threads for the process
     */
     if (task) {
         if (task_threads(task, &thread_list, &(thread_count)) != KERN_SUCCESS) {
-            return PyErr_Format(PyExc_RuntimeError, "task_threads() failed for pid %lu\n", pid);
+            return PyErr_Format(PyExc_RuntimeError, "task_threads() failed for pid %lu", pid);
         }
 
         else {
@@ -256,7 +265,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
                 unsigned int icount = THREAD_BASIC_INFO_COUNT;
 
                 if(thread_info(thread_list[i], THREAD_BASIC_INFO, (thread_info_t)&t_info, &icount) != KERN_SUCCESS) {
-                    return PyErr_Format(PyExc_RuntimeError, "thread_info() failed for pid %lu\n", pid);
+                    return PyErr_Format(PyExc_RuntimeError, "thread_info() failed for pid %lu", pid);
                 }
 
                 else {
@@ -328,6 +337,7 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 static PyObject* get_memory_info(PyObject* self, PyObject* args)
 {
     long pid;
+    int err;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
     task_port_t task = (task_port_t)NULL;
     time_value_t user_time, system_time;
@@ -344,15 +354,19 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
      * procmod group or if the caller is root."
      * - http://developer.apple.com/documentation/MacOSX/Conceptual/universal_binary/universal_binary_tips/chapter_5_section_19.html
      */
-    if (task_for_pid(mach_task_self(), pid, &task) == KERN_SUCCESS) {
+    err = task_for_pid(mach_task_self(), pid, &task);
+    if ( err == KERN_SUCCESS) {
         info_count = TASK_BASIC_INFO_COUNT;
         if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count) != KERN_SUCCESS) {
-            return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu\n", pid);
+            return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu", pid);
         }
     }
 
     else {
-        return PyErr_Format(PyExc_RuntimeError, "task_for_pid() failed for pid %lu\n", pid);
+        if (! pid_exists(pid)) {
+            return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+        }
+        return PyErr_Format(AccessDeniedException, "task_for_pid() failed for pid %lu with error %i", pid, err);
     }
 
     return Py_BuildValue("(ll)", tasks_info.resident_size, tasks_info.virtual_size);
