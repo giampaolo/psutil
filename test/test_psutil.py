@@ -80,27 +80,33 @@ class TestCase(unittest.TestCase):
         self.proc = None
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
-    # Disabled on OS X and *BSD because os.times() is broken, see:
+    # On OS X and *BSD because os.times() is broken, see:
     # http://bugs.python.org/issue1040026
+	# It's also broken on Windows on Python 2.5 (not 2.6)
+	# Disabled since we can't rely on os.times()
 
-    if not sys.platform.lower().startswith("darwin") \
-    and not sys.platform.lower().startswith("freebsd"):
-        def test_get_cpu_times(self):
-            user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()
-            utime, ktime = os.times()[:2]
+##    def test_get_cpu_times(self):
+##        user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()
+##        utime, ktime = os.times()[:2]
+##
+##        # Use os.times()[:2] as base values to compare our results
+##        # using a tolerance  of +/- 0.1 seconds.
+##        # It will fail if the difference between the values is > 0.1s.
+##        if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
+##            self.fail("expected: %s, found: %s" %(utime, user_time))
+##
+##        if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
+##            self.fail("expected: %s, found: %s" %(ktime, kernel_time))
+##
+##        # make sure returned values can be pretty printed with strftime
+##        time.strftime("%H:%M:%S", time.localtime(user_time))
+##        time.strftime("%H:%M:%S", time.localtime(kernel_time))
 
-            # Use os.times()[:2] as base values to compare our results
-            # using a tolerance  of +/- 0.1 seconds.
-            # It will fail if the difference between the values is > 0.1s.
-            if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
-                self.fail("expected: %s, found: %s" %(utime, user_time))
-
-            if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
-                self.fail("expected: %s, found: %s" %(ktime, kernel_time))
-
-            # make sure returned values can be pretty printed with strftime
-            time.strftime("%H:%M:%S", time.localtime(user_time))
-            time.strftime("%H:%M:%S", time.localtime(kernel_time))
+	# the best we can do
+    def test_get_cpu_times(self):
+        user, kernel = psutil.Process(os.getpid()).get_cpu_times()
+        self.assertTrue(user > 0.0)
+        self.assertTrue(kernel > 0.0)
 
     def test_create_time(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
