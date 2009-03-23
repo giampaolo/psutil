@@ -51,6 +51,7 @@ init_psutil_mswindows(void)
      NoSuchProcessException = PyErr_NewException("_psutil_mswindows.NoSuchProcess", NULL, NULL);
      Py_INCREF(NoSuchProcessException);
      PyModule_AddObject(m, "NoSuchProcess", NoSuchProcessException);
+     SetSeDebug();
 }
 
 
@@ -137,8 +138,6 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     int pid_return;
     PyObject* ret;
     ret = PyInt_FromLong(0);
-
-    SetSeDebug();
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
@@ -311,8 +310,6 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     PyObject* ppid;
     PyObject* arglist;
     PyObject* name;
-
-    SetSeDebug();
 
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
         return PyErr_Format(PyExc_RuntimeError, "get_process_info(): Invalid argument - no PID provided.");
