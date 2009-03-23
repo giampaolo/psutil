@@ -119,21 +119,7 @@ class TestCase(unittest.TestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
 
     def test_get_memory_info(self):
-        ip = "127.0.0.1"
-        port = find_unused_port()
-        # open a socket accepting connections; once connection takes
-        # place allocates some memory and send some data
-        arg = "import socket;" \
-              "sock = socket.socket();" \
-              "sock.bind(('%s', %s));" %(ip, port) + \
-              "sock.listen(1);" \
-              "conn, addr = sock.accept();" \
-              "string = 's' * 1024000;" \
-              "conn.sendall('sentinel - memory allocated');" \
-              "raw_input();"
-        self.proc = subprocess.Popen([PYTHON, "-c", arg], stdout=DEVNULL)
-        wait_for_pid(self.proc.pid)
-        p = psutil.Process(self.proc.pid)
+        p = psutil.Process(os.getpid())
 
         # step 1 - get a base value to compare our results
         rss1, vms1 = p.get_memory_info()
@@ -141,22 +127,8 @@ class TestCase(unittest.TestCase):
         self.assertTrue(rss1 > 0)
         self.assertTrue(vms1 > 0)
 
-        # step 2 - by connecting to the socket we make the subprocess
-        # allocates some memory ("string = 's' * 1024000"); although
-        # we can't test the exact difference in bytes we can at least
-        # make sure that the memory usage bumped up.
-        while 1:
-            try:
-                sock = socket.socket()
-                sock.connect((ip, port))
-            except socket.error, err:
-                if err[0] == errno.ECONNREFUSED:
-                    continue
-                raise
-            else:
-                # sentinel - blocks until subprocess has allocated memory
-                sock.recv(1024)
-                break
+        # step 2 - allocate some memory
+        memarr = [None] * 1500
 
         rss2, vms2 = p.get_memory_info()
         percent2 = p.get_memory_percent()
@@ -164,6 +136,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(rss2 > rss1)
         self.assertTrue(vms2 >= vms1)  # vms might be equal
         self.assertTrue(percent2 > percent1)
+        del memarr
 
     def test_get_memory_percent(self):
         p = psutil.Process(os.getpid())
