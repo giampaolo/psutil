@@ -238,7 +238,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     }
 
     else { //task_for_pid failed
-        if (!pid_exists(pid)) {
+        if (! pid_exists(pid) ) {
             return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
         }
         return PyErr_Format(AccessDeniedException, "task_for_pid() failed for pid %lu with error %i", pid, err);

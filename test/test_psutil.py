@@ -321,12 +321,12 @@ class TestCase(unittest.TestCase):
                 p.get_memory_info()
                 p.get_memory_percent()
                 valid_procs += 1
-            except psutil.NoSuchProcess, psutil.AccessDenied:
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
 
         # we should always have a non-empty list, not including PID 0 etc.
         # special cases.
-        self.assertTrue(valid_procs > 2)
+        self.assertTrue(valid_procs > 0)
 
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms even if with
@@ -345,7 +345,7 @@ class TestCase(unittest.TestCase):
         # that nothing strange happens
         str(p)
 
-        if sys.platform.lower().startswith("darwin") and os.getuid() != 0:
+        if sys.platform.lower().startswith("darwin") and os.geteuid() != 0:
             self.assertRaises(psutil.AccessDenied, p.get_memory_info)
         else:
             p.get_memory_info()
