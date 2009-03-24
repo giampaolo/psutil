@@ -244,48 +244,6 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
         return PyErr_Format(AccessDeniedException, "task_for_pid() failed for pid %lu with error %i", pid, err);
     }
 
-    /* Some stats need to be fetched from all the threads for the process
-    */
-    if (task) {
-        if (task_threads(task, &thread_list, &(thread_count)) != KERN_SUCCESS) {
-            return PyErr_Format(PyExc_RuntimeError, "task_threads() failed for pid %lu", pid);
-        }
-
-        else {
-            /* sum the stats from each thread */
-            int i;
-            t_utime = 0;
-            t_utime_ms = 0;
-            t_stime = 0;
-            t_stime_ms = 0;
-            t_cpu = 0;
-
-            for(i = 0; i < thread_count; i++) {
-                struct thread_basic_info t_info;
-                unsigned int icount = THREAD_BASIC_INFO_COUNT;
-
-                if(thread_info(thread_list[i], THREAD_BASIC_INFO, (thread_info_t)&t_info, &icount) != KERN_SUCCESS) {
-                    return PyErr_Format(PyExc_RuntimeError, "thread_info() failed for pid %lu", pid);
-                }
-
-                else {
-                    t_utime += t_info.user_time.seconds;
-                    t_utime_ms += t_info.user_time.microseconds;
-                    t_stime += t_info.system_time.seconds;
-                    t_stime_ms += t_info.system_time.microseconds;
-                    t_cpu += t_info.cpu_usage;
-                }
-            }
-        }
-    }
-
-    /*
-    //XXX: throwing false access denied errors so we'll ignore this for now
-    else {
-        //return PyErr_Format(AccessDeniedException, "Access denied to CPU times for PID %lu", pid);
-    }
-    */
-
     float user_t = -1.0;
     float sys_t = -1.0;
     user_time = tasks_info.user_time;
