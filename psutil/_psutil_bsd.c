@@ -90,24 +90,6 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 }
 
 
-static int pid_exists(long pid) {
-    int kill_ret;
-
-    //save some time if it's an invalid PID
-    if (pid < 0) {
-        return 0;
-    }
-
-    //if kill returns success of permission denied we know it's a valid PID
-    kill_ret = kill(pid , 0);
-    if ( (0 == kill_ret) || (EPERM == errno) ) {
-        return 1;
-    }
-
-    return 0;
-}
-
-
 static PyObject* get_process_info(PyObject* self, PyObject* args)
 {
 
@@ -180,9 +162,7 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 	long pid;
-    long secs, psecs;
     double user_t, sys_t;
-    char obuff[128];
     PyObject* timeTuple = NULL;
 
 	//the argument passed should be a process id
