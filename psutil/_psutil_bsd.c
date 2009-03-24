@@ -256,12 +256,6 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 }
 
 
-//borrowed from compat/linprocfs/linprocfs.c
-#define B2K(x) ((x) >> 10)                 /* bytes to kbytes */
-#define B2P(x) ((x) >> PAGE_SHIFT)         /* bytes to pages */
-#define P2B(x) ((x) << PAGE_SHIFT)         /* pages to bytes */
-#define P2K(x) ((x) << (PAGE_SHIFT - 10))  /* pages to kbytes */
-
 /*
  * Returns a tuple of RSS and VMS memory usage
  */
@@ -288,7 +282,7 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     }
 
     if (len > 0) {
-        return Py_BuildValue("(ll)", P2B(kp.ki_rssize), (long)kp.ki_size);
+        return Py_BuildValue("(ll)", ptoa(kp.ki_rssize), (long)kp.ki_size);
     }
 
     return PyErr_Format(PyExc_RuntimeError, "Unable to read process start time.");

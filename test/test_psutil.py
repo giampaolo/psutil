@@ -95,8 +95,7 @@ class TestCase(unittest.TestCase):
 
     def test_get_cpu_times(self):
         user, kernel = psutil.Process(os.getpid()).get_cpu_times()
-        self.assertTrue(user > 0.0)
-        self.assertTrue(kernel > 0.0)
+        self.assertTrue((user > 0.0) or (kernel > 0.0))
 
     def test_create_time(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
@@ -124,7 +123,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(vms1 > 0)
 
         # step 2 - allocate some memory
-        memarr = [None] * 150000
+        memarr = [None] * 1500000
 
         rss2, vms2 = p.get_memory_info()
         percent2 = p.get_memory_percent()
