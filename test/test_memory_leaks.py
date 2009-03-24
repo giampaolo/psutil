@@ -10,7 +10,8 @@ import psutil
 LOOPS = 250
 
 
-class TestMemoryLeaks(unittest.TestCase):
+class TestProcessObjectLeaks(unittest.TestCase):
+    """Test leaks of Process class methods and properties"""
 
     def setUp(self):
         gc.collect()
@@ -37,7 +38,6 @@ class TestMemoryLeaks(unittest.TestCase):
             else:
                 retvalue = obj  # property
         del x, p, obj, retvalue
-
         rss2 = psutil.Process(os.getpid()).get_memory_info()[0]
 
         # comparison
@@ -69,9 +69,52 @@ class TestMemoryLeaks(unittest.TestCase):
         self.execute('is_running')
 
 
+class TestModuleFunctionsLeaks(unittest.TestCase):
+    """Test leaks of psutil module functions."""
+
+    def setUp(self):
+        gc.collect()
+
+    def execute(self, function, *args, **kwarks):
+        # step 1
+        for x in xrange(LOOPS):
+            obj = getattr(psutil, function)
+            if callable(obj):
+                retvalue = obj(*args, **kwarks)
+            else:
+                retvalue = obj  # property
+        del x, obj, retvalue
+        gc.collect()
+        rss1 = psutil.Process(os.getpid()).get_memory_info()[0]
+
+        # step 2
+        for x in xrange(LOOPS):
+            obj = getattr(psutil, function)
+            if callable(obj):
+                retvalue = obj(*args, **kwarks)
+            else:
+                retvalue = obj  # property
+        del x, obj, retvalue
+        gc.collect()
+        rss2 = psutil.Process(os.getpid()).get_memory_info()[0]
+
+        # comparison
+        self.assertEqual(rss1, rss2)
+
+    def test_get_pid_list(self):
+        self.execute('get_pid_list')
+
+    def test_pid_exists(self):
+        self.execute('pid_exists', os.getpid())
+
+    def test_process_iter(self):
+        self.execute('process_iter')
+
+
 def test_main():
     test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.makeSuite(TestMemoryLeaks))
+    test_suite.addTest(unittest.makeSuite(TestProcessObjectLeaks))
+    test_suite.addTest(unittest.makeSuite(TestModuleFunctionsLeaks))
     unittest.TextTestRunner(verbosity=2).run(test_suite)
 
 if __name__ == '__main__':
