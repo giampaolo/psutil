@@ -52,9 +52,8 @@ _platform_impl = Impl()
 
 
 class ProcessInfo(object):
-    """Class that allows the process information to be passed
-    between external code and psutil.  Used directly by the
-    Process class.
+    """Class that allows the process information to be passed between
+    external code and psutil.  Used directly by the Process class.
     """
 
     def __init__(self, pid, ppid=None, name=None, path=None, cmdline=None,
@@ -76,22 +75,24 @@ class Process(object):
     """Represents an OS process."""
 
     def __init__(self, pid):
-        """Create a new Process object, raises NoSuchProcess if the PID does
-        not exist, and ValueError if the parameter is not an integer PID."""
+        """Create a new Process object, raises NoSuchProcess if the PID
+        does not exist, and ValueError if the parameter is not an
+        integer PID."""
         if not isinstance(pid, int):
             raise ValueError("An integer is required")
         if not pid_exists(pid):
             raise NoSuchProcess("No process found with PID %s" % pid)
         self._procinfo = ProcessInfo(pid)
         self.is_proxy = True
-        # try to init CPU times, if it raises AccessDenied then suppress it so
-        # it won't interrupt the constructor. First call to get_cpu_percent()
-        # will trigger the AccessDenied exception instead.
+        # try to init CPU times, if it raises AccessDenied then suppress
+        # it so it won't interrupt the constructor. First call to
+        # get_cpu_percent() will trigger the AccessDenied exception
+        # instead.
         try:
             self._last_sys_time = time.time()
             self._last_user_time, self._last_kern_time = self.get_cpu_times()
         except AccessDenied:
-            pass
+            self._last_user_time, self._last_kern_time = None, None
 
     def __str__(self):
         return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; " \
@@ -129,14 +130,15 @@ class Process(object):
         return True
 
     def deproxy(self):
-        """Used internally by Process properties. The first call to deproxy()
-        initializes the ProcessInfo object in self._procinfo with process data
-        read from platform-specific module's get_process_info() method.
+        """Used internally by Process properties. The first call to
+        deproxy() initializes the ProcessInfo object in self._procinfo
+        with process data read from platform-specific module's
+        get_process_info() method.
 
         This method becomes a NO-OP after the first property is accessed.
-        Property data is filled in from the ProcessInfo object created, and
-        further calls to deproxy() simply return immediately without calling
-        get_process_info().
+        Property data is filled in from the ProcessInfo object created,
+        and further calls to deproxy() simply return immediately without
+        calling get_process_info().
         """
         if self.is_proxy:
             # get_process_info returns a tuple we use as the arguments
@@ -157,8 +159,8 @@ class Process(object):
 
     @property
     def parent(self):
-        """Return the parent process as a Process object. If no ppid is known
-        then return None."""
+        """Return the parent process as a Process object. If no ppid is
+        known then return None."""
         if self.ppid is not None:
             return Process(self.ppid)
         return None
@@ -203,14 +205,15 @@ class Process(object):
         return self._procinfo.create
 
     def get_cpu_percent(self):
-        """Compare process times to system time elapsed since last call and
-        calculate CPU utilization as a percentage. It is recommended for
-        accuracy that this function be called with at least 1 second between
-        calls. The initial delta is calculated from the instantiation of the
-        Process object."""
+        """Compare process times to system time elapsed since last call
+        and calculate CPU utilization as a percentage. It is recommended
+        for accuracy that this function be called with at least 1 second
+        between calls. The initial delta is calculated from the
+        instantiation of the Process object.
+        """
         now = time.time()
         # will raise AccessDenied on OS X if not root or in procmod group
-        user_t, kern_t = self.get_cpu_times()
+        user_t, kern_t = _platform_impl.get_cpu_times(self.pid)
 
         total_proc_time = float((user_t - self._last_user_time) + \
                                 (kern_t - self._last_kern_time))
@@ -226,9 +229,9 @@ class Process(object):
         return (percent * 100.0) / NUM_CPUS
 
     def get_cpu_times(self):
-        """Return a tuple whose values are process CPU user and system time.
-        These are the same first two values that os.times() returns
-        for the current process.
+        """Return a tuple whose values are process CPU user and system
+        time.  These are the same first two values that os.times()
+        returns for the current process.
         """
         return _platform_impl.get_cpu_times(self.pid)
 
@@ -262,7 +265,7 @@ class Process(object):
             str(new_proc)
         except NoSuchProcess:
             return False
-        return (self == new_proc)
+        return self == new_proc
 
     def kill(self, sig=None):
         """Kill the current process by using signal sig (defaults to SIGKILL).
@@ -278,15 +281,11 @@ def get_pid_list():
     """Return a list of current running PIDs."""
     return _platform_impl.get_pid_list()
 
-def get_num_cpus():
-    """Return the number of CPUs."""
-    return _platform_impl.get_num_cpus()
-
 def process_iter():
     """Return an iterator yielding a Process class instances for all
     running processes on the local machine.
     """
-    pids = _platform_impl.get_pid_list();
+    pids = _platform_impl.get_pid_list()
     # for each PID, create a proxyied Process object
     # it will lazy init it's name and path later if required
     for pid in pids:

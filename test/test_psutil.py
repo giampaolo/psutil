@@ -9,7 +9,6 @@ import sys
 import subprocess
 import time
 import signal
-import socket
 import types
 import errno
 from test import test_support
@@ -34,14 +33,6 @@ def wait_for_pid(pid, timeout=1):
         time.sleep(0.0001)
         if time.time() >= raise_at:
             raise RuntimeError("Timed out")
-
-def find_unused_port(family=socket.AF_INET, socktype=socket.SOCK_STREAM):
-    "Bind the socket to a free port and return the port number."
-    tempsock = socket.socket(family, socktype)
-    port = test_support.bind_port(tempsock)
-    tempsock.close()
-    del tempsock
-    return port
 
 
 class TestCase(unittest.TestCase):
@@ -80,10 +71,10 @@ class TestCase(unittest.TestCase):
         self.proc = None
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
-    # On OS X and *BSD because os.times() is broken, see:
+    # os.times() is broken on OS X and *BSD because, see:
     # http://bugs.python.org/issue1040026
 	# It's also broken on Windows on Python 2.5 (not 2.6)
-	# Disabled since we can't rely on os.times()
+	# Disabled since we can't rely on it
 
 ##    def test_get_cpu_times(self):
 ##        user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()
@@ -102,7 +93,6 @@ class TestCase(unittest.TestCase):
 ##        time.strftime("%H:%M:%S", time.localtime(user_time))
 ##        time.strftime("%H:%M:%S", time.localtime(kernel_time))
 
-	# the best we can do
     def test_get_cpu_times(self):
         user, kernel = psutil.Process(os.getpid()).get_cpu_times()
         self.assertTrue(user > 0.0)
@@ -295,6 +285,7 @@ class TestCase(unittest.TestCase):
         for p in psutil.process_iter():
             try:
                 str(p)
+                p.create_time
                 p.get_cpu_times()
                 p.get_cpu_percent()
                 p.get_memory_info()
