@@ -302,15 +302,43 @@ def get_process_list():
 
 
 def test():
-    processes = get_process_list()
-    print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s" \
-          %("PID", "PPID", "NAME", "PATH", "COMMAND LINE", "UID", "GID")
-    for proc in processes:
-        print "%-5s  %-5s %-15s %-25s %-20s %-5s %-5s" \
-              %(proc.pid, proc.ppid, proc.name, proc.path or "<unknown>", \
-              ' '.join(proc.cmdline) or "<unknown>", proc.uid, proc.gid)
+    """List info of all currently running processes emulating a
+    ps -aux output.
+    """
+    _today_day = time.strftime("%d", time.localtime(time.time()))
+
+    def get_process_info(pid):
+        proc = Process(pid)
+        uid = proc.uid
+        pid = proc.pid
+        cpu = round(proc.get_cpu_percent(), 1)
+        mem = round(proc.get_memory_percent(), 1)
+        vsz, rss = [x / 1024 for x in proc.get_memory_info()]
+
+        # If process has been created today print H:M, else MonthDay
+        _ctime = time.localtime(proc.create_time)
+        if time.strftime("%d", _ctime) == _today_day:
+            start = time.strftime("%H:%M", _ctime)
+        else:
+            start = time.strftime("%b%d", _ctime)
+
+        cputime = time.strftime("%M:%S", time.localtime(sum(proc.get_cpu_times())))
+        cmd = ' '.join(proc.cmdline)
+        return "%-5s %7s %4s %4s %7s %7s %5s %8s %s" \
+               %(uid, pid, cpu, mem, vsz, rss, start, cputime, cmd)
+
+    print "%-5s %7s %4s %4s %7s %7s %5s %8s %s" \
+       %("UID", "PID", "%CPU", "%MEM", "VSZ", "RSS", "START", "TIME", "COMMAND")
+    pids = get_pid_list()
+    pids.sort()
+    for pid in pids:
+        try:
+            line = get_process_info(pid)
+        except (AccessDenied, NoSuchProcess):
+            pass
+        else:
+            print line
 
 if __name__ == "__main__":
     test()
-
 
