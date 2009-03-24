@@ -324,6 +324,10 @@ def test():
 
         cputime = time.strftime("%M:%S", time.localtime(sum(proc.get_cpu_times())))
         cmd = ' '.join(proc.cmdline)
+        # where cmdline is not available UNIX shows process name between
+        # [] parentheses
+        if not cmd:
+            cmd = "[%s]" %proc.name
         return "%-5s %7s %4s %4s %7s %7s %5s %8s %s" \
                %(uid, pid, cpu, mem, vsz, rss, start, cputime, cmd)
 
