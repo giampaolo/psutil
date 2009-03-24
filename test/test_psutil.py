@@ -124,7 +124,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(vms1 > 0)
 
         # step 2 - allocate some memory
-        memarr = [None] * 1500
+        memarr = [None] * 150000
 
         rss2, vms2 = p.get_memory_info()
         percent2 = p.get_memory_percent()
