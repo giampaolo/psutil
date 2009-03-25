@@ -99,6 +99,9 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return 1 if PID exists in the current process list, else 0.
+ */
 static int pid_exists(long pid) {
     kinfo_proc *procList = NULL;
     size_t num_processes;
@@ -120,6 +123,10 @@ static int pid_exists(long pid) {
 }
 
 
+/*
+ * Return a Python tuple containing a set of information about the process:
+ * (pid, ppid, name, path, cmdline).
+ */
 static PyObject* get_process_info(PyObject* self, PyObject* args)
 {
     int mib[4];
@@ -174,7 +181,9 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 }
 
 
-// returns he number of CPUs on the system, needed for CPU utilization % calc
+/*
+ * Return a Python integer indicating the number of CPUs on the system.
+ */
 static PyObject* get_num_cpus(PyObject* self, PyObject* args)
 {
 
@@ -197,6 +206,9 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args)
 
 #define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
 
+/*
+ * Return a Python tuple (user_time, kernel_time)
+ */
 static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 {
     long pid;
@@ -258,6 +270,10 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return a Python float indicating the process create time expressed in
+ * seconds since the epoch.
+ */
 static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 {
 
@@ -290,7 +306,7 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 
 
 /*
- * Returns a tuple of RSS and VMS memory usage
+ * Return a tuple of RSS and VMS memory usage.
  */
 static PyObject* get_memory_info(PyObject* self, PyObject* args)
 {
@@ -331,6 +347,10 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return a Python integer indicating the total amount of physical memory
+ * in bytes.
+ */
 static PyObject* get_total_phymem(PyObject* self, PyObject* args)
 {
     int mib[2];
@@ -350,6 +370,10 @@ static PyObject* get_total_phymem(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return a Python integer indicating the total amount of virtual memory
+ * in bytes.
+ */
 static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
 {
     //FIXME: write a real function here to retrieve total virtual memory

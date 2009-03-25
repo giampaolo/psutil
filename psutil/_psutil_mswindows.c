@@ -55,6 +55,10 @@ init_psutil_mswindows(void)
 }
 
 
+/*
+ * Return a Python float representing the system uptime expressed in seconds
+ * since the epoch.
+ */
 static PyObject* get_system_uptime(PyObject* self, PyObject* args)
 {
     float uptime;
@@ -85,6 +89,9 @@ static PyObject* get_system_uptime(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return 1 if PID exists in the current process list, else 0.
+ */
 static PyObject* pid_exists(PyObject* self, PyObject* args)
 {
     long pid;
@@ -103,6 +110,9 @@ static PyObject* pid_exists(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return a Python list of all the PIDs running on the system.
+ */
 static PyObject* get_pid_list(PyObject* self, PyObject* args)
 {
     DWORD *proclist = NULL;
@@ -131,6 +141,9 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Kill a process given its PID.
+ */
 static PyObject* kill_process(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
@@ -176,6 +189,9 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return a Python tuple (user_time, kernel_time)
+ */
 static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 {
     long        pid;
@@ -235,6 +251,10 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return a Python float indicating the process create time expressed in
+ * seconds since the epoch.
+ */
 static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 {
     long        pid;
@@ -287,6 +307,9 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return a Python integer indicating the number of CPUs on the system.
+ */
 static PyObject* get_num_cpus(PyObject* self, PyObject* args)
 {
     SYSTEM_INFO system_info;
@@ -301,6 +324,10 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return a Python tuple containing a set of information about the process:
+ * (pid, ppid, name, path, cmdline).
+ */
 static PyObject* get_process_info(PyObject* self, PyObject* args)
 {
 	//the argument passed should be a process id
@@ -376,8 +403,9 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	return infoTuple;
 }
 
+
 /*
- * Return the RSS and VMS as a tuple.
+ * Return the RSS and VMS as a Python tuple.
  */
 static PyObject* get_memory_info(PyObject* self, PyObject* args)
 {
@@ -403,7 +431,8 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
 
 
 /*
- * Return the total physical memory size in bytes
+ * Return a Python integer indicating the total amount of physical memory
+ * in bytes.
  */
 static PyObject* get_total_phymem(PyObject* self, PyObject* args)
 {
@@ -419,7 +448,8 @@ static PyObject* get_total_phymem(PyObject* self, PyObject* args)
 
 
 /*
- * Return the total virtual memory size, in bytes
+ * Return a Python integer indicating the total amount of virtual memory
+ * in bytes.
  */
 static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
 {
