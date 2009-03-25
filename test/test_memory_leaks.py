@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-# test_memory_leaks.py
+#
+# $Id$
+#
 
 import os
 import gc
