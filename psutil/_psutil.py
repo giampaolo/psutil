@@ -305,7 +305,8 @@ def test():
     """List info of all currently running processes emulating a
     ps -aux output.
     """
-    _today_day = time.strftime("%d", time.localtime(time.time()))
+    import datetime
+    today_day = datetime.date.today()
 
     def get_process_info(pid):
         proc = Process(pid)
@@ -316,11 +317,11 @@ def test():
         vsz, rss = [x / 1024 for x in proc.get_memory_info()]
 
         # If process has been created today print H:M, else MonthDay
-        _ctime = time.localtime(proc.create_time)
-        if time.strftime("%d", _ctime) == _today_day:
-            start = time.strftime("%H:%M", _ctime)
+        start = datetime.datetime.fromtimestamp(proc.create_time)
+        if start.date() == today_day:
+            start = start.strftime("%H:%M")
         else:
-            start = time.strftime("%b%d", _ctime)
+            start = start.strftime("%b%d")
 
         cputime = time.strftime("%M:%S", time.localtime(sum(proc.get_cpu_times())))
         cmd = ' '.join(proc.cmdline)
