@@ -209,7 +209,7 @@ class Impl(object):
                 resident_size = int(line.split()[1])
                 break
         f.close()
-        return (virtual_size * 1024, resident_size * 1024)
+        return (resident_size * 1024, virtual_size * 1024)
 
     def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)

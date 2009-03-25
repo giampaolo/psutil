@@ -314,7 +314,7 @@ def test():
         pid = proc.pid
         cpu = round(proc.get_cpu_percent(), 1)
         mem = round(proc.get_memory_percent(), 1)
-        vsz, rss = [x / 1024 for x in proc.get_memory_info()]
+        rss, vsz = [x / 1024 for x in proc.get_memory_info()]
 
         # If process has been created today print H:M, else MonthDay
         start = datetime.datetime.fromtimestamp(proc.create_time)
