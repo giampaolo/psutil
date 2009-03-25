@@ -42,7 +42,7 @@ def _get_total_virtmem():
     """Return total physical system memory"""
     f = open('/proc/meminfo', 'r')
     for line in f:
-        if line.startswith('VmallocTotal:'):
+        if line.startswith('SwapTotal:'):
             f.close()
             return int(line.split()[1]) * 1024
 
