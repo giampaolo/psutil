@@ -7,7 +7,8 @@ import unittest
 
 import psutil
 
-LOOPS = 250
+LOOPS = 1000
+MARGIN = 4096
 
 
 class TestProcessObjectLeaks(unittest.TestCase):
@@ -38,10 +39,13 @@ class TestProcessObjectLeaks(unittest.TestCase):
             else:
                 retvalue = obj  # property
         del x, p, obj, retvalue
+        gc.collect()
         rss2 = psutil.Process(os.getpid()).get_memory_info()[0]
 
         # comparison
-        self.assertEqual(rss1, rss2)
+        difference = rss2 - rss1
+        if difference > MARGIN:
+            self.fail("rss1=%s, rss2=%s, difference=%s" %(rss1, rss2, difference))
 
     def test_pid(self):
         self.execute('pid')
@@ -99,7 +103,9 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
         rss2 = psutil.Process(os.getpid()).get_memory_info()[0]
 
         # comparison
-        self.assertEqual(rss1, rss2)
+        difference = rss2 - rss1
+        if difference > MARGIN:
+            self.fail("rss1=%s, rss2=%s, difference=%s" %(rss1, rss2, difference))
 
     def test_get_pid_list(self):
         self.execute('get_pid_list')
