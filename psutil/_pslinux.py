@@ -30,19 +30,43 @@ def _get_num_cpus():
     f.close()
     return num
 
-def _get_total_phymem():
-    """Return total physical system memory"""
+def _total_mem():
+    """Return the total amount of physical memory, in bytes"""
     f = open('/proc/meminfo', 'r')
     for line in f:
         if line.startswith('MemTotal:'):
             f.close()
             return int(line.split()[1]) * 1024
 
-def _get_total_virtmem():
-    """Return total physical system memory"""
+def used_mem():
+    """"Return the amount of physical memory used, in bytes."""
+    f = open('/proc/meminfo', 'r')
+    total = None
+    free = None
+    _flag = False
+    for line in f:
+        if not _flag and line.startswith('MemTotal:'):
+            total = int(line.split()[1]) * 1024
+            _flag = True
+        elif line.startswith('MemFree:'):
+            free = int(line.split()[1]) * 1024
+            break
+    f.close()
+    return (total - free)
+
+def total_virtmem():
+    """"Return the total amount of virtual memory, in bytes."""
     f = open('/proc/meminfo', 'r')
     for line in f:
-        if line.startswith('SwapTotal:'):
+        if line.startswith('VmallocTotal:'):
+            f.close()
+            return int(line.split()[1]) * 1024
+
+def used_virtmem():
+    """"Return the amount of virtual memory used, in bytes."""
+    f = open('/proc/meminfo', 'r')
+    for line in f:
+        if line.startswith('VmallocUsed:'):
             f.close()
             return int(line.split()[1]) * 1024
 
@@ -51,8 +75,7 @@ def _get_total_virtmem():
 _CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
 _UPTIME = _get_uptime()
 NUM_CPUS = _get_num_cpus()
-TOTAL_PHYMEM = _get_total_phymem()
-TOTAL_VIRTMEM = _get_total_virtmem()
+TOTAL_MEM = _total_mem()
 
 
 def prevent_zombie(method):

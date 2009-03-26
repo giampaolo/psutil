@@ -11,14 +11,17 @@ __all__ = [
     "NoSuchProcess",
     "AccessDenied",
     "NUM_CPUS",
-    "TOTAL_PHYMEM",
-    "TOTAL_VIRTMEM",
     "ProcessInfo",
     "Process",
     "pid_exists",
     "get_pid_list",
     "process_iter",
-    "get_process_list",]
+    "get_process_list",
+    "TOTAL_MEM",
+    "used_mem",
+    "total_virtmem",
+    "used_virtmem",
+    ]
 
 import sys
 import os
@@ -252,7 +255,7 @@ class Process(object):
         """
         rss = _platform_impl.get_memory_info(self.pid)[0]
         try:
-            return (rss / float(TOTAL_PHYMEM)) * 100
+            return (rss / float(TOTAL_MEM)) * 100
         except ZeroDivisionError:
             return 0.0
 
