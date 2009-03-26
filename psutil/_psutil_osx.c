@@ -376,6 +376,18 @@ static PyObject* get_total_phymem(PyObject* self, PyObject* args)
  */
 static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
 {
-    //FIXME: write a real function here to retrieve total virtual memory
-    return Py_BuildValue("L", 0);
+    int mib[2];
+    size_t size;
+    struct xsw_usage totals;
+
+    mib[0] = CTL_VM;
+    mib[1] = VM_SWAPUSAGE;
+    size = sizeof(totals);
+
+    if (sysctl(mib, 2, &totals, &size, NULL, 0) == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+     }
+
+    return Py_BuildValue("L", totals.xsu_total);
 }
