@@ -443,7 +443,7 @@ static PyObject* get_total_phymem(PyObject* self, PyObject* args)
         return PyErr_SetFromWindowsErr(0);
     }
 
-    return Py_BuildValue("l", memInfo.ullTotalPhys);
+    return Py_BuildValue("L", memInfo.ullTotalPhys);
 }
 
 
@@ -460,5 +460,5 @@ static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
         return PyErr_SetFromWindowsErr(0);
     }
 
-    return Py_BuildValue("l", memInfo.ullTotalPageFile);
+    return Py_BuildValue("L", memInfo.ullTotalPageFile);
 }

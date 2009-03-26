@@ -17,10 +17,10 @@ __all__ = [
     "get_pid_list",
     "process_iter",
     "get_process_list",
-    "TOTAL_MEM",
-    "used_mem",
-    "total_virtmem",
-    "used_virtmem",
+    "TOTAL_PHYMEM",
+    #"used_mem",
+    #"total_virtmem",
+    #"used_virtmem",
     ]
 
 import sys
