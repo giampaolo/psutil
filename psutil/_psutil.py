@@ -255,7 +255,7 @@ class Process(object):
         """
         rss = _platform_impl.get_memory_info(self.pid)[0]
         try:
-            return (rss / float(TOTAL_MEM)) * 100
+            return (rss / float(TOTAL_PHYMEM)) * 100
         except ZeroDivisionError:
             return 0.0
 

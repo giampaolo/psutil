@@ -14,6 +14,7 @@
 #include <sys/sysctl.h>
 #include <sys/user.h>
 #include <sys/proc.h>
+#include <sys/vmmeter.h>  /* needed for vmtotal struct */
 
 #include "_psutil_bsd.h"
 #include "arch/bsd/process_info.h"
@@ -331,6 +332,16 @@ static PyObject* get_total_phymem(PyObject* self, PyObject* args)
  */
 static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
 {
-    //FIXME: write a real function here to retrieve total virtual memory
-    return Py_BuildValue("i", 0);
+    int mib[2];
+    struct vmtotal vm;
+    size_t size;
+
+    mib[0] = CTL_VM;
+    mib[1] = VM_METER;
+    size = sizeof(vm);
+    sysctl(mib, 2, &vm, &size, NULL, 0);
+
+    // vmtotal struct:
+    // http://fxr.watson.org/fxr/source/sys/vmmeter.h?v=FREEBSD54
+    return Py_BuildValue("i", vm.t_vm);
 }
