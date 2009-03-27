@@ -335,6 +335,7 @@ static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
     int mib[2];
     struct vmtotal vm;
     size_t size;
+    long long total_vmem;
 
     mib[0] = CTL_VM;
     mib[1] = VM_METER;
@@ -343,5 +344,7 @@ static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
 
     // vmtotal struct:
     // http://fxr.watson.org/fxr/source/sys/vmmeter.h?v=FREEBSD54
-    return Py_BuildValue("i", vm.t_vm);
+    // note: value is returned in page, so we must multiply by size of a page
+    total_vmem = (long long)vm.t_vm * (long long)getpagesize();
+    return Py_BuildValue("L", total_vmem);
 }
