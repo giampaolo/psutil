@@ -20,6 +20,15 @@ TOTAL_PHYMEM = _psutil_osx.get_total_phymem()
 TOTAL_VIRTMEM = _psutil_osx.get_total_virtmem()
 
 
+def avail_mem():
+    """Returns the amount of physical memory available on the system."""
+    return _psutil_osx.get_avail_phymem()
+
+def used_mem():
+    """Returns the amount of physical memory currently in use on the system."""
+    return TOTAL_PHYMEM - _psutil_osx.get_avail_phymem()
+
+
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if an
     OSError EPERM exception is raised we translate it into

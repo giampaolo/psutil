@@ -38,21 +38,29 @@ def _total_mem():
             f.close()
             return int(line.split()[1]) * 1024
 
-def used_mem():
-    """"Return the amount of physical memory used, in bytes."""
+
+# Number of clock ticks per second
+_CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
+_UPTIME = _get_uptime()
+NUM_CPUS = _get_num_cpus()
+TOTAL_MEM = _total_mem()
+
+
+def avail_mem():
+    """Return the amount of physical memory available, in bytes."""
     f = open('/proc/meminfo', 'r')
-    total = None
     free = None
     _flag = False
     for line in f:
-        if not _flag and line.startswith('MemTotal:'):
-            total = int(line.split()[1]) * 1024
-            _flag = True
-        elif line.startswith('MemFree:'):
+        if line.startswith('MemFree:'):
             free = int(line.split()[1]) * 1024
             break
     f.close()
-    return (total - free)
+    return free
+
+def used_mem():
+    """"Return the amount of physical memory used, in bytes."""
+    return (TOTAL_PHYMEM - avail_mem())
 
 def total_virtmem():
     """"Return the total amount of virtual memory, in bytes."""
@@ -70,12 +78,6 @@ def used_virtmem():
             f.close()
             return int(line.split()[1]) * 1024
 
-
-# Number of clock ticks per second
-_CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
-_UPTIME = _get_uptime()
-NUM_CPUS = _get_num_cpus()
-TOTAL_MEM = _total_mem()
 
 
 def prevent_zombie(method):

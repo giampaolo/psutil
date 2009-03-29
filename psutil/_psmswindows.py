@@ -16,6 +16,15 @@ _UPTIME = _psutil_mswindows.get_system_uptime()
 TOTAL_PHYMEM = _psutil_mswindows.get_total_phymem()
 TOTAL_VIRTMEM = _psutil_mswindows.get_total_virtmem()
 
+
+def avail_mem():
+    """Returns the amount of physical memory available on the system."""
+    return _psutil_mswindows.get_avail_phymem()
+
+def used_mem():
+    """Returns the amount of physical memory currently in use on the system."""
+    return TOTAL_PHYMEM - _psutil_mswindows.get_avail_phymem()
+
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if a
     WindowsError 5 AccessDenied exception is raised we translate it

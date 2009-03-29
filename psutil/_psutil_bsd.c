@@ -39,6 +39,8 @@ static PyMethodDef PsutilMethods[] =
          "Return a tuple of RSS/VMS memory information"},
      {"get_total_phymem", get_total_phymem, METH_VARARGS,
          "Return the total amount of physical memory, in bytes"},
+     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
+         "Return the amount of available physical memory, in bytes"},
      {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
          "Return the total amount of virtual memory, in bytes"},
      {NULL, NULL, 0, NULL}
@@ -327,7 +329,54 @@ static PyObject* get_total_phymem(PyObject* self, PyObject* args)
 
 
 /*
- * Return a Python integer indicating the total amount of virtual memory
+ * Return a Python long indicating the amount of available physical memory in
+ * bytes.
+ */
+static PyObject* get_avail_phymem(PyObject* self, PyObject* args)
+{
+    int mib[2];
+    size_t len;
+    struct vmtotal totals;
+    unsigned int v_inactive_count;
+    unsigned int v_cache_count;
+    unsigned int v_free_count;
+    unsigned int v_active_count;
+    int total_mem;
+    long long used_mem;
+    long long avail_mem;
+    size_t size = sizeof(unsigned int);
+    size_t psize = sizeof(int);
+    int pagesize = getpagesize();
+
+    if (sysctlbyname("hw.physmem", &total_mem, &psize, NULL, 0) == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    if (sysctlbyname("vm.stats.vm.v_inactive_count", &v_inactive_count, &size, NULL, 0) == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    if (sysctlbyname("vm.stats.vm.v_cache_count", &v_cache_count, &size, NULL, 0) == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    if (sysctlbyname("vm.stats.vm.v_free_count", &v_free_count, &size, NULL, 0) == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    avail_mem = (v_inactive_count + v_cache_count + v_free_count) * pagesize;
+    //used_mem = total_mem - avail_mem;
+
+    return Py_BuildValue("L", avail_mem);
+}
+
+
+/*
+ * Return a Python long indicating the total amount of virtual memory
  * in bytes.
  */
 static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
@@ -348,3 +397,4 @@ static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
     total_vmem = (long long)vm.t_vm * (long long)getpagesize();
     return Py_BuildValue("L", total_vmem);
 }
+

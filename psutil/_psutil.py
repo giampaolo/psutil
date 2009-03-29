@@ -18,7 +18,8 @@ __all__ = [
     "process_iter",
     "get_process_list",
     "TOTAL_PHYMEM",
-    #"used_mem",
+    "avail_mem",
+    "used_mem",
     #"total_virtmem",
     #"used_virtmem",
     ]
