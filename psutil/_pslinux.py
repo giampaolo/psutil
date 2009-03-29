@@ -43,7 +43,7 @@ def _total_mem():
 _CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
 _UPTIME = _get_uptime()
 NUM_CPUS = _get_num_cpus()
-TOTAL_MEM = _total_mem()
+TOTAL_PHYMEM = _total_mem()
 
 
 def avail_mem():
