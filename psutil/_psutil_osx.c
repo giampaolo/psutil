@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <sys/sysctl.h>
+#include <sys/vmmeter.h>
 
 #include <mach/task.h>
 #include <mach/mach_init.h>
@@ -41,6 +42,8 @@ static PyMethodDef PsutilMethods[] =
          "Return a tuple of RSS/VMS memory information"},
      {"get_total_phymem", get_total_phymem, METH_VARARGS,
          "Return the total amount of physical memory, in bytes"},
+     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
+         "Return the amount of available physical memory, in bytes"},
      {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
          "Return the total amount of virtual memory, in bytes"},
      {NULL, NULL, 0, NULL}
@@ -367,6 +370,31 @@ static PyObject* get_total_phymem(PyObject* self, PyObject* args)
     }
 
     return Py_BuildValue("L", total_phymem);
+}
+
+
+/*
+ * Return a Python long indicating the amount of available physical memory in
+ * bytes.
+ */
+static PyObject* get_avail_phymem(PyObject* self, PyObject* args)
+{
+    vm_statistics_data_t vm_stat;
+	mach_msg_type_number_t count;
+	kern_return_t error;
+	unsigned long long mem_free;
+    int pagesize = getpagesize();
+    mach_port_t mport = mach_host_self();
+
+	count = sizeof(vm_stat) / sizeof(natural_t);
+	error = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vm_stat, &count);
+
+	if (error != KERN_SUCCESS) {
+	    return PyErr_Format(PyExc_RuntimeError, "Error in host_statistics(): %s", mach_error_string(error));
+	}
+
+	mem_free = (unsigned long long) vm_stat.free_count * pagesize;
+    return Py_BuildValue("L", mem_free);
 }
 
 
