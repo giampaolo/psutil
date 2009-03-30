@@ -38,10 +38,10 @@ static PyMethodDef PsutilMethods[] =
          "Return the total amount of physical memory, in bytes"},
      {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
          "Return the total amount of virtual memory, in bytes"},
-     {"get_used_phymem", get_used_phymem, METH_VARARGS,
-         "Return the amount of used physical memory, in bytes"},
-     {"get_used_virtmem", get_used_virtmem, METH_VARARGS,
-         "Return the amount of virtual memory used, in bytes"},
+     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
+         "Return the amount of available physical memory, in bytes"},
+     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
+         "Return the amount of available virtual memory, in bytes"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -469,25 +469,25 @@ static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
 
 
 /*
- * Return a Python integer indicating the amount of used physical memory
+ * Return a Python integer indicating the amount of available physical memory
  * in bytes.
  */
-static PyObject* get_used_phymem(PyObject* self, PyObject* args)
+static PyObject* get_avail_phymem(PyObject* self, PyObject* args)
 {
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
     if (! GlobalMemoryStatusEx(&memInfo) ) {
         return PyErr_SetFromWindowsErr(0);
     }
-    return Py_BuildValue("L", memInfo.ullTotalPhys - memInfo.ullAvailPhys);
+    return Py_BuildValue("L", memInfo.ullAvailPhys);
 }
 
 
 /*
- * Return a Python integer indicating the amount of used virtual memory
+ * Return a Python integer indicating the amount of available virtual memory
  * in bytes.
  */
-static PyObject* get_used_virtmem(PyObject* self, PyObject* args)
+static PyObject* get_avail_virtmem(PyObject* self, PyObject* args)
 {
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
@@ -495,5 +495,5 @@ static PyObject* get_used_virtmem(PyObject* self, PyObject* args)
     if (! GlobalMemoryStatusEx(&memInfo) ) {
         return PyErr_SetFromWindowsErr(0);
     }
-    return Py_BuildValue("L", memInfo.ullTotalPageFile - memInfo.ullAvailPageFile);
+    return Py_BuildValue("L", memInfo.ullAvailPageFile);
 }

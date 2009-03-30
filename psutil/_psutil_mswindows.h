@@ -18,6 +18,6 @@ static PyObject* get_system_uptime(PyObject* self, PyObject* args);
 static PyObject* get_memory_info(PyObject* self, PyObject* args);
 static PyObject* get_total_phymem(PyObject* self, PyObject* args);
 static PyObject* get_total_virtmem(PyObject* self, PyObject* args);
-static PyObject* get_used_phymem(PyObject* self, PyObject* args);
-static PyObject* get_used_virtmem(PyObject* self, PyObject* args);
+static PyObject* get_avail_phymem(PyObject* self, PyObject* args);
+static PyObject* get_avail_virtmem(PyObject* self, PyObject* args);
 
