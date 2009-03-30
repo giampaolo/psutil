@@ -71,26 +71,44 @@ class TestCase(unittest.TestCase):
         self.proc = None
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
-    # XXX - provisional clause as long as such functions will be
+    # XXX - provisional hasattr clauses as long as such functions will be
     #  available on all platforms
-    if sys.platform.lower().startswith("linux"):
 
+    if hasattr(psutil, "TOTAL_PHYMEM"):
         def test_TOTAL_MEM(self):
-            self.assertTrue(isinstance(psutil.TOTAL_MEM, int))
-            self.assertTrue(psutil.TOTAL_MEM > 0)
+            x = psutil.TOTAL_PHYMEM
+            self.assertTrue(isinstance(x, int) or isinstance(x, long))
+            self.assertTrue(x > 0)
 
+    if hasattr(psutil, "used_mem"):
         def test_used_mem(self):
-            self.assertTrue(isinstance(psutil.used_mem(), int))
-            self.assertTrue(psutil.used_mem() > 0)
+            x = psutil.used_mem()
+            self.assertTrue(isinstance(x, int) or isinstance(x, long))
+            self.assertTrue(x > 0)
 
+    if hasattr(psutil, "avail_mem"):
+        def test_avail_mem(self):
+            x = psutil.avail_mem()
+            self.assertTrue(isinstance(x, int) or isinstance(x, long))
+            self.assertTrue(x > 0)
+
+    if hasattr(psutil, "total_virtmem"):
         def test_total_virtmem(self):
-            self.assertTrue(isinstance(psutil.total_virtmem(), int))
-            self.assertTrue(psutil.total_virtmem() > 0)
+            x = psutil.total_virtmem()
+            self.assertTrue(isinstance(x, int) or isinstance(x, long))
+            self.assertTrue(x > 0)
 
+    if hasattr(psutil, "used_virtmem"):
         def test_used_virtmem(self):
-            self.assertTrue(isinstance(psutil.used_virtmem(), int))
-            self.assertTrue(psutil.used_virtmem() > 0)
+            x = psutil.used_virtmem()
+            self.assertTrue(isinstance(x, int) or isinstance(x, long))
+            self.assertTrue(x > 0)
 
+    if hasattr(psutil, "avail_virtmem"):
+        def test_avail_virtmem(self):
+            x = psutil.avail_virtmem()
+            self.assertTrue(isinstance(x, int) or isinstance(x, long))
+            self.assertTrue(x > 0)
 
     # os.times() is broken on OS X and *BSD because, see:
     # http://bugs.python.org/issue1040026
