@@ -334,15 +334,10 @@ static PyObject* get_total_phymem(PyObject* self, PyObject* args)
  */
 static PyObject* get_avail_phymem(PyObject* self, PyObject* args)
 {
-    int mib[2];
-    size_t len;
-    struct vmtotal totals;
     unsigned int v_inactive_count;
     unsigned int v_cache_count;
     unsigned int v_free_count;
-    unsigned int v_active_count;
     int total_mem;
-    long long used_mem;
     long long avail_mem;
     size_t size = sizeof(unsigned int);
     size_t psize = sizeof(int);
