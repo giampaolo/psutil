@@ -20,11 +20,11 @@ TOTAL_PHYMEM = _psutil_osx.get_total_phymem()
 TOTAL_VIRTMEM = _psutil_osx.get_total_virtmem()
 
 
-def avail_mem():
+def avail_phymem():
     """Returns the amount of physical memory available on the system."""
     return _psutil_osx.get_avail_phymem()
 
-def used_mem():
+def used_phymem():
     """Returns the amount of physical memory currently in use on the system."""
     return TOTAL_PHYMEM - _psutil_osx.get_avail_phymem()
 

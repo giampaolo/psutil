@@ -17,11 +17,11 @@ _UPTIME = _psutil_mswindows.get_system_uptime()
 TOTAL_PHYMEM = _psutil_mswindows.get_total_phymem()
 
 
-def avail_mem():
+def avail_phymem():
     "Return the amount of physical memory available on the system, in bytes."
     return _psutil_mswindows.get_avail_phymem()
 
-def used_mem():
+def used_phymem():
     "Return the amount of physical memory currently in use on the system, in bytes."
     return TOTAL_PHYMEM - _psutil_mswindows.get_avail_phymem()
 

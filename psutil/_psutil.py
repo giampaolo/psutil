@@ -18,10 +18,11 @@ __all__ = [
     "process_iter",
     "get_process_list",
     "TOTAL_PHYMEM",
-    "avail_mem",
-    "used_mem",
+    "avail_phymem",
+    "used_phymem",
     #"total_virtmem",
-    #"used_virtmem",
+    #"avail_virtmem",
+    #"used_virtmem"
     ]
 
 import sys

@@ -75,20 +75,20 @@ class TestCase(unittest.TestCase):
     #  available on all platforms
 
     if hasattr(psutil, "TOTAL_PHYMEM"):
-        def test_TOTAL_MEM(self):
+        def test_TOTAL_PHYMEM(self):
             x = psutil.TOTAL_PHYMEM
             self.assertTrue(isinstance(x, int) or isinstance(x, long))
             self.assertTrue(x > 0)
 
-    if hasattr(psutil, "used_mem"):
-        def test_used_mem(self):
-            x = psutil.used_mem()
+    if hasattr(psutil, "used_phymem"):
+        def test_used_phymem(self):
+            x = psutil.used_phymem()
             self.assertTrue(isinstance(x, int) or isinstance(x, long))
             self.assertTrue(x > 0)
 
-    if hasattr(psutil, "avail_mem"):
-        def test_avail_mem(self):
-            x = psutil.avail_mem()
+    if hasattr(psutil, "avail_phymem"):
+        def test_avail_phymem(self):
+            x = psutil.avail_phymem()
             self.assertTrue(isinstance(x, int) or isinstance(x, long))
             self.assertTrue(x > 0)
 

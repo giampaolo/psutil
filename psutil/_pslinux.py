@@ -30,7 +30,7 @@ def _get_num_cpus():
     f.close()
     return num
 
-def _total_mem():
+def _get_total_phymem():
     """Return the total amount of physical memory, in bytes"""
     f = open('/proc/meminfo', 'r')
     for line in f:
@@ -43,10 +43,10 @@ def _total_mem():
 _CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
 _UPTIME = _get_uptime()
 NUM_CPUS = _get_num_cpus()
-TOTAL_PHYMEM = _total_mem()
+TOTAL_PHYMEM = _get_total_phymem()
 
 
-def avail_mem():
+def avail_phymem():
     """Return the amount of physical memory available, in bytes."""
     f = open('/proc/meminfo', 'r')
     free = None
@@ -58,9 +58,9 @@ def avail_mem():
     f.close()
     return free
 
-def used_mem():
+def used_phymem():
     """"Return the amount of physical memory used, in bytes."""
-    return (TOTAL_PHYMEM - avail_mem())
+    return (TOTAL_PHYMEM - avail_phymem())
 
 def total_virtmem():
     """"Return the total amount of virtual memory, in bytes."""
