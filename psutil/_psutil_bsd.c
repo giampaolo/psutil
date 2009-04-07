@@ -43,6 +43,8 @@ static PyMethodDef PsutilMethods[] =
          "Return the amount of available physical memory, in bytes"},
      {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
          "Return the total amount of virtual memory, in bytes"},
+     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
+         "Return the amount of available virtual memory, in bytes"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -393,3 +395,28 @@ static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
     return Py_BuildValue("L", total_vmem);
 }
 
+
+/*
+ * Return a Python long indicating the avail amount of virtual memory
+ * in bytes.
+ */
+static PyObject* get_avail_virtmem(PyObject* self, PyObject* args)
+{
+    int mib[2];
+    struct vmtotal vm;
+    size_t size;
+    long long total_vmem;
+    long long avail_vmem;
+
+    mib[0] = CTL_VM;
+    mib[1] = VM_METER;
+    size = sizeof(vm);
+    sysctl(mib, 2, &vm, &size, NULL, 0);
+
+    // vmtotal struct:
+    // http://fxr.watson.org/fxr/source/sys/vmmeter.h?v=FREEBSD54
+    // note: value is returned in page, so we must multiply by size of a page
+    total_vmem = (long long)vm.t_vm * (long long)getpagesize();
+    avail_vmem = total_vmem - ((long long)vm.t_avm * (long long)getpagesize());
+    return Py_BuildValue("L", avail_vmem);
+}
