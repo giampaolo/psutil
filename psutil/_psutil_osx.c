@@ -46,6 +46,8 @@ static PyMethodDef PsutilMethods[] =
          "Return the amount of available physical memory, in bytes"},
      {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
          "Return the total amount of virtual memory, in bytes"},
+     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
+         "Return the amount of available virtual memory, in bytes"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -418,4 +420,26 @@ static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
      }
 
     return Py_BuildValue("L", totals.xsu_total);
+}
+
+/*
+ * Return a Python integer indicating the avail amount of virtual memory
+ * in bytes.
+ */
+static PyObject* get_avail_virtmem(PyObject* self, PyObject* args)
+{
+    int mib[2];
+    size_t size;
+    struct xsw_usage totals;
+
+    mib[0] = CTL_VM;
+    mib[1] = VM_SWAPUSAGE;
+    size = sizeof(totals);
+
+    if (sysctl(mib, 2, &totals, &size, NULL, 0) == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+     }
+
+    return Py_BuildValue("L", totals.xsu_avail);
 }
