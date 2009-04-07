@@ -20,9 +20,9 @@ __all__ = [
     "TOTAL_PHYMEM",
     "avail_phymem",
     "used_phymem",
-    #"total_virtmem",
-    #"avail_virtmem",
-    #"used_virtmem"
+    "total_virtmem",
+    "avail_virtmem",
+    "used_virtmem"
     ]
 
 import sys
