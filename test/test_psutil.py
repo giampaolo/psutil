@@ -94,7 +94,7 @@ class TestCase(unittest.TestCase):
     def test_used_virtmem(self):
         x = psutil.used_virtmem()
         self.assertTrue(isinstance(x, int) or isinstance(x, long))
-        self.assertTrue(x > 0)
+        self.assertTrue(x > -1)
 
     def test_avail_virtmem(self):
         x = psutil.avail_virtmem()

@@ -66,17 +66,21 @@ def total_virtmem():
     """"Return the total amount of virtual memory, in bytes."""
     f = open('/proc/meminfo', 'r')
     for line in f:
-        if line.startswith('VmallocTotal:'):
+        if line.startswith('SwapTotal:'):
+            f.close()
+            return int(line.split()[1]) * 1024
+
+def avail_virtmem():
+    "Return the amount of virtual memory currently in use on the system, in bytes."
+    f = open('/proc/meminfo', 'r')
+    for line in f:
+        if line.startswith('SwapFree:'):
             f.close()
             return int(line.split()[1]) * 1024
 
 def used_virtmem():
-    """"Return the amount of virtual memory used, in bytes."""
-    f = open('/proc/meminfo', 'r')
-    for line in f:
-        if line.startswith('VmallocUsed:'):
-            f.close()
-            return int(line.split()[1]) * 1024
+    """Return the amount of used memory currently in use on the system, in bytes."""
+    return total_virtmem() - avail_virtmem()
 
 
 
