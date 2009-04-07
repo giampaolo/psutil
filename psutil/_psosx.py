@@ -17,16 +17,26 @@ NoSuchProcess = _psutil_osx.NoSuchProcess
 AccessDenied = _psutil_osx.AccessDenied
 NUM_CPUS = _psutil_osx.get_num_cpus()
 TOTAL_PHYMEM = _psutil_osx.get_total_phymem()
-TOTAL_VIRTMEM = _psutil_osx.get_total_virtmem()
-
 
 def avail_phymem():
-    """Returns the amount of physical memory available on the system."""
+    "Return the amount of physical memory available on the system, in bytes."
     return _psutil_osx.get_avail_phymem()
 
 def used_phymem():
-    """Returns the amount of physical memory currently in use on the system."""
+    "Return the amount of physical memory currently in use on the system, in bytes."
     return TOTAL_PHYMEM - _psutil_osx.get_avail_phymem()
+
+def total_virtmem():
+    "Return the amount of total virtual memory available on the system, in bytes."
+    return _psutil_osx.get_total_virtmem()
+
+def avail_virtmem():
+    "Return the amount of virtual memory currently in use on the system, in bytes."
+    return _psutil_osx.get_avail_virtmem()
+
+def used_virtmem():
+    """Return the amount of used memory currently in use on the system, in bytes."""
+    return _psutil_osx.get_total_virtmem() - _psutil_osx.get_avail_virtmem()
 
 
 def wrap_privileges(callable):
