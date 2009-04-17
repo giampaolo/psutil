@@ -82,6 +82,15 @@ def used_virtmem():
     """Return the amount of used memory currently in use on the system, in bytes."""
     return total_virtmem() - avail_virtmem()
 
+def cpu_times():
+    """Return a tuple representing user, kernel and idle CPU times."""
+    f = open('/proc/stat', 'r')
+    values = f.readline().split()
+    f.close()
+    user = float(values[1]) / _CLOCK_TICKS
+    system = float(values[3]) / _CLOCK_TICKS
+    idle = float(values[4]) / _CLOCK_TICKS
+    return (user, system, idle)
 
 
 def prevent_zombie(method):
