@@ -439,8 +439,8 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    return Py_BuildValue("(lll)", cpu_time[CP_USER],
-                                  cpu_time[CP_SYS],
-                                  cpu_time[CP_IDLE]
+    return Py_BuildValue("(ddd)", (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
+                                  (double)cpu_time[CP_SYS] / CLOCKS_PER_SEC,
+                                  (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC
                         );
 }
