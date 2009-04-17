@@ -45,6 +45,8 @@ static PyMethodDef PsutilMethods[] =
          "Return the total amount of virtual memory, in bytes"},
      {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
          "Return the amount of available virtual memory, in bytes"},
+     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
+         "Return system cpu times"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -419,4 +421,26 @@ static PyObject* get_avail_virtmem(PyObject* self, PyObject* args)
     total_vmem = (long long)vm.t_vm * (long long)getpagesize();
     avail_vmem = total_vmem - ((long long)vm.t_avm * (long long)getpagesize());
     return Py_BuildValue("L", avail_vmem);
+}
+
+
+/*
+ * Return a Python tuple representing user, kernel and idle CPU times
+ */
+static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
+{
+    long cpu_time[CPUSTATES];
+    size_t size;
+
+    size = sizeof(cpu_time);
+
+    if (sysctlbyname("kern.cp_time", &cpu_time, &size, NULL, 0) == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    return Py_BuildValue("(lll)", (long)cpu_time[CP_USER],
+                                  (long)cpu_time[CP_SYS],
+                                  (long)cpu_time[CP_IDLE]
+                        );
 }
