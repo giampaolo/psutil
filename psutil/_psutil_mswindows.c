@@ -4,6 +4,8 @@
  * Windows platform-specific module methods for _psutil_mswindows
  */
 
+#define _WIN32_WINNT 0x0501
+
 #include <Python.h>
 #include <windows.h>
 #include <Psapi.h>
@@ -42,6 +44,8 @@ static PyMethodDef PsutilMethods[] =
          "Return the amount of available physical memory, in bytes"},
      {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
          "Return the amount of available virtual memory, in bytes"},
+     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
+         "Return system cpu times"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -497,3 +501,39 @@ static PyObject* get_avail_virtmem(PyObject* self, PyObject* args)
     }
     return Py_BuildValue("L", memInfo.ullAvailPageFile);
 }
+
+
+/*
+ * Return a Python tuple representing user, kernel and idle CPU times
+ */
+static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
+{
+    FILETIME idle_time;
+    FILETIME kernel_time;
+    FILETIME user_time;
+
+    if (! GetSystemTimes(&idle_time, &kernel_time, &user_time) ) {
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    /*
+    idle, user and kernel times are represented as a FILETIME structure wich
+    contains a 64-bit value representing the number of 100-nanosecond intervals
+    since January 1, 1601 (UTC):
+    http://msdn.microsoft.com/en-us/library/ms724284(VS.85).aspx
+
+    To convert it into a float representing the seconds that the CPU has
+    executed in idle/user/kernel mode I borrowed the code below from Python's
+    Modules/posixmodule.c
+    */
+	return Py_BuildValue("(ddd)",
+                		 (double)(user_time.dwHighDateTime*429.4967296 + \
+                		          user_time.dwLowDateTime*1e-7),
+                		 (double)(kernel_time.dwHighDateTime*429.4967296 + \
+                		          kernel_time.dwLowDateTime*1e-7),
+                		 (double)(idle_time.dwHighDateTime*429.4967296 + \
+                   		          idle_time.dwLowDateTime*1e-7)
+                         );
+
+}
+

@@ -37,6 +37,10 @@ def used_virtmem():
     """Return the amount of used memory currently in use on the system, in bytes."""
     return _psutil_mswindows.get_total_virtmem() - _psutil_mswindows.get_avail_virtmem()
 
+def cpu_times():
+    """Return a tuple representing user, kernel and idle CPU times."""
+    return _psutil_mswindows.get_system_cpu_times()
+
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if a
