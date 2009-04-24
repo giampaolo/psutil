@@ -101,6 +101,13 @@ class TestCase(unittest.TestCase):
         self.assertTrue(isinstance(x, int) or isinstance(x, long))
         self.assertTrue(x > 0)
 
+    def test_system_cpu_times(self):
+        x = psutil.cpu_times()
+        self.assertTrue(isinstance(x, tuple))
+        for y in x:
+            self.assertTrue(isinstance(y, float))
+        self.assertTrue(x > 0)
+
     # os.times() is broken on OS X and *BSD because, see:
     # http://bugs.python.org/issue1040026
 	# It's also broken on Windows on Python 2.5 (not 2.6)

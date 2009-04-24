@@ -133,6 +133,9 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
     def test_avail_virtmem(self):
         self.execute('avail_virtmem')
 
+    def test_cpu_times(self):
+        self.execute('cpu_times')
+
 
 def test_main():
     test_suite = unittest.TestSuite()
