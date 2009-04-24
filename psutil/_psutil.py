@@ -22,7 +22,8 @@ __all__ = [
     "used_phymem",
     "total_virtmem",
     "avail_virtmem",
-    "used_virtmem"
+    "used_virtmem",
+    "cpu_times",
     ]
 
 import sys

@@ -16,6 +16,7 @@
 
 #include <mach/task.h>
 #include <mach/mach_init.h>
+#include <mach/host_info.h>
 #include <mach/mach_traps.h>
 #include <mach/shared_memory_server.h>
 
@@ -48,6 +49,8 @@ static PyMethodDef PsutilMethods[] =
          "Return the total amount of virtual memory, in bytes"},
      {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
          "Return the amount of available virtual memory, in bytes"},
+     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
+         "Return system cpu times as a tuple of user, kernel, and idle times."},
      {NULL, NULL, 0, NULL}
 };
 
@@ -442,4 +445,20 @@ static PyObject* get_avail_virtmem(PyObject* self, PyObject* args)
      }
 
     return Py_BuildValue("L", totals.xsu_avail);
+}
+
+/*
+ * Return a Python tuple representing user, kernel and idle CPU times
+ */
+static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
+{
+    mach_msg_type_number_t  count;
+    struct host_cpu_load_info r_load;
+
+    host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, &r_load, &count);
+
+	return Py_BuildValue("(ddd)", (double)r_load.cpu_ticks[CPU_STATE_USER] / CLOCKS_PER_SEC,
+        (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLOCKS_PER_SEC,
+        (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLOCKS_PER_SEC );
+
 }
