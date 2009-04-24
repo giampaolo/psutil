@@ -106,7 +106,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(isinstance(x, tuple))
         for y in x:
             self.assertTrue(isinstance(y, float))
-        self.assertTrue(x > 0)
+            self.assertTrue(y > 0)
 
     # os.times() is broken on OS X and *BSD because, see:
     # http://bugs.python.org/issue1040026
