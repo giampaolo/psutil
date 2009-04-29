@@ -6,7 +6,7 @@
 
 
 #ifndef _AVAIL_WINVER_
-    #define _AVAIL_WINVER_ 0x500
+    #define _AVAIL_WINVER_ 0x0500
 #endif
 
 #include <Python.h>
@@ -540,10 +540,10 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 	typedef BOOL (_stdcall *GST_PROC) (LPFILETIME, LPFILETIME, LPFILETIME);
 	float idle, kernel, user;
 
-#if _AVAIL_WINVER_ >= 0x501
+#if _AVAIL_WINVER_ >= 0x0501
     // GetSystemTimes supported
 
-    FILETIME idle_time
+    FILETIME idle_time;
     FILETIME kernel_time;
     FILETIME user_time;
 
