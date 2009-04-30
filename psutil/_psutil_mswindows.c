@@ -4,8 +4,6 @@
  * Windows platform-specific module methods for _psutil_mswindows
  */
 
-#define _WIN32_WINNT 0x0501
-
 #include <Python.h>
 #include <windows.h>
 #include <Psapi.h>
@@ -506,7 +504,7 @@ static PyObject* get_avail_virtmem(PyObject* self, PyObject* args)
 /*
  * Return a Python tuple representing user, kernel and idle CPU times
  */
-#define LO_T ((float)1e-7) 
+#define LO_T ((float)1e-7)
 #define HI_T (LO_T*4294967296.0)
 
 // structures and enums from winternl.h (not available under mingw)
@@ -585,7 +583,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 		{
 			// gets NtQuerySystemInformation address
 			NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(hNtDll, "NtQuerySystemInformation");
-			if (NtQuerySystemInformation != NULL) 
+			if (NtQuerySystemInformation != NULL)
 			{
 				// retrives number of processors
 				GetSystemInfo(&si);
@@ -593,7 +591,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 				// allocates an array of SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION structures, one per processor
 				sppi=(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *)
 					malloc(si.dwNumberOfProcessors*sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
-				if (sppi != NULL) 
+				if (sppi != NULL)
 				{
 					// gets cpu time informations
 					if (0 == NtQuerySystemInformation(
@@ -612,7 +610,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 						}
 
 						return Py_BuildValue("(ddd)", user, kernel, idle );
-						
+
 
 					} // END NtQuerySystemInformation
 
