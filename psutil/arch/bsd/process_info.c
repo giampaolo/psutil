@@ -125,7 +125,7 @@ char *getcmdpath(long pid, size_t *pathsize)
     mib[2] = KERN_PROC_PATHNAME;
     mib[3] = pid;
 
-    //call with a null buffer first to determine if we need a buffer
+    // call with a null buffer first to determine if we need a buffer
     if (sysctl(mib, 4, NULL, &size, NULL, 0) == -1) {
         //perror("sysctl");
         return NULL;
@@ -199,7 +199,7 @@ char *getcmdargs(long pid, size_t *argsize)
         return NULL;       /* Insufficient privileges */
     }
 
-    //return string and set the length of arguments
+    // return string and set the length of arguments
     *argsize = size;
     return procargs;
 }
@@ -218,23 +218,26 @@ PyObject* get_arg_list(long pid)
         return retlist;
     }
 
-    //this leaks memory (grrr)
+    // this leaks memory (grrr)
     argstr = getcmdargs(pid, &argsize);
 
     if (NULL == argstr) {
         if (ESRCH == errno) {
-            PyErr_Format(PyExc_RuntimeError, "getcmdargs() failed - no process found with pid %lu", pid);
+            PyErr_Format(PyExc_RuntimeError,
+                    "getcmdargs() failed - no process found with pid %lu", pid);
             return NULL;
         }
 
-        //ignore other errors for now, since we don't want to bail on get_process_info() if
-        //cmdline is the only thing we couldn't get. In that case, we just return an empty list
-        //return PyErr_Format(PyExc_RuntimeError, "getcmdargs() failed for pid %lu", pid);
+        // ignore other errors for now, since we don't want to bail on
+        // get_process_info() if cmdline is the only thing we couldn't get.
+        // In that case, we just return an empty list return
+        // PyErr_Format(PyExc_RuntimeError, "getcmdargs() failed for pid %lu", pid);
         return retlist;
     }
 
-    //args are returned as a flattened string with \0 separators between arguments
-    //add each string to the list then step forward to the next separator
+    // args are returned as a flattened string with \0 separators between
+    // arguments add each string to the list then step forward to the next
+    // separator
     if (argsize > 0) {
         while(pos < argsize) {
             item = Py_BuildValue("s", &argstr[pos]);

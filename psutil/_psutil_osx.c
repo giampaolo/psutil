@@ -91,10 +91,10 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
     }
 
     if (num_processes > 0) {
-        //save the address of proclist so we can free it later
+        // save the address of proclist so we can free it later
         orig_address = proclist;
         for (idx=0; idx < num_processes; idx++) {
-            //printf("%i: %s\n", proclist->kp_proc.p_pid, proclist->kp_proc.p_comm);
+            // printf("%i: %s\n", proclist->kp_proc.p_pid, proclist->kp_proc.p_comm);
             pid = Py_BuildValue("i", proclist->kp_proc.p_pid);
             PyList_Append(retlist, pid);
             Py_XDECREF(pid);
@@ -116,12 +116,12 @@ static int pid_exists(long pid) {
     size_t idx;
     int kill_ret;
 
-    //save some time if it's an invalid PID
+    // save some time if it's an invalid PID
     if (pid < 0) {
         return 0;
     }
 
-    //if kill returns success of permission denied we know it's a valid PID
+    // if kill returns success of permission denied we know it's a valid PID
     kill_ret = kill(pid , 0);
     if ( (0 == kill_ret) || (EPERM == errno) ) {
         return 1;
@@ -143,26 +143,28 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 	long pid;
     PyObject* arglist = NULL;
 
-	//the argument passed should be a process id
+	// the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+		return PyErr_Format(PyExc_RuntimeError,
+                            "Invalid argument - no PID provided.");
 	}
 
     /* Fill out the first three components of the mib */
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
-    //now the PID we want
+    // now the PID we want
     mib[3] = pid;
 
-    //fetch the info with sysctl()
+    // fetch the info with sysctl()
     len = sizeof(kp);
 
-    //now read the data from sysctl
+    // now read the data from sysctl
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
         // raise an exception and throw errno as the error
         if (ESRCH == errno) { //no such process
-            return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+            return PyErr_Format(NoSuchProcessException,
+                                "No process found with pid %lu", pid);
         }
         return PyErr_SetFromErrno(NULL);
     }
@@ -170,10 +172,17 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     if (len > 0) {
         arglist = get_arg_list(pid);
         if (Py_None == arglist) {
-            return NULL; //exception should already be set from getcmdargs()
+            return NULL; // exception should already be set from getcmdargs()
         }
 
-        return Py_BuildValue("llssNll", pid, kp.kp_eproc.e_ppid, kp.kp_proc.p_comm, "", arglist, kp.kp_eproc.e_pcred.p_ruid, kp.kp_eproc.e_pcred.p_rgid);
+        return Py_BuildValue("llssNll",
+                             pid,
+                             kp.kp_eproc.e_ppid,
+                             kp.kp_proc.p_comm,
+                             "",
+                             arglist,
+                             kp.kp_eproc.e_pcred.p_ruid,
+                             kp.kp_eproc.e_pcred.p_rgid);
     }
 
     /*
@@ -181,11 +190,13 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
      * appears to happen when the process has gone away.
      */
     else {
-        return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+        return PyErr_Format(NoSuchProcessException,
+                            "No process found with pid %lu", pid);
     }
 
-    //something went wrong if we get to this, so throw an exception
-	return PyErr_Format(PyExc_RuntimeError, "Failed to retrieve process information.");
+    // something went wrong if we get to this, so throw an exception
+	return PyErr_Format(PyExc_RuntimeError,
+                        "Failed to retrieve process information.");
 }
 
 
@@ -233,9 +244,10 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     struct task_thread_times_info task_times;
 
 
-    //the argument passed should be a process id
+    // the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+		return PyErr_Format(PyExc_RuntimeError,
+                            "Invalid argument - no PID provided.");
 	}
 
 
@@ -248,20 +260,24 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     if ( err == KERN_SUCCESS) {
         info_count = TASK_BASIC_INFO_COUNT;
         if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count) != KERN_SUCCESS) {
-            return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu", pid);
+            return PyErr_Format(PyExc_RuntimeError,
+                        "task_info(TASK_BASIC_INFO) failed for pid %lu", pid);
         }
 
         info_count = TASK_THREAD_TIMES_INFO_COUNT;
         if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&task_times, &info_count) != KERN_SUCCESS) {
-            return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_THREAD_TIMES_INFO) failed for pid %lu", pid);
+            return PyErr_Format(PyExc_RuntimeError,
+                    "task_info(TASK_THREAD_TIMES_INFO) failed for pid %lu", pid);
         }
     }
 
-    else { //task_for_pid failed
+    else { // task_for_pid failed
         if (! pid_exists(pid) ) {
-            return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+            return PyErr_Format(NoSuchProcessException,
+                                "No process found with pid %lu", pid);
         }
-        return PyErr_Format(AccessDeniedException, "task_for_pid() failed for pid %lu with error %i", pid, err);
+        return PyErr_Format(AccessDeniedException,
+                    "task_for_pid() failed for pid %lu with error %i", pid, err);
     }
 
     float user_t = -1.0;
@@ -290,9 +306,10 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 
-	//the argument passed should be a process id
+	// the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+		return PyErr_Format(PyExc_RuntimeError,
+                            "Invalid argument - no PID provided.");
 	}
 
     len = 4;
@@ -325,7 +342,7 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     time_value_t user_time, system_time;
     struct task_basic_info tasks_info;
 
-    //the argument passed should be a process id
+    // the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
 		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
 	}
@@ -340,15 +357,18 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     if ( err == KERN_SUCCESS) {
         info_count = TASK_BASIC_INFO_COUNT;
         if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count) != KERN_SUCCESS) {
-            return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu", pid);
+            return PyErr_Format(PyExc_RuntimeError,
+                            "task_info(TASK_BASIC_INFO) failed for pid %lu", pid);
         }
     }
 
     else {
         if (! pid_exists(pid)) {
-            return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+            return PyErr_Format(NoSuchProcessException,
+                                        "No process found with pid %lu", pid);
         }
-        return PyErr_Format(AccessDeniedException, "task_for_pid() failed for pid %lu with error %i", pid, err);
+        return PyErr_Format(AccessDeniedException,
+                    "task_for_pid() failed for pid %lu with error %i", pid, err);
     }
 
     return Py_BuildValue("(ll)", tasks_info.resident_size, tasks_info.virtual_size);
@@ -395,7 +415,8 @@ static PyObject* get_avail_phymem(PyObject* self, PyObject* args)
 	error = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vm_stat, &count);
 
 	if (error != KERN_SUCCESS) {
-	    return PyErr_Format(PyExc_RuntimeError, "Error in host_statistics(): %s", mach_error_string(error));
+	    return PyErr_Format(PyExc_RuntimeError,
+                    "Error in host_statistics(): %s", mach_error_string(error));
 	}
 
 	mem_free = (unsigned long long) vm_stat.free_count * pagesize;
@@ -457,8 +478,10 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 
     host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, &r_load, &count);
 
-	return Py_BuildValue("(ddd)", (double)r_load.cpu_ticks[CPU_STATE_USER] / CLOCKS_PER_SEC,
-        (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLOCKS_PER_SEC,
-        (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLOCKS_PER_SEC );
+	return Py_BuildValue("(ddd)",
+                    (double)r_load.cpu_ticks[CPU_STATE_USER] / CLOCKS_PER_SEC,
+                    (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLOCKS_PER_SEC,
+                    (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLOCKS_PER_SEC
+            );
 
 }

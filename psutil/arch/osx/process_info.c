@@ -136,7 +136,8 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
 
     *arglist = Py_BuildValue("[]");     /* empty list */
     if (*arglist == NULL) {
-        PyErr_SetString(PyExc_SystemError, "getcmdargs(): failed to build empty list");
+        PyErr_SetString(PyExc_SystemError,
+                        "getcmdargs(): failed to build empty list");
         return -1;
     }
 
@@ -153,7 +154,8 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
     /* Allocate space for the arguments. */
     procargs = (char *)malloc(argmax);
     if (procargs == NULL) {
-        PyErr_SetString(PyExc_MemoryError, "getcmdargs(): Cannot allocate memory for procargs");
+        PyErr_SetString(PyExc_MemoryError,
+                           "getcmdargs(): Cannot allocate memory for procargs");
         return -1;
     }
 
@@ -166,7 +168,7 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
 
     size = (size_t)argmax;
     if (sysctl(mib, 3, procargs, &size, NULL, 0) == -1) {
-        if (22 == errno) { //invalid parameter == access denied for some reason
+        if (22 == errno) { // invalid parameter == access denied for some reason
             free(procargs);
             return -2;       /* Insufficient privileges */
         }
@@ -187,7 +189,7 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
     /* Skip over the exec_path. */
     for (; cp < &procargs[size]; cp++) {
         if (*cp == '\0') {
-            //End of exec_path reached.
+            // End of exec_path reached.
             break;
         }
     }
@@ -238,14 +240,14 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
      */
 
     if (np == NULL || np == sp) {
-        //Empty or unterminated string.
+        // Empty or unterminated string.
         goto ERROR_B;
     }
 
-    //Make a copy of the string.
-    //asprintf(args, "%s", sp);
+    // Make a copy of the string.
+    // asprintf(args, "%s", sp);
 
-    //Clean up.
+    // Clean up.
     free(procargs);
     return 0;
 

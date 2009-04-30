@@ -16,7 +16,7 @@
 /*
  * NtQueryInformationProcess code taken from
  *
- *     http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/
+ * http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/
  *
  * typedefs needed to compile against ntdll functions not exposted in the API
  */
@@ -48,7 +48,7 @@ typedef struct _PROCESS_BASIC_INFORMATION
 } PROCESS_BASIC_INFORMATION, *PPROCESS_BASIC_INFORMATION;
 
 
-//fetch the PEB base address from NtQueryInformationProcess()
+// fetch the PEB base address from NtQueryInformationProcess()
 PVOID GetPebAddress(HANDLE ProcessHandle)
 {
     _NtQueryInformationProcess NtQueryInformationProcess =
@@ -112,7 +112,7 @@ int pid_is_running(DWORD pid)
     HANDLE hProcess;
     DWORD exitCode;
 
-    //Special case for PID 0 System Idle Process
+    // Special case for PID 0 System Idle Process
     if (pid == 0) {
         return 1;
     }
@@ -123,11 +123,12 @@ int pid_is_running(DWORD pid)
 
     hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
-        if (GetLastError() == ERROR_INVALID_PARAMETER) { //invalid parameter is no such process
+        // invalid parameter is no such process
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
             return 0;
         }
 
-        //access denied obviously means there's a process to deny access to...
+        // access denied obviously means there's a process to deny access to...
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             return 1;
         }
@@ -140,7 +141,7 @@ int pid_is_running(DWORD pid)
         return (exitCode == STILL_ACTIVE);
     }
 
-    //access denied means there's a process there so we'll assume it's running
+    // access denied means there's a process there so we'll assume it's running
     if (GetLastError() == ERROR_ACCESS_DENIED) {
         return 1;
     }
@@ -158,7 +159,8 @@ int pid_in_proclist(DWORD pid)
 
     proclist = get_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
-		PyErr_SetString(PyExc_RuntimeError, "get_pids() failed for pid_in_proclist()");
+		PyErr_SetString(PyExc_RuntimeError,
+                        "get_pids() failed for pid_in_proclist()");
         return -1;
     }
 
@@ -174,10 +176,11 @@ int pid_in_proclist(DWORD pid)
 }
 
 
-//Get a process handle from a pid with PROCESS_QUERY_INFORMATION rights
+// Get a process handle from a pid with PROCESS_QUERY_INFORMATION rights
 HANDLE handle_from_pid(DWORD pid)
 {
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                                  FALSE, pid);
     /*
     if (NULL == hProcess) {
         hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
@@ -187,7 +190,7 @@ HANDLE handle_from_pid(DWORD pid)
 }
 
 
-//Check exit code from a process handle. Return FALSE on an error also
+// Check exit code from a process handle. Return FALSE on an error also
 BOOL is_running(HANDLE hProcess)
 {
     DWORD dwCode;
@@ -203,8 +206,8 @@ BOOL is_running(HANDLE hProcess)
 }
 
 
-//Return None to represent NoSuchProcess, else return NULL for
-//other exception or the name as a Python string
+// Return None to represent NoSuchProcess, else return NULL for
+// other exception or the name as a Python string
 PyObject* get_name(long pid)
 {
 	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -219,13 +222,14 @@ PyObject* get_name(long pid)
 			}
 		} while( Process32Next(h, &pe));
 
-        //the process was never found (NoSuchProcess raised later)
+        // the process was never found (NoSuchProcess raised later)
         CloseHandle(h);
         return Py_BuildValue("");
 	}
 
     CloseHandle(h);
-    PyErr_SetString(PyExc_RuntimeError, "Failed to read process name from toolhelp snapshot");
+    PyErr_SetString(PyExc_RuntimeError,
+                    "Failed to read process name from toolhelp snapshot");
     return NULL;
 }
 
@@ -246,13 +250,14 @@ PyObject* get_ppid(long pid)
 			}
 		} while( Process32Next(h, &pe));
 
-        //the process was never found (NoSuchProcess raised later)
+        // the process was never found (NoSuchProcess raised later)
         CloseHandle(h);
         return Py_BuildValue("");
 	}
 
     CloseHandle(h);
-    PyErr_SetString(PyExc_RuntimeError, "Failed to read process ppid from toolhelp snapshot");
+    PyErr_SetString(PyExc_RuntimeError,
+                    "Failed to read process ppid from toolhelp snapshot");
     return NULL;
 }
 
@@ -319,27 +324,35 @@ PyObject* get_arg_list(long pid)
     /* print the commandline */
     //printf("%.*S\n", commandLine.Length / 2, commandLineContents);
 
-    //null-terminate the string to prevent wcslen from returning incorrect length
-    //the length specifier is in characters, but commandLine.Length is in bytes
+    // null-terminate the string to prevent wcslen from returning incorrect length
+    // the length specifier is in characters, but commandLine.Length is in bytes
     commandLineContents[(commandLine.Length/sizeof(WCHAR))] = '\0';
 
-    //attemempt tp parse the command line using Win32 API, fall back on string
-    //cmdline version otherwise
+    // attemempt tp parse the command line using Win32 API, fall back on string
+    // cmdline version otherwise
     szArglist = CommandLineToArgvW(commandLineContents, &nArgs);
     if (NULL == szArglist) {
-        //failed to parse arglist
-        //encode as a UTF8 Python string object from WCHAR string
-        argList = Py_BuildValue("N", PyUnicode_AsUTF8String(PyUnicode_FromWideChar(commandLineContents, commandLine.Length/2)));
+        // failed to parse arglist
+        // encode as a UTF8 Python string object from WCHAR string
+        argList = Py_BuildValue("N",
+                                PyUnicode_AsUTF8String(
+                                    PyUnicode_FromWideChar(
+                                    commandLineContents, commandLine.Length / 2)
+                                    )
+                                );
     }
 
 
     else {
-        //arglist parsed as array of UNICODE_STRING, so convert each to Python
-        //string object and add to arg list
+        // arglist parsed as array of UNICODE_STRING, so convert each to Python
+        // string object and add to arg list
         argList = Py_BuildValue("[]");
         for( i=0; i<nArgs; i++) {
-            //printf("%d: %.*S (%d characters)\n", i, wcslen(szArglist[i]), szArglist[i], wcslen(szArglist[i]));
-            arg_from_wchar = PyUnicode_FromWideChar(szArglist[i], wcslen(szArglist[i]));
+            //printf("%d: %.*S (%d characters)\n", i, wcslen(szArglist[i]),
+            //                  szArglist[i], wcslen(szArglist[i]));
+            arg_from_wchar = PyUnicode_FromWideChar(szArglist[i],
+                                                    wcslen(szArglist[i])
+                                                    );
             arg = PyUnicode_AsUTF8String(arg_from_wchar);
             Py_XDECREF(arg_from_wchar);
             PyList_Append(argList, arg);
@@ -352,5 +365,4 @@ PyObject* get_arg_list(long pid)
     CloseHandle(hProcess);
     return argList;
 }
-
 

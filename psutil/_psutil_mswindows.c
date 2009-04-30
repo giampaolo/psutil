@@ -54,7 +54,8 @@ init_psutil_mswindows(void)
 {
      PyObject *m;
      m = Py_InitModule("_psutil_mswindows", PsutilMethods);
-     NoSuchProcessException = PyErr_NewException("_psutil_mswindows.NoSuchProcess", NULL, NULL);
+     NoSuchProcessException = PyErr_NewException("_psutil_mswindows.NoSuchProcess",
+                                                 NULL, NULL);
      Py_INCREF(NoSuchProcessException);
      PyModule_AddObject(m, "NoSuchProcess", NoSuchProcessException);
      SetSeDebug();
@@ -74,17 +75,19 @@ static PyObject* get_system_uptime(PyObject* self, PyObject* args)
 
     GetSystemTimeAsFileTime(&fileTime);
 
-    // HUGE thanks to:
-    // http://johnstewien.spaces.live.com/blog/cns!E6885DB5CEBABBC8!831.entry
-    //
-    // This function converts the FILETIME structure to the 32 bit
-    // Unix time structure.
-    // The time_t is a 32-bit value for the number of seconds since
-    // January 1, 1970. A FILETIME is a 64-bit for the number of
-    // 100-nanosecond periods since January 1, 1601. Convert by
-    // subtracting the number of 100-nanosecond period betwee 01-01-1970
-    // and 01-01-1601, from time_t the divide by 1e+7 to get to the same
-    // base granularity.
+    /*
+    HUGE thanks to:
+    http://johnstewien.spaces.live.com/blog/cns!E6885DB5CEBABBC8!831.entry
+
+    This function converts the FILETIME structure to the 32 bit
+    Unix time structure.
+    The time_t is a 32-bit value for the number of seconds since
+    January 1, 1970. A FILETIME is a 64-bit for the number of
+    100-nanosecond periods since January 1, 1601. Convert by
+    subtracting the number of 100-nanosecond period betwee 01-01-1970
+    and 01-01-1601, from time_t the divide by 1e+7 to get to the same
+    base granularity.
+    */
     ll = (((LONGLONG)(fileTime.dwHighDateTime)) << 32) + fileTime.dwLowDateTime;
     pt = (time_t)((ll - 116444736000000000ull)/10000000ull);
 
@@ -104,12 +107,13 @@ static PyObject* pid_exists(PyObject* self, PyObject* args)
     int status;
 
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+        return PyErr_Format(PyExc_RuntimeError,
+                            "Invalid argument - no PID provided.");
 	}
 
     status = pid_is_running(pid);
     if (-1 == status) {
-        return NULL; //exception raised in pid_is_running()
+        return NULL; // exception raised in pid_is_running()
     }
 
     return PyBool_FromLong(status);
@@ -140,7 +144,7 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
         Py_XDECREF(pid);
     }
 
-    //free C array allocated for PIDs
+    // free C array allocated for PIDs
     free(proclist);
 
     return retlist;
@@ -169,21 +173,22 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 
     pid_return = pid_is_running(pid);
     if (pid_return == 0) {
-        return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+        return PyErr_Format(NoSuchProcessException,
+                            "No process found with pid %lu", pid);
     }
 
     if (pid_return == -1) {
-        return NULL; //exception raised from within pid_is_running()
+        return NULL; // exception raised from within pid_is_running()
     }
 
-    //get a process handle
+    // get a process handle
     hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
     if (hProcess == NULL) {
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
 
-    //kill the process
+    // kill the process
     if (! TerminateProcess(hProcess, 0) ){
         PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
@@ -218,8 +223,9 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     if (hProcess == NULL){
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            //bad PID so no such process
-            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+            // bad PID so no such process
+            PyErr_Format(NoSuchProcessException,
+                         "No process found with pid %lu", pid);
         }
         return NULL;
     }
@@ -227,8 +233,9 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
-            //usually means the process has died so we throw a NoSuchProcess here
-            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+            // usually means the process has died so we throw a NoSuchProcess here
+            PyErr_Format(NoSuchProcessException,
+                         "No process found with pid %lu", pid);
         }
         CloseHandle(hProcess);
         return NULL;
@@ -274,7 +281,6 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     }
 
     // special case for PIDs 0 and 4
-    // XXX - 0.0 means year 1970. Should we return uptime instead?
     if ( (0 == pid) || (4 == pid) ){
 	   return Py_BuildValue("d", 0.0);
     }
@@ -283,7 +289,7 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     if (hProcess == NULL){
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            //bad PID so no such process
+            // bad PID so no such process
             PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
         }
         return NULL;
@@ -292,8 +298,9 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
-            //usually means the process has died so we throw a NoSuchProcess here
-            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+            // usually means the process has died so we throw a NoSuchProcess here
+            PyErr_Format(NoSuchProcessException,
+                         "No process found with pid %lu", pid);
         }
         CloseHandle(hProcess);
         return NULL;
@@ -336,7 +343,7 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args)
  */
 static PyObject* get_process_info(PyObject* self, PyObject* args)
 {
-	//the argument passed should be a process id
+	// the argument passed should be a process id
 	long pid;
     int pid_return;
     PyObject* infoTuple;
@@ -345,38 +352,41 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     PyObject* name;
 
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return PyErr_Format(PyExc_RuntimeError, "get_process_info(): Invalid argument - no PID provided.");
+        return PyErr_Format(PyExc_RuntimeError,
+                       "get_process_info(): Invalid argument - no PID provided.");
 	}
 
-    //special case for PID 0 (System Idle Process)
+    // special case for PID 0 (System Idle Process)
     if (0 == pid) {
         arglist = Py_BuildValue("[]");
-	    infoTuple = Py_BuildValue("llssNll", pid, 0, "System Idle Process", "", arglist, -1, -1);
+	    infoTuple = Py_BuildValue("llssNll", pid, 0, "System Idle Process", "",
+                                  arglist, -1, -1);
         return infoTuple;
     }
 
-    //special case for PID 4 (System)
+    // special case for PID 4 (System)
     if (4 == pid) {
         arglist = Py_BuildValue("[]");
 	    infoTuple = Py_BuildValue("llssNll", pid, 0, "System", "", arglist, -1, -1);
         return infoTuple;
     }
 
-    //check if the process exists before we waste time trying to read info
+    // check if the process exists before we waste time trying to read info
     pid_return = pid_is_running(pid);
     if (pid_return == 0) {
-        return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+        return PyErr_Format(NoSuchProcessException,
+                            "No process found with pid %lu", pid);
     }
 
     if (pid_return == -1) {
-        return NULL; //exception raised from within pid_is_running()
+        return NULL; // exception raised from within pid_is_running()
     }
 
 
-    /* Now fetch the actual properties of the process */
+    // Now fetch the actual properties of the process
     ppid = get_ppid(pid);
     if ( NULL == ppid ) {
-        return NULL;  //exception string set in get_ppid()
+        return NULL;  // exception string set in get_ppid()
     }
 
     name = get_name(pid);
@@ -384,17 +394,19 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         return NULL;  //exception string set in get_name()
     }
 
-    //If get_name or get_pid returns None that means the process is dead
+    // If get_name or get_pid returns None that means the process is dead
     if (Py_None == name) {
-        return PyErr_Format(NoSuchProcessException, "Process with pid %lu has disappeared", pid);
+        return PyErr_Format(NoSuchProcessException,
+                            "Process with pid %lu has disappeared", pid);
     }
 
     if (Py_None == ppid) {
-        return PyErr_Format(NoSuchProcessException, "Process with pid %lu has disappeared", pid);
+        return PyErr_Format(NoSuchProcessException,
+                            "Process with pid %lu has disappeared", pid);
     }
 
-    //May fail any of several ReadProcessMemory calls etc. and not indicate
-    //a real problem so we ignore any errors and just live without commandline
+    // May fail any of several ReadProcessMemory calls etc. and not indicate
+    // a real problem so we ignore any errors and just live without commandline
     arglist = get_arg_list(pid);
     if ( NULL == arglist ) {
         // carry on anyway, clear any exceptions too
@@ -420,7 +432,8 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     DWORD pid;
 
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+        return PyErr_Format(PyExc_RuntimeError,
+                            "Invalid argument - no PID provided.");
 	}
 
     hProcess = handle_from_pid(pid);
@@ -501,9 +514,6 @@ static PyObject* get_avail_virtmem(PyObject* self, PyObject* args)
 }
 
 
-/*
- * Return a Python tuple representing user, kernel and idle CPU times
- */
 #define LO_T ((float)1e-7)
 #define HI_T (LO_T*4294967296.0)
 
@@ -530,6 +540,9 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
 } SYSTEM_INFORMATION_CLASS;
 
 
+/*
+ * Return a Python tuple representing user, kernel and idle CPU times
+ */
 static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 {
 	typedef BOOL (_stdcall *GST_PROC) (LPFILETIME, LPFILETIME, LPFILETIME);
@@ -540,12 +553,15 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 	// Improves performance calling GetProcAddress only the first time
 	if (bFirstCall)
 	{
-		// retrieves GetSystemTimes address in Kernel32
-		GetSystemTimes=(GST_PROC)GetProcAddress (GetModuleHandle (TEXT("Kernel32.dll")), "GetSystemTimes");
+        // retrieves GetSystemTimes address in Kernel32
+		GetSystemTimes=(GST_PROC)GetProcAddress(GetModuleHandle
+                                               (TEXT("Kernel32.dll")),
+                                               "GetSystemTimes");
 		bFirstCall = FALSE;
 	}
 
-	// Uses GetSystemTimes if supported (winXP sp1+), uses NtQuerySystemInformation otherwise
+
+     // Uses GetSystemTimes if supported (winXP sp1+)
 	if (NULL!=GetSystemTimes)
 	{
 		// GetSystemTimes supported
@@ -559,16 +575,19 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 			return PyErr_SetFromWindowsErr(0);
 		}
 
-		idle = (float)(HI_T*idle_time.dwHighDateTime + LO_T*idle_time.dwLowDateTime);
-		user = (float)(HI_T*user_time.dwHighDateTime + LO_T*user_time.dwLowDateTime);
-		kernel = (float)(HI_T*kernel_time.dwHighDateTime + LO_T*kernel_time.dwLowDateTime);
+		idle = (float)((HI_T * idle_time.dwHighDateTime) + \
+                       (LO_T * idle_time.dwLowDateTime));
+		user = (float)((HI_T * user_time.dwHighDateTime) + \
+                       (LO_T * user_time.dwLowDateTime));
+		kernel = (float)((HI_T * kernel_time.dwHighDateTime) + \
+                         (LO_T * kernel_time.dwLowDateTime));
 
 		return Py_BuildValue("(ddd)", user, kernel, idle );
 
 	}
 	else
 	{
-		// GetSystemTimes NOT supported
+        // GetSystemTimes NOT supportedm, use NtQuerySystemInformation instead
 
 		typedef DWORD (_stdcall *NTQSI_PROC) (int, PVOID, ULONG, PULONG);
 		NTQSI_PROC NtQuerySystemInformation;
@@ -582,35 +601,41 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 		if (hNtDll != NULL)
 		{
 			// gets NtQuerySystemInformation address
-			NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(hNtDll, "NtQuerySystemInformation");
+			NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
+                                        hNtDll, "NtQuerySystemInformation");
+
 			if (NtQuerySystemInformation != NULL)
 			{
 				// retrives number of processors
 				GetSystemInfo(&si);
 
-				// allocates an array of SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION structures, one per processor
-				sppi=(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *)
-					malloc(si.dwNumberOfProcessors*sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+				// allocates an array of SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
+                // structures, one per processor
+				sppi=(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
+    				  malloc(si.dwNumberOfProcessors * \
+                             sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
 				if (sppi != NULL)
 				{
 					// gets cpu time informations
 					if (0 == NtQuerySystemInformation(
 								SystemProcessorPerformanceInformation,
 								sppi,
-								si.dwNumberOfProcessors*sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+								si.dwNumberOfProcessors * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
 								NULL))
 					{
 						// computes system global times summing each processor value
 						idle = user = kernel = 0;
 						for (i=0; i<si.dwNumberOfProcessors; i++)
 						{
-							idle += (float)(HI_T*sppi[i].IdleTime.HighPart + LO_T*sppi[i].IdleTime.LowPart);
-							user += (float)(HI_T*sppi[i].UserTime.HighPart + LO_T*sppi[i].UserTime.LowPart);
-							kernel += (float)(HI_T*sppi[i].KernelTime.HighPart + LO_T*sppi[i].KernelTime.LowPart);
+							idle += (float)((HI_T * sppi[i].IdleTime.HighPart) + \
+                                            (LO_T * sppi[i].IdleTime.LowPart));
+							user += (float)((HI_T * sppi[i].UserTime.HighPart) + \
+                                            (LO_T * sppi[i].UserTime.LowPart));
+							kernel += (float)((HI_T * sppi[i].KernelTime.HighPart) + \
+                                              (LO_T * sppi[i].KernelTime.LowPart));
 						}
 
-						return Py_BuildValue("(ddd)", user, kernel, idle );
-
+						return Py_BuildValue("(ddd)", user, kernel, idle);
 
 					} // END NtQuerySystemInformation
 
@@ -621,12 +646,11 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 		} // END LoadLibrary
 
 		PyErr_SetFromWindowsErr(0);
-		if (sppi) free(sppi);
-		if (hNtDll) FreeLibrary(hNtDll);
+		if (sppi)
+            free(sppi);
+		if (hNtDll)
+            FreeLibrary(hNtDll);
 		return 0;
 
 	} // END GetSystemTimes NOT supported
-
 }
-
-

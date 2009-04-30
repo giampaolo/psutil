@@ -83,7 +83,7 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
     }
 
     if (num_processes > 0) {
-        orig_address = proclist; //save so we can free it after we're done
+        orig_address = proclist; // save so we can free it after we're done
         for (idx=0; idx < num_processes; idx++) {
             pid = Py_BuildValue("i", proclist->ki_pid);
             PyList_Append(retlist, pid);
@@ -111,18 +111,18 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     PyObject* infoTuple = NULL;
     PyObject* arglist = NULL;
 
-	//the argument passed should be a process id
+	// the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
 		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
 	}
 
     if (0 == pid) {
-        //USER   PID %CPU %MEM   VSZ   RSS  TT  STAT STARTED      TIME COMMAND
-        //root     0  0.0  0.0     0     0  ??  DLs  12:22AM   0:00.13 [swapper]
+        // USER   PID %CPU %MEM   VSZ   RSS  TT  STAT STARTED      TIME COMMAND
+        // root     0  0.0  0.0     0     0  ??  DLs  12:22AM   0:00.13 [swapper]
         return Py_BuildValue("llssNll", pid, 0, "swapper", "", Py_BuildValue("[]"), 0, 0);
     }
 
-    //build the mib to pass to sysctl to tell it what PID and what info we want
+    // build the mib to pass to sysctl to tell it what PID and what info we want
     len = 4;
     sysctlnametomib("kern.proc.pid", mib, &len);
     mib[0] = CTL_KERN;
@@ -130,7 +130,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
 
-    //fetch the info with sysctl()
+    // fetch the info with sysctl()
     len = sizeof(kp);
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
         // raise an exception if it failed, since we won't get any data
@@ -140,29 +140,35 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         return PyErr_SetFromErrno(PyExc_OSError);
     }
 
-    if (len > 0) { //if 0 then no data was retrieved
+    if (len > 0) { // if 0 then no data was retrieved
 
-        //get the commandline, since we got everything else
+        // get the commandline, since we got everything else
         arglist = get_arg_list(pid);
 
-        //get_arg_list() returns NULL only if getcmdargs failed with ESRCH (no process with that PID)
+        // get_arg_list() returns NULL only if getcmdargs failed with ESRCH
+        // (no process with that PID)
         if (NULL == arglist) {
-            return PyErr_Format(NoSuchProcessException, "No such process found with pid %lu", pid);
+            return PyErr_Format(NoSuchProcessException,
+                                "No such process found with pid %lu", pid);
         }
 
-        //hooray, we got all the data, so return it as a tuple to be passed to ProcessInfo() constructor
-        infoTuple = Py_BuildValue("llssNll", pid, kp.ki_ppid, kp.ki_comm, "", arglist, kp.ki_ruid, kp.ki_rgid);
+        // hooray, we got all the data, so return it as a tuple to be passed to
+        // ProcessInfo() constructor
+        infoTuple = Py_BuildValue("llssNll", pid, kp.ki_ppid, kp.ki_comm, "",
+                                  arglist, kp.ki_ruid, kp.ki_rgid);
         if (NULL == infoTuple) {
-            PyErr_SetString(PyExc_RuntimeError, "Failed to build process information tuple!");
+            PyErr_SetString(PyExc_RuntimeError,
+                            "Failed to build process information tuple!");
         }
         return infoTuple;
     }
 
-    //something went wrong, throw an error
-	return PyErr_Format(PyExc_RuntimeError, "Failed to retrieve process information.");
+    // something went wrong, throw an error
+	return PyErr_Format(PyExc_RuntimeError,
+                        "Failed to retrieve process information.");
 }
 
-//convert a timeval struct to a double
+// convert a timeval struct to a double
 #define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
 
 
@@ -179,12 +185,13 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
     double user_t, sys_t;
     PyObject* timeTuple = NULL;
 
-	//the argument passed should be a process id
+	// the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+		return PyErr_Format(PyExc_RuntimeError,
+                            "Invalid argument - no PID provided.");
 	}
 
-    //build the mib to pass to sysctl to tell it what PID and what info we want
+    // build the mib to pass to sysctl to tell it what PID and what info we want
     len = 4;
     sysctlnametomib("kern.proc.pid", mib, &len);
     mib[0] = CTL_KERN;
@@ -192,30 +199,33 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
 
-    //fetch the info with sysctl()
+    // fetch the info with sysctl()
     len = sizeof(kp);
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
         // raise an exception if it failed, since we won't get any data
         if (ESRCH == errno) {
-            return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+            return PyErr_Format(NoSuchProcessException,
+                                "No process found with pid %lu", pid);
         }
         return PyErr_SetFromErrno(PyExc_OSError);
     }
 
-    if (len > 0) { //if 0 then no data was retrieved
+    if (len > 0) { // if 0 then no data was retrieved
         user_t = TV2DOUBLE(kp.ki_rusage.ru_utime);
         sys_t = TV2DOUBLE(kp.ki_rusage.ru_stime);
 
-        //convert from microseconds to seconds
+        // convert from microseconds to seconds
         timeTuple = Py_BuildValue("(dd)", user_t, sys_t);
         if (NULL == timeTuple) {
-            PyErr_SetString(PyExc_RuntimeError, "Failed to build process CPU times tuple!");
+            PyErr_SetString(PyExc_RuntimeError,
+                            "Failed to build process CPU times tuple!");
         }
         return timeTuple;
     }
 
-    //something went wrong, throw an error
-	return PyErr_Format(PyExc_RuntimeError, "Failed to retrieve process CPU times.");
+    // something went wrong, throw an error
+	return PyErr_Format(PyExc_RuntimeError,
+                        "Failed to retrieve process CPU times.");
 }
 
 
@@ -253,9 +263,10 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 
-	//the argument passed should be a process id
+	// the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+		return PyErr_Format(PyExc_RuntimeError,
+                            "Invalid argument - no PID provided.");
 	}
 
     len = 4;
@@ -286,9 +297,10 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 
-    //the argument passed should be a process id
+    // the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+		return PyErr_Format(PyExc_RuntimeError,
+                            "Invalid argument - no PID provided.");
 	}
 
     len = 4;
@@ -352,23 +364,26 @@ static PyObject* get_avail_phymem(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    if (sysctlbyname("vm.stats.vm.v_inactive_count", &v_inactive_count, &size, NULL, 0) == -1) {
+    if (sysctlbyname("vm.stats.vm.v_inactive_count", &v_inactive_count,
+                     &size, NULL, 0) == -1) {
         PyErr_SetFromErrno(0);
         return NULL;
     }
 
-    if (sysctlbyname("vm.stats.vm.v_cache_count", &v_cache_count, &size, NULL, 0) == -1) {
+    if (sysctlbyname("vm.stats.vm.v_cache_count",
+                     &v_cache_count, &size, NULL, 0) == -1) {
         PyErr_SetFromErrno(0);
         return NULL;
     }
 
-    if (sysctlbyname("vm.stats.vm.v_free_count", &v_free_count, &size, NULL, 0) == -1) {
+    if (sysctlbyname("vm.stats.vm.v_free_count",
+                     &v_free_count, &size, NULL, 0) == -1) {
         PyErr_SetFromErrno(0);
         return NULL;
     }
 
     avail_mem = (v_inactive_count + v_cache_count + v_free_count) * pagesize;
-    //used_mem = total_mem - avail_mem;
+    // used_mem = total_mem - avail_mem;
 
     return Py_BuildValue("L", avail_mem);
 }
