@@ -24,6 +24,7 @@ __all__ = [
     "avail_virtmem",
     "used_virtmem",
     "cpu_times",
+    "cpu_percent",
     ]
 
 import sys
@@ -350,6 +351,25 @@ def test():
         else:
             print line
 
+
+_old_cpu_times = cpu_times()
+
+def cpu_percent():
+    """Return CPU utilization times (user, kernel, idle) as a
+    percentage calculated from the last call to the function.
+    """
+    global _old_cpu_times
+    
+    times = cpu_times()
+
+    delta_cpu = sum(times) - sum(_old_cpu_times)    
+    deltas = [m - n for m,n in zip(times, _old_cpu_times)]
+    percent = tuple([(100 * x) / delta_cpu for x in deltas])
+    
+    _old_cpu_times = times
+ 
+    return  percent
+
+
 if __name__ == "__main__":
     test()
-

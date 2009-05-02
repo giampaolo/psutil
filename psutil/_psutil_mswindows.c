@@ -582,12 +582,14 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 		kernel = (float)((HI_T * kernel_time.dwHighDateTime) + \
                          (LO_T * kernel_time.dwLowDateTime));
 
-		return Py_BuildValue("(ddd)", user, kernel, idle );
+        // kernel time includes idle time on windows
+        // we return only busy kernel time subtracting idle time from kernel time
+		return Py_BuildValue("(ddd)", user, kernel - idle, idle );
 
 	}
 	else
 	{
-        // GetSystemTimes NOT supportedm, use NtQuerySystemInformation instead
+        // GetSystemTimes NOT supported, use NtQuerySystemInformation instead
 
 		typedef DWORD (_stdcall *NTQSI_PROC) (int, PVOID, ULONG, PULONG);
 		NTQSI_PROC NtQuerySystemInformation;
@@ -635,7 +637,9 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
                                               (LO_T * sppi[i].KernelTime.LowPart));
 						}
 
-						return Py_BuildValue("(ddd)", user, kernel, idle);
+                        // kernel time includes idle time on windows
+                        // we return only busy kernel time subtracting idle time from kernel time
+						return Py_BuildValue("(ddd)", user, kernel - idle , idle);
 
 					} // END NtQuerySystemInformation
 
