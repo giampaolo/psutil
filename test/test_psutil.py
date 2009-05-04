@@ -108,6 +108,15 @@ class TestCase(unittest.TestCase):
             self.assertTrue(isinstance(y, float))
             self.assertTrue(y > 0)
 
+    def test_cpu_percent(self):
+        x = psutil.cpu_percent()
+        self.assertTrue(isinstance(x, tuple))
+        self.assertEqual(len(x), 3)
+        for y in x:
+            self.assertTrue(isinstance(y, float))
+            self.assertTrue(y >= 0)
+            self.assertTrue(y <= 100)
+
     # os.times() is broken on OS X and *BSD because, see:
     # http://bugs.python.org/issue1040026
 	# It's also broken on Windows on Python 2.5 (not 2.6)
