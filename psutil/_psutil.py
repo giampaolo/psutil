@@ -359,21 +359,21 @@ def cpu_percent():
     percentage calculated from the last call to the function.
     """
     global _last_cpu_times
-    percentages = []
 
     times = cpu_times()
-    delta_cpu = sum(times) - sum(_last_cpu_times)
-    deltas = [m - n for m, n in zip(times, _last_cpu_times)]
-    for x in deltas:
-        try:
-            percent = (100.0 * x) / delta_cpu
-        except ZeroDivisionError:
-            percentages.append(0.0)
-        else:
-            percentages.append(percent)
+    times_len=len(times)
+
+    try :
+        # normalization factor = 100/(amount of time between calls)
+        norm_factor = 100 / (sum(times) - sum(_last_cpu_times))
+    except ZeroDivisionError:
+        percentages = [ 0 for i in range(times_len)]
+    else :
+        deltas = [m - n for m, n in zip(times, _last_cpu_times)]
+        percentages = tuple([x * norm_factor for x in deltas])
 
     _last_cpu_times = times
-    return tuple(percentages)
+    return percentages
 
 
 if __name__ == "__main__":
