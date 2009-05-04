@@ -352,23 +352,28 @@ def test():
             print line
 
 
-_old_cpu_times = cpu_times()
+_last_cpu_times = cpu_times()
 
 def cpu_percent():
     """Return CPU utilization times (user, kernel, idle) as a
     percentage calculated from the last call to the function.
     """
-    global _old_cpu_times
-    
-    times = cpu_times()
+    global _last_cpu_times
+    percentages = []
 
-    delta_cpu = sum(times) - sum(_old_cpu_times)    
-    deltas = [m - n for m,n in zip(times, _old_cpu_times)]
-    percent = tuple([(100 * x) / delta_cpu for x in deltas])
-    
-    _old_cpu_times = times
- 
-    return  percent
+    times = cpu_times()
+    delta_cpu = sum(times) - sum(_last_cpu_times)
+    deltas = [m - n for m, n in zip(times, _last_cpu_times)]
+    for x in deltas:
+        try:
+            percent = (100.0 * x) / delta_cpu
+        except ZeroDivisionError:
+            percentages.append(0.0)
+        else:
+            percentages.append(percent)
+
+    _last_cpu_times = times
+    return tuple(percentages)
 
 
 if __name__ == "__main__":
