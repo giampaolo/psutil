@@ -11,6 +11,7 @@ import grp
 
 # import psutil exceptions we can override with our own
 from error import *
+from common import CPUTimes
 
 def _get_uptime():
     """Return system boot time (epoch in seconds)"""
@@ -83,14 +84,17 @@ def used_virtmem():
     return total_virtmem() - avail_virtmem()
 
 def cpu_times():
-    """Return a tuple representing user, kernel and idle CPU times."""
+    """Return a CPUTimes instance with the following CPU times:
+    user, nice, system, idle, iowait, irq, softirq.
+    """
     f = open('/proc/stat', 'r')
     values = f.readline().split()
     f.close()
-    user = float(values[1]) / _CLOCK_TICKS
-    system = float(values[3]) / _CLOCK_TICKS
-    idle = float(values[4]) / _CLOCK_TICKS
-    return (user, system, idle)
+    values = values[1:8]
+    values = tuple([float(x) / _CLOCK_TICKS for x in values])
+    return CPUTimes(user=values[0], nice=values[1], system=values[2],
+                    idle=values[3], iowait=values[4], irq=values[5],
+                    softirq=values[6])
 
 
 def prevent_zombie(method):

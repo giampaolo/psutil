@@ -13,6 +13,7 @@ __all__ = [
     "NUM_CPUS",
     "ProcessInfo",
     "Process",
+    "CPUTimes",
     "pid_exists",
     "get_pid_list",
     "process_iter",
