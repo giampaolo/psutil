@@ -454,8 +454,21 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    return Py_BuildValue("(ddd)", (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
+    /*
+        #define CP_USER     0
+        #define CP_NICE     1
+        #define CP_SYS      2
+        #define CP_INTR     3
+        #define CP_IDLE     4
+        #define CPUSTATES   5
+    */
+    //user, nice, system, idle, iowait, irqm, softirq
+    return Py_BuildValue("(ddddddd)", (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
+                                  (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC
                                   (double)cpu_time[CP_SYS] / CLOCKS_PER_SEC,
-                                  (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC
+                                  (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC,
+                                  (double)-1, //iowait
+                                  (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC, //irq (?)
+                                  (double)-1, //softirq
                         );
 }

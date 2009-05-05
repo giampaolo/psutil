@@ -83,6 +83,8 @@ class CPUTimes:
     def __init__(self, **kwargs):
         self.attrs = []
         for name in kwargs:
+            if kwargs[name] < 0:
+                continue
             setattr(self, name, kwargs[name])
             self.attrs.append(name)
 

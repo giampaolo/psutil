@@ -584,7 +584,15 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 
         // kernel time includes idle time on windows
         // we return only busy kernel time subtracting idle time from kernel time
-		return Py_BuildValue("(ddd)", user, kernel - idle, idle );
+        //user, nice, system, idle, iowait, irqm, softirq
+		return Py_BuildValue("(ddddddd)", user,
+                (double)-1, //nice
+                kernel - idle,
+                idle,
+                (double)-1, //iowait
+                (double)-1, //irq
+                (double)-1  //softirq
+        );
 
 	}
 	else
@@ -639,7 +647,15 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 
                         // kernel time includes idle time on windows
                         // we return only busy kernel time subtracting idle time from kernel time
-						return Py_BuildValue("(ddd)", user, kernel - idle , idle);
+                        //user, nice, system, idle, iowait, irqm, softirq
+						return Py_BuildValue("(ddddddd)", user,
+                                (double)-1, //nice
+                                kernel - idle,
+                                idle,
+                                (double)-1, //iowait
+                                (double)-1, //irq
+                                (double)-1  //softirq
+                            );
 
 					} // END NtQuerySystemInformation
 
