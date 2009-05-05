@@ -39,7 +39,8 @@ def used_virtmem():
     return _psutil_osx.get_total_virtmem() - _psutil_osx.get_avail_virtmem()
 
 def get_system_cpu_times():
-    """Return a tuple representing user, kernel and idle CPU times."""
+    """Return a tuple with the following CPU times:
+    user, nice, system, idle, iowait, irq, softirq."""
     return _psutil_osx.get_system_cpu_times()
 
 def wrap_privileges(callable):

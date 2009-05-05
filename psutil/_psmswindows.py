@@ -8,7 +8,6 @@ import _psutil_mswindows
 
 # import psutil exceptions we can override with our own
 from error import *
-from common import CPUTimes
 
 # module level constants (gets pushed up to psutil module)
 NoSuchProcess = _psutil_mswindows.NoSuchProcess
@@ -38,10 +37,9 @@ def used_virtmem():
     """Return the amount of used memory currently in use on the system, in bytes."""
     return _psutil_mswindows.get_total_virtmem() - _psutil_mswindows.get_avail_virtmem()
 
-def cpu_times():
+def get_system_cpu_times():
     """Return a tuple representing user, kernel and idle CPU times."""
-    times = _psutil_mswindows.get_system_cpu_times()
-    return CPUTimes(user=times[0], system=times[1], idle=times[2])
+    return _psutil_mswindows.get_system_cpu_times()
 
 
 def wrap_privileges(callable):

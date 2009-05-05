@@ -40,8 +40,9 @@ def used_virtmem():
     """Return the amount of used memory currently in use on the system, in bytes."""
     return _psutil_bsd.get_total_virtmem() - _psutil_bsd.get_avail_virtmem()
 
-def cpu_times():
-    """Return a tuple representing user, kernel and idle CPU times."""
+def get_system_cpu_times():
+    """Return a tuple with the following CPU times:
+    user, nice, system, idle, iowait, irq, softirq."""
     return _psutil_bsd.get_system_cpu_times()
 
 
