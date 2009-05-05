@@ -59,6 +59,45 @@ else:
 _platform_impl = Impl()
 
 
+class CPUTimes:
+    """This class contains information about CPU times.
+    This class is not used directly but it's returned as an instance by
+    psutil.cpu_times() function.
+
+    Every CPU time is accessible in form of an attribute and represents
+    the time CPU has spent in the given mode.
+
+    The attributes availability varies depending on the platform.
+    Here follows a list of all available attributes:
+
+     - user
+     - system
+     - idle
+     - nice (UNIX)
+     - iowait (Linux)
+     - irq (Linux)
+     - softirq (Linux)
+     - interrupt (FreeBSD)
+    """
+
+    def __init__(self, **kwargs):
+        self.attrs = []
+        for name in kwargs:
+            setattr(self, name, kwargs[name])
+            self.attrs.append(name)
+
+    def __str__(self):
+        string = []
+        for attr in self.attrs:
+            value = getattr(self, attr)
+            string.append("%s=%s" %(attr, value))
+        return '; '.join(string)
+
+    def __iter__(self):
+        for attr in self.attrs:
+            yield getattr(self, attr)
+
+
 class ProcessInfo(object):
     """Class that allows the process information to be passed between
     external code and psutil.  Used directly by the Process class.
@@ -351,6 +390,13 @@ def test():
             pass
         else:
             print line
+
+
+def cpu_times():
+    """Return CPU times as a CPUTimes object."""
+    values = get_system_cpu_times()
+    return CPUTimes(user=values[0], nice=values[1], system=values[2],
+        idle=values[3], iowait=values[4], irq=values[5],softirq=values[6])
 
 
 _last_cpu_times = cpu_times()

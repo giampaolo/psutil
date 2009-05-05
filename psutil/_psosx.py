@@ -38,7 +38,7 @@ def used_virtmem():
     """Return the amount of used memory currently in use on the system, in bytes."""
     return _psutil_osx.get_total_virtmem() - _psutil_osx.get_avail_virtmem()
 
-def cpu_times():
+def get_system_cpu_times():
     """Return a tuple representing user, kernel and idle CPU times."""
     return _psutil_osx.get_system_cpu_times()
 
