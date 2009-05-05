@@ -43,7 +43,9 @@ def used_virtmem():
 def get_system_cpu_times():
     """Return a tuple with the following CPU times:
     user, nice, system, idle, iowait, irq, softirq."""
-    return _psutil_bsd.get_system_cpu_times()
+    values = _psutil_bsd.get_system_cpu_times()
+    return dict(user=values[0], nice=values[1], system=values[2],
+        idle=values[3], irq=values[4])
 
 
 def wrap_privileges(callable):

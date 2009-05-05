@@ -484,9 +484,6 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
                     (double)r_load.cpu_ticks[CPU_STATE_NICE] / CLOCKS_PER_SEC,
                     (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLOCKS_PER_SEC,
                     (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLOCKS_PER_SEC,
-                    (double)-1, //iowait
-                    (double)-1, //irq
-                    (double)-1 //softirq
             );
 
 }

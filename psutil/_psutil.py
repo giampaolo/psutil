@@ -83,8 +83,6 @@ class CPUTimes:
     def __init__(self, **kwargs):
         self.attrs = []
         for name in kwargs:
-            if kwargs[name] < 0:
-                continue
             setattr(self, name, kwargs[name])
             self.attrs.append(name)
 
@@ -397,9 +395,7 @@ def test():
 def cpu_times():
     """Return CPU times as a CPUTimes object."""
     values = get_system_cpu_times()
-    return CPUTimes(user=values[0], nice=values[1], system=values[2],
-        idle=values[3], iowait=values[4], irq=values[5],softirq=values[6])
-
+    return CPUTimes(**values)
 
 _last_cpu_times = cpu_times()
 

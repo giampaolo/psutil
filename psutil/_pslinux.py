@@ -83,7 +83,7 @@ def used_virtmem():
     return total_virtmem() - avail_virtmem()
 
 def get_system_cpu_times():
-    """Return a tuple with the following CPU times:
+    """Return a dict representing CPU times, possible keys:
     user, nice, system, idle, iowait, irq, softirq.
     """
     f = open('/proc/stat', 'r')
@@ -91,7 +91,9 @@ def get_system_cpu_times():
     f.close()
     values = values[1:8]
     values = tuple([float(x) / _CLOCK_TICKS for x in values])
-    return values
+    return dict(user=values[0], nice=values[1], system=values[2],
+        idle=values[3], iowait=values[4], irq=values[5], softirq=values[6])
+
 
 
 def prevent_zombie(method):

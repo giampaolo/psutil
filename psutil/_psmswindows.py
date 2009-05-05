@@ -38,8 +38,10 @@ def used_virtmem():
     return _psutil_mswindows.get_total_virtmem() - _psutil_mswindows.get_avail_virtmem()
 
 def get_system_cpu_times():
-    """Return a tuple representing user, kernel and idle CPU times."""
-    return _psutil_mswindows.get_system_cpu_times()
+    """Return a dict of CPU times, possible keys:
+       user, nice, system, idle, iowait, irq, softirq."""
+    values = _psutil_mswindows.get_system_cpu_times()
+    return dict(user=times[0], system=times[1], idle=times[2])
 
 
 def wrap_privileges(callable):

@@ -39,9 +39,10 @@ def used_virtmem():
     return _psutil_osx.get_total_virtmem() - _psutil_osx.get_avail_virtmem()
 
 def get_system_cpu_times():
-    """Return a tuple with the following CPU times:
+    """Return a dict of CPU times and values, possible keys::
     user, nice, system, idle, iowait, irq, softirq."""
-    return _psutil_osx.get_system_cpu_times()
+    values = _psutil_osx.get_system_cpu_times()
+    return dict(user=values[0], nice=values[1], system=values[2], idle=values[3])
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if an
