@@ -348,6 +348,41 @@ def get_process_list():
     """
     return list(process_iter())
 
+def cpu_times():
+    """Return system CPU times as a CPUTimes object."""
+    values = get_system_cpu_times()
+    return CPUTimes(**values)
+
+_last_cpu_idle = cpu_times().idle
+_last_system_time = time.time()
+
+def cpu_percent():
+    """Return the current system-wide CPU utilization as a percentage. For
+    highest accuracy, it is recommended that this be called at least 1/10th
+    of a second after importing the module or calling cpu_percent() in a
+    previous call, to allow for a larger time delta from which to calculate
+    the percentage value.
+    """
+    global _last_cpu_idle
+    global _last_system_time
+
+    idle_time = cpu_times().idle
+    system_time = time.time()
+
+    total_time_delta = system_time - _last_system_time
+    cpu_times_delta = idle_time - _last_cpu_idle
+
+    _last_cpu_idle = idle_time
+    _last_system_time = system_time
+
+    try :
+        idle_percent = (cpu_times_delta / total_time_delta) * 100.0
+        percent = (100 * NUM_CPUS) - idle_percent
+    except ZeroDivisionError:
+        return 0.00
+
+    return percent / NUM_CPUS
+
 
 def test():
     """List info of all currently running processes emulating a
@@ -392,38 +427,6 @@ def test():
         else:
             print line
 
-
-def cpu_times():
-    """Return CPU times as a CPUTimes object."""
-    values = get_system_cpu_times()
-    return CPUTimes(**values)
-
-_last_cpu_idle = cpu_times().idle
-_last_system_time = time.time()
-
-def cpu_percent():
-    """Return CPU utilization times (user, kernel, idle) as a
-    percentage calculated from the last call to the function.
-    """
-    global _last_cpu_idle
-    global _last_system_time
-
-    idle_time = cpu_times().idle
-    system_time = time.time()
-
-    total_time_delta = system_time - _last_system_time
-    cpu_times_delta = idle_time - _last_cpu_idle
-
-    _last_cpu_idle = idle_time
-    _last_system_time = system_time
-
-    try :
-        idle_percent = (cpu_times_delta / total_time_delta) * 100.0
-        percent = (100 * NUM_CPUS) - idle_percent
-    except ZeroDivisionError:
-        return 0.00
-
-    return percent / NUM_CPUS
 
 
 if __name__ == "__main__":
