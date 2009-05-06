@@ -381,7 +381,7 @@ def cpu_percent():
     except ZeroDivisionError:
         return 0.0
 
-    return util / NUM_CPUS
+    return util_percent / NUM_CPUS
 
 
 def test():
