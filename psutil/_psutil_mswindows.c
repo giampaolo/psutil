@@ -17,17 +17,19 @@
 static PyMethodDef PsutilMethods[] =
 {
      {"get_pid_list", get_pid_list, METH_VARARGS,
-     	"Returns a python list of PIDs currently running on the host system"},
+     	"Returns a list of PIDs currently running on the system"},
      {"get_process_info", get_process_info, METH_VARARGS,
-       	"Returns a psutil.ProcessInfo object for the given PID"},
+        "Return a tuple containing a set of information about the "
+        "process (pid, ppid, name, path, cmdline)"},
      {"kill_process", kill_process, METH_VARARGS,
          "Kill the process identified by the given PID"},
      {"pid_exists", pid_exists, METH_VARARGS,
          "Determine if the process exists in the current process list."},
      {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
-         "Return process CPU kernel/user times."},
+       	"Return tuple of user/kern time for the given PID"},
      {"get_process_create_time", get_process_create_time, METH_VARARGS,
-         "Return process creation time."},
+         "Return a float indicating the process create time expressed in "
+         "seconds since the epoch"},
      {"get_num_cpus", get_num_cpus, METH_VARARGS,
          "Returns the number of CPUs on the system"},
      {"get_system_uptime", get_system_uptime, METH_VARARGS,
@@ -43,7 +45,7 @@ static PyMethodDef PsutilMethods[] =
      {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
-         "Return system cpu times (user, system, idle)"},
+         "Return system cpu times as a tuple (user, system, idle)"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -89,7 +91,7 @@ static PyObject* get_system_uptime(PyObject* self, PyObject* args)
     base granularity.
     */
     ll = (((LONGLONG)(fileTime.dwHighDateTime)) << 32) + fileTime.dwLowDateTime;
-    pt = (time_t)((ll - 116444736000000000ull)/10000000ull);
+    pt = (time_t)((ll - 116444736000000000ull) / 10000000ull);
 
     // XXX - By using GetTickCount() time will wrap around to zero if the
     // system is run continuously for 49.7 days.
@@ -233,7 +235,8 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
-            // usually means the process has died so we throw a NoSuchProcess here
+            // usually means the process has died so we throw a NoSuchProcess
+            // here
             PyErr_Format(NoSuchProcessException,
                          "No process found with pid %lu", pid);
         }
@@ -290,7 +293,8 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // bad PID so no such process
-            PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
+            PyErr_Format(NoSuchProcessException,
+                         "No process found with pid %lu", pid);
         }
         return NULL;
     }

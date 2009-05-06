@@ -32,10 +32,6 @@ __all__ = [
 import sys
 import os
 import time
-try:
-    import pwd, grp
-except ImportError:
-    pwd = grp = None
 
 # exceptions are imported here, but may be overriden by platform
 # module implementation later
@@ -429,8 +425,6 @@ def test():
             pass
         else:
             print line
-
-
 
 if __name__ == "__main__":
     test()

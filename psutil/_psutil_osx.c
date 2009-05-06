@@ -30,11 +30,12 @@
 static PyMethodDef PsutilMethods[] =
 {
      {"get_pid_list", get_pid_list, METH_VARARGS,
-     	"Returns a python list of PIDs currently running on the host system"},
+     	"Returns a list of PIDs currently running on the system"},
      {"get_process_info", get_process_info, METH_VARARGS,
-       	"Returns a psutil.ProcessInfo object for the given PID"},
+        "Return a tuple containing a set of information about the "
+        "process (pid, ppid, name, path, cmdline)"},
      {"get_num_cpus", get_num_cpus, METH_VARARGS,
-       	"Returns the number of CPUs on the system"},
+         "Returns the number of CPUs on the system"},
      {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
          "Return process CPU kernel/user times."},
      {"get_process_create_time", get_process_create_time, METH_VARARGS,
@@ -50,7 +51,7 @@ static PyMethodDef PsutilMethods[] =
      {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
-         "Return system cpu times as a tuple of user, kernel, and idle times."},
+         "Return system cpu times as a tuple (user, nice, system, idle)."},
      {NULL, NULL, 0, NULL}
 };
 
@@ -63,10 +64,12 @@ init_psutil_osx(void)
 {
      PyObject *m;
      m = Py_InitModule("_psutil_osx", PsutilMethods);
-     NoSuchProcessException = PyErr_NewException("_psutil_osx.NoSuchProcess", NULL, NULL);
+     NoSuchProcessException = PyErr_NewException("_psutil_osx.NoSuchProcess",
+                                                 NULL, NULL);
      Py_INCREF(NoSuchProcessException);
      PyModule_AddObject(m, "NoSuchProcess", NoSuchProcessException);
-     AccessDeniedException = PyErr_NewException("_psutil_osx.AccessDenied", NULL, NULL);
+     AccessDeniedException = PyErr_NewException("_psutil_osx.AccessDenied",
+                                                NULL, NULL);
      Py_INCREF(AccessDeniedException);
      PyModule_AddObject(m, "AccessDenied", AccessDeniedException);
 }
@@ -94,14 +97,12 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
         // save the address of proclist so we can free it later
         orig_address = proclist;
         for (idx=0; idx < num_processes; idx++) {
-            // printf("%i: %s\n", proclist->kp_proc.p_pid, proclist->kp_proc.p_comm);
             pid = Py_BuildValue("i", proclist->kp_proc.p_pid);
             PyList_Append(retlist, pid);
             Py_XDECREF(pid);
             proclist++;
         }
     }
-
     free(orig_address);
     return retlist;
 }
@@ -149,7 +150,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
                             "Invalid argument - no PID provided.");
 	}
 
-    /* Fill out the first three components of the mib */
+    // Fill out the first three components of the mib
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
@@ -259,14 +260,16 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     err = task_for_pid(mach_task_self(), pid, &task);
     if ( err == KERN_SUCCESS) {
         info_count = TASK_BASIC_INFO_COUNT;
-        if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count) != KERN_SUCCESS) {
-            return PyErr_Format(PyExc_RuntimeError,
+        if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info,
+            &info_count) != KERN_SUCCESS) {
+               return PyErr_Format(PyExc_RuntimeError,
                         "task_info(TASK_BASIC_INFO) failed for pid %lu", pid);
         }
 
         info_count = TASK_THREAD_TIMES_INFO_COUNT;
-        if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&task_times, &info_count) != KERN_SUCCESS) {
-            return PyErr_Format(PyExc_RuntimeError,
+        if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&task_times,
+            &info_count) != KERN_SUCCESS) {
+                return PyErr_Format(PyExc_RuntimeError,
                     "task_info(TASK_THREAD_TIMES_INFO) failed for pid %lu", pid);
         }
     }
@@ -344,7 +347,8 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
 
     // the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+		return PyErr_Format(PyExc_RuntimeError,
+                            "Invalid argument - no PID provided.");
 	}
 
 
@@ -356,8 +360,9 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     err = task_for_pid(mach_task_self(), pid, &task);
     if ( err == KERN_SUCCESS) {
         info_count = TASK_BASIC_INFO_COUNT;
-        if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count) != KERN_SUCCESS) {
-            return PyErr_Format(PyExc_RuntimeError,
+        if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info,
+            &info_count) != KERN_SUCCESS) {
+                return PyErr_Format(PyExc_RuntimeError,
                             "task_info(TASK_BASIC_INFO) failed for pid %lu", pid);
         }
     }
@@ -485,5 +490,4 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
                     (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLOCKS_PER_SEC,
                     (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLOCKS_PER_SEC
             );
-
 }

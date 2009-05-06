@@ -9,13 +9,16 @@ import _psutil_mswindows
 # import psutil exceptions we can override with our own
 from error import *
 
-# module level constants (gets pushed up to psutil module)
+
+# --- module level constants (gets pushed up to psutil module)
+
 NoSuchProcess = _psutil_mswindows.NoSuchProcess
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
 _UPTIME = _psutil_mswindows.get_system_uptime()
-# the amount of total physical memory available on the system, in bytes
 TOTAL_PHYMEM = _psutil_mswindows.get_total_phymem()
 
+
+# --- public functions
 
 def avail_phymem():
     "Return the amount of physical memory available on the system, in bytes."
@@ -42,6 +45,8 @@ def get_system_cpu_times():
     times = _psutil_mswindows.get_system_cpu_times()
     return dict(user=times[0], system=times[1], idle=times[2])
 
+
+# --- decorator
 
 def wrap_privileges(callable):
     """Call callable into a try/except clause so that if a

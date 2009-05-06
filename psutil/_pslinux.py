@@ -12,6 +12,7 @@ import grp
 # import psutil exceptions we can override with our own
 from error import *
 
+
 def _get_uptime():
     """Return system boot time (epoch in seconds)"""
     f = open('/proc/stat', 'r')
@@ -95,6 +96,7 @@ def get_system_cpu_times():
         idle=values[3], iowait=values[4], irq=values[5], softirq=values[6])
 
 
+# --- decorators
 
 def prevent_zombie(method):
     """Call method(self, pid) into a try/except clause so that if an
@@ -261,7 +263,6 @@ class Impl(object):
                 return int(line.split()[1])
 
     def _get_process_uid(self, pid):
-        # XXX - something faster than readlines() could be used
         f = open("/proc/%s/status" %pid)
         for line in f:
             if line.startswith('Uid:'):
@@ -272,7 +273,6 @@ class Impl(object):
                 return int(line.split()[1])
 
     def _get_process_gid(self, pid):
-        # XXX - something faster than readlines() could be used
         f = open("/proc/%s/status" %pid)
         for line in f:
             if line.startswith('Gid:'):

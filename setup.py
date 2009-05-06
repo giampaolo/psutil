@@ -17,7 +17,8 @@ if sys.platform.lower().startswith("win"):
                            sources=['psutil/_psutil_mswindows.c',
                                     'psutil/arch/mswindows/process_info.c',
                                     'psutil/arch/mswindows/security.c'],
-                           define_macros=[('_WIN32_WINNT', get_winver()), ('_AVAIL_WINVER_', get_winver())],
+                           define_macros=[('_WIN32_WINNT', get_winver()),
+                                          ('_AVAIL_WINVER_', get_winver())],
                            libraries=["psapi", "kernel32", "advapi32", "shell32"]
                            )
 

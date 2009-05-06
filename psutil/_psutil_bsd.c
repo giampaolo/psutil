@@ -26,15 +26,17 @@
 static PyMethodDef PsutilMethods[] =
 {
      {"get_pid_list", get_pid_list, METH_VARARGS,
-     	"Returns a python list of PIDs currently running on the host system"},
+     	"Returns a list of PIDs currently running on the system"},
      {"get_process_info", get_process_info, METH_VARARGS,
-       	"Returns a psutil.ProcessInfo object for the given PID"},
+        "Return a tuple containing a set of information about the "
+        "process (pid, ppid, name, path, cmdline)"},
      {"get_cpu_times", get_cpu_times, METH_VARARGS,
-       	"Returns tuple of user/kern time for the given PID"},
+       	"Return tuple of user/kern time for the given PID"},
      {"get_num_cpus", get_num_cpus, METH_VARARGS,
-       	"Returns number of CPUs on the system"},
+       	"Return number of CPUs on the system"},
      {"get_process_create_time", get_process_create_time, METH_VARARGS,
-         "Return process creation time."},
+         "Return a float indicating the process create time expressed in "
+         "seconds since the epoch"},
      {"get_memory_info", get_memory_info, METH_VARARGS,
          "Return a tuple of RSS/VMS memory information"},
      {"get_total_phymem", get_total_phymem, METH_VARARGS,
@@ -46,7 +48,7 @@ static PyMethodDef PsutilMethods[] =
      {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
-         "Return system cpu times"},
+         "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
      {NULL, NULL, 0, NULL}
 };
 
