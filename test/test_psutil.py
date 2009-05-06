@@ -102,21 +102,25 @@ class TestCase(unittest.TestCase):
         self.assertTrue(x > 0)
 
     def test_system_cpu_times(self):
-        x = psutil.cpu_times()
-        self.assertTrue(isinstance(x, psutil.CPUTimes))
-        for y in x:
-            self.assertTrue(isinstance(y, float))
+        total = 0
+        times = psutil.cpu_times()
+        self.assertTrue(isinstance(times, psutil.CPUTimes))
+        for time in times:
+            self.assertTrue(isinstance(time, float))
+            self.assertTrue(time >= 0.0)
+            total += time
+        # test CPUTimes's __iter__ and __str__ implementation
+        self.assertEqual(total, sum(times))
+        str(times)
 
-# XXX disabled for now
-
-##    def test_cpu_percent(self):
-##        x = psutil.cpu_percent()
-##        self.assertTrue(isinstance(x, tuple))
-##        self.assertEqual(len(x), 3)
-##        for y in x:
-##            self.assertTrue(isinstance(y, float))
-##            self.assertTrue(y >= 0)
-##            self.assertTrue(y <= 100)
+    def test_system_cpu_percent(self):
+        percent = psutil.cpu_percent()
+        self.assertTrue(isinstance(percent, float))
+        for x in xrange(1000):
+            percent = psutil.cpu_percent()
+            self.assertTrue(isinstance(percent, float))
+            self.assertTrue(percent >= 0.0)
+            self.assertTrue(percent <= 100.0)
 
     # os.times() is broken on OS X and *BSD because, see:
     # http://bugs.python.org/issue1040026
