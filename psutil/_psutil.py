@@ -76,9 +76,8 @@ class CPUTimes:
      - idle
      - nice (UNIX)
      - iowait (Linux)
-     - irq (Linux)
+     - irq (Linux, FreeBSD)
      - softirq (Linux)
-     - interrupt (FreeBSD)
     """
 
     def __init__(self, **kwargs):

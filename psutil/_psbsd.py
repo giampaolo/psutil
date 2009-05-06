@@ -45,7 +45,7 @@ def get_system_cpu_times():
     user, nice, system, idle, interrupt."""
     values = _psutil_bsd.get_system_cpu_times()
     return dict(user=values[0], nice=values[1], system=values[2],
-        idle=values[3], interrupt=values[4])
+        idle=values[3], irq=values[4])
 
 
 def wrap_privileges(callable):
