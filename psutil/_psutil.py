@@ -348,8 +348,8 @@ def cpu_times():
     values = get_system_cpu_times()
     return CPUTimes(**values)
 
-_last_cpu_idle = cpu_times().idle
-_last_system_time = time.time()
+_last_idle_time = cpu_times().idle
+_last_time = time.time()
 
 def cpu_percent():
     """Return the current system-wide CPU utilization as a percentage. For
@@ -358,29 +358,30 @@ def cpu_percent():
     previous call, to allow for a larger time delta from which to calculate
     the percentage value.
     """
-    global _last_cpu_idle
-    global _last_system_time
+    global _last_idle_time
+    global _last_time
 
     idle_time = cpu_times().idle
-    system_time = time.time()
+    curr_time = time.time()
 
-    total_time_delta = system_time - _last_system_time
-    cpu_times_delta = idle_time - _last_cpu_idle
+    time_delta = curr_time - _last_time
+    idle_delta = idle_time - _last_idle_time
 
-    _last_cpu_idle = idle_time
-    _last_system_time = system_time
+    # reset values for next run
+    _last_idle_time = idle_time
+    _last_time = curr_time
 
     # invalid data, will not be accurate so return 0.0 to avoid an overflow
-    if total_time_delta < cpu_times_delta:
+    if time_delta < idle_delta:
         return 0.0
 
     try :
-        idle_percent = (cpu_times_delta / total_time_delta) * 100.0
-        percent = (100 * NUM_CPUS) - idle_percent
+        idle_percent = (idle_delta / time_delta) * 100.0
+        util_percent = (100 * NUM_CPUS) - idle_percent
     except ZeroDivisionError:
         return 0.0
 
-    return percent / NUM_CPUS
+    return util / NUM_CPUS
 
 
 def test():
