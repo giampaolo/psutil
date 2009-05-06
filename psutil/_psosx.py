@@ -39,8 +39,8 @@ def used_virtmem():
     return _psutil_osx.get_total_virtmem() - _psutil_osx.get_avail_virtmem()
 
 def get_system_cpu_times():
-    """Return a dict of CPU times and values, possible keys::
-    user, nice, system, idle, iowait, irq, softirq."""
+    """Return a dict representing the following CPU times:
+    user, nice, system, idle."""
     values = _psutil_osx.get_system_cpu_times()
     return dict(user=values[0], nice=values[1], system=values[2], idle=values[3])
 

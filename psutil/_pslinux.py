@@ -83,7 +83,7 @@ def used_virtmem():
     return total_virtmem() - avail_virtmem()
 
 def get_system_cpu_times():
-    """Return a dict representing CPU times, possible keys:
+    """Return a dict representing the following CPU times:
     user, nice, system, idle, iowait, irq, softirq.
     """
     f = open('/proc/stat', 'r')

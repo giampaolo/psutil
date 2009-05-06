@@ -479,7 +479,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
     host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, &r_load, &count);
 
     //user, nice, system, idle, iowait, irqm, softirq
-	return Py_BuildValue("(ddddddd)",
+	return Py_BuildValue("(dddd)",
                     (double)r_load.cpu_ticks[CPU_STATE_USER] / CLOCKS_PER_SEC,
                     (double)r_load.cpu_ticks[CPU_STATE_NICE] / CLOCKS_PER_SEC,
                     (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLOCKS_PER_SEC,

@@ -13,6 +13,7 @@ __all__ = [
     "NUM_CPUS",
     "ProcessInfo",
     "Process",
+    "test",
     "CPUTimes",
     "pid_exists",
     "get_pid_list",
@@ -61,7 +62,7 @@ _platform_impl = Impl()
 
 class CPUTimes:
     """This class contains information about CPU times.
-    This class is not used directly but it's returned as an instance by
+    It is not used directly but it's returned as an instance by
     psutil.cpu_times() function.
 
     Every CPU time is accessible in form of an attribute and represents

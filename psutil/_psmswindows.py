@@ -38,9 +38,8 @@ def used_virtmem():
     return _psutil_mswindows.get_total_virtmem() - _psutil_mswindows.get_avail_virtmem()
 
 def get_system_cpu_times():
-    """Return a dict of CPU times, possible keys:
-       user, nice, system, idle, iowait, irq, softirq."""
-    values = _psutil_mswindows.get_system_cpu_times()
+    """Return a dict representing the following CPU times: user, system, idle."""
+    times = _psutil_mswindows.get_system_cpu_times()
     return dict(user=times[0], system=times[1], idle=times[2])
 
 

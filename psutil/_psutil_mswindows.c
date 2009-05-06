@@ -43,7 +43,7 @@ static PyMethodDef PsutilMethods[] =
      {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
-         "Return system cpu times"},
+         "Return system cpu times (user, system, idle)"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -584,11 +584,9 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 
         // kernel time includes idle time on windows
         // we return only busy kernel time subtracting idle time from kernel time
-        //user, nice, system, idle, iowait, irqm, softirq
-		return Py_BuildValue("(ddddddd)", user,
-                kernel - idle,
-                idle,
-        );
+		return Py_BuildValue("(ddd)", user,
+                                      kernel - idle,
+                                      idle);
 
 	}
 	else
@@ -642,12 +640,12 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 						}
 
                         // kernel time includes idle time on windows
-                        // we return only busy kernel time subtracting idle time from kernel time
-                        //user, nice, system, idle, iowait, irqm, softirq
-						return Py_BuildValue("(ddddddd)", user,
-                                kernel - idle,
-                                idle,
-                            );
+                        // we return only busy kernel time subtracting idle
+                        // time from kernel time
+						return Py_BuildValue("(ddd)", user,
+                                                      kernel - idle,
+                                                      idle
+                                             );
 
 					} // END NtQuerySystemInformation
 
