@@ -136,6 +136,8 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
     def test_cpu_times(self):
         self.execute('cpu_times')
 
+    def test_cpu_percent(self):
+        self.execute('cpu_percent')
 
 def test_main():
     test_suite = unittest.TestSuite()
@@ -145,3 +147,4 @@ def test_main():
 
 if __name__ == '__main__':
     test_main()
+
