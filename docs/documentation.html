@@ -6,15 +6,17 @@
 </head>
 
 <body>
-<h1><a name="API_reference" id="API_reference">API reference</a></h1>
+<h1><a name="API_Reference" id="API_Reference">API Reference</a></h1>
 <h2><a name="Exceptions" id="Exceptions">Exceptions</a></h2>
-<p><a name="Exceptions" id="Exceptions">psutil.<strong>NoSuchProcess</strong></a></p>
+<p><a name="Exceptions" id="Exceptions">psutil.<strong>NoSuchProcess</strong></a><br />
+</p>
 <blockquote>Raised when no process with the given PID/parameter was found in the current process list. </blockquote>
-<p>psutil.<strong>AccessDenied</strong></p>
+<p>psutil.<strong>AccessDenied</strong><br />
+</p>
 <blockquote>Exception raised when permission to perform an action is denied. </blockquote>
 <hr />
 <h2><a name="Classes" id="Classes">Classes</a></h2>
-<p><a name="Classes" id="Classes">psutil.<strong>Process(</strong><em>pid</em><strong>)</strong> </a></p>
+<p><a name="Classes" id="Classes">psutil.<strong>Process(</strong><em>pid</em><strong>)</strong></a></p>
 <blockquote><a name="Classes" id="Classes">A class which represents an OS process. </a></blockquote>
 <ul>
   <li><a name="Classes" id="Classes"><strong>pid</strong><br />
@@ -49,6 +51,32 @@
     The real group id of the current process.  Where gid doesn't make sense (<em>Windows</em>) always return -1. </a></li>
 </ul>
 <ul>
+  <li><a name="Classes" id="Classes"><strong>create_time</strong><br />
+    The process creation time as a floating point number expressed in seconds since the epoch, in UTC. </a></li>
+</ul>
+<blockquote><a name="Classes" id="Classes"><em>New in 0.1.2</em></a></blockquote>
+<ul>
+  <li><a name="Classes" id="Classes"><strong>get_cpu_times()</strong><br />
+    Return  a tuple whose values are process CPU user and system times which means  the amount of time expressed in seconds that a process has spent in  user/system mode. </a></li>
+</ul>
+<blockquote><a name="Classes" id="Classes"><em>New in 0.1.2</em></a></blockquote>
+<ul>
+  <li><a name="Classes" id="Classes"><strong>get_cpu_percent()</strong><br />
+    Compare  process times to system time elapsed since last call and calculate CPU  utilization as a percentage. It is recommended for accuracy that this  function be called with at least 1 second between calls. The initial  delta is calculated from the instantiation of the Process object. </a></li>
+</ul>
+<blockquote><a name="Classes" id="Classes"><em>New in 0.1.2</em></a></blockquote>
+<ul>
+  <li><a name="Classes" id="Classes"><strong>get_memory_info()</strong><br />
+    Return a tuple representing RSS (Resident Set Size) and VMS (Virtual Memory Size) in bytes.<br />
+    On  UNIX RSS and VMS are the same values shown by ps. On Windows RSS and  VMS refer to &quot;Mem Usage&quot; and &quot;VM Size&quot; columns of taskmgr.exe. </a></li>
+</ul>
+<blockquote><a name="Classes" id="Classes"><em>New in 0.1.2</em></a></blockquote>
+<ul>
+  <li><a name="Classes" id="Classes"><strong>get_memory_percent()</strong><br />
+    Compare physical system memory to process resident memory and calculate process memory utilization as a percentage. </a></li>
+</ul>
+<blockquote><a name="Classes" id="Classes"><em>New in 0.1.2</em></a></blockquote>
+<ul>
   <li><a name="Classes" id="Classes"><strong>is_running()</strong><br />
     Return whether the current process is running in the current process list. </a></li>
 </ul>
@@ -58,15 +86,45 @@
 </ul>
 <hr />
 <h2><a name="Functions" id="Functions">Functions</a></h2>
-<p><a name="Functions" id="Functions">psutil.<strong>get_pid_list()</strong></a></p>
+<p><a name="Functions" id="Functions">psutil.<strong>get_pid_list()</strong><br />
+</a></p>
 <blockquote><a name="Functions" id="Functions">Return a list of current running PIDs. </a></blockquote>
-<p><a name="Functions" id="Functions">psutil.<strong>pid_exists(</strong><em>pid</em><strong>)</strong></a></p>
+<p><a name="Functions" id="Functions">psutil.<strong>pid_exists(</strong><em>pid</em><strong>)</strong><br />
+</a></p>
 <blockquote><a name="Functions" id="Functions">Check whether the given PID exists in the current process list. </a></blockquote>
-<p><a name="Functions" id="Functions">psutil.<strong>process_iter()</strong></a></p>
-<blockquote>
-  <p><a name="Functions" id="Functions">Return an iterator yielding a Process class instances for all running processes on the local machine. </a></p>
-  <p>&nbsp;</p>
-  <p>&nbsp;</p>
-</blockquote>
+<p><a name="Functions" id="Functions">psutil.<strong>process_iter()</strong><br />
+</a></p>
+<blockquote><a name="Functions" id="Functions">Return an iterator yielding a Process class instances for all running processes on the local machine. </a></blockquote>
+<hr />
+<h2><a name="System_related_objects" id="System_related_objects">System related objects</a></h2>
+<p><a name="System_related_objects" id="System_related_objects">psutil.<strong>cpu_percent()</strong></a></p>
+<blockquote><a name="System_related_objects" id="System_related_objects">Return  the current system-wide CPU utilization as a percentage. For highest  accuracy, it is recommended that this be called at least 1/10th of a  second after importing the module or calling cpu_percent() in a  previous call, to allow for a larger time delta from which to calculate  the percentage value. </a></blockquote>
+<blockquote><a name="System_related_objects" id="System_related_objects"><em>New in 0.1.2</em></a></blockquote>
+<p><a name="System_related_objects" id="System_related_objects">psutil.<strong>cpu_times()</strong></a></p>
+<blockquote><a name="System_related_objects" id="System_related_objects">Return system CPU times as a CPUTimes class object. Every CPU time is accessible in form of a CPUTimes attribute and represents the time CPU has spent in the given mode.<br />
+  The attributes availability varies depending on the platform.  Here follows a list of all available attributes: </a></blockquote>
+<blockquote><a name="System_related_objects" id="System_related_objects">- <strong>user</strong><br />
+  - <strong>system</strong><br />
+  - <strong>idle</strong><br />
+  - <strong>nice</strong> <em>(UNIX)</em><br />
+  - <strong>iowait</strong> <em>(Linux)</em><br />
+  - <strong>irq</strong> <em>(Linux, FreeBSD)</em><br />
+  - <strong>softirq</strong> <em>(Linux)</em><br />
+</a></blockquote>
+<blockquote><a name="System_related_objects" id="System_related_objects"><em>New in 0.1.2</em></a></blockquote>
+<p><a name="System_related_objects" id="System_related_objects">psutil.<strong>TOTAL_PHYMEM</strong><br />
+  psutil.<strong>avail_phymem()</strong><br />
+  psutil.<strong>used_phymem()</strong><br />
+</a></p>
+<blockquote><a name="System_related_objects" id="System_related_objects">Return the amount of total, available and used physical memory on the system, in bytes. </a></blockquote>
+<blockquote><a name="System_related_objects" id="System_related_objects"><em>New in 0.1.2</em></a></blockquote>
+<p><a name="System_related_objects" id="System_related_objects">psutil.<strong>total_virtmem()</strong><br />
+  psutil.<strong>avail_virtmem()</strong><br />
+  psutil.<strong>used_virtmem()</strong><br />
+</a></p>
+<blockquote><a name="System_related_objects" id="System_related_objects">Return the amount of total, available and used virtual memory on the system, in bytes.<br />
+  On Linux they match the values returned by free command line utility. On OS X and FreeBSD they represent the same values as returned by sysctl vm.vmtotal. On Windows they are determined by reading the *PageFile values of </a><a href="http://msdn.microsoft.com/en-us/library/aa366770%28VS.85%29.aspx" rel="nofollow">MEMORYSTATUSEX</a> structure. </blockquote>
+<blockquote><em>New in 0.1.2</em></blockquote>
+<p>&nbsp;</p>
 </body>
 </html>
