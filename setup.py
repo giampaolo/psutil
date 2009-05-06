@@ -50,6 +50,7 @@ def main():
         long_description="""
 psutil is a module providing convenience functions for managing processes in a
 portable way by using Python.""",
+        keywords=['psutil', 'ps', 'top', 'process', 'utility'],
         author='Giampaolo Rodola, Dave Daeschler, Jay Loden',
         author_email='psutil-dev@googlegroups.com',
         url='http://code.google.com/p/psutil/',
