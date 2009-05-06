@@ -105,10 +105,10 @@ class TestCase(unittest.TestCase):
         total = 0
         times = psutil.cpu_times()
         self.assertTrue(isinstance(times, psutil.CPUTimes))
-        for time in times:
-            self.assertTrue(isinstance(time, float))
-            self.assertTrue(time >= 0.0)
-            total += time
+        for cp_time in times:
+            self.assertTrue(isinstance(cp_time, float))
+            self.assertTrue(cp_time >= 0.0)
+            total += cp_time
         # test CPUTimes's __iter__ and __str__ implementation
         self.assertEqual(total, sum(times))
         str(times)

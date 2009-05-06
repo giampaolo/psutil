@@ -374,11 +374,15 @@ def cpu_percent():
     _last_cpu_idle = idle_time
     _last_system_time = system_time
 
+    # invalid data, will not be accurate so return 0.0 to avoid an overflow
+    if total_time_delta < cpu_times_delta:
+        return 0.0
+
     try :
         idle_percent = (cpu_times_delta / total_time_delta) * 100.0
         percent = (100 * NUM_CPUS) - idle_percent
     except ZeroDivisionError:
-        return 0.00
+        return 0.0
 
     return percent / NUM_CPUS
 
