@@ -46,6 +46,8 @@ static PyMethodDef PsutilMethods[] =
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
          "Return system cpu times as a tuple (user, system, idle)"},
+    {"get_proc_username", get_proc_username, METH_VARARGS,
+        "Return the name of the user that owns the process"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -600,7 +602,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 		typedef DWORD (_stdcall *NTQSI_PROC) (int, PVOID, ULONG, PULONG);
 		NTQSI_PROC NtQuerySystemInformation;
 		HINSTANCE hNtDll;
-		SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi;
+		SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
 		SYSTEM_INFO si;
 		UINT i;
 
@@ -646,7 +648,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
                         // kernel time includes idle time on windows
                         // we return only busy kernel time subtracting idle
                         // time from kernel time
-						return Py_BuildValue("(ddd)", user,
+						return Py_BuildValue("(fff)", user,
                                                       kernel - idle,
                                                       idle
                                              );
@@ -667,4 +669,131 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 		return 0;
 
 	} // END GetSystemTimes NOT supported
+}
+
+
+
+
+/*
+ * Sid to User convertion
+ */
+BOOL SidToUser(PSID pSid, LPTSTR szUser, DWORD dwUserLen, LPTSTR szDomain, DWORD dwDomainLen)
+{
+    SID_NAME_USE snuSIDNameUse;
+    DWORD dwULen;
+    DWORD dwDLen;
+
+    dwULen = dwUserLen;
+    dwDLen = dwDomainLen;
+
+    if ( IsValidSid( pSid ) )
+        {
+            // Get user and domain name based on SID
+            if ( LookupAccountSid( NULL, pSid, szUser, &dwULen, szDomain, &dwDLen, &snuSIDNameUse) )
+                {
+                    // LocalSystem processes are incorrectly reported as owned by BUILTIN\Administrators
+                    // We modify that behavior to conform to standard taskmanager
+                    if ( lstrcmpi(szDomain, TEXT("builtin")) == 0 && lstrcmpi(szUser, TEXT("administrators")) == 0)
+                        {
+                            strncpy  (szUser, "SYSTEM", dwUserLen);
+                            strncpy  (szDomain, "NT AUTHORITY", dwDomainLen);
+                        }
+
+                    return TRUE;
+                }
+        }
+
+    return FALSE;
+}
+
+
+
+#define MAX_USERNAME_LEN 21
+#define MAX_GROUP_LEN 257
+/*
+ * Return the username of a process given its PID
+ */
+static PyObject* get_proc_username(PyObject* self, PyObject* args)
+{
+    HANDLE hProc;
+    BOOL bOk = FALSE;
+    TCHAR szUser[MAX_USERNAME_LEN];
+    TCHAR szDomain[MAX_GROUP_LEN];
+    DWORD dwPid;
+    
+    // Reset strings
+    szUser[0]=0;
+    szDomain[0]=0;
+    
+    if (! PyArg_ParseTuple(args, "l", &dwPid))
+    {
+        return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+    }
+
+    // Set Debug privileges
+    SetSeDebug();
+
+    // needs STANDARD_RIGHTS_READ for GetKernelObjectSecurity to work!
+    hProc = OpenProcess( STANDARD_RIGHTS_READ , FALSE,  dwPid);
+
+    if ( hProc != NULL )
+    {
+        
+        SECURITY_DESCRIPTOR *pSecDescr = NULL;
+        DWORD dwSecInfoSize;
+        BOOL bDefaulted;
+        PSID psidUser;
+
+        // Get Security Descriptor size
+        GetKernelObjectSecurity (hProc, OWNER_SECURITY_INFORMATION, pSecDescr, 0, &dwSecInfoSize);
+
+        // Call should have failed due to zero-length buffer.
+        if ( GetLastError() == ERROR_INSUFFICIENT_BUFFER )
+        {
+            // Security Descriptor allocation
+            pSecDescr = (SECURITY_DESCRIPTOR *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BYTE) * dwSecInfoSize);
+
+            if (pSecDescr != NULL)
+            {
+                // Get Security Descriptor (real call)
+                if ( GetKernelObjectSecurity (hProc, OWNER_SECURITY_INFORMATION, pSecDescr, dwSecInfoSize, &dwSecInfoSize) )
+                {
+                    // Get descriptor owner's SID
+                    if ( GetSecurityDescriptorOwner(pSecDescr, &psidUser, &bDefaulted) )
+                    {
+                        // Converts SID to Domain + Username
+                        if ( SidToUser(psidUser, szUser, sizeof(szUser), szDomain, sizeof(szDomain)) )
+                        {
+                            bOk = TRUE;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!bOk) PyErr_SetFromWindowsErr(0);
+
+        if ( pSecDescr != NULL )
+            HeapFree ( GetProcessHeap(), 0, pSecDescr );
+
+        CloseHandle(hProc);
+
+    }
+    else
+    {
+        PyErr_SetFromWindowsErr(0);
+    }
+    
+    // Unset Debug privileges
+    UnsetSeDebug();
+
+    if (bOk)
+    {
+        // Concatenates Domain and Username
+        strcat (szDomain, "\\");
+        strcat (szDomain, szUser);
+        return Py_BuildValue("s", szDomain);
+    }
+    
+    return 0;
 }

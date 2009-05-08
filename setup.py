@@ -19,7 +19,7 @@ if sys.platform.lower().startswith("win"):
                                     'psutil/arch/mswindows/security.c'],
                            define_macros=[('_WIN32_WINNT', get_winver()),
                                           ('_AVAIL_WINVER_', get_winver())],
-                           libraries=["psapi", "kernel32", "advapi32", "shell32"]
+                           libraries=["psapi", "kernel32", "advapi32", "shell32", "netapi32"]
                            )
 
 

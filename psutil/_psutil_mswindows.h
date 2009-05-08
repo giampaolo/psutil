@@ -21,5 +21,4 @@ static PyObject* get_total_virtmem(PyObject* self, PyObject* args);
 static PyObject* get_avail_phymem(PyObject* self, PyObject* args);
 static PyObject* get_avail_virtmem(PyObject* self, PyObject* args);
 static PyObject* get_system_cpu_times(PyObject* self, PyObject* args);
-
-
+static PyObject* get_proc_username(PyObject* self, PyObject* args);
