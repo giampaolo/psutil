@@ -27,7 +27,6 @@ __all__ = [
     "used_virtmem",
     "cpu_times",
     "cpu_percent",
-    "get_process_username",
     ]
 
 import sys
@@ -113,6 +112,7 @@ class ProcessInfo(object):
         self.uid = uid
         self.gid = gid
         self.create = None
+        self.username = None
 
 
 class Process(object):
@@ -240,6 +240,12 @@ class Process(object):
         return self._procinfo.gid
 
     @property
+    def username(self):
+        """The name of the user that owns the process."""
+        if self._procinfo.username is None:
+            self._procinfo.username = _platform_impl.get_process_username(self.pid)
+        return self._procinfo.username
+
     def create_time(self):
         """The process creation time as a floating point number
         expressed in seconds since the epoch, in UTC.

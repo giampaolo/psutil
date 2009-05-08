@@ -45,11 +45,7 @@ def get_system_cpu_times():
     times = _psutil_mswindows.get_system_cpu_times()
     return dict(user=times[0], system=times[1], idle=times[2])
 
-def get_process_username(pid):
-    """Return the name of the user that owns the process"""
-    return _psutil_mswindows.get_proc_username(pid)
-    
-    
+
 # --- decorator
 
 def wrap_privileges(callable):
@@ -95,6 +91,10 @@ class Impl(object):
             if (pid == 0) and (err.errno == errno.EINVAL):
                 raise AccessDenied
             raise
+
+    def get_process_username(self, pid):
+        """Return the name of the user that owns the process"""
+        return _psutil_mswindows.get_proc_username(pid)
 
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
