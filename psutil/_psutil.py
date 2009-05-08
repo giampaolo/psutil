@@ -246,6 +246,7 @@ class Process(object):
             self._procinfo.username = _platform_impl.get_process_username(self.pid)
         return self._procinfo.username
 
+    @property
     def create_time(self):
         """The process creation time as a floating point number
         expressed in seconds since the epoch, in UTC.
