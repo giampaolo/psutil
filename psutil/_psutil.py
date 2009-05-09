@@ -32,6 +32,10 @@ __all__ = [
 import sys
 import os
 import time
+try:
+    import pwd, grp
+except ImportError:
+    pwd = grp = None
 
 # exceptions are imported here, but may be overriden by platform
 # module implementation later
@@ -113,6 +117,7 @@ class ProcessInfo(object):
         self.gid = gid
         self.create = None
         self.username = None
+        self.groupname = None
 
 
 class Process(object):
@@ -242,9 +247,24 @@ class Process(object):
     @property
     def username(self):
         """The name of the user that owns the process."""
-        if self._procinfo.username is None:
-            self._procinfo.username = _platform_impl.get_process_username(self.pid)
-        return self._procinfo.username
+    	if self._procinfo.username is not None:
+    		return self._procinfo.username
+        if pwd is not None:
+            self._procinfo.username = pwd.getpwuid(self._procinfo.uid).pw_name
+        else:
+            self._procinfo.username =  _platform_impl.get_process_username(self.pid)
+    	return self._procinfo.username
+
+    @property
+    def groupname(self):
+        """The real groupname of the current process."""
+    	if self._procinfo.groupname is not None:
+    		return self._procinfo.groupname
+        if grp is not None:
+            self._procinfo.groupname = grp.getgrgid(self._procinfo.uid).gr_name
+        else:
+            raise NotImplementedError
+    	return self._procinfo.groupname
 
     @property
     def create_time(self):
