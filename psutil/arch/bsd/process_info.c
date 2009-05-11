@@ -140,6 +140,7 @@ char *getcmdpath(long pid, size_t *pathsize)
     *pathsize = size;
     if (sysctl(mib, 4, path, &size, NULL, 0) == -1) {
         //perror("sysctl");
+        free(path);
         return NULL;       /* Insufficient privileges */
     }
 
