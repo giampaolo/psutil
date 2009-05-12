@@ -162,7 +162,7 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **envlist, PyObject **ar
     iter_args =  procargs + sizeof(nargs);
     end_args = &procargs[size]; // end of the argument space
     if (iter_args >= end_args) {
-        err = "getcmdargs(): path parsing";
+        err = "getcmdargs(): argument length mismatch";
         goto ERROR_RETURN;
     }
 
@@ -170,7 +170,7 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **envlist, PyObject **ar
     if (NULL != exec_path) {
         *exec_path = Py_BuildValue("s", iter_args);
         if (*exec_path == NULL) {
-            err = "getcmdargs(): path exception";
+            err = "getcmdargs(): exec_path exception";
             goto ERROR_RETURN;
         }
     }
@@ -193,7 +193,7 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **envlist, PyObject **ar
             /* Fetch next argument */
             arg = Py_BuildValue("s", curr_arg);
             if (arg == NULL) {
-                err = "getcmdargs(): args exception";
+                err = "getcmdargs(): exception building argument string";
                 goto ERROR_RETURN;
             }
             PyList_Append(*arglist, arg);
@@ -204,16 +204,15 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **envlist, PyObject **ar
         }
     }
 
-    /* sp points to the beginning of the arguments/environment string,
-     * and ap should point past the '\0' terminator for the string.
+    /*
+     * curr_arg position should be further than the start of the argspace
+     * and number of arguments should be 0 after iterating above. Otherwise
+     * we had an empty argument space or a missing terminating \0 etc.
      */
     if (curr_arg == start_args || nargs > 0) {
-        err = "getcmdargs(): args parsing";  // empty or unterminated
+        err = "getcmdargs(): argument parsing failed";
         goto ERROR_RETURN;
     }
-
-    // Make a copy of the string.
-    // asprintf(args, "%s", sp);
 
 ERROR_RETURN:
     // Clean up.
