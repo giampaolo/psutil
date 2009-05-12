@@ -28,7 +28,7 @@
  * On success, the function returns 0.
  * On error, the function returns a BSD errno value.
  */
-int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
+int get_proc_list(kinfo_proc **procList, size_t *procCount)
 {
     /* Declaring mib as const requires use of a cast since the
      * sysctl prototype doesn't include the const modifier. */
@@ -251,7 +251,6 @@ PyObject* get_arg_list(long pid)
     if (r == 0) {
         //PySequence_Tuple(args);
         argList = PySequence_List(args);
-        PyList_Append(argList, exec_path);
     } else if (r == ARGS_ACCESS_DENIED) { //-2
         argList = Py_BuildValue("[]");
     } else {
@@ -259,6 +258,8 @@ PyObject* get_arg_list(long pid)
     }
 
     Py_XDECREF(args);
+    Py_XDECREF(exec_path);
+    Py_XDECREF(env);
     return argList;
 }
 

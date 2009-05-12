@@ -87,7 +87,7 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
     PyObject *pid;
     PyObject *retlist = PyList_New(0);
 
-    if (GetBSDProcessList(&proclist, &num_processes) != 0) {
+    if (get_proc_list(&proclist, &num_processes) != 0) {
         Py_DECREF(retlist);
         PyErr_SetString(PyExc_RuntimeError, "failed to retrieve process list.");
         return NULL;

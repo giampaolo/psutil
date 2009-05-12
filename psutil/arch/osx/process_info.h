@@ -10,7 +10,7 @@
 
 typedef struct kinfo_proc kinfo_proc;
 
-int GetBSDProcessList(kinfo_proc **procList, size_t *procCount);
+int get_proc_list(kinfo_proc **procList, size_t *procCount);
 int getcmdargs(long pid, PyObject **exec_path, PyObject **envlist, PyObject **arglist);
 PyObject* get_arg_list(long pid);
 
