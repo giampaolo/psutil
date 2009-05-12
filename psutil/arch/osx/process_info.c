@@ -21,22 +21,23 @@
 
 
 /*
- * Returns a list of all BSD processes on the system.  This routine
- * allocates the list and puts it in *procList and a count of the
- * number of entries in *procCount.  You are responsible for freeing
- * this list (use "free" from System framework).
- * On success, the function returns 0.
- * On error, the function returns a BSD errno value.
+ * Returns a list of all BSD processes on the system.  This
+ * routine allocates the list and puts it in *procList and
+ * returns the number of entries in *procCount.  You are
+ * responsible for freeing this list, using std free().
+ *
+ * Returns:
+ *       0 for success
+ *   errno in case of failure.
  */
 int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
 {
-    int                 err;
-    kinfo_proc *        result;
-    bool                done;
-    static const int    name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
-    // Declaring name as const requires us to cast it when passing it to
-    // sysctl because the prototype doesn't include the const modifier.
-    size_t              length;
+    /* Declaring mib as const requires use of a cast since the
+     * sysctl prototype doesn't include the const modifier. */
+    static const int mib3[3] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
+    size_t           size, size2;
+    void            *ptr;
+    int              err, lim = 8;  /* some limit */
 
     assert( procList != NULL);
     assert(*procList == NULL);
@@ -44,72 +45,52 @@ int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
 
     *procCount = 0;
 
-    /*
-     * We start by calling sysctl with result == NULL and length == 0.
-     * That will succeed, and set length to the appropriate length.
-     * We then allocate a buffer of that size and call sysctl again
-     * with that buffer.  If that succeeds, we're done.  If that fails
-     * with ENOMEM, we have to throw away our buffer and loop.  Note
-     * that the loop causes use to call sysctl with NULL again; this
-     * is necessary because the ENOMEM failure case sets length to
+    /* We start by calling sysctl with ptr == NULL and size == 0.
+     * That will succeed, and set size to the appropriate length.
+     * We then allocate a buffer of at least that size and call
+     * sysctl with that buffer.  If that succeeds, we're done.
+     * If that call fails with ENOMEM, we throw the buffer away
+     * and try again.
+     * Note that the loop calls sysctl with NULL again.  This is
+     * is necessary because the ENOMEM failure case sets size to
      * the amount of data returned, not the amount of data that
      * could have been returned.
      */
-    result = NULL;
-    done = false;
-    do {
-        assert(result == NULL);
-        // Call sysctl with a NULL buffer.
-        length = 0;
-        err = sysctl( (int *) name, (sizeof(name) / sizeof(*name)) - 1,
-                      NULL, &length,
-                      NULL, 0);
-        if (err == -1) {
+    while (lim-- > 0) {
+        size = 0;
+        if (sysctl((int *)mib3, 3, NULL, &size, NULL, 0) == -1) {
+            return errno;
+        }
+
+        size2 = size + (size >> 3);  /* add some */
+        if (size2 > size) {
+            ptr = malloc(size2);
+            if (ptr == NULL) {
+                ptr = malloc(size);
+            } else {
+                size = size2;
+            }
+        } else {
+            ptr = malloc(size);
+        }
+        if (ptr == NULL) {
+            return ENOMEM;
+        }
+
+        if (sysctl((int *)mib3, 3, ptr, &size, NULL, 0) == -1) {
             err = errno;
-        }
-
-        // Allocate an appropriately sized buffer based on the results
-        // from the previous call.
-        if (err == 0) {
-            result = malloc(length);
-            if (result == NULL) {
-                err = ENOMEM;
+            free(ptr);
+            if (err != ENOMEM) {
+                return err;
             }
-        }
 
-        // Call sysctl again with the new buffer.  If we get an ENOMEM
-        // error, toss away our buffer and start again.
-        if (err == 0) {
-            err = sysctl( (int *) name, (sizeof(name) / sizeof(*name)) - 1,
-                          result, &length,
-                          NULL, 0);
-            if (err == -1) {
-                err = errno;
-            }
-            if (err == 0) {
-                done = true;
-            } else if (err == ENOMEM) {
-                assert(result != NULL);
-                free(result);
-                result = NULL;
-                err = 0;
-            }
+        } else {
+            *procList = (kinfo_proc *)ptr;
+            *procCount = size / sizeof(kinfo_proc);
+            return 0;
         }
-    } while (err == 0 && ! done);
-
-    // Clean up and establish post conditions.
-    if (err != 0 && result != NULL) {
-        free(result);
-        result = NULL;
     }
-    *procList = result;
-    if (err == 0) {
-        *procCount = length / sizeof(kinfo_proc);
-    }
-
-    assert( (err == 0) == (*procList != NULL) );
-
-    return err;
+    return ENOMEM;
 }
 
 
@@ -128,64 +109,66 @@ int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
  */
 int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
 {
-    int       mib[3], nargs;
-    size_t    size, argmax;
-    PyObject  *arg;
-    char      *ap, *sp, *cp, *ep;
-    char      *procargs = NULL, *err = NULL;
+    int      mib2[2], mib3[3], na, r = 0;
+    size_t   size, argsize;
+    void     *ptr = NULL, *err = NULL;
+    PyObject *arg;
+    char     *ap, *cp, *ep, *sp, *procargs, args[2048];
 
-    *arglist = Py_BuildValue("[]");     /* empty list */
-    if (*arglist == NULL) {
-        err = "getcmdargs(): arglist exception";
-        goto erroreturn;
-    }
+    /* Get the size of the process arguments. */
+    mib3[0] = CTL_KERN;
+    mib3[1] = KERN_PROCARGS2;
+    mib3[2] = (int)pid;
 
-    /* Get the maximum process arguments size. */
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_ARGMAX;
+    argsize = ~(size_t)0;
+    if (sysctl(mib3, 3, NULL, &argsize, NULL, 0) == -1) {
+		/* Try to get the maximum size. */
+		mib2[0] = CTL_KERN;
+		mib2[1] = KERN_ARGMAX;
 
-    size = sizeof(argmax);
-    if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1) {
-        PyErr_SetFromErrno(NULL);
-        return 1;
-    }
+		size = sizeof(argsize);
+		if (sysctl(mib2, 2, &argsize, &size, NULL, 0) == -1) {
+			PyErr_SetFromErrno(NULL);
+			return 1;
+		}
+	}
 
-    /* Allocate space for the arguments. */
-    procargs = (char *)malloc(argmax);
-    if (procargs == NULL) {
-        PyErr_SetString(PyExc_MemoryError,
-                        "getcmdargs(): insufficient memory for procargs");
-        return -1;
-    }
+    if (argsize > sizeof(args)) {
+	    /* Allocate the space. */
+	    ptr = malloc(argsize);
+	    if (ptr == NULL) {
+		    PyErr_SetString(PyExc_MemoryError,
+						    "getcmdargs(): insufficient memory");
+		    return -1;
+	    }
+	    procargs = (char *)ptr;
+    } else {  /* Use the space on the stack */
+        procargs = args;
+        argsize = sizeof(args);
+	}
 
-    /*
-     * Make a sysctl() call to get the raw argument space of the process.
-     */
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROCARGS2;
-    mib[2] = (int)pid;
-
-    size = argmax;
-    if (sysctl(mib, 3, procargs, &size, NULL, 0) == -1) {
-        if (EINVAL == errno) { // invalid == access denied for some reason
-            free(procargs);
-            return ARGS_ACCESS_DENIED;  /* Insufficient privileges */
+	/* Get the process pat, arguments and env. */
+	size = argsize;
+	if (sysctl(mib3, 3, procargs, &size, NULL, 0) == -1) {
+		if (EINVAL == errno) { /* access denied for some reason */
+			r = ARGS_ACCESS_DENIED;
+		} else {
+            PyErr_SetFromErrno(PyExc_OSError);
+            r = 1;
         }
+        goto erroreturn;
+	}
 
-        PyErr_SetFromErrno(PyExc_OSError);
-        free(procargs);
-        return 1;
-    }
-
-    memcpy(&nargs, procargs, sizeof(nargs));
-    cp =  procargs + sizeof(nargs);
+    /* Get number of arguments. */
+    memcpy(&na, procargs, sizeof(na));
+    cp =  procargs + sizeof(na);
     ep = &procargs[size];
     if (cp >= ep) {
         err = "getcmdargs(): path parsing";
         goto erroreturn;
     }
 
-    if (NULL != exec_path) {  /* Save the path */
+    if (exec_path != NULL) {  /* Save the path */
         *exec_path = Py_BuildValue("s", cp);
         if (*exec_path == NULL) {
             err = "getcmdargs(): path exception";
@@ -193,20 +176,25 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
         }
     }
 
-    /* Skip over the exec_path and '\0' characters. */
+    *arglist = Py_BuildValue("[]");  /* Empty list */
+    if (*arglist == NULL) {
+        err = "getcmdargs(): arglist exception";
+        goto erroreturn;
+    }
+
+    /* Skip over the exec_path and '\0'-s. */
     while (cp < ep && *cp != '\0') cp++;
     while (cp < ep && *cp == '\0') cp++;
 
-    /* Iterate through the '\0'-terminated strings and add each string
-     * to the Python List arglist as a Python string.
-     * Stop when nargs strings have been extracted.  That should be all
-     * the arguments.  The rest of the strings will be environment
-     * strings for the command.
-     */
+    /* Iterate through the '\0'-terminated strings and add each
+     * string to the Python List arglist as a Python string.
+     * Stop when na strings have been extracted.  That should
+     * be all the arguments.  The rest of the strings will be
+     * environment variable strings for the command. */
     ap = sp = cp;
-    while (cp < ep && nargs > 0) {
+    while (cp < ep && na > 0) {
         if (*cp++ == '\0') {
-            /* Fetch next argument */
+            /* Append next argument. */
             arg = Py_BuildValue("s", ap);
             if (arg == NULL) {
                 err = "getcmdargs(): args exception";
@@ -216,31 +204,29 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
             Py_DECREF(arg);
 
             ap = cp;
-            nargs--;
+            na--;
         }
     }
 
     /* sp points to the beginning of the arguments/environment string,
-     * and ap should point past the '\0' terminator for the string.
-     */
-    if (ap == sp || nargs > 0) {
-        err = "getcmdargs(): args parsing";  // empty or unterminated
+     * and ap should point past the '\0' terminator for the string. */
+    if (ap == sp || na > 0) {
+        err = "getcmdargs(): args parsing";  /* empty or unterminated */
         goto erroreturn;
     }
 
-    // Make a copy of the string.
-    // asprintf(args, "%s", sp);
+    /* Make a copy of the string.
+    asprintf(args, "%s", sp); */
 
 erroreturn:
-    // Clean up.
-    if (NULL != procargs) {
-        free(procargs);
+    if (NULL != ptr) {
+        free(ptr);
     }
     if (NULL != err) {
         PyErr_SetString(PyExc_SystemError, err);
-        return -1;
+        r = -1;
     }
-    return 0;
+    return r;
 }
 
 
