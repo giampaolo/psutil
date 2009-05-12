@@ -21,14 +21,12 @@
 
 
 /*
- * Returns a list of all BSD processes on the system.  This
- * routine allocates the list and puts it in *procList and
- * returns the number of entries in *procCount.  You are
- * responsible for freeing this list, using std free().
- *
- * Returns:
- *       0 for success
- *   errno in case of failure.
+ * Returns a list of all BSD processes on the system.  This routine
+ * allocates the list and puts it in *procList and a count of the
+ * number of entries in *procCount.  You are responsible for freeing
+ * this list (use "free" from System framework).
+ * On success, the function returns 0.
+ * On error, the function returns a BSD errno value.
  */
 int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
 {
@@ -109,66 +107,64 @@ int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
  */
 int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
 {
-    int      mib2[2], mib3[3], na, r = 0;
-    size_t   size, argsize;
-    void     *ptr = NULL, *err = NULL;
-    PyObject *arg;
-    char     *ap, *cp, *ep, *sp, *procargs, args[2048];
+    int       mib[3], nargs;
+    size_t    size, argmax;
+    PyObject  *arg;
+    char      *ap, *sp, *cp, *ep;
+    char      *procargs = NULL, *err = NULL;
 
-    /* Get the size of the process arguments. */
-    mib3[0] = CTL_KERN;
-    mib3[1] = KERN_PROCARGS2;
-    mib3[2] = (int)pid;
-
-    argsize = ~(size_t)0;
-    if (sysctl(mib3, 3, NULL, &argsize, NULL, 0) == -1) {
-		/* Try to get the maximum size. */
-		mib2[0] = CTL_KERN;
-		mib2[1] = KERN_ARGMAX;
-
-		size = sizeof(argsize);
-		if (sysctl(mib2, 2, &argsize, &size, NULL, 0) == -1) {
-			PyErr_SetFromErrno(NULL);
-			return 1;
-		}
-	}
-
-    if (argsize > sizeof(args)) {
-	    /* Allocate the space. */
-	    ptr = malloc(argsize);
-	    if (ptr == NULL) {
-		    PyErr_SetString(PyExc_MemoryError,
-						    "getcmdargs(): insufficient memory");
-		    return -1;
-	    }
-	    procargs = (char *)ptr;
-    } else {  /* Use the space on the stack */
-        procargs = args;
-        argsize = sizeof(args);
-	}
-
-	/* Get the process pat, arguments and env. */
-	size = argsize;
-	if (sysctl(mib3, 3, procargs, &size, NULL, 0) == -1) {
-		if (EINVAL == errno) { /* access denied for some reason */
-			r = ARGS_ACCESS_DENIED;
-		} else {
-            PyErr_SetFromErrno(PyExc_OSError);
-            r = 1;
-        }
+    *arglist = Py_BuildValue("[]");     /* empty list */
+    if (*arglist == NULL) {
+        err = "getcmdargs(): arglist exception";
         goto erroreturn;
-	}
+    }
 
-    /* Get number of arguments. */
-    memcpy(&na, procargs, sizeof(na));
-    cp =  procargs + sizeof(na);
+    /* Get the maximum process arguments size. */
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_ARGMAX;
+
+    size = sizeof(argmax);
+    if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1) {
+        PyErr_SetFromErrno(NULL);
+        return 1;
+    }
+
+    /* Allocate space for the arguments. */
+    procargs = (char *)malloc(argmax);
+    if (procargs == NULL) {
+        PyErr_SetString(PyExc_MemoryError,
+                        "getcmdargs(): insufficient memory for procargs");
+        return -1;
+    }
+
+    /*
+     * Make a sysctl() call to get the raw argument space of the process.
+     */
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROCARGS2;
+    mib[2] = (int)pid;
+
+    size = argmax;
+    if (sysctl(mib, 3, procargs, &size, NULL, 0) == -1) {
+        if (EINVAL == errno) { // invalid == access denied for some reason
+            free(procargs);
+            return ARGS_ACCESS_DENIED;  /* Insufficient privileges */
+        }
+
+        PyErr_SetFromErrno(PyExc_OSError);
+        free(procargs);
+        return 1;
+    }
+
+    memcpy(&nargs, procargs, sizeof(nargs));
+    cp =  procargs + sizeof(nargs);
     ep = &procargs[size];
     if (cp >= ep) {
         err = "getcmdargs(): path parsing";
         goto erroreturn;
     }
 
-    if (exec_path != NULL) {  /* Save the path */
+    if (NULL != exec_path) {  /* Save the path */
         *exec_path = Py_BuildValue("s", cp);
         if (*exec_path == NULL) {
             err = "getcmdargs(): path exception";
@@ -176,25 +172,20 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
         }
     }
 
-    *arglist = Py_BuildValue("[]");  /* Empty list */
-    if (*arglist == NULL) {
-        err = "getcmdargs(): arglist exception";
-        goto erroreturn;
-    }
-
-    /* Skip over the exec_path and '\0'-s. */
+    /* Skip over the exec_path and '\0' characters. */
     while (cp < ep && *cp != '\0') cp++;
     while (cp < ep && *cp == '\0') cp++;
 
-    /* Iterate through the '\0'-terminated strings and add each
-     * string to the Python List arglist as a Python string.
-     * Stop when na strings have been extracted.  That should
-     * be all the arguments.  The rest of the strings will be
-     * environment variable strings for the command. */
+    /* Iterate through the '\0'-terminated strings and add each string
+     * to the Python List arglist as a Python string.
+     * Stop when nargs strings have been extracted.  That should be all
+     * the arguments.  The rest of the strings will be environment
+     * strings for the command.
+     */
     ap = sp = cp;
-    while (cp < ep && na > 0) {
+    while (cp < ep && nargs > 0) {
         if (*cp++ == '\0') {
-            /* Append next argument. */
+            /* Fetch next argument */
             arg = Py_BuildValue("s", ap);
             if (arg == NULL) {
                 err = "getcmdargs(): args exception";
@@ -204,29 +195,31 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
             Py_DECREF(arg);
 
             ap = cp;
-            na--;
+            nargs--;
         }
     }
 
     /* sp points to the beginning of the arguments/environment string,
-     * and ap should point past the '\0' terminator for the string. */
-    if (ap == sp || na > 0) {
-        err = "getcmdargs(): args parsing";  /* empty or unterminated */
+     * and ap should point past the '\0' terminator for the string.
+     */
+    if (ap == sp || nargs > 0) {
+        err = "getcmdargs(): args parsing";  // empty or unterminated
         goto erroreturn;
     }
 
-    /* Make a copy of the string.
-    asprintf(args, "%s", sp); */
+    // Make a copy of the string.
+    // asprintf(args, "%s", sp);
 
 erroreturn:
-    if (NULL != ptr) {
-        free(ptr);
+    // Clean up.
+    if (NULL != procargs) {
+        free(procargs);
     }
     if (NULL != err) {
         PyErr_SetString(PyExc_SystemError, err);
-        r = -1;
+        return -1;
     }
-    return r;
+    return 0;
 }
 
 
