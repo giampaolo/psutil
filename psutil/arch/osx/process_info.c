@@ -93,9 +93,9 @@ int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
 
 
 /*
- * Borrowed from psi Python System Information project
+ * Modified from psi Python System Information project
  *
- * Get command arguments and environment variables.
+ * Get command path, arguments and environment variables.
  *
  * Based on code from ps.
  *
@@ -105,18 +105,19 @@ int GetBSDProcessList(kinfo_proc **procList, size_t *procCount)
  *      -1 for failure, system or memory exception raised
  *      -2 rather ARGS_ACCESS_DENIED, for insufficient privileges
  */
-int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
+int getcmdargs(long pid, PyObject **exec_path, PyObject **envlist, PyObject **arglist)
 {
-    int       mib[3], nargs;
-    size_t    size, argmax;
-    PyObject  *arg;
-    char      *ap, *sp, *cp, *ep;
-    char      *procargs = NULL, *err = NULL;
+    int nargs, mib[3];
+    size_t size, argmax;
+    char *curr_arg, *start_args, *iter_args, *end_args;
+    char *procargs = NULL;
+    char *err = NULL;
+    PyObject *arg;
 
     *arglist = Py_BuildValue("[]");     /* empty list */
     if (*arglist == NULL) {
         err = "getcmdargs(): arglist exception";
-        goto erroreturn;
+        goto ERROR_RETURN;
     }
 
     /* Get the maximum process arguments size. */
@@ -126,7 +127,7 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
     size = sizeof(argmax);
     if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1) {
         PyErr_SetFromErrno(NULL);
-        return 1;
+        return errno;
     }
 
     /* Allocate space for the arguments. */
@@ -134,7 +135,7 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
     if (procargs == NULL) {
         PyErr_SetString(PyExc_MemoryError,
                         "getcmdargs(): insufficient memory for procargs");
-        return -1;
+        return ENOMEM;
     }
 
     /*
@@ -153,28 +154,31 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
 
         PyErr_SetFromErrno(PyExc_OSError);
         free(procargs);
-        return 1;
+        return errno;
     }
 
+    // copy the number of argument to nargs
     memcpy(&nargs, procargs, sizeof(nargs));
-    cp =  procargs + sizeof(nargs);
-    ep = &procargs[size];
-    if (cp >= ep) {
+    iter_args =  procargs + sizeof(nargs);
+    end_args = &procargs[size]; // end of the argument space
+    if (iter_args >= end_args) {
         err = "getcmdargs(): path parsing";
-        goto erroreturn;
+        goto ERROR_RETURN;
     }
 
-    if (NULL != exec_path) {  /* Save the path */
-        *exec_path = Py_BuildValue("s", cp);
+    // Save the path
+    if (NULL != exec_path) {
+        *exec_path = Py_BuildValue("s", iter_args);
         if (*exec_path == NULL) {
             err = "getcmdargs(): path exception";
-            goto erroreturn;
+            goto ERROR_RETURN;
         }
     }
 
-    /* Skip over the exec_path and '\0' characters. */
-    while (cp < ep && *cp != '\0') cp++;
-    while (cp < ep && *cp == '\0') cp++;
+    //TODO: save the environment variables to envlist as well
+    // Skip over the exec_path and '\0' characters.
+    while (iter_args < end_args && *iter_args != '\0') { iter_args++; }
+    while (iter_args < end_args && *iter_args == '\0') { iter_args++; }
 
     /* Iterate through the '\0'-terminated strings and add each string
      * to the Python List arglist as a Python string.
@@ -182,19 +186,20 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
      * the arguments.  The rest of the strings will be environment
      * strings for the command.
      */
-    ap = sp = cp;
-    while (cp < ep && nargs > 0) {
-        if (*cp++ == '\0') {
+    curr_arg = iter_args;
+    start_args = iter_args; //reset start position to beginning of cmdline
+    while (iter_args < end_args && nargs > 0) {
+        if (*iter_args++ == '\0') {
             /* Fetch next argument */
-            arg = Py_BuildValue("s", ap);
+            arg = Py_BuildValue("s", curr_arg);
             if (arg == NULL) {
                 err = "getcmdargs(): args exception";
-                goto erroreturn;
+                goto ERROR_RETURN;
             }
             PyList_Append(*arglist, arg);
             Py_DECREF(arg);
 
-            ap = cp;
+            curr_arg = iter_args;
             nargs--;
         }
     }
@@ -202,15 +207,15 @@ int getcmdargs(long pid, PyObject **exec_path, PyObject **arglist)
     /* sp points to the beginning of the arguments/environment string,
      * and ap should point past the '\0' terminator for the string.
      */
-    if (ap == sp || nargs > 0) {
+    if (curr_arg == start_args || nargs > 0) {
         err = "getcmdargs(): args parsing";  // empty or unterminated
-        goto erroreturn;
+        goto ERROR_RETURN;
     }
 
     // Make a copy of the string.
     // asprintf(args, "%s", sp);
 
-erroreturn:
+ERROR_RETURN:
     // Clean up.
     if (NULL != procargs) {
         free(procargs);
@@ -228,7 +233,9 @@ PyObject* get_arg_list(long pid)
 {
     int r;
     PyObject *argList;
+    PyObject *env = NULL;
     PyObject *args = NULL;
+    PyObject *exec_path = NULL;
 
     //special case for PID 0 (kernel_task) where cmdline cannot be fetched
     if (pid == 0) {
@@ -241,10 +248,11 @@ PyObject* get_arg_list(long pid)
         return Py_BuildValue("");
     }
 
-    r = getcmdargs(pid, NULL, &args);
+    r = getcmdargs(pid, &exec_path, &env, &args);
     if (r == 0) {
         //PySequence_Tuple(args);
         argList = PySequence_List(args);
+        PyList_Append(argList, exec_path);
     } else if (r == ARGS_ACCESS_DENIED) { //-2
         argList = Py_BuildValue("[]");
     } else {
