@@ -711,7 +711,7 @@ BOOL SidToUser(PSID pSid, LPTSTR szUser, DWORD dwUserLen, LPTSTR szDomain, DWORD
 #define MAX_USERNAME_LEN 21
 #define MAX_GROUP_LEN 257
 /*
- * Return the username of a process given its PID
+ * Return the "domain\username" of a process given its PID
  */
 static PyObject* get_proc_username(PyObject* self, PyObject* args)
 {
@@ -719,26 +719,30 @@ static PyObject* get_proc_username(PyObject* self, PyObject* args)
     BOOL bOk = FALSE;
     TCHAR szUser[MAX_USERNAME_LEN];
     TCHAR szDomain[MAX_GROUP_LEN];
-    DWORD dwPid;
-    
+    DWORD pid;
+
     // Reset strings
     szUser[0]=0;
     szDomain[0]=0;
-    
-    if (! PyArg_ParseTuple(args, "l", &dwPid))
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
     {
         return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+    }
+
+    if (pid == 0){
+        return Py_BuildValue("s", "NT AUTHORITY\\SYSTEM");
     }
 
     // Set Debug privileges
     SetSeDebug();
 
     // needs STANDARD_RIGHTS_READ for GetKernelObjectSecurity to work!
-    hProc = OpenProcess( STANDARD_RIGHTS_READ , FALSE,  dwPid);
+    hProc = OpenProcess( STANDARD_RIGHTS_READ , FALSE, pid);
 
     if ( hProc != NULL )
     {
-        
+
         SECURITY_DESCRIPTOR *pSecDescr = NULL;
         DWORD dwSecInfoSize;
         BOOL bDefaulted;
@@ -783,7 +787,7 @@ static PyObject* get_proc_username(PyObject* self, PyObject* args)
     {
         PyErr_SetFromWindowsErr(0);
     }
-    
+
     // Unset Debug privileges
     UnsetSeDebug();
 
@@ -794,6 +798,6 @@ static PyObject* get_proc_username(PyObject* self, PyObject* args)
         strcat (szDomain, szUser);
         return Py_BuildValue("s", szDomain);
     }
-    
+
     return 0;
 }
