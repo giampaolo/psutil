@@ -249,6 +249,43 @@ class TestCase(unittest.TestCase):
             # we expect it to be -1
             self.assertEqual(gid, -1)
 
+    def test_username(self):
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(self.proc.pid)
+        # generic test, only access the attribute (twice for testing the
+        # caching code)
+        p.username
+        p.username
+
+        # UNIX tests
+        if os.name == 'posix':
+            import pwd
+            user = pwd.getpwuid(p.uid).pw_name
+            self.assertEqual(p.username, user)
+
+        # Windows tests
+        elif sys.platform.lower().startswith("win32"):
+            expected_username = os.environ['USERNAME']
+            expected_domain = os.environ['USERDOMAIN']
+            domain, username = p.username.split('\\')
+            self.assertEqual(domain, expected_domain)
+            self.assertEqual(username, expected_username)
+
+    def test_groupname(self):
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(self.proc.pid)
+        # generic test, only access the attribute (twice for testing the
+        # caching code)
+        p.groupname
+        p.groupname
+
+        if os.name == 'posix':
+            import grp
+            self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+            p = psutil.Process(self.proc.pid)
+            group = grp.getgrgid(p.gid).gr_name
+            self.assertEqual(p.groupname, group)
+
     def test_parent_ppid(self):
         this_parent = os.getpid()
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
@@ -275,6 +312,8 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.uid, int))
         self.assert_(isinstance(p.gid, int))
         self.assert_(isinstance(p.create_time, float))
+        self.assert_(isinstance(p.username, str))
+        self.assert_(isinstance(p.groupname, str))
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(p.get_cpu_times(), tuple))
         self.assert_(isinstance(p.get_cpu_times()[0], float))
@@ -370,6 +409,21 @@ class TestCase(unittest.TestCase):
         else:
             p.get_memory_info()
 
+        # username / groupname properties
+        if sys.platform.lower().startswith("linux"):
+            self.assertEqual(p.username, 'root')
+            self.assertEqual(p.groupname, 'root')
+        elif sys.platform.lower().startswith('freebsd') or \
+        sys.platform.lower().startswith('darwin'):
+            self.assertEqual(p.username, 'root')
+            self.assertEqual(p.groupname, 'wheel')
+        elif sys.platform.lower().startswith("win32"):
+            self.assertEqual(p.username, 'NT AUTHORITY\\SYSTEM')
+            # XXX groupname code here
+        else:
+            p.username
+            p.groupname
+
         # PID 0 is supposed to be available on all platforms
         self.assertTrue(0 in psutil.get_pid_list())
         self.assertTrue(psutil.pid_exists(0))
@@ -379,12 +433,12 @@ class TestCase(unittest.TestCase):
 
     # UNIX specific tests
 
-    if not sys.platform.lower().startswith("win32"):
-
+    if os.name == 'posix':
         if hasattr(os, 'getuid') and os.getuid() > 0:
             def test_unix_access_denied(self):
                 p = psutil.Process(1)
                 self.assertRaises(psutil.AccessDenied, p.kill)
+
 
     # Windows specific tests
 
@@ -400,6 +454,8 @@ class TestCase(unittest.TestCase):
             # use __str__ to access all common Process properties to check
             # that nothing strange happens
             str(p)
+            p.username
+            p.groupname
             self.assertTrue(p.create_time >= 0.0)
             rss, vms = p.get_memory_info()
             self.assertTrue(rss > 0)
