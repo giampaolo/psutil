@@ -56,6 +56,12 @@ class TestProcessObjectLeaks(unittest.TestCase):
         # includes name, ppid, path, cmdline, uid, gid properties
         self.execute('__str__')
 
+    def test_username(self):
+        self.execute('username')
+
+    def test_groupname(self):
+        self.execute('groupname')
+
     def test_create_time(self):
         self.execute('create_time')
 
