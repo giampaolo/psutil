@@ -307,7 +307,7 @@ class TestCase(unittest.TestCase):
         try:
             psutil.test()
         finally:
-            sys.stdout = sys.stdout
+            sys.stdout = stdout
 
     def test_types(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
