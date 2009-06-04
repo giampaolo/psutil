@@ -300,6 +300,15 @@ class TestCase(unittest.TestCase):
         # make sure every pid is unique
         self.assertEqual(len(pidlist), len(set(pidlist)))
 
+    def test_test(self):
+        # test for psutil.test() function
+        stdout = sys.stdout
+        sys.stdout = DEVNULL
+        try:
+            psutil.test()
+        finally:
+            sys.stdout = sys.stdout
+
     def test_types(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         p = psutil.Process(self.proc.pid)

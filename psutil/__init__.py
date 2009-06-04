@@ -81,20 +81,20 @@ class CPUTimes:
     """
 
     def __init__(self, **kwargs):
-        self.attrs = []
+        self.__attrs = []
         for name in kwargs:
             setattr(self, name, kwargs[name])
-            self.attrs.append(name)
+            self.__attrs.append(name)
 
     def __str__(self):
         string = []
-        for attr in self.attrs:
+        for attr in self.__attrs:
             value = getattr(self, attr)
             string.append("%s=%s" %(attr, value))
         return '; '.join(string)
 
     def __iter__(self):
-        for attr in self.attrs:
+        for attr in self.__attrs:
             yield getattr(self, attr)
 
 
