@@ -254,6 +254,28 @@ class Impl(object):
         f.close()
         return (resident_size * 1024, virtual_size * 1024)
 
+    @prevent_zombie
+    def get_process_environ(self, pid):
+        """Return process environment variables for the process with the
+        given PID as a dictionary."""
+        if pid == 0:
+            return {}
+        try:
+            f = open("/proc/%s/environ" % pid)
+        except IOError, err:
+            if err.errno == errno.EACCES:
+                raise AccessDenied
+            raise
+        else:
+            envs = f.read().strip('\0').split('\0')
+            f.close()
+
+        dict = {}
+        for env in envs:
+            key, value = env.split('=', 1)
+            dict[key] = value
+        return dict
+
     def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)
         for line in f:

@@ -286,6 +286,14 @@ class TestCase(unittest.TestCase):
             group = grp.getgrgid(p.gid).gr_name
             self.assertEqual(p.groupname, group)
 
+    def test_environ(self):
+        if not sys.platform.lower().startswith("linux"):
+            # XXX not implemented yet, skip test
+            return
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(self.proc.pid)
+        self.assertEqual(p.environ, os.environ)
+
     def test_parent_ppid(self):
         this_parent = os.getpid()
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)

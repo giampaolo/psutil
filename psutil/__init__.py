@@ -268,6 +268,11 @@ class Process(object):
     	return self._procinfo.groupname
 
     @property
+    def environ(self):
+        """The process environment variables as a dictionary."""
+        return _platform_impl.get_process_environ(self.pid)
+
+    @property
     def create_time(self):
         """The process creation time as a floating point number
         expressed in seconds since the epoch, in UTC.
