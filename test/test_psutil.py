@@ -294,6 +294,15 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(self.proc.pid)
         self.assertEqual(p.environ, os.environ)
 
+    def test_getcwd(self):
+        if not sys.platform.lower().startswith("linux"):
+            # XXX not implemented yet, skip test
+            return
+
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(self.proc.pid)
+        self.assertEqual(p.getcwd(), os.getcwd())
+
     def test_parent_ppid(self):
         this_parent = os.getpid()
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
@@ -331,6 +340,9 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.create_time, float))
         self.assert_(isinstance(p.username, str))
         self.assert_(isinstance(p.groupname, str))
+        # XXX - enable when fully implemented
+#        self.assert_(isinstance(p.environ, dict))
+#        self.assert_(isinstance(p.getpwd(), str))
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(p.get_cpu_times(), tuple))
         self.assert_(isinstance(p.get_cpu_times()[0], float))
@@ -376,6 +388,9 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "cmdline")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "uid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "gid")
+        # XXX - enable when fully implemented
+#        self.assertRaises(psutil.NoSuchProcess, getattr, p, "environ ")
+#        self.assertRaises(psutil.NoSuchProcess, p.getcwd)
         self.assertRaises(psutil.NoSuchProcess, p.kill)
         # XXX - these tests are supposed to work everywhere except
         # Windows which keeps returning info for a dead process.
@@ -390,8 +405,11 @@ class TestCase(unittest.TestCase):
         valid_procs = 0
         for p in psutil.process_iter():
             try:
-                str(p)
+                str(p)              
                 p.create_time
+                # XXX - enable when fully implemented
+#                p.environ  
+#                p.getpwd()
                 p.get_cpu_times()
                 p.get_cpu_percent()
                 p.get_memory_info()

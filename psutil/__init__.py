@@ -281,6 +281,10 @@ class Process(object):
             self._procinfo.create = _platform_impl.get_process_create_time(self.pid)
         return self._procinfo.create
 
+    def getcwd(self):
+        """Return a string representing the process current working directory."""
+        return _platform_impl.get_process_cwd(self.pid)     
+
     def get_cpu_percent(self):
         """Compare process times to system time elapsed since last call
         and calculate CPU utilization as a percentage. It is recommended
