@@ -295,10 +295,6 @@ class TestCase(unittest.TestCase):
         self.assertEqual(p.environ, os.environ)
 
     def test_getcwd(self):
-        if not sys.platform.lower().startswith("linux"):
-            # XXX not implemented yet, skip test
-            return
-
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         p = psutil.Process(self.proc.pid)
         self.assertEqual(p.getcwd(), os.getcwd())
@@ -405,10 +401,10 @@ class TestCase(unittest.TestCase):
         valid_procs = 0
         for p in psutil.process_iter():
             try:
-                str(p)              
+                str(p)
                 p.create_time
                 # XXX - enable when fully implemented
-#                p.environ  
+#                p.environ
 #                p.getpwd()
                 p.get_cpu_times()
                 p.get_cpu_percent()

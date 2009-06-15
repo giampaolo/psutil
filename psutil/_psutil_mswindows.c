@@ -874,9 +874,16 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
         currentDirectoryContent, currentDirectory.Length, NULL))
     {
         printf("Could not read the command line string!\n");
+        PyErr_SetFromWindowsErr(0);
+        if (GetLastError() == ERROR_PARTIAL_COPY) {
+            PyErr_Format(NoSuchProcessException,
+                         "Process with pid %d not properly initialized yet", pid);
+        }
+
+
         CloseHandle(processHandle);
         free(currentDirectoryContent);
-        return PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
 
     //printf("%.*S\n", currentDirectory.Length / 2, currentDirectoryContent);
