@@ -48,6 +48,8 @@ static PyMethodDef PsutilMethods[] =
          "Return system cpu times as a tuple (user, system, idle)"},
     {"get_proc_username", get_proc_username, METH_VARARGS,
         "Return the name of the user that owns the process"},
+    {"get_process_cwd", get_process_cwd, METH_VARARGS,
+        "Return process current working directory"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -801,3 +803,153 @@ static PyObject* get_proc_username(PyObject* self, PyObject* args)
 
     return 0;
 }
+
+
+/* structures needed to retrieve process current working directory */
+
+typedef struct _PROCESS_BASIC_INFORMATION {
+    PVOID Reserved1;
+    BYTE *PebBaseAddress;
+    PVOID Reserved2[2];
+    ULONG_PTR UniqueProcessId;
+    PVOID Reserved3;
+} PROCESS_BASIC_INFORMATION;
+
+typedef enum _PROCESSINFOCLASS {
+    ProcessBasicInformation = 0,
+    ProcessWow64Information = 26
+} PROCESSINFOCLASS;
+
+typedef LONG WINAPI
+NtQueryInformationProcess (
+    IN HANDLE ProcessHandle,
+    IN PROCESSINFOCLASS ProcessInformationClass,
+    OUT PVOID ProcessInformation,
+    IN ULONG ProcessInformationLength,
+    OUT PULONG ReturnLength OPTIONAL
+    );
+
+typedef struct _UNICODE_STRING {
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR Buffer;
+} UNICODE_STRING, *PUNICODE_STRING;
+
+typedef struct _RTL_DRIVE_LETTER_CURDIR {
+    USHORT Flags;
+    USHORT Length;
+    ULONG TimeStamp;
+    UNICODE_STRING DosPath;
+} RTL_DRIVE_LETTER_CURDIR, *PRTL_DRIVE_LETTER_CURDIR;
+
+typedef struct _RTL_USER_PROCESS_PARAMETERS {
+    ULONG MaximumLength;
+    ULONG Length;
+    ULONG Flags;
+    ULONG DebugFlags;
+    PVOID ConsoleHandle;
+    ULONG ConsoleFlags;
+    HANDLE StdInputHandle;
+    HANDLE StdOutputHandle;
+    HANDLE StdErrorHandle;
+    UNICODE_STRING CurrentDirectoryPath;
+    HANDLE CurrentDirectoryHandle;
+    UNICODE_STRING DllPath;
+    UNICODE_STRING ImagePathName;
+    UNICODE_STRING CommandLine;
+    PVOID Environment;
+    ULONG StartingPositionLeft;
+    ULONG StartingPositionTop;
+    ULONG Width;
+    ULONG Height;
+    ULONG CharWidth;
+    ULONG CharHeight;
+    ULONG ConsoleTextAttributes;
+    ULONG WindowFlags;
+    ULONG ShowWindowFlags;
+    UNICODE_STRING WindowTitle;
+    UNICODE_STRING DesktopName;
+    UNICODE_STRING ShellInfo;
+    UNICODE_STRING RuntimeData;
+    RTL_DRIVE_LETTER_CURDIR DLCurrentDirectory[0x20];
+} RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
+
+
+/*
+ * Return process current working directory as a Python string.
+ */
+static PyObject* get_process_cwd(PyObject* self, PyObject* args)
+{
+    int pid;
+    HANDLE processHandle;
+    PVOID pebAddress;
+    PVOID rtlUserProcParamsAddress;
+    UNICODE_STRING currentDirectory;
+    WCHAR *currentDirectoryContent;
+    PyObject *returnPyObj = NULL;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+        return NULL;
+    }
+
+    processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                                FALSE, pid);
+    if (processHandle == 0)
+    {
+        printf("Could not open process!\n");
+        PyErr_SetFromWindowsErr(0);
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            // bad PID so no such process
+            PyErr_Format(NoSuchProcessException,
+                         "No process found with pid %d", pid);
+        }
+        return NULL;
+    }
+
+    pebAddress = GetPebAddress(processHandle);
+
+    /* get the address of ProcessParameters */
+    if (!ReadProcessMemory(processHandle, (PCHAR)pebAddress + 0x10,
+        &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
+    {
+        printf("Could not read the address of ProcessParameters!\n");
+        CloseHandle(processHandle);
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    /* read the currentDirectory UNICODE_STRING structure */
+    if (!ReadProcessMemory(processHandle, (PCHAR)rtlUserProcParamsAddress + 0x24,
+        &currentDirectory, sizeof(currentDirectory), NULL))
+    {
+        printf("Could not read currentDirectory!\n");
+        CloseHandle(processHandle);
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    /* allocate memory to hold the command line */
+    currentDirectoryContent = (WCHAR *)malloc(currentDirectory.Length);
+
+    /* read the command line */
+    if (!ReadProcessMemory(processHandle, currentDirectory.Buffer,
+        currentDirectoryContent, currentDirectory.Length, NULL))
+    {
+        printf("Could not read the command line string!\n");
+        CloseHandle(processHandle);
+        free(currentDirectoryContent);
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    //printf("%.*S\n", currentDirectory.Length / 2, currentDirectoryContent);
+
+    returnPyObj = Py_BuildValue("N", PyUnicode_AsUTF8String(
+                                PyUnicode_FromWideChar(currentDirectoryContent,
+                                                       currentDirectory.Length / 2)
+                                )
+                         );
+
+    CloseHandle(processHandle);
+    free(currentDirectoryContent);
+    return returnPyObj;
+}
+

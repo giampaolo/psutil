@@ -114,3 +114,9 @@ class Impl(object):
     def get_cpu_times(self, pid):
         return _psutil_mswindows.get_process_cpu_times(pid)
 
+    @wrap_privileges
+    def get_process_cwd(self, pid):
+        if pid in (0, 4):
+            return ''
+        return _psutil_mswindows.get_process_cwd(pid)
+
