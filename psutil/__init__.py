@@ -29,6 +29,9 @@ __all__ = [
     "cpu_percent",
     ]
 
+__version__ = '0.1.3'
+
+
 import sys
 import os
 import time
