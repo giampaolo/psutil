@@ -28,7 +28,7 @@ __all__ = [
     "cpu_times",
     "cpu_percent",
     ]
-
+    
 __version__ = '0.1.3'
 
 
@@ -354,6 +354,10 @@ class Process(object):
     def kill(self, sig=None):
         """Kill the current process by using signal sig (defaults to SIGKILL).
         """
+        # safety measure in case the current process has been killed in
+        # meantime and the kernel reused its PID
+        if not self.is_running():
+            raise NoSuchProcess
         _platform_impl.kill_process(self.pid, sig)
 
 
