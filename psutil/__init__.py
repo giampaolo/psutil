@@ -153,33 +153,11 @@ class Process(object):
                  self.uid, self.gid)
 
     def __eq__(self, other):
-        """Test for equality with another Process object based on PID,
-        name etc."""
-        if self.pid != other.pid:
-            return False
-
-        # make sure both objects are initialized
-        self.deproxy()
-        other.deproxy()
-        # check all non-callable and non-private attributes for equality
-        # if the attribute is missing from other then return False
-        for attr in dir(self):
-            attrobj = getattr(self, attr)
-            # skip private attributes
-            if attr.startswith("_"):
-                continue
-
-            # skip methods and Process objects
-            if callable(attrobj) or isinstance(attrobj, Process):
-                continue
-
-            # attribute doesn't exist or isn't equal, so return False
-            if not hasattr(other, attr):
-                return False
-            if getattr(self, attr) != getattr(other, attr):
-                return False
-
-        return True
+        """Test for equality with another Process object based on PID
+        and creation time."""
+        h1 = (self.pid, self.create_time)
+        h2 = (other.pid, other.create_time)
+        return h1 == h2
 
     def deproxy(self):
         """Used internally by Process properties. The first call to
@@ -344,12 +322,10 @@ class Process(object):
         """Return whether the current process is running in the current process
         list."""
         try:
-            new_proc = Process(self.pid)
-            # calls get_process_info() which may in turn trigger NSP exception
-            str(new_proc)
+            newproc = Process(self.pid)
+            return self == newproc
         except NoSuchProcess:
-            return False
-        return self == new_proc
+            return False        
 
     def kill(self, sig=None):
         """Kill the current process by using signal sig (defaults to SIGKILL).
