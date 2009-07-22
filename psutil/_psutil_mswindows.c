@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <Psapi.h>
 #include <time.h>
+#include <lm.h>
 
 #include "_psutil_mswindows.h"
 #include "arch/mswindows/security.h"
@@ -48,6 +49,8 @@ static PyMethodDef PsutilMethods[] =
          "Return system cpu times as a tuple (user, system, idle)"},
     {"get_proc_username", get_proc_username, METH_VARARGS,
         "Return the name of the user that owns the process"},
+    {"get_user_group", get_user_group, METH_VARARGS,
+        "Return the name of the group a user belong to"},
     {"get_process_cwd", get_process_cwd, METH_VARARGS,
         "Return process current working directory"},
      {NULL, NULL, 0, NULL}
@@ -803,6 +806,83 @@ static PyObject* get_proc_username(PyObject* self, PyObject* args)
 
     return 0;
 }
+
+/*
+ * Return the well known group a user belongs to
+ */
+static PyObject* get_user_group(PyObject* self, PyObject* args)
+{
+	// defines well known groups, ordered by decreasing rights' power
+	WCHAR *wszpWellKnownGroups[] = {L"administrators", 
+	                                L"power users", 
+	                                L"users", 
+	                                L"guests", 
+	                                NULL };
+	
+	LPBYTE pbBuf = NULL;
+	LOCALGROUP_USERS_INFO_0 *pLGUI = NULL;
+	NET_API_STATUS nStatus;
+	DWORD dwEntriesRead;
+	DWORD dwTotalEntries;
+	TCHAR szGroup[MAX_GROUP_LEN];
+	char *szUser;
+	WCHAR wszUser[MAX_USERNAME_LEN];
+	DWORD i, j = 0;
+	INT found = -1;
+
+
+    if (! PyArg_ParseTuple(args, "s", &szUser))
+    {
+        return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no user provided");
+    }
+    
+	// Resets output string
+	szGroup[0]=0;
+
+	// netAPI uses unicode: username conversion
+	MultiByteToWideChar (CP_ACP, MB_PRECOMPOSED, szUser, -1,
+                        wszUser, sizeof(wszUser)/sizeof(wszUser[0]));
+
+	// Retrieves group list associated to username
+	nStatus = NetUserGetLocalGroups (NULL, wszUser, 0, LG_INCLUDE_INDIRECT, 
+                                    &pbBuf, MAX_PREFERRED_LENGTH,  
+                                    &dwEntriesRead, &dwTotalEntries);
+
+	if (nStatus == NERR_Success)
+	{
+		pLGUI=(LOCALGROUP_USERS_INFO_0 *)pbBuf;
+		
+		// looks for the highest right's power well known group 
+		// in users group list
+        while ( found <0 && wszpWellKnownGroups[j] != NULL )
+        {
+            for (i=0; i<dwTotalEntries; i++)
+            {
+                if (!lstrcmpiW(pLGUI[i].lgrui0_name, wszpWellKnownGroups[j]))
+                {
+                    found=i;    
+                    break;
+                }
+            }
+            j++;
+        }
+
+		if (found>=0)
+		{   // user belongs to one of the well known groups
+			// group name from unicode to multibyte
+			WideCharToMultiByte(CP_ACP, 0, pLGUI[found].lgrui0_name, -1, 
+			                    szGroup, sizeof(szGroup), NULL, NULL);
+		}
+
+	}
+
+
+	if (pbBuf != NULL)
+		NetApiBufferFree (pbBuf);
+
+	return Py_BuildValue("s", szGroup);
+}
+
 
 
 typedef struct _UNICODE_STRING {

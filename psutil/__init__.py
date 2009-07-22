@@ -244,8 +244,9 @@ class Process(object):
         if grp is not None:
             self._procinfo.groupname = grp.getgrgid(self.gid).gr_name
         else:
-            # XXX - provisional for Windows
-            return "groupname"
+            # Windows
+            self._procinfo.groupname = _platform_impl.get_process_groupname(self.username)
+                
     	return self._procinfo.groupname
 
     @property
