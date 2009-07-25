@@ -28,7 +28,7 @@ __all__ = [
     "cpu_times",
     "cpu_percent",
     ]
-    
+
 __version__ = '0.1.3'
 
 
@@ -246,7 +246,7 @@ class Process(object):
         else:
             # Windows
             self._procinfo.groupname = _platform_impl.get_process_groupname(self.username)
-                
+
     	return self._procinfo.groupname
 
     @property
@@ -265,7 +265,7 @@ class Process(object):
 
     def getcwd(self):
         """Return a string representing the process current working directory."""
-        return _platform_impl.get_process_cwd(self.pid)     
+        return _platform_impl.get_process_cwd(self.pid)
 
     def get_cpu_percent(self):
         """Compare process times to system time elapsed since last call
@@ -326,7 +326,7 @@ class Process(object):
             newproc = Process(self.pid)
             return self == newproc
         except NoSuchProcess:
-            return False        
+            return False
 
     def kill(self, sig=None):
         """Kill the current process by using signal sig (defaults to SIGKILL).
@@ -415,7 +415,9 @@ def test():
 
     def get_process_info(pid):
         proc = Process(pid)
-        uid = proc.uid
+        user = proc.username
+        if os.name == 'nt' and '\\' in user:
+            user = user.split('\\')[1]
         pid = proc.pid
         cpu = round(proc.get_cpu_percent(), 1)
         mem = round(proc.get_memory_percent(), 1)
@@ -434,11 +436,11 @@ def test():
         # [] parentheses
         if not cmd:
             cmd = "[%s]" %proc.name
-        return "%-5s %7s %4s %4s %7s %7s %5s %8s %s" \
-               %(uid, pid, cpu, mem, vsz, rss, start, cputime, cmd)
+        return "%-9s %-5s %-4s %4s %7s %7s %5s %8s %s" \
+               %(user, pid, cpu, mem, vsz, rss, start, cputime, cmd)
 
-    print "%-5s %7s %4s %4s %7s %7s %5s %8s %s" \
-       %("UID", "PID", "%CPU", "%MEM", "VSZ", "RSS", "START", "TIME", "COMMAND")
+    print "%-9s %-5s %-4s %4s %7s %7s %5s %7s  %s" \
+       %("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "START", "TIME", "COMMAND")
     pids = get_pid_list()
     pids.sort()
     for pid in pids:

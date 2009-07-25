@@ -46,7 +46,7 @@ def get_system_cpu_times():
     times = _psutil_mswindows.get_system_cpu_times()
     return dict(user=times[0], system=times[1], idle=times[2])
 
-    
+
 # --- decorator
 
 def wrap_privileges(callable):
@@ -97,6 +97,9 @@ class Impl(object):
         """Return the name of the user that owns the process"""
         return _psutil_mswindows.get_proc_username(pid)
 
+    def get_process_groupname(self, username):
+       return _psutil_mswindows.get_proc_groupname(username)
+
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
         return _psutil_mswindows.get_pid_list()
@@ -127,7 +130,3 @@ class Impl(object):
         # "\\" at the and of the path
         path = _psutil_mswindows.get_process_cwd(pid)
         return os.path.normpath(path)
-
-    @wrap_privileges
-    def get_process_groupname(self, username):
-       return _psutil_mswindows.get_user_group(username)

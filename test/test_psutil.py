@@ -403,6 +403,7 @@ class TestCase(unittest.TestCase):
             try:
                 str(p)
                 p.create_time
+                p.groupname
                 # XXX - enable when fully implemented
 #                p.environ
 #                p.getpwd()
@@ -450,6 +451,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(p.groupname, 'wheel')
         elif sys.platform.lower().startswith("win32"):
             self.assertEqual(p.username, 'NT AUTHORITY\\SYSTEM')
+            p.groupname
             # XXX groupname code here
         else:
             p.username

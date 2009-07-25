@@ -49,7 +49,7 @@ static PyMethodDef PsutilMethods[] =
          "Return system cpu times as a tuple (user, system, idle)"},
     {"get_proc_username", get_proc_username, METH_VARARGS,
         "Return the name of the user that owns the process"},
-    {"get_user_group", get_user_group, METH_VARARGS,
+    {"get_proc_groupname", get_proc_groupname, METH_VARARGS,
         "Return the name of the group a user belong to"},
     {"get_process_cwd", get_process_cwd, METH_VARARGS,
         "Return process current working directory"},
@@ -810,15 +810,15 @@ static PyObject* get_proc_username(PyObject* self, PyObject* args)
 /*
  * Return the well known group a user belongs to
  */
-static PyObject* get_user_group(PyObject* self, PyObject* args)
+static PyObject* get_proc_groupname(PyObject* self, PyObject* args)
 {
 	// defines well known groups, ordered by decreasing rights' power
-	WCHAR *wszpWellKnownGroups[] = {L"administrators", 
-	                                L"power users", 
-	                                L"users", 
-	                                L"guests", 
+	WCHAR *wszpWellKnownGroups[] = {L"administrators",
+	                                L"power users",
+	                                L"users",
+	                                L"guests",
 	                                NULL };
-	
+
 	LPBYTE pbBuf = NULL;
 	LOCALGROUP_USERS_INFO_0 *pLGUI = NULL;
 	NET_API_STATUS nStatus;
@@ -835,7 +835,7 @@ static PyObject* get_user_group(PyObject* self, PyObject* args)
     {
         return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no user provided");
     }
-    
+
 	// Resets output string
 	szGroup[0]=0;
 
@@ -844,15 +844,15 @@ static PyObject* get_user_group(PyObject* self, PyObject* args)
                         wszUser, sizeof(wszUser)/sizeof(wszUser[0]));
 
 	// Retrieves group list associated to username
-	nStatus = NetUserGetLocalGroups (NULL, wszUser, 0, LG_INCLUDE_INDIRECT, 
-                                    &pbBuf, MAX_PREFERRED_LENGTH,  
+	nStatus = NetUserGetLocalGroups (NULL, wszUser, 0, LG_INCLUDE_INDIRECT,
+                                    &pbBuf, MAX_PREFERRED_LENGTH,
                                     &dwEntriesRead, &dwTotalEntries);
 
 	if (nStatus == NERR_Success)
 	{
 		pLGUI=(LOCALGROUP_USERS_INFO_0 *)pbBuf;
-		
-		// looks for the highest right's power well known group 
+
+		// looks for the highest right's power well known group
 		// in users group list
         while ( found <0 && wszpWellKnownGroups[j] != NULL )
         {
@@ -860,7 +860,7 @@ static PyObject* get_user_group(PyObject* self, PyObject* args)
             {
                 if (!lstrcmpiW(pLGUI[i].lgrui0_name, wszpWellKnownGroups[j]))
                 {
-                    found=i;    
+                    found=i;
                     break;
                 }
             }
@@ -870,7 +870,7 @@ static PyObject* get_user_group(PyObject* self, PyObject* args)
 		if (found>=0)
 		{   // user belongs to one of the well known groups
 			// group name from unicode to multibyte
-			WideCharToMultiByte(CP_ACP, 0, pLGUI[found].lgrui0_name, -1, 
+			WideCharToMultiByte(CP_ACP, 0, pLGUI[found].lgrui0_name, -1,
 			                    szGroup, sizeof(szGroup), NULL, NULL);
 		}
 
