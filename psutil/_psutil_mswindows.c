@@ -808,11 +808,11 @@ static PyObject* get_proc_username(PyObject* self, PyObject* args)
 }
 
 /*
- * Return the well known group a user belongs to
+ * Return the most powerful well known group a user belongs to
  */
 static PyObject* get_proc_groupname(PyObject* self, PyObject* args)
 {
-	// defines well known groups, ordered by decreasing rights' power
+	// Defines well known groups, ordered by decreasing rights' power
 	WCHAR *wszpWellKnownGroups[] = {L"administrators",
 	                                L"power users",
 	                                L"users",
@@ -839,7 +839,7 @@ static PyObject* get_proc_groupname(PyObject* self, PyObject* args)
 	// Resets output string
 	szGroup[0]=0;
 
-	// netAPI uses unicode: username conversion
+	// NetAPI uses unicode: username conversion
 	MultiByteToWideChar (CP_ACP, MB_PRECOMPOSED, szUser, -1,
                         wszUser, sizeof(wszUser)/sizeof(wszUser[0]));
 
@@ -852,7 +852,7 @@ static PyObject* get_proc_groupname(PyObject* self, PyObject* args)
 	{
 		pLGUI=(LOCALGROUP_USERS_INFO_0 *)pbBuf;
 
-		// looks for the highest right's power well known group
+		// Looks for the most powerful well known group
 		// in users group list
         while ( found <0 && wszpWellKnownGroups[j] != NULL )
         {
@@ -867,9 +867,9 @@ static PyObject* get_proc_groupname(PyObject* self, PyObject* args)
             j++;
         }
 
+        // User belongs to one of the well known groups
 		if (found>=0)
-		{   // user belongs to one of the well known groups
-			// group name from unicode to multibyte
+		{   // Group name from unicode to multibyte
 			WideCharToMultiByte(CP_ACP, 0, pLGUI[found].lgrui0_name, -1,
 			                    szGroup, sizeof(szGroup), NULL, NULL);
 		}

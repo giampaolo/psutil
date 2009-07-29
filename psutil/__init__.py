@@ -238,7 +238,10 @@ class Process(object):
 
     @property
     def groupname(self):
-        """The real groupname of the current process."""
+        """The real groupname of the current process.
+        On Windows machines, the most powerful among the well known groups
+        the user owning the process belongs to is returned
+        """
     	if self._procinfo.groupname is not None:
     		return self._procinfo.groupname
         if grp is not None:
