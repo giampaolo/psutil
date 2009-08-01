@@ -296,6 +296,7 @@ class TestCase(unittest.TestCase):
 
     def test_getcwd(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        wait_for_pid(self.proc.pid)
         p = psutil.Process(self.proc.pid)
         self.assertEqual(p.getcwd(), os.getcwd())
 
