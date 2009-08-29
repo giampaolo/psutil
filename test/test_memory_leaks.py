@@ -5,6 +5,7 @@
 
 import os
 import gc
+import sys
 import unittest
 
 import psutil
@@ -80,6 +81,11 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def test_is_running(self):
         self.execute('is_running')
 
+    if sys.platform.lower().startswith("linux") \
+    or sys.platform.lower().startswith("win32"):
+        def test_getcwd(self):
+            self.execute('getcwd')
+
 
 class TestModuleFunctionsLeaks(unittest.TestCase):
     """Test leaks of psutil module functions."""
@@ -144,6 +150,7 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
 
     def test_cpu_percent(self):
         self.execute('cpu_percent')
+
 
 def test_main():
     test_suite = unittest.TestSuite()
