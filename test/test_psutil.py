@@ -294,11 +294,13 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(self.proc.pid)
         self.assertEqual(p.environ, os.environ)
 
-    def test_getcwd(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
-        p = psutil.Process(self.proc.pid)
-        self.assertEqual(p.getcwd(), os.getcwd())
+    if sys.platform.lower().startswith("linux") \
+    or sys.platform.lower().startswith("win32"):
+        def test_getcwd(self):
+            self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+            wait_for_pid(self.proc.pid)
+            p = psutil.Process(self.proc.pid)
+            self.assertEqual(p.getcwd(), os.getcwd())
 
     def test_parent_ppid(self):
         this_parent = os.getpid()
