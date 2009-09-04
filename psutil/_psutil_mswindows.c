@@ -903,6 +903,8 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     UNICODE_STRING currentDirectory;
     WCHAR *currentDirectoryContent;
     PyObject *returnPyObj = NULL;
+    PyObject *cwd_from_wchar = NULL;
+    PyObject *cwd = NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
@@ -947,7 +949,7 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     }
 
     /* allocate memory to hold the command line */
-    currentDirectoryContent = (WCHAR *)malloc(currentDirectory.Length);
+    currentDirectoryContent = (WCHAR *)malloc(currentDirectory.Length+1);
 
     /* read the command line */
     if (!ReadProcessMemory(processHandle, currentDirectory.Buffer,
@@ -966,13 +968,17 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    //printf("%.*S\n", currentDirectory.Length / 2, currentDirectoryContent);
+    // null-terminate the string to prevent wcslen from returning incorrect length
+    // the length specifier is in characters, but commandLine.Length is in bytes
+    currentDirectoryContent[(currentDirectory.Length/sizeof(WCHAR))] = '\0';
 
-    returnPyObj = Py_BuildValue("N", PyUnicode_AsUTF8String(
-                                PyUnicode_FromWideChar(currentDirectoryContent,
-                                                       currentDirectory.Length / 2)
-                                )
-                         );
+    // convert wchar array to a Python unicode string, and then to UTF8
+    cwd_from_wchar = PyUnicode_FromWideChar(currentDirectoryContent, wcslen(currentDirectoryContent));
+    cwd = PyUnicode_AsUTF8String(cwd_from_wchar);
+
+    // decrement the reference count on our temp unicode str to avoid mem leak
+    Py_XDECREF(cwd_from_wchar);
+    returnPyObj = Py_BuildValue("N", cwd);
 
     CloseHandle(processHandle);
     free(currentDirectoryContent);
