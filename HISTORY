@@ -1,3 +1,21 @@
+0.1.3 - 2009-XXX-XXX
+--------------------
+NEW FEATURES
+ * Issue 14: per-process username and groupname
+ * Issue 51: per-process current working directory
+ * Issue 59: Process.is_running() is now 10 times faster.
+ * Issue 60: a new graphical process manager is available in demo directory
+
+BUGFIXES
+ * Issue 48: incorrect size for mib array defined in getcmdargs for BSD
+ * Issue 49: possible memory leak due to missing free() on error condition on
+ * Issue 50: fixed getcmdargs() memory fragmentation on BSD
+ * Issue 57: some unit tests were failing on systems where no swap memory is
+   available
+ * Issue 58: is_running() is now called before kill() to make sure we are going
+   to kill the correct process.
+
+
 0.1.2 - 2009-05-06
 ------------------
 NEW FEATURES
