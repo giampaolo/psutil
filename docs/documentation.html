@@ -51,6 +51,25 @@
     The real group id of the current process.  Where gid doesn't make sense (<em>Windows</em>) always return -1. </a></li>
 </ul>
 <ul>
+  <li><a name="Classes" id="Classes"><strong>username</strong><br />
+    The name of the user that owns the process. 
+  </a></li>
+</ul>
+<blockquote><a name="Classes" id="Classes"><em>New in 0.1.3</em></a></blockquote>
+<ul>
+  <li><a name="Classes" id="Classes"><strong>groupname</strong><br />
+   The real groupname of the current process. On Windows the most powerful among the well known groups the user owning the process belongs to is returned. 
+  </a></li>
+</ul>
+<blockquote><a name="Classes" id="Classes"><em>New in 0.1.3</em></a></blockquote>
+<ul>
+  <li><a name="Classes" id="Classes"><strong>getcwd()</strong><br />
+   Return a string representing the process current working directory. 
+  </a></li>
+</ul>
+<blockquote><a name="Classes" id="Classes"><em>New in 0.1.3 - Availability <strong>Windows, Linux</strong></em></a></blockquote>
+
+<ul>
   <li><a name="Classes" id="Classes"><strong>create_time</strong><br />
     The process creation time as a floating point number expressed in seconds since the epoch, in UTC. </a></li>
 </ul>
