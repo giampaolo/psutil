@@ -11,6 +11,7 @@ import time
 import signal
 import types
 import errno
+import platform
 from test import test_support
 
 import psutil
@@ -493,9 +494,11 @@ class TestCase(unittest.TestCase):
             p.username
             p.groupname
             self.assertTrue(p.create_time >= 0.0)
-            rss, vms = p.get_memory_info()
-            self.assertTrue(rss > 0)
-            self.assertEqual(vms, 0)
+            # get_memory_info() raises AccessDenied on Windows Vista
+            if platform.uname()[1] != 'vista':
+                rss, vms = p.get_memory_info()
+                self.assertTrue(rss > 0)
+                self.assertEqual(vms, 0)
 
 
 if hasattr(os, 'getuid'):

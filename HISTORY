@@ -10,6 +10,7 @@ BUGFIXES
  * Issue 48: incorrect size for mib array defined in getcmdargs for BSD
  * Issue 49: possible memory leak due to missing free() on error condition on
  * Issue 50: fixed getcmdargs() memory fragmentation on BSD
+ * Issue 55: test_pid_4 was failing on Windows Vista
  * Issue 57: some unit tests were failing on systems where no swap memory is
    available
  * Issue 58: is_running() is now called before kill() to make sure we are going
@@ -19,13 +20,13 @@ BUGFIXES
 0.1.2 - 2009-05-06
 ------------------
 NEW FEATURES
- * Issue 32: Per-process CPU user/kernel times 
+ * Issue 32: Per-process CPU user/kernel times
  * Issue 33: Process create time
  * Issue 34: Per-process CPU utilization percentage
  * Issue 38: Per-process memory usage (bytes)
  * Issue 41: Per-process memory utilization (percent)
  * Issue 39: System uptime
- * Issue 43: Total system virtual memory 
+ * Issue 43: Total system virtual memory
  * Issue 46: Total system physical memory
  * Issue 44: Total system used/free virtual and physical memory
 
@@ -58,7 +59,7 @@ BUGFIXES
    otherwise would return an "invalid parameter" exception.
  * Issue 17: get_process_list() ignores NoSuchProcess and AccessDenied
    exceptions during building of the list.
- * Issue 22: Process(0).kill() was failing on Windows with an unset exception 
+ * Issue 22: Process(0).kill() was failing on Windows with an unset exception
  * Issue 23: Special case for pid_exists(0)
  * Issue 24: Process(0).kill() now raises AccessDenied exception instead of
    WindowsError.
