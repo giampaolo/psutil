@@ -682,7 +682,8 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 /*
  * Sid to User convertion
  */
-BOOL SidToUser(PSID pSid, LPTSTR szUser, DWORD dwUserLen, LPTSTR szDomain, DWORD dwDomainLen)
+BOOL SidToUser(PSID pSid, LPTSTR szUser, DWORD dwUserLen, LPTSTR szDomain, DWORD
+dwDomainLen, DWORD pid)
 {
     SID_NAME_USE snuSIDNameUse;
     DWORD dwULen;
@@ -696,14 +697,20 @@ BOOL SidToUser(PSID pSid, LPTSTR szUser, DWORD dwUserLen, LPTSTR szDomain, DWORD
             // Get user and domain name based on SID
             if ( LookupAccountSid( NULL, pSid, szUser, &dwULen, szDomain, &dwDLen, &snuSIDNameUse) )
                 {
-                    // LocalSystem processes are incorrectly reported as owned by BUILTIN\Administrators
-                    // We modify that behavior to conform to standard taskmanager
-                    if ( lstrcmpi(szDomain, TEXT("builtin")) == 0 && lstrcmpi(szUser, TEXT("administrators")) == 0)
-                        {
-                            strncpy  (szUser, "SYSTEM", dwUserLen);
-                            strncpy  (szDomain, "NT AUTHORITY", dwDomainLen);
-                        }
-
+                    // LocalSystem processes are incorrectly reported as owned
+                    // by BUILTIN\Administrators We modify that behavior to
+                    // conform to standard taskmanager only if the process is
+                    // actually a System process
+                    if (is_system_proc(pid) == 1) {
+                        // default to *not* changing the data if we fail to
+                        // check for local system privileges, so only look for
+                        // definite confirmed system processes and ignore errors
+                        if ( lstrcmpi(szDomain, TEXT("builtin")) == 0 && lstrcmpi(szUser, TEXT("administrators")) == 0)
+                            {
+                                strncpy  (szUser, "SYSTEM", dwUserLen);
+                                strncpy  (szDomain, "NT AUTHORITY", dwDomainLen);
+                            }
+                    }
                     return TRUE;
                 }
         }
@@ -739,6 +746,10 @@ static PyObject* get_proc_username(PyObject* self, PyObject* args)
         return Py_BuildValue("s", "NT AUTHORITY\\SYSTEM");
     }
 
+    if (pid == 4){
+        return Py_BuildValue("s", "NT AUTHORITY\\SYSTEM");
+    }
+
     // Set Debug privileges
     SetSeDebug();
 
@@ -771,7 +782,8 @@ static PyObject* get_proc_username(PyObject* self, PyObject* args)
                     if ( GetSecurityDescriptorOwner(pSecDescr, &psidUser, &bDefaulted) )
                     {
                         // Converts SID to Domain + Username
-                        if ( SidToUser(psidUser, szUser, sizeof(szUser), szDomain, sizeof(szDomain)) )
+                        if ( SidToUser(psidUser, szUser, sizeof(szUser),
+                                szDomain, sizeof(szDomain), pid) )
                         {
                             bOk = TRUE;
                         }
@@ -780,7 +792,10 @@ static PyObject* get_proc_username(PyObject* self, PyObject* args)
             }
         }
 
-        if (!bOk) PyErr_SetFromWindowsErr(0);
+        if (!bOk) {
+            printf("!bOk\n");
+            PyErr_SetFromWindowsErr(0);
+        }
 
         if ( pSecDescr != NULL )
             HeapFree ( GetProcessHeap(), 0, pSecDescr );

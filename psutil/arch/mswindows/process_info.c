@@ -10,6 +10,7 @@
 #include <Psapi.h>
 #include <tlhelp32.h>
 
+#include "security.h"
 #include "process_info.h"
 
 
@@ -104,6 +105,39 @@ DWORD* get_pids(DWORD *numberOfReturnedPIDs){
     *numberOfReturnedPIDs = enumReturnSz / sizeof(DWORD);
 
     return procArray;
+}
+
+
+int is_system_proc(DWORD pid) {
+    HANDLE hProcess;
+
+    // Special case for PID 0 System Idle Process
+    // and PID 4 (SYSTEM)
+    if ((pid == 0) || (pid == 4)) {
+        return 1;
+    }
+
+    if (pid < 0) {
+        return 0;
+    }
+
+    hProcess = handle_from_pid(pid);
+    if (NULL == hProcess) {
+        // invalid parameter is no such process
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            return 0;
+        }
+
+        // access denied obviously means there's a process to deny access to...
+        if (GetLastError() == ERROR_ACCESS_DENIED) {
+            return 1;
+        }
+
+        PyErr_SetFromWindowsErr(0);
+        return -1;
+    }
+
+    return HasSystemPrivilege(hProcess);
 }
 
 
