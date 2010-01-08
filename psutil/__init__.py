@@ -296,7 +296,7 @@ class Process(object):
         self._last_sys_time = time.time()
         self._last_user_time, self._last_kern_time = self.get_cpu_times()
 
-        return (percent * 100.0) / NUM_CPUS
+        return (percent * 100.0)
 
     def get_cpu_times(self):
         """Return a tuple whose values are process CPU user and system
@@ -400,9 +400,10 @@ def cpu_percent():
     _last_idle_time = idle_time
     _last_time = curr_time
 
+    # Removed; see Issue #67: http://code.google.com/p/psutil/issues/detail?id=67
     # invalid data, will not be accurate so return 0.0 to avoid an overflow
-    if time_delta < idle_delta:
-        return 0.0
+    #if time_delta < idle_delta:
+    #    return 0.0
 
     try :
         idle_percent = (idle_delta / time_delta) * 100.0
