@@ -494,9 +494,13 @@ class TestCase(unittest.TestCase):
             p.username
             p.groupname
             self.assertTrue(p.create_time >= 0.0)
-            # get_memory_info() raises AccessDenied on Windows Vista
-            if platform.uname()[1] != 'vista':
-                rss, vms = p.get_memory_info()
+            try:
+                rss, vms = p.get_memory_info()            
+            except psutil.AccessDenied:
+                # expected on Windows Vista and Windows 7
+                if not platform.uname()[1] in ('vista', 'win-7'):
+                    raise
+            else:
                 self.assertTrue(rss > 0)
                 self.assertEqual(vms, 0)
 
