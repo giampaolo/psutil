@@ -477,34 +477,6 @@ class TestCase(unittest.TestCase):
                 self.assertRaises(psutil.AccessDenied, p.kill)
 
 
-    # Windows specific tests
-
-    if sys.platform.lower().startswith("win32"):
-
-        def test_windows_issue_24(self):
-            p = psutil.Process(0)
-            self.assertRaises(psutil.AccessDenied, p.kill)
-
-        def test_windows_pid_4(self):
-            p = psutil.Process(4)
-            self.assertEqual(p.name, 'System')
-            # use __str__ to access all common Process properties to check
-            # that nothing strange happens
-            str(p)
-            p.username
-            p.groupname
-            self.assertTrue(p.create_time >= 0.0)
-            try:
-                rss, vms = p.get_memory_info()
-            except psutil.AccessDenied:
-                # expected on Windows Vista and Windows 7
-                if not platform.uname()[1] in ('vista', 'win-7'):
-                    raise
-            else:
-                self.assertTrue(rss > 0)
-                self.assertEqual(vms, 0)
-
-
 if hasattr(os, 'getuid'):
     class LimitedUserTestCase(TestCase):
         """Repeat the previous tests by using a limited user.
@@ -534,13 +506,13 @@ def test_main():
 
     # import the specific platform test suite
     if sys.platform.lower().startswith("linux"):
-        from linux import LinuxSpecificTestCase as stc
+        from _linux import LinuxSpecificTestCase as stc
     elif sys.platform.lower().startswith("win32"):
-        from windows import WindowsSpecificTestCase as stc
+        from _windows import WindowsSpecificTestCase as stc
     elif sys.platform.lower().startswith("darwin"):
-        from osx import OSXSpecificTestCase as stc
+        from _osx import OSXSpecificTestCase as stc
     elif sys.platform.lower().startswith("freebsd"):
-        from bsd import BSDSpecificTestCase as stc
+        from _bsd import BSDSpecificTestCase as stc
 
     test_suite.addTest(unittest.makeSuite(stc))
 
