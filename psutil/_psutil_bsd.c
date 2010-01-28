@@ -329,8 +329,13 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
  */
 static PyObject* get_total_phymem(PyObject* self, PyObject* args)
 {
+    #ifdef __x86_64__
+        long long total_phymem;
+    #else
+        int total_phymem;
+    #endif
+
     int mib[2];
-    int total_phymem;
     size_t len;
 
     mib[0] = CTL_HW;
