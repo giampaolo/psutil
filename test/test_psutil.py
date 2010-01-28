@@ -495,7 +495,7 @@ class TestCase(unittest.TestCase):
             p.groupname
             self.assertTrue(p.create_time >= 0.0)
             try:
-                rss, vms = p.get_memory_info()            
+                rss, vms = p.get_memory_info()
             except psutil.AccessDenied:
                 # expected on Windows Vista and Windows 7
                 if not platform.uname()[1] in ('vista', 'win-7'):
@@ -531,6 +531,19 @@ def test_main():
     test_suite.addTest(unittest.makeSuite(TestCase))
     if hasattr(os, 'getuid') and os.getuid() == 0:
         test_suite.addTest(unittest.makeSuite(LimitedUserTestCase))
+
+    # import the specific platform test suite
+    if sys.platform.lower().startswith("linux"):
+        from linux import LinuxSpecificTestCase as stc
+    elif sys.platform.lower().startswith("win32"):
+        from windows import WindowsSpecificTestCase as stc
+    elif sys.platform.lower().startswith("darwin"):
+        from osx import OSXSpecificTestCase as stc
+    elif sys.platform.lower().startswith("freebsd"):
+        from bsd import BSDSpecificTestCase as stc
+
+    test_suite.addTest(unittest.makeSuite(stc))
+
     unittest.TextTestRunner(verbosity=2).run(test_suite)
     if hasattr(test_support, "reap_children"):  # python 2.5 and >
         test_support.reap_children()
