@@ -19,7 +19,10 @@ import psutil
 
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
-
+try:
+    from test.test_support import TESTFN
+except ImportError:
+    TESTFN = 'temp-fname'
 
 def wait_for_pid(pid, timeout=1):
     """Wait for pid to show up in the process list then return.
@@ -35,13 +38,40 @@ def wait_for_pid(pid, timeout=1):
         if time.time() >= raise_at:
             raise RuntimeError("Timed out")
 
+def run_hanging_subprocess():
+    """Starts a sub process which hangs, and wait for it to be fully
+    started before returning a subprocess.Popen object.
+
+    Used in the test suite to have a fully initialized and
+    ready-to-use process keeping its memory utilization unchanged
+    for the whole time.
+
+    The subprocess first creates a file and then just hangs remaining
+    alive. On our end we assume that the process is fully started when
+    from our process space we see that the file has been written on the
+    disk.
+    """
+    cmdline = """\
+python -c "import time; \
+open('%s', 'w').close(); \
+time.sleep(999);" """ %TESTFN
+    p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
+    while 1:
+        if os.path.exists(TESTFN):
+            break
+    return p
+
 
 class TestCase(unittest.TestCase):
 
+    @classmethod
     def setUp(self):
         self.proc = None
 
+    @classmethod
     def tearDown(self):
+        if os.path.isfile(TESTFN):
+            os.remove(TESTFN)
         if self.proc is not None:
             try:
                 if hasattr(os, 'kill'):
@@ -504,6 +534,10 @@ def test_main():
     if hasattr(os, 'getuid') and os.getuid() == 0:
         test_suite.addTest(unittest.makeSuite(LimitedUserTestCase))
 
+    if os.name == 'posix':
+        from _posix import PosixSpecificTestCase
+        test_suite.addTest(unittest.makeSuite(PosixSpecificTestCase))
+
     # import the specific platform test suite
     if sys.platform.lower().startswith("linux"):
         from _linux import LinuxSpecificTestCase as stc
@@ -519,6 +553,7 @@ def test_main():
     unittest.TextTestRunner(verbosity=2).run(test_suite)
     if hasattr(test_support, "reap_children"):  # python 2.5 and >
         test_support.reap_children()
+
     DEVNULL.close()
 
 if __name__ == '__main__':
