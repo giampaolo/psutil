@@ -24,6 +24,7 @@ try:
 except ImportError:
     TESTFN = 'temp-fname'
 
+
 def wait_for_pid(pid, timeout=1):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
@@ -51,33 +52,43 @@ def run_hanging_subprocess():
     from our process space we see that the file has been written on the
     disk.
     """
+    if os.path.isfile(TESTFN):
+        os.remove(TESTFN)
     cmdline = """\
-python -c "import time; \
-open('%s', 'w').close(); \
+python -c "import time, os, sys; \
+f = open('%s', 'w');
+f.write(str(os.getpid())); \
+f.close(); \
 time.sleep(999);" """ %TESTFN
-    p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
-    while 1:
-        if os.path.exists(TESTFN):
-            break
-    return p
+    p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    # XXX provisional - wait for the file to be written by subprocess
+    time.sleep(0.1)
+    f = open(TESTFN, 'r')
+    pid = int(f.read())
+    f.close()
+    return pid
+
+def kill(pid):
+    """Kill a process given its PID"""
+    if hasattr(os, 'kill'):
+        os.kill(pid, signal.SIGKILL)
+    else:
+        psutil.Process(pid).kill()
 
 
 class TestCase(unittest.TestCase):
 
-    @classmethod
     def setUp(self):
         self.proc = None
 
-    @classmethod
     def tearDown(self):
         if os.path.isfile(TESTFN):
             os.remove(TESTFN)
         if self.proc is not None:
+            print self.proc.pid
             try:
-                if hasattr(os, 'kill'):
-                    os.kill(self.proc.pid, signal.SIGKILL)
-                else:
-                    psutil.Process(self.proc.pid).kill()
+                kill(self.proc.pid)
             finally:
                 self.proc = None
 
