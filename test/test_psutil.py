@@ -289,6 +289,7 @@ class TestCase(unittest.TestCase):
         # caching code)
         p.groupname
         p.groupname
+        kill(p.pid)
 
         if os.name == 'posix':
             import grp
