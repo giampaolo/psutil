@@ -39,12 +39,12 @@ class PosixSpecificTestCase(unittest.TestCase):
         self.assertEqual(ppid_ps, str(ppid_psutil))
 
     def test_process_uid(self):
-        uid_ps = sh("ps --no-headers -o euid -p %s" %self.pid)
+        uid_ps = sh("ps --no-headers -o uid -p %s" %self.pid)
         uid_psutil = psutil.Process(self.pid).uid
         self.assertEqual(uid_ps, str(uid_psutil))
 
     def test_process_gid(self):
-        gid_ps = sh("ps --no-headers -o egid -p %s" %self.pid)
+        gid_ps = sh("ps --no-headers -o rgid -p %s" %self.pid)
         gid_psutil = psutil.Process(self.pid).uid
         self.assertEqual(gid_ps, str(gid_psutil))
 
@@ -54,7 +54,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         self.assertEqual(username_ps, username_psutil)
 
     def test_process_groupname(self):
-        groupname_ps = sh("ps --no-headers -o egroup -p %s" %self.pid)
+        groupname_ps = sh("ps --no-headers -o rgroup -p %s" %self.pid)
         groupname_psutil = psutil.Process(self.pid).groupname
         self.assertEqual(groupname_ps, groupname_psutil)
 
