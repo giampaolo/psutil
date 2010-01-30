@@ -39,32 +39,6 @@ def wait_for_pid(pid, timeout=1):
         if time.time() >= raise_at:
             raise RuntimeError("Timed out")
 
-def run_hanging_subprocess():
-    """Starts a sub process which hangs, and wait for it to be fully
-    started before returning its pid.
-
-    Used in the test suite to have a fully initialized and
-    ready-to-use process keeping its memory utilization unchanged
-    for the whole time.
-    """
-    if os.path.isfile(TESTFN):
-        os.remove(TESTFN)
-    cmdline = """python -c "\
-import os; \
-f = open('%s', 'w');
-f.write(str(os.getpid())); \
-f.close(); \
-raw_input();" """ %TESTFN
-    p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
-    # XXX provisional - wait for the file to be written by subprocess
-    time.sleep(0.1)
-    f = open(TESTFN, 'r')
-    pid = int(f.read())
-    f.close()
-    os.remove(TESTFN)
-    return pid
-
 def kill(pid):
     """Kill a process given its PID."""
     if hasattr(os, 'kill'):
