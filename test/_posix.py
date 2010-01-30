@@ -74,8 +74,3 @@ class PosixSpecificTestCase(unittest.TestCase):
         vsz_psutil = psutil.Process(self.pid).get_memory_info()[1] / 1024
         self.assertEqual(vsz_ps, str(vsz_psutil))
 
-    def test_process_create_time(self):
-        start_ps = sh("ps --no-headers -o start -p %s" %self.pid)
-        start_psutil = psutil.Process(self.pid).create_time
-        start_psutil = time.strftime("%H:%M:%S", time.localtime(start_psutil))
-        self.assertEqual(start_ps, start_psutil)
