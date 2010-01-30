@@ -11,6 +11,8 @@ import _psutil_mswindows
 from error import *
 
 
+ERROR_NONE_MAPPED = 1332
+
 # --- module level constants (gets pushed up to psutil module)
 
 NoSuchProcess = _psutil_mswindows.NoSuchProcess
@@ -93,12 +95,20 @@ class Impl(object):
                 raise AccessDenied
             raise
 
+    @wrap_privileges
     def get_process_username(self, pid):
         """Return the name of the user that owns the process"""
-        return _psutil_mswindows.get_proc_username(pid)
+        try:
+            return _psutil_mswindows.get_proc_username(pid)
+        except WindowsError, err:
+            if err.winerror == ERROR_NONE_MAPPED:
+                # XXX - temporary fix around
+                # http://code.google.com/p/psutil/issues/detail?id=63
+                raise AccessDenied
+            raise
 
     def get_process_groupname(self, username):
-       return _psutil_mswindows.get_proc_groupname(username)
+        return _psutil_mswindows.get_proc_groupname(username)
 
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""

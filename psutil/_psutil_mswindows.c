@@ -793,7 +793,6 @@ static PyObject* get_proc_username(PyObject* self, PyObject* args)
         }
 
         if (!bOk) {
-            printf("!bOk\n");
             PyErr_SetFromWindowsErr(0);
         }
 

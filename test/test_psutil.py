@@ -53,13 +53,8 @@ class TestCase(unittest.TestCase):
         self.proc = None
 
     def tearDown(self):
-        if os.path.isfile(TESTFN):
-            os.remove(TESTFN)
         if self.proc is not None:
-            try:
-                kill(self.proc.pid)
-            finally:
-                self.proc = None
+            kill(self.proc.pid)
 
     def test_get_process_list(self):
         pids = [x.pid for x in psutil.get_process_list()]
