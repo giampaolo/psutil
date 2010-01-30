@@ -41,25 +41,20 @@ def wait_for_pid(pid, timeout=1):
 
 def run_hanging_subprocess():
     """Starts a sub process which hangs, and wait for it to be fully
-    started before returning a subprocess.Popen object.
+    started before returning its pid.
 
     Used in the test suite to have a fully initialized and
     ready-to-use process keeping its memory utilization unchanged
     for the whole time.
-
-    The subprocess first creates a file and then just hangs remaining
-    alive. On our end we assume that the process is fully started when
-    from our process space we see that the file has been written on the
-    disk.
     """
     if os.path.isfile(TESTFN):
         os.remove(TESTFN)
-    cmdline = """\
-python -c "import time, os, sys; \
+    cmdline = """python -c "\
+import os; \
 f = open('%s', 'w');
 f.write(str(os.getpid())); \
 f.close(); \
-time.sleep(999);" """ %TESTFN
+raw_input();" """ %TESTFN
     p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     # XXX provisional - wait for the file to be written by subprocess
@@ -67,10 +62,11 @@ time.sleep(999);" """ %TESTFN
     f = open(TESTFN, 'r')
     pid = int(f.read())
     f.close()
+    os.remove(TESTFN)
     return pid
 
 def kill(pid):
-    """Kill a process given its PID"""
+    """Kill a process given its PID."""
     if hasattr(os, 'kill'):
         os.kill(pid, signal.SIGKILL)
     else:
@@ -86,7 +82,6 @@ class TestCase(unittest.TestCase):
         if os.path.isfile(TESTFN):
             os.remove(TESTFN)
         if self.proc is not None:
-            print self.proc.pid
             try:
                 kill(self.proc.pid)
             finally:
