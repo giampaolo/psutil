@@ -329,12 +329,7 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
  */
 static PyObject* get_total_phymem(PyObject* self, PyObject* args)
 {
-    #ifdef __x86_64__
-        long total_phymem;
-    #else
-        int total_phymem;
-    #endif
-
+    long total_phymem;
     int mib[2];
     size_t len;
 
@@ -347,7 +342,7 @@ static PyObject* get_total_phymem(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    return Py_BuildValue("i", total_phymem);
+    return Py_BuildValue("l", total_phymem);
 }
 
 
