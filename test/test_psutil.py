@@ -505,14 +505,17 @@ if hasattr(os, 'getuid'):
 
 
 def test_main():
+    tests = []
     test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.makeSuite(TestCase))
+    
+    tests.append(TestCase)
+    
     if hasattr(os, 'getuid') and os.getuid() == 0:
-        test_suite.addTest(unittest.makeSuite(LimitedUserTestCase))
+        tests.append(LimitedUserTestCase)
 
     if os.name == 'posix':
         from _posix import PosixSpecificTestCase
-        test_suite.addTest(unittest.makeSuite(PosixSpecificTestCase))
+        tests.append(PosixSpecificTestCase)
 
     # import the specific platform test suite
     if sys.platform.lower().startswith("linux"):
@@ -523,8 +526,10 @@ def test_main():
         from _osx import OSXSpecificTestCase as stc
     elif sys.platform.lower().startswith("freebsd"):
         from _bsd import BSDSpecificTestCase as stc
+    tests.append(stc)
 
-    test_suite.addTest(unittest.makeSuite(stc))
+    for test_class in tests:
+        test_suite.addTest(unittest.makeSuite(test_class))
 
     unittest.TextTestRunner(verbosity=2).run(test_suite)
     if hasattr(test_support, "reap_children"):  # python 2.5 and >

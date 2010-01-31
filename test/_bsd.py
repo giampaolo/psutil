@@ -9,9 +9,16 @@ import psutil
 from test_psutil import kill, PYTHON, DEVNULL
 
 
-def sh(cmd):
-    p = subprocess.Popen(cmd, shell=1, stdout=subprocess.PIPE) 
-    return p.communicate()[0].strip()
+def sysctl(cmdline):
+    """Expects a sysctl command with an argument and parse the result
+    returning only the value of interest.
+    """
+    p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE) 
+    result = p.communicate()[0].strip().split()[1]
+    try:
+        return int(result)
+    except ValueError:
+        return result
 
 
 class BSDSpecificTestCase(unittest.TestCase):
@@ -23,22 +30,19 @@ class BSDSpecificTestCase(unittest.TestCase):
         kill(self.pid)
 
     def test_TOTAL_PHYMEM(self):
-        p = subprocess.Popen('sysctl -a | grep hw.physmem', shell=1, stdout=subprocess.PIPE)
-        out = p.stdout.read()
-        value = int(out.split()[1])
-        self.assertEqual(value, psutil.TOTAL_PHYMEM)
+        sysctl_hwphymem = sysctl('sysctl hw.physmem')
+        self.assertEqual(sysctl_hwphymem, psutil.TOTAL_PHYMEM)
 
     def test_avail_phymem(self):
-        # This test is not particularly precise and may fail if the OS is
+        # This test is not particularly accurate and may fail if the OS is
         # consuming memory for other applications. 
         # We just want to test that the difference between psutil result
         # and sysctl's is not too high.
-        _sum = sum((
-            int(sh("sysctl vm.stats.vm.v_inactive_count").split()[1]),
-            int(sh("sysctl vm.stats.vm.v_cache_count").split()[1]),
-            int(sh("sysctl vm.stats.vm.v_free_count").split()[1])
-            ))
-        _pagesize = int(sh("sysctl hw.pagesize").split()[1])
+        _sum = sum((sysctl("sysctl vm.stats.vm.v_inactive_count"),
+                    sysctl("sysctl vm.stats.vm.v_cache_count"),
+                    sysctl("sysctl vm.stats.vm.v_free_count")
+                   ))
+        _pagesize = sysctl("sysctl hw.pagesize")
         sysctl_avail_phymem = _sum * _pagesize
         psutil_avail_phymem =  psutil.avail_phymem()
         difference = psutil_avail_phymem - sysctl_avail_phymem
