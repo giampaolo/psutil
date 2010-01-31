@@ -276,11 +276,28 @@ class Process(object):
 
     def suspend(self):
         """Suspend process execution."""
-        return _platform_impl.suspend_process(self.pid)
+        # windows
+        if hasattr(_platform_impl, "suspend_process"):
+            _platform_impl.suspend_process(self.pid)
+        # posix
+        try:
+            os.kill(self.pid, signal.SIGSTOP)
+        except OSError, err:
+            if err.errno == errno.ESRCH:
+                raise NoSuchProcess(self.pid)
+            raise
 
     def resume(self):
         """Resume process execution."""
-        return _platform_impl.resume_process(self.pid)
+        if hasattr(_platform_impl, "resume_process"):        
+            _platform_impl.resume_process(self.pid)
+        # posix
+        try:
+            os.kill(self.pid, signal.SIGCONT)
+        except OSError, err:
+            if err.errno == errno.ESRCH:
+                raise NoSuchProcess(self.pid)
+            raise
 
     def get_cpu_percent(self):
         """Compare process times to system time elapsed since last call
