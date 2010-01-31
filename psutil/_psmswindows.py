@@ -134,10 +134,6 @@ class Impl(object):
     def resume_process(self, pid):
         return _psutil_mswindows.resume_process(pid)
 
-    def get_process_environ(self, pid):
-        # XXX - still to be implemented
-        return {}
-
     @wrap_privileges
     def get_process_cwd(self, pid):
         if pid in (0, 4):
