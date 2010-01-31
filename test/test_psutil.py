@@ -316,6 +316,12 @@ class TestCase(unittest.TestCase):
         self.assertEqual(p.ppid, this_parent)
         self.assertEqual(p.parent.pid, this_parent)
 
+    def test_suspend_resume(self):
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(self.proc.pid)
+        p.suspend()
+        p.resume()
+
     def test_get_pid_list(self):
         plist = [x.pid for x in psutil.get_process_list()]
         pidlist = psutil.get_pid_list()
@@ -507,9 +513,9 @@ if hasattr(os, 'getuid'):
 def test_main():
     tests = []
     test_suite = unittest.TestSuite()
-    
+
     tests.append(TestCase)
-    
+
     if hasattr(os, 'getuid') and os.getuid() == 0:
         tests.append(LimitedUserTestCase)
 

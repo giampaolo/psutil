@@ -6,6 +6,7 @@
  */
 
 #include <Python.h>
+#include <windows.h>
 
 static PyObject* get_pid_list(PyObject* self, PyObject* args);
 static PyObject* kill_process(PyObject* self, PyObject* args);
@@ -24,3 +25,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args);
 static PyObject* get_proc_username(PyObject* self, PyObject* args);
 static PyObject* get_proc_groupname(PyObject* self, PyObject* args);
 static PyObject* get_process_cwd(PyObject* self, PyObject* args);
+static PyObject* suspend_process(PyObject* self, PyObject* args);
+static PyObject* resume_process(PyObject* self, PyObject* args);
+
+int suspend_resume_process(DWORD pid, int suspend);

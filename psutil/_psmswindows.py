@@ -128,6 +128,12 @@ class Impl(object):
     def get_cpu_times(self, pid):
         return _psutil_mswindows.get_process_cpu_times(pid)
 
+    def suspend_process(self, pid):
+        return _psutil_mswindows.suspend_process(pid)
+
+    def resume_process(self, pid):
+        return _psutil_mswindows.resume_process(pid)
+
     def get_process_environ(self, pid):
         # XXX - still to be implemented
         return {}

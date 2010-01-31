@@ -9,6 +9,7 @@
 #include <Psapi.h>
 #include <time.h>
 #include <lm.h>
+#include <tlhelp32.h>
 
 #include "_psutil_mswindows.h"
 #include "arch/mswindows/security.h"
@@ -53,6 +54,10 @@ static PyMethodDef PsutilMethods[] =
         "Return the name of the group a user belong to"},
     {"get_process_cwd", get_process_cwd, METH_VARARGS,
         "Return process current working directory"},
+    {"suspend_process", suspend_process, METH_VARARGS,
+        "Suspend a process"},
+    {"resume_process", resume_process, METH_VARARGS,
+        "Resume a process"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -999,3 +1004,89 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     return returnPyObj;
 }
 
+
+/*
+Resume or suspends a process.
+*/
+int suspend_resume_process(DWORD pid, int suspend)
+{
+    // a huge thanks to http://www.codeproject.com/KB/threads/pausep.aspx
+
+    HANDLE         hThreadSnap   = NULL;
+    BOOL           bRet          = FALSE;
+    THREADENTRY32  te32          = {0};
+
+    hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+    if (hThreadSnap == INVALID_HANDLE_VALUE)
+        return (FALSE);
+
+    // Fill in the size of the structure before using it.
+    te32.dwSize = sizeof(THREADENTRY32);
+
+    // Walk the thread snapshot to find all threads of the process.
+    // If the thread belongs to the process, add its information
+    // to the display list.
+    if (Thread32First(hThreadSnap, &te32))
+    {
+        do
+        {
+            if (te32.th32OwnerProcessID == pid)
+            {
+				HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE,
+                                            te32.th32ThreadID);
+				if (suspend == 1)
+				{
+					//printf("Suspending Thread \n");
+					SuspendThread(hThread);
+				}
+				else
+				{
+					//printf("Resuming Thread \n");
+					ResumeThread(hThread);
+				}
+				CloseHandle(hThread);
+            }
+        }
+        while (Thread32Next(hThreadSnap, &te32));
+        bRet = TRUE;
+    }
+    else
+        bRet = FALSE;  // could not walk the list of threads
+
+    // Do not forget to clean up the snapshot object.
+    CloseHandle(hThreadSnap);
+
+    return (bRet);
+}
+
+
+static PyObject* suspend_process(PyObject* self, PyObject* args)
+{
+    long pid;
+    int  suspend = 1;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+        return NULL;
+    }
+    if (! suspend_resume_process(pid, suspend)){
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+    return Py_None;
+}
+
+
+static PyObject* resume_process(PyObject* self, PyObject* args)
+{
+    long pid;
+    int suspend = 0;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+        return NULL;
+    }
+    if (! suspend_resume_process(pid, suspend)){
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+    return Py_None;
+}

@@ -274,6 +274,14 @@ class Process(object):
             """
             return _platform_impl.get_process_cwd(self.pid)
 
+    def suspend(self):
+        """Suspend process execution."""
+        return _platform_impl.suspend_process(self.pid)
+
+    def resume(self):
+        """Resume process execution."""
+        return _platform_impl.resume_process(self.pid)
+
     def get_cpu_percent(self):
         """Compare process times to system time elapsed since last call
         and calculate CPU utilization as a percentage. It is recommended
