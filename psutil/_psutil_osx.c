@@ -344,6 +344,10 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     task_port_t task = (task_port_t)NULL;
     time_value_t user_time, system_time;
     struct task_basic_info tasks_info;
+    vm_region_basic_info_data_64_t  b_info;
+    vm_address_t address = GLOBAL_SHARED_TEXT_SEGMENT;
+    vm_size_t size;
+    mach_port_t object_name;
 
     // the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
@@ -365,6 +369,21 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
                 return PyErr_Format(PyExc_RuntimeError,
                             "task_info(TASK_BASIC_INFO) failed for pid %lu", pid);
         }
+
+        /* Issue #73 http://code.google.com/p/psutil/issues/detail?id=73
+         * adjust the virtual memory size down to account for
+         * shared memory that task_info.virtual_size includes w/every process
+         */
+        info_count = VM_REGION_BASIC_INFO_COUNT_64;
+        err = vm_region_64(task, &address, &size, VM_REGION_BASIC_INFO,
+            (vm_region_info_t)&b_info, &info_count, &object_name);
+        if (err == KERN_SUCCESS) {
+            if (b_info.reserved && size == (SHARED_TEXT_REGION_SIZE) &&
+                tasks_info.virtual_size > (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE)) {
+                    tasks_info.virtual_size -= (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE);
+            }
+        }
+
     }
 
     else {
