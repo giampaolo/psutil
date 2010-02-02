@@ -3,10 +3,11 @@
 import unittest
 import subprocess
 import time
+import re
 
 import psutil
 
-from test_psutil import kill, ps, PYTHON, DEVNULL
+from test_psutil import kill, PYTHON, DEVNULL
 from _posix import ps
 
 
@@ -20,6 +21,19 @@ def sysctl(cmdline):
         return int(result)
     except ValueError:
         return result
+
+def parse_sysctl_vmtotal(output):
+    """Parse sysctl vm.vmtotal output returning total and free memory
+    values.
+    """
+    line = output.split('\n')[4]  # our line of interest
+    mobj = re.match(r'Virtual\s+Memory.*Total:\s+(\d+)K,\s+Active\s+(\d+)K.*', line)
+    total, active = mobj.groups()
+    # values are represented in kilo bytes
+    total = int(total) * 1024
+    active = int(active) * 1024
+    free = total - active
+    return total, free
 
 
 class BSDSpecificTestCase(unittest.TestCase):
@@ -47,11 +61,48 @@ class BSDSpecificTestCase(unittest.TestCase):
         sysctl_avail_phymem = _sum * _pagesize
         psutil_avail_phymem =  psutil.avail_phymem()
         difference = psutil_avail_phymem - sysctl_avail_phymem
-        # on my system the difference is of 348160 bytes;
-        # let's assume it is a filaure if it's higher than 0.5 mega bytes
-        if difference > 512000:
+        # On my system both sysctl and psutil report the same values. 
+        # Let's use a tollerance of 0.5 MB and consider the test as failed
+        # if we go over it.
+        if difference > (0.5 * 2**20):
             self.fail("sysctl=%s; psutil=%s; difference=%s;" %(
                       sysctl_avail_phymem, psutil_avail_phymem, difference))
+
+    def test_total_virtmem(self):
+        # This test is not particularly accurate and may fail if the OS is
+        # consuming memory for other applications.
+        # We just want to test that the difference between psutil result
+        # and sysctl's is not too high.
+        p = subprocess.Popen("sysctl vm.vmtotal", shell=1, stdout=subprocess.PIPE)
+        result = p.communicate()[0].strip()
+        sysctl_total_virtmem, _ = parse_sysctl_vmtotal(result)
+        psutil_total_virtmem = psutil.total_virtmem()
+        difference = sysctl_total_virtmem - psutil_total_virtmem
+
+        # On my system I get a difference of 4657152 bytes, probably because
+        # the system is consuming memory for this same test.
+        # Assuming psutil is right, let use a tollerance of 5 MB and consider
+        # the test as failed if we go over it.
+        if difference > (5 * 2**20):
+            self.fail("sysctl=%s; psutil=%s; difference=%s;" %(
+                       sysctl_total_virtmem, psutil_total_virtmem, difference)
+                      )
+
+    def test_avail_virtmem(self):
+        # This test is not particularly accurate and may fail if the OS is
+        # consuming memory for other applications.
+        # We just want to test that the difference between psutil result
+        # and sysctl's is not too high.
+        p = subprocess.Popen("sysctl vm.vmtotal", shell=1, stdout=subprocess.PIPE)
+        result = p.communicate()[0].strip()
+        _, sysctl_avail_virtmem = parse_sysctl_vmtotal(result)
+        psutil_avail_virtmem = psutil.avail_virtmem()
+        difference = sysctl_avail_virtmem - psutil_avail_virtmem
+        # let's assume the test is failed if difference is > 0.5 MB
+        if difference > (0.5 * 2**20):
+            self.fail("sysctl=%s; psutil=%s; difference=%s;" %(
+                       sysctl_avail_virtmem, psutil_avail_virtmem, difference)
+                      )
 
     def test_process_create_time(self):
         cmdline = "ps -o lstart -p %s" %self.pid
@@ -67,6 +118,13 @@ class BSDSpecificTestCase(unittest.TestCase):
         groupname_ps = ps("ps --no-headers -o rgroup -p %s" %self.pid)
         groupname_psutil = psutil.Process(self.pid).groupname
         self.assertEqual(groupname_ps, groupname_psutil)
+
+
+
+if __name__ == '__main__':
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(unittest.makeSuite(BSDSpecificTestCase))
+    unittest.TextTestRunner(verbosity=2).run(test_suite)
 
 
 
