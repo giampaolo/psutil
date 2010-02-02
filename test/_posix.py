@@ -57,11 +57,6 @@ class PosixSpecificTestCase(unittest.TestCase):
         username_psutil = psutil.Process(self.pid).username
         self.assertEqual(username_ps, username_psutil)
 
-    def test_process_groupname(self):
-        groupname_ps = ps("ps --no-headers -o rgroup -p %s" %self.pid)
-        groupname_psutil = psutil.Process(self.pid).groupname
-        self.assertEqual(groupname_ps, groupname_psutil)
-
     def test_process_rss_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same

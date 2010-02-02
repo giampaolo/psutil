@@ -6,7 +6,8 @@ import time
 
 import psutil
 
-from test_psutil import kill, PYTHON, DEVNULL
+from test_psutil import kill, ps, PYTHON, DEVNULL
+from _posix import ps
 
 
 def sysctl(cmdline):
@@ -61,6 +62,12 @@ class BSDSpecificTestCase(unittest.TestCase):
         start_psutil = time.strftime("%a %b %d %H:%M:%S %Y", 
                                      time.localtime(start_psutil))
         self.assertEqual(start_ps, start_psutil)
+
+    def test_process_groupname(self):
+        groupname_ps = ps("ps --no-headers -o rgroup -p %s" %self.pid)
+        groupname_psutil = psutil.Process(self.pid).groupname
+        self.assertEqual(groupname_ps, groupname_psutil)
+
 
 
 
