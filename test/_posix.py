@@ -49,7 +49,7 @@ class PosixSpecificTestCase(unittest.TestCase):
 
     def test_process_gid(self):
         gid_ps = ps("ps --no-headers -o rgid -p %s" %self.pid)
-        gid_psutil = psutil.Process(self.pid).uid
+        gid_psutil = psutil.Process(self.pid).gid
         self.assertEqual(gid_ps, gid_psutil)
 
     def test_process_username(self):

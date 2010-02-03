@@ -156,8 +156,9 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 
         // hooray, we got all the data, so return it as a tuple to be passed to
         // ProcessInfo() constructor
-        infoTuple = Py_BuildValue("llssNll", pid, kp.ki_ppid, kp.ki_comm, "",
-                                  arglist, kp.ki_ruid, kp.ki_rgid);
+        infoTuple = Py_BuildValue("llssNll", pid, (long)kp.ki_ppid, kp.ki_comm, "",
+                                  arglist, (long)kp.ki_ruid, (long)kp.ki_rgid);
+
         if (NULL == infoTuple) {
             PyErr_SetString(PyExc_RuntimeError,
                             "Failed to build process information tuple!");
