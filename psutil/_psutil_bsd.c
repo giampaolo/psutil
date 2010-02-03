@@ -352,13 +352,13 @@ static PyObject* get_total_phymem(PyObject* self, PyObject* args)
  */
 static PyObject* get_avail_phymem(PyObject* self, PyObject* args)
 {
-    unsigned int v_inactive_count;
-    unsigned int v_cache_count;
-    unsigned int v_free_count;
-    int total_mem;
-    long long avail_mem;
-    size_t size = sizeof(unsigned int);
-    size_t psize = sizeof(int);
+    unsigned long v_inactive_count = 0;
+    unsigned long v_cache_count = 0;
+    unsigned long v_free_count = 0;
+    long total_mem = 0;
+    long long avail_mem = 0;
+    size_t size = sizeof(long);
+    size_t psize = sizeof(long);
     int pagesize = getpagesize();
 
     if (sysctlbyname("hw.physmem", &total_mem, &psize, NULL, 0) == -1) {

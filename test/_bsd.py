@@ -60,7 +60,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         _pagesize = sysctl("sysctl hw.pagesize")
         sysctl_avail_phymem = _sum * _pagesize
         psutil_avail_phymem =  psutil.avail_phymem()
-        difference = psutil_avail_phymem - sysctl_avail_phymem
+        difference = abs(psutil_avail_phymem - sysctl_avail_phymem)
         # On my system both sysctl and psutil report the same values. 
         # Let's use a tollerance of 0.5 MB and consider the test as failed
         # if we go over it.
@@ -77,13 +77,13 @@ class BSDSpecificTestCase(unittest.TestCase):
         result = p.communicate()[0].strip()
         sysctl_total_virtmem, _ = parse_sysctl_vmtotal(result)
         psutil_total_virtmem = psutil.total_virtmem()
-        difference = sysctl_total_virtmem - psutil_total_virtmem
+        difference = abs(sysctl_total_virtmem - psutil_total_virtmem)
 
         # On my system I get a difference of 4657152 bytes, probably because
         # the system is consuming memory for this same test.
-        # Assuming psutil is right, let use a tollerance of 5 MB and consider
+        # Assuming psutil is right, let's use a tollerance of 10 MB and consider
         # the test as failed if we go over it.
-        if difference > (5 * 2**20):
+        if difference > (10 * 2**20):
             self.fail("sysctl=%s; psutil=%s; difference=%s;" %(
                        sysctl_total_virtmem, psutil_total_virtmem, difference)
                       )
@@ -97,7 +97,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         result = p.communicate()[0].strip()
         _, sysctl_avail_virtmem = parse_sysctl_vmtotal(result)
         psutil_avail_virtmem = psutil.avail_virtmem()
-        difference = sysctl_avail_virtmem - psutil_avail_virtmem
+        difference = abs(sysctl_avail_virtmem - psutil_avail_virtmem)
         # let's assume the test is failed if difference is > 0.5 MB
         if difference > (0.5 * 2**20):
             self.fail("sysctl=%s; psutil=%s; difference=%s;" %(
@@ -110,7 +110,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         output = p.communicate()[0]
         start_ps = output.replace('STARTED', '').strip()
         start_psutil = psutil.Process(self.pid).create_time
-        start_psutil = time.strftime("%a %b %d %H:%M:%S %Y", 
+        start_psutil = time.strftime("%a %b %e %H:%M:%S %Y", 
                                      time.localtime(start_psutil))
         self.assertEqual(start_ps, start_psutil)
 
