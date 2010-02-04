@@ -864,40 +864,44 @@ static PyObject* get_proc_groupname(PyObject* self, PyObject* args)
 
 	// Retrieves group list associated to username
 	nStatus = NetUserGetLocalGroups (NULL, wszUser, 0, LG_INCLUDE_INDIRECT,
-                                    &pbBuf, MAX_PREFERRED_LENGTH,
-                                    &dwEntriesRead, &dwTotalEntries);
+                                     &pbBuf, MAX_PREFERRED_LENGTH,
+                                     &dwEntriesRead, &dwTotalEntries);
 
-	if (nStatus == NERR_Success)
-	{
-		pLGUI=(LOCALGROUP_USERS_INFO_0 *)pbBuf;
+	if (nStatus != NERR_Success) {
+    	if (pbBuf != NULL)
+    		NetApiBufferFree(pbBuf);
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
 
-		// Looks for the most powerful well known group
-		// in users group list
-        while ( found <0 && wszpWellKnownGroups[j] != NULL )
+	pLGUI=(LOCALGROUP_USERS_INFO_0 *)pbBuf;
+
+	// Looks for the most powerful well known group
+	// in users group list
+    while ( found <0 && wszpWellKnownGroups[j] != NULL )
+    {
+        for (i=0; i<dwTotalEntries; i++)
         {
-            for (i=0; i<dwTotalEntries; i++)
+            if (!lstrcmpiW(pLGUI[i].lgrui0_name, wszpWellKnownGroups[j]))
             {
-                if (!lstrcmpiW(pLGUI[i].lgrui0_name, wszpWellKnownGroups[j]))
-                {
-                    found=i;
-                    break;
-                }
+                found=i;
+                break;
             }
-            j++;
         }
+        j++;
+    }
 
-        // User belongs to one of the well known groups
-		if (found>=0)
-		{   // Group name from unicode to multibyte
-			WideCharToMultiByte(CP_ACP, 0, pLGUI[found].lgrui0_name, -1,
-			                    szGroup, sizeof(szGroup), NULL, NULL);
-		}
-
+    // User belongs to one of the well known groups
+	if (found>=0)
+	{   // Group name from unicode to multibyte
+		WideCharToMultiByte(CP_ACP, 0, pLGUI[found].lgrui0_name, -1,
+		                    szGroup, sizeof(szGroup), NULL, NULL);
 	}
 
 
+
 	if (pbBuf != NULL)
-		NetApiBufferFree (pbBuf);
+		NetApiBufferFree(pbBuf);
 
 	return Py_BuildValue("s", szGroup);
 }
