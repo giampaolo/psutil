@@ -271,29 +271,39 @@ class Process(object):
 
     def suspend(self):
         """Suspend process execution."""
+        # safety measure in case the current process has been killed in
+        # meantime and the kernel reused its PID
+        if not self.is_running():
+            raise NoSuchProcess
         # windows
         if hasattr(_platform_impl, "suspend_process"):
             _platform_impl.suspend_process(self.pid)
-        # posix
-        try:
-            os.kill(self.pid, signal.SIGSTOP)
-        except OSError, err:
-            if err.errno == errno.ESRCH:
-                raise NoSuchProcess(self.pid)
-            raise
+        else:
+            # posix
+            try:
+                os.kill(self.pid, signal.SIGSTOP)
+            except OSError, err:
+                if err.errno == errno.ESRCH:
+                    raise NoSuchProcess(self.pid)
+                raise
 
     def resume(self):
         """Resume process execution."""
+        # safety measure in case the current process has been killed in
+        # meantime and the kernel reused its PID
+        if not self.is_running():
+            raise NoSuchProcess
         # windows
         if hasattr(_platform_impl, "resume_process"):
             _platform_impl.resume_process(self.pid)
-        # posix
-        try:
-            os.kill(self.pid, signal.SIGCONT)
-        except OSError, err:
-            if err.errno == errno.ESRCH:
-                raise NoSuchProcess(self.pid)
-            raise
+        else:
+            # posix
+            try:
+                os.kill(self.pid, signal.SIGCONT)
+            except OSError, err:
+                if err.errno == errno.ESRCH:
+                    raise NoSuchProcess(self.pid)
+                raise
 
     def get_cpu_percent(self):
         """Compare process times to system time elapsed since last call
