@@ -81,6 +81,9 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def test_is_running(self):
         self.execute('is_running')
 
+    def test_resume(self):
+        self.execute('resume')
+
     if sys.platform.lower().startswith("linux") \
     or sys.platform.lower().startswith("win32"):
         def test_getcwd(self):

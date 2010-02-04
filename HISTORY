@@ -1,3 +1,5 @@
+Bug tracker at http://code.google.com/p/psutil/issues
+
 0.1.3 - 2009-XXX-XXX
 --------------------
 NEW FEATURES
@@ -5,6 +7,8 @@ NEW FEATURES
  * Issue 51: per-process current working directory
  * Issue 59: Process.is_running() is now 10 times faster.
  * Issue 60: a new graphical process manager is available in demo directory
+ * Issue 61: added supoprt for FreeBSD 64 bit.
+ * Issue 71: implemented suspend/resume process.
 
 BUGFIXES
  * Issue 48: incorrect size for mib array defined in getcmdargs for BSD
@@ -15,6 +19,7 @@ BUGFIXES
    available
  * Issue 58: is_running() is now called before kill() to make sure we are going
    to kill the correct process.
+ * Issue 73: virtual memory size reported on OS X includes shared library size.
 
 
 0.1.2 - 2009-05-06
@@ -43,10 +48,10 @@ NEW FEATURES
  * Issue 9: Process.uid and Process.gid now retrieve process UID and GID.
  * Issue 11: Support for parent/ppid - Process.parent property returns a
    Process object representing the parent process, and Process.ppid returns
-	 the parent PID.
+   the parent PID.
  * Issue 12 & 15: NoSuchProcess exception now raised when creating an object
    for a nonexistent process, or when retrieving information about a process
-	 that has gone away.
+   that has gone away.
  * Issue 21: AccessDenied exception created for raising access denied errors
    from OSError or WindowsError on individual platforms.
  * Issue 26: psutil.process_iter() function to iterate over processes as
