@@ -80,15 +80,21 @@ class PosixSpecificTestCase(unittest.TestCase):
         output = p.communicate()[0].strip()
         output = output.replace('PID', '')
         p.wait()
-        pids_ps = [0]
+        pids_ps = []
         for pid in output.split('\n'):
             if pid:
                 pids_ps.append(int(pid.strip()))
         # remove ps subprocess pid which is supposed to be dead in meantime
         pids_ps.remove(p.pid)
+        # not all systems include pid 0 in their list but psutil does so 
+        # we force it
+        if 0 not in pids_ps:
+            pis_ps.append(0)
+
         pids_psutil = psutil.get_pid_list()
         pids_ps.sort()
         pids_psutil.sort()
+
         if pids_ps != pids_psutil:
             difference = filter(lambda x:x not in pids_ps, pids_psutil) + \
                          filter(lambda x:x not in pids_psutil, pids_ps)
