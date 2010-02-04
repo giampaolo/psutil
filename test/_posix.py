@@ -73,3 +73,31 @@ class PosixSpecificTestCase(unittest.TestCase):
         vsz_psutil = psutil.Process(self.pid).get_memory_info()[1] / 1024
         self.assertEqual(vsz_ps, vsz_psutil)
 
+    def test_get_pids(self):
+        # Note: this test might fail if the OS is starting/killing
+        # other processes in the meantime
+        p = subprocess.Popen(["ps", "ax", "-o", "pid"], stdout=subprocess.PIPE)
+        output = p.communicate()[0].strip()
+        output = output.replace('PID', '')
+        p.wait()
+        pids_ps = [0]
+        for pid in output.split('\n'):
+            if pid:
+                pids_ps.append(int(pid.strip()))
+        # remove ps subprocess pid which is supposed to be dead in meantime
+        pids_ps.remove(p.pid)
+        pids_psutil = psutil.get_pid_list()
+        pids_ps.sort()
+        pids_psutil.sort()
+        if pids_ps != pids_psutil:
+            difference = filter(lambda x:x not in pids_ps, pids_psutil) + \
+                         filter(lambda x:x not in pids_psutil, pids_ps)
+            self.fail("difference: " + str(difference))
+
+
+if __name__ == '__main__':
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(unittest.makeSuite(PosixSpecificTestCase))
+    unittest.TextTestRunner(verbosity=2).run(test_suite)
+
+
