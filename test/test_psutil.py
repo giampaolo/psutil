@@ -282,9 +282,8 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(self.proc.pid)
         # generic test, only access the attribute (twice for testing the
         # caching code)
-        p.groupname
-        p.groupname
-        kill(p.pid)
+        self.assertTrue(p.groupname != "")
+        self.assertTrue(p.groupname != "")
 
         if os.name == 'posix':
             import grp
