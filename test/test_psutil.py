@@ -343,7 +343,6 @@ class TestCase(unittest.TestCase):
 
     def test_types(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        p = psutil.Process(self.proc.pid)
         self.assert_(isinstance(p.pid, int))
         self.assert_(isinstance(p.ppid, int))
         self.assert_(isinstance(p.parent, psutil.Process))
@@ -353,7 +352,7 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.uid, int))
         self.assert_(isinstance(p.gid, int))
         self.assert_(isinstance(p.create_time, float))
-        self.assert_(isinstance(p.username, str))
+        self.assert_(isinstance(p.username, str) or isinstance(p.username, u''))
         self.assert_(isinstance(p.groupname, str))
         # XXX - enable when fully implemented
 #        self.assert_(isinstance(p.environ, dict))

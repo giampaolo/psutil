@@ -4,6 +4,8 @@
 #
 
 import sys
+import os
+import shutil
 from distutils.core import setup, Extension
 
 # Windows
@@ -76,8 +78,25 @@ portable way by using Python.""",
         )
     if extensions is not None:
         setup_args["ext_modules"] = [extensions]
+
     setup(**setup_args)
 
+    # Manually copy wmi.py located deep down in the source tree and copy
+    # it here to install it as a separate module.
+    # This sucks, but apparently there's no way to tell distutils to
+    # put wmi.py in Lib\site-packages directory unless we have it
+    # in the same directory as setup.py.
+    if sys.platform.lower().startswith("win"):
+        shutil.copyfile('psutil/arch/mswindows/wmi.py', 'wmi.py')
+        setup(name='wmi',
+              version='1.4.6',
+              description = "Windows Management Instrumentation",
+              author = "Tim Golden",
+              author_email = "mail@timgolden.me.uk",
+              url = "http://timgolden.me.uk/python/wmi.html",
+              license = "http://www.opensource.org/licenses/mit-license.php",
+              py_modules=['wmi'])
+        os.remove('wmi.py')
 
 if __name__ == '__main__':
     main()

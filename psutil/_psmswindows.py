@@ -10,8 +10,11 @@ import _psutil_mswindows
 # import psutil exceptions we can override with our own
 from error import *
 
+try:
+    import wmi
+except ImportError:
+    msi = None
 
-ERROR_NONE_MAPPED = 1332
 
 # --- module level constants (gets pushed up to psutil module)
 
@@ -95,17 +98,17 @@ class Impl(object):
                 raise AccessDenied
             raise
 
-    @wrap_privileges
     def get_process_username(self, pid):
         """Return the name of the user that owns the process"""
-        try:
-            return _psutil_mswindows.get_proc_username(pid)
-        except WindowsError, err:
-            if err.winerror == ERROR_NONE_MAPPED:
-                # XXX - temporary fix around
-                # http://code.google.com/p/psutil/issues/detail?id=63
-                raise AccessDenied
-            raise
+        if wmi is None:
+            raise NotImplementedError("This functionnality requires pywin32 " \
+                                      "extension to be installed")
+        else:
+            if pid in (0, 4):
+                return 'NT AUTHORITY\\SYSTEM'
+            w = wmi.WMI().Win32_Process(ProcessId=pid)
+            domain, _, username = w[0].GetOwner()
+            return "%s\\%s" %(domain, username)
 
     def get_process_groupname(self, username):
         # username comes in as "domain\username"; if no domain is
