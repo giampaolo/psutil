@@ -30,7 +30,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
         # that nothing strange happens
         str(p)
         p.username
-        #p.groupname
+        p.groupname
         self.assertTrue(p.create_time >= 0.0)
         try:
             rss, vms = p.get_memory_info()
