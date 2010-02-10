@@ -13,7 +13,7 @@ from error import *
 try:
     import wmi
 except ImportError:
-    msi = None
+    wmi = None
 
 
 # --- module level constants (gets pushed up to psutil module)

@@ -343,6 +343,7 @@ class TestCase(unittest.TestCase):
 
     def test_types(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(self.proc.pid)
         self.assert_(isinstance(p.pid, int))
         self.assert_(isinstance(p.ppid, int))
         self.assert_(isinstance(p.parent, psutil.Process))
