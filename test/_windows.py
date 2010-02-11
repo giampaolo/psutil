@@ -2,6 +2,7 @@ import os
 import unittest
 import platform
 import subprocess
+import time
 
 import psutil
 from test_psutil import kill, PYTHON, DEVNULL
@@ -43,6 +44,9 @@ class WindowsSpecificTestCase(unittest.TestCase):
             self.assertEqual(vms, 0)
 
     if wmi is not None:
+
+        # --- Process class tests
+
         def test_process_name(self):
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
             p = psutil.Process(self.pid)
@@ -76,6 +80,48 @@ class WindowsSpecificTestCase(unittest.TestCase):
             p = psutil.Process(self.pid)
             vsz = p.get_memory_info()[1]
             self.assertEqual(vsz, int(w.PageFileUsage) * 1024)
+
+        def test_process_create_time(self):
+            w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+            p = psutil.Process(self.pid)
+            wmic_create = str(w.CreationDate.split('.')[0])
+            psutil_create = time.strftime("%Y%m%d%H%M%S",
+                                          time.localtime(p.create_time))
+            self.assertEqual(wmic_create, psutil_create)
+
+
+        # --- psutil namespace functions and constants tests
+
+        def test_NUM_CPUS(self):
+            w = wmi.WMI().Win32_ComputerSystem()[0]
+            self.assertEqual(w.NumberOfLogicalProcessors, psutil.NUM_CPUS)
+
+        def test_TOTAL_PHYMEM(self):
+            w = wmi.WMI().Win32_ComputerSystem()[0]
+            self.assertEqual(int(w.TotalPhysicalMemory), psutil.TOTAL_PHYMEM)
+
+        def test__UPTIME(self):
+            # _UPTIME constant is not public but it is used internally
+            # as value to return for pid 0 creation time.
+            # WMI behaves the same.
+            w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+            p = psutil.Process(0)
+            wmic_create = str(w.CreationDate.split('.')[0])
+            psutil_create = time.strftime("%Y%m%d%H%M%S",
+                                          time.localtime(p.create_time))
+
+        def test_get_pids(self):
+            # Note: this test might fail if the OS is starting/killing
+            # other processes in the meantime
+            w = wmi.WMI().Win32_Process()
+            wmi_pids = [x.ProcessId for x in w]
+            wmi_pids.sort()
+            psutil_pids = psutil.get_pid_list()
+            psutil_pids.sort()
+            if wmi_pids != psutil_pids:
+                difference = filter(lambda x:x not in wmi_pids, psutil_pids) + \
+                             filter(lambda x:x not in psutil_pids, wmi_pids)
+                self.fail("difference: " + str(difference))
 
 
 if __name__ == '__main__':
