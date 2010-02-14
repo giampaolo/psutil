@@ -4,6 +4,7 @@ import unittest
 import subprocess
 import time
 import sys
+import os
 
 import psutil
 
@@ -19,7 +20,7 @@ def ps(cmd):
     p = subprocess.Popen(cmd, shell=1, stdout=subprocess.PIPE)
     output = p.communicate()[0].strip()
     if not sys.platform.lower().startswith("linux"):
-        output = output.split()[1]
+        output = output.split('\n')[1]
     try:
         return int(output)
     except ValueError:
@@ -32,7 +33,7 @@ class PosixSpecificTestCase(unittest.TestCase):
     # for ps -o arguments see: http://unixhelp.ed.ac.uk/CGI/man-cgi?ps
 
     def setUp(self):
-        self.pid = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL).pid
+        self.pid = subprocess.Popen([PYTHON, "-E", "-O"], stdout=DEVNULL, stderr=DEVNULL).pid
 
     def tearDown(self):
         kill(self.pid)
@@ -72,6 +73,22 @@ class PosixSpecificTestCase(unittest.TestCase):
         vsz_ps = ps("ps --no-headers -o vsz -p %s" %self.pid)
         vsz_psutil = psutil.Process(self.pid).get_memory_info()[1] / 1024
         self.assertEqual(vsz_ps, vsz_psutil)
+
+    def test_process_name(self):
+        name_ps = ps("ps --no-headers -o comm -p %s" %self.pid)
+        name_psutil = psutil.Process(self.pid).name
+        self.assertEqual(name_ps, name_psutil)
+
+    def test_process_pathname(self):
+        ps_pathname = ps("ps --no-headers -o command -p %s" %self.pid).split(' ')[0]
+        psutil_pathname = os.path.join(psutil.Process(self.pid).path,
+                                       psutil.Process(self.pid).name)   
+        self.assertEqual(ps_pathname, psutil_pathname)
+
+    def test_process_cmdline(self):
+        ps_cmdline = ps("ps --no-headers -o command -p %s" %self.pid)
+        psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline)
+        self.assertEqual(ps_cmdline, psutil_cmdline)
 
     def test_get_pids(self):
         # Note: this test might fail if the OS is starting/killing

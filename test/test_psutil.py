@@ -287,8 +287,6 @@ class TestCase(unittest.TestCase):
 
         if os.name == 'posix':
             import grp
-            self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-            p = psutil.Process(self.proc.pid)
             group = grp.getgrgid(p.gid).gr_name
             self.assertEqual(p.groupname, group)
 
