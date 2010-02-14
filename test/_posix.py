@@ -106,7 +106,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         # not all systems include pid 0 in their list but psutil does so 
         # we force it
         if 0 not in pids_ps:
-            pis_ps.append(0)
+            pids_ps.append(0)
 
         pids_psutil = psutil.get_pid_list()
         pids_ps.sort()

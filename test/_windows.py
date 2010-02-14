@@ -3,12 +3,15 @@ import unittest
 import platform
 import subprocess
 import time
+import warnings
 
 import psutil
 from test_psutil import kill, PYTHON, DEVNULL
 try:
     import wmi
 except ImportError:
+    warnings.warn("Can't import WMI module; Windows specific tests disabled",
+                  RuntimeWarning)
     wmi = None
 
 
