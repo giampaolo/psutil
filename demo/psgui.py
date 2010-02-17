@@ -127,8 +127,7 @@ class MainGUIFrame(wx.Frame):
                 user = user.split('\\')[1]
 
             row_id = self.process_list.Append((proc.name, proc.pid, proc.ppid,
-                            proc.path, ' '.join(proc.cmdline), user, \
-                            proc.groupname, cpu, mem))
+                            proc.path, ' '.join(proc.cmdline), user, cpu, mem))
 
             # display the row in green for 1 second
             self.process_list.SetItemBackgroundColour(row_id, wx.GREEN)

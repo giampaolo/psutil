@@ -3,7 +3,7 @@ Bug tracker at http://code.google.com/p/psutil/issues
 0.1.3 - 2009-XXX-XXX
 --------------------
 NEW FEATURES
- * Issue 14: per-process username and groupname
+ * Issue 14: per-process username
  * Issue 51: per-process current working directory
  * Issue 59: Process.is_running() is now 10 times faster.
  * Issue 60: a new graphical process manager is available in demo directory

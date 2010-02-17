@@ -18,9 +18,4 @@ class LinuxSpecificTestCase(unittest.TestCase):
     def tearDown(self):
         kill(self.pid)
 
-    def test_process_groupname(self):
-        groupname_ps = ps("ps --no-headers -o rgroup -p %s" %self.pid)
-        groupname_psutil = psutil.Process(self.pid).groupname
-        self.assertEqual(groupname_ps, groupname_psutil)
-
 

@@ -110,13 +110,6 @@ class Impl(object):
             domain, _, username = w[0].GetOwner()
             return "%s\\%s" %(domain, username)
 
-    def get_process_groupname(self, username):
-        # username comes in as "domain\username"; if no domain is
-        # passed to the underlying C function the local computer
-        # is assumed as default.
-        username = username.split('\\')[1]
-        return _psutil_mswindows.get_proc_groupname(username)
-
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
         return _psutil_mswindows.get_pid_list()

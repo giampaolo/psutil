@@ -60,9 +60,6 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def test_username(self):
         self.execute('username')
 
-    def test_groupname(self):
-        self.execute('groupname')
-
     def test_create_time(self):
         self.execute('create_time')
 

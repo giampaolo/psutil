@@ -120,7 +120,6 @@ class ProcessInfo(object):
         self.gid = gid
         self.create = None
         self.username = None
-        self.groupname = None
 
 
 class Process(object):
@@ -235,22 +234,6 @@ class Process(object):
         else:
             self._procinfo.username =  _platform_impl.get_process_username(self.pid)
     	return self._procinfo.username
-
-    @property
-    def groupname(self):
-        """The real groupname of the current process.
-        On Windows machines, the most powerful among the well known groups
-        the user owning the process belongs to is returned
-        """
-    	if self._procinfo.groupname is not None:
-    		return self._procinfo.groupname
-        if grp is not None:
-            self._procinfo.groupname = grp.getgrgid(self.gid).gr_name
-        else:
-            # Windows
-            self._procinfo.groupname = _platform_impl.get_process_groupname(self.username)
-
-    	return self._procinfo.groupname
 
     @property
     def create_time(self):

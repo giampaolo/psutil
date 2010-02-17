@@ -15,7 +15,7 @@ def sysctl(cmdline):
     """Expects a sysctl command with an argument and parse the result
     returning only the value of interest.
     """
-    p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE) 
+    p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
     result = p.communicate()[0].strip().split()[1]
     try:
         return int(result)
@@ -50,7 +50,7 @@ class BSDSpecificTestCase(unittest.TestCase):
 
     def test_avail_phymem(self):
         # This test is not particularly accurate and may fail if the OS is
-        # consuming memory for other applications. 
+        # consuming memory for other applications.
         # We just want to test that the difference between psutil result
         # and sysctl's is not too high.
         _sum = sum((sysctl("sysctl vm.stats.vm.v_inactive_count"),
@@ -61,7 +61,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         sysctl_avail_phymem = _sum * _pagesize
         psutil_avail_phymem =  psutil.avail_phymem()
         difference = abs(psutil_avail_phymem - sysctl_avail_phymem)
-        # On my system both sysctl and psutil report the same values. 
+        # On my system both sysctl and psutil report the same values.
         # Let's use a tollerance of 0.5 MB and consider the test as failed
         # if we go over it.
         if difference > (0.5 * 2**20):
@@ -110,15 +110,9 @@ class BSDSpecificTestCase(unittest.TestCase):
         output = p.communicate()[0]
         start_ps = output.replace('STARTED', '').strip()
         start_psutil = psutil.Process(self.pid).create_time
-        start_psutil = time.strftime("%a %b %e %H:%M:%S %Y", 
+        start_psutil = time.strftime("%a %b %e %H:%M:%S %Y",
                                      time.localtime(start_psutil))
         self.assertEqual(start_ps, start_psutil)
-
-    def test_process_groupname(self):
-        groupname_ps = ps("ps --no-headers -o rgroup -p %s" %self.pid)
-        groupname_psutil = psutil.Process(self.pid).groupname
-        self.assertEqual(groupname_ps, groupname_psutil)
-
 
 
 if __name__ == '__main__':

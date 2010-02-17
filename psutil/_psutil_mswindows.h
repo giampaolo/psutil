@@ -22,8 +22,6 @@ static PyObject* get_total_virtmem(PyObject* self, PyObject* args);
 static PyObject* get_avail_phymem(PyObject* self, PyObject* args);
 static PyObject* get_avail_virtmem(PyObject* self, PyObject* args);
 static PyObject* get_system_cpu_times(PyObject* self, PyObject* args);
-static PyObject* get_proc_username(PyObject* self, PyObject* args);
-static PyObject* get_proc_groupname(PyObject* self, PyObject* args);
 static PyObject* get_process_cwd(PyObject* self, PyObject* args);
 static PyObject* suspend_process(PyObject* self, PyObject* args);
 static PyObject* resume_process(PyObject* self, PyObject* args);

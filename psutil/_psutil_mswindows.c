@@ -48,10 +48,6 @@ static PyMethodDef PsutilMethods[] =
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
          "Return system cpu times as a tuple (user, system, idle)"},
-    {"get_proc_username", get_proc_username, METH_VARARGS,
-        "Return the name of the user that owns the process"},
-    {"get_proc_groupname", get_proc_groupname, METH_VARARGS,
-        "Return the name of the group a user belong to"},
     {"get_process_cwd", get_process_cwd, METH_VARARGS,
         "Return process current working directory"},
     {"suspend_process", suspend_process, METH_VARARGS,
@@ -723,191 +719,6 @@ dwDomainLen, DWORD pid)
     return FALSE;
 }
 
-
-
-#define MAX_USERNAME_LEN 21
-#define MAX_GROUP_LEN 257
-/*
- * Return the "domain\username" of a process given its PID
- */
-static PyObject* get_proc_username(PyObject* self, PyObject* args)
-{
-    HANDLE hProc;
-    BOOL bOk = FALSE;
-    TCHAR szUser[MAX_USERNAME_LEN];
-    TCHAR szDomain[MAX_GROUP_LEN];
-    DWORD pid;
-
-    // Reset strings
-    szUser[0]=0;
-    szDomain[0]=0;
-
-    if (! PyArg_ParseTuple(args, "l", &pid))
-    {
-        return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
-    }
-
-    if (pid == 0){
-        return Py_BuildValue("s", "NT AUTHORITY\\SYSTEM");
-    }
-
-    if (pid == 4){
-        return Py_BuildValue("s", "NT AUTHORITY\\SYSTEM");
-    }
-
-    // Set Debug privileges
-    SetSeDebug();
-
-    // needs STANDARD_RIGHTS_READ for GetKernelObjectSecurity to work!
-    hProc = OpenProcess( STANDARD_RIGHTS_READ , FALSE, pid);
-
-    if ( hProc != NULL )
-    {
-
-        SECURITY_DESCRIPTOR *pSecDescr = NULL;
-        DWORD dwSecInfoSize;
-        BOOL bDefaulted;
-        PSID psidUser;
-
-        // Get Security Descriptor size
-        GetKernelObjectSecurity (hProc, OWNER_SECURITY_INFORMATION, pSecDescr, 0, &dwSecInfoSize);
-
-        // Call should have failed due to zero-length buffer.
-        if ( GetLastError() == ERROR_INSUFFICIENT_BUFFER )
-        {
-            // Security Descriptor allocation
-            pSecDescr = (SECURITY_DESCRIPTOR *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BYTE) * dwSecInfoSize);
-
-            if (pSecDescr != NULL)
-            {
-                // Get Security Descriptor (real call)
-                if ( GetKernelObjectSecurity (hProc, OWNER_SECURITY_INFORMATION, pSecDescr, dwSecInfoSize, &dwSecInfoSize) )
-                {
-                    // Get descriptor owner's SID
-                    if ( GetSecurityDescriptorOwner(pSecDescr, &psidUser, &bDefaulted) )
-                    {
-                        // Converts SID to Domain + Username
-                        if ( SidToUser(psidUser, szUser, sizeof(szUser),
-                                szDomain, sizeof(szDomain), pid) )
-                        {
-                            bOk = TRUE;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (!bOk) {
-            PyErr_SetFromWindowsErr(0);
-        }
-
-        if ( pSecDescr != NULL )
-            HeapFree ( GetProcessHeap(), 0, pSecDescr );
-
-        CloseHandle(hProc);
-
-    }
-    else
-    {
-        PyErr_SetFromWindowsErr(0);
-    }
-
-    // Unset Debug privileges
-    UnsetSeDebug();
-
-    if (bOk)
-    {
-        // Concatenates Domain and Username
-        strcat (szDomain, "\\");
-        strcat (szDomain, szUser);
-        return Py_BuildValue("s", szDomain);
-    }
-
-    return 0;
-}
-
-/*
- * Return the most powerful well known group a user belongs to
- */
-static PyObject* get_proc_groupname(PyObject* self, PyObject* args)
-{
-	// Defines well known groups, ordered by decreasing rights' power
-	WCHAR *wszpWellKnownGroups[] = {L"administrators",
-	                                L"power users",
-	                                L"users",
-	                                L"guests",
-	                                NULL };
-
-	LPBYTE pbBuf = NULL;
-	LOCALGROUP_USERS_INFO_0 *pLGUI = NULL;
-	NET_API_STATUS nStatus;
-	DWORD dwEntriesRead;
-	DWORD dwTotalEntries;
-	TCHAR szGroup[MAX_GROUP_LEN];
-	char *szUser;
-	WCHAR wszUser[MAX_USERNAME_LEN];
-	DWORD i, j = 0;
-	INT found = -1;
-
-
-    if (! PyArg_ParseTuple(args, "s", &szUser))
-    {
-        return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no user provided");
-    }
-
-	// Resets output string
-	szGroup[0]=0;
-
-	// NetAPI uses unicode: username conversion
-	MultiByteToWideChar (CP_ACP, MB_PRECOMPOSED, szUser, -1,
-                        wszUser, sizeof(wszUser)/sizeof(wszUser[0]));
-
-	// Retrieves group list associated to username
-	nStatus = NetUserGetLocalGroups (NULL, wszUser, 0, LG_INCLUDE_INDIRECT,
-                                     &pbBuf, MAX_PREFERRED_LENGTH,
-                                     &dwEntriesRead, &dwTotalEntries);
-
-	if (nStatus != NERR_Success) {
-    	if (pbBuf != NULL)
-    		NetApiBufferFree(pbBuf);
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
-    }
-
-	pLGUI=(LOCALGROUP_USERS_INFO_0 *)pbBuf;
-
-	// Looks for the most powerful well known group
-	// in users group list
-    while ( found <0 && wszpWellKnownGroups[j] != NULL )
-    {
-        for (i=0; i<dwTotalEntries; i++)
-        {
-            if (!lstrcmpiW(pLGUI[i].lgrui0_name, wszpWellKnownGroups[j]))
-            {
-                found=i;
-                break;
-            }
-        }
-        j++;
-    }
-
-    // User belongs to one of the well known groups
-	if (found>=0)
-	{   // Group name from unicode to multibyte
-		WideCharToMultiByte(CP_ACP, 0, pLGUI[found].lgrui0_name, -1,
-		                    szGroup, sizeof(szGroup), NULL, NULL);
-	}
-
-
-
-	if (pbBuf != NULL)
-		NetApiBufferFree(pbBuf);
-
-	return Py_BuildValue("s", szGroup);
-}
-
-
-
 typedef struct _UNICODE_STRING {
     USHORT Length;
     USHORT MaximumLength;
@@ -996,7 +807,8 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     currentDirectoryContent[(currentDirectory.Length/sizeof(WCHAR))] = '\0';
 
     // convert wchar array to a Python unicode string, and then to UTF8
-    cwd_from_wchar = PyUnicode_FromWideChar(currentDirectoryContent, wcslen(currentDirectoryContent));
+    cwd_from_wchar = PyUnicode_FromWideChar(currentDirectoryContent,
+                                            wcslen(currentDirectoryContent));
     cwd = PyUnicode_AsUTF8String(cwd_from_wchar);
 
     // decrement the reference count on our temp unicode str to avoid mem leak
@@ -1015,7 +827,6 @@ Resume or suspends a process.
 int suspend_resume_process(DWORD pid, int suspend)
 {
     // a huge thanks to http://www.codeproject.com/KB/threads/pausep.aspx
-
     HANDLE         hThreadSnap   = NULL;
     BOOL           bRet          = FALSE;
     THREADENTRY32  te32          = {0};

@@ -278,19 +278,6 @@ class TestCase(unittest.TestCase):
             self.assertEqual(domain, expected_domain)
             self.assertEqual(username, expected_username)
 
-    def test_groupname(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        p = psutil.Process(self.proc.pid)
-        # generic test, only access the attribute (twice for testing the
-        # caching code)
-        self.assertTrue(p.groupname != "")
-        self.assertTrue(p.groupname != "")
-
-        if os.name == 'posix':
-            import grp
-            group = grp.getgrgid(p.gid).gr_name
-            self.assertEqual(p.groupname, group)
-
     if sys.platform.lower().startswith("linux") \
     or sys.platform.lower().startswith("win32"):
         def test_getcwd(self):
@@ -353,7 +340,6 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.gid, int))
         self.assert_(isinstance(p.create_time, float))
         self.assert_(isinstance(p.username, str) or isinstance(p.username, u''))
-        self.assert_(isinstance(p.groupname, str))
         # XXX - enable when fully implemented
 #        self.assert_(isinstance(p.environ, dict))
 #        self.assert_(isinstance(p.getpwd(), str))
@@ -421,7 +407,6 @@ class TestCase(unittest.TestCase):
             try:
                 str(p)
                 p.create_time
-                p.groupname
                 # XXX - enable when fully implemented
 #                p.environ
 #                p.getpwd()
@@ -459,21 +444,16 @@ class TestCase(unittest.TestCase):
         else:
             p.get_memory_info()
 
-        # username / groupname properties
+        # username property
         if sys.platform.lower().startswith("linux"):
             self.assertEqual(p.username, 'root')
-            self.assertEqual(p.groupname, 'root')
         elif sys.platform.lower().startswith('freebsd') or \
         sys.platform.lower().startswith('darwin'):
             self.assertEqual(p.username, 'root')
-            self.assertEqual(p.groupname, 'wheel')
         elif sys.platform.lower().startswith("win32"):
             self.assertEqual(p.username, 'NT AUTHORITY\\SYSTEM')
-            p.groupname
-            # XXX groupname code here
         else:
             p.username
-            p.groupname
 
         # PID 0 is supposed to be available on all platforms
         self.assertTrue(0 in psutil.get_pid_list())
