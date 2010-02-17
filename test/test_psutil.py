@@ -164,7 +164,7 @@ class TestCase(unittest.TestCase):
         # Use time.time() as base value to compare our result using a
         # tolerance of +/- 1 second.
         # It will fail if the difference between the values is > 1s.
-        if (max([now, create_time]) - min([now, create_time])) > 1:
+        if abs(create_time - now) > 1:
             self.fail("expected: %s, found: %s" %(now, create_time))
 
         # make sure returned value can be pretty printed with strftime
