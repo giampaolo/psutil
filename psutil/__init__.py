@@ -438,11 +438,14 @@ def cpu_percent():
 
     try :
         idle_percent = (idle_delta / time_delta) * 100.0
-        util_percent = (100 * NUM_CPUS) - idle_percent
+        util_percent = ((100 * NUM_CPUS) - idle_percent) / NUM_CPUS
     except ZeroDivisionError:
         return 0.0
 
-    return util_percent / NUM_CPUS
+    if util_percent < 0:
+        return 0.0
+    else:
+        return util_percent
 
 
 def test():
