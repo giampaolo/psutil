@@ -6,7 +6,6 @@ NEW FEATURES
  * Issue 14: per-process username
  * Issue 51: per-process current working directory
  * Issue 59: Process.is_running() is now 10 times faster.
- * Issue 60: a new graphical process manager is available in demo directory
  * Issue 61: added supoprt for FreeBSD 64 bit.
  * Issue 71: implemented suspend/resume process.
 
