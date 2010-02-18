@@ -75,14 +75,17 @@ class PosixSpecificTestCase(unittest.TestCase):
         self.assertEqual(vsz_ps, vsz_psutil)
 
     def test_process_name(self):
-        name_ps = ps("ps --no-headers -o comm -p %s" %self.pid)
+        # use command + arg since "comm" keyword not supported on all platforms
+        name_ps = ps("ps --no-headers -o command -p %s" %self.pid).split(' ')[0]
+        # remove path if there is any, from the command
+        name_ps = os.path.basename(name_ps)
         name_psutil = psutil.Process(self.pid).name
         self.assertEqual(name_ps, name_psutil)
 
     def test_process_pathname(self):
         ps_pathname = ps("ps --no-headers -o command -p %s" %self.pid).split(' ')[0]
         psutil_pathname = os.path.join(psutil.Process(self.pid).path,
-                                       psutil.Process(self.pid).name)   
+                                       psutil.Process(self.pid).name)
         self.assertEqual(ps_pathname, psutil_pathname)
 
     def test_process_cmdline(self):
@@ -103,7 +106,7 @@ class PosixSpecificTestCase(unittest.TestCase):
                 pids_ps.append(int(pid.strip()))
         # remove ps subprocess pid which is supposed to be dead in meantime
         pids_ps.remove(p.pid)
-        # not all systems include pid 0 in their list but psutil does so 
+        # not all systems include pid 0 in their list but psutil does so
         # we force it
         if 0 not in pids_ps:
             pids_ps.append(0)
