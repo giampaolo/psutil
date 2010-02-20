@@ -12,17 +12,12 @@ import signal
 import types
 import errno
 import platform
-from test import test_support
 
 import psutil
 
 
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
-try:
-    from test.test_support import TESTFN
-except ImportError:
-    TESTFN = 'temp-fname'
 
 
 def wait_for_pid(pid, timeout=1):
@@ -339,10 +334,10 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.uid, int))
         self.assert_(isinstance(p.gid, int))
         self.assert_(isinstance(p.create_time, float))
-        self.assert_(isinstance(p.username, str) or isinstance(p.username, u''))
-        # XXX - enable when fully implemented
-#        self.assert_(isinstance(p.environ, dict))
-#        self.assert_(isinstance(p.getpwd(), str))
+        self.assert_(isinstance(p.username, str) or \
+                     isinstance(p.username, type(u'')))
+        if hasattr(p, 'getpwd'):
+            self.assert_(isinstance(p.getpwd(), str))
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(p.get_cpu_times(), tuple))
         self.assert_(isinstance(p.get_cpu_times()[0], float))
@@ -526,8 +521,21 @@ def test_main():
         test_suite.addTest(unittest.makeSuite(test_class))
 
     unittest.TextTestRunner(verbosity=2).run(test_suite)
-    if hasattr(test_support, "reap_children"):  # python 2.5 and >
-        test_support.reap_children()
+
+    # reap_children() function should help ensure that no extra children
+    # (zombies) stick around to hog resources and create problems when
+    # looking for refleaks.
+    # We check for ImportError as on most Unixen python tests are not
+    # installed by default (e.g. on Ubuntu they get installed with:
+    # "apt-get install python-dev")
+    try:
+        from test import test_support
+    except ImportError:
+        pass
+    else:
+        # available since python 2.5
+        if hasattr(test_support, "reap_children"):
+            test_support.reap_children()
 
     DEVNULL.close()
 

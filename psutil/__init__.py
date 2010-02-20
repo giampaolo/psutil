@@ -227,13 +227,13 @@ class Process(object):
     @property
     def username(self):
         """The name of the user that owns the process."""
-    	if self._procinfo.username is not None:
-    		return self._procinfo.username
+        if self._procinfo.username is not None:
+            return self._procinfo.username
         if pwd is not None:
             self._procinfo.username = pwd.getpwuid(self.uid).pw_name
         else:
             self._procinfo.username =  _platform_impl.get_process_username(self.pid)
-    	return self._procinfo.username
+        return self._procinfo.username
 
     @property
     def create_time(self):
