@@ -8,6 +8,15 @@ import os
 import shutil
 from distutils.core import setup, Extension
 
+# Hack for Python 3 to tell distutils to run 2to3 against the files
+# copied in the build directory before installing.
+# Reference: http://osdir.com/ml/python.python-3000.cvs/2008-03/msg00127.html
+try:
+    from distutils.command.build_py import build_py_2to3 as build_py
+except ImportError:
+    from distutils.command.build_py import build_py
+
+
 # Windows
 if sys.platform.lower().startswith("win"):
 
@@ -21,24 +30,21 @@ if sys.platform.lower().startswith("win"):
                                     'psutil/arch/mswindows/security.c'],
                            define_macros=[('_WIN32_WINNT', get_winver()),
                                           ('_AVAIL_WINVER_', get_winver())],
-                           libraries=["psapi", "kernel32", "advapi32", "shell32", "netapi32"]
+                           libraries=["psapi", "kernel32", "advapi32", "shell32",
+                                      "netapi32"]
                            )
-
-
 # OS X
 elif sys.platform.lower().startswith("darwin"):
     extensions = Extension('_psutil_osx',
                            sources = ['psutil/_psutil_osx.c',
                                       'psutil/arch/osx/process_info.c']
                            )
-
 # FreeBSD
 elif sys.platform.lower().startswith("freebsd"):
     extensions = Extension('_psutil_bsd',
                            sources = ['psutil/_psutil_bsd.c',
                                       'psutil/arch/bsd/process_info.c']
                            )
-
 # Others
 else:
     extensions = None
@@ -59,6 +65,7 @@ portable way by using Python.""",
         platforms='Platform Independent',
         license='License :: OSI Approved :: BSD License',
         packages=['psutil'],
+        cmdclass={'build_py':build_py},  # Python 3.X
         classifiers=[
               'Development Status :: 2 - Pre-Alpha',
               'Environment :: Console',
@@ -95,8 +102,10 @@ portable way by using Python.""",
               author_email = "mail@timgolden.me.uk",
               url = "http://timgolden.me.uk/python/wmi.html",
               license = "http://www.opensource.org/licenses/mit-license.php",
+              cmdclass={'build_py':build_py},  # Python 3.X
               py_modules=['wmi'])
         os.remove('wmi.py')
+
 
 if __name__ == '__main__':
     main()
