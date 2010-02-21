@@ -16,6 +16,8 @@
 #include "arch/mswindows/process_info.h"
 
 
+static PyObject *NoSuchProcessException;
+
 static PyMethodDef PsutilMethods[] =
 {
      {"get_pid_list", get_pid_list, METH_VARARGS,
@@ -57,18 +59,85 @@ static PyMethodDef PsutilMethods[] =
      {NULL, NULL, 0, NULL}
 };
 
-static PyObject *NoSuchProcessException;
+struct module_state {
+    PyObject *error;
+};
 
-PyMODINIT_FUNC
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
+
+static PyObject *
+error_out(PyObject *m) {
+    struct module_state *st = GETSTATE(m);
+    PyErr_SetString(st->error, "something bad happened");
+    return NULL;
+}
+
+#if PY_MAJOR_VERSION >= 3
+
+static int psutil_mswindows_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int psutil_mswindows_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "psutil_mswindows",
+        NULL,
+        sizeof(struct module_state),
+        PsutilMethods,
+        NULL,
+        psutil_mswindows_traverse,
+        psutil_mswindows_clear,
+        NULL
+};
+
+#define INITERROR return NULL
+
+PyObject *
+PyInit__psutil_mswindows(void)
+
+#else
+#define INITERROR return
+
+void
 init_psutil_mswindows(void)
+#endif
 {
-     PyObject *m;
-     m = Py_InitModule("_psutil_mswindows", PsutilMethods);
-     NoSuchProcessException = PyErr_NewException("_psutil_mswindows.NoSuchProcess",
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule("_psutil_mswindows", PsutilMethods);
+#endif
+    if (module == NULL)
+        INITERROR;
+    struct module_state *st = GETSTATE(module);
+
+    st->error = PyErr_NewException("_psutil_mswindow.Error", NULL, NULL);
+    if (st->error == NULL) {
+        Py_DECREF(module);
+        INITERROR;
+    }
+
+    NoSuchProcessException = PyErr_NewException("_psutil_mswindows.NoSuchProcess",
                                                  NULL, NULL);
-     Py_INCREF(NoSuchProcessException);
-     PyModule_AddObject(m, "NoSuchProcess", NoSuchProcessException);
-     SetSeDebug();
+    Py_INCREF(NoSuchProcessException);
+    PyModule_AddObject(module, "NoSuchProcess", NoSuchProcessException);
+    SetSeDebug();
+
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
 }
 
 
@@ -170,7 +239,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     long pid;
     int pid_return;
     PyObject* ret;
-    ret = PyInt_FromLong(0);
+    ret = PyLong_FromLong(0);
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
@@ -206,7 +275,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     }
 
     CloseHandle(hProcess);
-    return PyInt_FromLong(1);
+    return PyLong_FromLong(1);
 }
 
 
