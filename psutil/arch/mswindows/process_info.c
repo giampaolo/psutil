@@ -368,15 +368,14 @@ PyObject* get_arg_list(long pid)
     if (NULL == szArglist) {
         // failed to parse arglist
         // encode as a UTF8 Python string object from WCHAR string
-        argList = Py_BuildValue("N",
-                                PyUnicode_AsUTF8String(
-                                    PyUnicode_FromWideChar(
-                                    commandLineContents, commandLine.Length / 2)
-                                    )
-                                );
+        arg_from_wchar = PyUnicode_FromWideChar(commandLineContents,
+                                                commandLine.Length / 2);
+        #if PY_MAJOR_VERSION >= 3
+            argList = Py_BuildValue("N", PyUnicode_AsUTF8String(arg_from_wchar));
+        #else
+            argList = Py_BuildValue("N", PyUnicode_FromObject(arg_from_wchar));
+        #endif
     }
-
-
     else {
         // arglist parsed as array of UNICODE_STRING, so convert each to Python
         // string object and add to arg list
@@ -387,7 +386,11 @@ PyObject* get_arg_list(long pid)
             arg_from_wchar = PyUnicode_FromWideChar(szArglist[i],
                                                     wcslen(szArglist[i])
                                                     );
-            arg = PyUnicode_AsUTF8String(arg_from_wchar);
+            #if PY_MAJOR_VERSION >= 3
+                arg = PyUnicode_FromObject(arg_from_wchar);
+            #else
+                arg = PyUnicode_AsUTF8String(arg_from_wchar);
+            #endif
             Py_XDECREF(arg_from_wchar);
             PyList_Append(argList, arg);
             Py_XDECREF(arg);

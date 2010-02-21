@@ -871,7 +871,12 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     // convert wchar array to a Python unicode string, and then to UTF8
     cwd_from_wchar = PyUnicode_FromWideChar(currentDirectoryContent,
                                             wcslen(currentDirectoryContent));
-    cwd = PyUnicode_AsUTF8String(cwd_from_wchar);
+
+    #if PY_MAJOR_VERSION >= 3
+        cwd = PyUnicode_FromObject(cwd_from_wchar);
+    #else
+        cwd = PyUnicode_AsUTF8String(cwd_from_wchar);
+    #endif
 
     // decrement the reference count on our temp unicode str to avoid mem leak
     Py_XDECREF(cwd_from_wchar);
