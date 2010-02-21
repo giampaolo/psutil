@@ -24,6 +24,8 @@ def ps(cmd):
     try:
         return int(output)
     except ValueError:
+        if sys.version_info >= (3,):
+            return str(output, sys.stdout.encoding)
         return output
 
 
@@ -98,6 +100,8 @@ class PosixSpecificTestCase(unittest.TestCase):
         # other processes in the meantime
         p = subprocess.Popen(["ps", "ax", "-o", "pid"], stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
+        if sys.version_info >= (3,):
+            output = str(output, sys.stdout.encoding)
         output = output.replace('PID', '')
         p.wait()
         pids_ps = []
