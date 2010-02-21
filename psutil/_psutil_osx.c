@@ -24,6 +24,9 @@
 #include "arch/osx/process_info.h"
 
 
+static PyObject *NoSuchProcessException;
+static PyObject *AccessDeniedException;
+
 /*
  * define the psutil C module methods and initialize the module.
  */
@@ -56,23 +59,85 @@ static PyMethodDef PsutilMethods[] =
 };
 
 
-static PyObject *NoSuchProcessException;
-static PyObject *AccessDeniedException;
 
-PyMODINIT_FUNC
+
+struct module_state {
+    PyObject *error;
+};
+
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+
+static int psutil_osx_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int psutil_osx_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "psutil_osx",
+        NULL,
+        sizeof(struct module_state),
+        PsutilMethods,
+        NULL,
+        psutil_osx_traverse,
+        psutil_osx_clear,
+        NULL
+};
+
+#define INITERROR return NULL
+
+PyObject *
+PyInit__psutil_osx(void)
+
+#else
+#define INITERROR return
+
+void
 init_psutil_osx(void)
+#endif
 {
-     PyObject *m;
-     m = Py_InitModule("_psutil_osx", PsutilMethods);
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
+#endif
+    if (module == NULL)
+        INITERROR;
+    struct module_state *st = GETSTATE(module);
+
+    st->error = PyErr_NewException("_psutil_osx.Error", NULL, NULL);
+    if (st->error == NULL) {
+        Py_DECREF(module);
+        INITERROR;
+    }
+
      NoSuchProcessException = PyErr_NewException("_psutil_osx.NoSuchProcess",
                                                  NULL, NULL);
      Py_INCREF(NoSuchProcessException);
-     PyModule_AddObject(m, "NoSuchProcess", NoSuchProcessException);
+     PyModule_AddObject(module, "NoSuchProcess", NoSuchProcessException);
      AccessDeniedException = PyErr_NewException("_psutil_osx.AccessDenied",
                                                 NULL, NULL);
      Py_INCREF(AccessDeniedException);
-     PyModule_AddObject(m, "AccessDenied", AccessDeniedException);
+     PyModule_AddObject(module, "AccessDenied", AccessDeniedException);
+
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
 }
+
 
 
 /*
