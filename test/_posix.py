@@ -19,13 +19,13 @@ def ps(cmd):
         cmd = cmd.replace(" --no-headers ", " ")
     p = subprocess.Popen(cmd, shell=1, stdout=subprocess.PIPE)
     output = p.communicate()[0].strip()
+    if sys.version_info >= (3,):
+        output = str(output, sys.stdout.encoding)
     if not sys.platform.lower().startswith("linux"):
         output = output.split('\n')[1]
     try:
         return int(output)
     except ValueError:
-        if sys.version_info >= (3,):
-            return str(output, sys.stdout.encoding)
         return output
 
 

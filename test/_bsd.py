@@ -4,6 +4,7 @@ import unittest
 import subprocess
 import time
 import re
+import sys
 
 import psutil
 
@@ -17,6 +18,8 @@ def sysctl(cmdline):
     """
     p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
     result = p.communicate()[0].strip().split()[1]
+    if sys.version_info >= (3,):
+        result = str(result, sys.stdout.encoding)
     try:
         return int(result)
     except ValueError:
@@ -75,6 +78,8 @@ class BSDSpecificTestCase(unittest.TestCase):
         # and sysctl's is not too high.
         p = subprocess.Popen("sysctl vm.vmtotal", shell=1, stdout=subprocess.PIPE)
         result = p.communicate()[0].strip()
+        if sys.version_info >= (3,):
+            result = str(result, sys.stdout.encoding)
         sysctl_total_virtmem, _ = parse_sysctl_vmtotal(result)
         psutil_total_virtmem = psutil.total_virtmem()
         difference = abs(sysctl_total_virtmem - psutil_total_virtmem)
@@ -95,6 +100,8 @@ class BSDSpecificTestCase(unittest.TestCase):
         # and sysctl's is not too high.
         p = subprocess.Popen("sysctl vm.vmtotal", shell=1, stdout=subprocess.PIPE)
         result = p.communicate()[0].strip()
+        if sys.version_info >= (3,):
+            result = str(result, sys.stdout.encoding)
         _, sysctl_avail_virtmem = parse_sysctl_vmtotal(result)
         psutil_avail_virtmem = psutil.avail_virtmem()
         difference = abs(sysctl_avail_virtmem - psutil_avail_virtmem)
@@ -108,6 +115,8 @@ class BSDSpecificTestCase(unittest.TestCase):
         cmdline = "ps -o lstart -p %s" %self.pid
         p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0]
+        if sys.version_info >= (3,):
+            output = str(output, sys.stdout.encoding)
         start_ps = output.replace('STARTED', '').strip()
         start_psutil = psutil.Process(self.pid).create_time
         start_psutil = time.strftime("%a %b %e %H:%M:%S %Y",
