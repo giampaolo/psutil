@@ -20,6 +20,8 @@
 #include "arch/bsd/process_info.h"
 
 
+static PyObject *NoSuchProcessException;
+
 /*
  * define the psutil C module methods and initialize the module.
  */
@@ -53,17 +55,80 @@ static PyMethodDef PsutilMethods[] =
 };
 
 
-static PyObject *NoSuchProcessException;
+struct module_state {
+    PyObject *error;
+};
 
-PyMODINIT_FUNC
-init_psutil_bsd(void)
-{
-     PyObject *m;
-     m = Py_InitModule("_psutil_bsd", PsutilMethods);
-     NoSuchProcessException = PyErr_NewException("_psutil_bsd.NoSuchProcess", NULL, NULL);
-     Py_INCREF(NoSuchProcessException);
-     PyModule_AddObject(m, "NoSuchProcess", NoSuchProcessException);
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+
+static int psutil_bsd_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
 }
+
+static int psutil_bsd_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "psutil_bsd",
+        NULL,
+        sizeof(struct module_state),
+        PsutilMethods,
+        NULL,
+        psutil_bsd_traverse,
+        psutil_bsd_clear,
+        NULL
+};
+
+#define INITERROR return NULL
+
+PyObject *
+PyInit__psutil_bsd(void)
+
+#else
+#define INITERROR return
+
+void
+init_psutil_bsd(void)
+#endif
+{
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule("_psutil_bsd", PsutilMethods);
+#endif
+    if (module == NULL)
+        INITERROR;
+    struct module_state *st = GETSTATE(module);
+
+    st->error = PyErr_NewException("_psutil_bsd.Error", NULL, NULL);
+    if (st->error == NULL) {
+        Py_DECREF(module);
+        INITERROR;
+    }
+
+    NoSuchProcessException = PyErr_NewException("_psutil_bsd.NoSuchProcess",
+                                                 NULL, NULL);
+    Py_INCREF(NoSuchProcessException);
+    PyModule_AddObject(module, "NoSuchProcess", NoSuchProcessException);
+
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
+}
+
+
 
 
 /*
