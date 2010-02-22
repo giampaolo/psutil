@@ -57,8 +57,10 @@ class TestProcessObjectLeaks(unittest.TestCase):
         # includes name, ppid, path, cmdline, uid, gid properties
         self.execute('__str__')
 
-    def test_username(self):
-        self.execute('username')
+    # XXX - disabled for Windows as it uses WMI which takes ages to complete
+    if not sys.platform.lower().startswith("win32"):
+        def test_username(self):
+            self.execute('username')
 
     def test_create_time(self):
         self.execute('create_time')
