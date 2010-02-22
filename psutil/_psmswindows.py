@@ -107,6 +107,8 @@ class Impl(object):
             if pid in (0, 4):
                 return 'NT AUTHORITY\\SYSTEM'
             w = wmi.WMI().Win32_Process(ProcessId=pid)
+            if not w:
+                raise NoSuchProcess
             domain, _, username = w[0].GetOwner()
             return "%s\\%s" %(domain, username)
 
