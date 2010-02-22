@@ -927,15 +927,25 @@ int suspend_resume_process(DWORD pid, int suspend)
             {
 				HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE,
                                             te32.th32ThreadID);
+                if (hThread == NULL) {
+                    CloseHandle(hThread);
+                    return PyErr_SetFromWindowsErr(0);
+                }
 				if (suspend == 1)
 				{
 					//printf("Suspending Thread \n");
-					SuspendThread(hThread);
+					if (SuspendThread(hThread) == (DWORD)-1) {
+                        CloseHandle(hThread);
+                        return PyErr_SetFromWindowsErr(0);
+                    }
 				}
 				else
 				{
 					//printf("Resuming Thread \n");
-					ResumeThread(hThread);
+					if (ResumeThread(hThread) == (DWORD)-1) {
+                        CloseHandle(hThread);
+                        return PyErr_SetFromWindowsErr(0);
+                    }
 				}
 				CloseHandle(hThread);
             }

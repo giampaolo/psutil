@@ -302,18 +302,6 @@ class TestCase(unittest.TestCase):
         p.suspend()
         p.resume()
 
-    def test_suspend_resume_killed_process(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        test_pid = self.proc.pid
-        wait_for_pid(test_pid)
-        p = psutil.Process(test_pid)
-        name = p.name
-        p.kill()
-        self.proc.wait()
-        self.proc = None
-        self.assertRaises(psutil.NoSuchProcess, p.suspend)
-        self.assertRaises(psutil.NoSuchProcess, p.resume)
-
     def test_get_pid_list(self):
         plist = [x.pid for x in psutil.get_process_list()]
         pidlist = psutil.get_pid_list()
