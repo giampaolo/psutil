@@ -811,10 +811,8 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
                                 FALSE, pid);
     if (processHandle == 0)
     {
-        printf("Could not open process!\n");
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            // bad PID so no such process
             PyErr_Format(NoSuchProcessException,
                          "No process found with pid %d", pid);
         }
@@ -827,9 +825,16 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     if (!ReadProcessMemory(processHandle, (PCHAR)pebAddress + 0x10,
         &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
     {
-        printf("Could not read the address of ProcessParameters!\n");
         CloseHandle(processHandle);
-        return PyErr_SetFromWindowsErr(0);
+        if (GetLastError() == ERROR_PARTIAL_COPY) {
+            /* Usually means the process has gone in the meantime */
+            PyErr_Format(NoSuchProcessException, "");
+            return NULL;
+        }
+        else {
+            return PyErr_SetFromWindowsErr(0);
+        }
+
     }
 
     /* read the currentDirectory UNICODE_STRING structure.
@@ -839,9 +844,15 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     if (!ReadProcessMemory(processHandle, (PCHAR)rtlUserProcParamsAddress + 0x24,
         &currentDirectory, sizeof(currentDirectory), NULL))
     {
-        printf("Could not read currentDirectory!\n");
         CloseHandle(processHandle);
-        return PyErr_SetFromWindowsErr(0);
+        if (GetLastError() == ERROR_PARTIAL_COPY) {
+            /* Usually means the process has gone in the meantime */
+            PyErr_Format(NoSuchProcessException, "");
+            return NULL;
+        }
+        else {
+            return PyErr_SetFromWindowsErr(0);
+        }
     }
 
     /* allocate memory to hold the command line */
@@ -851,17 +862,17 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     if (!ReadProcessMemory(processHandle, currentDirectory.Buffer,
         currentDirectoryContent, currentDirectory.Length, NULL))
     {
-        printf("Could not read the command line string!\n");
-        PyErr_SetFromWindowsErr(0);
-        if (GetLastError() == ERROR_PARTIAL_COPY) {
-            PyErr_Format(NoSuchProcessException,
-                         "Process with pid %d not properly initialized yet", pid);
-        }
-
-
         CloseHandle(processHandle);
         free(currentDirectoryContent);
-        return NULL;
+
+        if (GetLastError() == ERROR_PARTIAL_COPY) {
+            /* Usually means the process has gone in the meantime */
+            PyErr_Format(NoSuchProcessException, "");
+            return NULL;
+        }
+        else {
+            return PyErr_SetFromWindowsErr(0);
+        }
     }
 
     // null-terminate the string to prevent wcslen from returning incorrect length

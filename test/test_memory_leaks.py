@@ -81,8 +81,7 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def test_resume(self):
         self.execute('resume')
 
-    if sys.platform.lower().startswith("linux") \
-    or sys.platform.lower().startswith("win32"):
+    if hasattr(psutil.Process, "getcwd"):
         def test_getcwd(self):
             self.execute('getcwd')
 

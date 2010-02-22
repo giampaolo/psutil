@@ -273,13 +273,21 @@ class TestCase(unittest.TestCase):
             self.assertEqual(domain, expected_domain)
             self.assertEqual(username, expected_username)
 
-    if sys.platform.lower().startswith("linux") \
-    or sys.platform.lower().startswith("win32"):
+    if hasattr(psutil.Process, "getcwd"):
         def test_getcwd(self):
             self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
             wait_for_pid(self.proc.pid)
             p = psutil.Process(self.proc.pid)
             self.assertEqual(p.getcwd(), os.getcwd())
+
+        def test_getcwd_2(self):
+            cmd = [PYTHON, "-c", "import os; os.chdir('..'); raw_input()"]
+            self.proc = subprocess.Popen(cmd, stdout=DEVNULL)
+            wait_for_pid(self.proc.pid)
+            p = psutil.Process(self.proc.pid)
+            time.sleep(0.1)
+            expected_dir = os.path.dirname(os.getcwd())
+            self.assertEqual(p.getcwd(), expected_dir)
 
     def test_parent_ppid(self):
         this_parent = os.getpid()
@@ -383,10 +391,12 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "cmdline")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "uid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "gid")
-        # XXX - enable when fully implemented
-#        self.assertRaises(psutil.NoSuchProcess, getattr, p, "environ ")
-#        self.assertRaises(psutil.NoSuchProcess, p.getcwd)
+        if hasattr(p, 'getcwd'):
+            self.assertRaises(psutil.NoSuchProcess, p.getcwd)
+        self.assertRaises(psutil.NoSuchProcess, p.suspend)
+        self.assertRaises(psutil.NoSuchProcess, p.resume)
         self.assertRaises(psutil.NoSuchProcess, p.kill)
+
         # XXX - these tests are supposed to work everywhere except
         # Windows which keeps returning info for a dead process.
         if not sys.platform.lower().startswith("win32"):
@@ -402,9 +412,8 @@ class TestCase(unittest.TestCase):
             try:
                 str(p)
                 p.create_time
-                # XXX - enable when fully implemented
-#                p.environ
-#                p.getpwd()
+                if hasattr(p, 'getcwd'):
+                    p.getcwd()
                 p.get_cpu_times()
                 p.get_cpu_percent()
                 p.get_memory_info()
