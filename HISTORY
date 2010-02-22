@@ -4,10 +4,11 @@ Bug tracker at http://code.google.com/p/psutil/issues
 --------------------
 NEW FEATURES
  * Issue 14: per-process username
- * Issue 51: per-process current working directory
- * Issue 59: Process.is_running() is now 10 times faster.
- * Issue 61: added supoprt for FreeBSD 64 bit.
- * Issue 71: implemented suspend/resume process.
+ * Issue 51: per-process current working directory (Windows and Linux only)
+ * Issue 59: Process.is_running() is now 10 times faster
+ * Issue 61: added supoprt for FreeBSD 64 bit
+ * Issue 71: implemented suspend/resume process
+ * Issue 75: python 3 support
 
 BUGFIXES
  * Issue 48: incorrect size for mib array defined in getcmdargs for BSD
@@ -18,7 +19,9 @@ BUGFIXES
    available
  * Issue 58: is_running() is now called before kill() to make sure we are going
    to kill the correct process.
- * Issue 73: virtual memory size reported on OS X includes shared library size.
+ * Issue 73: virtual memory size reported on OS X includes shared library size
+ * Issue 76: process cpu_times() and memory_info() functions succeeded also for
+   dead processes while a NoSuchProcess exception is supposed to be raised.
 
 
 0.1.2 - 2009-05-06

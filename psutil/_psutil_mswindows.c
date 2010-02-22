@@ -280,6 +280,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     long        pid;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
+    LPDWORD     ProcessExitCode;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
@@ -300,6 +301,15 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
                          "No process found with pid %lu", pid);
         }
         return NULL;
+    }
+
+    /*
+     * OpenProcess is known to succeed even if the process is gone in meantime.
+     * Make sure the process is still alive and if not raise NoSuchProcess.
+     */
+    GetExitCodeProcess(hProcess, &ProcessExitCode);
+    if (ProcessExitCode == 0) {
+        return PyErr_Format(NoSuchProcessException, "");
     }
 
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
@@ -504,6 +514,7 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     HANDLE hProcess;
     PROCESS_MEMORY_COUNTERS counters;
     DWORD pid;
+    LPDWORD ProcessExitCode;
 
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
         return PyErr_Format(PyExc_RuntimeError,
@@ -514,6 +525,15 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     if (NULL == hProcess) {
         return PyErr_SetFromWindowsErr(0);
     }
+    /*
+     * OpenProcess is known to succeed even if the process is gone in meantime.
+     * Make sure the process is still alive raise NoSuchProcess if it's not.
+     */
+    GetExitCodeProcess(hProcess, &ProcessExitCode);
+    if (ProcessExitCode == 0) {
+        return PyErr_Format(NoSuchProcessException, "");
+    }
+
 
     if (! GetProcessMemoryInfo(hProcess, &counters, sizeof(counters)) ) {
         return PyErr_SetFromWindowsErr(0);

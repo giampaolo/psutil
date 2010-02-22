@@ -281,7 +281,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(p.getcwd(), os.getcwd())
 
         def test_getcwd_2(self):
-            cmd = [PYTHON, "-c", "import os; os.chdir('..'); raw_input()"]
+            cmd = [PYTHON, "-c", "import os; os.chdir('..'); input()"]
             self.proc = subprocess.Popen(cmd, stdout=DEVNULL)
             wait_for_pid(self.proc.pid)
             p = psutil.Process(self.proc.pid)
@@ -384,14 +384,10 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, p.suspend)
         self.assertRaises(psutil.NoSuchProcess, p.resume)
         self.assertRaises(psutil.NoSuchProcess, p.kill)
-
-        # XXX - these tests are supposed to work everywhere except
-        # Windows which keeps returning info for a dead process.
-        if not sys.platform.lower().startswith("win32"):
-            self.assertRaises(psutil.NoSuchProcess, p.get_cpu_times)
-            self.assertRaises(psutil.NoSuchProcess, p.get_cpu_percent)
-            self.assertRaises(psutil.NoSuchProcess, p.get_memory_info)
-            self.assertRaises(psutil.NoSuchProcess, p.get_memory_percent)
+        self.assertRaises(psutil.NoSuchProcess, p.get_cpu_times)
+        self.assertRaises(psutil.NoSuchProcess, p.get_cpu_percent)
+        self.assertRaises(psutil.NoSuchProcess, p.get_memory_info)
+        self.assertRaises(psutil.NoSuchProcess, p.get_memory_percent)
         self.assertFalse(p.is_running())
 
     def test_fetch_all(self):
