@@ -965,6 +965,7 @@ static PyObject* suspend_process(PyObject* self, PyObject* args)
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
@@ -981,5 +982,6 @@ static PyObject* resume_process(PyObject* self, PyObject* args)
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
+    Py_INCREF(Py_None);
     return Py_None;
 }
