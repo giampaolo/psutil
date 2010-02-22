@@ -357,6 +357,7 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     long long unix_time;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
+    LPDWORD     ProcessExitCode;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
@@ -377,6 +378,15 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
                          "No process found with pid %lu", pid);
         }
         return NULL;
+    }
+
+    /*
+     * OpenProcess is known to succeed even if the process is gone in meantime.
+     * Make sure the process is still alive and if not raise NoSuchProcess.
+     */
+    GetExitCodeProcess(hProcess, &ProcessExitCode);
+    if (ProcessExitCode == 0) {
+        return PyErr_Format(NoSuchProcessException, "");
     }
 
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {

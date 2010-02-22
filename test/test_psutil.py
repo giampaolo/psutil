@@ -379,6 +379,8 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "cmdline")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "uid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "gid")
+        self.assertRaises(psutil.NoSuchProcess, getattr, p, "create_time")
+        self.assertRaises(psutil.NoSuchProcess, getattr, p, "username")
         if hasattr(p, 'getcwd'):
             self.assertRaises(psutil.NoSuchProcess, p.getcwd)
         self.assertRaises(psutil.NoSuchProcess, p.suspend)

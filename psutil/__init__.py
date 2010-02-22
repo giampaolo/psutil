@@ -240,9 +240,7 @@ class Process(object):
         """The process creation time as a floating point number
         expressed in seconds since the epoch, in UTC.
         """
-        if self._procinfo.create is None:
-            self._procinfo.create = _platform_impl.get_process_create_time(self.pid)
-        return self._procinfo.create
+        return _platform_impl.get_process_create_time(self.pid)
 
     if sys.platform.lower().startswith("linux") \
     or sys.platform.lower().startswith("win32"):
