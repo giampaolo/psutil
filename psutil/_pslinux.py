@@ -106,10 +106,9 @@ def prevent_zombie(method):
     def wrapper(self, pid, *args, **kwargs):
         try:
             return method(self, pid, *args, **kwargs)
-        except IOError, err:
+        except (OSError, IOError), err:
             if err.errno == errno.ENOENT:  # no such file or directory
-                if not self.pid_exists(pid):
-                    raise NoSuchProcess(pid)
+                raise NoSuchProcess(pid)
             raise
     return wrapper
 

@@ -394,19 +394,18 @@ class TestCase(unittest.TestCase):
 
     def test_fetch_all(self):
         valid_procs = 0
+        attrs = ['__str__', 'create_time', 'username', 'getcwd', 'get_cpu_times',
+                 'get_cpu_percent', 'get_memory_info', 'get_memory_percent']
         for p in psutil.process_iter():
-            try:
-                str(p)
-                p.create_time
-                if hasattr(p, 'getcwd'):
-                    p.getcwd()
-                p.get_cpu_times()
-                p.get_cpu_percent()
-                p.get_memory_info()
-                p.get_memory_percent()
-                valid_procs += 1
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
+            for attr in attrs:
+                try:
+                    attr = getattr(p, attr, None)
+                    if attr is not None and callable(attr):
+                        attr()
+                    valid_procs += 1
+
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
 
         # we should always have a non-empty list, not including PID 0 etc.
         # special cases.
@@ -483,8 +482,10 @@ if hasattr(os, 'getuid'):
 
         if sys.platform.lower().startswith("linux"):
 
-            # disable this test on Linux as it always raises AccessDenied
+            # disable these tests on Linux as they always raises AccessDenied
             def test_getcwd(self):
+                return
+            def test_getcwd_2(self):
                 return
 
 
