@@ -280,7 +280,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     long        pid;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
-    LPDWORD     ProcessExitCode;
+    DWORD     ProcessExitCode = 0;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
@@ -357,7 +357,7 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     long long unix_time;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
-    LPDWORD     ProcessExitCode;
+    DWORD     ProcessExitCode = 0;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
@@ -524,7 +524,7 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     HANDLE hProcess;
     PROCESS_MEMORY_COUNTERS counters;
     DWORD pid;
-    LPDWORD ProcessExitCode;
+    DWORD ProcessExitCode = 0;
 
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
         return PyErr_Format(PyExc_RuntimeError,
