@@ -154,7 +154,11 @@ class Process(object):
     def __eq__(self, other):
         """Test for equality with another Process object based on PID
         and creation time."""
-        h1 = (self.pid, self.create_time)
+        # Avoid to use self.create_time directly to avoid caching in
+        # case kill() gets called before create_time resulting in
+        # NoSuchProcess not being raised (see issue 77):
+        h1 = (self.pid, self._procinfo.create or \
+                        _platform_impl.get_process_create_time(self.pid))
         h2 = (other.pid, other.create_time)
         return h1 == h2
 
@@ -240,10 +244,12 @@ class Process(object):
         """The process creation time as a floating point number
         expressed in seconds since the epoch, in UTC.
         """
-        return _platform_impl.get_process_create_time(self.pid)
+        if self._procinfo.create is None:
+            self._procinfo.create = _platform_impl.get_process_create_time(self.pid)
+        return self._procinfo.create
 
-    if sys.platform.lower().startswith("linux") \
-    or sys.platform.lower().startswith("win32"):
+    # available for Windows and Linux only
+    if hasattr(_platform_impl, "get_process_cwd"):
         def getcwd(self):
             """Return a string representing the process current working
             directory.
