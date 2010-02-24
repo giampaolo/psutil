@@ -20,20 +20,6 @@ PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 
 
-def wait_for_pid(pid, timeout=1):
-    """Wait for pid to show up in the process list then return.
-    Used in the test suite to give time the sub process to initialize.
-    """
-    raise_at = time.time() + timeout
-    while 1:
-        if pid in psutil.get_pid_list():
-		    # give it one more iteration to allow full initialization
-            time.sleep(0.01)
-            return
-        time.sleep(0.0001)
-        if time.time() >= raise_at:
-            raise RuntimeError("Timed out")
-
 def kill(pid):
     """Kill a process given its PID."""
     if hasattr(os, 'kill'):
@@ -64,7 +50,6 @@ class TestCase(unittest.TestCase):
     def test_kill(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         test_pid = self.proc.pid
-        wait_for_pid(test_pid)
         p = psutil.Process(test_pid)
         name = p.name
         p.kill()
@@ -152,7 +137,6 @@ class TestCase(unittest.TestCase):
     def test_create_time(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         now = time.time()
-        wait_for_pid(self.proc.pid)
         p = psutil.Process(self.proc.pid)
         create_time = p.create_time
 
@@ -196,12 +180,10 @@ class TestCase(unittest.TestCase):
 
     def test_eq(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
         self.assertTrue(psutil.Process(self.proc.pid) == psutil.Process(self.proc.pid))
 
     def test_is_running(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
         p = psutil.Process(self.proc.pid)
         self.assertTrue(p.is_running())
         psutil.Process(self.proc.pid).kill()
@@ -216,22 +198,18 @@ class TestCase(unittest.TestCase):
 
     def test_path(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
         self.assertEqual(psutil.Process(self.proc.pid).path, os.path.dirname(PYTHON))
 
     def test_cmdline(self):
         self.proc = subprocess.Popen([PYTHON, "-E"], stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
         self.assertEqual(psutil.Process(self.proc.pid).cmdline, [PYTHON, "-E"])
 
     def test_name(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL,  stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
         self.assertEqual(psutil.Process(self.proc.pid).name, os.path.basename(PYTHON))
 
     def test_uid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
         uid = psutil.Process(self.proc.pid).uid
         if hasattr(os, 'getuid'):
             self.assertEqual(uid, os.getuid())
@@ -242,7 +220,6 @@ class TestCase(unittest.TestCase):
 
     def test_gid(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
         gid = psutil.Process(self.proc.pid).gid
         if hasattr(os, 'getgid'):
             self.assertEqual(gid, os.getgid())
@@ -276,14 +253,12 @@ class TestCase(unittest.TestCase):
     if hasattr(psutil.Process, "getcwd"):
         def test_getcwd(self):
             self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-            wait_for_pid(self.proc.pid)
             p = psutil.Process(self.proc.pid)
             self.assertEqual(p.getcwd(), os.getcwd())
 
         def test_getcwd_2(self):
             cmd = [PYTHON, "-c", "import os; os.chdir('..'); input()"]
             self.proc = subprocess.Popen(cmd, stdout=DEVNULL)
-            wait_for_pid(self.proc.pid)
             p = psutil.Process(self.proc.pid)
             time.sleep(0.1)
             expected_dir = os.path.dirname(os.getcwd())
