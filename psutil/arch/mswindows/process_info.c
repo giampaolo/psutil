@@ -314,8 +314,6 @@ PyObject* get_arg_list(long pid)
     PyObject *arg_from_wchar = NULL;
     PyObject *argList = NULL;
 
-    /* allocate memory to hold the command line */
-    commandLineContents = (WCHAR *)malloc(commandLine.Length+1);
 
     hProcess = handle_from_pid(pid);
     if(NULL == hProcess) {
@@ -334,40 +332,27 @@ PyObject* get_arg_list(long pid)
         return PyErr_SetFromWindowsErr(0);
     }
 
-    while (1) {
+    /* read the CommandLine UNICODE_STRING structure */
+    if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 0x40,
+        &commandLine, sizeof(commandLine), NULL))
+    {
+        //printf("Could not read CommandLine!\n");
+        CloseHandle(hProcess);
+        return PyErr_SetFromWindowsErr(0);
+    }
 
-        /* read the CommandLine UNICODE_STRING structure */
-        if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 0x40,
-            &commandLine, sizeof(commandLine), NULL))
-        {
-            //printf("Could not read CommandLine!\n");
-            CloseHandle(hProcess);
-            return PyErr_SetFromWindowsErr(0);
-        }
 
-        /* read the command line */
-        if (!ReadProcessMemory(hProcess, commandLine.Buffer, commandLineContents,
-            commandLine.Length, NULL))
-        {
-            /*
-             * ERROR_PARTIAL_COPY might happen in case of processes not
-             * properly initialized yet (see issue 56). Attempting to
-             * repeat the routine from the previous ReadProcessMemory()
-             * call seems to work fine.
-             */
-            //printf("Could not read the command line string!\n");
-            if (GetLastError() == ERROR_PARTIAL_COPY && is_running(hProcess)) {
-                continue;
-            }
-            else {
-                CloseHandle(hProcess);
-                free(commandLineContents);
-                return PyErr_SetFromWindowsErr(0);
-            }
-        }
-        else {
-            break;
-        }
+    /* allocate memory to hold the command line */
+    commandLineContents = (WCHAR *)malloc(commandLine.Length+1);
+
+    /* read the command line */
+    if (!ReadProcessMemory(hProcess, commandLine.Buffer,
+        commandLineContents, commandLine.Length, NULL))
+    {
+        //printf("Could not read the command line string!\n");
+        CloseHandle(hProcess);
+        free(commandLineContents);
+        return PyErr_SetFromWindowsErr(0);
     }
 
     /* print the commandline */

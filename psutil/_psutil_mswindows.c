@@ -493,10 +493,13 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
                             "Process with pid %lu has disappeared", pid);
     }
 
-
+    // May fail any of several ReadProcessMemory calls etc. and not indicate
+    // a real problem so we ignore any errors and just live without commandline
     arglist = get_arg_list(pid);
     if ( NULL == arglist ) {
-        return PyErr_SetFromWindowsErr(0);
+        // carry on anyway, clear any exceptions too
+        PyErr_Clear();
+        arglist = Py_BuildValue("[]");
     }
 
 	infoTuple = Py_BuildValue("lNNsNll", pid, ppid, name, "", arglist, -1, -1);
