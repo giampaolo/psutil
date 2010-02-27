@@ -32,7 +32,7 @@ int get_proc_list(struct kinfo_proc **procList, size_t *procCount)
     int err;
     struct kinfo_proc * result;
     int done;
-    static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0 };
+    static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC 0 };
     // Declaring name as const requires us to cast it when passing it to
     // sysctl because the prototype doesn't include the const modifier.
     size_t              length;
