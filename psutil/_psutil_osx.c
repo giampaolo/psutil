@@ -380,7 +380,6 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
                             "Invalid argument - no PID provided.");
 	}
 
-    len = 4;
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
@@ -392,6 +391,15 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 
     if (len > 0) {
         return Py_BuildValue("d", TV2DOUBLE(kp.kp_proc.p_starttime));
+    }
+
+    /*
+     * if sysctl succeeds but len is zero, raise NoSuchProcess as this only
+     * appears to happen when the process has gone away.
+     */
+    else {
+        return PyErr_Format(NoSuchProcessException,
+                            "No process found with pid %lu", pid);
     }
 
     return PyErr_Format(PyExc_RuntimeError, "Unable to read process start time.");
