@@ -813,7 +813,7 @@ typedef struct _UNICODE_STRING {
  */
 static PyObject* get_process_cwd(PyObject* self, PyObject* args)
 {
-    int pid;
+    long pid;
     HANDLE processHandle;
     PVOID pebAddress;
     PVOID rtlUserProcParamsAddress;
