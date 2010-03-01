@@ -95,8 +95,8 @@ class WindowsSpecificTestCase(unittest.TestCase):
         # --- psutil namespace functions and constants tests
 
         def test_NUM_CPUS(self):
-            w = wmi.WMI().Win32_ComputerSystem()[0]
-            self.assertEqual(w.NumberOfLogicalProcessors, psutil.NUM_CPUS)
+            num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
+            self.assertEqual(num_cpus, psutil.NUM_CPUS)
 
         def test_TOTAL_PHYMEM(self):
             w = wmi.WMI().Win32_ComputerSystem()[0]
