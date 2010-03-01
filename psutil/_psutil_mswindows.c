@@ -306,7 +306,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     /* make sure the process is running */
     GetExitCodeProcess(hProcess, &ProcessExitCode);
     if (ProcessExitCode == 0) {
-        return PyErr_Format(NoSuchProcessException, "");
+        return PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
     }
 
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
@@ -380,7 +380,7 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     /* make sure the process is running */
     GetExitCodeProcess(hProcess, &ProcessExitCode);
     if (ProcessExitCode == 0) {
-        return PyErr_Format(NoSuchProcessException, "");
+        return PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
     }
 
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
@@ -533,7 +533,7 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     /* make sure the process is running */
     GetExitCodeProcess(hProcess, &ProcessExitCode);
     if (ProcessExitCode == 0) {
-        return PyErr_Format(NoSuchProcessException, "");
+        return PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
     }
 
     if (! GetProcessMemoryInfo(hProcess, &counters, sizeof(counters)) ) {
@@ -835,7 +835,7 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     /* check the process is running */
     GetExitCodeProcess(processHandle, &ProcessExitCode);
     if (ProcessExitCode == 0) {
-        return PyErr_Format(NoSuchProcessException, "");
+        return PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
     }
 
     if (processHandle == 0)
@@ -857,7 +857,7 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
         CloseHandle(processHandle);
         if (GetLastError() == ERROR_PARTIAL_COPY) {
             /* Usually means the process has gone in the meantime */
-            PyErr_Format(NoSuchProcessException, "");
+            PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
             return NULL;
         }
         else {
@@ -876,7 +876,7 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
         CloseHandle(processHandle);
         if (GetLastError() == ERROR_PARTIAL_COPY) {
             /* Usually means the process has gone in the meantime */
-            PyErr_Format(NoSuchProcessException, "");
+            PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
             return NULL;
         }
         else {
@@ -896,7 +896,7 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
 
         if (GetLastError() == ERROR_PARTIAL_COPY) {
             /* Usually means the process has gone in the meantime */
-            PyErr_Format(NoSuchProcessException, "");
+            PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
             return NULL;
         }
         else {
@@ -958,14 +958,16 @@ int suspend_resume_process(DWORD pid, int suspend)
                                             te32.th32ThreadID);
                 if (hThread == NULL) {
                     CloseHandle(hThread);
-                    return PyErr_SetFromWindowsErr(0);
+                    PyErr_SetFromWindowsErr(0);
+                    return FALSE;
                 }
 				if (suspend == 1)
 				{
 					//printf("Suspending Thread \n");
 					if (SuspendThread(hThread) == (DWORD)-1) {
                         CloseHandle(hThread);
-                        return PyErr_SetFromWindowsErr(0);
+                        PyErr_SetFromWindowsErr(0);
+                        return FALSE;
                     }
 				}
 				else
@@ -973,7 +975,8 @@ int suspend_resume_process(DWORD pid, int suspend)
 					//printf("Resuming Thread \n");
 					if (ResumeThread(hThread) == (DWORD)-1) {
                         CloseHandle(hThread);
-                        return PyErr_SetFromWindowsErr(0);
+                        PyErr_SetFromWindowsErr(0);
+                        return FALSE;
                     }
 				}
 				CloseHandle(hThread);
