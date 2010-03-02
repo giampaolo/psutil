@@ -23,6 +23,8 @@ NUM_CPUS = _psutil_mswindows.get_num_cpus()
 _UPTIME = _psutil_mswindows.get_system_uptime()
 TOTAL_PHYMEM = _psutil_mswindows.get_total_phymem()
 
+ERROR_ACCESS_DENIED = 5
+ERROR_INVALID_PARAMETER = 87
 
 # --- public functions
 
@@ -63,7 +65,7 @@ def wrap_privileges(callable):
         try:
             return callable(*args, **kwargs)
         except OSError, err:
-            if err.errno == errno.EACCES:
+            if err.errno in (errno.EACCES, ERROR_ACCESS_DENIED):
                 raise AccessDenied
             raise
     return wrapper
@@ -94,7 +96,7 @@ class Impl(object):
             return _psutil_mswindows.kill_process(pid)
         except OSError, err:
             # work around issue #24
-            if (pid == 0) and (err.errno == errno.EINVAL):
+            if (pid == 0) and err.errno in (errno.EINVAL, ERROR_INVALID_PARAMETER):
                 raise AccessDenied
             raise
 
