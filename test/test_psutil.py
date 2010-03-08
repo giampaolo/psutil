@@ -12,6 +12,7 @@ import signal
 import types
 import errno
 import platform
+import traceback
 
 import psutil
 
@@ -289,6 +290,14 @@ class TestCase(unittest.TestCase):
             expected_dir = os.path.dirname(os.getcwd())
             self.assertEqual(p.getcwd(), expected_dir)
 
+    if hasattr(psutil.Process, "get_open_files"):
+        def test_get_open_files(self):
+            # XXX - actual implementation needed
+            self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+            wait_for_pid(self.proc.pid)
+            p = psutil.Process(self.proc.pid)
+            p.get_open_files()
+
     def test_parent_ppid(self):
         this_parent = os.getpid()
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
@@ -334,6 +343,11 @@ class TestCase(unittest.TestCase):
                      isinstance(p.username, type(u'')))
         if hasattr(p, 'getpwd'):
             self.assert_(isinstance(p.getpwd(), str))
+        if hasattr(p, 'get_open_files'):
+            self.assert_(isinstance(p.get_open_files(), list))
+            for path in p.get_open_files():
+                self.assert_(isinstance(path, str) or \
+                             isinstance(path, type(u'')))
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(p.get_cpu_times(), tuple))
         self.assert_(isinstance(p.get_cpu_times()[0], float))
@@ -383,6 +397,8 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "username")
         if hasattr(p, 'getcwd'):
             self.assertRaises(psutil.NoSuchProcess, p.getcwd)
+        if hasattr(p, 'get_open_files'):
+            self.assertRaises(psutil.NoSuchProcess, p.get_open_files)
         self.assertRaises(psutil.NoSuchProcess, p.suspend)
         self.assertRaises(psutil.NoSuchProcess, p.resume)
         self.assertRaises(psutil.NoSuchProcess, p.kill)
@@ -395,7 +411,8 @@ class TestCase(unittest.TestCase):
     def test_fetch_all(self):
         valid_procs = 0
         attrs = ['__str__', 'create_time', 'username', 'getcwd', 'get_cpu_times',
-                 'get_cpu_percent', 'get_memory_info', 'get_memory_percent']
+                 'get_cpu_percent', 'get_memory_info', 'get_memory_percent',
+                 'get_open_files']
         for p in psutil.process_iter():
             for attr in attrs:
                 try:
@@ -403,9 +420,12 @@ class TestCase(unittest.TestCase):
                     if attr is not None and callable(attr):
                         attr()
                     valid_procs += 1
-
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
+                except:
+                    trace = traceback.format_exc()
+                    self.fail('Exception raised for method %s, pid %s:\n%s'
+                              %(attr, p.pid, trace))
 
         # we should always have a non-empty list, not including PID 0 etc.
         # special cases.

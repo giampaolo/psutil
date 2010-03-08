@@ -146,3 +146,8 @@ class Impl(object):
         # "\\" at the and of the path
         path = _psutil_mswindows.get_process_cwd(pid)
         return os.path.normpath(path)
+
+    def get_open_files(self, pid):
+        if pid in (0, 4):
+            return []
+        return _psutil_mswindows.get_process_open_files(pid)

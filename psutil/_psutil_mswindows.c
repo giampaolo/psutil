@@ -14,6 +14,7 @@
 #include "_psutil_mswindows.h"
 #include "arch/mswindows/security.h"
 #include "arch/mswindows/process_info.h"
+#include "arch/mswindows/process_handles.h"
 
 
 static PyObject *NoSuchProcessException;
@@ -56,6 +57,8 @@ static PyMethodDef PsutilMethods[] =
         "Suspend a process"},
     {"resume_process", resume_process, METH_VARARGS,
         "Resume a process"},
+    {"get_process_open_files", get_process_open_files, METH_VARARGS,
+        "Return files opened by process"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -1027,3 +1030,21 @@ static PyObject* resume_process(PyObject* self, PyObject* args)
     Py_INCREF(Py_None);
     return Py_None;
 }
+
+
+static PyObject* get_process_open_files(PyObject* self, PyObject* args)
+{
+    long pid;
+    PyObject* filesList;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+        return NULL;
+    }
+
+    filesList = get_open_files(pid);
+    if (filesList == NULL) {
+        return PyErr_SetFromWindowsErr(0);
+    }
+    return filesList;
+}
+

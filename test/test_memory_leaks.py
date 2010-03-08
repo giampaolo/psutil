@@ -87,6 +87,10 @@ class TestProcessObjectLeaks(unittest.TestCase):
         def test_getcwd(self):
             self.execute('getcwd')
 
+    if hasattr(psutil.Process, "get_open_files"):
+        def test_get_open_files(self):
+            self.execute('get_open_files')
+
 
 class TestModuleFunctionsLeaks(unittest.TestCase):
     """Test leaks of psutil module functions."""

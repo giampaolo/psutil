@@ -345,6 +345,12 @@ class Process(object):
         except ZeroDivisionError:
             return 0.0
 
+    # XXX
+    if hasattr(_platform_impl, "get_open_files"):
+        def get_open_files(self):
+            """Return files opened by process as a list of paths."""
+            return _platform_impl.get_open_files(self.pid)
+
     def is_running(self):
         """Return whether the current process is running in the current process
         list."""

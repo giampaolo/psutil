@@ -27,6 +27,7 @@ if sys.platform.lower().startswith("win"):
     extensions = Extension('_psutil_mswindows',
                            sources=['psutil/_psutil_mswindows.c',
                                     'psutil/arch/mswindows/process_info.c',
+                                    'psutil/arch/mswindows/process_handles.c',
                                     'psutil/arch/mswindows/security.c'],
                            define_macros=[('_WIN32_WINNT', get_winver()),
                                           ('_AVAIL_WINVER_', get_winver())],
