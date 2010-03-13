@@ -293,10 +293,14 @@ class TestCase(unittest.TestCase):
     if hasattr(psutil.Process, "get_open_files"):
         def test_get_open_files(self):
             # XXX - actual implementation needed
-            self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+            thisfile = os.path.join(os.getcwd(), __file__)
+            cmdline = "f = open('%s', 'r'); input();" %thisfile
+            self.proc = subprocess.Popen([PYTHON, "-c", cmdline])
             wait_for_pid(self.proc.pid)
+            time.sleep(0.1)
             p = psutil.Process(self.proc.pid)
-            p.get_open_files()
+            files = p.get_open_files()
+            self.assertEqual(files, [thisfile])
 
     def test_parent_ppid(self):
         this_parent = os.getpid()
@@ -344,10 +348,12 @@ class TestCase(unittest.TestCase):
         if hasattr(p, 'getpwd'):
             self.assert_(isinstance(p.getpwd(), str))
         if hasattr(p, 'get_open_files'):
-            self.assert_(isinstance(p.get_open_files(), list))
-            for path in p.get_open_files():
-                self.assert_(isinstance(path, str) or \
-                             isinstance(path, type(u'')))
+            if not sys.platform.lower().startswith("linux") and \
+            not isinstance(self, LimitedUserTestCase):
+                self.assert_(isinstance(p.get_open_files(), list))
+                for path in p.get_open_files():
+                    self.assert_(isinstance(path, str) or \
+                                 isinstance(path, type(u'')))
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(p.get_cpu_times(), tuple))
         self.assert_(isinstance(p.get_cpu_times()[0], float))
@@ -506,6 +512,8 @@ if hasattr(os, 'getuid'):
             def test_getcwd(self):
                 return
             def test_getcwd_2(self):
+                return
+            def test_get_open_files(self):
                 return
 
 

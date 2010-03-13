@@ -278,6 +278,19 @@ class Impl(object):
             return ''
         return os.readlink("/proc/%s/cwd" %pid)
 
+    @prevent_zombie
+    @wrap_privileges
+    def get_open_files(self, pid):
+        retlist = []
+        files = os.listdir("/proc/%s/fd" %pid)
+        for link in files:
+            file = "/proc/%s/fd/%s" %(pid, link)
+            if os.path.islink(file):
+                file = os.readlink(file)
+                if os.path.isfile(file) and not file in retlist:
+                    retlist.append(file)
+        return retlist 
+
     def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)
         for line in f:
