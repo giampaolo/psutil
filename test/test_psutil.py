@@ -508,13 +508,16 @@ if hasattr(os, 'getuid'):
 
         if sys.platform.lower().startswith("linux"):
 
-            # disable these tests on Linux as they always raises AccessDenied
+            # overridden tests known to raise AccessDenied when run 
+            # as limited user
             def test_getcwd(self):
-                return
+                self.assertRaises(psutil.AccessDenied, TestCase.test_getcwd, self)
+
             def test_getcwd_2(self):
-                return
+                self.assertRaises(psutil.AccessDenied, TestCase.test_getcwd_2, self)
+
             def test_get_open_files(self):
-                return
+                self.assertRaises(psutil.AccessDenied, TestCase.test_get_open_files, self)
 
 
 def test_main():
