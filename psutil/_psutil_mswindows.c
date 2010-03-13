@@ -9,6 +9,7 @@
 #include <Psapi.h>
 #include <time.h>
 #include <lm.h>
+#include <tchar.h>
 #include <tlhelp32.h>
 
 #include "_psutil_mswindows.h"
@@ -59,6 +60,8 @@ static PyMethodDef PsutilMethods[] =
         "Resume a process"},
     {"get_process_open_files", get_process_open_files, METH_VARARGS,
         "Return files opened by process"},
+    {"_QueryDosDevice", _QueryDosDevice, METH_VARARGS,
+        "QueryDosDevice binding"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -1046,5 +1049,60 @@ static PyObject* get_process_open_files(PyObject* self, PyObject* args)
         return PyErr_SetFromWindowsErr(0);
     }
     return filesList;
+}
+
+
+static PyObject* _QueryDosDevice(PyObject* self, PyObject* args)
+{
+    LPCTSTR lpDevicePath;
+    TCHAR d = TEXT('A');
+    DWORD retlen;
+    ULONG                       fileNameLength;
+    PyObject                    *filesList = Py_BuildValue("[]");
+    PyObject                    *arg = NULL;
+    PyObject                    *fileFromWchar = NULL;
+
+    if (!PyArg_ParseTuple(args, "s", &lpDevicePath)) {
+        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+        return NULL;
+    }
+
+    lpDevicePath = TEXT(lpDevicePath);
+
+    while(d <= TEXT('Z'))
+    {
+        TCHAR szDeviceName[3] = {d,TEXT(':'),TEXT('\0')};
+        TCHAR szTarget[512] = {0};
+        retlen = QueryDosDevice(szDeviceName, szTarget, 511);
+        if(retlen != 0) {
+            if(_tcscmp(lpDevicePath, szTarget) == 0) {
+                _tprintf (TEXT("%c:\\   =>   %s\n"), d, szTarget);
+                //return PyString_FromStringAndSize(d, 511);
+
+                //sprintf (TEXT("%c:\\   =>   %s\n"), d, szTarget);
+                //PyUnicode_FromWideChar(d, retlen);
+
+                //return PyUnicode_FromObject(d, retlen);
+                //return Py_BuildValue("u", TEXT(d));
+
+                //fileFromWchar = PyUnicode_FromWideChar(s, (TEXT("%c:\\"));
+                //return Py_BuildValue("N", PyUnicode_FromObject(fileFromWchar));
+
+/*
+                fileFromWchar = PyUnicode_FromWideChar(d,
+                                                       szTarget);
+                #if PY_MAJOR_VERSION >= 3
+                    arg = Py_BuildValue("N", PyUnicode_AsUTF8String(fileFromWchar));
+                #else
+                    arg = Py_BuildValue("N", PyUnicode_FromObject(fileFromWchar));
+                #endif
+*/
+
+            }
+            //_tprintf (TEXT("%c:\\   =>   %s\n"), d, szTarget);
+        }
+        d++;
+    }
+    return Py_BuildValue("s", TEXT("xxx"));
 }
 

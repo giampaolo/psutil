@@ -15,6 +15,7 @@ try:
 except ImportError:
     wmi = None
 
+print _psutil_mswindows._QueryDosDevice(u"\Device\HarddiskVolume2")
 
 # --- module level constants (gets pushed up to psutil module)
 
