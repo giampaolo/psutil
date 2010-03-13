@@ -1037,14 +1037,30 @@ static PyObject* resume_process(PyObject* self, PyObject* args)
 
 static PyObject* get_process_open_files(PyObject* self, PyObject* args)
 {
-    long pid;
-    PyObject* filesList;
+    long       pid;
+    HANDLE     processHandle;
+    DWORD      ProcessExitCode = 0;
+    PyObject*  filesList;
+
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
         return NULL;
     }
 
-    filesList = get_open_files(pid);
+    if (!(processHandle = OpenProcess(PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION,
+                                      FALSE,
+                                      pid)))
+    {
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    GetExitCodeProcess(processHandle, &ProcessExitCode);
+    if (ProcessExitCode == 0) {
+        return PyErr_Format(NoSuchProcessException,
+                            "No Process found with pid %lu", pid);
+    }
+
+    filesList = get_open_files(pid, processHandle);
     if (filesList == NULL) {
         return PyErr_SetFromWindowsErr(0);
     }

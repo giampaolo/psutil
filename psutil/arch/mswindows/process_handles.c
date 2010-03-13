@@ -100,7 +100,7 @@ PVOID GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName)
 }
 
 
-PyObject* get_open_files(long pid)
+PyObject* get_open_files(long pid, HANDLE processHandle)
 {
     _NtQuerySystemInformation NtQuerySystemInformation =
         GetLibraryProcAddress("ntdll.dll", "NtQuerySystemInformation");
@@ -112,17 +112,14 @@ PyObject* get_open_files(long pid)
     NTSTATUS                    status;
     PSYSTEM_HANDLE_INFORMATION  handleInfo;
     ULONG                       handleInfoSize = 0x10000;
-    HANDLE                      processHandle;
+
     ULONG                       i;
     ULONG                       fileNameLength;
     PyObject                    *filesList = Py_BuildValue("[]");
     PyObject                    *arg = NULL;
     PyObject                    *fileFromWchar = NULL;
 
-    if (!(processHandle = OpenProcess(PROCESS_DUP_HANDLE, FALSE, pid))) {
-        //printf("Could not open PID %d! (Don't try to open a system process.)\n", pid);
-        return NULL;
-    }
+
 
     handleInfo = (PSYSTEM_HANDLE_INFORMATION)malloc(handleInfoSize);
 
