@@ -1052,57 +1052,35 @@ static PyObject* get_process_open_files(PyObject* self, PyObject* args)
 }
 
 
+/*
+ Accept a filename's drive in native  format like "\Device\HarddiskVolume1\"
+ and return the corresponding drive letter (e.g. "C:\\").
+ If no match is found return an empty string.
+*/
 static PyObject* _QueryDosDevice(PyObject* self, PyObject* args)
 {
-    LPCTSTR lpDevicePath;
+    LPCTSTR   lpDevicePath;
     TCHAR d = TEXT('A');
-    DWORD retlen;
-    ULONG                       fileNameLength;
-    PyObject                    *filesList = Py_BuildValue("[]");
-    PyObject                    *arg = NULL;
-    PyObject                    *fileFromWchar = NULL;
+    TCHAR     szBuff[5];
 
     if (!PyArg_ParseTuple(args, "s", &lpDevicePath)) {
         PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
         return NULL;
     }
 
-    lpDevicePath = TEXT(lpDevicePath);
-
     while(d <= TEXT('Z'))
     {
         TCHAR szDeviceName[3] = {d,TEXT(':'),TEXT('\0')};
         TCHAR szTarget[512] = {0};
-        retlen = QueryDosDevice(szDeviceName, szTarget, 511);
-        if(retlen != 0) {
-            if(_tcscmp(lpDevicePath, szTarget) == 0) {
-                _tprintf (TEXT("%c:\\   =>   %s\n"), d, szTarget);
-                //return PyString_FromStringAndSize(d, 511);
-
-                //sprintf (TEXT("%c:\\   =>   %s\n"), d, szTarget);
-                //PyUnicode_FromWideChar(d, retlen);
-
-                //return PyUnicode_FromObject(d, retlen);
-                //return Py_BuildValue("u", TEXT(d));
-
-                //fileFromWchar = PyUnicode_FromWideChar(s, (TEXT("%c:\\"));
-                //return Py_BuildValue("N", PyUnicode_FromObject(fileFromWchar));
-
-/*
-                fileFromWchar = PyUnicode_FromWideChar(d,
-                                                       szTarget);
-                #if PY_MAJOR_VERSION >= 3
-                    arg = Py_BuildValue("N", PyUnicode_AsUTF8String(fileFromWchar));
-                #else
-                    arg = Py_BuildValue("N", PyUnicode_FromObject(fileFromWchar));
-                #endif
-*/
-
-            }
+        if (QueryDosDevice(szDeviceName, szTarget, 511) != 0){
             //_tprintf (TEXT("%c:\\   =>   %s\n"), d, szTarget);
+            if(_tcscmp(lpDevicePath, szTarget) == 0) {
+                _stprintf(szBuff, TEXT("%c:"), d);
+                return Py_BuildValue("s", szBuff);
+            }
         }
         d++;
     }
-    return Py_BuildValue("s", TEXT("xxx"));
+    return Py_BuildValue("s", "");
 }
 

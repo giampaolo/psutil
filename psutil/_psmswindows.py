@@ -15,8 +15,6 @@ try:
 except ImportError:
     wmi = None
 
-print _psutil_mswindows._QueryDosDevice(u"\Device\HarddiskVolume2")
-
 # --- module level constants (gets pushed up to psutil module)
 
 NoSuchProcess = _psutil_mswindows.NoSuchProcess
@@ -148,7 +146,21 @@ class Impl(object):
         path = _psutil_mswindows.get_process_cwd(pid)
         return os.path.normpath(path)
 
+    @wrap_privileges
     def get_open_files(self, pid):
         if pid in (0, 4):
             return []
-        return _psutil_mswindows.get_process_open_files(pid)
+        retlist = []
+        # Filenames come in in native format like:
+        # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
+        # Convert the first part in the corresponding drive letter
+        # (e.g. "C:\") by using Windows's QueryDosDevice()
+        raw_file_names = _psutil_mswindows.get_process_open_files(pid)
+        for file in raw_file_names:
+            if file.startswith('\\Device\\'):
+                rawdrive = '\\'.join(file.split('\\')[:3])
+                driveletter = _psutil_mswindows._QueryDosDevice(rawdrive)
+                file = file.replace(rawdrive, driveletter)
+                if os.path.isfile(file) and file not in retlist:
+                    retlist.append(file)
+        return retlist
