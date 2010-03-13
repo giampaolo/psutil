@@ -287,6 +287,12 @@ class Impl(object):
             file = "/proc/%s/fd/%s" %(pid, link)
             if os.path.islink(file):
                 file = os.readlink(file)
+                if file.startswith("socket:["):
+                    continue
+                if file.startswith("pipe:["):
+                    continue
+                if file == "[]":
+                    continue
                 if os.path.isfile(file) and not file in retlist:
                     retlist.append(file)
         return retlist 
