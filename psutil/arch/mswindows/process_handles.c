@@ -8,7 +8,9 @@
 #include <Ntdef.h>
 #include "process_handles.h"
 
-#define NT_SUCCESS(x) ((x) >= 0)
+#ifndef NT_SUCCESS
+    #define NT_SUCCESS(x) ((x) >= 0)
+#endif
 #define STATUS_INFO_LENGTH_MISMATCH 0xc0000004
 
 #define SystemHandleInformation 16

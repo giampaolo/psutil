@@ -849,7 +849,7 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             PyErr_Format(NoSuchProcessException,
-                         "No process found with pid %d", pid);
+                         "No process found with pid %lu", pid);
         }
         return NULL;
     }

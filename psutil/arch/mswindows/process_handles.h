@@ -1,4 +1,4 @@
 #include <Python.h>
 #include <windows.h>
 
-PyObject* get_open_fles(long pid, HANDLE processHandle);
+PyObject* get_open_files(long pid, HANDLE processHandle);
