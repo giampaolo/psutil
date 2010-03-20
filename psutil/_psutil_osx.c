@@ -14,9 +14,11 @@
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
 
+#include <mach/mach.h>
 #include <mach/task.h>
 #include <mach/mach_init.h>
 #include <mach/host_info.h>
+#include <mach/mach_host.h>
 #include <mach/mach_traps.h>
 #include <mach/shared_memory_server.h>
 
@@ -177,9 +179,6 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
  * Return 1 if PID exists in the current process list, else 0.
  */
 static int pid_exists(long pid) {
-    kinfo_proc *procList = NULL;
-    size_t num_processes;
-    size_t idx;
     int kill_ret;
 
     // save some time if it's an invalid PID
@@ -298,17 +297,11 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 {
     long pid;
     int err;
-    int t_utime, t_utime_ms;
-    int t_stime, t_stime_ms;
-    int t_cpu;
-    unsigned int thread_count;
-    thread_array_t thread_list = NULL;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
     task_port_t task = (task_port_t)NULL;
     time_value_t user_time, system_time;
     struct task_basic_info tasks_info;
     struct task_thread_times_info task_times;
-
 
     // the argument passed should be a process id
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
@@ -415,7 +408,6 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     int err;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
     task_port_t task = (task_port_t)NULL;
-    time_value_t user_time, system_time;
     struct task_basic_info tasks_info;
     vm_region_basic_info_data_64_t  b_info;
     vm_address_t address = GLOBAL_SHARED_TEXT_SEGMENT;

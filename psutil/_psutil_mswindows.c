@@ -70,58 +70,58 @@ struct module_state {
 };
 
 #if PY_MAJOR_VERSION >= 3
-#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+    #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
 #else
-#define GETSTATE(m) (&_state)
-static struct module_state _state;
+    #define GETSTATE(m) (&_state)
+    static struct module_state _state;
 #endif
 
 #if PY_MAJOR_VERSION >= 3
 
-static int psutil_mswindows_traverse(PyObject *m, visitproc visit, void *arg) {
-    Py_VISIT(GETSTATE(m)->error);
-    return 0;
-}
+    static int psutil_mswindows_traverse(PyObject *m, visitproc visit, void *arg) {
+        Py_VISIT(GETSTATE(m)->error);
+        return 0;
+    }
 
-static int psutil_mswindows_clear(PyObject *m) {
-    Py_CLEAR(GETSTATE(m)->error);
-    return 0;
-}
+    static int psutil_mswindows_clear(PyObject *m) {
+        Py_CLEAR(GETSTATE(m)->error);
+        return 0;
+    }
 
 
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "psutil_mswindows",
-        NULL,
-        sizeof(struct module_state),
-        PsutilMethods,
-        NULL,
-        psutil_mswindows_traverse,
-        psutil_mswindows_clear,
-        NULL
-};
+    static struct PyModuleDef moduledef = {
+            PyModuleDef_HEAD_INIT,
+            "psutil_mswindows",
+            NULL,
+            sizeof(struct module_state),
+            PsutilMethods,
+            NULL,
+            psutil_mswindows_traverse,
+            psutil_mswindows_clear,
+            NULL
+    };
 
 #define INITERROR return NULL
 
-PyObject *
-PyInit__psutil_mswindows(void)
+    PyObject* PyInit__psutil_mswindows(void)
 
 #else
-#define INITERROR return
-
-void
-init_psutil_mswindows(void)
+    #define INITERROR return
+    void init_psutil_mswindows(void)
 #endif
 {
+    struct module_state *st;
 #if PY_MAJOR_VERSION >= 3
     PyObject *module = PyModule_Create(&moduledef);
 #else
     PyObject *module = Py_InitModule("_psutil_mswindows", PsutilMethods);
 #endif
-    if (module == NULL)
-        INITERROR;
-    struct module_state *st = GETSTATE(module);
 
+    if (module == NULL) {
+        INITERROR;
+    }
+
+    st = GETSTATE(module);
     st->error = PyErr_NewException("_psutil_mswindow.Error", NULL, NULL);
     if (st->error == NULL) {
         Py_DECREF(module);
