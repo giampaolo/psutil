@@ -13,6 +13,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#include <sys/param.h>
 #include <sys/user.h>
 #include <sys/proc.h>
 
