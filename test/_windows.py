@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# $Id
+
 import os
 import unittest
 import platform
