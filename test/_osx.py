@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-# $Id
+#
+# $Id$
+#
 
 import unittest
 import subprocess
