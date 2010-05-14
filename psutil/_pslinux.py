@@ -72,7 +72,7 @@ def total_virtmem():
             return int(line.split()[1]) * 1024
 
 def avail_virtmem():
-    "Return the amount of virtual memory currently in use on the system, in bytes."
+    """Return the amount of virtual memory currently in use on the system, in bytes."""
     f = open('/proc/meminfo', 'r')
     for line in f:
         if line.startswith('SwapFree:'):
@@ -82,6 +82,22 @@ def avail_virtmem():
 def used_virtmem():
     """Return the amount of used memory currently in use on the system, in bytes."""
     return total_virtmem() - avail_virtmem()
+
+def cached_mem():
+    """Return the amount of cached memory on the system, in bytes."""
+    f = open('/proc/meminfo', 'r')
+    for line in f:
+        if line.startswith('Cached:'):
+            f.close()
+            return int(line.split()[1]) * 1024
+
+def cached_swap():
+    """Return the amount of cached swap on the system, in bytes."""
+    f = open('/proc/meminfo', 'r')
+    for line in f:
+        if line.startswith('SwapCached:'):
+            f.close()
+            return int(line.split()[1]) * 1024
 
 def get_system_cpu_times():
     """Return a dict representing the following CPU times:
@@ -295,7 +311,7 @@ class Impl(object):
                     continue
                 if os.path.isfile(file) and not file in retlist:
                     retlist.append(file)
-        return retlist 
+        return retlist
 
     def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)

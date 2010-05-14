@@ -27,6 +27,8 @@ __all__ = [
     "used_virtmem",
     "cpu_times",
     "cpu_percent",
+    "cached_mem",
+    "cached_swap",
     ]
 
 __version__ = '0.1.3'
