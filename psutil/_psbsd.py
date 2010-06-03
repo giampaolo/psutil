@@ -41,11 +41,11 @@ def used_virtmem():
 
 def cached_mem():
     """Return the amount of cached memory on the system, in bytes."""
-    raise NotImplementedError("This feature not yet implemented on BSD.")
+    return _psutil_bsd.get_cached_mem()
 
 def cached_swap():
-    """Return the amount of cached swap on the system, in bytes."""
-    raise NotImplementedError("This feature not yet implemented on BSD.")
+    """Return 0 as there's no such thing as cached memory on BSD."""
+    return 0
 
 def get_system_cpu_times():
     """Return a dict representing the following CPU times:

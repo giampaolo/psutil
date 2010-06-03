@@ -103,6 +103,11 @@ class TestCase(unittest.TestCase):
         self.assertTrue(isinstance(x, int) or isinstance(x, long))
         self.assertTrue(x >= 0)
 
+    def test_cached_mem(self):
+        x = psutil.cached_mem()
+        self.assertTrue(isinstance(x, int) or isinstance(x, long))
+        self.assertTrue(x >= 0)
+
     def test_system_cpu_times(self):
         total = 0
         times = psutil.cpu_times()

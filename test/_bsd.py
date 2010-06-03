@@ -111,8 +111,12 @@ class BSDSpecificTestCase(unittest.TestCase):
         # let's assume the test is failed if difference is > 0.5 MB
         if difference > (0.5 * 2**20):
             self.fail("sysctl=%s; psutil=%s; difference=%s;" %(
-                       sysctl_avail_virtmem, psutil_avail_virtmem, difference)
-                      )
+                       sysctl_avail_virtmem, psutil_avail_virtmem, difference))
+
+    def test_cached_mem(self):
+        sysctl_mem = sysctl("sysctl vm.stats.vm.v_cache_count")
+        psutil_mem = psutil.cached_mem()
+        self.assertEqual(sysctl_mem, psutil_mem)
 
     def test_process_create_time(self):
         cmdline = "ps -o lstart -p %s" %self.pid
