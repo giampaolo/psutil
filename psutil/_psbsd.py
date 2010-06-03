@@ -44,7 +44,7 @@ def cached_mem():
     return _psutil_bsd.get_cached_mem()
 
 def cached_swap():
-    """Return 0 as there's no such thing as cached memory on BSD."""
+    """Return 0 as there's no such thing as cached swap on BSD."""
     return 0
 
 def get_system_cpu_times():

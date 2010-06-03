@@ -150,7 +150,7 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
     def test_avail_virtmem(self):
         self.execute('avail_virtmem')
 
-    def test_avail_virtmem(self):
+    def test_cached_mem(self):
         self.execute('cached_mem')
 
     def test_cpu_times(self):
