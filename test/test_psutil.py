@@ -438,6 +438,8 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, p.suspend)
         self.assertRaises(psutil.NoSuchProcess, p.resume)
         self.assertRaises(psutil.NoSuchProcess, p.kill)
+        self.assertRaises(psutil.NoSuchProcess, p.terminate)
+        self.assertRaises(psutil.NoSuchProcess, p.send_signal, signal.SIGTERM)
         self.assertRaises(psutil.NoSuchProcess, p.get_cpu_times)
         self.assertRaises(psutil.NoSuchProcess, p.get_cpu_percent)
         self.assertRaises(psutil.NoSuchProcess, p.get_memory_info)
@@ -512,8 +514,12 @@ class TestCase(unittest.TestCase):
     if os.name == 'posix':
         if hasattr(os, 'getuid') and os.getuid() > 0:
             def test_unix_access_denied(self):
-                p = psutil.Process(1)
+                p = psutil.Process(1)    
                 self.assertRaises(psutil.AccessDenied, p.kill)
+                self.assertRaises(psutil.AccessDenied, p.send_signal, signal.SIGTERM)
+                self.assertRaises(psutil.AccessDenied, p.terminate)
+                self.assertRaises(psutil.AccessDenied, p.suspend)
+                self.assertRaises(psutil.AccessDenied, p.resume)
 
 
 if hasattr(os, 'getuid'):

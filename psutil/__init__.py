@@ -275,6 +275,8 @@ class Process(object):
             except OSError, err:
                 if err.errno == errno.ESRCH:
                     raise NoSuchProcess(self.pid)
+                if err.errno == errno.EPERM:
+                    raise AccessDenied
                 raise
 
     def resume(self):
@@ -293,6 +295,8 @@ class Process(object):
             except OSError, err:
                 if err.errno == errno.ESRCH:
                     raise NoSuchProcess(self.pid)
+                if err.errno == errno.EPERM:
+                    raise AccessDenied
                 raise
 
     def get_cpu_percent(self):
