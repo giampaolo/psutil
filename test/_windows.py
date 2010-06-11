@@ -8,6 +8,7 @@ import os
 import unittest
 import platform
 import subprocess
+import signal
 import time
 import warnings
 
@@ -50,6 +51,10 @@ class WindowsSpecificTestCase(unittest.TestCase):
         else:
             self.assertTrue(rss > 0)
             self.assertEqual(vms, 0)
+
+    def test_signal(self):
+        p = psutil.Process(self.pid)
+        self.assertRaises(ValueError, p.send_signal, signal.SIGKILL)
 
     if wmi is not None:
 

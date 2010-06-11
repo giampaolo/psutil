@@ -362,14 +362,45 @@ class Process(object):
         except NoSuchProcess:
             return False
 
-    def kill(self, sig=None):
-        """Kill the current process by using signal sig (defaults to SIGKILL).
+    def send_signal(self, sig):
+        """Send a signal to process (see signal module constants).
+        On Windows only SIGTERM is valid and is an alias for kill().
         """
         # safety measure in case the current process has been killed in
         # meantime and the kernel reused its PID
         if not self.is_running():
+            raise NoSuchProcess        
+        if os.name == 'posix':
+            try:
+                os.kill(self.pid, sig)
+            except OSError, err:
+                if err.errno == errno.ESRCH:
+                    raise NoSuchProcess(pid)
+                if err.errno == errno.EPERM:
+                    raise AccessDenied
+                raise
+        else:
+            if sig == signal.SIGTERM:
+                _platform_impl.kill_process(self.pid, sig)
+            else:
+                raise ValueError("Only SIGTERM is supported on Windows")
+
+    def terminate(self):
+        """Terminate the process with SIGTERM.
+        On Windows this is an alias for kill().
+        """
+        self.send_signal(signal.SIGTERM)
+
+    def kill(self):
+        """Kill the current process."""
+        # safety measure in case the current process has been killed in
+        # meantime and the kernel reused its PID
+        if not self.is_running():
             raise NoSuchProcess
-        _platform_impl.kill_process(self.pid, sig)
+        if os.name == 'posix':
+            self.send_signal(signal.SIGKILL)
+        else:
+            _platform_impl.kill_process(self.pid, sig)
 
 
 def pid_exists(pid):

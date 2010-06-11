@@ -95,18 +95,6 @@ class Impl(object):
         return infoTuple
 
     @wrap_privileges
-    def kill_process(self, pid, sig=signal.SIGKILL):
-        """Terminates the process with the given PID."""
-        if sig is None:
-            sig = signal.SIGKILL
-        try:
-            os.kill(pid, sig)
-        except OSError, err:
-            if err.errno == errno.ESRCH:
-                raise NoSuchProcess(pid)
-            raise
-
-    @wrap_privileges
     def get_cpu_times(self, pid):
         """return a tuple containing process user/kernel time."""
         return _psutil_bsd.get_cpu_times(pid)

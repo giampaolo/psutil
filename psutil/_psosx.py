@@ -78,18 +78,6 @@ class Impl(object):
         return infoTuple
 
     @wrap_privileges
-    def kill_process(self, pid, sig=signal.SIGKILL):
-        """Terminates the process with the given PID."""
-        if sig is None:
-            sig = signal.SIGKILL
-        try:
-            os.kill(pid, sig)
-        except OSError, err:
-            if err.errno == errno.ESRCH:
-                raise NoSuchProcess(pid)
-            raise
-
-    @wrap_privileges
     def get_memory_info(self, pid):
         """Return a tuple with the process' RSS and VMS size."""
         return _psutil_osx.get_memory_info(pid)

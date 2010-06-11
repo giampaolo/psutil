@@ -183,18 +183,6 @@ class Impl(object):
                                   self._get_process_uid(pid),
                                   self._get_process_gid(pid))
 
-    @wrap_privileges
-    def kill_process(self, pid, sig=signal.SIGKILL):
-        """Terminates the process with the given PID."""
-        if sig is None:
-            sig = signal.SIGKILL
-        try:
-            os.kill(pid, sig)
-        except OSError, err:
-            if err.errno == errno.ESRCH:
-                raise NoSuchProcess(pid)
-            raise
-
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
         pids = [int(x) for x in os.listdir('/proc') if x.isdigit()]

@@ -1,5 +1,11 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+0.1.4 - XXXX-XX-XX
+------------------
+NEW FEATURES
+ * Issue 91: per-process send_signal() and terminate() methods.
+
+
 0.1.3 - 2010-03-02
 ------------------
 NEW FEATURES

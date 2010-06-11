@@ -73,6 +73,31 @@ class TestCase(unittest.TestCase):
         self.proc = None
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
+    def test_terminate(self):
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        test_pid = self.proc.pid
+        wait_for_pid(test_pid)
+        p = psutil.Process(test_pid)
+        name = p.name
+        p.terminate()
+        self.proc.wait()
+        self.proc = None
+        self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
+
+    def test_send_signal(self):
+        if os.name == 'posix':
+            sig = signal.SIGKILL
+        else:
+            sig = signal.SIGTERM
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        test_pid = self.proc.pid
+        p = psutil.Process(test_pid)
+        name = p.name
+        p.send_signal(sig)
+        self.proc.wait()
+        self.proc = None
+        self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
+
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM
         self.assertTrue(isinstance(x, int) or isinstance(x, long))
