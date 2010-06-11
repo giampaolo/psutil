@@ -375,8 +375,8 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.create_time, float))
         self.assert_(isinstance(p.username, str) or \
                      isinstance(p.username, type(u'')))
-        if hasattr(p, 'getpwd'):
-            self.assert_(isinstance(p.getpwd(), str))
+        if hasattr(p, 'getcwd'):
+            self.assert_(isinstance(p.getcwd(), str))
         if hasattr(p, 'get_open_files'):
             if not sys.platform.lower().startswith("linux") and \
             not isinstance(self, LimitedUserTestCase):
