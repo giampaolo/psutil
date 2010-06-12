@@ -1,4 +1,4 @@
-# $Id$
+# $Id
 
 # this exception get overriden by the platform specific modules if necessary
 
