@@ -135,7 +135,7 @@ class Process(object):
         if not isinstance(pid, int):
             raise ValueError("An integer is required")
         if not pid_exists(pid):
-            raise NoSuchProcess("No process found with PID %s" % pid)
+            raise NoSuchProcess(pid, "no process found with PID %s" % pid)
         self._procinfo = ProcessInfo(pid)
         self.is_proxy = True
         # try to init CPU times, if it raises AccessDenied then suppress
@@ -147,6 +147,18 @@ class Process(object):
             self._last_user_time, self._last_kern_time = self.get_cpu_times()
         except AccessDenied:
             self._last_user_time, self._last_kern_time = None, None
+
+    def __getattribute__(self, name):
+        # wrap all method calls and attributes lookups so that any bare
+        # "raise NoSuchProcess" clause coming from lower level calls is
+        # translated into a more meaningful "raise NoSuchProcess(self.pid, msg)"
+        try:            
+            return object.__getattribute__(self, name)
+        except (NoSuchProcess), err:
+            raise NoSuchProcess(pid=err.pid or self.pid, 
+                                msg=err.msg or "process no longer exists")
+        except AccessDenied, err:
+            raise AccessDenied(pid=err.pid or self.pid, msg=err.msg)
 
     def __str__(self):
         return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; " \
@@ -264,7 +276,7 @@ class Process(object):
         # safety measure in case the current process has been killed in
         # meantime and the kernel reused its PID
         if not self.is_running():
-            raise NoSuchProcess
+            raise NoSuchProcess(self.pid, "process no longer exists")
         # windows
         if hasattr(_platform_impl, "suspend_process"):
             _platform_impl.suspend_process(self.pid)
@@ -274,7 +286,7 @@ class Process(object):
                 os.kill(self.pid, signal.SIGSTOP)
             except OSError, err:
                 if err.errno == errno.ESRCH:
-                    raise NoSuchProcess(self.pid)
+                    raise NoSuchProcess(self.pid, "process no longer exists")
                 if err.errno == errno.EPERM:
                     raise AccessDenied
                 raise
@@ -284,7 +296,7 @@ class Process(object):
         # safety measure in case the current process has been killed in
         # meantime and the kernel reused its PID
         if not self.is_running():
-            raise NoSuchProcess
+            raise NoSuchProcess(self.pid, "process no longer exists")
         # windows
         if hasattr(_platform_impl, "resume_process"):
             _platform_impl.resume_process(self.pid)
@@ -294,7 +306,7 @@ class Process(object):
                 os.kill(self.pid, signal.SIGCONT)
             except OSError, err:
                 if err.errno == errno.ESRCH:
-                    raise NoSuchProcess(self.pid)
+                    raise NoSuchProcess(self.pid, "process no longer exists")
                 if err.errno == errno.EPERM:
                     raise AccessDenied
                 raise
@@ -373,13 +385,13 @@ class Process(object):
         # safety measure in case the current process has been killed in
         # meantime and the kernel reused its PID
         if not self.is_running():
-            raise NoSuchProcess        
+            raise NoSuchProcess(self.pid, "process no longer exists")
         if os.name == 'posix':
             try:
                 os.kill(self.pid, sig)
             except OSError, err:
                 if err.errno == errno.ESRCH:
-                    raise NoSuchProcess(pid)
+                    raise NoSuchProcess(self.pid, "process no longer exists")
                 if err.errno == errno.EPERM:
                     raise AccessDenied
                 raise
@@ -400,7 +412,7 @@ class Process(object):
         # safety measure in case the current process has been killed in
         # meantime and the kernel reused its PID
         if not self.is_running():
-            raise NoSuchProcess
+            raise NoSuchProcess(self.pid, "process no longer exists")
         if os.name == 'posix':
             self.send_signal(signal.SIGKILL)
         else:
@@ -526,3 +538,4 @@ def test():
 
 if __name__ == "__main__":
     test()
+
