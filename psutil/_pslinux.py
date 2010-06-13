@@ -114,40 +114,25 @@ def get_system_cpu_times():
 
 # --- decorators
 
-def prevent_zombie(method):
-    """Call method(self, pid) into a try/except clause so that if an
-    IOError "No such file" exception is raised we assume the process
-    has died and raise psutil.NoSuchProcess instead.
+def wrap_exceptions(callable):
+    """Call callable into a try/except clause and translate ENOENT,
+    EACCES and EPERM in NoSuchProcess or AccessDenied exceptions.
     """
     def wrapper(self, pid, *args, **kwargs):
         try:
-            return method(self, pid, *args, **kwargs)
+            return callable(self, pid, *args, **kwargs)
         except (OSError, IOError), err:
             if err.errno == errno.ENOENT:  # no such file or directory
-                raise NoSuchProcess(pid)
-            raise
-    return wrapper
-
-
-def wrap_privileges(callable):
-    """Call callable into a try/except clause so that if an
-    OSError EPERM exception is raised we translate it into
-    psutil.AccessDenied.
-    """
-    def wrapper(*args, **kwargs):
-        try:
-            return callable(*args, **kwargs)
-        except (OSError, IOError), err:
+                raise NoSuchProcess(pid, "process no longer exists")
             if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied
+                raise AccessDenied(pid)
             raise
     return wrapper
 
 
 class Impl(object):
 
-    @prevent_zombie
-    @wrap_privileges
+    @wrap_exceptions
     def get_process_info(self, pid):
         """Returns a process info class."""
         if pid == 0:
@@ -202,8 +187,7 @@ class Impl(object):
         else:
             return True
 
-    @prevent_zombie
-    @wrap_privileges
+    @wrap_exceptions
     def get_cpu_times(self, pid):
         # special case for 0 (kernel process) PID
         if pid == 0:
@@ -218,8 +202,7 @@ class Impl(object):
         stime = float(values[12]) / _CLOCK_TICKS
         return (utime, stime)
 
-    @prevent_zombie
-    @wrap_privileges
+    @wrap_exceptions
     def get_process_create_time(self, pid):
         # special case for 0 (kernel processes) PID; return system uptime
         if pid == 0:
@@ -237,8 +220,7 @@ class Impl(object):
         starttime = (float(values[19]) / _CLOCK_TICKS) + _UPTIME
         return starttime
 
-    @prevent_zombie
-    @wrap_privileges
+    @wrap_exceptions
     def get_memory_info(self, pid):
         # special case for 0 (kernel processes) PID
         if pid == 0:
@@ -259,8 +241,7 @@ class Impl(object):
 
 # XXX - commented as it's still not implemented on all platforms.
 # Leaving it here for the future.
-##    @prevent_zombie
-##    @wrap_privileges
+##    @wrap_exceptions
 ##    def get_process_environ(self, pid):
 ##        """Return process environment variables for the process with the
 ##        given PID as a dictionary."""
@@ -275,15 +256,13 @@ class Impl(object):
 ##            dict[key] = value
 ##        return dict
 
-    @prevent_zombie
-    @wrap_privileges
+    @wrap_exceptions
     def get_process_cwd(self, pid):
         if pid == 0:
             return ''
         return os.readlink("/proc/%s/cwd" %pid)
 
-    @prevent_zombie
-    @wrap_privileges
+    @wrap_exceptions
     def get_open_files(self, pid):
         retlist = []
         files = os.listdir("/proc/%s/fd" %pid)

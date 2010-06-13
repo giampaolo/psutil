@@ -148,18 +148,6 @@ class Process(object):
         except AccessDenied:
             self._last_user_time, self._last_kern_time = None, None
 
-    def __getattribute__(self, name):
-        # wrap all method calls and attributes lookups so that any bare
-        # "raise NoSuchProcess" clause coming from lower level calls is
-        # translated into a more meaningful "raise NoSuchProcess(self.pid, msg)"
-        try:            
-            return object.__getattribute__(self, name)
-        except (NoSuchProcess), err:
-            raise NoSuchProcess(pid=err.pid or self.pid, 
-                                msg=err.msg or "process no longer exists")
-        except AccessDenied, err:
-            raise AccessDenied(pid=err.pid or self.pid, msg=err.msg)
-
     def __str__(self):
         return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; " \
                "CMDLINE:%s; UID:%s; GID:%s;>" \
