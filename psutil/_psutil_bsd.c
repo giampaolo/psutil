@@ -21,8 +21,6 @@
 #include "arch/bsd/process_info.h"
 
 
-static PyObject *NoSuchProcessException;
-
 /*
  * define the psutil C module methods and initialize the module.
  */
@@ -120,18 +118,10 @@ init_psutil_bsd(void)
         Py_DECREF(module);
         INITERROR;
     }
-
-    NoSuchProcessException = PyErr_NewException("_psutil_bsd.NoSuchProcess",
-                                                 NULL, NULL);
-    Py_INCREF(NoSuchProcessException);
-    PyModule_AddObject(module, "NoSuchProcess", NoSuchProcessException);
-
 #if PY_MAJOR_VERSION >= 3
     return module;
 #endif
 }
-
-
 
 
 /*
@@ -204,9 +194,6 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     len = sizeof(kp);
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
         // raise an exception if it failed, since we won't get any data
-        if (ESRCH == errno) {
-            return PyErr_Format(NoSuchProcessException, "No process found with pid %lu", pid);
-        }
         return PyErr_SetFromErrno(PyExc_OSError);
     }
 
@@ -218,8 +205,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         // get_arg_list() returns NULL only if getcmdargs failed with ESRCH
         // (no process with that PID)
         if (NULL == arglist) {
-            return PyErr_Format(NoSuchProcessException,
-                                "No such process found with pid %lu", pid);
+            return PyErr_SetFromErrno(PyExc_OSError);
         }
 
         // hooray, we got all the data, so return it as a tuple to be passed to
@@ -274,10 +260,6 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
     len = sizeof(kp);
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
         // raise an exception if it failed, since we won't get any data
-        if (ESRCH == errno) {
-            return PyErr_Format(NoSuchProcessException,
-                                "No process found with pid %lu", pid);
-        }
         return PyErr_SetFromErrno(PyExc_OSError);
     }
 

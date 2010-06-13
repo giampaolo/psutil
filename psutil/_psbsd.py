@@ -14,8 +14,6 @@ import _psutil_bsd
 # import psutil exceptions we can override with our own
 from error import *
 
-# module level constants (gets pushed up to psutil module)
-NoSuchProcess = _psutil_bsd.NoSuchProcess
 NUM_CPUS = _psutil_bsd.get_num_cpus()
 TOTAL_PHYMEM = _psutil_bsd.get_total_phymem()
 
@@ -55,21 +53,7 @@ def get_system_cpu_times():
         idle=values[3], irq=values[4])
 
 
-def wrap_privileges(callable):
-    """Call callable into a try/except clause so that if an
-    OSError EPERM exception is raised we translate it into
-    psutil.AccessDenied.
-    """
-    def wrapper(*args, **kwargs):
-        try:
-            return callable(*args, **kwargs)
-        except OSError, err:
-            if err.errno == errno.EPERM:
-                raise AccessDenied
-            raise
-    return wrapper
-
-def prevent_zombie(method):
+def wrap_exceptions(method):
     """Call method(self, pid) into a try/except clause so that if an
     OSError "No such process" exception is raised we assume the process
     has died and raise psutil.NoSuchProcess instead.
@@ -79,14 +63,16 @@ def prevent_zombie(method):
             return method(self, pid, *args, **kwargs)
         except OSError, err:
             if err.errno == errno.ESRCH:
-                raise NoSuchProcess(pid)
+                raise NoSuchProcess(pid, "process no longer exists")
+            if err.errno == errno.EPERM:
+                raise AccessDenied(pid)
             raise
     return wrapper
 
 
 class Impl(object):
 
-    @wrap_privileges
+    @wrap_exceptions
     def get_process_info(self, pid):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.
@@ -94,17 +80,17 @@ class Impl(object):
         infoTuple = _psutil_bsd.get_process_info(pid)
         return infoTuple
 
-    @wrap_privileges
+    @wrap_exceptions
     def get_cpu_times(self, pid):
         """return a tuple containing process user/kernel time."""
         return _psutil_bsd.get_cpu_times(pid)
 
-    @prevent_zombie
+    @wrap_exceptions
     def get_memory_info(self, pid):
         """Return a tuple with the process' RSS and VMS size."""
         return _psutil_bsd.get_memory_info(pid)
 
-    @prevent_zombie
+    @wrap_exceptions
     def get_process_create_time(self, pid):
         return _psutil_bsd.get_process_create_time(pid)
 
