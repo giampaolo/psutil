@@ -17,7 +17,6 @@ except ImportError:
 
 # --- module level constants (gets pushed up to psutil module)
 
-NoSuchProcess = _psutil_mswindows.NoSuchProcess
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
 _UPTIME = _psutil_mswindows.get_system_uptime()
 TOTAL_PHYMEM = _psutil_mswindows.get_total_phymem()
@@ -63,24 +62,26 @@ def get_system_cpu_times():
 
 # --- decorator
 
-def wrap_privileges(callable):
+def wrap_exceptions(callable):
     """Call callable into a try/except clause so that if a
     WindowsError 5 AccessDenied exception is raised we translate it
     into psutil.AccessDenied
     """
-    def wrapper(*args, **kwargs):
+    def wrapper(self, pid, *args, **kwargs):
         try:
-            return callable(*args, **kwargs)
+            return callable(self, pid, *args, **kwargs)
         except OSError, err:
             if err.errno in (errno.EACCES, ERROR_ACCESS_DENIED):
-                raise AccessDenied
+                raise AccessDenied(pid)
             raise
+        except _psutil_mswindows.NoSuchProcess:
+            raise NoSuchProcess(pid, "process no longer exists")
     return wrapper
 
 
 class Impl(object):
 
-    @wrap_privileges
+    @wrap_exceptions
     def get_process_info(self, pid):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.
@@ -88,7 +89,7 @@ class Impl(object):
         infoTuple = _psutil_mswindows.get_process_info(pid)
         return infoTuple
 
-    @wrap_privileges
+    @wrap_exceptions
     def get_memory_info(self, pid):
         """Returns a tuple or RSS/VMS memory usage in bytes."""
         # special case for 0 (kernel processes) PID
@@ -96,7 +97,7 @@ class Impl(object):
             return (0, 0)
         return _psutil_mswindows.get_memory_info(pid)
 
-    @wrap_privileges
+    @wrap_exceptions
     def kill_process(self, pid):
         """Terminates the process with the given PID."""
         try:
@@ -104,7 +105,7 @@ class Impl(object):
         except OSError, err:
             # work around issue #24
             if (pid == 0) and err.errno in (errno.EINVAL, ERROR_INVALID_PARAMETER):
-                raise AccessDenied
+                raise AccessDenied(pid)
             raise
 
     def get_process_username(self, pid):
@@ -117,7 +118,7 @@ class Impl(object):
                 return 'NT AUTHORITY\\SYSTEM'
             w = wmi.WMI().Win32_Process(ProcessId=pid)
             if not w:
-                raise NoSuchProcess
+                raise NoSuchProcess(pid, "process no longer exists")
             domain, _, username = w[0].GetOwner()
             return "%s\\%s" %(domain, username)
 
@@ -128,14 +129,14 @@ class Impl(object):
     def pid_exists(self, pid):
         return _psutil_mswindows.pid_exists(pid)
 
-    @wrap_privileges
+    @wrap_exceptions
     def get_process_create_time(self, pid):
         # special case for kernel process PIDs; return system uptime
         if pid in (0, 4):
             return _UPTIME
         return _psutil_mswindows.get_process_create_time(pid)
 
-    @wrap_privileges
+    @wrap_exceptions
     def get_cpu_times(self, pid):
         return _psutil_mswindows.get_process_cpu_times(pid)
 
@@ -145,7 +146,7 @@ class Impl(object):
     def resume_process(self, pid):
         return _psutil_mswindows.resume_process(pid)
 
-    @wrap_privileges
+    @wrap_exceptions
     def get_process_cwd(self, pid):
         if pid in (0, 4):
             return ''
@@ -154,7 +155,7 @@ class Impl(object):
         path = _psutil_mswindows.get_process_cwd(pid)
         return os.path.normpath(path)
 
-    @wrap_privileges
+    @wrap_exceptions
     def get_open_files(self, pid):
         if pid in (0, 4):
             return []
