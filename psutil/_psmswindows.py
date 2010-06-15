@@ -97,7 +97,7 @@ class Impl(object):
         return _psutil_mswindows.get_memory_info(pid)
 
     @wrap_privileges
-    def kill_process(self, pid, sig=None):
+    def kill_process(self, pid):
         """Terminates the process with the given PID."""
         try:
             return _psutil_mswindows.kill_process(pid)

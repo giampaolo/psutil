@@ -54,7 +54,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
 
     def test_signal(self):
         p = psutil.Process(self.pid)
-        self.assertRaises(ValueError, p.send_signal, signal.SIGKILL)
+        self.assertRaises(ValueError, p.send_signal, signal.SIGINT)
 
     if wmi is not None:
 

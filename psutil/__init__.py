@@ -37,6 +37,7 @@ __version__ = '0.1.3'
 import sys
 import os
 import time
+import signal
 try:
     import pwd, grp
 except ImportError:
@@ -385,7 +386,7 @@ class Process(object):
                 raise
         else:
             if sig == signal.SIGTERM:
-                _platform_impl.kill_process(self.pid, sig)
+                _platform_impl.kill_process(self.pid)
             else:
                 raise ValueError("Only SIGTERM is supported on Windows")
 
@@ -404,7 +405,7 @@ class Process(object):
         if os.name == 'posix':
             self.send_signal(signal.SIGKILL)
         else:
-            _platform_impl.kill_process(self.pid, sig)
+            _platform_impl.kill_process(self.pid)
 
 
 def pid_exists(pid):
