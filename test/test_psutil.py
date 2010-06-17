@@ -46,11 +46,13 @@ def kill(pid):
 class TestCase(unittest.TestCase):
 
     def setUp(self):
+        # supposed to always be a subprocess.Popen instance
         self.proc = None
 
     def tearDown(self):
         if self.proc is not None:
             kill(self.proc.pid)
+            self.proc.wait()
 
     def test_get_process_list(self):
         pids = [x.pid for x in psutil.get_process_list()]
@@ -338,6 +340,11 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(self.proc.pid)
         self.assertEqual(p.ppid, this_parent)
         self.assertEqual(p.parent.pid, this_parent)
+        # no other process is supposed to have us as parent
+        for p in psutil.process_iter():
+            if p.pid == self.proc.pid:
+                continue
+            self.assertTrue(p.ppid != this_parent)
 
     def test_suspend_resume(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
