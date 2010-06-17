@@ -9,7 +9,7 @@ import time
 
 import psutil
 
-from test_psutil import PYTHON, DEVNULL, kill
+from test_psutil import PYTHON, DEVNULL, reap_children
 from _posix import ps
 
 
@@ -19,6 +19,6 @@ class LinuxSpecificTestCase(unittest.TestCase):
         self.pid = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL).pid
 
     def tearDown(self):
-        kill(self.pid)
+        reap_children()
 
 

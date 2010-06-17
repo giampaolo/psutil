@@ -42,6 +42,40 @@ def kill(pid):
     else:
         psutil.Process(pid).kill()
 
+def reap_children():
+    """Kill any subprocess started by this test suite and ensure that 
+    no zombies stick around to hog resources and create problems when 
+    looking for refleaks.
+    """
+    if os.name == 'posix':
+        def waitpid(_):
+            # on posix we are free to wait for any pending process by
+            # passing -1 to os.waitpid()
+            while True:
+                try:
+                    any_process = -1
+                    pid, status = os.waitpid(any_process, os.WNOHANG)
+                    if pid == 0:
+                        break
+                except OSError:
+                    break
+    else:
+        def waitpid(process):
+            # on non-posix systems we just wait for the given process
+            # to go away
+            while process.is_running():
+                time.sleep(0.01)
+
+    this_pid = os.getpid()
+    for p in psutil.process_iter():
+        if p.ppid == this_pid:
+            p.kill()
+            waitpid(p)
+            assert not p.is_running()
+    else:
+        if os.name == 'posix':
+            waitpid(None)
+
 
 class TestCase(unittest.TestCase):
 
@@ -50,9 +84,7 @@ class TestCase(unittest.TestCase):
         self.proc = None
 
     def tearDown(self):
-        if self.proc is not None:
-            kill(self.proc.pid)
-            self.proc.wait()
+        reap_children()
 
     def test_get_process_list(self):
         pids = [x.pid for x in psutil.get_process_list()]
@@ -72,7 +104,6 @@ class TestCase(unittest.TestCase):
         name = p.name
         p.kill()
         self.proc.wait()
-        self.proc = None
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_terminate(self):
@@ -83,7 +114,6 @@ class TestCase(unittest.TestCase):
         name = p.name
         p.terminate()
         self.proc.wait()
-        self.proc = None
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_send_signal(self):
@@ -97,7 +127,6 @@ class TestCase(unittest.TestCase):
         name = p.name
         p.send_signal(sig)
         self.proc.wait()
-        self.proc = None
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_TOTAL_PHYMEM(self):
@@ -239,7 +268,6 @@ class TestCase(unittest.TestCase):
         self.assertTrue(p.is_running())
         psutil.Process(self.proc.pid).kill()
         self.proc.wait()
-        self.proc = None
         self.assertFalse(p.is_running())
 
     def test_pid_exists(self):
@@ -427,7 +455,6 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(self.proc.pid)
         p.kill()
         self.proc.wait()
-        self.proc = None
 
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "ppid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "parent")
@@ -595,22 +622,7 @@ def test_main():
         test_suite.addTest(unittest.makeSuite(test_class))
 
     unittest.TextTestRunner(verbosity=2).run(test_suite)
-
-    # reap_children() function should help ensure that no extra children
-    # (zombies) stick around to hog resources and create problems when
-    # looking for refleaks.
-    # We check for ImportError as on most Unixen python tests are not
-    # installed by default (e.g. on Ubuntu they get installed with:
-    # "apt-get install python-dev")
-    try:
-        from test import test_support
-    except ImportError:
-        pass
-    else:
-        # available since python 2.5
-        if hasattr(test_support, "reap_children"):
-            test_support.reap_children()
-
+    reap_children()
     DEVNULL.close()
 
 if __name__ == '__main__':

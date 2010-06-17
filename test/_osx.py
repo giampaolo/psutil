@@ -11,7 +11,7 @@ import sys
 
 import psutil
 
-from test_psutil import kill, PYTHON, DEVNULL
+from test_psutil import reap_children, PYTHON, DEVNULL
 #from _posix import ps
 
 
@@ -35,7 +35,7 @@ class OSXSpecificTestCase(unittest.TestCase):
         self.pid = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL).pid
 
     def tearDown(self):
-        kill(self.pid)
+        reap_children()
 
     def test_TOTAL_PHYMEM(self):
         sysctl_hwphymem = sysctl('sysctl hw.physmem')
