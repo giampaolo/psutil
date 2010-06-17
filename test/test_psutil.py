@@ -43,8 +43,8 @@ def kill(pid):
         psutil.Process(pid).kill()
 
 def reap_children():
-    """Kill any subprocess started by this test suite and ensure that 
-    no zombies stick around to hog resources and create problems when 
+    """Kill any subprocess started by this test suite and ensure that
+    no zombies stick around to hog resources and create problems when
     looking for refleaks.
     """
     if os.name == 'posix':
@@ -552,7 +552,7 @@ class TestCase(unittest.TestCase):
     if os.name == 'posix':
         if hasattr(os, 'getuid') and os.getuid() > 0:
             def test_unix_access_denied(self):
-                p = psutil.Process(1)    
+                p = psutil.Process(1)
                 self.assertRaises(psutil.AccessDenied, p.kill)
                 self.assertRaises(psutil.AccessDenied, p.send_signal, signal.SIGTERM)
                 self.assertRaises(psutil.AccessDenied, p.terminate)
@@ -582,7 +582,7 @@ if hasattr(os, 'getuid'):
 
         if sys.platform.lower().startswith("linux"):
 
-            # overridden tests known to raise AccessDenied when run 
+            # overridden tests known to raise AccessDenied when run
             # as limited user
             def test_getcwd(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_getcwd, self)
