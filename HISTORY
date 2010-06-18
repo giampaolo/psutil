@@ -6,6 +6,7 @@ NEW FEATURES
  * Issue 91: per-process send_signal() and terminate() methods.
  * Issue 95: NoSuchProcess and AccessDenied exception classes now provide a
    "pid" and a "msg" attribute.
+ * Issue 97: per-process children.
 
 BUGFIXES
  * Issue 94: suspend() raises OSError instead of AccessDenied.

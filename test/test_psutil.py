@@ -48,17 +48,18 @@ def reap_children():
     looking for refleaks.
     """
     if os.name == 'posix':
-        def waitpid(_):
+        def waitpid(process):
             # on posix we are free to wait for any pending process by
             # passing -1 to os.waitpid()
             while True:
                 try:
                     any_process = -1
                     pid, status = os.waitpid(any_process, os.WNOHANG)
-                    if pid == 0:
+                    if pid == 0 and not process.is_running():
                         break
                 except OSError:
-                    break
+                    if not process.is_running():
+                        break
     else:
         def waitpid(process):
             # on non-posix systems we just wait for the given process
@@ -66,15 +67,10 @@ def reap_children():
             while process.is_running():
                 time.sleep(0.01)
 
-    this_pid = os.getpid()
-    for p in psutil.process_iter():
-        if p.ppid == this_pid:
-            p.kill()
-            waitpid(p)
-            assert not p.is_running()
-    else:
-        if os.name == 'posix':
-            waitpid(None)
+    this_process = psutil.Process(os.getpid())
+    for child in this_process.get_children():
+        child.kill()
+        waitpid(child)
 
 
 class TestCase(unittest.TestCase):
@@ -373,6 +369,15 @@ class TestCase(unittest.TestCase):
             if p.pid == self.proc.pid:
                 continue
             self.assertTrue(p.ppid != this_parent)
+
+    def test_get_children(self):
+        p = psutil.Process(os.getpid())
+        self.assertEqual(p.get_children(), [])
+        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        children = p.get_children()
+        self.assertEqual(len(children), 1)
+        self.assertEqual(children[0].pid, self.proc.pid)
+        self.assertEqual(children[0].ppid, os.getpid())
 
     def test_suspend_resume(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)

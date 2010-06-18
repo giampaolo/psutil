@@ -300,6 +300,12 @@ class Process(object):
                     raise AccessDenied
                 raise
 
+    def get_children(self):
+        """Return the children of this process as a list of Process 
+        objects.
+        """
+        return [p for p in process_iter() if p.ppid == self.pid]
+
     def get_cpu_percent(self):
         """Compare process times to system time elapsed since last call
         and calculate CPU utilization as a percentage. It is recommended
