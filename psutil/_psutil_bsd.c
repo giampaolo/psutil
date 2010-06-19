@@ -20,7 +20,6 @@
 #include "_psutil_bsd.h"
 #include "arch/bsd/process_info.h"
 
-
 /*
  * define the psutil C module methods and initialize the module.
  */
@@ -56,9 +55,26 @@ static PyMethodDef PsutilMethods[] =
 };
 
 
+/*
+ * Raises an OSError(errno=ESRCH, strerror="No such process") exception
+ * in Python.
+ */
+static PyObject * 
+NoSuchProcess(void) {
+    PyObject *exc;
+    char *msg = strerror(ESRCH);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+    return NULL;
+}
+
+
 struct module_state {
     PyObject *error;
 };
+
+
 
 #if PY_MAJOR_VERSION >= 3
 #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
@@ -78,7 +94,6 @@ static int psutil_bsd_clear(PyObject *m) {
     Py_CLEAR(GETSTATE(m)->error);
     return 0;
 }
-
 
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,

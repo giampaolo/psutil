@@ -277,7 +277,7 @@ class Process(object):
                 if err.errno == errno.ESRCH:
                     raise NoSuchProcess(self.pid, "process no longer exists")
                 if err.errno == errno.EPERM:
-                    raise AccessDenied
+                    raise AccessDenied(self.pid)
                 raise
 
     def resume(self):
@@ -297,7 +297,7 @@ class Process(object):
                 if err.errno == errno.ESRCH:
                     raise NoSuchProcess(self.pid, "process no longer exists")
                 if err.errno == errno.EPERM:
-                    raise AccessDenied
+                    raise AccessDenied(self.pid)
                 raise
 
     def get_children(self):
@@ -388,7 +388,7 @@ class Process(object):
                 if err.errno == errno.ESRCH:
                     raise NoSuchProcess(self.pid, "process no longer exists")
                 if err.errno == errno.EPERM:
-                    raise AccessDenied
+                    raise AccessDenied(self.pid)
                 raise
         else:
             if sig == signal.SIGTERM:
