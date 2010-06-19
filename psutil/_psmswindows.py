@@ -73,9 +73,9 @@ def wrap_exceptions(callable):
         except OSError, err:
             if err.errno in (errno.EACCES, ERROR_ACCESS_DENIED):
                 raise AccessDenied(pid)
+            if err.errno == errno.ESRCH:
+                raise NoSuchProcess(pid, "process no longer exists")
             raise
-        except _psutil_mswindows.NoSuchProcess:
-            raise NoSuchProcess(pid, "process no longer exists")
     return wrapper
 
 

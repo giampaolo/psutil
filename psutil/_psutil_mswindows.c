@@ -17,9 +17,6 @@
 #include "arch/mswindows/process_info.h"
 #include "arch/mswindows/process_handles.h"
 
-
-static PyObject *NoSuchProcessException;
-
 static PyMethodDef PsutilMethods[] =
 {
      {"get_pid_list", get_pid_list, METH_VARARGS,
@@ -64,6 +61,20 @@ static PyMethodDef PsutilMethods[] =
         "QueryDosDevice binding"},
      {NULL, NULL, 0, NULL}
 };
+
+/*
+ * Raises an OSError(errno=ESRCH, strerror="No such process") exception
+ * in Python.
+ */
+static PyObject *
+NoSuchProcess(void) {
+    PyObject *exc;
+    char *msg = strerror(ESRCH);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+    return NULL;
+}
 
 struct module_state {
     PyObject *error;
@@ -128,10 +139,6 @@ struct module_state {
         INITERROR;
     }
 
-    NoSuchProcessException = PyErr_NewException("_psutil_mswindows.NoSuchProcess",
-                                                 NULL, NULL);
-    Py_INCREF(NoSuchProcessException);
-    PyModule_AddObject(module, "NoSuchProcess", NoSuchProcessException);
     SetSeDebug();
 
 #if PY_MAJOR_VERSION >= 3
@@ -251,8 +258,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 
     pid_return = pid_is_running(pid);
     if (pid_return == 0) {
-        return PyErr_Format(NoSuchProcessException,
-                            "No process found with pid %lu", pid);
+        return NoSuchProcess();
     }
 
     if (pid_return == -1) {
@@ -303,8 +309,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // bad PID so no such process
-            PyErr_Format(NoSuchProcessException,
-                         "No process found with pid %lu", pid);
+            return NoSuchProcess();
         }
         return NULL;
     }
@@ -312,7 +317,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     /* make sure the process is running */
     GetExitCodeProcess(hProcess, &ProcessExitCode);
     if (ProcessExitCode == 0) {
-        return PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
+        return NoSuchProcess();
     }
 
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
@@ -320,8 +325,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
-            PyErr_Format(NoSuchProcessException,
-                         "No process found with pid %lu", pid);
+            return NoSuchProcess();
         }
         CloseHandle(hProcess);
         return NULL;
@@ -377,8 +381,7 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // bad PID so no such process
-            PyErr_Format(NoSuchProcessException,
-                         "No process found with pid %lu", pid);
+            return NoSuchProcess();
         }
         return NULL;
     }
@@ -386,15 +389,14 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     /* make sure the process is running */
     GetExitCodeProcess(hProcess, &ProcessExitCode);
     if (ProcessExitCode == 0) {
-        return PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
+        return NoSuchProcess();
     }
 
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess here
-            PyErr_Format(NoSuchProcessException,
-                         "No process found with pid %lu", pid);
+            return NoSuchProcess();
         }
         CloseHandle(hProcess);
         return NULL;
@@ -468,8 +470,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     // check if the process exists before we waste time trying to read info
     pid_return = pid_is_running(pid);
     if (pid_return == 0) {
-        return PyErr_Format(NoSuchProcessException,
-                            "No process found with pid %lu", pid);
+        return NoSuchProcess();
     }
 
     if (pid_return == -1) {
@@ -490,13 +491,11 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 
     // If get_name or get_pid returns None that means the process is dead
     if (Py_None == name) {
-        return PyErr_Format(NoSuchProcessException,
-                            "Process with pid %lu has disappeared", pid);
+        return NoSuchProcess();
     }
 
     if (Py_None == ppid) {
-        return PyErr_Format(NoSuchProcessException,
-                            "Process with pid %lu has disappeared", pid);
+        return NoSuchProcess();
     }
 
     // May fail any of several ReadProcessMemory calls etc. and not indicate
@@ -539,7 +538,7 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     /* make sure the process is running */
     GetExitCodeProcess(hProcess, &ProcessExitCode);
     if (ProcessExitCode == 0) {
-        return PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
+        return NoSuchProcess();
     }
 
     if (! GetProcessMemoryInfo(hProcess, &counters, sizeof(counters)) ) {
@@ -817,6 +816,7 @@ typedef struct _UNICODE_STRING {
 /*
  * Return process current working directory as a Python string.
  */
+
 static PyObject* get_process_cwd(PyObject* self, PyObject* args)
 {
     long pid;
@@ -841,15 +841,14 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     /* check the process is running */
     GetExitCodeProcess(processHandle, &ProcessExitCode);
     if (ProcessExitCode == 0) {
-        return PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
+        return NoSuchProcess();
     }
 
     if (processHandle == 0)
     {
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            PyErr_Format(NoSuchProcessException,
-                         "No process found with pid %lu", pid);
+            return NoSuchProcess();
         }
         return NULL;
     }
@@ -863,8 +862,7 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
         CloseHandle(processHandle);
         if (GetLastError() == ERROR_PARTIAL_COPY) {
             /* Usually means the process has gone in the meantime */
-            PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
-            return NULL;
+            return NoSuchProcess();
         }
         else {
             return PyErr_SetFromWindowsErr(0);
@@ -882,8 +880,7 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
         CloseHandle(processHandle);
         if (GetLastError() == ERROR_PARTIAL_COPY) {
             /* Usually means the process has gone in the meantime */
-            PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
-            return NULL;
+            return NoSuchProcess();
         }
         else {
             return PyErr_SetFromWindowsErr(0);
@@ -902,8 +899,7 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
 
         if (GetLastError() == ERROR_PARTIAL_COPY) {
             /* Usually means the process has gone in the meantime */
-            PyErr_Format(NoSuchProcessException, "No Process found with pid %lu", pid);
-            return NULL;
+            return NoSuchProcess();
         }
         else {
             return PyErr_SetFromWindowsErr(0);
@@ -1056,8 +1052,7 @@ static PyObject* get_process_open_files(PyObject* self, PyObject* args)
 
     GetExitCodeProcess(processHandle, &ProcessExitCode);
     if (ProcessExitCode == 0) {
-        return PyErr_Format(NoSuchProcessException,
-                            "No Process found with pid %lu", pid);
+        return NoSuchProcess();
     }
 
     filesList = get_open_files(pid, processHandle);
