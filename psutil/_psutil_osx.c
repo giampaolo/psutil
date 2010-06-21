@@ -67,6 +67,14 @@ static PyObject* NoSuchProcess(void) {
     return PyErr_SetFromErrno(PyExc_OSError);
 }
 
+/*
+ * Raises an OSError(errno=EPERM, strerror="Operation not permitted") exception
+ * in Python.
+ */
+static PyObject* AccessDenied(void) {
+    errno = EPERM;
+    return PyErr_SetFromErrno(PyExc_OSError);
+}
 
 struct module_state {
     PyObject *error;
@@ -331,8 +339,8 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
             return NoSuchProcess();
         }
 
-        // pid exists, so return an OSError to errno set by task_for_pid()
-        return PyErr_SetFromErrno(PyExc_OSError);
+        // pid exists, so return AccessDenied error since task_for_pid() failed
+        return AccessDenied();
     }
 
     float user_t = -1.0;
@@ -449,8 +457,8 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
             return NoSuchProcess();
         }
 
-        // pid exists, so return an OSError to errno set by task_for_pid()
-        return PyErr_SetFromErrno(PyExc_OSError);
+        // pid exists, so return AccessDenied error since task_for_pid() failed
+        return AccessDenied();
     }
 
     return Py_BuildValue("(ll)", tasks_info.resident_size, tasks_info.virtual_size);

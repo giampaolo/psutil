@@ -50,14 +50,14 @@ def get_system_cpu_times():
     values = _psutil_osx.get_system_cpu_times()
     return dict(user=values[0], nice=values[1], system=values[2], idle=values[3])
 
-def wrap_privileges(callable):
+def wrap_exceptions(callable):
     """Call callable into a try/except clause so that if an
     OSError EPERM exception is raised we translate it into
     psutil.AccessDenied.
     """
-    def wrapper(*args, **kwargs):
+    def wrapper(self, pid, *args, **kwargs):
         try:
-            return callable(*args, **kwargs)
+            return callable(self, pid, *args, **kwargs)
         except OSError, err:
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(pid, "process no longer exists")
@@ -69,7 +69,7 @@ def wrap_privileges(callable):
 
 class Impl(object):
 
-    @wrap_privileges
+    @wrap_exceptions
     def get_process_info(self, pid):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.
@@ -77,14 +77,16 @@ class Impl(object):
         infoTuple = _psutil_osx.get_process_info(pid)
         return infoTuple
 
-    @wrap_privileges
+    @wrap_exceptions
     def get_memory_info(self, pid):
         """Return a tuple with the process' RSS and VMS size."""
         return _psutil_osx.get_memory_info(pid)
 
+    @wrap_exceptions
     def get_cpu_times(self, pid):
         return _psutil_osx.get_process_cpu_times(pid)
 
+    @wrap_exceptions
     def get_process_create_time(self, pid):
         """Return the start time of the process as a number of seconds since
         the epoch."""
