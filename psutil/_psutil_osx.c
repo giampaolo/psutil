@@ -26,9 +26,6 @@
 #include "arch/osx/process_info.h"
 
 
-static PyObject *NoSuchProcessException;
-static PyObject *AccessDeniedException;
-
 /*
  * define the psutil C module methods and initialize the module.
  */
@@ -61,6 +58,14 @@ static PyMethodDef PsutilMethods[] =
 };
 
 
+/*
+ * Raises an OSError(errno=ESRCH, strerror="No such process") exception
+ * in Python.
+ */
+static PyObject* NoSuchProcess(void) {
+    errno = ESRCH;
+    return PyErr_SetFromErrno(PyExc_OSError);
+}
 
 
 struct module_state {
@@ -125,16 +130,6 @@ init_psutil_osx(void)
         Py_DECREF(module);
         INITERROR;
     }
-
-     NoSuchProcessException = PyErr_NewException("_psutil_osx.NoSuchProcess",
-                                                 NULL, NULL);
-     Py_INCREF(NoSuchProcessException);
-     PyModule_AddObject(module, "NoSuchProcess", NoSuchProcessException);
-     AccessDeniedException = PyErr_NewException("_psutil_osx.AccessDenied",
-                                                NULL, NULL);
-     Py_INCREF(AccessDeniedException);
-     PyModule_AddObject(module, "AccessDenied", AccessDeniedException);
-
 #if PY_MAJOR_VERSION >= 3
     return module;
 #endif
@@ -192,6 +187,7 @@ static int pid_exists(long pid) {
         return 1;
     }
 
+    // otherwise return 0 for PID not found
     return 0;
 }
 
@@ -228,8 +224,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
         // raise an exception and throw errno as the error
         if (ESRCH == errno) { //no such process
-            return PyErr_Format(NoSuchProcessException,
-                                "No process found with pid %lu", pid);
+            return NoSuchProcess();
         }
         return PyErr_SetFromErrno(NULL);
     }
@@ -255,8 +250,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
      * appears to happen when the process has gone away.
      */
     else {
-        return PyErr_Format(NoSuchProcessException,
-                            "No process found with pid %lu", pid);
+        return NoSuchProcess();
     }
 
     // something went wrong if we get to this, so throw an exception
@@ -334,11 +328,11 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 
     else { // task_for_pid failed
         if (! pid_exists(pid) ) {
-            return PyErr_Format(NoSuchProcessException,
-                                "No process found with pid %lu", pid);
+            return NoSuchProcess();
         }
-        return PyErr_Format(AccessDeniedException,
-                    "task_for_pid() failed for pid %lu with error %i", pid, err);
+
+        // pid exists, so return an OSError to errno set by task_for_pid()
+        return PyErr_SetFromErrno(PyExc_OSError);
     }
 
     float user_t = -1.0;
@@ -391,8 +385,7 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
      * appears to happen when the process has gone away.
      */
     else {
-        return PyErr_Format(NoSuchProcessException,
-                            "No process found with pid %lu", pid);
+        return NoSuchProcess();
     }
 
     return PyErr_Format(PyExc_RuntimeError, "Unable to read process start time.");
@@ -452,12 +445,12 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     }
 
     else {
-        if (! pid_exists(pid)) {
-            return PyErr_Format(NoSuchProcessException,
-                                        "No process found with pid %lu", pid);
+        if (! pid_exists(pid) ) {
+            return NoSuchProcess();
         }
-        return PyErr_Format(AccessDeniedException,
-                    "task_for_pid() failed for pid %lu with error %i", pid, err);
+
+        // pid exists, so return an OSError to errno set by task_for_pid()
+        return PyErr_SetFromErrno(PyExc_OSError);
     }
 
     return Py_BuildValue("(ll)", tasks_info.resident_size, tasks_info.virtual_size);

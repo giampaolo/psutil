@@ -13,8 +13,6 @@ import _psutil_osx
 from error import *
 
 # module level constants (gets pushed up to psutil module)
-NoSuchProcess = _psutil_osx.NoSuchProcess
-AccessDenied = _psutil_osx.AccessDenied
 NUM_CPUS = _psutil_osx.get_num_cpus()
 TOTAL_PHYMEM = _psutil_osx.get_total_phymem()
 
@@ -61,8 +59,10 @@ def wrap_privileges(callable):
         try:
             return callable(*args, **kwargs)
         except OSError, err:
+            if err.errno == errno.ESRCH:
+                raise NoSuchProcess(pid, "process no longer exists")
             if err.errno == errno.EPERM:
-                raise AccessDenied
+                raise AccessDenied(pid)
             raise
     return wrapper
 
