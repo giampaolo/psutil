@@ -11,7 +11,6 @@ __all__ = [
     "NoSuchProcess",
     "AccessDenied",
     "NUM_CPUS",
-    "ProcessInfo",
     "Process",
     "test",
     "CPUTimes",
@@ -105,7 +104,7 @@ class CPUTimes:
             yield getattr(self, attr)
 
 
-class ProcessInfo(object):
+class _ProcessInfo(object):
     """Class that allows the process information to be passed between
     external code and psutil.  Used directly by the Process class.
     """
@@ -137,7 +136,7 @@ class Process(object):
             raise ValueError("An integer is required")
         if not pid_exists(pid):
             raise NoSuchProcess(pid, "no process found with PID %s" % pid)
-        self._procinfo = ProcessInfo(pid)
+        self._procinfo = _ProcessInfo(pid)
         self.is_proxy = True
         # try to init CPU times, if it raises AccessDenied then suppress
         # it so it won't interrupt the constructor. First call to
@@ -168,19 +167,19 @@ class Process(object):
 
     def deproxy(self):
         """Used internally by Process properties. The first call to
-        deproxy() initializes the ProcessInfo object in self._procinfo
+        deproxy() initializes the _ProcessInfo object in self._procinfo
         with process data read from platform-specific module's
         get_process_info() method.
 
         This method becomes a NO-OP after the first property is accessed.
-        Property data is filled in from the ProcessInfo object created,
+        Property data is filled in from the _ProcessInfo object created,
         and further calls to deproxy() simply return immediately without
         calling get_process_info().
         """
         if self.is_proxy:
             # get_process_info returns a tuple we use as the arguments
-            # to the ProcessInfo constructor
-            self._procinfo = ProcessInfo(*_platform_impl.get_process_info(self._procinfo.pid))
+            # to the _ProcessInfo constructor
+            self._procinfo = _ProcessInfo(*_platform_impl.get_process_info(self._procinfo.pid))
             self.is_proxy = False
 
     @property
@@ -301,7 +300,7 @@ class Process(object):
                 raise
 
     def get_children(self):
-        """Return the children of this process as a list of Process 
+        """Return the children of this process as a list of Process
         objects.
         """
         return [p for p in process_iter() if p.ppid == self.pid]
