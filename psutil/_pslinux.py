@@ -9,6 +9,12 @@ import errno
 import pwd
 import grp
 
+try:
+    from collections import namedtuple
+except ImportError:
+    from compat import namedtuple  # python < 2.6
+
+
 # import psutil exceptions we can override with our own
 from error import *
 
@@ -106,10 +112,12 @@ def get_system_cpu_times():
     f = open('/proc/stat', 'r')
     values = f.readline().split()
     f.close()
+
     values = values[1:8]
     values = tuple([float(x) / _CLOCK_TICKS for x in values])
-    return dict(user=values[0], nice=values[1], system=values[2],
-        idle=values[3], iowait=values[4], irq=values[5], softirq=values[6])
+
+    meminfo = namedtuple('meminfo', 'user nice system idle iowait irq softirq')
+    return meminfo(*values)
 
 
 # --- decorators
@@ -200,7 +208,8 @@ class Impl(object):
         values = st.split(' ')
         utime = float(values[11]) / _CLOCK_TICKS
         stime = float(values[12]) / _CLOCK_TICKS
-        return (utime, stime)
+        cpuinfo = namedtuple('cpuinfo', 'user system')
+        return cpuinfo(utime, stime)
 
     @wrap_exceptions
     def get_process_create_time(self, pid):
@@ -237,7 +246,8 @@ class Impl(object):
                 resident_size = int(line.split()[1])
                 break
         f.close()
-        return (resident_size * 1024, virtual_size * 1024)
+        meminfo = namedtuple('meminfo', 'rss vms')
+        return meminfo(resident_size * 1024, virtual_size * 1024)
 
 # XXX - commented as it's still not implemented on all platforms.
 # Leaving it here for the future.

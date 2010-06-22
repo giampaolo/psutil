@@ -28,7 +28,7 @@ def wait_for_pid(pid, timeout=1):
     raise_at = time.time() + timeout
     while 1:
         if pid in psutil.get_pid_list():
-		    # give it one more iteration to allow full initialization
+            # give it one more iteration to allow full initialization
             time.sleep(0.01)
             return
         time.sleep(0.0001)
@@ -163,7 +163,9 @@ class TestCase(unittest.TestCase):
     def test_system_cpu_times(self):
         total = 0
         times = psutil.cpu_times()
-        self.assertTrue(isinstance(times, psutil.CPUTimes))
+        # test namedtuple behavior
+        self.assertEqual(times[0], times.user)
+        sum(times)
         for cp_time in times:
             self.assertTrue(isinstance(cp_time, float))
             self.assertTrue(cp_time >= 0.0)
@@ -183,8 +185,8 @@ class TestCase(unittest.TestCase):
 
     # os.times() is broken on OS X and *BSD because, see:
     # http://bugs.python.org/issue1040026
-	# It's also broken on Windows on Python 2.5 (not 2.6)
-	# Disabled since we can't rely on it
+    # It's also broken on Windows on Python 2.5 (not 2.6)
+    # Disabled since we can't rely on it
 
 ##    def test_get_cpu_times(self):
 ##        user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()
@@ -204,8 +206,8 @@ class TestCase(unittest.TestCase):
 ##        time.strftime("%H:%M:%S", time.localtime(kernel_time))
 
     def test_get_cpu_times(self):
-        user, kernel = psutil.Process(os.getpid()).get_cpu_times()
-        self.assertTrue((user > 0.0) or (kernel > 0.0))
+        times = psutil.Process(os.getpid()).get_cpu_times()
+        self.assertTrue((times.user > 0.0) or (times.kernel > 0.0))
 
     def test_create_time(self):
         self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)

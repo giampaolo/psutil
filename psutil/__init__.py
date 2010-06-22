@@ -30,7 +30,7 @@ __all__ = [
     "cached_swap",
     ]
 
-__version__ = '0.1.3'
+__version__ = '0.2.0'
 
 
 import sys
@@ -441,9 +441,8 @@ def get_process_list():
     return list(process_iter())
 
 def cpu_times():
-    """Return system CPU times as a CPUTimes object."""
-    values = get_system_cpu_times()
-    return CPUTimes(**values)
+    """Return system CPU times as a named tuple."""
+    return get_system_cpu_times()
 
 _last_idle_time = cpu_times().idle
 _last_time = time.time()
