@@ -66,44 +66,6 @@ else:
 _platform_impl = Impl()
 
 
-class CPUTimes:
-    """This class contains information about CPU times.
-    It is not used directly but it's returned as an instance by
-    psutil.cpu_times() function.
-
-    Every CPU time is accessible in form of an attribute and represents
-    the time CPU has spent in the given mode.
-
-    The attributes availability varies depending on the platform.
-    Here follows a list of all available attributes:
-
-     - user
-     - system
-     - idle
-     - nice (UNIX)
-     - iowait (Linux)
-     - irq (Linux, FreeBSD)
-     - softirq (Linux)
-    """
-
-    def __init__(self, **kwargs):
-        self.__attrs = []
-        for name in kwargs:
-            setattr(self, name, kwargs[name])
-            self.__attrs.append(name)
-
-    def __str__(self):
-        string = []
-        for attr in self.__attrs:
-            value = getattr(self, attr)
-            string.append("%s=%s" %(attr, value))
-        return '; '.join(string)
-
-    def __iter__(self):
-        for attr in self.__attrs:
-            yield getattr(self, attr)
-
-
 class _ProcessInfo(object):
     """Class that allows the process information to be passed between
     external code and psutil.  Used directly by the Process class.
@@ -441,7 +403,21 @@ def get_process_list():
     return list(process_iter())
 
 def cpu_times():
-    """Return system CPU times as a named tuple."""
+    """Return system CPU times as a named tuple.
+
+    Every CPU time represents the time CPU has spent in the given mode.
+
+    The number of the elements in the named tuple depends on the
+    platform.  Here follows a list of all available values:
+
+     - user
+     - system
+     - idle
+     - nice (UNIX)
+     - iowait (Linux)
+     - irq (Linux, FreeBSD)
+     - softirq (Linux)
+    """
     return get_system_cpu_times()
 
 _last_idle_time = cpu_times().idle

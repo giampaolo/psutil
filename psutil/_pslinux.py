@@ -116,7 +116,7 @@ def get_system_cpu_times():
     values = values[1:8]
     values = tuple([float(x) / _CLOCK_TICKS for x in values])
 
-    meminfo = namedtuple('meminfo', 'user nice system idle iowait irq softirq')
+    meminfo = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
     return meminfo(*values)
 
 
@@ -208,8 +208,8 @@ class Impl(object):
         values = st.split(' ')
         utime = float(values[11]) / _CLOCK_TICKS
         stime = float(values[12]) / _CLOCK_TICKS
-        cpuinfo = namedtuple('cpuinfo', 'user system')
-        return cpuinfo(utime, stime)
+        cputimes = namedtuple('cputimes', 'user system')
+        return cputimes(utime, stime)
 
     @wrap_exceptions
     def get_process_create_time(self, pid):

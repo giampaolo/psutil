@@ -7,6 +7,11 @@ import errno
 import os
 import _psutil_mswindows
 
+try:
+    from collections import namedtuple
+except ImportError:
+    from compat import namedtuple  # python < 2.6
+
 # import psutil exceptions we can override with our own
 from error import *
 
@@ -57,7 +62,8 @@ def cached_swap():
 def get_system_cpu_times():
     """Return a dict representing the following CPU times: user, system, idle."""
     times = _psutil_mswindows.get_system_cpu_times()
-    return dict(user=times[0], system=times[1], idle=times[2])
+    cputimes = namedtuple('cputimes', 'user system idle')
+    return cputimes(times[0], times[1], times[2])
 
 
 # --- decorator
@@ -95,7 +101,9 @@ class Impl(object):
         # special case for 0 (kernel processes) PID
         if pid == 0:
             return (0, 0)
-        return _psutil_mswindows.get_memory_info(pid)
+        rss, vms = _psutil_mswindows.get_memory_info(pid)
+        meminfo = namedtuple('meminfo', 'rss vms')
+        return meminfo(rss, vms)
 
     @wrap_exceptions
     def kill_process(self, pid):
@@ -138,7 +146,9 @@ class Impl(object):
 
     @wrap_exceptions
     def get_cpu_times(self, pid):
-        return _psutil_mswindows.get_process_cpu_times(pid)
+        user, system = _psutil_mswindows.get_process_cpu_times(pid)
+        cputimes = namedtuple('cputimes', 'user system')
+        return cputimes(user, system)
 
     def suspend_process(self, pid):
         return _psutil_mswindows.suspend_process(pid)
