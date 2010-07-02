@@ -163,8 +163,7 @@ class TestCase(unittest.TestCase):
     def test_system_cpu_times(self):
         total = 0
         times = psutil.cpu_times()
-        # test namedtuple behavior
-        self.assertEqual(times[0], times.user)
+        self.assertTrue(isinstance(times, psutil.CPUTimes))
         sum(times)
         for cp_time in times:
             self.assertTrue(isinstance(cp_time, float))
