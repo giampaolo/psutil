@@ -83,7 +83,7 @@ class Impl(object):
     @wrap_exceptions
     def get_memory_info(self, pid):
         """Return a tuple with the process' RSS and VMS size."""
-        rss, vmz = _psutil_osx.get_memory_info(pid)
+        rss, vms = _psutil_osx.get_memory_info(pid)
         meminfo = namedtuple('meminfo', 'rss vms')
         return meminfo(rss, vms)
 

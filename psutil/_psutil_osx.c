@@ -408,7 +408,7 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     long pid;
     int err;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
-    task_port_t task = (task_port_t)NULL;
+    mach_port_t task;
     struct task_basic_info tasks_info;
     vm_region_basic_info_data_64_t  b_info;
     vm_address_t address = GLOBAL_SHARED_TEXT_SEGMENT;
