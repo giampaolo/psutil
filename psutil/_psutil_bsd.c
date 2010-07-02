@@ -26,14 +26,14 @@
 static PyMethodDef PsutilMethods[] =
 {
      {"get_pid_list", get_pid_list, METH_VARARGS,
-     	"Returns a list of PIDs currently running on the system"},
+         "Returns a list of PIDs currently running on the system"},
      {"get_process_info", get_process_info, METH_VARARGS,
         "Return a tuple containing a set of information about the "
         "process (pid, ppid, name, path, cmdline)"},
      {"get_cpu_times", get_cpu_times, METH_VARARGS,
-       	"Return tuple of user/kern time for the given PID"},
+           "Return tuple of user/kern time for the given PID"},
      {"get_num_cpus", get_num_cpus, METH_VARARGS,
-       	"Return number of CPUs on the system"},
+           "Return number of CPUs on the system"},
      {"get_process_create_time", get_process_create_time, METH_VARARGS,
          "Return a float indicating the process create time expressed in "
          "seconds since the epoch"},
@@ -54,27 +54,9 @@ static PyMethodDef PsutilMethods[] =
      {NULL, NULL, 0, NULL}
 };
 
-
-/*
- * Raises an OSError(errno=ESRCH, strerror="No such process") exception
- * in Python.
- */
-static PyObject * 
-NoSuchProcess(void) {
-    PyObject *exc;
-    char *msg = strerror(ESRCH);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
-    return NULL;
-}
-
-
 struct module_state {
     PyObject *error;
 };
-
-
 
 #if PY_MAJOR_VERSION >= 3
 #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
@@ -182,14 +164,14 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     int mib[4];
     size_t len;
     struct kinfo_proc kp;
-	long pid;
+    long pid;
     PyObject* infoTuple = NULL;
     PyObject* arglist = NULL;
 
-	// the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
-	}
+    // the argument passed should be a process id
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
+    }
 
     if (0 == pid) {
         // USER   PID %CPU %MEM   VSZ   RSS  TT  STAT STARTED      TIME COMMAND
@@ -236,7 +218,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     }
 
     // something went wrong, throw an error
-	return PyErr_Format(PyExc_RuntimeError,
+    return PyErr_Format(PyExc_RuntimeError,
                         "Failed to retrieve process information.");
 }
 
@@ -253,15 +235,15 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
     int mib[4];
     size_t len;
     struct kinfo_proc kp;
-	long pid;
+    long pid;
     double user_t, sys_t;
     PyObject* timeTuple = NULL;
 
-	// the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError,
+    // the argument passed should be a process id
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return PyErr_Format(PyExc_RuntimeError,
                             "Invalid argument - no PID provided.");
-	}
+    }
 
     // build the mib to pass to sysctl to tell it what PID and what info we want
     len = 4;
@@ -292,7 +274,7 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
     }
 
     // something went wrong, throw an error
-	return PyErr_Format(PyExc_RuntimeError,
+    return PyErr_Format(PyExc_RuntimeError,
                         "Failed to retrieve process CPU times.");
 }
 
@@ -331,11 +313,11 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 
-	// the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError,
+    // the argument passed should be a process id
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return PyErr_Format(PyExc_RuntimeError,
                             "Invalid argument - no PID provided.");
-	}
+    }
 
     len = 4;
     mib[0] = CTL_KERN;
@@ -366,10 +348,10 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     struct kinfo_proc kp;
 
     // the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError,
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return PyErr_Format(PyExc_RuntimeError,
                             "Invalid argument - no PID provided.");
-	}
+    }
 
     len = 4;
     mib[0] = CTL_KERN;

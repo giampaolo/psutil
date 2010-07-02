@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# $Id:
+# $Id$
 #
 
 """Module which provides compatibility with older Python versions."""

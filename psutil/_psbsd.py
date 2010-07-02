@@ -15,8 +15,6 @@ except ImportError:
     from compat import namedtuple  # python < 2.6
 
 import _psutil_bsd
-
-# import psutil exceptions we can override with our own
 from error import *
 
 NUM_CPUS = _psutil_bsd.get_num_cpus()
@@ -97,7 +95,7 @@ class Impl(object):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms = _psutil_bsd.get_memory_info(pid)
         meminfo = namedtuple('meminfo', 'rss vms')
-        return meminfo(rss, vms)       
+        return meminfo(rss, vms)
 
     @wrap_exceptions
     def get_process_create_time(self, pid):

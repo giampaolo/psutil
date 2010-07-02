@@ -1,12 +1,21 @@
-# $Id
+#!/usr/bin/env python
+#
+# $Id$
+#
 
-# this exception get overriden by the platform specific modules if necessary
+"""psutil exception classes"""
+
 
 class Error(Exception):
+    """Base exception class. All other psutil exceptions inherit
+    from this one.
+    """
     pass
 
 class NoSuchProcess(Error):
-    """No process was found for the given parameters."""
+    """Exception raised when a process with a certain PID doesn't
+    or no longer exists (zombie).
+    """
 
     def __init__(self, pid=None, msg=None):
         self.pid = pid

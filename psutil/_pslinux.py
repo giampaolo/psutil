@@ -14,9 +14,7 @@ try:
 except ImportError:
     from compat import namedtuple  # python < 2.6
 
-
-# import psutil exceptions we can override with our own
-from error import *
+from psutil.error import *
 
 
 def _get_uptime():

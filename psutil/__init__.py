@@ -42,8 +42,6 @@ try:
 except ImportError:
     pwd = grp = None
 
-# exceptions are imported here, but may be overriden by platform
-# module implementation later
 from error import *
 
 # import the appropriate module for our platform only

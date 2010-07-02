@@ -13,8 +13,6 @@ except ImportError:
     from compat import namedtuple  # python < 2.6
 
 import _psutil_osx
-
-# import psutil exceptions we can override with our own
 from error import *
 
 # module level constants (gets pushed up to psutil module)
