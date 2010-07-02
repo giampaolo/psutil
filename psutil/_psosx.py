@@ -7,6 +7,11 @@ import os
 import signal
 import errno
 
+try:
+    from collections import namedtuple
+except ImportError:
+    from compat import namedtuple  # python < 2.6
+
 import _psutil_osx
 
 # import psutil exceptions we can override with our own
@@ -80,11 +85,15 @@ class Impl(object):
     @wrap_exceptions
     def get_memory_info(self, pid):
         """Return a tuple with the process' RSS and VMS size."""
-        return _psutil_osx.get_memory_info(pid)
+        rss, vmz = _psutil_osx.get_memory_info(pid)
+        meminfo = namedtuple('meminfo', 'rss vms')
+        return meminfo(rss, vms)
 
     @wrap_exceptions
     def get_cpu_times(self, pid):
-        return _psutil_osx.get_process_cpu_times(pid)
+        user, system = _psutil_osx.get_process_cpu_times(pid)
+        cputimes = namedtuple('cputimes', 'user system')
+        return cputimes(user, system)
 
     @wrap_exceptions
     def get_process_create_time(self, pid):
