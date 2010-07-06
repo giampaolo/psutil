@@ -159,27 +159,33 @@ int pid_is_running(DWORD pid)
     if (NULL == hProcess) {
         // invalid parameter is no such process
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            CloseHandle(hProcess);
             return 0;
         }
 
         // access denied obviously means there's a process to deny access to...
         if (GetLastError() == ERROR_ACCESS_DENIED) {
+            CloseHandle(hProcess);
             return 1;
         }
 
         PyErr_SetFromWindowsErr(0);
+        CloseHandle(hProcess);
         return -1;
     }
 
     if (GetExitCodeProcess(hProcess, &exitCode)) {
+        CloseHandle(hProcess);
         return (exitCode == STILL_ACTIVE);
     }
 
     // access denied means there's a process there so we'll assume it's running
     if (GetLastError() == ERROR_ACCESS_DENIED) {
+        CloseHandle(hProcess);
         return 1;
     }
 
+    CloseHandle(hProcess);
     PyErr_SetFromWindowsErr(0);
     return -1;
 }
