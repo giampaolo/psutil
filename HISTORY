@@ -14,6 +14,8 @@ NEW FEATURES
 BUGFIXES
  * Issue 94: suspend() raises OSError instead of AccessDenied.
  * Issue 86: psutil didn't compile against FreeBSD 6.x.
+ * Issue 102: orphaned process handles obtained by using OpenProcess in C were 
+   left behind every time Process class was instantiated.
 
 
 0.1.3 - 2010-03-02

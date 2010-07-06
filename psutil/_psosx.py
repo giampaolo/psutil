@@ -13,7 +13,7 @@ except ImportError:
     from compat import namedtuple  # python < 2.6
 
 import _psutil_osx
-from error import *
+from psutil.error import *
 
 # module level constants (gets pushed up to psutil module)
 NUM_CPUS = _psutil_osx.get_num_cpus()
