@@ -309,6 +309,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // bad PID so no such process
+            CloseHandle(hProcess);
             return NoSuchProcess();
         }
         return NULL;
@@ -317,6 +318,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     /* make sure the process is running */
     GetExitCodeProcess(hProcess, &ProcessExitCode);
     if (ProcessExitCode == 0) {
+        CloseHandle(hProcess);
         return NoSuchProcess();
     }
 
@@ -325,6 +327,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
+            CloseHandle(hProcess);
             return NoSuchProcess();
         }
         CloseHandle(hProcess);
