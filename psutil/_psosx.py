@@ -13,6 +13,7 @@ except ImportError:
     from compat import namedtuple  # python < 2.6
 
 import _psutil_osx
+import _psposix
 from psutil.error import *
 
 # module level constants (gets pushed up to psutil module)
@@ -115,4 +116,8 @@ class Impl(object):
             return e.errno == errno.EPERM
         else:
             return True
+
+    def get_open_files(self, pid):
+        """Return files opened by process by parsing lsof output."""
+        return _psposix.get_process_open_files(pid)
 

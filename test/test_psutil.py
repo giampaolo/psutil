@@ -347,17 +347,15 @@ class TestCase(unittest.TestCase):
             expected_dir = os.path.dirname(os.getcwd())
             self.assertEqual(p.getcwd(), expected_dir)
 
-    if hasattr(psutil.Process, "get_open_files"):
-        def test_get_open_files(self):
-            # XXX - actual implementation needed
-            thisfile = os.path.join(os.getcwd(), __file__)
-            cmdline = "f = open(r'%s', 'r'); input();" %thisfile
-            self.proc = subprocess.Popen([PYTHON, "-c", cmdline])
-            wait_for_pid(self.proc.pid)
-            time.sleep(0.1)
-            p = psutil.Process(self.proc.pid)
-            files = p.get_open_files()
-            self.assertEqual(files, [thisfile])
+    def test_get_open_files(self):
+        # XXX - actual implementation needed
+        thisfile = os.path.join(os.getcwd(), __file__)
+        cmdline = "f = open(r'%s', 'r'); input();" %thisfile
+        self.proc = subprocess.Popen([PYTHON, "-c", cmdline])
+        wait_for_pid(self.proc.pid)
+        p = psutil.Process(self.proc.pid)
+        files = p.get_open_files()
+        self.assertTrue(thisfile in files)
 
     def test_parent_ppid(self):
         this_parent = os.getpid()
@@ -493,10 +491,13 @@ class TestCase(unittest.TestCase):
                  'get_open_files']
         for p in psutil.process_iter():
             for attr in attrs:
-                # XXX - temporary
+                # XXX - temporary: skip slow Python implementation 
                 if attr == 'username' or attr == 'get_open_files' and \
-                sys.platform.lower().startswith("win32"):
+                os.name == 'nt':
                     continue
+                if attr == 'get_open_files' and os.name == 'posix':
+                    continue
+
                 try:
                     attr = getattr(p, attr, None)
                     if attr is not None and callable(attr):
@@ -586,15 +587,21 @@ if hasattr(os, 'getuid'):
             os.seteuid(self.PROCESS_GID)
             TestCase.tearDown(self)
 
+        # overridden tests known to raise AccessDenied when run
+        # as limited user on different platforms
+
         if sys.platform.lower().startswith("linux"):
 
-            # overridden tests known to raise AccessDenied when run
-            # as limited user
             def test_getcwd(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_getcwd, self)
 
             def test_getcwd_2(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_getcwd_2, self)
+
+            def test_get_open_files(self):
+                self.assertRaises(psutil.AccessDenied, TestCase.test_get_open_files, self)
+
+        if sys.platform.lower().startswith("freebsd"):
 
             def test_get_open_files(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_get_open_files, self)

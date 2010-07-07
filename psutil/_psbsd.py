@@ -15,7 +15,8 @@ except ImportError:
     from compat import namedtuple  # python < 2.6
 
 import _psutil_bsd
-from error import *
+import _psposix
+from psutil.error import *
 
 NUM_CPUS = _psutil_bsd.get_num_cpus()
 TOTAL_PHYMEM = _psutil_bsd.get_total_phymem()
@@ -116,5 +117,9 @@ class Impl(object):
             return e.errno == errno.EPERM
         else:
             return True
+
+    def get_open_files(self, pid):
+        """Return files opened by process by parsing lsof output."""
+        return _psposix.get_process_open_files(pid)
 
 
