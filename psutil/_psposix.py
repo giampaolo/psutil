@@ -13,6 +13,18 @@ import psutil
 from psutil.error import *
 
 
+def pid_exists(pid):
+    """Check whether pid exists in the current process table."""
+    if pid < 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except OSError, e:
+        return e.errno == errno.EPERM
+    else:
+        return True
+
+
 def get_process_open_files(pid):
     """Return files opened by process by parsing lsof output."""
     cmd = "lsof -p %s -Ftn0" %pid

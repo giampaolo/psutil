@@ -100,22 +100,13 @@ class Impl(object):
         the epoch."""
         return _psutil_osx.get_process_create_time(pid)
 
-
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""
         return _psutil_osx.get_pid_list()
 
     def pid_exists(self, pid):
         """Check For the existence of a unix pid."""
-        if pid < 0:
-            return False
-
-        try:
-            os.kill(pid, 0)
-        except OSError, e:
-            return e.errno == errno.EPERM
-        else:
-            return True
+        return _psposix.pid_exists(pid)
 
     def get_open_files(self, pid):
         """Return files opened by process by parsing lsof output."""

@@ -348,11 +348,11 @@ class TestCase(unittest.TestCase):
             self.assertEqual(p.getcwd(), expected_dir)
 
     def test_get_open_files(self):
-        # XXX - actual implementation needed
         thisfile = os.path.join(os.getcwd(), __file__)
         cmdline = "f = open(r'%s', 'r'); input();" %thisfile
         self.proc = subprocess.Popen([PYTHON, "-c", cmdline])
         wait_for_pid(self.proc.pid)
+        time.sleep(0.1)
         p = psutil.Process(self.proc.pid)
         files = p.get_open_files()
         self.assertTrue(thisfile in files)

@@ -108,15 +108,8 @@ class Impl(object):
 
     def pid_exists(self, pid):
         """Check For the existence of a unix pid."""
-        if pid < 0:
-            return False
+        return _psposix.pid_exists(pid)
 
-        try:
-            os.kill(pid, 0)
-        except OSError, e:
-            return e.errno == errno.EPERM
-        else:
-            return True
 
     def get_open_files(self, pid):
         """Return files opened by process by parsing lsof output."""

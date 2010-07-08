@@ -257,46 +257,6 @@ class Process(object):
             """
             return _platform_impl.get_process_cwd(self.pid)
 
-    def suspend(self):
-        """Suspend process execution."""
-        # safety measure in case the current process has been killed in
-        # meantime and the kernel reused its PID
-        if not self.is_running():
-            raise NoSuchProcess(self.pid, "process no longer exists")
-        # windows
-        if hasattr(_platform_impl, "suspend_process"):
-            _platform_impl.suspend_process(self.pid)
-        else:
-            # posix
-            try:
-                os.kill(self.pid, signal.SIGSTOP)
-            except OSError, err:
-                if err.errno == errno.ESRCH:
-                    raise NoSuchProcess(self.pid, "process no longer exists")
-                if err.errno == errno.EPERM:
-                    raise AccessDenied(self.pid)
-                raise
-
-    def resume(self):
-        """Resume process execution."""
-        # safety measure in case the current process has been killed in
-        # meantime and the kernel reused its PID
-        if not self.is_running():
-            raise NoSuchProcess(self.pid, "process no longer exists")
-        # windows
-        if hasattr(_platform_impl, "resume_process"):
-            _platform_impl.resume_process(self.pid)
-        else:
-            # posix
-            try:
-                os.kill(self.pid, signal.SIGCONT)
-            except OSError, err:
-                if err.errno == errno.ESRCH:
-                    raise NoSuchProcess(self.pid, "process no longer exists")
-                if err.errno == errno.EPERM:
-                    raise AccessDenied(self.pid)
-                raise
-
     def get_children(self):
         """Return the children of this process as a list of Process
         objects.
@@ -360,8 +320,9 @@ class Process(object):
         return _platform_impl.get_open_files(self.pid)
 
     def is_running(self):
-        """Return whether the current process is running in the current process
-        list."""
+        """Return whether the current process is running in the current 
+        process list.
+        """
         try:
             newproc = Process(self.pid)
             return self == newproc
@@ -370,7 +331,8 @@ class Process(object):
 
     def send_signal(self, sig):
         """Send a signal to process (see signal module constants).
-        On Windows only SIGTERM is valid and is an alias for kill().
+        On Windows only SIGTERM is valid and is treated as an alias 
+        for kill().
         """
         # safety measure in case the current process has been killed in
         # meantime and the kernel reused its PID
@@ -390,6 +352,32 @@ class Process(object):
                 _platform_impl.kill_process(self.pid)
             else:
                 raise ValueError("Only SIGTERM is supported on Windows")
+
+    def suspend(self):
+        """Suspend process execution."""
+        # safety measure in case the current process has been killed in
+        # meantime and the kernel reused its PID
+        if not self.is_running():
+            raise NoSuchProcess(self.pid, "process no longer exists")
+        # windows
+        if hasattr(_platform_impl, "suspend_process"):
+            _platform_impl.suspend_process(self.pid)
+        else:
+            # posix
+            self.send_signal(signal.SIGSTOP)
+
+    def resume(self):
+        """Resume process execution."""
+        # safety measure in case the current process has been killed in
+        # meantime and the kernel reused its PID
+        if not self.is_running():
+            raise NoSuchProcess(self.pid, "process no longer exists")
+        # windows
+        if hasattr(_platform_impl, "resume_process"):
+            _platform_impl.resume_process(self.pid)
+        else:
+            # posix
+            self.send_signal(signal.SIGCONT)
 
     def terminate(self):
         """Terminate the process with SIGTERM.

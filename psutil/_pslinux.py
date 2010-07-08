@@ -14,6 +14,7 @@ try:
 except ImportError:
     from compat import namedtuple  # python < 2.6
 
+import _psposix
 from psutil.error import *
 
 
@@ -183,15 +184,7 @@ class Impl(object):
 
     def pid_exists(self, pid):
         """Check For the existence of a unix pid."""
-        if pid < 0:
-            return False
-
-        try:
-            os.kill(pid, 0)
-        except OSError, e:
-            return e.errno == errno.EPERM
-        else:
-            return True
+        return _psposix.pid_exists(pid)
 
     @wrap_exceptions
     def get_cpu_times(self, pid):
