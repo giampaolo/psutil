@@ -21,6 +21,12 @@ import psutil
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 
+POSIX = os.name == 'posix'
+LINUX = sys.platform.lower().startswith("linux")
+WINDOWS = sys.platform.lower().startswith("win32")
+OSX = sys.platform.lower().startswith("darwin")
+BSD = sys.platform.lower().startswith("freebsd")
+
 
 def wait_for_pid(pid, timeout=1):
     """Wait for pid to show up in the process list then return.
@@ -48,7 +54,7 @@ def reap_children():
     no zombies stick around to hog resources and create problems when
     looking for refleaks.
     """
-    if os.name == 'posix':
+    if POSIX:
         def waitpid(process):
             # on posix we are free to wait for any pending process by
             # passing -1 to os.waitpid()
@@ -114,7 +120,7 @@ class TestCase(unittest.TestCase):
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_send_signal(self):
-        if os.name == 'posix':
+        if POSIX:
             sig = signal.SIGKILL
         else:
             sig = signal.SIGTERM
@@ -319,13 +325,13 @@ class TestCase(unittest.TestCase):
         p.username
 
         # UNIX tests
-        if os.name == 'posix':
+        if POSIX:
             import pwd
             user = pwd.getpwuid(p.uid).pw_name
             self.assertEqual(p.username, user)
 
         # Windows tests
-        elif sys.platform.lower().startswith("win32"):
+        elif WINDOWS:
             expected_username = os.environ['USERNAME']
             expected_domain = os.environ['USERDOMAIN']
             domain, username = p.username.split('\\')
@@ -468,8 +474,8 @@ class TestCase(unittest.TestCase):
         if hasattr(p, 'getcwd'):
             self.assert_(isinstance(p.getcwd(), str))
         if hasattr(p, 'get_open_files'):
-            if not sys.platform.lower().startswith("linux") and \
-            self.__class__.__name__ != "LimitedUserTestCase":
+            # XXX
+            if not LINUX and self.__class__.__name__ != "LimitedUserTestCase":
                 self.assert_(isinstance(p.get_open_files(), list))
                 for path in p.get_open_files():
                     self.assert_(isinstance(path, str) or \
@@ -547,10 +553,9 @@ class TestCase(unittest.TestCase):
         for p in psutil.process_iter():
             for attr in attrs:
                 # XXX - temporary: skip slow Python implementation 
-                if attr == 'username' or attr == 'get_open_files' and \
-                os.name == 'nt':
+                if WINDOWS and attr in ('username', 'get_open_files'):
                     continue
-                if attr == 'get_open_files' and os.name == 'posix':
+                if POSIX and attr == 'get_open_files':
                     continue
 
                 try:
@@ -573,31 +578,30 @@ class TestCase(unittest.TestCase):
         # Process(0) is supposed to work on all platforms even if with
         # some differences
         p = psutil.Process(0)
-        if sys.platform.lower().startswith("win32"):
+        if WINDOWS:
             self.assertEqual(p.name, 'System Idle Process')
-        elif sys.platform.lower().startswith("linux"):
+        elif LINUX:
             self.assertEqual(p.name, 'sched')
-        elif sys.platform.lower().startswith("freebsd"):
+        elif BSD:
             self.assertEqual(p.name, 'swapper')
-        elif sys.platform.lower().startswith("darwin"):
+        elif OSX:
             self.assertEqual(p.name, 'kernel_task')
 
         # use __str__ to access all common Process properties to check
         # that nothing strange happens
         str(p)
 
-        if sys.platform.lower().startswith("darwin") and os.geteuid() != 0:
+        if OSX and os.geteuid() != 0:
             self.assertRaises(psutil.AccessDenied, p.get_memory_info)
         else:
             p.get_memory_info()
 
         # username property
-        if sys.platform.lower().startswith("linux"):
+        if LINUX:
             self.assertEqual(p.username, 'root')
-        elif sys.platform.lower().startswith('freebsd') or \
-        sys.platform.lower().startswith('darwin'):
+        elif BSD or OSX:
             self.assertEqual(p.username, 'root')
-        elif sys.platform.lower().startswith("win32"):
+        elif WINDOWS:
             self.assertEqual(p.username, 'NT AUTHORITY\\SYSTEM')
         else:
             p.username
@@ -611,7 +615,7 @@ class TestCase(unittest.TestCase):
 
     # UNIX specific tests
 
-    if os.name == 'posix':
+    if POSIX:
         if hasattr(os, 'getuid') and os.getuid() > 0:
             def test_unix_access_denied(self):
                 p = psutil.Process(1)
@@ -645,7 +649,7 @@ if hasattr(os, 'getuid'):
         # overridden tests known to raise AccessDenied when run
         # as limited user on different platforms
 
-        if sys.platform.lower().startswith("linux"):
+        if LINUX:
 
             def test_getcwd(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_getcwd, self)
@@ -656,7 +660,7 @@ if hasattr(os, 'getuid'):
             def test_get_open_files(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_get_open_files, self)
 
-        if sys.platform.lower().startswith("freebsd"):
+        if BSD:
 
             def test_get_open_files(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_get_open_files, self)
@@ -674,18 +678,18 @@ def test_main():
     if hasattr(os, 'getuid') and os.getuid() == 0:
         tests.append(LimitedUserTestCase)
 
-    if os.name == 'posix':
+    if POSIX:
         from _posix import PosixSpecificTestCase
         tests.append(PosixSpecificTestCase)
 
     # import the specific platform test suite
-    if sys.platform.lower().startswith("linux"):
+    if LINUX:
         from _linux import LinuxSpecificTestCase as stc
-    elif sys.platform.lower().startswith("win32"):
+    elif WINDOWS:
         from _windows import WindowsSpecificTestCase as stc
-    elif sys.platform.lower().startswith("darwin"):
+    elif OSX:
         from _osx import OSXSpecificTestCase as stc
-    elif sys.platform.lower().startswith("freebsd"):
+    elif BSD:
         from _bsd import BSDSpecificTestCase as stc
     tests.append(stc)
 

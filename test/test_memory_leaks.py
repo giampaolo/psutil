@@ -9,7 +9,7 @@ import sys
 import unittest
 
 import psutil
-from test_psutil import cleanup
+from test_psutil import cleanup, WINDOWS
 
 LOOPS = 1000
 MARGIN = 4096
@@ -62,7 +62,7 @@ class TestProcessObjectLeaks(unittest.TestCase):
         self.execute('__str__')
 
     # XXX - disabled for Windows as it uses WMI which takes ages to complete
-    if not sys.platform.lower().startswith("win32"):
+    if not WINDOWS:
         def test_username(self):
             self.execute('username')
 
