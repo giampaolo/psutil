@@ -47,8 +47,10 @@ elif sys.platform.lower().startswith("freebsd"):
                                       'psutil/arch/bsd/process_info.c']
                            )
 # Others
-else:
+elif sys.platform.lower().startswith("linux"):
     extensions = None
+else:
+    raise NotImplementedError('platform %s is not supported' % sys.platform)
 
 
 def main():
@@ -80,6 +82,7 @@ portable way by using Python.""",
               'Programming Language :: Python :: 2.4',
               'Programming Language :: Python :: 2.5',
               'Programming Language :: Python :: 2.6',
+              'Programming Language :: Python :: 2.7',
               'Programming Language :: Python :: 3',
               'Programming Language :: Python :: 3.0',
               'Programming Language :: Python :: 3.1',

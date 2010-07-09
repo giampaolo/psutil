@@ -58,7 +58,7 @@ elif sys.platform.lower().startswith("darwin"):
 elif sys.platform.lower().startswith("freebsd"):
     from _psbsd import *
 else:
-    raise ImportError('no os specific module found')
+    raise NotImplementedError('platform %s is not supported' % sys.platform)
 
 # platform-specific modules define an Impl implementation class
 _platform_impl = Impl()
