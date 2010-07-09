@@ -157,7 +157,7 @@ def get_process_connections(pid):
         _type = socket_table[fields['P']]  
         family = socket_table[fields['t']]
         peers = fields['n']
-        status = fields['TST']
+        status = fields.get('TST', "")  # might not appear for UDP
         if not '->' in peers:
             local_address = _normaddress(peers, family)
             remote_address = ()
