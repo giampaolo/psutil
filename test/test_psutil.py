@@ -472,16 +472,18 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.username, str) or \
                      isinstance(p.username, type(u'')))
         if hasattr(p, 'getcwd'):
-            self.assert_(isinstance(p.getcwd(), str))
+            if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
+                self.assert_(isinstance(p.getcwd(), str))
         if hasattr(p, 'get_open_files'):
             # XXX
-            if not LINUX and self.__class__.__name__ != "LimitedUserTestCase":
+            if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
                 self.assert_(isinstance(p.get_open_files(), list))
                 for path in p.get_open_files():
                     self.assert_(isinstance(path, str) or \
                                  isinstance(path, type(u'')))
         if hasattr(p, 'get_connections'):
-            self.assert_(isinstance(p.get_connections(), list))
+            if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
+                self.assert_(isinstance(p.get_connections(), list))
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(p.get_cpu_times(), tuple))
         self.assert_(isinstance(p.get_cpu_times()[0], float))
@@ -660,10 +662,16 @@ if hasattr(os, 'getuid'):
             def test_get_open_files(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_get_open_files, self)
 
+            def test_get_connections(self):
+                pass
+
         if BSD:
 
             def test_get_open_files(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_get_open_files, self)
+
+            def test_get_connections(self):
+                self.assertRaises(psutil.AccessDenied, TestCase.test_get_connections, self)
 
             def test_get_connections_all(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_get_connections_all, self)
