@@ -319,6 +319,11 @@ class Process(object):
         """Return files opened by process as a list of paths."""
         return _platform_impl.get_open_files(self.pid)
 
+    if hasattr(_platform_impl, "get_connections"):
+        def get_connections(self):
+            """Return files opened by process as a list of paths."""
+            return _platform_impl.get_connections(self.pid)
+
     def is_running(self):
         """Return whether the current process is running in the current 
         process list.

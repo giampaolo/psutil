@@ -281,6 +281,9 @@ class Impl(object):
                     retlist.append(file)
         return retlist
 
+    def get_connections(self, pid):
+        return _psposix.get_process_connections(pid)
+
     def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)
         for line in f:

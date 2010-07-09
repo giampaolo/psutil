@@ -13,6 +13,7 @@ import types
 import errno
 import platform
 import traceback
+import socket
 
 import psutil
 
@@ -332,6 +333,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(username, expected_username)
 
     if hasattr(psutil.Process, "getcwd"):
+
         def test_getcwd(self):
             self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
             wait_for_pid(self.proc.pid)
@@ -356,6 +358,55 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(self.proc.pid)
         files = p.get_open_files()
         self.assertTrue(thisfile in files)
+
+    if hasattr(psutil.Process, "get_connections"):
+
+        def test_get_connections(self):
+            arg = "import socket;" \
+                  "s = socket.socket();" \
+                  "s.bind(('127.0.0.1', 0));" \
+                  "s.listen(1);" \
+                  "conn, addr = s.accept();" \
+                  "raw_input();" 
+            self.proc = subprocess.Popen([PYTHON, "-c", arg])
+            time.sleep(0.1)
+            p = psutil.Process(self.proc.pid)
+            cons = p.get_connections()
+            self.assertTrue(len(cons) == 1)
+            con = cons[0]
+            self.assertEqual(con.family, socket.AF_INET)
+            self.assertEqual(con.type, socket.SOCK_STREAM)
+            self.assertEqual(con.status, "LISTEN")
+            ip, port = con.local_address
+            self.assertEqual(ip, '127.0.0.1')
+            self.assertEqual(con.remote_address, ())
+    
+        def test_get_connections_all(self):
+
+            def check_address(addr, family):
+                if not addr:
+                    return
+                ip, port = addr
+                self.assertTrue(isinstance(port, int))
+                if family == socket.AF_INET:
+                    ip = map(int, ip.split('.'))
+                    self.assertTrue(len(ip) == 4)
+                    for num in ip:
+                        self.assertTrue(0 <= num <= 255)
+                self.assertTrue(0 <= port <= 65535)
+
+            for p in psutil.process_iter():
+                for conn in p.get_connections():
+                    self.assertTrue(conn.type in (socket.SOCK_STREAM, 
+                                                  socket.SOCK_DGRAM))
+                    self.assertTrue(conn.family in (socket.AF_INET, 
+                                                    socket.AF_INET6))
+                    check_address(conn.local_address, conn.family)
+                    check_address(conn.remote_address, conn.family)
+                    # actually try to bind the local socket
+                    s = socket.socket(conn.family, conn.type)
+                    s.bind((conn.local_address[0], 0))
+                    s.close()
 
     def test_parent_ppid(self):
         this_parent = os.getpid()
@@ -423,6 +474,8 @@ class TestCase(unittest.TestCase):
                 for path in p.get_open_files():
                     self.assert_(isinstance(path, str) or \
                                  isinstance(path, type(u'')))
+        if hasattr(p, 'get_connections'):
+            self.assert_(isinstance(p.get_connections(), list))
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(p.get_cpu_times(), tuple))
         self.assert_(isinstance(p.get_cpu_times()[0], float))
@@ -473,6 +526,8 @@ class TestCase(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, p.getcwd)
         if hasattr(p, 'get_open_files'):
             self.assertRaises(psutil.NoSuchProcess, p.get_open_files)
+        if hasattr(p, 'get_connections'):
+            self.assertRaises(psutil.NoSuchProcess, p.get_connections)
         self.assertRaises(psutil.NoSuchProcess, p.suspend)
         self.assertRaises(psutil.NoSuchProcess, p.resume)
         self.assertRaises(psutil.NoSuchProcess, p.kill)
@@ -606,6 +661,9 @@ if hasattr(os, 'getuid'):
             def test_get_open_files(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_get_open_files, self)
 
+            def test_get_connections_all(self):
+                self.assertRaises(psutil.AccessDenied, TestCase.test_get_connections_all, self)
+
 
 def test_main():
     tests = []
@@ -640,4 +698,5 @@ def test_main():
 
 if __name__ == '__main__':
     test_main()
+
 
