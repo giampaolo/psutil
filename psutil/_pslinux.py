@@ -240,23 +240,6 @@ class Impl(object):
         meminfo = namedtuple('meminfo', 'rss vms')
         return meminfo(resident_size * 1024, virtual_size * 1024)
 
-# XXX - commented as it's still not implemented on all platforms.
-# Leaving it here for the future.
-##    @wrap_exceptions
-##    def get_process_environ(self, pid):
-##        """Return process environment variables for the process with the
-##        given PID as a dictionary."""
-##        if pid == 0:
-##            return {}
-##        f = open("/proc/%s/environ" % pid)
-##        envs = f.read().strip('\0').split('\0')
-##        f.close()
-##        dict = {}
-##        for env in envs:
-##            key, value = env.split('=', 1)
-##            dict[key] = value
-##        return dict
-
     @wrap_exceptions
     def get_process_cwd(self, pid):
         if pid == 0:
