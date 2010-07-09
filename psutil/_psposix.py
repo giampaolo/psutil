@@ -69,7 +69,17 @@ def pid_exists(pid):
 
 def get_process_open_files(pid):
     """Return files opened by process by parsing lsof output."""
-    cmd = "lsof -p %s -Ftn0" %pid
+    # Options:
+    # -i == network files only
+    # -a == ANDing of all options
+    # -p == process with given PID only
+    # -n == do not resolve IP addresses
+    # -P == do not resolve port numbers
+    # -w == suppresses warnings
+    # -F0nPt == (0) separate lines with "\x00" 
+    #           (n) file name
+    #           (t) file type
+    cmd = "lsof -a -p %s -n -P -w -F0tn" %pid
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
                                           stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
@@ -92,11 +102,12 @@ def get_process_open_files(pid):
             raise NoSuchProcess(pid, "process no longer exists")
         return []
     files = []
-    for line in stdout.split():
+    lines = stdout.split()
+    del lines[0]  # first line contains the PID
+    for line in lines:
         if line.startswith("tVREG\x00n"):
             file = line[7:].strip("\x00")
-            if os.path.isfile(file):
-                files.append(file)
+            files.append(file)
     return files
 
 

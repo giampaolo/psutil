@@ -364,6 +364,8 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(self.proc.pid)
         files = p.get_open_files()
         self.assertTrue(thisfile in files)
+        for file in files:
+            self.assertTrue(os.path.isfile(file))
 
     if hasattr(psutil.Process, "get_connections"):
 
