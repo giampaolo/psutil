@@ -390,7 +390,6 @@ class TestCase(unittest.TestCase):
             self.assertEqual(con.remote_address, ())
     
         def test_get_connections_all(self):
-
             def check_address(addr, family):
                 if not addr:
                     return
@@ -404,17 +403,22 @@ class TestCase(unittest.TestCase):
                 self.assertTrue(0 <= port <= 65535)
 
             for p in psutil.process_iter():
-                for conn in p.get_connections():
-                    self.assertTrue(conn.type in (socket.SOCK_STREAM, 
-                                                  socket.SOCK_DGRAM))
-                    self.assertTrue(conn.family in (socket.AF_INET, 
-                                                    socket.AF_INET6))
-                    check_address(conn.local_address, conn.family)
-                    check_address(conn.remote_address, conn.family)
-                    # actually try to bind the local socket
-                    s = socket.socket(conn.family, conn.type)
-                    s.bind((conn.local_address[0], 0))
-                    s.close()
+                try:
+                    cons = p.get_connections()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+                else:
+                    for conn in cons:
+                        self.assertTrue(conn.type in (socket.SOCK_STREAM, 
+                                                      socket.SOCK_DGRAM))
+                        self.assertTrue(conn.family in (socket.AF_INET, 
+                                                        socket.AF_INET6))
+                        check_address(conn.local_address, conn.family)
+                        check_address(conn.remote_address, conn.family)
+                        # actually try to bind the local socket
+                        s = socket.socket(conn.family, conn.type)
+                        s.bind((conn.local_address[0], 0))
+                        s.close()
 
     def test_parent_ppid(self):
         this_parent = os.getpid()
@@ -674,9 +678,6 @@ if hasattr(os, 'getuid'):
 
             def test_get_connections(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_get_connections, self)
-
-            def test_get_connections_all(self):
-                self.assertRaises(psutil.AccessDenied, TestCase.test_get_connections_all, self)
 
 
 def test_main():

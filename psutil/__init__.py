@@ -321,7 +321,11 @@ class Process(object):
 
     if hasattr(_platform_impl, "get_connections"):
         def get_connections(self):
-            """Return files opened by process as a list of paths."""
+            """Return TCP and UPD connections opened by process as a list 
+            of namedtuple/s.
+            For third party processes (!= os.getpid()) results can differ 
+            depending on user privileges.
+            """
             return _platform_impl.get_connections(self.pid)
 
     def is_running(self):

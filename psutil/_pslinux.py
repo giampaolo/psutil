@@ -8,6 +8,8 @@ import signal
 import errno
 import pwd
 import grp
+import socket
+import struct
 
 try:
     from collections import namedtuple
@@ -51,6 +53,19 @@ _UPTIME = _get_uptime()
 NUM_CPUS = _get_num_cpus()
 TOTAL_PHYMEM = _get_total_phymem()
 
+# http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
+_TCP_STATES_TABLE = {"01" : "ESTABLISHED",
+                     "02" : "SYN_SENT",
+                     "03" : "SYN_RECV",
+                     "04" : "FIN_WAIT1",
+                     "05" : "FIN_WAIT2",
+                     "06" : "TIME_WAIT",
+                     "07" : "CLOSE",
+                     "08" : "CLOSE_WAIT",
+                     "09" : "LAST_ACK",
+                     "0A" : "LISTEN",
+                     "0B" : "CLOSING"
+                     }
 
 def avail_phymem():
     """Return the amount of physical memory available, in bytes."""
@@ -264,8 +279,56 @@ class Impl(object):
                     retlist.append(file)
         return retlist
 
+    @wrap_exceptions
     def get_connections(self, pid):
-        return _psposix.get_process_connections(pid)
+        if pid == 0:
+            return []
+        descriptors = []
+        # os.listdir() is gonna raise a lot of access denied 
+        # exceptions in case of unprivileged user; that's fine: 
+        # lsof does the same so it's unlikely that we can to better.
+        for name in os.listdir("/proc/%s/fd" %pid):
+            try:
+                fd = os.readlink("/proc/%s/fd/%s" %(pid, name))
+            except OSError:
+                continue
+            if fd.startswith('socket:['):
+                # the process is using a TCP connection
+                descriptors.append(fd[8:][:-1])  # extract the fd number
+
+        if not descriptors:
+            # no connections for this process
+            return []
+
+        def process(file, family, _type):
+            retlist = []
+            f = open(file)
+            f.readline()  # skip the first line
+            for line in f:
+                _, laddr, raddr, status, _, _, _, _, _, inode = line.split()[:10]
+                if inode in descriptors:
+                    laddr = self._decode_address(laddr, family)
+                    raddr = self._decode_address(raddr, family)
+                    # XXX - note: we're using TCP table also for UDP; 
+                    # there should be one specific for UDP somewhere.
+                    # Unfortunately I couldn't find it.
+                    status = _TCP_STATES_TABLE[status]
+                    conn = conntuple(family, _type, laddr, raddr, status)
+                    retlist.append(conn)
+            return retlist
+
+        conntuple = namedtuple('connection', 'family type local_address ' \
+                                             'remote_address status')
+        tcp4 = process("/proc/net/tcp", socket.AF_INET, socket.SOCK_STREAM)
+        tcp6 = process("/proc/net/tcp6", socket.AF_INET6, socket.SOCK_STREAM)
+        udp4 = process("/proc/net/udp", socket.AF_INET, socket.SOCK_DGRAM)
+        udp6 = process("/proc/net/udp6", socket.AF_INET6, socket.SOCK_DGRAM)
+        return tcp4 + tcp6 + udp4 + udp6
+
+#    --- lsof implementation
+#
+#    def get_connections(self, pid):
+#        return _psposix.get_process_connections(pid)
 
     def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)
@@ -294,4 +357,42 @@ class Impl(object):
                 # We want to provide real GID only.
                 f.close()
                 return int(line.split()[1])
+
+    def _decode_address(self, addr, family):
+        """Accept an "ip:port" address as displayed in /proc/net/*
+        and convert it into a human readable form, like:
+
+        "0500000A:0016" -> ("10.0.0.5", 22)
+        "0000000000000000FFFF00000100007F:9E49" -> ("::ffff:127.0.0.1", 40521)
+
+        The IP address portion is a little-endian four-byte hexadecimal
+        number; that is, the least significant byte is listed first,
+        so we need to reverse the order of the bytes to convert it
+        to an IP address.
+        The port is represented as a two-byte hexadecimal number.
+
+        Reference: 
+        http://linuxdevcenter.com/pub/a/linux/2000/11/16/LinuxAdmin.html
+        """
+        ip, port = addr.split(':')
+        port = int(port, 16)
+        # this usually refers to a local socket in listen mode with 
+        # no end-points connected
+        if not port:
+            return ()
+        if family == socket.AF_INET:
+            ip = socket.inet_ntop(family, ip.decode('hex')[::-1])        
+        else:
+            # IPv6 address
+            def decode(ip):
+                # old version - let's keep it, just in case...
+                #ip = ip.decode('hex')
+                #return socket.inet_ntop(socket.AF_INET6, 
+                #          ''.join(ip[i:i+4][::-1] for i in xrange(0, 16, 4)))                
+                ip = ip.decode('hex')
+                return socket.inet_ntop(socket.AF_INET6, 
+                                struct.pack('>4I', *struct.unpack('<4I', ip)))
+            ip = decode(ip)
+        return (ip, port)
+
 
