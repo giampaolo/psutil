@@ -319,14 +319,17 @@ class Process(object):
         """Return files opened by process as a list of paths."""
         return _platform_impl.get_open_files(self.pid)
 
-    if hasattr(_platform_impl, "get_connections"):
-        def get_connections(self):
-            """Return TCP and UPD connections opened by process as a list 
-            of namedtuple/s.
-            For third party processes (!= os.getpid()) results can differ 
-            depending on user privileges.
-            """
-            return _platform_impl.get_connections(self.pid)
+    def get_connections(self):
+        """Return TCP and UPD connections opened by process as a list 
+        of namedtuple/s.
+        For third party processes (!= os.getpid()) results can differ 
+        depending on user privileges.
+        """
+        # check for zombie process for implementations which rely
+        # on parsing command output
+        if not sys.platform.lower().startswith("linux") and not self.is_running():
+            raise NoSuchProcess(self.pid, "process no longer exists")
+        return _platform_impl.get_connections(self.pid)
 
     def is_running(self):
         """Return whether the current process is running in the current 

@@ -5,6 +5,8 @@
 
 import errno
 import os
+import subprocess
+import socket
 import _psutil_mswindows
 
 try:
@@ -181,3 +183,63 @@ class Impl(object):
                 if os.path.isfile(file) and file not in retlist:
                     retlist.append(file)
         return retlist
+
+    def get_connections(self, pid):
+        p = subprocess.Popen("netstat -ano", shell=True, stdout=subprocess.PIPE,
+                                                         stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        if stderr:
+            p = psutil.Process(pid)
+            if not p.is_running():
+                raise NoSuchProcess(pid, "process no longer exists")
+            raise RuntimeError(stderr)  # this must be considered an application bug
+        if not stdout:
+            return []
+
+        AF_INET6 = getattr(socket, "AF_INET6", 23)
+        proto_table = {"TCP": (socket.AF_INET, socket.SOCK_STREAM),
+                       "UDP": (socket.AF_INET, socket.SOCK_DGRAM),
+                       "TCPv6" : (AF_INET6, socket.SOCK_STREAM),
+                       "UDPv6" : (AF_INET6, socket.SOCK_DGRAM)}
+
+        # used to match the names provided on UNIX
+        status_table = {"LISTENING" : "LISTEN",
+                        "SYN_RECEIVED" : "SYN_RECV",
+                        "SYN_SEND" : "SYN_SENT",
+                        "CLOSED" : "CLOSE"}
+
+        conn_tuple = namedtuple('connection', 'family type local_address ' \
+                                              'remote_address status')
+        def convert_address(addr, family):
+            ip, port = addr.split(":")
+            if port == "*":
+                return ()
+            port = int(port)
+            if port == 0:
+                return ()
+            if ip == "*":
+                if family == socket.AF_INET:
+                    ip = "0.0.0.0"
+                else:
+                    ip = "::"
+            return (ip, port)
+
+        cons = []
+        for line in stdout.split('\r\n'):
+            line = line.strip()
+            if line[:3] in ("TCP", "UDP"):      
+                if line.startswith("UDP"):
+                    proto, laddr, raddr, _pid = line.split()
+                    status = ""
+                else:
+                    proto, laddr, raddr, status, _pid = line.split()
+                _pid = int(_pid)
+                if _pid == pid:
+                    status = status_table.get(status, status)
+                    family, _type = proto_table[proto]
+                    laddr = convert_address(laddr, family)
+                    raddr = convert_address(raddr, family)
+                    conn = conn_tuple(family, _type, laddr, raddr, status)
+                    cons.append(conn)
+        return cons
+
