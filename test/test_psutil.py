@@ -76,15 +76,15 @@ def reap_children():
 
     this_process = psutil.Process(os.getpid())
     for child in this_process.get_children():
-        child.kill()
-        waitpid(child)
+        try:
+            child.kill()
+        except psutil.NoSuchProcess:
+            pass
+        else:
+            waitpid(child)
 
 
 class TestCase(unittest.TestCase):
-
-    def setUp(self):
-        # supposed to always be a subprocess.Popen instance
-        self.proc = None
 
     def tearDown(self):
         reap_children()
@@ -100,23 +100,23 @@ class TestCase(unittest.TestCase):
             self.assertTrue(os.getpid() in pids)
 
     def test_kill(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        test_pid = self.proc.pid
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        test_pid = sproc.pid
         wait_for_pid(test_pid)
         p = psutil.Process(test_pid)
         name = p.name
         p.kill()
-        self.proc.wait()
+        sproc.wait()
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_terminate(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        test_pid = self.proc.pid
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        test_pid = sproc.pid
         wait_for_pid(test_pid)
         p = psutil.Process(test_pid)
         name = p.name
         p.terminate()
-        self.proc.wait()
+        sproc.wait()
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_send_signal(self):
@@ -124,12 +124,12 @@ class TestCase(unittest.TestCase):
             sig = signal.SIGKILL
         else:
             sig = signal.SIGTERM
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        test_pid = self.proc.pid
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        test_pid = sproc.pid
         p = psutil.Process(test_pid)
         name = p.name
         p.send_signal(sig)
-        self.proc.wait()
+        sproc.wait()
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_TOTAL_PHYMEM(self):
@@ -189,7 +189,7 @@ class TestCase(unittest.TestCase):
             self.assertTrue(percent >= 0.0)
             self.assertTrue(percent <= 100.0)
 
-    # os.times() is broken on OS X and *BSD because, see:
+    # os.times() is broken on OS X and *BSD, see:
     # http://bugs.python.org/issue1040026
     # It's also broken on Windows on Python 2.5 (not 2.6)
     # Disabled since we can't rely on it
@@ -216,10 +216,10 @@ class TestCase(unittest.TestCase):
         self.assertTrue((times.user > 0.0) or (times.kernel > 0.0))
 
     def test_create_time(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         now = time.time()
-        wait_for_pid(self.proc.pid)
-        p = psutil.Process(self.proc.pid)
+        wait_for_pid(sproc.pid)
+        p = psutil.Process(sproc.pid)
         create_time = p.create_time
 
         # Use time.time() as base value to compare our result using a
@@ -227,7 +227,8 @@ class TestCase(unittest.TestCase):
         # It will fail if the difference between the values is > 2s.
         difference = abs(create_time - now)
         if difference > 2:
-            self.fail("expected: %s, found: %s, difference: %s" %(now, create_time, difference))
+            self.fail("expected: %s, found: %s, difference: %s" 
+                      % (now, create_time, difference))
 
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
@@ -257,21 +258,21 @@ class TestCase(unittest.TestCase):
         self.assertTrue(p.get_memory_percent() > 0.0)
 
     def test_pid(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        self.assertEqual(psutil.Process(self.proc.pid).pid, self.proc.pid)
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        self.assertEqual(psutil.Process(sproc.pid).pid, sproc.pid)
 
     def test_eq(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
-        self.assertTrue(psutil.Process(self.proc.pid) == psutil.Process(self.proc.pid))
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        wait_for_pid(sproc.pid)
+        self.assertTrue(psutil.Process(sproc.pid) == psutil.Process(sproc.pid))
 
     def test_is_running(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
-        p = psutil.Process(self.proc.pid)
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        wait_for_pid(sproc.pid)
+        p = psutil.Process(sproc.pid)
         self.assertTrue(p.is_running())
-        psutil.Process(self.proc.pid).kill()
-        self.proc.wait()
+        psutil.Process(sproc.pid).kill()
+        sproc.wait()
         self.assertFalse(p.is_running())
 
     def test_pid_exists(self):
@@ -280,24 +281,24 @@ class TestCase(unittest.TestCase):
         self.assertFalse(psutil.pid_exists(-1))
 
     def test_path(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
-        self.assertEqual(psutil.Process(self.proc.pid).path, os.path.dirname(PYTHON))
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        wait_for_pid(sproc.pid)
+        self.assertEqual(psutil.Process(sproc.pid).path, os.path.dirname(PYTHON))
 
     def test_cmdline(self):
-        self.proc = subprocess.Popen([PYTHON, "-E"], stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
-        self.assertEqual(psutil.Process(self.proc.pid).cmdline, [PYTHON, "-E"])
+        sproc = subprocess.Popen([PYTHON, "-E"], stdout=DEVNULL, stderr=DEVNULL)
+        wait_for_pid(sproc.pid)
+        self.assertEqual(psutil.Process(sproc.pid).cmdline, [PYTHON, "-E"])
 
     def test_name(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL,  stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
-        self.assertEqual(psutil.Process(self.proc.pid).name, os.path.basename(PYTHON))
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL,  stderr=DEVNULL)
+        wait_for_pid(sproc.pid)
+        self.assertEqual(psutil.Process(sproc.pid).name, os.path.basename(PYTHON))
 
     def test_uid(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
-        uid = psutil.Process(self.proc.pid).uid
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        wait_for_pid(sproc.pid)
+        uid = psutil.Process(sproc.pid).uid
         if hasattr(os, 'getuid'):
             self.assertEqual(uid, os.getuid())
         else:
@@ -306,9 +307,9 @@ class TestCase(unittest.TestCase):
             self.assertEqual(uid, -1)
 
     def test_gid(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        wait_for_pid(self.proc.pid)
-        gid = psutil.Process(self.proc.pid).gid
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        wait_for_pid(sproc.pid)
+        gid = psutil.Process(sproc.pid).gid
         if hasattr(os, 'getgid'):
             self.assertEqual(gid, os.getgid())
         else:
@@ -317,20 +318,17 @@ class TestCase(unittest.TestCase):
             self.assertEqual(gid, -1)
 
     def test_username(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        p = psutil.Process(self.proc.pid)
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(sproc.pid)
         # generic test, only access the attribute (twice for testing the
         # caching code)
         p.username
         p.username
 
-        # UNIX tests
         if POSIX:
             import pwd
             user = pwd.getpwuid(p.uid).pw_name
             self.assertEqual(p.username, user)
-
-        # Windows tests
         elif WINDOWS:
             expected_username = os.environ['USERNAME']
             expected_domain = os.environ['USERDOMAIN']
@@ -341,16 +339,16 @@ class TestCase(unittest.TestCase):
     if hasattr(psutil.Process, "getcwd"):
 
         def test_getcwd(self):
-            self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-            wait_for_pid(self.proc.pid)
-            p = psutil.Process(self.proc.pid)
+            sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+            wait_for_pid(sproc.pid)
+            p = psutil.Process(sproc.pid)
             self.assertEqual(p.getcwd(), os.getcwd())
 
         def test_getcwd_2(self):
             cmd = [PYTHON, "-c", "import os; os.chdir('..'); input()"]
-            self.proc = subprocess.Popen(cmd, stdout=DEVNULL)
-            wait_for_pid(self.proc.pid)
-            p = psutil.Process(self.proc.pid)
+            sproc = subprocess.Popen(cmd, stdout=DEVNULL)
+            wait_for_pid(sproc.pid)
+            p = psutil.Process(sproc.pid)
             time.sleep(0.1)
             expected_dir = os.path.dirname(os.getcwd())
             self.assertEqual(p.getcwd(), expected_dir)
@@ -358,92 +356,90 @@ class TestCase(unittest.TestCase):
     def test_get_open_files(self):
         thisfile = os.path.join(os.getcwd(), __file__)
         cmdline = "f = open(r'%s', 'r'); input();" %thisfile
-        self.proc = subprocess.Popen([PYTHON, "-c", cmdline])
-        wait_for_pid(self.proc.pid)
+        sproc = subprocess.Popen([PYTHON, "-c", cmdline])
+        wait_for_pid(sproc.pid)
         time.sleep(0.1)
-        p = psutil.Process(self.proc.pid)
+        p = psutil.Process(sproc.pid)
         files = p.get_open_files()
         self.assertTrue(thisfile in files)
         for file in files:
             self.assertTrue(os.path.isfile(file))
 
-    if hasattr(psutil.Process, "get_connections"):
+    def test_get_connections(self):
+        arg = "import socket;" \
+              "s = socket.socket();" \
+              "s.bind(('127.0.0.1', 0));" \
+              "s.listen(1);" \
+              "conn, addr = s.accept();" \
+              "raw_input();" 
+        sproc = subprocess.Popen([PYTHON, "-c", arg])
+        time.sleep(0.1)
+        p = psutil.Process(sproc.pid)
+        cons = p.get_connections()
+        self.assertTrue(len(cons) == 1)
+        con = cons[0]
+        self.assertEqual(con.family, socket.AF_INET)
+        self.assertEqual(con.type, socket.SOCK_STREAM)
+        self.assertEqual(con.status, "LISTEN")
+        ip, port = con.local_address
+        self.assertEqual(ip, '127.0.0.1')
+        self.assertEqual(con.remote_address, ())
 
-        def test_get_connections(self):
-            arg = "import socket;" \
-                  "s = socket.socket();" \
-                  "s.bind(('127.0.0.1', 0));" \
-                  "s.listen(1);" \
-                  "conn, addr = s.accept();" \
-                  "raw_input();" 
-            self.proc = subprocess.Popen([PYTHON, "-c", arg])
-            time.sleep(0.1)
-            p = psutil.Process(self.proc.pid)
-            cons = p.get_connections()
-            self.assertTrue(len(cons) == 1)
-            con = cons[0]
-            self.assertEqual(con.family, socket.AF_INET)
-            self.assertEqual(con.type, socket.SOCK_STREAM)
-            self.assertEqual(con.status, "LISTEN")
-            ip, port = con.local_address
-            self.assertEqual(ip, '127.0.0.1')
-            self.assertEqual(con.remote_address, ())
-    
-        def test_get_connections_all(self):
-            def check_address(addr, family):
-                if not addr:
-                    return
-                ip, port = addr
-                self.assertTrue(isinstance(port, int))
-                if family == socket.AF_INET:
-                    ip = map(int, ip.split('.'))
-                    self.assertTrue(len(ip) == 4)
-                    for num in ip:
-                        self.assertTrue(0 <= num <= 255)
-                self.assertTrue(0 <= port <= 65535)
+    def test_get_connections_all(self):
+        def check_address(addr, family):
+            if not addr:
+                return
+            ip, port = addr
+            self.assertTrue(isinstance(port, int))
+            if family == socket.AF_INET:
+                ip = map(int, ip.split('.'))
+                self.assertTrue(len(ip) == 4)
+                for num in ip:
+                    self.assertTrue(0 <= num <= 255)
+            self.assertTrue(0 <= port <= 65535)
 
-            for p in psutil.process_iter():
-                try:
-                    cons = p.get_connections()
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
-                else:
-                    for conn in cons:
-                        self.assertTrue(conn.type in (socket.SOCK_STREAM, 
-                                                      socket.SOCK_DGRAM))
-                        self.assertTrue(conn.family in (socket.AF_INET, 
-                                                        socket.AF_INET6))
-                        check_address(conn.local_address, conn.family)
-                        check_address(conn.remote_address, conn.family)
-                        # actually try to bind the local socket
-                        s = socket.socket(conn.family, conn.type)
-                        s.bind((conn.local_address[0], 0))
-                        s.close()
+        for p in psutil.process_iter():
+            try:
+                cons = p.get_connections()
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+            else:
+                for conn in cons:
+                    self.assertTrue(conn.type in (socket.SOCK_STREAM, 
+                                                  socket.SOCK_DGRAM))
+                    self.assertTrue(conn.family in (socket.AF_INET, 
+                                                    socket.AF_INET6))
+                    check_address(conn.local_address, conn.family)
+                    check_address(conn.remote_address, conn.family)
+                    # actually try to bind the local socket
+                    s = socket.socket(conn.family, conn.type)
+                    s.bind((conn.local_address[0], 0))
+                    s.close()
 
     def test_parent_ppid(self):
         this_parent = os.getpid()
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        p = psutil.Process(self.proc.pid)
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(sproc.pid)
         self.assertEqual(p.ppid, this_parent)
         self.assertEqual(p.parent.pid, this_parent)
         # no other process is supposed to have us as parent
         for p in psutil.process_iter():
-            if p.pid == self.proc.pid:
+            if p.pid == sproc.pid:
                 continue
             self.assertTrue(p.ppid != this_parent)
 
     def test_get_children(self):
         p = psutil.Process(os.getpid())
         self.assertEqual(p.get_children(), [])
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         children = p.get_children()
         self.assertEqual(len(children), 1)
-        self.assertEqual(children[0].pid, self.proc.pid)
+        self.assertEqual(children[0].pid, sproc.pid)
         self.assertEqual(children[0].ppid, os.getpid())
 
     def test_suspend_resume(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        p = psutil.Process(self.proc.pid)
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(sproc.pid)
         p.suspend()
         p.resume()
 
@@ -464,8 +460,8 @@ class TestCase(unittest.TestCase):
             sys.stdout = stdout
 
     def test_types(self):
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        p = psutil.Process(self.proc.pid)
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(sproc.pid)
         self.assert_(isinstance(p.pid, int))
         self.assert_(isinstance(p.ppid, int))
         self.assert_(isinstance(p.parent, psutil.Process))
@@ -480,16 +476,12 @@ class TestCase(unittest.TestCase):
         if hasattr(p, 'getcwd'):
             if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
                 self.assert_(isinstance(p.getcwd(), str))
-        if hasattr(p, 'get_open_files'):
-            # XXX
-            if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
-                self.assert_(isinstance(p.get_open_files(), list))
-                for path in p.get_open_files():
-                    self.assert_(isinstance(path, str) or \
-                                 isinstance(path, type(u'')))
-        if hasattr(p, 'get_connections'):
-            if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
-                self.assert_(isinstance(p.get_connections(), list))
+        if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
+            self.assert_(isinstance(p.get_open_files(), list))
+            for path in p.get_open_files():
+                self.assert_(isinstance(path, str) or isinstance(path, type(u'')))
+        if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
+            self.assert_(isinstance(p.get_connections(), list))
         self.assert_(isinstance(p.is_running(), bool))
         self.assert_(isinstance(p.get_cpu_times(), tuple))
         self.assert_(isinstance(p.get_cpu_times()[0], float))
@@ -513,6 +505,8 @@ class TestCase(unittest.TestCase):
 
     def test_invalid_pid(self):
         self.assertRaises(ValueError, psutil.Process, "1")
+        self.assertRaises(ValueError, psutil.Process, -1)
+        self.assertRaises(ValueError, psutil.Process, None)
 
     def test_zombie_process(self):
         # Test that NoSuchProcess exception gets raised in the event the
@@ -522,10 +516,10 @@ class TestCase(unittest.TestCase):
         #  >>> time.sleep(5)  # time-consuming task, process dies in meantime
         #  >>> proc.name
         # Refers to Issue #15
-        self.proc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
-        p = psutil.Process(self.proc.pid)
+        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        p = psutil.Process(sproc.pid)
         p.kill()
-        self.proc.wait()
+        sproc.wait()
 
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "ppid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "parent")
@@ -538,10 +532,8 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "username")
         if hasattr(p, 'getcwd'):
             self.assertRaises(psutil.NoSuchProcess, p.getcwd)
-        if hasattr(p, 'get_open_files'):
-            self.assertRaises(psutil.NoSuchProcess, p.get_open_files)
-        if hasattr(p, 'get_connections'):
-            self.assertRaises(psutil.NoSuchProcess, p.get_connections)
+        self.assertRaises(psutil.NoSuchProcess, p.get_open_files)
+        self.assertRaises(psutil.NoSuchProcess, p.get_connections)
         self.assertRaises(psutil.NoSuchProcess, p.suspend)
         self.assertRaises(psutil.NoSuchProcess, p.resume)
         self.assertRaises(psutil.NoSuchProcess, p.kill)
@@ -650,8 +642,8 @@ if hasattr(os, 'getuid'):
             TestCase.setUp(self)
 
         def tearDown(self):
-            os.setegid(self.PROCESS_UID)
-            os.seteuid(self.PROCESS_GID)
+            os.setegid(sprocESS_UID)
+            os.seteuid(sprocESS_GID)
             TestCase.tearDown(self)
 
         # overridden tests known to raise AccessDenied when run
