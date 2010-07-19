@@ -11,6 +11,7 @@ import subprocess
 import psutil
 import socket
 import re
+import sys
 
 try:
     from collections import namedtuple
@@ -19,6 +20,11 @@ except ImportError:
 
 from psutil import AccessDenied, NoSuchProcess
 
+
+if sys.version_info >= (3,):
+    decode = lambda x: x.decode(sys.stdout.encoding)
+else:
+    decode = lambda x: x
 
 def _which(program):
     """Same as UNIX which command.  Return None on command not found."""
@@ -83,6 +89,7 @@ def get_process_open_files(pid):
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
                                           stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
+    stdout, stderr = decode(stdout), decode(stderr)
     if stderr:
         if _which("lsof") is None:
             msg = "this functionnality requires lsof command line utility " \
@@ -129,6 +136,7 @@ def get_process_connections(pid):
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
                                           stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
+    stdout, stderr = decode(stdout), decode(stderr)
     if stderr:
         if _which("lsof") is None:
             msg = "this functionnality requires lsof command line utility " \
