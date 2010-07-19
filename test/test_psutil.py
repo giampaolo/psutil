@@ -23,7 +23,6 @@ import traceback
 import socket
 
 import psutil
-import collections
 
 
 PYTHON = os.path.realpath(sys.executable)
@@ -142,37 +141,37 @@ class TestCase(unittest.TestCase):
 
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM
-        self.assertTrue(isinstance(x, int) or isinstance(x, int))
+        self.assertTrue(isinstance(x, int) or isinstance(x, long))
         self.assertTrue(x > 0)
 
     def test_used_phymem(self):
         x = psutil.used_phymem()
-        self.assertTrue(isinstance(x, int) or isinstance(x, int))
+        self.assertTrue(isinstance(x, int) or isinstance(x, long))
         self.assertTrue(x > 0)
 
     def test_avail_phymem(self):
         x = psutil.avail_phymem()
-        self.assertTrue(isinstance(x, int) or isinstance(x, int))
+        self.assertTrue(isinstance(x, int) or isinstance(x, long))
         self.assertTrue(x > 0)
 
     def test_total_virtmem(self):
         x = psutil.total_virtmem()
-        self.assertTrue(isinstance(x, int) or isinstance(x, int))
+        self.assertTrue(isinstance(x, int) or isinstance(x, long))
         self.assertTrue(x >= 0)
 
     def test_used_virtmem(self):
         x = psutil.used_virtmem()
-        self.assertTrue(isinstance(x, int) or isinstance(x, int))
+        self.assertTrue(isinstance(x, int) or isinstance(x, long))
         self.assertTrue(x >= 0)
 
     def test_avail_virtmem(self):
         x = psutil.avail_virtmem()
-        self.assertTrue(isinstance(x, int) or isinstance(x, int))
+        self.assertTrue(isinstance(x, int) or isinstance(x, long))
         self.assertTrue(x >= 0)
 
     def test_cached_mem(self):
         x = psutil.cached_mem()
-        self.assertTrue(isinstance(x, int) or isinstance(x, int))
+        self.assertTrue(isinstance(x, int) or isinstance(x, long))
         self.assertTrue(x >= 0)
 
     def test_system_cpu_times(self):
@@ -191,7 +190,7 @@ class TestCase(unittest.TestCase):
     def test_system_cpu_percent(self):
         percent = psutil.cpu_percent()
         self.assertTrue(isinstance(percent, float))
-        for x in range(1000):
+        for x in xrange(1000):
             percent = psutil.cpu_percent()
             self.assertTrue(isinstance(percent, float))
             self.assertTrue(percent >= 0.0)
@@ -401,7 +400,7 @@ class TestCase(unittest.TestCase):
             ip, port = addr
             self.assertTrue(isinstance(port, int))
             if family == socket.AF_INET:
-                ip = list(list(map(int, ip.split('.'))))
+                ip = map(int, ip.split('.'))
                 self.assertTrue(len(ip) == 4)
                 for num in ip:
                     self.assertTrue(0 <= num <= 255)
@@ -555,14 +554,14 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.gid, int))
         self.assert_(isinstance(p.create_time, float))
         self.assert_(isinstance(p.username, str) or \
-                     isinstance(p.username, type('')))
+                     isinstance(p.username, type(u'')))
         if hasattr(p, 'getcwd'):
             if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
                 self.assert_(isinstance(p.getcwd(), str))
         if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
             self.assert_(isinstance(p.get_open_files(), list))
             for path in p.get_open_files():
-                self.assert_(isinstance(path, str) or isinstance(path, type('')))
+                self.assert_(isinstance(path, str) or isinstance(path, type(u'')))
         if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
             self.assert_(isinstance(p.get_connections(), list))
         self.assert_(isinstance(p.is_running(), bool))
@@ -577,7 +576,7 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(psutil.get_process_list(), list))
         self.assert_(isinstance(psutil.get_process_list()[0], psutil.Process))
         self.assert_(isinstance(psutil.process_iter(), types.GeneratorType))
-        self.assert_(isinstance(next(psutil.process_iter()), psutil.Process))
+        self.assert_(isinstance(psutil.process_iter().next(), psutil.Process))
         self.assert_(isinstance(psutil.get_pid_list(), list))
         self.assert_(isinstance(psutil.get_pid_list()[0], int))
         self.assert_(isinstance(psutil.pid_exists(1), bool))
@@ -642,7 +641,7 @@ class TestCase(unittest.TestCase):
 
                 try:
                     attr = getattr(p, attr, None)
-                    if attr is not None and isinstance(attr, collections.Callable):
+                    if attr is not None and callable(attr):
                         attr()
                     valid_procs += 1
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
