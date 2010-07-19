@@ -10,6 +10,8 @@ import pwd
 import grp
 import socket
 import struct
+import sys
+import base64
 
 try:
     from collections import namedtuple
@@ -365,7 +367,7 @@ class Impl(object):
         "0500000A:0016" -> ("10.0.0.5", 22)
         "0000000000000000FFFF00000100007F:9E49" -> ("::ffff:127.0.0.1", 40521)
 
-        The IP address portion is a little-endian four-byte hexadecimal
+        The IPv4 address portion is a little-endian four-byte hexadecimal
         number; that is, the least significant byte is listed first,
         so we need to reverse the order of the bytes to convert it
         to an IP address.
@@ -376,23 +378,22 @@ class Impl(object):
         """
         ip, port = addr.split(':')
         port = int(port, 16)
+        if sys.version_info >= (3,):
+            ip = ip.encode('ascii')
         # this usually refers to a local socket in listen mode with 
-        # no end-points connected
+        # no end-points connected       
         if not port:
             return ()
         if family == socket.AF_INET:
-            ip = socket.inet_ntop(family, ip.decode('hex')[::-1])        
-        else:
-            # IPv6 address
-            def decode(ip):
-                # old version - let's keep it, just in case...
-                #ip = ip.decode('hex')
-                #return socket.inet_ntop(socket.AF_INET6, 
-                #          ''.join(ip[i:i+4][::-1] for i in xrange(0, 16, 4)))                
-                ip = ip.decode('hex')
-                return socket.inet_ntop(socket.AF_INET6, 
+            ip = socket.inet_ntop(family, base64.b16decode(ip)[::-1])
+        else:  # IPv6
+            # old version - let's keep it, just in case...
+            #ip = ip.decode('hex')
+            #return socket.inet_ntop(socket.AF_INET6, 
+            #          ''.join(ip[i:i+4][::-1] for i in xrange(0, 16, 4)))
+            ip = base64.b16decode(ip)
+            ip = socket.inet_ntop(socket.AF_INET6, 
                                 struct.pack('>4I', *struct.unpack('<4I', ip)))
-            ip = decode(ip)
         return (ip, port)
 
 

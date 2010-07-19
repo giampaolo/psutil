@@ -56,7 +56,7 @@ else:
 def main():
     setup_args = dict(
         name='psutil',
-        version='0.1.3',
+        version='0.2.0',
         description='A process utilities module for Python',
         long_description="""
 psutil is a module providing convenience functions for managing processes in a
