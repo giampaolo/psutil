@@ -110,11 +110,11 @@ class Impl(object):
 
     def get_open_files(self, pid):
         """Return files opened by process by parsing lsof output."""
-        return _psposix.get_process_open_files(pid)
+        return _psposix.LsofParser(pid).get_process_open_files()
 
     def get_connections(self, pid):
         """Return etwork connections opened by a process as a list of
         namedtuples."""
-        return _psposix.get_process_connections(pid)
+        return _psposix.LsofParser(pid).get_process_connections()
 
 
