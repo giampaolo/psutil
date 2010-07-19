@@ -85,7 +85,7 @@ def get_process_open_files(pid):
     # -F0nPt == (0) separate lines with "\x00" 
     #           (n) file name
     #           (t) file type
-    cmd = "lsof -a -p %s -n -P -w -F0tn" %pid
+    cmd = "lsof -a -p %s -n -P -F0tn" %pid
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
                                           stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
@@ -132,7 +132,7 @@ def get_process_connections(pid):
     #           (P) protocol type (TCP, UPD, Unix)
     #           (t) socket family (IPv4, IPv6)
     #           (T) connection status
-    cmd = "lsof -p %s -i -a -w -F0nPtT -n -P" % pid
+    cmd = "lsof -p %s -i -a -F0nPtT -n -P" % pid
     p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
                                           stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()

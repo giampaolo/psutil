@@ -325,10 +325,6 @@ class Process(object):
         For third party processes (!= os.getpid()) results can differ 
         depending on user privileges.
         """
-        # check for zombie process for implementations which rely
-        # on parsing command output
-        if not sys.platform.lower().startswith("linux") and not self.is_running():
-            raise NoSuchProcess(self.pid, "process no longer exists")
         return _platform_impl.get_connections(self.pid)
 
     def is_running(self):
