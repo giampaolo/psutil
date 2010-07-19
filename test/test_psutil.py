@@ -505,7 +505,6 @@ class TestCase(unittest.TestCase):
 
     def test_invalid_pid(self):
         self.assertRaises(ValueError, psutil.Process, "1")
-        self.assertRaises(ValueError, psutil.Process, -1)
         self.assertRaises(ValueError, psutil.Process, None)
 
     def test_zombie_process(self):
@@ -642,8 +641,8 @@ if hasattr(os, 'getuid'):
             TestCase.setUp(self)
 
         def tearDown(self):
-            os.setegid(sprocESS_UID)
-            os.seteuid(sprocESS_GID)
+            os.setegid(self.PROCESS_UID)
+            os.seteuid(self.PROCESS_GID)
             TestCase.tearDown(self)
 
         # overridden tests known to raise AccessDenied when run
