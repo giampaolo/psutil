@@ -416,6 +416,12 @@ class TestCase(unittest.TestCase):
                 sock.close()
                 return True
 
+        # all values are supposed to match Linux's tcp_states.h states
+        # table across all platforms.
+        valid_states = ["ESTABLISHED", "SYN_SENT", "SYN_RECV", "FIN_WAIT1",
+                        "FIN_WAIT2", "TIME_WAIT", "CLOSE", "CLOSE_WAIT",
+                        "LAST_ACK", "LISTEN", "CLOSING", ""]
+
         tcp_template = "import socket;" \
                        "s = socket.socket({family}, socket.SOCK_STREAM);" \
                        "s.bind(('{addr}', 0));" \
@@ -459,6 +465,8 @@ class TestCase(unittest.TestCase):
                                                     socket.AF_INET6))
                     check_address(conn.local_address, conn.family)
                     check_address(conn.remote_address, conn.family)
+                    if conn.status not in valid_states:
+                        self.fail("%s is not a valid status" %conn.status)
                     # actually try to bind the local socket
                     s = socket.socket(conn.family, conn.type)
                     s.bind((conn.local_address[0], 0))
