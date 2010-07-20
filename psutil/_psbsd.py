@@ -10,8 +10,8 @@ try:
 except ImportError:
     from psutil.compat import namedtuple  # python < 2.6
 
-from psutil import _psutil_bsd
-from psutil import _psposix
+import _psutil_bsd
+import _psposix
 from psutil.error import *
 
 NUM_CPUS = _psutil_bsd.get_num_cpus()

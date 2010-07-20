@@ -10,8 +10,8 @@ try:
 except ImportError:
     from psutil.compat import namedtuple  # python < 2.6
 
-from psutil import _psutil_osx
-from psutil import _psposix
+import _psutil_osx
+import _psposix
 from psutil.error import *
 
 # module level constants (gets pushed up to psutil module)

@@ -13,11 +13,11 @@ try:
 except ImportError:
     from psutil.compat import namedtuple  # python < 2.6
 
-from psutil import _psutil_mswindows
+import _psutil_mswindows
 from psutil.error import *
 
 try:
-    from psutil import wmi
+    import wmi
 except ImportError:
     wmi = None
 
