@@ -3,8 +3,6 @@
 # $Id$
 #
 
-import os
-import signal
 import errno
 
 try:
@@ -78,8 +76,8 @@ class Impl(object):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.
         """
-        infoTuple = _psutil_osx.get_process_info(pid)
-        return infoTuple
+        info_tuple = _psutil_osx.get_process_info(pid)
+        return info_tuple
 
     @wrap_exceptions
     def get_memory_info(self, pid):

@@ -10,7 +10,6 @@ class Error(Exception):
     """Base exception class. All other psutil exceptions inherit
     from this one.
     """
-    pass
 
 class NoSuchProcess(Error):
     """Exception raised when a process with a certain PID doesn't

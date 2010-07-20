@@ -17,8 +17,6 @@ import subprocess
 import time
 import signal
 import types
-import errno
-import platform
 import traceback
 import socket
 
@@ -362,7 +360,7 @@ class TestCase(unittest.TestCase):
 
     def test_get_open_files(self):
         thisfile = os.path.join(os.getcwd(), __file__)
-        cmdline = "f = open(r'%s', 'r'); input();" %thisfile
+        cmdline = "f = open(r'%s', 'r'); input();" % thisfile
         sproc = subprocess.Popen([PYTHON, "-c", cmdline])
         wait_for_pid(sproc.pid)
         time.sleep(0.1)

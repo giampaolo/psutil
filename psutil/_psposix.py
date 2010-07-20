@@ -57,7 +57,7 @@ class LsofParser:
         # -F0nPt == (0) separate lines with "\x00" 
         #           (n) file name
         #           (t) file type
-        cmd = "lsof -a -p %s -n -P -F0tn" %self.pid
+        cmd = "lsof -a -p %s -n -P -F0tn" % self.pid
         stdout = self.runcmd(cmd)
         if not stdout:
             return []

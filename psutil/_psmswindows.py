@@ -17,7 +17,7 @@ from psutil import _psutil_mswindows
 from psutil.error import *
 
 try:
-    import wmi
+    from psutil import wmi
 except ImportError:
     wmi = None
 
@@ -92,8 +92,8 @@ class Impl(object):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.
         """
-        infoTuple = _psutil_mswindows.get_process_info(pid)
-        return infoTuple
+        info_tuple = _psutil_mswindows.get_process_info(pid)
+        return info_tuple
 
     @wrap_exceptions
     def get_memory_info(self, pid):
@@ -128,7 +128,7 @@ class Impl(object):
             if not w:
                 raise NoSuchProcess(pid, "process no longer exists")
             domain, _, username = w[0].GetOwner()
-            return "%s\\%s" %(domain, username)
+            return "%s\\%s" % (domain, username)
 
     def get_pid_list(self):
         """Returns a list of PIDs currently running on the system."""

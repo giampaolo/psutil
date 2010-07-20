@@ -4,10 +4,7 @@
 #
 
 import os
-import signal
 import errno
-import pwd
-import grp
 import socket
 import struct
 import sys
@@ -94,7 +91,9 @@ def total_virtmem():
             return int(line.split()[1]) * 1024
 
 def avail_virtmem():
-    """Return the amount of virtual memory currently in use on the system, in bytes."""
+    """Return the amount of virtual memory currently in use on the 
+    system, in bytes.
+    """
     f = open('/proc/meminfo', 'r')
     for line in f:
         if line.startswith('SwapFree:'):
@@ -102,7 +101,9 @@ def avail_virtmem():
             return int(line.split()[1]) * 1024
 
 def used_virtmem():
-    """Return the amount of used memory currently in use on the system, in bytes."""
+    """Return the amount of used memory currently in use on the system, 
+    in bytes.
+    """
     return total_virtmem() - avail_virtmem()
 
 def cached_mem():
@@ -261,14 +262,14 @@ class Impl(object):
     def get_process_cwd(self, pid):
         if pid == 0:
             return ''
-        return os.readlink("/proc/%s/cwd" %pid)
+        return os.readlink("/proc/%s/cwd" % pid)
 
     @wrap_exceptions
     def get_open_files(self, pid):
         retlist = []
-        files = os.listdir("/proc/%s/fd" %pid)
+        files = os.listdir("/proc/%s/fd" % pid)
         for link in files:
-            file = "/proc/%s/fd/%s" %(pid, link)
+            file = "/proc/%s/fd/%s" % (pid, link)
             if os.path.islink(file):
                 file = os.readlink(file)
                 if file.startswith("socket:["):

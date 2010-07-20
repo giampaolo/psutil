@@ -3,11 +3,7 @@
 # $Id$
 #
 
-import os
-import signal
 import errno
-import pwd
-import grp
 
 try:
     from collections import namedtuple
@@ -81,8 +77,8 @@ class Impl(object):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.
         """
-        infoTuple = _psutil_bsd.get_process_info(pid)
-        return infoTuple
+        info_tuple = _psutil_bsd.get_process_info(pid)
+        return info_tuple
 
     @wrap_exceptions
     def get_cpu_times(self, pid):
