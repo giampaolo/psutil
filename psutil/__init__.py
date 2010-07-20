@@ -322,15 +322,19 @@ class Process(object):
         return _platform_impl.get_open_files(self.pid)
 
     def get_connections(self):
-        """Return TCP and UPD connections opened by process as a list 
+        """Return TCP and UPD connections opened by process as a list
         of namedtuple/s.
-        For third party processes (!= os.getpid()) results can differ 
+        For third party processes (!= os.getpid()) results can differ
         depending on user privileges.
         """
+        # on Windows we can't rely on the underlying implementation to
+        # check for zombie processes
+        if sys.platform.lower().startswith("win32") and not self.is_running():
+            raise NoSuchProcess(self.pid, "process no longer exists")
         return _platform_impl.get_connections(self.pid)
 
     def is_running(self):
-        """Return whether the current process is running in the current 
+        """Return whether the current process is running in the current
         process list.
         """
         try:
@@ -341,7 +345,7 @@ class Process(object):
 
     def send_signal(self, sig):
         """Send a signal to process (see signal module constants).
-        On Windows only SIGTERM is valid and is treated as an alias 
+        On Windows only SIGTERM is valid and is treated as an alias
         for kill().
         """
         # safety measure in case the current process has been killed in

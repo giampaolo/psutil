@@ -7,6 +7,7 @@ import errno
 import os
 import subprocess
 import socket
+import re
 
 try:
     from collections import namedtuple
@@ -196,12 +197,6 @@ class Impl(object):
         if not stdout:
             return []
 
-        AF_INET6 = getattr(socket, "AF_INET6", 23)
-        proto_table = {"TCP": (socket.AF_INET, socket.SOCK_STREAM),
-                       "UDP": (socket.AF_INET, socket.SOCK_DGRAM),
-                       "TCPv6" : (AF_INET6, socket.SOCK_STREAM),
-                       "UDPv6" : (AF_INET6, socket.SOCK_DGRAM)}
-
         # used to match the names provided on UNIX
         status_table = {"LISTENING" : "LISTEN",
                         "SYN_RECEIVED" : "SYN_RECV",
@@ -211,7 +206,13 @@ class Impl(object):
         conn_tuple = namedtuple('connection', 'family type local_address ' \
                                               'remote_address status')
         def convert_address(addr, family):
-            ip, port = addr.split(":")
+            if family == socket.AF_INET:
+                ip, port = addr.split(':')
+            else:
+                if "]" in addr:
+                    ip, port = re.findall('\[([^]]+)\]:([0-9]+)', addr)[0]
+                else:
+                    ip, port = addr.split(':')
             if port == "*":
                 return ()
             port = int(port)
@@ -227,16 +228,21 @@ class Impl(object):
         cons = []
         for line in stdout.split('\r\n'):
             line = line.strip()
-            if line[:3] in ("TCP", "UDP"):      
+            if line[:3] in ("TCP", "UDP"):
                 if line.startswith("UDP"):
-                    proto, laddr, raddr, _pid = line.split()
+                    _, laddr, raddr, _pid = line.split()
                     status = ""
+                    _type = socket.SOCK_DGRAM
                 else:
-                    proto, laddr, raddr, status, _pid = line.split()
+                    _, laddr, raddr, status, _pid = line.split()
+                    _type = socket.SOCK_STREAM
                 _pid = int(_pid)
                 if _pid == pid:
                     status = status_table.get(status, status)
-                    family, _type = proto_table[proto]
+                    if laddr.count(":") > 1 or raddr.count(":") > 1:
+                        family = socket.AF_INET6
+                    else:
+                        family = socket.AF_INET
                     laddr = convert_address(laddr, family)
                     raddr = convert_address(raddr, family)
                     conn = conn_tuple(family, _type, laddr, raddr, status)
