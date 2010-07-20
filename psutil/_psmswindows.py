@@ -7,13 +7,13 @@ import errno
 import os
 import subprocess
 import socket
-import _psutil_mswindows
 
 try:
     from collections import namedtuple
 except ImportError:
-    from compat import namedtuple  # python < 2.6
+    from psutil.compat import namedtuple  # python < 2.6
 
+from psutil import _psutil_mswindows
 from psutil.error import *
 
 try:

@@ -10,10 +10,10 @@ import errno
 try:
     from collections import namedtuple
 except ImportError:
-    from compat import namedtuple  # python < 2.6
+    from psutil.compat import namedtuple  # python < 2.6
 
-import _psutil_osx
-import _psposix
+from psutil import _psutil_osx
+from psutil import _psposix
 from psutil.error import *
 
 # module level constants (gets pushed up to psutil module)

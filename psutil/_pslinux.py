@@ -16,9 +16,9 @@ import base64
 try:
     from collections import namedtuple
 except ImportError:
-    from compat import namedtuple  # python < 2.6
+    from psutil.compat import namedtuple  # python < 2.6
 
-import _psposix
+from psutil import _psposix
 from psutil.error import *
 
 

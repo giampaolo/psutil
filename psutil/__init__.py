@@ -42,21 +42,22 @@ try:
 except ImportError:
     pwd = grp = None
 
-from error import *
+from psutil.error import *
 
 # import the appropriate module for our platform only
 if sys.platform.lower().startswith("linux"):
-    from _pslinux import *
+    from psutil._pslinux import *
 
 elif sys.platform.lower().startswith("win32"):
-    from _psmswindows import *
+    from psutil._psmswindows import *
     __all__.append("wmi")
 
 elif sys.platform.lower().startswith("darwin"):
-    from _psosx import *
+    from psutil._psosx import *
 
 elif sys.platform.lower().startswith("freebsd"):
-    from _psbsd import *
+    from psutil._psbsd import *
+
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
@@ -149,8 +150,8 @@ class Process(object):
     def __str__(self):
         return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; " \
                "CMDLINE:%s; UID:%s; GID:%s;>" \
-               %(self.pid, self.ppid, self.name, self.path, self.cmdline, \
-                 self.uid, self.gid)
+                % (self.pid, self.ppid, self.name, self.path, self.cmdline,
+                   self.uid, self.gid)
 
     def __eq__(self, other):
         """Test for equality with another Process object based on PID
@@ -177,7 +178,8 @@ class Process(object):
         if self.is_proxy:
             # get_process_info returns a tuple we use as the arguments
             # to the _ProcessInfo constructor
-            self._procinfo = _ProcessInfo(*_platform_impl.get_process_info(self._procinfo.pid))
+            self._procinfo = _ProcessInfo(*_platform_impl.get_process_info(
+                                          self._procinfo.pid))
             self.is_proxy = False
 
     @property
@@ -506,12 +508,12 @@ def test():
         # where cmdline is not available UNIX shows process name between
         # [] parentheses
         if not cmd:
-            cmd = "[%s]" %proc.name
+            cmd = "[%s]" % proc.name
         return "%-9s %-5s %-4s %4s %7s %7s %5s %8s %s" \
-               %(user, pid, cpu, mem, vsz, rss, start, cputime, cmd)
+                % (user, pid, cpu, mem, vsz, rss, start, cputime, cmd)
 
     print "%-9s %-5s %-4s %4s %7s %7s %5s %7s  %s" \
-       %("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "START", "TIME", "COMMAND")
+      % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "START", "TIME", "COMMAND")
     pids = get_pid_list()
     pids.sort()
     for pid in pids:
