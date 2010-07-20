@@ -8,6 +8,7 @@ import os
 import subprocess
 import socket
 import re
+import sys
 
 try:
     from collections import namedtuple
@@ -177,6 +178,8 @@ class Impl(object):
         # (e.g. "C:\") by using Windows's QueryDosDevice()
         raw_file_names = _psutil_mswindows.get_process_open_files(pid)
         for file in raw_file_names:
+            if sys.version_info >= (3,):
+                file = file.decode('utf8')
             if file.startswith('\\Device\\'):
                 rawdrive = '\\'.join(file.split('\\')[:3])
                 driveletter = _psutil_mswindows._QueryDosDevice(rawdrive)
@@ -196,6 +199,8 @@ class Impl(object):
             raise RuntimeError(stderr)  # this must be considered an application bug
         if not stdout:
             return []
+        if sys.version_info >= (3,):
+            stdout = stdout.decode(sys.stdout.encoding)
 
         # used to match the names provided on UNIX
         status_table = {"LISTENING" : "LISTEN",
