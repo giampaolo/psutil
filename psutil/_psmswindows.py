@@ -206,7 +206,10 @@ class Impl(object):
         status_table = {"LISTENING" : "LISTEN",
                         "SYN_RECEIVED" : "SYN_RECV",
                         "SYN_SEND" : "SYN_SENT",
-                        "CLOSED" : "CLOSE"}
+                        "CLOSED" : "CLOSE",
+                        "FIN_WAIT_1" : "FIN_WAIT1",
+                        "FIN_WAIT_2" : "FIN_WAIT2"
+                        }
 
         conn_tuple = namedtuple('connection', 'family type local_address ' \
                                               'remote_address status')
