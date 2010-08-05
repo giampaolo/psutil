@@ -360,6 +360,17 @@ class TestCase(unittest.TestCase):
 
     def test_get_open_files(self):
         thisfile = os.path.join(os.getcwd(), __file__)
+        # current process
+        p = psutil.Process(os.getpid())
+        files = p.get_open_files()
+        self.assertFalse(thisfile in files)
+        f = open(thisfile, 'r')
+        files = p.get_open_files()
+        self.assertTrue(thisfile in files)
+        f.close()
+        for file in files:
+            self.assertTrue(os.path.isfile(file))
+        # subprocess
         cmdline = "f = open(r'%s', 'r'); input();" % thisfile
         sproc = subprocess.Popen([PYTHON, "-c", cmdline])
         wait_for_pid(sproc.pid)
@@ -369,6 +380,15 @@ class TestCase(unittest.TestCase):
         self.assertTrue(thisfile in files)
         for file in files:
             self.assertTrue(os.path.isfile(file))
+        # all processes
+        for proc in psutil.process_iter():
+            try:
+                files = proc.get_open_files()
+            except psutil.Error:
+                pass
+            else:
+                for file in files:
+                    self.assertTrue(os.path.isfile(file))
 
     def test_get_connections(self):
         arg = "import socket;" \
