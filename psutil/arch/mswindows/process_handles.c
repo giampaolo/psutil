@@ -154,6 +154,15 @@ PyObject* get_open_files(long pid, HANDLE processHandle)
         if (handle.ProcessId != pid)
             continue;
 
+        /* Skip handles with the following access codes as the next call
+           to NtDuplicateObject() or NtQueryObject() might hang forever. */
+        if((handle.GrantedAccess == 0x0012019f)
+        || (handle.GrantedAccess == 0x001a019f)
+        || (handle.GrantedAccess == 0x00120189)
+        || (handle.GrantedAccess == 0x00100000)) {
+            continue;
+        }
+
         /* Duplicate the handle so we can query it. */
         if (!NT_SUCCESS(NtDuplicateObject(
             processHandle,
@@ -180,24 +189,6 @@ PyObject* get_open_files(long pid, HANDLE processHandle)
             )))
         {
             //printf("[%#x] Error!\n", handle.Handle);
-            CloseHandle(dupHandle);
-            continue;
-        }
-
-        /* Query the object name (unless it has an access of
-           0x0012019f, on which NtQueryObject could hang. */
-        if (handle.GrantedAccess == 0x0012019f)
-        {
-            /* We have the type, so display that. */
-            /*
-            printf(
-                "[%#x] %.*S: (did not get name)\n",
-                handle.Handle,
-                objectTypeInfo->Name.Length / 2,
-                objectTypeInfo->Name.Buffer
-                );
-            */
-            free(objectTypeInfo);
             CloseHandle(dupHandle);
             continue;
         }

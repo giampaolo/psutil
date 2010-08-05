@@ -640,12 +640,10 @@ class TestCase(unittest.TestCase):
                  'get_open_files']
         for p in psutil.process_iter():
             for attr in attrs:
-                # XXX - temporary: skip slow Python implementation
-                if WINDOWS and attr in ('username', 'get_open_files'):
-                    continue
+                # skip slow Python implementation; we're reasonably sure
+                # it works anyway
                 if POSIX and attr == 'get_open_files':
                     continue
-
                 try:
                     attr = getattr(p, attr, None)
                     if attr is not None and callable(attr):
