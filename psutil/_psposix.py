@@ -37,9 +37,9 @@ class LsofParser:
     """A wrapper for lsof command line utility.
     Executes lsof in subprocess and parses its output.
     """
-    socket_table = {'TCP' : socket.SOCK_STREAM, 
+    socket_table = {'TCP' : socket.SOCK_STREAM,
                     'UDP' : socket.SOCK_DGRAM,
-                    'IPv4' : socket.AF_INET, 
+                    'IPv4' : socket.AF_INET,
                     'IPv6' : socket.AF_INET6}
 
     def __init__(self, pid):
@@ -54,7 +54,7 @@ class LsofParser:
         # -n == do not resolve IP addresses
         # -P == do not resolve port numbers
         # -w == suppresses warnings
-        # -F0nPt == (0) separate lines with "\x00" 
+        # -F0nPt == (0) separate lines with "\x00"
         #           (n) file name
         #           (t) file type
         cmd = "lsof -a -p %s -n -P -F0tn" % self.pid
@@ -62,11 +62,14 @@ class LsofParser:
         if not stdout:
             return []
         files = []
-        lines = stdout.split()
+        lines = stdout.split("\n")
         del lines[0]  # first line contains the PID
         for line in lines:
-            if line.startswith("tVREG\x00n"):
-                file = line[7:].strip("\x00")
+            if line.startswith("tVREG\x00n") or line.startswith("tREG\x00n"):
+                #file = line[7:].strip("\x00")
+                line = line.replace("tVREG\x00n", "")
+                line = line.replace("tREG\x00n", "")
+                file = line.strip("\x00")
                 files.append(file)
         return files
 
@@ -79,7 +82,7 @@ class LsofParser:
         # -n == do not resolve IP addresses
         # -P == do not resolve port numbers
         # -w == suppresses warnings
-        # -F0nPt == (0) separate lines with "\x00" 
+        # -F0nPt == (0) separate lines with "\x00"
         #           (n) and show internet addresses only
         #           (P) protocol type (TCP, UPD, Unix)
         #           (t) socket family (IPv4, IPv6)
@@ -94,7 +97,7 @@ class LsofParser:
         conn_tuple = namedtuple('connection', 'family type local_address ' \
                                               'remote_address status')
         for line in lines:
-            line = line.strip("\x00")  
+            line = line.strip("\x00")
             fields = {}
             for field in line.split("\x00"):
                 if field.startswith('T'):
@@ -103,9 +106,9 @@ class LsofParser:
                     key, value = field[0], field[1:]
                 fields[key] = value
 
-            # XXX - might trow execption; needs "continue on unsupported 
+            # XXX - might trow execption; needs "continue on unsupported
             # family or type" (e.g. unix sockets)
-            _type = self.socket_table[fields['P']]  
+            _type = self.socket_table[fields['P']]
             family = self.socket_table[fields['t']]
             peers = fields['n']
             status = fields.get('TST', "")  # might not appear for UDP
@@ -123,16 +126,16 @@ class LsofParser:
         return connections
 
     def runcmd(self, cmd):
-        """Expects an lsof-related command line, execute it in a 
+        """Expects an lsof-related command line, execute it in a
         subprocess and return its output.
-        If something goes bad stderr is parsed and proper exceptions 
+        If something goes bad stderr is parsed and proper exceptions
         raised as necessary.
         """
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
                                               stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         if sys.version_info >= (3,):
-            stdout, stderr = map(lambda x: x.decode(sys.stdout.encoding), 
+            stdout, stderr = map(lambda x: x.decode(sys.stdout.encoding),
                                  (stdout, stderr))
         if stderr:
             utility = cmd.split(' ')[0]
@@ -154,7 +157,7 @@ class LsofParser:
                 raise NoSuchProcess(self.pid, "process no longer exists")
             return ""
         return stdout
-    
+
     def _which(self, program):
         """Same as UNIX which command.  Return None on command not found."""
         def is_exe(fpath):
