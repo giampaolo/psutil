@@ -16,7 +16,7 @@ class NoSuchProcess(Error):
     or no longer exists (zombie).
     """
 
-    def __init__(self, pid=None, msg=None):
+    def __init__(self, pid, msg=None):
         self.pid = pid
         self.msg = msg
 

@@ -312,10 +312,10 @@ class Impl(object):
                 if inode in descriptors:
                     laddr = self._decode_address(laddr, family)
                     raddr = self._decode_address(raddr, family)
-                    # XXX - note: we're using TCP table also for UDP; 
-                    # there should be one specific for UDP somewhere.
-                    # Unfortunately I couldn't find it.
-                    status = _TCP_STATES_TABLE[status]
+                    if _type == socket.SOCK_STREAM:
+                        status = _TCP_STATES_TABLE[status]
+                    else:
+                        status = ""
                     conn = conntuple(family, _type, laddr, raddr, status)
                     retlist.append(conn)
             return retlist

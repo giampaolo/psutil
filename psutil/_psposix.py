@@ -111,7 +111,10 @@ class LsofParser:
             _type = self.socket_table[fields['P']]
             family = self.socket_table[fields['t']]
             peers = fields['n']
-            status = fields.get('TST', "")  # might not appear for UDP
+            if _type == socket.SOCK_STREAM:
+                status = ""
+            else:
+                status = fields['TST']
             if not '->' in peers:
                 local_addr = self._normaddress(peers, family)
                 remote_addr = ()
