@@ -83,16 +83,18 @@ class WindowsSpecificTestCase(unittest.TestCase):
             self.assertEqual(p.username, username)
 
         def test_process_rss_memory(self):
+            time.sleep(0.1)
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
             p = psutil.Process(self.pid)
-            rss = p.get_memory_info()[0]
+            rss = p.get_memory_info().rss
             self.assertEqual(rss, int(w.WorkingSetSize))
 
-        def test_process_vsz_memory(self):
+        def test_process_vms_memory(self):
+            time.sleep(0.1)
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
             p = psutil.Process(self.pid)
-            vsz = p.get_memory_info()[1]
-            self.assertEqual(vsz, int(w.PageFileUsage) * 1024)
+            vms = p.get_memory_info().vms
+            self.assertEqual(vms, int(w.PageFileUsage))
 
         def test_process_create_time(self):
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
