@@ -66,7 +66,6 @@ class LsofParser:
         del lines[0]  # first line contains the PID
         for line in lines:
             if line.startswith("tVREG\x00n") or line.startswith("tREG\x00n"):
-                #file = line[7:].strip("\x00")
                 line = line.replace("tVREG\x00n", "")
                 line = line.replace("tREG\x00n", "")
                 file = line.strip("\x00")

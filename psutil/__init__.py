@@ -118,6 +118,8 @@ class _ProcessInfo(object):
         # if we have the cmdline but not the path, figure it out from argv[0]
         if cmdline and not path:
             self.path = os.path.dirname(cmdline[0])
+        if cmdline:
+            self.name = os.path.basename(cmdline[0])
         self.uid = uid
         self.gid = gid
         self.create = None
