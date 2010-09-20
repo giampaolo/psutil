@@ -9,7 +9,7 @@ import sys
 import unittest
 
 import psutil
-from test_psutil import cleanup, WINDOWS
+from test_psutil import reap_children, WINDOWS
 
 LOOPS = 1000
 MARGIN = 4096
@@ -22,7 +22,7 @@ class TestProcessObjectLeaks(unittest.TestCase):
         gc.collect()
 
     def tearDown(self):
-        cleanup()
+        reap_children()
 
     def execute(self, method, *args, **kwarks):
         # step 1
