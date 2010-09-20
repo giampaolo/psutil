@@ -46,7 +46,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
             rss, vms = p.get_memory_info()
         except psutil.AccessDenied:
             # expected on Windows Vista and Windows 7
-            if not platform.uname()[1] in ('vista', 'win-7'):
+            if not platform.uname()[1] in ('vista', 'win-7', 'win7'):
                 raise
         else:
             self.assertTrue(rss > 0)
