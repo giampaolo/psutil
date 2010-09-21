@@ -292,6 +292,12 @@ class TestCase(unittest.TestCase):
         sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         wait_for_pid(sproc.pid)
         self.assertEqual(psutil.Process(sproc.pid).path, os.path.dirname(PYTHON))
+        for p in psutil.process_iter():
+            if not p.path:
+                continue
+            if not os.path.isdir(p.path):
+                self.fail("%s is not a directory (pid=%s, name=%s, cmdline=%s)" \
+                          % (repr(p.path), p.pid, p.name, p.cmdline))
 
     def test_cmdline(self):
         sproc = subprocess.Popen([PYTHON, "-E"], stdout=DEVNULL, stderr=DEVNULL)
