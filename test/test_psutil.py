@@ -298,6 +298,15 @@ class TestCase(unittest.TestCase):
             if not os.path.isdir(p.path):
                 self.fail("%s is not a directory (pid=%s, name=%s, cmdline=%s)" \
                           % (repr(p.path), p.pid, p.name, p.cmdline))
+            # path + name is supposed to be the absolute executable path
+            abs_exe_path = os.path.join(p.path, p.name)
+            if not os.path.exists(abs_exe_path):
+                self.fail("%s does not exist (pid=%s, name=%s, cmdline=%s)" \
+                          % (repr(abs_exe_path), p.pid, p.name, p.cmdline))
+            if hasattr(os, 'access'):
+                if not os.access(abs_exe_path, os.X_OK):
+                    self.fail("%s is not executable (pid=%s, name=%s, cmdline=%s)" \
+                              % (repr(abs_exe_path), p.pid, p.name, p.cmdline))
 
     def test_cmdline(self):
         sproc = subprocess.Popen([PYTHON, "-E"], stdout=DEVNULL, stderr=DEVNULL)
