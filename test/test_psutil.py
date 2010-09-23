@@ -19,6 +19,7 @@ import signal
 import types
 import traceback
 import socket
+import warnings
 
 import psutil
 
@@ -288,25 +289,28 @@ class TestCase(unittest.TestCase):
             self.assertTrue(psutil.pid_exists(os.getpid()))
         self.assertFalse(psutil.pid_exists(-1))
 
-    def test_path(self):
+    def test_exe(self):
         sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
         wait_for_pid(sproc.pid)
-        self.assertEqual(psutil.Process(sproc.pid).path, os.path.dirname(PYTHON))
+        self.assertEqual(psutil.Process(sproc.pid).exe, PYTHON)
         for p in psutil.process_iter():
-            if not p.path:
+            if not p.exe:
                 continue
-            if not os.path.isdir(p.path):
-                self.fail("%s is not a directory (pid=%s, name=%s, cmdline=%s)" \
-                          % (repr(p.path), p.pid, p.name, p.cmdline))
-            # path + name is supposed to be the absolute executable path
-            abs_exe_path = os.path.join(p.path, p.name)
-            if not os.path.exists(abs_exe_path):
+            if not os.path.exists(p.exe):
                 self.fail("%s does not exist (pid=%s, name=%s, cmdline=%s)" \
-                          % (repr(abs_exe_path), p.pid, p.name, p.cmdline))
-            if hasattr(os, 'access'):
-                if not os.access(abs_exe_path, os.X_OK):
+                          % (repr(p.exe), p.pid, p.name, p.cmdline))
+            if hasattr(os, 'access') and hasattr(os, "X_OK"):
+                if not os.access(p.exe, os.X_OK):
                     self.fail("%s is not executable (pid=%s, name=%s, cmdline=%s)" \
-                              % (repr(abs_exe_path), p.pid, p.name, p.cmdline))
+                              % (repr(p.exe), p.pid, p.name, p.cmdline))
+
+    def test_path(self):
+        proc = psutil.Process(os.getpid())
+        warnings.filterwarnings("error")
+        try:
+            self.assertRaises(DeprecationWarning, getattr, proc, 'path')
+        finally:
+            warnings.resetwarnings()
 
     def test_cmdline(self):
         sproc = subprocess.Popen([PYTHON, "-E"], stdout=DEVNULL, stderr=DEVNULL)
@@ -593,7 +597,7 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.ppid, int))
         self.assert_(isinstance(p.parent, psutil.Process))
         self.assert_(isinstance(p.name, str))
-        self.assert_(isinstance(p.path, str))
+        self.assert_(isinstance(p.exe, str))
         self.assert_(isinstance(p.cmdline, list))
         self.assert_(isinstance(p.uid, int))
         self.assert_(isinstance(p.gid, int))
@@ -651,7 +655,7 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "ppid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "parent")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "name")
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "path")
+        self.assertRaises(psutil.NoSuchProcess, getattr, p, "exe")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "cmdline")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "uid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "gid")
@@ -735,7 +739,6 @@ class TestCase(unittest.TestCase):
         # PID 0 is supposed to be available on all platforms
         self.assertTrue(0 in psutil.get_pid_list())
         self.assertTrue(psutil.pid_exists(0))
-
 
     # --- OS specific tests
 

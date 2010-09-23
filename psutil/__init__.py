@@ -37,6 +37,7 @@ import sys
 import os
 import time
 import signal
+import warnings
 try:
     import pwd, grp
 except ImportError:
@@ -108,18 +109,19 @@ class _ProcessInfo(object):
     external code and psutil.  Used directly by the Process class.
     """
 
-    def __init__(self, pid, ppid=None, name=None, path=None, cmdline=None,
+    def __init__(self, pid, ppid=None, name=None, exe=None, cmdline=None,
                        uid=None, gid=None):
         self.pid = pid
         self.ppid = ppid
         self.name = name
-        self.path = path
+        self.exe = exe
         self.cmdline = cmdline
-        # if we have the cmdline but not the path, figure it out from argv[0]
-        if cmdline and not path:
-            self.path = os.path.dirname(cmdline[0])
-        if cmdline:
-            self.name = os.path.basename(cmdline[0])
+        # if we have the cmdline but not the exe, figure it out from argv[0]
+        if cmdline and not exe:
+            _exe = os.path.realpath(cmdline[0])
+            if hasattr(os, 'access') and hasattr(os, 'X_OK'):
+                if os.path.isfile(_exe) and os.access(_exe, os.X_OK):
+                    self.exe = _exe
         self.uid = uid
         self.gid = gid
         self.create = None
@@ -150,9 +152,9 @@ class Process(object):
             self._last_user_time, self._last_kern_time = None, None
 
     def __str__(self):
-        return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; PATH:'%s'; " \
+        return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; EXE:'%s'; " \
                "CMDLINE:%s; UID:%s; GID:%s;>" \
-                % (self.pid, self.ppid, self.name, self.path, self.cmdline,
+                % (self.pid, self.ppid, self.name, self.exe, self.cmdline,
                    self.uid, self.gid)
 
     def __eq__(self, other):
@@ -210,10 +212,16 @@ class Process(object):
         return self._procinfo.name
 
     @property
-    def path(self):
-        """The process path."""
+    def exe(self):
+        """The process executable as an absolute path name."""
         self.deproxy()
-        return self._procinfo.path
+        return self._procinfo.exe
+
+    @property
+    def path(self):
+        warnings.warn("'path' property is deprecated; use 'exe' instead", 
+                      DeprecationWarning)
+        return self.exe
 
     @property
     def cmdline(self):

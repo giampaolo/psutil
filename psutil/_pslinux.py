@@ -166,20 +166,16 @@ class Impl(object):
 
         # determine executable
         try:
-            _exe = os.readlink("/proc/%s/exe" %pid)
+            exe = os.readlink("/proc/%s/exe" %pid)
         except OSError:
-            f = open("/proc/%s/stat" %pid)
-            try:
-                _exe = f.read().split(' ')[1].replace('(', '').replace(')', '')
-            finally:
-                f.close()
+            exe = ""
 
-        # determine name and path
-        if os.path.isabs(_exe):
-            path, name = os.path.split(_exe)
-        else:
-            path = ''
-            name = _exe
+        # determine name
+        f = open("/proc/%s/stat" %pid)
+        try:
+            name = f.read().split(' ')[1].replace('(', '').replace(')', '')
+        finally:
+            f.close()
 
         # determine cmdline
         f = open("/proc/%s/cmdline" %pid)
@@ -189,7 +185,7 @@ class Impl(object):
         finally:
             f.close()
 
-        return (pid, self._get_ppid(pid), name, path, cmdline,
+        return (pid, self._get_ppid(pid), name, exe, cmdline,
                                   self._get_process_uid(pid),
                                   self._get_process_gid(pid))
 

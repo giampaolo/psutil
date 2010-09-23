@@ -87,10 +87,9 @@ class PosixSpecificTestCase(unittest.TestCase):
         name_psutil = psutil.Process(self.pid).name
         self.assertEqual(name_ps, name_psutil)
 
-    def test_process_pathname(self):
+    def test_process_exe(self):
         ps_pathname = ps("ps --no-headers -o command -p %s" %self.pid).split(' ')[0]
-        psutil_pathname = os.path.join(psutil.Process(self.pid).path,
-                                       psutil.Process(self.pid).name)
+        psutil_pathname = psutil.Process(self.pid).exe
         self.assertEqual(ps_pathname, psutil_pathname)
 
     def test_process_cmdline(self):
