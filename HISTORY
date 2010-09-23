@@ -13,6 +13,7 @@ NEW FEATURES
  * Issue 98: Process.get_cpu_times() and Process.get_memory_info now return
    a namedtuple instead of a tuple.
  * Issue 103: per-process opened TCP and UDP connections.
+ * Issue 111: per-process executable name.
 
 BUGFIXES
 
@@ -20,9 +21,12 @@ BUGFIXES
  * Issue 86: psutil didn't compile against FreeBSD 6.x.
  * Issue 102: orphaned process handles obtained by using OpenProcess in C were 
    left behind every time Process class was instantiated.
+ * Issue 111: path and name Process properties report erroneous values.
 
 API CHANGES
 
+ * psutil.Process.path property is deprecated and works as an alias for "exe"
+   property.
  * psutil.Process.kill(): signal argument was removed - to send a signal to the 
    process use send_signal(signal) method instead.
  * psutil.Process.get_memory_info() returns a nametuple instead of a tuple.
