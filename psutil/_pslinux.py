@@ -106,19 +106,24 @@ def used_virtmem():
     """
     return total_virtmem() - avail_virtmem()
 
-def cached_mem():
-    """Return the amount of cached memory on the system, in bytes."""
+def cached_phymem():
+    """Return the amount of cached memory on the system, in bytes.
+    This reflects the "cached" column of free command line utility.
+    """
     f = open('/proc/meminfo', 'r')
     for line in f:
         if line.startswith('Cached:'):
             f.close()
             return int(line.split()[1]) * 1024
 
-def cached_swap():
-    """Return the amount of cached swap on the system, in bytes."""
+def phymem_buffers():
+    """Return the amount of physical memory buffers used by the 
+    kernel in bytes.
+    This reflects the "buffers" column of free command line utility.
+    """
     f = open('/proc/meminfo', 'r')
     for line in f:
-        if line.startswith('SwapCached:'):
+        if line.startswith('Buffers:'):
             f.close()
             return int(line.split()[1]) * 1024
 

@@ -6,6 +6,8 @@ Bug tracker at http://code.google.com/p/psutil/issues
 NEW FEATURES
 
  * Issue 79: per-process open files.
+ * Issue 88: total system physical cached memory.
+ * Issue 88: total system physical memory buffers used by the kernel.
  * Issue 91: per-process send_signal() and terminate() methods.
  * Issue 95: NoSuchProcess and AccessDenied exception classes now provide a
    "pid" and a "msg" attribute.

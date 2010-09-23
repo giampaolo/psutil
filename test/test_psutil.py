@@ -168,13 +168,17 @@ class TestCase(unittest.TestCase):
         self.assertTrue(isinstance(x, int) or isinstance(x, long))
         self.assertTrue(x >= 0)
 
-    def test_cached_mem(self):
-        try:
-            x = psutil.cached_mem()
+    if hasattr(psutil, "cached_phymem"):
+        def test_cached_phymem(self):
+            x = psutil.cached_phymem()
             self.assertTrue(isinstance(x, int) or isinstance(x, long))
             self.assertTrue(x >= 0)
-        except NotImplementedError:
-            pass
+
+    if hasattr(psutil, "phymem_buffers"):
+        def test_phymem_buffers(self):
+            x = psutil.phymem_buffers()
+            self.assertTrue(isinstance(x, int) or isinstance(x, long))
+            self.assertTrue(x >= 0)
 
     def test_system_cpu_times(self):
         total = 0
