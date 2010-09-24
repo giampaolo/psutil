@@ -12,6 +12,7 @@ import psutil
 import socket
 import re
 import sys
+import warnings
 
 try:
     from collections import namedtuple
@@ -145,14 +146,20 @@ class LsofParser:
                 msg = "this functionnality requires %s command line utility " \
                       "to be installed on the system" % utility
                 raise NotImplementedError(msg)
-            if "permission denied" in stderr.lower():
+            elif "permission denied" in stderr.lower():
                 # "permission denied" can be found also in case of zombie
                 # processes;
                 p = psutil.Process(self.pid)
                 if not p.is_running():
                     raise NoSuchProcess(self.pid, "process no longer exists")
                 raise AccessDenied(self.pid)
-            raise RuntimeError(stderr)  # this must be considered an application bug
+            elif "lsof: warning:" in stderr.lower():
+                # usually appears when lsof is run for the first time and
+                # complains about missing cache file in user home
+                warnings.warn(stderr, RuntimeWarning)
+            else:
+                # this must be considered an application bug
+                raise RuntimeError(stderr)  
         if not stdout:
             p = psutil.Process(self.pid)
             if not p.is_running():
@@ -161,7 +168,7 @@ class LsofParser:
         return stdout
 
     def _which(self, program):
-        """Same as UNIX which command.  Return None on command not found."""
+        """Same as UNIX which command. Return None on command not found."""
         def is_exe(fpath):
             return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
