@@ -56,6 +56,12 @@ class WindowsSpecificTestCase(unittest.TestCase):
         p = psutil.Process(self.pid)
         self.assertRaises(ValueError, p.send_signal, signal.SIGINT)
 
+    def test_process_names(self):
+        for p in psutil.process_iter():
+            if p.pid in (0, 4):
+                continue
+            self.assertTrue(p.name.endswith(".exe"))
+
     if wmi is not None:
 
         # --- Process class tests
@@ -68,7 +74,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
         def test_process_path(self):
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
             p = psutil.Process(self.pid)
-            self.assertEqual(os.path.join(p.path, p.name), w.ExecutablePath)
+            self.assertEqual(p.exe, w.ExecutablePath)
 
         def test_process_cmdline(self):
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
