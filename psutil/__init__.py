@@ -219,9 +219,9 @@ class Process(object):
 
     @property
     def path(self):
-        warnings.warn("'path' property is deprecated; use 'exe' instead", 
-                      DeprecationWarning)
-        return self.exe
+        msg = "'path' property is deprecated; use 'os.path.dirname(exe)' instead"
+        warnings.warn(msg, DeprecationWarning)
+        return os.path.dirname(self.exe)
 
     @property
     def cmdline(self):

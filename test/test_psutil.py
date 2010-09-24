@@ -315,6 +315,15 @@ class TestCase(unittest.TestCase):
             self.assertRaises(DeprecationWarning, getattr, proc, 'path')
         finally:
             warnings.resetwarnings()
+        warnings.filterwarnings("ignore")
+        try:
+            for proc in psutil.process_iter():
+                if proc.exe:
+                    self.assertEqual(proc.path, os.path.dirname(proc.exe))
+                else:
+                    self.assertEqual(proc.path, "")
+        finally:
+            warnings.resetwarnings()
 
     def test_cmdline(self):
         sproc = subprocess.Popen([PYTHON, "-E"], stdout=DEVNULL, stderr=DEVNULL)
