@@ -111,9 +111,9 @@ class LsofParser:
             family = self.socket_table[fields['t']]
             peers = fields['n']
             if _type == socket.SOCK_STREAM:
-                status = ""
-            else:
                 status = fields['TST']
+            else:                
+                status = ""
             if not '->' in peers:
                 local_addr = self._normaddress(peers, family)
                 remote_addr = ()
