@@ -178,8 +178,8 @@ static PyObject* get_system_uptime(PyObject* self, PyObject* args)
 
     // XXX - By using GetTickCount() time will wrap around to zero if the
     // system is run continuously for 49.7 days.
-    uptime = GetTickCount() / 1000.00;
-    return Py_BuildValue("f", (float)pt - uptime);
+    uptime = GetTickCount() / 1000.00f;
+    return Py_BuildValue("d", (double)pt - uptime);
 }
 
 

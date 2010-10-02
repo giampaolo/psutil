@@ -5,7 +5,6 @@
 #include <Python.h>
 #include <windows.h>
 #include <stdio.h>
-#include <Ntdef.h>
 #include "process_handles.h"
 
 #ifndef NT_SUCCESS
@@ -17,6 +16,15 @@
 #define ObjectBasicInformation 0
 #define ObjectNameInformation 1
 #define ObjectTypeInformation 2
+
+
+typedef LONG NTSTATUS;
+
+typedef struct _UNICODE_STRING {
+  USHORT  Length;
+  USHORT  MaximumLength;
+  PWSTR  Buffer;
+} UNICODE_STRING, *PUNICODE_STRING;
 
 typedef NTSTATUS (NTAPI *_NtQuerySystemInformation)(
     ULONG SystemInformationClass,
