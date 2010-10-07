@@ -130,6 +130,9 @@ class Impl(object):
             if not w:
                 raise NoSuchProcess(pid, "process no longer exists")
             domain, _, username = w[0].GetOwner()
+            # this matches procexp behavior, at least on Win 7
+            if domain is None or username is None:
+                raise AccessDenied(pid=pid)
             return "%s\\%s" % (domain, username)
 
     def get_pid_list(self):
