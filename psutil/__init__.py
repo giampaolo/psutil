@@ -118,8 +118,8 @@ class _ProcessInfo(object):
         self.cmdline = cmdline
         # if we have the cmdline but not the exe, figure it out from argv[0]
         if cmdline and not exe:
-            _exe = os.path.realpath(cmdline[0])
             if hasattr(os, 'access') and hasattr(os, 'X_OK'):
+                _exe = os.path.realpath(cmdline[0])
                 if os.path.isfile(_exe) and os.access(_exe, os.X_OK):
                     self.exe = _exe
         self.uid = uid
