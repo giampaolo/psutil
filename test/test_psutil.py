@@ -687,6 +687,7 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, p.get_cpu_percent)
         self.assertRaises(psutil.NoSuchProcess, p.get_memory_info)
         self.assertRaises(psutil.NoSuchProcess, p.get_memory_percent)
+        self.assertRaises(psutil.NoSuchProcess, p.get_children)
         self.assertFalse(p.is_running())
 
     def test_fetch_all(self):

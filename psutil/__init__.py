@@ -273,6 +273,8 @@ class Process(object):
         """Return the children of this process as a list of Process
         objects.
         """
+        if not self.is_running():
+            raise NoSuchProcess(self.pid, "process no longer exists")
         return [p for p in process_iter() if p.ppid == self.pid]
 
     def get_cpu_percent(self):
