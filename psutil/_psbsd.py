@@ -63,14 +63,17 @@ def wrap_exceptions(method):
             return method(self, pid, *args, **kwargs)
         except OSError, err:
             if err.errno == errno.ESRCH:
-                raise NoSuchProcess(pid, "process no longer exists")
+                raise NoSuchProcess(pid, self._process_name)
             if err.errno == errno.EPERM:
-                raise AccessDenied(pid)
+                raise AccessDenied(pid, self._process_name)
             raise
     return wrapper
 
 
 class Impl(object):
+
+    def __init__(self):
+        self._process_name = None
 
     @wrap_exceptions
     def get_process_info(self, pid):
@@ -78,6 +81,7 @@ class Impl(object):
         constructor.
         """
         info_tuple = _psutil_bsd.get_process_info(pid)
+        self._process_name = info_tuple[2]
         return info_tuple
 
     @wrap_exceptions
@@ -106,14 +110,13 @@ class Impl(object):
         """Check For the existence of a unix pid."""
         return _psposix.pid_exists(pid)
 
-
     def get_open_files(self, pid):
         """Return files opened by process by parsing lsof output."""
-        return _psposix.LsofParser(pid).get_process_open_files()
+        return _psposix.LsofParser(pid, self._process_name).get_process_open_files()
 
     def get_connections(self, pid):
         """Return etwork connections opened by a process as a list of
         namedtuples."""
-        return _psposix.LsofParser(pid).get_process_connections()
+        return _psposix.LsofParser(pid, self._process_name).get_process_connections()
 
 

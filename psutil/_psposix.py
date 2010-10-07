@@ -43,8 +43,9 @@ class LsofParser:
                     'IPv4' : socket.AF_INET,
                     'IPv6' : socket.AF_INET6}
 
-    def __init__(self, pid):
+    def __init__(self, pid, name):
         self.pid = pid
+        self.process_name = name
 
     def get_process_open_files(self):
         """Return files opened by process by parsing lsof output."""
@@ -151,8 +152,8 @@ class LsofParser:
                 # processes;
                 p = psutil.Process(self.pid)
                 if not p.is_running():
-                    raise NoSuchProcess(self.pid, "process no longer exists")
-                raise AccessDenied(self.pid)
+                    raise NoSuchProcess(self.pid, self.process_name)
+                raise AccessDenied(self.pid, self.process_name)
             elif "lsof: warning:" in stderr.lower():
                 # usually appears when lsof is run for the first time and
                 # complains about missing cache file in user home
@@ -163,7 +164,7 @@ class LsofParser:
         if not stdout:
             p = psutil.Process(self.pid)
             if not p.is_running():
-                raise NoSuchProcess(self.pid, "process no longer exists")
+                raise NoSuchProcess(self.pid, self.process_name)
             return ""
         return stdout
 

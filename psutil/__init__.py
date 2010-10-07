@@ -138,7 +138,7 @@ class Process(object):
         if not isinstance(pid, int):
             raise ValueError("An integer is required")
         if not pid_exists(pid):
-            raise NoSuchProcess(pid, "no process found with PID %s" % pid)
+            raise NoSuchProcess(pid, None, "no process found with PID %s" % pid)
         self._procinfo = _ProcessInfo(pid)
         self.is_proxy = True
         # try to init CPU times, if it raises AccessDenied then suppress
@@ -274,7 +274,7 @@ class Process(object):
         objects.
         """
         if not self.is_running():
-            raise NoSuchProcess(self.pid, "process no longer exists")
+            raise NoSuchProcess(self.pid, self._procinfo.name)
         return [p for p in process_iter() if p.ppid == self.pid]
 
     def get_cpu_percent(self):
@@ -342,7 +342,7 @@ class Process(object):
         # on Windows we can't rely on the underlying implementation to
         # check for zombie processes
         if sys.platform.lower().startswith("win32") and not self.is_running():
-            raise NoSuchProcess(self.pid, "process no longer exists")
+            raise NoSuchProcess(self.pid, self._procinfo.name)
         return _platform_impl.get_connections(self.pid)
 
     def is_running(self):
@@ -363,28 +363,28 @@ class Process(object):
         # safety measure in case the current process has been killed in
         # meantime and the kernel reused its PID
         if not self.is_running():
-            raise NoSuchProcess(self.pid, "process no longer exists")
+            raise NoSuchProcess(self.pid, self._procinfo.name)
         if os.name == 'posix':
             try:
                 os.kill(self.pid, sig)
             except OSError, err:
                 if err.errno == errno.ESRCH:
-                    raise NoSuchProcess(self.pid, "process no longer exists")
+                    raise NoSuchProcess(self.pid, self._procinfo.name)
                 if err.errno == errno.EPERM:
-                    raise AccessDenied(self.pid)
+                    raise AccessDenied(self.pid, self._procinfo.name)
                 raise
         else:
             if sig == signal.SIGTERM:
                 _platform_impl.kill_process(self.pid)
             else:
-                raise ValueError("Only SIGTERM is supported on Windows")
+                raise ValueError("only SIGTERM is supported on Windows")
 
     def suspend(self):
         """Suspend process execution."""
         # safety measure in case the current process has been killed in
         # meantime and the kernel reused its PID
         if not self.is_running():
-            raise NoSuchProcess(self.pid, "process no longer exists")
+            raise NoSuchProcess(self.pid, self._procinfo.name)
         # windows
         if hasattr(_platform_impl, "suspend_process"):
             _platform_impl.suspend_process(self.pid)
@@ -397,7 +397,7 @@ class Process(object):
         # safety measure in case the current process has been killed in
         # meantime and the kernel reused its PID
         if not self.is_running():
-            raise NoSuchProcess(self.pid, "process no longer exists")
+            raise NoSuchProcess(self.pid, self._procinfo.name)
         # windows
         if hasattr(_platform_impl, "resume_process"):
             _platform_impl.resume_process(self.pid)
@@ -416,7 +416,7 @@ class Process(object):
         # safety measure in case the current process has been killed in
         # meantime and the kernel reused its PID
         if not self.is_running():
-            raise NoSuchProcess(self.pid, "process no longer exists")
+            raise NoSuchProcess(self.pid, self._procinfo.name)
         if os.name == 'posix':
             self.send_signal(signal.SIGKILL)
         else:

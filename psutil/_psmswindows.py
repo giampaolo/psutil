@@ -80,14 +80,17 @@ def wrap_exceptions(callable):
             return callable(self, pid, *args, **kwargs)
         except OSError, err:
             if err.errno in (errno.EACCES, ERROR_ACCESS_DENIED):
-                raise AccessDenied(pid)
+                raise AccessDenied(pid, self._process_name)
             if err.errno == errno.ESRCH:
-                raise NoSuchProcess(pid, "process no longer exists")
+                raise NoSuchProcess(pid, self._process_name)
             raise
     return wrapper
 
 
 class Impl(object):
+
+    def __init__(self):
+        self._process_name = None
 
     @wrap_exceptions
     def get_process_info(self, pid):
@@ -95,6 +98,7 @@ class Impl(object):
         constructor.
         """
         info_tuple = _psutil_mswindows.get_process_info(pid)
+        self._process_name = info_tuple[2]
         return info_tuple
 
     @wrap_exceptions
@@ -115,7 +119,7 @@ class Impl(object):
         except OSError, err:
             # work around issue #24
             if (pid == 0) and err.errno in (errno.EINVAL, ERROR_INVALID_PARAMETER):
-                raise AccessDenied(pid)
+                raise AccessDenied(pid, self._process_name)
             raise
 
     def get_process_username(self, pid):
@@ -128,11 +132,11 @@ class Impl(object):
                 return 'NT AUTHORITY\\SYSTEM'
             w = wmi.WMI().Win32_Process(ProcessId=pid)
             if not w:
-                raise NoSuchProcess(pid, "process no longer exists")
+                raise NoSuchProcess(pid, self._process_name)
             domain, _, username = w[0].GetOwner()
             # this matches procexp behavior, at least on Win 7
             if domain is None or username is None:
-                raise AccessDenied(pid=pid)
+                raise AccessDenied(pid, self._process_name)
             return "%s\\%s" % (domain, username)
 
     def get_pid_list(self):
@@ -198,7 +202,7 @@ class Impl(object):
         if stderr:
             p = psutil.Process(pid)
             if not p.is_running():
-                raise NoSuchProcess(pid, "process no longer exists")
+                raise NoSuchProcess(pid, self._process_name)
             raise RuntimeError(stderr)  # this must be considered an application bug
         if not stdout:
             return []

@@ -153,14 +153,17 @@ def wrap_exceptions(callable):
             return callable(self, pid, *args, **kwargs)
         except (OSError, IOError), err:
             if err.errno == errno.ENOENT:  # no such file or directory
-                raise NoSuchProcess(pid, "process no longer exists")
+                raise NoSuchProcess(pid, self._process_name)
             if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(pid)
+                raise AccessDenied(pid, self._process_name)
             raise
     return wrapper
 
 
 class Impl(object):
+
+    def __init__(self):
+        self._process_name = None
 
     @wrap_exceptions
     def get_process_info(self, pid):
@@ -169,18 +172,19 @@ class Impl(object):
             # special case for 0 (kernel process) PID
             return (pid, 0, 'sched', '', [], 0, 0)
 
-        # determine executable
-        try:
-            exe = os.readlink("/proc/%s/exe" %pid)
-        except OSError:
-            exe = ""
-
         # determine name
         f = open("/proc/%s/stat" %pid)
         try:
             name = f.read().split(' ')[1].replace('(', '').replace(')', '')
         finally:
             f.close()
+        self._process_name = name
+
+        # determine executable
+        try:
+            exe = os.readlink("/proc/%s/exe" %pid)
+        except OSError:
+            exe = ""
 
         # determine cmdline
         f = open("/proc/%s/cmdline" %pid)
