@@ -9,13 +9,14 @@ NEW FEATURES
  * Issue 88: total system physical cached memory.
  * Issue 88: total system physical memory buffers used by the kernel.
  * Issue 91: per-process send_signal() and terminate() methods.
- * Issue 95: NoSuchProcess and AccessDenied exception classes now provide a
-   "pid" and a "msg" attribute.
+ * Issue 95: NoSuchProcess and AccessDenied exception classes now provide "pid", 
+   "name" and "msg" attributes.
  * Issue 97: per-process children.
  * Issue 98: Process.get_cpu_times() and Process.get_memory_info now return
    a namedtuple instead of a tuple.
  * Issue 103: per-process opened TCP and UDP connections.
  * Issue 111: per-process executable name.
+ * Issue 113: exception messages now include process name and pid.
 
 BUGFIXES
 
