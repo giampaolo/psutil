@@ -26,8 +26,6 @@ __all__ = [
     "used_virtmem",
     "cpu_times",
     "cpu_percent",
-    "cached_mem",
-    "cached_swap",
     ]
 
 __version__ = '0.2.0'
@@ -48,6 +46,7 @@ from psutil.error import *
 # import the appropriate module for our platform only
 if sys.platform.lower().startswith("linux"):
     from psutil._pslinux import *
+    __all__.extend(["cached_phymem", "phymem_buffers"])
 
 elif sys.platform.lower().startswith("win32"):
     from psutil._psmswindows import *
