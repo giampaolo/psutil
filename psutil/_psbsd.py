@@ -49,8 +49,14 @@ def get_system_cpu_times():
     return dict(user=values[0], nice=values[1], system=values[2],
         idle=values[3], irq=values[4])
 
+def get_pid_list():
+    """Returns a list of PIDs currently running on the system."""
+    return _psutil_bsd.get_pid_list()
 
-# --- decorator
+def pid_exists(pid):
+    """Check For the existence of a unix pid."""
+    return _psposix.pid_exists(pid)
+
 
 def wrap_exceptions(method):
     """Call method(self, pid) into a try/except clause so that if an
@@ -100,14 +106,6 @@ class Impl(object):
     @wrap_exceptions
     def get_process_create_time(self, pid):
         return _psutil_bsd.get_process_create_time(pid)
-
-    def get_pid_list(self):
-        """Returns a list of PIDs currently running on the system."""
-        return _psutil_bsd.get_pid_list()
-
-    def pid_exists(self, pid):
-        """Check For the existence of a unix pid."""
-        return _psposix.pid_exists(pid)
 
     def get_open_files(self, pid):
         """Return files opened by process by parsing lsof output."""

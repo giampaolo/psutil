@@ -14,13 +14,12 @@ import _psutil_osx
 import _psposix
 from psutil.error import *
 
-
 # --- constants
 
 NUM_CPUS = _psutil_osx.get_num_cpus()
 TOTAL_PHYMEM = _psutil_osx.get_total_phymem()
 
-# --- public functions
+# --- functions
 
 def avail_phymem():
     "Return the amount of physical memory available on the system, in bytes."
@@ -48,6 +47,13 @@ def get_system_cpu_times():
     values = _psutil_osx.get_system_cpu_times()
     return dict(user=values[0], nice=values[1], system=values[2], idle=values[3])
 
+def get_pid_list():
+    """Returns a list of PIDs currently running on the system."""
+    return _psutil_osx.get_pid_list()
+
+def pid_exists(pid):
+    """Check For the existence of a unix pid."""
+    return _psposix.pid_exists(pid)
 
 # --- decorator
 
@@ -100,14 +106,6 @@ class Impl(object):
         """Return the start time of the process as a number of seconds since
         the epoch."""
         return _psutil_osx.get_process_create_time(pid)
-
-    def get_pid_list(self):
-        """Returns a list of PIDs currently running on the system."""
-        return _psutil_osx.get_pid_list()
-
-    def pid_exists(self, pid):
-        """Check For the existence of a unix pid."""
-        return _psposix.pid_exists(pid)
 
     def get_open_files(self, pid):
         """Return files opened by process by parsing lsof output."""

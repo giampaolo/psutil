@@ -60,6 +60,13 @@ def get_system_cpu_times():
     times = _psutil_mswindows.get_system_cpu_times()
     return dict(user=times[0], system=times[1], idle=times[2])
 
+def get_pid_list():
+    """Returns a list of PIDs currently running on the system."""
+    return _psutil_mswindows.get_pid_list()
+
+def pid_exists(pid):
+    return _psutil_mswindows.pid_exists(pid)
+
 
 # --- decorator
 
@@ -131,13 +138,6 @@ class Impl(object):
             if domain is None or username is None:
                 raise AccessDenied(pid, self._process_name)
             return "%s\\%s" % (domain, username)
-
-    def get_pid_list(self):
-        """Returns a list of PIDs currently running on the system."""
-        return _psutil_mswindows.get_pid_list()
-
-    def pid_exists(self, pid):
-        return _psutil_mswindows.pid_exists(pid)
 
     @wrap_exceptions
     def get_process_create_time(self, pid):

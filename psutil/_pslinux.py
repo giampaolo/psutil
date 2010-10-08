@@ -143,6 +143,17 @@ def get_system_cpu_times():
     return dict(user=values[0], nice=values[1], system=values[2], idle=values[3],
                 iowait=values[4], irq=values[5], softirq=values[6])
 
+def get_pid_list():
+    """Returns a list of PIDs currently running on the system."""
+    pids = [int(x) for x in os.listdir('/proc') if x.isdigit()]
+    # special case for 0 (kernel process) PID
+    pids.insert(0, 0)
+    return pids
+
+def pid_exists(pid):
+    """Check For the existence of a unix pid."""
+    return _psposix.pid_exists(pid)
+
 
 # --- decorators
 
@@ -199,17 +210,6 @@ class Impl(object):
         return (pid, self._get_ppid(pid), name, exe, cmdline,
                                   self._get_process_uid(pid),
                                   self._get_process_gid(pid))
-
-    def get_pid_list(self):
-        """Returns a list of PIDs currently running on the system."""
-        pids = [int(x) for x in os.listdir('/proc') if x.isdigit()]
-        # special case for 0 (kernel process) PID
-        pids.insert(0, 0)
-        return pids
-
-    def pid_exists(self, pid):
-        """Check For the existence of a unix pid."""
-        return _psposix.pid_exists(pid)
 
     @wrap_exceptions
     def get_cpu_times(self, pid):

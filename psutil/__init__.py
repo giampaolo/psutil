@@ -62,9 +62,6 @@ elif sys.platform.lower().startswith("freebsd"):
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
-# platform-specific modules define an Impl implementation class
-_platform_impl = Impl()
-
 
 class CPUTimes:
     """This class contains information about CPU times.
@@ -139,6 +136,8 @@ class Process(object):
             raise ValueError("An integer is required")
         if not pid_exists(pid):
             raise NoSuchProcess(pid, None, "no process found with PID %s" % pid)
+        # platform-specific modules define an Impl implementation class
+        self._platform_impl = Impl()
         self._procinfo = _ProcessInfo(pid)
         self.is_proxy = True
         # try to init CPU times, if it raises AccessDenied then suppress
@@ -164,7 +163,7 @@ class Process(object):
         # case kill() gets called before create_time resulting in
         # NoSuchProcess not being raised (see issue 77):
         h1 = (self.pid, self._procinfo.create or \
-                        _platform_impl.get_process_create_time(self.pid))
+                        self._platform_impl.get_process_create_time(self.pid))
         h2 = (other.pid, other.create_time)
         return h1 == h2
 
@@ -182,7 +181,7 @@ class Process(object):
         if self.is_proxy:
             # get_process_info returns a tuple we use as the arguments
             # to the _ProcessInfo constructor
-            self._procinfo = _ProcessInfo(*_platform_impl.get_process_info(
+            self._procinfo = _ProcessInfo(*self._platform_impl.get_process_info(
                                           self._procinfo.pid))
             self.is_proxy = False
 
@@ -249,7 +248,7 @@ class Process(object):
         if pwd is not None:
             self._procinfo.username = pwd.getpwuid(self.uid).pw_name
         else:
-            self._procinfo.username =  _platform_impl.get_process_username(self.pid)
+            self._procinfo.username =  self._platform_impl.get_process_username(self.pid)
         return self._procinfo.username
 
     @property
@@ -258,16 +257,16 @@ class Process(object):
         expressed in seconds since the epoch, in UTC.
         """
         if self._procinfo.create is None:
-            self._procinfo.create = _platform_impl.get_process_create_time(self.pid)
+            self._procinfo.create = self._platform_impl.get_process_create_time(self.pid)
         return self._procinfo.create
 
     # available for Windows and Linux only
-    if hasattr(_platform_impl, "get_process_cwd"):
+    if hasattr(Impl, "get_process_cwd"):
         def getcwd(self):
             """Return a string representing the process current working
             directory.
             """
-            return _platform_impl.get_process_cwd(self.pid)
+            return self._platform_impl.get_process_cwd(self.pid)
 
     def get_children(self):
         """Return the children of this process as a list of Process
@@ -286,7 +285,7 @@ class Process(object):
         """
         now = time.time()
         # will raise AccessDenied on OS X if not root or in procmod group
-        user_t, kern_t = _platform_impl.get_cpu_times(self.pid)
+        user_t, kern_t = self._platform_impl.get_cpu_times(self.pid)
 
         total_proc_time = float((user_t - self._last_user_time) + \
                                 (kern_t - self._last_kern_time))
@@ -306,7 +305,7 @@ class Process(object):
         time.  These are the same first two values that os.times()
         returns for the current process.
         """
-        return _platform_impl.get_cpu_times(self.pid)
+        return self._platform_impl.get_cpu_times(self.pid)
 
     def get_memory_info(self):
         """Return a tuple representing RSS (Resident Set Size) and VMS
@@ -317,13 +316,13 @@ class Process(object):
         On Windows RSS and VMS refer to "Mem Usage" and "VM Size" columns
         of taskmgr.exe.
         """
-        return _platform_impl.get_memory_info(self.pid)
+        return self._platform_impl.get_memory_info(self.pid)
 
     def get_memory_percent(self):
         """Compare physical system memory to process resident memory and
         calculate process memory utilization as a percentage.
         """
-        rss = _platform_impl.get_memory_info(self.pid)[0]
+        rss = self._platform_impl.get_memory_info(self.pid)[0]
         try:
             return (rss / float(TOTAL_PHYMEM)) * 100
         except ZeroDivisionError:
@@ -331,7 +330,7 @@ class Process(object):
 
     def get_open_files(self):
         """Return files opened by process as a list of paths."""
-        return _platform_impl.get_open_files(self.pid)
+        return self._platform_impl.get_open_files(self.pid)
 
     def get_connections(self):
         """Return TCP and UPD connections opened by process as a list
@@ -343,7 +342,7 @@ class Process(object):
         # check for zombie processes
         if sys.platform.lower().startswith("win32") and not self.is_running():
             raise NoSuchProcess(self.pid, self._procinfo.name)
-        return _platform_impl.get_connections(self.pid)
+        return self._platform_impl.get_connections(self.pid)
 
     def is_running(self):
         """Return whether the current process is running in the current
@@ -375,7 +374,7 @@ class Process(object):
                 raise
         else:
             if sig == signal.SIGTERM:
-                _platform_impl.kill_process(self.pid)
+                self._platform_impl.kill_process(self.pid)
             else:
                 raise ValueError("only SIGTERM is supported on Windows")
 
@@ -386,8 +385,8 @@ class Process(object):
         if not self.is_running():
             raise NoSuchProcess(self.pid, self._procinfo.name)
         # windows
-        if hasattr(_platform_impl, "suspend_process"):
-            _platform_impl.suspend_process(self.pid)
+        if hasattr(self._platform_impl, "suspend_process"):
+            self._platform_impl.suspend_process(self.pid)
         else:
             # posix
             self.send_signal(signal.SIGSTOP)
@@ -399,8 +398,8 @@ class Process(object):
         if not self.is_running():
             raise NoSuchProcess(self.pid, self._procinfo.name)
         # windows
-        if hasattr(_platform_impl, "resume_process"):
-            _platform_impl.resume_process(self.pid)
+        if hasattr(self._platform_impl, "resume_process"):
+            self._platform_impl.resume_process(self.pid)
         else:
             # posix
             self.send_signal(signal.SIGCONT)
@@ -420,22 +419,14 @@ class Process(object):
         if os.name == 'posix':
             self.send_signal(signal.SIGKILL)
         else:
-            _platform_impl.kill_process(self.pid)
+            self._platform_impl.kill_process(self.pid)
 
-
-def pid_exists(pid):
-    """Check whether the given PID exists in the current process list."""
-    return _platform_impl.pid_exists(pid)
-
-def get_pid_list():
-    """Return a list of current running PIDs."""
-    return _platform_impl.get_pid_list()
 
 def process_iter():
     """Return an iterator yielding a Process class instances for all
     running processes on the local machine.
     """
-    pids = _platform_impl.get_pid_list()
+    pids = get_pid_list()
     # for each PID, create a proxyied Process object
     # it will lazy init it's name and path later if required
     for pid in pids:
