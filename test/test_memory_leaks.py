@@ -9,7 +9,7 @@ import sys
 import unittest
 
 import psutil
-from test_psutil import reap_children, WINDOWS
+from test_psutil import reap_children, POSIX, LINUX, WINDOWS, OSX, BSD
 
 LOOPS = 1000
 TOLERANCE = 4096
@@ -54,9 +54,6 @@ class TestProcessObjectLeaks(unittest.TestCase):
         if difference > TOLERANCE:
             self.fail("rss1=%s, rss2=%s, difference=%s" %(rss1, rss2, difference))
 
-    def test_pid(self):
-        self.execute('pid')
-
     def test__str__(self):
         # includes name, ppid, path, cmdline, uid, gid properties
         self.execute('__str__')
@@ -90,10 +87,11 @@ class TestProcessObjectLeaks(unittest.TestCase):
     if hasattr(psutil.Process, "getcwd"):
         def test_getcwd(self):
             self.execute('getcwd')
-
-    if hasattr(psutil.Process, "get_open_files"):
-        def test_get_open_files(self):
-            self.execute('get_open_files')
+    
+    if WINDOWS:
+        if hasattr(psutil.Process, "get_open_files"):
+            def test_get_open_files(self):
+                self.execute('get_open_files')
 
 
 class TestModuleFunctionsLeaks(unittest.TestCase):
