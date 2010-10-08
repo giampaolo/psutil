@@ -23,6 +23,7 @@ try:
 except ImportError:
     wmi = None
 
+
 # --- module level constants (gets pushed up to psutil module)
 
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
@@ -53,14 +54,6 @@ def avail_virtmem():
 def used_virtmem():
     """Return the amount of used memory currently in use on the system, in bytes."""
     return _psutil_mswindows.get_total_virtmem() - _psutil_mswindows.get_avail_virtmem()
-
-def cached_mem():
-    """Return the amount of cached memory on the system, in bytes."""
-    raise NotImplementedError("This feature not yet implemented on Windows.")
-
-def cached_swap():
-    """Return the amount of cached swap on the system, in bytes."""
-    raise NotImplementedError("This feature not yet implemented on Windows.")
 
 def get_system_cpu_times():
     """Return a dict representing the following CPU times: user, system, idle."""

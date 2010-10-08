@@ -113,11 +113,6 @@ class BSDSpecificTestCase(unittest.TestCase):
             self.fail("sysctl=%s; psutil=%s; difference=%s;" %(
                        sysctl_avail_virtmem, psutil_avail_virtmem, difference))
 
-    def test_cached_mem(self):
-        sysctl_mem = sysctl("sysctl vm.stats.vm.v_cache_count")
-        psutil_mem = psutil.cached_mem()
-        self.assertEqual(sysctl_mem, psutil_mem)
-
     def test_process_create_time(self):
         cmdline = "ps -o lstart -p %s" %self.pid
         p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)

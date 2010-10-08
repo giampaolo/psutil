@@ -14,9 +14,13 @@ import _psutil_osx
 import _psposix
 from psutil.error import *
 
-# module level constants (gets pushed up to psutil module)
+
+# --- constants
+
 NUM_CPUS = _psutil_osx.get_num_cpus()
 TOTAL_PHYMEM = _psutil_osx.get_total_phymem()
+
+# --- public functions
 
 def avail_phymem():
     "Return the amount of physical memory available on the system, in bytes."
@@ -38,19 +42,14 @@ def used_virtmem():
     """Return the amount of used memory currently in use on the system, in bytes."""
     return _psutil_osx.get_total_virtmem() - _psutil_osx.get_avail_virtmem()
 
-def cached_mem():
-    """Return the amount of cached memory on the system, in bytes."""
-    raise NotImplementedError("This feature not yet implemented on OS X.")
-
-def cached_swap():
-    """Return the amount of cached swap on the system, in bytes."""
-    raise NotImplementedError("This feature not yet implemented on OS X.")
-
 def get_system_cpu_times():
     """Return a dict representing the following CPU times:
     user, nice, system, idle."""
     values = _psutil_osx.get_system_cpu_times()
     return dict(user=values[0], nice=values[1], system=values[2], idle=values[3])
+
+
+# --- decorator
 
 def wrap_exceptions(callable):
     """Call callable into a try/except clause so that if an

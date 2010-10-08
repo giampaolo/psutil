@@ -47,8 +47,6 @@ static PyMethodDef PsutilMethods[] =
          "Return the total amount of virtual memory, in bytes"},
      {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
          "Return the amount of available virtual memory, in bytes"},
-     {"get_cached_mem", get_cached_mem, METH_VARARGS,
-         "Return the amount of cached memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
          "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
      {NULL, NULL, 0, NULL}
@@ -391,24 +389,6 @@ static PyObject* get_total_phymem(PyObject* self, PyObject* args)
     }
 
     return Py_BuildValue("l", total_phymem);
-}
-
-/*
- * Return a Python integer indicating the total amount of cached memory
- * in bytes.
- */
-static PyObject* get_cached_mem(PyObject* self, PyObject* args)
-{
-    unsigned long v_cache_count = 0;
-    size_t size = sizeof(unsigned long);
-
-    if (sysctlbyname("vm.stats.vm.v_cache_count",
-                     &v_cache_count, &size, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
-        return NULL;
-    }
-
-    return Py_BuildValue("l", v_cache_count);
 }
 
 

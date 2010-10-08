@@ -12,7 +12,7 @@ import psutil
 from test_psutil import reap_children, WINDOWS
 
 LOOPS = 1000
-MARGIN = 4096
+TOLERANCE = 4096
 
 
 class TestProcessObjectLeaks(unittest.TestCase):
@@ -51,7 +51,7 @@ class TestProcessObjectLeaks(unittest.TestCase):
 
         # comparison
         difference = rss2 - rss1
-        if difference > MARGIN:
+        if difference > TOLERANCE:
             self.fail("rss1=%s, rss2=%s, difference=%s" %(rss1, rss2, difference))
 
     def test_pid(self):
@@ -127,7 +127,7 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
 
         # comparison
         difference = rss2 - rss1
-        if difference > MARGIN:
+        if difference > TOLERANCE:
             self.fail("rss1=%s, rss2=%s, difference=%s" %(rss1, rss2, difference))
 
     def test_get_pid_list(self):
@@ -153,9 +153,6 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
 
     def test_avail_virtmem(self):
         self.execute('avail_virtmem')
-
-    def test_cached_mem(self):
-        self.execute('cached_mem')
 
     def test_cpu_times(self):
         self.execute('cpu_times')

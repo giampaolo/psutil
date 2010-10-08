@@ -14,8 +14,13 @@ import _psutil_bsd
 import _psposix
 from psutil.error import *
 
+
+# --- constants
+
 NUM_CPUS = _psutil_bsd.get_num_cpus()
 TOTAL_PHYMEM = _psutil_bsd.get_total_phymem()
+
+# --- public functions
 
 def avail_phymem():
     "Return the amount of physical memory available on the system, in bytes."
@@ -37,14 +42,6 @@ def used_virtmem():
     """Return the amount of used memory currently in use on the system, in bytes."""
     return _psutil_bsd.get_total_virtmem() - _psutil_bsd.get_avail_virtmem()
 
-def cached_mem():
-    """Return the amount of cached memory on the system, in bytes."""
-    return _psutil_bsd.get_cached_mem()
-
-def cached_swap():
-    """Return 0 as there's no such thing as cached swap on BSD."""
-    return 0
-
 def get_system_cpu_times():
     """Return a dict representing the following CPU times:
     user, nice, system, idle, interrupt."""
@@ -52,6 +49,8 @@ def get_system_cpu_times():
     return dict(user=values[0], nice=values[1], system=values[2],
         idle=values[3], irq=values[4])
 
+
+# --- decorator
 
 def wrap_exceptions(method):
     """Call method(self, pid) into a try/except clause so that if an
