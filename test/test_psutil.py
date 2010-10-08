@@ -706,8 +706,9 @@ class TestCase(unittest.TestCase):
                     if attr is not None and callable(attr):
                         attr()
                     valid_procs += 1
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
+                except (psutil.NoSuchProcess, psutil.AccessDenied), err:
+                    self.assertEqual(err.pid, p.pid)
+                    self.assertTrue(str(err))
                 except:
                     trace = traceback.format_exc()
                     self.fail('Exception raised for method %s, pid %s:\n%s'
