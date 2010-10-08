@@ -52,6 +52,8 @@ _UPTIME = _get_uptime()
 NUM_CPUS = _get_num_cpus()
 TOTAL_PHYMEM = _get_total_phymem()
 
+del _get_uptime, _get_num_cpus, _get_total_phymem
+
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
 _TCP_STATES_TABLE = {"01" : "ESTABLISHED",
                      "02" : "SYN_SENT",
