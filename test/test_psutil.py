@@ -140,44 +140,44 @@ class TestCase(unittest.TestCase):
 
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM
-        self.assertTrue(isinstance(x, int) or isinstance(x, long))
+        self.assertTrue(isinstance(x, (int, long)))
         self.assertTrue(x > 0)
 
     def test_used_phymem(self):
         x = psutil.used_phymem()
-        self.assertTrue(isinstance(x, int) or isinstance(x, long))
+        self.assertTrue(isinstance(x, (int, long)))
         self.assertTrue(x > 0)
 
     def test_avail_phymem(self):
         x = psutil.avail_phymem()
-        self.assertTrue(isinstance(x, int) or isinstance(x, long))
+        self.assertTrue(isinstance(x, (int, long)))
         self.assertTrue(x > 0)
 
     def test_total_virtmem(self):
         x = psutil.total_virtmem()
-        self.assertTrue(isinstance(x, int) or isinstance(x, long))
+        self.assertTrue(isinstance(x, (int, long)))
         self.assertTrue(x >= 0)
 
     def test_used_virtmem(self):
         x = psutil.used_virtmem()
-        self.assertTrue(isinstance(x, int) or isinstance(x, long))
+        self.assertTrue(isinstance(x, (int, long)))
         self.assertTrue(x >= 0)
 
     def test_avail_virtmem(self):
         x = psutil.avail_virtmem()
-        self.assertTrue(isinstance(x, int) or isinstance(x, long))
+        self.assertTrue(isinstance(x, (int, long)))
         self.assertTrue(x >= 0)
 
     if hasattr(psutil, "cached_phymem"):
         def test_cached_phymem(self):
             x = psutil.cached_phymem()
-            self.assertTrue(isinstance(x, int) or isinstance(x, long))
+            self.assertTrue(isinstance(x, (int, long)))
             self.assertTrue(x >= 0)
 
     if hasattr(psutil, "phymem_buffers"):
         def test_phymem_buffers(self):
             x = psutil.phymem_buffers()
-            self.assertTrue(isinstance(x, int) or isinstance(x, long))
+            self.assertTrue(isinstance(x, (int, long)))
             self.assertTrue(x >= 0)
 
     def test_system_cpu_times(self):
@@ -615,15 +615,14 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.uid, int))
         self.assert_(isinstance(p.gid, int))
         self.assert_(isinstance(p.create_time, float))
-        self.assert_(isinstance(p.username, str) or \
-                     isinstance(p.username, type(u'')))
+        self.assert_(isinstance(p.username, (unicode, str)))
         if hasattr(p, 'getcwd'):
             if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
                 self.assert_(isinstance(p.getcwd(), str))
         if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
             self.assert_(isinstance(p.get_open_files(), list))
             for path in p.get_open_files():
-                self.assert_(isinstance(path, str) or isinstance(path, type(u'')))
+                self.assert_(isinstance(path, (unicode, str)))
         if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
             self.assert_(isinstance(p.get_connections(), list))
         self.assert_(isinstance(p.is_running(), bool))
