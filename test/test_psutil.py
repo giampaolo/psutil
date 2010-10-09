@@ -20,6 +20,7 @@ import types
 import traceback
 import socket
 import warnings
+import atexit
 
 import psutil
 
@@ -34,14 +35,17 @@ OSX = sys.platform.lower().startswith("darwin")
 BSD = sys.platform.lower().startswith("freebsd")
 
 
+_subprocesses_started = set()
+
 def get_test_subprocess(cmd=PYTHON, stdout=DEVNULL, stderr=DEVNULL, stdin=None):
     """Return a subprocess.Popen object to use in tests.
     By default stdout and stderr are redirected to /dev/null and the 
     python interpreter is used as test process.
     """
-    return subprocess.Popen(cmd, stdout=stdout, stderr=stderr, stdin=stdin)
+    sproc = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, stdin=stdin)
+    _subprocesses_started.add(sproc.pid)
+    return sproc
     
-
 def wait_for_pid(pid, timeout=1):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
@@ -63,7 +67,7 @@ def kill(pid):
     else:
         psutil.Process(pid).kill()
 
-def reap_children():
+def reap_children(search_all=False):
     """Kill any subprocess started by this test suite and ensure that
     no zombies stick around to hog resources and create problems when
     looking for refleaks.
@@ -88,14 +92,23 @@ def reap_children():
             while process.is_running():
                 time.sleep(0.01)
 
-    this_process = psutil.Process(os.getpid())
-    for child in this_process.get_children():
+    if search_all:
+        this_process = psutil.Process(os.getpid())
+        pids = [x.pid for x in this_process.get_children()]
+    else:
+        pids =_subprocesses_started
+    while pids:
+        pid = pids.pop()
         try:
+            child = psutil.Process(pid)
             child.kill()
         except psutil.NoSuchProcess:
             pass
         else:
             waitpid(child)
+
+# we want to search through all processes before exiting
+atexit.register(reap_children, search_all=True)
 
 
 class TestCase(unittest.TestCase):
@@ -440,7 +453,7 @@ class TestCase(unittest.TestCase):
               "s.listen(1);" \
               "conn, addr = s.accept();" \
               "time.sleep(100);"
-        sproc = subprocess.Popen([PYTHON, "-c", arg])
+        sproc = get_test_subprocess([PYTHON, "-c", arg])
         time.sleep(0.1)
         p = psutil.Process(sproc.pid)
         cons = p.get_connections()
@@ -503,11 +516,11 @@ class TestCase(unittest.TestCase):
 
         # launch various subprocess instantiating a socket of various
         # families  and tupes to enrich psutil results
-        tcp4_proc = subprocess.Popen([PYTHON, "-c", tcp4_template])
-        udp4_proc = subprocess.Popen([PYTHON, "-c", udp4_template])
+        tcp4_proc = get_test_subprocess([PYTHON, "-c", tcp4_template])
+        udp4_proc = get_test_subprocess([PYTHON, "-c", udp4_template])
         if supports_ipv6():
-            tcp6_proc = subprocess.Popen([PYTHON, "-c", tcp6_template])
-            udp6_proc = subprocess.Popen([PYTHON, "-c", udp6_template])
+            tcp6_proc = get_test_subprocess([PYTHON, "-c", tcp6_template])
+            udp6_proc = get_test_subprocess([PYTHON, "-c", udp6_template])
         else:
             tcp6_proc = None
             udp6_proc = None
@@ -869,7 +882,6 @@ def test_main():
         test_suite.addTest(unittest.makeSuite(test_class))
 
     unittest.TextTestRunner(verbosity=2).run(test_suite)
-    reap_children()
     DEVNULL.close()
 
 if __name__ == '__main__':

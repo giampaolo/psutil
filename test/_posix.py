@@ -11,7 +11,7 @@ import os
 
 import psutil
 
-from test_psutil import kill, PYTHON, DEVNULL, LINUX
+from test_psutil import kill, get_test_subprocess, PYTHON, LINUX
 
 
 def ps(cmd):
@@ -38,7 +38,7 @@ class PosixSpecificTestCase(unittest.TestCase):
     # for ps -o arguments see: http://unixhelp.ed.ac.uk/CGI/man-cgi?ps
 
     def setUp(self):
-        self.pid = subprocess.Popen([PYTHON, "-E", "-O"], stdout=DEVNULL, stderr=DEVNULL).pid
+        self.pid = get_test_subprocess([PYTHON, "-E", "-O"]).pid
 
     def tearDown(self):
         kill(self.pid)
@@ -100,7 +100,7 @@ class PosixSpecificTestCase(unittest.TestCase):
     def test_get_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
-        p = subprocess.Popen(["ps", "ax", "-o", "pid"], stdout=subprocess.PIPE)
+        p = get_test_subprocess(["ps", "ax", "-o", "pid"], stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
         if sys.version_info >= (3,):
             output = str(output, sys.stdout.encoding)
