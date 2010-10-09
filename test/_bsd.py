@@ -11,7 +11,7 @@ import sys
 
 import psutil
 
-from test_psutil import reap_children, PYTHON, DEVNULL
+from test_psutil import reap_children, get_test_subprocess
 from _posix import ps
 
 
@@ -45,7 +45,7 @@ def parse_sysctl_vmtotal(output):
 class BSDSpecificTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.pid = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL).pid
+        self.pid = get_test_subprocess().pid
 
     def tearDown(self):
         reap_children()

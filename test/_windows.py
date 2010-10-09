@@ -13,7 +13,7 @@ import time
 import warnings
 
 import psutil
-from test_psutil import reap_children, PYTHON, DEVNULL
+from test_psutil import reap_children, get_test_subprocess
 try:
     from psutil import wmi
 except ImportError:
@@ -25,7 +25,7 @@ except ImportError:
 class WindowsSpecificTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.pid = subprocess.Popen([PYTHON, "-E", "-O"], stdout=DEVNULL, stderr=DEVNULL).pid
+        self.pid = get_test_subprocess().pid
 
     def tearDown(self):
         reap_children()

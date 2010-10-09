@@ -34,6 +34,10 @@ OSX = sys.platform.lower().startswith("darwin")
 BSD = sys.platform.lower().startswith("freebsd")
 
 
+def get_test_subprocess(cmd=PYTHON, stdout=DEVNULL, stderr=DEVNULL, stdin=DEVNULL):
+    return subprocess.Popen(cmd, stdout=stdout, stderr=stderr, stdin=stdin)
+    
+
 def wait_for_pid(pid, timeout=1):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
@@ -106,7 +110,7 @@ class TestCase(unittest.TestCase):
             self.assertTrue(os.getpid() in pids)
 
     def test_kill(self):
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         test_pid = sproc.pid
         wait_for_pid(test_pid)
         p = psutil.Process(test_pid)
@@ -116,7 +120,7 @@ class TestCase(unittest.TestCase):
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_terminate(self):
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         test_pid = sproc.pid
         wait_for_pid(test_pid)
         p = psutil.Process(test_pid)
@@ -130,7 +134,7 @@ class TestCase(unittest.TestCase):
             sig = signal.SIGKILL
         else:
             sig = signal.SIGTERM
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
         name = p.name
@@ -229,7 +233,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue((times.user > 0.0) or (times.kernel > 0.0))
 
     def test_create_time(self):
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         now = time.time()
         wait_for_pid(sproc.pid)
         p = psutil.Process(sproc.pid)
@@ -271,16 +275,16 @@ class TestCase(unittest.TestCase):
         self.assertTrue(p.get_memory_percent() > 0.0)
 
     def test_pid(self):
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         self.assertEqual(psutil.Process(sproc.pid).pid, sproc.pid)
 
     def test_eq(self):
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         wait_for_pid(sproc.pid)
         self.assertTrue(psutil.Process(sproc.pid) == psutil.Process(sproc.pid))
 
     def test_is_running(self):
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         wait_for_pid(sproc.pid)
         p = psutil.Process(sproc.pid)
         self.assertTrue(p.is_running())
@@ -294,7 +298,7 @@ class TestCase(unittest.TestCase):
         self.assertFalse(psutil.pid_exists(-1))
 
     def test_exe(self):
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         wait_for_pid(sproc.pid)
         self.assertEqual(psutil.Process(sproc.pid).exe, PYTHON)
         for p in psutil.process_iter():
@@ -326,17 +330,17 @@ class TestCase(unittest.TestCase):
             warnings.resetwarnings()
 
     def test_cmdline(self):
-        sproc = subprocess.Popen([PYTHON, "-E"], stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess([PYTHON, "-E"])
         wait_for_pid(sproc.pid)
         self.assertEqual(psutil.Process(sproc.pid).cmdline, [PYTHON, "-E"])
 
     def test_name(self):
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL,  stderr=DEVNULL)
+        sproc = get_test_subprocess(PYTHON)
         wait_for_pid(sproc.pid)
         self.assertEqual(psutil.Process(sproc.pid).name, os.path.basename(PYTHON))
 
     def test_uid(self):
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         wait_for_pid(sproc.pid)
         uid = psutil.Process(sproc.pid).uid
         if hasattr(os, 'getuid'):
@@ -347,7 +351,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(uid, -1)
 
     def test_gid(self):
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         wait_for_pid(sproc.pid)
         gid = psutil.Process(sproc.pid).gid
         if hasattr(os, 'getgid'):
@@ -358,7 +362,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(gid, -1)
 
     def test_username(self):
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         # generic test, only access the attribute (twice for testing the
         # caching code)
@@ -379,14 +383,14 @@ class TestCase(unittest.TestCase):
     if hasattr(psutil.Process, "getcwd"):
 
         def test_getcwd(self):
-            sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+            sproc = get_test_subprocess()
             wait_for_pid(sproc.pid)
             p = psutil.Process(sproc.pid)
             self.assertEqual(p.getcwd(), os.getcwd())
 
         def test_getcwd_2(self):
             cmd = [PYTHON, "-c", "import os; os.chdir('..'); input()"]
-            sproc = subprocess.Popen(cmd, stdout=DEVNULL)
+            sproc = get_test_subprocess(cmd, stdin=subprocess.PIPE)
             wait_for_pid(sproc.pid)
             p = psutil.Process(sproc.pid)
             time.sleep(0.1)
@@ -407,7 +411,7 @@ class TestCase(unittest.TestCase):
             self.assertTrue(os.path.isfile(file))
         # subprocess
         cmdline = "f = open(r'%s', 'r'); input();" % thisfile
-        sproc = subprocess.Popen([PYTHON, "-c", cmdline])
+        sproc = get_test_subprocess([PYTHON, "-c", cmdline], stdin=subprocess.PIPE)
         wait_for_pid(sproc.pid)
         time.sleep(0.1)
         p = psutil.Process(sproc.pid)
@@ -562,7 +566,7 @@ class TestCase(unittest.TestCase):
 
     def test_parent_ppid(self):
         this_parent = os.getpid()
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.ppid, this_parent)
         self.assertEqual(p.parent.pid, this_parent)
@@ -575,14 +579,14 @@ class TestCase(unittest.TestCase):
     def test_get_children(self):
         p = psutil.Process(os.getpid())
         self.assertEqual(p.get_children(), [])
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         children = p.get_children()
         self.assertEqual(len(children), 1)
         self.assertEqual(children[0].pid, sproc.pid)
         self.assertEqual(children[0].ppid, os.getpid())
 
     def test_suspend_resume(self):
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.suspend()
         p.resume()
@@ -604,7 +608,7 @@ class TestCase(unittest.TestCase):
             sys.stdout = stdout
 
     def test_types(self):
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         self.assert_(isinstance(p.pid, int))
         self.assert_(isinstance(p.ppid, int))
@@ -659,7 +663,7 @@ class TestCase(unittest.TestCase):
         #  >>> time.sleep(5)  # time-consuming task, process dies in meantime
         #  >>> proc.name
         # Refers to Issue #15
-        sproc = subprocess.Popen(PYTHON, stdout=DEVNULL, stderr=DEVNULL)
+        sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.kill()
         sproc.wait()
