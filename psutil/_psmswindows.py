@@ -133,7 +133,10 @@ class Impl(object):
             w = wmi.WMI().Win32_Process(ProcessId=pid)
             if not w:
                 raise NoSuchProcess(pid, self._process_name)
-            domain, _, username = w[0].GetOwner()
+            try:
+                domain, _, username = w[0].GetOwner()
+            except IndexError:
+                raise NoSuchProcess(pid, self._process_name)
             # this matches procexp behavior, at least on Win 7
             if domain is None or username is None:
                 raise AccessDenied(pid, self._process_name)
