@@ -34,7 +34,11 @@ OSX = sys.platform.lower().startswith("darwin")
 BSD = sys.platform.lower().startswith("freebsd")
 
 
-def get_test_subprocess(cmd=PYTHON, stdout=DEVNULL, stderr=DEVNULL, stdin=DEVNULL):
+def get_test_subprocess(cmd=PYTHON, stdout=DEVNULL, stderr=DEVNULL, stdin=None):
+    """Return a subprocess.Popen object to use in tests.
+    By default stdout and stderr are redirected to /dev/null and the 
+    python interpreter is used as test process.
+    """
     return subprocess.Popen(cmd, stdout=stdout, stderr=stderr, stdin=stdin)
     
 
@@ -389,8 +393,8 @@ class TestCase(unittest.TestCase):
             self.assertEqual(p.getcwd(), os.getcwd())
 
         def test_getcwd_2(self):
-            cmd = [PYTHON, "-c", "import os; os.chdir('..'); input()"]
-            sproc = get_test_subprocess(cmd, stdin=subprocess.PIPE)
+            cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(10)"]
+            sproc = get_test_subprocess(cmd)
             wait_for_pid(sproc.pid)
             p = psutil.Process(sproc.pid)
             time.sleep(0.1)
@@ -410,8 +414,8 @@ class TestCase(unittest.TestCase):
         for file in files:
             self.assertTrue(os.path.isfile(file))
         # subprocess
-        cmdline = "f = open(r'%s', 'r'); input();" % thisfile
-        sproc = get_test_subprocess([PYTHON, "-c", cmdline], stdin=subprocess.PIPE)
+        cmdline = "import time; f = open(r'%s', 'r'); time.sleep(100);" % thisfile
+        sproc = get_test_subprocess([PYTHON, "-c", cmdline])
         wait_for_pid(sproc.pid)
         time.sleep(0.1)
         p = psutil.Process(sproc.pid)
@@ -430,12 +434,12 @@ class TestCase(unittest.TestCase):
                     self.assertTrue(os.path.isfile(file))
 
     def test_get_connections(self):
-        arg = "import socket;" \
+        arg = "import socket, time;" \
               "s = socket.socket();" \
               "s.bind(('127.0.0.1', 0));" \
               "s.listen(1);" \
               "conn, addr = s.accept();" \
-              "input();"
+              "time.sleep(100);"
         sproc = subprocess.Popen([PYTHON, "-c", arg])
         time.sleep(0.1)
         p = psutil.Process(sproc.pid)
@@ -487,10 +491,10 @@ class TestCase(unittest.TestCase):
                        "s.listen(1);" \
                        "conn, addr = s.accept();"
 
-        udp_template = "import socket;" \
+        udp_template = "import socket, time;" \
                        "s = socket.socket({family}, socket.SOCK_DGRAM);" \
                        "s.bind(('{addr}', 0));" \
-                       "input();"
+                       "time.sleep(100);"
 
         tcp4_template = tcp_template.format(family=socket.AF_INET, addr="127.0.0.1")
         udp4_template = udp_template.format(family=socket.AF_INET, addr="127.0.0.1")
