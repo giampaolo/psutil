@@ -60,7 +60,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
         for p in psutil.process_iter():
             if p.pid in (0, 4):
                 continue
-            self.assertTrue(p.name.endswith(".exe"))
+            self.assertTrue(p.name.endswith(".exe") or p.name.endswith(".bin"))
 
     if wmi is not None:
 
