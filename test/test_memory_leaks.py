@@ -58,10 +58,8 @@ class TestProcessObjectLeaks(unittest.TestCase):
         # includes name, ppid, path, cmdline, uid, gid properties
         self.execute('__str__')
 
-    # XXX - disabled for Windows as it uses WMI which takes ages to complete
-    if not WINDOWS:
-        def test_username(self):
-            self.execute('username')
+    def test_username(self):
+        self.execute('username')
 
     def test_create_time(self):
         self.execute('create_time')
@@ -87,7 +85,7 @@ class TestProcessObjectLeaks(unittest.TestCase):
     if hasattr(psutil.Process, "getcwd"):
         def test_getcwd(self):
             self.execute('getcwd')
-    
+
     if WINDOWS:
         if hasattr(psutil.Process, "get_open_files"):
             def test_get_open_files(self):

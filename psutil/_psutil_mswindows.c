@@ -59,6 +59,8 @@ static PyMethodDef PsutilMethods[] =
         "Return files opened by process"},
     {"_QueryDosDevice", _QueryDosDevice, METH_VARARGS,
         "QueryDosDevice binding"},
+    {"get_process_username", get_process_username, METH_VARARGS,
+        "Return the username of a process"},
      {NULL, NULL, 0, NULL}
 };
 
@@ -1096,5 +1098,119 @@ static PyObject* _QueryDosDevice(PyObject* self, PyObject* args)
         d++;
     }
     return Py_BuildValue("s", "");
+}
+
+/*
+ * Return process username as a "DOMAIN//USERNAME" string.
+ */
+static PyObject* get_process_username(PyObject* self, PyObject* args)
+{
+    long pid;
+    HANDLE processHandle;
+    HANDLE tokenHandle;
+    PTOKEN_USER user;
+    ULONG bufferSize;
+    PTSTR name;
+    ULONG nameSize;
+    PTSTR domainName;
+    ULONG domainNameSize;
+    SID_NAME_USE nameUse;
+    PTSTR fullName;
+    PyObject* returnObject;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+        return NULL;
+    }
+
+    if (pid_is_running(pid) == 0) {
+        return NoSuchProcess();
+    }
+
+    /* Open the process and its token. */
+
+    if (!(processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid))) {
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    if (!OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)) {
+        CloseHandle(processHandle);
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    CloseHandle(processHandle);
+
+    /* Get the user SID. */
+
+    bufferSize = 0x100;
+    user = malloc(bufferSize);
+
+    if (!GetTokenInformation(tokenHandle,
+                             TokenUser,
+                             user,
+                             bufferSize,
+                             &bufferSize))
+    {
+        free(user);
+        user = malloc(bufferSize);
+
+        if (!GetTokenInformation(tokenHandle,
+                                 TokenUser,
+                                 user,
+                                 bufferSize,
+                                 &bufferSize))
+        {
+            CloseHandle(tokenHandle);
+            return PyErr_SetFromWindowsErr(0);
+        }
+    }
+
+    CloseHandle(tokenHandle);
+
+    /* Resolve the SID to a name. */
+
+    nameSize = 0x100;
+    domainNameSize = 0x100;
+
+    name = malloc(nameSize * sizeof(TCHAR));
+    domainName = malloc(domainNameSize * sizeof(TCHAR));
+
+    if (!LookupAccountSid(NULL, user->User.Sid, name, &nameSize, domainName,
+                          &domainNameSize, &nameUse))
+    {
+        free(name);
+        free(domainName);
+        name = malloc(nameSize * sizeof(TCHAR));
+        domainName = malloc(domainNameSize * sizeof(TCHAR));
+
+        if (!LookupAccountSid(NULL, user->User.Sid, name, &nameSize, domainName,
+                              &domainNameSize, &nameUse))
+        {
+            free(name);
+            free(domainName);
+            free(user);
+
+            return PyErr_SetFromWindowsErr(0);
+        }
+    }
+
+    nameSize = _tcslen(name);
+    domainNameSize = _tcslen(domainName);
+
+    /* Build the full username string. */
+    fullName = malloc(( + 1 + nameSize + 1) * sizeof(PSTR));
+    memcpy(fullName, domainName, domainNameSize);
+    fullName[domainNameSize] = '\\';
+    memcpy(&fullName[domainNameSize + 1], name, nameSize);
+    fullName[domainNameSize + 1 + nameSize] = '\0';
+
+    returnObject = Py_BuildValue("s", fullName);
+
+    free(fullName);
+    free(name);
+    free(domainName);
+    free(user);
+
+    return returnObject;
 }
 

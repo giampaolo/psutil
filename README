@@ -49,11 +49,6 @@ path in the command above with an appropriate location.
 
 [1] http://www.mingw.org/
 
-NOTE #2: as of right now all Windows functionnalities are written in pure C
-and no third party modules are required to be installed with the exception of
-the "username" functionnality which requires pywin32 extension to be installed
-separately.
-
 
 Installing on Windows using Visual Studio
 =========================================

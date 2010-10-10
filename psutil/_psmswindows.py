@@ -18,11 +18,6 @@ except ImportError:
 import _psutil_mswindows
 from psutil.error import *
 
-try:
-    import wmi
-except ImportError:
-    wmi = None
-
 
 # --- module level constants (gets pushed up to psutil module)
 
@@ -122,25 +117,12 @@ class Impl(object):
                 raise AccessDenied(pid, self._process_name)
             raise
 
+    @wrap_exceptions
     def get_process_username(self, pid):
         """Return the name of the user that owns the process"""
-        if wmi is None:
-            raise NotImplementedError("This functionnality requires pywin32 " \
-                                      "extension to be installed")
-        else:
-            if pid in (0, 4):
-                return 'NT AUTHORITY\\SYSTEM'
-            w = wmi.WMI().Win32_Process(ProcessId=pid)
-            if not w:
-                raise NoSuchProcess(pid, self._process_name)
-            try:
-                domain, _, username = w[0].GetOwner()
-            except IndexError:
-                raise NoSuchProcess(pid, self._process_name)
-            # this matches procexp behavior, at least on Win 7
-            if domain is None or username is None:
-                raise AccessDenied(pid, self._process_name)
-            return "%s\\%s" % (domain, username)
+        if pid in (0, 4):
+            return 'NT AUTHORITY\\SYSTEM'
+        return _psutil_mswindows.get_process_username(pid);
 
     @wrap_exceptions
     def get_process_create_time(self, pid):

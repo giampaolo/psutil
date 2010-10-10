@@ -50,7 +50,6 @@ if sys.platform.lower().startswith("linux"):
 
 elif sys.platform.lower().startswith("win32"):
     from psutil._psmswindows import *
-    __all__.append("wmi")
 
 elif sys.platform.lower().startswith("darwin"):
     from psutil._psosx import *

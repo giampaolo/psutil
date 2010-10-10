@@ -1,0 +1,34 @@
+
+Intro
+=====
+
+We would like to recognize some of the people who have been instrumental in the
+development of psutil.
+I'm sure we are forgetting some people (feel free to email us), but here is a
+short list.
+It's modeled after the Linux CREDITS file where the fields are:
+name (N), e-mail (E), web-address (W), country (C), description (D), (I) issues
+(issue tracker is at http://code.google.com/p/psutil/issues/list).
+Really thanks to all of you.
+
+
+Maintainers
+===========
+
+N: Giampaolo Rodola'
+C: Italy
+E: g.rodola@gmail.com
+
+N: Jay Loden
+C: NJ, USA
+E: jloden@gmail.com
+W: http://www.jayloden.com
+
+
+Contributors
+============
+
+N: wj32
+E: wj32.64@gmail.com
+D: process username on Windows
+I: 114

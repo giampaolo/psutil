@@ -15,7 +15,7 @@ import warnings
 import psutil
 from test_psutil import reap_children, get_test_subprocess
 try:
-    from psutil import wmi
+    import wmi
 except ImportError:
     warnings.warn("Can't import WMI module; Windows specific tests disabled",
                   RuntimeWarning)

@@ -9,7 +9,7 @@ NEW FEATURES
  * Issue 88: total system physical cached memory.
  * Issue 88: total system physical memory buffers used by the kernel.
  * Issue 91: per-process send_signal() and terminate() methods.
- * Issue 95: NoSuchProcess and AccessDenied exception classes now provide "pid", 
+ * Issue 95: NoSuchProcess and AccessDenied exception classes now provide "pid",
    "name" and "msg" attributes.
  * Issue 97: per-process children.
  * Issue 98: Process.get_cpu_times() and Process.get_memory_info now return
@@ -17,12 +17,15 @@ NEW FEATURES
  * Issue 103: per-process opened TCP and UDP connections.
  * Issue 111: per-process executable name.
  * Issue 113: exception messages now include process name and pid.
+ * Issue 114: process username Windows implementation has been rewritten in pure
+   C and no longer uses WMI resulting in a big speedup. Also, pywin32 is no
+   longer required as a third-party dependancy. (patch by wj32)
 
 BUGFIXES
 
  * Issue 94: suspend() raises OSError instead of AccessDenied.
  * Issue 86: psutil didn't compile against FreeBSD 6.x.
- * Issue 102: orphaned process handles obtained by using OpenProcess in C were 
+ * Issue 102: orphaned process handles obtained by using OpenProcess in C were
    left behind every time Process class was instantiated.
  * Issue 111: path and name Process properties report erroneous values.
 
@@ -30,11 +33,11 @@ API CHANGES
 
  * psutil.Process.path property is deprecated and works as an alias for "exe"
    property.
- * psutil.Process.kill(): signal argument was removed - to send a signal to the 
+ * psutil.Process.kill(): signal argument was removed - to send a signal to the
    process use send_signal(signal) method instead.
  * psutil.Process.get_memory_info() returns a nametuple instead of a tuple.
  * psutil.cpu_times() returns a nametuple instead of a tuple.
- * New psutil.Process methods: get_open_files(), get_connections(), 
+ * New psutil.Process methods: get_open_files(), get_connections(),
    send_signal() and terminate().
 
 
