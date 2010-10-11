@@ -11,14 +11,15 @@ import subprocess
 import signal
 import time
 import warnings
+import atexit
 
 import psutil
 from test_psutil import reap_children, get_test_subprocess
 try:
     import wmi
 except ImportError:
-    warnings.warn("Can't import WMI module; Windows specific tests disabled",
-                  RuntimeWarning)
+    atexit.register(warnings.warn, "Couldn't import wmi module; some Windows "
+                                 "specific tests were disabled", RuntimeWarning)
     wmi = None
 
 

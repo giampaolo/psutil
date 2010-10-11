@@ -860,8 +860,12 @@ def test_main():
 
     tests.append(TestCase)
 
-    if hasattr(os, 'getuid') and os.getuid() == 0:
-        tests.append(LimitedUserTestCase)
+    if hasattr(os, 'getuid'):
+        if os.getuid() == 0:
+            tests.append(LimitedUserTestCase)
+        else:
+            atexit.register(warnings.warn, "Couldn't run limited user tests ("
+                          "super-user privileges are required)", RuntimeWarning)
 
     if POSIX:
         from _posix import PosixSpecificTestCase
