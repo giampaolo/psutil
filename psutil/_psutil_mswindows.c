@@ -1160,6 +1160,7 @@ static PyObject* get_process_username(PyObject* self, PyObject* args)
                                  bufferSize,
                                  &bufferSize))
         {
+            free(user);
             CloseHandle(tokenHandle);
             return PyErr_SetFromWindowsErr(0);
         }
@@ -1198,7 +1199,7 @@ static PyObject* get_process_username(PyObject* self, PyObject* args)
     domainNameSize = _tcslen(domainName);
 
     /* Build the full username string. */
-    fullName = malloc(( + 1 + nameSize + 1) * sizeof(PSTR));
+    fullName = malloc((domainNameSize + 1 + nameSize + 1) * sizeof(TCHAR));
     memcpy(fullName, domainName, domainNameSize);
     fullName[domainNameSize] = '\\';
     memcpy(&fullName[domainNameSize + 1], name, nameSize);
