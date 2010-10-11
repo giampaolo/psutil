@@ -23,6 +23,7 @@ NEW FEATURES
 
 BUGFIXES
 
+ * Issue 81: psutil fails to compile with Visual Studio.
  * Issue 94: suspend() raises OSError instead of AccessDenied.
  * Issue 86: psutil didn't compile against FreeBSD 6.x.
  * Issue 102: orphaned process handles obtained by using OpenProcess in C were
