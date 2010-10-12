@@ -149,10 +149,21 @@ class Process(object):
             self._last_user_time, self._last_kern_time = None, None
 
     def __str__(self):
-        return "psutil.Process <PID:%s; PPID:%s; NAME:'%s'; EXE:'%s'; " \
-               "CMDLINE:%s; UID:%s; GID:%s;>" \
-                % (self.pid, self.ppid, self.name, self.exe, self.cmdline,
-                   self.uid, self.gid)
+        try:
+            pid = self.pid
+            name = repr(self.name)
+            cmdline = self.cmdline and repr(' '.join(self.cmdline))
+        except NoSuchProcess:
+            details = "<pid=%s (zombie)>" % self.pid
+        except AccessDenied:
+            details = "<pid=%s>" % (self.pid)
+        else:
+            if cmdline:
+                details = "<pid=%s, name=%s, cmdline=%s>" % (pid, name, cmdline)
+            else:
+                details = "<pid=%s, name=%s>" % (pid, name)
+        return "%s.%s %s" % (self.__class__.__module__, 
+                             self.__class__.__name__, details)
 
     def __eq__(self, other):
         """Test for equality with another Process object based on PID

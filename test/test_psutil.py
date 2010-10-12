@@ -710,6 +710,18 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, p.get_children)
         self.assertFalse(p.is_running())
 
+    def test__str__(self):
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        self.assertTrue(str(sproc.pid) in str(p))
+        self.assertTrue(os.path.basename(PYTHON) in str(p))
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        p.kill()
+        sproc.wait()
+        self.assertTrue(str(sproc.pid) in str(p))
+        self.assertTrue("zombie" in str(p))
+
     def test_fetch_all(self):
         valid_procs = 0
         attrs = ['__str__', 'create_time', 'username', 'getcwd', 'get_cpu_times',
