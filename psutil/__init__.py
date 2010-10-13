@@ -154,7 +154,7 @@ class Process(object):
             name = repr(self.name)
             cmdline = self.cmdline and repr(' '.join(self.cmdline))
         except NoSuchProcess:
-            details = "<pid=%s (zombie)>" % self.pid
+            details = "<pid=%s (terminated)>" % self.pid
         except AccessDenied:
             details = "<pid=%s>" % (self.pid)
         else:
