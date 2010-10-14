@@ -173,72 +173,78 @@ class Impl(object):
                     retlist.append(file)
         return retlist
 
+    @wrap_exceptions
     def get_connections(self, pid):
-        p = subprocess.Popen("netstat -ano", shell=True, stdout=subprocess.PIPE,
-                                                         stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        if stderr:
-            p = psutil.Process(pid)
-            if not p.is_running():
-                raise NoSuchProcess(pid, self._process_name)
-            raise RuntimeError(stderr)  # this must be considered an application bug
-        if not stdout:
-            return []
-        if sys.version_info >= (3,):
-            stdout = stdout.decode(sys.stdout.encoding)
-
-        # used to match the names provided on UNIX
-        status_table = {"LISTENING" : "LISTEN",
-                        "SYN_RECEIVED" : "SYN_RECV",
-                        "SYN_SEND" : "SYN_SENT",
-                        "CLOSED" : "CLOSE",
-                        "FIN_WAIT_1" : "FIN_WAIT1",
-                        "FIN_WAIT_2" : "FIN_WAIT2"
-                        }
-
         conn_tuple = namedtuple('connection', 'family type local_address ' \
                                               'remote_address status')
-        def convert_address(addr, family):
-            if family == socket.AF_INET:
-                ip, port = addr.split(':')
-            else:
-                if "]" in addr:
-                    ip, port = re.findall('\[([^]]+)\]:([0-9]+)', addr)[0]
-                else:
-                    ip, port = addr.split(':')
-            if port == "*":
-                return ()
-            port = int(port)
-            if port == 0:
-                return ()
-            if ip == "*":
-                if family == socket.AF_INET:
-                    ip = "0.0.0.0"
-                else:
-                    ip = "::"
-            return (ip, port)
+        return map(lambda c: conn_tuple(c[0], c[1], c[2], c[3], c[4]),
+                             _psutil_mswindows.get_process_connections(pid))
 
-        cons = []
-        for line in stdout.split('\r\n'):
-            line = line.strip()
-            if line[:3] in ("TCP", "UDP"):
-                if line.startswith("UDP"):
-                    _, laddr, raddr, _pid = line.split()
-                    status = ""
-                    _type = socket.SOCK_DGRAM
-                else:
-                    _, laddr, raddr, status, _pid = line.split()
-                    _type = socket.SOCK_STREAM
-                _pid = int(_pid)
-                if _pid == pid:
-                    status = status_table.get(status, status)
-                    if laddr.count(":") > 1 or raddr.count(":") > 1:
-                        family = socket.AF_INET6
-                    else:
-                        family = socket.AF_INET
-                    laddr = convert_address(laddr, family)
-                    raddr = convert_address(raddr, family)
-                    conn = conn_tuple(family, _type, laddr, raddr, status)
-                    cons.append(conn)
-        return cons
-
+##        p = subprocess.Popen("netstat -ano", shell=True, stdout=subprocess.PIPE,
+##                                                         stderr=subprocess.PIPE)
+##        stdout, stderr = p.communicate()
+##        if stderr:
+##            p = psutil.Process(pid)
+##            if not p.is_running():
+##                raise NoSuchProcess(pid, self._process_name)
+##            raise RuntimeError(stderr)  # this must be considered an application bug
+##        if not stdout:
+##            return []
+##        if sys.version_info >= (3,):
+##            stdout = stdout.decode(sys.stdout.encoding)
+##
+##        # used to match the names provided on UNIX
+##        status_table = {"LISTENING" : "LISTEN",
+##                        "SYN_RECEIVED" : "SYN_RECV",
+##                        "SYN_SEND" : "SYN_SENT",
+##                        "CLOSED" : "CLOSE",
+##                        "FIN_WAIT_1" : "FIN_WAIT1",
+##                        "FIN_WAIT_2" : "FIN_WAIT2"
+##                        }
+##
+##        conn_tuple = namedtuple('connection', 'family type local_address ' \
+##                                              'remote_address status')
+##        def convert_address(addr, family):
+##            if family == socket.AF_INET:
+##                ip, port = addr.split(':')
+##            else:
+##                if "]" in addr:
+##                    ip, port = re.findall('\[([^]]+)\]:([0-9]+)', addr)[0]
+##                else:
+##                    ip, port = addr.split(':')
+##            if port == "*":
+##                return ()
+##            port = int(port)
+##            if port == 0:
+##                return ()
+##            if ip == "*":
+##                if family == socket.AF_INET:
+##                    ip = "0.0.0.0"
+##                else:
+##                    ip = "::"
+##            return (ip, port)
+##
+##        cons = []
+##        for line in stdout.split('\r\n'):
+##            line = line.strip()
+##            if line[:3] in ("TCP", "UDP"):
+##                if line.startswith("UDP"):
+##                    _, laddr, raddr, _pid = line.split()
+##                    status = ""
+##                    _type = socket.SOCK_DGRAM
+##                else:
+##                    _, laddr, raddr, status, _pid = line.split()
+##                    _type = socket.SOCK_STREAM
+##                _pid = int(_pid)
+##                if _pid == pid:
+##                    status = status_table.get(status, status)
+##                    if laddr.count(":") > 1 or raddr.count(":") > 1:
+##                        family = socket.AF_INET6
+##                    else:
+##                        family = socket.AF_INET
+##                    laddr = convert_address(laddr, family)
+##                    raddr = convert_address(raddr, family)
+##                    conn = conn_tuple(family, _type, laddr, raddr, status)
+##                    cons.append(conn)
+##        return cons
+##
