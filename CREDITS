@@ -30,5 +30,5 @@ Contributors
 
 N: wj32
 E: wj32.64@gmail.com
-D: process username on Windows
-I: 114
+D: process username() and get_connections() on Windows
+I: 114, 115
