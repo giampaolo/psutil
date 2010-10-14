@@ -156,7 +156,7 @@ class Process(object):
         except NoSuchProcess:
             details = "(pid=%s (terminated))" % self.pid
         except AccessDenied:
-            details = "(pid=%s>" % (self.pid)
+            details = "(pid=%s)" % (self.pid)
         else:
             if cmdline:
                 details = "(pid=%s, name=%s, cmdline=%s)" % (pid, name, cmdline)
