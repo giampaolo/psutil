@@ -39,13 +39,13 @@ _subprocesses_started = set()
 
 def get_test_subprocess(cmd=PYTHON, stdout=DEVNULL, stderr=DEVNULL, stdin=None):
     """Return a subprocess.Popen object to use in tests.
-    By default stdout and stderr are redirected to /dev/null and the 
+    By default stdout and stderr are redirected to /dev/null and the
     python interpreter is used as test process.
     """
     sproc = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, stdin=stdin)
     _subprocesses_started.add(sproc.pid)
     return sproc
-    
+
 def wait_for_pid(pid, timeout=1):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
@@ -720,7 +720,7 @@ class TestCase(unittest.TestCase):
         p.kill()
         sproc.wait()
         self.assertTrue(str(sproc.pid) in str(p))
-        self.assertTrue("zombie" in str(p))
+        self.assertTrue("terminated" in str(p))
 
     def test_fetch_all(self):
         valid_procs = 0

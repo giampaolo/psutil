@@ -1116,6 +1116,7 @@ static PyObject* get_process_username(PyObject* self, PyObject* args)
     ULONG domainNameSize;
     SID_NAME_USE nameUse;
     PTSTR fullName;
+    DWORD ProcessExitCode = 0;
     PyObject* returnObject;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
@@ -1123,14 +1124,16 @@ static PyObject* get_process_username(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    if (pid_is_running(pid) == 0) {
-        return NoSuchProcess();
-    }
-
     /* Open the process and its token. */
 
     if (!(processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid))) {
         return PyErr_SetFromWindowsErr(0);
+    }
+
+    /* make sure the process is running */
+    GetExitCodeProcess(processHandle, &ProcessExitCode);
+    if (ProcessExitCode == 0) {
+        return NoSuchProcess();
     }
 
     if (!OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)) {
