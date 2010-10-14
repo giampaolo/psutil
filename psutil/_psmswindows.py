@@ -177,8 +177,8 @@ class Impl(object):
     def get_connections(self, pid):
         conn_tuple = namedtuple('connection', 'family type local_address ' \
                                               'remote_address status')
-        return map(lambda c: conn_tuple(c[0], c[1], c[2], c[3], c[4]),
-                             _psutil_mswindows.get_process_connections(pid))
+        retlist = _psutil_mswindows.get_process_connections(pid)
+        return [conn_tuple(*conn) for conn in retlist]
 
 ##        p = subprocess.Popen("netstat -ano", shell=True, stdout=subprocess.PIPE,
 ##                                                         stderr=subprocess.PIPE)

@@ -1335,13 +1335,17 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
     unsigned long pid;
     PyObject* connectionsList;
     PyObject* connectionTuple;
-    typedef PSTR (NTAPI *_RtlIpv4AddressToStringA)(struct in_addr *, PSTR /* __out_ecount(16) */);
+    typedef PSTR (NTAPI *_RtlIpv4AddressToStringA)(struct in_addr *,
+                                                   PSTR /* __out_ecount(16) */);
     _RtlIpv4AddressToStringA rtlIpv4AddressToStringA;
-    typedef PSTR (NTAPI *_RtlIpv6AddressToStringA)(struct in6_addr *, PSTR /* __out_ecount(65) */);
+    typedef PSTR (NTAPI *_RtlIpv6AddressToStringA)(struct in6_addr *,
+                                                   PSTR /* __out_ecount(65) */);
     _RtlIpv6AddressToStringA rtlIpv6AddressToStringA;
-    typedef DWORD (WINAPI *_GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG, TCP_TABLE_CLASS, ULONG);
+    typedef DWORD (WINAPI *_GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
+                                                 TCP_TABLE_CLASS, ULONG);
     _GetExtendedTcpTable getExtendedTcpTable;
-    typedef DWORD (WINAPI *_GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG, UDP_TABLE_CLASS, ULONG);
+    typedef DWORD (WINAPI *_GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
+                                                 UDP_TABLE_CLASS, ULONG);
     _GetExtendedUdpTable getExtendedUdpTable;
     PVOID table;
     DWORD tableSize;
@@ -1372,13 +1376,17 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
         HMODULE iphlpapi;
 
         ntdll = LoadLibrary(TEXT("ntdll.dll"));
-        rtlIpv4AddressToStringA = (_RtlIpv4AddressToStringA)GetProcAddress(ntdll, "RtlIpv4AddressToStringA");
-        rtlIpv6AddressToStringA = (_RtlIpv6AddressToStringA)GetProcAddress(ntdll, "RtlIpv6AddressToStringA");
+        rtlIpv4AddressToStringA = (_RtlIpv4AddressToStringA)GetProcAddress(ntdll,
+                                                     "RtlIpv4AddressToStringA");
+        rtlIpv6AddressToStringA = (_RtlIpv6AddressToStringA)GetProcAddress(ntdll,
+                                                     "RtlIpv6AddressToStringA");
         /* TODO: Check these two function pointers */
 
         iphlpapi = LoadLibrary(TEXT("iphlpapi.dll"));
-        getExtendedTcpTable = (_GetExtendedTcpTable)GetProcAddress(iphlpapi, "GetExtendedTcpTable");
-        getExtendedUdpTable = (_GetExtendedUdpTable)GetProcAddress(iphlpapi, "GetExtendedUdpTable");
+        getExtendedTcpTable = (_GetExtendedTcpTable)GetProcAddress(iphlpapi,
+                                                        "GetExtendedTcpTable");
+        getExtendedUdpTable = (_GetExtendedUdpTable)GetProcAddress(iphlpapi,
+                                                        "GetExtendedUdpTable");
     }
 
     if (getExtendedTcpTable)
@@ -1386,11 +1394,13 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
         /* TCP IPv4 */
 
         tableSize = 0;
-        getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0);
+        getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET,
+                            TCP_TABLE_OWNER_PID_ALL, 0);
 
         table = malloc(tableSize);
 
-        if (getExtendedTcpTable(table, &tableSize, FALSE, AF_INET, TCP_TABLE_OWNER_PID_ALL, 0) == 0)
+        if (getExtendedTcpTable(table, &tableSize, FALSE, AF_INET,
+                                TCP_TABLE_OWNER_PID_ALL, 0) == 0)
         {
             tcp4Table = table;
 
@@ -1399,26 +1409,30 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
                 if (tcp4Table->table[i].dwOwningPid != pid)
                     continue;
 
-                if (tcp4Table->table[i].dwLocalAddr != 0 || tcp4Table->table[i].dwLocalPort != 0)
+                if (tcp4Table->table[i].dwLocalAddr != 0 ||
+                    tcp4Table->table[i].dwLocalPort != 0)
                 {
                     struct in_addr addr;
 
                     addr.S_un.S_addr = tcp4Table->table[i].dwLocalAddr;
                     rtlIpv4AddressToStringA(&addr, addressBufferLocal);
-                    addressTupleLocal = Py_BuildValue("(si)", addressBufferLocal, BYTESWAP_USHORT(tcp4Table->table[i].dwLocalPort));
+                    addressTupleLocal = Py_BuildValue("(si)", addressBufferLocal,
+                               BYTESWAP_USHORT(tcp4Table->table[i].dwLocalPort));
                 }
                 else
                 {
                     addressTupleLocal = PyTuple_New(0);
                 }
 
-                if (tcp4Table->table[i].dwRemoteAddr != 0 || tcp4Table->table[i].dwRemotePort != 0)
+                if (tcp4Table->table[i].dwRemoteAddr != 0 ||
+                    tcp4Table->table[i].dwRemotePort != 0)
                 {
                     struct in_addr addr;
 
                     addr.S_un.S_addr = tcp4Table->table[i].dwRemoteAddr;
                     rtlIpv4AddressToStringA(&addr, addressBufferRemote);
-                    addressTupleRemote = Py_BuildValue("(si)", addressBufferRemote, BYTESWAP_USHORT(tcp4Table->table[i].dwRemotePort));
+                    addressTupleRemote = Py_BuildValue("(si)", addressBufferRemote,
+                            BYTESWAP_USHORT(tcp4Table->table[i].dwRemotePort));
                 }
                 else
                 {
@@ -1441,39 +1455,46 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
         /* TCP IPv6 */
 
         tableSize = 0;
-        getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET6, TCP_TABLE_OWNER_PID_ALL, 0);
+        getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET6,
+                            TCP_TABLE_OWNER_PID_ALL, 0);
 
         table = malloc(tableSize);
 
-        if (getExtendedTcpTable(table, &tableSize, FALSE, AF_INET6, TCP_TABLE_OWNER_PID_ALL, 0) == 0)
+        if (getExtendedTcpTable(table, &tableSize, FALSE, AF_INET6,
+                                TCP_TABLE_OWNER_PID_ALL, 0) == 0)
         {
             tcp6Table = table;
 
             for (i = 0; i < tcp6Table->dwNumEntries; i++)
             {
-                if (tcp6Table->table[i].dwOwningPid != pid)
+                if (tcp6Table->table[i].dwOwningPid != pid) {
                     continue;
+                }
 
-                if (memcmp(tcp6Table->table[i].ucLocalAddr, null_address, 16) != 0 || tcp6Table->table[i].dwLocalPort != 0)
+                if (memcmp(tcp6Table->table[i].ucLocalAddr, null_address, 16) != 0 ||
+                tcp6Table->table[i].dwLocalPort != 0)
                 {
                     struct in6_addr addr;
 
                     memcpy(&addr, tcp6Table->table[i].ucLocalAddr, 16);
                     rtlIpv6AddressToStringA(&addr, addressBufferLocal);
-                    addressTupleLocal = Py_BuildValue("(si)", addressBufferLocal, BYTESWAP_USHORT(tcp6Table->table[i].dwLocalPort));
+                    addressTupleLocal = Py_BuildValue("(si)", addressBufferLocal,
+                             BYTESWAP_USHORT(tcp6Table->table[i].dwLocalPort));
                 }
                 else
                 {
                     addressTupleLocal = PyTuple_New(0);
                 }
 
-                if (memcmp(tcp6Table->table[i].ucRemoteAddr, null_address, 16) != 0 || tcp6Table->table[i].dwRemotePort != 0)
+                if (memcmp(tcp6Table->table[i].ucRemoteAddr, null_address, 16) != 0 ||
+                    tcp6Table->table[i].dwRemotePort != 0)
                 {
                     struct in6_addr addr;
 
                     memcpy(&addr, tcp6Table->table[i].ucRemoteAddr, 16);
                     rtlIpv6AddressToStringA(&addr, addressBufferRemote);
-                    addressTupleRemote = Py_BuildValue("(si)", addressBufferRemote, BYTESWAP_USHORT(tcp6Table->table[i].dwRemotePort));
+                    addressTupleRemote = Py_BuildValue("(si)", addressBufferRemote,
+                            BYTESWAP_USHORT(tcp6Table->table[i].dwRemotePort));
                 }
                 else
                 {
@@ -1499,11 +1520,13 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
         /* UDP IPv4 */
 
         tableSize = 0;
-        getExtendedUdpTable(NULL, &tableSize, FALSE, AF_INET, UDP_TABLE_OWNER_PID, 0);
+        getExtendedUdpTable(NULL, &tableSize, FALSE, AF_INET,
+                            UDP_TABLE_OWNER_PID, 0);
 
         table = malloc(tableSize);
 
-        if (getExtendedUdpTable(table, &tableSize, FALSE, AF_INET, UDP_TABLE_OWNER_PID, 0) == 0)
+        if (getExtendedUdpTable(table, &tableSize, FALSE, AF_INET,
+                                UDP_TABLE_OWNER_PID, 0) == 0)
         {
             udp4Table = table;
 
@@ -1512,13 +1535,15 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
                 if (udp4Table->table[i].dwOwningPid != pid)
                     continue;
 
-                if (udp4Table->table[i].dwLocalAddr != 0 || udp4Table->table[i].dwLocalPort != 0)
+                if (udp4Table->table[i].dwLocalAddr != 0 ||
+                    udp4Table->table[i].dwLocalPort != 0)
                 {
                     struct in_addr addr;
 
                     addr.S_un.S_addr = udp4Table->table[i].dwLocalAddr;
                     rtlIpv4AddressToStringA(&addr, addressBufferLocal);
-                    addressTupleLocal = Py_BuildValue("(si)", addressBufferLocal, BYTESWAP_USHORT(udp4Table->table[i].dwLocalPort));
+                    addressTupleLocal = Py_BuildValue("(si)", addressBufferLocal,
+                                BYTESWAP_USHORT(udp4Table->table[i].dwLocalPort));
                 }
                 else
                 {
@@ -1551,16 +1576,19 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
 
             for (i = 0; i < udp6Table->dwNumEntries; i++)
             {
-                if (udp6Table->table[i].dwOwningPid != pid)
+                if (udp6Table->table[i].dwOwningPid != pid) {
                     continue;
+                }
 
-                if (memcmp(udp6Table->table[i].ucLocalAddr, null_address, 16) != 0 || udp6Table->table[i].dwLocalPort != 0)
+                if (memcmp(udp6Table->table[i].ucLocalAddr, null_address, 16) != 0 ||
+                    udp6Table->table[i].dwLocalPort != 0)
                 {
                     struct in6_addr addr;
 
                     memcpy(&addr, udp6Table->table[i].ucLocalAddr, 16);
                     rtlIpv6AddressToStringA(&addr, addressBufferLocal);
-                    addressTupleLocal = Py_BuildValue("(si)", addressBufferLocal, BYTESWAP_USHORT(udp6Table->table[i].dwLocalPort));
+                    addressTupleLocal = Py_BuildValue("(si)", addressBufferLocal,
+                              BYTESWAP_USHORT(udp6Table->table[i].dwLocalPort));
                 }
                 else
                 {
