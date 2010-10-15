@@ -1424,8 +1424,11 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
                     addressTupleLocal = PyTuple_New(0);
                 }
 
-                if (tcp4Table->table[i].dwRemoteAddr != 0 ||
-                    tcp4Table->table[i].dwRemotePort != 0)
+                // On Windows <= XP, remote addr is filled even if socket
+                // is in LISTEN mode in which case we just ignore it.
+                if ((tcp4Table->table[i].dwRemoteAddr != 0 ||
+                     tcp4Table->table[i].dwRemotePort != 0) &&
+                    (tcp4Table->table[i].dwState != MIB_TCP_STATE_LISTEN))
                 {
                     struct in_addr addr;
 
@@ -1486,8 +1489,11 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
                     addressTupleLocal = PyTuple_New(0);
                 }
 
-                if (memcmp(tcp6Table->table[i].ucRemoteAddr, null_address, 16) != 0 ||
-                    tcp6Table->table[i].dwRemotePort != 0)
+                // On Windows <= XP, remote addr is filled even if socket
+                // is in LISTEN mode in which case we just ignore it.
+                if ((memcmp(tcp6Table->table[i].ucRemoteAddr, null_address, 16) != 0 ||
+                    tcp6Table->table[i].dwRemotePort != 0) &&
+                   (tcp6Table->table[i].dwState != MIB_TCP_STATE_LISTEN))
                 {
                     struct in6_addr addr;
 
