@@ -37,11 +37,13 @@ BSD = sys.platform.lower().startswith("freebsd")
 
 _subprocesses_started = set()
 
-def get_test_subprocess(cmd=PYTHON, stdout=DEVNULL, stderr=DEVNULL, stdin=None):
+def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=None):
     """Return a subprocess.Popen object to use in tests.
     By default stdout and stderr are redirected to /dev/null and the
     python interpreter is used as test process.
     """
+    if cmd is None:
+        cmd = [PYTHON, "-c", "import time; time.sleep(10);"]
     sproc = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, stdin=stdin)
     _subprocesses_started.add(sproc.pid)
     return sproc
@@ -626,6 +628,7 @@ class TestCase(unittest.TestCase):
 
     def test_types(self):
         sproc = get_test_subprocess()
+        wait_for_pid(sproc.pid)
         p = psutil.Process(sproc.pid)
         self.assert_(isinstance(p.pid, int))
         self.assert_(isinstance(p.ppid, int))
