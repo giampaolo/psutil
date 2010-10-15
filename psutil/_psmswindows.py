@@ -35,7 +35,7 @@ def _has_connections_support():
         sp = int(re.search(r'(\d)', sp).group())
     except (ValueError, AttributeError):
         sp = -1
-    if (maj, _min) <= (5, 1):
+    if (maj, _min) < (5, 1):
         # <= 2000
         return False
     elif (maj, _min) == (5, 1):
