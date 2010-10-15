@@ -9,6 +9,7 @@ import subprocess
 import socket
 import re
 import sys
+import platform
 
 try:
     from collections import namedtuple
@@ -19,11 +20,48 @@ import _psutil_mswindows
 from psutil.error import *
 
 
+def _has_connections_support():
+    """Return True if this Windows version supports
+    GetExtendedTcpTable() and GetExtendedTcpTable() functions
+    introduced in Windows XP SP2.
+    """
+    # List of minimum supported versions:
+    # http://msdn.microsoft.com/en-us/library/aa365928(VS.85).aspx
+    # Name mappings:
+    # http://msdn.microsoft.com/en-us/library/ms724833(VS.85).aspx
+    import re
+    maj, _min, build, platf, sp = sys.getwindowsversion()
+    try:
+        sp = int(re.search(r'(\d)', sp).group())
+    except (ValueError, AttributeError):
+        sp = -1
+    if (maj, _min) <= (5, 1):
+        # <= 2000
+        return False
+    elif (maj, _min) == (5, 1):
+        # XP
+        return sp >= 2
+    elif (maj, _min) == (5, 2):
+        # XP prof 64-bit / 2003 server / Home server
+        ver = platform.win32_ver()[0].upper()
+        if ver == 'XP':
+            return sp >= 2
+        elif ('2003' in ver) or ('SERVER' in ver):
+            return sp >= 1
+        else:
+            return False
+    else:
+        # Vista, Server 2008, 7 and higher
+        return (maj, _min) > (5, 2)
+
+
 # --- module level constants (gets pushed up to psutil module)
 
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
 _UPTIME = _psutil_mswindows.get_system_uptime()
 TOTAL_PHYMEM = _psutil_mswindows.get_total_phymem()
+CONNECTIONS_SUPPORT = _has_connections_support()
+del _has_connections_support
 
 ERROR_ACCESS_DENIED = 5
 ERROR_INVALID_PARAMETER = 87
@@ -180,71 +218,14 @@ class Impl(object):
         retlist = _psutil_mswindows.get_process_connections(pid)
         return [conn_tuple(*conn) for conn in retlist]
 
-##        p = subprocess.Popen("netstat -ano", shell=True, stdout=subprocess.PIPE,
-##                                                         stderr=subprocess.PIPE)
-##        stdout, stderr = p.communicate()
-##        if stderr:
-##            p = psutil.Process(pid)
-##            if not p.is_running():
-##                raise NoSuchProcess(pid, self._process_name)
-##            raise RuntimeError(stderr)  # this must be considered an application bug
-##        if not stdout:
-##            return []
-##        if sys.version_info >= (3,):
-##            stdout = stdout.decode(sys.stdout.encoding)
-##
-##        # used to match the names provided on UNIX
-##        status_table = {"LISTENING" : "LISTEN",
-##                        "SYN_RECEIVED" : "SYN_RECV",
-##                        "SYN_SEND" : "SYN_SENT",
-##                        "CLOSED" : "CLOSE",
-##                        "FIN_WAIT_1" : "FIN_WAIT1",
-##                        "FIN_WAIT_2" : "FIN_WAIT2"
-##                        }
-##
-##        conn_tuple = namedtuple('connection', 'family type local_address ' \
-##                                              'remote_address status')
-##        def convert_address(addr, family):
-##            if family == socket.AF_INET:
-##                ip, port = addr.split(':')
-##            else:
-##                if "]" in addr:
-##                    ip, port = re.findall('\[([^]]+)\]:([0-9]+)', addr)[0]
-##                else:
-##                    ip, port = addr.split(':')
-##            if port == "*":
-##                return ()
-##            port = int(port)
-##            if port == 0:
-##                return ()
-##            if ip == "*":
-##                if family == socket.AF_INET:
-##                    ip = "0.0.0.0"
-##                else:
-##                    ip = "::"
-##            return (ip, port)
-##
-##        cons = []
-##        for line in stdout.split('\r\n'):
-##            line = line.strip()
-##            if line[:3] in ("TCP", "UDP"):
-##                if line.startswith("UDP"):
-##                    _, laddr, raddr, _pid = line.split()
-##                    status = ""
-##                    _type = socket.SOCK_DGRAM
-##                else:
-##                    _, laddr, raddr, status, _pid = line.split()
-##                    _type = socket.SOCK_STREAM
-##                _pid = int(_pid)
-##                if _pid == pid:
-##                    status = status_table.get(status, status)
-##                    if laddr.count(":") > 1 or raddr.count(":") > 1:
-##                        family = socket.AF_INET6
-##                    else:
-##                        family = socket.AF_INET
-##                    laddr = convert_address(laddr, family)
-##                    raddr = convert_address(raddr, family)
-##                    conn = conn_tuple(family, _type, laddr, raddr, status)
-##                    cons.append(conn)
-##        return cons
-##
+    if CONNECTIONS_SUPPORT:
+        @wrap_exceptions
+        def get_connections(self, pid):
+            conn_tuple = namedtuple('connection', 'family type local_address ' \
+                                                  'remote_address status')
+            retlist = _psutil_mswindows.get_process_connections(pid)
+            return [conn_tuple(*conn) for conn in retlist]
+    else:
+        def get_connections(self, pid):
+            raise NotImplementedError("feature not supported on this Windows "
+                                      "version")

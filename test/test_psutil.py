@@ -34,6 +34,15 @@ WINDOWS = sys.platform.lower().startswith("win32")
 OSX = sys.platform.lower().startswith("darwin")
 BSD = sys.platform.lower().startswith("freebsd")
 
+try:
+    psutil.Process(os.getpid()).get_connections()
+except NotImplementedError, err:
+    SUPPORT_CONNECTIONS = False
+    atexit.register(warnings.warn, "get_connections() not supported on this platform",
+                    RuntimeWarning)
+else:
+    SUPPORT_CONNECTIONS = True
+
 
 _subprocesses_started = set()
 
@@ -448,140 +457,141 @@ class TestCase(unittest.TestCase):
                 for file in files:
                     self.assertTrue(os.path.isfile(file))
 
-    def test_get_connections(self):
-        arg = "import socket, time;" \
-              "s = socket.socket();" \
-              "s.bind(('127.0.0.1', 0));" \
-              "s.listen(1);" \
-              "conn, addr = s.accept();" \
-              "time.sleep(100);"
-        sproc = get_test_subprocess([PYTHON, "-c", arg])
-        time.sleep(0.1)
-        p = psutil.Process(sproc.pid)
-        cons = p.get_connections()
-        self.assertTrue(len(cons) == 1)
-        con = cons[0]
-        self.assertEqual(con.family, socket.AF_INET)
-        self.assertEqual(con.type, socket.SOCK_STREAM)
-        self.assertEqual(con.status, "LISTEN")
-        ip, port = con.local_address
-        self.assertEqual(ip, '127.0.0.1')
-        self.assertEqual(con.remote_address, ())
+    if SUPPORT_CONNECTIONS:
+        def test_get_connections(self):
+            arg = "import socket, time;" \
+                  "s = socket.socket();" \
+                  "s.bind(('127.0.0.1', 0));" \
+                  "s.listen(1);" \
+                  "conn, addr = s.accept();" \
+                  "time.sleep(100);"
+            sproc = get_test_subprocess([PYTHON, "-c", arg])
+            time.sleep(0.1)
+            p = psutil.Process(sproc.pid)
+            cons = p.get_connections()
+            self.assertTrue(len(cons) == 1)
+            con = cons[0]
+            self.assertEqual(con.family, socket.AF_INET)
+            self.assertEqual(con.type, socket.SOCK_STREAM)
+            self.assertEqual(con.status, "LISTEN")
+            ip, port = con.local_address
+            self.assertEqual(ip, '127.0.0.1')
+            self.assertEqual(con.remote_address, ())
 
-    def test_get_connections_all(self):
+        def test_get_connections_all(self):
 
-        def check_address(addr, family):
-            if not addr:
-                return
-            ip, port = addr
-            self.assertTrue(isinstance(port, int))
-            if family == socket.AF_INET:
-                ip = map(int, ip.split('.'))
-                self.assertTrue(len(ip) == 4)
-                for num in ip:
-                    self.assertTrue(0 <= num <= 255)
-            self.assertTrue(0 <= port <= 65535)
+            def check_address(addr, family):
+                if not addr:
+                    return
+                ip, port = addr
+                self.assertTrue(isinstance(port, int))
+                if family == socket.AF_INET:
+                    ip = map(int, ip.split('.'))
+                    self.assertTrue(len(ip) == 4)
+                    for num in ip:
+                        self.assertTrue(0 <= num <= 255)
+                self.assertTrue(0 <= port <= 65535)
 
-        def supports_ipv6():
-            if not socket.has_ipv6 or not hasattr(socket, "AF_INET6"):
-                return False
-            try:
-                sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-                sock.bind(("::1", 0))
-            except (socket.error, socket.gaierror):
-                return False
+            def supports_ipv6():
+                if not socket.has_ipv6 or not hasattr(socket, "AF_INET6"):
+                    return False
+                try:
+                    sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+                    sock.bind(("::1", 0))
+                except (socket.error, socket.gaierror):
+                    return False
+                else:
+                    sock.close()
+                    return True
+
+            # all values are supposed to match Linux's tcp_states.h states
+            # table across all platforms.
+            valid_states = ["ESTABLISHED", "SYN_SENT", "SYN_RECV", "FIN_WAIT1",
+                            "FIN_WAIT2", "TIME_WAIT", "CLOSE", "CLOSE_WAIT",
+                            "LAST_ACK", "LISTEN", "CLOSING", ""]
+
+            tcp_template = "import socket;" \
+                           "s = socket.socket({family}, socket.SOCK_STREAM);" \
+                           "s.bind(('{addr}', 0));" \
+                           "s.listen(1);" \
+                           "conn, addr = s.accept();"
+
+            udp_template = "import socket, time;" \
+                           "s = socket.socket({family}, socket.SOCK_DGRAM);" \
+                           "s.bind(('{addr}', 0));" \
+                           "time.sleep(100);"
+
+            tcp4_template = tcp_template.format(family=socket.AF_INET, addr="127.0.0.1")
+            udp4_template = udp_template.format(family=socket.AF_INET, addr="127.0.0.1")
+            tcp6_template = tcp_template.format(family=socket.AF_INET6, addr="::1")
+            udp6_template = udp_template.format(family=socket.AF_INET6, addr="::1")
+
+            # launch various subprocess instantiating a socket of various
+            # families  and tupes to enrich psutil results
+            tcp4_proc = get_test_subprocess([PYTHON, "-c", tcp4_template])
+            udp4_proc = get_test_subprocess([PYTHON, "-c", udp4_template])
+            if supports_ipv6():
+                tcp6_proc = get_test_subprocess([PYTHON, "-c", tcp6_template])
+                udp6_proc = get_test_subprocess([PYTHON, "-c", udp6_template])
             else:
-                sock.close()
-                return True
+                tcp6_proc = None
+                udp6_proc = None
 
-        # all values are supposed to match Linux's tcp_states.h states
-        # table across all platforms.
-        valid_states = ["ESTABLISHED", "SYN_SENT", "SYN_RECV", "FIN_WAIT1",
-                        "FIN_WAIT2", "TIME_WAIT", "CLOSE", "CLOSE_WAIT",
-                        "LAST_ACK", "LISTEN", "CLOSING", ""]
+            time.sleep(0.1)
+            this_proc = psutil.Process(os.getpid())
+            children_pids = [p.pid for p in this_proc.get_children()]
+            for p in psutil.process_iter():
+                try:
+                    cons = p.get_connections()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+                else:
+                    for conn in cons:
+                        self.assertTrue(conn.type in (socket.SOCK_STREAM,
+                                                      socket.SOCK_DGRAM))
+                        self.assertTrue(conn.family in (socket.AF_INET,
+                                                        socket.AF_INET6))
+                        check_address(conn.local_address, conn.family)
+                        check_address(conn.remote_address, conn.family)
+                        if conn.status not in valid_states:
+                            self.fail("%s is not a valid status" %conn.status)
+                        # actually try to bind the local socket
+                        s = socket.socket(conn.family, conn.type)
+                        s.bind((conn.local_address[0], 0))
+                        s.close()
 
-        tcp_template = "import socket;" \
-                       "s = socket.socket({family}, socket.SOCK_STREAM);" \
-                       "s.bind(('{addr}', 0));" \
-                       "s.listen(1);" \
-                       "conn, addr = s.accept();"
-
-        udp_template = "import socket, time;" \
-                       "s = socket.socket({family}, socket.SOCK_DGRAM);" \
-                       "s.bind(('{addr}', 0));" \
-                       "time.sleep(100);"
-
-        tcp4_template = tcp_template.format(family=socket.AF_INET, addr="127.0.0.1")
-        udp4_template = udp_template.format(family=socket.AF_INET, addr="127.0.0.1")
-        tcp6_template = tcp_template.format(family=socket.AF_INET6, addr="::1")
-        udp6_template = udp_template.format(family=socket.AF_INET6, addr="::1")
-
-        # launch various subprocess instantiating a socket of various
-        # families  and tupes to enrich psutil results
-        tcp4_proc = get_test_subprocess([PYTHON, "-c", tcp4_template])
-        udp4_proc = get_test_subprocess([PYTHON, "-c", udp4_template])
-        if supports_ipv6():
-            tcp6_proc = get_test_subprocess([PYTHON, "-c", tcp6_template])
-            udp6_proc = get_test_subprocess([PYTHON, "-c", udp6_template])
-        else:
-            tcp6_proc = None
-            udp6_proc = None
-
-        time.sleep(0.1)
-        this_proc = psutil.Process(os.getpid())
-        children_pids = [p.pid for p in this_proc.get_children()]
-        for p in psutil.process_iter():
-            try:
-                cons = p.get_connections()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
-            else:
-                for conn in cons:
-                    self.assertTrue(conn.type in (socket.SOCK_STREAM,
-                                                  socket.SOCK_DGRAM))
-                    self.assertTrue(conn.family in (socket.AF_INET,
-                                                    socket.AF_INET6))
-                    check_address(conn.local_address, conn.family)
-                    check_address(conn.remote_address, conn.family)
-                    if conn.status not in valid_states:
-                        self.fail("%s is not a valid status" %conn.status)
-                    # actually try to bind the local socket
-                    s = socket.socket(conn.family, conn.type)
-                    s.bind((conn.local_address[0], 0))
-                    s.close()
-
-                # check matches against subprocesses
-                if p.pid in children_pids:
-                    self.assertTrue(len(cons) == 1)
-                    conn = cons[0]
-                    # TCP v4
-                    if p.pid == tcp4_proc.pid:
-                        self.assertEqual(conn.family, socket.AF_INET)
-                        self.assertEqual(conn.type, socket.SOCK_STREAM)
-                        self.assertEqual(conn.local_address[0], "127.0.0.1")
-                        self.assertEqual(conn.remote_address, ())
-                        self.assertEqual(conn.status, "LISTEN")
-                    # UDP v4
-                    elif p.pid == udp4_proc.pid:
-                        self.assertEqual(conn.family, socket.AF_INET)
-                        self.assertEqual(conn.type, socket.SOCK_DGRAM)
-                        self.assertEqual(conn.local_address[0], "127.0.0.1")
-                        self.assertEqual(conn.remote_address, ())
-                        self.assertEqual(conn.status, "")
-                    # TCP v6
-                    elif p.pid == getattr(tcp6_proc, "pid", None):
-                        self.assertEqual(conn.family, socket.AF_INET6)
-                        self.assertEqual(conn.type, socket.SOCK_STREAM)
-                        self.assertEqual(conn.local_address[0], "::1")
-                        self.assertEqual(conn.remote_address, ())
-                        self.assertEqual(conn.status, "LISTEN")
-                    # UDP v6
-                    elif p.pid == getattr(udp6_proc, "pid", None):
-                        self.assertEqual(conn.family, socket.AF_INET6)
-                        self.assertEqual(conn.type, socket.SOCK_DGRAM)
-                        self.assertEqual(conn.local_address[0], "::1")
-                        self.assertEqual(conn.remote_address, ())
-                        self.assertEqual(conn.status, "")
+                    # check matches against subprocesses
+                    if p.pid in children_pids:
+                        self.assertTrue(len(cons) == 1)
+                        conn = cons[0]
+                        # TCP v4
+                        if p.pid == tcp4_proc.pid:
+                            self.assertEqual(conn.family, socket.AF_INET)
+                            self.assertEqual(conn.type, socket.SOCK_STREAM)
+                            self.assertEqual(conn.local_address[0], "127.0.0.1")
+                            self.assertEqual(conn.remote_address, ())
+                            self.assertEqual(conn.status, "LISTEN")
+                        # UDP v4
+                        elif p.pid == udp4_proc.pid:
+                            self.assertEqual(conn.family, socket.AF_INET)
+                            self.assertEqual(conn.type, socket.SOCK_DGRAM)
+                            self.assertEqual(conn.local_address[0], "127.0.0.1")
+                            self.assertEqual(conn.remote_address, ())
+                            self.assertEqual(conn.status, "")
+                        # TCP v6
+                        elif p.pid == getattr(tcp6_proc, "pid", None):
+                            self.assertEqual(conn.family, socket.AF_INET6)
+                            self.assertEqual(conn.type, socket.SOCK_STREAM)
+                            self.assertEqual(conn.local_address[0], "::1")
+                            self.assertEqual(conn.remote_address, ())
+                            self.assertEqual(conn.status, "LISTEN")
+                        # UDP v6
+                        elif p.pid == getattr(udp6_proc, "pid", None):
+                            self.assertEqual(conn.family, socket.AF_INET6)
+                            self.assertEqual(conn.type, socket.SOCK_DGRAM)
+                            self.assertEqual(conn.local_address[0], "::1")
+                            self.assertEqual(conn.remote_address, ())
+                            self.assertEqual(conn.status, "")
 
     def test_parent_ppid(self):
         this_parent = os.getpid()
@@ -647,7 +657,8 @@ class TestCase(unittest.TestCase):
             self.assert_(isinstance(p.get_open_files(), list))
             for path in p.get_open_files():
                 self.assert_(isinstance(path, (unicode, str)))
-        if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
+        if not POSIX and self.__class__.__name__ != "LimitedUserTestCase" \
+        and SUPPORT_CONNECTIONS:
             self.assert_(isinstance(p.get_connections(), list))
         self.assert_(isinstance(p.is_running(), bool))
         if not OSX or self.__class__.__name__ != "LimitedUserTestCase":
