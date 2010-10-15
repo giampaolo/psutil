@@ -740,7 +740,10 @@ class TestCase(unittest.TestCase):
                     valid_procs += 1
                 except (psutil.NoSuchProcess, psutil.AccessDenied), err:
                     self.assertEqual(err.pid, p.pid)
+                    if err.name:
+                        self.assertEqual(err.name, p.name)
                     self.assertTrue(str(err))
+                    self.assertTrue(err.msg)
                 except:
                     trace = traceback.format_exc()
                     self.fail('Exception raised for method %s, pid %s:\n%s'

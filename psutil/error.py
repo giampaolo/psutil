@@ -16,20 +16,20 @@ class NoSuchProcess(Error):
     or no longer exists (zombie).
     """
 
-    def __init__(self, pid, name, msg=None):
+    def __init__(self, pid, name=None, msg=None):
         self.pid = pid
         self.name = name
         self.msg = msg
-
-    def __str__(self):
-        if self.msg:
-            return self.msg
-        else:
-            if self.name:
+        if msg is None:
+            if name:
                 details = "(pid=%s, name=%s)" % (self.pid, repr(self.name))
             else:
                 details = "(pid=%s)" % self.pid
-            return "process no longer exists " + details
+            self.msg = "process no longer exists " + details
+
+    def __str__(self):
+        return self.msg
+    
 
 class AccessDenied(Error):
     """Exception raised when permission to perform an action is denied."""
@@ -38,15 +38,14 @@ class AccessDenied(Error):
         self.pid = pid
         self.name = name
         self.msg = msg
+        if msg is None:
+            if pid and name:
+                self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
+            elif pid:
+                self.msg = "(pid=%s)" % self.pid
+            else:
+                self.msg = ""
 
     def __str__(self):
-        if self.msg:
-            return self.msg
-        else:
-            if self.pid and self.name:
-                return "(pid=%s, name=%s)" % (self.pid, repr(self.name))
-            elif self.pid:
-                return "(pid=%s)" % self.pid
-            else:
-                return ""
+        return self.msg
 
