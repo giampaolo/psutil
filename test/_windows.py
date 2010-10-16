@@ -22,11 +22,14 @@ except ImportError:
                                  "specific tests were disabled", RuntimeWarning)
     wmi = None
 
+WIN2000 = platform.win32_ver()[0] == '2000'
+
 
 class WindowsSpecificTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.pid = get_test_subprocess().pid
+        sproc = get_test_subprocess()
+        self.pid = sproc.pid
 
     def tearDown(self):
         reap_children()
@@ -35,8 +38,11 @@ class WindowsSpecificTestCase(unittest.TestCase):
         p = psutil.Process(0)
         self.assertRaises(psutil.AccessDenied, p.kill)
 
-    def test_pid_4(self):
-        p = psutil.Process(4)
+    def test_special_pid(self):
+        if not WIN2000:
+            p = psutil.Process(4)
+        else:
+            p = psutil.Process(8)
         self.assertEqual(p.name, 'System')
         # use __str__ to access all common Process properties to check
         # that nothing strange happens
@@ -51,17 +57,22 @@ class WindowsSpecificTestCase(unittest.TestCase):
                 raise
         else:
             self.assertTrue(rss > 0)
-            self.assertEqual(vms, 0)
+            if not WIN2000:
+                self.assertEqual(vms, 0)
 
     def test_signal(self):
         p = psutil.Process(self.pid)
         self.assertRaises(ValueError, p.send_signal, signal.SIGINT)
 
     def test_process_names(self):
+        special_pids = [0, 4]
+        if WIN2000:
+            special_pids.append(8)
         for p in psutil.process_iter():
-            if p.pid in (0, 4):
+            name = p.name.lower()
+            if p.pid in special_pids:
                 continue
-            self.assertTrue(p.name.endswith(".exe") or p.name.endswith(".bin"))
+            self.assertTrue(name.endswith(".exe") or name.endswith(".bin"))
 
     if wmi is not None:
 
@@ -77,10 +88,11 @@ class WindowsSpecificTestCase(unittest.TestCase):
             p = psutil.Process(self.pid)
             self.assertEqual(p.exe, w.ExecutablePath)
 
-        def test_process_cmdline(self):
-            w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-            p = psutil.Process(self.pid)
-            self.assertEqual(' '.join(p.cmdline), w.CommandLine)
+        if not WIN2000:
+            def test_process_cmdline(self):
+                w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+                p = psutil.Process(self.pid)
+                self.assertEqual(' '.join(p.cmdline), w.CommandLine)
 
         def test_process_username(self):
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]

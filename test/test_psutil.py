@@ -52,7 +52,7 @@ def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=None):
     python interpreter is used as test process.
     """
     if cmd is None:
-        cmd = [PYTHON, "-c", "import time; time.sleep(10);"]
+        cmd = [PYTHON, "-c", "import time; time.sleep(3600);"]
     sproc = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, stdin=stdin)
     _subprocesses_started.add(sproc.pid)
     return sproc

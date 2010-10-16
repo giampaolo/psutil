@@ -58,9 +58,10 @@ def _has_connections_support():
 # --- module level constants (gets pushed up to psutil module)
 
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
-_UPTIME = _psutil_mswindows.get_system_uptime()
 TOTAL_PHYMEM = _psutil_mswindows.get_total_phymem()
-CONNECTIONS_SUPPORT = _has_connections_support()
+_UPTIME = _psutil_mswindows.get_system_uptime()
+_WIN2000 = platform.win32_ver()[0] == '2000'
+_CONNECTIONS_SUPPORT = _has_connections_support()
 del _has_connections_support
 
 ERROR_ACCESS_DENIED = 5
@@ -158,14 +159,14 @@ class Impl(object):
     @wrap_exceptions
     def get_process_username(self, pid):
         """Return the name of the user that owns the process"""
-        if pid in (0, 4):
+        if pid in (0, 4) or pid == 8 and _WIN2000:
             return 'NT AUTHORITY\\SYSTEM'
         return _psutil_mswindows.get_process_username(pid);
 
     @wrap_exceptions
     def get_process_create_time(self, pid):
         # special case for kernel process PIDs; return system uptime
-        if pid in (0, 4):
+        if pid in (0, 4) or pid == 8 and _WIN2000:
             return _UPTIME
         return _psutil_mswindows.get_process_create_time(pid)
 
@@ -183,7 +184,7 @@ class Impl(object):
 
     @wrap_exceptions
     def get_process_cwd(self, pid):
-        if pid in (0, 4):
+        if pid in (0, 4) or pid == 8 and _WIN2000:
             return ''
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
@@ -192,7 +193,7 @@ class Impl(object):
 
     @wrap_exceptions
     def get_open_files(self, pid):
-        if pid in (0, 4):
+        if pid in (0, 4) or pid == 8 and _WIN2000:
             return []
         retlist = []
         # Filenames come in in native format like:
@@ -218,7 +219,7 @@ class Impl(object):
         retlist = _psutil_mswindows.get_process_connections(pid)
         return [conn_tuple(*conn) for conn in retlist]
 
-    if CONNECTIONS_SUPPORT:
+    if _CONNECTIONS_SUPPORT:
         @wrap_exceptions
         def get_connections(self, pid):
             conn_tuple = namedtuple('connection', 'family type local_address ' \
