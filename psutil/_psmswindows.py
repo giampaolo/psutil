@@ -212,18 +212,11 @@ class Impl(object):
                     retlist.append(file)
         return retlist
 
-    @wrap_exceptions
-    def get_connections(self, pid):
-        conn_tuple = namedtuple('connection', 'family type local_address ' \
-                                              'remote_address status')
-        retlist = _psutil_mswindows.get_process_connections(pid)
-        return [conn_tuple(*conn) for conn in retlist]
-
     if _CONNECTIONS_SUPPORT:
         @wrap_exceptions
         def get_connections(self, pid):
             conn_tuple = namedtuple('connection', 'family type local_address ' \
-                                                  'remote_address status')
+                                                  'remote_address status fd')
             retlist = _psutil_mswindows.get_process_connections(pid)
             return [conn_tuple(*conn) for conn in retlist]
     else:
