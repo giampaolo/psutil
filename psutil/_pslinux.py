@@ -293,20 +293,21 @@ class Impl(object):
     def get_connections(self, pid):
         if pid == 0:
             return []
-        descriptors = []
+        inodes = {}
         # os.listdir() is gonna raise a lot of access denied 
         # exceptions in case of unprivileged user; that's fine: 
         # lsof does the same so it's unlikely that we can to better.
-        for name in os.listdir("/proc/%s/fd" %pid):
+        for fd in os.listdir("/proc/%s/fd" %pid):
             try:
-                fd = os.readlink("/proc/%s/fd/%s" %(pid, name))
+                inode = os.readlink("/proc/%s/fd/%s" %(pid, fd))
             except OSError:
                 continue
-            if fd.startswith('socket:['):
-                # the process is using a TCP connection
-                descriptors.append(fd[8:][:-1])  # extract the fd number
+            if inode.startswith('socket:['):
+                # the process is using a socket
+                inode = inode[8:][:-1]
+                inodes[inode] = fd
 
-        if not descriptors:
+        if not inodes:
             # no connections for this process
             return []
 
@@ -316,19 +317,21 @@ class Impl(object):
             f.readline()  # skip the first line
             for line in f:
                 _, laddr, raddr, status, _, _, _, _, _, inode = line.split()[:10]
-                if inode in descriptors:
+                if inode in inodes:
                     laddr = self._decode_address(laddr, family)
                     raddr = self._decode_address(raddr, family)
                     if _type == socket.SOCK_STREAM:
                         status = _TCP_STATES_TABLE[status]
                     else:
                         status = ""
-                    conn = conntuple(family, _type, laddr, raddr, status)
+                    fd = int(inodes[inode])
+                    conn = conntuple(family, _type, laddr, raddr, status, fd)
                     retlist.append(conn)
+            f.close()
             return retlist
 
         conntuple = namedtuple('connection', 'family type local_address ' \
-                                             'remote_address status')
+                                             'remote_address status fd')
         tcp4 = process("/proc/net/tcp", socket.AF_INET, socket.SOCK_STREAM)
         tcp6 = process("/proc/net/tcp6", socket.AF_INET6, socket.SOCK_STREAM)
         udp4 = process("/proc/net/udp", socket.AF_INET, socket.SOCK_DGRAM)
@@ -338,7 +341,7 @@ class Impl(object):
 #    --- lsof implementation
 #
 #    def get_connections(self, pid):
-#        return _psposix.get_process_connections(pid)
+#        return _psposix.LsofParser(pid, self._process_name).get_process_connections()
 
     def _get_ppid(self, pid):
         f = open("/proc/%s/status" % pid)

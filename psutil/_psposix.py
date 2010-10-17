@@ -88,7 +88,8 @@ class LsofParser:
         #           (P) protocol type (TCP, UPD, Unix)
         #           (t) socket family (IPv4, IPv6)
         #           (T) connection status
-        cmd = "lsof -p %s -i -a -F0nPtT -n -P" % self.pid
+        #           (f) file descriptors
+        cmd = "lsof -p %s -i -a -F0nPtTf -n -P" % self.pid
         stdout = self.runcmd(cmd)
         if not stdout:
             return []
@@ -96,7 +97,7 @@ class LsofParser:
         lines = stdout.split()
         del lines[0]  # first line contains the PID
         conn_tuple = namedtuple('connection', 'family type local_address ' \
-                                              'remote_address status')
+                                              'remote_address status fd')
         for line in lines:
             line = line.strip("\x00")
             fields = {}
@@ -112,6 +113,7 @@ class LsofParser:
             _type = self.socket_table[fields['P']]
             family = self.socket_table[fields['t']]
             peers = fields['n']
+            fd = int(fields['f'])
             if _type == socket.SOCK_STREAM:
                 status = fields['TST']
             else:                
@@ -124,7 +126,7 @@ class LsofParser:
                 local_addr = self._normaddress(local_addr, family)
                 remote_addr = self._normaddress(remote_addr, family)
 
-            conn = conn_tuple(family, _type, local_addr, remote_addr, status)
+            conn = conn_tuple(family, _type, local_addr, remote_addr, status, fd)
             connections.append(conn)
 
         return connections
