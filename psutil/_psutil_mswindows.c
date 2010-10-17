@@ -540,6 +540,9 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
 
     hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            return NoSuchProcess();
+        }
         return PyErr_SetFromWindowsErr(0);
     }
 
@@ -1055,6 +1058,9 @@ static PyObject* get_process_open_files(PyObject* self, PyObject* args)
                                       FALSE,
                                       pid)))
     {
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            return NoSuchProcess();
+        }
         return PyErr_SetFromWindowsErr(0);
     }
 
@@ -1130,6 +1136,9 @@ static PyObject* get_process_username(PyObject* self, PyObject* args)
     /* Open the process and its token. */
 
     if (!(processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid))) {
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            return NoSuchProcess();
+        }
         return PyErr_SetFromWindowsErr(0);
     }
 
