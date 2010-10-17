@@ -14,12 +14,12 @@ import warnings
 import atexit
 
 import psutil
-from test_psutil import reap_children, get_test_subprocess
+from test_psutil import reap_children, get_test_subprocess, wait_for_pid
 try:
     import wmi
-except ImportError:
-    atexit.register(warnings.warn, "Couldn't import wmi module; some Windows "
-                                 "specific tests were disabled", RuntimeWarning)
+except ImportError, err:
+    atexit.register(warnings.warn, "Couldn't run wmi tests: %s" % str(err),
+                    RuntimeWarning)
     wmi = None
 
 WIN2000 = platform.win32_ver()[0] == '2000'
@@ -29,6 +29,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
 
     def setUp(self):
         sproc = get_test_subprocess()
+        wait_for_pid(sproc.pid)
         self.pid = sproc.pid
 
     def tearDown(self):
