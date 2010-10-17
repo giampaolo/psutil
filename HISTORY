@@ -20,6 +20,7 @@ NEW FEATURES
  * Issue 114: process username Windows implementation has been rewritten in pure
    C and no longer uses WMI resulting in a big speedup. Also, pywin32 is no
    longer required as a third-party dependancy. (patch by wj32)
+ * Issue 117: added support for Windows 2000.
 
 BUGFIXES
 
