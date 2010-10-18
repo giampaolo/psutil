@@ -924,6 +924,9 @@ if hasattr(os, 'getuid'):
             def test_get_connections(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_get_connections, self)
 
+            def test_connection_fromfd(self):
+                self.assertRaises(psutil.AccessDenied, TestCase.test_connection_fromfd, self)
+
 
 def test_main():
     tests = []

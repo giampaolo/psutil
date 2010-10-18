@@ -72,6 +72,8 @@ class LsofParser:
                 line = line.replace("tVREG\x00n", "")
                 line = line.replace("tREG\x00n", "")
                 file = line.strip("\x00")
+                if not os.path.isfile(os.path.realpath(file)):
+                    continue
                 files.append(file)
         return files
 
