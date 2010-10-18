@@ -175,6 +175,10 @@ def wrap_exceptions(callable):
 
 class Impl(object):
 
+    _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
+    _cputimes_ntuple = namedtuple('cputimes', 'user system')
+    _connection_ntuple = namedtuple('connection', 'family type local_address '
+                                                  'remote_address status fd')
     def __init__(self):
         self._process_name = None
 
@@ -209,8 +213,8 @@ class Impl(object):
 
         return (pid, self._get_ppid(pid), name, exe, cmdline,
                                   self._get_process_uid(pid),
-                                  self._get_process_gid(pid))
-
+                                  self._get_process_gid(pid))                                 
+                                 
     @wrap_exceptions
     def get_cpu_times(self, pid):
         # special case for 0 (kernel process) PID
@@ -224,8 +228,7 @@ class Impl(object):
         values = st.split(' ')
         utime = float(values[11]) / _CLOCK_TICKS
         stime = float(values[12]) / _CLOCK_TICKS
-        cputimes = namedtuple('cpuinfo', 'user system')
-        return cputimes(utime, stime)
+        return self._cputimes_ntuple(utime, stime)
 
     @wrap_exceptions
     def get_process_create_time(self, pid):
@@ -244,7 +247,7 @@ class Impl(object):
         # seconds since the epoch, in UTC.
         starttime = (float(values[19]) / _CLOCK_TICKS) + _UPTIME
         return starttime
-
+        
     @wrap_exceptions
     def get_memory_info(self, pid):
         # special case for 0 (kernel processes) PID
@@ -256,14 +259,13 @@ class Impl(object):
         _flag = False
         for line in f:
             if (not _flag) and line.startswith("VmSize:"):
-                virtual_size = int(line.split()[1])
+                virtual_size = int(line.split()[1]) * 1024
                 _flag = True
             elif line.startswith("VmRSS"):
-                resident_size = int(line.split()[1])
+                resident_size = int(line.split()[1]) * 1024
                 break
         f.close()
-        meminfo = namedtuple('meminfo', 'rss vms')
-        return meminfo(resident_size * 1024, virtual_size * 1024)
+        return self._meminfo_ntuple(resident_size, virtual_size)
 
     @wrap_exceptions
     def get_process_cwd(self, pid):
@@ -325,13 +327,12 @@ class Impl(object):
                     else:
                         status = ""
                     fd = int(inodes[inode])
-                    conn = conntuple(family, _type, laddr, raddr, status, fd)
+                    conn = self._connection_ntuple(family, _type, laddr, raddr, 
+                                                   status, fd)
                     retlist.append(conn)
             f.close()
             return retlist
 
-        conntuple = namedtuple('connection', 'family type local_address ' \
-                                             'remote_address status fd')
         tcp4 = process("/proc/net/tcp", socket.AF_INET, socket.SOCK_STREAM)
         tcp6 = process("/proc/net/tcp6", socket.AF_INET6, socket.SOCK_STREAM)
         udp4 = process("/proc/net/udp", socket.AF_INET, socket.SOCK_DGRAM)

@@ -77,6 +77,9 @@ def wrap_exceptions(method):
 
 class Impl(object):
 
+    _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
+    _cputimes_ntuple = namedtuple('cputimes', 'user system')
+
     def __init__(self):
         self._process_name = None
 
@@ -93,15 +96,13 @@ class Impl(object):
     def get_cpu_times(self, pid):
         """return a tuple containing process user/kernel time."""
         user, system = _psutil_bsd.get_cpu_times(pid)
-        cputimes = namedtuple('cputimes', 'user system')
-        return cputimes(user, system)
+        return self._cputimes_ntuple(user, system)
 
     @wrap_exceptions
     def get_memory_info(self, pid):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms = _psutil_bsd.get_memory_info(pid)
-        meminfo = namedtuple('meminfo', 'rss vms')
-        return meminfo(rss, vms)
+        return self._meminfo_ntuple(rss, vms)
 
     @wrap_exceptions
     def get_process_create_time(self, pid):

@@ -123,6 +123,10 @@ def wrap_exceptions(callable):
 
 class Impl(object):
 
+    _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
+    _cputimes_ntuple = namedtuple('cputimes', 'user system')
+    _connection_ntuple = namedtuple('connection', 'family type local_address '
+                                                  'remote_address status fd')
     def __init__(self):
         self._process_name = None
 
@@ -142,8 +146,7 @@ class Impl(object):
         if pid == 0:
             return (0, 0)
         rss, vms = _psutil_mswindows.get_memory_info(pid)
-        meminfo = namedtuple('meminfo', 'rss vms')
-        return meminfo(rss, vms)
+        return self._meminfo_ntuple(rss, vms)
 
     @wrap_exceptions
     def kill_process(self, pid):
@@ -173,8 +176,7 @@ class Impl(object):
     @wrap_exceptions
     def get_cpu_times(self, pid):
         user, system = _psutil_mswindows.get_process_cpu_times(pid)
-        cputimes = namedtuple('cputimes', 'user system')
-        return cputimes(user, system)
+        return self._cputimes_ntuple(user, system)
 
     def suspend_process(self, pid):
         return _psutil_mswindows.suspend_process(pid)
@@ -215,11 +217,10 @@ class Impl(object):
     if _CONNECTIONS_SUPPORT:
         @wrap_exceptions
         def get_connections(self, pid):
-            conn_tuple = namedtuple('connection', 'family type local_address ' \
-                                                  'remote_address status fd')
             retlist = _psutil_mswindows.get_process_connections(pid)
-            return [conn_tuple(*conn) for conn in retlist]
+            return [self._connection_ntuple(*conn) for conn in retlist]
     else:
         def get_connections(self, pid):
             raise NotImplementedError("feature not supported on this Windows "
                                       "version")
+
