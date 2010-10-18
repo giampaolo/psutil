@@ -161,14 +161,14 @@ def wrap_exceptions(callable):
     """Call callable into a try/except clause and translate ENOENT,
     EACCES and EPERM in NoSuchProcess or AccessDenied exceptions.
     """
-    def wrapper(self, pid, *args, **kwargs):
+    def wrapper(self, *args, **kwargs):
         try:
-            return callable(self, pid, *args, **kwargs)
+            return callable(self, *args, **kwargs)
         except (OSError, IOError), err:
             if err.errno == errno.ENOENT:  # no such file or directory
-                raise NoSuchProcess(pid, self._process_name)
+                raise NoSuchProcess(self.pid, self._process_name)
             if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(pid, self._process_name)
+                raise AccessDenied(self.pid, self._process_name)
             raise
     return wrapper
 
@@ -179,18 +179,19 @@ class Impl(object):
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
     _connection_ntuple = namedtuple('connection', 'family type local_address '
                                                   'remote_address status fd')
-    def __init__(self):
+    def __init__(self, pid):
+        self.pid = pid
         self._process_name = None
 
     @wrap_exceptions
-    def get_process_info(self, pid):
+    def get_process_info(self):
         """Returns a process info class."""
-        if pid == 0:
+        if self.pid == 0:
             # special case for 0 (kernel process) PID
-            return (pid, 0, 'sched', '', [], 0, 0)
+            return (self.pid, 0, 'sched', '', [], 0, 0)
 
         # determine name
-        f = open("/proc/%s/stat" %pid)
+        f = open("/proc/%s/stat" % self.pid)
         try:
             name = f.read().split(' ')[1].replace('(', '').replace(')', '')
         finally:
@@ -199,28 +200,27 @@ class Impl(object):
 
         # determine executable
         try:
-            exe = os.readlink("/proc/%s/exe" %pid)
+            exe = os.readlink("/proc/%s/exe" % self.pid)
         except OSError:
             exe = ""
 
         # determine cmdline
-        f = open("/proc/%s/cmdline" %pid)
+        f = open("/proc/%s/cmdline" % self.pid)
         try:
             # return the args as a list
             cmdline = [x for x in f.read().split('\x00') if x]
         finally:
             f.close()
 
-        return (pid, self._get_ppid(pid), name, exe, cmdline,
-                                  self._get_process_uid(pid),
-                                  self._get_process_gid(pid))                                 
+        return (self.pid, self._get_ppid(), name, exe, cmdline,
+                self._get_process_uid(), self._get_process_gid())
                                  
     @wrap_exceptions
-    def get_cpu_times(self, pid):
+    def get_cpu_times(self):
         # special case for 0 (kernel process) PID
-        if pid == 0:
+        if self.pid == 0:
             return (0.0, 0.0)
-        f = open("/proc/%s/stat" %pid)
+        f = open("/proc/%s/stat" % self.pid)
         st = f.read().strip()
         f.close()
         # ignore the first two values ("pid (exe)")
@@ -231,11 +231,11 @@ class Impl(object):
         return self._cputimes_ntuple(utime, stime)
 
     @wrap_exceptions
-    def get_process_create_time(self, pid):
+    def get_process_create_time(self):
         # special case for 0 (kernel processes) PID; return system uptime
-        if pid == 0:
+        if self.pid == 0:
             return _UPTIME
-        f = open("/proc/%s/stat" %pid)
+        f = open("/proc/%s/stat" % self.pid)
         st = f.read().strip()
         f.close()
         # ignore the first two values ("pid (exe)")
@@ -249,11 +249,11 @@ class Impl(object):
         return starttime
         
     @wrap_exceptions
-    def get_memory_info(self, pid):
+    def get_memory_info(self):
         # special case for 0 (kernel processes) PID
-        if pid == 0:
+        if self.pid == 0:
             return (0, 0)
-        f = open("/proc/%s/status" % pid)
+        f = open("/proc/%s/status" % self.pid)
         virtual_size = 0
         resident_size = 0
         _flag = False
@@ -268,17 +268,17 @@ class Impl(object):
         return self._meminfo_ntuple(resident_size, virtual_size)
 
     @wrap_exceptions
-    def get_process_cwd(self, pid):
-        if pid == 0:
+    def get_process_cwd(self):
+        if self.pid == 0:
             return ''
-        return os.readlink("/proc/%s/cwd" % pid)
+        return os.readlink("/proc/%s/cwd" % self.pid)
 
     @wrap_exceptions
-    def get_open_files(self, pid):
+    def get_open_files(self):
         retlist = []
-        files = os.listdir("/proc/%s/fd" % pid)
+        files = os.listdir("/proc/%s/fd" % self.pid)
         for link in files:
-            file = "/proc/%s/fd/%s" % (pid, link)
+            file = "/proc/%s/fd/%s" % (self.pid, link)
             if os.path.islink(file):
                 file = os.readlink(file)
                 if file.startswith("socket:["):
@@ -292,16 +292,16 @@ class Impl(object):
         return retlist
 
     @wrap_exceptions
-    def get_connections(self, pid):
-        if pid == 0:
+    def get_connections(self):
+        if self.pid == 0:
             return []
         inodes = {}
         # os.listdir() is gonna raise a lot of access denied 
         # exceptions in case of unprivileged user; that's fine: 
         # lsof does the same so it's unlikely that we can to better.
-        for fd in os.listdir("/proc/%s/fd" %pid):
+        for fd in os.listdir("/proc/%s/fd" % self.pid):
             try:
-                inode = os.readlink("/proc/%s/fd/%s" %(pid, fd))
+                inode = os.readlink("/proc/%s/fd/%s" % (self.pid, fd))
             except OSError:
                 continue
             if inode.startswith('socket:['):
@@ -341,19 +341,19 @@ class Impl(object):
 
 #    --- lsof implementation
 #
-#    def get_connections(self, pid):
+#    def get_connections(self):
 #        return _psposix.LsofParser(pid, self._process_name).get_process_connections()
 
-    def _get_ppid(self, pid):
-        f = open("/proc/%s/status" % pid)
+    def _get_ppid(self):
+        f = open("/proc/%s/status" % self.pid)
         for line in f:
             if line.startswith("PPid:"):
                 # PPid: nnnn
                 f.close()
                 return int(line.split()[1])
 
-    def _get_process_uid(self, pid):
-        f = open("/proc/%s/status" %pid)
+    def _get_process_uid(self):
+        f = open("/proc/%s/status" % self.pid)
         for line in f:
             if line.startswith('Uid:'):
                 # Uid line provides 4 values which stand for real,
@@ -362,8 +362,8 @@ class Impl(object):
                 f.close()
                 return int(line.split()[1])
 
-    def _get_process_gid(self, pid):
-        f = open("/proc/%s/status" %pid)
+    def _get_process_gid(self):
+        f = open("/proc/%s/status" % self.pid)
         for line in f:
             if line.startswith('Gid:'):
                 # Uid line provides 4 values which stand for real,

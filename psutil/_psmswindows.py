@@ -109,14 +109,14 @@ def wrap_exceptions(callable):
     WindowsError 5 AccessDenied exception is raised we translate it
     into psutil.AccessDenied
     """
-    def wrapper(self, pid, *args, **kwargs):
+    def wrapper(self, *args, **kwargs):
         try:
-            return callable(self, pid, *args, **kwargs)
+            return callable(self, *args, **kwargs)
         except OSError, err:
             if err.errno in (errno.EACCES, ERROR_ACCESS_DENIED):
-                raise AccessDenied(pid, self._process_name)
+                raise AccessDenied(self.pid, self._process_name)
             if err.errno == errno.ESRCH:
-                raise NoSuchProcess(pid, self._process_name)
+                raise NoSuchProcess(self.pid, self._process_name)
             raise
     return wrapper
 
@@ -127,82 +127,84 @@ class Impl(object):
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
     _connection_ntuple = namedtuple('connection', 'family type local_address '
                                                   'remote_address status fd')
-    def __init__(self):
+    def __init__(self, pid):
+        self.pid = pid
         self._process_name = None
 
     @wrap_exceptions
-    def get_process_info(self, pid):
+    def get_process_info(self):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.
         """
-        info_tuple = _psutil_mswindows.get_process_info(pid)
+        info_tuple = _psutil_mswindows.get_process_info(self.pid)
         self._process_name = info_tuple[2]
         return info_tuple
 
     @wrap_exceptions
-    def get_memory_info(self, pid):
+    def get_memory_info(self):
         """Returns a tuple or RSS/VMS memory usage in bytes."""
         # special case for 0 (kernel processes) PID
-        if pid == 0:
+        if self.pid == 0:
             return (0, 0)
-        rss, vms = _psutil_mswindows.get_memory_info(pid)
+        rss, vms = _psutil_mswindows.get_memory_info(self.pid)
         return self._meminfo_ntuple(rss, vms)
 
     @wrap_exceptions
-    def kill_process(self, pid):
+    def kill_process(self):
         """Terminates the process with the given PID."""
         try:
-            return _psutil_mswindows.kill_process(pid)
+            return _psutil_mswindows.kill_process(self.pid)
         except OSError, err:
             # work around issue #24
-            if (pid == 0) and err.errno in (errno.EINVAL, ERROR_INVALID_PARAMETER):
-                raise AccessDenied(pid, self._process_name)
+            if (self.pid == 0) and \
+            err.errno in (errno.EINVAL, ERROR_INVALID_PARAMETER):
+                raise AccessDenied(self.pid, self._process_name)
             raise
 
     @wrap_exceptions
-    def get_process_username(self, pid):
+    def get_process_username(self):
         """Return the name of the user that owns the process"""
-        if pid in (0, 4) or pid == 8 and _WIN2000:
+        if self.pid in (0, 4) or self.pid == 8 and _WIN2000:
             return 'NT AUTHORITY\\SYSTEM'
-        return _psutil_mswindows.get_process_username(pid);
+        return _psutil_mswindows.get_process_username(self.pid);
 
     @wrap_exceptions
-    def get_process_create_time(self, pid):
+    def get_process_create_time(self):
         # special case for kernel process PIDs; return system uptime
-        if pid in (0, 4) or pid == 8 and _WIN2000:
+        if self.pid in (0, 4) or self.pid == 8 and _WIN2000:
             return _UPTIME
-        return _psutil_mswindows.get_process_create_time(pid)
+        return _psutil_mswindows.get_process_create_time(self.pid)
 
     @wrap_exceptions
-    def get_cpu_times(self, pid):
-        user, system = _psutil_mswindows.get_process_cpu_times(pid)
+    def get_cpu_times(self):
+        user, system = _psutil_mswindows.get_process_cpu_times(self.pid)
         return self._cputimes_ntuple(user, system)
 
-    def suspend_process(self, pid):
-        return _psutil_mswindows.suspend_process(pid)
+    def suspend_process(self):
+        return _psutil_mswindows.suspend_process(self.pid)
 
-    def resume_process(self, pid):
-        return _psutil_mswindows.resume_process(pid)
+    def resume_process(self):
+        return _psutil_mswindows.resume_process(self.pid)
 
     @wrap_exceptions
-    def get_process_cwd(self, pid):
-        if pid in (0, 4) or pid == 8 and _WIN2000:
+    def get_process_cwd(self):
+        if self.pid in (0, 4) or self.pid == 8 and _WIN2000:
             return ''
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
-        path = _psutil_mswindows.get_process_cwd(pid)
+        path = _psutil_mswindows.get_process_cwd(self.pid)
         return os.path.normpath(path)
 
     @wrap_exceptions
-    def get_open_files(self, pid):
-        if pid in (0, 4) or pid == 8 and _WIN2000:
+    def get_open_files(self):
+        if self.pid in (0, 4) or self.pid == 8 and _WIN2000:
             return []
         retlist = []
         # Filenames come in in native format like:
         # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
         # Convert the first part in the corresponding drive letter
         # (e.g. "C:\") by using Windows's QueryDosDevice()
-        raw_file_names = _psutil_mswindows.get_process_open_files(pid)
+        raw_file_names = _psutil_mswindows.get_process_open_files(self.pid)
         for file in raw_file_names:
             if sys.version_info >= (3,):
                 file = file.decode('utf8')
@@ -216,11 +218,11 @@ class Impl(object):
 
     if _CONNECTIONS_SUPPORT:
         @wrap_exceptions
-        def get_connections(self, pid):
-            retlist = _psutil_mswindows.get_process_connections(pid)
+        def get_connections(self):
+            retlist = _psutil_mswindows.get_process_connections(self.pid)
             return [self._connection_ntuple(*conn) for conn in retlist]
     else:
-        def get_connections(self, pid):
+        def get_connections(self):
             raise NotImplementedError("feature not supported on this Windows "
                                       "version")
 

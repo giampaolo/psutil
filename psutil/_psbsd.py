@@ -63,14 +63,14 @@ def wrap_exceptions(method):
     OSError "No such process" exception is raised we assume the process
     has died and raise psutil.NoSuchProcess instead.
     """
-    def wrapper(self, pid, *args, **kwargs):
+    def wrapper(self, *args, **kwargs):
         try:
-            return method(self, pid, *args, **kwargs)
+            return method(self, *args, **kwargs)
         except OSError, err:
             if err.errno == errno.ESRCH:
-                raise NoSuchProcess(pid, self._process_name)
+                raise NoSuchProcess(self.pid, self._process_name)
             if err.errno == errno.EPERM:
-                raise AccessDenied(pid, self._process_name)
+                raise AccessDenied(self.pid, self._process_name)
             raise
     return wrapper
 
@@ -80,41 +80,44 @@ class Impl(object):
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
 
-    def __init__(self):
+    def __init__(self, pid):
+        self.pid = pid
         self._process_name = None
 
     @wrap_exceptions
-    def get_process_info(self, pid):
+    def get_process_info(self):
         """Returns a tuple that can be passed to the psutil.ProcessInfo class
         constructor.
         """
-        info_tuple = _psutil_bsd.get_process_info(pid)
+        info_tuple = _psutil_bsd.get_process_info(self.pid)
         self._process_name = info_tuple[2]
         return info_tuple
 
     @wrap_exceptions
-    def get_cpu_times(self, pid):
+    def get_cpu_times(self):
         """return a tuple containing process user/kernel time."""
-        user, system = _psutil_bsd.get_cpu_times(pid)
+        user, system = _psutil_bsd.get_cpu_times(self.pid)
         return self._cputimes_ntuple(user, system)
 
     @wrap_exceptions
-    def get_memory_info(self, pid):
+    def get_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
-        rss, vms = _psutil_bsd.get_memory_info(pid)
+        rss, vms = _psutil_bsd.get_memory_info(self.pid)
         return self._meminfo_ntuple(rss, vms)
 
     @wrap_exceptions
-    def get_process_create_time(self, pid):
-        return _psutil_bsd.get_process_create_time(pid)
+    def get_process_create_time(self):
+        return _psutil_bsd.get_process_create_time(self.pid)
 
-    def get_open_files(self, pid):
+    def get_open_files(self):
         """Return files opened by process by parsing lsof output."""
-        return _psposix.LsofParser(pid, self._process_name).get_process_open_files()
+        lsof = _psposix.LsofParser(self.pid, self._process_name)
+        return lsof.get_process_open_files()
 
-    def get_connections(self, pid):
+    def get_connections(self):
         """Return etwork connections opened by a process as a list of
         namedtuples."""
-        return _psposix.LsofParser(pid, self._process_name).get_process_connections()
+        lsof = _psposix.LsofParser(self.pid, self._process_name)
+        return lsof.get_process_connections()
 
 
