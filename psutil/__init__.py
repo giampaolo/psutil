@@ -350,10 +350,6 @@ class Process(object):
         For third party processes (!= os.getpid()) results can differ
         depending on user privileges.
         """
-        # on Windows we can't rely on the underlying implementation to
-        # check for zombie processes
-        if sys.platform.lower().startswith("win32") and not self.is_running():
-            raise NoSuchProcess(self.pid, self._procinfo.name)
         return self._platform_impl.get_connections(self.pid)
 
     def is_running(self):
