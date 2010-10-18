@@ -121,7 +121,8 @@ def wrap_exceptions(callable):
     return wrapper
 
 
-class Impl(object):
+class WindowsProcess(object):
+    """Wrapper class around underlying C implementation."""
 
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
@@ -225,4 +226,6 @@ class Impl(object):
         def get_connections(self):
             raise NotImplementedError("feature not supported on this Windows "
                                       "version")
+
+PlatformProcess = WindowsProcess
 

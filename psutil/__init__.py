@@ -134,8 +134,9 @@ class Process(object):
             raise ValueError("An integer is required")
         if not pid_exists(pid):
             raise NoSuchProcess(pid, None, "no process found with PID %s" % pid)
-        # platform-specific modules define an Impl implementation class
-        self._platform_impl = Impl(pid)
+        # platform-specific modules define an PlatformProcess 
+        # implementation class
+        self._platform_impl = PlatformProcess(pid)
         self._procinfo = _ProcessInfo(pid)
         self.is_proxy = True
         # try to init CPU times, if it raises AccessDenied then suppress
@@ -272,7 +273,7 @@ class Process(object):
         return self._procinfo.create
 
     # available for Windows and Linux only
-    if hasattr(Impl, "get_process_cwd"):
+    if hasattr(PlatformProcess, "get_process_cwd"):
         def getcwd(self):
             """Return a string representing the process current working
             directory.

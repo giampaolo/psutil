@@ -173,7 +173,8 @@ def wrap_exceptions(callable):
     return wrapper
 
 
-class Impl(object):
+class LinuxProcess(object):
+    """Linux process implementation."""
 
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
@@ -409,4 +410,5 @@ class Impl(object):
                                 struct.pack('>4I', *struct.unpack('<4I', ip)))
         return (ip, port)
 
+PlatformProcess = LinuxProcess
 

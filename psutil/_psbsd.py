@@ -75,7 +75,8 @@ def wrap_exceptions(method):
     return wrapper
 
 
-class Impl(object):
+class BSDProcess(object):
+    """Wrapper class around underlying C implementation."""
 
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
@@ -120,4 +121,5 @@ class Impl(object):
         lsof = _psposix.LsofParser(self.pid, self._process_name)
         return lsof.get_process_connections()
 
+PlatformProcess = BSDProcess
 
