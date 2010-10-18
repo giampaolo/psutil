@@ -65,16 +65,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
         p = psutil.Process(self.pid)
         self.assertRaises(ValueError, p.send_signal, signal.SIGINT)
 
-    def test_process_names(self):
-        special_pids = [0, 4]
-        if WIN2000:
-            special_pids.append(8)
-        for p in psutil.process_iter():
-            name = p.name.lower()
-            if p.pid in special_pids:
-                continue
-            self.assertTrue(name.endswith(".exe") or name.endswith(".bin"))
-
     if wmi is not None:
 
         # --- Process class tests
