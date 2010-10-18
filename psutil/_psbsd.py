@@ -78,6 +78,8 @@ def wrap_exceptions(method):
 class BSDProcess(object):
     """Wrapper class around underlying C implementation."""
 
+    __slots__ = ["_meminfo_ntuple", "_cputimes_ntuple", "_connection_ntuple",
+                 "pid", "_process_name"]
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
 

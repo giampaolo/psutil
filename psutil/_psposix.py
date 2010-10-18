@@ -44,6 +44,7 @@ class LsofParser:
                     'IPv6' : socket.AF_INET6}
     _connection_ntuple = namedtuple('connection', 'family type local_address '
                                                   'remote_address status fd')
+                                                  
     def __init__(self, pid, name):
         self.pid = pid
         self.process_name = name

@@ -103,6 +103,8 @@ class _ProcessInfo(object):
     """Class that allows the process information to be passed between
     external code and psutil.  Used directly by the Process class.
     """
+    __slots__ = ["pid", "ppid", "name", "exe", "cmdline", "uid", "gid", 
+                 "create", "username"]
 
     def __init__(self, pid, ppid=None, name=None, exe=None, cmdline=None,
                        uid=None, gid=None):
