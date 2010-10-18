@@ -170,7 +170,8 @@ class LsofParser:
             return ""
         return stdout
 
-    def _which(self, program):
+    @staticmethod
+    def _which(program):
         """Same as UNIX which command. Return None on command not found."""
         def is_exe(fpath):
             return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
@@ -186,7 +187,8 @@ class LsofParser:
                     return exe_file
         return None
 
-    def _normaddress(self, addr, family):
+    @staticmethod
+    def _normaddress(addr, family):
         """Normalize an IP address."""
         assert family in (socket.AF_INET, socket.AF_INET6), "unsupported family"
         if family == socket.AF_INET:

@@ -372,7 +372,8 @@ class Impl(object):
                 f.close()
                 return int(line.split()[1])
 
-    def _decode_address(self, addr, family):
+    @staticmethod
+    def _decode_address(addr, family):
         """Accept an "ip:port" address as displayed in /proc/net/*
         and convert it into a human readable form, like:
 
