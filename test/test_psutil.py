@@ -134,7 +134,8 @@ def skipIf(condition, reason="", warn=False):
     def outer(fun, *args, **kwargs):
         def inner(self):
             if condition:
-                #print "skipped %s\n" % (reason and repr(reason) or '')
+                sys.stdout.write("skipped-")
+                sys.stdout.flush()
                 if warn:
                     objname = "%s.%s" % (self.__class__.__name__, fun.__name__)
                     msg = "%s was skipped" % objname
