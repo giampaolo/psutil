@@ -483,7 +483,7 @@ class TestCase(unittest.TestCase):
             else:
                 self.assertTrue(con.fd > 0)
 
-        if hasattr(socket, "fromfd"):
+        if hasattr(socket, "fromfd") and not WINDOWS:
             def test_connection_fromfd(self):
                 sock = socket.socket()
                 sock.bind(('127.0.0.1', 0))
@@ -500,7 +500,7 @@ class TestCase(unittest.TestCase):
                     self.assertEqual(dupsock.getsockname(), conn.local_address)
                     self.assertNotEqual(sock.fileno(), dupsock.fileno())
                 finally:
-                    sock.close()   
+                    sock.close()
                     dupsock.close()
 
         def test_get_connections_all(self):
@@ -587,12 +587,12 @@ class TestCase(unittest.TestCase):
 
                         if not WINDOWS and hasattr(socket, 'fromfd'):
                             try:
-                                dupsock = socket.fromfd(conn.fd, conn.family, 
+                                dupsock = socket.fromfd(conn.fd, conn.family,
                                                                  conn.type)
                             except (socket.error, OSError), err:
                                 if err.args[0] == errno.EBADF:
                                     continue
-                                else:                                    
+                                else:
                                     raise
                             self.assertEqual(dupsock.family, conn.family)
                             self.assertEqual(dupsock.type, conn.type)
@@ -629,7 +629,7 @@ class TestCase(unittest.TestCase):
                             self.assertEqual(conn.local_address[0], "::1")
                             self.assertEqual(conn.remote_address, ())
                             self.assertEqual(conn.status, "")
-                            
+
     def test_parent_ppid(self):
         this_parent = os.getpid()
         sproc = get_test_subprocess()
@@ -883,7 +883,7 @@ if hasattr(os, 'getuid'):
             os.setegid(self.PROCESS_UID)
             os.seteuid(self.PROCESS_GID)
             TestCase.tearDown(self)
-            
+
         def test_path(self):
             # DeprecationWarning is only raised once
             pass
