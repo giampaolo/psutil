@@ -9,7 +9,8 @@ import sys
 import unittest
 
 import psutil
-from test_psutil import reap_children, POSIX, LINUX, WINDOWS, OSX, BSD
+from test_psutil import reap_children, skipUnless, skipIf, \
+                        POSIX, LINUX, WINDOWS, OSX, BSD
 
 LOOPS = 1000
 TOLERANCE = 4096
@@ -58,6 +59,7 @@ class TestProcessObjectLeaks(unittest.TestCase):
         # includes name, ppid, path, cmdline, uid, gid properties
         self.execute('__str__')
 
+    @skipIf(POSIX)
     def test_username(self):
         self.execute('username')
 
@@ -79,17 +81,21 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def test_is_running(self):
         self.execute('is_running')
 
+    @skipUnless(WINDOWS)
     def test_resume(self):
         self.execute('resume')
 
-    if hasattr(psutil.Process, "getcwd"):
-        def test_getcwd(self):
-            self.execute('getcwd')
+    @skipUnless(WINDOWS)
+    def test_getcwd(self):
+        self.execute('getcwd')
 
-    if WINDOWS:
-        if hasattr(psutil.Process, "get_open_files"):
-            def test_get_open_files(self):
-                self.execute('get_open_files')
+    @skipUnless(WINDOWS)
+    def test_get_open_files(self):
+        self.execute('get_open_files')
+
+    @skipUnless(WINDOWS)
+    def test_get_connections(self):
+        self.execute('get_connections')
 
 
 class TestModuleFunctionsLeaks(unittest.TestCase):
@@ -129,6 +135,7 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
     def test_get_pid_list(self):
         self.execute('get_pid_list')
 
+    @skipIf(POSIX)
     def test_pid_exists(self):
         self.execute('pid_exists', os.getpid())
 
