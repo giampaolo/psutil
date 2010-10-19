@@ -5,6 +5,7 @@
 
 import unittest
 import subprocess
+import sys
 
 import psutil
 
@@ -16,6 +17,8 @@ class LinuxSpecificTestCase(unittest.TestCase):
         # command line utility
         p = subprocess.Popen("free", shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
+        if sys.version_info >= (3,):
+            output = str(output, sys.stdout.encoding)
         free_cmem = int(output.split('\n')[1].split()[6])
         psutil_cmem = psutil.cached_phymem() / 1024
         self.assertEqual(free_cmem, psutil_cmem)
@@ -25,6 +28,8 @@ class LinuxSpecificTestCase(unittest.TestCase):
         # command line utility
         p = subprocess.Popen("free", shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
+        if sys.version_info >= (3,):
+            output = str(output, sys.stdout.encoding)
         free_cmem = int(output.split('\n')[1].split()[5])
         psutil_cmem = psutil.phymem_buffers() / 1024
         self.assertEqual(free_cmem, psutil_cmem)
