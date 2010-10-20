@@ -10,7 +10,7 @@ from keyword import iskeyword as _iskeyword
 import sys as _sys
 
 
-def namedtuple(typename, field_names, verbose=False, rename=False):
+def namedtuple(typename, field_names):
     """A collections.namedtuple implementation written in Python
     to support Python versions < 2.6.
 
@@ -23,16 +23,6 @@ def namedtuple(typename, field_names, verbose=False, rename=False):
          # names separated by whitespace and/or commas
         field_names = field_names.replace(',', ' ').split()
     field_names = tuple(map(str, field_names))
-    if rename:
-        names = list(field_names)
-        seen = set()
-        for i, name in enumerate(names):
-            if (not min(c.isalnum() or c=='_' for c in name) or _iskeyword(name)
-                or not name or name[0].isdigit() or name.startswith('_')
-                or name in seen):
-                    names[i] = '_%d' % i
-            seen.add(name)
-        field_names = tuple(names)
     for name in (typename,) + field_names:
         if not min(c.isalnum() or c=='_' for c in name):
             raise ValueError('Type names and field names can only contain ' \
@@ -46,7 +36,7 @@ def namedtuple(typename, field_names, verbose=False, rename=False):
                              'number: %r' % name)
     seen_names = set()
     for name in field_names:
-        if name.startswith('_') and not rename:
+        if name.startswith('_'):
             raise ValueError('Field names cannot start with an underscore: %r'
                              % name)
         if name in seen_names:
@@ -86,9 +76,6 @@ def namedtuple(typename, field_names, verbose=False, rename=False):
             return tuple(self) \n\n''' % locals()
     for i, name in enumerate(field_names):
         template += '        %s = _property(_itemgetter(%d))\n' % (name, i)
-    if verbose:
-        print template
-
     # Execute the template string in a temporary namespace
     namespace = dict(_itemgetter=_itemgetter, __name__='namedtuple_%s' % typename,
                      _property=property, _tuple=tuple)
@@ -109,3 +96,4 @@ def namedtuple(typename, field_names, verbose=False, rename=False):
         pass
 
     return result
+
