@@ -7,11 +7,14 @@
 processes in a portable way by using Python.
 """
 
+__version__ = "0.2.0"
+version_info = tuple([int(num) for num in __version__.split('.')])
+
 __all__ = [
     # exceptions
     "Error", "NoSuchProcess", "AccessDenied",
     # constants
-    "NUM_CPUS", "TOTAL_PHYMEM", "__version__",
+    "NUM_CPUS", "TOTAL_PHYMEM", "version_info", "__version__",
     # classes
     "Process",
     # functions
@@ -20,7 +23,7 @@ __all__ = [
     "used_virtmem", "cpu_times", "cpu_percent",
     ]
 
-__version__ = '0.2.0'
+
 
 
 import sys

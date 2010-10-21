@@ -8,6 +8,8 @@ import os
 import shutil
 from distutils.core import setup, Extension
 
+from psutil import __version__
+
 # Hack for Python 3 to tell distutils to run 2to3 against the files
 # copied in the build directory before installing.
 # Reference: http://osdir.com/ml/python.python-3000.cvs/2008-03/msg00127.html
@@ -56,7 +58,7 @@ else:
 def main():
     setup_args = dict(
         name='psutil',
-        version='0.2.0',
+        version=__version__,
         description='A process utilities module for Python',
         long_description="""
 psutil is a module providing convenience functions for managing processes in a
@@ -86,6 +88,7 @@ portable way by using Python.""",
               'Programming Language :: Python :: 3',
               'Programming Language :: Python :: 3.0',
               'Programming Language :: Python :: 3.1',
+              'Programming Language :: Python :: 3.2',
               'Topic :: System :: Monitoring',
               'Topic :: System :: Systems Administration',
               'Topic :: Utilities',
@@ -103,3 +106,4 @@ portable way by using Python.""",
 
 if __name__ == '__main__':
     main()
+
