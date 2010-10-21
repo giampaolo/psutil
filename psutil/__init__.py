@@ -8,24 +8,16 @@ processes in a portable way by using Python.
 """
 
 __all__ = [
-    "NoSuchProcess",
-    "AccessDenied",
-    "NUM_CPUS",
+    # exceptions
+    "Error", "NoSuchProcess", "AccessDenied",
+    # constants
+    "NUM_CPUS", "TOTAL_PHYMEM", "__version__",
+    # classes
     "Process",
-    "test",
-    "CPUTimes",
-    "pid_exists",
-    "get_pid_list",
-    "process_iter",
-    "get_process_list",
-    "TOTAL_PHYMEM",
-    "avail_phymem",
-    "used_phymem",
-    "total_virtmem",
-    "avail_virtmem",
-    "used_virtmem",
-    "cpu_times",
-    "cpu_percent",
+    # functions
+    "test", "pid_exists", "get_pid_list", "process_iter", "get_process_list",
+    "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem", 
+    "used_virtmem", "cpu_times", "cpu_percent",
     ]
 
 __version__ = '0.2.0'
@@ -36,12 +28,13 @@ import os
 import time
 import signal
 import warnings
+import errno
 try:
     import pwd, grp
 except ImportError:
     pwd = grp = None
 
-from psutil.error import *
+from psutil.error import Error, NoSuchProcess, AccessDenied
 
 # import the appropriate module for our platform only
 if sys.platform.lower().startswith("linux"):

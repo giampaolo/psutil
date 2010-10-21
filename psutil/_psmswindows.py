@@ -17,7 +17,7 @@ except ImportError:
     from psutil.compat import namedtuple  # python < 2.6
 
 import _psutil_mswindows
-from psutil.error import *
+from psutil.error import AccessDenied, NoSuchProcess
 
 
 def _has_connections_support():

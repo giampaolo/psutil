@@ -3,6 +3,14 @@
 # $Id$
 #
 
+__all__ = ["NUM_CPUS", "TOTAL_PHYMEM",
+           "PlatformProcess",
+           "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem", 
+           "used_virtmem", "get_system_cpu_times", "pid_exists", "get_pid_list",
+           "phymem_buffers", "cached_phymem"
+          ]
+
+
 import os
 import errno
 import socket
@@ -16,7 +24,7 @@ except ImportError:
     from psutil.compat import namedtuple  # python < 2.6
 
 from psutil import _psposix
-from psutil.error import *
+from psutil.error import AccessDenied, NoSuchProcess
 
 
 def _get_uptime():

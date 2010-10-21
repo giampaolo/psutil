@@ -12,7 +12,7 @@ except ImportError:
 
 import _psutil_bsd
 import _psposix
-from psutil.error import *
+from psutil.error import AccessDenied, NoSuchProcess
 
 
 # --- constants
