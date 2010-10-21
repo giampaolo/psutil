@@ -214,6 +214,13 @@ class LinuxProcess(object):
             exe = os.readlink("/proc/%s/exe" % self.pid)
         except OSError:
             exe = ""
+        # It seems symlinks can point to a deleted/invalid location
+        # (this usually  happens with "pulseaudio" process).
+        # However, if we had permissions to execute readlink() it's
+        # likely that we'll be able to figure out exe from argv[0] 
+        # later on.
+        if exe.endswith(" (deleted)") and not os.path.isfile(exe):
+            exe = ""
 
         # determine cmdline
         f = open("/proc/%s/cmdline" % self.pid)
