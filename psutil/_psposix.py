@@ -61,7 +61,8 @@ class LsofParser:
         # -F0nPt == (0) separate lines with "\x00"
         #           (n) file name
         #           (t) file type
-        cmd = "lsof -a -p %s -n -P -F0tn" % self.pid
+        #           (f) file descriptr
+        cmd = "lsof -a -p %s -n -P -F0ftn" % self.pid
         stdout = self.runcmd(cmd)
         if not stdout:
             return []
@@ -69,13 +70,20 @@ class LsofParser:
         lines = stdout.split("\n")
         del lines[0]  # first line contains the PID
         for line in lines:
-            if line.startswith("tVREG\x00n") or line.startswith("tREG\x00n"):
-                line = line.replace("tVREG\x00n", "")
-                line = line.replace("tREG\x00n", "")
-                file = line.strip("\x00")
-                if not os.path.isfile(os.path.realpath(file)):
+            if not line:
+                continue
+            line = line.strip("\x00")
+            fields = {}
+            for field in line.split("\x00"):
+                key, value = field[0], field[1:]
+                fields[key] = value
+            _type = fields['t']
+            fd = fields['f']
+            name = fields['n']
+            if 'REG' in _type and fd.isdigit():
+                if not os.path.isfile(os.path.realpath(name)):
                     continue
-                files.append(file)
+                files.append(name)
         return files
 
     def get_process_connections(self):
