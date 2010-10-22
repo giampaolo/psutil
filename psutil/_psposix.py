@@ -77,6 +77,8 @@ class LsofParser:
             for field in line.split("\x00"):
                 key, value = field[0], field[1:]
                 fields[key] = value
+            if not 't' in fields:
+                continue
             _type = fields['t']
             fd = fields['f']
             name = fields['n']
