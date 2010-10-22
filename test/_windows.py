@@ -83,7 +83,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
             def test_process_cmdline(self):
                 w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
                 p = psutil.Process(self.pid)
-                self.assertEqual(' '.join(p.cmdline), w.CommandLine)
+                self.assertEqual(' '.join(p.cmdline), w.CommandLine.replace('"', ''))
 
         def test_process_username(self):
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
