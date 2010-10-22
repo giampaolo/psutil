@@ -184,12 +184,12 @@ def wrap_exceptions(callable):
 class LinuxProcess(object):
     """Linux process implementation."""
    
-    __slots__ = ["_meminfo_ntuple", "_cputimes_ntuple", "_connection_ntuple",
-                 "pid", "_process_name"]
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
     _connection_ntuple = namedtuple('connection', 'family type local_address '
                                                   'remote_address status fd')
+    __slots__ = ["pid", "_process_name"]
+
     def __init__(self, pid):
         self.pid = pid
         self._process_name = None
