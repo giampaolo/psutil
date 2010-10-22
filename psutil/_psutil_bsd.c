@@ -166,10 +166,8 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     PyObject* infoTuple = NULL;
     PyObject* arglist = NULL;
 
-    // the argument passed should be a process id
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return PyErr_Format(PyExc_RuntimeError, "Invalid argument - no PID provided.");
-    }
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
+        return NULL;
 
     if (0 == pid) {
         // USER   PID %CPU %MEM   VSZ   RSS  TT  STAT STARTED      TIME COMMAND
@@ -199,20 +197,13 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 
         // get_arg_list() returns NULL only if getcmdargs failed with ESRCH
         // (no process with that PID)
-        if (NULL == arglist) {
+        if (NULL == arglist)
             return PyErr_SetFromErrno(PyExc_OSError);
-        }
 
-        // hooray, we got all the data, so return it as a tuple to be passed to
-        // ProcessInfo() constructor
-        infoTuple = Py_BuildValue("llssNll", pid, (long)kp.ki_ppid, kp.ki_comm, "",
-                                  arglist, (long)kp.ki_ruid, (long)kp.ki_rgid);
-
-        if (NULL == infoTuple) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Failed to build process information tuple!");
-        }
-        return infoTuple;
+        // hooray, we got all the data, so return it as a tuple to be 
+        // passed to ProcessInfo() constructor
+        return Py_BuildValue("llssNll", pid, (long)kp.ki_ppid, kp.ki_comm, "",
+                              arglist, (long)kp.ki_ruid, (long)kp.ki_rgid);
     }
 
     // something went wrong, throw an error
@@ -237,11 +228,8 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
     double user_t, sys_t;
     PyObject* timeTuple = NULL;
 
-    // the argument passed should be a process id
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return PyErr_Format(PyExc_RuntimeError,
-                            "Invalid argument - no PID provided.");
-    }
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
+        return NULL;
 
     // build the mib to pass to sysctl to tell it what PID and what info we want
     len = 4;
@@ -263,12 +251,7 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
         sys_t = TV2DOUBLE(kp.ki_rusage.ru_stime);
 
         // convert from microseconds to seconds
-        timeTuple = Py_BuildValue("(dd)", user_t, sys_t);
-        if (NULL == timeTuple) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Failed to build process CPU times tuple!");
-        }
-        return timeTuple;
+        return Py_BuildValue("(dd)", user_t, sys_t);
     }
 
     // something went wrong, throw an error
@@ -311,11 +294,8 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 
-    // the argument passed should be a process id
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return PyErr_Format(PyExc_RuntimeError,
-                            "Invalid argument - no PID provided.");
-    }
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
+        return NULL;
 
     len = 4;
     mib[0] = CTL_KERN;
@@ -323,13 +303,12 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
     len = sizeof(kp);
-    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
-        return PyErr_SetFromErrno(PyExc_OSError);
-    }
 
-    if (len > 0) {
+    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) 
+        return PyErr_SetFromErrno(PyExc_OSError);
+
+    if (len > 0)
         return Py_BuildValue("d", TV2DOUBLE(kp.ki_start));
-    }
 
     return PyErr_Format(PyExc_RuntimeError, "Unable to read process start time.");
 }
@@ -345,11 +324,8 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 
-    // the argument passed should be a process id
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return PyErr_Format(PyExc_RuntimeError,
-                            "Invalid argument - no PID provided.");
-    }
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
+        return NULL;
 
     len = 4;
     mib[0] = CTL_KERN;

@@ -61,34 +61,30 @@ int get_proc_list(struct kinfo_proc **procList, size_t *procCount)
         assert(result == NULL);
         // Call sysctl with a NULL buffer.
         length = 0;
-        err = sysctl( (int *) name, (sizeof(name) / sizeof(*name)) - 1,
-                      NULL, &length,
-                      NULL, 0);
-        if (err == -1) {
+        err = sysctl((int *)name, (sizeof(name) / sizeof(*name)) - 1,
+                     NULL, &length, NULL, 0);
+        if (err == -1)
             err = errno;
-        }
 
         // Allocate an appropriately sized buffer based on the results
         // from the previous call.
         if (err == 0) {
             result = malloc(length);
-            if (result == NULL) {
+            if (result == NULL)
                 err = ENOMEM;
-            }
         }
 
         // Call sysctl again with the new buffer.  If we get an ENOMEM
         // error, toss away our buffer and start again.
         if (err == 0) {
-            err = sysctl( (int *) name, (sizeof(name) / sizeof(*name)) - 1,
-                          result, &length,
-                          NULL, 0);
-            if (err == -1) {
+            err = sysctl((int *) name, (sizeof(name) / sizeof(*name)) - 1,
+                          result, &length, NULL, 0);
+            if (err == -1)
                 err = errno;
-            }
             if (err == 0) {
                 done = 1;
-            } else if (err == ENOMEM) {
+            } 
+            else if (err == ENOMEM) {
                 assert(result != NULL);
                 free(result);
                 result = NULL;
@@ -106,8 +102,7 @@ int get_proc_list(struct kinfo_proc **procList, size_t *procCount)
     *procList = result;
     *procCount = length / sizeof(struct kinfo_proc);
 
-    assert( (err == 0) == (*procList != NULL) );
-
+    assert((err == 0) == (*procList != NULL));
     return err;
 }
 
@@ -128,19 +123,15 @@ char *getcmdpath(long pid, size_t *pathsize)
 
     // call with a null buffer first to determine if we need a buffer
     if (sysctl(mib, 4, NULL, &size, NULL, 0) == -1) {
-        //perror("sysctl");
         return NULL;
     }
 
     path = malloc(size);
-    if (path == NULL) {
-        //perror("sysctl/malloc");
+    if (path == NULL)
         return NULL;
-    }
 
     *pathsize = size;
     if (sysctl(mib, 4, path, &size, NULL, 0) == -1) {
-        //perror("sysctl");
         free(path);
         return NULL;       /* Insufficient privileges */
     }
@@ -173,17 +164,13 @@ char *getcmdargs(long pid, size_t *argsize)
     mib[1] = KERN_ARGMAX;
 
     size = sizeof(argmax);
-    if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1) {
-        //perror("sysctl");
+    if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1)
         return NULL;
-    }
 
     /* Allocate space for the arguments. */
     procargs = (char *)malloc(argmax);
-    if (procargs == NULL) {
-        //printf("getcmdargs(): Cannot allocate memory for procargs\n");
+    if (procargs == NULL) 
         return NULL;
-    }
 
     /*
      * Make a sysctl() call to get the raw argument space of the process.
@@ -195,8 +182,6 @@ char *getcmdargs(long pid, size_t *argsize)
 
     size = argmax;
     if (sysctl(mib, 4, procargs, &size, NULL, 0) == -1) {
-        //printf("sysctl(%lu): %s\n", pid, strerror(errno));
-        //perror("sysctl (raw args) for PID ");
         free(procargs);
         return NULL;       /* Insufficient privileges */
     }
@@ -216,11 +201,10 @@ PyObject* get_arg_list(long pid)
     PyObject *retlist = Py_BuildValue("[]");
     PyObject *item = NULL;
 
-    if (pid < 0) {
+    if (pid < 0) 
         return retlist;
-    }
 
-    // this leaks memory (grrr)
+    // XXX - this leaks memory (grrr)
     argstr = getcmdargs(pid, &argsize);
 
     if (NULL == argstr) {
