@@ -195,17 +195,14 @@ static PyObject* pid_exists(PyObject* self, PyObject* args)
 {
     long pid;
     int status;
-
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return PyErr_Format(PyExc_RuntimeError,
-                            "Invalid argument - no PID provided.");
-	}
+    
+	if (! PyArg_ParseTuple(args, "l", &pid)) 
+    	return NULL;
 
     status = pid_is_running(pid);
     if (-1 == status) {
         return NULL; // exception raised in pid_is_running()
     }
-
     return PyBool_FromLong(status);
 }
 
@@ -252,19 +249,15 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     PyObject* ret;
     ret = PyLong_FromLong(0);
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
         return NULL;
-    }
 
-    if (pid < 0) {
+    if (pid < 0)
         return NULL;
-    }
 
     pid_return = pid_is_running(pid);
-    if (pid_return == 0) {
+    if (pid_return == 0)
         return NoSuchProcess();
-    }
 
     if (pid_return == -1) {
         return NULL; // exception raised from within pid_is_running()
@@ -299,10 +292,8 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
     DWORD       ProcessExitCode = 0;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
         return NULL;
-    }
 
     // special case for PID 0
     if (0 == pid){
@@ -374,10 +365,8 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
     DWORD     ProcessExitCode = 0;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
         return NULL;
-    }
 
     // special case for PIDs 0 and 4
     if ( (0 == pid) || (4 == pid) ){
@@ -455,10 +444,8 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     PyObject* arglist;
     PyObject* name;
 
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return PyErr_Format(PyExc_RuntimeError,
-                       "get_process_info(): Invalid argument - no PID provided.");
-	}
+	if (! PyArg_ParseTuple(args, "l", &pid)) 
+	    return NULL;
 
     // special case for PID 0 (System Idle Process)
     if (0 == pid) {
@@ -533,10 +520,8 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     DWORD pid;
     DWORD ProcessExitCode = 0;
 
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return PyErr_Format(PyExc_RuntimeError,
-                            "Invalid argument - no PID provided.");
-	}
+	if (! PyArg_ParseTuple(args, "l", &pid)) 
+	    return NULL;
 
     hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
@@ -841,10 +826,8 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     PyObject *cwd_from_wchar = NULL;
     PyObject *cwd = NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
         return NULL;
-    }
 
     processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                                 FALSE, pid);
@@ -1012,10 +995,8 @@ static PyObject* suspend_process(PyObject* self, PyObject* args)
 {
     long pid;
     int  suspend = 1;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
         return NULL;
-    }
     if (! suspend_resume_process(pid, suspend)){
         PyErr_SetFromWindowsErr(0);
         return NULL;
@@ -1029,10 +1010,8 @@ static PyObject* resume_process(PyObject* self, PyObject* args)
 {
     long pid;
     int suspend = 0;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
         return NULL;
-    }
     if (! suspend_resume_process(pid, suspend)){
         PyErr_SetFromWindowsErr(0);
         return NULL;
@@ -1049,10 +1028,8 @@ static PyObject* get_process_open_files(PyObject* self, PyObject* args)
     DWORD      ProcessExitCode = 0;
     PyObject*  filesList;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
         return NULL;
-    }
 
     if (!(processHandle = OpenProcess(PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION,
                                       FALSE,
@@ -1088,10 +1065,8 @@ static PyObject* _QueryDosDevice(PyObject* self, PyObject* args)
     TCHAR d = TEXT('A');
     TCHAR     szBuff[5];
 
-    if (!PyArg_ParseTuple(args, "s", &lpDevicePath)) {
-        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+    if (!PyArg_ParseTuple(args, "s", &lpDevicePath)) 
         return NULL;
-    }
 
     while(d <= TEXT('Z'))
     {
@@ -1128,10 +1103,8 @@ static PyObject* get_process_username(PyObject* self, PyObject* args)
     DWORD ProcessExitCode = 0;
     PyObject* returnObject;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
         return NULL;
-    }
 
     /* Open the process and its token. */
 
@@ -1368,10 +1341,8 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
     CHAR addressBufferRemote[65];
     PyObject* addressTupleRemote;
 
-    if (!PyArg_ParseTuple(args, "l", &pid)) {
-        PyErr_SetString(PyExc_RuntimeError, "Invalid argument");
+    if (!PyArg_ParseTuple(args, "l", &pid)) 
         return NULL;
-    }
 
     if (pid_is_running(pid) == 0) {
         return NoSuchProcess();
