@@ -101,15 +101,15 @@ static int psutil_osx_clear(PyObject *m) {
 
 
 static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "psutil_osx",
-        NULL,
-        sizeof(struct module_state),
-        PsutilMethods,
-        NULL,
-        psutil_osx_traverse,
-        psutil_osx_clear,
-        NULL
+    PyModuleDef_HEAD_INIT,
+    "psutil_osx",
+    NULL,
+    sizeof(struct module_state),
+    PsutilMethods,
+    NULL,
+    psutil_osx_traverse,
+    psutil_osx_clear,
+    NULL
 };
 
 #define INITERROR return NULL
@@ -213,10 +213,8 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     PyObject* arglist = NULL;
 
 	// the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError,
-                            "Invalid argument - no PID provided.");
-	}
+	if (! PyArg_ParseTuple(args, "l", &pid)) 
+        return NULL;
 
     // Fill out the first three components of the mib
     mib[0] = CTL_KERN;
@@ -306,11 +304,8 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     struct task_thread_times_info task_times;
 
     // the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError,
-                            "Invalid argument - no PID provided.");
-	}
-
+	if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
 
     /* task_for_pid() requires special privileges
      * "This function can be called only if the process is owned by the
@@ -370,10 +365,8 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     struct kinfo_proc kp;
 
 	// the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError,
-                            "Invalid argument - no PID provided.");
-	}
+	if (! PyArg_ParseTuple(args, "l", &pid)) 
+        return NULL;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
@@ -416,11 +409,8 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     mach_port_t object_name;
 
     // the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-		return PyErr_Format(PyExc_RuntimeError,
-                            "Invalid argument - no PID provided.");
-	}
-
+	if (! PyArg_ParseTuple(args, "l", &pid)) 
+        return NULL;
 
     /* task_for_pid() requires special privileges
      * "This function can be called only if the process is owned by the
@@ -576,3 +566,4 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
                     (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLOCKS_PER_SEC
             );
 }
+

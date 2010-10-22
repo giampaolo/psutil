@@ -68,7 +68,8 @@ int get_proc_list(kinfo_proc **procList, size_t *procCount)
             } else {
                 size = size2;
             }
-        } else {
+        } 
+        else {
             ptr = malloc(size);
         }
         if (ptr == NULL) {
@@ -251,9 +252,11 @@ PyObject* get_arg_list(long pid)
     if (r == 0) {
         //PySequence_Tuple(args);
         argList = PySequence_List(args);
-    } else if (r == ARGS_ACCESS_DENIED) { //-2
+    } 
+    else if (r == ARGS_ACCESS_DENIED) { //-2
         argList = Py_BuildValue("[]");
-    } else {
+    } 
+    else {
         argList = Py_BuildValue("");
     }
 
