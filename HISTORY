@@ -30,6 +30,9 @@ BUGFIXES
  * Issue 102: orphaned process handles obtained by using OpenProcess in C were
    left behind every time Process class was instantiated.
  * Issue 111: path and name Process properties report erroneous values.
+ * Issue 120: cpu_percent() always returning 100% on OS X
+ * Issue 108: get_memory_info and get_cpu_times failing with AccessDenied for
+   PID 0 or when run as non-root user
 
 API CHANGES
 
