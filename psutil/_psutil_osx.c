@@ -318,17 +318,22 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     err = task_for_pid(mach_task_self(), pid, &task);
     if ( err == KERN_SUCCESS) {
         info_count = TASK_BASIC_INFO_COUNT;
-        if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info,
-            &info_count) != KERN_SUCCESS) {
-               return PyErr_Format(PyExc_RuntimeError,
-                        "task_info(TASK_BASIC_INFO) failed for pid %lu", pid);
+        err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count);
+        if (err != KERN_SUCCESS) {
+                if (err == 4) { // errcode 4 is "invalid argument" (access denied)
+                    return AccessDenied();
+                }
+
+                //otherwise throw a runtime error with appropriate error code
+                return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu - %s (%i)",
+                       pid, mach_error_string(err), err);
+
         }
 
         info_count = TASK_THREAD_TIMES_INFO_COUNT;
         if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&task_times,
             &info_count) != KERN_SUCCESS) {
-                return PyErr_Format(PyExc_RuntimeError,
-                    "task_info(TASK_THREAD_TIMES_INFO) failed for pid %lu", pid);
+                return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_THREAD_TIMES_INFO) failed for pid %lu", pid);
         }
     }
 
@@ -425,10 +430,16 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     err = task_for_pid(mach_task_self(), pid, &task);
     if ( err == KERN_SUCCESS) {
         info_count = TASK_BASIC_INFO_COUNT;
-        if (task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info,
-            &info_count) != KERN_SUCCESS) {
-                return PyErr_Format(PyExc_RuntimeError,
-                            "task_info(TASK_BASIC_INFO) failed for pid %lu", pid);
+        err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count);
+        if (err != KERN_SUCCESS) {
+                if (err == 4) { // errcode 4 is "invalid argument" (access denied)
+                    return AccessDenied();
+                }
+
+                //otherwise throw a runtime error with appropriate error code
+                return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu - %s (%i)",
+                       pid, mach_error_string(err), err);
+
         }
 
         /* Issue #73 http://code.google.com/p/psutil/issues/detail?id=73

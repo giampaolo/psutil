@@ -19,7 +19,7 @@ __all__ = [
     "Process",
     # functions
     "test", "pid_exists", "get_pid_list", "process_iter", "get_process_list",
-    "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem", 
+    "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem",
     "used_virtmem", "cpu_times", "cpu_percent",
     ]
 
@@ -99,7 +99,7 @@ class _ProcessInfo(object):
     """Class that allows the process information to be passed between
     external code and psutil.  Used directly by the Process class.
     """
-    __slots__ = ["pid", "ppid", "name", "exe", "cmdline", "uid", "gid", 
+    __slots__ = ["pid", "ppid", "name", "exe", "cmdline", "uid", "gid",
                  "create", "username"]
 
     def __init__(self, pid, ppid=None, name=None, exe=None, cmdline=None,
@@ -132,7 +132,7 @@ class Process(object):
             raise ValueError("An integer is required")
         if not pid_exists(pid):
             raise NoSuchProcess(pid, None, "no process found with PID %s" % pid)
-        # platform-specific modules define an PlatformProcess 
+        # platform-specific modules define an PlatformProcess
         # implementation class
         self._platform_impl = PlatformProcess(pid)
         self._procinfo = _ProcessInfo(pid)
@@ -161,7 +161,7 @@ class Process(object):
                 details = "(pid=%s, name=%s, cmdline=%s)" % (pid, name, cmdline)
             else:
                 details = "(pid=%s, name=%s)" % (pid, name)
-        return "%s.%s %s" % (self.__class__.__module__, 
+        return "%s.%s %s" % (self.__class__.__module__,
                              self.__class__.__name__, details)
 
     def __repr__(self):
