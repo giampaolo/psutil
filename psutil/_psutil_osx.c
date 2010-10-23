@@ -331,9 +331,14 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
         }
 
         info_count = TASK_THREAD_TIMES_INFO_COUNT;
-        if (task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&task_times,
-            &info_count) != KERN_SUCCESS) {
-                return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_THREAD_TIMES_INFO) failed for pid %lu", pid);
+        err = task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&task_times, &info_count);
+        if (err != KERN_SUCCESS) {
+                if (err == 4) { // errcode 4 is "invalid argument" (access denied)
+                    return AccessDenied();
+                }
+
+                return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_THREAD_TIMES_INFO) failed for pid %lu - %s (%i)",
+                        pid, mach_error_string(err), err);
         }
     }
 
