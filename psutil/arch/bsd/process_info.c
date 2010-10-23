@@ -83,7 +83,7 @@ int get_proc_list(struct kinfo_proc **procList, size_t *procCount)
                 err = errno;
             if (err == 0) {
                 done = 1;
-            } 
+            }
             else if (err == ENOMEM) {
                 assert(result != NULL);
                 free(result);
@@ -169,7 +169,7 @@ char *getcmdargs(long pid, size_t *argsize)
 
     /* Allocate space for the arguments. */
     procargs = (char *)malloc(argmax);
-    if (procargs == NULL) 
+    if (procargs == NULL)
         return NULL;
 
     /*
@@ -201,8 +201,9 @@ PyObject* get_arg_list(long pid)
     PyObject *retlist = Py_BuildValue("[]");
     PyObject *item = NULL;
 
-    if (pid < 0) 
+    if (pid < 0) {
         return retlist;
+    }
 
     // XXX - this leaks memory (grrr)
     argstr = getcmdargs(pid, &argsize);
