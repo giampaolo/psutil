@@ -124,7 +124,7 @@ atexit.register(reap_children, search_all=True)
 
 def skipIf(condition, reason="", warn=False):
     """Decorator which skip a test under if condition is satisfied.
-    This is a substitute of unittest.skipIf which is available 
+    This is a substitute of unittest.skipIf which is available
     only in python 2.7 and 3.2.
     If 'reason' argument is provided this will be printed during
     tests execution.
@@ -147,7 +147,7 @@ def skipIf(condition, reason="", warn=False):
                 return fun(self, *args, **kwargs)
         return inner
     return outer
-    
+
 def skipUnless(condition, reason="", warn=False):
     """Contrary of skipIf."""
     if not condition:
@@ -257,13 +257,12 @@ class TestCase(unittest.TestCase):
         # test CPUTimes's __iter__ and __str__ implementation
         self.assertEqual(total, sum(times))
         str(times)
-        
+
     def test_system_cpu_times2(self):
         t1 = sum(psutil.cpu_times())
         time.sleep(0.1)
         t2 = sum(psutil.cpu_times())
-        difference = t2 - t1 
-        print difference
+        difference = t2 - t1
         if not difference >= 0.1:
             self.fail("difference %s" % difference)
 
@@ -275,7 +274,7 @@ class TestCase(unittest.TestCase):
             self.assertTrue(isinstance(percent, float))
             self.assertTrue(percent >= 0.0)
             self.assertTrue(percent <= 100.0)
-            
+
     # os.times() is broken on OS X and *BSD, see:
     # http://bugs.python.org/issue1040026
     # It's also broken on Windows on Python 2.5 (not 2.6)
