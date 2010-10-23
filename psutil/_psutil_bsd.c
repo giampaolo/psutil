@@ -104,8 +104,9 @@ init_psutil_bsd(void)
 #else
     PyObject *module = Py_InitModule("_psutil_bsd", PsutilMethods);
 #endif
-    if (module == NULL)
+    if (module == NULL) {
         INITERROR;
+    }
     struct module_state *st = GETSTATE(module);
 
     st->error = PyErr_NewException("_psutil_bsd.Error", NULL, NULL);
@@ -166,8 +167,9 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     PyObject* infoTuple = NULL;
     PyObject* arglist = NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) 
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     if (0 == pid) {
         // USER   PID %CPU %MEM   VSZ   RSS  TT  STAT STARTED      TIME COMMAND
@@ -197,10 +199,11 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
 
         // get_arg_list() returns NULL only if getcmdargs failed with ESRCH
         // (no process with that PID)
-        if (NULL == arglist)
+        if (NULL == arglist) {
             return PyErr_SetFromErrno(PyExc_OSError);
+        }
 
-        // hooray, we got all the data, so return it as a tuple to be 
+        // hooray, we got all the data, so return it as a tuple to be
         // passed to ProcessInfo() constructor
         return Py_BuildValue("llssNll", pid, (long)kp.ki_ppid, kp.ki_comm, "",
                               arglist, (long)kp.ki_ruid, (long)kp.ki_rgid);
@@ -228,8 +231,9 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
     double user_t, sys_t;
     PyObject* timeTuple = NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) 
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     // build the mib to pass to sysctl to tell it what PID and what info we want
     len = 4;
@@ -294,8 +298,9 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) 
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     len = 4;
     mib[0] = CTL_KERN;
@@ -304,11 +309,13 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     mib[3] = pid;
     len = sizeof(kp);
 
-    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) 
+    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
         return PyErr_SetFromErrno(PyExc_OSError);
+    }
 
-    if (len > 0)
+    if (len > 0) {
         return Py_BuildValue("d", TV2DOUBLE(kp.ki_start));
+    }
 
     return PyErr_Format(PyExc_RuntimeError, "Unable to read process start time.");
 }
@@ -324,8 +331,9 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     size_t len;
     struct kinfo_proc kp;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) 
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     len = 4;
     mib[0] = CTL_KERN;

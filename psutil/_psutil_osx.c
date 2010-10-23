@@ -129,8 +129,9 @@ init_psutil_osx(void)
 #else
     PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
 #endif
-    if (module == NULL)
+    if (module == NULL) {
         INITERROR;
+    }
     struct module_state *st = GETSTATE(module);
 
     st->error = PyErr_NewException("_psutil_osx.Error", NULL, NULL);
@@ -213,8 +214,9 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     PyObject* arglist = NULL;
 
 	// the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) 
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     // Fill out the first three components of the mib
     mib[0] = CTL_KERN;
@@ -304,8 +306,9 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     struct task_thread_times_info task_times;
 
     // the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid))
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     /* task_for_pid() requires special privileges
      * "This function can be called only if the process is owned by the
@@ -365,8 +368,9 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     struct kinfo_proc kp;
 
 	// the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) 
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
@@ -409,8 +413,9 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     mach_port_t object_name;
 
     // the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) 
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     /* task_for_pid() requires special privileges
      * "This function can be called only if the process is owned by the
@@ -560,10 +565,10 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 
     //user, nice, system, idle, iowait, irqm, softirq
 	return Py_BuildValue("(dddd)",
-                    (double)r_load.cpu_ticks[CPU_STATE_USER] / CLOCKS_PER_SEC,
-                    (double)r_load.cpu_ticks[CPU_STATE_NICE] / CLOCKS_PER_SEC,
-                    (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLOCKS_PER_SEC,
-                    (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLOCKS_PER_SEC
+                    (double)r_load.cpu_ticks[CPU_STATE_USER] / CLK_TCK,
+                    (double)r_load.cpu_ticks[CPU_STATE_NICE] / CLK_TCK,
+                    (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
+                    (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
             );
 }
 

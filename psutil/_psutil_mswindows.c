@@ -195,9 +195,10 @@ static PyObject* pid_exists(PyObject* self, PyObject* args)
 {
     long pid;
     int status;
-    
-	if (! PyArg_ParseTuple(args, "l", &pid)) 
+
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
     	return NULL;
+    }
 
     status = pid_is_running(pid);
     if (-1 == status) {
@@ -249,15 +250,18 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     PyObject* ret;
     ret = PyLong_FromLong(0);
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) 
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
-    if (pid < 0)
+    if (pid < 0) {
         return NULL;
+    }
 
     pid_return = pid_is_running(pid);
-    if (pid_return == 0)
+    if (pid_return == 0) {
         return NoSuchProcess();
+    }
 
     if (pid_return == -1) {
         return NULL; // exception raised from within pid_is_running()
@@ -292,8 +296,9 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
     DWORD       ProcessExitCode = 0;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) 
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     // special case for PID 0
     if (0 == pid){
@@ -365,8 +370,9 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
     DWORD     ProcessExitCode = 0;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) 
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     // special case for PIDs 0 and 4
     if ( (0 == pid) || (4 == pid) ){
@@ -444,8 +450,9 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     PyObject* arglist;
     PyObject* name;
 
-	if (! PyArg_ParseTuple(args, "l", &pid)) 
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
 	    return NULL;
+    }
 
     // special case for PID 0 (System Idle Process)
     if (0 == pid) {
@@ -520,8 +527,9 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     DWORD pid;
     DWORD ProcessExitCode = 0;
 
-	if (! PyArg_ParseTuple(args, "l", &pid)) 
+	if (! PyArg_ParseTuple(args, "l", &pid)) {
 	    return NULL;
+    }
 
     hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
@@ -647,8 +655,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 	float idle, kernel, user;
 
 	// Improves performance calling GetProcAddress only the first time
-	if (bFirstCall)
-	{
+	if (bFirstCall) {
         // retrieves GetSystemTimes address in Kernel32
 		GetSystemTimes=(GST_PROC)GetProcAddress(GetModuleHandle
                                                (TEXT("Kernel32.dll")),
@@ -658,8 +665,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 
 
      // Uses GetSystemTimes if supported (winXP sp1+)
-	if (NULL!=GetSystemTimes)
-	{
+	if (NULL!=GetSystemTimes) {
 		// GetSystemTimes supported
 
 		FILETIME idle_time;
@@ -685,8 +691,8 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
                                       idle);
 
 	}
-	else
-	{
+
+	else {
         // GetSystemTimes NOT supported, use NtQuerySystemInformation instead
 
 		typedef DWORD (_stdcall *NTQSI_PROC) (int, PVOID, ULONG, PULONG);
@@ -698,8 +704,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 
 		// dynamic linking is mandatory to use NtQuerySystemInformation
 		hNtDll = LoadLibrary(TEXT("ntdll.dll"));
-		if (hNtDll != NULL)
-		{
+		if (hNtDll != NULL) {
 			// gets NtQuerySystemInformation address
 			NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
                                         hNtDll, "NtQuerySystemInformation");
@@ -725,8 +730,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 					{
 						// computes system global times summing each processor value
 						idle = user = kernel = 0;
-						for (i=0; i<si.dwNumberOfProcessors; i++)
-						{
+						for (i=0; i<si.dwNumberOfProcessors; i++) {
 							idle += (float)((HI_T * sppi[i].IdleTime.HighPart) + \
                                             (LO_T * sppi[i].IdleTime.LowPart));
 							user += (float)((HI_T * sppi[i].UserTime.HighPart) + \
@@ -752,10 +756,12 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 		} // END LoadLibrary
 
 		PyErr_SetFromWindowsErr(0);
-		if (sppi)
+		if (sppi) {
             free(sppi);
-		if (hNtDll)
+        }
+		if (hNtDll) {
             FreeLibrary(hNtDll);
+        }
 		return 0;
 
 	} // END GetSystemTimes NOT supported
@@ -777,28 +783,26 @@ dwDomainLen, DWORD pid)
     dwULen = dwUserLen;
     dwDLen = dwDomainLen;
 
-    if ( IsValidSid( pSid ) )
-        {
-            // Get user and domain name based on SID
-            if ( LookupAccountSid( NULL, pSid, szUser, &dwULen, szDomain, &dwDLen, &snuSIDNameUse) )
-                {
-                    // LocalSystem processes are incorrectly reported as owned
-                    // by BUILTIN\Administrators We modify that behavior to
-                    // conform to standard taskmanager only if the process is
-                    // actually a System process
-                    if (is_system_proc(pid) == 1) {
-                        // default to *not* changing the data if we fail to
-                        // check for local system privileges, so only look for
-                        // definite confirmed system processes and ignore errors
-                        if ( lstrcmpi(szDomain, TEXT("builtin")) == 0 && lstrcmpi(szUser, TEXT("administrators")) == 0)
-                            {
-                                strncpy  (szUser, "SYSTEM", dwUserLen);
-                                strncpy  (szDomain, "NT AUTHORITY", dwDomainLen);
-                            }
-                    }
-                    return TRUE;
+    if ( IsValidSid( pSid ) ) {
+        // Get user and domain name based on SID
+        if ( LookupAccountSid( NULL, pSid, szUser, &dwULen, szDomain, &dwDLen, &snuSIDNameUse) ) {
+            // LocalSystem processes are incorrectly reported as owned
+            // by BUILTIN\Administrators We modify that behavior to
+            // conform to standard taskmanager only if the process is
+            // actually a System process
+            if (is_system_proc(pid) == 1) {
+                // default to *not* changing the data if we fail to
+                // check for local system privileges, so only look for
+                // definite confirmed system processes and ignore errors
+                if ( lstrcmpi(szDomain, TEXT("builtin")) == 0 && lstrcmpi(szUser, TEXT("administrators")) == 0) {
+                    strncpy  (szUser, "SYSTEM", dwUserLen);
+                    strncpy  (szDomain, "NT AUTHORITY", dwDomainLen);
                 }
+            }
+
+            return TRUE;
         }
+    }
 
     return FALSE;
 }
@@ -826,8 +830,9 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     PyObject *cwd_from_wchar = NULL;
     PyObject *cwd = NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) 
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                                 FALSE, pid);
@@ -838,8 +843,7 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
         return NoSuchProcess();
     }
 
-    if (processHandle == 0)
-    {
+    if (processHandle == 0) {
         PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             return NoSuchProcess();
@@ -853,14 +857,16 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     if (!ReadProcessMemory(processHandle, (PCHAR)pebAddress + 0x10,
         &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
     {
-        CloseHandle(processHandle);
-        if (GetLastError() == ERROR_PARTIAL_COPY) {
-            /* Usually means the process has gone in the meantime */
-            return NoSuchProcess();
-        }
-        else {
-            return PyErr_SetFromWindowsErr(0);
-        }
+            CloseHandle(processHandle);
+
+            if (GetLastError() == ERROR_PARTIAL_COPY) {
+                /* Usually means the process has gone in the meantime */
+                return NoSuchProcess();
+            }
+
+            else {
+                return PyErr_SetFromWindowsErr(0);
+            }
 
     }
 
@@ -935,8 +941,9 @@ int suspend_resume_process(DWORD pid, int suspend)
     THREADENTRY32  te32          = {0};
 
     hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-    if (hThreadSnap == INVALID_HANDLE_VALUE)
+    if (hThreadSnap == INVALID_HANDLE_VALUE) {
         return (FALSE);
+    }
 
     // Fill in the size of the structure before using it.
     te32.dwSize = sizeof(THREADENTRY32);
@@ -995,8 +1002,10 @@ static PyObject* suspend_process(PyObject* self, PyObject* args)
 {
     long pid;
     int  suspend = 1;
-    if (! PyArg_ParseTuple(args, "l", &pid)) 
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
+
     if (! suspend_resume_process(pid, suspend)){
         PyErr_SetFromWindowsErr(0);
         return NULL;
@@ -1010,8 +1019,10 @@ static PyObject* resume_process(PyObject* self, PyObject* args)
 {
     long pid;
     int suspend = 0;
-    if (! PyArg_ParseTuple(args, "l", &pid)) 
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
+
     if (! suspend_resume_process(pid, suspend)){
         PyErr_SetFromWindowsErr(0);
         return NULL;
@@ -1028,8 +1039,9 @@ static PyObject* get_process_open_files(PyObject* self, PyObject* args)
     DWORD      ProcessExitCode = 0;
     PyObject*  filesList;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) 
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     if (!(processHandle = OpenProcess(PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION,
                                       FALSE,
@@ -1065,8 +1077,9 @@ static PyObject* _QueryDosDevice(PyObject* self, PyObject* args)
     TCHAR d = TEXT('A');
     TCHAR     szBuff[5];
 
-    if (!PyArg_ParseTuple(args, "s", &lpDevicePath)) 
+    if (!PyArg_ParseTuple(args, "s", &lpDevicePath)) {
         return NULL;
+    }
 
     while(d <= TEXT('Z'))
     {
@@ -1103,8 +1116,9 @@ static PyObject* get_process_username(PyObject* self, PyObject* args)
     DWORD ProcessExitCode = 0;
     PyObject* returnObject;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) 
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     /* Open the process and its token. */
 
@@ -1341,8 +1355,9 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
     CHAR addressBufferRemote[65];
     PyObject* addressTupleRemote;
 
-    if (!PyArg_ParseTuple(args, "l", &pid)) 
+    if (!PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     if (pid_is_running(pid) == 0) {
         return NoSuchProcess();
