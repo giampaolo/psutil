@@ -257,6 +257,15 @@ class TestCase(unittest.TestCase):
         # test CPUTimes's __iter__ and __str__ implementation
         self.assertEqual(total, sum(times))
         str(times)
+        
+    def test_system_cpu_times2(self):
+        t1 = sum(psutil.cpu_times())
+        time.sleep(0.1)
+        t2 = sum(psutil.cpu_times())
+        difference = t2 - t1 
+        print difference
+        if not difference >= 0.1:
+            self.fail("difference %s" % difference)
 
     def test_system_cpu_percent(self):
         percent = psutil.cpu_percent()
@@ -266,7 +275,7 @@ class TestCase(unittest.TestCase):
             self.assertTrue(isinstance(percent, float))
             self.assertTrue(percent >= 0.0)
             self.assertTrue(percent <= 100.0)
-
+            
     # os.times() is broken on OS X and *BSD, see:
     # http://bugs.python.org/issue1040026
     # It's also broken on Windows on Python 2.5 (not 2.6)
