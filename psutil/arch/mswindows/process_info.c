@@ -1,8 +1,8 @@
 /*
  * $Id$
  *
- * Helper functions related to fetching process information. Used by _psutil_mswindows
- * module methods.
+ * Helper functions related to fetching process information. Used by
+ * _psutil_mswindows module methods.
  */
 
 #include <Python.h>
@@ -16,9 +16,7 @@
 
 /*
  * NtQueryInformationProcess code taken from
- *
  * http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/
- *
  * typedefs needed to compile against ntdll functions not exposted in the API
  */
 typedef LONG NTSTATUS;
@@ -47,6 +45,54 @@ typedef struct _PROCESS_BASIC_INFORMATION
     DWORD UniqueProcessId;
     DWORD ParentProcessId;
 } PROCESS_BASIC_INFORMATION, *PPROCESS_BASIC_INFORMATION;
+
+
+/*
+ * Set OSError(errno=ESRCH, strerror="No such process") Python exception.
+ */
+PyObject *
+NoSuchProcess(void) {
+    PyObject *exc;
+    char *msg = strerror(ESRCH);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+    return NULL;
+}
+
+/*
+ * A wrapper around OpenProcess setting NSP exception if process
+ * no longer exists.
+ * dwDesiredAccess is the first argument exptected by OpenProcess,
+ * pid is the process pid.
+ * Return a process handle or NULL.
+ */
+HANDLE
+GetProcessHandle(DWORD dwDesiredAccess,  DWORD pid)
+{
+    HANDLE hProcess;
+    DWORD  processExitCode = 0;
+
+    hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
+    if (hProcess == NULL) {
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            NoSuchProcess();
+        }
+        else {
+            PyErr_SetFromWindowsErr(0);
+        }
+        return NULL;
+    }
+
+    /* make sure the process is running */
+    GetExitCodeProcess(hProcess, &processExitCode);
+    if (processExitCode == 0) {
+        CloseHandle(hProcess);
+        NoSuchProcess();
+        return NULL;
+    }
+    return hProcess;
+}
 
 
 // fetch the PEB base address from NtQueryInformationProcess()
@@ -121,7 +167,7 @@ int is_system_proc(DWORD pid) {
         return 0;
     }
 
-    hProcess = handle_from_pid(pid);
+    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
     if (NULL == hProcess) {
         // invalid parameter is no such process
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
@@ -155,7 +201,8 @@ int pid_is_running(DWORD pid)
         return 0;
     }
 
-    hProcess = handle_from_pid(pid);
+    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                           FALSE, pid);
     if (NULL == hProcess) {
         // invalid parameter is no such process
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
@@ -213,20 +260,6 @@ int pid_in_proclist(DWORD pid)
 
     free(proclist);
     return 0;
-}
-
-
-// Get a process handle from a pid with PROCESS_QUERY_INFORMATION rights
-HANDLE handle_from_pid(DWORD pid)
-{
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                                  FALSE, pid);
-    /*
-    if (NULL == hProcess) {
-        hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
-    }
-    */
-    return hProcess;
 }
 
 
@@ -321,10 +354,9 @@ PyObject* get_arg_list(long pid)
     PyObject *argList = NULL;
 
 
-    hProcess = handle_from_pid(pid);
-    if(NULL == hProcess) {
-        //printf("Could not open process!: %lu\n", GetLastError());
-        return PyErr_SetFromWindowsErr(0);
+    hProcess = GetProcessHandle(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, pid);
+    if(hProcess == NULL) {
+        return NULL;
     }
 
     pebAddress = GetPebAddress(hProcess);
@@ -386,7 +418,7 @@ PyObject* get_arg_list(long pid)
         // arglist parsed as array of UNICODE_STRING, so convert each to Python
         // string object and add to arg list
         argList = Py_BuildValue("[]");
-        for( i=0; i<nArgs; i++) {
+        for(i=0; i<nArgs; i++) {
             //printf("%d: %.*S (%d characters)\n", i, wcslen(szArglist[i]),
             //                  szArglist[i], wcslen(szArglist[i]));
             arg_from_wchar = PyUnicode_FromWideChar(szArglist[i],

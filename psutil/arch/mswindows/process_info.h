@@ -8,7 +8,8 @@
 #include <Python.h>
 #include <windows.h>
 
-
+PyObject * NoSuchProcess(void);
+HANDLE GetProcessHandle(DWORD dwDesiredAccess,  DWORD pid);
 PVOID GetPebAddress(HANDLE ProcessHandle);
 HANDLE handle_from_pid(DWORD pid);
 BOOL is_running(HANDLE hProcess);
