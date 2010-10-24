@@ -18,6 +18,9 @@
 #include "arch/mswindows/process_info.h"
 #include "arch/mswindows/process_handles.h"
 
+
+// ------------------------ Python init ---------------------------
+
 static PyMethodDef PsutilMethods[] =
 {
      {"get_pid_list", get_pid_list, METH_VARARGS,
@@ -67,19 +70,6 @@ static PyMethodDef PsutilMethods[] =
      {NULL, NULL, 0, NULL}
 };
 
-/*
- * Raises an OSError(errno=ESRCH, strerror="No such process") exception
- * in Python.
- */
-static PyObject *
-NoSuchProcess(void) {
-    PyObject *exc;
-    char *msg = strerror(ESRCH);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
-    return NULL;
-}
 
 struct module_state {
     PyObject *error;
@@ -103,7 +93,6 @@ struct module_state {
         Py_CLEAR(GETSTATE(m)->error);
         return 0;
     }
-
 
     static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
@@ -151,6 +140,60 @@ struct module_state {
 #endif
 }
 
+
+// ------------------------ Utility functions ---------------------------
+
+/*
+ * Raises an OSError(errno=ESRCH, strerror="No such process") exception
+ * in Python.
+ */
+static PyObject *
+NoSuchProcess(void) {
+    PyObject *exc;
+    char *msg = strerror(ESRCH);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+    return NULL;
+}
+
+/*
+ * A wrapper around OpenProcess setting NSP exception if process
+ * no longer exists.
+ * dwDesiredAccess is the first argument exptected by OpenProcess,
+ * pid is the process pid.
+ * Return a process handle or NULL.
+ */
+static HANDLE
+GetProcessHandle(DWORD dwDesiredAccess,  DWORD pid)
+{
+    HANDLE hProcess;
+    DWORD  processExitCode = 0;
+
+    hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
+    if (hProcess == NULL) {
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            NoSuchProcess();
+        }
+        else {
+            PyErr_SetFromWindowsErr(0);
+        }
+        return NULL;
+    }
+
+    /* make sure the process is running */
+    GetExitCodeProcess(hProcess, &processExitCode);
+    if (processExitCode == 0) {
+        CloseHandle(hProcess);
+        NoSuchProcess();
+        return NULL;
+    }
+    return hProcess;
+}
+
+
+
+// ------------------------ Public functions ---------------------------
 
 /*
  * Return a Python float representing the system uptime expressed in seconds
@@ -294,7 +337,6 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     long        pid;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
-    DWORD       ProcessExitCode = 0;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
@@ -305,22 +347,9 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 	   return Py_BuildValue("(dd)", 0.0, 0.0);
     }
 
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-    if (hProcess == NULL){
-        PyErr_SetFromWindowsErr(0);
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            // bad PID so no such process
-            CloseHandle(hProcess);
-            return NoSuchProcess();
-        }
+    hProcess = GetProcessHandle(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, pid);
+    if (hProcess == NULL) {
         return NULL;
-    }
-
-    /* make sure the process is running */
-    GetExitCodeProcess(hProcess, &ProcessExitCode);
-    if (ProcessExitCode == 0) {
-        CloseHandle(hProcess);
-        return NoSuchProcess();
     }
 
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
@@ -368,7 +397,6 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     long long unix_time;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
-    DWORD     ProcessExitCode = 0;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
@@ -379,27 +407,18 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 	   return Py_BuildValue("d", 0.0);
     }
 
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-    if (hProcess == NULL){
-        PyErr_SetFromWindowsErr(0);
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            // bad PID so no such process
-            return NoSuchProcess();
-        }
+    hProcess = GetProcessHandle(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, pid);
+    if (hProcess == NULL) {
         return NULL;
     }
 
-    /* make sure the process is running */
-    GetExitCodeProcess(hProcess, &ProcessExitCode);
-    if (ProcessExitCode == 0) {
-        return NoSuchProcess();
-    }
-
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
-        PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess here
             return NoSuchProcess();
+        }
+        else {
+            PyErr_SetFromWindowsErr(0);
         }
         CloseHandle(hProcess);
         return NULL;
@@ -525,24 +544,14 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
     HANDLE hProcess;
     PROCESS_MEMORY_COUNTERS counters;
     DWORD pid;
-    DWORD ProcessExitCode = 0;
 
 	if (! PyArg_ParseTuple(args, "l", &pid)) {
 	    return NULL;
     }
 
-    hProcess = handle_from_pid(pid);
+    hProcess = GetProcessHandle(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, pid);
     if (NULL == hProcess) {
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            return NoSuchProcess();
-        }
-        return PyErr_SetFromWindowsErr(0);
-    }
-
-    /* make sure the process is running */
-    GetExitCodeProcess(hProcess, &ProcessExitCode);
-    if (ProcessExitCode == 0) {
-        return NoSuchProcess();
+        return NULL;
     }
 
     if (! GetProcessMemoryInfo(hProcess, &counters, sizeof(counters)) ) {
@@ -825,7 +834,6 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     PVOID rtlUserProcParamsAddress;
     UNICODE_STRING currentDirectory;
     WCHAR *currentDirectoryContent;
-    DWORD ProcessExitCode = 0;
     PyObject *returnPyObj = NULL;
     PyObject *cwd_from_wchar = NULL;
     PyObject *cwd = NULL;
@@ -834,20 +842,8 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                                FALSE, pid);
-
-    /* check the process is running */
-    GetExitCodeProcess(processHandle, &ProcessExitCode);
-    if (ProcessExitCode == 0) {
-        return NoSuchProcess();
-    }
-
-    if (processHandle == 0) {
-        PyErr_SetFromWindowsErr(0);
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            return NoSuchProcess();
-        }
+    processHandle = GetProcessHandle(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, pid);
+    if (processHandle == NULL) {
         return NULL;
     }
 
@@ -1036,26 +1032,15 @@ static PyObject* get_process_open_files(PyObject* self, PyObject* args)
 {
     long       pid;
     HANDLE     processHandle;
-    DWORD      ProcessExitCode = 0;
     PyObject*  filesList;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
 
-    if (!(processHandle = OpenProcess(PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION,
-                                      FALSE,
-                                      pid)))
-    {
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            return NoSuchProcess();
-        }
-        return PyErr_SetFromWindowsErr(0);
-    }
-
-    GetExitCodeProcess(processHandle, &ProcessExitCode);
-    if (ProcessExitCode == 0) {
-        return NoSuchProcess();
+    processHandle = GetProcessHandle(PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION, pid);
+    if (processHandle == NULL) {
+        return NULL;
     }
 
     filesList = get_open_files(pid, processHandle);
@@ -1113,26 +1098,15 @@ static PyObject* get_process_username(PyObject* self, PyObject* args)
     ULONG domainNameSize;
     SID_NAME_USE nameUse;
     PTSTR fullName;
-    DWORD ProcessExitCode = 0;
     PyObject* returnObject;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
 
-    /* Open the process and its token. */
-
-    if (!(processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid))) {
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            return NoSuchProcess();
-        }
-        return PyErr_SetFromWindowsErr(0);
-    }
-
-    /* make sure the process is running */
-    GetExitCodeProcess(processHandle, &ProcessExitCode);
-    if (ProcessExitCode == 0) {
-        return NoSuchProcess();
+    processHandle = GetProcessHandle(PROCESS_QUERY_INFORMATION, pid);
+    if (processHandle == NULL) {
+        return NULL;
     }
 
     if (!OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)) {
