@@ -120,6 +120,40 @@ init_psutil_bsd(void)
 }
 
 
+
+/*
+ * Utility function which fills a kinfo_proc struct based on process pid
+ */
+static int
+get_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
+{
+    int mib[4];
+    size_t size;
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = pid;
+
+    size = sizeof(struct kinfo_proc);
+
+    if (sysctl((int*)mib, 4, proc, &size, NULL, 0) == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return -1;
+    }
+
+    /* 
+     * sysctl stores 0 in the size if we can't find the process information.
+     * Set errno to ESRCH which will be translated in NoSuchProcess later on.
+     */
+    if (size == 0) {
+        errno = ESRCH;
+        PyErr_SetFromErrno(PyExc_OSError);
+        return -1;
+    }
+    return 0; 
+}
+
+
 /*
  * Return a Python list of all the PIDs running on the system.
  */
@@ -159,9 +193,6 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
  */
 static PyObject* get_process_info(PyObject* self, PyObject* args)
 {
-
-    int mib[4];
-    size_t len;
     struct kinfo_proc kp;
     long pid; 
     PyObject* arglist = NULL;
@@ -169,49 +200,33 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-
+    
     if (0 == pid) {
         // USER   PID %CPU %MEM   VSZ   RSS  TT  STAT STARTED      TIME COMMAND
         // root     0  0.0  0.0     0     0  ??  DLs  12:22AM   0:00.13 [swapper]
         return Py_BuildValue("llssNll", pid, 0, "swapper", "", Py_BuildValue("[]"), 0, 0);
     }
 
-    // build the mib to pass to sysctl to tell it what PID and what info we want
-    len = 4;
-    sysctlnametomib("kern.proc.pid", mib, &len);
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID;
-    mib[3] = pid;
+    // get kinfo_proc to retrieve ppid, uid and gid later
+    if (get_kinfo_proc(pid, &kp) == -1) {
+        return NULL;
+    }
 
-    // fetch the info with sysctl()
-    len = sizeof(kp);
-    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
-        // raise an exception if it failed, since we won't get any data
+    // get the commandline
+    arglist = get_arg_list(pid);
+
+    // get_arg_list() returns NULL only if getcmdargs failed with ESRCH
+    // (no process with that PID)
+    if (NULL == arglist) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
 
-    if (len > 0) { // if 0 then no data was retrieved
-
-        // get the commandline, since we got everything else
-        arglist = get_arg_list(pid);
-
-        // get_arg_list() returns NULL only if getcmdargs failed with ESRCH
-        // (no process with that PID)
-        if (NULL == arglist) {
-            return PyErr_SetFromErrno(PyExc_OSError);
-        }
-
-        // hooray, we got all the data, so return it as a tuple to be
-        // passed to ProcessInfo() constructor
-        return Py_BuildValue("llssNll", pid, (long)kp.ki_ppid, kp.ki_comm, "",
-                              arglist, (long)kp.ki_ruid, (long)kp.ki_rgid);
-    }
-
-    // something went wrong, throw an error
-    return PyErr_Format(PyExc_RuntimeError,
-                        "Failed to retrieve process information.");
+    // hooray, we got all the data, so return it as a tuple to be
+    // passed to ProcessInfo() constructor
+    return Py_BuildValue("llssNll", pid, (long)kp.ki_ppid, kp.ki_comm, "",
+                          arglist, (long)kp.ki_ruid, (long)kp.ki_rgid);
 }
+
 
 // convert a timeval struct to a double
 #define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -222,43 +237,19 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
  */
 static PyObject* get_cpu_times(PyObject* self, PyObject* args)
 {
-
-    int mib[4];
-    size_t len;
-    struct kinfo_proc kp;
     long pid;
     double user_t, sys_t;
-
+    struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-
-    // build the mib to pass to sysctl to tell it what PID and what info we want
-    len = 4;
-    sysctlnametomib("kern.proc.pid", mib, &len);
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID;
-    mib[3] = pid;
-
-    // fetch the info with sysctl()
-    len = sizeof(kp);
-    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
-        // raise an exception if it failed, since we won't get any data
-        return PyErr_SetFromErrno(PyExc_OSError);
+    if (get_kinfo_proc(pid, &kp) == -1) {
+        return NULL;
     }
-
-    if (len > 0) { // if 0 then no data was retrieved
-        user_t = TV2DOUBLE(kp.ki_rusage.ru_utime);
-        sys_t = TV2DOUBLE(kp.ki_rusage.ru_stime);
-
-        // convert from microseconds to seconds
-        return Py_BuildValue("(dd)", user_t, sys_t);
-    }
-
-    // something went wrong, throw an error
-    return PyErr_Format(PyExc_RuntimeError,
-                        "Failed to retrieve process CPU times.");
+    // convert from microseconds to seconds
+    user_t = TV2DOUBLE(kp.ki_rusage.ru_utime);
+    sys_t = TV2DOUBLE(kp.ki_rusage.ru_stime);
+    return Py_BuildValue("(dd)", user_t, sys_t);
 }
 
 
@@ -267,7 +258,6 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
  */
 static PyObject* get_num_cpus(PyObject* self, PyObject* args)
 {
-
     int mib[2];
     int ncpu;
     size_t len;
@@ -291,32 +281,16 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args)
  */
 static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 {
-    int mib[4];
     long pid;
-    size_t len;
     struct kinfo_proc kp;
-
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-
-    len = 4;
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID;
-    mib[3] = pid;
-    len = sizeof(kp);
-
-    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
-        return PyErr_SetFromErrno(PyExc_OSError);
+    if (get_kinfo_proc(pid, &kp) == -1) {
+        return NULL;
     }
-
-    if (len > 0) {
-        return Py_BuildValue("d", TV2DOUBLE(kp.ki_start));
-    }
-
-    return PyErr_Format(PyExc_RuntimeError, "Unable to read process start time.");
-}
+    return Py_BuildValue("d", TV2DOUBLE(kp.ki_start));
+} 
 
 
 /*
@@ -324,30 +298,15 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
  */
 static PyObject* get_memory_info(PyObject* self, PyObject* args)
 {
-    int mib[4];
     long pid;
-    size_t len;
     struct kinfo_proc kp;
-
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-
-    len = 4;
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID;
-    mib[3] = pid;
-    len = sizeof(kp);
-    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
-        return PyErr_SetFromErrno(PyExc_OSError);
+    if (get_kinfo_proc(pid, &kp) == -1) {
+        return NULL;
     }
-
-    if (len > 0) {
-        return Py_BuildValue("(ll)", ptoa(kp.ki_rssize), (long)kp.ki_size);
-    }
-
-    return PyErr_Format(PyExc_RuntimeError, "Unable to read process start time.");
+    return Py_BuildValue("(ll)", ptoa(kp.ki_rssize), (long)kp.ki_size);
 }
 
 
