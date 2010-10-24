@@ -263,7 +263,7 @@ class TestCase(unittest.TestCase):
         time.sleep(0.1)
         t2 = sum(psutil.cpu_times())
         difference = t2 - t1
-        if not difference >= 0.1:
+        if not difference >= 0.05:
             self.fail("difference %s" % difference)
 
     def test_system_cpu_percent(self):
