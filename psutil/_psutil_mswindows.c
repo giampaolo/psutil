@@ -141,58 +141,6 @@ struct module_state {
 }
 
 
-// ------------------------ Utility functions ---------------------------
-
-/*
- * Raises an OSError(errno=ESRCH, strerror="No such process") exception
- * in Python.
- */
-static PyObject *
-NoSuchProcess(void) {
-    PyObject *exc;
-    char *msg = strerror(ESRCH);
-    exc = PyObject_CallFunction(PyExc_OSError, "(is)", ESRCH, msg);
-    PyErr_SetObject(PyExc_OSError, exc);
-    Py_XDECREF(exc);
-    return NULL;
-}
-
-/*
- * A wrapper around OpenProcess setting NSP exception if process
- * no longer exists.
- * dwDesiredAccess is the first argument exptected by OpenProcess,
- * pid is the process pid.
- * Return a process handle or NULL.
- */
-static HANDLE
-GetProcessHandle(DWORD dwDesiredAccess,  DWORD pid)
-{
-    HANDLE hProcess;
-    DWORD  processExitCode = 0;
-
-    hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
-    if (hProcess == NULL) {
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            NoSuchProcess();
-        }
-        else {
-            PyErr_SetFromWindowsErr(0);
-        }
-        return NULL;
-    }
-
-    /* make sure the process is running */
-    GetExitCodeProcess(hProcess, &processExitCode);
-    if (processExitCode == 0) {
-        CloseHandle(hProcess);
-        NoSuchProcess();
-        return NULL;
-    }
-    return hProcess;
-}
-
-
-
 // ------------------------ Public functions ---------------------------
 
 /*
