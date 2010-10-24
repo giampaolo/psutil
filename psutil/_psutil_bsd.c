@@ -163,8 +163,7 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     int mib[4];
     size_t len;
     struct kinfo_proc kp;
-    long pid;
-    PyObject* infoTuple = NULL;
+    long pid; 
     PyObject* arglist = NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
@@ -229,7 +228,6 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
     struct kinfo_proc kp;
     long pid;
     double user_t, sys_t;
-    PyObject* timeTuple = NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
