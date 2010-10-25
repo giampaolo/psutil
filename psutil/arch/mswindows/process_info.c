@@ -63,12 +63,12 @@ NoSuchProcess(void) {
 /*
  * A wrapper around OpenProcess setting NSP exception if process
  * no longer exists.
- * dwDesiredAccess is the first argument exptected by OpenProcess,
- * pid is the process pid.
+ * "pid" is the process pid, "dwDesiredAccess" is the first argument
+ * exptected by OpenProcess.
  * Return a process handle or NULL.
  */
 HANDLE
-GetProcessHandle(DWORD dwDesiredAccess,  DWORD pid)
+handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess)
 {
     HANDLE hProcess;
     DWORD  processExitCode = 0;
@@ -92,6 +92,19 @@ GetProcessHandle(DWORD dwDesiredAccess,  DWORD pid)
         return NULL;
     }
     return hProcess;
+}
+
+
+/*
+ * Same as handle_from_pid_waccess but implicitly uses
+ * PROCESS_QUERY_INFORMATION | PROCESS_VM_READ as dwDesiredAccess
+ * parameter for OpenProcess.
+ */
+HANDLE
+handle_from_pid(DWORD pid)
+{
+    DWORD dwDesiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
+    return handle_from_pid_waccess(pid, dwDesiredAccess);
 }
 
 
@@ -354,7 +367,7 @@ PyObject* get_arg_list(long pid)
     PyObject *argList = NULL;
 
 
-    hProcess = GetProcessHandle(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, pid);
+    hProcess = handle_from_pid(pid);
     if(hProcess == NULL) {
         return NULL;
     }

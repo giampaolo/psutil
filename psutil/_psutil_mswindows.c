@@ -295,7 +295,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
 	   return Py_BuildValue("(dd)", 0.0, 0.0);
     }
 
-    hProcess = GetProcessHandle(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, pid);
+    hProcess = handle_from_pid(pid);
     if (hProcess == NULL) {
         return NULL;
     }
@@ -355,7 +355,7 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 	   return Py_BuildValue("d", 0.0);
     }
 
-    hProcess = GetProcessHandle(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, pid);
+    hProcess = handle_from_pid(pid);
     if (hProcess == NULL) {
         return NULL;
     }
@@ -497,7 +497,7 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
 	    return NULL;
     }
 
-    hProcess = GetProcessHandle(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, pid);
+    hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
         return NULL;
     }
@@ -790,7 +790,7 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    processHandle = GetProcessHandle(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, pid);
+    processHandle = handle_from_pid(pid);
     if (processHandle == NULL) {
         return NULL;
     }
@@ -980,13 +980,14 @@ static PyObject* get_process_open_files(PyObject* self, PyObject* args)
 {
     long       pid;
     HANDLE     processHandle;
+    DWORD      access = PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION;
     PyObject*  filesList;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
 
-    processHandle = GetProcessHandle(PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION, pid);
+    processHandle = handle_from_pid_waccess(pid, access);
     if (processHandle == NULL) {
         return NULL;
     }
@@ -1052,7 +1053,7 @@ static PyObject* get_process_username(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    processHandle = GetProcessHandle(PROCESS_QUERY_INFORMATION, pid);
+    processHandle = handle_from_pid_waccess(pid, PROCESS_QUERY_INFORMATION);
     if (processHandle == NULL) {
         return NULL;
     }

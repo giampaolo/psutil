@@ -9,7 +9,8 @@
 #include <windows.h>
 
 PyObject * NoSuchProcess(void);
-HANDLE GetProcessHandle(DWORD dwDesiredAccess,  DWORD pid);
+HANDLE handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess);
+HANDLE handle_from_pid(DWORD pid);
 PVOID GetPebAddress(HANDLE ProcessHandle);
 HANDLE handle_from_pid(DWORD pid);
 BOOL is_running(HANDLE hProcess);
