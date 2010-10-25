@@ -115,7 +115,7 @@ struct module_state {
     void init_psutil_mswindows(void)
 #endif
 {
-    struct module_state *st;
+    struct module_state *st = NULL;
 #if PY_MAJOR_VERSION >= 3
     PyObject *module = PyModule_Create(&moduledef);
 #else
@@ -149,7 +149,7 @@ struct module_state {
  */
 static PyObject* get_system_uptime(PyObject* self, PyObject* args)
 {
-    float uptime;
+    double uptime;
     time_t pt;
     FILETIME fileTime;
     long long ll;
@@ -218,7 +218,7 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
     }
 
     for (i = 0; i < numberOfReturnedPIDs; i++) {
-        pid = Py_BuildValue("i", proclist[i]);
+        pid = Py_BuildValue("I", proclist[i]);
         PyList_Append(retlist, pid);
         Py_XDECREF(pid);
     }
@@ -382,7 +382,7 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
     unix_time = ((LONGLONG)ftCreate.dwHighDateTime) << 32;
     unix_time += ftCreate.dwLowDateTime - 116444736000000000LL;
     unix_time /= 10000000;
-    return Py_BuildValue("f", (float)unix_time);
+    return Py_BuildValue("d", (double)unix_time);
 }
 
 
@@ -397,9 +397,9 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args)
     GetSystemInfo(&system_info);
     if (system_info.dwNumberOfProcessors == 0){
         // GetSystemInfo failed for some reason; return 1 as default
-        return Py_BuildValue("i", 1);
+        return Py_BuildValue("I", 1);
     }
-    return Py_BuildValue("i", system_info.dwNumberOfProcessors);
+    return Py_BuildValue("I", system_info.dwNumberOfProcessors);
 }
 
 
@@ -506,7 +506,7 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
         return PyErr_SetFromWindowsErr(0);
     }
 
-    return Py_BuildValue("(ll)", counters.WorkingSetSize, counters.PagefileUsage);
+    return Py_BuildValue("(nn)", counters.WorkingSetSize, counters.PagefileUsage);
 }
 
 
@@ -643,7 +643,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 
         // kernel time includes idle time on windows
         // we return only busy kernel time subtracting idle time from kernel time
-		return Py_BuildValue("(ddd)", user,
+		return Py_BuildValue("(fff)", user,
                                       kernel - idle,
                                       idle);
 
@@ -699,7 +699,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
                         // kernel time includes idle time on windows
                         // we return only busy kernel time subtracting idle
                         // time from kernel time
-						return Py_BuildValue("(fff)", user,
+						return Py_BuildValue("(ddd)", user,
                                                       kernel - idle,
                                                       idle
                                              );
@@ -798,8 +798,13 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
     pebAddress = GetPebAddress(processHandle);
 
     /* get the address of ProcessParameters */
+#ifdef _WIN64
+    if (!ReadProcessMemory(processHandle, (PCHAR)pebAddress + 32,
+        &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
+#else
     if (!ReadProcessMemory(processHandle, (PCHAR)pebAddress + 0x10,
         &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
+#endif
     {
             CloseHandle(processHandle);
 
@@ -818,8 +823,13 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
        0x24 refers to "CurrentDirectoryPath" of RTL_USER_PROCESS_PARAMETERS
        structure (http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/)
      */
+#ifdef _WIN64
+    if (!ReadProcessMemory(processHandle, (PCHAR)rtlUserProcParamsAddress + 56,
+        &currentDirectory, sizeof(currentDirectory), NULL))
+#else
     if (!ReadProcessMemory(processHandle, (PCHAR)rtlUserProcParamsAddress + 0x24,
         &currentDirectory, sizeof(currentDirectory), NULL))
+#endif
     {
         CloseHandle(processHandle);
         if (GetLastError() == ERROR_PARTIAL_COPY) {

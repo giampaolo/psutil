@@ -38,12 +38,11 @@ typedef struct _UNICODE_STRING
 
 typedef struct _PROCESS_BASIC_INFORMATION
 {
-    DWORD ExitStatus;
+    PVOID Reserved1;
     PVOID PebBaseAddress;
-    DWORD AffinityMask;
-    DWORD BasePriority;
-    DWORD UniqueProcessId;
-    DWORD ParentProcessId;
+    PVOID Reserved2[2];
+    ULONG_PTR UniqueProcessId;
+    PVOID Reserved3;
 } PROCESS_BASIC_INFORMATION, *PPROCESS_BASIC_INFORMATION;
 
 
@@ -332,7 +331,7 @@ PyObject* get_ppid(long pid)
 			if (pe.th32ProcessID == pid) {
 				//printf("PID: %i; PPID: %i\n", pid, pe.th32ParentProcessID);
                 CloseHandle(h);
-                return Py_BuildValue("l", pe.th32ParentProcessID);
+                return Py_BuildValue("I", pe.th32ParentProcessID);
 			}
 		} while( Process32Next(h, &pe));
 
@@ -375,8 +374,13 @@ PyObject* get_arg_list(long pid)
     pebAddress = GetPebAddress(hProcess);
 
     /* get the address of ProcessParameters */
+#ifdef _WIN64
+    if (!ReadProcessMemory(hProcess, (PCHAR)pebAddress + 32,
+        &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
+#else
     if (!ReadProcessMemory(hProcess, (PCHAR)pebAddress + 0x10,
         &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
+#endif
     {
         //printf("Could not read the address of ProcessParameters!\n");
         CloseHandle(hProcess);
@@ -384,8 +388,13 @@ PyObject* get_arg_list(long pid)
     }
 
     /* read the CommandLine UNICODE_STRING structure */
+#ifdef _WIN64
+    if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 112,
+        &commandLine, sizeof(commandLine), NULL))
+#else
     if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 0x40,
         &commandLine, sizeof(commandLine), NULL))
+#endif
     {
         //printf("Could not read CommandLine!\n");
         CloseHandle(hProcess);

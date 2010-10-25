@@ -15,6 +15,7 @@ NEW FEATURES
  * Issue 98: Process.get_cpu_times() and Process.get_memory_info now return
    a namedtuple instead of a tuple.
  * Issue 103: per-process opened TCP and UDP connections.
+ * Issue 107: add support for Windows 64 bit. (patch by cjgohlke)
  * Issue 111: per-process executable name.
  * Issue 113: exception messages now include process name and pid.
  * Issue 114: process username Windows implementation has been rewritten in pure
