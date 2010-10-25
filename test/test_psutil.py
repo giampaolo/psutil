@@ -7,7 +7,7 @@
 Note: this is targeted for python 2.x.
 To run it under python 3.x you need to use 2to3 tool first:
 
-$ 2to3 -w test/test_psutil.py
+$ 2to3 -w test/*.py
 """
 
 import unittest
