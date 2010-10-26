@@ -300,7 +300,7 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     long pid;
     int err;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
-    task_port_t task = (task_port_t)NULL;
+    task_port_t task;// = (task_port_t)NULL;
     time_value_t user_time, system_time;
     struct task_basic_info tasks_info;
     struct task_thread_times_info task_times;
@@ -574,10 +574,15 @@ static PyObject* get_avail_virtmem(PyObject* self, PyObject* args)
  */
 static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 {
-    mach_msg_type_number_t  count;
-    struct host_cpu_load_info r_load;
+    mach_msg_type_number_t  count = HOST_CPU_LOAD_INFO_COUNT;
+    kern_return_t error;
+    host_cpu_load_info_data_t r_load;
 
-    host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, &r_load, &count);
+    error = host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t)&r_load, &count);
+    if (error != KERN_SUCCESS) {
+        return PyErr_Format(PyExc_RuntimeError,
+                "Error in host_statistics(): %s", mach_error_string(error));
+    }
 
     //user, nice, system, idle, iowait, irqm, softirq
 	return Py_BuildValue("(dddd)",
