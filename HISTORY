@@ -32,9 +32,10 @@ BUGFIXES
    left behind every time Process class was instantiated.
  * Issue 111: path and name Process properties report truncated or erroneous
    values on UNIX.
- * Issue 120: cpu_percent() always returning 100% on OS X
  * Issue 108: get_memory_info and get_cpu_times failing with AccessDenied for
+ * Issue 120: cpu_percent() always returning 100% on OS X
    PID 0 or when run as non-root user
+ * Issue 124: AccessDenied not properly building error message string if PID 0
 
 API CHANGES
 
