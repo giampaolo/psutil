@@ -20,40 +20,6 @@ import _psutil_mswindows
 from psutil.error import AccessDenied, NoSuchProcess
 
 
-def _has_connections_support():
-    """Return True if this Windows version supports
-    GetExtendedTcpTable() and GetExtendedTcpTable() functions
-    introduced in Windows XP SP2.
-    """
-    # List of minimum supported versions:
-    # http://msdn.microsoft.com/en-us/library/aa365928(VS.85).aspx
-    # Name mappings:
-    # http://msdn.microsoft.com/en-us/library/ms724833(VS.85).aspx
-    import re
-    maj, _min, build, platf, sp = sys.getwindowsversion()
-    try:
-        sp = int(re.search(r'(\d)', sp).group())
-    except (ValueError, AttributeError):
-        sp = -1
-    if (maj, _min) < (5, 1):
-        # <= 2000
-        return False
-    elif (maj, _min) == (5, 1):
-        # XP
-        return sp >= 2
-    elif (maj, _min) == (5, 2):
-        # XP prof 64-bit / 2003 server / Home server
-        ver = platform.win32_ver()[0].upper()
-        if ver == 'XP':
-            return sp >= 2
-        elif ('2003' in ver) or ('SERVER' in ver):
-            return sp >= 1
-        else:
-            return False
-    else:
-        # Vista, Server 2008, 7 and higher
-        return (maj, _min) > (5, 2)
-
 
 # --- module level constants (gets pushed up to psutil module)
 
@@ -61,8 +27,6 @@ NUM_CPUS = _psutil_mswindows.get_num_cpus()
 TOTAL_PHYMEM = _psutil_mswindows.get_total_phymem()
 _UPTIME = _psutil_mswindows.get_system_uptime()
 _WIN2000 = platform.win32_ver()[0] == '2000'
-_CONNECTIONS_SUPPORT = _has_connections_support()
-del _has_connections_support
 
 ERROR_ACCESS_DENIED = 5
 ERROR_INVALID_PARAMETER = 87
@@ -219,15 +183,10 @@ class WindowsProcess(object):
                     retlist.append(file)
         return retlist
 
-    if _CONNECTIONS_SUPPORT:
-        @wrap_exceptions
-        def get_connections(self):
-            retlist = _psutil_mswindows.get_process_connections(self.pid)
-            return [self._connection_ntuple(*conn) for conn in retlist]
-    else:
-        def get_connections(self):
-            raise NotImplementedError("feature not supported on this Windows "
-                                      "version")
+    @wrap_exceptions
+    def get_connections(self):
+        retlist = _psutil_mswindows.get_process_connections(self.pid)
+        return [self._connection_ntuple(*conn) for conn in retlist]
 
 PlatformProcess = WindowsProcess
 
