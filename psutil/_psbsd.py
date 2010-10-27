@@ -4,6 +4,7 @@
 #
 
 import errno
+import os
 
 try:
     from collections import namedtuple
@@ -92,8 +93,20 @@ class BSDProcess(object):
         constructor.
         """
         info_tuple = _psutil_bsd.get_process_info(self.pid)
-        self._process_name = info_tuple[2]
-        return info_tuple
+        pid, ppid, name, exe, cmdline, uid, gid = info_tuple
+        # on BSD, "ki_comm" gets truncated to 16 bytes; if it matches
+        # the first part of the cmdline we return that one instead 
+        # because it's usually more clear.
+        # Examples are "sshd" vs. "sshd: root@ttyp1" and "sendmail" 
+        # vs. "sendmail: accepting connections".
+        # ps aux deals with this by returning both names as a
+        # "name (longer name)" string in the COMMAND column.
+        if cmdline:
+            extended_name = os.path.basename(cmdline[0])
+            if extended_name.startswith(name):
+                name = extended_name
+        self._process_name = name
+        return (pid, ppid, name, exe, cmdline, uid, gid)
 
     @wrap_exceptions
     def get_cpu_times(self):
