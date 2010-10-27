@@ -94,9 +94,9 @@ class OSXProcess(object):
         info_tuple = _psutil_osx.get_process_info(self.pid)
         pid, ppid, name, exe, cmdline, uid, gid = info_tuple
         # on OSX, "p_comm" gets truncated to 19 bytes; if it matches
-        # the first part of the cmdline we return that one instead 
+        # the first part of the cmdline we return that one instead
         # because it's usually more clear.
-        # Examples are "sshd" vs. "sshd: root@ttyp1" and "sendmail" 
+        # Examples are "sshd" vs. "sshd: root@ttyp1" and "sendmail"
         # vs. "sendmail: accepting connections".
         # ps aux deals with this by returning both names as a
         # "name (longer name)" string in the COMMAND column.

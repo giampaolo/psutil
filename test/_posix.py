@@ -11,7 +11,7 @@ import os
 
 import psutil
 
-from test_psutil import kill, get_test_subprocess, PYTHON, LINUX
+from test_psutil import kill, get_test_subprocess, PYTHON, LINUX, OSX
 
 
 def ps(cmd):
@@ -85,7 +85,11 @@ class PosixSpecificTestCase(unittest.TestCase):
         # remove path if there is any, from the command
         name_ps = os.path.basename(name_ps)
         name_psutil = psutil.Process(self.pid).name
-        self.assertEqual(name_ps, name_psutil)
+        if OSX:
+            self.assertEqual(name_psutil, "Python")
+        else:
+            self.assertEqual(name_ps, name_psutil)
+
 
     def test_process_exe(self):
         ps_pathname = ps("ps --no-headers -o command -p %s" %self.pid).split(' ')[0]

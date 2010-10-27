@@ -29,7 +29,7 @@ class NoSuchProcess(Error):
 
     def __str__(self):
         return self.msg
-    
+
 
 class AccessDenied(Error):
     """Exception raised when permission to perform an action is denied."""
@@ -39,9 +39,9 @@ class AccessDenied(Error):
         self.name = name
         self.msg = msg
         if msg is None:
-            if pid and name:
+            if (pid is not None) and (name is not None):
                 self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
-            elif pid:
+            elif (pid is not None):
                 self.msg = "(pid=%s)" % self.pid
             else:
                 self.msg = ""

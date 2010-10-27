@@ -406,7 +406,11 @@ class TestCase(unittest.TestCase):
     def test_name(self):
         sproc = get_test_subprocess(PYTHON)
         wait_for_pid(sproc.pid)
-        self.assertEqual(psutil.Process(sproc.pid).name, os.path.basename(PYTHON))
+        if OSX:
+            self.assertEqual(psutil.Process(sproc.pid).name, "Python")
+        else:
+            self.assertEqual(psutil.Process(sproc.pid).name, os.path.basename(PYTHON))
+
 
     def test_uid(self):
         sproc = get_test_subprocess()
