@@ -207,7 +207,6 @@ class LinuxProcess(object):
             name = f.read().split(' ')[1].replace('(', '').replace(')', '')
         finally:
             f.close()
-        self._process_name = name
 
         # determine executable
         try:
@@ -229,10 +228,21 @@ class LinuxProcess(object):
             cmdline = [x for x in f.read().split('\x00') if x]
         finally:
             f.close()
+            
+        # On Linux the name gets truncated to the first 15 characters.
+        # If it matches the first part of the cmdline we return that 
+        # one instead because it's usually more explicative.
+        # Examples are "gnome-keyring-d" vs. "gnome-keyring-daemon".
+        if cmdline:
+            extended_name = os.path.basename(cmdline[0])
+            if extended_name.startswith(name):
+                name = extended_name
+
+        self._process_name = name
 
         return (self.pid, self._get_ppid(), name, exe, cmdline,
                 self._get_process_uid(), self._get_process_gid())
-                                 
+
     @wrap_exceptions
     def get_cpu_times(self):
         # special case for 0 (kernel process) PID
