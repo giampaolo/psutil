@@ -885,83 +885,79 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
 
 
 /*
-Resume or suspends a process.
-*/
+ * Resume or suspends a process
+ */
 int suspend_resume_process(DWORD pid, int suspend)
 {
     // a huge thanks to http://www.codeproject.com/KB/threads/pausep.aspx
-    HANDLE         hThreadSnap   = NULL;
-    BOOL           bRet          = FALSE;
-    THREADENTRY32  te32          = {0};
+    HANDLE hThreadSnap = NULL;
+    THREADENTRY32  te32 = {0};
 
     hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
     if (hThreadSnap == INVALID_HANDLE_VALUE) {
-        return (FALSE);
+        PyErr_SetFromWindowsErr(0);
+        return FALSE;
     }
 
-    // Fill in the size of the structure before using it.
+    // Fill in the size of the structure before using it
     te32.dwSize = sizeof(THREADENTRY32);
+
+    if (! Thread32First(hThreadSnap, &te32)) {
+        PyErr_SetFromWindowsErr(0);
+        CloseHandle(hThreadSnap);
+        return FALSE;
+    }
 
     // Walk the thread snapshot to find all threads of the process.
     // If the thread belongs to the process, add its information
     // to the display list.
-    if (Thread32First(hThreadSnap, &te32))
+    do
     {
-        do
+        if (te32.th32OwnerProcessID == pid)
         {
-            if (te32.th32OwnerProcessID == pid)
-            {
-				HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE,
-                                            te32.th32ThreadID);
-                if (hThread == NULL) {
-                    CloseHandle(hThread);
+			HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE,
+                                        te32.th32ThreadID);
+            if (hThread == NULL) {
+                PyErr_SetFromWindowsErr(0);
+                CloseHandle(hThread);
+                CloseHandle(hThreadSnap);
+                return FALSE;
+            }
+			if (suspend == 1)
+			{
+				if (SuspendThread(hThread) == (DWORD)-1) {
                     PyErr_SetFromWindowsErr(0);
+                    CloseHandle(hThread);
+                    CloseHandle(hThreadSnap);
                     return FALSE;
                 }
-				if (suspend == 1)
-				{
-					//printf("Suspending Thread \n");
-					if (SuspendThread(hThread) == (DWORD)-1) {
-                        CloseHandle(hThread);
-                        PyErr_SetFromWindowsErr(0);
-                        return FALSE;
-                    }
-				}
-				else
-				{
-					//printf("Resuming Thread \n");
-					if (ResumeThread(hThread) == (DWORD)-1) {
-                        CloseHandle(hThread);
-                        PyErr_SetFromWindowsErr(0);
-                        return FALSE;
-                    }
-				}
-				CloseHandle(hThread);
-            }
+			}
+			else
+			{
+				if (ResumeThread(hThread) == (DWORD)-1) {
+                    PyErr_SetFromWindowsErr(0);
+                    CloseHandle(hThread);
+                    CloseHandle(hThreadSnap);
+                    return FALSE;
+                }
+			}
+			CloseHandle(hThread);
         }
-        while (Thread32Next(hThreadSnap, &te32));
-        bRet = TRUE;
-    }
-    else
-        bRet = FALSE;  // could not walk the list of threads
+    } while (Thread32Next(hThreadSnap, &te32));
 
-    // Do not forget to clean up the snapshot object.
-    CloseHandle(hThreadSnap);
-
-    return (bRet);
+    return TRUE;
 }
 
 
 static PyObject* suspend_process(PyObject* self, PyObject* args)
 {
     long pid;
-    int  suspend = 1;
+    int suspend = 1;
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
 
-    if (! suspend_resume_process(pid, suspend)){
-        PyErr_SetFromWindowsErr(0);
+    if (! suspend_resume_process(pid, suspend)) {
         return NULL;
     }
     Py_INCREF(Py_None);
@@ -977,8 +973,7 @@ static PyObject* resume_process(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    if (! suspend_resume_process(pid, suspend)){
-        PyErr_SetFromWindowsErr(0);
+    if (! suspend_resume_process(pid, suspend)) {
         return NULL;
     }
     Py_INCREF(Py_None);
