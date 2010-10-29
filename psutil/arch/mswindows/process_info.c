@@ -228,8 +228,8 @@ int pid_is_running(DWORD pid)
             return 1;
         }
 
-        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
+        PyErr_SetFromWindowsErr(0);
         return -1;
     }
 
@@ -244,8 +244,8 @@ int pid_is_running(DWORD pid)
         return 1;
     }
 
-    CloseHandle(hProcess);
     PyErr_SetFromWindowsErr(0);
+    CloseHandle(hProcess);
     return -1;
 }
 
@@ -383,8 +383,9 @@ PyObject* get_arg_list(long pid)
 #endif
     {
         //printf("Could not read the address of ProcessParameters!\n");
+        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
 
     /* read the CommandLine UNICODE_STRING structure */
@@ -397,8 +398,9 @@ PyObject* get_arg_list(long pid)
 #endif
     {
         //printf("Could not read CommandLine!\n");
+        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
 
 
@@ -410,9 +412,10 @@ PyObject* get_arg_list(long pid)
         commandLineContents, commandLine.Length, NULL))
     {
         //printf("Could not read the command line string!\n");
+        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
         free(commandLineContents);
-        return PyErr_SetFromWindowsErr(0);
+        return NULL;
     }
 
     /* print the commandline */

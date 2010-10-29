@@ -261,8 +261,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
     // get a process handle
     hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
     if (hProcess == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
+        return PyErr_SetFromWindowsErr(0);
     }
 
     // kill the process
@@ -301,13 +300,13 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
     }
 
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
-        PyErr_SetFromWindowsErr(0);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
             CloseHandle(hProcess);
             return NoSuchProcess();
         }
+        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
         return NULL;
     }
@@ -629,8 +628,7 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 		FILETIME kernel_time;
 		FILETIME user_time;
 
-		if (!GetSystemTimes(&idle_time, &kernel_time, &user_time))
-		{
+		if (!GetSystemTimes(&idle_time, &kernel_time, &user_time)) {
 			return PyErr_SetFromWindowsErr(0);
 		}
 
@@ -812,7 +810,6 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
                 /* Usually means the process has gone in the meantime */
                 return NoSuchProcess();
             }
-
             else {
                 return PyErr_SetFromWindowsErr(0);
             }
