@@ -68,7 +68,7 @@ int get_proc_list(kinfo_proc **procList, size_t *procCount)
             } else {
                 size = size2;
             }
-        } 
+        }
         else {
             ptr = malloc(size);
         }
@@ -252,10 +252,10 @@ PyObject* get_arg_list(long pid)
     if (r == 0) {
         //PySequence_Tuple(args);
         argList = PySequence_List(args);
-    } 
+    }
     else if (r == ARGS_ACCESS_DENIED) { //-2
         argList = Py_BuildValue("[]");
-    } 
+    }
     else {
         argList = Py_BuildValue("");
     }
@@ -266,3 +266,32 @@ PyObject* get_arg_list(long pid)
     return argList;
 }
 
+
+int get_kinfo_proc(pid_t pid, struct kinfo_proc *kp)
+{
+    int mib[4];
+    size_t len;
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = pid;
+
+    // fetch the info with sysctl()
+    len = sizeof(struct kinfo_proc);
+
+    // now read the data from sysctl
+    if (sysctl(mib, 4, kp, &len, NULL, 0) == -1) {
+        // raise an exception and throw errno as the error
+        PyErr_SetFromErrno(PyExc_OSError);
+    }
+
+    /*
+     * sysctl succeeds but len is zero, happens when process has gone away
+     */
+    if (len == 0) {
+        errno = ESRCH;
+        PyErr_SetFromErrno(PyExc_OSError);
+        return -1;
+    }
+    return 0;
+}

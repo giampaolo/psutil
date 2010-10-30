@@ -305,14 +305,16 @@ PyObject* get_name(long pid)
                 CloseHandle(h);
                 return Py_BuildValue("s", pe.szExeFile);
 			}
-		} while( Process32Next(h, &pe));
+		} while(Process32Next(h, &pe));
 
-        // the process was never found (NoSuchProcess raised later)
+        // the process was never found, set NoSuchProcess exception
+        NoSuchProcess();
         CloseHandle(h);
-        return Py_BuildValue("");
+        return NULL;
 	}
 
     CloseHandle(h);
+    // XXX - see whether we can use SetFromErrno
     PyErr_SetString(PyExc_RuntimeError,
                     "Failed to read process name from toolhelp snapshot");
     return NULL;
@@ -333,14 +335,16 @@ PyObject* get_ppid(long pid)
                 CloseHandle(h);
                 return Py_BuildValue("I", pe.th32ParentProcessID);
 			}
-		} while( Process32Next(h, &pe));
+		} while(Process32Next(h, &pe));
 
-        // the process was never found (NoSuchProcess raised later)
+        // the process was never found, set NoSuchProcess exception
+        NoSuchProcess();
         CloseHandle(h);
-        return Py_BuildValue("");
+        return NULL;
 	}
 
     CloseHandle(h);
+    // XXX - see whether we can use SetFromErrno
     PyErr_SetString(PyExc_RuntimeError,
                     "Failed to read process ppid from toolhelp snapshot");
     return NULL;

@@ -98,14 +98,40 @@ class WindowsProcess(object):
         self.pid = pid
         self._process_name = None
 
+
     @wrap_exceptions
-    def get_process_info(self):
-        """Returns a tuple that can be passed to the psutil.ProcessInfo class
-        constructor.
-        """
-        info_tuple = _psutil_mswindows.get_process_info(self.pid)
-        self._process_name = info_tuple[2]
-        return info_tuple
+    def get_process_name(self):
+        """Return process name as a string of limited len (15)."""
+        return _psutil_mswindows.get_process_name(self.pid)
+
+    def get_process_exe(self):
+        # no such thing as "exe" on BSD; it will maybe be determined
+        # later from cmdline[0]
+        if not pid_exists(self.pid):
+            raise NoSuchProcess(self.pid, self._process_name)
+        return ""
+
+    @wrap_exceptions
+    def get_process_cmdline(self):
+        """Return process cmdline as a list of arguments."""
+        return _psutil_mswindows.get_process_cmdline(self.pid)
+
+    @wrap_exceptions
+    def get_process_ppid(self):
+        """Return process parent pid."""
+        return _psutil_mswindows.get_process_ppid(self.pid)
+
+    def get_process_uid(self):
+        # no such thing as uid on Windows
+        if not pid_exists(self.pid):
+            raise NoSuchProcess(self.pid, self._process_name)
+        return -1
+
+    def get_process_gid(self):
+        # no such thing as gid on Windows
+        if not pid_exists(self.pid):
+            raise NoSuchProcess(self.pid, self._process_name)
+        return -1
 
     @wrap_exceptions
     def get_memory_info(self):
@@ -189,4 +215,3 @@ class WindowsProcess(object):
         return [self._connection_ntuple(*conn) for conn in retlist]
 
 PlatformProcess = WindowsProcess
-

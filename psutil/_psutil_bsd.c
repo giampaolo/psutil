@@ -25,20 +25,32 @@
  */
 static PyMethodDef PsutilMethods[] =
 {
-     {"get_pid_list", get_pid_list, METH_VARARGS,
-         "Returns a list of PIDs currently running on the system"},
-     {"get_process_info", get_process_info, METH_VARARGS,
-        "Return a tuple containing a set of information about the "
-        "process (pid, ppid, name, path, cmdline)"},
+     // --- per-process functions
+       
+     {"get_process_name", get_process_name, METH_VARARGS,
+        "Return process name"},
+     {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
+        "Return process cmdline as a list of cmdline arguments"},
+     {"get_process_ppid", get_process_ppid, METH_VARARGS,
+        "Return process ppid as an integer"},
+     {"get_process_uid", get_process_uid, METH_VARARGS,
+        "Return process real user id as an integer"},
+     {"get_process_gid", get_process_gid, METH_VARARGS,
+        "Return process real group id as an integer"},      
      {"get_cpu_times", get_cpu_times, METH_VARARGS,
            "Return tuple of user/kern time for the given PID"},
-     {"get_num_cpus", get_num_cpus, METH_VARARGS,
-           "Return number of CPUs on the system"},
      {"get_process_create_time", get_process_create_time, METH_VARARGS,
          "Return a float indicating the process create time expressed in "
          "seconds since the epoch"},
      {"get_memory_info", get_memory_info, METH_VARARGS,
          "Return a tuple of RSS/VMS memory information"},
+
+     // --- system-related functions
+     
+     {"get_pid_list", get_pid_list, METH_VARARGS,
+         "Returns a list of PIDs currently running on the system"},
+     {"get_num_cpus", get_num_cpus, METH_VARARGS,
+           "Return number of CPUs on the system"},
      {"get_total_phymem", get_total_phymem, METH_VARARGS,
          "Return the total amount of physical memory, in bytes"},
      {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
@@ -49,6 +61,7 @@ static PyMethodDef PsutilMethods[] =
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
          "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
+
      {NULL, NULL, 0, NULL}
 };
 
@@ -188,31 +201,35 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 
 
 /*
- * Return a Python tuple containing a set of information about the process:
- * (pid, ppid, name, path, cmdline).
+ * Return process name from kinfo_proc as a Python string.
  */
-static PyObject* get_process_info(PyObject* self, PyObject* args)
+static PyObject* get_process_name(PyObject* self, PyObject* args)
 {
+    long pid;
     struct kinfo_proc kp;
-    long pid; 
-    PyObject* arglist = NULL;
-
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    
-    if (0 == pid) {
-        // USER   PID %CPU %MEM   VSZ   RSS  TT  STAT STARTED      TIME COMMAND
-        // root     0  0.0  0.0     0     0  ??  DLs  12:22AM   0:00.13 [swapper]
-        return Py_BuildValue("llssNll", pid, 0, "swapper", "", Py_BuildValue("[]"), 0, 0);
-    }
-
-    // get kinfo_proc to retrieve ppid, uid and gid later
     if (get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
+    return Py_BuildValue("s", kp.ki_comm);
+}
 
-    // get the commandline
+
+/*
+ * Return process cmdline as a Python list of cmdline arguments.
+ */
+static PyObject* get_process_cmdline(PyObject* self, PyObject* args)
+{
+    long pid;
+    PyObject* arglist = NULL;
+    
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    // get the commandline, defined in arch/bsd/process_info.c
     arglist = get_arg_list(pid);
 
     // get_arg_list() returns NULL only if getcmdargs failed with ESRCH
@@ -220,11 +237,52 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
     if (NULL == arglist) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
+    return Py_BuildValue("N", arglist);
+}
 
-    // hooray, we got all the data, so return it as a tuple to be
-    // passed to ProcessInfo() constructor
-    return Py_BuildValue("llssNll", pid, (long)kp.ki_ppid, kp.ki_comm, "",
-                          arglist, (long)kp.ki_ruid, (long)kp.ki_rgid);
+
+/*
+ * Return process parent pid from kinfo_proc as a Python integer.
+ */
+static PyObject* get_process_ppid(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
+        return NULL;
+    if (get_kinfo_proc(pid, &kp) == -1) 
+        return NULL;
+    return Py_BuildValue("l", (long)kp.ki_ppid);
+}
+
+
+/*
+ * Return process real uid from kinfo_proc as a Python integer.
+ */
+static PyObject* get_process_uid(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
+        return NULL;
+    if (get_kinfo_proc(pid, &kp) == -1) 
+        return NULL;
+    return Py_BuildValue("l", (long)kp.ki_ruid);
+}
+
+
+/*
+ * Return process real group id from ki_comm as a Python integer.
+ */
+static PyObject* get_process_gid(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid)) 
+        return NULL;
+    if (get_kinfo_proc(pid, &kp) == -1) 
+        return NULL;
+    return Py_BuildValue("l", (long)kp.ki_rgid);
 }
 
 
@@ -460,3 +518,4 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
                          (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC
     );
 }
+

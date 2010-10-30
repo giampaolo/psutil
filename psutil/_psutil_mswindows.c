@@ -23,36 +23,23 @@
 
 static PyMethodDef PsutilMethods[] =
 {
-     {"get_pid_list", get_pid_list, METH_VARARGS,
-     	"Returns a list of PIDs currently running on the system"},
-     {"get_process_info", get_process_info, METH_VARARGS,
-        "Return a tuple containing a set of information about the "
-        "process (pid, ppid, name, path, cmdline)"},
+    // --- per-process functions
+
+     {"get_process_name", get_process_name, METH_VARARGS,
+        "Return process name"},
+     {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
+        "Return process cmdline as a list of cmdline arguments"},
+     {"get_process_ppid", get_process_ppid, METH_VARARGS,
+        "Return process ppid as an integer"},
      {"kill_process", kill_process, METH_VARARGS,
          "Kill the process identified by the given PID"},
-     {"pid_exists", pid_exists, METH_VARARGS,
-         "Determine if the process exists in the current process list."},
      {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
        	"Return tuple of user/kern time for the given PID"},
      {"get_process_create_time", get_process_create_time, METH_VARARGS,
          "Return a float indicating the process create time expressed in "
          "seconds since the epoch"},
-     {"get_num_cpus", get_num_cpus, METH_VARARGS,
-         "Returns the number of CPUs on the system"},
-     {"get_system_uptime", get_system_uptime, METH_VARARGS,
-         "Return system uptime"},
      {"get_memory_info", get_memory_info, METH_VARARGS,
          "Return a tuple of RSS/VMS memory information"},
-     {"get_total_phymem", get_total_phymem, METH_VARARGS,
-         "Return the total amount of physical memory, in bytes"},
-     {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
-         "Return the total amount of virtual memory, in bytes"},
-     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
-         "Return the amount of available physical memory, in bytes"},
-     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
-         "Return the amount of available virtual memory, in bytes"},
-     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
-         "Return system cpu times as a tuple (user, system, idle)"},
     {"get_process_cwd", get_process_cwd, METH_VARARGS,
         "Return process current working directory"},
     {"suspend_process", suspend_process, METH_VARARGS,
@@ -67,6 +54,28 @@ static PyMethodDef PsutilMethods[] =
         "Return the username of a process"},
     {"get_process_connections", get_process_connections, METH_VARARGS,
         "Return the network connections of a process"},
+
+    // --- system-related functions
+
+     {"get_pid_list", get_pid_list, METH_VARARGS,
+       	"Returns a list of PIDs currently running on the system"},
+     {"pid_exists", pid_exists, METH_VARARGS,
+         "Determine if the process exists in the current process list."},
+     {"get_num_cpus", get_num_cpus, METH_VARARGS,
+         "Returns the number of CPUs on the system"},
+     {"get_system_uptime", get_system_uptime, METH_VARARGS,
+         "Return system uptime"},
+     {"get_total_phymem", get_total_phymem, METH_VARARGS,
+         "Return the total amount of physical memory, in bytes"},
+     {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
+         "Return the total amount of virtual memory, in bytes"},
+     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
+         "Return the amount of available physical memory, in bytes"},
+     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
+         "Return the amount of available virtual memory, in bytes"},
+     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
+         "Return system cpu times as a tuple (user, system, idle)"},
+
      {NULL, NULL, 0, NULL}
 };
 
@@ -403,6 +412,7 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args)
 
 
 /*
+ * XXX - Must be removed
  * Return a Python tuple containing a set of information about the process:
  * (pid, ppid, name, path, cmdline).
  */
@@ -480,6 +490,103 @@ static PyObject* get_process_info(PyObject* self, PyObject* args)
         PyErr_SetString(PyExc_RuntimeError, "error building info tuple");
     }
 	return infoTuple;
+}
+
+
+/*
+ * Return process name as a Python string.
+ */
+static PyObject*
+get_process_name(PyObject* self, PyObject* args) {
+	long pid;
+    int pid_return;
+    PyObject* name;
+
+	if (! PyArg_ParseTuple(args, "l", &pid))
+	    return NULL;
+
+    if (pid == 0) {
+	    return Py_BuildValue("s", "System Idle Process");
+    }
+    else if (pid == 4) {
+        return Py_BuildValue("s", "System");
+    }
+
+    pid_return = pid_is_running(pid);
+    if (pid_return == 0) {
+        return NoSuchProcess();
+    }
+    if (pid_return == -1) {
+        return NULL;
+    }
+
+    name = get_name(pid);
+    if (name == NULL)
+        return NULL;  // exception set in get_name()
+    return name;
+}
+
+
+/*
+ * Return process parent pid as a Python integer.
+ */
+static PyObject*
+get_process_ppid(PyObject* self, PyObject* args) {
+	long pid;
+    int pid_return;
+    PyObject* ppid;
+
+	if (! PyArg_ParseTuple(args, "l", &pid))
+	    return NULL;
+    if ((pid == 0) || (pid == 4))
+	    return Py_BuildValue("l", 0);
+
+    pid_return = pid_is_running(pid);
+    if (pid_return == 0) {
+        return NoSuchProcess();
+    }
+    if (pid_return == -1) {
+        return NULL;
+    }
+
+    ppid = get_ppid(pid);
+    if (ppid == NULL)
+        return NULL;  // exception set in get_ppid()
+    return ppid;
+}
+
+/*
+ * Return process cmdline as a Python list of cmdline arguments.
+ */
+static PyObject*
+get_process_cmdline(PyObject* self, PyObject* args) {
+	long pid;
+    int pid_return;
+    PyObject* arglist;
+
+	if (! PyArg_ParseTuple(args, "l", &pid))
+	    return NULL;
+    if ((pid == 0) || (pid == 4))
+	    return Py_BuildValue("[]");
+
+    pid_return = pid_is_running(pid);
+    if (pid_return == 0) {
+        return NoSuchProcess();
+    }
+    if (pid_return == -1) {
+        return NULL;
+    }
+
+    // May fail any of several ReadProcessMemory calls etc. and not indicate
+    // a real problem so we ignore any errors and just live without commandline
+    arglist = get_arg_list(pid);
+    if ( NULL == arglist ) {
+        // carry on anyway, clear any exceptions too
+        PyErr_Clear();
+        return Py_BuildValue("[]");
+    }
+
+	return arglist;
 }
 
 
@@ -1541,4 +1648,3 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
 
     return connectionsList;
 }
-

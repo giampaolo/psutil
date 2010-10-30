@@ -31,19 +31,32 @@
  */
 static PyMethodDef PsutilMethods[] =
 {
-     {"get_pid_list", get_pid_list, METH_VARARGS,
-     	"Returns a list of PIDs currently running on the system"},
-     {"get_process_info", get_process_info, METH_VARARGS,
-        "Return a tuple containing a set of information about the "
-        "process (pid, ppid, name, path, cmdline)"},
-     {"get_num_cpus", get_num_cpus, METH_VARARGS,
-         "Returns the number of CPUs on the system"},
-     {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
-         "Return process CPU kernel/user times."},
+     // --- per-process functions
+
+     {"get_process_name", get_process_name, METH_VARARGS,
+        "Return process name"},
+     {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
+        "Return process cmdline as a list of cmdline arguments"},
+     {"get_process_ppid", get_process_ppid, METH_VARARGS,
+        "Return process ppid as an integer"},
+     {"get_process_uid", get_process_uid, METH_VARARGS,
+        "Return process real user id as an integer"},
+     {"get_process_gid", get_process_gid, METH_VARARGS,
+        "Return process real group id as an integer"},
+     {"get_cpu_times", get_cpu_times, METH_VARARGS,
+           "Return tuple of user/kern time for the given PID"},
      {"get_process_create_time", get_process_create_time, METH_VARARGS,
-         "Return process creation time."},
+         "Return a float indicating the process create time expressed in "
+         "seconds since the epoch"},
      {"get_memory_info", get_memory_info, METH_VARARGS,
          "Return a tuple of RSS/VMS memory information"},
+
+     // --- system-related functions
+
+     {"get_pid_list", get_pid_list, METH_VARARGS,
+         "Returns a list of PIDs currently running on the system"},
+     {"get_num_cpus", get_num_cpus, METH_VARARGS,
+           "Return number of CPUs on the system"},
      {"get_total_phymem", get_total_phymem, METH_VARARGS,
          "Return the total amount of physical memory, in bytes"},
      {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
@@ -53,7 +66,8 @@ static PyMethodDef PsutilMethods[] =
      {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
-         "Return system cpu times as a tuple (user, nice, system, idle)."},
+         "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
+
      {NULL, NULL, 0, NULL}
 };
 
@@ -180,6 +194,92 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 
 
 /*
+ * Return process name from kinfo_proc as a Python string.
+ */
+static PyObject* get_process_name(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
+        return NULL;
+    }
+    return Py_BuildValue("s", kp.kp_proc.p_comm);
+}
+
+
+/*
+ * Return process cmdline as a Python list of cmdline arguments.
+ */
+static PyObject* get_process_cmdline(PyObject* self, PyObject* args)
+{
+    long pid;
+    PyObject* arglist = NULL;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    // get the commandline, defined in arch/bsd/process_info.c
+    arglist = get_arg_list(pid);
+
+    // get_arg_list() returns NULL only if getcmdargs failed with ESRCH
+    // (no process with that PID)
+    if (NULL == arglist) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+    return Py_BuildValue("N", arglist);
+}
+
+
+/*
+ * Return process parent pid from kinfo_proc as a Python integer.
+ */
+static PyObject* get_process_ppid(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (get_kinfo_proc(pid, &kp) == -1)
+        return NULL;
+    return Py_BuildValue("l", (long)kp.kp_eproc.e_ppid);
+}
+
+
+/*
+ * Return process real uid from kinfo_proc as a Python integer.
+ */
+static PyObject* get_process_uid(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (get_kinfo_proc(pid, &kp) == -1)
+        return NULL;
+    return Py_BuildValue("l", (long)kp.kp_eproc.e_pcred.p_ruid);
+}
+
+
+/*
+ * Return process real group id from ki_comm as a Python integer.
+ */
+static PyObject* get_process_gid(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (get_kinfo_proc(pid, &kp) == -1)
+        return NULL;
+    return Py_BuildValue("l", (long)kp.kp_eproc.e_pcred.p_rgid);
+}
+
+
+/*
  * Return 1 if PID exists in the current process list, else 0.
  */
 static int pid_exists(long pid) {
@@ -198,72 +298,6 @@ static int pid_exists(long pid) {
 
     // otherwise return 0 for PID not found
     return 0;
-}
-
-
-/*
- * Return a Python tuple containing a set of information about the process:
- * (pid, ppid, name, path, cmdline).
- */
-static PyObject* get_process_info(PyObject* self, PyObject* args)
-{
-    int mib[4];
-    size_t len;
-    struct kinfo_proc kp;
-	long pid;
-    PyObject* arglist = NULL;
-
-	// the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-
-    // Fill out the first three components of the mib
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID;
-    // now the PID we want
-    mib[3] = pid;
-
-    // fetch the info with sysctl()
-    len = sizeof(kp);
-
-    // now read the data from sysctl
-    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
-        // raise an exception and throw errno as the error
-        if (ESRCH == errno) { //no such process
-            return NoSuchProcess();
-        }
-        return PyErr_SetFromErrno(NULL);
-    }
-
-    if (len > 0) {
-        arglist = get_arg_list(pid);
-        if (Py_None == arglist) {
-            return NULL; // exception should already be set from getcmdargs()
-        }
-
-        return Py_BuildValue("llssNll",
-                             pid,
-                             kp.kp_eproc.e_ppid,
-                             kp.kp_proc.p_comm,
-                             "",
-                             arglist,
-                             kp.kp_eproc.e_pcred.p_ruid,
-                             kp.kp_eproc.e_pcred.p_rgid);
-    }
-
-    /*
-     * if sysctl succeeds but len is zero, raise NoSuchProcess as this only
-     * appears to happen when the process has gone away.
-     */
-    else {
-        return NoSuchProcess();
-    }
-
-    // something went wrong if we get to this, so throw an exception
-	return PyErr_Format(PyExc_RuntimeError,
-                        "Failed to retrieve process information.");
 }
 
 
@@ -295,7 +329,7 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args)
 /*
  * Return a Python tuple (user_time, kernel_time)
  */
-static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
+static PyObject* get_cpu_times(PyObject* self, PyObject* args)
 {
     long pid;
     int err;
@@ -371,39 +405,15 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
  */
 static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 {
-
-    int mib[4];
     long pid;
-    size_t len;
     struct kinfo_proc kp;
-
-	// the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID;
-    mib[3] = pid;
-    len = sizeof(kp);
-    if (sysctl(mib, 4, &kp, &len, NULL, 0) == -1) {
-        return PyErr_SetFromErrno(PyExc_OSError);
+    if (get_kinfo_proc(pid, &kp) == -1) {
+        return NULL;
     }
-
-    if (len > 0) {
-        return Py_BuildValue("d", TV2DOUBLE(kp.kp_proc.p_starttime));
-    }
-
-    /*
-     * if sysctl succeeds but len is zero, raise NoSuchProcess as this only
-     * appears to happen when the process has gone away.
-     */
-    else {
-        return NoSuchProcess();
-    }
-
-    return PyErr_Format(PyExc_RuntimeError, "Unable to read process start time.");
+    return Py_BuildValue("d", TV2DOUBLE(kp.kp_proc.p_starttime));
 }
 
 

@@ -88,25 +88,34 @@ class BSDProcess(object):
         self._process_name = None
 
     @wrap_exceptions
-    def get_process_info(self):
-        """Returns a tuple that can be passed to the psutil.ProcessInfo class
-        constructor.
-        """
-        info_tuple = _psutil_bsd.get_process_info(self.pid)
-        pid, ppid, name, exe, cmdline, uid, gid = info_tuple
-        # on BSD, "ki_comm" gets truncated to 16 bytes; if it matches
-        # the first part of the cmdline we return that one instead 
-        # because it's usually more clear.
-        # Examples are "sshd" vs. "sshd: root@ttyp1" and "sendmail" 
-        # vs. "sendmail: accepting connections".
-        # ps aux deals with this by returning both names as a
-        # "name (longer name)" string in the COMMAND column.
-        if cmdline:
-            extended_name = os.path.basename(cmdline[0])
-            if extended_name.startswith(name):
-                name = extended_name
-        self._process_name = name
-        return (pid, ppid, name, exe, cmdline, uid, gid)
+    def get_process_name(self):
+        """Return process name as a string of limited len (15)."""
+        return _psutil_bsd.get_process_name(self.pid)
+        
+    def get_process_exe(self):
+        # no such thing as "exe" on BSD; it will maybe be determined
+        # later from cmdline[0]
+        return ""
+
+    @wrap_exceptions
+    def get_process_cmdline(self):
+        """Return process cmdline as a list of arguments."""
+        return _psutil_bsd.get_process_cmdline(self.pid)
+        
+    @wrap_exceptions
+    def get_process_ppid(self):
+        """Return process parent pid."""
+        return _psutil_bsd.get_process_ppid(self.pid)
+        
+    @wrap_exceptions
+    def get_process_uid(self):
+        """Return process real user id."""
+        return _psutil_bsd.get_process_uid(self.pid)
+
+    @wrap_exceptions
+    def get_process_gid(self):
+        """Return process real group id."""
+        return _psutil_bsd.get_process_gid(self.pid)
 
     @wrap_exceptions
     def get_cpu_times(self):
@@ -131,7 +140,8 @@ class BSDProcess(object):
 
     def get_connections(self):
         """Return etwork connections opened by a process as a list of
-        namedtuples."""
+        namedtuples by parsing lsof output.
+        """
         lsof = _psposix.LsofParser(self.pid, self._process_name)
         return lsof.get_process_connections()
 

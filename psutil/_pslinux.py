@@ -193,55 +193,57 @@ class LinuxProcess(object):
     def __init__(self, pid):
         self.pid = pid
         self._process_name = None
-
+               
     @wrap_exceptions
-    def get_process_info(self):
-        """Returns a process info class."""
+    def get_process_name(self):
         if self.pid == 0:
-            # special case for 0 (kernel process) PID
-            return (self.pid, 0, 'sched', '', [], 0, 0)
-
-        # determine name
+            return 'sched'  # special case for kernel process
         f = open("/proc/%s/stat" % self.pid)
         try:
             name = f.read().split(' ')[1].replace('(', '').replace(')', '')
         finally:
             f.close()
-
-        # determine executable
+        # XXX - gets changed later and probably needs refactoring
+        return name
+            
+    def get_process_exe(self):
+        if self.pid in (0, 2):
+            return ""   # special case for kernel processes
         try:
             exe = os.readlink("/proc/%s/exe" % self.pid)
-        except OSError:
-            exe = ""
+        except (OSError, IOError), err:
+            if err.errno == errno.ENOENT:  
+                # no such file error; might be raised also if the 
+                # path actually exists for system processes with 
+                # low pids (about 0-20)
+                if os.path.lexists("/proc/%s/exe" % self.pid):
+                    return ""
+                else:
+                    # ok, it is a process which has gone away
+                    raise NoSuchProcess(self.pid, self._process_name)
+            if err.errno in (errno.EPERM, errno.EACCES):
+                raise AccessDenied(self.pid, self._process_name)
+            raise
+
         # It seems symlinks can point to a deleted/invalid location
         # (this usually  happens with "pulseaudio" process).
         # However, if we had permissions to execute readlink() it's
         # likely that we'll be able to figure out exe from argv[0] 
         # later on.
         if exe.endswith(" (deleted)") and not os.path.isfile(exe):
-            exe = ""
-
-        # determine cmdline
+            return ""
+        return exe
+        
+    @wrap_exceptions
+    def get_process_cmdline(self):
+        if self.pid == 0:
+            return []   # special case for kernel process
         f = open("/proc/%s/cmdline" % self.pid)
         try:
             # return the args as a list
-            cmdline = [x for x in f.read().split('\x00') if x]
+            return [x for x in f.read().split('\x00') if x]
         finally:
             f.close()
-            
-        # On Linux the name gets truncated to the first 15 characters.
-        # If it matches the first part of the cmdline we return that 
-        # one instead because it's usually more explicative.
-        # Examples are "gnome-keyring-d" vs. "gnome-keyring-daemon".
-        if cmdline:
-            extended_name = os.path.basename(cmdline[0])
-            if extended_name.startswith(name):
-                name = extended_name
-
-        self._process_name = name
-
-        return (self.pid, self._get_ppid(), name, exe, cmdline,
-                self._get_process_uid(), self._get_process_gid())
 
     @wrap_exceptions
     def get_cpu_times(self):
@@ -372,7 +374,10 @@ class LinuxProcess(object):
 #    def get_connections(self):
 #        return _psposix.LsofParser(pid, self._process_name).get_process_connections()
 
-    def _get_ppid(self):
+    @wrap_exceptions
+    def get_process_ppid(self):
+        if self.pid == 0:
+            return 0
         f = open("/proc/%s/status" % self.pid)
         for line in f:
             if line.startswith("PPid:"):
@@ -380,7 +385,10 @@ class LinuxProcess(object):
                 f.close()
                 return int(line.split()[1])
 
-    def _get_process_uid(self):
+    @wrap_exceptions
+    def get_process_uid(self):
+        if self.pid == 0:
+            return 0
         f = open("/proc/%s/status" % self.pid)
         for line in f:
             if line.startswith('Uid:'):
@@ -390,7 +398,10 @@ class LinuxProcess(object):
                 f.close()
                 return int(line.split()[1])
 
-    def _get_process_gid(self):
+    @wrap_exceptions
+    def get_process_gid(self):
+        if self.pid == 0:
+            return 0
         f = open("/proc/%s/status" % self.pid)
         for line in f:
             if line.startswith('Gid:'):
