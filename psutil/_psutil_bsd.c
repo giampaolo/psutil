@@ -23,7 +23,8 @@
 /*
  * define the psutil C module methods and initialize the module.
  */
-static PyMethodDef PsutilMethods[] =
+static PyMethodDef 
+PsutilMethods[] =
 {
      // --- per-process functions
        
@@ -78,17 +79,20 @@ static struct module_state _state;
 
 #if PY_MAJOR_VERSION >= 3
 
-static int psutil_bsd_traverse(PyObject *m, visitproc visit, void *arg) {
+static int 
+psutil_bsd_traverse(PyObject *m, visitproc visit, void *arg) {
     Py_VISIT(GETSTATE(m)->error);
     return 0;
 }
 
-static int psutil_bsd_clear(PyObject *m) {
+static int 
+psutil_bsd_clear(PyObject *m) {
     Py_CLEAR(GETSTATE(m)->error);
     return 0;
 }
 
-static struct PyModuleDef moduledef = {
+static struct PyModuleDef 
+moduledef = {
         PyModuleDef_HEAD_INIT,
         "psutil_bsd",
         NULL,
@@ -108,8 +112,7 @@ PyInit__psutil_bsd(void)
 #else
 #define INITERROR return
 
-void
-init_psutil_bsd(void)
+void init_psutil_bsd(void)
 #endif
 {
 #if PY_MAJOR_VERSION >= 3
@@ -131,7 +134,6 @@ init_psutil_bsd(void)
     return module;
 #endif
 }
-
 
 
 /*
@@ -170,7 +172,8 @@ get_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
 /*
  * Return a Python list of all the PIDs running on the system.
  */
-static PyObject* get_pid_list(PyObject* self, PyObject* args)
+static PyObject* 
+get_pid_list(PyObject* self, PyObject* args)
 {
     kinfo_proc *proclist = NULL;
     kinfo_proc *orig_address = NULL;
@@ -203,7 +206,8 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 /*
  * Return process name from kinfo_proc as a Python string.
  */
-static PyObject* get_process_name(PyObject* self, PyObject* args)
+static PyObject* 
+get_process_name(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -220,7 +224,8 @@ static PyObject* get_process_name(PyObject* self, PyObject* args)
 /*
  * Return process cmdline as a Python list of cmdline arguments.
  */
-static PyObject* get_process_cmdline(PyObject* self, PyObject* args)
+static PyObject* 
+get_process_cmdline(PyObject* self, PyObject* args)
 {
     long pid;
     PyObject* arglist = NULL;
@@ -244,7 +249,8 @@ static PyObject* get_process_cmdline(PyObject* self, PyObject* args)
 /*
  * Return process parent pid from kinfo_proc as a Python integer.
  */
-static PyObject* get_process_ppid(PyObject* self, PyObject* args)
+static PyObject* 
+get_process_ppid(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -259,7 +265,8 @@ static PyObject* get_process_ppid(PyObject* self, PyObject* args)
 /*
  * Return process real uid from kinfo_proc as a Python integer.
  */
-static PyObject* get_process_uid(PyObject* self, PyObject* args)
+static PyObject* 
+get_process_uid(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -274,7 +281,8 @@ static PyObject* get_process_uid(PyObject* self, PyObject* args)
 /*
  * Return process real group id from ki_comm as a Python integer.
  */
-static PyObject* get_process_gid(PyObject* self, PyObject* args)
+static PyObject* 
+get_process_gid(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -293,7 +301,8 @@ static PyObject* get_process_gid(PyObject* self, PyObject* args)
 /*
  * Return a Python tuple (user_time, kernel_time)
  */
-static PyObject* get_cpu_times(PyObject* self, PyObject* args)
+static PyObject* 
+get_cpu_times(PyObject* self, PyObject* args)
 {
     long pid;
     double user_t, sys_t;
@@ -314,7 +323,8 @@ static PyObject* get_cpu_times(PyObject* self, PyObject* args)
 /*
  * Return a Python integer indicating the number of CPUs on the system
  */
-static PyObject* get_num_cpus(PyObject* self, PyObject* args)
+static PyObject* 
+get_num_cpus(PyObject* self, PyObject* args)
 {
     int mib[2];
     int ncpu;
@@ -337,7 +347,8 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args)
  * Return a Python float indicating the process create time expressed in
  * seconds since the epoch.
  */
-static PyObject* get_process_create_time(PyObject* self, PyObject* args)
+static PyObject* 
+get_process_create_time(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -354,7 +365,8 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 /*
  * Return the RSS and VMS as a Python tuple.
  */
-static PyObject* get_memory_info(PyObject* self, PyObject* args)
+static PyObject* 
+get_memory_info(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -372,7 +384,8 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
  * Return a Python integer indicating the total amount of physical memory
  * in bytes.
  */
-static PyObject* get_total_phymem(PyObject* self, PyObject* args)
+static PyObject* 
+get_total_phymem(PyObject* self, PyObject* args)
 {
     long total_phymem;
     int mib[2];
@@ -395,7 +408,8 @@ static PyObject* get_total_phymem(PyObject* self, PyObject* args)
  * Return a Python long indicating the amount of available physical memory in
  * bytes.
  */
-static PyObject* get_avail_phymem(PyObject* self, PyObject* args)
+static PyObject* 
+get_avail_phymem(PyObject* self, PyObject* args)
 {
     unsigned long v_inactive_count = 0;
     unsigned long v_cache_count = 0;
@@ -440,7 +454,8 @@ static PyObject* get_avail_phymem(PyObject* self, PyObject* args)
  * Return a Python long indicating the total amount of virtual memory
  * in bytes.
  */
-static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
+static PyObject* 
+get_total_virtmem(PyObject* self, PyObject* args)
 {
     int mib[2];
     struct vmtotal vm;
@@ -464,7 +479,8 @@ static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
  * Return a Python long indicating the avail amount of virtual memory
  * in bytes.
  */
-static PyObject* get_avail_virtmem(PyObject* self, PyObject* args)
+static PyObject* 
+get_avail_virtmem(PyObject* self, PyObject* args)
 {
     int mib[2];
     struct vmtotal vm;
@@ -489,7 +505,8 @@ static PyObject* get_avail_virtmem(PyObject* self, PyObject* args)
 /*
  * Return a Python tuple representing user, kernel and idle CPU times
  */
-static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
+static PyObject* 
+get_system_cpu_times(PyObject* self, PyObject* args)
 {
     long cpu_time[CPUSTATES];
     size_t size;

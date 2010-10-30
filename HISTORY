@@ -32,9 +32,13 @@ BUGFIXES
    left behind every time Process class was instantiated.
  * Issue 111: path and name Process properties report truncated or erroneous
    values on UNIX.
- * Issue 120: cpu_percent() always returning 100% on OS X
-   PID 0 or when run as non-root user
-
+ * Issue 120: cpu_percent() always returning 100% on OS X.
+ * Issue 112: uid and gid properties don't change if process changes effective
+   user/group id at some point.
+ * Issue 126: ppid, uid, gid, name, exe, cmdline and create_time properties are 
+   no longer cached and correctly raise NoSuchProcess exception if the process 
+   disappears.
+ 
 API CHANGES
 
  * psutil.Process.path property is deprecated and works as an alias for "exe"
@@ -45,6 +49,8 @@ API CHANGES
  * psutil.cpu_times() returns a nametuple instead of a tuple.
  * New psutil.Process methods: get_open_files(), get_connections(),
    send_signal() and terminate().
+ * ppid, uid, gid, name, exe, cmdline and create_time properties are no longer
+   cached and raise NoSuchProcess exception if process disappears.
 
 
 0.1.3 - 2010-03-02
