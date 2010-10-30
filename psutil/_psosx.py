@@ -94,11 +94,15 @@ class OSXProcess(object):
     def get_process_exe(self):
         # no such thing as "exe" on OS X; it will maybe be determined
         # later from cmdline[0]
+        if not pid_exists(self.pid):
+            raise NoSuchProcess(self.pid, self._process_name)
         return ""
 
     @wrap_exceptions
     def get_process_cmdline(self):
         """Return process cmdline as a list of arguments."""
+        if not pid_exists(self.pid):
+            raise NoSuchProcess(self.pid, self._process_name)
         return _psutil_osx.get_process_cmdline(self.pid)
 
     @wrap_exceptions
