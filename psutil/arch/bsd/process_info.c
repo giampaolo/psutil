@@ -28,7 +28,8 @@
  * On success, the function returns 0.
  * On error, the function returns a BSD errno value.
  */
-int get_proc_list(struct kinfo_proc **procList, size_t *procCount)
+int 
+get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 {
     int err;
     struct kinfo_proc * result;
@@ -107,7 +108,8 @@ int get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 }
 
 
-char *getcmdpath(long pid, size_t *pathsize)
+char 
+*getcmdpath(long pid, size_t *pathsize)
 {
     int  mib[4];
     char *path;
@@ -153,7 +155,8 @@ char *getcmdpath(long pid, size_t *pathsize)
  *      -1 for failure (Exception raised);
  *      1 for insufficient privileges.
  */
-char *getcmdargs(long pid, size_t *argsize)
+char 
+*getcmdargs(long pid, size_t *argsize)
 {
     int mib[4];
     size_t size, argmax;
@@ -193,7 +196,8 @@ char *getcmdargs(long pid, size_t *argsize)
 
 
 /* returns the command line as a python list object */
-PyObject* get_arg_list(long pid)
+PyObject* 
+get_arg_list(long pid)
 {
     char *argstr = NULL;
     int pos = 0;
@@ -237,3 +241,4 @@ PyObject* get_arg_list(long pid)
     free(argstr);
     return retlist;
 }
+

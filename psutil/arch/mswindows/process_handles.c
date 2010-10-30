@@ -110,7 +110,8 @@ PVOID GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName)
 }
 
 
-PyObject* get_open_files(long pid, HANDLE processHandle)
+PyObject* 
+get_open_files(long pid, HANDLE processHandle)
 {
     _NtQuerySystemInformation NtQuerySystemInformation =
         GetLibraryProcAddress("ntdll.dll", "NtQuerySystemInformation");

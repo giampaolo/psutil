@@ -11,7 +11,8 @@
 /*
  * Convert a process handle to a process token handle.
  */
-HANDLE token_from_handle(HANDLE hProcess) {
+HANDLE 
+token_from_handle(HANDLE hProcess) {
     HANDLE hToken = NULL;
 
     if (! OpenProcessToken(hProcess, TOKEN_QUERY, &hToken) ) {

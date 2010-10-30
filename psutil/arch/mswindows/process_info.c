@@ -162,7 +162,8 @@ get_pids(DWORD *numberOfReturnedPIDs) {
 }
 
 
-int is_system_proc(DWORD pid) {
+int 
+is_system_proc(DWORD pid) {
     HANDLE hProcess;
 
     // Special case for PID 0 System Idle Process
@@ -194,7 +195,8 @@ int is_system_proc(DWORD pid) {
 }
 
 
-int pid_is_running(DWORD pid)
+int 
+pid_is_running(DWORD pid)
 {
     HANDLE hProcess;
     DWORD exitCode;
@@ -245,7 +247,8 @@ int pid_is_running(DWORD pid)
 }
 
 
-int pid_in_proclist(DWORD pid)
+int 
+pid_in_proclist(DWORD pid)
 {
     DWORD *proclist = NULL;
     DWORD numberOfReturnedPIDs;
@@ -286,7 +289,8 @@ BOOL is_running(HANDLE hProcess)
 
 // Return None to represent NoSuchProcess, else return NULL for
 // other exception or the name as a Python string
-PyObject* get_name(long pid)
+PyObject* 
+get_name(long pid)
 {
 	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	PROCESSENTRY32 pe = { 0 };
@@ -312,7 +316,8 @@ PyObject* get_name(long pid)
 
 
 /* returns parent pid (as a Python int) for given pid or None on failure */
-PyObject* get_ppid(long pid)
+PyObject* 
+get_ppid(long pid)
 {
 	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	PROCESSENTRY32 pe = { 0 };
@@ -343,7 +348,8 @@ PyObject* get_ppid(long pid)
  * returns a Python list representing the arguments for the process
  * with given pid or NULL on error.
  */
-PyObject* get_arg_list(long pid)
+PyObject* 
+get_arg_list(long pid)
 {
     int nArgs, i;
     LPWSTR *szArglist;

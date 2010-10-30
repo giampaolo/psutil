@@ -21,7 +21,8 @@
 
 // ------------------------ Python init ---------------------------
 
-static PyMethodDef PsutilMethods[] =
+static PyMethodDef 
+PsutilMethods[] =
 {
     // --- per-process functions
 
@@ -156,7 +157,8 @@ struct module_state {
  * Return a Python float representing the system uptime expressed in seconds
  * since the epoch.
  */
-static PyObject* get_system_uptime(PyObject* self, PyObject* args)
+static PyObject* 
+get_system_uptime(PyObject* self, PyObject* args)
 {
     double uptime;
     time_t pt;
@@ -191,7 +193,8 @@ static PyObject* get_system_uptime(PyObject* self, PyObject* args)
 /*
  * Return 1 if PID exists in the current process list, else 0.
  */
-static PyObject* pid_exists(PyObject* self, PyObject* args)
+static PyObject* 
+pid_exists(PyObject* self, PyObject* args)
 {
     long pid;
     int status;
@@ -211,7 +214,8 @@ static PyObject* pid_exists(PyObject* self, PyObject* args)
 /*
  * Return a Python list of all the PIDs running on the system.
  */
-static PyObject* get_pid_list(PyObject* self, PyObject* args)
+static PyObject* 
+get_pid_list(PyObject* self, PyObject* args)
 {
     DWORD *proclist = NULL;
     DWORD numberOfReturnedPIDs;
@@ -241,7 +245,8 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
 /*
  * Kill a process given its PID.
  */
-static PyObject* kill_process(PyObject* self, PyObject* args)
+static PyObject* 
+kill_process(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
     long pid;
@@ -287,7 +292,8 @@ static PyObject* kill_process(PyObject* self, PyObject* args)
 /*
  * Return a Python tuple (user_time, kernel_time)
  */
-static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
+static PyObject* 
+get_process_cpu_times(PyObject* self, PyObject* args)
 {
     long        pid;
     HANDLE      hProcess;
@@ -346,7 +352,8 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args)
  * Return a Python float indicating the process create time expressed in
  * seconds since the epoch.
  */
-static PyObject* get_process_create_time(PyObject* self, PyObject* args)
+static PyObject* 
+get_process_create_time(PyObject* self, PyObject* args)
 {
     long        pid;
     long long unix_time;
@@ -396,7 +403,8 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args)
 /*
  * Return a Python integer indicating the number of CPUs on the system.
  */
-static PyObject* get_num_cpus(PyObject* self, PyObject* args)
+static PyObject* 
+get_num_cpus(PyObject* self, PyObject* args)
 {
     SYSTEM_INFO system_info;
     system_info.dwNumberOfProcessors = 0;
@@ -509,7 +517,8 @@ get_process_cmdline(PyObject* self, PyObject* args) {
 /*
  * Return the RSS and VMS as a Python tuple.
  */
-static PyObject* get_memory_info(PyObject* self, PyObject* args)
+static PyObject* 
+get_memory_info(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
     PROCESS_MEMORY_COUNTERS counters;
@@ -536,7 +545,8 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args)
  * Return a Python integer indicating the total amount of physical memory
  * in bytes.
  */
-static PyObject* get_total_phymem(PyObject* self, PyObject* args)
+static PyObject* 
+get_total_phymem(PyObject* self, PyObject* args)
 {
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
@@ -553,7 +563,8 @@ static PyObject* get_total_phymem(PyObject* self, PyObject* args)
  * Return a Python integer indicating the total amount of virtual memory
  * in bytes.
  */
-static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
+static PyObject* 
+get_total_virtmem(PyObject* self, PyObject* args)
 {
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
@@ -570,7 +581,8 @@ static PyObject* get_total_virtmem(PyObject* self, PyObject* args)
  * Return a Python integer indicating the amount of available physical memory
  * in bytes.
  */
-static PyObject* get_avail_phymem(PyObject* self, PyObject* args)
+static PyObject* 
+get_avail_phymem(PyObject* self, PyObject* args)
 {
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
@@ -585,7 +597,8 @@ static PyObject* get_avail_phymem(PyObject* self, PyObject* args)
  * Return a Python integer indicating the amount of available virtual memory
  * in bytes.
  */
-static PyObject* get_avail_virtmem(PyObject* self, PyObject* args)
+static PyObject* 
+get_avail_virtmem(PyObject* self, PyObject* args)
 {
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
@@ -626,7 +639,8 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
 /*
  * Return a Python tuple representing user, kernel and idle CPU times
  */
-static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
+static PyObject* 
+get_system_cpu_times(PyObject* self, PyObject* args)
 {
 	typedef BOOL (_stdcall *GST_PROC) (LPFILETIME, LPFILETIME, LPFILETIME);
 	static GST_PROC GetSystemTimes;
@@ -746,8 +760,6 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args)
 }
 
 
-
-
 /*
  * Sid to User convertion
  */
@@ -795,7 +807,8 @@ typedef struct _UNICODE_STRING {
  * Return process current working directory as a Python string.
  */
 
-static PyObject* get_process_cwd(PyObject* self, PyObject* args)
+static PyObject* 
+get_process_cwd(PyObject* self, PyObject* args)
 {
     long pid;
     HANDLE processHandle;
@@ -907,7 +920,8 @@ static PyObject* get_process_cwd(PyObject* self, PyObject* args)
 /*
  * Resume or suspends a process
  */
-int suspend_resume_process(DWORD pid, int suspend)
+int 
+suspend_resume_process(DWORD pid, int suspend)
 {
     // a huge thanks to http://www.codeproject.com/KB/threads/pausep.aspx
     HANDLE hThreadSnap = NULL;
@@ -969,7 +983,8 @@ int suspend_resume_process(DWORD pid, int suspend)
 }
 
 
-static PyObject* suspend_process(PyObject* self, PyObject* args)
+static PyObject* 
+suspend_process(PyObject* self, PyObject* args)
 {
     long pid;
     int suspend = 1;
@@ -985,7 +1000,8 @@ static PyObject* suspend_process(PyObject* self, PyObject* args)
 }
 
 
-static PyObject* resume_process(PyObject* self, PyObject* args)
+static PyObject* 
+resume_process(PyObject* self, PyObject* args)
 {
     long pid;
     int suspend = 0;
@@ -1001,7 +1017,8 @@ static PyObject* resume_process(PyObject* self, PyObject* args)
 }
 
 
-static PyObject* get_process_open_files(PyObject* self, PyObject* args)
+static PyObject* 
+get_process_open_files(PyObject* self, PyObject* args)
 {
     long       pid;
     HANDLE     processHandle;
@@ -1030,7 +1047,8 @@ static PyObject* get_process_open_files(PyObject* self, PyObject* args)
  and return the corresponding drive letter (e.g. "C:\\").
  If no match is found return an empty string.
 */
-static PyObject* _QueryDosDevice(PyObject* self, PyObject* args)
+static PyObject* 
+_QueryDosDevice(PyObject* self, PyObject* args)
 {
     LPCTSTR   lpDevicePath;
     TCHAR d = TEXT('A');
@@ -1059,7 +1077,8 @@ static PyObject* _QueryDosDevice(PyObject* self, PyObject* args)
 /*
  * Return process username as a "DOMAIN//USERNAME" string.
  */
-static PyObject* get_process_username(PyObject* self, PyObject* args)
+static PyObject* 
+get_process_username(PyObject* self, PyObject* args)
 {
     long pid;
     HANDLE processHandle;
@@ -1272,7 +1291,8 @@ typedef struct _MIB_UDP6TABLE_OWNER_PID
 /*
  * Return a list of network connections opened by a process
  */
-static PyObject* get_process_connections(PyObject* self, PyObject* args)
+static PyObject* 
+get_process_connections(PyObject* self, PyObject* args)
 {
     static long null_address[4] = { 0, 0, 0, 0 };
 
@@ -1564,3 +1584,4 @@ static PyObject* get_process_connections(PyObject* self, PyObject* args)
 
     return connectionsList;
 }
+
