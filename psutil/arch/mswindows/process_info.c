@@ -86,8 +86,8 @@ handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess)
     /* make sure the process is running */
     GetExitCodeProcess(hProcess, &processExitCode);
     if (processExitCode == 0) {
-        CloseHandle(hProcess);
         NoSuchProcess();
+        CloseHandle(hProcess);
         return NULL;
     }
     return hProcess;
@@ -100,15 +100,15 @@ handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess)
  * parameter for OpenProcess.
  */
 HANDLE
-handle_from_pid(DWORD pid)
-{
+handle_from_pid(DWORD pid) {
     DWORD dwDesiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_VM_READ;
     return handle_from_pid_waccess(pid, dwDesiredAccess);
 }
 
 
 // fetch the PEB base address from NtQueryInformationProcess()
-PVOID GetPebAddress(HANDLE ProcessHandle)
+PVOID
+GetPebAddress(HANDLE ProcessHandle)
 {
     _NtQueryInformationProcess NtQueryInformationProcess =
         (_NtQueryInformationProcess)GetProcAddress(
@@ -120,7 +120,8 @@ PVOID GetPebAddress(HANDLE ProcessHandle)
 }
 
 
-DWORD* get_pids(DWORD *numberOfReturnedPIDs){
+DWORD*
+get_pids(DWORD *numberOfReturnedPIDs) {
 	int procArraySz = 1024;
 
 	/* Win32 SDK says the only way to know if our process array
@@ -137,20 +138,15 @@ DWORD* get_pids(DWORD *numberOfReturnedPIDs){
 
 	do {
 		free(procArray);
-
         procArrayByteSz = procArraySz * sizeof(DWORD);
 		procArray = malloc(procArrayByteSz);
 
-
-		if (! EnumProcesses(procArray, procArrayByteSz, &enumReturnSz))
-		{
+		if (! EnumProcesses(procArray, procArrayByteSz, &enumReturnSz)) {
 			free(procArray);
-			/* Throw exception to python */
-			PyErr_SetString(PyExc_RuntimeError, "EnumProcesses failed");
-			return NULL;
+            PyErr_SetFromWindowsErr(0);
+            return NULL;
 		}
-		else if (enumReturnSz == procArrayByteSz)
-		{
+		else if (enumReturnSz == procArrayByteSz) {
 			/* Process list was too large.  Allocate more space*/
 			procArraySz += 1024;
 		}
@@ -174,7 +170,6 @@ int is_system_proc(DWORD pid) {
     if ((pid == 0) || (pid == 4)) {
         return 1;
     }
-
     if (pid < 0) {
         return 0;
     }
@@ -258,9 +253,7 @@ int pid_in_proclist(DWORD pid)
 
     proclist = get_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
-		PyErr_SetString(PyExc_RuntimeError,
-                        "get_pids() failed for pid_in_proclist()");
-        return -1;
+        return NULL;
     }
 
     for (i = 0; i < numberOfReturnedPIDs; i++) {
@@ -314,10 +307,7 @@ PyObject* get_name(long pid)
 	}
 
     CloseHandle(h);
-    // XXX - see whether we can use SetFromErrno
-    PyErr_SetString(PyExc_RuntimeError,
-                    "Failed to read process name from toolhelp snapshot");
-    return NULL;
+    return PyErr_SetFromWindowsErr(0);
 }
 
 
@@ -344,10 +334,7 @@ PyObject* get_ppid(long pid)
 	}
 
     CloseHandle(h);
-    // XXX - see whether we can use SetFromErrno
-    PyErr_SetString(PyExc_RuntimeError,
-                    "Failed to read process ppid from toolhelp snapshot");
-    return NULL;
+    return PyErr_SetFromWindowsErr(0);
 }
 
 

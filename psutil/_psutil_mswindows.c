@@ -222,7 +222,6 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args)
     proclist = get_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
         Py_DECREF(retlist);
-		PyErr_SetString(PyExc_RuntimeError, "get_pids() failed in get_pid_list()");
         return NULL;
     }
 
@@ -409,89 +408,6 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args)
     }
     return Py_BuildValue("I", system_info.dwNumberOfProcessors);
 }
-
-
-/*
- * XXX - Must be removed
- * Return a Python tuple containing a set of information about the process:
- * (pid, ppid, name, path, cmdline).
- */
-static PyObject* get_process_info(PyObject* self, PyObject* args)
-{
-	// the argument passed should be a process id
-	long pid;
-    int pid_return;
-    PyObject* infoTuple;
-    PyObject* ppid;
-    PyObject* arglist;
-    PyObject* name;
-
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-	    return NULL;
-    }
-
-    // special case for PID 0 (System Idle Process)
-    if (0 == pid) {
-        arglist = Py_BuildValue("[]");
-	    infoTuple = Py_BuildValue("llssNll", pid, 0, "System Idle Process", "",
-                                  arglist, -1, -1);
-        return infoTuple;
-    }
-
-    // special case for PID 4 (System)
-    if (4 == pid) {
-        arglist = Py_BuildValue("[]");
-	    infoTuple = Py_BuildValue("llssNll", pid, 0, "System", "", arglist, -1, -1);
-        return infoTuple;
-    }
-
-    // check if the process exists before we waste time trying to read info
-    pid_return = pid_is_running(pid);
-    if (pid_return == 0) {
-        return NoSuchProcess();
-    }
-
-    if (pid_return == -1) {
-        return NULL; // exception raised from within pid_is_running()
-    }
-
-
-    // Now fetch the actual properties of the process
-    ppid = get_ppid(pid);
-    if ( NULL == ppid ) {
-        return NULL;  // exception string set in get_ppid()
-    }
-
-    name = get_name(pid);
-    if ( NULL == name ) {
-        return NULL;  //exception string set in get_name()
-    }
-
-    // If get_name or get_pid returns None that means the process is dead
-    if (Py_None == name) {
-        return NoSuchProcess();
-    }
-
-    if (Py_None == ppid) {
-        return NoSuchProcess();
-    }
-
-    // May fail any of several ReadProcessMemory calls etc. and not indicate
-    // a real problem so we ignore any errors and just live without commandline
-    arglist = get_arg_list(pid);
-    if ( NULL == arglist ) {
-        // carry on anyway, clear any exceptions too
-        PyErr_Clear();
-        arglist = Py_BuildValue("[]");
-    }
-
-	infoTuple = Py_BuildValue("lNNsNll", pid, ppid, name, "", arglist, -1, -1);
-    if (infoTuple == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "error building info tuple");
-    }
-	return infoTuple;
-}
-
 
 /*
  * Return process name as a Python string.
