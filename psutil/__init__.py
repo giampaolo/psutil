@@ -456,17 +456,19 @@ def cpu_percent():
     #if time_delta < idle_delta:
     #    return 0.0
 
-    try :
-        idle_percent = (idle_delta / time_delta) * 100.0
-        util_percent = ((100 * NUM_CPUS) - idle_percent) / NUM_CPUS
-    except ZeroDivisionError:
+    # no idle time means CPU is 100% utilized
+    if (idle_delta == 0) and (time_delta > 0):
+        return 100.0
+
+    if idle_delta < 0:
+        # invalid calculation, return 0.0
         return 0.0
 
-    if util_percent < 0:
-        return 0.0
-    else:
-        return util_percent
+    # idle time is for all CPUs, so can be up to time_delta * NUM_CPUS
+    idle_delta = idle_delta / NUM_CPUS
 
+    idle_percent = (idle_delta / time_delta) * 100.0
+    return 100.0 - idle_percent
 
 def test():
     """List info of all currently running processes emulating a
