@@ -442,7 +442,13 @@ def cpu_percent(interval=0.1):
     t2_all = sum(t2)
     t2_busy = t2_all - t2.idle
 
-    if t2_busy <= t1_busy:
+    # This should avoid precision issues (t2_busy < t1_busy1).
+    # This is based on the assumption that anything beyond 2nd 
+    # decimal digit is garbage.
+    t1_busy = round(t1_busy, 2)
+    t2_busy = round(t2_busy, 2)
+ 
+    if t2_busy == t1_busy:
         return 0.0
 
     busy_delta = t2_busy - t1_busy
