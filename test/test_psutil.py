@@ -267,10 +267,10 @@ class TestCase(unittest.TestCase):
             self.fail("difference %s" % difference)
 
     def test_system_cpu_percent(self):
-        percent = psutil.cpu_percent()
+        percent = psutil.cpu_percent(0)
         self.assertTrue(isinstance(percent, float))
         for x in xrange(1000):
-            percent = psutil.cpu_percent()
+            percent = psutil.cpu_percent(0)
             self.assertTrue(isinstance(percent, float))
             self.assertTrue(percent >= 0.0)
             self.assertTrue(percent <= 100.0)

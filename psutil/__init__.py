@@ -428,45 +428,28 @@ def cpu_times():
     values = get_system_cpu_times()
     return CPUTimes(**values)
 
-_last_idle_time = cpu_times().idle
-_last_time = time.time()
-
-def cpu_percent():
-    """Return the current system-wide CPU utilization as a percentage. For
-    highest accuracy, it is recommended that this be called at least 1/10th
-    of a second after importing the module or calling cpu_percent() in a
-    previous call, to allow for a larger time delta from which to calculate
-    the percentage value.
+def cpu_percent(interval=0.1):
+    """Return a float representing the current system-wide CPU 
+    utilization as a percentage.
     """
-    global _last_idle_time
-    global _last_time
+    t1 = cpu_times()
+    t1_all = sum(t1)
+    t1_busy = t1_all - t1.idle
 
-    idle_time = cpu_times().idle
-    curr_time = time.time()
+    time.sleep(interval)
 
-    time_delta = curr_time - _last_time
-    idle_delta = idle_time - _last_idle_time
+    t2 = cpu_times()
+    t2_all = sum(t2)
+    t2_busy = t2_all - t2.idle
 
-    # reset values for next run
-    _last_idle_time = idle_time
-    _last_time = curr_time
-
-    # Removed; see Issue #67: http://code.google.com/p/psutil/issues/detail?id=67
-    # invalid data, will not be accurate so return 0.0 to avoid an overflow
-    #if time_delta < idle_delta:
-    #    return 0.0
-
-    try :
-        idle_percent = (idle_delta / time_delta) * 100.0
-        util_percent = ((100 * NUM_CPUS) - idle_percent) / NUM_CPUS
-    except ZeroDivisionError:
+    if t2_busy <= t1_busy:
         return 0.0
 
-    if util_percent < 0:
-        return 0.0
-    else:
-        return util_percent
-
+    busy_delta = t2_busy - t1_busy
+    all_delta = t2_all - t1_all
+    busy_perc = (busy_delta / all_delta) * 100
+    return round(busy_perc, 1)
+    
 
 def test():
     """List info of all currently running processes emulating a
