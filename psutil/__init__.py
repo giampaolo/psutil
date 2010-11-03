@@ -107,16 +107,9 @@ class Process(object):
         # platform-specific modules define an PlatformProcess
         # implementation class
         self._platform_impl = PlatformProcess(pid)
-        # try to init CPU times, if it raises AccessDenied then suppress
-        # it so it won't interrupt the constructor. First call to
-        # get_cpu_percent() will trigger the AccessDenied exception
-        # instead.
-        try:
-            self._last_sys_time = time.time()
-            self._last_user_time, self._last_kern_time = self.get_cpu_times()
-        except AccessDenied:
-            self._last_user_time, self._last_kern_time = None, None
-
+        self._last_sys_cpu_times = None
+        self._last_proc_cpu_times = None
+                
     def __str__(self):
         try:
             pid = self.pid
@@ -257,29 +250,53 @@ class Process(object):
                 pass
         return retlist
 
-    def get_cpu_percent(self):
-        """Compare process times to system time elapsed since last call
-        and calculate CPU utilization as a percentage. It is recommended
-        for accuracy that this function be called with at least 1 second
-        between calls. The initial delta is calculated from the
-        instantiation of the Process object.
+    def get_cpu_percent(self, interval=0.1):
+        """Return a float representing the current process CPU 
+        utilization as a percentage.
+        
+        When interval is specified compares process times to system CPU
+        times elapsed before and after the interval (blocking).
+
+        When interval is 0 or None compares process times to system CPU
+        times elapsed since last call, returning immediately.
+        In this case is recommended for accuracy that this function be 
+        called with at least 0.1 seconds between calls.
         """
-        now = time.time()
-        # will raise AccessDenied on OS X if not root or in procmod group
-        user_t, kern_t = self._platform_impl.get_cpu_times()
+        blocking = interval is not None and interval > 0.0
+        if blocking:
+            st1 = sum(cpu_times())
+            pt1 = self._platform_impl.get_cpu_times()
+            time.sleep(interval)
+            st2 = sum(cpu_times())
+            pt2 = self._platform_impl.get_cpu_times()
+        else:
+            st1 = self._last_sys_cpu_times
+            pt1 = self._last_proc_cpu_times
+            st2 = sum(cpu_times())
+            pt2 = self._platform_impl.get_cpu_times()
+            if st1 is None or pt1 is None:
+                self._last_sys_cpu_times = st2
+                self._last_proc_cpu_times = pt2
+                return 0.0
 
-        total_proc_time = float((user_t - self._last_user_time) + \
-                                (kern_t - self._last_kern_time))
+        delta_proc = (pt2.user - pt1.user) + (pt2.system - pt1.system)
+        delta_time = st2 - st1
+        # reset values for next call in case of interval == None
+        self._last_sys_cpu_times = st2
+        self._last_proc_cpu_times = pt2
+
         try:
-            percent = total_proc_time / float((now - self._last_sys_time))
+            # the utilization split between all CPUs
+            overall_percent = (delta_proc / delta_time) * 100
         except ZeroDivisionError:
-            percent = 0.000
-
-        # reset the values
-        self._last_sys_time = time.time()
-        self._last_user_time, self._last_kern_time = self.get_cpu_times()
-
-        return (percent * 100.0)
+            # interval was too low
+            return 0.0
+        # the utilization of a single CPU
+        single_cpu_percent = overall_percent * NUM_CPUS
+        # ugly hack to avoid troubles with float precision issues
+        if single_cpu_percent > 100.0:
+            return 100.0
+        return round(single_cpu_percent, 1)
 
     def get_cpu_times(self):
         """Return a tuple whose values are process CPU user and system
@@ -465,7 +482,7 @@ def test():
         if os.name == 'nt' and '\\' in user:
             user = user.split('\\')[1]
         pid = proc.pid
-        cpu = round(proc.get_cpu_percent(), 1)
+        cpu = round(proc.get_cpu_percent(interval=None), 1)
         mem = round(proc.get_memory_percent(), 1)
         rss, vsz = [x / 1024 for x in proc.get_memory_info()]
 

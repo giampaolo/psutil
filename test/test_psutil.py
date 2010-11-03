@@ -275,6 +275,16 @@ class TestCase(unittest.TestCase):
             self.assertTrue(percent >= 0.0)
             self.assertTrue(percent <= 100.0)
 
+    def test_process_cpu_percent(self):
+        p = psutil.Process(os.getpid())
+        p.get_cpu_percent(0.001)
+        p.get_cpu_percent(0.001)
+        for x in xrange(100):
+            percent = p.get_cpu_percent(None)
+            self.assertTrue(isinstance(percent, float))
+            self.assertTrue(percent >= 0.0)
+            self.assertTrue(percent <= 100.0)
+
     # os.times() is broken on OS X and *BSD, see:
     # http://bugs.python.org/issue1040026
     # It's also broken on Windows on Python 2.5 (not 2.6)
@@ -747,7 +757,7 @@ class TestCase(unittest.TestCase):
             self.assert_(isinstance(p.get_cpu_times(), tuple))
             self.assert_(isinstance(p.get_cpu_times()[0], float))
             self.assert_(isinstance(p.get_cpu_times()[1], float))
-            self.assert_(isinstance(p.get_cpu_percent(), float))
+            self.assert_(isinstance(p.get_cpu_percent(0), float))
             self.assert_(isinstance(p.get_memory_info(), tuple))
             self.assert_(isinstance(p.get_memory_info()[0], int))
             self.assert_(isinstance(p.get_memory_info()[1], int))
@@ -800,7 +810,7 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, p.terminate)
         self.assertRaises(psutil.NoSuchProcess, p.send_signal, signal.SIGTERM)
         self.assertRaises(psutil.NoSuchProcess, p.get_cpu_times)
-        self.assertRaises(psutil.NoSuchProcess, p.get_cpu_percent)
+        self.assertRaises(psutil.NoSuchProcess, p.get_cpu_percent, 0)
         self.assertRaises(psutil.NoSuchProcess, p.get_memory_info)
         self.assertRaises(psutil.NoSuchProcess, p.get_memory_percent)
         self.assertRaises(psutil.NoSuchProcess, p.get_children)
@@ -821,8 +831,7 @@ class TestCase(unittest.TestCase):
     def test_fetch_all(self):
         valid_procs = 0
         attrs = ['__str__', 'create_time', 'username', 'getcwd', 'get_cpu_times',
-                 'get_cpu_percent', 'get_memory_info', 'get_memory_percent',
-                 'get_open_files']
+                 'get_memory_info', 'get_memory_percent', 'get_open_files']
         for p in psutil.process_iter():
             for attr in attrs:
                 # skip slow Python implementation; we're reasonably sure
@@ -912,6 +921,7 @@ class TestCase(unittest.TestCase):
             pass
         def test_get_open_files(self):
             pass
+            
 
 if hasattr(os, 'getuid'):
     class LimitedUserTestCase(TestCase):

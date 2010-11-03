@@ -22,7 +22,8 @@ NEW FEATURES
    C and no longer uses WMI resulting in a big speedup. Also, pywin32 is no
    longer required as a third-party dependancy. (patch by wj32)
  * Issue 117: added support for Windows 2000.
- * Issue 123: psutil.cpu_percent() accepts a new 'interval' parameter.
+ * Issue 123: psutil.cpu_percent() and psutil.Process.cpu_percent() accept a 
+   new 'interval' parameter.
 
 BUGFIXES
 
@@ -53,6 +54,8 @@ API CHANGES
  * ppid, uid, gid, name, exe, cmdline and create_time properties are no longer
    cached and raise NoSuchProcess exception if process disappears.
  * psutil.cpu_percent() no longer returns immediately (see issue 123).
+ * psutil.Process.get_cpu_percent() no longer returns immediately by default 
+   (see issue 123).
 
 
 0.1.3 - 2010-03-02
