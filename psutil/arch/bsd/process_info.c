@@ -28,7 +28,7 @@
  * On success, the function returns 0.
  * On error, the function returns a BSD errno value.
  */
-int 
+int
 get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 {
     int err;
@@ -108,7 +108,7 @@ get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 }
 
 
-char 
+char
 *getcmdpath(long pid, size_t *pathsize)
 {
     int  mib[4];
@@ -155,7 +155,7 @@ char
  *      -1 for failure (Exception raised);
  *      1 for insufficient privileges.
  */
-char 
+char
 *getcmdargs(long pid, size_t *argsize)
 {
     int mib[4];
@@ -196,7 +196,7 @@ char
 
 
 /* returns the command line as a python list object */
-PyObject* 
+PyObject*
 get_arg_list(long pid)
 {
     char *argstr = NULL;

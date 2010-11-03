@@ -110,7 +110,7 @@ PVOID GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName)
 }
 
 
-PyObject* 
+PyObject*
 get_open_files(long pid, HANDLE processHandle)
 {
     _NtQuerySystemInformation NtQuerySystemInformation =

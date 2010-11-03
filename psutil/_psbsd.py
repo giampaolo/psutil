@@ -91,7 +91,7 @@ class BSDProcess(object):
     def get_process_name(self):
         """Return process name as a string of limited len (15)."""
         return _psutil_bsd.get_process_name(self.pid)
-        
+
     def get_process_exe(self):
         # no such thing as "exe" on BSD; it will maybe be determined
         # later from cmdline[0]
@@ -101,12 +101,12 @@ class BSDProcess(object):
     def get_process_cmdline(self):
         """Return process cmdline as a list of arguments."""
         return _psutil_bsd.get_process_cmdline(self.pid)
-        
+
     @wrap_exceptions
     def get_process_ppid(self):
         """Return process parent pid."""
         return _psutil_bsd.get_process_ppid(self.pid)
-        
+
     @wrap_exceptions
     def get_process_uid(self):
         """Return process real user id."""

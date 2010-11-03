@@ -44,7 +44,7 @@ class LsofParser:
                     'IPv6' : socket.AF_INET6}
     _connection_ntuple = namedtuple('connection', 'family type local_address '
                                                   'remote_address status fd')
-                                                  
+
     def __init__(self, pid, name):
         self.pid = pid
         self.process_name = name
@@ -128,7 +128,7 @@ class LsofParser:
             fd = int(fields['f'])
             if _type == socket.SOCK_STREAM:
                 status = fields['TST']
-            else:                
+            else:
                 status = ""
             if not '->' in peers:
                 local_addr = self._normaddress(peers, family)
@@ -138,7 +138,7 @@ class LsofParser:
                 local_addr = self._normaddress(local_addr, family)
                 remote_addr = self._normaddress(remote_addr, family)
 
-            conn = self._connection_ntuple(family, _type, local_addr, 
+            conn = self._connection_ntuple(family, _type, local_addr,
                                            remote_addr, status, fd)
             connections.append(conn)
 
@@ -175,7 +175,7 @@ class LsofParser:
                 warnings.warn(stderr, RuntimeWarning)
             else:
                 # this must be considered an application bug
-                raise RuntimeError(stderr)  
+                raise RuntimeError(stderr)
         if not stdout:
             p = psutil.Process(self.pid)
             if not p.is_running():

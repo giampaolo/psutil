@@ -429,7 +429,7 @@ def cpu_times():
     return CPUTimes(**values)
 
 def cpu_percent(interval=0.1):
-    """Return a float representing the current system-wide CPU 
+    """Return a float representing the current system-wide CPU
     utilization as a percentage.
     """
     t1 = cpu_times()
@@ -450,7 +450,7 @@ def cpu_percent(interval=0.1):
     all_delta = t2_all - t1_all
     busy_perc = (busy_delta / all_delta) * 100
     return round(busy_perc, 1)
-    
+
 
 def test():
     """List info of all currently running processes emulating a

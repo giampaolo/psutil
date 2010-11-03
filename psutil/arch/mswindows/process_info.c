@@ -122,47 +122,47 @@ GetPebAddress(HANDLE ProcessHandle)
 
 DWORD*
 get_pids(DWORD *numberOfReturnedPIDs) {
-	int procArraySz = 1024;
+    int procArraySz = 1024;
 
-	/* Win32 SDK says the only way to know if our process array
-	 * wasn't large enough is to check the returned size and make
-	 * sure that it doesn't match the size of the array.
-	 * If it does we allocate a larger array and try again*/
+    /* Win32 SDK says the only way to know if our process array
+     * wasn't large enough is to check the returned size and make
+     * sure that it doesn't match the size of the array.
+     * If it does we allocate a larger array and try again*/
 
-	/* Stores the actual array */
-	DWORD *procArray = NULL;
-	DWORD procArrayByteSz;
+    /* Stores the actual array */
+    DWORD *procArray = NULL;
+    DWORD procArrayByteSz;
 
     /* Stores the byte size of the returned array from enumprocesses */
-	DWORD enumReturnSz = 0;
+    DWORD enumReturnSz = 0;
 
-	do {
-		free(procArray);
+    do {
+        free(procArray);
         procArrayByteSz = procArraySz * sizeof(DWORD);
-		procArray = malloc(procArrayByteSz);
+        procArray = malloc(procArrayByteSz);
 
-		if (! EnumProcesses(procArray, procArrayByteSz, &enumReturnSz)) {
-			free(procArray);
+        if (! EnumProcesses(procArray, procArrayByteSz, &enumReturnSz)) {
+            free(procArray);
             PyErr_SetFromWindowsErr(0);
             return NULL;
-		}
-		else if (enumReturnSz == procArrayByteSz) {
-			/* Process list was too large.  Allocate more space*/
-			procArraySz += 1024;
-		}
+        }
+        else if (enumReturnSz == procArrayByteSz) {
+            /* Process list was too large.  Allocate more space*/
+            procArraySz += 1024;
+        }
 
-		/* else we have a good list */
+        /* else we have a good list */
 
-	} while(enumReturnSz == procArraySz * sizeof(DWORD));
+    } while(enumReturnSz == procArraySz * sizeof(DWORD));
 
-	/* The number of elements is the returned size / size of each element */
+    /* The number of elements is the returned size / size of each element */
     *numberOfReturnedPIDs = enumReturnSz / sizeof(DWORD);
 
     return procArray;
 }
 
 
-int 
+int
 is_system_proc(DWORD pid) {
     HANDLE hProcess;
 
@@ -195,7 +195,7 @@ is_system_proc(DWORD pid) {
 }
 
 
-int 
+int
 pid_is_running(DWORD pid)
 {
     HANDLE hProcess;
@@ -247,7 +247,7 @@ pid_is_running(DWORD pid)
 }
 
 
-int 
+int
 pid_in_proclist(DWORD pid)
 {
     DWORD *proclist = NULL;
@@ -289,26 +289,26 @@ BOOL is_running(HANDLE hProcess)
 
 // Return None to represent NoSuchProcess, else return NULL for
 // other exception or the name as a Python string
-PyObject* 
+PyObject*
 get_name(long pid)
 {
-	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	PROCESSENTRY32 pe = { 0 };
-	pe.dwSize = sizeof(PROCESSENTRY32);
+    HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    PROCESSENTRY32 pe = { 0 };
+    pe.dwSize = sizeof(PROCESSENTRY32);
 
-	if( Process32First(h, &pe)) {
-	    do {
-			if (pe.th32ProcessID == pid) {
+    if( Process32First(h, &pe)) {
+        do {
+            if (pe.th32ProcessID == pid) {
                 CloseHandle(h);
                 return Py_BuildValue("s", pe.szExeFile);
-			}
-		} while(Process32Next(h, &pe));
+            }
+        } while(Process32Next(h, &pe));
 
         // the process was never found, set NoSuchProcess exception
         NoSuchProcess();
         CloseHandle(h);
         return NULL;
-	}
+    }
 
     CloseHandle(h);
     return PyErr_SetFromWindowsErr(0);
@@ -316,27 +316,27 @@ get_name(long pid)
 
 
 /* returns parent pid (as a Python int) for given pid or None on failure */
-PyObject* 
+PyObject*
 get_ppid(long pid)
 {
-	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	PROCESSENTRY32 pe = { 0 };
-	pe.dwSize = sizeof(PROCESSENTRY32);
+    HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    PROCESSENTRY32 pe = { 0 };
+    pe.dwSize = sizeof(PROCESSENTRY32);
 
-	if( Process32First(h, &pe)) {
-	    do {
-			if (pe.th32ProcessID == pid) {
-				//printf("PID: %i; PPID: %i\n", pid, pe.th32ParentProcessID);
+    if( Process32First(h, &pe)) {
+        do {
+            if (pe.th32ProcessID == pid) {
+                //printf("PID: %i; PPID: %i\n", pid, pe.th32ParentProcessID);
                 CloseHandle(h);
                 return Py_BuildValue("I", pe.th32ParentProcessID);
-			}
-		} while(Process32Next(h, &pe));
+            }
+        } while(Process32Next(h, &pe));
 
         // the process was never found, set NoSuchProcess exception
         NoSuchProcess();
         CloseHandle(h);
         return NULL;
-	}
+    }
 
     CloseHandle(h);
     return PyErr_SetFromWindowsErr(0);
@@ -348,7 +348,7 @@ get_ppid(long pid)
  * returns a Python list representing the arguments for the process
  * with given pid or NULL on error.
  */
-PyObject* 
+PyObject*
 get_arg_list(long pid)
 {
     int nArgs, i;

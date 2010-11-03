@@ -36,10 +36,10 @@ BUGFIXES
  * Issue 120: cpu_percent() always returning 100% on OS X.
  * Issue 112: uid and gid properties don't change if process changes effective
    user/group id at some point.
- * Issue 126: ppid, uid, gid, name, exe, cmdline and create_time properties are 
-   no longer cached and correctly raise NoSuchProcess exception if the process 
+ * Issue 126: ppid, uid, gid, name, exe, cmdline and create_time properties are
+   no longer cached and correctly raise NoSuchProcess exception if the process
    disappears.
- 
+
 API CHANGES
 
  * psutil.Process.path property is deprecated and works as an alias for "exe"

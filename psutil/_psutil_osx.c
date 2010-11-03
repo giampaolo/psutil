@@ -29,7 +29,7 @@
 /*
  * define the psutil C module methods and initialize the module.
  */
-static PyMethodDef 
+static PyMethodDef
 PsutilMethods[] =
 {
      // --- per-process functions
@@ -77,7 +77,7 @@ PsutilMethods[] =
  * Raises an OSError(errno=ESRCH, strerror="No such process") exception
  * in Python.
  */
-static PyObject* 
+static PyObject*
 NoSuchProcess(void) {
     errno = ESRCH;
     return PyErr_SetFromErrno(PyExc_OSError);
@@ -87,7 +87,7 @@ NoSuchProcess(void) {
  * Raises an OSError(errno=EPERM, strerror="Operation not permitted") exception
  * in Python.
  */
-static PyObject* 
+static PyObject*
 AccessDenied(void) {
     errno = EPERM;
     return PyErr_SetFromErrno(PyExc_OSError);
@@ -106,20 +106,20 @@ static struct module_state _state;
 
 #if PY_MAJOR_VERSION >= 3
 
-static int 
+static int
 psutil_osx_traverse(PyObject *m, visitproc visit, void *arg) {
     Py_VISIT(GETSTATE(m)->error);
     return 0;
 }
 
-static int 
+static int
 psutil_osx_clear(PyObject *m) {
     Py_CLEAR(GETSTATE(m)->error);
     return 0;
 }
 
 
-static struct PyModuleDef 
+static struct PyModuleDef
 moduledef = {
     PyModuleDef_HEAD_INIT,
     "psutil_osx",
@@ -168,7 +168,7 @@ init_psutil_osx(void)
 /*
  * Return a Python list of all the PIDs running on the system.
  */
-static PyObject* 
+static PyObject*
 get_pid_list(PyObject* self, PyObject* args)
 {
     kinfo_proc *proclist = NULL;
@@ -202,7 +202,7 @@ get_pid_list(PyObject* self, PyObject* args)
 /*
  * Return process name from kinfo_proc as a Python string.
  */
-static PyObject* 
+static PyObject*
 get_process_name(PyObject* self, PyObject* args)
 {
     long pid;
@@ -220,7 +220,7 @@ get_process_name(PyObject* self, PyObject* args)
 /*
  * Return process cmdline as a Python list of cmdline arguments.
  */
-static PyObject* 
+static PyObject*
 get_process_cmdline(PyObject* self, PyObject* args)
 {
     long pid;
@@ -245,7 +245,7 @@ get_process_cmdline(PyObject* self, PyObject* args)
 /*
  * Return process parent pid from kinfo_proc as a Python integer.
  */
-static PyObject* 
+static PyObject*
 get_process_ppid(PyObject* self, PyObject* args)
 {
     long pid;
@@ -261,7 +261,7 @@ get_process_ppid(PyObject* self, PyObject* args)
 /*
  * Return process real uid from kinfo_proc as a Python integer.
  */
-static PyObject* 
+static PyObject*
 get_process_uid(PyObject* self, PyObject* args)
 {
     long pid;
@@ -277,7 +277,7 @@ get_process_uid(PyObject* self, PyObject* args)
 /*
  * Return process real group id from ki_comm as a Python integer.
  */
-static PyObject* 
+static PyObject*
 get_process_gid(PyObject* self, PyObject* args)
 {
     long pid;
@@ -293,7 +293,7 @@ get_process_gid(PyObject* self, PyObject* args)
 /*
  * Return 1 if PID exists in the current process list, else 0.
  */
-static int 
+static int
 pid_exists(long pid) {
     int kill_ret;
 
@@ -316,7 +316,7 @@ pid_exists(long pid) {
 /*
  * Return a Python integer indicating the number of CPUs on the system.
  */
-static PyObject* 
+static PyObject*
 get_num_cpus(PyObject* self, PyObject* args)
 {
 
@@ -342,7 +342,7 @@ get_num_cpus(PyObject* self, PyObject* args)
 /*
  * Return a Python tuple (user_time, kernel_time)
  */
-static PyObject* 
+static PyObject*
 get_cpu_times(PyObject* self, PyObject* args)
 {
     long pid;
@@ -354,7 +354,7 @@ get_cpu_times(PyObject* self, PyObject* args)
     struct task_thread_times_info task_times;
 
     // the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
 
@@ -417,7 +417,7 @@ get_cpu_times(PyObject* self, PyObject* args)
  * Return a Python float indicating the process create time expressed in
  * seconds since the epoch.
  */
-static PyObject* 
+static PyObject*
 get_process_create_time(PyObject* self, PyObject* args)
 {
     long pid;
@@ -435,7 +435,7 @@ get_process_create_time(PyObject* self, PyObject* args)
 /*
  * Return a tuple of RSS and VMS memory usage.
  */
-static PyObject* 
+static PyObject*
 get_memory_info(PyObject* self, PyObject* args)
 {
     long pid;
@@ -449,7 +449,7 @@ get_memory_info(PyObject* self, PyObject* args)
     mach_port_t object_name;
 
     // the argument passed should be a process id
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
 
@@ -504,7 +504,7 @@ get_memory_info(PyObject* self, PyObject* args)
  * Return a Python integer indicating the total amount of physical memory
  * in bytes.
  */
-static PyObject* 
+static PyObject*
 get_total_phymem(PyObject* self, PyObject* args)
 {
     int mib[2];
@@ -528,25 +528,25 @@ get_total_phymem(PyObject* self, PyObject* args)
  * Return a Python long indicating the amount of available physical memory in
  * bytes.
  */
-static PyObject* 
+static PyObject*
 get_avail_phymem(PyObject* self, PyObject* args)
 {
     vm_statistics_data_t vm_stat;
-	mach_msg_type_number_t count;
-	kern_return_t error;
-	unsigned long long mem_free;
+    mach_msg_type_number_t count;
+    kern_return_t error;
+    unsigned long long mem_free;
     int pagesize = getpagesize();
     mach_port_t mport = mach_host_self();
 
-	count = sizeof(vm_stat) / sizeof(natural_t);
-	error = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vm_stat, &count);
+    count = sizeof(vm_stat) / sizeof(natural_t);
+    error = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vm_stat, &count);
 
-	if (error != KERN_SUCCESS) {
-	    return PyErr_Format(PyExc_RuntimeError,
+    if (error != KERN_SUCCESS) {
+        return PyErr_Format(PyExc_RuntimeError,
                     "Error in host_statistics(): %s", mach_error_string(error));
-	}
+    }
 
-	mem_free = (unsigned long long) vm_stat.free_count * pagesize;
+    mem_free = (unsigned long long) vm_stat.free_count * pagesize;
     return Py_BuildValue("L", mem_free);
 }
 
@@ -555,7 +555,7 @@ get_avail_phymem(PyObject* self, PyObject* args)
  * Return a Python integer indicating the total amount of virtual memory
  * in bytes.
  */
-static PyObject* 
+static PyObject*
 get_total_virtmem(PyObject* self, PyObject* args)
 {
     int mib[2];
@@ -578,7 +578,7 @@ get_total_virtmem(PyObject* self, PyObject* args)
  * Return a Python integer indicating the avail amount of virtual memory
  * in bytes.
  */
-static PyObject* 
+static PyObject*
 get_avail_virtmem(PyObject* self, PyObject* args)
 {
     int mib[2];
@@ -600,7 +600,7 @@ get_avail_virtmem(PyObject* self, PyObject* args)
 /*
  * Return a Python tuple representing user, kernel and idle CPU times
  */
-static PyObject* 
+static PyObject*
 get_system_cpu_times(PyObject* self, PyObject* args)
 {
     mach_msg_type_number_t  count = HOST_CPU_LOAD_INFO_COUNT;
@@ -614,7 +614,7 @@ get_system_cpu_times(PyObject* self, PyObject* args)
     }
 
     //user, nice, system, idle, iowait, irqm, softirq
-	return Py_BuildValue("(dddd)",
+    return Py_BuildValue("(dddd)",
                     (double)r_load.cpu_ticks[CPU_STATE_USER] / CLK_TCK,
                     (double)r_load.cpu_ticks[CPU_STATE_NICE] / CLK_TCK,
                     (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,

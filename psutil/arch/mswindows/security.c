@@ -11,7 +11,7 @@
 /*
  * Convert a process handle to a process token handle.
  */
-HANDLE 
+HANDLE
 token_from_handle(HANDLE hProcess) {
     HANDLE hToken = NULL;
 

@@ -28,7 +28,7 @@
  * On success, the function returns 0.
  * On error, the function returns a BSD errno value.
  */
-int 
+int
 get_proc_list(kinfo_proc **procList, size_t *procCount)
 {
     /* Declaring mib as const requires use of a cast since the
@@ -107,7 +107,7 @@ get_proc_list(kinfo_proc **procList, size_t *procCount)
  *      -1 for failure, system or memory exception raised
  *      -2 rather ARGS_ACCESS_DENIED, for insufficient privileges
  */
-int 
+int
 getcmdargs(long pid, PyObject **exec_path, PyObject **envlist, PyObject **arglist)
 {
     int nargs, mib[3];
@@ -231,7 +231,7 @@ ERROR_RETURN:
 
 
 /* return process args as a python list */
-PyObject* 
+PyObject*
 get_arg_list(long pid)
 {
     int r;
@@ -270,7 +270,7 @@ get_arg_list(long pid)
 }
 
 
-int 
+int
 get_kinfo_proc(pid_t pid, struct kinfo_proc *kp)
 {
     int mib[4];

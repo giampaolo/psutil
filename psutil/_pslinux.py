@@ -5,7 +5,7 @@
 
 __all__ = ["NUM_CPUS", "TOTAL_PHYMEM",
            "PlatformProcess",
-           "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem", 
+           "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem",
            "used_virtmem", "get_system_cpu_times", "pid_exists", "get_pid_list",
            "phymem_buffers", "cached_phymem"
           ]
@@ -101,7 +101,7 @@ def total_virtmem():
             return int(line.split()[1]) * 1024
 
 def avail_virtmem():
-    """Return the amount of virtual memory currently in use on the 
+    """Return the amount of virtual memory currently in use on the
     system, in bytes.
     """
     f = open('/proc/meminfo', 'r')
@@ -111,7 +111,7 @@ def avail_virtmem():
             return int(line.split()[1]) * 1024
 
 def used_virtmem():
-    """Return the amount of used memory currently in use on the system, 
+    """Return the amount of used memory currently in use on the system,
     in bytes.
     """
     return total_virtmem() - avail_virtmem()
@@ -127,7 +127,7 @@ def cached_phymem():
             return int(line.split()[1]) * 1024
 
 def phymem_buffers():
-    """Return the amount of physical memory buffers used by the 
+    """Return the amount of physical memory buffers used by the
     kernel in bytes.
     This reflects the "buffers" column of free command line utility.
     """
@@ -183,7 +183,7 @@ def wrap_exceptions(callable):
 
 class LinuxProcess(object):
     """Linux process implementation."""
-   
+
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
     _connection_ntuple = namedtuple('connection', 'family type local_address '
@@ -193,7 +193,7 @@ class LinuxProcess(object):
     def __init__(self, pid):
         self.pid = pid
         self._process_name = None
-               
+
     @wrap_exceptions
     def get_process_name(self):
         if self.pid == 0:
@@ -205,16 +205,16 @@ class LinuxProcess(object):
             f.close()
         # XXX - gets changed later and probably needs refactoring
         return name
-            
+
     def get_process_exe(self):
         if self.pid in (0, 2):
             return ""   # special case for kernel processes
         try:
             exe = os.readlink("/proc/%s/exe" % self.pid)
         except (OSError, IOError), err:
-            if err.errno == errno.ENOENT:  
-                # no such file error; might be raised also if the 
-                # path actually exists for system processes with 
+            if err.errno == errno.ENOENT:
+                # no such file error; might be raised also if the
+                # path actually exists for system processes with
                 # low pids (about 0-20)
                 if os.path.lexists("/proc/%s/exe" % self.pid):
                     return ""
@@ -228,12 +228,12 @@ class LinuxProcess(object):
         # It seems symlinks can point to a deleted/invalid location
         # (this usually  happens with "pulseaudio" process).
         # However, if we had permissions to execute readlink() it's
-        # likely that we'll be able to figure out exe from argv[0] 
+        # likely that we'll be able to figure out exe from argv[0]
         # later on.
         if exe.endswith(" (deleted)") and not os.path.isfile(exe):
             return ""
         return exe
-        
+
     @wrap_exceptions
     def get_process_cmdline(self):
         if self.pid == 0:
@@ -277,7 +277,7 @@ class LinuxProcess(object):
         # seconds since the epoch, in UTC.
         starttime = (float(values[19]) / _CLOCK_TICKS) + _UPTIME
         return starttime
-        
+
     @wrap_exceptions
     def get_memory_info(self):
         # special case for 0 (kernel processes) PID
@@ -326,8 +326,8 @@ class LinuxProcess(object):
         if self.pid == 0:
             return []
         inodes = {}
-        # os.listdir() is gonna raise a lot of access denied 
-        # exceptions in case of unprivileged user; that's fine: 
+        # os.listdir() is gonna raise a lot of access denied
+        # exceptions in case of unprivileged user; that's fine:
         # lsof does the same so it's unlikely that we can to better.
         for fd in os.listdir("/proc/%s/fd" % self.pid):
             try:
@@ -357,7 +357,7 @@ class LinuxProcess(object):
                     else:
                         status = ""
                     fd = int(inodes[inode])
-                    conn = self._connection_ntuple(family, _type, laddr, raddr, 
+                    conn = self._connection_ntuple(family, _type, laddr, raddr,
                                                    status, fd)
                     retlist.append(conn)
             f.close()
@@ -425,15 +425,15 @@ class LinuxProcess(object):
         to an IP address.
         The port is represented as a two-byte hexadecimal number.
 
-        Reference: 
+        Reference:
         http://linuxdevcenter.com/pub/a/linux/2000/11/16/LinuxAdmin.html
         """
         ip, port = addr.split(':')
         port = int(port, 16)
         if sys.version_info >= (3,):
             ip = ip.encode('ascii')
-        # this usually refers to a local socket in listen mode with 
-        # no end-points connected       
+        # this usually refers to a local socket in listen mode with
+        # no end-points connected
         if not port:
             return ()
         if family == socket.AF_INET:
@@ -441,10 +441,10 @@ class LinuxProcess(object):
         else:  # IPv6
             # old version - let's keep it, just in case...
             #ip = ip.decode('hex')
-            #return socket.inet_ntop(socket.AF_INET6, 
+            #return socket.inet_ntop(socket.AF_INET6,
             #          ''.join(ip[i:i+4][::-1] for i in xrange(0, 16, 4)))
             ip = base64.b16decode(ip)
-            ip = socket.inet_ntop(socket.AF_INET6, 
+            ip = socket.inet_ntop(socket.AF_INET6,
                                 struct.pack('>4I', *struct.unpack('<4I', ip)))
         return (ip, port)
 

@@ -21,7 +21,7 @@
 
 // ------------------------ Python init ---------------------------
 
-static PyMethodDef 
+static PyMethodDef
 PsutilMethods[] =
 {
     // --- per-process functions
@@ -35,7 +35,7 @@ PsutilMethods[] =
      {"kill_process", kill_process, METH_VARARGS,
          "Kill the process identified by the given PID"},
      {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
-       	"Return tuple of user/kern time for the given PID"},
+        "Return tuple of user/kern time for the given PID"},
      {"get_process_create_time", get_process_create_time, METH_VARARGS,
          "Return a float indicating the process create time expressed in "
          "seconds since the epoch"},
@@ -59,7 +59,7 @@ PsutilMethods[] =
     // --- system-related functions
 
      {"get_pid_list", get_pid_list, METH_VARARGS,
-       	"Returns a list of PIDs currently running on the system"},
+        "Returns a list of PIDs currently running on the system"},
      {"pid_exists", pid_exists, METH_VARARGS,
          "Determine if the process exists in the current process list."},
      {"get_num_cpus", get_num_cpus, METH_VARARGS,
@@ -157,7 +157,7 @@ struct module_state {
  * Return a Python float representing the system uptime expressed in seconds
  * since the epoch.
  */
-static PyObject* 
+static PyObject*
 get_system_uptime(PyObject* self, PyObject* args)
 {
     double uptime;
@@ -193,14 +193,14 @@ get_system_uptime(PyObject* self, PyObject* args)
 /*
  * Return 1 if PID exists in the current process list, else 0.
  */
-static PyObject* 
+static PyObject*
 pid_exists(PyObject* self, PyObject* args)
 {
     long pid;
     int status;
 
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-    	return NULL;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
     }
 
     status = pid_is_running(pid);
@@ -214,14 +214,14 @@ pid_exists(PyObject* self, PyObject* args)
 /*
  * Return a Python list of all the PIDs running on the system.
  */
-static PyObject* 
+static PyObject*
 get_pid_list(PyObject* self, PyObject* args)
 {
     DWORD *proclist = NULL;
     DWORD numberOfReturnedPIDs;
     DWORD i;
     PyObject* pid = NULL;
-	PyObject* retlist = PyList_New(0);
+    PyObject* retlist = PyList_New(0);
 
     proclist = get_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
@@ -245,7 +245,7 @@ get_pid_list(PyObject* self, PyObject* args)
 /*
  * Kill a process given its PID.
  */
-static PyObject* 
+static PyObject*
 kill_process(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
@@ -292,7 +292,7 @@ kill_process(PyObject* self, PyObject* args)
 /*
  * Return a Python tuple (user_time, kernel_time)
  */
-static PyObject* 
+static PyObject*
 get_process_cpu_times(PyObject* self, PyObject* args)
 {
     long        pid;
@@ -305,7 +305,7 @@ get_process_cpu_times(PyObject* self, PyObject* args)
 
     // special case for PID 0
     if (0 == pid){
-	   return Py_BuildValue("(dd)", 0.0, 0.0);
+       return Py_BuildValue("(dd)", 0.0, 0.0);
     }
 
     hProcess = handle_from_pid(pid);
@@ -338,12 +338,12 @@ get_process_cpu_times(PyObject* self, PyObject* args)
     Modules/posixmodule.c
     */
 
-	return Py_BuildValue(
-		"(dd)",
-		(double)(ftUser.dwHighDateTime*429.4967296 + \
-		         ftUser.dwLowDateTime*1e-7),
-		(double)(ftKernel.dwHighDateTime*429.4967296 + \
-		         ftKernel.dwLowDateTime*1e-7)
+    return Py_BuildValue(
+        "(dd)",
+        (double)(ftUser.dwHighDateTime*429.4967296 + \
+                 ftUser.dwLowDateTime*1e-7),
+        (double)(ftKernel.dwHighDateTime*429.4967296 + \
+                 ftKernel.dwLowDateTime*1e-7)
         );
 }
 
@@ -352,7 +352,7 @@ get_process_cpu_times(PyObject* self, PyObject* args)
  * Return a Python float indicating the process create time expressed in
  * seconds since the epoch.
  */
-static PyObject* 
+static PyObject*
 get_process_create_time(PyObject* self, PyObject* args)
 {
     long        pid;
@@ -366,7 +366,7 @@ get_process_create_time(PyObject* self, PyObject* args)
 
     // special case for PIDs 0 and 4
     if ( (0 == pid) || (4 == pid) ){
-	   return Py_BuildValue("d", 0.0);
+       return Py_BuildValue("d", 0.0);
     }
 
     hProcess = handle_from_pid(pid);
@@ -403,7 +403,7 @@ get_process_create_time(PyObject* self, PyObject* args)
 /*
  * Return a Python integer indicating the number of CPUs on the system.
  */
-static PyObject* 
+static PyObject*
 get_num_cpus(PyObject* self, PyObject* args)
 {
     SYSTEM_INFO system_info;
@@ -422,15 +422,15 @@ get_num_cpus(PyObject* self, PyObject* args)
  */
 static PyObject*
 get_process_name(PyObject* self, PyObject* args) {
-	long pid;
+    long pid;
     int pid_return;
     PyObject* name;
 
-	if (! PyArg_ParseTuple(args, "l", &pid))
-	    return NULL;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
 
     if (pid == 0) {
-	    return Py_BuildValue("s", "System Idle Process");
+        return Py_BuildValue("s", "System Idle Process");
     }
     else if (pid == 4) {
         return Py_BuildValue("s", "System");
@@ -456,14 +456,14 @@ get_process_name(PyObject* self, PyObject* args) {
  */
 static PyObject*
 get_process_ppid(PyObject* self, PyObject* args) {
-	long pid;
+    long pid;
     int pid_return;
     PyObject* ppid;
 
-	if (! PyArg_ParseTuple(args, "l", &pid))
-	    return NULL;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
     if ((pid == 0) || (pid == 4))
-	    return Py_BuildValue("l", 0);
+        return Py_BuildValue("l", 0);
 
     pid_return = pid_is_running(pid);
     if (pid_return == 0) {
@@ -484,14 +484,14 @@ get_process_ppid(PyObject* self, PyObject* args) {
  */
 static PyObject*
 get_process_cmdline(PyObject* self, PyObject* args) {
-	long pid;
+    long pid;
     int pid_return;
     PyObject* arglist;
 
-	if (! PyArg_ParseTuple(args, "l", &pid))
-	    return NULL;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
     if ((pid == 0) || (pid == 4))
-	    return Py_BuildValue("[]");
+        return Py_BuildValue("[]");
 
     pid_return = pid_is_running(pid);
     if (pid_return == 0) {
@@ -510,22 +510,22 @@ get_process_cmdline(PyObject* self, PyObject* args) {
         return Py_BuildValue("[]");
     }
 
-	return arglist;
+    return arglist;
 }
 
 
 /*
  * Return the RSS and VMS as a Python tuple.
  */
-static PyObject* 
+static PyObject*
 get_memory_info(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
     PROCESS_MEMORY_COUNTERS counters;
     DWORD pid;
 
-	if (! PyArg_ParseTuple(args, "l", &pid)) {
-	    return NULL;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
     }
 
     hProcess = handle_from_pid(pid);
@@ -545,7 +545,7 @@ get_memory_info(PyObject* self, PyObject* args)
  * Return a Python integer indicating the total amount of physical memory
  * in bytes.
  */
-static PyObject* 
+static PyObject*
 get_total_phymem(PyObject* self, PyObject* args)
 {
     MEMORYSTATUSEX memInfo;
@@ -563,7 +563,7 @@ get_total_phymem(PyObject* self, PyObject* args)
  * Return a Python integer indicating the total amount of virtual memory
  * in bytes.
  */
-static PyObject* 
+static PyObject*
 get_total_virtmem(PyObject* self, PyObject* args)
 {
     MEMORYSTATUSEX memInfo;
@@ -581,7 +581,7 @@ get_total_virtmem(PyObject* self, PyObject* args)
  * Return a Python integer indicating the amount of available physical memory
  * in bytes.
  */
-static PyObject* 
+static PyObject*
 get_avail_phymem(PyObject* self, PyObject* args)
 {
     MEMORYSTATUSEX memInfo;
@@ -597,7 +597,7 @@ get_avail_phymem(PyObject* self, PyObject* args)
  * Return a Python integer indicating the amount of available virtual memory
  * in bytes.
  */
-static PyObject* 
+static PyObject*
 get_avail_virtmem(PyObject* self, PyObject* args)
 {
     MEMORYSTATUSEX memInfo;
@@ -639,124 +639,124 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
 /*
  * Return a Python tuple representing user, kernel and idle CPU times
  */
-static PyObject* 
+static PyObject*
 get_system_cpu_times(PyObject* self, PyObject* args)
 {
-	typedef BOOL (_stdcall *GST_PROC) (LPFILETIME, LPFILETIME, LPFILETIME);
-	static GST_PROC GetSystemTimes;
-	static BOOL bFirstCall = TRUE;
-	float idle, kernel, user;
+    typedef BOOL (_stdcall *GST_PROC) (LPFILETIME, LPFILETIME, LPFILETIME);
+    static GST_PROC GetSystemTimes;
+    static BOOL bFirstCall = TRUE;
+    float idle, kernel, user;
 
-	// Improves performance calling GetProcAddress only the first time
-	if (bFirstCall) {
+    // Improves performance calling GetProcAddress only the first time
+    if (bFirstCall) {
         // retrieves GetSystemTimes address in Kernel32
-		GetSystemTimes=(GST_PROC)GetProcAddress(GetModuleHandle
+        GetSystemTimes=(GST_PROC)GetProcAddress(GetModuleHandle
                                                (TEXT("Kernel32.dll")),
                                                "GetSystemTimes");
-		bFirstCall = FALSE;
-	}
+        bFirstCall = FALSE;
+    }
 
 
      // Uses GetSystemTimes if supported (winXP sp1+)
-	if (NULL!=GetSystemTimes) {
-		// GetSystemTimes supported
+    if (NULL!=GetSystemTimes) {
+        // GetSystemTimes supported
 
-		FILETIME idle_time;
-		FILETIME kernel_time;
-		FILETIME user_time;
+        FILETIME idle_time;
+        FILETIME kernel_time;
+        FILETIME user_time;
 
-		if (!GetSystemTimes(&idle_time, &kernel_time, &user_time)) {
-			return PyErr_SetFromWindowsErr(0);
-		}
+        if (!GetSystemTimes(&idle_time, &kernel_time, &user_time)) {
+            return PyErr_SetFromWindowsErr(0);
+        }
 
-		idle = (float)((HI_T * idle_time.dwHighDateTime) + \
+        idle = (float)((HI_T * idle_time.dwHighDateTime) + \
                        (LO_T * idle_time.dwLowDateTime));
-		user = (float)((HI_T * user_time.dwHighDateTime) + \
+        user = (float)((HI_T * user_time.dwHighDateTime) + \
                        (LO_T * user_time.dwLowDateTime));
-		kernel = (float)((HI_T * kernel_time.dwHighDateTime) + \
+        kernel = (float)((HI_T * kernel_time.dwHighDateTime) + \
                          (LO_T * kernel_time.dwLowDateTime));
 
         // kernel time includes idle time on windows
         // we return only busy kernel time subtracting idle time from kernel time
-		return Py_BuildValue("(fff)", user,
+        return Py_BuildValue("(fff)", user,
                                       kernel - idle,
                                       idle);
 
-	}
+    }
 
-	else {
+    else {
         // GetSystemTimes NOT supported, use NtQuerySystemInformation instead
 
-		typedef DWORD (_stdcall *NTQSI_PROC) (int, PVOID, ULONG, PULONG);
-		NTQSI_PROC NtQuerySystemInformation;
-		HINSTANCE hNtDll;
-		SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
-		SYSTEM_INFO si;
-		UINT i;
+        typedef DWORD (_stdcall *NTQSI_PROC) (int, PVOID, ULONG, PULONG);
+        NTQSI_PROC NtQuerySystemInformation;
+        HINSTANCE hNtDll;
+        SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
+        SYSTEM_INFO si;
+        UINT i;
 
-		// dynamic linking is mandatory to use NtQuerySystemInformation
-		hNtDll = LoadLibrary(TEXT("ntdll.dll"));
-		if (hNtDll != NULL) {
-			// gets NtQuerySystemInformation address
-			NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
+        // dynamic linking is mandatory to use NtQuerySystemInformation
+        hNtDll = LoadLibrary(TEXT("ntdll.dll"));
+        if (hNtDll != NULL) {
+            // gets NtQuerySystemInformation address
+            NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
                                         hNtDll, "NtQuerySystemInformation");
 
-			if (NtQuerySystemInformation != NULL)
-			{
-				// retrives number of processors
-				GetSystemInfo(&si);
+            if (NtQuerySystemInformation != NULL)
+            {
+                // retrives number of processors
+                GetSystemInfo(&si);
 
-				// allocates an array of SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
+                // allocates an array of SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
                 // structures, one per processor
-				sppi=(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
-    				  malloc(si.dwNumberOfProcessors * \
+                sppi=(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
+                      malloc(si.dwNumberOfProcessors * \
                              sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
-				if (sppi != NULL)
-				{
-					// gets cpu time informations
-					if (0 == NtQuerySystemInformation(
-								SystemProcessorPerformanceInformation,
-								sppi,
-								si.dwNumberOfProcessors * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
-								NULL))
-					{
-						// computes system global times summing each processor value
-						idle = user = kernel = 0;
-						for (i=0; i<si.dwNumberOfProcessors; i++) {
-							idle += (float)((HI_T * sppi[i].IdleTime.HighPart) + \
+                if (sppi != NULL)
+                {
+                    // gets cpu time informations
+                    if (0 == NtQuerySystemInformation(
+                                SystemProcessorPerformanceInformation,
+                                sppi,
+                                si.dwNumberOfProcessors * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+                                NULL))
+                    {
+                        // computes system global times summing each processor value
+                        idle = user = kernel = 0;
+                        for (i=0; i<si.dwNumberOfProcessors; i++) {
+                            idle += (float)((HI_T * sppi[i].IdleTime.HighPart) + \
                                             (LO_T * sppi[i].IdleTime.LowPart));
-							user += (float)((HI_T * sppi[i].UserTime.HighPart) + \
+                            user += (float)((HI_T * sppi[i].UserTime.HighPart) + \
                                             (LO_T * sppi[i].UserTime.LowPart));
-							kernel += (float)((HI_T * sppi[i].KernelTime.HighPart) + \
+                            kernel += (float)((HI_T * sppi[i].KernelTime.HighPart) + \
                                               (LO_T * sppi[i].KernelTime.LowPart));
-						}
+                        }
 
                         // kernel time includes idle time on windows
                         // we return only busy kernel time subtracting idle
                         // time from kernel time
-						return Py_BuildValue("(ddd)", user,
+                        return Py_BuildValue("(ddd)", user,
                                                       kernel - idle,
                                                       idle
                                              );
 
-					} // END NtQuerySystemInformation
+                    } // END NtQuerySystemInformation
 
-				} // END malloc SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
+                } // END malloc SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
 
-			} // END GetProcAddress
+            } // END GetProcAddress
 
-		} // END LoadLibrary
+        } // END LoadLibrary
 
-		PyErr_SetFromWindowsErr(0);
-		if (sppi) {
+        PyErr_SetFromWindowsErr(0);
+        if (sppi) {
             free(sppi);
         }
-		if (hNtDll) {
+        if (hNtDll) {
             FreeLibrary(hNtDll);
         }
-		return 0;
+        return 0;
 
-	} // END GetSystemTimes NOT supported
+    } // END GetSystemTimes NOT supported
 }
 
 
@@ -807,7 +807,7 @@ typedef struct _UNICODE_STRING {
  * Return process current working directory as a Python string.
  */
 
-static PyObject* 
+static PyObject*
 get_process_cwd(PyObject* self, PyObject* args)
 {
     long pid;
@@ -920,7 +920,7 @@ get_process_cwd(PyObject* self, PyObject* args)
 /*
  * Resume or suspends a process
  */
-int 
+int
 suspend_resume_process(DWORD pid, int suspend)
 {
     // a huge thanks to http://www.codeproject.com/KB/threads/pausep.aspx
@@ -949,7 +949,7 @@ suspend_resume_process(DWORD pid, int suspend)
     {
         if (te32.th32OwnerProcessID == pid)
         {
-			HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE,
+            HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE,
                                         te32.th32ThreadID);
             if (hThread == NULL) {
                 PyErr_SetFromWindowsErr(0);
@@ -957,25 +957,25 @@ suspend_resume_process(DWORD pid, int suspend)
                 CloseHandle(hThreadSnap);
                 return FALSE;
             }
-			if (suspend == 1)
-			{
-				if (SuspendThread(hThread) == (DWORD)-1) {
+            if (suspend == 1)
+            {
+                if (SuspendThread(hThread) == (DWORD)-1) {
                     PyErr_SetFromWindowsErr(0);
                     CloseHandle(hThread);
                     CloseHandle(hThreadSnap);
                     return FALSE;
                 }
-			}
-			else
-			{
-				if (ResumeThread(hThread) == (DWORD)-1) {
+            }
+            else
+            {
+                if (ResumeThread(hThread) == (DWORD)-1) {
                     PyErr_SetFromWindowsErr(0);
                     CloseHandle(hThread);
                     CloseHandle(hThreadSnap);
                     return FALSE;
                 }
-			}
-			CloseHandle(hThread);
+            }
+            CloseHandle(hThread);
         }
     } while (Thread32Next(hThreadSnap, &te32));
 
@@ -983,7 +983,7 @@ suspend_resume_process(DWORD pid, int suspend)
 }
 
 
-static PyObject* 
+static PyObject*
 suspend_process(PyObject* self, PyObject* args)
 {
     long pid;
@@ -1000,7 +1000,7 @@ suspend_process(PyObject* self, PyObject* args)
 }
 
 
-static PyObject* 
+static PyObject*
 resume_process(PyObject* self, PyObject* args)
 {
     long pid;
@@ -1017,7 +1017,7 @@ resume_process(PyObject* self, PyObject* args)
 }
 
 
-static PyObject* 
+static PyObject*
 get_process_open_files(PyObject* self, PyObject* args)
 {
     long       pid;
@@ -1047,7 +1047,7 @@ get_process_open_files(PyObject* self, PyObject* args)
  and return the corresponding drive letter (e.g. "C:\\").
  If no match is found return an empty string.
 */
-static PyObject* 
+static PyObject*
 _QueryDosDevice(PyObject* self, PyObject* args)
 {
     LPCTSTR   lpDevicePath;
@@ -1077,7 +1077,7 @@ _QueryDosDevice(PyObject* self, PyObject* args)
 /*
  * Return process username as a "DOMAIN//USERNAME" string.
  */
-static PyObject* 
+static PyObject*
 get_process_username(PyObject* self, PyObject* args)
 {
     long pid;
@@ -1291,7 +1291,7 @@ typedef struct _MIB_UDP6TABLE_OWNER_PID
 /*
  * Return a list of network connections opened by a process
  */
-static PyObject* 
+static PyObject*
 get_process_connections(PyObject* self, PyObject* args)
 {
     static long null_address[4] = { 0, 0, 0, 0 };
