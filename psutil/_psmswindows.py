@@ -138,7 +138,7 @@ class WindowsProcess(object):
         """Returns a tuple or RSS/VMS memory usage in bytes."""
         # special case for 0 (kernel processes) PID
         if self.pid == 0:
-            return (0, 0)
+            return self._meminfo_ntuple(0, 0)
         rss, vms = _psutil_mswindows.get_memory_info(self.pid)
         return self._meminfo_ntuple(rss, vms)
 

@@ -249,7 +249,7 @@ class LinuxProcess(object):
     def get_cpu_times(self):
         # special case for 0 (kernel process) PID
         if self.pid == 0:
-            return (0.0, 0.0)
+            return self._cputimes_ntuple(0.0, 0.0)
         f = open("/proc/%s/stat" % self.pid)
         st = f.read().strip()
         f.close()
@@ -282,7 +282,7 @@ class LinuxProcess(object):
     def get_memory_info(self):
         # special case for 0 (kernel processes) PID
         if self.pid == 0:
-            return (0, 0)
+            return self._meminfo_ntuple(0, 0)
         f = open("/proc/%s/status" % self.pid)
         virtual_size = 0
         resident_size = 0
