@@ -88,14 +88,8 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def test_get_cpu_times(self):
         self.execute('get_cpu_times')
 
-    def test_get_cpu_percent(self):
-        self.execute('get_cpu_percent')
-
     def test_get_memory_info(self):
         self.execute('get_memory_info')
-
-    def test_get_memory_percent(self):
-        self.execute('get_memory_percent')
 
     def test_is_running(self):
         self.execute('is_running')
@@ -178,9 +172,6 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
 
     def test_cpu_times(self):
         self.execute('cpu_times')
-
-    def test_cpu_percent(self):
-        self.execute('cpu_percent')
 
 
 def test_main():
