@@ -9,6 +9,7 @@
 #include <windows.h>
 
 PyObject * NoSuchProcess(void);
+PyObject * AccessDenied(void);
 HANDLE handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess);
 HANDLE handle_from_pid(DWORD pid);
 PVOID GetPebAddress(HANDLE ProcessHandle);

@@ -252,43 +252,36 @@ kill_process(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
     long pid;
-    int pid_return;
-    PyObject* ret;
-    ret = PyLong_FromLong(0);
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
+    if (pid == 0)
+        return AccessDenied();
 
-    if (pid < 0) {
-        return NULL;
-    }
-
-    pid_return = pid_is_running(pid);
-    if (pid_return == 0) {
-        return NoSuchProcess();
-    }
-
-    if (pid_return == -1) {
-        return NULL; // exception raised from within pid_is_running()
-    }
-
-    // get a process handle
     hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
     if (hProcess == NULL) {
-        return PyErr_SetFromWindowsErr(0);
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            // see http://code.google.com/p/psutil/issues/detail?id=24
+            NoSuchProcess();
+        }
+        else {
+            PyErr_SetFromWindowsErr(0);
+        }
+        return NULL;
     }
 
     // kill the process
-    if (! TerminateProcess(hProcess, 0) ){
+    if (! TerminateProcess(hProcess, 0)) {
         PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
         return NULL;
     }
 
     CloseHandle(hProcess);
-    return PyLong_FromLong(1);
+    Py_INCREF(Py_None);
+    return Py_None;
 }
+
 
 
 /*

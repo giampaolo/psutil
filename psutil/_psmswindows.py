@@ -29,7 +29,6 @@ _UPTIME = _psutil_mswindows.get_system_uptime()
 _WIN2000 = platform.win32_ver()[0] == '2000'
 
 ERROR_ACCESS_DENIED = 5
-ERROR_INVALID_PARAMETER = 87
 
 # --- public functions
 
@@ -145,14 +144,7 @@ class WindowsProcess(object):
     @wrap_exceptions
     def kill_process(self):
         """Terminates the process with the given PID."""
-        try:
-            return _psutil_mswindows.kill_process(self.pid)
-        except OSError, err:
-            # work around issue #24
-            if (self.pid == 0) and \
-            err.errno in (errno.EINVAL, ERROR_INVALID_PARAMETER):
-                raise AccessDenied(self.pid, self._process_name)
-            raise
+        return _psutil_mswindows.kill_process(self.pid)
 
     @wrap_exceptions
     def get_process_username(self):
