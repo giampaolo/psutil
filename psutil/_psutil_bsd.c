@@ -45,6 +45,9 @@ PsutilMethods[] =
          "seconds since the epoch"},
      {"get_memory_info", get_memory_info, METH_VARARGS,
          "Return a tuple of RSS/VMS memory information"},
+     {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
+         "Return number of threads used by process"},
+
 
      // --- system-related functions
 
@@ -292,6 +295,23 @@ get_process_gid(PyObject* self, PyObject* args)
         return NULL;
     return Py_BuildValue("l", (long)kp.ki_rgid);
 }
+
+
+/*
+ * Return number of threads used by process as a Python integer.
+ */
+static PyObject*
+get_process_num_threads(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (get_kinfo_proc(pid, &kp) == -1)
+        return NULL;
+    return Py_BuildValue("l", (long)kp.ki_numthreads);
+}
+
 
 
 // convert a timeval struct to a double
