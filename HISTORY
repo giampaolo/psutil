@@ -24,6 +24,7 @@ NEW FEATURES
  * Issue 117: added support for Windows 2000.
  * Issue 123: psutil.cpu_percent() and psutil.Process.cpu_percent() accept a
    new 'interval' parameter.
+ * Issue 129: per-process number of threads.
 
 BUGFIXES
 

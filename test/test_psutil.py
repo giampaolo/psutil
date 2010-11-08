@@ -22,6 +22,7 @@ import socket
 import warnings
 import atexit
 import errno
+import threading
 
 import psutil
 
@@ -328,6 +329,13 @@ class TestCase(unittest.TestCase):
 
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
+
+    def test_get_num_threads(self):
+        p = psutil.Process(os.getpid())
+        self.assertEqual(p.get_num_threads(), 1)
+        t = threading.Thread(target=lambda:time.sleep(1))
+        t.start()
+        self.assertEqual(p.get_num_threads(), 2)
 
     def test_get_memory_info(self):
         p = psutil.Process(os.getpid())
@@ -814,6 +822,7 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, p.get_memory_info)
         self.assertRaises(psutil.NoSuchProcess, p.get_memory_percent)
         self.assertRaises(psutil.NoSuchProcess, p.get_children)
+        self.assertRaises(psutil.NoSuchProcess, p.get_num_threads)
         self.assertFalse(p.is_running())
 
     def test__str__(self):

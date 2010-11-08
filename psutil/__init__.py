@@ -234,6 +234,10 @@ class Process(object):
             """
             return self._platform_impl.get_process_cwd()
 
+    def get_num_threads(self):
+        """Return the number of threads used by this process."""
+        return self._platform_impl.get_process_num_threads()
+
     def get_children(self):
         """Return the children of this process as a list of Process
         objects.

@@ -304,6 +304,16 @@ class LinuxProcess(object):
         return os.readlink("/proc/%s/cwd" % self.pid)
 
     @wrap_exceptions
+    def get_process_num_threads(self):
+        if self.pid == 0:
+            return 0
+        f = open("/proc/%s/status" % self.pid)
+        for line in f:
+            if line.startswith("Threads:"):
+                f.close()
+                return int(line.split()[1])
+
+    @wrap_exceptions
     def get_open_files(self):
         retlist = []
         files = os.listdir("/proc/%s/fd" % self.pid)
