@@ -109,7 +109,7 @@ class Process(object):
         self._platform_impl = PlatformProcess(pid)
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
-                
+
     def __str__(self):
         try:
             pid = self.pid
@@ -251,15 +251,15 @@ class Process(object):
         return retlist
 
     def get_cpu_percent(self, interval=0.1):
-        """Return a float representing the current process CPU 
+        """Return a float representing the current process CPU
         utilization as a percentage.
-        
-        When interval is specified compares process times to system CPU
+
+        When interval is > 0.0 compares process times to system CPU
         times elapsed before and after the interval (blocking).
 
-        When interval is 0 or None compares process times to system CPU
+        When interval is 0.0 or None compares process times to system CPU
         times elapsed since last call, returning immediately.
-        In this case is recommended for accuracy that this function be 
+        In this case is recommended for accuracy that this function be
         called with at least 0.1 seconds between calls.
         """
         blocking = interval is not None and interval > 0.0
@@ -445,20 +445,38 @@ def cpu_times():
     values = get_system_cpu_times()
     return CPUTimes(**values)
 
+
+_last_cpu_times = cpu_times()
+
 def cpu_percent(interval=0.1):
     """Return a float representing the current system-wide CPU
     utilization as a percentage.
+
+    When interval is > 0.0 compares system CPU times elapsed before
+    and after the interval (blocking).
+
+    When interval is 0.0 or None compares system CPU times elapsed
+    since last call or module import, returning immediately.
+    In this case is recommended for accuracy that this function be
+    called with at least 0.1 seconds between calls.
     """
-    t1 = cpu_times()
+    global _last_cpu_times
+
+    blocking = interval is not None and interval > 0.0
+    if blocking:
+        t1 = cpu_times()
+        time.sleep(interval)
+    else:
+        t1 = _last_cpu_times
+
     t1_all = sum(t1)
     t1_busy = t1_all - t1.idle
-
-    time.sleep(interval)
 
     t2 = cpu_times()
     t2_all = sum(t2)
     t2_busy = t2_all - t2.idle
 
+    _last_cpu_times = t1
     # this usually indicates a float precision issue
     if t2_busy <= t1_busy:
         return 0.0

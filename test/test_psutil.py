@@ -267,20 +267,20 @@ class TestCase(unittest.TestCase):
             self.fail("difference %s" % difference)
 
     def test_system_cpu_percent(self):
-        percent = psutil.cpu_percent(0)
-        self.assertTrue(isinstance(percent, float))
+        psutil.cpu_percent(interval=0.001)
+        psutil.cpu_percent(interval=0.001)
         for x in xrange(1000):
-            percent = psutil.cpu_percent(0)
+            percent = psutil.cpu_percent(interval=None)
             self.assertTrue(isinstance(percent, float))
             self.assertTrue(percent >= 0.0)
             self.assertTrue(percent <= 100.0)
 
     def test_process_cpu_percent(self):
         p = psutil.Process(os.getpid())
-        p.get_cpu_percent(0.001)
-        p.get_cpu_percent(0.001)
+        p.get_cpu_percent(interval=0.001)
+        p.get_cpu_percent(interval=0.001)
         for x in xrange(100):
-            percent = p.get_cpu_percent(None)
+            percent = p.get_cpu_percent(interval=None)
             self.assertTrue(isinstance(percent, float))
             self.assertTrue(percent >= 0.0)
             self.assertTrue(percent <= 100.0)
@@ -921,7 +921,7 @@ class TestCase(unittest.TestCase):
             pass
         def test_get_open_files(self):
             pass
-            
+
 
 if hasattr(os, 'getuid'):
     class LimitedUserTestCase(TestCase):
