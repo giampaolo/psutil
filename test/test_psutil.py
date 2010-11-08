@@ -332,10 +332,18 @@ class TestCase(unittest.TestCase):
 
     def test_get_num_threads(self):
         p = psutil.Process(os.getpid())
-        self.assertEqual(p.get_num_threads(), 1)
+        numt1 = p.get_num_threads()
+        if not WINDOWS:
+            # test is unreliable on Window
+            self.assertEqual(numt1, 1)
         t = threading.Thread(target=lambda:time.sleep(1))
         t.start()
-        self.assertEqual(p.get_num_threads(), 2)
+        numt2 = p.get_num_threads()
+        if WINDOWS:
+           self.assertTrue(numt2 > numt1)
+        else:
+            self.assertEqual(numt2, 2)
+
 
     def test_get_memory_info(self):
         p = psutil.Process(os.getpid())
@@ -750,6 +758,7 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(p.gid, int))
         self.assert_(isinstance(p.create_time, float))
         self.assert_(isinstance(p.username, (unicode, str)))
+        self.assert_(isinstance(p.get_num_threads(), int))
         if hasattr(p, 'getcwd'):
             if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
                 self.assert_(isinstance(p.getcwd(), str))
@@ -840,7 +849,8 @@ class TestCase(unittest.TestCase):
     def test_fetch_all(self):
         valid_procs = 0
         attrs = ['__str__', 'create_time', 'username', 'getcwd', 'get_cpu_times',
-                 'get_memory_info', 'get_memory_percent', 'get_open_files']
+                 'get_memory_info', 'get_memory_percent', 'get_open_files',
+                  'get_num_threads']
         for p in psutil.process_iter():
             for attr in attrs:
                 # skip slow Python implementation; we're reasonably sure
@@ -890,6 +900,11 @@ class TestCase(unittest.TestCase):
         self.assertEqual(p.ppid, 0)
         self.assertEqual(p.exe, "")
         self.assertEqual(p.cmdline, [])
+        # this can either raise AD (Win) or return 0 (UNIX)
+        try:
+            self.assertEqual(p.get_num_threads(), 0)
+        except psutil.AccessDenied:
+            pass
 
         if OSX : #and os.geteuid() != 0:
             self.assertRaises(psutil.AccessDenied, p.get_memory_info)

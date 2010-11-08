@@ -55,6 +55,8 @@ PsutilMethods[] =
         "Return the username of a process"},
     {"get_process_connections", get_process_connections, METH_VARARGS,
         "Return the network connections of a process"},
+    {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
+        "Return the network connections of a process"},
 
     // --- system-related functions
 
@@ -1014,6 +1016,70 @@ resume_process(PyObject* self, PyObject* args)
     }
     Py_INCREF(Py_None);
     return Py_None;
+}
+
+
+static PyObject*
+get_process_num_threads(PyObject* self, PyObject* args)
+{
+    long pid;
+    long nthreads = 0;
+    HANDLE hThreadSnap = NULL;
+    THREADENTRY32 te32 = {0};
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (pid == 0) {
+        // raise AD instead of returning 0 as procexp is able to
+        // retrieve useful information somehow
+        return AccessDenied();
+    }
+
+    hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+    if (hThreadSnap == INVALID_HANDLE_VALUE) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+
+    // Fill in the size of the structure before using it
+    te32.dwSize = sizeof(THREADENTRY32);
+
+    if (! Thread32First(hThreadSnap, &te32)) {
+        PyErr_SetFromWindowsErr(0);
+        CloseHandle(hThreadSnap);
+        return NULL;
+    }
+
+    // Walk the thread snapshot to find all threads of the process.
+    // If the thread belongs to the process, increase the counter.
+    do
+    {
+        if (te32.th32OwnerProcessID == pid)
+        {
+            HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION,
+                                        FALSE, te32.th32ThreadID);
+            if (hThread == NULL) {
+                if (GetLastError() == ERROR_INVALID_PARAMETER) {
+                    NoSuchProcess();
+                }
+                else {
+                    PyErr_SetFromWindowsErr(0);
+                }
+                CloseHandle(hThread);
+                CloseHandle(hThreadSnap);
+                return NULL;
+            }
+            nthreads += 1;
+            CloseHandle(hThread);
+        }
+    } while (Thread32Next(hThreadSnap, &te32));
+
+    // every process should be supposed to have at least one thread
+    if (nthreads == 0) {
+        return NoSuchProcess();
+    }
+
+    return Py_BuildValue("l", nthreads);
 }
 
 

@@ -60,6 +60,20 @@ NoSuchProcess(void) {
 }
 
 /*
+ * Set OSError(errno=EACCES, strerror="No such process") Python exception.
+ */
+PyObject *
+AccessDenied(void) {
+    PyObject *exc;
+    char *msg = strerror(EACCES);
+    exc = PyObject_CallFunction(PyExc_OSError, "(is)", EACCES, msg);
+    PyErr_SetObject(PyExc_OSError, exc);
+    Py_XDECREF(exc);
+    return NULL;
+}
+
+
+/*
  * A wrapper around OpenProcess setting NSP exception if process
  * no longer exists.
  * "pid" is the process pid, "dwDesiredAccess" is the first argument

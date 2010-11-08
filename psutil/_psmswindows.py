@@ -169,6 +169,10 @@ class WindowsProcess(object):
         return _psutil_mswindows.get_process_create_time(self.pid)
 
     @wrap_exceptions
+    def get_process_num_threads(self):
+        return _psutil_mswindows.get_process_num_threads(self.pid)
+
+    @wrap_exceptions
     def get_cpu_times(self):
         user, system = _psutil_mswindows.get_process_cpu_times(self.pid)
         return self._cputimes_ntuple(user, system)

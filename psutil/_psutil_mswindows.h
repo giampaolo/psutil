@@ -23,6 +23,7 @@ static PyObject* resume_process(PyObject* self, PyObject* args);
 static PyObject* get_process_open_files(PyObject* self, PyObject* args);
 static PyObject* get_process_username(PyObject* self, PyObject* args);
 static PyObject* get_process_connections(PyObject* self, PyObject* args);
+static PyObject* get_process_num_threads(PyObject* self, PyObject* args);
 
 // --- system-related functions
 
