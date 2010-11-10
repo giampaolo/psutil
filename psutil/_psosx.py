@@ -137,6 +137,11 @@ class OSXProcess(object):
         the epoch."""
         return _psutil_osx.get_process_create_time(self.pid)
 
+    @wrap_exceptions
+    def get_process_num_threads(self):
+        """Return the number of threads belonging to the process."""
+        return _psutil_osx.get_process_num_threads(self.pid)
+
     def get_open_files(self):
         """Return files opened by process by parsing lsof output."""
         lsof = _psposix.LsofParser(self.pid, self._process_name)

@@ -131,10 +131,13 @@ class BSDProcess(object):
 
     @wrap_exceptions
     def get_process_create_time(self):
+        """Return the start time of the process as a number of seconds since
+        the epoch."""
         return _psutil_bsd.get_process_create_time(self.pid)
 
     @wrap_exceptions
     def get_process_num_threads(self):
+        """Return the number of threads belonging to the process."""
         return _psutil_bsd.get_process_num_threads(self.pid)
 
     def get_open_files(self):

@@ -15,6 +15,7 @@ static PyObject* get_process_gid(PyObject* self, PyObject* args);
 static PyObject* get_cpu_times(PyObject* self, PyObject* args);
 static PyObject* get_process_create_time(PyObject* self, PyObject* args);
 static PyObject* get_memory_info(PyObject* self, PyObject* args);
+static PyObject* get_process_num_threads(PyObject* self, PyObject* args);
 
 // --- system-related functions
 static int pid_exists(long pid);

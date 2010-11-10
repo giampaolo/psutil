@@ -257,10 +257,12 @@ get_process_ppid(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
-    if (get_kinfo_proc(pid, &kp) == -1)
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
+    }
     return Py_BuildValue("l", (long)kp.ki_ppid);
 }
 
@@ -273,10 +275,12 @@ get_process_uid(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
-    if (get_kinfo_proc(pid, &kp) == -1)
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
+    }
     return Py_BuildValue("l", (long)kp.ki_ruid);
 }
 
@@ -289,10 +293,12 @@ get_process_gid(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
-    if (get_kinfo_proc(pid, &kp) == -1)
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
+    }
     return Py_BuildValue("l", (long)kp.ki_rgid);
 }
 
@@ -305,10 +311,12 @@ get_process_num_threads(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
-    if (get_kinfo_proc(pid, &kp) == -1)
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
+    }
     return Py_BuildValue("l", (long)kp.ki_numthreads);
 }
 

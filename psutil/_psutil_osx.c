@@ -51,6 +51,8 @@ PsutilMethods[] =
          "seconds since the epoch"},
      {"get_memory_info", get_memory_info, METH_VARARGS,
          "Return a tuple of RSS/VMS memory information"},
+     {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
+         "Return number of threads used by process"},
 
      // --- system-related functions
 
@@ -230,7 +232,7 @@ get_process_cmdline(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    // get the commandline, defined in arch/bsd/process_info.c
+    // get the commandline, defined in arch/osx/process_info.c
     arglist = get_arg_list(pid);
 
     // get_arg_list() returns NULL only if getcmdargs failed with ESRCH
@@ -250,10 +252,12 @@ get_process_ppid(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
-    if (get_kinfo_proc(pid, &kp) == -1)
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
+    }
     return Py_BuildValue("l", (long)kp.kp_eproc.e_ppid);
 }
 
@@ -266,10 +270,12 @@ get_process_uid(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
-    if (get_kinfo_proc(pid, &kp) == -1)
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
+    }
     return Py_BuildValue("l", (long)kp.kp_eproc.e_pcred.p_ruid);
 }
 
@@ -282,10 +288,12 @@ get_process_gid(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
-    if (get_kinfo_proc(pid, &kp) == -1)
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
+    }
     return Py_BuildValue("l", (long)kp.kp_eproc.e_pcred.p_rgid);
 }
 
@@ -497,6 +505,63 @@ get_memory_info(PyObject* self, PyObject* args)
     }
 
     return Py_BuildValue("(ll)", tasks_info.resident_size, tasks_info.virtual_size);
+}
+
+
+/*
+ * Return number of threads used by process as a Python integer.
+ */
+static PyObject*
+get_process_num_threads(PyObject* self, PyObject* args)
+{
+    long pid;
+    int err;
+    unsigned int info_count = TASK_BASIC_INFO_COUNT;
+    mach_port_t task;
+    struct task_basic_info tasks_info;
+    thread_act_port_array_t thread_list;
+    mach_msg_type_number_t thread_count;
+
+    // the argument passed should be a process id
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    /* task_for_pid() requires special privileges
+     * "This function can be called only if the process is owned by the
+     * procmod group or if the caller is root."
+     * - http://developer.apple.com/documentation/MacOSX/Conceptual/universal_binary/universal_binary_tips/chapter_5_section_19.html
+     */
+    err = task_for_pid(mach_task_self(), pid, &task);
+    if ( err == KERN_SUCCESS) {
+        info_count = TASK_BASIC_INFO_COUNT;
+        err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count);
+        if (err != KERN_SUCCESS) {
+                if (err == 4) { // errcode 4 is "invalid argument" (access denied)
+                    return AccessDenied();
+                }
+
+                //otherwise throw a runtime error with appropriate error code
+                return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu - %s (%i)",
+                       pid, mach_error_string(err), err);
+        }
+
+        err = task_threads(task, &thread_list, &thread_count);
+        if (err == KERN_SUCCESS) {
+            return Py_BuildValue("l", (long)thread_count);
+        }
+    }
+
+
+    else {
+        if (! pid_exists(pid) ) {
+            return NoSuchProcess();
+        }
+
+        // pid exists, so return AccessDenied error since task_for_pid() failed
+        return AccessDenied();
+    }
+    return NULL;
 }
 
 
