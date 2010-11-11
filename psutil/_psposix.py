@@ -123,7 +123,7 @@ class LsofParser:
             # XXX - might trow execption; needs "continue on unsupported
             # family or type" (e.g. unix sockets)
             # we consider TCP and UDP sockets only
-            stype = self.socket_table[fields['P']]
+            stype = fields['P']
             if stype not in self.socket_table:
                 continue
             else:
