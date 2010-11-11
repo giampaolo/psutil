@@ -609,20 +609,25 @@ class TestCase(unittest.TestCase):
                         "LAST_ACK", "LISTEN", "CLOSING", ""]
 
         tcp_template = "import socket;" \
-                       "s = socket.socket({family}, socket.SOCK_STREAM);" \
-                       "s.bind(('{addr}', 0));" \
+                       "s = socket.socket($family, socket.SOCK_STREAM);" \
+                       "s.bind(('$addr', 0));" \
                        "s.listen(1);" \
                        "conn, addr = s.accept();"
 
         udp_template = "import socket, time;" \
-                       "s = socket.socket({family}, socket.SOCK_DGRAM);" \
-                       "s.bind(('{addr}', 0));" \
+                       "s = socket.socket($family, socket.SOCK_DGRAM);" \
+                       "s.bind(('$addr', 0));" \
                        "time.sleep(100);"
 
-        tcp4_template = tcp_template.format(family=socket.AF_INET, addr="127.0.0.1")
-        udp4_template = udp_template.format(family=socket.AF_INET, addr="127.0.0.1")
-        tcp6_template = tcp_template.format(family=socket.AF_INET6, addr="::1")
-        udp6_template = udp_template.format(family=socket.AF_INET6, addr="::1")
+        from string import Template
+        tcp4_template = Template(tcp_template).substitute(family=socket.AF_INET,
+                                                          addr="127.0.0.1")
+        udp4_template = Template(udp_template).substitute(family=socket.AF_INET,
+                                                          addr="127.0.0.1")
+        tcp6_template = Template(tcp_template).substitute(family=socket.AF_INET6,
+                                                          addr="::1")
+        udp6_template = Template(udp_template).substitute(family=socket.AF_INET6,
+                                                          addr="::1")
 
         # launch various subprocess instantiating a socket of various
         # families  and tupes to enrich psutil results
