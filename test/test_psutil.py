@@ -498,6 +498,8 @@ class TestCase(unittest.TestCase):
 
     def test_get_open_files(self):
         thisfile = os.path.join(os.getcwd(), __file__)
+        # in case of os.getcwd() is a symlink
+        thisfile = os.path.realpath(thisfile)
         # current process
         p = psutil.Process(os.getpid())
         files = p.get_open_files()
