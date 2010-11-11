@@ -903,7 +903,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(p.uid, -1)
             self.assertEqual(p.gid, -1)
 
-        self.assertEqual(p.ppid, 0)
+        self.assertTrue(p.ppid in (0, 1))
         self.assertEqual(p.exe, "")
         self.assertEqual(p.cmdline, [])
         # this can either raise AD (Win) or return 0 (UNIX)
