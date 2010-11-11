@@ -932,16 +932,6 @@ class TestCase(unittest.TestCase):
 
     # --- OS specific tests
 
-    # POSIX specific tests
-
-    @skipUnless(hasattr(os, 'getuid') and os.getuid() > 0)
-    def test_unix_access_denied(self):
-        p = psutil.Process(1)
-        self.assertRaises(psutil.AccessDenied, p.kill)
-        self.assertRaises(psutil.AccessDenied, p.send_signal, signal.SIGTERM)
-        self.assertRaises(psutil.AccessDenied, p.terminate)
-        self.assertRaises(psutil.AccessDenied, p.suspend)
-        self.assertRaises(psutil.AccessDenied, p.resume)
 
 if hasattr(os, 'getuid'):
     class LimitedUserTestCase(TestCase):
