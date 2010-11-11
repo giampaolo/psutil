@@ -938,16 +938,6 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.AccessDenied, p.suspend)
         self.assertRaises(psutil.AccessDenied, p.resume)
 
-    # OS X specific overrides
-    if OSX:
-        def test_get_connections(self):
-            pass
-        def test_get_connections_all(self):
-            pass
-        def test_get_open_files(self):
-            pass
-
-
 if hasattr(os, 'getuid'):
     class LimitedUserTestCase(TestCase):
         """Repeat the previous tests by using a limited user.

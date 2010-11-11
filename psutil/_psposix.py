@@ -122,17 +122,29 @@ class LsofParser:
 
             # XXX - might trow execption; needs "continue on unsupported
             # family or type" (e.g. unix sockets)
-            _type = self.socket_table[fields['P']]
+            # we consider TCP and UDP sockets only
+            stype = self.socket_table[fields['P']]
+            if stype not in self.socket_table:
+                continue
+            else:
+                _type = self.socket_table[fields['P']]
             family = self.socket_table[fields['t']]
             peers = fields['n']
             fd = int(fields['f'])
             if _type == socket.SOCK_STREAM:
                 status = fields['TST']
+                # OS X shows "CLOSED" instead of "CLOSE" so translate them
+                if status == "CLOSED":
+                    status = "CLOSE"
             else:
                 status = ""
             if not '->' in peers:
                 local_addr = self._normaddress(peers, family)
                 remote_addr = ()
+                # OS X processes e.g. SystemUIServer can return *:* for local
+                # address, so we return 0 and move on
+                if local_addr == 0:
+                    continue
             else:
                 local_addr, remote_addr = peers.split("->")
                 local_addr = self._normaddress(local_addr, family)
@@ -216,8 +228,11 @@ class LsofParser:
                 ip = "0.0.0.0"
             elif family == socket.AF_INET6:
                 ip = "::"
+            # OS X can have some procs e.g. SystemUIServer listening on *:*
             else:
                 raise ValueError("invalid IP %s" %addr)
+            if port == "*":
+                return 0
         return (ip, int(port))
 
 
