@@ -398,11 +398,15 @@ class TestCase(unittest.TestCase):
         wait_for_pid(sproc.pid)
         self.assertEqual(psutil.Process(sproc.pid).exe, PYTHON)
         for p in psutil.process_iter():
-            if not p.exe:
+            try:
+                exe = p.exe
+            except psutil.Error:
                 continue
-            if not os.path.exists(p.exe):
+            if not exe:
+                continue
+            if not os.path.exists(exe):
                 self.fail("%s does not exist (pid=%s, name=%s, cmdline=%s)" \
-                          % (repr(p.exe), p.pid, p.name, p.cmdline))
+                          % (repr(exe), p.pid, p.name, p.cmdline))
             if hasattr(os, 'access') and hasattr(os, "X_OK"):
                 if not os.access(p.exe, os.X_OK):
                     self.fail("%s is not executable (pid=%s, name=%s, cmdline=%s)" \
@@ -413,15 +417,6 @@ class TestCase(unittest.TestCase):
         warnings.filterwarnings("error")
         try:
             self.assertRaises(DeprecationWarning, getattr, proc, 'path')
-        finally:
-            warnings.resetwarnings()
-        warnings.filterwarnings("ignore")
-        try:
-            for proc in psutil.process_iter():
-                if proc.exe:
-                    self.assertEqual(proc.path, os.path.dirname(proc.exe))
-                else:
-                    self.assertEqual(proc.path, "")
         finally:
             warnings.resetwarnings()
 
