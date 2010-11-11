@@ -109,6 +109,8 @@ class WindowsSpecificTestCase(unittest.TestCase):
             # This appear to be true on Windows 7 but not on Windows XP.
             if platform.uname()[1] in ('vista', 'win-7', 'win7'):
                 self.assertEqual(vms, int(w.PageFileUsage * 1024))
+            elif platform.uname()[2] in ("2003Server"):
+                self.assertEqual(vms, int(w.PageFileUsage * 1024))
             else:
                 self.assertEqual(vms, w.PageFileUsage)
 
