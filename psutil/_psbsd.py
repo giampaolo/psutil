@@ -146,7 +146,7 @@ class BSDProcess(object):
         return lsof.get_process_open_files()
 
     def get_connections(self):
-        """Return etwork connections opened by a process as a list of
+        """Return network connections opened by a process as a list of
         namedtuples by parsing lsof output.
         """
         lsof = _psposix.LsofParser(self.pid, self._process_name)

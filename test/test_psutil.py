@@ -293,25 +293,25 @@ class TestCase(unittest.TestCase):
         time.strftime("%H:%M:%S", time.localtime(times.user))
         time.strftime("%H:%M:%S", time.localtime(times.system))
 
-    # test Process.cpu_times() against os.times()
-    # os.times() is broken on OS X and *BSD, see:
+    # Test Process.cpu_times() against os.times()
+    # os.times() is broken on Python 2.6
     # http://bugs.python.org/issue1040026
-    # It's also broken on Windows on Python 2.5 (not 2.6)
+    # XXX fails on OSX: not sure if it's for os.times(). We should
+    # try this with Python 2.7 and re-enable the test.
 
-    if sys.version_info > (2, 6, 1):
+    @skipUnless(sys.version_info > (2, 6, 1) and not OSX)
+    def test_get_process_cpu_times2(self):
+        user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()
+        utime, ktime = os.times()[:2]
 
-        def test_get_process_cpu_times2(self):
-            user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()
-            utime, ktime = os.times()[:2]
+        # Use os.times()[:2] as base values to compare our results
+        # using a tolerance  of +/- 0.1 seconds.
+        # It will fail if the difference between the values is > 0.1s.
+        if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
+            self.fail("expected: %s, found: %s" %(utime, user_time))
 
-            # Use os.times()[:2] as base values to compare our results
-            # using a tolerance  of +/- 0.1 seconds.
-            # It will fail if the difference between the values is > 0.1s.
-            if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
-                self.fail("expected: %s, found: %s" %(utime, user_time))
-
-            if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
-                self.fail("expected: %s, found: %s" %(ktime, kernel_time))
+        if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
+            self.fail("expected: %s, found: %s" %(ktime, kernel_time))
 
     def test_create_time(self):
         sproc = get_test_subprocess()

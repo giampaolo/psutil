@@ -331,7 +331,9 @@ class Process(object):
             return 0.0
 
     def get_open_files(self):
-        """Return files opened by process as a list of paths."""
+        """Return files opened by process as a list of namedtuples
+        including absolute file name and file descriptor.
+        """
         return self._platform_impl.get_open_files()
 
     def get_connections(self):
