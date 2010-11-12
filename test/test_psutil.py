@@ -163,13 +163,13 @@ class TestCase(unittest.TestCase):
 
     def test_get_process_list(self):
         pids = [x.pid for x in psutil.get_process_list()]
-        if hasattr(os, 'getpid'):
-            self.assertTrue(os.getpid() in pids)
+        self.assertTrue(os.getpid() in pids)
+        self.assertTrue(0 in pids)
 
     def test_process_iter(self):
         pids = [x.pid for x in psutil.process_iter()]
-        if hasattr(os, 'getpid'):
-            self.assertTrue(os.getpid() in pids)
+        self.assertTrue(os.getpid() in pids)
+        self.assertTrue(0 in pids)
 
     def test_kill(self):
         sproc = get_test_subprocess()
@@ -234,17 +234,17 @@ class TestCase(unittest.TestCase):
         self.assertTrue(isinstance(x, (int, long)))
         self.assertTrue(x >= 0)
 
-    if hasattr(psutil, "cached_phymem"):
-        def test_cached_phymem(self):
-            x = psutil.cached_phymem()
-            self.assertTrue(isinstance(x, (int, long)))
-            self.assertTrue(x >= 0)
+    @skipUnless(LINUX)
+    def test_cached_phymem(self):
+        x = psutil.cached_phymem()
+        self.assertTrue(isinstance(x, (int, long)))
+        self.assertTrue(x >= 0)
 
-    if hasattr(psutil, "phymem_buffers"):
-        def test_phymem_buffers(self):
-            x = psutil.phymem_buffers()
-            self.assertTrue(isinstance(x, (int, long)))
-            self.assertTrue(x >= 0)
+    @skipUnless(LINUX)
+    def test_phymem_buffers(self):
+        x = psutil.phymem_buffers()
+        self.assertTrue(isinstance(x, (int, long)))
+        self.assertTrue(x >= 0)
 
     def test_system_cpu_times(self):
         total = 0
@@ -286,13 +286,21 @@ class TestCase(unittest.TestCase):
             self.assertTrue(percent >= 0.0)
             self.assertTrue(percent <= 100.0)
 
+    def test_get_process_cpu_times(self):
+        times = psutil.Process(os.getpid()).get_cpu_times()
+        self.assertTrue((times.user > 0.0) or (times.system > 0.0))
+        # make sure returned values can be pretty printed with strftime
+        time.strftime("%H:%M:%S", time.localtime(times.user))
+        time.strftime("%H:%M:%S", time.localtime(times.system))
+
+    # test Process.cpu_times() against os.times()
     # os.times() is broken on OS X and *BSD, see:
     # http://bugs.python.org/issue1040026
     # It's also broken on Windows on Python 2.5 (not 2.6)
 
     if sys.version_info > (2, 6, 1):
 
-        def test_get_cpu_times(self):
+        def test_get_process_cpu_times2(self):
             user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()
             utime, ktime = os.times()[:2]
 
@@ -304,14 +312,6 @@ class TestCase(unittest.TestCase):
 
             if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
                 self.fail("expected: %s, found: %s" %(ktime, kernel_time))
-
-            # make sure returned values can be pretty printed with strftime
-            time.strftime("%H:%M:%S", time.localtime(user_time))
-            time.strftime("%H:%M:%S", time.localtime(kernel_time))
-
-    def test_get_cpu_times(self):
-        times = psutil.Process(os.getpid()).get_cpu_times()
-        self.assertTrue((times.user > 0.0) or (times.kernel > 0.0))
 
     def test_create_time(self):
         sproc = get_test_subprocess()
@@ -345,7 +345,6 @@ class TestCase(unittest.TestCase):
            self.assertTrue(numt2 > numt1)
         else:
             self.assertEqual(numt2, 2)
-
 
     def test_get_memory_info(self):
         p = psutil.Process(os.getpid())
@@ -390,8 +389,12 @@ class TestCase(unittest.TestCase):
         self.assertFalse(p.is_running())
 
     def test_pid_exists(self):
-        if hasattr(os, 'getpid'):
-            self.assertTrue(psutil.pid_exists(os.getpid()))
+        sproc = get_test_subprocess()
+        wait_for_pid(sproc.pid)
+        self.assertTrue(psutil.pid_exists(sproc.pid))
+        psutil.Process(sproc.pid).kill()
+        sproc.wait()
+        self.assertFalse(psutil.pid_exists(sproc.pid))
         self.assertFalse(psutil.pid_exists(-1))
 
     def test_exe(self):
@@ -459,11 +462,6 @@ class TestCase(unittest.TestCase):
     def test_username(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
-        # generic test, only access the attribute (twice for testing the
-        # caching code)
-        p.username
-        p.username
-
         if POSIX:
             import pwd
             user = pwd.getpwuid(p.uid).pw_name
@@ -474,6 +472,8 @@ class TestCase(unittest.TestCase):
             domain, username = p.username.split('\\')
             self.assertEqual(domain, expected_domain)
             self.assertEqual(username, expected_username)
+        else:
+            p.username
 
     @skipUnless(WINDOWS or LINUX)
     def test_getcwd(self):
@@ -796,13 +796,11 @@ class TestCase(unittest.TestCase):
         self.assert_(isinstance(psutil.get_pid_list()[0], int))
         self.assert_(isinstance(psutil.pid_exists(1), bool))
 
-    def test_no_such_process(self):
-        # Refers to Issue #12
-        self.assertRaises(psutil.NoSuchProcess, psutil.Process, -1)
-
     def test_invalid_pid(self):
         self.assertRaises(ValueError, psutil.Process, "1")
         self.assertRaises(ValueError, psutil.Process, None)
+        # Refers to Issue #12
+        self.assertRaises(psutil.NoSuchProcess, psutil.Process, -1)
 
     def test_zombie_process(self):
         # Test that NoSuchProcess exception gets raised in the event the
