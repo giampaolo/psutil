@@ -76,7 +76,7 @@ def wrap_exceptions(callable):
         try:
             return callable(self, *args, **kwargs)
         except OSError, err:
-            if err.errno in (errno.EACCES, ERROR_ACCESS_DENIED):
+            if err.errno in (errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED):
                 raise AccessDenied(self.pid, self._process_name)
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._process_name)

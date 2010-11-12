@@ -70,7 +70,7 @@ def wrap_exceptions(method):
         except OSError, err:
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._process_name)
-            if err.errno == errno.EPERM:
+            if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._process_name)
             raise
     return wrapper
