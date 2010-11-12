@@ -934,7 +934,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(p.cmdline, [])
         # this can either raise AD (Win) or return 0 (UNIX)
         try:
-            self.assertEqual(p.get_num_threads(), 0)
+            self.assertTrue(p.get_num_threads() in (0, 1))
         except psutil.AccessDenied:
             pass
 
@@ -1017,6 +1017,9 @@ if hasattr(os, 'getuid'):
         if BSD:
 
             def test_get_open_files(self):
+                self.assertRaises(psutil.AccessDenied, TestCase.test_get_open_files, self)
+
+            def test_get_open_files2(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_get_open_files, self)
 
             def test_get_connections(self):
