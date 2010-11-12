@@ -89,8 +89,8 @@ class WindowsProcess(object):
 
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
-    _connection_ntuple = namedtuple('connection', 'family type local_address '
-                                                  'remote_address status fd')
+    _connection_ntuple = namedtuple('connection', 'fd family type local_address '
+                                                  'remote_address status')
     __slots__ = ["pid", "_process_name"]
 
     def __init__(self, pid):

@@ -1483,7 +1483,7 @@ get_process_connections(PyObject* self, PyObject* args)
                 SOCK_STREAM,
                 addressTupleLocal,
                 addressTupleRemote,
-                state_to_string(tcp4Table->table[i].dwState),
+                state_to_string(tcp4Table->table[i].dwState)
                 );
             PyList_Append(connectionsList, connectionTuple);
         }
@@ -1549,7 +1549,7 @@ get_process_connections(PyObject* self, PyObject* args)
                 SOCK_STREAM,
                 addressTupleLocal,
                 addressTupleRemote,
-                state_to_string(tcp6Table->table[i].dwState),
+                state_to_string(tcp6Table->table[i].dwState)
                 );
             PyList_Append(connectionsList, connectionTuple);
         }
@@ -1596,7 +1596,7 @@ get_process_connections(PyObject* self, PyObject* args)
                 SOCK_DGRAM,
                 addressTupleLocal,
                 PyTuple_New(0),
-                "",
+                ""
                 );
             PyList_Append(connectionsList, connectionTuple);
         }
@@ -1642,7 +1642,7 @@ get_process_connections(PyObject* self, PyObject* args)
                 SOCK_DGRAM,
                 addressTupleLocal,
                 PyTuple_New(0),
-                "",
+                ""
                 );
             PyList_Append(connectionsList, connectionTuple);
         }
