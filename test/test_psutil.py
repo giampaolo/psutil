@@ -1008,17 +1008,6 @@ if hasattr(os, 'getuid'):
             def test_exe(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_exe, self)
 
-        if OSX:
-
-            def test_get_connections(self):
-                pass
-            def test_get_connections_all(self):
-                pass
-            def test_get_open_files(self):
-                pass
-            def test_pid_0(self):
-                pass
-
         if BSD:
 
             def test_get_open_files(self):
