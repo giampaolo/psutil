@@ -89,6 +89,7 @@ class WindowsProcess(object):
 
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
+    _openfile_ntuple = namedtuple('openfile', 'path fd')
     _connection_ntuple = namedtuple('connection', 'fd family type local_address '
                                                   'remote_address status')
     __slots__ = ["pid", "_process_name"]
@@ -202,7 +203,8 @@ class WindowsProcess(object):
                 driveletter = _psutil_mswindows._QueryDosDevice(rawdrive)
                 file = file.replace(rawdrive, driveletter)
                 if os.path.isfile(file) and file not in retlist:
-                    retlist.append(file)
+                    ntuple = self._openfile_ntuple(file, -1)
+                    retlist.append(ntuple)
         return retlist
 
     @wrap_exceptions

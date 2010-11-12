@@ -530,7 +530,11 @@ class TestCase(unittest.TestCase):
         # test fd and path fields
         fileobj = open(os.path.join(os.getcwd(), __file__), 'r')
         p = psutil.Process(os.getpid())
-        path, fd = p.get_open_files()[0]
+        for path, fd in p.get_open_files():
+            if path == fileobj.name or fd == fileobj.fileno():
+                break
+        else:
+            self.fail("no file found; files=%s" % repr(p.get_open_files()))
         self.assertEqual(path, fileobj.name)
         if WINDOWS:
             self.assertEqual(fd, -1)
@@ -542,7 +546,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(ntuple[1], ntuple.fd)
         # test file is gone
         fileobj.close()
-        self.assertEqual(p.get_open_files(), [])
+        self.assertTrue(fileobj.name not in p.get_open_files())
 
     @skipUnless(SUPPORT_CONNECTIONS, warn=1)
     def test_get_connections(self):
@@ -797,8 +801,9 @@ class TestCase(unittest.TestCase):
                 self.assert_(isinstance(p.getcwd(), str))
         if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
             self.assert_(isinstance(p.get_open_files(), list))
-            for path in p.get_open_files():
+            for path, fd in p.get_open_files():
                 self.assert_(isinstance(path, (unicode, str)))
+                self.assert_(isinstance(fd, int))
         if not POSIX and self.__class__.__name__ != "LimitedUserTestCase" \
         and SUPPORT_CONNECTIONS:
             self.assert_(isinstance(p.get_connections(), list))
