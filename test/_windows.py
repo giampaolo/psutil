@@ -109,7 +109,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
             # bytes but funnily enough on certain platforms bytes are
             # returned instead.
             wmi_usage = int(w.PageFileUsage)
-            if (vms != wmi_usage) or (vms != wmi_usage * 1024):
+            if (vms != wmi_usage) and (vms != wmi_usage * 1024):
                 self.fail("wmi=%s, psutil=%s" % (wmi_usage, vms))
 
         def test_process_create_time(self):
