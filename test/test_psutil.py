@@ -684,11 +684,10 @@ class TestCase(unittest.TestCase):
                     if conn.status not in valid_states:
                         self.fail("%s is not a valid status" %conn.status)
                     # actually try to bind the local socket; ignore IPv6
-                    # UDP sockets as on OSX provide strange addresses.
-                    if conn.family == socket.AF_INET6 \
-                    and conn.type == socket.SOCK_DGRAM:
-                        pass
-                    else:
+                    # sockets as their address might be represented as
+                    # an IPv4-mapped-address (e.g. "::127.0.0.1")
+                    # and that's rejected by bind()
+                    if conn.family == socket.AF_INET:
                         s = socket.socket(conn.family, conn.type)
                         s.bind((conn.local_address[0], 0))
                         s.close()
