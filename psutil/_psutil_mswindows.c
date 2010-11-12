@@ -1016,6 +1016,7 @@ static PyObject*
 get_process_num_threads(PyObject* self, PyObject* args)
 {
     long pid;
+    int pid_return;
     long nthreads = 0;
     HANDLE hThreadSnap = NULL;
     THREADENTRY32 te32 = {0};
@@ -1026,6 +1027,14 @@ get_process_num_threads(PyObject* self, PyObject* args)
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
         return AccessDenied();
+    }
+
+    pid_return = pid_is_running(pid);
+    if (pid_return == 0) {
+        return NoSuchProcess();
+    }
+    if (pid_return == -1) {
+        return NULL;
     }
 
     hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
