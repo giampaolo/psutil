@@ -494,27 +494,27 @@ class TestCase(unittest.TestCase):
 
     def test_get_open_files(self):
         thisfile = os.path.join(os.getcwd(), __file__)
-        # in case of os.getcwd() is a symlink
-        thisfile = os.path.realpath(thisfile)
+
         # current process
         p = psutil.Process(os.getpid())
         files = p.get_open_files()
         self.assertFalse(thisfile in files)
         f = open(thisfile, 'r')
-        files = p.get_open_files()
-        self.assertTrue(thisfile in files)
+        filenames = [x.path for x in p.get_open_files()]
+        self.assertTrue(thisfile in filenames)
         f.close()
-        for file in files:
+        for file in filenames:
             self.assertTrue(os.path.isfile(file))
-        # subprocess
+
+        # another process
         cmdline = "import time; f = open(r'%s', 'r'); time.sleep(100);" % thisfile
         sproc = get_test_subprocess([PYTHON, "-c", cmdline])
         wait_for_pid(sproc.pid)
         time.sleep(0.1)
         p = psutil.Process(sproc.pid)
-        files = p.get_open_files()
-        self.assertTrue(thisfile in files)
-        for file in files:
+        filenames = [x.path for x in p.get_open_files()]
+        self.assertTrue(thisfile in filenames)
+        for file in filenames:
             self.assertTrue(os.path.isfile(file))
         # all processes
         for proc in psutil.process_iter():
@@ -523,8 +523,19 @@ class TestCase(unittest.TestCase):
             except psutil.Error:
                 pass
             else:
-                for file in files:
+                for file in filenames:
                     self.assertTrue(os.path.isfile(file))
+
+    def test_get_open_files2(self):
+        # test fd and path fields
+        fileobj = open(os.path.join(os.getcwd(), __file__), 'r')
+        p = psutil.Process(os.getpid())
+        fd, path = p.get_open_files()[0]
+        self.assertEqual(path, fileobj.name)
+        if WINDOWS:
+            self.assertEqual(fd, -1)
+        else:
+            self.assertEqual(fd, fileobj.fileno())
 
     @skipUnless(SUPPORT_CONNECTIONS, warn=1)
     def test_get_connections(self):

@@ -186,6 +186,7 @@ class LinuxProcess(object):
 
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
+    _openfile_ntuple = namedtuple('openfile', 'fd path')
     _connection_ntuple = namedtuple('connection', 'fd family type local_address '
                                                   'remote_address status')
     __slots__ = ["pid", "_process_name"]
@@ -317,8 +318,8 @@ class LinuxProcess(object):
     def get_open_files(self):
         retlist = []
         files = os.listdir("/proc/%s/fd" % self.pid)
-        for link in files:
-            file = "/proc/%s/fd/%s" % (self.pid, link)
+        for fd in files:
+            file = "/proc/%s/fd/%s" % (self.pid, fd)
             if os.path.islink(file):
                 file = os.readlink(file)
                 if file.startswith("socket:["):
@@ -328,7 +329,8 @@ class LinuxProcess(object):
                 if file == "[]":
                     continue
                 if os.path.isfile(file) and not file in retlist:
-                    retlist.append(file)
+                    ntuple = self._openfile_ntuple(int(fd), file)
+                    retlist.append(ntuple)
         return retlist
 
     @wrap_exceptions
