@@ -186,8 +186,8 @@ class LinuxProcess(object):
 
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
-    _connection_ntuple = namedtuple('connection', 'family type local_address '
-                                                  'remote_address status fd')
+    _connection_ntuple = namedtuple('connection', 'fd family type local_address '
+                                                  'remote_address status')
     __slots__ = ["pid", "_process_name"]
 
     def __init__(self, pid):
@@ -367,8 +367,8 @@ class LinuxProcess(object):
                     else:
                         status = ""
                     fd = int(inodes[inode])
-                    conn = self._connection_ntuple(family, _type, laddr, raddr,
-                                                   status, fd)
+                    conn = self._connection_ntuple(fd, family, _type, laddr,
+                                                   raddr, status)
                     retlist.append(conn)
             f.close()
             return retlist
@@ -382,7 +382,8 @@ class LinuxProcess(object):
 #    --- lsof implementation
 #
 #    def get_connections(self):
-#        return _psposix.LsofParser(pid, self._process_name).get_process_connections()
+#        lsof = _psposix.LsofParser(self.pid, self._process_name)
+#        return lsof.get_process_connections()
 
     @wrap_exceptions
     def get_process_ppid(self):

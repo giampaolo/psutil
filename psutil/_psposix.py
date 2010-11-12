@@ -42,8 +42,8 @@ class LsofParser:
                     'UDP' : socket.SOCK_DGRAM,
                     'IPv4' : socket.AF_INET,
                     'IPv6' : socket.AF_INET6}
-    _connection_ntuple = namedtuple('connection', 'family type local_address '
-                                                  'remote_address status fd')
+    _connection_ntuple = namedtuple('connection', 'fd family type local_address '
+                                                  'remote_address status')
 
     def __init__(self, pid, name):
         self.pid = pid
@@ -150,8 +150,8 @@ class LsofParser:
                 local_addr = self._normaddress(local_addr, family)
                 remote_addr = self._normaddress(remote_addr, family)
 
-            conn = self._connection_ntuple(family, _type, local_addr,
-                                           remote_addr, status, fd)
+            conn = self._connection_ntuple(fd, family, _type, local_addr,
+                                           remote_addr, status)
             connections.append(conn)
 
         return connections

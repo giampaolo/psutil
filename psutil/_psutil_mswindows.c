@@ -1477,13 +1477,13 @@ get_process_connections(PyObject* self, PyObject* args)
                 addressTupleRemote = PyTuple_New(0);
             }
 
-            connectionTuple = Py_BuildValue("(iiNNsi)",
+            connectionTuple = Py_BuildValue("(iiiNNs)",
+                -1,
                 AF_INET,
                 SOCK_STREAM,
                 addressTupleLocal,
                 addressTupleRemote,
                 state_to_string(tcp4Table->table[i].dwState),
-                -1
                 );
             PyList_Append(connectionsList, connectionTuple);
         }
@@ -1543,13 +1543,13 @@ get_process_connections(PyObject* self, PyObject* args)
                 addressTupleRemote = PyTuple_New(0);
             }
 
-            connectionTuple = Py_BuildValue("(iiNNsi)",
+            connectionTuple = Py_BuildValue("(iiiNNs)",
+                -1,
                 AF_INET6,
                 SOCK_STREAM,
                 addressTupleLocal,
                 addressTupleRemote,
                 state_to_string(tcp6Table->table[i].dwState),
-                -1
                 );
             PyList_Append(connectionsList, connectionTuple);
         }
@@ -1590,13 +1590,13 @@ get_process_connections(PyObject* self, PyObject* args)
                 addressTupleLocal = PyTuple_New(0);
             }
 
-            connectionTuple = Py_BuildValue("(iiNNsi)",
+            connectionTuple = Py_BuildValue("(iiiNNs)",
+                -1,
                 AF_INET,
                 SOCK_DGRAM,
                 addressTupleLocal,
                 PyTuple_New(0),
                 "",
-                -1
                 );
             PyList_Append(connectionsList, connectionTuple);
         }
@@ -1636,13 +1636,13 @@ get_process_connections(PyObject* self, PyObject* args)
                 addressTupleLocal = PyTuple_New(0);
             }
 
-            connectionTuple = Py_BuildValue("(iiNNsi)",
+            connectionTuple = Py_BuildValue("(iiiNNs)",
+                -1,
                 AF_INET6,
                 SOCK_DGRAM,
                 addressTupleLocal,
                 PyTuple_New(0),
                 "",
-                -1
                 );
             PyList_Append(connectionsList, connectionTuple);
         }
