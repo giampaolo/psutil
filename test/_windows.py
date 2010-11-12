@@ -105,14 +105,12 @@ class WindowsSpecificTestCase(unittest.TestCase):
             p = psutil.Process(self.pid)
             vms = p.get_memory_info().vms
             # http://msdn.microsoft.com/en-us/library/aa394372(VS.85).aspx
-            # claims that PageFileUsage is represented in Kilo bytes.
-            # This appear to be true on Windows 7 but not on Windows XP.
-            if platform.uname()[1] in ('vista', 'win-7', 'win7'):
-                self.assertEqual(vms, int(w.PageFileUsage * 1024))
-            elif platform.uname()[2] in ("2003Server"):
-                self.assertEqual(vms, int(w.PageFileUsage * 1024))
-            else:
-                self.assertEqual(vms, w.PageFileUsage)
+            # ...claims that PageFileUsage is represented in Kilo
+            # bytes but funnily enough on certain platforms bytes are
+            # returned instead.
+            wmi_usage = int(w.PageFileUsage)
+            if (vms != wmi_usage) or (vms != wmi_usage * 1024):
+                self.fail("wmi=%s, psutil=%s" % (wmi_usage, vms))
 
         def test_process_create_time(self):
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
