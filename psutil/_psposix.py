@@ -42,6 +42,7 @@ class LsofParser:
                     'UDP' : socket.SOCK_DGRAM,
                     'IPv4' : socket.AF_INET,
                     'IPv6' : socket.AF_INET6}
+    _openfile_ntuple = namedtuple('openfile', 'path fd')
     _connection_ntuple = namedtuple('connection', 'fd family type local_address '
                                                   'remote_address status')
 
@@ -85,7 +86,8 @@ class LsofParser:
             if 'REG' in _type and fd.isdigit():
                 if not os.path.isfile(os.path.realpath(name)):
                     continue
-                files.append(name)
+                ntuple = self._openfile_ntuple(name, int(fd))
+                files.append(ntuple)
         return files
 
     def get_process_connections(self):

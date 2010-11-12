@@ -530,12 +530,19 @@ class TestCase(unittest.TestCase):
         # test fd and path fields
         fileobj = open(os.path.join(os.getcwd(), __file__), 'r')
         p = psutil.Process(os.getpid())
-        fd, path = p.get_open_files()[0]
+        path, fd = p.get_open_files()[0]
         self.assertEqual(path, fileobj.name)
         if WINDOWS:
             self.assertEqual(fd, -1)
         else:
             self.assertEqual(fd, fileobj.fileno())
+        # test positions
+        ntuple = p.get_open_files()[0]
+        self.assertEqual(ntuple[0], ntuple.path)
+        self.assertEqual(ntuple[1], ntuple.fd)
+        # test file is gone
+        fileobj.close()
+        self.assertEqual(p.get_open_files(), [])
 
     @skipUnless(SUPPORT_CONNECTIONS, warn=1)
     def test_get_connections(self):
@@ -561,6 +568,13 @@ class TestCase(unittest.TestCase):
             self.assertEqual(con.fd, -1)
         else:
             self.assertTrue(con.fd > 0)
+        # test positions
+        self.assertEqual(con[0], con.fd)
+        self.assertEqual(con[1], con.family)
+        self.assertEqual(con[2], con.type)
+        self.assertEqual(con[3], con.local_address)
+        self.assertEqual(con[4], con.remote_address)
+        self.assertEqual(con[5], con.status)
 
     @skipUnless(hasattr(socket, "fromfd") and not WINDOWS)
     def test_connection_fromfd(self):

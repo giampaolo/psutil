@@ -186,7 +186,7 @@ class LinuxProcess(object):
 
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
-    _openfile_ntuple = namedtuple('openfile', 'fd path')
+    _openfile_ntuple = namedtuple('openfile', 'path fd')
     _connection_ntuple = namedtuple('connection', 'fd family type local_address '
                                                   'remote_address status')
     __slots__ = ["pid", "_process_name"]
@@ -329,9 +329,15 @@ class LinuxProcess(object):
                 if file == "[]":
                     continue
                 if os.path.isfile(file) and not file in retlist:
-                    ntuple = self._openfile_ntuple(int(fd), file)
+                    ntuple = self._openfile_ntuple(file, int(fd))
                     retlist.append(ntuple)
         return retlist
+
+#    --- lsof implementation
+#
+#    def get_open_files(self):
+#        lsof = _psposix.LsofParser(self.pid, self._process_name)
+#        return lsof.get_process_open_files()
 
     @wrap_exceptions
     def get_connections(self):
