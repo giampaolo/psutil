@@ -1,6 +1,9 @@
-include HISTORY LICENSE MANIFEST MANIFEST.in
-recursive-include docs *
-recursive-include psutil *
-recursive-include test *
-global-exclude *.pyc *.pyo *.exe  *.swp
-
+include CREDITS
+include HISTORY
+include LICENSE
+include MANIFEST.in
+include README
+include setup.py
+recursive-include docs *.html *.dia *.png
+recursive-include psutil *.py *.c *.h
+recursive-include test *.py

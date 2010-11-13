@@ -28,6 +28,7 @@ NEW FEATURES
 
 BUGFIXES
 
+ * Issue 80: fixed warnings when installing psutil with easy_install.
  * Issue 81: psutil fails to compile with Visual Studio.
  * Issue 94: suspend() raises OSError instead of AccessDenied.
  * Issue 86: psutil didn't compile against FreeBSD 6.x.
