@@ -1,26 +1,99 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<title>psutil - Home</title>
-</head>
 
-<body>
-<div id="wikicontent">
-  <h1>Python process utilities (psutil)</h1>
-  <h1><a name="Summary" id="Summary">Summary</a></h1>
-  <p><a name="Summary" id="Summary">psutil is a  module providing an interface for retrieving information on running  processes and system utilization (CPU, memory) in a portable way by  using Python. </a></p>
-  <p><a name="Summary" id="Summary">It currently supports Linux, OS X, FreeBSD and Windows. </a></p>
-  <h1><a name="Example_usage" id="Example_usage">Example usage</a></h1>
-  <pre><a name="Example_usage" id="Example_usage">&gt;&gt;&gt; import psutil<br />&gt;&gt;&gt; psutil.get_pid_list()<br />[1, 2, 3, 4, 5, 6, 7, 46, 48, 50, 51, 178, 182, 222, 223, 224,<br />268, 1215, 1216, 1220, 1221, 1243, 1244, 1301, 1601, 2237, 2355,<br />2637, 2774, 3932, 4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245, <br />4263, 4282, 4306, 4311, 4312, 4313, 4314, 4337, 4339, 4357, 4358, <br />4363, 4383, 4395, 4408, 4433, 4443, 4445, 4446, 5167, 5234, 5235, <br />5252, 5318, 5424, 5644, 6987, 7054, 7055, 7071]<br />&gt;&gt;&gt; p = psutil.Process(7055)<br />&gt;&gt;&gt; p.name<br />'python'<br />&gt;&gt;&gt; p.path<br />'/usr/bin'<br />&gt;&gt;&gt; p.cmdline<br />['/usr/bin/python', '-O']<br />&gt;&gt;&gt; p.uid<br />1000<br />&gt;&gt;&gt; p.gid<br />1000<br />&gt;&gt;&gt; rss, vms = &nbsp;p.get_memory_info()<br />&gt;&gt;&gt; print &quot;Resident memory: %s KB&quot; %(rss / 1024)<br />Resident memory: 3768 KB<br />&gt;&gt;&gt; print &quot;Virtual memory: %s KB&quot; %(vms / 1024)<br />Virtual memory: 6176 KB<br />&gt;&gt;&gt; <br />&gt;&gt;&gt; psutil.test()<br />UID &nbsp; &nbsp; &nbsp; PID %CPU %MEM &nbsp; &nbsp; VSZ &nbsp; &nbsp; RSS START &nbsp; &nbsp; TIME COMMAND<br />0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 0 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [sched]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 1 &nbsp;0.0 &nbsp;0.3 &nbsp; &nbsp;1740 &nbsp; &nbsp; 600 Mar20 &nbsp; &nbsp;00:04 /sbin/init<br />0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 2 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [kthreadd]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 3 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [migration/0]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 4 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:05 [ksoftirqd/0]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 5 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [watchdog/0]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 6 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:03 [events/0]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 7 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [khelper]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;46 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [kintegrityd/0]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;48 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:01 [kblockd/0]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;50 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [kacpid]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;51 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [kacpi_notify]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; 179 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [cqueue]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; 183 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [kseriod]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; 223 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [pdflush]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; 224 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:04 [pdflush]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; 225 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:01 [kswapd0]<br />0 &nbsp; &nbsp; &nbsp; &nbsp; 269 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [aio/0]<br />0 &nbsp; &nbsp; &nbsp; &nbsp;1221 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [ksuspend_usbd]<br />0 &nbsp; &nbsp; &nbsp; &nbsp;1222 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [khubd]<br />0 &nbsp; &nbsp; &nbsp; &nbsp;1226 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [ata/0]<br />0 &nbsp; &nbsp; &nbsp; &nbsp;1227 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [ata_aux]<br />0 &nbsp; &nbsp; &nbsp; &nbsp;1245 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:04 [mpt_poll_0]<br />0 &nbsp; &nbsp; &nbsp; &nbsp;1402 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [scsi_eh_0]<br />0 &nbsp; &nbsp; &nbsp; &nbsp;1843 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [scsi_eh_1]<br />0 &nbsp; &nbsp; &nbsp; &nbsp;1844 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [scsi_eh_2]<br />0 &nbsp; &nbsp; &nbsp; &nbsp;2241 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:06 [kjournald]<br />0 &nbsp; &nbsp; &nbsp; &nbsp;2359 &nbsp;0.0 &nbsp;0.4 &nbsp; &nbsp;2312 &nbsp; &nbsp; 740 Mar20 &nbsp; &nbsp;00:02 /sbin/udevd --daemon<br />0 &nbsp; &nbsp; &nbsp; &nbsp;2678 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [kgameportd]<br />0 &nbsp; &nbsp; &nbsp; &nbsp;2796 &nbsp;0.0 &nbsp;0.0 &nbsp; &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; 0 Mar20 &nbsp; &nbsp;00:00 [kpsmoused]<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4209 &nbsp;0.0 &nbsp;0.3 &nbsp; &nbsp;1780 &nbsp; &nbsp; 536 Mar20 &nbsp; &nbsp;00:00 /sbin/getty 38400 tty4<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4210 &nbsp;0.0 &nbsp;0.3 &nbsp; &nbsp;1780 &nbsp; &nbsp; 536 Mar20 &nbsp; &nbsp;00:00 /sbin/getty 38400 tty5<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4215 &nbsp;0.0 &nbsp;0.3 &nbsp; &nbsp;1780 &nbsp; &nbsp; 540 Mar20 &nbsp; &nbsp;00:00 /sbin/getty 38400 tty2<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4216 &nbsp;0.0 &nbsp;0.3 &nbsp; &nbsp;1780 &nbsp; &nbsp; 540 Mar20 &nbsp; &nbsp;00:00 /sbin/getty 38400 tty3<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4217 &nbsp;0.0 &nbsp;0.3 &nbsp; &nbsp;1780 &nbsp; &nbsp; 540 Mar20 &nbsp; &nbsp;00:00 /sbin/getty 38400 tty6<br />101 &nbsp; &nbsp; &nbsp;4258 &nbsp;0.0 &nbsp;0.4 &nbsp; &nbsp;2012 &nbsp; &nbsp; 712 Mar20 &nbsp; &nbsp;00:01 /sbin/syslogd -u syslog<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4276 &nbsp;0.0 &nbsp;0.4 &nbsp; &nbsp;1936 &nbsp; &nbsp; 544 Mar20 &nbsp; &nbsp;00:00 /bin/dd bs 1 if /proc/kmsg of /var/run/klogd/kmsg<br />102 &nbsp; &nbsp; &nbsp;4278 &nbsp;0.0 &nbsp;0.7 &nbsp; &nbsp;3508 &nbsp; &nbsp;2248 Mar20 &nbsp; &nbsp;00:00 /sbin/klogd -P /var/run/klogd/kmsg<br />104 &nbsp; &nbsp; &nbsp;4296 &nbsp;0.0 &nbsp;0.5 &nbsp; &nbsp;2640 &nbsp; &nbsp; 844 Mar20 &nbsp; &nbsp;00:02 /bin/dbus-daemon --system<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4315 &nbsp;0.0 &nbsp;1.0 &nbsp; &nbsp;5392 &nbsp; &nbsp;1060 Mar20 &nbsp; &nbsp;00:00 /usr/sbin/sshd<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4349 &nbsp;0.0 &nbsp;1.8 &nbsp; &nbsp;9216 &nbsp; &nbsp;1464 Mar20 &nbsp; &nbsp;00:01 /usr/sbin/winbindd<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4363 &nbsp;0.0 &nbsp;1.8 &nbsp; &nbsp;9472 &nbsp; &nbsp;2000 Mar20 &nbsp; &nbsp;00:00 /usr/sbin/winbindd<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4364 &nbsp;0.0 &nbsp;1.8 &nbsp; &nbsp;9216 &nbsp; &nbsp;1012 Mar20 &nbsp; &nbsp;00:00 /usr/sbin/winbindd<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4365 &nbsp;0.0 &nbsp;0.4 &nbsp; &nbsp;2064 &nbsp; &nbsp; 452 Mar20 &nbsp; &nbsp;00:00 /usr/sbin/atd<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4390 &nbsp;0.0 &nbsp;0.7 &nbsp; &nbsp;3408 &nbsp; &nbsp;1016 Mar20 &nbsp; &nbsp;00:00 /usr/sbin/cron<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4400 &nbsp;0.0 &nbsp;1.6 &nbsp; &nbsp;8128 &nbsp; &nbsp;3212 Mar20 &nbsp; &nbsp;00:00 /bin/login --<br />0 &nbsp; &nbsp; &nbsp; &nbsp;4402 &nbsp;0.0 &nbsp;1.8 &nbsp; &nbsp;9216 &nbsp; &nbsp;1108 Mar20 &nbsp; &nbsp;00:00 /usr/sbin/winbindd<br />1000 &nbsp; &nbsp; 5213 &nbsp;0.0 &nbsp;1.1 &nbsp; &nbsp;5656 &nbsp; &nbsp;3032 Mar20 &nbsp; &nbsp;00:00 -bash<br />0 &nbsp; &nbsp; &nbsp; &nbsp;5232 &nbsp;0.0 &nbsp;1.6 &nbsp; &nbsp;8144 &nbsp; &nbsp;2316 Mar20 &nbsp; &nbsp;00:00 su -<br />0 &nbsp; &nbsp; &nbsp; &nbsp;5298 &nbsp;0.0 &nbsp;0.8 &nbsp; &nbsp;4220 &nbsp; &nbsp;1832 Mar20 &nbsp; &nbsp;00:00 -su<br />0 &nbsp; &nbsp; &nbsp; &nbsp;5342 &nbsp;0.0 &nbsp;0.4 &nbsp; &nbsp;2252 &nbsp; &nbsp; 644 Mar20 &nbsp; &nbsp;00:00 dhclient<br />0 &nbsp; &nbsp; &nbsp; 13234 &nbsp;0.0 &nbsp;1.6 &nbsp; &nbsp;8120 &nbsp; &nbsp;1580 00:38 &nbsp; &nbsp;00:02 /usr/sbin/nmbd -D<br />0 &nbsp; &nbsp; &nbsp; 13236 &nbsp;0.0 &nbsp;2.6 &nbsp; 13604 &nbsp; &nbsp;2816 00:38 &nbsp; &nbsp;00:00 /usr/sbin/smbd -D<br />0 &nbsp; &nbsp; &nbsp; 13239 &nbsp;0.0 &nbsp;2.6 &nbsp; 13604 &nbsp; &nbsp;1044 00:38 &nbsp; &nbsp;00:00 /usr/sbin/smbd -D<br />0 &nbsp; &nbsp; &nbsp; 23643 &nbsp;0.0 &nbsp;2.4 &nbsp; 12376 &nbsp; &nbsp;4280 14:43 &nbsp; &nbsp;00:00 sshd: user [priv]<br />1000 &nbsp; &nbsp;23648 &nbsp;0.0 &nbsp;2.4 &nbsp; 12512 &nbsp; &nbsp;2008 14:43 &nbsp; &nbsp;00:06 sshd: user@pts/2<br />1000 &nbsp; &nbsp;23649 &nbsp;0.0 &nbsp;1.2 &nbsp; &nbsp;5944 &nbsp; &nbsp;3340 14:43 &nbsp; &nbsp;00:00 -bash<br />0 &nbsp; &nbsp; &nbsp; 25860 &nbsp;0.0 &nbsp;1.6 &nbsp; &nbsp;8144 &nbsp; &nbsp;2300 17:55 &nbsp; &nbsp;00:00 su -<br />0 &nbsp; &nbsp; &nbsp; 25926 &nbsp;0.0 &nbsp;1.1 &nbsp; &nbsp;5432 &nbsp; &nbsp;3072 17:55 &nbsp; &nbsp;00:00 -su<br />1000 &nbsp; &nbsp;28464 &nbsp;0.0 &nbsp;2.7 &nbsp; 13968 &nbsp; &nbsp;4076 21:45 &nbsp; &nbsp;00:00 /usr/sbin/smbd -D<br />0 &nbsp; &nbsp; &nbsp; 28655 &nbsp;0.0 &nbsp;1.0 &nbsp; &nbsp;4932 &nbsp; &nbsp;3204 21:58 &nbsp; &nbsp;00:00 python _psutil.py<br />&gt;&gt;&gt;<br /></a></pre>
-  <h1><a name="Mailing_lists" id="Mailing_lists">Mailing lists</a></h1>
-  <p><a name="Mailing_lists" id="Mailing_lists"><strong>Users</strong><br />
-  </a><a href="http://groups.google.com/group/psutil/topics" rel="nofollow">http://groups.google.com/group/psutil/topics</a></p>
-  <p><strong>Developers</strong><br />
-    <a href="http://groups.google.com/group/psutil-dev/topics" rel="nofollow">http://groups.google.com/group/psutil-dev/topics</a></p>
-  <p><strong>SVN commits and issue tracker changes</strong><br />
-    <a href="http://groups.google.com/group/psutil-commits/topics" rel="nofollow">http://groups.google.com/group/psutil-commits/topics</a></p>
-  <p>&nbsp;</p>
-</div>
-</body>
+
+
+<html>
+ <head>
+ <title>psutil</title>
+ </head>
+ <body>
+
+
+
+
+ <div id="wikicontent">
+ <table width="100%" border="0" cellspacing="0" cellpadding="0">
+ <tr>
+
+ <td class="vt" id="wikimaincol" width="100%">
+
+ <div id="wikiheader" style="margin-bottom:1em">
+
+
+ </div>
+ <h1><a name="Summary"></a>Summary<a href="#Summary" class="section_anchor"></a></h1><p>psutil is a module providing an interface for retrieving information on running processes and system utilization (CPU, memory) in a portable way by using Python, implementing many functionalities offered by command line tools like <strong>ps</strong>, <strong>top</strong>, <strong>kill</strong> and Windows <strong>task manager</strong>. </p><p>It currently supports <strong>Linux</strong>, <strong>OS X</strong>, <strong>FreeBSD</strong> and <strong>Windows</strong> with Python versions from <strong>2.4</strong> to <strong>3.1</strong> by using a unique code base. </p><h1><a name="Example_usage"></a>Example usage<a href="#Example_usage" class="section_anchor"></a></h1><h3><a name="process_management"></a>process management<a href="#process_management" class="section_anchor"></a></h3><pre class="prettyprint">&gt;&gt;&gt; import psutil
+&gt;&gt;&gt; psutil.get_pid_list()
+[1, 2, 3, 4, 5, 6, 7, 46, 48, 50, 51, 178, 182, 222, 223, 224,
+268, 1215, 1216, 1220, 1221, 1243, 1244, 1301, 1601, 2237, 2355,
+2637, 2774, 3932, 4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245,
+4263, 4282, 4306, 4311, 4312, 4313, 4314, 4337, 4339, 4357, 4358,
+4363, 4383, 4395, 4408, 4433, 4443, 4445, 4446, 5167, 5234, 5235,
+5252, 5318, 5424, 5644, 6987, 7054, 7055, 7071]
+&gt;&gt;&gt; p = psutil.Process(7055)
+&gt;&gt;&gt; p.name
+&#x27;python&#x27;
+&gt;&gt;&gt; p.path
+&#x27;/usr/bin&#x27;
+&gt;&gt;&gt; p.cmdline
+[&#x27;/usr/bin/python&#x27;, &#x27;-O&#x27;, &#x27;run.py&#x27;]
+&gt;&gt;&gt; p.uid
+1000
+&gt;&gt;&gt; p.gid
+1000
+&gt;&gt;&gt; p.username
+&#x27;jake&#x27;
+&gt;&gt;&gt; p.create_time
+1267551141.5019531
+&gt;&gt;&gt; p.get_cpu_percent()
+12.31243
+&gt;&gt;&gt; p.get_memory_percent()
+0.63423
+&gt;&gt;&gt; rss, vms =  p.get_memory_info()
+&gt;&gt;&gt; &quot;Resident memory: %s KB&quot; %(rss / 1024)
+&#x27;Resident memory: 3768 KB&#x27;
+&gt;&gt;&gt; &quot;Virtual memory: %s KB&quot; %(vms / 1024)
+&#x27;Virtual memory: 6176 KB&#x27;
+&gt;&gt;&gt;
+&gt;&gt;&gt; p.suspend()
+&gt;&gt;&gt; p.resume()
+&gt;&gt;&gt; psutil.test()
+UID       PID %CPU %MEM     VSZ     RSS START     TIME COMMAND
+0           0  0.0  0.0       0       0 00:12    00:00 [sched]
+0           1  0.0  0.3    1740     600 00:12    00:04 /sbin/init
+0           2  0.0  0.0       0       0 00:12    00:00 [kthreadd]
+0           3  0.0  0.0       0       0 00:12    00:00 [migration/0]
+...
+0       13239  0.0  2.6    13604   1044 00:38    00:00 /usr/sbin/smbd -D
+1000    23648  0.0  2.4    12512   2008 14:43    00:06 sshd: user@pts/2
+1000    23649  0.0  1.2    5944    3340 14:43    00:00 -bash
+0       25926  0.0  1.1    5432    3072 17:55    00:00 -su
+0       28655  0.0  1.0    4932    3204 21:58    00:00 python _psutil.py
+&gt;&gt;&gt;</pre><h3><a name="System_monitoring_(CPU_and_memory)"></a>System monitoring (CPU and memory)<a href="#System_monitoring_(CPU_and_memory)" class="section_anchor"></a></h3><pre class="prettyprint">&gt;&gt;&gt; import psutil, time
+&gt;&gt;&gt; print psutil.cpu_times()
+softirq=50.87; iowait=39.63; system=1130.67; idle=164171.41; user=965.15; irq=7.08; nice=0.0
+&gt;&gt;&gt;
+&gt;&gt;&gt; while 1:
+...     print round(psutil.cpu_percent(), 1)
+...     time.sleep(1)
+...
+5.4
+3.2
+7.3
+7.1
+2.5
+Traceback (most recent call last):
+  File &quot;&lt;stdin&gt;&quot;, line 3, in &lt;module&gt;
+KeyboardInterrupt
+&gt;&gt;&gt;
+&gt;&gt;&gt; psutil.TOTAL_PHYMEM
+526458880
+&gt;&gt;&gt; psutil.avail_phymem()
+153530368
+&gt;&gt;&gt; psutil.total_virtmem()
+197365760
+&gt;&gt;&gt; psutil.avail_virtmem()
+194277376</pre><h1><a name="Mailing_lists"></a>Mailing lists<a href="#Mailing_lists" class="section_anchor"></a></h1><p><strong>Users</strong><br><a href="http://groups.google.com/group/psutil/topics" rel="nofollow">http://groups.google.com/group/psutil/topics</a> </p><p><strong>Developers</strong><br><a href="http://groups.google.com/group/psutil-dev/topics" rel="nofollow">http://groups.google.com/group/psutil-dev/topics</a> </p><p><strong>SVN commits and issue tracker changes</strong><br><a href="http://groups.google.com/group/psutil-commits/topics" rel="nofollow">http://groups.google.com/group/psutil-commits/topics</a> </p><h1><a name="Contribute"></a>Contribute<a href="#Contribute" class="section_anchor"></a></h1><p>If you want to help or just give us suggestions about the project and other related things,  subscribe to the <a href="http://groups.google.com/group/psutil" rel="nofollow">discussion mailing list</a>. If you want to talk with project team members about psutil and other related things feel free to contact us at the following addresses: </p><p><table><tr><td style="border: 1px solid #aaa; padding: 5px;"> <strong>Name</strong> </td><td style="border: 1px solid #aaa; padding: 5px;"> <strong>Country</strong> </td><td style="border: 1px solid #aaa; padding: 5px;"> <strong>E-mail</strong> </td></tr> <tr><td style="border: 1px solid #aaa; padding: 5px;"> Jay Loden </td><td style="border: 1px solid #aaa; padding: 5px;"> New Jersey (USA) </td><td style="border: 1px solid #aaa; padding: 5px;"> jloden at gmail dot com  </td></tr> <tr><td style="border: 1px solid #aaa; padding: 5px;"> Giampaolo Rodola&#x27; </td><td style="border: 1px solid #aaa; padding: 5px;"> Turin (Italy) </td><td style="border: 1px solid #aaa; padding: 5px;"> g.rodola at gmail dot com </td></tr> </table></p><p>Feedbacks and suggestions are greatly appreciated as well as new testers and coders willing to join the development.<br> For any bug report, patch proposal or feature request, add an entry into the <a href="http://code.google.com/p/psutil/issues/list" rel="nofollow">Issue Tracker</a>.<br> </p><p>Thank you. </p>
+
+
+ </body>
 </html>
+
