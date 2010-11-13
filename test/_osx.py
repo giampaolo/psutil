@@ -38,7 +38,7 @@ class OSXSpecificTestCase(unittest.TestCase):
         reap_children()
 
     def test_TOTAL_PHYMEM(self):
-        sysctl_hwphymem = sysctl('sysctl hw.physmem')
+        sysctl_hwphymem = sysctl('sysctl hw.memsize')
         self.assertEqual(sysctl_hwphymem, psutil.TOTAL_PHYMEM)
 
     def test_process_create_time(self):
