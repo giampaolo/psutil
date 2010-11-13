@@ -57,11 +57,13 @@ def main():
     setup_args = dict(
         name='psutil',
         version="0.2.0",
+        download_url="http://psutil.googlecode.com/files/psutil-0.2.0.tar.gz",
         description='A process utilities module for Python',
         long_description="""
 psutil is a module providing convenience functions for managing processes in a
 portable way by using Python.""",
-        keywords=['psutil', 'ps', 'top', 'process', 'utility'],
+        keywords=['psutil', 'ps', 'top', 'process', 'utility', 'lsof', 'top',
+                  'netstat', 'taskmgr'],
         author='Giampaolo Rodola, Dave Daeschler, Jay Loden',
         author_email='psutil-dev@googlegroups.com',
         url='http://code.google.com/p/psutil/',
