@@ -189,6 +189,8 @@ class LinuxProcess(object):
     _openfile_ntuple = namedtuple('openfile', 'path fd')
     _connection_ntuple = namedtuple('connection', 'fd family type local_address '
                                                   'remote_address status')
+    _thread_ntuple = namedtuple('thread', 'id user_time system_time')
+
     __slots__ = ["pid", "_process_name"]
 
     def __init__(self, pid):
@@ -313,6 +315,33 @@ class LinuxProcess(object):
             if line.startswith("Threads:"):
                 f.close()
                 return int(line.split()[1])
+
+    @wrap_exceptions
+    def get_process_threads(self):
+        if self.pid == 0:
+            return []
+        thread_ids = os.listdir("/proc/%s/task" % self.pid)
+        thread_ids.sort()
+        retlist = []
+        for thread_id in thread_ids:
+            try:
+                f = open("/proc/%s/task/%s/stat" % (self.pid, thread_id))
+            except (OSError, IOError), err:
+                if err.errno == errno.ENOENT:
+                    # no such file or directory; it means thread
+                    # disappeared on us
+                    continue
+                raise
+            st = f.read().strip()
+            f.close()
+            # ignore the first two values ("pid (exe)")
+            st = st[st.find(')') + 2:]
+            values = st.split(' ')
+            utime = float(values[11]) / _CLOCK_TICKS
+            stime = float(values[12]) / _CLOCK_TICKS
+            ntuple = self._thread_ntuple(int(thread_id), utime, stime)
+            retlist.append(ntuple)
+        return retlist
 
     @wrap_exceptions
     def get_open_files(self):

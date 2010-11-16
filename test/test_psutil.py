@@ -379,10 +379,39 @@ class TestCase(unittest.TestCase):
         thread.start()
         try:
             step2 = p.get_num_threads()
-            self.assertTrue(step2 > step1)
+            self.assertEqual(step2, step1 + 1)
             thread.stop()
             step3 = p.get_num_threads()
             self.assertEqual(step3, step1)
+        finally:
+            if thread._running:
+                thread.stop()
+
+    # XXX - not implemented on all platforms
+    # XXX - also needs to be used in test_zombie_process
+    @skipUnless(LINUX, warn=1)
+    def test_get_threads(self):
+        p = psutil.Process(os.getpid())
+        step1 = p.get_threads()
+
+        thread = ThreadTask()
+        thread.start()
+
+        try:
+            step2 = p.get_threads()
+            self.assertEqual(len(step2), len(step1) + 1)
+            # on UNIX, first thread id is supposed to be this process
+            if POSIX:
+                self.assertEqual(step2[0].id, os.getpid())
+            athread = step2[0]
+            # test named tuple
+            self.assertEqual(athread.id, athread[0])
+            self.assertEqual(athread.user_time, athread[1])
+            self.assertEqual(athread.system_time, athread[2])
+            # test num threads
+            thread.stop()
+            step3 = p.get_threads()
+            self.assertEqual(len(step3), len(step1))
         finally:
             if thread._running:
                 thread.stop()
