@@ -156,6 +156,43 @@ def skipUnless(condition, reason="", warn=False):
     return skipIf(False)
 
 
+class ThreadTask(threading.Thread):
+    """A thread object used for running process thread tests."""
+
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self._running = False
+        self._interval = None
+        self._flag = threading.Event()
+
+    def __repr__(self):
+        name =  self.__class__.__name__
+        return '<%s running=%s at %#x>' % (name, self._running, id(self))
+
+    def start(self, interval=0.001):
+        """Start thread and keep it running until an explicit
+        stop() request. Polls for shutdown every 'timeout' seconds.
+        """
+        if self._running:
+            raise ValueError("already started")
+        self._interval = interval
+        threading.Thread.start(self)
+        self._flag.wait()
+
+    def run(self):
+        self._running = True
+        self._flag.set()
+        while self._running:
+            time.sleep(self._interval)
+
+    def stop(self):
+        """Stop thread execution and and waits until it is stopped."""
+        if not self._running:
+            raise ValueError("already stopped")
+        self._running = False
+        self.join()
+
+
 class TestCase(unittest.TestCase):
 
     def tearDown(self):
@@ -332,19 +369,23 @@ class TestCase(unittest.TestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
 
     def test_get_num_threads(self):
+        # on certain platforms such as Linux we might test for exact
+        # thread number, since we always have with 1 thread per process,
+        # but this does not apply across all platforms (OSX, Windows)
         p = psutil.Process(os.getpid())
-        numt1 = p.get_num_threads()
-        if not WINDOWS and not OSX:
-            # test is unreliable on Windows and OS X
-            # NOTE: sleep(1) is too long for OS X, works with sleep(.5)
-            self.assertEqual(numt1, 1)
-        t = threading.Thread(target=lambda:time.sleep(1))
-        t.start()
-        numt2 = p.get_num_threads()
-        if WINDOWS:
-           self.assertTrue(numt2 > numt1)
-        else:
-            self.assertEqual(numt2, 2)
+        step1 = p.get_num_threads()
+
+        thread = ThreadTask()
+        thread.start()
+        try:
+            step2 = p.get_num_threads()
+            self.assertTrue(step2 > step1)
+            thread.stop()
+            step3 = p.get_num_threads()
+            self.assertEqual(step3, step1)
+        finally:
+            if thread._running:
+                thread.stop()
 
     def test_get_memory_info(self):
         p = psutil.Process(os.getpid())
