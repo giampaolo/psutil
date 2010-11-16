@@ -389,7 +389,7 @@ class TestCase(unittest.TestCase):
 
     # XXX - not implemented on all platforms
     # XXX - also needs to be used in test_zombie_process
-    @skipUnless(LINUX, warn=1)
+    @skipUnless(LINUX or WINDOWS, warn=1)
     def test_get_threads(self):
         p = psutil.Process(os.getpid())
         step1 = p.get_threads()

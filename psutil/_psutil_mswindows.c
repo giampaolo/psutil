@@ -57,6 +57,8 @@ PsutilMethods[] =
         "Return the network connections of a process"},
     {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
         "Return the network connections of a process"},
+    {"get_process_threads", get_process_threads, METH_VARARGS,
+        "Return process threads information as a list of tuple"},
 
     // --- system-related functions
 
@@ -1083,6 +1085,113 @@ get_process_num_threads(PyObject* self, PyObject* args)
 
     return Py_BuildValue("l", nthreads);
 }
+
+
+static PyObject*
+get_process_threads(PyObject* self, PyObject* args)
+{
+    PyObject* retList = PyList_New(0);
+    PyObject* pyTuple = NULL;
+    HANDLE hThreadSnap = NULL;
+    THREADENTRY32 te32 = {0};
+    long pid;
+    int pid_return;
+    int rc;
+    DWORD thread_id;
+    FILETIME ftDummy, ftKernel, ftUser;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (pid == 0) {
+        // raise AD instead of returning 0 as procexp is able to
+        // retrieve useful information somehow
+        return AccessDenied();
+    }
+
+    pid_return = pid_is_running(pid);
+    if (pid_return == 0) {
+        return NoSuchProcess();
+    }
+    if (pid_return == -1) {
+        return NULL;
+    }
+
+    hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+    if (hThreadSnap == INVALID_HANDLE_VALUE) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+
+    // Fill in the size of the structure before using it
+    te32.dwSize = sizeof(THREADENTRY32);
+
+    if (! Thread32First(hThreadSnap, &te32)) {
+        PyErr_SetFromWindowsErr(0);
+        CloseHandle(hThreadSnap);
+        return NULL;
+    }
+
+    // Walk the thread snapshot to find all threads of the process.
+    // If the thread belongs to the process, increase the counter.
+    do
+    {
+        if (te32.th32OwnerProcessID == pid)
+        {
+            HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION,
+                                        FALSE, te32.th32ThreadID);
+            if (hThread == NULL) {
+                if (GetLastError() == ERROR_INVALID_PARAMETER) {
+                    NoSuchProcess();
+                }
+                else {
+                    PyErr_SetFromWindowsErr(0);
+                }
+                CloseHandle(hThread);
+                CloseHandle(hThreadSnap);
+                return NULL;
+            }
+
+            thread_id = GetThreadId(hThread);
+            if (thread_id == 0) {
+                PyErr_SetFromWindowsErr(0);
+                CloseHandle(hThread);
+                return NULL;
+            }
+
+            rc = GetThreadTimes(hThread, &ftDummy, &ftDummy, &ftKernel, &ftUser);
+            if (rc == 0) {
+                PyErr_SetFromWindowsErr(0);
+                CloseHandle(hThread);
+                return NULL;
+            }
+
+            /*
+            user and kernel times are represented as a FILETIME structure
+            wich contains a 64-bit value representing the number of
+            100-nanosecond intervals since January 1, 1601 (UTC).
+            http://msdn.microsoft.com/en-us/library/ms724284(VS.85).aspx
+
+            To convert it into a float representing the seconds that the
+            process has executed in user/kernel mode I borrowed the code
+            below from Python's Modules/posixmodule.c
+            */
+            pyTuple = Py_BuildValue("Idd",
+                            thread_id,
+                            (double)(ftUser.dwHighDateTime*429.4967296 + \
+                                     ftUser.dwLowDateTime*1e-7),
+                            (double)(ftKernel.dwHighDateTime*429.4967296 + \
+                                     ftKernel.dwLowDateTime*1e-7)
+                      );
+            PyList_Append(retList, pyTuple);
+            Py_XDECREF(pyTuple);
+
+            CloseHandle(hThread);
+        }
+    } while (Thread32Next(hThreadSnap, &te32));
+
+    return retList;
+}
+
 
 
 static PyObject*

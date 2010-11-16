@@ -92,6 +92,7 @@ class WindowsProcess(object):
     _openfile_ntuple = namedtuple('openfile', 'path fd')
     _connection_ntuple = namedtuple('connection', 'fd family type local_address '
                                                   'remote_address status')
+    _thread_ntuple = namedtuple('thread', 'id user_time system_time')
     __slots__ = ["pid", "_process_name"]
 
     def __init__(self, pid):
@@ -164,6 +165,15 @@ class WindowsProcess(object):
     @wrap_exceptions
     def get_process_num_threads(self):
         return _psutil_mswindows.get_process_num_threads(self.pid)
+
+    @wrap_exceptions
+    def get_process_threads(self):
+        rawlist = _psutil_mswindows.get_process_threads(self.pid)
+        retlist = []
+        for thread_id, utime, stime in rawlist:
+            ntuple = self._thread_ntuple(thread_id, utime, stime)
+            retlist.append(ntuple)
+        return retlist
 
     @wrap_exceptions
     def get_cpu_times(self):
