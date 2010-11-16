@@ -10,7 +10,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <signal.h>
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
 
@@ -234,13 +233,7 @@ get_process_cmdline(PyObject* self, PyObject* args)
 
     // get the commandline, defined in arch/osx/process_info.c
     arglist = get_arg_list(pid);
-
-    // get_arg_list() returns NULL only if getcmdargs failed with ESRCH
-    // (no process with that PID)
-    if (NULL == arglist) {
-        return PyErr_SetFromErrno(PyExc_OSError);
-    }
-    return Py_BuildValue("N", arglist);
+    return arglist;
 }
 
 
@@ -295,29 +288,6 @@ get_process_gid(PyObject* self, PyObject* args)
         return NULL;
     }
     return Py_BuildValue("l", (long)kp.kp_eproc.e_pcred.p_rgid);
-}
-
-
-/*
- * Return 1 if PID exists in the current process list, else 0.
- */
-static int
-pid_exists(long pid) {
-    int kill_ret;
-
-    // save some time if it's an invalid PID
-    if (pid < 0) {
-        return 0;
-    }
-
-    // if kill returns success of permission denied we know it's a valid PID
-    kill_ret = kill(pid , 0);
-    if ( (0 == kill_ret) || (EPERM == errno) ) {
-        return 1;
-    }
-
-    // otherwise return 0 for PID not found
-    return 0;
 }
 
 
