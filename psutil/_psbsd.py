@@ -81,6 +81,7 @@ class BSDProcess(object):
 
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
+    _thread_ntuple = namedtuple('thread', 'id user_time system_time')
     __slots__ = ["pid", "_process_name"]
 
     def __init__(self, pid):
@@ -139,6 +140,17 @@ class BSDProcess(object):
     def get_process_num_threads(self):
         """Return the number of threads belonging to the process."""
         return _psutil_bsd.get_process_num_threads(self.pid)
+
+    @wrap_exceptions
+    def get_process_threads(self):
+        """Return the number of threads belonging to the process."""
+        rawlist = _psutil_bsd.get_process_threads(self.pid)
+        retlist = []
+        for thread_id, utime, stime in rawlist:
+            ntuple = self._thread_ntuple(thread_id, utime, stime)
+            retlist.append(ntuple)
+        return retlist
+
 
     def get_open_files(self):
         """Return files opened by process by parsing lsof output."""

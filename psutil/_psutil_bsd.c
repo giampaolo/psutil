@@ -47,6 +47,8 @@ PsutilMethods[] =
          "Return a tuple of RSS/VMS memory information"},
      {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
          "Return number of threads used by process"},
+     {"get_process_threads", get_process_threads, METH_VARARGS,
+         "Return process threads"},
 
 
      // --- system-related functions
@@ -138,6 +140,9 @@ void init_psutil_bsd(void)
 #endif
 }
 
+
+// convert a timeval struct to a double
+#define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
 
 /*
  * Utility function which fills a kinfo_proc struct based on process pid
@@ -321,9 +326,78 @@ get_process_num_threads(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Retrieves all threads used by process returning a list of tuples
+ * including thread id, user time and system time.
+ * Thanks to Robert N. M. Watson:
+ * http://fxr.googlebit.com/source/usr.bin/procstat/procstat_threads.c?v=8-CURRENT
+ */
+static PyObject*
+get_process_threads(PyObject* self, PyObject* args)
+{
+    long pid;
+    int mib[4];
+    struct kinfo_proc *kip;
+    struct kinfo_proc *kipp;
+    int error;
+    unsigned int i;
+    size_t size;
+    PyObject* retList = PyList_New(0);
+    PyObject* pyTuple = NULL;
 
-// convert a timeval struct to a double
-#define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    /*
+     * We need to re-query for thread information, so don't use *kipp.
+     */
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID | KERN_PROC_INC_THREAD;
+    mib[3] = pid;
+
+    size = 0;
+    error = sysctl(mib, 4, NULL, &size, NULL, 0);
+    if (error == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+	}
+    if (size == 0) {
+    errno = ESRCH;
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    kip = malloc(size);
+    if (kip == NULL) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    error = sysctl(mib, 4, kip, &size, NULL, 0);
+    if (error == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    if (size == 0) {
+        errno = ESRCH;
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    for (i = 0; i < size / sizeof(*kipp); i++) {
+        kipp = &kip[i];
+        pyTuple = Py_BuildValue("Idd", kipp->ki_tid,
+                                       TV2DOUBLE(kipp->ki_rusage.ru_utime),
+                                       TV2DOUBLE(kipp->ki_rusage.ru_stime)
+                                );
+        PyList_Append(retList, pyTuple);
+        Py_XDECREF(pyTuple);
+    }
+    free(kip);
+    return retList;
+}
 
 
 /*

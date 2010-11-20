@@ -388,8 +388,7 @@ class TestCase(unittest.TestCase):
                 thread.stop()
 
     # XXX - not implemented on all platforms
-    # XXX - also needs to be used in test_zombie_process
-    @skipUnless(LINUX or WINDOWS, warn=1)
+    @skipUnless(LINUX or WINDOWS or BSD, warn=1)
     def test_get_threads(self):
         p = psutil.Process(os.getpid())
         step1 = p.get_threads()
@@ -400,8 +399,8 @@ class TestCase(unittest.TestCase):
         try:
             step2 = p.get_threads()
             self.assertEqual(len(step2), len(step1) + 1)
-            # on UNIX, first thread id is supposed to be this process
-            if POSIX:
+            # on Linux, first thread id is supposed to be this process
+            if LINUX:
                 self.assertEqual(step2[0].id, os.getpid())
             athread = step2[0]
             # test named tuple
@@ -936,6 +935,7 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, p.get_memory_percent)
         self.assertRaises(psutil.NoSuchProcess, p.get_children)
         self.assertRaises(psutil.NoSuchProcess, p.get_num_threads)
+        self.assertRaises(psutil.NoSuchProcess, p.get_threads)
         self.assertFalse(p.is_running())
 
     def test__str__(self):
@@ -954,7 +954,7 @@ class TestCase(unittest.TestCase):
         valid_procs = 0
         attrs = ['__str__', 'create_time', 'username', 'getcwd', 'get_cpu_times',
                  'get_memory_info', 'get_memory_percent', 'get_open_files',
-                  'get_num_threads']
+                  'get_num_threads', 'get_threads']
         for p in psutil.process_iter():
             for attr in attrs:
                 # skip slow Python implementation; we're reasonably sure
