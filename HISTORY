@@ -1,5 +1,14 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+0.2.1 - XXXX-XX-XX
+------------------
+
+NEW FEATURES
+
+ * Issue 136: process executable path on FreeBSD is now determined by asking
+   the kernel instead of guessing it from cmdline[0].
+
+
 0.2.0 - 2010-11-13
 ------------------
 

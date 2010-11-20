@@ -93,10 +93,12 @@ class BSDProcess(object):
         """Return process name as a string of limited len (15)."""
         return _psutil_bsd.get_process_name(self.pid)
 
+    @wrap_exceptions
     def get_process_exe(self):
-        # no such thing as "exe" on BSD; it will maybe be determined
-        # later from cmdline[0]
-        return ""
+        """Return process executable pathname."""
+        exe = _psutil_bsd.get_process_exe(self.pid)
+        print exe
+        return exe
 
     @wrap_exceptions
     def get_process_cmdline(self):

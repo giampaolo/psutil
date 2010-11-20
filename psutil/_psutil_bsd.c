@@ -30,6 +30,8 @@ PsutilMethods[] =
 
      {"get_process_name", get_process_name, METH_VARARGS,
         "Return process name"},
+     {"get_process_exe", get_process_exe, METH_VARARGS,
+        "Return process pathname executable"},
      {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
         "Return process cmdline as a list of cmdline arguments"},
      {"get_process_ppid", get_process_ppid, METH_VARARGS,
@@ -144,6 +146,7 @@ void init_psutil_bsd(void)
 // convert a timeval struct to a double
 #define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
 
+
 /*
  * Utility function which fills a kinfo_proc struct based on process pid
  */
@@ -226,6 +229,49 @@ get_process_name(PyObject* self, PyObject* args)
         return NULL;
     }
     return Py_BuildValue("s", kp.ki_comm);
+}
+
+
+/*
+ * Return process pathname executable.
+ * Thanks to Robert N. M. Watson:
+ * http://fxr.googlebit.com/source/usr.bin/procstat/procstat_bin.c?v=8-CURRENT
+ */
+static PyObject*
+get_process_exe(PyObject* self, PyObject* args)
+{
+    long pid;
+    char pathname[PATH_MAX];
+    int error;
+    int mib[4];
+    size_t size;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PATHNAME;
+    mib[3] = pid;
+
+    size = sizeof(pathname);
+    error = sysctl(mib, 4, pathname, &size, NULL, 0);
+    if (error == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    if (size == 0 || strlen(pathname) == 0) {
+        if (pid_exists(pid) == 0) {
+            errno = ESRCH;
+            PyErr_SetFromErrno(PyExc_OSError);
+            return NULL;
+        }
+        else {
+            strcpy(pathname, "");
+        }
+    }
+    return Py_BuildValue("s", pathname);
 }
 
 

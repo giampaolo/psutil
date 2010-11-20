@@ -88,6 +88,9 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def test_get_num_threads(self):
         self.execute('get_num_threads')
 
+    def test_get_threads(self):
+        self.execute('get_num_threads')
+
     def test_get_cpu_times(self):
         self.execute('get_cpu_times')
 
