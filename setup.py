@@ -26,6 +26,7 @@ if sys.platform.lower().startswith("win"):
 
     extensions = Extension('_psutil_mswindows',
                            sources=['psutil/_psutil_mswindows.c',
+                                    'psutil/_psutil_common.c',
                                     'psutil/arch/mswindows/process_info.c',
                                     'psutil/arch/mswindows/process_handles.c',
                                     'psutil/arch/mswindows/security.c'],
@@ -38,12 +39,14 @@ if sys.platform.lower().startswith("win"):
 elif sys.platform.lower().startswith("darwin"):
     extensions = Extension('_psutil_osx',
                            sources = ['psutil/_psutil_osx.c',
+                                      'psutil/_psutil_common.c',
                                       'psutil/arch/osx/process_info.c']
                            )
 # FreeBSD
 elif sys.platform.lower().startswith("freebsd"):
     extensions = Extension('_psutil_bsd',
                            sources = ['psutil/_psutil_bsd.c',
+                                      'psutil/_psutil_common.c',
                                       'psutil/arch/bsd/process_info.c']
                            )
 # Others

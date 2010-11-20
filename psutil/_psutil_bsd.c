@@ -18,6 +18,7 @@
 #include <sys/vmmeter.h>  /* needed for vmtotal struct */
 
 #include "_psutil_bsd.h"
+#include "_psutil_common.h"
 #include "arch/bsd/process_info.h"
 
 /*
@@ -169,11 +170,9 @@ get_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
 
     /*
      * sysctl stores 0 in the size if we can't find the process information.
-     * Set errno to ESRCH which will be translated in NoSuchProcess later on.
      */
     if (size == 0) {
-        errno = ESRCH;
-        PyErr_SetFromErrno(PyExc_OSError);
+        NoSuchProcess();
         return -1;
     }
     return 0;
@@ -263,9 +262,7 @@ get_process_exe(PyObject* self, PyObject* args)
     }
     if (size == 0 || strlen(pathname) == 0) {
         if (pid_exists(pid) == 0) {
-            errno = ESRCH;
-            PyErr_SetFromErrno(PyExc_OSError);
-            return NULL;
+            return NoSuchProcess();
         }
         else {
             strcpy(pathname, "");
@@ -410,9 +407,7 @@ get_process_threads(PyObject* self, PyObject* args)
         return NULL;
 	}
     if (size == 0) {
-    errno = ESRCH;
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        return NoSuchProcess();
     }
 
     kip = malloc(size);
@@ -427,9 +422,7 @@ get_process_threads(PyObject* self, PyObject* args)
         return NULL;
     }
     if (size == 0) {
-        errno = ESRCH;
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        return NoSuchProcess();
     }
 
     for (i = 0; i < size / sizeof(*kipp); i++) {
