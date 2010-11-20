@@ -543,7 +543,8 @@ class TestCase(unittest.TestCase):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         if POSIX:
-            self.assertEqual(p.username, os.getlogin())
+            import pwd
+            self.assertEqual(p.username, pwd.getpwuid(os.getuid()).pw_name)
         elif WINDOWS:
             expected_username = os.environ['USERNAME']
             expected_domain = os.environ['USERDOMAIN']
