@@ -469,7 +469,18 @@ class TestCase(unittest.TestCase):
     def test_exe(self):
         sproc = get_test_subprocess()
         wait_for_pid(sproc.pid)
-        self.assertEqual(psutil.Process(sproc.pid).exe, PYTHON)
+        try:
+            self.assertEqual(psutil.Process(sproc.pid).exe, PYTHON)
+        except AssertionError:
+            # certain platforms such as BSD are more accurate returning:
+            # "/usr/local/bin/python2.7"
+            # ...instead of:
+            # "/usr/local/bin/python"
+            # We do not want to consider this difference in accuracy
+            # an error.
+            extended_py_name = PYTHON + "%s.%s" % (sys.version_info.major,
+                                                   sys.version_info.minor)
+            self.assertEqual(psutil.Process(sproc.pid).exe, extended_py_name)
         for p in psutil.process_iter():
             try:
                 exe = p.exe

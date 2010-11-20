@@ -96,9 +96,7 @@ class BSDProcess(object):
     @wrap_exceptions
     def get_process_exe(self):
         """Return process executable pathname."""
-        exe = _psutil_bsd.get_process_exe(self.pid)
-        print exe
-        return exe
+        return _psutil_bsd.get_process_exe(self.pid)
 
     @wrap_exceptions
     def get_process_cmdline(self):

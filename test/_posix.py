@@ -94,7 +94,18 @@ class PosixSpecificTestCase(unittest.TestCase):
     def test_process_exe(self):
         ps_pathname = ps("ps --no-headers -o command -p %s" %self.pid).split(' ')[0]
         psutil_pathname = psutil.Process(self.pid).exe
-        self.assertEqual(ps_pathname, psutil_pathname)
+        try:
+            self.assertEqual(ps_pathname, psutil_pathname)
+        except AssertionError:
+            # certain platforms such as BSD are more accurate returning:
+            # "/usr/local/bin/python2.7"
+            # ...instead of:
+            # "/usr/local/bin/python"
+            # We do not want to consider this difference in accuracy
+            # an error.
+            ps_extended_pathname = PYTHON + "%s.%s" % (sys.version_info.major,
+                                                       sys.version_info.minor)
+            self.assertEqual(ps_extended_pathname, psutil_pathname)
 
     def test_process_cmdline(self):
         ps_cmdline = ps("ps --no-headers -o command -p %s" %self.pid)
