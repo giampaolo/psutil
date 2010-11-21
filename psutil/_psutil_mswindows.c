@@ -14,6 +14,7 @@
 #include <iphlpapi.h>
 
 #include "_psutil_mswindows.h"
+#include "_psutil_common.h"
 #include "arch/mswindows/security.h"
 #include "arch/mswindows/process_info.h"
 #include "arch/mswindows/process_handles.h"
