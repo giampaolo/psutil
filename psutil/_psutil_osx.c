@@ -22,6 +22,7 @@
 #include <mach/shared_memory_server.h>
 
 #include "_psutil_osx.h"
+#include "_psutil_common.h"
 #include "arch/osx/process_info.h"
 
 
@@ -73,26 +74,6 @@ PsutilMethods[] =
      {NULL, NULL, 0, NULL}
 };
 
-
-/*
- * Raises an OSError(errno=ESRCH, strerror="No such process") exception
- * in Python.
- */
-static PyObject*
-NoSuchProcess(void) {
-    errno = ESRCH;
-    return PyErr_SetFromErrno(PyExc_OSError);
-}
-
-/*
- * Raises an OSError(errno=EPERM, strerror="Operation not permitted") exception
- * in Python.
- */
-static PyObject*
-AccessDenied(void) {
-    errno = EPERM;
-    return PyErr_SetFromErrno(PyExc_OSError);
-}
 
 struct module_state {
     PyObject *error;

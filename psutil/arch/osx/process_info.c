@@ -168,13 +168,13 @@ get_arg_list(long pid)
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
         if (EINVAL == errno) { // invalid == access denied OR nonexistent PID
             if ( pid_exists(pid) ) {
-                errno = EACCES;
+                AccessDenied();
             } else {
-                errno = ESRCH;
+                NoSuchProcess();
             }
         }
         free(procargs);
-        return PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
     }
 
     arg_end = &procargs[argmax];
@@ -242,8 +242,7 @@ get_kinfo_proc(pid_t pid, struct kinfo_proc *kp)
      * sysctl succeeds but len is zero, happens when process has gone away
      */
     if (len == 0) {
-        errno = ESRCH;
-        PyErr_SetFromErrno(PyExc_OSError);
+        NoSuchProcess();
         return -1;
     }
     return 0;
