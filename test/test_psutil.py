@@ -539,6 +539,32 @@ class TestCase(unittest.TestCase):
             # we expect it to be -1
             self.assertEqual(gid, -1)
 
+    if os.name == 'posix':
+
+        def test_uids(self):
+            p = psutil.Process(os.getpid())
+            real, effective, saved = p.uids
+            # os.getuid() refers to "real" uid
+            self.assertEqual(real, os.getuid())
+            # os.geteuid() refers to "effective" uid
+            self.assertEqual(effective, os.geteuid())
+            # no such thing as os.getsuid() ("saved" uid), but starting
+            # from python 2.7 we have os.getresuid()[2]
+            if hasattr(os, "getresuid"):
+                self.assertEqual(saved, os.getresuid()[2])
+
+        def test_gids(self):
+            p = psutil.Process(os.getpid())
+            real, effective, saved = p.gids
+            # os.getuid() refers to "real" uid
+            self.assertEqual(real, os.getgid())
+            # os.geteuid() refers to "effective" uid
+            self.assertEqual(effective, os.getegid())
+            # no such thing as os.getsuid() ("saved" uid), but starting
+            # from python 2.7 we have os.getresuid()[2]
+            if hasattr(os, "getresuid"):
+                self.assertEqual(saved, os.getresgid()[2])
+
     def test_username(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -934,6 +960,9 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "username")
         if hasattr(p, 'getcwd'):
             self.assertRaises(psutil.NoSuchProcess, p.getcwd)
+        if hasattr(p, 'uids'):
+            self.assertRaises(psutil.NoSuchProcess, p.uids)
+            self.assertRaises(psutil.NoSuchProcess, p.gids)
         self.assertRaises(psutil.NoSuchProcess, p.get_open_files)
         self.assertRaises(psutil.NoSuchProcess, p.get_connections)
         self.assertRaises(psutil.NoSuchProcess, p.suspend)

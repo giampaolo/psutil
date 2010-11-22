@@ -190,6 +190,8 @@ class LinuxProcess(object):
     _connection_ntuple = namedtuple('connection', 'fd family type local_address '
                                                   'remote_address status')
     _thread_ntuple = namedtuple('thread', 'id user_time system_time')
+    _uids_ntuple = namedtuple('user', 'real effective saved')
+    _gids_ntuple = namedtuple('group', 'real effective saved')
 
     __slots__ = ["pid", "_process_name"]
 
@@ -458,6 +460,28 @@ class LinuxProcess(object):
                 # We want to provide real GID only.
                 f.close()
                 return int(line.split()[1])
+
+    @wrap_exceptions
+    def get_process_user_ids(self):
+        if self.pid == 0:
+            return 0
+        f = open("/proc/%s/status" % self.pid)
+        for line in f:
+            if line.startswith('Uid:'):
+                f.close()
+                _, real, effective, saved, fs = line.split()
+                return self._uids_ntuple(int(real), int(effective), int(saved))
+
+    @wrap_exceptions
+    def get_process_group_ids(self):
+        if self.pid == 0:
+            return 0
+        f = open("/proc/%s/status" % self.pid)
+        for line in f:
+            if line.startswith('Gid:'):
+                f.close()
+                _, real, effective, saved, fs = line.split()
+                return self._gids_ntuple(int(real), int(effective), int(saved))
 
     @staticmethod
     def _decode_address(addr, family):

@@ -208,15 +208,34 @@ class Process(object):
         """The real group id of the current process."""
         return self._platform_impl.get_process_gid()
 
+    if os.name == 'posix':
+
+        @property
+        def uids(self):
+            """Return a named tuple denoting the process real,
+            effective, and saved user ids.
+            """
+            return self._platform_impl.get_process_user_ids()
+
+        @property
+        def gids(self):
+            """Return a named tuple denoting the process real,
+            effective, and saved group ids.
+            """
+            return self._platform_impl.get_process_group_ids()
+
     @property
     def username(self):
-        """The name of the user that owns the process."""
+        """The name of the user that owns the process.
+        On UNIX this is calculated by using *real* process uid.
+        """
         if os.name == 'posix':
             if pwd is None:
                 # might happen on compiled-from-sources python
                 raise ImportError("requires pwd module shipped with standard python")
-            return pwd.getpwuid(self.uid).pw_name
+            return pwd.getpwuid(self.uids.real).pw_name
         else:
+            # Windows; we only have a unique username
             return self._platform_impl.get_process_username()
 
     @property
