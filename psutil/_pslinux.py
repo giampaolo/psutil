@@ -436,33 +436,7 @@ class LinuxProcess(object):
                 return int(line.split()[1])
 
     @wrap_exceptions
-    def get_process_uid(self):
-        if self.pid == 0:
-            return 0
-        f = open("/proc/%s/status" % self.pid)
-        for line in f:
-            if line.startswith('Uid:'):
-                # Uid line provides 4 values which stand for real,
-                # effective, saved set, and file system UIDs.
-                # We want to provide real UID only.
-                f.close()
-                return int(line.split()[1])
-
-    @wrap_exceptions
-    def get_process_gid(self):
-        if self.pid == 0:
-            return 0
-        f = open("/proc/%s/status" % self.pid)
-        for line in f:
-            if line.startswith('Gid:'):
-                # Uid line provides 4 values which stand for real,
-                # effective, saved set, and file system GIDs.
-                # We want to provide real GID only.
-                f.close()
-                return int(line.split()[1])
-
-    @wrap_exceptions
-    def get_process_user_ids(self):
+    def get_process_uids(self):
         if self.pid == 0:
             return 0
         f = open("/proc/%s/status" % self.pid)
@@ -473,7 +447,7 @@ class LinuxProcess(object):
                 return self._uids_ntuple(int(real), int(effective), int(saved))
 
     @wrap_exceptions
-    def get_process_group_ids(self):
+    def get_process_gids(self):
         if self.pid == 0:
             return 0
         f = open("/proc/%s/status" % self.pid)

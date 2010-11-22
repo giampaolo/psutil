@@ -198,16 +198,6 @@ class Process(object):
         """The command line process has been called with."""
         return self._platform_impl.get_process_cmdline()
 
-    @property
-    def uid(self):
-        """The real user id of the current process."""
-        return self._platform_impl.get_process_uid()
-
-    @property
-    def gid(self):
-        """The real group id of the current process."""
-        return self._platform_impl.get_process_gid()
-
     if os.name == 'posix':
 
         @property
@@ -215,14 +205,32 @@ class Process(object):
             """Return a named tuple denoting the process real,
             effective, and saved user ids.
             """
-            return self._platform_impl.get_process_user_ids()
+            return self._platform_impl.get_process_uids()
 
         @property
         def gids(self):
             """Return a named tuple denoting the process real,
             effective, and saved group ids.
             """
-            return self._platform_impl.get_process_group_ids()
+            return self._platform_impl.get_process_gids()
+
+    @property
+    def uid(self):
+        """The real user id of the current process."""
+        msg = "'uid' property is deprecated; use 'uids.real' instead"
+        warnings.warn(msg, DeprecationWarning)
+        if os.name != 'posix':
+            return -1
+        return self.uids.real
+
+    @property
+    def gid(self):
+        """The real group id of the current process."""
+        msg = "'uid' property is deprecated; use 'gids.real' instead"
+        warnings.warn(msg, DeprecationWarning)
+        if os.name != 'posix':
+            return -1
+        return self.gids.real
 
     @property
     def username(self):

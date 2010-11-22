@@ -50,12 +50,12 @@ class PosixSpecificTestCase(unittest.TestCase):
 
     def test_process_uid(self):
         uid_ps = ps("ps --no-headers -o uid -p %s" %self.pid)
-        uid_psutil = psutil.Process(self.pid).uid
+        uid_psutil = psutil.Process(self.pid).uids.real
         self.assertEqual(uid_ps, uid_psutil)
 
     def test_process_gid(self):
         gid_ps = ps("ps --no-headers -o rgid -p %s" %self.pid)
-        gid_psutil = psutil.Process(self.pid).gid
+        gid_psutil = psutil.Process(self.pid).gids.real
         self.assertEqual(gid_ps, gid_psutil)
 
     def test_process_username(self):

@@ -517,28 +517,6 @@ class TestCase(unittest.TestCase):
         else:
             self.assertEqual(psutil.Process(sproc.pid).name, os.path.basename(PYTHON))
 
-    def test_uid(self):
-        sproc = get_test_subprocess()
-        wait_for_pid(sproc.pid)
-        uid = psutil.Process(sproc.pid).uid
-        if hasattr(os, 'getuid'):
-            self.assertEqual(uid, os.getuid())
-        else:
-            # On those platforms where UID doesn't make sense (Windows)
-            # we expect it to be -1
-            self.assertEqual(uid, -1)
-
-    def test_gid(self):
-        sproc = get_test_subprocess()
-        wait_for_pid(sproc.pid)
-        gid = psutil.Process(sproc.pid).gid
-        if hasattr(os, 'getgid'):
-            self.assertEqual(gid, os.getgid())
-        else:
-            # On those platforms where GID doesn't make sense (Windows)
-            # we expect it to be -1
-            self.assertEqual(gid, -1)
-
     if os.name == 'posix':
 
         def test_uids(self):
@@ -896,8 +874,8 @@ class TestCase(unittest.TestCase):
         if self.__class__.__name__ != "LimitedUserTestCase":
             self.assert_(isinstance(p.exe, str))
         self.assert_(isinstance(p.cmdline, list))
-        self.assert_(isinstance(p.uid, int))
-        self.assert_(isinstance(p.gid, int))
+        self.assert_(isinstance(p.uids, tuple))
+        self.assert_(isinstance(p.gids, tuple))
         self.assert_(isinstance(p.create_time, float))
         self.assert_(isinstance(p.username, (unicode, str)))
         if hasattr(p, 'getcwd'):
@@ -954,8 +932,6 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "name")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "exe")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "cmdline")
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "uid")
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "gid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "create_time")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "username")
         if hasattr(p, 'getcwd'):
@@ -1036,11 +1012,8 @@ class TestCase(unittest.TestCase):
             self.assertEqual(p.name, 'kernel_task')
 
         if os.name == 'posix':
-            self.assertEqual(p.uid, 0)
-            self.assertEqual(p.gid, 0)
-        else:
-            self.assertEqual(p.uid, -1)
-            self.assertEqual(p.gid, -1)
+            self.assertEqual(p.uids.real, 0)
+            self.assertEqual(p.gids.real, 0)
 
         self.assertTrue(p.ppid in (0, 1))
         self.assertEqual(p.exe, "")
