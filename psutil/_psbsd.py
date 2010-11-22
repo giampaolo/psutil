@@ -82,6 +82,8 @@ class BSDProcess(object):
     _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
     _cputimes_ntuple = namedtuple('cputimes', 'user system')
     _thread_ntuple = namedtuple('thread', 'id user_time system_time')
+    _uids_ntuple = namedtuple('user', 'real effective saved')
+    _gids_ntuple = namedtuple('group', 'real effective saved')
     __slots__ = ["pid", "_process_name"]
 
     def __init__(self, pid):
@@ -109,14 +111,16 @@ class BSDProcess(object):
         return _psutil_bsd.get_process_ppid(self.pid)
 
     @wrap_exceptions
-    def get_process_uid(self):
-        """Return process real user id."""
-        return _psutil_bsd.get_process_uid(self.pid)
+    def get_process_uids(self):
+        """Return real, effective and saved user ids."""
+        real, effective, saved = _psutil_bsd.get_process_uids(self.pid)
+        return self._uids_ntuple(real, effective, saved)
 
     @wrap_exceptions
-    def get_process_gid(self):
-        """Return process real group id."""
-        return _psutil_bsd.get_process_gid(self.pid)
+    def get_process_gids(self):
+        """Return real, effective and saved group ids."""
+        real, effective, saved = _psutil_bsd.get_process_gids(self.pid)
+        return self._gids_ntuple(real, effective, saved)
 
     @wrap_exceptions
     def get_cpu_times(self):
