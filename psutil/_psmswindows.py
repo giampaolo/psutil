@@ -52,10 +52,11 @@ def used_virtmem():
     """Return the amount of used memory currently in use on the system, in bytes."""
     return _psutil_mswindows.get_total_virtmem() - _psutil_mswindows.get_avail_virtmem()
 
+_cputimes_ntuple = namedtuple('cputimes', 'user system idle')
 def get_system_cpu_times():
-    """Return a dict representing the following CPU times: user, system, idle."""
-    times = _psutil_mswindows.get_system_cpu_times()
-    return dict(user=times[0], system=times[1], idle=times[2])
+    """Return system CPU times as a named tuple."""
+    user, system, idle = _psutil_mswindows.get_system_cpu_times()
+    return _cputimes_ntuple(user, system, idle)
 
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""

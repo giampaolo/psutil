@@ -137,6 +137,7 @@ def phymem_buffers():
             f.close()
             return int(line.split()[1]) * 1024
 
+_cputimes_ntuple = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
 def get_system_cpu_times():
     """Return a dict representing the following CPU times:
     user, nice, system, idle, iowait, irq, softirq.
@@ -147,9 +148,7 @@ def get_system_cpu_times():
 
     values = values[1:8]
     values = tuple([float(x) / _CLOCK_TICKS for x in values])
-
-    return dict(user=values[0], nice=values[1], system=values[2], idle=values[3],
-                iowait=values[4], irq=values[5], softirq=values[6])
+    return _cputimes_ntuple(*values[:7])
 
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""
