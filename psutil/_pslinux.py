@@ -172,7 +172,10 @@ def wrap_exceptions(callable):
         try:
             return callable(self, *args, **kwargs)
         except (OSError, IOError), err:
-            if err.errno == errno.ENOENT:  # no such file or directory
+            # ENOENT (no such file or directory) gets raised on open().
+            # ESRCH (no such process) can get raised on read() if
+            # process is gone in meantime.
+            if err.errno in (errno.ENOENT, errno.ESRCH):
                 raise NoSuchProcess(self.pid, self._process_name)
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._process_name)

@@ -9,6 +9,11 @@ NEW FEATURES
    the kernel instead of guessing it from cmdline[0].
  * Issue 137: per-process real, effective and saved user and group ids.
 
+BUGFIXES
+
+ * Issue 130: a race condition can cause IOError exception be raised on
+   Linux if process disappears between open() and subsequent read() calls.
+
 API CHANGES
 
  * Process "uid" and "gid" properties are deprecated in favor of "uids" and
