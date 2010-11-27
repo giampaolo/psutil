@@ -16,6 +16,7 @@
 #include <sys/sysctl.h>
 
 #include "process_info.h"
+#include "../../_psutil_common.h"
 
 
 /*

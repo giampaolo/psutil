@@ -18,7 +18,6 @@ static PyObject* get_memory_info(PyObject* self, PyObject* args);
 static PyObject* get_process_num_threads(PyObject* self, PyObject* args);
 
 // --- system-related functions
-static int pid_exists(long pid);
 static PyObject* get_pid_list(PyObject* self, PyObject* args);
 static PyObject* get_num_cpus(PyObject* self, PyObject* args);
 static PyObject* get_total_phymem(PyObject* self, PyObject* args);
