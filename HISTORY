@@ -11,6 +11,7 @@ NEW FEATURES
 
 BUGFIXES
 
+ * Issue 83: process cmdline is empty on OSX 64-bit.
  * Issue 130: a race condition can cause IOError exception be raised on
    Linux if process disappears between open() and subsequent read() calls.
 
