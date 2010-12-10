@@ -20,7 +20,8 @@ def sysctl(cmdline):
     returning only the value of interest.
     """
     p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
-    result = p.communicate()[0].strip().split()[1]
+    result = p.communicate()[0].strip()
+    result = result[result.find(": ") + 2:]
     if sys.version_info >= (3,):
         result = str(result, sys.stdout.encoding)
     try:
@@ -53,6 +54,13 @@ class BSDSpecificTestCase(unittest.TestCase):
     def test_TOTAL_PHYMEM(self):
         sysctl_hwphymem = sysctl('sysctl hw.physmem')
         self.assertEqual(sysctl_hwphymem, psutil.TOTAL_PHYMEM)
+
+    def test_BOOT_TIME(self):
+        s = sysctl('sysctl kern.boottime')
+        s = s[s.find(" sec = ") + 7:]
+        s = s[:s.find(',')]
+        btime = int(s)
+        self.assertEqual(btime, psutil.BOOT_TIME)
 
     def test_avail_phymem(self):
         # This test is not particularly accurate and may fail if the OS is
@@ -93,8 +101,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         # the test as failed if we go over it.
         if difference > (10 * 2**20):
             self.fail("sysctl=%s; psutil=%s; difference=%s;" %(
-                       sysctl_total_virtmem, psutil_total_virtmem, difference)
-                      )
+                       sysctl_total_virtmem, psutil_total_virtmem, difference))
 
     def test_avail_virtmem(self):
         # This test is not particularly accurate and may fail if the OS is

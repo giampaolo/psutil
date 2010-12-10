@@ -20,6 +20,7 @@ from psutil.error import AccessDenied, NoSuchProcess
 
 NUM_CPUS = _psutil_bsd.get_num_cpus()
 TOTAL_PHYMEM = _psutil_bsd.get_total_phymem()
+BOOT_TIME = _psutil_bsd.get_system_boot_time()
 
 # --- public functions
 

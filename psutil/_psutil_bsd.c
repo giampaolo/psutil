@@ -70,6 +70,9 @@ PsutilMethods[] =
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
          "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
+     {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
+         "Return a float indicating the system boot time expressed in "
+         "seconds since the epoch"},
 
      {NULL, NULL, 0, NULL}
 };
@@ -210,6 +213,28 @@ get_pid_list(PyObject* self, PyObject* args)
     }
 
     return retlist;
+}
+
+
+/*
+ * Return a Python float indicating the system boot time expressed in
+ * seconds since the epoch.
+ */
+static PyObject*
+get_system_boot_time(PyObject* self, PyObject* args)
+{
+    /* fetch sysctl "kern.boottime" */
+    static int request[2] = { CTL_KERN, KERN_BOOTTIME };
+    struct timeval result;
+    size_t result_len = sizeof result;
+    time_t boot_time = 0;
+
+    if (sysctl (request, 2, &result, &result_len, NULL, 0) == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+    boot_time = result.tv_sec;
+    return Py_BuildValue("l", boot_time);
 }
 
 
