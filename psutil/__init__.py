@@ -14,7 +14,7 @@ __all__ = [
     # exceptions
     "Error", "NoSuchProcess", "AccessDenied",
     # constants
-    "NUM_CPUS", "TOTAL_PHYMEM", "version_info", "__version__",
+    "NUM_CPUS", "TOTAL_PHYMEM", "BOOT_TIME", "version_info", "__version__",
     # classes
     "Process",
     # functions

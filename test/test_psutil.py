@@ -877,8 +877,9 @@ class TestCase(unittest.TestCase):
         if self.__class__.__name__ != "LimitedUserTestCase":
             self.assert_(isinstance(p.exe, str))
         self.assert_(isinstance(p.cmdline, list))
-        self.assert_(isinstance(p.uids, tuple))
-        self.assert_(isinstance(p.gids, tuple))
+        if os.name == 'posix':
+            self.assert_(isinstance(p.uids, tuple))
+            self.assert_(isinstance(p.gids, tuple))
         self.assert_(isinstance(p.create_time, float))
         self.assert_(isinstance(p.username, (unicode, str)))
         if hasattr(p, 'getcwd'):

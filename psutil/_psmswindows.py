@@ -25,7 +25,7 @@ from psutil.error import AccessDenied, NoSuchProcess
 
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
 TOTAL_PHYMEM = _psutil_mswindows.get_total_phymem()
-_UPTIME = _psutil_mswindows.get_system_uptime()
+BOOT_TIME = _psutil_mswindows.get_system_uptime()
 _WIN2000 = platform.win32_ver()[0] == '2000'
 
 ERROR_ACCESS_DENIED = 5
@@ -158,9 +158,9 @@ class WindowsProcess(object):
 
     @wrap_exceptions
     def get_process_create_time(self):
-        # special case for kernel process PIDs; return system uptime
+        # special case for kernel process PIDs; return system boot time
         if self.pid in (0, 4) or self.pid == 8 and _WIN2000:
-            return _UPTIME
+            return BOOT_TIME
         return _psutil_mswindows.get_process_create_time(self.pid)
 
     @wrap_exceptions
