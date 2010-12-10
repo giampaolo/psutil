@@ -246,6 +246,11 @@ class TestCase(unittest.TestCase):
         self.assertTrue(isinstance(x, (int, long)))
         self.assertTrue(x > 0)
 
+    def test_BOOT_TIME(self):
+        x = psutil.BOOT_TIME
+        self.assertTrue(isinstance(x, float))
+        self.assertTrue(x > 0)
+
     def test_used_phymem(self):
         x = psutil.used_phymem()
         self.assertTrue(isinstance(x, (int, long)))

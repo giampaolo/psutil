@@ -8,6 +8,7 @@ NEW FEATURES
  * Issue 136: process executable path on FreeBSD is now determined by asking
    the kernel instead of guessing it from cmdline[0].
  * Issue 137: per-process real, effective and saved user and group ids.
+ * Issue 140: system boot time.
 
 BUGFIXES
 

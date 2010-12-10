@@ -3,7 +3,7 @@
 # $Id$
 #
 
-__all__ = ["NUM_CPUS", "TOTAL_PHYMEM",
+__all__ = ["NUM_CPUS", "TOTAL_PHYMEM", "BOOT_TIME",
            "PlatformProcess",
            "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem",
            "used_virtmem", "get_system_cpu_times", "pid_exists", "get_pid_list",
@@ -27,7 +27,7 @@ from psutil import _psposix
 from psutil.error import AccessDenied, NoSuchProcess
 
 
-def _get_uptime():
+def _get_boot_time():
     """Return system boot time (epoch in seconds)"""
     f = open('/proc/stat', 'r')
     for line in f:
@@ -56,11 +56,11 @@ def _get_total_phymem():
 
 # Number of clock ticks per second
 _CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
-_UPTIME = _get_uptime()
+BOOT_TIME = _get_boot_time()
 NUM_CPUS = _get_num_cpus()
 TOTAL_PHYMEM = _get_total_phymem()
 
-del _get_uptime, _get_num_cpus, _get_total_phymem
+del _get_boot_time, _get_num_cpus, _get_total_phymem
 
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
 _TCP_STATES_TABLE = {"01" : "ESTABLISHED",
@@ -282,7 +282,7 @@ class LinuxProcess(object):
         # unit is jiffies (clock ticks).
         # We first divide it for clock ticks and then add uptime returning
         # seconds since the epoch, in UTC.
-        starttime = (float(values[19]) / _CLOCK_TICKS) + _UPTIME
+        starttime = (float(values[19]) / _CLOCK_TICKS) + BOOT_TIME
         return starttime
 
     @wrap_exceptions
