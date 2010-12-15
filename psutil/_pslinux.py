@@ -271,7 +271,7 @@ class LinuxProcess(object):
     def get_process_create_time(self):
         # special case for 0 (kernel processes) PID; return system uptime
         if self.pid == 0:
-            return _UPTIME
+            return BOOT_TIME
         f = open("/proc/%s/stat" % self.pid)
         st = f.read().strip()
         f.close()
