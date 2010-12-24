@@ -60,6 +60,8 @@ PsutilMethods[] =
         "Return the network connections of a process"},
     {"get_process_threads", get_process_threads, METH_VARARGS,
         "Return process threads information as a list of tuple"},
+    {"process_wait", process_wait, METH_VARARGS,
+        "Wait for process to terminate and return its exit code."},
 
     // --- system-related functions
 
@@ -285,6 +287,51 @@ kill_process(PyObject* self, PyObject* args)
     return Py_None;
 }
 
+
+/*
+ * Wait for process to terminate and return its exit code.
+ */
+static PyObject*
+process_wait(PyObject* self, PyObject* args)
+{
+    HANDLE hProcess;
+    DWORD ExitCode;
+    long pid;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (pid == 0)
+        return AccessDenied();
+
+    hProcess = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION, FALSE, pid);
+    if (hProcess == NULL) {
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            // no such process; we do not want to raise NSP but
+            // return None instead.
+            Py_INCREF(Py_None);
+            return Py_None;
+        }
+        else {
+            PyErr_SetFromWindowsErr(0);
+            return NULL;
+        }
+    }
+
+    // wait until the process has terminated
+    if (WaitForSingleObject(hProcess, INFINITE) == WAIT_FAILED) {
+        CloseHandle(hProcess);
+        return PyErr_SetFromWindowsErr(GetLastError());
+    }
+
+    // get the exit code; note: subprocess module (erroneously?) uses
+    // what returned by WaitForSingleObject
+    if (GetExitCodeProcess(hProcess, &ExitCode) == 0) {
+        CloseHandle(hProcess);
+        return PyErr_SetFromWindowsErr(GetLastError());
+    }
+    CloseHandle(hProcess);
+    return PyInt_FromLong((int) ExitCode);
+}
 
 
 /*

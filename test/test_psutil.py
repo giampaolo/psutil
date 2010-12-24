@@ -245,13 +245,23 @@ class TestCase(unittest.TestCase):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.kill()
-        self.assertEqual(p.wait(), signal.SIGKILL)
+        code = p.wait()
+        if os.name == 'posix':
+            self.assertEqual(code, signal.SIGKILL)
+        else:
+            # windows
+            self.assertEqual(code, 0)
         self.assertFalse(p.is_running())
 
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.terminate()
-        self.assertEqual(p.wait(), signal.SIGTERM)
+        code = p.wait()
+        if os.name == 'posix':
+            self.assertEqual(code, signal.SIGTERM)
+        else:
+            # windows
+            self.assertEqual(code, 0)
         self.assertFalse(p.is_running())
 
         code = "import time, sys; time.sleep(0.01); sys.exit(5);"
@@ -259,6 +269,15 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.wait(), 5)
         self.assertFalse(p.is_running())
+
+        # Test wait() issued twice.
+        # It is not supposed to raise NSP when the process is gone.
+        # On UNIX this should return None, on Windows it should keep
+        # returning the exit code.
+        sproc = get_test_subprocess([PYTHON, "-c", code])
+        p = psutil.Process(sproc.pid)
+        self.assertEqual(p.wait(), 5)
+        self.assertTrue(p.wait() in (5, None))
 
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM

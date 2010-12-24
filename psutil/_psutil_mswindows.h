@@ -25,6 +25,7 @@ static PyObject* get_process_username(PyObject* self, PyObject* args);
 static PyObject* get_process_connections(PyObject* self, PyObject* args);
 static PyObject* get_process_num_threads(PyObject* self, PyObject* args);
 static PyObject* get_process_threads(PyObject* self, PyObject* args);
+static PyObject* process_wait(PyObject* self, PyObject* args);
 
 // --- system-related functions
 

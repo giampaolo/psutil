@@ -408,7 +408,7 @@ class Process(object):
         """Wait for process to terminate and, if process is a children
         of the current one also return its exit code, else None.
         """
-        return self._platform_impl.process_wait(self.pid)
+        return self._platform_impl.process_wait()
 
     def terminate(self):
         """Terminate the process with SIGTERM.

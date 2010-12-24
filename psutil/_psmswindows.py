@@ -149,6 +149,9 @@ class WindowsProcess(object):
         """Terminates the process with the given PID."""
         return _psutil_mswindows.kill_process(self.pid)
 
+    def process_wait(self):
+        return _psutil_mswindows.process_wait(self.pid)
+
     @wrap_exceptions
     def get_process_username(self):
         """Return the name of the user that owns the process"""
