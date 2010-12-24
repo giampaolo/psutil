@@ -153,5 +153,9 @@ class OSXProcess(object):
         lsof = _psposix.LsofParser(self.pid, self._process_name)
         return lsof.get_process_connections()
 
+    def process_wait(self, pid):
+        return _psposix.wait_pid(pid)
+
+
 PlatformProcess = OSXProcess
 

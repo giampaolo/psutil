@@ -13,6 +13,7 @@ import socket
 import re
 import sys
 import warnings
+import time
 
 try:
     from collections import namedtuple
@@ -32,6 +33,41 @@ def pid_exists(pid):
         return e.errno == errno.EPERM
     else:
         return True
+
+def wait_pid(pid):
+    """Wait for process with pid 'pid' to terminate and return its
+    exit status code as an integer.
+
+    If pid is not a children of os.getpid() (current process) just
+    waits until the process disappears and return None.
+
+    If pid does not exist at all return None immediately.
+    """
+    while True:
+        try:
+            pid, status = os.waitpid(pid, 0)
+        except OSError, err:
+            if err.errno == errno.EINTR:
+                continue
+            elif err.errno == errno.ECHILD:
+                # not a child of os.getpid(): poll until pid has
+                # disappeared and return None instead
+                while pid_exists(pid):
+                    time.sleep(0.05)
+                return
+            raise
+        else:
+            # process exited due to a signal; return the integer of
+            # that signal
+            if os.WIFSIGNALED(status):
+                return os.WTERMSIG(status)
+            # process exited using exit(2) system call; return the
+            # integer exit(2) system call has been called with
+            elif os.WIFEXITED(status):
+                return os.WEXITSTATUS(status)
+            else:
+                # should never happen
+                raise RuntimeError("unknown process exit status")
 
 
 class LsofParser:

@@ -215,7 +215,7 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(test_pid)
         name = p.name
         p.kill()
-        sproc.wait()
+        p.wait()
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_terminate(self):
@@ -225,7 +225,7 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(test_pid)
         name = p.name
         p.terminate()
-        sproc.wait()
+        p.wait()
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_send_signal(self):
@@ -238,8 +238,27 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(test_pid)
         name = p.name
         p.send_signal(sig)
-        sproc.wait()
+        p.wait()
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
+
+    def test_wait(self):
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        p.kill()
+        self.assertEqual(p.wait(), signal.SIGKILL)
+        self.assertFalse(p.is_running())
+
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        p.terminate()
+        self.assertEqual(p.wait(), signal.SIGTERM)
+        self.assertFalse(p.is_running())
+
+        code = "import time, sys; time.sleep(0.01); sys.exit(5);"
+        sproc = get_test_subprocess([PYTHON, "-c", code])
+        p = psutil.Process(sproc.pid)
+        self.assertEqual(p.wait(), 5)
+        self.assertFalse(p.is_running())
 
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM
@@ -456,16 +475,17 @@ class TestCase(unittest.TestCase):
         wait_for_pid(sproc.pid)
         p = psutil.Process(sproc.pid)
         self.assertTrue(p.is_running())
-        psutil.Process(sproc.pid).kill()
-        sproc.wait()
+        p.kill()
+        p.wait()
         self.assertFalse(p.is_running())
 
     def test_pid_exists(self):
         sproc = get_test_subprocess()
         wait_for_pid(sproc.pid)
         self.assertTrue(psutil.pid_exists(sproc.pid))
-        psutil.Process(sproc.pid).kill()
-        sproc.wait()
+        p = psutil.Process(sproc.pid)
+        p.kill()
+        p.wait()
         self.assertFalse(psutil.pid_exists(sproc.pid))
         self.assertFalse(psutil.pid_exists(-1))
 
@@ -929,7 +949,7 @@ class TestCase(unittest.TestCase):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.kill()
-        sproc.wait()
+        p.wait()
 
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "ppid")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "parent")
@@ -967,7 +987,7 @@ class TestCase(unittest.TestCase):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.kill()
-        sproc.wait()
+        p.wait()
         self.assertTrue(str(sproc.pid) in str(p))
         self.assertTrue("terminated" in str(p))
 
@@ -1047,6 +1067,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(psutil.pid_exists(0))
 
     # --- OS specific tests
+
 
 
 if hasattr(os, 'getuid'):

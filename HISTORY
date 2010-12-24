@@ -5,6 +5,7 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 NEW FEATURES
 
+ * Issue 116: per-process wait() (wait for process to terminate).
  * Issue 136: process executable path on FreeBSD is now determined by asking
    the kernel instead of guessing it from cmdline[0].
  * Issue 137: per-process real, effective and saved user and group ids.

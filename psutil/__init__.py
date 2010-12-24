@@ -404,6 +404,12 @@ class Process(object):
             # posix
             self.send_signal(signal.SIGCONT)
 
+    def wait(self):
+        """Wait for process to terminate and, if process is a children
+        of the current one also return its exit code, else None.
+        """
+        return self._platform_impl.process_wait(self.pid)
+
     def terminate(self):
         """Terminate the process with SIGTERM.
         On Windows this is an alias for kill().
