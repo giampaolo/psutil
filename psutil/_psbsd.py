@@ -168,8 +168,9 @@ class BSDProcess(object):
         lsof = _psposix.LsofParser(self.pid, self._process_name)
         return lsof.get_process_connections()
 
-    def process_wait(self, pid):
-        return _psposix.wait_pid(pid)
+    @wrap_exceptions
+    def process_wait(self):
+        return _psposix.wait_pid(self.pid)
 
 
 PlatformProcess = BSDProcess

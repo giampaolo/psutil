@@ -267,8 +267,9 @@ class LinuxProcess(object):
         stime = float(values[12]) / _CLOCK_TICKS
         return self._cputimes_ntuple(utime, stime)
 
-    def process_wait(self, pid):
-        return _psposix.wait_pid(pid)
+    @wrap_exceptions
+    def process_wait(self):
+        return _psposix.wait_pid(self.pid)
 
     @wrap_exceptions
     def get_process_create_time(self):
