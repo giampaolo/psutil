@@ -608,13 +608,6 @@ class TestCase(unittest.TestCase):
                 self.assertEqual(p.nice, 0)
             finally:
                 p.nice = first_nice
-            if self.__class__.__name__ == "LimitedUserTestCase":
-                try:
-                    p.nice = -1
-                except psutil.AccessDenied:
-                    pass
-                else:
-                    self.fail("exception not raised")
 
     def test_username(self):
         sproc = get_test_subprocess()
@@ -1153,6 +1146,16 @@ if hasattr(os, 'getuid'):
         def test_path(self):
             # DeprecationWarning is only raised once
             pass
+
+        if os.name == 'posix':
+
+            def test_nice(self):
+                try:
+                    p.nice = -1
+                except psutil.AccessDenied:
+                    pass
+                else:
+                    self.fail("exception not raised")
 
         # overridden tests known to raise AccessDenied when run
         # as limited user on different platforms
