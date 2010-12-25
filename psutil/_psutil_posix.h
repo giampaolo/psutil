@@ -1,7 +1,7 @@
 /*
- * $Id: _psutil_bsd.h 847 2010-12-10 22:06:32Z g.rodola $
+ * $Id$
  *
- * BSD platform-specific module methods for _psutil_bsd
+ * POSIX specific module methods for _psutil_posix
  */
 
 #include <Python.h>

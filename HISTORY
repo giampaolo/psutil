@@ -10,6 +10,7 @@ NEW FEATURES
    the kernel instead of guessing it from cmdline[0].
  * Issue 137: per-process real, effective and saved user and group ids.
  * Issue 140: system boot time.
+ * Issue 142: per-process get and set niceness (priority).
 
 BUGFIXES
 
