@@ -352,6 +352,13 @@ class LinuxProcess(object):
         return retlist
 
     @wrap_exceptions
+    def get_process_nice(self):
+        f = open('/proc/%s/stat' % self.pid, 'r')
+        data = f.read()
+        f.close()
+        return int(data.split()[18])
+
+    @wrap_exceptions
     def get_open_files(self):
         retlist = []
         files = os.listdir("/proc/%s/fd" % self.pid)

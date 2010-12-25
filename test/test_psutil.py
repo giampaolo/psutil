@@ -59,6 +59,19 @@ def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=None):
     _subprocesses_started.add(sproc.pid)
     return sproc
 
+def sh(cmdline):
+    """run cmd in a subprocess and return its output.
+    raises RuntimeError on error.
+    """
+    p = subprocess.Popen(cmdline, shell=True, stdout=subprocess.PIPE,
+                                              stderr=subprocess.PIPE)
+    stdout, stderr = p.communicate()
+    if p.returncode != 0:
+        raise RuntimeError(stderr)
+    if stderr:
+        warnings.warn(stderr, RuntimeWarning)
+
+
 def wait_for_pid(pid, timeout=1):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
@@ -585,6 +598,15 @@ class TestCase(unittest.TestCase):
             if hasattr(os, "getresuid"):
                 self.assertEqual(saved, os.getresgid()[2])
 
+        def test_nice(self):
+            p = psutil.Process(os.getpid())
+            self.assertEqual(p.nice, 0)
+            try:
+                sh("renice -n 10 %s" % os.getpid())
+                self.assertEqual(p.nice, 10)
+            finally:
+                sh("renice -n 0 %s" % os.getpid())
+
     def test_username(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -982,6 +1004,8 @@ class TestCase(unittest.TestCase):
         if hasattr(p, 'uids'):
             self.assertRaises(psutil.NoSuchProcess, p.uids)
             self.assertRaises(psutil.NoSuchProcess, p.gids)
+        if hasattr(p, 'nice'):
+            self.assertRaises(psutil.NoSuchProcess, p.nice)
         self.assertRaises(psutil.NoSuchProcess, p.get_open_files)
         self.assertRaises(psutil.NoSuchProcess, p.get_connections)
         self.assertRaises(psutil.NoSuchProcess, p.suspend)
@@ -1015,6 +1039,8 @@ class TestCase(unittest.TestCase):
         attrs = ['__str__', 'create_time', 'username', 'getcwd', 'get_cpu_times',
                  'get_memory_info', 'get_memory_percent', 'get_open_files',
                   'get_num_threads', 'get_threads']
+        if os.name == 'posix':
+            attrs.append("nice")
         for p in psutil.process_iter():
             for attr in attrs:
                 # skip slow Python implementation; we're reasonably sure

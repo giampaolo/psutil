@@ -177,6 +177,11 @@ class Process(object):
             """
             return self._platform_impl.get_process_gids()
 
+        @property
+        def nice(self):
+            """Process niceness."""
+            return self._platform_impl.get_process_nice()
+
     @property
     def uid(self):
         """The real user id of the current process."""
