@@ -179,8 +179,13 @@ class Process(object):
 
         @property
         def nice(self):
-            """Process niceness."""
+            """Get or set process niceness."""
             return self._platform_impl.get_process_nice()
+
+        @nice.setter
+        def nice(self, value):
+            # invoked on "p.nice = n", change process niceness
+            return self._platform_impl.set_process_nice(value)
 
     @property
     def uid(self):

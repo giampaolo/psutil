@@ -23,6 +23,7 @@ try:
 except ImportError:
     from psutil.compat import namedtuple  # python < 2.6
 
+import _psutil_posix
 from psutil import _psposix
 from psutil.error import AccessDenied, NoSuchProcess
 
@@ -353,10 +354,17 @@ class LinuxProcess(object):
 
     @wrap_exceptions
     def get_process_nice(self):
-        f = open('/proc/%s/stat' % self.pid, 'r')
-        data = f.read()
-        f.close()
-        return int(data.split()[18])
+        #f = open('/proc/%s/stat' % self.pid, 'r')
+        #data = f.read()
+        #f.close()
+        #return int(data.split()[18])
+
+        # Use C implementation
+        return _psutil_posix.getpriority(self.pid)
+
+    @wrap_exceptions
+    def set_process_nice(self, value):
+        return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def get_open_files(self):

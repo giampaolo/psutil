@@ -17,6 +17,11 @@ except ImportError:
     from distutils.command.build_py import build_py
 
 
+if os.name == 'posix':
+    posix_extension = Extension('_psutil_posix',
+                                sources = ['psutil/_psutil_posix.c'])
+
+
 # Windows
 if sys.platform.lower().startswith("win"):
 
@@ -37,21 +42,24 @@ if sys.platform.lower().startswith("win"):
                            )
 # OS X
 elif sys.platform.lower().startswith("darwin"):
-    extensions = Extension('_psutil_osx',
-                           sources = ['psutil/_psutil_osx.c',
-                                      'psutil/_psutil_common.c',
-                                      'psutil/arch/osx/process_info.c']
-                           )
+    extensions = [Extension('_psutil_osx',
+                            sources = ['psutil/_psutil_osx.c',
+                                       'psutil/_psutil_common.c',
+                                       'psutil/arch/osx/process_info.c']
+                            ),
+                  posix_extension]
 # FreeBSD
 elif sys.platform.lower().startswith("freebsd"):
-    extensions = Extension('_psutil_bsd',
-                           sources = ['psutil/_psutil_bsd.c',
-                                      'psutil/_psutil_common.c',
-                                      'psutil/arch/bsd/process_info.c']
-                           )
-# Others
+    extensions = [Extension('_psutil_bsd',
+                            sources = ['psutil/_psutil_bsd.c',
+                                       'psutil/_psutil_common.c',
+                                       'psutil/arch/bsd/process_info.c']
+                            ),
+                  posix_extension]
+# Linux
 elif sys.platform.lower().startswith("linux"):
-    extensions = None
+    extensions = [posix_extension]
+
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
@@ -59,7 +67,7 @@ else:
 def main():
     setup_args = dict(
         name='psutil',
-        version="0.2.0",
+        version="0.2.1",
         download_url="http://psutil.googlecode.com/files/psutil-0.2.0.tar.gz",
         description='A process utilities module for Python',
         long_description="""
@@ -105,7 +113,7 @@ portable way by using Python.""",
               ],
         )
     if extensions is not None:
-        setup_args["ext_modules"] = [extensions]
+        setup_args["ext_modules"] = extensions
 
     setup(**setup_args)
 

@@ -600,12 +600,21 @@ class TestCase(unittest.TestCase):
 
         def test_nice(self):
             p = psutil.Process(os.getpid())
-            self.assertEqual(p.nice, 0)
+            first_nice = p.nice
             try:
-                sh("renice -n 10 %s" % os.getpid())
-                self.assertEqual(p.nice, 10)
+                p.nice = 1
+                self.assertEqual(p.nice, 1)
+                p.nice = 0
+                self.assertEqual(p.nice, 0)
             finally:
-                sh("renice -n 0 %s" % os.getpid())
+                p.nice = first_nice
+            if self.__class__.__name__ == "LimitedUserTestCase":
+                try:
+                    p.nice = -1
+                except psutil.AccessDenied:
+                    pass
+                else:
+                    self.fail("exception not raised")
 
     def test_username(self):
         sproc = get_test_subprocess()
@@ -1006,6 +1015,12 @@ class TestCase(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, p.gids)
         if hasattr(p, 'nice'):
             self.assertRaises(psutil.NoSuchProcess, p.nice)
+            try:
+                p.nice = 1
+            except psutil.NoSuchProcess:
+                pass
+            else:
+                self.fail("exception not raised")
         self.assertRaises(psutil.NoSuchProcess, p.get_open_files)
         self.assertRaises(psutil.NoSuchProcess, p.get_connections)
         self.assertRaises(psutil.NoSuchProcess, p.suspend)

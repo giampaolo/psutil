@@ -12,6 +12,7 @@ except ImportError:
     from psutil.compat import namedtuple  # python < 2.6
 
 import _psutil_bsd
+import _psutil_posix
 import _psposix
 from psutil.error import AccessDenied, NoSuchProcess
 
@@ -171,6 +172,14 @@ class BSDProcess(object):
     @wrap_exceptions
     def process_wait(self):
         return _psposix.wait_pid(self.pid)
+
+    @wrap_exceptions
+    def get_process_nice(self):
+        return _psutil_posix.getpriority(self.pid)
+
+    @wrap_exceptions
+    def set_process_nice(self, value):
+        return _psutil_posix.setpriority(self.pid, value)
 
 
 PlatformProcess = BSDProcess
