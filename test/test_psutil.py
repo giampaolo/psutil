@@ -1151,7 +1151,7 @@ if hasattr(os, 'getuid'):
 
             def test_nice(self):
                 try:
-                    p.nice = -1
+                    psutil.Process(os.getpid()).nice = -1
                 except psutil.AccessDenied:
                     pass
                 else:
