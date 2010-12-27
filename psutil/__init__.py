@@ -418,6 +418,8 @@ class Process(object):
         """Wait for process to terminate and, if process is a children
         of the current one also return its exit code, else None.
         """
+        if not self.is_running():
+            return None
         return self._platform_impl.process_wait()
 
     def terminate(self):
