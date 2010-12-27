@@ -23,11 +23,6 @@ __all__ = [
     "used_virtmem", "cpu_times", "cpu_percent",
     ]
 
-if sys.platform.lower().startswith("win32"):
-    __all__.extend(["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
-                    "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
-                    "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS"])
-
 import sys
 import os
 import time
@@ -48,6 +43,9 @@ if sys.platform.lower().startswith("linux"):
 
 elif sys.platform.lower().startswith("win32"):
     from psutil._psmswindows import *
+    __all__.extend(["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
+                    "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
+                    "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS"])
 
 elif sys.platform.lower().startswith("darwin"):
     from psutil._psosx import *
@@ -165,6 +163,11 @@ class Process(object):
     def cmdline(self):
         """The command line process has been called with."""
         return self._platform_impl.get_process_cmdline()
+
+    @property
+    def status(self):
+        """The process status as a (code, str) namedtuple."""
+        return self._platform_impl.get_process_status()
 
     @property
     def nice(self):
