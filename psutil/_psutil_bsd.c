@@ -52,6 +52,8 @@ PsutilMethods[] =
          "Return number of threads used by process"},
      {"get_process_threads", get_process_threads, METH_VARARGS,
          "Return process threads"},
+     {"get_process_status", get_process_status, METH_VARARGS,
+         "Return process status as an integer"},
 
 
      // --- system-related functions
@@ -337,6 +339,59 @@ get_process_ppid(PyObject* self, PyObject* args)
         return NULL;
     }
     return Py_BuildValue("l", (long)kp.ki_ppid);
+}
+
+
+/*
+ * Return process status as a Python integer.
+ */
+static PyObject*
+get_process_status(PyObject* self, PyObject* args)
+{
+    long pid;
+    char code;
+    char *string;
+    struct kinfo_proc kp;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
+        return NULL;
+    }
+
+    code = kp.ki_stat;
+
+    /*
+     * These values are taken from /usr/src/bin/ps/print.c.
+     * We expressively avoid to consider process flags (ki_flag),
+     * displayed as an additional letter in 'ps' STAT column.
+     */
+    switch (code) {
+        case SSTOP:
+            string = "stopped";
+            break;
+        case SSLEEP:
+            string = "disk sleep";
+            break;
+        case SRUN:
+        case SIDL:
+            string = "running";
+            break;
+        case SWAIT:
+            string = "waking";
+            break;
+        case SLOCK:
+            string = "locked";
+            break;
+        case SZOMB:
+            string = "zombie";
+            break;
+        default:
+            string = '?';
+    }
+
+    return Py_BuildValue("(is)", (int)code, string);
 }
 
 

@@ -19,6 +19,7 @@ static PyObject* get_process_create_time(PyObject* self, PyObject* args);
 static PyObject* get_memory_info(PyObject* self, PyObject* args);
 static PyObject* get_process_num_threads(PyObject* self, PyObject* args);
 static PyObject* get_process_threads(PyObject* self, PyObject* args);
+static PyObject* get_process_status(PyObject* self, PyObject* args);
 
 // --- system-related functions
 

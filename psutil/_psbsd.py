@@ -85,6 +85,8 @@ class BSDProcess(object):
     _thread_ntuple = namedtuple('thread', 'id user_time system_time')
     _uids_ntuple = namedtuple('user', 'real effective saved')
     _gids_ntuple = namedtuple('group', 'real effective saved')
+    _status_ntuple = namedtuple('status', 'code str')
+
     __slots__ = ["pid", "_process_name"]
 
     def __init__(self, pid):
@@ -180,6 +182,11 @@ class BSDProcess(object):
     @wrap_exceptions
     def set_process_nice(self, value):
         return _psutil_posix.setpriority(self.pid, value)
+
+    @wrap_exceptions
+    def get_process_status(self):
+        code, ststr = _psutil_bsd.get_process_status(self.pid)
+        return self._status_ntuple(code, ststr)
 
 
 PlatformProcess = BSDProcess

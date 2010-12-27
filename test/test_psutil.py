@@ -624,6 +624,11 @@ class TestCase(unittest.TestCase):
             finally:
                 p.nice = psutil.NORMAL_PRIORITY_CLASS
 
+    def test_status(self):
+        p = psutil.Process(os.getpid())
+        self.assertEqual(p.status.str, 'running')
+        self.assertTrue(isinstance(p.status.code, int))
+
     def test_username(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -924,9 +929,12 @@ class TestCase(unittest.TestCase):
 
     def test_suspend_resume(self):
         sproc = get_test_subprocess()
+        time.sleep(0.1)
         p = psutil.Process(sproc.pid)
         p.suspend()
+        self.assertEqual(p.status.str, "stopped")
         p.resume()
+        self.assertTrue(p.status.str != "stopped")
 
     def test_get_pid_list(self):
         plist = [x.pid for x in psutil.get_process_list()]
