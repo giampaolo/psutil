@@ -191,9 +191,11 @@ class WindowsProcess(object):
         user, system = _psutil_mswindows.get_process_cpu_times(self.pid)
         return self._cputimes_ntuple(user, system)
 
+    @wrap_exceptions
     def suspend_process(self):
         return _psutil_mswindows.suspend_process(self.pid)
 
+    @wrap_exceptions
     def resume_process(self):
         return _psutil_mswindows.resume_process(self.pid)
 

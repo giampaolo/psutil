@@ -18,6 +18,8 @@ BUGFIXES
  * Issue 83: process cmdline is empty on OSX 64-bit.
  * Issue 130: a race condition can cause IOError exception be raised on
    Linux if process disappears between open() and subsequent read() calls.
+ * Issue 145: WindowsError was raised instead of psutil.AccessDenied when using
+   process resume() or suspend() on Windows.
 
 API CHANGES
 

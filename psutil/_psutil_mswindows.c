@@ -990,6 +990,10 @@ suspend_resume_process(DWORD pid, int suspend)
     HANDLE hThreadSnap = NULL;
     THREADENTRY32  te32 = {0};
 
+    if (pid == 0) {
+        return AccessDenied();
+    }
+
     hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
     if (hThreadSnap == INVALID_HANDLE_VALUE) {
         PyErr_SetFromWindowsErr(0);
