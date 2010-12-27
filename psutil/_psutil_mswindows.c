@@ -62,6 +62,10 @@ PsutilMethods[] =
         "Return process threads information as a list of tuple"},
     {"process_wait", process_wait, METH_VARARGS,
         "Wait for process to terminate and return its exit code."},
+    {"get_process_priority", get_process_priority, METH_VARARGS,
+        "Return process priority."},
+    {"set_process_priority", set_process_priority, METH_VARARGS,
+        "Set process priority."},
 
     // --- system-related functions
 
@@ -150,6 +154,20 @@ struct module_state {
         INITERROR;
     }
 
+    // Public constants
+    // http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx
+    PyModule_AddIntConstant(module, "ABOVE_NORMAL_PRIORITY_CLASS",
+                                     ABOVE_NORMAL_PRIORITY_CLASS);
+    PyModule_AddIntConstant(module, "BELOW_NORMAL_PRIORITY_CLASS",
+                                     BELOW_NORMAL_PRIORITY_CLASS);
+    PyModule_AddIntConstant(module, "HIGH_PRIORITY_CLASS",
+                                     HIGH_PRIORITY_CLASS);
+    PyModule_AddIntConstant(module, "IDLE_PRIORITY_CLASS",
+                                     IDLE_PRIORITY_CLASS);
+    PyModule_AddIntConstant(module, "NORMAL_PRIORITY_CLASS",
+                                     NORMAL_PRIORITY_CLASS);
+    PyModule_AddIntConstant(module, "REALTIME_PRIORITY_CLASS",
+                                     REALTIME_PRIORITY_CLASS);
     SetSeDebug();
 
 #if PY_MAJOR_VERSION >= 3
@@ -1810,3 +1828,59 @@ get_process_connections(PyObject* self, PyObject* args)
     return connectionsList;
 }
 
+
+/*
+ * Get process priority as a Python integer.
+ */
+static PyObject*
+get_process_priority(PyObject* self, PyObject* args)
+{
+    long pid;
+    DWORD priority;
+    HANDLE hProcess;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    hProcess = handle_from_pid(pid);
+    if (hProcess == NULL) {
+        return NULL;
+    }
+
+    priority = GetPriorityClass(hProcess);
+    if (priority == 0) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+    return Py_BuildValue("i", priority);
+}
+
+
+/*
+ * Set process priority.
+ */
+static PyObject*
+set_process_priority(PyObject* self, PyObject* args)
+{
+    long pid;
+    int priority;
+    int retval;
+    HANDLE hProcess;
+    DWORD dwDesiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
+    if (! PyArg_ParseTuple(args, "li", &pid, &priority)) {
+        return NULL;
+    }
+
+    hProcess = handle_from_pid_waccess(pid, dwDesiredAccess);
+    if (hProcess == NULL) {
+        return NULL;
+    }
+
+    retval = SetPriorityClass(hProcess, priority);
+    if (retval == 0) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+    Py_INCREF(Py_None);
+    return Py_None;
+}

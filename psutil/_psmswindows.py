@@ -19,16 +19,23 @@ except ImportError:
 import _psutil_mswindows
 from psutil.error import AccessDenied, NoSuchProcess
 
-
-
 # --- module level constants (gets pushed up to psutil module)
 
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
 TOTAL_PHYMEM = _psutil_mswindows.get_total_phymem()
 BOOT_TIME = _psutil_mswindows.get_system_uptime()
 _WIN2000 = platform.win32_ver()[0] == '2000'
-
 ERROR_ACCESS_DENIED = 5
+
+# process priority constants:
+# http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
+from _psutil_mswindows import (ABOVE_NORMAL_PRIORITY_CLASS,
+                               BELOW_NORMAL_PRIORITY_CLASS,
+                               HIGH_PRIORITY_CLASS,
+                               IDLE_PRIORITY_CLASS,
+                               NORMAL_PRIORITY_CLASS,
+                               REALTIME_PRIORITY_CLASS)
+
 
 # --- public functions
 
@@ -225,5 +232,14 @@ class WindowsProcess(object):
     def get_connections(self):
         retlist = _psutil_mswindows.get_process_connections(self.pid)
         return [self._connection_ntuple(*conn) for conn in retlist]
+
+    @wrap_exceptions
+    def get_process_nice(self):
+        return _psutil_mswindows.get_process_priority(self.pid)
+
+    @wrap_exceptions
+    def set_process_nice(self, value):
+        return _psutil_mswindows.set_process_priority(self.pid, value)
+
 
 PlatformProcess = WindowsProcess

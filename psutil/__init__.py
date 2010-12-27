@@ -161,6 +161,16 @@ class Process(object):
         """The command line process has been called with."""
         return self._platform_impl.get_process_cmdline()
 
+    @property
+    def nice(self):
+        """Get or set process niceness (priority)."""
+        return self._platform_impl.get_process_nice()
+
+    @nice.setter
+    def nice(self, value):
+        # invoked on "p.nice = n", change process niceness
+        return self._platform_impl.set_process_nice(value)
+
     if os.name == 'posix':
 
         @property
@@ -176,16 +186,6 @@ class Process(object):
             effective, and saved group ids.
             """
             return self._platform_impl.get_process_gids()
-
-        @property
-        def nice(self):
-            """Get or set process niceness."""
-            return self._platform_impl.get_process_nice()
-
-        @nice.setter
-        def nice(self, value):
-            # invoked on "p.nice = n", change process niceness
-            return self._platform_impl.set_process_nice(value)
 
     @property
     def uid(self):

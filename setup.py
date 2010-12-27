@@ -29,17 +29,17 @@ if sys.platform.lower().startswith("win"):
         maj,min = sys.getwindowsversion()[0:2]
         return '0x0%s' % ((maj * 100) + min)
 
-    extensions = Extension('_psutil_mswindows',
-                           sources=['psutil/_psutil_mswindows.c',
-                                    'psutil/_psutil_common.c',
-                                    'psutil/arch/mswindows/process_info.c',
-                                    'psutil/arch/mswindows/process_handles.c',
-                                    'psutil/arch/mswindows/security.c'],
-                           define_macros=[('_WIN32_WINNT', get_winver()),
-                                          ('_AVAIL_WINVER_', get_winver())],
-                           libraries=["psapi", "kernel32", "advapi32", "shell32",
-                                      "netapi32"]
-                           )
+    extensions = [Extension('_psutil_mswindows',
+                            sources=['psutil/_psutil_mswindows.c',
+                                     'psutil/_psutil_common.c',
+                                     'psutil/arch/mswindows/process_info.c',
+                                     'psutil/arch/mswindows/process_handles.c',
+                                     'psutil/arch/mswindows/security.c'],
+                            define_macros=[('_WIN32_WINNT', get_winver()),
+                                           ('_AVAIL_WINVER_', get_winver())],
+                            libraries=["psapi", "kernel32", "advapi32", "shell32",
+                                       "netapi32"]
+                            )]
 # OS X
 elif sys.platform.lower().startswith("darwin"):
     extensions = [Extension('_psutil_osx',

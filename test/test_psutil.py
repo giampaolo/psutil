@@ -600,6 +600,7 @@ class TestCase(unittest.TestCase):
 
         def test_nice(self):
             p = psutil.Process(os.getpid())
+            self.assertRaises(TypeError, setattr, p, "nice", "str")
             first_nice = p.nice
             try:
                 p.nice = 1
@@ -608,6 +609,20 @@ class TestCase(unittest.TestCase):
                 self.assertEqual(p.nice, 0)
             finally:
                 p.nice = first_nice
+
+    if os.name == 'nt':
+
+        def test_nice(self):
+            p = psutil.Process(os.getpid())
+            self.assertRaises(TypeError, setattr, p, "nice", "str")
+            try:
+                self.assertEqual(p.nice, psutil.NORMAL_PRIORITY_CLASS)
+                p.nice = psutil.HIGH_PRIORITY_CLASS
+                self.assertEqual(p.nice, psutil.HIGH_PRIORITY_CLASS)
+                p.nice = psutil.NORMAL_PRIORITY_CLASS
+                self.assertEqual(p.nice, psutil.NORMAL_PRIORITY_CLASS)
+            finally:
+                p.nice = psutil.NORMAL_PRIORITY_CLASS
 
     def test_username(self):
         sproc = get_test_subprocess()
@@ -1009,7 +1024,10 @@ class TestCase(unittest.TestCase):
         if hasattr(p, 'nice'):
             self.assertRaises(psutil.NoSuchProcess, p.nice)
             try:
-                p.nice = 1
+                if os.name == 'posix':
+                    p.nice = 1
+                else:
+                    p.nice = psutil.NORMAL_PRIORITY_CLASS
             except psutil.NoSuchProcess:
                 pass
             else:
@@ -1147,15 +1165,13 @@ if hasattr(os, 'getuid'):
             # DeprecationWarning is only raised once
             pass
 
-        if os.name == 'posix':
-
-            def test_nice(self):
-                try:
-                    psutil.Process(os.getpid()).nice = -1
-                except psutil.AccessDenied:
-                    pass
-                else:
-                    self.fail("exception not raised")
+        def test_nice(self):
+            try:
+                psutil.Process(os.getpid()).nice = -1
+            except psutil.AccessDenied:
+                pass
+            else:
+                self.fail("exception not raised")
 
         # overridden tests known to raise AccessDenied when run
         # as limited user on different platforms
