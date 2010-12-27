@@ -7,7 +7,7 @@
 processes in a portable way by using Python.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
@@ -22,6 +22,11 @@ __all__ = [
     "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem",
     "used_virtmem", "cpu_times", "cpu_percent",
     ]
+
+if sys.platform.lower().startswith("win32"):
+    __all__.extend(["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
+                    "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
+                    "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS"])
 
 import sys
 import os
