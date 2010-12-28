@@ -363,7 +363,8 @@ get_process_status(PyObject* self, PyObject* args)
     code = kp.ki_stat;
 
     /*
-     * These values are taken from /usr/src/bin/ps/print.c.
+     * These values are taken from /usr/src/bin/ps/print.c and adapted
+     * a little to match Linux fs/proc/array.c names.
      * We expressively avoid to consider process flags (ki_flag),
      * displayed as an additional letter in 'ps' STAT column.
      */
@@ -372,11 +373,13 @@ get_process_status(PyObject* self, PyObject* args)
             string = "stopped";
             break;
         case SSLEEP:
-            string = "disk sleep";
+            string = "sleeping";
             break;
         case SRUN:
-        case SIDL:
             string = "running";
+            break;
+        case SIDL:
+            string = "idle";
             break;
         case SWAIT:
             string = "waking";

@@ -35,6 +35,8 @@ except ImportError:
     pwd = None
 
 from psutil.error import Error, NoSuchProcess, AccessDenied
+if not hasattr(property, 'setter'):  # python < 2.6
+    from compat import property
 
 # import the appropriate module for our platform only
 if sys.platform.lower().startswith("linux"):
@@ -172,11 +174,13 @@ class Process(object):
     @property
     def nice(self):
         """Get or set process niceness (priority)."""
+        print "getter"
         return self._platform_impl.get_process_nice()
 
     @nice.setter
     def nice(self, value):
         # invoked on "p.nice = n", change process niceness
+        print "setter"
         return self._platform_impl.set_process_nice(value)
 
     if os.name == 'posix':
