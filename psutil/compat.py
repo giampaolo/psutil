@@ -111,7 +111,3 @@ def namedtuple(typename, field_names, verbose=False, rename=False):
     return result
     
 
-if not hasattr(property, "setter"):
-    class property(property):
-        def setter(self, *args, **kwargs):
-            pass
