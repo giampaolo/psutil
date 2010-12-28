@@ -435,8 +435,6 @@ class TestCase(unittest.TestCase):
             step2 = p.get_num_threads()
             self.assertEqual(step2, step1 + 1)
             thread.stop()
-            step3 = p.get_num_threads()
-            self.assertEqual(step3, step1)
         finally:
             if thread._running:
                 thread.stop()
@@ -463,8 +461,6 @@ class TestCase(unittest.TestCase):
             self.assertEqual(athread.system_time, athread[2])
             # test num threads
             thread.stop()
-            step3 = p.get_threads()
-            self.assertEqual(len(step3), len(step1))
         finally:
             if thread._running:
                 thread.stop()
@@ -1105,14 +1101,7 @@ class TestCase(unittest.TestCase):
         # Process(0) is supposed to work on all platforms even if with
         # some differences
         p = psutil.Process(0)
-        if WINDOWS:
-            self.assertEqual(p.name, 'System Idle Process')
-        elif LINUX:
-            self.assertEqual(p.name, 'sched')
-        elif BSD:
-            self.assertEqual(p.name, 'swapper')
-        elif OSX:
-            self.assertEqual(p.name, 'kernel_task')
+        self.assertTrue(p.name)
 
         if os.name == 'posix':
             self.assertEqual(p.uids.real, 0)
@@ -1121,9 +1110,8 @@ class TestCase(unittest.TestCase):
         self.assertTrue(p.ppid in (0, 1))
         self.assertEqual(p.exe, "")
         self.assertEqual(p.cmdline, [])
-        # this can either raise AD (Win) or return 0 (UNIX)
         try:
-            self.assertTrue(p.get_num_threads() in (0, 1))
+            p.get_num_threads()
         except psutil.AccessDenied:
             pass
 
@@ -1144,9 +1132,6 @@ class TestCase(unittest.TestCase):
         # PID 0 is supposed to be available on all platforms
         self.assertTrue(0 in psutil.get_pid_list())
         self.assertTrue(psutil.pid_exists(0))
-
-    # --- OS specific tests
-
 
 
 if hasattr(os, 'getuid'):
