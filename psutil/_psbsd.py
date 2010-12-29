@@ -86,6 +86,7 @@ class BSDProcess(object):
     _uids_ntuple = namedtuple('user', 'real effective saved')
     _gids_ntuple = namedtuple('group', 'real effective saved')
     _status_ntuple = namedtuple('status', 'code str')
+    _io_ntuple = namedtuple('io', 'read_count write_count read_bytes write_bytes')
 
     __slots__ = ["pid", "_process_name"]
 
@@ -187,6 +188,11 @@ class BSDProcess(object):
     def get_process_status(self):
         code, ststr = _psutil_bsd.get_process_status(self.pid)
         return self._status_ntuple(code, ststr)
+
+    @wrap_exceptions
+    def get_process_io_counters(self):
+        rc, wc, rb, wb = _psutil_bsd.get_process_io_counters(self.pid)
+        return self._io_ntuple(rc, wc, rb, wb)
 
 
 PlatformProcess = BSDProcess

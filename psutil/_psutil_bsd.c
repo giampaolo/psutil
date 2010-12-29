@@ -54,6 +54,8 @@ PsutilMethods[] =
          "Return process threads"},
      {"get_process_status", get_process_status, METH_VARARGS,
          "Return process status as an integer"},
+     {"get_process_io_counters", get_process_io_counters, METH_VARARGS,
+         "Return process IO counters"},
 
 
      // --- system-related functions
@@ -591,6 +593,29 @@ get_process_create_time(PyObject* self, PyObject* args)
     }
     return Py_BuildValue("d", TV2DOUBLE(kp.ki_start));
 }
+
+
+/*
+ * Return a Python float indicating the process create time expressed in
+ * seconds since the epoch.
+ */
+static PyObject*
+get_process_io_counters(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
+        return NULL;
+    }
+    // there's apparently no way to determine bytes count, hence return -1.
+    return Py_BuildValue("(llll)", kp.ki_rusage.ru_inblock, 
+                                   kp.ki_rusage.ru_oublock,
+                                   -1, -1);
+}
+
 
 
 /*
