@@ -242,6 +242,13 @@ class Process(object):
             """
             return self._platform_impl.get_process_cwd()
 
+    def get_io_counters(self):
+        """Return process I/O statistics as a namedtuple including 
+        the number of read/write calls performed and the amount of
+        bytes read and written by the process.
+        """
+        return self._platform_impl.get_process_io_counters()
+            
     def get_num_threads(self):
         """Return the number of threads used by this process."""
         return self._platform_impl.get_process_num_threads()

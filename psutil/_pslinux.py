@@ -196,6 +196,7 @@ class LinuxProcess(object):
     _uids_ntuple = namedtuple('user', 'real effective saved')
     _gids_ntuple = namedtuple('group', 'real effective saved')
     _status_ntuple = namedtuple('status', 'code str')
+    _io_ntuple = namedtuple('io', 'read_count write_count read_bytes write_bytes')
 
     __slots__ = ["pid", "_process_name"]
 
@@ -253,6 +254,23 @@ class LinuxProcess(object):
             return [x for x in f.read().split('\x00') if x]
         finally:
             f.close()
+            
+    @wrap_exceptions
+    def get_process_io_counters(self):
+        # special case for 0 (kernel process) PID
+        if self.pid == 0:
+            return self._io_ntuple(0, 0, 0, 0)
+        f = open("/proc/%s/io" % self.pid)
+        for line in f:
+            if line.startswith("rchar"):
+                read_count = int(line.split()[1])
+            elif line.startswith("wchar"):
+                write_count = int(line.split()[1])
+            elif line.startswith("read_bytes"):
+                read_bytes = int(line.split()[1])
+            elif line.startswith("write_bytes"):
+                write_bytes = int(line.split()[1])
+        return self._io_ntuple(read_count, write_count, read_bytes, write_bytes)
 
     @wrap_exceptions
     def get_cpu_times(self):

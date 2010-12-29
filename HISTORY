@@ -5,6 +5,7 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 NEW FEATURES
 
+ * Issue 64: per-process I/O counters.
  * Issue 116: per-process wait() (wait for process to terminate and return its
    exit code).
  * Issue 136: process executable path on FreeBSD is now determined by asking

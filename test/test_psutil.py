@@ -23,6 +23,7 @@ import warnings
 import atexit
 import errno
 import threading
+import tempfile
 
 import psutil
 
@@ -421,6 +422,31 @@ class TestCase(unittest.TestCase):
 
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
+        
+    # XXX
+    @skipUnless(LINUX)
+    def test_get_io_counters(self):
+        p = psutil.Process(os.getpid())
+        # test reads
+        io1 = p.get_io_counters()
+        f = open(PYTHON, 'r')
+        f.read()
+        f.close()
+        io2 = p.get_io_counters()
+        self.assertTrue(io2.read_count > io1.read_count)
+        self.assertTrue(io2.read_bytes >= io1.read_bytes)
+        self.assertTrue(io2.write_count == io1.write_count)
+        self.assertTrue(io2.write_bytes >= io1.write_bytes)
+        # test writes
+        io1 = p.get_io_counters()
+        f = tempfile.TemporaryFile()
+        f.write("x" * 1000000)
+        f.close()
+        io2 = p.get_io_counters()
+        self.assertTrue(io2.write_count > io1.write_count)
+        self.assertTrue(io2.write_bytes > io1.write_bytes)
+        self.assertTrue(io2.read_count >= io1.read_count)
+        self.assertTrue(io2.read_bytes >= io1.read_bytes)
 
     def test_get_num_threads(self):
         # on certain platforms such as Linux we might test for exact
