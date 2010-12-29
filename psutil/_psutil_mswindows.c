@@ -66,6 +66,9 @@ PsutilMethods[] =
         "Return process priority."},
     {"set_process_priority", set_process_priority, METH_VARARGS,
         "Set process priority."},
+    {"get_process_io_counters", get_process_io_counters, METH_VARARGS,
+        "Get process I/O counters."},
+
 
     // --- system-related functions
 
@@ -1888,3 +1891,34 @@ set_process_priority(PyObject* self, PyObject* args)
     Py_INCREF(Py_None);
     return Py_None;
 }
+
+
+/*
+ * Return a Python tuple referencing process I/O counters.
+ */
+static PyObject*
+get_process_io_counters(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    HANDLE hProcess;
+    IO_COUNTERS IoCounters;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (pid == 0) {
+        return AccessDenied();
+    }
+    hProcess = handle_from_pid(pid);
+    if (NULL == hProcess) {
+        return NULL;
+    }
+    if (! GetProcessIoCounters(hProcess, &IoCounters)) {
+        return PyErr_SetFromWindowsErr(0);
+    }
+    return Py_BuildValue("(KKKK)", IoCounters.ReadOperationCount,
+                                   IoCounters.WriteOperationCount,
+                                   IoCounters.ReadTransferCount,
+                                   IoCounters.WriteTransferCount);
+}
+

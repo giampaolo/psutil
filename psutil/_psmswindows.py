@@ -101,6 +101,7 @@ class WindowsProcess(object):
     _connection_ntuple = namedtuple('connection', 'fd family type local_address '
                                                   'remote_address status')
     _thread_ntuple = namedtuple('thread', 'id user_time system_time')
+    _io_ntuple = namedtuple('io', 'read_count write_count read_bytes write_bytes')
     __slots__ = ["pid", "_process_name"]
 
     def __init__(self, pid):
@@ -243,5 +244,11 @@ class WindowsProcess(object):
     def set_process_nice(self, value):
         return _psutil_mswindows.set_process_priority(self.pid, value)
 
+    @wrap_exceptions
+    def get_process_io_counters(self):
+        rc, wc, rb, wb =_psutil_mswindows.get_process_io_counters(self.pid)
+        return self._io_ntuple(rc, wc, rb, wb)
+
 
 PlatformProcess = WindowsProcess
+

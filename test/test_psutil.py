@@ -424,7 +424,7 @@ class TestCase(unittest.TestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
         
     # XXX
-    @skipUnless(LINUX)
+    @skipUnless(LINUX or WINDOWS)
     def test_get_io_counters(self):
         p = psutil.Process(os.getpid())
         # test reads

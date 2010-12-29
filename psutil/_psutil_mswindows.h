@@ -28,6 +28,7 @@ static PyObject* get_process_threads(PyObject* self, PyObject* args);
 static PyObject* process_wait(PyObject* self, PyObject* args);
 static PyObject* get_process_priority(PyObject* self, PyObject* args);
 static PyObject* set_process_priority(PyObject* self, PyObject* args);
+static PyObject* get_process_io_counters(PyObject* self, PyObject* args);
 
 // --- system-related functions
 
