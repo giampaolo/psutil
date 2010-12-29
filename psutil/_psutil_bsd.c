@@ -233,12 +233,12 @@ get_system_boot_time(PyObject* self, PyObject* args)
     size_t result_len = sizeof result;
     time_t boot_time = 0;
 
-    if (sysctl (request, 2, &result, &result_len, NULL, 0) == -1) {
+    if (sysctl(request, 2, &result, &result_len, NULL, 0) == -1) {
         PyErr_SetFromErrno(0);
         return NULL;
     }
     boot_time = result.tv_sec;
-    return Py_BuildValue("l", boot_time);
+    return Py_BuildValue("f", (float)boot_time);
 }
 
 
