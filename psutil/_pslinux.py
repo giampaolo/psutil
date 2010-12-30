@@ -235,6 +235,10 @@ class LinuxProcess(object):
                 raise AccessDenied(self.pid, self._process_name)
             raise
 
+        # readlink() might return paths containing null bytes causing
+        # problems when used with other fs-related functions (os.*, 
+        # open(), ...)
+        exe = exe.replace('\x00', '')
         # It seems symlinks can point to a deleted/invalid location
         # (this usually  happens with "pulseaudio" process).
         # However, if we had permissions to execute readlink() it's
@@ -332,7 +336,11 @@ class LinuxProcess(object):
     def get_process_cwd(self):
         if self.pid == 0:
             return ''
-        return os.readlink("/proc/%s/cwd" % self.pid)
+        # readlink() might return paths containing null bytes causing
+        # problems when used with other fs-related functions (os.*, 
+        # open(), ...)
+        path = os.readlink("/proc/%s/cwd" % self.pid)
+        return path.replace('\x00', '')
 
     @wrap_exceptions
     def get_process_num_threads(self):

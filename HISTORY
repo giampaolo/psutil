@@ -21,6 +21,8 @@ BUGFIXES
    Linux if process disappears between open() and subsequent read() calls.
  * Issue 145: WindowsError was raised instead of psutil.AccessDenied when using
    process resume() or suspend() on Windows.
+ * Issue 146: 'exe' property on Linux can raise TypeError if path contains NULL 
+   bytes.
 
 API CHANGES
 
