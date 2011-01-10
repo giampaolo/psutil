@@ -339,10 +339,12 @@ process_wait(PyObject* self, PyObject* args)
     }
 
     // wait until the process has terminated
+    Py_BEGIN_ALLOW_THREADS 
     if (WaitForSingleObject(hProcess, INFINITE) == WAIT_FAILED) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(GetLastError());
     }
+    Py_END_ALLOW_THREADS 
 
     // get the exit code; note: subprocess module (erroneously?) uses
     // what returned by WaitForSingleObject
