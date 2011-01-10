@@ -11,7 +11,7 @@ import os
 
 import psutil
 
-from test_psutil import kill, get_test_subprocess, PYTHON, LINUX, OSX
+from test_psutil import get_test_subprocess, reap_children, PYTHON, LINUX, OSX
 
 
 def ps(cmd):
@@ -41,7 +41,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         self.pid = get_test_subprocess([PYTHON, "-E", "-O"]).pid
 
     def tearDown(self):
-        kill(self.pid)
+        reap_children()
 
     def test_process_parent_pid(self):
         ppid_ps = ps("ps --no-headers -o ppid -p %s" %self.pid)

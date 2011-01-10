@@ -72,7 +72,6 @@ def sh(cmdline):
     if stderr:
         warnings.warn(stderr, RuntimeWarning)
 
-
 def wait_for_pid(pid, timeout=1):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
@@ -87,38 +86,11 @@ def wait_for_pid(pid, timeout=1):
         if time.time() >= raise_at:
             raise RuntimeError("Timed out")
 
-def kill(pid):
-    """Kill a process given its PID."""
-    if hasattr(os, 'kill'):
-        os.kill(pid, signal.SIGKILL)
-    else:
-        psutil.Process(pid).kill()
-
 def reap_children(search_all=False):
     """Kill any subprocess started by this test suite and ensure that
     no zombies stick around to hog resources and create problems when
     looking for refleaks.
     """
-    if POSIX:
-        def waitpid(process):
-            # on posix we are free to wait for any pending process by
-            # passing -1 to os.waitpid()
-            while True:
-                try:
-                    any_process = -1
-                    pid, status = os.waitpid(any_process, os.WNOHANG)
-                    if pid == 0 and not process.is_running():
-                        break
-                except OSError:
-                    if not process.is_running():
-                        break
-    else:
-        def waitpid(process):
-            # on non-posix systems we just wait for the given process
-            # to go away
-            while process.is_running():
-                time.sleep(0.01)
-
     if search_all:
         this_process = psutil.Process(os.getpid())
         pids = [x.pid for x in this_process.get_children()]
@@ -132,7 +104,8 @@ def reap_children(search_all=False):
         except psutil.NoSuchProcess:
             pass
         else:
-            waitpid(child)
+            child.wait()
+
 
 # we want to search through all processes before exiting
 atexit.register(reap_children, search_all=True)
