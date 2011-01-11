@@ -1226,13 +1226,6 @@ get_process_threads(PyObject* self, PyObject* args)
                 return NULL;
             }
 
-            thread_id = GetThreadId(hThread);
-            if (thread_id == 0) {
-                PyErr_SetFromWindowsErr(0);
-                CloseHandle(hThread);
-                return NULL;
-            }
-
             rc = GetThreadTimes(hThread, &ftDummy, &ftDummy, &ftKernel, &ftUser);
             if (rc == 0) {
                 PyErr_SetFromWindowsErr(0);
@@ -1250,8 +1243,8 @@ get_process_threads(PyObject* self, PyObject* args)
             process has executed in user/kernel mode I borrowed the code
             below from Python's Modules/posixmodule.c
             */
-            pyTuple = Py_BuildValue("Idd",
-                            thread_id,
+            pyTuple = Py_BuildValue("kdd",
+                            te32.th32ThreadID,
                             (double)(ftUser.dwHighDateTime*429.4967296 + \
                                      ftUser.dwLowDateTime*1e-7),
                             (double)(ftKernel.dwHighDateTime*429.4967296 + \
