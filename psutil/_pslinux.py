@@ -3,13 +3,17 @@
 # $Id$
 #
 
-__all__ = ["NUM_CPUS", "TOTAL_PHYMEM", "BOOT_TIME",
-           "PlatformProcess",
-           "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem",
-           "used_virtmem", "get_system_cpu_times", "pid_exists", "get_pid_list",
-           "phymem_buffers", "cached_phymem"
-          ]
-
+__all__ = [
+    # constants
+    "NUM_CPUS", "TOTAL_PHYMEM", "BOOT_TIME",
+    "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE", "IOPRIO_CLASS_IDLE",
+    # classes
+    "PlatformProcess",
+    # functions
+    "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem",
+    "used_virtmem", "get_system_cpu_times", "pid_exists", "get_pid_list",
+    "phymem_buffers", "cached_phymem",
+    ]
 
 import os
 import errno
@@ -24,6 +28,7 @@ except ImportError:
     from psutil.compat import namedtuple  # python < 2.6
 
 import _psutil_posix
+import _psutil_linux
 from psutil import _psposix
 from psutil.error import AccessDenied, NoSuchProcess
 
@@ -60,6 +65,11 @@ _CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
 BOOT_TIME = _get_boot_time()
 NUM_CPUS = _get_num_cpus()
 TOTAL_PHYMEM = _get_total_phymem()
+# ioprio_* constants http://linux.die.net/man/2/ioprio_get
+IOPRIO_CLASS_NONE = 0
+IOPRIO_CLASS_RT = 1
+IOPRIO_CLASS_BE = 2
+IOPRIO_CLASS_IDLE = 3
 
 del _get_boot_time, _get_num_cpus, _get_total_phymem
 
@@ -197,6 +207,7 @@ class LinuxProcess(object):
     _gids_ntuple = namedtuple('group', 'real effective saved')
     _status_ntuple = namedtuple('status', 'code str')
     _io_ntuple = namedtuple('io', 'read_count write_count read_bytes write_bytes')
+    _ionice_ntuple = namedtuple('ionice', 'ioclass iodata')
 
     __slots__ = ["pid", "_process_name"]
 
@@ -236,7 +247,7 @@ class LinuxProcess(object):
             raise
 
         # readlink() might return paths containing null bytes causing
-        # problems when used with other fs-related functions (os.*, 
+        # problems when used with other fs-related functions (os.*,
         # open(), ...)
         exe = exe.replace('\x00', '')
         # It seems symlinks can point to a deleted/invalid location
@@ -258,7 +269,7 @@ class LinuxProcess(object):
             return [x for x in f.read().split('\x00') if x]
         finally:
             f.close()
-            
+
     @wrap_exceptions
     def get_process_io_counters(self):
         # special case for 0 (kernel process) PID
@@ -337,7 +348,7 @@ class LinuxProcess(object):
         if self.pid == 0:
             return ''
         # readlink() might return paths containing null bytes causing
-        # problems when used with other fs-related functions (os.*, 
+        # problems when used with other fs-related functions (os.*,
         # open(), ...)
         path = os.readlink("/proc/%s/cwd" % self.pid)
         return path.replace('\x00', '')
@@ -392,6 +403,34 @@ class LinuxProcess(object):
     @wrap_exceptions
     def set_process_nice(self, value):
         return _psutil_posix.setpriority(self.pid, value)
+
+    # only starting from kernel 2.6.13
+    if hasattr(_psutil_linux, "ioprio_get"):
+
+        @wrap_exceptions
+        def get_process_ionice(self):
+            ioclass, iodata = _psutil_linux.ioprio_get(self.pid)
+            return self._ionice_ntuple(ioclass, iodata)
+
+        @wrap_exceptions
+        def set_process_ionice(self, ioclass, iodata):
+            if ioclass in (IOPRIO_CLASS_NONE, None):
+                if iodata:
+                    raise ValueError("can't specify iodata with IOPRIO_CLASS_NONE")
+                ioclass = IOPRIO_CLASS_NONE
+                iodata = 0
+            if ioclass in (IOPRIO_CLASS_RT, IOPRIO_CLASS_BE):
+                if iodata is None:
+                    iodata = 4
+            elif ioclass == IOPRIO_CLASS_IDLE:
+                if iodata:
+                    raise ValueError("can't specify iodata with IOPRIO_CLASS_IDLE")
+                iodata = 0
+            else:
+                iodata = 0
+            if not 0 <= iodata <= 8:
+                raise ValueError("iodata argument range expected is between 0 and 8")
+            return _psutil_linux.ioprio_set(self.pid, ioclass, iodata)
 
     @wrap_exceptions
     def get_process_status(self):
@@ -568,4 +607,3 @@ class LinuxProcess(object):
         return (ip, port)
 
 PlatformProcess = LinuxProcess
-

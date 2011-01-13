@@ -243,12 +243,26 @@ class Process(object):
             return self._platform_impl.get_process_cwd()
 
     def get_io_counters(self):
-        """Return process I/O statistics as a namedtuple including 
+        """Return process I/O statistics as a namedtuple including
         the number of read/write calls performed and the amount of
         bytes read and written by the process.
         """
         return self._platform_impl.get_process_io_counters()
-            
+
+    # available only on Linux
+    if hasattr(PlatformProcess, "get_process_ionice"):
+        def get_ionice(self):
+            """Return process I/O niceness (priority) as a namedtuple."""
+            return self._platform_impl.get_process_ionice()
+
+        def set_ionice(self, ioclass, iodata=None):
+            """Set process I/O niceness (priority).
+            ioclass is one of the IOPRIO_CLASS_* constants.
+            iodata is a number which goes from 0 to 7. The higher the
+            value, the lower the I/O priority of the process.
+            """
+            return self._platform_impl.set_process_ionice(ioclass, iodata)
+
     def get_num_threads(self):
         """Return the number of threads used by this process."""
         return self._platform_impl.get_process_num_threads()

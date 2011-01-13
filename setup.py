@@ -58,7 +58,11 @@ elif sys.platform.lower().startswith("freebsd"):
                   posix_extension]
 # Linux
 elif sys.platform.lower().startswith("linux"):
-    extensions = [posix_extension]
+    extensions = [Extension('_psutil_linux',
+                            sources=['psutil/_psutil_linux.c'],
+                            libraries=[]
+                            ),
+                  posix_extension]
 
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)

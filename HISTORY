@@ -13,6 +13,7 @@ NEW FEATURES
  * Issue 137: per-process real, effective and saved user and group ids.
  * Issue 140: system boot time.
  * Issue 142: per-process get and set niceness (priority).
+ * Issue 147: per-process I/O nice (priority) - Linux only.
 
 BUGFIXES
 
@@ -21,7 +22,7 @@ BUGFIXES
    Linux if process disappears between open() and subsequent read() calls.
  * Issue 145: WindowsError was raised instead of psutil.AccessDenied when using
    process resume() or suspend() on Windows.
- * Issue 146: 'exe' property on Linux can raise TypeError if path contains NULL 
+ * Issue 146: 'exe' property on Linux can raise TypeError if path contains NULL
    bytes.
 
 API CHANGES

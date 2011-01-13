@@ -395,7 +395,7 @@ class TestCase(unittest.TestCase):
 
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
-        
+
     # XXX
     @skipUnless(LINUX or WINDOWS)
     def test_get_io_counters(self):
@@ -420,6 +420,38 @@ class TestCase(unittest.TestCase):
         self.assertTrue(io2.write_bytes > io1.write_bytes)
         self.assertTrue(io2.read_count >= io1.read_count)
         self.assertTrue(io2.read_bytes >= io1.read_bytes)
+
+    @skipUnless(LINUX)
+    def test_get_set_ionice(self):
+        from psutil import (IOPRIO_CLASS_NONE, IOPRIO_CLASS_RT, IOPRIO_CLASS_BE,
+                            IOPRIO_CLASS_IDLE)
+        self.assertEqual(IOPRIO_CLASS_NONE, 0)
+        self.assertEqual(IOPRIO_CLASS_RT, 1)
+        self.assertEqual(IOPRIO_CLASS_BE, 2)
+        self.assertEqual(IOPRIO_CLASS_IDLE, 3)
+        p = psutil.Process(os.getpid())
+        try:
+            p.set_ionice(2)
+            ioclass, iodata = p.get_ionice()
+            self.assertEqual(ioclass, 2)
+            self.assertEqual(iodata, 4)
+            #
+            p.set_ionice(3)
+            ioclass, iodata = p.get_ionice()
+            self.assertEqual(ioclass, 3)
+            self.assertEqual(iodata, 0)
+            #
+            p.set_ionice(2, 0)
+            ioclass, iodata = p.get_ionice()
+            self.assertEqual(ioclass, 2)
+            self.assertEqual(iodata, 0)
+            p.set_ionice(2, 7)
+            ioclass, iodata = p.get_ionice()
+            self.assertEqual(ioclass, 2)
+            self.assertEqual(iodata, 7)
+            self.assertRaises(ValueError, p.set_ionice, 2, 10)
+        finally:
+            p.set_ionice(IOPRIO_CLASS_NONE)
 
     def test_get_num_threads(self):
         # on certain platforms such as Linux we might test for exact
@@ -1035,6 +1067,9 @@ class TestCase(unittest.TestCase):
                 pass
             else:
                 self.fail("exception not raised")
+        if hasattr(p, 'get_ionice'):
+            self.assertRaises(psutil.NoSuchProcess, p.get_ionice)
+            self.assertRaises(psutil.NoSuchProcess, p.set_ionice, 2)
         self.assertRaises(psutil.NoSuchProcess, p.get_open_files)
         self.assertRaises(psutil.NoSuchProcess, p.get_connections)
         self.assertRaises(psutil.NoSuchProcess, p.suspend)
