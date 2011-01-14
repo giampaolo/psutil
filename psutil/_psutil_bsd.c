@@ -611,7 +611,7 @@ get_process_io_counters(PyObject* self, PyObject* args)
         return NULL;
     }
     // there's apparently no way to determine bytes count, hence return -1.
-    return Py_BuildValue("(llll)", kp.ki_rusage.ru_inblock, 
+    return Py_BuildValue("(llll)", kp.ki_rusage.ru_inblock,
                                    kp.ki_rusage.ru_oublock,
                                    -1, -1);
 }

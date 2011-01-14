@@ -205,7 +205,6 @@ class LinuxProcess(object):
     _thread_ntuple = namedtuple('thread', 'id user_time system_time')
     _uids_ntuple = namedtuple('user', 'real effective saved')
     _gids_ntuple = namedtuple('group', 'real effective saved')
-    _status_ntuple = namedtuple('status', 'code str')
     _io_ntuple = namedtuple('io', 'read_count write_count read_bytes write_bytes')
     _ionice_ntuple = namedtuple('ionice', 'ioclass iodata')
 
@@ -435,27 +434,24 @@ class LinuxProcess(object):
     @wrap_exceptions
     def get_process_status(self):
         # taken from /fs/proc/array.c
-        status_map = {"R":0,
-                      "S":1,
-                      "D":2,
-                      "T":3,
-                      "t":8,
-                      "Z":16,
-                      "X":32,
-                      "x":64,
-                      "K":128,
-                      "W":256}
+        status_map = {"R" : 0,
+                      "S" : 1,
+                      "D" : 2,
+                      "T" : 4,
+                      "t" : 8,
+                      "Z" : 16,
+                      "X" : 32,
+                      "x" : 64,
+                      "K" : 128,
+                      "W" : 256}
         if self.pid == 0:
             return 0
         f = open("/proc/%s/status" % self.pid)
         for line in f:
             if line.startswith("State:"):
                 f.close()
-                fields = line.split()
-                letter = fields[1]
-                code = status_map[letter]
-                ststr = fields[2].replace('(', '').replace(')', '')
-                return self._status_ntuple(code, ststr)
+                letter = line.split()[1]
+                return status_map[letter]
 
     @wrap_exceptions
     def get_open_files(self):

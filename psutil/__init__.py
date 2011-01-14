@@ -57,6 +57,17 @@ else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
 
+STATUS_RUNNING = 0
+STATUS_SLEEPING = 1
+STATUS_DISK_SLEEP = 2
+STATUS_STOPPED = 4
+STATUS_TRACING_STOP = 8
+STATUS_ZOMBIE = 16
+STATUS_DEAD = 32
+#STATUS_DEAD2 = 64
+STATUS_WAKEKILL = 128
+STATUS_WAKING = 256
+
 
 class Process(object):
     """Represents an OS process."""
@@ -90,8 +101,8 @@ class Process(object):
                 details = "(pid=%s, name=%s, cmdline=%s)" % (pid, name, cmdline)
             else:
                 details = "(pid=%s, name=%s)" % (pid, name)
-        return "%s.%s %s" % (self.__class__.__module__,
-                             self.__class__.__name__, details)
+        return "%s.%s%s" % (self.__class__.__module__,
+                            self.__class__.__name__, details)
 
     def __repr__(self):
         return "<%s at %s>" % (self.__str__(), id(self))
@@ -166,7 +177,7 @@ class Process(object):
 
     @property
     def status(self):
-        """The process status as a (code, str) namedtuple."""
+        """The process current status as a STATUS_* constant."""
         return self._platform_impl.get_process_status()
 
     @property
@@ -542,6 +553,16 @@ def cpu_percent(interval=0.1):
     all_delta = t2_all - t1_all
     busy_perc = (busy_delta / all_delta) * 100
     return round(busy_perc, 1)
+
+
+_status_map = dict((v,k) for (k,v) in globals().iteritems() if k.startswith("STATUS_"))
+
+def status_str(code):
+    """Utility function to convert a process STATUS_* code returned by
+    Process.status into a human readable string.
+    """
+    name = _status_map.get(code, '_?')
+    return name.split('_')[1].lower()
 
 
 def test():
