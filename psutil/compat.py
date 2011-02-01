@@ -5,60 +5,64 @@
 
 """Module which provides compatibility with older Python versions."""
 
+__all__ = ["namedtuple", "property"]
+
 from operator import itemgetter as _itemgetter
 from keyword import iskeyword as _iskeyword
 import sys as _sys
 
+try:
+    from collections import namedtuple
+except ImportError:
+    def namedtuple(typename, field_names, verbose=False, rename=False):
+        """A collections.namedtuple implementation written in Python
+        to support Python versions < 2.6.
 
-def namedtuple(typename, field_names, verbose=False, rename=False):
-    """A collections.namedtuple implementation written in Python
-    to support Python versions < 2.6.
+        Taken from: http://code.activestate.com/recipes/500261/
+        """
+        # Parse and validate the field names.  Validation serves two
+        # purposes, generating informative error messages and preventing
+        # template injection attacks.
+        if isinstance(field_names, basestring):
+             # names separated by whitespace and/or commas
+            field_names = field_names.replace(',', ' ').split()
+        field_names = tuple(map(str, field_names))
+        if rename:
+            names = list(field_names)
+            seen = set()
+            for i, name in enumerate(names):
+                if (not min(c.isalnum() or c=='_' for c in name) or _iskeyword(name)
+                    or not name or name[0].isdigit() or name.startswith('_')
+                    or name in seen):
+                        names[i] = '_%d' % i
+                seen.add(name)
+            field_names = tuple(names)
+        for name in (typename,) + field_names:
+            if not min(c.isalnum() or c=='_' for c in name):
+                raise ValueError('Type names and field names can only contain ' \
+                                 'alphanumeric characters and underscores: %r'
+                                 % name)
+            if _iskeyword(name):
+                raise ValueError('Type names and field names cannot be a keyword: %r' \
+                                 % name)
+            if name[0].isdigit():
+                raise ValueError('Type names and field names cannot start with a ' \
+                                 'number: %r' % name)
+        seen_names = set()
+        for name in field_names:
+            if name.startswith('_') and not rename:
+                raise ValueError('Field names cannot start with an underscore: %r'
+                                 % name)
+            if name in seen_names:
+                raise ValueError('Encountered duplicate field name: %r' % name)
+            seen_names.add(name)
 
-    Taken from: http://code.activestate.com/recipes/500261/
-    """
-    # Parse and validate the field names.  Validation serves two
-    # purposes, generating informative error messages and preventing
-    # template injection attacks.
-    if isinstance(field_names, basestring):
-         # names separated by whitespace and/or commas
-        field_names = field_names.replace(',', ' ').split()
-    field_names = tuple(map(str, field_names))
-    if rename:
-        names = list(field_names)
-        seen = set()
-        for i, name in enumerate(names):
-            if (not min(c.isalnum() or c=='_' for c in name) or _iskeyword(name)
-                or not name or name[0].isdigit() or name.startswith('_')
-                or name in seen):
-                    names[i] = '_%d' % i
-            seen.add(name)
-        field_names = tuple(names)
-    for name in (typename,) + field_names:
-        if not min(c.isalnum() or c=='_' for c in name):
-            raise ValueError('Type names and field names can only contain ' \
-                             'alphanumeric characters and underscores: %r'
-                             % name)
-        if _iskeyword(name):
-            raise ValueError('Type names and field names cannot be a keyword: %r' \
-                             % name)
-        if name[0].isdigit():
-            raise ValueError('Type names and field names cannot start with a ' \
-                             'number: %r' % name)
-    seen_names = set()
-    for name in field_names:
-        if name.startswith('_') and not rename:
-            raise ValueError('Field names cannot start with an underscore: %r'
-                             % name)
-        if name in seen_names:
-            raise ValueError('Encountered duplicate field name: %r' % name)
-        seen_names.add(name)
-
-    # Create and fill-in the class template
-    numfields = len(field_names)
-    # tuple repr without parens or quotes
-    argtxt = repr(field_names).replace("'", "")[1:-1]
-    reprtxt = ', '.join('%s=%%r' % name for name in field_names)
-    template = '''class %(typename)s(tuple):
+        # Create and fill-in the class template
+        numfields = len(field_names)
+        # tuple repr without parens or quotes
+        argtxt = repr(field_names).replace("'", "")[1:-1]
+        reprtxt = ', '.join('%s=%%r' % name for name in field_names)
+        template = '''class %(typename)s(tuple):
         '%(typename)s(%(argtxt)s)' \n
         __slots__ = () \n
         _fields = %(field_names)r \n
@@ -84,30 +88,43 @@ def namedtuple(typename, field_names, verbose=False, rename=False):
             return result \n
         def __getnewargs__(self):
             return tuple(self) \n\n''' % locals()
-    for i, name in enumerate(field_names):
-        template += '        %s = _property(_itemgetter(%d))\n' % (name, i)
-    if verbose:
-        print template
+        for i, name in enumerate(field_names):
+            template += '        %s = _property(_itemgetter(%d))\n' % (name, i)
+        if verbose:
+            print template
 
-    # Execute the template string in a temporary namespace
-    namespace = dict(_itemgetter=_itemgetter, __name__='namedtuple_%s' % typename,
-                     _property=property, _tuple=tuple)
-    try:
-        exec template in namespace
-    except SyntaxError, e:
-        raise SyntaxError(e.message + ':\n' + template)
-    result = namespace[typename]
+        # Execute the template string in a temporary namespace
+        namespace = dict(_itemgetter=_itemgetter, __name__='namedtuple_%s' % typename,
+                         _property=property, _tuple=tuple)
+        try:
+            exec template in namespace
+        except SyntaxError, e:
+            raise SyntaxError(e.message + ':\n' + template)
+        result = namespace[typename]
 
-    # For pickling to work, the __module__ variable needs to be set
-    # to the frame where the named tuple is created.  Bypass this
-    # step in enviroments where sys._getframe is not defined (Jython
-    # for example) or sys._getframe is not defined for arguments
-    # greater than 0 (IronPython).
-    try:
-        result.__module__ = _sys._getframe(1).f_globals.get('__name__', '__main__')
-    except (AttributeError, ValueError):
-        pass
+        # For pickling to work, the __module__ variable needs to be set
+        # to the frame where the named tuple is created.  Bypass this
+        # step in enviroments where sys._getframe is not defined (Jython
+        # for example) or sys._getframe is not defined for arguments
+        # greater than 0 (IronPython).
+        try:
+            result.__module__ = _sys._getframe(1).f_globals.get('__name__', '__main__')
+        except (AttributeError, ValueError):
+            pass
 
-    return result
-    
+        return result
+
+# dirty hack to support property.setter on python < 2.6
+property = property
+
+if not hasattr(property, "setter"):
+    class property(property):
+        def setter(self, value):
+            cls_ns = _sys._getframe(1).f_locals
+            for k, v in cls_ns.iteritems():
+                if v == self:
+                    name = k
+                    break
+            cls_ns[name] = property(self.fget, value, self.fdel, self.__doc__)
+            return cls_ns[name]
 

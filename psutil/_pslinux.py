@@ -546,7 +546,7 @@ class LinuxProcess(object):
     @wrap_exceptions
     def get_process_uids(self):
         if self.pid == 0:
-            return 0
+            return self._uids_ntuple(0, 0, 0)
         f = open("/proc/%s/status" % self.pid)
         for line in f:
             if line.startswith('Uid:'):
@@ -557,7 +557,7 @@ class LinuxProcess(object):
     @wrap_exceptions
     def get_process_gids(self):
         if self.pid == 0:
-            return 0
+            return self._uids_ntuple(0, 0, 0)
         f = open("/proc/%s/status" % self.pid)
         for line in f:
             if line.startswith('Gid:'):
