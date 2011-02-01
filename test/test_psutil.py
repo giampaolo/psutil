@@ -897,8 +897,10 @@ class TestCase(unittest.TestCase):
                                 continue
                             else:
                                 raise
-                        self.assertEqual(dupsock.family, conn.family)
-                        self.assertEqual(dupsock.type, conn.type)
+                        # python >= 2.5
+                        if hasattr(dupsock, "family"):
+                            self.assertEqual(dupsock.family, conn.family)
+                            self.assertEqual(dupsock.type, conn.type)
 
                 # check matches against subprocesses
                 if p.pid in children_pids:
