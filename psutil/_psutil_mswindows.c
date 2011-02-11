@@ -1172,7 +1172,6 @@ get_process_threads(PyObject* self, PyObject* args)
     long pid;
     int pid_return;
     int rc;
-    DWORD thread_id;
     FILETIME ftDummy, ftKernel, ftUser;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
