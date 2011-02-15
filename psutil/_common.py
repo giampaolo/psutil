@@ -5,7 +5,7 @@
 
 """Common objects shared by all _ps* modules."""
 
-from psutil.compat import namedtuple
+from psutil._compat import namedtuple
 
 # system
 ntuple_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')

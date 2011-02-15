@@ -36,7 +36,7 @@ except ImportError:
     pwd = None
 
 from psutil.error import Error, NoSuchProcess, AccessDenied
-from psutil.compat import property
+from psutil._compat import property
 
 # import the appropriate module for our platform only
 if sys.platform.lower().startswith("linux"):

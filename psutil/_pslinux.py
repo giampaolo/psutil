@@ -10,15 +10,11 @@ import struct
 import sys
 import base64
 
-try:
-    from collections import namedtuple
-except ImportError:
-    from psutil.compat import namedtuple  # python < 2.6
-
 import _psutil_posix
 import _psutil_linux
 from psutil import _psposix
 from psutil.error import AccessDenied, NoSuchProcess
+from psutil._compat import namedtuple
 from psutil._common import *
 
 # Linux specific extended namespace

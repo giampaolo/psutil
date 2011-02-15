@@ -15,12 +15,8 @@ import sys
 import warnings
 import time
 
-try:
-    from collections import namedtuple
-except ImportError:
-    from psutil.compat import namedtuple  # python < 2.6
-
 from psutil.error import AccessDenied, NoSuchProcess
+from psutil._compat import namedtuple
 
 
 def pid_exists(pid):
