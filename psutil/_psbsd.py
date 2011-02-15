@@ -15,7 +15,9 @@ import _psutil_bsd
 import _psutil_posix
 import _psposix
 from psutil.error import AccessDenied, NoSuchProcess
+from psutil._common import *
 
+__all__ = base_module_namespace[:]
 
 # --- constants
 
@@ -80,14 +82,6 @@ def wrap_exceptions(method):
 class BSDProcess(object):
     """Wrapper class around underlying C implementation."""
 
-    _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
-    _cputimes_ntuple = namedtuple('cputimes', 'user system')
-    _thread_ntuple = namedtuple('thread', 'id user_time system_time')
-    _uids_ntuple = namedtuple('user', 'real effective saved')
-    _gids_ntuple = namedtuple('group', 'real effective saved')
-    _status_ntuple = namedtuple('status', 'code str')
-    _io_ntuple = namedtuple('io', 'read_count write_count read_bytes write_bytes')
-
     __slots__ = ["pid", "_process_name"]
 
     def __init__(self, pid):
@@ -118,25 +112,25 @@ class BSDProcess(object):
     def get_process_uids(self):
         """Return real, effective and saved user ids."""
         real, effective, saved = _psutil_bsd.get_process_uids(self.pid)
-        return self._uids_ntuple(real, effective, saved)
+        return ntuple_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_process_gids(self):
         """Return real, effective and saved group ids."""
         real, effective, saved = _psutil_bsd.get_process_gids(self.pid)
-        return self._gids_ntuple(real, effective, saved)
+        return ntuple_gids(real, effective, saved)
 
     @wrap_exceptions
     def get_cpu_times(self):
         """return a tuple containing process user/kernel time."""
         user, system = _psutil_bsd.get_cpu_times(self.pid)
-        return self._cputimes_ntuple(user, system)
+        return ntuple_cputimes(user, system)
 
     @wrap_exceptions
     def get_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms = _psutil_bsd.get_memory_info(self.pid)
-        return self._meminfo_ntuple(rss, vms)
+        return ntuple_meminfo(rss, vms)
 
     @wrap_exceptions
     def get_process_create_time(self):
@@ -155,7 +149,7 @@ class BSDProcess(object):
         rawlist = _psutil_bsd.get_process_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = self._thread_ntuple(thread_id, utime, stime)
+            ntuple = ntuple_thread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
 
@@ -187,12 +181,12 @@ class BSDProcess(object):
     @wrap_exceptions
     def get_process_status(self):
         code, ststr = _psutil_bsd.get_process_status(self.pid)
-        return self._status_ntuple(code, ststr)
+        return ntuple_status(code, ststr)
 
     @wrap_exceptions
     def get_process_io_counters(self):
         rc, wc, rb, wb = _psutil_bsd.get_process_io_counters(self.pid)
-        return self._io_ntuple(rc, wc, rb, wb)
+        return ntuple_io(rc, wc, rb, wb)
 
 
 PlatformProcess = BSDProcess

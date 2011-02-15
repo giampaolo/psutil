@@ -15,6 +15,9 @@ import _psutil_osx
 import _psutil_posix
 import _psposix
 from psutil.error import AccessDenied, NoSuchProcess
+from psutil._common import *
+
+__all__ = base_module_namespace[:]
 
 # --- constants
 
@@ -79,8 +82,6 @@ def wrap_exceptions(callable):
 class OSXProcess(object):
     """Wrapper class around underlying C implementation."""
 
-    _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
-    _cputimes_ntuple = namedtuple('cputimes', 'user system')
     __slots__ = ["pid", "_process_name"]
 
     def __init__(self, pid):
@@ -125,12 +126,12 @@ class OSXProcess(object):
     def get_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms = _psutil_osx.get_memory_info(self.pid)
-        return self._meminfo_ntuple(rss, vms)
+        return ntuple_meminfo(rss, vms)
 
     @wrap_exceptions
     def get_cpu_times(self):
         user, system = _psutil_osx.get_cpu_times(self.pid)
-        return self._cputimes_ntuple(user, system)
+        return ntuple_cputimes(user, system)
 
     @wrap_exceptions
     def get_process_create_time(self):
