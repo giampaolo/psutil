@@ -18,6 +18,15 @@ except ImportError:
 
 import _psutil_mswindows
 from psutil.error import AccessDenied, NoSuchProcess
+from psutil._common import *
+
+# Windows specific extended namespace
+__all__ = base_module_namespace[:]
+__all__.extend(["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
+                "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
+                "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS"
+               ])
+
 
 # --- module level constants (gets pushed up to psutil module)
 
@@ -95,13 +104,6 @@ def wrap_exceptions(callable):
 class WindowsProcess(object):
     """Wrapper class around underlying C implementation."""
 
-    _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
-    _cputimes_ntuple = namedtuple('cputimes', 'user system')
-    _openfile_ntuple = namedtuple('openfile', 'path fd')
-    _connection_ntuple = namedtuple('connection', 'fd family type local_address '
-                                                  'remote_address status')
-    _thread_ntuple = namedtuple('thread', 'id user_time system_time')
-    _io_ntuple = namedtuple('io', 'read_count write_count read_bytes write_bytes')
     __slots__ = ["pid", "_process_name"]
 
     def __init__(self, pid):
@@ -148,9 +150,9 @@ class WindowsProcess(object):
         """Returns a tuple or RSS/VMS memory usage in bytes."""
         # special case for 0 (kernel processes) PID
         if self.pid == 0:
-            return self._meminfo_ntuple(0, 0)
+            return ntuple_meminfo(0, 0)
         rss, vms = _psutil_mswindows.get_memory_info(self.pid)
-        return self._meminfo_ntuple(rss, vms)
+        return ntuple_meminfo(rss, vms)
 
     @wrap_exceptions
     def kill_process(self):
@@ -183,14 +185,14 @@ class WindowsProcess(object):
         rawlist = _psutil_mswindows.get_process_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = self._thread_ntuple(thread_id, utime, stime)
+            ntuple = ntuple_thread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
 
     @wrap_exceptions
     def get_cpu_times(self):
         user, system = _psutil_mswindows.get_process_cpu_times(self.pid)
-        return self._cputimes_ntuple(user, system)
+        return ntuple_cputimes(user, system)
 
     @wrap_exceptions
     def suspend_process(self):
@@ -227,14 +229,14 @@ class WindowsProcess(object):
                 driveletter = _psutil_mswindows._QueryDosDevice(rawdrive)
                 file = file.replace(rawdrive, driveletter)
                 if os.path.isfile(file) and file not in retlist:
-                    ntuple = self._openfile_ntuple(file, -1)
+                    ntuple = ntuple_openfile(file, -1)
                     retlist.append(ntuple)
         return retlist
 
     @wrap_exceptions
     def get_connections(self):
         retlist = _psutil_mswindows.get_process_connections(self.pid)
-        return [self._connection_ntuple(*conn) for conn in retlist]
+        return [ntuple_connection(*conn) for conn in retlist]
 
     @wrap_exceptions
     def get_process_nice(self):
@@ -247,7 +249,7 @@ class WindowsProcess(object):
     @wrap_exceptions
     def get_process_io_counters(self):
         rc, wc, rb, wb =_psutil_mswindows.get_process_io_counters(self.pid)
-        return self._io_ntuple(rc, wc, rb, wb)
+        return ntuple_io(rc, wc, rb, wb)
 
 
 PlatformProcess = WindowsProcess
