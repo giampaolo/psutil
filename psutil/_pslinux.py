@@ -3,18 +3,6 @@
 # $Id$
 #
 
-__all__ = [
-    # constants
-    "NUM_CPUS", "TOTAL_PHYMEM", "BOOT_TIME",
-    "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE", "IOPRIO_CLASS_IDLE",
-    # classes
-    "PlatformProcess",
-    # functions
-    "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem",
-    "used_virtmem", "get_system_cpu_times", "pid_exists", "get_pid_list",
-    "phymem_buffers", "cached_phymem",
-    ]
-
 import os
 import errno
 import socket
@@ -31,6 +19,14 @@ import _psutil_posix
 import _psutil_linux
 from psutil import _psposix
 from psutil.error import AccessDenied, NoSuchProcess
+from psutil._common import *
+
+# Linux specific extended namespace
+__all__ = base_module_namespace[:]
+__all__.extend([
+    "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE", "IOPRIO_CLASS_IDLE",
+    "phymem_buffers", "cached_phymem",
+    ])
 
 
 def _get_boot_time():
@@ -148,7 +144,6 @@ def phymem_buffers():
             f.close()
             return int(line.split()[1]) * 1024
 
-_cputimes_ntuple = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
 def get_system_cpu_times():
     """Return a dict representing the following CPU times:
     user, nice, system, idle, iowait, irq, softirq.
@@ -159,7 +154,7 @@ def get_system_cpu_times():
 
     values = values[1:8]
     values = tuple([float(x) / _CLOCK_TICKS for x in values])
-    return _cputimes_ntuple(*values[:7])
+    return ntuple_sys_cputimes(*values[:7])
 
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""
@@ -196,17 +191,6 @@ def wrap_exceptions(callable):
 
 class LinuxProcess(object):
     """Linux process implementation."""
-
-    _meminfo_ntuple = namedtuple('meminfo', 'rss vms')
-    _cputimes_ntuple = namedtuple('cputimes', 'user system')
-    _openfile_ntuple = namedtuple('openfile', 'path fd')
-    _connection_ntuple = namedtuple('connection', 'fd family type local_address '
-                                                  'remote_address status')
-    _thread_ntuple = namedtuple('thread', 'id user_time system_time')
-    _uids_ntuple = namedtuple('user', 'real effective saved')
-    _gids_ntuple = namedtuple('group', 'real effective saved')
-    _io_ntuple = namedtuple('io', 'read_count write_count read_bytes write_bytes')
-    _ionice_ntuple = namedtuple('ionice', 'ioclass iodata')
 
     __slots__ = ["pid", "_process_name"]
 
@@ -273,7 +257,7 @@ class LinuxProcess(object):
     def get_process_io_counters(self):
         # special case for 0 (kernel process) PID
         if self.pid == 0:
-            return self._io_ntuple(0, 0, 0, 0)
+            return ntuple_io(0, 0, 0, 0)
         f = open("/proc/%s/io" % self.pid)
         for line in f:
             if line.startswith("rchar"):
@@ -284,13 +268,13 @@ class LinuxProcess(object):
                 read_bytes = int(line.split()[1])
             elif line.startswith("write_bytes"):
                 write_bytes = int(line.split()[1])
-        return self._io_ntuple(read_count, write_count, read_bytes, write_bytes)
+        return ntuple_io(read_count, write_count, read_bytes, write_bytes)
 
     @wrap_exceptions
     def get_cpu_times(self):
         # special case for 0 (kernel process) PID
         if self.pid == 0:
-            return self._cputimes_ntuple(0.0, 0.0)
+            return ntuple_cputimes(0.0, 0.0)
         f = open("/proc/%s/stat" % self.pid)
         st = f.read().strip()
         f.close()
@@ -299,7 +283,7 @@ class LinuxProcess(object):
         values = st.split(' ')
         utime = float(values[11]) / _CLOCK_TICKS
         stime = float(values[12]) / _CLOCK_TICKS
-        return self._cputimes_ntuple(utime, stime)
+        return ntuple_cputimes(utime, stime)
 
     @wrap_exceptions
     def process_wait(self):
@@ -327,7 +311,7 @@ class LinuxProcess(object):
     def get_memory_info(self):
         # special case for 0 (kernel processes) PID
         if self.pid == 0:
-            return self._meminfo_ntuple(0, 0)
+            return ntuple_meminfo(0, 0)
         f = open("/proc/%s/status" % self.pid)
         virtual_size = 0
         resident_size = 0
@@ -340,7 +324,7 @@ class LinuxProcess(object):
                 resident_size = int(line.split()[1]) * 1024
                 break
         f.close()
-        return self._meminfo_ntuple(resident_size, virtual_size)
+        return ntuple_meminfo(resident_size, virtual_size)
 
     @wrap_exceptions
     def get_process_cwd(self):
@@ -385,7 +369,7 @@ class LinuxProcess(object):
             values = st.split(' ')
             utime = float(values[11]) / _CLOCK_TICKS
             stime = float(values[12]) / _CLOCK_TICKS
-            ntuple = self._thread_ntuple(int(thread_id), utime, stime)
+            ntuple = ntuple_thread(int(thread_id), utime, stime)
             retlist.append(ntuple)
         return retlist
 
@@ -409,7 +393,7 @@ class LinuxProcess(object):
         @wrap_exceptions
         def get_process_ionice(self):
             ioclass, iodata = _psutil_linux.ioprio_get(self.pid)
-            return self._ionice_ntuple(ioclass, iodata)
+            return ntuple_ionice(ioclass, iodata)
 
         @wrap_exceptions
         def set_process_ionice(self, ioclass, iodata):
@@ -468,7 +452,7 @@ class LinuxProcess(object):
                 if file == "[]":
                     continue
                 if os.path.isfile(file) and not file in retlist:
-                    ntuple = self._openfile_ntuple(file, int(fd))
+                    ntuple = ntuple_openfile(file, int(fd))
                     retlist.append(ntuple)
         return retlist
 
@@ -514,8 +498,8 @@ class LinuxProcess(object):
                     else:
                         status = ""
                     fd = int(inodes[inode])
-                    conn = self._connection_ntuple(fd, family, _type, laddr,
-                                                   raddr, status)
+                    conn = ntuple_connection(fd, family, _type, laddr,
+                                             raddr, status)
                     retlist.append(conn)
             f.close()
             return retlist
@@ -546,24 +530,24 @@ class LinuxProcess(object):
     @wrap_exceptions
     def get_process_uids(self):
         if self.pid == 0:
-            return self._uids_ntuple(0, 0, 0)
+            return ntuple_uids(0, 0, 0)
         f = open("/proc/%s/status" % self.pid)
         for line in f:
             if line.startswith('Uid:'):
                 f.close()
                 _, real, effective, saved, fs = line.split()
-                return self._uids_ntuple(int(real), int(effective), int(saved))
+                return ntuple_uids(int(real), int(effective), int(saved))
 
     @wrap_exceptions
     def get_process_gids(self):
         if self.pid == 0:
-            return self._uids_ntuple(0, 0, 0)
+            return ntuple_uids(0, 0, 0)
         f = open("/proc/%s/status" % self.pid)
         for line in f:
             if line.startswith('Gid:'):
                 f.close()
                 _, real, effective, saved, fs = line.split()
-                return self._gids_ntuple(int(real), int(effective), int(saved))
+                return ntuple_gids(int(real), int(effective), int(saved))
 
     @staticmethod
     def _decode_address(addr, family):
@@ -603,3 +587,4 @@ class LinuxProcess(object):
         return (ip, port)
 
 PlatformProcess = LinuxProcess
+
