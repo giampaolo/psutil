@@ -188,7 +188,7 @@ class Process(object):
 
     @nice.setter
     def nice(self, value):
-        # invoked on "p.nice = n", change process niceness
+        # invoked on "p.nice = num"; change process niceness
         return self._platform_impl.set_process_nice(value)
 
     if os.name == 'posix':
@@ -209,18 +209,18 @@ class Process(object):
 
     @property
     def uid(self):
-        """The real user id of the current process."""
-        msg = "'uid' property is deprecated; use 'uids.real' instead"
-        warnings.warn(msg, DeprecationWarning)
+        """The real user id of the current process (deprecated)."""
+        warnings.warn("'uid' property is deprecated; use 'uids.real' instead",
+                      DeprecationWarning)
         if os.name != 'posix':
             return -1
         return self.uids.real
 
     @property
     def gid(self):
-        """The real group id of the current process."""
-        msg = "'uid' property is deprecated; use 'gids.real' instead"
-        warnings.warn(msg, DeprecationWarning)
+        """The real group id of the current process (deprecated)."""
+        warnings.warn("'gid' property is deprecated; use 'uids.real' instead",
+                      DeprecationWarning)
         if os.name != 'posix':
             return -1
         return self.gids.real
@@ -232,11 +232,10 @@ class Process(object):
         """
         if os.name == 'posix':
             if pwd is None:
-                # might happen on compiled-from-sources python
+                # might happen if python was installed from sources
                 raise ImportError("requires pwd module shipped with standard python")
             return pwd.getpwuid(self.uids.real).pw_name
         else:
-            # Windows; we only have a unique username
             return self._platform_impl.get_process_username()
 
     @property
@@ -351,8 +350,7 @@ class Process(object):
 
     def get_cpu_times(self):
         """Return a tuple whose values are process CPU user and system
-        time.  These are the same first two values that os.times()
-        returns for the current process.
+        times. The same as os.times() but per-process.
         """
         return self._platform_impl.get_cpu_times()
 
@@ -379,15 +377,15 @@ class Process(object):
 
     def get_open_files(self):
         """Return files opened by process as a list of namedtuples
-        including absolute file name and file descriptor.
+        including absolute file name and file descriptor number.
         """
         return self._platform_impl.get_open_files()
 
     def get_connections(self):
         """Return TCP and UPD connections opened by process as a list
-        of namedtuple/s.
-        For third party processes (!= os.getpid()) results can differ
-        depending on user privileges.
+        of namedtuples.
+        On BSD and OSX results for third party processes (!= os.getpid())
+        can differ depending on user privileges.
         """
         return self._platform_impl.get_connections()
 
@@ -401,12 +399,17 @@ class Process(object):
         except NoSuchProcess:
             return False
 
-    def send_signal(self, sig):
-        """Send a signal to process (see signal module constants).
-        On Windows only SIGTERM is valid and is treated as an alias
-        for kill().
+    def wait(self):
+        """Wait for process to terminate and, if process is a children
+        of the current one, also return its exit code, else None.
+        If process is already gone return immediately instead of raising
+        NoSuchProcess exception.
         """
-        # safety measure in case the current process has been killed in
+        return self._platform_impl.process_wait()
+
+    def send_signal(self, sig):
+        """Send a signal to process (see signal module constants)."""
+        # safety measure in case the current process is gone in
         # meantime and the kernel reused its PID
         if not self.is_running():
             name = self._platform_impl._process_name
@@ -422,44 +425,22 @@ class Process(object):
                     raise AccessDenied(self.pid, name)
                 raise
         else:
-            if sig == signal.SIGTERM:
+            if sig in (signal.SIGTERM, signal.SIGKILL):
                 self._platform_impl.kill_process()
+            elif sig == signal.SIGSTOP:
+                self._platform_impl.suspend_process()
+            elif sig == signal.SIGCONT:
+                self._platform_impl.resume_process()
             else:
-                raise ValueError("only SIGTERM is supported on Windows")
+                raise ValueError("this signal is not supported on Windows")
 
     def suspend(self):
         """Suspend process execution."""
-        # safety measure in case the current process has been killed in
-        # meantime and the kernel reused its PID
-        if not self.is_running():
-            name = self._platform_impl._process_name
-            raise NoSuchProcess(self.pid, name)
-        # windows
-        if hasattr(self._platform_impl, "suspend_process"):
-            self._platform_impl.suspend_process()
-        else:
-            # posix
-            self.send_signal(signal.SIGSTOP)
+        self.send_signal(signal.SIGSTOP)
 
     def resume(self):
         """Resume process execution."""
-        # safety measure in case the current process has been killed in
-        # meantime and the kernel reused its PID
-        if not self.is_running():
-            name = self._platform_impl._process_name
-            raise NoSuchProcess(self.pid, name)
-        # windows
-        if hasattr(self._platform_impl, "resume_process"):
-            self._platform_impl.resume_process()
-        else:
-            # posix
-            self.send_signal(signal.SIGCONT)
-
-    def wait(self):
-        """Wait for process to terminate and, if process is a children
-        of the current one also return its exit code, else None.
-        """
-        return self._platform_impl.process_wait()
+        self.send_signal(signal.SIGCONT)
 
     def terminate(self):
         """Terminate the process with SIGTERM.
@@ -469,15 +450,7 @@ class Process(object):
 
     def kill(self):
         """Kill the current process."""
-        # safety measure in case the current process has been killed in
-        # meantime and the kernel reused its PID
-        if not self.is_running():
-            name = self._platform_impl._process_name
-            raise NoSuchProcess(self.pid, name)
-        if os.name == 'posix':
-            self.send_signal(signal.SIGKILL)
-        else:
-            self._platform_impl.kill_process()
+        self.send_signal(signal.SIGKILL)
 
 
 def process_iter():
@@ -485,8 +458,6 @@ def process_iter():
     running processes on the local machine.
     """
     pids = get_pid_list()
-    # for each PID, create a proxyied Process object
-    # it will lazy init it's name and path later if required
     for pid in pids:
         try:
             yield Process(pid)
