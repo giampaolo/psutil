@@ -400,17 +400,12 @@ class Process(object):
         except NoSuchProcess:
             return False
 
-    def wait(self):
-        """Wait for process to terminate and, if process is a children
-        of the current one, also return its exit code, else None.
-        If process is already gone return immediately instead of raising
-        NoSuchProcess exception.
-        """
-        return self._platform_impl.process_wait()
-
     def send_signal(self, sig):
-        """Send a signal to process (see signal module constants)."""
-        # safety measure in case the current process is gone in
+        """Send a signal to process (see signal module constants).
+        On Windows only SIGTERM is valid and is treated as an alias
+        for kill().
+        """
+        # safety measure in case the current process has been killed in
         # meantime and the kernel reused its PID
         if not self.is_running():
             name = self._platform_impl._process_name
@@ -426,22 +421,38 @@ class Process(object):
                     raise AccessDenied(self.pid, name)
                 raise
         else:
-            if sig in (signal.SIGTERM, signal.SIGKILL):
+            if sig == signal.SIGTERM:
                 self._platform_impl.kill_process()
-            elif sig == signal.SIGSTOP:
-                self._platform_impl.suspend_process()
-            elif sig == signal.SIGCONT:
-                self._platform_impl.resume_process()
             else:
-                raise ValueError("this signal is not supported on Windows")
+                raise ValueError("only SIGTERM is supported on Windows")
 
     def suspend(self):
         """Suspend process execution."""
-        self.send_signal(signal.SIGSTOP)
+        # safety measure in case the current process has been killed in
+        # meantime and the kernel reused its PID
+        if not self.is_running():
+            name = self._platform_impl._process_name
+            raise NoSuchProcess(self.pid, name)
+        # windows
+        if hasattr(self._platform_impl, "suspend_process"):
+            self._platform_impl.suspend_process()
+        else:
+            # posix
+            self.send_signal(signal.SIGSTOP)
 
     def resume(self):
         """Resume process execution."""
-        self.send_signal(signal.SIGCONT)
+        # safety measure in case the current process has been killed in
+        # meantime and the kernel reused its PID
+        if not self.is_running():
+            name = self._platform_impl._process_name
+            raise NoSuchProcess(self.pid, name)
+        # windows
+        if hasattr(self._platform_impl, "resume_process"):
+            self._platform_impl.resume_process()
+        else:
+            # posix
+            self.send_signal(signal.SIGCONT)
 
     def terminate(self):
         """Terminate the process with SIGTERM.
@@ -451,7 +462,21 @@ class Process(object):
 
     def kill(self):
         """Kill the current process."""
-        self.send_signal(signal.SIGKILL)
+        # safety measure in case the current process has been killed in
+        # meantime and the kernel reused its PID
+        if not self.is_running():
+            name = self._platform_impl._process_name
+            raise NoSuchProcess(self.pid, name)
+        if os.name == 'posix':
+            self.send_signal(signal.SIGKILL)
+        else:
+            self._platform_impl.kill_process()
+
+    def wait(self):
+        """Wait for process to terminate and, if process is a children
+        of the current one also return its exit code, else None.
+        """
+        return self._platform_impl.process_wait()
 
 
 class Popen(Process):
