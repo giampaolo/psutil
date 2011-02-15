@@ -16,7 +16,7 @@ __all__ = [
     # constants
     "NUM_CPUS", "TOTAL_PHYMEM", "BOOT_TIME", "version_info", "__version__",
     # classes
-    "Process",
+    "Process", "Popen",
     # functions
     "test", "pid_exists", "get_pid_list", "process_iter", "get_process_list",
     "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem",
@@ -29,6 +29,7 @@ import time
 import signal
 import warnings
 import errno
+import subprocess
 try:
     import pwd
 except ImportError:
@@ -451,6 +452,50 @@ class Process(object):
     def kill(self):
         """Kill the current process."""
         self.send_signal(signal.SIGKILL)
+
+
+class Popen(Process):
+    """A more convenient interface to stdlib subprocess module.
+    It starts a sub process and deals with it exactly as when using
+    subprocess.Popen class but in addition also provides all the
+    property and methods of psutil.Process class in a unique interface:
+
+      >>> import psutil
+      >>> from subprocess import PIPE
+      >>> p = psutil.Popen(["/usr/bin/python", "-c", "print 'hi'"], stdout=PIPE)
+      >>> p.name
+      'python'
+      >>> p.uids
+      user(real=1000, effective=1000, saved=1000)
+      >>> p.username
+      'giampaolo'
+      >>> p.communicate()
+      ('hi\n', None)
+      >>>
+
+    For method names common to both classes such as kill() and terminate(),
+    psutil.Process implementation takes precedence.
+
+    For a complete documentation refers to:
+    http://docs.python.org/library/subprocess.html
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.__subproc = subprocess.Popen(*args, **kwargs)
+        Process.__init__(self, self.__subproc.pid)
+
+    def __dir__(self):
+        return list(set(dir(Popen) + dir(subprocess.Popen)))
+
+    def __getattribute__(self, name):
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError:
+            try:
+                return object.__getattribute__(self.__subproc, name)
+            except AttributeError:
+                raise AttributeError("%s instance has no attribute '%s'"
+                                      %(self.__class__.__name__, name))
 
 
 def process_iter():

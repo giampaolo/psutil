@@ -1169,6 +1169,20 @@ class TestCase(unittest.TestCase):
         self.assertTrue(0 in psutil.get_pid_list())
         self.assertTrue(psutil.pid_exists(0))
 
+    def test_Popen(self):
+        # Popen class test
+        cmd = [PYTHON, "-c", "import time; time.sleep(3600);"]
+        proc = psutil.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            proc.name
+            proc.stdin
+            self.assertTrue(hasattr(proc, 'name'))
+            self.assertTrue(hasattr(proc, 'stdin'))
+            self.assertRaises(AttributeError, getattr, proc, 'foo')
+        finally:
+            proc.kill()
+            proc.wait()
+
 
 if hasattr(os, 'getuid'):
     class LimitedUserTestCase(TestCase):

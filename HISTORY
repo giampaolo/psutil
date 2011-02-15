@@ -14,6 +14,8 @@ NEW FEATURES
  * Issue 140: system boot time.
  * Issue 142: per-process get and set niceness (priority).
  * Issue 147: per-process I/O nice (priority) - Linux only.
+ * Issue 148: psutil.Popen class which tidies up subprocess.Popen and
+   psutil.Process in a unique interface.
 
 BUGFIXES
 
