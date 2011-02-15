@@ -7,6 +7,32 @@
 
 from psutil._compat import namedtuple
 
+class constant(int):
+    """A constant type; overrides base int to provide a useful name on str()."""
+
+    def __new__(cls, value, name, doc=None):
+        inst = super(constant, cls).__new__(cls, value)
+        inst._name = name
+        if doc is not None:
+            inst.__doc__ = doc
+        return inst
+
+    def __str__(self):
+        return self._name
+
+STATUS_RUNNING = constant(0, "running")
+STATUS_IDLE = constant(1, "idle")
+STATUS_SLEEPING = constant(2, "sleeping")
+STATUS_DISK_SLEEP = constant(3, "disk sleeping")
+STATUS_STOPPED = constant(4, "stopped")
+STATUS_TRACING_STOP = constant(5, "tracing stop")
+STATUS_ZOMBIE = constant(6, "zombie")
+STATUS_DEAD = constant(7, "dead")
+STATUS_WAKING = constant(8, "waking")
+STATUS_LOCKED = constant(9, "locked")
+STATUS_WAITING = constant(10, "locked")
+
+
 # system
 ntuple_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
 

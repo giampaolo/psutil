@@ -74,6 +74,16 @@ def wrap_exceptions(method):
             raise
     return wrapper
 
+_status_map = {
+    _psutil_bsd.SSTOP : STATUS_STOPPED,
+    _psutil_bsd.SSLEEP : STATUS_SLEEPING,
+    _psutil_bsd.SRUN : STATUS_RUNNING,
+    _psutil_bsd.SIDL : STATUS_IDLE,
+    _psutil_bsd.SWAIT : STATUS_WAITING,
+    _psutil_bsd.SLOCK : STATUS_LOCKED,
+    _psutil_bsd.SZOMB : STATUS_ZOMBIE,
+}
+
 
 class BSDProcess(object):
     """Wrapper class around underlying C implementation."""
@@ -176,8 +186,10 @@ class BSDProcess(object):
 
     @wrap_exceptions
     def get_process_status(self):
-        code, ststr = _psutil_bsd.get_process_status(self.pid)
-        return ntuple_status(code, ststr)
+        code = _psutil_bsd.get_process_status(self.pid)
+        if code in _status_map:
+            return _status_map[code]
+        return constant(-1, "?")
 
     @wrap_exceptions
     def get_process_io_counters(self):

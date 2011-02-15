@@ -135,6 +135,14 @@ void init_psutil_bsd(void)
 #else
     PyObject *module = Py_InitModule("_psutil_bsd", PsutilMethods);
 #endif
+    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
+    PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
+    PyModule_AddIntConstant(module, "SRUN", SRUN);
+    PyModule_AddIntConstant(module, "SIDL", SIDL);
+    PyModule_AddIntConstant(module, "SWAIT", SWAIT);
+    PyModule_AddIntConstant(module, "SLOCK", SLOCK);
+    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
+
     if (module == NULL) {
         INITERROR;
     }
@@ -351,54 +359,15 @@ static PyObject*
 get_process_status(PyObject* self, PyObject* args)
 {
     long pid;
-    char code;
-    char *string;
     struct kinfo_proc kp;
-
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
     if (get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
-
-    code = kp.ki_stat;
-
-    /*
-     * These values are taken from /usr/src/bin/ps/print.c and adapted
-     * a little to match Linux fs/proc/array.c names.
-     * We expressively avoid to consider process flags (ki_flag),
-     * displayed as an additional letter in 'ps' STAT column.
-     */
-    switch (code) {
-        case SSTOP:
-            string = "stopped";
-            break;
-        case SSLEEP:
-            string = "sleeping";
-            break;
-        case SRUN:
-            string = "running";
-            break;
-        case SIDL:
-            string = "idle";
-            break;
-        case SWAIT:
-            string = "waking";
-            break;
-        case SLOCK:
-            string = "locked";
-            break;
-        case SZOMB:
-            string = "zombie";
-            break;
-        default:
-            string = '?';
-    }
-
-    return Py_BuildValue("(is)", (int)code, string);
+    return Py_BuildValue("i", (int)kp.ki_stat);
 }
-
 
 
 /*

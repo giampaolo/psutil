@@ -654,7 +654,7 @@ class TestCase(unittest.TestCase):
     def test_status(self):
         p = psutil.Process(os.getpid())
         self.assertEqual(p.status, psutil.STATUS_RUNNING)
-        self.assertEqual(psutil.status_str(psutil.STATUS_RUNNING), 'running')
+        self.assertEqual(str(p.status), "running")
 
     def test_username(self):
         sproc = get_test_subprocess()
@@ -962,6 +962,7 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         p.suspend()
         self.assertEqual(p.status, psutil.STATUS_STOPPED)
+        self.assertEqual(str(p.status), "stopped")
         p.resume()
         self.assertTrue(p.status != psutil.STATUS_STOPPED)
 

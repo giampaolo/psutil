@@ -14,7 +14,11 @@ __all__ = [
     # exceptions
     "Error", "NoSuchProcess", "AccessDenied",
     # constants
-    "NUM_CPUS", "TOTAL_PHYMEM", "BOOT_TIME", "version_info", "__version__",
+    "NUM_CPUS", "TOTAL_PHYMEM", "BOOT_TIME",
+    "version_info", "__version__",
+    "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
+    "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
+    "STATUS_WAKING", "STATUS_LOCKED",
     # classes
     "Process", "Popen",
     # functions
@@ -37,6 +41,10 @@ except ImportError:
 
 from psutil.error import Error, NoSuchProcess, AccessDenied
 from psutil._compat import property
+from psutil._common import (STATUS_RUNNING, STATUS_IDLE, STATUS_SLEEPING,
+                            STATUS_DISK_SLEEP, STATUS_STOPPED,
+                            STATUS_TRACING_STOP, STATUS_ZOMBIE, STATUS_DEAD,
+                            STATUS_WAKING, STATUS_LOCKED)
 
 # import the appropriate module for our platform only
 if sys.platform.lower().startswith("linux"):
@@ -57,18 +65,6 @@ elif sys.platform.lower().startswith("freebsd"):
 
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
-
-
-STATUS_RUNNING = 0
-STATUS_SLEEPING = 1
-STATUS_DISK_SLEEP = 2
-STATUS_STOPPED = 4
-STATUS_TRACING_STOP = 8
-STATUS_ZOMBIE = 16
-STATUS_DEAD = 32
-#STATUS_DEAD2 = 64
-STATUS_WAKEKILL = 128
-STATUS_WAKING = 256
 
 
 class Process(object):
@@ -595,16 +591,6 @@ def cpu_percent(interval=0.1):
     all_delta = t2_all - t1_all
     busy_perc = (busy_delta / all_delta) * 100
     return round(busy_perc, 1)
-
-
-_status_map = dict((v,k) for (k,v) in globals().iteritems() if k.startswith("STATUS_"))
-
-def status_str(code):
-    """Utility function to convert a process STATUS_* code returned by
-    Process.status into a human readable string.
-    """
-    name = _status_map.get(code, '_?')
-    return name.split('_')[1].lower()
 
 
 def test():
