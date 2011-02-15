@@ -164,6 +164,18 @@ def pid_exists(pid):
     return _psposix.pid_exists(pid)
 
 
+# taken from /fs/proc/array.c
+_status_map = {"R" : STATUS_RUNNING,
+               "S" : STATUS_SLEEPING,
+               "D" : STATUS_DISK_SLEEP,
+               "T" : STATUS_STOPPED,
+               "t" : STATUS_TRACING_STOP,
+               "Z" : STATUS_ZOMBIE,
+               "X" : STATUS_DEAD,
+               "x" : STATUS_DEAD,
+               "K" : STATUS_WAKE_KILL,
+               "W" : STATUS_WAKING}
+
 # --- decorators
 
 def wrap_exceptions(callable):
@@ -413,17 +425,6 @@ class LinuxProcess(object):
 
     @wrap_exceptions
     def get_process_status(self):
-        # taken from /fs/proc/array.c
-        status_map = {"R" : 0,
-                      "S" : 1,
-                      "D" : 2,
-                      "T" : 4,
-                      "t" : 8,
-                      "Z" : 16,
-                      "X" : 32,
-                      "x" : 64,
-                      "K" : 128,
-                      "W" : 256}
         if self.pid == 0:
             return 0
         f = open("/proc/%s/status" % self.pid)
@@ -431,7 +432,9 @@ class LinuxProcess(object):
             if line.startswith("State:"):
                 f.close()
                 letter = line.split()[1]
-                return status_map[letter]
+                if letter in _status_map:
+                    return _status_map[letter]
+                return constant(-1, '?')
 
     @wrap_exceptions
     def get_open_files(self):

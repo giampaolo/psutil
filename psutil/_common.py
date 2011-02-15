@@ -21,16 +21,17 @@ class constant(int):
         return self._name
 
 STATUS_RUNNING = constant(0, "running")
-STATUS_IDLE = constant(1, "idle")
-STATUS_SLEEPING = constant(2, "sleeping")
-STATUS_DISK_SLEEP = constant(3, "disk sleeping")
-STATUS_STOPPED = constant(4, "stopped")
-STATUS_TRACING_STOP = constant(5, "tracing stop")
-STATUS_ZOMBIE = constant(6, "zombie")
-STATUS_DEAD = constant(7, "dead")
+STATUS_SLEEPING = constant(1, "sleeping")
+STATUS_DISK_SLEEP = constant(2, "disk sleep")
+STATUS_STOPPED = constant(3, "stopped")
+STATUS_TRACING_STOP = constant(4, "tracing stop")
+STATUS_ZOMBIE = constant(5, "zombie")
+STATUS_DEAD = constant(6, "dead")
+STATUS_WAKE_KILL = constant(7, "wake kill")
 STATUS_WAKING = constant(8, "waking")
-STATUS_LOCKED = constant(9, "locked")
-STATUS_WAITING = constant(10, "locked")
+STATUS_IDLE = constant(9, "idle")  # BSD
+STATUS_LOCKED = constant(10, "locked")  # BSD
+STATUS_WAITING = constant(11, "waiting")  # BSD
 
 
 # system

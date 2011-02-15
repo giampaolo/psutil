@@ -655,6 +655,9 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(os.getpid())
         self.assertEqual(p.status, psutil.STATUS_RUNNING)
         self.assertEqual(str(p.status), "running")
+        for p in psutil.process_iter():
+            if str(p.status) == '?':
+                self.fail("invalid status for pid %d" % p.pid)
 
     def test_username(self):
         sproc = get_test_subprocess()
