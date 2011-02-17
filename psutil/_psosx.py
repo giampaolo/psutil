@@ -110,14 +110,15 @@ class OSXProcess(object):
         return _psutil_osx.get_process_ppid(self.pid)
 
     @wrap_exceptions
-    def get_process_uid(self):
-        """Return process real user id."""
-        return _psutil_osx.get_process_uid(self.pid)
+    def get_process_uids(self):
+        real, effective, saved = _psutil_osx.get_process_uids(self.pid)
+        return ntuple_uids(real, effective, saved)
+
 
     @wrap_exceptions
-    def get_process_gid(self):
-        """Return process real group id."""
-        return _psutil_osx.get_process_gid(self.pid)
+    def get_process_gids(self):
+        real, effective, saved = _psutil_osx.get_process_gids(self.pid)
+        return ntuple_gids(real, effective, saved)
 
     @wrap_exceptions
     def get_memory_info(self):

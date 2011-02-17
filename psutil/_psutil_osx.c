@@ -40,9 +40,9 @@ PsutilMethods[] =
         "Return process cmdline as a list of cmdline arguments"},
      {"get_process_ppid", get_process_ppid, METH_VARARGS,
         "Return process ppid as an integer"},
-     {"get_process_uid", get_process_uid, METH_VARARGS,
+     {"get_process_uids", get_process_uids, METH_VARARGS,
         "Return process real user id as an integer"},
-     {"get_process_gid", get_process_gid, METH_VARARGS,
+     {"get_process_gids", get_process_gids, METH_VARARGS,
         "Return process real group id as an integer"},
      {"get_cpu_times", get_cpu_times, METH_VARARGS,
            "Return tuple of user/kern time for the given PID"},
@@ -244,7 +244,7 @@ get_process_ppid(PyObject* self, PyObject* args)
  * Return process real uid from kinfo_proc as a Python integer.
  */
 static PyObject*
-get_process_uid(PyObject* self, PyObject* args)
+get_process_uids(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -254,7 +254,12 @@ get_process_uid(PyObject* self, PyObject* args)
     if (get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
-    return Py_BuildValue("l", (long)kp.kp_eproc.e_pcred.p_ruid);
+
+    // on OSX there's no such thing as effective user id, hence we
+    // return real uid instead
+    return Py_BuildValue("lll", (long)kp.kp_eproc.e_pcred.p_ruid,
+                                (long)kp.kp_eproc.e_pcred.p_ruid,
+                                (long)kp.kp_eproc.e_pcred.p_svuid);
 }
 
 
@@ -262,7 +267,7 @@ get_process_uid(PyObject* self, PyObject* args)
  * Return process real group id from ki_comm as a Python integer.
  */
 static PyObject*
-get_process_gid(PyObject* self, PyObject* args)
+get_process_gids(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -272,7 +277,11 @@ get_process_gid(PyObject* self, PyObject* args)
     if (get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
-    return Py_BuildValue("l", (long)kp.kp_eproc.e_pcred.p_rgid);
+    // on OSX there's no such thing as effective group id, hence we
+    // return real gid instead
+    return Py_BuildValue("lll", (long)kp.kp_eproc.e_pcred.p_rgid,
+                                (long)kp.kp_eproc.e_pcred.p_rgid,
+                                (long)kp.kp_eproc.e_pcred.p_svgid);
 }
 
 
