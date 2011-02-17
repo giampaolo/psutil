@@ -76,6 +76,14 @@ def wrap_exceptions(callable):
     return wrapper
 
 
+_status_map = {
+    _psutil_osx.SIDL : STATUS_IDLE,
+    _psutil_osx.SRUN : STATUS_RUNNING,
+    _psutil_osx.SSLEEP : STATUS_SLEEPING,
+    _psutil_osx.SSTOP : STATUS_STOPPED,
+    _psutil_osx.SZOMB : STATUS_ZOMBIE,
+}
+
 class OSXProcess(object):
     """Wrapper class around underlying C implementation."""
 
@@ -164,6 +172,13 @@ class OSXProcess(object):
     @wrap_exceptions
     def set_process_nice(self, value):
         return _psutil_posix.setpriority(self.pid, value)
+
+    @wrap_exceptions
+    def get_process_status(self):
+        code = _psutil_osx.get_process_status(self.pid)
+        if code in _status_map:
+            return _status_map[code]
+        return constant(-1, "?")
 
 
 PlatformProcess = OSXProcess

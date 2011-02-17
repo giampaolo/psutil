@@ -53,6 +53,8 @@ PsutilMethods[] =
          "Return a tuple of RSS/VMS memory information"},
      {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
          "Return number of threads used by process"},
+     {"get_process_status", get_process_status, METH_VARARGS,
+         "Return process status as an integer"},
 
      // --- system-related functions
 
@@ -135,6 +137,14 @@ init_psutil_osx(void)
 #else
     PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
 #endif
+    // process status constants, defined in:
+    // http://fxr.watson.org/fxr/source/bsd/sys/proc.h?v=xnu-792.6.70#L149
+    PyModule_AddIntConstant(module, "SIDL", SIDL);
+    PyModule_AddIntConstant(module, "SRUN", SRUN);
+    PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
+    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
+    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
+
     if (module == NULL) {
         INITERROR;
     }
@@ -671,5 +681,23 @@ get_system_boot_time(PyObject* self, PyObject* args)
     }
     boot_time = result.tv_sec;
     return Py_BuildValue("f", (float)boot_time);
+}
+
+
+/*
+ * Return process status as a Python integer.
+ */
+static PyObject*
+get_process_status(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
+        return NULL;
+    }
+    return Py_BuildValue("i", (int)kp.kp_proc.p_stat);
 }
 
