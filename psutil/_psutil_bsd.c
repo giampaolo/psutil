@@ -21,143 +21,6 @@
 #include "_psutil_common.h"
 #include "arch/bsd/process_info.h"
 
-/*
- * define the psutil C module methods and initialize the module.
- */
-static PyMethodDef
-PsutilMethods[] =
-{
-     // --- per-process functions
-
-     {"get_process_name", get_process_name, METH_VARARGS,
-        "Return process name"},
-     {"get_process_exe", get_process_exe, METH_VARARGS,
-        "Return process pathname executable"},
-     {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
-        "Return process cmdline as a list of cmdline arguments"},
-     {"get_process_ppid", get_process_ppid, METH_VARARGS,
-        "Return process ppid as an integer"},
-     {"get_process_uids", get_process_uids, METH_VARARGS,
-        "Return process real effective and saved user ids as a Python tuple"},
-     {"get_process_gids", get_process_gids, METH_VARARGS,
-        "Return process real effective and saved group ids as a Python tuple"},
-     {"get_cpu_times", get_cpu_times, METH_VARARGS,
-           "Return tuple of user/kern time for the given PID"},
-     {"get_process_create_time", get_process_create_time, METH_VARARGS,
-         "Return a float indicating the process create time expressed in "
-         "seconds since the epoch"},
-     {"get_memory_info", get_memory_info, METH_VARARGS,
-         "Return a tuple of RSS/VMS memory information"},
-     {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
-         "Return number of threads used by process"},
-     {"get_process_threads", get_process_threads, METH_VARARGS,
-         "Return process threads"},
-     {"get_process_status", get_process_status, METH_VARARGS,
-         "Return process status as an integer"},
-     {"get_process_io_counters", get_process_io_counters, METH_VARARGS,
-         "Return process IO counters"},
-
-
-     // --- system-related functions
-
-     {"get_pid_list", get_pid_list, METH_VARARGS,
-         "Returns a list of PIDs currently running on the system"},
-     {"get_num_cpus", get_num_cpus, METH_VARARGS,
-           "Return number of CPUs on the system"},
-     {"get_total_phymem", get_total_phymem, METH_VARARGS,
-         "Return the total amount of physical memory, in bytes"},
-     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
-         "Return the amount of available physical memory, in bytes"},
-     {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
-         "Return the total amount of virtual memory, in bytes"},
-     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
-         "Return the amount of available virtual memory, in bytes"},
-     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
-         "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
-     {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
-         "Return a float indicating the system boot time expressed in "
-         "seconds since the epoch"},
-
-     {NULL, NULL, 0, NULL}
-};
-
-struct module_state {
-    PyObject *error;
-};
-
-#if PY_MAJOR_VERSION >= 3
-#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
-#else
-#define GETSTATE(m) (&_state)
-static struct module_state _state;
-#endif
-
-#if PY_MAJOR_VERSION >= 3
-
-static int
-psutil_bsd_traverse(PyObject *m, visitproc visit, void *arg) {
-    Py_VISIT(GETSTATE(m)->error);
-    return 0;
-}
-
-static int
-psutil_bsd_clear(PyObject *m) {
-    Py_CLEAR(GETSTATE(m)->error);
-    return 0;
-}
-
-static struct PyModuleDef
-moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "psutil_bsd",
-        NULL,
-        sizeof(struct module_state),
-        PsutilMethods,
-        NULL,
-        psutil_bsd_traverse,
-        psutil_bsd_clear,
-        NULL
-};
-
-#define INITERROR return NULL
-
-PyObject *
-PyInit__psutil_bsd(void)
-
-#else
-#define INITERROR return
-
-void init_psutil_bsd(void)
-#endif
-{
-#if PY_MAJOR_VERSION >= 3
-    PyObject *module = PyModule_Create(&moduledef);
-#else
-    PyObject *module = Py_InitModule("_psutil_bsd", PsutilMethods);
-#endif
-    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
-    PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
-    PyModule_AddIntConstant(module, "SRUN", SRUN);
-    PyModule_AddIntConstant(module, "SIDL", SIDL);
-    PyModule_AddIntConstant(module, "SWAIT", SWAIT);
-    PyModule_AddIntConstant(module, "SLOCK", SLOCK);
-    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
-
-    if (module == NULL) {
-        INITERROR;
-    }
-    struct module_state *st = GETSTATE(module);
-
-    st->error = PyErr_NewException("_psutil_bsd.Error", NULL, NULL);
-    if (st->error == NULL) {
-        Py_DECREF(module);
-        INITERROR;
-    }
-#if PY_MAJOR_VERSION >= 3
-    return module;
-#endif
-}
-
 
 // convert a timeval struct to a double
 #define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -759,5 +622,143 @@ get_system_cpu_times(PyObject* self, PyObject* args)
                          (double)cpu_time[CP_IDLE] / CLOCKS_PER_SEC,
                          (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC
     );
+}
+
+
+/*
+ * define the psutil C module methods and initialize the module.
+ */
+static PyMethodDef
+PsutilMethods[] =
+{
+     // --- per-process functions
+
+     {"get_process_name", get_process_name, METH_VARARGS,
+        "Return process name"},
+     {"get_process_exe", get_process_exe, METH_VARARGS,
+        "Return process pathname executable"},
+     {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
+        "Return process cmdline as a list of cmdline arguments"},
+     {"get_process_ppid", get_process_ppid, METH_VARARGS,
+        "Return process ppid as an integer"},
+     {"get_process_uids", get_process_uids, METH_VARARGS,
+        "Return process real effective and saved user ids as a Python tuple"},
+     {"get_process_gids", get_process_gids, METH_VARARGS,
+        "Return process real effective and saved group ids as a Python tuple"},
+     {"get_cpu_times", get_cpu_times, METH_VARARGS,
+           "Return tuple of user/kern time for the given PID"},
+     {"get_process_create_time", get_process_create_time, METH_VARARGS,
+         "Return a float indicating the process create time expressed in "
+         "seconds since the epoch"},
+     {"get_memory_info", get_memory_info, METH_VARARGS,
+         "Return a tuple of RSS/VMS memory information"},
+     {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
+         "Return number of threads used by process"},
+     {"get_process_threads", get_process_threads, METH_VARARGS,
+         "Return process threads"},
+     {"get_process_status", get_process_status, METH_VARARGS,
+         "Return process status as an integer"},
+     {"get_process_io_counters", get_process_io_counters, METH_VARARGS,
+         "Return process IO counters"},
+
+
+     // --- system-related functions
+
+     {"get_pid_list", get_pid_list, METH_VARARGS,
+         "Returns a list of PIDs currently running on the system"},
+     {"get_num_cpus", get_num_cpus, METH_VARARGS,
+           "Return number of CPUs on the system"},
+     {"get_total_phymem", get_total_phymem, METH_VARARGS,
+         "Return the total amount of physical memory, in bytes"},
+     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
+         "Return the amount of available physical memory, in bytes"},
+     {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
+         "Return the total amount of virtual memory, in bytes"},
+     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
+         "Return the amount of available virtual memory, in bytes"},
+     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
+         "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
+     {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
+         "Return a float indicating the system boot time expressed in "
+         "seconds since the epoch"},
+
+     {NULL, NULL, 0, NULL}
+};
+
+struct module_state {
+    PyObject *error;
+};
+
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+
+static int
+psutil_bsd_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int
+psutil_bsd_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+static struct PyModuleDef
+moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "psutil_bsd",
+        NULL,
+        sizeof(struct module_state),
+        PsutilMethods,
+        NULL,
+        psutil_bsd_traverse,
+        psutil_bsd_clear,
+        NULL
+};
+
+#define INITERROR return NULL
+
+PyObject *
+PyInit__psutil_bsd(void)
+
+#else
+#define INITERROR return
+
+void init_psutil_bsd(void)
+#endif
+{
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule("_psutil_bsd", PsutilMethods);
+#endif
+    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
+    PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
+    PyModule_AddIntConstant(module, "SRUN", SRUN);
+    PyModule_AddIntConstant(module, "SIDL", SIDL);
+    PyModule_AddIntConstant(module, "SWAIT", SWAIT);
+    PyModule_AddIntConstant(module, "SLOCK", SLOCK);
+    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
+
+    if (module == NULL) {
+        INITERROR;
+    }
+    struct module_state *st = GETSTATE(module);
+
+    st->error = PyErr_NewException("_psutil_bsd.Error", NULL, NULL);
+    if (st->error == NULL) {
+        Py_DECREF(module);
+        INITERROR;
+    }
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
 }
 

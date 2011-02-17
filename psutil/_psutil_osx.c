@@ -27,144 +27,6 @@
 
 
 /*
- * define the psutil C module methods and initialize the module.
- */
-static PyMethodDef
-PsutilMethods[] =
-{
-     // --- per-process functions
-
-     {"get_process_name", get_process_name, METH_VARARGS,
-        "Return process name"},
-     {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
-        "Return process cmdline as a list of cmdline arguments"},
-     {"get_process_ppid", get_process_ppid, METH_VARARGS,
-        "Return process ppid as an integer"},
-     {"get_process_uids", get_process_uids, METH_VARARGS,
-        "Return process real user id as an integer"},
-     {"get_process_gids", get_process_gids, METH_VARARGS,
-        "Return process real group id as an integer"},
-     {"get_cpu_times", get_cpu_times, METH_VARARGS,
-           "Return tuple of user/kern time for the given PID"},
-     {"get_process_create_time", get_process_create_time, METH_VARARGS,
-         "Return a float indicating the process create time expressed in "
-         "seconds since the epoch"},
-     {"get_memory_info", get_memory_info, METH_VARARGS,
-         "Return a tuple of RSS/VMS memory information"},
-     {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
-         "Return number of threads used by process"},
-     {"get_process_status", get_process_status, METH_VARARGS,
-         "Return process status as an integer"},
-     {"get_process_threads", get_process_threads, METH_VARARGS,
-         "Return process threads as a list of tuples"},
-
-
-     // --- system-related functions
-
-     {"get_pid_list", get_pid_list, METH_VARARGS,
-         "Returns a list of PIDs currently running on the system"},
-     {"get_num_cpus", get_num_cpus, METH_VARARGS,
-           "Return number of CPUs on the system"},
-     {"get_total_phymem", get_total_phymem, METH_VARARGS,
-         "Return the total amount of physical memory, in bytes"},
-     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
-         "Return the amount of available physical memory, in bytes"},
-     {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
-         "Return the total amount of virtual memory, in bytes"},
-     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
-         "Return the amount of available virtual memory, in bytes"},
-     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
-         "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
-     {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
-         "Return a float indicating the system boot time expressed in "
-         "seconds since the epoch"},
-
-
-     {NULL, NULL, 0, NULL}
-};
-
-
-struct module_state {
-    PyObject *error;
-};
-
-#if PY_MAJOR_VERSION >= 3
-#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
-#else
-#define GETSTATE(m) (&_state)
-static struct module_state _state;
-#endif
-
-#if PY_MAJOR_VERSION >= 3
-
-static int
-psutil_osx_traverse(PyObject *m, visitproc visit, void *arg) {
-    Py_VISIT(GETSTATE(m)->error);
-    return 0;
-}
-
-static int
-psutil_osx_clear(PyObject *m) {
-    Py_CLEAR(GETSTATE(m)->error);
-    return 0;
-}
-
-
-static struct PyModuleDef
-moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "psutil_osx",
-    NULL,
-    sizeof(struct module_state),
-    PsutilMethods,
-    NULL,
-    psutil_osx_traverse,
-    psutil_osx_clear,
-    NULL
-};
-
-#define INITERROR return NULL
-
-PyObject *
-PyInit__psutil_osx(void)
-
-#else
-#define INITERROR return
-
-void
-init_psutil_osx(void)
-#endif
-{
-#if PY_MAJOR_VERSION >= 3
-    PyObject *module = PyModule_Create(&moduledef);
-#else
-    PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
-#endif
-    // process status constants, defined in:
-    // http://fxr.watson.org/fxr/source/bsd/sys/proc.h?v=xnu-792.6.70#L149
-    PyModule_AddIntConstant(module, "SIDL", SIDL);
-    PyModule_AddIntConstant(module, "SRUN", SRUN);
-    PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
-    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
-    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
-
-    if (module == NULL) {
-        INITERROR;
-    }
-    struct module_state *st = GETSTATE(module);
-
-    st->error = PyErr_NewException("_psutil_osx.Error", NULL, NULL);
-    if (st->error == NULL) {
-        Py_DECREF(module);
-        INITERROR;
-    }
-#if PY_MAJOR_VERSION >= 3
-    return module;
-#endif
-}
-
-
-/*
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject*
@@ -328,45 +190,44 @@ get_cpu_times(PyObject* self, PyObject* args)
     long pid;
     int err;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
-    task_port_t task;// = (task_port_t)NULL;
+    task_port_t task;  // = (task_port_t)NULL;
     time_value_t user_time, system_time;
     struct task_basic_info tasks_info;
     struct task_thread_times_info task_times;
 
-    // the argument passed should be a process id
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
 
-    /* task_for_pid() requires special privileges
+    /*  task_for_pid() requires special privileges
      * "This function can be called only if the process is owned by the
      * procmod group or if the caller is root."
-     * - http://developer.apple.com/documentation/MacOSX/Conceptual/universal_binary/universal_binary_tips/chapter_5_section_19.html
-     */
+     * - http://developer.apple.com/documentation/MacOSX/Conceptual/universal_binary/universal_binary_tips/chapter_5_section_19.html  */
     err = task_for_pid(mach_task_self(), pid, &task);
     if ( err == KERN_SUCCESS) {
         info_count = TASK_BASIC_INFO_COUNT;
         err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count);
         if (err != KERN_SUCCESS) {
-                if (err == 4) { // errcode 4 is "invalid argument" (access denied)
+                // errcode 4 is "invalid argument" (access denied)
+                if (err == 4) {
                     return AccessDenied();
                 }
 
-                //otherwise throw a runtime error with appropriate error code
-                return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu - %s (%i)",
-                       pid, mach_error_string(err), err);
-
+                // otherwise throw a runtime error with appropriate error code
+                return PyErr_Format(PyExc_RuntimeError,
+                                   "task_info(TASK_BASIC_INFO) failed");
         }
 
         info_count = TASK_THREAD_TIMES_INFO_COUNT;
-        err = task_info(task, TASK_THREAD_TIMES_INFO, (task_info_t)&task_times, &info_count);
+        err = task_info(task, TASK_THREAD_TIMES_INFO,
+                        (task_info_t)&task_times, &info_count);
         if (err != KERN_SUCCESS) {
-                if (err == 4) { // errcode 4 is "invalid argument" (access denied)
+                // errcode 4 is "invalid argument" (access denied)
+                if (err == 4) {
                     return AccessDenied();
                 }
-
-                return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_THREAD_TIMES_INFO) failed for pid %lu - %s (%i)",
-                        pid, mach_error_string(err), err);
+                return PyErr_Format(PyExc_RuntimeError,
+                                   "task_info(TASK_BASIC_INFO) failed");
         }
     }
 
@@ -374,7 +235,6 @@ get_cpu_times(PyObject* self, PyObject* args)
         if (! pid_exists(pid) ) {
             return NoSuchProcess();
         }
-
         // pid exists, so return AccessDenied error since task_for_pid() failed
         return AccessDenied();
     }
@@ -436,20 +296,19 @@ get_memory_info(PyObject* self, PyObject* args)
     /* task_for_pid() requires special privileges
      * "This function can be called only if the process is owned by the
      * procmod group or if the caller is root."
-     * - http://developer.apple.com/documentation/MacOSX/Conceptual/universal_binary/universal_binary_tips/chapter_5_section_19.html
-     */
+     * - http://developer.apple.com/documentation/MacOSX/Conceptual/universal_binary/universal_binary_tips/chapter_5_section_19.html */
     err = task_for_pid(mach_task_self(), pid, &task);
     if ( err == KERN_SUCCESS) {
         info_count = TASK_BASIC_INFO_COUNT;
         err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count);
         if (err != KERN_SUCCESS) {
-                if (err == 4) { // errcode 4 is "invalid argument" (access denied)
+                if (err == 4) {
+                    // errcode 4 is "invalid argument" (access denied)
                     return AccessDenied();
                 }
-
-                //otherwise throw a runtime error with appropriate error code
-                return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu - %s (%i)",
-                       pid, mach_error_string(err), err);
+                // otherwise throw a runtime error with appropriate error code
+                return PyErr_Format(PyExc_RuntimeError,
+                                    "task_info(TASK_BASIC_INFO) failed");
         }
 
         /* Issue #73 http://code.google.com/p/psutil/issues/detail?id=73
@@ -461,8 +320,9 @@ get_memory_info(PyObject* self, PyObject* args)
             (vm_region_info_t)&b_info, &info_count, &object_name);
         if (err == KERN_SUCCESS) {
             if (b_info.reserved && size == (SHARED_TEXT_REGION_SIZE) &&
-                tasks_info.virtual_size > (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE)) {
-                    tasks_info.virtual_size -= (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE);
+                tasks_info.virtual_size > (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE))
+            {
+                tasks_info.virtual_size -= (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE);
             }
         }
     }
@@ -509,13 +369,14 @@ get_process_num_threads(PyObject* self, PyObject* args)
         info_count = TASK_BASIC_INFO_COUNT;
         err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count);
         if (err != KERN_SUCCESS) {
-                if (err == 4) { // errcode 4 is "invalid argument" (access denied)
+                // errcode 4 is "invalid argument" (access denied)
+                if (err == 4) {
                     return AccessDenied();
                 }
 
-                //otherwise throw a runtime error with appropriate error code
-                return PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed for pid %lu - %s (%i)",
-                       pid, mach_error_string(err), err);
+                // otherwise throw a runtime error with appropriate error code
+                return PyErr_Format(PyExc_RuntimeError,
+                                    "task_info(TASK_BASIC_INFO) failed");
         }
 
         err = task_threads(task, &thread_list, &thread_count);
@@ -556,7 +417,6 @@ get_total_phymem(PyObject* self, PyObject* args)
         PyErr_SetFromErrno(0);
         return NULL;
     }
-
     return Py_BuildValue("L", total_phymem);
 }
 
@@ -650,13 +510,12 @@ get_system_cpu_times(PyObject* self, PyObject* args)
                 "Error in host_statistics(): %s", mach_error_string(error));
     }
 
-    //user, nice, system, idle, iowait, irqm, softirq
     return Py_BuildValue("(dddd)",
-                    (double)r_load.cpu_ticks[CPU_STATE_USER] / CLK_TCK,
-                    (double)r_load.cpu_ticks[CPU_STATE_NICE] / CLK_TCK,
-                    (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
-                    (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
-            );
+                         (double)r_load.cpu_ticks[CPU_STATE_USER] / CLK_TCK,
+                         (double)r_load.cpu_ticks[CPU_STATE_NICE] / CLK_TCK,
+                         (double)r_load.cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
+                         (double)r_load.cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
+                         );
 }
 
 
@@ -771,4 +630,141 @@ get_process_threads(PyObject* self, PyObject* args)
 
     return retList;
 }
+
+
+/*
+ * define the psutil C module methods and initialize the module.
+ */
+static PyMethodDef
+PsutilMethods[] =
+{
+     // --- per-process functions
+
+     {"get_process_name", get_process_name, METH_VARARGS,
+        "Return process name"},
+     {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
+        "Return process cmdline as a list of cmdline arguments"},
+     {"get_process_ppid", get_process_ppid, METH_VARARGS,
+        "Return process ppid as an integer"},
+     {"get_process_uids", get_process_uids, METH_VARARGS,
+        "Return process real user id as an integer"},
+     {"get_process_gids", get_process_gids, METH_VARARGS,
+        "Return process real group id as an integer"},
+     {"get_cpu_times", get_cpu_times, METH_VARARGS,
+           "Return tuple of user/kern time for the given PID"},
+     {"get_process_create_time", get_process_create_time, METH_VARARGS,
+         "Return a float indicating the process create time expressed in "
+         "seconds since the epoch"},
+     {"get_memory_info", get_memory_info, METH_VARARGS,
+         "Return a tuple of RSS/VMS memory information"},
+     {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
+         "Return number of threads used by process"},
+     {"get_process_status", get_process_status, METH_VARARGS,
+         "Return process status as an integer"},
+     {"get_process_threads", get_process_threads, METH_VARARGS,
+         "Return process threads as a list of tuples"},
+
+     // --- system-related functions
+
+     {"get_pid_list", get_pid_list, METH_VARARGS,
+         "Returns a list of PIDs currently running on the system"},
+     {"get_num_cpus", get_num_cpus, METH_VARARGS,
+           "Return number of CPUs on the system"},
+     {"get_total_phymem", get_total_phymem, METH_VARARGS,
+         "Return the total amount of physical memory, in bytes"},
+     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
+         "Return the amount of available physical memory, in bytes"},
+     {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
+         "Return the total amount of virtual memory, in bytes"},
+     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
+         "Return the amount of available virtual memory, in bytes"},
+     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
+         "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
+     {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
+         "Return a float indicating the system boot time expressed in "
+         "seconds since the epoch"},
+
+     {NULL, NULL, 0, NULL}
+};
+
+
+struct module_state {
+    PyObject *error;
+};
+
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+
+static int
+psutil_osx_traverse(PyObject *m, visitproc visit, void *arg) {
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int
+psutil_osx_clear(PyObject *m) {
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+
+static struct PyModuleDef
+moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "psutil_osx",
+    NULL,
+    sizeof(struct module_state),
+    PsutilMethods,
+    NULL,
+    psutil_osx_traverse,
+    psutil_osx_clear,
+    NULL
+};
+
+#define INITERROR return NULL
+
+PyObject *
+PyInit__psutil_osx(void)
+
+#else
+#define INITERROR return
+
+void
+init_psutil_osx(void)
+#endif
+{
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
+#endif
+    // process status constants, defined in:
+    // http://fxr.watson.org/fxr/source/bsd/sys/proc.h?v=xnu-792.6.70#L149
+    PyModule_AddIntConstant(module, "SIDL", SIDL);
+    PyModule_AddIntConstant(module, "SRUN", SRUN);
+    PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
+    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
+    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
+
+    if (module == NULL) {
+        INITERROR;
+    }
+    struct module_state *st = GETSTATE(module);
+
+    st->error = PyErr_NewException("_psutil_osx.Error", NULL, NULL);
+    if (st->error == NULL) {
+        Py_DECREF(module);
+        INITERROR;
+    }
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
+}
+
 

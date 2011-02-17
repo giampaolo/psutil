@@ -20,167 +20,6 @@
 #include "arch/mswindows/process_handles.h"
 
 
-// ------------------------ Python init ---------------------------
-
-static PyMethodDef
-PsutilMethods[] =
-{
-    // --- per-process functions
-
-     {"get_process_name", get_process_name, METH_VARARGS,
-        "Return process name"},
-     {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
-        "Return process cmdline as a list of cmdline arguments"},
-     {"get_process_ppid", get_process_ppid, METH_VARARGS,
-        "Return process ppid as an integer"},
-     {"kill_process", kill_process, METH_VARARGS,
-         "Kill the process identified by the given PID"},
-     {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
-        "Return tuple of user/kern time for the given PID"},
-     {"get_process_create_time", get_process_create_time, METH_VARARGS,
-         "Return a float indicating the process create time expressed in "
-         "seconds since the epoch"},
-     {"get_memory_info", get_memory_info, METH_VARARGS,
-         "Return a tuple of RSS/VMS memory information"},
-    {"get_process_cwd", get_process_cwd, METH_VARARGS,
-        "Return process current working directory"},
-    {"suspend_process", suspend_process, METH_VARARGS,
-        "Suspend a process"},
-    {"resume_process", resume_process, METH_VARARGS,
-        "Resume a process"},
-    {"get_process_open_files", get_process_open_files, METH_VARARGS,
-        "Return files opened by process"},
-    {"_QueryDosDevice", _QueryDosDevice, METH_VARARGS,
-        "QueryDosDevice binding"},
-    {"get_process_username", get_process_username, METH_VARARGS,
-        "Return the username of a process"},
-    {"get_process_connections", get_process_connections, METH_VARARGS,
-        "Return the network connections of a process"},
-    {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
-        "Return the network connections of a process"},
-    {"get_process_threads", get_process_threads, METH_VARARGS,
-        "Return process threads information as a list of tuple"},
-    {"process_wait", process_wait, METH_VARARGS,
-        "Wait for process to terminate and return its exit code."},
-    {"get_process_priority", get_process_priority, METH_VARARGS,
-        "Return process priority."},
-    {"set_process_priority", set_process_priority, METH_VARARGS,
-        "Set process priority."},
-    {"get_process_io_counters", get_process_io_counters, METH_VARARGS,
-        "Get process I/O counters."},
-
-
-    // --- system-related functions
-
-     {"get_pid_list", get_pid_list, METH_VARARGS,
-        "Returns a list of PIDs currently running on the system"},
-     {"pid_exists", pid_exists, METH_VARARGS,
-         "Determine if the process exists in the current process list."},
-     {"get_num_cpus", get_num_cpus, METH_VARARGS,
-         "Returns the number of CPUs on the system"},
-     {"get_system_uptime", get_system_uptime, METH_VARARGS,
-         "Return system uptime"},
-     {"get_total_phymem", get_total_phymem, METH_VARARGS,
-         "Return the total amount of physical memory, in bytes"},
-     {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
-         "Return the total amount of virtual memory, in bytes"},
-     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
-         "Return the amount of available physical memory, in bytes"},
-     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
-         "Return the amount of available virtual memory, in bytes"},
-     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
-         "Return system cpu times as a tuple (user, system, idle)"},
-
-     {NULL, NULL, 0, NULL}
-};
-
-
-struct module_state {
-    PyObject *error;
-};
-
-#if PY_MAJOR_VERSION >= 3
-    #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
-#else
-    #define GETSTATE(m) (&_state)
-    static struct module_state _state;
-#endif
-
-#if PY_MAJOR_VERSION >= 3
-
-    static int psutil_mswindows_traverse(PyObject *m, visitproc visit, void *arg) {
-        Py_VISIT(GETSTATE(m)->error);
-        return 0;
-    }
-
-    static int psutil_mswindows_clear(PyObject *m) {
-        Py_CLEAR(GETSTATE(m)->error);
-        return 0;
-    }
-
-    static struct PyModuleDef moduledef = {
-            PyModuleDef_HEAD_INIT,
-            "psutil_mswindows",
-            NULL,
-            sizeof(struct module_state),
-            PsutilMethods,
-            NULL,
-            psutil_mswindows_traverse,
-            psutil_mswindows_clear,
-            NULL
-    };
-
-#define INITERROR return NULL
-
-    PyObject* PyInit__psutil_mswindows(void)
-
-#else
-    #define INITERROR return
-    void init_psutil_mswindows(void)
-#endif
-{
-    struct module_state *st = NULL;
-#if PY_MAJOR_VERSION >= 3
-    PyObject *module = PyModule_Create(&moduledef);
-#else
-    PyObject *module = Py_InitModule("_psutil_mswindows", PsutilMethods);
-#endif
-
-    if (module == NULL) {
-        INITERROR;
-    }
-
-    st = GETSTATE(module);
-    st->error = PyErr_NewException("_psutil_mswindow.Error", NULL, NULL);
-    if (st->error == NULL) {
-        Py_DECREF(module);
-        INITERROR;
-    }
-
-    // Public constants
-    // http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx
-    PyModule_AddIntConstant(module, "ABOVE_NORMAL_PRIORITY_CLASS",
-                                     ABOVE_NORMAL_PRIORITY_CLASS);
-    PyModule_AddIntConstant(module, "BELOW_NORMAL_PRIORITY_CLASS",
-                                     BELOW_NORMAL_PRIORITY_CLASS);
-    PyModule_AddIntConstant(module, "HIGH_PRIORITY_CLASS",
-                                     HIGH_PRIORITY_CLASS);
-    PyModule_AddIntConstant(module, "IDLE_PRIORITY_CLASS",
-                                     IDLE_PRIORITY_CLASS);
-    PyModule_AddIntConstant(module, "NORMAL_PRIORITY_CLASS",
-                                     NORMAL_PRIORITY_CLASS);
-    PyModule_AddIntConstant(module, "REALTIME_PRIORITY_CLASS",
-                                     REALTIME_PRIORITY_CLASS);
-    SetSeDebug();
-
-#if PY_MAJOR_VERSION >= 3
-    return module;
-#endif
-}
-
-
-// ------------------------ Public functions ---------------------------
-
 /*
  * Return a Python float representing the system uptime expressed in seconds
  * since the epoch.
@@ -339,12 +178,12 @@ process_wait(PyObject* self, PyObject* args)
     }
 
     // wait until the process has terminated
-    Py_BEGIN_ALLOW_THREADS 
+    Py_BEGIN_ALLOW_THREADS
     if (WaitForSingleObject(hProcess, INFINITE) == WAIT_FAILED) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(GetLastError());
     }
-    Py_END_ALLOW_THREADS 
+    Py_END_ALLOW_THREADS
 
     // get the exit code; note: subprocess module (erroneously?) uses
     // what returned by WaitForSingleObject
@@ -1915,4 +1754,167 @@ get_process_io_counters(PyObject* self, PyObject* args)
                                    IoCounters.ReadTransferCount,
                                    IoCounters.WriteTransferCount);
 }
+
+
+
+
+// ------------------------ Python init ---------------------------
+
+static PyMethodDef
+PsutilMethods[] =
+{
+    // --- per-process functions
+
+     {"get_process_name", get_process_name, METH_VARARGS,
+        "Return process name"},
+     {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
+        "Return process cmdline as a list of cmdline arguments"},
+     {"get_process_ppid", get_process_ppid, METH_VARARGS,
+        "Return process ppid as an integer"},
+     {"kill_process", kill_process, METH_VARARGS,
+         "Kill the process identified by the given PID"},
+     {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
+        "Return tuple of user/kern time for the given PID"},
+     {"get_process_create_time", get_process_create_time, METH_VARARGS,
+         "Return a float indicating the process create time expressed in "
+         "seconds since the epoch"},
+     {"get_memory_info", get_memory_info, METH_VARARGS,
+         "Return a tuple of RSS/VMS memory information"},
+    {"get_process_cwd", get_process_cwd, METH_VARARGS,
+        "Return process current working directory"},
+    {"suspend_process", suspend_process, METH_VARARGS,
+        "Suspend a process"},
+    {"resume_process", resume_process, METH_VARARGS,
+        "Resume a process"},
+    {"get_process_open_files", get_process_open_files, METH_VARARGS,
+        "Return files opened by process"},
+    {"_QueryDosDevice", _QueryDosDevice, METH_VARARGS,
+        "QueryDosDevice binding"},
+    {"get_process_username", get_process_username, METH_VARARGS,
+        "Return the username of a process"},
+    {"get_process_connections", get_process_connections, METH_VARARGS,
+        "Return the network connections of a process"},
+    {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
+        "Return the network connections of a process"},
+    {"get_process_threads", get_process_threads, METH_VARARGS,
+        "Return process threads information as a list of tuple"},
+    {"process_wait", process_wait, METH_VARARGS,
+        "Wait for process to terminate and return its exit code."},
+    {"get_process_priority", get_process_priority, METH_VARARGS,
+        "Return process priority."},
+    {"set_process_priority", set_process_priority, METH_VARARGS,
+        "Set process priority."},
+    {"get_process_io_counters", get_process_io_counters, METH_VARARGS,
+        "Get process I/O counters."},
+
+
+    // --- system-related functions
+
+     {"get_pid_list", get_pid_list, METH_VARARGS,
+        "Returns a list of PIDs currently running on the system"},
+     {"pid_exists", pid_exists, METH_VARARGS,
+         "Determine if the process exists in the current process list."},
+     {"get_num_cpus", get_num_cpus, METH_VARARGS,
+         "Returns the number of CPUs on the system"},
+     {"get_system_uptime", get_system_uptime, METH_VARARGS,
+         "Return system uptime"},
+     {"get_total_phymem", get_total_phymem, METH_VARARGS,
+         "Return the total amount of physical memory, in bytes"},
+     {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
+         "Return the total amount of virtual memory, in bytes"},
+     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
+         "Return the amount of available physical memory, in bytes"},
+     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
+         "Return the amount of available virtual memory, in bytes"},
+     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
+         "Return system cpu times as a tuple (user, system, idle)"},
+
+     {NULL, NULL, 0, NULL}
+};
+
+
+struct module_state {
+    PyObject *error;
+};
+
+#if PY_MAJOR_VERSION >= 3
+    #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+    #define GETSTATE(m) (&_state)
+    static struct module_state _state;
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+
+    static int psutil_mswindows_traverse(PyObject *m, visitproc visit, void *arg) {
+        Py_VISIT(GETSTATE(m)->error);
+        return 0;
+    }
+
+    static int psutil_mswindows_clear(PyObject *m) {
+        Py_CLEAR(GETSTATE(m)->error);
+        return 0;
+    }
+
+    static struct PyModuleDef moduledef = {
+            PyModuleDef_HEAD_INIT,
+            "psutil_mswindows",
+            NULL,
+            sizeof(struct module_state),
+            PsutilMethods,
+            NULL,
+            psutil_mswindows_traverse,
+            psutil_mswindows_clear,
+            NULL
+    };
+
+#define INITERROR return NULL
+
+    PyObject* PyInit__psutil_mswindows(void)
+
+#else
+    #define INITERROR return
+    void init_psutil_mswindows(void)
+#endif
+{
+    struct module_state *st = NULL;
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&moduledef);
+#else
+    PyObject *module = Py_InitModule("_psutil_mswindows", PsutilMethods);
+#endif
+
+    if (module == NULL) {
+        INITERROR;
+    }
+
+    st = GETSTATE(module);
+    st->error = PyErr_NewException("_psutil_mswindow.Error", NULL, NULL);
+    if (st->error == NULL) {
+        Py_DECREF(module);
+        INITERROR;
+    }
+
+    // Public constants
+    // http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx
+    PyModule_AddIntConstant(module, "ABOVE_NORMAL_PRIORITY_CLASS",
+                                     ABOVE_NORMAL_PRIORITY_CLASS);
+    PyModule_AddIntConstant(module, "BELOW_NORMAL_PRIORITY_CLASS",
+                                     BELOW_NORMAL_PRIORITY_CLASS);
+    PyModule_AddIntConstant(module, "HIGH_PRIORITY_CLASS",
+                                     HIGH_PRIORITY_CLASS);
+    PyModule_AddIntConstant(module, "IDLE_PRIORITY_CLASS",
+                                     IDLE_PRIORITY_CLASS);
+    PyModule_AddIntConstant(module, "NORMAL_PRIORITY_CLASS",
+                                     NORMAL_PRIORITY_CLASS);
+    PyModule_AddIntConstant(module, "REALTIME_PRIORITY_CLASS",
+                                     REALTIME_PRIORITY_CLASS);
+    SetSeDebug();
+
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
+}
+
+
 
