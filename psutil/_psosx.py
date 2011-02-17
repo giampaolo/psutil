@@ -19,6 +19,7 @@ __all__ = base_module_namespace[:]
 
 NUM_CPUS = _psutil_osx.get_num_cpus()
 TOTAL_PHYMEM = _psutil_osx.get_total_phymem()
+BOOT_TIME = _psutil_osx.get_system_boot_time()
 
 # --- functions
 
