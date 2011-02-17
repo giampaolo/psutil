@@ -55,6 +55,9 @@ PsutilMethods[] =
          "Return number of threads used by process"},
      {"get_process_status", get_process_status, METH_VARARGS,
          "Return process status as an integer"},
+     {"get_process_threads", get_process_threads, METH_VARARGS,
+         "Return process threads as a list of tuples"},
+
 
      // --- system-related functions
 
@@ -694,5 +697,78 @@ get_process_status(PyObject* self, PyObject* args)
         return NULL;
     }
     return Py_BuildValue("i", (int)kp.kp_proc.p_stat);
+}
+
+
+/*
+ * Return process threads
+ */
+static PyObject*
+get_process_threads(PyObject* self, PyObject* args)
+{
+    long pid;
+    int err, j;
+    kern_return_t kr;
+    unsigned int info_count = TASK_BASIC_INFO_COUNT;
+    mach_port_t task;
+    struct task_basic_info tasks_info;
+    thread_act_port_array_t thread_list;
+    thread_info_data_t thinfo;
+    thread_basic_info_t basic_info_th;
+    mach_msg_type_number_t thread_count, thread_info_count;
+
+    PyObject* retList = PyList_New(0);
+    PyObject* pyTuple = NULL;
+
+    // the argument passed should be a process id
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    // task_for_pid() requires special privileges
+    err = task_for_pid(mach_task_self(), pid, &task);
+    if (err != KERN_SUCCESS) {
+        if (! pid_exists(pid) ) {
+            return NoSuchProcess();
+        }
+        return AccessDenied();
+    }
+
+    info_count = TASK_BASIC_INFO_COUNT;
+    err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count);
+    if (err != KERN_SUCCESS) {
+        // errcode 4 is "invalid argument" (access denied)
+        if (err == 4) {
+            return AccessDenied();
+        }
+        // otherwise throw a runtime error with appropriate error code
+        return PyErr_Format(PyExc_RuntimeError,
+                            "task_info(TASK_BASIC_INFO) failed");
+    }
+
+    err = task_threads(task, &thread_list, &thread_count);
+    if (err != KERN_SUCCESS) {
+        return PyErr_Format(PyExc_RuntimeError, "task_threads() failed");
+    }
+
+    for (j = 0; j < thread_count; j++) {
+        thread_info_count = THREAD_INFO_MAX;
+        kr = thread_info(thread_list[j], THREAD_BASIC_INFO,
+                         (thread_info_t)thinfo, &thread_info_count);
+        if (kr != KERN_SUCCESS) {
+            return PyErr_Format(PyExc_RuntimeError, "thread_info() failed");
+        }
+        basic_info_th = (thread_basic_info_t)thinfo;
+        // XXX - thread_info structure does not provide any process id;
+        // the best we can do is assigning an incremental bogus value
+        pyTuple = Py_BuildValue("Iff", j + 1,
+                    (float)basic_info_th->user_time.microseconds / 1000000.0,
+                    (float)basic_info_th->system_time.microseconds / 1000000.0
+                  );
+        PyList_Append(retList, pyTuple);
+        Py_XDECREF(pyTuple);
+    }
+
+    return retList;
 }
 

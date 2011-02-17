@@ -180,6 +180,17 @@ class OSXProcess(object):
             return _status_map[code]
         return constant(-1, "?")
 
+    @wrap_exceptions
+    def get_process_threads(self):
+        """Return the number of threads belonging to the process."""
+        rawlist = _psutil_osx.get_process_threads(self.pid)
+        retlist = []
+        for thread_id, utime, stime in rawlist:
+            ntuple = ntuple_thread(thread_id, utime, stime)
+            retlist.append(ntuple)
+        return retlist
+
+
 
 PlatformProcess = OSXProcess
 
