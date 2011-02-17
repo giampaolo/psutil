@@ -264,11 +264,8 @@ get_process_uids(PyObject* self, PyObject* args)
     if (get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
-
-    // on OSX there's no such thing as effective user id, hence we
-    // return real uid instead
     return Py_BuildValue("lll", (long)kp.kp_eproc.e_pcred.p_ruid,
-                                (long)kp.kp_eproc.e_pcred.p_ruid,
+                                (long)kp.kp_eproc.e_ucred.cr_uid,
                                 (long)kp.kp_eproc.e_pcred.p_svuid);
 }
 
@@ -287,10 +284,8 @@ get_process_gids(PyObject* self, PyObject* args)
     if (get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
-    // on OSX there's no such thing as effective group id, hence we
-    // return real gid instead
     return Py_BuildValue("lll", (long)kp.kp_eproc.e_pcred.p_rgid,
-                                (long)kp.kp_eproc.e_pcred.p_rgid,
+                                (long)kp.kp_eproc.e_ucred.cr_groups[0],
                                 (long)kp.kp_eproc.e_pcred.p_svgid);
 }
 
