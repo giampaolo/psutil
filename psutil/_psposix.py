@@ -15,7 +15,7 @@ import sys
 import warnings
 import time
 
-from psutil.error import AccessDenied, NoSuchProcess
+from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._compat import namedtuple
 
 
@@ -30,7 +30,7 @@ def pid_exists(pid):
     else:
         return True
 
-def wait_pid(pid):
+def wait_pid(pid, timeout=None):
     """Wait for process with pid 'pid' to terminate and return its
     exit status code as an integer.
 
@@ -38,21 +38,42 @@ def wait_pid(pid):
     waits until the process disappears and return None.
 
     If pid does not exist at all return None immediately.
+
+    Raise TimeoutExpired on timeout expired.
     """
-    while True:
+    def check_timeout():
+        if timeout:
+            if time.time() >= stop_at:
+                raise TimeoutExpired
+            time.sleep(0.001)
+
+    if timeout:
+        waitcall = lambda: os.waitpid(pid, os.WNOHANG)
+        stop_at = time.time() + timeout
+    else:
+        waitcall = lambda: os.waitpid(pid, 0)
+
+    while 1:
         try:
-            pid, status = os.waitpid(pid, 0)
+            retpid, status = waitcall()
         except OSError, err:
             if err.errno == errno.EINTR:
+                check_timeout()
                 continue
             elif err.errno == errno.ECHILD:
                 # not a child of os.getpid(): poll until pid has
                 # disappeared and return None instead
-                while pid_exists(pid):
-                    time.sleep(0.05)
-                return
-            raise
+                while 1:
+                    if pid_exists(pid):
+                        check_timeout()
+                    else:
+                        return
+            else:
+                raise
         else:
+            if retpid == 0:
+                check_timeout()
+                continue
             # process exited due to a signal; return the integer of
             # that signal
             if os.WIFSIGNALED(status):

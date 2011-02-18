@@ -13,7 +13,7 @@ import base64
 import _psutil_posix
 import _psutil_linux
 from psutil import _psposix
-from psutil.error import AccessDenied, NoSuchProcess
+from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._compat import namedtuple
 from psutil._common import *
 
@@ -294,8 +294,11 @@ class LinuxProcess(object):
         return ntuple_cputimes(utime, stime)
 
     @wrap_exceptions
-    def process_wait(self):
-        return _psposix.wait_pid(self.pid)
+    def process_wait(self, timeout=None):
+        try:
+            return _psposix.wait_pid(self.pid, timeout)
+        except TimeoutExpired:
+            raise TimeoutExpired(self.pid, self._process_name)
 
     @wrap_exceptions
     def get_process_create_time(self):

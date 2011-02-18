@@ -12,7 +12,7 @@ version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
     # exceptions
-    "Error", "NoSuchProcess", "AccessDenied",
+    "Error", "NoSuchProcess", "AccessDenied", "TimeoutExpired",
     # constants
     "NUM_CPUS", "TOTAL_PHYMEM", "BOOT_TIME",
     "version_info", "__version__",
@@ -39,7 +39,7 @@ try:
 except ImportError:
     pwd = None
 
-from psutil.error import Error, NoSuchProcess, AccessDenied
+from psutil.error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
 from psutil._compat import property
 from psutil._common import (STATUS_RUNNING, STATUS_IDLE, STATUS_SLEEPING,
                             STATUS_DISK_SLEEP, STATUS_STOPPED,
@@ -468,11 +468,11 @@ class Process(object):
         else:
             self._platform_impl.kill_process()
 
-    def wait(self):
+    def wait(self, timeout=None):
         """Wait for process to terminate and, if process is a children
         of the current one also return its exit code, else None.
         """
-        return self._platform_impl.process_wait()
+        return self._platform_impl.process_wait(timeout)
 
 
 class Popen(Process):

@@ -9,7 +9,7 @@ import os
 import _psutil_bsd
 import _psutil_posix
 import _psposix
-from psutil.error import AccessDenied, NoSuchProcess
+from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._compat import namedtuple
 from psutil._common import *
 
@@ -173,8 +173,11 @@ class BSDProcess(object):
         return lsof.get_process_connections()
 
     @wrap_exceptions
-    def process_wait(self):
-        return _psposix.wait_pid(self.pid)
+    def process_wait(self, timeout=None):
+        try:
+            return _psposix.wait_pid(self.pid, timeout)
+        except TimeoutExpired:
+            raise TimeoutExpired(self.pid, self._process_name)
 
     @wrap_exceptions
     def get_process_nice(self):

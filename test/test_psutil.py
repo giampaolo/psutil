@@ -229,6 +229,7 @@ class TestCase(unittest.TestCase):
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_wait(self):
+        # check exit code signal
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.kill()
@@ -236,7 +237,6 @@ class TestCase(unittest.TestCase):
         if os.name == 'posix':
             self.assertEqual(code, signal.SIGKILL)
         else:
-            # windows
             self.assertEqual(code, 0)
         self.assertFalse(p.is_running())
 
@@ -247,10 +247,10 @@ class TestCase(unittest.TestCase):
         if os.name == 'posix':
             self.assertEqual(code, signal.SIGTERM)
         else:
-            # windows
             self.assertEqual(code, 0)
         self.assertFalse(p.is_running())
 
+        # check sys.exit() code
         code = "import time, sys; time.sleep(0.01); sys.exit(5);"
         sproc = get_test_subprocess([PYTHON, "-c", code])
         p = psutil.Process(sproc.pid)
@@ -265,6 +265,28 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.wait(), 5)
         self.assertTrue(p.wait() in (5, None))
+
+        # test timeout
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        p.name
+        self.assertRaises(psutil.TimeoutExpired, p.wait, 0.01)
+
+    def test_wait_non_children(self):
+        # test wait() against processes which are not our children
+        code = "import sys;"
+        code += "from subprocess import Popen, PIPE;"
+        code += "cmd = ['%s', '-c', 'import time; time.sleep(10)'];" %PYTHON
+        code += "sp = Popen(cmd, stdout=PIPE);"
+        code += "sys.stdout.write(str(sp.pid));"
+        sproc = get_test_subprocess([PYTHON, "-c", code], stdout=subprocess.PIPE)
+
+        grandson_pid = int(sproc.stdout.read())
+        grandson_proc = psutil.Process(grandson_pid)
+        self.assertRaises(psutil.TimeoutExpired, grandson_proc.wait, 0.01)
+        grandson_proc.kill()
+        ret = grandson_proc.wait()
+        self.assertEqual(ret, None)
 
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM

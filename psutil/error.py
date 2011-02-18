@@ -39,12 +39,31 @@ class AccessDenied(Error):
         self.name = name
         self.msg = msg
         if msg is None:
-            if (pid is not None) and (name is not None):
+            if pid and name:
                 self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
-            elif (pid is not None):
+            elif pid:
                 self.msg = "(pid=%s)" % self.pid
             else:
                 self.msg = ""
+
+    def __str__(self):
+        return self.msg
+
+
+class TimeoutExpired(Error):
+    """Raised on Process.wait(timeout) if timeout expires and process
+    is still alive.
+    """
+
+    def __init__(self, pid=None, name=None):
+        self.pid = pid
+        self.name = name
+        if pid and name:
+            self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
+        elif pid:
+            self.msg = "(pid=%s)" % self.pid
+        else:
+            self.msg = ""
 
     def __str__(self):
         return self.msg
