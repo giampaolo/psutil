@@ -272,6 +272,7 @@ class TestCase(unittest.TestCase):
         p.name
         self.assertRaises(psutil.TimeoutExpired, p.wait, 0.01)
 
+    @skipUnless(POSIX)
     def test_wait_non_children(self):
         # test wait() against processes which are not our children
         code = "import sys;"
@@ -283,10 +284,15 @@ class TestCase(unittest.TestCase):
 
         grandson_pid = int(sproc.stdout.read())
         grandson_proc = psutil.Process(grandson_pid)
-        self.assertRaises(psutil.TimeoutExpired, grandson_proc.wait, 0.01)
-        grandson_proc.kill()
-        ret = grandson_proc.wait()
-        self.assertEqual(ret, None)
+        try:
+            self.assertRaises(psutil.TimeoutExpired, grandson_proc.wait, 0.01)
+            grandson_proc.kill()
+            ret = grandson_proc.wait()
+            self.assertEqual(ret, None)
+        finally:
+            if grandson_proc.is_running():
+                grandson_proc.kill()
+                grandson_proc.wait()
 
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM

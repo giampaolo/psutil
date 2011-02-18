@@ -12,7 +12,7 @@ import sys
 import platform
 
 import _psutil_mswindows
-from psutil.error import AccessDenied, NoSuchProcess
+from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._compat import namedtuple
 from psutil._common import *
 
@@ -155,8 +155,17 @@ class WindowsProcess(object):
         """Terminates the process with the given PID."""
         return _psutil_mswindows.kill_process(self.pid)
 
-    def process_wait(self):
-        return _psutil_mswindows.process_wait(self.pid)
+    @wrap_exceptions
+    def process_wait(self, timeout=None):
+        if not timeout:
+            timeout = 0
+        else:
+            # WaitForSingleObject() expects time in milliseconds
+            timeout = int(timeout * 1000)
+        ret = _psutil_mswindows.process_wait(self.pid, timeout)
+        if ret == -1:
+            raise TimeoutExpired(self.pid, self._process_name)
+        return ret
 
     @wrap_exceptions
     def get_process_username(self):

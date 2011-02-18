@@ -156,12 +156,16 @@ process_wait(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
     DWORD ExitCode;
+    DWORD WINAPI retVal;
     long pid;
+    long timeout;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "ll", &pid, &timeout))
         return NULL;
     if (pid == 0)
         return AccessDenied();
+    if (timeout == 0)
+        timeout = INFINITE;
 
     hProcess = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION, FALSE, pid);
     if (hProcess == NULL) {
@@ -179,11 +183,17 @@ process_wait(PyObject* self, PyObject* args)
 
     // wait until the process has terminated
     Py_BEGIN_ALLOW_THREADS
-    if (WaitForSingleObject(hProcess, INFINITE) == WAIT_FAILED) {
+    retVal = WaitForSingleObject(hProcess, timeout);
+    Py_END_ALLOW_THREADS
+
+    if (retVal == WAIT_FAILED) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(GetLastError());
     }
-    Py_END_ALLOW_THREADS
+    if (retVal == WAIT_TIMEOUT) {
+        CloseHandle(hProcess);
+        return PyInt_FromLong(-1);
+    }
 
     // get the exit code; note: subprocess module (erroneously?) uses
     // what returned by WaitForSingleObject
