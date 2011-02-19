@@ -125,11 +125,15 @@ class Process(object):
 
     @property
     def parent(self):
-        """Return the parent process as a Process object. If no ppid is
-        known then return None."""
-        if self.ppid is not None:
-            return Process(self.ppid)
-        return None
+        """Return the parent process as a Process object. If no parent
+        pid is known return None.
+        """
+        ppid = self.ppid
+        if ppid is not None:
+            try:
+                return Process(ppid)
+            except NoSuchProcess:
+                pass
 
     @property
     def name(self):
