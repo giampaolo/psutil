@@ -12,6 +12,9 @@
 #include <tchar.h>
 #include <tlhelp32.h>
 #include <iphlpapi.h>
+#ifndef __MINGW32__
+#include <Winternl.h>
+#endif
 
 #include "_psutil_mswindows.h"
 #include "_psutil_common.h"
@@ -530,6 +533,7 @@ get_avail_virtmem(PyObject* self, PyObject* args)
 #define LO_T ((float)1e-7)
 #define HI_T (LO_T*4294967296.0)
 
+#ifdef __MINGW32__
 // structures and enums from winternl.h (not available under mingw)
 typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
     LARGE_INTEGER IdleTime;
@@ -551,6 +555,7 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
     SystemRegistryQuotaInformation = 37,
     SystemLookasideInformation = 45
 } SYSTEM_INFORMATION_CLASS;
+#endif
 
 
 /*
@@ -714,11 +719,13 @@ dwDomainLen, DWORD pid)
     return FALSE;
 }
 
+#ifdef __MINGW32__
 typedef struct _UNICODE_STRING {
     USHORT Length;
     USHORT MaximumLength;
     PWSTR Buffer;
 } UNICODE_STRING, *PUNICODE_STRING;
+#endif
 
 /*
  * Return process current working directory as a Python string.
