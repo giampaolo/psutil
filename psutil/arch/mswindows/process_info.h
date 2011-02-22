@@ -22,3 +22,4 @@ PyObject* get_arg_list(long pid);
 PyObject* get_ppid(long pid);
 PyObject* get_name(long pid);
 DWORD* get_pids(DWORD *numberOfReturnedPIDs);
+

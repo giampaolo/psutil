@@ -989,9 +989,9 @@ class TestCase(unittest.TestCase):
 
     def test_suspend_resume(self):
         sproc = get_test_subprocess()
-        time.sleep(0.1)
         p = psutil.Process(sproc.pid)
         p.suspend()
+        time.sleep(0.1)
         self.assertEqual(p.status, psutil.STATUS_STOPPED)
         self.assertEqual(str(p.status), "stopped")
         p.resume()

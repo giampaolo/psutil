@@ -12,7 +12,7 @@
 
 #include "security.h"
 #include "process_info.h"
-
+#include "ntextapi.h"
 
 /*
  * NtQueryInformationProcess code taken from
@@ -28,13 +28,6 @@ typedef NTSTATUS (NTAPI *_NtQueryInformationProcess)(
     DWORD ProcessInformationLength,
     PDWORD ReturnLength
     );
-
-typedef struct _UNICODE_STRING
-{
-    USHORT Length;
-    USHORT MaximumLength;
-    PWSTR Buffer;
-} UNICODE_STRING, *PUNICODE_STRING;
 
 typedef struct _PROCESS_BASIC_INFORMATION
 {
@@ -449,4 +442,81 @@ get_arg_list(long pid)
     CloseHandle(hProcess);
     return argList;
 }
+
+
+#define PH_FIRST_PROCESS(Processes) ((PSYSTEM_PROCESS_INFORMATION)(Processes))
+
+#define PH_NEXT_PROCESS(Process) ( \
+    ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
+    (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
+    ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : \
+    NULL \
+    )
+
+const STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
+const STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
+
+/*
+ * Given a process PID and a PSYSTEM_PROCESS_INFORMATION structure
+ * fills the structure with process information.
+ * On success return 1, else NULL with Python exception already set.
+ */
+int
+get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess)
+{
+    static ULONG initialBufferSize = 0x4000;
+    NTSTATUS status;
+    PVOID buffer;
+    ULONG bufferSize;
+    PSYSTEM_PROCESS_INFORMATION process;
+
+    // get NtQuerySystemInformation
+    typedef DWORD (_stdcall *NTQSI_PROC) (int, PVOID, ULONG, PULONG);
+    NTQSI_PROC NtQuerySystemInformation;
+    HINSTANCE hNtDll;
+    hNtDll = LoadLibrary(TEXT("ntdll.dll"));
+    NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
+                                hNtDll, "NtQuerySystemInformation");
+
+    bufferSize = initialBufferSize;
+    buffer = malloc(bufferSize);
+
+    while (TRUE) {
+        status = NtQuerySystemInformation(SystemProcessInformation, buffer,
+                                          bufferSize, &bufferSize);
+
+        if (status == STATUS_BUFFER_TOO_SMALL || status == STATUS_INFO_LENGTH_MISMATCH)
+        {
+            free(buffer);
+            buffer = malloc(bufferSize);
+        }
+        else {
+            break;
+        }
+    }
+
+    if (status != 0) {
+        free(buffer);
+        PyErr_Format(PyExc_RuntimeError, "NtQuerySystemInformation() failed");
+        return NULL;
+    }
+
+
+    if (bufferSize <= 0x20000)
+        initialBufferSize = bufferSize;
+
+    process = PH_FIRST_PROCESS(buffer);
+    do {
+        if (process->UniqueProcessId == pid) {
+            free(buffer);
+            *retProcess = process;
+            return 1;
+        }
+    } while (process = PH_NEXT_PROCESS(process));
+
+    free(buffer);
+    NoSuchProcess();
+    return NULL;
+}
+
 

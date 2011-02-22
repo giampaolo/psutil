@@ -256,6 +256,13 @@ class WindowsProcess(object):
         rc, wc, rb, wb =_psutil_mswindows.get_process_io_counters(self.pid)
         return ntuple_io(rc, wc, rb, wb)
 
+    @wrap_exceptions
+    def get_process_status(self):
+        suspended = _psutil_mswindows.is_process_suspended(self.pid)
+        if suspended:
+            return STATUS_STOPPED
+        else:
+            return STATUS_RUNNING
 
 PlatformProcess = WindowsProcess
 

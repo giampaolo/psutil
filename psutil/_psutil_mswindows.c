@@ -12,15 +12,13 @@
 #include <tchar.h>
 #include <tlhelp32.h>
 #include <iphlpapi.h>
-#ifndef __MINGW32__
-#include <Winternl.h>
-#endif
 
 #include "_psutil_mswindows.h"
 #include "_psutil_common.h"
 #include "arch/mswindows/security.h"
 #include "arch/mswindows/process_info.h"
 #include "arch/mswindows/process_handles.h"
+#include "arch/mswindows/ntextapi.h"
 
 
 /*
@@ -533,30 +531,6 @@ get_avail_virtmem(PyObject* self, PyObject* args)
 #define LO_T ((float)1e-7)
 #define HI_T (LO_T*4294967296.0)
 
-#ifdef __MINGW32__
-// structures and enums from winternl.h (not available under mingw)
-typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
-    LARGE_INTEGER IdleTime;
-    LARGE_INTEGER KernelTime;
-    LARGE_INTEGER UserTime;
-    LARGE_INTEGER Reserved1[2];
-    ULONG Reserved2;
-} SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION, *PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
-
-
-typedef enum _SYSTEM_INFORMATION_CLASS {
-    SystemBasicInformation = 0,
-    SystemPerformanceInformation = 2,
-    SystemTimeOfDayInformation = 3,
-    SystemProcessInformation = 5,
-    SystemProcessorPerformanceInformation = 8,
-    SystemInterruptInformation = 23,
-    SystemExceptionInformation = 33,
-    SystemRegistryQuotaInformation = 37,
-    SystemLookasideInformation = 45
-} SYSTEM_INFORMATION_CLASS;
-#endif
-
 
 /*
  * Return a Python tuple representing user, kernel and idle CPU times
@@ -719,13 +693,6 @@ dwDomainLen, DWORD pid)
     return FALSE;
 }
 
-#ifdef __MINGW32__
-typedef struct _UNICODE_STRING {
-    USHORT Length;
-    USHORT MaximumLength;
-    PWSTR Buffer;
-} UNICODE_STRING, *PUNICODE_STRING;
-#endif
 
 /*
  * Return process current working directory as a Python string.
@@ -1773,6 +1740,31 @@ get_process_io_counters(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return True if one of the process threads is in a waiting or
+ * suspended status.
+ */
+static PyObject*
+is_process_suspended(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    ULONG i;
+    PSYSTEM_PROCESS_INFORMATION process;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (get_process_info(pid, &process) != 1)
+        return NULL;
+
+    for (i = 0; i < process->NumberOfThreads; i++) {
+        if (process->Threads[i].ThreadState != Waiting ||
+            process->Threads[i].WaitReason != Suspended)
+        {
+            Py_RETURN_FALSE;
+        }
+    }
+    Py_RETURN_TRUE;
+}
+
 
 
 // ------------------------ Python init ---------------------------
@@ -1823,6 +1815,8 @@ PsutilMethods[] =
         "Set process priority."},
     {"get_process_io_counters", get_process_io_counters, METH_VARARGS,
         "Get process I/O counters."},
+    {"is_process_suspended", is_process_suspended, METH_VARARGS,
+        "Return True if one of the process threads is in a suspended state"},
 
 
     // --- system-related functions
