@@ -1168,7 +1168,7 @@ class TestCase(unittest.TestCase):
                         self.assertTrue(str(err))
                         self.assertTrue(err.msg)
                     else:
-                        if ret in (0, 0.0, []) or name == 'parent':
+                        if name == 'parent' or ret in (0, 0.0, []):
                             continue
                         self.assertTrue(ret)
                         if name == "exe":

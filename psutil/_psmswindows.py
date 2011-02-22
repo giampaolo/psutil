@@ -113,10 +113,12 @@ class WindowsProcess(object):
         return _psutil_mswindows.get_process_name(self.pid)
 
     def get_process_exe(self):
-        # no such thing as "exe" on BSD; it will maybe be determined
+        # no such thing as "exe" on Windows; it will maybe be determined
         # later from cmdline[0]
         if not pid_exists(self.pid):
             raise NoSuchProcess(self.pid, self._process_name)
+        if self.pid in (0, 4):
+            raise AccessDenied(self.pid, self._process_name)
         return ""
 
     @wrap_exceptions
@@ -210,7 +212,7 @@ class WindowsProcess(object):
     @wrap_exceptions
     def get_process_cwd(self):
         if self.pid in (0, 4) or self.pid == 8 and _WIN2000:
-            return ''
+            raise AccessDenied(self.pid, self._process_name)
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
         path = _psutil_mswindows.get_process_cwd(self.pid)

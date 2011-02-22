@@ -168,6 +168,8 @@ class Process(object):
                 _exe = os.path.realpath(cmdline[0])
                 if os.path.isfile(_exe) and os.access(_exe, os.X_OK):
                     return _exe
+        if not exe:
+            raise AccessDenied(self.pid, self._platform_impl._process_name)
         return exe
 
     @property
