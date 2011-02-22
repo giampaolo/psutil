@@ -26,6 +26,7 @@ BUGFIXES
    process resume() or suspend() on Windows.
  * Issue 146: 'exe' property on Linux can raise TypeError if path contains NULL
    bytes.
+ * Issue 151: exe and getcwd() for PID 0 on Linux return inconsistent data.
 
 API CHANGES
 

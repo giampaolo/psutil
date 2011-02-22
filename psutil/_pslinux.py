@@ -220,7 +220,7 @@ class LinuxProcess(object):
 
     def get_process_exe(self):
         if self.pid in (0, 2):
-            return ""   # special case for kernel processes
+            raise AccessDenied(self.pid, self._process_name)
         try:
             exe = os.readlink("/proc/%s/exe" % self.pid)
         except (OSError, IOError), err:
@@ -340,7 +340,7 @@ class LinuxProcess(object):
     @wrap_exceptions
     def get_process_cwd(self):
         if self.pid == 0:
-            return ''
+            raise AccessDenied(self.pid, self._process_name)
         # readlink() might return paths containing null bytes causing
         # problems when used with other fs-related functions (os.*,
         # open(), ...)

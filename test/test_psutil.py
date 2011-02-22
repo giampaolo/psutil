@@ -1134,33 +1134,51 @@ class TestCase(unittest.TestCase):
 
     def test_fetch_all(self):
         valid_procs = 0
-        attrs = ['__str__', 'create_time', 'username', 'getcwd', 'get_cpu_times',
-                 'get_memory_info', 'get_memory_percent', 'get_open_files',
-                  'get_num_threads', 'get_threads', 'status', 'get_io_counters',
-                  'exe', 'uids', 'gids', 'nice', 'get_ionice']
-        if os.name == 'posix':
-            attrs.append("nice")
+        excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
+                          'kill', 'wait']
+        excluded_names += ['get_cpu_percent', 'path', 'uid', 'gid', 'get_children']
+        # skip slow python implementation; we're reasonably sure
+        # it works anyway
+        #if POSIX:
+        #   excluded_names += 'get_open_files'
+        attrs = []
+        for name in dir(psutil.Process):
+            if name.startswith("_"):
+                continue
+            if name.startswith("set_"):
+                continue
+            if name in excluded_names:
+                continue
+            attrs.append(name)
+
         for p in psutil.process_iter():
-            for attr in attrs:
-                # skip slow Python implementation; we're reasonably sure
-                # it works anyway
-                if POSIX and attr == 'get_open_files':
-                    continue
+            for name in attrs:
                 try:
-                    attr = getattr(p, attr, None)
-                    if attr is not None and callable(attr):
-                        attr()
-                    valid_procs += 1
-                except (psutil.NoSuchProcess, psutil.AccessDenied), err:
-                    self.assertEqual(err.pid, p.pid)
-                    if err.name:
-                        self.assertEqual(err.name, p.name)
-                    self.assertTrue(str(err))
-                    self.assertTrue(err.msg)
-                except:
+                    try:
+                        attr = getattr(p, name, None)
+                        if attr is not None and callable(attr):
+                            ret = attr()
+                        else:
+                            ret = attr
+                        valid_procs += 1
+                    except (psutil.NoSuchProcess, psutil.AccessDenied), err:
+                        self.assertEqual(err.pid, p.pid)
+                        if err.name:
+                            self.assertEqual(err.name, p.name)
+                        self.assertTrue(str(err))
+                        self.assertTrue(err.msg)
+                    else:
+                        if ret in (0, 0.0, []) or name == 'parent':
+                            continue
+                        self.assertTrue(ret)
+                        if name == "exe":
+                            self.assertTrue(os.path.isfile(ret))
+                        elif name == "getcwd":
+                            self.assertTrue(os.path.isdir(ret))
+                except Exception, err:
                     trace = traceback.format_exc()
-                    self.fail('Exception raised for method %s, pid %s:\n%s'
-                              %(attr, p.pid, trace))
+                    self.fail('%s\nmethod=%s, pid=%s, retvalue=%s'
+                              %(trace, name, p.pid, repr(ret)))
 
         # we should always have a non-empty list, not including PID 0 etc.
         # special cases.
@@ -1177,7 +1195,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(p.gids.real, 0)
 
         self.assertTrue(p.ppid in (0, 1))
-        self.assertEqual(p.exe, "")
+        #self.assertEqual(p.exe, "")
         self.assertEqual(p.cmdline, [])
         try:
             p.get_num_threads()

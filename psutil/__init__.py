@@ -110,8 +110,12 @@ class Process(object):
         and creation time.
         """
         h1 = (self.pid, self.create_time)
-        h2 = (other.pid, other.create_time)
-        return h1 == h2
+        try:
+            h2 = (other.pid, other.create_time)
+        except AttributeError:
+            return False
+        else:
+            return h1 == h2
 
     @property
     def pid(self):
