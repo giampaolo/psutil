@@ -11,7 +11,8 @@ import os
 
 import psutil
 
-from test_psutil import get_test_subprocess, reap_children, PYTHON, LINUX, OSX
+from test_psutil import (get_test_subprocess, reap_children, PYTHON, LINUX, OSX,
+                         ignore_access_denied)
 
 
 def ps(cmd):
@@ -63,6 +64,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         username_psutil = psutil.Process(self.pid).username
         self.assertEqual(username_ps, username_psutil)
 
+    @ignore_access_denied
     def test_process_rss_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -71,6 +73,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         rss_psutil = psutil.Process(self.pid).get_memory_info()[0] / 1024
         self.assertEqual(rss_ps, rss_psutil)
 
+    @ignore_access_denied
     def test_process_vsz_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -89,7 +92,6 @@ class PosixSpecificTestCase(unittest.TestCase):
             self.assertEqual(name_psutil, "Python")
         else:
             self.assertEqual(name_ps, name_psutil)
-
 
     def test_process_exe(self):
         ps_pathname = ps("ps --no-headers -o command -p %s" %self.pid).split(' ')[0]

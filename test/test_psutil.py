@@ -142,6 +142,17 @@ def skipUnless(condition, reason="", warn=False):
         return skipIf(True, reason, warn)
     return skipIf(False)
 
+def ignore_access_denied(fun):
+    """Decorator to Ignore AccessDenied exceptions."""
+    def outer(fun, *args, **kwargs):
+        def inner(self):
+            try:
+                return fun(self, *args, **kwargs)
+            except psutil.AccessDenied:
+                pass
+        return inner
+    return outer
+
 
 class ThreadTask(threading.Thread):
     """A thread object used for running process thread tests."""
@@ -424,8 +435,7 @@ class TestCase(unittest.TestCase):
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
 
-    # XXX
-    @skipUnless(LINUX or WINDOWS)
+    @skipIf(OSX, warn=False)
     def test_get_io_counters(self):
         p = psutil.Process(os.getpid())
         # test reads
@@ -498,8 +508,6 @@ class TestCase(unittest.TestCase):
             if thread._running:
                 thread.stop()
 
-    # XXX - not implemented on all platforms
-    @skipUnless(LINUX or WINDOWS or BSD, warn=1)
     def test_get_threads(self):
         p = psutil.Process(os.getpid())
         step1 = p.get_threads()
@@ -649,7 +657,7 @@ class TestCase(unittest.TestCase):
             # os.geteuid() refers to "effective" uid
             self.assertEqual(effective, os.getegid())
             # no such thing as os.getsuid() ("saved" uid), but starting
-            # from python 2.7 we have os.getresuid()[2]
+            # from python 2.7 we have os.getresgid()[2]
             if hasattr(os, "getresuid"):
                 self.assertEqual(saved, os.getresgid()[2])
 
@@ -660,10 +668,14 @@ class TestCase(unittest.TestCase):
             try:
                 p.nice = 1
                 self.assertEqual(p.nice, 1)
-                p.nice = 0
-                self.assertEqual(p.nice, 0)
+                # going back to previous nice value raises AccessDenied on OSX
+                if not OSX:
+                    p.nice = 0
+                    self.assertEqual(p.nice, 0)
             finally:
-                p.nice = first_nice
+                # going back to previous nice value raises AccessDenied on OSX
+                if not OSX:
+                    p.nice = first_nice
 
     if os.name == 'nt':
 
@@ -727,6 +739,7 @@ class TestCase(unittest.TestCase):
         files = p.get_open_files()
         self.assertFalse(thisfile in files)
         f = open(thisfile, 'r')
+        time.sleep(.1)
         filenames = [x.path for x in p.get_open_files()]
         self.assertTrue(thisfile in filenames)
         f.close()
@@ -1013,52 +1026,6 @@ class TestCase(unittest.TestCase):
         finally:
             sys.stdout = stdout
 
-    def test_types(self):
-        sproc = get_test_subprocess()
-        wait_for_pid(sproc.pid)
-        p = psutil.Process(sproc.pid)
-        self.assert_(isinstance(p.pid, int))
-        self.assert_(isinstance(p.ppid, int))
-        self.assert_(isinstance(p.parent, psutil.Process))
-        self.assert_(isinstance(p.name, str))
-        if self.__class__.__name__ != "LimitedUserTestCase":
-            self.assert_(isinstance(p.exe, str))
-        self.assert_(isinstance(p.cmdline, list))
-        if os.name == 'posix':
-            self.assert_(isinstance(p.uids, tuple))
-            self.assert_(isinstance(p.gids, tuple))
-        self.assert_(isinstance(p.create_time, float))
-        self.assert_(isinstance(p.username, (unicode, str)))
-        if hasattr(p, 'getcwd'):
-            if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
-                self.assert_(isinstance(p.getcwd(), str))
-        if not POSIX and self.__class__.__name__ != "LimitedUserTestCase":
-            self.assert_(isinstance(p.get_open_files(), list))
-            for path, fd in p.get_open_files():
-                self.assert_(isinstance(path, (unicode, str)))
-                self.assert_(isinstance(fd, int))
-        if not POSIX and self.__class__.__name__ != "LimitedUserTestCase" \
-        and SUPPORT_CONNECTIONS:
-            self.assert_(isinstance(p.get_connections(), list))
-        self.assert_(isinstance(p.is_running(), bool))
-        if not OSX or self.__class__.__name__ != "LimitedUserTestCase":
-            self.assert_(isinstance(p.get_cpu_times(), tuple))
-            self.assert_(isinstance(p.get_cpu_times()[0], float))
-            self.assert_(isinstance(p.get_cpu_times()[1], float))
-            self.assert_(isinstance(p.get_cpu_percent(0), float))
-            self.assert_(isinstance(p.get_memory_info(), tuple))
-            self.assert_(isinstance(p.get_memory_info()[0], int))
-            self.assert_(isinstance(p.get_memory_info()[1], int))
-            self.assert_(isinstance(p.get_memory_percent(), float))
-            self.assert_(isinstance(p.get_num_threads(), int))
-        self.assert_(isinstance(psutil.get_process_list(), list))
-        self.assert_(isinstance(psutil.get_process_list()[0], psutil.Process))
-        self.assert_(isinstance(psutil.process_iter(), types.GeneratorType))
-        self.assert_(isinstance(psutil.process_iter().next(), psutil.Process))
-        self.assert_(isinstance(psutil.get_pid_list(), list))
-        self.assert_(isinstance(psutil.get_pid_list()[0], int))
-        self.assert_(isinstance(psutil.pid_exists(1), bool))
-
     def test_invalid_pid(self):
         self.assertRaises(ValueError, psutil.Process, "1")
         self.assertRaises(ValueError, psutil.Process, None)
@@ -1066,7 +1033,7 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, psutil.Process, -1)
 
     def test_zombie_process(self):
-        # Test that NoSuchProcess exception gets raised in the event the
+        # Test that NoSuchProcess exception gets raised in case the
         # process dies after we create the Process object.
         # Example:
         #  >>> proc = Process(1234)
@@ -1083,6 +1050,7 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "name")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "exe")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "cmdline")
+        self.assertRaises(psutil.NoSuchProcess, getattr, p, "status")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "create_time")
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "username")
         if hasattr(p, 'getcwd'):
@@ -1104,6 +1072,8 @@ class TestCase(unittest.TestCase):
         if hasattr(p, 'get_ionice'):
             self.assertRaises(psutil.NoSuchProcess, p.get_ionice)
             self.assertRaises(psutil.NoSuchProcess, p.set_ionice, 2)
+        if hasattr(p, 'get_io_counters'):
+            self.assertRaises(psutil.NoSuchProcess, p.get_io_counters)
         self.assertRaises(psutil.NoSuchProcess, p.get_open_files)
         self.assertRaises(psutil.NoSuchProcess, p.get_connections)
         self.assertRaises(psutil.NoSuchProcess, p.suspend)
@@ -1300,6 +1270,10 @@ if hasattr(os, 'getuid'):
 
             def test_connection_fromfd(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_connection_fromfd, self)
+
+        if OSX:
+            def test_nice(self):
+                self.assertRaises(psutil.AccessDenied, TestCase.test_nice, self)
 
 
 def test_main():
