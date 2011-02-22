@@ -1136,7 +1136,8 @@ class TestCase(unittest.TestCase):
         valid_procs = 0
         attrs = ['__str__', 'create_time', 'username', 'getcwd', 'get_cpu_times',
                  'get_memory_info', 'get_memory_percent', 'get_open_files',
-                  'get_num_threads', 'get_threads']
+                  'get_num_threads', 'get_threads', 'status', 'get_io_counters',
+                  'exe', 'uids', 'gids', 'nice', 'get_ionice']
         if os.name == 'posix':
             attrs.append("nice")
         for p in psutil.process_iter():
