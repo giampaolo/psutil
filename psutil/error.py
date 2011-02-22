@@ -39,9 +39,9 @@ class AccessDenied(Error):
         self.name = name
         self.msg = msg
         if msg is None:
-            if pid and name:
+            if (pid is not None) and (name is not None):
                 self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
-            elif pid:
+            elif (pid is not None):
                 self.msg = "(pid=%s)" % self.pid
             else:
                 self.msg = ""
@@ -58,9 +58,9 @@ class TimeoutExpired(Error):
     def __init__(self, pid=None, name=None):
         self.pid = pid
         self.name = name
-        if pid and name:
+        if (pid is not None) and (name is not None):
             self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
-        elif pid:
+        elif (pid is not None):
             self.msg = "(pid=%s)" % self.pid
         else:
             self.msg = ""

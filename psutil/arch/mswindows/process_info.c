@@ -236,7 +236,7 @@ pid_in_proclist(DWORD pid)
 
     proclist = get_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
-        return NULL;
+        return -1;
     }
 
     for (i = 0; i < numberOfReturnedPIDs; i++) {
@@ -459,7 +459,7 @@ const STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 /*
  * Given a process PID and a PSYSTEM_PROCESS_INFORMATION structure
  * fills the structure with process information.
- * On success return 1, else NULL with Python exception already set.
+ * On success return 1, else 0 with Python exception already set.
  */
 int
 get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess)
@@ -498,7 +498,7 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess)
     if (status != 0) {
         free(buffer);
         PyErr_Format(PyExc_RuntimeError, "NtQuerySystemInformation() failed");
-        return NULL;
+        return 0;
     }
 
 
@@ -507,7 +507,7 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess)
 
     process = PH_FIRST_PROCESS(buffer);
     do {
-        if (process->UniqueProcessId == pid) {
+        if (process->UniqueProcessId == (HANDLE)pid) {
             free(buffer);
             *retProcess = process;
             return 1;
@@ -516,7 +516,7 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess)
 
     free(buffer);
     NoSuchProcess();
-    return NULL;
+    return 0;
 }
 
 

@@ -157,7 +157,7 @@ process_wait(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
     DWORD ExitCode;
-    DWORD WINAPI retVal;
+    DWORD retVal;
     long pid;
     long timeout;
 
@@ -819,7 +819,8 @@ suspend_resume_process(DWORD pid, int suspend)
     THREADENTRY32  te32 = {0};
 
     if (pid == 0) {
-        return AccessDenied();
+        AccessDenied();
+        return FALSE;
     }
 
     hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
