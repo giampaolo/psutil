@@ -150,10 +150,18 @@ class OSXProcess(object):
         """Return the number of threads belonging to the process."""
         return _psutil_osx.get_process_num_threads(self.pid)
 
+    @wrap_exceptions
     def get_open_files(self):
         """Return files opened by process by parsing lsof output."""
-        lsof = _psposix.LsofParser(self.pid, self._process_name)
-        return lsof.get_process_open_files()
+        if self.pid == 0:
+            raise AccessDenied(self.pid, self._process_name)
+        files = []
+        rawlist = _psutil_osx.get_process_open_files(self.pid)
+        for path, fd in rawlist:
+            if os.path.isfile(path):
+                ntuple = ntuple_openfile(path, fd)
+                files.append(ntuple)
+        return files
 
     def get_connections(self):
         """Return etwork connections opened by a process as a list of

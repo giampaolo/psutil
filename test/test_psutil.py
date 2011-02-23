@@ -30,6 +30,7 @@ import psutil
 
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
+TESTFN = os.path.join(os.getcwd(), "$testfile")
 
 POSIX = os.name == 'posix'
 LINUX = sys.platform.lower().startswith("linux")
@@ -732,28 +733,26 @@ class TestCase(unittest.TestCase):
         self.assertEqual(p.getcwd(), expected_dir)
 
     def test_get_open_files(self):
-        thisfile = os.path.join(os.getcwd(), __file__)
-
         # current process
         p = psutil.Process(os.getpid())
         files = p.get_open_files()
-        self.assertFalse(thisfile in files)
-        f = open(thisfile, 'r')
+        self.assertFalse(TESTFN in files)
+        f = open(TESTFN, 'r')
         time.sleep(.1)
         filenames = [x.path for x in p.get_open_files()]
-        self.assertTrue(thisfile in filenames)
+        self.assertTrue(TESTFN in filenames)
         f.close()
         for file in filenames:
             self.assertTrue(os.path.isfile(file))
 
         # another process
-        cmdline = "import time; f = open(r'%s', 'r'); time.sleep(100);" % thisfile
+        cmdline = "import time; f = open(r'%s', 'r'); time.sleep(100);" % TESTFN
         sproc = get_test_subprocess([PYTHON, "-c", cmdline])
         wait_for_pid(sproc.pid)
         time.sleep(0.1)
         p = psutil.Process(sproc.pid)
         filenames = [x.path for x in p.get_open_files()]
-        self.assertTrue(thisfile in filenames)
+        self.assertTrue(TESTFN in filenames)
         for file in filenames:
             self.assertTrue(os.path.isfile(file))
         # all processes
@@ -768,7 +767,7 @@ class TestCase(unittest.TestCase):
 
     def test_get_open_files2(self):
         # test fd and path fields
-        fileobj = open(os.path.join(os.getcwd(), __file__), 'r')
+        fileobj = open(TESTFN, 'r')
         p = psutil.Process(os.getpid())
         for path, fd in p.get_open_files():
             if path == fileobj.name or fd == fileobj.fileno():
@@ -842,7 +841,6 @@ class TestCase(unittest.TestCase):
 
     @skipUnless(SUPPORT_CONNECTIONS, warn=1)
     def test_get_connections_all(self):
-
         def check_address(addr, family):
             if not addr:
                 return
@@ -1278,7 +1276,6 @@ if hasattr(os, 'getuid'):
 def test_main():
     tests = []
     test_suite = unittest.TestSuite()
-
     tests.append(TestCase)
 
     if hasattr(os, 'getuid'):
@@ -1305,6 +1302,10 @@ def test_main():
 
     for test_class in tests:
         test_suite.addTest(unittest.makeSuite(test_class))
+
+    f = open(TESTFN, 'w')
+    f.close()
+    atexit.register(lambda: os.remove(TESTFN))
 
     unittest.TextTestRunner(verbosity=2).run(test_suite)
     DEVNULL.close()

@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
+#include <libproc.h>
+#include <sys/proc_info.h>
 
 #include <mach/mach.h>
 #include <mach/task.h>
@@ -633,6 +635,102 @@ get_process_threads(PyObject* self, PyObject* args)
 
 
 /*
+ * Return process open files as a Python tuple.
+ * References:
+ * - lsof source code: http://goo.gl/SYW79 and http://goo.gl/m78fd
+ * - /usr/include/sys/proc_info.h
+ */
+static PyObject*
+get_process_open_files(PyObject* self, PyObject* args)
+{
+    long pid;
+    int pidinfo_result;
+    int iterations;
+    int i;
+    int nb;
+
+    struct proc_fdinfo *fds_pointer;
+    struct proc_fdinfo *fdp_pointer;
+    struct vnode_fdinfowithpath vi;
+
+    PyObject *retList = PyList_New(0);
+    PyObject *tuple = NULL;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+    if (pidinfo_result <= 0) {
+        goto error;
+    }
+
+    fds_pointer = malloc(pidinfo_result);
+    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
+                                  pidinfo_result);
+    free(fds_pointer);
+
+    if (pidinfo_result <= 0) {
+        goto error;
+    }
+
+    iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
+
+    for (i = 0; i < iterations; i++) {
+        fdp_pointer = &fds_pointer[i];
+
+        //
+        if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE)
+        {
+            nb = proc_pidfdinfo(pid,
+                                fdp_pointer->proc_fd,
+                                PROC_PIDFDVNODEPATHINFO,
+                                &vi,
+                                sizeof(vi));
+
+            // --- errors checking
+            if (nb <= 0) {
+                if ((errno == ENOENT) || (errno == EBADF)) {
+                    // no such file or directory or bad file descriptor;
+                    // let's assume the file has been closed or removed
+                    continue;
+                }
+                if (errno != 0) {
+                    return PyErr_SetFromErrno(PyExc_OSError);
+                }
+                else
+                    return PyErr_Format(PyExc_RuntimeError,
+                                "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
+            }
+            if (nb < sizeof(vi)) {
+                return PyErr_Format(PyExc_RuntimeError,
+                 "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed (buffer mismatch)");
+            }
+            // --- /errors checking
+
+            // --- construct python list
+            tuple = Py_BuildValue("(si)", vi.pvip.vip_path,
+                                          (int)fdp_pointer->proc_fd);
+            PyList_Append(retList, tuple);
+            Py_DECREF(tuple);
+            // --- /construct python list
+        }
+    }
+
+    return retList;
+
+error:
+    if (errno != 0)
+        return PyErr_SetFromErrno(PyExc_OSError);
+    else if (! pid_exists(pid) )
+        return NoSuchProcess();
+    else
+        return PyErr_Format(PyExc_RuntimeError,
+                            "proc_pidinfo(PROC_PIDLISTFDS) failed");
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -663,6 +761,9 @@ PsutilMethods[] =
          "Return process status as an integer"},
      {"get_process_threads", get_process_threads, METH_VARARGS,
          "Return process threads as a list of tuples"},
+     {"get_process_open_files", get_process_open_files, METH_VARARGS,
+         "Return files opened by process as a list of tuples"},
+
 
      // --- system-related functions
 
