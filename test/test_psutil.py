@@ -1105,9 +1105,11 @@ class TestCase(unittest.TestCase):
         excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
                           'kill', 'wait']
         excluded_names += ['get_cpu_percent', 'path', 'uid', 'gid', 'get_children']
-        # skip slow lsof implementation; it is already tested elsewhere
-        if BSD or OSX:
+        # XXX - skip slow lsof implementation;
+        if BSD:
            excluded_names += ['get_open_files', 'get_connections']
+        if OSX:
+           excluded_names += ['get_connections']
         attrs = []
         for name in dir(psutil.Process):
             if name.startswith("_"):
