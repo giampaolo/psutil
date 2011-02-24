@@ -841,6 +841,7 @@ class TestCase(unittest.TestCase):
 
     @skipUnless(SUPPORT_CONNECTIONS, warn=1)
     def test_get_connections_all(self):
+
         def check_address(addr, family):
             if not addr:
                 return
@@ -903,9 +904,9 @@ class TestCase(unittest.TestCase):
             tcp6_proc = None
             udp6_proc = None
 
+        # --- check connections of all processes
+
         time.sleep(0.1)
-        this_proc = psutil.Process(os.getpid())
-        children_pids = [p.pid for p in this_proc.get_children()]
         for p in psutil.process_iter():
             try:
                 cons = p.get_connections()
@@ -944,38 +945,38 @@ class TestCase(unittest.TestCase):
                             self.assertEqual(dupsock.family, conn.family)
                             self.assertEqual(dupsock.type, conn.type)
 
-                # check matches against subprocesses
-                if p.pid in children_pids:
-                    self.assertTrue(len(cons) == 1)
-                    conn = cons[0]
-                    # TCP v4
-                    if p.pid == tcp4_proc.pid:
-                        self.assertEqual(conn.family, socket.AF_INET)
-                        self.assertEqual(conn.type, socket.SOCK_STREAM)
-                        self.assertEqual(conn.local_address[0], "127.0.0.1")
-                        self.assertEqual(conn.remote_address, ())
-                        self.assertEqual(conn.status, "LISTEN")
-                    # UDP v4
-                    elif p.pid == udp4_proc.pid:
-                        self.assertEqual(conn.family, socket.AF_INET)
-                        self.assertEqual(conn.type, socket.SOCK_DGRAM)
-                        self.assertEqual(conn.local_address[0], "127.0.0.1")
-                        self.assertEqual(conn.remote_address, ())
-                        self.assertEqual(conn.status, "")
-                    # TCP v6
-                    elif p.pid == getattr(tcp6_proc, "pid", None):
-                        self.assertEqual(conn.family, socket.AF_INET6)
-                        self.assertEqual(conn.type, socket.SOCK_STREAM)
-                        self.assertEqual(conn.local_address[0], "::1")
-                        self.assertEqual(conn.remote_address, ())
-                        self.assertEqual(conn.status, "LISTEN")
-                    # UDP v6
-                    elif p.pid == getattr(udp6_proc, "pid", None):
-                        self.assertEqual(conn.family, socket.AF_INET6)
-                        self.assertEqual(conn.type, socket.SOCK_DGRAM)
-                        self.assertEqual(conn.local_address[0], "::1")
-                        self.assertEqual(conn.remote_address, ())
-                        self.assertEqual(conn.status, "")
+        # --- check matches against subprocesses
+
+        for p in psutil.Process(os.getpid()).get_children():
+            for conn in p.get_connections():
+                # TCP v4
+                if p.pid == tcp4_proc.pid:
+                    self.assertEqual(conn.family, socket.AF_INET)
+                    self.assertEqual(conn.type, socket.SOCK_STREAM)
+                    self.assertEqual(conn.local_address[0], "127.0.0.1")
+                    self.assertEqual(conn.remote_address, ())
+                    self.assertEqual(conn.status, "LISTEN")
+                # UDP v4
+                elif p.pid == udp4_proc.pid:
+                    self.assertEqual(conn.family, socket.AF_INET)
+                    self.assertEqual(conn.type, socket.SOCK_DGRAM)
+                    self.assertEqual(conn.local_address[0], "127.0.0.1")
+                    self.assertEqual(conn.remote_address, ())
+                    self.assertEqual(conn.status, "")
+                # TCP v6
+                elif p.pid == getattr(tcp6_proc, "pid", None):
+                    self.assertEqual(conn.family, socket.AF_INET6)
+                    self.assertEqual(conn.type, socket.SOCK_STREAM)
+                    self.assertEqual(conn.local_address[0], "::1")
+                    self.assertEqual(conn.remote_address, ())
+                    self.assertEqual(conn.status, "LISTEN")
+                # UDP v6
+                elif p.pid == getattr(udp6_proc, "pid", None):
+                    self.assertEqual(conn.family, socket.AF_INET6)
+                    self.assertEqual(conn.type, socket.SOCK_DGRAM)
+                    self.assertEqual(conn.local_address[0], "::1")
+                    self.assertEqual(conn.remote_address, ())
+                    self.assertEqual(conn.status, "")
 
     def test_parent_ppid(self):
         this_parent = os.getpid()

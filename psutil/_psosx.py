@@ -152,7 +152,7 @@ class OSXProcess(object):
 
     @wrap_exceptions
     def get_open_files(self):
-        """Return files opened by process by parsing lsof output."""
+        """Return files opened by process."""
         if self.pid == 0:
             raise AccessDenied(self.pid, self._process_name)
         files = []
@@ -163,11 +163,12 @@ class OSXProcess(object):
                 files.append(ntuple)
         return files
 
+    @wrap_exceptions
     def get_connections(self):
         """Return etwork connections opened by a process as a list of
         namedtuples."""
-        lsof = _psposix.LsofParser(self.pid, self._process_name)
-        return lsof.get_process_connections()
+        retlist = _psutil_osx.get_process_connections(self.pid)
+        return [ntuple_connection(*conn) for conn in retlist]
 
     @wrap_exceptions
     def process_wait(self, timeout=None):

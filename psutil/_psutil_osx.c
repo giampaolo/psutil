@@ -14,6 +14,8 @@
 #include <sys/vmmeter.h>
 #include <libproc.h>
 #include <sys/proc_info.h>
+#include <netinet/tcp_fsm.h>
+#include <arpa/inet.h>
 
 #include <mach/mach.h>
 #include <mach/task.h>
@@ -731,6 +733,201 @@ error:
 
 
 /*
+ * mathes Linux net/tcp_states.h:
+ * http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
+ */
+static char *
+get_connection_status(int st) {
+    switch (st) {
+        case TCPS_CLOSED:
+            return "CLOSE";
+        case TCPS_CLOSING:
+            return "CLOSING";
+        case TCPS_CLOSE_WAIT:
+            return "CLOSE_WAIT";
+        case TCPS_LISTEN:
+            return "LISTEN";
+        case TCPS_ESTABLISHED:
+            return "ESTABLISHED";
+        case TCPS_SYN_SENT:
+            return "SYN_SENT";
+        case TCPS_SYN_RECEIVED:
+            return "SYN_RECV";
+        case TCPS_FIN_WAIT_1:
+            return "FIN_WAIT_1";
+        case TCPS_FIN_WAIT_2:
+            return "FIN_WAIT_2";
+        case TCPS_LAST_ACK:
+            return "LAST_ACK";
+        case TCPS_TIME_WAIT:
+            return "TIME_WAIT";
+        default:
+            return "";
+    }
+}
+
+
+/*
+ * Return process TCP and UDP connections as a list of tuples.
+ * References:
+ * - lsof source code: http://goo.gl/SYW79 and http://goo.gl/wNrC0
+ * - /usr/include/sys/proc_info.h
+ */
+static PyObject*
+get_process_connections(PyObject* self, PyObject* args)
+{
+    long pid;
+    int pidinfo_result;
+    int iterations;
+    int i;
+    int nb;
+
+    struct proc_fdinfo *fds_pointer;
+    struct proc_fdinfo *fdp_pointer;
+    struct socket_fdinfo si;
+
+
+    PyObject *retList = PyList_New(0);
+    PyObject *tuple = NULL;
+    PyObject *laddr = NULL;
+    PyObject *raddr = NULL;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+    if (pidinfo_result <= 0) {
+        goto error;
+    }
+
+    fds_pointer = malloc(pidinfo_result);
+    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
+                                  pidinfo_result);
+    free(fds_pointer);
+
+    if (pidinfo_result <= 0) {
+        goto error;
+    }
+
+    iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
+
+    for (i = 0; i < iterations; i++) {
+        errno = 0;
+        fdp_pointer = &fds_pointer[i];
+
+        //
+        if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET)
+        {
+            nb = proc_pidfdinfo(pid, fdp_pointer->proc_fd, PROC_PIDFDSOCKETINFO,
+                                &si, sizeof(si));
+
+            // --- errors checking
+            if (nb <= 0) {
+                if (errno == EBADF) {
+                    // let's assume socket has been closed
+                    continue;
+                }
+                if (errno != 0) {
+                    return PyErr_SetFromErrno(PyExc_OSError);
+                }
+                else {
+                    return PyErr_Format(PyExc_RuntimeError,
+                                "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
+                }
+            }
+            if (nb < sizeof(si)) {
+                return PyErr_Format(PyExc_RuntimeError,
+                 "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed (buffer mismatch)");
+            }
+            // --- /errors checking
+
+            //
+            int fd, family, type, lport, rport;
+            char lip[200], rip[200];
+            char *state;
+
+            fd = (int)fdp_pointer->proc_fd;
+            family = si.psi.soi_family;
+            type = si.psi.soi_kind;
+
+            if ((family != AF_INET) && (family != AF_INET6)) {
+                continue;
+            }
+
+            if (type == 2)
+                type = SOCK_STREAM;
+            else if (type == 1)
+                type = SOCK_DGRAM;
+            else
+                continue;
+
+            if (errno != 0) {
+                printf("errno 1 = %i\n", errno);
+                return PyErr_SetFromErrno(PyExc_OSError);
+            }
+
+
+            if (family == AF_INET) {
+                inet_ntop(AF_INET,
+                          &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_46.i46a_addr4,
+                          lip,
+                          sizeof(lip));
+                inet_ntop(AF_INET,
+                          &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_46.i46a_addr4,
+                          rip,
+                          sizeof(lip));
+            }
+            else {
+                inet_ntop(AF_INET6,
+                          &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_6,
+                          lip, sizeof(lip));
+                inet_ntop(AF_INET6,
+                          &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_6,
+                          lip, sizeof(rip));
+            }
+
+            // check for inet_ntop failures
+            if (errno != 0) {
+                return PyErr_SetFromErrno(PyExc_OSError);
+            }
+
+            lport = ntohs(si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport);
+            rport = ntohs(si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_fport);
+            if (type == SOCK_STREAM)
+                state = get_connection_status((int)si.psi.soi_proto.pri_tcp.tcpsi_state);
+            else
+                state = "";
+
+            laddr = Py_BuildValue("(si)", lip, lport);
+            if (rport != 0)
+                raddr = Py_BuildValue("(si)", rip, rport);
+            else
+                raddr = PyTuple_New(0);
+
+            // --- construct python list
+            tuple = Py_BuildValue("(iiiNNs)", fd, family, type, laddr, raddr,
+                                              state);
+            PyList_Append(retList, tuple);
+            Py_DECREF(tuple);
+            // --- /construct python list
+        }
+    }
+
+    return retList;
+
+error:
+    if (errno != 0)
+        return PyErr_SetFromErrno(PyExc_OSError);
+    else if (! pid_exists(pid) )
+        return NoSuchProcess();
+    else
+        return PyErr_Format(PyExc_RuntimeError,
+                            "proc_pidinfo(PROC_PIDLISTFDS) failed");
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -763,6 +960,8 @@ PsutilMethods[] =
          "Return process threads as a list of tuples"},
      {"get_process_open_files", get_process_open_files, METH_VARARGS,
          "Return files opened by process as a list of tuples"},
+     {"get_process_connections", get_process_connections, METH_VARARGS,
+         "Get process TCP and UDP connections as a list of tuples"},
 
 
      // --- system-related functions
