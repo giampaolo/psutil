@@ -21,7 +21,6 @@ static PyObject* get_process_num_threads(PyObject* self, PyObject* args);
 static PyObject* get_process_threads(PyObject* self, PyObject* args);
 static PyObject* get_process_status(PyObject* self, PyObject* args);
 static PyObject* get_process_io_counters(PyObject* self, PyObject* args);
-static PyObject* get_process_open_files(PyObject* self, PyObject* args);
 
 // --- system-related functions
 

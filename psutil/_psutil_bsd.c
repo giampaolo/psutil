@@ -16,7 +16,6 @@
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/vmmeter.h>  /* needed for vmtotal struct */
-#include <libutil.h>
 
 #include "_psutil_bsd.h"
 #include "_psutil_common.h"
@@ -627,42 +626,6 @@ get_system_cpu_times(PyObject* self, PyObject* args)
 
 
 /*
- * Return a list of tuples for every regular file opened by process
- */
-static PyObject*
-get_process_open_files(PyObject* self, PyObject* args)
-{
-    long pid;
-    int i, cnt;
-    struct kinfo_file *freep, *kif;
-    PyObject *retList = PyList_New(0);
-    PyObject *tuple = NULL;
-
-
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-
-    freep = kinfo_getfile(pid, &cnt);
-    if (freep == NULL) {
-        return PyErr_SetFromErrno(PyExc_OSError);
-    }
-
-    for (i = 0; i < cnt; i++) {
-        kif = &freep[i];
-        if (kif->kf_type == KF_TYPE_VNODE) {
-            tuple = Py_BuildValue("(si)", kif->kf_path, kif->kf_fd);
-            PyList_Append(retList, tuple);
-            Py_DECREF(tuple);
-        }
-    }
-
-    return retList;
-}
-
-
-
-/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -697,8 +660,6 @@ PsutilMethods[] =
          "Return process status as an integer"},
      {"get_process_io_counters", get_process_io_counters, METH_VARARGS,
          "Return process IO counters"},
-     {"get_process_open_files", get_process_open_files, METH_VARARGS,
-         "Return files opened by process"},
 
 
      // --- system-related functions

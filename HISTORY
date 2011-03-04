@@ -16,8 +16,8 @@ NEW FEATURES
  * Issue 147: per-process I/O nice (priority) - Linux only.
  * Issue 148: psutil.Popen class which tidies up subprocess.Popen and
    psutil.Process in a unique interface.
- * Issue 152: (OSX and BSD) get_process_open_files() implementation has been
-   rewritten in C and no longer relies on lsof resulting in a 3x speedup.
+ * Issue 152: (OSX) get_process_open_files() implementation has been rewritten
+   in C and no longer relies on lsof resulting in a 3x speedup.
  * Issue 153: (OSX) get_process_connection() implementation has been rewritten
    in C and no longer relies on lsof resulting in a 3x speedup.
 

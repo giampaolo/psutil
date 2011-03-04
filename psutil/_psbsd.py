@@ -159,16 +159,11 @@ class BSDProcess(object):
             retlist.append(ntuple)
         return retlist
 
-    @wrap_exceptions
+
     def get_open_files(self):
         """Return files opened by process by parsing lsof output."""
-        files = []
-        rawlist = _psutil_bsd.get_process_open_files(self.pid)
-        for path, fd in rawlist:
-            if os.path.isfile(path):
-                ntuple = ntuple_openfile(path, fd)
-                files.append(ntuple)
-        return files
+        lsof = _psposix.LsofParser(self.pid, self._process_name)
+        return lsof.get_process_open_files()
 
     def get_connections(self):
         """Return network connections opened by a process as a list of
