@@ -445,9 +445,10 @@ class TestCase(unittest.TestCase):
         f.read()
         f.close()
         io2 = p.get_io_counters()
-        self.assertTrue(io2.read_count > io1.read_count)
+        if not BSD:
+            self.assertTrue(io2.read_count > io1.read_count)
+            self.assertTrue(io2.write_count == io1.write_count)
         self.assertTrue(io2.read_bytes >= io1.read_bytes)
-        self.assertTrue(io2.write_count == io1.write_count)
         self.assertTrue(io2.write_bytes >= io1.write_bytes)
         # test writes
         io1 = p.get_io_counters()
@@ -458,8 +459,9 @@ class TestCase(unittest.TestCase):
             f.write("x" * 1000000)
         f.close()
         io2 = p.get_io_counters()
-        self.assertTrue(io2.write_count > io1.write_count)
-        self.assertTrue(io2.write_bytes > io1.write_bytes)
+        if not BSD:
+            self.assertTrue(io2.write_count > io1.write_count)
+            self.assertTrue(io4.write_bytes > io1.write_bytes)
         self.assertTrue(io2.read_count >= io1.read_count)
         self.assertTrue(io2.read_bytes >= io1.read_bytes)
 
@@ -1269,6 +1271,9 @@ if hasattr(os, 'getuid'):
 
             def test_get_connections(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_get_connections, self)
+
+            def test_get_connections_all(self):
+                self.assertRaises(psutil.AccessDenied, TestCase.test_get_connections_all, self)
 
             def test_connection_fromfd(self):
                 self.assertRaises(psutil.AccessDenied, TestCase.test_connection_fromfd, self)
