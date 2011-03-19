@@ -1755,6 +1755,8 @@ is_process_suspended(PyObject* self, PyObject* args)
         return NULL;
     if (get_process_info(pid, &process) != 1)
         return NULL;
+    if (pid_is_running(pid) == 0)
+        return NoSuchProcess();
 
     for (i = 0; i < process->NumberOfThreads; i++) {
         if (process->Threads[i].ThreadState != Waiting ||
