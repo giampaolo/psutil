@@ -21,9 +21,11 @@ def sysctl(cmdline):
     """
     p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
     result = p.communicate()[0].strip()
-    result = result[result.find(": ") + 2:]
     if sys.version_info >= (3,):
+        result = result[result.find(b": ") + 2:]
         result = str(result, sys.stdout.encoding)
+    else:
+        result = result[result.find(": ") + 2:]
     try:
         return int(result)
     except ValueError:
