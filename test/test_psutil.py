@@ -441,7 +441,7 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(os.getpid())
         # test reads
         io1 = p.get_io_counters()
-        f = open(PYTHON, 'r')
+        f = open(PYTHON, 'rb')
         f.read()
         f.close()
         io2 = p.get_io_counters()
