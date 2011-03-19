@@ -458,12 +458,6 @@ class LinuxProcess(object):
                     retlist.append(ntuple)
         return retlist
 
-#    --- lsof implementation
-#
-#    def get_open_files(self):
-#        lsof = _psposix.LsofParser(self.pid, self._process_name)
-#        return lsof.get_process_open_files()
-
     @wrap_exceptions
     def get_connections(self):
         if self.pid == 0:

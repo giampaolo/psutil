@@ -452,7 +452,10 @@ class TestCase(unittest.TestCase):
         # test writes
         io1 = p.get_io_counters()
         f = tempfile.TemporaryFile()
-        f.write("x" * 1000000)
+        if sys.version_info >= (3,):
+            f.write(bytes("x" * 1000000, 'ascii'))
+        else:
+            f.write("x" * 1000000)
         f.close()
         io2 = p.get_io_counters()
         self.assertTrue(io2.write_count > io1.write_count)
@@ -1054,20 +1057,19 @@ class TestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess, getattr, p, "username")
         if hasattr(p, 'getcwd'):
             self.assertRaises(psutil.NoSuchProcess, p.getcwd)
-        if hasattr(p, 'uids'):
-            self.assertRaises(psutil.NoSuchProcess, p.uids)
-            self.assertRaises(psutil.NoSuchProcess, p.gids)
-        if hasattr(p, 'nice'):
-            self.assertRaises(psutil.NoSuchProcess, p.nice)
-            try:
-                if os.name == 'posix':
-                    p.nice = 1
-                else:
-                    p.nice = psutil.NORMAL_PRIORITY_CLASS
-            except psutil.NoSuchProcess:
-                pass
+        if POSIX:
+            self.assertRaises(psutil.NoSuchProcess, getattr, p, "uids")
+            self.assertRaises(psutil.NoSuchProcess, getattr, p, "gids")
+        self.assertRaises(psutil.NoSuchProcess, getattr, p, "nice")
+        try:
+            if os.name == 'posix':
+                p.nice = 1
             else:
-                self.fail("exception not raised")
+                p.nice = psutil.NORMAL_PRIORITY_CLASS
+        except psutil.NoSuchProcess:
+            pass
+        else:
+            self.fail("exception not raised")
         if hasattr(p, 'get_ionice'):
             self.assertRaises(psutil.NoSuchProcess, p.get_ionice)
             self.assertRaises(psutil.NoSuchProcess, p.set_ionice, 2)
