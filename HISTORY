@@ -8,11 +8,14 @@ NEW FEATURES
  * Issue 64: per-process I/O counters.
  * Issue 116: per-process wait() (wait for process to terminate and return its
    exit code).
+ * Issue 134: per-process get_threads() returning information (id, user and
+   kernel times) about threads opened by process.
  * Issue 136: process executable path on FreeBSD is now determined by asking
    the kernel instead of guessing it from cmdline[0].
  * Issue 137: per-process real, effective and saved user and group ids.
  * Issue 140: system boot time.
  * Issue 142: per-process get and set niceness (priority).
+ * Issue 143: per-process status.
  * Issue 147: per-process I/O nice (priority) - Linux only.
  * Issue 148: psutil.Popen class which tidies up subprocess.Popen and
    psutil.Process in a unique interface.
