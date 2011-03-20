@@ -507,10 +507,13 @@ class Popen(Process):
       'giampaolo'
       >>> p.communicate()
       ('hi\n', None)
+      >>> p.terminate()
+      >>> p.wait(timeout=2)
+      0
       >>>
 
-    For method names common to both classes such as kill() and terminate(),
-    psutil.Process implementation takes precedence.
+    For method names common to both classes such as kill(), terminate()
+    and wait(), psutil.Process implementation takes precedence.
 
     For a complete documentation refers to:
     http://docs.python.org/library/subprocess.html
