@@ -19,7 +19,7 @@ The easiest way to install psutil from sources is using easy_install.
 Get the latest easy_install version from http://pypi.python.org/pypi/setuptools
 and just run:
 
- > python easy_install psutil
+ > easy_install psutil
 
 This should get the most updated psutil version from the Python pypi repository,
 unpack it, compile it and install it automatically.
@@ -80,11 +80,11 @@ commands:
 
 to build only:
 
-  > ./setup.py build
+  > python setup.py build
 
 to install and build:
 
-  > ./setup.py install
+  > python setup.py install
 
 NOTE: due to developer's hardware limitations psutil has only been compiled and
 tested on OS X 10.4.11 so may or may not work on other versions.
@@ -99,20 +99,22 @@ the standard distutils commands:
 
 build only:
 
-  > ./setup.py build
+  > python setup.py build
 
 install and build:
 
-  > ./setup.py install
+  > python setup.py install
 
 
 Installing on Linux
 ===================
 
-Standard distutils installation steps should apply here. At the current time
-the Linux port of psutil does not require any C modules, so can be installed
-without need for a compiler using disutils:
+gcc is required and so the python headers. They can easily be installed by using
+the distro package manager. For example, on Ubuntu:
 
-install/build:
+  > sudo apt-get install python-dev
 
-  > ./setup.py install
+Once done, you can install/build psutil with:
+
+  > python setup.py install
+
