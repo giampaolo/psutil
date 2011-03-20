@@ -193,7 +193,7 @@ process_wait(PyObject* self, PyObject* args)
     }
     if (retVal == WAIT_TIMEOUT) {
         CloseHandle(hProcess);
-        return PyInt_FromLong(-1);
+        return Py_BuildValue("i", -1);
     }
 
     // get the exit code; note: subprocess module (erroneously?) uses
@@ -203,7 +203,11 @@ process_wait(PyObject* self, PyObject* args)
         return PyErr_SetFromWindowsErr(GetLastError());
     }
     CloseHandle(hProcess);
+#if PY_MAJOR_VERSION >= 3
+    return PyLong_FromLong((int) ExitCode);
+#else
     return PyInt_FromLong((int) ExitCode);
+#endif
 }
 
 

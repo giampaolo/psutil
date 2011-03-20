@@ -461,7 +461,7 @@ class TestCase(unittest.TestCase):
         io2 = p.get_io_counters()
         if not BSD:
             self.assertTrue(io2.write_count > io1.write_count)
-            self.assertTrue(io4.write_bytes > io1.write_bytes)
+            self.assertTrue(io2.write_bytes > io1.write_bytes)
         self.assertTrue(io2.read_count >= io1.read_count)
         self.assertTrue(io2.read_bytes >= io1.read_bytes)
 
