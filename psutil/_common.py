@@ -46,7 +46,7 @@ ntuple_thread = namedtuple('thread', 'id user_time system_time')
 ntuple_uids = namedtuple('user', 'real effective saved')
 ntuple_gids = namedtuple('group', 'real effective saved')
 ntuple_io = namedtuple('io', 'read_count write_count read_bytes write_bytes')
-ntuple_ionice = namedtuple('ionice', 'ioclass iodata')
+ntuple_ionice = namedtuple('ionice', 'ioclass value')
 
 # the __all__ namespace common to all _ps*.py platform modules
 base_module_namespace = [

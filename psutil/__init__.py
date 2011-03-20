@@ -278,13 +278,13 @@ class Process(object):
             """Return process I/O niceness (priority) as a namedtuple."""
             return self._platform_impl.get_process_ionice()
 
-        def set_ionice(self, ioclass, iodata=None):
+        def set_ionice(self, ioclass, value=None):
             """Set process I/O niceness (priority).
             ioclass is one of the IOPRIO_CLASS_* constants.
             iodata is a number which goes from 0 to 7. The higher the
             value, the lower the I/O priority of the process.
             """
-            return self._platform_impl.set_process_ionice(ioclass, iodata)
+            return self._platform_impl.set_process_ionice(ioclass, value)
 
     def get_num_threads(self):
         """Return the number of threads used by this process."""

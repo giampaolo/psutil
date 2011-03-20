@@ -403,28 +403,28 @@ class LinuxProcess(object):
 
         @wrap_exceptions
         def get_process_ionice(self):
-            ioclass, iodata = _psutil_linux.ioprio_get(self.pid)
-            return ntuple_ionice(ioclass, iodata)
+            ioclass, value = _psutil_linux.ioprio_get(self.pid)
+            return ntuple_ionice(ioclass, value)
 
         @wrap_exceptions
-        def set_process_ionice(self, ioclass, iodata):
+        def set_process_ionice(self, ioclass, value):
             if ioclass in (IOPRIO_CLASS_NONE, None):
-                if iodata:
-                    raise ValueError("can't specify iodata with IOPRIO_CLASS_NONE")
+                if value:
+                    raise ValueError("can't specify value with IOPRIO_CLASS_NONE")
                 ioclass = IOPRIO_CLASS_NONE
-                iodata = 0
+                value = 0
             if ioclass in (IOPRIO_CLASS_RT, IOPRIO_CLASS_BE):
-                if iodata is None:
-                    iodata = 4
+                if value is None:
+                    value = 4
             elif ioclass == IOPRIO_CLASS_IDLE:
-                if iodata:
-                    raise ValueError("can't specify iodata with IOPRIO_CLASS_IDLE")
-                iodata = 0
+                if value:
+                    raise ValueError("can't specify value with IOPRIO_CLASS_IDLE")
+                value = 0
             else:
-                iodata = 0
-            if not 0 <= iodata <= 8:
-                raise ValueError("iodata argument range expected is between 0 and 8")
-            return _psutil_linux.ioprio_set(self.pid, ioclass, iodata)
+                value = 0
+            if not 0 <= value <= 8:
+                raise ValueError("value argument range expected is between 0 and 8")
+            return _psutil_linux.ioprio_set(self.pid, ioclass, value)
 
     @wrap_exceptions
     def get_process_status(self):
