@@ -10,6 +10,7 @@ __all__ = ["namedtuple", "property"]
 from operator import itemgetter as _itemgetter
 from keyword import iskeyword as _iskeyword
 import sys as _sys
+import __builtin__
 
 try:
     from collections import namedtuple
@@ -114,17 +115,37 @@ except ImportError:
 
         return result
 
+
 # dirty hack to support property.setter on python < 2.6
 property = property
 
 if not hasattr(property, "setter"):
+
     class property(property):
-        def setter(self, value):
+
+        def __init__(self, fget, *args, **kwargs):
+            self.__doc__ = fget.__doc__
+            super(property, self).__init__(fget, *args, **kwargs)
+
+        def setter(self, fset):
             cls_ns = _sys._getframe(1).f_locals
             for k, v in cls_ns.iteritems():
-                if v == self:
-                    name = k
-                    break
-            cls_ns[name] = property(self.fget, value, self.fdel, self.__doc__)
-            return cls_ns[name]
+              if v == self:
+                  propname = k
+                  break
+            cls_ns[propname] = property(self.fget, fset,
+                                        self.fdel, self.__doc__)
+            return cls_ns[propname]
+
+        def deleter(self, fdel):
+            cls_ns = _sys._getframe(1).f_locals
+            for k, v in cls_ns.iteritems():
+              if v == self:
+                  propname = k
+                  break
+            cls_ns[propname] = property(self.fget, self.fset,
+                                        fdel, self.__doc__)
+            return cls_ns[propname]
+
+    __builtin__.property = property
 

@@ -32,6 +32,7 @@ def _get_boot_time():
         if line.startswith('btime'):
             f.close()
             return float(line.strip().split()[1])
+    raise RuntimeError("line not found")
 
 def _get_num_cpus():
     """Return the number of CPUs on the system"""
@@ -40,6 +41,8 @@ def _get_num_cpus():
     for line in f:
         if line.startswith('processor'):
             num += 1
+    if num == 0:
+        raise RuntimeError("line not found")
     f.close()
     return num
 
@@ -50,6 +53,7 @@ def _get_total_phymem():
         if line.startswith('MemTotal:'):
             f.close()
             return int(line.split()[1]) * 1024
+    raise RuntimeError("line not found")
 
 
 # Number of clock ticks per second
@@ -86,10 +90,9 @@ def avail_phymem():
     _flag = False
     for line in f:
         if line.startswith('MemFree:'):
-            free = int(line.split()[1]) * 1024
-            break
-    f.close()
-    return free
+            f.close()
+            return int(line.split()[1]) * 1024
+    raise RuntimeError("line not found")
 
 def used_phymem():
     """"Return the amount of physical memory used, in bytes."""
@@ -102,6 +105,7 @@ def total_virtmem():
         if line.startswith('SwapTotal:'):
             f.close()
             return int(line.split()[1]) * 1024
+    raise RuntimeError("line not found")
 
 def avail_virtmem():
     """Return the amount of virtual memory currently in use on the
@@ -112,6 +116,7 @@ def avail_virtmem():
         if line.startswith('SwapFree:'):
             f.close()
             return int(line.split()[1]) * 1024
+    raise RuntimeError("line not found")
 
 def used_virtmem():
     """Return the amount of used memory currently in use on the system,
@@ -128,6 +133,7 @@ def cached_phymem():
         if line.startswith('Cached:'):
             f.close()
             return int(line.split()[1]) * 1024
+    raise RuntimeError("line not found")
 
 def phymem_buffers():
     """Return the amount of physical memory buffers used by the
@@ -139,6 +145,7 @@ def phymem_buffers():
         if line.startswith('Buffers:'):
             f.close()
             return int(line.split()[1]) * 1024
+    raise RuntimeError("line not found")
 
 def get_system_cpu_times():
     """Return a dict representing the following CPU times:
@@ -276,6 +283,7 @@ class LinuxProcess(object):
                 read_bytes = int(line.split()[1])
             elif line.startswith("write_bytes"):
                 write_bytes = int(line.split()[1])
+        f.close()
         return ntuple_io(read_count, write_count, read_bytes, write_bytes)
 
     @wrap_exceptions
@@ -356,6 +364,7 @@ class LinuxProcess(object):
             if line.startswith("Threads:"):
                 f.close()
                 return int(line.split()[1])
+        raise RuntimeError("line not found")
 
     @wrap_exceptions
     def get_process_threads(self):
@@ -522,6 +531,7 @@ class LinuxProcess(object):
                 # PPid: nnnn
                 f.close()
                 return int(line.split()[1])
+        raise RuntimeError("line not found")
 
     @wrap_exceptions
     def get_process_uids(self):
@@ -533,6 +543,7 @@ class LinuxProcess(object):
                 f.close()
                 _, real, effective, saved, fs = line.split()
                 return ntuple_uids(int(real), int(effective), int(saved))
+        raise RuntimeError("line not found")
 
     @wrap_exceptions
     def get_process_gids(self):
@@ -544,6 +555,7 @@ class LinuxProcess(object):
                 f.close()
                 _, real, effective, saved, fs = line.split()
                 return ntuple_gids(int(real), int(effective), int(saved))
+        raise RuntimeError("line not found")
 
     @staticmethod
     def _decode_address(addr, family):
