@@ -17,7 +17,8 @@ import psutil
 from test_psutil import reap_children, get_test_subprocess, wait_for_pid
 try:
     import wmi
-except ImportError, err:
+except ImportError:
+    err = sys.exc_info()[1]
     atexit.register(warnings.warn, "Couldn't run wmi tests: %s" % str(err),
                     RuntimeWarning)
     wmi = None

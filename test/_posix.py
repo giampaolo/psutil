@@ -139,8 +139,8 @@ class PosixSpecificTestCase(unittest.TestCase):
         pids_psutil.sort()
 
         if pids_ps != pids_psutil:
-            difference = filter(lambda x:x not in pids_ps, pids_psutil) + \
-                         filter(lambda x:x not in pids_psutil, pids_ps)
+            difference = [x for x in pids_psutil if x not in pids_ps] + \
+                         [x for x in pids_ps if x not in pids_psutil]
             self.fail("difference: " + str(difference))
 
 

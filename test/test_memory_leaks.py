@@ -18,10 +18,13 @@ import unittest
 
 import psutil
 from test_psutil import reap_children, skipUnless, skipIf, \
-                        POSIX, LINUX, WINDOWS, OSX, BSD
+                        POSIX, LINUX, WINDOWS, OSX, BSD, PY3, callable
 
 LOOPS = 1000
 TOLERANCE = 4096
+
+if PY3:
+    xrange = range
 
 
 class TestProcessObjectLeaks(unittest.TestCase):

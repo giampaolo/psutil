@@ -3,11 +3,11 @@
 # $Id$
 #
 
-"""psutil test suite.
-Note: this is targeted for python 2.x.
-To run it under python 3.x you need to use 2to3 tool first:
+"""
+psutil test suite.
 
-$ 2to3 -w test/*.py
+Note: this is targeted for both python 2.x and 3.x.
+There's no need to use 2to3 first.
 """
 
 import unittest
@@ -24,6 +24,7 @@ import atexit
 import errno
 import threading
 import tempfile
+import collections
 
 import psutil
 
@@ -31,7 +32,7 @@ import psutil
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 TESTFN = os.path.join(os.getcwd(), "$testfile")
-
+PY3 = sys.version_info >= (3,)
 POSIX = os.name == 'posix'
 LINUX = sys.platform.lower().startswith("linux")
 WINDOWS = sys.platform.lower().startswith("win32")
@@ -40,12 +41,19 @@ BSD = sys.platform.lower().startswith("freebsd")
 
 try:
     psutil.Process(os.getpid()).get_connections()
-except NotImplementedError, err:
+except NotImplementedError:
+    err = sys.exc_info()[1]
     SUPPORT_CONNECTIONS = False
     atexit.register(warnings.warn, "get_connections() not supported on this platform",
                     RuntimeWarning)
 else:
     SUPPORT_CONNECTIONS = True
+
+if PY3:
+    long = int
+
+    def callable(attr):
+        return isinstance(attr, collections.Callable)
 
 
 _subprocesses_started = set()
@@ -375,7 +383,7 @@ class TestCase(unittest.TestCase):
     def test_system_cpu_percent(self):
         psutil.cpu_percent(interval=0.001)
         psutil.cpu_percent(interval=0.001)
-        for x in xrange(1000):
+        for x in range(1000):
             percent = psutil.cpu_percent(interval=None)
             self.assertTrue(isinstance(percent, float))
             self.assertTrue(percent >= 0.0)
@@ -385,7 +393,7 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(os.getpid())
         p.get_cpu_percent(interval=0.001)
         p.get_cpu_percent(interval=0.001)
-        for x in xrange(100):
+        for x in range(100):
             percent = p.get_cpu_percent(interval=None)
             self.assertTrue(isinstance(percent, float))
             self.assertTrue(percent >= 0.0)
@@ -853,7 +861,7 @@ class TestCase(unittest.TestCase):
             ip, port = addr
             self.assertTrue(isinstance(port, int))
             if family == socket.AF_INET:
-                ip = map(int, ip.split('.'))
+                ip = list(map(int, ip.split('.')))
                 self.assertTrue(len(ip) == 4)
                 for num in ip:
                     self.assertTrue(0 <= num <= 255)
@@ -940,7 +948,8 @@ class TestCase(unittest.TestCase):
                         try:
                             dupsock = socket.fromfd(conn.fd, conn.family,
                                                              conn.type)
-                        except (socket.error, OSError), err:
+                        except (socket.error, OSError):
+                            err = sys.exc_info()[1]
                             if err.args[0] == errno.EBADF:
                                 continue
                             else:
@@ -1135,7 +1144,8 @@ class TestCase(unittest.TestCase):
                         else:
                             ret = attr
                         valid_procs += 1
-                    except (psutil.NoSuchProcess, psutil.AccessDenied), err:
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        err = sys.exc_info()[1]
                         self.assertEqual(err.pid, p.pid)
                         if err.name:
                             self.assertEqual(err.name, p.name)
@@ -1149,7 +1159,8 @@ class TestCase(unittest.TestCase):
                             self.assertTrue(os.path.isfile(ret))
                         elif name == "getcwd":
                             self.assertTrue(os.path.isdir(ret))
-                except Exception, err:
+                except Exception:
+                    err = sys.exc_info()[1]
                     trace = traceback.format_exc()
                     self.fail('%s\nmethod=%s, pid=%s, retvalue=%s'
                               %(trace, name, p.pid, repr(ret)))
