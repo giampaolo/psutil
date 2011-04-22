@@ -996,7 +996,6 @@ struct module_state {
 #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
 #else
 #define GETSTATE(m) (&_state)
-static struct module_state _state;
 #endif
 
 #if PY_MAJOR_VERSION >= 3
@@ -1053,13 +1052,6 @@ init_psutil_osx(void)
     PyModule_AddIntConstant(module, "SZOMB", SZOMB);
 
     if (module == NULL) {
-        INITERROR;
-    }
-    struct module_state *st = GETSTATE(module);
-
-    st->error = PyErr_NewException("_psutil_osx.Error", NULL, NULL);
-    if (st->error == NULL) {
-        Py_DECREF(module);
         INITERROR;
     }
 #if PY_MAJOR_VERSION >= 3

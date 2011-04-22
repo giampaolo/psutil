@@ -1859,7 +1859,6 @@ struct module_state {
     #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
 #else
     #define GETSTATE(m) (&_state)
-    static struct module_state _state;
 #endif
 
 #if PY_MAJOR_VERSION >= 3

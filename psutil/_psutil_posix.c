@@ -73,7 +73,6 @@ struct module_state {
 #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
 #else
 #define GETSTATE(m) (&_state)
-static struct module_state _state;
 #endif
 
 #if PY_MAJOR_VERSION >= 3
@@ -120,13 +119,6 @@ void init_psutil_posix(void)
     PyObject *module = Py_InitModule("_psutil_posix", PsutilMethods);
 #endif
     if (module == NULL) {
-        INITERROR;
-    }
-    struct module_state *st = GETSTATE(module);
-
-    st->error = PyErr_NewException("_psutil_posix.Error", NULL, NULL);
-    if (st->error == NULL) {
-        Py_DECREF(module);
         INITERROR;
     }
 #if PY_MAJOR_VERSION >= 3
