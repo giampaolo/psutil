@@ -26,7 +26,7 @@ token_from_handle(HANDLE hProcess) {
 /*
  * http://www.ddj.com/windows/184405986
  *
- * there’s a way to determine whether we’re running under the Local System
+ * There's a way to determine whether we're running under the Local System
  * account. However (you guessed it), we have to call more Win32 functions to
  * determine this. Backing up through the code listing, we need to make another
  * call to GetTokenInformation, but instead of passing through the TOKEN_USER
@@ -171,7 +171,7 @@ int SetSeDebug()
                          ){
         if (GetLastError() == ERROR_NO_TOKEN){
             if (!ImpersonateSelf(SecurityImpersonation)){
-                //Log2File("Error setting impersonation [SetSeDebug()]", L_DEBUG);
+                CloseHandle(hToken);
                 return 0;
             }
             if (!OpenThreadToken(GetCurrentThread(),
@@ -179,7 +179,8 @@ int SetSeDebug()
                                  FALSE,
                                  &hToken)
                                  ){
-                //Log2File("Error Opening Thread Token", L_DEBUG);
+                RevertToSelf();
+                CloseHandle(hToken);
                 return 0;
             }
         }
@@ -187,7 +188,8 @@ int SetSeDebug()
 
     // enable SeDebugPrivilege (open any process)
     if (! SetPrivilege(hToken, SE_DEBUG_NAME, TRUE)){
-        //Log2File("Error setting SeDebug Privilege [SetPrivilege()]", L_WARN);
+        RevertToSelf();
+        CloseHandle(hToken);
         return 0;
     }
 
