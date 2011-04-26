@@ -193,6 +193,7 @@ int SetSeDebug()
         return 0;
     }
 
+    RevertToSelf();
     CloseHandle(hToken);
     return 1;
 }
