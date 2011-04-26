@@ -502,8 +502,9 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess)
     }
 
 
-    if (bufferSize <= 0x20000)
+    if (bufferSize <= 0x20000) {
         initialBufferSize = bufferSize;
+    }
 
     process = PH_FIRST_PROCESS(buffer);
     do {

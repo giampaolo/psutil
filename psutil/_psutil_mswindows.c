@@ -1755,12 +1755,15 @@ is_process_suspended(PyObject* self, PyObject* args)
     DWORD pid;
     ULONG i;
     PSYSTEM_PROCESS_INFORMATION process;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
-    if (get_process_info(pid, &process) != 1)
+    }
+    if (get_process_info(pid, &process) != 1) {
         return NULL;
-    if (pid_is_running(pid) == 0)
+    }
+    if (pid_is_running(pid) == 0) {
         return NoSuchProcess();
+    }
 
     for (i = 0; i < process->NumberOfThreads; i++) {
         if (process->Threads[i].ThreadState != Waiting ||
@@ -1859,6 +1862,7 @@ struct module_state {
     #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
 #else
     #define GETSTATE(m) (&_state)
+    static struct module_state _state;
 #endif
 
 #if PY_MAJOR_VERSION >= 3
