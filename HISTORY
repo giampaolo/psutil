@@ -1,5 +1,15 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+0.2.2 - TBD
+------------------
+
+NEW FEATURES
+
+BUGFIXES
+ 
+ * Issue 159: SetSeDebug() does not close handles or unset impersonation on 
+   return.
+
 0.2.1 - 2011-03-20
 ------------------
 
