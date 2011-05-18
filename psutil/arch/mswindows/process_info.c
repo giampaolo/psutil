@@ -306,7 +306,7 @@ get_ppid(long pid)
     if( Process32First(h, &pe)) {
         do {
             if (pe.th32ProcessID == pid) {
-                //printf("PID: %i; PPID: %i\n", pid, pe.th32ParentProcessID);
+                ////printf("PID: %i; PPID: %i\n", pid, pe.th32ParentProcessID);
                 CloseHandle(h);
                 return Py_BuildValue("I", pe.th32ParentProcessID);
             }
@@ -359,7 +359,7 @@ get_arg_list(long pid)
         &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
 #endif
     {
-        //printf("Could not read the address of ProcessParameters!\n");
+        ////printf("Could not read the address of ProcessParameters!\n");
         PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
         return NULL;
@@ -374,7 +374,7 @@ get_arg_list(long pid)
         &commandLine, sizeof(commandLine), NULL))
 #endif
     {
-        //printf("Could not read CommandLine!\n");
+        ////printf("Could not read CommandLine!\n");
         PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
         return NULL;
@@ -388,7 +388,7 @@ get_arg_list(long pid)
     if (!ReadProcessMemory(hProcess, commandLine.Buffer,
         commandLineContents, commandLine.Length, NULL))
     {
-        //printf("Could not read the command line string!\n");
+        ////printf("Could not read the command line string!\n");
         PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
         free(commandLineContents);
@@ -396,7 +396,7 @@ get_arg_list(long pid)
     }
 
     /* print the commandline */
-    //printf("%.*S\n", commandLine.Length / 2, commandLineContents);
+    ////printf("%.*S\n", commandLine.Length / 2, commandLineContents);
 
     // null-terminate the string to prevent wcslen from returning incorrect length
     // the length specifier is in characters, but commandLine.Length is in bytes
@@ -421,7 +421,7 @@ get_arg_list(long pid)
         // string object and add to arg list
         argList = Py_BuildValue("[]");
         for(i=0; i<nArgs; i++) {
-            //printf("%d: %.*S (%d characters)\n", i, wcslen(szArglist[i]),
+            ////printf("%d: %.*S (%d characters)\n", i, wcslen(szArglist[i]),
             //                  szArglist[i], wcslen(szArglist[i]));
             arg_from_wchar = PyUnicode_FromWideChar(szArglist[i],
                                                     wcslen(szArglist[i])
@@ -501,7 +501,6 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess)
         return 0;
     }
 
-
     if (bufferSize <= 0x20000) {
         initialBufferSize = bufferSize;
     }
@@ -509,8 +508,8 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess)
     process = PH_FIRST_PROCESS(buffer);
     do {
         if (process->UniqueProcessId == (HANDLE)pid) {
+            *retProcess = &process;
             free(buffer);
-            *retProcess = process;
             return 1;
         }
     } while (process = PH_NEXT_PROCESS(process));
