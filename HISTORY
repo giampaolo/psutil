@@ -9,6 +9,8 @@ BUGFIXES
  
  * Issue 159: SetSeDebug() does not close handles or unset impersonation on 
    return.
+ * Issue 164: wait function raises a TimeoutException when a process returns
+   -1 (Windows)
 
 0.2.1 - 2011-03-20
 ------------------
