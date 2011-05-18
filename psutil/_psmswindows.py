@@ -31,6 +31,7 @@ TOTAL_PHYMEM = _psutil_mswindows.get_total_phymem()
 BOOT_TIME = _psutil_mswindows.get_system_uptime()
 _WIN2000 = platform.win32_ver()[0] == '2000'
 ERROR_ACCESS_DENIED = 5
+WAIT_TIMEOUT = 0x00000102 # 258 in decimal
 
 # process priority constants:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
@@ -165,7 +166,7 @@ class WindowsProcess(object):
             # WaitForSingleObject() expects time in milliseconds
             timeout = int(timeout * 1000)
         ret = _psutil_mswindows.process_wait(self.pid, timeout)
-        if ret == -1:
+        if ret == WAIT_TIMEOUT:
             raise TimeoutExpired(self.pid, self._process_name)
         return ret
 

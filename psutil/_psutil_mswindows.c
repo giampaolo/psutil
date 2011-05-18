@@ -119,10 +119,12 @@ kill_process(PyObject* self, PyObject* args)
     HANDLE hProcess;
     long pid;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
-    if (pid == 0)
+    }
+    if (pid == 0) {
         return AccessDenied();
+    }
 
     hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
     if (hProcess == NULL) {
@@ -161,12 +163,15 @@ process_wait(PyObject* self, PyObject* args)
     long pid;
     long timeout;
 
-    if (! PyArg_ParseTuple(args, "ll", &pid, &timeout))
+    if (! PyArg_ParseTuple(args, "ll", &pid, &timeout)) {
         return NULL;
-    if (pid == 0)
+    }
+    if (pid == 0) {
         return AccessDenied();
-    if (timeout == 0)
+    }
+    if (timeout == 0) {
         timeout = INFINITE;
+    }
 
     hProcess = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION, FALSE, pid);
     if (hProcess == NULL) {
@@ -193,7 +198,7 @@ process_wait(PyObject* self, PyObject* args)
     }
     if (retVal == WAIT_TIMEOUT) {
         CloseHandle(hProcess);
-        return Py_BuildValue("i", -1);
+        return Py_BuildValue("l", WAIT_TIMEOUT);
     }
 
     // get the exit code; note: subprocess module (erroneously?) uses
@@ -204,9 +209,9 @@ process_wait(PyObject* self, PyObject* args)
     }
     CloseHandle(hProcess);
 #if PY_MAJOR_VERSION >= 3
-    return PyLong_FromLong((int) ExitCode);
+    return PyLong_FromLong((long) ExitCode);
 #else
-    return PyInt_FromLong((int) ExitCode);
+    return PyInt_FromLong((long) ExitCode);
 #endif
 }
 
@@ -348,8 +353,9 @@ get_process_name(PyObject* self, PyObject* args) {
     int pid_return;
     PyObject* name;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
 
     if (pid == 0) {
         return Py_BuildValue("s", "System Idle Process");
@@ -367,8 +373,9 @@ get_process_name(PyObject* self, PyObject* args) {
     }
 
     name = get_name(pid);
-    if (name == NULL)
+    if (name == NULL) {
         return NULL;  // exception set in get_name()
+    }
     return name;
 }
 
@@ -382,10 +389,12 @@ get_process_ppid(PyObject* self, PyObject* args) {
     int pid_return;
     PyObject* ppid;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
-    if ((pid == 0) || (pid == 4))
+    }
+    if ((pid == 0) || (pid == 4)) {
         return Py_BuildValue("l", 0);
+    }
 
     pid_return = pid_is_running(pid);
     if (pid_return == 0) {
@@ -396,8 +405,9 @@ get_process_ppid(PyObject* self, PyObject* args) {
     }
 
     ppid = get_ppid(pid);
-    if (ppid == NULL)
+    if (ppid == NULL) {
         return NULL;  // exception set in get_ppid()
+    }
     return ppid;
 }
 
@@ -410,10 +420,12 @@ get_process_cmdline(PyObject* self, PyObject* args) {
     int pid_return;
     PyObject* arglist;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
-    if ((pid == 0) || (pid == 4))
+    }
+    if ((pid == 0) || (pid == 4)) {
         return Py_BuildValue("[]");
+    }
 
     pid_return = pid_is_running(pid);
     if (pid_return == 0) {
@@ -926,8 +938,9 @@ get_process_num_threads(PyObject* self, PyObject* args)
     HANDLE hThreadSnap = NULL;
     THREADENTRY32 te32 = {0};
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
@@ -1002,8 +1015,9 @@ get_process_threads(PyObject* self, PyObject* args)
     int rc;
     FILETIME ftDummy, ftKernel, ftUser;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
+    }
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
@@ -1445,8 +1459,9 @@ get_process_connections(PyObject* self, PyObject* args)
 
         for (i = 0; i < tcp4Table->dwNumEntries; i++)
         {
-            if (tcp4Table->table[i].dwOwningPid != pid)
+            if (tcp4Table->table[i].dwOwningPid != pid) {
                 continue;
+            }
 
             if (tcp4Table->table[i].dwLocalAddr != 0 ||
                 tcp4Table->table[i].dwLocalPort != 0)
@@ -1576,8 +1591,9 @@ get_process_connections(PyObject* self, PyObject* args)
 
         for (i = 0; i < udp4Table->dwNumEntries; i++)
         {
-            if (udp4Table->table[i].dwOwningPid != pid)
+            if (udp4Table->table[i].dwOwningPid != pid) {
                 continue;
+            }
 
             if (udp4Table->table[i].dwLocalAddr != 0 ||
                 udp4Table->table[i].dwLocalPort != 0)
