@@ -18,7 +18,7 @@ import unittest
 
 import psutil
 from test_psutil import reap_children, skipUnless, skipIf, \
-                        POSIX, LINUX, WINDOWS, OSX, BSD, PY3, callable
+                        POSIX, LINUX, WINDOWS, OSX, BSD, PY3
 
 LOOPS = 1000
 TOLERANCE = 4096
@@ -80,6 +80,9 @@ class TestProcessObjectLeaks(unittest.TestCase):
 
     def test_uid(self):
         self.execute('gid')
+
+    def test_status(self):
+        self.execute('status')
 
     @skipIf(POSIX)
     def test_username(self):
