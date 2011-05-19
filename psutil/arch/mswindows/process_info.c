@@ -508,11 +508,10 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess)
     process = PH_FIRST_PROCESS(buffer);
     do {
         if (process->UniqueProcessId == (HANDLE)pid) {
-            *retProcess = &process;
-            free(buffer);
+            *retProcess = process;
             return 1;
         }
-    } while (process = PH_NEXT_PROCESS(process));
+    } while ( (process = PH_NEXT_PROCESS(process)) );
 
     free(buffer);
     NoSuchProcess();

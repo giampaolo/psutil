@@ -1785,9 +1785,11 @@ is_process_suspended(PyObject* self, PyObject* args)
         if (process->Threads[i].ThreadState != Waiting ||
             process->Threads[i].WaitReason != Suspended)
         {
+            free(process);
             Py_RETURN_FALSE;
         }
     }
+    free(process);
     Py_RETURN_TRUE;
 }
 
