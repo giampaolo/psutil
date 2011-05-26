@@ -12,6 +12,7 @@ BUGFIXES
  * Issue 164: wait function raises a TimeoutException when a process returns
    -1 (Windows)
  * Issue 165: process.status raises an unhandled exception
+ * Issue 166:	get_memory_info() Leaks Handles
 
 0.2.1 - 2011-03-20
 ------------------
