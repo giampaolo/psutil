@@ -468,9 +468,11 @@ get_memory_info(PyObject* self, PyObject* args)
     }
 
     if (! GetProcessMemoryInfo(hProcess, &counters, sizeof(counters)) ) {
+        CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
     }
 
+    CloseHandle(hProcess);
     return Py_BuildValue("(nn)", counters.WorkingSetSize, counters.PagefileUsage);
 }
 
