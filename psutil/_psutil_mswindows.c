@@ -241,15 +241,16 @@ get_process_cpu_times(PyObject* self, PyObject* args)
     }
 
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
+        CloseHandle(hProcess);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
-            CloseHandle(hProcess);
             return NoSuchProcess();
         }
-        PyErr_SetFromWindowsErr(0);
-        CloseHandle(hProcess);
-        return NULL;
+        else {
+            PyErr_SetFromWindowsErr(0);
+            return NULL;
+        }
     }
 
     CloseHandle(hProcess);
@@ -302,15 +303,15 @@ get_process_create_time(PyObject* self, PyObject* args)
     }
 
     if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
+        CloseHandle(hProcess);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess here
             return NoSuchProcess();
         }
         else {
             PyErr_SetFromWindowsErr(0);
+            return NULL;
         }
-        CloseHandle(hProcess);
-        return NULL;
     }
 
     CloseHandle(hProcess);
@@ -1123,6 +1124,7 @@ get_process_open_files(PyObject* self, PyObject* args)
     }
 
     filesList = get_open_files(pid, processHandle);
+    CloseHandle(processHandle);
     if (filesList == NULL) {
         return PyErr_SetFromWindowsErr(0);
     }
@@ -1695,6 +1697,7 @@ get_process_priority(PyObject* self, PyObject* args)
     }
 
     priority = GetPriorityClass(hProcess);
+    CloseHandle(hProcess);
     if (priority == 0) {
         PyErr_SetFromWindowsErr(0);
         return NULL;
@@ -1724,6 +1727,7 @@ set_process_priority(PyObject* self, PyObject* args)
     }
 
     retval = SetPriorityClass(hProcess, priority);
+    CloseHandle(hProcess);
     if (retval == 0) {
         PyErr_SetFromWindowsErr(0);
         return NULL;
@@ -1754,8 +1758,10 @@ get_process_io_counters(PyObject* self, PyObject* args)
         return NULL;
     }
     if (! GetProcessIoCounters(hProcess, &IoCounters)) {
+        CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
     }
+    CloseHandle(hProcess);
     return Py_BuildValue("(KKKK)", IoCounters.ReadOperationCount,
                                    IoCounters.WriteOperationCount,
                                    IoCounters.ReadTransferCount,
@@ -1817,8 +1823,10 @@ get_process_num_handlers(PyObject* self, PyObject* args)
         return NULL;
     }
     if (! GetProcessHandleCount(hProcess, &handleCount)) {
+        CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
     }
+    CloseHandle(hProcess);
     return Py_BuildValue("i", handleCount);
 }
 

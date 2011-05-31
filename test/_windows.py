@@ -83,17 +83,13 @@ class WindowsSpecificTestCase(unittest.TestCase):
                         'send_signal', 'wait'):
                 continue
             else:
-                try:
-                    num1 = _psutil_mswindows.get_process_num_handlers(p.pid)
-                    for x in range(10):
-                        call(p, name)
-                    num2 = _psutil_mswindows.get_process_num_handlers(p.pid)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    print name
-                else:
-                    if num2 > num1:
-                        self.fail("failure while processing Process.%s method "
-                                  "(before=%s, after=%s)" % (name, num1, num2))
+                num1 = _psutil_mswindows.get_process_num_handlers(p.pid)
+                for x in range(10):
+                    call(p, name)
+                num2 = _psutil_mswindows.get_process_num_handlers(p.pid)
+                if num2 > num1:
+                    self.fail("failure while processing Process.%s method "
+                              "(before=%s, after=%s)" % (name, num1, num2))
 
     if wmi is not None:
 

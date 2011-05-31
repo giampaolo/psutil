@@ -342,7 +342,6 @@ get_arg_list(long pid)
     PyObject *arg_from_wchar = NULL;
     PyObject *argList = NULL;
 
-
     hProcess = handle_from_pid(pid);
     if(hProcess == NULL) {
         return NULL;
@@ -375,8 +374,8 @@ get_arg_list(long pid)
 #endif
     {
         ////printf("Could not read CommandLine!\n");
-        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
+        PyErr_SetFromWindowsErr(0);
         return NULL;
     }
 
@@ -389,8 +388,8 @@ get_arg_list(long pid)
         commandLineContents, commandLine.Length, NULL))
     {
         ////printf("Could not read the command line string!\n");
-        PyErr_SetFromWindowsErr(0);
         CloseHandle(hProcess);
+        PyErr_SetFromWindowsErr(0);
         free(commandLineContents);
         return NULL;
     }
