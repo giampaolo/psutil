@@ -1796,6 +1796,34 @@ is_process_suspended(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return the number of handlers opened by process as a Python handler.
+ */
+static PyObject*
+get_process_num_handlers(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    HANDLE hProcess;
+    PDWORD handleCount;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (pid == 0) {
+        return AccessDenied();
+    }
+    hProcess = handle_from_pid(pid);
+    if (NULL == hProcess) {
+        return NULL;
+    }
+    if (! GetProcessHandleCount(hProcess, &handleCount)) {
+        return PyErr_SetFromWindowsErr(0);
+    }
+    return Py_BuildValue("i", handleCount);
+}
+
+
+
 
 // ------------------------ Python init ---------------------------
 
@@ -1847,6 +1875,8 @@ PsutilMethods[] =
         "Get process I/O counters."},
     {"is_process_suspended", is_process_suspended, METH_VARARGS,
         "Return True if one of the process threads is in a suspended state"},
+    {"get_process_num_handlers", get_process_num_handlers, METH_VARARGS,
+        "Return the number of handlers opened by process."},
 
 
     // --- system-related functions
