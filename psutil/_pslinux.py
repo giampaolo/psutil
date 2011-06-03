@@ -55,9 +55,20 @@ def _get_total_phymem():
             return int(line.split()[1]) * 1024
     raise RuntimeError("line not found")
 
+def _get_terminal_map():
+    import glob
+    ret = {}
+    ls = glob.glob('/dev/tty*') + glob.glob('/dev/pts/*')
+    for name in ls:
+        if os.stat(name).st_rdev in ret:
+            print name
+        ret[os.stat(name).st_rdev] = name
+    return ret
+
 
 # Number of clock ticks per second
 _CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
+_TERMINAL_MAP = _get_terminal_map()
 BOOT_TIME = _get_boot_time()
 NUM_CPUS = _get_num_cpus()
 TOTAL_PHYMEM = _get_total_phymem()
@@ -67,7 +78,7 @@ IOPRIO_CLASS_RT = 1
 IOPRIO_CLASS_BE = 2
 IOPRIO_CLASS_IDLE = 3
 
-del _get_boot_time, _get_num_cpus, _get_total_phymem
+del _get_boot_time, _get_num_cpus, _get_total_phymem, _get_terminal_map
 
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
 _TCP_STATES_TABLE = {"01" : "ESTABLISHED",
@@ -267,6 +278,20 @@ class LinuxProcess(object):
             return [x for x in f.read().split('\x00') if x]
         finally:
             f.close()
+
+    @wrap_exceptions
+    def get_process_terminal(self):
+        if self.pid == 0:
+            return None   # special case for kernel process
+        f = open("/proc/%s/stat" % self.pid)
+        try:
+            tty_nr = int(f.read().split(' ')[6])
+        finally:
+            f.close()
+        try:
+            return _TERMINAL_MAP[tty_nr]
+        except KeyError:
+            return None
 
     @wrap_exceptions
     def get_process_io_counters(self):

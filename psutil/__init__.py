@@ -253,6 +253,14 @@ class Process(object):
         """
         return self._platform_impl.get_process_create_time()
 
+    if os.name == 'posix':
+        @property
+        def terminal(self):
+            """The terminal associated with this process, if any,
+            else None.
+            """
+            return self._platform_impl.get_process_terminal()
+
     # available for Windows and Linux only
     if hasattr(PlatformProcess, "get_process_cwd"):
 

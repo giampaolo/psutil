@@ -444,6 +444,14 @@ class TestCase(unittest.TestCase):
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
 
+    # XXX - remove when OSX and BSD are ready
+    @skipIf(not LINUX, warn=True)
+    def test_terminal(self):
+        tty = subprocess.Popen(['/usr/bin/tty'],
+                               stdout=subprocess.PIPE).communicate()[0].strip()
+        p = psutil.Process(os.getpid())
+        self.assertEqual(p.terminal, tty)
+
     @skipIf(OSX, warn=False)
     def test_get_io_counters(self):
         p = psutil.Process(os.getpid())

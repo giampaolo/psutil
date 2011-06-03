@@ -5,7 +5,7 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 NEW FEATURES
 
-XXX
+ * Issue 163: per-process associated terminal (TTY).
 
 BUGFIXES
 
