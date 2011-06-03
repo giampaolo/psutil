@@ -601,7 +601,7 @@ def cpu_percent(interval=0.1):
     t2_all = sum(t2)
     t2_busy = t2_all - t2.idle
 
-    _last_cpu_times = t1
+    _last_cpu_times = t2
     # this usually indicates a float precision issue
     if t2_busy <= t1_busy:
         return 0.0

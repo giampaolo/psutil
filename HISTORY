@@ -1,18 +1,22 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-0.2.2 - TBD
+0.2.2 - XXXX-XX-XX
 ------------------
 
 NEW FEATURES
 
+XXX
+
 BUGFIXES
- 
- * Issue 159: SetSeDebug() does not close handles or unset impersonation on 
+
+ * Issue 159: SetSeDebug() does not close handles or unset impersonation on
    return.
  * Issue 164: wait function raises a TimeoutException when a process returns
-   -1 (Windows)
- * Issue 165: process.status raises an unhandled exception
- * Issue 166:	get_memory_info() Leaks Handles
+   -1 (Windows).
+ * Issue 165: process.status raises an unhandled exception.
+ * Issue 166: get_memory_info() leaks handles hogging system resources.
+ * Issue 168: psutil.cpu_percent() returns erroneous results when used in
+   non-blocking mode.  (patch by Philip Roberts)
 
 0.2.1 - 2011-03-20
 ------------------
