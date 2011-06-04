@@ -63,14 +63,25 @@ def used_virtmem():
     return _psutil_mswindows.get_total_virtmem() - _psutil_mswindows.get_avail_virtmem()
 
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle')
+
 def get_system_cpu_times():
     """Return system CPU times as a named tuple."""
-    user, system, idle = _psutil_mswindows.get_system_cpu_times()
+    user, system, idle = 0, 0, 0
+    # computes system global times summing each processor value
+    for cpu_time in _psutil_mswindows.get_system_cpu_times():
+        user += cpu_time[0]
+        system += cpu_time[1]
+        idle += cpu_time[2]
     return _cputimes_ntuple(user, system, idle)
 
 def get_system_per_cpu_times():
-    # XXX
-    raise NotImplementedError
+    """Return system per-CPU times as a list of named tuples."""
+    ret = []
+    for cpu_t in _psutil_mswindows.get_system_cpu_times():
+        user, system, idle = cpu_t
+        item = _cputimes_ntuple(user, system, idle)
+        ret.append(item)
+    return ret
 
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""

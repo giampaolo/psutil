@@ -552,126 +552,85 @@ get_avail_virtmem(PyObject* self, PyObject* args)
 
 
 /*
- * Return a Python tuple representing user, kernel and idle CPU times
+ * Return a Python list of tuples representing user, kernel and idle
+ * CPU times for every CPU on the system.
  */
 static PyObject*
 get_system_cpu_times(PyObject* self, PyObject* args)
 {
-    typedef BOOL (_stdcall *GST_PROC) (LPFILETIME, LPFILETIME, LPFILETIME);
-    static GST_PROC GetSystemTimes;
-    static BOOL bFirstCall = TRUE;
     float idle, kernel, user;
+    typedef DWORD (_stdcall *NTQSI_PROC) (int, PVOID, ULONG, PULONG);
+    NTQSI_PROC NtQuerySystemInformation;
+    HINSTANCE hNtDll;
+    SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
+    SYSTEM_INFO si;
+    UINT i;
+    PyObject *arg = NULL;
+    PyObject *retlist = PyList_New(0);
 
-    // Improves performance calling GetProcAddress only the first time
-    if (bFirstCall) {
-        // retrieves GetSystemTimes address in Kernel32
-        GetSystemTimes=(GST_PROC)GetProcAddress(GetModuleHandle
-                                               (TEXT("Kernel32.dll")),
-                                               "GetSystemTimes");
-        bFirstCall = FALSE;
-    }
+    // dynamic linking is mandatory to use NtQuerySystemInformation
+    hNtDll = LoadLibrary(TEXT("ntdll.dll"));
+    if (hNtDll != NULL) {
+        // gets NtQuerySystemInformation address
+        NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
+                                    hNtDll, "NtQuerySystemInformation");
 
+        if (NtQuerySystemInformation != NULL)
+        {
+            // retrives number of processors
+            GetSystemInfo(&si);
 
-     // Uses GetSystemTimes if supported (winXP sp1+)
-    if (NULL!=GetSystemTimes) {
-        // GetSystemTimes supported
-
-        FILETIME idle_time;
-        FILETIME kernel_time;
-        FILETIME user_time;
-
-        if (!GetSystemTimes(&idle_time, &kernel_time, &user_time)) {
-            return PyErr_SetFromWindowsErr(0);
-        }
-
-        idle = (float)((HI_T * idle_time.dwHighDateTime) + \
-                       (LO_T * idle_time.dwLowDateTime));
-        user = (float)((HI_T * user_time.dwHighDateTime) + \
-                       (LO_T * user_time.dwLowDateTime));
-        kernel = (float)((HI_T * kernel_time.dwHighDateTime) + \
-                         (LO_T * kernel_time.dwLowDateTime));
-
-        // kernel time includes idle time on windows
-        // we return only busy kernel time subtracting idle time from kernel time
-        return Py_BuildValue("(fff)", user,
-                                      kernel - idle,
-                                      idle);
-
-    }
-
-    else {
-        // GetSystemTimes NOT supported, use NtQuerySystemInformation instead
-
-        typedef DWORD (_stdcall *NTQSI_PROC) (int, PVOID, ULONG, PULONG);
-        NTQSI_PROC NtQuerySystemInformation;
-        HINSTANCE hNtDll;
-        SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
-        SYSTEM_INFO si;
-        UINT i;
-
-        // dynamic linking is mandatory to use NtQuerySystemInformation
-        hNtDll = LoadLibrary(TEXT("ntdll.dll"));
-        if (hNtDll != NULL) {
-            // gets NtQuerySystemInformation address
-            NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
-                                        hNtDll, "NtQuerySystemInformation");
-
-            if (NtQuerySystemInformation != NULL)
+            // allocates an array of SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
+            // structures, one per processor
+            sppi = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
+                    malloc(si.dwNumberOfProcessors * \
+                         sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+            if (sppi != NULL)
             {
-                // retrives number of processors
-                GetSystemInfo(&si);
-
-                // allocates an array of SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
-                // structures, one per processor
-                sppi=(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
-                      malloc(si.dwNumberOfProcessors * \
-                             sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
-                if (sppi != NULL)
+                // gets cpu time informations
+                if (0 == NtQuerySystemInformation(
+                    SystemProcessorPerformanceInformation,
+                    sppi,
+                    si.dwNumberOfProcessors * sizeof
+                                (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+                    NULL)
+                )
                 {
-                    // gets cpu time informations
-                    if (0 == NtQuerySystemInformation(
-                                SystemProcessorPerformanceInformation,
-                                sppi,
-                                si.dwNumberOfProcessors * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
-                                NULL))
-                    {
-                        // computes system global times summing each processor value
-                        idle = user = kernel = 0;
-                        for (i=0; i<si.dwNumberOfProcessors; i++) {
-                            idle += (float)((HI_T * sppi[i].IdleTime.HighPart) + \
-                                            (LO_T * sppi[i].IdleTime.LowPart));
-                            user += (float)((HI_T * sppi[i].UserTime.HighPart) + \
-                                            (LO_T * sppi[i].UserTime.LowPart));
-                            kernel += (float)((HI_T * sppi[i].KernelTime.HighPart) + \
-                                              (LO_T * sppi[i].KernelTime.LowPart));
-                        }
-
+                    // computes system global times summing each processor value
+                    idle = user = kernel = 0;
+                    for (i=0; i<si.dwNumberOfProcessors; i++) {
+                        user = (float)((HI_T * sppi[i].UserTime.HighPart) + \
+                                       (LO_T * sppi[i].UserTime.LowPart));
+                        idle = (float)((HI_T * sppi[i].IdleTime.HighPart) + \
+                                       (LO_T * sppi[i].IdleTime.LowPart));
+                        kernel = (float)((HI_T * sppi[i].KernelTime.HighPart) + \
+                                         (LO_T * sppi[i].KernelTime.LowPart));
                         // kernel time includes idle time on windows
-                        // we return only busy kernel time subtracting idle
-                        // time from kernel time
-                        return Py_BuildValue("(ddd)", user,
-                                                      kernel - idle,
-                                                      idle
-                                             );
+                        // we return only busy kernel time subtracting
+                        // idle time from kernel time
+                        arg = Py_BuildValue("(ddd)", user,
+                                                     kernel - idle,
+                                                     idle);
+                        PyList_Append(retlist, arg);
+                        Py_XDECREF(arg);
+                    }
+                    free(sppi);
+                    FreeLibrary(hNtDll);
+                    return retlist;
 
-                    } // END NtQuerySystemInformation
+                }  // END NtQuerySystemInformation
+            }  // END malloc SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
+        }  // END GetProcAddress
+    }  // END LoadLibrary
 
-                } // END malloc SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
-
-            } // END GetProcAddress
-
-        } // END LoadLibrary
-
-        PyErr_SetFromWindowsErr(0);
-        if (sppi) {
-            free(sppi);
-        }
-        if (hNtDll) {
-            FreeLibrary(hNtDll);
-        }
-        return 0;
-
-    } // END GetSystemTimes NOT supported
+    if (sppi) {
+        free(sppi);
+    }
+    if (hNtDll) {
+        FreeLibrary(hNtDll);
+    }
+    PyErr_SetFromWindowsErr(0);
+    return NULL;
 }
 
 
@@ -1868,7 +1827,7 @@ PsutilMethods[] =
      {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
-         "Return system cpu times as a tuple (user, system, idle)"},
+         "Return system per-cpu times as a list of tuples"},
 
      {NULL, NULL, 0, NULL}
 };
