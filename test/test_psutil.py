@@ -201,11 +201,14 @@ class ThreadTask(threading.Thread):
         self.join()
 
 
-class TestSystemAPI(unittest.TestCase):
-    """Test all system related functions in the psutil.* namespace."""
+class TestCase(unittest.TestCase):
 
     def tearDown(self):
         reap_children()
+
+    # ============================
+    # tests for system-related API
+    # ============================
 
     def test_get_process_list(self):
         pids = [x.pid for x in psutil.get_process_list()]
@@ -290,7 +293,7 @@ class TestSystemAPI(unittest.TestCase):
         finally:
             sys.stdout = stdout
 
-    def test_cpu_times(self):
+    def test_sys_cpu_times(self):
         total = 0
         times = psutil.cpu_times()
         sum(times)
@@ -301,7 +304,7 @@ class TestSystemAPI(unittest.TestCase):
         self.assertEqual(total, sum(times))
         str(times)
 
-    def test_cpu_times2(self):
+    def test_sys_cpu_times2(self):
         t1 = sum(psutil.cpu_times())
         time.sleep(0.1)
         t2 = sum(psutil.cpu_times())
@@ -309,7 +312,7 @@ class TestSystemAPI(unittest.TestCase):
         if not difference >= 0.05:
             self.fail("difference %s" % difference)
 
-    def test_per_cpu_times(self):
+    def test_sys_per_cpu_times(self):
         for times in psutil.per_cpu_times():
             total = 0
             sum(times)
@@ -320,7 +323,7 @@ class TestSystemAPI(unittest.TestCase):
             self.assertEqual(total, sum(times))
             str(times)
 
-    def test_per_cpu_times2(self):
+    def test_sys_per_cpu_times2(self):
         tot1 = psutil.per_cpu_times()
         time.sleep(0.1)
         tot2 = psutil.per_cpu_times()
@@ -330,7 +333,7 @@ class TestSystemAPI(unittest.TestCase):
             if not difference >= 0.05:
                 self.fail("difference %s" % difference)
 
-    def test_cpu_percent(self):
+    def test_sys_cpu_percent(self):
         psutil.cpu_percent(interval=0.001)
         psutil.cpu_percent(interval=0.001)
         for x in range(1000):
@@ -339,7 +342,7 @@ class TestSystemAPI(unittest.TestCase):
             self.assertTrue(percent >= 0.0)
             self.assertTrue(percent <= 100.0)
 
-    def test_per_cpu_percent(self):
+    def test_sys_per_cpu_percent(self):
         psutil.per_cpu_percent(interval=0.001)
         psutil.per_cpu_percent(interval=0.001)
         for x in range(1000):
@@ -349,11 +352,9 @@ class TestSystemAPI(unittest.TestCase):
                 self.assertTrue(percent >= 0.0)
                 self.assertTrue(percent <= 100.0)
 
-
-class TestProcess(unittest.TestCase):
-
-    def tearDown(self):
-        reap_children()
+    # ====================
+    # Process object tests
+    # ====================
 
     def test_kill(self):
         sproc = get_test_subprocess()
@@ -1272,7 +1273,7 @@ class TestProcess(unittest.TestCase):
 
 
 if hasattr(os, 'getuid'):
-    class LimitedUserTestCase(TestProcess):
+    class LimitedUserTestCase(TestCase):
         """Repeat the previous tests by using a limited user.
         Executed only on UNIX and only if the user who run the test script
         is root.
@@ -1320,8 +1321,7 @@ if hasattr(os, 'getuid'):
 def test_main():
     tests = []
     test_suite = unittest.TestSuite()
-    tests.append(TestSystemAPI)
-    tests.append(TestProcess)
+    tests.append(TestCase)
 
     if hasattr(os, 'getuid'):
         if os.getuid() == 0:
