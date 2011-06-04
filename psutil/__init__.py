@@ -210,24 +210,6 @@ class Process(object):
             return self._platform_impl.get_process_gids()
 
     @property
-    def uid(self):
-        """The real user id of the current process (deprecated)."""
-        warnings.warn("'uid' property is deprecated; use 'uids.real' instead",
-                      DeprecationWarning)
-        if os.name != 'posix':
-            return -1
-        return self.uids.real
-
-    @property
-    def gid(self):
-        """The real group id of the current process (deprecated)."""
-        warnings.warn("'gid' property is deprecated; use 'uids.real' instead",
-                      DeprecationWarning)
-        if os.name != 'posix':
-            return -1
-        return self.gids.real
-
-    @property
     def username(self):
         """The name of the user that owns the process.
         On UNIX this is calculated by using *real* process uid.

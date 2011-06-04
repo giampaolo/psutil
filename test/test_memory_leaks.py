@@ -74,11 +74,11 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def test_ppid(self):
         self.execute('ppid')
 
-    def test_uid(self):
-        self.execute('uid')
+    def test_uids(self):
+        self.execute('uids')
 
-    def test_gid(self):
-        self.execute('gid')
+    def test_gids(self):
+        self.execute('gids')
 
     def test_status(self):
         self.execute('status')

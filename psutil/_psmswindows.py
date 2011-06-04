@@ -144,18 +144,6 @@ class WindowsProcess(object):
         """Return process parent pid."""
         return _psutil_mswindows.get_process_ppid(self.pid)
 
-    def get_process_uid(self):
-        # no such thing as uid on Windows
-        if not pid_exists(self.pid):
-            raise NoSuchProcess(self.pid, self._process_name)
-        return -1
-
-    def get_process_gid(self):
-        # no such thing as gid on Windows
-        if not pid_exists(self.pid):
-            raise NoSuchProcess(self.pid, self._process_name)
-        return -1
-
     @wrap_exceptions
     def get_memory_info(self):
         """Returns a tuple or RSS/VMS memory usage in bytes."""

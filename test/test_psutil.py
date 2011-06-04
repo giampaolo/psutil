@@ -1157,7 +1157,7 @@ class TestCase(unittest.TestCase):
         valid_procs = 0
         excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
                           'kill', 'wait']
-        excluded_names += ['get_cpu_percent', 'uid', 'gid', 'get_children']
+        excluded_names += ['get_cpu_percent', 'get_children']
         # XXX - skip slow lsof implementation;
         if BSD:
            excluded_names += ['get_open_files', 'get_connections']
