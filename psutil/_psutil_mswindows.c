@@ -676,44 +676,6 @@ get_system_cpu_times(PyObject* self, PyObject* args)
 
 
 /*
- * Sid to User convertion
- */
-BOOL SidToUser(PSID pSid, LPTSTR szUser, DWORD dwUserLen, LPTSTR szDomain, DWORD
-dwDomainLen, DWORD pid)
-{
-    SID_NAME_USE snuSIDNameUse;
-    DWORD dwULen;
-    DWORD dwDLen;
-
-    dwULen = dwUserLen;
-    dwDLen = dwDomainLen;
-
-    if ( IsValidSid( pSid ) ) {
-        // Get user and domain name based on SID
-        if ( LookupAccountSid( NULL, pSid, szUser, &dwULen, szDomain, &dwDLen, &snuSIDNameUse) ) {
-            // LocalSystem processes are incorrectly reported as owned
-            // by BUILTIN\Administrators We modify that behavior to
-            // conform to standard taskmanager only if the process is
-            // actually a System process
-            if (is_system_proc(pid) == 1) {
-                // default to *not* changing the data if we fail to
-                // check for local system privileges, so only look for
-                // definite confirmed system processes and ignore errors
-                if ( lstrcmpi(szDomain, TEXT("builtin")) == 0 && lstrcmpi(szUser, TEXT("administrators")) == 0) {
-                    strncpy  (szUser, "SYSTEM", dwUserLen);
-                    strncpy  (szDomain, "NT AUTHORITY", dwDomainLen);
-                }
-            }
-
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
-
-
-/*
  * Return process current working directory as a Python string.
  */
 

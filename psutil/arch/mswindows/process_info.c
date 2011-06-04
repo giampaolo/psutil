@@ -143,39 +143,6 @@ get_pids(DWORD *numberOfReturnedPIDs) {
 
 
 int
-is_system_proc(DWORD pid) {
-    HANDLE hProcess;
-
-    // Special case for PID 0 System Idle Process
-    // and PID 4 (SYSTEM)
-    if ((pid == 0) || (pid == 4)) {
-        return 1;
-    }
-    if (pid < 0) {
-        return 0;
-    }
-
-    hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-    if (NULL == hProcess) {
-        // invalid parameter is no such process
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            return 0;
-        }
-
-        // access denied obviously means there's a process to deny access to...
-        if (GetLastError() == ERROR_ACCESS_DENIED) {
-            return 1;
-        }
-
-        PyErr_SetFromWindowsErr(0);
-        return -1;
-    }
-
-    return HasSystemPrivilege(hProcess);
-}
-
-
-int
 pid_is_running(DWORD pid)
 {
     HANDLE hProcess;
