@@ -201,7 +201,8 @@ class ThreadTask(threading.Thread):
         self.join()
 
 
-class TestCase(unittest.TestCase):
+class TestSystemAPI(unittest.TestCase):
+    """Test all system related functions in the psutil.* namespace."""
 
     def tearDown(self):
         reap_children()
@@ -215,6 +216,144 @@ class TestCase(unittest.TestCase):
         pids = [x.pid for x in psutil.process_iter()]
         self.assertTrue(os.getpid() in pids)
         self.assertTrue(0 in pids)
+
+    def test_TOTAL_PHYMEM(self):
+        x = psutil.TOTAL_PHYMEM
+        self.assertTrue(isinstance(x, (int, long)))
+        self.assertTrue(x > 0)
+
+    def test_BOOT_TIME(self):
+        x = psutil.BOOT_TIME
+        self.assertTrue(isinstance(x, float))
+        self.assertTrue(x > 0)
+
+    def test_used_phymem(self):
+        x = psutil.used_phymem()
+        self.assertTrue(isinstance(x, (int, long)))
+        self.assertTrue(x > 0)
+
+    def test_avail_phymem(self):
+        x = psutil.avail_phymem()
+        self.assertTrue(isinstance(x, (int, long)))
+        self.assertTrue(x > 0)
+
+    def test_total_virtmem(self):
+        x = psutil.total_virtmem()
+        self.assertTrue(isinstance(x, (int, long)))
+        self.assertTrue(x >= 0)
+
+    def test_used_virtmem(self):
+        x = psutil.used_virtmem()
+        self.assertTrue(isinstance(x, (int, long)))
+        self.assertTrue(x >= 0)
+
+    def test_avail_virtmem(self):
+        x = psutil.avail_virtmem()
+        self.assertTrue(isinstance(x, (int, long)))
+        self.assertTrue(x >= 0)
+
+    @skipUnless(LINUX)
+    def test_cached_phymem(self):
+        x = psutil.cached_phymem()
+        self.assertTrue(isinstance(x, (int, long)))
+        self.assertTrue(x >= 0)
+
+    @skipUnless(LINUX)
+    def test_phymem_buffers(self):
+        x = psutil.phymem_buffers()
+        self.assertTrue(isinstance(x, (int, long)))
+        self.assertTrue(x >= 0)
+
+    def test_pid_exists(self):
+        sproc = get_test_subprocess()
+        wait_for_pid(sproc.pid)
+        self.assertTrue(psutil.pid_exists(sproc.pid))
+        p = psutil.Process(sproc.pid)
+        p.kill()
+        p.wait()
+        self.assertFalse(psutil.pid_exists(sproc.pid))
+        self.assertFalse(psutil.pid_exists(-1))
+
+    def test_get_pid_list(self):
+        plist = [x.pid for x in psutil.get_process_list()]
+        pidlist = psutil.get_pid_list()
+        self.assertEqual(plist.sort(), pidlist.sort())
+        # make sure every pid is unique
+        self.assertEqual(len(pidlist), len(set(pidlist)))
+
+    def test_test(self):
+        # test for psutil.test() function
+        stdout = sys.stdout
+        sys.stdout = DEVNULL
+        try:
+            psutil.test()
+        finally:
+            sys.stdout = stdout
+
+    def test_cpu_times(self):
+        total = 0
+        times = psutil.cpu_times()
+        sum(times)
+        for cp_time in times:
+            self.assertTrue(isinstance(cp_time, float))
+            self.assertTrue(cp_time >= 0.0)
+            total += cp_time
+        self.assertEqual(total, sum(times))
+        str(times)
+
+    def test_cpu_times2(self):
+        t1 = sum(psutil.cpu_times())
+        time.sleep(0.1)
+        t2 = sum(psutil.cpu_times())
+        difference = t2 - t1
+        if not difference >= 0.05:
+            self.fail("difference %s" % difference)
+
+    def test_per_cpu_times(self):
+        for times in psutil.per_cpu_times():
+            total = 0
+            sum(times)
+            for cp_time in times:
+                self.assertTrue(isinstance(cp_time, float))
+                self.assertTrue(cp_time >= 0.0)
+                total += cp_time
+            self.assertEqual(total, sum(times))
+            str(times)
+
+    def test_per_cpu_times2(self):
+        tot1 = psutil.per_cpu_times()
+        time.sleep(0.1)
+        tot2 = psutil.per_cpu_times()
+        for t1, t2 in zip(tot1, tot2):
+            t1, t2 = sum(t1), sum(t2)
+            difference = t2 - t1
+            if not difference >= 0.05:
+                self.fail("difference %s" % difference)
+
+    def test_cpu_percent(self):
+        psutil.cpu_percent(interval=0.001)
+        psutil.cpu_percent(interval=0.001)
+        for x in range(1000):
+            percent = psutil.cpu_percent(interval=None)
+            self.assertTrue(isinstance(percent, float))
+            self.assertTrue(percent >= 0.0)
+            self.assertTrue(percent <= 100.0)
+
+    def test_per_cpu_percent(self):
+        psutil.per_cpu_percent(interval=0.001)
+        psutil.per_cpu_percent(interval=0.001)
+        for x in range(1000):
+            percents = psutil.per_cpu_percent(interval=None)
+            for percent in percents:
+                self.assertTrue(isinstance(percent, float))
+                self.assertTrue(percent >= 0.0)
+                self.assertTrue(percent <= 100.0)
+
+
+class TestProcess(unittest.TestCase):
+
+    def tearDown(self):
+        reap_children()
 
     def test_kill(self):
         sproc = get_test_subprocess()
@@ -315,113 +454,7 @@ class TestCase(unittest.TestCase):
                 grandson_proc.kill()
                 grandson_proc.wait()
 
-    def test_TOTAL_PHYMEM(self):
-        x = psutil.TOTAL_PHYMEM
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x > 0)
-
-    def test_BOOT_TIME(self):
-        x = psutil.BOOT_TIME
-        self.assertTrue(isinstance(x, float))
-        self.assertTrue(x > 0)
-
-    def test_used_phymem(self):
-        x = psutil.used_phymem()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x > 0)
-
-    def test_avail_phymem(self):
-        x = psutil.avail_phymem()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x > 0)
-
-    def test_total_virtmem(self):
-        x = psutil.total_virtmem()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x >= 0)
-
-    def test_used_virtmem(self):
-        x = psutil.used_virtmem()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x >= 0)
-
-    def test_avail_virtmem(self):
-        x = psutil.avail_virtmem()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x >= 0)
-
-    @skipUnless(LINUX)
-    def test_cached_phymem(self):
-        x = psutil.cached_phymem()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x >= 0)
-
-    @skipUnless(LINUX)
-    def test_phymem_buffers(self):
-        x = psutil.phymem_buffers()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x >= 0)
-
-    def test_system_cpu_times(self):
-        total = 0
-        times = psutil.cpu_times()
-        sum(times)
-        for cp_time in times:
-            self.assertTrue(isinstance(cp_time, float))
-            self.assertTrue(cp_time >= 0.0)
-            total += cp_time
-        self.assertEqual(total, sum(times))
-        str(times)
-
-    def test_system_cpu_times2(self):
-        t1 = sum(psutil.cpu_times())
-        time.sleep(0.1)
-        t2 = sum(psutil.cpu_times())
-        difference = t2 - t1
-        if not difference >= 0.05:
-            self.fail("difference %s" % difference)
-
-    def test_system_per_cpu_times(self):
-        for times in psutil.per_cpu_times():
-            total = 0
-            sum(times)
-            for cp_time in times:
-                self.assertTrue(isinstance(cp_time, float))
-                self.assertTrue(cp_time >= 0.0)
-                total += cp_time
-            self.assertEqual(total, sum(times))
-            str(times)
-
-    def test_system_per_cpu_times2(self):
-        tot1 = psutil.per_cpu_times()
-        time.sleep(0.1)
-        tot2 = psutil.per_cpu_times()
-        for t1, t2 in zip(tot1, tot2):
-            t1, t2 = sum(t1), sum(t2)
-            difference = t2 - t1
-            if not difference >= 0.05:
-                self.fail("difference %s" % difference)
-
-    def test_system_cpu_percent(self):
-        psutil.cpu_percent(interval=0.001)
-        psutil.cpu_percent(interval=0.001)
-        for x in range(1000):
-            percent = psutil.cpu_percent(interval=None)
-            self.assertTrue(isinstance(percent, float))
-            self.assertTrue(percent >= 0.0)
-            self.assertTrue(percent <= 100.0)
-
-    def test_system_per_cpu_percent(self):
-        psutil.per_cpu_percent(interval=0.001)
-        psutil.per_cpu_percent(interval=0.001)
-        for x in range(1000):
-            percents = psutil.per_cpu_percent(interval=None)
-            for percent in percents:
-                self.assertTrue(isinstance(percent, float))
-                self.assertTrue(percent >= 0.0)
-                self.assertTrue(percent <= 100.0)
-
-    def test_process_cpu_percent(self):
+    def test_cpu_percent(self):
         p = psutil.Process(os.getpid())
         p.get_cpu_percent(interval=0.001)
         p.get_cpu_percent(interval=0.001)
@@ -431,7 +464,7 @@ class TestCase(unittest.TestCase):
             self.assertTrue(percent >= 0.0)
             self.assertTrue(percent <= 100.0)
 
-    def test_get_process_cpu_times(self):
+    def test_cpu_times(self):
         times = psutil.Process(os.getpid()).get_cpu_times()
         self.assertTrue((times.user > 0.0) or (times.system > 0.0))
         # make sure returned values can be pretty printed with strftime
@@ -445,7 +478,7 @@ class TestCase(unittest.TestCase):
     # try this with Python 2.7 and re-enable the test.
 
     @skipUnless(sys.version_info > (2, 6, 1) and not OSX)
-    def test_get_process_cpu_times2(self):
+    def test_cpu_times2(self):
         user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()
         utime, ktime = os.times()[:2]
 
@@ -626,16 +659,6 @@ class TestCase(unittest.TestCase):
         p.kill()
         p.wait()
         self.assertFalse(p.is_running())
-
-    def test_pid_exists(self):
-        sproc = get_test_subprocess()
-        wait_for_pid(sproc.pid)
-        self.assertTrue(psutil.pid_exists(sproc.pid))
-        p = psutil.Process(sproc.pid)
-        p.kill()
-        p.wait()
-        self.assertFalse(psutil.pid_exists(sproc.pid))
-        self.assertFalse(psutil.pid_exists(-1))
 
     def test_exe(self):
         sproc = get_test_subprocess()
@@ -1062,22 +1085,6 @@ class TestCase(unittest.TestCase):
         p.resume()
         self.assertTrue(p.status != psutil.STATUS_STOPPED)
 
-    def test_get_pid_list(self):
-        plist = [x.pid for x in psutil.get_process_list()]
-        pidlist = psutil.get_pid_list()
-        self.assertEqual(plist.sort(), pidlist.sort())
-        # make sure every pid is unique
-        self.assertEqual(len(pidlist), len(set(pidlist)))
-
-    def test_test(self):
-        # test for psutil.test() function
-        stdout = sys.stdout
-        sys.stdout = DEVNULL
-        try:
-            psutil.test()
-        finally:
-            sys.stdout = stdout
-
     def test_invalid_pid(self):
         self.assertRaises(ValueError, psutil.Process, "1")
         self.assertRaises(ValueError, psutil.Process, None)
@@ -1265,7 +1272,7 @@ class TestCase(unittest.TestCase):
 
 
 if hasattr(os, 'getuid'):
-    class LimitedUserTestCase(TestCase):
+    class LimitedUserTestCase(TestProcess):
         """Repeat the previous tests by using a limited user.
         Executed only on UNIX and only if the user who run the test script
         is root.
@@ -1313,7 +1320,8 @@ if hasattr(os, 'getuid'):
 def test_main():
     tests = []
     test_suite = unittest.TestSuite()
-    tests.append(TestCase)
+    tests.append(TestSystemAPI)
+    tests.append(TestProcess)
 
     if hasattr(os, 'getuid'):
         if os.getuid() == 0:
