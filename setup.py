@@ -8,7 +8,7 @@ import os
 import shutil
 from distutils.core import setup, Extension
 
-__ver__ = "0.2.1"
+__ver__ = "0.2.2"
 
 # Hack for Python 3 to tell distutils to run 2to3 against the files
 # copied in the build directory before installing.
@@ -62,7 +62,6 @@ elif sys.platform.lower().startswith("freebsd"):
 elif sys.platform.lower().startswith("linux"):
     extensions = [Extension('_psutil_linux',
                             sources=['psutil/_psutil_linux.c'],
-                            libraries=[]
                             ),
                   posix_extension]
 
@@ -107,6 +106,7 @@ portable way by using Python.""",
               'Programming Language :: Python :: 3.0',
               'Programming Language :: Python :: 3.1',
               'Programming Language :: Python :: 3.2',
+              'Programming Language :: Python :: 3.3',
               'Topic :: System :: Monitoring',
               'Topic :: System :: Networking',
               'Topic :: System :: Benchmark',
