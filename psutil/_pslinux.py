@@ -55,20 +55,10 @@ def _get_total_phymem():
             return int(line.split()[1]) * 1024
     raise RuntimeError("line not found")
 
-def _get_terminal_map():
-    import glob
-    ret = {}
-    ls = glob.glob('/dev/tty*') + glob.glob('/dev/pts/*')
-    for name in ls:
-        if os.stat(name).st_rdev in ret:
-            print name
-        ret[os.stat(name).st_rdev] = name
-    return ret
-
 
 # Number of clock ticks per second
 _CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
-_TERMINAL_MAP = _get_terminal_map()
+_TERMINAL_MAP = _psposix._get_terminal_map()
 BOOT_TIME = _get_boot_time()
 NUM_CPUS = _get_num_cpus()
 TOTAL_PHYMEM = _get_total_phymem()

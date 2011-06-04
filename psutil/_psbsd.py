@@ -20,6 +20,7 @@ __all__ = base_module_namespace[:]
 NUM_CPUS = _psutil_bsd.get_num_cpus()
 TOTAL_PHYMEM = _psutil_bsd.get_total_phymem()
 BOOT_TIME = _psutil_bsd.get_system_boot_time()
+_TERMINAL_MAP = _psposix._get_terminal_map()
 
 # --- public functions
 
@@ -108,6 +109,14 @@ class BSDProcess(object):
     def get_process_cmdline(self):
         """Return process cmdline as a list of arguments."""
         return _psutil_bsd.get_process_cmdline(self.pid)
+
+    @wrap_exceptions
+    def get_process_terminal(self):
+        tty_nr = _psutil_bsd.get_process_tty_nr(self.pid)
+        try:
+            return _TERMINAL_MAP[tty_nr]
+        except KeyError:
+            return None
 
     @wrap_exceptions
     def get_process_ppid(self):

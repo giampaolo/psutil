@@ -14,6 +14,7 @@ import re
 import sys
 import warnings
 import time
+import glob
 
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._compat import namedtuple
@@ -85,6 +86,15 @@ def wait_pid(pid, timeout=None):
             else:
                 # should never happen
                 raise RuntimeError("unknown process exit status")
+
+def _get_terminal_map():
+    ret = {}
+    ls = glob.glob('/dev/tty*') + glob.glob('/dev/pts/*')
+    for name in ls:
+        if os.stat(name).st_rdev in ret:
+            print name
+        ret[os.stat(name).st_rdev] = name
+    return ret
 
 
 class LsofParser:
