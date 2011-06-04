@@ -381,6 +381,27 @@ class TestCase(unittest.TestCase):
         if not difference >= 0.05:
             self.fail("difference %s" % difference)
 
+    def test_system_per_cpu_times(self):
+        for times in psutil.per_cpu_times():
+            total = 0
+            sum(times)
+            for cp_time in times:
+                self.assertTrue(isinstance(cp_time, float))
+                self.assertTrue(cp_time >= 0.0)
+                total += cp_time
+            self.assertEqual(total, sum(times))
+            str(times)
+
+    def test_system_per_cpu_times2(self):
+        tot1 = psutil.per_cpu_times()
+        time.sleep(0.1)
+        tot2 = psutil.per_cpu_times()
+        for t1, t2 in zip(tot1, tot2):
+            t1, t2 = sum(t1), sum(t2)
+            difference = t2 - t1
+            if not difference >= 0.05:
+                self.fail("difference %s" % difference)
+
     def test_system_cpu_percent(self):
         psutil.cpu_percent(interval=0.001)
         psutil.cpu_percent(interval=0.001)
@@ -389,6 +410,16 @@ class TestCase(unittest.TestCase):
             self.assertTrue(isinstance(percent, float))
             self.assertTrue(percent >= 0.0)
             self.assertTrue(percent <= 100.0)
+
+    def test_system_per_cpu_percent(self):
+        psutil.per_cpu_percent(interval=0.001)
+        psutil.per_cpu_percent(interval=0.001)
+        for x in range(1000):
+            percents = psutil.per_cpu_percent(interval=None)
+            for percent in percents:
+                self.assertTrue(isinstance(percent, float))
+                self.assertTrue(percent >= 0.0)
+                self.assertTrue(percent <= 100.0)
 
     def test_process_cpu_percent(self):
         p = psutil.Process(os.getpid())
