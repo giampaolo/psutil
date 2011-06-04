@@ -625,15 +625,6 @@ get_system_cpu_times(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    /*
-        #define CP_USER     0
-        #define CP_NICE     1
-        #define CP_SYS      2
-        #define CP_INTR     3
-        #define CP_IDLE     4
-        #define CPUSTATES   5
-    */
-    //user, nice, system, idle, iowait, irqm, softirq
     return Py_BuildValue("(ddddd)",
                          (double)cpu_time[CP_USER] / CLOCKS_PER_SEC,
                          (double)cpu_time[CP_NICE] / CLOCKS_PER_SEC,
@@ -642,6 +633,62 @@ get_system_cpu_times(PyObject* self, PyObject* args)
                          (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC
     );
 }
+
+
+/*
+ * Return a Python list of tuple representing per-cpu times
+ */
+static PyObject*
+get_system_per_cpu_times(PyObject* self, PyObject* args)
+{
+    static int maxcpus;
+    int mib[2];
+    int ncpu;
+    size_t len;
+    size_t size;
+    int i;
+    PyObject* py_retlist = PyList_New(0);
+    PyObject* py_cputime;
+
+    // retrieve maxcpus value
+    size = sizeof(maxcpus);
+    if (sysctlbyname("kern.smp.maxcpus", &maxcpus, &size, NULL, 0) < 0) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+    long cpu_time[maxcpus][CPUSTATES];
+
+    // retrieve the number of cpus
+    mib[0] = CTL_HW;
+    mib[1] = HW_NCPU;
+    len = sizeof(ncpu);
+    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    // per-cpu info
+    size = sizeof(cpu_time);
+    if (sysctlbyname("kern.cp_times", &cpu_time, &size, NULL, 0) == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    for (i = 0; i < ncpu; i++) {
+        py_cputime = Py_BuildValue("(ddddd)",
+                               (double)cpu_time[i][CP_USER] / CLOCKS_PER_SEC,
+                               (double)cpu_time[i][CP_NICE] / CLOCKS_PER_SEC,
+                               (double)cpu_time[i][CP_SYS] / CLOCKS_PER_SEC,
+                               (double)cpu_time[i][CP_IDLE] / CLOCKS_PER_SEC,
+                               (double)cpu_time[i][CP_INTR] / CLOCKS_PER_SEC
+                               );
+        PyList_Append(py_retlist, py_cputime);
+        Py_XDECREF(py_cputime);
+    }
+
+    return py_retlist;
+}
+
 
 
 /*
@@ -699,6 +746,8 @@ PsutilMethods[] =
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
          "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
+     {"get_system_per_cpu_times", get_system_per_cpu_times, METH_VARARGS,
+         "Return system per-cpu times as a list of tuples"},
      {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
          "Return a float indicating the system boot time expressed in "
          "seconds since the epoch"},

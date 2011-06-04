@@ -44,10 +44,20 @@ def used_virtmem():
     return _psutil_bsd.get_total_virtmem() - _psutil_bsd.get_avail_virtmem()
 
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
+
 def get_system_cpu_times():
-    """Return system CPU times as a named tuple"""
+    """Return system per-CPU times as a named tuple"""
     user, nice, system, idle, irq = _psutil_bsd.get_system_cpu_times()
     return _cputimes_ntuple(user, nice, system, idle, irq)
+
+def get_system_per_cpu_times():
+    """Return system CPU times as a named tuple"""
+    ret = []
+    for cpu_t in _psutil_bsd.get_system_per_cpu_times():
+        user, nice, system, idle, irq = cpu_t
+        item = _cputimes_ntuple(user, nice, system, idle, irq)
+        ret.append(item)
+    return ret
 
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""
