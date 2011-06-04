@@ -691,14 +691,6 @@ class TestCase(unittest.TestCase):
                     self.fail("%s is not executable (pid=%s, name=%s, cmdline=%s)" \
                               % (repr(p.exe), p.pid, p.name, p.cmdline))
 
-    def test_path(self):
-        proc = psutil.Process(os.getpid())
-        warnings.filterwarnings("error")
-        try:
-            self.assertRaises(DeprecationWarning, getattr, proc, 'path')
-        finally:
-            warnings.resetwarnings()
-
     def test_cmdline(self):
         sproc = get_test_subprocess([PYTHON, "-E"])
         wait_for_pid(sproc.pid)
@@ -1165,7 +1157,7 @@ class TestCase(unittest.TestCase):
         valid_procs = 0
         excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
                           'kill', 'wait']
-        excluded_names += ['get_cpu_percent', 'path', 'uid', 'gid', 'get_children']
+        excluded_names += ['get_cpu_percent', 'uid', 'gid', 'get_children']
         # XXX - skip slow lsof implementation;
         if BSD:
            excluded_names += ['get_open_files', 'get_connections']
@@ -1304,10 +1296,6 @@ if hasattr(os, 'getuid'):
             os.setegid(self.PROCESS_UID)
             os.seteuid(self.PROCESS_GID)
             TestCase.tearDown(self)
-
-        def test_path(self):
-            # DeprecationWarning is only raised once
-            pass
 
         def test_nice(self):
             try:

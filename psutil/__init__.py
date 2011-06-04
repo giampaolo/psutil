@@ -174,12 +174,6 @@ class Process(object):
         return exe
 
     @property
-    def path(self):
-        msg = "'path' property is deprecated; use 'os.path.dirname(exe)' instead"
-        warnings.warn(msg, DeprecationWarning)
-        return os.path.dirname(self.exe)
-
-    @property
     def cmdline(self):
         """The command line process has been called with."""
         return self._platform_impl.get_process_cmdline()

@@ -99,7 +99,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
             p = psutil.Process(self.pid)
             self.assertEqual(p.name, w.Caption)
 
-        def test_process_path(self):
+        def test_process_exe(self):
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
             p = psutil.Process(self.pid)
             self.assertEqual(p.exe, w.ExecutablePath)
