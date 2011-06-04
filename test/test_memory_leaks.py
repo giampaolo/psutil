@@ -105,6 +105,9 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def test_is_running(self):
         self.execute('is_running')
 
+    def test_terminal(self):
+        self.execute('terminal')
+
     @skipUnless(WINDOWS)
     def test_resume(self):
         self.execute('resume')
@@ -183,6 +186,9 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
 
     def test_cpu_times(self):
         self.execute('cpu_times')
+
+    def test_per_cpu_times(self):
+        self.execute('per_cpu_times')
 
 
 def test_main():
