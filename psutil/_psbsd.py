@@ -4,7 +4,6 @@
 #
 
 import errno
-import os
 
 import _psutil_bsd
 import _psutil_posix

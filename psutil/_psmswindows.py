@@ -5,9 +5,6 @@
 
 import errno
 import os
-import subprocess
-import socket
-import re
 import sys
 import platform
 

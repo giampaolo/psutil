@@ -5,7 +5,6 @@
 
 import sys
 import os
-import shutil
 from distutils.core import setup, Extension
 
 __ver__ = "0.2.2"

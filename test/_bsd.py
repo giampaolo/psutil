@@ -12,8 +12,6 @@ import sys
 import psutil
 
 from test_psutil import reap_children, get_test_subprocess
-from _posix import ps
-
 
 def sysctl(cmdline):
     """Expects a sysctl command with an argument and parse the result

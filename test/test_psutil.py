@@ -25,7 +25,6 @@ import errno
 import threading
 import tempfile
 import collections
-import types
 
 import psutil
 

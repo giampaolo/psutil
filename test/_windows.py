@@ -7,11 +7,11 @@
 import os
 import unittest
 import platform
-import subprocess
 import signal
 import time
 import warnings
 import atexit
+import sys
 
 import psutil
 import _psutil_mswindows
@@ -76,7 +76,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
                 ret = attr
 
         p = psutil.Process(self.pid)
-        attrs = []
         for name in dir(psutil.Process):
             if name.startswith('_') \
             or name in ('terminate', 'kill', 'suspend', 'resume',
@@ -166,6 +165,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
             wmic_create = str(w.CreationDate.split('.')[0])
             psutil_create = time.strftime("%Y%m%d%H%M%S",
                                           time.localtime(p.create_time))
+            # XXX - ? no actual test here
 
         def test_get_pids(self):
             # Note: this test might fail if the OS is starting/killing

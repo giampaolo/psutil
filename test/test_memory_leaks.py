@@ -13,7 +13,6 @@ $ 2to3 -w test/test_memory_leaks.py
 
 import os
 import gc
-import sys
 import unittest
 
 import psutil
@@ -78,7 +77,7 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def test_uid(self):
         self.execute('uid')
 
-    def test_uid(self):
+    def test_gid(self):
         self.execute('gid')
 
     def test_status(self):

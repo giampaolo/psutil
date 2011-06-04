@@ -14,7 +14,6 @@ import _psutil_posix
 import _psutil_linux
 from psutil import _psposix
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
-from psutil._compat import namedtuple
 from psutil._common import *
 
 # Linux specific extended namespace
@@ -68,7 +67,7 @@ IOPRIO_CLASS_RT = 1
 IOPRIO_CLASS_BE = 2
 IOPRIO_CLASS_IDLE = 3
 
-del _get_boot_time, _get_num_cpus, _get_total_phymem, _get_terminal_map
+del _get_boot_time, _get_num_cpus, _get_total_phymem
 
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
 _TCP_STATES_TABLE = {"01" : "ESTABLISHED",
@@ -87,8 +86,6 @@ _TCP_STATES_TABLE = {"01" : "ESTABLISHED",
 def avail_phymem():
     """Return the amount of physical memory available, in bytes."""
     f = open('/proc/meminfo', 'r')
-    free = None
-    _flag = False
     for line in f:
         if line.startswith('MemFree:'):
             f.close()
