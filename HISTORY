@@ -5,6 +5,7 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 NEW FEATURES
 
+ * Issue 125: system per-cpu percentage utilization and times.
  * Issue 163: per-process associated terminal (TTY).
 
 BUGFIXES

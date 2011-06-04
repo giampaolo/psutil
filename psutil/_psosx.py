@@ -49,6 +49,10 @@ def get_system_cpu_times():
     user, nice, system, idle = _psutil_osx.get_system_cpu_times()
     return _cputimes_ntuple(user, nice, system, idle)
 
+def get_system_per_cpu_times():
+    # XXX
+    raise NotImplementedError
+
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""
     return _psutil_osx.get_pid_list()

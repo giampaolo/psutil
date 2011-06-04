@@ -56,6 +56,7 @@ base_module_namespace = [
     "PlatformProcess",
     # functions
     "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem",
-    "used_virtmem", "get_system_cpu_times", "pid_exists", "get_pid_list",
+    "used_virtmem", "get_system_cpu_times", "get_system_per_cpu_times",
+    "pid_exists", "get_pid_list",
     ]
 

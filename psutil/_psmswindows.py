@@ -68,6 +68,10 @@ def get_system_cpu_times():
     user, system, idle = _psutil_mswindows.get_system_cpu_times()
     return _cputimes_ntuple(user, system, idle)
 
+def get_system_per_cpu_times():
+    # XXX
+    raise NotImplementedError
+
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""
     return _psutil_mswindows.get_pid_list()

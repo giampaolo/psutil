@@ -146,7 +146,7 @@ def phymem_buffers():
     raise RuntimeError("line not found")
 
 def get_system_cpu_times():
-    """Return a dict representing the following CPU times:
+    """Return a named tuple representing the following CPU times:
     user, nice, system, idle, iowait, irq, softirq.
     """
     f = open('/proc/stat', 'r')
@@ -156,6 +156,23 @@ def get_system_cpu_times():
     values = values[1:8]
     values = tuple([float(x) / _CLOCK_TICKS for x in values])
     return ntuple_sys_cputimes(*values[:7])
+
+def get_system_per_cpu_times():
+    """Return a list of namedtuple representing the CPU times
+    for every CPU available on the system.
+    """
+    cpus = []
+    f = open('/proc/stat', 'r')
+    # get rid of the first line who refers to system wide CPU stats
+    f.readline()
+    for line in f.readlines():
+        if line.startswith('cpu'):
+            values = line.split()[1:8]
+            values = tuple([float(x) / _CLOCK_TICKS for x in values])
+            entry = ntuple_sys_cputimes(*values[:7])
+            cpus.append(entry)
+    f.close()
+    return cpus
 
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""

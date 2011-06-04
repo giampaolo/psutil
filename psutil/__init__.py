@@ -578,6 +578,12 @@ def cpu_times():
     """
     return get_system_cpu_times()
 
+def per_cpu_times():
+    """Same as cpu_times() but return a list of namedtuples including
+    the times of every CPU available on the system.
+    """
+    return get_system_per_cpu_times()
+
 
 _last_cpu_times = cpu_times()
 
@@ -618,6 +624,51 @@ def cpu_percent(interval=0.1):
     all_delta = t2_all - t1_all
     busy_perc = (busy_delta / all_delta) * 100
     return round(busy_perc, 1)
+
+
+_last_per_cpu_times = per_cpu_times()
+
+def per_cpu_percent(interval=0.1):
+    """Return a list of floats representing the current per-CPU
+    utilization as a percentage.
+
+    When interval is > 0.0 compares system CPU times elapsed before
+    and after the interval (blocking).
+
+    When interval is 0.0 or None compares system CPU times elapsed
+    since last call or module import, returning immediately.
+    In this case is recommended for accuracy that this function be
+    called with at least 0.1 seconds between calls.
+    """
+    global _last_per_cpu_times
+
+    blocking = interval is not None and interval > 0.0
+    if blocking:
+        tot1 = per_cpu_times()
+        time.sleep(interval)
+    else:
+        tot1 = _last_per_cpu_times
+
+    ret = []
+    tot2 = per_cpu_times()
+    _last_per_cpu_times = tot2
+    for t1, t2 in zip(tot1, tot2):
+        t1_all = sum(t1)
+        t1_busy = t1_all - t1.idle
+
+        t2_all = sum(t2)
+        t2_busy = t2_all - t2.idle
+
+        if t2_busy <= t1_busy:
+            # this usually indicates a float precision issue
+            result = 0.0
+        else:
+            busy_delta = t2_busy - t1_busy
+            all_delta = t2_all - t1_all
+            busy_perc = (busy_delta / all_delta) * 100
+            result = round(busy_perc, 1)
+        ret.append(result)
+    return ret
 
 
 def test():
