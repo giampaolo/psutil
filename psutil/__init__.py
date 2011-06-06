@@ -24,7 +24,8 @@ __all__ = [
     # functions
     "test", "pid_exists", "get_pid_list", "process_iter", "get_process_list",
     "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem",
-    "used_virtmem", "cpu_times", "cpu_percent",
+    "used_virtmem", "cpu_times", "per_cpu_times", "cpu_percent",
+    "per_cpu_percent"
     ]
 
 import sys
@@ -209,6 +210,13 @@ class Process(object):
             """
             return self._platform_impl.get_process_gids()
 
+        @property
+        def terminal(self):
+            """The terminal associated with this process, if any,
+            else None.
+            """
+            return self._platform_impl.get_process_terminal()
+
     @property
     def username(self):
         """The name of the user that owns the process.
@@ -228,14 +236,6 @@ class Process(object):
         expressed in seconds since the epoch, in UTC.
         """
         return self._platform_impl.get_process_create_time()
-
-    if os.name == 'posix':
-        @property
-        def terminal(self):
-            """The terminal associated with this process, if any,
-            else None.
-            """
-            return self._platform_impl.get_process_terminal()
 
     # available for Windows and Linux only
     if hasattr(PlatformProcess, "get_process_cwd"):
