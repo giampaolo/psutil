@@ -17,32 +17,25 @@ __extra__all__ = []
 # --- constants
 
 NUM_CPUS = _psutil_bsd.get_num_cpus()
-TOTAL_PHYMEM = _psutil_bsd.get_total_phymem()
 BOOT_TIME = _psutil_bsd.get_system_boot_time()
 _TERMINAL_MAP = _psposix._get_terminal_map()
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
 
 # --- public functions
 
-def avail_phymem():
-    "Return the amount of physical memory available on the system, in bytes."
-    return _psutil_bsd.get_avail_phymem()
+def get_phymem():
+    """Physical system memory as a (total, used, free) tuple."""
+    total = _psutil_bsd.get_total_phymem()
+    free =  _psutil_bsd.get_avail_phymem()
+    used = total - free
+    return (total, used, free)
 
-def used_phymem():
-    "Return the amount of physical memory currently in use on the system, in bytes."
-    return TOTAL_PHYMEM - _psutil_bsd.get_avail_phymem()
-
-def total_virtmem():
-    "Return the amount of total virtual memory available on the system, in bytes."
-    return _psutil_bsd.get_total_virtmem()
-
-def avail_virtmem():
-    "Return the amount of virtual memory currently in use on the system, in bytes."
-    return _psutil_bsd.get_avail_virtmem()
-
-def used_virtmem():
-    """Return the amount of used memory currently in use on the system, in bytes."""
-    return _psutil_bsd.get_total_virtmem() - _psutil_bsd.get_avail_virtmem()
+def get_virtmem():
+    """Virtual system memory as a (total, used, free) tuple."""
+    total = _psutil_bsd.get_total_virtmem()
+    free =  _psutil_bsd.get_avail_virtmem()
+    used = total - free
+    return (total, used, free)
 
 def get_system_cpu_times():
     """Return system per-CPU times as a named tuple"""
