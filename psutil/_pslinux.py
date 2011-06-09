@@ -43,30 +43,17 @@ def _get_num_cpus():
     f.close()
     return num
 
-# XXX - to be removed
-def _get_total_phymem():
-    """Return the total amount of physical memory, in bytes"""
-    f = open('/proc/meminfo', 'r')
-    for line in f:
-        if line.startswith('MemTotal:'):
-            f.close()
-            return int(line.split()[1]) * 1024
-    raise RuntimeError("line not found")
-
 
 # Number of clock ticks per second
 _CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
 _TERMINAL_MAP = _psposix._get_terminal_map()
 BOOT_TIME = _get_boot_time()
 NUM_CPUS = _get_num_cpus()
-TOTAL_PHYMEM = _get_total_phymem()
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
 IOPRIO_CLASS_NONE = 0
 IOPRIO_CLASS_RT = 1
 IOPRIO_CLASS_BE = 2
 IOPRIO_CLASS_IDLE = 3
-
-del _get_boot_time, _get_num_cpus, _get_total_phymem
 
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
 _TCP_STATES_TABLE = {"01" : "ESTABLISHED",

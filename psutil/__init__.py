@@ -14,7 +14,7 @@ __all__ = [
     # exceptions
     "Error", "NoSuchProcess", "AccessDenied", "TimeoutExpired",
     # constants
-    "NUM_CPUS", "TOTAL_get_phymem", "BOOT_TIME",
+    "NUM_CPUS", "TOTAL_PHYMEM", "BOOT_TIME",
     "version_info", "__version__",
     "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
     "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
