@@ -277,6 +277,20 @@ class TestCase(unittest.TestCase):
         self.assertFalse(psutil.pid_exists(sproc.pid))
         self.assertFalse(psutil.pid_exists(-1))
 
+    def test_pid_exists_2(self):
+        pids = psutil.get_pid_list()
+        for pid in pids:
+            try:
+                self.assertTrue(psutil.pid_exists(pid))
+            except AssertionError:
+                # in case the process disappeared in meantime fail only
+                # if it is no longer in get_pid_list()
+                if pid in psutil.get_pid_list():
+                    self.fail()
+        pids = range(max(pids) + 5000, max(pids) + 6000)
+        for pid in pids:
+            self.assertFalse(psutil.pid_exists(pid))
+
     def test_get_pid_list(self):
         plist = [x.pid for x in psutil.get_process_list()]
         pidlist = psutil.get_pid_list()
