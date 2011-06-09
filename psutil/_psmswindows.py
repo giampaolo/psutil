@@ -81,9 +81,8 @@ def get_system_per_cpu_times():
         ret.append(item)
     return ret
 
-get_pid_list = _psutil_mswindows.get_pid_list()
-pid_exists = _psutil_mswindows.pid_exists(pid)
-
+get_pid_list = _psutil_mswindows.get_pid_list
+pid_exists = _psutil_mswindows.pid_exists
 
 # --- decorator
 
