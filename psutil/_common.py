@@ -47,16 +47,3 @@ ntuple_uids = namedtuple('user', 'real effective saved')
 ntuple_gids = namedtuple('group', 'real effective saved')
 ntuple_io = namedtuple('io', 'read_count write_count read_bytes write_bytes')
 ntuple_ionice = namedtuple('ionice', 'ioclass value')
-
-# the __all__ namespace common to all _ps*.py platform modules
-base_module_namespace = [
-    # constants
-    "NUM_CPUS", "TOTAL_PHYMEM", "BOOT_TIME",
-    # classes
-    "PlatformProcess",
-    # functions
-    "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem",
-    "used_virtmem", "get_system_cpu_times", "get_system_per_cpu_times",
-    "pid_exists", "get_pid_list",
-    ]
-

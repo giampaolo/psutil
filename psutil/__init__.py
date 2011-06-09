@@ -49,23 +49,47 @@ from psutil._common import (STATUS_RUNNING, STATUS_IDLE, STATUS_SLEEPING,
 
 # import the appropriate module for our platform only
 if sys.platform.lower().startswith("linux"):
-    from psutil._pslinux import *
-    __all__.extend(["cached_phymem", "phymem_buffers"])
+    import psutil._pslinux as _psplatform
+    from psutil._pslinux import (phymem_buffers,
+                                 cached_phymem,
+                                 IOPRIO_CLASS_NONE,
+                                 IOPRIO_CLASS_RT,
+                                 IOPRIO_CLASS_BE,
+                                 IOPRIO_CLASS_IDLE)
 
 elif sys.platform.lower().startswith("win32"):
-    from psutil._psmswindows import *
-    __all__.extend(["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
-                    "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
-                    "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS"])
+    import psutil._psmswindows as _psplatform
+    from psutil._psmswindows import (ABOVE_NORMAL_PRIORITY_CLASS,
+                                     BELOW_NORMAL_PRIORITY_CLASS,
+                                     HIGH_PRIORITY_CLASS,
+                                     IDLE_PRIORITY_CLASS,
+                                     NORMAL_PRIORITY_CLASS,
+                                     REALTIME_PRIORITY_CLASS)
 
 elif sys.platform.lower().startswith("darwin"):
-    from psutil._psosx import *
+    import psutil._psosx as _psplatform
 
 elif sys.platform.lower().startswith("freebsd"):
-    from psutil._psbsd import *
+    import psutil._psbsd as _psplatform
 
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
+
+__all__.extend(_psplatform.__extra__all__)
+
+TOTAL_PHYMEM = _psplatform.TOTAL_PHYMEM
+NUM_CPUS = _psplatform.NUM_CPUS
+BOOT_TIME = _psplatform.BOOT_TIME
+
+# XXX provisional
+cached_phymem = _psplatform.cached_phymem
+used_phymem = _psplatform.used_phymem
+avail_phymem = _psplatform.avail_phymem
+total_virtmem = _psplatform.total_virtmem
+used_virtmem = _psplatform.used_virtmem
+avail_virtmem = _psplatform.avail_virtmem
+get_pid_list = _psplatform.get_pid_list
+pid_exists = _psplatform.pid_exists
 
 
 class Process(object):
@@ -81,9 +105,9 @@ class Process(object):
         if not pid_exists(pid):
             raise NoSuchProcess(pid, None, "no process found with pid %s" % pid)
         self._pid = pid
-        # platform-specific modules define an PlatformProcess
+        # platform-specific modules define an _psplatform.Process
         # implementation class
-        self._platform_impl = PlatformProcess(pid)
+        self._platform_impl = _psplatform.Process(pid)
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
 
@@ -238,7 +262,7 @@ class Process(object):
         return self._platform_impl.get_process_create_time()
 
     # available for Windows and Linux only
-    if hasattr(PlatformProcess, "get_process_cwd"):
+    if hasattr(_psplatform.Process, "get_process_cwd"):
 
         def getcwd(self):
             """Return a string representing the process current working
@@ -247,7 +271,7 @@ class Process(object):
             return self._platform_impl.get_process_cwd()
 
     # Linux, BSD and Windows only
-    if hasattr(PlatformProcess, "get_process_io_counters"):
+    if hasattr(_psplatform.Process, "get_process_io_counters"):
 
         def get_io_counters(self):
             """Return process I/O statistics as a namedtuple including
@@ -257,7 +281,7 @@ class Process(object):
             return self._platform_impl.get_process_io_counters()
 
     # available only on Linux
-    if hasattr(PlatformProcess, "get_process_ionice"):
+    if hasattr(_psplatform.Process, "get_process_ionice"):
 
         def get_ionice(self):
             """Return process I/O niceness (priority) as a namedtuple."""
@@ -521,7 +545,6 @@ class Popen(Process):
                 raise AttributeError("%s instance has no attribute '%s'"
                                       %(self.__class__.__name__, name))
 
-
 def process_iter():
     """Return an iterator yielding a Process class instances for all
     running processes on the local machine.
@@ -552,13 +575,13 @@ def cpu_times():
      - irq (Linux, FreeBSD)
      - softirq (Linux)
     """
-    return get_system_cpu_times()
+    return _psplatform.get_system_cpu_times()
 
 def per_cpu_times():
     """Same as cpu_times() but return a list of namedtuples including
     the times of every CPU available on the system.
     """
-    return get_system_per_cpu_times()
+    return _psplatform.get_system_per_cpu_times()
 
 
 _last_cpu_times = cpu_times()

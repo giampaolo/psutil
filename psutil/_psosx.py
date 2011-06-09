@@ -13,13 +13,14 @@ from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._compat import namedtuple
 from psutil._common import *
 
-__all__ = base_module_namespace[:]
+__extra__all__ = []
 
 # --- constants
 
 NUM_CPUS = _psutil_osx.get_num_cpus()
 TOTAL_PHYMEM = _psutil_osx.get_total_phymem()
 BOOT_TIME = _psutil_osx.get_system_boot_time()
+_cputimes_ntuple = namedtuple('cputimes', 'user nice system idle')
 
 # --- functions
 
@@ -43,7 +44,6 @@ def used_virtmem():
     """Return the amount of used memory currently in use on the system, in bytes."""
     return _psutil_osx.get_total_virtmem() - _psutil_osx.get_avail_virtmem()
 
-_cputimes_ntuple = namedtuple('cputimes', 'user nice system idle')
 def get_system_cpu_times():
     """Return system CPU times as a namedtuple."""
     user, nice, system, idle = _psutil_osx.get_system_cpu_times()
@@ -53,13 +53,8 @@ def get_system_per_cpu_times():
     # XXX
     raise NotImplementedError
 
-def get_pid_list():
-    """Returns a list of PIDs currently running on the system."""
-    return _psutil_osx.get_pid_list()
-
-def pid_exists(pid):
-    """Check For the existence of a unix pid."""
-    return _psposix.pid_exists(pid)
+get_pid_list = _psutil_osx.get_pid_list
+pid_exists = _psposix.pid_exists
 
 # --- decorator
 
@@ -88,7 +83,7 @@ _status_map = {
     _psutil_osx.SZOMB : STATUS_ZOMBIE,
 }
 
-class OSXProcess(object):
+class Process(object):
     """Wrapper class around underlying C implementation."""
 
     __slots__ = ["pid", "_process_name"]
@@ -205,8 +200,3 @@ class OSXProcess(object):
             ntuple = ntuple_thread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
-
-
-
-PlatformProcess = OSXProcess
-

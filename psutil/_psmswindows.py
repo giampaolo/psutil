@@ -14,11 +14,9 @@ from psutil._compat import namedtuple
 from psutil._common import *
 
 # Windows specific extended namespace
-__all__ = base_module_namespace[:]
-__all__.extend(["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
-                "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
-                "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS"
-               ])
+__extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
+                  "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
+                  "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS"]
 
 
 # --- module level constants (gets pushed up to psutil module)
@@ -83,12 +81,8 @@ def get_system_per_cpu_times():
         ret.append(item)
     return ret
 
-def get_pid_list():
-    """Returns a list of PIDs currently running on the system."""
-    return _psutil_mswindows.get_pid_list()
-
-def pid_exists(pid):
-    return _psutil_mswindows.pid_exists(pid)
+get_pid_list = _psutil_mswindows.get_pid_list()
+pid_exists = _psutil_mswindows.pid_exists(pid)
 
 
 # --- decorator
@@ -110,7 +104,7 @@ def wrap_exceptions(callable):
     return wrapper
 
 
-class WindowsProcess(object):
+class Process(object):
     """Wrapper class around underlying C implementation."""
 
     __slots__ = ["pid", "_process_name"]
@@ -266,6 +260,3 @@ class WindowsProcess(object):
             return STATUS_STOPPED
         else:
             return STATUS_RUNNING
-
-PlatformProcess = WindowsProcess
-

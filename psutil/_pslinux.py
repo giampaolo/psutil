@@ -16,12 +16,10 @@ from psutil import _psposix
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
 
-# Linux specific extended namespace
-__all__ = base_module_namespace[:]
-__all__.extend([
-    "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE", "IOPRIO_CLASS_IDLE",
-    "phymem_buffers", "cached_phymem",
-    ])
+__extra__all__ = [
+    "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE",
+    "IOPRIO_CLASS_IDLE",
+    "phymem_buffers", "cached_phymem"]
 
 
 def _get_boot_time():
@@ -219,7 +217,7 @@ def wrap_exceptions(callable):
     return wrapper
 
 
-class LinuxProcess(object):
+class Process(object):
     """Linux process implementation."""
 
     __slots__ = ["pid", "_process_name"]
@@ -622,6 +620,3 @@ class LinuxProcess(object):
             ip = socket.inet_ntop(socket.AF_INET6,
                                 struct.pack('>4I', *struct.unpack('<4I', ip)))
         return (ip, port)
-
-PlatformProcess = LinuxProcess
-

@@ -12,7 +12,7 @@ from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._compat import namedtuple
 from psutil._common import *
 
-__all__ = base_module_namespace[:]
+__extra__all__ = []
 
 # --- constants
 
@@ -20,6 +20,7 @@ NUM_CPUS = _psutil_bsd.get_num_cpus()
 TOTAL_PHYMEM = _psutil_bsd.get_total_phymem()
 BOOT_TIME = _psutil_bsd.get_system_boot_time()
 _TERMINAL_MAP = _psposix._get_terminal_map()
+_cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
 
 # --- public functions
 
@@ -43,8 +44,6 @@ def used_virtmem():
     """Return the amount of used memory currently in use on the system, in bytes."""
     return _psutil_bsd.get_total_virtmem() - _psutil_bsd.get_avail_virtmem()
 
-_cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
-
 def get_system_cpu_times():
     """Return system per-CPU times as a named tuple"""
     user, nice, system, idle, irq = _psutil_bsd.get_system_cpu_times()
@@ -59,13 +58,8 @@ def get_system_per_cpu_times():
         ret.append(item)
     return ret
 
-def get_pid_list():
-    """Returns a list of PIDs currently running on the system."""
-    return _psutil_bsd.get_pid_list()
-
-def pid_exists(pid):
-    """Check For the existence of a unix pid."""
-    return _psposix.pid_exists(pid)
+get_pid_list = _psutil_bsd.get_pid_list
+pid_exists = _psposix.pid_exists
 
 
 def wrap_exceptions(method):
@@ -95,7 +89,7 @@ _status_map = {
 }
 
 
-class BSDProcess(object):
+class Process(object):
     """Wrapper class around underlying C implementation."""
 
     __slots__ = ["pid", "_process_name"]
@@ -216,7 +210,3 @@ class BSDProcess(object):
     def get_process_io_counters(self):
         rc, wc, rb, wb = _psutil_bsd.get_process_io_counters(self.pid)
         return ntuple_io(rc, wc, rb, wb)
-
-
-PlatformProcess = BSDProcess
-
