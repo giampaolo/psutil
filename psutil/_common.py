@@ -39,6 +39,7 @@ ntuple_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq s
 
 # processes
 ntuple_meminfo = namedtuple('meminfo', 'rss vms')
+ntuple_sysmeminfo = namedtuple('meminfo', 'total used free percent')
 ntuple_cputimes = namedtuple('cputimes', 'user system')
 ntuple_openfile = namedtuple('openfile', 'path fd')
 ntuple_connection = namedtuple('connection', 'fd family type local_address remote_address status')

@@ -7,6 +7,9 @@ NEW FEATURES
 
  * Issue 125: system per-cpu percentage utilization and times.
  * Issue 163: per-process associated terminal (TTY).
+ * Issue 171: added get_phymem() and get_virtmem() functions returning system
+   memory information (total, used, free) and memory percent usage.
+   total_* avail_* and used_* memory functions are deprecated.
 
 BUGFIXES
 

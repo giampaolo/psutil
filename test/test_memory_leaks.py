@@ -169,20 +169,11 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
     def test_process_iter(self):
         self.execute('process_iter')
 
-    def test_used_phymem(self):
-        self.execute('used_phymem')
+    def test_get_phymem(self):
+        self.execute('get_phymem')
 
-    def test_avail_phymem(self):
-        self.execute('avail_phymem')
-
-    def test_total_virtmem(self):
-        self.execute('total_virtmem')
-
-    def test_used_virtmem(self):
-        self.execute('used_virtmem')
-
-    def test_avail_virtmem(self):
-        self.execute('avail_virtmem')
+    def test_get_virtmem(self):
+        self.execute('get_virtmem')
 
     def test_cpu_times(self):
         self.execute('cpu_times')

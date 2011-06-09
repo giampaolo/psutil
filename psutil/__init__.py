@@ -14,7 +14,7 @@ __all__ = [
     # exceptions
     "Error", "NoSuchProcess", "AccessDenied", "TimeoutExpired",
     # constants
-    "NUM_CPUS", "TOTAL_PHYMEM", "BOOT_TIME",
+    "NUM_CPUS", "TOTAL_get_phymem", "BOOT_TIME",
     "version_info", "__version__",
     "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
     "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
@@ -23,9 +23,8 @@ __all__ = [
     "Process", "Popen",
     # functions
     "test", "pid_exists", "get_pid_list", "process_iter", "get_process_list",
-    "avail_phymem", "used_phymem", "total_virtmem", "avail_virtmem",
-    "used_virtmem", "cpu_times", "per_cpu_times", "cpu_percent",
-    "per_cpu_percent"
+    "get_phymem", "get_virtmem"
+    "cpu_times", "per_cpu_times", "cpu_percent", "per_cpu_percent"
     ]
 
 import sys
@@ -42,10 +41,12 @@ except ImportError:
 
 from psutil.error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
 from psutil._compat import property
+from psutil._common import ntuple_sysmeminfo as _ntuple_sysmeminfo
 from psutil._common import (STATUS_RUNNING, STATUS_IDLE, STATUS_SLEEPING,
                             STATUS_DISK_SLEEP, STATUS_STOPPED,
                             STATUS_TRACING_STOP, STATUS_ZOMBIE, STATUS_DEAD,
-                            STATUS_WAKING, STATUS_LOCKED)
+                            STATUS_WAKING, STATUS_LOCKED
+                            )
 
 # import the appropriate module for our platform only
 if sys.platform.lower().startswith("linux"):
@@ -79,16 +80,10 @@ else:
 
 __all__.extend(_psplatform.__extra__all__)
 
-TOTAL_PHYMEM = _psplatform.TOTAL_PHYMEM
 NUM_CPUS = _psplatform.NUM_CPUS
 BOOT_TIME = _psplatform.BOOT_TIME
+TOTAL_PHYMEM = _psplatform.get_phymem()[0]
 
-# XXX provisional
-avail_phymem = _psplatform.avail_phymem
-used_phymem = _psplatform.used_phymem
-total_virtmem = _psplatform.total_virtmem
-used_virtmem = _psplatform.used_virtmem
-avail_virtmem = _psplatform.avail_virtmem
 get_pid_list = _psplatform.get_pid_list
 pid_exists = _psplatform.pid_exists
 
@@ -670,6 +665,62 @@ def per_cpu_percent(interval=0.1):
         ret.append(result)
     return ret
 
+def get_phymem():
+    """Return the amount of total, used and free physical memory
+    on the system in bytes plus the percentage usage.
+    """
+    total, used, free = _psplatform.get_phymem()
+    percent = (float(used) / total) * 100
+    percent = round(percent, 1)
+    return _ntuple_sysmeminfo(total, used, free, percent)
+
+def get_virtmem():
+    """Return the amount of total, used and free virtual memory
+    on the system in bytes plus the percentage usage.
+
+    On Linux they match the values returned by free command line utility.
+    On OS X and FreeBSD they represent the same values as returned by
+    sysctl vm.vmtotal. On Windows they are determined by reading the
+    PageFile values of MEMORYSTATUSEX structure.
+    """
+    total, used, free = _psplatform.get_virtmem()
+    percent = (float(used) / total) * 100
+    percent = round(percent, 1)
+    return _ntuple_sysmeminfo(total, used, free, percent)
+
+
+def _deprecated(replacement):
+    # a decorator which can be used to mark functions as deprecated
+    def outer(fun):
+        def inner(*args, **kwargs):
+            msg = "psutil.%s is deprecated; use %s instead" \
+                  % (fun.__name__, replacement)
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return fun(*args, **kwargs)
+        return inner
+    return outer
+
+# --- deprecated functions
+
+@_deprecated("psutil.get_phymem")
+def avail_phymem():
+    return get_phymem().free
+
+@_deprecated("psutil.get_phymem")
+def used_phymem():
+    return get_phymem().used
+
+@_deprecated("psutil.get_virtmem")
+def total_virtmem():
+    return get_virtmem().total
+
+@_deprecated("psutil.get_virtmem")
+def used_virtmem():
+    return get_virtmem().used
+
+@_deprecated("psutil.get_virtmem")
+def avail_virtmem():
+    return get_virtmem().free
 
 def test():
     """List info of all currently running processes emulating a

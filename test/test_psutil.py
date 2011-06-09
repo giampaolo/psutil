@@ -230,36 +230,30 @@ class TestCase(unittest.TestCase):
         self.assertTrue(isinstance(x, float))
         self.assertTrue(x > 0)
 
-    def test_used_phymem(self):
-        x = psutil.used_phymem()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x > 0)
+    def test_deprecated_memory_functions(self):
+        warnings.filterwarnings("error")
+        try:
+            self.assertRaises(DeprecationWarning, psutil.used_phymem)
+            self.assertRaises(DeprecationWarning, psutil.avail_phymem)
+            self.assertRaises(DeprecationWarning, psutil.total_virtmem)
+            self.assertRaises(DeprecationWarning, psutil.used_virtmem)
+            self.assertRaises(DeprecationWarning, psutil.avail_virtmem)
+        finally:
+            warnings.resetwarnings()
 
-    def test_avail_phymem(self):
-        x = psutil.avail_phymem()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x > 0)
+    def test_get_phymem(self):
+        mem = psutil.get_phymem()
+        self.assertTrue(mem.total > 0)
+        self.assertTrue(mem.used > 0)
+        self.assertTrue(mem.free > 0)
+        self.assertTrue(0 <= mem.percent <= 100)
 
-    def test_total_virtmem(self):
-        x = psutil.total_virtmem()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x >= 0)
-
-    def test_used_virtmem(self):
-        x = psutil.used_virtmem()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x >= 0)
-
-    def test_avail_virtmem(self):
-        x = psutil.avail_virtmem()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x >= 0)
-
-    @skipUnless(LINUX)
-    def test_cached_phymem(self):
-        x = psutil.cached_phymem()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x >= 0)
+    def test_get_virtmem(self):
+        mem = psutil.get_virtmem()
+        self.assertTrue(mem.total > 0)
+        self.assertTrue(mem.used > 0)
+        self.assertTrue(mem.free > 0)
+        self.assertTrue(0 <= mem.percent <= 100)
 
     @skipUnless(LINUX)
     def test_phymem_buffers(self):

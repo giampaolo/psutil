@@ -43,6 +43,7 @@ def _get_num_cpus():
     f.close()
     return num
 
+# XXX - to be removed
 def _get_total_phymem():
     """Return the total amount of physical memory, in bytes"""
     f = open('/proc/meminfo', 'r')
@@ -81,44 +82,7 @@ _TCP_STATES_TABLE = {"01" : "ESTABLISHED",
                      "0B" : "CLOSING"
                      }
 
-def avail_phymem():
-    """Return the amount of physical memory available, in bytes."""
-    f = open('/proc/meminfo', 'r')
-    for line in f:
-        if line.startswith('MemFree:'):
-            f.close()
-            return int(line.split()[1]) * 1024
-    raise RuntimeError("line not found")
-
-def used_phymem():
-    """"Return the amount of physical memory used, in bytes."""
-    return (TOTAL_PHYMEM - avail_phymem())
-
-def total_virtmem():
-    """"Return the total amount of virtual memory, in bytes."""
-    f = open('/proc/meminfo', 'r')
-    for line in f:
-        if line.startswith('SwapTotal:'):
-            f.close()
-            return int(line.split()[1]) * 1024
-    raise RuntimeError("line not found")
-
-def avail_virtmem():
-    """Return the amount of virtual memory currently in use on the
-    system, in bytes.
-    """
-    f = open('/proc/meminfo', 'r')
-    for line in f:
-        if line.startswith('SwapFree:'):
-            f.close()
-            return int(line.split()[1]) * 1024
-    raise RuntimeError("line not found")
-
-def used_virtmem():
-    """Return the amount of used memory currently in use on the system,
-    in bytes.
-    """
-    return total_virtmem() - avail_virtmem()
+# --- system memory functions
 
 def cached_phymem():
     """Return the amount of cached memory on the system, in bytes.
@@ -142,6 +106,35 @@ def phymem_buffers():
             f.close()
             return int(line.split()[1]) * 1024
     raise RuntimeError("line not found")
+
+def get_phymem():
+    f = open('/proc/meminfo', 'r')
+    total = free = None
+    for line in f:
+        if line.startswith('MemTotal:'):
+            total = int(line.split()[1]) / 1024
+        elif line.startswith('MemFree:'):
+            free = int(line.split()[1]) / 1024
+        if total is not None and free is not None:
+            break
+    used = total - free
+    return (total, used, free)
+
+def get_virtmem():
+    f = open('/proc/meminfo', 'r')
+    total = free = None
+    for line in f:
+        if line.startswith('SwapTotal:'):
+            total = int(line.split()[1]) / 1024
+        elif line.startswith('SwapFree:'):
+            free = int(line.split()[1]) / 1024
+        if total is not None and free is not None:
+            break
+    used = total - free
+    return (total, used, free)
+
+
+# --- system CPU functions
 
 def get_system_cpu_times():
     """Return a named tuple representing the following CPU times:
@@ -171,6 +164,8 @@ def get_system_per_cpu_times():
             cpus.append(entry)
     f.close()
     return cpus
+
+# --- process functions
 
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""
