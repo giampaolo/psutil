@@ -22,7 +22,6 @@ __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
 # --- module level constants (gets pushed up to psutil module)
 
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
-TOTAL_PHYMEM = _psutil_mswindows.get_total_phymem()
 BOOT_TIME = _psutil_mswindows.get_system_uptime()
 _WIN2000 = platform.win32_ver()[0] == '2000'
 ERROR_ACCESS_DENIED = 5
@@ -37,28 +36,22 @@ from _psutil_mswindows import (ABOVE_NORMAL_PRIORITY_CLASS,
                                NORMAL_PRIORITY_CLASS,
                                REALTIME_PRIORITY_CLASS)
 
-
 # --- public functions
 
-def avail_phymem():
-    "Return the amount of physical memory available on the system, in bytes."
-    return _psutil_mswindows.get_avail_phymem()
+def get_phymem():
+    """Physical system memory as a (total, used, free) tuple."""
+    total = _psutil_mswindows.get_total_phymem()
+    free =  _psutil_mswindows.get_avail_phymem()
+    used = total - free
+    return (total, used, free)
 
-def used_phymem():
-    "Return the amount of physical memory currently in use on the system, in bytes."
-    return TOTAL_PHYMEM - _psutil_mswindows.get_avail_phymem()
+def get_virtmem():
+    """Virtual system memory as a (total, used, free) tuple."""
+    total = _psutil_mswindows.get_total_virtmem()
+    free =  _psutil_mswindows.get_avail_virtmem()
+    used = total - free
+    return (total, used, free)
 
-def total_virtmem():
-    "Return the amount of total virtual memory available on the system, in bytes."
-    return _psutil_mswindows.get_total_virtmem()
-
-def avail_virtmem():
-    "Return the amount of virtual memory currently in use on the system, in bytes."
-    return _psutil_mswindows.get_avail_virtmem()
-
-def used_virtmem():
-    """Return the amount of used memory currently in use on the system, in bytes."""
-    return _psutil_mswindows.get_total_virtmem() - _psutil_mswindows.get_avail_virtmem()
 
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle')
 
