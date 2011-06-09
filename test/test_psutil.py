@@ -933,14 +933,18 @@ class TestCase(unittest.TestCase):
         def supports_ipv6():
             if not socket.has_ipv6 or not hasattr(socket, "AF_INET6"):
                 return False
+            sock = None
             try:
-                sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-                sock.bind(("::1", 0))
-            except (socket.error, socket.gaierror):
-                return False
-            else:
-                sock.close()
-                return True
+                try:
+                    sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+                    sock.bind(("::1", 0))
+                except (socket.error, socket.gaierror):
+                    return False
+                else:
+                    return True
+            finally:
+                if sock is not None:
+                    sock.close()
 
         # all values are supposed to match Linux's tcp_states.h states
         # table across all platforms.
@@ -1008,19 +1012,25 @@ class TestCase(unittest.TestCase):
                         s.close()
 
                     if not WINDOWS and hasattr(socket, 'fromfd'):
+                        dupsock = None
                         try:
-                            dupsock = socket.fromfd(conn.fd, conn.family,
-                                                             conn.type)
-                        except (socket.error, OSError):
-                            err = sys.exc_info()[1]
-                            if err.args[0] == errno.EBADF:
-                                continue
-                            else:
-                                raise
-                        # python >= 2.5
-                        if hasattr(dupsock, "family"):
-                            self.assertEqual(dupsock.family, conn.family)
-                            self.assertEqual(dupsock.type, conn.type)
+                            try:
+                                dupsock = socket.fromfd(conn.fd, conn.family,
+                                                                 conn.type)
+                            except (socket.error, OSError):
+                                err = sys.exc_info()[1]
+                                if err.args[0] == errno.EBADF:
+                                    continue
+                                else:
+                                    raise
+                            # python >= 2.5
+                            if hasattr(dupsock, "family"):
+                                self.assertEqual(dupsock.family, conn.family)
+                                self.assertEqual(dupsock.type, conn.type)
+                        finally:
+                            if dupsock is not None:
+                                dupsock.close()
+
 
         # --- check matches against subprocesses
 

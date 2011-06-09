@@ -25,23 +25,27 @@ __extra__all__ = [
 def _get_boot_time():
     """Return system boot time (epoch in seconds)"""
     f = open('/proc/stat', 'r')
-    for line in f:
-        if line.startswith('btime'):
-            f.close()
-            return float(line.strip().split()[1])
-    raise RuntimeError("line not found")
+    try:
+        for line in f:
+            if line.startswith('btime'):
+                return float(line.strip().split()[1])
+        raise RuntimeError("line not found")
+    finally:
+        f.close()
 
 def _get_num_cpus():
     """Return the number of CPUs on the system"""
     num = 0
     f = open('/proc/cpuinfo', 'r')
-    for line in f:
-        if line.startswith('processor'):
-            num += 1
-    if num == 0:
-        raise RuntimeError("line not found")
-    f.close()
-    return num
+    try:
+        for line in f:
+            if line.startswith('processor'):
+                num += 1
+        if num == 0:
+            raise RuntimeError("line not found")
+        return num
+    finally:
+        f.close()
 
 
 # Number of clock ticks per second
@@ -76,11 +80,13 @@ def cached_phymem():
     This reflects the "cached" column of free command line utility.
     """
     f = open('/proc/meminfo', 'r')
-    for line in f:
-        if line.startswith('Cached:'):
-            f.close()
-            return int(line.split()[1]) * 1024
-    raise RuntimeError("line not found")
+    try:
+        for line in f:
+            if line.startswith('Cached:'):
+                return int(line.split()[1]) * 1024
+        raise RuntimeError("line not found")
+    finally:
+        f.close()
 
 def phymem_buffers():
     """Return the amount of physical memory buffers used by the
@@ -88,37 +94,47 @@ def phymem_buffers():
     This reflects the "buffers" column of free command line utility.
     """
     f = open('/proc/meminfo', 'r')
-    for line in f:
-        if line.startswith('Buffers:'):
-            f.close()
-            return int(line.split()[1]) * 1024
-    raise RuntimeError("line not found")
+    try:
+        for line in f:
+            if line.startswith('Buffers:'):
+                return int(line.split()[1]) * 1024
+        raise RuntimeError("line not found")
+    finally:
+        f.close()
 
 def get_phymem():
     f = open('/proc/meminfo', 'r')
-    total = free = None
-    for line in f:
-        if line.startswith('MemTotal:'):
-            total = int(line.split()[1]) * 1024
-        elif line.startswith('MemFree:'):
-            free = int(line.split()[1]) * 1024
-        if total is not None and free is not None:
-            break
-    used = total - free
-    return (total, used, free)
+    try:
+        total = free = None
+        for line in f:
+            if line.startswith('MemTotal:'):
+                total = int(line.split()[1]) * 1024
+            elif line.startswith('MemFree:'):
+                free = int(line.split()[1]) * 1024
+            if total is not None and free is not None:
+                break
+        assert total is not None and free is not None
+        used = total - free
+        return (total, used, free)
+    finally:
+        f.close()
 
 def get_virtmem():
     f = open('/proc/meminfo', 'r')
-    total = free = None
-    for line in f:
-        if line.startswith('SwapTotal:'):
-            total = int(line.split()[1]) * 1024
-        elif line.startswith('SwapFree:'):
-            free = int(line.split()[1]) * 1024
-        if total is not None and free is not None:
-            break
-    used = total - free
-    return (total, used, free)
+    try:
+        total = free = None
+        for line in f:
+            if line.startswith('SwapTotal:'):
+                total = int(line.split()[1]) * 1024
+            elif line.startswith('SwapFree:'):
+                free = int(line.split()[1]) * 1024
+            if total is not None and free is not None:
+                break
+        assert total is not None and free is not None
+        used = total - free
+        return (total, used, free)
+    finally:
+        f.close()
 
 
 # --- system CPU functions
@@ -128,8 +144,10 @@ def get_system_cpu_times():
     user, nice, system, idle, iowait, irq, softirq.
     """
     f = open('/proc/stat', 'r')
-    values = f.readline().split()
-    f.close()
+    try:
+        values = f.readline().split()
+    finally:
+        f.close()
 
     values = values[1:8]
     values = tuple([float(x) / _CLOCK_TICKS for x in values])
@@ -142,15 +160,17 @@ def get_system_per_cpu_times():
     cpus = []
     f = open('/proc/stat', 'r')
     # get rid of the first line who refers to system wide CPU stats
-    f.readline()
-    for line in f.readlines():
-        if line.startswith('cpu'):
-            values = line.split()[1:8]
-            values = tuple([float(x) / _CLOCK_TICKS for x in values])
-            entry = ntuple_sys_cputimes(*values[:7])
-            cpus.append(entry)
-    f.close()
-    return cpus
+    try:
+        f.readline()
+        for line in f.readlines():
+            if line.startswith('cpu'):
+                values = line.split()[1:8]
+                values = tuple([float(x) / _CLOCK_TICKS for x in values])
+                entry = ntuple_sys_cputimes(*values[:7])
+                cpus.append(entry)
+        return cpus
+    finally:
+        f.close()
 
 # --- process functions
 
@@ -283,17 +303,19 @@ class Process(object):
         if self.pid == 0:
             return ntuple_io(0, 0, 0, 0)
         f = open("/proc/%s/io" % self.pid)
-        for line in f:
-            if line.startswith("rchar"):
-                read_count = int(line.split()[1])
-            elif line.startswith("wchar"):
-                write_count = int(line.split()[1])
-            elif line.startswith("read_bytes"):
-                read_bytes = int(line.split()[1])
-            elif line.startswith("write_bytes"):
-                write_bytes = int(line.split()[1])
-        f.close()
-        return ntuple_io(read_count, write_count, read_bytes, write_bytes)
+        try:
+            for line in f:
+                if line.startswith("rchar"):
+                    read_count = int(line.split()[1])
+                elif line.startswith("wchar"):
+                    write_count = int(line.split()[1])
+                elif line.startswith("read_bytes"):
+                    read_bytes = int(line.split()[1])
+                elif line.startswith("write_bytes"):
+                    write_bytes = int(line.split()[1])
+            return ntuple_io(read_count, write_count, read_bytes, write_bytes)
+        finally:
+            f.close()
 
     @wrap_exceptions
     def get_cpu_times(self):
@@ -301,8 +323,10 @@ class Process(object):
         if self.pid == 0:
             return ntuple_cputimes(0.0, 0.0)
         f = open("/proc/%s/stat" % self.pid)
-        st = f.read().strip()
-        f.close()
+        try:
+            st = f.read().strip()
+        finally:
+            f.close()
         # ignore the first two values ("pid (exe)")
         st = st[st.find(')') + 2:]
         values = st.split(' ')
@@ -323,8 +347,10 @@ class Process(object):
         if self.pid == 0:
             return BOOT_TIME
         f = open("/proc/%s/stat" % self.pid)
-        st = f.read().strip()
-        f.close()
+        try:
+            st = f.read().strip()
+        finally:
+            f.close()
         # ignore the first two values ("pid (exe)")
         st = st[st.find(')') + 2:]
         values = st.split(' ')
@@ -341,18 +367,20 @@ class Process(object):
         if self.pid == 0:
             return ntuple_meminfo(0, 0)
         f = open("/proc/%s/status" % self.pid)
-        virtual_size = 0
-        resident_size = 0
-        _flag = False
-        for line in f:
-            if (not _flag) and line.startswith("VmSize:"):
-                virtual_size = int(line.split()[1]) * 1024
-                _flag = True
-            elif line.startswith("VmRSS"):
-                resident_size = int(line.split()[1]) * 1024
-                break
-        f.close()
-        return ntuple_meminfo(resident_size, virtual_size)
+        try:
+            virtual_size = 0
+            resident_size = 0
+            _flag = False
+            for line in f:
+                if (not _flag) and line.startswith("VmSize:"):
+                    virtual_size = int(line.split()[1]) * 1024
+                    _flag = True
+                elif line.startswith("VmRSS"):
+                    resident_size = int(line.split()[1]) * 1024
+                    break
+            return ntuple_meminfo(resident_size, virtual_size)
+        finally:
+            f.close()
 
     @wrap_exceptions
     def get_process_cwd(self):
@@ -369,11 +397,13 @@ class Process(object):
         if self.pid == 0:
             return 0
         f = open("/proc/%s/status" % self.pid)
-        for line in f:
-            if line.startswith("Threads:"):
-                f.close()
-                return int(line.split()[1])
-        raise RuntimeError("line not found")
+        try:
+            for line in f:
+                if line.startswith("Threads:"):
+                    return int(line.split()[1])
+            raise RuntimeError("line not found")
+        finally:
+            f.close()
 
     @wrap_exceptions
     def get_process_threads(self):
@@ -391,8 +421,10 @@ class Process(object):
                     # disappeared on us
                     continue
                 raise
-            st = f.read().strip()
-            f.close()
+            try:
+                st = f.read().strip()
+            finally:
+                f.close()
             # ignore the first two values ("pid (exe)")
             st = st[st.find(')') + 2:]
             values = st.split(' ')
@@ -405,9 +437,11 @@ class Process(object):
     @wrap_exceptions
     def get_process_nice(self):
         #f = open('/proc/%s/stat' % self.pid, 'r')
-        #data = f.read()
-        #f.close()
-        #return int(data.split()[18])
+        #try:
+        #   data = f.read()
+        #   return int(data.split()[18])
+        #finally:
+        #   f.close()
 
         # Use C implementation
         return _psutil_posix.getpriority(self.pid)
@@ -449,13 +483,15 @@ class Process(object):
         if self.pid == 0:
             return 0
         f = open("/proc/%s/status" % self.pid)
-        for line in f:
-            if line.startswith("State:"):
-                f.close()
-                letter = line.split()[1]
-                if letter in _status_map:
-                    return _status_map[letter]
-                return constant(-1, '?')
+        try:
+            for line in f:
+                if line.startswith("State:"):
+                    letter = line.split()[1]
+                    if letter in _status_map:
+                        return _status_map[letter]
+                    return constant(-1, '?')
+        finally:
+            f.close()
 
     @wrap_exceptions
     def get_open_files(self):
@@ -501,22 +537,25 @@ class Process(object):
         def process(file, family, _type):
             retlist = []
             f = open(file)
-            f.readline()  # skip the first line
-            for line in f:
-                _, laddr, raddr, status, _, _, _, _, _, inode = line.split()[:10]
-                if inode in inodes:
-                    laddr = self._decode_address(laddr, family)
-                    raddr = self._decode_address(raddr, family)
-                    if _type == socket.SOCK_STREAM:
-                        status = _TCP_STATES_TABLE[status]
-                    else:
-                        status = ""
-                    fd = int(inodes[inode])
-                    conn = ntuple_connection(fd, family, _type, laddr,
-                                             raddr, status)
-                    retlist.append(conn)
-            f.close()
-            return retlist
+            try:
+                f.readline()  # skip the first line
+                for line in f:
+                    _, laddr, raddr, status, _, _, _, _, _, inode = \
+                                                            line.split()[:10]
+                    if inode in inodes:
+                        laddr = self._decode_address(laddr, family)
+                        raddr = self._decode_address(raddr, family)
+                        if _type == socket.SOCK_STREAM:
+                            status = _TCP_STATES_TABLE[status]
+                        else:
+                            status = ""
+                        fd = int(inodes[inode])
+                        conn = ntuple_connection(fd, family, _type, laddr,
+                                                 raddr, status)
+                        retlist.append(conn)
+                return retlist
+            finally:
+                f.close()
 
         tcp4 = process("/proc/net/tcp", socket.AF_INET, socket.SOCK_STREAM)
         tcp6 = process("/proc/net/tcp6", socket.AF_INET6, socket.SOCK_STREAM)
@@ -535,36 +574,42 @@ class Process(object):
         if self.pid == 0:
             return 0
         f = open("/proc/%s/status" % self.pid)
-        for line in f:
-            if line.startswith("PPid:"):
-                # PPid: nnnn
-                f.close()
-                return int(line.split()[1])
-        raise RuntimeError("line not found")
+        try:
+            for line in f:
+                if line.startswith("PPid:"):
+                    # PPid: nnnn
+                    return int(line.split()[1])
+            raise RuntimeError("line not found")
+        finally:
+            f.close()
 
     @wrap_exceptions
     def get_process_uids(self):
         if self.pid == 0:
             return ntuple_uids(0, 0, 0)
         f = open("/proc/%s/status" % self.pid)
-        for line in f:
-            if line.startswith('Uid:'):
-                f.close()
-                _, real, effective, saved, fs = line.split()
-                return ntuple_uids(int(real), int(effective), int(saved))
-        raise RuntimeError("line not found")
+        try:
+            for line in f:
+                if line.startswith('Uid:'):
+                    _, real, effective, saved, fs = line.split()
+                    return ntuple_uids(int(real), int(effective), int(saved))
+            raise RuntimeError("line not found")
+        finally:
+            f.close()
 
     @wrap_exceptions
     def get_process_gids(self):
         if self.pid == 0:
             return ntuple_uids(0, 0, 0)
         f = open("/proc/%s/status" % self.pid)
-        for line in f:
-            if line.startswith('Gid:'):
-                f.close()
-                _, real, effective, saved, fs = line.split()
-                return ntuple_gids(int(real), int(effective), int(saved))
-        raise RuntimeError("line not found")
+        try:
+            for line in f:
+                if line.startswith('Gid:'):
+                    _, real, effective, saved, fs = line.split()
+                    return ntuple_gids(int(real), int(effective), int(saved))
+            raise RuntimeError("line not found")
+        finally:
+            f.close()
 
     @staticmethod
     def _decode_address(addr, family):
