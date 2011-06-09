@@ -99,9 +99,9 @@ def get_phymem():
     total = free = None
     for line in f:
         if line.startswith('MemTotal:'):
-            total = int(line.split()[1]) / 1024
+            total = int(line.split()[1]) * 1024
         elif line.startswith('MemFree:'):
-            free = int(line.split()[1]) / 1024
+            free = int(line.split()[1]) * 1024
         if total is not None and free is not None:
             break
     used = total - free
@@ -112,9 +112,9 @@ def get_virtmem():
     total = free = None
     for line in f:
         if line.startswith('SwapTotal:'):
-            total = int(line.split()[1]) / 1024
+            total = int(line.split()[1]) * 1024
         elif line.startswith('SwapFree:'):
-            free = int(line.split()[1]) / 1024
+            free = int(line.split()[1]) * 1024
         if total is not None and free is not None:
             break
     used = total - free
