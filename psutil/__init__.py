@@ -56,6 +56,8 @@ if sys.platform.lower().startswith("linux"):
                                  IOPRIO_CLASS_RT,
                                  IOPRIO_CLASS_BE,
                                  IOPRIO_CLASS_IDLE)
+    phymem_buffers = _psplatform.phymem_buffers
+    cached_phymem = _psplatform.cached_phymem
 
 elif sys.platform.lower().startswith("win32"):
     import psutil._psmswindows as _psplatform
@@ -82,9 +84,8 @@ NUM_CPUS = _psplatform.NUM_CPUS
 BOOT_TIME = _psplatform.BOOT_TIME
 
 # XXX provisional
-cached_phymem = _psplatform.cached_phymem
-used_phymem = _psplatform.used_phymem
 avail_phymem = _psplatform.avail_phymem
+used_phymem = _psplatform.used_phymem
 total_virtmem = _psplatform.total_virtmem
 used_virtmem = _psplatform.used_virtmem
 avail_virtmem = _psplatform.avail_virtmem
