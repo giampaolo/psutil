@@ -52,6 +52,13 @@ def get_virtmem():
     used = total - free
     return (total, used, free)
 
+def get_disk_usage(path):
+    """Return disk usage associated with path."""
+    total, free = _psutil_mswindows.get_disk_usage(path)
+    used = total - free
+    percent = (float(used) / total) * 100
+    return ntuple_diskinfo(total, used, free, round(percent, 1))
+
 
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle')
 

@@ -1752,6 +1752,29 @@ get_process_num_handlers(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return path's disk total and free as a Python tuple.
+ */
+static PyObject*
+get_disk_usage(PyObject* self, PyObject* args)
+{
+    BOOL retval;
+    ULARGE_INTEGER _, total, free;
+    LPCTSTR path;
+
+    if (! PyArg_ParseTuple(args, "s", &path)) {
+        return NULL;
+    }
+
+    retval = GetDiskFreeSpaceEx(path, &_, &total, &free);
+    if (retval == 0) {
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    return Py_BuildValue("(LL)", total.QuadPart, free.QuadPart);
+}
+
+
 
 
 // ------------------------ Python init ---------------------------
@@ -1828,6 +1851,8 @@ PsutilMethods[] =
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
          "Return system per-cpu times as a list of tuples"},
+     {"get_disk_usage", get_disk_usage, METH_VARARGS,
+         "Return path's disk total and free as a Python tuple."},
 
      {NULL, NULL, 0, NULL}
 };
