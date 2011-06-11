@@ -688,6 +688,13 @@ def get_virtmem():
     percent = round(percent, 1)
     return _ntuple_sysmeminfo(total, used, free, percent)
 
+def disk_usage(path):
+    """Return disk usage statistics about the given path as a namedtuple
+    including total, used and free space expressed in bytes plus the
+    percentage usage.
+    """
+    return _psplatform.get_disk_usage(path)
+
 
 def _deprecated(replacement):
     # a decorator which can be used to mark functions as deprecated

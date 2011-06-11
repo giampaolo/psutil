@@ -181,6 +181,9 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
     def test_per_cpu_times(self):
         self.execute('per_cpu_times')
 
+    @skipUnless(WINDOWS)
+    def test_disk_usage(self):
+        self.execute('disk_usage')
 
 def test_main():
     test_suite = unittest.TestSuite()

@@ -36,10 +36,11 @@ STATUS_WAITING = constant(11, "waiting")  # BSD
 
 # system
 ntuple_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
+ntuple_sysmeminfo = namedtuple('usage', 'total used free percent')
+ntuple_diskinfo = namedtuple('usage', 'total used free percent')
 
 # processes
 ntuple_meminfo = namedtuple('meminfo', 'rss vms')
-ntuple_sysmeminfo = namedtuple('meminfo', 'total used free percent')
 ntuple_cputimes = namedtuple('cputimes', 'user system')
 ntuple_openfile = namedtuple('openfile', 'path fd')
 ntuple_connection = namedtuple('connection', 'fd family type local_address remote_address status')

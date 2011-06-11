@@ -251,7 +251,7 @@ class TestCase(unittest.TestCase):
     def test_get_virtmem(self):
         mem = psutil.get_virtmem()
         self.assertTrue(mem.total > 0)
-        self.assertTrue(mem.used > 0)
+        self.assertTrue(mem.used >= 0)
         self.assertTrue(mem.free > 0)
         self.assertTrue(0 <= mem.percent <= 100)
 
@@ -359,6 +359,15 @@ class TestCase(unittest.TestCase):
                 self.assertTrue(isinstance(percent, float))
                 self.assertTrue(percent >= 0.0)
                 self.assertTrue(percent <= 100.0)
+
+    def test_disk_usage(self):
+        usage = psutil.disk_usage(os.getcwd())
+        self.assertTrue(usage.total > 0)
+        self.assertTrue(usage.used > 0)
+        self.assertTrue(usage.free > 0)
+        self.assertTrue(usage.total > usage.used)
+        self.assertTrue(usage.total > usage.free)
+        self.assertTrue(0 <= usage.percent <= 100)
 
     # ====================
     # Process object tests

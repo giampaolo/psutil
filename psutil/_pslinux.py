@@ -185,6 +185,7 @@ def pid_exists(pid):
     """Check For the existence of a unix pid."""
     return _psposix.pid_exists(pid)
 
+get_disk_usage = _psposix.get_disk_usage
 
 # taken from /fs/proc/array.c
 _status_map = {"R" : STATUS_RUNNING,

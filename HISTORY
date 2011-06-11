@@ -10,6 +10,7 @@ NEW FEATURES
  * Issue 171: added get_phymem() and get_virtmem() functions returning system
    memory information (total, used, free) and memory percent usage.
    total_* avail_* and used_* memory functions are deprecated.
+ * Issue 172: disk usage statistics.
 
 BUGFIXES
 
