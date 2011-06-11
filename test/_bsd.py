@@ -73,7 +73,7 @@ class BSDSpecificTestCase(unittest.TestCase):
                    ))
         _pagesize = sysctl("sysctl hw.pagesize")
         sysctl_avail_phymem = _sum * _pagesize
-        psutil_avail_phymem =  psutil.get_phymem().free
+        psutil_avail_phymem =  psutil.phymem_usage().free
         difference = abs(psutil_avail_phymem - sysctl_avail_phymem)
         # On my system both sysctl and psutil report the same values.
         # Let's use a tollerance of 0.5 MB and consider the test as failed
@@ -92,7 +92,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         if sys.version_info >= (3,):
             result = str(result, sys.stdout.encoding)
         sysctl_total_virtmem, _ = parse_sysctl_vmtotal(result)
-        psutil_total_virtmem = psutil.get_virtmem().total
+        psutil_total_virtmem = psutil.virtmem_usage().total
         difference = abs(sysctl_total_virtmem - psutil_total_virtmem)
 
         # On my system I get a difference of 4657152 bytes, probably because
@@ -113,11 +113,10 @@ class BSDSpecificTestCase(unittest.TestCase):
         if sys.version_info >= (3,):
             result = str(result, sys.stdout.encoding)
         _, sysctl_avail_virtmem = parse_sysctl_vmtotal(result)
-        psutil_avail_virtmem = psutil.get_virtmem().free
+        psutil_avail_virtmem = psutil.virtmem_usage().free
         difference = abs(sysctl_avail_virtmem - psutil_avail_virtmem)
         # let's assume the test is failed if difference is > 0.5 MB
         if difference > (0.5 * 2**20):
-            self.fail("sysctl=%s; psutil=%s; difference=%s;" %(
                        sysctl_avail_virtmem, psutil_avail_virtmem, difference))
 
     def test_process_create_time(self):

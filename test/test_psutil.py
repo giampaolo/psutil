@@ -241,15 +241,15 @@ class TestCase(unittest.TestCase):
         finally:
             warnings.resetwarnings()
 
-    def test_get_phymem(self):
-        mem = psutil.get_phymem()
+    def test_phymem_usage(self):
+        mem = psutil.phymem_usage()
         self.assertTrue(mem.total > 0)
         self.assertTrue(mem.used > 0)
         self.assertTrue(mem.free > 0)
         self.assertTrue(0 <= mem.percent <= 100)
 
-    def test_get_virtmem(self):
-        mem = psutil.get_virtmem()
+    def test_virtmem_usage(self):
+        mem = psutil.virtmem_usage()
         self.assertTrue(mem.total > 0)
         self.assertTrue(mem.used >= 0)
         self.assertTrue(mem.free > 0)

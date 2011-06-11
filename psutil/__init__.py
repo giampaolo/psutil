@@ -23,7 +23,7 @@ __all__ = [
     "Process", "Popen",
     # functions
     "test", "pid_exists", "get_pid_list", "process_iter", "get_process_list",
-    "get_phymem", "get_virtmem"
+    "phymem_usage", "virtmem_usage"
     "cpu_times", "per_cpu_times", "cpu_percent", "per_cpu_percent"
     ]
 
@@ -82,7 +82,7 @@ __all__.extend(_psplatform.__extra__all__)
 
 NUM_CPUS = _psplatform.NUM_CPUS
 BOOT_TIME = _psplatform.BOOT_TIME
-TOTAL_PHYMEM = _psplatform.get_phymem()[0]
+TOTAL_PHYMEM = _psplatform.phymem_usage()[0]
 
 get_pid_list = _psplatform.get_pid_list
 pid_exists = _psplatform.pid_exists
@@ -665,16 +665,16 @@ def per_cpu_percent(interval=0.1):
         ret.append(result)
     return ret
 
-def get_phymem():
+def phymem_usage():
     """Return the amount of total, used and free physical memory
     on the system in bytes plus the percentage usage.
     """
-    total, used, free = _psplatform.get_phymem()
+    total, used, free = _psplatform.phymem_usage()
     percent = (float(used) / total) * 100
     percent = round(percent, 1)
     return _ntuple_sysmeminfo(total, used, free, percent)
 
-def get_virtmem():
+def virtmem_usage():
     """Return the amount of total, used and free virtual memory
     on the system in bytes plus the percentage usage.
 
@@ -683,7 +683,7 @@ def get_virtmem():
     sysctl vm.vmtotal. On Windows they are determined by reading the
     PageFile values of MEMORYSTATUSEX structure.
     """
-    total, used, free = _psplatform.get_virtmem()
+    total, used, free = _psplatform.virtmem_usage()
     percent = (float(used) / total) * 100
     percent = round(percent, 1)
     return _ntuple_sysmeminfo(total, used, free, percent)
@@ -709,25 +709,25 @@ def _deprecated(replacement):
 
 # --- deprecated functions
 
-@_deprecated("psutil.get_phymem")
+@_deprecated("psutil.phymem_usage")
 def avail_phymem():
-    return get_phymem().free
+    return phymem_usage().free
 
-@_deprecated("psutil.get_phymem")
+@_deprecated("psutil.phymem_usage")
 def used_phymem():
-    return get_phymem().used
+    return phymem_usage().used
 
-@_deprecated("psutil.get_virtmem")
+@_deprecated("psutil.virtmem_usage")
 def total_virtmem():
-    return get_virtmem().total
+    return virtmem_usage().total
 
-@_deprecated("psutil.get_virtmem")
+@_deprecated("psutil.virtmem_usage")
 def used_virtmem():
-    return get_virtmem().used
+    return virtmem_usage().used
 
-@_deprecated("psutil.get_virtmem")
+@_deprecated("psutil.virtmem_usage")
 def avail_virtmem():
-    return get_virtmem().free
+    return virtmem_usage().free
 
 def test():
     """List info of all currently running processes emulating a

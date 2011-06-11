@@ -102,7 +102,7 @@ def phymem_buffers():
     finally:
         f.close()
 
-def get_phymem():
+def phymem_usage():
     f = open('/proc/meminfo', 'r')
     try:
         total = free = None
@@ -119,7 +119,7 @@ def get_phymem():
     finally:
         f.close()
 
-def get_virtmem():
+def virtmem_usage():
     f = open('/proc/meminfo', 'r')
     try:
         total = free = None
