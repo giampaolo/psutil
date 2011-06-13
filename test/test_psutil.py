@@ -1338,13 +1338,6 @@ def test_main():
     test_suite = unittest.TestSuite()
     tests.append(TestCase)
 
-    if hasattr(os, 'getuid'):
-        if os.getuid() == 0:
-            tests.append(LimitedUserTestCase)
-        else:
-            atexit.register(warnings.warn, "Couldn't run limited user tests ("
-                          "super-user privileges are required)", RuntimeWarning)
-
     if POSIX:
         from _posix import PosixSpecificTestCase
         tests.append(PosixSpecificTestCase)
@@ -1360,6 +1353,13 @@ def test_main():
         from _bsd import BSDSpecificTestCase as stc
     tests.append(stc)
 
+    if hasattr(os, 'getuid'):
+        if os.getuid() == 0:
+            tests.append(LimitedUserTestCase)
+        else:
+            atexit.register(warnings.warn, "Couldn't run limited user tests ("
+                         "super-user privileges are required)", RuntimeWarning)
+
     for test_class in tests:
         test_suite.addTest(unittest.makeSuite(test_class))
 
@@ -1372,5 +1372,3 @@ def test_main():
 
 if __name__ == '__main__':
     test_main()
-
-
