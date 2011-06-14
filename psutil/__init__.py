@@ -669,10 +669,7 @@ def phymem_usage():
     """Return the amount of total, used and free physical memory
     on the system in bytes plus the percentage usage.
     """
-    total, used, free = _psplatform.phymem_usage()
-    percent = (float(used) / total) * 100
-    percent = round(percent, 1)
-    return _ntuple_sysmeminfo(total, used, free, percent)
+    return _psplatform.phymem_usage()
 
 def virtmem_usage():
     """Return the amount of total, used and free virtual memory

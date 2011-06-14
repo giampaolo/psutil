@@ -103,21 +103,27 @@ def phymem_buffers():
         f.close()
 
 def phymem_usage():
+    # total, used and free values are matched against free cmdline utility
+    # the percentage matches top/htop and gnome-system-monitor
     f = open('/proc/meminfo', 'r')
     try:
-        total = free = None
+        total = free = buffers = cached = None
         for line in f:
             if line.startswith('MemTotal:'):
                 total = int(line.split()[1]) * 1024
             elif line.startswith('MemFree:'):
                 free = int(line.split()[1]) * 1024
-            if total is not None and free is not None:
+            elif line.startswith('Buffers:'):
+                buffers = int(line.split()[1]) * 1024
+            elif line.startswith('Cached:'):
+                cached = int(line.split()[1]) * 1024
                 break
-        assert total is not None and free is not None
         used = total - free
-        return (total, used, free)
+        percent = (float(total - (free + buffers + cached)) / total) * 100
+        return ntuple_sysmeminfo(total, used, free, round(percent, 1))
     finally:
         f.close()
+
 
 def virtmem_usage():
     f = open('/proc/meminfo', 'r')
