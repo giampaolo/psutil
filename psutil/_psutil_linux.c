@@ -7,6 +7,7 @@
 #include <Python.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <mntent.h>
 #include <sys/syscall.h>
 #include <linux/unistd.h>
 
@@ -86,6 +87,38 @@ linux_ioprio_set(PyObject* self, PyObject* args)
 }
 #endif
 
+
+/*
+ * Return disk mounted partitions as a list of tuples including device,
+ * mount point and filesystem type
+ */
+static PyObject*
+get_disk_partitions(PyObject* self, PyObject* args)
+{
+    FILE *file;
+    struct mntent *entry;
+    PyObject* py_retlist = PyList_New(0);
+    PyObject* py_tuple;
+
+    // MOUNTED constant comes from mntent.h and it's == '/etc/mtab'
+    file = setmntent(MOUNTED, "r");
+    if (file == 0) {
+    	return PyErr_SetFromErrno(PyExc_OSError);
+    }
+
+    while ((entry = getmntent(file))) {
+        py_tuple = Py_BuildValue("(sss)", entry->mnt_fsname,  // device
+                                          entry->mnt_dir,     // mount point
+                                          entry->mnt_type);   // fs type
+        PyList_Append(py_retlist, py_tuple);
+        Py_XDECREF(py_tuple);
+    }
+
+    endmntent(file);
+    return py_retlist;
+}
+
+
 /*
  * Define the psutil C module methods and initialize the module.
  */
@@ -98,6 +131,10 @@ PsutilMethods[] =
      {"ioprio_set", linux_ioprio_set, METH_VARARGS,
         "Set process I/O priority"},
 #endif
+     {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
+        "Return disk mounted partitions as a list of tuples including "
+        "device, mount point and filesystem type"},
+
      {NULL, NULL, 0, NULL}
 };
 

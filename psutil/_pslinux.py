@@ -189,18 +189,12 @@ def disk_partitions(all=False):
             phydevs.append(line.strip())
 
     retlist = []
-    f = open('/etc/mtab', "r")
-    for line in f:
-        if not all and line.startswith('none'):
-            continue
-        fields = line.split()
-        device = fields[0]
-        mountpoint = fields[1]
-        fstype = fields[2]
-        if not all and fstype not in phydevs:
-            continue
-        if device == 'none':
-            device = ''
+    partitions = _psutil_linux.get_disk_partitions()
+    for partition in partitions:
+        device, mountpoint, fstype = partition
+        if not all:
+            if device == 'none' or fstype not in phydevs:
+                continue
         ntuple = ntuple_partition(device, mountpoint, fstype)
         retlist.append(ntuple)
     return retlist
