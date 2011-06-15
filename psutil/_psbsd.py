@@ -4,6 +4,7 @@
 #
 
 import errno
+import os
 
 import _psutil_bsd
 import _psutil_posix
@@ -50,6 +51,19 @@ def get_system_per_cpu_times():
         item = _cputimes_ntuple(user, nice, system, idle, irq)
         ret.append(item)
     return ret
+
+def disk_partitions(all=False):
+    retlist = []
+    partitions = _psutil_bsd.get_disk_partitions()
+    for partition in partitions:
+        device, mountpoint, fstype = partition
+        if not all:
+            if not os.path.isabs(device) \
+            or not os.path.exists(device):
+                continue
+        ntuple = ntuple_partition(device, mountpoint, fstype)
+        retlist.append(ntuple)
+    return retlist
 
 get_pid_list = _psutil_bsd.get_pid_list
 pid_exists = _psposix.pid_exists

@@ -16,6 +16,7 @@
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/vmmeter.h>  /* needed for vmtotal struct */
+#include <sys/mount.h>
 
 #include "_psutil_bsd.h"
 #include "_psutil_common.h"
@@ -690,6 +691,49 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return a list of tuples including device, mount point and fs type
+ * for all partitions mounted on the system.
+ */
+static PyObject*
+get_disk_partitions(PyObject* self, PyObject* args)
+{
+    int num;
+    int i;
+    long len;
+    struct statfs *fs;
+    PyObject* py_retlist = PyList_New(0);
+    PyObject* py_tuple;
+
+    // get the number of mount points
+    num = getfsstat(NULL, 0, MNT_NOWAIT);
+    if (num == -1) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    len = sizeof(*fs) * num;
+    fs = malloc(len);
+
+    num = getfsstat(fs, len, MNT_NOWAIT);
+    if (num == -1) {
+        free(fs);
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    for (i = 0; i < num; i++) {
+        py_tuple = Py_BuildValue("(sss)", fs[i].f_mntfromname,  // device
+                                          fs[i].f_mntonname,    // mount point
+                                          fs[i].f_fstypename);  // fs type
+        PyList_Append(py_retlist, py_tuple);
+        Py_XDECREF(py_tuple);
+    }
+
+    free(fs);
+    return py_retlist;
+}
+
 
 /*
  * define the psutil C module methods and initialize the module.
@@ -751,6 +795,9 @@ PsutilMethods[] =
      {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
          "Return a float indicating the system boot time expressed in "
          "seconds since the epoch"},
+     {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
+         "Return a list of tuples including device, mount point and "
+         "fs type for all partitions mounted on the system."},
 
      {NULL, NULL, 0, NULL}
 };
