@@ -182,11 +182,15 @@ def get_system_per_cpu_times():
 # --- system disk functions
 
 def disk_partitions(all=False):
+    """Return mounted disk partitions as a list of nameduples"""
     phydevs = []
     f = open("/proc/filesystems", "r")
-    for line in f:
-        if not line.startswith("nodev"):
-            phydevs.append(line.strip())
+    try:
+        for line in f:
+            if not line.startswith("nodev"):
+                phydevs.append(line.strip())
+    finally:
+        f.close()
 
     retlist = []
     partitions = _psutil_linux.get_disk_partitions()
