@@ -692,6 +692,15 @@ def disk_usage(path):
     """
     return _psplatform.get_disk_usage(path)
 
+def disk_partitions(all=False):
+    """Return mounted partitions as a list of namedtuples including
+    device, mount point and filesystem type.
+
+    If "all" parameter is False return physical devices only and ignore
+    all others.
+    """
+    return _psplatform.disk_partitions(all)
+
 
 def _deprecated(replacement):
     # a decorator which can be used to mark functions as deprecated

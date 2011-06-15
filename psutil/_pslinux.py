@@ -178,6 +178,35 @@ def get_system_per_cpu_times():
     finally:
         f.close()
 
+
+# --- system disk functions
+
+def disk_partitions(all=False):
+    phydevs = []
+    f = open("/proc/filesystems", "r")
+    for line in f:
+        if not line.startswith("nodev"):
+            phydevs.append(line.strip())
+
+    retlist = []
+    f = open('/etc/mtab', "r")
+    for line in f:
+        if not all and line.startswith('none'):
+            continue
+        fields = line.split()
+        device = fields[0]
+        mountpoint = fields[1]
+        fstype = fields[2]
+        if not all and fstype not in phydevs:
+            continue
+        if device == 'none':
+            device = ''
+        ntuple = ntuple_partition(device, mountpoint, fstype)
+        retlist.append(ntuple)
+    return retlist
+
+get_disk_usage = _psposix.get_disk_usage
+
 # --- process functions
 
 def get_pid_list():
@@ -190,8 +219,6 @@ def get_pid_list():
 def pid_exists(pid):
     """Check For the existence of a unix pid."""
     return _psposix.pid_exists(pid)
-
-get_disk_usage = _psposix.get_disk_usage
 
 # taken from /fs/proc/array.c
 _status_map = {"R" : STATUS_RUNNING,

@@ -38,6 +38,7 @@ STATUS_WAITING = constant(11, "waiting")  # BSD
 ntuple_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
 ntuple_sysmeminfo = namedtuple('usage', 'total used free percent')
 ntuple_diskinfo = namedtuple('usage', 'total used free percent')
+ntuple_partition = namedtuple('partition',  'device mountpoint fstype')
 
 # processes
 ntuple_meminfo = namedtuple('meminfo', 'rss vms')

@@ -11,6 +11,7 @@ NEW FEATURES
    memory information (total, used, free) and memory percent usage.
    total_* avail_* and used_* memory functions are deprecated.
  * Issue 172: disk usage statistics.
+ * Issue 174: mounted disk partitions.
 
 BUGFIXES
 

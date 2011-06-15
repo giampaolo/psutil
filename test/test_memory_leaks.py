@@ -185,6 +185,10 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
     def test_disk_usage(self):
         self.execute('disk_usage')
 
+    def test_disk_partitions(self):
+        self.execute('disk_partitions')
+
+
 def test_main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(TestProcessObjectLeaks))

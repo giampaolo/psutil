@@ -369,6 +369,17 @@ class TestCase(unittest.TestCase):
         self.assertTrue(usage.total > usage.free)
         self.assertTrue(0 <= usage.percent <= 100)
 
+    def test_disk_partitions(self):
+        for disk in psutil.disk_partitions(all=False):
+            self.assertTrue(os.path.exists(disk.device))
+            self.assertTrue(os.path.isdir(disk.mountpoint))
+            self.assertTrue(disk.fstype)
+        for disk in psutil.disk_partitions(all=True):
+            self.assertTrue(os.path.isdir(disk.mountpoint))
+            self.assertTrue(disk.fstype)
+
+
+
     # ====================
     # Process object tests
     # ====================
