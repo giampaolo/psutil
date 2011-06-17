@@ -59,6 +59,19 @@ def get_disk_usage(path):
     percent = (float(used) / total) * 100
     return ntuple_diskinfo(total, used, free, round(percent, 1))
 
+def disk_partitions(all):
+    """Return disk partitions."""
+    retlist = []
+    partitions = _psutil_mswindows.get_disk_partitions()
+    for partition in partitions:
+        letter, type = partition
+        if not all:
+            if type not in ('cdrom', 'fixed', 'removable'):
+                continue
+        ntuple = ntuple_partition(letter, letter, type)
+        retlist.append(ntuple)
+    return retlist
+
 
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle')
 

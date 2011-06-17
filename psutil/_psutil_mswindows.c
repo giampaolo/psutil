@@ -1776,6 +1776,63 @@ get_disk_usage(PyObject* self, PyObject* args)
 
 
 
+/*
+ * Return disk partitions as a list of namedtuples.
+ */
+static PyObject*
+get_disk_partitions(PyObject* self, PyObject* args)
+{
+    DWORD num_bytes;
+    char drive_strings[255];
+    char* drive_letter = drive_strings;
+    int type;
+    char* type_str;
+    PyObject* py_retlist = PyList_New(0);
+    PyObject* py_tuple;
+
+    num_bytes = GetLogicalDriveStrings(254, drive_letter);
+    if (num_bytes == 0) {
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    while (*drive_letter != 0) {
+        drive_letter = strchr(drive_letter, 0) +1;
+        type = GetDriveType(drive_letter);
+        switch (type) {
+            case DRIVE_UNKNOWN:
+                type_str = "unknown";
+                break;
+            case DRIVE_NO_ROOT_DIR:
+                // this means drive is unmounted
+                continue;
+            case DRIVE_REMOVABLE:
+                type_str = "removable";
+                break;
+            case DRIVE_FIXED:
+                type_str = "fixed";
+                break;
+            case DRIVE_REMOTE:
+                type_str = "remote";
+                break;
+            case DRIVE_CDROM:
+                type_str = "cdrom";
+                break;
+            case DRIVE_RAMDISK:
+                type_str = "ramdisk";
+                break;
+            default:
+                type_str = "?";
+                break;
+        }
+
+        py_tuple = Py_BuildValue("(ss)", drive_letter, type_str);
+        PyList_Append(py_retlist, py_tuple);
+        Py_XDECREF(py_tuple);
+    }
+
+    return py_retlist;
+}
+
 
 // ------------------------ Python init ---------------------------
 
@@ -1853,6 +1910,8 @@ PsutilMethods[] =
          "Return system per-cpu times as a list of tuples"},
      {"get_disk_usage", get_disk_usage, METH_VARARGS,
          "Return path's disk total and free as a Python tuple."},
+     {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
+         "Return disk partitions as a list of tuples."},
 
      {NULL, NULL, 0, NULL}
 };
