@@ -483,7 +483,7 @@ get_memory_info(PyObject* self, PyObject* args)
  * in bytes.
  */
 static PyObject*
-get_total_phymem(PyObject* self, PyObject* args)
+get_system_phymem(PyObject* self, PyObject* args)
 {
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
@@ -492,7 +492,15 @@ get_total_phymem(PyObject* self, PyObject* args)
         return PyErr_SetFromWindowsErr(0);
     }
 
-    return Py_BuildValue("L", memInfo.ullTotalPhys);
+    return Py_BuildValue("(LLLLLLk)",
+                                memInfo.ullTotalPhys,      // total
+                                memInfo.ullAvailPhys,      // avail
+                                memInfo.ullTotalPageFile,  // total page file
+                                memInfo.ullAvailPageFile,  // avail page file
+                                memInfo.ullTotalVirtual,   // total virtual
+                                memInfo.ullAvailVirtual,   // avail virtual
+                                memInfo.dwMemoryLoad       // percent
+                                );
 }
 
 
@@ -511,22 +519,6 @@ get_total_virtmem(PyObject* self, PyObject* args)
     }
 
     return Py_BuildValue("L", memInfo.ullTotalPageFile);
-}
-
-
-/*
- * Return a Python integer indicating the amount of available physical memory
- * in bytes.
- */
-static PyObject*
-get_avail_phymem(PyObject* self, PyObject* args)
-{
-    MEMORYSTATUSEX memInfo;
-    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
-    if (! GlobalMemoryStatusEx(&memInfo) ) {
-        return PyErr_SetFromWindowsErr(0);
-    }
-    return Py_BuildValue("L", memInfo.ullAvailPhys);
 }
 
 
@@ -1898,12 +1890,10 @@ PsutilMethods[] =
          "Returns the number of CPUs on the system"},
      {"get_system_uptime", get_system_uptime, METH_VARARGS,
          "Return system uptime"},
-     {"get_total_phymem", get_total_phymem, METH_VARARGS,
+     {"get_system_phymem", get_system_phymem, METH_VARARGS,
          "Return the total amount of physical memory, in bytes"},
      {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
          "Return the total amount of virtual memory, in bytes"},
-     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
-         "Return the amount of available physical memory, in bytes"},
      {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
