@@ -38,7 +38,6 @@ static PyObject* get_pid_list(PyObject* self, PyObject* args);
 static PyObject* get_num_cpus(PyObject* self, PyObject* args);
 static PyObject* get_system_uptime(PyObject* self, PyObject* args);
 static PyObject* get_system_phymem(PyObject* self, PyObject* args);
-static PyObject* get_avail_virtmem(PyObject* self, PyObject* args);
 static PyObject* get_system_cpu_times(PyObject* self, PyObject* args);
 static PyObject* _QueryDosDevice(PyObject* self, PyObject* args);
 static PyObject* pid_exists(PyObject* self, PyObject* args);

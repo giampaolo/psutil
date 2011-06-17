@@ -40,15 +40,16 @@ from _psutil_mswindows import (ABOVE_NORMAL_PRIORITY_CLASS,
 
 def phymem_usage():
     """Physical system memory as a (total, used, free) tuple."""
-    total, free, total_pagef, avail_pagef, total_virt, avail_virt, percent = \
-        _psutil_mswindows.get_system_phymem()
+    all = _psutil_mswindows.get_system_phymem()
+    total, free, total_pagef, avail_pagef, total_virt, avail_virt, percent = all
     used = total - free
     return ntuple_sysmeminfo(total, used, free, round(percent, 1))
 
 def virtmem_usage():
     """Virtual system memory as a (total, used, free) tuple."""
-    total = _psutil_mswindows.get_total_virtmem()
-    free =  _psutil_mswindows.get_avail_virtmem()
+    all = _psutil_mswindows.get_system_phymem()
+    total = all[4]
+    free = all[5]
     used = total - free
     return (total, used, free)
 

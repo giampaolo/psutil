@@ -504,41 +504,6 @@ get_system_phymem(PyObject* self, PyObject* args)
 }
 
 
-/*
- * Return a Python integer indicating the total amount of virtual memory
- * in bytes.
- */
-static PyObject*
-get_total_virtmem(PyObject* self, PyObject* args)
-{
-    MEMORYSTATUSEX memInfo;
-    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
-
-    if (! GlobalMemoryStatusEx(&memInfo) ) {
-        return PyErr_SetFromWindowsErr(0);
-    }
-
-    return Py_BuildValue("L", memInfo.ullTotalPageFile);
-}
-
-
-/*
- * Return a Python integer indicating the amount of available virtual memory
- * in bytes.
- */
-static PyObject*
-get_avail_virtmem(PyObject* self, PyObject* args)
-{
-    MEMORYSTATUSEX memInfo;
-    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
-
-    if (! GlobalMemoryStatusEx(&memInfo) ) {
-        return PyErr_SetFromWindowsErr(0);
-    }
-    return Py_BuildValue("L", memInfo.ullAvailPageFile);
-}
-
-
 #define LO_T ((float)1e-7)
 #define HI_T (LO_T*4294967296.0)
 
@@ -1892,10 +1857,6 @@ PsutilMethods[] =
          "Return system uptime"},
      {"get_system_phymem", get_system_phymem, METH_VARARGS,
          "Return the total amount of physical memory, in bytes"},
-     {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
-         "Return the total amount of virtual memory, in bytes"},
-     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
-         "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
          "Return system per-cpu times as a list of tuples"},
      {"get_disk_usage", get_disk_usage, METH_VARARGS,
