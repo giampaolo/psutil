@@ -528,6 +528,8 @@ class Process(object):
 
     @wrap_exceptions
     def get_open_files(self):
+        if self.pid == 0:
+            return []
         retlist = []
         files = os.listdir("/proc/%s/fd" % self.pid)
         for fd in files:
