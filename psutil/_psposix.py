@@ -18,7 +18,7 @@ import glob
 
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._compat import namedtuple
-from psutil._common import ntuple_diskinfo
+from psutil._common import ntuple_diskinfo, usage_percent
 
 
 def pid_exists(pid):
@@ -94,11 +94,11 @@ def get_disk_usage(path):
     free = (st.f_bavail * st.f_frsize)
     total = (st.f_blocks * st.f_frsize)
     used = (st.f_blocks - st.f_bfree) * st.f_frsize
-    percent = (float(used) / total) * 100
+    percent = usage_percent(used, total, round=1)
     # NB: the percentage is -5% than what shown by df due to
     # reserved blocks that we are currently not considering:
     # http://goo.gl/sWGbH
-    return ntuple_diskinfo(total, used, free, round(percent, 1))
+    return ntuple_diskinfo(total, used, free, percent)
 
 def _get_terminal_map():
     ret = {}

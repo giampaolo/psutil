@@ -119,8 +119,9 @@ def phymem_usage():
                 cached = int(line.split()[1]) * 1024
                 break
         used = total - free
-        percent = (float(total - (free + buffers + cached)) / total) * 100
-        return ntuple_sysmeminfo(total, used, free, round(percent, 1))
+        percent = usage_percent(total - (free + buffers + cached), total,
+                                round=1)
+        return ntuple_sysmeminfo(total, used, free, percent)
     finally:
         f.close()
 

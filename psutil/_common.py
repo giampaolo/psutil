@@ -7,6 +7,18 @@
 
 from psutil._compat import namedtuple
 
+def usage_percent(used, total, round=None):
+    """Calculate percentage usage of 'used' against 'total'."""
+    try:
+        ret = (float(used) / total) * 100
+    except ZeroDivisionError:
+        ret = 0
+    if round is not None:
+        return __builtins__['round'](ret, round)
+    else:
+        return ret
+
+
 class constant(int):
     """A constant type; overrides base int to provide a useful name on str()."""
 
