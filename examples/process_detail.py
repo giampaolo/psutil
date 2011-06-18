@@ -4,6 +4,8 @@
 Print detailed information about a process.
 """
 
+from __future__ import print_function
+
 import os
 import datetime
 import socket
@@ -27,11 +29,10 @@ def convert_bytes(n):
 
 def print_(a, b):
     if sys.stdout.isatty():
-        fmt = '\x1b[1;32m%-17s\x1b[0m %s\n' %(a, b)
+        fmt = '\x1b[1;32m%-17s\x1b[0m %s' %(a, b)
     else:
-        fmt = '%-15s %s\n' %(a, b)
-    sys.stdout.write(fmt)
-    sys.stdout.flush()
+        fmt = '%-15s %s' %(a, b)
+    print(fmt)
 
 def run(pid):
     p = psutil.Process(pid)
@@ -114,4 +115,4 @@ def main(argv=None):
         sys.exit('usage: %s [pid]' % __file__)
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
