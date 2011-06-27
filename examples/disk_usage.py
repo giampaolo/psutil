@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-List all mounted disk partitions a-la "df" command.
+List all mounted disk partitions a-la "df -h" command.
 """
 
 import sys
@@ -21,8 +21,8 @@ def convert_bytes(n):
 
 
 def main():
-    templ = "%-17s %8s %8s %8s %5s%% %8s  %s"
-    print templ % ("Device", "Total", "Used", "Free", "Use %", "Type", "Mount")
+    templ = "%-17s %9s %9s %9s %5s%% %9s  %s"
+    print templ % ("Device", "Total", "Used", "Free", "Use ", "Type", "Mount")
     for part in psutil.disk_partitions(0):
         usage = psutil.disk_usage(part.mountpoint)
         print templ % (part.device,
