@@ -52,6 +52,19 @@ def get_system_per_cpu_times():
         ret.append(item)
     return ret
 
+def disk_partitions(all=False):
+    retlist = []
+    partitions = _psutil_osx.get_disk_partitions()
+    for partition in partitions:
+        device, mountpoint, fstype = partition
+        if not all:
+            if not os.path.isabs(device) \
+            or not os.path.exists(device):
+                continue
+        ntuple = ntuple_partition(device, mountpoint, fstype)
+        retlist.append(ntuple)
+    return retlist
+
 get_pid_list = _psutil_osx.get_pid_list
 pid_exists = _psposix.pid_exists
 get_disk_usage = _psposix.get_disk_usage

@@ -31,4 +31,4 @@ static PyObject* get_avail_virtmem(PyObject* self, PyObject* args);
 static PyObject* get_system_cpu_times(PyObject* self, PyObject* args);
 static PyObject* get_system_per_cpu_times(PyObject* self, PyObject* args);
 static PyObject* get_system_boot_time(PyObject* self, PyObject* args);
-
+static PyObject* get_disk_partitions(PyObject* self, PyObject* args);
