@@ -12,7 +12,7 @@ import os
 import psutil
 
 from test_psutil import (get_test_subprocess, reap_children, PYTHON, LINUX, OSX,
-                         ignore_access_denied)
+                         ignore_access_denied, sh)
 
 
 def ps(cmd):
@@ -142,6 +142,39 @@ class PosixSpecificTestCase(unittest.TestCase):
             difference = [x for x in pids_psutil if x not in pids_ps] + \
                          [x for x in pids_ps if x not in pids_psutil]
             self.fail("difference: " + str(difference))
+
+    def test_disks(self):
+        # test psutil.disk_usage() and psutil.disk_partitions()
+        # against "df -a"
+        reap_children()
+        df = sh('df -a').strip()
+        lines = df.split('\n')
+        lines.pop(0)
+        for line in lines:
+            dev, total, used, free = line.split()[:4]
+            mountp = ''.join(line.split()[5:])
+            total = int(total) * 1024
+            used = int(used) * 1024
+            free = int(free) * 1024
+            for part in psutil.disk_partitions(all=True):
+                if part.mountpoint == mountp:
+                    # device
+                    if dev == 'none':
+                        self.assertEqual(part.device, '')
+                    else:
+                        self.assertEqual(part.device, dev)
+                    # mount point
+                    self.assertEqual(mountp, part.mountpoint)
+                    # usage; for free and used values use a tollerance
+                    # of max 10 mega bytes
+                    TEN_MB = 1024 * 1024 * 10
+                    usage = psutil.disk_usage(part.mountpoint)
+                    self.assertEqual(total, usage.total)
+                    self.assertAlmostEqual(free, usage.free, delta=TEN_MB)
+                    self.assertAlmostEqual(used, usage.used, delta=TEN_MB)
+                    break
+            else:
+                self.fail("can't find %s" % line)
 
 
 if __name__ == '__main__':

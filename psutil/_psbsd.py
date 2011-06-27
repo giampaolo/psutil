@@ -57,6 +57,8 @@ def disk_partitions(all=False):
     partitions = _psutil_bsd.get_disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype = partition
+        if device == 'none':
+            device = ''
         if not all:
             if not os.path.isabs(device) \
             or not os.path.exists(device):

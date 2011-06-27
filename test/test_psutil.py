@@ -542,8 +542,7 @@ class TestCase(unittest.TestCase):
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
 
-    # XXX - OSX still to be implemented
-    @skipUnless(LINUX or BSD, warn=True)
+    @skipIf(WINDOWS)
     def test_terminal(self):
         tty = sh('tty').strip()
         p = psutil.Process(os.getpid())

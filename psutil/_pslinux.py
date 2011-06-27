@@ -197,8 +197,10 @@ def disk_partitions(all=False):
     partitions = _psutil_linux.get_disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype = partition
+        if device == 'none':
+            device = ''
         if not all:
-            if device == 'none' or fstype not in phydevs:
+            if device == '' or fstype not in phydevs:
                 continue
         ntuple = ntuple_partition(device, mountpoint, fstype)
         retlist.append(ntuple)
