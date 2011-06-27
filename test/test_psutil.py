@@ -333,7 +333,10 @@ class TestCase(unittest.TestCase):
 
     def test_sys_per_cpu_times2(self):
         tot1 = psutil.per_cpu_times()
-        time.sleep(0.1)
+        stop_at = time.time() + 0.1
+        while 1:
+            if time.time() >= stop_at:
+                break
         tot2 = psutil.per_cpu_times()
         for t1, t2 in zip(tot1, tot2):
             t1, t2 = sum(t1), sum(t2)

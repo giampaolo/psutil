@@ -28,7 +28,8 @@ def phymem_usage():
     total = _psutil_osx.get_total_phymem()
     free =  _psutil_osx.get_avail_phymem()
     used = total - free
-    return (total, used, free)
+    usage_percent(used, total, round=1)
+    return ntuple_sysmeminfo(total, used, free, percent)
 
 def virtmem_usage():
     """Virtual system memory as a (total, used, free) tuple."""
