@@ -37,9 +37,19 @@ def virtmem_usage():
     used = total - free
     return (total, used, free)
 
+def get_system_cpu_times():
+    """Return system CPU times as a namedtuple."""
+    user, nice, system, idle = _psutil_osx.get_system_cpu_times()
+    return _cputimes_ntuple(user, nice, system, idle)
+
 def get_system_per_cpu_times():
-    # XXX
-    raise NotImplementedError
+    """Return system CPU times as a named tuple"""
+    ret = []
+    for cpu_t in _psutil_osx.get_system_per_cpu_times():
+        user, nice, system, idle = cpu_t
+        item = _cputimes_ntuple(user, nice, system, idle)
+        ret.append(item)
+    return ret
 
 get_pid_list = _psutil_osx.get_pid_list
 pid_exists = _psposix.pid_exists

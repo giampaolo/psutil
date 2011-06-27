@@ -524,6 +524,45 @@ get_system_cpu_times(PyObject* self, PyObject* args)
 
 
 /*
+ * Return a Python list of tuple representing per-cpu times
+ */
+static PyObject*
+get_system_per_cpu_times(PyObject* self, PyObject* args)
+{
+    natural_t cpu_count;
+    processor_info_array_t info_array;
+    mach_msg_type_number_t info_count;
+    kern_return_t error;
+    processor_cpu_load_info_data_t* cpu_load_info;
+    PyObject* py_retlist = PyList_New(0);
+    PyObject* py_cputime;
+    int i;
+
+    error = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO,
+                                &cpu_count, &info_array, &info_count);
+    if (error != KERN_SUCCESS) {
+        return PyErr_Format(PyExc_RuntimeError,
+              "Error in host_processor_info(): %s", mach_error_string(error));
+    }
+
+    cpu_load_info = (processor_cpu_load_info_data_t*) info_array;
+
+    for (i = 0; i < cpu_count; i++) {
+        py_cputime = Py_BuildValue("(dddd)",
+               (double)cpu_load_info[i].cpu_ticks[CPU_STATE_USER] / CLK_TCK,
+               (double)cpu_load_info[i].cpu_ticks[CPU_STATE_NICE] / CLK_TCK,
+               (double)cpu_load_info[i].cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
+               (double)cpu_load_info[i].cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
+              );
+        PyList_Append(py_retlist, py_cputime);
+        Py_XDECREF(py_cputime);
+    }
+
+    return py_retlist;
+}
+
+
+/*
  * Return a Python float indicating the system boot time expressed in
  * seconds since the epoch.
  */
@@ -980,6 +1019,8 @@ PsutilMethods[] =
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
          "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
+     {"get_system_per_cpu_times", get_system_per_cpu_times, METH_VARARGS,
+         "Return system per-cpu times as a list of tuples"},
      {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
          "Return a float indicating the system boot time expressed in "
          "seconds since the epoch"},
