@@ -7,7 +7,7 @@
 processes in a portable way by using Python.
 """
 
-__version__ = "0.2.2"
+__version__ = "0.3.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
