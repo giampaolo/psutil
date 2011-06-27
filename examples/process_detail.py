@@ -4,8 +4,6 @@
 Print detailed information about a process.
 """
 
-from __future__ import print_function
-
 import os
 import datetime
 import socket
@@ -32,7 +30,7 @@ def print_(a, b):
         fmt = '\x1b[1;32m%-17s\x1b[0m %s' %(a, b)
     else:
         fmt = '%-15s %s' %(a, b)
-    print(fmt)
+    print fmt
 
 def run(pid):
     p = psutil.Process(pid)

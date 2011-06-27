@@ -4,7 +4,6 @@
 List all mounted disk partitions a-la "df" command.
 """
 
-from __future__ import print_function
 import sys
 import psutil
 
@@ -20,17 +19,19 @@ def convert_bytes(n):
             value = float(n) / prefix[s]
             return '%.1f%s' % (value, s)
 
+
 def main():
-    print("Device       Total     Used     Free  Use %     Type  Mount")
+    templ = "%-17s %8s %8s %8s %5s%% %8s  %s"
+    print templ % ("Device", "Total", "Used", "Free", "Use %", "Type", "Mount")
     for part in psutil.disk_partitions(0):
         usage = psutil.disk_usage(part.mountpoint)
-        print("%-9s %8s %8s %8s %5s%% %8s  %s" % (part.device,
-                                                  convert_bytes(usage.total),
-                                                  convert_bytes(usage.used),
-                                                  convert_bytes(usage.free),
-                                                  int(usage.percent),
-                                                  part.fstype,
-                                                  part.mountpoint))
+        print templ % (part.device,
+                       convert_bytes(usage.total),
+                       convert_bytes(usage.used),
+                       convert_bytes(usage.free),
+                       int(usage.percent),
+                       part.fstype,
+                       part.mountpoint)
 
 if __name__ == '__main__':
     sys.exit(main())
