@@ -341,8 +341,9 @@ class TestCase(unittest.TestCase):
         for t1, t2 in zip(tot1, tot2):
             t1, t2 = sum(t1), sum(t2)
             difference = t2 - t1
-            if not difference >= 0.05:
-                self.fail("difference %s" % difference)
+            if difference >= 0.05:
+                return
+        self.fail()
 
     def test_sys_cpu_percent(self):
         psutil.cpu_percent(interval=0.001)
