@@ -54,6 +54,7 @@ def get_system_per_cpu_times():
 
 get_pid_list = _psutil_osx.get_pid_list
 pid_exists = _psposix.pid_exists
+get_disk_usage = _psposix.get_disk_usage
 
 # --- decorator
 
