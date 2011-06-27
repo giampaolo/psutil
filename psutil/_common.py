@@ -7,14 +7,14 @@
 
 from psutil._compat import namedtuple
 
-def usage_percent(used, total, round=None):
+def usage_percent(used, total, _round=None):
     """Calculate percentage usage of 'used' against 'total'."""
     try:
         ret = (float(used) / total) * 100
     except ZeroDivisionError:
         ret = 0
-    if round is not None:
-        return __builtins__['round'](ret, round)
+    if _round is not None:
+        return round(ret, _round)
     else:
         return ret
 

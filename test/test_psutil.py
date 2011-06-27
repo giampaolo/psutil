@@ -1058,9 +1058,6 @@ class TestCase(unittest.TestCase):
 
         # --- check matches against subprocesses
 
-        if supports_ipv6():
-            s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-            ipv6_localhost = s.getsockname()[0]
         for p in psutil.Process(os.getpid()).get_children():
             for conn in p.get_connections():
                 # TCP v4
@@ -1081,14 +1078,14 @@ class TestCase(unittest.TestCase):
                 elif p.pid == getattr(tcp6_proc, "pid", None):
                     self.assertEqual(conn.family, socket.AF_INET6)
                     self.assertEqual(conn.type, socket.SOCK_STREAM)
-                    self.assertEqual(conn.local_address[0], ipv6_localhost)
+                    self.assertTrue(conn.local_address[0] in ("::", "::1"))
                     self.assertEqual(conn.remote_address, ())
                     self.assertEqual(conn.status, "LISTEN")
                 # UDP v6
                 elif p.pid == getattr(udp6_proc, "pid", None):
                     self.assertEqual(conn.family, socket.AF_INET6)
                     self.assertEqual(conn.type, socket.SOCK_DGRAM)
-                    self.assertEqual(conn.local_address[0], ipv6_localhost)
+                    self.assertTrue(conn.local_address[0] in ("::", "::1"))
                     self.assertEqual(conn.remote_address, ())
                     self.assertEqual(conn.status, "")
 

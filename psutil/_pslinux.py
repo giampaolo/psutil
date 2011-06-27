@@ -120,7 +120,7 @@ def phymem_usage():
                 break
         used = total - free
         percent = usage_percent(total - (free + buffers + cached), total,
-                                round=1)
+                                _round=1)
         return ntuple_sysmeminfo(total, used, free, percent)
     finally:
         f.close()

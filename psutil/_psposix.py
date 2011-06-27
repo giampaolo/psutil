@@ -94,7 +94,7 @@ def get_disk_usage(path):
     free = (st.f_bavail * st.f_frsize)
     total = (st.f_blocks * st.f_frsize)
     used = (st.f_blocks - st.f_bfree) * st.f_frsize
-    percent = usage_percent(used, total, round=1)
+    percent = usage_percent(used, total, _round=1)
     # NB: the percentage is -5% than what shown by df due to
     # reserved blocks that we are currently not considering:
     # http://goo.gl/sWGbH

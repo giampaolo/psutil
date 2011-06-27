@@ -57,7 +57,7 @@ def get_disk_usage(path):
     """Return disk usage associated with path."""
     total, free = _psutil_mswindows.get_disk_usage(path)
     used = total - free
-    percent = usage_percent(used, total, round=1)
+    percent = usage_percent(used, total, _round=1)
     return ntuple_diskinfo(total, used, free, percent)
 
 def disk_partitions(all):
