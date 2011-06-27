@@ -160,6 +160,24 @@ get_process_gids(PyObject* self, PyObject* args)
 
 
 /*
+ * Return process controlling terminal number as an integer.
+ */
+static PyObject*
+get_process_tty_nr(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
+        return NULL;
+    }
+    return Py_BuildValue("i", kp.kp_eproc.e_tdev);
+}
+
+
+/*
  * Return a Python integer indicating the number of CPUs on the system.
  */
 static PyObject*
@@ -1045,7 +1063,8 @@ PsutilMethods[] =
          "Return files opened by process as a list of tuples"},
      {"get_process_connections", get_process_connections, METH_VARARGS,
          "Get process TCP and UDP connections as a list of tuples"},
-
+     {"get_process_tty_nr", get_process_tty_nr, METH_VARARGS,
+         "Return process tty number as an integer"},
 
      // --- system-related functions
 

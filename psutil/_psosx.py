@@ -19,6 +19,7 @@ __extra__all__ = []
 
 NUM_CPUS = _psutil_osx.get_num_cpus()
 BOOT_TIME = _psutil_osx.get_system_boot_time()
+_TERMINAL_MAP = _psposix._get_terminal_map()
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle')
 
 # --- functions
@@ -134,11 +135,18 @@ class Process(object):
         real, effective, saved = _psutil_osx.get_process_uids(self.pid)
         return ntuple_uids(real, effective, saved)
 
-
     @wrap_exceptions
     def get_process_gids(self):
         real, effective, saved = _psutil_osx.get_process_gids(self.pid)
         return ntuple_gids(real, effective, saved)
+
+    @wrap_exceptions
+    def get_process_terminal(self):
+        tty_nr = _psutil_osx.get_process_tty_nr(self.pid)
+        try:
+            return _TERMINAL_MAP[tty_nr]
+        except KeyError:
+            return None
 
     @wrap_exceptions
     def get_memory_info(self):
