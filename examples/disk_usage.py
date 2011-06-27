@@ -21,7 +21,7 @@ def convert_bytes(n):
 
 
 def main():
-    templ = "%-17s %9s %9s %9s %5s%% %9s  %s"
+    templ = "%-17s %8s %8s %8s %5s%% %9s  %s"
     print templ % ("Device", "Total", "Used", "Free", "Use ", "Type", "Mount")
     for part in psutil.disk_partitions(0):
         usage = psutil.disk_usage(part.mountpoint)
