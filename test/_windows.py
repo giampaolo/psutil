@@ -67,29 +67,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
         p = psutil.Process(self.pid)
         self.assertRaises(ValueError, p.send_signal, signal.SIGINT)
 
-    def test_open_handlers(self):
-        def call(p, attr):
-            attr = getattr(p, name, None)
-            if attr is not None and callable(attr):
-                ret = attr()
-            else:
-                ret = attr
-
-        p = psutil.Process(self.pid)
-        for name in dir(psutil.Process):
-            if name.startswith('_') \
-            or name in ('terminate', 'kill', 'suspend', 'resume',
-                        'send_signal', 'wait'):
-                continue
-            else:
-                num1 = _psutil_mswindows.get_process_num_handlers(p.pid)
-                for x in range(10):
-                    call(p, name)
-                num2 = _psutil_mswindows.get_process_num_handlers(p.pid)
-                if num2 > num1:
-                    self.fail("failure while processing Process.%s method "
-                              "(before=%s, after=%s)" % (name, num1, num2))
-
     if wmi is not None:
 
         # --- Process class tests
