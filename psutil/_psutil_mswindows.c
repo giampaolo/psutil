@@ -1694,7 +1694,9 @@ get_disk_usage(PyObject* self, PyObject* args)
         return NULL;
     }
 
+    Py_BEGIN_ALLOW_THREADS
     retval = GetDiskFreeSpaceEx(path, &_, &total, &free);
+    Py_END_ALLOW_THREADS
     if (retval == 0) {
         return PyErr_SetFromWindowsErr(0);
     }
@@ -1718,11 +1720,14 @@ get_disk_partitions(PyObject* self, PyObject* args)
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_tuple;
 
+    Py_BEGIN_ALLOW_THREADS
     num_bytes = GetLogicalDriveStrings(254, drive_letter);
+    Py_END_ALLOW_THREADS
     if (num_bytes == 0) {
         return PyErr_SetFromWindowsErr(0);
     }
 
+    Py_BEGIN_ALLOW_THREADS
     while (*drive_letter != 0) {
         drive_letter = strchr(drive_letter, 0) +1;
         type = GetDriveType(drive_letter);
@@ -1757,6 +1762,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
         PyList_Append(py_retlist, py_tuple);
         Py_XDECREF(py_tuple);
     }
+    Py_END_ALLOW_THREADS
 
     return py_retlist;
 }
