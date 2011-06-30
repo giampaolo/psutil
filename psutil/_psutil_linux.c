@@ -101,11 +101,14 @@ get_disk_partitions(PyObject* self, PyObject* args)
     PyObject* py_tuple;
 
     // MOUNTED constant comes from mntent.h and it's == '/etc/mtab'
+    Py_BEGIN_ALLOW_THREADS
     file = setmntent(MOUNTED, "r");
+    Py_END_ALLOW_THREADS
     if (file == 0) {
     	return PyErr_SetFromErrno(PyExc_OSError);
     }
 
+    Py_BEGIN_ALLOW_THREADS
     while ((entry = getmntent(file))) {
         py_tuple = Py_BuildValue("(sss)", entry->mnt_fsname,  // device
                                           entry->mnt_dir,     // mount point
@@ -115,6 +118,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     }
 
     endmntent(file);
+    Py_END_ALLOW_THREADS
     return py_retlist;
 }
 

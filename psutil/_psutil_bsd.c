@@ -706,7 +706,9 @@ get_disk_partitions(PyObject* self, PyObject* args)
     PyObject* py_tuple;
 
     // get the number of mount points
+    Py_BEGIN_ALLOW_THREADS
     num = getfsstat(NULL, 0, MNT_NOWAIT);
+    Py_END_ALLOW_THREADS
     if (num == -1) {
         PyErr_SetFromErrno(0);
         return NULL;
@@ -715,7 +717,9 @@ get_disk_partitions(PyObject* self, PyObject* args)
     len = sizeof(*fs) * num;
     fs = malloc(len);
 
+    Py_BEGIN_ALLOW_THREADS
     num = getfsstat(fs, len, MNT_NOWAIT);
+    Py_END_ALLOW_THREADS
     if (num == -1) {
         free(fs);
         PyErr_SetFromErrno(0);
