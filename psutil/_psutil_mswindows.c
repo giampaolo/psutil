@@ -1663,6 +1663,7 @@ is_process_suspended(PyObject* self, PyObject* args)
         return NULL;
     }
     if (get_process_info(pid, &process, &buffer) != 1) {
+        free(buffer);
         return NULL;
     }
     if (pid_is_running(pid) == 0) {
