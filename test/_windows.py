@@ -157,6 +157,23 @@ class WindowsSpecificTestCase(unittest.TestCase):
                              filter(lambda x:x not in psutil_pids, wmi_pids)
                 self.fail("difference: " + str(difference))
 
+        def test_disks(self):
+            ps_parts = psutil.disk_partitions(all=True)
+            wmi_parts = wmi.WMI().Win32_LogicalDisk()
+            for ps_part in ps_parts:
+                for wmi_part in wmi_parts:
+                    if ps_part.device.replace('\\', '') == wmi_part.DeviceID:
+                        usage = psutil.disk_usage(ps_part.mountpoint)
+                        self.assertEqual(usage.total, int(wmi_part.Size))
+                        wmi_free = int(wmi_part.FreeSpace)
+                        self.assertEqual(usage.free, wmi_free)
+                        # 10 MB tollerance
+                        if abs(usage.free - wmi_free) > 10 * 1024 * 1024:
+                            self.fail("psutil=%s, wmi=%s" % usage.free, wmi_free)
+                        break
+                else:
+                    self.fail("can't find partition %r", ps_part)
+
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()
