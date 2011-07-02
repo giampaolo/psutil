@@ -80,7 +80,9 @@ def sh(cmdline):
         raise RuntimeError(stderr)
     if stderr:
         warnings.warn(stderr, RuntimeWarning)
-    return stdout
+    if sys.version_info >= (3,):
+        stdout = str(stdout, sys.stdout.encoding)
+    return stdout.strip()
 
 def wait_for_pid(pid, timeout=1):
     """Wait for pid to show up in the process list then return.
