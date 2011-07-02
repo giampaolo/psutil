@@ -105,8 +105,8 @@ class PosixSpecificTestCase(unittest.TestCase):
             # "/usr/local/bin/python"
             # We do not want to consider this difference in accuracy
             # an error.
-            ps_extended_pathname = PYTHON + "%s.%s" % (sys.version_info.major,
-                                                       sys.version_info.minor)
+            ps_extended_pathname = PYTHON + "%s.%s" % (sys.version_info[0],
+                                                       sys.version_info[1])
             self.assertEqual(ps_extended_pathname, psutil_pathname)
 
     def test_process_cmdline(self):

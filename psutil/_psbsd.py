@@ -29,7 +29,9 @@ def phymem_usage():
     total = _psutil_bsd.get_total_phymem()
     free =  _psutil_bsd.get_avail_phymem()
     used = total - free
-    return (total, used, free)
+    # XXX check out whether we have to do the same math we do on Linux
+    percent = usage_percent(used, total, _round=1)
+    return ntuple_sysmeminfo(total, used, free, percent)
 
 def virtmem_usage():
     """Virtual system memory as a (total, used, free) tuple."""
@@ -69,6 +71,7 @@ def disk_partitions(all=False):
 
 get_pid_list = _psutil_bsd.get_pid_list
 pid_exists = _psposix.pid_exists
+get_disk_usage = _psposix.get_disk_usage
 
 
 def wrap_exceptions(method):

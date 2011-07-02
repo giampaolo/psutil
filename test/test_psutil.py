@@ -704,8 +704,8 @@ class TestCase(unittest.TestCase):
             # "/usr/local/bin/python"
             # We do not want to consider this difference in accuracy
             # an error.
-            extended_py_name = PYTHON + "%s.%s" % (sys.version_info.major,
-                                                   sys.version_info.minor)
+            extended_py_name = PYTHON + "%s.%s" % (sys.version_info[0],
+                                                   sys.version_info[1])
             self.assertEqual(psutil.Process(sproc.pid).exe, extended_py_name)
         for p in psutil.process_iter():
             try:

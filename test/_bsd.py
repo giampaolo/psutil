@@ -20,10 +20,8 @@ def sysctl(cmdline):
     p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
     result = p.communicate()[0].strip()
     if sys.version_info >= (3,):
-        result = result[result.find(b": ") + 2:]
         result = str(result, sys.stdout.encoding)
-    else:
-        result = result[result.find(": ") + 2:]
+    result = result[result.find(": ") + 2:]
     try:
         return int(result)
     except ValueError:
@@ -117,7 +115,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         difference = abs(sysctl_avail_virtmem - psutil_avail_virtmem)
         # let's assume the test is failed if difference is > 0.5 MB
         if difference > (0.5 * 2**20):
-                       sysctl_avail_virtmem, psutil_avail_virtmem, difference))
+            self.fail(difference)
 
     def test_process_create_time(self):
         cmdline = "ps -o lstart -p %s" %self.pid
