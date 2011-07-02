@@ -1657,13 +1657,16 @@ is_process_suspended(PyObject* self, PyObject* args)
     DWORD pid;
     ULONG i;
     PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_process_info(pid, &process) != 1) {
+    if (get_process_info(pid, &process, &buffer) != 1) {
         return NULL;
     }
     if (pid_is_running(pid) == 0) {
+        free(buffer);
         return NoSuchProcess();
     }
 
@@ -1671,11 +1674,11 @@ is_process_suspended(PyObject* self, PyObject* args)
         if (process->Threads[i].ThreadState != Waiting ||
             process->Threads[i].WaitReason != Suspended)
         {
-            free(process);
+            free(buffer);
             Py_RETURN_FALSE;
         }
     }
-    free(process);
+    free(buffer);
     Py_RETURN_TRUE;
 }
 

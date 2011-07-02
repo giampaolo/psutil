@@ -428,7 +428,7 @@ const STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
  * On success return 1, else 0 with Python exception already set.
  */
 int
-get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess)
+get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retBuffer)
 {
     static ULONG initialBufferSize = 0x4000;
     NTSTATUS status;
@@ -462,7 +462,6 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess)
     }
 
     if (status != 0) {
-        free(buffer);
         PyErr_Format(PyExc_RuntimeError, "NtQuerySystemInformation() failed");
         return 0;
     }
@@ -474,12 +473,12 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess)
     process = PH_FIRST_PROCESS(buffer);
     do {
         if (process->UniqueProcessId == (HANDLE)pid) {
-            *retProcess = buffer;
+            *retProcess = process;
+            *retBuffer = buffer;
             return 1;
         }
     } while ( (process = PH_NEXT_PROCESS(process)) );
 
-    free(buffer);
     NoSuchProcess();
     return 0;
 }
