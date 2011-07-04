@@ -23,6 +23,8 @@ BUGFIXES
  * Issue 166: get_memory_info() leaks handles hogging system resources.
  * Issue 168: psutil.cpu_percent() returns erroneous results when used in
    non-blocking mode.  (patch by Philip Roberts)
+ * Issue 178: OSX - Process.get_threads() leaks memory
+
 
 0.2.1 - 2011-03-20
 ------------------

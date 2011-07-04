@@ -369,7 +369,7 @@ static PyObject*
 get_process_num_threads(PyObject* self, PyObject* args)
 {
     long pid;
-    int err;
+    int err, ret;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
     mach_port_t task;
     struct task_basic_info tasks_info;
@@ -400,14 +400,19 @@ get_process_num_threads(PyObject* self, PyObject* args)
                 return PyErr_Format(PyExc_RuntimeError,
                                     "task_info(TASK_BASIC_INFO) failed");
         }
-
         err = task_threads(task, &thread_list, &thread_count);
         if (err == KERN_SUCCESS) {
+            ret = vm_deallocate(task, (vm_address_t)thread_list,
+                                thread_count * sizeof(int));
+            if (ret != KERN_SUCCESS) {
+                printf("vm_deallocate() failed\n");
+            }
             return Py_BuildValue("l", (long)thread_count);
         }
+        else {
+            return PyErr_Format(PyExc_RuntimeError, "task_thread() failed");
+        }
     }
-
-
     else {
         if (! pid_exists(pid) ) {
             return NoSuchProcess();
