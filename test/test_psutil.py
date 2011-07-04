@@ -732,10 +732,8 @@ class TestCase(unittest.TestCase):
     def test_name(self):
         sproc = get_test_subprocess(PYTHON)
         wait_for_pid(sproc.pid)
-        if OSX:
-            self.assertEqual(psutil.Process(sproc.pid).name, "Python")
-        else:
-            self.assertEqual(psutil.Process(sproc.pid).name, os.path.basename(PYTHON))
+        self.assertEqual(psutil.Process(sproc.pid).name,
+                         os.path.basename(sys.executable))
 
     if os.name == 'posix':
 
@@ -852,8 +850,13 @@ class TestCase(unittest.TestCase):
         wait_for_pid(sproc.pid)
         time.sleep(0.1)
         p = psutil.Process(sproc.pid)
-        filenames = [x.path for x in p.get_open_files()]
-        self.assertTrue(TESTFN in filenames)
+        for x in range(100):
+            filenames = [x.path for x in p.get_open_files()]
+            if TESTFN in filenames:
+                break
+            time.sleep(.01)
+        else:
+            self.assertTrue(TESTFN in filenames)
         for file in filenames:
             self.assertTrue(os.path.isfile(file))
         # all processes
@@ -897,10 +900,13 @@ class TestCase(unittest.TestCase):
               "conn, addr = s.accept();" \
               "time.sleep(100);"
         sproc = get_test_subprocess([PYTHON, "-c", arg])
-        time.sleep(0.1)
         p = psutil.Process(sproc.pid)
-        cons = p.get_connections()
-        self.assertTrue(len(cons) == 1)
+        for x in range(100):
+            cons = p.get_connections()
+            if cons:
+                break
+            time.sleep(.01)
+        self.assertEqual(len(cons), 1)
         con = cons[0]
         self.assertEqual(con.family, socket.AF_INET)
         self.assertEqual(con.type, socket.SOCK_STREAM)

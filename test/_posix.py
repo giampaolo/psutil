@@ -88,10 +88,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         # remove path if there is any, from the command
         name_ps = os.path.basename(name_ps)
         name_psutil = psutil.Process(self.pid).name
-        if OSX:
-            self.assertEqual(name_psutil, "Python")
-        else:
-            self.assertEqual(name_ps, name_psutil)
+        self.assertEqual(name_ps, name_psutil)
 
     def test_process_exe(self):
         ps_pathname = ps("ps --no-headers -o command -p %s" %self.pid).split(' ')[0]
