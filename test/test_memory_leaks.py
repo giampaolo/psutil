@@ -105,6 +105,7 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def test_is_running(self):
         self.execute('is_running')
 
+    @skipIf(WINDOWS)
     def test_terminal(self):
         self.execute('terminal')
 
@@ -116,11 +117,11 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def test_getcwd(self):
         self.execute('getcwd')
 
-    @skipUnless(WINDOWS)
+    @skipUnless(WINDOWS or OSX)
     def test_get_open_files(self):
         self.execute('get_open_files')
 
-    @skipUnless(WINDOWS)
+    @skipUnless(WINDOWS or OSX)
     def test_get_connections(self):
         self.execute('get_connections')
 
