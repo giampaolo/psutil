@@ -576,6 +576,8 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
         Py_XDECREF(py_cputime);
     }
 
+    vm_deallocate(mach_task_self(), (vm_address_t)info_array,
+                  info_count * sizeof(int));
     return py_retlist;
 }
 
