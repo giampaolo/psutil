@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# $Id
+# $Id$
 
 """
 Kill a process by name.

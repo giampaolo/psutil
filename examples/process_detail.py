@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# $Id
+# $Id$
 
 """
 Print detailed information about a process.
