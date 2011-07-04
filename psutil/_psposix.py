@@ -105,8 +105,6 @@ def _get_terminal_map():
     ls = glob.glob('/dev/tty*') + glob.glob('/dev/pts/*')
     for name in ls:
         assert name not in ret
-        if sys.version_info >= (3,):
-            name = name.encode('ascii')
         ret[os.stat(name).st_rdev] = name
     return ret
 

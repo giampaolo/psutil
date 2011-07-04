@@ -546,7 +546,7 @@ class TestCase(unittest.TestCase):
 
     @skipIf(WINDOWS)
     def test_terminal(self):
-        tty = sh('tty').strip()
+        tty = sh('tty')
         p = psutil.Process(os.getpid())
         self.assertEqual(p.terminal, tty)
 
