@@ -39,7 +39,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
         def df(path):
-            out = sh('df -B 1 %s' % path).strip()
+            out = sh('df -B 1 "%s"' % path).strip()
             lines = out.split('\n')
             lines.pop(0)
             line = lines.pop(0)
@@ -49,7 +49,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
             total, used, free = int(total), int(used), int(free)
             return dev, total, used, free
 
-        for part in psutil.disk_partitions(all=True):
+        for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
             dev, total, used, free = df(part.mountpoint)
             self.assertEqual(part.device, dev)

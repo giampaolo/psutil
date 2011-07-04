@@ -130,7 +130,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
         def df(path):
-            out = sh('df -k %s' % path).strip()
+            out = sh('df -k "%s"' % path).strip()
             lines = out.split('\n')
             lines.pop(0)
             line = lines.pop(0)
@@ -142,7 +142,7 @@ class BSDSpecificTestCase(unittest.TestCase):
             free = int(free) * 1024
             return dev, total, used, free
 
-        for part in psutil.disk_partitions(all=True):
+        for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
             dev, total, used, free = df(part.mountpoint)
             self.assertEqual(part.device, dev)
