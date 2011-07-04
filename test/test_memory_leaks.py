@@ -33,13 +33,15 @@ class Base(unittest.TestCase):
         # step 1
         for x in xrange(LOOPS):
             self.call(function, *args, **kwargs)
-        del x; gc.collect()
+        del x
+        gc.collect()
         rss1 = self.get_mem()
 
         # step 2
         for x in xrange(LOOPS):
             self.call(function, *args, **kwargs)
-        del x; gc.collect()
+        del x
+        gc.collect()
         rss2 = self.get_mem()
 
         # comparison
@@ -57,11 +59,13 @@ class Base(unittest.TestCase):
                 self.call(function, *args, **kwargs)
                 if time.time() >= stop_at:
                     break
+            del stop_at
+            gc.collect()
             rss3 = self.get_mem()
             difference = rss3 - rss2
             if rss3 > rss2:
                 self.fail("rss2=%s, rss3=%s, difference=%s" \
-                            % (rss2, rss3, difference))
+                          % (rss2, rss3, difference))
 
     @staticmethod
     def get_mem():
