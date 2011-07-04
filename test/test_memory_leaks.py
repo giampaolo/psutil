@@ -14,6 +14,7 @@ $ 2to3 -w test/test_memory_leaks.py
 import os
 import gc
 import unittest
+import time
 
 import psutil
 from test_psutil import reap_children, skipUnless, skipIf, \
@@ -26,7 +27,51 @@ if PY3:
     xrange = range
 
 
-class TestProcessObjectLeaks(unittest.TestCase):
+class Base(unittest.TestCase):
+
+    def execute(self, function, *args, **kwargs):
+        # step 1
+        for x in xrange(LOOPS):
+            self.call(function, *args, **kwargs)
+        del x; gc.collect()
+        rss1 = self.get_mem()
+
+        # step 2
+        for x in xrange(LOOPS):
+            self.call(function, *args, **kwargs)
+        del x; gc.collect()
+        rss2 = self.get_mem()
+
+        # comparison
+        difference = rss2 - rss1
+        if difference > TOLERANCE:
+            # This doesn't necessarily mean we have a leak yet.
+            # At this point we assume that after having called the
+            # function so many times the memory usage is stabilized
+            # and if there are no leaks it should not increase any
+            # more.
+            # Let's keep calling fun for 3 more seconds and fail if
+            # we notice any difference.
+            stop_at = time.time() + 3
+            while 1:
+                self.call(function, *args, **kwargs)
+                if time.time() >= stop_at:
+                    break
+            rss3 = self.get_mem()
+            difference = rss3 - rss2
+            if rss3 > rss2:
+                self.fail("rss2=%s, rss3=%s, difference=%s" \
+                            % (rss2, rss3, difference))
+
+    @staticmethod
+    def get_mem():
+        return psutil.Process(os.getpid()).get_memory_info()[0]
+
+    def call(self):
+        raise NotImplementedError("must be implemented in subclass")
+
+
+class TestProcessObjectLeaks(Base):
     """Test leaks of Process class methods and properties"""
 
     def setUp(self):
@@ -35,35 +80,11 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def tearDown(self):
         reap_children()
 
-    def execute(self, method, *args, **kwarks):
-        # step 1
+    def call(self, function, *args, **kwargs):
         p = psutil.Process(os.getpid())
-        for x in xrange(LOOPS):
-            obj = getattr(p, method)
-            if callable(obj):
-                retvalue = obj(*args, **kwarks)
-            else:
-                retvalue = obj  # property
-        del x, p, obj, retvalue
-        gc.collect()
-        rss1 = psutil.Process(os.getpid()).get_memory_info()[0]
-
-        # step 2
-        p = psutil.Process(os.getpid())
-        for x in xrange(LOOPS):
-            obj = getattr(p, method)
-            if callable(obj):
-                retvalue = obj(*args, **kwarks)
-            else:
-                retvalue = obj  # property
-        del x, p, obj, retvalue
-        gc.collect()
-        rss2 = psutil.Process(os.getpid()).get_memory_info()[0]
-
-        # comparison
-        difference = rss2 - rss1
-        if difference > TOLERANCE:
-            self.fail("rss1=%s, rss2=%s, difference=%s" %(rss1, rss2, difference))
+        obj = getattr(p, function)
+        if callable(obj):
+            obj(*args, **kwargs)
 
     def test_name(self):
         self.execute('name')
@@ -74,9 +95,11 @@ class TestProcessObjectLeaks(unittest.TestCase):
     def test_ppid(self):
         self.execute('ppid')
 
+    @skipIf(WINDOWS)
     def test_uids(self):
         self.execute('uids')
 
+    @skipIf(WINDOWS)
     def test_gids(self):
         self.execute('gids')
 
@@ -126,39 +149,16 @@ class TestProcessObjectLeaks(unittest.TestCase):
         self.execute('get_connections')
 
 
-class TestModuleFunctionsLeaks(unittest.TestCase):
+class TestModuleFunctionsLeaks(Base):
     """Test leaks of psutil module functions."""
 
     def setUp(self):
         gc.collect()
 
-    def execute(self, function, *args, **kwarks):
-        # step 1
-        for x in xrange(LOOPS):
-            obj = getattr(psutil, function)
-            if callable(obj):
-                retvalue = obj(*args, **kwarks)
-            else:
-                retvalue = obj  # property
-        del x, obj, retvalue
-        gc.collect()
-        rss1 = psutil.Process(os.getpid()).get_memory_info()[0]
-
-        # step 2
-        for x in xrange(LOOPS):
-            obj = getattr(psutil, function)
-            if callable(obj):
-                retvalue = obj(*args, **kwarks)
-            else:
-                retvalue = obj  # property
-        del x, obj, retvalue
-        gc.collect()
-        rss2 = psutil.Process(os.getpid()).get_memory_info()[0]
-
-        # comparison
-        difference = rss2 - rss1
-        if difference > TOLERANCE:
-            self.fail("rss1=%s, rss2=%s, difference=%s" %(rss1, rss2, difference))
+    def call(self, function, *args, **kwargs):
+        obj = getattr(psutil, function)
+        if callable(obj):
+            retvalue = obj(*args, **kwargs)
 
     def test_get_pid_list(self):
         self.execute('get_pid_list')
@@ -184,7 +184,7 @@ class TestModuleFunctionsLeaks(unittest.TestCase):
 
     @skipUnless(WINDOWS)
     def test_disk_usage(self):
-        self.execute('disk_usage')
+        self.execute('disk_usage', '.')
 
     def test_disk_partitions(self):
         self.execute('disk_partitions')
