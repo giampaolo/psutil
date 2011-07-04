@@ -554,7 +554,7 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     processor_cpu_load_info_data_t* cpu_load_info;
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_cputime;
-    int i;
+    int i, ret;
 
     error = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO,
                                 &cpu_count, &info_array, &info_count);
@@ -576,8 +576,11 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
         Py_XDECREF(py_cputime);
     }
 
-    vm_deallocate(mach_task_self(), (vm_address_t)info_array,
-                  info_count * sizeof(int));
+    ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
+                        info_count * sizeof(int));
+    if (ret != KERN_SUCCESS) {
+        printf("vm_deallocate() failed\n");
+    }
     return py_retlist;
 }
 
