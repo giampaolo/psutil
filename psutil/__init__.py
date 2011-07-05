@@ -111,16 +111,12 @@ class Process(object):
         try:
             pid = self.pid
             name = repr(self.name)
-            cmdline = self.cmdline and repr(' '.join(self.cmdline))
         except NoSuchProcess:
             details = "(pid=%s (terminated))" % self.pid
         except AccessDenied:
             details = "(pid=%s)" % (self.pid)
         else:
-            if cmdline:
-                details = "(pid=%s, name=%s, cmdline=%s)" % (pid, name, cmdline)
-            else:
-                details = "(pid=%s, name=%s)" % (pid, name)
+            details = "(pid=%s, name=%s)" % (pid, name)
         return "%s.%s%s" % (self.__class__.__module__,
                             self.__class__.__name__, details)
 
