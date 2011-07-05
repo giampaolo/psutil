@@ -41,7 +41,6 @@ except ImportError:
 
 from psutil.error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
 from psutil._compat import property
-from psutil._common import ntuple_sysmeminfo as _ntuple_sysmeminfo
 from psutil._common import (STATUS_RUNNING, STATUS_IDLE, STATUS_SLEEPING,
                             STATUS_DISK_SLEEP, STATUS_STOPPED,
                             STATUS_TRACING_STOP, STATUS_ZOMBIE, STATUS_DEAD,
@@ -676,10 +675,7 @@ def virtmem_usage():
     sysctl vm.vmtotal. On Windows they are determined by reading the
     PageFile values of MEMORYSTATUSEX structure.
     """
-    total, used, free = _psplatform.virtmem_usage()
-    percent = (float(used) / total) * 100
-    percent = round(percent, 1)
-    return _ntuple_sysmeminfo(total, used, free, percent)
+    return _psplatform.virtmem_usage()
 
 def disk_usage(path):
     """Return disk usage statistics about the given path as a namedtuple

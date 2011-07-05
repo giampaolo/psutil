@@ -139,7 +139,8 @@ def virtmem_usage():
                 break
         assert total is not None and free is not None
         used = total - free
-        return (total, used, free)
+        percent = usage_percent(used, total, _round=1)
+        return ntuple_sysmeminfo(total, used, free, percent)
     finally:
         f.close()
 

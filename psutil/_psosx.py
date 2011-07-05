@@ -37,7 +37,8 @@ def virtmem_usage():
     total = _psutil_osx.get_total_virtmem()
     free =  _psutil_osx.get_avail_virtmem()
     used = total - free
-    return (total, used, free)
+    percent = usage_percent(used, total, _round=1)
+    return ntuple_sysmeminfo(total, used, free, percent)
 
 def get_system_cpu_times():
     """Return system CPU times as a namedtuple."""
