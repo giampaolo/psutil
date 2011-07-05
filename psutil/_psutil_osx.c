@@ -911,6 +911,10 @@ get_process_connections(PyObject* self, PyObject* args)
         return NULL;
     }
 
+    if (pid == 0) {
+        return retList;
+    }
+
     pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
     if (pidinfo_result <= 0) {
         goto error;
