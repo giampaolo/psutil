@@ -110,6 +110,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
 
     while ((entry = getmntent(file))) {
         if (entry == NULL) {
+            endmntent(file);
             return PyErr_Format(PyExc_RuntimeError, "getmntent() failed");
         }
         py_tuple = Py_BuildValue("(sss)", entry->mnt_fsname,  // device
