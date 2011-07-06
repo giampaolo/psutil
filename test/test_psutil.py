@@ -374,7 +374,8 @@ class TestCase(unittest.TestCase):
         t2 = psutil.cpu_percent(interval=0, percpu=True)
         # calculate total average
         t2 = sum(t2) / len(t2)
-        self.assertEqual(t1, t2)
+        if abs(t1 - t2) > 2:
+            self.assertEqual(t1, t2)
 
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())

@@ -104,12 +104,14 @@ get_disk_partitions(PyObject* self, PyObject* args)
     Py_BEGIN_ALLOW_THREADS
     file = setmntent(MOUNTED, "r");
     Py_END_ALLOW_THREADS
-    if (file == 0) {
+    if ((file == 0) || (file == NULL)) {
     	return PyErr_SetFromErrno(PyExc_OSError);
     }
 
-    Py_BEGIN_ALLOW_THREADS
     while ((entry = getmntent(file))) {
+        if (entry == NULL) {
+            return PyErr_Format(PyExc_RuntimeError, "getmntent() failed");
+        }
         py_tuple = Py_BuildValue("(sss)", entry->mnt_fsname,  // device
                                           entry->mnt_dir,     // mount point
                                           entry->mnt_type);   // fs type
@@ -118,7 +120,6 @@ get_disk_partitions(PyObject* self, PyObject* args)
     }
 
     endmntent(file);
-    Py_END_ALLOW_THREADS
     return py_retlist;
 }
 
