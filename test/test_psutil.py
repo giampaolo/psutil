@@ -323,7 +323,7 @@ class TestCase(unittest.TestCase):
             self.fail("difference %s" % difference)
 
     def test_sys_per_cpu_times(self):
-        for times in psutil.per_cpu_times():
+        for times in psutil.cpu_times(percpu=True):
             total = 0
             sum(times)
             for cp_time in times:
@@ -334,12 +334,12 @@ class TestCase(unittest.TestCase):
             str(times)
 
     def test_sys_per_cpu_times2(self):
-        tot1 = psutil.per_cpu_times()
+        tot1 = psutil.cpu_times(percpu=True)
         stop_at = time.time() + 0.1
         while 1:
             if time.time() >= stop_at:
                 break
-        tot2 = psutil.per_cpu_times()
+        tot2 = psutil.cpu_times(percpu=True)
         for t1, t2 in zip(tot1, tot2):
             t1, t2 = sum(t1), sum(t2)
             difference = t2 - t1
@@ -357,14 +357,24 @@ class TestCase(unittest.TestCase):
             self.assertTrue(percent <= 100.0)
 
     def test_sys_per_cpu_percent(self):
-        psutil.per_cpu_percent(interval=0.001)
-        psutil.per_cpu_percent(interval=0.001)
+        psutil.cpu_percent(interval=0.001, percpu=True)
+        psutil.cpu_percent(interval=0.001, percpu=True)
         for x in range(1000):
-            percents = psutil.per_cpu_percent(interval=None)
+            percents = psutil.cpu_percent(interval=None, percpu=True)
             for percent in percents:
                 self.assertTrue(isinstance(percent, float))
                 self.assertTrue(percent >= 0.0)
                 self.assertTrue(percent <= 100.0)
+
+    def test_sys_cpu_percent_compare(self):
+        psutil.cpu_percent(interval=0)
+        psutil.cpu_percent(interval=0, percpu=True)
+        time.sleep(.1)
+        t1 = psutil.cpu_percent(interval=0)
+        t2 = psutil.cpu_percent(interval=0, percpu=True)
+        # calculate total average
+        t2 = sum(t2) / len(t2)
+        self.assertEqual(t1, t2)
 
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
