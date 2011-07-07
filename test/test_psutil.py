@@ -1159,20 +1159,21 @@ class TestCase(unittest.TestCase):
         p.kill()
         p.wait()
 
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "ppid")
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "parent")
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "name")
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "exe")
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "cmdline")
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "status")
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "create_time")
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "username")
-        if hasattr(p, 'getcwd'):
-            self.assertRaises(psutil.NoSuchProcess, p.getcwd)
-        if POSIX:
-            self.assertRaises(psutil.NoSuchProcess, getattr, p, "uids")
-            self.assertRaises(psutil.NoSuchProcess, getattr, p, "gids")
-        self.assertRaises(psutil.NoSuchProcess, getattr, p, "nice")
+        for name in dir(p):
+            if name.startswith('_')\
+            or name in ('pid', 'send_signal', 'is_running', 'set_ionice',
+                        'wait'):
+                continue
+            try:
+                meth = getattr(p, name)
+                if callable(meth):
+                    meth()
+            except psutil.NoSuchProcess:
+                pass
+            else:
+                self.fail("NoSuchProcess exception not raised for %r" % name)
+
+        # other methods
         try:
             if os.name == 'posix':
                 p.nice = 1
@@ -1182,25 +1183,9 @@ class TestCase(unittest.TestCase):
             pass
         else:
             self.fail("exception not raised")
-        if hasattr(p, 'get_ionice'):
-            self.assertRaises(psutil.NoSuchProcess, p.get_ionice)
+        if hasattr(p, 'set_ionice'):
             self.assertRaises(psutil.NoSuchProcess, p.set_ionice, 2)
-        if hasattr(p, 'get_io_counters'):
-            self.assertRaises(psutil.NoSuchProcess, p.get_io_counters)
-        self.assertRaises(psutil.NoSuchProcess, p.get_open_files)
-        self.assertRaises(psutil.NoSuchProcess, p.get_connections)
-        self.assertRaises(psutil.NoSuchProcess, p.suspend)
-        self.assertRaises(psutil.NoSuchProcess, p.resume)
-        self.assertRaises(psutil.NoSuchProcess, p.kill)
-        self.assertRaises(psutil.NoSuchProcess, p.terminate)
         self.assertRaises(psutil.NoSuchProcess, p.send_signal, signal.SIGTERM)
-        self.assertRaises(psutil.NoSuchProcess, p.get_cpu_times)
-        self.assertRaises(psutil.NoSuchProcess, p.get_cpu_percent, 0)
-        self.assertRaises(psutil.NoSuchProcess, p.get_memory_info)
-        self.assertRaises(psutil.NoSuchProcess, p.get_memory_percent)
-        self.assertRaises(psutil.NoSuchProcess, p.get_children)
-        self.assertRaises(psutil.NoSuchProcess, p.get_num_threads)
-        self.assertRaises(psutil.NoSuchProcess, p.get_threads)
         self.assertFalse(p.is_running())
 
     def test__str__(self):
