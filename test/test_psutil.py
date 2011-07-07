@@ -274,6 +274,7 @@ class TestCase(unittest.TestCase):
         self.assertFalse(psutil.pid_exists(-1))
 
     def test_pid_exists_2(self):
+        reap_children()
         pids = psutil.get_pid_list()
         for pid in pids:
             try:
@@ -281,8 +282,9 @@ class TestCase(unittest.TestCase):
             except AssertionError:
                 # in case the process disappeared in meantime fail only
                 # if it is no longer in get_pid_list()
+                time.sleep(.1)
                 if pid in psutil.get_pid_list():
-                    self.fail()
+                    self.fail(pid)
         pids = range(max(pids) + 5000, max(pids) + 6000)
         for pid in pids:
             self.assertFalse(psutil.pid_exists(pid))

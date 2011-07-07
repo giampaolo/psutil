@@ -52,7 +52,7 @@ def virtmem_usage():
     free_virt = all[5]
     used = total_virt - free_virt
     percent = usage_percent(used, total_virt, _round=1)
-    return ntuple_sysmeminfo(total, used, free, percent)
+    return ntuple_sysmeminfo(total_virt, used, free_virt, percent)
 
 def get_disk_usage(path):
     """Return disk usage associated with path."""
