@@ -25,6 +25,8 @@ BUGFIXES
  * Issue 168: psutil.cpu_percent() returns erroneous results when used in
    non-blocking mode.  (patch by Philip Roberts)
  * Issue 178: OSX - Process.get_threads() leaks memory
+ * Issue 180: Windows - Process's get_num_threads() and get_threads() methods
+   can raise NoSuchProcess exception while process still exists.
 
 
 0.2.1 - 2011-03-20
