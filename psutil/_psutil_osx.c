@@ -685,7 +685,7 @@ static PyObject*
 get_process_threads(PyObject* self, PyObject* args)
 {
     long pid;
-    int err, j;
+    int err, j, ret;
     kern_return_t kr;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
     mach_port_t task;
@@ -735,7 +735,7 @@ get_process_threads(PyObject* self, PyObject* args)
                          (thread_info_t)thinfo, &thread_info_count);
         if (kr != KERN_SUCCESS) {
             return PyErr_Format(PyExc_RuntimeError, "thread_info() failed");
-        }
+        }        
         basic_info_th = (thread_basic_info_t)thinfo;
         // XXX - thread_info structure does not provide any process id;
         // the best we can do is assigning an incremental bogus value
@@ -745,6 +745,12 @@ get_process_threads(PyObject* self, PyObject* args)
                   );
         PyList_Append(retList, pyTuple);
         Py_XDECREF(pyTuple);
+    }
+
+    ret = vm_deallocate(task, (vm_address_t)thread_list,
+                        thread_count * sizeof(int));
+    if (ret != KERN_SUCCESS) {
+        printf("vm_deallocate() failed\n");
     }
 
     return retList;
