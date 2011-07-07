@@ -388,13 +388,26 @@ class TestCase(unittest.TestCase):
         self.assertTrue(usage.total > usage.free)
         self.assertTrue(0 <= usage.percent <= 100)
 
+        # if path does not exist OSError ENOENT is expected across
+        # all platforms
+        fname = tempfile.mktemp()
+        try:
+            psutil.disk_usage(fname)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.args[0] != errno.ENOENT:
+                raise
+        else:
+            self.fail("OSError not raised")
+
     def test_disk_partitions(self):
         for disk in psutil.disk_partitions(all=False):
             self.assertTrue(os.path.exists(disk.device))
             self.assertTrue(os.path.isdir(disk.mountpoint))
             self.assertTrue(disk.fstype)
         for disk in psutil.disk_partitions(all=True):
-            self.assertTrue(os.path.isdir(disk.mountpoint))
+            if not WINDOWS:
+                self.assertTrue(os.path.isdir(disk.mountpoint))
             self.assertTrue(disk.fstype)
 
         def find_mount_point(path):
@@ -402,7 +415,7 @@ class TestCase(unittest.TestCase):
             while not os.path.ismount(path):
                 path = os.path.dirname(path)
             return path
-        
+
         mount = find_mount_point(__file__)
         mounts = [x.mountpoint for x in psutil.disk_partitions(all=True)]
         self.assertTrue(mount in mounts)

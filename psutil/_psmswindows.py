@@ -56,7 +56,12 @@ def virtmem_usage():
 
 def get_disk_usage(path):
     """Return disk usage associated with path."""
-    total, free = _psutil_mswindows.get_disk_usage(path)
+    try:
+        total, free = _psutil_mswindows.get_disk_usage(path)
+    except WindowsError, err:
+        if not os.path.exists(path):
+            raise OSError(errno.ENOENT, "No such file or directory: '%s'" % path)
+        raise
     used = total - free
     percent = usage_percent(used, total, _round=1)
     return ntuple_diskinfo(total, used, free, percent)
@@ -74,9 +79,9 @@ def disk_partitions(all):
         if not all:
             if type not in ('cdrom', 'fixed', 'removable'):
                 continue
-            if mountpoint == "":
+            if not mountpoint:
                 continue
-        ntuple = ntuple_partition(letter, letter, type)
+        ntuple = ntuple_partition(letter, mountpoint, type)
         retlist.append(ntuple)
     return retlist
 
