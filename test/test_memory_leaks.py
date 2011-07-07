@@ -121,7 +121,7 @@ class TestProcessObjectLeaks(Base):
         self.execute('get_num_threads')
 
     def test_get_threads(self):
-        self.execute('get_num_threads')
+        self.execute('get_threads')
 
     def test_get_cpu_times(self):
         self.execute('get_cpu_times')
@@ -184,7 +184,7 @@ class TestModuleFunctionsLeaks(Base):
         self.execute('cpu_times')
 
     def test_per_cpu_times(self):
-        self.execute('per_cpu_times')
+        self.execute('cpu_times', percpu=True)
 
     @skipUnless(WINDOWS)
     def test_disk_usage(self):

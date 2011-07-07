@@ -937,21 +937,15 @@ get_process_threads(PyObject* self, PyObject* args)
             HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION,
                                         FALSE, te32.th32ThreadID);
             if (hThread == NULL) {
-                if (GetLastError() == ERROR_INVALID_PARAMETER) {
-                    NoSuchProcess();
-                }
-                else {
-                    PyErr_SetFromWindowsErr(0);
-                }
-                CloseHandle(hThread);
-                CloseHandle(hThreadSnap);
-                return NULL;
+                // thread has disappeared on us
+                continue;
             }
 
             rc = GetThreadTimes(hThread, &ftDummy, &ftDummy, &ftKernel, &ftUser);
             if (rc == 0) {
                 PyErr_SetFromWindowsErr(0);
                 CloseHandle(hThread);
+                CloseHandle(hThreadSnap);
                 return NULL;
             }
 
@@ -979,6 +973,7 @@ get_process_threads(PyObject* self, PyObject* args)
         }
     } while (Thread32Next(hThreadSnap, &te32));
 
+    CloseHandle(hThreadSnap);
     return retList;
 }
 
