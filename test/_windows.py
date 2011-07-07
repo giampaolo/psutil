@@ -163,6 +163,9 @@ class WindowsSpecificTestCase(unittest.TestCase):
             for ps_part in ps_parts:
                 for wmi_part in wmi_parts:
                     if ps_part.device.replace('\\', '') == wmi_part.DeviceID:
+                        if not ps_part.mountpoint:
+                            # this is usually a CD-ROM with no disk inserted
+                            break
                         usage = psutil.disk_usage(ps_part.mountpoint)
                         self.assertEqual(usage.total, int(wmi_part.Size))
                         wmi_free = int(wmi_part.FreeSpace)

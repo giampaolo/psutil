@@ -397,6 +397,16 @@ class TestCase(unittest.TestCase):
             self.assertTrue(os.path.isdir(disk.mountpoint))
             self.assertTrue(disk.fstype)
 
+        def find_mount_point(path):
+            path = os.path.abspath(path)
+            while not os.path.ismount(path):
+                path = os.path.dirname(path)
+            return path
+        
+        mount = find_mount_point(__file__)
+        mounts = [x.mountpoint for x in psutil.disk_partitions(all=True)]
+        self.assertTrue(mount in mounts)
+        psutil.disk_usage(mount)
 
 
     # ====================

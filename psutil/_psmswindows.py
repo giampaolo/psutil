@@ -67,8 +67,14 @@ def disk_partitions(all):
     partitions = _psutil_mswindows.get_disk_partitions()
     for partition in partitions:
         letter, type = partition
+        mountpoint = letter
+        if not os.path.exists(mountpoint):
+            # usually a CD-ROM device with no disk inserted
+            mountpoint = ""
         if not all:
             if type not in ('cdrom', 'fixed', 'removable'):
+                continue
+            if mountpoint == "":
                 continue
         ntuple = ntuple_partition(letter, letter, type)
         retlist.append(ntuple)
