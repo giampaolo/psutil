@@ -77,9 +77,9 @@ def main():
         version=__ver__,
         download_url="http://psutil.googlecode.com/files/psutil-%s.tar.gz" % __ver__,
         description='A process utilities module for Python',
-        long_description="""
-psutil is a module providing convenience functions for managing processes in a
-portable way by using Python.""",
+        long_description="""\
+psutil is a module providing convenience functions for monitoring
+system and processes in a portable way by using Python.""",
         keywords=['ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice',
                   'tty', 'ionice', 'uptime', 'taskmgr', 'process'],
         author='Giampaolo Rodola, Dave Daeschler, Jay Loden',
@@ -108,7 +108,6 @@ portable way by using Python.""",
               'Programming Language :: Python :: 3.0',
               'Programming Language :: Python :: 3.1',
               'Programming Language :: Python :: 3.2',
-              'Programming Language :: Python :: 3.3',
               'Topic :: System :: Monitoring',
               'Topic :: System :: Networking',
               'Topic :: System :: Benchmark',
