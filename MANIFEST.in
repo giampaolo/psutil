@@ -7,3 +7,4 @@ include setup.py
 recursive-include docs *.html *.dia *.png
 recursive-include psutil *.py *.c *.h
 recursive-include test *.py
+recursive-include examples *.py
