@@ -963,7 +963,7 @@ get_process_open_files(PyObject* self, PyObject* args)
  If no match is found return an empty string.
 */
 static PyObject*
-_QueryDosDevice(PyObject* self, PyObject* args)
+win32_QueryDosDevice(PyObject* self, PyObject* args)
 {
     LPCTSTR   lpDevicePath;
     TCHAR d = TEXT('A');
@@ -1656,66 +1656,76 @@ get_disk_usage(PyObject* self, PyObject* args)
 }
 
 
-
 /*
  * Return disk partitions as a list of namedtuples.
  */
 static PyObject*
-get_disk_partitions(PyObject* self, PyObject* args)
+win32_GetLogicalDriveStrings(PyObject* self, PyObject* args)
 {
     DWORD num_bytes;
     char drive_strings[255];
     char* drive_letter = drive_strings;
-    int type;
-    char* type_str;
     PyObject* py_retlist = PyList_New(0);
-    PyObject* py_tuple;
 
     Py_BEGIN_ALLOW_THREADS
     num_bytes = GetLogicalDriveStrings(254, drive_letter);
     Py_END_ALLOW_THREADS
+
     if (num_bytes == 0) {
         return PyErr_SetFromWindowsErr(0);
     }
 
-    Py_BEGIN_ALLOW_THREADS
     while (*drive_letter != 0) {
+        PyList_Append(py_retlist, Py_BuildValue("s", drive_letter));
         drive_letter = strchr(drive_letter, 0) +1;
-        type = GetDriveType(drive_letter);
-        switch (type) {
-            case DRIVE_UNKNOWN:
-                type_str = "unknown";
-                break;
-            case DRIVE_NO_ROOT_DIR:
-                // this means drive is unmounted
-                continue;
-            case DRIVE_REMOVABLE:
-                type_str = "removable";
-                break;
-            case DRIVE_FIXED:
-                type_str = "fixed";
-                break;
-            case DRIVE_REMOTE:
-                type_str = "remote";
-                break;
-            case DRIVE_CDROM:
-                type_str = "cdrom";
-                break;
-            case DRIVE_RAMDISK:
-                type_str = "ramdisk";
-                break;
-            default:
-                type_str = "?";
-                break;
-        }
-
-        py_tuple = Py_BuildValue("(ss)", drive_letter, type_str);
-        PyList_Append(py_retlist, py_tuple);
-        Py_XDECREF(py_tuple);
     }
-    Py_END_ALLOW_THREADS
 
     return py_retlist;
+}
+
+
+static PyObject*
+win32_GetDriveType(PyObject* self, PyObject* args)
+{
+    LPCTSTR drive_letter;
+    int type;
+    char* type_str;
+
+    if (! PyArg_ParseTuple(args, "s", &drive_letter)) {
+        return NULL;
+    }
+
+    Py_BEGIN_ALLOW_THREADS
+    type = GetDriveType(drive_letter);
+    Py_END_ALLOW_THREADS
+
+    switch (type) {
+        case DRIVE_UNKNOWN:
+            type_str = "unknown";
+            break;
+        case DRIVE_NO_ROOT_DIR:
+            type_str = "unmounted";
+        case DRIVE_REMOVABLE:
+            type_str = "removable";
+            break;
+        case DRIVE_FIXED:
+            type_str = "fixed";
+            break;
+        case DRIVE_REMOTE:
+            type_str = "remote";
+            break;
+        case DRIVE_CDROM:
+            type_str = "cdrom";
+            break;
+        case DRIVE_RAMDISK:
+            type_str = "ramdisk";
+            break;
+        default:
+            type_str = "?";
+            break;
+    }
+
+    return Py_BuildValue("s", type_str);
 }
 
 
@@ -1749,8 +1759,6 @@ PsutilMethods[] =
         "Resume a process"},
     {"get_process_open_files", get_process_open_files, METH_VARARGS,
         "Return files opened by process"},
-    {"_QueryDosDevice", _QueryDosDevice, METH_VARARGS,
-        "QueryDosDevice binding"},
     {"get_process_username", get_process_username, METH_VARARGS,
         "Return the username of a process"},
     {"get_process_connections", get_process_connections, METH_VARARGS,
@@ -1770,7 +1778,6 @@ PsutilMethods[] =
     {"is_process_suspended", is_process_suspended, METH_VARARGS,
         "Return True if one of the process threads is in a suspended state"},
 
-
     // --- system-related functions
 
      {"get_pid_list", get_pid_list, METH_VARARGS,
@@ -1787,8 +1794,14 @@ PsutilMethods[] =
          "Return system per-cpu times as a list of tuples"},
      {"get_disk_usage", get_disk_usage, METH_VARARGS,
          "Return path's disk total and free as a Python tuple."},
-     {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
-         "Return disk partitions as a list of tuples."},
+
+     // --- windows API bindings
+     {"win32_GetLogicalDriveStrings", win32_GetLogicalDriveStrings, METH_VARARGS,
+         "GetLogicalDriveStrings binding"},
+     {"win32_GetDriveType", win32_GetDriveType, METH_VARARGS,
+         "GetDriveType binding"},
+     {"win32_QueryDosDevice", win32_QueryDosDevice, METH_VARARGS,
+         "QueryDosDevice binding"},
 
      {NULL, NULL, 0, NULL}
 };

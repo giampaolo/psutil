@@ -38,11 +38,15 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args);
 static PyObject* get_system_uptime(PyObject* self, PyObject* args);
 static PyObject* get_system_phymem(PyObject* self, PyObject* args);
 static PyObject* get_system_cpu_times(PyObject* self, PyObject* args);
-static PyObject* _QueryDosDevice(PyObject* self, PyObject* args);
 static PyObject* pid_exists(PyObject* self, PyObject* args);
 static PyObject* get_disk_usage(PyObject* self, PyObject* args);
 static PyObject* get_disk_partitions(PyObject* self, PyObject* args);
 
-// --- others
+// --- windows API bindings
 
+static PyObject* win32_QueryDosDevice(PyObject* self, PyObject* args);
+static PyObject* win32_GetLogicalDriveStrings(PyObject* self, PyObject* args);
+static PyObject* win32_GetDriveType(PyObject* self, PyObject* args);
+
+// --- internal
 int suspend_resume_process(DWORD pid, int suspend);

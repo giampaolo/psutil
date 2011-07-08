@@ -69,10 +69,10 @@ def get_disk_usage(path):
 def disk_partitions(all):
     """Return disk partitions."""
     retlist = []
-    partitions = _psutil_mswindows.get_disk_partitions()
-    for partition in partitions:
-        letter, type = partition
+    drive_letters = _psutil_mswindows.win32_GetLogicalDriveStrings()
+    for letter in drive_letters:
         mountpoint = letter
+        type = _psutil_mswindows.win32_GetDriveType(letter)
         if not os.path.exists(mountpoint):
             # usually a CD-ROM device with no disk inserted
             mountpoint = ""
@@ -253,7 +253,7 @@ class Process(object):
                 file = file.decode('utf8')
             if file.startswith('\\Device\\'):
                 rawdrive = '\\'.join(file.split('\\')[:3])
-                driveletter = _psutil_mswindows._QueryDosDevice(rawdrive)
+                driveletter = _psutil_mswindows.win32_QueryDosDevice(rawdrive)
                 file = file.replace(rawdrive, driveletter)
                 if os.path.isfile(file) and file not in retlist:
                     ntuple = ntuple_openfile(file, -1)
