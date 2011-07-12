@@ -135,6 +135,10 @@ class Process(object):
             return None
 
     @wrap_exceptions
+    def get_process_cpu(self):
+        return _psutil_bsd.get_process_cpu(self.pid)
+
+    @wrap_exceptions
     def get_process_ppid(self):
         """Return process parent pid."""
         return _psutil_bsd.get_process_ppid(self.pid)

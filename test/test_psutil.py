@@ -325,6 +325,7 @@ class TestCase(unittest.TestCase):
             self.fail("difference %s" % difference)
 
     def test_sys_per_cpu_times(self):
+        self.assertEqual(len(psutil.cpu_times(percpu=True)), psutil.NUM_CPUS)
         for times in psutil.cpu_times(percpu=True):
             total = 0
             sum(times)
@@ -772,10 +773,12 @@ class TestCase(unittest.TestCase):
                          os.path.basename(sys.executable))
 
     def test_cpu(self):
-        self.assertTrue(psutil.Process(os.getpid()).cpu <= psutil.NUM_CPUS)
         for p in psutil.process_iter():
             try:
-                self.assertTrue(p.cpu <= psutil.NUM_CPUS)
+                self.assertFalse(p.cpu < 0)
+                self.assertFalse(p.cpu > psutil.NUM_CPUS)
+                if psutil.NUM_CPUS == 1:
+                    self.assertEqual(p.cpu, 0)
             except psutil.Error:
                 pass
 
