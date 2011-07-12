@@ -1,5 +1,13 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+0.3.1 - XXXX-XX-XX
+------------------
+
+NEW FEATURES
+
+ * Issue 185: Process.cpu property returning what CPU the process is running on.
+
+
 0.3.0 - 2011-07-08
 ------------------
 

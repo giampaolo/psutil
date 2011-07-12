@@ -771,6 +771,14 @@ class TestCase(unittest.TestCase):
         self.assertEqual(psutil.Process(sproc.pid).name,
                          os.path.basename(sys.executable))
 
+    def test_cpu(self):
+        self.assertTrue(psutil.Process(os.getpid()).cpu <= psutil.NUM_CPUS)
+        for p in psutil.process_iter():
+            try:
+                self.assertTrue(p.cpu <= psutil.NUM_CPUS)
+            except psutil.Error:
+                pass
+
     if os.name == 'posix':
 
         def test_uids(self):

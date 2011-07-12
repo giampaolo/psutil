@@ -212,6 +212,11 @@ class Process(object):
     if os.name == 'posix':
 
         @property
+        def cpu(self):
+            """What CPU the process is currently running on."""
+            return self._platform_impl.get_process_cpu()
+
+        @property
         def uids(self):
             """Return a named tuple denoting the process real,
             effective, and saved user ids.

@@ -107,6 +107,10 @@ class TestProcessObjectLeaks(Base):
     def test_gids(self):
         self.execute('gids')
 
+    @skipIf(WINDOWS)
+    def test_cpu(self):
+        self.execute('cpu')
+
     def test_status(self):
         self.execute('status')
 
