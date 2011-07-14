@@ -277,24 +277,6 @@ get_process_gids(PyObject* self, PyObject* args)
 
 
 /*
- * Return What CPU the process is currently running on as a Python integer.
- */
-static PyObject*
-get_process_cpu(PyObject* self, PyObject* args)
-{
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-    if (get_kinfo_proc(pid, &kp) == -1) {
-        return NULL;
-    }
-    return Py_BuildValue("b", kp.ki_lastcpu);
-}
-
-
-/*
  * Return process real, effective and saved group ids from kinfo_proc
  * as a Python tuple.
  */
@@ -794,8 +776,6 @@ PsutilMethods[] =
          "Return process IO counters"},
      {"get_process_tty_nr", get_process_tty_nr, METH_VARARGS,
          "Return process tty (terminal) number"},
-     {"get_process_cpu", get_process_cpu, METH_VARARGS,
-         "What CPU the process is currently running on"},
 
 
      // --- system-related functions

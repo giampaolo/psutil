@@ -334,20 +334,6 @@ class Process(object):
             return None
 
     @wrap_exceptions
-    def get_process_cpu(self):
-        if self.pid == 0:
-            return 0   # special case for kernel process
-        f = open("/proc/%s/stat" % self.pid)
-        try:
-            st = f.read().strip()
-        finally:
-            f.close()
-        # ignore the first two values ("pid (exe)")
-        st = st[st.find(')') + 2:]
-        values = st.split(' ')
-        return int(values[36])
-
-    @wrap_exceptions
     def get_process_io_counters(self):
         # special case for 0 (kernel process) PID
         if self.pid == 0:
