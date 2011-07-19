@@ -39,7 +39,7 @@ def _get_num_cpus():
     f = open('/proc/cpuinfo', 'r')
     try:
         for line in f:
-            if line.startswith('processor'):
+            if line.lower().startswith('processor'):
                 num += 1
         if num == 0:
             raise RuntimeError("line not found")

@@ -965,7 +965,7 @@ class TestCase(unittest.TestCase):
     @skipUnless(hasattr(socket, "fromfd") and not WINDOWS)
     def test_connection_fromfd(self):
         sock = socket.socket()
-        sock.bind(('127.0.0.1', 0))
+        sock.bind(('localhost', 0))
         sock.listen(1)
         p = psutil.Process(os.getpid())
         for conn in p.get_connections():
