@@ -596,9 +596,16 @@ class Process(object):
                 f.close()
 
         tcp4 = process("/proc/net/tcp", socket.AF_INET, socket.SOCK_STREAM)
-        tcp6 = process("/proc/net/tcp6", socket.AF_INET6, socket.SOCK_STREAM)
         udp4 = process("/proc/net/udp", socket.AF_INET, socket.SOCK_DGRAM)
-        udp6 = process("/proc/net/udp6", socket.AF_INET6, socket.SOCK_DGRAM)
+        try:
+            tcp6 = process("/proc/net/tcp6", socket.AF_INET6, socket.SOCK_STREAM)
+            udp6 = process("/proc/net/udp6", socket.AF_INET6, socket.SOCK_DGRAM)
+        except IOError, err:
+            if err.errno == errno.ENOENT:
+                # IPv6 is not supported on this platform
+                tcp6 = udp6 = []
+            else:
+                raise
         return tcp4 + tcp6 + udp4 + udp6
 
 #    --- lsof implementation

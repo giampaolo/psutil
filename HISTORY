@@ -7,7 +7,9 @@ NEW FEATURES
 
 BUGFIXES
 
- * Issue 188: psutil import error on Linux ARM architectures.
+ * Issue 188: (Linux) psutil import error on Linux ARM architectures.
+ * Issue 197: (Linux) Process.get_connections() is broken on platforms not
+   supporting IPv6.
 
 
 0.3.0 - 2011-07-08
