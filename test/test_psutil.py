@@ -525,6 +525,22 @@ class TestCase(unittest.TestCase):
                 grandson_proc.kill()
                 grandson_proc.wait()
 
+    def test_wait_timeout_0(self):
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        self.assertRaises(psutil.TimeoutExpired, p.wait, 0)
+        p.kill()
+        stop_at = time.time() + 2
+        while 1:
+            try:
+                code = p.wait(0)
+            except psutil.TimeoutExpired:
+                if time.time() >= stop_at:
+                    raise
+            else:
+                break
+        self.assertEqual(code, signal.SIGKILL)
+
     def test_cpu_percent(self):
         p = psutil.Process(os.getpid())
         p.get_cpu_percent(interval=0.001)

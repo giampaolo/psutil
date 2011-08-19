@@ -44,12 +44,12 @@ def wait_pid(pid, timeout=None):
     Raise TimeoutExpired on timeout expired.
     """
     def check_timeout():
-        if timeout:
+        if timeout is not None:
             if time.time() >= stop_at:
                 raise TimeoutExpired
             time.sleep(0.001)
 
-    if timeout:
+    if timeout is not None:
         waitcall = lambda: os.waitpid(pid, os.WNOHANG)
         stop_at = time.time() + timeout
     else:
