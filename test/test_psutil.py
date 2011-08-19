@@ -503,6 +503,9 @@ class TestCase(unittest.TestCase):
         p.name
         self.assertRaises(psutil.TimeoutExpired, p.wait, 0.01)
 
+        # timeout < 0 not allowed
+        self.assertRaises(ValueError, p.wait, -1)
+
     @skipUnless(POSIX)
     def test_wait_non_children(self):
         # test wait() against processes which are not our children
@@ -539,7 +542,11 @@ class TestCase(unittest.TestCase):
                     raise
             else:
                 break
-        self.assertEqual(code, signal.SIGKILL)
+        if os.name == 'posix':
+            self.assertEqual(code, signal.SIGKILL)
+        else:
+            self.assertEqual(code, 0)
+        self.assertFalse(p.is_running())
 
     def test_cpu_percent(self):
         p = psutil.Process(os.getpid())

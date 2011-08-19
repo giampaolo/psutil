@@ -487,6 +487,8 @@ class Process(object):
         """Wait for process to terminate and, if process is a children
         of the current one also return its exit code, else None.
         """
+        if timeout is not None and not timeout >= 0:
+            raise ValueError("timeout must be a positive integer")
         return self._platform_impl.process_wait(timeout)
 
 

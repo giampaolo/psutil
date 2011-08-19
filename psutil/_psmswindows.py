@@ -34,7 +34,8 @@ from _psutil_mswindows import (ABOVE_NORMAL_PRIORITY_CLASS,
                                HIGH_PRIORITY_CLASS,
                                IDLE_PRIORITY_CLASS,
                                NORMAL_PRIORITY_CLASS,
-                               REALTIME_PRIORITY_CLASS)
+                               REALTIME_PRIORITY_CLASS,
+                               INFINITE)
 
 # --- public functions
 
@@ -179,8 +180,8 @@ class Process(object):
 
     @wrap_exceptions
     def process_wait(self, timeout=None):
-        if not timeout:
-            timeout = 0
+        if timeout is None:
+            timeout = INFINITE
         else:
             # WaitForSingleObject() expects time in milliseconds
             timeout = int(timeout * 1000)

@@ -169,9 +169,6 @@ process_wait(PyObject* self, PyObject* args)
     if (pid == 0) {
         return AccessDenied();
     }
-    if (timeout == 0) {
-        timeout = INFINITE;
-    }
 
     hProcess = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION, FALSE, pid);
     if (hProcess == NULL) {
@@ -1883,6 +1880,8 @@ struct module_state {
                                      NORMAL_PRIORITY_CLASS);
     PyModule_AddIntConstant(module, "REALTIME_PRIORITY_CLASS",
                                      REALTIME_PRIORITY_CLASS);
+    // private constants
+    PyModule_AddIntConstant(module, "INFINITE", INFINITE);
     SetSeDebug();
 
 #if PY_MAJOR_VERSION >= 3
