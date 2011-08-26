@@ -9,6 +9,7 @@ import socket
 import struct
 import sys
 import base64
+import re
 
 import _psutil_posix
 import _psutil_linux
@@ -38,14 +39,30 @@ def _get_num_cpus():
     num = 0
     f = open('/proc/cpuinfo', 'r')
     try:
-        for line in f:
-            if line.lower().startswith('processor'):
-                num += 1
-        if num == 0:
-            raise RuntimeError("line not found")
-        return num
+        lines = f.readlines()
     finally:
         f.close()
+    for line in lines:
+        if line.lower().startswith('processor'):
+            num += 1
+
+    # unknown format (e.g. amrel/sparc architectures), see:
+    # http://code.google.com/p/psutil/issues/detail?id=200
+    if num == 0:
+        f = open('/proc/stat', 'r')
+        try:
+            lines = f.readlines()
+        finally:
+            f.close()
+        search = re.compile('cpu\d')
+        for line in lines:
+            line = line.split(' ')[0]
+            if search.match(line):
+                num += 1
+
+    if num == 0:
+        raise RuntimeError("can't determine number of CPUs")
+    return num
 
 
 # Number of clock ticks per second
