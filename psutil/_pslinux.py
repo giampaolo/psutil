@@ -681,9 +681,9 @@ class Process(object):
         "0500000A:0016" -> ("10.0.0.5", 22)
         "0000000000000000FFFF00000100007F:9E49" -> ("::ffff:127.0.0.1", 40521)
 
-        The IPv4 address portion is a little-endian four-byte hexadecimal
-        number; that is, the least significant byte is listed first,
-        so we need to reverse the order of the bytes to convert it
+        The IP address portion is a little or big endian four-byte
+        hexadecimal number; that is, the least significant byte is listed
+        first, so we need to reverse the order of the bytes to convert it
         to an IP address.
         The port is represented as a two-byte hexadecimal number.
 
@@ -710,6 +710,11 @@ class Process(object):
             #return socket.inet_ntop(socket.AF_INET6,
             #          ''.join(ip[i:i+4][::-1] for i in xrange(0, 16, 4)))
             ip = base64.b16decode(ip)
-            ip = socket.inet_ntop(socket.AF_INET6,
+            # see: http://code.google.com/p/psutil/issues/detail?id=201
+            if sys.byteorder == 'little':
+                ip = socket.inet_ntop(socket.AF_INET6,
                                 struct.pack('>4I', *struct.unpack('<4I', ip)))
+            else:
+                ip = socket.inet_ntop(socket.AF_INET6,
+                                struct.pack('<4I', *struct.unpack('<4I', ip)))
         return (ip, port)
