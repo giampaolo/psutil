@@ -165,6 +165,23 @@ def ignore_access_denied(fun):
         return inner
     return outer
 
+def supports_ipv6():
+    """Return True if IPv6 is supported on this platform."""
+    if not socket.has_ipv6 or not hasattr(socket, "AF_INET6"):
+        return False
+    sock = None
+    try:
+        try:
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            sock.bind(("::1", 0))
+        except (socket.error, socket.gaierror):
+            return False
+        else:
+            return True
+    finally:
+        if sock is not None:
+            sock.close()
+
 
 class ThreadTask(threading.Thread):
     """A thread object used for running process thread tests."""
@@ -985,6 +1002,16 @@ class TestCase(unittest.TestCase):
         self.assertEqual(con[4], con.remote_address)
         self.assertEqual(con[5], con.status)
 
+    @skipUnless(supports_ipv6())
+    def test_get_connections_ipv6(self):
+        s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        s.bind(('::1', 0))
+        s.listen(1)
+        cons = psutil.Process(os.getpid()).get_connections()
+        s.close()
+        self.assertEqual(len(cons), 1)
+        self.assertEqual(cons[0].local_address[0], '::1')
+
     @skipUnless(hasattr(socket, "fromfd") and not WINDOWS)
     def test_connection_fromfd(self):
         sock = socket.socket()
@@ -1019,22 +1046,6 @@ class TestCase(unittest.TestCase):
                 for num in ip:
                     self.assertTrue(0 <= num <= 255)
             self.assertTrue(0 <= port <= 65535)
-
-        def supports_ipv6():
-            if not socket.has_ipv6 or not hasattr(socket, "AF_INET6"):
-                return False
-            sock = None
-            try:
-                try:
-                    sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-                    sock.bind(("::1", 0))
-                except (socket.error, socket.gaierror):
-                    return False
-                else:
-                    return True
-            finally:
-                if sock is not None:
-                    sock.close()
 
         # all values are supposed to match Linux's tcp_states.h states
         # table across all platforms.

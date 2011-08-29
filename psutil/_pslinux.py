@@ -699,7 +699,11 @@ class Process(object):
         if not port:
             return ()
         if family == socket.AF_INET:
-            ip = socket.inet_ntop(family, base64.b16decode(ip)[::-1])
+            # see: http://code.google.com/p/psutil/issues/detail?id=201
+            if sys.byteorder == 'little':
+                ip = socket.inet_ntop(family, base64.b16decode(ip)[::-1])
+            else:
+                ip = socket.inet_ntop(family, base64.b16decode(ip))
         else:  # IPv6
             # old version - let's keep it, just in case...
             #ip = ip.decode('hex')
