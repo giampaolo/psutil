@@ -840,14 +840,17 @@ class TestCase(unittest.TestCase):
         def test_nice(self):
             p = psutil.Process(os.getpid())
             self.assertRaises(TypeError, setattr, p, "nice", "str")
-            first_nice = p.nice
             try:
-                p.nice = 1
-                self.assertEqual(p.nice, 1)
-                # going back to previous nice value raises AccessDenied on OSX
-                if not OSX:
-                    p.nice = 0
-                    self.assertEqual(p.nice, 0)
+                try:
+                    first_nice = p.nice
+                    p.nice = 1
+                    self.assertEqual(p.nice, 1)
+                    # going back to previous nice value raises AccessDenied on OSX
+                    if not OSX:
+                        p.nice = 0
+                        self.assertEqual(p.nice, 0)
+                except psutil.AccessDenied:
+                    pass
             finally:
                 # going back to previous nice value raises AccessDenied on OSX
                 if not OSX:

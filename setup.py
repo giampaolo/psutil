@@ -14,7 +14,7 @@ __ver__ = "0.3.0"
 
 # Hack for Python 3 to tell distutils to run 2to3 against the files
 # copied in the build directory before installing.
-# Reference: http://osdir.com/ml/python.python-3000.cvs/2008-03/msg00127.html
+# Reference: http://docs.python.org/dev/howto/pyporting.html#during-installation
 try:
     from distutils.command.build_py import build_py_2to3 as build_py
 except ImportError:
