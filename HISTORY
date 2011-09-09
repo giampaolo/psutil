@@ -5,6 +5,7 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 NEW FEATURES
 
+ * Issue 150: network I/O counters.
  * Issue 198: Process.wait(timeout=0) can now be used to make wait() return
    immediately.
 

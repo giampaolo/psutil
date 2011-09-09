@@ -24,7 +24,8 @@ __all__ = [
     # functions
     "test", "pid_exists", "get_pid_list", "process_iter", "get_process_list",
     "phymem_usage", "virtmem_usage"
-    "cpu_times", "per_cpu_times", "cpu_percent", "per_cpu_percent"
+    "cpu_times", "per_cpu_times", "cpu_percent", "per_cpu_percent",
+    "network_io_counters,"
     ]
 
 import sys
@@ -674,6 +675,15 @@ def disk_partitions(all=False):
     all others.
     """
     return _psplatform.disk_partitions(all)
+
+if hasattr(_psplatform, "network_io_counters"):
+
+    def network_io_counters():
+        """Return network I/O statistics as a namedtuple including
+        the number of bytes sent and received and the number of
+        packets sent and received.
+        """
+        return _psplatform.network_io_counters()
 
 
 def _deprecated(replacement):

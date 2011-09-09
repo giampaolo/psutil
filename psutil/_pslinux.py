@@ -239,6 +239,30 @@ def pid_exists(pid):
     """Check For the existence of a unix pid."""
     return _psposix.pid_exists(pid)
 
+def network_io_counters():
+    """Return network I/O statistics as a namedtuple including
+    the number of bytes sent and received and the number of
+    packets sent and received.
+    """
+    f = open("/proc/net/dev", "r")
+    try:
+        lines = f.readlines()
+    finally:
+        f.close()
+    retlist = []
+    for line in lines[2:]:
+        bsent, brecv, psent, precv = 0, 0, 0, 0
+        fields = line.split()
+        name = fields[0][:-1]
+        brecv = int(fields[1])
+        precv = int(fields[2])
+        bsent = int(fields[9])
+        psent = int(fields[10])
+        ntuple = ntuple_netiostat(name, bsent, brecv, psent, precv)
+        retlist.append(ntuple)
+    return retlist
+
+
 # taken from /fs/proc/array.c
 _status_map = {"R" : STATUS_RUNNING,
                "S" : STATUS_SLEEPING,

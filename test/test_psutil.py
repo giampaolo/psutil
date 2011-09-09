@@ -438,6 +438,11 @@ class TestCase(unittest.TestCase):
         self.assertTrue(mount in mounts)
         psutil.disk_usage(mount)
 
+    # XXX
+    @skipUnless(hasattr(psutil, "network_io_counters"))
+    def test_network_io_counters(self):
+        psutil.network_io_counters()
+
 
     # ====================
     # Process object tests
