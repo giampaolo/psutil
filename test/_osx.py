@@ -84,7 +84,3 @@ if __name__ == '__main__':
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(OSXSpecificTestCase))
     unittest.TextTestRunner(verbosity=2).run(test_suite)
-
-
-
-

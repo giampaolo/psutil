@@ -69,6 +69,18 @@ def disk_partitions(all=False):
         retlist.append(ntuple)
     return retlist
 
+def network_io_counters():
+    """Return network I/O statistics as a namedtuple including
+    the number of bytes sent and received and the number of
+    packets sent and received.
+    """
+    retlist = []
+    for ifc_info in _psutil_osx.get_network_io_counters():
+        name, bsent, brecv, psent, precv = ifc_info
+        ntuple = ntuple_netiostat(name, bsent, brecv, psent, precv)
+        retlist.append(ntuple)
+    return retlist
+
 get_pid_list = _psutil_osx.get_pid_list
 pid_exists = _psposix.pid_exists
 get_disk_usage = _psposix.get_disk_usage

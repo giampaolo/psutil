@@ -16,6 +16,7 @@
 #include <sys/proc_info.h>
 #include <netinet/tcp_fsm.h>
 #include <arpa/inet.h>
+#include <net/if_dl.h>
 
 #include <mach/mach.h>
 #include <mach/task.h>
@@ -735,7 +736,7 @@ get_process_threads(PyObject* self, PyObject* args)
                          (thread_info_t)thinfo, &thread_info_count);
         if (kr != KERN_SUCCESS) {
             return PyErr_Format(PyExc_RuntimeError, "thread_info() failed");
-        }        
+        }
         basic_info_th = (thread_basic_info_t)thinfo;
         // XXX - thread_info structure does not provide any process id;
         // the best we can do is assigning an incremental bogus value
@@ -1053,6 +1054,73 @@ error:
 
 
 /*
+ * Return a Python list of named tuples with overall network I/O information
+ */
+static PyObject*
+get_network_io_counters(PyObject* self, PyObject* args)
+{
+    char *buf = NULL, *lim, *next;
+    struct if_msghdr *ifm;
+    int mib[6];
+    size_t len;
+    PyObject* py_retlist = PyList_New(0);
+    PyObject* py_ifc_info;
+
+    mib[0] = CTL_NET;          // networking subsystem
+    mib[1] = PF_ROUTE;         // type of information
+    mib[2] = 0;                // protocol (IPPROTO_xxx)
+    mib[3] = 0;                // address family
+    mib[4] = NET_RT_IFLIST2;   // operation
+    mib[5] = 0;
+
+    if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    buf = malloc(len);
+
+    if (sysctl(mib, 6, buf, &len, NULL, 0) < 0) {
+        if (buf) {
+            free(buf);
+        }
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    lim = buf + len;
+
+    for (next = buf; next < lim; ) {
+        ifm = (struct if_msghdr *)next;
+        next += ifm->ifm_msglen;
+
+        if (ifm->ifm_type == RTM_IFINFO2) {
+            struct if_msghdr2 *if2m = (struct if_msghdr2 *)ifm;
+            struct sockaddr_dl *sdl = (struct sockaddr_dl *)(if2m + 1);
+            char ifc_name[32];
+
+            strncpy(ifc_name, sdl->sdl_data, sdl->sdl_nlen);
+            ifc_name[sdl->sdl_nlen] = 0;
+
+            py_ifc_info = Py_BuildValue("(siiii)",
+                                        ifc_name,
+                                        if2m->ifm_data.ifi_obytes,
+                                        if2m->ifm_data.ifi_ibytes,
+                                        if2m->ifm_data.ifi_opackets,
+                                        if2m->ifm_data.ifi_ipackets);
+            PyList_Append(py_retlist, py_ifc_info);
+            Py_XDECREF(py_ifc_info);
+        }
+        else {
+            continue;
+        }
+    }
+
+    return py_retlist;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -1114,6 +1182,8 @@ PsutilMethods[] =
      {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
          "Return a list of tuples including device, mount point and "
          "fs type for all partitions mounted on the system."},
+     {"get_network_io_counters", get_network_io_counters, METH_VARARGS,
+         "Return a tuple of cumulative network I/O information."},
 
      {NULL, NULL, 0, NULL}
 };
