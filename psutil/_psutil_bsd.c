@@ -793,7 +793,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
             strncpy(ifc_name, sdl->sdl_data, sdl->sdl_nlen);
             ifc_name[sdl->sdl_nlen] = 0;
 
-            py_ifc_info = Py_BuildValue("(siiii)",
+            py_ifc_info = Py_BuildValue("(sKKKK)",
                                         ifc_name,
                                         if2m->ifm_data.ifi_obytes,
                                         if2m->ifm_data.ifi_ibytes,
