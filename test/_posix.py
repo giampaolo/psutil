@@ -86,8 +86,8 @@ class PosixSpecificTestCase(unittest.TestCase):
         # use command + arg since "comm" keyword not supported on all platforms
         name_ps = ps("ps --no-headers -o command -p %s" %self.pid).split(' ')[0]
         # remove path if there is any, from the command
-        name_ps = os.path.basename(name_ps)
-        name_psutil = psutil.Process(self.pid).name
+        name_ps = os.path.basename(name_ps).lower()
+        name_psutil = psutil.Process(self.pid).name.lower()
         self.assertEqual(name_ps, name_psutil)
 
     def test_process_exe(self):

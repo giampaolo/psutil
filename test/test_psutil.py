@@ -813,8 +813,8 @@ class TestCase(unittest.TestCase):
     def test_name(self):
         sproc = get_test_subprocess(PYTHON)
         wait_for_pid(sproc.pid)
-        self.assertEqual(psutil.Process(sproc.pid).name,
-                         os.path.basename(sys.executable))
+        self.assertEqual(psutil.Process(sproc.pid).name.lower(),
+                         os.path.basename(sys.executable).lower())
 
     if os.name == 'posix':
 
@@ -1257,7 +1257,9 @@ class TestCase(unittest.TestCase):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         self.assertTrue(str(sproc.pid) in str(p))
-        self.assertTrue(os.path.basename(PYTHON) in str(p))
+        # python shows up as 'Python' in cmdline on OS X so test fails on OS X
+        if not OSX:
+            self.assertTrue(os.path.basename(PYTHON) in str(p))
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.kill()
