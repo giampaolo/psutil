@@ -26,6 +26,12 @@
 #include <mach/mach_traps.h>
 #include <mach/shared_memory_server.h>
 
+#include <CoreFoundation/CoreFoundation.h>
+#include <IOKit/IOKitLib.h>
+#include <IOKit/storage/IOBlockStorageDriver.h>
+#include <IOKit/storage/IOMedia.h>
+#include <IOKit/IOBSD.h>
+
 #include "_psutil_osx.h"
 #include "_psutil_common.h"
 #include "arch/osx/process_info.h"
@@ -1074,6 +1080,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
     mib[5] = 0;
 
     if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
+        Py_DECREF(py_retlist);
         PyErr_SetFromErrno(0);
         return NULL;
     }
@@ -1084,6 +1091,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
         if (buf) {
             free(buf);
         }
+        Py_DECREF(py_retlist);
         PyErr_SetFromErrno(0);
         return NULL;
     }
@@ -1115,6 +1123,158 @@ get_network_io_counters(PyObject* self, PyObject* args)
             continue;
         }
     }
+
+    return py_retlist;
+}
+
+
+/*
+ * Return a Python list of named tuples with overall disk I/O information
+ */
+static PyObject*
+get_disk_io_counters(PyObject* self, PyObject* args)
+{
+    PyObject* py_retlist = PyList_New(0);
+    PyObject* py_disk_info;
+
+    CFDictionaryRef parent_dict;
+    CFDictionaryRef props_dict;
+    CFDictionaryRef stats_dict;
+    io_registry_entry_t parent;
+    io_registry_entry_t disk;
+    io_iterator_t disk_list;
+
+    /* Get list of disks */
+    if (IOServiceGetMatchingServices(kIOMasterPortDefault,
+                                     IOServiceMatching(kIOMediaClass),
+                                     &disk_list) != kIOReturnSuccess) {
+        Py_DECREF(py_retlist);
+        PyErr_SetString(PyExc_RuntimeError, "Unable to get the list of disks.");
+        return NULL;
+    }
+
+    /* Iterate over disks */
+    while ((disk = IOIteratorNext(disk_list)) != 0) {
+        parent_dict = NULL;
+        props_dict = NULL;
+        stats_dict = NULL;
+
+        if (IORegistryEntryGetParentEntry(disk, kIOServicePlane, &parent) != kIOReturnSuccess) {
+            PyErr_SetString(PyExc_RuntimeError, "Unable to get the disk's parent.");
+            Py_DECREF(py_retlist);
+            IOObjectRelease(disk);
+            return NULL;
+        }
+
+        if (IOObjectConformsTo(parent, "IOBlockStorageDriver")) {
+            if(IORegistryEntryCreateCFProperties(
+                                     disk,
+                                     (CFMutableDictionaryRef *) &parent_dict,
+                                     kCFAllocatorDefault,
+                                     kNilOptions) != kIOReturnSuccess)
+            {
+                PyErr_SetString(PyExc_RuntimeError,
+                                "Unable to get the parent's properties.");
+                Py_DECREF(py_retlist);
+                IOObjectRelease(disk);
+                IOObjectRelease(parent);
+                return NULL;
+            }
+
+            if (IORegistryEntryCreateCFProperties(parent,
+                                          (CFMutableDictionaryRef *) &props_dict,
+                                          kCFAllocatorDefault,
+                                          kNilOptions) != kIOReturnSuccess)
+            {
+                PyErr_SetString(PyExc_RuntimeError,
+                                "Unable to get the disk properties.");
+                Py_DECREF(py_retlist);
+                IOObjectRelease(disk);
+                return NULL;
+            }
+
+            const int kMaxDiskNameSize = 64;
+            CFStringRef disk_name_ref = (CFStringRef)CFDictionaryGetValue(
+                                                    parent_dict,
+                                                    CFSTR(kIOBSDNameKey));
+            char disk_name[kMaxDiskNameSize];
+
+            CFStringGetCString(disk_name_ref,
+                               disk_name,
+                               kMaxDiskNameSize,
+                               CFStringGetSystemEncoding());
+
+            stats_dict = (CFDictionaryRef)CFDictionaryGetValue(
+                                    props_dict,
+                                    CFSTR(kIOBlockStorageDriverStatisticsKey));
+
+            if (stats_dict == NULL) {
+                PyErr_SetString(PyExc_RuntimeError, "Unable to get disk stats.");
+                Py_DECREF(py_retlist);
+                CFRelease(props_dict);
+                IOObjectRelease(disk);
+                IOObjectRelease(parent);
+                return NULL;
+            }
+
+            CFNumberRef number;
+            int64_t reads, writes, read_bytes, write_bytes, read_time, write_time = 0;
+
+            /* Get disk reads/writes */
+            if ((number = (CFNumberRef)CFDictionaryGetValue(
+                            stats_dict,
+                            CFSTR(kIOBlockStorageDriverStatisticsReadsKey))))
+            {
+                CFNumberGetValue(number, kCFNumberSInt64Type, &reads);
+            }
+            if ((number = (CFNumberRef)CFDictionaryGetValue(
+                            stats_dict,
+                            CFSTR(kIOBlockStorageDriverStatisticsWritesKey))))
+            {
+                CFNumberGetValue(number, kCFNumberSInt64Type, &writes);
+            }
+
+            /* Get disk bytes read/written */
+            if ((number = (CFNumberRef)CFDictionaryGetValue(
+                        stats_dict,
+                        CFSTR(kIOBlockStorageDriverStatisticsBytesReadKey))))
+            {
+                CFNumberGetValue(number, kCFNumberSInt64Type, &read_bytes);
+            }
+            if ((number = (CFNumberRef)CFDictionaryGetValue(
+                stats_dict,
+                CFSTR(kIOBlockStorageDriverStatisticsBytesWrittenKey))))
+            {
+                CFNumberGetValue(number, kCFNumberSInt64Type, &write_bytes);
+            }
+
+            /* Get disk time spent reading/writing */
+            if ((number = (CFNumberRef)CFDictionaryGetValue(
+                    stats_dict,
+                    CFSTR(kIOBlockStorageDriverStatisticsTotalReadTimeKey))))
+            {
+                CFNumberGetValue(number, kCFNumberSInt64Type, &read_time);
+            }
+            if ((number = (CFNumberRef)CFDictionaryGetValue(
+                    stats_dict,
+                    CFSTR(kIOBlockStorageDriverStatisticsTotalWriteTimeKey)))) {
+                CFNumberGetValue(number, kCFNumberSInt64Type, &write_time);
+            }
+
+            py_disk_info = Py_BuildValue("(sKKKKKK)",
+                                         disk_name, reads, writes, read_bytes,
+                                         write_bytes, read_time, write_time);
+            PyList_Append(py_retlist, py_disk_info);
+            Py_XDECREF(py_disk_info);
+
+            CFRelease(parent_dict);
+            IOObjectRelease(parent);
+            CFRelease(props_dict);
+            IOObjectRelease(disk);
+        }
+    }
+
+    IOObjectRelease (disk_list);
 
     return py_retlist;
 }
@@ -1184,6 +1344,8 @@ PsutilMethods[] =
          "fs type for all partitions mounted on the system."},
      {"get_network_io_counters", get_network_io_counters, METH_VARARGS,
          "Return a tuple of cumulative network I/O information."},
+     {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
+         "Return a tuple of cumulative disk I/O information."},
 
      {NULL, NULL, 0, NULL}
 };
@@ -1259,5 +1421,3 @@ init_psutil_osx(void)
     return module;
 #endif
 }
-
-

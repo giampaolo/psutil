@@ -81,6 +81,22 @@ def network_io_counters():
         retlist.append(ntuple)
     return retlist
 
+def disk_io_counters():
+    """Return disk I/O statistics for every physical disk
+    available to the system as a list of namedtuples including
+    the number of reads, number of writes, number of bytes read,
+    number of bytes written, time spent reading and time spent
+    writing.
+    """
+    retlist = []
+    for disk_info in _psutil_osx.get_disk_io_counters():
+        name, reads, writes, read_bytes, write_bytes, read_time, write_time = \
+            disk_info
+        ntuple = ntuple_diskiostat(name, reads, writes, read_bytes, write_bytes,
+                                   read_time, write_time)
+        retlist.append(ntuple)
+    return retlist
+
 get_pid_list = _psutil_osx.get_pid_list
 pid_exists = _psposix.pid_exists
 get_disk_usage = _psposix.get_disk_usage

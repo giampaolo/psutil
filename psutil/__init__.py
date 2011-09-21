@@ -25,7 +25,7 @@ __all__ = [
     "test", "pid_exists", "get_pid_list", "process_iter", "get_process_list",
     "phymem_usage", "virtmem_usage"
     "cpu_times", "per_cpu_times", "cpu_percent", "per_cpu_percent",
-    "network_io_counters,"
+    "network_io_counters", "disk_io_counters",
     ]
 
 import sys
@@ -701,6 +701,35 @@ if hasattr(_psplatform, "network_io_counters"):
                 precv += item.packets_rcvd
             return ntuple_tot_netiostat(bsent, brecv, psent, precv)
 
+if hasattr(_psplatform, "disk_io_counters"):
+
+    def disk_io_counters(total=False):
+        """Return disk I/O statistics for every physical disk
+        available to the system as a list of namedtuples including
+        the number of reads, number of writes, number of bytes read,
+        number of bytes written, time spent reading and time spent
+        writing.
+
+        If total is True return a namedtuple of total reads, total
+        writes, total bytes read, total bytes written, total time
+        spent reading and the total time spent writing for all
+        disks.
+        """
+        ret = _psplatform.disk_io_counters()
+        if not total:
+            return ret
+        else:
+            from psutil._common import ntuple_tot_diskiostat
+            rcount, wcount, rbytes, wbytes, rtime, wtime = 0, 0, 0, 0, 0, 0
+            for item in ret:
+                rcount += item.reads
+                wcount += item.writes
+                rbytes += item.read_bytes
+                wbytes += item.write_bytes
+                rtime += item.read_time
+                wtime += item.write_time
+            return ntuple_tot_diskiostat(rcount, wcount, rbytes, wbytes, rtime,
+                                         wtime)
 
 def _deprecated(replacement):
     # a decorator which can be used to mark functions as deprecated

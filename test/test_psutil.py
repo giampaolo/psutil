@@ -443,6 +443,11 @@ class TestCase(unittest.TestCase):
     def test_network_io_counters(self):
         psutil.network_io_counters()
 
+    # XXX
+    @skipUnless(hasattr(psutil, "disk_io_counters"))
+    def test_disk_io_counters(self):
+        psutil.disk_io_counters()
+
 
     # ====================
     # Process object tests
