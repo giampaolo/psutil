@@ -703,19 +703,21 @@ if hasattr(_psplatform, "network_io_counters"):
 
 if hasattr(_psplatform, "disk_io_counters"):
 
-    def disk_io_counters(total=False):
-        """Return disk I/O statistics for every physical disk
-        available to the system as a list of namedtuples including
-        the number of reads, number of writes, number of bytes read,
-        number of bytes written, time spent reading and time spent
-        writing.
+    def disk_io_counters(perdisk=False):
+        """Return system disk I/O statistics as a namedtuple including:
+         - number of bytes read
+         - number of bytes written
+         - number of reads
+         - number of writes
+         - time spent reading from disk (in nanoseconds)
+         - time spent writing to disk (in nanoseconds)
 
-        If total is True return a namedtuple of total reads, total
-        writes, total bytes read, total bytes written, total time
-        spent reading and the total time spent writing for all
-        disks.
+        If perdisk is True return the same information for every
+        physical disk installed on the system as a dictionary
+        with partition names as the keys and the namedutuple
+        described above as the values.
         """
-        ret = _psplatform.disk_io_counters()
+        return _psplatform.disk_io_counters(perdisk)
         if not total:
             return ret
         else:

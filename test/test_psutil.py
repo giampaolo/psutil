@@ -446,8 +446,26 @@ class TestCase(unittest.TestCase):
     # XXX
     @skipUnless(hasattr(psutil, "disk_io_counters"))
     def test_disk_io_counters(self):
-        psutil.disk_io_counters()
+        def check_ntuple(nt):
+            self.assertEqual(nt[0], nt.read_count)
+            self.assertEqual(nt[1], nt.write_count)
+            self.assertEqual(nt[2], nt.read_bytes)
+            self.assertEqual(nt[3], nt.write_bytes)
+            self.assertEqual(nt[4], nt.read_time)
+            self.assertEqual(nt[5], nt.write_time)
+            self.assertTrue(nt.read_count >= 0)
+            self.assertTrue(nt.write_count >= 0)
+            self.assertTrue(nt.read_bytes >= 0)
+            self.assertTrue(nt.write_bytes >= 0)
+            self.assertTrue(nt.read_time >= 0)
+            self.assertTrue(nt.write_time >= 0)
 
+        ret = psutil.disk_io_counters(perdisk=False)
+        check_ntuple(ret)
+        ret = psutil.disk_io_counters(perdisk=True)
+        for name, ntuple in ret.iteritems():
+            self.assertTrue(name)
+            check_ntuple(ntuple)
 
     # ====================
     # Process object tests

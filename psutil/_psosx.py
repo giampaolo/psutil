@@ -81,21 +81,32 @@ def network_io_counters():
         retlist.append(ntuple)
     return retlist
 
-def disk_io_counters():
-    """Return disk I/O statistics for every physical disk
-    available to the system as a list of namedtuples including
-    the number of reads, number of writes, number of bytes read,
-    number of bytes written, time spent reading and time spent
-    writing.
+def disk_io_counters(perdisk=False):
+    """Return disk I/O statistics as a nameduple or a dict of
+    namedtuple.
     """
-    retlist = []
-    for disk_info in _psutil_osx.get_disk_io_counters():
-        name, reads, writes, read_bytes, write_bytes, read_time, write_time = \
-            disk_info
-        ntuple = ntuple_diskiostat(name, reads, writes, read_bytes, write_bytes,
-                                   read_time, write_time)
-        retlist.append(ntuple)
-    return retlist
+    rawdict = _psutil_osx.get_disk_io_counters()
+    tot_reads, tot_writes, tot_rbytes, tot_wbytes, tot_rtime, tot_wtime = \
+        0, 0, 0, 0, 0, 0
+    retdict = {}
+    for name, values in rawdict.iteritems():
+        reads, writes, rbytes, wbytes, rtime, wtime = values
+        if perdisk:
+            nt = ntuple_disk_iostat(reads, writes, rbytes, wbytes, rtime, wtime)
+            retdict[name] = nt
+        else:
+            tot_reads += reads
+            tot_writes += writes
+            tot_rbytes += rbytes
+            tot_wbytes += wbytes
+            tot_rtime += rtime
+            tot_wtime += wtime
+    if perdisk:
+        return retdict
+    else:
+        return ntuple_disk_iostat(tot_reads, tot_writes,
+                                  tot_rbytes, tot_wbytes,
+                                  tot_rtime, tot_wtime)
 
 get_pid_list = _psutil_osx.get_pid_list
 pid_exists = _psposix.pid_exists

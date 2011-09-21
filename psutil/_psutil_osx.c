@@ -1129,12 +1129,12 @@ get_network_io_counters(PyObject* self, PyObject* args)
 
 
 /*
- * Return a Python list of named tuples with overall disk I/O information
+ * Return a Python dict of tuples for disk I/O information
  */
 static PyObject*
 get_disk_io_counters(PyObject* self, PyObject* args)
 {
-    PyObject* py_retlist = PyList_New(0);
+    PyObject* py_retdict = PyDict_New();
     PyObject* py_disk_info;
 
     CFDictionaryRef parent_dict;
@@ -1148,7 +1148,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
     if (IOServiceGetMatchingServices(kIOMasterPortDefault,
                                      IOServiceMatching(kIOMediaClass),
                                      &disk_list) != kIOReturnSuccess) {
-        Py_DECREF(py_retlist);
+        Py_DECREF(py_retdict);
         PyErr_SetString(PyExc_RuntimeError, "Unable to get the list of disks.");
         return NULL;
     }
@@ -1161,7 +1161,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
 
         if (IORegistryEntryGetParentEntry(disk, kIOServicePlane, &parent) != kIOReturnSuccess) {
             PyErr_SetString(PyExc_RuntimeError, "Unable to get the disk's parent.");
-            Py_DECREF(py_retlist);
+            Py_DECREF(py_retdict);
             IOObjectRelease(disk);
             return NULL;
         }
@@ -1175,7 +1175,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
             {
                 PyErr_SetString(PyExc_RuntimeError,
                                 "Unable to get the parent's properties.");
-                Py_DECREF(py_retlist);
+                Py_DECREF(py_retdict);
                 IOObjectRelease(disk);
                 IOObjectRelease(parent);
                 return NULL;
@@ -1188,7 +1188,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
             {
                 PyErr_SetString(PyExc_RuntimeError,
                                 "Unable to get the disk properties.");
-                Py_DECREF(py_retlist);
+                Py_DECREF(py_retdict);
                 IOObjectRelease(disk);
                 return NULL;
             }
@@ -1210,7 +1210,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
 
             if (stats_dict == NULL) {
                 PyErr_SetString(PyExc_RuntimeError, "Unable to get disk stats.");
-                Py_DECREF(py_retlist);
+                Py_DECREF(py_retdict);
                 CFRelease(props_dict);
                 IOObjectRelease(disk);
                 IOObjectRelease(parent);
@@ -1248,7 +1248,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
                 CFNumberGetValue(number, kCFNumberSInt64Type, &write_bytes);
             }
 
-            /* Get disk time spent reading/writing */
+            /* Get disk time spent reading/writing (nanoseconds) */
             if ((number = (CFNumberRef)CFDictionaryGetValue(
                     stats_dict,
                     CFSTR(kIOBlockStorageDriverStatisticsTotalReadTimeKey))))
@@ -1261,10 +1261,11 @@ get_disk_io_counters(PyObject* self, PyObject* args)
                 CFNumberGetValue(number, kCFNumberSInt64Type, &write_time);
             }
 
-            py_disk_info = Py_BuildValue("(sKKKKKK)",
-                                         disk_name, reads, writes, read_bytes,
-                                         write_bytes, read_time, write_time);
-            PyList_Append(py_retlist, py_disk_info);
+            py_disk_info = Py_BuildValue("(KKKKKK)",
+                                         reads, writes,
+                                         read_bytes, write_bytes,
+                                         read_time, write_time);
+            PyDict_SetItemString(py_retdict, disk_name, py_disk_info);
             Py_XDECREF(py_disk_info);
 
             CFRelease(parent_dict);
@@ -1276,7 +1277,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
 
     IOObjectRelease (disk_list);
 
-    return py_retlist;
+    return py_retdict;
 }
 
 
@@ -1345,7 +1346,7 @@ PsutilMethods[] =
      {"get_network_io_counters", get_network_io_counters, METH_VARARGS,
          "Return a tuple of cumulative network I/O information."},
      {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
-         "Return a tuple of cumulative disk I/O information."},
+         "Return dict of tuples of disks I/O information."},
 
      {NULL, NULL, 0, NULL}
 };
