@@ -28,6 +28,10 @@ W: http://www.jayloden.com
 Contributors
 ============
 
+N: Jeremy Whitlock
+E: jcscoobyrs@gmail.com
+I: 125, 150, 174, 206
+
 N: wj32
 E: wj32.64@gmail.com
 D: process username() and get_connections() on Windows
@@ -66,7 +70,3 @@ I: 125
 N: Sandro Tosi
 E: sandro.tosi@gmail.com
 I: 200, 201
-
-N: Jeremy Whitlock
-E: jcscoobyrs@gmail.com
-I: 150
