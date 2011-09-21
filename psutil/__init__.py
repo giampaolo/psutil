@@ -718,20 +718,6 @@ if hasattr(_psplatform, "disk_io_counters"):
         described above as the values.
         """
         return _psplatform.disk_io_counters(perdisk)
-        if not total:
-            return ret
-        else:
-            from psutil._common import ntuple_tot_diskiostat
-            rcount, wcount, rbytes, wbytes, rtime, wtime = 0, 0, 0, 0, 0, 0
-            for item in ret:
-                rcount += item.reads
-                wcount += item.writes
-                rbytes += item.read_bytes
-                wbytes += item.write_bytes
-                rtime += item.read_time
-                wtime += item.write_time
-            return ntuple_tot_diskiostat(rcount, wcount, rbytes, wbytes, rtime,
-                                         wtime)
 
 def _deprecated(replacement):
     # a decorator which can be used to mark functions as deprecated
