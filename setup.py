@@ -49,7 +49,8 @@ elif sys.platform.lower().startswith("darwin"):
     extensions = [Extension('_psutil_osx',
                             sources = ['psutil/_psutil_osx.c',
                                        'psutil/_psutil_common.c',
-                                       'psutil/arch/osx/process_info.c']
+                                       'psutil/arch/osx/process_info.c'],
+                            extra_link_args=['-framework', 'CoreFoundation']
                             ),
                   posix_extension]
 # FreeBSD
