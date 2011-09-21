@@ -50,7 +50,7 @@ elif sys.platform.lower().startswith("darwin"):
                             sources = ['psutil/_psutil_osx.c',
                                        'psutil/_psutil_common.c',
                                        'psutil/arch/osx/process_info.c'],
-                            extra_link_args=['-framework', 'CoreFoundation']
+                            extra_link_args=['-framework', 'CoreFoundation', '-framework', 'IOKit']
                             ),
                   posix_extension]
 # FreeBSD
