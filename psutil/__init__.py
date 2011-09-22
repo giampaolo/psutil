@@ -690,7 +690,21 @@ if hasattr(_psplatform, "network_io_counters"):
         with network interface names as the keys and the namedtuple
         described above as the values.
         """
-        return _psplatform.network_io_counters(pernic)
+        from psutil._common import ntuple_net_iostat
+        rawdict = _psplatform.network_io_counters()
+        if pernic:
+            for nic, fields in rawdict.iteritems():
+                rawdict[nic] = ntuple_net_iostat(*fields)
+            return rawdict
+        else:
+            bytes_sent, bytes_recv, packets_sent, packets_recv = 0, 0, 0, 0
+            for _, fields in rawdict.iteritems():
+                bytes_sent += fields[0]
+                bytes_recv += fields[1]
+                packets_sent += fields[2]
+                packets_recv += fields[3]
+            return ntuple_net_iostat(bytes_sent, bytes_recv,
+                                     packets_sent, packets_recv)
 
 if hasattr(_psplatform, "disk_io_counters"):
 

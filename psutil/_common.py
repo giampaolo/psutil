@@ -51,6 +51,8 @@ ntuple_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq s
 ntuple_sysmeminfo = namedtuple('usage', 'total used free percent')
 ntuple_diskinfo = namedtuple('usage', 'total used free percent')
 ntuple_partition = namedtuple('partition',  'device mountpoint fstype')
+ntuple_net_iostat = namedtuple('iostat', 'bytes_sent bytes_recv packets_sent packets_recv')
+ntuple_disk_iostat = namedtuple('iostat', 'read_count write_count read_bytes write_bytes read_time write_time')
 
 # processes
 ntuple_meminfo = namedtuple('meminfo', 'rss vms')
@@ -62,5 +64,3 @@ ntuple_uids = namedtuple('user', 'real effective saved')
 ntuple_gids = namedtuple('group', 'real effective saved')
 ntuple_io = namedtuple('io', 'read_count write_count read_bytes write_bytes')
 ntuple_ionice = namedtuple('ionice', 'ioclass value')
-ntuple_net_iostat = namedtuple('iostat', 'bytes_sent bytes_recv packets_sent packets_recv')
-ntuple_disk_iostat = namedtuple('iostat', 'read_count write_count read_bytes write_bytes read_time write_time')
