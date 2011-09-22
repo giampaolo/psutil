@@ -19,6 +19,7 @@ BUGFIXES
    architectures and causing crash on module import.
  * Issue 201: (Linux) Process.get_connections() is broken on big-endian
    architectures.
+ * Issue 135: (OS X) psutil cannot create Process object
 
 
 0.3.0 - 2011-07-08
