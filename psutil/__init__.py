@@ -678,28 +678,19 @@ def disk_partitions(all=False):
 
 if hasattr(_psplatform, "network_io_counters"):
 
-    def network_io_counters(total=False):
-        """Return network I/O statistics for every network interface
-        installed on the system as a list of namedtuples including
-        the number of bytes sent and received and the number of
-        packets sent and received by that network interface.
+    def network_io_counters(pernic=False):
+        """Return network I/O statistics as a namedtuple including:
+         - number of bytes sent
+         - number of bytes received
+         - number of packets sent
+         - number of packets received
 
-        If total is True return a namedtuple of total bytes sent and
-        received and the total number of packets sent and received by
-        all network interfaces.
+        If pernic is True return the same information for every
+        network interface installed on the system as a dictionary
+        with network interface names as the keys and the namedtuple
+        described above as the values.
         """
-        ret = _psplatform.network_io_counters()
-        if not total:
-            return ret
-        else:
-            from psutil._common import ntuple_tot_netiostat
-            bsent, brecv, psent, precv = 0, 0, 0, 0
-            for item in ret:
-                bsent += item.bytes_sent
-                brecv += item.bytes_rcvd
-                psent += item.packets_sent
-                precv += item.packets_rcvd
-            return ntuple_tot_netiostat(bsent, brecv, psent, precv)
+        return _psplatform.network_io_counters(pernic)
 
 if hasattr(_psplatform, "disk_io_counters"):
 

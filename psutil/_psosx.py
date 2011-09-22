@@ -69,20 +69,35 @@ def disk_partitions(all=False):
         retlist.append(ntuple)
     return retlist
 
-def network_io_counters():
-    """Return network I/O statistics as a namedtuple including
-    the number of bytes sent and received and the number of
-    packets sent and received.
+def network_io_counters(pernic=False):
+    """Return network I/O statistics as a namedtuple or a
+    dict of namedtuple.
     """
-    retlist = []
-    for ifc_info in _psutil_osx.get_network_io_counters():
-        name, bsent, brecv, psent, precv = ifc_info
-        ntuple = ntuple_netiostat(name, bsent, brecv, psent, precv)
-        retlist.append(ntuple)
-    return retlist
+    rawdict = _psutil_osx.get_network_io_counters()
+    tot_bytes_sent, tot_bytes_rcvd, tot_packets_sent, tot_packets_rcvd = \
+        0, 0, 0, 0
+    retdict = {}
+
+    for name, values in rawdict.iteritems():
+        bytes_sent, bytes_rcvd, packets_sent, packets_rcvd = values
+        if pernic:
+            nt = ntuple_net_iostat(bytes_sent, bytes_rcvd, packets_sent,
+                                   packets_rcvd)
+            retdict[name] = nt
+        else:
+            tot_bytes_sent += bytes_sent
+            tot_bytes_rcvd += bytes_rcvd
+            tot_packets_sent += packets_sent
+            tot_packets_rcvd += packets_rcvd
+
+    if pernic:
+        return retdict
+    else:
+        return ntuple_net_iostat(tot_bytes_sent, tot_bytes_rcvd,
+                                 tot_packets_sent, tot_packets_rcvd)
 
 def disk_io_counters(perdisk=False):
-    """Return disk I/O statistics as a nameduple or a dict of
+    """Return disk I/O statistics as a namedtuple or a dict of
     namedtuple.
     """
     rawdict = _psutil_osx.get_disk_io_counters()

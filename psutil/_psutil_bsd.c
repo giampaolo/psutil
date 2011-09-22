@@ -749,12 +749,13 @@ get_disk_partitions(PyObject* self, PyObject* args)
 static PyObject*
 get_network_io_counters(PyObject* self, PyObject* args)
 {
+    PyObject* py_retdict = PyDict_New();
+    PyObject* py_ifc_info;
+
     char *buf = NULL, *lim, *next;
     struct if_msghdr *ifm;
     int mib[6];
     size_t len;
-    PyObject* py_retlist = PyList_New(0);
-    PyObject* py_ifc_info;
 
     mib[0] = CTL_NET;          // networking subsystem
     mib[1] = PF_ROUTE;         // type of information
@@ -764,6 +765,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
     mib[5] = 0;
 
     if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
+        Py_DECREF(py_retdict);
         PyErr_SetFromErrno(0);
         return NULL;
     }
@@ -775,6 +777,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
         if (buf) {
             free(buf);
         }
+        Py_DECREF(py_retdict);
         PyErr_SetFromErrno(0);
         return NULL;
     }
@@ -793,13 +796,12 @@ get_network_io_counters(PyObject* self, PyObject* args)
             strncpy(ifc_name, sdl->sdl_data, sdl->sdl_nlen);
             ifc_name[sdl->sdl_nlen] = 0;
 
-            py_ifc_info = Py_BuildValue("(sKKKK)",
-                                        ifc_name,
+            py_ifc_info = Py_BuildValue("(KKKK)",
                                         if2m->ifm_data.ifi_obytes,
                                         if2m->ifm_data.ifi_ibytes,
                                         if2m->ifm_data.ifi_opackets,
                                         if2m->ifm_data.ifi_ipackets);
-            PyList_Append(py_retlist, py_ifc_info);
+            PyDict_SetItemString(py_retdict, ifc_name, py_ifc_info);
             Py_XDECREF(py_ifc_info);
         }
         else {
@@ -807,7 +809,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
         }
     }
 
-    return py_retlist;
+    return py_retdict;
 }
 
 
@@ -877,7 +879,7 @@ PsutilMethods[] =
          "Return a list of tuples including device, mount point and "
          "fs type for all partitions mounted on the system."},
      {"get_network_io_counters", get_network_io_counters, METH_VARARGS,
-         "Return a tuple of cumulative network I/O information."},
+         "Return dict of tuples of networks I/O information."},
 
      {NULL, NULL, 0, NULL}
 };

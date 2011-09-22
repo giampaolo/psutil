@@ -239,28 +239,42 @@ def pid_exists(pid):
     """Check For the existence of a unix pid."""
     return _psposix.pid_exists(pid)
 
-def network_io_counters():
-    """Return network I/O statistics as a namedtuple including
-    the number of bytes sent and received and the number of
-    packets sent and received.
+def network_io_counters(pernic=False):
+    """Return network I/O statistics as a namedtuple or a
+    dict of namedtuple.
     """
     f = open("/proc/net/dev", "r")
     try:
         lines = f.readlines()
     finally:
         f.close()
-    retlist = []
+    tot_bytes_sent, tot_bytes_rcvd, tot_packets_sent, tot_packets_rcvd = \
+        0, 0, 0, 0
+    retdict = {}
+
     for line in lines[2:]:
-        bsent, brecv, psent, precv = 0, 0, 0, 0
+        bytes_sent, bytes_rcvd, packets_sent, packets_rcvd = 0, 0, 0, 0
         fields = line.split()
         name = fields[0][:-1]
         brecv = int(fields[1])
         precv = int(fields[2])
         bsent = int(fields[9])
         psent = int(fields[10])
-        ntuple = ntuple_netiostat(name, bsent, brecv, psent, precv)
-        retlist.append(ntuple)
-    return retlist
+        if pernic:
+            nt = ntuple_net_iostat(bytes_sent, bytes_rcvd, packets_sent,
+                                   packets_rcvd)
+            retdict[name] = nt
+        else:
+            tot_bytes_sent += bytes_sent
+            tot_bytes_rcvd += bytes_rcvd
+            tot_packets_sent += packets_sent
+            tot_packets_rcvd += packets_rcvd
+
+    if pernic:
+        return retdict
+    else:
+        return ntuple_net_iostat(tot_bytes_sent, tot_bytes_rcvd,
+                                 tot_packets_sent, tot_packets_rcvd)
 
 def disk_io_counters(perdisk=False):
     """Return system disk IO counters."""
