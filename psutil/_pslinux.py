@@ -262,6 +262,63 @@ def network_io_counters():
         retlist.append(ntuple)
     return retlist
 
+def disk_io_counters(perdisk=False):
+    """Return system disk IO counters."""
+    # man iostat states that sectors are equivalent with blocks and
+    # have a size of 512 bytes since 2.4 kernels. This value is
+    # needed to calculate the amount of disk I/O in bytes.
+    SECTOR_SIZE = 512
+
+    # determine partitions we want to look for
+    partitions = []
+    f = open("/proc/partitions", "r")
+    try:
+        lines = f.readlines()[2:]
+    finally:
+        f.close()
+    for line in lines:
+        _, _, _, name = line.split()
+        if name[-1].isdigit():
+            partitions.append(name)
+    #
+    retdict = {}
+    f = open("/proc/diskstats", "r")
+    try:
+        lines = f.readlines()
+    finally:
+        f.close()
+    tot_reads, tot_writes, tot_rbytes, tot_wbytes, tot_rtime, tot_wtime = \
+        0, 0, 0, 0, 0, 0
+    for line in lines:
+        _, _, name, reads, _, rbytes, rtime, writes, _, wbytes, wtime = \
+            line.split()[:11]
+        rbytes = int(rbytes) * SECTOR_SIZE
+        wbytes = int(wbytes) * SECTOR_SIZE
+        reads = int(reads)
+        writes = int(writes)
+        # TODO: times are expressed in milliseconds while OSX/BSD has
+        # these expressed in nanoseconds; figure this out.
+        rtime = int(rtime)
+        wtime = int(wtime)
+        if name in partitions:
+            if not perdisk:
+                tot_rbytes += rbytes
+                tot_wbytes += wbytes
+                tot_reads += reads
+                tot_writes += writes
+                tot_rtime += rtime
+                tot_wtime += wtime
+            else:
+                retdict[name] = ntuple_disk_iostat(reads, writes,
+                                                   rbytes, wbytes,
+                                                   rtime, wtime)
+    if not perdisk:
+        return ntuple_disk_iostat(tot_reads, tot_writes,
+                                  tot_rbytes, tot_wbytes,
+                                  tot_rtime, tot_wtime)
+    else:
+        return retdict
+
 
 # taken from /fs/proc/array.c
 _status_map = {"R" : STATUS_RUNNING,
