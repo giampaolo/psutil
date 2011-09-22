@@ -10,7 +10,7 @@ try:
 except ImportError:
     from distutils.core import setup, Extension
 
-__ver__ = "0.3.0"
+__ver__ = "0.3.1"
 
 # Hack for Python 3 to tell distutils to run 2to3 against the files
 # copied in the build directory before installing.
