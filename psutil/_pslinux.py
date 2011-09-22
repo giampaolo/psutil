@@ -248,33 +248,32 @@ def network_io_counters(pernic=False):
         lines = f.readlines()
     finally:
         f.close()
-    tot_bytes_sent, tot_bytes_rcvd, tot_packets_sent, tot_packets_rcvd = \
+    tot_bytes_sent, tot_bytes_recv, tot_packets_sent, tot_packets_recv = \
         0, 0, 0, 0
     retdict = {}
 
     for line in lines[2:]:
-        bytes_sent, bytes_rcvd, packets_sent, packets_rcvd = 0, 0, 0, 0
         fields = line.split()
         name = fields[0][:-1]
-        brecv = int(fields[1])
-        precv = int(fields[2])
-        bsent = int(fields[9])
-        psent = int(fields[10])
+        bytes_recv = int(fields[1])
+        packets_recv = int(fields[2])
+        bytes_sent = int(fields[9])
+        packets_sent = int(fields[10])
         if pernic:
-            nt = ntuple_net_iostat(bytes_sent, bytes_rcvd, packets_sent,
-                                   packets_rcvd)
+            nt = ntuple_net_iostat(bytes_sent, bytes_recv,
+                                   packets_sent, packets_recv)
             retdict[name] = nt
         else:
             tot_bytes_sent += bytes_sent
-            tot_bytes_rcvd += bytes_rcvd
+            tot_bytes_recv += bytes_recv
             tot_packets_sent += packets_sent
-            tot_packets_rcvd += packets_rcvd
+            tot_packets_recv += packets_recv
 
     if pernic:
         return retdict
     else:
-        return ntuple_net_iostat(tot_bytes_sent, tot_bytes_rcvd,
-                                 tot_packets_sent, tot_packets_rcvd)
+        return ntuple_net_iostat(tot_bytes_sent, tot_bytes_recv,
+                                 tot_packets_sent, tot_packets_recv)
 
 def disk_io_counters(perdisk=False):
     """Return system disk IO counters."""

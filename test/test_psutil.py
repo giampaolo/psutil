@@ -440,9 +440,23 @@ class TestCase(unittest.TestCase):
 
     # XXX
     @skipUnless(hasattr(psutil, "network_io_counters"))
-    def test_network_io_counters(self):
-        psutil.network_io_counters()
+    def test_anetwork_io_counters(self):
+        def check_ntuple(nt):
+            self.assertEqual(nt[0], nt.bytes_sent)
+            self.assertEqual(nt[1], nt.bytes_recv)
+            self.assertEqual(nt[2], nt.packets_sent)
+            self.assertEqual(nt[3], nt.packets_recv)
+            self.assertTrue(nt.bytes_sent >= 0)
+            self.assertTrue(nt.bytes_recv >= 0)
+            self.assertTrue(nt.packets_sent >= 0)
+            self.assertTrue(nt.packets_recv >= 0)
 
+        ret = psutil.network_io_counters(pernic=False)
+        check_ntuple(ret)
+        ret = psutil.network_io_counters(pernic=True)
+        for name, ntuple in ret.iteritems():
+            self.assertTrue(name)
+            check_ntuple(ntuple)
     # XXX
     @skipUnless(hasattr(psutil, "disk_io_counters"))
     def test_disk_io_counters(self):
