@@ -722,7 +722,23 @@ if hasattr(_psplatform, "disk_io_counters"):
         with partition names as the keys and the namedutuple
         described above as the values.
         """
-        return _psplatform.disk_io_counters(perdisk)
+        from psutil._common import ntuple_disk_iostat
+        rawdict = _psplatform.disk_io_counters()
+        if perdisk:
+            for disk, fields in rawdict.iteritems():
+                rawdict[disk] = ntuple_disk_iostat(*fields)
+            return rawdict
+        else:
+            reads, writes, rbytes, wbytes, rtime, wtime = 0, 0, 0, 0, 0, 0
+            for _, fields in rawdict.iteritems():
+                reads += fields[0]
+                writes += fields[1]
+                rbytes += fields[2]
+                wbytes += fields[3]
+                rtime += fields[4]
+                wtime += fields[5]
+            return ntuple_disk_iostat(reads, writes, rbytes, wbytes, rtime, wtime)
+
 
 def _deprecated(replacement):
     # a decorator which can be used to mark functions as deprecated

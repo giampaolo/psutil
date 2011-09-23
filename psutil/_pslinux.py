@@ -241,7 +241,7 @@ def pid_exists(pid):
 
 def network_io_counters():
     """Return network I/O statistics for every network interface
-    installed on the system as a raw dict of tuples.
+    installed on the system as a dict of raw tuples.
     """
     f = open("/proc/net/dev", "r")
     try:
@@ -260,8 +260,10 @@ def network_io_counters():
         retdict[name] = (bytes_sent, bytes_recv, packets_sent, packets_recv)
     return retdict
 
-def disk_io_counters(perdisk=False):
-    """Return system disk IO counters."""
+def disk_io_counters():
+    """Return disk I/O statistics for every disk installed on the
+    system as a dict of raw tuples.
+    """
     # man iostat states that sectors are equivalent with blocks and
     # have a size of 512 bytes since 2.4 kernels. This value is
     # needed to calculate the amount of disk I/O in bytes.
@@ -285,37 +287,20 @@ def disk_io_counters(perdisk=False):
         lines = f.readlines()
     finally:
         f.close()
-    tot_reads, tot_writes, tot_rbytes, tot_wbytes, tot_rtime, tot_wtime = \
-        0, 0, 0, 0, 0, 0
     for line in lines:
         _, _, name, reads, _, rbytes, rtime, writes, _, wbytes, wtime = \
             line.split()[:11]
-        rbytes = int(rbytes) * SECTOR_SIZE
-        wbytes = int(wbytes) * SECTOR_SIZE
-        reads = int(reads)
-        writes = int(writes)
-        # TODO: times are expressed in milliseconds while OSX/BSD has
-        # these expressed in nanoseconds; figure this out.
-        rtime = int(rtime)
-        wtime = int(wtime)
         if name in partitions:
-            if not perdisk:
-                tot_rbytes += rbytes
-                tot_wbytes += wbytes
-                tot_reads += reads
-                tot_writes += writes
-                tot_rtime += rtime
-                tot_wtime += wtime
-            else:
-                retdict[name] = ntuple_disk_iostat(reads, writes,
-                                                   rbytes, wbytes,
-                                                   rtime, wtime)
-    if not perdisk:
-        return ntuple_disk_iostat(tot_reads, tot_writes,
-                                  tot_rbytes, tot_wbytes,
-                                  tot_rtime, tot_wtime)
-    else:
-        return retdict
+            rbytes = int(rbytes) * SECTOR_SIZE
+            wbytes = int(wbytes) * SECTOR_SIZE
+            reads = int(reads)
+            writes = int(writes)
+            # TODO: times are expressed in milliseconds while OSX/BSD has
+            # these expressed in nanoseconds; figure this out.
+            rtime = int(rtime)
+            wtime = int(wtime)
+            retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime)
+    return retdict
 
 
 # taken from /fs/proc/array.c

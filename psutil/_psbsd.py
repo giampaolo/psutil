@@ -70,15 +70,10 @@ def disk_partitions(all=False):
         retlist.append(ntuple)
     return retlist
 
-def network_io_counters():
-    """Return network I/O statistics for every network interface
-    installed on the system as a raw dict of tuples.
-    """
-    return _psutil_osx.get_network_io_counters()
-
 get_pid_list = _psutil_bsd.get_pid_list
 pid_exists = _psposix.pid_exists
 get_disk_usage = _psposix.get_disk_usage
+network_io_counters = _psutil_osx.get_network_io_counters
 
 
 def wrap_exceptions(method):

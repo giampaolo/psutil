@@ -69,42 +69,11 @@ def disk_partitions(all=False):
         retlist.append(ntuple)
     return retlist
 
-def network_io_counters():
-    """Return network I/O statistics for every network interface
-    installed on the system as a raw dict of tuples.
-    """
-    return _psutil_osx.get_network_io_counters()
-
-def disk_io_counters(perdisk=False):
-    """Return disk I/O statistics as a namedtuple or a dict of
-    namedtuple.
-    """
-    rawdict = _psutil_osx.get_disk_io_counters()
-    tot_reads, tot_writes, tot_rbytes, tot_wbytes, tot_rtime, tot_wtime = \
-        0, 0, 0, 0, 0, 0
-    retdict = {}
-    for name, values in rawdict.iteritems():
-        reads, writes, rbytes, wbytes, rtime, wtime = values
-        if perdisk:
-            nt = ntuple_disk_iostat(reads, writes, rbytes, wbytes, rtime, wtime)
-            retdict[name] = nt
-        else:
-            tot_reads += reads
-            tot_writes += writes
-            tot_rbytes += rbytes
-            tot_wbytes += wbytes
-            tot_rtime += rtime
-            tot_wtime += wtime
-    if perdisk:
-        return retdict
-    else:
-        return ntuple_disk_iostat(tot_reads, tot_writes,
-                                  tot_rbytes, tot_wbytes,
-                                  tot_rtime, tot_wtime)
-
 get_pid_list = _psutil_osx.get_pid_list
 pid_exists = _psposix.pid_exists
 get_disk_usage = _psposix.get_disk_usage
+network_io_counters = _psutil_osx.get_network_io_counters
+disk_io_counters = _psutil_osx.get_disk_io_counters
 
 # --- decorator
 
