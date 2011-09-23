@@ -123,18 +123,6 @@ class Process(object):
     def __repr__(self):
         return "<%s at %s>" % (self.__str__(), id(self))
 
-    def __eq__(self, other):
-        """Test for equality with another Process object based on pid
-        and creation time.
-        """
-        h1 = (self.pid, self.create_time)
-        try:
-            h2 = (other.pid, other.create_time)
-        except AttributeError:
-            return False
-        else:
-            return h1 == h2
-
     @property
     def pid(self):
         """The process pid."""
@@ -403,14 +391,21 @@ class Process(object):
         return self._platform_impl.get_connections()
 
     def is_running(self):
-        """Return whether the current process is running in the current
-        process list.
-        """
+        """Return whether this process is running."""
         try:
-            newproc = Process(self.pid)
-            return self == newproc
+            # Test for equality with another Process object based
+            # on pid and creation time.
+            # This pair is supposed to indentify a Process instance
+            # univocally over the time (the PID alone is not enough as
+            # it might refer to a process which is gone in meantime
+            # and its PID reused by another process).
+            new_self = Process(self.pid)
+            p1 = (self.pid, self.create_time)
+            p2 = (new_self.pid, new_self.create_time)
         except NoSuchProcess:
             return False
+        else:
+            return p1 == p2
 
     def send_signal(self, sig):
         """Send a signal to process (see signal module constants).

@@ -798,11 +798,6 @@ class TestCase(unittest.TestCase):
         sproc = get_test_subprocess()
         self.assertEqual(psutil.Process(sproc.pid).pid, sproc.pid)
 
-    def test_eq(self):
-        sproc = get_test_subprocess()
-        wait_for_pid(sproc.pid)
-        self.assertTrue(psutil.Process(sproc.pid) == psutil.Process(sproc.pid))
-
     def test_is_running(self):
         sproc = get_test_subprocess()
         wait_for_pid(sproc.pid)

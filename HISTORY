@@ -12,6 +12,7 @@ NEW FEATURES
 
 BUGFIXES
 
+ * Issue 135: (OS X) psutil cannot create Process object
  * Issue 188: (Linux) psutil import error on Linux ARM architectures.
  * Issue 197: (Linux) Process.get_connections() is broken on platforms not
    supporting IPv6.
@@ -19,7 +20,8 @@ BUGFIXES
    architectures and causing crash on module import.
  * Issue 201: (Linux) Process.get_connections() is broken on big-endian
    architectures.
- * Issue 135: (OS X) psutil cannot create Process object
+ * Issue 211: Process instance can unexpectedly raise NoSuchProcess if tested
+   for equality with another object.
 
 
 0.3.0 - 2011-07-08

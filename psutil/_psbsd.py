@@ -185,7 +185,6 @@ class Process(object):
             retlist.append(ntuple)
         return retlist
 
-
     def get_open_files(self):
         """Return files opened by process by parsing lsof output."""
         lsof = _psposix.LsofParser(self.pid, self._process_name)
