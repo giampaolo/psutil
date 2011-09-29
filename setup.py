@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 #
 # $Id$
-#
+
+# psutil is distributed under BSD license.
+# Copyright (c) 2009, Jay Loden, Dave Daeschler, Giampaolo Rodola'
+# All rights reserved.
 
 import sys
 import os
