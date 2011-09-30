@@ -13,6 +13,7 @@ NEW FEATURES
 BUGFIXES
 
  * Issue 135: (OS X) psutil cannot create Process object
+ * Issue 144: (Linux) no longer support 0 special PID.
  * Issue 188: (Linux) psutil import error on Linux ARM architectures.
  * Issue 197: (Linux) Process.get_connections() is broken on platforms not
    supporting IPv6.

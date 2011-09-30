@@ -231,8 +231,6 @@ get_disk_usage = _psposix.get_disk_usage
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""
     pids = [int(x) for x in os.listdir('/proc') if x.isdigit()]
-    # special case for 0 (kernel process) PID
-    pids.insert(0, 0)
     return pids
 
 def pid_exists(pid):
@@ -347,8 +345,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_name(self):
-        if self.pid == 0:
-            return 'sched'  # special case for kernel process
         f = open("/proc/%s/stat" % self.pid)
         try:
             name = f.read().split(' ')[1].replace('(', '').replace(')', '')
@@ -391,8 +387,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_cmdline(self):
-        if self.pid == 0:
-            return []   # special case for kernel process
         f = open("/proc/%s/cmdline" % self.pid)
         try:
             # return the args as a list
@@ -402,8 +396,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_terminal(self):
-        if self.pid == 0:
-            return None   # special case for kernel process
         f = open("/proc/%s/stat" % self.pid)
         try:
             tty_nr = int(f.read().split(' ')[6])
@@ -416,9 +408,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_io_counters(self):
-        # special case for 0 (kernel process) PID
-        if self.pid == 0:
-            return ntuple_io(0, 0, 0, 0)
         f = open("/proc/%s/io" % self.pid)
         try:
             for line in f:
@@ -436,9 +425,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_cpu_times(self):
-        # special case for 0 (kernel process) PID
-        if self.pid == 0:
-            return ntuple_cputimes(0.0, 0.0)
         f = open("/proc/%s/stat" % self.pid)
         try:
             st = f.read().strip()
@@ -460,9 +446,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_create_time(self):
-        # special case for 0 (kernel processes) PID; return system uptime
-        if self.pid == 0:
-            return BOOT_TIME
         f = open("/proc/%s/stat" % self.pid)
         try:
             st = f.read().strip()
@@ -480,9 +463,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_memory_info(self):
-        # special case for 0 (kernel processes) PID
-        if self.pid == 0:
-            return ntuple_meminfo(0, 0)
         f = open("/proc/%s/status" % self.pid)
         try:
             virtual_size = 0
@@ -501,8 +481,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_cwd(self):
-        if self.pid == 0:
-            raise AccessDenied(self.pid, self._process_name)
         # readlink() might return paths containing null bytes causing
         # problems when used with other fs-related functions (os.*,
         # open(), ...)
@@ -511,8 +489,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_num_threads(self):
-        if self.pid == 0:
-            return 0
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:
@@ -524,8 +500,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_threads(self):
-        if self.pid == 0:
-            return []
         thread_ids = os.listdir("/proc/%s/task" % self.pid)
         thread_ids.sort()
         retlist = []
@@ -597,8 +571,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_status(self):
-        if self.pid == 0:
-            return 0
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:
@@ -612,8 +584,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_open_files(self):
-        if self.pid == 0:
-            return []
         retlist = []
         files = os.listdir("/proc/%s/fd" % self.pid)
         for fd in files:
@@ -633,8 +603,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_connections(self):
-        if self.pid == 0:
-            return []
         inodes = {}
         # os.listdir() is gonna raise a lot of access denied
         # exceptions in case of unprivileged user; that's fine:
@@ -697,8 +665,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_ppid(self):
-        if self.pid == 0:
-            return 0
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:
@@ -711,8 +677,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_uids(self):
-        if self.pid == 0:
-            return ntuple_uids(0, 0, 0)
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:
@@ -725,8 +689,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_gids(self):
-        if self.pid == 0:
-            return ntuple_uids(0, 0, 0)
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:

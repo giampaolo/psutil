@@ -232,12 +232,10 @@ class TestCase(unittest.TestCase):
     def test_get_process_list(self):
         pids = [x.pid for x in psutil.get_process_list()]
         self.assertTrue(os.getpid() in pids)
-        self.assertTrue(0 in pids)
 
     def test_process_iter(self):
         pids = [x.pid for x in psutil.process_iter()]
         self.assertTrue(os.getpid() in pids)
-        self.assertTrue(0 in pids)
 
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM
@@ -1359,9 +1357,9 @@ class TestCase(unittest.TestCase):
         # special cases.
         self.assertTrue(valid_procs > 0)
 
+    @skipIf(LINUX)
     def test_pid_0(self):
-        # Process(0) is supposed to work on all platforms even if with
-        # some differences
+        # Process(0) is supposed to work on all platforms except Linux
         p = psutil.Process(0)
         self.assertTrue(p.name)
 
@@ -1391,7 +1389,6 @@ class TestCase(unittest.TestCase):
         else:
             p.username
 
-        # PID 0 is supposed to be available on all platforms
         self.assertTrue(0 in psutil.get_pid_list())
         self.assertTrue(psutil.pid_exists(0))
 

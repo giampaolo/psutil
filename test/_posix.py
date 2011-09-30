@@ -125,11 +125,6 @@ class PosixSpecificTestCase(unittest.TestCase):
                 pids_ps.append(int(pid.strip()))
         # remove ps subprocess pid which is supposed to be dead in meantime
         pids_ps.remove(p.pid)
-        # not all systems include pid 0 in their list but psutil does so
-        # we force it
-        if 0 not in pids_ps:
-            pids_ps.append(0)
-
         pids_psutil = psutil.get_pid_list()
         pids_ps.sort()
         pids_psutil.sort()
