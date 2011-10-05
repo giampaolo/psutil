@@ -1,8 +1,11 @@
 /*
  * $Id$
  *
- * Windows platform-specific module methods for _psutil_mswindows
+ * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
  *
+ * Windows platform-specific module methods for _psutil_mswindows
  */
 
 #include <Python.h>

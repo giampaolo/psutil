@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 #
 # $Id$
+#
+# Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
 
 import sys
 import os
@@ -83,8 +87,8 @@ system and processes in a portable way by using Python.""",
         keywords=['ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice',
                   'tty', 'ionice', 'uptime', 'taskmgr', 'process', 'df',
                   'monitoring'],
-        author='Giampaolo Rodola, Dave Daeschler, Jay Loden',
-        author_email='psutil-dev@googlegroups.com',
+        author='Giampaolo Rodola, Jay Loden',
+        author_email='psutil@googlegroups.com',
         url='http://code.google.com/p/psutil/',
         platforms='Platform Independent',
         license='License :: OSI Approved :: BSD License',

@@ -2,9 +2,13 @@
 #
 # $Id$
 #
+# Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
 
 """psutil is a module providing convenience functions for managing
-processes in a portable way by using Python.
+processes and gather system information in a portable way by using
+Python.
 """
 
 __version__ = "0.3.1"

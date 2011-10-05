@@ -2,12 +2,15 @@
 #
 # $Id$
 #
+# Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
 
 """
 psutil test suite.
 
-Note: this is targeted for both python 2.x and 3.x.
-There's no need to use 2to3 first.
+Note: this is targeted for both python 2.x and 3.x so there's no need
+to use 2to3 tool first.
 """
 
 import unittest

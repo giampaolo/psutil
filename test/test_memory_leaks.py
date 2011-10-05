@@ -2,14 +2,15 @@
 #
 # $Id$
 #
+# Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
 
 """
-Note: this is targeted for python 2.x.
-To run it under python 3.x you need to use 2to3 tool first:
-
-$ 2to3 -w test/test_memory_leaks.py
+A test script which attempts to detect memory leaks by calling C
+functions many times and compare process memory usage before and
+after the calls.  It might produce false positives.
 """
-
 
 import os
 import gc
