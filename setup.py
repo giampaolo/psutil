@@ -44,8 +44,8 @@ if sys.platform.lower().startswith("win"):
                                      'psutil/arch/mswindows/security.c'],
                             define_macros=[('_WIN32_WINNT', get_winver()),
                                            ('_AVAIL_WINVER_', get_winver())],
-                            libraries=["psapi", "kernel32", "advapi32", "shell32",
-                                       "netapi32"]
+                            libraries=["psapi", "kernel32", "advapi32",
+                                       "shell32", "netapi32"]
                             )]
 # OS X
 elif sys.platform.lower().startswith("darwin"):
@@ -53,7 +53,8 @@ elif sys.platform.lower().startswith("darwin"):
                             sources = ['psutil/_psutil_osx.c',
                                        'psutil/_psutil_common.c',
                                        'psutil/arch/osx/process_info.c'],
-                            extra_link_args=['-framework', 'CoreFoundation', '-framework', 'IOKit']
+                            extra_link_args=['-framework', 'CoreFoundation',
+                                             '-framework', 'IOKit']
                             ),
                   posix_extension]
 # FreeBSD
