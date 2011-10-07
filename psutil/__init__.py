@@ -386,13 +386,24 @@ class Process(object):
         """
         return self._platform_impl.get_open_files()
 
-    def get_connections(self):
-        """Return TCP and UPD connections opened by process as a list
-        of namedtuples.
-        On BSD and OSX results for third party processes (!= os.getpid())
-        can differ depending on user privileges.
+    def get_connections(self, kind='inet'):
+        """Return connections opened by process as a list of namedtuples.
+        The kind parameter filters for connections that fit the following
+        criteria:
+
+        Kind Value      Connections using
+        inet            IPv4 and IPv6
+        inet4           IPv4
+        inet6           IPv6
+        tcp             TCP
+        tcp4            TCP over IPv4
+        tcp6            TCP over IPv6
+        udp             UDP
+        udp4            UDP over IPv4
+        udp6            UDP over IPv6
+        all             the sum of all the possible families and protocols
         """
-        return self._platform_impl.get_connections()
+        return self._platform_impl.get_connections(kind)
 
     def is_running(self):
         """Return whether this process is running."""

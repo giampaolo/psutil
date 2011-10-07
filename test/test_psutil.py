@@ -1042,6 +1042,8 @@ class TestCase(unittest.TestCase):
         self.assertEqual(con[3], con.local_address)
         self.assertEqual(con[4], con.remote_address)
         self.assertEqual(con[5], con.status)
+        # test kind arg
+        self.assertRaises(ValueError, p.get_connections, 'foo')
 
     @skipUnless(supports_ipv6())
     def test_get_connections_ipv6(self):
@@ -1116,7 +1118,7 @@ class TestCase(unittest.TestCase):
                                                           addr="::1")
 
         # launch various subprocess instantiating a socket of various
-        # families  and tupes to enrich psutil results
+        # families and types to enrich psutil results
         tcp4_proc = get_test_subprocess([PYTHON, "-c", tcp4_template])
         udp4_proc = get_test_subprocess([PYTHON, "-c", udp4_template])
         if supports_ipv6():
@@ -1176,6 +1178,9 @@ class TestCase(unittest.TestCase):
 
         # --- check matches against subprocesses
 
+        all_kinds = ("all", "inet", "inet4", "inet6", "tcp", "tcp4", "tcp6",
+                     "udp", "udp4", "udp6")
+
         for p in psutil.Process(os.getpid()).get_children():
             for conn in p.get_connections():
                 # TCP v4
@@ -1185,6 +1190,12 @@ class TestCase(unittest.TestCase):
                     self.assertEqual(conn.local_address[0], "127.0.0.1")
                     self.assertEqual(conn.remote_address, ())
                     self.assertEqual(conn.status, "LISTEN")
+                    for kind in all_kinds:
+                        cons = p.get_connections(kind=kind)
+                        if kind in ("all", "inet", "inet4", "tcp", "tcp4"):
+                            self.assertTrue(cons != [])
+                        else:
+                            self.assertEqual(cons, [])
                 # UDP v4
                 elif p.pid == udp4_proc.pid:
                     self.assertEqual(conn.family, socket.AF_INET)
@@ -1192,6 +1203,12 @@ class TestCase(unittest.TestCase):
                     self.assertEqual(conn.local_address[0], "127.0.0.1")
                     self.assertEqual(conn.remote_address, ())
                     self.assertEqual(conn.status, "")
+                    for kind in all_kinds:
+                        cons = p.get_connections(kind=kind)
+                        if kind in ("all", "inet", "inet4", "udp", "udp4"):
+                            self.assertTrue(cons != [])
+                        else:
+                            self.assertEqual(cons, [])
                 # TCP v6
                 elif p.pid == getattr(tcp6_proc, "pid", None):
                     self.assertEqual(conn.family, socket.AF_INET6)
@@ -1199,6 +1216,12 @@ class TestCase(unittest.TestCase):
                     self.assertTrue(conn.local_address[0] in ("::", "::1"))
                     self.assertEqual(conn.remote_address, ())
                     self.assertEqual(conn.status, "LISTEN")
+                    for kind in all_kinds:
+                        cons = p.get_connections(kind=kind)
+                        if kind in ("all", "inet", "inet6", "tcp", "tcp6"):
+                            self.assertTrue(cons != [])
+                        else:
+                            self.assertEqual(cons, [])
                 # UDP v6
                 elif p.pid == getattr(udp6_proc, "pid", None):
                     self.assertEqual(conn.family, socket.AF_INET6)
@@ -1206,6 +1229,12 @@ class TestCase(unittest.TestCase):
                     self.assertTrue(conn.local_address[0] in ("::", "::1"))
                     self.assertEqual(conn.remote_address, ())
                     self.assertEqual(conn.status, "")
+                    for kind in all_kinds:
+                        cons = p.get_connections(kind=kind)
+                        if kind in ("all", "inet", "inet6", "udp", "udp6"):
+                            self.assertTrue(cons != [])
+                        else:
+                            self.assertEqual(cons, [])
 
     def test_parent_ppid(self):
         this_parent = os.getpid()

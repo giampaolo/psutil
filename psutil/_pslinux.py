@@ -607,7 +607,23 @@ class Process(object):
         return retlist
 
     @wrap_exceptions
-    def get_connections(self):
+    def get_connections(self, kind='inet'):
+        """Return connections opened by process as a list of namedtuples.
+        The kind parameter filters for connections that fit the following
+        criteria:
+
+        Kind Value      Number of connections using
+        inet            IPv4 and IPv6
+        inet4           IPv4
+        inet6           IPv6
+        tcp             TCP
+        tcp4            TCP over IPv4
+        tcp6            TCP over IPv6
+        udp             UDP
+        udp4            UDP over IPv4
+        udp6            UDP over IPv6
+        all             the sum of all the possible families and protocols
+        """
         inodes = {}
         # os.listdir() is gonna raise a lot of access denied
         # exceptions in case of unprivileged user; that's fine:
@@ -626,41 +642,65 @@ class Process(object):
             # no connections for this process
             return []
 
-        def process(file, family, _type):
+        def process(file, family, type_):
             retlist = []
-            f = open(file)
+            try:
+                f = open(file, 'rb')
+            except IOError, err:
+                # IPv6 not supported on this platform
+                if err.errno == errno.ENOENT and file.endswith('6'):
+                    return []
+                else:
+                    raise
             try:
                 f.readline()  # skip the first line
                 for line in f:
-                    _, laddr, raddr, status, _, _, _, _, _, inode = \
-                                                            line.split()[:10]
-                    if inode in inodes:
-                        laddr = self._decode_address(laddr, family)
-                        raddr = self._decode_address(raddr, family)
-                        if _type == socket.SOCK_STREAM:
-                            status = _TCP_STATES_TABLE[status]
-                        else:
-                            status = ""
-                        fd = int(inodes[inode])
-                        conn = ntuple_connection(fd, family, _type, laddr,
-                                                 raddr, status)
-                        retlist.append(conn)
+                    # IPv4 / IPv6
+                    if family in (socket.AF_INET, socket.AF_INET6):
+                        _, laddr, raddr, status, _, _, _, _, _, inode = \
+                                                                line.split()[:10]
+                        if inode in inodes:
+                            laddr = self._decode_address(laddr, family)
+                            raddr = self._decode_address(raddr, family)
+                            if type_ == socket.SOCK_STREAM:
+                                status = _TCP_STATES_TABLE[status]
+                            else:
+                                status = ""
+                            fd = int(inodes[inode])
+                            conn = ntuple_connection(fd, family, type_, laddr,
+                                                     raddr, status)
+                            retlist.append(conn)
+                    else:
+                        raise ValueError(family)
                 return retlist
             finally:
                 f.close()
 
-        tcp4 = process("/proc/net/tcp", socket.AF_INET, socket.SOCK_STREAM)
-        udp4 = process("/proc/net/udp", socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            tcp6 = process("/proc/net/tcp6", socket.AF_INET6, socket.SOCK_STREAM)
-            udp6 = process("/proc/net/udp6", socket.AF_INET6, socket.SOCK_DGRAM)
-        except IOError, err:
-            if err.errno == errno.ENOENT:
-                # IPv6 is not supported on this platform
-                tcp6 = udp6 = []
-            else:
-                raise
-        return tcp4 + tcp6 + udp4 + udp6
+        tcp4 = ("tcp" , socket.AF_INET , socket.SOCK_STREAM)
+        tcp6 = ("tcp6", socket.AF_INET6, socket.SOCK_STREAM)
+        udp4 = ("udp" , socket.AF_INET , socket.SOCK_DGRAM)
+        udp6 = ("udp6", socket.AF_INET6, socket.SOCK_DGRAM)
+
+        tmap = {
+            "all"  : (tcp4, tcp6, udp4, udp6),
+            "tcp"  : (tcp4, tcp6),
+            "tcp4" : (tcp4,),
+            "tcp6" : (tcp6,),
+            "udp"  : (udp4, udp6),
+            "udp4" : (udp4,),
+            "udp6" : (udp6,),
+            "inet" : (tcp4, tcp6, udp4, udp6),
+            "inet4": (tcp4, udp4),
+            "inet6": (tcp6, udp6),
+        }
+        if kind not in tmap:
+            raise ValueError("invalid %r kind argument; choose between %s"
+                             % (kind, ', '.join([repr(x) for x in tmap])))
+        ret = []
+        for f, family, type_ in tmap[kind]:
+            ret += process("/proc/net/%s" % f, family, type_)
+        return ret
+
 
 #    --- lsof implementation
 #

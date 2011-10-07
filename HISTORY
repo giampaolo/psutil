@@ -9,6 +9,8 @@ NEW FEATURES
  * Issue 198: Process.wait(timeout=0) can now be used to make wait() return
    immediately.
  * Issue 206: disk I/O counters. (OSX patch by Jeremy Whitlock)
+ * Issue 217: Process.get_connections() now has a "kind" argument to filter
+   for connections with different criteria.
 
 BUGFIXES
 
