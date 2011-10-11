@@ -119,36 +119,23 @@ except ImportError:
         return result
 
 
-# dirty hack to support property.setter on python < 2.6
-property = property
-
-if not hasattr(property, "setter"):
-
-    class property(property):
+# hack to support property.setter/deleter on python < 2.6
+# http://docs.python.org/library/functions.html?highlight=property#property
+if hasattr(property, 'setter'):
+    property = property
+else:
+    class property(__builtin__.property):
+        __metaclass__ = type
 
         def __init__(self, fget, *args, **kwargs):
-            self.__doc__ = fget.__doc__
             super(property, self).__init__(fget, *args, **kwargs)
+            self.__doc__ = fget.__doc__
 
-        def setter(self, fset):
-            cls_ns = _sys._getframe(1).f_locals
-            for k, v in cls_ns.iteritems():
-              if v == self:
-                  propname = k
-                  break
-            cls_ns[propname] = property(self.fget, fset,
-                                        self.fdel, self.__doc__)
-            return cls_ns[propname]
+        def getter(self, method):
+            return property(method, self.fset, self.fdel)
 
-        def deleter(self, fdel):
-            cls_ns = _sys._getframe(1).f_locals
-            for k, v in cls_ns.iteritems():
-              if v == self:
-                  propname = k
-                  break
-            cls_ns[propname] = property(self.fget, self.fset,
-                                        fdel, self.__doc__)
-            return cls_ns[propname]
+        def setter(self, method):
+            return property(self.fget, method, self.fdel)
 
-    __builtin__.property = property
-
+        def deleter(self, method):
+            return property(self.fget, self.fset, method)
