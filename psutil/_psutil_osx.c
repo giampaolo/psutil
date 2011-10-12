@@ -1267,10 +1267,12 @@ get_disk_io_counters(PyObject* self, PyObject* args)
                 CFNumberGetValue(number, kCFNumberSInt64Type, &write_time);
             }
 
+            // Read/Write time on OS X comes back in nanoseconds and in psutil
+            // we've standardized on milliseconds so do the conversion.
             py_disk_info = Py_BuildValue("(KKKKKK)",
                                          reads, writes,
                                          read_bytes, write_bytes,
-                                         read_time, write_time);
+                                         read_time / 1000, write_time / 1000);
             PyDict_SetItemString(py_retdict, disk_name, py_disk_info);
             Py_XDECREF(py_disk_info);
 
