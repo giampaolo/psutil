@@ -1218,6 +1218,7 @@ static PyObject*
 get_process_connections(PyObject* self, PyObject* args)
 {
     static long null_address[4] = { 0, 0, 0, 0 };
+    int fam4, fam6, typetcp, typeudp;
 
     unsigned long pid;
     PyObject* connectionsList;
@@ -1246,7 +1247,9 @@ get_process_connections(PyObject* self, PyObject* args)
     CHAR addressBufferRemote[65];
     PyObject* addressTupleRemote;
 
-    if (!PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "liiii",
+                           &pid, &fam4, &fam6, &typetcp, &typeudp))
+    {
         return NULL;
     }
 
@@ -1289,8 +1292,10 @@ get_process_connections(PyObject* self, PyObject* args)
 
     table = malloc(tableSize);
 
-    if (getExtendedTcpTable(table, &tableSize, FALSE, AF_INET,
-                            TCP_TABLE_OWNER_PID_ALL, 0) == 0)
+    if ((getExtendedTcpTable(table, &tableSize, FALSE, AF_INET,
+                            TCP_TABLE_OWNER_PID_ALL, 0) == 0) &&
+        ((fam4 != -1) && (typetcp != -1)))
+
     {
         tcp4Table = table;
 
@@ -1355,8 +1360,9 @@ get_process_connections(PyObject* self, PyObject* args)
 
     table = malloc(tableSize);
 
-    if (getExtendedTcpTable(table, &tableSize, FALSE, AF_INET6,
-                            TCP_TABLE_OWNER_PID_ALL, 0) == 0)
+    if ((getExtendedTcpTable(table, &tableSize, FALSE, AF_INET6,
+                             TCP_TABLE_OWNER_PID_ALL, 0) == 0) &&
+       ((fam6 != -1) && (typetcp != -1)))
     {
         tcp6Table = table;
 
@@ -1421,8 +1427,9 @@ get_process_connections(PyObject* self, PyObject* args)
 
     table = malloc(tableSize);
 
-    if (getExtendedUdpTable(table, &tableSize, FALSE, AF_INET,
-                            UDP_TABLE_OWNER_PID, 0) == 0)
+    if ((getExtendedUdpTable(table, &tableSize, FALSE, AF_INET,
+                             UDP_TABLE_OWNER_PID, 0) == 0) &&
+        ((fam4 != -1) && (typeudp != -1)))
     {
         udp4Table = table;
 
@@ -1468,7 +1475,9 @@ get_process_connections(PyObject* self, PyObject* args)
 
     table = malloc(tableSize);
 
-    if (getExtendedUdpTable(table, &tableSize, FALSE, AF_INET6, UDP_TABLE_OWNER_PID, 0) == 0)
+    if ((getExtendedUdpTable(table, &tableSize, FALSE, AF_INET6,
+                             UDP_TABLE_OWNER_PID, 0) == 0) &&
+        ((fam6 != -1) && (typeudp != -1)))
     {
         udp6Table = table;
 

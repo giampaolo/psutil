@@ -268,8 +268,25 @@ class Process(object):
         return retlist
 
     @wrap_exceptions
-    def get_connections(self):
-        retlist = _psutil_mswindows.get_process_connections(self.pid)
+    def get_connections(self, kind='inet'):
+        from socket import AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM
+        tmap = {      # ipv4    ipv6      tcp          udp
+            "all"  : (AF_INET,  AF_INET6, SOCK_STREAM, SOCK_DGRAM),
+            "tcp"  : (AF_INET,  AF_INET6, SOCK_STREAM, -1),
+            "tcp4" : (AF_INET,  -1,       SOCK_STREAM, -1),
+            "tcp6" : (-1,       AF_INET6, SOCK_STREAM, -1),
+            "udp"  : (AF_INET,  AF_INET6, -1,          SOCK_DGRAM),
+            "udp4" : (AF_INET,  -1,       -1,          SOCK_DGRAM),
+            "udp6" : (-1,       AF_INET6, -1,          SOCK_DGRAM),
+            "inet" : (AF_INET,  AF_INET6, SOCK_STREAM, SOCK_DGRAM),
+            "inet4": (AF_INET,  -1,       SOCK_STREAM, SOCK_DGRAM),
+            "inet6": (-1,       AF_INET6, SOCK_STREAM, SOCK_DGRAM),
+        }
+        if kind not in tmap:
+            raise ValueError("invalid %r kind argument; choose between %s"
+                             % (kind, ', '.join([repr(x) for x in tmap])))
+        args = tmap[kind]
+        retlist = _psutil_mswindows.get_process_connections(self.pid, *args)
         return [ntuple_connection(*conn) for conn in retlist]
 
     @wrap_exceptions
