@@ -8,6 +8,9 @@
  * Windows platform-specific module methods for _psutil_mswindows
  */
 
+// Fixes clash between winsock2.h and windows.h
+#define WIN32_LEAN_AND_MEAN
+
 #include <Python.h>
 #include <windows.h>
 #include <Psapi.h>
@@ -15,7 +18,11 @@
 #include <lm.h>
 #include <tchar.h>
 #include <tlhelp32.h>
+#include <winsock2.h>
 #include <iphlpapi.h>
+
+// Link with Iphlpapi.lib
+#pragma comment(lib, "IPHLPAPI.lib")
 
 #include "_psutil_mswindows.h"
 #include "_psutil_common.h"
@@ -1658,6 +1665,75 @@ get_disk_usage(PyObject* self, PyObject* args)
 
 
 /*
+ * Return a Python list of named tuples with overall network I/O information
+ */
+static PyObject*
+get_network_io_counters(PyObject* self, PyObject* args)
+{
+    PyObject* py_retdict = PyDict_New();
+    PyObject* py_ifc_info;
+
+    MIB_IFROW *pIfRow;
+    unsigned int i = 0;
+    ULONG flags = 0;
+    ULONG family = AF_UNSPEC;
+    PIP_ADAPTER_ADDRESSES pAddresses = NULL;
+    PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
+
+    ULONG outBufLen = sizeof(IP_ADAPTER_INFO);
+    pAddresses = (IP_ADAPTER_ADDRESSES *)malloc(outBufLen);
+    if (pAddresses == NULL) {
+        Py_DECREF(py_retdict);
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    if (GetAdaptersAddresses(family, flags, NULL, pAddresses, &outBufLen) == ERROR_BUFFER_OVERFLOW) {
+        free(pAddresses);
+        pAddresses = (IP_ADAPTER_ADDRESSES *)malloc(outBufLen);
+        if (pAddresses == NULL) {
+            Py_DECREF(py_retdict);
+            PyErr_SetFromErrno(0);
+            return NULL;
+        }
+    }
+
+    if (GetAdaptersAddresses(family, flags, NULL, pAddresses, &outBufLen) == NO_ERROR) {
+        pCurrAddresses = pAddresses;
+        while (pCurrAddresses) {
+            pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
+            if (pIfRow == NULL) {
+                Py_DECREF(py_retdict);
+                PyErr_SetFromErrno(0);
+                return NULL;
+            }
+
+            pIfRow->dwIndex = pCurrAddresses->IfIndex;
+            if (GetIfEntry(pIfRow) == NO_ERROR) {
+                py_ifc_info = Py_BuildValue("(IIII)",
+                                            pIfRow->dwOutOctets,
+                                            pIfRow->dwInOctets,
+                                            pIfRow->dwOutUcastPkts,
+                                            pIfRow->dwInUcastPkts);
+
+                PyDict_SetItemString(py_retdict,
+                                     PyString_AsString(PyUnicode_FromWideChar(pCurrAddresses->FriendlyName, wcslen(pCurrAddresses->FriendlyName))),
+                                     py_ifc_info);
+
+                Py_XDECREF(py_ifc_info);
+            }
+            free(pIfRow);
+            pCurrAddresses = pCurrAddresses->Next;
+        }
+    }
+
+    free(pAddresses);
+
+    return py_retdict;
+}
+
+
+/*
  * Return disk partitions as a list of namedtuples.
  */
 static PyObject*
@@ -1795,6 +1871,8 @@ PsutilMethods[] =
          "Return system per-cpu times as a list of tuples"},
      {"get_disk_usage", get_disk_usage, METH_VARARGS,
          "Return path's disk total and free as a Python tuple."},
+     {"get_network_io_counters", get_network_io_counters, METH_VARARGS,
+         "Return dict of tuples of networks I/O information."},
 
      // --- windows API bindings
      {"win32_GetLogicalDriveStrings", win32_GetLogicalDriveStrings, METH_VARARGS,
@@ -1892,6 +1970,3 @@ struct module_state {
     return module;
 #endif
 }
-
-
-
