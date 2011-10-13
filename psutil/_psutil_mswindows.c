@@ -16,6 +16,7 @@
 #include <Psapi.h>
 #include <time.h>
 #include <lm.h>
+#include <WinIoCtl.h>
 #include <tchar.h>
 #include <tlhelp32.h>
 #include <winsock2.h>
@@ -1755,6 +1756,55 @@ get_network_io_counters(PyObject* self, PyObject* args)
 
 
 /*
+ * Return a Python dict of tuples for disk I/O information
+ */
+static PyObject*
+get_disk_io_counters(PyObject* self, PyObject* args)
+{
+    PyObject* py_retdict = PyDict_New();
+    PyObject* py_disk_info;
+
+    DISK_PERFORMANCE diskPerformance;
+    DWORD dwSize;
+    HANDLE hDevice = NULL;
+    char szDevice[MAX_PATH];
+    char szDeviceDisplay[MAX_PATH];
+    int devNum;
+
+    for (devNum = 0;; devNum++) {
+        sprintf (szDevice, "\\\\.\\PhysicalDrive%d", devNum);
+        hDevice = CreateFile (szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, 0, NULL);
+
+        if (hDevice == INVALID_HANDLE_VALUE)
+            break;
+
+        if (DeviceIoControl (hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0,
+            &diskPerformance, sizeof (DISK_PERFORMANCE), &dwSize, NULL)) {
+            sprintf (szDeviceDisplay, "PhysicalDrive%d", devNum);
+            py_disk_info = Py_BuildValue("(IILLLL)",
+                                         diskPerformance.ReadCount,
+                                         diskPerformance.WriteCount,
+                                         diskPerformance.BytesRead,
+                                         diskPerformance.BytesWritten,
+                                         (diskPerformance.ReadTime.QuadPart
+                                            * 10) / 1000,
+                                         (diskPerformance.WriteTime.QuadPart
+                                            * 10) / 1000);
+            PyDict_SetItemString(py_retdict,
+                                 szDeviceDisplay,
+                                 py_disk_info);
+            Py_XDECREF(py_disk_info);
+        }
+
+        CloseHandle(hDevice);
+    }
+
+    return py_retdict;
+}
+
+
+/*
  * Return disk partitions as a list of namedtuples.
  */
 static PyObject*
@@ -1894,6 +1944,8 @@ PsutilMethods[] =
          "Return path's disk total and free as a Python tuple."},
      {"get_network_io_counters", get_network_io_counters, METH_VARARGS,
          "Return dict of tuples of networks I/O information."},
+     {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
+         "Return dict of tuples of disks I/O information."},
 
      // --- windows API bindings
      {"win32_GetLogicalDriveStrings", win32_GetLogicalDriveStrings, METH_VARARGS,
