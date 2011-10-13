@@ -1774,7 +1774,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
     for (devNum = 0;; devNum++) {
         sprintf (szDevice, "\\\\.\\PhysicalDrive%d", devNum);
         hDevice = CreateFile (szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
-            NULL, OPEN_EXISTING, 0, NULL);
+                              NULL, OPEN_EXISTING, 0, NULL);
 
         if (hDevice == INVALID_HANDLE_VALUE)
             break;
