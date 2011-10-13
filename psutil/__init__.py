@@ -36,6 +36,7 @@ import sys
 import os
 import time
 import signal
+import socket
 import warnings
 import errno
 import subprocess
@@ -403,7 +404,43 @@ class Process(object):
         udp6            UDP over IPv6
         all             the sum of all the possible families and protocols
         """
-        return self._platform_impl.get_connections(kind)
+        tcp4 = ("tcp" , socket.AF_INET , socket.SOCK_STREAM)
+        tcp6 = ("tcp6", socket.AF_INET6, socket.SOCK_STREAM)
+        udp4 = ("udp" , socket.AF_INET , socket.SOCK_DGRAM)
+        udp6 = ("udp6", socket.AF_INET6, socket.SOCK_DGRAM)
+        tmap = {
+            "all"  : (tcp4, tcp6, udp4, udp6),
+            "tcp"  : (tcp4, tcp6),
+            "tcp4" : (tcp4,),
+            "tcp6" : (tcp6,),
+            "udp"  : (udp4, udp6),
+            "udp4" : (udp4,),
+            "udp6" : (udp6,),
+            "inet" : (tcp4, tcp6, udp4, udp6),
+            "inet4": (tcp4, udp4),
+            "inet6": (tcp6, udp6),
+        }
+        if kind not in tmap:
+            raise ValueError("invalid %r kind argument; choose between %s"
+                             % (kind, ', '.join([repr(x) for x in tmap])))
+        connections = self._platform_impl.get_connections()
+
+        if kind == 'all':
+            return connections
+
+        retlist = []
+        families = []
+        types = []
+
+        for t in tmap[kind]:
+            families.append(t[1])
+            types.append(t[2])
+
+        for connection in connections:
+            if connection.family in families and connection.type in types:
+                retlist.append(connection)
+
+        return retlist
 
     def is_running(self):
         """Return whether this process is running."""
