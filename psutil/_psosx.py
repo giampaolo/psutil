@@ -194,10 +194,24 @@ class Process(object):
         return files
 
     @wrap_exceptions
-    def get_connections(self):
+    def get_connections(self, kind='inet'):
         """Return etwork connections opened by a process as a list of
-        namedtuples."""
-        retlist = _psutil_osx.get_process_connections(self.pid)
+        namedtuples.
+        """
+        from socket import AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM
+        tmap = {      # ipv4    ipv6     unix tcp          udp
+            "all"  : (AF_INET,  AF_INET6, -1, SOCK_STREAM, SOCK_DGRAM),
+            "tcp"  : (AF_INET,  AF_INET6, -1, SOCK_STREAM, -1),
+            "tcp4" : (AF_INET,  -1,       -1, SOCK_STREAM, -1),
+            "tcp6" : (-1,       AF_INET6, -1, SOCK_STREAM, -1),
+            "udp"  : (AF_INET,  AF_INET6, -1, SOCK_DGRAM,  -1),
+            "udp4" : (AF_INET,  -1,       -1, SOCK_DGRAM,  -1),
+            "udp6" : (-1,       AF_INET6, -1, SOCK_DGRAM,  -1),
+            "inet" : (AF_INET,  AF_INET6, -1, SOCK_STREAM, SOCK_DGRAM),
+            "inet4": (AF_INET,  -1        -1, SOCK_STREAM, SOCK_DGRAM),
+            "inet6": (-1,       AF_INET6, -1, SOCK_STREAM, SOCK_DGRAM),
+        }
+        retlist = _psutil_osx.get_process_connections(self.pid, *tmap[kind])
         return [ntuple_connection(*conn) for conn in retlist]
 
     @wrap_exceptions

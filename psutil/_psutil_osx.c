@@ -913,6 +913,7 @@ get_process_connections(PyObject* self, PyObject* args)
     int iterations;
     int i;
     int nb;
+    int fam4, fam6, famunix, typetcp, typeudp;
 
     struct proc_fdinfo *fds_pointer;
     struct proc_fdinfo *fdp_pointer;
@@ -924,7 +925,9 @@ get_process_connections(PyObject* self, PyObject* args)
     PyObject *laddr = NULL;
     PyObject *raddr = NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "liiiii",
+                           &pid, &fam4, &fam6, &famunix, &typetcp, &typeudp))
+    {
         return NULL;
     }
 
@@ -986,6 +989,17 @@ get_process_connections(PyObject* self, PyObject* args)
             fd = (int)fdp_pointer->proc_fd;
             family = si.psi.soi_family;
             type = si.psi.soi_kind;
+
+            // apply filters
+            if (((family == AF_INET) && (fam4 == -1))  ||
+                ((family == AF_INET6) && (fam6 == -1)) ||
+                ((family == AF_UNIX) && (famunix == -1)) ||
+                ((type == SOCK_STREAM) && (typetcp == -1)) ||
+                ((type == SOCK_DGRAM) && (typeudp == -1)))
+            {
+                continue;
+            }
+
 
             if ((family != AF_INET) && (family != AF_INET6)) {
                 continue;
