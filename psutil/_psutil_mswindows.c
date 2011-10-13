@@ -1673,6 +1673,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
     PyObject* py_retdict = PyDict_New();
     PyObject* py_ifc_info;
 
+    DWORD dwRetVal = 0;
     MIB_IFROW *pIfRow;
     unsigned int i = 0;
     ULONG flags = 0;
@@ -1688,7 +1689,9 @@ get_network_io_counters(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    if (GetAdaptersAddresses(family, flags, NULL, pAddresses, &outBufLen) == ERROR_BUFFER_OVERFLOW) {
+    dwRetVal = GetAdaptersAddresses(family, flags, NULL, pAddresses,
+        &outBufLen);
+    if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
         free(pAddresses);
         pAddresses = (IP_ADAPTER_ADDRESSES *)malloc(outBufLen);
         if (pAddresses == NULL) {
@@ -1698,7 +1701,9 @@ get_network_io_counters(PyObject* self, PyObject* args)
         }
     }
 
-    if (GetAdaptersAddresses(family, flags, NULL, pAddresses, &outBufLen) == NO_ERROR) {
+    dwRetVal = GetAdaptersAddresses(family, flags, NULL, pAddresses,
+        &outBufLen);
+    if (dwRetVal == NO_ERROR) {
         pCurrAddresses = pAddresses;
         while (pCurrAddresses) {
             pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
@@ -1709,7 +1714,8 @@ get_network_io_counters(PyObject* self, PyObject* args)
             }
 
             pIfRow->dwIndex = pCurrAddresses->IfIndex;
-            if (GetIfEntry(pIfRow) == NO_ERROR) {
+            dwRetVal = GetIfEntry(pIfRow);
+            if (dwRetVal == NO_ERROR) {
                 py_ifc_info = Py_BuildValue("(IIII)",
                                             pIfRow->dwOutOctets,
                                             pIfRow->dwInOctets,
@@ -1717,7 +1723,9 @@ get_network_io_counters(PyObject* self, PyObject* args)
                                             pIfRow->dwInUcastPkts);
 
                 PyDict_SetItemString(py_retdict,
-                                     PyString_AsString(PyUnicode_FromWideChar(pCurrAddresses->FriendlyName, wcslen(pCurrAddresses->FriendlyName))),
+                                     PyString_AsString(PyUnicode_FromWideChar(
+                                        pCurrAddresses->FriendlyName,
+                                        wcslen(pCurrAddresses->FriendlyName))),
                                      py_ifc_info);
 
                 Py_XDECREF(py_ifc_info);
@@ -1725,6 +1733,10 @@ get_network_io_counters(PyObject* self, PyObject* args)
             free(pIfRow);
             pCurrAddresses = pCurrAddresses->Next;
         }
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError, "failed to retrieve adapters information.");
+        return NULL;
     }
 
     free(pAddresses);
