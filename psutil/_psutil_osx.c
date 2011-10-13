@@ -69,8 +69,8 @@ get_pid_list(PyObject* self, PyObject* args)
             Py_XDECREF(pid);
             proclist++;
         }
+        free(orig_address);
     }
-    free(orig_address);
     return retlist;
 }
 
