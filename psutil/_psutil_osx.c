@@ -913,7 +913,6 @@ get_process_connections(PyObject* self, PyObject* args)
     int iterations;
     int i;
     int nb;
-    int fam4, fam6, famunix, typetcp, typeudp;
 
     struct proc_fdinfo *fds_pointer;
     struct proc_fdinfo *fdp_pointer;
@@ -924,10 +923,17 @@ get_process_connections(PyObject* self, PyObject* args)
     PyObject *tuple = NULL;
     PyObject *laddr = NULL;
     PyObject *raddr = NULL;
+    PyObject *af_filter = NULL;
+    PyObject *type_filter = NULL;
 
-    if (! PyArg_ParseTuple(args, "liiiii",
-                           &pid, &fam4, &fam6, &famunix, &typetcp, &typeudp))
+    if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter))
     {
+        return NULL;
+    }
+
+    if (!PySequence_Check(af_filter) || !PySequence_Check(type_filter))
+    {
+        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         return NULL;
     }
 
@@ -985,25 +991,11 @@ get_process_connections(PyObject* self, PyObject* args)
             int fd, family, type, lport, rport;
             char lip[200], rip[200];
             char *state;
+            int inseq;
 
             fd = (int)fdp_pointer->proc_fd;
             family = si.psi.soi_family;
             type = si.psi.soi_kind;
-
-            // apply filters
-            if (((family == AF_INET) && (fam4 == -1))  ||
-                ((family == AF_INET6) && (fam6 == -1)) ||
-                ((family == AF_UNIX) && (famunix == -1)) ||
-                ((type == SOCK_STREAM) && (typetcp == -1)) ||
-                ((type == SOCK_DGRAM) && (typeudp == -1)))
-            {
-                continue;
-            }
-
-
-            if ((family != AF_INET) && (family != AF_INET6)) {
-                continue;
-            }
 
             if (type == 2)
                 type = SOCK_STREAM;
@@ -1012,11 +1004,17 @@ get_process_connections(PyObject* self, PyObject* args)
             else
                 continue;
 
+            // apply filters
+            inseq = PySequence_Contains(af_filter, PyInt_FromLong(family));
+            if (inseq == 0)
+                continue;
+            inseq = PySequence_Contains(type_filter, PyInt_FromLong(type));
+            if (inseq == 0)
+                continue;
+
             if (errno != 0) {
-                printf("errno 1 = %i\n", errno);
                 return PyErr_SetFromErrno(PyExc_OSError);
             }
-
 
             if (family == AF_INET) {
                 inet_ntop(AF_INET,

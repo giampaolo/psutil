@@ -199,20 +199,24 @@ class Process(object):
         namedtuples.
         """
         from socket import AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM
-        tmap = {      # ipv4    ipv6     unix tcp          udp
-            "all"  : (AF_INET,  AF_INET6, -1, SOCK_STREAM, SOCK_DGRAM),
-            "tcp"  : (AF_INET,  AF_INET6, -1, SOCK_STREAM, -1),
-            "tcp4" : (AF_INET,  -1,       -1, SOCK_STREAM, -1),
-            "tcp6" : (-1,       AF_INET6, -1, SOCK_STREAM, -1),
-            "udp"  : (AF_INET,  AF_INET6, -1, SOCK_DGRAM,  -1),
-            "udp4" : (AF_INET,  -1,       -1, SOCK_DGRAM,  -1),
-            "udp6" : (-1,       AF_INET6, -1, SOCK_DGRAM,  -1),
-            "inet" : (AF_INET,  AF_INET6, -1, SOCK_STREAM, SOCK_DGRAM),
-            "inet4": (AF_INET,  -1        -1, SOCK_STREAM, SOCK_DGRAM),
-            "inet6": (-1,       AF_INET6, -1, SOCK_STREAM, SOCK_DGRAM),
+        tmap = {
+            "all"  : ([AF_INET, AF_INET6], [SOCK_STREAM, SOCK_DGRAM]),
+            "tcp"  : ([AF_INET, AF_INET6], [SOCK_STREAM]),
+            "tcp4" : ([AF_INET],           [SOCK_STREAM]),
+            "tcp6" : ([AF_INET6],          [SOCK_STREAM]),
+            "udp"  : ([AF_INET, AF_INET6], [SOCK_DGRAM]),
+            "udp4" : ([AF_INET],           [SOCK_DGRAM]),
+            "udp6" : ([AF_INET6],          [SOCK_DGRAM]),
+            "inet" : ([AF_INET, AF_INET6], [SOCK_STREAM, SOCK_DGRAM]),
+            "inet4": ([AF_INET],           [SOCK_STREAM, SOCK_DGRAM]),
+            "inet6": ([AF_INET6],          [SOCK_STREAM, SOCK_DGRAM]),
         }
-        retlist = _psutil_osx.get_process_connections(self.pid, *tmap[kind])
-        return [ntuple_connection(*conn) for conn in retlist]
+        if kind not in tmap:
+            raise ValueError("invalid %r kind argument; choose between %s"
+                             % (kind, ', '.join([repr(x) for x in tmap])))
+        families, types = tmap[kind]
+        ret = _psutil_osx.get_process_connections(self.pid, families, types)
+        return [ntuple_connection(*conn) for conn in ret]
 
     @wrap_exceptions
     def process_wait(self, timeout=None):
