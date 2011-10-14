@@ -22,22 +22,22 @@
 
 #if HAS_IOPRIO
 enum {
-	IOPRIO_WHO_PROCESS = 1,
+    IOPRIO_WHO_PROCESS = 1,
 };
 
 static inline int
 ioprio_get(int which, int who)
 {
-	return syscall(__NR_ioprio_get, which, who);
+    return syscall(__NR_ioprio_get, which, who);
 }
 
 static inline int
 ioprio_set(int which, int who, int ioprio)
 {
-	return syscall(__NR_ioprio_set, which, who, ioprio);
+    return syscall(__NR_ioprio_set, which, who, ioprio);
 }
 
-#define IOPRIO_CLASS_SHIFT	13
+#define IOPRIO_CLASS_SHIFT  13
 #define IOPRIO_PRIO_MASK  ((1UL << IOPRIO_CLASS_SHIFT) - 1)
 
 #define IOPRIO_PRIO_CLASS(mask)  ((mask) >> IOPRIO_CLASS_SHIFT)
@@ -52,7 +52,7 @@ static PyObject*
 linux_ioprio_get(PyObject* self, PyObject* args)
 {
     long pid;
-	int ioprio, ioclass, iodata;
+    int ioprio, ioclass, iodata;
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
@@ -60,8 +60,8 @@ linux_ioprio_get(PyObject* self, PyObject* args)
     if (ioprio == -1) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-	ioclass = IOPRIO_PRIO_CLASS(ioprio);
-	iodata = IOPRIO_PRIO_DATA(ioprio);
+    ioclass = IOPRIO_PRIO_CLASS(ioprio);
+    iodata = IOPRIO_PRIO_DATA(ioprio);
     return Py_BuildValue("ii", ioclass, iodata);
 }
 
@@ -82,8 +82,8 @@ linux_ioprio_set(PyObject* self, PyObject* args)
         return NULL;
     }
     ioprio = IOPRIO_PRIO_VALUE(ioclass, iodata);
-	retval = ioprio_set(IOPRIO_WHO_PROCESS, pid, ioprio);
-	if (retval == -1) {
+    retval = ioprio_set(IOPRIO_WHO_PROCESS, pid, ioprio);
+    if (retval == -1) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
     Py_INCREF(Py_None);
@@ -109,7 +109,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     file = setmntent(MOUNTED, "r");
     Py_END_ALLOW_THREADS
     if ((file == 0) || (file == NULL)) {
-    	return PyErr_SetFromErrno(PyExc_OSError);
+        return PyErr_SetFromErrno(PyExc_OSError);
     }
 
     while ((entry = getmntent(file))) {

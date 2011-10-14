@@ -360,7 +360,7 @@ get_process_threads(PyObject* self, PyObject* args)
     if (error == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
-	}
+    }
     if (size == 0) {
         return NoSuchProcess();
     }
@@ -657,12 +657,12 @@ get_process_open_files(PyObject* self, PyObject* args)
     PyObject *retList = PyList_New(0);
     PyObject *tuple = NULL;
 
-	struct kinfo_file *freep, *kif;
+    struct kinfo_file *freep, *kif;
     struct kinfo_proc kipp;
 
 
-	int i, cnt;
-	const char *str;
+    int i, cnt;
+    const char *str;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -670,22 +670,22 @@ get_process_open_files(PyObject* self, PyObject* args)
         return NULL;
 
     freep = kinfo_getfile(pid, &cnt);
-	if (freep == NULL) {
+    if (freep == NULL) {
         PyErr_SetFromErrno(0);
         return NULL;
     }
 
-	for (i = 0; i < cnt; i++) {
-		kif = &freep[i];
+    for (i = 0; i < cnt; i++) {
+        kif = &freep[i];
         if ((kif->kf_type == KF_TYPE_VNODE) &&
             (kif->kf_vnode_type == KF_VTYPE_VREG))
         {
             tuple = Py_BuildValue("(si)", kif->kf_path, kif->kf_fd);
             PyList_Append(retList, tuple);
             Py_DECREF(tuple);
-		}
-	}
-	free(freep);
+        }
+    }
+    free(freep);
 
     return retList;
 }
