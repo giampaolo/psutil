@@ -45,7 +45,8 @@ def run(pid):
     else:
         parent = ''
     started = datetime.datetime.fromtimestamp(p.create_time).strftime('%Y-%M-%d %H:%M')
-    io = p.get_io_counters()
+    if hasattr(p, 'get_io_counters'):
+        io = p.get_io_counters()
     mem = p.get_memory_info()
     mem = '%s%% (resident=%s, virtual=%s) ' %(round(p.get_memory_percent(), 1),
                                               convert_bytes(mem.rss),

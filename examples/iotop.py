@@ -10,16 +10,24 @@
 A clone of iotop (http://guichaz.free.fr/iotop/) showing real time
 disk I/O statistics.
 
-It works on UNIX only as curses module is not available on Windows.
+It works on Linux and FreeBSD only (OSX is missing support for IO counters).
+It doesn't work on Windows as curses module is required.
 
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 """
+
+import os
+import sys
+import psutil
+
+if not hasattr(psutil.Process, 'get_io_counters') \
+or os.name != 'posix':
+    sys.exit('platform not supported')
 
 import time
 import curses
 import atexit
 
-import psutil
 
 win = curses.initscr()
 
