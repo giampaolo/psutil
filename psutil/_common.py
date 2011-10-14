@@ -10,6 +10,8 @@
 
 from psutil._compat import namedtuple
 
+# --- functions
+
 def usage_percent(used, total, _round=None):
     """Calculate percentage usage of 'used' against 'total'."""
     try:
@@ -35,6 +37,8 @@ class constant(int):
     def __str__(self):
         return self._name
 
+# --- constants
+
 STATUS_RUNNING = constant(0, "running")
 STATUS_SLEEPING = constant(1, "sleeping")
 STATUS_DISK_SLEEP = constant(2, "disk sleep")
@@ -48,6 +52,32 @@ STATUS_IDLE = constant(9, "idle")  # BSD
 STATUS_LOCKED = constant(10, "locked")  # BSD
 STATUS_WAITING = constant(11, "waiting")  # BSD
 
+# --- Process.get_connections() 'kind' parameter mapping
+
+import socket
+from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
+AF_INET6 = getattr(socket, 'AF_INET6', None)
+
+conn_tmap = {
+    "all"  : ([AF_INET, AF_INET6], [SOCK_STREAM, SOCK_DGRAM]),
+    "tcp"  : ([AF_INET, AF_INET6], [SOCK_STREAM]),
+    "tcp4" : ([AF_INET],           [SOCK_STREAM]),
+    "udp"  : ([AF_INET, AF_INET6], [SOCK_DGRAM]),
+    "udp4" : ([AF_INET],           [SOCK_DGRAM]),
+    "inet" : ([AF_INET, AF_INET6], [SOCK_STREAM, SOCK_DGRAM]),
+    "inet4": ([AF_INET],           [SOCK_STREAM, SOCK_DGRAM]),
+    "inet6": ([AF_INET6],          [SOCK_STREAM, SOCK_DGRAM]),
+}
+
+if AF_INET6 is not None:
+    conn_tmap.update({
+        "tcp6" : ([AF_INET6],          [SOCK_STREAM]),
+        "udp6" : ([AF_INET6],          [SOCK_DGRAM]),
+    })
+
+del AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM, socket
+
+# --- namedtuples
 
 # system
 ntuple_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')

@@ -918,7 +918,6 @@ get_process_connections(PyObject* self, PyObject* args)
     struct proc_fdinfo *fdp_pointer;
     struct socket_fdinfo si;
 
-
     PyObject *retList = PyList_New(0);
     PyObject *tuple = NULL;
     PyObject *laddr = NULL;
@@ -926,13 +925,11 @@ get_process_connections(PyObject* self, PyObject* args)
     PyObject *af_filter = NULL;
     PyObject *type_filter = NULL;
 
-    if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter))
-    {
+    if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter)) {
         return NULL;
     }
 
-    if (!PySequence_Check(af_filter) || !PySequence_Check(type_filter))
-    {
+    if (!PySequence_Check(af_filter) || !PySequence_Check(type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         return NULL;
     }
