@@ -198,7 +198,6 @@ class Process(object):
         """Return etwork connections opened by a process as a list of
         namedtuples.
         """
-        from socket import AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM
         if kind not in conn_tmap:
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
