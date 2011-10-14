@@ -78,7 +78,7 @@ def disk_partitions(all=False):
 get_pid_list = _psutil_bsd.get_pid_list
 pid_exists = _psposix.pid_exists
 get_disk_usage = _psposix.get_disk_usage
-network_io_counters = _psutil_osx.get_network_io_counters
+network_io_counters = _psutil_bsd.get_network_io_counters
 
 
 def wrap_exceptions(method):
@@ -195,7 +195,8 @@ class Process(object):
         lsof = _psposix.LsofParser(self.pid, self._process_name)
         return lsof.get_process_open_files()
 
-    def get_connections(self):
+    # XXX kind parameter still not supported
+    def get_connections(self, kind='inet'):
         """Return network connections opened by a process as a list of
         namedtuples by parsing lsof output.
         """
