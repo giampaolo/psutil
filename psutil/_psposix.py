@@ -128,6 +128,7 @@ class LsofParser:
         self.pid = pid
         self.process_name = name
 
+    # XXX - this is no longer used
     def get_process_open_files(self):
         """Return files opened by process by parsing lsof output."""
         # Options:

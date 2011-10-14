@@ -21,10 +21,13 @@
 #include <sys/proc.h>
 #include <sys/vmmeter.h>  /* needed for vmtotal struct */
 #include <sys/mount.h>
-// network-related stuff
-#include <net/if.h>
+
+#include <net/if.h>       /* net io counters */
 #include <net/if_dl.h>
 #include <net/route.h>
+
+#include <netinet/in.h>   /* process open files/connections */
+#include <sys/un.h>
 
 #include "_psutil_bsd.h"
 #include "_psutil_common.h"
@@ -645,6 +648,50 @@ get_system_cpu_times(PyObject* self, PyObject* args)
 
 
 /*
+ * Return files opened by process as a list of (path, fd) tuples
+ */
+static PyObject*
+get_process_open_files(PyObject* self, PyObject* args)
+{
+    long pid;
+    PyObject *retList = PyList_New(0);
+    PyObject *tuple = NULL;
+
+	struct kinfo_file *freep, *kif;
+    struct kinfo_proc kipp;
+
+
+	int i, cnt;
+	const char *str;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (get_kinfo_proc(pid, &kipp) == -1)
+        return NULL;
+
+    freep = kinfo_getfile(pid, &cnt);
+	if (freep == NULL) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+	for (i = 0; i < cnt; i++) {
+		kif = &freep[i];
+        if ((kif->kf_type == KF_TYPE_VNODE) &&
+            (kif->kf_vnode_type == KF_VTYPE_VREG))
+        {
+            tuple = Py_BuildValue("(si)", kif->kf_path, kif->kf_fd);
+            PyList_Append(retList, tuple);
+            Py_DECREF(tuple);
+		}
+	}
+	free(freep);
+
+    return retList;
+}
+
+
+/*
  * Return a Python list of tuple representing per-cpu times
  */
 static PyObject*
@@ -856,6 +903,8 @@ PsutilMethods[] =
          "Return process IO counters"},
      {"get_process_tty_nr", get_process_tty_nr, METH_VARARGS,
          "Return process tty (terminal) number"},
+     {"get_process_open_files", get_process_open_files, METH_VARARGS,
+         "Return files opened by process as a list of (path, fd) tuples"},
 
 
      // --- system-related functions

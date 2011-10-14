@@ -191,9 +191,9 @@ class Process(object):
         return retlist
 
     def get_open_files(self):
-        """Return files opened by process by parsing lsof output."""
-        lsof = _psposix.LsofParser(self.pid, self._process_name)
-        return lsof.get_process_open_files()
+        """Return files opened by process as a list of namedtuples."""
+        rawlist = _psutil_bsd.get_process_open_files(self.pid)
+        return [ntuple_openfile(path, fd) for path, fd in rawlist]
 
     # XXX kind parameter still not supported
     def get_connections(self, kind='inet'):

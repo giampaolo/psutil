@@ -11,6 +11,8 @@ NEW FEATURES
  * Issue 206: disk I/O counters. (OSX patch by Jeremy Whitlock)
  * Issue 217: Process.get_connections() now has a "kind" argument to filter
    for connections with different criteria.
+ * Issue 221: (FreeBSD) Process.get_open_files has been rewritten in C and no
+   longer relies on lsof.
 
 BUGFIXES
 
