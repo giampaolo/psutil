@@ -692,6 +692,51 @@ get_process_open_files(PyObject* self, PyObject* args)
 
 
 /*
+ * Return process current working directory.
+ */
+static PyObject*
+get_process_cwd(PyObject* self, PyObject* args)
+{
+    long pid;
+    PyObject *path = NULL;
+    struct kinfo_file *freep, *kif;
+    struct kinfo_proc kipp;
+
+    int i, cnt;
+    const char *str;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (get_kinfo_proc(pid, &kipp) == -1)
+        return NULL;
+
+    freep = kinfo_getfile(pid, &cnt);
+    if (freep == NULL) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    for (i = 0; i < cnt; i++) {
+        kif = &freep[i];
+        if (kif->kf_fd == KF_FD_TYPE_CWD) {
+            path = Py_BuildValue("s", kif->kf_path);
+            break;
+        }
+    }
+    /*
+     * For lower pids it seems we can't retrieve any information
+     * (lsof can't do that it either).  Since this happens even
+     * as root we return an empty string instead of AccessDenied.
+     */
+    if (path == NULL) {
+        path = Py_BuildValue("s", "");
+    }
+    free(freep);
+    return path;
+}
+
+
+/*
  * Return a Python list of tuple representing per-cpu times
  */
 static PyObject*
@@ -905,7 +950,8 @@ PsutilMethods[] =
          "Return process tty (terminal) number"},
      {"get_process_open_files", get_process_open_files, METH_VARARGS,
          "Return files opened by process as a list of (path, fd) tuples"},
-
+     {"get_process_cwd", get_process_cwd, METH_VARARGS,
+         "Return process current working directory."},
 
      // --- system-related functions
 

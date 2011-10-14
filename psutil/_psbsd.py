@@ -146,6 +146,11 @@ class Process(object):
         return _psutil_bsd.get_process_ppid(self.pid)
 
     @wrap_exceptions
+    def get_process_cwd(self):
+        """Return process current working directory."""
+        return _psutil_bsd.get_process_cwd(self.pid)
+
+    @wrap_exceptions
     def get_process_uids(self):
         """Return real, effective and saved user ids."""
         real, effective, saved = _psutil_bsd.get_process_uids(self.pid)
@@ -190,6 +195,7 @@ class Process(object):
             retlist.append(ntuple)
         return retlist
 
+    @wrap_exceptions
     def get_open_files(self):
         """Return files opened by process as a list of namedtuples."""
         rawlist = _psutil_bsd.get_process_open_files(self.pid)

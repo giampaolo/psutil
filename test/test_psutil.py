@@ -931,14 +931,14 @@ class TestCase(unittest.TestCase):
         else:
             p.username
 
-    @skipUnless(WINDOWS or LINUX)
+    @skipIf(not hasattr(psutil.Process, "getcwd"))
     def test_getcwd(self):
         sproc = get_test_subprocess()
         wait_for_pid(sproc.pid)
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.getcwd(), os.getcwd())
 
-    @skipUnless(WINDOWS or LINUX)
+    @skipIf(not hasattr(psutil.Process, "getcwd"))
     def test_getcwd_2(self):
         cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(10)"]
         sproc = get_test_subprocess(cmd)
@@ -1336,8 +1336,6 @@ class TestCase(unittest.TestCase):
         excluded_names += ['get_cpu_percent', 'get_children']
         # XXX - skip slow lsof implementation;
         if BSD:
-           excluded_names += ['get_open_files', 'get_connections']
-        if OSX:
            excluded_names += ['get_connections']
         attrs = []
         for name in dir(psutil.Process):
@@ -1368,6 +1366,10 @@ class TestCase(unittest.TestCase):
                         self.assertTrue(err.msg)
                     else:
                         if name == 'parent' or ret in (0, 0.0, [], None):
+                            continue
+                        # getcwd() on FreeBSD may be an empty string
+                        # in case of a system process
+                        if name == 'getcwd' and BSD and ret == '':
                             continue
                         self.assertTrue(ret)
                         if name == "exe":
