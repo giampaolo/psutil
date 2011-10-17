@@ -41,18 +41,26 @@ def _get_boot_time():
 
 def _get_num_cpus():
     """Return the number of CPUs on the system"""
-    num = 0
-    f = open('/proc/cpuinfo', 'r')
+    # we try to determine num CPUs by using different approaches.
+    # SC_NPROCESSORS_ONLN seems to be the safer and it is also
+    # used by multiprocessing module
     try:
-        lines = f.readlines()
-    finally:
-        f.close()
-    for line in lines:
-        if line.lower().startswith('processor'):
-            num += 1
+        return os.sysconf("SC_NPROCESSORS_ONLN")
+    except ValueError:
+        # as a second fallback we try to parse /proc/cpuinfo
+        num = 0
+        f = open('/proc/cpuinfo', 'r')
+        try:
+            lines = f.readlines()
+        finally:
+            f.close()
+        for line in lines:
+            if line.lower().startswith('processor'):
+                num += 1
 
     # unknown format (e.g. amrel/sparc architectures), see:
     # http://code.google.com/p/psutil/issues/detail?id=200
+    # try to parse /proc/stat as a last resort
     if num == 0:
         f = open('/proc/stat', 'r')
         try:
