@@ -13,4 +13,5 @@
 static PyObject* linux_ioprio_get(PyObject* self, PyObject* args);
 static PyObject* linux_ioprio_set(PyObject* self, PyObject* args);
 static PyObject* get_disk_partitions(PyObject* self, PyObject* args);
+static PyObject* get_physmem(PyObject* self, PyObject* args);
 

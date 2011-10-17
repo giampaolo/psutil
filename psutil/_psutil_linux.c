@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <mntent.h>
 #include <sys/syscall.h>
+#include <sys/sysinfo.h>
 #include <linux/unistd.h>
 
 #include "_psutil_linux.h"
@@ -130,6 +131,20 @@ get_disk_partitions(PyObject* self, PyObject* args)
 
 
 /*
+ * Return physical memory usage as a (total, free, buffer) tuple.
+ */
+static PyObject*
+get_physmem(PyObject* self, PyObject* args)
+{
+    struct sysinfo info;
+    if (sysinfo(&info) != 0) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+    return Py_BuildValue("(lll)", info.totalram, info.freeram, info.bufferram);
+}
+
+
+/*
  * Define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -144,6 +159,8 @@ PsutilMethods[] =
      {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
         "Return disk mounted partitions as a list of tuples including "
         "device, mount point and filesystem type"},
+     {"get_physmem", get_physmem, METH_VARARGS,
+        "The physical memory usage as a (total, free, buffer) tuple."},
 
      {NULL, NULL, 0, NULL}
 };

@@ -123,37 +123,20 @@ def phymem_buffers():
     kernel in bytes.
     This reflects the "buffers" column of free command line utility.
     """
-    f = open('/proc/meminfo', 'r')
-    try:
-        for line in f:
-            if line.startswith('Buffers:'):
-                return int(line.split()[1]) * 1024
-        raise RuntimeError("line not found")
-    finally:
-        f.close()
+    total, free, buffers = _psutil_linux.get_physmem()
+    return buffers
 
 def phymem_usage():
+    """Return physical memory usage statistics as a namedutple including
+    tota, used, free and percent usage.
+    """
     # total, used and free values are matched against free cmdline utility
     # the percentage matches top/htop and gnome-system-monitor
-    f = open('/proc/meminfo', 'r')
-    try:
-        total = free = buffers = cached = None
-        for line in f:
-            if line.startswith('MemTotal:'):
-                total = int(line.split()[1]) * 1024
-            elif line.startswith('MemFree:'):
-                free = int(line.split()[1]) * 1024
-            elif line.startswith('Buffers:'):
-                buffers = int(line.split()[1]) * 1024
-            elif line.startswith('Cached:'):
-                cached = int(line.split()[1]) * 1024
-                break
-        used = total - free
-        percent = usage_percent(total - (free + buffers + cached), total,
-                                _round=1)
-        return ntuple_sysmeminfo(total, used, free, percent)
-    finally:
-        f.close()
+    total, free, buffers = _psutil_linux.get_physmem()
+    cached = cached_phymem()
+    used = total - free
+    percent = usage_percent(total - (free + buffers + cached), total, _round=1)
+    return ntuple_sysmeminfo(total, used, free, percent)
 
 
 def virtmem_usage():
