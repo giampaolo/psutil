@@ -30,6 +30,8 @@ BUGFIXES
    architectures.
  * Issue 211: Process instance can unexpectedly raise NoSuchProcess if tested
    for equality with another object.
+ * Issue 218: (Linux) crash at import time on Debian 64-bit because of a missing
+   line in /proc/meminfo.
 
 
 0.3.0 - 2011-07-08
