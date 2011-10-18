@@ -10,10 +10,12 @@ NEW FEATURES
  * Issue 198: Process.wait(timeout=0) can now be used to make wait() return
    immediately.
  * Issue 206: disk I/O counters. (OSX patch by Jeremy Whitlock)
+ * Issue 213: examples/iotop.py script.
  * Issue 217: Process.get_connections() now has a "kind" argument to filter
    for connections with different criteria.
  * Issue 221: (FreeBSD) Process.get_open_files has been rewritten in C and no
    longer relies on lsof.
+ * Issue 223: examples/top.py script.
 
 BUGFIXES
 
