@@ -58,6 +58,8 @@ def poll(interval):
     # sleep some time
     time.sleep(interval)
 
+    procs_status = dict(([(str(getattr(psutil, x)), 0) for x in dir(psutil) \
+                        if x.startswith("STATUS")]))
     # then retrieve the same info again
     for p in procs[:]:
         try:
@@ -68,13 +70,15 @@ def poll(interval):
             p._cpu_percent = p.get_cpu_percent(interval=0)
             p._create_time = p.create_time
             p._name = p.name
+            procs_status[str(p.status)] += 1
         except psutil.NoSuchProcess:
             procs.remove(p)
 
     # return processes sorted by CPU percent usage
-    return sorted(procs, key=lambda p: p._cpu_percent, reverse=True)
+    processes = sorted(procs, key=lambda p: p._cpu_percent, reverse=True)
+    return (processes, procs_status)
 
-def print_header():
+def print_header(procs_status):
     """Print system-related info, above the process list."""
 
     def get_dashes(perc):
@@ -111,12 +115,20 @@ def print_header():
                                            str(vmem.total / 1024 / 1024) + "M")
     win.addstr(lineno, 0, line)
 
-    # no procesess, load average, uptime
+    # procesess number and status
+    lineno += 1
+    st = []
+    for x, y in procs_status.iteritems():
+        if y:
+            st.append("%s=%s" % (x, y))
+    st.sort(key=lambda x: x[:3] in ('run', 'sle'), reverse=1)
+    win.addstr(lineno, 0, " Processes: %s (%s)" % (len(procs), ' '.join(st)))
+    # load average, uptime
     lineno += 1
     uptime = datetime.now() - datetime.fromtimestamp(psutil.BOOT_TIME)
     av1, av2, av3 = os.getloadavg()
-    line = " Processes: %s  Load average: %.2f %.2f %.2f  Uptime: %s" \
-            % (len(procs), av1, av2, av3, str(uptime).split('.')[0])
+    line = " Load average: %.2f %.2f %.2f  Uptime: %s" \
+            % (av1, av2, av3, str(uptime).split('.')[0])
     win.addstr(lineno, 0, line)
     return lineno + 1
 
@@ -126,12 +138,12 @@ def run(win):
     templ = "%-6s %-8s %4s %5s %5s %6s %4s %9s  %2s"
     interval = 0
     while 1:
-        procs = poll(interval)
+        procs, procs_status = poll(interval)
         win.erase()
         header = templ % ("PID", "USER", "NI", "VIRT", "RES", "CPU%", "MEM%",
                           "TIME", "NAME")
         header += " " * (win.getmaxyx()[1] - len(header))
-        lineno = print_header() + 1
+        lineno = print_header(procs_status) + 1
         win.addstr(lineno, 0, header, curses.A_REVERSE)
         lineno += 1
         for p in procs:
