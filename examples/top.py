@@ -68,7 +68,7 @@ def poll(interval):
             p._meminfo = p.get_memory_info()
             p._mempercent = p.get_memory_percent()
             p._cpu_percent = p.get_cpu_percent(interval=0)
-            p._create_time = p.create_time
+            p._cpu_times = p.get_cpu_times()
             p._name = p.name
             procs_status[str(p.status)] += 1
         except psutil.NoSuchProcess:
@@ -149,7 +149,7 @@ def run(win):
         for p in procs:
             # TIME+ column shows process CPU cumulative time and
             # is expressed as: mm:ss.ms
-            ctime = timedelta(seconds=sum(p.get_cpu_times()))
+            ctime = timedelta(seconds=sum(p._cpu_times))
             ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
                                   str((ctime.seconds % 60)).zfill(2),
                                   str(ctime.microseconds)[:2])
