@@ -636,7 +636,7 @@ class Process(object):
         def process(file, family, type_):
             retlist = []
             try:
-                f = open(file, 'rb')
+                f = open(file, 'r')
             except IOError, err:
                 # IPv6 not supported on this platform
                 if err.errno == errno.ENOENT and file.endswith('6'):
