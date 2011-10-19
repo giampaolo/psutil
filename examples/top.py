@@ -141,14 +141,18 @@ def run(win):
         procs, procs_status = poll(interval)
         win.erase()
         header = templ % ("PID", "USER", "NI", "VIRT", "RES", "CPU%", "MEM%",
-                          "TIME", "NAME")
+                          "TIME+", "NAME")
         header += " " * (win.getmaxyx()[1] - len(header))
         lineno = print_header(procs_status) + 1
         win.addstr(lineno, 0, header, curses.A_REVERSE)
         lineno += 1
         for p in procs:
-            ctime = p._create_time - psutil.BOOT_TIME
-            ctime = str(timedelta(seconds=ctime)).split('.')[0]
+            # TIME+ column shows process CPU cumulative time and
+            # is expressed as: mm:ss.ms
+            ctime = timedelta(seconds=sum(p.get_cpu_times()))
+            ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
+                                  str((ctime.seconds % 60)).zfill(2),
+                                  str(ctime.microseconds)[:2])
             line = templ % (p.pid,
                             p._username[:8],
                             p._nice,
