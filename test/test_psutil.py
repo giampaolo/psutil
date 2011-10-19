@@ -455,9 +455,9 @@ class TestCase(unittest.TestCase):
         ret = psutil.network_io_counters(pernic=False)
         check_ntuple(ret)
         ret = psutil.network_io_counters(pernic=True)
-        for name, ntuple in ret.iteritems():
-            self.assertTrue(name)
-            check_ntuple(ntuple)
+        for key in ret:
+            self.assertTrue(key)
+            check_ntuple(ret[key])
     # XXX
     @skipUnless(hasattr(psutil, "disk_io_counters"))
     def test_disk_io_counters(self):
@@ -478,9 +478,9 @@ class TestCase(unittest.TestCase):
         ret = psutil.disk_io_counters(perdisk=False)
         check_ntuple(ret)
         ret = psutil.disk_io_counters(perdisk=True)
-        for name, ntuple in ret.iteritems():
-            self.assertTrue(name)
-            check_ntuple(ntuple)
+        for key in ret:
+            self.assertTrue(key)
+            check_ntuple(ret[key])
 
     # ====================
     # Process object tests
