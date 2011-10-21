@@ -1428,6 +1428,9 @@ class TestCase(unittest.TestCase):
 
     def test_Popen(self):
         # Popen class test
+        # XXX this test causes a ResourceWarning on Python 3 because
+        # psutil.__subproc instance doesn't get propertly freed.
+        # Not sure what to do though.
         cmd = [PYTHON, "-c", "import time; time.sleep(3600);"]
         proc = psutil.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:
