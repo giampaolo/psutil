@@ -686,68 +686,68 @@ def disk_partitions(all=False):
     """
     return _psplatform.disk_partitions(all)
 
-if hasattr(_psplatform, "network_io_counters"):
+def network_io_counters(pernic=False):
+    """Return network I/O statistics as a namedtuple including
+    the following attributes:
 
-    def network_io_counters(pernic=False):
-        """Return network I/O statistics as a namedtuple including:
-         - number of bytes sent
-         - number of bytes received
-         - number of packets sent
-         - number of packets received
+     - bytes_sent:   number of bytes sent
+     - bytes_recv:   number of bytes received
+     - packets_sent: number of packets sent
+     - packets_recv: number of packets received
 
-        If pernic is True return the same information for every
-        network interface installed on the system as a dictionary
-        with network interface names as the keys and the namedtuple
-        described above as the values.
-        """
-        from psutil._common import ntuple_net_iostat
-        rawdict = _psplatform.network_io_counters()
-        if pernic:
-            for nic, fields in rawdict.iteritems():
-                rawdict[nic] = ntuple_net_iostat(*fields)
-            return rawdict
-        else:
-            bytes_sent, bytes_recv, packets_sent, packets_recv = 0, 0, 0, 0
-            for _, fields in rawdict.iteritems():
-                bytes_sent += fields[0]
-                bytes_recv += fields[1]
-                packets_sent += fields[2]
-                packets_recv += fields[3]
-            return ntuple_net_iostat(bytes_sent, bytes_recv,
-                                     packets_sent, packets_recv)
+    If pernic is True return the same information for every
+    network interface installed on the system as a dictionary
+    with network interface names as the keys and the namedtuple
+    described above as the values.
+    """
+    from psutil._common import ntuple_net_iostat
+    rawdict = _psplatform.network_io_counters()
+    if pernic:
+        for nic, fields in rawdict.iteritems():
+            rawdict[nic] = ntuple_net_iostat(*fields)
+        return rawdict
+    else:
+        bytes_sent, bytes_recv, packets_sent, packets_recv = 0, 0, 0, 0
+        for _, fields in rawdict.iteritems():
+            bytes_sent += fields[0]
+            bytes_recv += fields[1]
+            packets_sent += fields[2]
+            packets_recv += fields[3]
+        return ntuple_net_iostat(bytes_sent, bytes_recv,
+                                 packets_sent, packets_recv)
 
-if hasattr(_psplatform, "disk_io_counters"):
+def disk_io_counters(perdisk=False):
+    """Return system disk I/O statistics as a namedtuple including
+    the following attributes:
 
-    def disk_io_counters(perdisk=False):
-        """Return system disk I/O statistics as a namedtuple including:
-         - number of bytes read
-         - number of bytes written
-         - number of reads
-         - number of writes
-         - time spent reading from disk (in nanoseconds)
-         - time spent writing to disk (in nanoseconds)
+     - read_count:  number of reads
+     - write_count: number of writes
+     - read_bytes:  number of bytes read
+     - write_bytes: number of bytes written
+     - read_time:   time spent reading from disk (in milliseconds)
+     - write_time:  time spent writing to disk (in milliseconds)
 
-        If perdisk is True return the same information for every
-        physical disk installed on the system as a dictionary
-        with partition names as the keys and the namedutuple
-        described above as the values.
-        """
-        from psutil._common import ntuple_disk_iostat
-        rawdict = _psplatform.disk_io_counters()
-        if perdisk:
-            for disk, fields in rawdict.iteritems():
-                rawdict[disk] = ntuple_disk_iostat(*fields)
-            return rawdict
-        else:
-            reads, writes, rbytes, wbytes, rtime, wtime = 0, 0, 0, 0, 0, 0
-            for _, fields in rawdict.iteritems():
-                reads += fields[0]
-                writes += fields[1]
-                rbytes += fields[2]
-                wbytes += fields[3]
-                rtime += fields[4]
-                wtime += fields[5]
-            return ntuple_disk_iostat(reads, writes, rbytes, wbytes, rtime, wtime)
+    If perdisk is True return the same information for every
+    physical disk installed on the system as a dictionary
+    with partition names as the keys and the namedutuple
+    described above as the values.
+    """
+    from psutil._common import ntuple_disk_iostat
+    rawdict = _psplatform.disk_io_counters()
+    if perdisk:
+        for disk, fields in rawdict.iteritems():
+            rawdict[disk] = ntuple_disk_iostat(*fields)
+        return rawdict
+    else:
+        reads, writes, rbytes, wbytes, rtime, wtime = 0, 0, 0, 0, 0, 0
+        for _, fields in rawdict.iteritems():
+            reads += fields[0]
+            writes += fields[1]
+            rbytes += fields[2]
+            wbytes += fields[3]
+            rtime += fields[4]
+            wtime += fields[5]
+        return ntuple_disk_iostat(reads, writes, rbytes, wbytes, rtime, wtime)
 
 
 def _deprecated(replacement):

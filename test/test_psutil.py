@@ -439,9 +439,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(mount in mounts)
         psutil.disk_usage(mount)
 
-    # XXX
-    @skipUnless(hasattr(psutil, "network_io_counters"))
-    def test_anetwork_io_counters(self):
+    def test_network_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.bytes_sent)
             self.assertEqual(nt[1], nt.bytes_recv)
@@ -458,8 +456,7 @@ class TestCase(unittest.TestCase):
         for key in ret:
             self.assertTrue(key)
             check_ntuple(ret[key])
-    # XXX
-    @skipUnless(hasattr(psutil, "disk_io_counters"))
+
     def test_disk_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.read_count)
@@ -481,6 +478,17 @@ class TestCase(unittest.TestCase):
         for key in ret:
             self.assertTrue(key)
             check_ntuple(ret[key])
+
+        # make sure counters have increased after writing a file
+        before = psutil.disk_io_counters(perdisk=False)
+        f = open(TESTFN, 'wb')
+        f.write('x' * 10485760)  # 10 MB
+        f.close()
+        time.sleep(.1)
+        after = psutil.disk_io_counters(perdisk=False)
+        self.assertTrue(after.write_count > before.write_count)
+        self.assertTrue(after.write_time > before.write_time)
+        self.assertTrue((after.write_bytes - before.write_bytes) > 1048576) # 1MB
 
     # ====================
     # Process object tests
