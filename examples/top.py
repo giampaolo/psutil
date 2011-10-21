@@ -58,8 +58,7 @@ def poll(interval):
     # sleep some time
     time.sleep(interval)
 
-    procs_status = dict(([(str(getattr(psutil, x)), 0) for x in dir(psutil) \
-                        if x.startswith("STATUS")]))
+    procs_status = {}
     # then retrieve the same info again
     for p in procs[:]:
         try:
@@ -70,6 +69,8 @@ def poll(interval):
             p._cpu_percent = p.get_cpu_percent(interval=0)
             p._cpu_times = p.get_cpu_times()
             p._name = p.name
+            if str(p.status) not in procs_status:
+                procs_status[str(p.status)] = 0
             procs_status[str(p.status)] += 1
         except psutil.NoSuchProcess:
             procs.remove(p)
