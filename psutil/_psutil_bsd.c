@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/user.h>
 #include <sys/proc.h>
+#include <devstat.h>      /* get io counters */
 #include <sys/vmmeter.h>  /* needed for vmtotal struct */
 #include <sys/mount.h>
 
@@ -909,6 +910,54 @@ get_network_io_counters(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return a Python dict of tuples for disk I/O information
+ */
+static PyObject*
+get_disk_io_counters(PyObject* self, PyObject* args)
+{
+    PyObject* py_retdict = PyDict_New();
+    PyObject* py_disk_info;
+
+    int i;
+    struct statinfo stats;
+
+    if (devstat_checkversion(NULL) < 0) {
+        Py_DECREF(py_retdict);
+        return PyErr_Format(PyExc_RuntimeError,
+                           "devstat_checkversion() failed");
+    }
+
+    stats.dinfo = (struct devinfo *)malloc(sizeof(struct devinfo));
+    bzero(stats.dinfo, sizeof(struct devinfo));
+
+    if (devstat_getdevs(NULL, &stats) == -1) {
+        Py_DECREF(py_retdict);
+        return PyErr_Format(PyExc_RuntimeError,
+                           "devstat_getdevs() failed");
+    }
+
+    for (i = 0; i < stats.dinfo->numdevs; i++) {
+        struct devstat current;
+        char disk_name[128];
+        current = stats.dinfo->devices[i];
+        snprintf(disk_name, sizeof(disk_name), "%s%d",
+                                current.device_name,
+                                current.unit_number);
+        py_disk_info = Py_BuildValue("(KKKKKK)",
+            current.operations[DEVSTAT_READ],   // no reads
+            current.operations[DEVSTAT_WRITE],  // no writes
+            current.bytes[DEVSTAT_READ],        // bytes read
+            current.bytes[DEVSTAT_WRITE],       // bytes written
+            devstat_compute_etime(&current.duration[DEVSTAT_READ], NULL),  // r time
+            devstat_compute_etime(&current.duration[DEVSTAT_WRITE], NULL)  // w time
+        );
+        PyDict_SetItemString(py_retdict, disk_name, py_disk_info);
+        Py_XDECREF(py_disk_info);
+    }
+
+    return py_retdict;
+}
 
 
 /*
@@ -979,6 +1028,8 @@ PsutilMethods[] =
          "fs type for all partitions mounted on the system."},
      {"get_network_io_counters", get_network_io_counters, METH_VARARGS,
          "Return dict of tuples of networks I/O information."},
+     {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
+         "Return a Python dict of tuples for disk I/O information"},
 
      {NULL, NULL, 0, NULL}
 };

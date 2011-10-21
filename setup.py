@@ -62,7 +62,8 @@ elif sys.platform.lower().startswith("freebsd"):
     extensions = [Extension('_psutil_bsd',
                             sources = ['psutil/_psutil_bsd.c',
                                        'psutil/_psutil_common.c',
-                                       'psutil/arch/bsd/process_info.c']
+                                       'psutil/arch/bsd/process_info.c'],
+                            libraries=["devstat"],
                             ),
                   posix_extension]
 # Linux
