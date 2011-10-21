@@ -944,14 +944,18 @@ get_disk_io_counters(PyObject* self, PyObject* args)
         snprintf(disk_name, sizeof(disk_name), "%s%d",
                                 current.device_name,
                                 current.unit_number);
-        py_disk_info = Py_BuildValue("(KKKKKK)",
+
+
+        py_disk_info = Py_BuildValue("(KKKKLL)",
             current.operations[DEVSTAT_READ],   // no reads
             current.operations[DEVSTAT_WRITE],  // no writes
             current.bytes[DEVSTAT_READ],        // bytes read
             current.bytes[DEVSTAT_WRITE],       // bytes written
-            devstat_compute_etime(&current.duration[DEVSTAT_READ], NULL),  // r time
-            devstat_compute_etime(&current.duration[DEVSTAT_WRITE], NULL)  // w time
-        );
+            (long long)devstat_compute_etime(
+                &current.duration[DEVSTAT_READ], NULL),  // r time
+            (long long)devstat_compute_etime(
+                &current.duration[DEVSTAT_WRITE], NULL)  // w time
+       );
         PyDict_SetItemString(py_retdict, disk_name, py_disk_info);
         Py_XDECREF(py_disk_info);
     }
