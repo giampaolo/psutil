@@ -207,8 +207,16 @@ class Process(object):
         """Return network connections opened by a process as a list of
         namedtuples by parsing lsof output.
         """
+        if kind not in conn_tmap:
+            raise ValueError("invalid %r kind argument; choose between %s"
+                             % (kind, ', '.join([repr(x) for x in conn_tmap])))
+        families, types = conn_tmap[kind]
+        ret = []
         lsof = _psposix.LsofParser(self.pid, self._process_name)
-        return lsof.get_process_connections()
+        for conn in lsof.get_process_connections():
+            if conn.family in families and conn.type in types:
+                ret.append(conn)
+        return ret
 
     @wrap_exceptions
     def process_wait(self, timeout=None):
