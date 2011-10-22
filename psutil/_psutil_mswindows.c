@@ -1297,8 +1297,8 @@ get_process_connections(PyObject* self, PyObject* args)
 
     /* TCP IPv4 */
 
-    if ((PySequence_Contains(af_filter, PyInt_FromLong(AF_INET)) == 1) &&
-        (PySequence_Contains(type_filter, PyInt_FromLong(SOCK_STREAM)) == 1))
+    if ((PySequence_Contains(af_filter, PyLong_FromLong((long)AF_INET)) == 1) &&
+        (PySequence_Contains(type_filter, PyLong_FromLong((long)SOCK_STREAM)) == 1))
     {
         tableSize = 0;
         getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET,
@@ -1367,8 +1367,8 @@ get_process_connections(PyObject* self, PyObject* args)
 
     /* TCP IPv6 */
 
-    if ((PySequence_Contains(af_filter, PyInt_FromLong(AF_INET6)) == 1) &&
-        (PySequence_Contains(type_filter, PyInt_FromLong(SOCK_STREAM)) == 1))
+    if ((PySequence_Contains(af_filter, PyLong_FromLong((long)AF_INET6)) == 1) &&
+        (PySequence_Contains(type_filter, PyLong_FromLong((long)SOCK_STREAM)) == 1))
     {
         tableSize = 0;
         getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET6,
@@ -1437,8 +1437,8 @@ get_process_connections(PyObject* self, PyObject* args)
 
     /* UDP IPv4 */
 
-    if ((PySequence_Contains(af_filter, PyInt_FromLong(AF_INET)) == 1) &&
-        (PySequence_Contains(type_filter, PyInt_FromLong(SOCK_DGRAM)) == 1))
+    if ((PySequence_Contains(af_filter, PyLong_FromLong((long)AF_INET)) == 1) &&
+        (PySequence_Contains(type_filter, PyLong_FromLong((long)SOCK_DGRAM)) == 1))
     {
         tableSize = 0;
         getExtendedUdpTable(NULL, &tableSize, FALSE, AF_INET,
@@ -1489,8 +1489,8 @@ get_process_connections(PyObject* self, PyObject* args)
 
     /* UDP IPv6 */
 
-    if ((PySequence_Contains(af_filter, PyInt_FromLong(AF_INET6)) == 1) &&
-        (PySequence_Contains(type_filter, PyInt_FromLong(SOCK_DGRAM)) == 1))
+    if ((PySequence_Contains(af_filter, PyLong_FromLong((long)AF_INET6)) == 1) &&
+        (PySequence_Contains(type_filter, PyLong_FromLong((long)SOCK_DGRAM)) == 1))
     {
         tableSize = 0;
         getExtendedUdpTable(NULL, &tableSize, FALSE,
@@ -1754,7 +1754,11 @@ get_network_io_counters(PyObject* self, PyObject* args)
                                             pIfRow->dwInUcastPkts);
 
                 PyDict_SetItemString(py_retdict,
+#if PY_MAJOR_VERSION >= 3
+                                     PyUnicode_AsUTF8String(PyUnicode_FromWideChar(
+# else
                                      PyString_AsString(PyUnicode_FromWideChar(
+#endif
                                         pCurrAddresses->FriendlyName,
                                         wcslen(pCurrAddresses->FriendlyName))),
                                      py_ifc_info);
