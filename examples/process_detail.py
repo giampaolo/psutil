@@ -33,7 +33,7 @@ def convert_bytes(n):
     return n
 
 def print_(a, b):
-    if sys.stdout.isatty():
+    if sys.stdout.isatty() and os.name == 'posix':
         fmt = '\x1b[1;32m%-17s\x1b[0m %s' %(a, b)
     else:
         fmt = '%-15s %s' %(a, b)
