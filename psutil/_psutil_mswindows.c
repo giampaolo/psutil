@@ -1237,7 +1237,6 @@ get_process_connections(PyObject* self, PyObject* args)
     typedef DWORD (WINAPI *_GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
                                                  UDP_TABLE_CLASS, ULONG);
     _GetExtendedUdpTable getExtendedUdpTable;
-    DWORD ret;
     PVOID table;
     DWORD tableSize;
     PMIB_TCPTABLE_OWNER_PID tcp4Table;
@@ -1702,7 +1701,6 @@ get_network_io_counters(PyObject* self, PyObject* args)
 
     DWORD dwRetVal = 0;
     MIB_IFROW *pIfRow;
-    unsigned int i = 0;
     ULONG flags = 0;
     ULONG family = AF_UNSPEC;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;

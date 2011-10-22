@@ -45,7 +45,7 @@ if sys.platform.lower().startswith("win"):
                             define_macros=[('_WIN32_WINNT', get_winver()),
                                            ('_AVAIL_WINVER_', get_winver())],
                             libraries=["psapi", "kernel32", "advapi32",
-                                       "shell32", "netapi32"]
+                                       "shell32", "netapi32", "iphlpapi"]
                             )]
 # OS X
 elif sys.platform.lower().startswith("darwin"):
