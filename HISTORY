@@ -22,6 +22,8 @@ BUGFIXES
  * Issue 135: (OS X) psutil cannot create Process object
  * Issue 144: (Linux) no longer support 0 special PID.
  * Issue 188: (Linux) psutil import error on Linux ARM architectures.
+ * Issue 194: (POSIX) psutil.Process.get_cpu_percent() now reports a percentage
+   over 100 on multicore processors.
  * Issue 197: (Linux) Process.get_connections() is broken on platforms not
    supporting IPv6.
  * Issue 200: (Linux) psutil.NUM_CPUS not working on armel and sparc

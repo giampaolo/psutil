@@ -348,9 +348,13 @@ class Process(object):
             return 0.0
         # the utilization of a single CPU
         single_cpu_percent = overall_percent * NUM_CPUS
-        # ugly hack to avoid troubles with float precision issues
-        if single_cpu_percent > 100.0:
-            return 100.0
+        # on posix a percentage > 100 is legitimate
+        # http://stackoverflow.com/questions/1032357/comprehending-top-cpu-usage
+        # on windows we use this ugly hack to avoid troubles with float
+        # precision issues
+        if os.name != 'posix':
+            if single_cpu_percent > 100.0:
+                return 100.0
         return round(single_cpu_percent, 1)
 
     def get_cpu_times(self):
