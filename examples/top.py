@@ -69,9 +69,10 @@ def poll(interval):
             p._cpu_percent = p.get_cpu_percent(interval=0)
             p._cpu_times = p.get_cpu_times()
             p._name = p.name
-            if str(p.status) not in procs_status:
-                procs_status[str(p.status)] = 0
-            procs_status[str(p.status)] += 1
+            try:
+                procs_status[str(p.status)] += 1
+            except KeyError:
+                procs_status[str(p.status)] = 1
         except psutil.NoSuchProcess:
             procs.remove(p)
 
