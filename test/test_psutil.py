@@ -613,7 +613,7 @@ class TestCase(unittest.TestCase):
             percent = p.get_cpu_percent(interval=None)
             self.assertTrue(isinstance(percent, float))
             self.assertTrue(percent >= 0.0)
-            if os.name != posix:
+            if os.name != 'posix':
                 self.assertTrue(percent <= 100.0)
             else:
                 self.assertTrue(percent >= 0.0)
@@ -890,9 +890,10 @@ class TestCase(unittest.TestCase):
                 except psutil.AccessDenied:
                     pass
             finally:
-                # going back to previous nice value raises AccessDenied on OSX
-                if not OSX:
+                try:
                     p.nice = first_nice
+                except psutil.AccessDenied:
+                    pass
 
     if os.name == 'nt':
 
