@@ -481,9 +481,15 @@ get_memory_info(PyObject* self, PyObject* args)
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
     }
-
-    CloseHandle(hProcess);
+    
+// py 2.4
+#if (PY_MAJOR_VERSION == 2) && (PY_MINOR_VERSION <= 4)
+    return Py_BuildValue("(II)", (unsigned int)counters.WorkingSetSize,
+                                 (unsigned int)counters.PagefileUsage);
+#else
+// py >= 2.5
     return Py_BuildValue("(nn)", counters.WorkingSetSize, counters.PagefileUsage);
+#endif
 }
 
 
