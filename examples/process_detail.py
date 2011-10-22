@@ -30,6 +30,7 @@ def convert_bytes(n):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
             return '%.1f%s' % (value, s)
+    return n
 
 def print_(a, b):
     if sys.stdout.isatty():
@@ -100,7 +101,12 @@ def run(pid):
     if connections:
         print_('open connections', '')
         for conn in connections:
-            type = 'TCP' if conn.type == socket.SOCK_STREAM else 'UDP'
+            if conn.type == socket.SOCK_STREAM:
+                type = 'TCP'
+            elif conn.type == socket.SOCK_DGRAM:
+                type = 'UDP'
+            else:
+                type = 'UNIX'
             lip, lport = conn.local_address
             if not conn.remote_address:
                 rip, rport = '*', '*'
