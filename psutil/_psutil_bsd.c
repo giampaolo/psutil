@@ -959,6 +959,9 @@ get_disk_io_counters(PyObject* self, PyObject* args)
         Py_XDECREF(py_disk_info);
     }
 
+    free(stats.dinfo->mem_ptr);
+    free(stats.dinfo);
+
     return py_retdict;
 }
 
