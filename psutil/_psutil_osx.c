@@ -1002,10 +1002,10 @@ get_process_connections(PyObject* self, PyObject* args)
                 continue;
 
             // apply filters
-            inseq = PySequence_Contains(af_filter, PyInt_FromLong(family));
+            inseq = PySequence_Contains(af_filter, PyLong_FromLong((long)family));
             if (inseq == 0)
                 continue;
-            inseq = PySequence_Contains(type_filter, PyInt_FromLong(type));
+            inseq = PySequence_Contains(type_filter, PyLong_FromLong((long)type));
             if (inseq == 0)
                 continue;
 
