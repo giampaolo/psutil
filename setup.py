@@ -13,7 +13,7 @@ try:
 except ImportError:
     from distutils.core import setup, Extension
 
-__ver__ = "0.3.1"
+__ver__ = "0.4.0"
 
 # Hack for Python 3 to tell distutils to run 2to3 against the files
 # copied in the build directory before installing.
@@ -88,7 +88,7 @@ psutil is a module providing convenience functions for monitoring
 system and processes in a portable way by using Python.""",
         keywords=['ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice',
                   'tty', 'ionice', 'uptime', 'taskmgr', 'process', 'df',
-                  'monitoring'],
+                  'iotop', 'iostat', 'monitoring',],
         author='Giampaolo Rodola, Jay Loden',
         author_email='psutil@googlegroups.com',
         url='http://code.google.com/p/psutil/',

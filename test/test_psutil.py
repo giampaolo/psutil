@@ -479,17 +479,6 @@ class TestCase(unittest.TestCase):
             self.assertTrue(key)
             check_ntuple(ret[key])
 
-        # make sure counters have increased after writing a file
-        before = psutil.disk_io_counters(perdisk=False)
-        f = open(TESTFN, 'wb')
-        f.write('x' * 10485760)  # 10 MB
-        f.close()
-        time.sleep(.1)
-        after = psutil.disk_io_counters(perdisk=False)
-        self.assertTrue(after.write_count > before.write_count)
-        self.assertTrue(after.write_time > before.write_time)
-        self.assertTrue((after.write_bytes - before.write_bytes) > 1048576) # 1MB
-
     # ====================
     # Process object tests
     # ====================
