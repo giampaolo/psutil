@@ -136,7 +136,7 @@ class PosixSpecificTestCase(unittest.TestCase):
 
         # on OSX ps doesn't show pid 0
         if OSX and 0 not in pids_ps:
-            pids_ps.append(0)
+            pids_ps.insert(0, 0)
 
         if pids_ps != pids_psutil:
             difference = [x for x in pids_psutil if x not in pids_ps] + \
