@@ -613,7 +613,10 @@ class TestCase(unittest.TestCase):
             percent = p.get_cpu_percent(interval=None)
             self.assertTrue(isinstance(percent, float))
             self.assertTrue(percent >= 0.0)
-            self.assertTrue(percent <= 100.0)
+            if os.name != posix:
+                self.assertTrue(percent <= 100.0)
+            else:
+                self.assertTrue(percent >= 0.0)
 
     def test_cpu_times(self):
         times = psutil.Process(os.getpid()).get_cpu_times()
