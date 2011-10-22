@@ -21,6 +21,7 @@
 #include <sys/proc.h>
 #include <devstat.h>      /* get io counters */
 #include <sys/vmmeter.h>  /* needed for vmtotal struct */
+#include <libutil.h>      /* process open files */
 #include <sys/mount.h>
 
 #include <net/if.h>       /* net io counters */
@@ -663,7 +664,6 @@ get_process_open_files(PyObject* self, PyObject* args)
 
 
     int i, cnt;
-    const char *str;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -704,7 +704,6 @@ get_process_cwd(PyObject* self, PyObject* args)
     struct kinfo_proc kipp;
 
     int i, cnt;
-    const char *str;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
