@@ -1747,6 +1747,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
     pCurrAddresses = pAddresses;
     while (pCurrAddresses) {
         pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
+        
         if (pIfRow == NULL) {
             Py_DECREF(py_retdict);
             Py_XDECREF(py_pre_nic_name);
@@ -1759,26 +1760,31 @@ get_network_io_counters(PyObject* self, PyObject* args)
 
         pIfRow->dwIndex = pCurrAddresses->IfIndex;
         dwRetVal = GetIfEntry(pIfRow);
-        if (dwRetVal == NO_ERROR) {
-            py_nic_info = Py_BuildValue("(IIII)",
-                                        pIfRow->dwOutOctets,
-                                        pIfRow->dwInOctets,
-                                        pIfRow->dwOutUcastPkts,
-                                        pIfRow->dwInUcastPkts);          
-                              
-            py_pre_nic_name = PyUnicode_FromWideChar(
-                                    pCurrAddresses->FriendlyName,
-                                    wcslen(pCurrAddresses->FriendlyName));
-#if PY_MAJOR_VERSION >= 3
-            py_nic_name = PyUnicode_FromObject(py_pre_nic_name);
-#else
-            py_nic_name = PyUnicode_AsUTF8String(py_pre_nic_name);
-#endif
-            PyDict_SetItemString(py_retdict, py_nic_name, py_nic_info);
+        if (dwRetVal != NO_ERROR) {
+            Py_DECREF(py_retdict);
             Py_XDECREF(py_pre_nic_name);
             Py_XDECREF(py_nic_name);
             Py_XDECREF(py_nic_info);
+            PyErr_SetString(PyExc_RuntimeError, 
+                "GetIfEntry() failed.");
+            return NULL;
         }
+        
+        py_nic_info = Py_BuildValue("(IIII)",
+                                    pIfRow->dwOutOctets,
+                                    pIfRow->dwInOctets,
+                                    pIfRow->dwOutUcastPkts,
+                                    pIfRow->dwInUcastPkts);          
+                          
+        py_pre_nic_name = PyUnicode_FromWideChar(
+                                pCurrAddresses->FriendlyName,
+                                wcslen(pCurrAddresses->FriendlyName));
+        py_nic_name = PyUnicode_FromObject(py_pre_nic_name);
+        PyDict_SetItem(py_retdict, py_nic_name, py_nic_info);
+        Py_XDECREF(py_pre_nic_name);
+        Py_XDECREF(py_nic_name);
+        Py_XDECREF(py_nic_info);
+
         free(pIfRow);
         pCurrAddresses = pCurrAddresses->Next;
     }
