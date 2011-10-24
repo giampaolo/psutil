@@ -1830,7 +1830,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
 
 
 /*
- * Return disk partitions as a list of namedtuples.
+ * Return disk partitions as a list of strings.
  */
 static PyObject*
 win32_GetLogicalDriveStrings(PyObject* self, PyObject* args)
@@ -1839,6 +1839,7 @@ win32_GetLogicalDriveStrings(PyObject* self, PyObject* args)
     char drive_strings[255];
     char* drive_letter = drive_strings;
     PyObject* py_retlist = PyList_New(0);
+    PyObject* py_string = NULL;
 
     Py_BEGIN_ALLOW_THREADS
     num_bytes = GetLogicalDriveStrings(254, drive_letter);
@@ -1849,8 +1850,10 @@ win32_GetLogicalDriveStrings(PyObject* self, PyObject* args)
     }
 
     while (*drive_letter != 0) {
-        PyList_Append(py_retlist, Py_BuildValue("s", drive_letter));
-        drive_letter = strchr(drive_letter, 0) +1;
+        py_string = Py_BuildValue("s", drive_letter);
+        PyList_Append(py_retlist, py_string);
+        Py_DECREF(py_string);
+        drive_letter = strchr(drive_letter, 0) + 1;
     }
 
     return py_retlist;
