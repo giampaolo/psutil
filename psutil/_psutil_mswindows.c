@@ -1703,75 +1703,84 @@ static PyObject*
 get_network_io_counters(PyObject* self, PyObject* args)
 {
     PyObject* py_retdict = PyDict_New();
-    PyObject* py_ifc_info;
-
+    PyObject* py_nic_info = NULL;
+    PyObject* py_pre_nic_name = NULL;
+    PyObject* py_nic_name = NULL;
+    
+    int attempts = 0;
+    int outBufLen = 15000;
     DWORD dwRetVal = 0;
     MIB_IFROW *pIfRow;
     ULONG flags = 0;
     ULONG family = AF_UNSPEC;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
-
-    ULONG outBufLen = sizeof(IP_ADAPTER_INFO);
-    pAddresses = (IP_ADAPTER_ADDRESSES *)malloc(outBufLen);
-    if (pAddresses == NULL) {
-        Py_DECREF(py_retdict);
-        PyErr_SetFromErrno(0);
-        return NULL;
-    }
-
-    dwRetVal = GetAdaptersAddresses(family, flags, NULL, pAddresses,
-        &outBufLen);
-    if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
-        free(pAddresses);
-        pAddresses = (IP_ADAPTER_ADDRESSES *)malloc(outBufLen);
+ 
+    do {        
+        pAddresses = (IP_ADAPTER_ADDRESSES *) malloc(outBufLen);
         if (pAddresses == NULL) {
             Py_DECREF(py_retdict);
-            PyErr_SetFromErrno(0);
+            PyErr_SetString(PyExc_RuntimeError, 
+                "memory allocation failed for IP_ADAPTER_ADDRESSES struct.");
             return NULL;
         }
-    }
 
-    dwRetVal = GetAdaptersAddresses(family, flags, NULL, pAddresses,
-        &outBufLen);
-    if (dwRetVal == NO_ERROR) {
-        pCurrAddresses = pAddresses;
-        while (pCurrAddresses) {
-            pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
-            if (pIfRow == NULL) {
-                Py_DECREF(py_retdict);
-                PyErr_SetFromErrno(0);
-                return NULL;
-            }
-
-            pIfRow->dwIndex = pCurrAddresses->IfIndex;
-            dwRetVal = GetIfEntry(pIfRow);
-            if (dwRetVal == NO_ERROR) {
-                py_ifc_info = Py_BuildValue("(IIII)",
-                                            pIfRow->dwOutOctets,
-                                            pIfRow->dwInOctets,
-                                            pIfRow->dwOutUcastPkts,
-                                            pIfRow->dwInUcastPkts);
-
-                PyDict_SetItemString(py_retdict,
-#if PY_MAJOR_VERSION >= 3
-                                     PyUnicode_AsUTF8String(PyUnicode_FromWideChar(
-# else
-                                     PyString_AsString(PyUnicode_FromWideChar(
-#endif
-                                        pCurrAddresses->FriendlyName,
-                                        wcslen(pCurrAddresses->FriendlyName))),
-                                     py_ifc_info);
-
-                Py_XDECREF(py_ifc_info);
-            }
-            free(pIfRow);
-            pCurrAddresses = pCurrAddresses->Next;
+        dwRetVal = GetAdaptersAddresses(family, flags, NULL, pAddresses, 
+                                        &outBufLen);
+        if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
+            free(pAddresses);
+            pAddresses = NULL;
+        } 
+        else {
+            break;
         }
-    }
-    else {
-        PyErr_SetString(PyExc_RuntimeError, "failed to retrieve adapters information.");
+
+        attempts++;
+    } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (attempts < 3));
+
+    if (dwRetVal != NO_ERROR) {
+        Py_DECREF(py_retdict);
+        PyErr_SetString(PyExc_RuntimeError,  "GetAdaptersAddresses() failed.");
         return NULL;
+    }
+    
+    pCurrAddresses = pAddresses;
+    while (pCurrAddresses) {
+        pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
+        if (pIfRow == NULL) {
+            Py_DECREF(py_retdict);
+            Py_XDECREF(py_pre_nic_name);
+            Py_XDECREF(py_nic_name);
+            Py_XDECREF(py_nic_info);
+            PyErr_SetString(PyExc_RuntimeError, 
+                "memory allocation failed for MIB_IFROW struct.");
+            return NULL;
+        }
+
+        pIfRow->dwIndex = pCurrAddresses->IfIndex;
+        dwRetVal = GetIfEntry(pIfRow);
+        if (dwRetVal == NO_ERROR) {
+            py_nic_info = Py_BuildValue("(IIII)",
+                                        pIfRow->dwOutOctets,
+                                        pIfRow->dwInOctets,
+                                        pIfRow->dwOutUcastPkts,
+                                        pIfRow->dwInUcastPkts);          
+                              
+            py_pre_nic_name = PyUnicode_FromWideChar(
+                                    pCurrAddresses->FriendlyName,
+                                    wcslen(pCurrAddresses->FriendlyName));
+#if PY_MAJOR_VERSION >= 3
+            py_nic_name = PyUnicode_FromObject(py_pre_nic_name);
+#else
+            py_nic_name = PyUnicode_AsUTF8String(py_pre_nic_name);
+#endif
+            PyDict_SetItemString(py_retdict, py_nic_name, py_nic_info);
+            Py_XDECREF(py_pre_nic_name);
+            Py_XDECREF(py_nic_name);
+            Py_XDECREF(py_nic_info);
+        }
+        free(pIfRow);
+        pCurrAddresses = pCurrAddresses->Next;
     }
 
     free(pAddresses);
