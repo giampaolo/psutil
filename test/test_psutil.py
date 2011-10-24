@@ -453,6 +453,7 @@ class TestCase(unittest.TestCase):
         ret = psutil.network_io_counters(pernic=False)
         check_ntuple(ret)
         ret = psutil.network_io_counters(pernic=True)
+        self.assertTrue(ret != [])
         for key in ret:
             self.assertTrue(key)
             check_ntuple(ret[key])

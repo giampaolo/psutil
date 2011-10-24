@@ -142,6 +142,18 @@ class PosixSpecificTestCase(unittest.TestCase):
             difference = [x for x in pids_psutil if x not in pids_ps] + \
                          [x for x in pids_ps if x not in pids_psutil]
             self.fail("difference: " + str(difference))
+            
+    def test_nic_names(self):
+        p = subprocess.Popen("ifconfig -a", shell=1, stdout=subprocess.PIPE)
+        output = p.communicate()[0].strip()
+        if sys.version_info >= (3,):
+            output = str(output, sys.stdout.encoding)
+        for nic in psutil.network_io_counters(pernic=True).keys():
+            for line in output.split():
+                if line.startswith(nic):
+                    break
+            else:
+                self.fail("couldn't find %s nic in 'ifconfig -a' output" % nic)
 
 
 if __name__ == '__main__':
