@@ -905,6 +905,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
         }
     }
 
+    free(buf);
     return py_retdict;
 }
 

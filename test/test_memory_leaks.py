@@ -141,15 +141,15 @@ class TestProcessObjectLeaks(Base):
     def test_resume(self):
         self.execute('resume')
 
-    @skipUnless(WINDOWS)
+    @skipIf(not hasattr(psutil.Process, 'getcwd'))
     def test_getcwd(self):
         self.execute('getcwd')
 
-    @skipUnless(WINDOWS or OSX)
     def test_get_open_files(self):
         self.execute('get_open_files')
 
-    @skipUnless(WINDOWS or OSX)
+    # XXX - still using provisional lsof implementation
+    @skipIf(BSD)
     def test_get_connections(self):
         self.execute('get_connections')
 
