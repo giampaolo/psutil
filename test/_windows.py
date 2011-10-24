@@ -16,10 +16,11 @@ import time
 import warnings
 import atexit
 import sys
+import subprocess
 
 import psutil
 import _psutil_mswindows
-from test_psutil import reap_children, get_test_subprocess, wait_for_pid
+from test_psutil import reap_children, get_test_subprocess, wait_for_pid, PY3
 try:
     import wmi
 except ImportError:
@@ -70,6 +71,18 @@ class WindowsSpecificTestCase(unittest.TestCase):
     def test_signal(self):
         p = psutil.Process(self.pid)
         self.assertRaises(ValueError, p.send_signal, signal.SIGINT)
+        
+    def test_nic_names(self):
+        p = subprocess.Popen(['ipconfig', '/all'], stdout=subprocess.PIPE)
+        out = p.communicate()[0]
+        if PY3:
+            out = str(out, sys.stdout.encoding)
+        nics = psutil.network_io_counters(pernic=True).keys()
+        for nic in nics:
+            if "pseudo-interface" in nic.replace(' ', '-').lower():
+                continue
+            if nic not in out:
+                self.fail("%r nic wasn't found in 'ipconfig /all' output" % nic)
 
     if wmi is not None:
 

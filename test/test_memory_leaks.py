@@ -26,6 +26,10 @@ TOLERANCE = 4096
 
 if PY3:
     xrange = range
+try:
+    callable
+except NameError:
+    callable = lambda x: hasattr(x, '__call__')
 
 
 class Base(unittest.TestCase):
