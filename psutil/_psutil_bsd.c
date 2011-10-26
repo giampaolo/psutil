@@ -649,6 +649,13 @@ get_system_cpu_times(PyObject* self, PyObject* args)
     );
 }
 
+/*
+ * XXX
+ * These functions are available on FreeBSD 8 only.
+ * In the upper python layer we do various tricks to avoid crashing
+ * and/or to provide alternatives where possible.
+ */ 
+
 
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 /*
@@ -736,7 +743,6 @@ get_process_cwd(PyObject* self, PyObject* args)
     free(freep);
     return path;
 }
-#endif
 
 
 /*
@@ -792,6 +798,7 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
 
     return py_retlist;
 }
+#endif
 
 
 /*
@@ -1032,8 +1039,10 @@ PsutilMethods[] =
          "Return the amount of available virtual memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
          "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
      {"get_system_per_cpu_times", get_system_per_cpu_times, METH_VARARGS,
          "Return system per-cpu times as a list of tuples"},
+#endif
      {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
          "Return a float indicating the system boot time expressed in "
          "seconds since the epoch"},

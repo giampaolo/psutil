@@ -59,6 +59,23 @@ def get_system_per_cpu_times():
         item = _cputimes_ntuple(user, nice, system, idle, irq)
         ret.append(item)
     return ret
+    
+# XXX
+# Ok, this is very dirty.
+# On FreeBSD < 8 we cannot gather per-cpu information, see:
+# http://code.google.com/p/psutil/issues/detail?id=226 
+# If NUM_CPUS > 1, on first call we return single cpu times to avoid a 
+# crash at psutil import time.
+# Next calls will fail with NotImplementedError
+if not hasattr(_psutil_bsd, "get_system_per_cpu_times"):
+    def get_system_per_cpu_times():
+        if NUM_CPUS == 1:
+            return [get_system_cpu_times]
+        if get_system_per_cpu_times.__called__:
+            raise NotImplementedError("supported only starting from FreeBSD 8")
+        get_system_per_cpu_times.__called__ = True
+        return [get_system_cpu_times]
+get_system_per_cpu_times.__called__ = False
 
 def disk_partitions(all=False):
     retlist = []
@@ -146,10 +163,12 @@ class Process(object):
         """Return process parent pid."""
         return _psutil_bsd.get_process_ppid(self.pid)
 
-    @wrap_exceptions
-    def get_process_cwd(self):
-        """Return process current working directory."""
-        return _psutil_bsd.get_process_cwd(self.pid)
+    # XXX - available on FreeBSD >= 8 only
+    if hasattr(_psutil_bsd, "get_process_cwd"):
+        @wrap_exceptions
+        def get_process_cwd(self):
+            """Return process current working directory."""
+            return _psutil_bsd.get_process_cwd(self.pid)
 
     @wrap_exceptions
     def get_process_uids(self):
@@ -199,10 +218,15 @@ class Process(object):
     @wrap_exceptions
     def get_open_files(self):
         """Return files opened by process as a list of namedtuples."""
-        rawlist = _psutil_bsd.get_process_open_files(self.pid)
-        return [ntuple_openfile(path, fd) for path, fd in rawlist]
+        # XXX - C implementation available on FreeBSD >= 8 only
+        # else fallback on lsof parser
+        if hasattr(_psutil_bsd, "get_process_open_files"):
+            rawlist = _psutil_bsd.get_process_open_files(self.pid)
+            return [ntuple_openfile(path, fd) for path, fd in rawlist]
+        else:
+            lsof = _psposix.LsofParser(self.pid, self._process_name)            
+            return lsof.get_process_open_files()
 
-    # XXX kind parameter still not supported
     def get_connections(self, kind='inet'):
         """Return network connections opened by a process as a list of
         namedtuples by parsing lsof output.

@@ -26,8 +26,10 @@ static PyObject* get_process_threads(PyObject* self, PyObject* args);
 static PyObject* get_process_status(PyObject* self, PyObject* args);
 static PyObject* get_process_io_counters(PyObject* self, PyObject* args);
 static PyObject* get_process_tty_nr(PyObject* self, PyObject* args);
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 static PyObject* get_process_open_files(PyObject* self, PyObject* args);
 static PyObject* get_process_cwd(PyObject* self, PyObject* args);
+#endif 
 
 // --- system-related functions
 
@@ -38,7 +40,9 @@ static PyObject* get_avail_phymem(PyObject* self, PyObject* args);
 static PyObject* get_total_virtmem(PyObject* self, PyObject* args);
 static PyObject* get_avail_virtmem(PyObject* self, PyObject* args);
 static PyObject* get_system_cpu_times(PyObject* self, PyObject* args);
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 static PyObject* get_system_per_cpu_times(PyObject* self, PyObject* args);
+#endif
 static PyObject* get_system_boot_time(PyObject* self, PyObject* args);
 static PyObject* get_disk_partitions(PyObject* self, PyObject* args);
 static PyObject* get_network_io_counters(PyObject* self, PyObject* args);
