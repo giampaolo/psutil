@@ -34,6 +34,7 @@ BUGFIXES
    for equality with another object.
  * Issue 218: (Linux) crash at import time on Debian 64-bit because of a missing
    line in /proc/meminfo.
+ * Issue 226: (FreeBSD) crash at import time on FreeBSD 7 and minor.
 
 
 0.3.0 - 2011-07-08
