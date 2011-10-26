@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/user.h>
 #include <sys/proc.h>
+#include <sys/socket.h>
 #include <devstat.h>      /* get io counters */
 #include <sys/vmmeter.h>  /* needed for vmtotal struct */
 #include <libutil.h>      /* process open files */
@@ -649,6 +650,7 @@ get_system_cpu_times(PyObject* self, PyObject* args)
 }
 
 
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 /*
  * Return files opened by process as a list of (path, fd) tuples
  */
@@ -734,6 +736,7 @@ get_process_cwd(PyObject* self, PyObject* args)
     free(freep);
     return path;
 }
+#endif
 
 
 /*
@@ -1006,10 +1009,12 @@ PsutilMethods[] =
          "Return process IO counters"},
      {"get_process_tty_nr", get_process_tty_nr, METH_VARARGS,
          "Return process tty (terminal) number"},
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
      {"get_process_open_files", get_process_open_files, METH_VARARGS,
          "Return files opened by process as a list of (path, fd) tuples"},
      {"get_process_cwd", get_process_cwd, METH_VARARGS,
          "Return process current working directory."},
+#endif
 
      // --- system-related functions
 
