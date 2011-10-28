@@ -154,48 +154,49 @@ def print_header(procs_status):
             % (av1, av2, av3, str(uptime).split('.')[0])
     print_line(line)
 
-def run(win):
+def refresh_window(procs, procs_status):
     """Print results on screen by using curses."""
     curses.endwin()
     templ = "%-6s %-8s %4s %5s %5s %6s %4s %9s  %2s"
-    interval = 0
-    while 1:
-        procs, procs_status = poll(interval)
-        win.erase()
-        header = templ % ("PID", "USER", "NI", "VIRT", "RES", "CPU%", "MEM%",
-                          "TIME+", "NAME")
-        print_header(procs_status)
-        print_line("")
-        print_line(header, highlight=True)
-        for p in procs:
-            # TIME+ column shows process CPU cumulative time and
-            # is expressed as: mm:ss.ms
-            ctime = timedelta(seconds=sum(p._cpu_times))
-            ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
-                                  str((ctime.seconds % 60)).zfill(2),
-                                  str(ctime.microseconds)[:2])
-            line = templ % (p.pid,
-                            p._username[:8],
-                            p._nice,
-                            bytes2human(p._meminfo.vms),
-                            bytes2human(p._meminfo.rss),
-                            p._cpu_percent,
-                            round(p._mempercent, 1),
-                            ctime,
-                            p._name,
-                            )
-            try:
-                print_line(line)
-            except curses.error:
-                break
-            win.refresh()
-        interval = 1
+    win.erase()
+    header = templ % ("PID", "USER", "NI", "VIRT", "RES", "CPU%", "MEM%",
+                      "TIME+", "NAME")
+    print_header(procs_status)
+    print_line("")
+    print_line(header, highlight=True)
+    for p in procs:
+        # TIME+ column shows process CPU cumulative time and
+        # is expressed as: mm:ss.ms
+        ctime = timedelta(seconds=sum(p._cpu_times))
+        ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
+                              str((ctime.seconds % 60)).zfill(2),
+                              str(ctime.microseconds)[:2])
+        line = templ % (p.pid,
+                        p._username[:8],
+                        p._nice,
+                        bytes2human(p._meminfo.vms),
+                        bytes2human(p._meminfo.rss),
+                        p._cpu_percent,
+                        round(p._mempercent, 1),
+                        ctime,
+                        p._name,
+                        )
+        try:
+            print_line(line)
+        except curses.error:
+            break
+        win.refresh()
+
 
 def main():
     try:
-        run(win)
+        interval = 0
+        while 1:
+            args = poll(interval)
+            refresh_window(*args) 
+            interval = 1
     except (KeyboardInterrupt, SystemExit):
-        pass
+        print
 
 if __name__ == '__main__':
     main()

@@ -121,40 +121,43 @@ def poll(interval):
 
     return (processes, disks_read_per_sec, disks_write_per_sec)
 
-def run(win):
+
+def refresh_window(procs, disks_read, disks_write):
     """Print results on screen by using curses."""
     curses.endwin()
     templ = "%-5s %-7s %11s %11s  %s"
     interval = 0
-    while 1:
-        procs, disks_read, disks_write = poll(interval)
-        win.erase()
+    win.erase()
 
-        disks_tot = "Total DISK READ: %s | Total DISK WRITE: %s" \
-                    % (bytes2human(disks_read), bytes2human(disks_write))
-        print_line(disks_tot)
+    disks_tot = "Total DISK READ: %s | Total DISK WRITE: %s" \
+                % (bytes2human(disks_read), bytes2human(disks_write))
+    print_line(disks_tot)
 
-        header = templ % ("PID", "USER", "DISK READ", "DISK WRITE", "COMMAND")
-        print_line(header, highlight=True)
+    header = templ % ("PID", "USER", "DISK READ", "DISK WRITE", "COMMAND")
+    print_line(header, highlight=True)
 
-        for p in procs:
-            line = templ % (p.pid,
-                            p._username[:7],
-                            bytes2human(p._read_per_sec),
-                            bytes2human(p._write_per_sec),
-                            p._cmdline)
-            try:
-                print_line(line)
-            except curses.error:
-                break
-        win.refresh()
-        interval = 1
+    for p in procs:
+        line = templ % (p.pid,
+                        p._username[:7],
+                        bytes2human(p._read_per_sec),
+                        bytes2human(p._write_per_sec),
+                        p._cmdline)
+        try:
+            print_line(line)
+        except curses.error:
+            break
+    win.refresh()
+    interval = 1
 
 def main():
     try:
-        run(win)
+        interval = 0
+        while 1:
+            args = poll(interval)
+            refresh_window(*args) 
+            interval = 1
     except (KeyboardInterrupt, SystemExit):
-        pass
+        print
 
 if __name__ == '__main__':
     main()

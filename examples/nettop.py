@@ -129,15 +129,13 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
     lineno = 0
 
 
-def run():
-    interval = 0
-    while 1:
-        refresh_window(*poll(interval)) 
-        interval = 1
-
 def main():
     try:
-        run()
+        interval = 0
+        while 1:
+            args = poll(interval)
+            refresh_window(*args) 
+            interval = 1
     except (KeyboardInterrupt, SystemExit):
         print
 
