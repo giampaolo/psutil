@@ -20,17 +20,42 @@ Author: Giampaolo Rodola' <g.rodola@gmail.com>
 import os
 import sys
 import psutil
-
-if not hasattr(psutil.Process, 'get_io_counters') \
-or os.name != 'posix':
+if not hasattr(psutil.Process, 'get_io_counters') or os.name != 'posix':
     sys.exit('platform not supported')
-
 import time
 import curses
 import atexit
 
 
+# --- curses stuff
+def tear_down():
+    win.keypad(0)
+    curses.nocbreak()
+    curses.echo()
+    curses.endwin()
+
 win = curses.initscr()
+atexit.register(tear_down)
+curses.endwin()
+lineno = 0
+
+def print_line(line, highlight=False):
+    """A thin wrapper around curses's addstr()."""
+    global lineno
+    try:
+        if highlight:
+            line += " " * (win.getmaxyx()[1] - len(line))
+            win.addstr(lineno, 0, line, curses.A_REVERSE)
+        else:
+            win.addstr(lineno, 0, line, 0)
+    except curses.error:
+        lineno = 0
+        win.refresh()
+        raise
+    else:
+        lineno += 1
+# --- /curses stuff
+
 
 def bytes2human(n):
     """
@@ -107,13 +132,11 @@ def run(win):
 
         disks_tot = "Total DISK READ: %s | Total DISK WRITE: %s" \
                     % (bytes2human(disks_read), bytes2human(disks_write))
-        win.addstr(0, 0, disks_tot)
+        print_line(disks_tot)
 
         header = templ % ("PID", "USER", "DISK READ", "DISK WRITE", "COMMAND")
-        header += " " * (win.getmaxyx()[1] - len(header))
-        win.addstr(1, 0, header, curses.A_REVERSE)
+        print_line(header, highlight=True)
 
-        lineno = 2
         for p in procs:
             line = templ % (p.pid,
                             p._username[:7],
@@ -121,21 +144,13 @@ def run(win):
                             bytes2human(p._write_per_sec),
                             p._cmdline)
             try:
-                win.addstr(lineno, 0, line)
+                print_line(line)
             except curses.error:
                 break
-            win.refresh()
-            lineno += 1
+        win.refresh()
         interval = 1
 
 def main():
-    def tear_down():
-        win.keypad(0)
-        curses.nocbreak()
-        curses.echo()
-        curses.endwin()
-
-    atexit.register(tear_down)
     try:
         run(win)
     except (KeyboardInterrupt, SystemExit):
