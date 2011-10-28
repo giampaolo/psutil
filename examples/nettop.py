@@ -23,6 +23,7 @@ import time
 import psutil
 
 
+# --- curses stuff
 def tear_down():
     win.keypad(0)
     curses.nocbreak()
@@ -49,6 +50,8 @@ def print_line(line, highlight=False):
         raise
     else:
         lineno += 1
+# --- curses stuff
+
         
 def bytes2human(n):
     """

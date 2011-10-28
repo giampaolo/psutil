@@ -14,10 +14,8 @@ Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
 import os
 import sys
-
 if os.name != 'posix':
     sys.exit('platform not supported')
-
 import time
 import curses
 import atexit
@@ -26,8 +24,35 @@ from datetime import datetime, timedelta
 import psutil
 
 
-win = curses.initscr()                      # the curses window
-procs = [p for p in psutil.process_iter()]  # the current process list
+# --- curses stuff
+def tear_down():
+    win.keypad(0)
+    curses.nocbreak()
+    curses.echo()
+    curses.endwin()
+
+win = curses.initscr()
+atexit.register(tear_down)
+curses.endwin()
+lineno = 0
+
+def print_line(line, highlight=False):
+    """A thin wrapper around curses's addstr()."""
+    global lineno
+    try:
+        if highlight:
+            line += " " * (win.getmaxyx()[1] - len(line))
+            win.addstr(lineno, 0, line, curses.A_REVERSE)
+        else:
+            win.addstr(lineno, 0, line, 0)
+    except curses.error:
+        lineno = 0
+        win.refresh()
+        raise
+    else:
+        lineno += 1
+# --- /curses stuff
+
 
 def bytes2human(n):
     """
@@ -46,6 +71,7 @@ def bytes2human(n):
             return '%s%s' % (value, s)
     return "0B"
 
+procs = [p for p in psutil.process_iter()]  # the current process list
 
 def poll(interval):
     # add new processes to procs list; processes which have gone
@@ -91,11 +117,9 @@ def print_header(procs_status):
     # cpu usage
     for lineno, perc in enumerate(psutil.cpu_percent(interval=0, percpu=True)):
         dashes, empty_dashes = get_dashes(perc)
-        line = " CPU%-2s [%s%s] %5s%%" % (lineno, dashes, empty_dashes, perc)
-        win.addstr(lineno, 0, line)
+        print_line(" CPU%-2s [%s%s] %5s%%" % (lineno, dashes, empty_dashes, perc))
 
     # physmem usage
-    lineno += 1
     phymem = psutil.phymem_usage()
     dashes, empty_dashes = get_dashes(phymem.percent)
     buffers = getattr(psutil, 'phymem_buffers', lambda: 0)()
@@ -105,34 +129,30 @@ def print_header(procs_status):
                                            phymem.percent,
                                            str(used / 1024 / 1024) + "M",
                                            str(phymem.total / 1024 / 1024) + "M")
-    win.addstr(lineno, 0, line)
+    print_line(line)
 
     # swap usage
-    lineno += 1
     vmem = psutil.virtmem_usage()
     dashes, empty_dashes = get_dashes(vmem.percent)
     line = " Swap  [%s%s] %5s%% %6s/%s" % (dashes, empty_dashes,
                                            vmem.percent,
                                            str(vmem.used / 1024 / 1024) + "M",
                                            str(vmem.total / 1024 / 1024) + "M")
-    win.addstr(lineno, 0, line)
+    print_line(line)
 
     # procesess number and status
-    lineno += 1
     st = []
     for x, y in procs_status.iteritems():
         if y:
             st.append("%s=%s" % (x, y))
     st.sort(key=lambda x: x[:3] in ('run', 'sle'), reverse=1)
-    win.addstr(lineno, 0, " Processes: %s (%s)" % (len(procs), ' '.join(st)))
+    print_line(" Processes: %s (%s)" % (len(procs), ' '.join(st)))
     # load average, uptime
-    lineno += 1
     uptime = datetime.now() - datetime.fromtimestamp(psutil.BOOT_TIME)
     av1, av2, av3 = os.getloadavg()
     line = " Load average: %.2f %.2f %.2f  Uptime: %s" \
             % (av1, av2, av3, str(uptime).split('.')[0])
-    win.addstr(lineno, 0, line)
-    return lineno + 1
+    print_line(line)
 
 def run(win):
     """Print results on screen by using curses."""
@@ -144,10 +164,9 @@ def run(win):
         win.erase()
         header = templ % ("PID", "USER", "NI", "VIRT", "RES", "CPU%", "MEM%",
                           "TIME+", "NAME")
-        header += " " * (win.getmaxyx()[1] - len(header))
-        lineno = print_header(procs_status) + 1
-        win.addstr(lineno, 0, header, curses.A_REVERSE)
-        lineno += 1
+        print_header(procs_status)
+        print_line("")
+        print_line(header, highlight=True)
         for p in procs:
             # TIME+ column shows process CPU cumulative time and
             # is expressed as: mm:ss.ms
@@ -166,21 +185,13 @@ def run(win):
                             p._name,
                             )
             try:
-                win.addstr(lineno, 0, line)
+                print_line(line)
             except curses.error:
                 break
             win.refresh()
-            lineno += 1
         interval = 1
 
 def main():
-    def tear_down():
-        win.keypad(0)
-        curses.nocbreak()
-        curses.echo()
-        curses.endwin()
-
-    atexit.register(tear_down)
     try:
         run(win)
     except (KeyboardInterrupt, SystemExit):
