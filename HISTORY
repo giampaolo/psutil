@@ -7,6 +7,7 @@ NEW FEATURES
 
  * Issue 150: network I/O counters. (OSX patch by Jeremy Whitlock)
  * Issue 154: (FreeBSD) add support for process getcwd()
+ * Issue 157: (Windows) provide installer for Python 3.2 64-bit.
  * Issue 198: Process.wait(timeout=0) can now be used to make wait() return
    immediately.
  * Issue 206: disk I/O counters. (OSX patch by Jeremy Whitlock)
