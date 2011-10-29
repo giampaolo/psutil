@@ -11,7 +11,7 @@ processes and gather system information in a portable way by using
 Python.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [

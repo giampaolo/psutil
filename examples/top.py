@@ -140,7 +140,7 @@ def print_header(procs_status):
                                            str(vmem.total / 1024 / 1024) + "M")
     print_line(line)
 
-    # procesess number and status
+    # processes number and status
     st = []
     for x, y in procs_status.iteritems():
         if y:
@@ -196,7 +196,7 @@ def main():
             refresh_window(*args) 
             interval = 1
     except (KeyboardInterrupt, SystemExit):
-        print
+        pass
 
 if __name__ == '__main__':
     main()

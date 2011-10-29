@@ -155,7 +155,7 @@ def main():
             refresh_window(*args) 
             interval = 1
     except (KeyboardInterrupt, SystemExit):
-        print
+        pass
 
 if __name__ == '__main__':
     main()
