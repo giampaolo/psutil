@@ -16,7 +16,6 @@ import socket
 import sys
 
 import psutil
-from psutil._compat import namedtuple
 
 
 def convert_bytes(n):

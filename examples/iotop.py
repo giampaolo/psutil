@@ -126,7 +126,6 @@ def refresh_window(procs, disks_read, disks_write):
     """Print results on screen by using curses."""
     curses.endwin()
     templ = "%-5s %-7s %11s %11s  %s"
-    interval = 0
     win.erase()
 
     disks_tot = "Total DISK READ: %s | Total DISK WRITE: %s" \
@@ -147,7 +146,6 @@ def refresh_window(procs, disks_read, disks_write):
         except curses.error:
             break
     win.refresh()
-    interval = 1
 
 def main():
     try:

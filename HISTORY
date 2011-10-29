@@ -1,6 +1,6 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-0.4.0 - XXXX-XX-XX
+0.4.0 - 2011-10-29
 ------------------
 
 NEW FEATURES
@@ -17,6 +17,7 @@ NEW FEATURES
  * Issue 221: (FreeBSD) Process.get_open_files has been rewritten in C and no
    longer relies on lsof.
  * Issue 223: examples/top.py script.
+ * Issue 227: examples/nettop.py script.
 
 BUGFIXES
 
