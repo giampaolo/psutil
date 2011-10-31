@@ -482,6 +482,8 @@ get_memory_info(PyObject* self, PyObject* args)
         return PyErr_SetFromWindowsErr(0);
     }
     
+    CloseHandle(hProcess);
+	
 // py 2.4
 #if (PY_MAJOR_VERSION == 2) && (PY_MINOR_VERSION <= 4)
     return Py_BuildValue("(II)", (unsigned int)counters.WorkingSetSize,
@@ -787,6 +789,7 @@ suspend_resume_process(DWORD pid, int suspend)
         }
     } while (Thread32Next(hThreadSnap, &te32));
 
+    CloseHandle(hThreadSnap);
     return TRUE;
 }
 
