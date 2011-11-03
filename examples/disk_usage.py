@@ -13,6 +13,11 @@ List all mounted disk partitions a-la "df -h" command.
 import sys
 import psutil
 
+def print_(s):
+    # python 2/3 compatibility layer
+    sys.stdout.write(s + '\n')
+    sys.stdout.flush()
+
 def convert_bytes(n):
     if n == 0:
         return "0B"
@@ -28,16 +33,16 @@ def convert_bytes(n):
 
 def main():
     templ = "%-17s %8s %8s %8s %5s%% %9s  %s"
-    print templ % ("Device", "Total", "Used", "Free", "Use ", "Type", "Mount")
+    print_(templ % ("Device", "Total", "Used", "Free", "Use ", "Type", "Mount"))
     for part in psutil.disk_partitions(all=False):
         usage = psutil.disk_usage(part.mountpoint)
-        print templ % (part.device,
+        print_(templ % (part.device,
                        convert_bytes(usage.total),
                        convert_bytes(usage.used),
                        convert_bytes(usage.free),
                        int(usage.percent),
                        part.fstype,
-                       part.mountpoint)
+                       part.mountpoint))
 
 if __name__ == '__main__':
     sys.exit(main())

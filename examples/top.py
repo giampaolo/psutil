@@ -125,24 +125,28 @@ def print_header(procs_status):
     buffers = getattr(psutil, 'phymem_buffers', lambda: 0)()
     cached = getattr(psutil, 'cached_phymem', lambda: 0)()
     used = phymem.total - (phymem.free + buffers + cached)
-    line = " Mem   [%s%s] %5s%% %6s/%s" % (dashes, empty_dashes,
-                                           phymem.percent,
-                                           str(used / 1024 / 1024) + "M",
-                                           str(phymem.total / 1024 / 1024) + "M")
+    line = " Mem   [%s%s] %5s%% %6s/%s" % (
+        dashes, empty_dashes,
+        phymem.percent,
+        str(int(used / 1024 / 1024)) + "M",
+        str(int(phymem.total / 1024 / 1024)) + "M"
+    )
     print_line(line)
 
     # swap usage
     vmem = psutil.virtmem_usage()
     dashes, empty_dashes = get_dashes(vmem.percent)
-    line = " Swap  [%s%s] %5s%% %6s/%s" % (dashes, empty_dashes,
-                                           vmem.percent,
-                                           str(vmem.used / 1024 / 1024) + "M",
-                                           str(vmem.total / 1024 / 1024) + "M")
+    line = " Swap  [%s%s] %5s%% %6s/%s" % (
+        dashes, empty_dashes,
+        vmem.percent,
+        str(int(vmem.used / 1024 / 1024)) + "M",
+        str(int(vmem.total / 1024 / 1024)) + "M"
+    )
     print_line(line)
 
     # processes number and status
     st = []
-    for x, y in procs_status.iteritems():
+    for x, y in procs_status.items():
         if y:
             st.append("%s=%s" % (x, y))
     st.sort(key=lambda x: x[:3] in ('run', 'sle'), reverse=1)
