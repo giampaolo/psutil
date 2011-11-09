@@ -14,6 +14,7 @@ except ImportError:
     from distutils.core import setup, Extension
 
 __ver__ = "0.4.1"
+README = os.path.abspath(os.path.join(os.path.dirname(__file__), 'README'))
 
 # Hack for Python 3 to tell distutils to run 2to3 against the files
 # copied in the build directory before installing.
@@ -24,11 +25,10 @@ except ImportError:
     from distutils.command.build_py import build_py
 
 
+# POSIX
 if os.name == 'posix':
     posix_extension = Extension('_psutil_posix',
                                 sources = ['psutil/_psutil_posix.c'])
-
-
 # Windows
 if sys.platform.lower().startswith("win"):
 
@@ -72,7 +72,6 @@ elif sys.platform.lower().startswith("linux"):
                             sources=['psutil/_psutil_linux.c'],
                             ),
                   posix_extension]
-
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
@@ -82,15 +81,16 @@ def main():
         name='psutil',
         version=__ver__,
         download_url="http://psutil.googlecode.com/files/psutil-%s.tar.gz" % __ver__,
+        bugtrack_url="http://code.google.com/p/psutil/issues/list",
         description='A process utilities module for Python',
-        long_description="""\
-psutil is a module providing convenience functions for monitoring
-system and processes in a portable way by using Python.""",
+        long_description=open(README, 'r').read(),
         keywords=['ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice',
                   'tty', 'ionice', 'uptime', 'taskmgr', 'process', 'df',
                   'iotop', 'iostat', 'ifconfig', 'monitoring',],
         author='Giampaolo Rodola, Jay Loden',
         author_email='psutil@googlegroups.com',
+        maintainer='Giampaolo Rodola',
+        maintainer_email='g.rodola <at> gmail <dot> com',
         url='http://code.google.com/p/psutil/',
         platforms='Platform Independent',
         license='License :: OSI Approved :: BSD License',
@@ -100,7 +100,9 @@ system and processes in a portable way by using Python.""",
               'Development Status :: 5 - Production/Stable',
               'Environment :: Console',
               'Operating System :: MacOS :: MacOS X',
+              'Operating System :: Microsoft',
               'Operating System :: Microsoft :: Windows :: Windows NT/2000',
+              'Operating System :: POSIX',
               'Operating System :: POSIX :: Linux',
               'Operating System :: POSIX :: BSD :: FreeBSD',
               'Operating System :: OS Independent',
@@ -117,9 +119,12 @@ system and processes in a portable way by using Python.""",
               'Programming Language :: Python :: 3.2',
               'Topic :: System :: Monitoring',
               'Topic :: System :: Networking',
+              'Topic :: System :: Networking :: Monitoring',
               'Topic :: System :: Benchmark',
+              'Topic :: System :: Hardware',
               'Topic :: System :: Systems Administration',
               'Topic :: Utilities',
+              'Topic :: Software Development :: Libraries',
               'Topic :: Software Development :: Libraries :: Python Modules',
               'Intended Audience :: Developers',
               'Intended Audience :: System Administrators',
@@ -134,4 +139,3 @@ system and processes in a portable way by using Python.""",
 
 if __name__ == '__main__':
     main()
-

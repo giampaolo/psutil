@@ -1,120 +1,181 @@
+===========
+Quick links
+===========
 
-Introduction
-============
+* `Home page <http://code.google.com/p/psutil/>`_
+* `Download <http://code.google.com/p/psutil/downloads/list/>`_
+* `Documentation <http://code.google.com/p/psutil/wiki/Documentation/>`_
 
-psutil is a module providing an interface for retrieving information on running
-processes in a portable way by using Python.
-It currently supports Linux, OS X, FreeBSD and Windows.
+=======
+Summary
+=======
 
-psutil website is at http://code.google.com/p/psutil/
+psutil is a module providing an interface for retrieving information on all 
+running processes and system utilization (CPU, disk, memory) in a portable way 
+by using Python, implementing many functionalities offered by command line 
+tools such as:  **ps, top, df, kill, free, lsof, free, netstat, ifconfig, nice,
+ionice, iostato, iotop, uptime, tty**.
 
-The following document describes how to compile and install psutil from sources
-on different platforms.
+It currently supports **Linux**, **Windows**, **OSX** and **FreeBSD** both 
+**32-bit** and  **64-bit** with Python versions from **2.4** to **3.3** by using 
+a single code base.
+
+==============
+Example usages
+==============
+
+CPU
+===
+
+>>> import psutil
+>>> psutil.cpu_times()
+cputimes(user=3961.46, nice=169.729, system=2150.659, idle=16900.540, 
+         iowait=629.509, irq=0.0, softirq=19.422)
+>>>
+>>> for x in range(3):
+...     psutil.cpu_percent(interval=1)
+... 
+4.0
+5.9
+3.8
+>>>
+>>> for x in range(3):
+...     psutil.cpu_percent(interval=1, percpu=True)
+... 
+[4.0, 6.9]
+[7.0, 8.5]
+[1.2, 9.0]
+>>>
 
 
-Using easy_install
+Memory 
+======
+
+>>> psutil.phymem_usage()
+usage(total=4153868288, used=2854199296, free=1299668992, percent=34.6)
+>>> psutil.virtmem_usage()
+usage(total=2097147904, used=4096, free=2097143808, percent=0.0)
+>>>
+
+
+Disks
+=====
+
+>>> psutil.disk_partitions()
+[partition(device='/dev/sda1', mountpoint='/', fstype='ext4'),
+ partition(device='/dev/sda2', mountpoint='/home', fstype='ext4')]
+>>>
+>>> psutil.disk_usage('/')
+usage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
+>>>
+>>> psutil.disk_io_counters()
+iostat(read_count=719566, write_count=1082197, read_bytes=18626220032, 
+       write_bytes=24081764352, read_time=5023392, write_time=63199568)
+>>>
+
+
+Network
+=======
+
+>>> psutil.network_io_counters(pernic=True)
+{'lo': iostat(bytes_sent=799953745, bytes_recv=799953745, 
+              packets_sent=453698, packets_recv=453698), 
+ 'eth0': iostat(bytes_sent=734324837, bytes_recv=4163935363, 
+                packets_sent=3605828, packets_recv=4096685)}
+>>>
+
+
+Process management
 ==================
 
-The easiest way to install psutil from sources is using easy_install.
-Get the latest easy_install version from http://pypi.python.org/pypi/setuptools
-and just run:
-
- > easy_install psutil
-
-This should get the most updated psutil version from the Python pypi repository,
-unpack it, compile it and install it automatically.
-
-
-Installing on Windows using mingw32
-===================================
-
-After the mingw [1] environment is properly set up on your system you can
-compile Windows sources by entering:
-
- > setup.py build -c mingw32
-
-To compile and install just append the "install" keyword at the end of the
-command line above, like this:
-
- > setup.py build -c mingw32 install
-
-It might be possible that distutils will complain about missing gcc executable.
-That means you have to add mingw bin PATH variable first.
-Entering this line in the command prompt should do the work:
-
- > SET PATH=C:\MinGW\bin;%PATH%
-
-NOTE: this assumes MinGW is installed in C:\MinGW, if not simply replace the
-path in the command above with an appropriate location.
-
-[1] http://www.mingw.org/
-
-
-Installing on Windows using Visual Studio
-=========================================
-
-To use Visual Studio to install psutil, you must have the same version of
-Visual Studio used to compile your installation of Python. For older versions
-of Python that will be Visual Studio 2003. For 2.6 and later it should be
-Visual Studio 2008. If you do not have the requisite version of Visual Studio
-available then it is recommended to use MinGW to compile psutil instead.
-
-If you do have Visual Studio installed, you can use the basic distutils
-commands:
-
-  > setup.py build
-
-or to install and build:
-
-  > setup.py install
-
-distutils should take care of any necessary magic to compile from there.
-
-
-Installing on OS X
-==================
-
-OS X installation from source will require gcc which you can obtain as part of
-the 'XcodeTools' installer from Apple. Then you can run the standard distutils
-commands:
-
-to build only:
-
-  > python setup.py build
-
-to install and build:
-
-  > python setup.py install
-
-NOTE: due to developer's hardware limitations psutil has only been compiled and
-tested on OS X 10.4.11 so may or may not work on other versions.
-
-
-Installing on FreeBSD
-=====================
-
-The same compiler used to install Python must be present on the system in order
-to build modules using distutils. Assuming it is installed, you can build using
-the standard distutils commands:
-
-build only:
-
-  > python setup.py build
-
-install and build:
-
-  > python setup.py install
-
-
-Installing on Linux
-===================
-
-gcc is required and so the python headers. They can easily be installed by using
-the distro package manager. For example, on Ubuntu:
-
-  > sudo apt-get install python-dev
-
-Once done, you can install/build psutil with:
-
-  > python setup.py install
-
+>>> import psutil
+>>> psutil.get_pid_list()
+[1, 2, 3, 4, 5, 6, 7, 46, 48, 50, 51, 178, 182, 222, 223, 224,
+268, 1215, 1216, 1220, 1221, 1243, 1244, 1301, 1601, 2237, 2355,
+2637, 2774, 3932, 4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245, 
+4263, 4282, 4306, 4311, 4312, 4313, 4314, 4337, 4339, 4357, 4358, 
+4363, 4383, 4395, 4408, 4433, 4443, 4445, 4446, 5167, 5234, 5235, 
+5252, 5318, 5424, 5644, 6987, 7054, 7055, 7071]
+>>>
+>>> p = psutil.Process(7055)
+>>> p.name
+'python'
+>>> p.exe
+'/usr/bin/python'
+>>> p.getcwd()
+'/home/giampaolo'
+>>> p.cmdline
+['/usr/bin/python', 'main.py']
+>>>
+>>> str(p.status)
+'running'
+>>> p.username
+'giampaolo'
+>>> p.create_time
+1267551141.5019531
+>>> p.terminal
+'/dev/pts/0'
+>>>
+>>> p.uids
+user(real=1000, effective=1000, saved=1000)
+>>> p.gids
+group(real=1000, effective=1000, saved=1000)
+>>>
+>>> p.get_cpu_percent(interval=1.0)
+12.1
+>>> p.get_memory_percent()
+0.63423
+>>>
+>>> p.get_memory_info()
+meminfo(rss=7471104, vms=68513792)
+>>> p.get_cpu_times()
+cputimes(user=1.02, system=0.31)
+>>> 
+>>> p.get_io_counters()
+io(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632)
+>>> 
+>>> p.get_open_files()
+[openfile(path='/home/giampaolo/svn/psutil/somefile', fd=3)]
+>>>
+>>> p.get_connections()
+[connection(fd=115, family=2, type=1, local_address=('10.0.0.1', 48776), 
+            remote_address=('93.186.135.91', 80), status='ESTABLISHED'),
+ connection(fd=117, family=2, type=1, local_address=('10.0.0.1', 43761), 
+            remote_address=('72.14.234.100', 80), status='CLOSING'),
+ connection(fd=119, family=2, type=1, local_address=('10.0.0.1', 60759), 
+            remote_address=('72.14.234.104', 80), status='ESTABLISHED'),
+ connection(fd=123, family=2, type=1, local_address=('10.0.0.1', 51314), 
+            remote_address=('72.14.234.83', 443), status='SYN_SENT')]
+>>>
+>>> p.get_threads()
+[thread(id=5234, user_time=22.5, system_time=9.2891), 
+ thread(id=5235, user_time=0.0, system_time=0.0), 
+ thread(id=5236, user_time=0.0, system_time=0.0), 
+ thread(id=5237, user_time=0.0707, system_time=1.1)]
+>>>
+>>> p.nice
+0
+>>> p.nice = 10  # set/change process priority
+>>> p.nice
+10
+>>>
+>>> p.suspend()
+>>> p.resume()
+>>>
+>>> p.terminate()
+>>> p.wait(timeout=3)
+0
+>>>
+>>> psutil.test()
+UID       PID %CPU %MEM     VSZ     RSS START     TIME COMMAND
+0           0  0.0  0.0       0       0 00:12    00:00 [sched]
+0           1  0.0  0.3    1740     600 00:12    00:04 /sbin/init
+0           2  0.0  0.0       0       0 00:12    00:00 [kthreadd]
+0           3  0.1  0.0       0       0 00:12    00:00 [migration/0]
+...
+0       13239  0.0  2.6    13604   1044 00:38    00:00 /usr/sbin/smbd -D
+1000    23648  1.1  2.4    12512   2008 14:43    00:06 sshd: user@pts/2
+1000    23649  0.0  1.2    5944    3340 14:43    00:00 -bash
+0       25926  0.3  1.1    5432    3072 17:55    00:00 -su
+0       28655  0.0  1.0    4932    3204 21:58    00:00 python _psutil.py
+>>>

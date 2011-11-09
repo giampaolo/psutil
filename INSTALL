@@ -1,0 +1,110 @@
+==================
+Using easy_install
+==================
+
+The easiest way to install psutil from sources is using easy_install.
+Get the latest easy_install version from http://pypi.python.org/pypi/setuptools
+and just run:
+
+    easy_install psutil
+
+This should get the most updated psutil version from the Python pypi repository,
+unpack it, compile it and install it automatically.
+
+
+===================================
+Installing on Windows using mingw32
+===================================
+
+After the mingw [1] environment is properly set up on your system you can
+compile Windows sources by entering:
+
+    setup.py build -c mingw32
+
+To compile and install just append the "install" keyword at the end of the
+command line above, like this:
+
+    setup.py build -c mingw32 install
+
+It might be possible that distutils will complain about missing gcc executable.
+That means you have to add mingw bin PATH variable first.
+Entering this line in the command prompt should do the work:
+
+    SET PATH=C:\MinGW\bin;%PATH%
+
+NOTE: this assumes MinGW is installed in C:\MinGW, if not simply replace the
+path in the command above with an appropriate location.
+
+[1] http://www.mingw.org/
+
+
+=========================================
+Installing on Windows using Visual Studio
+=========================================
+
+To use Visual Studio to install psutil, you must have the same version of
+Visual Studio used to compile your installation of Python. For older versions
+of Python that will be Visual Studio 2003. For 2.6 and later it should be
+Visual Studio 2008. If you do not have the requisite version of Visual Studio
+available then it is recommended to use MinGW to compile psutil instead.
+If you do have Visual Studio installed, you can use the basic distutils
+commands:
+
+     setup.py build
+
+...or to install and build:
+
+     setup.py install
+
+distutils should take care of any necessary magic to compile from there.
+
+
+==================
+Installing on OS X
+==================
+
+OS X installation from source will require gcc which you can obtain as part of
+the 'XcodeTools' installer from Apple. Then you can run the standard distutils
+commands.
+To build only:
+
+     python setup.py build
+
+To install and build:
+
+     python setup.py install
+
+NOTE: due to developer's hardware limitations psutil has only been compiled and
+tested on OS X 10.4.11 so may or may not work on other versions.
+
+
+=====================
+Installing on FreeBSD
+=====================
+
+The same compiler used to install Python must be present on the system in order
+to build modules using distutils. Assuming it is installed, you can build using
+the standard distutils commands.
+
+Build only:
+
+     python setup.py build
+
+Install and build:
+
+     python setup.py install
+
+
+===================
+Installing on Linux
+===================
+
+gcc is required and so the python headers. They can easily be installed by using
+the distro package manager. For example, on Ubuntu:
+
+     sudo apt-get install python-dev
+
+Once done, you can install/build psutil with:
+
+     python setup.py install
+
