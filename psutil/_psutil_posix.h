@@ -12,5 +12,3 @@
 
 static PyObject* posix_getpriority(PyObject* self, PyObject* args);
 static PyObject* posix_setpriority(PyObject* self, PyObject* args);
-static PyObject* get_system_users(PyObject* self, PyObject* args);
-

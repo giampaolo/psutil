@@ -221,7 +221,20 @@ def disk_partitions(all=False):
     return retlist
     
 get_disk_usage = _psposix.get_disk_usage
-get_users = _psposix.get_system_users       
+
+# --- system users
+
+def get_system_users():
+    """Return currently connected users as a list of namedtuples."""
+    retlist = []
+    rawlist = _psutil_linux.get_system_users()
+    for item in rawlist:
+        user, tty, hostname, tstamp, user_process = item
+        if not os.path.isabs(tty):
+            tty = os.path.join("/dev", tty)
+        nt = ntuple_user(user, tty, hostname, tstamp, user_process)
+        retlist.append(nt)
+    return retlist
 
 
 # --- process functions

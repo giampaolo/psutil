@@ -776,7 +776,7 @@ def get_users():
         whether or not the entry is a user process (as opposed to a reboot 
         or some other system event).
     """
-    return _psplatform.get_users()
+    return _psplatform.get_system_users()
 
 
 def _deprecated(replacement):

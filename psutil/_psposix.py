@@ -19,7 +19,6 @@ import warnings
 import time
 import glob
 
-import _psutil_posix
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._compat import namedtuple
 from psutil._common import ntuple_diskinfo, usage_percent
@@ -104,19 +103,6 @@ def get_disk_usage(path):
     # http://goo.gl/sWGbH
     return ntuple_diskinfo(total, used, free, percent)
     
-def get_system_users():
-    """Return currently connected users as a list of namedtuples."""
-    from psutil._common import ntuple_user 
-    retlist = []
-    rawlist = _psutil_posix.get_system_users()
-    for item in rawlist:
-        user, tty, hostname, tstamp, user_process = item
-        # XXX temporary
-        tty = os.path.join("/dev", tty)
-        nt = ntuple_user(user, tty, hostname, tstamp, user_process)
-        retlist.append(nt)
-    return retlist
-
 def _get_terminal_map():
     ret = {}
     ls = glob.glob('/dev/tty*') + glob.glob('/dev/pts/*')
