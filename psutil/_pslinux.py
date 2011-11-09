@@ -219,8 +219,10 @@ def disk_partitions(all=False):
         ntuple = ntuple_partition(device, mountpoint, fstype)
         retlist.append(ntuple)
     return retlist
-
+    
 get_disk_usage = _psposix.get_disk_usage
+get_users = _psposix.get_system_users       
+
 
 # --- process functions
 

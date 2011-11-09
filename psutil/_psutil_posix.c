@@ -11,6 +11,7 @@
 #include <Python.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <utmp.h>
 #include <sys/resource.h>
 
 #include "_psutil_posix.h"
@@ -57,6 +58,48 @@ posix_setpriority(PyObject* self, PyObject* args)
 
 
 /*
+ * Return currently connected users as a list of tuples.
+ */
+static PyObject*
+get_system_users(PyObject* self, PyObject* args)
+{
+    PyObject *ret_list = PyList_New(0);
+    PyObject *tuple = NULL;
+    PyObject *user_proc = NULL;
+    struct utmp *ut;
+    int ret;
+
+    // XXX a header-defined constant should be used here
+    ret = utmpname("/var/run/utmp");
+    if (ret != 0) {
+        PyErr_Format(PyExc_RuntimeError, "utmpname() failed");
+        return NULL;
+    }
+    
+    setutent();
+   
+    while (NULL != (ut = getutent())) {
+        if (ut->ut_type == USER_PROCESS)
+            user_proc = Py_True;
+        else 
+            user_proc = Py_False;
+        tuple = Py_BuildValue("(sssfO)", 
+            ut->ut_user,              // username 
+            ut->ut_line,              // tty              
+            ut->ut_host,              // hostname
+            (float)ut->ut_tv.tv_sec,  // tstamp
+            user_proc                 // (bool) user process
+        );
+        PyList_Append(ret_list, tuple);
+        Py_DECREF(tuple);
+    }
+    endutent();
+
+    return ret_list;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -66,6 +109,8 @@ PsutilMethods[] =
         "Return process priority"},
      {"setpriority", posix_setpriority, METH_VARARGS,
         "Set process priority"},
+     {"get_system_users", get_system_users, METH_VARARGS,
+        "Return currently connected users as a list of tuples"},
      {NULL, NULL, 0, NULL}
 };
 

@@ -3,6 +3,10 @@ Bug tracker at http://code.google.com/p/psutil/issues
 0.4.1 - XXXX-XX-XX
 ------------------
 
+NEW FEATURES
+
+ * 229: get users currently connected on the system (psutil.get_users()).
+
 BUGFIXES
 
  * 228: some example scripts were not working with python 3.
