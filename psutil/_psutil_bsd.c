@@ -20,9 +20,11 @@
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 #include <devstat.h>      /* get io counters */
 #include <sys/vmmeter.h>  /* needed for vmtotal struct */
 #include <libutil.h>      /* process open files */
+#include <utmp.h>         /* system users */
 #include <sys/mount.h>
 
 #include <net/if.h>       /* net io counters */
@@ -980,6 +982,41 @@ get_disk_io_counters(PyObject* self, PyObject* args)
 
 
 /*
+ * Return currently connected users as a list of tuples.
+ */
+static PyObject*
+get_system_users(PyObject* self, PyObject* args)
+{
+    PyObject *ret_list = PyList_New(0);
+    PyObject *tuple = NULL;
+    struct utmp ut;
+    int fp;
+    
+    fp = fopen(_PATH_UTMP, "r");
+    if (fp == -1) {
+        return PyErr_SetFromErrno(0);
+    }
+    
+    while (fread(&ut, sizeof(ut), 1, fp) == 1) {
+        if (*ut.ut_name == '\0')
+            continue;
+        tuple = Py_BuildValue("(sssfO)", 
+            ut.ut_name,              // username 
+            ut.ut_line,              // tty              
+            ut.ut_host,              // hostname
+            (float)ut.ut_time,       // tstamp
+            Py_True                  // (bool) user process
+        );
+        PyList_Append(ret_list, tuple);
+        Py_DECREF(tuple);
+    }
+
+    fclose(fp);
+    return ret_list;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -1053,6 +1090,8 @@ PsutilMethods[] =
          "Return dict of tuples of networks I/O information."},
      {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
          "Return a Python dict of tuples for disk I/O information"},
+     {"get_system_users", get_system_users, METH_VARARGS,
+        "Return currently connected users as a list of tuples"},
 
      {NULL, NULL, 0, NULL}
 };

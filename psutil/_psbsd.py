@@ -91,6 +91,18 @@ def disk_partitions(all=False):
         ntuple = ntuple_partition(device, mountpoint, fstype)
         retlist.append(ntuple)
     return retlist
+    
+def get_system_users():
+    retlist = []
+    rawlist = _psutil_bsd.get_system_users()
+    for item in rawlist:
+        user, tty, hostname, tstamp, user_process = item
+        if not os.path.isabs(tty):
+            tty = os.path.join("/dev", tty)
+        nt = ntuple_user(user, tty, hostname, tstamp, user_process)
+        retlist.append(nt)
+    return retlist
+
 
 get_pid_list = _psutil_bsd.get_pid_list
 pid_exists = _psposix.pid_exists
