@@ -115,11 +115,12 @@ def print_header(procs_status):
         return dashes, empty_dashes
 
     # cpu usage
-    for lineno, perc in enumerate(psutil.cpu_percent(interval=0, percpu=True)):
+    for cpu_num, perc in enumerate(psutil.cpu_percent(interval=0, percpu=True)):
         dashes, empty_dashes = get_dashes(perc)
-        print_line(" CPU%-2s [%s%s] %5s%%" % (lineno, dashes, empty_dashes, perc))
-
-    # physmem usage
+        print_line(" CPU%-2s [%s%s] %5s%%" % (cpu_num, dashes, empty_dashes, 
+                                              perc))
+    # physmem usage (on linux we include buffers and cached values
+    # to match htop results)
     phymem = psutil.phymem_usage()
     dashes, empty_dashes = get_dashes(phymem.percent)
     buffers = getattr(psutil, 'phymem_buffers', lambda: 0)()
@@ -169,8 +170,8 @@ def refresh_window(procs, procs_status):
     print_line("")
     print_line(header, highlight=True)
     for p in procs:
-        # TIME+ column shows process CPU cumulative time and
-        # is expressed as: mm:ss.ms
+        # TIME+ column shows process CPU cumulative time and it
+        # is expressed as: "mm:ss.ms"
         ctime = timedelta(seconds=sum(p._cpu_times))
         ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
                               str((ctime.seconds % 60)).zfill(2),

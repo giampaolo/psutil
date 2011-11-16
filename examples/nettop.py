@@ -94,16 +94,17 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
           % (tot_after.packets_sent, tot_after.packets_recv)
     )
     
-    # per network interface
+    
+    # per-network interface details: let's sort network interfaces so 
+    # that the ones which generated more traffic are shown first
     print_line("")
-    for nic in pnic_after:
-        stats_before = pnic_before[nic]
-        stats_after = pnic_after[nic]
+    nic_names = pnic_after.keys()
+    nic_names.sort(key=lambda x: sum(pnic_after[x]), reverse=True)
+    for name in nic_names:
+        stats_before = pnic_before[name]
+        stats_after = pnic_after[name]
         templ = "%-15s %15s %15s"
-        print_line(templ % (
-                nic, "TOTAL", "PER-SEC"),
-            highlight=True
-        )
+        print_line(templ % (name, "TOTAL", "PER-SEC"), highlight=True)
         print_line(templ % (
             "bytes-sent",
             bytes2human(stats_after.bytes_sent),
