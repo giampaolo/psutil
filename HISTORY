@@ -10,6 +10,7 @@ NEW FEATURES
 BUGFIXES
 
  * 228: some example scripts were not working with python 3.
+ * 230: (Windows / OSX) memory leak in Process.get_connections().
 
 
 0.4.0 - 2011-10-29
@@ -270,4 +271,3 @@ BUGFIXES
 ------------------
 
  * Initial release.
-

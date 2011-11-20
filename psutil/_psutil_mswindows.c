@@ -481,9 +481,9 @@ get_memory_info(PyObject* self, PyObject* args)
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
     }
-    
+
     CloseHandle(hProcess);
-	
+
 // py 2.4
 #if (PY_MAJOR_VERSION == 2) && (PY_MINOR_VERSION <= 4)
     return Py_BuildValue("(II)", (unsigned int)counters.WorkingSetSize,
@@ -1234,6 +1234,12 @@ get_process_connections(PyObject* self, PyObject* args)
     PyObject* connectionTuple;
     PyObject *af_filter = NULL;
     PyObject *type_filter = NULL;
+
+    PyObject *_AF_INET = PyLong_FromLong((long)AF_INET);
+    PyObject *_AF_INET6 = PyLong_FromLong((long)AF_INET6);
+    PyObject *_SOCK_STREAM = PyLong_FromLong((long)SOCK_STREAM);
+    PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
+
     typedef PSTR (NTAPI *_RtlIpv4AddressToStringA)(struct in_addr *,
                                                    PSTR /* __out_ecount(16) */);
     _RtlIpv4AddressToStringA rtlIpv4AddressToStringA;
@@ -1257,6 +1263,11 @@ get_process_connections(PyObject* self, PyObject* args)
     PyObject* addressTupleLocal;
     CHAR addressBufferRemote[65];
     PyObject* addressTupleRemote;
+
+    Py_DECREF(_AF_INET);
+    Py_DECREF(_AF_INET6);
+    Py_DECREF(_SOCK_STREAM);
+    Py_DECREF(_SOCK_DGRAM);
 
     if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter)) {
         return NULL;
@@ -1300,8 +1311,8 @@ get_process_connections(PyObject* self, PyObject* args)
 
     /* TCP IPv4 */
 
-    if ((PySequence_Contains(af_filter, PyLong_FromLong((long)AF_INET)) == 1) &&
-        (PySequence_Contains(type_filter, PyLong_FromLong((long)SOCK_STREAM)) == 1))
+    if ((PySequence_Contains(af_filter, _AF_INET) == 1) &&
+        (PySequence_Contains(type_filter, _SOCK_STREAM) == 1))
     {
         tableSize = 0;
         getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET,
@@ -1362,6 +1373,7 @@ get_process_connections(PyObject* self, PyObject* args)
                     state_to_string(tcp4Table->table[i].dwState)
                     );
                 PyList_Append(connectionsList, connectionTuple);
+                Py_DECREF(connectionTuple);
             }
         }
 
@@ -1370,8 +1382,8 @@ get_process_connections(PyObject* self, PyObject* args)
 
     /* TCP IPv6 */
 
-    if ((PySequence_Contains(af_filter, PyLong_FromLong((long)AF_INET6)) == 1) &&
-        (PySequence_Contains(type_filter, PyLong_FromLong((long)SOCK_STREAM)) == 1))
+    if ((PySequence_Contains(af_filter, _AF_INET6) == 1) &&
+        (PySequence_Contains(type_filter, _SOCK_STREAM) == 1))
     {
         tableSize = 0;
         getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET6,
@@ -1432,6 +1444,7 @@ get_process_connections(PyObject* self, PyObject* args)
                     state_to_string(tcp6Table->table[i].dwState)
                     );
                 PyList_Append(connectionsList, connectionTuple);
+                Py_DECREF(connectionTuple);
             }
         }
 
@@ -1440,8 +1453,8 @@ get_process_connections(PyObject* self, PyObject* args)
 
     /* UDP IPv4 */
 
-    if ((PySequence_Contains(af_filter, PyLong_FromLong((long)AF_INET)) == 1) &&
-        (PySequence_Contains(type_filter, PyLong_FromLong((long)SOCK_DGRAM)) == 1))
+    if ((PySequence_Contains(af_filter, _AF_INET) == 1) &&
+        (PySequence_Contains(type_filter, _SOCK_DGRAM) == 1))
     {
         tableSize = 0;
         getExtendedUdpTable(NULL, &tableSize, FALSE, AF_INET,
@@ -1484,6 +1497,7 @@ get_process_connections(PyObject* self, PyObject* args)
                     ""
                     );
                 PyList_Append(connectionsList, connectionTuple);
+                Py_DECREF(connectionTuple);
             }
         }
 
@@ -1492,8 +1506,8 @@ get_process_connections(PyObject* self, PyObject* args)
 
     /* UDP IPv6 */
 
-    if ((PySequence_Contains(af_filter, PyLong_FromLong((long)AF_INET6)) == 1) &&
-        (PySequence_Contains(type_filter, PyLong_FromLong((long)SOCK_DGRAM)) == 1))
+    if ((PySequence_Contains(af_filter, _AF_INET6) == 1) &&
+        (PySequence_Contains(type_filter, _SOCK_DGRAM) == 1))
     {
         tableSize = 0;
         getExtendedUdpTable(NULL, &tableSize, FALSE,
@@ -1536,6 +1550,7 @@ get_process_connections(PyObject* self, PyObject* args)
                     ""
                     );
                 PyList_Append(connectionsList, connectionTuple);
+                Py_DECREF(connectionTuple);
             }
         }
 
@@ -1709,7 +1724,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
     PyObject* py_nic_info = NULL;
     PyObject* py_pre_nic_name = NULL;
     PyObject* py_nic_name = NULL;
-    
+
     int attempts = 0;
     int outBufLen = 15000;
     DWORD dwRetVal = 0;
@@ -1718,22 +1733,22 @@ get_network_io_counters(PyObject* self, PyObject* args)
     ULONG family = AF_UNSPEC;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
- 
-    do {        
+
+    do {
         pAddresses = (IP_ADAPTER_ADDRESSES *) malloc(outBufLen);
         if (pAddresses == NULL) {
             Py_DECREF(py_retdict);
-            PyErr_SetString(PyExc_RuntimeError, 
+            PyErr_SetString(PyExc_RuntimeError,
                 "memory allocation failed for IP_ADAPTER_ADDRESSES struct.");
             return NULL;
         }
 
-        dwRetVal = GetAdaptersAddresses(family, flags, NULL, pAddresses, 
+        dwRetVal = GetAdaptersAddresses(family, flags, NULL, pAddresses,
                                         &outBufLen);
         if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
             free(pAddresses);
             pAddresses = NULL;
-        } 
+        }
         else {
             break;
         }
@@ -1746,17 +1761,17 @@ get_network_io_counters(PyObject* self, PyObject* args)
         PyErr_SetString(PyExc_RuntimeError,  "GetAdaptersAddresses() failed.");
         return NULL;
     }
-    
+
     pCurrAddresses = pAddresses;
     while (pCurrAddresses) {
         pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
-        
+
         if (pIfRow == NULL) {
             Py_DECREF(py_retdict);
             Py_XDECREF(py_pre_nic_name);
             Py_XDECREF(py_nic_name);
             Py_XDECREF(py_nic_info);
-            PyErr_SetString(PyExc_RuntimeError, 
+            PyErr_SetString(PyExc_RuntimeError,
                 "memory allocation failed for MIB_IFROW struct.");
             return NULL;
         }
@@ -1768,17 +1783,17 @@ get_network_io_counters(PyObject* self, PyObject* args)
             Py_XDECREF(py_pre_nic_name);
             Py_XDECREF(py_nic_name);
             Py_XDECREF(py_nic_info);
-            PyErr_SetString(PyExc_RuntimeError, 
+            PyErr_SetString(PyExc_RuntimeError,
                 "GetIfEntry() failed.");
             return NULL;
         }
-        
+
         py_nic_info = Py_BuildValue("(IIII)",
                                     pIfRow->dwOutOctets,
                                     pIfRow->dwInOctets,
                                     pIfRow->dwOutUcastPkts,
-                                    pIfRow->dwInUcastPkts);          
-                          
+                                    pIfRow->dwInUcastPkts);
+
         py_pre_nic_name = PyUnicode_FromWideChar(
                                 pCurrAddresses->FriendlyName,
                                 wcslen(pCurrAddresses->FriendlyName));
