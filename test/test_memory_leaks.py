@@ -16,9 +16,10 @@ import os
 import gc
 import unittest
 import time
+import socket
 
 import psutil
-from test_psutil import reap_children, skipUnless, skipIf, \
+from test_psutil import reap_children, skipUnless, skipIf, supports_ipv6, \
                         POSIX, LINUX, WINDOWS, OSX, BSD, PY3
 
 LOOPS = 1000
@@ -152,10 +153,28 @@ class TestProcessObjectLeaks(Base):
     def test_get_open_files(self):
         self.execute('get_open_files')
 
-    # XXX - still using provisional lsof implementation
-    @skipIf(BSD)
+    # XXX - BSD still uses provisional lsof implementation
+    # Linux implementation is pure python so since it's slow we skip it
+    @skipIf(BSD or LINUX)
     def test_get_connections(self):
-        self.execute('get_connections')
+        def create_socket(family, type):
+            sock = socket.socket(family, type)
+            sock.bind(('', 0))
+            if type == socket.SOCK_STREAM:
+                sock.listen(1)
+            return sock
+
+        socks = []
+        socks.append(create_socket(socket.AF_INET, socket.SOCK_STREAM))
+        socks.append(create_socket(socket.AF_INET, socket.SOCK_DGRAM))
+        if supports_ipv6():
+            socks.append(create_socket(socket.AF_INET6, socket.SOCK_STREAM))
+            socks.append(create_socket(socket.AF_INET6, socket.SOCK_DGRAM))
+        try:
+            self.execute('get_connections', kind='all')
+        finally:
+            for s in socks:
+                s.close()
 
 
 class TestModuleFunctionsLeaks(Base):
@@ -212,4 +231,3 @@ def test_main():
 
 if __name__ == '__main__':
     test_main()
-
