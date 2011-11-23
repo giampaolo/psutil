@@ -854,13 +854,18 @@ get_process_open_files(PyObject* self, PyObject* args)
     return retList;
 
 error:
-    if (errno != 0)
+    if (errno != 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
-    else if (! pid_exists(pid) )
+    }
+
+    else if (! pid_exists(pid) ) {
         return NoSuchProcess();
-    else
+    }
+
+    else {
         return PyErr_Format(PyExc_RuntimeError,
                             "proc_pidinfo(PROC_PIDLISTFDS) failed");
+    }
 }
 
 
@@ -989,25 +994,39 @@ get_process_connections(PyObject* self, PyObject* args)
             char lip[200], rip[200];
             char *state;
             int inseq;
+            PyObject* _family;
+            PyObject* _type;
 
             fd = (int)fdp_pointer->proc_fd;
             family = si.psi.soi_family;
             type = si.psi.soi_kind;
 
-            if (type == 2)
+            if (type == 2) {
                 type = SOCK_STREAM;
-            else if (type == 1)
+            }
+
+            else if (type == 1) {
                 type = SOCK_DGRAM;
-            else
+            }
+
+            else {
                 continue;
+            }
 
             // apply filters
-            inseq = PySequence_Contains(af_filter, PyLong_FromLong((long)family));
-            if (inseq == 0)
+            _family = PyLong_FromLong((long)family);
+            inseq = PySequence_Contains(af_filter, _family);
+            Py_DECREF(_family);
+            if (inseq == 0) {
                 continue;
-            inseq = PySequence_Contains(type_filter, PyLong_FromLong((long)type));
-            if (inseq == 0)
+            }
+
+            _type = PyLong_FromLong((long)type);
+            inseq = PySequence_Contains(type_filter, _type);
+            Py_DECREF(_type);
+            if (inseq == 0) {
                 continue;
+            }
 
             if (errno != 0) {
                 return PyErr_SetFromErrno(PyExc_OSError);
@@ -1023,6 +1042,7 @@ get_process_connections(PyObject* self, PyObject* args)
                           rip,
                           sizeof(lip));
             }
+
             else {
                 inet_ntop(AF_INET6,
                           &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_6,
@@ -1039,16 +1059,22 @@ get_process_connections(PyObject* self, PyObject* args)
 
             lport = ntohs(si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport);
             rport = ntohs(si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_fport);
-            if (type == SOCK_STREAM)
+            if (type == SOCK_STREAM) {
                 state = get_connection_status((int)si.psi.soi_proto.pri_tcp.tcpsi_state);
-            else
+            }
+
+            else {
                 state = "";
+            }
 
             laddr = Py_BuildValue("(si)", lip, lport);
-            if (rport != 0)
+            if (rport != 0) {
                 raddr = Py_BuildValue("(si)", rip, rport);
-            else
+            }
+
+            else {
                 raddr = PyTuple_New(0);
+            }
 
             // --- construct python list
             tuple = Py_BuildValue("(iiiNNs)", fd, family, type, laddr, raddr,
@@ -1062,13 +1088,18 @@ get_process_connections(PyObject* self, PyObject* args)
     return retList;
 
 error:
-    if (errno != 0)
+    if (errno != 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
-    else if (! pid_exists(pid) )
+    }
+
+    else if (! pid_exists(pid) ) {
         return NoSuchProcess();
-    else
+    }
+
+    else {
         return PyErr_Format(PyExc_RuntimeError,
                             "proc_pidinfo(PROC_PIDLISTFDS) failed");
+    }
 }
 
 
