@@ -141,7 +141,10 @@ get_physmem(PyObject* self, PyObject* args)
     if (sysinfo(&info) != 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-    return Py_BuildValue("(lll)", info.totalram, info.freeram, info.bufferram);
+
+    return Py_BuildValue("(KKK)", info.totalram *(unsigned long long)info.mem_unit,
+        info.freeram * (unsigned long long)info.mem_unit,
+        info.bufferram * (unsigned long long)info.mem_unit );
 }
 
 
@@ -163,17 +166,17 @@ get_system_users(PyObject* self, PyObject* args)
         PyErr_Format(PyExc_RuntimeError, "utmpname() failed");
         return NULL;
     }
-    
+
     setutent();
-   
+
     while (NULL != (ut = getutent())) {
         if (ut->ut_type == USER_PROCESS)
             user_proc = Py_True;
-        else 
+        else
             user_proc = Py_False;
-        tuple = Py_BuildValue("(sssfO)", 
-            ut->ut_user,              // username 
-            ut->ut_line,              // tty              
+        tuple = Py_BuildValue("(sssfO)",
+            ut->ut_user,              // username
+            ut->ut_line,              // tty
             ut->ut_host,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
             user_proc                 // (bool) user process
