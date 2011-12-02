@@ -141,10 +141,10 @@ get_physmem(PyObject* self, PyObject* args)
     if (sysinfo(&info) != 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-
-    return Py_BuildValue("(KKK)", info.totalram *(unsigned long long)info.mem_unit,
+    return Py_BuildValue("(KKK)",
+        info.totalram *(unsigned long long)info.mem_unit,
         info.freeram * (unsigned long long)info.mem_unit,
-        info.bufferram * (unsigned long long)info.mem_unit );
+        info.bufferram * (unsigned long long)info.mem_unit);
 }
 
 
@@ -273,4 +273,3 @@ void init_psutil_linux(void)
     return module;
 #endif
 }
-

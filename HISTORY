@@ -11,7 +11,8 @@ BUGFIXES
 
  * 228: some example scripts were not working with python 3.
  * 230: (Windows / OSX) memory leak in Process.get_connections().
- * 232: Different output between psutil and "free" command
+ * 232: (Linux) psutil.phymem_usage() can report erroneous values which are
+   different than "free" command.
 
 
 0.4.0 - 2011-10-29
