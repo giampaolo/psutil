@@ -1834,8 +1834,11 @@ get_disk_io_counters(PyObject* self, PyObject* args)
         hDevice = CreateFile (szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
                               NULL, OPEN_EXISTING, 0, NULL);
 
-        if (hDevice == INVALID_HANDLE_VALUE)
+        if (hDevice == INVALID_HANDLE_VALUE) {
+            // what happens if we get an invalid handle on the first disk?
+            // we might end up with an empty dict incorrectly in some cases
             break;
+        }
 
         if (DeviceIoControl (hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0,
             &diskPerformance, sizeof (DISK_PERFORMANCE), &dwSize, NULL)) {
