@@ -5,14 +5,16 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 NEW FEATURES
 
- * 229: get users currently connected on the system (psutil.get_users()).
+ * Issue 229: get users currently connected on the system (psutil.get_users()).
 
 BUGFIXES
 
- * 228: some example scripts were not working with python 3.
- * 230: (Windows / OSX) memory leak in Process.get_connections().
- * 232: (Linux) psutil.phymem_usage() can report erroneous values which are
-   different than "free" command.
+ * Issue 228: some example scripts were not working with python 3.
+ * Issue 230: (Windows / OSX) memory leak in Process.get_connections().
+ * Issue 232: (Linux) psutil.phymem_usage() can report erroneous values which
+   are different than "free" command.
+ * Issue 236: (Windows) memory/handle leak in Process's get_memory_info() and
+   suspend() / resume() methods.
 
 
 0.4.0 - 2011-10-29
