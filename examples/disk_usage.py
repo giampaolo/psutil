@@ -18,10 +18,12 @@ def print_(s):
     sys.stdout.write(s + '\n')
     sys.stdout.flush()
 
-def convert_bytes(n):
-    if n == 0:
-        return "0B"
-    symbols = ('k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+def bytes2human(n):
+    # >>> bytes2human(10000)
+    # '9.8K'
+    # >>> bytes2human(100001221)
+    # '95.4M'
+    symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
     prefix = {}
     for i, s in enumerate(symbols):
         prefix[s] = 1 << (i+1)*10
@@ -29,6 +31,7 @@ def convert_bytes(n):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
             return '%.1f%s' % (value, s)
+    return "%sB" % n
 
 
 def main():
@@ -37,12 +40,12 @@ def main():
     for part in psutil.disk_partitions(all=False):
         usage = psutil.disk_usage(part.mountpoint)
         print_(templ % (part.device,
-                       convert_bytes(usage.total),
-                       convert_bytes(usage.used),
-                       convert_bytes(usage.free),
-                       int(usage.percent),
-                       part.fstype,
-                       part.mountpoint))
+                        bytes2human(usage.total),
+                        bytes2human(usage.used),
+                        bytes2human(usage.free),
+                        int(usage.percent),
+                        part.fstype,
+                        part.mountpoint))
 
 if __name__ == '__main__':
     sys.exit(main())

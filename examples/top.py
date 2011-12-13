@@ -57,9 +57,9 @@ def print_line(line, highlight=False):
 def bytes2human(n):
     """
     >>> bytes2human(10000)
-    '9.8 K/s'
+    '9K'
     >>> bytes2human(100001221)
-    '95.4 M/s'
+    '95M'
     """
     symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
     prefix = {}
@@ -69,7 +69,7 @@ def bytes2human(n):
         if n >= prefix[s]:
             value = int(float(n) / prefix[s])
             return '%s%s' % (value, s)
-    return "0B"
+    return "%sB" % n
 
 procs = [p for p in psutil.process_iter()]  # the current process list
 
@@ -117,7 +117,7 @@ def print_header(procs_status):
     # cpu usage
     for cpu_num, perc in enumerate(psutil.cpu_percent(interval=0, percpu=True)):
         dashes, empty_dashes = get_dashes(perc)
-        print_line(" CPU%-2s [%s%s] %5s%%" % (cpu_num, dashes, empty_dashes, 
+        print_line(" CPU%-2s [%s%s] %5s%%" % (cpu_num, dashes, empty_dashes,
                                               perc))
     # physmem usage (on linux we include buffers and cached values
     # to match htop results)
@@ -198,7 +198,7 @@ def main():
         interval = 0
         while 1:
             args = poll(interval)
-            refresh_window(*args) 
+            refresh_window(*args)
             interval = 1
     except (KeyboardInterrupt, SystemExit):
         pass

@@ -19,9 +19,7 @@ import psutil
 
 
 def convert_bytes(n):
-    if n == 0:
-        return '0B'
-    symbols = ('k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+    symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
     prefix = {}
     for i, s in enumerate(symbols):
         prefix[s] = 1 << (i+1)*10
@@ -29,7 +27,7 @@ def convert_bytes(n):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
             return '%.1f%s' % (value, s)
-    return n
+    return "%sB" % n
 
 def print_(a, b):
     if sys.stdout.isatty() and os.name == 'posix':

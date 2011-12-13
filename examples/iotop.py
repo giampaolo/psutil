@@ -72,7 +72,7 @@ def bytes2human(n):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
             return '%.2f %s/s' % (value, s)
-    return "0.00 B/s"
+    return '%.2f B/s' % (n)
 
 def poll(interval):
     """Calculate IO usage by comparing IO statics before and
@@ -152,7 +152,7 @@ def main():
         interval = 0
         while 1:
             args = poll(interval)
-            refresh_window(*args) 
+            refresh_window(*args)
             interval = 1
     except (KeyboardInterrupt, SystemExit):
         pass

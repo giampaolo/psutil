@@ -52,7 +52,7 @@ def print_line(line, highlight=False):
         lineno += 1
 # --- curses stuff
 
-        
+
 def bytes2human(n):
     """
     >>> bytes2human(10000)
@@ -68,7 +68,7 @@ def bytes2human(n):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
             return '%.2f %s' % (value, s)
-    return "0.00 B"
+    return '%.2f B' % (n)
 
 def poll(interval):
     """Retrieve raw stats within an interval window."""
@@ -79,23 +79,23 @@ def poll(interval):
     tot_after = psutil.network_io_counters()
     pnic_after = psutil.network_io_counters(pernic=True)
     return (tot_before, tot_after, pnic_before, pnic_after)
-    
+
 
 def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
     """Print stats on screen."""
     global lineno
-    
-    # totals   
+
+    # totals
     print_line("total bytes:           sent: %-10s   received: %s" \
           % (bytes2human(tot_after.bytes_sent),
              bytes2human(tot_after.bytes_recv))
-    )   
+    )
     print_line("total packets:         sent: %-10s   received: %s" \
           % (tot_after.packets_sent, tot_after.packets_recv)
     )
-    
-    
-    # per-network interface details: let's sort network interfaces so 
+
+
+    # per-network interface details: let's sort network interfaces so
     # that the ones which generated more traffic are shown first
     print_line("")
     nic_names = pnic_after.keys()
@@ -135,7 +135,7 @@ def main():
         interval = 0
         while 1:
             args = poll(interval)
-            refresh_window(*args) 
+            refresh_window(*args)
             interval = 1
     except (KeyboardInterrupt, SystemExit):
         pass
