@@ -1221,6 +1221,11 @@ typedef struct _MIB_UDP6TABLE_OWNER_PID
 } MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
 
 
+#define ConnDecrefPyObjs() Py_DECREF(_AF_INET); \
+                           Py_DECREF(_AF_INET6);\
+                           Py_DECREF(_SOCK_STREAM);\
+                           Py_DECREF(_SOCK_DGRAM);
+
 /*
  * Return a list of network connections opened by a process
  */
@@ -1264,21 +1269,19 @@ get_process_connections(PyObject* self, PyObject* args)
     CHAR addressBufferRemote[65];
     PyObject* addressTupleRemote;
 
-    Py_DECREF(_AF_INET);
-    Py_DECREF(_AF_INET6);
-    Py_DECREF(_SOCK_STREAM);
-    Py_DECREF(_SOCK_DGRAM);
-
     if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter)) {
+        ConnDecrefPyObjs();
         return NULL;
     }
 
     if (!PySequence_Check(af_filter) || !PySequence_Check(type_filter)) {
+        ConnDecrefPyObjs();
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         return NULL;
     }
 
     if (pid_is_running(pid) == 0) {
+        ConnDecrefPyObjs();
         return NoSuchProcess();
     }
 
@@ -1304,6 +1307,7 @@ get_process_connections(PyObject* self, PyObject* args)
     if ((getExtendedTcpTable == NULL) || (getExtendedUdpTable == NULL)) {
         PyErr_SetString(PyExc_NotImplementedError,
                         "feature not supported on this Windows version");
+        ConnDecrefPyObjs();
         return NULL;
     }
 
@@ -1557,6 +1561,7 @@ get_process_connections(PyObject* self, PyObject* args)
         free(table);
     }
 
+    ConnDecrefPyObjs();
     return connectionsList;
 }
 
