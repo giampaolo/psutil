@@ -479,18 +479,6 @@ class TestCase(unittest.TestCase):
         for key in ret:
             self.assertTrue(key)
             check_ntuple(ret[key])
-    
-    # XXX
-    @skipUnless(LINUX, warn=True)
-    def test_aget_users(self):   
-        for user in psutil.get_users():
-            self.assertTrue(user.name)
-            terminal = user.terminal
-            if terminal:
-                if not os.path.exists(user.terminal):
-                    self.fail("%r does not exist" % terminal)
-            self.assertTrue(user.started > 0.0)
-            self.assertTrue(user.user_process in (True, False))
 
     # ====================
     # Process object tests

@@ -59,12 +59,12 @@ def get_system_per_cpu_times():
         item = _cputimes_ntuple(user, nice, system, idle, irq)
         ret.append(item)
     return ret
-    
+
 # XXX
 # Ok, this is very dirty.
 # On FreeBSD < 8 we cannot gather per-cpu information, see:
-# http://code.google.com/p/psutil/issues/detail?id=226 
-# If NUM_CPUS > 1, on first call we return single cpu times to avoid a 
+# http://code.google.com/p/psutil/issues/detail?id=226
+# If NUM_CPUS > 1, on first call we return single cpu times to avoid a
 # crash at psutil import time.
 # Next calls will fail with NotImplementedError
 if not hasattr(_psutil_bsd, "get_system_per_cpu_times"):
@@ -91,18 +91,6 @@ def disk_partitions(all=False):
         ntuple = ntuple_partition(device, mountpoint, fstype)
         retlist.append(ntuple)
     return retlist
-    
-def get_system_users():
-    retlist = []
-    rawlist = _psutil_bsd.get_system_users()
-    for item in rawlist:
-        user, tty, hostname, tstamp, user_process = item
-        if not os.path.isabs(tty):
-            tty = os.path.join("/dev", tty)
-        nt = ntuple_user(user, tty, hostname, tstamp, user_process)
-        retlist.append(nt)
-    return retlist
-
 
 get_pid_list = _psutil_bsd.get_pid_list
 pid_exists = _psposix.pid_exists
@@ -236,7 +224,7 @@ class Process(object):
             rawlist = _psutil_bsd.get_process_open_files(self.pid)
             return [ntuple_openfile(path, fd) for path, fd in rawlist]
         else:
-            lsof = _psposix.LsofParser(self.pid, self._process_name)            
+            lsof = _psposix.LsofParser(self.pid, self._process_name)
             return lsof.get_process_open_files()
 
     def get_connections(self, kind='inet'):

@@ -149,48 +149,6 @@ get_physmem(PyObject* self, PyObject* args)
 
 
 /*
- * Return currently connected users as a list of tuples.
- */
-static PyObject*
-get_system_users(PyObject* self, PyObject* args)
-{
-    PyObject *ret_list = PyList_New(0);
-    PyObject *tuple = NULL;
-    PyObject *user_proc = NULL;
-    struct utmp *ut;
-    int ret;
-
-    // XXX a header-defined constant should be used here
-    ret = utmpname("/var/run/utmp");
-    if (ret != 0) {
-        PyErr_Format(PyExc_RuntimeError, "utmpname() failed");
-        return NULL;
-    }
-
-    setutent();
-
-    while (NULL != (ut = getutent())) {
-        if (ut->ut_type == USER_PROCESS)
-            user_proc = Py_True;
-        else
-            user_proc = Py_False;
-        tuple = Py_BuildValue("(sssfO)",
-            ut->ut_user,              // username
-            ut->ut_line,              // tty
-            ut->ut_host,              // hostname
-            (float)ut->ut_tv.tv_sec,  // tstamp
-            user_proc                 // (bool) user process
-        );
-        PyList_Append(ret_list, tuple);
-        Py_DECREF(tuple);
-    }
-    endutent();
-
-    return ret_list;
-}
-
-
-/*
  * Define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -207,8 +165,6 @@ PsutilMethods[] =
         "device, mount point and filesystem type"},
      {"get_physmem", get_physmem, METH_VARARGS,
         "The physical memory usage as a (total, free, buffer) tuple."},
-     {"get_system_users", get_system_users, METH_VARARGS,
-        "Return currently connected users as a list of tuples"},
 
      {NULL, NULL, 0, NULL}
 };
