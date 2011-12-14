@@ -81,7 +81,6 @@ def main():
         name='psutil',
         version=__ver__,
         download_url="http://psutil.googlecode.com/files/psutil-%s.tar.gz" % __ver__,
-        bugtrack_url="http://code.google.com/p/psutil/issues/list",
         description='A process utilities module for Python',
         long_description=open(README, 'r').read(),
         keywords=['ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice',
