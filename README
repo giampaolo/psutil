@@ -2,22 +2,22 @@
 Quick links
 ===========
 
-* `Home page <http://code.google.com/p/psutil/>`_
-* `Download <http://code.google.com/p/psutil/downloads/list/>`_
-* `Documentation <http://code.google.com/p/psutil/wiki/Documentation/>`_
+* `Home page <http://code.google.com/p/psutil>`_
+* `Download <http://code.google.com/p/psutil/downloads/list>`_
+* `Documentation <http://code.google.com/p/psutil/wiki/Documentation>`_
 
 =======
 Summary
 =======
 
-psutil is a module providing an interface for retrieving information on all 
-running processes and system utilization (CPU, disk, memory) in a portable way 
-by using Python, implementing many functionalities offered by command line 
+psutil is a module providing an interface for retrieving information on all
+running processes and system utilization (CPU, disk, memory) in a portable way
+by using Python, implementing many functionalities offered by command line
 tools such as:  **ps, top, df, kill, free, lsof, free, netstat, ifconfig, nice,
 ionice, iostato, iotop, uptime, tty**.
 
-It currently supports **Linux**, **Windows**, **OSX** and **FreeBSD** both 
-**32-bit** and  **64-bit** with Python versions from **2.4** to **3.3** by using 
+It currently supports **Linux**, **Windows**, **OSX** and **FreeBSD** both
+**32-bit** and  **64-bit** with Python versions from **2.4** to **3.3** by using
 a single code base.
 
 ==============
@@ -29,26 +29,26 @@ CPU
 
 >>> import psutil
 >>> psutil.cpu_times()
-cputimes(user=3961.46, nice=169.729, system=2150.659, idle=16900.540, 
+cputimes(user=3961.46, nice=169.729, system=2150.659, idle=16900.540,
          iowait=629.509, irq=0.0, softirq=19.422)
 >>>
 >>> for x in range(3):
 ...     psutil.cpu_percent(interval=1)
-... 
+...
 4.0
 5.9
 3.8
 >>>
 >>> for x in range(3):
 ...     psutil.cpu_percent(interval=1, percpu=True)
-... 
+...
 [4.0, 6.9]
 [7.0, 8.5]
 [1.2, 9.0]
 >>>
 
 
-Memory 
+Memory
 ======
 
 >>> psutil.phymem_usage()
@@ -69,7 +69,7 @@ Disks
 usage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
 >>>
 >>> psutil.disk_io_counters()
-iostat(read_count=719566, write_count=1082197, read_bytes=18626220032, 
+iostat(read_count=719566, write_count=1082197, read_bytes=18626220032,
        write_bytes=24081764352, read_time=5023392, write_time=63199568)
 >>>
 
@@ -78,9 +78,9 @@ Network
 =======
 
 >>> psutil.network_io_counters(pernic=True)
-{'lo': iostat(bytes_sent=799953745, bytes_recv=799953745, 
-              packets_sent=453698, packets_recv=453698), 
- 'eth0': iostat(bytes_sent=734324837, bytes_recv=4163935363, 
+{'lo': iostat(bytes_sent=799953745, bytes_recv=799953745,
+              packets_sent=453698, packets_recv=453698),
+ 'eth0': iostat(bytes_sent=734324837, bytes_recv=4163935363,
                 packets_sent=3605828, packets_recv=4096685)}
 >>>
 
@@ -92,9 +92,9 @@ Process management
 >>> psutil.get_pid_list()
 [1, 2, 3, 4, 5, 6, 7, 46, 48, 50, 51, 178, 182, 222, 223, 224,
 268, 1215, 1216, 1220, 1221, 1243, 1244, 1301, 1601, 2237, 2355,
-2637, 2774, 3932, 4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245, 
-4263, 4282, 4306, 4311, 4312, 4313, 4314, 4337, 4339, 4357, 4358, 
-4363, 4383, 4395, 4408, 4433, 4443, 4445, 4446, 5167, 5234, 5235, 
+2637, 2774, 3932, 4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245,
+4263, 4282, 4306, 4311, 4312, 4313, 4314, 4337, 4339, 4357, 4358,
+4363, 4383, 4395, 4408, 4433, 4443, 4445, 4446, 5167, 5234, 5235,
 5252, 5318, 5424, 5644, 6987, 7054, 7055, 7071]
 >>>
 >>> p = psutil.Process(7055)
@@ -130,27 +130,27 @@ group(real=1000, effective=1000, saved=1000)
 meminfo(rss=7471104, vms=68513792)
 >>> p.get_cpu_times()
 cputimes(user=1.02, system=0.31)
->>> 
+>>>
 >>> p.get_io_counters()
 io(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632)
->>> 
+>>>
 >>> p.get_open_files()
 [openfile(path='/home/giampaolo/svn/psutil/somefile', fd=3)]
 >>>
 >>> p.get_connections()
-[connection(fd=115, family=2, type=1, local_address=('10.0.0.1', 48776), 
+[connection(fd=115, family=2, type=1, local_address=('10.0.0.1', 48776),
             remote_address=('93.186.135.91', 80), status='ESTABLISHED'),
- connection(fd=117, family=2, type=1, local_address=('10.0.0.1', 43761), 
+ connection(fd=117, family=2, type=1, local_address=('10.0.0.1', 43761),
             remote_address=('72.14.234.100', 80), status='CLOSING'),
- connection(fd=119, family=2, type=1, local_address=('10.0.0.1', 60759), 
+ connection(fd=119, family=2, type=1, local_address=('10.0.0.1', 60759),
             remote_address=('72.14.234.104', 80), status='ESTABLISHED'),
- connection(fd=123, family=2, type=1, local_address=('10.0.0.1', 51314), 
+ connection(fd=123, family=2, type=1, local_address=('10.0.0.1', 51314),
             remote_address=('72.14.234.83', 443), status='SYN_SENT')]
 >>>
 >>> p.get_threads()
-[thread(id=5234, user_time=22.5, system_time=9.2891), 
- thread(id=5235, user_time=0.0, system_time=0.0), 
- thread(id=5236, user_time=0.0, system_time=0.0), 
+[thread(id=5234, user_time=22.5, system_time=9.2891),
+ thread(id=5235, user_time=0.0, system_time=0.0),
+ thread(id=5236, user_time=0.0, system_time=0.0),
  thread(id=5237, user_time=0.0707, system_time=1.1)]
 >>>
 >>> p.nice
