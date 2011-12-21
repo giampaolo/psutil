@@ -27,6 +27,7 @@ import atexit
 import errno
 import threading
 import tempfile
+import stat
 import collections
 
 import psutil
@@ -1382,7 +1383,14 @@ class TestCase(unittest.TestCase):
                             # as /proc/4144/fdinfo whichd doesn't exist
                             if 'chrome' in p.name:
                                 continue
-                            self.assertTrue(os.path.isdir(ret))
+                            try:
+                                st = os.stat(ret)
+                            except OSError, err:
+                                # directory has been removed in mean time
+                                if err.errno != errno.ENOENT:
+                                    raise
+                            else:
+                                self.assertTrue(stat.S_ISDIR(st.st_mode))
                 except Exception:
                     err = sys.exc_info()[1]
                     trace = traceback.format_exc()
