@@ -802,9 +802,8 @@ get_process_open_files(PyObject* self, PyObject* args)
     fds_pointer = malloc(pidinfo_result);
     pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
                                   pidinfo_result);
-    free(fds_pointer);
-
     if (pidinfo_result <= 0) {
+        free(fds_pointer);
         goto error;
     }
 
@@ -830,13 +829,16 @@ get_process_open_files(PyObject* self, PyObject* args)
                     continue;
                 }
                 if (errno != 0) {
+                    free(fds_pointer);
                     return PyErr_SetFromErrno(PyExc_OSError);
                 }
                 else
+                    free(fds_pointer);
                     return PyErr_Format(PyExc_RuntimeError,
                                 "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
             }
             if (nb < sizeof(vi)) {
+                free(fds_pointer);
                 return PyErr_Format(PyExc_RuntimeError,
                  "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed (buffer mismatch)");
             }
@@ -847,6 +849,7 @@ get_process_open_files(PyObject* self, PyObject* args)
                                           (int)fdp_pointer->proc_fd);
             PyList_Append(retList, tuple);
             Py_DECREF(tuple);
+            free(fds_pointer);
             // --- /construct python list
         }
     }
@@ -951,9 +954,9 @@ get_process_connections(PyObject* self, PyObject* args)
     fds_pointer = malloc(pidinfo_result);
     pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
                                   pidinfo_result);
-    free(fds_pointer);
 
     if (pidinfo_result <= 0) {
+        free(fds_pointer);
         goto error;
     }
 
@@ -976,14 +979,17 @@ get_process_connections(PyObject* self, PyObject* args)
                     continue;
                 }
                 if (errno != 0) {
+                    free(fds_pointer);
                     return PyErr_SetFromErrno(PyExc_OSError);
                 }
                 else {
+                    free(fds_pointer);
                     return PyErr_Format(PyExc_RuntimeError,
                                 "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
                 }
             }
             if (nb < sizeof(si)) {
+                free(fds_pointer);
                 return PyErr_Format(PyExc_RuntimeError,
                  "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed (buffer mismatch)");
             }
@@ -1029,6 +1035,7 @@ get_process_connections(PyObject* self, PyObject* args)
             }
 
             if (errno != 0) {
+                free(fds_pointer);
                 return PyErr_SetFromErrno(PyExc_OSError);
             }
 
@@ -1054,6 +1061,7 @@ get_process_connections(PyObject* self, PyObject* args)
 
             // check for inet_ntop failures
             if (errno != 0) {
+                free(fds_pointer);
                 return PyErr_SetFromErrno(PyExc_OSError);
             }
 
@@ -1081,6 +1089,7 @@ get_process_connections(PyObject* self, PyObject* args)
                                               state);
             PyList_Append(retList, tuple);
             Py_DECREF(tuple);
+            free(fds_pointer);
             // --- /construct python list
         }
     }
