@@ -1,5 +1,13 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+
+0.4.2 - TBA 
+------------------
+
+BUGFIXES
+
+ * Issue 240: Incorrectly used free() in _psutil_osx.c
+
 0.4.1 - 2011-12-14
 ------------------
 
