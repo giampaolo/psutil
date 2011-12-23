@@ -150,6 +150,15 @@ class TestProcessObjectLeaks(Base):
     def test_getcwd(self):
         self.execute('getcwd')
 
+    @skipUnless(LINUX or WINDOWS)
+    def test_get_cpu_affinity(self):
+        self.execute('get_cpu_affinity')
+
+    @skipUnless(LINUX or WINDOWS)
+    def test_get_cpu_affinity(self):
+        affinity = psutil.Process(os.getpid()).get_cpu_affinity()
+        self.execute('set_cpu_affinity', affinity)
+
     def test_get_open_files(self):
         self.execute('get_open_files')
 
@@ -222,6 +231,7 @@ class TestModuleFunctionsLeaks(Base):
 
     def test_disk_io_counters(self):
         self.execute('disk_io_counters')
+
 
 def test_main():
     test_suite = unittest.TestSuite()

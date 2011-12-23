@@ -251,6 +251,9 @@ class TestCase(unittest.TestCase):
         self.assertTrue(isinstance(x, float))
         self.assertTrue(x > 0)
 
+    def test_NUM_CPUS(self):
+        self.assertEqual(psutil.NUM_CPUS, len(psutil.cpu_times(percpu=True)))
+
     def test_deprecated_memory_functions(self):
         warnings.filterwarnings("error")
         try:
