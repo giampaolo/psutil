@@ -1,12 +1,17 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-
-0.4.2 - TBA 
+0.5.0 - XXXX-XX-XX
 ------------------
+
+NEW FEATURES
+
+ * Issue #238: (Linux, Windows) process CPU affinity (get and set).
+
 
 BUGFIXES
 
- * Issue 240: Incorrectly used free() in _psutil_osx.c
+ * Issue #240: (OSX) incorrect use of free() for Process.get_connections().
+
 
 0.4.1 - 2011-12-14
 ------------------

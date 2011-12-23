@@ -951,6 +951,19 @@ class TestCase(unittest.TestCase):
         expected_dir = os.path.dirname(os.getcwd())
         self.assertEqual(p.getcwd(), expected_dir)
 
+    @skipIf(not hasattr(psutil.Process, "get_cpu_affinity"))
+    def test_cpu_affinity(self):
+        p = psutil.Process(os.getpid())
+        old = p.get_cpu_affinity()
+        all_cpus = range(len(psutil.cpu_percent(percpu=True)))
+        p.set_cpu_affinity(all_cpus)
+        self.assertEqual(p.get_cpu_affinity(), all_cpus)
+        p.set_cpu_affinity(old)
+        self.assertEqual(p.get_cpu_affinity(), old)
+        #
+        invalid_cpu = [len(psutil.cpu_times(percpu=True)) + 10]
+        self.assertRaises(ValueError, p.set_cpu_affinity, invalid_cpu)
+
     def test_get_open_files(self):
         # current process
         p = psutil.Process(os.getpid())
@@ -1292,7 +1305,7 @@ class TestCase(unittest.TestCase):
         for name in dir(p):
             if name.startswith('_')\
             or name in ('pid', 'send_signal', 'is_running', 'set_ionice',
-                        'wait'):
+                        'wait', 'set_cpu_affinity'):
                 continue
             try:
                 meth = getattr(p, name)
@@ -1317,6 +1330,7 @@ class TestCase(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, p.set_ionice, 2)
         self.assertRaises(psutil.NoSuchProcess, p.send_signal, signal.SIGTERM)
         self.assertFalse(p.is_running())
+        self.assertRaises(psutil.NoSuchProcess, p.set_cpu_affinity, [0])
 
     def test__str__(self):
         sproc = get_test_subprocess()

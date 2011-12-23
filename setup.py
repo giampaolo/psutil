@@ -13,7 +13,7 @@ try:
 except ImportError:
     from distutils.core import setup, Extension
 
-__ver__ = "0.4.1"
+__ver__ = "0.5.0"
 README = os.path.abspath(os.path.join(os.path.dirname(__file__), 'README'))
 
 # Hack for Python 3 to tell distutils to run 2to3 against the files
@@ -85,7 +85,7 @@ def main():
         long_description=open(README, 'r').read(),
         keywords=['ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice',
                   'tty', 'ionice', 'uptime', 'taskmgr', 'process', 'df',
-                  'iotop', 'iostat', 'ifconfig', 'monitoring',],
+                  'iotop', 'iostat', 'ifconfig', 'taskset', 'monitoring',],
         author='Giampaolo Rodola, Jay Loden',
         author_email='psutil@googlegroups.com',
         maintainer='Giampaolo Rodola',

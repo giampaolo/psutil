@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <mntent.h>
 #include <utmp.h>
+#include <sched.h>
 #include <sys/syscall.h>
 #include <sys/sysinfo.h>
 #include <linux/unistd.h>
@@ -149,6 +150,47 @@ get_physmem(PyObject* self, PyObject* args)
 
 
 /*
+ * Return process CPU affinity as a Python long (the bitmask)
+ */
+static PyObject*
+get_process_cpu_affinity(PyObject* self, PyObject* args)
+{
+    unsigned long mask;
+    unsigned int len = sizeof(mask);
+    long pid;
+
+    if (!PyArg_ParseTuple(args, "i", &pid)) {
+        return NULL;
+    }
+    if (sched_getaffinity(pid, len, (cpu_set_t *)&mask) < 0) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+    return Py_BuildValue("l", mask);
+}
+
+
+/*
+ * Set process CPU affinity; expects a bitmask
+ */
+static PyObject*
+set_process_cpu_affinity(PyObject* self, PyObject* args)
+{
+    unsigned long mask;
+    unsigned int len = sizeof(mask);
+    long pid;
+
+    if (!PyArg_ParseTuple(args, "ll", &pid, &mask)) {
+        return NULL;
+    }
+    if (sched_setaffinity(pid, len, (cpu_set_t *)&mask)) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
+/*
  * Define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -165,6 +207,10 @@ PsutilMethods[] =
         "device, mount point and filesystem type"},
      {"get_physmem", get_physmem, METH_VARARGS,
         "The physical memory usage as a (total, free, buffer) tuple."},
+     {"get_process_cpu_affinity", get_process_cpu_affinity, METH_VARARGS,
+        "Return process CPU affinity as a Python long (the bitmask)."},
+     {"set_process_cpu_affinity", set_process_cpu_affinity, METH_VARARGS,
+        "Set process CPU affinity; expects a bitmask."},
 
      {NULL, NULL, 0, NULL}
 };
