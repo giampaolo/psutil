@@ -1658,6 +1658,70 @@ get_process_io_counters(PyObject* self, PyObject* args)
 
 
 /*
+ * Return process CPU affinity as a bitmask
+ */
+static PyObject*
+get_process_cpu_affinity(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    HANDLE hProcess;
+    PDWORD_PTR proc_mask;
+    PDWORD_PTR system_mask;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (pid == 0) {
+        return AccessDenied();
+    }
+    hProcess = handle_from_pid(pid);
+    if (hProcess == NULL) {
+        return NULL;
+    }
+    if (GetProcessAffinityMask(hProcess, &proc_mask, &system_mask) == 0) {
+        CloseHandle(hProcess);
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    CloseHandle(hProcess);
+    return Py_BuildValue("k", (unsigned long)proc_mask);
+}
+
+
+/*
+ * Set process CPU affinity
+ */
+static PyObject*
+set_process_cpu_affinity(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    HANDLE hProcess;
+    DWORD dwDesiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
+    DWORD_PTR mask;
+
+    if (! PyArg_ParseTuple(args, "lk", &pid, &mask)) {
+        return NULL;
+    }
+    if (pid == 0) {
+        return AccessDenied();
+    }
+    hProcess = handle_from_pid_waccess(pid, dwDesiredAccess);
+    if (hProcess == NULL) {
+        return NULL;
+    }
+
+    if (SetProcessAffinityMask(hProcess, 1) == 0) {
+        CloseHandle(hProcess);
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    CloseHandle(hProcess);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
+/*
  * Return True if one of the process threads is in a waiting or
  * suspended status.
  */
@@ -1990,6 +2054,10 @@ PsutilMethods[] =
         "Return process priority."},
     {"set_process_priority", set_process_priority, METH_VARARGS,
         "Set process priority."},
+    {"get_process_cpu_affinity", get_process_cpu_affinity, METH_VARARGS,
+        "Return process CPU affinity as a bitmask."},
+    {"set_process_cpu_affinity", set_process_cpu_affinity, METH_VARARGS,
+        "Set process CPU affinity."},
     {"get_process_io_counters", get_process_io_counters, METH_VARARGS,
         "Get process I/O counters."},
     {"is_process_suspended", is_process_suspended, METH_VARARGS,

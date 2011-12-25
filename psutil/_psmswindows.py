@@ -297,3 +297,32 @@ class Process(object):
             return STATUS_STOPPED
         else:
             return STATUS_RUNNING
+
+    @wrap_exceptions
+    def get_process_cpu_affinity(self):
+        from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
+        bitmask = _psutil_mswindows.get_process_cpu_affinity(self.pid)
+        return from_bitmask(bitmask)
+
+    @wrap_exceptions
+    def set_process_cpu_affinity(self, value):
+        def to_bitmask(l):
+            if not l:
+                raise ValueError("invalid argument %r" % l)
+            out = 0
+            for b in l:
+                if not isinstance(b, (int, long)) or b < 0:
+                    raise ValueError("invalid argument %r" % b)
+                out |= 2**b
+            return out
+
+        # SetProcessAffinityMask() states that ERROR_INVALID_PARAMETER
+        # is returned for an invalid CPU but this seems not to be true,
+        # therefore we check CPUs validy beforehand.
+        allcpus = range(len(get_system_per_cpu_times()))
+        for cpu in value:
+            if cpu not in allcpus:
+                raise ValueError("invalid CPU %i" % cpu)
+
+        bitmask = to_bitmask(value)
+        _psutil_mswindows.set_process_cpu_affinity(self.pid, bitmask)

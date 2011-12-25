@@ -7,7 +7,6 @@ NEW FEATURES
 
  * Issue #238: (Linux, Windows) process CPU affinity (get and set).
 
-
 BUGFIXES
 
  * Issue #240: (OSX) incorrect use of free() for Process.get_connections().
