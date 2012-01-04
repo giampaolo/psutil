@@ -15,7 +15,6 @@ import platform
 
 import _psutil_mswindows
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
-from psutil._compat import namedtuple
 from psutil._common import *
 
 # Windows specific extended namespace
@@ -202,7 +201,7 @@ class Process(object):
         """Return the name of the user that owns the process"""
         if self.pid in (0, 4) or self.pid == 8 and _WIN2000:
             return 'NT AUTHORITY\\SYSTEM'
-        return _psutil_mswindows.get_process_username(self.pid);
+        return _psutil_mswindows.get_process_username(self.pid)
 
     @wrap_exceptions
     def get_process_create_time(self):

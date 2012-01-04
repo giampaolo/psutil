@@ -1002,7 +1002,7 @@ class TestCase(unittest.TestCase):
             except psutil.Error:
                 pass
             else:
-                for file in filenames:
+                for file in files:
                     self.assertTrue(os.path.isfile(file))
 
     def test_get_open_files2(self):

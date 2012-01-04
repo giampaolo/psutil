@@ -61,9 +61,9 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertEqual(usage.total, total)
             # 10 MB tollerance
             if abs(usage.free - free) > 10 * 1024 * 1024:
-                self.fail("psutil=%s, df=%s" % usage.free, free)
+                self.fail("psutil=%s, df=%s" % (usage.free, free))
             if abs(usage.used - used) > 10 * 1024 * 1024:
-                self.fail("psutil=%s, df=%s" % usage.used, used)
+                self.fail("psutil=%s, df=%s" % (usage.used, used))
 
 
 if __name__ == '__main__':

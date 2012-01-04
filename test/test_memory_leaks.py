@@ -77,7 +77,7 @@ class Base(unittest.TestCase):
     def get_mem():
         return psutil.Process(os.getpid()).get_memory_info()[0]
 
-    def call(self):
+    def call(self, *args, **kwargs):
         raise NotImplementedError("must be implemented in subclass")
 
 

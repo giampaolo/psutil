@@ -28,7 +28,7 @@ __all__ = [
     # functions
     "test", "pid_exists", "get_pid_list", "process_iter", "get_process_list",
     "phymem_usage", "virtmem_usage"
-    "cpu_times", "per_cpu_times", "cpu_percent", "per_cpu_percent",
+    "cpu_times", "cpu_percent", "per_cpu_percent",
     "network_io_counters", "disk_io_counters",
     ]
 
@@ -200,7 +200,7 @@ class Process(object):
     @nice.setter
     def nice(self, value):
         # invoked on "p.nice = num"; change process niceness
-        return self._platform_impl.set_process_nice(value)
+        self._platform_impl.set_process_nice(value)
 
     if os.name == 'posix':
 
