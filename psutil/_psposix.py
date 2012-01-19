@@ -50,7 +50,7 @@ def wait_pid(pid, timeout=None):
         if timeout is not None:
             if time.time() >= stop_at:
                 raise TimeoutExpired
-            time.sleep(0.001)
+        time.sleep(0.001)
 
     if timeout is not None:
         waitcall = lambda: os.waitpid(pid, os.WNOHANG)
@@ -102,7 +102,7 @@ def get_disk_usage(path):
     # reserved blocks that we are currently not considering:
     # http://goo.gl/sWGbH
     return ntuple_diskinfo(total, used, free, percent)
-    
+
 def _get_terminal_map():
     ret = {}
     ls = glob.glob('/dev/tty*') + glob.glob('/dev/pts/*')
@@ -315,5 +315,3 @@ class LsofParser:
             if port == "*":
                 return 0
         return (ip, int(port))
-
-
