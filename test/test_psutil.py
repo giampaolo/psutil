@@ -13,6 +13,7 @@ Note: this is targeted for both python 2.x and 3.x so there's no need
 to use 2to3 tool first.
 """
 
+from __future__ import division
 import unittest
 import os
 import sys
@@ -958,7 +959,7 @@ class TestCase(unittest.TestCase):
     def test_cpu_affinity(self):
         p = psutil.Process(os.getpid())
         old = p.get_cpu_affinity()
-        all_cpus = range(len(psutil.cpu_percent(percpu=True)))
+        all_cpus = list(range(len(psutil.cpu_percent(percpu=True))))
         p.set_cpu_affinity(all_cpus)
         self.assertEqual(p.get_cpu_affinity(), all_cpus)
         p.set_cpu_affinity(old)
@@ -1402,7 +1403,8 @@ class TestCase(unittest.TestCase):
                                 continue
                             try:
                                 st = os.stat(ret)
-                            except OSError, err:
+                            except OSError:
+                                err = sys.exc_info()[1]
                                 # directory has been removed in mean time
                                 if err.errno != errno.ENOENT:
                                     raise

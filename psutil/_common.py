@@ -8,6 +8,7 @@
 
 """Common objects shared by all _ps* modules."""
 
+from __future__ import division
 from psutil._compat import namedtuple
 
 # --- functions
@@ -15,7 +16,7 @@ from psutil._compat import namedtuple
 def usage_percent(used, total, _round=None):
     """Calculate percentage usage of 'used' against 'total'."""
     try:
-        ret = (float(used) / total) * 100
+        ret = (used / total) * 100
     except ZeroDivisionError:
         ret = 0
     if _round is not None:

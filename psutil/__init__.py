@@ -11,6 +11,8 @@ processes and gather system information in a portable way by using
 Python.
 """
 
+from __future__ import division
+
 __version__ = "0.5.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 

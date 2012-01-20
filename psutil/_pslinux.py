@@ -8,6 +8,8 @@
 
 """Linux platform implementation."""
 
+from __future__ import division
+
 import os
 import errno
 import socket

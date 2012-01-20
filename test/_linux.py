@@ -8,6 +8,7 @@
 
 """Linux specific tests.  These are implicitly run by test_psutil.py."""
 
+from __future__ import division
 import unittest
 import subprocess
 import sys
