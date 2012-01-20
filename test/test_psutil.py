@@ -1004,7 +1004,7 @@ class TestCase(unittest.TestCase):
                 pass
             else:
                 for file in files:
-                    self.assertTrue(os.path.isfile(file))
+                    self.assertTrue(os.path.isfile(file.path))
 
     def test_get_open_files2(self):
         # test fd and path fields
