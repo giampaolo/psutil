@@ -248,12 +248,14 @@ def network_io_counters():
 
     retdict = {}
     for line in lines[2:]:
-        fields = line.split()
-        name = fields[0][:-1]
-        bytes_recv = int(fields[1])
-        packets_recv = int(fields[2])
-        bytes_sent = int(fields[9])
-        packets_sent = int(fields[10])
+        colon = line.find(':')
+        assert colon > 0, line
+        name = line[:colon].strip()
+        fields = line[colon+1:].strip().split()
+        bytes_recv = int(fields[0])
+        packets_recv = int(fields[1])
+        bytes_sent = int(fields[8])
+        packets_sent = int(fields[9])
         retdict[name] = (bytes_sent, bytes_recv, packets_sent, packets_recv)
     return retdict
 

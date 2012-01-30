@@ -13,6 +13,8 @@ BUGFIXES
  * Issue #240: (OSX) incorrect use of free() for Process.get_connections().
  * Issue #244: (POSIX) Process.wait() can hog CPU resources if called against
    a process which is not our children.
+ * Issue #248: (Linux) psutil.network_io_counters() might return erroneous NIC
+   names.
 
 
 0.4.1 - 2011-12-14
