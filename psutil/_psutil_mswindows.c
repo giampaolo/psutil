@@ -648,8 +648,8 @@ get_process_cwd(PyObject* self, PyObject* args)
             CloseHandle(processHandle);
 
             if (GetLastError() == ERROR_PARTIAL_COPY) {
-                // usually means the process has gone in the meantime
-                return NoSuchProcess();
+                // this occurs quite often with system processes
+                return AccessDenied();
             }
             else {
                 return PyErr_SetFromWindowsErr(0);
@@ -671,8 +671,8 @@ get_process_cwd(PyObject* self, PyObject* args)
     {
         CloseHandle(processHandle);
         if (GetLastError() == ERROR_PARTIAL_COPY) {
-            // Usually means the process has gone in the meantime
-            return NoSuchProcess();
+            // this occurs quite often with system processes
+            return AccessDenied();
         }
         else {
             return PyErr_SetFromWindowsErr(0);
@@ -690,8 +690,8 @@ get_process_cwd(PyObject* self, PyObject* args)
         free(currentDirectoryContent);
 
         if (GetLastError() == ERROR_PARTIAL_COPY) {
-            /* Usually means the process has gone in the meantime */
-            return NoSuchProcess();
+            // this occurs quite often with system processes
+            return AccessDenied();
         }
         else {
             return PyErr_SetFromWindowsErr(0);
