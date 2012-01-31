@@ -645,19 +645,18 @@ get_process_cwd(PyObject* self, PyObject* args)
         &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
 #endif
     {
-            CloseHandle(processHandle);
+        CloseHandle(processHandle);
 
-            if (GetLastError() == ERROR_PARTIAL_COPY) {
-                // this occurs quite often with system processes
-                return AccessDenied();
-            }
-            else {
-                return PyErr_SetFromWindowsErr(0);
-            }
-
+        if (GetLastError() == ERROR_PARTIAL_COPY) {
+            // this occurs quite often with system processes
+            return AccessDenied();
+        }
+        else {
+            return PyErr_SetFromWindowsErr(0);
+        }
     }
 
-    // read the currentDirectory UNICODE_STRING structure.
+    // Read the currentDirectory UNICODE_STRING structure.
     // 0x24 refers to "CurrentDirectoryPath" of RTL_USER_PROCESS_PARAMETERS
     // structure, see:
     // http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/
@@ -698,8 +697,9 @@ get_process_cwd(PyObject* self, PyObject* args)
         }
     }
 
-    // null-terminate the string to prevent wcslen from returning incorrect length
-    // the length specifier is in characters, but currentDirectory.Length is in bytes
+    // null-terminate the string to prevent wcslen from returning
+    // incorrect length the length specifier is in characters, but
+    // currentDirectory.Length is in bytes
     currentDirectoryContent[(currentDirectory.Length/sizeof(WCHAR))] = '\0';
 
     // convert wchar array to a Python unicode string, and then to UTF8
@@ -712,7 +712,8 @@ get_process_cwd(PyObject* self, PyObject* args)
         cwd = PyUnicode_AsUTF8String(cwd_from_wchar);
     #endif
 
-    // decrement the reference count on our temp unicode str to avoid mem leak
+    // decrement the reference count on our temp unicode str to avoid
+    // mem leak
     Py_XDECREF(cwd_from_wchar);
     returnPyObj = Py_BuildValue("N", cwd);
 
