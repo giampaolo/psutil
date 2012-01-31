@@ -636,7 +636,7 @@ get_process_cwd(PyObject* self, PyObject* args)
 
     pebAddress = GetPebAddress(processHandle);
 
-    /* get the address of ProcessParameters */
+    // get the address of ProcessParameters
 #ifdef _WIN64
     if (!ReadProcessMemory(processHandle, (PCHAR)pebAddress + 32,
         &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
@@ -648,7 +648,7 @@ get_process_cwd(PyObject* self, PyObject* args)
             CloseHandle(processHandle);
 
             if (GetLastError() == ERROR_PARTIAL_COPY) {
-                /* Usually means the process has gone in the meantime */
+                // usually means the process has gone in the meantime
                 return NoSuchProcess();
             }
             else {
@@ -657,10 +657,10 @@ get_process_cwd(PyObject* self, PyObject* args)
 
     }
 
-    /* read the currentDirectory UNICODE_STRING structure.
-       0x24 refers to "CurrentDirectoryPath" of RTL_USER_PROCESS_PARAMETERS
-       structure (http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/)
-     */
+    // read the currentDirectory UNICODE_STRING structure.
+    // 0x24 refers to "CurrentDirectoryPath" of RTL_USER_PROCESS_PARAMETERS
+    // structure, see:
+    // http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/
 #ifdef _WIN64
     if (!ReadProcessMemory(processHandle, (PCHAR)rtlUserProcParamsAddress + 56,
         &currentDirectory, sizeof(currentDirectory), NULL))
@@ -671,7 +671,7 @@ get_process_cwd(PyObject* self, PyObject* args)
     {
         CloseHandle(processHandle);
         if (GetLastError() == ERROR_PARTIAL_COPY) {
-            /* Usually means the process has gone in the meantime */
+            // Usually means the process has gone in the meantime
             return NoSuchProcess();
         }
         else {
@@ -679,10 +679,10 @@ get_process_cwd(PyObject* self, PyObject* args)
         }
     }
 
-    /* allocate memory to hold the command line */
+    // allocate memory to hold cwd
     currentDirectoryContent = (WCHAR *)malloc(currentDirectory.Length+1);
 
-    /* read the command line */
+    // read cwd
     if (!ReadProcessMemory(processHandle, currentDirectory.Buffer,
         currentDirectoryContent, currentDirectory.Length, NULL))
     {
@@ -699,7 +699,7 @@ get_process_cwd(PyObject* self, PyObject* args)
     }
 
     // null-terminate the string to prevent wcslen from returning incorrect length
-    // the length specifier is in characters, but commandLine.Length is in bytes
+    // the length specifier is in characters, but currentDirectory.Length is in bytes
     currentDirectoryContent[(currentDirectory.Length/sizeof(WCHAR))] = '\0';
 
     // convert wchar array to a Python unicode string, and then to UTF8
