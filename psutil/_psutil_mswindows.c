@@ -2038,8 +2038,13 @@ get_process_environ(PyObject* self, PyObject* args)
     pebAddress = GetPebAddress(processHandle);
 
     // get the address of ProcessParameters
+#ifdef _WIN64
+    if (!ReadProcessMemory(processHandle, (PCHAR)pebAddress + 32,
+        &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
+#else
     if (!ReadProcessMemory(processHandle, (PCHAR)pebAddress + 0x10,
         &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
+#endif
     {
         CloseHandle(processHandle);
 
@@ -2055,8 +2060,13 @@ get_process_environ(PyObject* self, PyObject* args)
     // 0x48 refers to "Environ" of RTL_USER_PROCESS_PARAMETERS
     // Different but related:
     // http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/
+#ifdef _WIN64
+    if (!ReadProcessMemory(processHandle, (PCHAR)rtlUserProcParamsAddress + 128,
+        &currentEnv, sizeof(currentEnv), NULL))
+#else
     if (!ReadProcessMemory(processHandle, (PCHAR)rtlUserProcParamsAddress + 0x48,
         &currentEnv, sizeof(currentEnv), NULL))
+#endif
     {
         CloseHandle(processHandle);
         if (GetLastError() == ERROR_PARTIAL_COPY) {

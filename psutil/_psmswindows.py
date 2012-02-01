@@ -311,8 +311,8 @@ class Process(object):
                 key = line[:pos].upper()
                 if key:
                     value = line[pos+1:]
-                    assert value, line
-                    ret[key] = value
+                    if value:
+                        ret[key] = value
         return ret
 
     @wrap_exceptions
