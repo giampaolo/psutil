@@ -5,6 +5,7 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 NEW FEATURES
 
+ * Issue #52: process environment variables.
  * Issue #238: (Linux, Windows) process CPU affinity (get and set).
  * Issue #245: (POSIX) Process.wait() incrementally consumes less CPU cycles.
 
