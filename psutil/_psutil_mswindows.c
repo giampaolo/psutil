@@ -2011,6 +2011,104 @@ win32_GetDriveType(PyObject* self, PyObject* args)
 }
 
 
+static PyObject*
+get_process_environ(PyObject* self, PyObject* args)
+{
+    long pid;
+    HANDLE processHandle;
+    PVOID pebAddress;
+    PVOID rtlUserProcParamsAddress;
+    PVOID currentEnv;
+    MEMORY_BASIC_INFORMATION info;
+    WCHAR buf[4096];
+    DWORD size = sizeof(buf);
+    PyObject *returnPyObj = NULL;
+    PyObject *env_from_wchar = NULL;
+    PyObject *env = NULL;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    processHandle = handle_from_pid(pid);
+    if (processHandle == NULL) {
+        return NULL;
+    }
+
+    pebAddress = GetPebAddress(processHandle);
+
+    // get the address of ProcessParameters
+    if (!ReadProcessMemory(processHandle, (PCHAR)pebAddress + 0x10,
+        &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
+    {
+        CloseHandle(processHandle);
+
+        if (GetLastError() == ERROR_PARTIAL_COPY) {
+            // this occurs quite often with system processes
+            return AccessDenied();
+        }
+        else {
+            return PyErr_SetFromWindowsErr(0);
+        }
+    }
+
+    // 0x48 refers to "Environ" of RTL_USER_PROCESS_PARAMETERS
+    // Different but related:
+    // http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/
+    if (!ReadProcessMemory(processHandle, (PCHAR)rtlUserProcParamsAddress + 0x48,
+        &currentEnv, sizeof(currentEnv), NULL))
+    {
+        CloseHandle(processHandle);
+        if (GetLastError() == ERROR_PARTIAL_COPY) {
+            // this occurs quite often with system processes
+            return AccessDenied();
+        }
+        else {
+            return PyErr_SetFromWindowsErr(0);
+        }
+    }
+
+    memset(buf, '\0', size);
+    size -= 2;
+
+    if (VirtualQueryEx(processHandle, currentEnv, &info, sizeof(info))) {
+        if (size > info.RegionSize) {
+            size = info.RegionSize;
+        }
+    }
+
+    if (!ReadProcessMemory(processHandle, currentEnv, buf, size, NULL)) {
+        CloseHandle(processHandle);
+        free(buf);
+        if (GetLastError() == ERROR_PARTIAL_COPY) {
+            // this occurs quite often with system processes or when
+            // putenv() was used in case of current process
+            return AccessDenied();
+        }
+        else {
+            return PyErr_SetFromWindowsErr(0);
+        }
+    }
+
+    env_from_wchar = PyUnicode_FromWideChar(buf, size);
+
+    #if PY_MAJOR_VERSION >= 3
+        env = PyUnicode_FromObject(env_from_wchar);
+    #else
+        env = PyUnicode_AsUTF8String(env_from_wchar);
+    #endif
+
+    // decrement the reference count on our temp unicode str to avoid
+    // mem leak
+    Py_XDECREF(env_from_wchar);
+    returnPyObj = Py_BuildValue("N", env);
+
+    CloseHandle(processHandle);
+    free(buf);
+    return returnPyObj;
+}
+
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -2063,6 +2161,8 @@ PsutilMethods[] =
         "Get process I/O counters."},
     {"is_process_suspended", is_process_suspended, METH_VARARGS,
         "Return True if one of the process threads is in a suspended state"},
+    {"get_process_environ", get_process_environ, METH_VARARGS,
+        "Return process env vars as a string."},
 
     // --- system-related functions
 
