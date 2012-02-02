@@ -2020,7 +2020,7 @@ get_process_environ(PyObject* self, PyObject* args)
     PVOID rtlUserProcParamsAddress;
     PVOID currentEnv;
     MEMORY_BASIC_INFORMATION info;
-    WCHAR buf[4096];
+    WCHAR buf[8192];  // XXX is this safe?
     DWORD size = sizeof(buf);
     PyObject *returnPyObj = NULL;
     PyObject *env_from_wchar = NULL;
