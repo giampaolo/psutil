@@ -49,7 +49,7 @@ def wait_pid(pid, timeout=None):
     def check_timeout(delay):
         if timeout is not None:
             if time.time() >= stop_at:
-                raise TimeoutExpired
+                raise TimeoutExpired(pid)
         time.sleep(delay)
         return min(delay * 2, 0.04)
 
