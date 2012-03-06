@@ -1303,6 +1303,8 @@ get_process_connections(PyObject* self, PyObject* args)
                                                         "GetExtendedTcpTable");
         getExtendedUdpTable = (_GetExtendedUdpTable)GetProcAddress(iphlpapi,
                                                         "GetExtendedUdpTable");
+        FreeLibrary(ntdll);
+        FreeLibrary(iphlpapi);
     }
 
     if ((getExtendedTcpTable == NULL) || (getExtendedUdpTable == NULL)) {

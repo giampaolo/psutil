@@ -447,6 +447,7 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
     hNtDll = LoadLibrary(TEXT("ntdll.dll"));
     NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
                                 hNtDll, "NtQuerySystemInformation");
+    FreeLibrary(hNtDll);
 
     bufferSize = initialBufferSize;
     buffer = malloc(bufferSize);
@@ -486,5 +487,3 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
     NoSuchProcess();
     return 0;
 }
-
-
