@@ -49,7 +49,7 @@ class OSXSpecificTestCase(unittest.TestCase):
     def test_total_virtmem(self):
         tot1 = psutil.virtmem_usage().total
         tot2 = os.path.getsize("/var/vm/swapfile0")
-        assertEqual(tot1, tot2)
+        self.assertEqual(tot1, tot2)
 
     def test_process_create_time(self):
         cmdline = "ps -o lstart -p %s" %self.pid
