@@ -12,6 +12,7 @@ import unittest
 import subprocess
 import time
 import sys
+import os
 
 import psutil
 
@@ -44,6 +45,11 @@ class OSXSpecificTestCase(unittest.TestCase):
     def test_TOTAL_PHYMEM(self):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
         self.assertEqual(sysctl_hwphymem, psutil.TOTAL_PHYMEM)
+
+    def test_total_virtmem(self):
+        tot1 = psutil.virtmem_usage().total
+        tot2 = os.path.getsize("/var/vm/swapfile0")
+        assertEqual(tot1, tot2)
 
     def test_process_create_time(self):
         cmdline = "ps -o lstart -p %s" %self.pid
