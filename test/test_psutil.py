@@ -231,17 +231,23 @@ class TestCase(unittest.TestCase):
     def tearDown(self):
         reap_children()
 
+    if not hasattr(unittest.TestCase, "assertIn"):
+        def assertIn(self, member, container, msg=None):
+            if member not in container:
+                self.fail(msg or \
+                        '%s not found in %s' % (repr(member), repr(container)))
+
     # ============================
     # tests for system-related API
     # ============================
 
     def test_get_process_list(self):
         pids = [x.pid for x in psutil.get_process_list()]
-        self.assertTrue(os.getpid() in pids)
+        self.assertIn(os.getpid(), pids)
 
     def test_process_iter(self):
         pids = [x.pid for x in psutil.process_iter()]
-        self.assertTrue(os.getpid() in pids)
+        self.assertIn(os.getpid(), pids)
 
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM
@@ -272,14 +278,14 @@ class TestCase(unittest.TestCase):
         self.assertTrue(mem.total > 0)
         self.assertTrue(mem.used > 0)
         self.assertTrue(mem.free > 0)
-        self.assertTrue(0 <= mem.percent <= 100)
+        self.assertTrue(0 <= mem.percent <= 100, mem.percent)
 
     def test_virtmem_usage(self):
         mem = psutil.virtmem_usage()
         self.assertTrue(mem.total > 0)
         self.assertTrue(mem.used >= 0)
         self.assertTrue(mem.free > 0)
-        self.assertTrue(0 <= mem.percent <= 100)
+        self.assertTrue(0 <= mem.percent <= 100, mem.percent)
 
     @skipUnless(LINUX)
     def test_phymem_buffers(self):
@@ -410,7 +416,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(usage.free > 0)
         self.assertTrue(usage.total > usage.used)
         self.assertTrue(usage.total > usage.free)
-        self.assertTrue(0 <= usage.percent <= 100)
+        self.assertTrue(0 <= usage.percent <= 100, usage.percent)
 
         # if path does not exist OSError ENOENT is expected across
         # all platforms
@@ -442,7 +448,7 @@ class TestCase(unittest.TestCase):
 
         mount = find_mount_point(__file__)
         mounts = [x.mountpoint for x in psutil.disk_partitions(all=True)]
-        self.assertTrue(mount in mounts)
+        self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
 
     def test_network_io_counters(self):
@@ -580,7 +586,7 @@ class TestCase(unittest.TestCase):
         sproc = get_test_subprocess([PYTHON, "-c", code])
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.wait(), 5)
-        self.assertTrue(p.wait() in (5, None))
+        self.assertIn(p.wait(), (5, None))
 
         # test timeout
         sproc = get_test_subprocess()
@@ -708,7 +714,7 @@ class TestCase(unittest.TestCase):
         io2 = p.get_io_counters()
         if not BSD:
             self.assertTrue(io2.read_count > io1.read_count)
-            self.assertTrue(io2.write_count == io1.write_count)
+            self.assertEqual(io2.write_count, io1.write_count)
         self.assertTrue(io2.read_bytes >= io1.read_bytes)
         self.assertTrue(io2.write_bytes >= io1.write_bytes)
         # test writes
@@ -998,7 +1004,7 @@ class TestCase(unittest.TestCase):
         f = open(TESTFN, 'r')
         time.sleep(.1)
         filenames = [x.path for x in p.get_open_files()]
-        self.assertTrue(TESTFN in filenames)
+        self.assertIn(TESTFN, filenames)
         f.close()
         for file in filenames:
             self.assertTrue(os.path.isfile(file))
@@ -1015,7 +1021,7 @@ class TestCase(unittest.TestCase):
                 break
             time.sleep(.01)
         else:
-            self.assertTrue(TESTFN in filenames)
+            self.assertIn(TESTFN, filenames)
         for file in filenames:
             self.assertTrue(os.path.isfile(file))
         # all processes
@@ -1180,10 +1186,10 @@ class TestCase(unittest.TestCase):
                 pass
             else:
                 for conn in cons:
-                    self.assertTrue(conn.type in (socket.SOCK_STREAM,
-                                                  socket.SOCK_DGRAM))
-                    self.assertTrue(conn.family in (socket.AF_INET,
-                                                    socket.AF_INET6))
+                    self.assertIn(conn.type, (socket.SOCK_STREAM,
+                                              socket.SOCK_DGRAM))
+                    self.assertIn(conn.family, (socket.AF_INET,
+                                                socket.AF_INET6))
                     check_address(conn.local_address, conn.family)
                     check_address(conn.remote_address, conn.family)
                     if conn.status not in valid_states:
@@ -1235,9 +1241,9 @@ class TestCase(unittest.TestCase):
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet4", "tcp", "tcp4"):
-                            self.assertTrue(cons != [])
+                            self.assertTrue(cons != [], cons)
                         else:
-                            self.assertEqual(cons, [])
+                            self.assertEqual(cons, [], cons)
                 # UDP v4
                 elif p.pid == udp4_proc.pid:
                     self.assertEqual(conn.family, socket.AF_INET)
@@ -1248,35 +1254,35 @@ class TestCase(unittest.TestCase):
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet4", "udp", "udp4"):
-                            self.assertTrue(cons != [])
+                            self.assertTrue(cons != [], cons)
                         else:
-                            self.assertEqual(cons, [])
+                            self.assertEqual(cons, [], cons)
                 # TCP v6
                 elif p.pid == getattr(tcp6_proc, "pid", None):
                     self.assertEqual(conn.family, socket.AF_INET6)
                     self.assertEqual(conn.type, socket.SOCK_STREAM)
-                    self.assertTrue(conn.local_address[0] in ("::", "::1"))
+                    self.assertIn(conn.local_address[0], ("::", "::1"))
                     self.assertEqual(conn.remote_address, ())
                     self.assertEqual(conn.status, "LISTEN")
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet6", "tcp", "tcp6"):
-                            self.assertTrue(cons != [])
+                            self.assertTrue(cons != [], cons)
                         else:
-                            self.assertEqual(cons, [])
+                            self.assertEqual(cons, [], cons)
                 # UDP v6
                 elif p.pid == getattr(udp6_proc, "pid", None):
                     self.assertEqual(conn.family, socket.AF_INET6)
                     self.assertEqual(conn.type, socket.SOCK_DGRAM)
-                    self.assertTrue(conn.local_address[0] in ("::", "::1"))
+                    self.assertIn(conn.local_address[0], ("::", "::1"))
                     self.assertEqual(conn.remote_address, ())
                     self.assertEqual(conn.status, "")
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet6", "udp", "udp6"):
-                            self.assertTrue(cons != [])
+                            self.assertTrue(cons != [], cons)
                         else:
-                            self.assertEqual(cons, [])
+                            self.assertEqual(cons, [], cons)
 
     def test_parent_ppid(self):
         this_parent = os.getpid()
@@ -1365,7 +1371,7 @@ class TestCase(unittest.TestCase):
     def test__str__(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
-        self.assertTrue(str(sproc.pid) in str(p))
+        self.assertIn(str(sproc.pid), str(p))
         # python shows up as 'Python' in cmdline on OS X so test fails on OS X
         if not OSX:
             self.assertTrue(os.path.basename(PYTHON) in str(p))
@@ -1373,8 +1379,8 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         p.kill()
         p.wait()
-        self.assertTrue(str(sproc.pid) in str(p))
-        self.assertTrue("terminated" in str(p))
+        self.assertIn(str(sproc.pid), str(p))
+        self.assertIn("terminated", str(p))
 
     def test_fetch_all(self):
         valid_procs = 0
@@ -1456,7 +1462,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(p.uids.real, 0)
             self.assertEqual(p.gids.real, 0)
 
-        self.assertTrue(p.ppid in (0, 1))
+        self.assertIn(p.ppid, (0, 1))
         #self.assertEqual(p.exe, "")
         self.assertEqual(p.cmdline, [])
         try:
@@ -1478,7 +1484,7 @@ class TestCase(unittest.TestCase):
         else:
             p.username
 
-        self.assertTrue(0 in psutil.get_pid_list())
+        self.assertIn(0, psutil.get_pid_list())
         self.assertTrue(psutil.pid_exists(0))
 
     def test_Popen(self):
