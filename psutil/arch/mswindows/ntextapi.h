@@ -181,3 +181,52 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
 } SYSTEM_INFORMATION_CLASS;
 
 
+// ================================================
+// get_system_users support ()
+// ================================================
+
+typedef struct _WINSTATION_INFO {
+    BYTE Reserved1[72];
+    ULONG SessionId;
+    BYTE Reserved2[4];
+    FILETIME ConnectTime;
+    FILETIME DisconnectTime;
+    FILETIME LastInputTime;
+    FILETIME LoginTime;
+    BYTE Reserved3[1096];
+    FILETIME CurrentTime;
+} WINSTATION_INFO, *PWINSTATION_INFO;
+
+typedef enum _WINSTATIONINFOCLASS {
+     WinStationInformation = 8
+} WINSTATIONINFOCLASS;
+
+typedef BOOLEAN (WINAPI * PWINSTATIONQUERYINFORMATIONW)
+                 (HANDLE,ULONG,WINSTATIONINFOCLASS,PVOID,ULONG,PULONG);
+
+typedef struct _WINSTATIONINFORMATIONW {
+    BYTE Reserved2[70];
+    ULONG LogonId;
+    BYTE Reserved3[1140];
+} WINSTATIONINFORMATIONW, *PWINSTATIONINFORMATIONW;
+
+// start mingw support:
+// http://www.koders.com/c/fid7C02CAE627C526914CDEB427405B51DF393A5EFA.aspx
+#ifndef _INC_WTSAPI
+typedef struct _WTS_CLIENT_ADDRESS {
+    DWORD AddressFamily;  // AF_INET, AF_IPX, AF_NETBIOS, AF_UNSPEC
+    BYTE  Address[20];    // client network address
+} WTS_CLIENT_ADDRESS, * PWTS_CLIENT_ADDRESS;
+
+HANDLE
+WINAPI
+WTSOpenServerA(
+    IN LPSTR pServerName
+    );
+
+VOID
+WINAPI
+WTSCloseServer(
+    IN HANDLE hServer
+    );
+#endif

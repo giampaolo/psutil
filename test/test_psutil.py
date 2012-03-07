@@ -503,7 +503,13 @@ class TestCase(unittest.TestCase):
             self.assertTrue(user.started > 0.0)
             datetime.datetime.fromtimestamp(user.started)
 
-        me = os.getenv('USER')
+        try:
+            import pwd
+            me = pwd.getpwuid(os.getuid())[0]
+        except ImportError:
+            me = os.getenv('LOGNAME') or os.getenv('USER') or \
+                 os.getenv('USERNAME') or os.getlogin()
+        assert me, me
         for user in users:
             if user.name == me:
                 if hasattr(os, "ttyname"):

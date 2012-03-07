@@ -21,6 +21,7 @@
 #include <tlhelp32.h>
 #include <winsock2.h>
 #include <iphlpapi.h>
+#include <wtsapi32.h>
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -2121,6 +2122,138 @@ get_process_environ(PyObject* self, PyObject* args)
 }
 
 
+#ifdef UNICODE
+#define WTSOpenServer WTSOpenServerW
+#else
+#define WTSOpenServer WTSOpenServerA
+#endif
+
+
+/*
+ * Return a Python dict of tuples for disk I/O information
+ */
+static PyObject*
+get_system_users(PyObject* self, PyObject* args)
+{
+    PyObject* py_retlist = PyList_New(0);
+    PyObject* py_tuple = NULL;
+    PyObject* py_address = NULL;
+
+    HANDLE hServer = NULL;
+    LPTSTR buffer_user = NULL;
+    LPTSTR buffer_addr = NULL;
+    PWTS_SESSION_INFO sessions;
+    DWORD count;
+    DWORD sessionId;
+    DWORD bytes;
+    PWTS_CLIENT_ADDRESS address;
+    int i;
+    char address_str[50];
+    long long unix_time;
+
+    PWINSTATIONQUERYINFORMATIONW WinStationQueryInformationW;
+    WINSTATION_INFO station_info;
+    HINSTANCE hInstWinSta;
+    ULONG returnLen;
+
+
+    hInstWinSta = LoadLibraryA("winsta.dll");
+    WinStationQueryInformationW = (PWINSTATIONQUERYINFORMATIONW)
+        GetProcAddress(hInstWinSta, "WinStationQueryInformationW");
+    FreeLibrary(hInstWinSta);
+
+    hServer = WTSOpenServer('\0');
+    if (hServer == NULL) {
+        goto error;
+    }
+
+    if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
+        goto error;
+    }
+
+    for (i=0; i<count; i++) {
+        sessionId = sessions[i].SessionId;
+        if (buffer_user != NULL) {
+            WTSFreeMemory(buffer_user);
+        }
+        if (buffer_addr != NULL) {
+            WTSFreeMemory(buffer_addr);
+        }
+
+        buffer_user = NULL;
+        buffer_addr = NULL;
+
+        // username
+        bytes = 0;
+        if (WTSQuerySessionInformation(hServer, sessionId, WTSUserName,
+                                        &buffer_user, &bytes) == 0) {
+            goto error;
+        }
+        if (bytes == 1) {
+            continue;
+        }
+
+        // address
+        bytes = 0;
+        if (WTSQuerySessionInformation(hServer, sessionId, WTSClientAddress,
+                                       &buffer_addr, &bytes) == 0) {
+            goto error;
+        }
+
+        address = (PWTS_CLIENT_ADDRESS)buffer_addr;
+        if (address->AddressFamily == 0) {  // AF_INET
+            sprintf(address_str, "%u.%u.%u.%u", address->Address[0],
+                                                address->Address[1],
+                                                address->Address[2],
+                                                address->Address[3]);
+            py_address = Py_BuildValue("s", address_str);
+        }
+        else {
+            py_address = Py_None;
+        }
+
+        // login time
+        if (!WinStationQueryInformationW(hServer,
+                                         sessionId,
+                                         WinStationInformation,
+                                         &station_info,
+                                         sizeof(station_info),
+                                         &returnLen))
+                                         {
+            goto error;
+        }
+
+        unix_time = ((LONGLONG)station_info.ConnectTime.dwHighDateTime) << 32;
+        unix_time += station_info.ConnectTime.dwLowDateTime - 116444736000000000LL;
+        unix_time /= 10000000;
+
+        py_tuple = Py_BuildValue("sOd", buffer_user,
+                                        py_address,
+                                        (double)unix_time);
+        PyList_Append(py_retlist, py_tuple);
+        Py_XDECREF(py_address);
+        Py_XDECREF(py_tuple);
+    }
+
+    WTSCloseServer(hServer);
+    WTSFreeMemory(buffer_user);
+    WTSFreeMemory(buffer_addr);
+    return py_retlist;
+
+error:
+    if (hServer != NULL) {
+        WTSCloseServer(hServer);
+    }
+    if (buffer_user != NULL) {
+        WTSFreeMemory(buffer_user);
+    }
+    if (buffer_addr != NULL) {
+        WTSFreeMemory(buffer_addr);
+    }
+    return PyErr_SetFromWindowsErr(0);
+}
+
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -2196,6 +2329,9 @@ PsutilMethods[] =
          "Return dict of tuples of networks I/O information."},
      {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
          "Return dict of tuples of disks I/O information."},
+     {"get_system_users", get_system_users, METH_VARARGS,
+         "XXX"},
+
 
      // --- windows API bindings
      {"win32_GetLogicalDriveStrings", win32_GetLogicalDriveStrings, METH_VARARGS,

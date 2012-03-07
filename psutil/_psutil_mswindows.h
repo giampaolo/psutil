@@ -49,6 +49,7 @@ static PyObject* get_disk_usage(PyObject* self, PyObject* args);
 static PyObject* get_disk_partitions(PyObject* self, PyObject* args);
 static PyObject* get_network_io_counters(PyObject* self, PyObject* args);
 static PyObject* get_disk_io_counters(PyObject* self, PyObject* args);
+static PyObject* get_system_users(PyObject* self, PyObject* args);
 
 // --- windows API bindings
 
