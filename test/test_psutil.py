@@ -30,6 +30,7 @@ import threading
 import tempfile
 import stat
 import collections
+import datetime
 
 import psutil
 
@@ -484,6 +485,27 @@ class TestCase(unittest.TestCase):
         for key in ret:
             self.assertTrue(key)
             check_ntuple(ret[key])
+
+    def test_get_users(self):
+        users = psutil.get_users()
+        for user in users:
+            self.assertTrue(user.name)
+            terminal = user.terminal
+            if terminal:
+                self.assertTrue(os.path.exists(user.terminal), user.terminal)
+            user.host
+            self.assertTrue(user.started > 0.0)
+            datetime.datetime.fromtimestamp(user.started)
+
+        me = os.getenv('USER')
+        for user in users:
+            if user.name == me:
+                if hasattr(os, "ttyname"):
+                    tty = os.ttyname(sys.stdout.fileno())
+                    self.assertEqual(tty, user.terminal)
+                break
+        else:
+            self.fail("self username not found")
 
     # ====================
     # Process object tests

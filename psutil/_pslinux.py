@@ -225,6 +225,25 @@ def disk_partitions(all=False):
 get_disk_usage = _psposix.get_disk_usage
 
 
+# --- other sysetm functions
+
+def get_system_users():
+    """Return currently connected users as a list of namedtuples."""
+    retlist = []
+    rawlist = _psutil_linux.get_system_users()
+    for item in rawlist:
+        user, tty, hostname, tstamp, user_process = item
+        # XXX the underlying C function includes entries about
+        # system boot, run level and others.  We might want
+        # to use them in the future.
+        if not user_process:
+            continue
+        # XXX temporary
+        tty = os.path.join("/dev", tty)
+        nt = ntuple_user(user, tty, hostname, tstamp)
+        retlist.append(nt)
+    return retlist
+
 # --- process functions
 
 def get_pid_list():

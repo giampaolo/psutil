@@ -44,7 +44,8 @@ class PosixSpecificTestCase(unittest.TestCase):
     # for ps -o arguments see: http://unixhelp.ed.ac.uk/CGI/man-cgi?ps
 
     def setUp(self):
-        self.pid = get_test_subprocess([PYTHON, "-E", "-O"]).pid
+        self.pid = get_test_subprocess([PYTHON, "-E", "-O"],
+                                       stdin=subprocess.PIPE).pid
 
     def tearDown(self):
         reap_children()
@@ -142,7 +143,7 @@ class PosixSpecificTestCase(unittest.TestCase):
             difference = [x for x in pids_psutil if x not in pids_ps] + \
                          [x for x in pids_ps if x not in pids_psutil]
             self.fail("difference: " + str(difference))
-            
+
     def test_nic_names(self):
         p = subprocess.Popen("ifconfig -a", shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
@@ -155,10 +156,17 @@ class PosixSpecificTestCase(unittest.TestCase):
             else:
                 self.fail("couldn't find %s nic in 'ifconfig -a' output" % nic)
 
+    def test_get_users(self):
+        out = sh("who")
+        lines = out.split('\n')
+        users = [x.split()[0] for x in lines]
+        terminals = [os.path.join("/dev", x.split()[1]) for x in lines]
+        for u in psutil.get_users():
+            self.assertTrue(u.name in users, u.name)
+            self.assertTrue(u.terminal in terminals, u.terminal)
+
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(PosixSpecificTestCase))
     unittest.TextTestRunner(verbosity=2).run(test_suite)
-
-

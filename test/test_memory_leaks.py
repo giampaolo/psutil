@@ -235,6 +235,9 @@ class TestModuleFunctionsLeaks(Base):
     def test_disk_io_counters(self):
         self.execute('disk_io_counters')
 
+    def test_get_users(self):
+        self.execute('get_users')
+
 
 def test_main():
     test_suite = unittest.TestSuite()

@@ -778,6 +778,26 @@ def disk_io_counters(perdisk=False):
             wtime += fields[5]
         return ntuple_disk_iostat(reads, writes, rbytes, wbytes, rtime, wtime)
 
+def get_users():
+    """Return users currently connected on the system as a list of
+    namedtuples including the following attributes.
+
+     - (str) user:
+        the name of the user
+
+     - (str) terminal:
+        the tty or pseudo-tty associated with the user, if any.
+        This will always be the full path to the device.
+
+     - (str) host:
+        the host name associated with the entry, if any.
+
+     - (float) started:
+        the creation time as a floating point number expressed in seconds
+        since the epoch.
+    """
+    return _psplatform.get_system_users()
+
 
 def _deprecated(replacement):
     # a decorator which can be used to mark functions as deprecated
