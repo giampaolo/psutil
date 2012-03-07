@@ -2142,7 +2142,7 @@ get_system_users(PyObject* self, PyObject* args)
     HANDLE hServer = NULL;
     LPTSTR buffer_user = NULL;
     LPTSTR buffer_addr = NULL;
-    PWTS_SESSION_INFO sessions;
+    PWTS_SESSION_INFO sessions = NULL;
     DWORD count;
     DWORD sessionId;
     DWORD bytes;
@@ -2236,6 +2236,7 @@ get_system_users(PyObject* self, PyObject* args)
     }
 
     WTSCloseServer(hServer);
+    WTSFreeMemory(sessions);
     WTSFreeMemory(buffer_user);
     WTSFreeMemory(buffer_addr);
     return py_retlist;
@@ -2243,6 +2244,9 @@ get_system_users(PyObject* self, PyObject* args)
 error:
     if (hServer != NULL) {
         WTSCloseServer(hServer);
+    }
+    if (sessions != NULL) {
+        WTSFreeMemory(sessions);
     }
     if (buffer_user != NULL) {
         WTSFreeMemory(buffer_user);
