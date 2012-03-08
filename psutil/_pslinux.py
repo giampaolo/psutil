@@ -238,8 +238,9 @@ def get_system_users():
         # to use them in the future.
         if not user_process:
             continue
-        # XXX temporary
-        tty = os.path.join("/dev", tty)
+        abstty = os.path.join("/dev", tty)
+        if os.path.exists(abstty):
+            tty = abstty
         nt = ntuple_user(user, tty, hostname, tstamp)
         retlist.append(nt)
     return retlist
