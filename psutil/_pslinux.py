@@ -238,6 +238,8 @@ def get_system_users():
         # to use them in the future.
         if not user_process:
             continue
+        if hostname == ':0.0':
+            hostname = 'localhost'
         abstty = os.path.join("/dev", tty)
         if os.path.exists(abstty):
             tty = abstty
