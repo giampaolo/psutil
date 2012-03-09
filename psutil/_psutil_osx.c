@@ -14,6 +14,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <utmpx.h>
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
 #include <libproc.h>
@@ -1339,6 +1340,48 @@ get_disk_io_counters(PyObject* self, PyObject* args)
 
 
 /*
+ * Return currently connected users as a list of tuples.
+ */
+static PyObject*
+get_system_users(PyObject* self, PyObject* args)
+{
+    PyObject *ret_list = PyList_New(0);
+    PyObject *tuple = NULL;
+    struct utmpx ut;
+    FILE *fp;
+
+
+    fp = fopen(_PATH_UTMPX, "r");
+    if (fp == NULL) {
+        // man fopen says errno is set but it seems it's not (OSX 10.6)
+        return PyErr_SetFromErrnoWithFilename(PyExc_OSError, _PATH_UTMPX);
+    }
+
+    while (fread(&ut, sizeof(ut), 1, fp) == 1) {
+        if (*ut.ut_user == '\0') {
+            continue;
+        }
+#ifdef UTMPX_USER_PROCESS
+        if (ut.ut_type != UTMPX_USER_PROCESS) {
+            continue;
+        }
+#endif
+        tuple = Py_BuildValue("(sssf)",
+            ut.ut_user,              // username
+            ut.ut_line,              // tty
+            ut.ut_host,              // hostname
+            (float)ut.ut_tv.tv_sec   // login time
+        );
+        PyList_Append(ret_list, tuple);
+        Py_DECREF(tuple);
+    }
+
+    fclose(fp);
+    return ret_list;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -1404,6 +1447,8 @@ PsutilMethods[] =
          "Return dict of tuples of networks I/O information."},
      {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
          "Return dict of tuples of disks I/O information."},
+     {"get_system_users", get_system_users, METH_VARARGS,
+        "Return currently connected users as a list of tuples"},
 
      {NULL, NULL, 0, NULL}
 };
