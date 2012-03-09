@@ -990,11 +990,11 @@ get_system_users(PyObject* self, PyObject* args)
     PyObject *ret_list = PyList_New(0);
     PyObject *tuple = NULL;
     struct utmp ut;
-    int fp;
+    FILE *fp;
 
 
     fp = fopen(_PATH_UTMP, "r");
-    if (fp == -1) {
+    if (fp == NULL) {
         return PyErr_SetFromErrno(0);
     }
 
