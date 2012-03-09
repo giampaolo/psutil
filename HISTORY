@@ -12,6 +12,8 @@ NEW FEATURES
 
 BUGFIXES
 
+ * Issue #193: psutil.Popen constructor can throw an exception if the spawned
+   process terminates quickly.
  * Issue #240: (OSX) incorrect use of free() for Process.get_connections().
  * Issue #244: (POSIX) Process.wait() can hog CPU resources if called against
    a process which is not our children.
