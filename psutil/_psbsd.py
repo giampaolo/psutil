@@ -92,6 +92,20 @@ def disk_partitions(all=False):
         retlist.append(ntuple)
     return retlist
 
+def get_system_users():
+    retlist = []
+    rawlist = _psutil_bsd.get_system_users()
+    for item in rawlist:
+        user, tty, hostname, tstamp = item
+        if tty == '~':
+            continue  # reboot or shutdown
+        abstty = os.path.join("/dev", tty)
+        if os.path.exists(abstty):
+            tty = abstty
+        nt = ntuple_user(user, tty, hostname, tstamp)
+        retlist.append(nt)
+    return retlist
+
 get_pid_list = _psutil_bsd.get_pid_list
 pid_exists = _psposix.pid_exists
 get_disk_usage = _psposix.get_disk_usage

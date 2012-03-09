@@ -503,21 +503,6 @@ class TestCase(unittest.TestCase):
             self.assertTrue(user.started > 0.0)
             datetime.datetime.fromtimestamp(user.started)
 
-        try:
-            import pwd
-            me = pwd.getpwuid(os.getuid())[0]
-        except ImportError:
-            me = os.getenv('LOGNAME') or os.getenv('USER') or \
-                 os.getenv('USERNAME') or os.getlogin()
-        assert me, me
-        for user in users:
-            if user.name == me:
-                if hasattr(os, "ttyname"):
-                    tty = os.ttyname(sys.stdout.fileno())
-                    self.assertEqual(tty, user.terminal)
-                break
-        else:
-            self.fail("self username not found")
 
     # ====================
     # Process object tests
@@ -1302,9 +1287,10 @@ class TestCase(unittest.TestCase):
                 continue
             self.assertTrue(p.ppid != this_parent)
 
-    def test_get_environ(self):
-        p = psutil.Process(os.getpid())
-        self.assertEqual(p.get_environ(), os.environ)
+    if hasattr(psutil.Process, 'get_environ'):
+        def test_get_environ(self):
+            p = psutil.Process(os.getpid())
+            self.assertEqual(p.get_environ(), os.environ)
 
     def test_get_children(self):
         p = psutil.Process(os.getpid())
@@ -1372,7 +1358,8 @@ class TestCase(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, p.set_ionice, 2)
         self.assertRaises(psutil.NoSuchProcess, p.send_signal, signal.SIGTERM)
         self.assertFalse(p.is_running())
-        self.assertRaises(psutil.NoSuchProcess, p.set_cpu_affinity, [0])
+        if hasattr(p, "set_cpu_affinity"):
+            self.assertRaises(psutil.NoSuchProcess, p.set_cpu_affinity, [0])
 
     def test__str__(self):
         sproc = get_test_subprocess()
