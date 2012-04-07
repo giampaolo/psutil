@@ -564,8 +564,8 @@ class Popen(Process):
 
     def __init__(self, *args, **kwargs):
         self.__subproc = subprocess.Popen(*args, **kwargs)
-        self._pid = pid
-        self._platform_impl = _psplatform.Process(pid)
+        self._pid = self.__subproc.pid
+        self._platform_impl = _psplatform.Process(self._pid)
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
 
