@@ -8,6 +8,8 @@ NEW FEATURES
  * Issue #52: (Linux, Windows) get process environment variables.
  * Issue #229: list users currently connected on the system (psutil.get_users()).
  * Issue #238: (Linux, Windows) process CPU affinity (get and set).
+ * Issue #242: Process.get_children(recursive=True): return all process
+   descendants.
  * Issue #245: (POSIX) Process.wait() incrementally consumes less CPU cycles.
 
 BUGFIXES

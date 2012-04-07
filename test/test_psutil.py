@@ -111,7 +111,7 @@ def reap_children(search_all=False):
     """
     if search_all:
         this_process = psutil.Process(os.getpid())
-        pids = [x.pid for x in this_process.get_children()]
+        pids = [x.pid for x in this_process.get_children(recursive=True)]
     else:
         pids =_subprocesses_started
     while pids:
@@ -1295,11 +1295,32 @@ class TestCase(unittest.TestCase):
     def test_get_children(self):
         p = psutil.Process(os.getpid())
         self.assertEqual(p.get_children(), [])
+        self.assertEqual(p.get_children(recursive=True), [])
         sproc = get_test_subprocess()
-        children = p.get_children()
-        self.assertEqual(len(children), 1)
-        self.assertEqual(children[0].pid, sproc.pid)
+        children1 = p.get_children()
+        children2 = p.get_children(recursive=True)
+        for children in (children1, children2):
+            self.assertEqual(len(children), 1)
+            self.assertEqual(children[0].pid, sproc.pid)
+            self.assertEqual(children[0].ppid, os.getpid())
+
+    def test_get_children_recursive(self):
+        # here we create a subprocess which creates another one as in:
+        # A (parent) -> B (child) -> C (grandchild)
+        s =  "import subprocess, os, sys, time;"
+        s += "PYTHON = os.path.realpath(sys.executable);"
+        s += "DEVNULL = open(os.devnull, 'r+');"
+        s += "cmd = [PYTHON, '-c', 'import time; time.sleep(3600);'];"
+        s += "subprocess.Popen(cmd);"
+        s += "time.sleep(3600);"
+        get_test_subprocess(cmd=[PYTHON, "-c", s])
+        time.sleep(.1)
+        p = psutil.Process(os.getpid())
+        self.assertEqual(len(p.get_children(recursive=False)), 1)
+        children = p.get_children(recursive=True)
+        self.assertEqual(len(children), 2)
         self.assertEqual(children[0].ppid, os.getpid())
+        self.assertEqual(children[1].ppid, children[0].pid)
 
     def test_suspend_resume(self):
         sproc = get_test_subprocess()

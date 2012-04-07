@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # $Id$
 #
@@ -315,21 +316,50 @@ class Process(object):
         """
         return self._platform_impl.get_process_threads()
 
-    def get_children(self):
+    def get_children(self, recursive=False):
         """Return the children of this process as a list of Process
         objects.
+        If recursive is True return all the parent descendants.
+        Example (A == this process):
+
+         A ─┐
+            │
+            ├─ B (child) ─┐
+            │             └─ X (grandchild) ─┐
+            │                                └─ Y (great grandchild)
+            ├─ C (child)
+            └─ D (child)
+
+        >>> p.get_children()
+        B, C, D
+        >>> p.get_children(recursive=True)
+        B, X, Y, C, D,
         """
         if not self.is_running():
             name = self._platform_impl._process_name
             raise NoSuchProcess(self.pid, name)
-        retlist = []
-        for proc in process_iter():
-            try:
-                if proc.ppid == self.pid:
-                    retlist.append(proc)
-            except NoSuchProcess:
-                pass
-        return retlist
+
+        def get(processes, pid):
+            for p in processes:
+                try:
+                    if p.ppid == pid:
+                        yield p
+                except NoSuchProcess:
+                    pass
+
+        processes = list(process_iter())
+        if not recursive:
+            return list(get(processes, self.pid))
+        else:
+            ret = []
+            checklist = [self.pid]
+            while checklist:
+                for pid in checklist:
+                    for proc in get(processes, pid):
+                        ret.append(proc)
+                        checklist.append(proc.pid)
+                    del checklist[0]
+            return ret
 
     def get_cpu_percent(self, interval=0.1):
         """Return a float representing the current process CPU
