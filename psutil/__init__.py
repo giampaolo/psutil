@@ -48,7 +48,7 @@ except ImportError:
     pwd = None
 
 from psutil.error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
-from psutil._compat import property
+from psutil._compat import property, defaultdict
 from psutil._common import (STATUS_RUNNING, STATUS_IDLE, STATUS_SLEEPING,
                             STATUS_DISK_SLEEP, STATUS_STOPPED,
                             STATUS_TRACING_STOP, STATUS_ZOMBIE, STATUS_DEAD,
@@ -320,6 +320,7 @@ class Process(object):
         """Return the children of this process as a list of Process
         objects.
         If recursive is True return all the parent descendants.
+
         Example (A == this process):
 
          A ─┐
@@ -333,33 +334,43 @@ class Process(object):
         >>> p.get_children()
         B, C, D
         >>> p.get_children(recursive=True)
-        B, X, Y, C, D,
+        B, X, Y, C, D
+
+        Note that in the example above if process X disappears
+        process Y won't be returned either as the reference to
+        process A is lost.
         """
         if not self.is_running():
             name = self._platform_impl._process_name
             raise NoSuchProcess(self.pid, name)
 
-        def get(processes, pid):
-            for p in processes:
+        ret = []
+        if not recursive:
+            for p in process_iter():
                 try:
-                    if p.ppid == pid:
-                        yield p
+                    if p.ppid == self.pid:
+                        ret.append(p)
                 except NoSuchProcess:
                     pass
-
-        processes = list(process_iter())
-        if not recursive:
-            return list(get(processes, self.pid))
         else:
-            ret = []
-            checklist = [self.pid]
-            while checklist:
-                for pid in checklist:
-                    for proc in get(processes, pid):
-                        ret.append(proc)
-                        checklist.append(proc.pid)
-                    del checklist[0]
-            return ret
+            # construct a dict where 'values' are all the processes
+            # having 'key' as their parent
+            table = defaultdict(list)
+            for p in process_iter():
+                try:
+                    table[p.ppid].append(p)
+                except NoSuchProcess:
+                    pass
+            # At this point we have a mapping table where table[self.pid]
+            # are the current process's children.
+            # Below, we look for all descendants recursively, similarly
+            # to a recursive function call.
+            checkpids = [self.pid]
+            for pid in checkpids:
+                for proc in table[pid]:
+                    ret.append(proc)
+                    checkpids.append(proc.pid)
+        return ret
 
     def get_cpu_percent(self, interval=0.1):
         """Return a float representing the current process CPU

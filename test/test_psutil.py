@@ -1322,6 +1322,21 @@ class TestCase(unittest.TestCase):
         self.assertEqual(children[0].ppid, os.getpid())
         self.assertEqual(children[1].ppid, children[0].pid)
 
+    def test_get_children_duplicates(self):
+        # find the process which has the highest number of children
+        from psutil._compat import defaultdict
+        table = defaultdict(int)
+        for p in psutil.process_iter():
+            try:
+                table[p.ppid] += 1
+            except NoSuchProcess:
+                pass
+        # this is the one, now let's make sure there are no duplicates
+        pid = max(table, key=lambda x: table[x])
+        p = psutil.Process(pid)
+        c = p.get_children(recursive=True)
+        self.assertEqual(len(c), len(set(c)))
+
     def test_suspend_resume(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
