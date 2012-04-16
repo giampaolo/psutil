@@ -8,7 +8,7 @@
 
 """Module which provides compatibility with older Python versions."""
 
-__all__ = ["namedtuple", "property", "defauldict"]
+__all__ = ["namedtuple", "property", "defaultdict"]
 
 from operator import itemgetter as _itemgetter
 from keyword import iskeyword as _iskeyword
