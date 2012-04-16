@@ -850,11 +850,11 @@ get_process_open_files(PyObject* self, PyObject* args)
                                           (int)fdp_pointer->proc_fd);
             PyList_Append(retList, tuple);
             Py_DECREF(tuple);
-            free(fds_pointer);
             // --- /construct python list
         }
     }
 
+    free(fds_pointer);
     return retList;
 
 error:
@@ -1090,11 +1090,11 @@ get_process_connections(PyObject* self, PyObject* args)
                                               state);
             PyList_Append(retList, tuple);
             Py_DECREF(tuple);
-            free(fds_pointer);
             // --- /construct python list
         }
     }
 
+    free(fds_pointer);
     return retList;
 
 error:
