@@ -82,6 +82,7 @@ def _get_num_cpus():
 
 # Number of clock ticks per second
 _CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
+_PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 _TERMINAL_MAP = _psposix._get_terminal_map()
 BOOT_TIME = _get_boot_time()
 NUM_CPUS = _get_num_cpus()
@@ -486,19 +487,11 @@ class Process(object):
 
     @wrap_exceptions
     def get_memory_info(self):
-        f = open("/proc/%s/status" % self.pid)
+        f = open("/proc/%s/statm" % self.pid)
         try:
-            virtual_size = 0
-            resident_size = 0
-            _flag = False
-            for line in f:
-                if (not _flag) and line.startswith("VmSize:"):
-                    virtual_size = int(line.split()[1]) * 1024
-                    _flag = True
-                elif line.startswith("VmRSS"):
-                    resident_size = int(line.split()[1]) * 1024
-                    break
-            return ntuple_meminfo(resident_size, virtual_size)
+            vms, rss = f.readline().split()[:2]
+            return ntuple_meminfo(int(rss) * _PAGESIZE,
+                                  int(vms) * _PAGESIZE)
         finally:
             f.close()
 
