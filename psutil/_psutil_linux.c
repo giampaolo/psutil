@@ -120,9 +120,11 @@ get_disk_partitions(PyObject* self, PyObject* args)
             endmntent(file);
             return PyErr_Format(PyExc_RuntimeError, "getmntent() failed");
         }
-        py_tuple = Py_BuildValue("(sss)", entry->mnt_fsname,  // device
-                                          entry->mnt_dir,     // mount point
-                                          entry->mnt_type);   // fs type
+        py_tuple = Py_BuildValue("(ssss)", entry->mnt_fsname,  // device
+                                           entry->mnt_dir,     // mount point
+                                           entry->mnt_type,    // fs type
+                                           entry->mnt_opts);   // options
+
         PyList_Append(py_retlist, py_tuple);
         Py_XDECREF(py_tuple);
     }

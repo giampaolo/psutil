@@ -213,13 +213,13 @@ def disk_partitions(all=False):
     retlist = []
     partitions = _psutil_linux.get_disk_partitions()
     for partition in partitions:
-        device, mountpoint, fstype = partition
+        device, mountpoint, fstype, opts = partition
         if device == 'none':
             device = ''
         if not all:
             if device == '' or fstype not in phydevs:
                 continue
-        ntuple = ntuple_partition(device, mountpoint, fstype)
+        ntuple = ntuple_partition(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 

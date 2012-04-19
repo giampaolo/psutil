@@ -753,7 +753,8 @@ def disk_usage(path):
 
 def disk_partitions(all=False):
     """Return mounted partitions as a list of namedtuples including
-    device, mount point and filesystem type.
+    device, mount point, filesystem type and mount options (a raw
+    string separated by commas which may vary depending on the platform).
 
     If "all" parameter is False return physical devices only and ignore
     all others.

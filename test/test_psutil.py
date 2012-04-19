@@ -435,10 +435,12 @@ class TestCase(unittest.TestCase):
             self.assertTrue(os.path.exists(disk.device))
             self.assertTrue(os.path.isdir(disk.mountpoint))
             self.assertTrue(disk.fstype)
+            self.assertTrue(isinstance(disk.options, str))
         for disk in psutil.disk_partitions(all=True):
             if not WINDOWS:
                 self.assertTrue(os.path.isdir(disk.mountpoint))
             self.assertTrue(disk.fstype)
+            self.assertTrue(isinstance(disk.options, str))
 
         def find_mount_point(path):
             path = os.path.abspath(path)

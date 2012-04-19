@@ -84,7 +84,7 @@ del AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM, socket
 ntuple_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
 ntuple_sysmeminfo = namedtuple('usage', 'total used free percent')
 ntuple_diskinfo = namedtuple('usage', 'total used free percent')
-ntuple_partition = namedtuple('partition',  'device mountpoint fstype')
+ntuple_partition = namedtuple('partition',  'device mountpoint fstype options')
 ntuple_net_iostat = namedtuple('iostat', 'bytes_sent bytes_recv packets_sent packets_recv')
 ntuple_disk_iostat = namedtuple('iostat', 'read_count write_count read_bytes write_bytes read_time write_time')
 ntuple_user = namedtuple('user', 'name terminal host started')
