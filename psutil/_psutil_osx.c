@@ -22,6 +22,7 @@
 #include <netinet/tcp_fsm.h>
 #include <arpa/inet.h>
 #include <net/if_dl.h>
+#include <pwd.h>
 
 #include <mach/mach.h>
 #include <mach/task.h>
@@ -634,6 +635,8 @@ get_disk_partitions(PyObject* self, PyObject* args)
     int num;
     int i;
     long len;
+    uint64_t flags;
+    char opts[400];
     struct statfs *fs;
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_tuple;
@@ -660,9 +663,65 @@ get_disk_partitions(PyObject* self, PyObject* args)
     }
 
     for (i = 0; i < num; i++) {
-        py_tuple = Py_BuildValue("(sss)", fs[i].f_mntfromname,  // device
-                                          fs[i].f_mntonname,    // mount point
-                                          fs[i].f_fstypename);  // fs type
+        opts[0] = 0;
+        flags = fs[i].f_flags;
+
+        // see sys/mount.h
+        if (flags & MNT_RDONLY)
+            strlcat(opts, "ro", sizeof(opts));
+        else
+            strlcat(opts, "rw", sizeof(opts));
+        if (flags & MNT_SYNCHRONOUS)
+            strlcat(opts, ",sync", sizeof(opts));
+        if (flags & MNT_NOEXEC)
+            strlcat(opts, ",noexec", sizeof(opts));
+        if (flags & MNT_NOSUID)
+            strlcat(opts, ",nosuid", sizeof(opts));
+        if (flags & MNT_UNION)
+            strlcat(opts, ",union", sizeof(opts));
+        if (flags & MNT_ASYNC)
+            strlcat(opts, ",async", sizeof(opts));
+        if (flags & MNT_EXPORTED)
+            strlcat(opts, ",exported", sizeof(opts));
+        if (flags & MNT_QUARANTINE)
+            strlcat(opts, ",quarantine", sizeof(opts));
+        if (flags & MNT_LOCAL)
+            strlcat(opts, ",local", sizeof(opts));
+        if (flags & MNT_QUOTA)
+            strlcat(opts, ",quota", sizeof(opts));
+        if (flags & MNT_ROOTFS)
+            strlcat(opts, ",rootfs", sizeof(opts));
+        if (flags & MNT_DOVOLFS)
+            strlcat(opts, ",dovolfs", sizeof(opts));
+        if (flags & MNT_DONTBROWSE)
+            strlcat(opts, ",dontbrowse", sizeof(opts));
+        if (flags & MNT_IGNORE_OWNERSHIP)
+            strlcat(opts, ",ignore-ownership", sizeof(opts));
+        if (flags & MNT_AUTOMOUNTED)
+            strlcat(opts, ",automounted", sizeof(opts));
+        if (flags & MNT_JOURNALED)
+            strlcat(opts, ",journaled", sizeof(opts));
+        if (flags & MNT_NOUSERXATTR)
+            strlcat(opts, ",nouserxattr", sizeof(opts));
+        if (flags & MNT_DEFWRITE)
+            strlcat(opts, ",defwrite", sizeof(opts));
+        if (flags & MNT_MULTILABEL)
+            strlcat(opts, ",multilabel", sizeof(opts));
+        if (flags & MNT_NOATIME)
+            strlcat(opts, ",noatime", sizeof(opts));
+        if (flags & MNT_UPDATE)
+            strlcat(opts, ",update", sizeof(opts));
+        if (flags & MNT_RELOAD)
+            strlcat(opts, ",reload", sizeof(opts));
+        if (flags & MNT_FORCE)
+            strlcat(opts, ",force", sizeof(opts));
+        if (flags & MNT_CMDFLAGS)
+            strlcat(opts, ",cmdflags", sizeof(opts));
+
+        py_tuple = Py_BuildValue("(ssss)", fs[i].f_mntfromname,  // device
+                                           fs[i].f_mntonname,    // mount point
+                                           fs[i].f_fstypename,   // fs type
+                                           opts);                // options
         PyList_Append(py_retlist, py_tuple);
         Py_XDECREF(py_tuple);
     }
