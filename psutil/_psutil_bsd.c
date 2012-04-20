@@ -813,6 +813,8 @@ get_disk_partitions(PyObject* self, PyObject* args)
     int num;
     int i;
     long len;
+    uint64_t flags;
+    char opts[200];
     struct statfs *fs;
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_tuple;
@@ -839,9 +841,49 @@ get_disk_partitions(PyObject* self, PyObject* args)
     }
 
     for (i = 0; i < num; i++) {
-        py_tuple = Py_BuildValue("(sss)", fs[i].f_mntfromname,  // device
-                                          fs[i].f_mntonname,    // mount point
-                                          fs[i].f_fstypename);  // fs type
+        opts[0] = 0;
+        flags = fs[i].f_flags;
+
+        // see sys/mount.h
+        if (flags & MNT_RDONLY)
+            strlcat(opts, "ro", sizeof(opts));
+        else
+            strlcat(opts, "rw", sizeof(opts));
+        if (flags & MNT_SYNCHRONOUS)
+            strlcat(opts, ",sync", sizeof(opts));
+        if (flags & MNT_NOEXEC)
+            strlcat(opts, ",noexec", sizeof(opts));
+        if (flags & MNT_NOSUID)
+            strlcat(opts, ",nosuid", sizeof(opts));
+        if (flags & MNT_UNION)
+            strlcat(opts, ",union", sizeof(opts));
+        if (flags & MNT_ASYNC)
+            strlcat(opts, ",async", sizeof(opts));
+        if (flags & MNT_SUIDDIR)
+            strlcat(opts, ",suiddir", sizeof(opts));
+        if (flags & MNT_SOFTDEP)
+            strlcat(opts, ",softdep", sizeof(opts));
+        if (flags & MNT_NOSYMFOLLOW)
+            strlcat(opts, ",nosymfollow", sizeof(opts));
+        if (flags & MNT_GJOURNAL)
+            strlcat(opts, ",gjournal", sizeof(opts));
+        if (flags & MNT_MULTILABEL)
+            strlcat(opts, ",multilabel", sizeof(opts));
+        if (flags & MNT_ACLS)
+            strlcat(opts, ",acls", sizeof(opts));
+        if (flags & MNT_NOATIME)
+            strlcat(opts, ",noatime", sizeof(opts));
+        if (flags & MNT_NOCLUSTERR)
+            strlcat(opts, ",noclusterr", sizeof(opts));
+        if (flags & MNT_NOCLUSTERW)
+            strlcat(opts, ",noclusterw", sizeof(opts));
+        if (flags & MNT_NFS4ACLS)
+            strlcat(opts, ",nfs4acls", sizeof(opts));
+
+        py_tuple = Py_BuildValue("(ssss)", fs[i].f_mntfromname,  // device
+                                           fs[i].f_mntonname,    // mount point
+                                           fs[i].f_fstypename,   // fs type
+                                           opts);                // options
         PyList_Append(py_retlist, py_tuple);
         Py_XDECREF(py_tuple);
     }
