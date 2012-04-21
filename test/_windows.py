@@ -28,6 +28,15 @@ except ImportError:
     atexit.register(warnings.warn, "Couldn't run wmi tests: %s" % str(err),
                     RuntimeWarning)
     wmi = None
+try:
+    import win32api
+    import win32con
+except ImportError:
+    err = sys.exc_info()[1]
+    atexit.register(warnings.warn, "Couldn't run pywin32 tests: %s" % str(err),
+                    RuntimeWarning)
+    win32api = None
+
 
 WIN2000 = platform.win32_ver()[0] == '2000'
 
@@ -71,7 +80,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
     def test_signal(self):
         p = psutil.Process(self.pid)
         self.assertRaises(ValueError, p.send_signal, signal.SIGINT)
-        
+
     def test_nic_names(self):
         p = subprocess.Popen(['ipconfig', '/all'], stdout=subprocess.PIPE)
         out = p.communicate()[0]
@@ -194,9 +203,55 @@ class WindowsSpecificTestCase(unittest.TestCase):
                 else:
                     self.fail("can't find partition %r", ps_part)
 
+    if win32api is not None:
+
+        def test_get_num_handles(self):
+            p = psutil.Process(os.getpid())
+            before = p.get_num_handles()
+            handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION,
+                                          win32con.FALSE, os.getpid())
+            after = p.get_num_handles()
+            self.assertEqual(after, before+1)
+            win32api.CloseHandle(handle)
+            self.assertEqual(p.get_num_handles(), before)
+
+        def test_get_num_handles_2(self):
+            # Note: this fails from time to time; I'm keen on thinking
+            # it doesn't mean something is broken
+            def call(p, attr):
+                attr = getattr(p, name, None)
+                if attr is not None and callable(attr):
+                    ret = attr()
+                else:
+                    ret = attr
+
+            p = psutil.Process(self.pid)
+            attrs = []
+            failures = []
+            for name in dir(psutil.Process):
+                if name.startswith('_') \
+                or name.startswith('set_') \
+                or name in ('terminate', 'kill', 'suspend', 'resume',
+                            'send_signal', 'wait', 'get_children'):
+                    continue
+                else:
+                    try:
+                        call(p, name)
+                        num1 = p.get_num_handles()
+                        call(p, name)
+                        num2 = p.get_num_handles()
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        pass
+                    else:
+                        if num2 > num1:
+                            fail = "failure while processing Process.%s method " \
+                                   "(before=%s, after=%s)" % (name, num1, num2)
+                            failures.append(fail)
+            if failures:
+                self.fail('\n' + '\n'.join(failures))
+
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(WindowsSpecificTestCase))
     unittest.TextTestRunner(verbosity=2).run(test_suite)
-

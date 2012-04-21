@@ -292,7 +292,7 @@ class Process(object):
             """
             return self._platform_impl.set_process_ionice(ioclass, value)
 
-    # available for Windows and Linux only
+    # available on Windows and Linux only
     if hasattr(_psplatform.Process, "get_process_cpu_affinity"):
 
         def get_cpu_affinity(self):
@@ -305,6 +305,13 @@ class Process(object):
             affinity (e.g. [0, 1]).
             """
             return self._platform_impl.set_process_cpu_affinity(cpus)
+
+    # available on Windows only
+    if hasattr(_psplatform.Process, "get_num_handles"):
+
+        def get_num_handles(self):
+            """Return the number of handles opened by this process."""
+            return self._platform_impl.get_process_num_handles()
 
     def get_num_threads(self):
         """Return the number of threads used by this process."""

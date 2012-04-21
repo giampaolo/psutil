@@ -774,6 +774,12 @@ class TestCase(unittest.TestCase):
             if thread._running:
                 thread.stop()
 
+    @skipUnless(WINDOWS)
+    def test_get_num_handles(self):
+        # a better test is done later into test/_windows.py
+        p = psutil.Process(os.getpid())
+        self.assertTrue(p.get_num_handles() > 0)
+
     def test_get_threads(self):
         p = psutil.Process(os.getpid())
         step1 = p.get_threads()

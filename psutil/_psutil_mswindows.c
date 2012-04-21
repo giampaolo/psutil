@@ -2258,6 +2258,35 @@ error:
 }
 
 
+/*
+ * Return the number of handles opened by process.
+ */
+static PyObject*
+get_process_num_handles(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    HANDLE hProcess;
+    PDWORD handleCount;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (pid == 0) {
+        return AccessDenied();
+    }
+    hProcess = handle_from_pid(pid);
+    if (NULL == hProcess) {
+        return NULL;
+    }
+    if (! GetProcessHandleCount(hProcess, &handleCount)) {
+        CloseHandle(hProcess);
+        return PyErr_SetFromWindowsErr(0);
+    }
+    CloseHandle(hProcess);
+    return Py_BuildValue("k", handleCount);
+}
+
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -2312,6 +2341,8 @@ PsutilMethods[] =
         "Return True if one of the process threads is in a suspended state"},
     {"get_process_environ", get_process_environ, METH_VARARGS,
         "Return process env vars as a string."},
+    {"get_process_num_handles", get_process_num_handles, METH_VARARGS,
+        "Return the number of handles opened by process."},
 
     // --- system-related functions
 

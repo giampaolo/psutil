@@ -36,6 +36,7 @@ static PyObject* is_process_suspended(PyObject* self, PyObject* args);
 static PyObject* get_process_cpu_affinity(PyObject* self, PyObject* args);
 static PyObject* set_process_cpu_affinity(PyObject* self, PyObject* args);
 static PyObject* get_process_environ(PyObject* self, PyObject* args);
+static PyObject* get_process_num_handles(PyObject* self, PyObject* args);
 
 // --- system-related functions
 

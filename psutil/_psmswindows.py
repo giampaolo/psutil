@@ -86,7 +86,7 @@ def disk_partitions(all):
                 continue
             if not mountpoint:
                 continue
-        ntuple = ntuple_partition(letter, mountpoint, type)
+        ntuple = ntuple_partition(letter, mountpoint, type, "")
         retlist.append(ntuple)
     return retlist
 
@@ -353,3 +353,6 @@ class Process(object):
 
         bitmask = to_bitmask(value)
         _psutil_mswindows.set_process_cpu_affinity(self.pid, bitmask)
+
+    def get_process_num_handles(self):
+        return _psutil_mswindows.get_process_num_handles(self.pid)

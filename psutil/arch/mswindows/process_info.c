@@ -277,7 +277,6 @@ get_ppid(long pid)
     if( Process32First(h, &pe)) {
         do {
             if (pe.th32ProcessID == pid) {
-                ////printf("PID: %i; PPID: %i\n", pid, pe.th32ParentProcessID);
                 CloseHandle(h);
                 return Py_BuildValue("I", pe.th32ParentProcessID);
             }
@@ -292,7 +291,6 @@ get_ppid(long pid)
     CloseHandle(h);
     return PyErr_SetFromWindowsErr(0);
 }
-
 
 
 /*

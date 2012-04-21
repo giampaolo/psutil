@@ -153,6 +153,10 @@ class TestProcessObjectLeaks(Base):
     def test_getcwd(self):
         self.execute('getcwd')
 
+    @skipUnless(WINDOWS)
+    def test_getcwd(self):
+        self.execute('get_num_handles')
+
     @skipUnless(LINUX or WINDOWS)
     def test_get_cpu_affinity(self):
         self.execute('get_cpu_affinity')
