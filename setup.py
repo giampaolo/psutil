@@ -86,7 +86,7 @@ def main():
         long_description=open(README, 'r').read(),
         keywords=['ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice',
                   'tty', 'ionice', 'uptime', 'taskmgr', 'process', 'df',
-                  'iotop', 'iostat', 'ifconfig', 'taskset', 'who',
+                  'iotop', 'iostat', 'ifconfig', 'taskset', 'who', 'pidof',
                   'monitoring',],
         author='Giampaolo Rodola, Jay Loden',
         author_email='psutil@googlegroups.com',

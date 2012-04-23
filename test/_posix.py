@@ -13,6 +13,7 @@ import subprocess
 import time
 import sys
 import os
+import datetime
 
 import psutil
 
@@ -95,6 +96,13 @@ class PosixSpecificTestCase(unittest.TestCase):
         name_ps = os.path.basename(name_ps).lower()
         name_psutil = psutil.Process(self.pid).name.lower()
         self.assertEqual(name_ps, name_psutil)
+
+    def test_process_create_time(self):
+        time_ps = ps("ps --no-headers -o start -p %s" %self.pid).split(' ')[0]
+        time_psutil = psutil.Process(self.pid).create_time
+        time_psutil = datetime.datetime.fromtimestamp(
+                        time_psutil).strftime("%H:%M:%S")
+        self.assertEqual(time_ps, time_psutil)
 
     def test_process_exe(self):
         ps_pathname = ps("ps --no-headers -o command -p %s" %self.pid).split(' ')[0]
