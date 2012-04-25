@@ -151,11 +151,14 @@ get_open_files(long pid, HANDLE processHandle)
         handleInfoSize,
         NULL
         )) == STATUS_INFO_LENGTH_MISMATCH)
+    {
         handleInfo = (PSYSTEM_HANDLE_INFORMATION)realloc(handleInfo, handleInfoSize *= 2);
+    }
 
     /* NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH. */
     if (!NT_SUCCESS(status)) {
         //printf("NtQuerySystemInformation failed!\n");
+        free(handleInfo);
         return NULL;
     }
 
@@ -207,6 +210,7 @@ get_open_files(long pid, HANDLE processHandle)
             )))
         {
             //printf("[%#x] Error!\n", handle.Handle);
+            free(objectTypeInfo);
             CloseHandle(dupHandle);
             continue;
         }
