@@ -354,5 +354,6 @@ class Process(object):
         bitmask = to_bitmask(value)
         _psutil_mswindows.set_process_cpu_affinity(self.pid, bitmask)
 
-    def get_process_num_handles(self):
+    @wrap_exceptions
+    def get_num_handles(self):
         return _psutil_mswindows.get_process_num_handles(self.pid)

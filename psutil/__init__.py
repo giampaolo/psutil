@@ -311,7 +311,7 @@ class Process(object):
 
         def get_num_handles(self):
             """Return the number of handles opened by this process."""
-            return self._platform_impl.get_process_num_handles()
+            return self._platform_impl.get_num_handles()
 
     def get_num_threads(self):
         """Return the number of threads used by this process."""

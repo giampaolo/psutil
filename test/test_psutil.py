@@ -1337,7 +1337,7 @@ class TestCase(unittest.TestCase):
         for p in psutil.process_iter():
             try:
                 table[p.ppid] += 1
-            except NoSuchProcess:
+            except psutil.Error:
                 pass
         # this is the one, now let's make sure there are no duplicates
         pid = max(table, key=lambda x: table[x])
