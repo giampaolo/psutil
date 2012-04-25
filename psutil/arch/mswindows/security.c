@@ -71,13 +71,13 @@ int HasSystemPrivilege(HANDLE hProcess) {
 
     if (pBuffer == NULL) {
         PyErr_SetFromWindowsErr(0);
-        LocalFree(pBuffer);
+        free(pBuffer);
         return -1;
     }
 
     if (! GetTokenInformation(hToken, TokenPrivileges, pBuffer, dwSize, &dwSize) ) {
         PyErr_SetFromWindowsErr(0);
-        LocalFree(pBuffer);
+        free(pBuffer);
         return -1;
     }
 
