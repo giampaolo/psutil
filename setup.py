@@ -47,6 +47,9 @@ if sys.platform.lower().startswith("win"):
                             libraries=["psapi", "kernel32", "advapi32",
                                        "shell32", "netapi32", "iphlpapi",
                                        "wtsapi32"]
+#                                       ,
+#                            extra_compile_args=["/Z7"],
+#                            extra_link_args=["/DEBUG"]
                             )]
 # OS X
 elif sys.platform.lower().startswith("darwin"):

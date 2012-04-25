@@ -2092,7 +2092,6 @@ get_process_environ(PyObject* self, PyObject* args)
 
     if (!ReadProcessMemory(processHandle, currentEnv, buf, size, NULL)) {
         CloseHandle(processHandle);
-        free(buf);
         if (GetLastError() == ERROR_PARTIAL_COPY) {
             // this occurs quite often with system processes or when
             // putenv() was used in case of current process
@@ -2117,7 +2116,6 @@ get_process_environ(PyObject* self, PyObject* args)
     returnPyObj = Py_BuildValue("N", env);
 
     CloseHandle(processHandle);
-    free(buf);
     return returnPyObj;
 }
 
