@@ -209,6 +209,7 @@ get_arg_list(long pid)
         if (*arg_ptr++ == '\0') {
             arg = Py_BuildValue("s", curr_arg);
             if (NULL == arg) {
+                free(procargs);
                 return NULL;
             }
             PyList_Append(arglist, arg);
