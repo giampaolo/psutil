@@ -466,6 +466,8 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
 
     if (status != 0) {
         PyErr_Format(PyExc_RuntimeError, "NtQuerySystemInformation() failed");
+        
+        free(buffer);
         return 0;
     }
 
@@ -483,5 +485,7 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
     } while ( (process = PH_NEXT_PROCESS(process)) );
 
     NoSuchProcess();
+    
+    free(buffer);
     return 0;
 }
