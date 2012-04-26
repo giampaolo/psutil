@@ -824,6 +824,31 @@ class TestCase(unittest.TestCase):
         self.assertTrue(percent2 > percent1)
         del memarr
 
+    def test_get_memory_pams(self):
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        time.sleep(.1)
+        maps = p.get_memory_maps()
+        paths = [x for x in maps]
+        self.assertEqual(len(paths), len(set(paths)))
+        for nt in maps:
+            self.assertTrue(nt.path)
+            for f in nt._fields:
+                if f != 'path':
+                    value = getattr(nt, f)
+                    self.assertTrue(isinstance(value, (int, long)))
+                    self.assertTrue(value >= 0, value)
+
+        ext_maps = p.get_memory_maps(grouped=False)
+        self.assertEqual(sum([x.rss for x in maps]),
+                         sum([x.rss for x in ext_maps]))
+        for nt in ext_maps:
+            self.assertTrue(nt.addr)
+            for f in nt._fields:
+                value = getattr(nt, f)
+                if isinstance(value, (int, long)):
+                    self.assertTrue(value >= 0, value)
+
     def test_get_memory_percent(self):
         p = psutil.Process(os.getpid())
         self.assertTrue(p.get_memory_percent() > 0.0)
@@ -1482,8 +1507,8 @@ class TestCase(unittest.TestCase):
                 except Exception:
                     err = sys.exc_info()[1]
                     trace = traceback.format_exc()
-                    self.fail('%s\nmethod=%s, pid=%s, retvalue=%s'
-                              %(trace, name, p.pid, repr(ret)))
+                    self.fail('%s\nmethod=%r, pid=%s, retvalue=%r'
+                              %(trace, name, p.pid, ret))
 
         # we should always have a non-empty list, not including PID 0 etc.
         # special cases.

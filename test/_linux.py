@@ -12,8 +12,10 @@ from __future__ import division
 import unittest
 import subprocess
 import sys
+import time
+import os
 
-from test_psutil import sh
+from test_psutil import sh, get_test_subprocess
 import psutil
 
 
@@ -66,6 +68,22 @@ class LinuxSpecificTestCase(unittest.TestCase):
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 self.fail("psutil=%s, df=%s" % (usage.used, used))
 
+    def test_memory_maps(self):
+        sproc = get_test_subprocess()
+        time.sleep(1)
+        p = psutil.Process(sproc.pid)
+        maps = p.get_memory_maps(grouped=False)
+        pmap = sh('pmap -x %s' % p.pid).split('\n')
+        del pmap[0]; del pmap[0]  # get rid of header
+        while maps and pmap:
+            this = maps.pop(0)
+            other = pmap.pop(0)
+            addr, _, rss, dirty, mode, path = other.split(None, 5)
+            if not path.startswith('[') and not path.endswith(']'):
+                self.assertEqual(path, os.path.basename(this.path))
+            self.assertEqual(int(rss) * 1024, this.rss)
+            # test only rwx chars, ignore 's' and 'p'
+            self.assertEqual(mode[:3], this.perms[:3])
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()

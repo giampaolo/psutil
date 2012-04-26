@@ -458,6 +458,33 @@ class Process(object):
         except ZeroDivisionError:
             return 0.0
 
+    def get_memory_maps(self, grouped=True):
+        """Return process's mapped memory regions as a list of nameduples
+        whose fields are variable depending on the platform.
+
+        If 'grouped' is True the mapped regions with the same 'path'
+        are grouped together and the different memory fields are summed.
+
+        If 'grouped' is False every mapped region is shown as a single
+        entity and the namedtuple will also include the mapped region's
+        address space ('addr') and permission set ('perms').
+        """
+        it = self._platform_impl.get_memory_maps()
+        if grouped:
+            d = {}
+            for tupl in it:
+                path = tupl[2]
+                nums = tupl[3:]
+                try:
+                    d[path] = map(lambda x, y: x+y, d[path], nums)
+                except KeyError:
+                    d[path] = nums
+            nt = self._platform_impl.nt_mmap_grouped
+            return [nt(path, *d[path]) for path in d]
+        else:
+            nt = self._platform_impl.nt_mmap_ext
+            return [nt(*x) for x in it]
+
     def get_open_files(self):
         """Return files opened by process as a list of namedtuples
         including absolute file name and file descriptor number.

@@ -346,7 +346,7 @@ def wrap_exceptions(callable):
     def wrapper(self, *args, **kwargs):
         try:
             return callable(self, *args, **kwargs)
-        except (OSError, IOError), err:
+        except EnvironmentError, err:
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if
             # process is gone in meantime.
@@ -494,6 +494,75 @@ class Process(object):
                                   int(vms) * _PAGESIZE)
         finally:
             f.close()
+
+    _mmap_base_fields = ['path', 'rss', 'size', 'pss', 'shared_clean',
+                         'shared_dirty', 'private_clean', 'private_dirty',
+                         'referenced', 'anonymous', 'swap',]
+    nt_mmap_grouped = namedtuple('mmap', ' '.join(_mmap_base_fields))
+    nt_mmap_ext = namedtuple('mmap', 'addr perms ' + ' '.join(_mmap_base_fields))
+
+    def get_memory_maps(self):
+        """Return process's mapped memory regions as a list of nameduples.
+        Fields are explained in 'man proc'; here is an updated (Apr 2012)
+        version: http://goo.gl/fmebo
+        """
+        f = None
+        try:
+            try:
+                f = open("/proc/%s/smaps" % self.pid)
+                first_line = f.readline()
+                current_block = [first_line]
+
+                def get_block():
+                    data = {}
+                    for line in f:
+                        fields = line.split(None, 5)
+                        if len(fields) >= 5:
+                            yield (current_block.pop(), data)
+                            current_block.append(line)
+                        else:
+                            data[fields[0]] = int(fields[1]) * 1024
+                    yield (current_block.pop(), data)
+
+                if first_line:  # smaps file can be empty
+                    for header, data in get_block():
+                        hfields = header.split(None, 5)
+                        try:
+                            addr, perms, offset, dev, inode, path = hfields
+                        except ValueError:
+                            addr, perms, offset, dev, inode, path = hfields + ['']
+                        if not path:
+                            path = '[anon]'
+                        else:
+                            path = path.strip()
+                        yield (addr, perms, path,
+                               data['Rss:'],
+                               data['Size:'],
+                               data.get('Pss:', 0),
+                               data['Shared_Clean:'], data['Shared_Clean:'],
+                               data['Private_Clean:'], data['Private_Dirty:'],
+                               data['Referenced:'],
+                               data['Anonymous:'],
+                               data['Swap:'])
+            except EnvironmentError, err:
+                # XXX - Can't use wrap_exceptions decorator as we're
+                # returning a generator;  this probably needs some
+                # refactoring in order to avoid this code duplication.
+                if err.errno in (errno.ENOENT, errno.ESRCH):
+                    raise NoSuchProcess(self.pid, self._process_name)
+                if err.errno in (errno.EPERM, errno.EACCES):
+                    raise AccessDenied(self.pid, self._process_name)
+                raise
+        finally:
+            if f is not None:
+                f.close()
+
+    if not os.path.exists('/proc/%s/smaps' % os.getpid()):
+        def get_shared_libs(self, ext):
+            msg = "this Linux version does not support /proc/PID/smaps " \
+                  "(kernel < 2.6.14 or CONFIG_MMU kernel configuration " \
+                  "option is not enabled)"
+            raise NotImplementedError(msg)
 
     @wrap_exceptions
     def get_process_cwd(self):

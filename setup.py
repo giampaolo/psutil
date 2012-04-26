@@ -90,7 +90,7 @@ def main():
         keywords=['ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice',
                   'tty', 'ionice', 'uptime', 'taskmgr', 'process', 'df',
                   'iotop', 'iostat', 'ifconfig', 'taskset', 'who', 'pidof',
-                  'monitoring',],
+                  'pmap', 'smem', 'monitoring',],
         author='Giampaolo Rodola, Jay Loden',
         author_email='psutil@googlegroups.com',
         maintainer='Giampaolo Rodola',
