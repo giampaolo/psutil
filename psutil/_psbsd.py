@@ -282,3 +282,12 @@ class Process(object):
     def get_process_io_counters(self):
         rc, wc, rb, wb = _psutil_bsd.get_process_io_counters(self.pid)
         return ntuple_io(rc, wc, rb, wb)
+
+    nt_mmap_grouped = namedtuple('mmap',
+        'path rss, private, ref_count, shadow_count')
+    nt_mmap_ext = namedtuple('mmap',
+        'addr, perms path rss, private, ref_count, shadow_count')
+
+    @wrap_exceptions
+    def get_memory_maps(self):
+        return _psutil_bsd.get_process_memory_maps(self.pid)

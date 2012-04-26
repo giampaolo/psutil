@@ -135,6 +135,7 @@ class TestProcessObjectLeaks(Base):
     def test_get_memory_info(self):
         self.execute('get_memory_info')
 
+    @skipUnless(WINDOWS or LINUX)
     def test_get_environ(self):
         self.execute('get_environ')
 
@@ -168,6 +169,9 @@ class TestProcessObjectLeaks(Base):
 
     def test_get_open_files(self):
         self.execute('get_open_files')
+
+    def test_get_memory_maps(self):
+        self.execute('get_memory_maps')
 
     # XXX - BSD still uses provisional lsof implementation
     # Linux implementation is pure python so since it's slow we skip it

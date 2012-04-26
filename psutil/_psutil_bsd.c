@@ -24,7 +24,7 @@
 #include <utmp.h>         /* system users */
 #include <devstat.h>      /* get io counters */
 #include <sys/vmmeter.h>  /* needed for vmtotal struct */
-#include <libutil.h>      /* process open files */
+#include <libutil.h>      /* process open files, shared libs (kinfo_getvmmap) */
 #include <sys/mount.h>
 
 #include <net/if.h>       /* net io counters */
@@ -1059,6 +1059,106 @@ get_system_users(PyObject* self, PyObject* args)
 
 
 /*
+ * Return a list of tuples for every process memory maps.
+ * 'procstat' cmdline utility has been used as an example.
+ */
+static PyObject*
+get_process_memory_maps(PyObject* self, PyObject* args)
+{
+    long pid;
+    int ptrwidth;
+    int i, cnt;
+    char addr[30];
+    char perms[10];
+    const char *path;
+    struct kinfo_proc kp;
+    struct kinfo_vmentry *freep, *kve;
+    PyObject* pytuple = NULL;
+    PyObject* retlist = PyList_New(0);
+
+    ptrwidth = 2*sizeof(void *);
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
+        return NULL;
+    }
+
+    freep = kinfo_getvmmap(pid, &cnt);
+    if (freep == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "kinfo_getvmmap() failed");
+        return NULL;
+    }
+    for (i = 0; i < cnt; i++) {
+        kve = &freep[i];
+        addr[0] = '\0';
+        perms[0] = '\0';
+        sprintf(addr, "%#*jx-%#*jx", ptrwidth, (uintmax_t)kve->kve_start,
+                                     ptrwidth, (uintmax_t)kve->kve_end);
+        strlcat(perms, kve->kve_protection & KVME_PROT_READ ? "r" : "-",
+                sizeof(perms));
+        strlcat(perms, kve->kve_protection & KVME_PROT_WRITE ? "w" : "-",
+                sizeof(perms));
+        strlcat(perms, kve->kve_protection & KVME_PROT_EXEC ? "x" : "-",
+                sizeof(perms));
+
+        if (strlen(kve->kve_path) == 0) {
+            switch (kve->kve_type) {
+            case KVME_TYPE_NONE:
+                path = "[none]";
+                break;
+            case KVME_TYPE_DEFAULT:
+                path = "[default]";
+                break;
+            case KVME_TYPE_VNODE:
+                path = "[vnode]";
+                break;
+            case KVME_TYPE_SWAP:
+                path = "[swap]";
+                break;
+            case KVME_TYPE_DEVICE:
+                path = "[device]";
+                break;
+            case KVME_TYPE_PHYS:
+                path = "[phys]";
+                break;
+            case KVME_TYPE_DEAD:
+                path = "[dead]";
+                break;
+            case KVME_TYPE_SG:
+                path = "[sg]";
+                break;
+            case KVME_TYPE_UNKNOWN:
+                path = "[unknown]";
+                break;
+            default:
+                path = "[?]";
+                break;
+            }
+        }
+        else {
+            path = kve->kve_path;
+        }
+
+        pytuple = Py_BuildValue("sssiiii",
+            addr,                       // "start-end" address
+            perms,                      // "rwx" permissions
+            path,                       // path
+            kve->kve_resident,          // rss
+            kve->kve_private_resident,  // private
+            kve->kve_ref_count,         // ref count
+            kve->kve_shadow_count       // shadow count
+        );
+        PyList_Append(retlist, pytuple);
+        Py_XDECREF(pytuple);
+    }
+    free(freep);
+    return retlist;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -1100,6 +1200,9 @@ PsutilMethods[] =
          "Return files opened by process as a list of (path, fd) tuples"},
      {"get_process_cwd", get_process_cwd, METH_VARARGS,
          "Return process current working directory."},
+     {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
+         "Return a list of tuples for every process's memory map"},
+
 #endif
 
      // --- system-related functions
