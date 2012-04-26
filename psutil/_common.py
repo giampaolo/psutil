@@ -38,6 +38,16 @@ class constant(int):
     def __str__(self):
         return self._name
 
+def memoize(f):
+    """A simple memoize decorator for functions."""
+    cache= {}
+    def memf(*x):
+        if x not in cache:
+            cache[x] = f(*x)
+        return cache[x]
+    return memf
+
+
 # --- constants
 
 STATUS_RUNNING = constant(0, "running")

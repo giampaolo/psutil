@@ -2285,6 +2285,84 @@ get_process_num_handles(PyObject* self, PyObject* args)
 }
 
 
+static char *get_region_protection_string(ULONG protection)
+{
+    switch (protection & 0xff) {
+        case PAGE_NOACCESS:
+            return "";
+        case PAGE_READONLY:
+            return "r";
+        case PAGE_READWRITE:
+            return "rw";
+        case PAGE_WRITECOPY:
+            return "wc";
+        case PAGE_EXECUTE:
+            return "x";
+        case PAGE_EXECUTE_READ:
+            return "xr";
+        case PAGE_EXECUTE_READWRITE:
+            return "xrw";
+        case PAGE_EXECUTE_WRITECOPY:
+            return "xwc";
+        default:
+            return "?";
+    }
+}
+
+/*
+ * Return a list of process's memory mappings.
+ */
+static PyObject*
+get_process_memory_maps(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    HANDLE hProcess;
+    MEMORY_BASIC_INFORMATION basicInfo;
+    PVOID baseAddress;
+    PVOID previousAllocationBase;
+    CHAR mappedFileName[MAX_PATH];
+    PyObject* py_list = PyList_New(0);
+    PyObject* py_tuple;
+
+    TCHAR szName[MAX_PATH];
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (pid == 0) {
+        return AccessDenied();
+    }
+    hProcess = handle_from_pid(pid);
+    if (NULL == hProcess) {
+        return NULL;
+    }
+
+    baseAddress = NULL;
+    previousAllocationBase = NULL;
+
+    while (VirtualQueryEx(hProcess, baseAddress, &basicInfo,
+                          sizeof(MEMORY_BASIC_INFORMATION)))
+    {
+        if (GetMappedFileNameA(hProcess, baseAddress, mappedFileName,
+                               sizeof(mappedFileName)))
+        {
+            py_tuple = Py_BuildValue("(nssI)",
+                (ULONG_PTR)baseAddress,
+                get_region_protection_string(basicInfo.Protect),
+                mappedFileName,
+                basicInfo.RegionSize
+            );
+            PyList_Append(py_list, py_tuple);
+            Py_DECREF(py_tuple);
+        }
+        previousAllocationBase = basicInfo.AllocationBase;
+        baseAddress = (PCHAR)baseAddress + basicInfo.RegionSize;
+    }
+
+    CloseHandle(hProcess);
+    return py_list;
+}
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -2341,6 +2419,8 @@ PsutilMethods[] =
         "Return process env vars as a string."},
     {"get_process_num_handles", get_process_num_handles, METH_VARARGS,
         "Return the number of handles opened by process."},
+    {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
+        "Return a list of process's memory mappings"},
 
     // --- system-related functions
 
@@ -2363,7 +2443,7 @@ PsutilMethods[] =
      {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
          "Return dict of tuples of disks I/O information."},
      {"get_system_users", get_system_users, METH_VARARGS,
-         "XXX"},
+         "Return a list of currently connected users."},
 
 
      // --- windows API bindings

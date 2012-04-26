@@ -41,6 +41,21 @@ from _psutil_mswindows import (ABOVE_NORMAL_PRIORITY_CLASS,
                                REALTIME_PRIORITY_CLASS,
                                INFINITE)
 
+@memoize
+def _win32_QueryDosDevice(s):
+    return _psutil_mswindows.win32_QueryDosDevice(s)
+
+def _convert_raw_path(s):
+    # convert paths using native DOS format like:
+    # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
+    # into: "C:\Windows\systemew\file.txt"
+    if sys.version_info >= (3,):
+        s = s.decode('utf8')
+    rawdrive = '\\'.join(s.split('\\')[:3])
+    driveletter = _win32_QueryDosDevice(rawdrive)
+    return os.path.join(driveletter, s[len(rawdrive):])
+
+
 # --- public functions
 
 def phymem_usage():
@@ -189,6 +204,26 @@ class Process(object):
         rss, vms = _psutil_mswindows.get_memory_info(self.pid)
         return ntuple_meminfo(rss, vms)
 
+    nt_mmap_grouped = namedtuple('mmap', 'path rss')
+    nt_mmap_ext = namedtuple('mmap', 'addr perms path rss')
+
+    def get_memory_maps(self):
+        try:
+            raw = _psutil_mswindows.get_process_memory_maps(self.pid)
+        except OSError, err:
+            # XXX - can't use wrap_exceptions decorator as we're
+            # returning a generator; probably needs refactoring.
+            if err.errno in (errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED):
+                raise AccessDenied(self.pid, self._process_name)
+            if err.errno == errno.ESRCH:
+                raise NoSuchProcess(self.pid, self._process_name)
+            raise
+        else:
+            for addr, perm, path, rss in raw:
+                path = _convert_raw_path(path)
+                addr = hex(addr)
+                yield (addr, perm, path, rss)
+
     @wrap_exceptions
     def kill_process(self):
         """Terminates the process with the given PID."""
@@ -266,15 +301,10 @@ class Process(object):
         # (e.g. "C:\") by using Windows's QueryDosDevice()
         raw_file_names = _psutil_mswindows.get_process_open_files(self.pid)
         for file in raw_file_names:
-            if sys.version_info >= (3,):
-                file = file.decode('utf8')
-            if file.startswith('\\Device\\'):
-                rawdrive = '\\'.join(file.split('\\')[:3])
-                driveletter = _psutil_mswindows.win32_QueryDosDevice(rawdrive)
-                file = file.replace(rawdrive, driveletter)
-                if os.path.isfile(file) and file not in retlist:
-                    ntuple = ntuple_openfile(file, -1)
-                    retlist.append(ntuple)
+            file = _convert_raw_path(file)
+            if os.path.isfile(file) and file not in retlist:
+                ntuple = ntuple_openfile(file, -1)
+                retlist.append(ntuple)
         return retlist
 
     @wrap_exceptions

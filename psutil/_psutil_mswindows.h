@@ -37,6 +37,7 @@ static PyObject* get_process_cpu_affinity(PyObject* self, PyObject* args);
 static PyObject* set_process_cpu_affinity(PyObject* self, PyObject* args);
 static PyObject* get_process_environ(PyObject* self, PyObject* args);
 static PyObject* get_process_num_handles(PyObject* self, PyObject* args);
+static PyObject* get_process_memory_maps(PyObject* self, PyObject* args);
 
 // --- system-related functions
 

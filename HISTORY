@@ -13,7 +13,7 @@ NEW FEATURES
    descendants.
  * Issue #245: (POSIX) Process.wait() incrementally consumes less CPU cycles.
  * Issue #258: (Linux) Process.get_memory_info() is now 0.5x faster.
- * Issue #260: process's mapped memory regions.
+ * Issue #260: process's mapped memory regions. (Windows patch by wj32.64)
 
 BUGFIXES
 
