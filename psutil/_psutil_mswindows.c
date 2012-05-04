@@ -1938,6 +1938,28 @@ get_disk_io_counters(PyObject* self, PyObject* args)
 }
 
 
+static char *get_drive_type(int type)
+{
+    switch (type) {
+        case DRIVE_FIXED:
+            return "fixed";
+        case DRIVE_CDROM:
+            return "cdrom";
+        case DRIVE_REMOVABLE:
+            return "removable";
+        case DRIVE_UNKNOWN:
+            return "unknown";
+        case DRIVE_NO_ROOT_DIR:
+            return "unmounted";
+        case DRIVE_REMOTE:
+            return "remote";
+        case DRIVE_RAMDISK:
+            return "ramdisk";
+        default:
+            return "?";
+    }
+}
+
 /*
  * Return disk partitions as a list of tuples such as
  * (drive_letter, drive_letter, type, "")
@@ -1950,7 +1972,10 @@ get_disk_partitions(PyObject* self, PyObject* args)
     char* drive_letter = drive_strings;
     int all;
     int type;
-    char* type_str;
+    int ret;
+    char opts[20];
+    LPTSTR fs_type[MAX_PATH + 1] = { 0 };
+    DWORD pflags = 0;
     PyObject* py_all;
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_tuple = NULL;
@@ -1969,6 +1994,9 @@ get_disk_partitions(PyObject* self, PyObject* args)
     }
 
     while (*drive_letter != 0) {
+        opts[0] = 0;
+        fs_type[0] = 0;
+
         Py_BEGIN_ALLOW_THREADS
         type = GetDriveType(drive_letter);
         Py_END_ALLOW_THREADS
@@ -1988,37 +2016,36 @@ get_disk_partitions(PyObject* self, PyObject* args)
             }
         }
 
-        switch (type) {
-            case DRIVE_FIXED:
-                type_str = "fixed";
-                break;
-            case DRIVE_CDROM:
-                type_str = "cdrom";
-                break;
-            case DRIVE_REMOVABLE:
-                type_str = "removable";
-                break;
-            // only in case of all == True
-            case DRIVE_UNKNOWN:
-                type_str = "unknown";
-                break;
-            case DRIVE_NO_ROOT_DIR:
-                type_str = "unmounted";
-            case DRIVE_REMOTE:
-                type_str = "remote";
-                break;
-            case DRIVE_RAMDISK:
-                type_str = "ramdisk";
-                break;
-            default:
-                if (all == 0) {
-                    goto next;
-                }
-                type_str = "?";
-                break;
+        ret = GetVolumeInformation(drive_letter, NULL, ARRAYSIZE(drive_letter),
+                                   NULL, NULL, &pflags, fs_type,
+                                   ARRAYSIZE(fs_type));
+        if (ret == 0) {
+            // We might get here in case of a floppy hard drive, in
+            // which case the error is (21, "device not ready").
+            // Let's pretend it didn't happen as we already have
+            // the drive name and type ('removable').
+            strcat(opts, "");
+            SetLastError(0);
+        }
+        else {
+            if (pflags & FILE_READ_ONLY_VOLUME) {
+                strcat(opts, "ro");
+            }
+            else {
+                strcat(opts, "rw");
+            }
+            if (pflags & FILE_VOLUME_IS_COMPRESSED) {
+                strcat(opts, ",compressed");
+            }
         }
 
-        py_tuple = Py_BuildValue("(ssss)", drive_letter, drive_letter, type_str, "");
+        if (strlen(opts) > 0) {
+            strcat(opts, ",");
+        }
+        strcat(opts, get_drive_type(type));
+
+        py_tuple = Py_BuildValue("(ssss)", drive_letter, drive_letter,
+                                           fs_type, opts);
         PyList_Append(py_retlist, py_tuple);
         Py_DECREF(py_tuple);
         goto next;
