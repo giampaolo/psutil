@@ -2387,21 +2387,21 @@ PsutilMethods[] =
 {
     // --- per-process functions
 
-     {"get_process_name", get_process_name, METH_VARARGS,
+    {"get_process_name", get_process_name, METH_VARARGS,
         "Return process name"},
-     {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
+    {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
         "Return process cmdline as a list of cmdline arguments"},
-     {"get_process_ppid", get_process_ppid, METH_VARARGS,
+    {"get_process_ppid", get_process_ppid, METH_VARARGS,
         "Return process ppid as an integer"},
-     {"kill_process", kill_process, METH_VARARGS,
-         "Kill the process identified by the given PID"},
-     {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
+    {"kill_process", kill_process, METH_VARARGS,
+        "Kill the process identified by the given PID"},
+    {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
         "Return tuple of user/kern time for the given PID"},
-     {"get_process_create_time", get_process_create_time, METH_VARARGS,
-         "Return a float indicating the process create time expressed in "
-         "seconds since the epoch"},
-     {"get_memory_info", get_memory_info, METH_VARARGS,
-         "Return a tuple of RSS/VMS memory information"},
+    {"get_process_create_time", get_process_create_time, METH_VARARGS,
+        "Return a float indicating the process create time expressed in "
+        "seconds since the epoch"},
+    {"get_memory_info", get_memory_info, METH_VARARGS,
+        "Return a tuple of RSS/VMS memory information"},
     {"get_process_cwd", get_process_cwd, METH_VARARGS,
         "Return process current working directory"},
     {"suspend_process", suspend_process, METH_VARARGS,
@@ -2441,35 +2441,35 @@ PsutilMethods[] =
 
     // --- system-related functions
 
-     {"get_pid_list", get_pid_list, METH_VARARGS,
+    {"get_pid_list", get_pid_list, METH_VARARGS,
         "Returns a list of PIDs currently running on the system"},
-     {"pid_exists", pid_exists, METH_VARARGS,
-         "Determine if the process exists in the current process list."},
-     {"get_num_cpus", get_num_cpus, METH_VARARGS,
-         "Returns the number of CPUs on the system"},
-     {"get_system_uptime", get_system_uptime, METH_VARARGS,
-         "Return system uptime"},
-     {"get_system_phymem", get_system_phymem, METH_VARARGS,
-         "Return the total amount of physical memory, in bytes"},
-     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
-         "Return system per-cpu times as a list of tuples"},
-     {"get_disk_usage", get_disk_usage, METH_VARARGS,
-         "Return path's disk total and free as a Python tuple."},
-     {"get_network_io_counters", get_network_io_counters, METH_VARARGS,
-         "Return dict of tuples of networks I/O information."},
-     {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
+    {"pid_exists", pid_exists, METH_VARARGS,
+        "Determine if the process exists in the current process list."},
+    {"get_num_cpus", get_num_cpus, METH_VARARGS,
+        "Returns the number of CPUs on the system"},
+    {"get_system_uptime", get_system_uptime, METH_VARARGS,
+        "Return system uptime"},
+    {"get_system_phymem", get_system_phymem, METH_VARARGS,
+        "Return the total amount of physical memory, in bytes"},
+    {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
+        "Return system per-cpu times as a list of tuples"},
+    {"get_disk_usage", get_disk_usage, METH_VARARGS,
+        "Return path's disk total and free as a Python tuple."},
+    {"get_network_io_counters", get_network_io_counters, METH_VARARGS,
+        "Return dict of tuples of networks I/O information."},
+    {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
          "Return dict of tuples of disks I/O information."},
-     {"get_system_users", get_system_users, METH_VARARGS,
-         "Return a list of currently connected users."},
-     {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
-         "Return disk partitions."},
+    {"get_system_users", get_system_users, METH_VARARGS,
+        "Return a list of currently connected users."},
+    {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
+        "Return disk partitions."},
 
 
      // --- windows API bindings
-     {"win32_QueryDosDevice", win32_QueryDosDevice, METH_VARARGS,
-         "QueryDosDevice binding"},
+    {"win32_QueryDosDevice", win32_QueryDosDevice, METH_VARARGS,
+        "QueryDosDevice binding"},
 
-     {NULL, NULL, 0, NULL}
+    {NULL, NULL, 0, NULL}
 };
 
 
