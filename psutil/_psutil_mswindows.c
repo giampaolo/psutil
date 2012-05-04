@@ -1939,16 +1939,26 @@ get_disk_io_counters(PyObject* self, PyObject* args)
 
 
 /*
- * Return disk partitions as a list of strings.
+ * Return disk partitions as a list of tuples such as
+ * (drive_letter, drive_letter, type, "")
  */
 static PyObject*
-win32_GetLogicalDriveStrings(PyObject* self, PyObject* args)
+get_disk_partitions(PyObject* self, PyObject* args)
 {
     DWORD num_bytes;
     char drive_strings[255];
     char* drive_letter = drive_strings;
+    int all;
+    int type;
+    char* type_str;
+    PyObject* py_all;
     PyObject* py_retlist = PyList_New(0);
-    PyObject* py_string = NULL;
+    PyObject* py_tuple = NULL;
+
+    if (! PyArg_ParseTuple(args, "O", &py_all)) {
+        return NULL;
+    }
+    all = PyObject_IsTrue(py_all);
 
     Py_BEGIN_ALLOW_THREADS
     num_bytes = GetLogicalDriveStrings(254, drive_letter);
@@ -1959,58 +1969,65 @@ win32_GetLogicalDriveStrings(PyObject* self, PyObject* args)
     }
 
     while (*drive_letter != 0) {
-        py_string = Py_BuildValue("s", drive_letter);
-        PyList_Append(py_retlist, py_string);
-        Py_DECREF(py_string);
-        drive_letter = strchr(drive_letter, 0) + 1;
+        Py_BEGIN_ALLOW_THREADS
+        type = GetDriveType(drive_letter);
+        Py_END_ALLOW_THREADS
+
+        // by default we only show hard drives and cd-roms
+        if (all == 0) {
+            if ((type == DRIVE_UNKNOWN) ||
+                (type == DRIVE_NO_ROOT_DIR) ||
+                (type == DRIVE_REMOTE) ||
+                (type == DRIVE_RAMDISK)) {
+                goto next;
+            }
+            // floppy disk: skip it by default as it introduces a
+            // considerable slowdown.
+            if ((type == DRIVE_REMOVABLE) && (strcmp(drive_letter, "A:\\") == 0)) {
+                goto next;
+            }
+        }
+
+        switch (type) {
+            case DRIVE_FIXED:
+                type_str = "fixed";
+                break;
+            case DRIVE_CDROM:
+                type_str = "cdrom";
+                break;
+            case DRIVE_REMOVABLE:
+                type_str = "removable";
+                break;
+            // only in case of all == True
+            case DRIVE_UNKNOWN:
+                type_str = "unknown";
+                break;
+            case DRIVE_NO_ROOT_DIR:
+                type_str = "unmounted";
+            case DRIVE_REMOTE:
+                type_str = "remote";
+                break;
+            case DRIVE_RAMDISK:
+                type_str = "ramdisk";
+                break;
+            default:
+                if (all == 0) {
+                    goto next;
+                }
+                type_str = "?";
+                break;
+        }
+
+        py_tuple = Py_BuildValue("(ssss)", drive_letter, drive_letter, type_str, "");
+        PyList_Append(py_retlist, py_tuple);
+        Py_DECREF(py_tuple);
+        goto next;
+
+        next:
+            drive_letter = strchr(drive_letter, 0) + 1;
     }
 
     return py_retlist;
-}
-
-
-static PyObject*
-win32_GetDriveType(PyObject* self, PyObject* args)
-{
-    LPCTSTR drive_letter;
-    int type;
-    char* type_str;
-
-    if (! PyArg_ParseTuple(args, "s", &drive_letter)) {
-        return NULL;
-    }
-
-    Py_BEGIN_ALLOW_THREADS
-    type = GetDriveType(drive_letter);
-    Py_END_ALLOW_THREADS
-
-    switch (type) {
-        case DRIVE_UNKNOWN:
-            type_str = "unknown";
-            break;
-        case DRIVE_NO_ROOT_DIR:
-            type_str = "unmounted";
-        case DRIVE_REMOVABLE:
-            type_str = "removable";
-            break;
-        case DRIVE_FIXED:
-            type_str = "fixed";
-            break;
-        case DRIVE_REMOTE:
-            type_str = "remote";
-            break;
-        case DRIVE_CDROM:
-            type_str = "cdrom";
-            break;
-        case DRIVE_RAMDISK:
-            type_str = "ramdisk";
-            break;
-        default:
-            type_str = "?";
-            break;
-    }
-
-    return Py_BuildValue("s", type_str);
 }
 
 
@@ -2444,13 +2461,11 @@ PsutilMethods[] =
          "Return dict of tuples of disks I/O information."},
      {"get_system_users", get_system_users, METH_VARARGS,
          "Return a list of currently connected users."},
+     {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
+         "Return disk partitions."},
 
 
      // --- windows API bindings
-     {"win32_GetLogicalDriveStrings", win32_GetLogicalDriveStrings, METH_VARARGS,
-         "GetLogicalDriveStrings binding"},
-     {"win32_GetDriveType", win32_GetDriveType, METH_VARARGS,
-         "GetDriveType binding"},
      {"win32_QueryDosDevice", win32_QueryDosDevice, METH_VARARGS,
          "QueryDosDevice binding"},
 

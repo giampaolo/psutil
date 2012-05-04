@@ -56,8 +56,6 @@ static PyObject* get_system_users(PyObject* self, PyObject* args);
 // --- windows API bindings
 
 static PyObject* win32_QueryDosDevice(PyObject* self, PyObject* args);
-static PyObject* win32_GetLogicalDriveStrings(PyObject* self, PyObject* args);
-static PyObject* win32_GetDriveType(PyObject* self, PyObject* args);
 
 // --- internal
 int suspend_resume_process(DWORD pid, int suspend);

@@ -88,22 +88,8 @@ def get_disk_usage(path):
 
 def disk_partitions(all):
     """Return disk partitions."""
-    retlist = []
-    drive_letters = _psutil_mswindows.win32_GetLogicalDriveStrings()
-    for letter in drive_letters:
-        mountpoint = letter
-        type = _psutil_mswindows.win32_GetDriveType(letter)
-        if not os.path.exists(mountpoint):
-            # usually a CD-ROM device with no disk inserted
-            mountpoint = ""
-        if not all:
-            if type not in ('cdrom', 'fixed', 'removable'):
-                continue
-            if not mountpoint:
-                continue
-        ntuple = ntuple_partition(letter, mountpoint, type, "")
-        retlist.append(ntuple)
-    return retlist
+    rawlist = _psutil_mswindows.get_disk_partitions(all)
+    return [ntuple_partition(*x) for x in rawlist]
 
 
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle')
