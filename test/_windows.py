@@ -38,8 +38,6 @@ except ImportError:
     win32api = None
 
 
-WIN2000 = platform.win32_ver()[0] == '2000'
-
 
 class WindowsSpecificTestCase(unittest.TestCase):
 
@@ -56,10 +54,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
         self.assertRaises(psutil.AccessDenied, p.kill)
 
     def test_special_pid(self):
-        if not WIN2000:
-            p = psutil.Process(4)
-        else:
-            p = psutil.Process(8)
+        p = psutil.Process(4)
         self.assertEqual(p.name, 'System')
         # use __str__ to access all common Process properties to check
         # that nothing strange happens
@@ -74,8 +69,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
                 raise
         else:
             self.assertTrue(rss > 0)
-            if not WIN2000:
-                self.assertEqual(vms, 0)
 
     def test_signal(self):
         p = psutil.Process(self.pid)
@@ -107,11 +100,10 @@ class WindowsSpecificTestCase(unittest.TestCase):
             p = psutil.Process(self.pid)
             self.assertEqual(p.exe, w.ExecutablePath)
 
-        if not WIN2000:
-            def test_process_cmdline(self):
-                w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-                p = psutil.Process(self.pid)
-                self.assertEqual(' '.join(p.cmdline), w.CommandLine.replace('"', ''))
+        def test_process_cmdline(self):
+            w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+            p = psutil.Process(self.pid)
+            self.assertEqual(' '.join(p.cmdline), w.CommandLine.replace('"', ''))
 
         def test_process_username(self):
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]

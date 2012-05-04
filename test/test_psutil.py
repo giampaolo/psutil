@@ -45,15 +45,6 @@ WINDOWS = sys.platform.lower().startswith("win32")
 OSX = sys.platform.lower().startswith("darwin")
 BSD = sys.platform.lower().startswith("freebsd")
 
-try:
-    psutil.Process(os.getpid()).get_connections()
-except NotImplementedError:
-    err = sys.exc_info()[1]
-    SUPPORT_CONNECTIONS = False
-    atexit.register(warnings.warn, "get_connections() not supported on this platform",
-                    RuntimeWarning)
-else:
-    SUPPORT_CONNECTIONS = True
 
 if PY3:
     long = int
@@ -1080,7 +1071,6 @@ class TestCase(unittest.TestCase):
         fileobj.close()
         self.assertTrue(fileobj.name not in p.get_open_files())
 
-    @skipUnless(SUPPORT_CONNECTIONS, warn=1)
     def test_get_connections(self):
         arg = "import socket, time;" \
               "s = socket.socket();" \
@@ -1147,7 +1137,6 @@ class TestCase(unittest.TestCase):
             sock.close()
             dupsock.close()
 
-    @skipUnless(SUPPORT_CONNECTIONS, warn=1)
     def test_get_connections_all(self):
 
         def check_address(addr, family):

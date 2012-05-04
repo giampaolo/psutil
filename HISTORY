@@ -12,6 +12,7 @@ NEW FEATURES
  * Issue #242: Process.get_children(recursive=True): return all process
    descendants.
  * Issue #245: (POSIX) Process.wait() incrementally consumes less CPU cycles.
+ * Issue #257: (Windows) removed Windows 2000 support.
  * Issue #258: (Linux) Process.get_memory_info() is now 0.5x faster.
  * Issue #260: process's mapped memory regions. (Windows patch by wj32.64)
  * Issue #262: (Windows) psutil.disk_partitions() was slow due to inspecting
