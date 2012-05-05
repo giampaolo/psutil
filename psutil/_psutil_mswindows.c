@@ -2365,6 +2365,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     PVOID baseAddress;
     PVOID previousAllocationBase;
     CHAR mappedFileName[MAX_PATH];
+    SYSTEM_INFO system_info;
     PyObject* py_list = PyList_New(0);
     PyObject* py_tuple;
 
@@ -2383,10 +2384,14 @@ get_process_memory_maps(PyObject* self, PyObject* args)
 
     baseAddress = NULL;
     previousAllocationBase = NULL;
+    GetSystemInfo(&system_info);
 
     while (VirtualQueryEx(hProcess, baseAddress, &basicInfo,
                           sizeof(MEMORY_BASIC_INFORMATION)))
     {
+        if (baseAddress > system_info.lpMaximumApplicationAddress) {
+            break;
+        }
         if (GetMappedFileNameA(hProcess, baseAddress, mappedFileName,
                                sizeof(mappedFileName)))
         {
