@@ -2044,8 +2044,11 @@ get_disk_partitions(PyObject* self, PyObject* args)
         }
         strcat(opts, get_drive_type(type));
 
-        py_tuple = Py_BuildValue("(ssss)", drive_letter, drive_letter,
-                                           fs_type, opts);
+        py_tuple = Py_BuildValue("(ssss)",
+            drive_letter,
+            drive_letter,
+            fs_type,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
+            opts);
         PyList_Append(py_retlist, py_tuple);
         Py_DECREF(py_tuple);
         goto next;
@@ -2186,10 +2189,10 @@ get_system_users(PyObject* self, PyObject* args)
     LPTSTR buffer_addr = NULL;
     PWTS_SESSION_INFO sessions = NULL;
     DWORD count;
+    DWORD i;
     DWORD sessionId;
     DWORD bytes;
     PWTS_CLIENT_ADDRESS address;
-    int i;
     char address_str[50];
     long long unix_time;
 
@@ -2308,7 +2311,7 @@ get_process_num_handles(PyObject* self, PyObject* args)
 {
     DWORD pid;
     HANDLE hProcess;
-    PDWORD handleCount;
+    DWORD handleCount;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
@@ -2366,10 +2369,9 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     PVOID previousAllocationBase;
     CHAR mappedFileName[MAX_PATH];
     SYSTEM_INFO system_info;
+    LPVOID maxAddr;
     PyObject* py_list = PyList_New(0);
     PyObject* py_tuple;
-
-    TCHAR szName[MAX_PATH];
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
@@ -2382,14 +2384,15 @@ get_process_memory_maps(PyObject* self, PyObject* args)
         return NULL;
     }
 
+    GetSystemInfo(&system_info);
+    maxAddr = system_info.lpMaximumApplicationAddress;
     baseAddress = NULL;
     previousAllocationBase = NULL;
-    GetSystemInfo(&system_info);
 
     while (VirtualQueryEx(hProcess, baseAddress, &basicInfo,
                           sizeof(MEMORY_BASIC_INFORMATION)))
     {
-        if (baseAddress > system_info.lpMaximumApplicationAddress) {
+        if (baseAddress > maxAddr) {
             break;
         }
         if (GetMappedFileNameA(hProcess, baseAddress, mappedFileName,
