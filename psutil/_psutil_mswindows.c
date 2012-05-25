@@ -1960,6 +1960,9 @@ static char *get_drive_type(int type)
     }
 }
 
+
+#define _ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
+
 /*
  * Return disk partitions as a list of tuples such as
  * (drive_letter, drive_letter, type, "")
@@ -2016,9 +2019,9 @@ get_disk_partitions(PyObject* self, PyObject* args)
             }
         }
 
-        ret = GetVolumeInformation(drive_letter, NULL, ARRAYSIZE(drive_letter),
+        ret = GetVolumeInformation(drive_letter, NULL, _ARRAYSIZE(drive_letter),
                                    NULL, NULL, &pflags, fs_type,
-                                   ARRAYSIZE(fs_type));
+                                   _ARRAYSIZE(fs_type));
         if (ret == 0) {
             // We might get here in case of a floppy hard drive, in
             // which case the error is (21, "device not ready").
