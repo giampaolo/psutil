@@ -45,7 +45,7 @@ D: help on Windows development
 N: Dave Daeschler
 C: USA
 E: david.daeschler@gmail.com
-D: initial design/bootstrap and continuing bug fixes 
+D: initial design/bootstrap and continuing bug fixes
 
 N: cjgohlke
 E: cjgohlke@gmail.com
@@ -78,4 +78,4 @@ I: 248
 
 N: Amoser
 E: amoser@google.com
-I: 267
+I: 266, 267

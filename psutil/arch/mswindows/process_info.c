@@ -106,21 +106,21 @@ GetPebAddress(HANDLE ProcessHandle)
 
 DWORD*
 get_pids(DWORD *numberOfReturnedPIDs) {
-    int procArraySz = 1024;
-
     /* Win32 SDK says the only way to know if our process array
      * wasn't large enough is to check the returned size and make
      * sure that it doesn't match the size of the array.
-     * If it does we allocate a larger array and try again*/
+     * If it does we allocate a larger array and try again */
 
-    /* Stores the actual array */
+    // Stores the actual array
     DWORD *procArray = NULL;
     DWORD procArrayByteSz;
+    int procArraySz = 0;
 
-    /* Stores the byte size of the returned array from enumprocesses */
+    // Stores the byte size of the returned array from enumprocesses
     DWORD enumReturnSz = 0;
 
     do {
+        procArraySz += 1024;
         free(procArray);
         procArrayByteSz = procArraySz * sizeof(DWORD);
         procArray = malloc(procArrayByteSz);
@@ -130,16 +130,9 @@ get_pids(DWORD *numberOfReturnedPIDs) {
             PyErr_SetFromWindowsErr(0);
             return NULL;
         }
-        else if (enumReturnSz == procArrayByteSz) {
-            /* Process list was too large.  Allocate more space*/
-            procArraySz += 1024;
-        }
-
-        /* else we have a good list */
-
     } while(enumReturnSz == procArraySz * sizeof(DWORD));
 
-    /* The number of elements is the returned size / size of each element */
+    // The number of elements is the returned size / size of each element
     *numberOfReturnedPIDs = enumReturnSz / sizeof(DWORD);
 
     return procArray;
@@ -466,7 +459,7 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
 
     if (status != 0) {
         PyErr_Format(PyExc_RuntimeError, "NtQuerySystemInformation() failed");
-        
+
         free(buffer);
         return 0;
     }
@@ -485,7 +478,7 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
     } while ( (process = PH_NEXT_PROCESS(process)) );
 
     NoSuchProcess();
-    
+
     free(buffer);
     return 0;
 }

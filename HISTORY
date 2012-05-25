@@ -29,6 +29,8 @@ BUGFIXES
    names.
  * Issue #252: (Windows) process getcwd() erroneously raise NoSuchProcess for
    processes owned by another user.  It now raises AccessDenied instead.
+ * Issue #266: (Windows) psutil.get_pid_list() only shows 1024 processes.
+   (patch by Amoser)
  * Issue #267: (OSX) Process.get_connections() - an erroneous remote address
    was returned. (Patch by Amoser)
 
