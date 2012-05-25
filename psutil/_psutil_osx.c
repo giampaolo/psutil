@@ -1107,7 +1107,7 @@ get_process_connections(PyObject* self, PyObject* args)
                 inet_ntop(AF_INET,
                           &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_46.i46a_addr4,
                           rip,
-                          sizeof(lip));
+                          sizeof(rip));
             }
 
             else {
@@ -1116,7 +1116,7 @@ get_process_connections(PyObject* self, PyObject* args)
                           lip, sizeof(lip));
                 inet_ntop(AF_INET6,
                           &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_6,
-                          lip, sizeof(rip));
+                          rip, sizeof(rip));
             }
 
             // check for inet_ntop failures
