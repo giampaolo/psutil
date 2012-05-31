@@ -58,8 +58,28 @@ get_system_per_cpu_times = lambda: (0.0, 0.0, 0.0)  # TODO
 disk_io_counters = _not_impl  # TODO
 network_io_counters = _not_impl  # TODO
 disk_partitions = _not_impl  # TODO
-get_system_users = _not_impl  # TODO
 virtmem_usage = _not_impl
+
+def get_system_users():
+    """Return currently connected users as a list of namedtuples."""
+    retlist = []
+    rawlist = _psutil_sunos.get_system_users()
+    localhost = (':0.0', ':0')
+    for item in rawlist:
+        user, tty, hostname, tstamp, user_process = item
+        # XXX the underlying C function includes entries about
+        # system boot, run level and others.  We might want
+        # to use them in the future.
+        if not user_process:
+            continue
+        if hostname in localhost:
+            hostname = 'localhost'
+        abstty = os.path.join("/dev", tty)
+        if os.path.exists(abstty):
+            tty = abstty
+        nt = ntuple_user(user, tty, hostname, tstamp)
+        retlist.append(nt)
+    return retlist
 
 
 def wrap_exceptions(callable):

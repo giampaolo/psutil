@@ -20,6 +20,7 @@
 #include <sys/proc.h>
 #include <fcntl.h>
 #include <procfs.h>
+#include <utmpx.h>
 
 
 #define TV2DOUBLE(t)   (((t).tv_nsec * 0.000000001) + (t).tv_sec)
@@ -125,19 +126,60 @@ get_process_cpu_times(PyObject* self, PyObject* args)
 
 
 /*
+ *
+ */
+static PyObject*
+get_system_users(PyObject* self, PyObject* args)
+{
+    PyObject *ret_list = PyList_New(0);
+    PyObject *tuple = NULL;
+    PyObject *user_proc = NULL;
+    struct utmpx *ut;
+    int ret;
+
+    while (NULL != (ut = getutxent())) {
+        if (ut->ut_type == USER_PROCESS)
+            user_proc = Py_True;
+        else
+            user_proc = Py_False;
+        tuple = Py_BuildValue("(sssfO)",
+            ut->ut_user,              // username
+            ut->ut_line,              // tty
+            ut->ut_host,              // hostname
+            (float)ut->ut_tv.tv_sec,  // tstamp
+            user_proc                 // (bool) user process
+        );
+        PyList_Append(ret_list, tuple);
+        Py_DECREF(tuple);
+    }
+    endutent();
+
+    return ret_list;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
 PsutilMethods[] =
 {
+     // --- process-related functions
+
      {"get_process_basic_info", get_process_basic_info, METH_VARARGS,
         "Return process ppid, rss, vms, ctime, nice, nthreads, status and tty"},
      {"get_process_name_and_args", get_process_name_and_args, METH_VARARGS,
         "Return process name and args."},
      {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
         "Return process user and system CPU times."},
+
+     // --- system-related functions
+     {"get_system_users", get_system_users, METH_VARARGS,
+        "Return currently connected users."},
+
      {NULL, NULL, 0, NULL}
 };
+
 
 struct module_state {
     PyObject *error;
