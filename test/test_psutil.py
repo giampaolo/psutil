@@ -1465,20 +1465,70 @@ class TestCase(unittest.TestCase):
                         err = sys.exc_info()[1]
                         self.assertEqual(err.pid, p.pid)
                         if err.name:
+                            # make sure exception's name attr is set
+                            # with the actual process name
                             self.assertEqual(err.name, p.name)
                         self.assertTrue(str(err))
                         self.assertTrue(err.msg)
                     else:
                         if name == 'parent' or ret in (0, 0.0, [], None):
                             continue
-                        # getcwd() on FreeBSD may be an empty string
-                        # in case of a system process
-                        if name == 'getcwd' and BSD and ret == '':
-                            continue
                         self.assertTrue(ret)
+
                         if name == "exe":
                             self.assertTrue(os.path.isfile(ret))
+                        elif name == 'ppid':
+                            self.assertTrue(field >= 0)
+                        elif name == 'name':
+                            self.assertTrue(isinstance(ret, str))
+                            self.assertTrue(ret)
+                        elif name == 'create_time':
+                            self.assertTrue(ret > 0)
+                            self.assertTrue(ret >= psutil.BOOT_TIME)
+                            # make sure returned value can be pretty printed
+                            # with strftime
+                            time.strftime("%Y %m %d %H:%M:%S",
+                                          time.localtime(p.create_time))
+                        elif name in ('uids', 'gids'):
+                            for field in ret:
+                                self.assertTrue(field >= 0)
+                        elif name == 'username':
+                            self.assertTrue(ret)
+                            if os.name == 'posix':
+                                import pwd
+                                all_users = [x.pw_name for x in pwd.getpwall()]
+                                self.assertTrue(ret in all_users)
+                        elif name == 'status':
+                            self.assertTrue(ret >= 0)
+                        elif name == 'get_io_counters':
+                            for field in ret:
+                                if field != -1:
+                                    self.assertTrue(field >= 0)
+                        elif name == 'get_ionice':
+                            self.assertTrue(ret.ioclass >= 0)
+                            self.assertTrue(ret.value >= 0)
+                        elif name == 'get_num_threads':
+                            self.assertTrue(ret >= 1)
+                        elif name == 'get_threads':
+                            for t in ret:
+                                self.assertTrue(t.id >= 0)
+                                self.assertTrue(t.user_time >= 0)
+                                self.assertTrue(t.system_time >= 0)
+                        elif name == 'get_cpu_times':
+                            self.assertTrue(ret.user >= 0)
+                            self.assertTrue(ret.system >= 0)
+                        elif name == 'get_memory_info':
+                            self.assertTrue(ret.rss >= 0)
+                            self.assertTrue(ret.vms >= 0)
+                        elif name == 'get_open_files':
+                            for f in ret:
+                                if f.fd != -1:
+                                    self.assertTrue(f.fd >= 1)
                         elif name == "getcwd":
+                            # getcwd() on FreeBSD may be an empty string
+                            # in case of a system process
+                            if BSD and ret == '':
+                                continue
                             # XXX - temporary fix; on my Linux box
                             # chrome process cws is errnously reported
                             # as /proc/4144/fdinfo whichd doesn't exist

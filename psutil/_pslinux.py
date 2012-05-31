@@ -513,7 +513,7 @@ class Process(object):
                 first_line = f.readline()
                 current_block = [first_line]
 
-                def get_block():
+                def get_blocks():
                     data = {}
                     for line in f:
                         fields = line.split(None, 5)
@@ -525,7 +525,7 @@ class Process(object):
                     yield (current_block.pop(), data)
 
                 if first_line:  # smaps file can be empty
-                    for header, data in get_block():
+                    for header, data in get_blocks():
                         hfields = header.split(None, 5)
                         try:
                             addr, perms, offset, dev, inode, path = hfields
