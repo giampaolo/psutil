@@ -76,6 +76,12 @@ elif sys.platform.lower().startswith("linux"):
                             sources=['psutil/_psutil_linux.c'],
                             ),
                   posix_extension]
+# Solaris
+elif sys.platform.lower().startswith('sunos'):
+    extensions = [Extension('_psutil_sunos',
+                            sources=['psutil/_psutil_sunos.c'],
+                            ),
+                  posix_extension]
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 

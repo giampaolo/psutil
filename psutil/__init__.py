@@ -82,6 +82,9 @@ elif sys.platform.lower().startswith("darwin"):
 elif sys.platform.lower().startswith("freebsd"):
     import psutil._psbsd as _psplatform
 
+elif sys.platform.lower().startswith("sunos"):
+    import psutil._pssunos as _psplatform
+
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 

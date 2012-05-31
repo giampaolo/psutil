@@ -44,6 +44,7 @@ LINUX = sys.platform.lower().startswith("linux")
 WINDOWS = sys.platform.lower().startswith("win32")
 OSX = sys.platform.lower().startswith("darwin")
 BSD = sys.platform.lower().startswith("freebsd")
+SUNOS = sys.platform.lower().startswith("sunos")
 
 
 if PY3:
@@ -1666,6 +1667,8 @@ def test_main():
         from _osx import OSXSpecificTestCase as stc
     elif BSD:
         from _bsd import BSDSpecificTestCase as stc
+    elif SUNOS:
+        from _sunos import SunOSSpecificTestCase as stc
     tests.append(stc)
 
     if hasattr(os, 'getuid'):

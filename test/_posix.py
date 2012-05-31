@@ -69,7 +69,7 @@ class PosixSpecificTestCase(unittest.TestCase):
     def test_process_username(self):
         username_ps = ps("ps --no-headers -o user -p %s" %self.pid)
         username_psutil = psutil.Process(self.pid).username
-        self.assertEqual(username_ps, username_psutil)
+        self.assertEqual(username_ps.strip(), username_psutil)
 
     @ignore_access_denied
     def test_process_rss_memory(self):
