@@ -81,6 +81,24 @@ def get_system_users():
         retlist.append(nt)
     return retlist
 
+def disk_partitions(all=False):
+    """Return system disk partitions."""
+    # TODO - the filtering logic should be better checked so that
+    # it tries to reflect 'df' as much as possible
+    retlist = []
+    partitions = _psutil_sunos.get_disk_partitions()
+    for partition in partitions:
+        device, mountpoint, fstype, opts = partition
+        if device == 'none':
+            device = ''
+        if not all:
+            if not os.path.isabs(device) \
+            or not os.path.exists(device):
+                continue
+        ntuple = ntuple_partition(device, mountpoint, fstype, opts)
+        retlist.append(ntuple)
+    return retlist
+
 
 def wrap_exceptions(callable):
     """Call callable into a try/except clause and translate ENOENT,

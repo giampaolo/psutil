@@ -18,6 +18,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
+#include <sys/mntent.h>  // for MNTTAB
+#include <sys/mnttab.h>
 #include <fcntl.h>
 #include <procfs.h>
 #include <utmpx.h>
@@ -126,7 +128,7 @@ get_process_cpu_times(PyObject* self, PyObject* args)
 
 
 /*
- *
+ * Return users currently connected on the system.
  */
 static PyObject*
 get_system_users(PyObject* self, PyObject* args)
@@ -159,6 +161,37 @@ get_system_users(PyObject* self, PyObject* args)
 
 
 /*
+ * Return disk mounted partitions as a list of tuples including device,
+ * mount point and filesystem type.
+ */
+static PyObject*
+get_disk_partitions(PyObject* self, PyObject* args)
+{
+    FILE *file;
+    struct mnttab mt;
+    PyObject* py_retlist = PyList_New(0);
+    PyObject* py_tuple;
+
+    file = fopen(MNTTAB, "rb");
+    if (file == NULL) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+
+    while (getmntent(file, &mt) == 0) {
+        py_tuple = Py_BuildValue("(ssss)", mt.mnt_special,  // device
+                                           mt.mnt_mountp,     // mount point
+                                           mt.mnt_fstype,    // fs type
+                                           mt.mnt_mntopts);   // options
+        PyList_Append(py_retlist, py_tuple);
+        Py_XDECREF(py_tuple);
+
+    }
+
+    return py_retlist;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -174,8 +207,12 @@ PsutilMethods[] =
         "Return process user and system CPU times."},
 
      // --- system-related functions
+
      {"get_system_users", get_system_users, METH_VARARGS,
         "Return currently connected users."},
+     {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
+        "Return disk partitions."},
+
 
      {NULL, NULL, 0, NULL}
 };
