@@ -153,6 +153,29 @@ get_process_cred(PyObject* self, PyObject* args)
 
 
 /*
+ * Return information about a given process thread.
+ */
+static PyObject*
+query_process_thread(PyObject* self, PyObject* args)
+{
+	int tid;
+	char path[100];
+	lwpstatus_t info;
+
+    if (! PyArg_ParseTuple(args, "i", &tid)) {
+        return NULL;
+    }
+    sprintf(path, "/proc/%i/lwp/1/lwpstatus", tid);
+    if (! _fill_struct_from_file(path, (void *)&info, sizeof(info))) {
+        return NULL;
+    }
+
+    return Py_BuildValue("dd", TV2DOUBLE(info.pr_utime),
+                               TV2DOUBLE(info.pr_stime));
+}
+
+
+/*
  * Return users currently connected on the system.
  */
 static PyObject*
@@ -320,7 +343,8 @@ PsutilMethods[] =
         "Return process user and system CPU times."},
      {"get_process_cred", get_process_cred, METH_VARARGS,
         "Return process uids/gids."},
-
+     {"query_process_thread", query_process_thread, METH_VARARGS,
+        "Return info about a process thread"},
 
      // --- system-related functions
 

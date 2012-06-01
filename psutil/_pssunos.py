@@ -220,10 +220,24 @@ class Process(object):
             return _status_map[code]
         return constant(-1, "?")
 
-    # TODO
     @wrap_exceptions
     def get_process_threads(self):
-        raise NotImplementedError()
+        ret = []
+        tids = os.listdir('/proc/%d/lwp' % self.pid)
+        for tid in tids:
+            if tid.isdigit():  # XXX is this necessary?
+                tid = int(tid)
+                try:
+                    utime, stime = _psutil_sunos.query_process_thread(tid)
+                except EnvironmentError:
+                    if err.errno in (errno.ENOENT, errno.ESRCH):
+                        # file no longer exists; means thread is gone
+                        # in meantime
+                        continue
+                else:
+                    nt = ntuple_thread(tid, utime, stime)
+                    ret.append(nt)
+        return ret
 
     # TODO
     @wrap_exceptions

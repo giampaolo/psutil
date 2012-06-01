@@ -14,6 +14,7 @@ static PyObject* get_process_basic_info(PyObject* self, PyObject* args);
 static PyObject* get_process_name_and_args(PyObject* self, PyObject* args);
 static PyObject* get_process_cpu_times(PyObject* self, PyObject* args);
 static PyObject* get_process_cred(PyObject* self, PyObject* args);
+static PyObject* query_process_thread(PyObject* self, PyObject* args);
 
 static PyObject* get_system_users(PyObject* self, PyObject* args);
 static PyObject* get_disk_partitions(PyObject* self, PyObject* args);
