@@ -33,7 +33,6 @@ def _not_impl(*a, **k):
     raise NotImplementedError
 
 network_io_counters = _not_impl  # TODO
-virtmem_usage = _not_impl  # TODO
 
 
 def phymem_usage():
@@ -49,6 +48,13 @@ def phymem_usage():
     used = total - free
     percent = usage_percent(used, total, _round=1)
     return ntuple_sysmeminfo(total, used, free, percent)
+
+def virtmem_usage():
+    """Virtual system memory as a (total, used, free) tuple."""
+    free, used = _psutil_sunos.get_system_virtmem()
+    total = free + used
+    percent = usage_percent(used, total, _round=1)
+    return ntuple_sysmeminfo(total / 1024, used / 1024, free / 1024, percent)
 
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""

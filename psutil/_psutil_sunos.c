@@ -178,6 +178,43 @@ query_process_thread(PyObject* self, PyObject* args)
 
 
 /*
+ * Return information about system virtual memory.
+ * XXX - not sure how to test this; "swap -s" shows different values.
+ */
+static PyObject*
+get_system_virtmem(PyObject* self, PyObject* args)
+{
+    kstat_ctl_t *kc;
+    kstat_t *ksp;
+    vminfo_t vm;
+    uint64_t free, used;
+
+    free = 0; used = 0;
+    kc = kstat_open();
+    if (kc == NULL) {
+        return PyErr_SetFromErrno(PyExc_OSError);;
+    }
+
+    ksp = kc->kc_chain;
+    while (ksp != NULL) {
+        if (ksp->ks_type == KSTAT_TYPE_RAW) {
+            if (strcmp(ksp->ks_class, "vm") == 0) {
+                if (kstat_read(kc, ksp, &vm) == -1) {
+                    kstat_close(kc);
+                    return PyErr_SetFromErrno(PyExc_OSError);;
+                }
+                free += vm.swap_free;
+                used += (vm.swap_alloc + vm.swap_resv);
+            }
+        }
+        ksp = ksp->ks_next;
+    }
+    kstat_close(kc);
+    return Py_BuildValue("KK", free, used);
+}
+
+
+/*
  * Return users currently connected on the system.
  */
 static PyObject*
@@ -350,6 +387,8 @@ PsutilMethods[] =
 
      // --- system-related functions
 
+     {"get_system_virtmem", get_system_virtmem, METH_VARARGS,
+        "Return information about system virtual memory."},
      {"get_system_users", get_system_users, METH_VARARGS,
         "Return currently connected users."},
      {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
