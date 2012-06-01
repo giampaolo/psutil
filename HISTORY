@@ -33,6 +33,9 @@ BUGFIXES
    (patch by Amoser)
  * Issue #267: (OSX) Process.get_connections() - an erroneous remote address
    was returned. (Patch by Amoser)
+ * Issue #272: (Linux) Porcess.get_open_files() - potential race condition can
+   lead to unexpected NoSuchProcess exception.  Also, we can get incorrect
+   reports of not absolutized path names.
 
 
 0.4.1 - 2011-12-14

@@ -719,16 +719,20 @@ class Process(object):
         for fd in files:
             file = "/proc/%s/fd/%s" % (self.pid, fd)
             if os.path.islink(file):
-                file = os.readlink(file)
-                if file.startswith("socket:["):
-                    continue
-                if file.startswith("pipe:["):
-                    continue
-                if file == "[]":
-                    continue
-                if os.path.isfile(file) and not file in retlist:
-                    ntuple = ntuple_openfile(file, int(fd))
-                    retlist.append(ntuple)
+                try:
+                    file = os.readlink(file)
+                except OSError, err:
+                    # ENOENT == file which is gone in the meantime
+                    if err.errno != errno.ENOENT:
+                        raise
+                else:
+                    # If file is not an absolute path there's no way
+                    # to tell whether it's a regular file or not,
+                    # so we skip it. A regular file is always supposed
+                    # to be absolutized though.
+                    if file.startswith('/') and os.path.isfile(file):
+                        ntuple = ntuple_openfile(file, int(fd))
+                        retlist.append(ntuple)
         return retlist
 
     @wrap_exceptions
