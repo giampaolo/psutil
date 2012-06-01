@@ -61,12 +61,12 @@ def pid_exists(pid):
 def get_system_cpu_times():
     """Return system-wide CPU times as a named tuple"""
     ret = _psutil_sunos.get_system_per_cpu_times()
-    return [_cputimes_ntuple(*x) for x in ret]
+    return _cputimes_ntuple(*[sum(x) for x in zip(*ret)])
 
 def get_system_per_cpu_times():
     """Return system per-CPU times as a list of named tuples"""
     ret = _psutil_sunos.get_system_per_cpu_times()
-    return _cputimes_ntuple(*[sum(x) for x in zip(*ret)])
+    return [_cputimes_ntuple(*x) for x in ret]
 
 def get_system_users():
     """Return currently connected users as a list of namedtuples."""
