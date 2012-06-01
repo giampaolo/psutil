@@ -80,6 +80,7 @@ elif sys.platform.lower().startswith("linux"):
 elif sys.platform.lower().startswith('sunos'):
     extensions = [Extension('_psutil_sunos',
                             sources=['psutil/_psutil_sunos.c'],
+                            libraries=['kstat'],
                             ),
                   posix_extension]
 else:

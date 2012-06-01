@@ -18,11 +18,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
+#include <sys/sysinfo.h>
 #include <sys/mntent.h>  // for MNTTAB
 #include <sys/mnttab.h>
 #include <fcntl.h>
 #include <procfs.h>
 #include <utmpx.h>
+#include <kstat.h>
 
 
 #define TV2DOUBLE(t)   (((t).tv_nsec * 0.000000001) + (t).tv_sec)
@@ -192,6 +194,41 @@ get_disk_partitions(PyObject* self, PyObject* args)
 
 
 /*
+ * Return system-wide CPU times.
+ */
+static PyObject*
+get_system_cpu_times(PyObject* self, PyObject* args)
+{
+    kstat_ctl_t *kc;
+    kstat_t *ksp;
+    cpu_stat_t cs;
+    uint_t idle, user, kernel, wait;
+    idle = 0; user = 0; kernel = 0; wait = 0;
+
+    kc = kstat_open();
+    if (kc == NULL) {
+        return PyErr_SetFromErrno(PyExc_OSError);;
+    }
+    ksp = kc->kc_chain;
+    while (ksp != NULL) {
+        if (strcmp(ksp->ks_module, "cpu_stat") == 0) {
+            if (kstat_read(kc, ksp, &cs) == -1) {
+                kstat_close(kc);
+                return PyErr_SetFromErrno(PyExc_OSError);;
+            }
+            idle += cs.cpu_sysinfo.cpu[CPU_IDLE];
+            user += cs.cpu_sysinfo.cpu[CPU_USER];
+            kernel += cs.cpu_sysinfo.cpu[CPU_KERNEL];
+            wait += cs.cpu_sysinfo.cpu[CPU_WAIT];
+        }
+        ksp = ksp->ks_next;
+    }
+    kstat_close(kc);
+    return Py_BuildValue("IIII", user, system, idle, wait);
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -208,11 +245,12 @@ PsutilMethods[] =
 
      // --- system-related functions
 
+     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
+        "Return system-wide CPU times."},
      {"get_system_users", get_system_users, METH_VARARGS,
         "Return currently connected users."},
      {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
         "Return disk partitions."},
-
 
      {NULL, NULL, 0, NULL}
 };

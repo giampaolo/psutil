@@ -47,7 +47,7 @@ def virtmem_usage():
     return ntuple_sysmeminfo(total, used, free, percent)
 
 def get_system_cpu_times():
-    """Return system per-CPU times as a named tuple"""
+    """Return system-wide CPU times as a named tuple"""
     user, nice, system, idle, irq = _psutil_bsd.get_system_cpu_times()
     return _cputimes_ntuple(user, nice, system, idle, irq)
 
