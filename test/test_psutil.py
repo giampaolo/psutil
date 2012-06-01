@@ -1554,7 +1554,7 @@ class TestCase(unittest.TestCase):
         # special cases.
         self.assertTrue(valid_procs > 0)
 
-    @skipIf(LINUX)
+    @skipIf(LINUX or SUNOS)
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
         p = psutil.Process(0)

@@ -130,6 +130,29 @@ get_process_cpu_times(PyObject* self, PyObject* args)
 
 
 /*
+ * Return process uids/gids as a Python tuple.
+ */
+static PyObject*
+get_process_cred(PyObject* self, PyObject* args)
+{
+	int pid;
+	char path[100];
+	prcred_t info;
+
+    if (! PyArg_ParseTuple(args, "i", &pid)) {
+        return NULL;
+    }
+    sprintf(path, "/proc/%i/cred", pid);
+    if (! _fill_struct_from_file(path, (void *)&info, sizeof(info))) {
+        return NULL;
+    }
+
+    return Py_BuildValue("iiiiii", info.pr_ruid, info.pr_euid, info.pr_suid,
+                                   info.pr_rgid, info.pr_egid, info.pr_sgid);
+}
+
+
+/*
  * Return users currently connected on the system.
  */
 static PyObject*
@@ -295,6 +318,9 @@ PsutilMethods[] =
         "Return process name and args."},
      {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
         "Return process user and system CPU times."},
+     {"get_process_cred", get_process_cred, METH_VARARGS,
+        "Return process uids/gids."},
+
 
      // --- system-related functions
 

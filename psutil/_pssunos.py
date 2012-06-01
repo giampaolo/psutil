@@ -183,24 +183,12 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_uids(self):
-        f = open('/proc/%s/cred' % os.getpid(), 'r')
-        try:
-            data = f.read()
-        finally:
-            f.close()
-        # XXX is "i" ok?
-        real, effective, saved = struct.unpack('iii', data[:12])
+        real, effective, saved, _, _, _ = _psutil_sunos.get_process_cred(self.pid)
         return ntuple_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_process_gids(self):
-        f = open('/proc/%s/cred' % os.getpid(), 'r')
-        try:
-            data = f.read()
-        finally:
-            f.close()
-        # XXX is "i" ok?
-        real, effective, saved = struct.unpack('iii', data[12:24])
+        _, _, _, real, effective, saved = _psutil_sunos.get_process_cred(self.pid)
         return ntuple_uids(real, effective, saved)
 
     @wrap_exceptions
