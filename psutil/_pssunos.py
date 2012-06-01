@@ -229,20 +229,33 @@ class Process(object):
                 tid = int(tid)
                 try:
                     utime, stime = _psutil_sunos.query_process_thread(tid)
-                except EnvironmentError:
-                    if err.errno in (errno.ENOENT, errno.ESRCH):
-                        # file no longer exists; means thread is gone
-                        # in meantime
-                        continue
+                except EnvironmentError, err:
+                    # ENOENT == thread gone in meantime
+                    if err.errno != errno.ENOENT:
+                        raise
                 else:
                     nt = ntuple_thread(tid, utime, stime)
                     ret.append(nt)
         return ret
 
-    # TODO
+    # TODO this needs to be shared with the Linux implementation
     @wrap_exceptions
     def get_open_files(self):
-        raise NotImplementedError()
+        retlist = []
+        pathdir = '/proc/%d/path' % self.pid
+        for fd in os.listdir('/proc/%d/fd' % self.pid):
+            path = os.path.join(pathdir, fd)
+            if os.path.islink(path):
+                try:
+                    file = os.readlink(path)
+                except OSError, err:
+                    # ENOENT == file gone in meantime
+                    if err.errno != errno.ENOENT:
+                        raise
+                else:
+                    if os.path.isfile(file):
+                        retlist.append(ntuple_openfile(file, int(fd)))
+        return retlist
 
     # TODO
     def get_connections(self, kind='inet'):
