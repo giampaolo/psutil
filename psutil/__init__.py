@@ -261,7 +261,7 @@ class Process(object):
             """
             return self._platform_impl.get_process_environ()
 
-    # available for Windows and Linux only
+    # available on Windows, Linux, FreeBSD and SunOS
     if hasattr(_psplatform.Process, "get_process_cwd"):
 
         def getcwd(self):

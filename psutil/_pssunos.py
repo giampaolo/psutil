@@ -208,6 +208,10 @@ class Process(object):
                         raise
 
     @wrap_exceptions
+    def get_process_cwd(self):
+        return os.readlink("/proc/%s/path/cwd" % self.pid)
+
+    @wrap_exceptions
     def get_memory_info(self):
         ret = _psutil_sunos.get_process_basic_info(self.pid)
         rss, vms = ret[1] * 1024, ret[2] * 1024
