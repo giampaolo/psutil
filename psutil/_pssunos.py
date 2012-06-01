@@ -54,8 +54,6 @@ get_disk_usage = _psposix.get_disk_usage
 def _not_impl(*a, **k):
     raise NotImplementedError
 
-get_system_cpu_times = _psutil_sunos.get_system_cpu_times
-get_system_per_cpu_times = lambda: None
 disk_io_counters = _not_impl  # TODO
 network_io_counters = _not_impl  # TODO
 disk_partitions = _not_impl  # TODO
@@ -64,8 +62,13 @@ virtmem_usage = _not_impl
 
 def get_system_cpu_times():
     """Return system-wide CPU times as a named tuple"""
-    user, system, idle, iowait = _psutil_sunos.get_system_cpu_times()
-    return _cputimes_ntuple(user, system, idle, iowait)
+    ret = _psutil_sunos.get_system_per_cpu_times()
+    return [_cputimes_ntuple(*x) for x in ret]
+
+def get_system_per_cpu_times():
+    """Return system per-CPU times as a list of named tuples"""
+    ret = _psutil_sunos.get_system_per_cpu_times()
+    return _cputimes_ntuple(*[sum(x) for x in zip(*ret)])
 
 def get_system_users():
     """Return currently connected users as a list of namedtuples."""

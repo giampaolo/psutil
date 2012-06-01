@@ -197,35 +197,45 @@ get_disk_partitions(PyObject* self, PyObject* args)
  * Return system-wide CPU times.
  */
 static PyObject*
-get_system_cpu_times(PyObject* self, PyObject* args)
+get_system_per_cpu_times(PyObject* self, PyObject* args)
 {
     kstat_ctl_t *kc;
     kstat_t *ksp;
     cpu_stat_t cs;
-    uint_t idle, user, kernel, wait;
-    idle = 0; user = 0; kernel = 0; wait = 0;
+    int numcpus;
+    int i;
+    PyObject* py_retlist = PyList_New(0);
+    PyObject* py_cputime;
 
     kc = kstat_open();
     if (kc == NULL) {
         return PyErr_SetFromErrno(PyExc_OSError);;
     }
-    ksp = kc->kc_chain;
-    while (ksp != NULL) {
-        if (strcmp(ksp->ks_module, "cpu_stat") == 0) {
-            if (kstat_read(kc, ksp, &cs) == -1) {
-                kstat_close(kc);
-                return PyErr_SetFromErrno(PyExc_OSError);;
-            }
-            idle += cs.cpu_sysinfo.cpu[CPU_IDLE];
-            user += cs.cpu_sysinfo.cpu[CPU_USER];
-            kernel += cs.cpu_sysinfo.cpu[CPU_KERNEL];
-            wait += cs.cpu_sysinfo.cpu[CPU_WAIT];
+
+    numcpus = sysconf(_SC_NPROCESSORS_ONLN) - 1;
+    for (i=0; i<=numcpus; i++) {
+        ksp = kstat_lookup(kc, "cpu_stat", i, NULL);
+        if (ksp == NULL) {
+            kstat_close(kc);
+            return PyErr_SetFromErrno(PyExc_OSError);;
         }
-        ksp = ksp->ks_next;
+	    if (kstat_read(kc, ksp, &cs) == -1) {
+		    kstat_close(kc);
+            return PyErr_SetFromErrno(PyExc_OSError);;
+	    }
+        py_cputime = Py_BuildValue("IIII",
+                                   cs.cpu_sysinfo.cpu[CPU_USER],
+                                   cs.cpu_sysinfo.cpu[CPU_KERNEL],
+                                   cs.cpu_sysinfo.cpu[CPU_IDLE],
+                                   cs.cpu_sysinfo.cpu[CPU_WAIT]);
+        PyList_Append(py_retlist, py_cputime);
+        Py_XDECREF(py_cputime);
     }
+
     kstat_close(kc);
-    return Py_BuildValue("IIII", user, system, idle, wait);
+    return py_retlist;
 }
+
 
 
 /*
@@ -245,12 +255,12 @@ PsutilMethods[] =
 
      // --- system-related functions
 
-     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
-        "Return system-wide CPU times."},
      {"get_system_users", get_system_users, METH_VARARGS,
         "Return currently connected users."},
      {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
         "Return disk partitions."},
+     {"get_system_per_cpu_times", get_system_per_cpu_times, METH_VARARGS,
+        "Return system per-CPU times."},
 
      {NULL, NULL, 0, NULL}
 };
