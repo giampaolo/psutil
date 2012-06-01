@@ -18,7 +18,7 @@ import datetime
 import psutil
 
 from test_psutil import (get_test_subprocess, reap_children, PYTHON, LINUX, OSX,
-                         ignore_access_denied, sh)
+                         SUNOS, ignore_access_denied, sh, skipIf)
 
 
 def ps(cmd):
@@ -27,6 +27,9 @@ def ps(cmd):
     """
     if not LINUX:
         cmd = cmd.replace(" --no-headers ", " ")
+    if SUNOS:
+        cmd = cmd.replace(" -o command ", " -o comm ")
+        cmd = cmd.replace(" -o start ", " -o stime ")
     p = subprocess.Popen(cmd, shell=1, stdout=subprocess.PIPE)
     output = p.communicate()[0].strip()
     if sys.version_info >= (3,):
@@ -119,11 +122,14 @@ class PosixSpecificTestCase(unittest.TestCase):
             adjusted_ps_pathname = ps_pathname[:len(ps_pathname)]
             self.assertEqual(ps_pathname, adjusted_ps_pathname)
 
+    @skipIf(SUNOS)
     def test_process_cmdline(self):
         ps_cmdline = ps("ps --no-headers -o command -p %s" %self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline)
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
+    # does not support "-o" with "ax"
+    @skipIf(SUNOS)
     def test_get_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime

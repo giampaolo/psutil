@@ -26,6 +26,16 @@ NUM_CPUS = os.sysconf("SC_NPROCESSORS_ONLN")
 BOOT_TIME = _psutil_sunos.get_process_basic_info(0)[3]
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle iowait')
 
+disk_io_counters = _psutil_sunos.get_disk_io_counters
+get_disk_usage = _psposix.get_disk_usage
+
+def _not_impl(*a, **k):
+    raise NotImplementedError
+
+network_io_counters = _not_impl  # TODO
+virtmem_usage = _not_impl  # TODO
+
+
 def phymem_usage():
     """Return physical memory usage statistics as a namedutple including
     total, used, free and percent usage.
@@ -47,16 +57,6 @@ def get_pid_list():
 def pid_exists(pid):
     """Check for the existence of a unix pid."""
     return _psposix.pid_exists(pid)
-
-get_disk_usage = _psposix.get_disk_usage
-
-
-def _not_impl(*a, **k):
-    raise NotImplementedError
-
-network_io_counters = _not_impl  # TODO
-virtmem_usage = _not_impl
-disk_io_counters = _psutil_sunos.get_disk_io_counters
 
 def get_system_cpu_times():
     """Return system-wide CPU times as a named tuple"""
