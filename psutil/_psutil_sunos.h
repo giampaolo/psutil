@@ -17,3 +17,4 @@ static PyObject* get_process_cpu_times(PyObject* self, PyObject* args);
 static PyObject* get_system_users(PyObject* self, PyObject* args);
 static PyObject* get_disk_partitions(PyObject* self, PyObject* args);
 static PyObject* get_system_per_cpu_times(PyObject* self, PyObject* args);
+static PyObject* get_disk_io_counters(PyObject* self, PyObject* args);

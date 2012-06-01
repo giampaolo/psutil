@@ -54,11 +54,9 @@ get_disk_usage = _psposix.get_disk_usage
 def _not_impl(*a, **k):
     raise NotImplementedError
 
-disk_io_counters = _not_impl  # TODO
 network_io_counters = _not_impl  # TODO
-disk_partitions = _not_impl  # TODO
 virtmem_usage = _not_impl
-
+disk_io_counters = _psutil_sunos.get_disk_io_counters
 
 def get_system_cpu_times():
     """Return system-wide CPU times as a named tuple"""

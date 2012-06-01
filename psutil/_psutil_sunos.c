@@ -237,6 +237,49 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return disk IO statistics.
+ */
+static PyObject*
+get_disk_io_counters(PyObject* self, PyObject* args)
+{
+    kstat_ctl_t *kc;
+    kstat_t *ksp;
+    kstat_io_t kio;
+    PyObject* py_retdict = PyDict_New();
+    PyObject* py_disk_info;
+
+    kc = kstat_open();
+    if (kc == NULL) {
+        return PyErr_SetFromErrno(PyExc_OSError);;
+    }
+    ksp = kc->kc_chain;
+    while (ksp != NULL) {
+        if (ksp->ks_type == KSTAT_TYPE_IO) {
+            if (strcmp(ksp->ks_class, "disk") == 0) {
+                if (kstat_read(kc, ksp, &kio) == -1) {
+                    kstat_close(kc);
+                    return PyErr_SetFromErrno(PyExc_OSError);;
+                }
+                py_disk_info = Py_BuildValue("(IIKKLL)",
+                                             kio.reads,
+                                             kio.writes,
+                                             kio.nread,
+                                             kio.nwritten,
+                                             kio.rtime,  // XXX are these ms?
+                                             kio.wtime   // XXX are these ms?
+                                             );
+                PyDict_SetItemString(py_retdict, ksp->ks_name, py_disk_info);
+                Py_XDECREF(py_disk_info);
+            }
+        }
+        ksp = ksp->ks_next;
+    }
+    kstat_close(kc);
+
+    return py_retdict;
+}
+
 
 /*
  * define the psutil C module methods and initialize the module.
@@ -261,6 +304,8 @@ PsutilMethods[] =
         "Return disk partitions."},
      {"get_system_per_cpu_times", get_system_per_cpu_times, METH_VARARGS,
         "Return system per-CPU times."},
+     {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
+        "Return a Python dict of tuples for disk I/O statistics."},
 
      {NULL, NULL, 0, NULL}
 };
