@@ -892,8 +892,8 @@ class TestCase(unittest.TestCase):
     def test_name(self):
         sproc = get_test_subprocess(PYTHON)
         wait_for_pid(sproc.pid)
-        self.assertEqual(psutil.Process(sproc.pid).name.lower(),
-                         os.path.basename(sys.executable).lower())
+        pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
+        self.assertEqual(psutil.Process(sproc.pid).name.lower(), pyexe)
 
     if os.name == 'posix':
 
