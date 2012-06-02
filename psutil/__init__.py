@@ -376,7 +376,8 @@ class Process(object):
             for pid in checkpids:
                 for proc in table[pid]:
                     ret.append(proc)
-                    checkpids.append(proc.pid)
+                    if proc.pid not in checkpids:
+                        checkpids.append(proc.pid)
         return ret
 
     def get_cpu_percent(self, interval=0.1):
