@@ -811,14 +811,7 @@ def network_io_counters(pernic=False):
             rawdict[nic] = ntuple_net_iostat(*fields)
         return rawdict
     else:
-        bytes_sent, bytes_recv, packets_sent, packets_recv = 0, 0, 0, 0
-        for _, fields in rawdict.iteritems():
-            bytes_sent += fields[0]
-            bytes_recv += fields[1]
-            packets_sent += fields[2]
-            packets_recv += fields[3]
-        return ntuple_net_iostat(bytes_sent, bytes_recv,
-                                 packets_sent, packets_recv)
+        return ntuple_net_iostat(*[sum(x) for x in zip(*rawdict.values())])
 
 def disk_io_counters(perdisk=False):
     """Return system disk I/O statistics as a namedtuple including
@@ -843,15 +836,7 @@ def disk_io_counters(perdisk=False):
             rawdict[disk] = ntuple_disk_iostat(*fields)
         return rawdict
     else:
-        reads, writes, rbytes, wbytes, rtime, wtime = 0, 0, 0, 0, 0, 0
-        for _, fields in rawdict.iteritems():
-            reads += fields[0]
-            writes += fields[1]
-            rbytes += fields[2]
-            wbytes += fields[3]
-            rtime += fields[4]
-            wtime += fields[5]
-        return ntuple_disk_iostat(reads, writes, rbytes, wbytes, rtime, wtime)
+        return ntuple_disk_iostat(*[sum(x) for x in zip(*rawdict.values())])
 
 def get_users():
     """Return users currently connected on the system as a list of
