@@ -232,10 +232,6 @@ class TestCase(unittest.TestCase):
     # tests for system-related API
     # ============================
 
-    def test_get_process_list(self):
-        pids = [x.pid for x in psutil.get_process_list()]
-        self.assertIn(os.getpid(), pids)
-
     def test_process_iter(self):
         pids = [x.pid for x in psutil.process_iter()]
         self.assertIn(os.getpid(), pids)
@@ -261,6 +257,7 @@ class TestCase(unittest.TestCase):
             self.assertRaises(DeprecationWarning, psutil.total_virtmem)
             self.assertRaises(DeprecationWarning, psutil.used_virtmem)
             self.assertRaises(DeprecationWarning, psutil.avail_virtmem)
+            self.assertRaises(DeprecationWarning, psutil.get_process_list)
         finally:
             warnings.resetwarnings()
 

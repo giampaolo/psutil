@@ -17,6 +17,7 @@ NEW FEATURES
  * Issue #260: process's mapped memory regions. (Windows patch by wj32.64)
  * Issue #262: (Windows) psutil.disk_partitions() was slow due to inspecting
    the floppy disk drive also when "all" argument was False.
+ * Issue #273: psutil.get_process_list() is deprecated.
 
 BUGFIXES
 
@@ -36,6 +37,10 @@ BUGFIXES
  * Issue #272: (Linux) Porcess.get_open_files() - potential race condition can
    lead to unexpected NoSuchProcess exception.  Also, we can get incorrect
    reports of not absolutized path names.
+
+API CHANGES
+
+ * psutil.get_process_list() is deprecated.
 
 
 0.4.1 - 2011-12-14

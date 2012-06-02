@@ -669,12 +669,6 @@ def process_iter():
         except (NoSuchProcess, AccessDenied):
             continue
 
-def get_process_list():
-    """Return a list of Process class instances for all running
-    processes on the local machine.
-    """
-    return list(process_iter())
-
 def cpu_times(percpu=False):
     """Return system-wide CPU times as a namedtuple object.
     Every CPU time represents the time CPU has spent in the given mode.
@@ -871,19 +865,27 @@ def get_users():
     """
     return _psplatform.get_system_users()
 
-
-def _deprecated(replacement):
-    # a decorator which can be used to mark functions as deprecated
+# http://goo.gl/jYLvf
+def _deprecated(replacement=None):
+    """A decorator which can be used to mark functions as deprecated."""
     def outer(fun):
         def inner(*args, **kwargs):
-            msg = "psutil.%s is deprecated; use %s instead" \
-                  % (fun.__name__, replacement)
+            msg = "psutil.%s is deprecated" % fun.__name__
+            if replacement is not None:
+                msg += "; use %s instead" % replacement
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
             return fun(*args, **kwargs)
         return inner
     return outer
 
 # --- deprecated functions
+
+@_deprecated()
+def get_process_list():
+    """Return a list of Process class instances for all running
+    processes on the local machine (deprecated).
+    """
+    return list(process_iter())
 
 @_deprecated("psutil.phymem_usage")
 def avail_phymem():
