@@ -38,19 +38,26 @@
 int
 _fill_struct_from_file(char *path, void *fstruct, size_t size)
 {
-	int fd, ret;
+    int fd;
+    size_t nbytes;
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
-        return 0;
+        return NULL;
 	}
-	ret = read(fd, fstruct, size);
-	if (ret == 1) {
+	nbytes = read(fd, fstruct, size);
+	if (nbytes == 1) {
+    	close(fd);
         PyErr_SetFromErrno(PyExc_OSError);
-        return 0;
+        return NULL;
+	}
+	if (nbytes != size) {
+    	close(fd);
+        PyErr_SetString(PyExc_RuntimeError, "structure size mismatch");
+        return NULL;
 	}
 	close(fd);
-    return 1;
+    return nbytes;
 }
 
 
