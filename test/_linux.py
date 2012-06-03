@@ -16,6 +16,7 @@ import time
 import os
 
 from test_psutil import sh, get_test_subprocess
+from psutil._compat import PY3
 import psutil
 
 
@@ -26,7 +27,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
         # command line utility
         p = subprocess.Popen("free", shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
-        if sys.version_info >= (3,):
+        if PY3:
             output = str(output, sys.stdout.encoding)
         free_cmem = int(output.split('\n')[1].split()[6])
         psutil_cmem = psutil.cached_phymem() / 1024
@@ -37,7 +38,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
         # command line utility
         p = subprocess.Popen("free", shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
-        if sys.version_info >= (3,):
+        if PY3:
             output = str(output, sys.stdout.encoding)
         free_cmem = int(output.split('\n')[1].split()[5])
         psutil_cmem = psutil.phymem_buffers() / 1024

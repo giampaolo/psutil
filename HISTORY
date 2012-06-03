@@ -18,6 +18,8 @@ NEW FEATURES
  * Issue #262: (Windows) psutil.disk_partitions() was slow due to inspecting
    the floppy disk drive also when "all" argument was False.
  * Issue #273: psutil.get_process_list() is deprecated.
+ * Issue #274: psutil no longer requires 2to3 at installation time in ortder to
+   work with Python 3.
 
 BUGFIXES
 

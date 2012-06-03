@@ -98,7 +98,7 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
     # per-network interface details: let's sort network interfaces so
     # that the ones which generated more traffic are shown first
     print_line("")
-    nic_names = pnic_after.keys()
+    nic_names = list(pnic_after.keys())
     nic_names.sort(key=lambda x: sum(pnic_after[x]), reverse=True)
     for name in nic_names:
         stats_before = pnic_before[name]

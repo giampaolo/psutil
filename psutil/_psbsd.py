@@ -121,7 +121,8 @@ def wrap_exceptions(method):
     def wrapper(self, *args, **kwargs):
         try:
             return method(self, *args, **kwargs)
-        except OSError, err:
+        except OSError:
+            err = sys.exc_info()[1]
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._process_name)
             if err.errno in (errno.EPERM, errno.EACCES):

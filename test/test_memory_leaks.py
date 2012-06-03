@@ -19,18 +19,12 @@ import time
 import socket
 
 import psutil
+from psutil._compat import PY3, callable, xrange
 from test_psutil import reap_children, skipUnless, skipIf, supports_ipv6, \
-                        POSIX, LINUX, WINDOWS, OSX, BSD, PY3
+                        POSIX, LINUX, WINDOWS, OSX, BSD
 
 LOOPS = 1000
 TOLERANCE = 4096
-
-if PY3:
-    xrange = range
-try:
-    callable
-except NameError:
-    callable = lambda x: hasattr(x, '__call__')
 
 
 class Base(unittest.TestCase):

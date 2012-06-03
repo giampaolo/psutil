@@ -16,6 +16,7 @@ import platform
 import _psutil_mswindows
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
+from psutil._compat import PY3, xrange, long
 
 # Windows specific extended namespace
 __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
@@ -48,7 +49,7 @@ def _convert_raw_path(s):
     # convert paths using native DOS format like:
     # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
     # into: "C:\Windows\systemew\file.txt"
-    if sys.version_info >= (3,):
+    if PY3:
         s = s.decode('utf8')
     rawdrive = '\\'.join(s.split('\\')[:3])
     driveletter = _win32_QueryDosDevice(rawdrive)
@@ -77,7 +78,8 @@ def get_disk_usage(path):
     """Return disk usage associated with path."""
     try:
         total, free = _psutil_mswindows.get_disk_usage(path)
-    except WindowsError, err:
+    except WindowsError:
+        err = sys.exc_info()[1]
         if not os.path.exists(path):
             raise OSError(errno.ENOENT, "No such file or directory: '%s'" % path)
         raise
@@ -137,7 +139,8 @@ def wrap_exceptions(callable):
     def wrapper(self, *args, **kwargs):
         try:
             return callable(self, *args, **kwargs)
-        except OSError, err:
+        except OSError:
+            err = sys.exc_info()[1]
             if err.errno in (errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED):
                 raise AccessDenied(self.pid, self._process_name)
             if err.errno == errno.ESRCH:
@@ -195,9 +198,10 @@ class Process(object):
     def get_memory_maps(self):
         try:
             raw = _psutil_mswindows.get_process_memory_maps(self.pid)
-        except OSError, err:
+        except OSError:
             # XXX - can't use wrap_exceptions decorator as we're
             # returning a generator; probably needs refactoring.
+            err = sys.exc_info()[1]
             if err.errno in (errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED):
                 raise AccessDenied(self.pid, self._process_name)
             if err.errno == errno.ESRCH:
@@ -361,7 +365,7 @@ class Process(object):
         # SetProcessAffinityMask() states that ERROR_INVALID_PARAMETER
         # is returned for an invalid CPU but this seems not to be true,
         # therefore we check CPUs validy beforehand.
-        allcpus = range(len(get_system_per_cpu_times()))
+        allcpus = list(range(len(get_system_per_cpu_times())))
         for cpu in value:
             if cpu not in allcpus:
                 raise ValueError("invalid CPU %i" % cpu)

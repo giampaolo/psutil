@@ -8,16 +8,62 @@
 
 """Module which provides compatibility with older Python versions."""
 
-__all__ = ["namedtuple", "property", "defaultdict"]
+__all__ = ["PY3", "int", "long", "xrange", "exec_", "callable",
+           "namedtuple", "property", "defaultdict"]
 
-from operator import itemgetter as _itemgetter
-from keyword import iskeyword as _iskeyword
-import sys as _sys
-import __builtin__
+import sys
+
+
+# --- python 2/3 compatibility layer
+
+PY3 = sys.version_info >= (3,)
+
+try:
+    import __builtin__
+except ImportError:
+    import builtins as __builtin__  # py3
+
+if PY3:
+    int = int
+    long = int
+    xrange = range
+    exec_ = getattr(__builtin__, "exec")
+else:
+    int = int
+    long = long
+    xrange = xrange
+
+    def exec_(code, globs=None, locs=None):
+        if globs is None:
+            frame = _sys._getframe(1)
+            globs = frame.f_globals
+            if locs is None:
+                locs = frame.f_locals
+            del frame
+        elif locs is None:
+            locs = globs
+        exec("""exec code in globs, locs""")
+
+# removed in 3.0, reintroduced in 3.2
+try:
+    callable = callable
+except Exception:
+    def callable(obj):
+        for klass in type(obj).__mro__:
+            if "__call__" in klass.__dict__:
+                return True
+        return False
+
+
+# --- stdlib additions
 
 try:
     from collections import namedtuple
 except ImportError:
+    from operator import itemgetter as _itemgetter
+    from keyword import iskeyword as _iskeyword
+    import sys as _sys
+
     def namedtuple(typename, field_names, verbose=False, rename=False):
         """A collections.namedtuple implementation written in Python
         to support Python versions < 2.6.
@@ -95,14 +141,16 @@ except ImportError:
         for i, name in enumerate(field_names):
             template += '        %s = _property(_itemgetter(%d))\n' % (name, i)
         if verbose:
-            print template
+            sys.stdout.write(template + '\n')
+            sys.stdout.flush()
 
         # Execute the template string in a temporary namespace
         namespace = dict(_itemgetter=_itemgetter, __name__='namedtuple_%s' % typename,
                          _property=property, _tuple=tuple)
         try:
-            exec template in namespace
-        except SyntaxError, e:
+            exec_(template, namespace)
+        except SyntaxError:
+            e = sys.exc_info()[1]
             raise SyntaxError(e.message + ':\n' + template)
         result = namespace[typename]
 

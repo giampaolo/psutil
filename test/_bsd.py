@@ -16,6 +16,7 @@ import sys
 
 import psutil
 
+from psutil._compat import PY3
 from test_psutil import reap_children, get_test_subprocess, sh
 
 def sysctl(cmdline):
@@ -89,7 +90,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         # and sysctl's is not too high.
         p = subprocess.Popen("sysctl vm.vmtotal", shell=1, stdout=subprocess.PIPE)
         result = p.communicate()[0].strip()
-        if sys.version_info >= (3,):
+        if PY3:
             result = str(result, sys.stdout.encoding)
         sysctl_total_virtmem, _ = parse_sysctl_vmtotal(result)
         psutil_total_virtmem = psutil.virtmem_usage().total
@@ -110,7 +111,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         # and sysctl's is not too high.
         p = subprocess.Popen("sysctl vm.vmtotal", shell=1, stdout=subprocess.PIPE)
         result = p.communicate()[0].strip()
-        if sys.version_info >= (3,):
+        if PY3:
             result = str(result, sys.stdout.encoding)
         _, sysctl_avail_virtmem = parse_sysctl_vmtotal(result)
         psutil_avail_virtmem = psutil.virtmem_usage().free
@@ -123,7 +124,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         cmdline = "ps -o lstart -p %s" %self.pid
         p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0]
-        if sys.version_info >= (3,):
+        if PY3:
             output = str(output, sys.stdout.encoding)
         start_ps = output.replace('STARTED', '').strip()
         start_psutil = psutil.Process(self.pid).create_time

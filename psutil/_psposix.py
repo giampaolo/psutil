@@ -20,7 +20,7 @@ import time
 import glob
 
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
-from psutil._compat import namedtuple
+from psutil._compat import PY3, namedtuple
 from psutil._common import ntuple_diskinfo, usage_percent
 
 
@@ -30,7 +30,8 @@ def pid_exists(pid):
         return False
     try:
         os.kill(pid, 0)
-    except OSError, e:
+    except OSError:
+        e = sys.exc_info()[1]
         return e.errno == errno.EPERM
     else:
         return True
@@ -63,7 +64,8 @@ def wait_pid(pid, timeout=None):
     while 1:
         try:
             retpid, status = waitcall()
-        except OSError, err:
+        except OSError:
+            err = sys.exc_info()[1]
             if err.errno == errno.EINTR:
                 delay = check_timeout(delay)
                 continue
@@ -253,9 +255,9 @@ class LsofParser:
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
                                               stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
-        if sys.version_info >= (3,):
-            stdout, stderr = map(lambda x: x.decode(sys.stdout.encoding),
-                                 (stdout, stderr))
+        if PY3:
+            stdout, stderr = [x.decode(sys.stdout.encoding)
+                              for x in (stdout, stderr)]
         if stderr:
             utility = cmd.split(' ')[0]
             if self._which(utility) is None:

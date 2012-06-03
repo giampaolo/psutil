@@ -16,15 +16,6 @@ except ImportError:
 __ver__ = "0.5.0"
 README = os.path.abspath(os.path.join(os.path.dirname(__file__), 'README'))
 
-# Hack for Python 3 to tell distutils to run 2to3 against the files
-# copied in the build directory before installing.
-# Reference: http://docs.python.org/dev/howto/pyporting.html#during-installation
-try:
-    from distutils.command.build_py import build_py_2to3 as build_py
-except ImportError:
-    from distutils.command.build_py import build_py
-
-
 # POSIX
 if os.name == 'posix':
     posix_extension = Extension('_psutil_posix',
@@ -33,7 +24,7 @@ if os.name == 'posix':
 if sys.platform.lower().startswith("win"):
 
     def get_winver():
-        maj,min = sys.getwindowsversion()[0:2]
+        maj, min = sys.getwindowsversion()[0:2]
         return '0x0%s' % ((maj * 100) + min)
 
     extensions = [Extension('_psutil_mswindows',
@@ -46,10 +37,9 @@ if sys.platform.lower().startswith("win"):
                                            ('_AVAIL_WINVER_', get_winver())],
                             libraries=["psapi", "kernel32", "advapi32",
                                        "shell32", "netapi32", "iphlpapi",
-                                       "wtsapi32"]
-#                                       ,
-#                            extra_compile_args=["/Z7"],
-#                            extra_link_args=["/DEBUG"]
+                                       "wtsapi32"],
+                            #extra_compile_args=["/Z7"],
+                            #extra_link_args=["/DEBUG"]
                             )]
 # OS X
 elif sys.platform.lower().startswith("darwin"):
@@ -99,7 +89,6 @@ def main():
         platforms='Platform Independent',
         license='License :: OSI Approved :: BSD License',
         packages=['psutil'],
-        cmdclass={'build_py':build_py},  # Python 3.X
         classifiers=[
               'Development Status :: 5 - Production/Stable',
               'Environment :: Console',

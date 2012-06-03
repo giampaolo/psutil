@@ -20,7 +20,8 @@ import subprocess
 
 import psutil
 import _psutil_mswindows
-from test_psutil import reap_children, get_test_subprocess, wait_for_pid, PY3
+from psutil._compat import PY3, callable
+from test_psutil import reap_children, get_test_subprocess, wait_for_pid
 try:
     import wmi
 except ImportError:

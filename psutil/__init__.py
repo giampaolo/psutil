@@ -541,7 +541,8 @@ class Process(object):
         if os.name == 'posix':
             try:
                 os.kill(self.pid, sig)
-            except OSError, err:
+            except OSError:
+                err = sys.exc_info()[1]
                 name = self._platform_impl._process_name
                 if err.errno == errno.ESRCH:
                     raise NoSuchProcess(self.pid, name)
@@ -807,7 +808,7 @@ def network_io_counters(pernic=False):
     from psutil._common import ntuple_net_iostat
     rawdict = _psplatform.network_io_counters()
     if pernic:
-        for nic, fields in rawdict.iteritems():
+        for nic, fields in rawdict.items():
             rawdict[nic] = ntuple_net_iostat(*fields)
         return rawdict
     else:
@@ -832,7 +833,7 @@ def disk_io_counters(perdisk=False):
     from psutil._common import ntuple_disk_iostat
     rawdict = _psplatform.disk_io_counters()
     if perdisk:
-        for disk, fields in rawdict.iteritems():
+        for disk, fields in rawdict.items():
             rawdict[disk] = ntuple_disk_iostat(*fields)
         return rawdict
     else:
@@ -899,6 +900,11 @@ def test():
     import datetime
     today_day = datetime.date.today()
 
+    def print_(s):
+        # python 2/3 compatibility layer
+        sys.stdout.write(s + '\n')
+        sys.stdout.flush()
+
     def get_process_info(pid):
         proc = Process(pid)
         user = proc.username
@@ -925,8 +931,8 @@ def test():
         return "%-9s %-5s %-4s %4s %7s %7s %5s %8s %s" \
                 % (user, pid, cpu, mem, vsz, rss, start, cputime, cmd)
 
-    print "%-9s %-5s %-4s %4s %7s %7s %5s %7s  %s" \
-      % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "START", "TIME", "COMMAND")
+    print_("%-9s %-5s %-4s %4s %7s %7s %5s %7s  %s" \
+      % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "START", "TIME", "COMMAND"))
     pids = get_pid_list()
     pids.sort()
     for pid in pids:
@@ -935,7 +941,7 @@ def test():
         except (AccessDenied, NoSuchProcess):
             pass
         else:
-            print line
+            print_(line)
 
 if __name__ == "__main__":
     test()

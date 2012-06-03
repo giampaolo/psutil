@@ -16,8 +16,8 @@ import os
 
 import psutil
 
+from psutil._compat import PY3
 from test_psutil import reap_children, get_test_subprocess, sh
-#from _posix import ps
 
 
 def sysctl(cmdline):
@@ -26,7 +26,7 @@ def sysctl(cmdline):
     """
     p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
     result = p.communicate()[0].strip().split()[1]
-    if sys.version_info >= (3,):
+    if PY3:
         result = str(result, sys.stdout.encoding)
     try:
         return int(result)
@@ -55,7 +55,7 @@ class OSXSpecificTestCase(unittest.TestCase):
         cmdline = "ps -o lstart -p %s" %self.pid
         p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0]
-        if sys.version_info >= (3,):
+        if PY3:
             output = str(output, sys.stdout.encoding)
         start_ps = output.replace('STARTED', '').strip()
         start_psutil = psutil.Process(self.pid).create_time

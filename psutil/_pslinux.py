@@ -23,6 +23,7 @@ import _psutil_linux
 from psutil import _psposix
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
+from psutil._compat import PY3, xrange, long
 
 __extra__all__ = [
     "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE",
@@ -346,10 +347,11 @@ def wrap_exceptions(callable):
     def wrapper(self, *args, **kwargs):
         try:
             return callable(self, *args, **kwargs)
-        except EnvironmentError, err:
+        except EnvironmentError:
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if
             # process is gone in meantime.
+            err = sys.exc_info()[1]
             if err.errno in (errno.ENOENT, errno.ESRCH):
                 raise NoSuchProcess(self.pid, self._process_name)
             if err.errno in (errno.EPERM, errno.EACCES):
@@ -382,7 +384,8 @@ class Process(object):
             raise AccessDenied(self.pid, self._process_name)
         try:
             exe = os.readlink("/proc/%s/exe" % self.pid)
-        except (OSError, IOError), err:
+        except (OSError, IOError):
+            err = sys.exc_info()[1]
             if err.errno == errno.ENOENT:
                 # no such file error; might be raised also if the
                 # path actually exists for system processes with
@@ -544,10 +547,11 @@ class Process(object):
                                data['Referenced:'],
                                data['Anonymous:'],
                                data['Swap:'])
-            except EnvironmentError, err:
+            except EnvironmentError:
                 # XXX - Can't use wrap_exceptions decorator as we're
                 # returning a generator;  this probably needs some
                 # refactoring in order to avoid this code duplication.
+                err = sys.exc_info()[1]
                 if err.errno in (errno.ENOENT, errno.ESRCH):
                     raise NoSuchProcess(self.pid, self._process_name)
                 if err.errno in (errno.EPERM, errno.EACCES):
@@ -591,7 +595,8 @@ class Process(object):
         for thread_id in thread_ids:
             try:
                 f = open("/proc/%s/task/%s/stat" % (self.pid, thread_id))
-            except (OSError, IOError), err:
+            except EnvironmentError:
+                err = sys.exc_info()[1]
                 if err.errno == errno.ENOENT:
                     # no such file or directory; it means thread
                     # disappeared on us
@@ -647,9 +652,10 @@ class Process(object):
         bitmask = to_bitmask(value)
         try:
             _psutil_linux.set_process_cpu_affinity(self.pid, bitmask)
-        except OSError, err:
+        except OSError:
+            err = sys.exc_info()[1]
             if err.errno == errno.EINVAL:
-                allcpus = range(len(get_system_per_cpu_times()))
+                allcpus = list(range(len(get_system_per_cpu_times())))
                 for cpu in value:
                     if cpu not in allcpus:
                         raise ValueError("invalid CPU %i" % cpu)
@@ -721,8 +727,9 @@ class Process(object):
             if os.path.islink(file):
                 try:
                     file = os.readlink(file)
-                except OSError, err:
+                except OSError:
                     # ENOENT == file which is gone in the meantime
+                    err = sys.exc_info()[1]
                     if err.errno != errno.ENOENT:
                         raise
                 else:
@@ -775,8 +782,9 @@ class Process(object):
             retlist = []
             try:
                 f = open(file, 'r')
-            except IOError, err:
+            except IOError:
                 # IPv6 not supported on this platform
+                err = sys.exc_info()[1]
                 if err.errno == errno.ENOENT and file.endswith('6'):
                     return []
                 else:
@@ -892,7 +900,7 @@ class Process(object):
         """
         ip, port = addr.split(':')
         port = int(port, 16)
-        if sys.version_info >= (3,):
+        if PY3:
             ip = ip.encode('ascii')
         # this usually refers to a local socket in listen mode with
         # no end-points connected

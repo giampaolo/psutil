@@ -17,6 +17,7 @@ import datetime
 
 import psutil
 
+from psutil._compat import PY3
 from test_psutil import (get_test_subprocess, reap_children, PYTHON, LINUX, OSX,
                          ignore_access_denied, sh)
 
@@ -29,7 +30,7 @@ def ps(cmd):
         cmd = cmd.replace(" --no-headers ", " ")
     p = subprocess.Popen(cmd, shell=1, stdout=subprocess.PIPE)
     output = p.communicate()[0].strip()
-    if sys.version_info >= (3,):
+    if PY3:
         output = str(output, sys.stdout.encoding)
     if not LINUX:
         output = output.split('\n')[1]
@@ -129,7 +130,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         # other processes in the meantime
         p = get_test_subprocess(["ps", "ax", "-o", "pid"], stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
-        if sys.version_info >= (3,):
+        if PY3:
             output = str(output, sys.stdout.encoding)
         output = output.replace('PID', '')
         p.wait()
@@ -155,7 +156,7 @@ class PosixSpecificTestCase(unittest.TestCase):
     def test_nic_names(self):
         p = subprocess.Popen("ifconfig -a", shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
-        if sys.version_info >= (3,):
+        if PY3:
             output = str(output, sys.stdout.encoding)
         for nic in psutil.network_io_counters(pernic=True).keys():
             for line in output.split():

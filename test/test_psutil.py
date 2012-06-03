@@ -33,24 +33,17 @@ import collections
 import datetime
 
 import psutil
+from psutil._compat import PY3, callable, long
 
 
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 TESTFN = os.path.join(os.getcwd(), "$testfile")
-PY3 = sys.version_info >= (3,)
 POSIX = os.name == 'posix'
 LINUX = sys.platform.lower().startswith("linux")
 WINDOWS = sys.platform.lower().startswith("win32")
 OSX = sys.platform.lower().startswith("darwin")
 BSD = sys.platform.lower().startswith("freebsd")
-
-
-if PY3:
-    long = int
-
-    def callable(attr):
-        return isinstance(attr, collections.Callable)
 
 
 _subprocesses_started = set()
@@ -77,7 +70,7 @@ def sh(cmdline):
         raise RuntimeError(stderr)
     if stderr:
         warnings.warn(stderr, RuntimeWarning)
-    if sys.version_info >= (3,):
+    if PY3:
         stdout = str(stdout, sys.stdout.encoding)
     return stdout.strip()
 
@@ -308,7 +301,7 @@ class TestCase(unittest.TestCase):
             self.assertFalse(psutil.pid_exists(pid))
 
     def test_get_pid_list(self):
-        plist = [x.pid for x in psutil.get_process_list()]
+        plist = [x.pid for x in psutil.process_iter()]
         pidlist = psutil.get_pid_list()
         self.assertEqual(plist.sort(), pidlist.sort())
         # make sure every pid is unique
@@ -701,7 +694,7 @@ class TestCase(unittest.TestCase):
         # test writes
         io1 = p.get_io_counters()
         f = tempfile.TemporaryFile()
-        if sys.version_info >= (3,):
+        if PY3:
             f.write(bytes("x" * 1000000, 'ascii'))
         else:
             f.write("x" * 1000000)
