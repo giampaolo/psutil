@@ -511,55 +511,57 @@ class Process(object):
         """
         f = None
         try:
-            try:
-                f = open("/proc/%s/smaps" % self.pid)
-                first_line = f.readline()
-                current_block = [first_line]
+            f = open("/proc/%s/smaps" % self.pid)
+            first_line = f.readline()
+            current_block = [first_line]
 
-                def get_blocks():
-                    data = {}
-                    for line in f:
-                        fields = line.split(None, 5)
-                        if len(fields) >= 5:
-                            yield (current_block.pop(), data)
-                            current_block.append(line)
-                        else:
-                            data[fields[0]] = int(fields[1]) * 1024
-                    yield (current_block.pop(), data)
+            def get_blocks():
+                data = {}
+                for line in f:
+                    fields = line.split(None, 5)
+                    if len(fields) >= 5:
+                        yield (current_block.pop(), data)
+                        current_block.append(line)
+                    else:
+                        data[fields[0]] = int(fields[1]) * 1024
+                yield (current_block.pop(), data)
 
-                if first_line:  # smaps file can be empty
-                    for header, data in get_blocks():
-                        hfields = header.split(None, 5)
-                        try:
-                            addr, perms, offset, dev, inode, path = hfields
-                        except ValueError:
-                            addr, perms, offset, dev, inode, path = hfields + ['']
-                        if not path:
-                            path = '[anon]'
-                        else:
-                            path = path.strip()
-                        yield (addr, perms, path,
-                               data['Rss:'],
-                               data['Size:'],
-                               data.get('Pss:', 0),
-                               data['Shared_Clean:'], data['Shared_Clean:'],
-                               data['Private_Clean:'], data['Private_Dirty:'],
-                               data['Referenced:'],
-                               data['Anonymous:'],
-                               data['Swap:'])
-            except EnvironmentError:
-                # XXX - Can't use wrap_exceptions decorator as we're
-                # returning a generator;  this probably needs some
-                # refactoring in order to avoid this code duplication.
-                err = sys.exc_info()[1]
-                if err.errno in (errno.ENOENT, errno.ESRCH):
-                    raise NoSuchProcess(self.pid, self._process_name)
-                if err.errno in (errno.EPERM, errno.EACCES):
-                    raise AccessDenied(self.pid, self._process_name)
-                raise
-        finally:
+            if first_line:  # smaps file can be empty
+                for header, data in get_blocks():
+                    hfields = header.split(None, 5)
+                    try:
+                        addr, perms, offset, dev, inode, path = hfields
+                    except ValueError:
+                        addr, perms, offset, dev, inode, path = hfields + ['']
+                    if not path:
+                        path = '[anon]'
+                    else:
+                        path = path.strip()
+                    yield (addr, perms, path,
+                           data['Rss:'],
+                           data['Size:'],
+                           data.get('Pss:', 0),
+                           data['Shared_Clean:'], data['Shared_Clean:'],
+                           data['Private_Clean:'], data['Private_Dirty:'],
+                           data['Referenced:'],
+                           data['Anonymous:'],
+                           data['Swap:'])
+        except EnvironmentError:
+            # XXX - Can't use wrap_exceptions decorator as we're
+            # returning a generator;  this probably needs some
+            # refactoring in order to avoid this code duplication.
             if f is not None:
                 f.close()
+            err = sys.exc_info()[1]
+            if err.errno in (errno.ENOENT, errno.ESRCH):
+                raise NoSuchProcess(self.pid, self._process_name)
+            if err.errno in (errno.EPERM, errno.EACCES):
+                raise AccessDenied(self.pid, self._process_name)
+            raise
+        except:
+            if f is not None:
+                f.close()
+            raise
 
     if not os.path.exists('/proc/%s/smaps' % os.getpid()):
         def get_shared_libs(self, ext):
