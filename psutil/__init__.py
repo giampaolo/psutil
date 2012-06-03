@@ -96,12 +96,9 @@ class Process(object):
     """Represents an OS process."""
 
     def __init__(self, pid):
-        """Create a new Process object, raises NoSuchProcess if the PID
-        does not exist, and ValueError if the parameter is not an
-        integer PID.
+        """Create a new Process object for the given pid.
+        Raises NoSuchProcess if pid does not exist.
         """
-        if not isinstance(pid, int):
-            raise ValueError("an integer is required")
         if not pid_exists(pid):
             raise NoSuchProcess(pid, None, "no process found with pid %s" % pid)
         self._pid = pid
