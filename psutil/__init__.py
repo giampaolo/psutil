@@ -91,9 +91,6 @@ NUM_CPUS = _psplatform.NUM_CPUS
 BOOT_TIME = _psplatform.BOOT_TIME
 TOTAL_PHYMEM = _psplatform.phymem_usage()[0]
 
-get_pid_list = _psplatform.get_pid_list
-pid_exists = _psplatform.pid_exists
-
 
 class Process(object):
     """Represents an OS process."""
@@ -614,7 +611,7 @@ class Popen(Process):
     """A more convenient interface to stdlib subprocess module.
     It starts a sub process and deals with it exactly as when using
     subprocess.Popen class but in addition also provides all the
-    property and methods of psutil.Process class in a unique interface:
+    property and methods of psutil.Process class in a single interface:
 
       >>> import psutil
       >>> from subprocess import PIPE
@@ -658,6 +655,10 @@ class Popen(Process):
             except AttributeError:
                 raise AttributeError("%s instance has no attribute '%s'"
                                       %(self.__class__.__name__, name))
+
+
+get_pid_list = _psplatform.get_pid_list
+pid_exists = _psplatform.pid_exists
 
 def process_iter():
     """Return an iterator yielding a Process class instances for all
@@ -805,14 +806,14 @@ def network_io_counters(pernic=False):
     with network interface names as the keys and the namedtuple
     described above as the values.
     """
-    from psutil._common import ntuple_net_iostat
+    from psutil._common import nt_net_iostat
     rawdict = _psplatform.network_io_counters()
     if pernic:
         for nic, fields in rawdict.items():
-            rawdict[nic] = ntuple_net_iostat(*fields)
+            rawdict[nic] = nt_net_iostat(*fields)
         return rawdict
     else:
-        return ntuple_net_iostat(*[sum(x) for x in zip(*rawdict.values())])
+        return nt_net_iostat(*[sum(x) for x in zip(*rawdict.values())])
 
 def disk_io_counters(perdisk=False):
     """Return system disk I/O statistics as a namedtuple including
@@ -830,14 +831,14 @@ def disk_io_counters(perdisk=False):
     with partition names as the keys and the namedutuple
     described above as the values.
     """
-    from psutil._common import ntuple_disk_iostat
+    from psutil._common import nt_disk_iostat
     rawdict = _psplatform.disk_io_counters()
     if perdisk:
         for disk, fields in rawdict.items():
-            rawdict[disk] = ntuple_disk_iostat(*fields)
+            rawdict[disk] = nt_disk_iostat(*fields)
         return rawdict
     else:
-        return ntuple_disk_iostat(*[sum(x) for x in zip(*rawdict.values())])
+        return nt_disk_iostat(*[sum(x) for x in zip(*rawdict.values())])
 
 def get_users():
     """Return users currently connected on the system as a list of

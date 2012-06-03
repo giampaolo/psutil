@@ -91,22 +91,21 @@ del AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM, socket
 # --- namedtuples
 
 # system
-ntuple_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
-ntuple_sysmeminfo = namedtuple('usage', 'total used free percent')
-ntuple_diskinfo = namedtuple('usage', 'total used free percent')
-ntuple_partition = namedtuple('partition',  'device mountpoint fstype options')
-ntuple_net_iostat = namedtuple('iostat', 'bytes_sent bytes_recv packets_sent packets_recv')
-ntuple_disk_iostat = namedtuple('iostat', 'read_count write_count read_bytes write_bytes read_time write_time')
-ntuple_user = namedtuple('user', 'name terminal host started')
-
+nt_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
+nt_sysmeminfo = namedtuple('usage', 'total used free percent')
+nt_diskinfo = namedtuple('usage', 'total used free percent')
+nt_partition = namedtuple('partition',  'device mountpoint fstype options')
+nt_net_iostat = namedtuple('iostat', 'bytes_sent bytes_recv packets_sent packets_recv')
+nt_disk_iostat = namedtuple('iostat', 'read_count write_count read_bytes write_bytes read_time write_time')
+nt_user = namedtuple('user', 'name terminal host started')
 
 # processes
-ntuple_meminfo = namedtuple('meminfo', 'rss vms')
-ntuple_cputimes = namedtuple('cputimes', 'user system')
-ntuple_openfile = namedtuple('openfile', 'path fd')
-ntuple_connection = namedtuple('connection', 'fd family type local_address remote_address status')
-ntuple_thread = namedtuple('thread', 'id user_time system_time')
-ntuple_uids = namedtuple('user', 'real effective saved')
-ntuple_gids = namedtuple('group', 'real effective saved')
-ntuple_io = namedtuple('io', 'read_count write_count read_bytes write_bytes')
-ntuple_ionice = namedtuple('ionice', 'ioclass value')
+nt_meminfo = namedtuple('meminfo', 'rss vms')
+nt_cputimes = namedtuple('cputimes', 'user system')
+nt_openfile = namedtuple('openfile', 'path fd')
+nt_connection = namedtuple('connection', 'fd family type local_address remote_address status')
+nt_thread = namedtuple('thread', 'id user_time system_time')
+nt_uids = namedtuple('user', 'real effective saved')
+nt_gids = namedtuple('group', 'real effective saved')
+nt_io = namedtuple('io', 'read_count write_count read_bytes write_bytes')
+nt_ionice = namedtuple('ionice', 'ioclass value')

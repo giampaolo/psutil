@@ -63,7 +63,7 @@ def phymem_usage():
     all = _psutil_mswindows.get_system_phymem()
     total, free, total_pagef, avail_pagef, total_virt, free_virt, percent = all
     used = total - free
-    return ntuple_sysmeminfo(total, used, free, round(percent, 1))
+    return nt_sysmeminfo(total, used, free, round(percent, 1))
 
 def virtmem_usage():
     """Virtual system memory as a (total, used, free) tuple."""
@@ -72,7 +72,7 @@ def virtmem_usage():
     free_virt = all[5]
     used = total_virt - free_virt
     percent = usage_percent(used, total_virt, _round=1)
-    return ntuple_sysmeminfo(total_virt, used, free_virt, percent)
+    return nt_sysmeminfo(total_virt, used, free_virt, percent)
 
 def get_disk_usage(path):
     """Return disk usage associated with path."""
@@ -85,12 +85,12 @@ def get_disk_usage(path):
         raise
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return ntuple_diskinfo(total, used, free, percent)
+    return nt_diskinfo(total, used, free, percent)
 
 def disk_partitions(all):
     """Return disk partitions."""
     rawlist = _psutil_mswindows.get_disk_partitions(all)
-    return [ntuple_partition(*x) for x in rawlist]
+    return [nt_partition(*x) for x in rawlist]
 
 
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle')
@@ -120,7 +120,7 @@ def get_system_users():
     rawlist = _psutil_mswindows.get_system_users()
     for item in rawlist:
         user, hostname, tstamp = item
-        nt = ntuple_user(user, None, hostname, tstamp)
+        nt = nt_user(user, None, hostname, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -188,9 +188,9 @@ class Process(object):
         """Returns a tuple or RSS/VMS memory usage in bytes."""
         # special case for 0 (kernel processes) PID
         if self.pid == 0:
-            return ntuple_meminfo(0, 0)
+            return nt_meminfo(0, 0)
         rss, vms = _psutil_mswindows.get_memory_info(self.pid)
-        return ntuple_meminfo(rss, vms)
+        return nt_meminfo(rss, vms)
 
     nt_mmap_grouped = namedtuple('mmap', 'path rss')
     nt_mmap_ext = namedtuple('mmap', 'addr perms path rss')
@@ -253,14 +253,14 @@ class Process(object):
         rawlist = _psutil_mswindows.get_process_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = ntuple_thread(thread_id, utime, stime)
+            ntuple = nt_thread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
 
     @wrap_exceptions
     def get_cpu_times(self):
         user, system = _psutil_mswindows.get_process_cpu_times(self.pid)
-        return ntuple_cputimes(user, system)
+        return nt_cputimes(user, system)
 
     @wrap_exceptions
     def suspend_process(self):
@@ -292,7 +292,7 @@ class Process(object):
         for file in raw_file_names:
             file = _convert_raw_path(file)
             if os.path.isfile(file) and file not in retlist:
-                ntuple = ntuple_openfile(file, -1)
+                ntuple = nt_openfile(file, -1)
                 retlist.append(ntuple)
         return retlist
 
@@ -303,7 +303,7 @@ class Process(object):
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
         ret = _psutil_mswindows.get_process_connections(self.pid, families, types)
-        return [ntuple_connection(*conn) for conn in ret]
+        return [nt_connection(*conn) for conn in ret]
 
     @wrap_exceptions
     def get_process_nice(self):
@@ -316,7 +316,7 @@ class Process(object):
     @wrap_exceptions
     def get_process_io_counters(self):
         rc, wc, rb, wb =_psutil_mswindows.get_process_io_counters(self.pid)
-        return ntuple_io(rc, wc, rb, wb)
+        return nt_io(rc, wc, rb, wb)
 
     @wrap_exceptions
     def get_process_status(self):

@@ -36,7 +36,7 @@ def phymem_usage():
     used = total - free
     # XXX check out whether we have to do the same math we do on Linux
     percent = usage_percent(used, total, _round=1)
-    return ntuple_sysmeminfo(total, used, free, percent)
+    return nt_sysmeminfo(total, used, free, percent)
 
 def virtmem_usage():
     """Virtual system memory as a (total, used, free) tuple."""
@@ -44,7 +44,7 @@ def virtmem_usage():
     free =  _psutil_bsd.get_avail_virtmem()
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return ntuple_sysmeminfo(total, used, free, percent)
+    return nt_sysmeminfo(total, used, free, percent)
 
 def get_system_cpu_times():
     """Return system per-CPU times as a named tuple"""
@@ -88,7 +88,7 @@ def disk_partitions(all=False):
             if not os.path.isabs(device) \
             or not os.path.exists(device):
                 continue
-        ntuple = ntuple_partition(device, mountpoint, fstype, opts)
+        ntuple = nt_partition(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -102,7 +102,7 @@ def get_system_users():
         abstty = os.path.join("/dev", tty)
         if os.path.exists(abstty):
             tty = abstty
-        nt = ntuple_user(user, tty, hostname, tstamp)
+        nt = nt_user(user, tty, hostname, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -189,25 +189,25 @@ class Process(object):
     def get_process_uids(self):
         """Return real, effective and saved user ids."""
         real, effective, saved = _psutil_bsd.get_process_uids(self.pid)
-        return ntuple_uids(real, effective, saved)
+        return nt_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_process_gids(self):
         """Return real, effective and saved group ids."""
         real, effective, saved = _psutil_bsd.get_process_gids(self.pid)
-        return ntuple_gids(real, effective, saved)
+        return nt_gids(real, effective, saved)
 
     @wrap_exceptions
     def get_cpu_times(self):
         """return a tuple containing process user/kernel time."""
         user, system = _psutil_bsd.get_cpu_times(self.pid)
-        return ntuple_cputimes(user, system)
+        return nt_cputimes(user, system)
 
     @wrap_exceptions
     def get_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms = _psutil_bsd.get_memory_info(self.pid)
-        return ntuple_meminfo(rss, vms)
+        return nt_meminfo(rss, vms)
 
     @wrap_exceptions
     def get_process_create_time(self):
@@ -226,7 +226,7 @@ class Process(object):
         rawlist = _psutil_bsd.get_process_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = ntuple_thread(thread_id, utime, stime)
+            ntuple = nt_thread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
 
@@ -237,7 +237,7 @@ class Process(object):
         # else fallback on lsof parser
         if hasattr(_psutil_bsd, "get_process_open_files"):
             rawlist = _psutil_bsd.get_process_open_files(self.pid)
-            return [ntuple_openfile(path, fd) for path, fd in rawlist]
+            return [nt_openfile(path, fd) for path, fd in rawlist]
         else:
             lsof = _psposix.LsofParser(self.pid, self._process_name)
             return lsof.get_process_open_files()
@@ -282,7 +282,7 @@ class Process(object):
     @wrap_exceptions
     def get_process_io_counters(self):
         rc, wc, rb, wb = _psutil_bsd.get_process_io_counters(self.pid)
-        return ntuple_io(rc, wc, rb, wb)
+        return nt_io(rc, wc, rb, wb)
 
     nt_mmap_grouped = namedtuple('mmap',
         'path rss, private, ref_count, shadow_count')

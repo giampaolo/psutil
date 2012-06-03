@@ -35,7 +35,7 @@ def phymem_usage():
     free =  _psutil_osx.get_avail_phymem()
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return ntuple_sysmeminfo(total, used, free, percent)
+    return nt_sysmeminfo(total, used, free, percent)
 
 def virtmem_usage():
     """Virtual system memory as a (total, used, free) tuple."""
@@ -43,7 +43,7 @@ def virtmem_usage():
     free =  _psutil_osx.get_avail_virtmem()
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return ntuple_sysmeminfo(total, used, free, percent)
+    return nt_sysmeminfo(total, used, free, percent)
 
 def get_system_cpu_times():
     """Return system CPU times as a namedtuple."""
@@ -70,7 +70,7 @@ def disk_partitions(all=False):
             if not os.path.isabs(device) \
             or not os.path.exists(device):
                 continue
-        ntuple = ntuple_partition(device, mountpoint, fstype, opts)
+        ntuple = nt_partition(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -87,7 +87,7 @@ def get_system_users():
             abstty = os.path.join("/dev", tty)
             if os.path.exists(abstty):
                 tty = abstty
-        nt = ntuple_user(user, tty, hostname or None, tstamp)
+        nt = nt_user(user, tty, hostname or None, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -162,12 +162,12 @@ class Process(object):
     @wrap_exceptions
     def get_process_uids(self):
         real, effective, saved = _psutil_osx.get_process_uids(self.pid)
-        return ntuple_uids(real, effective, saved)
+        return nt_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_process_gids(self):
         real, effective, saved = _psutil_osx.get_process_gids(self.pid)
-        return ntuple_gids(real, effective, saved)
+        return nt_gids(real, effective, saved)
 
     @wrap_exceptions
     def get_process_terminal(self):
@@ -181,12 +181,12 @@ class Process(object):
     def get_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms = _psutil_osx.get_memory_info(self.pid)
-        return ntuple_meminfo(rss, vms)
+        return nt_meminfo(rss, vms)
 
     @wrap_exceptions
     def get_cpu_times(self):
         user, system = _psutil_osx.get_cpu_times(self.pid)
-        return ntuple_cputimes(user, system)
+        return nt_cputimes(user, system)
 
     @wrap_exceptions
     def get_process_create_time(self):
@@ -208,7 +208,7 @@ class Process(object):
         rawlist = _psutil_osx.get_process_open_files(self.pid)
         for path, fd in rawlist:
             if os.path.isfile(path):
-                ntuple = ntuple_openfile(path, fd)
+                ntuple = nt_openfile(path, fd)
                 files.append(ntuple)
         return files
 
@@ -222,7 +222,7 @@ class Process(object):
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
         ret = _psutil_osx.get_process_connections(self.pid, families, types)
-        return [ntuple_connection(*conn) for conn in ret]
+        return [nt_connection(*conn) for conn in ret]
 
     @wrap_exceptions
     def process_wait(self, timeout=None):
@@ -252,6 +252,6 @@ class Process(object):
         rawlist = _psutil_osx.get_process_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = ntuple_thread(thread_id, utime, stime)
+            ntuple = nt_thread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist

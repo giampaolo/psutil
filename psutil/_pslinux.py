@@ -140,7 +140,7 @@ def phymem_usage():
     cached = cached_phymem()
     used = total - free
     percent = usage_percent(total - (free + buffers + cached), total, _round=1)
-    return ntuple_sysmeminfo(total, used, free, percent)
+    return nt_sysmeminfo(total, used, free, percent)
 
 
 def virtmem_usage():
@@ -157,7 +157,7 @@ def virtmem_usage():
         assert total is not None and free is not None
         used = total - free
         percent = usage_percent(used, total, _round=1)
-        return ntuple_sysmeminfo(total, used, free, percent)
+        return nt_sysmeminfo(total, used, free, percent)
     finally:
         f.close()
 
@@ -176,7 +176,7 @@ def get_system_cpu_times():
 
     values = values[1:8]
     values = tuple([float(x) / _CLOCK_TICKS for x in values])
-    return ntuple_sys_cputimes(*values[:7])
+    return nt_sys_cputimes(*values[:7])
 
 def get_system_per_cpu_times():
     """Return a list of namedtuple representing the CPU times
@@ -191,7 +191,7 @@ def get_system_per_cpu_times():
             if line.startswith('cpu'):
                 values = line.split()[1:8]
                 values = tuple([float(x) / _CLOCK_TICKS for x in values])
-                entry = ntuple_sys_cputimes(*values[:7])
+                entry = nt_sys_cputimes(*values[:7])
                 cpus.append(entry)
         return cpus
     finally:
@@ -220,7 +220,7 @@ def disk_partitions(all=False):
         if not all:
             if device == '' or fstype not in phydevs:
                 continue
-        ntuple = ntuple_partition(device, mountpoint, fstype, opts)
+        ntuple = nt_partition(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -245,7 +245,7 @@ def get_system_users():
         abstty = os.path.join("/dev", tty)
         if os.path.exists(abstty):
             tty = abstty
-        nt = ntuple_user(user, tty, hostname, tstamp)
+        nt = nt_user(user, tty, hostname, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -446,7 +446,7 @@ class Process(object):
                     read_bytes = int(line.split()[1])
                 elif line.startswith("write_bytes"):
                     write_bytes = int(line.split()[1])
-            return ntuple_io(read_count, write_count, read_bytes, write_bytes)
+            return nt_io(read_count, write_count, read_bytes, write_bytes)
         finally:
             f.close()
 
@@ -462,7 +462,7 @@ class Process(object):
         values = st.split(' ')
         utime = float(values[11]) / _CLOCK_TICKS
         stime = float(values[12]) / _CLOCK_TICKS
-        return ntuple_cputimes(utime, stime)
+        return nt_cputimes(utime, stime)
 
     @wrap_exceptions
     def process_wait(self, timeout=None):
@@ -493,8 +493,8 @@ class Process(object):
         f = open("/proc/%s/statm" % self.pid)
         try:
             vms, rss = f.readline().split()[:2]
-            return ntuple_meminfo(int(rss) * _PAGESIZE,
-                                  int(vms) * _PAGESIZE)
+            return nt_meminfo(int(rss) * _PAGESIZE,
+                              int(vms) * _PAGESIZE)
         finally:
             f.close()
 
@@ -613,7 +613,7 @@ class Process(object):
             values = st.split(' ')
             utime = float(values[11]) / _CLOCK_TICKS
             stime = float(values[12]) / _CLOCK_TICKS
-            ntuple = ntuple_thread(int(thread_id), utime, stime)
+            ntuple = nt_thread(int(thread_id), utime, stime)
             retlist.append(ntuple)
         return retlist
 
@@ -669,7 +669,7 @@ class Process(object):
         @wrap_exceptions
         def get_process_ionice(self):
             ioclass, value = _psutil_linux.ioprio_get(self.pid)
-            return ntuple_ionice(ioclass, value)
+            return nt_ionice(ioclass, value)
 
         @wrap_exceptions
         def set_process_ionice(self, ioclass, value):
@@ -740,7 +740,7 @@ class Process(object):
                     # so we skip it. A regular file is always supposed
                     # to be absolutized though.
                     if file.startswith('/') and os.path.isfile(file):
-                        ntuple = ntuple_openfile(file, int(fd))
+                        ntuple = nt_openfile(file, int(fd))
                         retlist.append(ntuple)
         return retlist
 
@@ -806,8 +806,8 @@ class Process(object):
                             else:
                                 status = ""
                             fd = int(inodes[inode])
-                            conn = ntuple_connection(fd, family, type_, laddr,
-                                                     raddr, status)
+                            conn = nt_connection(fd, family, type_, laddr,
+                                                 raddr, status)
                             retlist.append(conn)
                     else:
                         raise ValueError(family)
@@ -866,7 +866,7 @@ class Process(object):
             for line in f:
                 if line.startswith('Uid:'):
                     _, real, effective, saved, fs = line.split()
-                    return ntuple_uids(int(real), int(effective), int(saved))
+                    return nt_uids(int(real), int(effective), int(saved))
             raise RuntimeError("line not found")
         finally:
             f.close()
@@ -878,7 +878,7 @@ class Process(object):
             for line in f:
                 if line.startswith('Gid:'):
                     _, real, effective, saved, fs = line.split()
-                    return ntuple_gids(int(real), int(effective), int(saved))
+                    return nt_gids(int(real), int(effective), int(saved))
             raise RuntimeError("line not found")
         finally:
             f.close()
