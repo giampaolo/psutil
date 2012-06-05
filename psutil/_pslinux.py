@@ -450,6 +450,10 @@ class Process(object):
         finally:
             f.close()
 
+    if not os.path.exists('/proc/%s/io' % os.getpid()):
+        def get_process_io_counters(self):
+            raise NotImplementedError('/proc/PID/io is not available')
+
     @wrap_exceptions
     def get_cpu_times(self):
         f = open("/proc/%s/stat" % self.pid)

@@ -39,6 +39,8 @@ BUGFIXES
  * Issue #272: (Linux) Porcess.get_open_files() - potential race condition can
    lead to unexpected NoSuchProcess exception.  Also, we can get incorrect
    reports of not absolutized path names.
+ * Issue #275: (Linux) Process.get_io_counters() erroneously raise NoSuchProcess
+   on old Linux versions. Where not available it now raises NotImplementedError.
 
 API CHANGES
 
