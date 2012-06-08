@@ -34,7 +34,7 @@ _cputimes_ntuple = namedtuple('cputimes', 'user system idle iowait')
 disk_io_counters = _psutil_sunos.get_disk_io_counters
 network_io_counters = _psutil_sunos.get_network_io_counters
 get_disk_usage = _psposix.get_disk_usage
-
+get_system_boot_time = lambda: _psutil_sunos.get_process_basic_info(0)[3]
 
 nt_virtmem_info = namedtuple('vmem', ' '.join([
     # all platforms
@@ -247,7 +247,19 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_cwd(self):
-        return os.readlink("/proc/%s/path/cwd" % self.pid)
+        # /proc/PID/path/cwd may not be resolved by readlink() even if
+        # it exists (ls shows it). If that's the case and the process
+        # is still alive return None (we can return None also on BSD).
+        # Reference:
+        # https://groups.google.com/forum/?fromgroups#!topic/comp.unix.solaris/tcqvhTNFCAs
+        try:
+            return os.readlink("/proc/%s/path/cwd" % self.pid)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno == errno.ENOENT:
+                os.stat("/proc/%s" % self.pid)
+                return None
+            raise
 
     @wrap_exceptions
     def get_memory_info(self):
