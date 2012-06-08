@@ -411,6 +411,10 @@ class Process(object):
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
+            if fam not in families:
+                continue
+            if type not in types:
+                continue
             status = _conn_status_map[status]
             nt = nt_connection(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
