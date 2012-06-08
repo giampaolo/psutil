@@ -69,16 +69,18 @@ def run(pid):
     print_('cmdline', ' '.join(pinfo['cmdline']))
     print_('started', started)
     print_('user', pinfo['username'])
-    if os.name == 'posix':
+    if os.name == 'posix' and pinfo['uids'] and pinfo['gids']:
         print_('uids', 'real=%s, effective=%s, saved=%s' % pinfo['uids'])
+    if os.name == 'posix' and pinfo['gids']:
         print_('gids', 'real=%s, effective=%s, saved=%s' % pinfo['gids'])
+    if os.name == 'posix':
         print_('terminal', pinfo['terminal'] or '')
     if hasattr(p, 'getcwd'):
         print_('cwd', pinfo['cwd'])
     print_('memory', mem)
     print_('cpu', '%s%% (user=%s, system=%s)' % (pinfo['cpu_percent'],
-                                                 pinfo['cpu_times'].user,
-                                                 pinfo['cpu_times'].system))
+                                    getattr(pinfo['cpu_times'], 'user', '?'),
+                                    getattr(pinfo['cpu_times'], 'system', '?')))
     print_('status', pinfo['status'])
     print_('niceness', pinfo['nice'])
     print_('num threads', pinfo['num_threads'])

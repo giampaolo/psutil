@@ -202,10 +202,22 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_nice(self):
+        if self.pid in (2, 3):
+            # Special case PIDs: internally getpriority(3) return ESRCH
+            # (no such process), no matter what (even as root).
+            # The process actually exists though, as it has a name,
+            # creation time, etc.
+            raise AccessDenied(self.pid, self._process_name)
         return _psutil_posix.getpriority(self.pid)
 
     @wrap_exceptions
     def set_process_nice(self, value):
+        if self.pid in (2, 3):
+            # Special case PIDs: internally setpriority(3) return ESRCH
+            # (no such process), no matter what.
+            # The process actually exists though, as it has a name,
+            # creation time, etc.
+            raise AccessDenied(self.pid, self._process_name)
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
