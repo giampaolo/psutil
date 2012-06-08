@@ -12,12 +12,13 @@ import errno
 import os
 import struct
 import subprocess
+import socket
 
 import _psutil_sunos
 import _psutil_posix
 import _psposix
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
-from psutil._compat import namedtuple
+from psutil._compat import namedtuple, PY3
 from psutil._common import *
 
 
@@ -310,9 +311,59 @@ class Process(object):
             os.stat('/proc/%s' % self.pid)
         return retlist
 
-    # TODO
+    def _get_unix_sockets(self, pid):
+        """Get UNIX sockets used by process by parsing 'pfiles' output."""
+        # TODO: rewrite this in C (...but the damn netstat source code
+        # does not include this part! Argh!!)
+        cmd = "pfiles %s" % pid
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
+                                              stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        if PY3:
+            stdout, stderr = [x.decode(sys.stdout.encoding)
+                              for x in (stdout, stderr)]
+        if p.returncode != 0:
+            if 'permission denied' in stderr.lower():
+                raise AccessDenied(self.pid, self._process_name)
+            if 'no such process' in stderr.lower():
+                raise NoSuchProcess(self.pid, self._process_name)
+            raise RuntimeError("%r command error\n%s" % (cmd, stderr))
+
+        lines = stdout.split('\n')[2:]
+        for i, line in enumerate(lines):
+            line = line.lstrip()
+            if line.startswith('sockname: AF_UNIX'):
+                path = line.split(' ', 2)[2]
+                type = lines[i-2].strip()
+                if type == 'SOCK_STREAM':
+                    type = socket.SOCK_STREAM
+                elif type == 'SOCK_DGRAM':
+                    type = socket.SOCK_DGRAM
+                else:
+                    type = -1
+                yield (-1, socket.AF_UNIX, type, path, "", "")
+
+    @wrap_exceptions
     def get_connections(self, kind='inet'):
-        raise NotImplementedError()
+        if kind not in conn_tmap:
+            raise ValueError("invalid %r kind argument; choose between %s"
+                             % (kind, ', '.join([repr(x) for x in conn_tmap])))
+        families, types = conn_tmap[kind]
+        ret = _psutil_sunos.get_process_connections(self.pid, families, types)
+        # The underlying C implementation retrieves all OS connections
+        # and filters them by PID.  At this point we can't tell whether
+        # an empty list means there were no connections for process or
+        # process is no longer active so we force NSP in case the PID
+        # is no longer there.
+        if not ret:
+            os.stat('/proc/%s' % self.pid)  # will raise NSP if process is gone
+        ret = [nt_connection(*conn) for conn in ret]
+
+        # UNIX sockets
+        if socket.AF_UNIX in families:
+            ret.extend([nt_connection(*conn) for conn in \
+                        self._get_unix_sockets(self.pid)])
+        return ret
 
     nt_mmap_grouped = namedtuple('mmap', 'path rss anon locked')
     nt_mmap_ext = namedtuple('mmap', 'addr perms path rss anon locked')

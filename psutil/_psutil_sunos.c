@@ -28,11 +28,17 @@
 #include <utmpx.h>
 #include <kstat.h>
 
+
+// conn
+#include <sys/ioctl.h>
+#include <sys/tihdr.h>
+#include <stropts.h>
+#include <inet/tcp.h>
+
 #include "_psutil_sunos.h"
 
 
 #define TV2DOUBLE(t)   (((t).tv_nsec * 0.000000001) + (t).tv_sec)
-
 
 /*
  * Read a file content and fills a C structure with it.
@@ -183,6 +189,7 @@ get_process_num_ctx_switches(PyObject* self, PyObject* args)
 
     return Py_BuildValue("kk", info.pr_vctx, info.pr_ictx);
 }
+
 
 /*
  * Return information about a given process thread.
@@ -532,9 +539,9 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     uintptr_t stk_base_sz, brk_base_sz;
 
     PyObject* pytuple = NULL;
-    PyObject* retlist = PyList_New(0);
+    PyObject* py_retlist = PyList_New(0);
 
-    if (retlist == NULL) {
+    if (py_retlist == NULL) {
         return NULL;
     }
     if (! PyArg_ParseTuple(args, "i", &pid)) {
@@ -580,7 +587,6 @@ get_process_memory_maps(PyObject* self, PyObject* args)
         perms[0] = '\0';
         pr_addr_sz = p->pr_vaddr + p->pr_size;
 
-
         // perms
         sprintf(perms, "%c%c%c%c%c%c", p->pr_mflags & MA_READ ? 'r' : '-',
                                        p->pr_mflags & MA_WRITE ? 'w' : '-',
@@ -625,7 +631,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
                                     (long)p->pr_locked * p->pr_pagesize);
         if (!pytuple)
             goto error;
-        if (PyList_Append(retlist, pytuple))
+        if (PyList_Append(py_retlist, pytuple))
             goto error;
         Py_DECREF(pytuple);
 
@@ -633,12 +639,11 @@ get_process_memory_maps(PyObject* self, PyObject* args)
         p += 1;
     }
 
-
-    return retlist;
+    return py_retlist;
 
 error:
     Py_XDECREF(pytuple);
-    Py_DECREF(retlist);
+    Py_DECREF(py_retlist);
     if (xmap != NULL)
         free(xmap);
     return NULL;
@@ -741,6 +746,328 @@ error:
 }
 
 
+static char *
+psutil_get_connection_status(int st) {
+    switch (st) {
+        case TCPS_CLOSED:
+            return "CLOSE";
+        case TCPS_IDLE:  // XXX
+            return "IDLE";
+        case TCPS_BOUND:  // XXX
+            return "BOUND";
+        case TCPS_LISTEN:
+            return "LISTEN";
+        case TCPS_SYN_SENT:
+            return "SYN_SENT";
+        case TCPS_SYN_RCVD:
+            return "SYN_RECV";
+        case TCPS_ESTABLISHED:
+            return "ESTABLISHED";
+        case TCPS_CLOSE_WAIT:
+            return "CLOSE_WAIT";
+        case TCPS_FIN_WAIT_1:
+            return "FIN_WAIT1";
+        case TCPS_FIN_WAIT_2:
+            return "FIN_WAIT2";
+        case TCPS_CLOSING:
+            return "CLOSING";
+        case TCPS_LAST_ACK:
+            return "LAST_ACK";
+        case TCPS_TIME_WAIT:
+            return "TIME_WAIT";
+        default:
+            return "?";
+    }
+}
+
+#define EXPER_IP_AND_ALL_IRES   (1024+4)
+
+/*
+ * Return TCP and UDP connections opened by process.
+ *
+ * Thanks to:
+ * https://github.com/DavidGriffith/finx/blob/master/nxsensor-3.5.0-1/src/sysdeps/solaris.c
+ * ...and:
+ * https://hg.java.net/hg/solaris~on-src/file/tip/usr/src/cmd/cmd-inet/usr.bin/netstat/netstat.c
+ */
+static PyObject*
+get_process_connections(PyObject* self, PyObject* args)
+{
+    long pid;
+    int sd = NULL;
+    mib2_tcpConnEntry_t *tp = NULL;
+    mib2_udpEntry_t     *ude;
+#if defined(AF_INET6)
+    mib2_tcp6ConnEntry_t *tp6;
+    mib2_udp6Entry_t     *ude6;
+#endif
+    char buf[512];
+    int i, flags, getcode, num_ent;
+    char lip[200], rip[200];
+    char *state;
+    int lport, rport;
+    struct strbuf ctlbuf, databuf;
+    struct T_optmgmt_req *tor = (struct T_optmgmt_req *)buf;
+    struct T_optmgmt_ack *toa = (struct T_optmgmt_ack *)buf;
+    struct T_error_ack   *tea = (struct T_error_ack *)buf;
+    struct opthdr        *mibhdr;
+
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
+    PyObject *py_laddr = NULL;
+    PyObject *py_raddr = NULL;
+    PyObject *af_filter = NULL;
+    PyObject *type_filter = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter))
+        goto error;
+    if (!PySequence_Check(af_filter) || !PySequence_Check(type_filter)) {
+        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
+        goto error;
+    }
+
+    sd = open("/dev/arp", O_RDWR);
+    if (sd == -1) {
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, "/dev/arp");
+        goto error;
+    }
+
+    /*
+    XXX - These 2 are used in ifconfig.c but they seem unnecessary
+    ret = ioctl(sd, I_PUSH, "tcp");
+    if (ret == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+    ret = ioctl(sd, I_PUSH, "udp");
+    if (ret == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+    */
+
+    // OK, this mess is basically copied and pasted from nxsensor project
+    // which copied and pasted it from netstat source code, mibget()
+    // function.  Also see:
+    // http://stackoverflow.com/questions/8723598/
+    tor->PRIM_type = T_SVR4_OPTMGMT_REQ;
+    tor->OPT_offset = sizeof (struct T_optmgmt_req);
+    tor->OPT_length = sizeof (struct opthdr);
+    tor->MGMT_flags = T_CURRENT;
+    mibhdr = (struct opthdr *)&tor[1];
+    mibhdr->level = EXPER_IP_AND_ALL_IRES;
+    mibhdr->name  = 0;
+    mibhdr->len   = 0;
+
+    ctlbuf.buf = buf;
+    ctlbuf.len = tor->OPT_offset + tor->OPT_length;
+    flags = 0;  // request to be sent in non-priority
+
+    if (putmsg(sd, &ctlbuf, (struct strbuf *)0, flags) == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    mibhdr = (struct opthdr *)&toa[1];
+    ctlbuf.maxlen = sizeof (buf);
+
+    for (;;) {
+        flags = 0;
+        getcode = getmsg(sd, &ctlbuf, (struct strbuf *)0, &flags);
+
+        if (getcode != MOREDATA ||
+            ctlbuf.len < sizeof (struct T_optmgmt_ack) ||
+            toa->PRIM_type != T_OPTMGMT_ACK ||
+            toa->MGMT_flags != T_SUCCESS)
+        {
+             break;
+        }
+        if (ctlbuf.len >= sizeof (struct T_error_ack) &&
+            tea->PRIM_type == T_ERROR_ACK)
+        {
+            PyErr_SetString(PyExc_RuntimeError, "ERROR_ACK");
+            goto error;
+        }
+        if (getcode == 0 &&
+            ctlbuf.len >= sizeof (struct T_optmgmt_ack) &&
+            toa->PRIM_type == T_OPTMGMT_ACK &&
+            toa->MGMT_flags == T_SUCCESS)
+        {
+            PyErr_SetString(PyExc_RuntimeError, "ERROR_T_OPTMGMT_ACK");
+            goto error;
+        }
+
+        databuf.maxlen = mibhdr->len;
+        databuf.len = 0;
+        databuf.buf = (char *)malloc((int)mibhdr->len);
+        if (!databuf.buf) {
+            //perror("malloc");
+            //break;
+            PyErr_NoMemory();
+            goto error;
+        }
+
+        flags = 0;
+        getcode = getmsg(sd, (struct strbuf *)0, &databuf, &flags);
+        if (getcode < 0) {
+            PyErr_SetFromErrno(PyExc_OSError);
+            goto error;
+        }
+
+        // TCPv4
+        if (mibhdr->level == MIB2_TCP && mibhdr->name == MIB2_TCP_13) {
+            tp = (mib2_tcpConnEntry_t *)databuf.buf;
+            num_ent = mibhdr->len / sizeof(mib2_tcpConnEntry_t);
+            for (i = 0; i < num_ent; i++, tp++) {
+                // check PID
+                if (tp->tcpConnCreationProcess != pid)
+                    continue;
+                // construct local/remote addresses
+                inet_ntop(AF_INET, &tp->tcpConnLocalAddress, lip, sizeof(lip));
+                inet_ntop(AF_INET, &tp->tcpConnRemAddress, rip, sizeof(rip));
+                lport = tp->tcpConnLocalPort;
+                rport = tp->tcpConnRemPort;
+
+                // contruct python tuple/list
+                py_laddr = Py_BuildValue("(si)", lip, lport);
+                if (!py_laddr)
+                    goto error;
+                if (rport != 0) {
+                    py_raddr = Py_BuildValue("(si)", rip, rport);
+                }
+                else {
+                    py_raddr = Py_BuildValue("()");
+                }
+                if (!py_raddr)
+                    goto error;
+                state = psutil_get_connection_status(tp->tcpConnEntryInfo.ce_state);
+
+                // add item
+                py_tuple = Py_BuildValue("(iiiNNs)", -1, AF_INET, SOCK_STREAM,
+                                                     py_laddr, py_raddr, state);
+                if (!py_tuple) {
+                    goto error;
+                }
+                if (PyList_Append(py_retlist, py_tuple))
+                    goto error;
+                Py_DECREF(py_tuple);
+            }
+        }
+#if defined(AF_INET6)
+        // TCPv6
+        else if (mibhdr->level == MIB2_TCP6 && mibhdr->name == MIB2_TCP6_CONN) {
+            tp6 = (mib2_tcp6ConnEntry_t *)databuf.buf;
+            num_ent = mibhdr->len / sizeof(mib2_tcp6ConnEntry_t);
+
+            for (i = 0; i < num_ent; i++, tp6++) {
+                // check PID
+                if (tp6->tcp6ConnCreationProcess != pid)
+                    continue;
+                // construct local/remote addresses
+                inet_ntop(AF_INET6, &tp6->tcp6ConnLocalAddress, lip, sizeof(lip));
+                inet_ntop(AF_INET6, &tp6->tcp6ConnRemAddress, rip, sizeof(rip));
+                lport = tp6->tcp6ConnLocalPort;
+                rport = tp6->tcp6ConnRemPort;
+
+                // contruct python tuple/list
+                py_laddr = Py_BuildValue("(si)", lip, lport);
+                if (!py_laddr)
+                    goto error;
+                if (rport != 0) {
+                    py_raddr = Py_BuildValue("(si)", rip, rport);
+                }
+                else {
+                    py_raddr = Py_BuildValue("()");
+                }
+                if (!py_raddr)
+                    goto error;
+                state = psutil_get_connection_status(tp->tcpConnEntryInfo.ce_state);
+
+                // add item
+                py_tuple = Py_BuildValue("(iiiNNs)", -1, AF_INET6, SOCK_STREAM,
+                                                     py_laddr, py_raddr, state);
+
+                if (!py_tuple) {
+                    goto error;
+                }
+                if (PyList_Append(py_retlist, py_tuple))
+                    goto error;
+                Py_DECREF(py_tuple);
+            }
+        }
+#endif
+        else if (mibhdr->level == MIB2_UDP || mibhdr->level == MIB2_UDP_ENTRY) {
+            ude = (mib2_udpEntry_t *)databuf.buf;
+            num_ent = mibhdr->len / sizeof(mib2_udpEntry_t);
+            for (i = 0; i < num_ent; i++, ude++) {
+                // check PID
+                if (ude->udpCreationProcess != pid)
+                    continue;
+                inet_ntop(AF_INET, &ude->udpLocalAddress, lip, sizeof(lip));
+                lport = ude->udpLocalPort;
+                py_laddr = Py_BuildValue("(si)", lip, lport);
+                if (!py_laddr)
+                    goto error;
+                py_raddr = Py_BuildValue("()");
+                if (!py_raddr)
+                    goto error;
+                py_tuple = Py_BuildValue("(iiiNNs)", -1, AF_INET, SOCK_DGRAM,
+                                                     py_laddr, py_raddr, "");
+                if (!py_tuple) {
+                    goto error;
+                }
+                if (PyList_Append(py_retlist, py_tuple))
+                    goto error;
+                Py_DECREF(py_tuple);
+            }
+        }
+#if defined(AF_INET6)
+        else if (mibhdr->level == MIB2_UDP6 || mibhdr->level == MIB2_UDP6_ENTRY) {
+            ude6 = (mib2_udp6Entry_t *)databuf.buf;
+            num_ent = mibhdr->len / sizeof(mib2_udp6Entry_t);
+            for (i = 0; i < num_ent; i++, ude6++) {
+                // check PID
+                if (ude6->udp6CreationProcess != pid)
+                    continue;
+                inet_ntop(AF_INET6, &ude6->udp6LocalAddress, lip, sizeof(lip));
+                lport = ude6->udp6LocalPort;
+                py_laddr = Py_BuildValue("(si)", lip, lport);
+                if (!py_laddr)
+                    goto error;
+                py_raddr = Py_BuildValue("()");
+                if (!py_raddr)
+                    goto error;
+                py_tuple = Py_BuildValue("(iiiNNs)", -1, AF_INET6, SOCK_DGRAM,
+                                                     py_laddr, py_raddr, "");
+                if (!py_tuple) {
+                    goto error;
+                }
+                if (PyList_Append(py_retlist, py_tuple))
+                    goto error;
+                Py_DECREF(py_tuple);
+            }
+        }
+#endif
+    }
+
+    free(databuf.buf);
+    close(sd);
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_XDECREF(py_laddr);
+    Py_XDECREF(py_raddr);
+    Py_DECREF(py_retlist);
+    // TODO : free databuf
+    if (sd != NULL)
+        close(sd);
+    return NULL;
+}
+
+
 /*
  * define the psutil C module methods and initialize the module.
  */
@@ -763,6 +1090,9 @@ PsutilMethods[] =
         "Return process memory mappings"},
      {"get_process_num_ctx_switches", get_process_num_ctx_switches, METH_VARARGS,
         "Return the number of context switches performed by process"},
+     {"get_process_connections", get_process_connections, METH_VARARGS,
+        "Return TCP and UDP connections opened by process."},
+
 
      // --- system-related functions
 

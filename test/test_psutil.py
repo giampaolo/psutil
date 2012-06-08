@@ -1193,7 +1193,7 @@ class TestCase(unittest.TestCase):
         ip, port = con.local_address
         self.assertEqual(ip, '127.0.0.1')
         self.assertEqual(con.remote_address, ())
-        if WINDOWS:
+        if WINDOWS or SUNOS:
             self.assertEqual(con.fd, -1)
         else:
             assert con.fd > 0, con
@@ -1224,7 +1224,8 @@ class TestCase(unittest.TestCase):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.bind(TESTFN)
         conn = psutil.Process(os.getpid()).get_connections(kind='unix')[0]
-        self.assertEqual(conn.fd, sock.fileno())
+        if conn.fd != -1:
+            self.assertEqual(conn.fd, sock.fileno())
         self.assertEqual(conn.family, socket.AF_UNIX)
         self.assertEqual(conn.type, socket.SOCK_STREAM)
         self.assertEqual(conn.local_address, TESTFN)
@@ -1239,7 +1240,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(conn.type, socket.SOCK_DGRAM)
         sock.close()
 
-    @skipUnless(hasattr(socket, "fromfd") and not WINDOWS)
+    @skipUnless(hasattr(socket, "fromfd") and not WINDOWS or SUNOS)
     def test_connection_fromfd(self):
         sock = socket.socket()
         sock.bind(('localhost', 0))
