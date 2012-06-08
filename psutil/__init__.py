@@ -314,9 +314,11 @@ class Process(object):
             cmdline = self.cmdline
             if cmdline and hasattr(os, 'access') and hasattr(os, 'X_OK'):
                 exe = cmdline[0]  # the possible exe
-                rexe = os.path.realpath(exe)  # ...in case it's a symlink
-                if os.path.isabs(rexe) and os.path.isfile(rexe) \
-                and os.access(rexe, os.X_OK):
+                # Attempt to guess only in case of an absolute path.
+                # It is not safe otherwise as the process might have
+                # changed cwd.
+                if os.path.isabs(exe) and os.path.isfile(exe) \
+                and os.access(exe, os.X_OK):
                     return exe
             if isinstance(fallback, AccessDenied):
                 raise fallback

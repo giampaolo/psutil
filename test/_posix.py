@@ -124,6 +124,9 @@ class PosixSpecificTestCase(TestCase):
     def test_process_cmdline(self):
         ps_cmdline = ps("ps --no-headers -o command -p %s" %self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline)
+        if SUNOS:
+            # ps on Solaris only shows the first part of the cmdline
+            psutil_cmdline = psutil_cmdline.split(" ")[0]
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
     @retry_before_failing()

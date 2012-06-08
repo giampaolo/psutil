@@ -347,7 +347,7 @@ class Process(object):
                 try:
                     file = os.readlink(path)
                 except OSError:
-                    # ENOENT == file gone in meantime
+                    # ENOENT == file which is gone in the meantime
                     err = sys.exc_info()[1]
                     if err.errno == errno.ENOENT:
                         hit_enoent = True
