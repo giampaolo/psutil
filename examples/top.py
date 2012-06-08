@@ -167,8 +167,12 @@ def refresh_window(procs, procs_status):
             p.dict['memory_percent'] = ''
         if p.dict['cpu_percent'] is None:
             p.dict['cpu_percent'] = ''
+        if p.dict['username']:
+            username = p.dict['username'][:8]
+        else:
+            username = ""
         line = templ % (p.pid,
-                        p.dict['username'][:8],
+                        username,
                         p.dict['nice'],
                         bytes2human(getattr(p.dict['memory_info'], 'vms', 0)),
                         bytes2human(getattr(p.dict['memory_info'], 'rss', 0)),
