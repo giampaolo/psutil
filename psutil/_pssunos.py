@@ -416,6 +416,7 @@ class Process(object):
     def get_num_fds(self):
        return len(os.listdir("/proc/%s/fd" % self.pid))
 
+    @wrap_exceptions
     def get_num_ctx_switches(self):
         return nt_ctxsw(*_psutil_sunos.get_process_num_ctx_switches(self.pid))
 

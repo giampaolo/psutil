@@ -50,7 +50,7 @@ _fill_struct_from_file(char *path, void *fstruct, size_t size)
     size_t nbytes;
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, path);
         return 0;
 	}
 	nbytes = read(fd, fstruct, size);
