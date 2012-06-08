@@ -192,6 +192,45 @@ get_process_num_ctx_switches(PyObject* self, PyObject* args)
 
 
 /*
+ * Process IO counters.
+ *
+ * Commented out and left here as a reminder.  Apparently we cannot
+ * retrieve process IO stats because:
+ * - 'pr_ioch' is a sum of chars read and written, with no distinction
+ * - 'pr_inblk' and 'pr_oublk', which should be the number of bytes
+ *    read and written, hardly increase and according to:
+ *    http://www.brendangregg.com/Perf/paper_diskubyp1.pdf
+ *    ...they should be meaningless anyway.
+ *
+static PyObject*
+get_process_io_counters(PyObject* self, PyObject* args)
+{
+    int pid;
+    char path[100];
+    prusage_t info;
+
+    if (! PyArg_ParseTuple(args, "i", &pid)) {
+        return NULL;
+    }
+    sprintf(path, "/proc/%i/usage", pid);
+    if (! _fill_struct_from_file(path, (void *)&info, sizeof(info))) {
+        return NULL;
+    }
+
+    // On Solaris we only have 'pr_ioch' which accounts for bytes read
+    // *and* written.
+    // 'pr_inblk' and 'pr_oublk' should be expressed in blocks of
+    // 8KB according to:
+    // http://www.brendangregg.com/Perf/paper_diskubyp1.pdf  (pag. 8)
+    return Py_BuildValue("kkkk", info.pr_ioch,
+                                 info.pr_ioch,
+                                 info.pr_inblk,
+                                 info.pr_oublk);
+}
+ */
+
+
+/*
  * Return information about a given process thread.
  */
 static PyObject*
