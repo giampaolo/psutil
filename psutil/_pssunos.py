@@ -16,7 +16,7 @@ import socket
 
 import _psutil_sunos
 import _psutil_posix
-import _psposix
+from psutil import _psposix
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._compat import namedtuple, PY3
 from psutil._common import *
@@ -58,12 +58,13 @@ def swap_memory():
     # ...nevertheless I can't manage to obtain the same numbers as 'swap'
     # cmdline utility, so let's parse its output (sigh!)
     p = subprocess.Popen(['swap', '-l', '-k'], stdout=subprocess.PIPE)
-    out, err = p.communicate()
-    retcode = p.poll()
-    if retcode:
+    stdout, stderr = p.communicate()
+    if PY3:
+        stdout = stdout.decode(sys.stdout.encoding)
+    if p.returncode != 0:
         raise RuntimeError("'swap -l -k' failed (retcode=%s)" % retcode)
 
-    lines = out.strip().split('\n')[1:]
+    lines = stdout.strip().split('\n')[1:]
     if not lines:
         raise RuntimeError('no swap device(s) configured')
     total = free = 0
@@ -141,10 +142,11 @@ def wrap_exceptions(callable):
     def wrapper(self, *args, **kwargs):
         try:
             return callable(self, *args, **kwargs)
-        except EnvironmentError, err:
+        except EnvironmentError:
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if
             # process is gone in meantime.
+            err = sys.exc_info()[1]
             if err.errno in (errno.ENOENT, errno.ESRCH):
                 raise NoSuchProcess(self.pid, self._process_name)
             if err.errno in (errno.EPERM, errno.EACCES):
@@ -233,7 +235,8 @@ class Process(object):
             for x in (0, 1, 2, 255):
                 try:
                     return os.readlink('/proc/%d/path/%d' % (self.pid, x))
-                except OSError, err:
+                except OSError:
+                    err = sys.exc_info()[1]
                     if err.errno == errno.ENOENT:
                         hit_enoent = True
                         continue
@@ -272,8 +275,9 @@ class Process(object):
                 tid = int(tid)
                 try:
                     utime, stime = _psutil_sunos.query_process_thread(tid)
-                except EnvironmentError, err:
+                except EnvironmentError:
                     # ENOENT == thread gone in meantime
+                    err = sys.exc_info()[1]
                     if err.errno == errno.ENOENT:
                         hit_enoent = True
                         continue
@@ -297,8 +301,9 @@ class Process(object):
             if os.path.islink(path):
                 try:
                     file = os.readlink(path)
-                except OSError, err:
+                except OSError:
                     # ENOENT == file gone in meantime
+                    err = sys.exc_info()[1]
                     if err.errno == errno.ENOENT:
                         hit_enoent = True
                         continue
