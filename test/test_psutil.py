@@ -1707,12 +1707,15 @@ class TestProcess(TestCase):
             pass
 
         # username property
-        if POSIX:
-            self.assertEqual(p.username, 'root')
-        elif WINDOWS:
-            self.assertEqual(p.username, 'NT AUTHORITY\\SYSTEM')
-        else:
-            p.username
+        try:
+            if POSIX:
+                self.assertEqual(p.username, 'root')
+            elif WINDOWS:
+                self.assertEqual(p.username, 'NT AUTHORITY\\SYSTEM')
+            else:
+                p.username
+        except psutil.AccessDenied:
+            pass
 
         self.assertIn(0, psutil.get_pid_list())
         self.assertTrue(psutil.pid_exists(0))

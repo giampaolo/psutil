@@ -1370,6 +1370,8 @@ def test():
                         user = ''
                 else:
                     raise
+            except Error:
+                user = ''
             if os.name == 'nt' and '\\' in user:
                 user = user.split('\\')[1]
             vms = pinfo['memory_info'] and \
