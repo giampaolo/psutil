@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-#
-# $Id$
-#
+
 # Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -15,14 +13,12 @@ import sys
 import time
 import glob
 
-from psutil.error import TimeoutExpired
-from psutil._common import nt_diskinfo, usage_percent
+from psutil._error import TimeoutExpired
+from psutil._common import nt_diskinfo, usage_percent, memoize
 
 
 def pid_exists(pid):
     """Check whether pid exists in the current process table."""
-    if not isinstance(pid, int):
-        raise TypeError('an integer is required')
     if pid < 0:
         return False
     try:
@@ -46,14 +42,15 @@ def wait_pid(pid, timeout=None):
     """
     def check_timeout(delay):
         if timeout is not None:
-            if time.time() >= stop_at:
+            if timer() >= stop_at:
                 raise TimeoutExpired(pid)
         time.sleep(delay)
         return min(delay * 2, 0.04)
 
+    timer = getattr(time, 'monotonic', time.time)
     if timeout is not None:
         waitcall = lambda: os.waitpid(pid, os.WNOHANG)
-        stop_at = time.time() + timeout
+        stop_at = timer() + timeout
     else:
         waitcall = lambda: os.waitpid(pid, 0)
 
@@ -109,10 +106,16 @@ def get_disk_usage(path):
     # http://goo.gl/sWGbH
     return nt_diskinfo(total, used, free, percent)
 
+@memoize
 def _get_terminal_map():
     ret = {}
     ls = glob.glob('/dev/tty*') + glob.glob('/dev/pts/*')
     for name in ls:
         assert name not in ret
-        ret[os.stat(name).st_rdev] = name
+        try:
+            ret[os.stat(name).st_rdev] = name
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno != errno.ENOENT:
+                raise
     return ret

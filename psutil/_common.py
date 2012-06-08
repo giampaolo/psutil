@@ -1,7 +1,5 @@
 #/usr/bin/env python
-#
-#$Id$
-#
+
 # Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -13,10 +11,9 @@ import sys
 import os
 import stat
 import errno
-import functools
 import warnings
 
-from psutil._compat import namedtuple, long
+from psutil._compat import namedtuple, long, wraps
 
 # --- functions
 
@@ -95,7 +92,7 @@ def deprecated(replacement=None):
         if fun.__doc__ is None:
             fun.__doc__ = msg
 
-        @functools.wraps(fun)
+        @wraps(fun)
         def inner(*args, **kwargs):
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
             return fun(*args, **kwargs)
@@ -135,6 +132,19 @@ STATUS_IDLE = constant(9, "idle")  # BSD
 STATUS_LOCKED = constant(10, "locked")  # BSD
 STATUS_WAITING = constant(11, "waiting")  # BSD
 
+CONN_ESTABLISHED = constant(0, "ESTABLISHED")
+CONN_SYN_SENT = constant(1, "SYN_SENT")
+CONN_SYN_RECV = constant(2, "SYN_RECV")
+CONN_FIN_WAIT1 = constant(3, "FIN_WAIT1")
+CONN_FIN_WAIT2 = constant(4, "FIN_WAIT2")
+CONN_TIME_WAIT = constant(5, "TIME_WAIT")
+CONN_CLOSE = constant(6, "CLOSE")
+CONN_CLOSE_WAIT = constant(7, "CLOSE_WAIT")
+CONN_LAST_ACK = constant(8, "LAST_ACK")
+CONN_LISTEN = constant(9, "LISTEN")
+CONN_CLOSING = constant(10, "CLOSING")
+CONN_NONE = constant(20, "NONE")
+
 # --- Process.get_connections() 'kind' parameter mapping
 
 import socket
@@ -170,7 +180,6 @@ del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM, socket
 # --- namedtuples
 
 # system
-nt_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
 nt_sysmeminfo = namedtuple('usage', 'total used free percent')
 # XXX - would 'available' be better than 'free' as for virtual_memory() nt?
 nt_swapmeminfo = namedtuple('swap', 'total used free percent sin sout')

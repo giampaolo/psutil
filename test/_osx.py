@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-#
-# $Id$
-#
+
 # Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -18,11 +16,10 @@ import re
 import psutil
 
 from psutil._compat import PY3
-from test_psutil import reap_children, get_test_subprocess, sh
+from test_psutil import *
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-TOLERANCE = 200 * 1024  # 200 KB
 
 
 def sysctl(cmdline):
@@ -49,21 +46,13 @@ def vm_stat(field):
     return int(re.search('\d+', line).group(0)) * PAGESIZE
 
 
-class OSXSpecificTestCase(unittest.TestCase):
+class OSXSpecificTestCase(TestCase):
 
     def setUp(self):
         self.pid = get_test_subprocess().pid
 
     def tearDown(self):
         reap_children()
-
-    def assert_eq_w_tol(self, first, second, tolerance):
-        difference = abs(first - second)
-        if difference <= tolerance:
-            return
-        msg = '%r != %r within %r delta (%r difference)' \
-              % (first, second, tolerance, difference)
-        raise AssertionError(msg)
 
     def test_process_create_time(self):
         cmdline = "ps -o lstart -p %s" %self.pid
@@ -110,18 +99,22 @@ class OSXSpecificTestCase(unittest.TestCase):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
         self.assertEqual(sysctl_hwphymem, psutil.TOTAL_PHYMEM)
 
+    @retry_before_failing()
     def test_vmem_free(self):
         num = vm_stat("free")
         self.assert_eq_w_tol(psutil.virtual_memory().free, num, TOLERANCE)
 
+    @retry_before_failing()
     def test_vmem_active(self):
         num = vm_stat("active")
         self.assert_eq_w_tol(psutil.virtual_memory().active, num, TOLERANCE)
 
+    @retry_before_failing()
     def test_vmem_inactive(self):
         num = vm_stat("inactive")
         self.assert_eq_w_tol(psutil.virtual_memory().inactive, num, TOLERANCE)
 
+    @retry_before_failing()
     def test_vmem_wired(self):
         num = vm_stat("wired")
         self.assert_eq_w_tol(psutil.virtual_memory().wired, num, TOLERANCE)
@@ -148,7 +141,12 @@ class OSXSpecificTestCase(unittest.TestCase):
         self.assertEqual(tot1, tot2)
 
 
-if __name__ == '__main__':
+def test_main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(OSXSpecificTestCase))
-    unittest.TextTestRunner(verbosity=2).run(test_suite)
+    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
+    return result.wasSuccessful()
+
+if __name__ == '__main__':
+    if not test_main():
+        sys.exit(1)

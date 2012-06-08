@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-#
-# $Id$
-#
+
 # Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -18,8 +16,7 @@ import datetime
 import psutil
 
 from psutil._compat import PY3
-from test_psutil import (get_test_subprocess, reap_children, PYTHON, LINUX, OSX,
-                         BSD, SUNOS, ignore_access_denied, sh, skipIf)
+from test_psutil import *
 
 
 def ps(cmd):
@@ -28,11 +25,6 @@ def ps(cmd):
     """
     if not LINUX:
         cmd = cmd.replace(" --no-headers ", " ")
-    if SUNOS:
-        if ' -o command ' in cmd:
-            cmd = cmd.replace(' -o command ', ' -o comm ')
-        elif ' -o start ' in cmd:
-            cmd = cmd.replace(' -o start ', ' -o stime ')
     p = subprocess.Popen(cmd, shell=1, stdout=subprocess.PIPE)
     output = p.communicate()[0].strip()
     if PY3:
@@ -45,7 +37,7 @@ def ps(cmd):
         return output
 
 
-class PosixSpecificTestCase(unittest.TestCase):
+class PosixSpecificTestCase(TestCase):
     """Compare psutil results against 'ps' command line utility."""
 
     # for ps -o arguments see: http://unixhelp.ed.ac.uk/CGI/man-cgi?ps
@@ -73,11 +65,11 @@ class PosixSpecificTestCase(unittest.TestCase):
         self.assertEqual(gid_ps, gid_psutil)
 
     def test_process_username(self):
-        username_ps = ps("ps --no-headers -o user -p %s" %self.pid).strip()
+        username_ps = ps("ps --no-headers -o user -p %s" %self.pid)
         username_psutil = psutil.Process(self.pid).username
         self.assertEqual(username_ps, username_psutil)
 
-    @ignore_access_denied
+    @skip_on_access_denied()
     def test_process_rss_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -86,7 +78,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         rss_psutil = psutil.Process(self.pid).get_memory_info()[0] / 1024
         self.assertEqual(rss_ps, rss_psutil)
 
-    @ignore_access_denied
+    @skip_on_access_denied()
     def test_process_vsz_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -128,12 +120,10 @@ class PosixSpecificTestCase(unittest.TestCase):
 
     def test_process_cmdline(self):
         ps_cmdline = ps("ps --no-headers -o command -p %s" %self.pid)
-        if not SUNOS:
-            psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline)
-        else:
-            psutil_cmdline = psutil.Process(self.pid).cmdline[0]
+        psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline)
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
+    @retry_before_failing()
     def test_get_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
@@ -185,7 +175,12 @@ class PosixSpecificTestCase(unittest.TestCase):
             self.assertTrue(u.terminal in terminals, u.terminal)
 
 
-if __name__ == '__main__':
+def test_main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(PosixSpecificTestCase))
-    unittest.TextTestRunner(verbosity=2).run(test_suite)
+    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
+    return result.wasSuccessful()
+
+if __name__ == '__main__':
+    if not test_main():
+        sys.exit(1)

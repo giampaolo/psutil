@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
@@ -107,6 +105,9 @@ get_disk_partitions(PyObject* self, PyObject* args)
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_tuple = NULL;
 
+    if (py_retlist == NULL)
+        return NULL;
+
     // MOUNTED constant comes from mntent.h and it's == '/etc/mtab'
     Py_BEGIN_ALLOW_THREADS
     file = setmntent(MOUNTED, "r");
@@ -153,6 +154,8 @@ get_sysinfo(PyObject* self, PyObject* args)
     if (sysinfo(&info) != 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
+
+    // note: BOOT_TIME might also be determined from here
     return Py_BuildValue("(KKKKKK)",
         (unsigned long long)info.totalram  * info.mem_unit,   // total
         (unsigned long long)info.freeram   * info.mem_unit,   // free
@@ -160,7 +163,6 @@ get_sysinfo(PyObject* self, PyObject* args)
         (unsigned long long)info.sharedram * info.mem_unit,   // shared
         (unsigned long long)info.totalswap * info.mem_unit,   // swap tot
         (unsigned long long)info.freeswap  * info.mem_unit);  // swap free
-    // TODO: we can also determine BOOT_TIME here
 }
 
 
@@ -215,6 +217,9 @@ get_system_users(PyObject* self, PyObject* args)
     PyObject *tuple = NULL;
     PyObject *user_proc = NULL;
     struct utmp *ut;
+
+    if (ret_list == NULL)
+        return NULL;
 
     setutent();
     while (NULL != (ut = getutent())) {

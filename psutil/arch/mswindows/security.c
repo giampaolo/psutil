@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
@@ -68,10 +66,8 @@ int HasSystemPrivilege(HANDLE hProcess) {
     // allocate buffer and call GetTokenInformation again
     //tp = (PTOKEN_PRIVILEGES) GlobalAlloc(GPTR, dwSize);
     pBuffer = (BYTE *) malloc(dwSize);
-
     if (pBuffer == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        free(pBuffer);
+        PyErr_NoMemory();
         return -1;
     }
 
@@ -237,4 +233,3 @@ int UnsetSeDebug()
     CloseHandle(hToken);
     return 1;
 }
-

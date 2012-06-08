@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-#
-# $Id$
-#
+
 # Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -12,26 +10,64 @@ import errno
 import os
 import sys
 import platform
+import warnings
 
 import _psutil_mswindows
 from _psutil_mswindows import ERROR_ACCESS_DENIED
-from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
+from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
-from psutil._compat import PY3, xrange, long
+from psutil._compat import PY3, xrange, long, wraps
 
 # Windows specific extended namespace
 __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
                   "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
-                  "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS"]
+                  "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
+                  #
+                  "CONN_DELETE_TCB",
+                  ]
 
 
 # --- module level constants (gets pushed up to psutil module)
 
-NUM_CPUS = _psutil_mswindows.get_num_cpus()
-BOOT_TIME = _psutil_mswindows.get_system_uptime()
-TOTAL_PHYMEM = _psutil_mswindows.get_virtual_mem()[0]
+# Since these constants get determined at import time we do not want to
+# crash immediately; instead we'll set them to None and most likely
+# we'll crash later as they're used for determining process CPU stats
+# and creation_time
+try:
+    NUM_CPUS = _psutil_mswindows.get_num_cpus()
+except Exception:
+    NUM_CPUS = None
+    warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
+try:
+    BOOT_TIME = _psutil_mswindows.get_system_boot_time()
+except Exception:
+    BOOT_TIME = None
+    warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
+try:
+    TOTAL_PHYMEM = _psutil_mswindows.get_virtual_mem()[0]
+except Exception:
+    TOTAL_PHYMEM = None
+    warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
+
+CONN_DELETE_TCB = constant(11, "DELETE_TCB")
 WAIT_TIMEOUT = 0x00000102 # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED])
+TCP_STATES_TABLE = {
+    _psutil_mswindows.MIB_TCP_STATE_ESTAB : CONN_ESTABLISHED,
+    _psutil_mswindows.MIB_TCP_STATE_SYN_SENT : CONN_SYN_SENT,
+    _psutil_mswindows.MIB_TCP_STATE_SYN_RCVD : CONN_SYN_RECV,
+    _psutil_mswindows.MIB_TCP_STATE_FIN_WAIT1 : CONN_FIN_WAIT1,
+    _psutil_mswindows.MIB_TCP_STATE_FIN_WAIT2 : CONN_FIN_WAIT2,
+    _psutil_mswindows.MIB_TCP_STATE_TIME_WAIT : CONN_TIME_WAIT,
+    _psutil_mswindows.MIB_TCP_STATE_CLOSED : CONN_CLOSE,
+    _psutil_mswindows.MIB_TCP_STATE_CLOSE_WAIT : CONN_CLOSE_WAIT,
+    _psutil_mswindows.MIB_TCP_STATE_LAST_ACK : CONN_LAST_ACK,
+    _psutil_mswindows.MIB_TCP_STATE_LISTEN : CONN_LISTEN,
+    _psutil_mswindows.MIB_TCP_STATE_CLOSING : CONN_CLOSING,
+    _psutil_mswindows.MIB_TCP_STATE_DELETE_TCB : CONN_DELETE_TCB,
+    _psutil_mswindows.PSUTIL_CONN_NONE : CONN_NONE,
+}
+
 
 # process priority constants:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
@@ -59,6 +95,8 @@ def _convert_raw_path(s):
 
 
 # --- public functions
+
+get_system_boot_time = _psutil_mswindows.get_system_boot_time
 
 nt_virtmem_info = namedtuple('vmem', ' '.join([
     # all platforms
@@ -142,14 +180,14 @@ disk_io_counters = _psutil_mswindows.get_disk_io_counters
 
 # --- decorator
 
-def wrap_exceptions(callable):
-    """Call callable into a try/except clause so that if a
-    WindowsError 5 AccessDenied exception is raised we translate it
-    into psutil.AccessDenied
+def wrap_exceptions(fun):
+    """Decorator which translates bare OSError and WindowsError
+    exceptions into NoSuchProcess and AccessDenied.
     """
+    @wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
-            return callable(self, *args, **kwargs)
+            return fun(self, *args, **kwargs)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
@@ -348,8 +386,15 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        ret = _psutil_mswindows.get_process_connections(self.pid, families, types)
-        return [nt_connection(*conn) for conn in ret]
+        rawlist = _psutil_mswindows.get_process_connections(self.pid, families,
+                                                            types)
+        ret = []
+        for item in rawlist:
+            fd, fam, type, laddr, raddr, status = item
+            status = TCP_STATES_TABLE[status]
+            nt = nt_connection(fd, fam, type, laddr, raddr, status)
+            ret.append(nt)
+        return ret
 
     @wrap_exceptions
     def get_process_nice(self):
@@ -358,6 +403,22 @@ class Process(object):
     @wrap_exceptions
     def set_process_nice(self, value):
         return _psutil_mswindows.set_process_priority(self.pid, value)
+
+    # available on Windows >= Vista
+    if hasattr(_psutil_mswindows, "get_process_io_priority"):
+        @wrap_exceptions
+        def get_process_ionice(self):
+            return _psutil_mswindows.get_process_io_priority(self.pid)
+
+        @wrap_exceptions
+        def set_process_ionice(self, value, _):
+            if _:
+                raise TypeError("set_process_ionice() on Windows takes only " \
+                                "1 argument (2 given)")
+            if value not in (2, 1, 0):
+                raise ValueError("value must be 2 (normal), 1 (low) or 0 " \
+                                 "(very low); got %r" % value)
+            return _psutil_mswindows.set_process_io_priority(self.pid, value)
 
     @wrap_exceptions
     def get_process_io_counters(self):
@@ -392,8 +453,6 @@ class Process(object):
                 raise ValueError("invalid argument %r" % l)
             out = 0
             for b in l:
-                if not isinstance(b, (int, long)) or b < 0:
-                    raise ValueError("invalid argument %r" % b)
                 out |= 2**b
             return out
 
@@ -403,7 +462,7 @@ class Process(object):
         allcpus = list(range(len(get_system_per_cpu_times())))
         for cpu in value:
             if cpu not in allcpus:
-                raise ValueError("invalid CPU %i" % cpu)
+                raise ValueError("invalid CPU %r" % cpu)
 
         bitmask = to_bitmask(value)
         _psutil_mswindows.set_process_cpu_affinity(self.pid, bitmask)

@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-#
-# $Id$
-#
+
 # Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -19,6 +17,7 @@ import time
 import socket
 import threading
 import types
+import sys
 
 import psutil
 import psutil._common
@@ -149,7 +148,11 @@ class TestProcessObjectLeaks(Base):
         self.execute('get_ionice')
 
     def test_set_ionice(self):
-        self.execute('set_ionice', psutil.IOPRIO_CLASS_NONE)
+        if WINDOWS:
+            value = psutil.Process(os.getpid()).get_ionice()
+            self.execute('set_ionice', value)
+        else:
+            self.execute('set_ionice', psutil.IOPRIO_CLASS_NONE)
 
     def test_username(self):
         self.execute('username')
@@ -319,7 +322,9 @@ def test_main():
              TestModuleFunctionsLeaks,]
     for test in tests:
         test_suite.addTest(unittest.makeSuite(test))
-    unittest.TextTestRunner(verbosity=2).run(test_suite)
+    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
+    return result.wasSuccessful()
 
 if __name__ == '__main__':
-    test_main()
+    if not test_main():
+        sys.exit(1)

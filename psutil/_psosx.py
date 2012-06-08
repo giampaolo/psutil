@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-#
-# $Id$
-#
+
 # Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -11,26 +9,59 @@
 import errno
 import os
 import sys
+import warnings
 
 import _psutil_osx
 import _psutil_posix
 from psutil import _psposix
-from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
-from psutil._compat import namedtuple
+from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
+from psutil._compat import namedtuple, wraps
 from psutil._common import *
 
 __extra__all__ = []
 
 # --- constants
 
-NUM_CPUS = _psutil_osx.get_num_cpus()
-BOOT_TIME = _psutil_osx.get_system_boot_time()
-TOTAL_PHYMEM = _psutil_osx.get_virtual_mem()[0]
+# Since these constants get determined at import time we do not want to
+# crash immediately; instead we'll set them to None and most likely
+# we'll crash later as they're used for determining process CPU stats
+# and creation_time
+try:
+    NUM_CPUS = _psutil_osx.get_num_cpus()
+except Exception:
+    NUM_CPUS = None
+    warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
+try:
+    BOOT_TIME = _psutil_osx.get_system_boot_time()
+except Exception:
+    BOOT_TIME = None
+    warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
+try:
+    TOTAL_PHYMEM = _psutil_osx.get_virtual_mem()[0]
+except Exception:
+    TOTAL_PHYMEM = None
+    warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
+
 _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-_TERMINAL_MAP = _psposix._get_terminal_map()
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle')
+# http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
+_TCP_STATES_TABLE = {_psutil_osx.TCPS_ESTABLISHED : CONN_ESTABLISHED,
+                     _psutil_osx.TCPS_SYN_SENT : CONN_SYN_SENT,
+                     _psutil_osx.TCPS_SYN_RECEIVED : CONN_SYN_RECV,
+                     _psutil_osx.TCPS_FIN_WAIT_1 : CONN_FIN_WAIT1,
+                     _psutil_osx.TCPS_FIN_WAIT_2 : CONN_FIN_WAIT2,
+                     _psutil_osx.TCPS_TIME_WAIT : CONN_TIME_WAIT,
+                     _psutil_osx.TCPS_CLOSED : CONN_CLOSE,
+                     _psutil_osx.TCPS_CLOSE_WAIT : CONN_CLOSE_WAIT,
+                     _psutil_osx.TCPS_LAST_ACK : CONN_LAST_ACK,
+                     _psutil_osx.TCPS_LISTEN : CONN_LISTEN,
+                     _psutil_osx.TCPS_CLOSING : CONN_CLOSING,
+                     _psutil_osx.PSUTIL_CONN_NONE : CONN_NONE,
+                     }
 
 # --- functions
+
+get_system_boot_time = _psutil_osx.get_system_boot_time
 
 nt_virtmem_info = namedtuple('vmem', ' '.join([
     # all platforms
@@ -106,14 +137,14 @@ disk_io_counters = _psutil_osx.get_disk_io_counters
 
 # --- decorator
 
-def wrap_exceptions(callable):
-    """Call callable into a try/except clause so that if an
-    OSError EPERM exception is raised we translate it into
-    psutil.AccessDenied.
+def wrap_exceptions(fun):
+    """Decorator which translates bare OSError exceptions into
+    NoSuchProcess and AccessDenied.
     """
+    @wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
-            return callable(self, *args, **kwargs)
+            return fun(self, *args, **kwargs)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno == errno.ESRCH:
@@ -179,8 +210,9 @@ class Process(object):
     @wrap_exceptions
     def get_process_terminal(self):
         tty_nr = _psutil_osx.get_process_tty_nr(self.pid)
+        tmap = _psposix._get_terminal_map()
         try:
-            return _TERMINAL_MAP[tty_nr]
+            return tmap[tty_nr]
         except KeyError:
             return None
 
@@ -242,8 +274,14 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        ret = _psutil_osx.get_process_connections(self.pid, families, types)
-        return [nt_connection(*conn) for conn in ret]
+        rawlist = _psutil_osx.get_process_connections(self.pid, families, types)
+        ret = []
+        for item in rawlist:
+            fd, fam, type, laddr, raddr, status = item
+            status = _TCP_STATES_TABLE[status]
+            nt = nt_connection(fd, fam, type, laddr, raddr, status)
+            ret.append(nt)
+        return ret
 
     @wrap_exceptions
     def get_num_fds(self):

@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-#
-# $Id$
-#
+
 # Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -23,7 +21,8 @@ import traceback
 import psutil
 import _psutil_mswindows
 from psutil._compat import PY3, callable, long
-from test_psutil import reap_children, get_test_subprocess, wait_for_pid, warn
+from test_psutil import *
+
 try:
     import wmi
 except ImportError:
@@ -40,7 +39,7 @@ except ImportError:
 
 
 
-class WindowsSpecificTestCase(unittest.TestCase):
+class WindowsSpecificTestCase(TestCase):
 
     def setUp(self):
         sproc = get_test_subprocess()
@@ -151,6 +150,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
 
         # --- psutil namespace functions and constants tests
 
+        @skipUnless(hasattr(os, 'NUMBER_OF_PROCESSORS'))
         def test_NUM_CPUS(self):
             num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
             self.assertEqual(num_cpus, psutil.NUM_CPUS)
@@ -361,8 +361,13 @@ class TestDualProcessImplementation(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
 
-if __name__ == '__main__':
+def test_main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(WindowsSpecificTestCase))
     test_suite.addTest(unittest.makeSuite(TestDualProcessImplementation))
-    unittest.TextTestRunner(verbosity=2).run(test_suite)
+    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
+    return result.wasSuccessful()
+
+if __name__ == '__main__':
+    if not test_main():
+        sys.exit(1)
