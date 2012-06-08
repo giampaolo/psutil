@@ -905,7 +905,7 @@ class TestProcess(TestCase):
         else:
             assert terminal, repr(terminal)
 
-    @skipIf(OSX, warn=False)  # XXX why (I forgot)?
+    @skipIf(OSX or SUNOS, warn=False)
     @skip_on_not_implemented(only_if=LINUX)
     def test_get_io_counters(self):
         p = psutil.Process(os.getpid())

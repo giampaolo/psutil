@@ -473,11 +473,12 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
             PyErr_SetFromErrno(PyExc_OSError);
             goto error;
 	    }
-        py_cputime = Py_BuildValue("IIII",
-                                   cs.cpu_sysinfo.cpu[CPU_USER],
-                                   cs.cpu_sysinfo.cpu[CPU_KERNEL],
-                                   cs.cpu_sysinfo.cpu[CPU_IDLE],
-                                   cs.cpu_sysinfo.cpu[CPU_WAIT]);
+
+        py_cputime = Py_BuildValue("ffff",
+                                   (float)cs.cpu_sysinfo.cpu[CPU_USER],
+                                   (float)cs.cpu_sysinfo.cpu[CPU_KERNEL],
+                                   (float)cs.cpu_sysinfo.cpu[CPU_IDLE],
+                                   (float)cs.cpu_sysinfo.cpu[CPU_WAIT]);
         if (py_cputime == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_cputime))
