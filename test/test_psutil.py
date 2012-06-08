@@ -1312,6 +1312,11 @@ class TestProcess(TestCase):
                 assert num not in ints, num
                 ints.append(num)
                 strs.append(str_)
+        if SUNOS:
+            psutil.CONN_IDLE
+            psutil.CONN_BOUND
+        if WINDOWS:
+            psutil.CONN_DELETE_TCB
 
     def test_get_connections(self):
         arg = "import socket, time;" \
@@ -1337,7 +1342,7 @@ class TestProcess(TestCase):
         ip, port = con.local_address
         self.assertEqual(ip, '127.0.0.1')
         self.assertEqual(con.remote_address, ())
-        if WINDOWS:
+        if WINDOWS or SUNOS:
             self.assertEqual(con.fd, -1)
         else:
             assert con.fd > 0, con
@@ -1368,7 +1373,8 @@ class TestProcess(TestCase):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.bind(TESTFN)
         conn = psutil.Process(os.getpid()).get_connections(kind='unix')[0]
-        self.assertEqual(conn.fd, sock.fileno())
+        if conn.fd != -1:  # != sunos and windows
+            self.assertEqual(conn.fd, sock.fileno())
         self.assertEqual(conn.family, socket.AF_UNIX)
         self.assertEqual(conn.type, socket.SOCK_STREAM)
         self.assertEqual(conn.local_address, TESTFN)
@@ -1383,7 +1389,8 @@ class TestProcess(TestCase):
         self.assertEqual(conn.type, socket.SOCK_DGRAM)
         sock.close()
 
-    @skipUnless(hasattr(socket, "fromfd") and not WINDOWS)
+    @skipUnless(hasattr(socket, "fromfd"))
+    @skipIf(WINDOWS or SUNOS)
     def test_connection_fromfd(self):
         sock = socket.socket()
         sock.bind(('localhost', 0))
@@ -1956,6 +1963,10 @@ class TestFetchAllProcesses(TestCase):
         valid_conn_states = ["ESTABLISHED", "SYN_SENT", "SYN_RECV", "FIN_WAIT1",
                              "FIN_WAIT2", "TIME_WAIT", "CLOSE", "CLOSE_WAIT",
                              "LAST_ACK", "LISTEN", "CLOSING", "NONE"]
+        if SUNOS:
+            valid_conn_states += ["IDLE", "BOUND"]
+        if WINDOWS:
+            valid_conn_states += ["DELETE_TCB"]
         for conn in ret:
             self.assertIn(conn.type, (socket.SOCK_STREAM, socket.SOCK_DGRAM))
             self.assertIn(conn.family, (socket.AF_INET, socket.AF_INET6))

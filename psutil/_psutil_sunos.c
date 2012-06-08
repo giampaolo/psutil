@@ -746,41 +746,10 @@ error:
 }
 
 
-static char *
-psutil_get_connection_status(int st) {
-    switch (st) {
-        case TCPS_CLOSED:
-            return "CLOSE";
-        case TCPS_IDLE:  // XXX
-            return "IDLE";
-        case TCPS_BOUND:  // XXX
-            return "BOUND";
-        case TCPS_LISTEN:
-            return "LISTEN";
-        case TCPS_SYN_SENT:
-            return "SYN_SENT";
-        case TCPS_SYN_RCVD:
-            return "SYN_RECV";
-        case TCPS_ESTABLISHED:
-            return "ESTABLISHED";
-        case TCPS_CLOSE_WAIT:
-            return "CLOSE_WAIT";
-        case TCPS_FIN_WAIT_1:
-            return "FIN_WAIT1";
-        case TCPS_FIN_WAIT_2:
-            return "FIN_WAIT2";
-        case TCPS_CLOSING:
-            return "CLOSING";
-        case TCPS_LAST_ACK:
-            return "LAST_ACK";
-        case TCPS_TIME_WAIT:
-            return "TIME_WAIT";
-        default:
-            return "?";
-    }
-}
-
 #define EXPER_IP_AND_ALL_IRES   (1024+4)
+
+// a signaler for connections without an actual status
+static int PSUTIL_CONN_NONE = 128;
 
 /*
  * Return TCP and UDP connections opened by process.
@@ -802,9 +771,8 @@ get_process_connections(PyObject* self, PyObject* args)
     mib2_udp6Entry_t     *ude6;
 #endif
     char buf[512];
-    int i, flags, getcode, num_ent;
+    int i, flags, getcode, num_ent, state;
     char lip[200], rip[200];
-    char *state;
     int lport, rport;
     struct strbuf ctlbuf, databuf;
     struct T_optmgmt_req *tor = (struct T_optmgmt_req *)buf;
@@ -942,10 +910,10 @@ get_process_connections(PyObject* self, PyObject* args)
                 }
                 if (!py_raddr)
                     goto error;
-                state = psutil_get_connection_status(tp->tcpConnEntryInfo.ce_state);
+                state = tp->tcpConnEntryInfo.ce_state;
 
                 // add item
-                py_tuple = Py_BuildValue("(iiiNNs)", -1, AF_INET, SOCK_STREAM,
+                py_tuple = Py_BuildValue("(iiiNNi)", -1, AF_INET, SOCK_STREAM,
                                                      py_laddr, py_raddr, state);
                 if (!py_tuple) {
                     goto error;
@@ -983,10 +951,10 @@ get_process_connections(PyObject* self, PyObject* args)
                 }
                 if (!py_raddr)
                     goto error;
-                state = psutil_get_connection_status(tp->tcpConnEntryInfo.ce_state);
+                state = tp->tcpConnEntryInfo.ce_state;
 
                 // add item
-                py_tuple = Py_BuildValue("(iiiNNs)", -1, AF_INET6, SOCK_STREAM,
+                py_tuple = Py_BuildValue("(iiiNNi)", -1, AF_INET6, SOCK_STREAM,
                                                      py_laddr, py_raddr, state);
 
                 if (!py_tuple) {
@@ -1013,8 +981,9 @@ get_process_connections(PyObject* self, PyObject* args)
                 py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                py_tuple = Py_BuildValue("(iiiNNs)", -1, AF_INET, SOCK_DGRAM,
-                                                     py_laddr, py_raddr, "");
+                py_tuple = Py_BuildValue("(iiiNNi)", -1, AF_INET, SOCK_DGRAM,
+                                                     py_laddr, py_raddr,
+                                                     PSUTIL_CONN_NONE);
                 if (!py_tuple) {
                     goto error;
                 }
@@ -1039,8 +1008,9 @@ get_process_connections(PyObject* self, PyObject* args)
                 py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                py_tuple = Py_BuildValue("(iiiNNs)", -1, AF_INET6, SOCK_DGRAM,
-                                                     py_laddr, py_raddr, "");
+                py_tuple = Py_BuildValue("(iiiNNi)", -1, AF_INET6, SOCK_DGRAM,
+                                                     py_laddr, py_raddr,
+                                                     PSUTIL_CONN_NONE);
                 if (!py_tuple) {
                     goto error;
                 }
@@ -1175,6 +1145,21 @@ void init_psutil_sunos(void)
     PyModule_AddIntConstant(module, "SWAIT", SWAIT);
 
     PyModule_AddIntConstant(module, "PRNODEV", PRNODEV);  // for process tty
+
+    PyModule_AddIntConstant(module, "TCPS_CLOSED", TCPS_CLOSED);
+    PyModule_AddIntConstant(module, "TCPS_CLOSING", TCPS_CLOSING);
+    PyModule_AddIntConstant(module, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT);
+    PyModule_AddIntConstant(module, "TCPS_LISTEN", TCPS_LISTEN);
+    PyModule_AddIntConstant(module, "TCPS_ESTABLISHED", TCPS_ESTABLISHED);
+    PyModule_AddIntConstant(module, "TCPS_SYN_SENT", TCPS_SYN_SENT);
+    PyModule_AddIntConstant(module, "TCPS_SYN_RCVD", TCPS_SYN_RCVD);
+    PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1);
+    PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
+    PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
+    PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
+    PyModule_AddIntConstant(module, "TCPS_IDLE", TCPS_IDLE);  // sunos specific
+    PyModule_AddIntConstant(module, "TCPS_BOUND", TCPS_BOUND);  // sunos specific
+    PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
     if (module == NULL) {
         INITERROR;

@@ -22,12 +22,16 @@ from psutil._compat import namedtuple, PY3
 from psutil._common import *
 
 
-__extra__all__ = []
+__extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
 NUM_CPUS = os.sysconf("SC_NPROCESSORS_ONLN")
 BOOT_TIME = _psutil_sunos.get_process_basic_info(0)[3]
 TOTAL_PHYMEM = os.sysconf('SC_PHYS_PAGES') * PAGE_SIZE
+
+CONN_IDLE = constant(11, "IDLE")
+CONN_BOUND = constant(12, "BOUND")
+
 _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle iowait')
 
@@ -165,6 +169,22 @@ _status_map = {
     _psutil_sunos.SWAIT : STATUS_WAITING,
 }
 
+_conn_status_map = {_psutil_sunos.TCPS_ESTABLISHED : CONN_ESTABLISHED,
+                    _psutil_sunos.TCPS_SYN_SENT : CONN_SYN_SENT,
+                    _psutil_sunos.TCPS_SYN_RCVD : CONN_SYN_RECV,
+                    _psutil_sunos.TCPS_FIN_WAIT_1 : CONN_FIN_WAIT1,
+                    _psutil_sunos.TCPS_FIN_WAIT_2 : CONN_FIN_WAIT2,
+                    _psutil_sunos.TCPS_TIME_WAIT : CONN_TIME_WAIT,
+                    _psutil_sunos.TCPS_CLOSED : CONN_CLOSE,
+                    _psutil_sunos.TCPS_CLOSE_WAIT : CONN_CLOSE_WAIT,
+                    _psutil_sunos.TCPS_LAST_ACK : CONN_LAST_ACK,
+                    _psutil_sunos.TCPS_LISTEN : CONN_LISTEN,
+                    _psutil_sunos.TCPS_CLOSING : CONN_CLOSING,
+                    _psutil_sunos.PSUTIL_CONN_NONE : CONN_NONE,
+                    _psutil_sunos.TCPS_IDLE : CONN_IDLE,  # sunos specific
+                    _psutil_sunos.TCPS_BOUND : CONN_BOUND,  # sunos specific
+                    }
+
 
 class Process(object):
     """Wrapper class around underlying C implementation."""
@@ -291,6 +311,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_threads(self):
+        # TODO: this always raises AD except for root user
         ret = []
         tids = os.listdir('/proc/%d/lwp' % self.pid)
         hit_enoent = False
@@ -370,7 +391,7 @@ class Process(object):
                     type = socket.SOCK_DGRAM
                 else:
                     type = -1
-                yield (-1, socket.AF_UNIX, type, path, "", "")
+                yield (-1, socket.AF_UNIX, type, path, "", CONN_NONE)
 
     @wrap_exceptions
     def get_connections(self, kind='inet'):
@@ -378,15 +399,21 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        ret = _psutil_sunos.get_process_connections(self.pid, families, types)
+        rawlist = _psutil_sunos.get_process_connections(self.pid, families, types)
         # The underlying C implementation retrieves all OS connections
         # and filters them by PID.  At this point we can't tell whether
         # an empty list means there were no connections for process or
         # process is no longer active so we force NSP in case the PID
         # is no longer there.
-        if not ret:
+        if not rawlist:
             os.stat('/proc/%s' % self.pid)  # will raise NSP if process is gone
-        ret = [nt_connection(*conn) for conn in ret]
+
+        ret = []
+        for item in rawlist:
+            fd, fam, type, laddr, raddr, status = item
+            status = _conn_status_map[status]
+            nt = nt_connection(fd, fam, type, laddr, raddr, status)
+            ret.append(nt)
 
         # UNIX sockets
         if socket.AF_UNIX in families:

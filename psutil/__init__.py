@@ -99,6 +99,8 @@ elif sys.platform.startswith("freebsd"):
 
 elif sys.platform.startswith("sunos"):
     import psutil._pssunos as _psplatform
+    from psutil._pssunos import (CONN_IDLE,
+                                 CONN_BOUND)
 
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
