@@ -280,8 +280,7 @@ class Process(object):
         # /proc/PID/path/cwd may not be resolved by readlink() even if
         # it exists (ls shows it). If that's the case and the process
         # is still alive return None (we can return None also on BSD).
-        # Reference:
-        # https://groups.google.com/forum/?fromgroups#!topic/comp.unix.solaris/tcqvhTNFCAs
+        # Reference: http://goo.gl/55XgO
         try:
             return os.readlink("/proc/%s/path/cwd" % self.pid)
         except OSError:
@@ -433,12 +432,30 @@ class Process(object):
 
         retlist = []
         rawlist = _psutil_sunos.get_process_memory_maps(self.pid)
+        hit_enoent = False
         for item in rawlist:
             addr, addrsize, perm, name, rss, anon, locked = item
             addr = toaddr(addr, addrsize)
             if not name.startswith('['):
-                name = os.readlink('/proc/%s/path/%s' % (self.pid, name))
+                try:
+                    name = os.readlink('/proc/%s/path/%s' % (self.pid, name))
+                except OSError:
+                    err = sys.exc_info()[1]
+                    if err.errno == errno.ENOENT:
+                        # sometimes the link may not be resolved by
+                        # readlink() even if it exists (ls shows it).
+                        # If that's the case we just return the
+                        # unresolved link path.
+                        # This seems an incosistency with /proc similar
+                        # to: http://goo.gl/55XgO
+                        name = '/proc/%s/path/%s' % (self.pid, name)
+                        hit_enoent = True
+                    else:
+                        raise
             retlist.append((addr, perm, name, rss, anon, locked))
+        if hit_enoent:
+            # raise NSP if the process disappeared on us
+            os.stat('/proc/%s' % self.pid)
         return retlist
 
     @wrap_exceptions
