@@ -2158,7 +2158,7 @@ class TestFetchAllProcesses(unittest.TestCase):
 # --- Limited user tests
 # ===================================================================
 
-if hasattr(os, 'getuid'):
+if hasattr(os, 'getuid') and os.getuid() == 0:
     class LimitedUserTestCase(TestProcess):
         """Repeat the previous tests by using a limited user.
         Executed only on UNIX and only if the user who run the test script
@@ -2311,11 +2311,11 @@ def test_main():
     tests.append(stc)
 
     if hasattr(os, 'getuid'):
-        if os.getuid() == 0:
+        if 'LimitedUserTestCase' in globals():
             tests.append(LimitedUserTestCase)
         else:
             register_warning("LimitedUserTestCase was skipped (super-user "
-                           "privileges are required)")
+                             "privileges are required)")
 
     tests.append(TestExampleScripts)
 
