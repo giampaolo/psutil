@@ -327,7 +327,7 @@ class ThreadTask(threading.Thread):
 
 if not hasattr(unittest, 'skip'):
     register_warning("unittest2 module is not installed; a serie of pretty " \
-                     "darn ugly workarounds will be used as workaround")
+                     "darn ugly workarounds will be used")
 
     class SkipTest(Exception):
         pass

@@ -794,7 +794,7 @@ get_process_connections(PyObject* self, PyObject* args)
     mib2_udp6Entry_t     *ude6;
 #endif
     char buf[512];
-    int i, flags, getcode, num_ent, state;
+    int i, flags, getcode, num_ent;
     char lip[200], rip[200];
     int lport, rport;
     struct strbuf ctlbuf, databuf;
@@ -933,7 +933,7 @@ get_process_connections(PyObject* self, PyObject* args)
                 }
                 if (!py_raddr)
                     goto error;
-                state = tp->tcpConnEntryInfo.ce_state;
+                int state = tp->tcpConnEntryInfo.ce_state;
 
                 // add item
                 py_tuple = Py_BuildValue("(iiiNNi)", -1, AF_INET, SOCK_STREAM,
@@ -974,7 +974,7 @@ get_process_connections(PyObject* self, PyObject* args)
                 }
                 if (!py_raddr)
                     goto error;
-                state = tp->tcpConnEntryInfo.ce_state;
+                int state = tp->tcpConnEntryInfo.ce_state;
 
                 // add item
                 py_tuple = Py_BuildValue("(iiiNNi)", -1, AF_INET6, SOCK_STREAM,
