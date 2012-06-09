@@ -103,9 +103,11 @@ class PosixSpecificTestCase(unittest.TestCase):
     def test_process_create_time(self):
         time_ps = ps("ps --no-headers -o start -p %s" %self.pid).split(' ')[0]
         time_psutil = psutil.Process(self.pid).create_time
-        time_psutil = datetime.datetime.fromtimestamp(
+        if SUNOS:
+            time_psutil = round(time_psutil)
+        time_psutil_tstamp = datetime.datetime.fromtimestamp(
                         time_psutil).strftime("%H:%M:%S")
-        self.assertEqual(time_ps, time_psutil)
+        self.assertEqual(time_ps, time_psutil_tstamp)
 
     def test_process_exe(self):
         ps_pathname = ps("ps --no-headers -o command -p %s" %self.pid).split(' ')[0]
