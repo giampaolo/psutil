@@ -32,6 +32,7 @@
 #include <sys/tihdr.h>
 #include <stropts.h>
 #include <inet/tcp.h>
+#include <arpa/inet.h>
 
 #include "_psutil_sunos.h"
 
@@ -853,7 +854,7 @@ get_process_connections(PyObject* self, PyObject* args)
 
     ctlbuf.buf = buf;
     ctlbuf.len = tor->OPT_offset + tor->OPT_length;
-7    flags = 0;  // request to be sent in non-priority
+    flags = 0;  // request to be sent in non-priority
 
     if (putmsg(sd, &ctlbuf, (struct strbuf *)0, flags) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
