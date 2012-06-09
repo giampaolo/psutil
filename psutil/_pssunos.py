@@ -129,8 +129,10 @@ def disk_partitions(all=False):
         if device == 'none':
             device = ''
         if not all:
-            if not os.path.isabs(device) \
-            or not os.path.exists(device):
+            # Differently from, say, Linux, we don't have a list of
+            # common fs types so the best we can do, AFAIK, is to
+            # filter by filesystem having a total size > 0.
+            if not get_disk_usage(mountpoint).total:
                 continue
         ntuple = nt_partition(device, mountpoint, fstype, opts)
         retlist.append(ntuple)

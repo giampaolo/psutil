@@ -687,6 +687,7 @@ class TestSystemAPIs(unittest.TestCase):
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
                      "os.statvfs() function not available on this platform")
     def test_disk_partitions(self):
+        # all = False
         for disk in psutil.disk_partitions(all=False):
             if WINDOWS and 'cdrom' in disk.opts:
                 continue
@@ -696,9 +697,15 @@ class TestSystemAPIs(unittest.TestCase):
                 # we cannot make any assumption about this, see:
                 # http://goo.gl/p9c43
                 disk.device
-            assert os.path.isdir(disk.mountpoint), disk
+            if SUNOS:
+                # on solaris apparently mount points can also be files
+                assert os.path.exists(disk.mountpoint), disk
+            else:
+                assert os.path.isdir(disk.mountpoint), disk
             assert disk.fstype, disk
             self.assertIsInstance(disk.opts, str)
+
+        # all = True
         for disk in psutil.disk_partitions(all=True):
             if not WINDOWS:
                 try:
@@ -709,7 +716,11 @@ class TestSystemAPIs(unittest.TestCase):
                     if err.errno not in (errno.EPERM, errno.EACCES):
                         raise
                 else:
-                    assert os.path.isdir(disk.mountpoint), disk.mountpoint
+                    if SUNOS:
+                        # on solaris apparently mount points can also be files
+                        assert os.path.exists(disk.mountpoint), disk
+                    else:
+                        assert os.path.isdir(disk.mountpoint), disk
             self.assertIsInstance(disk.fstype, str)
             self.assertIsInstance(disk.opts, str)
 
