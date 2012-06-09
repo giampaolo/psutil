@@ -896,12 +896,9 @@ def test():
     ps -aux output.
     """
     import datetime
-    today_day = datetime.date.today()
+    from psutil._compat import print_
 
-    def print_(s):
-        # python 2/3 compatibility layer
-        sys.stdout.write(s + '\n')
-        sys.stdout.flush()
+    today_day = datetime.date.today()
 
     def get_process_info(pid):
         proc = Process(pid)

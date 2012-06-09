@@ -28,6 +28,7 @@ if PY3:
     long = int
     xrange = range
     exec_ = getattr(__builtin__, "exec")
+    print_ = getattr(__builtin__, "print")
 else:
     int = int
     long = long
@@ -43,6 +44,11 @@ else:
         elif locs is None:
             locs = globs
         exec("""exec code in globs, locs""")
+
+    def print_(s):
+        sys.stdout.write(s + '\n')
+        sys.stdout.flush()
+
 
 # removed in 3.0, reintroduced in 3.2
 try:

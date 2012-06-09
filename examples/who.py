@@ -15,12 +15,8 @@ import sys
 from datetime import datetime
 
 import psutil
+from psutil._compat import print_
 
-
-def print_(s):
-    # python 2/3 compatibility layer
-    sys.stdout.write(s + '\n')
-    sys.stdout.flush()
 
 def main():
     users = psutil.get_users()

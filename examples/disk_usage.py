@@ -12,11 +12,7 @@ List all mounted disk partitions a-la "df -h" command.
 
 import sys
 import psutil
-
-def print_(s):
-    # python 2/3 compatibility layer
-    sys.stdout.write(s + '\n')
-    sys.stdout.flush()
+from psutil._compat import print_
 
 def bytes2human(n):
     # http://code.activestate.com/recipes/578019
