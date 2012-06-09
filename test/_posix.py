@@ -134,16 +134,19 @@ class PosixSpecificTestCase(unittest.TestCase):
     def test_get_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
-        p = get_test_subprocess(["ps", "ax", "-o", "pid"], stdout=subprocess.PIPE)
+        if SUNOS:
+            cmd = ["ps", "ax"]
+        else:
+            cmd = ["ps", "ax", "-o", "pid"]
+        p = get_test_subprocess(cmd, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
         if PY3:
             output = str(output, sys.stdout.encoding)
-        output = output.replace('PID', '')
-        p.wait()
         pids_ps = []
-        for pid in output.split('\n'):
-            if pid:
-                pids_ps.append(int(pid.strip()))
+        for line in output.split('\n')[1:]:
+            if line:
+                pid = int(line.split()[0].strip())
+                pids_ps.append(pid)
         # remove ps subprocess pid which is supposed to be dead in meantime
         pids_ps.remove(p.pid)
         pids_psutil = psutil.get_pid_list()
