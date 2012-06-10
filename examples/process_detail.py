@@ -39,46 +39,50 @@ def print_(a, b):
     sys.stdout.flush()
 
 def run(pid):
-    p = psutil.Process(pid)
-    if p.parent:
-        parent = '(%s)' % p.parent.name
-    else:
-        parent = ''
-    started = datetime.datetime.fromtimestamp(p.create_time).strftime('%Y-%M-%d %H:%M')
-    if hasattr(p, 'get_io_counters'):
-        io = p.get_io_counters()
-    mem = p.get_memory_info()
-    mem = '%s%% (resident=%s, virtual=%s) ' %(round(p.get_memory_percent(), 1),
-                                              convert_bytes(mem.rss),
-                                              convert_bytes(mem.vms))
-    cpu_times = p.get_cpu_times()
-    cpu_percent = p.get_cpu_percent(0)
-    children = p.get_children()
-    files = p.get_open_files()
-    threads = p.get_threads()
-    connections = p.get_connections()
+    ACCESS_DENIED = ''
+    try:
+        p = psutil.Process(pid)
+        pinfo = p.as_dict(ad_value=ACCESS_DENIED)
+    except psutil.NoSuchProcess:
+        sys.exit(str(sys.exc_info()[1]))
 
-    print_('pid', p.pid)
-    print_('name', p.name)
-    print_('exe', p.exe)
-    print_('parent', '%s %s' % (p.ppid, parent))
-    print_('cmdline', ' '.join(p.cmdline))
+    try:
+        if p.parent:
+            parent = '(%s)' % p.parent.name
+        else:
+            parent = ''
+    except psutil.Error:
+        parent = ''
+    started = datetime.datetime.fromtimestamp(pinfo['create_time']
+                                                ).strftime('%Y-%M-%d %H:%M')
+    io = pinfo.get('io_counters', None)
+    mem = '%s%% (resident=%s, virtual=%s) ' % (
+                                      round(pinfo['memory_percent'], 1),
+                                      convert_bytes(pinfo['memory_info'].rss),
+                                      convert_bytes(pinfo['memory_info'].vms))
+    children = p.get_children()
+
+    print_('pid', pinfo['pid'])
+    print_('name', pinfo['name'])
+    print_('exe', pinfo['exe'])
+    print_('parent', '%s %s' % (pinfo['ppid'], parent))
+    print_('cmdline', ' '.join(pinfo['cmdline']))
     print_('started', started)
-    print_('user', p.username)
+    print_('user', pinfo['username'])
     if os.name == 'posix':
-        print_('uids', 'real=%s, effective=%s, saved=%s' % p.uids)
-        print_('gids', 'real=%s, effective=%s, saved=%s' % p.gids)
-        print_('terminal', p.terminal or '')
+        print_('uids', 'real=%s, effective=%s, saved=%s' % pinfo['uids'])
+        print_('gids', 'real=%s, effective=%s, saved=%s' % pinfo['gids'])
+        print_('terminal', pinfo['terminal'] or '')
     if hasattr(p, 'getcwd'):
-        print_('cwd', p.getcwd())
+        print_('cwd', pinfo['cwd'])
     print_('memory', mem)
-    print_('cpu', '%s%% (user=%s, system=%s)' % (cpu_percent,
-                                                 cpu_times.user,
-                                                 cpu_times.system))
-    print_('status', p.status)
-    print_('niceness', p.nice)
-    print_('num threads', p.get_num_threads())
-    if hasattr(p, 'get_io_counters'):
+    print_('cpu', '%s%% (user=%s, system=%s)' % (pinfo['cpu_percent'],
+                                                 pinfo['cpu_times'].user,
+                                                 pinfo['cpu_times'].system))
+    print_('status', pinfo['status'])
+    print_('niceness', pinfo['nice'])
+    print_('num threads', pinfo['num_threads'])
+    if io != ACCESS_DENIED:
         print_('I/O', 'bytes-read=%s, bytes-written=%s' % \
                                                (convert_bytes(io.read_bytes),
                                                 convert_bytes(io.write_bytes)))
@@ -87,19 +91,19 @@ def run(pid):
         for child in children:
             print_('', 'pid=%s name=%s' % (child.pid, child.name))
 
-    if files:
+    if pinfo['open_files'] != ACCESS_DENIED:
         print_('open files', '')
-        for file in files:
+        for file in pinfo['open_files']:
             print_('',  'fd=%s %s ' % (file.fd, file.path))
 
-    if threads:
+    if pinfo['threads']:
         print_('running threads', '')
-        for thread in threads:
+        for thread in pinfo['threads']:
             print_('',  'id=%s, user-time=%s, sys-time=%s' \
                          % (thread.id, thread.user_time, thread.system_time))
-    if connections:
+    if pinfo['connections'] != ACCESS_DENIED:
         print_('open connections', '')
-        for conn in connections:
+        for conn in pinfo['connections']:
             if conn.type == socket.SOCK_STREAM:
                 type = 'TCP'
             elif conn.type == socket.SOCK_DGRAM:

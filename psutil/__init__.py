@@ -124,6 +124,48 @@ class Process(object):
     def __repr__(self):
         return "<%s at %s>" % (self.__str__(), id(self))
 
+    def as_dict(self, attrs=[], ad_value=None):
+        """Utility method returning process information as a hashable
+        dictionary.
+
+        If 'attrs' is specified it must be a list of strings reflecting
+        available Process class's attribute names (e.g. ['get_cpu_times',
+        'name']) else all public (read only) attributes are assumed.
+
+        'ad_value' is the value which gets assigned to a dict key in case
+        AccessDenied exception is raised when retrieving that particular
+        process information.
+        """
+        excluded_names = set(['send_signal', 'suspend', 'resume', 'terminate',
+                              'kill', 'wait', 'is_running', 'as_dict', 'parent',
+                              'get_children'])
+        retdict = dict()
+        for name in set(attrs or dir(self)):
+            if name.startswith('_'):
+                continue
+            if name.startswith('set_'):
+                continue
+            if name in excluded_names:
+                continue
+            try:
+                attr = getattr(self, name)
+                if callable(attr):
+                    if name == 'get_cpu_percent':
+                        ret = attr(interval=0)
+                    else:
+                        ret = attr()
+                else:
+                    ret = attr
+            except AccessDenied:
+                ret = ad_value
+            if name.startswith('get'):
+                if name[3] == '_':
+                    name = name[4:]
+                elif name == 'getcwd':
+                    name = 'cwd'
+            retdict[name] = ret
+        return retdict
+
     @property
     def pid(self):
         """The process pid."""

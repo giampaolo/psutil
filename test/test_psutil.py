@@ -1365,6 +1365,25 @@ class TestCase(unittest.TestCase):
         # Refers to Issue #12
         self.assertRaises(psutil.NoSuchProcess, psutil.Process, -1)
 
+    def test_as_dict(self):
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        d = p.as_dict()
+        try:
+            import json
+        except ImportError:
+            pass
+        else:
+            # dict is supposed to be hashable
+            json.dumps(d)
+        #
+        d = p.as_dict(attrs=['name', 'getcwd'])
+        self.assertEqual(sorted(d.keys()), ['cwd', 'name'])
+        #
+        p = psutil.Process(min(psutil.get_pid_list()))
+        d = p.as_dict(attrs=['get_connections'], ad_replacement='foo')
+        self.assertEqual(d['connections'], 'foo')
+
     def test_zombie_process(self):
         # Test that NoSuchProcess exception gets raised in case the
         # process dies after we create the Process object.

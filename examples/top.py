@@ -88,13 +88,9 @@ def poll(interval):
     # then retrieve the same info again
     for p in procs[:]:
         try:
-            p._username = p.username
-            p._nice = p.nice
-            p._meminfo = p.get_memory_info()
-            p._mempercent = p.get_memory_percent()
-            p._cpu_percent = p.get_cpu_percent(interval=0)
-            p._cpu_times = p.get_cpu_times()
-            p._name = p.name
+            p.dict = p.as_dict(['username', 'nice', 'get_memory_info',
+                                'get_memory_percent', 'get_cpu_percent',
+                                'get_cpu_times', 'name'])
             try:
                 procs_status[str(p.status)] += 1
             except KeyError:
@@ -103,7 +99,7 @@ def poll(interval):
             procs.remove(p)
 
     # return processes sorted by CPU percent usage
-    processes = sorted(procs, key=lambda p: p._cpu_percent, reverse=True)
+    processes = sorted(procs, key=lambda p: p.dict['cpu_percent'], reverse=True)
     return (processes, procs_status)
 
 def print_header(procs_status):
@@ -172,19 +168,19 @@ def refresh_window(procs, procs_status):
     for p in procs:
         # TIME+ column shows process CPU cumulative time and it
         # is expressed as: "mm:ss.ms"
-        ctime = timedelta(seconds=sum(p._cpu_times))
+        ctime = timedelta(seconds=sum(p.dict['cpu_times']))
         ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
                               str((ctime.seconds % 60)).zfill(2),
                               str(ctime.microseconds)[:2])
         line = templ % (p.pid,
-                        p._username[:8],
-                        p._nice,
-                        bytes2human(p._meminfo.vms),
-                        bytes2human(p._meminfo.rss),
-                        p._cpu_percent,
-                        round(p._mempercent, 1),
+                        p.dict['username'][:8],
+                        p.dict['nice'],
+                        bytes2human(p.dict['memory_info'].vms),
+                        bytes2human(p.dict['memory_info'].rss),
+                        p.dict['cpu_percent'],
+                        round(p.dict['memory_percent'], 1),
                         ctime,
-                        p._name,
+                        p.dict['name'],
                         )
         try:
             print_line(line)

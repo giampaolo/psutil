@@ -20,6 +20,7 @@ NEW FEATURES
  * Issue #273: psutil.get_process_list() is deprecated.
  * Issue #274: psutil no longer requires 2to3 at installation time in order to
    work with Python 3.
+ * Issue #278: new Process.as_dict() method.
 
 BUGFIXES
 
