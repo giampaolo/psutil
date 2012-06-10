@@ -700,9 +700,8 @@ class TestCase(unittest.TestCase):
             f.write("x" * 1000000)
         f.close()
         io2 = p.get_io_counters()
-        if not BSD:
-            self.assertTrue(io2.write_count > io1.write_count)
-            self.assertTrue(io2.write_bytes > io1.write_bytes)
+        self.assertTrue(io2.write_count >= io1.write_count)
+        self.assertTrue(io2.write_bytes >= io1.write_bytes)
         self.assertTrue(io2.read_count >= io1.read_count)
         self.assertTrue(io2.read_bytes >= io1.read_bytes)
 
@@ -1360,8 +1359,8 @@ class TestCase(unittest.TestCase):
         self.assertTrue(p.status != psutil.STATUS_STOPPED)
 
     def test_invalid_pid(self):
-        self.assertRaises(ValueError, psutil.Process, "1")
-        self.assertRaises(ValueError, psutil.Process, None)
+        self.assertRaises(TypeError, psutil.Process, "1")
+        self.assertRaises(TypeError, psutil.Process, None)
         # Refers to Issue #12
         self.assertRaises(psutil.NoSuchProcess, psutil.Process, -1)
 
@@ -1381,8 +1380,9 @@ class TestCase(unittest.TestCase):
         self.assertEqual(sorted(d.keys()), ['cwd', 'name'])
         #
         p = psutil.Process(min(psutil.get_pid_list()))
-        d = p.as_dict(attrs=['get_connections'], ad_replacement='foo')
-        self.assertEqual(d['connections'], 'foo')
+        d = p.as_dict(attrs=['get_connections'], ad_value='foo')
+        if not isinstance(d['connections'], list):
+            self.assertEqual(d['connections'], 'foo')
 
     def test_zombie_process(self):
         # Test that NoSuchProcess exception gets raised in case the
