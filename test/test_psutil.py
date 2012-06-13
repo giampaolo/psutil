@@ -955,6 +955,19 @@ class TestCase(unittest.TestCase):
             if str(p.status) == '?':
                 self.fail("invalid status for pid %d" % p.pid)
 
+    def test_status_constants(self):
+        # STATUS_* constants are supposed to be comparable also by
+        # using their str representation
+        self.assertTrue(psutil.STATUS_RUNNING == 0)
+        self.assertTrue(psutil.STATUS_RUNNING == long(0))
+        self.assertTrue(psutil.STATUS_RUNNING == 'running')
+        self.assertFalse(psutil.STATUS_RUNNING == 1)
+        self.assertFalse(psutil.STATUS_RUNNING == 'sleeping')
+        self.assertFalse(psutil.STATUS_RUNNING != 0)
+        self.assertFalse(psutil.STATUS_RUNNING != 'running')
+        self.assertTrue(psutil.STATUS_RUNNING != 1)
+        self.assertTrue(psutil.STATUS_RUNNING != 'sleeping')
+
     def test_username(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)

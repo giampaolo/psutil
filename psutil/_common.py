@@ -9,7 +9,7 @@
 """Common objects shared by all _ps* modules."""
 
 from __future__ import division
-from psutil._compat import namedtuple
+from psutil._compat import namedtuple, long
 
 # --- functions
 
@@ -37,6 +37,25 @@ class constant(int):
 
     def __str__(self):
         return self._name
+
+    def __eq__(self, other):
+        # Use both int or str values when comparing for equality
+        # (useful for serialization):
+        # >>> st = constant(0, "running")
+        # >>> st == 0
+        # True
+        # >>> st == 'running'
+        # True
+        if isinstance(other, int):
+            return int(self) == other
+        if isinstance(other, long):
+            return long(self) == other
+        if isinstance(other, str):
+            return self._name == other
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 def memoize(f):
     """A simple memoize decorator for functions."""
