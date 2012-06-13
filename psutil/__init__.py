@@ -50,11 +50,12 @@ except ImportError:
 from psutil.error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
 from psutil._compat import property, defaultdict
 from psutil._common import cached_property
+from psutil._common import (nt_disk_iostat as _nt_disk_iostat,
+                            nt_net_iostat as _nt_net_iostat)
 from psutil._common import (STATUS_RUNNING, STATUS_IDLE, STATUS_SLEEPING,
                             STATUS_DISK_SLEEP, STATUS_STOPPED,
                             STATUS_TRACING_STOP, STATUS_ZOMBIE, STATUS_DEAD,
-                            STATUS_WAKING, STATUS_LOCKED
-                            )
+                            STATUS_WAKING, STATUS_LOCKED)
 
 # import the appropriate module for our platform only
 if sys.platform.lower().startswith("linux"):
@@ -851,14 +852,13 @@ def network_io_counters(pernic=False):
     with network interface names as the keys and the namedtuple
     described above as the values.
     """
-    from psutil._common import nt_net_iostat
     rawdict = _psplatform.network_io_counters()
     if pernic:
         for nic, fields in rawdict.items():
-            rawdict[nic] = nt_net_iostat(*fields)
+            rawdict[nic] = _nt_net_iostat(*fields)
         return rawdict
     else:
-        return nt_net_iostat(*[sum(x) for x in zip(*rawdict.values())])
+        return _nt_net_iostat(*[sum(x) for x in zip(*rawdict.values())])
 
 def disk_io_counters(perdisk=False):
     """Return system disk I/O statistics as a namedtuple including
@@ -876,14 +876,13 @@ def disk_io_counters(perdisk=False):
     with partition names as the keys and the namedutuple
     described above as the values.
     """
-    from psutil._common import nt_disk_iostat
     rawdict = _psplatform.disk_io_counters()
     if perdisk:
         for disk, fields in rawdict.items():
-            rawdict[disk] = nt_disk_iostat(*fields)
+            rawdict[disk] = _nt_disk_iostat(*fields)
         return rawdict
     else:
-        return nt_disk_iostat(*[sum(x) for x in zip(*rawdict.values())])
+        return _nt_disk_iostat(*[sum(x) for x in zip(*rawdict.values())])
 
 def get_users():
     """Return users currently connected on the system as a list of
