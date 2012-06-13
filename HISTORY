@@ -25,6 +25,8 @@ NEW FEATURES
    class are now cached after being accessed.
  * Issue #282: psutil.STATUS_* constants can now be compared by using their
    string representation.
+ * Issue #283: speedup Process.is_running() by caching its return value in case
+   the process is terminated.
 
 BUGFIXES
 

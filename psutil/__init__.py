@@ -103,6 +103,7 @@ class Process(object):
         if not pid_exists(pid):
             raise NoSuchProcess(pid, None, "no process found with pid %s" % pid)
         self._pid = pid
+        self._gone = False
         # platform-specific modules define an _psplatform.Process
         # implementation class
         self._platform_impl = _psplatform.Process(pid)
@@ -550,6 +551,8 @@ class Process(object):
 
     def is_running(self):
         """Return whether this process is running."""
+        if self._gone:
+            return False
         try:
             # Test for equality with another Process object based
             # on pid and creation time.
@@ -561,6 +564,7 @@ class Process(object):
             p1 = (self.pid, self.create_time)
             p2 = (new_self.pid, new_self.create_time)
         except NoSuchProcess:
+            self._gone = True
             return False
         else:
             return p1 == p2
@@ -679,6 +683,7 @@ class Popen(Process):
     def __init__(self, *args, **kwargs):
         self.__subproc = subprocess.Popen(*args, **kwargs)
         self._pid = self.__subproc.pid
+        self._gone = False
         self._platform_impl = _psplatform.Process(self._pid)
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None

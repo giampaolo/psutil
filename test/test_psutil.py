@@ -842,8 +842,10 @@ class TestCase(unittest.TestCase):
         wait_for_pid(sproc.pid)
         p = psutil.Process(sproc.pid)
         self.assertTrue(p.is_running())
+        self.assertTrue(p.is_running())
         p.kill()
         p.wait()
+        self.assertFalse(p.is_running())
         self.assertFalse(p.is_running())
 
     def test_exe(self):
