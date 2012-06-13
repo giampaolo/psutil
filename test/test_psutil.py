@@ -1400,7 +1400,7 @@ class TestCase(unittest.TestCase):
         for name in dir(p):
             if name.startswith('_')\
             or name in ('pid', 'send_signal', 'is_running', 'set_ionice',
-                        'wait', 'set_cpu_affinity'):
+                        'wait', 'set_cpu_affinity', 'create_time'):
                 continue
             try:
                 meth = getattr(p, name)

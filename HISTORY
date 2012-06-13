@@ -21,6 +21,8 @@ NEW FEATURES
  * Issue #274: psutil no longer requires 2to3 at installation time in order to
    work with Python 3.
  * Issue #278: new Process.as_dict() method.
+ * Issue #281: ppid, name, exe, cmdline and create_time properties of Process
+   class are now cached after being accessed.
 
 BUGFIXES
 
@@ -46,6 +48,9 @@ BUGFIXES
 API CHANGES
 
  * psutil.get_process_list() is deprecated.
+ * ppid, name, exe, cmdline and create_time properties of Process class are now
+   cached after being accessed, meaning NoSuchProcess will no longer be raised
+   in case the process is gone in the meantime.
 
 
 0.4.1 - 2011-12-14

@@ -47,6 +47,15 @@ def memoize(f):
         return cache[x]
     return memf
 
+class cached_property(object):
+    """A memoize decorator for class properties."""
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, instance, type):
+        res = instance.__dict__[self.func.__name__] = self.func(instance)
+        return res
+
 
 # --- constants
 

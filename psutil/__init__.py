@@ -49,6 +49,7 @@ except ImportError:
 
 from psutil.error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
 from psutil._compat import property, defaultdict
+from psutil._common import cached_property
 from psutil._common import (STATUS_RUNNING, STATUS_IDLE, STATUS_SLEEPING,
                             STATUS_DISK_SLEEP, STATUS_STOPPED,
                             STATUS_TRACING_STOP, STATUS_ZOMBIE, STATUS_DEAD,
@@ -171,7 +172,7 @@ class Process(object):
         """The process pid."""
         return self._pid
 
-    @property
+    @cached_property
     def ppid(self):
         """The process parent pid."""
         return self._platform_impl.get_process_ppid()
@@ -188,7 +189,7 @@ class Process(object):
             except NoSuchProcess:
                 pass
 
-    @property
+    @cached_property
     def name(self):
         """The process name."""
         name = self._platform_impl.get_process_name()
@@ -206,7 +207,7 @@ class Process(object):
         self._platform_impl._process_name = name
         return name
 
-    @property
+    @cached_property
     def exe(self):
         """The process executable as an absolute path name."""
         exe = self._platform_impl.get_process_exe()
@@ -221,7 +222,7 @@ class Process(object):
             raise AccessDenied(self.pid, self._platform_impl._process_name)
         return exe
 
-    @property
+    @cached_property
     def cmdline(self):
         """The command line process has been called with."""
         return self._platform_impl.get_process_cmdline()
@@ -277,7 +278,7 @@ class Process(object):
         else:
             return self._platform_impl.get_process_username()
 
-    @property
+    @cached_property
     def create_time(self):
         """The process creation time as a floating point number
         expressed in seconds since the epoch, in UTC.
@@ -982,3 +983,5 @@ def test():
 
 if __name__ == "__main__":
     test()
+
+del num, property, cached_property, division
