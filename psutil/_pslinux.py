@@ -483,7 +483,7 @@ class Process(object):
         finally:
             f.close()
         # ignore the first two values ("pid (exe)")
-        st = st[st.find(')') + 2:]
+        st = st[st.rfind(')') + 2:]
         values = st.split(' ')
         # According to documentation, starttime is in field 21 and the
         # unit is jiffies (clock ticks).
