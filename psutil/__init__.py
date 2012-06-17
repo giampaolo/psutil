@@ -555,20 +555,14 @@ class Process(object):
         if self._gone:
             return False
         try:
-            # Test for equality with another Process object based
-            # on pid and creation time.
-            # This pair is supposed to indentify a Process instance
-            # univocally over the time (the PID alone is not enough as
-            # it might refer to a process which is gone in meantime
-            # and its PID reused by another process).
-            new_self = Process(self.pid)
-            p1 = (self.pid, self.create_time)
-            p2 = (new_self.pid, new_self.create_time)
+            # Checking if pid is alive is not enough as the pid might
+            # have been reused by another process.
+            # pid + creation time, on the other hand, is supposed to
+            # identify a process univocally.
+            return self.create_time == self._platform_impl.get_process_create_time()
         except NoSuchProcess:
             self._gone = True
             return False
-        else:
-            return p1 == p2
 
     def send_signal(self, sig):
         """Send a signal to process (see signal module constants).
