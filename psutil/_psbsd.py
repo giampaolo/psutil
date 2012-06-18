@@ -10,6 +10,7 @@
 
 import errno
 import os
+import sys
 
 import _psutil_bsd
 import _psutil_posix
@@ -219,6 +220,11 @@ class Process(object):
     def get_process_num_threads(self):
         """Return the number of threads belonging to the process."""
         return _psutil_bsd.get_process_num_threads(self.pid)
+
+    @wrap_exceptions
+    def get_num_fds(self):
+        """Return the number of file descriptors opened by this process."""
+        return _psutil_bsd.get_process_num_fds(self.pid)
 
     @wrap_exceptions
     def get_process_threads(self):

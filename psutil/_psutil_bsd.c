@@ -667,14 +667,12 @@ static PyObject*
 get_process_open_files(PyObject* self, PyObject* args)
 {
     long pid;
+    int i, cnt;
     PyObject *retList = PyList_New(0);
     PyObject *tuple = NULL;
 
     struct kinfo_file *freep, *kif;
     struct kinfo_proc kipp;
-
-
-    int i, cnt;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -700,6 +698,33 @@ get_process_open_files(PyObject* self, PyObject* args)
     free(freep);
 
     return retList;
+}
+
+
+/*
+ * Return files opened by process as a list of (path, fd) tuples
+ */
+static PyObject*
+get_process_num_fds(PyObject* self, PyObject* args)
+{
+    long pid;
+    int cnt;
+
+    struct kinfo_file *freep, *kif;
+    struct kinfo_proc kipp;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (get_kinfo_proc(pid, &kipp) == -1)
+        return NULL;
+
+    freep = kinfo_getfile(pid, &cnt);
+    if (freep == NULL) {
+        PyErr_SetFromErrno(0);
+        return NULL;
+    }
+
+    return Py_BuildValue("i", cnt);
 }
 
 
@@ -1202,7 +1227,8 @@ PsutilMethods[] =
          "Return process current working directory."},
      {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
          "Return a list of tuples for every process's memory map"},
-
+     {"get_process_num_fds", get_process_num_fds, METH_VARARGS,
+         "Return the number of file descriptors opened by this process"},
 #endif
 
      // --- system-related functions
