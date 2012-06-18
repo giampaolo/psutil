@@ -298,3 +298,11 @@ class Process(object):
     @wrap_exceptions
     def get_memory_maps(self):
         return _psutil_bsd.get_process_memory_maps(self.pid)
+
+    if not hasattr(_psutil_bsd, 'get_process_open_filesa'):
+        def _not_implemented(self):
+            raise NotImplementedError("supported only starting from FreeBSD 8")
+        get_open_files = _not_implemented
+        get_process_cwd = _not_implemented
+        get_memory_maps = _not_implemented
+        get_num_fds = _not_implemented
