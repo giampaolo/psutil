@@ -1301,6 +1301,17 @@ class TestCase(unittest.TestCase):
                         else:
                             self.assertEqual(cons, [], cons)
 
+    def test_get_num_fds(self):
+        p = psutil.Process(os.getpid())
+        start = p.get_num_fds()
+        file = open(TESTFN, 'r')
+        self.assertEqual(p.get_num_fds(), start + 1)
+        sock = socket.socket()
+        self.assertEqual(p.get_num_fds(), start + 2)
+        file.close()
+        sock.close()
+        self.assertEqual(p.get_num_fds(), start)
+
     def test_parent_ppid(self):
         this_parent = os.getpid()
         sproc = get_test_subprocess()
@@ -1548,6 +1559,8 @@ class TestCase(unittest.TestCase):
                             for f in ret:
                                 if f.fd != -1:
                                     self.assertTrue(f.fd >= 1)
+                        elif name == 'get_num_fds':
+                            self.assertTrue(ret > 0)
                         elif name == "getcwd":
                             # getcwd() on FreeBSD may be an empty string
                             # in case of a system process

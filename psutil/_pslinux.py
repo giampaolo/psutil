@@ -852,6 +852,10 @@ class Process(object):
 #        return lsof.get_process_connections()
 
     @wrap_exceptions
+    def get_num_fds(self):
+       return len(os.listdir("/proc/%s/fd" % self.pid))
+
+    @wrap_exceptions
     def get_process_ppid(self):
         f = open("/proc/%s/status" % self.pid)
         try:

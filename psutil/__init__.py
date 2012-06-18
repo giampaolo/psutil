@@ -352,6 +352,12 @@ class Process(object):
             """Return the number of handles opened by this process."""
             return self._platform_impl.get_num_handles()
 
+    if os.name == 'posix':
+
+        def get_num_fds(self):
+            """Return the number of file descriptors opened by this process."""
+            return self._platform_impl.get_num_fds()
+
     def get_num_threads(self):
         """Return the number of threads used by this process."""
         return self._platform_impl.get_process_num_threads()

@@ -27,6 +27,7 @@ NEW FEATURES
    string representation.
  * Issue #283: speedup Process.is_running() by caching its return value in case
    the process is terminated.
+ * Issue #284: (POSIX) per-process number of opened file descriptors.
 
 BUGFIXES
 
