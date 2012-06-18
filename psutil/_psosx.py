@@ -10,6 +10,7 @@
 
 import errno
 import os
+import sys
 
 import _psutil_osx
 import _psutil_posix
@@ -203,7 +204,7 @@ class Process(object):
     def get_open_files(self):
         """Return files opened by process."""
         if self.pid == 0:
-            raise AccessDenied(self.pid, self._process_name)
+            return []
         files = []
         rawlist = _psutil_osx.get_process_open_files(self.pid)
         for path, fd in rawlist:
@@ -223,6 +224,12 @@ class Process(object):
         families, types = conn_tmap[kind]
         ret = _psutil_osx.get_process_connections(self.pid, families, types)
         return [nt_connection(*conn) for conn in ret]
+
+    @wrap_exceptions
+    def get_num_fds(self):
+        if self.pid == 0:
+            return 0
+        return _psutil_osx.get_process_num_fds(self.pid)
 
     @wrap_exceptions
     def process_wait(self, timeout=None):

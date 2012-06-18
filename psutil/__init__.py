@@ -345,17 +345,20 @@ class Process(object):
             """
             return self._platform_impl.set_process_cpu_affinity(cpus)
 
-    # available on Windows only
-    if hasattr(_psplatform.Process, "get_num_handles"):
+    if os.name == 'nt':
 
         def get_num_handles(self):
-            """Return the number of handles opened by this process."""
+            """Return the number of handles opened by this process
+            (Windows only).
+            """
             return self._platform_impl.get_num_handles()
 
     if os.name == 'posix':
 
         def get_num_fds(self):
-            """Return the number of file descriptors opened by this process."""
+            """Return the number of file descriptors opened by this
+            process (POSIX only).
+            """
             return self._platform_impl.get_num_fds()
 
     def get_num_threads(self):

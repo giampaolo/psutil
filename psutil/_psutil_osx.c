@@ -1173,6 +1173,39 @@ error:
 
 
 /*
+ * Return number of file descriptors opened by process.
+ */
+static PyObject*
+get_process_num_fds(PyObject* self, PyObject* args)
+{
+    long pid;
+    int pidinfo_result;
+    int num;
+    struct proc_fdinfo *fds_pointer;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+    if (pidinfo_result <= 0) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+
+    fds_pointer = malloc(pidinfo_result);
+    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
+                                  pidinfo_result);
+    if (pidinfo_result <= 0) {
+        free(fds_pointer);
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+
+    num = (pidinfo_result / PROC_PIDLISTFD_SIZE);
+    return Py_BuildValue("i", num);
+}
+
+
+/*
  * Return a Python list of named tuples with overall network I/O information
  */
 static PyObject*
@@ -1473,6 +1506,8 @@ PsutilMethods[] =
          "Return process threads as a list of tuples"},
      {"get_process_open_files", get_process_open_files, METH_VARARGS,
          "Return files opened by process as a list of tuples"},
+     {"get_process_num_fds", get_process_num_fds, METH_VARARGS,
+         "Return the number of fds opened by process."},
      {"get_process_connections", get_process_connections, METH_VARARGS,
          "Get process TCP and UDP connections as a list of tuples"},
      {"get_process_tty_nr", get_process_tty_nr, METH_VARARGS,
