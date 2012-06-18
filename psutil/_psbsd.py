@@ -299,7 +299,8 @@ class Process(object):
     def get_memory_maps(self):
         return _psutil_bsd.get_process_memory_maps(self.pid)
 
-    if not hasattr(_psutil_bsd, 'get_process_open_filesa'):
+    # FreeBSD < 8 does not support kinfo_getfile() and kinfo_getvmmap()
+    if not hasattr(_psutil_bsd, 'get_process_open_files'):
         def _not_implemented(self):
             raise NotImplementedError("supported only starting from FreeBSD 8")
         get_open_files = _not_implemented
