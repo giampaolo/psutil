@@ -226,8 +226,13 @@ class TestCase(unittest.TestCase):
     # ============================
 
     def test_process_iter(self):
-        pids = [x.pid for x in psutil.process_iter()]
-        self.assertIn(os.getpid(), pids)
+        assert os.getpid() in [x.pid for x in psutil.process_iter()]
+        sproc = get_test_subprocess()
+        assert sproc.pid in [x.pid for x in psutil.process_iter()]
+        p = psutil.Process(sproc.pid)
+        p.kill()
+        p.wait()
+        assert sproc.pid not in [x.pid for x in psutil.process_iter()]
 
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM
