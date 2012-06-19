@@ -1471,8 +1471,7 @@ class TestCase(unittest.TestCase):
     def test_fetch_all(self):
         valid_procs = 0
         excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
-                          'kill', 'wait']
-        excluded_names += ['get_cpu_percent', 'get_children']
+                          'kill', 'wait', 'as_dict', 'get_cpu_percent']
         # XXX - skip slow lsof implementation;
         if BSD:
            excluded_names += ['get_connections']

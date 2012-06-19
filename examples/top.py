@@ -71,38 +71,30 @@ def bytes2human(n):
             return '%s%s' % (value, s)
     return "%sB" % n
 
-procs = [p for p in psutil.process_iter()]  # the current process list
-
 def poll(interval):
-    # add new processes to procs list; processes which have gone
-    # in meantime will be removed from the list later
-    cpids = [p.pid for p in procs]
-    for p in psutil.process_iter():
-        if p.pid not in cpids:
-            procs.append(p)
-
     # sleep some time
     time.sleep(interval)
-
+    procs = []
     procs_status = {}
-    # then retrieve the same info again
-    for p in procs[:]:
+    for p in psutil.process_iter():
         try:
             p.dict = p.as_dict(['username', 'nice', 'get_memory_info',
                                 'get_memory_percent', 'get_cpu_percent',
-                                'get_cpu_times', 'name'])
+                                'get_cpu_times', 'name', 'status'])
             try:
-                procs_status[str(p.status)] += 1
+                procs_status[str(p.dict['status'])] += 1
             except KeyError:
-                procs_status[str(p.status)] = 1
+                procs_status[str(p.dict['status'])] = 1
         except psutil.NoSuchProcess:
-            procs.remove(p)
+            pass
+        else:
+            procs.append(p)
 
     # return processes sorted by CPU percent usage
     processes = sorted(procs, key=lambda p: p.dict['cpu_percent'], reverse=True)
     return (processes, procs_status)
 
-def print_header(procs_status):
+def print_header(procs_status, num_procs):
     """Print system-related info, above the process list."""
 
     def get_dashes(perc):
@@ -147,7 +139,7 @@ def print_header(procs_status):
         if y:
             st.append("%s=%s" % (x, y))
     st.sort(key=lambda x: x[:3] in ('run', 'sle'), reverse=1)
-    print_line(" Processes: %s (%s)" % (len(procs), ' '.join(st)))
+    print_line(" Processes: %s (%s)" % (num_procs, ' '.join(st)))
     # load average, uptime
     uptime = datetime.now() - datetime.fromtimestamp(psutil.BOOT_TIME)
     av1, av2, av3 = os.getloadavg()
@@ -162,7 +154,7 @@ def refresh_window(procs, procs_status):
     win.erase()
     header = templ % ("PID", "USER", "NI", "VIRT", "RES", "CPU%", "MEM%",
                       "TIME+", "NAME")
-    print_header(procs_status)
+    print_header(procs_status, len(procs))
     print_line("")
     print_line(header, highlight=True)
     for p in procs:

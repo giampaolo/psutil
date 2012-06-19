@@ -28,6 +28,7 @@ NEW FEATURES
  * Issue #283: speedup Process.is_running() by caching its return value in case
    the process is terminated.
  * Issue #284: (POSIX) per-process number of opened file descriptors.
+ * Issue #287: psutil.process_iter() now caches Process instances between calls.
 
 BUGFIXES
 

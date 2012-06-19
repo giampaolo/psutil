@@ -722,16 +722,50 @@ class Popen(Process):
 get_pid_list = _psplatform.get_pid_list
 pid_exists = _psplatform.pid_exists
 
+_pmap = {}
+
 def process_iter():
-    """Return an iterator yielding a Process class instances for all
+    """Return a generator yielding a Process class instance for all
     running processes on the local machine.
+
+    Every new Process instance is only created once and then cached
+    into an internal table which is updated every time this is used.
     """
-    pids = get_pid_list()
-    for pid in pids:
+    def add(pid):
+        proc = Process(pid)
+        _pmap[proc.pid] = proc
+        return proc
+
+    def remove(pid):
+        _pmap.pop(pid, None)
+
+    a = set(get_pid_list())
+    b = set(_pmap.keys())
+    new_pids = a - b
+    gone_pids = b - a
+
+    for pid in gone_pids:
+        remove(pid)
+    for pid, proc in _pmap.items():
         try:
-            yield Process(pid)
-        except (NoSuchProcess, AccessDenied):
-            continue
+            # use is_running() to check whether PID has been reused by
+            # another process in which case yield a new Process instance
+            if proc.is_running():
+                yield proc
+            else:
+                yield add(pid)
+        except NoSuchProcess:
+            remove(pid)
+        except AccessDenied:
+            # Process creation time can't be determined hence there's
+            # no way to tell whether the pid of the cached process
+            # has been reused. Just return the cached version.
+            yield proc
+    for pid in new_pids:
+        try:
+            yield add(pid)
+        except NoSuchProcess:
+            pass
 
 def cpu_times(percpu=False):
     """Return system-wide CPU times as a namedtuple object.
