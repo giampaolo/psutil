@@ -989,51 +989,46 @@ def avail_virtmem():
     return virtmem_usage().free
 
 def test():
-    """List info of all currently running processes emulating a
-    ps -aux output.
+    """List info of all currently running processes emulating ps aux
+    output.
     """
     import datetime
     from psutil._compat import print_
 
     today_day = datetime.date.today()
-
-    def get_process_info(pid):
-        proc = Process(pid)
-        user = proc.username
-        if os.name == 'nt' and '\\' in user:
-            user = user.split('\\')[1]
-        pid = proc.pid
-        cpu = round(proc.get_cpu_percent(interval=None), 1)
-        mem = round(proc.get_memory_percent(), 1)
-        rss, vsz = [x / 1024 for x in proc.get_memory_info()]
-
-        # If process has been created today print H:M, else MonthDay
-        start = datetime.datetime.fromtimestamp(proc.create_time)
-        if start.date() == today_day:
-            start = start.strftime("%H:%M")
-        else:
-            start = start.strftime("%b%d")
-
-        cputime = time.strftime("%M:%S", time.localtime(sum(proc.get_cpu_times())))
-        cmd = ' '.join(proc.cmdline)
-        # where cmdline is not available UNIX shows process name between
-        # [] parentheses
-        if not cmd:
-            cmd = "[%s]" % proc.name
-        return "%-9s %-5s %-4s %4s %7s %7s %5s %8s %s" \
-                % (user, pid, cpu, mem, vsz, rss, start, cputime, cmd)
-
-    print_("%-9s %-5s %-4s %4s %7s %7s %5s %7s  %s" \
-      % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "START", "TIME", "COMMAND"))
-    pids = get_pid_list()
-    pids.sort()
-    for pid in pids:
+    templ = "%-10s %5s %4s %4s %7s %7s %-10s %5s %7s  %s"
+    attrs = ['pid', 'username', 'get_cpu_percent', 'get_memory_percent', 'name',
+             'get_cpu_times', 'create_time', 'get_memory_info']
+    if os.name == 'posix':
+        attrs.append('terminal')
+    print_(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY", "START",
+                    "TIME", "COMMAND"))
+    for p in sorted(process_iter(), key=lambda p: p.pid):
         try:
-            line = get_process_info(pid)
-        except (AccessDenied, NoSuchProcess):
+            pinfo = p.as_dict(attrs, ad_value='')
+        except NoSuchProcess:
             pass
         else:
-            print_(line)
+            ctime = datetime.datetime.fromtimestamp(pinfo['create_time'])
+            if ctime.date() == today_day:
+                ctime = ctime.strftime("%H:%M")
+            else:
+                ctime = ctime.strftime("%b%d")
+            cputime = time.strftime("%M:%S", time.localtime(sum(pinfo['cpu_times'])))
+            user = pinfo['username']
+            if os.name == 'nt' and '\\' in user:
+                user = user.split('\\')[1]
+
+            print_(templ % (user[:10],
+                            pinfo['pid'],
+                            pinfo['cpu_percent'],
+                            round(pinfo['memory_percent'], 1),
+                            int(pinfo['memory_info'].vms / 1024),
+                            int(pinfo['memory_info'].rss / 1024),
+                            pinfo['terminal'] or '?',
+                            ctime,
+                            cputime,
+                            pinfo['name'].strip()))
 
 if __name__ == "__main__":
     test()
