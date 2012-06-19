@@ -366,6 +366,8 @@ class Process(object):
     __slots__ = ["pid", "_process_name"]
 
     def __init__(self, pid):
+        if not isinstance(pid, int):
+            raise TypeError('pid must be an integer')
         self.pid = pid
         self._process_name = None
 

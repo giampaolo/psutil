@@ -49,6 +49,8 @@ BUGFIXES
    reports of not absolutized path names.
  * Issue #275: (Linux) Process.get_io_counters() erroneously raise NoSuchProcess
    on old Linux versions. Where not available it now raises NotImplementedError.
+ * Issue #286: Process.is_running() doesn't actually check whether PID has been
+   reused.
 
 API CHANGES
 

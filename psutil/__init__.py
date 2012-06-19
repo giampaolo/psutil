@@ -101,8 +101,6 @@ class Process(object):
         """Create a new Process object for the given pid.
         Raises NoSuchProcess if pid does not exist.
         """
-        if not pid_exists(pid):
-            raise NoSuchProcess(pid, None, "no process found with pid %s" % pid)
         self._pid = pid
         self._gone = False
         # platform-specific modules define an _psplatform.Process
@@ -110,6 +108,13 @@ class Process(object):
         self._platform_impl = _psplatform.Process(pid)
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
+        # cache creation time for later use in is_running() method
+        try:
+            self.create_time
+        except AccessDenied:
+            pass
+        except NoSuchProcess:
+            raise NoSuchProcess(pid, None, 'no process found with pid %s' % pid)
 
     def __str__(self):
         try:
@@ -568,7 +573,8 @@ class Process(object):
             # have been reused by another process.
             # pid + creation time, on the other hand, is supposed to
             # identify a process univocally.
-            return self.create_time == self._platform_impl.get_process_create_time()
+            return self.create_time == \
+                   self._platform_impl.get_process_create_time()
         except NoSuchProcess:
             self._gone = True
             return False
@@ -691,6 +697,13 @@ class Popen(Process):
         self._platform_impl = _psplatform.Process(self._pid)
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
+        try:
+            self.create_time
+        except AccessDenied:
+            pass
+        except NoSuchProcess:
+            raise NoSuchProcess(self._pid, None,
+                                "no process found with pid %s" % pid)
 
     def __dir__(self):
         return list(set(dir(Popen) + dir(subprocess.Popen)))
