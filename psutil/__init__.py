@@ -166,6 +166,13 @@ class Process(object):
                     ret = attr
             except AccessDenied:
                 ret = ad_value
+            except NotImplementedError:
+                # in case of not implemented functionality (may happen
+                # on old or exotic systems) we want to crash only if
+                # the user explicitly asked for that particular attr
+                if attrs:
+                    raise
+                continue
             if name.startswith('get'):
                 if name[3] == '_':
                     name = name[4:]
