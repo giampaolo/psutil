@@ -262,3 +262,12 @@ class Process(object):
             ntuple = nt_thread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
+
+    nt_mmap_grouped = namedtuple('mmap',
+        'path rss private swapped dirtied ref_count shadow_depth')
+    nt_mmap_ext = namedtuple('mmap',
+        'addr perms path rss private swapped dirtied ref_count shadow_depth')
+
+    @wrap_exceptions
+    def get_memory_maps(self):
+        return _psutil_osx.get_process_memory_maps(self.pid)

@@ -30,7 +30,10 @@
 #include <mach/host_info.h>
 #include <mach/mach_host.h>
 #include <mach/mach_traps.h>
+#include <mach/mach_vm.h>
 #include <mach/shared_memory_server.h>
+
+#include <mach-o/loader.h>
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/IOKitLib.h>
@@ -187,6 +190,131 @@ get_process_tty_nr(PyObject* self, PyObject* args)
         return NULL;
     }
     return Py_BuildValue("i", kp.kp_eproc.e_tdev);
+}
+
+
+/*
+ * Return a list of tuples for every process memory maps.
+ * 'procstat' cmdline utility has been used as an example.
+ */
+static PyObject*
+get_process_memory_maps(PyObject* self, PyObject* args)
+{
+    char buf[PATH_MAX];
+    char addr_str[34];
+    char perms[8];
+    int pagesize = getpagesize();
+    long pid;
+    kern_return_t err = KERN_SUCCESS;
+    mach_port_t task;
+    uint32_t depth = 1;
+    vm_address_t address = 0;
+    vm_size_t size = 0;
+
+    PyObject* py_tuple = NULL;
+    PyObject* py_list = PyList_New(0);
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    err = task_for_pid(mach_task_self(), pid, &task);
+
+    if (err != KERN_SUCCESS) {
+        if (! pid_exists(pid)) {
+            return NoSuchProcess();
+        }
+        // pid exists, so return AccessDenied error since task_for_pid() failed
+        return AccessDenied();
+    }
+
+    while (1) {
+        struct vm_region_submap_info_64 info;
+        mach_msg_type_number_t count = VM_REGION_SUBMAP_INFO_COUNT_64;
+
+        err = vm_region_recurse_64(task, &address, &size, &depth,
+                                   (vm_region_info_64_t)&info, &count);
+
+        if (err == KERN_INVALID_ADDRESS) {
+            break;
+        }
+
+        if (info.is_submap) {
+            depth++;
+        }
+        else {
+            // Free/Reset the char[]s to avoid weird paths
+            memset(buf, 0, sizeof(buf));
+            memset(addr_str, 0, sizeof(addr_str));
+            memset(perms, 0, sizeof(perms));
+
+            sprintf(addr_str, "%016x-%016x", address, address + size);
+            sprintf(perms, "%c%c%c/%c%c%c",
+                    (info.protection & VM_PROT_READ) ? 'r' : '-',
+                    (info.protection & VM_PROT_WRITE) ? 'w' : '-',
+                    (info.protection & VM_PROT_EXECUTE) ? 'x' : '-',
+                    (info.max_protection & VM_PROT_READ) ? 'r' : '-',
+                    (info.max_protection & VM_PROT_WRITE) ? 'w' : '-',
+                    (info.max_protection & VM_PROT_EXECUTE) ? 'x' : '-');
+
+            address += size;
+
+            err = proc_regionfilename(pid, address, buf, sizeof(buf));
+
+            if (info.share_mode == SM_COW && info.ref_count == 1) {
+                // Treat single reference SM_COW as SM_PRIVATE
+                info.share_mode = SM_PRIVATE;
+            }
+
+            if (strlen(buf) == 0) {
+                switch(info.share_mode) {
+                /*
+                case SM_LARGE_PAGE:
+                    // Treat SM_LARGE_PAGE the same as SM_PRIVATE
+                    // since they are not shareable and are wired.
+                */
+                case SM_COW:
+                    strcpy(buf, "[cow]");
+                    break;
+                case SM_PRIVATE:
+                    strcpy(buf, "[prv]");
+                    break;
+                case SM_EMPTY:
+                    strcpy(buf, "[nul]");
+                    break;
+                case SM_SHARED:
+                case SM_TRUESHARED:
+                    strcpy(buf, "[shm]");
+                    break;
+                case SM_PRIVATE_ALIASED:
+                    strcpy(buf, "[ali]");
+                    break;
+                case SM_SHARED_ALIASED:
+                    strcpy(buf, "[s/a]");
+                    break;
+                default:
+                    strcpy(buf, "[???]");
+                }
+            }
+
+            py_tuple = Py_BuildValue("sssIIIIIH",
+                addr_str,                                 // "start-end" address
+                perms,                                    // "rwx" permissions
+                buf,                                      // path
+                info.pages_resident * pagesize,           // rss
+                info.pages_shared_now_private * pagesize, // private
+                info.pages_swapped_out * pagesize,        // swapped
+                info.pages_dirtied * pagesize,            // dirtied
+                info.ref_count,                           // ref count
+                info.shadow_depth                         // shadow depth
+            );
+
+            PyList_Append(py_list, py_tuple);
+            Py_XDECREF(py_tuple);
+        }
+    }
+
+    return py_list;
 }
 
 
@@ -1512,6 +1640,8 @@ PsutilMethods[] =
          "Get process TCP and UDP connections as a list of tuples"},
      {"get_process_tty_nr", get_process_tty_nr, METH_VARARGS,
          "Return process tty number as an integer"},
+     {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
+         "Return a list of tuples for every process's memory map"},
 
      // --- system-related functions
 

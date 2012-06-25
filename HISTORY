@@ -14,7 +14,8 @@ NEW FEATURES
  * Issue #245: (POSIX) Process.wait() incrementally consumes less CPU cycles.
  * Issue #257: (Windows) removed Windows 2000 support.
  * Issue #258: (Linux) Process.get_memory_info() is now 0.5x faster.
- * Issue #260: process's mapped memory regions. (Windows patch by wj32.64)
+ * Issue #260: process's mapped memory regions. (Windows patch by wj32.64, OSX
+   patch by Jeremy Whitlock)
  * Issue #262: (Windows) psutil.disk_partitions() was slow due to inspecting
    the floppy disk drive also when "all" argument was False.
  * Issue #273: psutil.get_process_list() is deprecated.
@@ -81,12 +82,12 @@ BUGFIXES
 
 NEW FEATURES
 
- * Issue 150: network I/O counters. (OSX patch by Jeremy Whitlock)
+ * Issue 150: network I/O counters. (OSX and Windows patch by Jeremy Whitlock)
  * Issue 154: (FreeBSD) add support for process getcwd()
  * Issue 157: (Windows) provide installer for Python 3.2 64-bit.
  * Issue 198: Process.wait(timeout=0) can now be used to make wait() return
    immediately.
- * Issue 206: disk I/O counters. (OSX patch by Jeremy Whitlock)
+ * Issue 206: disk I/O counters. (OSX and Windows patch by Jeremy Whitlock)
  * Issue 213: examples/iotop.py script.
  * Issue 217: Process.get_connections() now has a "kind" argument to filter
    for connections with different criteria.
