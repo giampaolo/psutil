@@ -434,7 +434,15 @@ class TestCase(unittest.TestCase):
             assert isinstance(disk.options, str)
         for disk in psutil.disk_partitions(all=True):
             if not WINDOWS:
-                assert os.path.isdir(disk.mountpoint), disk
+                try:
+                    os.stat(disk.mountpoint)
+                except OSError:
+                    # http://mail.python.org/pipermail/python-dev/2012-June/120787.html
+                    err = sys.exc_info()[1]
+                    if err.errno not in (errno.EPERM, errno.EACCES):
+                        raise
+                else:
+                    assert os.path.isdir(disk.mountpoint), disk.mountpoint
             assert isinstance(disk.fstype, str)
             assert isinstance(disk.options, str)
 
@@ -500,13 +508,6 @@ class TestCase(unittest.TestCase):
             user.host
             assert user.started > 0.0, user
             datetime.datetime.fromtimestamp(user.started)
-        names = [x.name for x in users]
-        if POSIX:
-            import pwd
-            me = pwd.getpwuid(os.getuid()).pw_name
-        else:
-            me = os.environ['USERNAME']
-        self.assertIn(me, names)
 
     # ====================
     # Process object tests
@@ -1573,7 +1574,7 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def get_open_files(self, ret):
         for f in ret:
-            assert f.fd >= 1, f
+            assert f.fd >= 0, f
             assert os.path.isabs(f.path), f
             assert os.path.isfile(f.path), f
 
