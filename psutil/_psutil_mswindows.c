@@ -2116,14 +2116,12 @@ get_system_users(PyObject* self, PyObject* args)
 
     PWINSTATIONQUERYINFORMATIONW WinStationQueryInformationW;
     WINSTATION_INFO station_info;
-    HINSTANCE hInstWinSta;
+    HINSTANCE hInstWinSta = NULL;
     ULONG returnLen;
-
 
     hInstWinSta = LoadLibraryA("winsta.dll");
     WinStationQueryInformationW = (PWINSTATIONQUERYINFORMATIONW)
         GetProcAddress(hInstWinSta, "WinStationQueryInformationW");
-    FreeLibrary(hInstWinSta);
 
     hServer = WTSOpenServer('\0');
     if (hServer == NULL) {
@@ -2202,9 +2200,13 @@ get_system_users(PyObject* self, PyObject* args)
     WTSFreeMemory(sessions);
     WTSFreeMemory(buffer_user);
     WTSFreeMemory(buffer_addr);
+    FreeLibrary(hInstWinSta);
     return py_retlist;
 
 error:
+    if (hInstWinSta != NULL) {
+        FreeLibrary(hInstWinSta);
+    }
     if (hServer != NULL) {
         WTSCloseServer(hServer);
     }
@@ -2385,8 +2387,6 @@ PsutilMethods[] =
         "Get process I/O counters."},
     {"is_process_suspended", is_process_suspended, METH_VARARGS,
         "Return True if one of the process threads is in a suspended state"},
-    {"get_process_environ", get_process_environ, METH_VARARGS,
-        "Return process env vars as a string."},
     {"get_process_num_handles", get_process_num_handles, METH_VARARGS,
         "Return the number of handles opened by process."},
     {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
