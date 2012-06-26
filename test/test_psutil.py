@@ -830,20 +830,21 @@ class TestCase(unittest.TestCase):
         maps = p.get_memory_maps()
         paths = [x for x in maps]
         self.assertEqual(len(paths), len(set(paths)))
-        for nt in maps:
-            self.assertTrue(nt.path)
-            for f in nt._fields:
-                if f != 'path':
-                    value = getattr(nt, f)
-                    self.assertTrue(isinstance(value, (int, long)))
-                    self.assertTrue(value >= 0, value)
-
         ext_maps = p.get_memory_maps(grouped=False)
+
+        for nt in maps:
+            if not nt.path.startswith('['):
+                self.assertTrue(os.path.isabs(nt.path))
+                self.assertTrue(os.path.exists(nt.path))
         for nt in ext_maps:
-            self.assertTrue(nt.addr)
-            for f in nt._fields:
-                value = getattr(nt, f)
-                if isinstance(value, (int, long)):
+            for fname in nt._fields:
+                value = getattr(nt, fname)
+                if fname == 'path':
+                    continue
+                elif fname in ('addr', 'perms'):
+                    self.assertTrue(value)
+                else:
+                    self.assertTrue(isinstance(value, (int, long)))
                     self.assertTrue(value >= 0, value)
 
     def test_get_memory_percent(self):
@@ -1456,7 +1457,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         valid_procs = 0
         excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
                           'kill', 'wait', 'as_dict', 'get_cpu_percent', 'nice',
-                          'parent', 'get_children']
+                          'parent', 'get_children', 'pid']
         # XXX - skip slow lsof implementation;
         if BSD:
            excluded_names += ['get_connections']
@@ -1492,18 +1493,20 @@ class TestFetchAllProcesses(unittest.TestCase):
                     else:
                         if ret not in (0, 0.0, [], None):
                             self.assertTrue(ret)
-                        meth = getattr(self, name, None)
-                        if meth is not None:
-                            meth(ret)
+                        meth = getattr(self, name)
+                        meth(ret)
                 except Exception:
                     err = sys.exc_info()[1]
                     trace = traceback.format_exc()
                     self.fail('%s\nproc=%s, method=%r, retvalue=%r'
-                              %(trace, p, name, ret))
+                              % (trace, p, name, ret))
 
         # we should always have a non-empty list, not including PID 0 etc.
         # special cases.
         self.assertTrue(valid_procs > 0)
+
+    def cmdline(self, ret):
+        pass
 
     def exe(self, ret):
         self.assertTrue(os.path.isfile(ret))
@@ -1575,7 +1578,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             self.assertTrue(os.path.isfile(f.path))
 
     def get_num_fds(self, ret):
-        self.assertTrue(ret > 0)
+        self.assertTrue(ret >= 0)
 
     def get_connections(self, ret):
         # all values are supposed to match Linux's tcp_states.h states
@@ -1629,6 +1632,42 @@ class TestFetchAllProcesses(unittest.TestCase):
                     raise
             else:
                 self.assertTrue(stat.S_ISDIR(st.st_mode))
+
+    def get_memory_percent(self, ret):
+        self.assertTrue(0 <= ret <= 100, ret)
+
+    def is_running(self, ret):
+        self.assertTrue(ret)
+
+    def get_cpu_affinity(self, ret):
+        self.assertTrue(ret != [])
+
+    def terminal(self, ret):
+        if ret is not None:
+            self.assertTrue(os.path.isabs(ret))
+            self.assertTrue(os.path.exists(ret))
+
+    def get_memory_maps(self, ret):
+        for nt in ret:
+            for fname in nt._fields:
+                value = getattr(nt, fname)
+                if fname == 'path':
+                    if not value.startswith('['):
+                        self.assertTrue(os.path.isabs(nt.path))
+                        # commented as on Linux we might get '/foo/bar (deleted)'
+                        #self.assertTrue(os.path.exists(nt.path), nt.path)
+                elif fname in ('addr', 'perms'):
+                    self.assertTrue(value)
+                else:
+                    self.assertTrue(isinstance(value, (int, long)))
+                    self.assertTrue(value >= 0, value)
+
+    def get_nice(self, ret):
+        if POSIX:
+            self.assertTrue(-20 <= ret <= 20, ret)
+        else:
+            self.assertIn(ret, (psutil.IOPRIO_CLASS_NONE, psutil.IOPRIO_CLASS_RT,
+                                psutil.IOPRIO_CLASS_BE, psutil.IOPRIO_CLASS_IDLE))
 
 
 if hasattr(os, 'getuid'):
