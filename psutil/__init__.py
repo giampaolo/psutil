@@ -760,7 +760,7 @@ def process_iter():
 
     for pid in gone_pids:
         remove(pid)
-    for pid, proc in _pmap.items():
+    for pid, proc in list(_pmap.items()):
         try:
             # use is_running() to check whether PID has been reused by
             # another process in which case yield a new Process instance
