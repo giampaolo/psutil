@@ -49,7 +49,7 @@ def _convert_raw_path(s):
     # convert paths using native DOS format like:
     # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
     # into: "C:\Windows\systemew\file.txt"
-    if PY3:
+    if PY3 and not isinstance(s, str):
         s = s.decode('utf8')
     rawdrive = '\\'.join(s.split('\\')[:3])
     driveletter = _win32_QueryDosDevice(rawdrive)

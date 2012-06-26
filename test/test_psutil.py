@@ -943,15 +943,15 @@ class TestCase(unittest.TestCase):
 
         def test_nice(self):
             p = psutil.Process(os.getpid())
-            self.assertRaises(TypeError, setattr, p, "nice", "str")
+            self.assertRaises(TypeError, p.set_nice, "str")
             try:
-                self.assertEqual(p.nice, psutil.NORMAL_PRIORITY_CLASS)
-                p.nice = psutil.HIGH_PRIORITY_CLASS
-                self.assertEqual(p.nice, psutil.HIGH_PRIORITY_CLASS)
-                p.nice = psutil.NORMAL_PRIORITY_CLASS
-                self.assertEqual(p.nice, psutil.NORMAL_PRIORITY_CLASS)
+                self.assertEqual(p.get_nice(), psutil.NORMAL_PRIORITY_CLASS)
+                p.set_nice(psutil.HIGH_PRIORITY_CLASS)
+                self.assertEqual(p.get_nice(), psutil.HIGH_PRIORITY_CLASS)
+                p.set_nice(psutil.NORMAL_PRIORITY_CLASS)
+                self.assertEqual(p.get_nice(), psutil.NORMAL_PRIORITY_CLASS)
             finally:
-                p.nice = psutil.NORMAL_PRIORITY_CLASS
+                p.set_nice(psutil.NORMAL_PRIORITY_CLASS)
 
     def test_status(self):
         p = psutil.Process(os.getpid())
