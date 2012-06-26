@@ -1395,177 +1395,6 @@ class TestCase(unittest.TestCase):
         self.assertIn(str(sproc.pid), str(p))
         self.assertIn("terminated", str(p))
 
-    def test_fetch_all(self):
-        # all values are supposed to match Linux's tcp_states.h states
-        # table across all platforms.
-        valid_conn_states = ["ESTABLISHED", "SYN_SENT", "SYN_RECV", "FIN_WAIT1",
-                             "FIN_WAIT2", "TIME_WAIT", "CLOSE", "CLOSE_WAIT",
-                             "LAST_ACK", "LISTEN", "CLOSING", ""]
-        valid_procs = 0
-        excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
-                          'kill', 'wait', 'as_dict', 'get_cpu_percent', 'nice']
-        # XXX - skip slow lsof implementation;
-        if BSD:
-           excluded_names += ['get_connections']
-        attrs = []
-        for name in dir(psutil.Process):
-            if name.startswith("_"):
-                continue
-            if name.startswith("set_"):
-                continue
-            if name in excluded_names:
-                continue
-            attrs.append(name)
-
-        for p in psutil.process_iter():
-            for name in attrs:
-                try:
-                    try:
-                        attr = getattr(p, name, None)
-                        if attr is not None and callable(attr):
-                            ret = attr()
-                        else:
-                            ret = attr
-                        valid_procs += 1
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):
-                        err = sys.exc_info()[1]
-                        self.assertEqual(err.pid, p.pid)
-                        if err.name:
-                            # make sure exception's name attr is set
-                            # with the actual process name
-                            self.assertEqual(err.name, p.name)
-                        self.assertTrue(str(err))
-                        self.assertTrue(err.msg)
-                    else:
-                        if name == 'parent' or ret in (0, 0.0, [], None):
-                            continue
-                        self.assertTrue(ret)
-
-                        if name == "exe":
-                            self.assertTrue(os.path.isfile(ret))
-                            if hasattr(os, 'access') and hasattr(os, "X_OK"):
-                                self.assertTrue(os.access(ret, os.X_OK))
-                        elif name == 'ppid':
-                            self.assertTrue(ret >= 0)
-                        elif name == 'name':
-                            self.assertTrue(isinstance(ret, str))
-                            self.assertTrue(ret)
-                        elif name == 'create_time':
-                            self.assertTrue(ret > 0)
-                            if not WINDOWS:
-                                self.assertTrue(ret >= psutil.BOOT_TIME)
-                            # make sure returned value can be pretty printed
-                            # with strftime
-                            time.strftime("%Y %m %d %H:%M:%S",
-                                          time.localtime(p.create_time))
-                        elif name in ('uids', 'gids'):
-                            for field in ret:
-                                self.assertTrue(field >= 0)
-                        elif name == 'username':
-                            self.assertTrue(ret)
-                            if os.name == 'posix':
-                                import pwd
-                                all_users = [x.pw_name for x in pwd.getpwall()]
-                                self.assertTrue(ret in all_users)
-                        elif name == 'status':
-                            self.assertTrue(ret >= 0)
-                            self.assertTrue(ret != '?')
-                        elif name == 'get_io_counters':
-                            for field in ret:
-                                if field != -1:
-                                    self.assertTrue(field >= 0)
-                        elif name == 'get_ionice':
-                            self.assertTrue(ret.ioclass >= 0)
-                            self.assertTrue(ret.value >= 0)
-                        elif name == 'get_num_threads':
-                            self.assertTrue(ret >= 1)
-                        elif name == 'get_threads':
-                            for t in ret:
-                                self.assertTrue(t.id >= 0)
-                                self.assertTrue(t.user_time >= 0)
-                                self.assertTrue(t.system_time >= 0)
-                        elif name == 'get_cpu_times':
-                            self.assertTrue(ret.user >= 0)
-                            self.assertTrue(ret.system >= 0)
-                        elif name == 'get_memory_info':
-                            self.assertTrue(ret.rss >= 0)
-                            self.assertTrue(ret.vms >= 0)
-                        elif name == 'get_open_files':
-                            for f in ret:
-                                if f.fd != -1:
-                                    self.assertTrue(f.fd >= 1)
-                                self.assertTrue(os.path.isfile(f.path))
-                        elif name == 'get_num_fds':
-                            self.assertTrue(ret > 0)
-                        elif name == 'get_connections':
-                            for conn in ret:
-                                self.assertIn(conn.type, (socket.SOCK_STREAM,
-                                                          socket.SOCK_DGRAM))
-                                self.assertIn(conn.family, (socket.AF_INET,
-                                                            socket.AF_INET6))
-                                check_ip_address(conn.local_address, conn.family)
-                                check_ip_address(conn.remote_address, conn.family)
-                                if conn.status not in valid_conn_states:
-                                    self.fail("%s is not a valid status" %conn.status)
-                                # actually try to bind the local socket; ignore IPv6
-                                # sockets as their address might be represented as
-                                # an IPv4-mapped-address (e.g. "::127.0.0.1")
-                                # and that's rejected by bind()
-                                if conn.family == socket.AF_INET:
-                                    s = socket.socket(conn.family, conn.type)
-                                    s.bind((conn.local_address[0], 0))
-                                    s.close()
-
-                                if not WINDOWS and hasattr(socket, 'fromfd'):
-                                    dupsock = None
-                                    try:
-                                        try:
-                                            dupsock = socket.fromfd(conn.fd, conn.family,
-                                                                             conn.type)
-                                        except (socket.error, OSError):
-                                            err = sys.exc_info()[1]
-                                            if err.args[0] == errno.EBADF:
-                                                continue
-                                            else:
-                                                raise
-                                        # python >= 2.5
-                                        if hasattr(dupsock, "family"):
-                                            self.assertEqual(dupsock.family, conn.family)
-                                            self.assertEqual(dupsock.type, conn.type)
-                                    finally:
-                                        if dupsock is not None:
-                                            dupsock.close()
-
-
-                        elif name == "getcwd":
-                            # getcwd() on FreeBSD may be an empty string
-                            # in case of a system process
-                            if BSD and ret == '':
-                                continue
-                            # XXX - temporary fix; on my Linux box
-                            # chrome process cws is errnously reported
-                            # as /proc/4144/fdinfo whichd doesn't exist
-                            if 'chrome' in p.name:
-                                continue
-                            try:
-                                st = os.stat(ret)
-                            except OSError:
-                                err = sys.exc_info()[1]
-                                # directory has been removed in mean time
-                                if err.errno != errno.ENOENT:
-                                    raise
-                            else:
-                                self.assertTrue(stat.S_ISDIR(st.st_mode))
-                except Exception:
-                    err = sys.exc_info()[1]
-                    trace = traceback.format_exc()
-                    self.fail('%s\nproc=%s, method=%r, retvalue=%r'
-                              %(trace, p, name, ret))
-
-        # we should always have a non-empty list, not including PID 0 etc.
-        # special cases.
-        self.assertTrue(valid_procs > 0)
-
     @skipIf(LINUX)
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
@@ -1619,6 +1448,189 @@ class TestCase(unittest.TestCase):
             proc.wait()
 
 
+class TestFetchAllProcesses(unittest.TestCase):
+    # Iterates over all running processes and performs some sanity
+    # checks against Process API's returned values.
+
+    def test_fetch_all(self):
+        valid_procs = 0
+        excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
+                          'kill', 'wait', 'as_dict', 'get_cpu_percent', 'nice',
+                          'parent', 'get_children']
+        # XXX - skip slow lsof implementation;
+        if BSD:
+           excluded_names += ['get_connections']
+        attrs = []
+        for name in dir(psutil.Process):
+            if name.startswith("_"):
+                continue
+            if name.startswith("set_"):
+                continue
+            if name in excluded_names:
+                continue
+            attrs.append(name)
+
+        for p in psutil.process_iter():
+            for name in attrs:
+                try:
+                    try:
+                        attr = getattr(p, name, None)
+                        if attr is not None and callable(attr):
+                            ret = attr()
+                        else:
+                            ret = attr
+                        valid_procs += 1
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        err = sys.exc_info()[1]
+                        self.assertEqual(err.pid, p.pid)
+                        if err.name:
+                            # make sure exception's name attr is set
+                            # with the actual process name
+                            self.assertEqual(err.name, p.name)
+                        self.assertTrue(str(err))
+                        self.assertTrue(err.msg)
+                    else:
+                        if ret not in (0, 0.0, [], None):
+                            self.assertTrue(ret)
+                        meth = getattr(self, name, None)
+                        if meth is not None:
+                            meth(ret)
+                except Exception:
+                    err = sys.exc_info()[1]
+                    trace = traceback.format_exc()
+                    self.fail('%s\nproc=%s, method=%r, retvalue=%r'
+                              %(trace, p, name, ret))
+
+        # we should always have a non-empty list, not including PID 0 etc.
+        # special cases.
+        self.assertTrue(valid_procs > 0)
+
+    def exe(self, ret):
+        self.assertTrue(os.path.isfile(ret))
+        if hasattr(os, 'access') and hasattr(os, "X_OK"):
+            self.assertTrue(os.access(ret, os.X_OK))
+
+    def ppid(self, ret):
+        self.assertTrue(ret >= 0)
+
+    def name(self, ret):
+        self.assertTrue(isinstance(ret, str))
+        self.assertTrue(ret)
+
+    def create_time(self, ret):
+        self.assertTrue(ret > 0)
+        if not WINDOWS:
+            self.assertTrue(ret >= psutil.BOOT_TIME)
+        # make sure returned value can be pretty printed
+        # with strftime
+        time.strftime("%Y %m %d %H:%M:%S", time.localtime(ret))
+
+    def uids(self, ret):
+        for field in ret:
+            self.assertTrue(field >= 0)
+
+    gids = uids # XXX
+
+    def username(self, ret):
+        self.assertTrue(ret)
+        if os.name == 'posix':
+            import pwd
+            all_users = [x.pw_name for x in pwd.getpwall()]
+            self.assertTrue(ret in all_users)
+
+    def status(self, ret):
+        self.assertTrue(ret >= 0)
+        self.assertTrue(ret != '?')
+
+    def get_io_counters(self, ret):
+        for field in ret:
+            if field != -1:
+                self.assertTrue(field >= 0)
+
+    def get_ionice(self, ret):
+        self.assertTrue(ret.ioclass >= 0)
+        self.assertTrue(ret.value >= 0)
+
+    def get_num_threads(self, ret):
+        self.assertTrue(ret >= 1)
+
+    def get_threads(self, ret):
+        for t in ret:
+            self.assertTrue(t.id >= 0)
+            self.assertTrue(t.user_time >= 0)
+            self.assertTrue(t.system_time >= 0)
+
+    def get_cpu_times(self, ret):
+        self.assertTrue(ret.user >= 0)
+        self.assertTrue(ret.system >= 0)
+
+    def get_memory_info(self, ret):
+        self.assertTrue(ret.rss >= 0)
+        self.assertTrue(ret.vms >= 0)
+
+    def get_open_files(self, ret):
+        for f in ret:
+            self.assertTrue(f.fd >= 1)
+            self.assertTrue(os.path.isabs(f.path))
+            self.assertTrue(os.path.isfile(f.path))
+
+    def get_num_fds(self, ret):
+        self.assertTrue(ret > 0)
+
+    def get_connections(self, ret):
+        # all values are supposed to match Linux's tcp_states.h states
+        # table across all platforms.
+        valid_conn_states = ["ESTABLISHED", "SYN_SENT", "SYN_RECV", "FIN_WAIT1",
+                             "FIN_WAIT2", "TIME_WAIT", "CLOSE", "CLOSE_WAIT",
+                             "LAST_ACK", "LISTEN", "CLOSING", ""]
+        for conn in ret:
+            self.assertIn(conn.type, (socket.SOCK_STREAM, socket.SOCK_DGRAM))
+            self.assertIn(conn.family, (socket.AF_INET, socket.AF_INET6))
+            check_ip_address(conn.local_address, conn.family)
+            check_ip_address(conn.remote_address, conn.family)
+            if conn.status not in valid_conn_states:
+                self.fail("%s is not a valid status" %conn.status)
+            # actually try to bind the local socket; ignore IPv6
+            # sockets as their address might be represented as
+            # an IPv4-mapped-address (e.g. "::127.0.0.1")
+            # and that's rejected by bind()
+            if conn.family == socket.AF_INET:
+                s = socket.socket(conn.family, conn.type)
+                s.bind((conn.local_address[0], 0))
+                s.close()
+
+            if not WINDOWS and hasattr(socket, 'fromfd'):
+                dupsock = None
+                try:
+                    try:
+                        dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
+                    except (socket.error, OSError):
+                        err = sys.exc_info()[1]
+                        if err.args[0] == errno.EBADF:
+                            continue
+                        raise
+                    # python >= 2.5
+                    if hasattr(dupsock, "family"):
+                        self.assertEqual(dupsock.family, conn.family)
+                        self.assertEqual(dupsock.type, conn.type)
+                finally:
+                    if dupsock is not None:
+                        dupsock.close()
+
+    def getcwd(self, ret):
+        if ret is not None:  # BSD may return None
+            self.assertTrue(os.path.isabs(ret))
+            try:
+                st = os.stat(ret)
+            except OSError:
+                err = sys.exc_info()[1]
+                # directory has been removed in mean time
+                if err.errno != errno.ENOENT:
+                    raise
+            else:
+                self.assertTrue(stat.S_ISDIR(st.st_mode))
+
+
 if hasattr(os, 'getuid'):
     class LimitedUserTestCase(TestCase):
         """Repeat the previous tests by using a limited user.
@@ -1665,6 +1677,7 @@ def test_main():
     tests = []
     test_suite = unittest.TestSuite()
     tests.append(TestCase)
+    tests.append(TestFetchAllProcesses)
 
     if POSIX:
         from _posix import PosixSpecificTestCase
