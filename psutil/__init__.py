@@ -1016,11 +1016,12 @@ def test():
         except NoSuchProcess:
             pass
         else:
-            ctime = datetime.datetime.fromtimestamp(pinfo['create_time'])
-            if ctime.date() == today_day:
-                ctime = ctime.strftime("%H:%M")
-            else:
-                ctime = ctime.strftime("%b%d")
+            if pinfo['create_time']:
+                ctime = datetime.datetime.fromtimestamp(pinfo['create_time'])
+                if ctime.date() == today_day:
+                    ctime = ctime.strftime("%H:%M")
+                else:
+                    ctime = ctime.strftime("%b%d")
             cputime = time.strftime("%M:%S", time.localtime(sum(pinfo['cpu_times'])))
             user = pinfo['username']
             if os.name == 'nt' and '\\' in user:
@@ -1037,7 +1038,7 @@ def test():
                             memp,
                             vms,
                             rss,
-                            pinfo['terminal'] or '?',
+                            pinfo.get('terminal', '') or '?',
                             ctime,
                             cputime,
                             pinfo['name'].strip() or '?'))

@@ -103,7 +103,7 @@ def reap_children(search_all=False):
         try:
             child = psutil.Process(pid)
             child.kill()
-        except psutil.NoSuchProcess:
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
             pass
         else:
             child.wait()
@@ -1302,6 +1302,7 @@ class TestCase(unittest.TestCase):
                         else:
                             self.assertEqual(cons, [], cons)
 
+    @skipUnless(POSIX)
     def test_get_num_fds(self):
         p = psutil.Process(os.getpid())
         start = p.get_num_fds()
@@ -1375,8 +1376,12 @@ class TestCase(unittest.TestCase):
         # this is the one, now let's make sure there are no duplicates
         pid = max(table, key=lambda x: table[x])
         p = psutil.Process(pid)
-        c = p.get_children(recursive=True)
-        self.assertEqual(len(c), len(set(c)))
+        try:
+            c = p.get_children(recursive=True)
+        except psutil.AccessDenied:  # windows
+            pass
+        else:
+            self.assertEqual(len(c), len(set(c)))
 
     def test_suspend_resume(self):
         sproc = get_test_subprocess()
@@ -1516,13 +1521,14 @@ class TestCase(unittest.TestCase):
                         if name == "exe":
                             self.assertTrue(os.path.isfile(ret))
                         elif name == 'ppid':
-                            self.assertTrue(field >= 0)
+                            self.assertTrue(ret >= 0)
                         elif name == 'name':
                             self.assertTrue(isinstance(ret, str))
                             self.assertTrue(ret)
                         elif name == 'create_time':
                             self.assertTrue(ret > 0)
-                            self.assertTrue(ret >= psutil.BOOT_TIME)
+                            if not WINDOWS:
+                                self.assertTrue(ret >= psutil.BOOT_TIME)
                             # make sure returned value can be pretty printed
                             # with strftime
                             time.strftime("%Y %m %d %H:%M:%S",
