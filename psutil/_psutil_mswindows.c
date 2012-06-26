@@ -294,8 +294,10 @@ static PyObject*
 get_process_create_time(PyObject* self, PyObject* args)
 {
     long        pid;
-    long long unix_time;
+    long long   unix_time;
+    DWORD       exitCode;
     HANDLE      hProcess;
+    BOOL WINAPI ret;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
@@ -324,7 +326,26 @@ get_process_create_time(PyObject* self, PyObject* args)
         }
     }
 
+    // Make sure the process is not gone as OpenProcess alone seems to be
+    // unreliable in doing so (it seems a previous call to p.wait() makes
+    // it unreliable).
+    // This check is important as creation time is used to make sure the
+    // process is still running.
+    ret = GetExitCodeProcess(hProcess, &exitCode);
     CloseHandle(hProcess);
+    if (ret != 0) {
+        if (exitCode != STILL_ACTIVE) {
+            return NoSuchProcess();
+        }
+    }
+    else {
+        // Ignore access denied as it means the process is still alive.
+        // For all other errors, we want an exception.
+        if (GetLastError() != ERROR_ACCESS_DENIED) {
+            PyErr_SetFromWindowsErr(0);
+            return NULL;
+        }
+    }
 
     /*
     Convert the FILETIME structure to a Unix time.
