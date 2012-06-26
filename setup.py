@@ -21,7 +21,7 @@ if os.name == 'posix':
     posix_extension = Extension('_psutil_posix',
                                 sources = ['psutil/_psutil_posix.c'])
 # Windows
-if sys.platform.lower().startswith("win"):
+if sys.platform.startswith("win32"):
 
     def get_winver():
         maj, min = sys.getwindowsversion()[0:2]
@@ -42,7 +42,7 @@ if sys.platform.lower().startswith("win"):
                             #extra_link_args=["/DEBUG"]
                             )]
 # OS X
-elif sys.platform.lower().startswith("darwin"):
+elif sys.platform.startswith("darwin"):
     extensions = [Extension('_psutil_osx',
                             sources = ['psutil/_psutil_osx.c',
                                        'psutil/_psutil_common.c',
@@ -52,7 +52,7 @@ elif sys.platform.lower().startswith("darwin"):
                             ),
                   posix_extension]
 # FreeBSD
-elif sys.platform.lower().startswith("freebsd"):
+elif sys.platform.startswith("freebsd"):
     extensions = [Extension('_psutil_bsd',
                             sources = ['psutil/_psutil_bsd.c',
                                        'psutil/_psutil_common.c',
@@ -61,7 +61,7 @@ elif sys.platform.lower().startswith("freebsd"):
                             ),
                   posix_extension]
 # Linux
-elif sys.platform.lower().startswith("linux"):
+elif sys.platform.startswith("linux"):
     extensions = [Extension('_psutil_linux',
                             sources=['psutil/_psutil_linux.c'],
                             ),

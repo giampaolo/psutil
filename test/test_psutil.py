@@ -40,10 +40,10 @@ PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 TESTFN = os.path.join(os.getcwd(), "$testfile")
 POSIX = os.name == 'posix'
-LINUX = sys.platform.lower().startswith("linux")
-WINDOWS = sys.platform.lower().startswith("win32")
-OSX = sys.platform.lower().startswith("darwin")
-BSD = sys.platform.lower().startswith("freebsd")
+LINUX = sys.platform.startswith("linux")
+WINDOWS = sys.platform.startswith("win32")
+OSX = sys.platform.startswith("darwin")
+BSD = sys.platform.startswith("freebsd")
 
 
 _subprocesses_started = set()

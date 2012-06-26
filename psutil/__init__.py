@@ -58,7 +58,7 @@ from psutil._common import (STATUS_RUNNING, STATUS_IDLE, STATUS_SLEEPING,
                             STATUS_WAKING, STATUS_LOCKED)
 
 # import the appropriate module for our platform only
-if sys.platform.lower().startswith("linux"):
+if sys.platform.startswith("linux"):
     import psutil._pslinux as _psplatform
     from psutil._pslinux import (phymem_buffers,
                                  cached_phymem,
@@ -69,7 +69,7 @@ if sys.platform.lower().startswith("linux"):
     phymem_buffers = _psplatform.phymem_buffers
     cached_phymem = _psplatform.cached_phymem
 
-elif sys.platform.lower().startswith("win32"):
+elif sys.platform.startswith("win32"):
     import psutil._psmswindows as _psplatform
     from psutil._psmswindows import (ABOVE_NORMAL_PRIORITY_CLASS,
                                      BELOW_NORMAL_PRIORITY_CLASS,
@@ -78,10 +78,10 @@ elif sys.platform.lower().startswith("win32"):
                                      NORMAL_PRIORITY_CLASS,
                                      REALTIME_PRIORITY_CLASS)
 
-elif sys.platform.lower().startswith("darwin"):
+elif sys.platform.startswith("darwin"):
     import psutil._psosx as _psplatform
 
-elif sys.platform.lower().startswith("freebsd"):
+elif sys.platform.startswith("freebsd"):
     import psutil._psbsd as _psplatform
 
 else:
