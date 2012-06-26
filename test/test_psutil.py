@@ -392,17 +392,6 @@ class TestCase(unittest.TestCase):
                 self.assertTrue(percent >= 0.0)
                 self.assertTrue(percent <= 100.0)
 
-    def test_sys_cpu_percent_compare(self):
-        psutil.cpu_percent(interval=0)
-        psutil.cpu_percent(interval=0, percpu=True)
-        time.sleep(.1)
-        t1 = psutil.cpu_percent(interval=0)
-        t2 = psutil.cpu_percent(interval=0, percpu=True)
-        # calculate total average
-        t2 = sum(t2) / len(t2)
-        if abs(t1 - t2) > 5:
-            self.assertEqual(t1, t2)
-
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
         self.assertTrue(usage.total > 0)
