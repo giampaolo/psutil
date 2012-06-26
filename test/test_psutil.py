@@ -247,8 +247,9 @@ class TestCase(unittest.TestCase):
     def test_NUM_CPUS(self):
         self.assertEqual(psutil.NUM_CPUS, len(psutil.cpu_times(percpu=True)))
 
-    def test_deprecated_memory_functions(self):
+    def test_deprecated_apis(self):
         warnings.filterwarnings("error")
+        p = psutil.Process(os.getpid())
         try:
             self.assertRaises(DeprecationWarning, psutil.used_phymem)
             self.assertRaises(DeprecationWarning, psutil.avail_phymem)
@@ -256,6 +257,13 @@ class TestCase(unittest.TestCase):
             self.assertRaises(DeprecationWarning, psutil.used_virtmem)
             self.assertRaises(DeprecationWarning, psutil.avail_virtmem)
             self.assertRaises(DeprecationWarning, psutil.get_process_list)
+            self.assertRaises(DeprecationWarning, psutil.get_process_list)
+            try:
+                p.nice
+            except DeprecationWarning:
+                pass
+            else:
+                self.fail("p.nice didn't raise DeprecationWarning")
         finally:
             warnings.resetwarnings()
 
@@ -918,21 +926,21 @@ class TestCase(unittest.TestCase):
 
         def test_nice(self):
             p = psutil.Process(os.getpid())
-            self.assertRaises(TypeError, setattr, p, "nice", "str")
+            self.assertRaises(TypeError, p.set_nice, "str")
             try:
                 try:
-                    first_nice = p.nice
-                    p.nice = 1
-                    self.assertEqual(p.nice, 1)
+                    first_nice = p.get_nice()
+                    p.set_nice(1)
+                    self.assertEqual(p.get_nice(), 1)
                     # going back to previous nice value raises AccessDenied on OSX
                     if not OSX:
-                        p.nice = 0
-                        self.assertEqual(p.nice, 0)
+                        p.set_nice(0)
+                        self.assertEqual(p.get_nice(), 0)
                 except psutil.AccessDenied:
                     pass
             finally:
                 try:
-                    p.nice = first_nice
+                    p.set_nice(first_nice)
                 except psutil.AccessDenied:
                     pass
 
@@ -1430,7 +1438,8 @@ class TestCase(unittest.TestCase):
         for name in dir(p):
             if name.startswith('_')\
             or name in ('pid', 'send_signal', 'is_running', 'set_ionice',
-                        'wait', 'set_cpu_affinity', 'create_time'):
+                        'wait', 'set_cpu_affinity', 'create_time', 'set_nice',
+                        'nice'):
                 continue
             try:
                 meth = getattr(p, name)
@@ -1444,9 +1453,9 @@ class TestCase(unittest.TestCase):
         # other methods
         try:
             if os.name == 'posix':
-                p.nice = 1
+                p.set_nice(1)
             else:
-                p.nice = psutil.NORMAL_PRIORITY_CLASS
+                p.set_nice(psutil.NORMAL_PRIORITY_CLASS)
         except psutil.NoSuchProcess:
             pass
         else:
@@ -1454,6 +1463,7 @@ class TestCase(unittest.TestCase):
         if hasattr(p, 'set_ionice'):
             self.assertRaises(psutil.NoSuchProcess, p.set_ionice, 2)
         self.assertRaises(psutil.NoSuchProcess, p.send_signal, signal.SIGTERM)
+        self.assertRaises(psutil.NoSuchProcess, p.set_nice, 0)
         self.assertFalse(p.is_running())
         if hasattr(p, "set_cpu_affinity"):
             self.assertRaises(psutil.NoSuchProcess, p.set_cpu_affinity, [0])
@@ -1475,7 +1485,7 @@ class TestCase(unittest.TestCase):
     def test_fetch_all(self):
         valid_procs = 0
         excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
-                          'kill', 'wait', 'as_dict', 'get_cpu_percent']
+                          'kill', 'wait', 'as_dict', 'get_cpu_percent', 'nice']
         # XXX - skip slow lsof implementation;
         if BSD:
            excluded_names += ['get_connections']
@@ -1682,7 +1692,7 @@ if hasattr(os, 'getuid'):
 
         def test_nice(self):
             try:
-                psutil.Process(os.getpid()).nice = -1
+                psutil.Process(os.getpid()).set_nice(-1)
             except psutil.AccessDenied:
                 pass
             else:

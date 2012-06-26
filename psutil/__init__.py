@@ -146,7 +146,7 @@ class Process(object):
         """
         excluded_names = set(['send_signal', 'suspend', 'resume', 'terminate',
                               'kill', 'wait', 'is_running', 'as_dict', 'parent',
-                              'get_children'])
+                              'get_children', 'nice'])
         retdict = dict()
         for name in set(attrs or dir(self)):
             if name.startswith('_'):
@@ -246,16 +246,6 @@ class Process(object):
         """The process current status as a STATUS_* constant."""
         return self._platform_impl.get_process_status()
 
-    @property
-    def nice(self):
-        """Get or set process niceness (priority)."""
-        return self._platform_impl.get_process_nice()
-
-    @nice.setter
-    def nice(self, value):
-        # invoked on "p.nice = num"; change process niceness
-        self._platform_impl.set_process_nice(value)
-
     if os.name == 'posix':
 
         @property
@@ -317,6 +307,14 @@ class Process(object):
             bytes read and written by the process.
             """
             return self._platform_impl.get_process_io_counters()
+
+    def get_nice(self):
+        """Get process niceness (priority)."""
+        return self._platform_impl.get_process_nice()
+
+    def set_nice(self, value):
+        """Set process niceness (priority)."""
+        return self._platform_impl.set_process_nice(value)
 
     # available only on Linux
     if hasattr(_psplatform.Process, "get_process_ionice"):
@@ -656,6 +654,25 @@ class Process(object):
         if timeout is not None and not timeout >= 0:
             raise ValueError("timeout must be a positive integer")
         return self._platform_impl.process_wait(timeout)
+
+    # --- deprecated API
+
+    @property
+    def nice(self):
+        """Get or set process niceness (priority).
+        Deprecated, use get_nice() instead.
+        """
+        msg = "this property is deprecated; use Process.get_nice() method instead"
+        warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+        return self.get_nice()
+
+    @nice.setter
+    def nice(self, value):
+        # invoked on "p.nice = num"; change process niceness
+        # deprecated in favor of set_nice()
+        msg = "this property is deprecated; use Process.set_nice() method instead"
+        warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+        return self.set_nice(value)
 
 
 class Popen(Process):

@@ -29,6 +29,8 @@ NEW FEATURES
    the process is terminated.
  * Issue #284: (POSIX) per-process number of opened file descriptors.
  * Issue #287: psutil.process_iter() now caches Process instances between calls.
+ * Issue #290: Process.nice property is deprecated in favor of new get_nice()
+   and set_nice() methods.
 
 BUGFIXES
 
@@ -55,6 +57,8 @@ BUGFIXES
 
 API CHANGES
 
+ * Process.nice property is deprecated in favor of new get_nice() and set_nice()
+   methods.
  * psutil.get_process_list() is deprecated.
  * ppid, name, exe, cmdline and create_time properties of Process class are now
    cached after being accessed, meaning NoSuchProcess will no longer be raised
