@@ -425,7 +425,7 @@ class TestCase(unittest.TestCase):
         for disk in psutil.disk_partitions(all=True):
             if not WINDOWS:
                 self.assertTrue(os.path.isdir(disk.mountpoint))
-            self.assertTrue(disk.fstype)
+            self.assertTrue(isinstance(disk.fstype, str))
             self.assertTrue(isinstance(disk.options, str))
 
         def find_mount_point(path):

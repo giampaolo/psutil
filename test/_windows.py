@@ -17,6 +17,7 @@ import warnings
 import atexit
 import sys
 import subprocess
+import errno
 
 import psutil
 import _psutil_mswindows
@@ -185,7 +186,15 @@ class WindowsSpecificTestCase(unittest.TestCase):
                         if not ps_part.mountpoint:
                             # this is usually a CD-ROM with no disk inserted
                             break
-                        usage = psutil.disk_usage(ps_part.mountpoint)
+                        try:
+                            usage = psutil.disk_usage(ps_part.mountpoint)
+                        except OSError:
+                            err = sys.exc_info()[1]
+                            if err.errno == errno.ENOENT:
+                                # usually this is the floppy
+                                break
+                            else:
+                                raise
                         self.assertEqual(usage.total, int(wmi_part.Size))
                         wmi_free = int(wmi_part.FreeSpace)
                         self.assertEqual(usage.free, wmi_free)
@@ -194,7 +203,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
                             self.fail("psutil=%s, wmi=%s" % usage.free, wmi_free)
                         break
                 else:
-                    self.fail("can't find partition %r", ps_part)
+                    self.fail("can't find partition %s" % repr(ps_part))
 
     if win32api is not None:
 
