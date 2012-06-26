@@ -1342,20 +1342,23 @@ class TestCase(unittest.TestCase):
             self.assertEqual(children[0].pid, sproc.pid)
             self.assertEqual(children[0].ppid, os.getpid())
 
-    def test_aget_children_recursive(self):
+    def test_get_children_recursive(self):
         # here we create a subprocess which creates another one as in:
         # A (parent) -> B (child) -> C (grandchild)
         s =  "import subprocess, os, sys, time;"
         s += "PYTHON = os.path.realpath(sys.executable);"
-        s += "DEVNULL = open(os.devnull, 'r+');"
         s += "cmd = [PYTHON, '-c', 'import time; time.sleep(3600);'];"
         s += "subprocess.Popen(cmd);"
         s += "time.sleep(3600);"
         get_test_subprocess(cmd=[PYTHON, "-c", s])
-        time.sleep(.1)
         p = psutil.Process(os.getpid())
         self.assertEqual(len(p.get_children(recursive=False)), 1)
-        children = p.get_children(recursive=True)
+        # give the grandchild some time to start
+        stop_at = time.time() + 1.5
+        while time.time() < stop_at:
+            children = p.get_children(recursive=True)
+            if len(children) > 1:
+                break
         self.assertEqual(len(children), 2)
         self.assertEqual(children[0].ppid, os.getpid())
         self.assertEqual(children[1].ppid, children[0].pid)
