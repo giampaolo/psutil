@@ -249,13 +249,13 @@ class TestCase(unittest.TestCase):
 
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x > 0)
+        assert isinstance(x, (int, long))
+        assert x > 0
 
     def test_BOOT_TIME(self):
         x = psutil.BOOT_TIME
-        self.assertTrue(isinstance(x, float))
-        self.assertTrue(x > 0)
+        assert isinstance(x, float)
+        assert x > 0
 
     def test_NUM_CPUS(self):
         self.assertEqual(psutil.NUM_CPUS, len(psutil.cpu_times(percpu=True)))
@@ -282,28 +282,28 @@ class TestCase(unittest.TestCase):
 
     def test_phymem_usage(self):
         mem = psutil.phymem_usage()
-        self.assertTrue(mem.total > 0)
-        self.assertTrue(mem.used > 0)
-        self.assertTrue(mem.free > 0)
-        self.assertTrue(0 <= mem.percent <= 100, mem.percent)
+        assert mem.total > 0, mem
+        assert mem.used > 0, mem
+        assert mem.free > 0, mem
+        assert 0 <= mem.percent <= 100, mem
 
     def test_virtmem_usage(self):
         mem = psutil.virtmem_usage()
-        self.assertTrue(mem.total > 0)
-        self.assertTrue(mem.used >= 0)
-        self.assertTrue(mem.free > 0)
-        self.assertTrue(0 <= mem.percent <= 100, mem.percent)
+        assert mem.total > 0, mem
+        assert mem.used >= 0, mem
+        assert mem.free > 0, mem
+        assert 0 <= mem.percent <= 100, mem
 
     @skipUnless(LINUX)
     def test_phymem_buffers(self):
         x = psutil.phymem_buffers()
-        self.assertTrue(isinstance(x, (int, long)))
-        self.assertTrue(x >= 0)
+        assert isinstance(x, (int, long))
+        assert x >= 0, x
 
     def test_pid_exists(self):
         sproc = get_test_subprocess()
         wait_for_pid(sproc.pid)
-        self.assertTrue(psutil.pid_exists(sproc.pid))
+        assert psutil.pid_exists(sproc.pid)
         p = psutil.Process(sproc.pid)
         p.kill()
         p.wait()
@@ -315,7 +315,7 @@ class TestCase(unittest.TestCase):
         pids = psutil.get_pid_list()
         for pid in pids:
             try:
-                self.assertTrue(psutil.pid_exists(pid))
+                assert psutil.pid_exists(pid)
             except AssertionError:
                 # in case the process disappeared in meantime fail only
                 # if it is no longer in get_pid_list()
@@ -347,8 +347,8 @@ class TestCase(unittest.TestCase):
         times = psutil.cpu_times()
         sum(times)
         for cp_time in times:
-            self.assertTrue(isinstance(cp_time, float))
-            self.assertTrue(cp_time >= 0.0)
+            assert isinstance(cp_time, float)
+            assert cp_time >= 0.0, cp_time
             total += cp_time
         self.assertEqual(total, sum(times))
         str(times)
@@ -366,8 +366,8 @@ class TestCase(unittest.TestCase):
             total = 0
             sum(times)
             for cp_time in times:
-                self.assertTrue(isinstance(cp_time, float))
-                self.assertTrue(cp_time >= 0.0)
+                assert isinstance(cp_time, float)
+                assert cp_time >= 0.0, cp_time
                 total += cp_time
             self.assertEqual(total, sum(times))
             str(times)
@@ -391,9 +391,9 @@ class TestCase(unittest.TestCase):
         psutil.cpu_percent(interval=0.001)
         for x in range(1000):
             percent = psutil.cpu_percent(interval=None)
-            self.assertTrue(isinstance(percent, float))
-            self.assertTrue(percent >= 0.0)
-            self.assertTrue(percent <= 100.0)
+            assert isinstance(percent, float)
+            assert percent >= 0.0, percent
+            assert percent <= 100.0, percent
 
     def test_sys_per_cpu_percent(self):
         psutil.cpu_percent(interval=0.001, percpu=True)
@@ -401,18 +401,18 @@ class TestCase(unittest.TestCase):
         for x in range(1000):
             percents = psutil.cpu_percent(interval=None, percpu=True)
             for percent in percents:
-                self.assertTrue(isinstance(percent, float))
-                self.assertTrue(percent >= 0.0)
-                self.assertTrue(percent <= 100.0)
+                assert isinstance(percent, float)
+                assert percent >= 0.0, percent
+                assert percent <= 100.0, percent
 
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
-        self.assertTrue(usage.total > 0)
-        self.assertTrue(usage.used > 0)
-        self.assertTrue(usage.free > 0)
-        self.assertTrue(usage.total > usage.used)
-        self.assertTrue(usage.total > usage.free)
-        self.assertTrue(0 <= usage.percent <= 100, usage.percent)
+        assert usage.total > 0, usage
+        assert usage.used > 0, usage
+        assert usage.free > 0, usage
+        assert usage.total > usage.used, usage
+        assert usage.total > usage.free, usage
+        assert 0 <= usage.percent <= 100, usage.percent
 
         # if path does not exist OSError ENOENT is expected across
         # all platforms
@@ -428,15 +428,15 @@ class TestCase(unittest.TestCase):
 
     def test_disk_partitions(self):
         for disk in psutil.disk_partitions(all=False):
-            self.assertTrue(os.path.exists(disk.device))
-            self.assertTrue(os.path.isdir(disk.mountpoint))
-            self.assertTrue(disk.fstype)
-            self.assertTrue(isinstance(disk.options, str))
+            assert os.path.exists(disk.device), disk
+            assert os.path.isdir(disk.mountpoint), disk
+            assert disk.fstype, disk
+            assert isinstance(disk.options, str)
         for disk in psutil.disk_partitions(all=True):
             if not WINDOWS:
-                self.assertTrue(os.path.isdir(disk.mountpoint))
-            self.assertTrue(isinstance(disk.fstype, str))
-            self.assertTrue(isinstance(disk.options, str))
+                assert os.path.isdir(disk.mountpoint), disk
+            assert isinstance(disk.fstype, str)
+            assert isinstance(disk.options, str)
 
         def find_mount_point(path):
             path = os.path.abspath(path)
@@ -455,17 +455,17 @@ class TestCase(unittest.TestCase):
             self.assertEqual(nt[1], nt.bytes_recv)
             self.assertEqual(nt[2], nt.packets_sent)
             self.assertEqual(nt[3], nt.packets_recv)
-            self.assertTrue(nt.bytes_sent >= 0)
-            self.assertTrue(nt.bytes_recv >= 0)
-            self.assertTrue(nt.packets_sent >= 0)
-            self.assertTrue(nt.packets_recv >= 0)
+            assert nt.bytes_sent >= 0, nt
+            assert nt.bytes_recv >= 0, nt
+            assert nt.packets_sent >= 0, nt
+            assert nt.packets_recv >= 0, nt
 
         ret = psutil.network_io_counters(pernic=False)
         check_ntuple(ret)
         ret = psutil.network_io_counters(pernic=True)
-        self.assertTrue(ret != [])
+        assert ret != []
         for key in ret:
-            self.assertTrue(key)
+            assert key
             check_ntuple(ret[key])
 
     def test_disk_io_counters(self):
@@ -476,29 +476,29 @@ class TestCase(unittest.TestCase):
             self.assertEqual(nt[3], nt.write_bytes)
             self.assertEqual(nt[4], nt.read_time)
             self.assertEqual(nt[5], nt.write_time)
-            self.assertTrue(nt.read_count >= 0)
-            self.assertTrue(nt.write_count >= 0)
-            self.assertTrue(nt.read_bytes >= 0)
-            self.assertTrue(nt.write_bytes >= 0)
-            self.assertTrue(nt.read_time >= 0)
-            self.assertTrue(nt.write_time >= 0)
+            assert nt.read_count >= 0, nt
+            assert nt.write_count >= 0, nt
+            assert nt.read_bytes >= 0, nt
+            assert nt.write_bytes >= 0, nt
+            assert nt.read_time >= 0, nt
+            assert nt.write_time >= 0, nt
 
         ret = psutil.disk_io_counters(perdisk=False)
         check_ntuple(ret)
         ret = psutil.disk_io_counters(perdisk=True)
         for key in ret:
-            self.assertTrue(key)
+            assert key, key
             check_ntuple(ret[key])
 
     def test_get_users(self):
         users = psutil.get_users()
         for user in users:
-            self.assertTrue(user.name)
+            assert user.name, user
             terminal = user.terminal
             if terminal:
-                self.assertTrue(os.path.exists(user.terminal), user.terminal)
+                assert os.path.exists(user.terminal), user
             user.host
-            self.assertTrue(user.started > 0.0)
+            assert user.started > 0.0, user
             datetime.datetime.fromtimestamp(user.started)
         names = [x.name for x in users]
         if POSIX:
@@ -640,16 +640,16 @@ class TestCase(unittest.TestCase):
         p.get_cpu_percent(interval=0.001)
         for x in range(100):
             percent = p.get_cpu_percent(interval=None)
-            self.assertTrue(isinstance(percent, float))
-            self.assertTrue(percent >= 0.0)
+            assert isinstance(percent, float)
+            assert percent >= 0.0, percent
             if os.name != 'posix':
-                self.assertTrue(percent <= 100.0)
+                assert percent <= 100.0, percent
             else:
-                self.assertTrue(percent >= 0.0)
+                assert percent >= 0.0, percent
 
     def test_cpu_times(self):
         times = psutil.Process(os.getpid()).get_cpu_times()
-        self.assertTrue((times.user > 0.0) or (times.system > 0.0))
+        assert (times.user > 0.0) or (times.system > 0.0), times
         # make sure returned values can be pretty printed with strftime
         time.strftime("%H:%M:%S", time.localtime(times.user))
         time.strftime("%H:%M:%S", time.localtime(times.system))
@@ -708,10 +708,10 @@ class TestCase(unittest.TestCase):
         f.close()
         io2 = p.get_io_counters()
         if not BSD:
-            self.assertTrue(io2.read_count > io1.read_count)
+            assert io2.read_count > io1.read_count, (io1, io2)
             self.assertEqual(io2.write_count, io1.write_count)
-        self.assertTrue(io2.read_bytes >= io1.read_bytes)
-        self.assertTrue(io2.write_bytes >= io1.write_bytes)
+        assert io2.read_bytes >= io1.read_bytes, (io1, io2)
+        assert io2.write_bytes >= io1.write_bytes, (io1, io2)
         # test writes
         io1 = p.get_io_counters()
         f = tempfile.TemporaryFile()
@@ -721,10 +721,10 @@ class TestCase(unittest.TestCase):
             f.write("x" * 1000000)
         f.close()
         io2 = p.get_io_counters()
-        self.assertTrue(io2.write_count >= io1.write_count)
-        self.assertTrue(io2.write_bytes >= io1.write_bytes)
-        self.assertTrue(io2.read_count >= io1.read_count)
-        self.assertTrue(io2.read_bytes >= io1.read_bytes)
+        assert io2.write_count >= io1.write_count, (io1, io2)
+        assert io2.write_bytes >= io1.write_bytes, (io1, io2)
+        assert io2.read_count >= io1.read_count, (io1, io2)
+        assert io2.read_bytes >= io1.read_bytes, (io1, io2)
 
     @skipUnless(LINUX)
     def test_get_set_ionice(self):
@@ -779,7 +779,7 @@ class TestCase(unittest.TestCase):
     def test_get_num_handles(self):
         # a better test is done later into test/_windows.py
         p = psutil.Process(os.getpid())
-        self.assertTrue(p.get_num_handles() > 0)
+        assert p.get_num_handles() > 0
 
     def test_get_threads(self):
         p = psutil.Process(os.getpid())
@@ -811,8 +811,8 @@ class TestCase(unittest.TestCase):
         # step 1 - get a base value to compare our results
         rss1, vms1 = p.get_memory_info()
         percent1 = p.get_memory_percent()
-        self.assertTrue(rss1 > 0)
-        self.assertTrue(vms1 > 0)
+        assert rss1 > 0
+        assert vms1 > 0
 
         # step 2 - allocate some memory
         memarr = [None] * 1500000
@@ -820,9 +820,9 @@ class TestCase(unittest.TestCase):
         rss2, vms2 = p.get_memory_info()
         percent2 = p.get_memory_percent()
         # make sure that the memory usage bumped up
-        self.assertTrue(rss2 > rss1)
-        self.assertTrue(vms2 >= vms1)  # vms might be equal
-        self.assertTrue(percent2 > percent1)
+        assert rss2 > rss1
+        assert vms2 >= vms1  # vms might be equal
+        assert percent2 > percent1
         del memarr
 
     def test_get_memory_maps(self):
@@ -834,22 +834,22 @@ class TestCase(unittest.TestCase):
 
         for nt in maps:
             if not nt.path.startswith('['):
-                self.assertTrue(os.path.isabs(nt.path))
-                self.assertTrue(os.path.exists(nt.path))
+                assert os.path.isabs(nt.path), nt.path
+                assert os.path.exists(nt.path), nt.path
         for nt in ext_maps:
             for fname in nt._fields:
                 value = getattr(nt, fname)
                 if fname == 'path':
                     continue
                 elif fname in ('addr', 'perms'):
-                    self.assertTrue(value)
+                    assert value, value
                 else:
-                    self.assertTrue(isinstance(value, (int, long)))
-                    self.assertTrue(value >= 0, value)
+                    assert isinstance(value, (int, long))
+                    assert value >= 0, value
 
     def test_get_memory_percent(self):
         p = psutil.Process(os.getpid())
-        self.assertTrue(p.get_memory_percent() > 0.0)
+        assert p.get_memory_percent() > 0.0
 
     def test_pid(self):
         sproc = get_test_subprocess()
@@ -859,12 +859,12 @@ class TestCase(unittest.TestCase):
         sproc = get_test_subprocess()
         wait_for_pid(sproc.pid)
         p = psutil.Process(sproc.pid)
-        self.assertTrue(p.is_running())
-        self.assertTrue(p.is_running())
+        assert p.is_running()
+        assert p.is_running()
         p.kill()
         p.wait()
-        self.assertFalse(p.is_running())
-        self.assertFalse(p.is_running())
+        assert not p.is_running()
+        assert not p.is_running()
 
     def test_exe(self):
         sproc = get_test_subprocess()
@@ -1027,7 +1027,7 @@ class TestCase(unittest.TestCase):
         self.assertIn(TESTFN, filenames)
         f.close()
         for file in filenames:
-            self.assertTrue(os.path.isfile(file))
+            assert os.path.isfile(file), file
 
         # another process
         cmdline = "import time; f = open(r'%s', 'r'); time.sleep(100);" % TESTFN
@@ -1043,7 +1043,7 @@ class TestCase(unittest.TestCase):
         else:
             self.assertIn(TESTFN, filenames)
         for file in filenames:
-            self.assertTrue(os.path.isfile(file))
+            assert os.path.isfile(file), file
 
     def test_get_open_files2(self):
         # test fd and path fields
@@ -1092,7 +1092,7 @@ class TestCase(unittest.TestCase):
         if WINDOWS:
             self.assertEqual(con.fd, -1)
         else:
-            self.assertTrue(con.fd > 0)
+            assert con.fd > 0, con
         # test positions
         self.assertEqual(con[0], con.fd)
         self.assertEqual(con[1], con.family)
@@ -1181,7 +1181,7 @@ class TestCase(unittest.TestCase):
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet4", "tcp", "tcp4"):
-                            self.assertTrue(cons != [], cons)
+                            assert cons != [], cons
                         else:
                             self.assertEqual(cons, [], cons)
                 # UDP v4
@@ -1194,7 +1194,7 @@ class TestCase(unittest.TestCase):
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet4", "udp", "udp4"):
-                            self.assertTrue(cons != [], cons)
+                            assert cons != [], cons
                         else:
                             self.assertEqual(cons, [], cons)
                 # TCP v6
@@ -1207,7 +1207,7 @@ class TestCase(unittest.TestCase):
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet6", "tcp", "tcp6"):
-                            self.assertTrue(cons != [], cons)
+                            assert cons != [], cons
                         else:
                             self.assertEqual(cons, [], cons)
                 # UDP v6
@@ -1220,7 +1220,7 @@ class TestCase(unittest.TestCase):
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet6", "udp", "udp6"):
-                            self.assertTrue(cons != [], cons)
+                            assert cons != [], cons
                         else:
                             self.assertEqual(cons, [], cons)
 
@@ -1308,7 +1308,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(p.status, psutil.STATUS_STOPPED)
         self.assertEqual(str(p.status), "stopped")
         p.resume()
-        self.assertTrue(p.status != psutil.STATUS_STOPPED)
+        assert p.status != psutil.STATUS_STOPPED, p.status
 
     def test_invalid_pid(self):
         self.assertRaises(TypeError, psutil.Process, "1")
@@ -1388,7 +1388,7 @@ class TestCase(unittest.TestCase):
         self.assertIn(str(sproc.pid), str(p))
         # python shows up as 'Python' in cmdline on OS X so test fails on OS X
         if not OSX:
-            self.assertTrue(os.path.basename(PYTHON) in str(p))
+            self.assertIn(os.path.basename(PYTHON), str(p))
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.kill()
@@ -1492,7 +1492,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                         self.assertTrue(err.msg)
                     else:
                         if ret not in (0, 0.0, [], None):
-                            self.assertTrue(ret)
+                            assert ret, ret
                         meth = getattr(self, name)
                         meth(ret)
                 except Exception:
@@ -1509,7 +1509,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         pass
 
     def exe(self, ret):
-        self.assertTrue(os.path.isfile(ret))
+        assert os.path.isfile(ret), ret
         if hasattr(os, 'access') and hasattr(os, "X_OK"):
             self.assertTrue(os.access(ret, os.X_OK))
 
@@ -1539,11 +1539,11 @@ class TestFetchAllProcesses(unittest.TestCase):
         if os.name == 'posix':
             import pwd
             all_users = [x.pw_name for x in pwd.getpwall()]
-            self.assertTrue(ret in all_users)
+            self.assertIn(ret, all_users)
 
     def status(self, ret):
         self.assertTrue(ret >= 0)
-        self.assertTrue(ret != '?')
+        self.assertTrue(str(ret) != '?')
 
     def get_io_counters(self, ret):
         for field in ret:
@@ -1573,9 +1573,9 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def get_open_files(self, ret):
         for f in ret:
-            self.assertTrue(f.fd >= 1)
-            self.assertTrue(os.path.isabs(f.path))
-            self.assertTrue(os.path.isfile(f.path))
+            assert f.fd >= 1, f
+            assert os.path.isabs(f.path), f
+            assert os.path.isfile(f.path), f
 
     def get_num_fds(self, ret):
         self.assertTrue(ret >= 0)
@@ -1622,7 +1622,7 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def getcwd(self, ret):
         if ret is not None:  # BSD may return None
-            self.assertTrue(os.path.isabs(ret))
+            assert os.path.isabs(ret), ret
             try:
                 st = os.stat(ret)
             except OSError:
@@ -1634,18 +1634,18 @@ class TestFetchAllProcesses(unittest.TestCase):
                 self.assertTrue(stat.S_ISDIR(st.st_mode))
 
     def get_memory_percent(self, ret):
-        self.assertTrue(0 <= ret <= 100, ret)
+        assert 0 <= ret <= 100, ret
 
     def is_running(self, ret):
         self.assertTrue(ret)
 
     def get_cpu_affinity(self, ret):
-        self.assertTrue(ret != [])
+        assert ret != [], ret
 
     def terminal(self, ret):
         if ret is not None:
-            self.assertTrue(os.path.isabs(ret))
-            self.assertTrue(os.path.exists(ret))
+            assert os.path.isabs(ret), ret
+            assert os.path.exists(ret), ret
 
     def get_memory_maps(self, ret):
         for nt in ret:
@@ -1653,18 +1653,18 @@ class TestFetchAllProcesses(unittest.TestCase):
                 value = getattr(nt, fname)
                 if fname == 'path':
                     if not value.startswith('['):
-                        self.assertTrue(os.path.isabs(nt.path))
+                        assert os.path.isabs(nt.path), nt.path
                         # commented as on Linux we might get '/foo/bar (deleted)'
-                        #self.assertTrue(os.path.exists(nt.path), nt.path)
+                        #assert os.path.exists(nt.path), nt.path
                 elif fname in ('addr', 'perms'):
                     self.assertTrue(value)
                 else:
-                    self.assertTrue(isinstance(value, (int, long)))
-                    self.assertTrue(value >= 0, value)
+                    assert isinstance(value, (int, long))
+                    assert value >= 0, value
 
     def get_nice(self, ret):
         if POSIX:
-            self.assertTrue(-20 <= ret <= 20, ret)
+            assert -20 <= ret <= 20, ret
         else:
             self.assertIn(ret, (psutil.IOPRIO_CLASS_NONE, psutil.IOPRIO_CLASS_RT,
                                 psutil.IOPRIO_CLASS_BE, psutil.IOPRIO_CLASS_IDLE))
