@@ -78,7 +78,7 @@ def poll(interval):
     procs_status = {}
     for p in psutil.process_iter():
         try:
-            p.dict = p.as_dict(['username', 'nice', 'get_memory_info',
+            p.dict = p.as_dict(['username', 'get_nice', 'get_memory_info',
                                 'get_memory_percent', 'get_cpu_percent',
                                 'get_cpu_times', 'name', 'status'])
             try:

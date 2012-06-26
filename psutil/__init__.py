@@ -1053,4 +1053,6 @@ def test():
 if __name__ == "__main__":
     test()
 
-del num, property, cached_property, division
+del property, cached_property, division
+if sys.version_info < (3, 0):
+    del num

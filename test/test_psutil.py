@@ -487,7 +487,13 @@ class TestCase(unittest.TestCase):
             user.host
             self.assertTrue(user.started > 0.0)
             datetime.datetime.fromtimestamp(user.started)
-
+        names = [x.name for x in users]
+        if POSIX:
+            import pwd
+            me = pwd.getpwuid(os.getuid()).pw_name
+        else:
+            me = os.environ['USERNAME']
+        self.assertIn(me, names)
 
     # ====================
     # Process object tests

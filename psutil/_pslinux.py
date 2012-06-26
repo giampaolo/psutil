@@ -552,6 +552,7 @@ class Process(object):
                            data['Referenced:'],
                            data['Anonymous:'],
                            data['Swap:'])
+            f.close()
         except EnvironmentError:
             # XXX - Can't use wrap_exceptions decorator as we're
             # returning a generator;  this probably needs some

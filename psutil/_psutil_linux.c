@@ -202,17 +202,8 @@ get_system_users(PyObject* self, PyObject* args)
     PyObject *tuple = NULL;
     PyObject *user_proc = NULL;
     struct utmp *ut;
-    int ret;
-
-    // XXX a header-defined constant should be used here
-    ret = utmpname("/var/run/utmp");
-    if (ret != 0) {
-        PyErr_Format(PyExc_RuntimeError, "utmpname() failed");
-        return NULL;
-    }
 
     setutent();
-
     while (NULL != (ut = getutent())) {
         if (ut->ut_type == USER_PROCESS)
             user_proc = Py_True;
