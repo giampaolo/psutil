@@ -1342,7 +1342,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(children[0].pid, sproc.pid)
             self.assertEqual(children[0].ppid, os.getpid())
 
-    def test_get_children_recursive(self):
+    def test_aget_children_recursive(self):
         # here we create a subprocess which creates another one as in:
         # A (parent) -> B (child) -> C (grandchild)
         s =  "import subprocess, os, sys, time;"
@@ -1403,8 +1403,8 @@ class TestCase(unittest.TestCase):
             # dict is supposed to be hashable
             json.dumps(d)
         #
-        d = p.as_dict(attrs=['name', 'getcwd'])
-        self.assertEqual(sorted(d.keys()), ['cwd', 'name'])
+        d = p.as_dict(attrs=['exe', 'name'])
+        self.assertEqual(sorted(d.keys()), ['exe', 'name'])
         #
         p = psutil.Process(min(psutil.get_pid_list()))
         d = p.as_dict(attrs=['get_connections'], ad_value='foo')

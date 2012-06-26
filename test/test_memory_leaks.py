@@ -164,6 +164,8 @@ class TestProcessObjectLeaks(Base):
     def test_get_open_files(self):
         self.execute('get_open_files')
 
+    # OSX implementation is unbelievably slow
+    @skipIf(OSX)
     def test_get_memory_maps(self):
         self.execute('get_memory_maps')
 
