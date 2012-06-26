@@ -108,6 +108,19 @@ def reap_children(search_all=False):
         else:
             child.wait()
 
+def check_ip_address(addr, family):
+    """Attempts to check IP address's validity."""
+    if not addr:
+        return
+    ip, port = addr
+    assert isinstance(port, int), port
+    if family == socket.AF_INET:
+        ip = list(map(int, ip.split('.')))
+        assert len(ip) == 4, ip
+        for num in ip:
+            assert 0 <= num <= 255, ip
+    assert 0 <= port <= 65535, port
+
 
 # we want to search through all processes before exiting
 atexit.register(reap_children, search_all=True)
@@ -867,20 +880,6 @@ class TestCase(unittest.TestCase):
             name = psutil.Process(sproc.pid).exe
             adjusted_name = PYTHON[:len(name)]
             self.assertEqual(name, adjusted_name)
-        for p in psutil.process_iter():
-            try:
-                exe = p.exe
-            except psutil.Error:
-                continue
-            if not exe:
-                continue
-            if not os.path.exists(exe):
-                self.fail("%s does not exist (pid=%s, name=%s, cmdline=%s)" \
-                          % (repr(exe), p.pid, p.name, p.cmdline))
-            if hasattr(os, 'access') and hasattr(os, "X_OK"):
-                if not os.access(p.exe, os.X_OK):
-                    self.fail("%s is not executable (pid=%s, name=%s, cmdline=%s)" \
-                              % (repr(p.exe), p.pid, p.name, p.cmdline))
 
     def test_cmdline(self):
         sproc = get_test_subprocess([PYTHON, "-E"])
@@ -957,9 +956,6 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(os.getpid())
         self.assertEqual(p.status, psutil.STATUS_RUNNING)
         self.assertEqual(str(p.status), "running")
-        for p in psutil.process_iter():
-            if str(p.status) == '?':
-                self.fail("invalid status for pid %d" % p.pid)
 
     def test_status_constants(self):
         # STATUS_* constants are supposed to be comparable also by
@@ -1047,15 +1043,6 @@ class TestCase(unittest.TestCase):
             self.assertIn(TESTFN, filenames)
         for file in filenames:
             self.assertTrue(os.path.isfile(file))
-        # all processes
-        for proc in psutil.process_iter():
-            try:
-                files = proc.get_open_files()
-            except psutil.Error:
-                pass
-            else:
-                for file in files:
-                    self.assertTrue(os.path.isfile(file.path))
 
     def test_get_open_files2(self):
         # test fd and path fields
@@ -1146,25 +1133,6 @@ class TestCase(unittest.TestCase):
             dupsock.close()
 
     def test_get_connections_all(self):
-
-        def check_address(addr, family):
-            if not addr:
-                return
-            ip, port = addr
-            self.assertTrue(isinstance(port, int))
-            if family == socket.AF_INET:
-                ip = list(map(int, ip.split('.')))
-                self.assertTrue(len(ip) == 4)
-                for num in ip:
-                    self.assertTrue(0 <= num <= 255)
-            self.assertTrue(0 <= port <= 65535)
-
-        # all values are supposed to match Linux's tcp_states.h states
-        # table across all platforms.
-        valid_states = ["ESTABLISHED", "SYN_SENT", "SYN_RECV", "FIN_WAIT1",
-                        "FIN_WAIT2", "TIME_WAIT", "CLOSE", "CLOSE_WAIT",
-                        "LAST_ACK", "LISTEN", "CLOSING", ""]
-
         tcp_template = "import socket;" \
                        "s = socket.socket($family, socket.SOCK_STREAM);" \
                        "s.bind(('$addr', 0));" \
@@ -1197,59 +1165,9 @@ class TestCase(unittest.TestCase):
             tcp6_proc = None
             udp6_proc = None
 
-        # --- check connections of all processes
-
-        time.sleep(0.1)
-        for p in psutil.process_iter():
-            try:
-                cons = p.get_connections()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
-            else:
-                for conn in cons:
-                    self.assertIn(conn.type, (socket.SOCK_STREAM,
-                                              socket.SOCK_DGRAM))
-                    self.assertIn(conn.family, (socket.AF_INET,
-                                                socket.AF_INET6))
-                    check_address(conn.local_address, conn.family)
-                    check_address(conn.remote_address, conn.family)
-                    if conn.status not in valid_states:
-                        self.fail("%s is not a valid status" %conn.status)
-                    # actually try to bind the local socket; ignore IPv6
-                    # sockets as their address might be represented as
-                    # an IPv4-mapped-address (e.g. "::127.0.0.1")
-                    # and that's rejected by bind()
-                    if conn.family == socket.AF_INET:
-                        s = socket.socket(conn.family, conn.type)
-                        s.bind((conn.local_address[0], 0))
-                        s.close()
-
-                    if not WINDOWS and hasattr(socket, 'fromfd'):
-                        dupsock = None
-                        try:
-                            try:
-                                dupsock = socket.fromfd(conn.fd, conn.family,
-                                                                 conn.type)
-                            except (socket.error, OSError):
-                                err = sys.exc_info()[1]
-                                if err.args[0] == errno.EBADF:
-                                    continue
-                                else:
-                                    raise
-                            # python >= 2.5
-                            if hasattr(dupsock, "family"):
-                                self.assertEqual(dupsock.family, conn.family)
-                                self.assertEqual(dupsock.type, conn.type)
-                        finally:
-                            if dupsock is not None:
-                                dupsock.close()
-
-
-        # --- check matches against subprocesses
-
+        # check matches against subprocesses just created
         all_kinds = ("all", "inet", "inet4", "inet6", "tcp", "tcp4", "tcp6",
                      "udp", "udp4", "udp6")
-
         for p in psutil.Process(os.getpid()).get_children():
             for conn in p.get_connections():
                 # TCP v4
@@ -1478,6 +1396,11 @@ class TestCase(unittest.TestCase):
         self.assertIn("terminated", str(p))
 
     def test_fetch_all(self):
+        # all values are supposed to match Linux's tcp_states.h states
+        # table across all platforms.
+        valid_conn_states = ["ESTABLISHED", "SYN_SENT", "SYN_RECV", "FIN_WAIT1",
+                             "FIN_WAIT2", "TIME_WAIT", "CLOSE", "CLOSE_WAIT",
+                             "LAST_ACK", "LISTEN", "CLOSING", ""]
         valid_procs = 0
         excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
                           'kill', 'wait', 'as_dict', 'get_cpu_percent', 'nice']
@@ -1520,6 +1443,8 @@ class TestCase(unittest.TestCase):
 
                         if name == "exe":
                             self.assertTrue(os.path.isfile(ret))
+                            if hasattr(os, 'access') and hasattr(os, "X_OK"):
+                                self.assertTrue(os.access(ret, os.X_OK))
                         elif name == 'ppid':
                             self.assertTrue(ret >= 0)
                         elif name == 'name':
@@ -1544,6 +1469,7 @@ class TestCase(unittest.TestCase):
                                 self.assertTrue(ret in all_users)
                         elif name == 'status':
                             self.assertTrue(ret >= 0)
+                            self.assertTrue(ret != '?')
                         elif name == 'get_io_counters':
                             for field in ret:
                                 if field != -1:
@@ -1568,8 +1494,49 @@ class TestCase(unittest.TestCase):
                             for f in ret:
                                 if f.fd != -1:
                                     self.assertTrue(f.fd >= 1)
+                                self.assertTrue(os.path.isfile(f.path))
                         elif name == 'get_num_fds':
                             self.assertTrue(ret > 0)
+                        elif name == 'get_connections':
+                            for conn in ret:
+                                self.assertIn(conn.type, (socket.SOCK_STREAM,
+                                                          socket.SOCK_DGRAM))
+                                self.assertIn(conn.family, (socket.AF_INET,
+                                                            socket.AF_INET6))
+                                check_ip_address(conn.local_address, conn.family)
+                                check_ip_address(conn.remote_address, conn.family)
+                                if conn.status not in valid_conn_states:
+                                    self.fail("%s is not a valid status" %conn.status)
+                                # actually try to bind the local socket; ignore IPv6
+                                # sockets as their address might be represented as
+                                # an IPv4-mapped-address (e.g. "::127.0.0.1")
+                                # and that's rejected by bind()
+                                if conn.family == socket.AF_INET:
+                                    s = socket.socket(conn.family, conn.type)
+                                    s.bind((conn.local_address[0], 0))
+                                    s.close()
+
+                                if not WINDOWS and hasattr(socket, 'fromfd'):
+                                    dupsock = None
+                                    try:
+                                        try:
+                                            dupsock = socket.fromfd(conn.fd, conn.family,
+                                                                             conn.type)
+                                        except (socket.error, OSError):
+                                            err = sys.exc_info()[1]
+                                            if err.args[0] == errno.EBADF:
+                                                continue
+                                            else:
+                                                raise
+                                        # python >= 2.5
+                                        if hasattr(dupsock, "family"):
+                                            self.assertEqual(dupsock.family, conn.family)
+                                            self.assertEqual(dupsock.type, conn.type)
+                                    finally:
+                                        if dupsock is not None:
+                                            dupsock.close()
+
+
                         elif name == "getcwd":
                             # getcwd() on FreeBSD may be an empty string
                             # in case of a system process
@@ -1592,8 +1559,8 @@ class TestCase(unittest.TestCase):
                 except Exception:
                     err = sys.exc_info()[1]
                     trace = traceback.format_exc()
-                    self.fail('%s\nmethod=%r, pid=%s, retvalue=%r'
-                              %(trace, name, p.pid, ret))
+                    self.fail('%s\nproc=%s, method=%r, retvalue=%r'
+                              %(trace, p, name, ret))
 
         # we should always have a non-empty list, not including PID 0 etc.
         # special cases.
