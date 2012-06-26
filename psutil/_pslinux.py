@@ -711,22 +711,6 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def get_process_environ(self):
-        f = open("/proc/%s/environ" % self.pid)
-        try:
-            data = f.read()
-        finally:
-            f.close()
-        lines = data.strip('\0').split('\0')
-        ret = {}
-        for line in lines:
-            equal = line.find('=')
-            key = line[:equal]
-            value = line[equal+1:]
-            ret[key] = value
-        return ret
-
-    @wrap_exceptions
     def get_open_files(self):
         retlist = []
         files = os.listdir("/proc/%s/fd" % self.pid)

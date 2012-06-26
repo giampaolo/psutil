@@ -1326,11 +1326,6 @@ class TestCase(unittest.TestCase):
                 continue
             self.assertTrue(p.ppid != this_parent)
 
-    if hasattr(psutil.Process, 'get_environ'):
-        def test_get_environ(self):
-            p = psutil.Process(os.getpid())
-            self.assertEqual(p.get_environ(), os.environ)
-
     def test_get_children(self):
         p = psutil.Process(os.getpid())
         self.assertEqual(p.get_children(), [])

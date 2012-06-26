@@ -129,10 +129,6 @@ class TestProcessObjectLeaks(Base):
     def test_get_memory_info(self):
         self.execute('get_memory_info')
 
-    @skipUnless(WINDOWS or LINUX)
-    def test_get_environ(self):
-        self.execute('get_environ')
-
     def test_is_running(self):
         self.execute('is_running')
 

@@ -299,16 +299,6 @@ class Process(object):
         """
         return self._platform_impl.get_process_create_time()
 
-    if hasattr(_psplatform.Process, "get_process_environ"):
-        def get_environ(self):
-            """The process environment variables as a dict.
-            Note: for the current prcess (os.getpid()) calling putenv() does
-            not change this returning value.
-            Changes to the environment affect os.getpid()'s subprocesses
-            started with os.system(), popen() or fork() and execv().
-            """
-            return self._platform_impl.get_process_environ()
-
     # available for Windows and Linux only
     if hasattr(_psplatform.Process, "get_process_cwd"):
 

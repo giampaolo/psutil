@@ -327,24 +327,6 @@ class Process(object):
             return STATUS_RUNNING
 
     @wrap_exceptions
-    def get_process_environ(self):
-        if self.pid in (0, 4):
-            raise AccessDenied(self.pid, self._process_name)
-        rawstr = _psutil_mswindows.get_process_environ(self.pid)
-        ret = {}
-        values = rawstr.split('\0\0')[0].split('\0')
-        for line in values:
-            pos = line.find('=')
-            if pos:
-                # os.environ forces upper keys; let's do the same
-                key = line[:pos].upper()
-                if key:
-                    value = line[pos+1:]
-                    if value:
-                        ret[key] = value
-        return ret
-
-    @wrap_exceptions
     def get_process_cpu_affinity(self):
         from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
         bitmask = _psutil_mswindows.get_process_cpu_affinity(self.pid)
