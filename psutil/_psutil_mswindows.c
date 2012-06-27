@@ -1934,8 +1934,10 @@ get_disk_io_counters(PyObject* self, PyObject* args)
             break;
         }
 
-        if (DeviceIoControl (hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0,
-            &diskPerformance, sizeof (DISK_PERFORMANCE), &dwSize, NULL)) {
+        if (DeviceIoControl(hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0,
+                            &diskPerformance, sizeof(DISK_PERFORMANCE),
+                            &dwSize, NULL))
+        {
             sprintf (szDeviceDisplay, "PhysicalDrive%d", devNum);
             py_disk_info = Py_BuildValue("(IILLLL)",
                                          diskPerformance.ReadCount,
@@ -1950,6 +1952,12 @@ get_disk_io_counters(PyObject* self, PyObject* args)
                                  szDeviceDisplay,
                                  py_disk_info);
             Py_XDECREF(py_disk_info);
+        }
+        else {
+            // XXX we might get here with ERROR_INSUFFICIENT_BUFFER when
+            // compiling with mingw32; not sure what to do.
+            //return PyErr_SetFromWindowsErr(0);
+            ;;
         }
 
         CloseHandle(hDevice);

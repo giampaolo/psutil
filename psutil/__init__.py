@@ -917,6 +917,8 @@ def network_io_counters(pernic=False):
     described above as the values.
     """
     rawdict = _psplatform.network_io_counters()
+    if not rawdict:
+        raise RuntimeError("couldn't find any network interface")
     if pernic:
         for nic, fields in rawdict.items():
             rawdict[nic] = _nt_net_iostat(*fields)
@@ -941,6 +943,8 @@ def disk_io_counters(perdisk=False):
     described above as the values.
     """
     rawdict = _psplatform.disk_io_counters()
+    if not rawdict:
+        raise RuntimeError("couldn't find any physical disk")
     if perdisk:
         for disk, fields in rawdict.items():
             rawdict[disk] = _nt_disk_iostat(*fields)
