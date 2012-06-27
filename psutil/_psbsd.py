@@ -184,7 +184,9 @@ class Process(object):
         @wrap_exceptions
         def get_process_cwd(self):
             """Return process current working directory."""
-            return _psutil_bsd.get_process_cwd(self.pid)
+            # sometimes we get an empty string, in which case we turn
+            # it into None
+            return _psutil_bsd.get_process_cwd(self.pid) or None
 
     @wrap_exceptions
     def get_process_uids(self):

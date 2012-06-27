@@ -19,7 +19,7 @@ import psutil
 
 from psutil._compat import PY3
 from test_psutil import (get_test_subprocess, reap_children, PYTHON, LINUX, OSX,
-                         ignore_access_denied, sh)
+                         BSD, ignore_access_denied, sh, skipIf)
 
 
 def ps(cmd):
@@ -98,6 +98,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         name_psutil = psutil.Process(self.pid).name.lower()
         self.assertEqual(name_ps, name_psutil)
 
+    @skipIf(OSX or BSD)
     def test_process_create_time(self):
         time_ps = ps("ps --no-headers -o start -p %s" %self.pid).split(' ')[0]
         time_psutil = psutil.Process(self.pid).create_time

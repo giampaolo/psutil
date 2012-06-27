@@ -159,6 +159,19 @@ class BSDSpecificTestCase(unittest.TestCase):
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 self.fail("psutil=%s, df=%s" % (usage.used, used))
 
+    def test_memory_maps(self):
+        out = sh('procstat -v %s' % self.pid)
+        maps = psutil.Process(self.pid).get_memory_maps(grouped=False)
+        lines = out.split('\n')[1:]
+        while lines:
+            line = lines.pop()
+            fields = line.split()
+            _, start, stop, perms, res = fields[:5]
+            map = maps.pop()
+            self.assertEqual("%s-%s" % (start, stop), map.addr)
+            self.assertEqual(int(res), map.rss)
+            if not map.path.startswith('['):
+                self.assertEqual(fields[10], map.path)
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()
