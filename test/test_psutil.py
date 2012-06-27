@@ -836,7 +836,14 @@ class TestCase(unittest.TestCase):
         for nt in maps:
             if not nt.path.startswith('['):
                 assert os.path.isabs(nt.path), nt.path
-                assert os.path.exists(nt.path), nt.path
+                if POSIX:
+                    assert os.path.exists(nt.path), nt.path
+                else:
+                    # XXX - On Windows we have this strange behavior with
+                    # 64 bit dlls: they are visible via explorer but cannot
+                    # be accessed via os.stat() (wtf?).
+                    if '64' not in os.path.basename(nt.path):
+                        assert os.path.exists(nt.path), nt.path
         for nt in ext_maps:
             for fname in nt._fields:
                 value = getattr(nt, fname)
