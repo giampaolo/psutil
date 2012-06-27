@@ -62,8 +62,8 @@ Disks
 =====
 
 >>> psutil.disk_partitions()
-[partition(device='/dev/sda1', mountpoint='/', fstype='ext4'),
- partition(device='/dev/sda2', mountpoint='/home', fstype='ext4')]
+[partition(device='/dev/sda1', mountpoint='/', fstype='ext4', opts='rw,nosuid'),
+ partition(device='/dev/sda2', mountpoint='/home', fstype='ext, opts='rw')]
 >>>
 >>> psutil.disk_usage('/')
 usage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
@@ -82,6 +82,15 @@ Network
               packets_sent=453698, packets_recv=453698),
  'eth0': iostat(bytes_sent=734324837, bytes_recv=4163935363,
                 packets_sent=3605828, packets_recv=4096685)}
+>>>
+
+
+Users
+=====
+
+>>> psutil.get_users()
+[user(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0),
+ user(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0)]
 >>>
 
 
@@ -121,15 +130,27 @@ user(real=1000, effective=1000, saved=1000)
 >>> p.gids
 group(real=1000, effective=1000, saved=1000)
 >>>
+>>> p.get_cpu_times()
+cputimes(user=1.02, system=0.31)
 >>> p.get_cpu_percent(interval=1.0)
 12.1
+>>> p.get_cpu_affinity()
+[0, 1, 2, 3]
+>>> p.set_cpu_affinity([0])
+>>>
 >>> p.get_memory_percent()
 0.63423
 >>>
 >>> p.get_memory_info()
 meminfo(rss=7471104, vms=68513792)
->>> p.get_cpu_times()
-cputimes(user=1.02, system=0.31)
+>>> p = psutil.Process(os.getpid())
+>>> p.get_memory_maps()
+[mmap(path='/lib/x86_64-linux-gnu/libutil-2.15.so', rss=16384, anonymous=8192, swap=0),
+ mmap(path='/lib/x86_64-linux-gnu/libc-2.15.so', rss=6384, anonymous=15, swap=0),
+ mmap(path='/lib/x86_64-linux-gnu/libcrypto.so.1.0.0', rss=34124, anonymous=1245, swap=0),
+ mmap(path='[heap]', rss=54653, anonymous=8192, swap=0),
+ mmap(path='[stack]', rss=1542, anonymous=166, swap=0),
+ ...]
 >>>
 >>> p.get_io_counters()
 io(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632)
@@ -147,6 +168,10 @@ io(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632)
  connection(fd=123, family=2, type=1, local_address=('10.0.0.1', 51314),
             remote_address=('72.14.234.83', 443), status='SYN_SENT')]
 >>>
+>>> p.get_num_threads()
+4
+>>> p.get_num_fds()
+8
 >>> p.get_threads()
 [thread(id=5234, user_time=22.5, system_time=9.2891),
  thread(id=5235, user_time=0.0, system_time=0.0),
@@ -167,15 +192,12 @@ io(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632)
 0
 >>>
 >>> psutil.test()
-UID       PID %CPU %MEM     VSZ     RSS START     TIME COMMAND
-0           0  0.0  0.0       0       0 00:12    00:00 [sched]
-0           1  0.0  0.3    1740     600 00:12    00:04 /sbin/init
-0           2  0.0  0.0       0       0 00:12    00:00 [kthreadd]
-0           3  0.1  0.0       0       0 00:12    00:00 [migration/0]
+USER         PID %CPU %MEM     VSZ     RSS TTY        START    TIME  COMMAND
+root           1  0.0  0.0   24584    2240 ?          Jun17   00:00  init
+root           2  0.0  0.0       0       0 ?          Jun17   00:00  kthreadd
+root           3  0.0  0.0       0       0 ?          Jun17   00:05  ksoftirqd/0
 ...
-0       13239  0.0  2.6    13604   1044 00:38    00:00 /usr/sbin/smbd -D
-1000    23648  1.1  2.4    12512   2008 14:43    00:06 sshd: user@pts/2
-1000    23649  0.0  1.2    5944    3340 14:43    00:00 -bash
-0       25926  0.3  1.1    5432    3072 17:55    00:00 -su
-0       28655  0.0  1.0    4932    3204 21:58    00:00 python _psutil.py
+giampaolo  31475  0.0  0.0   20760    3024 /dev/pts/0 Jun19   00:00  python2.4
+giampaolo  31721  0.0  2.2  773060  181896 ?          00:04   10:30  chrome
+root       31763  0.0  0.0       0       0 ?          00:05   00:00  kworker/0:1
 >>>

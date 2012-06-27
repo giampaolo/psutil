@@ -67,7 +67,7 @@ elif sys.platform.startswith("linux"):
                             ),
                   posix_extension]
 else:
-    raise NotImplementedError('platform %s is not supported' % sys.platform)
+    sys.exit('platform %s is not supported' % sys.platform)
 
 
 def main():
@@ -121,7 +121,7 @@ def main():
               'Topic :: Software Development :: Libraries :: Python Modules',
               'Intended Audience :: Developers',
               'Intended Audience :: System Administrators',
-              'License :: OSI Approved :: MIT License',
+              'License :: OSI Approved :: BSD License',
               ],
         )
     if extensions is not None:

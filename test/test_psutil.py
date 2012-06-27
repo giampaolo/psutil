@@ -431,7 +431,7 @@ class TestCase(unittest.TestCase):
             assert os.path.exists(disk.device), disk
             assert os.path.isdir(disk.mountpoint), disk
             assert disk.fstype, disk
-            assert isinstance(disk.options, str)
+            assert isinstance(disk.opts, str)
         for disk in psutil.disk_partitions(all=True):
             if not WINDOWS:
                 try:
@@ -444,7 +444,7 @@ class TestCase(unittest.TestCase):
                 else:
                     assert os.path.isdir(disk.mountpoint), disk.mountpoint
             assert isinstance(disk.fstype, str)
-            assert isinstance(disk.options, str)
+            assert isinstance(disk.opts, str)
 
         def find_mount_point(path):
             path = os.path.abspath(path)
