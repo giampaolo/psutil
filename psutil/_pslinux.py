@@ -242,10 +242,7 @@ def get_system_users():
             continue
         if hostname == ':0.0':
             hostname = 'localhost'
-        abstty = os.path.join("/dev", tty)
-        if os.path.exists(abstty):
-            tty = abstty
-        nt = nt_user(user, tty, hostname, tstamp)
+        nt = nt_user(user, tty or None, hostname, tstamp)
         retlist.append(nt)
     return retlist
 

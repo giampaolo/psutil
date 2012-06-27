@@ -500,11 +500,10 @@ class TestCase(unittest.TestCase):
 
     def test_get_users(self):
         users = psutil.get_users()
+        assert users
         for user in users:
             assert user.name, user
-            terminal = user.terminal
-            if terminal:
-                assert os.path.exists(user.terminal), user
+            user.terminal
             user.host
             assert user.started > 0.0, user
             datetime.datetime.fromtimestamp(user.started)

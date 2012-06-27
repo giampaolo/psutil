@@ -171,7 +171,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         lines = out.split('\n')
         users = [x.split()[0] for x in lines]
         self.assertEqual(len(users), len(psutil.get_users()))
-        terminals = [os.path.join("/dev", x.split()[1]) for x in lines]
+        terminals = [x.split()[1] for x in lines]
         for u in psutil.get_users():
             self.assertTrue(u.name in users, u.name)
             self.assertTrue(u.terminal in terminals, u.terminal)

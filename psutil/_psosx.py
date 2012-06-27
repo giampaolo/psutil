@@ -84,11 +84,7 @@ def get_system_users():
             continue  # reboot or shutdown
         if not tstamp:
             continue
-        if tty:
-            abstty = os.path.join("/dev", tty)
-            if os.path.exists(abstty):
-                tty = abstty
-        nt = nt_user(user, tty, hostname or None, tstamp)
+        nt = nt_user(user, tty or None, hostname or None, tstamp)
         retlist.append(nt)
     return retlist
 
