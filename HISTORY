@@ -5,6 +5,7 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 NEW FEATURES
 
+ * Issue #195: (Windows) number of handles opened by process.
  * Issue #209: psutil.disk_partitions() now provides also mount options.
  * Issue #229: list users currently connected on the system (psutil.get_users()).
  * Issue #238: (Linux, Windows) process CPU affinity (get and set).
