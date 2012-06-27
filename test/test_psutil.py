@@ -1574,7 +1574,8 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def get_open_files(self, ret):
         for f in ret:
-            assert f.fd >= 0, f
+            if f.fd != -1:  # windows
+                assert f.fd >= 0, f
             assert os.path.isabs(f.path), f
             assert os.path.isfile(f.path), f
 
@@ -1663,12 +1664,16 @@ class TestFetchAllProcesses(unittest.TestCase):
                     assert isinstance(value, (int, long))
                     assert value >= 0, value
 
+    def get_num_handles(self, ret):
+        assert ret > 0
+
     def get_nice(self, ret):
         if POSIX:
             assert -20 <= ret <= 20, ret
         else:
-            self.assertIn(ret, (psutil.IOPRIO_CLASS_NONE, psutil.IOPRIO_CLASS_RT,
-                                psutil.IOPRIO_CLASS_BE, psutil.IOPRIO_CLASS_IDLE))
+            priorities = [getattr(psutil, x) for x in dir(psutil)
+                          if x.endswith('_PRIORITY_CLASS')]
+            self.assertIn(ret, priorities)
 
 
 if hasattr(os, 'getuid'):
