@@ -1461,6 +1461,13 @@ class TestFetchAllProcesses(unittest.TestCase):
     # Iterates over all running processes and performs some sanity
     # checks against Process API's returned values.
 
+    def setUp(self):
+        if POSIX:
+            import pwd
+            pall = pwd.getpwall()
+            self._uids = set([x.pw_uid for x in pall])
+            self._usernames = set([x.pw_name for x in pall])
+
     def test_fetch_all(self):
         valid_procs = 0
         excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
@@ -1537,17 +1544,21 @@ class TestFetchAllProcesses(unittest.TestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(ret))
 
     def uids(self, ret):
-        for field in ret:
-            self.assertTrue(field >= 0)
+        for uid in ret:
+            self.assertTrue(uid >= 0)
+            self.assertIn(uid, self._uids)
 
-    gids = uids # XXX
+    def gids(self, ret):
+        # note: testing all gids as above seems not to be reliable for
+        # gid == 30 (nodoby); not sure why.
+        for gid in ret:
+            self.assertTrue(gid >= 0)
+            #self.assertIn(uid, self.gids)
 
     def username(self, ret):
         self.assertTrue(ret)
         if os.name == 'posix':
-            import pwd
-            all_users = [x.pw_name for x in pwd.getpwall()]
-            self.assertIn(ret, all_users)
+            self.assertIn(ret, self._usernames)
 
     def status(self, ret):
         self.assertTrue(ret >= 0)
