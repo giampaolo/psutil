@@ -14,7 +14,7 @@ import sys
 
 import _psutil_bsd
 import _psutil_posix
-import _psposix
+from psutil import _psposix
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._compat import namedtuple
 from psutil._common import *
