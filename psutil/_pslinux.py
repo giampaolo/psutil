@@ -598,6 +598,7 @@ class Process(object):
         thread_ids = os.listdir("/proc/%s/task" % self.pid)
         thread_ids.sort()
         retlist = []
+        hit_enoent = False
         for thread_id in thread_ids:
             try:
                 f = open("/proc/%s/task/%s/stat" % (self.pid, thread_id))
@@ -606,6 +607,7 @@ class Process(object):
                 if err.errno == errno.ENOENT:
                     # no such file or directory; it means thread
                     # disappeared on us
+                    hit_enoent = True
                     continue
                 raise
             try:
@@ -619,6 +621,9 @@ class Process(object):
             stime = float(values[12]) / _CLOCK_TICKS
             ntuple = nt_thread(int(thread_id), utime, stime)
             retlist.append(ntuple)
+        if hit_enoent:
+            # raise NSP if the process disappeared on us
+            os.stat('/proc/%s' % self.pid)
         return retlist
 
     @wrap_exceptions
@@ -712,6 +717,7 @@ class Process(object):
     def get_open_files(self):
         retlist = []
         files = os.listdir("/proc/%s/fd" % self.pid)
+        hit_enoent = False
         for fd in files:
             file = "/proc/%s/fd/%s" % (self.pid, fd)
             if os.path.islink(file):
@@ -720,8 +726,10 @@ class Process(object):
                 except OSError:
                     # ENOENT == file which is gone in the meantime
                     err = sys.exc_info()[1]
-                    if err.errno != errno.ENOENT:
-                        raise
+                    if err.errno == errno.ENOENT:
+                        hit_enoent = True
+                        continue
+                    raise
                 else:
                     # If file is not an absolute path there's no way
                     # to tell whether it's a regular file or not,
@@ -730,6 +738,9 @@ class Process(object):
                     if file.startswith('/') and os.path.isfile(file):
                         ntuple = nt_openfile(file, int(fd))
                         retlist.append(ntuple)
+        if hit_enoent:
+            # raise NSP if the process disappeared on us
+            os.stat('/proc/%s' % self.pid)
         return retlist
 
     @wrap_exceptions
@@ -826,6 +837,8 @@ class Process(object):
         ret = []
         for f, family, type_ in tmap[kind]:
             ret += process("/proc/net/%s" % f, family, type_)
+        # raise NSP if the process disappeared on us
+        os.stat('/proc/%s' % self.pid)
         return ret
 
 
