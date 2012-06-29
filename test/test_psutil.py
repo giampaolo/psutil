@@ -1013,13 +1013,17 @@ class TestCase(unittest.TestCase):
     @skipIf(not hasattr(psutil.Process, "get_cpu_affinity"))
     def test_cpu_affinity(self):
         p = psutil.Process(os.getpid())
-        old = p.get_cpu_affinity()
+        initial = p.get_cpu_affinity()
         all_cpus = list(range(len(psutil.cpu_percent(percpu=True))))
+        #
+        for n in all_cpus:
+            p.set_cpu_affinity([n])
+            self.assertEqual(p.get_cpu_affinity(), [n])
+        #
         p.set_cpu_affinity(all_cpus)
         self.assertEqual(p.get_cpu_affinity(), all_cpus)
-        p.set_cpu_affinity(old)
-        self.assertEqual(p.get_cpu_affinity(), old)
         #
+        p.set_cpu_affinity(initial)
         invalid_cpu = [len(psutil.cpu_times(percpu=True)) + 10]
         self.assertRaises(ValueError, p.set_cpu_affinity, invalid_cpu)
 

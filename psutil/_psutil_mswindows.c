@@ -1756,7 +1756,7 @@ set_process_cpu_affinity(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    if (SetProcessAffinityMask(hProcess, 1) == 0) {
+    if (SetProcessAffinityMask(hProcess, mask) == 0) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
     }
