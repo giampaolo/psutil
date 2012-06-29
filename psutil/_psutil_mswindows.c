@@ -481,6 +481,40 @@ get_process_cmdline(PyObject* self, PyObject* args) {
 
 
 /*
+ * Return process executable path.
+ */
+static PyObject*
+get_process_exe(PyObject* self, PyObject* args) {
+    long pid;
+    HANDLE hProcess;
+    wchar_t exe[MAX_PATH];
+    DWORD nSize = MAX_PATH;
+    DWORD WINAPI ret;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    if (pid == 0) {
+        return AccessDenied();
+    }
+
+    hProcess = handle_from_pid_waccess(pid, PROCESS_QUERY_LIMITED_INFORMATION);
+    if (NULL == hProcess) {
+        return NULL;
+    }
+
+    if (GetProcessImageFileName(hProcess, &exe, nSize) == 0) {
+        CloseHandle(hProcess);
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    CloseHandle(hProcess);
+    return Py_BuildValue("s", exe);
+}
+
+
+/*
  * Return the RSS and VMS as a Python tuple.
  */
 static PyObject*
@@ -2354,6 +2388,8 @@ PsutilMethods[] =
         "Return process name"},
     {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
         "Return process cmdline as a list of cmdline arguments"},
+    {"get_process_exe", get_process_exe, METH_VARARGS,
+        "Return path of the process executable"},
     {"get_process_ppid", get_process_ppid, METH_VARARGS,
         "Return process ppid as an integer"},
     {"kill_process", kill_process, METH_VARARGS,

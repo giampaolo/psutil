@@ -2,6 +2,11 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 1.0.0 - XXXX-XX-XX
 
+NEW FEATURES
+
+ * Issue 293: (Windows) process executable path is now determined by asking the
+   OS instead of being guessed from process cmdline.
+
 BUGFIXES
 
  * Issue 292: (Linux) race condition in process files/threads/connections.

@@ -88,6 +88,13 @@ class WindowsSpecificTestCase(unittest.TestCase):
             if nic not in out:
                 self.fail("%r nic wasn't found in 'ipconfig /all' output" % nic)
 
+    def test_exe(self):
+        for p in psutil.process_iter():
+            try:
+                self.assertEqual(os.path.basename(p.exe), p.name)
+            except psutil.Error:
+                pass
+
     if wmi is not None:
 
         # --- Process class tests

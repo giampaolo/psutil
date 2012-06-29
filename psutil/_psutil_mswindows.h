@@ -16,6 +16,7 @@
 static PyObject* kill_process(PyObject* self, PyObject* args);
 static PyObject* get_process_name(PyObject* self, PyObject* args);
 static PyObject* get_process_cmdline(PyObject* self, PyObject* args);
+static PyObject* get_process_exe(PyObject* self, PyObject* args);
 static PyObject* get_process_ppid(PyObject* self, PyObject* args);
 static PyObject* get_process_cpu_times(PyObject* self, PyObject* args);
 static PyObject* get_process_create_time(PyObject* self, PyObject* args);
