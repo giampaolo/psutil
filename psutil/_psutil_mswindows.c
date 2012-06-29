@@ -495,7 +495,7 @@ get_process_exe(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    hProcess = handle_from_pid_waccess(pid, PROCESS_QUERY_LIMITED_INFORMATION);
+    hProcess = handle_from_pid_waccess(pid, PROCESS_QUERY_INFORMATION);
     if (NULL == hProcess) {
         return NULL;
     }
