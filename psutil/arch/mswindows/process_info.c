@@ -56,6 +56,11 @@ handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess)
     HANDLE hProcess;
     DWORD  processExitCode = 0;
 
+    if (pid == 0) {
+        // otherwise we'd get NoSuchProcess
+        return AccessDenied();
+    }
+
     hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {

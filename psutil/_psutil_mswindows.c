@@ -495,10 +495,6 @@ get_process_exe(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    if (pid == 0) {
-        return AccessDenied();
-    }
-
     hProcess = handle_from_pid_waccess(pid, PROCESS_QUERY_LIMITED_INFORMATION);
     if (NULL == hProcess) {
         return NULL;
@@ -1697,9 +1693,6 @@ get_process_io_counters(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (pid == 0) {
-        return AccessDenied();
-    }
     hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
         return NULL;
@@ -1730,9 +1723,6 @@ get_process_cpu_affinity(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (pid == 0) {
-        return AccessDenied();
-    }
     hProcess = handle_from_pid(pid);
     if (hProcess == NULL) {
         return NULL;
@@ -1760,9 +1750,6 @@ set_process_cpu_affinity(PyObject* self, PyObject* args)
 
     if (! PyArg_ParseTuple(args, "lk", &pid, &mask)) {
         return NULL;
-    }
-    if (pid == 0) {
-        return AccessDenied();
     }
     hProcess = handle_from_pid_waccess(pid, dwDesiredAccess);
     if (hProcess == NULL) {
@@ -2278,9 +2265,6 @@ get_process_num_handles(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (pid == 0) {
-        return AccessDenied();
-    }
     hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
         return NULL;
@@ -2337,9 +2321,6 @@ get_process_memory_maps(PyObject* self, PyObject* args)
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
-    }
-    if (pid == 0) {
-        return AccessDenied();
     }
     hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
