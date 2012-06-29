@@ -120,6 +120,14 @@ class TestProcessObjectLeaks(Base):
     def test_get_num_threads(self):
         self.execute('get_num_threads')
 
+    @skipUnless(WINDOWS)
+    def test_get_num_handles(self):
+        self.execute('get_num_handles')
+
+    @skipUnless(POSIX)
+    def test_get_num_fds(self):
+        self.execute('get_num_fds')
+
     def test_get_threads(self):
         self.execute('get_threads')
 
@@ -140,13 +148,8 @@ class TestProcessObjectLeaks(Base):
     def test_resume(self):
         self.execute('resume')
 
-    @skipIf(not hasattr(psutil.Process, 'getcwd'))
     def test_getcwd(self):
         self.execute('getcwd')
-
-    @skipUnless(WINDOWS)
-    def test_getcwd(self):
-        self.execute('get_num_handles')
 
     @skipUnless(LINUX or WINDOWS)
     def test_get_cpu_affinity(self):

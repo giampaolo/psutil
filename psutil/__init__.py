@@ -289,14 +289,11 @@ class Process(object):
         """
         return self._platform_impl.get_process_create_time()
 
-    # available for Windows and Linux only
-    if hasattr(_psplatform.Process, "get_process_cwd"):
-
-        def getcwd(self):
-            """Return a string representing the process current working
-            directory.
-            """
-            return self._platform_impl.get_process_cwd()
+    def getcwd(self):
+        """Return a string representing the process current working
+        directory.
+        """
+        return self._platform_impl.get_process_cwd()
 
     # Linux, BSD and Windows only
     if hasattr(_psplatform.Process, "get_process_io_counters"):
