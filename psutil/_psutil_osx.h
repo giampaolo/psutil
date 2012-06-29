@@ -14,6 +14,7 @@
 static PyObject* get_process_name(PyObject* self, PyObject* args);
 static PyObject* get_process_cmdline(PyObject* self, PyObject* args);
 static PyObject* get_process_cwd(PyObject* self, PyObject* args);
+static PyObject* get_process_exe(PyObject* self, PyObject* args);
 static PyObject* get_process_ppid(PyObject* self, PyObject* args);
 static PyObject* get_process_uids(PyObject* self, PyObject* args);
 static PyObject* get_process_gids(PyObject* self, PyObject* args);

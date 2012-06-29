@@ -137,12 +137,9 @@ class Process(object):
         """Return process name as a string of limited len (15)."""
         return _psutil_osx.get_process_name(self.pid)
 
+    @wrap_exceptions
     def get_process_exe(self):
-        # no such thing as "exe" on OS X; it will maybe be determined
-        # later from cmdline[0]
-        if not pid_exists(self.pid):
-            raise NoSuchProcess(self.pid, self._process_name)
-        return ""
+        return _psutil_osx.get_process_exe(self.pid)
 
     @wrap_exceptions
     def get_process_cmdline(self):

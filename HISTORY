@@ -7,6 +7,8 @@ Bug tracker at http://code.google.com/p/psutil/issues
 NEW FEATURES
 
  * Issue 222: (OSX) add support for process cwd.
+ * Issue 295: (OSX) process executable path is now determined by asking the OS
+   instead of being guessed from process cmdline.
 
 
 0.5.1 - 2012-06-29

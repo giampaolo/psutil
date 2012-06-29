@@ -97,6 +97,7 @@ get_process_name(PyObject* self, PyObject* args)
     return Py_BuildValue("s", kp.kp_proc.p_comm);
 }
 
+
 /*
  * Return process current working directory.
  */
@@ -122,6 +123,31 @@ get_process_cwd(PyObject* self, PyObject* args)
     return Py_BuildValue("s", pathinfo.pvi_cdir.vip_path);
 }
 
+
+/*
+ * Return path of the process executable.
+ */
+static PyObject*
+get_process_exe(PyObject* self, PyObject* args)
+{
+    long pid;
+    char buf[PATH_MAX];
+    int ret;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    ret = proc_pidpath(pid, &buf, sizeof(buf));
+    if (ret == 0) {
+        if (! pid_exists(pid)) {
+            return NoSuchProcess();
+        }
+        else {
+            return AccessDenied();
+        }
+    }
+    return Py_BuildValue("s", buf);
+}
 
 /*
  * Return process cmdline as a Python list of cmdline arguments.
@@ -1638,6 +1664,8 @@ PsutilMethods[] =
         "Return process name"},
      {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
         "Return process cmdline as a list of cmdline arguments"},
+     {"get_process_exe", get_process_exe, METH_VARARGS,
+        "Return path of the process executable"},
      {"get_process_cwd", get_process_cwd, METH_VARARGS,
         "Return process current working directory."},
      {"get_process_ppid", get_process_ppid, METH_VARARGS,
