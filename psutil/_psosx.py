@@ -157,6 +157,10 @@ class Process(object):
         return _psutil_osx.get_process_ppid(self.pid)
 
     @wrap_exceptions
+    def get_process_cwd(self):
+        return _psutil_osx.get_process_cwd(self.pid)
+
+    @wrap_exceptions
     def get_process_uids(self):
         real, effective, saved = _psutil_osx.get_process_uids(self.pid)
         return nt_uids(real, effective, saved)

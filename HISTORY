@@ -1,6 +1,16 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+
+1.0.0 - XXXX-XX-XX
+------------------
+
+NEW FEATURES
+
+ * Issue 222: (OSX) add support for process cwd.
+
+
 0.5.1 - 2012-06-29
+------------------
 
 NEW FEATURES
 
