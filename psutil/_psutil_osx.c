@@ -106,7 +106,6 @@ get_process_cwd(PyObject* self, PyObject* args)
 {
     long pid;
     struct proc_vnodepathinfo pathinfo;
-    int ret;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
