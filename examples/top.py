@@ -160,19 +160,28 @@ def refresh_window(procs, procs_status):
     for p in procs:
         # TIME+ column shows process CPU cumulative time and it
         # is expressed as: "mm:ss.ms"
-        ctime = timedelta(seconds=sum(p.dict['cpu_times']))
-        ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
-                              str((ctime.seconds % 60)).zfill(2),
-                              str(ctime.microseconds)[:2])
+        if p.dict['cpu_times'] != None:
+            ctime = timedelta(seconds=sum(p.dict['cpu_times']))
+            ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
+                                  str((ctime.seconds % 60)).zfill(2),
+                                  str(ctime.microseconds)[:2])
+        else:
+            ctime = ''
+        if p.dict['memory_percent'] is not None:
+            p.dict['memory_percent'] = round(p.dict['memory_percent'], 1)
+        else:
+            p.dict['memory_percent'] = ''
+        if p.dict['cpu_percent'] is None:
+            p.dict['cpu_percent'] = ''
         line = templ % (p.pid,
                         p.dict['username'][:8],
                         p.dict['nice'],
-                        bytes2human(p.dict['memory_info'].vms),
-                        bytes2human(p.dict['memory_info'].rss),
+                        bytes2human(getattr(p.dict['memory_info'], 'vms', 0)),
+                        bytes2human(getattr(p.dict['memory_info'], 'rss', 0)),
                         p.dict['cpu_percent'],
-                        round(p.dict['memory_percent'], 1),
+                        p.dict['memory_percent'],
                         ctime,
-                        p.dict['name'],
+                        p.dict['name'] or '',
                         )
         try:
             print_line(line)
