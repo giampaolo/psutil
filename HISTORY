@@ -18,6 +18,10 @@ NEW FEATURES
     - get_cpu_percent()
     - get_num_threads()
 
+BUGFIXES
+
+ * Issue 298: (OSX) memory leak in get_num_fds().
+
 
 0.5.1 - 2012-06-29
 ------------------

@@ -1230,6 +1230,7 @@ get_process_num_fds(PyObject* self, PyObject* args)
     }
 
     num = (pidinfo_result / PROC_PIDLISTFD_SIZE);
+    free(fds_pointer);
     return Py_BuildValue("i", num);
 }
 
