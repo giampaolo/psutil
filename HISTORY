@@ -9,6 +9,14 @@ NEW FEATURES
  * Issue 222: (OSX) add support for process cwd.
  * Issue 295: (OSX) process executable path is now determined by asking the OS
    instead of being guessed from process cmdline.
+ * Issue 297: (OSX) the Process methods below were always raising AccessDenied
+   for any process except the current one. Now this is no longer true. Also they
+   are 2.5x faster.
+    - get_memory_info()
+    - get_memory_percent()
+    - get_cpu_times()
+    - get_cpu_percent()
+    - get_num_threads()
 
 
 0.5.1 - 2012-06-29

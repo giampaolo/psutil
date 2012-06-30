@@ -402,68 +402,16 @@ static PyObject*
 get_cpu_times(PyObject* self, PyObject* args)
 {
     long pid;
-    int err;
-    unsigned int info_count = TASK_BASIC_INFO_COUNT;
-    task_port_t task;  // = (task_port_t)NULL;
-    time_value_t user_time, system_time;
-    struct task_basic_info tasks_info;
-    struct task_thread_times_info task_times;
-
+    struct proc_taskinfo pti;
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-
-    /*  task_for_pid() requires special privileges
-     * "This function can be called only if the process is owned by the
-     * procmod group or if the caller is root."
-     * - http://developer.apple.com/documentation/MacOSX/Conceptual/universal_binary/universal_binary_tips/chapter_5_section_19.html  */
-    err = task_for_pid(mach_task_self(), pid, &task);
-    if ( err == KERN_SUCCESS) {
-        info_count = TASK_BASIC_INFO_COUNT;
-        err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count);
-        if (err != KERN_SUCCESS) {
-                // errcode 4 is "invalid argument" (access denied)
-                if (err == 4) {
-                    return AccessDenied();
-                }
-
-                // otherwise throw a runtime error with appropriate error code
-                return PyErr_Format(PyExc_RuntimeError,
-                                   "task_info(TASK_BASIC_INFO) failed");
-        }
-
-        info_count = TASK_THREAD_TIMES_INFO_COUNT;
-        err = task_info(task, TASK_THREAD_TIMES_INFO,
-                        (task_info_t)&task_times, &info_count);
-        if (err != KERN_SUCCESS) {
-                // errcode 4 is "invalid argument" (access denied)
-                if (err == 4) {
-                    return AccessDenied();
-                }
-                return PyErr_Format(PyExc_RuntimeError,
-                                   "task_info(TASK_BASIC_INFO) failed");
-        }
+    if (! psutil_proc_pidinfo(pid, &pti, sizeof(pti))) {
+        return NULL;
     }
-
-    else { // task_for_pid failed
-        if (! pid_exists(pid) ) {
-            return NoSuchProcess();
-        }
-        // pid exists, so return AccessDenied error since task_for_pid() failed
-        return AccessDenied();
-    }
-
-    float user_t = -1.0;
-    float sys_t = -1.0;
-    user_time = tasks_info.user_time;
-    system_time = tasks_info.system_time;
-
-    time_value_add(&user_time, &task_times.user_time);
-    time_value_add(&system_time, &task_times.system_time);
-
-    user_t = (float)user_time.seconds + ((float)user_time.microseconds / 1000000.0);
-    sys_t = (float)system_time.seconds + ((float)system_time.microseconds / 1000000.0);
-    return Py_BuildValue("(dd)", user_t, sys_t);
+    return Py_BuildValue("(dd)",
+                         (float)pti.pti_total_user / 1000000000.0,
+                         (float)pti.pti_total_system / 1000000000.0);
 }
 
 
@@ -493,64 +441,15 @@ static PyObject*
 get_memory_info(PyObject* self, PyObject* args)
 {
     long pid;
-    int err;
-    unsigned int info_count = TASK_BASIC_INFO_COUNT;
-    mach_port_t task;
-    struct task_basic_info tasks_info;
-    vm_region_basic_info_data_64_t  b_info;
-    vm_address_t address = GLOBAL_SHARED_TEXT_SEGMENT;
-    vm_size_t size;
-    mach_port_t object_name;
-
-    // the argument passed should be a process id
+    struct proc_taskinfo pti;
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-
-    /* task_for_pid() requires special privileges
-     * "This function can be called only if the process is owned by the
-     * procmod group or if the caller is root."
-     * - http://developer.apple.com/documentation/MacOSX/Conceptual/universal_binary/universal_binary_tips/chapter_5_section_19.html */
-    err = task_for_pid(mach_task_self(), pid, &task);
-    if ( err == KERN_SUCCESS) {
-        info_count = TASK_BASIC_INFO_COUNT;
-        err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count);
-        if (err != KERN_SUCCESS) {
-                if (err == 4) {
-                    // errcode 4 is "invalid argument" (access denied)
-                    return AccessDenied();
-                }
-                // otherwise throw a runtime error with appropriate error code
-                return PyErr_Format(PyExc_RuntimeError,
-                                    "task_info(TASK_BASIC_INFO) failed");
-        }
-
-        /* Issue #73 http://code.google.com/p/psutil/issues/detail?id=73
-         * adjust the virtual memory size down to account for
-         * shared memory that task_info.virtual_size includes w/every process
-         */
-        info_count = VM_REGION_BASIC_INFO_COUNT_64;
-        err = vm_region_64(task, &address, &size, VM_REGION_BASIC_INFO,
-            (vm_region_info_t)&b_info, &info_count, &object_name);
-        if (err == KERN_SUCCESS) {
-            if (b_info.reserved && size == (SHARED_TEXT_REGION_SIZE) &&
-                tasks_info.virtual_size > (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE))
-            {
-                tasks_info.virtual_size -= (SHARED_TEXT_REGION_SIZE + SHARED_DATA_REGION_SIZE);
-            }
-        }
+    if (! psutil_proc_pidinfo(pid, &pti, sizeof(pti))) {
+        return NULL;
     }
-
-    else {
-        if (! pid_exists(pid) ) {
-            return NoSuchProcess();
-        }
-
-        // pid exists, so return AccessDenied error since task_for_pid() failed
-        return AccessDenied();
-    }
-
-    return Py_BuildValue("(ll)", tasks_info.resident_size, tasks_info.virtual_size);
+    return Py_BuildValue("(KK)", pti.pti_resident_size,
+                                 pti.pti_virtual_size);
 }
 
 
@@ -561,59 +460,14 @@ static PyObject*
 get_process_num_threads(PyObject* self, PyObject* args)
 {
     long pid;
-    int err, ret;
-    unsigned int info_count = TASK_BASIC_INFO_COUNT;
-    mach_port_t task;
-    struct task_basic_info tasks_info;
-    thread_act_port_array_t thread_list;
-    mach_msg_type_number_t thread_count;
-
-    // the argument passed should be a process id
+    struct proc_taskinfo pti;
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-
-    /* task_for_pid() requires special privileges
-     * "This function can be called only if the process is owned by the
-     * procmod group or if the caller is root."
-     * - http://developer.apple.com/documentation/MacOSX/Conceptual/universal_binary/universal_binary_tips/chapter_5_section_19.html
-     */
-    err = task_for_pid(mach_task_self(), pid, &task);
-    if ( err == KERN_SUCCESS) {
-        info_count = TASK_BASIC_INFO_COUNT;
-        err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count);
-        if (err != KERN_SUCCESS) {
-                // errcode 4 is "invalid argument" (access denied)
-                if (err == 4) {
-                    return AccessDenied();
-                }
-
-                // otherwise throw a runtime error with appropriate error code
-                return PyErr_Format(PyExc_RuntimeError,
-                                    "task_info(TASK_BASIC_INFO) failed");
-        }
-        err = task_threads(task, &thread_list, &thread_count);
-        if (err == KERN_SUCCESS) {
-            ret = vm_deallocate(task, (vm_address_t)thread_list,
-                                thread_count * sizeof(int));
-            if (ret != KERN_SUCCESS) {
-                printf("vm_deallocate() failed\n");
-            }
-            return Py_BuildValue("l", (long)thread_count);
-        }
-        else {
-            return PyErr_Format(PyExc_RuntimeError, "task_thread() failed");
-        }
+    if (! psutil_proc_pidinfo(pid, &pti, sizeof(pti))) {
+        return NULL;
     }
-    else {
-        if (! pid_exists(pid) ) {
-            return NoSuchProcess();
-        }
-
-        // pid exists, so return AccessDenied error since task_for_pid() failed
-        return AccessDenied();
-    }
-    return NULL;
+    return Py_BuildValue("k", pti.pti_threadnum);
 }
 
 

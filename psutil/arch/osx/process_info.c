@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <sys/sysctl.h>
+#include <libproc.h>
 
 #include "process_info.h"
 #include "../../_psutil_common.h"
@@ -252,4 +253,31 @@ get_kinfo_proc(pid_t pid, struct kinfo_proc *kp)
         return -1;
     }
     return 0;
+}
+
+
+/*
+ * A thin wrapper around proc_pidinfo()
+ */
+int
+psutil_proc_pidinfo(long pid, struct proc_taskinfo *pti, int size)
+{
+    int ret = proc_pidinfo((int)pid, PROC_PIDTASKINFO, 0, pti, size);
+    if (ret == 0) {
+        if (! pid_exists(pid)) {
+            NoSuchProcess();
+            return 0;
+        }
+        else {
+            AccessDenied();
+            return 0;
+        }
+    }
+    else if (ret != size) {
+        AccessDenied();
+        return 0;
+    }
+    else {
+        return 1;
+    }
 }
