@@ -111,14 +111,11 @@ get_process_cwd(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    ret = proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, 0, &pathinfo, sizeof(pathinfo));
-    if (ret == 0) {
-        if (! pid_exists(pid)) {
-            return NoSuchProcess();
-        }
-        else {
-            return AccessDenied();
-        }
+
+    if (! psutil_proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, &pathinfo,
+                              sizeof(pathinfo)))
+    {
+        return NULL;
     }
     return Py_BuildValue("s", pathinfo.pvi_cdir.vip_path);
 }
@@ -406,7 +403,7 @@ get_cpu_times(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (! psutil_proc_pidinfo(pid, &pti, sizeof(pti))) {
+    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti))) {
         return NULL;
     }
     return Py_BuildValue("(dd)",
@@ -445,7 +442,7 @@ get_memory_info(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (! psutil_proc_pidinfo(pid, &pti, sizeof(pti))) {
+    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti))) {
         return NULL;
     }
     return Py_BuildValue("(KK)", pti.pti_resident_size,
@@ -464,7 +461,7 @@ get_process_num_threads(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (! psutil_proc_pidinfo(pid, &pti, sizeof(pti))) {
+    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti))) {
         return NULL;
     }
     return Py_BuildValue("k", pti.pti_threadnum);
