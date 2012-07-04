@@ -158,6 +158,7 @@ get_open_files(long pid, HANDLE processHandle)
     /* NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH. */
     if (!NT_SUCCESS(status)) {
         //printf("NtQuerySystemInformation failed!\n");
+        Py_DECREF(filesList);
         free(handleInfo);
         return NULL;
     }
@@ -305,4 +306,3 @@ get_open_files(long pid, HANDLE processHandle)
     CloseHandle(processHandle);
     return filesList;
 }
-

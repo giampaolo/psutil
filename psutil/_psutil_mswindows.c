@@ -655,6 +655,7 @@ get_system_cpu_times(PyObject* self, PyObject* args)
     if (hNtDll) {
         FreeLibrary(hNtDll);
     }
+    Py_DECREF(retlist);
     PyErr_SetFromWindowsErr(0);
     return NULL;
 }
@@ -920,26 +921,28 @@ get_process_threads(PyObject* self, PyObject* args)
     FILETIME ftDummy, ftKernel, ftUser;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
+        goto error;
     }
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
-        return AccessDenied();
+        AccessDenied();
+        goto error;
     }
 
     pid_return = pid_is_running(pid);
     if (pid_return == 0) {
-        return NoSuchProcess();
+        NoSuchProcess();
+        goto error;
     }
     if (pid_return == -1) {
-        return NULL;
+        goto error;
     }
 
     hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
     if (hThreadSnap == INVALID_HANDLE_VALUE) {
         PyErr_SetFromWindowsErr(0);
-        return NULL;
+        goto error;
     }
 
     // Fill in the size of the structure before using it
@@ -947,8 +950,7 @@ get_process_threads(PyObject* self, PyObject* args)
 
     if (! Thread32First(hThreadSnap, &te32)) {
         PyErr_SetFromWindowsErr(0);
-        CloseHandle(hThreadSnap);
-        return NULL;
+        goto error;
     }
 
     // Walk the thread snapshot to find all threads of the process.
@@ -968,8 +970,7 @@ get_process_threads(PyObject* self, PyObject* args)
             if (rc == 0) {
                 PyErr_SetFromWindowsErr(0);
                 CloseHandle(hThread);
-                CloseHandle(hThreadSnap);
-                return NULL;
+                goto error;
             }
 
             /*
@@ -998,6 +999,13 @@ get_process_threads(PyObject* self, PyObject* args)
 
     CloseHandle(hThreadSnap);
     return retList;
+
+error:
+    Py_DECREF(retList);
+    if (hThreadSnap != NULL) {
+        CloseHandle(hThreadSnap);
+    }
+    return NULL;
 }
 
 
@@ -2034,6 +2042,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     PyObject* py_tuple = NULL;
 
     if (! PyArg_ParseTuple(args, "O", &py_all)) {
+        Py_DECREF(py_retlist);
         return NULL;
     }
     all = PyObject_IsTrue(py_all);
@@ -2043,6 +2052,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     Py_END_ALLOW_THREADS
 
     if (num_bytes == 0) {
+        Py_DECREF(py_retlist);
         return PyErr_SetFromWindowsErr(0);
     }
 
@@ -2233,6 +2243,7 @@ get_system_users(PyObject* self, PyObject* args)
     return py_retlist;
 
 error:
+    Py_DECREF(py_retlist);
     if (hInstWinSta != NULL) {
         FreeLibrary(hInstWinSta);
     }
@@ -2320,10 +2331,12 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     PyObject* py_tuple;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
+        Py_DECREF(py_list);
         return NULL;
     }
     hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
+        Py_DECREF(py_list);
         return NULL;
     }
 
