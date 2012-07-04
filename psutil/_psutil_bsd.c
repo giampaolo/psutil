@@ -355,7 +355,7 @@ get_process_threads(PyObject* self, PyObject* args)
 {
     long pid;
     int mib[4];
-    struct kinfo_proc *kip;
+    struct kinfo_proc *kip = NULL;
     struct kinfo_proc *kipp;
     int error;
     unsigned int i;
@@ -364,7 +364,7 @@ get_process_threads(PyObject* self, PyObject* args)
     PyObject* pyTuple = NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
+        goto error;
     }
 
     /*
@@ -379,25 +379,27 @@ get_process_threads(PyObject* self, PyObject* args)
     error = sysctl(mib, 4, NULL, &size, NULL, 0);
     if (error == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        goto error;
     }
     if (size == 0) {
-        return NoSuchProcess();
+        NoSuchProcess();
+        goto error;
     }
 
     kip = malloc(size);
     if (kip == NULL) {
         PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        goto error;
     }
 
     error = sysctl(mib, 4, kip, &size, NULL, 0);
     if (error == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        goto error;
     }
     if (size == 0) {
-        return NoSuchProcess();
+        NoSuchProcess();
+        goto error;
     }
 
     for (i = 0; i < size / sizeof(*kipp); i++) {
@@ -411,6 +413,13 @@ get_process_threads(PyObject* self, PyObject* args)
     }
     free(kip);
     return retList;
+
+error:
+    Py_DECREF(retList);
+    if (kip != NULL) {
+        free(kip);
+    }
+    return NULL;
 }
 
 
@@ -690,14 +699,14 @@ get_process_open_files(PyObject* self, PyObject* args)
     struct kinfo_proc kipp;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
+        goto error;
     if (get_kinfo_proc(pid, &kipp) == -1)
-        return NULL;
+        goto error;
 
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
         PyErr_SetFromErrno(0);
-        return NULL;
+        goto error;
     }
 
     for (i = 0; i < cnt; i++) {
@@ -711,8 +720,11 @@ get_process_open_files(PyObject* self, PyObject* args)
         }
     }
     free(freep);
-
     return retList;
+
+error:
+    Py_DECREF(retList);
+    return NULL;
 }
 
 
@@ -1055,8 +1067,8 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     // retrieve maxcpus value
     size = sizeof(maxcpus);
     if (sysctlbyname("kern.smp.maxcpus", &maxcpus, &size, NULL, 0) < 0) {
+        Py_DECREF(py_retlist);
         PyErr_SetFromErrno(0);
-        return NULL;
     }
     long cpu_time[maxcpus][CPUSTATES];
 
@@ -1065,15 +1077,15 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     mib[1] = HW_NCPU;
     len = sizeof(ncpu);
     if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
+        Py_DECREF(py_retlist);
         PyErr_SetFromErrno(0);
-        return NULL;
     }
 
     // per-cpu info
     size = sizeof(cpu_time);
     if (sysctlbyname("kern.cp_times", &cpu_time, &size, NULL, 0) == -1) {
+        Py_DECREF(py_retlist);
         PyErr_SetFromErrno(0);
-        return NULL;
     }
 
     for (i = 0; i < ncpu; i++) {
@@ -1106,23 +1118,24 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     char perms[10];
     const char *path;
     struct kinfo_proc kp;
-    struct kinfo_vmentry *freep, *kve;
+    struct kinfo_vmentry *freep = NULL;
+    struct kinfo_vmentry *kve;
     PyObject* pytuple = NULL;
     PyObject* retlist = PyList_New(0);
 
     ptrwidth = 2*sizeof(void *);
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
+        goto error;
     }
     if (get_kinfo_proc(pid, &kp) == -1) {
-        return NULL;
+        goto error;
     }
 
     freep = kinfo_getvmmap(pid, &cnt);
     if (freep == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "kinfo_getvmmap() failed");
-        return NULL;
+        goto error;
     }
     for (i = 0; i < cnt; i++) {
         kve = &freep[i];
@@ -1189,6 +1202,12 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     }
     free(freep);
     return retlist;
+
+error:
+    Py_DECREF(retlist);
+    if (freep != NULL)
+        free(freep);
+    return NULL;
 }
 #endif
 
@@ -1214,6 +1233,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     num = getfsstat(NULL, 0, MNT_NOWAIT);
     Py_END_ALLOW_THREADS
     if (num == -1) {
+        Py_DECREF(py_retlist);
         PyErr_SetFromErrno(0);
         return NULL;
     }
@@ -1225,6 +1245,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     num = getfsstat(fs, len, MNT_NOWAIT);
     Py_END_ALLOW_THREADS
     if (num == -1) {
+        Py_DECREF(py_retlist);
         free(fs);
         PyErr_SetFromErrno(0);
         return NULL;
@@ -1427,6 +1448,7 @@ get_system_users(PyObject* self, PyObject* args)
 
     fp = fopen(_PATH_UTMP, "r");
     if (fp == NULL) {
+        Py_DECREF(ret_list);
         return PyErr_SetFromErrno(0);
     }
 
