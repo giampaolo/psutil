@@ -630,8 +630,7 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
                         info_count * sizeof(int));
     if (ret != KERN_SUCCESS) {
-        // TODO: provide a warning instead
-        printf("vm_deallocate() failed\n");
+        PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
     }
     return py_retlist;
 }
@@ -864,8 +863,7 @@ get_process_threads(PyObject* self, PyObject* args)
     ret = vm_deallocate(task, (vm_address_t)thread_list,
                         thread_count * sizeof(int));
     if (ret != KERN_SUCCESS) {
-        // TODO: provide a warning instead
-        printf("vm_deallocate() failed\n");
+        PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
     }
 
     return retList;

@@ -23,6 +23,7 @@ NEW FEATURES
 BUGFIXES
 
  * Issue 298: (OSX - BSD) memory leak in get_num_fds().
+ * Issue 299: potential memory leak every time PyList_New(0) is used.
 
 
 0.5.1 - 2012-06-29
