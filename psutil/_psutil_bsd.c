@@ -738,6 +738,7 @@ get_process_num_fds(PyObject* self, PyObject* args)
         PyErr_SetFromErrno(0);
         return NULL;
     }
+    free(freep);
 
     return Py_BuildValue("i", cnt);
 }
