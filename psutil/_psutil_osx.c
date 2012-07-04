@@ -262,12 +262,14 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     PyObject* py_list = PyList_New(0);
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
+        Py_DECREF(py_list);
         return NULL;
     }
 
     err = task_for_pid(mach_task_self(), pid, &task);
 
     if (err != KERN_SUCCESS) {
+        Py_DECREF(py_list);
         if (! pid_exists(pid)) {
             return NoSuchProcess();
         }
@@ -606,8 +608,10 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     error = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO,
                                 &cpu_count, &info_array, &info_count);
     if (error != KERN_SUCCESS) {
-        return PyErr_Format(PyExc_RuntimeError,
-              "Error in host_processor_info(): %s", mach_error_string(error));
+        Py_DECREF(py_retlist);
+        PyErr_Format(PyExc_RuntimeError, "Error in host_processor_info(): %s",
+                     mach_error_string(error));
+        return NULL;
     }
 
     cpu_load_info = (processor_cpu_load_info_data_t*) info_array;
@@ -626,6 +630,7 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
                         info_count * sizeof(int));
     if (ret != KERN_SUCCESS) {
+        // TODO: provide a warning instead
         printf("vm_deallocate() failed\n");
     }
     return py_retlist;
@@ -675,6 +680,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     num = getfsstat(NULL, 0, MNT_NOWAIT);
     Py_END_ALLOW_THREADS
     if (num == -1) {
+        Py_DECREF(py_retlist);
         PyErr_SetFromErrno(0);
         return NULL;
     }
@@ -686,6 +692,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     num = getfsstat(fs, len, MNT_NOWAIT);
     Py_END_ALLOW_THREADS
     if (num == -1) {
+        Py_DECREF(py_retlist);
         free(fs);
         PyErr_SetFromErrno(0);
         return NULL;
@@ -800,16 +807,19 @@ get_process_threads(PyObject* self, PyObject* args)
 
     // the argument passed should be a process id
     if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
+        goto error;
     }
 
     // task_for_pid() requires special privileges
     err = task_for_pid(mach_task_self(), pid, &task);
     if (err != KERN_SUCCESS) {
-        if (! pid_exists(pid) ) {
-            return NoSuchProcess();
+        if (! pid_exists(pid)) {
+            NoSuchProcess();
         }
-        return AccessDenied();
+        else {
+            AccessDenied();
+        }
+        goto error;
     }
 
     info_count = TASK_BASIC_INFO_COUNT;
@@ -817,16 +827,19 @@ get_process_threads(PyObject* self, PyObject* args)
     if (err != KERN_SUCCESS) {
         // errcode 4 is "invalid argument" (access denied)
         if (err == 4) {
-            return AccessDenied();
+            AccessDenied();
         }
-        // otherwise throw a runtime error with appropriate error code
-        return PyErr_Format(PyExc_RuntimeError,
-                            "task_info(TASK_BASIC_INFO) failed");
+        else {
+            // otherwise throw a runtime error with appropriate error code
+            PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed");
+        }
+        goto error;
     }
 
     err = task_threads(task, &thread_list, &thread_count);
     if (err != KERN_SUCCESS) {
-        return PyErr_Format(PyExc_RuntimeError, "task_threads() failed");
+        PyErr_Format(PyExc_RuntimeError, "task_threads() failed");
+        goto error;
     }
 
     for (j = 0; j < thread_count; j++) {
@@ -834,7 +847,8 @@ get_process_threads(PyObject* self, PyObject* args)
         kr = thread_info(thread_list[j], THREAD_BASIC_INFO,
                          (thread_info_t)thinfo, &thread_info_count);
         if (kr != KERN_SUCCESS) {
-            return PyErr_Format(PyExc_RuntimeError, "thread_info() failed");
+            PyErr_Format(PyExc_RuntimeError, "thread_info() failed");
+            goto error;
         }
         basic_info_th = (thread_basic_info_t)thinfo;
         // XXX - thread_info structure does not provide any process id;
@@ -850,10 +864,15 @@ get_process_threads(PyObject* self, PyObject* args)
     ret = vm_deallocate(task, (vm_address_t)thread_list,
                         thread_count * sizeof(int));
     if (ret != KERN_SUCCESS) {
+        // TODO: provide a warning instead
         printf("vm_deallocate() failed\n");
     }
 
     return retList;
+
+error:
+    Py_DECREF(retList);
+    return NULL;
 }
 
 
@@ -872,7 +891,7 @@ get_process_open_files(PyObject* self, PyObject* args)
     int i;
     int nb;
 
-    struct proc_fdinfo *fds_pointer;
+    struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
     struct vnode_fdinfowithpath vi;
 
@@ -880,11 +899,13 @@ get_process_open_files(PyObject* self, PyObject* args)
     PyObject *tuple = NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
+        goto error;
     }
 
     pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
     if (pidinfo_result <= 0) {
+        // may be be ignored later if errno != 0
+        PyErr_Format(PyExc_RuntimeError, "proc_pidinfo(PROC_PIDLISTFDS) failed");
         goto error;
     }
 
@@ -892,7 +913,8 @@ get_process_open_files(PyObject* self, PyObject* args)
     pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
                                   pidinfo_result);
     if (pidinfo_result <= 0) {
-        free(fds_pointer);
+        // may be be ignored later if errno != 0
+        PyErr_Format(PyExc_RuntimeError, "proc_pidinfo(PROC_PIDLISTFDS) failed");
         goto error;
     }
 
@@ -901,7 +923,6 @@ get_process_open_files(PyObject* self, PyObject* args)
     for (i = 0; i < iterations; i++) {
         fdp_pointer = &fds_pointer[i];
 
-        //
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE)
         {
             nb = proc_pidfdinfo(pid,
@@ -917,19 +938,15 @@ get_process_open_files(PyObject* self, PyObject* args)
                     // let's assume the file has been closed or removed
                     continue;
                 }
-                if (errno != 0) {
-                    free(fds_pointer);
-                    return PyErr_SetFromErrno(PyExc_OSError);
-                }
-                else
-                    free(fds_pointer);
-                    return PyErr_Format(PyExc_RuntimeError,
-                                "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
+                // may be be ignored later if errno != 0
+                PyErr_Format(PyExc_RuntimeError,
+                            "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
+                goto error;
             }
             if (nb < sizeof(vi)) {
-                free(fds_pointer);
-                return PyErr_Format(PyExc_RuntimeError,
+                PyErr_Format(PyExc_RuntimeError,
                  "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed (buffer mismatch)");
+                goto error;
             }
             // --- /errors checking
 
@@ -946,17 +963,19 @@ get_process_open_files(PyObject* self, PyObject* args)
     return retList;
 
 error:
+    Py_DECREF(retList);
+    if (fds_pointer != NULL) {
+        free(fds_pointer);
+    }
     if (errno != 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-
-    else if (! pid_exists(pid) ) {
+    else if (! pid_exists(pid)) {
         return NoSuchProcess();
     }
-
     else {
-        return PyErr_Format(PyExc_RuntimeError,
-                            "proc_pidinfo(PROC_PIDLISTFDS) failed");
+        // exception has already been set earlier
+        return NULL;
     }
 }
 
@@ -1475,6 +1494,7 @@ get_system_users(PyObject* self, PyObject* args)
 
     fp = fopen(_PATH_UTMPX, "r");
     if (fp == NULL) {
+        Py_DECREF(ret_list);
         // man fopen says errno is set but it seems it's not (OSX 10.6)
         return PyErr_SetFromErrnoWithFilename(PyExc_OSError, _PATH_UTMPX);
     }

@@ -160,7 +160,9 @@ get_arg_list(long pid)
 
     /* read argmax and allocate memory for argument space. */
     argmax = get_argmax();
-    if (! argmax) { return PyErr_SetFromErrno(PyExc_OSError); }
+    if (! argmax) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
 
     procargs = (char *)malloc(argmax);
     if (NULL == procargs) {

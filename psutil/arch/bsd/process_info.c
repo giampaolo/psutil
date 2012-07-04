@@ -219,6 +219,7 @@ get_arg_list(long pid)
 
     if (NULL == argstr) {
         if (ESRCH == errno) {
+            Py_DECREF(retlist);
             PyErr_Format(PyExc_RuntimeError,
                     "getcmdargs() failed - no process found with pid %lu", pid);
             return NULL;
@@ -268,4 +269,3 @@ pid_exists(long pid)
     // otherwise return 0 for PID not found
     return 0;
 }
-
