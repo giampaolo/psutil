@@ -20,7 +20,22 @@
 #include <sys/param.h>
 #include <sys/user.h>
 #include <sys/proc.h>
+#include <sys/file.h>
+#include <net/route.h>
+
 #include <sys/socket.h>
+#include <sys/socketvar.h>    /* for struct socket */
+#include <sys/protosw.h>      /* for struct proto */
+#include <sys/domain.h>       /* for struct domain */
+/* for in_pcb struct */
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/in_pcb.h>
+#include <netinet/tcp_var.h>   /* for struct tcpcb */
+#include <netinet/tcp_fsm.h>   /* for TCP connection states */
+#include <arpa/inet.h>         /* for inet_ntop() */
+
 #include <utmp.h>         /* system users */
 #include <devstat.h>      /* get io counters */
 #include <sys/vmmeter.h>  /* needed for vmtotal struct */
@@ -710,7 +725,7 @@ get_process_num_fds(PyObject* self, PyObject* args)
     long pid;
     int cnt;
 
-    struct kinfo_file *freep, *kif;
+    struct kinfo_file *freep;
     struct kinfo_proc kipp;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -769,6 +784,255 @@ get_process_cwd(PyObject* self, PyObject* args)
     }
     free(freep);
     return path;
+}
+
+
+/*
+ * mathes Linux net/tcp_states.h:
+ * http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
+ */
+static char *
+get_connection_status(int st) {
+    switch (st) {
+        case TCPS_CLOSED:
+            return "CLOSE";
+        case TCPS_CLOSING:
+            return "CLOSING";
+        case TCPS_CLOSE_WAIT:
+            return "CLOSE_WAIT";
+        case TCPS_LISTEN:
+            return "LISTEN";
+        case TCPS_ESTABLISHED:
+            return "ESTABLISHED";
+        case TCPS_SYN_SENT:
+            return "SYN_SENT";
+        case TCPS_SYN_RECEIVED:
+            return "SYN_RECV";
+        case TCPS_FIN_WAIT_1:
+            return "FIN_WAIT_1";
+        case TCPS_FIN_WAIT_2:
+            return "FIN_WAIT_2";
+        case TCPS_LAST_ACK:
+            return "LAST_ACK";
+        case TCPS_TIME_WAIT:
+            return "TIME_WAIT";
+        default:
+            return "?";
+    }
+}
+
+// a kvm_read that returns true if everything is read
+#define KVM_READ(kaddr, paddr, len) \
+    ((len) < SSIZE_MAX && \
+    kvm_read(kd, (u_long)(kaddr), (char *)(paddr), (len)) == (ssize_t)(len))
+
+// XXX - copied from sys/file.h to make compiler happy
+struct file {
+    void        *f_data;    /* file descriptor specific data */
+    struct fileops  *f_ops;     /* File operations */
+    struct ucred    *f_cred;    /* associated credentials. */
+    struct vnode    *f_vnode;   /* NULL or applicable vnode */
+    short       f_type;     /* descriptor type */
+    short       f_vnread_flags; /* (f) Sleep lock for f_offset */
+    volatile u_int  f_flag;     /* see fcntl.h */
+    volatile u_int  f_count;    /* reference count */
+    int     f_seqcount; /* Count of sequential accesses. */
+    off_t       f_nextoff;  /* next expected read/write offset. */
+    struct cdev_privdata *f_cdevpriv; /* (d) Private data for the cdev. */
+    off_t       f_offset;
+    void        *f_label;   /* Place-holder for MAC label. */
+};
+
+
+/*
+ * Return connections opened by process.
+ * fstat.c source code was used as an example.
+ */
+static PyObject*
+get_process_connections(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc *p;
+    struct file **ofiles = NULL;
+    char buf[_POSIX2_LINE_MAX];
+    int cnt;
+    int i;
+    kvm_t *kd = NULL;
+    struct file file;
+    struct filedesc filed;
+    struct nlist nl[] = {{ "" },};
+    struct socket   so;
+    struct protosw  proto;
+    struct domain   dom;
+    struct inpcb    inpcb;
+    struct tcpcb    tcpcb;
+
+    PyObject *retList = PyList_New(0);
+    PyObject *tuple = NULL;
+    PyObject *laddr = NULL;
+    PyObject *raddr = NULL;
+    PyObject *af_filter = NULL;
+    PyObject *type_filter = NULL;
+
+    if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter)) {
+        goto error;
+    }
+    if (!PySequence_Check(af_filter) || !PySequence_Check(type_filter)) {
+        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
+        goto error;
+    }
+
+    kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, buf);
+    if (kd == NULL) {
+        AccessDenied();
+        goto error;
+    }
+
+    if (kvm_nlist(kd, nl) != 0) {
+        PyErr_SetString(PyExc_RuntimeError, "kvm_nlist() failed");
+        goto error;
+    }
+
+    p = kvm_getprocs(kd, KERN_PROC_PID, pid, &cnt);
+    if (p == NULL) {
+        NoSuchProcess();
+        goto error;
+    }
+    if (cnt != 1) {
+        NoSuchProcess();
+        goto error;
+    }
+    if (p->ki_fd == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "no usable fd found");
+        goto error;
+    }
+    if (!KVM_READ(p->ki_fd, &filed, sizeof(filed))) {
+        PyErr_SetString(PyExc_RuntimeError, "kvm_read() failed");
+        goto error;
+    }
+
+    ofiles = malloc((filed.fd_lastfile+1) * sizeof(struct file *));
+    if (ofiles == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "malloc() failed");
+        goto error;
+    }
+
+    if (!KVM_READ(filed.fd_ofiles, ofiles,
+                  (filed.fd_lastfile+1) * sizeof(struct file *))) {
+        PyErr_SetString(PyExc_RuntimeError, "kvm_read() failed");
+        goto error;
+    }
+
+    for (i = 0; i <= filed.fd_lastfile; i++) {
+        int lport, rport;
+        char lip[200], rip[200];
+        char *state;
+        int inseq;
+        PyObject* _family;
+        PyObject* _type;
+
+        if (ofiles[i] == NULL) {
+            continue;
+        }
+        if (!KVM_READ(ofiles[i], &file, sizeof (struct file))) {
+            PyErr_SetString(PyExc_RuntimeError, "kvm_read() file failed");
+            goto error;
+        }
+        if (file.f_type == DTYPE_SOCKET) {
+            // fill in socket
+            if (!KVM_READ(file.f_data, &so, sizeof(struct socket))) {
+                PyErr_SetString(PyExc_RuntimeError, "kvm_read() socket failed");
+                goto error;
+            }
+            // fill in protosw entry
+            if (!KVM_READ(so.so_proto, &proto, sizeof(struct protosw))) {
+                PyErr_SetString(PyExc_RuntimeError, "kvm_read() proto failed");
+                goto error;
+            }
+            // fill in domain
+            if (!KVM_READ(proto.pr_domain, &dom, sizeof(struct domain))) {
+                PyErr_SetString(PyExc_RuntimeError, "kvm_read() domain failed");
+                goto error;
+            }
+
+            // apply filters
+            _family = PyLong_FromLong((long)dom.dom_family);
+            inseq = PySequence_Contains(af_filter, _family);
+            Py_DECREF(_family);
+            if (inseq == 0) {
+                continue;
+            }
+            _type = PyLong_FromLong((long)proto.pr_type);
+            inseq = PySequence_Contains(type_filter, _type);
+            Py_DECREF(_type);
+            if (inseq == 0) {
+                continue;
+            }
+
+            // fill inpcb
+            if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
+                         sizeof(struct inpcb)) != sizeof(struct inpcb)) {
+                PyErr_SetString(PyExc_RuntimeError, "kvm_read() addr failed");
+                goto error;
+            }
+
+            // fill status
+            if (proto.pr_type == SOCK_STREAM) {
+                if (kvm_read(kd, (u_long)inpcb.inp_ppcb, (char *)&tcpcb,
+                             sizeof(struct tcpcb)) != sizeof(struct tcpcb)) {
+                    PyErr_SetString(PyExc_RuntimeError, "kvm_read() state failed");
+                    goto error;
+                }
+                state = get_connection_status((int)tcpcb.t_state);
+            }
+            else {
+                state = "";
+            }
+
+            // build addr and port
+            if (dom.dom_family == AF_INET) {
+                inet_ntop(AF_INET, &inpcb.inp_laddr.s_addr, lip, sizeof(lip));
+                inet_ntop(AF_INET, &inpcb.inp_faddr.s_addr, rip, sizeof(rip));
+            }
+            else {
+                inet_ntop(AF_INET6, &inpcb.in6p_laddr.s6_addr, lip, sizeof(lip));
+                inet_ntop(AF_INET6, &inpcb.in6p_faddr.s6_addr, rip, sizeof(rip));
+            }
+            lport = ntohs(inpcb.inp_lport);
+            rport = ntohs(inpcb.inp_fport);
+
+            // contruct python tuple/list
+            laddr = Py_BuildValue("(si)", lip, lport);
+            if (rport != 0) {
+                raddr = Py_BuildValue("(si)", rip, rport);
+            }
+            else {
+                raddr = PyTuple_New(0);
+            }
+            tuple = Py_BuildValue("(iiiNNs)", i,
+                                              dom.dom_family,
+                                              proto.pr_type,
+                                              laddr,
+                                              raddr,
+                                              state);
+            PyList_Append(retList, tuple);
+            Py_DECREF(tuple);
+        }
+    }
+
+    free(ofiles);
+    kvm_close(kd);
+    return retList;
+
+error:
+    Py_DECREF(retList);
+    if (kd != NULL) {
+        kvm_close(kd);
+    }
+    if (ofiles != NULL) {
+        free(ofiles);
+    }
+    return NULL;
 }
 
 
@@ -1193,6 +1457,8 @@ PsutilMethods[] =
 
      {"get_process_name", get_process_name, METH_VARARGS,
         "Return process name"},
+     {"get_process_connections", get_process_connections, METH_VARARGS,
+        "Return connections opened by process"},
      {"get_process_exe", get_process_exe, METH_VARARGS,
         "Return process pathname executable"},
      {"get_process_cmdline", get_process_cmdline, METH_VARARGS,

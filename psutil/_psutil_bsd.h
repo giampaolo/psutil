@@ -19,6 +19,7 @@ static PyObject* get_process_cmdline(PyObject* self, PyObject* args);
 static PyObject* get_process_ppid(PyObject* self, PyObject* args);
 static PyObject* get_process_uids(PyObject* self, PyObject* args);
 static PyObject* get_process_gids(PyObject* self, PyObject* args);
+static PyObject* get_process_connections(PyObject* self, PyObject* args);
 static PyObject* get_process_create_time(PyObject* self, PyObject* args);
 static PyObject* get_memory_info(PyObject* self, PyObject* args);
 static PyObject* get_process_num_threads(PyObject* self, PyObject* args);

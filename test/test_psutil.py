@@ -1476,9 +1476,6 @@ class TestFetchAllProcesses(unittest.TestCase):
         excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
                           'kill', 'wait', 'as_dict', 'get_cpu_percent', 'nice',
                           'parent', 'get_children', 'pid']
-        # XXX - skip slow lsof implementation;
-        if BSD:
-           excluded_names += ['get_connections']
         attrs = []
         for name in dir(psutil.Process):
             if name.startswith("_"):

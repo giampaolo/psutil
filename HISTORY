@@ -6,6 +6,8 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 NEW FEATURES
 
+ * Issue 220: (BSD) get_connections() has been rewritten in C and no longer
+   requires lsof.
  * Issue 222: (OSX) add support for process cwd.
  * Issue 295: (OSX) process executable path is now determined by asking the OS
    instead of being guessed from process cmdline.

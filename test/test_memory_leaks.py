@@ -168,9 +168,8 @@ class TestProcessObjectLeaks(Base):
     def test_get_memory_maps(self):
         self.execute('get_memory_maps')
 
-    # XXX - BSD still uses provisional lsof implementation
     # Linux implementation is pure python so since it's slow we skip it
-    @skipIf(BSD or LINUX)
+    @skipIf(LINUX)
     def test_get_connections(self):
         def create_socket(family, type):
             sock = socket.socket(family, type)
