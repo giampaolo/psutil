@@ -112,11 +112,13 @@ get_disk_partitions(PyObject* self, PyObject* args)
     file = setmntent(MOUNTED, "r");
     Py_END_ALLOW_THREADS
     if ((file == 0) || (file == NULL)) {
+        Py_DECREF(py_retlist);
         return PyErr_SetFromErrno(PyExc_OSError);
     }
 
     while ((entry = getmntent(file))) {
         if (entry == NULL) {
+            Py_DECREF(py_retlist);
             endmntent(file);
             return PyErr_Format(PyExc_RuntimeError, "getmntent() failed");
         }
