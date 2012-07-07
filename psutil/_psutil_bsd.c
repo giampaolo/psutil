@@ -27,6 +27,10 @@
 #include <sys/socketvar.h>    /* for struct socket */
 #include <sys/protosw.h>      /* for struct proto */
 #include <sys/domain.h>       /* for struct domain */
+
+#include <sys/un.h>           /* for unpcb struct (UNIX sockets) */
+#include <sys/unpcb.h>        /* for unpcb struct (UNIX sockets) */
+#include <sys/mbuf.h>         /* for mbuf struct (UNIX sockets) */
 /* for in_pcb struct */
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -868,6 +872,7 @@ get_process_connections(PyObject* self, PyObject* args)
     struct kinfo_proc *p;
     struct file **ofiles = NULL;
     char buf[_POSIX2_LINE_MAX];
+    char path[PATH_MAX];
     int cnt;
     int i;
     kvm_t *kd = NULL;
@@ -879,6 +884,7 @@ get_process_connections(PyObject* self, PyObject* args)
     struct domain   dom;
     struct inpcb    inpcb;
     struct tcpcb    tcpcb;
+    struct unpcb    unpcb;
 
     PyObject *retList = PyList_New(0);
     PyObject *tuple = NULL;
@@ -982,54 +988,89 @@ get_process_connections(PyObject* self, PyObject* args)
                 continue;
             }
 
-            // fill inpcb
-            if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
-                         sizeof(struct inpcb)) != sizeof(struct inpcb)) {
-                PyErr_SetString(PyExc_RuntimeError, "kvm_read() addr failed");
-                goto error;
-            }
-
-            // fill status
-            if (proto.pr_type == SOCK_STREAM) {
-                if (kvm_read(kd, (u_long)inpcb.inp_ppcb, (char *)&tcpcb,
-                             sizeof(struct tcpcb)) != sizeof(struct tcpcb)) {
-                    PyErr_SetString(PyExc_RuntimeError, "kvm_read() state failed");
+            // IPv4 / IPv6 socket
+            if ((dom.dom_family == AF_INET) || (dom.dom_family == AF_INET6)) {
+                // fill inpcb
+                if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
+                             sizeof(struct inpcb)) != sizeof(struct inpcb)) {
+                    PyErr_SetString(PyExc_RuntimeError, "kvm_read() addr failed");
                     goto error;
                 }
-                state = get_connection_status((int)tcpcb.t_state);
-            }
-            else {
-                state = "";
-            }
 
-            // build addr and port
-            if (dom.dom_family == AF_INET) {
-                inet_ntop(AF_INET, &inpcb.inp_laddr.s_addr, lip, sizeof(lip));
-                inet_ntop(AF_INET, &inpcb.inp_faddr.s_addr, rip, sizeof(rip));
-            }
-            else {
-                inet_ntop(AF_INET6, &inpcb.in6p_laddr.s6_addr, lip, sizeof(lip));
-                inet_ntop(AF_INET6, &inpcb.in6p_faddr.s6_addr, rip, sizeof(rip));
-            }
-            lport = ntohs(inpcb.inp_lport);
-            rport = ntohs(inpcb.inp_fport);
+                // fill status
+                if (proto.pr_type == SOCK_STREAM) {
+                    if (kvm_read(kd, (u_long)inpcb.inp_ppcb, (char *)&tcpcb,
+                                 sizeof(struct tcpcb)) != sizeof(struct tcpcb)) {
+                        PyErr_SetString(PyExc_RuntimeError, "kvm_read() state failed");
+                        goto error;
+                    }
+                    state = get_connection_status((int)tcpcb.t_state);
+                }
+                else {
+                    state = "";
+                }
 
-            // contruct python tuple/list
-            laddr = Py_BuildValue("(si)", lip, lport);
-            if (rport != 0) {
-                raddr = Py_BuildValue("(si)", rip, rport);
+                // build addr and port
+                if (dom.dom_family == AF_INET) {
+                    inet_ntop(AF_INET, &inpcb.inp_laddr.s_addr, lip, sizeof(lip));
+                    inet_ntop(AF_INET, &inpcb.inp_faddr.s_addr, rip, sizeof(rip));
+                }
+                else {
+                    inet_ntop(AF_INET6, &inpcb.in6p_laddr.s6_addr, lip, sizeof(lip));
+                    inet_ntop(AF_INET6, &inpcb.in6p_faddr.s6_addr, rip, sizeof(rip));
+                }
+                lport = ntohs(inpcb.inp_lport);
+                rport = ntohs(inpcb.inp_fport);
+
+                // contruct python tuple/list
+                laddr = Py_BuildValue("(si)", lip, lport);
+                if (rport != 0) {
+                    raddr = Py_BuildValue("(si)", rip, rport);
+                }
+                else {
+                    raddr = PyTuple_New(0);
+                }
+                tuple = Py_BuildValue("(iiiNNs)", i,
+                                                  dom.dom_family,
+                                                  proto.pr_type,
+                                                  laddr,
+                                                  raddr,
+                                                  state);
+                PyList_Append(retList, tuple);
+                Py_DECREF(tuple);
             }
-            else {
-                raddr = PyTuple_New(0);
+            // UNIX socket
+            else if (dom.dom_family == AF_UNIX) {
+                struct sockaddr_un sun;
+                path[0] = '\0';
+
+                if (kvm_read(kd, (u_long)so.so_pcb, (char *)&unpcb,
+                             sizeof(struct unpcb)) != sizeof(struct unpcb)) {
+                    PyErr_SetString(PyExc_RuntimeError, "kvm_read() unpcb failed");
+                    goto error;
+                }
+                if (unpcb.unp_addr) {
+                    if (kvm_read(kd, (u_long)unpcb.unp_addr, (char *)&sun,
+                                 sizeof(sun)) != sizeof(sun)) {
+                        PyErr_SetString(PyExc_RuntimeError,
+                                        "kvm_read() sockaddr_un failed");
+                        goto error;
+                    }
+                    sprintf(path, "%.*s",
+                            (sun.sun_len - (sizeof(sun) - sizeof(sun.sun_path))),
+                            sun.sun_path);
+                }
+
+                tuple = Py_BuildValue("(iiisOs)", i,
+                                                  dom.dom_family,
+                                                  proto.pr_type,
+                                                  path,
+                                                  Py_None,
+                                                  "");
+                PyList_Append(retList, tuple);
+                Py_DECREF(tuple);
+                Py_INCREF(Py_None);
             }
-            tuple = Py_BuildValue("(iiiNNs)", i,
-                                              dom.dom_family,
-                                              proto.pr_type,
-                                              laddr,
-                                              raddr,
-                                              state);
-            PyList_Append(retList, tuple);
-            Py_DECREF(tuple);
         }
     }
 

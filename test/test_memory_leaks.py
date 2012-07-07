@@ -20,8 +20,8 @@ import socket
 
 import psutil
 from psutil._compat import PY3, callable, xrange
-from test_psutil import reap_children, skipUnless, skipIf, supports_ipv6, \
-                        POSIX, LINUX, WINDOWS, OSX, BSD
+from test_psutil import (reap_children, skipUnless, skipIf, supports_ipv6, 
+                         safe_remove, POSIX, LINUX, WINDOWS, OSX, BSD, TESTFN)
 
 LOOPS = 1000
 TOLERANCE = 4096
@@ -185,6 +185,7 @@ class TestProcessObjectLeaks(Base):
             socks.append(create_socket(socket.AF_INET6, socket.SOCK_STREAM))
             socks.append(create_socket(socket.AF_INET6, socket.SOCK_DGRAM))
         if hasattr(socket, 'AF_UNIX'):
+            safe_remove(TESTFN)
             s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             s.bind(TESTFN)
             s.listen(1)

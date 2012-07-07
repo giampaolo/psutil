@@ -1798,6 +1798,7 @@ def test_main():
     for test_class in tests:
         test_suite.addTest(unittest.makeSuite(test_class))
 
+    safe_remove(TESTFN)  # needed for UNIX socket test
     f = open(TESTFN, 'w')
     f.close()
     atexit.register(lambda: safe_remove(TESTFN))
