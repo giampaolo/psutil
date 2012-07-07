@@ -96,9 +96,10 @@ STATUS_WAITING = constant(11, "waiting")  # BSD
 import socket
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
 AF_INET6 = getattr(socket, 'AF_INET6', None)
+AF_UNIX = getattr(socket, 'AF_UNIX', None)
 
 conn_tmap = {
-    "all"  : ([AF_INET, AF_INET6], [SOCK_STREAM, SOCK_DGRAM]),
+    "all"  : ([AF_INET, AF_INET6, AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
     "tcp"  : ([AF_INET, AF_INET6], [SOCK_STREAM]),
     "tcp4" : ([AF_INET],           [SOCK_STREAM]),
     "udp"  : ([AF_INET, AF_INET6], [SOCK_DGRAM]),
@@ -114,7 +115,13 @@ if AF_INET6 is not None:
         "udp6" : ([AF_INET6],          [SOCK_DGRAM]),
     })
 
-del AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM, socket
+if AF_UNIX is not None:
+    conn_tmap.update({
+        "unix" : ([AF_UNIX],           [SOCK_STREAM, SOCK_DGRAM]),
+    })
+
+
+del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM, socket
 
 # --- namedtuples
 

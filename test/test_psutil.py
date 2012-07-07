@@ -121,6 +121,12 @@ def check_ip_address(addr, family):
             assert 0 <= num <= 255, ip
     assert 0 <= port <= 65535, port
 
+def safe_remove(fname):
+    try:
+        os.remove(fname)
+    except OSError:
+        pass
+
 
 # we want to search through all processes before exiting
 atexit.register(reap_children, search_all=True)
@@ -1124,6 +1130,31 @@ class TestCase(unittest.TestCase):
         self.assertEqual(len(cons), 1)
         self.assertEqual(cons[0].local_address[0], '::1')
 
+    @skipUnless(hasattr(socket, 'AF_UNIX'))
+    def test_get_connections_unix(self):
+        try:
+            # tcp
+            safe_remove(TESTFN)
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sock.bind(TESTFN)
+            conn = psutil.Process(os.getpid()).get_connections(kind='unix')[0]
+            self.assertEqual(conn.fd, sock.fileno())
+            self.assertEqual(conn.family, socket.AF_UNIX)
+            self.assertEqual(conn.type, socket.SOCK_STREAM)
+            self.assertEqual(conn.local_address, TESTFN)
+            self.assertTrue(not conn.remote_address)
+            self.assertTrue(not conn.status)
+            # udp
+            safe_remove(TESTFN)
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            sock.bind(TESTFN)
+            conn = psutil.Process(os.getpid()).get_connections(kind='unix')[0]
+            self.assertEqual(conn.type, socket.SOCK_DGRAM)
+        finally:
+            safe_remove(TESTFN)
+            f = open(TESTFN, 'w')
+            f.close()
+
     @skipUnless(hasattr(socket, "fromfd") and not WINDOWS)
     def test_connection_fromfd(self):
         sock = socket.socket()
@@ -1769,7 +1800,7 @@ def test_main():
 
     f = open(TESTFN, 'w')
     f.close()
-    atexit.register(lambda: os.remove(TESTFN))
+    atexit.register(lambda: safe_remove(TESTFN))
 
     unittest.TextTestRunner(verbosity=2).run(test_suite)
     DEVNULL.close()

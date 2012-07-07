@@ -761,6 +761,9 @@ class Process(object):
         udp6            UDP over IPv6
         all             the sum of all the possible families and protocols
         """
+        # Note: in case of UNIX sockets we're only able to determine the
+        # local bound path while the remote endpoint is not retrievable:
+        # http://goo.gl/R3GHM
         inodes = {}
         # os.listdir() is gonna raise a lot of access denied
         # exceptions in case of unprivileged user; that's fine:
@@ -808,6 +811,20 @@ class Process(object):
                             conn = nt_connection(fd, family, type_, laddr,
                                                  raddr, status)
                             retlist.append(conn)
+                    elif family == socket.AF_UNIX:
+                        tokens = line.split()
+                        _, _, _, _, type_, _, inode = tokens[0:7]
+                        if inode in inodes:
+
+                            if len(tokens) == 8:
+                                path = tokens[-1]
+                            else:
+                                path = ""
+                            fd = int(inodes[inode])
+                            type_ = int(type_)
+                            conn = nt_connection(fd, family, type_, path,
+                                                 None, "")
+                            retlist.append(conn)
                     else:
                         raise ValueError(family)
                 return retlist
@@ -818,15 +835,17 @@ class Process(object):
         tcp6 = ("tcp6", socket.AF_INET6, socket.SOCK_STREAM)
         udp4 = ("udp" , socket.AF_INET , socket.SOCK_DGRAM)
         udp6 = ("udp6", socket.AF_INET6, socket.SOCK_DGRAM)
+        unix = ("unix", socket.AF_UNIX, None)
 
         tmap = {
-            "all"  : (tcp4, tcp6, udp4, udp6),
+            "all"  : (tcp4, tcp6, udp4, udp6, unix),
             "tcp"  : (tcp4, tcp6),
             "tcp4" : (tcp4,),
             "tcp6" : (tcp6,),
             "udp"  : (udp4, udp6),
             "udp4" : (udp4,),
             "udp6" : (udp6,),
+            "unix" : (unix,),
             "inet" : (tcp4, tcp6, udp4, udp6),
             "inet4": (tcp4, udp4),
             "inet6": (tcp6, udp6),

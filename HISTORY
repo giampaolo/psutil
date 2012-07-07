@@ -6,6 +6,7 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 NEW FEATURES
 
+ * Issue 216: (UNIX) get_connections() UNIX sockets support.
  * Issue 220: (BSD) get_connections() has been rewritten in C and no longer
    requires lsof.
  * Issue 222: (OSX) add support for process cwd.

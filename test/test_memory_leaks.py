@@ -184,6 +184,11 @@ class TestProcessObjectLeaks(Base):
         if supports_ipv6():
             socks.append(create_socket(socket.AF_INET6, socket.SOCK_STREAM))
             socks.append(create_socket(socket.AF_INET6, socket.SOCK_DGRAM))
+        if hasattr(socket, 'AF_UNIX'):
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s.bind(TESTFN)
+            s.listen(1)
+            socks.append(s)
         try:
             self.execute('get_connections', kind='all')
         finally:
@@ -247,7 +252,9 @@ def test_main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(TestProcessObjectLeaks))
     test_suite.addTest(unittest.makeSuite(TestModuleFunctionsLeaks))
+    safe_remove(TESTFN)
     unittest.TextTestRunner(verbosity=2).run(test_suite)
+    safe_remove(TESTFN)
 
 if __name__ == '__main__':
     test_main()
