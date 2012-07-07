@@ -1111,19 +1111,7 @@ get_process_connections(PyObject* self, PyObject* args)
 
             fd = (int)fdp_pointer->proc_fd;
             family = si.psi.soi_family;
-            type = si.psi.soi_kind;
-
-            if (type == 2) {
-                type = SOCK_STREAM;
-            }
-
-            else if (type == 1) {
-                type = SOCK_DGRAM;
-            }
-
-            else {
-                continue;
-            }
+            type = si.psi.soi_type;
 
             // apply filters
             _family = PyLong_FromLong((long)family);
@@ -1132,7 +1120,6 @@ get_process_connections(PyObject* self, PyObject* args)
             if (inseq == 0) {
                 continue;
             }
-
             _type = PyLong_FromLong((long)type);
             inseq = PySequence_Contains(type_filter, _type);
             Py_DECREF(_type);
@@ -1145,57 +1132,66 @@ get_process_connections(PyObject* self, PyObject* args)
                 return PyErr_SetFromErrno(PyExc_OSError);
             }
 
-            if (family == AF_INET) {
-                inet_ntop(AF_INET,
-                          &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_46.i46a_addr4,
-                          lip,
-                          sizeof(lip));
-                inet_ntop(AF_INET,
-                          &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_46.i46a_addr4,
-                          rip,
-                          sizeof(rip));
-            }
+            if ((family == AF_INET) || (family == AF_INET6)) {
+                if (family == AF_INET) {
+                    inet_ntop(AF_INET,
+                              &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_46.i46a_addr4,
+                              lip,
+                              sizeof(lip));
+                    inet_ntop(AF_INET,
+                              &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_46.i46a_addr4,
+                              rip,
+                              sizeof(rip));
+                }
+                else {
+                    inet_ntop(AF_INET6,
+                              &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_6,
+                              lip, sizeof(lip));
+                    inet_ntop(AF_INET6,
+                              &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_6,
+                              rip, sizeof(rip));
+                }
 
-            else {
-                inet_ntop(AF_INET6,
-                          &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_6,
-                          lip, sizeof(lip));
-                inet_ntop(AF_INET6,
-                          &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_6,
-                          rip, sizeof(rip));
-            }
+                // check for inet_ntop failures
+                if (errno != 0) {
+                    free(fds_pointer);
+                    return PyErr_SetFromErrno(PyExc_OSError);
+                }
 
-            // check for inet_ntop failures
-            if (errno != 0) {
-                free(fds_pointer);
-                return PyErr_SetFromErrno(PyExc_OSError);
-            }
+                lport = ntohs(si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport);
+                rport = ntohs(si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_fport);
+                if (type == SOCK_STREAM) {
+                    state = get_connection_status((int)si.psi.soi_proto.pri_tcp.tcpsi_state);
+                }
 
-            lport = ntohs(si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport);
-            rport = ntohs(si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_fport);
-            if (type == SOCK_STREAM) {
-                state = get_connection_status((int)si.psi.soi_proto.pri_tcp.tcpsi_state);
-            }
+                else {
+                    state = "";
+                }
 
-            else {
-                state = "";
-            }
+                laddr = Py_BuildValue("(si)", lip, lport);
+                if (rport != 0) {
+                    raddr = Py_BuildValue("(si)", rip, rport);
+                }
+                else {
+                    raddr = PyTuple_New(0);
+                }
 
-            laddr = Py_BuildValue("(si)", lip, lport);
-            if (rport != 0) {
-                raddr = Py_BuildValue("(si)", rip, rport);
+                // construct the python list
+                tuple = Py_BuildValue("(iiiNNs)", fd, family, type, laddr, raddr,
+                                                  state);
+                PyList_Append(retList, tuple);
+                Py_DECREF(tuple);
             }
-
-            else {
-                raddr = PyTuple_New(0);
+            else if (family == AF_UNIX) {
+                // construct the python list
+                tuple = Py_BuildValue("(iiisss)",
+                    fd, family, type,
+                    si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path,
+                    si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path,
+                    "");
+                PyList_Append(retList, tuple);
+                Py_DECREF(tuple);
             }
-
-            // --- construct python list
-            tuple = Py_BuildValue("(iiiNNs)", fd, family, type, laddr, raddr,
-                                              state);
-            PyList_Append(retList, tuple);
-            Py_DECREF(tuple);
-            // --- /construct python list
         }
     }
 
