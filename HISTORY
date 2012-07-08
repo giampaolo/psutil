@@ -20,6 +20,7 @@ NEW FEATURES
     - get_cpu_times()
     - get_cpu_percent()
     - get_num_threads()
+ * Issue 300: examples/pmap.py script.
 
 BUGFIXES
 
