@@ -552,6 +552,7 @@ class Process(object):
         udp             UDP
         udp4            UDP over IPv4
         udp6            UDP over IPv6
+        unix            UNIX socket (both UDP and TCP protocols)
         all             the sum of all the possible families and protocols
         """
         return self._platform_impl.get_connections(kind)
