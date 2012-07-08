@@ -230,7 +230,8 @@ class Process(object):
             cmdline = self.cmdline
             if cmdline and hasattr(os, 'access') and hasattr(os, 'X_OK'):
                 _exe = os.path.realpath(cmdline[0])
-                if os.path.isfile(_exe) and os.access(_exe, os.X_OK):
+                if os.path.isabs(_exe) and os.path.isfile(_exe) \
+                  and os.access(_exe, os.X_OK):
                     return _exe
         if not exe:
             raise AccessDenied(self.pid, self._platform_impl._process_name)
