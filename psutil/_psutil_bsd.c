@@ -533,6 +533,28 @@ get_memory_info(PyObject* self, PyObject* args)
 
 
 /*
+ * Return extended memory info for a process as a Python tuple.
+ */
+static PyObject*
+get_ext_memory_info(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
+        return NULL;
+    }
+    return Py_BuildValue("(lllll)", ptoa(kp.ki_rssize),    // rss
+                                    (long)kp.ki_size,      // vms
+                                    ptoa(kp.ki_tsize),     // text
+                                    ptoa(kp.ki_dsize),     // data
+                                    ptoa(kp.ki_ssize));    // stack
+}
+
+
+/*
  * Return a Python integer indicating the total amount of physical memory
  * in bytes.
  */
@@ -1540,6 +1562,8 @@ PsutilMethods[] =
          "seconds since the epoch"},
      {"get_memory_info", get_memory_info, METH_VARARGS,
          "Return a tuple of RSS/VMS memory information"},
+     {"get_ext_memory_info", get_ext_memory_info, METH_VARARGS,
+         "Return extended memory info for a process as a Python tuple."},
      {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
          "Return number of threads used by process"},
      {"get_process_threads", get_process_threads, METH_VARARGS,

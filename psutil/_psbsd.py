@@ -209,6 +209,12 @@ class Process(object):
         rss, vms = _psutil_bsd.get_memory_info(self.pid)
         return nt_meminfo(rss, vms)
 
+    _nt_ext_mem = namedtuple('meminfo', 'rss vms text data stack')
+
+    @wrap_exceptions
+    def get_ext_memory_info(self):
+        return self._nt_ext_mem(*_psutil_bsd.get_ext_memory_info(self.pid))
+
     @wrap_exceptions
     def get_process_create_time(self):
         """Return the start time of the process as a number of seconds since

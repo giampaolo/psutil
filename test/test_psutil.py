@@ -1634,6 +1634,12 @@ class TestFetchAllProcesses(unittest.TestCase):
     def get_ext_memory_info(self, ret):
         for name in ret._fields:
             self.assertTrue(getattr(ret, name) >= 0)
+        if POSIX and ret.vms != 0:
+            # VMS is always supposed to be the highest
+            for name in ret._fields:
+                if name != 'vms':
+                    value = getattr(ret, name)
+                    assert ret.vms > value, ret
 
     def get_open_files(self, ret):
         for f in ret:
