@@ -23,7 +23,7 @@ import _psutil_linux
 from psutil import _psposix
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
-from psutil._compat import PY3, xrange, long
+from psutil._compat import PY3, xrange, long, namedtuple
 
 __extra__all__ = [
     "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE",
@@ -500,6 +500,29 @@ class Process(object):
                               int(vms) * _PAGESIZE)
         finally:
             f.close()
+
+    _nt_ext_mem = namedtuple('meminfo', 'rss vms shared text lib data dirty')
+
+    @wrap_exceptions
+    def get_ext_memory_info(self):
+        #  ============================================================
+        # | FIELD  | DESCRIPTION                         | AKA  | TOP  |
+        #  ============================================================
+        # | rss    | resident set size                   |      | RES  |
+        # | vms    | total program size                  | size | VIRT |
+        # | shared | shared pages (from shared mappings) |      | SHR  |
+        # | text   | text ('code')                       | trs  | CODE |
+        # | lib    | library (unused in Linux 2.6)       | lrs  |      |
+        # | data   | data + stack                        | drs  | DATA |
+        # | dirty  | dirty pages (unused in Linux 2.6)   | dt   |      |
+        #  ============================================================
+        f = open("/proc/%s/statm" % self.pid)
+        try:
+            vms, rss, shared, text, lib, data, dirty = \
+              [int(x) * _PAGESIZE for x in f.readline().split()[:7]]
+        finally:
+            f.close()
+        return self._nt_ext_mem(rss, vms, shared, text, lib, data, dirty)
 
     _mmap_base_fields = ['path', 'rss', 'size', 'pss', 'shared_clean',
                          'shared_dirty', 'private_clean', 'private_dirty',

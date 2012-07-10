@@ -10,6 +10,7 @@ NEW FEATURES
  * Issue 220: (BSD) get_connections() has been rewritten in C and no longer
    requires lsof.
  * Issue 222: (OSX) add support for process cwd.
+ * Issue 261: process extended memory info.
  * Issue 295: (OSX) process executable path is now determined by asking the OS
    instead of being guessed from process cmdline.
  * Issue 297: (OSX) the Process methods below were always raising AccessDenied

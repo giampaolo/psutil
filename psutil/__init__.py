@@ -495,6 +495,13 @@ class Process(object):
         """
         return self._platform_impl.get_memory_info()
 
+    def get_ext_memory_info(self):
+        """Return a namedtuple with variable fields depending on the
+        platform representing extended memory information about
+        the process. All numbers are expressed in bytes.
+        """
+        return self._platform_impl.get_ext_memory_info()
+
     def get_memory_percent(self):
         """Compare physical system memory to process resident memory and
         calculate process memory utilization as a percentage.

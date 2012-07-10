@@ -831,6 +831,16 @@ class TestCase(unittest.TestCase):
         assert percent2 > percent1
         del memarr
 
+    @skipUnless(POSIX)
+    def test_get_ext_memory_info(self):
+        proc = get_test_subprocess()
+        time.sleep(.1)
+        p = psutil.Process(proc.pid)
+        mem1 = p.get_memory_info()
+        mem2 = p.get_ext_memory_info()
+        self.assertEqual(mem1.rss, mem2.rss)
+        self.assertEqual(mem1.vms, mem2.vms)
+
     def test_get_memory_maps(self):
         p = psutil.Process(os.getpid())
         maps = p.get_memory_maps()
@@ -1620,6 +1630,10 @@ class TestFetchAllProcesses(unittest.TestCase):
     def get_memory_info(self, ret):
         self.assertTrue(ret.rss >= 0)
         self.assertTrue(ret.vms >= 0)
+
+    def get_ext_memory_info(self, ret):
+        for name in ret._fields:
+            self.assertTrue(getattr(ret, name) >= 0)
 
     def get_open_files(self, ret):
         for f in ret:

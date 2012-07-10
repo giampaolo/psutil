@@ -20,7 +20,7 @@ import socket
 
 import psutil
 from psutil._compat import PY3, callable, xrange
-from test_psutil import (reap_children, skipUnless, skipIf, supports_ipv6, 
+from test_psutil import (reap_children, skipUnless, skipIf, supports_ipv6,
                          safe_remove, POSIX, LINUX, WINDOWS, OSX, BSD, TESTFN)
 
 LOOPS = 1000
@@ -195,6 +195,9 @@ class TestProcessObjectLeaks(Base):
         finally:
             for s in socks:
                 s.close()
+
+    def test_get_ext_memory_info(self):
+        self.execute('get_ext_memory_info')
 
 
 class TestModuleFunctionsLeaks(Base):
