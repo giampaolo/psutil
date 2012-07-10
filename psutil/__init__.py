@@ -750,6 +750,9 @@ def process_iter():
 
     Every new Process instance is only created once and then cached
     into an internal table which is updated every time this is used.
+
+    The sorting order in which processes are yielded is based on
+    their PIDs.
     """
     def add(pid):
         proc = Process(pid)
@@ -766,14 +769,18 @@ def process_iter():
 
     for pid in gone_pids:
         remove(pid)
-    for pid, proc in list(_pmap.items()):
+    for pid, proc in sorted(list(_pmap.items()) + \
+                            list(dict.fromkeys(new_pids).items())):
         try:
-            # use is_running() to check whether PID has been reused by
-            # another process in which case yield a new Process instance
-            if proc.is_running():
-                yield proc
-            else:
+            if proc is None:  # new process
                 yield add(pid)
+            else:
+                # use is_running() to check whether PID has been reused by
+                # another process in which case yield a new Process instance
+                if proc.is_running():
+                    yield proc
+                else:
+                    yield add(pid)
         except NoSuchProcess:
             remove(pid)
         except AccessDenied:
@@ -781,11 +788,6 @@ def process_iter():
             # no way to tell whether the pid of the cached process
             # has been reused. Just return the cached version.
             yield proc
-    for pid in new_pids:
-        try:
-            yield add(pid)
-        except NoSuchProcess:
-            pass
 
 def cpu_times(percpu=False):
     """Return system-wide CPU times as a namedtuple object.
