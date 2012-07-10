@@ -25,6 +25,7 @@ __extra__all__ = []
 
 NUM_CPUS = _psutil_osx.get_num_cpus()
 BOOT_TIME = _psutil_osx.get_system_boot_time()
+_PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 _TERMINAL_MAP = _psposix._get_terminal_map()
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle')
 
@@ -180,6 +181,16 @@ class Process(object):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms = _psutil_osx.get_memory_info(self.pid)
         return nt_meminfo(rss, vms)
+
+    _nt_ext_mem = namedtuple('meminfo', 'rss vms pfaults pageins')
+
+    @wrap_exceptions
+    def get_ext_memory_info(self):
+        """Return a tuple with the process' RSS and VMS size."""
+        rss, vms, pfaults, pageins = _psutil_osx.get_ext_memory_info(self.pid)
+        return self._nt_ext_mem(rss, vms,
+                                pfaults * _PAGESIZE,
+                                pageins * _PAGESIZE)
 
     @wrap_exceptions
     def get_cpu_times(self):

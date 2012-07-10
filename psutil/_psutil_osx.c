@@ -452,6 +452,36 @@ get_memory_info(PyObject* self, PyObject* args)
 
 
 /*
+ * Return extended memory info about a process.
+ */
+static PyObject*
+get_ext_memory_info(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct proc_taskinfo pti;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti))) {
+        return NULL;
+    }
+
+    // Note: determining other memory stats on OSX is a mess:
+    // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
+    // I just give up...
+    //struct proc_regioninfo pri;
+    //psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, &pri, sizeof(pri))
+
+    return Py_BuildValue("(KKkk)",
+        pti.pti_resident_size,      // resident memory size (rss)
+        pti.pti_virtual_size,       // virtual memory size (vms)
+        pti.pti_faults,             // number of page faults (pages)
+        pti.pti_pageins             // number of actual pageins (pages)
+    );
+}
+
+
+/*
  * Return number of threads used by process as a Python integer.
  */
 static PyObject*
@@ -1546,6 +1576,8 @@ PsutilMethods[] =
          "seconds since the epoch"},
      {"get_memory_info", get_memory_info, METH_VARARGS,
          "Return a tuple of RSS/VMS memory information"},
+     {"get_ext_memory_info", get_ext_memory_info, METH_VARARGS,
+         "Return extended memory info about a process"},
      {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
          "Return number of threads used by process"},
      {"get_process_status", get_process_status, METH_VARARGS,
