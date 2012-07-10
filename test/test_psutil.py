@@ -1640,6 +1640,11 @@ class TestFetchAllProcesses(unittest.TestCase):
                 if name != 'vms':
                     value = getattr(ret, name)
                     assert ret.vms > value, ret
+        elif WINDOWS:
+            assert ret.peak_wset >= ret.wset, ret
+            assert ret.peak_paged_pool >= ret.paged_pool, ret
+            assert ret.peak_nonpaged_pool >= ret.nonpaged_pool, ret
+            assert ret.peak_pagefile >= ret.pagefile, ret
 
     def get_open_files(self, ret):
         for f in ret:

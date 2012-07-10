@@ -511,13 +511,13 @@ get_process_exe(PyObject* self, PyObject* args) {
 
 
 /*
- * Return the RSS and VMS as a Python tuple.
+ * Return process memory information as a Python tuple.
  */
 static PyObject*
 get_memory_info(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
-    PROCESS_MEMORY_COUNTERS counters;
+    PROCESS_MEMORY_COUNTERS cnt;
     DWORD pid;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
@@ -529,7 +529,7 @@ get_memory_info(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    if (! GetProcessMemoryInfo(hProcess, &counters, sizeof(counters)) ) {
+    if (! GetProcessMemoryInfo(hProcess, &cnt, sizeof(cnt)) ) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
     }
@@ -538,11 +538,28 @@ get_memory_info(PyObject* self, PyObject* args)
 
 // py 2.4
 #if (PY_MAJOR_VERSION == 2) && (PY_MINOR_VERSION <= 4)
-    return Py_BuildValue("(II)", (unsigned int)counters.WorkingSetSize,
-                                 (unsigned int)counters.PagefileUsage);
+    return Py_BuildValue("(IIIIIIIII)",
+        cnt.PageFaultCount,
+        (unsigned int)cnt.PeakWorkingSetSize,
+        (unsigned int)cnt.WorkingSetSize,
+        (unsigned int)cnt.QuotaPeakPagedPoolUsage,
+        (unsigned int)cnt.QuotaPagedPoolUsage,
+        (unsigned int)cnt.QuotaPeakNonPagedPoolUsage,
+        (unsigned int)cnt.QuotaNonPagedPoolUsage,
+        (unsigned int)cnt.PagefileUsage,
+        (unsigned int)cnt.PeakPagefileUsage);
 #else
 // py >= 2.5
-    return Py_BuildValue("(nn)", counters.WorkingSetSize, counters.PagefileUsage);
+    return Py_BuildValue("(nnnnnnnnn)",
+        cnt.PageFaultCount,
+        cnt.PeakWorkingSetSize,
+        cnt.WorkingSetSize,
+        cnt.QuotaPeakPagedPoolUsage,
+        cnt.QuotaPagedPoolUsage,
+        cnt.QuotaPeakNonPagedPoolUsage,
+        cnt.QuotaNonPagedPoolUsage,
+        cnt.PagefileUsage,
+        cnt.PeakPagefileUsage);
 #endif
 }
 

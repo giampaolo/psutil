@@ -191,8 +191,26 @@ class Process(object):
         # special case for 0 (kernel processes) PID
         if self.pid == 0:
             return nt_meminfo(0, 0)
-        rss, vms = _psutil_mswindows.get_memory_info(self.pid)
-        return nt_meminfo(rss, vms)
+        # on Windows RSS == WorkingSetSize and VSM == PagefileUsage
+        # fields of PROCESS_MEMORY_COUNTERS struct:
+        # http://msdn.microsoft.com/en-us/library/windows/desktop/ms684877(v=vs.85).aspx
+        t = _psutil_mswindows.get_memory_info(self.pid)
+        return nt_meminfo(t[2], t[7])
+
+    _nt_ext_mem = namedtuple('meminfo',
+        ' '.join(['num_page_faults',
+                  'peak_wset',
+                  'wset',
+                  'peak_paged_pool',
+                  'paged_pool',
+                  'peak_nonpaged_pool',
+                  'nonpaged_pool',
+                  'pagefile',
+                  'peak_pagefile']))
+
+    @wrap_exceptions
+    def get_ext_memory_info(self):
+        return self._nt_ext_mem(*_psutil_mswindows.get_memory_info(self.pid))
 
     nt_mmap_grouped = namedtuple('mmap', 'path rss')
     nt_mmap_ext = namedtuple('mmap', 'addr perms path rss')
