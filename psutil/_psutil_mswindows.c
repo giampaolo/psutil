@@ -517,8 +517,13 @@ static PyObject*
 get_memory_info(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
-    PROCESS_MEMORY_COUNTERS cnt;
     DWORD pid;
+#if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
+    PROCESS_MEMORY_COUNTERS_EX cnt;
+#else
+    PROCESS_MEMORY_COUNTERS cnt;
+#endif
+    SIZE_T private = 0;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
@@ -534,11 +539,15 @@ get_memory_info(PyObject* self, PyObject* args)
         return PyErr_SetFromWindowsErr(0);
     }
 
+#if (_WIN32_WINNT >= 0x0501)
+    private = cnt.PrivateUsage;
+#endif
+
     CloseHandle(hProcess);
 
 // py 2.4
 #if (PY_MAJOR_VERSION == 2) && (PY_MINOR_VERSION <= 4)
-    return Py_BuildValue("(IIIIIIIII)",
+    return Py_BuildValue("(IIIIIIIIII)",
         cnt.PageFaultCount,
         (unsigned int)cnt.PeakWorkingSetSize,
         (unsigned int)cnt.WorkingSetSize,
@@ -547,10 +556,11 @@ get_memory_info(PyObject* self, PyObject* args)
         (unsigned int)cnt.QuotaPeakNonPagedPoolUsage,
         (unsigned int)cnt.QuotaNonPagedPoolUsage,
         (unsigned int)cnt.PagefileUsage,
-        (unsigned int)cnt.PeakPagefileUsage);
+        (unsigned int)cnt.PeakPagefileUsage,
+        (unsigned int)private);
 #else
 // py >= 2.5
-    return Py_BuildValue("(nnnnnnnnn)",
+    return Py_BuildValue("(nnnnnnnnnn)",
         cnt.PageFaultCount,
         cnt.PeakWorkingSetSize,
         cnt.WorkingSetSize,
@@ -559,7 +569,8 @@ get_memory_info(PyObject* self, PyObject* args)
         cnt.QuotaPeakNonPagedPoolUsage,
         cnt.QuotaNonPagedPoolUsage,
         cnt.PagefileUsage,
-        cnt.PeakPagefileUsage);
+        cnt.PeakPagefileUsage,
+        private);
 #endif
 }
 
@@ -2411,7 +2422,7 @@ PsutilMethods[] =
         "Return a float indicating the process create time expressed in "
         "seconds since the epoch"},
     {"get_memory_info", get_memory_info, METH_VARARGS,
-        "Return a tuple of RSS/VMS memory information"},
+        "Return a tuple of process memory information"},
     {"get_process_cwd", get_process_cwd, METH_VARARGS,
         "Return process current working directory"},
     {"suspend_process", suspend_process, METH_VARARGS,

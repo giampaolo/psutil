@@ -206,7 +206,8 @@ class Process(object):
                   'peak_nonpaged_pool',
                   'nonpaged_pool',
                   'pagefile',
-                  'peak_pagefile']))
+                  'peak_pagefile',
+                  'private',]))
 
     @wrap_exceptions
     def get_ext_memory_info(self):
