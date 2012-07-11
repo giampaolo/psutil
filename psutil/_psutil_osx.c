@@ -500,6 +500,27 @@ get_process_num_threads(PyObject* self, PyObject* args)
 
 
 /*
+ * Return the number of context switches performed by process.
+ */
+static PyObject*
+get_process_num_ctx_switches(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct proc_taskinfo pti;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti))) {
+        return NULL;
+    }
+    // unvoluntary value seems not to be available;
+    // pti.pti_csw probably refers to the sum of the two (getrusage()
+    // numbers seems to confirm this theory).
+    return Py_BuildValue("ki", pti.pti_csw, 0);
+}
+
+
+/*
  * Return a Python integer indicating the total amount of physical memory
  * in bytes.
  */
@@ -1588,6 +1609,8 @@ PsutilMethods[] =
          "Return files opened by process as a list of tuples"},
      {"get_process_num_fds", get_process_num_fds, METH_VARARGS,
          "Return the number of fds opened by process."},
+     {"get_process_num_ctx_switches", get_process_num_ctx_switches, METH_VARARGS,
+         "Return the number of context switches performed by process"},
      {"get_process_connections", get_process_connections, METH_VARARGS,
          "Get process TCP and UDP connections as a list of tuples"},
      {"get_process_tty_nr", get_process_tty_nr, METH_VARARGS,

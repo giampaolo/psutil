@@ -204,6 +204,10 @@ class Process(object):
         return _psutil_osx.get_process_create_time(self.pid)
 
     @wrap_exceptions
+    def get_num_ctx_switches(self):
+        return nt_ctxsw(*_psutil_osx.get_process_num_ctx_switches(self.pid))
+
+    @wrap_exceptions
     def get_process_num_threads(self):
         """Return the number of threads belonging to the process."""
         return _psutil_osx.get_process_num_threads(self.pid)
