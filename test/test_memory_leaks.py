@@ -29,22 +29,22 @@ TOLERANCE = 4096
 
 
 class Base(unittest.TestCase):
-    pid = os.getpid()
+
+    proc = psutil.Process(os.getpid())
 
     def execute(self, function, *args, **kwargs):
+        def call_many_times():
+            for x in xrange(LOOPS):
+                self.call(function, *args, **kwargs)
+            del x
+            gc.collect()
+            return self.get_mem()
+
         # step 1
-        for x in xrange(LOOPS):
-            self.call(function, *args, **kwargs)
-        del x
-        gc.collect()
-        rss1 = self.get_mem()
+        rss1 = call_many_times()
 
         # step 2
-        for x in xrange(LOOPS):
-            self.call(function, *args, **kwargs)
-        del x
-        gc.collect()
-        rss2 = self.get_mem()
+        rss2 = call_many_times()
 
         # comparison
         difference = rss2 - rss1
@@ -70,7 +70,7 @@ class Base(unittest.TestCase):
                           % (rss2, rss3, difference))
 
     def get_mem(self):
-        return psutil.Process(self.pid).get_memory_info()[0]
+        return psutil.Process(os.getpid()).get_memory_info()[0]
 
     def call(self, *args, **kwargs):
         raise NotImplementedError("must be implemented in subclass")
@@ -86,10 +86,12 @@ class TestProcessObjectLeaks(Base):
         reap_children()
 
     def call(self, function, *args, **kwargs):
-        p = psutil.Process(self.pid)
-        obj = getattr(p, function)
-        if callable(obj):
-            obj(*args, **kwargs)
+        try:
+            obj = getattr(self.proc, function)
+            if callable(obj):
+                obj(*args, **kwargs)
+        except psutil.Error:
+            pass
 
     def test_name(self):
         self.execute('name')
@@ -157,7 +159,7 @@ class TestProcessObjectLeaks(Base):
         self.execute('get_cpu_affinity')
 
     @skipUnless(LINUX or WINDOWS)
-    def test_get_cpu_affinity(self):
+    def test_set_cpu_affinity(self):
         affinity = psutil.Process(os.getpid()).get_cpu_affinity()
         self.execute('set_cpu_affinity', affinity)
 
@@ -201,26 +203,17 @@ class TestProcessObjectLeaks(Base):
         self.execute('get_ext_memory_info')
 
 
+p = get_test_subprocess()
+DEAD_PROC = psutil.Process(p.pid)
+DEAD_PROC.kill()
+DEAD_PROC.wait()
+del p
+
 class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
     """Same as above but looks for leaks occurring when dealing with
     zombie processes raising NoSuchProcess exception.
     """
-
-    def setUp(self):
-        sproc = get_test_subprocess()
-        p = psutil.Process(sproc.pid)
-        self.pid = p.pid
-        p.kill()
-        p.wait()
-        TestProcessObjectLeaks.setUp(self)
-
-    def execute(self, *args, **kwargs):
-        try:
-            TestProcessObjectLeaks.execute(self, *args, **kwargs)
-        except psutil.NoSuchProcess:
-            pass
-        else:
-            self.fail('process still alive')
+    proc = DEAD_PROC
 
 
 class TestModuleFunctionsLeaks(Base):
