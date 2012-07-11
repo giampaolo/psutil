@@ -18,6 +18,7 @@ import unittest
 import time
 import socket
 import threading
+import types
 
 import psutil
 import psutil._common
@@ -87,6 +88,18 @@ class Base(unittest.TestCase):
 class TestProcessObjectLeaks(Base):
     """Test leaks of Process class methods and properties"""
 
+    def __init__(self, *args, **kwargs):
+        Base.__init__(self, *args, **kwargs)
+        # skip tests which are not supported by Process API
+        supported_attrs = dir(psutil.Process)
+        for attr in [x for x in dir(self) if x.startswith('test')]:
+            if attr[5:] not in supported_attrs:
+                meth = getattr(self, attr)
+                @skipIf(True)
+                def test_(self):
+                    pass
+                setattr(self, attr, types.MethodType(test_, self))
+
     def setUp(self):
         gc.collect()
 
@@ -113,39 +126,31 @@ class TestProcessObjectLeaks(Base):
     def test_ppid(self):
         self.execute('ppid')
 
-    @skipIf(WINDOWS)
     def test_uids(self):
         self.execute('uids')
 
-    @skipIf(WINDOWS)
     def test_gids(self):
         self.execute('gids')
 
     def test_status(self):
         self.execute('status')
 
-    @skipUnless(POSIX)
     def test_get_nice(self):
         self.execute('get_nice')
 
-    @skipUnless(POSIX)
     def test_set_nice(self):
         niceness = psutil.Process(os.getpid()).get_nice()
         self.execute('set_nice', niceness)
 
-    @skipIf(OSX)
     def test_get_io_counters(self):
         self.execute('get_io_counters')
 
-    @skipUnless(LINUX)
     def test_get_ionice(self):
         self.execute('get_ionice')
 
-    @skipUnless(LINUX)
     def test_set_ionice(self):
         self.execute('set_ionice', psutil.IOPRIO_CLASS_NONE)
 
-    @skipIf(POSIX)
     def test_username(self):
         self.execute('username')
 
@@ -155,11 +160,9 @@ class TestProcessObjectLeaks(Base):
     def test_get_num_threads(self):
         self.execute('get_num_threads')
 
-    @skipUnless(WINDOWS)
     def test_get_num_handles(self):
         self.execute('get_num_handles')
 
-    @skipUnless(POSIX)
     def test_get_num_fds(self):
         self.execute('get_num_fds')
 
@@ -175,7 +178,6 @@ class TestProcessObjectLeaks(Base):
     def test_get_ext_memory_info(self):
         self.execute('get_ext_memory_info')
 
-    @skipIf(WINDOWS)
     def test_terminal(self):
         self.execute('terminal')
 
@@ -186,11 +188,9 @@ class TestProcessObjectLeaks(Base):
     def test_getcwd(self):
         self.execute('getcwd')
 
-    @skipUnless(LINUX or WINDOWS)
     def test_get_cpu_affinity(self):
         self.execute('get_cpu_affinity')
 
-    @skipUnless(LINUX or WINDOWS)
     def test_set_cpu_affinity(self):
         affinity = psutil.Process(os.getpid()).get_cpu_affinity()
         self.execute('set_cpu_affinity', affinity)
