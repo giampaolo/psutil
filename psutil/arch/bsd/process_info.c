@@ -214,7 +214,6 @@ get_arg_list(long pid)
         return retlist;
     }
 
-    // XXX - this leaks memory (grrr)
     argstr = getcmdargs(pid, &argsize);
 
     if (NULL == argstr) {

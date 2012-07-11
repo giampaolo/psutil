@@ -228,6 +228,22 @@ class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
     """
     proc = DEAD_PROC
 
+    if not POSIX:
+        def test_kill(self):
+            self.execute('kill')
+
+        def test_terminate(self):
+            self.execute('terminate')
+
+        def test_suspend(self):
+            self.execute('suspend')
+
+        def test_resume(self):
+            self.execute('resume')
+
+        def test_wait(self):
+            self.execute('wait')
+
 
 class TestModuleFunctionsLeaks(Base):
     """Test leaks of psutil module functions."""
