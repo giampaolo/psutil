@@ -23,6 +23,7 @@ NEW FEATURES
     - get_num_threads()
  * Issue 300: examples/pmap.py script.
  * Issue 301: process_iter() now yields processes sorted by their PIDs.
+ * Issue 302: process number of voluntary and involuntary context switches.
 
 BUGFIXES
 

@@ -606,6 +606,22 @@ class Process(object):
         return path.replace('\x00', '')
 
     @wrap_exceptions
+    def get_num_ctx_switches(self):
+        vol = unvol = None
+        f = open("/proc/%s/status" % self.pid)
+        try:
+            for line in f:
+                if line.startswith("voluntary_ctxt_switches"):
+                    vol = int(line.split()[1])
+                elif line.startswith("nonvoluntary_ctxt_switches"):
+                    unvol = int(line.split()[1])
+                if vol is not None and unvol is not None:
+                    return nt_ctxsw(vol, unvol)
+            raise RuntimeError("line not found")
+        finally:
+            f.close()
+
+    @wrap_exceptions
     def get_process_num_threads(self):
         f = open("/proc/%s/status" % self.pid)
         try:

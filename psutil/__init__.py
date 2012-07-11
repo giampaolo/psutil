@@ -360,6 +360,12 @@ class Process(object):
             """
             return self._platform_impl.get_num_fds()
 
+    def get_num_ctx_switches(self):
+        """Return the number voluntary and involuntary context switches
+        performed by this process.
+        """
+        return self._platform_impl.get_num_ctx_switches()
+
     def get_num_threads(self):
         """Return the number of threads used by this process."""
         return self._platform_impl.get_process_num_threads()

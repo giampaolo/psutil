@@ -1301,6 +1301,14 @@ class TestCase(unittest.TestCase):
         sock.close()
         self.assertEqual(p.get_num_fds(), start)
 
+    def test_get_num_ctx_switches(self):
+        p = psutil.Process(os.getpid())
+        before = sum(p.get_num_ctx_switches())
+        for x in range(1000):
+            p.get_num_ctx_switches()
+        after = sum(p.get_num_ctx_switches())
+        assert after > before, (before, after)
+
     def test_parent_ppid(self):
         this_parent = os.getpid()
         sproc = get_test_subprocess()
@@ -1762,6 +1770,9 @@ class TestFetchAllProcesses(unittest.TestCase):
                           if x.endswith('_PRIORITY_CLASS')]
             self.assertIn(ret, priorities)
 
+    def get_num_ctx_switches(self, ret):
+        self.assertTrue(ret.voluntary >= 0)
+        self.assertTrue(ret.involuntary >= 0)
 
 if hasattr(os, 'getuid'):
     class LimitedUserTestCase(TestCase):
