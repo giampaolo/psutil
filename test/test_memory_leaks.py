@@ -17,6 +17,7 @@ import gc
 import unittest
 import time
 import socket
+import threading
 
 import psutil
 from psutil._compat import PY3, callable, xrange
@@ -34,19 +35,22 @@ class Base(unittest.TestCase):
 
     def execute(self, function, *args, **kwargs):
         def call_many_times():
-            for x in xrange(LOOPS):
+            for x in xrange(LOOPS - 1):
                 self.call(function, *args, **kwargs)
             del x
             gc.collect()
             return self.get_mem()
 
+        self.call(function, *args, **kwargs)
+        self.assertEqual(gc.garbage, [])
+        self.assertEqual(threading.active_count(), 1)
+
+        # RSS comparison
         # step 1
         rss1 = call_many_times()
-
         # step 2
         rss2 = call_many_times()
 
-        # comparison
         difference = rss2 - rss1
         if difference > TOLERANCE:
             # This doesn't necessarily mean we have a leak yet.
@@ -164,7 +168,12 @@ class TestProcessObjectLeaks(Base):
         self.execute('set_cpu_affinity', affinity)
 
     def test_get_open_files(self):
-        self.execute('get_open_files')
+        safe_remove(TESTFN)  # needed after UNIX socket test has run
+        f = open(TESTFN, 'w')
+        try:
+            self.execute('get_open_files')
+        finally:
+            f.close()
 
     # OSX implementation is unbelievably slow
     @skipIf(OSX)
