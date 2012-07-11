@@ -227,6 +227,10 @@ class Process(object):
         return _psutil_bsd.get_process_num_threads(self.pid)
 
     @wrap_exceptions
+    def get_num_ctx_switches(self):
+        return nt_ctxsw(*_psutil_bsd.get_process_num_ctx_switches(self.pid))
+
+    @wrap_exceptions
     def get_num_fds(self):
         """Return the number of file descriptors opened by this process."""
         return _psutil_bsd.get_process_num_fds(self.pid)

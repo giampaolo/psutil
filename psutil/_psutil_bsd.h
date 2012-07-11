@@ -30,6 +30,7 @@ static PyObject* get_process_status(PyObject* self, PyObject* args);
 static PyObject* get_process_io_counters(PyObject* self, PyObject* args);
 static PyObject* get_process_tty_nr(PyObject* self, PyObject* args);
 static PyObject* get_process_memory_maps(PyObject* self, PyObject* args);
+static PyObject* get_process_num_ctx_switches(PyObject* self, PyObject* args);
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 static PyObject* get_process_open_files(PyObject* self, PyObject* args);
 static PyObject* get_process_cwd(PyObject* self, PyObject* args);

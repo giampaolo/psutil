@@ -331,6 +331,26 @@ get_process_tty_nr(PyObject* self, PyObject* args)
 
 
 /*
+ * Return the number of context switches performed by process as a tuple.
+ */
+static PyObject*
+get_process_num_ctx_switches(PyObject* self, PyObject* args)
+{
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (get_kinfo_proc(pid, &kp) == -1) {
+        return NULL;
+    }
+    return Py_BuildValue("(ll)", kp.ki_rusage.ru_nvcsw,
+                                 kp.ki_rusage.ru_nivcsw);
+}
+
+
+
+/*
  * Return number of threads used by process as a Python integer.
  */
 static PyObject*
@@ -1566,6 +1586,8 @@ PsutilMethods[] =
          "Return extended memory info for a process as a Python tuple."},
      {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
          "Return number of threads used by process"},
+     {"get_process_num_ctx_switches", get_process_num_ctx_switches, METH_VARARGS,
+         "Return the number of context switches performed by process"},
      {"get_process_threads", get_process_threads, METH_VARARGS,
          "Return process threads"},
      {"get_process_status", get_process_status, METH_VARARGS,
