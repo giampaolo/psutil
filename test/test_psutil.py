@@ -59,6 +59,10 @@ def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=None):
     _subprocesses_started.add(sproc.pid)
     return sproc
 
+def warn(msg, warntype=RuntimeWarning):
+    """Raise a warning msg."""
+    warnings.warn(msg, warntype)
+
 def sh(cmdline):
     """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
@@ -69,7 +73,7 @@ def sh(cmdline):
     if p.returncode != 0:
         raise RuntimeError(stderr)
     if stderr:
-        warnings.warn(stderr, RuntimeWarning)
+        warn(stderr)
     if PY3:
         stdout = str(stdout, sys.stdout.encoding)
     return stdout.strip()
@@ -93,18 +97,20 @@ def reap_children(search_all=False):
     no zombies stick around to hog resources and create problems when
     looking for refleaks.
     """
+    pids = _subprocesses_started
     if search_all:
         this_process = psutil.Process(os.getpid())
-        pids = [x.pid for x in this_process.get_children(recursive=True)]
-    else:
-        pids =_subprocesses_started
+        for p in this_process.get_children(recursive=True):
+            pids.add(p.pid)
     while pids:
         pid = pids.pop()
         try:
             child = psutil.Process(pid)
             child.kill()
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+        except psutil.NoSuchProcess:
             pass
+        except psutil.AccessDenied:
+            warn("couldn't kill child process with pid %s" % pid)
         else:
             child.wait()
 
@@ -128,9 +134,6 @@ def safe_remove(fname):
         pass
 
 
-# we want to search through all processes before exiting
-atexit.register(reap_children, search_all=True)
-
 def skipIf(condition, reason="", warn=False):
     """Decorator which skip a test under if condition is satisfied.
     This is a substitute of unittest.skipIf which is available
@@ -150,7 +153,7 @@ def skipIf(condition, reason="", warn=False):
                     msg = "%s was skipped" % objname
                     if reason:
                         msg += "; reason: " + repr(reason)
-                    atexit.register(warnings.warn, msg, RuntimeWarning)
+                    atexit.register(warn, msg)
                 return
             else:
                 return fun(self, *args, **kwargs)
@@ -1802,6 +1805,13 @@ if hasattr(os, 'getuid'):
                 self.fail("exception not raised")
 
 
+def cleanup():
+    reap_children(search_all=True)
+    DEVNULL.close()
+    safe_remove(TESTFN)
+
+atexit.register(cleanup)
+
 def test_main():
     tests = []
     test_suite = unittest.TestSuite()
@@ -1827,8 +1837,8 @@ def test_main():
         if os.getuid() == 0:
             tests.append(LimitedUserTestCase)
         else:
-            atexit.register(warnings.warn, "Couldn't run limited user tests ("
-                         "super-user privileges are required)", RuntimeWarning)
+            atexit.register(warn, "Couldn't run limited user tests ("
+                                  "super-user privileges are required)")
 
     for test_class in tests:
         test_suite.addTest(unittest.makeSuite(test_class))
@@ -1836,10 +1846,8 @@ def test_main():
     safe_remove(TESTFN)  # needed for UNIX socket test
     f = open(TESTFN, 'w')
     f.close()
-    atexit.register(lambda: safe_remove(TESTFN))
 
     unittest.TextTestRunner(verbosity=2).run(test_suite)
-    DEVNULL.close()
 
 if __name__ == '__main__':
     test_main()

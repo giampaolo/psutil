@@ -22,21 +22,19 @@ import errno
 import psutil
 import _psutil_mswindows
 from psutil._compat import PY3, callable
-from test_psutil import reap_children, get_test_subprocess, wait_for_pid
+from test_psutil import reap_children, get_test_subprocess, wait_for_pid, warn
 try:
     import wmi
 except ImportError:
     err = sys.exc_info()[1]
-    atexit.register(warnings.warn, "Couldn't run wmi tests: %s" % str(err),
-                    RuntimeWarning)
+    atexit.register(warn, "Couldn't run wmi tests: %s" % str(err))
     wmi = None
 try:
     import win32api
     import win32con
 except ImportError:
     err = sys.exc_info()[1]
-    atexit.register(warnings.warn, "Couldn't run pywin32 tests: %s" % str(err),
-                    RuntimeWarning)
+    atexit.register(warn, "Couldn't run pywin32 tests: %s" % str(err))
     win32api = None
 
 

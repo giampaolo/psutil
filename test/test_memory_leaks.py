@@ -277,15 +277,9 @@ class TestModuleFunctionsLeaks(Base):
         if callable(obj):
             retvalue = obj(*args, **kwargs)
 
-    def test_get_pid_list(self):
-        self.execute('get_pid_list')
-
     @skipIf(POSIX)
     def test_pid_exists(self):
         self.execute('pid_exists', os.getpid())
-
-    def test_process_iter(self):
-        self.execute('process_iter')
 
     def test_phymem_usage(self):
         self.execute('phymem_usage')
@@ -320,13 +314,12 @@ class TestModuleFunctionsLeaks(Base):
 
 def test_main():
     test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.makeSuite(TestProcessObjectLeaks))
-    test_suite.addTest(unittest.makeSuite(TestModuleFunctionsLeaks))
-    test_suite.addTest(unittest.makeSuite(TestProcessObjectLeaksZombie))
-
-    safe_remove(TESTFN)
+    tests = [TestProcessObjectLeaks,
+             TestModuleFunctionsLeaks,
+             TestProcessObjectLeaksZombie]
+    for test in tests:
+        test_suite.addTest(unittest.makeSuite(test))
     unittest.TextTestRunner(verbosity=2).run(test_suite)
-    safe_remove(TESTFN)
 
 if __name__ == '__main__':
     test_main()
