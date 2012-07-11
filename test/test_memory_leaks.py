@@ -20,14 +20,16 @@ import socket
 
 import psutil
 from psutil._compat import PY3, callable, xrange
+from test_psutil import POSIX, LINUX, WINDOWS, OSX, BSD, TESTFN
 from test_psutil import (reap_children, skipUnless, skipIf, supports_ipv6,
-                         safe_remove, POSIX, LINUX, WINDOWS, OSX, BSD, TESTFN)
+                         safe_remove, get_test_subprocess)
 
 LOOPS = 1000
 TOLERANCE = 4096
 
 
 class Base(unittest.TestCase):
+    pid = os.getpid()
 
     def execute(self, function, *args, **kwargs):
         # step 1
@@ -67,9 +69,8 @@ class Base(unittest.TestCase):
                 self.fail("rss2=%s, rss3=%s, difference=%s" \
                           % (rss2, rss3, difference))
 
-    @staticmethod
-    def get_mem():
-        return psutil.Process(os.getpid()).get_memory_info()[0]
+    def get_mem(self):
+        return psutil.Process(self.pid).get_memory_info()[0]
 
     def call(self, *args, **kwargs):
         raise NotImplementedError("must be implemented in subclass")
@@ -85,7 +86,7 @@ class TestProcessObjectLeaks(Base):
         reap_children()
 
     def call(self, function, *args, **kwargs):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process(self.pid)
         obj = getattr(p, function)
         if callable(obj):
             obj(*args, **kwargs)
@@ -200,6 +201,28 @@ class TestProcessObjectLeaks(Base):
         self.execute('get_ext_memory_info')
 
 
+class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
+    """Same as above but looks for leaks occurring when dealing with
+    zombie processes raising NoSuchProcess exception.
+    """
+
+    def setUp(self):
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        self.pid = p.pid
+        p.kill()
+        p.wait()
+        TestProcessObjectLeaks.setUp(self)
+
+    def execute(self, *args, **kwargs):
+        try:
+            TestProcessObjectLeaks.execute(self, *args, **kwargs)
+        except psutil.NoSuchProcess:
+            pass
+        else:
+            self.fail('process still alive')
+
+
 class TestModuleFunctionsLeaks(Base):
     """Test leaks of psutil module functions."""
 
@@ -256,6 +279,8 @@ def test_main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(TestProcessObjectLeaks))
     test_suite.addTest(unittest.makeSuite(TestModuleFunctionsLeaks))
+    test_suite.addTest(unittest.makeSuite(TestProcessObjectLeaksZombie))
+
     safe_remove(TESTFN)
     unittest.TextTestRunner(verbosity=2).run(test_suite)
     safe_remove(TESTFN)
