@@ -107,6 +107,9 @@ class TestProcessObjectLeaks(Base):
     def test_cmdline(self):
         self.execute('cmdline')
 
+    def test_exe(self):
+        self.execute('exe')
+
     def test_ppid(self):
         self.execute('ppid')
 
@@ -120,6 +123,27 @@ class TestProcessObjectLeaks(Base):
 
     def test_status(self):
         self.execute('status')
+
+    @skipUnless(POSIX)
+    def test_get_nice(self):
+        self.execute('get_nice')
+
+    @skipUnless(POSIX)
+    def test_set_nice(self):
+        niceness = psutil.Process(os.getpid()).get_nice()
+        self.execute('set_nice', niceness)
+
+    @skipIf(OSX)
+    def test_get_io_counters(self):
+        self.execute('get_io_counters')
+
+    @skipUnless(LINUX)
+    def test_get_ionice(self):
+        self.execute('get_ionice')
+
+    @skipUnless(LINUX)
+    def test_set_ionice(self):
+        self.execute('set_ionice', psutil.IOPRIO_CLASS_NONE)
 
     @skipIf(POSIX)
     def test_username(self):
@@ -148,8 +172,8 @@ class TestProcessObjectLeaks(Base):
     def test_get_memory_info(self):
         self.execute('get_memory_info')
 
-    def test_is_running(self):
-        self.execute('is_running')
+    def test_get_ext_memory_info(self):
+        self.execute('get_ext_memory_info')
 
     @skipIf(WINDOWS)
     def test_terminal(self):
@@ -211,9 +235,6 @@ class TestProcessObjectLeaks(Base):
         finally:
             for s in socks:
                 s.close()
-
-    def test_get_ext_memory_info(self):
-        self.execute('get_ext_memory_info')
 
 
 p = get_test_subprocess()
