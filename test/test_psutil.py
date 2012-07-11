@@ -286,6 +286,16 @@ class TestCase(unittest.TestCase):
         finally:
             warnings.resetwarnings()
 
+    def test_deprecated_apis_retval(self):
+        warnings.filterwarnings("ignore")
+        p = psutil.Process(os.getpid())
+        try:
+            self.assertEqual(psutil.total_virtmem(), psutil.virtmem_usage().total)
+            self.assertEqual(psutil.get_process_list(), list(psutil.process_iter()))
+            self.assertEqual(p.nice, p.get_nice())
+        finally:
+            warnings.resetwarnings()
+
     def test_phymem_usage(self):
         mem = psutil.phymem_usage()
         assert mem.total > 0, mem

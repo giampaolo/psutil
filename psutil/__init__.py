@@ -42,6 +42,7 @@ import signal
 import warnings
 import errno
 import subprocess
+import functools
 try:
     import pwd
 except ImportError:
@@ -976,12 +977,17 @@ def get_users():
 def _deprecated(replacement=None):
     """A decorator which can be used to mark functions as deprecated."""
     def outer(fun):
+        msg = "psutil.%s is deprecated" % fun.__name__
+        if replacement is not None:
+            msg += "; use %s instead" % replacement
+        if fun.__doc__ is None:
+            fun.__doc__ = msg
+
+        @functools.wraps(fun)
         def inner(*args, **kwargs):
-            msg = "psutil.%s is deprecated" % fun.__name__
-            if replacement is not None:
-                msg += "; use %s instead" % replacement
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
             return fun(*args, **kwargs)
+
         return inner
     return outer
 
@@ -994,23 +1000,23 @@ def get_process_list():
     """
     return list(process_iter())
 
-@_deprecated("psutil.phymem_usage")
+@_deprecated("psutil.phymem_usage().free")
 def avail_phymem():
     return phymem_usage().free
 
-@_deprecated("psutil.phymem_usage")
+@_deprecated("psutil.phymem_usage().used")
 def used_phymem():
     return phymem_usage().used
 
-@_deprecated("psutil.virtmem_usage")
+@_deprecated("psutil.virtmem_usage().total")
 def total_virtmem():
     return virtmem_usage().total
 
-@_deprecated("psutil.virtmem_usage")
+@_deprecated("psutil.virtmem_usage().used")
 def used_virtmem():
     return virtmem_usage().used
 
-@_deprecated("psutil.virtmem_usage")
+@_deprecated("psutil.virtmem_usage().free")
 def avail_virtmem():
     return virtmem_usage().free
 
