@@ -2317,6 +2317,38 @@ get_process_num_handles(PyObject* self, PyObject* args)
 }
 
 
+/*
+ * Return the number of context switches executed by process.
+ */
+static PyObject*
+get_process_num_ctx_switches(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    ULONG i;
+    ULONG total = 0;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (get_process_info(pid, &process, &buffer) != 1) {
+        free(buffer);
+        return NULL;
+    }
+    if (pid_is_running(pid) == 0) {
+        free(buffer);
+        return NoSuchProcess();
+    }
+
+    for (i=0; i < process->NumberOfThreads; i++) {
+        total += process->Threads[i].ContextSwitches;
+    }
+    free(buffer);
+    return Py_BuildValue("ki", total, 0);
+}
+
+
 static char *get_region_protection_string(ULONG protection)
 {
     switch (protection & 0xff) {
@@ -2455,6 +2487,8 @@ PsutilMethods[] =
         "Return True if one of the process threads is in a suspended state"},
     {"get_process_num_handles", get_process_num_handles, METH_VARARGS,
         "Return the number of handles opened by process."},
+    {"get_process_num_ctx_switches", get_process_num_ctx_switches, METH_VARARGS,
+        "Return the number of context switches performed by process."},
     {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
         "Return a list of process's memory mappings"},
 
