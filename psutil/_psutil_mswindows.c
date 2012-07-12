@@ -921,14 +921,9 @@ get_process_num_threads(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_process_info(pid, &process, &buffer) != 1) {
+    if (! get_process_info(pid, &process, &buffer)) {
         return NULL;
     }
-    if (pid_is_running(pid) == 0) {
-        free(buffer);
-        return NoSuchProcess();
-    }
-
     num = (int)process->NumberOfThreads;
     free(buffer);
     return Py_BuildValue("i", num);
@@ -1817,14 +1812,9 @@ is_process_suspended(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_process_info(pid, &process, &buffer) != 1) {
+    if (! get_process_info(pid, &process, &buffer)) {
         return NULL;
     }
-    if (pid_is_running(pid) == 0) {
-        free(buffer);
-        return NoSuchProcess();
-    }
-
     for (i = 0; i < process->NumberOfThreads; i++) {
         if (process->Threads[i].ThreadState != Waiting ||
             process->Threads[i].WaitReason != Suspended)
@@ -2330,14 +2320,9 @@ get_process_num_ctx_switches(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_process_info(pid, &process, &buffer) != 1) {
+    if (! get_process_info(pid, &process, &buffer)) {
         return NULL;
     }
-    if (pid_is_running(pid) == 0) {
-        free(buffer);
-        return NoSuchProcess();
-    }
-
     for (i=0; i < process->NumberOfThreads; i++) {
         total += process->Threads[i].ContextSwitches;
     }
