@@ -922,7 +922,6 @@ get_process_num_threads(PyObject* self, PyObject* args)
         return NULL;
     }
     if (get_process_info(pid, &process, &buffer) != 1) {
-        free(buffer);
         return NULL;
     }
     if (pid_is_running(pid) == 0) {
@@ -1819,7 +1818,6 @@ is_process_suspended(PyObject* self, PyObject* args)
         return NULL;
     }
     if (get_process_info(pid, &process, &buffer) != 1) {
-        free(buffer);
         return NULL;
     }
     if (pid_is_running(pid) == 0) {
@@ -2333,7 +2331,6 @@ get_process_num_ctx_switches(PyObject* self, PyObject* args)
         return NULL;
     }
     if (get_process_info(pid, &process, &buffer) != 1) {
-        free(buffer);
         return NULL;
     }
     if (pid_is_running(pid) == 0) {

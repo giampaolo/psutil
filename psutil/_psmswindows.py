@@ -382,4 +382,4 @@ class Process(object):
 
     @wrap_exceptions
     def get_num_ctx_switches(self):
-        return _psutil_mswindows.get_process_num_ctx_switches(self.pid)
+        return nt_ctxsw(*_psutil_mswindows.get_process_num_ctx_switches(self.pid))

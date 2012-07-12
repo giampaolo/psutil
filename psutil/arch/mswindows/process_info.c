@@ -443,7 +443,6 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
     hNtDll = LoadLibrary(TEXT("ntdll.dll"));
     NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
                                 hNtDll, "NtQuerySystemInformation");
-    FreeLibrary(hNtDll);
 
     bufferSize = initialBufferSize;
     buffer = malloc(bufferSize);
@@ -464,7 +463,7 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
 
     if (status != 0) {
         PyErr_Format(PyExc_RuntimeError, "NtQuerySystemInformation() failed");
-
+        FreeLibrary(hNtDll);
         free(buffer);
         return 0;
     }
@@ -483,7 +482,7 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
     } while ( (process = PH_NEXT_PROCESS(process)) );
 
     NoSuchProcess();
-
+    FreeLibrary(hNtDll);
     free(buffer);
     return 0;
 }
