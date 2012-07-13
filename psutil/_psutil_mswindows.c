@@ -514,7 +514,7 @@ get_process_exe(PyObject* self, PyObject* args) {
  * Return process memory information as a Python tuple.
  */
 static PyObject*
-get_memory_info(PyObject* self, PyObject* args)
+get_process_memory_info(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
     DWORD pid;
@@ -2435,7 +2435,7 @@ PsutilMethods[] =
     {"get_process_create_time", get_process_create_time, METH_VARARGS,
         "Return a float indicating the process create time expressed in "
         "seconds since the epoch"},
-    {"get_memory_info", get_memory_info, METH_VARARGS,
+    {"get_process_memory_info", get_process_memory_info, METH_VARARGS,
         "Return a tuple of process memory information"},
     {"get_process_cwd", get_process_cwd, METH_VARARGS,
         "Return process current working directory"},

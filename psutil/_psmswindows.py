@@ -194,7 +194,7 @@ class Process(object):
         # on Windows RSS == WorkingSetSize and VSM == PagefileUsage
         # fields of PROCESS_MEMORY_COUNTERS struct:
         # http://msdn.microsoft.com/en-us/library/windows/desktop/ms684877(v=vs.85).aspx
-        t = _psutil_mswindows.get_memory_info(self.pid)
+        t = _psutil_mswindows.get_process_memory_info(self.pid)
         return nt_meminfo(t[2], t[7])
 
     _nt_ext_mem = namedtuple('meminfo',
@@ -211,7 +211,8 @@ class Process(object):
 
     @wrap_exceptions
     def get_ext_memory_info(self):
-        return self._nt_ext_mem(*_psutil_mswindows.get_memory_info(self.pid))
+        ret = _psutil_mswindows.get_process_memory_info(self.pid)
+        return self._nt_ext_mem(*ret)
 
     nt_mmap_grouped = namedtuple('mmap', 'path rss')
     nt_mmap_ext = namedtuple('mmap', 'addr perms path rss')
