@@ -185,16 +185,22 @@ class Process(object):
         """Return process parent pid."""
         return _psutil_mswindows.get_process_ppid(self.pid)
 
+    def _get_raw_meminfo(self):
+        try:
+            return _psutil_mswindows.get_process_memory_info(self.pid)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno in ACCESS_DENIED_SET:
+                return _psutil_mswindows.get_process_memory_info_2(self.pid)
+            raise
+
     @wrap_exceptions
     def get_memory_info(self):
         """Returns a tuple or RSS/VMS memory usage in bytes."""
-        # special case for 0 (kernel processes) PID
-        if self.pid == 0:
-            return nt_meminfo(0, 0)
         # on Windows RSS == WorkingSetSize and VSM == PagefileUsage
         # fields of PROCESS_MEMORY_COUNTERS struct:
         # http://msdn.microsoft.com/en-us/library/windows/desktop/ms684877(v=vs.85).aspx
-        t = _psutil_mswindows.get_process_memory_info(self.pid)
+        t = self._get_raw_meminfo()
         return nt_meminfo(t[2], t[7])
 
     _nt_ext_mem = namedtuple('meminfo',
@@ -211,8 +217,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_ext_memory_info(self):
-        ret = _psutil_mswindows.get_process_memory_info(self.pid)
-        return self._nt_ext_mem(*ret)
+        return self._nt_ext_mem(*self._get_raw_meminfo())
 
     nt_mmap_grouped = namedtuple('mmap', 'path rss')
     nt_mmap_ext = namedtuple('mmap', 'addr perms path rss')
