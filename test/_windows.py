@@ -282,7 +282,7 @@ class TestDualProcessImplementation(unittest.TestCase):
         ('get_process_create_time',     0.5),
         ('get_process_num_handles',     1),  # 1 because impl #1 opens a handle
         ('get_process_io_counters',     0),
-        ('get_process_memory_info',     0),
+        ('get_process_memory_info',     1024),  # KB
     ]
 
     def test_compare_values(self):
@@ -314,6 +314,7 @@ class TestDualProcessImplementation(unittest.TestCase):
                         diff = abs(a - b)
                         assert diff <= tolerance, diff
 
+        failures = []
         for name, tolerance in self.fun_names:
             meth1 = wrap_exceptions(getattr(_psutil_mswindows, name))
             meth2 = wrap_exceptions(getattr(_psutil_mswindows, name + '_2'))
@@ -344,8 +345,12 @@ class TestDualProcessImplementation(unittest.TestCase):
                 except AssertionError:
                     err = sys.exc_info()[1]
                     trace = traceback.format_exc()
-                    self.fail('%s\npid=%s, method=%r, ret_1=%r, ret_2=%r'
-                              % (trace, p.pid, name, ret1, ret2))
+                    msg = '%s\npid=%s, method=%r, ret_1=%r, ret_2=%r' \
+                           % (trace, p.pid, name, ret1, ret2)
+                    failures.append(msg)
+                    break
+        if failures:
+            self.fail('\n\n'.join(failures))
 
     def test_zombies(self):
         # test that NPS is raised by the 2nd implementation in case a
