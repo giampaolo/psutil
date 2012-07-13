@@ -240,7 +240,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
                 if name.startswith('_') \
                 or name.startswith('set_') \
                 or name in ('terminate', 'kill', 'suspend', 'resume', 'nice',
-                            'send_signal', 'wait', 'get_children'):
+                            'send_signal', 'wait', 'get_children', 'as_dict'):
                     continue
                 else:
                     try:
@@ -282,6 +282,7 @@ class TestDualProcessImplementation(unittest.TestCase):
         ('get_process_create_time',     0.5),
         ('get_process_num_handles',     1),  # 1 because impl #1 opens a handle
         ('get_process_io_counters',     0),
+        ('get_process_memory_info',     0),
     ]
 
     def test_compare_values(self):
@@ -292,7 +293,7 @@ class TestDualProcessImplementation(unittest.TestCase):
         # Here we test that the two methods return the exact same value,
         # see:
         # http://code.google.com/p/psutil/issues/detail?id=304
-        def assert_gt_0(obj):
+        def assert_ge_0(obj):
             if isinstance(obj, tuple):
                 for value in obj:
                     assert value >= 0, value
@@ -335,9 +336,11 @@ class TestDualProcessImplementation(unittest.TestCase):
                 # compare values
                 try:
                     if ret1 is None:
-                        assert_gt_0(ret2)
+                        assert_ge_0(ret2)
                     else:
                         compare_with_tolerance(ret1, ret2, tolerance)
+                        assert_ge_0(ret1)
+                        assert_ge_0(ret2)
                 except AssertionError:
                     err = sys.exc_info()[1]
                     trace = traceback.format_exc()
@@ -355,6 +358,6 @@ class TestDualProcessImplementation(unittest.TestCase):
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()
-#    test_suite.addTest(unittest.makeSuite(WindowsSpecificTestCase))
+    test_suite.addTest(unittest.makeSuite(WindowsSpecificTestCase))
     test_suite.addTest(unittest.makeSuite(TestDualProcessImplementation))
     unittest.TextTestRunner(verbosity=2).run(test_suite)

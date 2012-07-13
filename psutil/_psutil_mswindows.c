@@ -601,7 +601,7 @@ get_process_memory_info(PyObject* self, PyObject* args)
 
 // py 2.4
 #if (PY_MAJOR_VERSION == 2) && (PY_MINOR_VERSION <= 4)
-    return Py_BuildValue("(IIIIIIIIII)",
+    return Py_BuildValue("(kIIIIIIIII)",
         cnt.PageFaultCount,
         (unsigned int)cnt.PeakWorkingSetSize,
         (unsigned int)cnt.WorkingSetSize,
@@ -614,7 +614,7 @@ get_process_memory_info(PyObject* self, PyObject* args)
         (unsigned int)private);
 #else
 // py >= 2.5
-    return Py_BuildValue("(nnnnnnnnnn)",
+    return Py_BuildValue("(knnnnnnnnn)",
         cnt.PageFaultCount,
         cnt.PeakWorkingSetSize,
         cnt.WorkingSetSize,
@@ -625,6 +625,53 @@ get_process_memory_info(PyObject* self, PyObject* args)
         cnt.PagefileUsage,
         cnt.PeakPagefileUsage,
         private);
+#endif
+}
+
+
+/*
+ * Alternative implementation of the one above but bypasses ACCESS DENIED.
+ */
+static PyObject*
+get_process_memory_info_2(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    ULONG m0;
+    SIZE_T m1, m2, m3, m4, m5, m6, m7, m8, m9;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (! get_process_info(pid, &process, &buffer)) {
+        return NULL;
+    }
+    m0 = process->PageFaultCount;
+    m1 = process->PeakWorkingSetSize;
+    m2 = process->WorkingSetSize;
+    m3 = process->QuotaPeakPagedPoolUsage;
+    m4 = process->QuotaPagedPoolUsage;
+    m5 = process->QuotaPeakNonPagedPoolUsage;
+    m6 = process->QuotaNonPagedPoolUsage;
+    m7 = process->PagefileUsage;
+    m8 = process->PeakPagefileUsage;
+#if (_WIN32_WINNT >= 0x0501)
+    m9 = process->PrivatePageCount;  // private me
+#else
+    m9 = 0;
+#endif
+    free(buffer);
+
+// py 2.4
+#if (PY_MAJOR_VERSION == 2) && (PY_MINOR_VERSION <= 4)
+    return Py_BuildValue("(kIIIIIIIII)",
+        (unsigned int)m0, (unsigned int)m1, (unsigned int)m2, (unsigned int)m3,
+        (unsigned int)m4, (unsigned int)m5, (unsigned int)m6, (unsigned int)m7,
+        (unsigned int)m8, (unsigned int)m9);
+#else
+    return Py_BuildValue("(knnnnnnnnn)",
+        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9);
 #endif
 }
 
@@ -2586,7 +2633,8 @@ PsutilMethods[] =
         "Alternative implementation"},
     {"get_process_io_counters_2", get_process_io_counters_2, METH_VARARGS,
         "Alternative implementation"},
-
+    {"get_process_memory_info_2", get_process_memory_info_2, METH_VARARGS,
+        "Alternative implementation"},
 
     // --- system-related functions
 

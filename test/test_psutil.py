@@ -1841,6 +1841,8 @@ def test_main():
         from _linux import LinuxSpecificTestCase as stc
     elif WINDOWS:
         from _windows import WindowsSpecificTestCase as stc
+        from _windows import TestDualProcessImplementation
+        tests.append(TestDualProcessImplementation)
     elif OSX:
         from _osx import OSXSpecificTestCase as stc
     elif BSD:

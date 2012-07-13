@@ -32,6 +32,8 @@ NEW FEATURES
     - get_cpu_percent()
     - get_num_handles()
     - get_io_counters()
+    - get_memory_info()
+    - get_memory_percent()
 
 BUGFIXES
 
