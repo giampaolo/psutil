@@ -30,6 +30,7 @@ __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
 BOOT_TIME = _psutil_mswindows.get_system_uptime()
 WAIT_TIMEOUT = 0x00000102 # 258 in decimal
+ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED])
 
 # process priority constants:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
@@ -141,7 +142,7 @@ def wrap_exceptions(callable):
             return callable(self, *args, **kwargs)
         except OSError:
             err = sys.exc_info()[1]
-            if err.errno in (errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED):
+            if err.errno in ACCESS_DENIED_SET:
                 raise AccessDenied(self.pid, self._process_name)
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._process_name)
@@ -157,7 +158,6 @@ class Process(object):
     def __init__(self, pid):
         self.pid = pid
         self._process_name = None
-
 
     @wrap_exceptions
     def get_process_name(self):
@@ -281,8 +281,15 @@ class Process(object):
 
     @wrap_exceptions
     def get_cpu_times(self):
-        user, system = _psutil_mswindows.get_process_cpu_times(self.pid)
-        return nt_cputimes(user, system)
+        try:
+            ret = _psutil_mswindows.get_process_cpu_times(self.pid)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno in ACCESS_DENIED_SET:
+                ret = _psutil_mswindows.get_process_cpu_times_2(self.pid)
+            else:
+                raise
+        return nt_cputimes(*ret)
 
     @wrap_exceptions
     def suspend_process(self):

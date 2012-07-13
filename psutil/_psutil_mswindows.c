@@ -240,11 +240,6 @@ get_process_cpu_times(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    // special case for PID 0
-    if (0 == pid){
-       return Py_BuildValue("(dd)", 0.0, 0.0);
-    }
-
     hProcess = handle_from_pid(pid);
     if (hProcess == NULL) {
         return NULL;
@@ -283,6 +278,32 @@ get_process_cpu_times(PyObject* self, PyObject* args)
         (double)(ftKernel.dwHighDateTime*429.4967296 + \
                  ftKernel.dwLowDateTime*1e-7)
         );
+}
+
+
+/*
+ * Alternative implementation of the one above but bypasses ACCESS DENIED.
+ */
+static PyObject*
+get_process_cpu_times_2(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    double user, kernel;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (! get_process_info(pid, &process, &buffer)) {
+        return NULL;
+    }
+    user = (double)process->UserTime.HighPart * 429.4967296 + \
+           (double)process->UserTime.LowPart * 1e-7;
+    kernel = (double)process->KernelTime.HighPart * 429.4967296 + \
+             (double)process->KernelTime.LowPart * 1e-7;
+    free(buffer);
+    return Py_BuildValue("(dd)", user, kernel);
 }
 
 
@@ -2472,6 +2493,10 @@ PsutilMethods[] =
         "Return the number of context switches performed by process."},
     {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
         "Return a list of process's memory mappings"},
+
+    // --- alternative pinfo interface
+    {"get_process_cpu_times_2", get_process_cpu_times_2, METH_VARARGS,
+        "Return tuple of user/kern time for the given PID"},
 
     // --- system-related functions
 
