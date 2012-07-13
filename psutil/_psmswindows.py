@@ -392,7 +392,13 @@ class Process(object):
 
     @wrap_exceptions
     def get_num_handles(self):
-        return _psutil_mswindows.get_process_num_handles(self.pid)
+        try:
+            return _psutil_mswindows.get_process_num_handles(self.pid)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno in ACCESS_DENIED_SET:
+                return _psutil_mswindows.get_process_num_handles_2(self.pid)
+            raise
 
     @wrap_exceptions
     def get_num_ctx_switches(self):

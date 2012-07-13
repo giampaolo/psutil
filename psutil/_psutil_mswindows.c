@@ -2360,6 +2360,29 @@ get_process_num_handles(PyObject* self, PyObject* args)
 
 
 /*
+ * Alternative implementation of the one above but bypasses ACCESS DENIED.
+ */
+static PyObject*
+get_process_num_handles_2(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    ULONG count;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (! get_process_info(pid, &process, &buffer)) {
+        return NULL;
+    }
+    count = process->HandleCount;
+    free(buffer);
+    return Py_BuildValue("k", count);
+}
+
+
+/*
  * Return the number of context switches executed by process.
  */
 static PyObject*
@@ -2530,9 +2553,11 @@ PsutilMethods[] =
 
     // --- alternative pinfo interface
     {"get_process_cpu_times_2", get_process_cpu_times_2, METH_VARARGS,
-        "Return tuple of user/kern time for the given PID"},
+        "Alternative implementation"},
     {"get_process_create_time_2", get_process_create_time_2, METH_VARARGS,
-        "Return tuple of user/kern time for the given PID"},
+        "Alternative implementation"},
+    {"get_process_num_handles_2", get_process_num_handles_2, METH_VARARGS,
+        "Alternative implementation"},
 
 
     // --- system-related functions

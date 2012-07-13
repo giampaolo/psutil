@@ -36,6 +36,8 @@ static PyObject* get_process_num_ctx_switches(PyObject* self, PyObject* args);
 static PyObject* get_process_memory_maps(PyObject* self, PyObject* args);
 
 static PyObject* get_process_cpu_times_2(PyObject* self, PyObject* args);
+static PyObject* get_process_create_time_2(PyObject* self, PyObject* args);
+static PyObject* get_process_num_handles_2(PyObject* self, PyObject* args);
 
 static PyObject* suspend_process(PyObject* self, PyObject* args);
 static PyObject* resume_process(PyObject* self, PyObject* args);

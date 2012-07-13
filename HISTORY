@@ -27,8 +27,10 @@ NEW FEATURES
  * Issue 303: (Windows) the Process methods below were always raising
    AccessDenied for any process not owned by current user. Now this is no longer
    true:
+    - create_time
     - get_cpu_times()
     - get_cpu_percent()
+    - get_num_handles()
 
 BUGFIXES
 

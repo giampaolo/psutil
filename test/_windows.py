@@ -18,10 +18,11 @@ import atexit
 import sys
 import subprocess
 import errno
+import traceback
 
 import psutil
 import _psutil_mswindows
-from psutil._compat import PY3, callable
+from psutil._compat import PY3, callable, long
 from test_psutil import reap_children, get_test_subprocess, wait_for_pid, warn
 try:
     import wmi
@@ -258,13 +259,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
                 self.fail('\n' + '\n'.join(failures))
 
 
-# Certain APIs on Windows have 2 internal implementations, one
-# based on documented Windows APIs, another one based
-# NtQuerySystemInformation() which gets called as fallback in case
-# the first fails because of limited permission error.
-# Here we test that the two methods return the exact same value, see:
-# http://code.google.com/p/psutil/issues/detail?id=304
-
 import _psutil_mswindows
 from psutil._psmswindows import ACCESS_DENIED_SET
 
@@ -282,63 +276,84 @@ def wrap_exceptions(callable):
     return wrapper
 
 class TestDualProcessImplementation(unittest.TestCase):
+    fun_names = [
+        # function name                 tolerance
+        ('get_process_cpu_times',       0.2),
+        ('get_process_create_time',     0.5),
+        ('get_process_num_handles',     1),  # 1 because impl #1 opens a handle
+    ]
 
-    def gather_pairs(self, meth_name):
-        meth1 = wrap_exceptions(getattr(_psutil_mswindows, meth_name))
-        meth2 = wrap_exceptions(getattr(_psutil_mswindows, meth_name + '_2'))
-        for p in psutil.process_iter():
-            #
-            try:
-                a = meth1(p.pid)
-            except psutil.NoSuchProcess:
-                continue
-            except psutil.AccessDenied:
-                a = None
-            #
-            try:
-                b = meth2(p.pid)
-            except psutil.NoSuchProcess:
-                # this is supposed to fail only in case of zombie process
-                # never for permission error
-                continue
-            yield (a, b)
-
-    def test_cpu_times(self):
-        for a, b in self.gather_pairs('get_process_cpu_times'):
-            if a is None:
-                assert b[0] >= 0, b
-                assert b[0] >= 0, b
+    def test_compare_values(self):
+        # Certain APIs on Windows have 2 internal implementations, one
+        # based on documented Windows APIs, another one based
+        # NtQuerySystemInformation() which gets called as fallback in
+        # case the first fails because of limited permission error.
+        # Here we test that the two methods return the exact same value,
+        # see:
+        # http://code.google.com/p/psutil/issues/detail?id=304
+        def assert_gt_0(obj):
+            if isinstance(obj, tuple):
+                for value in obj:
+                    assert value >= 0, value
+            elif isinstance(obj, (int, long, float)):
+                assert obj >= 0, obj
             else:
-                # TODO implement some tolerance
-                self.assertEqual(a, b)
+                assert 0  # case not handled which needs to be fixed
 
-    def test_create_time(self):
-        for a, b in self.gather_pairs('get_process_create_time'):
-            if a is None:
-                assert b >= 0
+        def compare_with_tolerance(ret1, ret2, tolerance):
+            if ret1 == ret2:
+                return
             else:
-                # TODO implement some tolerance
-                self.assertEqual(a, b)
+                if isinstance(ret2, (int, long, float)):
+                    diff = abs(ret1 - ret2)
+                    assert diff <= tolerance, diff
+                elif isinstance(ret2, tuple):
+                    for a, b in zip(ret1, ret2):
+                        diff = abs(a - b)
+                        assert diff <= tolerance, diff
 
-    # --- test NPS is raised by the 2nd implementation in case a
-    # process no longer exists
+        for name, tolerance in self.fun_names:
+            meth1 = wrap_exceptions(getattr(_psutil_mswindows, name))
+            meth2 = wrap_exceptions(getattr(_psutil_mswindows, name + '_2'))
+            for p in psutil.process_iter():
+                #
+                try:
+                    ret1 = meth1(p.pid)
+                except psutil.NoSuchProcess:
+                    continue
+                except psutil.AccessDenied:
+                    ret1 = None
+                #
+                try:
+                    ret2 = meth2(p.pid)
+                except psutil.NoSuchProcess:
+                    # this is supposed to fail only in case of zombie process
+                    # never for permission error
+                    continue
 
-    FAKE_ZOMBIE_PID = max(psutil.get_pid_list()) + 5000
+                # compare values
+                try:
+                    if ret1 is None:
+                        assert_gt_0(ret2)
+                    else:
+                        compare_with_tolerance(ret1, ret2, tolerance)
+                except AssertionError:
+                    err = sys.exc_info()[1]
+                    trace = traceback.format_exc()
+                    self.fail('%s\npid=%s, method=%r, ret_1=%r, ret_2=%r'
+                              % (trace, p.pid, name, ret1, ret2))
 
-    def test_cpu_times_zombie(self):
-        meth = wrap_exceptions(getattr(_psutil_mswindows,
-                                       'get_process_cpu_times_2'))
-        self.assertRaises(psutil.NoSuchProcess, meth, self.FAKE_ZOMBIE_PID)
-
-    def test_create_time_zombie(self):
-        meth = wrap_exceptions(getattr(_psutil_mswindows,
-                                       'get_process_create_time_2'))
-        self.assertRaises(psutil.NoSuchProcess, meth, self.FAKE_ZOMBIE_PID)
-
+    def test_zombies(self):
+        # test that NPS is raised by the 2nd implementation in case a
+        # process no longer exists
+        ZOMBIE_PID = max(psutil.get_pid_list()) + 5000
+        for name, _ in self.fun_names:
+            meth = wrap_exceptions(getattr(_psutil_mswindows, name))
+            self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.makeSuite(WindowsSpecificTestCase))
+#    test_suite.addTest(unittest.makeSuite(WindowsSpecificTestCase))
     test_suite.addTest(unittest.makeSuite(TestDualProcessImplementation))
     unittest.TextTestRunner(verbosity=2).run(test_suite)
