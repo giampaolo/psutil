@@ -350,8 +350,15 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_io_counters(self):
-        rc, wc, rb, wb =_psutil_mswindows.get_process_io_counters(self.pid)
-        return nt_io(rc, wc, rb, wb)
+        try:
+            ret = _psutil_mswindows.get_process_io_counters(self.pid)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno in ACCESS_DENIED_SET:
+                ret = _psutil_mswindows.get_process_io_counters_2(self.pid)
+            else:
+                raise
+        return nt_io(*ret)
 
     @wrap_exceptions
     def get_process_status(self):

@@ -281,6 +281,7 @@ class TestDualProcessImplementation(unittest.TestCase):
         ('get_process_cpu_times',       0.2),
         ('get_process_create_time',     0.5),
         ('get_process_num_handles',     1),  # 1 because impl #1 opens a handle
+        ('get_process_io_counters',     0),
     ]
 
     def test_compare_values(self):

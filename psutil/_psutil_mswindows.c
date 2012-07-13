@@ -1794,6 +1794,32 @@ get_process_io_counters(PyObject* self, PyObject* args)
 
 
 /*
+ * Alternative implementation of the one above but bypasses ACCESS DENIED.
+ */
+static PyObject*
+get_process_io_counters_2(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    LONGLONG rcount, wcount, rbytes, wbytes;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (! get_process_info(pid, &process, &buffer)) {
+        return NULL;
+    }
+    rcount = process->ReadOperationCount.QuadPart;
+    wcount = process->WriteOperationCount.QuadPart;
+    rbytes = process->ReadTransferCount.QuadPart;
+    wbytes = process->WriteTransferCount.QuadPart;
+    free(buffer);
+    return Py_BuildValue("KKKK", rcount, wcount, rbytes, wbytes);
+}
+
+
+/*
  * Return process CPU affinity as a bitmask
  */
 static PyObject*
@@ -2557,6 +2583,8 @@ PsutilMethods[] =
     {"get_process_create_time_2", get_process_create_time_2, METH_VARARGS,
         "Alternative implementation"},
     {"get_process_num_handles_2", get_process_num_handles_2, METH_VARARGS,
+        "Alternative implementation"},
+    {"get_process_io_counters_2", get_process_io_counters_2, METH_VARARGS,
         "Alternative implementation"},
 
 

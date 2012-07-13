@@ -31,6 +31,7 @@ NEW FEATURES
     - get_cpu_times()
     - get_cpu_percent()
     - get_num_handles()
+    - get_io_counters()
 
 BUGFIXES
 

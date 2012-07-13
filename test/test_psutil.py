@@ -1760,7 +1760,10 @@ class TestFetchAllProcesses(unittest.TestCase):
                     assert value >= 0, value
 
     def get_num_handles(self, ret):
-        assert ret > 0
+        if WINDOWS:
+            assert ret >= 0
+        else:
+            assert ret > 0
 
     def get_nice(self, ret):
         if POSIX:
