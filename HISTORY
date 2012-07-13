@@ -29,6 +29,8 @@ BUGFIXES
 
  * Issue 298: (OSX - BSD) memory leak in get_num_fds().
  * Issue 299: potential memory leak every time PyList_New(0) is used.
+ * Issue 303: (Windows) potential heap corruption in get_num_threads() and
+   get_status() Process methods.
 
 
 0.5.1 - 2012-06-29
