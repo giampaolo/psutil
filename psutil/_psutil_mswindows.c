@@ -297,7 +297,7 @@ get_process_create_time(PyObject* self, PyObject* args)
     long long   unix_time;
     DWORD       exitCode;
     HANDLE      hProcess;
-    BOOL WINAPI ret;
+    BOOL        ret;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
@@ -489,7 +489,6 @@ get_process_exe(PyObject* self, PyObject* args) {
     HANDLE hProcess;
     wchar_t exe[MAX_PATH];
     DWORD nSize = MAX_PATH;
-    DWORD WINAPI ret;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
