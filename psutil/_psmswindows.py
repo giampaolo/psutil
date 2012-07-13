@@ -264,7 +264,13 @@ class Process(object):
         # special case for kernel process PIDs; return system boot time
         if self.pid in (0, 4):
             return BOOT_TIME
-        return _psutil_mswindows.get_process_create_time(self.pid)
+        try:
+            return _psutil_mswindows.get_process_create_time(self.pid)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno in ACCESS_DENIED_SET:
+                return _psutil_mswindows.get_process_create_time_2(self.pid)
+            raise
 
     @wrap_exceptions
     def get_process_num_threads(self):

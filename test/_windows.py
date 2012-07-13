@@ -312,6 +312,14 @@ class TestDualProcessImplementation(unittest.TestCase):
                 # TODO implement some tolerance
                 self.assertEqual(a, b)
 
+    def test_create_time(self):
+        for a, b in self.gather_pairs('get_process_create_time'):
+            if a is None:
+                assert b >= 0
+            else:
+                # TODO implement some tolerance
+                self.assertEqual(a, b)
+
     # --- test NPS is raised by the 2nd implementation in case a
     # process no longer exists
 
@@ -321,6 +329,12 @@ class TestDualProcessImplementation(unittest.TestCase):
         meth = wrap_exceptions(getattr(_psutil_mswindows,
                                        'get_process_cpu_times_2'))
         self.assertRaises(psutil.NoSuchProcess, meth, self.FAKE_ZOMBIE_PID)
+
+    def test_create_time_zombie(self):
+        meth = wrap_exceptions(getattr(_psutil_mswindows,
+                                       'get_process_create_time_2'))
+        self.assertRaises(psutil.NoSuchProcess, meth, self.FAKE_ZOMBIE_PID)
+
 
 
 if __name__ == '__main__':

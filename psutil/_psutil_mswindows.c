@@ -325,9 +325,9 @@ get_process_create_time(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    // special case for PIDs 0 and 4
-    if ( (0 == pid) || (4 == pid) ){
-       return Py_BuildValue("d", 0.0);
+    // special case for PIDs 0 and 4, return BOOT_TIME
+    if (0 == pid || 4 == pid) {
+        return get_system_uptime(NULL, NULL);
     }
 
     hProcess = handle_from_pid(pid);
@@ -376,6 +376,40 @@ get_process_create_time(PyObject* self, PyObject* args)
     unix_time = ((LONGLONG)ftCreate.dwHighDateTime) << 32;
     unix_time += ftCreate.dwLowDateTime - 116444736000000000LL;
     unix_time /= 10000000;
+    return Py_BuildValue("d", (double)unix_time);
+}
+
+
+/*
+ * Alternative implementation of the one above but bypasses ACCESS DENIED.
+ */
+static PyObject*
+get_process_create_time_2(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    long long   unix_time;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (! get_process_info(pid, &process, &buffer)) {
+        return NULL;
+    }
+    // special case for PIDs 0 and 4, return BOOT_TIME
+    if (0 == pid || 4 == pid) {
+        return get_system_uptime(NULL, NULL);
+    }
+    /*
+    Convert the LARGE_INTEGER union to a Unix time.
+    It's the best I could find by googling and borrowing code here and there.
+    The time returned has a precision of 1 second.
+    */
+    unix_time = ((LONGLONG)process->CreateTime.HighPart) << 32;
+    unix_time += process->CreateTime.LowPart - 116444736000000000LL;
+    unix_time /= 10000000;
+    free(buffer);
     return Py_BuildValue("d", (double)unix_time);
 }
 
@@ -2497,6 +2531,9 @@ PsutilMethods[] =
     // --- alternative pinfo interface
     {"get_process_cpu_times_2", get_process_cpu_times_2, METH_VARARGS,
         "Return tuple of user/kern time for the given PID"},
+    {"get_process_create_time_2", get_process_create_time_2, METH_VARARGS,
+        "Return tuple of user/kern time for the given PID"},
+
 
     // --- system-related functions
 
