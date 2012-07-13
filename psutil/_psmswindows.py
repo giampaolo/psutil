@@ -14,6 +14,7 @@ import sys
 import platform
 
 import _psutil_mswindows
+from _psutil_mswindows import ERROR_ACCESS_DENIED
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
 from psutil._compat import PY3, xrange, long
@@ -28,7 +29,6 @@ __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
 
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
 BOOT_TIME = _psutil_mswindows.get_system_uptime()
-ERROR_ACCESS_DENIED = 5
 WAIT_TIMEOUT = 0x00000102 # 258 in decimal
 
 # process priority constants:

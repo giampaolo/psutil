@@ -2586,6 +2586,7 @@ struct module_state {
                                      REALTIME_PRIORITY_CLASS);
     // private constants
     PyModule_AddIntConstant(module, "INFINITE", INFINITE);
+    PyModule_AddIntConstant(module, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED);
     SetSeDebug();
 
 #if PY_MAJOR_VERSION >= 3
