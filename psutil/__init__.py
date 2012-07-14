@@ -213,11 +213,15 @@ class Process(object):
             # If it matches the first part of the cmdline we return that
             # one instead because it's usually more explicative.
             # Examples are "gnome-keyring-d" vs. "gnome-keyring-daemon".
-            cmdline = self.cmdline
-            if cmdline:
-                extended_name = os.path.basename(cmdline[0])
-                if extended_name.startswith(name):
-                    name = extended_name
+            try:
+                cmdline = self.cmdline
+            except AccessDenied:
+                pass
+            else:
+                if cmdline:
+                    extended_name = os.path.basename(cmdline[0])
+                    if extended_name.startswith(name):
+                        name = " " + extended_name
         # XXX - perhaps needs refactoring
         self._platform_impl._process_name = name
         return name

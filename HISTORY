@@ -16,6 +16,7 @@ NEW FEATURES
  * Issue 297: (OSX) the Process methods below were always raising AccessDenied
    for any process except the current one. Now this is no longer true. Also they
    are 2.5x faster.
+    - name
     - get_memory_info()
     - get_memory_percent()
     - get_cpu_times()
