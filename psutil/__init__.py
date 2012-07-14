@@ -221,7 +221,7 @@ class Process(object):
                 if cmdline:
                     extended_name = os.path.basename(cmdline[0])
                     if extended_name.startswith(name):
-                        name = " " + extended_name
+                        name = extended_name
         # XXX - perhaps needs refactoring
         self._platform_impl._process_name = name
         return name
