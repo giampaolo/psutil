@@ -35,6 +35,7 @@ NEW FEATURES
     - get_io_counters()
     - get_memory_info()
     - get_memory_percent()
+ * Issue 305: add examples/netstat.py script.
 
 BUGFIXES
 
