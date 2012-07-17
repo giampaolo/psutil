@@ -102,37 +102,44 @@ linux_ioprio_set(PyObject* self, PyObject* args)
 static PyObject*
 get_disk_partitions(PyObject* self, PyObject* args)
 {
-    FILE *file;
+    FILE *file = NULL;
     struct mntent *entry;
     PyObject* py_retlist = PyList_New(0);
-    PyObject* py_tuple;
+    PyObject* py_tuple = NULL;
 
     // MOUNTED constant comes from mntent.h and it's == '/etc/mtab'
     Py_BEGIN_ALLOW_THREADS
     file = setmntent(MOUNTED, "r");
     Py_END_ALLOW_THREADS
     if ((file == 0) || (file == NULL)) {
-        Py_DECREF(py_retlist);
-        return PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
     }
 
     while ((entry = getmntent(file))) {
         if (entry == NULL) {
-            Py_DECREF(py_retlist);
-            endmntent(file);
-            return PyErr_Format(PyExc_RuntimeError, "getmntent() failed");
+            PyErr_Format(PyExc_RuntimeError, "getmntent() failed");
+            goto error;
         }
         py_tuple = Py_BuildValue("(ssss)", entry->mnt_fsname,  // device
                                            entry->mnt_dir,     // mount point
                                            entry->mnt_type,    // fs type
                                            entry->mnt_opts);   // options
-
-        PyList_Append(py_retlist, py_tuple);
-        Py_XDECREF(py_tuple);
+        if (! py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
+        Py_DECREF(py_tuple);
     }
-
     endmntent(file);
     return py_retlist;
+
+error:
+    if (file != NULL)
+        endmntent(file);
+    Py_DECREF(py_retlist);
+    Py_XDECREF(py_tuple);
+    return NULL;
 }
 
 
@@ -218,12 +225,21 @@ get_system_users(PyObject* self, PyObject* args)
             (float)ut->ut_tv.tv_sec,  // tstamp
             user_proc                 // (bool) user process
         );
-        PyList_Append(ret_list, tuple);
+        if (! tuple)
+            goto error;
+        if (PyList_Append(ret_list, tuple))
+            goto error;
         Py_DECREF(tuple);
     }
     endutent();
-
     return ret_list;
+
+error:
+    Py_DECREF(ret_list);
+    Py_XDECREF(tuple);
+    Py_XDECREF(user_proc);
+    endutent();
+    return NULL;
 }
 
 
