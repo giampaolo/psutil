@@ -218,11 +218,14 @@ get_arg_list(long pid)
 
     if (NULL == argstr) {
         if (ESRCH == errno) {
-            Py_DECREF(retlist);
+            // XXX - why raise RuntimeError?
             PyErr_Format(PyExc_RuntimeError,
                     "getcmdargs() failed - no process found with pid %lu", pid);
-            return NULL;
+            goto error;
         }
+
+        // XXX - this probably needs to go away as it refers to an old
+        // assumption (get_process_info is gone long ago)
 
         // ignore other errors for now, since we don't want to bail on
         // get_process_info() if cmdline is the only thing we couldn't get.
@@ -237,7 +240,10 @@ get_arg_list(long pid)
     if (argsize > 0) {
         while(pos < argsize) {
             item = Py_BuildValue("s", &argstr[pos]);
-            PyList_Append(retlist, item);
+            if (!item)
+                goto error;
+            if (PyList_Append(retlist, item))
+                goto error;
             Py_DECREF(item);
             pos = pos + strlen(&argstr[pos]) + 1;
         }
@@ -245,6 +251,13 @@ get_arg_list(long pid)
 
     free(argstr);
     return retlist;
+
+error:
+    Py_DECREF(retlist);
+    Py_XDECREF(item);
+    if (argstr != NULL)
+        free(argstr);
+    return NULL;
 }
 
 
