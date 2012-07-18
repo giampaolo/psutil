@@ -1459,7 +1459,7 @@ get_process_connections(PyObject* self, PyObject* args)
 
     unsigned long pid;
     PyObject* connectionsList;
-    PyObject* connectionTuple;
+    PyObject* connectionTuple = NULL;
     PyObject *af_filter = NULL;
     PyObject *type_filter = NULL;
 
@@ -1480,7 +1480,7 @@ get_process_connections(PyObject* self, PyObject* args)
     typedef DWORD (WINAPI *_GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
                                                  UDP_TABLE_CLASS, ULONG);
     _GetExtendedUdpTable getExtendedUdpTable;
-    PVOID table;
+    PVOID table = NULL;
     DWORD tableSize;
     PMIB_TCPTABLE_OWNER_PID tcp4Table;
     PMIB_UDPTABLE_OWNER_PID udp4Table;
@@ -1488,9 +1488,9 @@ get_process_connections(PyObject* self, PyObject* args)
     PMIB_UDP6TABLE_OWNER_PID udp6Table;
     ULONG i;
     CHAR addressBufferLocal[65];
-    PyObject* addressTupleLocal;
+    PyObject* addressTupleLocal = NULL;
     CHAR addressBufferRemote[65];
-    PyObject* addressTupleRemote;
+    PyObject* addressTupleRemote = NULL;
 
     if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter)) {
         ConnDecrefPyObjs();
@@ -1543,6 +1543,10 @@ get_process_connections(PyObject* self, PyObject* args)
     if ((PySequence_Contains(af_filter, _AF_INET) == 1) &&
         (PySequence_Contains(type_filter, _SOCK_STREAM) == 1))
     {
+        table = NULL;
+        connectionTuple = NULL;
+        addressTupleLocal = NULL;
+        addressTupleRemote = NULL;
         tableSize = 0;
         getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET,
                             TCP_TABLE_OWNER_PID_ALL, 0);
@@ -1575,6 +1579,9 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleLocal = PyTuple_New(0);
                 }
 
+                if (addressTupleLocal == NULL)
+                    goto error;
+
                 // On Windows <= XP, remote addr is filled even if socket
                 // is in LISTEN mode in which case we just ignore it.
                 if ((tcp4Table->table[i].dwRemoteAddr != 0 ||
@@ -1593,6 +1600,9 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleRemote = PyTuple_New(0);
                 }
 
+                if (addressTupleRemote == NULL)
+                    goto error;
+
                 connectionTuple = Py_BuildValue("(iiiNNs)",
                     -1,
                     AF_INET,
@@ -1601,7 +1611,10 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleRemote,
                     state_to_string(tcp4Table->table[i].dwState)
                     );
-                PyList_Append(connectionsList, connectionTuple);
+                if (!connectionTuple)
+                    goto error;
+                if (PyList_Append(connectionsList, connectionTuple))
+                    goto error;
                 Py_DECREF(connectionTuple);
             }
         }
@@ -1614,6 +1627,10 @@ get_process_connections(PyObject* self, PyObject* args)
     if ((PySequence_Contains(af_filter, _AF_INET6) == 1) &&
         (PySequence_Contains(type_filter, _SOCK_STREAM) == 1))
     {
+        table = NULL;
+        connectionTuple = NULL;
+        addressTupleLocal = NULL;
+        addressTupleRemote = NULL;
         tableSize = 0;
         getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET6,
                             TCP_TABLE_OWNER_PID_ALL, 0);
@@ -1646,6 +1663,9 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleLocal = PyTuple_New(0);
                 }
 
+                if (addressTupleLocal == NULL)
+                    goto error;
+
                 // On Windows <= XP, remote addr is filled even if socket
                 // is in LISTEN mode in which case we just ignore it.
                 if ((memcmp(tcp6Table->table[i].ucRemoteAddr, null_address, 16) != 0 ||
@@ -1664,6 +1684,9 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleRemote = PyTuple_New(0);
                 }
 
+                if (addressTupleRemote == NULL)
+                    goto error;
+
                 connectionTuple = Py_BuildValue("(iiiNNs)",
                     -1,
                     AF_INET6,
@@ -1672,7 +1695,10 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleRemote,
                     state_to_string(tcp6Table->table[i].dwState)
                     );
-                PyList_Append(connectionsList, connectionTuple);
+                if (!connectionTuple)
+                    goto error;
+                if (PyList_Append(connectionsList, connectionTuple))
+                    goto error;
                 Py_DECREF(connectionTuple);
             }
         }
@@ -1685,6 +1711,10 @@ get_process_connections(PyObject* self, PyObject* args)
     if ((PySequence_Contains(af_filter, _AF_INET) == 1) &&
         (PySequence_Contains(type_filter, _SOCK_DGRAM) == 1))
     {
+        table = NULL;
+        connectionTuple = NULL;
+        addressTupleLocal = NULL;
+        addressTupleRemote = NULL;
         tableSize = 0;
         getExtendedUdpTable(NULL, &tableSize, FALSE, AF_INET,
                             UDP_TABLE_OWNER_PID, 0);
@@ -1717,6 +1747,9 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleLocal = PyTuple_New(0);
                 }
 
+                if (addressTupleLocal == NULL)
+                    goto error;
+
                 connectionTuple = Py_BuildValue("(iiiNNs)",
                     -1,
                     AF_INET,
@@ -1725,7 +1758,10 @@ get_process_connections(PyObject* self, PyObject* args)
                     PyTuple_New(0),
                     ""
                     );
-                PyList_Append(connectionsList, connectionTuple);
+                if (!connectionTuple)
+                    goto error;
+                if (PyList_Append(connectionsList, connectionTuple))
+                    goto error;
                 Py_DECREF(connectionTuple);
             }
         }
@@ -1738,6 +1774,10 @@ get_process_connections(PyObject* self, PyObject* args)
     if ((PySequence_Contains(af_filter, _AF_INET6) == 1) &&
         (PySequence_Contains(type_filter, _SOCK_DGRAM) == 1))
     {
+        table = NULL;
+        connectionTuple = NULL;
+        addressTupleLocal = NULL;
+        addressTupleRemote = NULL;
         tableSize = 0;
         getExtendedUdpTable(NULL, &tableSize, FALSE,
                             AF_INET6, UDP_TABLE_OWNER_PID, 0);
@@ -1770,6 +1810,9 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleLocal = PyTuple_New(0);
                 }
 
+                if (addressTupleLocal == NULL)
+                    goto error;
+
                 connectionTuple = Py_BuildValue("(iiiNNs)",
                     -1,
                     AF_INET6,
@@ -1778,7 +1821,10 @@ get_process_connections(PyObject* self, PyObject* args)
                     PyTuple_New(0),
                     ""
                     );
-                PyList_Append(connectionsList, connectionTuple);
+                if (!connectionTuple)
+                    goto error;
+                if (PyList_Append(connectionsList, connectionTuple))
+                    goto error;
                 Py_DECREF(connectionTuple);
             }
         }
@@ -1788,6 +1834,16 @@ get_process_connections(PyObject* self, PyObject* args)
 
     ConnDecrefPyObjs();
     return connectionsList;
+
+error:
+    ConnDecrefPyObjs();
+    Py_XDECREF(connectionTuple);
+    Py_XDECREF(addressTupleLocal);
+    Py_XDECREF(addressTupleRemote);
+    Py_DECREF(connectionsList);
+    if (table != NULL)
+        free(table);
+    return NULL;
 }
 
 
