@@ -200,20 +200,20 @@ class Process(object):
     @wrap_exceptions
     def get_cpu_times(self):
         """return a tuple containing process user/kernel time."""
-        user, system = _psutil_bsd.get_cpu_times(self.pid)
+        user, system = _psutil_bsd.get_process_cpu_times(self.pid)
         return nt_cputimes(user, system)
 
     @wrap_exceptions
     def get_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
-        rss, vms = _psutil_bsd.get_memory_info(self.pid)
+        rss, vms = _psutil_bsd.get_process_memory_info(self.pid)[:2]
         return nt_meminfo(rss, vms)
 
     _nt_ext_mem = namedtuple('meminfo', 'rss vms text data stack')
 
     @wrap_exceptions
     def get_ext_memory_info(self):
-        return self._nt_ext_mem(*_psutil_bsd.get_ext_memory_info(self.pid))
+        return self._nt_ext_mem(*_psutil_bsd.get_process_memory_info(self.pid))
 
     @wrap_exceptions
     def get_process_create_time(self):

@@ -465,7 +465,7 @@ error:
  * Return a Python tuple (user_time, kernel_time)
  */
 static PyObject*
-get_cpu_times(PyObject* self, PyObject* args)
+get_process_cpu_times(PyObject* self, PyObject* args)
 {
     long pid;
     double user_t, sys_t;
@@ -547,30 +547,11 @@ get_process_io_counters(PyObject* self, PyObject* args)
 }
 
 
-
-/*
- * Return the RSS and VMS as a Python tuple.
- */
-static PyObject*
-get_memory_info(PyObject* self, PyObject* args)
-{
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-    if (get_kinfo_proc(pid, &kp) == -1) {
-        return NULL;
-    }
-    return Py_BuildValue("(ll)", ptoa(kp.ki_rssize), (long)kp.ki_size);
-}
-
-
 /*
  * Return extended memory info for a process as a Python tuple.
  */
 static PyObject*
-get_ext_memory_info(PyObject* self, PyObject* args)
+get_process_memory_info(PyObject* self, PyObject* args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -1665,14 +1646,12 @@ PsutilMethods[] =
         "Return process real effective and saved user ids as a Python tuple"},
      {"get_process_gids", get_process_gids, METH_VARARGS,
         "Return process real effective and saved group ids as a Python tuple"},
-     {"get_cpu_times", get_cpu_times, METH_VARARGS,
+     {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
            "Return tuple of user/kern time for the given PID"},
      {"get_process_create_time", get_process_create_time, METH_VARARGS,
          "Return a float indicating the process create time expressed in "
          "seconds since the epoch"},
-     {"get_memory_info", get_memory_info, METH_VARARGS,
-         "Return a tuple of RSS/VMS memory information"},
-     {"get_ext_memory_info", get_ext_memory_info, METH_VARARGS,
+     {"get_process_memory_info", get_process_memory_info, METH_VARARGS,
          "Return extended memory info for a process as a Python tuple."},
      {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
          "Return number of threads used by process"},
