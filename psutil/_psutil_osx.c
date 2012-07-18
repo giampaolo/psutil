@@ -56,13 +56,12 @@ get_pid_list(PyObject* self, PyObject* args)
     kinfo_proc *orig_address = NULL;
     size_t num_processes;
     size_t idx;
-    PyObject *pid;
+    PyObject *pid = NULL;
     PyObject *retlist = PyList_New(0);
 
     if (get_proc_list(&proclist, &num_processes) != 0) {
-        Py_DECREF(retlist);
         PyErr_SetString(PyExc_RuntimeError, "failed to retrieve process list.");
-        return NULL;
+        goto error;
     }
 
     if (num_processes > 0) {
@@ -70,13 +69,23 @@ get_pid_list(PyObject* self, PyObject* args)
         orig_address = proclist;
         for (idx=0; idx < num_processes; idx++) {
             pid = Py_BuildValue("i", proclist->kp_proc.p_pid);
-            PyList_Append(retlist, pid);
-            Py_XDECREF(pid);
+            if (!pid)
+                goto error;
+            if (PyList_Append(retlist, pid))
+                goto error;
+            Py_DECREF(pid);
             proclist++;
         }
         free(orig_address);
     }
     return retlist;
+
+error:
+    Py_XDECREF(pid);
+    Py_DECREF(retlist);
+    if (orig_address != NULL)
+        free(orig_address);
+    return NULL;
 }
 
 
@@ -262,19 +271,21 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     PyObject* py_list = PyList_New(0);
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
-        Py_DECREF(py_list);
-        return NULL;
+        goto error;
     }
 
     err = task_for_pid(mach_task_self(), pid, &task);
 
     if (err != KERN_SUCCESS) {
-        Py_DECREF(py_list);
         if (! pid_exists(pid)) {
-            return NoSuchProcess();
+            NoSuchProcess();
         }
-        // pid exists, so return AccessDenied error since task_for_pid() failed
-        return AccessDenied();
+        else {
+            // pid exists, so return AccessDenied error since task_for_pid()
+            // failed
+            AccessDenied();
+        }
+        goto error;
     }
 
     while (1) {
@@ -357,13 +368,20 @@ get_process_memory_maps(PyObject* self, PyObject* args)
                 info.ref_count,                           // ref count
                 info.shadow_depth                         // shadow depth
             );
-
-            PyList_Append(py_list, py_tuple);
-            Py_XDECREF(py_tuple);
+            if (!py_tuple)
+                goto error;
+            if (PyList_Append(py_list, py_tuple))
+                goto error;
+            Py_DECREF(py_tuple);
         }
     }
 
     return py_list;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_list);
+    return NULL;
 }
 
 
@@ -373,7 +391,6 @@ get_process_memory_maps(PyObject* self, PyObject* args)
 static PyObject*
 get_num_cpus(PyObject* self, PyObject* args)
 {
-
     int mib[2];
     int ncpu;
     size_t len;
@@ -651,18 +668,17 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     processor_info_array_t info_array;
     mach_msg_type_number_t info_count;
     kern_return_t error;
-    processor_cpu_load_info_data_t* cpu_load_info;
+    processor_cpu_load_info_data_t* cpu_load_info = NULL;
     PyObject* py_retlist = PyList_New(0);
-    PyObject* py_cputime;
+    PyObject* py_cputime = NULL;
     int i, ret;
 
     error = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO,
                                 &cpu_count, &info_array, &info_count);
     if (error != KERN_SUCCESS) {
-        Py_DECREF(py_retlist);
         PyErr_Format(PyExc_RuntimeError, "Error in host_processor_info(): %s",
                      mach_error_string(error));
-        return NULL;
+        goto error;
     }
 
     cpu_load_info = (processor_cpu_load_info_data_t*) info_array;
@@ -674,8 +690,11 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
                (double)cpu_load_info[i].cpu_ticks[CPU_STATE_SYSTEM] / CLK_TCK,
                (double)cpu_load_info[i].cpu_ticks[CPU_STATE_IDLE] / CLK_TCK
               );
-        PyList_Append(py_retlist, py_cputime);
-        Py_XDECREF(py_cputime);
+        if (!py_cputime)
+            goto error;
+        if (PyList_Append(py_retlist, py_cputime))
+            goto error;
+        Py_DECREF(py_cputime);
     }
 
     ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
@@ -684,6 +703,18 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
         PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
     }
     return py_retlist;
+
+error:
+    Py_XDECREF(py_cputime);
+    Py_DECREF(py_retlist);
+    if (cpu_load_info != NULL) {
+        ret = vm_deallocate(mach_task_self(), (vm_address_t)info_array,
+                            info_count * sizeof(int));
+        if (ret != KERN_SUCCESS) {
+            PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
+        }
+    }
+    return NULL;
 }
 
 
@@ -721,18 +752,17 @@ get_disk_partitions(PyObject* self, PyObject* args)
     long len;
     uint64_t flags;
     char opts[400];
-    struct statfs *fs;
+    struct statfs *fs = NULL;
     PyObject* py_retlist = PyList_New(0);
-    PyObject* py_tuple;
+    PyObject* py_tuple = NULL;
 
     // get the number of mount points
     Py_BEGIN_ALLOW_THREADS
     num = getfsstat(NULL, 0, MNT_NOWAIT);
     Py_END_ALLOW_THREADS
     if (num == -1) {
-        Py_DECREF(py_retlist);
         PyErr_SetFromErrno(0);
-        return NULL;
+        goto error;
     }
 
     len = sizeof(*fs) * num;
@@ -742,10 +772,8 @@ get_disk_partitions(PyObject* self, PyObject* args)
     num = getfsstat(fs, len, MNT_NOWAIT);
     Py_END_ALLOW_THREADS
     if (num == -1) {
-        Py_DECREF(py_retlist);
-        free(fs);
         PyErr_SetFromErrno(0);
-        return NULL;
+        goto error;
     }
 
     for (i = 0; i < num; i++) {
@@ -808,12 +836,22 @@ get_disk_partitions(PyObject* self, PyObject* args)
                                            fs[i].f_mntonname,    // mount point
                                            fs[i].f_fstypename,   // fs type
                                            opts);                // options
-        PyList_Append(py_retlist, py_tuple);
-        Py_XDECREF(py_tuple);
+        if (!py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
+        Py_DECREF(py_tuple);
     }
 
     free(fs);
     return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    if (fs != NULL)
+        free(fs);
+    return NULL;
 }
 
 
@@ -847,7 +885,7 @@ get_process_threads(PyObject* self, PyObject* args)
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
     mach_port_t task;
     struct task_basic_info tasks_info;
-    thread_act_port_array_t thread_list;
+    thread_act_port_array_t thread_list = NULL;
     thread_info_data_t thinfo;
     thread_basic_info_t basic_info_th;
     mach_msg_type_number_t thread_count, thread_info_count;
@@ -907,8 +945,11 @@ get_process_threads(PyObject* self, PyObject* args)
                     (float)basic_info_th->user_time.microseconds / 1000000.0,
                     (float)basic_info_th->system_time.microseconds / 1000000.0
                   );
-        PyList_Append(retList, pyTuple);
-        Py_XDECREF(pyTuple);
+        if (!pyTuple)
+            goto error;
+        if (PyList_Append(retList, pyTuple))
+            goto error;
+        Py_DECREF(pyTuple);
     }
 
     ret = vm_deallocate(task, (vm_address_t)thread_list,
@@ -920,7 +961,15 @@ get_process_threads(PyObject* self, PyObject* args)
     return retList;
 
 error:
+    Py_XDECREF(pyTuple);
     Py_DECREF(retList);
+    if (thread_list != NULL) {
+        ret = vm_deallocate(task, (vm_address_t)thread_list,
+                            thread_count * sizeof(int));
+        if (ret != KERN_SUCCESS) {
+            PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
+        }
+    }
     return NULL;
 }
 
@@ -1002,7 +1051,10 @@ get_process_open_files(PyObject* self, PyObject* args)
             // --- construct python list
             tuple = Py_BuildValue("(si)", vi.pvip.vip_path,
                                           (int)fdp_pointer->proc_fd);
-            PyList_Append(retList, tuple);
+            if (!tuple)
+                goto error;
+            if (PyList_Append(retList, tuple))
+                goto error;
             Py_DECREF(tuple);
             // --- /construct python list
         }
@@ -1012,6 +1064,7 @@ get_process_open_files(PyObject* self, PyObject* args)
     return retList;
 
 error:
+    Py_XDECREF(tuple);
     Py_DECREF(retList);
     if (fds_pointer != NULL) {
         free(fds_pointer);
@@ -1079,7 +1132,7 @@ get_process_connections(PyObject* self, PyObject* args)
     int i;
     int nb;
 
-    struct proc_fdinfo *fds_pointer;
+    struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
     struct socket_fdinfo si;
 
@@ -1091,12 +1144,12 @@ get_process_connections(PyObject* self, PyObject* args)
     PyObject *type_filter = NULL;
 
     if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter)) {
-        return NULL;
+        goto error;
     }
 
     if (!PySequence_Check(af_filter) || !PySequence_Check(type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
-        return NULL;
+        goto error;
     }
 
     if (pid == 0) {
@@ -1113,7 +1166,6 @@ get_process_connections(PyObject* self, PyObject* args)
                                   pidinfo_result);
 
     if (pidinfo_result <= 0) {
-        free(fds_pointer);
         goto error;
     }
 
@@ -1123,7 +1175,6 @@ get_process_connections(PyObject* self, PyObject* args)
         errno = 0;
         fdp_pointer = &fds_pointer[i];
 
-        //
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET)
         {
             nb = proc_pidfdinfo(pid, fdp_pointer->proc_fd, PROC_PIDFDSOCKETINFO,
@@ -1136,19 +1187,18 @@ get_process_connections(PyObject* self, PyObject* args)
                     continue;
                 }
                 if (errno != 0) {
-                    free(fds_pointer);
-                    return PyErr_SetFromErrno(PyExc_OSError);
+                    PyErr_SetFromErrno(PyExc_OSError);
                 }
                 else {
-                    free(fds_pointer);
-                    return PyErr_Format(PyExc_RuntimeError,
-                                "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
+                    PyErr_Format(PyExc_RuntimeError,
+                                 "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
                 }
+                goto error;
             }
             if (nb < sizeof(si)) {
-                free(fds_pointer);
-                return PyErr_Format(PyExc_RuntimeError,
+                PyErr_Format(PyExc_RuntimeError,
                  "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed (buffer mismatch)");
+                goto error;
             }
             // --- /errors checking
 
@@ -1179,8 +1229,8 @@ get_process_connections(PyObject* self, PyObject* args)
             }
 
             if (errno != 0) {
-                free(fds_pointer);
-                return PyErr_SetFromErrno(PyExc_OSError);
+                PyErr_SetFromErrno(PyExc_OSError);
+                goto error;
             }
 
             if ((family == AF_INET) || (family == AF_INET6)) {
@@ -1205,8 +1255,8 @@ get_process_connections(PyObject* self, PyObject* args)
 
                 // check for inet_ntop failures
                 if (errno != 0) {
-                    free(fds_pointer);
-                    return PyErr_SetFromErrno(PyExc_OSError);
+                    PyErr_SetFromErrno(PyExc_OSError);
+                    goto error;
                 }
 
                 lport = ntohs(si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport);
@@ -1220,17 +1270,24 @@ get_process_connections(PyObject* self, PyObject* args)
                 }
 
                 laddr = Py_BuildValue("(si)", lip, lport);
+                if (!laddr)
+                    goto error;
                 if (rport != 0) {
                     raddr = Py_BuildValue("(si)", rip, rport);
                 }
                 else {
-                    raddr = PyTuple_New(0);
+                    raddr = Py_BuildValue("()");
                 }
+                if (!raddr)
+                    goto error;
 
                 // construct the python list
                 tuple = Py_BuildValue("(iiiNNs)", fd, family, type, laddr, raddr,
                                                   state);
-                PyList_Append(retList, tuple);
+                if (!tuple)
+                    goto error;
+                if (PyList_Append(retList, tuple))
+                    goto error;
                 Py_DECREF(tuple);
             }
             else if (family == AF_UNIX) {
@@ -1240,7 +1297,10 @@ get_process_connections(PyObject* self, PyObject* args)
                     si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path,
                     si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path,
                     "");
-                PyList_Append(retList, tuple);
+                if (!tuple)
+                    goto error;
+                if (PyList_Append(retList, tuple))
+                    goto error;
                 Py_DECREF(tuple);
             }
         }
@@ -1250,14 +1310,23 @@ get_process_connections(PyObject* self, PyObject* args)
     return retList;
 
 error:
+    Py_XDECREF(tuple);
+    Py_XDECREF(laddr);
+    Py_XDECREF(raddr);
+    // XXX is it correct to ignore these two? the last one causes segfault
+    //Py_XDECREF(af_filter);
+    //Py_XDECREF(type_filter);
+    Py_DECREF(retList);
+
+    if (fds_pointer != NULL) {
+        free(fds_pointer);
+    }
     if (errno != 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-
     else if (! pid_exists(pid) ) {
         return NoSuchProcess();
     }
-
     else {
         return PyErr_Format(PyExc_RuntimeError,
                             "proc_pidinfo(PROC_PIDLISTFDS) failed");
@@ -1306,7 +1375,7 @@ static PyObject*
 get_network_io_counters(PyObject* self, PyObject* args)
 {
     PyObject* py_retdict = PyDict_New();
-    PyObject* py_ifc_info;
+    PyObject* py_ifc_info = NULL;
 
     char *buf = NULL, *lim, *next;
     struct if_msghdr *ifm;
@@ -1321,20 +1390,15 @@ get_network_io_counters(PyObject* self, PyObject* args)
     mib[5] = 0;
 
     if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
-        Py_DECREF(py_retdict);
         PyErr_SetFromErrno(0);
-        return NULL;
+        goto error;
     }
 
     buf = malloc(len);
 
     if (sysctl(mib, 6, buf, &len, NULL, 0) < 0) {
-        if (buf) {
-            free(buf);
-        }
-        Py_DECREF(py_retdict);
         PyErr_SetFromErrno(0);
-        return NULL;
+        goto error;
     }
 
     lim = buf + len;
@@ -1356,8 +1420,11 @@ get_network_io_counters(PyObject* self, PyObject* args)
                                         if2m->ifm_data.ifi_ibytes,
                                         if2m->ifm_data.ifi_opackets,
                                         if2m->ifm_data.ifi_ipackets);
-            PyDict_SetItemString(py_retdict, ifc_name, py_ifc_info);
-            Py_XDECREF(py_ifc_info);
+            if (!py_ifc_info)
+                goto error;
+            if (PyDict_SetItemString(py_retdict, ifc_name, py_ifc_info))
+                goto error;
+            Py_DECREF(py_ifc_info);
         }
         else {
             continue;
@@ -1365,8 +1432,14 @@ get_network_io_counters(PyObject* self, PyObject* args)
     }
 
     free(buf);
-
     return py_retdict;
+
+error:
+    Py_XDECREF(py_ifc_info);
+    Py_DECREF(py_retdict);
+    if (buf != NULL)
+        free(buf);
+    return NULL;
 }
 
 
@@ -1377,7 +1450,7 @@ static PyObject*
 get_disk_io_counters(PyObject* self, PyObject* args)
 {
     PyObject* py_retdict = PyDict_New();
-    PyObject* py_disk_info;
+    PyObject* py_disk_info = NULL;
 
     CFDictionaryRef parent_dict;
     CFDictionaryRef props_dict;
@@ -1390,9 +1463,8 @@ get_disk_io_counters(PyObject* self, PyObject* args)
     if (IOServiceGetMatchingServices(kIOMasterPortDefault,
                                      IOServiceMatching(kIOMediaClass),
                                      &disk_list) != kIOReturnSuccess) {
-        Py_DECREF(py_retdict);
         PyErr_SetString(PyExc_RuntimeError, "Unable to get the list of disks.");
-        return NULL;
+        goto error;
     }
 
     /* Iterate over disks */
@@ -1403,9 +1475,8 @@ get_disk_io_counters(PyObject* self, PyObject* args)
 
         if (IORegistryEntryGetParentEntry(disk, kIOServicePlane, &parent) != kIOReturnSuccess) {
             PyErr_SetString(PyExc_RuntimeError, "Unable to get the disk's parent.");
-            Py_DECREF(py_retdict);
             IOObjectRelease(disk);
-            return NULL;
+            goto error;
         }
 
         if (IOObjectConformsTo(parent, "IOBlockStorageDriver")) {
@@ -1417,10 +1488,9 @@ get_disk_io_counters(PyObject* self, PyObject* args)
             {
                 PyErr_SetString(PyExc_RuntimeError,
                                 "Unable to get the parent's properties.");
-                Py_DECREF(py_retdict);
                 IOObjectRelease(disk);
                 IOObjectRelease(parent);
-                return NULL;
+                goto error;
             }
 
             if (IORegistryEntryCreateCFProperties(parent,
@@ -1430,9 +1500,10 @@ get_disk_io_counters(PyObject* self, PyObject* args)
             {
                 PyErr_SetString(PyExc_RuntimeError,
                                 "Unable to get the disk properties.");
-                Py_DECREF(py_retdict);
+                CFRelease(props_dict);
                 IOObjectRelease(disk);
-                return NULL;
+                IOObjectRelease(parent);
+                goto error;
             }
 
             const int kMaxDiskNameSize = 64;
@@ -1452,11 +1523,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
 
             if (stats_dict == NULL) {
                 PyErr_SetString(PyExc_RuntimeError, "Unable to get disk stats.");
-                Py_DECREF(py_retdict);
-                CFRelease(props_dict);
-                IOObjectRelease(disk);
-                IOObjectRelease(parent);
-                return NULL;
+                goto error;
             }
 
             CFNumberRef number;
@@ -1509,8 +1576,11 @@ get_disk_io_counters(PyObject* self, PyObject* args)
                                          reads, writes,
                                          read_bytes, write_bytes,
                                          read_time / 1000, write_time / 1000);
-            PyDict_SetItemString(py_retdict, disk_name, py_disk_info);
-            Py_XDECREF(py_disk_info);
+            if (!py_disk_info)
+                goto error;
+            if (PyDict_SetItemString(py_retdict, disk_name, py_disk_info))
+                goto error;
+            Py_DECREF(py_disk_info);
 
             CFRelease(parent_dict);
             IOObjectRelease(parent);
@@ -1522,6 +1592,11 @@ get_disk_io_counters(PyObject* self, PyObject* args)
     IOObjectRelease (disk_list);
 
     return py_retdict;
+
+error:
+    Py_XDECREF(py_disk_info);
+    Py_DECREF(py_retdict);
+    return NULL;
 }
 
 
@@ -1534,14 +1609,13 @@ get_system_users(PyObject* self, PyObject* args)
     PyObject *ret_list = PyList_New(0);
     PyObject *tuple = NULL;
     struct utmpx ut;
-    FILE *fp;
-
+    FILE *fp = NULL;
 
     fp = fopen(_PATH_UTMPX, "r");
     if (fp == NULL) {
-        Py_DECREF(ret_list);
         // man fopen says errno is set but it seems it's not (OSX 10.6)
-        return PyErr_SetFromErrnoWithFilename(PyExc_OSError, _PATH_UTMPX);
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, _PATH_UTMPX);
+        goto error;
     }
 
     while (fread(&ut, sizeof(ut), 1, fp) == 1) {
@@ -1559,12 +1633,22 @@ get_system_users(PyObject* self, PyObject* args)
             ut.ut_host,              // hostname
             (float)ut.ut_tv.tv_sec   // login time
         );
-        PyList_Append(ret_list, tuple);
+        if (!tuple)
+            goto error;
+        if (PyList_Append(ret_list, tuple))
+            goto error;
         Py_DECREF(tuple);
     }
 
     fclose(fp);
     return ret_list;
+
+error:
+    Py_XDECREF(tuple);
+    Py_DECREF(ret_list);
+    if (fp != NULL)
+        fclose(fp);
+    return NULL;
 }
 
 

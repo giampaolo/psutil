@@ -314,8 +314,8 @@ class TestModuleFunctionsLeaks(Base):
 
 def test_main():
     test_suite = unittest.TestSuite()
-    tests = [TestProcessObjectLeaks,
-             TestModuleFunctionsLeaks,
+    tests = [#TestProcessObjectLeaks,
+             #TestModuleFunctionsLeaks,
              TestProcessObjectLeaksZombie]
     for test in tests:
         test_suite.addTest(unittest.makeSuite(test))
