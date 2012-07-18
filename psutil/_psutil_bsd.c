@@ -1021,6 +1021,9 @@ get_process_connections(PyObject* self, PyObject* args)
         char lip[200], rip[200];
         char *state;
         int inseq;
+        tuple = NULL;
+        laddr = NULL;
+        raddr = NULL;
 
         if (ofiles[i] == NULL) {
             continue;
@@ -1164,8 +1167,6 @@ error:
     Py_XDECREF(tuple);
     Py_XDECREF(laddr);
     Py_XDECREF(raddr);
-    Py_XDECREF(af_filter);
-    Py_XDECREF(laddr);
     Py_DECREF(retList);
 
     if (kd != NULL) {
@@ -1276,6 +1277,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
         goto error;
     }
     for (i = 0; i < cnt; i++) {
+        pytuple = NULL;
         kve = &freep[i];
         addr[0] = '\0';
         perms[0] = '\0';
@@ -1391,6 +1393,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     }
 
     for (i = 0; i < num; i++) {
+        py_tuple = NULL;
         opts[0] = 0;
         flags = fs[i].f_flags;
 
@@ -1490,6 +1493,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
     lim = buf + len;
 
     for (next = buf; next < lim; ) {
+        py_ifc_info = NULL;
         ifm = (struct if_msghdr *)next;
         next += ifm->ifm_msglen;
 
@@ -1555,6 +1559,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
     }
 
     for (i = 0; i < stats.dinfo->numdevs; i++) {
+        py_disk_info = NULL;
         struct devstat current;
         char disk_name[128];
         current = stats.dinfo->devices[i];
