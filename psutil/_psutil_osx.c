@@ -415,7 +415,7 @@ get_num_cpus(PyObject* self, PyObject* args)
  * Return a Python tuple (user_time, kernel_time)
  */
 static PyObject*
-get_cpu_times(PyObject* self, PyObject* args)
+get_process_cpu_times(PyObject* self, PyObject* args)
 {
     long pid;
     struct proc_taskinfo pti;
@@ -451,29 +451,10 @@ get_process_create_time(PyObject* self, PyObject* args)
 
 
 /*
- * Return a tuple of RSS and VMS memory usage.
- */
-static PyObject*
-get_memory_info(PyObject* self, PyObject* args)
-{
-    long pid;
-    struct proc_taskinfo pti;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti))) {
-        return NULL;
-    }
-    return Py_BuildValue("(KK)", pti.pti_resident_size,
-                                 pti.pti_virtual_size);
-}
-
-
-/*
  * Return extended memory info about a process.
  */
 static PyObject*
-get_ext_memory_info(PyObject* self, PyObject* args)
+get_process_memory_info(PyObject* self, PyObject* args)
 {
     long pid;
     struct proc_taskinfo pti;
@@ -1679,15 +1660,13 @@ PsutilMethods[] =
         "Return process real user id as an integer"},
      {"get_process_gids", get_process_gids, METH_VARARGS,
         "Return process real group id as an integer"},
-     {"get_cpu_times", get_cpu_times, METH_VARARGS,
+     {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
            "Return tuple of user/kern time for the given PID"},
      {"get_process_create_time", get_process_create_time, METH_VARARGS,
          "Return a float indicating the process create time expressed in "
          "seconds since the epoch"},
-     {"get_memory_info", get_memory_info, METH_VARARGS,
-         "Return a tuple of RSS/VMS memory information"},
-     {"get_ext_memory_info", get_ext_memory_info, METH_VARARGS,
-         "Return extended memory info about a process"},
+     {"get_process_memory_info", get_process_memory_info, METH_VARARGS,
+         "Return memory information about a process"},
      {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
          "Return number of threads used by process"},
      {"get_process_status", get_process_status, METH_VARARGS,

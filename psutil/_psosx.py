@@ -179,7 +179,7 @@ class Process(object):
     @wrap_exceptions
     def get_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
-        rss, vms = _psutil_osx.get_memory_info(self.pid)
+        rss, vms = _psutil_osx.get_process_memory_info(self.pid)[:2]
         return nt_meminfo(rss, vms)
 
     _nt_ext_mem = namedtuple('meminfo', 'rss vms pfaults pageins')
@@ -187,14 +187,14 @@ class Process(object):
     @wrap_exceptions
     def get_ext_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
-        rss, vms, pfaults, pageins = _psutil_osx.get_ext_memory_info(self.pid)
+        rss, vms, pfaults, pageins = _psutil_osx.get_process_memory_info(self.pid)
         return self._nt_ext_mem(rss, vms,
                                 pfaults * _PAGESIZE,
                                 pageins * _PAGESIZE)
 
     @wrap_exceptions
     def get_cpu_times(self):
-        user, system = _psutil_osx.get_cpu_times(self.pid)
+        user, system = _psutil_osx.get_process_cpu_times(self.pid)
         return nt_cputimes(user, system)
 
     @wrap_exceptions

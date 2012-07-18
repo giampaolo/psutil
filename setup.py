@@ -13,7 +13,7 @@ try:
 except ImportError:
     from distutils.core import setup, Extension
 
-__ver__ = "0.5.1"
+__ver__ = "0.6.0"
 README = os.path.abspath(os.path.join(os.path.dirname(__file__), 'README'))
 
 # POSIX
