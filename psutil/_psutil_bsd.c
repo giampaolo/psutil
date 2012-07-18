@@ -119,7 +119,7 @@ get_pid_list(PyObject* self, PyObject* args)
                 goto error;
             if (PyList_Append(retlist, pid))
                 goto error;
-            Py_XDECREF(pid);
+            Py_DECREF(pid);
             proclist++;
         }
         free(orig_address);
@@ -128,8 +128,8 @@ get_pid_list(PyObject* self, PyObject* args)
     return retlist;
 
 error:
-    Py_DECREF(retlist);
     Py_XDECREF(pid);
+    Py_DECREF(retlist);
     if (orig_address != NULL) {
         free(orig_address);
     }
@@ -452,8 +452,8 @@ get_process_threads(PyObject* self, PyObject* args)
     return retList;
 
 error:
-    Py_DECREF(retList);
     Py_XDECREF(pyTuple);
+    Py_DECREF(retList);
     if (kip != NULL) {
         free(kip);
     }
@@ -787,8 +787,8 @@ get_process_open_files(PyObject* self, PyObject* args)
     return retList;
 
 error:
-    Py_DECREF(retList);
     Py_XDECREF(tuple);
+    Py_DECREF(retList);
     if (freep != NULL)
         free(freep);
     return NULL;
@@ -1161,12 +1161,12 @@ get_process_connections(PyObject* self, PyObject* args)
     return retList;
 
 error:
-    Py_DECREF(retList);
     Py_XDECREF(tuple);
     Py_XDECREF(laddr);
     Py_XDECREF(raddr);
     Py_XDECREF(af_filter);
     Py_XDECREF(laddr);
+    Py_DECREF(retList);
 
     if (kd != NULL) {
         kvm_close(kd);
@@ -1236,8 +1236,8 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     return py_retlist;
 
 error:
-    Py_DECREF(py_retlist);
     Py_XDECREF(py_cputime);
+    Py_DECREF(py_retlist);
     return NULL;
 }
 
@@ -1345,8 +1345,8 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     return retlist;
 
 error:
-    Py_DECREF(retlist);
     Py_XDECREF(pytuple);
+    Py_DECREF(retlist);
     if (freep != NULL)
         free(freep);
     return NULL;
@@ -1445,8 +1445,8 @@ get_disk_partitions(PyObject* self, PyObject* args)
     return py_retlist;
 
 error:
-    Py_DECREF(py_retlist);
     Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
     if (fs != NULL)
         free(fs);
     return NULL;
@@ -1521,8 +1521,8 @@ get_network_io_counters(PyObject* self, PyObject* args)
     return py_retdict;
 
 error:
-    Py_DECREF(py_retdict);
     Py_XDECREF(py_ifc_info);
+    Py_DECREF(py_retdict);
     if (buf != NULL)
         free(buf);
     return NULL;
@@ -1586,8 +1586,8 @@ get_disk_io_counters(PyObject* self, PyObject* args)
     return py_retdict;
 
 error:
-    Py_DECREF(py_retdict);
     Py_XDECREF(py_disk_info);
+    Py_DECREF(py_retdict);
     if (stats.dinfo != NULL)
         free(stats.dinfo);
     return NULL;
@@ -1632,8 +1632,8 @@ get_system_users(PyObject* self, PyObject* args)
     return ret_list;
 
 error:
-    Py_DECREF(ret_list);
     Py_XDECREF(tuple);
+    Py_DECREF(ret_list);
     return NULL;
 }
 

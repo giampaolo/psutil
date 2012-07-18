@@ -137,8 +137,8 @@ get_disk_partitions(PyObject* self, PyObject* args)
 error:
     if (file != NULL)
         endmntent(file);
-    Py_DECREF(py_retlist);
     Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
     return NULL;
 }
 
@@ -235,9 +235,9 @@ get_system_users(PyObject* self, PyObject* args)
     return ret_list;
 
 error:
-    Py_DECREF(ret_list);
     Py_XDECREF(tuple);
     Py_XDECREF(user_proc);
+    Py_DECREF(ret_list);
     endutent();
     return NULL;
 }
