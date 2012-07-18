@@ -289,6 +289,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     }
 
     while (1) {
+        py_tuple = NULL;
         struct vm_region_submap_info_64 info;
         mach_msg_type_number_t count = VM_REGION_SUBMAP_INFO_COUNT_64;
 
@@ -931,6 +932,7 @@ get_process_threads(PyObject* self, PyObject* args)
     }
 
     for (j = 0; j < thread_count; j++) {
+        pyTuple = NULL;
         thread_info_count = THREAD_INFO_MAX;
         kr = thread_info(thread_list[j], THREAD_BASIC_INFO,
                          (thread_info_t)thinfo, &thread_info_count);
@@ -1019,6 +1021,7 @@ get_process_open_files(PyObject* self, PyObject* args)
     iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
 
     for (i = 0; i < iterations; i++) {
+        tuple = NULL;
         fdp_pointer = &fds_pointer[i];
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE)
@@ -1172,6 +1175,9 @@ get_process_connections(PyObject* self, PyObject* args)
     iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
 
     for (i = 0; i < iterations; i++) {
+        tuple = NULL;
+        laddr = NULL;
+        raddr = NULL;
         errno = 0;
         fdp_pointer = &fds_pointer[i];
 
@@ -1313,9 +1319,6 @@ error:
     Py_XDECREF(tuple);
     Py_XDECREF(laddr);
     Py_XDECREF(raddr);
-    // XXX is it correct to ignore these two? the last one causes segfault
-    //Py_XDECREF(af_filter);
-    //Py_XDECREF(type_filter);
     Py_DECREF(retList);
 
     if (fds_pointer != NULL) {
@@ -1408,6 +1411,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
         next += ifm->ifm_msglen;
 
         if (ifm->ifm_type == RTM_IFINFO2) {
+            py_ifc_info = NULL;
             struct if_msghdr2 *if2m = (struct if_msghdr2 *)ifm;
             struct sockaddr_dl *sdl = (struct sockaddr_dl *)(if2m + 1);
             char ifc_name[32];
@@ -1469,6 +1473,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
 
     /* Iterate over disks */
     while ((disk = IOIteratorNext(disk_list)) != 0) {
+        py_disk_info = NULL;
         parent_dict = NULL;
         props_dict = NULL;
         stats_dict = NULL;

@@ -214,6 +214,8 @@ get_system_users(PyObject* self, PyObject* args)
 
     setutent();
     while (NULL != (ut = getutent())) {
+        tuple = NULL;
+        user_proc = NULL;
         if (ut->ut_type == USER_PROCESS)
             user_proc = Py_True;
         else
