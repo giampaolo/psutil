@@ -314,9 +314,9 @@ class TestModuleFunctionsLeaks(Base):
 
 def test_main():
     test_suite = unittest.TestSuite()
-    tests = [#TestProcessObjectLeaks,
-             #TestModuleFunctionsLeaks,
-             TestProcessObjectLeaksZombie]
+    tests = [TestProcessObjectLeaksZombie,
+             TestProcessObjectLeaks,
+             TestModuleFunctionsLeaks,]
     for test in tests:
         test_suite.addTest(unittest.makeSuite(test))
     unittest.TextTestRunner(verbosity=2).run(test_suite)

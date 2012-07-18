@@ -167,10 +167,12 @@ get_open_files(long pid, HANDLE processHandle)
     {
         SYSTEM_HANDLE            handle = handleInfo->Handles[i];
         HANDLE                   dupHandle = NULL;
-        POBJECT_TYPE_INFORMATION objectTypeInfo;
+        POBJECT_TYPE_INFORMATION objectTypeInfo = NULL;
         PVOID                    objectNameInfo;
         UNICODE_STRING           objectName;
         ULONG                    returnLength;
+        fileFromWchar = NULL;
+        arg = NULL;
 
         /* Check if this handle belongs to the PID the user specified. */
         if (handle.ProcessId != pid)
@@ -265,13 +267,19 @@ get_open_files(long pid, HANDLE processHandle)
                 //printf("%.*S\n", objectName.Length / 2, objectName.Buffer);
                 fileFromWchar = PyUnicode_FromWideChar(objectName.Buffer,
                                                        fileNameLength);
+                if (fileFromWchar == NULL)
+                    goto error_py_fun;
                 #if PY_MAJOR_VERSION >= 3
                     arg = Py_BuildValue("N", PyUnicode_AsUTF8String(fileFromWchar));
                 #else
                     arg = Py_BuildValue("N", PyUnicode_FromObject(fileFromWchar));
                 #endif
+                if (!arg)
+                    goto error_py_fun;
                 Py_XDECREF(fileFromWchar);
-                PyList_Append(filesList, arg);
+                fileFromWchar = NULL;
+                if (PyList_Append(filesList, arg))
+                    goto error_py_fun;
                 Py_XDECREF(arg);
             }
             /*
@@ -305,4 +313,10 @@ get_open_files(long pid, HANDLE processHandle)
     free(handleInfo);
     CloseHandle(processHandle);
     return filesList;
+
+error_py_fun:
+    Py_XDECREF(arg);
+    Py_XDECREF(fileFromWchar);
+    Py_DECREF(filesList);
+    return NULL;
 }

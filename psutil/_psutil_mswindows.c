@@ -106,20 +106,28 @@ get_pid_list(PyObject* self, PyObject* args)
 
     proclist = get_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
-        Py_DECREF(retlist);
-        return NULL;
+        goto error;
     }
 
     for (i = 0; i < numberOfReturnedPIDs; i++) {
         pid = Py_BuildValue("I", proclist[i]);
-        PyList_Append(retlist, pid);
-        Py_XDECREF(pid);
+        if (!pid)
+            goto error;
+        if (PyList_Append(retlist, pid))
+            goto error;
+        Py_DECREF(pid);
     }
 
     // free C array allocated for PIDs
     free(proclist);
-
     return retlist;
+
+error:
+    Py_XDECREF(pid);
+    Py_DECREF(retlist);
+    if (proclist != NULL)
+        free(proclist);
+    return NULL;
 }
 
 
@@ -522,6 +530,8 @@ get_process_cmdline(PyObject* self, PyObject* args) {
         return NULL;
     }
 
+    // XXX the assumptio below probably needs to go away
+
     // May fail any of several ReadProcessMemory calls etc. and not indicate
     // a real problem so we ignore any errors and just live without commandline
     arglist = get_arg_list(pid);
@@ -754,6 +764,7 @@ get_system_cpu_times(PyObject* self, PyObject* args)
                     // computes system global times summing each processor value
                     idle = user = kernel = 0;
                     for (i=0; i<si.dwNumberOfProcessors; i++) {
+                        arg = NULL;
                         user = (float)((HI_T * sppi[i].UserTime.HighPart) + \
                                        (LO_T * sppi[i].UserTime.LowPart));
                         idle = (float)((HI_T * sppi[i].IdleTime.HighPart) + \
@@ -766,8 +777,11 @@ get_system_cpu_times(PyObject* self, PyObject* args)
                         arg = Py_BuildValue("(ddd)", user,
                                                      kernel - idle,
                                                      idle);
-                        PyList_Append(retlist, arg);
-                        Py_XDECREF(arg);
+                        if (!arg)
+                            goto error;
+                        if (PyList_Append(retlist, arg))
+                            goto error;
+                        Py_DECREF(arg);
                     }
                     free(sppi);
                     FreeLibrary(hNtDll);
@@ -777,14 +791,17 @@ get_system_cpu_times(PyObject* self, PyObject* args)
             }  // END malloc SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
         }  // END GetProcAddress
     }  // END LoadLibrary
+    goto error;
 
+error:
+    Py_XDECREF(arg);
+    Py_DECREF(retlist);
     if (sppi) {
         free(sppi);
     }
     if (hNtDll) {
         FreeLibrary(hNtDll);
     }
-    Py_DECREF(retlist);
     PyErr_SetFromWindowsErr(0);
     return NULL;
 }
@@ -798,11 +815,11 @@ static PyObject*
 get_process_cwd(PyObject* self, PyObject* args)
 {
     long pid;
-    HANDLE processHandle;
+    HANDLE processHandle = NULL;
     PVOID pebAddress;
     PVOID rtlUserProcParamsAddress;
     UNICODE_STRING currentDirectory;
-    WCHAR *currentDirectoryContent;
+    WCHAR *currentDirectoryContent = NULL;
     PyObject *returnPyObj = NULL;
     PyObject *cwd_from_wchar = NULL;
     PyObject *cwd = NULL;
@@ -867,16 +884,14 @@ get_process_cwd(PyObject* self, PyObject* args)
     if (!ReadProcessMemory(processHandle, currentDirectory.Buffer,
         currentDirectoryContent, currentDirectory.Length, NULL))
     {
-        CloseHandle(processHandle);
-        free(currentDirectoryContent);
-
         if (GetLastError() == ERROR_PARTIAL_COPY) {
             // this occurs quite often with system processes
-            return AccessDenied();
+            AccessDenied();
         }
         else {
-            return PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromWindowsErr(0);
         }
+        goto error;
     }
 
     // null-terminate the string to prevent wcslen from returning
@@ -887,21 +902,38 @@ get_process_cwd(PyObject* self, PyObject* args)
     // convert wchar array to a Python unicode string, and then to UTF8
     cwd_from_wchar = PyUnicode_FromWideChar(currentDirectoryContent,
                                             wcslen(currentDirectoryContent));
+    if (cwd_from_wchar == NULL)
+        goto error;
 
     #if PY_MAJOR_VERSION >= 3
         cwd = PyUnicode_FromObject(cwd_from_wchar);
     #else
         cwd = PyUnicode_AsUTF8String(cwd_from_wchar);
     #endif
+    if (cwd == NULL)
+        goto error;
 
     // decrement the reference count on our temp unicode str to avoid
     // mem leak
-    Py_XDECREF(cwd_from_wchar);
     returnPyObj = Py_BuildValue("N", cwd);
+    if (!returnPyObj)
+        goto error;
+
+    Py_DECREF(cwd_from_wchar);
 
     CloseHandle(processHandle);
     free(currentDirectoryContent);
     return returnPyObj;
+
+error:
+    Py_XDECREF(cwd_from_wchar);
+    Py_XDECREF(cwd);
+    Py_XDECREF(returnPyObj);
+    if (currentDirectoryContent != NULL)
+        free(currentDirectoryContent);
+    if (processHandle != NULL)
+        CloseHandle(processHandle);
+    return NULL;
 }
 
 
@@ -1037,6 +1069,7 @@ get_process_threads(PyObject* self, PyObject* args)
     PyObject* retList = PyList_New(0);
     PyObject* pyTuple = NULL;
     HANDLE hThreadSnap = NULL;
+    HANDLE hThread;
     THREADENTRY32 te32 = {0};
     long pid;
     int pid_return;
@@ -1082,8 +1115,10 @@ get_process_threads(PyObject* self, PyObject* args)
     {
         if (te32.th32OwnerProcessID == pid)
         {
-            HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION,
-                                        FALSE, te32.th32ThreadID);
+            pyTuple = NULL;
+            hThread = NULL;
+            hThread = OpenThread(THREAD_QUERY_INFORMATION,
+                                  FALSE, te32.th32ThreadID);
             if (hThread == NULL) {
                 // thread has disappeared on us
                 continue;
@@ -1092,7 +1127,6 @@ get_process_threads(PyObject* self, PyObject* args)
             rc = GetThreadTimes(hThread, &ftDummy, &ftDummy, &ftKernel, &ftUser);
             if (rc == 0) {
                 PyErr_SetFromWindowsErr(0);
-                CloseHandle(hThread);
                 goto error;
             }
 
@@ -1111,10 +1145,12 @@ get_process_threads(PyObject* self, PyObject* args)
                             (double)(ftUser.dwHighDateTime*429.4967296 + \
                                      ftUser.dwLowDateTime*1e-7),
                             (double)(ftKernel.dwHighDateTime*429.4967296 + \
-                                     ftKernel.dwLowDateTime*1e-7)
-                      );
-            PyList_Append(retList, pyTuple);
-            Py_XDECREF(pyTuple);
+                                     ftKernel.dwLowDateTime*1e-7));
+            if (!pyTuple)
+                goto error;
+            if (PyList_Append(retList, pyTuple))
+                goto error;
+            Py_DECREF(pyTuple);
 
             CloseHandle(hThread);
         }
@@ -1124,7 +1160,10 @@ get_process_threads(PyObject* self, PyObject* args)
     return retList;
 
 error:
+    Py_XDECREF(pyTuple);
     Py_DECREF(retList);
+    if (hThread != NULL)
+        CloseHandle(hThread);
     if (hThreadSnap != NULL) {
         CloseHandle(hThreadSnap);
     }
@@ -1994,7 +2033,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
     int attempts = 0;
     int outBufLen = 15000;
     DWORD dwRetVal = 0;
-    MIB_IFROW *pIfRow;
+    MIB_IFROW *pIfRow = NULL;
     ULONG flags = 0;
     ULONG family = AF_UNSPEC;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
@@ -2003,10 +2042,9 @@ get_network_io_counters(PyObject* self, PyObject* args)
     do {
         pAddresses = (IP_ADAPTER_ADDRESSES *) malloc(outBufLen);
         if (pAddresses == NULL) {
-            Py_DECREF(py_retdict);
             PyErr_SetString(PyExc_RuntimeError,
                 "memory allocation failed for IP_ADAPTER_ADDRESSES struct.");
-            return NULL;
+            goto error;
         }
 
         dwRetVal = GetAdaptersAddresses(family, flags, NULL, pAddresses,
@@ -2023,35 +2061,28 @@ get_network_io_counters(PyObject* self, PyObject* args)
     } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (attempts < 3));
 
     if (dwRetVal != NO_ERROR) {
-        Py_DECREF(py_retdict);
         PyErr_SetString(PyExc_RuntimeError,  "GetAdaptersAddresses() failed.");
-        return NULL;
+        goto error;
     }
 
     pCurrAddresses = pAddresses;
     while (pCurrAddresses) {
+        py_pre_nic_name = NULL;
+        py_nic_name = NULL;
+        py_nic_info = NULL;
         pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
 
         if (pIfRow == NULL) {
-            Py_DECREF(py_retdict);
-            Py_XDECREF(py_pre_nic_name);
-            Py_XDECREF(py_nic_name);
-            Py_XDECREF(py_nic_info);
             PyErr_SetString(PyExc_RuntimeError,
                 "memory allocation failed for MIB_IFROW struct.");
-            return NULL;
+            goto error;
         }
 
         pIfRow->dwIndex = pCurrAddresses->IfIndex;
         dwRetVal = GetIfEntry(pIfRow);
         if (dwRetVal != NO_ERROR) {
-            Py_DECREF(py_retdict);
-            Py_XDECREF(py_pre_nic_name);
-            Py_XDECREF(py_nic_name);
-            Py_XDECREF(py_nic_info);
-            PyErr_SetString(PyExc_RuntimeError,
-                "GetIfEntry() failed.");
-            return NULL;
+            PyErr_SetString(PyExc_RuntimeError, "GetIfEntry() failed.");
+            goto error;
         }
 
         py_nic_info = Py_BuildValue("(IIII)",
@@ -2059,12 +2090,19 @@ get_network_io_counters(PyObject* self, PyObject* args)
                                     pIfRow->dwInOctets,
                                     pIfRow->dwOutUcastPkts,
                                     pIfRow->dwInUcastPkts);
+        if (!py_nic_info)
+            goto error;
 
         py_pre_nic_name = PyUnicode_FromWideChar(
                                 pCurrAddresses->FriendlyName,
                                 wcslen(pCurrAddresses->FriendlyName));
+        if (py_pre_nic_name == NULL)
+            goto error;
         py_nic_name = PyUnicode_FromObject(py_pre_nic_name);
-        PyDict_SetItem(py_retdict, py_nic_name, py_nic_info);
+        if (py_nic_name == NULL)
+            goto error;
+        if (PyDict_SetItem(py_retdict, py_nic_name, py_nic_info))
+            goto error;
         Py_XDECREF(py_pre_nic_name);
         Py_XDECREF(py_nic_name);
         Py_XDECREF(py_nic_info);
@@ -2074,8 +2112,18 @@ get_network_io_counters(PyObject* self, PyObject* args)
     }
 
     free(pAddresses);
-
     return py_retdict;
+
+error:
+    Py_XDECREF(py_pre_nic_name);
+    Py_XDECREF(py_nic_name);
+    Py_XDECREF(py_nic_info);
+    Py_DECREF(py_retdict);
+    if (pAddresses != NULL)
+        free(pAddresses);
+    if (pIfRow != NULL)
+        free(pIfRow);
+    return NULL;
 }
 
 
@@ -2086,7 +2134,7 @@ static PyObject*
 get_disk_io_counters(PyObject* self, PyObject* args)
 {
     PyObject* py_retdict = PyDict_New();
-    PyObject* py_disk_info;
+    PyObject* py_disk_info = NULL;
 
     DISK_PERFORMANCE diskPerformance;
     DWORD dwSize;
@@ -2096,6 +2144,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
     int devNum;
 
     for (devNum = 0;; devNum++) {
+        py_disk_info = NULL;
         sprintf (szDevice, "\\\\.\\PhysicalDrive%d", devNum);
         hDevice = CreateFile (szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
                               NULL, OPEN_EXISTING, 0, NULL);
@@ -2120,9 +2169,10 @@ get_disk_io_counters(PyObject* self, PyObject* args)
                                             * 10) / 1000,
                                          (diskPerformance.WriteTime.QuadPart
                                             * 10) / 1000);
-            PyDict_SetItemString(py_retdict,
-                                 szDeviceDisplay,
-                                 py_disk_info);
+            if (!py_disk_info)
+                goto error;
+            if (PyDict_SetItemString(py_retdict, szDeviceDisplay, py_disk_info))
+                goto error;
             Py_XDECREF(py_disk_info);
         }
         else {
@@ -2136,6 +2186,13 @@ get_disk_io_counters(PyObject* self, PyObject* args)
     }
 
     return py_retdict;
+
+error:
+    Py_XDECREF(py_disk_info);
+    Py_DECREF(py_retdict);
+    if (hDevice != NULL)
+        CloseHandle(hDevice);
+    return NULL;
 }
 
 
@@ -2185,8 +2242,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     PyObject* py_tuple = NULL;
 
     if (! PyArg_ParseTuple(args, "O", &py_all)) {
-        Py_DECREF(py_retlist);
-        return NULL;
+        goto error;
     }
     all = PyObject_IsTrue(py_all);
 
@@ -2195,11 +2251,12 @@ get_disk_partitions(PyObject* self, PyObject* args)
     Py_END_ALLOW_THREADS
 
     if (num_bytes == 0) {
-        Py_DECREF(py_retlist);
-        return PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromWindowsErr(0);
+        goto error;
     }
 
     while (*drive_letter != 0) {
+        py_tuple = NULL;
         opts[0] = 0;
         fs_type[0] = 0;
 
@@ -2255,7 +2312,10 @@ get_disk_partitions(PyObject* self, PyObject* args)
             drive_letter,
             fs_type,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
             opts);
-        PyList_Append(py_retlist, py_tuple);
+        if (!py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
         Py_DECREF(py_tuple);
         goto next;
 
@@ -2264,6 +2324,11 @@ get_disk_partitions(PyObject* self, PyObject* args)
     }
 
     return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    return NULL;
 }
 
 
@@ -2307,14 +2372,18 @@ get_system_users(PyObject* self, PyObject* args)
 
     hServer = WTSOpenServer('\0');
     if (hServer == NULL) {
+        PyErr_SetFromWindowsErr(0);
         goto error;
     }
 
     if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
+        PyErr_SetFromWindowsErr(0);
         goto error;
     }
 
     for (i=0; i<count; i++) {
+        py_address = NULL;
+        py_tuple = NULL;
         sessionId = sessions[i].SessionId;
         if (buffer_user != NULL) {
             WTSFreeMemory(buffer_user);
@@ -2330,6 +2399,7 @@ get_system_users(PyObject* self, PyObject* args)
         bytes = 0;
         if (WTSQuerySessionInformation(hServer, sessionId, WTSUserName,
                                         &buffer_user, &bytes) == 0) {
+            PyErr_SetFromWindowsErr(0);
             goto error;
         }
         if (bytes == 1) {
@@ -2340,6 +2410,7 @@ get_system_users(PyObject* self, PyObject* args)
         bytes = 0;
         if (WTSQuerySessionInformation(hServer, sessionId, WTSClientAddress,
                                        &buffer_addr, &bytes) == 0) {
+            PyErr_SetFromWindowsErr(0);
             goto error;
         }
 
@@ -2350,6 +2421,8 @@ get_system_users(PyObject* self, PyObject* args)
                                                 address->Address[2],
                                                 address->Address[3]);
             py_address = Py_BuildValue("s", address_str);
+            if (!py_address)
+                goto error;
         }
         else {
             py_address = Py_None;
@@ -2373,7 +2446,10 @@ get_system_users(PyObject* self, PyObject* args)
         py_tuple = Py_BuildValue("sOd", buffer_user,
                                         py_address,
                                         (double)unix_time);
-        PyList_Append(py_retlist, py_tuple);
+        if (!py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
         Py_XDECREF(py_address);
         Py_XDECREF(py_tuple);
     }
@@ -2386,7 +2462,10 @@ get_system_users(PyObject* self, PyObject* args)
     return py_retlist;
 
 error:
+    Py_XDECREF(py_tuple);
+    Py_XDECREF(py_address);
     Py_DECREF(py_retlist);
+
     if (hInstWinSta != NULL) {
         FreeLibrary(hInstWinSta);
     }
@@ -2402,7 +2481,7 @@ error:
     if (buffer_addr != NULL) {
         WTSFreeMemory(buffer_addr);
     }
-    return PyErr_SetFromWindowsErr(0);
+    return NULL;
 }
 
 
@@ -2512,7 +2591,7 @@ static PyObject*
 get_process_memory_maps(PyObject* self, PyObject* args)
 {
     DWORD pid;
-    HANDLE hProcess;
+    HANDLE hProcess = NULL;
     MEMORY_BASIC_INFORMATION basicInfo;
     PVOID baseAddress;
     PVOID previousAllocationBase;
@@ -2520,16 +2599,14 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     SYSTEM_INFO system_info;
     LPVOID maxAddr;
     PyObject* py_list = PyList_New(0);
-    PyObject* py_tuple;
+    PyObject* py_tuple = NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
-        Py_DECREF(py_list);
-        return NULL;
+        goto error;
     }
     hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
-        Py_DECREF(py_list);
-        return NULL;
+        goto error;
     }
 
     GetSystemInfo(&system_info);
@@ -2540,6 +2617,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     while (VirtualQueryEx(hProcess, baseAddress, &basicInfo,
                           sizeof(MEMORY_BASIC_INFORMATION)))
     {
+        py_tuple = NULL;
         if (baseAddress > maxAddr) {
             break;
         }
@@ -2552,7 +2630,10 @@ get_process_memory_maps(PyObject* self, PyObject* args)
                 mappedFileName,
                 basicInfo.RegionSize
             );
-            PyList_Append(py_list, py_tuple);
+            if (!py_tuple)
+                goto error;
+            if (PyList_Append(py_list, py_tuple))
+                goto error;
             Py_DECREF(py_tuple);
         }
         previousAllocationBase = basicInfo.AllocationBase;
@@ -2561,6 +2642,13 @@ get_process_memory_maps(PyObject* self, PyObject* args)
 
     CloseHandle(hProcess);
     return py_list;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_list);
+    if (hProcess != NULL)
+        CloseHandle(hProcess);
+    return NULL;
 }
 
 // ------------------------ Python init ---------------------------

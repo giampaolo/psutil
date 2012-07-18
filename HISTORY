@@ -31,10 +31,10 @@ NEW FEATURES
     - create_time
     - get_cpu_times()
     - get_cpu_percent()
-    - get_num_handles()
-    - get_io_counters()
     - get_memory_info()
     - get_memory_percent()
+    - get_num_handles()
+    - get_io_counters()
  * Issue 305: add examples/netstat.py script.
 
 BUGFIXES
