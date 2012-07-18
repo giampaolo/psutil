@@ -13,8 +13,34 @@ try:
 except ImportError:
     from distutils.core import setup, Extension
 
-__ver__ = "0.6.0"
-README = os.path.abspath(os.path.join(os.path.dirname(__file__), 'README'))
+
+def get_version():
+    INIT = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                           'psutil', '__init__.py'))
+    f = open(INIT, 'r')
+    try:
+        for line in f:
+            if line.startswith('__version__'):
+                ret = eval(line.strip().split(' = ')[1])
+                assert ret.count('.') == 2, ret
+                for num in ret.split('.'):
+                    assert num.isdigit(), ret
+                return ret
+        else:
+            raise ValueError("couldn't find version string")
+    finally:
+        f.close()
+
+def get_description():
+    README = os.path.abspath(os.path.join(os.path.dirname(__file__), 'README'))
+    f = open(README, 'r')
+    try:
+        return f.read()
+    finally:
+        f.close()
+
+VERSION = get_version()
+
 
 # POSIX
 if os.name == 'posix':
@@ -73,10 +99,11 @@ else:
 def main():
     setup_args = dict(
         name='psutil',
-        version=__ver__,
-        download_url="http://psutil.googlecode.com/files/psutil-%s.tar.gz" % __ver__,
-        description='A process utilities module for Python',
-        long_description=open(README, 'r').read(),
+        version=VERSION,
+        download_url="http://psutil.googlecode.com/files/psutil-%s.tar.gz" \
+                     % VERSION,
+        description='A process and system utilities module for Python',
+        long_description=get_description(),
         keywords=['ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice',
                   'tty', 'ionice', 'uptime', 'taskmgr', 'process', 'df',
                   'iotop', 'iostat', 'ifconfig', 'taskset', 'who', 'pidof',
@@ -126,9 +153,7 @@ def main():
         )
     if extensions is not None:
         setup_args["ext_modules"] = extensions
-
     setup(**setup_args)
-
 
 if __name__ == '__main__':
     main()

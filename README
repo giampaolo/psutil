@@ -143,7 +143,8 @@ cputimes(user=1.02, system=0.31)
 >>>
 >>> p.get_memory_info()
 meminfo(rss=7471104, vms=68513792)
->>> p = psutil.Process(os.getpid())
+>>> p.get_ext_memory_info()
+meminfo(rss=9662464, vms=49192960, shared=3612672, text=2564096, lib=0, data=5754880, dirty=0)
 >>> p.get_memory_maps()
 [mmap(path='/lib/x86_64-linux-gnu/libutil-2.15.so', rss=16384, anonymous=8192, swap=0),
  mmap(path='/lib/x86_64-linux-gnu/libc-2.15.so', rss=6384, anonymous=15, swap=0),
@@ -178,11 +179,12 @@ io(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632)
  thread(id=5236, user_time=0.0, system_time=0.0),
  thread(id=5237, user_time=0.0707, system_time=1.1)]
 >>>
->>> p.nice
+>>> p.get_num_ctx_switches()
+amount(voluntary=78, involuntary=19)
+>>>
+>>> p.get_nice()
 0
->>> p.nice = 10  # set/change process priority
->>> p.nice
-10
+>>> p.set_nice(10)
 >>>
 >>> p.suspend()
 >>> p.resume()
