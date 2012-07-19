@@ -48,7 +48,13 @@ class OSXSpecificTestCase(unittest.TestCase):
 
     def test_total_virtmem(self):
         tot1 = psutil.virtmem_usage().total
-        tot2 = os.path.getsize("/var/vm/swapfile0")
+        tot2 = 0
+        # OSX uses multiple cache files:
+        # http://en.wikipedia.org/wiki/Paging#OS_X
+        for name in os.listdir("/var/vm/"):
+            file = os.path.join("/var/vm", name)
+            if os.path.isfile(file):
+                tot2 += os.path.getsize(file)
         self.assertEqual(tot1, tot2)
 
     def test_process_create_time(self):
