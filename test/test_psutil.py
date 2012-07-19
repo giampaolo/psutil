@@ -905,8 +905,9 @@ class TestCase(unittest.TestCase):
     def test_exe(self):
         sproc = get_test_subprocess()
         wait_for_pid(sproc.pid)
+        exe = psutil.Process(sproc.pid).exe
         try:
-            self.assertEqual(psutil.Process(sproc.pid).exe, PYTHON)
+            self.assertEqual(exe, PYTHON)
         except AssertionError:
             # certain platforms such as BSD are more accurate returning:
             # "/usr/local/bin/python2.7"
@@ -914,9 +915,8 @@ class TestCase(unittest.TestCase):
             # "/usr/local/bin/python"
             # We do not want to consider this difference in accuracy
             # an error.
-            name = psutil.Process(sproc.pid).exe
-            adjusted_name = PYTHON[:len(name)]
-            self.assertEqual(name, adjusted_name)
+            ver = "%s.%s" % (sys.version_info.major, sys.version_info.minor)
+            self.assertEqual(exe.replace(ver, ''), PYTHON.replace(ver, ''))
 
     def test_cmdline(self):
         sproc = get_test_subprocess([PYTHON, "-E"])
@@ -1669,8 +1669,10 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def get_open_files(self, ret):
         for f in ret:
-            if f.fd != -1:  # windows
-                assert f.fd >= 0, f
+            if WINDOWS:
+                assert f.fd == -1, f
+            else:
+                assert isinstance(f.fd, int), f
             assert os.path.isabs(f.path), f
             assert os.path.isfile(f.path), f
 
