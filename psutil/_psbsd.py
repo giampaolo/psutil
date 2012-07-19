@@ -40,7 +40,7 @@ def phymem_usage():
     percent = usage_percent(used, total, _round=1)
     return nt_sysmeminfo(total, used, free, percent)
 
-def virtmem_usage():
+def swapmem_usage():
     """Virtual system memory as a (total, used, free) tuple."""
     total, used = _psutil_bsd.get_swap_mem()
     total *= _PAGESIZE

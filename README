@@ -53,7 +53,7 @@ Memory
 
 >>> psutil.phymem_usage()
 usage(total=4153868288, used=2854199296, free=1299668992, percent=34.6)
->>> psutil.virtmem_usage()
+>>> psutil.swapmem_usage()
 usage(total=2097147904, used=4096, free=2097143808, percent=0.0)
 >>>
 

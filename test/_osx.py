@@ -46,8 +46,8 @@ class OSXSpecificTestCase(unittest.TestCase):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
         self.assertEqual(sysctl_hwphymem, psutil.TOTAL_PHYMEM)
 
-    def test_total_virtmem(self):
-        tot1 = psutil.virtmem_usage().total
+    def test_total_swapmem(self):
+        tot1 = psutil.swapmem_usage().total
         tot2 = 0
         # OSX uses multiple cache files:
         # http://en.wikipedia.org/wiki/Paging#OS_X

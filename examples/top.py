@@ -123,13 +123,13 @@ def print_header(procs_status, num_procs):
     print_line(line)
 
     # swap usage
-    vmem = psutil.virtmem_usage()
-    dashes, empty_dashes = get_dashes(vmem.percent)
+    swap = psutil.swapmem_usage()
+    dashes, empty_dashes = get_dashes(swap.percent)
     line = " Swap  [%s%s] %5s%% %6s/%s" % (
         dashes, empty_dashes,
-        vmem.percent,
-        str(int(vmem.used / 1024 / 1024)) + "M",
-        str(int(vmem.total / 1024 / 1024)) + "M"
+        swap.percent,
+        str(int(swap.used / 1024 / 1024)) + "M",
+        str(int(swap.total / 1024 / 1024)) + "M"
     )
     print_line(line)
 

@@ -273,6 +273,7 @@ class TestCase(unittest.TestCase):
         warnings.filterwarnings("error")
         p = psutil.Process(os.getpid())
         try:
+            self.assertRaises(DeprecationWarning, psutil.virtmem_usage)
             self.assertRaises(DeprecationWarning, psutil.used_phymem)
             self.assertRaises(DeprecationWarning, psutil.avail_phymem)
             self.assertRaises(DeprecationWarning, psutil.total_virtmem)
@@ -293,7 +294,7 @@ class TestCase(unittest.TestCase):
         warnings.filterwarnings("ignore")
         p = psutil.Process(os.getpid())
         try:
-            self.assertEqual(psutil.total_virtmem(), psutil.virtmem_usage().total)
+            self.assertEqual(psutil.total_virtmem(), psutil.swapmem_usage().total)
             self.assertEqual(psutil.get_process_list(), list(psutil.process_iter()))
             self.assertEqual(p.nice, p.get_nice())
         finally:
@@ -306,8 +307,8 @@ class TestCase(unittest.TestCase):
         assert mem.free > 0, mem
         assert 0 <= mem.percent <= 100, mem
 
-    def test_virtmem_usage(self):
-        mem = psutil.virtmem_usage()
+    def test_swapmem_usage(self):
+        mem = psutil.swapmem_usage()
         assert mem.total > 0, mem
         assert mem.used >= 0, mem
         assert mem.free > 0, mem

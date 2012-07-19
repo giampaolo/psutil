@@ -30,7 +30,7 @@ __all__ = [
     "Process", "Popen",
     # functions
     "test", "pid_exists", "get_pid_list", "process_iter", "get_process_list",
-    "phymem_usage", "virtmem_usage"
+    "phymem_usage", "swapmem_usage"
     "cpu_times", "cpu_percent", "per_cpu_percent",
     "network_io_counters", "disk_io_counters",
     ]
@@ -893,16 +893,11 @@ def phymem_usage():
     """
     return _psplatform.phymem_usage()
 
-def virtmem_usage():
-    """Return the amount of total, used and free virtual memory
-    on the system in bytes plus the percentage usage.
-
-    On Linux they match the values returned by free command line utility.
-    On OS X and FreeBSD they represent the same values as returned by
-    sysctl vm.vmtotal. On Windows they are determined by reading the
-    PageFile values of MEMORYSTATUSEX structure.
+def swapmem_usage():
+    """Return the amount of total, used and free swap memory
+    in bytes plus the percentage usage.
     """
-    return _psplatform.virtmem_usage()
+    return _psplatform.swapmem_usage()
 
 def disk_usage(path):
     """Return disk usage statistics about the given path as a namedtuple
@@ -1009,6 +1004,10 @@ def get_process_list():
     processes on the local machine (deprecated).
     """
     return list(process_iter())
+
+@_deprecated("psutil.swapmem_usage()")
+def virtmem_usage():
+    return swapmem_usage()
 
 @_deprecated("psutil.phymem_usage().free")
 def avail_phymem():

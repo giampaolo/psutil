@@ -143,7 +143,7 @@ def phymem_usage():
     return nt_sysmeminfo(total, used, free, percent)
 
 
-def virtmem_usage():
+def swapmem_usage():
     f = open('/proc/meminfo', 'r')
     try:
         total = free = None

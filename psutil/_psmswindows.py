@@ -66,14 +66,13 @@ def phymem_usage():
     used = total - free
     return nt_sysmeminfo(total, used, free, round(percent, 1))
 
-def virtmem_usage():
+def swapmem_usage():
     """Virtual system memory as a (total, used, free) tuple."""
     all = _psutil_mswindows.get_system_phymem()
-    total_virt = all[4]
-    free_virt = all[5]
-    used = total_virt - free_virt
-    percent = usage_percent(used, total_virt, _round=1)
-    return nt_sysmeminfo(total_virt, used, free_virt, percent)
+    total, free, total_pagef, avail_pagef, total_virt, free_virt, _ = all
+    used = total_pagef - avail_pagef
+    percent = usage_percent(used, total_pagef, _round=1)
+    return nt_sysmeminfo(total_pagef, used, avail_pagef, percent)
 
 def get_disk_usage(path):
     """Return disk usage associated with path."""
