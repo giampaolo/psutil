@@ -47,6 +47,7 @@ BUGFIXES
  * Issue 306: at C level, errors are not checked when invoking Py* functions
    which create or manipulate Python objects leading to potential memory related
    errors and/or segmentation faults.
+ * Issue 307: (BSD) values returned by psutil.network_io_counters() are wrong.
 
 
 0.5.1 - 2012-06-29
