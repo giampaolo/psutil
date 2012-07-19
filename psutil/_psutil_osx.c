@@ -570,11 +570,10 @@ get_avail_phymem(PyObject* self, PyObject* args)
 
 
 /*
- * Return a Python integer indicating the total amount of virtual memory
- * in bytes.
+ * Return stats about swap memory.
  */
 static PyObject*
-get_total_virtmem(PyObject* self, PyObject* args)
+get_swap_mem(PyObject* self, PyObject* args)
 {
     int mib[2];
     size_t size;
@@ -589,31 +588,11 @@ get_total_virtmem(PyObject* self, PyObject* args)
         return NULL;
      }
 
-    return Py_BuildValue("L", totals.xsu_total);
+    return Py_BuildValue("LLL", totals.xsu_total,
+                                totals.xsu_used,
+                                totals.xsu_avail);
 }
 
-/*
- * Return a Python integer indicating the avail amount of virtual memory
- * in bytes.
- */
-static PyObject*
-get_avail_virtmem(PyObject* self, PyObject* args)
-{
-    int mib[2];
-    size_t size;
-    struct xsw_usage totals;
-
-    mib[0] = CTL_VM;
-    mib[1] = VM_SWAPUSAGE;
-    size = sizeof(totals);
-
-    if (sysctl(mib, 2, &totals, &size, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
-        return NULL;
-     }
-
-    return Py_BuildValue("L", totals.xsu_avail);
-}
 
 /*
  * Return a Python tuple representing user, kernel and idle CPU times
@@ -1696,10 +1675,8 @@ PsutilMethods[] =
          "Return the total amount of physical memory, in bytes"},
      {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
          "Return the amount of available physical memory, in bytes"},
-     {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
-         "Return the total amount of virtual memory, in bytes"},
-     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
-         "Return the amount of available virtual memory, in bytes"},
+     {"get_swap_mem", get_swap_mem, METH_VARARGS,
+         "Return stats about swap memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
          "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
      {"get_system_per_cpu_times", get_system_per_cpu_times, METH_VARARGS,
