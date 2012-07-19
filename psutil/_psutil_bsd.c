@@ -40,7 +40,11 @@
 #include <netinet/tcp_fsm.h>   /* for TCP connection states */
 #include <arpa/inet.h>         /* for inet_ntop() */
 
-#include <utmp.h>         /* system users */
+#if __FreeBSD_version < 900000
+    #include <utmp.h>         /* system users */
+#else
+    #include <utmpx.h>
+#endif
 #include <devstat.h>      /* get io counters */
 #include <sys/vmmeter.h>  /* needed for vmtotal struct */
 #include <libutil.h>      /* process open files, shared libs (kinfo_getvmmap) */
@@ -1588,9 +1592,10 @@ get_system_users(PyObject* self, PyObject* args)
 {
     PyObject *ret_list = PyList_New(0);
     PyObject *tuple = NULL;
+
+#if __FreeBSD_version < 900000
     struct utmp ut;
     FILE *fp;
-
 
     fp = fopen(_PATH_UTMP, "r");
     if (fp == NULL) {
@@ -1605,16 +1610,45 @@ get_system_users(PyObject* self, PyObject* args)
             ut.ut_name,              // username
             ut.ut_line,              // tty
             ut.ut_host,              // hostname
-            (float)ut.ut_time        // tstamp
+            (float)ut.ut_time        // start time
         );
-        if (!tuple)
+        if (!tuple) {
+            fclose(fp);
             goto error;
-        if (PyList_Append(ret_list, tuple))
+        }
+        if (PyList_Append(ret_list, tuple)) {
+            fclose(fp);
             goto error;
+        }
         Py_DECREF(tuple);
     }
 
     fclose(fp);
+#else
+    struct utmpx *utx;
+
+    while ((utx = getutxent()) != NULL) {
+        if (utx->ut_type != USER_PROCESS)
+            continue;
+        tuple = Py_BuildValue("(sssf)",
+            utx->ut_user,             // username
+            utx->ut_line,             // tty
+            utx->ut_host,             // hostname
+            (float)utx->ut_tv.tv_sec  // start time
+        );
+        if (!tuple) {
+            endutxent();
+            goto error;
+        }
+        if (PyList_Append(ret_list, tuple)) {
+            endutxent();
+            goto error;
+        }
+        Py_DECREF(tuple);
+    }
+
+    endutxent();
+#endif
     return ret_list;
 
 error:

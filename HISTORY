@@ -43,6 +43,7 @@ BUGFIXES
  * Issue 299: potential memory leak every time PyList_New(0) is used.
  * Issue 303: (Windows) potential heap corruption in get_num_threads() and
    get_status() Process methods.
+ * Issue 305: (BSD) psutil can't compile on FreeBSD 9 due to removal of utmp.h.
  * Issue 306: at C level, errors are not checked when invoking Py* functions
    which create or manipulate Python objects leading to potential memory related
    errors and/or segmentation faults.
