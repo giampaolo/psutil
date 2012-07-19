@@ -644,54 +644,20 @@ get_avail_phymem(PyObject* self, PyObject* args)
 
 
 /*
- * Return a Python long indicating the total amount of virtual memory
- * in bytes.
+ * Return swap memory stats (see 'swapinfo' cmdline tool)
  */
 static PyObject*
-get_total_virtmem(PyObject* self, PyObject* args)
+get_swap_mem(PyObject* self, PyObject* args)
 {
-    int mib[2];
-    struct vmtotal vm;
-    size_t size;
-    long long total_vmem;
+    kvm_t *kd;
+    struct kvm_swap kvmsw[1];
 
-    mib[0] = CTL_VM;
-    mib[1] = VM_METER;
-    size = sizeof(vm);
-    sysctl(mib, 2, &vm, &size, NULL, 0);
-
-    // vmtotal struct:
-    // http://fxr.watson.org/fxr/source/sys/vmmeter.h?v=FREEBSD54
-    // note: value is returned in page, so we must multiply by size of a page
-    total_vmem = (long long)vm.t_vm * (long long)getpagesize();
-    return Py_BuildValue("L", total_vmem);
-}
-
-
-/*
- * Return a Python long indicating the avail amount of virtual memory
- * in bytes.
- */
-static PyObject*
-get_avail_virtmem(PyObject* self, PyObject* args)
-{
-    int mib[2];
-    struct vmtotal vm;
-    size_t size;
-    long long total_vmem;
-    long long avail_vmem;
-
-    mib[0] = CTL_VM;
-    mib[1] = VM_METER;
-    size = sizeof(vm);
-    sysctl(mib, 2, &vm, &size, NULL, 0);
-
-    // vmtotal struct:
-    // http://fxr.watson.org/fxr/source/sys/vmmeter.h?v=FREEBSD54
-    // note: value is returned in page, so we must multiply by size of a page
-    total_vmem = (long long)vm.t_vm * (long long)getpagesize();
-    avail_vmem = total_vmem - ((long long)vm.t_avm * (long long)getpagesize());
-    return Py_BuildValue("L", avail_vmem);
+    if (kvm_getswapinfo(kd, kvmsw, 1, 0) < 0) {
+        PyErr_SetString(PyExc_RuntimeError, "kvm_getswapinfo failed");
+        return NULL;
+    }
+    return Py_BuildValue("(ii)", kvmsw[0].ksw_total,
+                                 kvmsw[0].ksw_used);
 }
 
 
@@ -1720,10 +1686,8 @@ PsutilMethods[] =
          "Return the total amount of physical memory, in bytes"},
      {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
          "Return the amount of available physical memory, in bytes"},
-     {"get_total_virtmem", get_total_virtmem, METH_VARARGS,
-         "Return the total amount of virtual memory, in bytes"},
-     {"get_avail_virtmem", get_avail_virtmem, METH_VARARGS,
-         "Return the amount of available virtual memory, in bytes"},
+     {"get_swap_mem", get_swap_mem, METH_VARARGS,
+         "Return swap mem stats"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
          "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000

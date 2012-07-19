@@ -26,6 +26,7 @@ __extra__all__ = []
 NUM_CPUS = _psutil_bsd.get_num_cpus()
 BOOT_TIME = _psutil_bsd.get_system_boot_time()
 _TERMINAL_MAP = _psposix._get_terminal_map()
+_PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
 
 # --- public functions
@@ -41,9 +42,10 @@ def phymem_usage():
 
 def virtmem_usage():
     """Virtual system memory as a (total, used, free) tuple."""
-    total = _psutil_bsd.get_total_virtmem()
-    free =  _psutil_bsd.get_avail_virtmem()
-    used = total - free
+    total, used = _psutil_bsd.get_swap_mem()
+    total *= _PAGESIZE
+    used *= _PAGESIZE
+    free = total - used
     percent = usage_percent(used, total, _round=1)
     return nt_sysmeminfo(total, used, free, percent)
 
