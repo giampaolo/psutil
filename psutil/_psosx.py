@@ -39,11 +39,11 @@ def phymem_usage():
     percent = usage_percent(used, total, _round=1)
     return nt_sysmeminfo(total, used, free, percent)
 
-def virtmem_usage():
-    """Virtual system memory as a (total, used, free) tuple."""
-    total, used, free = _psutil_osx.get_swap_mem()
+def swapmem_usage():
+    """Swap system memory as a (total, used, free, sin, sout) tuple."""
+    total, used, free, sin, sout = _psutil_osx.get_swap_mem()
     percent = usage_percent(used, total, _round=1)
-    return nt_sysmeminfo(total, used, free, percent)
+    return nt_swapmeminfo(total, used, free, percent, sin, sout)
 
 def get_system_cpu_times():
     """Return system CPU times as a namedtuple."""

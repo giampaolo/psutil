@@ -894,8 +894,17 @@ def phymem_usage():
     return _psplatform.phymem_usage()
 
 def swapmem_usage():
-    """Return the amount of total, used and free swap memory
-    in bytes plus the percentage usage.
+    """Return system swap memory statistics as a namedtuple including
+    the following attributes:
+
+     - total:   total swap memory in bytes
+     - used:    used swap memory in bytes
+     - free:    free swap memory in bytes
+     - percent: the percentage usage
+     - sin:     no. of bytes the system has swapped in from disk (cumulative)
+     - sout:    no. of bytes the system has swapped out from disk (cumulative)
+
+    'sin' and 'sout' on Windows are meaningless and always set to 0.
     """
     return _psplatform.swapmem_usage()
 

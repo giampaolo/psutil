@@ -47,6 +47,26 @@
 
 
 /*
+ * A wrapper around host_statistics() invoked with HOST_VM_INFO.
+ */
+int
+psutil_sys_vminfo(vm_statistics_data_t *vmstat)
+{
+    kern_return_t ret;
+    mach_msg_type_number_t count = sizeof(*vmstat) / sizeof(integer_t);
+    mach_port_t mport = mach_host_self();
+
+    ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)vmstat, &count);
+    if (ret != KERN_SUCCESS) {
+        PyErr_Format(PyExc_RuntimeError,
+                     "host_statistics() failed: %s", mach_error_string(ret));
+        return 0;
+    }
+    return 1;
+}
+
+
+/*
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject*
@@ -549,23 +569,13 @@ get_total_phymem(PyObject* self, PyObject* args)
 static PyObject*
 get_avail_phymem(PyObject* self, PyObject* args)
 {
-    vm_statistics_data_t vm_stat;
-    mach_msg_type_number_t count;
-    kern_return_t error;
-    unsigned long long mem_free;
+    vm_statistics_data_t vmstat;
     int pagesize = getpagesize();
-    mach_port_t mport = mach_host_self();
 
-    count = sizeof(vm_stat) / sizeof(natural_t);
-    error = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vm_stat, &count);
-
-    if (error != KERN_SUCCESS) {
-        return PyErr_Format(PyExc_RuntimeError,
-                    "Error in host_statistics(): %s", mach_error_string(error));
+    if (!psutil_sys_vminfo(&vmstat)) {
+        return NULL;
     }
-
-    mem_free = (unsigned long long) vm_stat.free_count * pagesize;
-    return Py_BuildValue("L", mem_free);
+    return Py_BuildValue("L", (unsigned long long)vmstat.free_count * pagesize);
 }
 
 
@@ -578,19 +588,26 @@ get_swap_mem(PyObject* self, PyObject* args)
     int mib[2];
     size_t size;
     struct xsw_usage totals;
+    vm_statistics_data_t vmstat;
+    int pagesize = getpagesize();
 
     mib[0] = CTL_VM;
     mib[1] = VM_SWAPUSAGE;
     size = sizeof(totals);
-
     if (sysctl(mib, 2, &totals, &size, NULL, 0) == -1) {
         PyErr_SetFromErrno(0);
         return NULL;
-     }
+    }
+    if (!psutil_sys_vminfo(&vmstat)) {
+        return NULL;
+    }
 
-    return Py_BuildValue("LLL", totals.xsu_total,
-                                totals.xsu_used,
-                                totals.xsu_avail);
+    return Py_BuildValue("LLLLL",
+                         totals.xsu_total,
+                         totals.xsu_used,
+                         totals.xsu_avail,
+                         (unsigned long long)vmstat.pageins * pagesize,
+                         (unsigned long long)vmstat.pageouts * pagesize);
 }
 
 
