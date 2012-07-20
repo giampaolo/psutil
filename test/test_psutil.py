@@ -48,14 +48,31 @@ BSD = sys.platform.startswith("freebsd")
 
 _subprocesses_started = set()
 
-def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=None):
+def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=None, stdin=None,
+                        wait=False):
     """Return a subprocess.Popen object to use in tests.
     By default stdout and stderr are redirected to /dev/null and the
     python interpreter is used as test process.
+    If 'wait' is True attemps to make sure the process is in a
+    reasonably initialized state.
     """
     if cmd is None:
-        cmd = [PYTHON, "-c", "import time; time.sleep(3600);"]
-    sproc = subprocess.Popen(cmd, stdout=stdout, stderr=stderr, stdin=stdin)
+        pyline = ""
+        if wait:
+            pyline += "open('%s', 'w'); " % TESTFN
+        pyline += "import time; time.sleep(3600);"
+        cmd_ = [PYTHON, "-c", pyline]
+    else:
+        cmd_ = cmd
+    sproc = subprocess.Popen(cmd_, stdout=stdout,  stdin=stdin)
+    if wait:
+        if cmd is None:
+            while 1:
+                if os.path.exists(TESTFN):
+                    break
+                time.sleep(0.001)
+        else:
+            wait_for_pid(sproc.pid)
     _subprocesses_started.add(sproc.pid)
     return sproc
 
@@ -234,6 +251,9 @@ class ThreadTask(threading.Thread):
 
 class TestCase(unittest.TestCase):
 
+    def setUp(self):
+        safe_remove(TESTFN)
+
     def tearDown(self):
         reap_children()
 
@@ -323,8 +343,7 @@ class TestCase(unittest.TestCase):
         assert x >= 0, x
 
     def test_pid_exists(self):
-        sproc = get_test_subprocess()
-        wait_for_pid(sproc.pid)
+        sproc = get_test_subprocess(wait=True)
         assert psutil.pid_exists(sproc.pid)
         p = psutil.Process(sproc.pid)
         p.kill()
@@ -535,9 +554,8 @@ class TestCase(unittest.TestCase):
     # ====================
 
     def test_kill(self):
-        sproc = get_test_subprocess()
+        sproc = get_test_subprocess(wait=True)
         test_pid = sproc.pid
-        wait_for_pid(test_pid)
         p = psutil.Process(test_pid)
         name = p.name
         p.kill()
@@ -545,9 +563,8 @@ class TestCase(unittest.TestCase):
         self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
 
     def test_terminate(self):
-        sproc = get_test_subprocess()
+        sproc = get_test_subprocess(wait=True)
         test_pid = sproc.pid
-        wait_for_pid(test_pid)
         p = psutil.Process(test_pid)
         name = p.name
         p.terminate()
@@ -697,9 +714,8 @@ class TestCase(unittest.TestCase):
             self.fail("expected: %s, found: %s" %(ktime, kernel_time))
 
     def test_create_time(self):
-        sproc = get_test_subprocess()
+        sproc = get_test_subprocess(wait=True)
         now = time.time()
-        wait_for_pid(sproc.pid)
         p = psutil.Process(sproc.pid)
         create_time = p.create_time
 
@@ -847,16 +863,6 @@ class TestCase(unittest.TestCase):
         assert percent2 > percent1
         del memarr
 
-    @skipUnless(POSIX)
-    def test_get_ext_memory_info(self):
-        proc = get_test_subprocess()
-        time.sleep(.1)
-        p = psutil.Process(proc.pid)
-        mem1 = p.get_memory_info()
-        mem2 = p.get_ext_memory_info()
-        self.assertEqual(mem1.rss, mem2.rss)
-        self.assertEqual(mem1.vms, mem2.vms)
-
     def test_get_memory_maps(self):
         p = psutil.Process(os.getpid())
         maps = p.get_memory_maps()
@@ -895,8 +901,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(psutil.Process(sproc.pid).pid, sproc.pid)
 
     def test_is_running(self):
-        sproc = get_test_subprocess()
-        wait_for_pid(sproc.pid)
+        sproc = get_test_subprocess(wait=True)
         p = psutil.Process(sproc.pid)
         assert p.is_running()
         assert p.is_running()
@@ -906,8 +911,7 @@ class TestCase(unittest.TestCase):
         assert not p.is_running()
 
     def test_exe(self):
-        sproc = get_test_subprocess()
-        wait_for_pid(sproc.pid)
+        sproc = get_test_subprocess(wait=True)
         exe = psutil.Process(sproc.pid).exe
         try:
             self.assertEqual(exe, PYTHON)
@@ -922,13 +926,11 @@ class TestCase(unittest.TestCase):
             self.assertEqual(exe.replace(ver, ''), PYTHON.replace(ver, ''))
 
     def test_cmdline(self):
-        sproc = get_test_subprocess([PYTHON, "-E"])
-        wait_for_pid(sproc.pid)
+        sproc = get_test_subprocess([PYTHON, "-E"], wait=True)
         self.assertEqual(psutil.Process(sproc.pid).cmdline, [PYTHON, "-E"])
 
     def test_name(self):
-        sproc = get_test_subprocess(PYTHON)
-        wait_for_pid(sproc.pid)
+        sproc = get_test_subprocess(PYTHON, wait=True)
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         self.assertEqual(psutil.Process(sproc.pid).name.lower(), pyexe)
 
@@ -1027,16 +1029,14 @@ class TestCase(unittest.TestCase):
 
     @skipIf(not hasattr(psutil.Process, "getcwd"))
     def test_getcwd(self):
-        sproc = get_test_subprocess()
-        wait_for_pid(sproc.pid)
+        sproc = get_test_subprocess(wait=True)
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.getcwd(), os.getcwd())
 
     @skipIf(not hasattr(psutil.Process, "getcwd"))
     def test_getcwd_2(self):
         cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(10)"]
-        sproc = get_test_subprocess(cmd)
-        wait_for_pid(sproc.pid)
+        sproc = get_test_subprocess(cmd, wait=True)
         p = psutil.Process(sproc.pid)
         time.sleep(0.1)
         expected_dir = os.path.dirname(os.getcwd())
@@ -1064,7 +1064,7 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(os.getpid())
         files = p.get_open_files()
         self.assertFalse(TESTFN in files)
-        f = open(TESTFN, 'r')
+        f = open(TESTFN, 'w')
         time.sleep(.1)
         filenames = [x.path for x in p.get_open_files()]
         self.assertIn(TESTFN, filenames)
@@ -1074,8 +1074,7 @@ class TestCase(unittest.TestCase):
 
         # another process
         cmdline = "import time; f = open(r'%s', 'r'); time.sleep(100);" % TESTFN
-        sproc = get_test_subprocess([PYTHON, "-c", cmdline])
-        wait_for_pid(sproc.pid)
+        sproc = get_test_subprocess([PYTHON, "-c", cmdline], wait=True)
         time.sleep(0.1)
         p = psutil.Process(sproc.pid)
         for x in range(100):
@@ -1090,7 +1089,7 @@ class TestCase(unittest.TestCase):
 
     def test_get_open_files2(self):
         # test fd and path fields
-        fileobj = open(TESTFN, 'r')
+        fileobj = open(TESTFN, 'w')
         p = psutil.Process(os.getpid())
         for path, fd in p.get_open_files():
             if path == fileobj.name or fd == fileobj.fileno():
@@ -1158,28 +1157,23 @@ class TestCase(unittest.TestCase):
 
     @skipUnless(hasattr(socket, 'AF_UNIX'))
     def test_get_connections_unix(self):
-        try:
-            # tcp
-            safe_remove(TESTFN)
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            sock.bind(TESTFN)
-            conn = psutil.Process(os.getpid()).get_connections(kind='unix')[0]
-            self.assertEqual(conn.fd, sock.fileno())
-            self.assertEqual(conn.family, socket.AF_UNIX)
-            self.assertEqual(conn.type, socket.SOCK_STREAM)
-            self.assertEqual(conn.local_address, TESTFN)
-            self.assertTrue(not conn.remote_address)
-            self.assertTrue(not conn.status)
-            # udp
-            safe_remove(TESTFN)
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-            sock.bind(TESTFN)
-            conn = psutil.Process(os.getpid()).get_connections(kind='unix')[0]
-            self.assertEqual(conn.type, socket.SOCK_DGRAM)
-        finally:
-            safe_remove(TESTFN)
-            f = open(TESTFN, 'w')
-            f.close()
+        # tcp
+        safe_remove(TESTFN)
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.bind(TESTFN)
+        conn = psutil.Process(os.getpid()).get_connections(kind='unix')[0]
+        self.assertEqual(conn.fd, sock.fileno())
+        self.assertEqual(conn.family, socket.AF_UNIX)
+        self.assertEqual(conn.type, socket.SOCK_STREAM)
+        self.assertEqual(conn.local_address, TESTFN)
+        self.assertTrue(not conn.remote_address)
+        self.assertTrue(not conn.status)
+        # udp
+        safe_remove(TESTFN)
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        sock.bind(TESTFN)
+        conn = psutil.Process(os.getpid()).get_connections(kind='unix')[0]
+        self.assertEqual(conn.type, socket.SOCK_DGRAM)
 
     @skipUnless(hasattr(socket, "fromfd") and not WINDOWS)
     def test_connection_fromfd(self):
@@ -1296,7 +1290,7 @@ class TestCase(unittest.TestCase):
     def test_get_num_fds(self):
         p = psutil.Process(os.getpid())
         start = p.get_num_fds()
-        file = open(TESTFN, 'r')
+        file = open(TESTFN, 'w')
         self.assertEqual(p.get_num_fds(), start + 1)
         sock = socket.socket()
         self.assertEqual(p.get_num_fds(), start + 2)
@@ -1307,10 +1301,11 @@ class TestCase(unittest.TestCase):
     def test_get_num_ctx_switches(self):
         p = psutil.Process(os.getpid())
         before = sum(p.get_num_ctx_switches())
-        for x in range(1000):
-            p.get_num_ctx_switches()
-        after = sum(p.get_num_ctx_switches())
-        assert after > before, (before, after)
+        for x in range(50000):
+            after = sum(p.get_num_ctx_switches())
+            if after > before:
+                return
+        self.fail("num ctx switches still the same after 50.000 iterations")
 
     def test_parent_ppid(self):
         this_parent = os.getpid()
@@ -1377,7 +1372,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(len(c), len(set(c)))
 
     def test_suspend_resume(self):
-        sproc = get_test_subprocess()
+        sproc = get_test_subprocess(wait=True)
         p = psutil.Process(sproc.pid)
         p.suspend()
         time.sleep(0.1)
@@ -1670,6 +1665,16 @@ class TestFetchAllProcesses(unittest.TestCase):
             assert ret.peak_nonpaged_pool >= ret.nonpaged_pool, ret
             assert ret.peak_pagefile >= ret.pagefile, ret
 
+    @skipUnless(POSIX)
+    def test_get_ext_memory_info_2(self):
+        proc = get_test_subprocess()
+        time.sleep(.1)
+        p = psutil.Process(proc.pid)
+        mem1 = p.get_memory_info()
+        mem2 = p.get_ext_memory_info()
+        self.assertEqual(mem1.rss, mem2.rss)
+        self.assertEqual(mem1.vms, mem2.vms)
+
     def get_open_files(self, ret):
         for f in ret:
             if WINDOWS:
@@ -1863,11 +1868,6 @@ def test_main():
 
     for test_class in tests:
         test_suite.addTest(unittest.makeSuite(test_class))
-
-    safe_remove(TESTFN)  # needed for UNIX socket test
-    f = open(TESTFN, 'w')
-    f.close()
-
     unittest.TextTestRunner(verbosity=2).run(test_suite)
 
 if __name__ == '__main__':
