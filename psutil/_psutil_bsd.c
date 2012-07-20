@@ -651,13 +651,33 @@ get_swap_mem(PyObject* self, PyObject* args)
 {
     kvm_t *kd;
     struct kvm_swap kvmsw[1];
+    unsigned int swapin, swapout, nodein, nodeout;
+    size_t size = sizeof(unsigned int);
 
     if (kvm_getswapinfo(kd, kvmsw, 1, 0) < 0) {
         PyErr_SetString(PyExc_RuntimeError, "kvm_getswapinfo failed");
         return NULL;
     }
-    return Py_BuildValue("(ii)", kvmsw[0].ksw_total,
-                                 kvmsw[0].ksw_used);
+
+    if (sysctlbyname("vm.stats.vm.v_swapin", &swapin, &size, NULL, 0) == -1)
+        goto sbn_error;
+    if (sysctlbyname("vm.stats.vm.v_swapout", &swapout, &size, NULL, 0) == -1)
+        goto sbn_error;
+    if (sysctlbyname("vm.stats.vm.v_vnodein", &nodein, &size, NULL, 0) == -1)
+        goto sbn_error;
+    if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1)
+        goto sbn_error;
+
+    return Py_BuildValue("(iiiII)",
+                            kvmsw[0].ksw_total,                     // total
+                            kvmsw[0].ksw_used,                      // used
+                            kvmsw[0].ksw_total - kvmsw[0].ksw_used, // free
+                            swapin + swapout,                       // swap in
+                            nodein + nodeout);                      // swap out
+
+sbn_error:
+    PyErr_SetFromErrno(0);
+    return NULL;
 }
 
 

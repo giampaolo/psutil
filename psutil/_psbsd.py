@@ -42,12 +42,10 @@ def phymem_usage():
 
 def swapmem_usage():
     """Virtual system memory as a (total, used, free) tuple."""
-    total, used = _psutil_bsd.get_swap_mem()
-    total *= _PAGESIZE
-    used *= _PAGESIZE
-    free = total - used
+    total, used, free, sin, sout = \
+        [x * _PAGESIZE for x in _psutil_bsd.get_swap_mem()]
     percent = usage_percent(used, total, _round=1)
-    return nt_sysmeminfo(total, used, free, percent)
+    return nt_swapmeminfo(total, used, free, percent, sin, sout)
 
 def get_system_cpu_times():
     """Return system per-CPU times as a named tuple"""
