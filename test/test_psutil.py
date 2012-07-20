@@ -313,6 +313,8 @@ class TestCase(unittest.TestCase):
         assert mem.used >= 0, mem
         assert mem.free > 0, mem
         assert 0 <= mem.percent <= 100, mem
+        assert mem.sin >= 0, mem
+        assert mem.sout >= 0, mem
 
     @skipUnless(LINUX)
     def test_phymem_buffers(self):

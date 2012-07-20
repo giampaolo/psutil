@@ -131,6 +131,7 @@ del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM, socket
 # system
 nt_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
 nt_sysmeminfo = namedtuple('usage', 'total used free percent')
+nt_swapmeminfo = namedtuple('swap', 'total used free percent sin sout')
 nt_diskinfo = namedtuple('usage', 'total used free percent')
 nt_partition = namedtuple('partition',  'device mountpoint fstype opts')
 nt_net_iostat = namedtuple('iostat', 'bytes_sent bytes_recv packets_sent packets_recv')

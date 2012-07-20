@@ -10,9 +10,10 @@ NEW FEATURES
  * Issue 220: (BSD) get_connections() has been rewritten in C and no longer
    requires lsof.
  * Issue 222: (OSX) add support for process cwd.
- * Issue 256: psutil.virtmem_usage() is deprecated in favor of
-   psutil.swapmem_usage().  On BSD and Windows virtmem_usage() now returns
-   information about swap memory instead of virtual memory.
+ * Issue 256: new psutil.swapmem_usage(), deprecating psutil.virtmem_usage() and
+   also providing stats about pswpin / pswpout counters.
+   On BSD and Windows virtmem_usage() now returns information about swap memory
+   instead of virtual memory.
  * Issue 261: process extended memory info.
  * Issue 295: (OSX) process executable path is now determined by asking the OS
    instead of being guessed from process cmdline.

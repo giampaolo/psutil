@@ -142,9 +142,9 @@ def phymem_usage():
     percent = usage_percent(total - (free + buffers + cached), total, _round=1)
     return nt_sysmeminfo(total, used, free, percent)
 
-
 def swapmem_usage():
     f = open('/proc/meminfo', 'r')
+    # get total, used, free, percent
     try:
         total = free = None
         for line in f:
@@ -154,12 +154,29 @@ def swapmem_usage():
                 free = int(line.split()[1]) * 1024
             if total is not None and free is not None:
                 break
-        assert total is not None and free is not None
+        else:
+            raise RuntimeError("lines not found")
         used = total - free
         percent = usage_percent(used, total, _round=1)
-        return nt_sysmeminfo(total, used, free, percent)
     finally:
         f.close()
+    # get pgin/pgouts
+    f = open("/proc/vmstat", "r")
+    sin = sout = None
+    try:
+        for line in f:
+            # values are expressed in 4 kilo bytes, we want bytes instead
+            if line.startswith('pswpin'):
+                sin = int(line.split(' ')[1]) * 4 * 1024
+            elif line.startswith('pswpout'):
+                sout = int(line.split(' ')[1])  * 4 * 1024
+            if sin is not None and sout is not None:
+                break
+        else:
+            raise RuntimeError("lines not found")
+    finally:
+        f.close()
+    return nt_swapmeminfo(total, used, free, percent, sin, sout)
 
 
 # --- system CPU functions
