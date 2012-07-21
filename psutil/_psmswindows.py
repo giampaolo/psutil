@@ -330,7 +330,7 @@ class Process(object):
         raw_file_names = _psutil_mswindows.get_process_open_files(self.pid)
         for file in raw_file_names:
             file = _convert_raw_path(file)
-            if os.path.isfile(file) and file not in retlist:
+            if isfile_strict(file) and file not in retlist:
                 ntuple = nt_openfile(file, -1)
                 retlist.append(ntuple)
         return retlist

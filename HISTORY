@@ -54,6 +54,8 @@ BUGFIXES
  * Issue 307: (BSD) values returned by psutil.network_io_counters() are wrong.
  * Issue 308: (BSD / Windows) psutil.virtmem_usage() wasn't actually returning
    information about swap memory usage as it was supposed to do. It does now.
+ * Issue 309: get_open_files() might not return files which can not be accessed
+   due to limited permissions. AccessDenied is now raised instead.
 
 API CHANGES
 

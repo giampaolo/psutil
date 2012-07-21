@@ -218,7 +218,7 @@ class Process(object):
         files = []
         rawlist = _psutil_osx.get_process_open_files(self.pid)
         for path, fd in rawlist:
-            if os.path.isfile(path):
+            if isfile_strict(path):
                 ntuple = nt_openfile(path, fd)
                 files.append(ntuple)
         return files

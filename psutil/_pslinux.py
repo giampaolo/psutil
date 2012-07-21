@@ -424,7 +424,7 @@ class Process(object):
         # However, if we had permissions to execute readlink() it's
         # likely that we'll be able to figure out exe from argv[0]
         # later on.
-        if exe.endswith(" (deleted)") and not os.path.isfile(exe):
+        if exe.endswith(" (deleted)") and not isfile_strict(exe):
             return ""
         return exe
 
@@ -791,7 +791,7 @@ class Process(object):
                     # to tell whether it's a regular file or not,
                     # so we skip it. A regular file is always supposed
                     # to be absolutized though.
-                    if file.startswith('/') and os.path.isfile(file):
+                    if file.startswith('/') and isfile_strict(file):
                         ntuple = nt_openfile(file, int(fd))
                         retlist.append(ntuple)
         if hit_enoent:

@@ -52,7 +52,8 @@ from psutil.error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
 from psutil._compat import property, defaultdict
 from psutil._common import cached_property
 from psutil._common import (nt_disk_iostat as _nt_disk_iostat,
-                            nt_net_iostat as _nt_net_iostat)
+                            nt_net_iostat as _nt_net_iostat,
+                            isfile_strict as _isfile_strict)
 from psutil._common import (STATUS_RUNNING, STATUS_IDLE, STATUS_SLEEPING,
                             STATUS_DISK_SLEEP, STATUS_STOPPED,
                             STATUS_TRACING_STOP, STATUS_ZOMBIE, STATUS_DEAD,
@@ -235,7 +236,7 @@ class Process(object):
             cmdline = self.cmdline
             if cmdline and hasattr(os, 'access') and hasattr(os, 'X_OK'):
                 _exe = os.path.realpath(cmdline[0])
-                if os.path.isabs(_exe) and os.path.isfile(_exe) \
+                if os.path.isabs(_exe) and _isfile_strict(_exe) \
                   and os.access(_exe, os.X_OK):
                     return _exe
         if not exe:
