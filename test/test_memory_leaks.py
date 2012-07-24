@@ -284,8 +284,8 @@ class TestModuleFunctionsLeaks(Base):
     def test_phymem_usage(self):
         self.execute('phymem_usage')
 
-    def test_swapmem_usage(self):
-        self.execute('swapmem_usage')
+    def test_swap_memory(self):
+        self.execute('swap_memory')
 
     def test_cpu_times(self):
         self.execute('cpu_times')

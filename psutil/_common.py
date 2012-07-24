@@ -13,6 +13,8 @@ import sys
 import os
 import stat
 import errno
+import functools
+import warnings
 
 from psutil._compat import namedtuple, long
 
@@ -83,6 +85,25 @@ class cached_property(object):
             instance.__dict__[self.func.__name__] = ret
         return ret
 
+# http://goo.gl/jYLvf
+def deprecated(replacement=None):
+    """A decorator which can be used to mark functions as deprecated."""
+    def outer(fun):
+        msg = "psutil.%s is deprecated" % fun.__name__
+        if replacement is not None:
+            msg += "; use %s instead" % replacement
+        if fun.__doc__ is None:
+            fun.__doc__ = msg
+
+        @functools.wraps(fun)
+        def inner(*args, **kwargs):
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return fun(*args, **kwargs)
+
+        return inner
+    return outer
+
+
 def isfile_strict(path):
     """Same as os.path.isfile() but does not swallow EACCES / EPERM
     exceptions, see:
@@ -151,6 +172,7 @@ del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM, socket
 # system
 nt_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
 nt_sysmeminfo = namedtuple('usage', 'total used free percent')
+# XXX - would 'available' be better than 'free' as for virtual_memory() nt?
 nt_swapmeminfo = namedtuple('swap', 'total used free percent sin sout')
 nt_diskinfo = namedtuple('usage', 'total used free percent')
 nt_partition = namedtuple('partition',  'device mountpoint fstype opts')

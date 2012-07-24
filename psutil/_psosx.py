@@ -25,21 +25,31 @@ __extra__all__ = []
 
 NUM_CPUS = _psutil_osx.get_num_cpus()
 BOOT_TIME = _psutil_osx.get_system_boot_time()
+TOTAL_PHYMEM = _psutil_osx.get_virtual_mem()[0]
 _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 _TERMINAL_MAP = _psposix._get_terminal_map()
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle')
 
 # --- functions
 
-def phymem_usage():
-    """Physical system memory as a (total, used, free) tuple."""
-    total = _psutil_osx.get_total_phymem()
-    free =  _psutil_osx.get_avail_phymem()
-    used = total - free
-    percent = usage_percent(used, total, _round=1)
-    return nt_sysmeminfo(total, used, free, percent)
+nt_virtmem_info = namedtuple('vmem', ' '.join([
+    # all platforms
+    'total', 'available', 'percent', 'used', 'free',
+    # OSX specific
+    'active',
+    'inactive',
+    'wired']))
 
-def swapmem_usage():
+def virtual_memory():
+    """System virtual memory as a namedtuple."""
+    total, active, inactive, wired, free = _psutil_osx.get_virtual_mem()
+    avail = inactive + free
+    used = active + inactive + wired
+    percent = usage_percent((total - avail), total, _round=1)
+    return nt_virtmem_info(total, avail, percent, used, free,
+                           active, inactive, wired)
+
+def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     total, used, free, sin, sout = _psutil_osx.get_swap_mem()
     percent = usage_percent(used, total, _round=1)

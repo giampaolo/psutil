@@ -48,7 +48,7 @@ BSD = sys.platform.startswith("freebsd")
 
 _subprocesses_started = set()
 
-def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=None, stdin=None,
+def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=None,
                         wait=False):
     """Return a subprocess.Popen object to use in tests.
     By default stdout and stderr are redirected to /dev/null and the
@@ -64,7 +64,7 @@ def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=None, stdin=None,
         cmd_ = [PYTHON, "-c", pyline]
     else:
         cmd_ = cmd
-    sproc = subprocess.Popen(cmd_, stdout=stdout,  stdin=stdin)
+    sproc = subprocess.Popen(cmd_, stdout=stdout, stderr=stderr, stdin=stdin)
     if wait:
         if cmd is None:
             while 1:
@@ -80,12 +80,11 @@ def warn(msg, warntype=RuntimeWarning):
     """Raise a warning msg."""
     warnings.warn(msg, warntype)
 
-def sh(cmdline):
+def sh(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
     """
-    p = subprocess.Popen(cmdline, shell=True, stdout=subprocess.PIPE,
-                                              stderr=subprocess.PIPE)
+    p = subprocess.Popen(cmdline, shell=True, stdout=stdout, stderr=stderr)
     stdout, stderr = p.communicate()
     if p.returncode != 0:
         raise RuntimeError(stderr)
@@ -94,6 +93,22 @@ def sh(cmdline):
     if PY3:
         stdout = str(stdout, sys.stdout.encoding)
     return stdout.strip()
+
+def which(program):
+    """Same as UNIX which command. Return None on command not found."""
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+    return None
 
 def wait_for_pid(pid, timeout=1):
     """Wait for pid to show up in the process list then return.
@@ -280,14 +295,25 @@ class TestCase(unittest.TestCase):
         x = psutil.TOTAL_PHYMEM
         assert isinstance(x, (int, long))
         assert x > 0
+        self.assertEqual(x, psutil.virtual_memory().total)
 
     def test_BOOT_TIME(self):
         x = psutil.BOOT_TIME
         assert isinstance(x, float)
         assert x > 0
+        assert x < time.time(), x
 
     def test_NUM_CPUS(self):
         self.assertEqual(psutil.NUM_CPUS, len(psutil.cpu_times(percpu=True)))
+        assert psutil.NUM_CPUS >= 1, psutil.NUM_CPUS
+
+    @skipUnless(POSIX)
+    def test_PAGESIZE(self):
+        # pagesize is used internally to perform different calculations
+        # and it's determined by using SC_PAGE_SIZE; make sure
+        # getpagesize() returns the same value.
+        import resource
+        self.assertEqual(os.sysconf("SC_PAGE_SIZE"), resource.getpagesize())
 
     def test_deprecated_apis(self):
         warnings.filterwarnings("error")
@@ -299,8 +325,12 @@ class TestCase(unittest.TestCase):
             self.assertRaises(DeprecationWarning, psutil.total_virtmem)
             self.assertRaises(DeprecationWarning, psutil.used_virtmem)
             self.assertRaises(DeprecationWarning, psutil.avail_virtmem)
+            self.assertRaises(DeprecationWarning, psutil.phymem_usage)
             self.assertRaises(DeprecationWarning, psutil.get_process_list)
             self.assertRaises(DeprecationWarning, psutil.get_process_list)
+            if LINUX:
+                self.assertRaises(DeprecationWarning, psutil.phymem_buffers)
+                self.assertRaises(DeprecationWarning, psutil.cached_phymem)
             try:
                 p.nice
             except DeprecationWarning:
@@ -314,33 +344,36 @@ class TestCase(unittest.TestCase):
         warnings.filterwarnings("ignore")
         p = psutil.Process(os.getpid())
         try:
-            self.assertEqual(psutil.total_virtmem(), psutil.swapmem_usage().total)
+            self.assertEqual(psutil.total_virtmem(), psutil.swap_memory().total)
             self.assertEqual(psutil.get_process_list(), list(psutil.process_iter()))
             self.assertEqual(p.nice, p.get_nice())
         finally:
             warnings.resetwarnings()
 
-    def test_phymem_usage(self):
-        mem = psutil.phymem_usage()
+    def test_virtual_memory(self):
+        mem = psutil.virtual_memory()
         assert mem.total > 0, mem
-        assert mem.used > 0, mem
-        assert mem.free > 0, mem
+        assert mem.available > 0, mem
         assert 0 <= mem.percent <= 100, mem
+        assert mem.used > 0, mem
+        assert mem.free >= 0, mem
+        for name in mem._fields:
+            if name != 'total':
+                value = getattr(mem, name)
+                if not value >= 0:
+                    self.fail("%r < 0 (%s)" % (name, value))
+                if value > mem.total:
+                    self.fail("%r > total (total=%s, %s=%s)" \
+                              % (name, mem.total, name, value))
 
-    def test_swapmem_usage(self):
-        mem = psutil.swapmem_usage()
+    def test_swap_memory(self):
+        mem = psutil.swap_memory()
         assert mem.total > 0, mem
         assert mem.used >= 0, mem
         assert mem.free > 0, mem
         assert 0 <= mem.percent <= 100, mem
         assert mem.sin >= 0, mem
         assert mem.sout >= 0, mem
-
-    @skipUnless(LINUX)
-    def test_phymem_buffers(self):
-        x = psutil.phymem_buffers()
-        assert isinstance(x, (int, long))
-        assert x >= 0, x
 
     def test_pid_exists(self):
         sproc = get_test_subprocess(wait=True)

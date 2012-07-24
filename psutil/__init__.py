@@ -30,7 +30,7 @@ __all__ = [
     "Process", "Popen",
     # functions
     "test", "pid_exists", "get_pid_list", "process_iter", "get_process_list",
-    "phymem_usage", "swapmem_usage"
+    "virtual_memory", "swap_memory",
     "cpu_times", "cpu_percent", "per_cpu_percent",
     "network_io_counters", "disk_io_counters",
     ]
@@ -51,8 +51,10 @@ except ImportError:
 from psutil.error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
 from psutil._compat import property, defaultdict
 from psutil._common import cached_property
-from psutil._common import (nt_disk_iostat as _nt_disk_iostat,
+from psutil._common import (deprecated as _deprecated,
+                            nt_disk_iostat as _nt_disk_iostat,
                             nt_net_iostat as _nt_net_iostat,
+                            nt_sysmeminfo as _nt_sysmeminfo,
                             isfile_strict as _isfile_strict)
 from psutil._common import (STATUS_RUNNING, STATUS_IDLE, STATUS_SLEEPING,
                             STATUS_DISK_SLEEP, STATUS_STOPPED,
@@ -93,7 +95,7 @@ __all__.extend(_psplatform.__extra__all__)
 
 NUM_CPUS = _psplatform.NUM_CPUS
 BOOT_TIME = _psplatform.BOOT_TIME
-TOTAL_PHYMEM = _psplatform.phymem_usage()[0]
+TOTAL_PHYMEM = _psplatform.TOTAL_PHYMEM
 
 
 class Process(object):
@@ -888,13 +890,62 @@ def cpu_percent(interval=0.1, percpu=False):
             ret.append(calculate(t1, t2))
         return ret
 
-def phymem_usage():
-    """Return the amount of total, used and free physical memory
-    on the system in bytes plus the percentage usage.
-    """
-    return _psplatform.phymem_usage()
+def virtual_memory():
+    """Return statistics about system memory usage as a namedtuple
+    including the following fields, expressed in bytes:
 
-def swapmem_usage():
+     - total:
+       total physical memory available.
+
+     - available:
+       the actual amount of available memory that can be given
+       instantly to processes that request more memory in bytes; this
+       is calculated by summing different memory values depending on
+       the platform (e.g. free + buffers + cached on Linux) and it is
+       supposed to be used to monitor actual memory usage in a cross
+       platform fashion.
+
+     - percent:
+       the percentage usage calculated as (total - available) / total * 100
+
+     - used:
+       memory used, calculated differently depending on the platform and
+       designed for informational purposes only:
+        OSX: active + inactive + wired
+        BSD: active + wired + cached
+        LINUX: total - free
+
+     - free:
+       memory not being used at all (zeroed) that is readily available;
+       note that this doesn't reflect the actual memory available
+       (use 'available' instead)
+
+    Platform-specific fields:
+
+     - active (UNIX):
+       memory currently in use or very recently used, and so it is in RAM.
+
+     - inactive (UNIX):
+       memory that is marked as not used.
+
+     - buffers (BSD, Linux):
+       cache for things like file system metadata.
+
+     - cached (BSD, OSX):
+       cache for various things.
+
+     - wired (OSX, BSD):
+       memory that is marked to always stay in RAM. It is never moved to disk.
+
+     - shared (BSD):
+       memory that may be simultaneously accessed by multiple processes.
+
+    The sum of 'used' and 'available' does not necessarily equal total.
+    On Windows 'available' and 'free' are the same.
+    """
+    return _psplatform.virtual_memory()
+
+def swap_memory():
     """Return system swap memory statistics as a namedtuple including
     the following attributes:
 
@@ -907,7 +958,7 @@ def swapmem_usage():
 
     'sin' and 'sout' on Windows are meaningless and always set to 0.
     """
-    return _psplatform.swapmem_usage()
+    return _psplatform.swap_memory()
 
 def disk_usage(path):
     """Return disk usage statistics about the given path as a namedtuple
@@ -988,23 +1039,6 @@ def get_users():
     """
     return _psplatform.get_system_users()
 
-# http://goo.gl/jYLvf
-def _deprecated(replacement=None):
-    """A decorator which can be used to mark functions as deprecated."""
-    def outer(fun):
-        msg = "psutil.%s is deprecated" % fun.__name__
-        if replacement is not None:
-            msg += "; use %s instead" % replacement
-        if fun.__doc__ is None:
-            fun.__doc__ = msg
-
-        @functools.wraps(fun)
-        def inner(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            return fun(*args, **kwargs)
-
-        return inner
-    return outer
 
 # --- deprecated functions
 
@@ -1015,9 +1049,18 @@ def get_process_list():
     """
     return list(process_iter())
 
-@_deprecated("psutil.swapmem_usage()")
+@_deprecated()
+def phymem_usage():
+    """Return the amount of total, used and free physical memory
+    on the system in bytes plus the percentage usage.
+    Deprecated by psutil.virtual_memory().
+    """
+    mem = virtual_memory()
+    return _nt_sysmeminfo(mem.total, mem.used, mem.free, mem.percent)
+
+@_deprecated("psutil.swap_memory()")
 def virtmem_usage():
-    return swapmem_usage()
+    return swap_memory()
 
 @_deprecated("psutil.phymem_usage().free")
 def avail_phymem():

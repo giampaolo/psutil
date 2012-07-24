@@ -11,13 +11,13 @@ Summary
 =======
 
 psutil is a module providing an interface for retrieving information on all
-running processes and system utilization (CPU, disk, memory) in a portable way
-by using Python, implementing many functionalities offered by command line
-tools such as:  **ps, top, df, kill, free, lsof, free, netstat, ifconfig, nice,
-ionice, iostato, iotop, uptime, tty, taskset**.
+running processes and system utilization (CPU, memory, disks, network, users) in
+a portable way by using Python, implementing many functionalities offered by
+command line tools such as:  **ps, top, df, kill, free, lsof, free, netstat,
+ifconfig, nice, ionice, iostat, iotop, uptime, pidof, tty, who, taskset, pmap**.
 
 It currently supports **Linux**, **Windows**, **OSX** and **FreeBSD** both
-**32-bit** and  **64-bit** with Python versions from **2.4** to **3.3** by using
+**32-bit** and **64-bit** with Python versions from **2.4** to **3.3** by using
 a single code base.
 
 ==============
@@ -51,10 +51,13 @@ cputimes(user=3961.46, nice=169.729, system=2150.659, idle=16900.540,
 Memory
 ======
 
->>> psutil.phymem_usage()
-usage(total=4153868288, used=2854199296, free=1299668992, percent=34.6)
->>> psutil.swapmem_usage()
-usage(total=2097147904, used=4096, free=2097143808, percent=0.0)
+>>> psutil.virtual_memory()
+vmem(total=8374149120L, available=2081050624L, percent=75.1, used=8074080256L,
+     free=300068864L, active=3294920704, inactive=1361616896, buffers=529895424L,
+     cached=1251086336)
+>>> psutil.swap_memory()
+swap(total=2097147904L, used=296128512L, free=1801019392L, percent=14.1,
+     sin=304193536, sout=677842944)
 >>>
 
 

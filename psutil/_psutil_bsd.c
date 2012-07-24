@@ -574,72 +574,50 @@ get_process_memory_info(PyObject* self, PyObject* args)
 
 
 /*
- * Return a Python integer indicating the total amount of physical memory
- * in bytes.
+ * Return virtual memory usage statistics.
  */
 static PyObject*
-get_total_phymem(PyObject* self, PyObject* args)
+get_virtual_mem(PyObject* self, PyObject* args)
 {
-    long total_phymem;
-    int mib[2];
-    size_t len;
+    unsigned int   total, active, inactive, wired, cached, free, buffers;
+    size_t		   size = sizeof(total);
+	struct vmtotal vm;
+	int            mib[] = {CTL_VM, VM_METER};
+	long           pagesize = getpagesize();
 
-    mib[0] = CTL_HW;
-    mib[1] = HW_PHYSMEM;
-    len = sizeof(total_phymem);
+    if (sysctlbyname("vm.stats.vm.v_page_count", &total, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.vm.v_active_count", &active, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.vm.v_inactive_count", &inactive, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.vm.v_wire_count", &wired, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.vm.v_cache_count", &cached, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.vm.v_free_count", &free, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vfs.bufspace", &buffers, &size, NULL, 0))
+        goto error;
 
-    if (sysctl(mib, 2, &total_phymem, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
-        return NULL;
-    }
+    size = sizeof(vm);
+    if (sysctl(mib, 2, &vm, &size, NULL, 0) != 0)
+        goto error;
 
-    return Py_BuildValue("l", total_phymem);
-}
+    return Py_BuildValue("KKKKKKKK",
+        (unsigned long long) total    * pagesize,
+        (unsigned long long) free     * pagesize,
+        (unsigned long long) active   * pagesize,
+        (unsigned long long) inactive * pagesize,
+        (unsigned long long) wired    * pagesize,
+        (unsigned long long) cached   * pagesize,
+        (unsigned long long) buffers,
+        (unsigned long long) (vm.t_vmshr + vm.t_rmshr) * pagesize  // shared
+    );
 
-
-/*
- * Return a Python long indicating the amount of available physical memory in
- * bytes.
- */
-static PyObject*
-get_avail_phymem(PyObject* self, PyObject* args)
-{
-    unsigned long v_inactive_count = 0;
-    unsigned long v_cache_count = 0;
-    unsigned long v_free_count = 0;
-    long total_mem = 0;
-    long long avail_mem = 0;
-    size_t size = sizeof(unsigned long);
-    size_t psize = sizeof(total_mem);
-    int pagesize = getpagesize();
-
-    if (sysctlbyname("hw.physmem", &total_mem, &psize, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
-        return NULL;
-    }
-
-    if (sysctlbyname("vm.stats.vm.v_inactive_count", &v_inactive_count,
-                     &size, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
-        return NULL;
-    }
-
-    if (sysctlbyname("vm.stats.vm.v_cache_count",
-                     &v_cache_count, &size, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
-        return NULL;
-    }
-
-    if (sysctlbyname("vm.stats.vm.v_free_count",
-                     &v_free_count, &size, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
-        return NULL;
-    }
-
-    avail_mem = (v_inactive_count + v_cache_count + v_free_count) * pagesize;
-    // used_mem = total_mem - avail_mem;
-
-    return Py_BuildValue("L", avail_mem);
+error:
+    PyErr_SetFromErrno(0);
+    return NULL;
 }
 
 
@@ -1702,10 +1680,8 @@ PsutilMethods[] =
          "Returns a list of PIDs currently running on the system"},
      {"get_num_cpus", get_num_cpus, METH_VARARGS,
            "Return number of CPUs on the system"},
-     {"get_total_phymem", get_total_phymem, METH_VARARGS,
-         "Return the total amount of physical memory, in bytes"},
-     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
-         "Return the amount of available physical memory, in bytes"},
+     {"get_virtual_mem", get_virtual_mem, METH_VARARGS,
+         "Return system virtual memory usage statistics"},
      {"get_swap_mem", get_swap_mem, METH_VARARGS,
          "Return swap mem stats"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,

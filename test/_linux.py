@@ -20,29 +20,18 @@ from psutil._compat import PY3
 import psutil
 
 
+TOLERANCE = 200 * 1024  # 200 KB
+
+
 class LinuxSpecificTestCase(unittest.TestCase):
 
-    def test_cached_phymem(self):
-        # test psutil.cached_phymem against "cached" column of free
-        # command line utility
-        p = subprocess.Popen("free", shell=1, stdout=subprocess.PIPE)
-        output = p.communicate()[0].strip()
-        if PY3:
-            output = str(output, sys.stdout.encoding)
-        free_cmem = int(output.split('\n')[1].split()[6])
-        psutil_cmem = psutil.cached_phymem() / 1024
-        self.assertEqual(free_cmem, psutil_cmem)
-
-    def test_phymem_buffers(self):
-        # test psutil.phymem_buffers against "buffers" column of free
-        # command line utility
-        p = subprocess.Popen("free", shell=1, stdout=subprocess.PIPE)
-        output = p.communicate()[0].strip()
-        if PY3:
-            output = str(output, sys.stdout.encoding)
-        free_cmem = int(output.split('\n')[1].split()[5])
-        psutil_cmem = psutil.phymem_buffers() / 1024
-        self.assertEqual(free_cmem, psutil_cmem)
+    def assert_eq_w_tol(self, first, second, tolerance):
+        difference = abs(first - second)
+        if difference <= tolerance:
+            return
+        msg = '%r != %r within %r delta (%r difference)' \
+              % (first, second, tolerance, difference)
+        raise AssertionError(msg)
 
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
@@ -85,6 +74,47 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertEqual(int(rss) * 1024, this.rss)
             # test only rwx chars, ignore 's' and 'p'
             self.assertEqual(mode[:3], this.perms[:3])
+
+    def test_vmem_total(self):
+        lines = sh('free').split('\n')[1:]
+        total = int(lines[0].split()[1]) * 1024
+        self.assertEqual(total, psutil.virtual_memory().total)
+
+    def test_vmem_used(self):
+        lines = sh('free').split('\n')[1:]
+        used = int(lines[0].split()[2]) * 1024
+        self.assert_eq_w_tol(used, psutil.virtual_memory().used, TOLERANCE)
+
+    def test_vmem_free(self):
+        lines = sh('free').split('\n')[1:]
+        free = int(lines[0].split()[3]) * 1024
+        self.assert_eq_w_tol(free, psutil.virtual_memory().free, TOLERANCE)
+
+    def test_vmem_buffers(self):
+        lines = sh('free').split('\n')[1:]
+        buffers = int(lines[0].split()[5]) * 1024
+        self.assert_eq_w_tol(buffers, psutil.virtual_memory().buffers, TOLERANCE)
+
+    def test_vmem_cached(self):
+        lines = sh('free').split('\n')[1:]
+        cached = int(lines[0].split()[6]) * 1024
+        self.assert_eq_w_tol(cached, psutil.virtual_memory().cached, TOLERANCE)
+
+    def test_swapmem_total(self):
+        lines = sh('free').split('\n')[1:]
+        total = int(lines[2].split()[1]) * 1024
+        self.assertEqual(total, psutil.swap_memory().total)
+
+    def test_swapmem_used(self):
+        lines = sh('free').split('\n')[1:]
+        used = int(lines[2].split()[2]) * 1024
+        self.assert_eq_w_tol(used, psutil.swap_memory().used, TOLERANCE)
+
+    def test_swapmem_free(self):
+        lines = sh('free').split('\n')[1:]
+        free = int(lines[2].split()[3]) * 1024
+        self.assert_eq_w_tol(free, psutil.swap_memory().free, TOLERANCE)
+
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()

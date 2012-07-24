@@ -13,11 +13,20 @@ import subprocess
 import time
 import re
 import sys
+import os
 
 import psutil
 
 from psutil._compat import PY3
-from test_psutil import reap_children, get_test_subprocess, sh
+from test_psutil import DEVNULL
+from test_psutil import (reap_children, get_test_subprocess, sh, which,
+                         skipUnless)
+
+
+PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+TOLERANCE = 200 * 1024  # 200 KB
+MUSE_AVAILABLE = which('muse')
+
 
 def sysctl(cmdline):
     """Expects a sysctl command with an argument and parse the result
@@ -30,18 +39,15 @@ def sysctl(cmdline):
     except ValueError:
         return result
 
-def parse_sysctl_vmtotal(output):
-    """Parse sysctl vm.vmtotal output returning total and free memory
-    values.
-    """
-    line = output.split('\n')[4]  # our line of interest
-    mobj = re.match(r'Virtual\s+Memory.*Total:\s+(\d+)K,\s+Active\s+(\d+)K.*', line)
-    total, active = mobj.groups()
-    # values are represented in kilo bytes
-    total = int(total) * 1024
-    active = int(active) * 1024
-    free = total - active
-    return total, free
+def muse(field):
+    """Thin wrapper around 'muse' cmdline utility."""
+    out = sh('muse', stderr=DEVNULL)
+    for line in out.split('\n'):
+        if line.startswith(field):
+            break
+    else:
+        raise ValueError("line not found")
+    return int(line.split()[1])
 
 
 class BSDSpecificTestCase(unittest.TestCase):
@@ -52,9 +58,13 @@ class BSDSpecificTestCase(unittest.TestCase):
     def tearDown(self):
         reap_children()
 
-    def test_TOTAL_PHYMEM(self):
-        sysctl_hwphymem = sysctl('sysctl hw.physmem')
-        self.assertEqual(sysctl_hwphymem, psutil.TOTAL_PHYMEM)
+    def assert_eq_w_tol(self, first, second, tolerance):
+        difference = abs(first - second)
+        if difference <= tolerance:
+            return
+        msg = '%r != %r within %r delta (%r difference)' \
+              % (first, second, tolerance, difference)
+        raise AssertionError(msg)
 
     def test_BOOT_TIME(self):
         s = sysctl('sysctl kern.boottime')
@@ -62,26 +72,6 @@ class BSDSpecificTestCase(unittest.TestCase):
         s = s[:s.find(',')]
         btime = int(s)
         self.assertEqual(btime, psutil.BOOT_TIME)
-
-    def test_avail_phymem(self):
-        # This test is not particularly accurate and may fail if the OS is
-        # consuming memory for other applications.
-        # We just want to test that the difference between psutil result
-        # and sysctl's is not too high.
-        _sum = sum((sysctl("sysctl vm.stats.vm.v_inactive_count"),
-                    sysctl("sysctl vm.stats.vm.v_cache_count"),
-                    sysctl("sysctl vm.stats.vm.v_free_count")
-                   ))
-        _pagesize = sysctl("sysctl hw.pagesize")
-        sysctl_avail_phymem = _sum * _pagesize
-        psutil_avail_phymem =  psutil.phymem_usage().free
-        difference = abs(psutil_avail_phymem - sysctl_avail_phymem)
-        # On my system both sysctl and psutil report the same values.
-        # Let's use a tollerance of 0.5 MB and consider the test as failed
-        # if we go over it.
-        if difference > (0.5 * 2**20):
-            self.fail("sysctl=%s; psutil=%s; difference=%s;" %(
-                      sysctl_avail_phymem, psutil_avail_phymem, difference))
 
     def test_process_create_time(self):
         cmdline = "ps -o lstart -p %s" %self.pid
@@ -135,6 +125,74 @@ class BSDSpecificTestCase(unittest.TestCase):
             self.assertEqual(int(res), map.rss)
             if not map.path.startswith('['):
                 self.assertEqual(fields[10], map.path)
+
+    # --- virtual_memory(); tests against sysctl
+
+    def test_vmem_total(self):
+        syst = sysctl("sysctl vm.stats.vm.v_page_count") * PAGESIZE
+        self.assertEqual(psutil.virtual_memory().total, syst)
+
+    def test_vmem_active(self):
+        syst = sysctl("vm.stats.vm.v_active_count") * PAGESIZE
+        self.assert_eq_w_tol(psutil.virtual_memory().active, syst, TOLERANCE)
+
+    def test_vmem_inactive(self):
+        syst = sysctl("vm.stats.vm.v_inactive_count") * PAGESIZE
+        self.assert_eq_w_tol(psutil.virtual_memory().inactive, syst, TOLERANCE)
+
+    def test_vmem_wired(self):
+        syst = sysctl("vm.stats.vm.v_wire_count") * PAGESIZE
+        self.assert_eq_w_tol(psutil.virtual_memory().wired, syst, TOLERANCE)
+
+    def test_vmem_cached(self):
+        syst = sysctl("vm.stats.vm.v_cache_count") * PAGESIZE
+        self.assert_eq_w_tol(psutil.virtual_memory().cached, syst, TOLERANCE)
+
+    def test_vmem_free(self):
+        syst = sysctl("vm.stats.vm.v_free_count") * PAGESIZE
+        self.assert_eq_w_tol(psutil.virtual_memory().free, syst, TOLERANCE)
+
+    def test_vmem_buffers(self):
+        syst = sysctl("vfs.bufspace")
+        self.assert_eq_w_tol(psutil.virtual_memory().buffers, syst, TOLERANCE)
+
+    # --- virtual_memory(); tests against muse
+
+    @skipUnless(MUSE_AVAILABLE)
+    def test_total(self):
+        num = muse('Total')
+        self.assertEqual(psutil.virtual_memory().total, num)
+
+    @skipUnless(MUSE_AVAILABLE)
+    def test_active(self):
+        num = muse('Active')
+        self.assert_eq_w_tol(psutil.virtual_memory().active, num, TOLERANCE)
+
+    @skipUnless(MUSE_AVAILABLE)
+    def test_inactive(self):
+        num = muse('Inactive')
+        self.assert_eq_w_tol(psutil.virtual_memory().inactive, num, TOLERANCE)
+
+    @skipUnless(MUSE_AVAILABLE)
+    def test_wired(self):
+        num = muse('Wired')
+        self.assert_eq_w_tol(psutil.virtual_memory().wired, num, TOLERANCE)
+
+    @skipUnless(MUSE_AVAILABLE)
+    def test_cached(self):
+        num = muse('Cache')
+        self.assert_eq_w_tol(psutil.virtual_memory().cached, num, TOLERANCE)
+
+    @skipUnless(MUSE_AVAILABLE)
+    def test_free(self):
+        num = muse('Free')
+        self.assert_eq_w_tol(psutil.virtual_memory().free, num, TOLERANCE)
+
+    @skipUnless(MUSE_AVAILABLE)
+    def test_buffers(self):
+        num = muse('Buffer')
+        self.assert_eq_w_tol(psutil.virtual_memory().buffers, num, TOLERANCE)
+
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()

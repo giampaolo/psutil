@@ -10,10 +10,6 @@ NEW FEATURES
  * Issue 220: (BSD) get_connections() has been rewritten in C and no longer
    requires lsof.
  * Issue 222: (OSX) add support for process cwd.
- * Issue 256: new psutil.swapmem_usage(), deprecating psutil.virtmem_usage() and
-   also providing stats about pswpin / pswpout counters.
-   On BSD and Windows virtmem_usage() now returns information about swap memory
-   instead of virtual memory.
  * Issue 261: process extended memory info.
  * Issue 295: (OSX) process executable path is now determined by asking the OS
    instead of being guessed from process cmdline.
@@ -40,6 +36,29 @@ NEW FEATURES
     - get_num_handles()
     - get_io_counters()
  * Issue 305: add examples/netstat.py script.
+ * Issue 311: system memory functions has been refactorized and rewritten and
+   now provide a more detailed and consistent representation of the system
+   memory.
+   New psutil.virtual_memory() function provides the following memory amounts:
+    - total
+    - available
+    - percent
+    - used
+    - active (UNIX)
+    - inactive (UNIX)
+    - buffers (BSD, Linux)
+    - cached (BSD, OSX)
+    - wired (OSX, BSD)
+    - shared (BSD)
+   New psutil.swap_memory() provides:
+    - total
+    - used
+    - free
+    - percent
+    - sin (no. of bytes the system has swapped in from disk (cumulative))
+    - sout (no. of bytes the system has swapped out from disk (cumulative))
+   All old memory-related functions are deprecated.
+   Also two new example scripts were added:  free.py and meminfo.py.
 
 BUGFIXES
 
@@ -59,7 +78,10 @@ BUGFIXES
 
 API CHANGES
 
- * psutil.virtmem_usage() is deprecated in favor of psutil.swapmem_usage()
+ * psutil.phymem_usage() is deprecated             (use psutil.virtual_memory())
+ * psutil.virtmem_usage() is deprecated            (use psutil.swap_memory())
+ * psutil.phymem_buffers() on Linux is deprecated  (use psutil.virtual_memory())
+ * psutil.cached_phymem() on Linux is deprecated   (use psutil.virtual_memory())
  * (Windows and BSD) psutil.virtmem_usage() now returns information about swap
    memory instead of virtual memory.
 

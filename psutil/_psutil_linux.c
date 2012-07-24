@@ -144,19 +144,23 @@ error:
 
 
 /*
- * Return physical memory usage as a (total, free, buffer) tuple.
+ * A wrapper around sysinfo(), return system memory usage statistics.
  */
 static PyObject*
-get_physmem(PyObject* self, PyObject* args)
+get_sysinfo(PyObject* self, PyObject* args)
 {
     struct sysinfo info;
     if (sysinfo(&info) != 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-    return Py_BuildValue("(KKK)",
-        info.totalram *(unsigned long long)info.mem_unit,
-        info.freeram * (unsigned long long)info.mem_unit,
-        info.bufferram * (unsigned long long)info.mem_unit);
+    return Py_BuildValue("(KKKKKK)",
+        (unsigned long long)info.totalram  * info.mem_unit,   // total
+        (unsigned long long)info.freeram   * info.mem_unit,   // free
+        (unsigned long long)info.bufferram * info.mem_unit,   // buffer
+        (unsigned long long)info.sharedram * info.mem_unit,   // shared
+        (unsigned long long)info.totalswap * info.mem_unit,   // swap tot
+        (unsigned long long)info.freeswap  * info.mem_unit);  // swap free
+    // TODO: we can also determine BOOT_TIME here
 }
 
 
@@ -260,8 +264,8 @@ PsutilMethods[] =
      {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
         "Return disk mounted partitions as a list of tuples including "
         "device, mount point and filesystem type"},
-     {"get_physmem", get_physmem, METH_VARARGS,
-        "The physical memory usage as a (total, free, buffer) tuple."},
+     {"get_sysinfo", get_sysinfo, METH_VARARGS,
+        "A wrapper around sysinfo(), return system memory usage statistics"},
      {"get_process_cpu_affinity", get_process_cpu_affinity, METH_VARARGS,
         "Return process CPU affinity as a Python long (the bitmask)."},
      {"set_process_cpu_affinity", set_process_cpu_affinity, METH_VARARGS,

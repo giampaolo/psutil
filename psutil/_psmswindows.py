@@ -29,6 +29,7 @@ __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
 
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
 BOOT_TIME = _psutil_mswindows.get_system_uptime()
+TOTAL_PHYMEM = _psutil_mswindows.get_virtual_mem()[0]
 WAIT_TIMEOUT = 0x00000102 # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED])
 
@@ -59,20 +60,30 @@ def _convert_raw_path(s):
 
 # --- public functions
 
-def phymem_usage():
-    """Physical system memory as a (total, used, free) tuple."""
-    all = _psutil_mswindows.get_system_phymem()
-    total, free, total_pagef, avail_pagef, total_virt, free_virt, percent = all
-    used = total - free
-    return nt_sysmeminfo(total, used, free, round(percent, 1))
+nt_virtmem_info = namedtuple('vmem', ' '.join([
+    # all platforms
+    'total', 'available', 'percent', 'used', 'free']))
 
-def swapmem_usage():
-    """Virtual system memory as a (total, used, free) tuple."""
-    all = _psutil_mswindows.get_system_phymem()
-    total, free, total_pagef, avail_pagef, total_virt, free_virt, _ = all
-    used = total_pagef - avail_pagef
-    percent = usage_percent(used, total_pagef, _round=1)
-    return nt_sysmeminfo(total_pagef, used, avail_pagef, percent)
+def virtual_memory():
+    """System virtual memory as a namedtuple."""
+    mem = _psutil_mswindows.get_virtual_mem()
+    totphys, availphys, totpagef, availpagef, totvirt, freevirt = mem
+    #
+    total = totphys
+    avail = availphys
+    free = availphys
+    used = total - avail
+    percent = usage_percent((total - avail), total, _round=1)
+    return nt_virtmem_info(total, avail, percent, used, free)
+
+def swap_memory():
+    """Swap system memory as a (total, used, free, sin, sout) tuple."""
+    mem = _psutil_mswindows.get_virtual_mem()
+    total = mem[2]
+    free = mem[3]
+    used = total - free
+    percent = usage_percent(used, total, _round=1)
+    return nt_swapmeminfo(total, used, free, percent, 0, 0)
 
 def get_disk_usage(path):
     """Return disk usage associated with path."""

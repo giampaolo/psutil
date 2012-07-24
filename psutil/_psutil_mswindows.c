@@ -691,7 +691,7 @@ get_process_memory_info_2(PyObject* self, PyObject* args)
  * in bytes.
  */
 static PyObject*
-get_system_phymem(PyObject* self, PyObject* args)
+get_virtual_mem(PyObject* self, PyObject* args)
 {
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
@@ -700,15 +700,14 @@ get_system_phymem(PyObject* self, PyObject* args)
         return PyErr_SetFromWindowsErr(0);
     }
 
-    return Py_BuildValue("(LLLLLLk)",
-                                memInfo.ullTotalPhys,      // total
-                                memInfo.ullAvailPhys,      // avail
-                                memInfo.ullTotalPageFile,  // total page file
-                                memInfo.ullAvailPageFile,  // avail page file
-                                memInfo.ullTotalVirtual,   // total virtual
-                                memInfo.ullAvailVirtual,   // avail virtual
-                                memInfo.dwMemoryLoad       // percent
-                                );
+    return Py_BuildValue("(LLLLLL)",
+        memInfo.ullTotalPhys,      // total
+        memInfo.ullAvailPhys,      // avail
+        memInfo.ullTotalPageFile,  // total page file
+        memInfo.ullAvailPageFile,  // avail page file
+        memInfo.ullTotalVirtual,   // total virtual
+        memInfo.ullAvailVirtual    // avail virtual
+    );
 }
 
 
@@ -2790,7 +2789,7 @@ PsutilMethods[] =
         "Returns the number of CPUs on the system"},
     {"get_system_uptime", get_system_uptime, METH_VARARGS,
         "Return system uptime"},
-    {"get_system_phymem", get_system_phymem, METH_VARARGS,
+    {"get_virtual_mem", get_virtual_mem, METH_VARARGS,
         "Return the total amount of physical memory, in bytes"},
     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
         "Return system per-cpu times as a list of tuples"},

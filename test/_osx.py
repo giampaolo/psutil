@@ -13,11 +13,16 @@ import subprocess
 import time
 import sys
 import os
+import re
 
 import psutil
 
 from psutil._compat import PY3
 from test_psutil import reap_children, get_test_subprocess, sh
+
+
+PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+TOLERANCE = 200 * 1024  # 200 KB
 
 
 def sysctl(cmdline):
@@ -33,6 +38,16 @@ def sysctl(cmdline):
     except ValueError:
         return result
 
+def vm_stat(field):
+    """Wrapper around 'vm_stat' cmdline utility."""
+    out = sh('vm_stat')
+    for line in out.split('\n'):
+        if field in line:
+            break
+    else:
+        raise ValueError("line not found")
+    return int(re.search('\d+', line).group(0)) * PAGESIZE
+
 
 class OSXSpecificTestCase(unittest.TestCase):
 
@@ -42,20 +57,13 @@ class OSXSpecificTestCase(unittest.TestCase):
     def tearDown(self):
         reap_children()
 
-    def test_TOTAL_PHYMEM(self):
-        sysctl_hwphymem = sysctl('sysctl hw.memsize')
-        self.assertEqual(sysctl_hwphymem, psutil.TOTAL_PHYMEM)
-
-    def test_total_swapmem(self):
-        tot1 = psutil.swapmem_usage().total
-        tot2 = 0
-        # OSX uses multiple cache files:
-        # http://en.wikipedia.org/wiki/Paging#OS_X
-        for name in os.listdir("/var/vm/"):
-            file = os.path.join("/var/vm", name)
-            if os.path.isfile(file):
-                tot2 += os.path.getsize(file)
-        self.assertEqual(tot1, tot2)
+    def assert_eq_w_tol(self, first, second, tolerance):
+        difference = abs(first - second)
+        if difference <= tolerance:
+            return
+        msg = '%r != %r within %r delta (%r difference)' \
+              % (first, second, tolerance, difference)
+        raise AssertionError(msg)
 
     def test_process_create_time(self):
         cmdline = "ps -o lstart -p %s" %self.pid
@@ -95,6 +103,49 @@ class OSXSpecificTestCase(unittest.TestCase):
                 self.fail("psutil=%s, df=%s" % usage.free, free)
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 self.fail("psutil=%s, df=%s" % usage.used, used)
+
+    # --- virtual mem
+
+    def test_vmem_total(self):
+        sysctl_hwphymem = sysctl('sysctl hw.memsize')
+        self.assertEqual(sysctl_hwphymem, psutil.TOTAL_PHYMEM)
+
+    def test_vmem_free(self):
+        num = vm_stat("free")
+        self.assert_eq_w_tol(psutil.virtual_memory().free, num, TOLERANCE)
+
+    def test_vmem_active(self):
+        num = vm_stat("active")
+        self.assert_eq_w_tol(psutil.virtual_memory().active, num, TOLERANCE)
+
+    def test_vmem_inactive(self):
+        num = vm_stat("inactive")
+        self.assert_eq_w_tol(psutil.virtual_memory().inactive, num, TOLERANCE)
+
+    def test_vmem_wired(self):
+        num = vm_stat("wired")
+        self.assert_eq_w_tol(psutil.virtual_memory().wired, num, TOLERANCE)
+
+    # --- swap mem
+
+    def test_swapmem_sin(self):
+        num = vm_stat("Pageins")
+        self.assertEqual(psutil.swap_memory().sin, num)
+
+    def test_swapmem_sout(self):
+        num = vm_stat("Pageouts")
+        self.assertEqual(psutil.swap_memory().sout, num)
+
+    def test_swapmem_total(self):
+        tot1 = psutil.swap_memory().total
+        tot2 = 0
+        # OSX uses multiple cache files:
+        # http://en.wikipedia.org/wiki/Paging#OS_X
+        for name in os.listdir("/var/vm/"):
+            file = os.path.join("/var/vm", name)
+            if os.path.isfile(file):
+                tot2 += os.path.getsize(file)
+        self.assertEqual(tot1, tot2)
 
 
 if __name__ == '__main__':

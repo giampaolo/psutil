@@ -33,8 +33,7 @@ static PyObject* get_process_memory_maps(PyObject* self, PyObject* args);
 // --- system-related functions
 static PyObject* get_pid_list(PyObject* self, PyObject* args);
 static PyObject* get_num_cpus(PyObject* self, PyObject* args);
-static PyObject* get_total_phymem(PyObject* self, PyObject* args);
-static PyObject* get_avail_phymem(PyObject* self, PyObject* args);
+static PyObject* get_virtual_mem(PyObject* self, PyObject* args);
 static PyObject* get_swap_mem(PyObject* self, PyObject* args);
 static PyObject* get_system_cpu_times(PyObject* self, PyObject* args);
 static PyObject* get_system_per_cpu_times(PyObject* self, PyObject* args);

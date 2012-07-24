@@ -107,23 +107,19 @@ def print_header(procs_status, num_procs):
         dashes, empty_dashes = get_dashes(perc)
         print_line(" CPU%-2s [%s%s] %5s%%" % (cpu_num, dashes, empty_dashes,
                                               perc))
-    # physmem usage (on linux we include buffers and cached values
-    # to match htop results)
-    phymem = psutil.phymem_usage()
-    dashes, empty_dashes = get_dashes(phymem.percent)
-    buffers = getattr(psutil, 'phymem_buffers', lambda: 0)()
-    cached = getattr(psutil, 'cached_phymem', lambda: 0)()
-    used = phymem.total - (phymem.free + buffers + cached)
+    mem = psutil.virtual_memory()
+    dashes, empty_dashes = get_dashes(mem.percent)
+    used = mem.total - mem.available
     line = " Mem   [%s%s] %5s%% %6s/%s" % (
         dashes, empty_dashes,
-        phymem.percent,
+        mem.percent,
         str(int(used / 1024 / 1024)) + "M",
-        str(int(phymem.total / 1024 / 1024)) + "M"
+        str(int(mem.total / 1024 / 1024)) + "M"
     )
     print_line(line)
 
     # swap usage
-    swap = psutil.swapmem_usage()
+    swap = psutil.swap_memory()
     dashes, empty_dashes = get_dashes(swap.percent)
     line = " Swap  [%s%s] %5s%% %6s/%s" % (
         dashes, empty_dashes,

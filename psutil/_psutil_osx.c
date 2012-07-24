@@ -540,42 +540,41 @@ get_process_num_ctx_switches(PyObject* self, PyObject* args)
 
 
 /*
- * Return a Python integer indicating the total amount of physical memory
- * in bytes.
+ * Return system virtual memory stats
  */
 static PyObject*
-get_total_phymem(PyObject* self, PyObject* args)
+get_virtual_mem(PyObject* self, PyObject* args)
 {
-    int mib[2];
-    uint64_t total_phymem;
-    size_t len;
 
-    mib[0] = CTL_HW;
-    mib[1] = HW_MEMSIZE;
-    len = sizeof(total_phymem);
-
-    if (sysctl(mib, 2, &total_phymem, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
-        return NULL;
-    }
-    return Py_BuildValue("L", total_phymem);
-}
-
-
-/*
- * Return a Python long indicating the amount of available physical memory in
- * bytes.
- */
-static PyObject*
-get_avail_phymem(PyObject* self, PyObject* args)
-{
-    vm_statistics_data_t vmstat;
+    int      mib[2];
+    uint64_t total;
+    size_t   len = sizeof(total);
+    vm_statistics_data_t vm;
     int pagesize = getpagesize();
 
-    if (!psutil_sys_vminfo(&vmstat)) {
+    // physical mem
+    mib[0] = CTL_HW;
+    mib[1] = HW_MEMSIZE;
+    if (sysctl(mib, 2, &total, &len, NULL, 0)) {
+        if (errno != 0)
+            PyErr_SetFromErrno(0);
+        else
+            PyErr_Format(PyExc_RuntimeError, "sysctl(HW_MEMSIZE) failed");
         return NULL;
     }
-    return Py_BuildValue("L", (unsigned long long)vmstat.free_count * pagesize);
+
+    // vm
+    if (!psutil_sys_vminfo(&vm)) {
+        return NULL;
+    }
+
+    return Py_BuildValue("KKKKK",
+        total,
+        (unsigned long long) vm.active_count * pagesize,
+        (unsigned long long) vm.inactive_count * pagesize,
+        (unsigned long long) vm.wire_count * pagesize,
+        (unsigned long long) vm.free_count * pagesize
+    );
 }
 
 
@@ -595,14 +594,17 @@ get_swap_mem(PyObject* self, PyObject* args)
     mib[1] = VM_SWAPUSAGE;
     size = sizeof(totals);
     if (sysctl(mib, 2, &totals, &size, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
+        if (errno != 0)
+            PyErr_SetFromErrno(0);
+        else
+            PyErr_Format(PyExc_RuntimeError, "sysctl(VM_SWAPUSAGE) failed");
         return NULL;
     }
     if (!psutil_sys_vminfo(&vmstat)) {
         return NULL;
     }
 
-    return Py_BuildValue("LLLLL",
+    return Py_BuildValue("LLLKK",
                          totals.xsu_total,
                          totals.xsu_used,
                          totals.xsu_avail,
@@ -1688,10 +1690,8 @@ PsutilMethods[] =
          "Returns a list of PIDs currently running on the system"},
      {"get_num_cpus", get_num_cpus, METH_VARARGS,
            "Return number of CPUs on the system"},
-     {"get_total_phymem", get_total_phymem, METH_VARARGS,
-         "Return the total amount of physical memory, in bytes"},
-     {"get_avail_phymem", get_avail_phymem, METH_VARARGS,
-         "Return the amount of available physical memory, in bytes"},
+     {"get_virtual_mem", get_virtual_mem, METH_VARARGS,
+         "Return system virtual memory stats"},
      {"get_swap_mem", get_swap_mem, METH_VARARGS,
          "Return stats about swap memory, in bytes"},
      {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,

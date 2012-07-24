@@ -87,6 +87,7 @@ _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 _TERMINAL_MAP = _psposix._get_terminal_map()
 BOOT_TIME = _get_boot_time()
 NUM_CPUS = _get_num_cpus()
+TOTAL_PHYMEM = _psutil_linux.get_sysinfo()[0]
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
 IOPRIO_CLASS_NONE = 0
 IOPRIO_CLASS_RT = 1
@@ -109,57 +110,45 @@ _TCP_STATES_TABLE = {"01" : "ESTABLISHED",
 
 # --- system memory functions
 
-def cached_phymem():
-    """Return the amount of cached memory on the system, in bytes.
-    This reflects the "cached" column of free command line utility.
-    """
+nt_virtmem_info = namedtuple('vmem', ' '.join([
+    # all platforms
+    'total', 'available', 'percent', 'used', 'free',
+    # linux specific
+    'active',
+    'inactive',
+    'buffers',
+    'cached']))
+
+def virtual_memory():
+    total, free, buffers, shared, _, _ = _psutil_linux.get_sysinfo()
+    cached = active = inactive = None
     f = open('/proc/meminfo', 'r')
     try:
         for line in f:
             if line.startswith('Cached:'):
-                return int(line.split()[1]) * 1024
-        raise RuntimeError("line not found")
-    finally:
-        f.close()
-
-def phymem_buffers():
-    """Return the amount of physical memory buffers used by the
-    kernel in bytes.
-    This reflects the "buffers" column of free command line utility.
-    """
-    total, free, buffers = _psutil_linux.get_physmem()
-    return buffers
-
-def phymem_usage():
-    """Return physical memory usage statistics as a namedutple including
-    tota, used, free and percent usage.
-    """
-    # total, used and free values are matched against free cmdline utility
-    # the percentage matches top/htop and gnome-system-monitor
-    total, free, buffers = _psutil_linux.get_physmem()
-    cached = cached_phymem()
-    used = total - free
-    percent = usage_percent(total - (free + buffers + cached), total, _round=1)
-    return nt_sysmeminfo(total, used, free, percent)
-
-def swapmem_usage():
-    f = open('/proc/meminfo', 'r')
-    # get total, used, free, percent
-    try:
-        total = free = None
-        for line in f:
-            if line.startswith('SwapTotal:'):
-                total = int(line.split()[1]) * 1024
-            elif line.startswith('SwapFree:'):
-                free = int(line.split()[1]) * 1024
-            if total is not None and free is not None:
+                cached = int(line.split()[1]) * 1024
+            elif line.startswith('Active:'):
+                active = int(line.split()[1]) * 1024
+            elif line.startswith('Inactive:'):
+                inactive = int(line.split()[1]) * 1024
+            if cached is not None \
+            and active is not None \
+            and inactive is not None:
                 break
         else:
-            raise RuntimeError("lines not found")
-        used = total - free
-        percent = usage_percent(used, total, _round=1)
+            raise RuntimeError("line(s) not found")
     finally:
         f.close()
+    avail = free + buffers + cached
+    used = total - free
+    percent = usage_percent((total - avail), total, _round=1)
+    return nt_virtmem_info(total, avail, percent, used, free,
+                           active, inactive, buffers, cached)
+
+def swap_memory():
+    _, _, _, _, total, free = _psutil_linux.get_sysinfo()
+    used = total - free
+    percent = usage_percent(used, total, _round=1)
     # get pgin/pgouts
     f = open("/proc/vmstat", "r")
     sin = sout = None
@@ -173,10 +162,20 @@ def swapmem_usage():
             if sin is not None and sout is not None:
                 break
         else:
-            raise RuntimeError("lines not found")
+            raise RuntimeError("line(s) not found")
     finally:
         f.close()
     return nt_swapmeminfo(total, used, free, percent, sin, sout)
+
+# --- XXX deprecated memory functions
+
+@deprecated('psutil.virtual_memory().cached')
+def cached_phymem():
+    return virtual_memory().cached
+
+@deprecated('psutil.virtual_memory().buffers')
+def phymem_buffers():
+    return virtual_memory().buffers
 
 
 # --- system CPU functions

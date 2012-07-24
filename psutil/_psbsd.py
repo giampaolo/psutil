@@ -25,23 +25,36 @@ __extra__all__ = []
 
 NUM_CPUS = _psutil_bsd.get_num_cpus()
 BOOT_TIME = _psutil_bsd.get_system_boot_time()
+TOTAL_PHYMEM = _psutil_bsd.get_virtual_mem()[0]
 _TERMINAL_MAP = _psposix._get_terminal_map()
 _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
 
 # --- public functions
 
-def phymem_usage():
-    """Physical system memory as a (total, used, free) tuple."""
-    total = _psutil_bsd.get_total_phymem()
-    free =  _psutil_bsd.get_avail_phymem()
-    used = total - free
-    # XXX check out whether we have to do the same math we do on Linux
-    percent = usage_percent(used, total, _round=1)
-    return nt_sysmeminfo(total, used, free, percent)
+nt_virtmem_info = namedtuple('vmem', ' '.join([
+    # all platforms
+    'total', 'available', 'percent', 'used', 'free',
+    # FreeBSD specific
+    'active',
+    'inactive',
+    'buffers',
+    'cached',
+    'shared',
+    'wired']))
 
-def swapmem_usage():
-    """Virtual system memory as a (total, used, free) tuple."""
+def virtual_memory():
+    """System virtual memory as a namedutple."""
+    mem =  _psutil_bsd.get_virtual_mem()
+    total, free, active, inactive, wired, cached, buffers, shared = mem
+    avail = inactive + cached + free
+    used =  active + wired + cached
+    percent = usage_percent((total - avail), total, _round=1)
+    return nt_virtmem_info(total, avail, percent, used, free,
+                           active, inactive, buffers, cached, shared, wired)
+
+def swap_memory():
+    """System swap memory as (total, used, free, sin, sout) namedtuple."""
     total, used, free, sin, sout = \
         [x * _PAGESIZE for x in _psutil_bsd.get_swap_mem()]
     percent = usage_percent(used, total, _round=1)
