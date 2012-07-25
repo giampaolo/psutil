@@ -2140,11 +2140,15 @@ get_network_io_counters(PyObject* self, PyObject* args)
             goto error;
         }
 
-        py_nic_info = Py_BuildValue("(IIII)",
+        py_nic_info = Py_BuildValue("(IIIIIIII)",
                                     pIfRow->dwOutOctets,
                                     pIfRow->dwInOctets,
                                     pIfRow->dwOutUcastPkts,
-                                    pIfRow->dwInUcastPkts);
+                                    pIfRow->dwInUcastPkts,
+                                    pIfRow->dwInErrors,
+                                    pIfRow->dwOutErrors,
+                                    pIfRow->dwInDiscards,
+                                    pIfRow->dwOutDiscards);
         if (!py_nic_info)
             goto error;
 
