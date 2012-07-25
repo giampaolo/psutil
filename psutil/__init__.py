@@ -985,6 +985,10 @@ def network_io_counters(pernic=False):
      - bytes_recv:   number of bytes received
      - packets_sent: number of packets sent
      - packets_recv: number of packets received
+     - errin:        total number of errors while receiving
+     - errout:       total number of errors while sending
+     - dropin:       total number of incoming packets which were dropped
+     - dropout:      total number of outgoing packets which were dropped
 
     If pernic is True return the same information for every
     network interface installed on the system as a dictionary

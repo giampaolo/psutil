@@ -291,9 +291,14 @@ def network_io_counters():
         fields = line[colon+1:].strip().split()
         bytes_recv = int(fields[0])
         packets_recv = int(fields[1])
+        errin = int(fields[2])
+        dropin = int(fields[2])
         bytes_sent = int(fields[8])
         packets_sent = int(fields[9])
-        retdict[name] = (bytes_sent, bytes_recv, packets_sent, packets_recv)
+        errout = int(fields[10])
+        dropout = int(fields[11])
+        retdict[name] = (bytes_sent, bytes_recv, packets_sent, packets_recv,
+                         errin, errout, dropin, dropout)
     return retdict
 
 def disk_io_counters():

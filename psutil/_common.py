@@ -176,7 +176,8 @@ nt_sysmeminfo = namedtuple('usage', 'total used free percent')
 nt_swapmeminfo = namedtuple('swap', 'total used free percent sin sout')
 nt_diskinfo = namedtuple('usage', 'total used free percent')
 nt_partition = namedtuple('partition',  'device mountpoint fstype opts')
-nt_net_iostat = namedtuple('iostat', 'bytes_sent bytes_recv packets_sent packets_recv')
+nt_net_iostat = namedtuple('iostat',
+    'bytes_sent bytes_recv packets_sent packets_recv errin errout dropin dropout')
 nt_disk_iostat = namedtuple('iostat', 'read_count write_count read_bytes write_bytes read_time write_time')
 nt_user = namedtuple('user', 'name terminal host started')
 

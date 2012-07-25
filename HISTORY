@@ -59,6 +59,9 @@ NEW FEATURES
     - sout (no. of bytes the system has swapped out from disk (cumulative))
    All old memory-related functions are deprecated.
    Also two new example scripts were added:  free.py and meminfo.py.
+ * Issue 312: psutil.network_io_counters() namedtuple includes 4 new fields:
+   errin, errout dropin and dropout, reflecting the number of packets dropped
+   and with errors.
 
 BUGFIXES
 

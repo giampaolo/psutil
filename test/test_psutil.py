@@ -537,10 +537,18 @@ class TestCase(unittest.TestCase):
             self.assertEqual(nt[1], nt.bytes_recv)
             self.assertEqual(nt[2], nt.packets_sent)
             self.assertEqual(nt[3], nt.packets_recv)
+            self.assertEqual(nt[4], nt.errin)
+            self.assertEqual(nt[5], nt.errout)
+            self.assertEqual(nt[6], nt.dropin)
+            self.assertEqual(nt[7], nt.dropout)
             assert nt.bytes_sent >= 0, nt
             assert nt.bytes_recv >= 0, nt
             assert nt.packets_sent >= 0, nt
             assert nt.packets_recv >= 0, nt
+            assert nt.errin >= 0, nt
+            assert nt.errout >= 0, nt
+            assert nt.dropin >= 0, nt
+            assert nt.dropout >= 0, nt
 
         ret = psutil.network_io_counters(pernic=False)
         check_ntuple(ret)

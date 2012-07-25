@@ -281,8 +281,8 @@ class TestModuleFunctionsLeaks(Base):
     def test_pid_exists(self):
         self.execute('pid_exists', os.getpid())
 
-    def test_phymem_usage(self):
-        self.execute('phymem_usage')
+    def test_virtual_memory(self):
+        self.execute('virtual_memory')
 
     def test_swap_memory(self):
         self.execute('swap_memory')
