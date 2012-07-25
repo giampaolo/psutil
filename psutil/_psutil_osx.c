@@ -1398,11 +1398,16 @@ get_network_io_counters(PyObject* self, PyObject* args)
             strncpy(ifc_name, sdl->sdl_data, sdl->sdl_nlen);
             ifc_name[sdl->sdl_nlen] = 0;
 
-            py_ifc_info = Py_BuildValue("(KKKK)",
+            py_ifc_info = Py_BuildValue("(KKKKKKKi)",
                                         if2m->ifm_data.ifi_obytes,
                                         if2m->ifm_data.ifi_ibytes,
                                         if2m->ifm_data.ifi_opackets,
-                                        if2m->ifm_data.ifi_ipackets);
+                                        if2m->ifm_data.ifi_ipackets,
+                                        if2m->ifm_data.ifi_ierrors,
+                                        if2m->ifm_data.ifi_oerrors,
+                                        if2m->ifm_data.ifi_iqdrops,
+                                        0);  // dropout not supported
+
             if (!py_ifc_info)
                 goto error;
             if (PyDict_SetItemString(py_retdict, ifc_name, py_ifc_info))
