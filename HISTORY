@@ -158,6 +158,7 @@ BUGFIXES
    on old Linux versions. Where not available it now raises NotImplementedError.
  * Issue #286: Process.is_running() doesn't actually check whether PID has been
    reused.
+ * Issue #314: Process.get_children() can sometimes return non-children.
 
 API CHANGES
 

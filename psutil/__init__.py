@@ -416,7 +416,10 @@ class Process(object):
             for p in process_iter():
                 try:
                     if p.ppid == self.pid:
-                        ret.append(p)
+                        # if child happens to be older than its parent
+                        # (self) it means child's PID has been reused
+                        if self.create_time <= p.create_time:
+                            ret.append(p)
                 except NoSuchProcess:
                     pass
         else:
@@ -434,10 +437,18 @@ class Process(object):
             # to a recursive function call.
             checkpids = [self.pid]
             for pid in checkpids:
-                for proc in table[pid]:
-                    ret.append(proc)
-                    if proc.pid not in checkpids:
-                        checkpids.append(proc.pid)
+                for child in table[pid]:
+                    try:
+                        # if child happens to be older than its parent
+                        # (self) it means child's PID has been reused
+                        intime = self.create_time <= child.create_time
+                    except NoSuchProcess:
+                        pass
+                    else:
+                        if intime:
+                            ret.append(child)
+                            if child.pid not in checkpids:
+                                checkpids.append(child.pid)
         return ret
 
     def get_cpu_percent(self, interval=0.1):
