@@ -165,17 +165,17 @@ def safe_remove(fname):
     except OSError:
         pass
 
-def call_until_equal(fun, expected, timeout=1):
-    """Keep calling function for timeout secs and exit if return value
-    is equal to 'expected'.
+def call_until(fun, expr, timeout=1):
+    """Keep calling function for timeout secs and exit if eval()
+    expression is True.
     """
     stop_at = time.time() + timeout
     while time.time() < stop_at:
         ret = fun()
-        if ret == expected:
-            return
+        if eval(expr):
+            return ret
         time.sleep(0.001)
-    raise RuntimeError('timed out (ret=%r, expected=%r)' % (ret, expected))
+    raise RuntimeError('timed out (ret=%r)' % ret)
 
 
 def skipIf(condition, reason="", warn=False):
@@ -1102,8 +1102,7 @@ class TestCase(unittest.TestCase):
         cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(10)"]
         sproc = get_test_subprocess(cmd, wait=True)
         p = psutil.Process(sproc.pid)
-        expected_dir = os.path.dirname(os.getcwd())
-        call_until_equal(p.getcwd, expected_dir, timeout=1)
+        call_until(p.getcwd, "ret == os.path.dirname(os.getcwd())", timeout=1)
 
     @skipIf(not hasattr(psutil.Process, "get_cpu_affinity"))
     def test_cpu_affinity(self):
@@ -1231,12 +1230,14 @@ class TestCase(unittest.TestCase):
         self.assertEqual(conn.local_address, TESTFN)
         self.assertTrue(not conn.remote_address)
         self.assertTrue(not conn.status)
+        sock.close()
         # udp
         safe_remove(TESTFN)
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         sock.bind(TESTFN)
         conn = psutil.Process(os.getpid()).get_connections(kind='unix')[0]
         self.assertEqual(conn.type, socket.SOCK_DGRAM)
+        sock.close()
 
     @skipUnless(hasattr(socket, "fromfd") and not WINDOWS)
     def test_connection_fromfd(self):
@@ -1548,11 +1549,10 @@ class TestCase(unittest.TestCase):
         except psutil.AccessDenied:
             pass
 
-        if OSX : #and os.geteuid() != 0:
-            self.assertRaises(psutil.AccessDenied, p.get_memory_info)
-            self.assertRaises(psutil.AccessDenied, p.get_cpu_times)
-        else:
+        try:
             p.get_memory_info()
+        except psutil.AccessDenied:
+            pass
 
         # username property
         if POSIX:
