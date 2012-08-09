@@ -1127,7 +1127,7 @@ class TestCase(unittest.TestCase):
         files = p.get_open_files()
         self.assertFalse(TESTFN in files)
         f = open(TESTFN, 'w')
-        time.sleep(.1)
+        call_until(p.get_open_files, "len(ret) != %i" % len(files))
         filenames = [x.path for x in p.get_open_files()]
         self.assertIn(TESTFN, filenames)
         f.close()
@@ -1137,7 +1137,6 @@ class TestCase(unittest.TestCase):
         # another process
         cmdline = "import time; f = open(r'%s', 'r'); time.sleep(100);" % TESTFN
         sproc = get_test_subprocess([PYTHON, "-c", cmdline], wait=True)
-        time.sleep(0.1)
         p = psutil.Process(sproc.pid)
         for x in range(100):
             filenames = [x.path for x in p.get_open_files()]
@@ -1439,8 +1438,10 @@ class TestCase(unittest.TestCase):
         sproc = get_test_subprocess(wait=True)
         p = psutil.Process(sproc.pid)
         p.suspend()
-        time.sleep(0.1)
-        self.assertEqual(p.status, psutil.STATUS_STOPPED)
+        for x in range(100):
+            if p.status == psutil.STATUS_STOPPED:
+                break
+            time.sleep(0.01)
         self.assertEqual(str(p.status), "stopped")
         p.resume()
         assert p.status != psutil.STATUS_STOPPED, p.status
