@@ -144,7 +144,7 @@ def reap_children(search_all=False):
         except psutil.AccessDenied:
             warn("couldn't kill child process with pid %s" % pid)
         else:
-            child.wait()
+            child.wait(timeout=3)
 
 def check_ip_address(addr, family):
     """Attempts to check IP address's validity."""
@@ -164,6 +164,18 @@ def safe_remove(fname):
         os.remove(fname)
     except OSError:
         pass
+
+def call_until_equal(fun, expected, timeout=1):
+    """Keep calling function for timeout secs and exit if return value
+    is equal to 'expected'.
+    """
+    stop_at = time.time() + timeout
+    while time.time() < stop_at:
+        ret = fun()
+        if ret == expected:
+            return
+        time.sleep(0.001)
+    raise RuntimeError('timed out (ret=%r, expected=%r)' % (ret, expected))
 
 
 def skipIf(condition, reason="", warn=False):
@@ -277,6 +289,14 @@ class TestCase(unittest.TestCase):
             if member not in container:
                 self.fail(msg or \
                         '%s not found in %s' % (repr(member), repr(container)))
+
+    def assert_eq_w_tol(self, first, second, tolerance):
+        difference = abs(first - second)
+        if difference <= tolerance:
+            return
+        msg = '%r != %r within %r delta (%r difference)' \
+              % (first, second, tolerance, difference)
+        raise AssertionError(msg)
 
     # ============================
     # tests for system-related API
@@ -904,6 +924,9 @@ class TestCase(unittest.TestCase):
         assert percent2 > percent1
         del memarr
 
+#    def test_get_ext_memory_info(self):
+#       # tested later in fetch all test suite
+
     def test_get_memory_maps(self):
         p = psutil.Process(os.getpid())
         maps = p.get_memory_maps()
@@ -1079,9 +1102,8 @@ class TestCase(unittest.TestCase):
         cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(10)"]
         sproc = get_test_subprocess(cmd, wait=True)
         p = psutil.Process(sproc.pid)
-        time.sleep(0.1)
         expected_dir = os.path.dirname(os.getcwd())
-        self.assertEqual(p.getcwd(), expected_dir)
+        call_until_equal(p.getcwd, expected_dir, timeout=1)
 
     @skipIf(not hasattr(psutil.Process, "get_cpu_affinity"))
     def test_cpu_affinity(self):
@@ -1705,16 +1727,6 @@ class TestFetchAllProcesses(unittest.TestCase):
             assert ret.peak_paged_pool >= ret.paged_pool, ret
             assert ret.peak_nonpaged_pool >= ret.nonpaged_pool, ret
             assert ret.peak_pagefile >= ret.pagefile, ret
-
-    @skipUnless(POSIX)
-    def test_get_ext_memory_info_2(self):
-        proc = get_test_subprocess()
-        time.sleep(.1)
-        p = psutil.Process(proc.pid)
-        mem1 = p.get_memory_info()
-        mem2 = p.get_ext_memory_info()
-        self.assertEqual(mem1.rss, mem2.rss)
-        self.assertEqual(mem1.vms, mem2.vms)
 
     def get_open_files(self, ret):
         for f in ret:
