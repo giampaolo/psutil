@@ -764,6 +764,10 @@ class Popen(Process):
                                       %(self.__class__.__name__, name))
 
 
+# =====================================================================
+# --- system processes related functions
+# =====================================================================
+
 get_pid_list = _psplatform.get_pid_list
 pid_exists = _psplatform.pid_exists
 
@@ -813,6 +817,10 @@ def process_iter():
             # no way to tell whether the pid of the cached process
             # has been reused. Just return the cached version.
             yield proc
+
+# =====================================================================
+# --- CPU related functions
+# =====================================================================
 
 def cpu_times(percpu=False):
     """Return system-wide CPU times as a namedtuple object.
@@ -901,6 +909,10 @@ def cpu_percent(interval=0.1, percpu=False):
             ret.append(calculate(t1, t2))
         return ret
 
+# =====================================================================
+# --- system memory related functions
+# =====================================================================
+
 def virtual_memory():
     """Return statistics about system memory usage as a namedtuple
     including the following fields, expressed in bytes:
@@ -971,6 +983,10 @@ def swap_memory():
     """
     return _psplatform.swap_memory()
 
+# =====================================================================
+# --- disks/paritions related functions
+# =====================================================================
+
 def disk_usage(path):
     """Return disk usage statistics about the given path as a namedtuple
     including total, used and free space expressed in bytes plus the
@@ -987,6 +1003,36 @@ def disk_partitions(all=False):
     all others.
     """
     return _psplatform.disk_partitions(all)
+
+def disk_io_counters(perdisk=False):
+    """Return system disk I/O statistics as a namedtuple including
+    the following attributes:
+
+     - read_count:  number of reads
+     - write_count: number of writes
+     - read_bytes:  number of bytes read
+     - write_bytes: number of bytes written
+     - read_time:   time spent reading from disk (in milliseconds)
+     - write_time:  time spent writing to disk (in milliseconds)
+
+    If perdisk is True return the same information for every
+    physical disk installed on the system as a dictionary
+    with partition names as the keys and the namedutuple
+    described above as the values.
+    """
+    rawdict = _psplatform.disk_io_counters()
+    if not rawdict:
+        raise RuntimeError("couldn't find any physical disk")
+    if perdisk:
+        for disk, fields in rawdict.items():
+            rawdict[disk] = _nt_disk_iostat(*fields)
+        return rawdict
+    else:
+        return _nt_disk_iostat(*[sum(x) for x in zip(*rawdict.values())])
+
+# =====================================================================
+# --- network related functions
+# =====================================================================
 
 def network_io_counters(pernic=False):
     """Return network I/O statistics as a namedtuple including
@@ -1017,31 +1063,9 @@ def network_io_counters(pernic=False):
     else:
         return _nt_net_iostat(*[sum(x) for x in zip(*rawdict.values())])
 
-def disk_io_counters(perdisk=False):
-    """Return system disk I/O statistics as a namedtuple including
-    the following attributes:
-
-     - read_count:  number of reads
-     - write_count: number of writes
-     - read_bytes:  number of bytes read
-     - write_bytes: number of bytes written
-     - read_time:   time spent reading from disk (in milliseconds)
-     - write_time:  time spent writing to disk (in milliseconds)
-
-    If perdisk is True return the same information for every
-    physical disk installed on the system as a dictionary
-    with partition names as the keys and the namedutuple
-    described above as the values.
-    """
-    rawdict = _psplatform.disk_io_counters()
-    if not rawdict:
-        raise RuntimeError("couldn't find any physical disk")
-    if perdisk:
-        for disk, fields in rawdict.items():
-            rawdict[disk] = _nt_disk_iostat(*fields)
-        return rawdict
-    else:
-        return _nt_disk_iostat(*[sum(x) for x in zip(*rawdict.values())])
+# =====================================================================
+# --- other system related functions
+# =====================================================================
 
 def get_users():
     """Return users currently connected on the system as a list of
@@ -1055,8 +1079,9 @@ def get_users():
     """
     return _psplatform.get_system_users()
 
-
+# =====================================================================
 # --- deprecated functions
+# =====================================================================
 
 @_deprecated()
 def get_process_list():
