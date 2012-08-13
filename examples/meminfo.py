@@ -14,7 +14,7 @@ import psutil
 from psutil._compat import print_
 
 def to_meg(n):
-    return str(n / 1024 / 1024) + "M"
+    return str(int(n / 1024 / 1024)) + "M"
 
 def pprint_ntuple(nt):
     for name in nt._fields:
