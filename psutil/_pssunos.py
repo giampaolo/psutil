@@ -276,10 +276,23 @@ class Process(object):
     def get_process_io_counters(self):
         raise NotImplementedError()
 
-    # TODO
+    nt_mmap_grouped = namedtuple('mmap', 'path rss anon locked')
+    nt_mmap_ext = namedtuple('mmap', 'addr perms path rss anon locked')
+
     @wrap_exceptions
     def get_memory_maps(self):
-        raise NotImplementedError()
+        def toaddr(start, end):
+            return '%s-%s' % (hex(start)[2:].strip('L'), hex(end)[2:].strip('L'))
+
+        retlist = []
+        rawlist = _psutil_sunos.get_process_memory_maps(self.pid)
+        for item in rawlist:
+            addr, addrsize, perm, name, rss, anon, locked = item
+            addr = toaddr(addr, addrsize)
+            if not name.startswith('['):
+                name = os.readlink('/proc/%s/path/%s' % (self.pid, name))
+            retlist.append((addr, perm, name, rss, anon, locked))
+        return retlist
 
     @wrap_exceptions
     def process_wait(self, timeout=None):
