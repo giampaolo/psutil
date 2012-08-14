@@ -198,6 +198,10 @@ get_process_exe(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
+    if (pid == 0) {
+        // ...otherwise we'd get '\x98\xd5\xbf\xbf\xfb\xf3\x10\x08H\x01'
+        return Py_BuildValue("s", "");
+    }
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
@@ -210,14 +214,7 @@ get_process_exe(PyObject* self, PyObject* args)
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
-    if (size == 0 || strlen(pathname) == 0) {
-        if (pid_exists(pid) == 0) {
-            return NoSuchProcess();
-        }
-        else {
-            strcpy(pathname, "");
-        }
-    }
+
     return Py_BuildValue("s", pathname);
 }
 

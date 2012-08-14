@@ -400,8 +400,6 @@ class Process(object):
         return name
 
     def get_process_exe(self):
-        if self.pid in (0, 2):
-            raise AccessDenied(self.pid, self._process_name)
         try:
             exe = os.readlink("/proc/%s/exe" % self.pid)
         except (OSError, IOError):
@@ -423,13 +421,12 @@ class Process(object):
         # problems when used with other fs-related functions (os.*,
         # open(), ...)
         exe = exe.replace('\x00', '')
-        # It seems symlinks can point to a deleted/invalid location
-        # (this usually  happens with "pulseaudio" process).
-        # However, if we had permissions to execute readlink() it's
-        # likely that we'll be able to figure out exe from argv[0]
-        # later on.
-        if exe.endswith(" (deleted)") and not isfile_strict(exe):
-            return ""
+        # Certain names have ' (deleted)' appended. Usually this is
+        # bogus as the file actually exists. Either way that's not
+        # important as we don't want to discriminate executables which
+        # have been deleted.
+        if exe.endswith(" (deleted)") and not os.path.exists(exe):
+            exe = exe[:-10]
         return exe
 
     @wrap_exceptions

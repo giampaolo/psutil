@@ -1630,7 +1630,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                         self.assertTrue(str(err))
                         self.assertTrue(err.msg)
                     else:
-                        if ret not in (0, 0.0, [], None):
+                        if ret not in (0, 0.0, [], None, ''):
                             assert ret, ret
                         meth = getattr(self, name)
                         meth(ret)
@@ -1648,9 +1648,13 @@ class TestFetchAllProcesses(unittest.TestCase):
         pass
 
     def exe(self, ret):
-        assert os.path.isfile(ret), ret
-        if hasattr(os, 'access') and hasattr(os, "X_OK"):
-            self.assertTrue(os.access(ret, os.X_OK))
+        if not ret:
+            assert ret == ''
+        else:
+            assert os.path.isabs(ret), ret
+            assert os.path.isfile(ret), ret
+            if hasattr(os, 'access') and hasattr(os, "X_OK"):
+                self.assertTrue(os.access(ret, os.X_OK))
 
     def ppid(self, ret):
         self.assertTrue(ret >= 0)

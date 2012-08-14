@@ -231,19 +231,36 @@ class Process(object):
 
     @cached_property
     def exe(self):
-        """The process executable as an absolute path name."""
-        exe = self._platform_impl.get_process_exe()
-        # if we have the cmdline but not the exe, figure it out from argv[0]
-        if not exe:
+        """The process executable path. May also be an empty string."""
+        def guess_it(fallback):
+            # try to guess exe from cmdline[0] in absence of a native
+            # exe representation
             cmdline = self.cmdline
             if cmdline and hasattr(os, 'access') and hasattr(os, 'X_OK'):
-                _exe = os.path.realpath(cmdline[0])
-                if os.path.isabs(_exe) and _isfile_strict(_exe) \
-                  and os.access(_exe, os.X_OK):
-                    return _exe
-        if not exe:
-            raise AccessDenied(self.pid, self._platform_impl._process_name)
-        return exe
+                exe = cmdline[0]  # the possible exe
+                rexe = os.path.realpath(exe)  # ...in case it's a symlink
+                if os.path.isabs(rexe) and os.path.isfile(rexe) \
+                and os.access(rexe, os.X_OK):
+                    return exe
+            if isinstance(fallback, AccessDenied):
+                raise fallback
+            return fallback
+
+        try:
+            exe = self._platform_impl.get_process_exe()
+        except AccessDenied:
+            err = sys.exc_info()[1]
+            return guess_it(fallback=err)
+        else:
+            if not exe:
+                # underlying implementation can legitimately return an
+                # empty string; if that's the case we don't want to
+                # raise AD while guessing from the cmdline
+                try:
+                    exe = guess_it(fallback=exe)
+                except AccessDenied:
+                    pass
+            return exe
 
     @cached_property
     def cmdline(self):

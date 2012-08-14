@@ -1,5 +1,22 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+0.6.1 - XXXX-XX-XX
+------------------
+
+NEW FEATURES
+
+ * Issue 316: process cmdline property now makes a better job at guessing the
+   process executable from the cmdline.
+
+BUG FIXES
+
+ * Issue 316: process exe was resolved in case it was a symlink.
+
+API CHANGES
+
+ * process exe can now return an empty string instead of raising AccessDenied.
+ * process exe is no longer resolved in case it's a symlink.
+
 
 0.6.0 - 2012-08-13
 ------------------
