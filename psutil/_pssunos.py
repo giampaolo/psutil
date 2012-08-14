@@ -27,12 +27,12 @@ BOOT_TIME = _psutil_sunos.get_process_basic_info(0)[3]
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle iowait')
 
 disk_io_counters = _psutil_sunos.get_disk_io_counters
+network_io_counters = _psutil_sunos.get_network_io_counters
 get_disk_usage = _psposix.get_disk_usage
 
+# XXX temporary
 def _not_impl(*a, **k):
     raise NotImplementedError
-
-network_io_counters = _not_impl  # TODO
 
 
 def phymem_usage():
