@@ -176,14 +176,10 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_exe(self):
-        exe = _convert_raw_path(_psutil_mswindows.get_process_exe(self.pid))
-        # Note: if the folder containing the executable is changed
-        # GetProcessImageFileName() returns the previous name, hence
-        # this check. An empty string signals to try to guess the exe
-        # from cmdline later.
-        if not os.path.exists(exe):
-            exe = ""
-        return exe
+        # Note: os.path.exists(path) may return False even if the file
+        # is there, see:
+        # http://stackoverflow.com/questions/3112546/os-path-exists-lies
+        return _convert_raw_path(_psutil_mswindows.get_process_exe(self.pid))
 
     @wrap_exceptions
     def get_process_cmdline(self):
