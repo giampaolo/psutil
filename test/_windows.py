@@ -17,24 +17,25 @@ import warnings
 import atexit
 import sys
 import subprocess
+import errno
+import traceback
 
 import psutil
 import _psutil_mswindows
-from test_psutil import reap_children, get_test_subprocess, wait_for_pid, PY3
+from psutil._compat import PY3, callable, long
+from test_psutil import reap_children, get_test_subprocess, wait_for_pid, warn
 try:
     import wmi
 except ImportError:
     err = sys.exc_info()[1]
-    atexit.register(warnings.warn, "Couldn't run wmi tests: %s" % str(err),
-                    RuntimeWarning)
+    atexit.register(warn, "Couldn't run wmi tests: %s" % str(err))
     wmi = None
 try:
     import win32api
     import win32con
 except ImportError:
     err = sys.exc_info()[1]
-    atexit.register(warnings.warn, "Couldn't run pywin32 tests: %s" % str(err),
-                    RuntimeWarning)
+    atexit.register(warn, "Couldn't run pywin32 tests: %s" % str(err))
     win32api = None
 
 
@@ -85,6 +86,13 @@ class WindowsSpecificTestCase(unittest.TestCase):
                 continue
             if nic not in out:
                 self.fail("%r nic wasn't found in 'ipconfig /all' output" % nic)
+
+    def test_exe(self):
+        for p in psutil.process_iter():
+            try:
+                self.assertEqual(os.path.basename(p.exe), p.name)
+            except psutil.Error:
+                pass
 
     if wmi is not None:
 
@@ -184,7 +192,15 @@ class WindowsSpecificTestCase(unittest.TestCase):
                         if not ps_part.mountpoint:
                             # this is usually a CD-ROM with no disk inserted
                             break
-                        usage = psutil.disk_usage(ps_part.mountpoint)
+                        try:
+                            usage = psutil.disk_usage(ps_part.mountpoint)
+                        except OSError:
+                            err = sys.exc_info()[1]
+                            if err.errno == errno.ENOENT:
+                                # usually this is the floppy
+                                break
+                            else:
+                                raise
                         self.assertEqual(usage.total, int(wmi_part.Size))
                         wmi_free = int(wmi_part.FreeSpace)
                         self.assertEqual(usage.free, wmi_free)
@@ -193,7 +209,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
                             self.fail("psutil=%s, wmi=%s" % usage.free, wmi_free)
                         break
                 else:
-                    self.fail("can't find partition %r", ps_part)
+                    self.fail("can't find partition %s" % repr(ps_part))
 
     if win32api is not None:
 
@@ -223,8 +239,8 @@ class WindowsSpecificTestCase(unittest.TestCase):
             for name in dir(psutil.Process):
                 if name.startswith('_') \
                 or name.startswith('set_') \
-                or name in ('terminate', 'kill', 'suspend', 'resume',
-                            'send_signal', 'wait', 'get_children'):
+                or name in ('terminate', 'kill', 'suspend', 'resume', 'nice',
+                            'send_signal', 'wait', 'get_children', 'as_dict'):
                     continue
                 else:
                     try:
@@ -243,7 +259,110 @@ class WindowsSpecificTestCase(unittest.TestCase):
                 self.fail('\n' + '\n'.join(failures))
 
 
+import _psutil_mswindows
+from psutil._psmswindows import ACCESS_DENIED_SET
+
+def wrap_exceptions(callable):
+    def wrapper(self, *args, **kwargs):
+        try:
+            return callable(self, *args, **kwargs)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno in ACCESS_DENIED_SET:
+                raise psutil.AccessDenied(None, None)
+            if err.errno == errno.ESRCH:
+                raise psutil.NoSuchProcess(None, None)
+            raise
+    return wrapper
+
+class TestDualProcessImplementation(unittest.TestCase):
+    fun_names = [
+        # function name                 tolerance
+        ('get_process_cpu_times',       0.2),
+        ('get_process_create_time',     0.5),
+        ('get_process_num_handles',     1),  # 1 because impl #1 opens a handle
+        ('get_process_io_counters',     0),
+        ('get_process_memory_info',     1024),  # KB
+    ]
+
+    def test_compare_values(self):
+        # Certain APIs on Windows have 2 internal implementations, one
+        # based on documented Windows APIs, another one based
+        # NtQuerySystemInformation() which gets called as fallback in
+        # case the first fails because of limited permission error.
+        # Here we test that the two methods return the exact same value,
+        # see:
+        # http://code.google.com/p/psutil/issues/detail?id=304
+        def assert_ge_0(obj):
+            if isinstance(obj, tuple):
+                for value in obj:
+                    assert value >= 0, value
+            elif isinstance(obj, (int, long, float)):
+                assert obj >= 0, obj
+            else:
+                assert 0  # case not handled which needs to be fixed
+
+        def compare_with_tolerance(ret1, ret2, tolerance):
+            if ret1 == ret2:
+                return
+            else:
+                if isinstance(ret2, (int, long, float)):
+                    diff = abs(ret1 - ret2)
+                    assert diff <= tolerance, diff
+                elif isinstance(ret2, tuple):
+                    for a, b in zip(ret1, ret2):
+                        diff = abs(a - b)
+                        assert diff <= tolerance, diff
+
+        failures = []
+        for name, tolerance in self.fun_names:
+            meth1 = wrap_exceptions(getattr(_psutil_mswindows, name))
+            meth2 = wrap_exceptions(getattr(_psutil_mswindows, name + '_2'))
+            for p in psutil.process_iter():
+                #
+                try:
+                    ret1 = meth1(p.pid)
+                except psutil.NoSuchProcess:
+                    continue
+                except psutil.AccessDenied:
+                    ret1 = None
+                #
+                try:
+                    ret2 = meth2(p.pid)
+                except psutil.NoSuchProcess:
+                    # this is supposed to fail only in case of zombie process
+                    # never for permission error
+                    continue
+
+                # compare values
+                try:
+                    if ret1 is None:
+                        assert_ge_0(ret2)
+                    else:
+                        compare_with_tolerance(ret1, ret2, tolerance)
+                        assert_ge_0(ret1)
+                        assert_ge_0(ret2)
+                except AssertionError:
+                    err = sys.exc_info()[1]
+                    trace = traceback.format_exc()
+                    msg = '%s\npid=%s, method=%r, ret_1=%r, ret_2=%r' \
+                           % (trace, p.pid, name, ret1, ret2)
+                    failures.append(msg)
+                    break
+        if failures:
+            self.fail('\n\n'.join(failures))
+
+    def test_zombies(self):
+        # test that NPS is raised by the 2nd implementation in case a
+        # process no longer exists
+        ZOMBIE_PID = max(psutil.get_pid_list()) + 5000
+        for name, _ in self.fun_names:
+            meth = wrap_exceptions(getattr(_psutil_mswindows, name))
+            self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
+
+
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(WindowsSpecificTestCase))
+    test_suite.addTest(unittest.makeSuite(TestDualProcessImplementation))
     unittest.TextTestRunner(verbosity=2).run(test_suite)

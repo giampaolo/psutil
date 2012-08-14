@@ -9,7 +9,14 @@
 """Common objects shared by all _ps* modules."""
 
 from __future__ import division
-from psutil._compat import namedtuple
+import sys
+import os
+import stat
+import errno
+import functools
+import warnings
+
+from psutil._compat import namedtuple, long
 
 # --- functions
 
@@ -24,7 +31,6 @@ def usage_percent(used, total, _round=None):
     else:
         return ret
 
-
 class constant(int):
     """A constant type; overrides base int to provide a useful name on str()."""
 
@@ -38,6 +44,25 @@ class constant(int):
     def __str__(self):
         return self._name
 
+    def __eq__(self, other):
+        # Use both int or str values when comparing for equality
+        # (useful for serialization):
+        # >>> st = constant(0, "running")
+        # >>> st == 0
+        # True
+        # >>> st == 'running'
+        # True
+        if isinstance(other, int):
+            return int(self) == other
+        if isinstance(other, long):
+            return long(self) == other
+        if isinstance(other, str):
+            return self._name == other
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 def memoize(f):
     """A simple memoize decorator for functions."""
     cache= {}
@@ -46,6 +71,53 @@ def memoize(f):
             cache[x] = f(*x)
         return cache[x]
     return memf
+
+class cached_property(object):
+    """A memoize decorator for class properties."""
+    enabled = True
+
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, instance, type):
+        ret = self.func(instance)
+        if self.enabled:
+            instance.__dict__[self.func.__name__] = ret
+        return ret
+
+# http://goo.gl/jYLvf
+def deprecated(replacement=None):
+    """A decorator which can be used to mark functions as deprecated."""
+    def outer(fun):
+        msg = "psutil.%s is deprecated" % fun.__name__
+        if replacement is not None:
+            msg += "; use %s instead" % replacement
+        if fun.__doc__ is None:
+            fun.__doc__ = msg
+
+        @functools.wraps(fun)
+        def inner(*args, **kwargs):
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return fun(*args, **kwargs)
+
+        return inner
+    return outer
+
+
+def isfile_strict(path):
+    """Same as os.path.isfile() but does not swallow EACCES / EPERM
+    exceptions, see:
+    http://mail.python.org/pipermail/python-dev/2012-June/120787.html
+    """
+    try:
+        st = os.stat(path)
+    except OSError:
+        err = sys.exc_info()[1]
+        if err.errno in (errno.EPERM, errno.EACCES):
+            raise
+        return False
+    else:
+        return stat.S_ISREG(st.st_mode)
 
 
 # --- constants
@@ -68,9 +140,10 @@ STATUS_WAITING = constant(11, "waiting")  # BSD
 import socket
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
 AF_INET6 = getattr(socket, 'AF_INET6', None)
+AF_UNIX = getattr(socket, 'AF_UNIX', None)
 
 conn_tmap = {
-    "all"  : ([AF_INET, AF_INET6], [SOCK_STREAM, SOCK_DGRAM]),
+    "all"  : ([AF_INET, AF_INET6, AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
     "tcp"  : ([AF_INET, AF_INET6], [SOCK_STREAM]),
     "tcp4" : ([AF_INET],           [SOCK_STREAM]),
     "udp"  : ([AF_INET, AF_INET6], [SOCK_DGRAM]),
@@ -86,27 +159,36 @@ if AF_INET6 is not None:
         "udp6" : ([AF_INET6],          [SOCK_DGRAM]),
     })
 
-del AF_INET, AF_INET6, SOCK_STREAM, SOCK_DGRAM, socket
+if AF_UNIX is not None:
+    conn_tmap.update({
+        "unix" : ([AF_UNIX],           [SOCK_STREAM, SOCK_DGRAM]),
+    })
+
+
+del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM, socket
 
 # --- namedtuples
 
 # system
-ntuple_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
-ntuple_sysmeminfo = namedtuple('usage', 'total used free percent')
-ntuple_diskinfo = namedtuple('usage', 'total used free percent')
-ntuple_partition = namedtuple('partition',  'device mountpoint fstype options')
-ntuple_net_iostat = namedtuple('iostat', 'bytes_sent bytes_recv packets_sent packets_recv')
-ntuple_disk_iostat = namedtuple('iostat', 'read_count write_count read_bytes write_bytes read_time write_time')
-ntuple_user = namedtuple('user', 'name terminal host started')
-
+nt_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
+nt_sysmeminfo = namedtuple('usage', 'total used free percent')
+# XXX - would 'available' be better than 'free' as for virtual_memory() nt?
+nt_swapmeminfo = namedtuple('swap', 'total used free percent sin sout')
+nt_diskinfo = namedtuple('usage', 'total used free percent')
+nt_partition = namedtuple('partition',  'device mountpoint fstype opts')
+nt_net_iostat = namedtuple('iostat',
+    'bytes_sent bytes_recv packets_sent packets_recv errin errout dropin dropout')
+nt_disk_iostat = namedtuple('iostat', 'read_count write_count read_bytes write_bytes read_time write_time')
+nt_user = namedtuple('user', 'name terminal host started')
 
 # processes
-ntuple_meminfo = namedtuple('meminfo', 'rss vms')
-ntuple_cputimes = namedtuple('cputimes', 'user system')
-ntuple_openfile = namedtuple('openfile', 'path fd')
-ntuple_connection = namedtuple('connection', 'fd family type local_address remote_address status')
-ntuple_thread = namedtuple('thread', 'id user_time system_time')
-ntuple_uids = namedtuple('user', 'real effective saved')
-ntuple_gids = namedtuple('group', 'real effective saved')
-ntuple_io = namedtuple('io', 'read_count write_count read_bytes write_bytes')
-ntuple_ionice = namedtuple('ionice', 'ioclass value')
+nt_meminfo = namedtuple('meminfo', 'rss vms')
+nt_cputimes = namedtuple('cputimes', 'user system')
+nt_openfile = namedtuple('openfile', 'path fd')
+nt_connection = namedtuple('connection', 'fd family type local_address remote_address status')
+nt_thread = namedtuple('thread', 'id user_time system_time')
+nt_uids = namedtuple('user', 'real effective saved')
+nt_gids = namedtuple('group', 'real effective saved')
+nt_io = namedtuple('io', 'read_count write_count read_bytes write_bytes')
+nt_ionice = namedtuple('ionice', 'ioclass value')
+nt_ctxsw = namedtuple('amount', 'voluntary involuntary')

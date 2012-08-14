@@ -14,8 +14,10 @@ import sys
 import platform
 
 import _psutil_mswindows
+from _psutil_mswindows import ERROR_ACCESS_DENIED
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
+from psutil._compat import PY3, xrange, long
 
 # Windows specific extended namespace
 __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
@@ -27,8 +29,9 @@ __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
 
 NUM_CPUS = _psutil_mswindows.get_num_cpus()
 BOOT_TIME = _psutil_mswindows.get_system_uptime()
-ERROR_ACCESS_DENIED = 5
+TOTAL_PHYMEM = _psutil_mswindows.get_virtual_mem()[0]
 WAIT_TIMEOUT = 0x00000102 # 258 in decimal
+ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED])
 
 # process priority constants:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
@@ -48,7 +51,7 @@ def _convert_raw_path(s):
     # convert paths using native DOS format like:
     # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
     # into: "C:\Windows\systemew\file.txt"
-    if sys.version_info >= (3,):
+    if PY3 and not isinstance(s, str):
         s = s.decode('utf8')
     rawdrive = '\\'.join(s.split('\\')[:3])
     driveletter = _win32_QueryDosDevice(rawdrive)
@@ -57,38 +60,48 @@ def _convert_raw_path(s):
 
 # --- public functions
 
-def phymem_usage():
-    """Physical system memory as a (total, used, free) tuple."""
-    all = _psutil_mswindows.get_system_phymem()
-    total, free, total_pagef, avail_pagef, total_virt, free_virt, percent = all
-    used = total - free
-    return ntuple_sysmeminfo(total, used, free, round(percent, 1))
+nt_virtmem_info = namedtuple('vmem', ' '.join([
+    # all platforms
+    'total', 'available', 'percent', 'used', 'free']))
 
-def virtmem_usage():
-    """Virtual system memory as a (total, used, free) tuple."""
-    all = _psutil_mswindows.get_system_phymem()
-    total_virt = all[4]
-    free_virt = all[5]
-    used = total_virt - free_virt
-    percent = usage_percent(used, total_virt, _round=1)
-    return ntuple_sysmeminfo(total_virt, used, free_virt, percent)
+def virtual_memory():
+    """System virtual memory as a namedtuple."""
+    mem = _psutil_mswindows.get_virtual_mem()
+    totphys, availphys, totpagef, availpagef, totvirt, freevirt = mem
+    #
+    total = totphys
+    avail = availphys
+    free = availphys
+    used = total - avail
+    percent = usage_percent((total - avail), total, _round=1)
+    return nt_virtmem_info(total, avail, percent, used, free)
+
+def swap_memory():
+    """Swap system memory as a (total, used, free, sin, sout) tuple."""
+    mem = _psutil_mswindows.get_virtual_mem()
+    total = mem[2]
+    free = mem[3]
+    used = total - free
+    percent = usage_percent(used, total, _round=1)
+    return nt_swapmeminfo(total, used, free, percent, 0, 0)
 
 def get_disk_usage(path):
     """Return disk usage associated with path."""
     try:
         total, free = _psutil_mswindows.get_disk_usage(path)
-    except WindowsError, err:
+    except WindowsError:
+        err = sys.exc_info()[1]
         if not os.path.exists(path):
             raise OSError(errno.ENOENT, "No such file or directory: '%s'" % path)
         raise
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return ntuple_diskinfo(total, used, free, percent)
+    return nt_diskinfo(total, used, free, percent)
 
 def disk_partitions(all):
     """Return disk partitions."""
     rawlist = _psutil_mswindows.get_disk_partitions(all)
-    return [ntuple_partition(*x) for x in rawlist]
+    return [nt_partition(*x) for x in rawlist]
 
 
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle')
@@ -118,7 +131,7 @@ def get_system_users():
     rawlist = _psutil_mswindows.get_system_users()
     for item in rawlist:
         user, hostname, tstamp = item
-        nt = ntuple_user(user, None, hostname, tstamp)
+        nt = nt_user(user, None, hostname, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -137,8 +150,9 @@ def wrap_exceptions(callable):
     def wrapper(self, *args, **kwargs):
         try:
             return callable(self, *args, **kwargs)
-        except OSError, err:
-            if err.errno in (errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED):
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno in ACCESS_DENIED_SET:
                 raise AccessDenied(self.pid, self._process_name)
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._process_name)
@@ -155,20 +169,17 @@ class Process(object):
         self.pid = pid
         self._process_name = None
 
-
     @wrap_exceptions
     def get_process_name(self):
         """Return process name as a string of limited len (15)."""
         return _psutil_mswindows.get_process_name(self.pid)
 
+    @wrap_exceptions
     def get_process_exe(self):
-        # no such thing as "exe" on Windows; it will maybe be determined
-        # later from cmdline[0]
-        if not pid_exists(self.pid):
-            raise NoSuchProcess(self.pid, self._process_name)
-        if self.pid in (0, 4):
-            raise AccessDenied(self.pid, self._process_name)
-        return ""
+        # Note: os.path.exists(path) may return False even if the file
+        # is there, see:
+        # http://stackoverflow.com/questions/3112546/os-path-exists-lies
+        return _convert_raw_path(_psutil_mswindows.get_process_exe(self.pid))
 
     @wrap_exceptions
     def get_process_cmdline(self):
@@ -180,14 +191,39 @@ class Process(object):
         """Return process parent pid."""
         return _psutil_mswindows.get_process_ppid(self.pid)
 
+    def _get_raw_meminfo(self):
+        try:
+            return _psutil_mswindows.get_process_memory_info(self.pid)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno in ACCESS_DENIED_SET:
+                return _psutil_mswindows.get_process_memory_info_2(self.pid)
+            raise
+
     @wrap_exceptions
     def get_memory_info(self):
         """Returns a tuple or RSS/VMS memory usage in bytes."""
-        # special case for 0 (kernel processes) PID
-        if self.pid == 0:
-            return ntuple_meminfo(0, 0)
-        rss, vms = _psutil_mswindows.get_memory_info(self.pid)
-        return ntuple_meminfo(rss, vms)
+        # on Windows RSS == WorkingSetSize and VSM == PagefileUsage
+        # fields of PROCESS_MEMORY_COUNTERS struct:
+        # http://msdn.microsoft.com/en-us/library/windows/desktop/ms684877(v=vs.85).aspx
+        t = self._get_raw_meminfo()
+        return nt_meminfo(t[2], t[7])
+
+    _nt_ext_mem = namedtuple('meminfo',
+        ' '.join(['num_page_faults',
+                  'peak_wset',
+                  'wset',
+                  'peak_paged_pool',
+                  'paged_pool',
+                  'peak_nonpaged_pool',
+                  'nonpaged_pool',
+                  'pagefile',
+                  'peak_pagefile',
+                  'private',]))
+
+    @wrap_exceptions
+    def get_ext_memory_info(self):
+        return self._nt_ext_mem(*self._get_raw_meminfo())
 
     nt_mmap_grouped = namedtuple('mmap', 'path rss')
     nt_mmap_ext = namedtuple('mmap', 'addr perms path rss')
@@ -195,9 +231,10 @@ class Process(object):
     def get_memory_maps(self):
         try:
             raw = _psutil_mswindows.get_process_memory_maps(self.pid)
-        except OSError, err:
+        except OSError:
             # XXX - can't use wrap_exceptions decorator as we're
             # returning a generator; probably needs refactoring.
+            err = sys.exc_info()[1]
             if err.errno in (errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED):
                 raise AccessDenied(self.pid, self._process_name)
             if err.errno == errno.ESRCH:
@@ -238,7 +275,13 @@ class Process(object):
         # special case for kernel process PIDs; return system boot time
         if self.pid in (0, 4):
             return BOOT_TIME
-        return _psutil_mswindows.get_process_create_time(self.pid)
+        try:
+            return _psutil_mswindows.get_process_create_time(self.pid)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno in ACCESS_DENIED_SET:
+                return _psutil_mswindows.get_process_create_time_2(self.pid)
+            raise
 
     @wrap_exceptions
     def get_process_num_threads(self):
@@ -249,14 +292,21 @@ class Process(object):
         rawlist = _psutil_mswindows.get_process_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = ntuple_thread(thread_id, utime, stime)
+            ntuple = nt_thread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
 
     @wrap_exceptions
     def get_cpu_times(self):
-        user, system = _psutil_mswindows.get_process_cpu_times(self.pid)
-        return ntuple_cputimes(user, system)
+        try:
+            ret = _psutil_mswindows.get_process_cpu_times(self.pid)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno in ACCESS_DENIED_SET:
+                ret = _psutil_mswindows.get_process_cpu_times_2(self.pid)
+            else:
+                raise
+        return nt_cputimes(*ret)
 
     @wrap_exceptions
     def suspend_process(self):
@@ -287,8 +337,8 @@ class Process(object):
         raw_file_names = _psutil_mswindows.get_process_open_files(self.pid)
         for file in raw_file_names:
             file = _convert_raw_path(file)
-            if os.path.isfile(file) and file not in retlist:
-                ntuple = ntuple_openfile(file, -1)
+            if isfile_strict(file) and file not in retlist:
+                ntuple = nt_openfile(file, -1)
                 retlist.append(ntuple)
         return retlist
 
@@ -299,7 +349,7 @@ class Process(object):
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
         ret = _psutil_mswindows.get_process_connections(self.pid, families, types)
-        return [ntuple_connection(*conn) for conn in ret]
+        return [nt_connection(*conn) for conn in ret]
 
     @wrap_exceptions
     def get_process_nice(self):
@@ -311,8 +361,15 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_io_counters(self):
-        rc, wc, rb, wb =_psutil_mswindows.get_process_io_counters(self.pid)
-        return ntuple_io(rc, wc, rb, wb)
+        try:
+            ret = _psutil_mswindows.get_process_io_counters(self.pid)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno in ACCESS_DENIED_SET:
+                ret = _psutil_mswindows.get_process_io_counters_2(self.pid)
+            else:
+                raise
+        return nt_io(*ret)
 
     @wrap_exceptions
     def get_process_status(self):
@@ -321,24 +378,6 @@ class Process(object):
             return STATUS_STOPPED
         else:
             return STATUS_RUNNING
-
-    @wrap_exceptions
-    def get_process_environ(self):
-        if self.pid in (0, 4):
-            raise AccessDenied(self.pid, self._process_name)
-        rawstr = _psutil_mswindows.get_process_environ(self.pid)
-        ret = {}
-        values = rawstr.split('\0\0')[0].split('\0')
-        for line in values:
-            pos = line.find('=')
-            if pos:
-                # os.environ forces upper keys; let's do the same
-                key = line[:pos].upper()
-                if key:
-                    value = line[pos+1:]
-                    if value:
-                        ret[key] = value
-        return ret
 
     @wrap_exceptions
     def get_process_cpu_affinity(self):
@@ -361,7 +400,7 @@ class Process(object):
         # SetProcessAffinityMask() states that ERROR_INVALID_PARAMETER
         # is returned for an invalid CPU but this seems not to be true,
         # therefore we check CPUs validy beforehand.
-        allcpus = range(len(get_system_per_cpu_times()))
+        allcpus = list(range(len(get_system_per_cpu_times())))
         for cpu in value:
             if cpu not in allcpus:
                 raise ValueError("invalid CPU %i" % cpu)
@@ -371,4 +410,14 @@ class Process(object):
 
     @wrap_exceptions
     def get_num_handles(self):
-        return _psutil_mswindows.get_process_num_handles(self.pid)
+        try:
+            return _psutil_mswindows.get_process_num_handles(self.pid)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno in ACCESS_DENIED_SET:
+                return _psutil_mswindows.get_process_num_handles_2(self.pid)
+            raise
+
+    @wrap_exceptions
+    def get_num_ctx_switches(self):
+        return nt_ctxsw(*_psutil_mswindows.get_process_num_ctx_switches(self.pid))

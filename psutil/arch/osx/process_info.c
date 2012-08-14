@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <sys/sysctl.h>
+#include <libproc.h>
 
 #include "process_info.h"
 #include "../../_psutil_common.h"
@@ -144,7 +145,7 @@ get_arg_list(long pid)
     int mib[3];
     int nargs;
     int len;
-    char *procargs;
+    char *procargs = NULL;
     char *arg_ptr;
     char *arg_end;
     char *curr_arg;
@@ -159,11 +160,15 @@ get_arg_list(long pid)
 
     /* read argmax and allocate memory for argument space. */
     argmax = get_argmax();
-    if (! argmax) { return PyErr_SetFromErrno(PyExc_OSError); }
+    if (! argmax) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
 
     procargs = (char *)malloc(argmax);
     if (NULL == procargs) {
-        return PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
     }
 
     /* read argument space */
@@ -178,8 +183,7 @@ get_arg_list(long pid)
                 NoSuchProcess();
             }
         }
-        free(procargs);
-        return NULL;
+        goto error;
     }
 
     arg_end = &procargs[argmax];
@@ -205,14 +209,15 @@ get_arg_list(long pid)
     /* iterate through arguments */
     curr_arg = arg_ptr;
     arglist = Py_BuildValue("[]");
+    if (!arglist)
+        goto error;
     while (arg_ptr < arg_end && nargs > 0) {
         if (*arg_ptr++ == '\0') {
             arg = Py_BuildValue("s", curr_arg);
-            if (NULL == arg) {
-                free(procargs);
-                return NULL;
-            }
-            PyList_Append(arglist, arg);
+            if (!arg)
+                goto error;
+            if (PyList_Append(arglist, arg))
+                goto error;
             Py_DECREF(arg);
             // iterate to next arg and decrement # of args
             curr_arg = arg_ptr;
@@ -222,6 +227,13 @@ get_arg_list(long pid)
 
     free(procargs);
     return arglist;
+
+error:
+    Py_XDECREF(arg);
+    Py_XDECREF(arglist);
+    if (procargs != NULL)
+        free(procargs);
+    return NULL;
 }
 
 
@@ -242,6 +254,7 @@ get_kinfo_proc(pid_t pid, struct kinfo_proc *kp)
     if (sysctl(mib, 4, kp, &len, NULL, 0) == -1) {
         // raise an exception and throw errno as the error
         PyErr_SetFromErrno(PyExc_OSError);
+        return -1;
     }
 
     /*
@@ -252,4 +265,31 @@ get_kinfo_proc(pid_t pid, struct kinfo_proc *kp)
         return -1;
     }
     return 0;
+}
+
+
+/*
+ * A thin wrapper around proc_pidinfo()
+ */
+int
+psutil_proc_pidinfo(long pid, int flavor, void *pti, int size)
+{
+    int ret = proc_pidinfo((int)pid, flavor, 0, pti, size);
+    if (ret == 0) {
+        if (! pid_exists(pid)) {
+            NoSuchProcess();
+            return 0;
+        }
+        else {
+            AccessDenied();
+            return 0;
+        }
+    }
+    else if (ret != size) {
+        AccessDenied();
+        return 0;
+    }
+    else {
+        return 1;
+    }
 }

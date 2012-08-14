@@ -56,6 +56,11 @@ handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess)
     HANDLE hProcess;
     DWORD  processExitCode = 0;
 
+    if (pid == 0) {
+        // otherwise we'd get NoSuchProcess
+        return AccessDenied();
+    }
+
     hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
@@ -294,12 +299,12 @@ PyObject*
 get_arg_list(long pid)
 {
     int nArgs, i;
-    LPWSTR *szArglist;
-    HANDLE hProcess;
+    LPWSTR *szArglist = NULL;
+    HANDLE hProcess = NULL;
     PVOID pebAddress;
     PVOID rtlUserProcParamsAddress;
     UNICODE_STRING commandLine;
-    WCHAR *commandLineContents;
+    WCHAR *commandLineContents = NULL;
     PyObject *arg = NULL;
     PyObject *arg_from_wchar = NULL;
     PyObject *argList = NULL;
@@ -322,8 +327,7 @@ get_arg_list(long pid)
     {
         ////printf("Could not read the address of ProcessParameters!\n");
         PyErr_SetFromWindowsErr(0);
-        CloseHandle(hProcess);
-        return NULL;
+        goto error;
     }
 
     /* read the CommandLine UNICODE_STRING structure */
@@ -336,9 +340,8 @@ get_arg_list(long pid)
 #endif
     {
         ////printf("Could not read CommandLine!\n");
-        CloseHandle(hProcess);
         PyErr_SetFromWindowsErr(0);
-        return NULL;
+        goto error;
     }
 
 
@@ -350,10 +353,8 @@ get_arg_list(long pid)
         commandLineContents, commandLine.Length, NULL))
     {
         ////printf("Could not read the command line string!\n");
-        CloseHandle(hProcess);
         PyErr_SetFromWindowsErr(0);
-        free(commandLineContents);
-        return NULL;
+        goto error;
     }
 
     /* print the commandline */
@@ -371,37 +372,63 @@ get_arg_list(long pid)
         // encode as a UTF8 Python string object from WCHAR string
         arg_from_wchar = PyUnicode_FromWideChar(commandLineContents,
                                                 commandLine.Length / 2);
+        if (arg_from_wchar == NULL)
+            goto error;
         #if PY_MAJOR_VERSION >= 3
             argList = Py_BuildValue("N", PyUnicode_AsUTF8String(arg_from_wchar));
         #else
             argList = Py_BuildValue("N", PyUnicode_FromObject(arg_from_wchar));
         #endif
+        if (!argList)
+            goto error;
     }
     else {
         // arglist parsed as array of UNICODE_STRING, so convert each to Python
         // string object and add to arg list
         argList = Py_BuildValue("[]");
+        if (!argList)
+            goto error;
         for(i=0; i<nArgs; i++) {
+            arg_from_wchar = NULL;
+            arg = NULL;
             ////printf("%d: %.*S (%d characters)\n", i, wcslen(szArglist[i]),
             //                  szArglist[i], wcslen(szArglist[i]));
             arg_from_wchar = PyUnicode_FromWideChar(szArglist[i],
                                                     wcslen(szArglist[i])
                                                     );
+            if (arg_from_wchar == NULL)
+                goto error;
             #if PY_MAJOR_VERSION >= 3
                 arg = PyUnicode_FromObject(arg_from_wchar);
             #else
                 arg = PyUnicode_AsUTF8String(arg_from_wchar);
             #endif
+            if (arg == NULL)
+                goto error;
             Py_XDECREF(arg_from_wchar);
-            PyList_Append(argList, arg);
+            if (PyList_Append(argList, arg))
+                goto error;
             Py_XDECREF(arg);
         }
     }
 
-    LocalFree(szArglist);
+    if (szArglist != NULL)
+        LocalFree(szArglist);
     free(commandLineContents);
     CloseHandle(hProcess);
     return argList;
+
+error:
+    Py_XDECREF(arg);
+    Py_XDECREF(arg_from_wchar);
+    Py_XDECREF(argList);
+    if (hProcess != NULL)
+        CloseHandle(hProcess);
+    if (commandLineContents != NULL)
+        free(commandLineContents);
+    if (szArglist != NULL)
+        LocalFree(szArglist);
+    return NULL;
 }
 
 
@@ -438,7 +465,6 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
     hNtDll = LoadLibrary(TEXT("ntdll.dll"));
     NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
                                 hNtDll, "NtQuerySystemInformation");
-    FreeLibrary(hNtDll);
 
     bufferSize = initialBufferSize;
     buffer = malloc(bufferSize);
@@ -459,7 +485,7 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
 
     if (status != 0) {
         PyErr_Format(PyExc_RuntimeError, "NtQuerySystemInformation() failed");
-
+        FreeLibrary(hNtDll);
         free(buffer);
         return 0;
     }
@@ -478,7 +504,7 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
     } while ( (process = PH_NEXT_PROCESS(process)) );
 
     NoSuchProcess();
-
+    FreeLibrary(hNtDll);
     free(buffer);
     return 0;
 }

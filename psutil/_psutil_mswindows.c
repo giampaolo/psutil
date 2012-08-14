@@ -106,20 +106,28 @@ get_pid_list(PyObject* self, PyObject* args)
 
     proclist = get_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
-        Py_DECREF(retlist);
-        return NULL;
+        goto error;
     }
 
     for (i = 0; i < numberOfReturnedPIDs; i++) {
         pid = Py_BuildValue("I", proclist[i]);
-        PyList_Append(retlist, pid);
-        Py_XDECREF(pid);
+        if (!pid)
+            goto error;
+        if (PyList_Append(retlist, pid))
+            goto error;
+        Py_DECREF(pid);
     }
 
     // free C array allocated for PIDs
     free(proclist);
-
     return retlist;
+
+error:
+    Py_XDECREF(pid);
+    Py_DECREF(retlist);
+    if (proclist != NULL)
+        free(proclist);
+    return NULL;
 }
 
 
@@ -240,11 +248,6 @@ get_process_cpu_times(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    // special case for PID 0
-    if (0 == pid){
-       return Py_BuildValue("(dd)", 0.0, 0.0);
-    }
-
     hProcess = handle_from_pid(pid);
     if (hProcess == NULL) {
         return NULL;
@@ -287,6 +290,32 @@ get_process_cpu_times(PyObject* self, PyObject* args)
 
 
 /*
+ * Alternative implementation of the one above but bypasses ACCESS DENIED.
+ */
+static PyObject*
+get_process_cpu_times_2(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    double user, kernel;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (! get_process_info(pid, &process, &buffer)) {
+        return NULL;
+    }
+    user = (double)process->UserTime.HighPart * 429.4967296 + \
+           (double)process->UserTime.LowPart * 1e-7;
+    kernel = (double)process->KernelTime.HighPart * 429.4967296 + \
+             (double)process->KernelTime.LowPart * 1e-7;
+    free(buffer);
+    return Py_BuildValue("(dd)", user, kernel);
+}
+
+
+/*
  * Return a Python float indicating the process create time expressed in
  * seconds since the epoch.
  */
@@ -294,17 +323,19 @@ static PyObject*
 get_process_create_time(PyObject* self, PyObject* args)
 {
     long        pid;
-    long long unix_time;
+    long long   unix_time;
+    DWORD       exitCode;
     HANDLE      hProcess;
+    BOOL        ret;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
 
-    // special case for PIDs 0 and 4
-    if ( (0 == pid) || (4 == pid) ){
-       return Py_BuildValue("d", 0.0);
+    // special case for PIDs 0 and 4, return BOOT_TIME
+    if (0 == pid || 4 == pid) {
+        return get_system_uptime(NULL, NULL);
     }
 
     hProcess = handle_from_pid(pid);
@@ -324,7 +355,26 @@ get_process_create_time(PyObject* self, PyObject* args)
         }
     }
 
+    // Make sure the process is not gone as OpenProcess alone seems to be
+    // unreliable in doing so (it seems a previous call to p.wait() makes
+    // it unreliable).
+    // This check is important as creation time is used to make sure the
+    // process is still running.
+    ret = GetExitCodeProcess(hProcess, &exitCode);
     CloseHandle(hProcess);
+    if (ret != 0) {
+        if (exitCode != STILL_ACTIVE) {
+            return NoSuchProcess();
+        }
+    }
+    else {
+        // Ignore access denied as it means the process is still alive.
+        // For all other errors, we want an exception.
+        if (GetLastError() != ERROR_ACCESS_DENIED) {
+            PyErr_SetFromWindowsErr(0);
+            return NULL;
+        }
+    }
 
     /*
     Convert the FILETIME structure to a Unix time.
@@ -334,6 +384,40 @@ get_process_create_time(PyObject* self, PyObject* args)
     unix_time = ((LONGLONG)ftCreate.dwHighDateTime) << 32;
     unix_time += ftCreate.dwLowDateTime - 116444736000000000LL;
     unix_time /= 10000000;
+    return Py_BuildValue("d", (double)unix_time);
+}
+
+
+/*
+ * Alternative implementation of the one above but bypasses ACCESS DENIED.
+ */
+static PyObject*
+get_process_create_time_2(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    long long   unix_time;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (! get_process_info(pid, &process, &buffer)) {
+        return NULL;
+    }
+    // special case for PIDs 0 and 4, return BOOT_TIME
+    if (0 == pid || 4 == pid) {
+        return get_system_uptime(NULL, NULL);
+    }
+    /*
+    Convert the LARGE_INTEGER union to a Unix time.
+    It's the best I could find by googling and borrowing code here and there.
+    The time returned has a precision of 1 second.
+    */
+    unix_time = ((LONGLONG)process->CreateTime.HighPart) << 32;
+    unix_time += process->CreateTime.LowPart - 116444736000000000LL;
+    unix_time /= 10000000;
+    free(buffer);
     return Py_BuildValue("d", (double)unix_time);
 }
 
@@ -446,6 +530,8 @@ get_process_cmdline(PyObject* self, PyObject* args) {
         return NULL;
     }
 
+    // XXX the assumptio below probably needs to go away
+
     // May fail any of several ReadProcessMemory calls etc. and not indicate
     // a real problem so we ignore any errors and just live without commandline
     arglist = get_arg_list(pid);
@@ -460,14 +546,48 @@ get_process_cmdline(PyObject* self, PyObject* args) {
 
 
 /*
- * Return the RSS and VMS as a Python tuple.
+ * Return process executable path.
  */
 static PyObject*
-get_memory_info(PyObject* self, PyObject* args)
+get_process_exe(PyObject* self, PyObject* args) {
+    long pid;
+    HANDLE hProcess;
+    wchar_t exe[MAX_PATH];
+    DWORD nSize = MAX_PATH;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+
+    hProcess = handle_from_pid_waccess(pid, PROCESS_QUERY_INFORMATION);
+    if (NULL == hProcess) {
+        return NULL;
+    }
+
+    if (GetProcessImageFileName(hProcess, &exe, nSize) == 0) {
+        CloseHandle(hProcess);
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    CloseHandle(hProcess);
+    return Py_BuildValue("s", exe);
+}
+
+
+/*
+ * Return process memory information as a Python tuple.
+ */
+static PyObject*
+get_process_memory_info(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
-    PROCESS_MEMORY_COUNTERS counters;
     DWORD pid;
+#if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
+    PROCESS_MEMORY_COUNTERS_EX cnt;
+#else
+    PROCESS_MEMORY_COUNTERS cnt;
+#endif
+    SIZE_T private = 0;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
@@ -478,20 +598,90 @@ get_memory_info(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    if (! GetProcessMemoryInfo(hProcess, &counters, sizeof(counters)) ) {
+    if (! GetProcessMemoryInfo(hProcess, &cnt, sizeof(cnt)) ) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
     }
+
+#if (_WIN32_WINNT >= 0x0501)
+    private = cnt.PrivateUsage;
+#endif
 
     CloseHandle(hProcess);
 
 // py 2.4
 #if (PY_MAJOR_VERSION == 2) && (PY_MINOR_VERSION <= 4)
-    return Py_BuildValue("(II)", (unsigned int)counters.WorkingSetSize,
-                                 (unsigned int)counters.PagefileUsage);
+    return Py_BuildValue("(kIIIIIIIII)",
+        cnt.PageFaultCount,
+        (unsigned int)cnt.PeakWorkingSetSize,
+        (unsigned int)cnt.WorkingSetSize,
+        (unsigned int)cnt.QuotaPeakPagedPoolUsage,
+        (unsigned int)cnt.QuotaPagedPoolUsage,
+        (unsigned int)cnt.QuotaPeakNonPagedPoolUsage,
+        (unsigned int)cnt.QuotaNonPagedPoolUsage,
+        (unsigned int)cnt.PagefileUsage,
+        (unsigned int)cnt.PeakPagefileUsage,
+        (unsigned int)private);
 #else
 // py >= 2.5
-    return Py_BuildValue("(nn)", counters.WorkingSetSize, counters.PagefileUsage);
+    return Py_BuildValue("(knnnnnnnnn)",
+        cnt.PageFaultCount,
+        cnt.PeakWorkingSetSize,
+        cnt.WorkingSetSize,
+        cnt.QuotaPeakPagedPoolUsage,
+        cnt.QuotaPagedPoolUsage,
+        cnt.QuotaPeakNonPagedPoolUsage,
+        cnt.QuotaNonPagedPoolUsage,
+        cnt.PagefileUsage,
+        cnt.PeakPagefileUsage,
+        private);
+#endif
+}
+
+
+/*
+ * Alternative implementation of the one above but bypasses ACCESS DENIED.
+ */
+static PyObject*
+get_process_memory_info_2(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    ULONG m0;
+    SIZE_T m1, m2, m3, m4, m5, m6, m7, m8, m9;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (! get_process_info(pid, &process, &buffer)) {
+        return NULL;
+    }
+    m0 = process->PageFaultCount;
+    m1 = process->PeakWorkingSetSize;
+    m2 = process->WorkingSetSize;
+    m3 = process->QuotaPeakPagedPoolUsage;
+    m4 = process->QuotaPagedPoolUsage;
+    m5 = process->QuotaPeakNonPagedPoolUsage;
+    m6 = process->QuotaNonPagedPoolUsage;
+    m7 = process->PagefileUsage;
+    m8 = process->PeakPagefileUsage;
+#if (_WIN32_WINNT >= 0x0501)
+    m9 = process->PrivatePageCount;  // private me
+#else
+    m9 = 0;
+#endif
+    free(buffer);
+
+// py 2.4
+#if (PY_MAJOR_VERSION == 2) && (PY_MINOR_VERSION <= 4)
+    return Py_BuildValue("(kIIIIIIIII)",
+        (unsigned int)m0, (unsigned int)m1, (unsigned int)m2, (unsigned int)m3,
+        (unsigned int)m4, (unsigned int)m5, (unsigned int)m6, (unsigned int)m7,
+        (unsigned int)m8, (unsigned int)m9);
+#else
+    return Py_BuildValue("(knnnnnnnnn)",
+        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9);
 #endif
 }
 
@@ -501,7 +691,7 @@ get_memory_info(PyObject* self, PyObject* args)
  * in bytes.
  */
 static PyObject*
-get_system_phymem(PyObject* self, PyObject* args)
+get_virtual_mem(PyObject* self, PyObject* args)
 {
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
@@ -510,15 +700,14 @@ get_system_phymem(PyObject* self, PyObject* args)
         return PyErr_SetFromWindowsErr(0);
     }
 
-    return Py_BuildValue("(LLLLLLk)",
-                                memInfo.ullTotalPhys,      // total
-                                memInfo.ullAvailPhys,      // avail
-                                memInfo.ullTotalPageFile,  // total page file
-                                memInfo.ullAvailPageFile,  // avail page file
-                                memInfo.ullTotalVirtual,   // total virtual
-                                memInfo.ullAvailVirtual,   // avail virtual
-                                memInfo.dwMemoryLoad       // percent
-                                );
+    return Py_BuildValue("(LLLLLL)",
+        memInfo.ullTotalPhys,      // total
+        memInfo.ullAvailPhys,      // avail
+        memInfo.ullTotalPageFile,  // total page file
+        memInfo.ullAvailPageFile,  // avail page file
+        memInfo.ullTotalVirtual,   // total virtual
+        memInfo.ullAvailVirtual    // avail virtual
+    );
 }
 
 
@@ -574,6 +763,7 @@ get_system_cpu_times(PyObject* self, PyObject* args)
                     // computes system global times summing each processor value
                     idle = user = kernel = 0;
                     for (i=0; i<si.dwNumberOfProcessors; i++) {
+                        arg = NULL;
                         user = (float)((HI_T * sppi[i].UserTime.HighPart) + \
                                        (LO_T * sppi[i].UserTime.LowPart));
                         idle = (float)((HI_T * sppi[i].IdleTime.HighPart) + \
@@ -586,8 +776,11 @@ get_system_cpu_times(PyObject* self, PyObject* args)
                         arg = Py_BuildValue("(ddd)", user,
                                                      kernel - idle,
                                                      idle);
-                        PyList_Append(retlist, arg);
-                        Py_XDECREF(arg);
+                        if (!arg)
+                            goto error;
+                        if (PyList_Append(retlist, arg))
+                            goto error;
+                        Py_DECREF(arg);
                     }
                     free(sppi);
                     FreeLibrary(hNtDll);
@@ -597,7 +790,11 @@ get_system_cpu_times(PyObject* self, PyObject* args)
             }  // END malloc SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
         }  // END GetProcAddress
     }  // END LoadLibrary
+    goto error;
 
+error:
+    Py_XDECREF(arg);
+    Py_DECREF(retlist);
     if (sppi) {
         free(sppi);
     }
@@ -617,11 +814,11 @@ static PyObject*
 get_process_cwd(PyObject* self, PyObject* args)
 {
     long pid;
-    HANDLE processHandle;
+    HANDLE processHandle = NULL;
     PVOID pebAddress;
     PVOID rtlUserProcParamsAddress;
     UNICODE_STRING currentDirectory;
-    WCHAR *currentDirectoryContent;
+    WCHAR *currentDirectoryContent = NULL;
     PyObject *returnPyObj = NULL;
     PyObject *cwd_from_wchar = NULL;
     PyObject *cwd = NULL;
@@ -686,16 +883,14 @@ get_process_cwd(PyObject* self, PyObject* args)
     if (!ReadProcessMemory(processHandle, currentDirectory.Buffer,
         currentDirectoryContent, currentDirectory.Length, NULL))
     {
-        CloseHandle(processHandle);
-        free(currentDirectoryContent);
-
         if (GetLastError() == ERROR_PARTIAL_COPY) {
             // this occurs quite often with system processes
-            return AccessDenied();
+            AccessDenied();
         }
         else {
-            return PyErr_SetFromWindowsErr(0);
+            PyErr_SetFromWindowsErr(0);
         }
+        goto error;
     }
 
     // null-terminate the string to prevent wcslen from returning
@@ -706,21 +901,38 @@ get_process_cwd(PyObject* self, PyObject* args)
     // convert wchar array to a Python unicode string, and then to UTF8
     cwd_from_wchar = PyUnicode_FromWideChar(currentDirectoryContent,
                                             wcslen(currentDirectoryContent));
+    if (cwd_from_wchar == NULL)
+        goto error;
 
     #if PY_MAJOR_VERSION >= 3
         cwd = PyUnicode_FromObject(cwd_from_wchar);
     #else
         cwd = PyUnicode_AsUTF8String(cwd_from_wchar);
     #endif
+    if (cwd == NULL)
+        goto error;
 
     // decrement the reference count on our temp unicode str to avoid
     // mem leak
-    Py_XDECREF(cwd_from_wchar);
     returnPyObj = Py_BuildValue("N", cwd);
+    if (!returnPyObj)
+        goto error;
+
+    Py_DECREF(cwd_from_wchar);
 
     CloseHandle(processHandle);
     free(currentDirectoryContent);
     return returnPyObj;
+
+error:
+    Py_XDECREF(cwd_from_wchar);
+    Py_XDECREF(cwd);
+    Py_XDECREF(returnPyObj);
+    if (currentDirectoryContent != NULL)
+        free(currentDirectoryContent);
+    if (processHandle != NULL)
+        CloseHandle(processHandle);
+    return NULL;
 }
 
 
@@ -841,15 +1053,9 @@ get_process_num_threads(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_process_info(pid, &process, &buffer) != 1) {
-        free(buffer);
+    if (! get_process_info(pid, &process, &buffer)) {
         return NULL;
     }
-    if (pid_is_running(pid) == 0) {
-        free(buffer);
-        return NoSuchProcess();
-    }
-
     num = (int)process->NumberOfThreads;
     free(buffer);
     return Py_BuildValue("i", num);
@@ -862,6 +1068,7 @@ get_process_threads(PyObject* self, PyObject* args)
     PyObject* retList = PyList_New(0);
     PyObject* pyTuple = NULL;
     HANDLE hThreadSnap = NULL;
+    HANDLE hThread;
     THREADENTRY32 te32 = {0};
     long pid;
     int pid_return;
@@ -869,26 +1076,28 @@ get_process_threads(PyObject* self, PyObject* args)
     FILETIME ftDummy, ftKernel, ftUser;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
+        goto error;
     }
     if (pid == 0) {
         // raise AD instead of returning 0 as procexp is able to
         // retrieve useful information somehow
-        return AccessDenied();
+        AccessDenied();
+        goto error;
     }
 
     pid_return = pid_is_running(pid);
     if (pid_return == 0) {
-        return NoSuchProcess();
+        NoSuchProcess();
+        goto error;
     }
     if (pid_return == -1) {
-        return NULL;
+        goto error;
     }
 
     hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
     if (hThreadSnap == INVALID_HANDLE_VALUE) {
         PyErr_SetFromWindowsErr(0);
-        return NULL;
+        goto error;
     }
 
     // Fill in the size of the structure before using it
@@ -896,8 +1105,7 @@ get_process_threads(PyObject* self, PyObject* args)
 
     if (! Thread32First(hThreadSnap, &te32)) {
         PyErr_SetFromWindowsErr(0);
-        CloseHandle(hThreadSnap);
-        return NULL;
+        goto error;
     }
 
     // Walk the thread snapshot to find all threads of the process.
@@ -906,8 +1114,10 @@ get_process_threads(PyObject* self, PyObject* args)
     {
         if (te32.th32OwnerProcessID == pid)
         {
-            HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION,
-                                        FALSE, te32.th32ThreadID);
+            pyTuple = NULL;
+            hThread = NULL;
+            hThread = OpenThread(THREAD_QUERY_INFORMATION,
+                                  FALSE, te32.th32ThreadID);
             if (hThread == NULL) {
                 // thread has disappeared on us
                 continue;
@@ -916,9 +1126,7 @@ get_process_threads(PyObject* self, PyObject* args)
             rc = GetThreadTimes(hThread, &ftDummy, &ftDummy, &ftKernel, &ftUser);
             if (rc == 0) {
                 PyErr_SetFromWindowsErr(0);
-                CloseHandle(hThread);
-                CloseHandle(hThreadSnap);
-                return NULL;
+                goto error;
             }
 
             /*
@@ -936,10 +1144,12 @@ get_process_threads(PyObject* self, PyObject* args)
                             (double)(ftUser.dwHighDateTime*429.4967296 + \
                                      ftUser.dwLowDateTime*1e-7),
                             (double)(ftKernel.dwHighDateTime*429.4967296 + \
-                                     ftKernel.dwLowDateTime*1e-7)
-                      );
-            PyList_Append(retList, pyTuple);
-            Py_XDECREF(pyTuple);
+                                     ftKernel.dwLowDateTime*1e-7));
+            if (!pyTuple)
+                goto error;
+            if (PyList_Append(retList, pyTuple))
+                goto error;
+            Py_DECREF(pyTuple);
 
             CloseHandle(hThread);
         }
@@ -947,6 +1157,16 @@ get_process_threads(PyObject* self, PyObject* args)
 
     CloseHandle(hThreadSnap);
     return retList;
+
+error:
+    Py_XDECREF(pyTuple);
+    Py_DECREF(retList);
+    if (hThread != NULL)
+        CloseHandle(hThread);
+    if (hThreadSnap != NULL) {
+        CloseHandle(hThreadSnap);
+    }
+    return NULL;
 }
 
 
@@ -1238,7 +1458,7 @@ get_process_connections(PyObject* self, PyObject* args)
 
     unsigned long pid;
     PyObject* connectionsList;
-    PyObject* connectionTuple;
+    PyObject* connectionTuple = NULL;
     PyObject *af_filter = NULL;
     PyObject *type_filter = NULL;
 
@@ -1259,7 +1479,7 @@ get_process_connections(PyObject* self, PyObject* args)
     typedef DWORD (WINAPI *_GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
                                                  UDP_TABLE_CLASS, ULONG);
     _GetExtendedUdpTable getExtendedUdpTable;
-    PVOID table;
+    PVOID table = NULL;
     DWORD tableSize;
     PMIB_TCPTABLE_OWNER_PID tcp4Table;
     PMIB_UDPTABLE_OWNER_PID udp4Table;
@@ -1267,9 +1487,9 @@ get_process_connections(PyObject* self, PyObject* args)
     PMIB_UDP6TABLE_OWNER_PID udp6Table;
     ULONG i;
     CHAR addressBufferLocal[65];
-    PyObject* addressTupleLocal;
+    PyObject* addressTupleLocal = NULL;
     CHAR addressBufferRemote[65];
-    PyObject* addressTupleRemote;
+    PyObject* addressTupleRemote = NULL;
 
     if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter)) {
         ConnDecrefPyObjs();
@@ -1322,6 +1542,10 @@ get_process_connections(PyObject* self, PyObject* args)
     if ((PySequence_Contains(af_filter, _AF_INET) == 1) &&
         (PySequence_Contains(type_filter, _SOCK_STREAM) == 1))
     {
+        table = NULL;
+        connectionTuple = NULL;
+        addressTupleLocal = NULL;
+        addressTupleRemote = NULL;
         tableSize = 0;
         getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET,
                             TCP_TABLE_OWNER_PID_ALL, 0);
@@ -1354,6 +1578,9 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleLocal = PyTuple_New(0);
                 }
 
+                if (addressTupleLocal == NULL)
+                    goto error;
+
                 // On Windows <= XP, remote addr is filled even if socket
                 // is in LISTEN mode in which case we just ignore it.
                 if ((tcp4Table->table[i].dwRemoteAddr != 0 ||
@@ -1372,6 +1599,9 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleRemote = PyTuple_New(0);
                 }
 
+                if (addressTupleRemote == NULL)
+                    goto error;
+
                 connectionTuple = Py_BuildValue("(iiiNNs)",
                     -1,
                     AF_INET,
@@ -1380,7 +1610,10 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleRemote,
                     state_to_string(tcp4Table->table[i].dwState)
                     );
-                PyList_Append(connectionsList, connectionTuple);
+                if (!connectionTuple)
+                    goto error;
+                if (PyList_Append(connectionsList, connectionTuple))
+                    goto error;
                 Py_DECREF(connectionTuple);
             }
         }
@@ -1393,6 +1626,10 @@ get_process_connections(PyObject* self, PyObject* args)
     if ((PySequence_Contains(af_filter, _AF_INET6) == 1) &&
         (PySequence_Contains(type_filter, _SOCK_STREAM) == 1))
     {
+        table = NULL;
+        connectionTuple = NULL;
+        addressTupleLocal = NULL;
+        addressTupleRemote = NULL;
         tableSize = 0;
         getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET6,
                             TCP_TABLE_OWNER_PID_ALL, 0);
@@ -1425,6 +1662,9 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleLocal = PyTuple_New(0);
                 }
 
+                if (addressTupleLocal == NULL)
+                    goto error;
+
                 // On Windows <= XP, remote addr is filled even if socket
                 // is in LISTEN mode in which case we just ignore it.
                 if ((memcmp(tcp6Table->table[i].ucRemoteAddr, null_address, 16) != 0 ||
@@ -1443,6 +1683,9 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleRemote = PyTuple_New(0);
                 }
 
+                if (addressTupleRemote == NULL)
+                    goto error;
+
                 connectionTuple = Py_BuildValue("(iiiNNs)",
                     -1,
                     AF_INET6,
@@ -1451,7 +1694,10 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleRemote,
                     state_to_string(tcp6Table->table[i].dwState)
                     );
-                PyList_Append(connectionsList, connectionTuple);
+                if (!connectionTuple)
+                    goto error;
+                if (PyList_Append(connectionsList, connectionTuple))
+                    goto error;
                 Py_DECREF(connectionTuple);
             }
         }
@@ -1464,6 +1710,10 @@ get_process_connections(PyObject* self, PyObject* args)
     if ((PySequence_Contains(af_filter, _AF_INET) == 1) &&
         (PySequence_Contains(type_filter, _SOCK_DGRAM) == 1))
     {
+        table = NULL;
+        connectionTuple = NULL;
+        addressTupleLocal = NULL;
+        addressTupleRemote = NULL;
         tableSize = 0;
         getExtendedUdpTable(NULL, &tableSize, FALSE, AF_INET,
                             UDP_TABLE_OWNER_PID, 0);
@@ -1496,6 +1746,9 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleLocal = PyTuple_New(0);
                 }
 
+                if (addressTupleLocal == NULL)
+                    goto error;
+
                 connectionTuple = Py_BuildValue("(iiiNNs)",
                     -1,
                     AF_INET,
@@ -1504,7 +1757,10 @@ get_process_connections(PyObject* self, PyObject* args)
                     PyTuple_New(0),
                     ""
                     );
-                PyList_Append(connectionsList, connectionTuple);
+                if (!connectionTuple)
+                    goto error;
+                if (PyList_Append(connectionsList, connectionTuple))
+                    goto error;
                 Py_DECREF(connectionTuple);
             }
         }
@@ -1517,6 +1773,10 @@ get_process_connections(PyObject* self, PyObject* args)
     if ((PySequence_Contains(af_filter, _AF_INET6) == 1) &&
         (PySequence_Contains(type_filter, _SOCK_DGRAM) == 1))
     {
+        table = NULL;
+        connectionTuple = NULL;
+        addressTupleLocal = NULL;
+        addressTupleRemote = NULL;
         tableSize = 0;
         getExtendedUdpTable(NULL, &tableSize, FALSE,
                             AF_INET6, UDP_TABLE_OWNER_PID, 0);
@@ -1549,6 +1809,9 @@ get_process_connections(PyObject* self, PyObject* args)
                     addressTupleLocal = PyTuple_New(0);
                 }
 
+                if (addressTupleLocal == NULL)
+                    goto error;
+
                 connectionTuple = Py_BuildValue("(iiiNNs)",
                     -1,
                     AF_INET6,
@@ -1557,7 +1820,10 @@ get_process_connections(PyObject* self, PyObject* args)
                     PyTuple_New(0),
                     ""
                     );
-                PyList_Append(connectionsList, connectionTuple);
+                if (!connectionTuple)
+                    goto error;
+                if (PyList_Append(connectionsList, connectionTuple))
+                    goto error;
                 Py_DECREF(connectionTuple);
             }
         }
@@ -1567,6 +1833,16 @@ get_process_connections(PyObject* self, PyObject* args)
 
     ConnDecrefPyObjs();
     return connectionsList;
+
+error:
+    ConnDecrefPyObjs();
+    Py_XDECREF(connectionTuple);
+    Py_XDECREF(addressTupleLocal);
+    Py_XDECREF(addressTupleRemote);
+    Py_DECREF(connectionsList);
+    if (table != NULL)
+        free(table);
+    return NULL;
 }
 
 
@@ -1642,9 +1918,6 @@ get_process_io_counters(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (pid == 0) {
-        return AccessDenied();
-    }
     hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
         return NULL;
@@ -1662,6 +1935,32 @@ get_process_io_counters(PyObject* self, PyObject* args)
 
 
 /*
+ * Alternative implementation of the one above but bypasses ACCESS DENIED.
+ */
+static PyObject*
+get_process_io_counters_2(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    LONGLONG rcount, wcount, rbytes, wbytes;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (! get_process_info(pid, &process, &buffer)) {
+        return NULL;
+    }
+    rcount = process->ReadOperationCount.QuadPart;
+    wcount = process->WriteOperationCount.QuadPart;
+    rbytes = process->ReadTransferCount.QuadPart;
+    wbytes = process->WriteTransferCount.QuadPart;
+    free(buffer);
+    return Py_BuildValue("KKKK", rcount, wcount, rbytes, wbytes);
+}
+
+
+/*
  * Return process CPU affinity as a bitmask
  */
 static PyObject*
@@ -1674,9 +1973,6 @@ get_process_cpu_affinity(PyObject* self, PyObject* args)
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
-    }
-    if (pid == 0) {
-        return AccessDenied();
     }
     hProcess = handle_from_pid(pid);
     if (hProcess == NULL) {
@@ -1706,15 +2002,12 @@ set_process_cpu_affinity(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "lk", &pid, &mask)) {
         return NULL;
     }
-    if (pid == 0) {
-        return AccessDenied();
-    }
     hProcess = handle_from_pid_waccess(pid, dwDesiredAccess);
     if (hProcess == NULL) {
         return NULL;
     }
 
-    if (SetProcessAffinityMask(hProcess, 1) == 0) {
+    if (SetProcessAffinityMask(hProcess, mask) == 0) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
     }
@@ -1740,15 +2033,9 @@ is_process_suspended(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_process_info(pid, &process, &buffer) != 1) {
-        free(buffer);
+    if (! get_process_info(pid, &process, &buffer)) {
         return NULL;
     }
-    if (pid_is_running(pid) == 0) {
-        free(buffer);
-        return NoSuchProcess();
-    }
-
     for (i = 0; i < process->NumberOfThreads; i++) {
         if (process->Threads[i].ThreadState != Waiting ||
             process->Threads[i].WaitReason != Suspended)
@@ -1801,7 +2088,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
     int attempts = 0;
     int outBufLen = 15000;
     DWORD dwRetVal = 0;
-    MIB_IFROW *pIfRow;
+    MIB_IFROW *pIfRow = NULL;
     ULONG flags = 0;
     ULONG family = AF_UNSPEC;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
@@ -1810,10 +2097,9 @@ get_network_io_counters(PyObject* self, PyObject* args)
     do {
         pAddresses = (IP_ADAPTER_ADDRESSES *) malloc(outBufLen);
         if (pAddresses == NULL) {
-            Py_DECREF(py_retdict);
             PyErr_SetString(PyExc_RuntimeError,
                 "memory allocation failed for IP_ADAPTER_ADDRESSES struct.");
-            return NULL;
+            goto error;
         }
 
         dwRetVal = GetAdaptersAddresses(family, flags, NULL, pAddresses,
@@ -1830,48 +2116,52 @@ get_network_io_counters(PyObject* self, PyObject* args)
     } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (attempts < 3));
 
     if (dwRetVal != NO_ERROR) {
-        Py_DECREF(py_retdict);
         PyErr_SetString(PyExc_RuntimeError,  "GetAdaptersAddresses() failed.");
-        return NULL;
+        goto error;
     }
 
     pCurrAddresses = pAddresses;
     while (pCurrAddresses) {
+        py_pre_nic_name = NULL;
+        py_nic_name = NULL;
+        py_nic_info = NULL;
         pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
 
         if (pIfRow == NULL) {
-            Py_DECREF(py_retdict);
-            Py_XDECREF(py_pre_nic_name);
-            Py_XDECREF(py_nic_name);
-            Py_XDECREF(py_nic_info);
             PyErr_SetString(PyExc_RuntimeError,
                 "memory allocation failed for MIB_IFROW struct.");
-            return NULL;
+            goto error;
         }
 
         pIfRow->dwIndex = pCurrAddresses->IfIndex;
         dwRetVal = GetIfEntry(pIfRow);
         if (dwRetVal != NO_ERROR) {
-            Py_DECREF(py_retdict);
-            Py_XDECREF(py_pre_nic_name);
-            Py_XDECREF(py_nic_name);
-            Py_XDECREF(py_nic_info);
-            PyErr_SetString(PyExc_RuntimeError,
-                "GetIfEntry() failed.");
-            return NULL;
+            PyErr_SetString(PyExc_RuntimeError, "GetIfEntry() failed.");
+            goto error;
         }
 
-        py_nic_info = Py_BuildValue("(IIII)",
+        py_nic_info = Py_BuildValue("(IIIIIIII)",
                                     pIfRow->dwOutOctets,
                                     pIfRow->dwInOctets,
                                     pIfRow->dwOutUcastPkts,
-                                    pIfRow->dwInUcastPkts);
+                                    pIfRow->dwInUcastPkts,
+                                    pIfRow->dwInErrors,
+                                    pIfRow->dwOutErrors,
+                                    pIfRow->dwInDiscards,
+                                    pIfRow->dwOutDiscards);
+        if (!py_nic_info)
+            goto error;
 
         py_pre_nic_name = PyUnicode_FromWideChar(
                                 pCurrAddresses->FriendlyName,
                                 wcslen(pCurrAddresses->FriendlyName));
+        if (py_pre_nic_name == NULL)
+            goto error;
         py_nic_name = PyUnicode_FromObject(py_pre_nic_name);
-        PyDict_SetItem(py_retdict, py_nic_name, py_nic_info);
+        if (py_nic_name == NULL)
+            goto error;
+        if (PyDict_SetItem(py_retdict, py_nic_name, py_nic_info))
+            goto error;
         Py_XDECREF(py_pre_nic_name);
         Py_XDECREF(py_nic_name);
         Py_XDECREF(py_nic_info);
@@ -1881,8 +2171,18 @@ get_network_io_counters(PyObject* self, PyObject* args)
     }
 
     free(pAddresses);
-
     return py_retdict;
+
+error:
+    Py_XDECREF(py_pre_nic_name);
+    Py_XDECREF(py_nic_name);
+    Py_XDECREF(py_nic_info);
+    Py_DECREF(py_retdict);
+    if (pAddresses != NULL)
+        free(pAddresses);
+    if (pIfRow != NULL)
+        free(pIfRow);
+    return NULL;
 }
 
 
@@ -1893,7 +2193,7 @@ static PyObject*
 get_disk_io_counters(PyObject* self, PyObject* args)
 {
     PyObject* py_retdict = PyDict_New();
-    PyObject* py_disk_info;
+    PyObject* py_disk_info = NULL;
 
     DISK_PERFORMANCE diskPerformance;
     DWORD dwSize;
@@ -1903,6 +2203,7 @@ get_disk_io_counters(PyObject* self, PyObject* args)
     int devNum;
 
     for (devNum = 0;; devNum++) {
+        py_disk_info = NULL;
         sprintf (szDevice, "\\\\.\\PhysicalDrive%d", devNum);
         hDevice = CreateFile (szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
                               NULL, OPEN_EXISTING, 0, NULL);
@@ -1913,8 +2214,10 @@ get_disk_io_counters(PyObject* self, PyObject* args)
             break;
         }
 
-        if (DeviceIoControl (hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0,
-            &diskPerformance, sizeof (DISK_PERFORMANCE), &dwSize, NULL)) {
+        if (DeviceIoControl(hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0,
+                            &diskPerformance, sizeof(DISK_PERFORMANCE),
+                            &dwSize, NULL))
+        {
             sprintf (szDeviceDisplay, "PhysicalDrive%d", devNum);
             py_disk_info = Py_BuildValue("(IILLLL)",
                                          diskPerformance.ReadCount,
@@ -1925,16 +2228,30 @@ get_disk_io_counters(PyObject* self, PyObject* args)
                                             * 10) / 1000,
                                          (diskPerformance.WriteTime.QuadPart
                                             * 10) / 1000);
-            PyDict_SetItemString(py_retdict,
-                                 szDeviceDisplay,
-                                 py_disk_info);
+            if (!py_disk_info)
+                goto error;
+            if (PyDict_SetItemString(py_retdict, szDeviceDisplay, py_disk_info))
+                goto error;
             Py_XDECREF(py_disk_info);
+        }
+        else {
+            // XXX we might get here with ERROR_INSUFFICIENT_BUFFER when
+            // compiling with mingw32; not sure what to do.
+            //return PyErr_SetFromWindowsErr(0);
+            ;;
         }
 
         CloseHandle(hDevice);
     }
 
     return py_retdict;
+
+error:
+    Py_XDECREF(py_disk_info);
+    Py_DECREF(py_retdict);
+    if (hDevice != NULL)
+        CloseHandle(hDevice);
+    return NULL;
 }
 
 
@@ -1984,7 +2301,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     PyObject* py_tuple = NULL;
 
     if (! PyArg_ParseTuple(args, "O", &py_all)) {
-        return NULL;
+        goto error;
     }
     all = PyObject_IsTrue(py_all);
 
@@ -1993,10 +2310,12 @@ get_disk_partitions(PyObject* self, PyObject* args)
     Py_END_ALLOW_THREADS
 
     if (num_bytes == 0) {
-        return PyErr_SetFromWindowsErr(0);
+        PyErr_SetFromWindowsErr(0);
+        goto error;
     }
 
     while (*drive_letter != 0) {
+        py_tuple = NULL;
         opts[0] = 0;
         fs_type[0] = 0;
 
@@ -2052,7 +2371,10 @@ get_disk_partitions(PyObject* self, PyObject* args)
             drive_letter,
             fs_type,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
             opts);
-        PyList_Append(py_retlist, py_tuple);
+        if (!py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
         Py_DECREF(py_tuple);
         goto next;
 
@@ -2061,112 +2383,11 @@ get_disk_partitions(PyObject* self, PyObject* args)
     }
 
     return py_retlist;
-}
 
-
-static PyObject*
-get_process_environ(PyObject* self, PyObject* args)
-{
-    long pid;
-    HANDLE processHandle;
-    PVOID pebAddress;
-    PVOID rtlUserProcParamsAddress;
-    PVOID currentEnv;
-    MEMORY_BASIC_INFORMATION info;
-    WCHAR buf[8192];  // XXX is this safe?
-    DWORD size = sizeof(buf);
-    PyObject *returnPyObj = NULL;
-    PyObject *env_from_wchar = NULL;
-    PyObject *env = NULL;
-
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-
-    processHandle = handle_from_pid(pid);
-    if (processHandle == NULL) {
-        return NULL;
-    }
-
-    pebAddress = GetPebAddress(processHandle);
-
-    // get the address of ProcessParameters
-#ifdef _WIN64
-    if (!ReadProcessMemory(processHandle, (PCHAR)pebAddress + 32,
-        &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
-#else
-    if (!ReadProcessMemory(processHandle, (PCHAR)pebAddress + 0x10,
-        &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
-#endif
-    {
-        CloseHandle(processHandle);
-
-        if (GetLastError() == ERROR_PARTIAL_COPY) {
-            // this occurs quite often with system processes
-            return AccessDenied();
-        }
-        else {
-            return PyErr_SetFromWindowsErr(0);
-        }
-    }
-
-    // 0x48 refers to "Environ" of RTL_USER_PROCESS_PARAMETERS
-    // Different but related:
-    // http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/
-#ifdef _WIN64
-    if (!ReadProcessMemory(processHandle, (PCHAR)rtlUserProcParamsAddress + 128,
-        &currentEnv, sizeof(currentEnv), NULL))
-#else
-    if (!ReadProcessMemory(processHandle, (PCHAR)rtlUserProcParamsAddress + 0x48,
-        &currentEnv, sizeof(currentEnv), NULL))
-#endif
-    {
-        CloseHandle(processHandle);
-        if (GetLastError() == ERROR_PARTIAL_COPY) {
-            // this occurs quite often with system processes
-            return AccessDenied();
-        }
-        else {
-            return PyErr_SetFromWindowsErr(0);
-        }
-    }
-
-    memset(buf, '\0', size);
-    size -= 2;
-
-    if (VirtualQueryEx(processHandle, currentEnv, &info, sizeof(info))) {
-        if (size > info.RegionSize) {
-            size = info.RegionSize;
-        }
-    }
-
-    if (!ReadProcessMemory(processHandle, currentEnv, buf, size, NULL)) {
-        CloseHandle(processHandle);
-        if (GetLastError() == ERROR_PARTIAL_COPY) {
-            // this occurs quite often with system processes or when
-            // putenv() was used in case of current process
-            return AccessDenied();
-        }
-        else {
-            return PyErr_SetFromWindowsErr(0);
-        }
-    }
-
-    env_from_wchar = PyUnicode_FromWideChar(buf, size);
-
-    #if PY_MAJOR_VERSION >= 3
-        env = PyUnicode_FromObject(env_from_wchar);
-    #else
-        env = PyUnicode_AsUTF8String(env_from_wchar);
-    #endif
-
-    // decrement the reference count on our temp unicode str to avoid
-    // mem leak
-    Py_XDECREF(env_from_wchar);
-    returnPyObj = Py_BuildValue("N", env);
-
-    CloseHandle(processHandle);
-    return returnPyObj;
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    return NULL;
 }
 
 
@@ -2201,25 +2422,27 @@ get_system_users(PyObject* self, PyObject* args)
 
     PWINSTATIONQUERYINFORMATIONW WinStationQueryInformationW;
     WINSTATION_INFO station_info;
-    HINSTANCE hInstWinSta;
+    HINSTANCE hInstWinSta = NULL;
     ULONG returnLen;
-
 
     hInstWinSta = LoadLibraryA("winsta.dll");
     WinStationQueryInformationW = (PWINSTATIONQUERYINFORMATIONW)
         GetProcAddress(hInstWinSta, "WinStationQueryInformationW");
-    FreeLibrary(hInstWinSta);
 
     hServer = WTSOpenServer('\0');
     if (hServer == NULL) {
+        PyErr_SetFromWindowsErr(0);
         goto error;
     }
 
     if (WTSEnumerateSessions(hServer, 0, 1, &sessions, &count) == 0) {
+        PyErr_SetFromWindowsErr(0);
         goto error;
     }
 
     for (i=0; i<count; i++) {
+        py_address = NULL;
+        py_tuple = NULL;
         sessionId = sessions[i].SessionId;
         if (buffer_user != NULL) {
             WTSFreeMemory(buffer_user);
@@ -2235,6 +2458,7 @@ get_system_users(PyObject* self, PyObject* args)
         bytes = 0;
         if (WTSQuerySessionInformation(hServer, sessionId, WTSUserName,
                                         &buffer_user, &bytes) == 0) {
+            PyErr_SetFromWindowsErr(0);
             goto error;
         }
         if (bytes == 1) {
@@ -2245,6 +2469,7 @@ get_system_users(PyObject* self, PyObject* args)
         bytes = 0;
         if (WTSQuerySessionInformation(hServer, sessionId, WTSClientAddress,
                                        &buffer_addr, &bytes) == 0) {
+            PyErr_SetFromWindowsErr(0);
             goto error;
         }
 
@@ -2255,6 +2480,8 @@ get_system_users(PyObject* self, PyObject* args)
                                                 address->Address[2],
                                                 address->Address[3]);
             py_address = Py_BuildValue("s", address_str);
+            if (!py_address)
+                goto error;
         }
         else {
             py_address = Py_None;
@@ -2278,7 +2505,10 @@ get_system_users(PyObject* self, PyObject* args)
         py_tuple = Py_BuildValue("sOd", buffer_user,
                                         py_address,
                                         (double)unix_time);
-        PyList_Append(py_retlist, py_tuple);
+        if (!py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
         Py_XDECREF(py_address);
         Py_XDECREF(py_tuple);
     }
@@ -2287,9 +2517,17 @@ get_system_users(PyObject* self, PyObject* args)
     WTSFreeMemory(sessions);
     WTSFreeMemory(buffer_user);
     WTSFreeMemory(buffer_addr);
+    FreeLibrary(hInstWinSta);
     return py_retlist;
 
 error:
+    Py_XDECREF(py_tuple);
+    Py_XDECREF(py_address);
+    Py_DECREF(py_retlist);
+
+    if (hInstWinSta != NULL) {
+        FreeLibrary(hInstWinSta);
+    }
     if (hServer != NULL) {
         WTSCloseServer(hServer);
     }
@@ -2302,7 +2540,7 @@ error:
     if (buffer_addr != NULL) {
         WTSFreeMemory(buffer_addr);
     }
-    return PyErr_SetFromWindowsErr(0);
+    return NULL;
 }
 
 
@@ -2319,9 +2557,6 @@ get_process_num_handles(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (pid == 0) {
-        return AccessDenied();
-    }
     hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
         return NULL;
@@ -2332,6 +2567,55 @@ get_process_num_handles(PyObject* self, PyObject* args)
     }
     CloseHandle(hProcess);
     return Py_BuildValue("k", handleCount);
+}
+
+
+/*
+ * Alternative implementation of the one above but bypasses ACCESS DENIED.
+ */
+static PyObject*
+get_process_num_handles_2(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    ULONG count;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (! get_process_info(pid, &process, &buffer)) {
+        return NULL;
+    }
+    count = process->HandleCount;
+    free(buffer);
+    return Py_BuildValue("k", count);
+}
+
+
+/*
+ * Return the number of context switches executed by process.
+ */
+static PyObject*
+get_process_num_ctx_switches(PyObject* self, PyObject* args)
+{
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    ULONG i;
+    ULONG total = 0;
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    if (! get_process_info(pid, &process, &buffer)) {
+        return NULL;
+    }
+    for (i=0; i < process->NumberOfThreads; i++) {
+        total += process->Threads[i].ContextSwitches;
+    }
+    free(buffer);
+    return Py_BuildValue("ki", total, 0);
 }
 
 
@@ -2366,7 +2650,7 @@ static PyObject*
 get_process_memory_maps(PyObject* self, PyObject* args)
 {
     DWORD pid;
-    HANDLE hProcess;
+    HANDLE hProcess = NULL;
     MEMORY_BASIC_INFORMATION basicInfo;
     PVOID baseAddress;
     PVOID previousAllocationBase;
@@ -2374,17 +2658,14 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     SYSTEM_INFO system_info;
     LPVOID maxAddr;
     PyObject* py_list = PyList_New(0);
-    PyObject* py_tuple;
+    PyObject* py_tuple = NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-    if (pid == 0) {
-        return AccessDenied();
+        goto error;
     }
     hProcess = handle_from_pid(pid);
     if (NULL == hProcess) {
-        return NULL;
+        goto error;
     }
 
     GetSystemInfo(&system_info);
@@ -2395,6 +2676,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     while (VirtualQueryEx(hProcess, baseAddress, &basicInfo,
                           sizeof(MEMORY_BASIC_INFORMATION)))
     {
+        py_tuple = NULL;
         if (baseAddress > maxAddr) {
             break;
         }
@@ -2407,7 +2689,10 @@ get_process_memory_maps(PyObject* self, PyObject* args)
                 mappedFileName,
                 basicInfo.RegionSize
             );
-            PyList_Append(py_list, py_tuple);
+            if (!py_tuple)
+                goto error;
+            if (PyList_Append(py_list, py_tuple))
+                goto error;
             Py_DECREF(py_tuple);
         }
         previousAllocationBase = basicInfo.AllocationBase;
@@ -2416,6 +2701,13 @@ get_process_memory_maps(PyObject* self, PyObject* args)
 
     CloseHandle(hProcess);
     return py_list;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_list);
+    if (hProcess != NULL)
+        CloseHandle(hProcess);
+    return NULL;
 }
 
 // ------------------------ Python init ---------------------------
@@ -2429,6 +2721,8 @@ PsutilMethods[] =
         "Return process name"},
     {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
         "Return process cmdline as a list of cmdline arguments"},
+    {"get_process_exe", get_process_exe, METH_VARARGS,
+        "Return path of the process executable"},
     {"get_process_ppid", get_process_ppid, METH_VARARGS,
         "Return process ppid as an integer"},
     {"kill_process", kill_process, METH_VARARGS,
@@ -2438,8 +2732,8 @@ PsutilMethods[] =
     {"get_process_create_time", get_process_create_time, METH_VARARGS,
         "Return a float indicating the process create time expressed in "
         "seconds since the epoch"},
-    {"get_memory_info", get_memory_info, METH_VARARGS,
-        "Return a tuple of RSS/VMS memory information"},
+    {"get_process_memory_info", get_process_memory_info, METH_VARARGS,
+        "Return a tuple of process memory information"},
     {"get_process_cwd", get_process_cwd, METH_VARARGS,
         "Return process current working directory"},
     {"suspend_process", suspend_process, METH_VARARGS,
@@ -2470,12 +2764,24 @@ PsutilMethods[] =
         "Get process I/O counters."},
     {"is_process_suspended", is_process_suspended, METH_VARARGS,
         "Return True if one of the process threads is in a suspended state"},
-    {"get_process_environ", get_process_environ, METH_VARARGS,
-        "Return process env vars as a string."},
     {"get_process_num_handles", get_process_num_handles, METH_VARARGS,
         "Return the number of handles opened by process."},
+    {"get_process_num_ctx_switches", get_process_num_ctx_switches, METH_VARARGS,
+        "Return the number of context switches performed by process."},
     {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
         "Return a list of process's memory mappings"},
+
+    // --- alternative pinfo interface
+    {"get_process_cpu_times_2", get_process_cpu_times_2, METH_VARARGS,
+        "Alternative implementation"},
+    {"get_process_create_time_2", get_process_create_time_2, METH_VARARGS,
+        "Alternative implementation"},
+    {"get_process_num_handles_2", get_process_num_handles_2, METH_VARARGS,
+        "Alternative implementation"},
+    {"get_process_io_counters_2", get_process_io_counters_2, METH_VARARGS,
+        "Alternative implementation"},
+    {"get_process_memory_info_2", get_process_memory_info_2, METH_VARARGS,
+        "Alternative implementation"},
 
     // --- system-related functions
 
@@ -2487,7 +2793,7 @@ PsutilMethods[] =
         "Returns the number of CPUs on the system"},
     {"get_system_uptime", get_system_uptime, METH_VARARGS,
         "Return system uptime"},
-    {"get_system_phymem", get_system_phymem, METH_VARARGS,
+    {"get_virtual_mem", get_virtual_mem, METH_VARARGS,
         "Return the total amount of physical memory, in bytes"},
     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
         "Return system per-cpu times as a list of tuples"},
@@ -2589,6 +2895,7 @@ struct module_state {
                                      REALTIME_PRIORITY_CLASS);
     // private constants
     PyModule_AddIntConstant(module, "INFINITE", INFINITE);
+    PyModule_AddIntConstant(module, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED);
     SetSeDebug();
 
 #if PY_MAJOR_VERSION >= 3

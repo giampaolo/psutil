@@ -102,52 +102,65 @@ linux_ioprio_set(PyObject* self, PyObject* args)
 static PyObject*
 get_disk_partitions(PyObject* self, PyObject* args)
 {
-    FILE *file;
+    FILE *file = NULL;
     struct mntent *entry;
     PyObject* py_retlist = PyList_New(0);
-    PyObject* py_tuple;
+    PyObject* py_tuple = NULL;
 
     // MOUNTED constant comes from mntent.h and it's == '/etc/mtab'
     Py_BEGIN_ALLOW_THREADS
     file = setmntent(MOUNTED, "r");
     Py_END_ALLOW_THREADS
     if ((file == 0) || (file == NULL)) {
-        return PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
     }
 
     while ((entry = getmntent(file))) {
         if (entry == NULL) {
-            endmntent(file);
-            return PyErr_Format(PyExc_RuntimeError, "getmntent() failed");
+            PyErr_Format(PyExc_RuntimeError, "getmntent() failed");
+            goto error;
         }
         py_tuple = Py_BuildValue("(ssss)", entry->mnt_fsname,  // device
                                            entry->mnt_dir,     // mount point
                                            entry->mnt_type,    // fs type
                                            entry->mnt_opts);   // options
-
-        PyList_Append(py_retlist, py_tuple);
-        Py_XDECREF(py_tuple);
+        if (! py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
+        Py_DECREF(py_tuple);
     }
-
     endmntent(file);
     return py_retlist;
+
+error:
+    if (file != NULL)
+        endmntent(file);
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    return NULL;
 }
 
 
 /*
- * Return physical memory usage as a (total, free, buffer) tuple.
+ * A wrapper around sysinfo(), return system memory usage statistics.
  */
 static PyObject*
-get_physmem(PyObject* self, PyObject* args)
+get_sysinfo(PyObject* self, PyObject* args)
 {
     struct sysinfo info;
     if (sysinfo(&info) != 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-    return Py_BuildValue("(KKK)",
-        info.totalram *(unsigned long long)info.mem_unit,
-        info.freeram * (unsigned long long)info.mem_unit,
-        info.bufferram * (unsigned long long)info.mem_unit);
+    return Py_BuildValue("(KKKKKK)",
+        (unsigned long long)info.totalram  * info.mem_unit,   // total
+        (unsigned long long)info.freeram   * info.mem_unit,   // free
+        (unsigned long long)info.bufferram * info.mem_unit,   // buffer
+        (unsigned long long)info.sharedram * info.mem_unit,   // shared
+        (unsigned long long)info.totalswap * info.mem_unit,   // swap tot
+        (unsigned long long)info.freeswap  * info.mem_unit);  // swap free
+    // TODO: we can also determine BOOT_TIME here
 }
 
 
@@ -202,18 +215,11 @@ get_system_users(PyObject* self, PyObject* args)
     PyObject *tuple = NULL;
     PyObject *user_proc = NULL;
     struct utmp *ut;
-    int ret;
-
-    // XXX a header-defined constant should be used here
-    ret = utmpname("/var/run/utmp");
-    if (ret != 0) {
-        PyErr_Format(PyExc_RuntimeError, "utmpname() failed");
-        return NULL;
-    }
 
     setutent();
-
     while (NULL != (ut = getutent())) {
+        tuple = NULL;
+        user_proc = NULL;
         if (ut->ut_type == USER_PROCESS)
             user_proc = Py_True;
         else
@@ -225,12 +231,21 @@ get_system_users(PyObject* self, PyObject* args)
             (float)ut->ut_tv.tv_sec,  // tstamp
             user_proc                 // (bool) user process
         );
-        PyList_Append(ret_list, tuple);
+        if (! tuple)
+            goto error;
+        if (PyList_Append(ret_list, tuple))
+            goto error;
         Py_DECREF(tuple);
     }
     endutent();
-
     return ret_list;
+
+error:
+    Py_XDECREF(tuple);
+    Py_XDECREF(user_proc);
+    Py_DECREF(ret_list);
+    endutent();
+    return NULL;
 }
 
 
@@ -249,8 +264,8 @@ PsutilMethods[] =
      {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
         "Return disk mounted partitions as a list of tuples including "
         "device, mount point and filesystem type"},
-     {"get_physmem", get_physmem, METH_VARARGS,
-        "The physical memory usage as a (total, free, buffer) tuple."},
+     {"get_sysinfo", get_sysinfo, METH_VARARGS,
+        "A wrapper around sysinfo(), return system memory usage statistics"},
      {"get_process_cpu_affinity", get_process_cpu_affinity, METH_VARARGS,
         "Return process CPU affinity as a Python long (the bitmask)."},
      {"set_process_cpu_affinity", set_process_cpu_affinity, METH_VARARGS,

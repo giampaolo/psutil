@@ -138,7 +138,7 @@ typedef struct _SYSTEM_PROCESS_INFORMATION
     ULONG_PTR PageDirectoryBase;
     SIZE_T PeakVirtualSize;
     SIZE_T VirtualSize;
-    ULONG PageFaultCount;
+    DWORD PageFaultCount;
     SIZE_T PeakWorkingSetSize;
     SIZE_T WorkingSetSize;
     SIZE_T QuotaPeakPagedPoolUsage;

@@ -134,8 +134,10 @@ char
     }
 
     path = malloc(size);
-    if (path == NULL)
+    if (path == NULL) {
+        PyErr_SetString(PyExc_MemoryError, "couldn't allocate memory");
         return NULL;
+    }
 
     *pathsize = size;
     if (sysctl(mib, 4, path, &size, NULL, 0) == -1) {
@@ -145,7 +147,6 @@ char
 
     return path;
 }
-
 
 
 /*
@@ -177,8 +178,10 @@ char
 
     /* Allocate space for the arguments. */
     procargs = (char *)malloc(argmax);
-    if (procargs == NULL)
+    if (procargs == NULL) {
+        PyErr_SetString(PyExc_MemoryError, "couldn't allocate memory");
         return NULL;
+    }
 
     /*
      * Make a sysctl() call to get the raw argument space of the process.
@@ -214,21 +217,9 @@ get_arg_list(long pid)
         return retlist;
     }
 
-    // XXX - this leaks memory (grrr)
     argstr = getcmdargs(pid, &argsize);
-
-    if (NULL == argstr) {
-        if (ESRCH == errno) {
-            PyErr_Format(PyExc_RuntimeError,
-                    "getcmdargs() failed - no process found with pid %lu", pid);
-            return NULL;
-        }
-
-        // ignore other errors for now, since we don't want to bail on
-        // get_process_info() if cmdline is the only thing we couldn't get.
-        // In that case, we just return an empty list return
-        // PyErr_Format(PyExc_RuntimeError, "getcmdargs() failed for pid %lu", pid);
-        return retlist;
+    if (argstr == NULL) {
+        goto error;
     }
 
     // args are returned as a flattened string with \0 separators between
@@ -237,7 +228,10 @@ get_arg_list(long pid)
     if (argsize > 0) {
         while(pos < argsize) {
             item = Py_BuildValue("s", &argstr[pos]);
-            PyList_Append(retlist, item);
+            if (!item)
+                goto error;
+            if (PyList_Append(retlist, item))
+                goto error;
             Py_DECREF(item);
             pos = pos + strlen(&argstr[pos]) + 1;
         }
@@ -245,6 +239,13 @@ get_arg_list(long pid)
 
     free(argstr);
     return retlist;
+
+error:
+    Py_XDECREF(item);
+    Py_DECREF(retlist);
+    if (argstr != NULL)
+        free(argstr);
+    return NULL;
 }
 
 
@@ -268,4 +269,3 @@ pid_exists(long pid)
     // otherwise return 0 for PID not found
     return 0;
 }
-

@@ -10,10 +10,11 @@
 
 import errno
 import os
+import sys
 
 import _psutil_bsd
 import _psutil_posix
-import _psposix
+from psutil import _psposix
 from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._compat import namedtuple
 from psutil._common import *
@@ -24,30 +25,43 @@ __extra__all__ = []
 
 NUM_CPUS = _psutil_bsd.get_num_cpus()
 BOOT_TIME = _psutil_bsd.get_system_boot_time()
+TOTAL_PHYMEM = _psutil_bsd.get_virtual_mem()[0]
 _TERMINAL_MAP = _psposix._get_terminal_map()
+_PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
 
 # --- public functions
 
-def phymem_usage():
-    """Physical system memory as a (total, used, free) tuple."""
-    total = _psutil_bsd.get_total_phymem()
-    free =  _psutil_bsd.get_avail_phymem()
-    used = total - free
-    # XXX check out whether we have to do the same math we do on Linux
-    percent = usage_percent(used, total, _round=1)
-    return ntuple_sysmeminfo(total, used, free, percent)
+nt_virtmem_info = namedtuple('vmem', ' '.join([
+    # all platforms
+    'total', 'available', 'percent', 'used', 'free',
+    # FreeBSD specific
+    'active',
+    'inactive',
+    'buffers',
+    'cached',
+    'shared',
+    'wired']))
 
-def virtmem_usage():
-    """Virtual system memory as a (total, used, free) tuple."""
-    total = _psutil_bsd.get_total_virtmem()
-    free =  _psutil_bsd.get_avail_virtmem()
-    used = total - free
+def virtual_memory():
+    """System virtual memory as a namedutple."""
+    mem =  _psutil_bsd.get_virtual_mem()
+    total, free, active, inactive, wired, cached, buffers, shared = mem
+    avail = inactive + cached + free
+    used =  active + wired + cached
+    percent = usage_percent((total - avail), total, _round=1)
+    return nt_virtmem_info(total, avail, percent, used, free,
+                           active, inactive, buffers, cached, shared, wired)
+
+def swap_memory():
+    """System swap memory as (total, used, free, sin, sout) namedtuple."""
+    total, used, free, sin, sout = \
+        [x * _PAGESIZE for x in _psutil_bsd.get_swap_mem()]
     percent = usage_percent(used, total, _round=1)
-    return ntuple_sysmeminfo(total, used, free, percent)
+    return nt_swapmeminfo(total, used, free, percent, sin, sout)
 
 def get_system_cpu_times():
-    """Return system-wide CPU times as a named tuple"""
+    """Return system per-CPU times as a named tuple"""
     user, nice, system, idle, irq = _psutil_bsd.get_system_cpu_times()
     return _cputimes_ntuple(user, nice, system, idle, irq)
 
@@ -88,7 +102,7 @@ def disk_partitions(all=False):
             if not os.path.isabs(device) \
             or not os.path.exists(device):
                 continue
-        ntuple = ntuple_partition(device, mountpoint, fstype, opts)
+        ntuple = nt_partition(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -99,10 +113,7 @@ def get_system_users():
         user, tty, hostname, tstamp = item
         if tty == '~':
             continue  # reboot or shutdown
-        abstty = os.path.join("/dev", tty)
-        if os.path.exists(abstty):
-            tty = abstty
-        nt = ntuple_user(user, tty, hostname, tstamp)
+        nt = nt_user(user, tty or None, hostname, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -121,7 +132,8 @@ def wrap_exceptions(method):
     def wrapper(self, *args, **kwargs):
         try:
             return method(self, *args, **kwargs)
-        except OSError, err:
+        except OSError:
+            err = sys.exc_info()[1]
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._process_name)
             if err.errno in (errno.EPERM, errno.EACCES):
@@ -182,31 +194,39 @@ class Process(object):
         @wrap_exceptions
         def get_process_cwd(self):
             """Return process current working directory."""
-            return _psutil_bsd.get_process_cwd(self.pid)
+            # sometimes we get an empty string, in which case we turn
+            # it into None
+            return _psutil_bsd.get_process_cwd(self.pid) or None
 
     @wrap_exceptions
     def get_process_uids(self):
         """Return real, effective and saved user ids."""
         real, effective, saved = _psutil_bsd.get_process_uids(self.pid)
-        return ntuple_uids(real, effective, saved)
+        return nt_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_process_gids(self):
         """Return real, effective and saved group ids."""
         real, effective, saved = _psutil_bsd.get_process_gids(self.pid)
-        return ntuple_gids(real, effective, saved)
+        return nt_gids(real, effective, saved)
 
     @wrap_exceptions
     def get_cpu_times(self):
         """return a tuple containing process user/kernel time."""
-        user, system = _psutil_bsd.get_cpu_times(self.pid)
-        return ntuple_cputimes(user, system)
+        user, system = _psutil_bsd.get_process_cpu_times(self.pid)
+        return nt_cputimes(user, system)
 
     @wrap_exceptions
     def get_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
-        rss, vms = _psutil_bsd.get_memory_info(self.pid)
-        return ntuple_meminfo(rss, vms)
+        rss, vms = _psutil_bsd.get_process_memory_info(self.pid)[:2]
+        return nt_meminfo(rss, vms)
+
+    _nt_ext_mem = namedtuple('meminfo', 'rss vms text data stack')
+
+    @wrap_exceptions
+    def get_ext_memory_info(self):
+        return self._nt_ext_mem(*_psutil_bsd.get_process_memory_info(self.pid))
 
     @wrap_exceptions
     def get_process_create_time(self):
@@ -220,12 +240,21 @@ class Process(object):
         return _psutil_bsd.get_process_num_threads(self.pid)
 
     @wrap_exceptions
+    def get_num_ctx_switches(self):
+        return nt_ctxsw(*_psutil_bsd.get_process_num_ctx_switches(self.pid))
+
+    @wrap_exceptions
+    def get_num_fds(self):
+        """Return the number of file descriptors opened by this process."""
+        return _psutil_bsd.get_process_num_fds(self.pid)
+
+    @wrap_exceptions
     def get_process_threads(self):
         """Return the number of threads belonging to the process."""
         rawlist = _psutil_bsd.get_process_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = ntuple_thread(thread_id, utime, stime)
+            ntuple = nt_thread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
 
@@ -236,25 +265,22 @@ class Process(object):
         # else fallback on lsof parser
         if hasattr(_psutil_bsd, "get_process_open_files"):
             rawlist = _psutil_bsd.get_process_open_files(self.pid)
-            return [ntuple_openfile(path, fd) for path, fd in rawlist]
+            return [nt_openfile(path, fd) for path, fd in rawlist]
         else:
             lsof = _psposix.LsofParser(self.pid, self._process_name)
             return lsof.get_process_open_files()
 
+    @wrap_exceptions
     def get_connections(self, kind='inet'):
-        """Return network connections opened by a process as a list of
-        namedtuples by parsing lsof output.
+        """Return etwork connections opened by a process as a list of
+        namedtuples.
         """
         if kind not in conn_tmap:
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        ret = []
-        lsof = _psposix.LsofParser(self.pid, self._process_name)
-        for conn in lsof.get_process_connections():
-            if conn.family in families and conn.type in types:
-                ret.append(conn)
-        return ret
+        ret = _psutil_bsd.get_process_connections(self.pid, families, types)
+        return [nt_connection(*conn) for conn in ret]
 
     @wrap_exceptions
     def process_wait(self, timeout=None):
@@ -281,7 +307,7 @@ class Process(object):
     @wrap_exceptions
     def get_process_io_counters(self):
         rc, wc, rb, wb = _psutil_bsd.get_process_io_counters(self.pid)
-        return ntuple_io(rc, wc, rb, wb)
+        return nt_io(rc, wc, rb, wb)
 
     nt_mmap_grouped = namedtuple('mmap',
         'path rss, private, ref_count, shadow_count')
@@ -291,3 +317,12 @@ class Process(object):
     @wrap_exceptions
     def get_memory_maps(self):
         return _psutil_bsd.get_process_memory_maps(self.pid)
+
+    # FreeBSD < 8 does not support kinfo_getfile() and kinfo_getvmmap()
+    if not hasattr(_psutil_bsd, 'get_process_open_files'):
+        def _not_implemented(self):
+            raise NotImplementedError("supported only starting from FreeBSD 8")
+        get_open_files = _not_implemented
+        get_process_cwd = _not_implemented
+        get_memory_maps = _not_implemented
+        get_num_fds = _not_implemented

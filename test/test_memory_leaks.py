@@ -17,40 +17,45 @@ import gc
 import unittest
 import time
 import socket
+import threading
+import types
 
 import psutil
-from test_psutil import reap_children, skipUnless, skipIf, supports_ipv6, \
-                        POSIX, LINUX, WINDOWS, OSX, BSD, PY3
+import psutil._common
+from psutil._compat import PY3, callable, xrange
+from test_psutil import POSIX, LINUX, WINDOWS, OSX, BSD, TESTFN
+from test_psutil import (reap_children, skipUnless, skipIf, supports_ipv6,
+                         safe_remove, get_test_subprocess)
+
+# disable cache for Process class properties
+psutil._common.cached_property.enabled = False
 
 LOOPS = 1000
 TOLERANCE = 4096
 
-if PY3:
-    xrange = range
-try:
-    callable
-except NameError:
-    callable = lambda x: hasattr(x, '__call__')
-
 
 class Base(unittest.TestCase):
 
+    proc = psutil.Process(os.getpid())
+
     def execute(self, function, *args, **kwargs):
+        def call_many_times():
+            for x in xrange(LOOPS - 1):
+                self.call(function, *args, **kwargs)
+            del x
+            gc.collect()
+            return self.get_mem()
+
+        self.call(function, *args, **kwargs)
+        self.assertEqual(gc.garbage, [])
+        self.assertEqual(threading.active_count(), 1)
+
+        # RSS comparison
         # step 1
-        for x in xrange(LOOPS):
-            self.call(function, *args, **kwargs)
-        del x
-        gc.collect()
-        rss1 = self.get_mem()
-
+        rss1 = call_many_times()
         # step 2
-        for x in xrange(LOOPS):
-            self.call(function, *args, **kwargs)
-        del x
-        gc.collect()
-        rss2 = self.get_mem()
+        rss2 = call_many_times()
 
-        # comparison
         difference = rss2 - rss1
         if difference > TOLERANCE:
             # This doesn't necessarily mean we have a leak yet.
@@ -73,8 +78,7 @@ class Base(unittest.TestCase):
                 self.fail("rss2=%s, rss3=%s, difference=%s" \
                           % (rss2, rss3, difference))
 
-    @staticmethod
-    def get_mem():
+    def get_mem(self):
         return psutil.Process(os.getpid()).get_memory_info()[0]
 
     def call(self, *args, **kwargs):
@@ -84,6 +88,18 @@ class Base(unittest.TestCase):
 class TestProcessObjectLeaks(Base):
     """Test leaks of Process class methods and properties"""
 
+    def __init__(self, *args, **kwargs):
+        Base.__init__(self, *args, **kwargs)
+        # skip tests which are not supported by Process API
+        supported_attrs = dir(psutil.Process)
+        for attr in [x for x in dir(self) if x.startswith('test')]:
+            if attr[5:] not in supported_attrs:
+                meth = getattr(self, attr)
+                @skipIf(True)
+                def test_(self):
+                    pass
+                setattr(self, attr, types.MethodType(test_, self))
+
     def setUp(self):
         gc.collect()
 
@@ -91,10 +107,12 @@ class TestProcessObjectLeaks(Base):
         reap_children()
 
     def call(self, function, *args, **kwargs):
-        p = psutil.Process(os.getpid())
-        obj = getattr(p, function)
-        if callable(obj):
-            obj(*args, **kwargs)
+        try:
+            obj = getattr(self.proc, function)
+            if callable(obj):
+                obj(*args, **kwargs)
+        except psutil.Error:
+            pass
 
     def test_name(self):
         self.execute('name')
@@ -102,21 +120,37 @@ class TestProcessObjectLeaks(Base):
     def test_cmdline(self):
         self.execute('cmdline')
 
+    def test_exe(self):
+        self.execute('exe')
+
     def test_ppid(self):
         self.execute('ppid')
 
-    @skipIf(WINDOWS)
     def test_uids(self):
         self.execute('uids')
 
-    @skipIf(WINDOWS)
     def test_gids(self):
         self.execute('gids')
 
     def test_status(self):
         self.execute('status')
 
-    @skipIf(POSIX)
+    def test_get_nice(self):
+        self.execute('get_nice')
+
+    def test_set_nice(self):
+        niceness = psutil.Process(os.getpid()).get_nice()
+        self.execute('set_nice', niceness)
+
+    def test_get_io_counters(self):
+        self.execute('get_io_counters')
+
+    def test_get_ionice(self):
+        self.execute('get_ionice')
+
+    def test_set_ionice(self):
+        self.execute('set_ionice', psutil.IOPRIO_CLASS_NONE)
+
     def test_username(self):
         self.execute('username')
 
@@ -125,6 +159,12 @@ class TestProcessObjectLeaks(Base):
 
     def test_get_num_threads(self):
         self.execute('get_num_threads')
+
+    def test_get_num_handles(self):
+        self.execute('get_num_handles')
+
+    def test_get_num_fds(self):
+        self.execute('get_num_fds')
 
     def test_get_threads(self):
         self.execute('get_threads')
@@ -135,14 +175,9 @@ class TestProcessObjectLeaks(Base):
     def test_get_memory_info(self):
         self.execute('get_memory_info')
 
-    @skipUnless(WINDOWS or LINUX)
-    def test_get_environ(self):
-        self.execute('get_environ')
+    def test_get_ext_memory_info(self):
+        self.execute('get_ext_memory_info')
 
-    def test_is_running(self):
-        self.execute('is_running')
-
-    @skipIf(WINDOWS)
     def test_terminal(self):
         self.execute('terminal')
 
@@ -150,32 +185,31 @@ class TestProcessObjectLeaks(Base):
     def test_resume(self):
         self.execute('resume')
 
-    @skipIf(not hasattr(psutil.Process, 'getcwd'))
     def test_getcwd(self):
         self.execute('getcwd')
 
-    @skipUnless(WINDOWS)
-    def test_getcwd(self):
-        self.execute('get_num_handles')
-
-    @skipUnless(LINUX or WINDOWS)
     def test_get_cpu_affinity(self):
         self.execute('get_cpu_affinity')
 
-    @skipUnless(LINUX or WINDOWS)
-    def test_get_cpu_affinity(self):
+    def test_set_cpu_affinity(self):
         affinity = psutil.Process(os.getpid()).get_cpu_affinity()
         self.execute('set_cpu_affinity', affinity)
 
     def test_get_open_files(self):
-        self.execute('get_open_files')
+        safe_remove(TESTFN)  # needed after UNIX socket test has run
+        f = open(TESTFN, 'w')
+        try:
+            self.execute('get_open_files')
+        finally:
+            f.close()
 
+    # OSX implementation is unbelievably slow
+    @skipIf(OSX)
     def test_get_memory_maps(self):
         self.execute('get_memory_maps')
 
-    # XXX - BSD still uses provisional lsof implementation
     # Linux implementation is pure python so since it's slow we skip it
-    @skipIf(BSD or LINUX)
+    @skipIf(LINUX)
     def test_get_connections(self):
         def create_socket(family, type):
             sock = socket.socket(family, type)
@@ -190,11 +224,46 @@ class TestProcessObjectLeaks(Base):
         if supports_ipv6():
             socks.append(create_socket(socket.AF_INET6, socket.SOCK_STREAM))
             socks.append(create_socket(socket.AF_INET6, socket.SOCK_DGRAM))
+        if hasattr(socket, 'AF_UNIX'):
+            safe_remove(TESTFN)
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s.bind(TESTFN)
+            s.listen(1)
+            socks.append(s)
         try:
             self.execute('get_connections', kind='all')
         finally:
             for s in socks:
                 s.close()
+
+
+p = get_test_subprocess()
+DEAD_PROC = psutil.Process(p.pid)
+DEAD_PROC.kill()
+DEAD_PROC.wait()
+del p
+
+class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
+    """Same as above but looks for leaks occurring when dealing with
+    zombie processes raising NoSuchProcess exception.
+    """
+    proc = DEAD_PROC
+
+    if not POSIX:
+        def test_kill(self):
+            self.execute('kill')
+
+        def test_terminate(self):
+            self.execute('terminate')
+
+        def test_suspend(self):
+            self.execute('suspend')
+
+        def test_resume(self):
+            self.execute('resume')
+
+        def test_wait(self):
+            self.execute('wait')
 
 
 class TestModuleFunctionsLeaks(Base):
@@ -208,21 +277,15 @@ class TestModuleFunctionsLeaks(Base):
         if callable(obj):
             retvalue = obj(*args, **kwargs)
 
-    def test_get_pid_list(self):
-        self.execute('get_pid_list')
-
     @skipIf(POSIX)
     def test_pid_exists(self):
         self.execute('pid_exists', os.getpid())
 
-    def test_process_iter(self):
-        self.execute('process_iter')
+    def test_virtual_memory(self):
+        self.execute('virtual_memory')
 
-    def test_phymem_usage(self):
-        self.execute('phymem_usage')
-
-    def test_virtmem_usage(self):
-        self.execute('virtmem_usage')
+    def test_swap_memory(self):
+        self.execute('swap_memory')
 
     def test_cpu_times(self):
         self.execute('cpu_times')
@@ -251,8 +314,11 @@ class TestModuleFunctionsLeaks(Base):
 
 def test_main():
     test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.makeSuite(TestProcessObjectLeaks))
-    test_suite.addTest(unittest.makeSuite(TestModuleFunctionsLeaks))
+    tests = [TestProcessObjectLeaksZombie,
+             TestProcessObjectLeaks,
+             TestModuleFunctionsLeaks,]
+    for test in tests:
+        test_suite.addTest(unittest.makeSuite(test))
     unittest.TextTestRunner(verbosity=2).run(test_suite)
 
 if __name__ == '__main__':

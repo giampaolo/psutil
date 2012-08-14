@@ -24,6 +24,7 @@ __extra__all__ = []
 
 NUM_CPUS = os.sysconf("SC_NPROCESSORS_ONLN")
 BOOT_TIME = _psutil_sunos.get_process_basic_info(0)[3]
+TOTAL_PHYMEM = 0  # TODO
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle iowait')
 
 disk_io_counters = _psutil_sunos.get_disk_io_counters
@@ -47,14 +48,14 @@ def phymem_usage():
     free *= PAGE_SIZE
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return ntuple_sysmeminfo(total, used, free, percent)
+    return nt_sysmeminfo(total, used, free, percent)
 
 def virtmem_usage():
     """Virtual system memory as a (total, used, free) tuple."""
     free, used = _psutil_sunos.get_system_virtmem()
     total = free + used
     percent = usage_percent(used, total, _round=1)
-    return ntuple_sysmeminfo(total / 1024, used / 1024, free / 1024, percent)
+    return nt_sysmeminfo(total / 1024, used / 1024, free / 1024, percent)
 
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""
@@ -91,7 +92,7 @@ def get_system_users():
         abstty = os.path.join("/dev", tty)
         if os.path.exists(abstty):
             tty = abstty
-        nt = ntuple_user(user, tty, hostname, tstamp)
+        nt = nt_user(user, tty, hostname, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -109,7 +110,7 @@ def disk_partitions(all=False):
             if not os.path.isabs(device) \
             or not os.path.exists(device):
                 continue
-        ntuple = ntuple_partition(device, mountpoint, fstype, opts)
+        ntuple = nt_partition(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -190,17 +191,17 @@ class Process(object):
     @wrap_exceptions
     def get_process_uids(self):
         real, effective, saved, _, _, _ = _psutil_sunos.get_process_cred(self.pid)
-        return ntuple_uids(real, effective, saved)
+        return nt_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_process_gids(self):
         _, _, _, real, effective, saved = _psutil_sunos.get_process_cred(self.pid)
-        return ntuple_uids(real, effective, saved)
+        return nt_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_cpu_times(self):
         user, system = _psutil_sunos.get_process_cpu_times(self.pid)
-        return ntuple_cputimes(user, system)
+        return nt_cputimes(user, system)
 
     def get_process_terminal(self):
         tty = wrap_exceptions(_psutil_sunos.get_process_basic_info(self.pid)[0])
@@ -221,7 +222,7 @@ class Process(object):
     def get_memory_info(self):
         ret = _psutil_sunos.get_process_basic_info(self.pid)
         rss, vms = ret[1] * 1024, ret[2] * 1024
-        return ntuple_meminfo(rss, vms)
+        return nt_meminfo(rss, vms)
 
     @wrap_exceptions
     def get_process_status(self):
@@ -244,7 +245,7 @@ class Process(object):
                     if err.errno != errno.ENOENT:
                         raise
                 else:
-                    nt = ntuple_thread(tid, utime, stime)
+                    nt = nt_thread(tid, utime, stime)
                     ret.append(nt)
         return ret
 
@@ -264,7 +265,7 @@ class Process(object):
                         raise
                 else:
                     if os.path.isfile(file):
-                        retlist.append(ntuple_openfile(file, int(fd)))
+                        retlist.append(nt_openfile(file, int(fd)))
         return retlist
 
     # TODO

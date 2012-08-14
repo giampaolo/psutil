@@ -71,42 +71,30 @@ def bytes2human(n):
             return '%s%s' % (value, s)
     return "%sB" % n
 
-procs = [p for p in psutil.process_iter()]  # the current process list
-
 def poll(interval):
-    # add new processes to procs list; processes which have gone
-    # in meantime will be removed from the list later
-    cpids = [p.pid for p in procs]
-    for p in psutil.process_iter():
-        if p.pid not in cpids:
-            procs.append(p)
-
     # sleep some time
     time.sleep(interval)
-
+    procs = []
     procs_status = {}
-    # then retrieve the same info again
-    for p in procs[:]:
+    for p in psutil.process_iter():
         try:
-            p._username = p.username
-            p._nice = p.nice
-            p._meminfo = p.get_memory_info()
-            p._mempercent = p.get_memory_percent()
-            p._cpu_percent = p.get_cpu_percent(interval=0)
-            p._cpu_times = p.get_cpu_times()
-            p._name = p.name
+            p.dict = p.as_dict(['username', 'get_nice', 'get_memory_info',
+                                'get_memory_percent', 'get_cpu_percent',
+                                'get_cpu_times', 'name', 'status'])
             try:
-                procs_status[str(p.status)] += 1
+                procs_status[str(p.dict['status'])] += 1
             except KeyError:
-                procs_status[str(p.status)] = 1
+                procs_status[str(p.dict['status'])] = 1
         except psutil.NoSuchProcess:
-            procs.remove(p)
+            pass
+        else:
+            procs.append(p)
 
     # return processes sorted by CPU percent usage
-    processes = sorted(procs, key=lambda p: p._cpu_percent, reverse=True)
+    processes = sorted(procs, key=lambda p: p.dict['cpu_percent'], reverse=True)
     return (processes, procs_status)
 
-def print_header(procs_status):
+def print_header(procs_status, num_procs):
     """Print system-related info, above the process list."""
 
     def get_dashes(perc):
@@ -119,29 +107,25 @@ def print_header(procs_status):
         dashes, empty_dashes = get_dashes(perc)
         print_line(" CPU%-2s [%s%s] %5s%%" % (cpu_num, dashes, empty_dashes,
                                               perc))
-    # physmem usage (on linux we include buffers and cached values
-    # to match htop results)
-    phymem = psutil.phymem_usage()
-    dashes, empty_dashes = get_dashes(phymem.percent)
-    buffers = getattr(psutil, 'phymem_buffers', lambda: 0)()
-    cached = getattr(psutil, 'cached_phymem', lambda: 0)()
-    used = phymem.total - (phymem.free + buffers + cached)
+    mem = psutil.virtual_memory()
+    dashes, empty_dashes = get_dashes(mem.percent)
+    used = mem.total - mem.available
     line = " Mem   [%s%s] %5s%% %6s/%s" % (
         dashes, empty_dashes,
-        phymem.percent,
+        mem.percent,
         str(int(used / 1024 / 1024)) + "M",
-        str(int(phymem.total / 1024 / 1024)) + "M"
+        str(int(mem.total / 1024 / 1024)) + "M"
     )
     print_line(line)
 
     # swap usage
-    vmem = psutil.virtmem_usage()
-    dashes, empty_dashes = get_dashes(vmem.percent)
+    swap = psutil.swap_memory()
+    dashes, empty_dashes = get_dashes(swap.percent)
     line = " Swap  [%s%s] %5s%% %6s/%s" % (
         dashes, empty_dashes,
-        vmem.percent,
-        str(int(vmem.used / 1024 / 1024)) + "M",
-        str(int(vmem.total / 1024 / 1024)) + "M"
+        swap.percent,
+        str(int(swap.used / 1024 / 1024)) + "M",
+        str(int(swap.total / 1024 / 1024)) + "M"
     )
     print_line(line)
 
@@ -151,7 +135,7 @@ def print_header(procs_status):
         if y:
             st.append("%s=%s" % (x, y))
     st.sort(key=lambda x: x[:3] in ('run', 'sle'), reverse=1)
-    print_line(" Processes: %s (%s)" % (len(procs), ' '.join(st)))
+    print_line(" Processes: %s (%s)" % (num_procs, ' '.join(st)))
     # load average, uptime
     uptime = datetime.now() - datetime.fromtimestamp(psutil.BOOT_TIME)
     av1, av2, av3 = os.getloadavg()
@@ -166,25 +150,34 @@ def refresh_window(procs, procs_status):
     win.erase()
     header = templ % ("PID", "USER", "NI", "VIRT", "RES", "CPU%", "MEM%",
                       "TIME+", "NAME")
-    print_header(procs_status)
+    print_header(procs_status, len(procs))
     print_line("")
     print_line(header, highlight=True)
     for p in procs:
         # TIME+ column shows process CPU cumulative time and it
         # is expressed as: "mm:ss.ms"
-        ctime = timedelta(seconds=sum(p._cpu_times))
-        ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
-                              str((ctime.seconds % 60)).zfill(2),
-                              str(ctime.microseconds)[:2])
+        if p.dict['cpu_times'] != None:
+            ctime = timedelta(seconds=sum(p.dict['cpu_times']))
+            ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
+                                  str((ctime.seconds % 60)).zfill(2),
+                                  str(ctime.microseconds)[:2])
+        else:
+            ctime = ''
+        if p.dict['memory_percent'] is not None:
+            p.dict['memory_percent'] = round(p.dict['memory_percent'], 1)
+        else:
+            p.dict['memory_percent'] = ''
+        if p.dict['cpu_percent'] is None:
+            p.dict['cpu_percent'] = ''
         line = templ % (p.pid,
-                        p._username[:8],
-                        p._nice,
-                        bytes2human(p._meminfo.vms),
-                        bytes2human(p._meminfo.rss),
-                        p._cpu_percent,
-                        round(p._mempercent, 1),
+                        p.dict['username'][:8],
+                        p.dict['nice'],
+                        bytes2human(getattr(p.dict['memory_info'], 'vms', 0)),
+                        bytes2human(getattr(p.dict['memory_info'], 'rss', 0)),
+                        p.dict['cpu_percent'],
+                        p.dict['memory_percent'],
                         ctime,
-                        p._name,
+                        p.dict['name'] or '',
                         )
         try:
             print_line(line)

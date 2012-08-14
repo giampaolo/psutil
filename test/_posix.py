@@ -17,8 +17,9 @@ import datetime
 
 import psutil
 
+from psutil._compat import PY3
 from test_psutil import (get_test_subprocess, reap_children, PYTHON, LINUX, OSX,
-                         SUNOS, ignore_access_denied, sh, skipIf)
+                         BSD, ignore_access_denied, sh, skipIf)
 
 
 def ps(cmd):
@@ -27,12 +28,9 @@ def ps(cmd):
     """
     if not LINUX:
         cmd = cmd.replace(" --no-headers ", " ")
-    if SUNOS:
-        cmd = cmd.replace(" -o command ", " -o comm ")
-        cmd = cmd.replace(" -o start ", " -o stime ")
     p = subprocess.Popen(cmd, shell=1, stdout=subprocess.PIPE)
     output = p.communicate()[0].strip()
-    if sys.version_info >= (3,):
+    if PY3:
         output = str(output, sys.stdout.encoding)
     if not LINUX:
         output = output.split('\n')[1]
@@ -72,7 +70,7 @@ class PosixSpecificTestCase(unittest.TestCase):
     def test_process_username(self):
         username_ps = ps("ps --no-headers -o user -p %s" %self.pid)
         username_psutil = psutil.Process(self.pid).username
-        self.assertEqual(username_ps.strip(), username_psutil)
+        self.assertEqual(username_ps, username_psutil)
 
     @ignore_access_denied
     def test_process_rss_memory(self):
@@ -100,6 +98,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         name_psutil = psutil.Process(self.pid).name.lower()
         self.assertEqual(name_ps, name_psutil)
 
+    @skipIf(OSX or BSD)
     def test_process_create_time(self):
         time_ps = ps("ps --no-headers -o start -p %s" %self.pid).split(' ')[0]
         time_psutil = psutil.Process(self.pid).create_time
@@ -122,20 +121,17 @@ class PosixSpecificTestCase(unittest.TestCase):
             adjusted_ps_pathname = ps_pathname[:len(ps_pathname)]
             self.assertEqual(ps_pathname, adjusted_ps_pathname)
 
-    @skipIf(SUNOS)
     def test_process_cmdline(self):
         ps_cmdline = ps("ps --no-headers -o command -p %s" %self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline)
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
-    # does not support "-o" with "ax"
-    @skipIf(SUNOS)
     def test_get_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
         p = get_test_subprocess(["ps", "ax", "-o", "pid"], stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
-        if sys.version_info >= (3,):
+        if PY3:
             output = str(output, sys.stdout.encoding)
         output = output.replace('PID', '')
         p.wait()
@@ -161,7 +157,7 @@ class PosixSpecificTestCase(unittest.TestCase):
     def test_nic_names(self):
         p = subprocess.Popen("ifconfig -a", shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
-        if sys.version_info >= (3,):
+        if PY3:
             output = str(output, sys.stdout.encoding)
         for nic in psutil.network_io_counters(pernic=True).keys():
             for line in output.split():
@@ -175,7 +171,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         lines = out.split('\n')
         users = [x.split()[0] for x in lines]
         self.assertEqual(len(users), len(psutil.get_users()))
-        terminals = [os.path.join("/dev", x.split()[1]) for x in lines]
+        terminals = [x.split()[1] for x in lines]
         for u in psutil.get_users():
             self.assertTrue(u.name in users, u.name)
             self.assertTrue(u.terminal in terminals, u.terminal)
