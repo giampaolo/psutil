@@ -22,9 +22,10 @@ from psutil._common import *
 
 __extra__all__ = []
 
+PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
 NUM_CPUS = os.sysconf("SC_NPROCESSORS_ONLN")
 BOOT_TIME = _psutil_sunos.get_process_basic_info(0)[3]
-TOTAL_PHYMEM = 0  # TODO
+TOTAL_PHYMEM = os.sysconf('SC_PHYS_PAGES') * PAGE_SIZE
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle iowait')
 
 disk_io_counters = _psutil_sunos.get_disk_io_counters
@@ -35,27 +36,22 @@ get_disk_usage = _psposix.get_disk_usage
 def _not_impl(*a, **k):
     raise NotImplementedError
 
+nt_virtmem_info = namedtuple('vmem', ' '.join([
+    # all platforms
+    'total', 'available', 'percent', 'used', 'free']))
 
-def phymem_usage():
-    """Return physical memory usage statistics as a namedutple including
-    total, used, free and percent usage.
-    """
+def virtual_memory():
     # we could have done this with kstat, but imho this is good enough
-    PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
-    total = os.sysconf('SC_PHYS_PAGES')
-    total *= PAGE_SIZE
-    free = os.sysconf('SC_AVPHYS_PAGES')
-    free *= PAGE_SIZE
+    total = os.sysconf('SC_PHYS_PAGES') * PAGE_SIZE
+    # note: there's no difference on Solaris
+    free = avail = os.sysconf('SC_AVPHYS_PAGES') * PAGE_SIZE
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return nt_sysmeminfo(total, used, free, percent)
+    return nt_virtmem_info(total, avail, percent, used, free)
 
-def virtmem_usage():
-    """Virtual system memory as a (total, used, free) tuple."""
-    free, used = _psutil_sunos.get_system_virtmem()
-    total = free + used
-    percent = usage_percent(used, total, _round=1)
-    return nt_sysmeminfo(total / 1024, used / 1024, free / 1024, percent)
+def swap_memory():
+    # TODO
+    return _psutil_sunos.get_system_virtmem()
 
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""
