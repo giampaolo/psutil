@@ -19,7 +19,7 @@ import psutil
 
 from psutil._compat import PY3
 from test_psutil import (get_test_subprocess, reap_children, PYTHON, LINUX, OSX,
-                         BSD, ignore_access_denied, sh, skipIf)
+                         BSD, SUNOS, ignore_access_denied, sh, skipIf)
 
 
 def ps(cmd):
@@ -28,6 +28,11 @@ def ps(cmd):
     """
     if not LINUX:
         cmd = cmd.replace(" --no-headers ", " ")
+    if SUNOS:
+        if ' -o command ' in cmd:
+            cmd = cmd.replace(' -o command ', ' -o comm ')
+        elif ' -o start ' in cmd:
+            cmd = cmd.replace(' -o start ', ' -o stime ')
     p = subprocess.Popen(cmd, shell=1, stdout=subprocess.PIPE)
     output = p.communicate()[0].strip()
     if PY3:
@@ -68,7 +73,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         self.assertEqual(gid_ps, gid_psutil)
 
     def test_process_username(self):
-        username_ps = ps("ps --no-headers -o user -p %s" %self.pid)
+        username_ps = ps("ps --no-headers -o user -p %s" %self.pid).strip()
         username_psutil = psutil.Process(self.pid).username
         self.assertEqual(username_ps, username_psutil)
 
@@ -123,7 +128,10 @@ class PosixSpecificTestCase(unittest.TestCase):
 
     def test_process_cmdline(self):
         ps_cmdline = ps("ps --no-headers -o command -p %s" %self.pid)
-        psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline)
+        if not SUNOS:
+            psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline)
+        else:
+            psutil_cmdline = psutil.Process(self.pid).cmdline[0]
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
     def test_get_pids(self):
