@@ -154,8 +154,11 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_exe(self):
-        # XXX is this going to be set up later?
-        return _psutil_sunos.get_process_name_and_args(self.pid)[0]
+        # Will be guess later from cmdline but we want to explicitly
+        # invoke cmdline here in order to get an AccessDenied
+        # exception if the user has not enough privileges.
+        self.get_process_cmdline()
+        return ""
 
     @wrap_exceptions
     def get_process_cmdline(self):
@@ -217,6 +220,9 @@ class Process(object):
         ret = _psutil_sunos.get_process_basic_info(self.pid)
         rss, vms = ret[1] * 1024, ret[2] * 1024
         return nt_meminfo(rss, vms)
+
+    # it seems Solaris uses rss and vms only
+    get_ext_memory_info = get_memory_info
 
     @wrap_exceptions
     def get_process_status(self):
