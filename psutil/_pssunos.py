@@ -291,6 +291,9 @@ class Process(object):
             retlist.append((addr, perm, name, rss, anon, locked))
         return retlist
 
+    def get_num_ctx_switches(self):
+        return nt_ctxsw(*_psutil_sunos.get_process_num_ctx_switches(self.pid))
+
     @wrap_exceptions
     def process_wait(self, timeout=None):
         try:

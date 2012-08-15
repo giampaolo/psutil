@@ -162,6 +162,27 @@ get_process_cred(PyObject* self, PyObject* args)
 
 
 /*
+ * Return process uids/gids as a Python tuple.
+ */
+static PyObject*
+get_process_num_ctx_switches(PyObject* self, PyObject* args)
+{
+    int pid;
+    char path[100];
+    prusage_t info;
+
+    if (! PyArg_ParseTuple(args, "i", &pid)) {
+        return NULL;
+    }
+    sprintf(path, "/proc/%i/usage", pid);
+    if (! _fill_struct_from_file(path, (void *)&info, sizeof(info))) {
+        return NULL;
+    }
+
+    return Py_BuildValue("kk", info.pr_vctx, info.pr_ictx);
+}
+
+/*
  * Return information about a given process thread.
  */
 static PyObject*
@@ -618,6 +639,8 @@ PsutilMethods[] =
         "Return info about a process thread"},
      {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
         "Return process memory mappings"},
+     {"get_process_num_ctx_switches", get_process_num_ctx_switches, METH_VARARGS,
+        "Return the number of context switches performed by process"},
 
      // --- system-related functions
 
