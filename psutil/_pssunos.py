@@ -199,6 +199,7 @@ class Process(object):
         user, system = _psutil_sunos.get_process_cpu_times(self.pid)
         return nt_cputimes(user, system)
 
+    @wrap_exceptions
     def get_process_terminal(self):
         tty = wrap_exceptions(_psutil_sunos.get_process_basic_info(self.pid)[0])
         if tty != _psutil_sunos.PRNODEV:
@@ -268,11 +269,6 @@ class Process(object):
     def get_connections(self, kind='inet'):
         raise NotImplementedError()
 
-    # TODO
-    @wrap_exceptions
-    def get_process_io_counters(self):
-        raise NotImplementedError()
-
     nt_mmap_grouped = namedtuple('mmap', 'path rss anon locked')
     nt_mmap_ext = namedtuple('mmap', 'addr perms path rss anon locked')
 
@@ -290,6 +286,10 @@ class Process(object):
                 name = os.readlink('/proc/%s/path/%s' % (self.pid, name))
             retlist.append((addr, perm, name, rss, anon, locked))
         return retlist
+
+    @wrap_exceptions
+    def get_num_fds(self):
+       return len(os.listdir("/proc/%s/fd" % self.pid))
 
     def get_num_ctx_switches(self):
         return nt_ctxsw(*_psutil_sunos.get_process_num_ctx_switches(self.pid))

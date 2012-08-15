@@ -442,7 +442,7 @@ class TestCase(unittest.TestCase):
         times = psutil.cpu_times()
         sum(times)
         for cp_time in times:
-            assert isinstance(cp_time, float)
+            assert isinstance(cp_time, float), cp_time
             assert cp_time >= 0.0, cp_time
             total += cp_time
         self.assertEqual(total, sum(times))
@@ -461,7 +461,7 @@ class TestCase(unittest.TestCase):
             total = 0
             sum(times)
             for cp_time in times:
-                assert isinstance(cp_time, float)
+                assert isinstance(cp_time, float), cp_time
                 assert cp_time >= 0.0, cp_time
                 total += cp_time
             self.assertEqual(total, sum(times))
@@ -798,7 +798,7 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(os.getpid())
         self.assertEqual(p.terminal, tty)
 
-    @skipIf(OSX, warn=False)
+    @skipIf(OSX or SUNOS, warn=False)
     def test_get_io_counters(self):
         p = psutil.Process(os.getpid())
         # test reads
@@ -1540,12 +1540,18 @@ class TestCase(unittest.TestCase):
         self.assertTrue(p.name)
 
         if os.name == 'posix':
-            self.assertEqual(p.uids.real, 0)
-            self.assertEqual(p.gids.real, 0)
+            try:
+                self.assertEqual(p.uids.real, 0)
+                self.assertEqual(p.gids.real, 0)
+            except psutil.AccessDenied:
+                pass
 
         self.assertIn(p.ppid, (0, 1))
         #self.assertEqual(p.exe, "")
-        self.assertEqual(p.cmdline, [])
+        if not SUNOS:
+            self.assertEqual(p.cmdline, [])
+        else:
+            p.cmdline  # == ['sched']
         try:
             p.get_num_threads()
         except psutil.AccessDenied:
@@ -1558,7 +1564,10 @@ class TestCase(unittest.TestCase):
 
         # username property
         if POSIX:
-            self.assertEqual(p.username, 'root')
+            try:
+                self.assertEqual(p.username, 'root')
+            except psutil.AccessDenied:
+                pass
         elif WINDOWS:
             self.assertEqual(p.username, 'NT AUTHORITY\\SYSTEM')
         else:
