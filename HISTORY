@@ -1,6 +1,6 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-0.6.1 - XXXX-XX-XX
+0.6.1 - 2012-08-16
 ------------------
 
 NEW FEATURES
@@ -11,6 +11,7 @@ NEW FEATURES
 BUG FIXES
 
  * Issue 316: process exe was resolved in case it was a symlink.
+ * Issue 318: python 2.4 compatibility was broken.
 
 API CHANGES
 

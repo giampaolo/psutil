@@ -14,7 +14,7 @@ Python.
 
 from __future__ import division
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
@@ -42,7 +42,6 @@ import signal
 import warnings
 import errno
 import subprocess
-import functools
 try:
     import pwd
 except ImportError:

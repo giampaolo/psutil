@@ -13,10 +13,9 @@ import sys
 import os
 import stat
 import errno
-import functools
 import warnings
 
-from psutil._compat import namedtuple, long
+from psutil._compat import namedtuple, long, wraps
 
 # --- functions
 
@@ -95,7 +94,7 @@ def deprecated(replacement=None):
         if fun.__doc__ is None:
             fun.__doc__ = msg
 
-        @functools.wraps(fun)
+        @wraps(fun)
         def inner(*args, **kwargs):
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
             return fun(*args, **kwargs)

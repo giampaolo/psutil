@@ -1425,7 +1425,7 @@ class TestCase(unittest.TestCase):
             except psutil.Error:
                 pass
         # this is the one, now let's make sure there are no duplicates
-        pid = max(table, key=lambda x: table[x])
+        pid = max(sorted(table, key=lambda x: table[x]))
         p = psutil.Process(pid)
         try:
             c = p.get_children(recursive=True)
@@ -1587,6 +1587,13 @@ class TestCase(unittest.TestCase):
 class TestFetchAllProcesses(unittest.TestCase):
     # Iterates over all running processes and performs some sanity
     # checks against Process API's returned values.
+
+    # Python 2.4 compatibility
+    if not hasattr(unittest.TestCase, "assertIn"):
+        def assertIn(self, member, container, msg=None):
+            if member not in container:
+                self.fail(msg or \
+                        '%s not found in %s' % (repr(member), repr(container)))
 
     def setUp(self):
         if POSIX:

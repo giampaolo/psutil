@@ -244,3 +244,27 @@ except ImportError:
         def __repr__(self):
             return 'defaultdict(%s, %s)' % (self.default_factory,
                                             dict.__repr__(self))
+
+
+# py 2.5 functools.wraps
+try:
+    from functools import wraps
+except ImportError:
+    def wraps(original):
+        def inner(fn):
+            # see functools.WRAPPER_ASSIGNMENTS
+            for attribute in ['__module__',
+                              '__name__',
+                              '__doc__'
+                              ]:
+                setattr(fn, attribute, getattr(original, attribute))
+            # see functools.WRAPPER_UPDATES
+            for attribute in ['__dict__',
+                              ]:
+                if hasattr(fn, attribute):
+                    getattr(fn, attribute).update(getattr(original, attribute))
+                else:
+                    setattr(fn, attribute,
+                            getattr(original, attribute).copy())
+            return fn
+        return inner
