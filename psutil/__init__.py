@@ -48,7 +48,7 @@ except ImportError:
     pwd = None
 
 from psutil.error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
-from psutil._compat import property, defaultdict
+from psutil._compat import property, callable, defaultdict
 from psutil._common import cached_property
 from psutil._common import (deprecated as _deprecated,
                             nt_disk_iostat as _nt_disk_iostat,

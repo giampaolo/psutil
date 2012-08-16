@@ -67,10 +67,13 @@ def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=None,
     sproc = subprocess.Popen(cmd_, stdout=stdout, stderr=stderr, stdin=stdin)
     if wait:
         if cmd is None:
-            while 1:
+            stop_at = time.time() + 3
+            while time.time() > stop_at:
                 if os.path.exists(TESTFN):
                     break
                 time.sleep(0.001)
+            else:
+                warn("couldn't make sure test file was actually created")
         else:
             wait_for_pid(sproc.pid)
     _subprocesses_started.add(sproc.pid)
@@ -986,7 +989,7 @@ class TestCase(unittest.TestCase):
             # "/usr/local/bin/python"
             # We do not want to consider this difference in accuracy
             # an error.
-            ver = "%s.%s" % (sys.version_info.major, sys.version_info.minor)
+            ver = "%s.%s" % (sys.version_info[0], sys.version_info[1])
             self.assertEqual(exe.replace(ver, ''), PYTHON.replace(ver, ''))
 
     def test_cmdline(self):
@@ -1659,9 +1662,13 @@ class TestFetchAllProcesses(unittest.TestCase):
             assert ret == ''
         else:
             assert os.path.isabs(ret), ret
-            assert os.path.isfile(ret), ret
-            if hasattr(os, 'access') and hasattr(os, "X_OK"):
-                self.assertTrue(os.access(ret, os.X_OK))
+            # Note: os.stat() may return False even if the file is there
+            # hence we skip the test, see:
+            # http://stackoverflow.com/questions/3112546/os-path-exists-lies
+            if POSIX:
+                assert os.path.isfile(ret), ret
+                if hasattr(os, 'access') and hasattr(os, "X_OK"):
+                    self.assertTrue(os.access(ret, os.X_OK))
 
     def ppid(self, ret):
         self.assertTrue(ret >= 0)

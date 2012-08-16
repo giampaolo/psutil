@@ -2683,8 +2683,8 @@ get_process_memory_maps(PyObject* self, PyObject* args)
         if (GetMappedFileNameA(hProcess, baseAddress, mappedFileName,
                                sizeof(mappedFileName)))
         {
-            py_tuple = Py_BuildValue("(nssI)",
-                (ULONG_PTR)baseAddress,
+            py_tuple = Py_BuildValue("(kssI)",
+                (unsigned long)baseAddress,
                 get_region_protection_string(basicInfo.Protect),
                 mappedFileName,
                 basicInfo.RegionSize
