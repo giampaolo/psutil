@@ -583,13 +583,15 @@ class Process(object):
                         path = path.strip()
                     yield (addr, perms, path,
                            data['Rss:'],
-                           data['Size:'],
+                           data.get('Size:', 0),
                            data.get('Pss:', 0),
-                           data['Shared_Clean:'], data['Shared_Clean:'],
-                           data['Private_Clean:'], data['Private_Dirty:'],
-                           data['Referenced:'],
-                           data['Anonymous:'],
-                           data['Swap:'])
+                           data.get('Shared_Clean:', 0),
+                           data.get('Shared_Dirty:', 0),
+                           data.get('Private_Clean:', 0),
+                           data.get('Private_Dirty:', 0),
+                           data.get('Referenced:', 0),
+                           data.get('Anonymous:', 0),
+                           data.get('Swap:', 0))
             f.close()
         except EnvironmentError:
             # XXX - Can't use wrap_exceptions decorator as we're

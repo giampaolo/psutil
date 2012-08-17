@@ -14,7 +14,7 @@ Python.
 
 from __future__ import division
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [

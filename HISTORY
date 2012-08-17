@@ -1,5 +1,14 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+0.6.2 - XXXX-XX-XX
+------------------
+
+BUG FIXES
+
+ * Issue 319: (Linux) process get_memory_maps() raises KeyError 'Anonymous' on
+ Debian squeeze.
+
+
 0.6.1 - 2012-08-16
 ------------------
 
