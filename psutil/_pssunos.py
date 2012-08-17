@@ -34,9 +34,6 @@ disk_io_counters = _psutil_sunos.get_disk_io_counters
 network_io_counters = _psutil_sunos.get_network_io_counters
 get_disk_usage = _psposix.get_disk_usage
 
-# XXX temporary
-def _not_impl(*a, **k):
-    raise NotImplementedError
 
 nt_virtmem_info = namedtuple('vmem', ' '.join([
     # all platforms
@@ -229,15 +226,20 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_terminal(self):
+        hit_enoent = False
         tty = wrap_exceptions(_psutil_sunos.get_process_basic_info(self.pid)[0])
         if tty != _psutil_sunos.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
                     return os.readlink('/proc/%d/path/%d' % (self.pid, x))
                 except OSError, err:
-                    # XXX - catch EPERM as well?
-                    if err.errno != errno.ENOENT:
-                        raise
+                    if err.errno == errno.ENOENT:
+                        hit_enoent = True
+                        continue
+                    raise
+        if hit_enoent:
+            # raise NSP if the process disappeared on us
+            os.stat('/proc/%s' % self.pid)
 
     @wrap_exceptions
     def get_process_cwd(self):
@@ -263,6 +265,7 @@ class Process(object):
     def get_process_threads(self):
         ret = []
         tids = os.listdir('/proc/%d/lwp' % self.pid)
+        hit_enoent = False
         for tid in tids:
             if tid.isdigit():  # XXX is this necessary?
                 tid = int(tid)
@@ -270,17 +273,23 @@ class Process(object):
                     utime, stime = _psutil_sunos.query_process_thread(tid)
                 except EnvironmentError, err:
                     # ENOENT == thread gone in meantime
-                    if err.errno != errno.ENOENT:
-                        raise
+                    if err.errno == errno.ENOENT:
+                        hit_enoent = True
+                        continue
+                    raise
                 else:
                     nt = nt_thread(tid, utime, stime)
                     ret.append(nt)
+        if hit_enoent:
+            # raise NSP if the process disappeared on us
+            os.stat('/proc/%s' % self.pid)
         return ret
 
     # TODO this needs to be shared with the Linux implementation
     @wrap_exceptions
     def get_open_files(self):
         retlist = []
+        hit_enoent = False
         pathdir = '/proc/%d/path' % self.pid
         for fd in os.listdir('/proc/%d/fd' % self.pid):
             path = os.path.join(pathdir, fd)
@@ -289,11 +298,16 @@ class Process(object):
                     file = os.readlink(path)
                 except OSError, err:
                     # ENOENT == file gone in meantime
-                    if err.errno != errno.ENOENT:
-                        raise
+                    if err.errno == errno.ENOENT:
+                        hit_enoent = True
+                        continue
+                    raise
                 else:
-                    if os.path.isfile(file):
+                    if isfile_strict(file):
                         retlist.append(nt_openfile(file, int(fd)))
+        if hit_enoent:
+            # raise NSP if the process disappeared on us
+            os.stat('/proc/%s' % self.pid)
         return retlist
 
     # TODO
