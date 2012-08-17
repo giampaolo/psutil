@@ -5,8 +5,12 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 BUG FIXES
 
+ * Issue 313: (Linux) psutil.virtual_memory() and psutil.swap_memory() can crash
+   on certain exotic Linux flavors having an incomplete /proc interface.
+   If that's the case we now set the unretrievable stats to 0 and raise a
+   RuntimeWarning.
  * Issue 319: (Linux) process get_memory_maps() raises KeyError 'Anonymous' on
- Debian squeeze.
+   Debian squeeze.
 
 
 0.6.1 - 2012-08-16

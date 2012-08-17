@@ -136,7 +136,12 @@ def virtual_memory():
             and inactive is not None:
                 break
         else:
-            raise RuntimeError("line(s) not found")
+            # we might get here when dealing with exotic Linux flavors, see:
+            # http://code.google.com/p/psutil/issues/detail?id=313
+            msg = "'cached', 'active' and 'inactive' memory stats couldn't " \
+                  "be determined and were set to 0"
+            warnings.warn(msg, RuntimeWarning)
+            cached = active = inactive = 0
     finally:
         f.close()
     avail = free + buffers + cached
@@ -162,7 +167,12 @@ def swap_memory():
             if sin is not None and sout is not None:
                 break
         else:
-            raise RuntimeError("line(s) not found")
+            # we might get here when dealing with exotic Linux flavors, see:
+            # http://code.google.com/p/psutil/issues/detail?id=313
+            msg = "'sin' and 'sout' swap memory stats couldn't " \
+                  "be determined and were set to 0"
+            warnings.warn(msg, RuntimeWarning)
+            sin = sout = 0
     finally:
         f.close()
     return nt_swapmeminfo(total, used, free, percent, sin, sout)
