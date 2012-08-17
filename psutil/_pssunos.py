@@ -11,6 +11,7 @@
 import errno
 import os
 import struct
+import subprocess
 
 import _psutil_sunos
 import _psutil_posix
@@ -50,8 +51,33 @@ def virtual_memory():
     return nt_virtmem_info(total, avail, percent, used, free)
 
 def swap_memory():
-    # TODO
-    return _psutil_sunos.get_system_virtmem()
+    sin, sout = _psutil_sunos.get_swap_mem()
+
+    # XXX
+    # we are supposed to get total/free by doing so:
+    # http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/cmd/swap/swap.c
+    # ...nevertheless I can't manage to obtain the same numbers as 'swap'
+    # cmdline utility, so let's parse its output (sigh!)
+    p = subprocess.Popen(['swap', '-l', '-k'], stdout=subprocess.PIPE)
+    out, err = p.communicate()
+    retcode = p.poll()
+    if retcode:
+        raise RuntimeError("'swap -l -k' failed (retcode=%s)" % retcode)
+
+    lines = out.strip().split('\n')[1:]
+    if not lines:
+        raise RuntimeError('no swap device(s) configured')
+    total = free = 0
+    for line in lines:
+        line = line.split()
+        t, f = line[-2:]
+        t = t.replace('K', '')
+        f = f.replace('K', '')
+        total += int(int(t) * 1024)
+        free += int(int(f) * 1024)
+    used = total - free
+    percent = usage_percent(used, total, _round=1)
+    return nt_swapmeminfo(total, used, free, percent, sin, sout)
 
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""
