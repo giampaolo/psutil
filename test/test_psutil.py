@@ -68,7 +68,7 @@ def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=None,
     if wait:
         if cmd is None:
             stop_at = time.time() + 3
-            while time.time() > stop_at:
+            while stop_at > time.time():
                 if os.path.exists(TESTFN):
                     break
                 time.sleep(0.001)
@@ -1907,6 +1907,7 @@ def cleanup():
     safe_remove(TESTFN)
 
 atexit.register(cleanup)
+safe_remove(TESTFN)
 
 def test_main():
     tests = []
