@@ -27,7 +27,7 @@
 #include <utmpx.h>
 #include <kstat.h>
 
-// #include "_psutil_bsd.h"  TODO fix warnings
+#include "_psutil_sunos.h"
 
 
 #define TV2DOUBLE(t)   (((t).tv_nsec * 0.000000001) + (t).tv_sec)
@@ -791,15 +791,15 @@ psutil_sunos_clear(PyObject *m) {
 
 static struct PyModuleDef
 moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "psutil_sunos",
-        NULL,
-        sizeof(struct module_state),
-        PsutilMethods,
-        NULL,
-        psutil_sunos_traverse,
-        psutil_sunos_clear,
-        NULL
+    PyModuleDef_HEAD_INIT,
+    "psutil_sunos",
+    NULL,
+    sizeof(struct module_state),
+    PsutilMethods,
+    NULL,
+    psutil_sunos_traverse,
+    psutil_sunos_clear,
+    NULL
 };
 
 #define INITERROR return NULL
