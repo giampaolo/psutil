@@ -312,7 +312,6 @@ get_system_users(PyObject* self, PyObject* args)
     PyObject *tuple = NULL;
     PyObject *user_proc = NULL;
     struct utmpx *ut;
-    int ret;
 
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == USER_PROCESS)
@@ -326,12 +325,22 @@ get_system_users(PyObject* self, PyObject* args)
             (float)ut->ut_tv.tv_sec,  // tstamp
             user_proc                 // (bool) user process
         );
-        PyList_Append(ret_list, tuple);
+        if (tuple == NULL)
+            goto error;
+        if (PyList_Append(ret_list, tuple))
+            goto error;
         Py_DECREF(tuple);
     }
     endutent();
 
     return ret_list;
+
+error:
+    Py_XDECREF(tuple);
+    Py_DECREF(ret_list);
+    if (ut != NULL)
+        endutent();
+    return NULL;
 }
 
 
@@ -345,11 +354,12 @@ get_disk_partitions(PyObject* self, PyObject* args)
     FILE *file;
     struct mnttab mt;
     PyObject* py_retlist = PyList_New(0);
-    PyObject* py_tuple;
+    PyObject* py_tuple = NULL;
 
     file = fopen(MNTTAB, "rb");
     if (file == NULL) {
-        return PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
     }
 
     while (getmntent(file, &mt) == 0) {
@@ -357,12 +367,22 @@ get_disk_partitions(PyObject* self, PyObject* args)
                                            mt.mnt_mountp,     // mount point
                                            mt.mnt_fstype,    // fs type
                                            mt.mnt_mntopts);   // options
-        PyList_Append(py_retlist, py_tuple);
-        Py_XDECREF(py_tuple);
+        if (py_tuple == NULL)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
+        Py_DECREF(py_tuple);
 
     }
-
+    fclose(file);
     return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    if (file != NULL)
+        fclose(file);
+    return NULL;
 }
 
 
@@ -378,35 +398,47 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     int numcpus;
     int i;
     PyObject* py_retlist = PyList_New(0);
-    PyObject* py_cputime;
+    PyObject* py_cputime = NULL;
 
     kc = kstat_open();
     if (kc == NULL) {
-        return PyErr_SetFromErrno(PyExc_OSError);;
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
     }
 
     numcpus = sysconf(_SC_NPROCESSORS_ONLN) - 1;
     for (i=0; i<=numcpus; i++) {
         ksp = kstat_lookup(kc, "cpu_stat", i, NULL);
         if (ksp == NULL) {
-            kstat_close(kc);
-            return PyErr_SetFromErrno(PyExc_OSError);;
+            PyErr_SetFromErrno(PyExc_OSError);
+            goto error;
         }
 	    if (kstat_read(kc, ksp, &cs) == -1) {
-		    kstat_close(kc);
-            return PyErr_SetFromErrno(PyExc_OSError);;
+            PyErr_SetFromErrno(PyExc_OSError);
+            goto error;
 	    }
         py_cputime = Py_BuildValue("IIII",
                                    cs.cpu_sysinfo.cpu[CPU_USER],
                                    cs.cpu_sysinfo.cpu[CPU_KERNEL],
                                    cs.cpu_sysinfo.cpu[CPU_IDLE],
                                    cs.cpu_sysinfo.cpu[CPU_WAIT]);
-        PyList_Append(py_retlist, py_cputime);
-        Py_XDECREF(py_cputime);
+        if (py_cputime == NULL)
+            goto error;
+        if (PyList_Append(py_retlist, py_cputime))
+            goto error;
+        Py_DECREF(py_cputime);
+
     }
 
     kstat_close(kc);
     return py_retlist;
+
+error:
+    Py_XDECREF(py_cputime);
+    Py_DECREF(py_retlist);
+    if (kc != NULL)
+        kstat_close(kc);
+    return NULL;
 }
 
 
@@ -420,11 +452,12 @@ get_disk_io_counters(PyObject* self, PyObject* args)
     kstat_t *ksp;
     kstat_io_t kio;
     PyObject* py_retdict = PyDict_New();
-    PyObject* py_disk_info;
+    PyObject* py_disk_info = NULL;
 
     kc = kstat_open();
     if (kc == NULL) {
-        return PyErr_SetFromErrno(PyExc_OSError);;
+        PyErr_SetFromErrno(PyExc_OSError);;
+        goto error;
     }
     ksp = kc->kc_chain;
     while (ksp != NULL) {
@@ -442,8 +475,12 @@ get_disk_io_counters(PyObject* self, PyObject* args)
                                              kio.rtime,  // XXX are these ms?
                                              kio.wtime   // XXX are these ms?
                                              );
-                PyDict_SetItemString(py_retdict, ksp->ks_name, py_disk_info);
-                Py_XDECREF(py_disk_info);
+
+                if (!py_disk_info)
+                    goto error;
+                if (PyDict_SetItemString(py_retdict, ksp->ks_name, py_disk_info))
+                    goto error;
+                Py_DECREF(py_disk_info);
             }
         }
         ksp = ksp->ks_next;
@@ -451,6 +488,13 @@ get_disk_io_counters(PyObject* self, PyObject* args)
     kstat_close(kc);
 
     return py_retdict;
+
+error:
+    Py_XDECREF(py_disk_info);
+    Py_DECREF(py_retdict);
+    if (kc != NULL)
+        kstat_close(kc);
+    return NULL;
 }
 
 
