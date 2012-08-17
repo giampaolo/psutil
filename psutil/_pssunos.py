@@ -27,6 +27,7 @@ PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
 NUM_CPUS = os.sysconf("SC_NPROCESSORS_ONLN")
 BOOT_TIME = _psutil_sunos.get_process_basic_info(0)[3]
 TOTAL_PHYMEM = os.sysconf('SC_PHYS_PAGES') * PAGE_SIZE
+_PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle iowait')
 
 disk_io_counters = _psutil_sunos.get_disk_io_counters
@@ -77,7 +78,8 @@ def swap_memory():
         free += int(int(f) * 1024)
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return nt_swapmeminfo(total, used, free, percent, sin, sout)
+    return nt_swapmeminfo(total, used, free, percent,
+                          sin * _PAGESIZE, sout * _PAGESIZE)
 
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""
