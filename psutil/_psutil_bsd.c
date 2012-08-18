@@ -110,6 +110,9 @@ get_pid_list(PyObject* self, PyObject* args)
     PyObject* retlist = PyList_New(0);
     PyObject* pid = NULL;
 
+    if (retlist == NULL) {
+        return NULL;
+    }
     if (get_proc_list(&proclist, &num_processes) != 0) {
         PyErr_SetString(PyExc_RuntimeError, "failed to retrieve process list.");
         goto error;
@@ -198,10 +201,6 @@ get_process_exe(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (pid == 0) {
-        // ...otherwise we'd get '\x98\xd5\xbf\xbf\xfb\xf3\x10\x08H\x01'
-        return Py_BuildValue("s", "");
-    }
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
@@ -214,7 +213,14 @@ get_process_exe(PyObject* self, PyObject* args)
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
-
+    if (size == 0 || strlen(pathname) == 0) {
+        if (pid_exists(pid) == 0) {
+            return NoSuchProcess();
+        }
+        else {
+            strcpy(pathname, "");
+        }
+    }
     return Py_BuildValue("s", pathname);
 }
 
@@ -398,9 +404,10 @@ get_process_threads(PyObject* self, PyObject* args)
     PyObject* retList = PyList_New(0);
     PyObject* pyTuple = NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (retList == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
-    }
 
     /*
      * We need to re-query for thread information, so don't use *kipp.
@@ -423,7 +430,7 @@ get_process_threads(PyObject* self, PyObject* args)
 
     kip = malloc(size);
     if (kip == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_NoMemory();
         goto error;
     }
 
@@ -698,13 +705,14 @@ get_process_open_files(PyObject* self, PyObject* args)
 {
     long pid;
     int i, cnt;
-    PyObject *retList = PyList_New(0);
-    PyObject *tuple = NULL;
-
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
     struct kinfo_proc kipp;
+    PyObject *retList = PyList_New(0);
+    PyObject *tuple = NULL;
 
+    if (retList == NULL)
+        return NULL;
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
     if (get_kinfo_proc(pid, &kipp) == -1)
@@ -913,6 +921,9 @@ get_process_connections(PyObject* self, PyObject* args)
     PyObject* _family = NULL;
     PyObject* _type = NULL;
 
+    if (retList == NULL) {
+        return NULL;
+    }
     if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter)) {
         goto error;
     }
@@ -952,7 +963,7 @@ get_process_connections(PyObject* self, PyObject* args)
 
     ofiles = malloc((filed.fd_lastfile+1) * sizeof(struct file *));
     if (ofiles == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "malloc() failed");
+        PyErr_NoMemory();
         goto error;
     }
 
@@ -1140,6 +1151,9 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_cputime = NULL;
 
+    if (py_retlist == NULL)
+        return NULL;
+
     // retrieve maxcpus value
     size = sizeof(maxcpus);
     if (sysctlbyname("kern.smp.maxcpus", &maxcpus, &size, NULL, 0) < 0) {
@@ -1205,11 +1219,13 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     struct kinfo_proc kp;
     struct kinfo_vmentry *freep = NULL;
     struct kinfo_vmentry *kve;
+    ptrwidth = 2*sizeof(void *);
     PyObject* pytuple = NULL;
     PyObject* retlist = PyList_New(0);
 
-    ptrwidth = 2*sizeof(void *);
-
+    if (retlist == NULL) {
+        return NULL;
+    }
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         goto error;
     }
@@ -1318,6 +1334,9 @@ get_disk_partitions(PyObject* self, PyObject* args)
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_tuple = NULL;
 
+    if (py_retlist == NULL)
+        return NULL;
+
     // get the number of mount points
     Py_BEGIN_ALLOW_THREADS
     num = getfsstat(NULL, 0, MNT_NOWAIT);
@@ -1329,6 +1348,10 @@ get_disk_partitions(PyObject* self, PyObject* args)
 
     len = sizeof(*fs) * num;
     fs = malloc(len);
+    if (fs == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
 
     Py_BEGIN_ALLOW_THREADS
     num = getfsstat(fs, len, MNT_NOWAIT);
@@ -1408,13 +1431,14 @@ error:
 static PyObject*
 get_network_io_counters(PyObject* self, PyObject* args)
 {
-    PyObject* py_retdict = PyDict_New();
-    PyObject* py_ifc_info = NULL;
-
     char *buf = NULL, *lim, *next;
     struct if_msghdr *ifm;
     int mib[6];
     size_t len;
+    PyObject* py_retdict = PyDict_New();
+    PyObject* py_ifc_info = NULL;
+    if (py_retdict == NULL)
+        return NULL;
 
     mib[0] = CTL_NET;          // networking subsystem
     mib[1] = PF_ROUTE;         // type of information
@@ -1428,8 +1452,11 @@ get_network_io_counters(PyObject* self, PyObject* args)
         goto error;
     }
 
-
     buf = malloc(len);
+    if (buf == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
 
     if (sysctl(mib, 6, buf, &len, NULL, 0) < 0) {
         PyErr_SetFromErrno(0);
@@ -1489,11 +1516,13 @@ error:
 static PyObject*
 get_disk_io_counters(PyObject* self, PyObject* args)
 {
-    PyObject* py_retdict = PyDict_New();
-    PyObject* py_disk_info = NULL;
-
     int i;
     struct statinfo stats;
+
+    PyObject* py_retdict = PyDict_New();
+    PyObject* py_disk_info = NULL;
+    if (py_retdict == NULL)
+        return NULL;
 
     if (devstat_checkversion(NULL) < 0) {
         PyErr_Format(PyExc_RuntimeError, "devstat_checkversion() failed");
@@ -1501,6 +1530,10 @@ get_disk_io_counters(PyObject* self, PyObject* args)
     }
 
     stats.dinfo = (struct devinfo *)malloc(sizeof(struct devinfo));
+    if (stats.dinfo == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
     bzero(stats.dinfo, sizeof(struct devinfo));
 
     if (devstat_getdevs(NULL, &stats) == -1) {
@@ -1557,6 +1590,9 @@ get_system_users(PyObject* self, PyObject* args)
 {
     PyObject *ret_list = PyList_New(0);
     PyObject *tuple = NULL;
+
+    if (ret_list == NULL)
+        return NULL;
 
 #if __FreeBSD_version < 900000
     struct utmp ut;
