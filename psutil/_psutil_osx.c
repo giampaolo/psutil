@@ -79,6 +79,9 @@ get_pid_list(PyObject* self, PyObject* args)
     PyObject *pid = NULL;
     PyObject *retlist = PyList_New(0);
 
+    if (retlist == NULL)
+        return NULL;
+
     if (get_proc_list(&proclist, &num_processes) != 0) {
         PyErr_SetString(PyExc_RuntimeError, "failed to retrieve process list.");
         goto error;
@@ -289,6 +292,9 @@ get_process_memory_maps(PyObject* self, PyObject* args)
 
     PyObject* py_tuple = NULL;
     PyObject* py_list = PyList_New(0);
+
+    if (py_list == NULL)
+        return NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         goto error;
@@ -649,9 +655,12 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     mach_msg_type_number_t info_count;
     kern_return_t error;
     processor_cpu_load_info_data_t* cpu_load_info = NULL;
+    int i, ret;
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_cputime = NULL;
-    int i, ret;
+
+    if (py_retlist == NULL)
+        return NULL;
 
     error = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO,
                                 &cpu_count, &info_array, &info_count);
@@ -736,6 +745,9 @@ get_disk_partitions(PyObject* self, PyObject* args)
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_tuple = NULL;
 
+    if (py_retlist == NULL)
+        return NULL;
+
     // get the number of mount points
     Py_BEGIN_ALLOW_THREADS
     num = getfsstat(NULL, 0, MNT_NOWAIT);
@@ -747,6 +759,10 @@ get_disk_partitions(PyObject* self, PyObject* args)
 
     len = sizeof(*fs) * num;
     fs = malloc(len);
+    if (fs == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
 
     Py_BEGIN_ALLOW_THREADS
     num = getfsstat(fs, len, MNT_NOWAIT);
@@ -873,6 +889,9 @@ get_process_threads(PyObject* self, PyObject* args)
     PyObject* retList = PyList_New(0);
     PyObject* pyTuple = NULL;
 
+    if (retList == NULL)
+        return NULL;
+
     // the argument passed should be a process id
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         goto error;
@@ -977,6 +996,9 @@ get_process_open_files(PyObject* self, PyObject* args)
     PyObject *retList = PyList_New(0);
     PyObject *tuple = NULL;
 
+    if (retList == NULL)
+        return NULL;
+
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         goto error;
     }
@@ -989,6 +1011,10 @@ get_process_open_files(PyObject* self, PyObject* args)
     }
 
     fds_pointer = malloc(pidinfo_result);
+    if (fds_pointer == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
     pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
                                   pidinfo_result);
     if (pidinfo_result <= 0) {
@@ -1125,6 +1151,9 @@ get_process_connections(PyObject* self, PyObject* args)
     PyObject *af_filter = NULL;
     PyObject *type_filter = NULL;
 
+    if (retList == NULL)
+        return NULL;
+
     if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter)) {
         goto error;
     }
@@ -1144,6 +1173,10 @@ get_process_connections(PyObject* self, PyObject* args)
     }
 
     fds_pointer = malloc(pidinfo_result);
+    if (fds_pointer == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
     pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
                                   pidinfo_result);
 
@@ -1337,6 +1370,9 @@ get_process_num_fds(PyObject* self, PyObject* args)
     }
 
     fds_pointer = malloc(pidinfo_result);
+    if (fds_pointer == NULL) {
+        return PyErr_NoMemory();
+    }
     pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
                                   pidinfo_result);
     if (pidinfo_result <= 0) {
@@ -1356,13 +1392,15 @@ get_process_num_fds(PyObject* self, PyObject* args)
 static PyObject*
 get_network_io_counters(PyObject* self, PyObject* args)
 {
-    PyObject* py_retdict = PyDict_New();
-    PyObject* py_ifc_info = NULL;
-
     char *buf = NULL, *lim, *next;
     struct if_msghdr *ifm;
     int mib[6];
     size_t len;
+    PyObject* py_retdict = PyDict_New();
+    PyObject* py_ifc_info = NULL;
+
+    if (py_retdict == NULL)
+        return NULL;
 
     mib[0] = CTL_NET;          // networking subsystem
     mib[1] = PF_ROUTE;         // type of information
@@ -1377,6 +1415,10 @@ get_network_io_counters(PyObject* self, PyObject* args)
     }
 
     buf = malloc(len);
+    if (buf == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
 
     if (sysctl(mib, 6, buf, &len, NULL, 0) < 0) {
         PyErr_SetFromErrno(0);
@@ -1437,15 +1479,17 @@ error:
 static PyObject*
 get_disk_io_counters(PyObject* self, PyObject* args)
 {
-    PyObject* py_retdict = PyDict_New();
-    PyObject* py_disk_info = NULL;
-
     CFDictionaryRef parent_dict;
     CFDictionaryRef props_dict;
     CFDictionaryRef stats_dict;
     io_registry_entry_t parent;
     io_registry_entry_t disk;
     io_iterator_t disk_list;
+    PyObject* py_retdict = PyDict_New();
+    PyObject* py_disk_info = NULL;
+
+    if (py_retdict == NULL)
+        return NULL;
 
     /* Get list of disks */
     if (IOServiceGetMatchingServices(kIOMasterPortDefault,
@@ -1595,10 +1639,13 @@ error:
 static PyObject*
 get_system_users(PyObject* self, PyObject* args)
 {
-    PyObject *ret_list = PyList_New(0);
-    PyObject *tuple = NULL;
     struct utmpx ut;
     FILE *fp = NULL;
+    PyObject *ret_list = PyList_New(0);
+    PyObject *tuple = NULL;
+
+    if (ret_list == NULL)
+        return NULL;
 
     fp = fopen(_PATH_UTMPX, "r");
     if (fp == NULL) {

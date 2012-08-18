@@ -107,6 +107,9 @@ get_disk_partitions(PyObject* self, PyObject* args)
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_tuple = NULL;
 
+    if (py_retlist == NULL)
+        return NULL;
+
     // MOUNTED constant comes from mntent.h and it's == '/etc/mtab'
     Py_BEGIN_ALLOW_THREADS
     file = setmntent(MOUNTED, "r");
@@ -215,6 +218,9 @@ get_system_users(PyObject* self, PyObject* args)
     PyObject *tuple = NULL;
     PyObject *user_proc = NULL;
     struct utmp *ut;
+
+    if (ret_list == NULL)
+        return NULL;
 
     setutent();
     while (NULL != (ut = getutent())) {
