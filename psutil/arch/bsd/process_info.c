@@ -135,8 +135,7 @@ char
 
     path = malloc(size);
     if (path == NULL) {
-        PyErr_SetString(PyExc_MemoryError, "couldn't allocate memory");
-        return NULL;
+        return PyErr_NoMemory();
     }
 
     *pathsize = size;
@@ -179,8 +178,7 @@ char
     /* Allocate space for the arguments. */
     procargs = (char *)malloc(argmax);
     if (procargs == NULL) {
-        PyErr_SetString(PyExc_MemoryError, "couldn't allocate memory");
-        return NULL;
+        return PyErr_NoMemory();
     }
 
     /*
