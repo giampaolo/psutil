@@ -139,9 +139,15 @@ get_open_files(long pid, HANDLE processHandle)
     PyObject                    *arg = NULL;
     PyObject                    *fileFromWchar = NULL;
 
-
+    if (filesList == NULL)
+        return NULL;
 
     handleInfo = (PSYSTEM_HANDLE_INFORMATION)malloc(handleInfoSize);
+    if (handleInfo == NULL) {
+        Py_DECREF(filesList);
+        PyErr_NoMemory();
+        return NULL;
+    }
 
     /* NtQuerySystemInformation won't give us the correct buffer size,
        so we guess by doubling the buffer size. */

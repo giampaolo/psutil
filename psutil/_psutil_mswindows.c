@@ -104,6 +104,9 @@ get_pid_list(PyObject* self, PyObject* args)
     PyObject* pid = NULL;
     PyObject* retlist = PyList_New(0);
 
+    if (retlist == NULL) {
+        return NULL;
+    }
     proclist = get_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
         goto error;
@@ -732,6 +735,9 @@ get_system_cpu_times(PyObject* self, PyObject* args)
     PyObject *arg = NULL;
     PyObject *retlist = PyList_New(0);
 
+    if (retlist == NULL)
+        return NULL;
+
     // dynamic linking is mandatory to use NtQuerySystemInformation
     hNtDll = LoadLibrary(TEXT("ntdll.dll"));
     if (hNtDll != NULL) {
@@ -878,6 +884,11 @@ get_process_cwd(PyObject* self, PyObject* args)
 
     // allocate memory to hold cwd
     currentDirectoryContent = (WCHAR *)malloc(currentDirectory.Length+1);
+    if (currentDirectoryContent == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
 
     // read cwd
     if (!ReadProcessMemory(processHandle, currentDirectory.Buffer,
@@ -1065,16 +1076,19 @@ get_process_num_threads(PyObject* self, PyObject* args)
 static PyObject*
 get_process_threads(PyObject* self, PyObject* args)
 {
-    PyObject* retList = PyList_New(0);
-    PyObject* pyTuple = NULL;
-    HANDLE hThreadSnap = NULL;
     HANDLE hThread;
     THREADENTRY32 te32 = {0};
     long pid;
     int pid_return;
     int rc;
     FILETIME ftDummy, ftKernel, ftUser;
+    PyObject* retList = PyList_New(0);
+    PyObject* pyTuple = NULL;
+    HANDLE hThreadSnap = NULL;
 
+    if (retList == NULL) {
+        return NULL;
+    }
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         goto error;
     }
@@ -1268,6 +1282,9 @@ get_process_username(PyObject* self, PyObject* args)
 
     bufferSize = 0x100;
     user = malloc(bufferSize);
+    if (user == NULL) {
+        return PyErr_NoMemory();
+    }
 
     if (!GetTokenInformation(tokenHandle,
                              TokenUser,
@@ -1277,7 +1294,10 @@ get_process_username(PyObject* self, PyObject* args)
     {
         free(user);
         user = malloc(bufferSize);
-
+        if (user == NULL) {
+            CloseHandle(tokenHandle);
+            return PyErr_NoMemory();
+        }
         if (!GetTokenInformation(tokenHandle,
                                  TokenUser,
                                  user,
@@ -1298,7 +1318,11 @@ get_process_username(PyObject* self, PyObject* args)
     domainNameSize = 0x100;
 
     name = malloc(nameSize * sizeof(TCHAR));
+    if (name == NULL)
+        return PyErr_NoMemory();
     domainName = malloc(domainNameSize * sizeof(TCHAR));
+    if (domainName == NULL)
+        return PyErr_NoMemory();
 
     if (!LookupAccountSid(NULL, user->User.Sid, name, &nameSize, domainName,
                           &domainNameSize, &nameUse))
@@ -1306,8 +1330,11 @@ get_process_username(PyObject* self, PyObject* args)
         free(name);
         free(domainName);
         name = malloc(nameSize * sizeof(TCHAR));
+        if (name == NULL)
+            return PyErr_NoMemory();
         domainName = malloc(domainNameSize * sizeof(TCHAR));
-
+        if (domainName == NULL)
+            return PyErr_NoMemory();
         if (!LookupAccountSid(NULL, user->User.Sid, name, &nameSize, domainName,
                               &domainNameSize, &nameUse))
         {
@@ -1324,6 +1351,12 @@ get_process_username(PyObject* self, PyObject* args)
 
     /* Build the full username string. */
     fullName = malloc((domainNameSize + 1 + nameSize + 1) * sizeof(TCHAR));
+    if (fullName == NULL) {
+        free(name);
+        free(domainName);
+        free(user);
+        return PyErr_NoMemory();
+    }
     memcpy(fullName, domainName, domainNameSize);
     fullName[domainNameSize] = '\\';
     memcpy(&fullName[domainNameSize + 1], name, nameSize);
@@ -1536,6 +1569,10 @@ get_process_connections(PyObject* self, PyObject* args)
     }
 
     connectionsList = PyList_New(0);
+    if (connectionsList == NULL) {
+        ConnDecrefPyObjs();
+        return NULL;
+    }
 
     /* TCP IPv4 */
 
@@ -1551,6 +1588,10 @@ get_process_connections(PyObject* self, PyObject* args)
                             TCP_TABLE_OWNER_PID_ALL, 0);
 
         table = malloc(tableSize);
+        if (table == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
 
         if (getExtendedTcpTable(table, &tableSize, FALSE, AF_INET,
                                 TCP_TABLE_OWNER_PID_ALL, 0) == 0)
@@ -1635,6 +1676,10 @@ get_process_connections(PyObject* self, PyObject* args)
                             TCP_TABLE_OWNER_PID_ALL, 0);
 
         table = malloc(tableSize);
+        if (table == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
 
         if (getExtendedTcpTable(table, &tableSize, FALSE, AF_INET6,
                                  TCP_TABLE_OWNER_PID_ALL, 0) == 0)
@@ -1719,6 +1764,10 @@ get_process_connections(PyObject* self, PyObject* args)
                             UDP_TABLE_OWNER_PID, 0);
 
         table = malloc(tableSize);
+        if (table == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
 
         if (getExtendedUdpTable(table, &tableSize, FALSE, AF_INET,
                                  UDP_TABLE_OWNER_PID, 0) == 0)
@@ -1782,6 +1831,10 @@ get_process_connections(PyObject* self, PyObject* args)
                             AF_INET6, UDP_TABLE_OWNER_PID, 0);
 
         table = malloc(tableSize);
+        if (table == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
 
         if (getExtendedUdpTable(table, &tableSize, FALSE, AF_INET6,
                                  UDP_TABLE_OWNER_PID, 0) == 0)
@@ -2080,11 +2133,6 @@ get_disk_usage(PyObject* self, PyObject* args)
 static PyObject*
 get_network_io_counters(PyObject* self, PyObject* args)
 {
-    PyObject* py_retdict = PyDict_New();
-    PyObject* py_nic_info = NULL;
-    PyObject* py_pre_nic_name = NULL;
-    PyObject* py_nic_name = NULL;
-
     int attempts = 0;
     int outBufLen = 15000;
     DWORD dwRetVal = 0;
@@ -2094,11 +2142,18 @@ get_network_io_counters(PyObject* self, PyObject* args)
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
 
+    PyObject* py_retdict = PyDict_New();
+    PyObject* py_nic_info = NULL;
+    PyObject* py_pre_nic_name = NULL;
+    PyObject* py_nic_name = NULL;
+
+    if (py_retdict == NULL) {
+        return NULL;
+    }
     do {
         pAddresses = (IP_ADAPTER_ADDRESSES *) malloc(outBufLen);
         if (pAddresses == NULL) {
-            PyErr_SetString(PyExc_RuntimeError,
-                "memory allocation failed for IP_ADAPTER_ADDRESSES struct.");
+            PyErr_NoMemory();
             goto error;
         }
 
@@ -2128,8 +2183,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
         pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
 
         if (pIfRow == NULL) {
-            PyErr_SetString(PyExc_RuntimeError,
-                "memory allocation failed for MIB_IFROW struct.");
+            PyErr_NoMemory();
             goto error;
         }
 
@@ -2192,15 +2246,17 @@ error:
 static PyObject*
 get_disk_io_counters(PyObject* self, PyObject* args)
 {
-    PyObject* py_retdict = PyDict_New();
-    PyObject* py_disk_info = NULL;
-
     DISK_PERFORMANCE diskPerformance;
     DWORD dwSize;
     HANDLE hDevice = NULL;
     char szDevice[MAX_PATH];
     char szDeviceDisplay[MAX_PATH];
     int devNum;
+    PyObject* py_retdict = PyDict_New();
+    PyObject* py_disk_info = NULL;
+    if (py_retdict == NULL) {
+        return NULL;
+    }
 
     for (devNum = 0;; devNum++) {
         py_disk_info = NULL;
@@ -2300,6 +2356,9 @@ get_disk_partitions(PyObject* self, PyObject* args)
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_tuple = NULL;
 
+    if (py_retlist == NULL) {
+        return NULL;
+    }
     if (! PyArg_ParseTuple(args, "O", &py_all)) {
         goto error;
     }
@@ -2404,10 +2463,6 @@ error:
 static PyObject*
 get_system_users(PyObject* self, PyObject* args)
 {
-    PyObject* py_retlist = PyList_New(0);
-    PyObject* py_tuple = NULL;
-    PyObject* py_address = NULL;
-
     HANDLE hServer = NULL;
     LPTSTR buffer_user = NULL;
     LPTSTR buffer_addr = NULL;
@@ -2424,6 +2479,13 @@ get_system_users(PyObject* self, PyObject* args)
     WINSTATION_INFO station_info;
     HINSTANCE hInstWinSta = NULL;
     ULONG returnLen;
+
+    PyObject* py_retlist = PyList_New(0);
+    PyObject* py_tuple = NULL;
+    PyObject* py_address = NULL;
+    if (py_retlist == NULL) {
+        return NULL;
+    }
 
     hInstWinSta = LoadLibraryA("winsta.dll");
     WinStationQueryInformationW = (PWINSTATIONQUERYINFORMATIONW)
@@ -2660,6 +2722,9 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     PyObject* py_list = PyList_New(0);
     PyObject* py_tuple = NULL;
 
+    if (py_list == NULL) {
+        return NULL;
+    }
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         goto error;
     }

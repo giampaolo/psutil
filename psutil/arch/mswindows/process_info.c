@@ -129,7 +129,10 @@ get_pids(DWORD *numberOfReturnedPIDs) {
         free(procArray);
         procArrayByteSz = procArraySz * sizeof(DWORD);
         procArray = malloc(procArrayByteSz);
-
+        if (procArray == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
         if (! EnumProcesses(procArray, procArrayByteSz, &enumReturnSz)) {
             free(procArray);
             PyErr_SetFromWindowsErr(0);
@@ -347,6 +350,10 @@ get_arg_list(long pid)
 
     /* allocate memory to hold the command line */
     commandLineContents = (WCHAR *)malloc(commandLine.Length+1);
+    if (commandLineContents == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
 
     /* read the command line */
     if (!ReadProcessMemory(hProcess, commandLine.Buffer,
@@ -386,7 +393,7 @@ get_arg_list(long pid)
         // arglist parsed as array of UNICODE_STRING, so convert each to Python
         // string object and add to arg list
         argList = Py_BuildValue("[]");
-        if (!argList)
+        if (argList == NULL)
             goto error;
         for(i=0; i<nArgs; i++) {
             arg_from_wchar = NULL;
@@ -468,6 +475,10 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
 
     bufferSize = initialBufferSize;
     buffer = malloc(bufferSize);
+    if (buffer == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
 
     while (TRUE) {
         status = NtQuerySystemInformation(SystemProcessInformation, buffer,
@@ -477,6 +488,10 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
         {
             free(buffer);
             buffer = malloc(bufferSize);
+            if (buffer == NULL) {
+                PyErr_NoMemory();
+                goto error;
+            }
         }
         else {
             break;
@@ -485,9 +500,7 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
 
     if (status != 0) {
         PyErr_Format(PyExc_RuntimeError, "NtQuerySystemInformation() failed");
-        FreeLibrary(hNtDll);
-        free(buffer);
-        return 0;
+        goto error;
     }
 
     if (bufferSize <= 0x20000) {
@@ -504,7 +517,11 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
     } while ( (process = PH_NEXT_PROCESS(process)) );
 
     NoSuchProcess();
+    goto error;
+
+error:
     FreeLibrary(hNtDll);
-    free(buffer);
+    if (buffer != NULL)
+        free(buffer);
     return 0;
 }
