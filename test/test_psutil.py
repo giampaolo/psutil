@@ -48,7 +48,7 @@ BSD = sys.platform.startswith("freebsd")
 
 _subprocesses_started = set()
 
-def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=None,
+def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=None, stdin=None,
                         wait=False):
     """Return a subprocess.Popen object to use in tests.
     By default stdout and stderr are redirected to /dev/null and the
@@ -59,7 +59,7 @@ def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=None,
     if cmd is None:
         pyline = ""
         if wait:
-            pyline += "open('%s', 'w'); " % TESTFN
+            pyline += "open(r'%s', 'w'); " % TESTFN
         pyline += "import time; time.sleep(3600);"
         cmd_ = [PYTHON, "-c", pyline]
     else:
@@ -983,14 +983,18 @@ class TestCase(unittest.TestCase):
         try:
             self.assertEqual(exe, PYTHON)
         except AssertionError:
-            # certain platforms such as BSD are more accurate returning:
-            # "/usr/local/bin/python2.7"
-            # ...instead of:
-            # "/usr/local/bin/python"
-            # We do not want to consider this difference in accuracy
-            # an error.
-            ver = "%s.%s" % (sys.version_info[0], sys.version_info[1])
-            self.assertEqual(exe.replace(ver, ''), PYTHON.replace(ver, ''))
+            if WINDOWS and len(exe) == len(PYTHON):
+                # on Windows we don't care about case sensitivity
+                self.assertEqual(exe.lower(), PYTHON.lower())
+            else:
+                # certain platforms such as BSD are more accurate returning:
+                # "/usr/local/bin/python2.7"
+                # ...instead of:
+                # "/usr/local/bin/python"
+                # We do not want to consider this difference in accuracy
+                # an error.
+                ver = "%s.%s" % (sys.version_info[0], sys.version_info[1])
+                self.assertEqual(exe.replace(ver, ''), PYTHON.replace(ver, ''))
 
     def test_cmdline(self):
         sproc = get_test_subprocess([PYTHON, "-E"], wait=True)
