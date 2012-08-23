@@ -308,10 +308,13 @@ get_swap_mem(PyObject* self, PyObject* args)
 static PyObject*
 get_system_users(PyObject* self, PyObject* args)
 {
+    struct utmpx *ut;
     PyObject *ret_list = PyList_New(0);
     PyObject *tuple = NULL;
     PyObject *user_proc = NULL;
-    struct utmpx *ut;
+
+    if (ret_list == NULL)
+        return NULL;
 
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == USER_PROCESS)
@@ -356,6 +359,9 @@ get_disk_partitions(PyObject* self, PyObject* args)
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_tuple = NULL;
 
+    if (py_retlist == NULL)
+        return NULL;
+
     file = fopen(MNTTAB, "rb");
     if (file == NULL) {
         PyErr_SetFromErrno(PyExc_OSError);
@@ -399,6 +405,9 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     int i;
     PyObject* py_retlist = PyList_New(0);
     PyObject* py_cputime = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
 
     kc = kstat_open();
     if (kc == NULL) {
@@ -454,6 +463,8 @@ get_disk_io_counters(PyObject* self, PyObject* args)
     PyObject* py_retdict = PyDict_New();
     PyObject* py_disk_info = NULL;
 
+    if (py_retdict == NULL)
+        return NULL;
     kc = kstat_open();
     if (kc == NULL) {
         PyErr_SetFromErrno(PyExc_OSError);;
@@ -522,6 +533,9 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     PyObject* pytuple = NULL;
     PyObject* retlist = PyList_New(0);
 
+    if (retlist == NULL) {
+        return NULL;
+    }
     if (! PyArg_ParseTuple(args, "i", &pid)) {
         goto error;
     }
@@ -547,7 +561,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
 
 	xmap = (prxmap_t *)malloc(size);
 	if (xmap == NULL) {
-        PyErr_SetString(PyExc_MemoryError, "can't allocate prxmap_t");
+        PyErr_NoMemory();
         goto error;
 	}
 
@@ -643,6 +657,8 @@ get_network_io_counters(PyObject* self, PyObject* args)
     PyObject* py_retdict = PyDict_New();
     PyObject* py_ifc_info = NULL;
 
+    if (py_retdict == NULL)
+        return NULL;
     kc = kstat_open();
     if (kc == NULL)
         goto error;
