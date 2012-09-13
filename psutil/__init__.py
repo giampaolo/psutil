@@ -764,7 +764,7 @@ class Popen(Process):
             pass
         except NoSuchProcess:
             raise NoSuchProcess(self._pid, None,
-                                "no process found with pid %s" % pid)
+                                "no process found with pid %s" % self._pid)
 
     def __dir__(self):
         return list(set(dir(Popen) + dir(subprocess.Popen)))
