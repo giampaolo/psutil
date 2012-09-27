@@ -11,6 +11,7 @@ BUG FIXES
    RuntimeWarning.
  * Issue 319: (Linux) process get_memory_maps() raises KeyError 'Anonymous' on
    Debian squeeze.
+ * Issue 333: (OS X) Leak of Mach ports on OS X (patch by rsesek@google.com)
 
 
 0.6.1 - 2012-08-16
