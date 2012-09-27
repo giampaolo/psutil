@@ -62,6 +62,7 @@ psutil_sys_vminfo(vm_statistics_data_t *vmstat)
                      "host_statistics() failed: %s", mach_error_string(ret));
         return 0;
     }
+    mach_port_deallocate(mach_task_self(), mport);
     return 1;
 }
 
@@ -403,9 +404,14 @@ get_process_memory_maps(PyObject* self, PyObject* args)
         }
     }
 
+    if (task != MACH_PORT_NULL)
+        mach_port_deallocate(mach_task_self(), task);
+
     return py_list;
 
 error:
+    if (task != MACH_PORT_NULL)
+        mach_port_deallocate(mach_task_self(), task);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_list);
     return NULL;
@@ -629,11 +635,13 @@ get_system_cpu_times(PyObject* self, PyObject* args)
     kern_return_t error;
     host_cpu_load_info_data_t r_load;
 
-    error = host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t)&r_load, &count);
+    mach_port_t host_port = mach_host_self();
+    error = host_statistics(host_port, HOST_CPU_LOAD_INFO, (host_info_t)&r_load, &count);
     if (error != KERN_SUCCESS) {
         return PyErr_Format(PyExc_RuntimeError,
                 "Error in host_statistics(): %s", mach_error_string(error));
     }
+    mach_port_deallocate(mach_task_self(), host_port);
 
     return Py_BuildValue("(dddd)",
                          (double)r_load.cpu_ticks[CPU_STATE_USER] / CLK_TCK,
@@ -662,13 +670,15 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     if (py_retlist == NULL)
         return NULL;
 
-    error = host_processor_info(mach_host_self(), PROCESSOR_CPU_LOAD_INFO,
+    mach_port_t host_port = mach_host_self();
+    error = host_processor_info(host_port, PROCESSOR_CPU_LOAD_INFO,
                                 &cpu_count, &info_array, &info_count);
     if (error != KERN_SUCCESS) {
         PyErr_Format(PyExc_RuntimeError, "Error in host_processor_info(): %s",
                      mach_error_string(error));
         goto error;
     }
+    mach_port_deallocate(mach_task_self(), host_port);
 
     cpu_load_info = (processor_cpu_load_info_data_t*) info_array;
 
@@ -958,9 +968,13 @@ get_process_threads(PyObject* self, PyObject* args)
         PyErr_WarnEx(PyExc_RuntimeWarning, "vm_deallocate() failed", 2);
     }
 
+    mach_port_deallocate(mach_task_self(), task);
+
     return retList;
 
 error:
+    if (task != MACH_PORT_NULL)
+        mach_port_deallocate(mach_task_self(), task);
     Py_XDECREF(pyTuple);
     Py_DECREF(retList);
     if (thread_list != NULL) {
