@@ -163,8 +163,8 @@ char
 char
 *getcmdargs(long pid, size_t *argsize)
 {
-    int mib[4];
-    size_t size, argmax;
+    int mib[4], argmax;
+    size_t size = sizeof(argmax);
     char *procargs = NULL;
 
     /* Get the maximum process arguments size. */
