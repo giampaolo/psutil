@@ -189,6 +189,7 @@ get_open_files(long pid, HANDLE processHandle)
         if((handle.GrantedAccess == 0x0012019f)
         || (handle.GrantedAccess == 0x001a019f)
         || (handle.GrantedAccess == 0x00120189)
+        || (handle.GrantedAccess == 0x00120089)
         || (handle.GrantedAccess == 0x00100000)) {
             continue;
         }
