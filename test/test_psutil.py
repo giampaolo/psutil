@@ -1684,7 +1684,7 @@ class TestFetchAllProcesses(unittest.TestCase):
     def create_time(self, ret):
         self.assertTrue(ret > 0)
         if not WINDOWS:
-            self.assertTrue(ret >= psutil.BOOT_TIME)
+            assert ret >= psutil.BOOT_TIME, (ret, psutil.BOOT_TIME)
         # make sure returned value can be pretty printed
         # with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(ret))
