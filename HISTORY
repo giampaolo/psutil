@@ -14,6 +14,8 @@ BUG FIXES
  * Issue 333: (OS X) Leak of Mach ports on OS X (patch by rsesek@google.com)
  * Issue 339: (FreeBSD) get_pid_list() can allocate all the memory on system.
  * Issue 340: (Windows) Process.get_open_files() might hang forever.
+ * Issue 344: (FreeBSD) swap_memory() might return incorrect results due to
+   kvm_open(3) not being called. (patch by Jean Sebastien)
 
 
 0.6.1 - 2012-08-16

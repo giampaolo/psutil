@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/param.h>
@@ -625,6 +626,10 @@ error:
 }
 
 
+#ifndef _PATH_DEVNULL
+#define _PATH_DEVNULL "/dev/null"
+#endif
+
 /*
  * Return swap memory stats (see 'swapinfo' cmdline tool)
  */
@@ -636,10 +641,19 @@ get_swap_mem(PyObject* self, PyObject* args)
     unsigned int swapin, swapout, nodein, nodeout;
     size_t size = sizeof(unsigned int);
 
+    kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open failed");
+    if (kd == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "kvm_open failed");
+        return NULL;
+    }
+
     if (kvm_getswapinfo(kd, kvmsw, 1, 0) < 0) {
+        kvm_close(kd);
         PyErr_SetString(PyExc_RuntimeError, "kvm_getswapinfo failed");
         return NULL;
     }
+
+    kvm_close(kd);
 
     if (sysctlbyname("vm.stats.vm.v_swapin", &swapin, &size, NULL, 0) == -1)
         goto sbn_error;
