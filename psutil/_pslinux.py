@@ -17,6 +17,7 @@ import struct
 import sys
 import base64
 import re
+import warnings
 
 import _psutil_posix
 import _psutil_linux
@@ -38,15 +39,15 @@ def _get_boot_time():
         for line in f:
             if line.startswith('btime'):
                 return float(line.strip().split()[1])
-        raise RuntimeError("line not found")
+        # Since this gets called at import time we do not want to crash
+        # now; instead we'll return None and most likely we'll crash
+        # later, as BOOT_TIME is used for calculating process creation time.
+        warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
     finally:
         f.close()
 
 def _get_num_cpus():
     """Return the number of CPUs on the system"""
-    # we try to determine num CPUs by using different approaches.
-    # SC_NPROCESSORS_ONLN seems to be the safer and it is also
-    # used by multiprocessing module
     try:
         return os.sysconf("SC_NPROCESSORS_ONLN")
     except ValueError:
@@ -77,12 +78,16 @@ def _get_num_cpus():
                 num += 1
 
     if num == 0:
-        raise RuntimeError("can't determine number of CPUs")
-    return num
+        # Since this gets called at import time we do not want to crash
+        # now; instead we'll return None and most likely we'll crash
+        # later, as NUM_CPUS is used for calculating system CPU usage.
+        warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
+    else:
+        return num
 
 
 # Number of clock ticks per second
-_CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
+_CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 BOOT_TIME = _get_boot_time()
 NUM_CPUS = _get_num_cpus()
