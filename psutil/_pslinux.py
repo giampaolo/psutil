@@ -484,7 +484,8 @@ class Process(object):
 
     if not os.path.exists('/proc/%s/io' % os.getpid()):
         def get_process_io_counters(self):
-            raise NotImplementedError('/proc/PID/io is not available')
+            raise NotImplementedError("couldn't find /proc/%s/io (kernel " \
+                                      "too old?)" % self.pid)
 
     @wrap_exceptions
     def get_cpu_times(self):
@@ -627,9 +628,8 @@ class Process(object):
 
     if not os.path.exists('/proc/%s/smaps' % os.getpid()):
         def get_shared_libs(self, ext):
-            msg = "this Linux version does not support /proc/PID/smaps " \
-                  "(kernel < 2.6.14 or CONFIG_MMU kernel configuration " \
-                  "option is not enabled)"
+            msg = "couldn't find /proc/%s/smaps; kernel < 2.6.14 or CONFIG_MMU " \
+                  "kernel configuration option is not enabled" % self.pid
             raise NotImplementedError(msg)
 
     @wrap_exceptions
@@ -652,7 +652,10 @@ class Process(object):
                     unvol = int(line.split()[1])
                 if vol is not None and unvol is not None:
                     return nt_ctxsw(vol, unvol)
-            raise NotImplementedError("line not found")
+            raise NotImplementedError("the 'voluntary_ctxt_switches' and " \
+                "'nonvoluntary_ctxt_switches' fields were not found in " \
+                "/proc/%s/status; the kernel is probably older than 2.6.23" \
+                % self.pid)
         finally:
             f.close()
 
