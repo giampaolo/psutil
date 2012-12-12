@@ -652,7 +652,7 @@ class Process(object):
                     unvol = int(line.split()[1])
                 if vol is not None and unvol is not None:
                     return nt_ctxsw(vol, unvol)
-            raise RuntimeError("line not found")
+            raise NotImplementedError("line not found")
         finally:
             f.close()
 
@@ -663,7 +663,7 @@ class Process(object):
             for line in f:
                 if line.startswith("Threads:"):
                     return int(line.split()[1])
-            raise RuntimeError("line not found")
+            raise NotImplementedError("line not found")
         finally:
             f.close()
 
@@ -953,7 +953,7 @@ class Process(object):
                 if line.startswith("PPid:"):
                     # PPid: nnnn
                     return int(line.split()[1])
-            raise RuntimeError("line not found")
+            raise NotImplementedError("line not found")
         finally:
             f.close()
 
@@ -965,7 +965,7 @@ class Process(object):
                 if line.startswith('Uid:'):
                     _, real, effective, saved, fs = line.split()
                     return nt_uids(int(real), int(effective), int(saved))
-            raise RuntimeError("line not found")
+            raise NotImplementedError("line not found")
         finally:
             f.close()
 
@@ -977,7 +977,7 @@ class Process(object):
                 if line.startswith('Gid:'):
                     _, real, effective, saved, fs = line.split()
                     return nt_gids(int(real), int(effective), int(saved))
-            raise RuntimeError("line not found")
+            raise NotImplementedError("line not found")
         finally:
             f.close()
 
