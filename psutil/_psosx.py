@@ -27,7 +27,6 @@ NUM_CPUS = _psutil_osx.get_num_cpus()
 BOOT_TIME = _psutil_osx.get_system_boot_time()
 TOTAL_PHYMEM = _psutil_osx.get_virtual_mem()[0]
 _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-_TERMINAL_MAP = _psposix._get_terminal_map()
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle')
 
 # --- functions
@@ -179,8 +178,9 @@ class Process(object):
     @wrap_exceptions
     def get_process_terminal(self):
         tty_nr = _psutil_osx.get_process_tty_nr(self.pid)
+        tmap = _psposix._get_terminal_map()
         try:
-            return _TERMINAL_MAP[tty_nr]
+            return tmap[tty_nr]
         except KeyError:
             return None
 

@@ -16,7 +16,7 @@ import time
 import glob
 
 from psutil.error import TimeoutExpired
-from psutil._common import nt_diskinfo, usage_percent
+from psutil._common import nt_diskinfo, usage_percent, memoize
 
 
 def pid_exists(pid):
@@ -109,10 +109,16 @@ def get_disk_usage(path):
     # http://goo.gl/sWGbH
     return nt_diskinfo(total, used, free, percent)
 
+@memoize
 def _get_terminal_map():
     ret = {}
     ls = glob.glob('/dev/tty*') + glob.glob('/dev/pts/*')
     for name in ls:
         assert name not in ret
-        ret[os.stat(name).st_rdev] = name
+        try:
+            ret[os.stat(name).st_rdev] = name
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno != errno.ENOENT:
+                raise
     return ret

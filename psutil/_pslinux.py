@@ -84,7 +84,6 @@ def _get_num_cpus():
 # Number of clock ticks per second
 _CLOCK_TICKS = os.sysconf(os.sysconf_names["SC_CLK_TCK"])
 _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-_TERMINAL_MAP = _psposix._get_terminal_map()
 BOOT_TIME = _get_boot_time()
 NUM_CPUS = _get_num_cpus()
 TOTAL_PHYMEM = _psutil_linux.get_sysinfo()[0]
@@ -450,13 +449,14 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_terminal(self):
+        tmap = _psposix._get_terminal_map()
         f = open("/proc/%s/stat" % self.pid)
         try:
             tty_nr = int(f.read().split(' ')[6])
         finally:
             f.close()
         try:
-            return _TERMINAL_MAP[tty_nr]
+            return tmap[tty_nr]
         except KeyError:
             return None
 
