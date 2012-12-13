@@ -15,6 +15,7 @@ BUG FIXES
    on certain exotic Linux flavors having an incomplete /proc interface.
    If that's the case we now set the unretrievable stats to 0 and raise a
    RuntimeWarning.
+ * Issue 317: (Windows) cannot set process CPU affinity above 31 cores.
  * Issue 319: (Linux) process get_memory_maps() raises KeyError 'Anonymous' on
    Debian squeeze.
  * Issue 333: (OS X) Leak of Mach ports on OS X (patch by rsesek@google.com)

@@ -2114,7 +2114,11 @@ get_process_cpu_affinity(PyObject* self, PyObject* args)
     }
 
     CloseHandle(hProcess);
+#ifdef _WIN64
+    return Py_BuildValue("K", (unsigned long long)proc_mask);
+#else
     return Py_BuildValue("k", (unsigned long)proc_mask);
+#endif
 }
 
 
@@ -2129,7 +2133,12 @@ set_process_cpu_affinity(PyObject* self, PyObject* args)
     DWORD dwDesiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
     DWORD_PTR mask;
 
-    if (! PyArg_ParseTuple(args, "lk", &pid, &mask)) {
+#ifdef _WIN64
+    if (! PyArg_ParseTuple(args, "lK", &pid, &mask))
+#else
+    if (! PyArg_ParseTuple(args, "lk", &pid, &mask))
+#endif
+    {
         return NULL;
     }
     hProcess = handle_from_pid_waccess(pid, dwDesiredAccess);

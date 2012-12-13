@@ -408,8 +408,6 @@ class Process(object):
                 raise ValueError("invalid argument %r" % l)
             out = 0
             for b in l:
-                if not isinstance(b, (int, long)) or b < 0:
-                    raise ValueError("invalid argument %r" % b)
                 out |= 2**b
             return out
 
@@ -419,7 +417,7 @@ class Process(object):
         allcpus = list(range(len(get_system_per_cpu_times())))
         for cpu in value:
             if cpu not in allcpus:
-                raise ValueError("invalid CPU %i" % cpu)
+                raise ValueError("invalid CPU %r" % cpu)
 
         bitmask = to_bitmask(value)
         _psutil_mswindows.set_process_cpu_affinity(self.pid, bitmask)
