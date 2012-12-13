@@ -2436,6 +2436,11 @@ get_disk_partitions(PyObject* self, PyObject* args)
     if (py_retlist == NULL) {
         return NULL;
     }
+
+    // avoid to visualize a message box in case something goes wrong
+    // see http://code.google.com/p/psutil/issues/detail?id=264
+    SetErrorMode(SEM_FAILCRITICALERRORS);
+
     if (! PyArg_ParseTuple(args, "O", &py_all)) {
         goto error;
     }
@@ -2518,9 +2523,11 @@ get_disk_partitions(PyObject* self, PyObject* args)
             drive_letter = strchr(drive_letter, 0) + 1;
     }
 
+    SetErrorMode(0);
     return py_retlist;
 
 error:
+    SetErrorMode(0);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     return NULL;

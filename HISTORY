@@ -9,6 +9,8 @@ NEW FEATURES
 
 BUG FIXES
 
+ * Issue 264: (Windows) use of psutil.disk_partitions() may cause a message box
+   to appear.
  * Issue 313: (Linux) psutil.virtual_memory() and psutil.swap_memory() can crash
    on certain exotic Linux flavors having an incomplete /proc interface.
    If that's the case we now set the unretrievable stats to 0 and raise a
