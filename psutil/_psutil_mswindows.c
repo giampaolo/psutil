@@ -1958,6 +1958,7 @@ set_process_priority(PyObject* self, PyObject* args)
 }
 
 
+#if (_WIN32_WINNT >= 0x0600)  // Windows Vista
 /*
  * Get process IO priority as a Python integer.
  */
@@ -2031,6 +2032,7 @@ set_process_io_priority(PyObject* self, PyObject* args)
     Py_INCREF(Py_None);
     return Py_None;
 }
+#endif
 
 
 /*
@@ -2896,10 +2898,12 @@ PsutilMethods[] =
         "Return process priority."},
     {"set_process_priority", set_process_priority, METH_VARARGS,
         "Set process priority."},
+#if (_WIN32_WINNT >= 0x0600)  // Windows Vista
     {"get_process_io_priority", get_process_io_priority, METH_VARARGS,
         "Return process IO priority."},
     {"set_process_io_priority", set_process_io_priority, METH_VARARGS,
         "Set process IO priority."},
+#endif
     {"get_process_cpu_affinity", get_process_cpu_affinity, METH_VARARGS,
         "Return process CPU affinity as a bitmask."},
     {"set_process_cpu_affinity", set_process_cpu_affinity, METH_VARARGS,
