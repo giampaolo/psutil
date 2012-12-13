@@ -18,6 +18,8 @@ BUG FIXES
  * Issue 317: (Windows) cannot set process CPU affinity above 31 cores.
  * Issue 319: (Linux) process get_memory_maps() raises KeyError 'Anonymous' on
    Debian squeeze.
+ * Issue 323: (OSX) disk_io_counters()'s read_time and write_time parameters
+   were reporting microseconds not milliseconds.  (patch by Gregory Szorc)
  * Issue 333: (OS X) Leak of Mach ports on OS X (patch by rsesek@google.com)
  * Issue 337: (Linux) process methods not working because of a poor /proc
    implementation will raise NotImplementedError rather than RuntimeError and
@@ -27,6 +29,10 @@ BUG FIXES
    system terminals map.
  * Issue 344: (FreeBSD) swap_memory() might return incorrect results due to
    kvm_open(3) not being called. (patch by Jean Sebastien)
+
+API CHANGES
+ * (Linux) Process methods not working because of a poor /proc implementation
+   will raise NotImplementedError instead of RuntimeError.
 
 
 0.6.1 - 2012-08-16

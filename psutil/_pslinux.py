@@ -350,8 +350,6 @@ def disk_io_counters():
             wbytes = int(wbytes) * SECTOR_SIZE
             reads = int(reads)
             writes = int(writes)
-            # TODO: times are expressed in milliseconds while OSX/BSD has
-            # these expressed in nanoseconds; figure this out.
             rtime = int(rtime)
             wtime = int(wtime)
             retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime)
