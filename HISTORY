@@ -20,7 +20,6 @@ BUG FIXES
    implementation will raise NotImplementedError rather than RuntimeError and
    Process.as_dict() will not blow up.  (patch by Curtin1060)
  * Issue 339: (FreeBSD) get_pid_list() can allocate all the memory on system.
- * Issue 340: (Windows) Process.get_open_files() might hang forever.
  * Issue 341: (Linux) psutil might crash on import due to error in retrieving
    system terminals map.
  * Issue 344: (FreeBSD) swap_memory() might return incorrect results due to
