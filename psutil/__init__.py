@@ -338,18 +338,31 @@ class Process(object):
         """Set process niceness (priority)."""
         return self._platform_impl.set_process_nice(value)
 
-    # available only on Linux
+    # available only on Linux and Windows >= Vista
     if hasattr(_psplatform.Process, "get_process_ionice"):
 
         def get_ionice(self):
-            """Return process I/O niceness (priority) as a namedtuple."""
+            """Return process I/O niceness (priority).
+
+            On Linux this is a (ioclass, value) namedtuple.
+            On Windows it's an integer which can be equal to 2 (normal),
+            1 (low) or 0 (very low).
+
+            Available on Linux and Windows > Vista only.
+            """
             return self._platform_impl.get_process_ionice()
 
         def set_ionice(self, ioclass, value=None):
             """Set process I/O niceness (priority).
-            ioclass is one of the IOPRIO_CLASS_* constants.
-            iodata is a number which goes from 0 to 7. The higher the
+
+            On Linux 'ioclass' is one of the IOPRIO_CLASS_* constants.
+            'value' is a number which goes from 0 to 7. The higher the
             value, the lower the I/O priority of the process.
+
+            On Windows only 'ioclass' is used and it can be set to 2
+            (normal), 1 (low) or 0 (very low).
+
+            Available on Linux and Windows > Vista only.
             """
             return self._platform_impl.set_process_ionice(ioclass, value)
 

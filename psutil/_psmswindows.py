@@ -360,6 +360,20 @@ class Process(object):
         return _psutil_mswindows.set_process_priority(self.pid, value)
 
     @wrap_exceptions
+    def get_process_ionice(self):
+        return _psutil_mswindows.get_process_io_priority(self.pid)
+
+    @wrap_exceptions
+    def set_process_ionice(self, value, _):
+        if _:
+            raise TypeError("set_process_ionice() on Windows takes only 1 " \
+                            "argument (2 given)")
+        if value not in (2, 1, 0):
+            raise ValueError("value must be 2 (normal), 1 (low) or 0 (very " \
+                             "low); got %r", value)
+        return _psutil_mswindows.set_process_io_priority(self.pid, value)
+
+    @wrap_exceptions
     def get_process_io_counters(self):
         try:
             ret = _psutil_mswindows.get_process_io_counters(self.pid)

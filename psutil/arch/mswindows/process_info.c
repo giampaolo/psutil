@@ -18,29 +18,6 @@
 #include "process_info.h"
 #include "ntextapi.h"
 
-/*
- * NtQueryInformationProcess code taken from
- * http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/
- * typedefs needed to compile against ntdll functions not exposted in the API
- */
-typedef LONG NTSTATUS;
-
-typedef NTSTATUS (NTAPI *_NtQueryInformationProcess)(
-    HANDLE ProcessHandle,
-    DWORD ProcessInformationClass,
-    PVOID ProcessInformation,
-    DWORD ProcessInformationLength,
-    PDWORD ReturnLength
-    );
-
-typedef struct _PROCESS_BASIC_INFORMATION
-{
-    PVOID Reserved1;
-    PVOID PebBaseAddress;
-    PVOID Reserved2[2];
-    ULONG_PTR UniqueProcessId;
-    PVOID Reserved3;
-} PROCESS_BASIC_INFORMATION, *PPROCESS_BASIC_INFORMATION;
 
 
 /*

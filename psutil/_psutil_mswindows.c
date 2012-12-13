@@ -1959,6 +1959,81 @@ set_process_priority(PyObject* self, PyObject* args)
 
 
 /*
+ * Get process IO priority as a Python integer.
+ */
+static PyObject*
+get_process_io_priority(PyObject* self, PyObject* args)
+{
+    long pid;
+    HANDLE hProcess;
+    PULONG IoPriority;
+
+    _NtQueryInformationProcess NtQueryInformationProcess =
+        (_NtQueryInformationProcess)GetProcAddress(
+        GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
+
+    if (! PyArg_ParseTuple(args, "l", &pid)) {
+        return NULL;
+    }
+    hProcess = handle_from_pid(pid);
+    if (hProcess == NULL) {
+        return NULL;
+    }
+
+    NtQueryInformationProcess(
+        hProcess,
+        ProcessIoPriority,
+        &IoPriority,
+        sizeof(ULONG),
+        NULL
+    );
+    CloseHandle(hProcess);
+    return Py_BuildValue("i", IoPriority);
+}
+
+
+/*
+ * Set process IO priority.
+ */
+static PyObject*
+set_process_io_priority(PyObject* self, PyObject* args)
+{
+    long pid;
+    int prio;
+    HANDLE hProcess;
+
+    _NtSetInformationProcess NtSetInformationProcess =
+        (_NtSetInformationProcess)GetProcAddress(
+        GetModuleHandleA("ntdll.dll"), "NtSetInformationProcess");
+
+    if (NtSetInformationProcess == NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "couldn't get NtSetInformationProcess");
+        return NULL;
+    }
+
+    if (! PyArg_ParseTuple(args, "li", &pid, &prio)) {
+        return NULL;
+    }
+    hProcess = handle_from_pid_waccess(pid, PROCESS_ALL_ACCESS);
+    if (hProcess == NULL) {
+        return NULL;
+    }
+
+    NtSetInformationProcess(
+        hProcess,
+        ProcessIoPriority,
+        (PVOID)&prio,
+        sizeof((PVOID)prio)
+    );
+
+    CloseHandle(hProcess);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
+/*
  * Return a Python tuple referencing process I/O counters.
  */
 static PyObject*
@@ -2821,6 +2896,10 @@ PsutilMethods[] =
         "Return process priority."},
     {"set_process_priority", set_process_priority, METH_VARARGS,
         "Set process priority."},
+    {"get_process_io_priority", get_process_io_priority, METH_VARARGS,
+        "Return process IO priority."},
+    {"set_process_io_priority", set_process_io_priority, METH_VARARGS,
+        "Set process IO priority."},
     {"get_process_cpu_affinity", get_process_cpu_affinity, METH_VARARGS,
         "Return process CPU affinity as a bitmask."},
     {"set_process_cpu_affinity", set_process_cpu_affinity, METH_VARARGS,

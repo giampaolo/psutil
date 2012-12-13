@@ -230,3 +230,79 @@ WTSCloseServer(
     IN HANDLE hServer
     );
 #endif
+// end mingw support:
+
+/*
+ * NtQueryInformationProcess code taken from
+ * http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/
+ * typedefs needed to compile against ntdll functions not exposted in the API
+ */
+typedef LONG NTSTATUS;
+
+typedef NTSTATUS (NTAPI *_NtQueryInformationProcess)(
+    HANDLE ProcessHandle,
+    DWORD ProcessInformationClass,
+    PVOID ProcessInformation,
+    DWORD ProcessInformationLength,
+    PDWORD ReturnLength
+    );
+
+typedef NTSTATUS (NTAPI *_NtSetInformationProcess)(
+    HANDLE ProcessHandle,
+    DWORD ProcessInformationClass,
+    PVOID ProcessInformation,
+    DWORD ProcessInformationLength
+);
+
+typedef struct _PROCESS_BASIC_INFORMATION
+{
+    PVOID Reserved1;
+    PVOID PebBaseAddress;
+    PVOID Reserved2[2];
+    ULONG_PTR UniqueProcessId;
+    PVOID Reserved3;
+} PROCESS_BASIC_INFORMATION, *PPROCESS_BASIC_INFORMATION;
+
+
+typedef enum _PROCESSINFOCLASS {
+    ProcessBasicInformation,
+    ProcessQuotaLimits,
+    ProcessIoCounters,
+    ProcessVmCounters,
+    ProcessTimes,
+    ProcessBasePriority,
+    ProcessRaisePriority,
+    ProcessDebugPort,
+    ProcessExceptionPort,
+    ProcessAccessToken,
+    ProcessLdtInformation,
+    ProcessLdtSize,
+    ProcessDefaultHardErrorMode,
+    ProcessIoPortHandlers,
+    ProcessPooledUsageAndLimits,
+    ProcessWorkingSetWatch,
+    ProcessUserModeIOPL,
+    ProcessEnableAlignmentFaultFixup,
+    ProcessPriorityClass,
+    ProcessWx86Information,
+    ProcessHandleCount,
+    ProcessAffinityMask,
+    ProcessPriorityBoost,
+    ProcessDeviceMap,
+    ProcessSessionInformation,
+    ProcessForegroundInformation,
+    ProcessWow64Information,
+    /* added after XP+ */
+    ProcessImageFileName,
+    ProcessLUIDDeviceMapsEnabled,
+    ProcessBreakOnTermination,
+    ProcessDebugObjectHandle,
+    ProcessDebugFlags,
+    ProcessHandleTracing,
+    ProcessIoPriority,
+    ProcessExecuteFlags,
+    ProcessResourceManagement,
+    ProcessCookie,
+    ProcessImageInformation,
+    MaxProcessInfoClass
+} PROCESSINFOCLASS;

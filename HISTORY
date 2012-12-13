@@ -3,6 +3,10 @@ Bug tracker at http://code.google.com/p/psutil/issues
 0.6.2 - XXXX-XX-XX
 ------------------
 
+NEW FEATURES
+
+ * Issue 328: (Windows) process IO nice/priority support.
+
 BUG FIXES
 
  * Issue 313: (Linux) psutil.virtual_memory() and psutil.swap_memory() can crash

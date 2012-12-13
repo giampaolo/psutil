@@ -828,37 +828,53 @@ class TestCase(unittest.TestCase):
         assert io2.read_count >= io1.read_count, (io1, io2)
         assert io2.read_bytes >= io1.read_bytes, (io1, io2)
 
-    @skipUnless(LINUX)
+    # Linux and Windows Vista+
+    @skipUnless(hasattr(psutil.Process, 'get_ionice'))
     def test_get_set_ionice(self):
-        from psutil import (IOPRIO_CLASS_NONE, IOPRIO_CLASS_RT, IOPRIO_CLASS_BE,
-                            IOPRIO_CLASS_IDLE)
-        self.assertEqual(IOPRIO_CLASS_NONE, 0)
-        self.assertEqual(IOPRIO_CLASS_RT, 1)
-        self.assertEqual(IOPRIO_CLASS_BE, 2)
-        self.assertEqual(IOPRIO_CLASS_IDLE, 3)
-        p = psutil.Process(os.getpid())
-        try:
-            p.set_ionice(2)
-            ioclass, value = p.get_ionice()
-            self.assertEqual(ioclass, 2)
-            self.assertEqual(value, 4)
+        if LINUX:
+            from psutil import (IOPRIO_CLASS_NONE, IOPRIO_CLASS_RT,
+                                IOPRIO_CLASS_BE, IOPRIO_CLASS_IDLE)
+            self.assertEqual(IOPRIO_CLASS_NONE, 0)
+            self.assertEqual(IOPRIO_CLASS_RT, 1)
+            self.assertEqual(IOPRIO_CLASS_BE, 2)
+            self.assertEqual(IOPRIO_CLASS_IDLE, 3)
+            p = psutil.Process(os.getpid())
+            try:
+                p.set_ionice(2)
+                ioclass, value = p.get_ionice()
+                self.assertEqual(ioclass, 2)
+                self.assertEqual(value, 4)
+                #
+                p.set_ionice(3)
+                ioclass, value = p.get_ionice()
+                self.assertEqual(ioclass, 3)
+                self.assertEqual(value, 0)
+                #
+                p.set_ionice(2, 0)
+                ioclass, value = p.get_ionice()
+                self.assertEqual(ioclass, 2)
+                self.assertEqual(value, 0)
+                p.set_ionice(2, 7)
+                ioclass, value = p.get_ionice()
+                self.assertEqual(ioclass, 2)
+                self.assertEqual(value, 7)
+                self.assertRaises(ValueError, p.set_ionice, 2, 10)
+            finally:
+                p.set_ionice(IOPRIO_CLASS_NONE)
+        else:
+            p = psutil.Process(os.getpid())
+            original = p.get_ionice()
+            try:
+                value = 0  # very low
+                if original == value:
+                    value = 1  # low
+                p.set_ionice(value)
+                self.assertEqual(p.get_ionice(), value)
+            finally:
+                p.set_ionice(original)
             #
-            p.set_ionice(3)
-            ioclass, value = p.get_ionice()
-            self.assertEqual(ioclass, 3)
-            self.assertEqual(value, 0)
-            #
-            p.set_ionice(2, 0)
-            ioclass, value = p.get_ionice()
-            self.assertEqual(ioclass, 2)
-            self.assertEqual(value, 0)
-            p.set_ionice(2, 7)
-            ioclass, value = p.get_ionice()
-            self.assertEqual(ioclass, 2)
-            self.assertEqual(value, 7)
-            self.assertRaises(ValueError, p.set_ionice, 2, 10)
-        finally:
-            p.set_ionice(IOPRIO_CLASS_NONE)
+            self.assertRaises(ValueError, p.set_ionice, 3)
+            self.assertRaises(TypeError, p.set_ionice, 2, 1)
 
     def test_get_num_threads(self):
         # on certain platforms such as Linux we might test for exact
@@ -1716,8 +1732,12 @@ class TestFetchAllProcesses(unittest.TestCase):
                 self.assertTrue(field >= 0)
 
     def get_ionice(self, ret):
-        self.assertTrue(ret.ioclass >= 0)
-        self.assertTrue(ret.value >= 0)
+        if LINUX:
+            self.assertTrue(ret.ioclass >= 0)
+            self.assertTrue(ret.value >= 0)
+        else:
+            self.assertTrue(ret >= 0)
+            self.assertIn(ret, (0, 1, 2))
 
     def get_num_threads(self, ret):
         self.assertTrue(ret >= 1)
