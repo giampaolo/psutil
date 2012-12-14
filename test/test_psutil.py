@@ -1316,7 +1316,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(conn.type, socket.SOCK_STREAM)
         self.assertEqual(conn.local_address, TESTFN)
         self.assertTrue(not conn.remote_address)
-        self.assertEqual(conn.status, psutil.CONN_NONE)
+        self.assertEqual(conn.status, psutil.CONN_NONE, str(conn.status))
         sock.close()
         # udp
         safe_remove(TESTFN)
@@ -1887,7 +1887,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         # table across all platforms.
         valid_conn_states = ["ESTABLISHED", "SYN_SENT", "SYN_RECV", "FIN_WAIT1",
                              "FIN_WAIT2", "TIME_WAIT", "CLOSE", "CLOSE_WAIT",
-                             "LAST_ACK", "LISTEN", "CLOSING", ""]
+                             "LAST_ACK", "LISTEN", "CLOSING", "NONE"]
         for conn in ret:
             self.assertIn(conn.type, (socket.SOCK_STREAM, socket.SOCK_DGRAM))
             self.assertIn(conn.family, (socket.AF_INET, socket.AF_INET6))
