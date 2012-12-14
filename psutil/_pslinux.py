@@ -265,7 +265,7 @@ def get_system_users():
     rawlist = _psutil_linux.get_system_users()
     for item in rawlist:
         user, tty, hostname, tstamp, user_process = item
-        # XXX the underlying C function includes entries about
+        # note: the underlying C function includes entries about
         # system boot, run level and others.  We might want
         # to use them in the future.
         if not user_process:

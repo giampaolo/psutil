@@ -487,10 +487,11 @@ class Process(object):
         When interval is > 0.0 compares process times to system CPU
         times elapsed before and after the interval (blocking).
 
-        When interval is 0.0 or None compares process times to system CPU
-        times elapsed since last call, returning immediately.
-        In this case is recommended for accuracy that this function be
-        called with at least 0.1 seconds between calls.
+        When interval is 0.0 or None compares process times to system
+        CPU times elapsed since last call, returning immediately
+        (non-blocking).
+        In this case is recommended for accuracy that this function
+        be called with at least 0.1 seconds between calls.
         """
         blocking = interval is not None and interval > 0.0
         if blocking:
@@ -557,8 +558,8 @@ class Process(object):
         return self._platform_impl.get_ext_memory_info()
 
     def get_memory_percent(self):
-        """Compare physical system memory to process resident memory and
-        calculate process memory utilization as a percentage.
+        """Compare physical system memory to process resident memory
+        (RSS) and calculate process memory utilization as a percentage.
         """
         rss = self._platform_impl.get_memory_info()[0]
         try:

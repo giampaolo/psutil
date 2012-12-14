@@ -5,33 +5,33 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 NEW FEATURES
 
- * Issue 328: (Windows) process IO nice/priority support.
+ * #328: [Windows] process IO nice/priority support.
 
 BUG FIXES
 
- * Issue 264: (Windows) use of psutil.disk_partitions() may cause a message box
-   to appear.
- * Issue 313: (Linux) psutil.virtual_memory() and psutil.swap_memory() can crash
-   on certain exotic Linux flavors having an incomplete /proc interface.
-   If that's the case we now set the unretrievable stats to 0 and raise a
-   RuntimeWarning.
- * Issue 317: (Windows) cannot set process CPU affinity above 31 cores.
- * Issue 319: (Linux) process get_memory_maps() raises KeyError 'Anonymous' on
-   Debian squeeze.
- * Issue 323: (OSX) disk_io_counters()'s read_time and write_time parameters
-   were reporting microseconds not milliseconds.  (patch by Gregory Szorc)
- * Issue 333: (OS X) Leak of Mach ports on OS X (patch by rsesek@google.com)
- * Issue 337: (Linux) process methods not working because of a poor /proc
-   implementation will raise NotImplementedError rather than RuntimeError and
-   Process.as_dict() will not blow up.  (patch by Curtin1060)
- * Issue 339: (FreeBSD) get_pid_list() can allocate all the memory on system.
- * Issue 341: (Linux) psutil might crash on import due to error in retrieving
-   system terminals map.
- * Issue 344: (FreeBSD) swap_memory() might return incorrect results due to
-   kvm_open(3) not being called. (patch by Jean Sebastien)
+ * #264: [Windows] use of psutil.disk_partitions() may cause a message box to
+         appear.
+ * #313: [Linux] psutil.virtual_memory() and psutil.swap_memory() can crash on
+         certain exotic Linux flavors having an incomplete /proc interface.
+         If that's the case we now set the unretrievable stats to 0 and raise a
+         RuntimeWarning.
+ * #317: [Windows] cannot set process CPU affinity above 31 cores.
+ * #319: [Linux] process get_memory_maps() raises KeyError 'Anonymous' on Debian
+         squeeze.
+ * #323: [OSX] disk_io_counters()'s read_time and write_time parameters were
+         reporting microseconds not milliseconds.  (patch by Gregory Szorc)
+ * #333: [OSX] Leak of Mach ports on OS X (patch by rsesek@google.com)
+ * #337: [Linux] process methods not working because of a poor /proc
+         implementation will raise NotImplementedError rather than RuntimeError
+         and Process.as_dict() will not blow up.  (patch by Curtin1060)
+ * #339: [FreeBSD] get_pid_list() can allocate all the memory on system.
+ * #341: [Linux] psutil might crash on import due to error in retrieving system
+         terminals map.
+ * #344: [FreeBSD] swap_memory() might return incorrect results due to
+         kvm_open(3) not being called. (patch by Jean Sebastien)
 
 API CHANGES
- * (Linux) Process methods not working because of a poor /proc implementation
+ * [Linux] Process methods not working because of a poor /proc implementation
    will raise NotImplementedError instead of RuntimeError.
 
 
@@ -40,13 +40,13 @@ API CHANGES
 
 NEW FEATURES
 
- * Issue 316: process cmdline property now makes a better job at guessing the
-   process executable from the cmdline.
+ * #316: process cmdline property now makes a better job at guessing the process
+         executable from the cmdline.
 
 BUG FIXES
 
- * Issue 316: process exe was resolved in case it was a symlink.
- * Issue 318: python 2.4 compatibility was broken.
+ * #316: process exe was resolved in case it was a symlink.
+ * #318: python 2.4 compatibility was broken.
 
 API CHANGES
 
@@ -59,78 +59,78 @@ API CHANGES
 
 NEW FEATURES
 
- * Issue 216: (UNIX) get_connections() UNIX sockets support.
- * Issue 220: (BSD) get_connections() has been rewritten in C and no longer
-   requires lsof.
- * Issue 222: (OSX) add support for process cwd.
- * Issue 261: process extended memory info.
- * Issue 295: (OSX) process executable path is now determined by asking the OS
-   instead of being guessed from process cmdline.
- * Issue 297: (OSX) the Process methods below were always raising AccessDenied
-   for any process except the current one. Now this is no longer true. Also they
-   are 2.5x faster.
-    - name
-    - get_memory_info()
-    - get_memory_percent()
-    - get_cpu_times()
-    - get_cpu_percent()
-    - get_num_threads()
- * Issue 300: examples/pmap.py script.
- * Issue 301: process_iter() now yields processes sorted by their PIDs.
- * Issue 302: process number of voluntary and involuntary context switches.
- * Issue 303: (Windows) the Process methods below were always raising
-   AccessDenied for any process not owned by current user. Now this is no longer
-   true:
-    - create_time
-    - get_cpu_times()
-    - get_cpu_percent()
-    - get_memory_info()
-    - get_memory_percent()
-    - get_num_handles()
-    - get_io_counters()
- * Issue 305: add examples/netstat.py script.
- * Issue 311: system memory functions has been refactorized and rewritten and
-   now provide a more detailed and consistent representation of the system
-   memory.
-   New psutil.virtual_memory() function provides the following memory amounts:
-    - total
-    - available
-    - percent
-    - used
-    - active (UNIX)
-    - inactive (UNIX)
-    - buffers (BSD, Linux)
-    - cached (BSD, OSX)
-    - wired (OSX, BSD)
-    - shared (BSD)
-   New psutil.swap_memory() provides:
-    - total
-    - used
-    - free
-    - percent
-    - sin (no. of bytes the system has swapped in from disk (cumulative))
-    - sout (no. of bytes the system has swapped out from disk (cumulative))
-   All old memory-related functions are deprecated.
-   Also two new example scripts were added:  free.py and meminfo.py.
- * Issue 312: psutil.network_io_counters() namedtuple includes 4 new fields:
-   errin, errout dropin and dropout, reflecting the number of packets dropped
-   and with errors.
+ * #216: [POSIX] get_connections() UNIX sockets support.
+ * #220: [FreeBSD] get_connections() has been rewritten in C and no longer
+         requires lsof.
+ * #222: [OSX] add support for process cwd.
+ * #261: process extended memory info.
+ * #295: [OSX] process executable path is now determined by asking the OS
+         instead of being guessed from process cmdline.
+ * #297: [OSX] the Process methods below were always raising AccessDenied for
+         any process except the current one. Now this is no longer true. Also
+         they are 2.5x faster.
+           - name
+           - get_memory_info()
+           - get_memory_percent()
+           - get_cpu_times()
+           - get_cpu_percent()
+           - get_num_threads()
+ * #300: examples/pmap.py script.
+ * #301: process_iter() now yields processes sorted by their PIDs.
+ * #302: process number of voluntary and involuntary context switches.
+ * #303: [Windows] the Process methods below were always raising AccessDenied
+         for any process not owned by current user. Now this is no longer true:
+          - create_time
+          - get_cpu_times()
+          - get_cpu_percent()
+          - get_memory_info()
+          - get_memory_percent()
+          - get_num_handles()
+          - get_io_counters()
+ * #305: add examples/netstat.py script.
+ * #311: system memory functions has been refactorized and rewritten and now
+         provide a more detailed and consistent representation of the system
+         memory. New psutil.virtual_memory() function provides the following
+         memory amounts:
+          - total
+          - available
+          - percent
+          - used
+          - active [POSIX]
+          - inactive [POSIX]
+          - buffers (BSD, Linux)
+          - cached (BSD, OSX)
+          - wired (OSX, BSD)
+          - shared [FreeBSD]
+         New psutil.swap_memory() provides:
+          - total
+          - used
+          - free
+          - percent
+          - sin (no. of bytes the system has swapped in from disk (cumulative))
+          - sout (no. of bytes the system has swapped out from disk (cumulative))
+         All old memory-related functions are deprecated.
+         Also two new example scripts were added:  free.py and meminfo.py.
+ * #312: psutil.network_io_counters() namedtuple includes 4 new fields:
+         errin, errout dropin and dropout, reflecting the number of packets
+         dropped and with errors.
 
 BUGFIXES
 
- * Issue 298: (OSX - BSD) memory leak in get_num_fds().
- * Issue 299: potential memory leak every time PyList_New(0) is used.
- * Issue 303: (Windows) potential heap corruption in get_num_threads() and
-   get_status() Process methods.
- * Issue 305: (BSD) psutil can't compile on FreeBSD 9 due to removal of utmp.h.
- * Issue 306: at C level, errors are not checked when invoking Py* functions
-   which create or manipulate Python objects leading to potential memory related
-   errors and/or segmentation faults.
- * Issue 307: (BSD) values returned by psutil.network_io_counters() are wrong.
- * Issue 308: (BSD / Windows) psutil.virtmem_usage() wasn't actually returning
-   information about swap memory usage as it was supposed to do. It does now.
- * Issue 309: get_open_files() might not return files which can not be accessed
-   due to limited permissions. AccessDenied is now raised instead.
+ * #298: [OSX and BSD] memory leak in get_num_fds().
+ * #299: potential memory leak every time PyList_New(0) is used.
+ * #303: [Windows] potential heap corruption in get_num_threads() and
+         get_status() Process methods.
+ * #305: [FreeBSD] psutil can't compile on FreeBSD 9 due to removal of utmp.h.
+ * #306: at C level, errors are not checked when invoking Py* functions which
+         create or manipulate Python objects leading to potential memory related
+         errors and/or segmentation faults.
+ * #307: [FreeBSD] values returned by psutil.network_io_counters() are wrong.
+ * #308: [BSD / Windows] psutil.virtmem_usage() wasn't actually returning
+         information about swap memory usage as it was supposed to do. It does
+         now.
+ * #309: get_open_files() might not return files which can not be accessed
+         due to limited permissions. AccessDenied is now raised instead.
 
 API CHANGES
 
@@ -138,7 +138,7 @@ API CHANGES
  * psutil.virtmem_usage() is deprecated            (use psutil.swap_memory())
  * psutil.phymem_buffers() on Linux is deprecated  (use psutil.virtual_memory())
  * psutil.cached_phymem() on Linux is deprecated   (use psutil.virtual_memory())
- * (Windows and BSD) psutil.virtmem_usage() now returns information about swap
+ * [Windows and BSD] psutil.virtmem_usage() now returns information about swap
    memory instead of virtual memory.
 
 
@@ -147,13 +147,13 @@ API CHANGES
 
 NEW FEATURES
 
- * Issue 293: (Windows) process executable path is now determined by asking the
-   OS instead of being guessed from process cmdline.
+ * #293: [Windows] process executable path is now determined by asking the OS
+         instead of being guessed from process cmdline.
 
 BUGFIXES
 
- * Issue 292: (Linux) race condition in process files/threads/connections.
- * Issue 294: (Windows) Process CPU affinity is only able to set CPU #0.
+ * #292: [Linux] race condition in process files/threads/connections.
+ * #294: [Windows] Process CPU affinity is only able to set CPU #0.
 
 
 0.5.0 - 2012-06-27
@@ -161,57 +161,57 @@ BUGFIXES
 
 NEW FEATURES
 
- * Issue #195: (Windows) number of handles opened by process.
- * Issue #209: psutil.disk_partitions() now provides also mount options.
- * Issue #229: list users currently connected on the system (psutil.get_users()).
- * Issue #238: (Linux, Windows) process CPU affinity (get and set).
- * Issue #242: Process.get_children(recursive=True): return all process
-   descendants.
- * Issue #245: (POSIX) Process.wait() incrementally consumes less CPU cycles.
- * Issue #257: (Windows) removed Windows 2000 support.
- * Issue #258: (Linux) Process.get_memory_info() is now 0.5x faster.
- * Issue #260: process's mapped memory regions. (Windows patch by wj32.64, OSX
-   patch by Jeremy Whitlock)
- * Issue #262: (Windows) psutil.disk_partitions() was slow due to inspecting
-   the floppy disk drive also when "all" argument was False.
- * Issue #273: psutil.get_process_list() is deprecated.
- * Issue #274: psutil no longer requires 2to3 at installation time in order to
-   work with Python 3.
- * Issue #278: new Process.as_dict() method.
- * Issue #281: ppid, name, exe, cmdline and create_time properties of Process
-   class are now cached after being accessed.
- * Issue #282: psutil.STATUS_* constants can now be compared by using their
-   string representation.
- * Issue #283: speedup Process.is_running() by caching its return value in case
-   the process is terminated.
- * Issue #284: (POSIX) per-process number of opened file descriptors.
- * Issue #287: psutil.process_iter() now caches Process instances between calls.
- * Issue #290: Process.nice property is deprecated in favor of new get_nice()
-   and set_nice() methods.
+ * #195: [Windows] number of handles opened by process.
+ * #209: psutil.disk_partitions() now provides also mount options.
+ * #229: list users currently connected on the system (psutil.get_users()).
+ * #238: [Linux, Windows] process CPU affinity (get and set).
+ * #242: Process.get_children(recursive=True): return all process
+         descendants.
+ * #245: [POSIX] Process.wait() incrementally consumes less CPU cycles.
+ * #257: [Windows] removed Windows 2000 support.
+ * #258: [Linux] Process.get_memory_info() is now 0.5x faster.
+ * #260: process's mapped memory regions. (Windows patch by wj32.64, OSX patch
+         by Jeremy Whitlock)
+ * #262: [Windows] psutil.disk_partitions() was slow due to inspecting the
+         floppy disk drive also when "all" argument was False.
+ * #273: psutil.get_process_list() is deprecated.
+ * #274: psutil no longer requires 2to3 at installation time in order to work
+         with Python 3.
+ * #278: new Process.as_dict() method.
+ * #281: ppid, name, exe, cmdline and create_time properties of Process class
+         are now cached after being accessed.
+ * #282: psutil.STATUS_* constants can now be compared by using their string
+         representation.
+ * #283: speedup Process.is_running() by caching its return value in case the
+         process is terminated.
+ * #284: [POSIX] per-process number of opened file descriptors.
+ * #287: psutil.process_iter() now caches Process instances between calls.
+ * #290: Process.nice property is deprecated in favor of new get_nice() and
+         set_nice() methods.
 
 BUGFIXES
 
- * Issue #193: psutil.Popen constructor can throw an exception if the spawned
-   process terminates quickly.
- * Issue #240: (OSX) incorrect use of free() for Process.get_connections().
- * Issue #244: (POSIX) Process.wait() can hog CPU resources if called against
-   a process which is not our children.
- * Issue #248: (Linux) psutil.network_io_counters() might return erroneous NIC
-   names.
- * Issue #252: (Windows) process getcwd() erroneously raise NoSuchProcess for
-   processes owned by another user.  It now raises AccessDenied instead.
- * Issue #266: (Windows) psutil.get_pid_list() only shows 1024 processes.
-   (patch by Amoser)
- * Issue #267: (OSX) Process.get_connections() - an erroneous remote address
-   was returned. (Patch by Amoser)
- * Issue #272: (Linux) Porcess.get_open_files() - potential race condition can
-   lead to unexpected NoSuchProcess exception.  Also, we can get incorrect
-   reports of not absolutized path names.
- * Issue #275: (Linux) Process.get_io_counters() erroneously raise NoSuchProcess
-   on old Linux versions. Where not available it now raises NotImplementedError.
- * Issue #286: Process.is_running() doesn't actually check whether PID has been
-   reused.
- * Issue #314: Process.get_children() can sometimes return non-children.
+ * #193: psutil.Popen constructor can throw an exception if the spawned process
+         terminates quickly.
+ * #240: [OSX] incorrect use of free() for Process.get_connections().
+ * #244: [POSIX] Process.wait() can hog CPU resources if called against a
+         process which is not our children.
+ * #248: [Linux] psutil.network_io_counters() might return erroneous NIC names.
+ * #252: [Windows] process getcwd() erroneously raise NoSuchProcess for
+         processes owned by another user.  It now raises AccessDenied instead.
+ * #266: [Windows] psutil.get_pid_list() only shows 1024 processes.
+         (patch by Amoser)
+ * #267: [OSX] Process.get_connections() - an erroneous remote address was
+         returned. (Patch by Amoser)
+ * #272: [Linux] Porcess.get_open_files() - potential race condition can lead to
+         unexpected NoSuchProcess exception.  Also, we can get incorrect reports
+         of not absolutized path names.
+ * #275: [Linux] Process.get_io_counters() erroneously raise NoSuchProcess on
+         old Linux versions. Where not available it now raises
+         NotImplementedError.
+ * #286: Process.is_running() doesn't actually check whether PID has been
+         reused.
+ * #314: Process.get_children() can sometimes return non-children.
 
 API CHANGES
 
@@ -230,12 +230,12 @@ API CHANGES
 
 BUGFIXES
 
- * Issue 228: some example scripts were not working with python 3.
- * Issue 230: (Windows / OSX) memory leak in Process.get_connections().
- * Issue 232: (Linux) psutil.phymem_usage() can report erroneous values which
-   are different than "free" command.
- * Issue 236: (Windows) memory/handle leak in Process's get_memory_info(),
-   suspend() and resume() methods.
+ * #228: some example scripts were not working with python 3.
+ * #230: [Windows / OSX] memory leak in Process.get_connections().
+ * #232: [Linux] psutil.phymem_usage() can report erroneous values which are
+         different than "free" command.
+ * #236: [Windows] memory/handle leak in Process's get_memory_info(),
+         suspend() and resume() methods.
 
 
 0.4.0 - 2011-10-29
@@ -243,38 +243,38 @@ BUGFIXES
 
 NEW FEATURES
 
- * Issue 150: network I/O counters. (OSX and Windows patch by Jeremy Whitlock)
- * Issue 154: (FreeBSD) add support for process getcwd()
- * Issue 157: (Windows) provide installer for Python 3.2 64-bit.
- * Issue 198: Process.wait(timeout=0) can now be used to make wait() return
-   immediately.
- * Issue 206: disk I/O counters. (OSX and Windows patch by Jeremy Whitlock)
- * Issue 213: examples/iotop.py script.
- * Issue 217: Process.get_connections() now has a "kind" argument to filter
+ * #150: network I/O counters. (OSX and Windows patch by Jeremy Whitlock)
+ * #154: [FreeBSD] add support for process getcwd()
+ * #157: [Windows] provide installer for Python 3.2 64-bit.
+ * #198: Process.wait(timeout=0) can now be used to make wait() return
+         immediately.
+ * #206: disk I/O counters. (OSX and Windows patch by Jeremy Whitlock)
+ * #213: examples/iotop.py script.
+ * #217: Process.get_connections() now has a "kind" argument to filter
    for connections with different criteria.
- * Issue 221: (FreeBSD) Process.get_open_files has been rewritten in C and no
-   longer relies on lsof.
- * Issue 223: examples/top.py script.
- * Issue 227: examples/nettop.py script.
+ * #221: [FreeBSD] Process.get_open_files has been rewritten in C and no longer
+   relies on lsof.
+ * #223: examples/top.py script.
+ * #227: examples/nettop.py script.
 
 BUGFIXES
 
- * Issue 135: (OS X) psutil cannot create Process object
- * Issue 144: (Linux) no longer support 0 special PID.
- * Issue 188: (Linux) psutil import error on Linux ARM architectures.
- * Issue 194: (POSIX) psutil.Process.get_cpu_percent() now reports a percentage
-   over 100 on multicore processors.
- * Issue 197: (Linux) Process.get_connections() is broken on platforms not
-   supporting IPv6.
- * Issue 200: (Linux) psutil.NUM_CPUS not working on armel and sparc
-   architectures and causing crash on module import.
- * Issue 201: (Linux) Process.get_connections() is broken on big-endian
-   architectures.
- * Issue 211: Process instance can unexpectedly raise NoSuchProcess if tested
-   for equality with another object.
- * Issue 218: (Linux) crash at import time on Debian 64-bit because of a missing
-   line in /proc/meminfo.
- * Issue 226: (FreeBSD) crash at import time on FreeBSD 7 and minor.
+ * #135: [OSX] psutil cannot create Process object.
+ * #144: [Linux] no longer support 0 special PID.
+ * #188: [Linux] psutil import error on Linux ARM architectures.
+ * #194: [POSIX] psutil.Process.get_cpu_percent() now reports a percentage over
+         100 on multicore processors.
+ * #197: [Linux] Process.get_connections() is broken on platforms not supporting
+         IPv6.
+ * #200: [Linux] psutil.NUM_CPUS not working on armel and sparc architectures
+         and causing crash on module import.
+ * #201: [Linux] Process.get_connections() is broken on big-endian
+          architectures.
+ * #211: Process instance can unexpectedly raise NoSuchProcess if tested for
+         equality with another object.
+ * #218: [Linux] crash at import time on Debian 64-bit because of a missing line
+         in /proc/meminfo.
+ * #226: [FreeBSD] crash at import time on FreeBSD 7 and minor.
 
 
 0.3.0 - 2011-07-08
@@ -282,28 +282,27 @@ BUGFIXES
 
 NEW FEATURES
 
- * Issue 125: system per-cpu percentage utilization and times.
- * Issue 163: per-process associated terminal (TTY).
- * Issue 171: added get_phymem() and get_virtmem() functions returning system
-   memory information (total, used, free) and memory percent usage.
-   total_* avail_* and used_* memory functions are deprecated.
- * Issue 172: disk usage statistics.
- * Issue 174: mounted disk partitions.
- * Issue 179: setuptools is now used in setup.py
+ * #125: system per-cpu percentage utilization and times.
+ * #163: per-process associated terminal (TTY).
+ * #171: added get_phymem() and get_virtmem() functions returning system
+         memory information (total, used, free) and memory percent usage.
+         total_* avail_* and used_* memory functions are deprecated.
+ * #172: disk usage statistics.
+ * #174: mounted disk partitions.
+ * #179: setuptools is now used in setup.py
 
 BUGFIXES
 
- * Issue 159: SetSeDebug() does not close handles or unset impersonation on
-   return.
- * Issue 164: wait function raises a TimeoutException when a process returns
-   -1 (Windows).
- * Issue 165: process.status raises an unhandled exception.
- * Issue 166: get_memory_info() leaks handles hogging system resources.
- * Issue 168: psutil.cpu_percent() returns erroneous results when used in
-   non-blocking mode.  (patch by Philip Roberts)
- * Issue 178: OSX - Process.get_threads() leaks memory
- * Issue 180: Windows - Process's get_num_threads() and get_threads() methods
-   can raise NoSuchProcess exception while process still exists.
+ * #159: SetSeDebug() does not close handles or unset impersonation on return.
+ * #164: [Windows] wait function raises a TimeoutException when a process
+         returns -1 .
+ * #165: process.status raises an unhandled exception.
+ * #166: get_memory_info() leaks handles hogging system resources.
+ * #168: psutil.cpu_percent() returns erroneous results when used in
+         non-blocking mode.  (patch by Philip Roberts)
+ * #178: OSX - Process.get_threads() leaks memory
+ * #180: [Windows] Process's get_num_threads() and get_threads() methods can
+         raise NoSuchProcess exception while process still exists.
 
 
 0.2.1 - 2011-03-20
@@ -311,35 +310,35 @@ BUGFIXES
 
 NEW FEATURES
 
- * Issue 64: per-process I/O counters.
- * Issue 116: per-process wait() (wait for process to terminate and return its
-   exit code).
- * Issue 134: per-process get_threads() returning information (id, user and
-   kernel times) about threads opened by process.
- * Issue 136: process executable path on FreeBSD is now determined by asking
-   the kernel instead of guessing it from cmdline[0].
- * Issue 137: per-process real, effective and saved user and group ids.
- * Issue 140: system boot time.
- * Issue 142: per-process get and set niceness (priority).
- * Issue 143: per-process status.
- * Issue 147: per-process I/O nice (priority) - Linux only.
- * Issue 148: psutil.Popen class which tidies up subprocess.Popen and
-   psutil.Process in a unique interface.
- * Issue 152: (OSX) get_process_open_files() implementation has been rewritten
-   in C and no longer relies on lsof resulting in a 3x speedup.
- * Issue 153: (OSX) get_process_connection() implementation has been rewritten
-   in C and no longer relies on lsof resulting in a 3x speedup.
+ * #64: per-process I/O counters.
+ * #116: per-process wait() (wait for process to terminate and return its exit
+         code).
+ * #134: per-process get_threads() returning information (id, user and kernel
+         times) about threads opened by process.
+ * #136: process executable path on FreeBSD is now determined by asking the
+         kernel instead of guessing it from cmdline[0].
+ * #137: per-process real, effective and saved user and group ids.
+ * #140: system boot time.
+ * #142: per-process get and set niceness (priority).
+ * #143: per-process status.
+ * #147: per-process I/O nice (priority) - Linux only.
+ * #148: psutil.Popen class which tidies up subprocess.Popen and psutil.Process
+         in a unique interface.
+ * #152: [OSX] get_process_open_files() implementation has been rewritten
+         in C and no longer relies on lsof resulting in a 3x speedup.
+ * #153: [OSX] get_process_connection() implementation has been rewritten
+         in C and no longer relies on lsof resulting in a 3x speedup.
 
 BUGFIXES
 
- * Issue 83: process cmdline is empty on OSX 64-bit.
- * Issue 130: a race condition can cause IOError exception be raised on
-   Linux if process disappears between open() and subsequent read() calls.
- * Issue 145: WindowsError was raised instead of psutil.AccessDenied when using
-   process resume() or suspend() on Windows.
- * Issue 146: 'exe' property on Linux can raise TypeError if path contains NULL
-   bytes.
- * Issue 151: exe and getcwd() for PID 0 on Linux return inconsistent data.
+ * #83:  process cmdline is empty on OSX 64-bit.
+ * #130: a race condition can cause IOError exception be raised on
+         Linux if process disappears between open() and subsequent read() calls.
+ * #145: WindowsError was raised instead of psutil.AccessDenied when using
+         process resume() or suspend() on Windows.
+ * #146: 'exe' property on Linux can raise TypeError if path contains NULL
+         bytes.
+ * #151: exe and getcwd() for PID 0 on Linux return inconsistent data.
 
 API CHANGES
 
@@ -352,43 +351,43 @@ API CHANGES
 
 NEW FEATURES
 
- * Issue 79: per-process open files.
- * Issue 88: total system physical cached memory.
- * Issue 88: total system physical memory buffers used by the kernel.
- * Issue 91: per-process send_signal() and terminate() methods.
- * Issue 95: NoSuchProcess and AccessDenied exception classes now provide "pid",
-   "name" and "msg" attributes.
- * Issue 97: per-process children.
- * Issue 98: Process.get_cpu_times() and Process.get_memory_info now return
-   a namedtuple instead of a tuple.
- * Issue 103: per-process opened TCP and UDP connections.
- * Issue 107: add support for Windows 64 bit. (patch by cjgohlke)
- * Issue 111: per-process executable name.
- * Issue 113: exception messages now include process name and pid.
- * Issue 114: process username Windows implementation has been rewritten in pure
-   C and no longer uses WMI resulting in a big speedup. Also, pywin32 is no
-   longer required as a third-party dependancy. (patch by wj32)
- * Issue 117: added support for Windows 2000.
- * Issue 123: psutil.cpu_percent() and psutil.Process.cpu_percent() accept a
-   new 'interval' parameter.
- * Issue 129: per-process number of threads.
+ * #79: per-process open files.
+ * #88: total system physical cached memory.
+ * #88: total system physical memory buffers used by the kernel.
+ * #91: per-process send_signal() and terminate() methods.
+ * #95: NoSuchProcess and AccessDenied exception classes now provide "pid",
+        "name" and "msg" attributes.
+ * #97: per-process children.
+ * #98: Process.get_cpu_times() and Process.get_memory_info now return
+        a namedtuple instead of a tuple.
+ * #103: per-process opened TCP and UDP connections.
+ * #107: add support for Windows 64 bit. (patch by cjgohlke)
+ * #111: per-process executable name.
+ * #113: exception messages now include process name and pid.
+ * #114: process username Windows implementation has been rewritten in pure
+         C and no longer uses WMI resulting in a big speedup. Also, pywin32 is no
+         longer required as a third-party dependancy. (patch by wj32)
+ * #117: added support for Windows 2000.
+ * #123: psutil.cpu_percent() and psutil.Process.cpu_percent() accept a
+         new 'interval' parameter.
+ * #129: per-process number of threads.
 
 BUGFIXES
 
- * Issue 80: fixed warnings when installing psutil with easy_install.
- * Issue 81: psutil fails to compile with Visual Studio.
- * Issue 94: suspend() raises OSError instead of AccessDenied.
- * Issue 86: psutil didn't compile against FreeBSD 6.x.
- * Issue 102: orphaned process handles obtained by using OpenProcess in C were
-   left behind every time Process class was instantiated.
- * Issue 111: path and name Process properties report truncated or erroneous
-   values on UNIX.
- * Issue 120: cpu_percent() always returning 100% on OS X.
- * Issue 112: uid and gid properties don't change if process changes effective
-   user/group id at some point.
- * Issue 126: ppid, uid, gid, name, exe, cmdline and create_time properties are
-   no longer cached and correctly raise NoSuchProcess exception if the process
-   disappears.
+ * #80: fixed warnings when installing psutil with easy_install.
+ * #81: psutil fails to compile with Visual Studio.
+ * #94: suspend() raises OSError instead of AccessDenied.
+ * #86: psutil didn't compile against FreeBSD 6.x.
+ * #102: orphaned process handles obtained by using OpenProcess in C were
+         left behind every time Process class was instantiated.
+ * #111: path and name Process properties report truncated or erroneous
+         values on UNIX.
+ * #120: cpu_percent() always returning 100% on OS X.
+ * #112: uid and gid properties don't change if process changes effective
+         user/group id at some point.
+ * #126: ppid, uid, gid, name, exe, cmdline and create_time properties are
+         no longer cached and correctly raise NoSuchProcess exception if the process
+         disappears.
 
 API CHANGES
 
@@ -412,28 +411,28 @@ API CHANGES
 
 NEW FEATURES
 
- * Issue 14: per-process username
- * Issue 51: per-process current working directory (Windows and Linux only)
- * Issue 59: Process.is_running() is now 10 times faster
- * Issue 61: added supoprt for FreeBSD 64 bit
- * Issue 71: implemented suspend/resume process
- * Issue 75: python 3 support
+ * #14: per-process username
+ * #51: per-process current working directory (Windows and Linux only)
+ * #59: Process.is_running() is now 10 times faster
+ * #61: added supoprt for FreeBSD 64 bit
+ * #71: implemented suspend/resume process
+ * #75: python 3 support
 
 BUGFIXES
 
- * Issue 36: process cpu_times() and memory_info() functions succeeded also for
-   dead processes while a NoSuchProcess exception is supposed to be raised.
- * Issue 48: incorrect size for mib array defined in getcmdargs for BSD
- * Issue 49: possible memory leak due to missing free() on error condition on
- * Issue 50: fixed getcmdargs() memory fragmentation on BSD
- * Issue 55: test_pid_4 was failing on Windows Vista
- * Issue 57: some unit tests were failing on systems where no swap memory is
-   available
- * Issue 58: is_running() is now called before kill() to make sure we are going
-   to kill the correct process.
- * Issue 73: virtual memory size reported on OS X includes shared library size
- * Issue 77: NoSuchProcess wasn't raised on Process.create_time if kill() was
-   used first.
+ * #36: process cpu_times() and memory_info() functions succeeded also for
+        dead processes while a NoSuchProcess exception is supposed to be raised.
+ * #48: incorrect size for mib array defined in getcmdargs for BSD
+ * #49: possible memory leak due to missing free() on error condition on
+ * #50: fixed getcmdargs() memory fragmentation on BSD
+ * #55: test_pid_4 was failing on Windows Vista
+ * #57: some unit tests were failing on systems where no swap memory is
+        available
+ * #58: is_running() is now called before kill() to make sure we are going
+        to kill the correct process.
+ * #73: virtual memory size reported on OS X includes shared library size
+ * #77: NoSuchProcess wasn't raised on Process.create_time if kill() was
+        used first.
 
 
 0.1.2 - 2009-05-06
@@ -441,21 +440,21 @@ BUGFIXES
 
 NEW FEATURES
 
- * Issue 32: Per-process CPU user/kernel times
- * Issue 33: Process create time
- * Issue 34: Per-process CPU utilization percentage
- * Issue 38: Per-process memory usage (bytes)
- * Issue 41: Per-process memory utilization (percent)
- * Issue 39: System uptime
- * Issue 43: Total system virtual memory
- * Issue 46: Total system physical memory
- * Issue 44: Total system used/free virtual and physical memory
+ * #32: Per-process CPU user/kernel times
+ * #33: Process create time
+ * #34: Per-process CPU utilization percentage
+ * #38: Per-process memory usage (bytes)
+ * #41: Per-process memory utilization (percent)
+ * #39: System uptime
+ * #43: Total system virtual memory
+ * #46: Total system physical memory
+ * #44: Total system used/free virtual and physical memory
 
 BUGFIXES
 
- * Issue 36: NoSuchProcess not raised on Windows when accessing timing methods
- * Issue 40: test_get_cpu_times() failing on FreeBSD and OS X
- * Issue 42: get_memory_percent() raises AccessDenied on Windows
+ * #36: [Windows] NoSuchProcess not raised when accessing timing methods.
+ * #40: test_get_cpu_times() failing on FreeBSD and OS X.
+ * #42: [Windows] get_memory_percent() raises AccessDenied.
 
 
 0.1.1 - 2009-03-06
@@ -463,33 +462,34 @@ BUGFIXES
 
 NEW FEATURES
 
- * Issue 4: FreeBSD support for all functions of psutil
- * Issue 9: Process.uid and Process.gid now retrieve process UID and GID.
- * Issue 11: Support for parent/ppid - Process.parent property returns a
-   Process object representing the parent process, and Process.ppid returns
-   the parent PID.
- * Issue 12 & 15: NoSuchProcess exception now raised when creating an object
-   for a nonexistent process, or when retrieving information about a process
-   that has gone away.
- * Issue 21: AccessDenied exception created for raising access denied errors
-   from OSError or WindowsError on individual platforms.
- * Issue 26: psutil.process_iter() function to iterate over processes as
-   Process objects with a generator.
- * Process objects can now also be compared with == operator for equality
-   (PID, name, command line are compared).
+ * #4: FreeBSD support for all functions of psutil
+ * #9: Process.uid and Process.gid now retrieve process UID and GID.
+ * #11: Support for parent/ppid - Process.parent property returns a
+        Process object representing the parent process, and Process.ppid returns
+        the parent PID.
+ * #12 & 15:
+        NoSuchProcess exception now raised when creating an object
+        for a nonexistent process, or when retrieving information about a process
+        that has gone away.
+ * #21: AccessDenied exception created for raising access denied errors
+        from OSError or WindowsError on individual platforms.
+ * #26: psutil.process_iter() function to iterate over processes as
+        Process objects with a generator.
+ * #?:  Process objects can now also be compared with == operator for equality
+        (PID, name, command line are compared).
 
 BUGFIXES
 
- * Issue 16: Special case for Windows' "System Idle Process" (PID 0) which
-   otherwise would return an "invalid parameter" exception.
- * Issue 17: get_process_list() ignores NoSuchProcess and AccessDenied
-   exceptions during building of the list.
- * Issue 22: Process(0).kill() was failing on Windows with an unset exception
- * Issue 23: Special case for pid_exists(0)
- * Issue 24: Process(0).kill() now raises AccessDenied exception instead of
-   WindowsError.
- * Issue 30: psutil.get_pid_list() was returning two instances of PID 0 on OS
-   X and FreeBSD platforms.
+ * #16: [Windows] Special case for "System Idle Process" (PID 0) which
+        otherwise would return an "invalid parameter" exception.
+ * #17: get_process_list() ignores NoSuchProcess and AccessDenied
+        exceptions during building of the list.
+ * #22: [Windows] Process(0).kill() was failing with an unset exception.
+ * #23: Special case for pid_exists(0)
+ * #24: [Windows] Process(0).kill() now raises AccessDenied exception instead of
+        WindowsError.
+ * #30: psutil.get_pid_list() was returning two instances of PID 0 on OS
+        X and FreeBSD platforms.
 
 
 0.1.0 - 2009-01-27

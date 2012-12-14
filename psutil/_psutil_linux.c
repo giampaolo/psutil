@@ -156,6 +156,8 @@ get_sysinfo(PyObject* self, PyObject* args)
     if (sysinfo(&info) != 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
+
+    // note: BOOT_TIME might also be determined from here
     return Py_BuildValue("(KKKKKK)",
         (unsigned long long)info.totalram  * info.mem_unit,   // total
         (unsigned long long)info.freeram   * info.mem_unit,   // free
@@ -163,7 +165,6 @@ get_sysinfo(PyObject* self, PyObject* args)
         (unsigned long long)info.sharedram * info.mem_unit,   // shared
         (unsigned long long)info.totalswap * info.mem_unit,   // swap tot
         (unsigned long long)info.freeswap  * info.mem_unit);  // swap free
-    // TODO: we can also determine BOOT_TIME here
 }
 
 
