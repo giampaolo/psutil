@@ -1472,8 +1472,7 @@ class TestCase(unittest.TestCase):
     def test_invalid_pid(self):
         self.assertRaises(TypeError, psutil.Process, "1")
         self.assertRaises(TypeError, psutil.Process, None)
-        # Refers to Issue #12
-        self.assertRaises(psutil.NoSuchProcess, psutil.Process, -1)
+        self.assertRaises(ValueError, psutil.Process, -1)
 
     def test_as_dict(self):
         sproc = get_test_subprocess()

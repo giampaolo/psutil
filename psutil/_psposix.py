@@ -21,8 +21,6 @@ from psutil._common import nt_diskinfo, usage_percent, memoize
 
 def pid_exists(pid):
     """Check whether pid exists in the current process table."""
-    if not isinstance(pid, int):
-        raise TypeError('an integer is required')
     if pid < 0:
         return False
     try:

@@ -48,7 +48,7 @@ except ImportError:
     pwd = None
 
 from psutil.error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
-from psutil._compat import property, callable, defaultdict
+from psutil._compat import property, callable, defaultdict, PY3 as _PY3
 from psutil._common import cached_property
 from psutil._common import (deprecated as _deprecated,
                             nt_disk_iostat as _nt_disk_iostat,
@@ -104,6 +104,11 @@ class Process(object):
         """Create a new Process object for the given pid.
         Raises NoSuchProcess if pid does not exist.
         """
+        if not _PY3:
+            if not isinstance(pid, (int, long)):
+                raise TypeError('pid must be an integer')
+        if pid < 0:
+            raise ValueError('pid must be a positive integer')
         self._pid = pid
         self._gone = False
         # platform-specific modules define an _psplatform.Process
