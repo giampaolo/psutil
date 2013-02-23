@@ -1491,6 +1491,12 @@ get_network_io_counters(PyObject* self, PyObject* args)
 
             strncpy(ifc_name, sdl->sdl_data, sdl->sdl_nlen);
             ifc_name[sdl->sdl_nlen] = 0;
+            // XXX: ignore usbus interfaces:
+            // http://lists.freebsd.org/pipermail/freebsd-current/2011-October/028752.html
+            // 'ifconfig -a' doesn't show them, nor do we.
+            if (strncmp(ifc_name, "usbus", 5) == 0) {
+                continue;
+            }
 
             py_ifc_info = Py_BuildValue("(kkkkkkki)",
                                         if2m->ifm_data.ifi_obytes,
