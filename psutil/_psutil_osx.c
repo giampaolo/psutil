@@ -31,7 +31,7 @@
 #include <mach/mach_host.h>
 #include <mach/mach_traps.h>
 #include <mach/mach_vm.h>
-#include <mach/shared_memory_server.h>
+#include <mach/shared_region.h>
 
 #include <mach-o/loader.h>
 
@@ -336,7 +336,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
             memset(addr_str, 0, sizeof(addr_str));
             memset(perms, 0, sizeof(perms));
 
-            sprintf(addr_str, "%016x-%016x", address, address + size);
+            sprintf(addr_str, "%016lx-%016lx", address, address + size);
             sprintf(perms, "%c%c%c/%c%c%c",
                     (info.protection & VM_PROT_READ) ? 'r' : '-',
                     (info.protection & VM_PROT_WRITE) ? 'w' : '-',
