@@ -1654,51 +1654,38 @@ error:
 static PyObject*
 get_system_users(PyObject* self, PyObject* args)
 {
-    struct utmpx ut;
-    FILE *fp = NULL;
+    struct utmpx *utx;
     PyObject *ret_list = PyList_New(0);
     PyObject *tuple = NULL;
 
     if (ret_list == NULL)
         return NULL;
-
-    fp = fopen(_PATH_UTMPX, "r");
-    if (fp == NULL) {
-        // man fopen says errno is set but it seems it's not (OSX 10.6)
-        PyErr_SetFromErrnoWithFilename(PyExc_OSError, _PATH_UTMPX);
-        goto error;
-    }
-
-    while (fread(&ut, sizeof(ut), 1, fp) == 1) {
-        if (*ut.ut_user == '\0') {
+    while ((utx = getutxent()) != NULL) {
+        if (utx->ut_type != USER_PROCESS)
             continue;
-        }
-#ifdef UTMPX_USER_PROCESS
-        if (ut.ut_type != UTMPX_USER_PROCESS) {
-            continue;
-        }
-#endif
         tuple = Py_BuildValue("(sssf)",
-            ut.ut_user,              // username
-            ut.ut_line,              // tty
-            ut.ut_host,              // hostname
-            (float)ut.ut_tv.tv_sec   // login time
+            utx->ut_user,             // username
+            utx->ut_line,             // tty
+            utx->ut_host,             // hostname
+            (float)utx->ut_tv.tv_sec  // start time
         );
-        if (!tuple)
+        if (!tuple) {
+            endutxent();
             goto error;
-        if (PyList_Append(ret_list, tuple))
+        }
+        if (PyList_Append(ret_list, tuple)) {
+            endutxent();
             goto error;
+        }
         Py_DECREF(tuple);
     }
 
-    fclose(fp);
+    endutxent();
     return ret_list;
 
 error:
     Py_XDECREF(tuple);
     Py_DECREF(ret_list);
-    if (fp != NULL)
-        fclose(fp);
     return NULL;
 }
 
