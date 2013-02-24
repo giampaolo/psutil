@@ -331,10 +331,19 @@ def disk_io_counters():
         lines = f.readlines()[2:]
     finally:
         f.close()
-    for line in lines:
+    for line in reversed(lines):
         _, _, _, name = line.split()
         if name[-1].isdigit():
+            # we're dealing with a partition (e.g. 'sda1'); 'sda' will
+            # also be around but we want to omit it
             partitions.append(name)
+        else:
+            if not partitions or not partitions[-1].startswith(name):
+                # we're dealing with a disk entity for which no
+                # partitions have been defined (e.g. 'sda' but
+                # 'sda1' was not around), see:
+                # http://code.google.com/p/psutil/issues/detail?id=338
+                partitions.append(name)
     #
     retdict = {}
     f = open("/proc/diskstats", "r")

@@ -599,9 +599,17 @@ class TestCase(unittest.TestCase):
         ret = psutil.disk_io_counters(perdisk=False)
         check_ntuple(ret)
         ret = psutil.disk_io_counters(perdisk=True)
+        # make sure there are no duplicates
+        self.assertEqual(len(ret), len(set(ret)))
         for key in ret:
             assert key, key
             check_ntuple(ret[key])
+            if LINUX and key[-1].isdigit():
+                # if 'sda1' is listed 'sda' shouldn't, see:
+                # http://code.google.com/p/psutil/issues/detail?id=338
+                while key[-1].isdigit():
+                    key = key[:-1]
+                assert key not in ret, (key, ret.keys())
 
     def test_get_users(self):
         users = psutil.get_users()
