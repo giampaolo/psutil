@@ -2344,23 +2344,25 @@ get_disk_io_counters(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    for (devNum = 0;; devNum++) {
+    // Apparently there's no way to figure out how many times we have
+    // to iterate in order to find valid drives.
+    // Let's assume 32, which is higher than 26, the number of letters
+    // in the alphabet (from A:\ to Z:\).
+    for (devNum=0; devNum <= 32; ++devNum) {
         py_disk_info = NULL;
-        sprintf (szDevice, "\\\\.\\PhysicalDrive%d", devNum);
-        hDevice = CreateFile (szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                              NULL, OPEN_EXISTING, 0, NULL);
+        sprintf(szDevice, "\\\\.\\PhysicalDrive%d", devNum);
+        hDevice = CreateFile(szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                             NULL, OPEN_EXISTING, 0, NULL);
 
         if (hDevice == INVALID_HANDLE_VALUE) {
-            // what happens if we get an invalid handle on the first disk?
-            // we might end up with an empty dict incorrectly in some cases
-            break;
+            continue;
         }
 
         if (DeviceIoControl(hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0,
                             &diskPerformance, sizeof(DISK_PERFORMANCE),
                             &dwSize, NULL))
         {
-            sprintf (szDeviceDisplay, "PhysicalDrive%d", devNum);
+            sprintf(szDeviceDisplay, "PhysicalDrive%d", devNum);
             py_disk_info = Py_BuildValue("(IILLLL)",
                                          diskPerformance.ReadCount,
                                          diskPerformance.WriteCount,
