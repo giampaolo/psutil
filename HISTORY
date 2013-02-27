@@ -9,6 +9,7 @@ NEW FEATURES
 
 BUG FIXES
 
+ * #234: [Windows] disk_io_counters() fails to list certain disks.
  * #264: [Windows] use of psutil.disk_partitions() may cause a message box to
          appear.
  * #313: [Linux] psutil.virtual_memory() and psutil.swap_memory() can crash on
@@ -21,6 +22,7 @@ BUG FIXES
          squeeze.
  * #323: [OSX] disk_io_counters()'s read_time and write_time parameters were
          reporting microseconds not milliseconds.  (patch by Gregory Szorc)
+ * #331: Process cmdline is no longer cached after first acces as it may change.
  * #333: [OSX] Leak of Mach ports on OS X (patch by rsesek@google.com)
  * #337: [Linux] process methods not working because of a poor /proc
          implementation will raise NotImplementedError rather than RuntimeError
@@ -36,6 +38,7 @@ BUG FIXES
 API CHANGES
  * [Linux] Process methods not working because of a poor /proc implementation
    will raise NotImplementedError instead of RuntimeError.
+ * Process.cmdline property is no longer cached after first access.
 
 
 0.6.1 - 2012-08-16

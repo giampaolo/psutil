@@ -166,7 +166,9 @@ def safe_remove(fname):
     try:
         os.remove(fname)
     except OSError:
-        pass
+        err = sys.exc_info()[1]
+        if err.args[0] != errno.ENOENT:
+            raise
 
 def call_until(fun, expr, timeout=1):
     """Keep calling function for timeout secs and exit if eval()
