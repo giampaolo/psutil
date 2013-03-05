@@ -12,6 +12,7 @@ import errno
 import os
 import sys
 import platform
+import warnings
 
 import _psutil_mswindows
 from _psutil_mswindows import ERROR_ACCESS_DENIED
@@ -27,9 +28,26 @@ __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
 
 # --- module level constants (gets pushed up to psutil module)
 
-NUM_CPUS = _psutil_mswindows.get_num_cpus()
-BOOT_TIME = _psutil_mswindows.get_system_uptime()
-TOTAL_PHYMEM = _psutil_mswindows.get_virtual_mem()[0]
+# Since these constants get determined at import time we do not want to
+# crash immediately; instead we'll set them to None and most likely
+# we'll crash later as they're used for determining process CPU stats
+# and creation_time
+try:
+    NUM_CPUS = _psutil_mswindows.get_num_cpus()
+except Exception:
+    NUM_CPUS = None
+    warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
+try:
+    BOOT_TIME = _psutil_mswindows.get_system_uptime()
+except Exception, err:
+    BOOT_TIME = None
+    warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
+try:
+    TOTAL_PHYMEM = _psutil_mswindows.get_virtual_mem()[0]
+except Exception:
+    TOTAL_PHYMEM = None
+    warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
+
 WAIT_TIMEOUT = 0x00000102 # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED])
 

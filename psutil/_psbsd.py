@@ -11,6 +11,7 @@
 import errno
 import os
 import sys
+import warnings
 
 import _psutil_bsd
 import _psutil_posix
@@ -23,9 +24,27 @@ __extra__all__ = []
 
 # --- constants
 
-NUM_CPUS = _psutil_bsd.get_num_cpus()
-BOOT_TIME = _psutil_bsd.get_system_boot_time()
-TOTAL_PHYMEM = _psutil_bsd.get_virtual_mem()[0]
+# Since these constants get determined at import time we do not want to
+# crash immediately; instead we'll set them to None and most likely
+# we'll crash later as they're used for determining process CPU stats
+# and creation_time
+try:
+    NUM_CPUS = _psutil_bsd.get_num_cpus()
+except Exception:
+    NUM_CPUS = None
+    warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
+try:
+    TOTAL_PHYMEM = _psutil_bsd.get_virtual_mem()[0]
+except Exception:
+    TOTAL_PHYMEM = None
+    warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
+try:
+    BOOT_TIME = _psutil_bsd.get_system_boot_time()
+except Exception, err:
+    BOOT_TIME = None
+    warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
+
+
 _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
 

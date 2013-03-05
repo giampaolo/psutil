@@ -39,10 +39,7 @@ def _get_boot_time():
         for line in f:
             if line.startswith('btime'):
                 return float(line.strip().split()[1])
-        # Since this gets called at import time we do not want to crash
-        # now; instead we'll return None and most likely we'll crash
-        # later, as BOOT_TIME is used for calculating process creation time.
-        warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
+        raise RuntimeError("line 'btime' not found")
     finally:
         f.close()
 
@@ -78,20 +75,35 @@ def _get_num_cpus():
                 num += 1
 
     if num == 0:
-        # Since this gets called at import time we do not want to crash
-        # now; instead we'll return None and most likely we'll crash
-        # later, as NUM_CPUS is used for calculating system CPU usage.
-        warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
-    else:
-        return num
+        raise RuntimeError("couldn't determine platform's NUM_CPUS")
+    return num
 
 
 # Number of clock ticks per second
 _CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-BOOT_TIME = _get_boot_time()
-NUM_CPUS = _get_num_cpus()
-TOTAL_PHYMEM = _psutil_linux.get_sysinfo()[0]
+
+# Since these constants get determined at import time we do not want to
+# crash immediately; instead we'll set them to None and most likely
+# we'll crash later as they're used for determining process CPU stats
+# and creation_time
+try:
+    BOOT_TIME = _get_boot_time()
+except Exception, err:
+    BOOT_TIME = None
+    warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
+try:
+    NUM_CPUS = _get_num_cpus()
+except Exception:
+    NUM_CPUS = None
+    warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
+try:
+    TOTAL_PHYMEM = _psutil_linux.get_sysinfo()[0]
+except Exception:
+    TOTAL_PHYMEM = None
+    warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
+
+
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
 IOPRIO_CLASS_NONE = 0
 IOPRIO_CLASS_RT = 1

@@ -266,6 +266,7 @@ class Process(object):
                     pass
             return exe
 
+    @property
     def cmdline(self):
         """The command line process has been called with."""
         return self._platform_impl.get_process_cmdline()
