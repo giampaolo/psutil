@@ -152,16 +152,14 @@ get_system_boot_time(PyObject* self, PyObject* args)
 {
     /* fetch sysctl "kern.boottime" */
     static int request[2] = { CTL_KERN, KERN_BOOTTIME };
-    struct timeval result;
-    size_t result_len = sizeof result;
-    time_t boot_time = 0;
+    struct timeval boottime;
+    size_t len = sizeof(boottime);
 
-    if (sysctl(request, 2, &result, &result_len, NULL, 0) == -1) {
+    if (sysctl(request, 2, &boottime, &len, NULL, 0) == -1) {
         PyErr_SetFromErrno(0);
         return NULL;
     }
-    boot_time = result.tv_sec;
-    return Py_BuildValue("f", (float)boot_time);
+    return Py_BuildValue("I", (unsigned int)boottime.tv_sec);
 }
 
 
