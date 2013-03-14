@@ -671,6 +671,7 @@ class Process(object):
             if f is not None:
                 f.close()
             raise
+        f.close()
 
     if not os.path.exists('/proc/%s/smaps' % os.getpid()):
         def get_shared_libs(self, ext):
