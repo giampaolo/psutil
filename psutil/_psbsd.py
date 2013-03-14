@@ -48,6 +48,8 @@ _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
 
 # --- public functions
 
+get_system_boot_time = _psutil_bsd.get_system_boot_time
+
 nt_virtmem_info = namedtuple('vmem', ' '.join([
     # all platforms
     'total', 'available', 'percent', 'used', 'free',

@@ -76,6 +76,8 @@ def _convert_raw_path(s):
 
 # --- public functions
 
+get_system_boot_time = _psutil_mswindows.get_system_boot_time
+
 nt_virtmem_info = namedtuple('vmem', ' '.join([
     # all platforms
     'total', 'available', 'percent', 'used', 'free']))
