@@ -159,7 +159,7 @@ get_system_boot_time(PyObject* self, PyObject* args)
         PyErr_SetFromErrno(0);
         return NULL;
     }
-    return Py_BuildValue("I", (unsigned int)boottime.tv_sec);
+    return Py_BuildValue("d", (double)boottime.tv_sec);
 }
 
 
