@@ -1215,6 +1215,16 @@ error:
 }
 
 
+// remove spaces from string
+void remove_spaces(char *str) {
+    char *p1 = str;
+    char *p2 = str;
+    do
+        while (*p2 == ' ')
+            p2++;
+    while (*p1++ = *p2++);
+}
+
 /*
  * Return a list of tuples for every process memory maps.
  * 'procstat' cmdline utility has been used as an example.
@@ -1226,7 +1236,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     int ptrwidth;
     int i, cnt;
     char addr[30];
-    char perms[10];
+    char perms[4];
     const char *path;
     struct kinfo_proc kp;
     struct kinfo_vmentry *freep = NULL;
@@ -1257,12 +1267,14 @@ get_process_memory_maps(PyObject* self, PyObject* args)
         perms[0] = '\0';
         sprintf(addr, "%#*jx-%#*jx", ptrwidth, (uintmax_t)kve->kve_start,
                                      ptrwidth, (uintmax_t)kve->kve_end);
+        remove_spaces(addr);
         strlcat(perms, kve->kve_protection & KVME_PROT_READ ? "r" : "-",
                 sizeof(perms));
         strlcat(perms, kve->kve_protection & KVME_PROT_WRITE ? "w" : "-",
                 sizeof(perms));
         strlcat(perms, kve->kve_protection & KVME_PROT_EXEC ? "x" : "-",
                 sizeof(perms));
+
 
         if (strlen(kve->kve_path) == 0) {
             switch (kve->kve_type) {
