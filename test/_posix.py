@@ -70,7 +70,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         username_psutil = psutil.Process(self.pid).username
         self.assertEqual(username_ps, username_psutil)
 
-    @skip_on_access_denied
+    @skip_on_access_denied()
     def test_process_rss_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -79,7 +79,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         rss_psutil = psutil.Process(self.pid).get_memory_info()[0] / 1024
         self.assertEqual(rss_ps, rss_psutil)
 
-    @skip_on_access_denied
+    @skip_on_access_denied()
     def test_process_vsz_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same

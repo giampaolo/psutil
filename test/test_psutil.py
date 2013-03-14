@@ -214,16 +214,22 @@ def skipUnless(condition, reason="", warn=False):
         return skipIf(True, reason, warn)
     return skipIf(False)
 
-def skip_on_access_denied(fun):
+def skip_on_access_denied(only_if=None):
     """Decorator to Ignore AccessDenied exceptions."""
-    @functools.wraps(fun)
-    def wrapper(*args, **kwargs):
-        try:
-            return fun(*args, **kwargs)
-        except psutil.AccessDenied:
-            warn("%r was skipped because it raised AccessDenied" \
-                 % fun.__name__)
-    return wrapper
+    def decorator(fun):
+        @functools.wraps(fun)
+        def wrapper(*args, **kwargs):
+            try:
+                return fun(*args, **kwargs)
+            except psutil.AccessDenied:
+                if only_if is not None:
+                    if not only_if:
+                        raise
+                atexit.register(warn, "%r was skipped because it raised " \
+                                      "AccessDenied" % fun.__name__)
+        return wrapper
+    return decorator
+
 
 def supports_ipv6():
     """Return True if IPv6 is supported on this platform."""
@@ -1226,6 +1232,7 @@ class TestCase(unittest.TestCase):
         fileobj.close()
         self.assertTrue(fileobj.name not in p.get_open_files())
 
+    @skip_on_access_denied(only_if=BSD)
     def test_get_connections(self):
         arg = "import socket, time;" \
               "s = socket.socket();" \
@@ -1263,6 +1270,7 @@ class TestCase(unittest.TestCase):
         self.assertRaises(ValueError, p.get_connections, 'foo')
 
     @skipUnless(supports_ipv6())
+    @skip_on_access_denied(only_if=BSD)
     def test_get_connections_ipv6(self):
         s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         s.bind(('::1', 0))
@@ -1273,6 +1281,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(cons[0].local_address[0], '::1')
 
     @skipUnless(hasattr(socket, 'AF_UNIX'))
+    @skip_on_access_denied(only_if=BSD)
     def test_get_connections_unix(self):
         # tcp
         safe_remove(TESTFN)
@@ -1295,6 +1304,7 @@ class TestCase(unittest.TestCase):
         sock.close()
 
     @skipUnless(hasattr(socket, "fromfd") and not WINDOWS)
+    @skip_on_access_denied(only_if=BSD)
     def test_connection_fromfd(self):
         sock = socket.socket()
         sock.bind(('localhost', 0))
@@ -1314,6 +1324,7 @@ class TestCase(unittest.TestCase):
             sock.close()
             dupsock.close()
 
+    @skip_on_access_denied(only_if=BSD)
     def test_get_connections_all(self):
         tcp_template = "import socket;" \
                        "s = socket.socket($family, socket.SOCK_STREAM);" \
