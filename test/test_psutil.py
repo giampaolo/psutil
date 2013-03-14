@@ -29,6 +29,7 @@ import tempfile
 import stat
 import collections
 import datetime
+import functools
 
 import psutil
 from psutil._compat import PY3, callable, long
@@ -213,16 +214,16 @@ def skipUnless(condition, reason="", warn=False):
         return skipIf(True, reason, warn)
     return skipIf(False)
 
-def ignore_access_denied(fun):
+def skip_on_access_denied(fun):
     """Decorator to Ignore AccessDenied exceptions."""
-    def outer(fun, *args, **kwargs):
-        def inner(self):
-            try:
-                return fun(self, *args, **kwargs)
-            except psutil.AccessDenied:
-                pass
-        return inner
-    return outer
+    @functools.wraps(fun)
+    def wrapper(*args, **kwargs):
+        try:
+            return fun(*args, **kwargs)
+        except psutil.AccessDenied:
+            warn("%r was skipped because it raised AccessDenied" \
+                 % fun.__name__)
+    return wrapper
 
 def supports_ipv6():
     """Return True if IPv6 is supported on this platform."""
