@@ -34,4 +34,3 @@ AccessDenied(void) {
     Py_XDECREF(exc);
     return NULL;
 }
-

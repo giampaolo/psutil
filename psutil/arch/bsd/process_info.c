@@ -265,3 +265,17 @@ pid_exists(long pid)
     // otherwise return 0 for PID not found
     return 0;
 }
+
+
+/*
+ * Set exception to AccessDenied if pid exists else NoSuchProcess.
+ */
+int
+psutil_raise_ad_or_nsp(pid) {
+    if (pid_exists(pid) == 0) {
+        NoSuchProcess();
+    }
+    else {
+        AccessDenied();
+    }
+}

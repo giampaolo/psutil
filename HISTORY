@@ -48,6 +48,8 @@ BUG FIXES
          process.
  * #365: Process.set_nice() should check PID has not been reused by another
          process.
+ * #366: [FreeBSD] get_memory_maps(), get_num_fds(), get_open_files() and
+         getcwd() Process methods raise RuntimeError instead of AccessDenied.
 
 API CHANGES
 
