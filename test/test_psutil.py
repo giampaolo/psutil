@@ -46,7 +46,7 @@ BSD = sys.platform.startswith("freebsd")
 
 _subprocesses_started = set()
 
-def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=None,
+def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=DEVNULL,
                         wait=False):
     """Return a subprocess.Popen object to use in tests.
     By default stdout and stderr are redirected to /dev/null and the
@@ -1064,8 +1064,9 @@ class TestCase(unittest.TestCase):
 
     def test_name(self):
         sproc = get_test_subprocess(PYTHON, wait=True)
+        name = psutil.Process(sproc.pid).name.lower()
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
-        self.assertEqual(psutil.Process(sproc.pid).name.lower(), pyexe)
+        assert pyexe.startswith(name), (pyexe, name)
 
     if os.name == 'posix':
 
