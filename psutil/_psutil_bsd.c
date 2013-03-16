@@ -944,7 +944,7 @@ get_process_connections(PyObject* self, PyObject* args)
 
     kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, buf);
     if (kd == NULL) {
-        AccessDenied();
+        psutil_raise_ad_or_nsp();
         goto error;
     }
 
