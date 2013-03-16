@@ -133,7 +133,6 @@ class Process(object):
          - send_signal()
          - terminate()
          - kill()
-         - wait()
 
         To prevent this problem for all other methods you can:
           - use is_running() before querying the process
@@ -782,16 +781,9 @@ class Process(object):
     def wait(self, timeout=None):
         """Wait for process to terminate and, if process is a children
         of the current one also return its exit code, else None.
-        On UNIX it first makes sure this process PID has not been reused by
-        another process in which case returns immediately.
         """
         if timeout is not None and not timeout >= 0:
             raise ValueError("timeout must be a positive integer")
-        # cannot check PID reuse on Windows as we're able to determine
-        # exit code also from a dead process
-        if os.name == 'posix':
-            if not self.is_running():
-                return
         return self._platform_impl.process_wait(timeout)
 
     # --- deprecated API

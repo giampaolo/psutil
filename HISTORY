@@ -44,8 +44,6 @@ BUG FIXES
  * #353: [OSX] get_users() returns an empty list on OSX 10.8.
  * #356: Process.parent now checks whether parent PID has been reused in which
          case returns None.
- * #365: [UNIX] Process.wait() should check PID has not been reused by another
-         process.
  * #365: Process.set_nice() should check PID has not been reused by another
          process.
  * #366: [FreeBSD] get_memory_maps(), get_num_fds(), get_open_files() and
