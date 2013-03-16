@@ -69,7 +69,7 @@
  * Utility function which fills a kinfo_proc struct based on process pid
  */
 static int
-get_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
+psutil_get_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
 {
     int mib[4];
     size_t size;
@@ -174,7 +174,7 @@ get_process_name(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("s", kp.ki_comm);
@@ -258,7 +258,7 @@ get_process_ppid(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("l", (long)kp.ki_ppid);
@@ -276,7 +276,7 @@ get_process_status(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("i", (int)kp.ki_stat);
@@ -295,7 +295,7 @@ get_process_uids(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("lll", (long)kp.ki_ruid,
@@ -316,7 +316,7 @@ get_process_gids(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("lll", (long)kp.ki_rgid,
@@ -337,7 +337,7 @@ get_process_tty_nr(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("i", kp.ki_tdev);
@@ -355,7 +355,7 @@ get_process_num_ctx_switches(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("(ll)", kp.ki_rusage.ru_nvcsw,
@@ -375,7 +375,7 @@ get_process_num_threads(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("l", (long)kp.ki_numthreads);
@@ -478,7 +478,7 @@ get_process_cpu_times(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     // convert from microseconds to seconds
@@ -523,7 +523,7 @@ get_process_create_time(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("d", TV2DOUBLE(kp.ki_start));
@@ -542,7 +542,7 @@ get_process_io_counters(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     // there's apparently no way to determine bytes count, hence return -1.
@@ -563,7 +563,7 @@ get_process_memory_info(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("(lllll)", ptoa(kp.ki_rssize),    // rss
@@ -725,7 +725,7 @@ get_process_open_files(PyObject* self, PyObject* args)
         return NULL;
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
-    if (get_kinfo_proc(pid, &kipp) == -1)
+    if (psutil_get_kinfo_proc(pid, &kipp) == -1)
         goto error;
 
     freep = kinfo_getfile(pid, &cnt);
@@ -773,7 +773,7 @@ get_process_num_fds(PyObject* self, PyObject* args)
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (get_kinfo_proc(pid, &kipp) == -1)
+    if (psutil_get_kinfo_proc(pid, &kipp) == -1)
         return NULL;
 
     freep = kinfo_getfile(pid, &cnt);
@@ -803,7 +803,7 @@ get_process_cwd(PyObject* self, PyObject* args)
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
-    if (get_kinfo_proc(pid, &kipp) == -1)
+    if (psutil_get_kinfo_proc(pid, &kipp) == -1)
         goto error;
 
     freep = kinfo_getfile(pid, &cnt);
@@ -1249,7 +1249,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         goto error;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         goto error;
     }
 
