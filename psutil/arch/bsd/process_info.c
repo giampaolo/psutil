@@ -133,7 +133,8 @@ char
 
     path = malloc(size);
     if (path == NULL) {
-        return PyErr_NoMemory();
+        PyErr_NoMemory();
+        return NULL;
     }
 
     *pathsize = size;
@@ -177,7 +178,8 @@ char
     /* Allocate space for the arguments. */
     procargs = (char *)malloc(argmax);
     if (procargs == NULL) {
-        return PyErr_NoMemory();
+        PyErr_NoMemory();
+        return NULL;
     }
 
     /*
