@@ -14,6 +14,7 @@
 // error, see:
 // http://sourceware.org/ml/gdb-patches/2010-11/msg00336.html
 #undef _FILE_OFFSET_BITS
+#define _STRUCTURED_PROC 1
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -22,8 +23,8 @@
 #include <sys/sysinfo.h>
 #include <sys/mntent.h>  // for MNTTAB
 #include <sys/mnttab.h>
+#include <sys/procfs.h>
 #include <fcntl.h>
-#include <procfs.h>
 #include <utmpx.h>
 #include <kstat.h>
 
@@ -44,18 +45,18 @@ _fill_struct_from_file(char *path, void *fstruct, size_t size)
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        return 0;
 	}
 	nbytes = read(fd, fstruct, size);
-	if (nbytes == 1) {
+	if (nbytes <= 0) {
     	close(fd);
         PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        return 0;
 	}
 	if (nbytes != size) {
     	close(fd);
         PyErr_SetString(PyExc_RuntimeError, "structure size mismatch");
-        return NULL;
+        return 0;
 	}
 	close(fd);
     return nbytes;
