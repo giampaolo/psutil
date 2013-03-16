@@ -11,9 +11,8 @@
 
 typedef struct kinfo_proc kinfo_proc;
 
-int get_proc_list(struct kinfo_proc **procList, size_t *procCount);
-char *getcmdargs(long pid, size_t *argsize);
-char *getcmdpath(long pid, size_t *pathsize);
-PyObject* get_arg_list(long pid);
-int pid_exists(long pid);
-
+int  psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount);
+char *psutil_get_cmd_args(long pid, size_t *argsize);
+char *psutil_get_cmd_path(long pid, size_t *pathsize);
+int  psutil_pid_exists(long pid);
+PyObject* psutil_get_arg_list(long pid);

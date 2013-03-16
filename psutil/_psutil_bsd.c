@@ -112,7 +112,7 @@ get_pid_list(PyObject* self, PyObject* args)
     if (retlist == NULL) {
         return NULL;
     }
-    if (get_proc_list(&proclist, &num_processes) != 0) {
+    if (psutil_get_proc_list(&proclist, &num_processes) != 0) {
         PyErr_SetString(PyExc_RuntimeError, "failed to retrieve process list.");
         goto error;
     }
@@ -211,7 +211,7 @@ get_process_exe(PyObject* self, PyObject* args)
         return NULL;
     }
     if (size == 0 || strlen(pathname) == 0) {
-        if (pid_exists(pid) == 0) {
+        if (psutil_pid_exists(pid) == 0) {
             return NoSuchProcess();
         }
         else {
@@ -236,9 +236,9 @@ get_process_cmdline(PyObject* self, PyObject* args)
     }
 
     // get the commandline, defined in arch/bsd/process_info.c
-    arglist = get_arg_list(pid);
+    arglist = psutil_get_arg_list(pid);
 
-    // get_arg_list() returns NULL only if getcmdargs failed with ESRCH
+    // psutil_get_arg_list() returns NULL only if psutil_get_cmd_args failed with ESRCH
     // (no process with that PID)
     if (NULL == arglist) {
         return PyErr_SetFromErrno(PyExc_OSError);
