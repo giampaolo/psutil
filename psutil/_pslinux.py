@@ -32,8 +32,8 @@ __extra__all__ = [
     "phymem_buffers", "cached_phymem"]
 
 
-def _get_boot_time():
-    """Return system boot time (epoch in seconds)"""
+def get_system_boot_time():
+    """Return the system boot time expressed in seconds since the epoch."""
     f = open('/proc/stat', 'r')
     try:
         for line in f:
@@ -88,7 +88,7 @@ _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 # we'll crash later as they're used for determining process CPU stats
 # and creation_time
 try:
-    BOOT_TIME = _get_boot_time()
+    BOOT_TIME = get_system_boot_time()
 except Exception:
     BOOT_TIME = None
     warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)

@@ -34,7 +34,7 @@ __all__ = [
     "cpu_times", "cpu_percent", "per_cpu_percent",                  # cpu
     "network_io_counters",                                          # network
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
-    "get_users",                                                    # others
+    "get_users", "get_boot_time",                                   # others
     ]
 
 import sys
@@ -1103,6 +1103,8 @@ def network_io_counters(pernic=False):
 # =====================================================================
 # --- other system related functions
 # =====================================================================
+
+get_boot_time = _psplatform.get_system_boot_time  # also available as BOOT_TIME
 
 def get_users():
     """Return users currently connected on the system as a list of

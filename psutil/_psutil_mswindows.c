@@ -39,7 +39,7 @@
  * since the epoch.
  */
 static PyObject*
-get_system_uptime(PyObject* self, PyObject* args)
+get_system_boot_time(PyObject* self, PyObject* args)
 {
     double uptime;
     time_t pt;
@@ -338,7 +338,7 @@ get_process_create_time(PyObject* self, PyObject* args)
 
     // special case for PIDs 0 and 4, return BOOT_TIME
     if (0 == pid || 4 == pid) {
-        return get_system_uptime(NULL, NULL);
+        return get_system_boot_time(NULL, NULL);
     }
 
     hProcess = handle_from_pid(pid);
@@ -410,7 +410,7 @@ get_process_create_time_2(PyObject* self, PyObject* args)
     }
     // special case for PIDs 0 and 4, return BOOT_TIME
     if (0 == pid || 4 == pid) {
-        return get_system_uptime(NULL, NULL);
+        return get_system_boot_time(NULL, NULL);
     }
     /*
     Convert the LARGE_INTEGER union to a Unix time.
@@ -2957,8 +2957,8 @@ PsutilMethods[] =
         "Determine if the process exists in the current process list."},
     {"get_num_cpus", get_num_cpus, METH_VARARGS,
         "Returns the number of CPUs on the system"},
-    {"get_system_uptime", get_system_uptime, METH_VARARGS,
-        "Return system uptime"},
+    {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
+        "Return the system boot time expressed in seconds since the epoch."},
     {"get_virtual_mem", get_virtual_mem, METH_VARARGS,
         "Return the total amount of physical memory, in bytes"},
     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,

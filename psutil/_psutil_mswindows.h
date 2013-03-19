@@ -55,7 +55,7 @@ static PyObject* kill_process(PyObject* self, PyObject* args);
 
 static PyObject* get_pid_list(PyObject* self, PyObject* args);
 static PyObject* get_num_cpus(PyObject* self, PyObject* args);
-static PyObject* get_system_uptime(PyObject* self, PyObject* args);
+static PyObject* get_system_boot_time(PyObject* self, PyObject* args);
 static PyObject* get_virtual_mem(PyObject* self, PyObject* args);
 static PyObject* get_system_cpu_times(PyObject* self, PyObject* args);
 static PyObject* pid_exists(PyObject* self, PyObject* args);

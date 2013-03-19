@@ -322,11 +322,15 @@ class TestCase(unittest.TestCase):
         assert x > 0
         self.assertEqual(x, psutil.virtual_memory().total)
 
-    def test_BOOT_TIME(self):
-        x = psutil.BOOT_TIME
+    def test_BOOT_TIME(self, arg=None):
+        x = arg or psutil.BOOT_TIME
         assert isinstance(x, float)
         assert x > 0
         assert x < time.time(), x
+
+    def test_get_boot_time(self):
+        self.test_BOOT_TIME(psutil.get_boot_time())
+        self.assertEqual(psutil.get_boot_time(), psutil.BOOT_TIME)
 
     def test_NUM_CPUS(self):
         self.assertEqual(psutil.NUM_CPUS, len(psutil.cpu_times(percpu=True)))

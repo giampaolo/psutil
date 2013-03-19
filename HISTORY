@@ -6,6 +6,7 @@ Bug tracker at http://code.google.com/p/psutil/issues
 NEW FEATURES
 
  * #328: [Windows] process IO nice/priority support.
+ * #359: psutil.get_boot_time()
 
 BUG FIXES
 

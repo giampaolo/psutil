@@ -1748,8 +1748,7 @@ PsutilMethods[] =
          "Return system per-cpu times as a list of tuples"},
 #endif
      {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
-         "Return a float indicating the system boot time expressed in "
-         "seconds since the epoch"},
+         "Return the system boot time expressed in seconds since the epoch."},
      {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
          "Return a list of tuples including device, mount point and "
          "fs type for all partitions mounted on the system."},
