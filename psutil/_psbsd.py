@@ -40,7 +40,7 @@ except Exception:
     warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
 try:
     BOOT_TIME = _psutil_bsd.get_system_boot_time()
-except Exception, err:
+except Exception:
     BOOT_TIME = None
     warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
 

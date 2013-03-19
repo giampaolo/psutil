@@ -89,7 +89,7 @@ _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 # and creation_time
 try:
     BOOT_TIME = _get_boot_time()
-except Exception, err:
+except Exception:
     BOOT_TIME = None
     warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
 try:
