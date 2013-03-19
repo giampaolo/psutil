@@ -29,10 +29,12 @@ __all__ = [
     # classes
     "Process", "Popen",
     # functions
-    "test", "pid_exists", "get_pid_list", "process_iter", "get_process_list",
-    "virtual_memory", "swap_memory",
-    "cpu_times", "cpu_percent", "per_cpu_percent",
-    "network_io_counters", "disk_io_counters",
+    "pid_exists", "get_pid_list", "process_iter",                   # proc
+    "virtual_memory", "swap_memory",                                # memory
+    "cpu_times", "cpu_percent", "per_cpu_percent",                  # cpu
+    "network_io_counters",                                          # network
+    "disk_io_counters", "disk_partitions", "disk_usage",            # disk
+    "get_users",                                                    # others
     ]
 
 import sys

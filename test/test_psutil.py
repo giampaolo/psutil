@@ -1598,6 +1598,19 @@ class TestCase(unittest.TestCase):
         self.assertIn(0, psutil.get_pid_list())
         self.assertTrue(psutil.pid_exists(0))
 
+    def test__all__(self):
+        for name in dir(psutil):
+            if name in ('callable', 'defaultdict', 'error'):
+                continue
+            if not name.startswith('_'):
+                try:
+                    __import__(name)
+                except ImportError:
+                    if name not in psutil.__all__:
+                        fun = getattr(psutil, name)
+                        if 'deprecated' not in fun.__doc__.lower():
+                            self.fail('%r not in psutil.__all__' % name)
+
     def test_Popen(self):
         # Popen class test
         # XXX this test causes a ResourceWarning on Python 3 because
