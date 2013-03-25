@@ -7,6 +7,9 @@ NEW FEATURES
 
  * #328: [Windows] process IO nice/priority support.
  * #359: psutil.get_boot_time()
+ * #361: [Linux] psutil.cpu_times() now includes new 'steal', 'guest' and
+         'guest_nice' fields available on recent Linux kernels.
+         Also, psutil.cpu_percent() is more accurate.
 
 BUG FIXES
 

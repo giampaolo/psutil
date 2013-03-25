@@ -474,6 +474,8 @@ class TestCase(unittest.TestCase):
                 total += cp_time
             self.assertEqual(total, sum(times))
             str(times)
+        self.assertEqual(len(psutil.cpu_times(percpu=True)[0]),
+                         len(psutil.cpu_times(percpu=False)))
 
     def test_sys_per_cpu_times2(self):
         tot1 = psutil.cpu_times(percpu=True)

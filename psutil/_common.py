@@ -169,7 +169,6 @@ del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM, socket
 # --- namedtuples
 
 # system
-nt_sys_cputimes = namedtuple('cputimes', 'user nice system idle iowait irq softirq')
 nt_sysmeminfo = namedtuple('usage', 'total used free percent')
 # XXX - would 'available' be better than 'free' as for virtual_memory() nt?
 nt_swapmeminfo = namedtuple('swap', 'total used free percent sin sout')

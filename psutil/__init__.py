@@ -871,6 +871,9 @@ def cpu_times(percpu=False):
      - iowait (Linux)
      - irq (Linux, FreeBSD)
      - softirq (Linux)
+     - steal (Linux >= 2.6.11)
+     - guest (Linux >= 2.6.24)
+     - guest_nice (Linux >= 3.2.0)
 
     When percpu is True return a list of nameduples for each CPU.
     First element of the list refers to first CPU, second element

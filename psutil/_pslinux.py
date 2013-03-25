@@ -206,34 +206,65 @@ def phymem_buffers():
 
 # --- system CPU functions
 
+@memoize
+def _get_cputimes_ntuple():
+    """ Return a (nt, rindex) tuple depending on the CPU times available
+    on this Linux kernel version which may be:
+    user, nice, system, idle, iowait, irq, softirq [steal, [guest, [guest_nice]]]
+    """
+    f = open('/proc/stat', 'r')
+    try:
+        values = f.readline().split()[1:]
+    finally:
+        f.close()
+    fields = ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq']
+    rindex = 8
+    vlen = len(values)
+    if vlen >= 8:
+        # Linux >= 2.6.11
+        fields.append('steal')
+        rindex += 1
+    if vlen >= 9:
+        # Linux >= 2.6.24
+        fields.append('guest')
+        rindex += 1
+    if vlen >= 10:
+        # Linux >= 3.2.0
+        fields.append('guest_nice')
+        rindex += 1
+    return (namedtuple('cputimes', ' '.join(fields)), rindex)
+
 def get_system_cpu_times():
-    """Return a named tuple representing the following CPU times:
-    user, nice, system, idle, iowait, irq, softirq.
+    """Return a named tuple representing the following system-wide
+    CPU times:
+    user, nice, system, idle, iowait, irq, softirq [steal, [guest, [guest_nice]]]
+    Last 3 fields may not be available on all Linux kernel versions.
     """
     f = open('/proc/stat', 'r')
     try:
         values = f.readline().split()
     finally:
         f.close()
-
-    values = values[1:8]
-    values = tuple([float(x) / _CLOCK_TICKS for x in values])
-    return nt_sys_cputimes(*values[:7])
+    nt, rindex = _get_cputimes_ntuple()
+    fields = values[1:rindex]
+    fields = [float(x) / _CLOCK_TICKS for x in fields]
+    return nt(*fields)
 
 def get_system_per_cpu_times():
     """Return a list of namedtuple representing the CPU times
     for every CPU available on the system.
     """
+    nt, rindex = _get_cputimes_ntuple()
     cpus = []
     f = open('/proc/stat', 'r')
-    # get rid of the first line who refers to system wide CPU stats
     try:
+        # get rid of the first line which refers to system wide CPU stats
         f.readline()
-        for line in f.readlines():
+        for line in f:
             if line.startswith('cpu'):
-                values = line.split()[1:8]
-                values = tuple([float(x) / _CLOCK_TICKS for x in values])
-                entry = nt_sys_cputimes(*values[:7])
+                fields = line.split()[1:rindex]
+                fields = [float(x) / _CLOCK_TICKS for x in fields]
+                entry = nt(*fields)
                 cpus.append(entry)
         return cpus
     finally:

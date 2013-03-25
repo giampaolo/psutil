@@ -14,6 +14,7 @@ import subprocess
 import sys
 import time
 import os
+import re
 
 from test_psutil import sh, get_test_subprocess
 from psutil._compat import PY3
@@ -114,6 +115,26 @@ class LinuxSpecificTestCase(unittest.TestCase):
         lines = sh('free').split('\n')[1:]
         free = int(lines[2].split()[3]) * 1024
         self.assert_eq_w_tol(free, psutil.swap_memory().free, TOLERANCE)
+
+    def test_cpu_times(self):
+        fields = psutil.cpu_times()._fields
+        kernel_ver = re.findall('\d.\d.\d', os.uname()[2])[0]
+        kernel_ver_info = tuple(map(int, kernel_ver.split('.')))
+        # steal >= 2.6.11
+        # guest >= 2.6.24
+        # guest_nice >= 3.2.0
+        if kernel_ver_info >= (2, 6, 11):
+            assert 'steal' in fields, fields
+        else:
+            assert 'steal' not in fields, fields
+        if kernel_ver_info >= (2, 6, 24):
+            assert 'guest' in fields, fields
+        else:
+            assert 'guest' not in fields, fields
+        if kernel_ver_info >= (3, 2, 0):
+            assert 'guest_nice' in fields, fields
+        else:
+            assert 'guest_nice' not in fields, fields
 
 
 if __name__ == '__main__':
