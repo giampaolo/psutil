@@ -5,6 +5,7 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 BUG FIXES:
 
+ * #370: [BSD] Process.get_connections() requires root.  (patch by bsdknife)
  * #372: [BSD] different process methods raise NoSuchProcess instead of
          AccessDenied.
 

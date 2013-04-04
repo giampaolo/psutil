@@ -6,6 +6,7 @@
  * FreeBSD platform-specific module methods for _psutil_bsd
  */
 
+
 #include <Python.h>
 #include <assert.h>
 #include <errno.h>
@@ -23,19 +24,13 @@
 #include <net/route.h>
 
 #include <sys/socket.h>
-#include <sys/socketvar.h>    /* for struct socket */
-#include <sys/protosw.h>      /* for struct proto */
-#include <sys/domain.h>       /* for struct domain */
-
-#include <sys/un.h>           /* for unpcb struct (UNIX sockets) */
-#include <sys/unpcb.h>        /* for unpcb struct (UNIX sockets) */
-#include <sys/mbuf.h>         /* for mbuf struct (UNIX sockets) */
-/* for in_pcb struct */
+#include <sys/socketvar.h>    /* for struct xsocket */
+/* for xinpcb struct */
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
-#include <netinet/tcp_var.h>   /* for struct tcpcb */
+#include <netinet/tcp_var.h>   /* for struct xtcpcb */
 #include <netinet/tcp_fsm.h>   /* for TCP connection states */
 #include <arpa/inet.h>         /* for inet_ntop() */
 
@@ -581,10 +576,10 @@ static PyObject*
 get_virtual_mem(PyObject* self, PyObject* args)
 {
     unsigned int   total, active, inactive, wired, cached, free, buffers;
-    size_t		   size = sizeof(total);
-	struct vmtotal vm;
-	int            mib[] = {CTL_VM, VM_METER};
-	long           pagesize = getpagesize();
+    size_t         size = sizeof(total);
+    struct vmtotal vm;
+    int            mib[] = {CTL_VM, VM_METER};
+    long           pagesize = getpagesize();
 
     if (sysctlbyname("vm.stats.vm.v_page_count", &total, &size, NULL, 0))
         goto error;
@@ -874,53 +869,138 @@ get_connection_status(int st) {
     }
 }
 
-// a kvm_read that returns true if everything is read
-#define KVM_READ(kaddr, paddr, len) \
-    ((len) < SSIZE_MAX && \
-    kvm_read(kd, (u_long)(kaddr), (char *)(paddr), (len)) == (ssize_t)(len))
+/* The tcplist fetching and walking is borrowed from netstat/inet.c. */
+static char *
+psutil_fetch_tcplist(void)
+{
+    char *buf;
+    size_t len;
+    int error;
 
-// XXX - copied from sys/file.h to make compiler happy
-struct file {
-    void        *f_data;    /* file descriptor specific data */
-    struct fileops  *f_ops;     /* File operations */
-    struct ucred    *f_cred;    /* associated credentials. */
-    struct vnode    *f_vnode;   /* NULL or applicable vnode */
-    short       f_type;     /* descriptor type */
-    short       f_vnread_flags; /* (f) Sleep lock for f_offset */
-    volatile u_int  f_flag;     /* see fcntl.h */
-    volatile u_int  f_count;    /* reference count */
-    int     f_seqcount; /* Count of sequential accesses. */
-    off_t       f_nextoff;  /* next expected read/write offset. */
-    struct cdev_privdata *f_cdevpriv; /* (d) Private data for the cdev. */
-    off_t       f_offset;
-    void        *f_label;   /* Place-holder for MAC label. */
-};
+    for (;;) {
+        if (sysctlbyname("net.inet.tcp.pcblist", NULL, &len, NULL, 0) < 0) {
+            PyErr_SetFromErrno(0);
+            return NULL;
+        }
+        buf = malloc(len);
+        if (buf == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+        if (sysctlbyname("net.inet.tcp.pcblist", buf, &len, NULL, 0) < 0) {
+            free(buf);
+            PyErr_SetFromErrno(0);
+            return NULL;
+        }
+        return buf;
+    }
+}
 
+static int
+psutil_sockaddr_port(int family, struct sockaddr_storage *ss)
+{
+    struct sockaddr_in6 *sin6;
+    struct sockaddr_in *sin;
+
+    if (family == AF_INET) {
+        sin = (struct sockaddr_in *)ss;
+        return (sin->sin_port);
+    } else {
+        sin6 = (struct sockaddr_in6 *)ss;
+        return (sin6->sin6_port);
+    }
+}
+
+static void *
+psutil_sockaddr_addr(int family, struct sockaddr_storage *ss)
+{
+    struct sockaddr_in6 *sin6;
+    struct sockaddr_in *sin;
+
+    if (family == AF_INET) {
+        sin = (struct sockaddr_in *)ss;
+        return (&sin->sin_addr);
+    } else {
+        sin6 = (struct sockaddr_in6 *)ss;
+        return (&sin6->sin6_addr);
+    }
+}
+
+static socklen_t
+psutil_sockaddr_addrlen(int family)
+{
+    if (family == AF_INET)
+        return (sizeof(struct in_addr));
+    else
+        return (sizeof(struct in6_addr));
+}
+
+static int
+psutil_sockaddr_matches(int family, int port, void *pcb_addr,
+                        struct sockaddr_storage *ss)
+{
+    if (psutil_sockaddr_port(family, ss) != port)
+        return (0);
+    return (memcmp(psutil_sockaddr_addr(family, ss), pcb_addr,
+        psutil_sockaddr_addrlen(family)) == 0);
+}
+
+static struct tcpcb *
+psutil_search_tcplist(char *buf, struct kinfo_file *kif)
+{
+    struct tcpcb *tp;
+    struct inpcb *inp;
+    struct xinpgen *xig, *oxig;
+    struct xsocket *so;
+
+    oxig = xig = (struct xinpgen *)buf;
+    for (xig = (struct xinpgen *)((char *)xig + xig->xig_len);
+         xig->xig_len > sizeof(struct xinpgen);
+         xig = (struct xinpgen *)((char *)xig + xig->xig_len)) {
+        tp = &((struct xtcpcb *)xig)->xt_tp;
+        inp = &((struct xtcpcb *)xig)->xt_inp;
+        so = &((struct xtcpcb *)xig)->xt_socket;
+
+        if (so->so_type != kif->kf_sock_type ||
+            so->xso_family != kif->kf_sock_domain ||
+            so->xso_protocol != kif->kf_sock_protocol)
+                continue;
+
+        if (kif->kf_sock_domain == AF_INET) {
+            if (!psutil_sockaddr_matches(AF_INET, inp->inp_lport, &inp->inp_laddr,
+                &kif->kf_sa_local))
+                continue;
+            if (!psutil_sockaddr_matches(AF_INET, inp->inp_fport, &inp->inp_faddr,
+                &kif->kf_sa_peer))
+                continue;
+        } else {
+            if (!psutil_sockaddr_matches(AF_INET6, inp->inp_lport, &inp->in6p_laddr,
+                &kif->kf_sa_local))
+                continue;
+            if (!psutil_sockaddr_matches(AF_INET6, inp->inp_fport, &inp->in6p_faddr,
+                &kif->kf_sa_peer))
+                continue;
+        }
+
+        return (tp);
+    }
+    return NULL;
+}
 
 /*
  * Return connections opened by process.
- * fstat.c source code was used as an example.
  */
 static PyObject*
 get_process_connections(PyObject* self, PyObject* args)
 {
     long pid;
-    struct kinfo_proc *p;
-    struct file **ofiles = NULL;
-    char buf[_POSIX2_LINE_MAX];
-    char path[PATH_MAX];
-    int cnt;
-    int i;
-    kvm_t *kd = NULL;
-    struct file file;
-    struct filedesc filed;
-    struct nlist nl[] = {{ "" },};
-    struct socket   so;
-    struct protosw  proto;
-    struct domain   dom;
-    struct inpcb    inpcb;
-    struct tcpcb    tcpcb;
-    struct unpcb    unpcb;
+    int i, cnt;
+
+    struct kinfo_file *freep = NULL;
+    struct kinfo_file *kif;
+    struct kinfo_proc kipp;
+    char *tcplist = NULL;
+    struct tcpcb *tcp;
 
     PyObject *retList = PyList_New(0);
     PyObject *tuple = NULL;
@@ -942,88 +1022,43 @@ get_process_connections(PyObject* self, PyObject* args)
         goto error;
     }
 
-    kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, buf);
-    if (kd == NULL) {
+    if (psutil_get_kinfo_proc(pid, &kipp) == -1) {
+        goto error;
+    }
+
+    freep = kinfo_getfile(pid, &cnt);
+    if (freep == NULL) {
         psutil_raise_ad_or_nsp(pid);
         goto error;
     }
 
-    if (kvm_nlist(kd, nl) != 0) {
-        PyErr_SetString(PyExc_RuntimeError, "kvm_nlist() failed");
+    tcplist = psutil_fetch_tcplist();
+    if (tcplist == NULL) {
+        PyErr_SetFromErrno(0);
         goto error;
     }
 
-    p = kvm_getprocs(kd, KERN_PROC_PID, pid, &cnt);
-    if (p == NULL) {
-        NoSuchProcess();
-        goto error;
-    }
-    if (cnt != 1) {
-        NoSuchProcess();
-        goto error;
-    }
-    if (p->ki_fd == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "no usable fd found");
-        goto error;
-    }
-    if (!KVM_READ(p->ki_fd, &filed, sizeof(filed))) {
-        PyErr_SetString(PyExc_RuntimeError, "kvm_read() failed");
-        goto error;
-    }
-
-    ofiles = malloc((filed.fd_lastfile+1) * sizeof(struct file *));
-    if (ofiles == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    if (!KVM_READ(filed.fd_ofiles, ofiles,
-                  (filed.fd_lastfile+1) * sizeof(struct file *))) {
-        PyErr_SetString(PyExc_RuntimeError, "kvm_read() failed");
-        goto error;
-    }
-
-    for (i = 0; i <= filed.fd_lastfile; i++) {
+    for (i = 0; i < cnt; i++) {
         int lport, rport;
         char lip[200], rip[200];
+        char path[PATH_MAX];
         char *state;
         int inseq;
         tuple = NULL;
         laddr = NULL;
         raddr = NULL;
 
-        if (ofiles[i] == NULL) {
-            continue;
-        }
-        if (!KVM_READ(ofiles[i], &file, sizeof (struct file))) {
-            PyErr_SetString(PyExc_RuntimeError, "kvm_read() file failed");
-            goto error;
-        }
-        if (file.f_type == DTYPE_SOCKET) {
-            // fill in socket
-            if (!KVM_READ(file.f_data, &so, sizeof(struct socket))) {
-                PyErr_SetString(PyExc_RuntimeError, "kvm_read() socket failed");
-                goto error;
-            }
-            // fill in protosw entry
-            if (!KVM_READ(so.so_proto, &proto, sizeof(struct protosw))) {
-                PyErr_SetString(PyExc_RuntimeError, "kvm_read() proto failed");
-                goto error;
-            }
-            // fill in domain
-            if (!KVM_READ(proto.pr_domain, &dom, sizeof(struct domain))) {
-                PyErr_SetString(PyExc_RuntimeError, "kvm_read() domain failed");
-                goto error;
-            }
-
+        kif = &freep[i];
+        if (kif->kf_type == KF_TYPE_SOCKET)
+        {
             // apply filters
-            _family = PyLong_FromLong((long)dom.dom_family);
+            _family = PyLong_FromLong((long)kif->kf_sock_domain);
             inseq = PySequence_Contains(af_filter, _family);
             Py_DECREF(_family);
             if (inseq == 0) {
                 continue;
             }
-            _type = PyLong_FromLong((long)proto.pr_type);
+            _type = PyLong_FromLong((long)kif->kf_sock_type);
             inseq = PySequence_Contains(type_filter, _type);
             Py_DECREF(_type);
             if (inseq == 0) {
@@ -1031,40 +1066,29 @@ get_process_connections(PyObject* self, PyObject* args)
             }
 
             // IPv4 / IPv6 socket
-            if ((dom.dom_family == AF_INET) || (dom.dom_family == AF_INET6)) {
-                // fill inpcb
-                if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
-                             sizeof(struct inpcb)) != sizeof(struct inpcb)) {
-                    PyErr_SetString(PyExc_RuntimeError, "kvm_read() addr failed");
-                    goto error;
-                }
-
+            if ((kif->kf_sock_domain == AF_INET) ||
+                (kif->kf_sock_domain == AF_INET6)) {
                 // fill status
-                if (proto.pr_type == SOCK_STREAM) {
-                    if (kvm_read(kd, (u_long)inpcb.inp_ppcb, (char *)&tcpcb,
-                                 sizeof(struct tcpcb)) != sizeof(struct tcpcb)) {
-                        PyErr_SetString(PyExc_RuntimeError, "kvm_read() state failed");
-                        goto error;
-                    }
-                    state = get_connection_status((int)tcpcb.t_state);
-                }
-                else {
-                    state = "";
+                state = "";
+                if (kif->kf_sock_type == SOCK_STREAM) {
+                    tcp = psutil_search_tcplist(tcplist, kif);
+                    if (tcp != NULL)
+                        state = get_connection_status((int)tcp->t_state);
                 }
 
                 // build addr and port
-                if (dom.dom_family == AF_INET) {
-                    inet_ntop(AF_INET, &inpcb.inp_laddr.s_addr, lip, sizeof(lip));
-                    inet_ntop(AF_INET, &inpcb.inp_faddr.s_addr, rip, sizeof(rip));
-                }
-                else {
-                    inet_ntop(AF_INET6, &inpcb.in6p_laddr.s6_addr, lip, sizeof(lip));
-                    inet_ntop(AF_INET6, &inpcb.in6p_faddr.s6_addr, rip, sizeof(rip));
-                }
-                lport = ntohs(inpcb.inp_lport);
-                rport = ntohs(inpcb.inp_fport);
+                inet_ntop(kif->kf_sock_domain,
+                    psutil_sockaddr_addr(kif->kf_sock_domain, &kif->kf_sa_local),
+                    lip, sizeof(lip));
+                inet_ntop(kif->kf_sock_domain,
+                    psutil_sockaddr_addr(kif->kf_sock_domain, &kif->kf_sa_peer),
+                    rip, sizeof(rip));
+                lport = htons(psutil_sockaddr_port(kif->kf_sock_domain,
+                                                   &kif->kf_sa_local));
+                rport = htons(psutil_sockaddr_port(kif->kf_sock_domain,
+                                                   &kif->kf_sa_peer));
 
-                // contruct python tuple/list
+                // construct python tuple/list
                 laddr = Py_BuildValue("(si)", lip, lport);
                 if (!laddr)
                     goto error;
@@ -1076,9 +1100,9 @@ get_process_connections(PyObject* self, PyObject* args)
                 }
                 if (!raddr)
                     goto error;
-                tuple = Py_BuildValue("(iiiNNs)", i,
-                                                  dom.dom_family,
-                                                  proto.pr_type,
+                tuple = Py_BuildValue("(iiiNNs)", kif->kf_fd,
+                                                  kif->kf_sock_domain,
+                                                  kif->kf_sock_type,
                                                   laddr,
                                                   raddr,
                                                   state);
@@ -1089,30 +1113,17 @@ get_process_connections(PyObject* self, PyObject* args)
                 Py_DECREF(tuple);
             }
             // UNIX socket
-            else if (dom.dom_family == AF_UNIX) {
-                struct sockaddr_un sun;
-                path[0] = '\0';
+            else if (kif->kf_sock_domain == AF_UNIX) {
+                struct sockaddr_un *sun;
 
-                if (kvm_read(kd, (u_long)so.so_pcb, (char *)&unpcb,
-                             sizeof(struct unpcb)) != sizeof(struct unpcb)) {
-                    PyErr_SetString(PyExc_RuntimeError, "kvm_read() unpcb failed");
-                    goto error;
-                }
-                if (unpcb.unp_addr) {
-                    if (kvm_read(kd, (u_long)unpcb.unp_addr, (char *)&sun,
-                                 sizeof(sun)) != sizeof(sun)) {
-                        PyErr_SetString(PyExc_RuntimeError,
-                                        "kvm_read() sockaddr_un failed");
-                        goto error;
-                    }
-                    sprintf(path, "%.*s",
-                            (sun.sun_len - (sizeof(sun) - sizeof(sun.sun_path))),
-                             sun.sun_path);
-                }
+                sun = (struct sockaddr_un *)&kif->kf_sa_local;
+                snprintf(path, sizeof(path), "%.*s",
+                        (sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
+                         sun->sun_path);
 
-                tuple = Py_BuildValue("(iiisOs)", i,
-                                                  dom.dom_family,
-                                                  proto.pr_type,
+                tuple = Py_BuildValue("(iiisOs)", kif->kf_fd,
+                                                  kif->kf_sock_domain,
+                                                  kif->kf_sock_type,
                                                   path,
                                                   Py_None,
                                                   "");
@@ -1125,9 +1136,8 @@ get_process_connections(PyObject* self, PyObject* args)
             }
         }
     }
-
-    free(ofiles);
-    kvm_close(kd);
+    free(freep);
+    free(tcplist);
     return retList;
 
 error:
@@ -1135,13 +1145,10 @@ error:
     Py_XDECREF(laddr);
     Py_XDECREF(raddr);
     Py_DECREF(retList);
-
-    if (kd != NULL) {
-        kvm_close(kd);
-    }
-    if (ofiles != NULL) {
-        free(ofiles);
-    }
+    if (freep != NULL)
+        free(freep);
+    if (tcplist != NULL)
+        free(tcplist);
     return NULL;
 }
 
