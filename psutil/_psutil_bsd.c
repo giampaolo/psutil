@@ -730,7 +730,7 @@ get_process_open_files(PyObject* self, PyObject* args)
 
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp();
+        psutil_raise_ad_or_nsp(pid);
         goto error;
     }
 
@@ -778,7 +778,7 @@ get_process_num_fds(PyObject* self, PyObject* args)
 
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp();
+        psutil_raise_ad_or_nsp(pid);
         return NULL;
     }
     free(freep);
@@ -808,7 +808,7 @@ get_process_cwd(PyObject* self, PyObject* args)
 
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp();
+        psutil_raise_ad_or_nsp(pid);
         goto error;
     }
 
@@ -944,7 +944,7 @@ get_process_connections(PyObject* self, PyObject* args)
 
     kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, buf);
     if (kd == NULL) {
-        psutil_raise_ad_or_nsp();
+        psutil_raise_ad_or_nsp(pid);
         goto error;
     }
 
@@ -1255,7 +1255,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
 
     freep = kinfo_getvmmap(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp();
+        psutil_raise_ad_or_nsp(pid);
         goto error;
     }
     for (i = 0; i < cnt; i++) {

@@ -1,5 +1,13 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+0.7.1 - XXXX-XX-XX
+------------------
+
+BUG FIXES:
+
+ * #372: [BSD] different process methods raise NoSuchProcess instead of
+         AccessDenied.
+
 0.7.0 - 2013-04-12
 ------------------
 
