@@ -5,6 +5,8 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 BUG FIXES:
 
+ * #325: [BSD] psutil.virtual_memory() can raise SystemError.
+         (patch by Jan Beich)
  * #370: [BSD] Process.get_connections() requires root.  (patch by John Baldwin)
  * #372: [BSD] different process methods raise NoSuchProcess instead of
          AccessDenied.

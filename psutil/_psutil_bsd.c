@@ -575,11 +575,17 @@ get_process_memory_info(PyObject* self, PyObject* args)
 static PyObject*
 get_virtual_mem(PyObject* self, PyObject* args)
 {
-    unsigned int   total, active, inactive, wired, cached, free, buffers;
+    unsigned int   total, active, inactive, wired, cached, free;
     size_t         size = sizeof(total);
     struct vmtotal vm;
     int            mib[] = {CTL_VM, VM_METER};
     long           pagesize = getpagesize();
+#if __FreeBSD_version > 702101
+    long buffers;
+#else
+    int buffers;
+#endif
+    size_t buffers_size = sizeof(buffers);
 
     if (sysctlbyname("vm.stats.vm.v_page_count", &total, &size, NULL, 0))
         goto error;
@@ -593,7 +599,7 @@ get_virtual_mem(PyObject* self, PyObject* args)
         goto error;
     if (sysctlbyname("vm.stats.vm.v_free_count", &free, &size, NULL, 0))
         goto error;
-    if (sysctlbyname("vfs.bufspace", &buffers, &size, NULL, 0))
+    if (sysctlbyname("vfs.bufspace", &buffers, &buffers_size, NULL, 0))
         goto error;
 
     size = sizeof(vm);
