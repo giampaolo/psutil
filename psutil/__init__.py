@@ -498,6 +498,17 @@ class Process(object):
         (non-blocking).
         In this case is recommended for accuracy that this function
         be called with at least 0.1 seconds between calls.
+
+        Examples:
+
+          >>> p = psutil.Process(os.getpid())
+          >>> # blocking
+          >>> p.get_cpu_percent(interval=1)
+          2.0
+          >>> # non-blocking (percentage since last call)
+          >>> p.get_cpu_percent(interval=0)
+          2.9
+          >>>
         """
         blocking = interval is not None and interval > 0.0
         if blocking:
@@ -905,6 +916,21 @@ def cpu_percent(interval=0.1, percpu=False):
     First element of the list refers to first CPU, second element
     to second CPU and so on.
     The order of the list is consistent across calls.
+
+    Examples:
+
+      >>> # blocking, system-wide
+      >>> psutil.cpu_percent(interval=1)
+      2.0
+      >>>
+      >>> # blocking, per-cpu
+      >>> psutil.cpu_percent(interval=1, percpu=True)
+      [2.0, 1.0]
+      >>>
+      >>> # non-blocking (percentage since last call)
+      >>> psutil.cpu_percent(interval=0)
+      2.9
+      >>>
     """
     global _last_cpu_times
     global _last_per_cpu_times
@@ -948,6 +974,7 @@ def cpu_percent(interval=0.1, percpu=False):
             ret.append(calculate(t1, t2))
         return ret
 
+
 # Use separate global vars for cpu_times_percent() so that it's
 # independent from cpu_percent() and they can both be used within
 # the same program.
@@ -957,10 +984,8 @@ _ptime_cpu_perc_nt = None
 
 def cpu_times_percent(interval=0.1, percpu=False):
     """Same as cpu_percent() but provides utilization percentages
-    for each specific CPU time.
-
-    The return value is a namedtuple containing the same fields
-    provided by cpu_times(). For instance, on Linux we'll get:
+    for each specific CPU time as is returned by cpu_times().
+    For instance, on Linux we'll get:
 
       >>> cpu_times_percent()
       cpupercent(user=4.8, nice=0.0, system=4.8, idle=90.5, iowait=0.0,
@@ -1010,7 +1035,6 @@ def cpu_times_percent(interval=0.1, percpu=False):
         for t1, t2 in zip(tot1, _last_per_cpu_times_2):
             ret.append(calculate(t1, t2))
         return ret
-
 
 # =====================================================================
 # --- system memory related functions

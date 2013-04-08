@@ -513,8 +513,7 @@ class TestCase(unittest.TestCase):
             cpu = psutil.cpu_times_percent(interval=None)
             for percent in cpu:
                 self._test_cpu_percent(percent)
-            # XXX probably redundant
-            self._test_cpu_percent(sum(cpu) - cpu.idle)
+            self._test_cpu_percent(sum(cpu))
 
     def test_sys_per_cpu_times_percent(self):
         self.assertEqual(len(psutil.cpu_times_percent(interval=0.001,
@@ -525,8 +524,7 @@ class TestCase(unittest.TestCase):
             for cpu in cpus:
                 for percent in cpu:
                     self._test_cpu_percent(percent)
-                # XXX probably redundant
-                self._test_cpu_percent(sum(cpu) - cpu.idle)
+                self._test_cpu_percent(sum(cpu))
 
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
