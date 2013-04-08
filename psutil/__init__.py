@@ -29,7 +29,7 @@ __all__ = [
     # functions
     "pid_exists", "get_pid_list", "process_iter",                   # proc
     "virtual_memory", "swap_memory",                                # memory
-    "cpu_times", "cpu_percent", "per_cpu_percent",                  # cpu
+    "cpu_times", "cpu_percent", "cpu_times_percent",                # cpu
     "network_io_counters",                                          # network
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
     "get_users", "get_boot_time",                                   # others
@@ -48,8 +48,9 @@ except ImportError:
     pwd = None
 
 from psutil.error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
-from psutil._compat import property, callable, defaultdict, PY3 as _PY3
 from psutil._common import cached_property
+from psutil._compat import (property, callable, defaultdict, namedtuple,
+                            PY3 as _PY3)
 from psutil._common import (deprecated as _deprecated,
                             nt_disk_iostat as _nt_disk_iostat,
                             nt_net_iostat as _nt_net_iostat,
@@ -946,6 +947,70 @@ def cpu_percent(interval=0.1, percpu=False):
         for t1, t2 in zip(tot1, _last_per_cpu_times):
             ret.append(calculate(t1, t2))
         return ret
+
+# Use separate global vars for cpu_times_percent() so that it's
+# independent from cpu_percent() and they can both be used within
+# the same program.
+_last_cpu_times_2 = _last_cpu_times
+_last_per_cpu_times_2 = _last_per_cpu_times
+_ptime_cpu_perc_nt = None
+
+def cpu_times_percent(interval=0.1, percpu=False):
+    """Same as cpu_percent() but provides utilization percentages
+    for each specific CPU time.
+
+    The return value is a namedtuple containing the same fields
+    provided by cpu_times(). For instance, on Linux we'll get:
+
+      >>> cpu_times_percent()
+      cpupercent(user=4.8, nice=0.0, system=4.8, idle=90.5, iowait=0.0,
+                 irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+      >>>
+
+    interval and percpu arguments have the same meaning as in
+    cpu_percent().
+    """
+    global _last_cpu_times_2
+    global _last_per_cpu_times_2
+    blocking = interval is not None and interval > 0.0
+
+    def calculate(t1, t2):
+        global _ptime_cpu_perc_nt
+        nums = []
+        all_delta = sum(t2) - sum(t1)
+        for field in t1._fields:
+            field_delta = getattr(t2, field) - getattr(t1, field)
+            try:
+                field_perc = (100 * field_delta) / all_delta
+            except ZeroDivisionError:
+                field_perc = 0.0
+            nums.append(round(field_perc, 1))
+        if _ptime_cpu_perc_nt is None:
+            _ptime_cpu_perc_nt = namedtuple('cpupercent', ' '.join(t1._fields))
+        return _ptime_cpu_perc_nt(*nums)
+
+    # system-wide usage
+    if not percpu:
+        if blocking:
+            t1 = cpu_times()
+            time.sleep(interval)
+        else:
+            t1 = _last_cpu_times_2
+        _last_cpu_times_2 = cpu_times()
+        return calculate(t1, _last_cpu_times_2)
+    # per-cpu usage
+    else:
+        ret = []
+        if blocking:
+            tot1 = cpu_times(percpu=True)
+            time.sleep(interval)
+        else:
+            tot1 = _last_per_cpu_times_2
+        _last_per_cpu_times_2 = cpu_times(percpu=True)
+        for t1, t2 in zip(tot1, _last_per_cpu_times_2):
+            ret.append(calculate(t1, t2))
+        return ret
+
 
 # =====================================================================
 # --- system memory related functions

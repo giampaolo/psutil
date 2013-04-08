@@ -489,24 +489,44 @@ class TestCase(unittest.TestCase):
                 return
         self.fail()
 
+    def _test_cpu_percent(self, percent):
+        assert isinstance(percent, float), percent
+        assert percent >= 0.0, percent
+        assert percent <= 100.0, percent
+
     def test_sys_cpu_percent(self):
         psutil.cpu_percent(interval=0.001)
-        psutil.cpu_percent(interval=0.001)
         for x in range(1000):
-            percent = psutil.cpu_percent(interval=None)
-            assert isinstance(percent, float)
-            assert percent >= 0.0, percent
-            assert percent <= 100.0, percent
+            self._test_cpu_percent(psutil.cpu_percent(interval=None))
 
     def test_sys_per_cpu_percent(self):
-        psutil.cpu_percent(interval=0.001, percpu=True)
-        psutil.cpu_percent(interval=0.001, percpu=True)
+        self.assertEqual(len(psutil.cpu_percent(interval=0.001, percpu=True)),
+                         psutil.NUM_CPUS)
         for x in range(1000):
             percents = psutil.cpu_percent(interval=None, percpu=True)
             for percent in percents:
-                assert isinstance(percent, float)
-                assert percent >= 0.0, percent
-                assert percent <= 100.0, percent
+                self._test_cpu_percent(percent)
+
+    def test_sys_cpu_times_percent(self):
+        psutil.cpu_times_percent(interval=0.001)
+        for x in range(1000):
+            cpu = psutil.cpu_times_percent(interval=None)
+            for percent in cpu:
+                self._test_cpu_percent(percent)
+            # XXX probably redundant
+            self._test_cpu_percent(sum(cpu) - cpu.idle)
+
+    def test_sys_per_cpu_times_percent(self):
+        self.assertEqual(len(psutil.cpu_times_percent(interval=0.001,
+                                                      percpu=True)),
+                         psutil.NUM_CPUS)
+        for x in range(1000):
+            cpus = psutil.cpu_times_percent(interval=None, percpu=True)
+            for cpu in cpus:
+                for percent in cpu:
+                    self._test_cpu_percent(percent)
+                # XXX probably redundant
+                self._test_cpu_percent(sum(cpu) - cpu.idle)
 
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
@@ -1604,7 +1624,7 @@ class TestCase(unittest.TestCase):
 
     def test__all__(self):
         for name in dir(psutil):
-            if name in ('callable', 'defaultdict', 'error'):
+            if name in ('callable', 'defaultdict', 'error', 'namedtuple'):
                 continue
             if not name.startswith('_'):
                 try:

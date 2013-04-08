@@ -10,6 +10,7 @@ NEW FEATURES
  * #361: [Linux] psutil.cpu_times() now includes new 'steal', 'guest' and
          'guest_nice' fields available on recent Linux kernels.
          Also, psutil.cpu_percent() is more accurate.
+ * #362: cpu_times_percent() (per-CPU-time utilization as a percentage)
 
 BUG FIXES
 
