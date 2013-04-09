@@ -44,6 +44,7 @@ except Exception:
 
 _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle')
+get_system_boot_time = _psutil_osx.get_system_boot_time
 
 # --- functions
 
