@@ -1194,7 +1194,11 @@ def network_io_counters(pernic=False):
 # --- other system related functions
 # =====================================================================
 
-get_boot_time = _psplatform.get_system_boot_time  # also available as BOOT_TIME
+def get_boot_time():
+    """Return the system boot time expressed in seconds since the epoch.
+    This is also available as psutil.BOOT_TIME.
+    """
+    return _psplatform.get_system_boot_time()
 
 def get_users():
     """Return users currently connected on the system as a list of
