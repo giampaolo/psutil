@@ -711,6 +711,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
         py_ifc_info = Py_BuildValue("(kkkkkkii)", rbytes->value.ui32,
                                                   wbytes->value.ui32,
                                                   rpkts->value.ui32,
+                                                  wpkts->value.ui32,
                                                   ierrs->value.ui32,
                                                   oerrs->value.ui32,
 #endif
