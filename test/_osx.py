@@ -20,7 +20,7 @@ from test_psutil import reap_children, get_test_subprocess, sh
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-TOLERANCE = 200 * 1024  # 200 KB
+TOLERANCE = 500 * 1024  # 500 KB
 
 
 def sysctl(cmdline):
@@ -59,7 +59,7 @@ class OSXSpecificTestCase(unittest.TestCase):
         difference = abs(first - second)
         if difference <= tolerance:
             return
-        msg = '%r != %r within %r delta (%r difference)' \
+        msg = '%r != %r (tolerance=%r, difference=%s)' \
               % (first, second, tolerance, difference)
         raise AssertionError(msg)
 

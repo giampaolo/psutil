@@ -1431,7 +1431,7 @@ class TestCase(unittest.TestCase):
     def test_get_num_ctx_switches(self):
         p = psutil.Process(os.getpid())
         before = sum(p.get_num_ctx_switches())
-        for x in range(50000):
+        for x in range(500000):
             after = sum(p.get_num_ctx_switches())
             if after > before:
                 return
@@ -1744,6 +1744,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             if POSIX:
                 assert os.path.isfile(ret), ret
                 if hasattr(os, 'access') and hasattr(os, "X_OK"):
+                    # XXX may fail on OSX
                     self.assertTrue(os.access(ret, os.X_OK))
 
     def ppid(self, ret):
