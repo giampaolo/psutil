@@ -1499,7 +1499,7 @@ class TestCase(unittest.TestCase):
             except psutil.Error:
                 pass
         # this is the one, now let's make sure there are no duplicates
-        pid = max(sorted(table, key=lambda x: table[x]))
+        pid = sorted(table.items(), key=lambda x: x[1])[-1][0]
         p = psutil.Process(pid)
         try:
             c = p.get_children(recursive=True)
