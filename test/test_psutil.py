@@ -329,13 +329,18 @@ class TestCase(unittest.TestCase):
 
     def test_BOOT_TIME(self, arg=None):
         x = arg or psutil.BOOT_TIME
-        assert isinstance(x, float)
-        assert x > 0
+        assert isinstance(x, float), x
+        assert x > 0, x
         assert x < time.time(), x
 
     def test_get_boot_time(self):
         self.test_BOOT_TIME(psutil.get_boot_time())
-        self.assertEqual(psutil.get_boot_time(), psutil.BOOT_TIME)
+        if WINDOWS:
+            # work around float precision issues; give it 1 secs tolerance
+            diff = abs(psutil.get_boot_time() - psutil.BOOT_TIME)
+            assert diff < 1, diff
+        else:
+            self.assertEqual(psutil.get_boot_time(), psutil.BOOT_TIME)
 
     def test_NUM_CPUS(self):
         self.assertEqual(psutil.NUM_CPUS, len(psutil.cpu_times(percpu=True)))
@@ -556,6 +561,8 @@ class TestCase(unittest.TestCase):
 
     def test_disk_partitions(self):
         for disk in psutil.disk_partitions(all=False):
+            if WINDOWS and 'cdrom' in disk.opts:
+                continue
             assert os.path.exists(disk.device), disk
             assert os.path.isdir(disk.mountpoint), disk
             assert disk.fstype, disk
@@ -1642,6 +1649,8 @@ class TestCase(unittest.TestCase):
                 except ImportError:
                     if name not in psutil.__all__:
                         fun = getattr(psutil, name)
+                        if fun is None:
+                            continue
                         if 'deprecated' not in fun.__doc__.lower():
                             self.fail('%r not in psutil.__all__' % name)
 

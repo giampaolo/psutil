@@ -1283,6 +1283,8 @@ def test():
                     ctime = ctime.strftime("%H:%M")
                 else:
                     ctime = ctime.strftime("%b%d")
+            else:
+                ctime = ''
             cputime = time.strftime("%M:%S", time.localtime(sum(pinfo['cpu_times'])))
             user = pinfo['username']
             if os.name == 'nt' and '\\' in user:

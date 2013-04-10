@@ -36,7 +36,7 @@ except Exception:
     NUM_CPUS = None
     warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
 try:
-    BOOT_TIME = _psutil_mswindows.get_system_uptime()
+    BOOT_TIME = _psutil_mswindows.get_system_boot_time()
 except Exception, err:
     BOOT_TIME = None
     warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
