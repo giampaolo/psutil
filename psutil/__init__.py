@@ -673,6 +673,7 @@ class Process(object):
                 err = sys.exc_info()[1]
                 name = self._platform_impl._process_name
                 if err.errno == errno.ESRCH:
+                    self._gone = True
                     raise NoSuchProcess(self.pid, name)
                 if err.errno == errno.EPERM:
                     raise AccessDenied(self.pid, name)
@@ -723,6 +724,7 @@ class Process(object):
         # meantime and the kernel reused its PID
         if not self.is_running():
             name = self._platform_impl._process_name
+
             raise NoSuchProcess(self.pid, name)
         if os.name == 'posix':
             self.send_signal(signal.SIGKILL)
