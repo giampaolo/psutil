@@ -29,10 +29,9 @@ import tempfile
 import stat
 import collections
 import datetime
-import functools
 
 import psutil
-from psutil._compat import PY3, callable, long
+from psutil._compat import PY3, callable, long, wraps
 
 
 PYTHON = os.path.realpath(sys.executable)
@@ -217,7 +216,7 @@ def skipUnless(condition, reason="", warn=False):
 def skip_on_access_denied(only_if=None):
     """Decorator to Ignore AccessDenied exceptions."""
     def decorator(fun):
-        @functools.wraps(fun)
+        @wraps(fun)
         def wrapper(*args, **kwargs):
             try:
                 return fun(*args, **kwargs)
