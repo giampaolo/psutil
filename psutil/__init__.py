@@ -141,6 +141,8 @@ class Process(object):
     def __repr__(self):
         return "<%s at %s>" % (self.__str__(), id(self))
 
+    # --- utility methods
+
     def as_dict(self, attrs=[], ad_value=None):
         """Utility method returning process information as a hashable
         dictionary.
@@ -191,16 +193,6 @@ class Process(object):
         return retdict
 
     @property
-    def pid(self):
-        """The process pid."""
-        return self._pid
-
-    @cached_property
-    def ppid(self):
-        """The process parent pid."""
-        return self._platform_impl.get_process_ppid()
-
-    @property
     def parent(self):
         """Return the parent process as a Process object. If no parent
         pid is known return None.
@@ -211,6 +203,18 @@ class Process(object):
                 return Process(ppid)
             except NoSuchProcess:
                 pass
+
+    # --- actual API
+
+    @property
+    def pid(self):
+        """The process pid."""
+        return self._pid
+
+    @cached_property
+    def ppid(self):
+        """The process parent pid."""
+        return self._platform_impl.get_process_ppid()
 
     @cached_property
     def name(self):
