@@ -112,6 +112,7 @@ class Process(object):
             raise ValueError('pid must be a positive integer')
         self._pid = pid
         self._gone = False
+        self._ppid = None
         # platform-specific modules define an _psplatform.Process
         # implementation class
         self._platform_impl = _psplatform.Process(pid)
@@ -211,10 +212,19 @@ class Process(object):
         """The process pid."""
         return self._pid
 
-    @cached_property
+    @property
     def ppid(self):
         """The process parent pid."""
-        return self._platform_impl.get_process_ppid()
+        # On POSIX we don't want to cache the ppid as it may unexpectedly
+        # change to 1 (init) in case this process turns into a zombie:
+        # https://code.google.com/p/psutil/issues/detail?id=321
+        # http://stackoverflow.com/questions/356722/
+        if os.name == 'posix':
+            return self._platform_impl.get_process_ppid()
+        else:
+            if self._ppid is None:
+                self._ppid = self._platform_impl.get_process_ppid()
+            return self._ppid
 
     @cached_property
     def name(self):
@@ -792,6 +802,7 @@ class Popen(Process):
         self.__subproc = subprocess.Popen(*args, **kwargs)
         self._pid = self.__subproc.pid
         self._gone = False
+        self._ppid = None
         self._platform_impl = _psplatform.Process(self._pid)
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
