@@ -13,7 +13,7 @@ import sys
 import time
 import glob
 
-from psutil.error import TimeoutExpired
+from psutil._error import TimeoutExpired
 from psutil._common import nt_diskinfo, usage_percent, memoize
 
 

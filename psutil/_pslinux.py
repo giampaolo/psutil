@@ -20,7 +20,7 @@ import warnings
 import _psutil_posix
 import _psutil_linux
 from psutil import _psposix
-from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
+from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
 from psutil._compat import PY3, xrange, long, namedtuple
 

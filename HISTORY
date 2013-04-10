@@ -5,6 +5,7 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 NEW FEATURES
 
+ * #246: psutil.error module is deprecated and scheduled for removal.
  * #328: [Windows] process IO nice/priority support.
  * #359: psutil.get_boot_time()
  * #361: [Linux] psutil.cpu_times() now includes new 'steal', 'guest' and
@@ -41,9 +42,11 @@ BUG FIXES
  * #353: [OSX] get_users() returns an empty list on OSX 10.8.
 
 API CHANGES
+
  * [Linux] Process methods not working because of a poor /proc implementation
    will raise NotImplementedError instead of RuntimeError.
  * Process.cmdline property is no longer cached after first access.
+ * psutil.error module is deprecated and scheduled for removal.
 
 
 0.6.1 - 2012-08-16

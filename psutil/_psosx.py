@@ -14,7 +14,7 @@ import warnings
 import _psutil_osx
 import _psutil_posix
 from psutil import _psposix
-from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
+from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._compat import namedtuple
 from psutil._common import *
 

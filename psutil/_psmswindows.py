@@ -14,7 +14,7 @@ import warnings
 
 import _psutil_mswindows
 from _psutil_mswindows import ERROR_ACCESS_DENIED
-from psutil.error import AccessDenied, NoSuchProcess, TimeoutExpired
+from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
 from psutil._compat import PY3, xrange, long
 

@@ -47,7 +47,7 @@ try:
 except ImportError:
     pwd = None
 
-from psutil.error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
+from psutil._error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
 from psutil._common import cached_property
 from psutil._compat import (property, callable, defaultdict, namedtuple,
                             PY3 as _PY3)

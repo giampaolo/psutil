@@ -357,6 +357,7 @@ class TestCase(unittest.TestCase):
         warnings.filterwarnings("error")
         p = psutil.Process(os.getpid())
         try:
+            self.assertRaises(DeprecationWarning, __import__, 'psutil.error')
             self.assertRaises(DeprecationWarning, psutil.virtmem_usage)
             self.assertRaises(DeprecationWarning, psutil.used_phymem)
             self.assertRaises(DeprecationWarning, psutil.avail_phymem)
