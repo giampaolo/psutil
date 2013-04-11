@@ -125,6 +125,7 @@ class Process(object):
 
         The only exceptions for which process identity is pre-emptively
         checked are:
+         - parent
          - get_children()
          - set_nice()
          - suspend()
@@ -227,14 +228,18 @@ class Process(object):
         return retdict
 
     @property
+    @_assert_is_running
     def parent(self):
-        """Return the parent process as a Process object. If no parent
-        pid is known return None.
+        """Return the parent process as a Process object.
+        If no parent is known return None.
         """
         ppid = self.ppid
         if ppid is not None:
             try:
-                return Process(ppid)
+                parent = Process(ppid)
+                if parent.create_time <= self.create_time:
+                    return parent
+                # ...else ppid has been reused by another process
             except NoSuchProcess:
                 pass
 
@@ -252,6 +257,9 @@ class Process(object):
         # change to 1 (init) in case this process turns into a zombie:
         # https://code.google.com/p/psutil/issues/detail?id=321
         # http://stackoverflow.com/questions/356722/
+
+        # XXX should we check creation time here rather than in
+        # Process.parent?
         if os.name == 'posix':
             return self._platform_impl.get_process_ppid()
         else:

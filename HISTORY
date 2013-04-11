@@ -42,6 +42,8 @@ BUG FIXES
          kvm_open(3) not being called. (patch by Jean Sebastien)
  * #338: [Linux] disk_io_counters() fails to find some disks.
  * #353: [OSX] get_users() returns an empty list on OSX 10.8.
+ * #356: Process.parent now checks whether parent PID has been reused in which
+         case returns None.
  * #365: Process wait() and set_nice() methods should check PID has not been
          reused by another process.
 
