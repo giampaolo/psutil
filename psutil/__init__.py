@@ -98,7 +98,7 @@ BOOT_TIME = _psplatform.BOOT_TIME
 TOTAL_PHYMEM = _psplatform.TOTAL_PHYMEM
 
 
-def _assert_is_running(fun):
+def _assert_pid_not_reused(fun):
     """Decorator which raises NoSuchProcess in case a process is no
     longer running or its PID has been reused.
     """
@@ -228,9 +228,10 @@ class Process(object):
         return retdict
 
     @property
-    @_assert_is_running
+    @_assert_pid_not_reused
     def parent(self):
-        """Return the parent process as a Process object.
+        """Return the parent process as a Process object pre-emptively
+        checking whether PID has been reused.
         If no parent is known return None.
         """
         ppid = self.ppid
@@ -395,9 +396,10 @@ class Process(object):
         """Get process niceness (priority)."""
         return self._platform_impl.get_process_nice()
 
-    @_assert_is_running
+    @_assert_pid_not_reused
     def set_nice(self, value):
-        """Set process niceness (priority)."""
+        """Set process niceness (priority) pre-emptively checking
+        whether PID has been reused."""
         return self._platform_impl.set_process_nice(value)
 
     # available only on Linux and Windows >= Vista
@@ -474,10 +476,10 @@ class Process(object):
         """
         return self._platform_impl.get_process_threads()
 
-    @_assert_is_running
+    @_assert_pid_not_reused
     def get_children(self, recursive=False):
         """Return the children of this process as a list of Process
-        objects.
+        objects pre-emptively checking whether PID has been reused.
         If recursive is True return all the parent descendants.
 
         Example (A == this process):
@@ -708,9 +710,10 @@ class Process(object):
             self._gone = True
             return False
 
-    @_assert_is_running
+    @_assert_pid_not_reused
     def send_signal(self, sig):
-        """Send a signal to process (see signal module constants).
+        """Send a signal to process pre-emptively checking whether
+        PID has been reused (see signal module constants) .
         On Windows only SIGTERM is valid and is treated as an alias
         for kill().
         """
@@ -732,9 +735,10 @@ class Process(object):
             else:
                 raise ValueError("only SIGTERM is supported on Windows")
 
-    @_assert_is_running
+    @_assert_pid_not_reused
     def suspend(self):
-        """Suspend process execution with SIGSTOP.
+        """Suspend process execution with SIGSTOP pre-emptively checking
+        whether PID has been reused.
         On Windows it suspends all process threads.
         """
         if hasattr(self._platform_impl, "suspend_process"):
@@ -744,9 +748,10 @@ class Process(object):
             # posix
             self.send_signal(signal.SIGSTOP)
 
-    @_assert_is_running
+    @_assert_pid_not_reused
     def resume(self):
-        """Resume process execution with SIGCONT.
+        """Resume process execution with SIGCONT pre-emptively checking
+        whether PID has been reused.
         On Windows it resumes all process threads.
         """
         if hasattr(self._platform_impl, "resume_process"):
@@ -757,14 +762,16 @@ class Process(object):
             self.send_signal(signal.SIGCONT)
 
     def terminate(self):
-        """Terminate the process with SIGTERM.
+        """Terminate the process with SIGTERM pre-emptively checking
+        whether PID has been reused.
         On Windows this is an alias for kill().
         """
         self.send_signal(signal.SIGTERM)
 
-    @_assert_is_running
+    @_assert_pid_not_reused
     def kill(self):
-        """Kill the current process with SIGKILL."""
+        """Kill the current process with SIGKILL pre-emptively checking
+        whether PID has been reused."""
         if os.name == 'posix':
             self.send_signal(signal.SIGKILL)
         else:
