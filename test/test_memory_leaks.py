@@ -147,7 +147,11 @@ class TestProcessObjectLeaks(Base):
         self.execute('get_ionice')
 
     def test_set_ionice(self):
-        self.execute('set_ionice', psutil.IOPRIO_CLASS_NONE)
+        if WINDOWS:
+            value = psutil.Process(os.getpid()).get_ionice()
+            self.execute('set_ionice', value)
+        else:
+            self.execute('set_ionice', psutil.IOPRIO_CLASS_NONE)
 
     def test_username(self):
         self.execute('username')
