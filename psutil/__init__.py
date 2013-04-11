@@ -50,7 +50,7 @@ except ImportError:
 from psutil._error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
 from psutil._common import cached_property
 from psutil._compat import (property, callable, defaultdict, namedtuple,
-                            PY3 as _PY3)
+                            wraps as _wraps, PY3 as _PY3)
 from psutil._common import (deprecated as _deprecated,
                             nt_disk_iostat as _nt_disk_iostat,
                             nt_net_iostat as _nt_net_iostat,
@@ -96,6 +96,18 @@ __all__.extend(_psplatform.__extra__all__)
 NUM_CPUS = _psplatform.NUM_CPUS
 BOOT_TIME = _psplatform.BOOT_TIME
 TOTAL_PHYMEM = _psplatform.TOTAL_PHYMEM
+
+
+def _assert_is_running(fun):
+    """Decorator which raises NoSuchProcess in case a process is no
+    longer running or its PID has been reused.
+    """
+    @_wraps(fun)
+    def wrapper(self, *args, **kwargs):
+        if not self.is_running():
+            raise NoSuchProcess(self.pid, self._platform_impl._process_name)
+        return fun(self, *args, **kwargs)
+    return wrapper
 
 
 class Process(object):
@@ -432,6 +444,7 @@ class Process(object):
         """
         return self._platform_impl.get_process_threads()
 
+    @_assert_is_running
     def get_children(self, recursive=False):
         """Return the children of this process as a list of Process
         objects.
@@ -456,10 +469,6 @@ class Process(object):
         process Y won't be returned either as the reference to
         process A is lost.
         """
-        if not self.is_running():
-            name = self._platform_impl._process_name
-            raise NoSuchProcess(self.pid, name)
-
         ret = []
         if not recursive:
             for p in process_iter():
@@ -666,6 +675,7 @@ class Process(object):
             self._gone = True
             return False
 
+    @_assert_is_running
     def send_signal(self, sig):
         """Send a signal to process (see signal module constants).
         On Windows only SIGTERM is valid and is treated as an alias
@@ -673,9 +683,6 @@ class Process(object):
         """
         # safety measure in case the current process has been killed in
         # meantime and the kernel reused its PID
-        if not self.is_running():
-            name = self._platform_impl._process_name
-            raise NoSuchProcess(self.pid, name)
         if os.name == 'posix':
             try:
                 os.kill(self.pid, sig)
@@ -694,13 +701,9 @@ class Process(object):
             else:
                 raise ValueError("only SIGTERM is supported on Windows")
 
+    @_assert_is_running
     def suspend(self):
         """Suspend process execution."""
-        # safety measure in case the current process has been killed in
-        # meantime and the kernel reused its PID
-        if not self.is_running():
-            name = self._platform_impl._process_name
-            raise NoSuchProcess(self.pid, name)
         # windows
         if hasattr(self._platform_impl, "suspend_process"):
             self._platform_impl.suspend_process()
@@ -708,13 +711,9 @@ class Process(object):
             # posix
             self.send_signal(signal.SIGSTOP)
 
+    @_assert_is_running
     def resume(self):
         """Resume process execution."""
-        # safety measure in case the current process has been killed in
-        # meantime and the kernel reused its PID
-        if not self.is_running():
-            name = self._platform_impl._process_name
-            raise NoSuchProcess(self.pid, name)
         # windows
         if hasattr(self._platform_impl, "resume_process"):
             self._platform_impl.resume_process()
@@ -728,14 +727,11 @@ class Process(object):
         """
         self.send_signal(signal.SIGTERM)
 
+    @_assert_is_running
     def kill(self):
         """Kill the current process."""
         # safety measure in case the current process has been killed in
         # meantime and the kernel reused its PID
-        if not self.is_running():
-            name = self._platform_impl._process_name
-
-            raise NoSuchProcess(self.pid, name)
         if os.name == 'posix':
             self.send_signal(signal.SIGKILL)
         else:
