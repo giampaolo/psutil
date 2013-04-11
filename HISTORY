@@ -1,13 +1,12 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-0.7.0 - XXXX-XX-XX
+0.7.0 - 2013-04-12
 ------------------
 
 NEW FEATURES
 
+ * #233: code migrated to Mercurial (yay!)
  * #246: psutil.error module is deprecated and scheduled for removal.
- * #321: [UNIX] Process.ppid property is no longer cached as the kernel may set
-         the ppid to 1 in case of a zombie process.
  * #328: [Windows] process IO nice/priority support.
  * #359: psutil.get_boot_time()
  * #361: [Linux] psutil.cpu_times() now includes new 'steal', 'guest' and
@@ -28,6 +27,8 @@ BUG FIXES
  * #317: [Windows] cannot set process CPU affinity above 31 cores.
  * #319: [Linux] process get_memory_maps() raises KeyError 'Anonymous' on Debian
          squeeze.
+ * #321: [UNIX] Process.ppid property is no longer cached as the kernel may set
+         the ppid to 1 in case of a zombie process.
  * #323: [OSX] disk_io_counters()'s read_time and write_time parameters were
          reporting microseconds not milliseconds.  (patch by Gregory Szorc)
  * #331: Process cmdline is no longer cached after first acces as it may change.
@@ -35,12 +36,12 @@ BUG FIXES
  * #337: [Linux] process methods not working because of a poor /proc
          implementation will raise NotImplementedError rather than RuntimeError
          and Process.as_dict() will not blow up.  (patch by Curtin1060)
+ * #338: [Linux] disk_io_counters() fails to find some disks.
  * #339: [FreeBSD] get_pid_list() can allocate all the memory on system.
  * #341: [Linux] psutil might crash on import due to error in retrieving system
          terminals map.
  * #344: [FreeBSD] swap_memory() might return incorrect results due to
          kvm_open(3) not being called. (patch by Jean Sebastien)
- * #338: [Linux] disk_io_counters() fails to find some disks.
  * #353: [OSX] get_users() returns an empty list on OSX 10.8.
  * #356: Process.parent now checks whether parent PID has been reused in which
          case returns None.
