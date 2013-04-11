@@ -116,6 +116,28 @@ class Process(object):
     def __init__(self, pid):
         """Create a new Process object for the given pid.
         Raises NoSuchProcess if pid does not exist.
+
+        Note that most of the methods of this class do not make sure
+        the PID of the process being queried has been reused.
+        That means you might end up retrieving an information referring
+        to another process in case the original one this instance
+        refers to is gone in the meantime.
+
+        The only exceptions for which process identity is pre-emptively
+        checked are:
+         - get_children()
+         - suspend()
+         - resume()
+         - send_signal()
+         - terminate()
+         - kill()
+         - wait()
+
+        To prevent this problem for all other methods you can:
+          - use is_running() before querying the process
+          - if you're continuously iterating over a set of Process
+            instances use process_iter() which pre-emptively checks
+            process identity for every yielded instance
         """
         if not _PY3:
             if not isinstance(pid, (int, long)):
@@ -845,6 +867,10 @@ def process_iter():
 
     Every new Process instance is only created once and then cached
     into an internal table which is updated every time this is used.
+
+    Cached Process instances are checked for identity so that you're
+    safe in case a PID has been reused by another process, in which
+    case the cached instance is updated.
 
     The sorting order in which processes are yielded is based on
     their PIDs.
