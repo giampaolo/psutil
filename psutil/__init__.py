@@ -743,10 +743,13 @@ class Process(object):
     def wait(self, timeout=None):
         """Wait for process to terminate and, if process is a children
         of the current one also return its exit code, else None.
+        It also makes sure this process PID has not been reused by
+        another process. If that's the case returns immediately.
         """
-        if timeout is not None and not timeout >= 0:
-            raise ValueError("timeout must be a positive integer")
-        return self._platform_impl.process_wait(timeout)
+        if self.is_running():
+            if timeout is not None and not timeout >= 0:
+                raise ValueError("timeout must be a positive integer")
+            return self._platform_impl.process_wait(timeout)
 
     # --- deprecated API
 
