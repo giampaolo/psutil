@@ -126,6 +126,7 @@ class Process(object):
         The only exceptions for which process identity is pre-emptively
         checked are:
          - get_children()
+         - set_nice()
          - suspend()
          - resume()
          - send_signal()
@@ -388,6 +389,7 @@ class Process(object):
         """Get process niceness (priority)."""
         return self._platform_impl.get_process_nice()
 
+    @_assert_is_running
     def set_nice(self, value):
         """Set process niceness (priority)."""
         return self._platform_impl.set_process_nice(value)
