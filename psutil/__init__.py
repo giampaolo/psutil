@@ -681,8 +681,6 @@ class Process(object):
         On Windows only SIGTERM is valid and is treated as an alias
         for kill().
         """
-        # safety measure in case the current process has been killed in
-        # meantime and the kernel reused its PID
         if os.name == 'posix':
             try:
                 os.kill(self.pid, sig)
@@ -703,9 +701,11 @@ class Process(object):
 
     @_assert_is_running
     def suspend(self):
-        """Suspend process execution."""
-        # windows
+        """Suspend process execution with SIGSTOP.
+        On Windows it suspends all process threads.
+        """
         if hasattr(self._platform_impl, "suspend_process"):
+            # windows
             self._platform_impl.suspend_process()
         else:
             # posix
@@ -713,9 +713,11 @@ class Process(object):
 
     @_assert_is_running
     def resume(self):
-        """Resume process execution."""
-        # windows
+        """Resume process execution with SIGCONT.
+        On Windows it resumes all process threads.
+        """
         if hasattr(self._platform_impl, "resume_process"):
+            # windows
             self._platform_impl.resume_process()
         else:
             # posix
@@ -729,9 +731,7 @@ class Process(object):
 
     @_assert_is_running
     def kill(self):
-        """Kill the current process."""
-        # safety measure in case the current process has been killed in
-        # meantime and the kernel reused its PID
+        """Kill the current process with SIGKILL."""
         if os.name == 'posix':
             self.send_signal(signal.SIGKILL)
         else:
