@@ -82,9 +82,9 @@ pid_exists(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    status = pid_is_running(pid);
+    status = psutil_pid_is_running(pid);
     if (-1 == status) {
-        return NULL; // exception raised in pid_is_running()
+        return NULL; // exception raised in psutil_pid_is_running()
     }
     return PyBool_FromLong(status);
 }
@@ -105,7 +105,7 @@ get_pid_list(PyObject* self, PyObject* args)
     if (retlist == NULL) {
         return NULL;
     }
-    proclist = get_pids(&numberOfReturnedPIDs);
+    proclist = psutil_get_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
         goto error;
     }
@@ -249,7 +249,7 @@ get_process_cpu_times(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    hProcess = handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid(pid);
     if (hProcess == NULL) {
         return NULL;
     }
@@ -339,7 +339,7 @@ get_process_create_time(PyObject* self, PyObject* args)
         return get_system_boot_time(NULL, NULL);
     }
 
-    hProcess = handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid(pid);
     if (hProcess == NULL) {
         return NULL;
     }
@@ -460,7 +460,7 @@ get_process_name(PyObject* self, PyObject* args) {
         return Py_BuildValue("s", "System");
     }
 
-    pid_return = pid_is_running(pid);
+    pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0) {
         return NoSuchProcess();
     }
@@ -468,9 +468,9 @@ get_process_name(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    name = get_name(pid);
+    name = psutil_get_name(pid);
     if (name == NULL) {
-        return NULL;  // exception set in get_name()
+        return NULL;  // exception set in psutil_get_name()
     }
     return name;
 }
@@ -492,7 +492,7 @@ get_process_ppid(PyObject* self, PyObject* args) {
         return Py_BuildValue("l", 0);
     }
 
-    pid_return = pid_is_running(pid);
+    pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0) {
         return NoSuchProcess();
     }
@@ -500,9 +500,9 @@ get_process_ppid(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    ppid = get_ppid(pid);
+    ppid = psutil_get_ppid(pid);
     if (ppid == NULL) {
-        return NULL;  // exception set in get_ppid()
+        return NULL;  // exception set in psutil_get_ppid()
     }
     return ppid;
 }
@@ -523,7 +523,7 @@ get_process_cmdline(PyObject* self, PyObject* args) {
         return Py_BuildValue("[]");
     }
 
-    pid_return = pid_is_running(pid);
+    pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0) {
         return NoSuchProcess();
     }
@@ -535,7 +535,7 @@ get_process_cmdline(PyObject* self, PyObject* args) {
 
     // May fail any of several ReadProcessMemory calls etc. and not indicate
     // a real problem so we ignore any errors and just live without commandline
-    arglist = get_arg_list(pid);
+    arglist = psutil_get_arg_list(pid);
     if ( NULL == arglist ) {
         // carry on anyway, clear any exceptions too
         PyErr_Clear();
@@ -560,7 +560,7 @@ get_process_exe(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    hProcess = handle_from_pid_waccess(pid, PROCESS_QUERY_INFORMATION);
+    hProcess = psutil_handle_from_pid_waccess(pid, PROCESS_QUERY_INFORMATION);
     if (NULL == hProcess) {
         return NULL;
     }
@@ -594,7 +594,7 @@ get_process_memory_info(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    hProcess = handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid(pid);
     if (NULL == hProcess) {
         return NULL;
     }
@@ -831,12 +831,12 @@ get_process_cwd(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    processHandle = handle_from_pid(pid);
+    processHandle = psutil_handle_from_pid(pid);
     if (processHandle == NULL) {
         return NULL;
     }
 
-    pebAddress = GetPebAddress(processHandle);
+    pebAddress = psutil_get_peb_address(processHandle);
 
     // get the address of ProcessParameters
 #ifdef _WIN64
@@ -1097,7 +1097,7 @@ get_process_threads(PyObject* self, PyObject* args)
         goto error;
     }
 
-    pid_return = pid_is_running(pid);
+    pid_return = psutil_pid_is_running(pid);
     if (pid_return == 0) {
         NoSuchProcess();
         goto error;
@@ -1195,12 +1195,12 @@ get_process_open_files(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    processHandle = handle_from_pid_waccess(pid, access);
+    processHandle = psutil_handle_from_pid_waccess(pid, access);
     if (processHandle == NULL) {
         return NULL;
     }
 
-    filesList = get_open_files(pid, processHandle);
+    filesList = psutil_get_open_files(pid, processHandle);
     CloseHandle(processHandle);
     if (filesList == NULL) {
         return PyErr_SetFromWindowsErr(0);
@@ -1264,7 +1264,7 @@ get_process_username(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    processHandle = handle_from_pid_waccess(pid, PROCESS_QUERY_INFORMATION);
+    processHandle = psutil_handle_from_pid_waccess(pid, PROCESS_QUERY_INFORMATION);
     if (processHandle == NULL) {
         return NULL;
     }
@@ -1533,7 +1533,7 @@ get_process_connections(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    if (pid_is_running(pid) == 0) {
+    if (psutil_pid_is_running(pid) == 0) {
         ConnDecrefPyObjs();
         return NoSuchProcess();
     }
@@ -1910,7 +1910,7 @@ get_process_priority(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    hProcess = handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid(pid);
     if (hProcess == NULL) {
         return NULL;
     }
@@ -1940,7 +1940,7 @@ set_process_priority(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    hProcess = handle_from_pid_waccess(pid, dwDesiredAccess);
+    hProcess = psutil_handle_from_pid_waccess(pid, dwDesiredAccess);
     if (hProcess == NULL) {
         return NULL;
     }
@@ -1974,7 +1974,7 @@ get_process_io_priority(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    hProcess = handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid(pid);
     if (hProcess == NULL) {
         return NULL;
     }
@@ -2014,7 +2014,7 @@ set_process_io_priority(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "li", &pid, &prio)) {
         return NULL;
     }
-    hProcess = handle_from_pid_waccess(pid, PROCESS_ALL_ACCESS);
+    hProcess = psutil_handle_from_pid_waccess(pid, PROCESS_ALL_ACCESS);
     if (hProcess == NULL) {
         return NULL;
     }
@@ -2046,7 +2046,7 @@ get_process_io_counters(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    hProcess = handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid(pid);
     if (NULL == hProcess) {
         return NULL;
     }
@@ -2102,7 +2102,7 @@ get_process_cpu_affinity(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    hProcess = handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid(pid);
     if (hProcess == NULL) {
         return NULL;
     }
@@ -2139,7 +2139,7 @@ set_process_cpu_affinity(PyObject* self, PyObject* args)
     {
         return NULL;
     }
-    hProcess = handle_from_pid_waccess(pid, dwDesiredAccess);
+    hProcess = psutil_handle_from_pid_waccess(pid, dwDesiredAccess);
     if (hProcess == NULL) {
         return NULL;
     }
@@ -2712,7 +2712,7 @@ get_process_num_handles(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    hProcess = handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid(pid);
     if (NULL == hProcess) {
         return NULL;
     }
@@ -2821,7 +2821,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         goto error;
     }
-    hProcess = handle_from_pid(pid);
+    hProcess = psutil_handle_from_pid(pid);
     if (NULL == hProcess) {
         goto error;
     }
