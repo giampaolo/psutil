@@ -161,9 +161,8 @@ disk_io_counters = _psutil_mswindows.get_disk_io_counters
 # --- decorator
 
 def wrap_exceptions(fun):
-    """Call callable into a try/except clause so that if a
-    WindowsError 5 AccessDenied exception is raised we translate it
-    into psutil.AccessDenied
+    """Decorator which translates bare OSError and WindowsError
+    exceptions into NoSuchProcess and AccessDenied.
     """
     @wraps(fun)
     def wrapper(self, *args, **kwargs):

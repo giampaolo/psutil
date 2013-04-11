@@ -421,8 +421,8 @@ _status_map = {"R" : STATUS_RUNNING,
 # --- decorators
 
 def wrap_exceptions(fun):
-    """Call callable into a try/except clause and translate ENOENT,
-    EACCES and EPERM in NoSuchProcess or AccessDenied exceptions.
+    """Decorator which translates bare OSError and IOError exceptions
+    into NoSuchProcess and AccessDenied.
     """
     @wraps(fun)
     def wrapper(self, *args, **kwargs):

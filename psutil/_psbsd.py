@@ -143,9 +143,8 @@ disk_io_counters = _psutil_bsd.get_disk_io_counters
 
 
 def wrap_exceptions(fun):
-    """Call method(self, pid) into a try/except clause so that if an
-    OSError "No such process" exception is raised we assume the process
-    has died and raise psutil.NoSuchProcess instead.
+    """Decorator which translates bare OSError exceptions into
+    NoSuchProcess and AccessDenied.
     """
     @wraps(fun)
     def wrapper(self, *args, **kwargs):
