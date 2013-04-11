@@ -661,7 +661,10 @@ class Process(object):
         return self._platform_impl.get_connections(kind)
 
     def is_running(self):
-        """Return whether this process is running."""
+        """Return whether this process is running.
+        It also checks if PID has been reused by another process in
+        which case returns False.
+        """
         if self._gone:
             return False
         try:
