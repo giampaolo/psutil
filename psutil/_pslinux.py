@@ -22,7 +22,7 @@ import _psutil_linux
 from psutil import _psposix
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
-from psutil._compat import PY3, xrange, long, namedtuple
+from psutil._compat import PY3, xrange, long, namedtuple, wraps
 
 __extra__all__ = [
     "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE",
@@ -420,13 +420,14 @@ _status_map = {"R" : STATUS_RUNNING,
 
 # --- decorators
 
-def wrap_exceptions(callable):
+def wrap_exceptions(fun):
     """Call callable into a try/except clause and translate ENOENT,
     EACCES and EPERM in NoSuchProcess or AccessDenied exceptions.
     """
+    @wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
-            return callable(self, *args, **kwargs)
+            return fun(self, *args, **kwargs)
         except EnvironmentError:
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if

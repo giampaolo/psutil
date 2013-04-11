@@ -15,7 +15,7 @@ import _psutil_bsd
 import _psutil_posix
 from psutil import _psposix
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
-from psutil._compat import namedtuple
+from psutil._compat import namedtuple, wraps
 from psutil._common import *
 
 __extra__all__ = []
@@ -142,14 +142,15 @@ network_io_counters = _psutil_bsd.get_network_io_counters
 disk_io_counters = _psutil_bsd.get_disk_io_counters
 
 
-def wrap_exceptions(method):
+def wrap_exceptions(fun):
     """Call method(self, pid) into a try/except clause so that if an
     OSError "No such process" exception is raised we assume the process
     has died and raise psutil.NoSuchProcess instead.
     """
+    @wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
-            return method(self, *args, **kwargs)
+            return fun(self, *args, **kwargs)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno == errno.ESRCH:

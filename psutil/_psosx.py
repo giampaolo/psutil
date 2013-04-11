@@ -15,7 +15,7 @@ import _psutil_osx
 import _psutil_posix
 from psutil import _psposix
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
-from psutil._compat import namedtuple
+from psutil._compat import namedtuple, wraps
 from psutil._common import *
 
 __extra__all__ = []
@@ -123,14 +123,15 @@ disk_io_counters = _psutil_osx.get_disk_io_counters
 
 # --- decorator
 
-def wrap_exceptions(callable):
+def wrap_exceptions(fun):
     """Call callable into a try/except clause so that if an
     OSError EPERM exception is raised we translate it into
     psutil.AccessDenied.
     """
+    @wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
-            return callable(self, *args, **kwargs)
+            return fun(self, *args, **kwargs)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno == errno.ESRCH:

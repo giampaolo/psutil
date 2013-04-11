@@ -16,7 +16,7 @@ import _psutil_mswindows
 from _psutil_mswindows import ERROR_ACCESS_DENIED
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
-from psutil._compat import PY3, xrange, long
+from psutil._compat import PY3, xrange, long, wraps
 
 # Windows specific extended namespace
 __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
@@ -160,14 +160,15 @@ disk_io_counters = _psutil_mswindows.get_disk_io_counters
 
 # --- decorator
 
-def wrap_exceptions(callable):
+def wrap_exceptions(fun):
     """Call callable into a try/except clause so that if a
     WindowsError 5 AccessDenied exception is raised we translate it
     into psutil.AccessDenied
     """
+    @wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
-            return callable(self, *args, **kwargs)
+            return fun(self, *args, **kwargs)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
