@@ -81,7 +81,7 @@ get_pid_list(PyObject* self, PyObject* args)
     if (retlist == NULL)
         return NULL;
 
-    if (get_proc_list(&proclist, &num_processes) != 0) {
+    if (psutil_get_proc_list(&proclist, &num_processes) != 0) {
         PyErr_SetString(PyExc_RuntimeError, "failed to retrieve process list.");
         goto error;
     }
@@ -122,7 +122,7 @@ get_process_name(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("s", kp.kp_proc.p_comm);
@@ -166,7 +166,7 @@ get_process_exe(PyObject* self, PyObject* args)
     }
     ret = proc_pidpath(pid, &buf, sizeof(buf));
     if (ret == 0) {
-        if (! pid_exists(pid)) {
+        if (! psutil_pid_exists(pid)) {
             return NoSuchProcess();
         }
         else {
@@ -190,7 +190,7 @@ get_process_cmdline(PyObject* self, PyObject* args)
     }
 
     // get the commandline, defined in arch/osx/process_info.c
-    arglist = get_arg_list(pid);
+    arglist = psutil_get_arg_list(pid);
     return arglist;
 }
 
@@ -206,7 +206,7 @@ get_process_ppid(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("l", (long)kp.kp_eproc.e_ppid);
@@ -224,7 +224,7 @@ get_process_uids(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("lll", (long)kp.kp_eproc.e_pcred.p_ruid,
@@ -244,7 +244,7 @@ get_process_gids(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("lll", (long)kp.kp_eproc.e_pcred.p_rgid,
@@ -264,7 +264,7 @@ get_process_tty_nr(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("i", kp.kp_eproc.e_tdev);
@@ -302,7 +302,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     err = task_for_pid(mach_task_self(), pid, &task);
 
     if (err != KERN_SUCCESS) {
-        if (! pid_exists(pid)) {
+        if (! psutil_pid_exists(pid)) {
             NoSuchProcess();
         }
         else {
@@ -473,7 +473,7 @@ get_process_create_time(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("d", TV2DOUBLE(kp.kp_proc.p_starttime));
@@ -870,7 +870,7 @@ get_process_status(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (get_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("i", (int)kp.kp_proc.p_stat);
@@ -908,7 +908,7 @@ get_process_threads(PyObject* self, PyObject* args)
     // task_for_pid() requires special privileges
     err = task_for_pid(mach_task_self(), pid, &task);
     if (err != KERN_SUCCESS) {
-        if (! pid_exists(pid)) {
+        if (! psutil_pid_exists(pid)) {
             NoSuchProcess();
         }
         else {
@@ -1092,7 +1092,7 @@ error:
     if (errno != 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-    else if (! pid_exists(pid)) {
+    else if (! psutil_pid_exists(pid)) {
         return NoSuchProcess();
     }
     else {
@@ -1351,7 +1351,7 @@ error:
     if (errno != 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-    else if (! pid_exists(pid) ) {
+    else if (! psutil_pid_exists(pid) ) {
         return NoSuchProcess();
     }
     else {
