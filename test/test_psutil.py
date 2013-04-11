@@ -1705,8 +1705,11 @@ class TestFetchAllProcesses(unittest.TestCase):
                 continue
             attrs.append(name)
 
-        for p in psutil.process_iter():
-            for name in attrs:
+        default = object()
+        failures = []
+        for name in attrs:
+            for p in psutil.process_iter():
+                ret = default
                 try:
                     try:
                         attr = getattr(p, name, None)
@@ -1731,9 +1734,19 @@ class TestFetchAllProcesses(unittest.TestCase):
                         meth(ret)
                 except Exception:
                     err = sys.exc_info()[1]
-                    trace = traceback.format_exc()
-                    self.fail('%s\nproc=%s, method=%r, retvalue=%r'
-                              % (trace, p, name, ret))
+                    s = '\n' + '=' * 70 + '\n'
+                    s += "FAIL: test_%s (proc=%s" % (name, p)
+                    if ret != default:
+                        s += ", ret=%s)" % repr(ret)
+                    s += ')\n'
+                    s += '-' * 70
+                    s += "\n%s" % traceback.format_exc()
+                    s =  "\n".join((" " * 4) + i for i in s.splitlines())
+                    failures.append(s)
+                    break
+
+        if failures:
+            self.fail(''.join(failures))
 
         # we should always have a non-empty list, not including PID 0 etc.
         # special cases.
