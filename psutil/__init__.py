@@ -192,14 +192,16 @@ class Process(object):
         AccessDenied exception is raised when retrieving that particular
         process information.
         """
-        excluded_names = set(['send_signal', 'suspend', 'resume', 'nice'
-                              'terminate', 'kill', 'wait', 'is_running',
-                              'as_dict', 'parent', 'get_children'])
+        excluded_names = set(['send_signal', 'suspend', 'resume', 'terminate',
+                              'kill', 'wait', 'is_running', 'as_dict', 'parent',
+                              'get_children', 'nice'])
         retdict = dict()
-        for name in set(attrs or dir(self)) - excluded_names:
+        for name in set(attrs or dir(self)):
             if name.startswith('_'):
                 continue
             if name.startswith('set_'):
+                continue
+            if name in excluded_names:
                 continue
             try:
                 attr = getattr(self, name)
