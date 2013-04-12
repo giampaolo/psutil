@@ -114,18 +114,6 @@ IOPRIO_CLASS_RT = 1
 IOPRIO_CLASS_BE = 2
 IOPRIO_CLASS_IDLE = 3
 
-CONN_ESTABLISHED = constant(0, "ESTABLISHED")
-CONN_SYN_SENT = constant(1, "SYN_SENT")
-CONN_SYN_RECV = constant(2, "SYN_RECV")
-CONN_FIN_WAIT1 = constant(3, "FIN_WAIT1")
-CONN_FIN_WAIT2 = constant(4, "FIN_WAIT2")
-CONN_TIME_WAIT = constant(5, "TIME_WAIT")
-CONN_CLOSE = constant(6, "CLOSE")
-CONN_CLOSE_WAIT = constant(7, "CLOSE_WAIT")
-CONN_LAST_ACK = constant(8, "LAST_ACK")
-CONN_LISTEN = constant(9, "LISTEN")
-CONN_CLOSING = constant(10, "CLOSING")
-
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
 _TCP_STATES_TABLE = {"01" : CONN_ESTABLISHED,
                      "02" : CONN_SYN_SENT,
@@ -949,7 +937,7 @@ class Process(object):
                             if type_ == socket.SOCK_STREAM:
                                 status = _TCP_STATES_TABLE[status]
                             else:
-                                status = ""
+                                status = CONN_NONE
                             fd = int(inodes[inode])
                             conn = nt_connection(fd, family, type_, laddr,
                                                  raddr, status)
