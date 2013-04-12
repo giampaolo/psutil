@@ -1240,6 +1240,19 @@ class TestCase(unittest.TestCase):
         fileobj.close()
         self.assertTrue(fileobj.name not in p.get_open_files())
 
+    def test_connection_constants(self):
+        ints = []
+        strs = []
+        for name in dir(psutil):
+            if name.startswith('CONN_'):
+                num = getattr(psutil, name)
+                str_ = str(number)
+                assert str_.isupper(), str_
+                assert str_ not in strs, str_
+                assert num not in ints, num
+                ints.append(num)
+                strs.append(str_)
+
     @skip_on_access_denied(only_if=BSD)
     def test_get_connections(self):
         arg = "import socket, time;" \

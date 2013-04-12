@@ -25,8 +25,14 @@ from psutil._common import *
 from psutil._compat import PY3, xrange, long, namedtuple, wraps
 
 __extra__all__ = [
+    # io prio constants
     "IOPRIO_CLASS_NONE", "IOPRIO_CLASS_RT", "IOPRIO_CLASS_BE",
     "IOPRIO_CLASS_IDLE",
+    # connection status constants
+    "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
+    "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
+    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING",
+    # other
     "phymem_buffers", "cached_phymem"]
 
 
@@ -108,18 +114,30 @@ IOPRIO_CLASS_RT = 1
 IOPRIO_CLASS_BE = 2
 IOPRIO_CLASS_IDLE = 3
 
+CONN_ESTABLISHED = constant(0, "ESTABLISHED")
+CONN_SYN_SENT = constant(1, "SYN_SENT")
+CONN_SYN_RECV = constant(2, "SYN_RECV")
+CONN_FIN_WAIT1 = constant(3, "FIN_WAIT1")
+CONN_FIN_WAIT2 = constant(4, "FIN_WAIT2")
+CONN_TIME_WAIT = constant(5, "TIME_WAIT")
+CONN_CLOSE = constant(6, "CLOSE")
+CONN_CLOSE_WAIT = constant(7, "CLOSE_WAIT")
+CONN_LAST_ACK = constant(8, "LAST_ACK")
+CONN_LISTEN = constant(9, "LISTEN")
+CONN_CLOSING = constant(10, "CLOSING")
+
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
-_TCP_STATES_TABLE = {"01" : "ESTABLISHED",
-                     "02" : "SYN_SENT",
-                     "03" : "SYN_RECV",
-                     "04" : "FIN_WAIT1",
-                     "05" : "FIN_WAIT2",
-                     "06" : "TIME_WAIT",
-                     "07" : "CLOSE",
-                     "08" : "CLOSE_WAIT",
-                     "09" : "LAST_ACK",
-                     "0A" : "LISTEN",
-                     "0B" : "CLOSING"
+_TCP_STATES_TABLE = {"01" : CONN_ESTABLISHED,
+                     "02" : CONN_SYN_SENT,
+                     "03" : CONN_SYN_RECV,
+                     "04" : CONN_FIN_WAIT1,
+                     "05" : CONN_FIN_WAIT2,
+                     "06" : CONN_TIME_WAIT,
+                     "07" : CONN_CLOSE,
+                     "08" : CONN_CLOSE_WAIT,
+                     "09" : CONN_LAST_ACK,
+                     "0A" : CONN_LISTEN,
+                     "0B" : CONN_CLOSING
                      }
 
 # --- system memory functions
@@ -984,13 +1002,6 @@ class Process(object):
         # raise NSP if the process disappeared on us
         os.stat('/proc/%s' % self.pid)
         return ret
-
-
-#    --- lsof implementation
-#
-#    def get_connections(self):
-#        lsof = _psposix.LsofParser(self.pid, self._process_name)
-#        return lsof.get_process_connections()
 
     @wrap_exceptions
     def get_num_fds(self):
