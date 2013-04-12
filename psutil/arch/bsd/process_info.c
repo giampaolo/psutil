@@ -32,7 +32,7 @@
  * On error, the function returns a BSD errno value.
  */
 int
-get_proc_list(struct kinfo_proc **procList, size_t *procCount)
+psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 {
     int err;
     struct kinfo_proc * result;
@@ -112,7 +112,7 @@ get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 
 
 char
-*getcmdpath(long pid, size_t *pathsize)
+*psutil_get_cmd_path(long pid, size_t *pathsize)
 {
     int  mib[4];
     char *path;
@@ -133,7 +133,8 @@ char
 
     path = malloc(size);
     if (path == NULL) {
-        return PyErr_NoMemory();
+        PyErr_NoMemory();
+        return NULL;
     }
 
     *pathsize = size;
@@ -147,6 +148,7 @@ char
 
 
 /*
+ * XXX no longer used; it probably makese sense to remove it.
  * Borrowed from psi Python System Information project
  *
  * Get command arguments and environment variables.
@@ -159,7 +161,7 @@ char
  *      1 for insufficient privileges.
  */
 char
-*getcmdargs(long pid, size_t *argsize)
+*psutil_get_cmd_args(long pid, size_t *argsize)
 {
     int mib[4], argmax;
     size_t size = sizeof(argmax);
@@ -176,7 +178,8 @@ char
     /* Allocate space for the arguments. */
     procargs = (char *)malloc(argmax);
     if (procargs == NULL) {
-        return PyErr_NoMemory();
+        PyErr_NoMemory();
+        return NULL;
     }
 
     /*
@@ -201,7 +204,7 @@ char
 
 /* returns the command line as a python list object */
 PyObject*
-get_arg_list(long pid)
+psutil_get_arg_list(long pid)
 {
     char *argstr = NULL;
     int pos = 0;
@@ -213,7 +216,7 @@ get_arg_list(long pid)
         return retlist;
     }
 
-    argstr = getcmdargs(pid, &argsize);
+    argstr = psutil_get_cmd_args(pid, &argsize);
     if (argstr == NULL) {
         goto error;
     }
@@ -249,7 +252,7 @@ error:
  * Return 1 if PID exists in the current process list, else 0.
  */
 int
-pid_exists(long pid)
+psutil_pid_exists(long pid)
 {
     int kill_ret;
     if (pid < 0) {
@@ -272,7 +275,7 @@ pid_exists(long pid)
  */
 int
 psutil_raise_ad_or_nsp(pid) {
-    if (pid_exists(pid) == 0) {
+    if (psutil_pid_exists(pid) == 0) {
         NoSuchProcess();
     }
     else {
