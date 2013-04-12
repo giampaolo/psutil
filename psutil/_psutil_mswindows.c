@@ -2323,6 +2323,22 @@ error:
     return NULL;
 }
 
+// fix for mingw32, see
+// https://code.google.com/p/psutil/issues/detail?id=351#c2
+typedef struct _DISK_PERFORMANCE_WIN_2008 {
+       LARGE_INTEGER BytesRead;
+       LARGE_INTEGER BytesWritten;
+       LARGE_INTEGER ReadTime;
+       LARGE_INTEGER WriteTime;
+       LARGE_INTEGER IdleTime;
+       DWORD         ReadCount;
+       DWORD         WriteCount;
+       DWORD         QueueDepth;
+       DWORD         SplitCount;
+       LARGE_INTEGER QueryTime;
+       DWORD         StorageDeviceNumber;
+       WCHAR         StorageManagerName[8];
+} DISK_PERFORMANCE_WIN_2008;
 
 /*
  * Return a Python dict of tuples for disk I/O information
@@ -2330,7 +2346,7 @@ error:
 static PyObject*
 get_disk_io_counters(PyObject* self, PyObject* args)
 {
-    DISK_PERFORMANCE diskPerformance;
+    DISK_PERFORMANCE_WIN_2008 diskPerformance;
     DWORD dwSize;
     HANDLE hDevice = NULL;
     char szDevice[MAX_PATH];
@@ -2355,9 +2371,8 @@ get_disk_io_counters(PyObject* self, PyObject* args)
         if (hDevice == INVALID_HANDLE_VALUE) {
             continue;
         }
-
         if (DeviceIoControl(hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0,
-                            &diskPerformance, sizeof(DISK_PERFORMANCE),
+                            &diskPerformance, sizeof(diskPerformance),
                             &dwSize, NULL))
         {
             sprintf(szDeviceDisplay, "PhysicalDrive%d", devNum);

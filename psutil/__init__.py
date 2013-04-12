@@ -1204,6 +1204,9 @@ def disk_io_counters(perdisk=False):
     physical disk installed on the system as a dictionary
     with partition names as the keys and the namedutuple
     described above as the values.
+
+    On recent Windows versions 'diskperf -y' command may need to be
+    executed first otherwise this function won't find any disk.
     """
     rawdict = _psplatform.disk_io_counters()
     if not rawdict:

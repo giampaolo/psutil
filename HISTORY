@@ -41,6 +41,8 @@ BUG FIXES
  * #344: [FreeBSD] swap_memory() might return incorrect results due to
          kvm_open(3) not being called. (patch by Jean Sebastien)
  * #338: [Linux] disk_io_counters() fails to find some disks.
+ * #351: [Windows] if psutil is compiled with mingw32 (provided installers for
+         py2.4 and py2.5 are) disk_io_counters() will fail. (Patch by m.malycha)
  * #353: [OSX] get_users() returns an empty list on OSX 10.8.
  * #356: Process.parent now checks whether parent PID has been reused in which
          case returns None.
@@ -51,11 +53,11 @@ BUG FIXES
 
 API CHANGES
 
+ * Process.cmdline property is no longer cached after first access.
+ * Process.ppid property is no longer cached after first access.
  * [Linux] Process methods not working because of a poor /proc implementation
    will raise NotImplementedError instead of RuntimeError.
- * Process.cmdline property is no longer cached after first access.
  * psutil.error module is deprecated and scheduled for removal.
- * Process.ppid property is no longer cached
 
 
 0.6.1 - 2012-08-16
