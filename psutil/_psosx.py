@@ -56,7 +56,7 @@ _TCP_STATES_TABLE = {_psutil_osx.TCPS_ESTABLISHED : CONN_ESTABLISHED,
                      _psutil_osx.TCPS_LAST_ACK : CONN_LAST_ACK,
                      _psutil_osx.TCPS_LISTEN : CONN_LISTEN,
                      _psutil_osx.TCPS_CLOSING : CONN_CLOSING,
-                     20 : CONN_NONE,
+                     _psutil_osx.PSUTIL_CONN_NONE : CONN_NONE,
                      }
 
 # --- functions

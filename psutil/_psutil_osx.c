@@ -1102,6 +1102,9 @@ error:
 }
 
 
+// a signaler for connections without an actual status
+static int PSUTIL_CONN_NONE = 128;
+
 /*
  * Return process TCP and UDP connections as a list of tuples.
  * References:
@@ -1259,7 +1262,7 @@ get_process_connections(PyObject* self, PyObject* args)
                     state = (int)si.psi.soi_proto.pri_tcp.tcpsi_state;
                 }
                 else {
-                    state = 20;
+                    state = PSUTIL_CONN_NONE;
                 }
 
                 laddr = Py_BuildValue("(si)", lip, lport);
@@ -1289,7 +1292,7 @@ get_process_connections(PyObject* self, PyObject* args)
                     fd, family, type,
                     si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path,
                     si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path,
-                    20);  // 0 will be mapped to CONN_NONE later
+                    PSUTIL_CONN_NONE);
                 if (!tuple)
                     goto error;
                 if (PyList_Append(retList, tuple))
@@ -1803,6 +1806,7 @@ init_psutil_osx(void)
     PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
     PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
     PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
+    PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
     if (module == NULL) {
         INITERROR;
