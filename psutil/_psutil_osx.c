@@ -1103,41 +1103,6 @@ error:
 
 
 /*
- * mathes Linux net/tcp_states.h:
- * http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
- */
-static char *
-get_connection_status(int st) {
-    switch (st) {
-        case TCPS_CLOSED:
-            return "CLOSE";
-        case TCPS_CLOSING:
-            return "CLOSING";
-        case TCPS_CLOSE_WAIT:
-            return "CLOSE_WAIT";
-        case TCPS_LISTEN:
-            return "LISTEN";
-        case TCPS_ESTABLISHED:
-            return "ESTABLISHED";
-        case TCPS_SYN_SENT:
-            return "SYN_SENT";
-        case TCPS_SYN_RECEIVED:
-            return "SYN_RECV";
-        case TCPS_FIN_WAIT_1:
-            return "FIN_WAIT_1";
-        case TCPS_FIN_WAIT_2:
-            return "FIN_WAIT_2";
-        case TCPS_LAST_ACK:
-            return "LAST_ACK";
-        case TCPS_TIME_WAIT:
-            return "TIME_WAIT";
-        default:
-            return "";
-    }
-}
-
-
-/*
  * Return process TCP and UDP connections as a list of tuples.
  * References:
  * - lsof source code: http://goo.gl/SYW79 and http://goo.gl/wNrC0
@@ -1233,9 +1198,8 @@ get_process_connections(PyObject* self, PyObject* args)
             // --- /errors checking
 
             //
-            int fd, family, type, lport, rport;
+            int fd, family, type, lport, rport, state;
             char lip[200], rip[200];
-            char *state;
             int inseq;
             PyObject* _family;
             PyObject* _type;
@@ -1292,11 +1256,10 @@ get_process_connections(PyObject* self, PyObject* args)
                 lport = ntohs(si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_lport);
                 rport = ntohs(si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_fport);
                 if (type == SOCK_STREAM) {
-                    state = get_connection_status((int)si.psi.soi_proto.pri_tcp.tcpsi_state);
+                    state = (int)si.psi.soi_proto.pri_tcp.tcpsi_state;
                 }
-
                 else {
-                    state = "";
+                    state = 20;
                 }
 
                 laddr = Py_BuildValue("(si)", lip, lport);
@@ -1312,7 +1275,7 @@ get_process_connections(PyObject* self, PyObject* args)
                     goto error;
 
                 // construct the python list
-                tuple = Py_BuildValue("(iiiNNs)", fd, family, type, laddr, raddr,
+                tuple = Py_BuildValue("(iiiNNi)", fd, family, type, laddr, raddr,
                                                   state);
                 if (!tuple)
                     goto error;
@@ -1322,11 +1285,11 @@ get_process_connections(PyObject* self, PyObject* args)
             }
             else if (family == AF_UNIX) {
                 // construct the python list
-                tuple = Py_BuildValue("(iiisss)",
+                tuple = Py_BuildValue("(iiissi)",
                     fd, family, type,
                     si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path,
                     si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path,
-                    "");
+                    20);  // 0 will be mapped to CONN_NONE later
                 if (!tuple)
                     goto error;
                 if (PyList_Append(retList, tuple))
@@ -1828,6 +1791,18 @@ init_psutil_osx(void)
     PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
     PyModule_AddIntConstant(module, "SSTOP", SSTOP);
     PyModule_AddIntConstant(module, "SZOMB", SZOMB);
+    // connection status constants
+    PyModule_AddIntConstant(module, "TCPS_CLOSED", TCPS_CLOSED);
+    PyModule_AddIntConstant(module, "TCPS_CLOSING", TCPS_CLOSING);
+    PyModule_AddIntConstant(module, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT);
+    PyModule_AddIntConstant(module, "TCPS_LISTEN", TCPS_LISTEN);
+    PyModule_AddIntConstant(module, "TCPS_ESTABLISHED", TCPS_ESTABLISHED);
+    PyModule_AddIntConstant(module, "TCPS_SYN_SENT", TCPS_SYN_SENT);
+    PyModule_AddIntConstant(module, "TCPS_SYN_RECEIVED", TCPS_SYN_RECEIVED);
+    PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1);
+    PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
+    PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
+    PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
 
     if (module == NULL) {
         INITERROR;

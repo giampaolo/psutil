@@ -1264,8 +1264,10 @@ class TestCase(unittest.TestCase):
         sproc = get_test_subprocess([PYTHON, "-c", arg])
         p = psutil.Process(sproc.pid)
         for x in range(100):
-            cons = p.get_connections()
-            if cons:
+            if p.get_connections():
+                # give the subprocess some more time to bind()
+                time.sleep(.01)
+                cons = p.get_connections()
                 break
             time.sleep(.01)
         self.assertEqual(len(cons), 1)
@@ -1314,7 +1316,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(conn.type, socket.SOCK_STREAM)
         self.assertEqual(conn.local_address, TESTFN)
         self.assertTrue(not conn.remote_address)
-        self.assertTrue(not conn.status)
+        self.assertEqual(conn.status, psutil.CONN_NONE)
         sock.close()
         # udp
         safe_remove(TESTFN)
