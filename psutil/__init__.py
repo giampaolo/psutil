@@ -88,7 +88,8 @@ elif sys.platform.startswith("win32"):
                                      HIGH_PRIORITY_CLASS,
                                      IDLE_PRIORITY_CLASS,
                                      NORMAL_PRIORITY_CLASS,
-                                     REALTIME_PRIORITY_CLASS)
+                                     REALTIME_PRIORITY_CLASS,
+                                     CONN_DELETE_TCB)
 
 elif sys.platform.startswith("darwin"):
     import psutil._psosx as _psplatform
