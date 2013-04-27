@@ -1273,6 +1273,22 @@ def get_users():
     """
     return _psplatform.get_system_users()
 
+if sys.platform.startswith("linux"):
+
+    def get_cpu_temp(fahrenheit=False):
+        """Return temperatures for each physical CPU installed on the
+        system as a list of namedtuple including the following fields:
+
+         - name: CPU name
+         - temp: current temperature
+         - max: maximum temperature
+         - critical: temperature considered critical
+
+        If fahrenheit == False values are expressed in Celsius.
+        Linux only and still experimental.
+        """
+        return _psplatform.get_cpu_temp(fahrenheit)
+
 # =====================================================================
 # --- deprecated functions
 # =====================================================================

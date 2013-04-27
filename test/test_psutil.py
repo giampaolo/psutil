@@ -823,6 +823,17 @@ class TestCase(unittest.TestCase):
         if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
             self.fail("expected: %s, found: %s" %(ktime, kernel_time))
 
+    if LINUX:
+        def test_cpu_temp(self):
+            ls = psutil.get_cpu_temp()
+            if not ls:
+                self.fail('psutil.get_cpu_temp() returns an empty list')
+            for item in ls:
+                assert item.name, item
+                assert item.temp >= 0, item
+                assert item.max >= 0, item
+                assert item.critical >= 0, item
+
     def test_create_time(self):
         sproc = get_test_subprocess(wait=True)
         now = time.time()

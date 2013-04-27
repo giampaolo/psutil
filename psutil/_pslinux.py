@@ -268,6 +268,41 @@ def get_system_per_cpu_times():
     finally:
         f.close()
 
+def _cat(file, int_=False):
+    f = open(file, 'r')
+    try:
+        content = f.read().strip()
+    finally:
+        f.close()
+    if int_:
+        content = int(content)
+    return content
+
+nt_cpu_temp = namedtuple('cputemp', 'name temp max critical')
+
+def get_cpu_temp(fahrenheit=False):
+    """Return CPU temperatures expressed in Celsius."""
+    # References:
+    # http://www.mjmwired.net/kernel/Documentation/hwmon/sysfs-interface
+    # /sys/class/hwmon/hwmon0/temp1_*
+    base = '/sys/class/hwmon/'
+    ret = []
+    ls = sorted(os.listdir(base))
+    if not ls:
+        raise RuntimeError('no files in ' + base)
+    for hwmon in ls:
+        hwmon = os.path.join(base, hwmon)
+        label = _cat(os.path.join(hwmon, 'temp1_label'))
+        assert 'cpu temp' in label.lower(), label
+        name = _cat(os.path.join(hwmon, 'name'))
+        temp = _cat(os.path.join(hwmon, 'temp1_input'), int_=True) / 1000
+        max_ = _cat(os.path.join(hwmon, 'temp1_max'), int_=True) / 1000
+        crit = _cat(os.path.join(hwmon, 'temp1_crit'), int_=True) / 1000
+        digits = (temp, max_, crit)
+        if fahrenheit:
+            digits = [(x * 1.8) + 32 for x in digits]
+        ret.append(nt_cpu_temp(name, *digits))
+    return ret
 
 # --- system disk functions
 
