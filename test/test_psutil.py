@@ -1721,6 +1721,13 @@ class TestFetchAllProcesses(unittest.TestCase):
                         valid_procs += 1
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         err = sys.exc_info()[1]
+                        if isinstance(err, psutil.NoSuchProcess):
+                            if psutil.pid_exists(p.pid):
+                                # XXX race condition; we probably need
+                                # to try figuring out the process
+                                # identity before failing
+                                self.fail("PID still exists but fun raised " \
+                                          "NoSuchProcess")
                         self.assertEqual(err.pid, p.pid)
                         if err.name:
                             # make sure exception's name attr is set
