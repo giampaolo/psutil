@@ -42,6 +42,7 @@ LINUX = sys.platform.startswith("linux")
 WINDOWS = sys.platform.startswith("win32")
 OSX = sys.platform.startswith("darwin")
 BSD = sys.platform.startswith("freebsd")
+NO_RETRIES = 10  # conf for retry_before_failing() decorator
 
 
 _subprocesses_started = set()
@@ -180,6 +181,21 @@ def call_until(fun, expr, timeout=1):
         time.sleep(0.001)
     raise RuntimeError('timed out (ret=%r)' % ret)
 
+def retry_before_failing(ntimes=None):
+    """Decorator which runs a test function and retries N times before
+    actually failing.
+    """
+    def decorator(fun):
+        @wraps(fun)
+        def wrapper(*args, **kwargs):
+            for x in range(ntimes or NO_RETRIES):
+                try:
+                    return fun(*args, **kwargs)
+                except AssertionError:
+                    pass
+            raise
+        return wrapper
+    return decorator
 
 def skipIf(condition, reason="", warn=False):
     """Decorator which skip a test under if condition is satisfied.

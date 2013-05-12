@@ -14,7 +14,8 @@ import time
 import os
 import re
 
-from test_psutil import sh, get_test_subprocess, skip_on_not_implemented
+from test_psutil import (sh, get_test_subprocess, skip_on_not_implemented,
+                         retry_before_failing)
 from psutil._compat import PY3
 import psutil
 
@@ -80,21 +81,25 @@ class LinuxSpecificTestCase(unittest.TestCase):
         total = int(lines[0].split()[1]) * 1024
         self.assertEqual(total, psutil.virtual_memory().total)
 
+    @retry_before_failing()
     def test_vmem_used(self):
         lines = sh('free').split('\n')[1:]
         used = int(lines[0].split()[2]) * 1024
         self.assert_eq_w_tol(used, psutil.virtual_memory().used, TOLERANCE)
 
+    @retry_before_failing()
     def test_vmem_free(self):
         lines = sh('free').split('\n')[1:]
         free = int(lines[0].split()[3]) * 1024
         self.assert_eq_w_tol(free, psutil.virtual_memory().free, TOLERANCE)
 
+    @retry_before_failing()
     def test_vmem_buffers(self):
         lines = sh('free').split('\n')[1:]
         buffers = int(lines[0].split()[5]) * 1024
         self.assert_eq_w_tol(buffers, psutil.virtual_memory().buffers, TOLERANCE)
 
+    @retry_before_failing()
     def test_vmem_cached(self):
         lines = sh('free').split('\n')[1:]
         cached = int(lines[0].split()[6]) * 1024
@@ -105,11 +110,13 @@ class LinuxSpecificTestCase(unittest.TestCase):
         total = int(lines[2].split()[1]) * 1024
         self.assertEqual(total, psutil.swap_memory().total)
 
+    @retry_before_failing()
     def test_swapmem_used(self):
         lines = sh('free').split('\n')[1:]
         used = int(lines[2].split()[2]) * 1024
         self.assert_eq_w_tol(used, psutil.swap_memory().used, TOLERANCE)
 
+    @retry_before_failing()
     def test_swapmem_free(self):
         lines = sh('free').split('\n')[1:]
         free = int(lines[2].split()[3]) * 1024

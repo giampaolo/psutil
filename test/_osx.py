@@ -16,7 +16,8 @@ import re
 import psutil
 
 from psutil._compat import PY3
-from test_psutil import reap_children, get_test_subprocess, sh
+from test_psutil import (reap_children, get_test_subprocess, sh,
+                         retry_before_failing)
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
@@ -108,18 +109,22 @@ class OSXSpecificTestCase(unittest.TestCase):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
         self.assertEqual(sysctl_hwphymem, psutil.TOTAL_PHYMEM)
 
+    @retry_before_failing()
     def test_vmem_free(self):
         num = vm_stat("free")
         self.assert_eq_w_tol(psutil.virtual_memory().free, num, TOLERANCE)
 
+    @retry_before_failing()
     def test_vmem_active(self):
         num = vm_stat("active")
         self.assert_eq_w_tol(psutil.virtual_memory().active, num, TOLERANCE)
 
+    @retry_before_failing()
     def test_vmem_inactive(self):
         num = vm_stat("inactive")
         self.assert_eq_w_tol(psutil.virtual_memory().inactive, num, TOLERANCE)
 
+    @retry_before_failing()
     def test_vmem_wired(self):
         num = vm_stat("wired")
         self.assert_eq_w_tol(psutil.virtual_memory().wired, num, TOLERANCE)
