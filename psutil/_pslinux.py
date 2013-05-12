@@ -676,7 +676,7 @@ class Process(object):
         f.close()
 
     if not os.path.exists('/proc/%s/smaps' % os.getpid()):
-        def get_shared_libs(self, ext):
+        def get_memory_maps(self, ext):
             msg = "couldn't find /proc/%s/smaps; kernel < 2.6.14 or CONFIG_MMU " \
                   "kernel configuration option is not enabled" % self.pid
             raise NotImplementedError(msg)
