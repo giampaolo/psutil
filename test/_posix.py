@@ -124,6 +124,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline)
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
+    @retry_before_failing()
     def test_get_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime

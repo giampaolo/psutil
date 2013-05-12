@@ -415,7 +415,6 @@ class TestCase(unittest.TestCase):
         p = psutil.Process(os.getpid())
         try:
             self.assertEqual(psutil.total_virtmem(), psutil.swap_memory().total)
-            self.assertEqual(psutil.get_process_list(), list(psutil.process_iter()))
             self.assertEqual(p.nice, p.get_nice())
         finally:
             warnings.resetwarnings()
