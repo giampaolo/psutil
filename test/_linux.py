@@ -14,7 +14,7 @@ import time
 import os
 import re
 
-from test_psutil import sh, get_test_subprocess
+from test_psutil import sh, get_test_subprocess, skip_on_not_implemented
 from psutil._compat import PY3
 import psutil
 
@@ -32,6 +32,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
               % (first, second, tolerance, difference)
         raise AssertionError(msg)
 
+    @skip_on_not_implemented()
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
         # against "df -a"
