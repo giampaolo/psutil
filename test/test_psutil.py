@@ -843,9 +843,11 @@ class TestCase(unittest.TestCase):
 
     @skipIf(WINDOWS)
     def test_terminal(self):
-        tty = sh('tty')
-        p = psutil.Process(os.getpid())
-        self.assertEqual(p.terminal, tty)
+        terminal = psutil.Process(os.getpid()).terminal
+        if sys.stdin.isatty():
+            self.assertEqual(terminal, sh('tty'))
+        else:
+            assert terminal, repr(terminal)
 
     @skipIf(OSX, warn=False)
     def test_get_io_counters(self):
