@@ -1,5 +1,13 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+0.7.2 - XXXX-XX-XX
+------------------
+
+NEW FEATURES
+
+ * #380: test suite exits with non-zero on failure.  (patch by floppymaster)
+
+
 0.7.1 - 2013-05-03
 ------------------
 

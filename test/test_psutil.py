@@ -2047,7 +2047,9 @@ def test_main():
 
     for test_class in tests:
         test_suite.addTest(unittest.makeSuite(test_class))
-    unittest.TextTestRunner(verbosity=2).run(test_suite)
+    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
+    return result.wasSuccessful()
 
 if __name__ == '__main__':
-    test_main()
+    if not test_main():
+        sys.exit(1)
