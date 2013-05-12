@@ -1717,6 +1717,10 @@ class TestFetchAllProcesses(unittest.TestCase):
                         else:
                             ret = attr
                         valid_procs += 1
+                    except NotImplementedError:
+                        atexit.register(warn, "%r was skipped because not "
+                            "implemented" % (self.__class__.__name__ + \
+                                             '.test_' + name))
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         err = sys.exc_info()[1]
                         if isinstance(err, psutil.NoSuchProcess):
