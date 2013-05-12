@@ -553,6 +553,8 @@ class TestCase(unittest.TestCase):
                     self._test_cpu_percent(percent)
                 self._test_cpu_percent(sum(cpu))
 
+    @skipIf(POSIX and not hasattr(os, 'statvfs'),
+            reason="os.statvfs() function not available on this platform")
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
         assert usage.total > 0, usage
