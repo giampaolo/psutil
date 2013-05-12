@@ -576,6 +576,8 @@ class TestCase(unittest.TestCase):
         else:
             self.fail("OSError not raised")
 
+    @skipIf(POSIX and not hasattr(os, 'statvfs'),
+            reason="os.statvfs() function not available on this platform")
     def test_disk_partitions(self):
         for disk in psutil.disk_partitions(all=False):
             if WINDOWS and 'cdrom' in disk.opts:
