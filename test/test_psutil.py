@@ -563,7 +563,8 @@ class TestCase(unittest.TestCase):
         for disk in psutil.disk_partitions(all=False):
             if WINDOWS and 'cdrom' in disk.opts:
                 continue
-            assert os.path.exists(disk.device), disk
+            if os.path.isabs(disk.device):
+                assert os.path.exists(disk.device), disk
             assert os.path.isdir(disk.mountpoint), disk
             assert disk.fstype, disk
             assert isinstance(disk.opts, str)
