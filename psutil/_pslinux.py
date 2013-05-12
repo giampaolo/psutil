@@ -514,7 +514,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_io_counters(self):
-        raise NotImplementedError
         f = open("/proc/%s/io" % self.pid)
         try:
             for line in f:

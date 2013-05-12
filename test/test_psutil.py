@@ -229,6 +229,21 @@ def skip_on_access_denied(only_if=None):
         return wrapper
     return decorator
 
+def skip_on_not_implemented(only_if=None):
+    """Decorator to Ignore NotImplementedError exceptions."""
+    def decorator(fun):
+        @wraps(fun)
+        def wrapper(*args, **kwargs):
+            try:
+                return fun(*args, **kwargs)
+            except NotImplementedError:
+                if only_if is not None:
+                    if not only_if:
+                        raise
+                atexit.register(warn, "%r was skipped because it raised " \
+                                      "NotImplementedError" % fun.__name__)
+        return wrapper
+    return decorator
 
 def supports_ipv6():
     """Return True if IPv6 is supported on this platform."""
@@ -849,7 +864,8 @@ class TestCase(unittest.TestCase):
         else:
             assert terminal, repr(terminal)
 
-    @skipIf(OSX, warn=False)
+    @skipIf(OSX, warn=False)  # XXX why (I forgot)?
+    @skip_on_not_implemented(only_if=LINUX)
     def test_get_io_counters(self):
         p = psutil.Process(os.getpid())
         # test reads
@@ -1434,6 +1450,7 @@ class TestCase(unittest.TestCase):
         sock.close()
         self.assertEqual(p.get_num_fds(), start)
 
+    @skip_on_not_implemented(only_if=LINUX)
     def test_get_num_ctx_switches(self):
         p = psutil.Process(os.getpid())
         before = sum(p.get_num_ctx_switches())
