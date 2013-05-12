@@ -1569,6 +1569,8 @@ class TestCase(unittest.TestCase):
                     meth()
             except psutil.NoSuchProcess:
                 pass
+            except NotImplementedError:
+                pass
             else:
                 self.fail("NoSuchProcess exception not raised for %r" % name)
 
