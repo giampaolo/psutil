@@ -437,7 +437,7 @@ class TestCase(unittest.TestCase):
 
     def test_swap_memory(self):
         mem = psutil.swap_memory()
-        assert mem.total > 0, mem
+        assert mem.total >= 0, mem
         assert mem.used >= 0, mem
         assert mem.free > 0, mem
         assert 0 <= mem.percent <= 100, mem
