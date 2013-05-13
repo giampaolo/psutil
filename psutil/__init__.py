@@ -1326,7 +1326,7 @@ def test():
 
     today_day = datetime.date.today()
     templ = "%-10s %5s %4s %4s %7s %7s %-13s %5s %7s  %s"
-    attrs = ['pid', 'username', 'get_cpu_percent', 'get_memory_percent', 'name',
+    attrs = ['pid', 'uids', 'get_cpu_percent', 'get_memory_percent', 'name',
              'get_cpu_times', 'create_time', 'get_memory_info']
     if os.name == 'posix':
         attrs.append('terminal')
@@ -1347,7 +1347,16 @@ def test():
             else:
                 ctime = ''
             cputime = time.strftime("%M:%S", time.localtime(sum(pinfo['cpu_times'])))
-            user = pinfo['username']
+            try:
+                user = p.username
+            except KeyError:
+                if os.name == 'posix':
+                    if pinfo['uids']:
+                        user = str(pinfo['uids'].real)
+                    else:
+                        user = ''
+                else:
+                    raise
             if os.name == 'nt' and '\\' in user:
                 user = user.split('\\')[1]
             vms = pinfo['memory_info'] and \
