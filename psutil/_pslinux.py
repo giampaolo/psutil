@@ -626,7 +626,8 @@ class Process(object):
                 data = {}
                 for line in f:
                     fields = line.split(None, 5)
-                    if len(fields) >= 5:
+                    if not fields[0].endswith(':'):
+                        # new block section
                         yield (current_block.pop(), data)
                         current_block.append(line)
                     else:
