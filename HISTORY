@@ -7,6 +7,10 @@ NEW FEATURES
 
  * #380: test suite exits with non-zero on failure.  (patch by floppymaster)
 
+BUG FIXES
+
+ * #379: [Linux] Process.get_memory_maps() may raise ValueError.
+
 
 0.7.1 - 2013-05-03
 ------------------

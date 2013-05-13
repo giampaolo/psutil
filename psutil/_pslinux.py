@@ -630,7 +630,15 @@ class Process(object):
                         yield (current_block.pop(), data)
                         current_block.append(line)
                     else:
-                        data[fields[0]] = int(fields[1]) * 1024
+                        try:
+                            data[fields[0]] = int(fields[1]) * 1024
+                        except ValueError:
+                            if fields[0].startswith('VmFlags:'):
+                                # see issue #369
+                                continue
+                            else:
+                                raise ValueError("don't know how to interpret" \
+                                                 " line %r" % line)
                 yield (current_block.pop(), data)
 
             if first_line:  # smaps file can be empty
