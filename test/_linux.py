@@ -15,7 +15,7 @@ import os
 import re
 
 from test_psutil import (sh, get_test_subprocess, skip_on_not_implemented,
-                         retry_before_failing)
+                         skipIf, retry_before_failing, POSIX)
 from psutil._compat import PY3
 import psutil
 
@@ -33,6 +33,8 @@ class LinuxSpecificTestCase(unittest.TestCase):
               % (first, second, tolerance, difference)
         raise AssertionError(msg)
 
+    @skipIf(POSIX and not hasattr(os, 'statvfs'),
+            reason="os.statvfs() function not available on this platform")
     @skip_on_not_implemented()
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()

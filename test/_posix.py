@@ -17,7 +17,8 @@ import psutil
 
 from psutil._compat import PY3
 from test_psutil import (get_test_subprocess, reap_children, PYTHON, LINUX, OSX,
-                         BSD, skip_on_access_denied, sh, skipIf)
+                         BSD, skip_on_access_denied, sh, skipIf,
+                         retry_before_failing)
 
 
 def ps(cmd):
