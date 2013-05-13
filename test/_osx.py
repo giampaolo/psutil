@@ -151,7 +151,12 @@ class OSXSpecificTestCase(unittest.TestCase):
         self.assertEqual(tot1, tot2)
 
 
-if __name__ == '__main__':
+def test_main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(OSXSpecificTestCase))
-    unittest.TextTestRunner(verbosity=2).run(test_suite)
+    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
+    return result.wasSuccessful()
+
+if __name__ == '__main__':
+    if not test_main():
+        sys.exit(1)

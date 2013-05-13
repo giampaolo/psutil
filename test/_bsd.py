@@ -204,7 +204,12 @@ class BSDSpecificTestCase(unittest.TestCase):
         self.assert_eq_w_tol(psutil.virtual_memory().buffers, num, TOLERANCE)
 
 
-if __name__ == '__main__':
+def test_main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(BSDSpecificTestCase))
-    unittest.TextTestRunner(verbosity=2).run(test_suite)
+    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
+    return result.wasSuccessful()
+
+if __name__ == '__main__':
+    if not test_main():
+        sys.exit(1)

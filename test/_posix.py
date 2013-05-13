@@ -177,7 +177,12 @@ class PosixSpecificTestCase(unittest.TestCase):
             self.assertTrue(u.terminal in terminals, u.terminal)
 
 
-if __name__ == '__main__':
+def test_main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(PosixSpecificTestCase))
-    unittest.TextTestRunner(verbosity=2).run(test_suite)
+    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
+    return result.wasSuccessful()
+
+if __name__ == '__main__':
+    if not test_main():
+        sys.exit(1)

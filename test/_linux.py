@@ -145,7 +145,12 @@ class LinuxSpecificTestCase(unittest.TestCase):
             assert 'guest_nice' not in fields, fields
 
 
-if __name__ == '__main__':
+def test_main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(LinuxSpecificTestCase))
-    unittest.TextTestRunner(verbosity=2).run(test_suite)
+    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
+    return result.wasSuccessful()
+
+if __name__ == '__main__':
+    if not test_main():
+        sys.exit(1)
