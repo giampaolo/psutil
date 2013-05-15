@@ -16,12 +16,12 @@ import re
 import psutil
 
 from psutil._compat import PY3
+from test_psutil import TOLERANCE
 from test_psutil import (reap_children, get_test_subprocess, sh,
                          retry_before_failing)
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-TOLERANCE = 500 * 1024  # 500 KB
 
 
 def sysctl(cmdline):

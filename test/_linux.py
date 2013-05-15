@@ -14,13 +14,11 @@ import time
 import os
 import re
 
+from test_psutil import POSIX, TOLERANCE
 from test_psutil import (sh, get_test_subprocess, skip_on_not_implemented,
-                         skipIf, retry_before_failing, POSIX)
+                         skipIf, retry_before_failing)
 from psutil._compat import PY3
 import psutil
-
-
-TOLERANCE = 200 * 1024  # 200 KB
 
 
 class LinuxSpecificTestCase(unittest.TestCase):

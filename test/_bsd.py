@@ -16,13 +16,12 @@ import os
 import psutil
 
 from psutil._compat import PY3
-from test_psutil import DEVNULL
+from test_psutil import DEVNULL, TOLERANCE
 from test_psutil import (reap_children, get_test_subprocess, sh, which,
                          skipUnless, retry_before_failing)
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-TOLERANCE = 500 * 1024  # 500 KB
 MUSE_AVAILABLE = which('muse')
 
 

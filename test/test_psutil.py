@@ -34,6 +34,11 @@ import psutil
 from psutil._compat import PY3, callable, long, wraps
 
 
+# conf for retry_before_failing() decorator
+NO_RETRIES = 10
+# bytes tolerance for OS memory related tests
+TOLERANCE = 500 * 1024  # 500KB
+
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 TESTFN = os.path.join(os.getcwd(), "$testfile")
@@ -42,7 +47,6 @@ LINUX = sys.platform.startswith("linux")
 WINDOWS = sys.platform.startswith("win32")
 OSX = sys.platform.startswith("darwin")
 BSD = sys.platform.startswith("freebsd")
-NO_RETRIES = 10  # conf for retry_before_failing() decorator
 
 
 _subprocesses_started = set()
