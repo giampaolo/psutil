@@ -284,7 +284,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
     int pagesize = getpagesize();
     long pid;
     kern_return_t err = KERN_SUCCESS;
-    mach_port_t task;
+    mach_port_t task = MACH_PORT_NULL;
     uint32_t depth = 1;
     vm_address_t address = 0;
     vm_size_t size = 0;
@@ -887,7 +887,7 @@ get_process_threads(PyObject* self, PyObject* args)
     int err, j, ret;
     kern_return_t kr;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
-    mach_port_t task;
+    mach_port_t task = MACH_PORT_NULL;
     struct task_basic_info tasks_info;
     thread_act_port_array_t thread_list = NULL;
     thread_info_data_t thinfo;
@@ -1572,7 +1572,12 @@ get_disk_io_counters(PyObject* self, PyObject* args)
             }
 
             CFNumberRef number;
-            int64_t reads, writes, read_bytes, write_bytes, read_time, write_time = 0;
+            int64_t reads = 0;
+            int64_t writes = 0;
+            int64_t read_bytes = 0;
+            int64_t write_bytes = 0;
+            int64_t read_time = 0;
+            int64_t write_time = 0;
 
             /* Get disk reads/writes */
             if ((number = (CFNumberRef)CFDictionaryGetValue(
