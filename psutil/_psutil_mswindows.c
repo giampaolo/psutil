@@ -2219,6 +2219,7 @@ get_network_io_counters(PyObject* self, PyObject* args)
 {
     int attempts = 0;
     int outBufLen = 15000;
+    char ifname[2000];
     DWORD dwRetVal = 0;
     MIB_IFROW *pIfRow = NULL;
     ULONG flags = 0;
@@ -2228,7 +2229,6 @@ get_network_io_counters(PyObject* self, PyObject* args)
 
     PyObject* py_retdict = PyDict_New();
     PyObject* py_nic_info = NULL;
-    PyObject* py_pre_nic_name = NULL;
     PyObject* py_nic_name = NULL;
 
     if (py_retdict == NULL) {
@@ -2261,7 +2261,6 @@ get_network_io_counters(PyObject* self, PyObject* args)
 
     pCurrAddresses = pAddresses;
     while (pCurrAddresses) {
-        py_pre_nic_name = NULL;
         py_nic_name = NULL;
         py_nic_info = NULL;
         pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
@@ -2290,17 +2289,12 @@ get_network_io_counters(PyObject* self, PyObject* args)
         if (!py_nic_info)
             goto error;
 
-        py_pre_nic_name = PyUnicode_FromWideChar(
-                                pCurrAddresses->FriendlyName,
-                                wcslen(pCurrAddresses->FriendlyName));
-        if (py_pre_nic_name == NULL)
-            goto error;
-        py_nic_name = PyUnicode_FromObject(py_pre_nic_name);
+        sprintf(ifname, "%wS", pCurrAddresses->FriendlyName);
+        py_nic_name = PyString_FromString(ifname);
         if (py_nic_name == NULL)
             goto error;
         if (PyDict_SetItem(py_retdict, py_nic_name, py_nic_info))
             goto error;
-        Py_XDECREF(py_pre_nic_name);
         Py_XDECREF(py_nic_name);
         Py_XDECREF(py_nic_info);
 
@@ -2312,7 +2306,6 @@ get_network_io_counters(PyObject* self, PyObject* args)
     return py_retdict;
 
 error:
-    Py_XDECREF(py_pre_nic_name);
     Py_XDECREF(py_nic_name);
     Py_XDECREF(py_nic_info);
     Py_DECREF(py_retdict);
