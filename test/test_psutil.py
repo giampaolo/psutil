@@ -1198,7 +1198,7 @@ class TestCase(unittest.TestCase):
         if POSIX:
             import pwd
             self.assertEqual(p.username, pwd.getpwuid(os.getuid()).pw_name)
-        elif WINDOWS:
+        elif WINDOWS and 'USERNAME' in os.environ:
             expected_username = os.environ['USERNAME']
             expected_domain = os.environ['USERDOMAIN']
             domain, username = p.username.split('\\')

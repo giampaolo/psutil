@@ -1326,9 +1326,10 @@ def test():
 
     today_day = datetime.date.today()
     templ = "%-10s %5s %4s %4s %7s %7s %-13s %5s %7s  %s"
-    attrs = ['pid', 'uids', 'get_cpu_percent', 'get_memory_percent', 'name',
+    attrs = ['pid', 'get_cpu_percent', 'get_memory_percent', 'name',
              'get_cpu_times', 'create_time', 'get_memory_info']
     if os.name == 'posix':
+        attrs.append('uids')
         attrs.append('terminal')
     print_(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY", "START",
                     "TIME", "COMMAND"))

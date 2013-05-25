@@ -17,6 +17,7 @@ import time
 import socket
 import threading
 import types
+import sys
 
 import psutil
 import psutil._common

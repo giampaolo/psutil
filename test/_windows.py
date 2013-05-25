@@ -21,7 +21,8 @@ import traceback
 import psutil
 import _psutil_mswindows
 from psutil._compat import PY3, callable, long
-from test_psutil import reap_children, get_test_subprocess, wait_for_pid, warn
+from test_psutil import (reap_children, get_test_subprocess, wait_for_pid, warn,
+                         skipUnless)
 try:
     import wmi
 except ImportError:
@@ -149,6 +150,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
 
         # --- psutil namespace functions and constants tests
 
+        @skipUnless(hasattr(os, 'NUMBER_OF_PROCESSORS'))
         def test_NUM_CPUS(self):
             num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
             self.assertEqual(num_cpus, psutil.NUM_CPUS)
