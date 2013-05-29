@@ -841,7 +841,6 @@ error:
 }
 
 
-<<<<<<< local
 /*
  * mathes Linux net/tcp_states.h:
  * http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
@@ -883,12 +882,6 @@ psutil_fetch_tcplist(void)
     char *buf;
     size_t len;
     int error;
-=======
-// a kvm_read that returns true if everything is read
-#define KVM_READ(kaddr, paddr, len) \
-    ((len) < SSIZE_MAX && \
-    kvm_read(kd, (u_long)(kaddr), (char *)(paddr), (len)) == (ssize_t)(len))
->>>>>>> other
 
     for (;;) {
         if (sysctlbyname("net.inet.tcp.pcblist", NULL, &len, NULL, 0) < 0) {
@@ -1000,6 +993,7 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif)
     return NULL;
 }
 
+
 // a signaler for connections without an actual status
 static int PSUTIL_CONN_NONE = 128;
 
@@ -1054,31 +1048,10 @@ get_process_connections(PyObject* self, PyObject* args)
         goto error;
     }
 
-<<<<<<< local
     for (i = 0; i < cnt; i++) {
-        int lport, rport;
-=======
-    ofiles = malloc((filed.fd_lastfile+1) * sizeof(struct file *));
-    if (ofiles == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    if (!KVM_READ(filed.fd_ofiles, ofiles,
-                  (filed.fd_lastfile+1) * sizeof(struct file *))) {
-        PyErr_SetString(PyExc_RuntimeError, "kvm_read() failed");
-        goto error;
-    }
-
-    for (i = 0; i <= filed.fd_lastfile; i++) {
         int lport, rport, state;
->>>>>>> other
         char lip[200], rip[200];
-<<<<<<< local
         char path[PATH_MAX];
-        char *state;
-=======
->>>>>>> other
         int inseq;
         tuple = NULL;
         laddr = NULL;
@@ -1105,24 +1078,11 @@ get_process_connections(PyObject* self, PyObject* args)
             if ((kif->kf_sock_domain == AF_INET) ||
                 (kif->kf_sock_domain == AF_INET6)) {
                 // fill status
-<<<<<<< local
-                state = "";
+                state = PSUTIL_CONN_NONE;
                 if (kif->kf_sock_type == SOCK_STREAM) {
                     tcp = psutil_search_tcplist(tcplist, kif);
                     if (tcp != NULL)
-                        state = get_connection_status((int)tcp->t_state);
-=======
-                if (proto.pr_type == SOCK_STREAM) {
-                    if (kvm_read(kd, (u_long)inpcb.inp_ppcb, (char *)&tcpcb,
-                                 sizeof(struct tcpcb)) != sizeof(struct tcpcb)) {
-                        PyErr_SetString(PyExc_RuntimeError, "kvm_read() state failed");
-                        goto error;
-                    }
-                    state = (int)tcpcb.t_state;
-                }
-                else {
-                    state = PSUTIL_CONN_NONE;
->>>>>>> other
+                        state = (int)tcp->t_state;
                 }
 
                 // build addr and port
@@ -1149,15 +1109,9 @@ get_process_connections(PyObject* self, PyObject* args)
                 }
                 if (!raddr)
                     goto error;
-<<<<<<< local
-                tuple = Py_BuildValue("(iiiNNs)", kif->kf_fd,
+                tuple = Py_BuildValue("(iiiNNi)", kif->kf_fd,
                                                   kif->kf_sock_domain,
                                                   kif->kf_sock_type,
-=======
-                tuple = Py_BuildValue("(iiiNNi)", i,
-                                                  dom.dom_family,
-                                                  proto.pr_type,
->>>>>>> other
                                                   laddr,
                                                   raddr,
                                                   state);
@@ -1176,15 +1130,9 @@ get_process_connections(PyObject* self, PyObject* args)
                         (sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
                          sun->sun_path);
 
-<<<<<<< local
-                tuple = Py_BuildValue("(iiisOs)", kif->kf_fd,
+                tuple = Py_BuildValue("(iiisOi)", kif->kf_fd,
                                                   kif->kf_sock_domain,
                                                   kif->kf_sock_type,
-=======
-                tuple = Py_BuildValue("(iiisOi)", i,
-                                                  dom.dom_family,
-                                                  proto.pr_type,
->>>>>>> other
                                                   path,
                                                   Py_None,
                                                   PSUTIL_CONN_NONE);

@@ -1299,8 +1299,6 @@ class TestProcess(TestCase):
         fileobj.close()
         self.assertTrue(fileobj.name not in p.get_open_files())
 
-<<<<<<< local
-=======
     def test_connection_constants(self):
         ints = []
         strs = []
@@ -1314,8 +1312,6 @@ class TestProcess(TestCase):
                 ints.append(num)
                 strs.append(str_)
 
-    @skip_on_access_denied(only_if=BSD)
->>>>>>> other
     def test_get_connections(self):
         arg = "import socket, time;" \
               "s = socket.socket();" \
