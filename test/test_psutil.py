@@ -29,6 +29,10 @@ import tempfile
 import stat
 import collections
 import datetime
+try:
+    import curses
+except ImportError:
+    curses = None
 
 import psutil
 from psutil._compat import PY3, callable, long, wraps
@@ -42,6 +46,8 @@ TOLERANCE = 500 * 1024  # 500KB
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 TESTFN = os.path.join(os.getcwd(), "$testfile")
+EXAMPLES_DIR = os.path.abspath(os.path.join(os.path.dirname(
+                               os.path.dirname(__file__)), 'examples'))
 POSIX = os.name == 'posix'
 LINUX = sys.platform.startswith("linux")
 WINDOWS = sys.platform.startswith("win32")
@@ -2060,6 +2066,75 @@ if hasattr(os, 'getuid'):
                 self.fail("exception not raised")
 
 
+class TestExampleScripts(unittest.TestCase):
+    """Tests for scripts in the examples directory."""
+
+    def assert_stdout(self, exe, args=None):
+        exe = os.path.join(EXAMPLES_DIR, exe)
+        if args:
+            exe = exe + ' ' + args
+        out = sh(exe).strip()
+        assert out, out
+        return out
+
+    def assert_curses_script(self, exe, args=None):
+        try:
+            sh(os.path.join(EXAMPLES_DIR, exe))
+        except RuntimeError:
+            err = str(sys.exc_info()[1])
+            if curses is not None:
+                assert '_curses.error' in err, err
+            else:
+                assert 'platform not supported' in err, err
+        else:
+            self.fail('RuntimeError not raised')
+
+    def test_check_presence(self):
+        # make sure all example scripts have a test method defined
+        meths = dir(self)
+        for name in os.listdir(EXAMPLES_DIR):
+            if name.endswith('.py'):
+                if 'test_' + os.path.splitext(name)[0] not in meths:
+                    #self.assert_stdout(name)
+                    self.fail('no test defined for %r script' \
+                              % os.path.join(EXAMPLES_DIR, name))
+
+    def test_disk_usage(self):
+        self.assert_stdout('disk_usage.py')
+
+    def test_free(self):
+        self.assert_stdout('free.py')
+
+    def test_meminfo(self):
+        self.assert_stdout('meminfo.py')
+
+    def test_process_detail(self):
+        self.assert_stdout('process_detail.py')
+
+    def test_who(self):
+        self.assert_stdout('who.py')
+
+    def test_netstat(self):
+        self.assert_stdout('netstat.py')
+
+    def test_pmap(self):
+        self.assert_stdout('pmap.py', args=str(os.getpid()))
+
+    def test_killall(self):
+        pass
+
+    # --- curses
+
+    def test_nettop(self):
+        self.assert_curses_script('nettop.py')
+
+    def test_top(self):
+        self.assert_curses_script('top.py')
+
+    def test_iotop(self):
+        self.assert_curses_script('iotop.py')
+
+
 def cleanup():
     reap_children(search_all=True)
     DEVNULL.close()
@@ -2097,6 +2172,8 @@ def test_main():
         else:
             atexit.register(warn, "Couldn't run limited user tests ("
                                   "super-user privileges are required)")
+
+    tests.append(TestExampleScripts)
 
     for test_class in tests:
         test_suite.addTest(unittest.makeSuite(test_class))
