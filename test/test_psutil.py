@@ -5,7 +5,7 @@
 # found in the LICENSE file.
 
 """
-psutil test suite.
+psutil test suite (you can quickly run it with "python setup.py test").
 
 Note: this is targeted for both python 2.x and 3.x so there's no need
 to use 2to3 tool first.

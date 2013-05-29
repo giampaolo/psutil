@@ -114,6 +114,7 @@ def main():
         platforms='Platform Independent',
         license='License :: OSI Approved :: BSD License',
         packages=['psutil'],
+        test_suite='test.test_psutil',
         classifiers=[
               'Development Status :: 5 - Production/Stable',
               'Environment :: Console',
