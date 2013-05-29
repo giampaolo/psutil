@@ -14,22 +14,12 @@ import time
 import os
 import re
 
-from test_psutil import POSIX, TOLERANCE
-from test_psutil import (sh, get_test_subprocess, skip_on_not_implemented,
-                         skipIf, retry_before_failing)
+from test_psutil import *
 from psutil._compat import PY3
 import psutil
 
 
-class LinuxSpecificTestCase(unittest.TestCase):
-
-    def assert_eq_w_tol(self, first, second, tolerance):
-        difference = abs(first - second)
-        if difference <= tolerance:
-            return
-        msg = '%r != %r within %r delta (%r difference)' \
-              % (first, second, tolerance, difference)
-        raise AssertionError(msg)
+class LinuxSpecificTestCase(TestCase):
 
     @skipIf(POSIX and not hasattr(os, 'statvfs'),
             reason="os.statvfs() function not available on this platform")

@@ -16,9 +16,7 @@ import os
 import psutil
 
 from psutil._compat import PY3
-from test_psutil import DEVNULL, TOLERANCE
-from test_psutil import (reap_children, get_test_subprocess, sh, which,
-                         skipUnless, retry_before_failing)
+from test_psutil import *
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
@@ -47,21 +45,13 @@ def muse(field):
     return int(line.split()[1])
 
 
-class BSDSpecificTestCase(unittest.TestCase):
+class BSDSpecificTestCase(TestCase):
 
     def setUp(self):
         self.pid = get_test_subprocess().pid
 
     def tearDown(self):
         reap_children()
-
-    def assert_eq_w_tol(self, first, second, tolerance):
-        difference = abs(first - second)
-        if difference <= tolerance:
-            return
-        msg = '%r != %r within %r delta (%r difference)' \
-              % (first, second, tolerance, difference)
-        raise AssertionError(msg)
 
     def test_BOOT_TIME(self):
         s = sysctl('sysctl kern.boottime')

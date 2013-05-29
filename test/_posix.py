@@ -16,9 +16,7 @@ import datetime
 import psutil
 
 from psutil._compat import PY3
-from test_psutil import (get_test_subprocess, reap_children, PYTHON, LINUX, OSX,
-                         BSD, skip_on_access_denied, sh, skipIf,
-                         retry_before_failing)
+from test_psutil import *
 
 
 def ps(cmd):
@@ -39,7 +37,7 @@ def ps(cmd):
         return output
 
 
-class PosixSpecificTestCase(unittest.TestCase):
+class PosixSpecificTestCase(TestCase):
     """Compare psutil results against 'ps' command line utility."""
 
     # for ps -o arguments see: http://unixhelp.ed.ac.uk/CGI/man-cgi?ps

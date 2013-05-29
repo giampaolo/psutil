@@ -328,12 +328,7 @@ class ThreadTask(threading.Thread):
 
 class TestCase(unittest.TestCase):
 
-    def setUp(self):
-        safe_remove(TESTFN)
-
-    def tearDown(self):
-        reap_children()
-
+    # Python 2.4 compatibility
     if not hasattr(unittest.TestCase, "assertIn"):
         def assertIn(self, member, container, msg=None):
             if member not in container:
@@ -348,9 +343,15 @@ class TestCase(unittest.TestCase):
               % (first, second, tolerance, difference)
         raise AssertionError(msg)
 
-    # ============================
-    # tests for system-related API
-    # ============================
+
+class TestSystemAPIs(TestCase):
+    """Tests for system-related APIs."""
+
+    def setUp(self):
+        safe_remove(TESTFN)
+
+    def tearDown(self):
+        reap_children()
 
     def test_process_iter(self):
         assert os.getpid() in [x.pid for x in psutil.process_iter()]
@@ -708,9 +709,15 @@ class TestCase(unittest.TestCase):
             assert user.started > 0.0, user
             datetime.datetime.fromtimestamp(user.started)
 
-    # ====================
-    # Process object tests
-    # ====================
+
+class TestProcess(TestCase):
+    """Tests for psutil.Process class."""
+
+    def setUp(self):
+        safe_remove(TESTFN)
+
+    def tearDown(self):
+        reap_children()
 
     def test_kill(self):
         sproc = get_test_subprocess(wait=True)
@@ -1723,16 +1730,9 @@ class TestCase(unittest.TestCase):
             proc.wait()
 
 
-class TestFetchAllProcesses(unittest.TestCase):
+class TestFetchAllProcesses(TestCase):
     # Iterates over all running processes and performs some sanity
     # checks against Process API's returned values.
-
-    # Python 2.4 compatibility
-    if not hasattr(unittest.TestCase, "assertIn"):
-        def assertIn(self, member, container, msg=None):
-            if member not in container:
-                self.fail(msg or \
-                        '%s not found in %s' % (repr(member), repr(container)))
 
     def setUp(self):
         if POSIX:
@@ -2025,7 +2025,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertTrue(ret.involuntary >= 0)
 
 if hasattr(os, 'getuid'):
-    class LimitedUserTestCase(TestCase):
+    class LimitedUserTestCase(TestProcess):
         """Repeat the previous tests by using a limited user.
         Executed only on UNIX and only if the user who run the test script
         is root.
@@ -2035,7 +2035,7 @@ if hasattr(os, 'getuid'):
         PROCESS_GID = os.getgid()
 
         def __init__(self, *args, **kwargs):
-            TestCase.__init__(self, *args, **kwargs)
+            TestProcess.__init__(self, *args, **kwargs)
             # re-define all existent test methods in order to
             # ignore AccessDenied exceptions
             for attr in [x for x in dir(self) if x.startswith('test')]:
@@ -2050,12 +2050,12 @@ if hasattr(os, 'getuid'):
         def setUp(self):
             os.setegid(1000)
             os.seteuid(1000)
-            TestCase.setUp(self)
+            TestProcess.setUp(self)
 
         def tearDown(self):
             os.setegid(self.PROCESS_UID)
             os.seteuid(self.PROCESS_GID)
-            TestCase.tearDown(self)
+            TestProcess.tearDown(self)
 
         def test_nice(self):
             try:
@@ -2146,7 +2146,8 @@ safe_remove(TESTFN)
 def test_main():
     tests = []
     test_suite = unittest.TestSuite()
-    tests.append(TestCase)
+    tests.append(TestSystemAPIs)
+    tests.append(TestProcess)
     tests.append(TestFetchAllProcesses)
 
     if POSIX:

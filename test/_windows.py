@@ -21,8 +21,8 @@ import traceback
 import psutil
 import _psutil_mswindows
 from psutil._compat import PY3, callable, long
-from test_psutil import (reap_children, get_test_subprocess, wait_for_pid, warn,
-                         skipUnless)
+from test_psutil import *
+
 try:
     import wmi
 except ImportError:
@@ -39,7 +39,7 @@ except ImportError:
 
 
 
-class WindowsSpecificTestCase(unittest.TestCase):
+class WindowsSpecificTestCase(TestCase):
 
     def setUp(self):
         sproc = get_test_subprocess()
