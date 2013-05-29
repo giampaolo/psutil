@@ -33,6 +33,8 @@ def main():
             cons = p.get_connections(kind='inet')
         except psutil.AccessDenied:
             print_(templ % (AD, AD, AD, AD, p.pid, name))
+        except psutil.NoSuchProcess:
+            continue
         else:
             for c in cons:
                 raddr = ""
