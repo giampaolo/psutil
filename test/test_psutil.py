@@ -896,14 +896,18 @@ class TestSystemAPIs(unittest.TestCase):
             # TODO subject to race condition (must be removed later)
             if conn.pid is not None:
                 if conn.pid not in map:
-                    map[conn.pid] = \
-                            psutil.Process(conn.pid).get_connections(kind='all')
-                for c in map[conn.pid]:
-                    if c.laddr == conn.laddr and c.raddr == conn.raddr:
-                        break
-                else:
-                    self.fail("connection %s not found amonst those of " \
-                              "pid %s" % (conn, conn.pid))
+                    try:
+                        p = psutil.Process(conn.pid)
+                        map[conn.pid] = p.get_connections(kind='all')
+                    except psutil.Error:
+                        pass
+                    else:
+                        for c in map[conn.pid]:
+                            if c.laddr == conn.laddr and c.raddr == conn.raddr:
+                                break
+                        else:
+                            self.fail("connection %s not found amonst those " \
+                                      "od pid %s" % (conn, conn.pid))
 
 
 # ===================================================================
