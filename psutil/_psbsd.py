@@ -10,6 +10,7 @@ import errno
 import os
 import sys
 import warnings
+import socket
 
 import _psutil_bsd
 import _psutil_posix
@@ -134,6 +135,23 @@ def get_system_users():
         nt = nt_user(user, tty or None, hostname, tstamp)
         retlist.append(nt)
     return retlist
+
+def get_net_connections(kind):
+    if kind not in conn_tmap:
+        raise ValueError("invalid %r kind argument; choose between %s"
+                        % (kind, ', '.join([repr(x) for x in conn_tmap])))
+    families, types = conn_tmap[kind]
+    ret = []
+    #rawlist = _psutil_bsd.get_system_connections(families, types)
+    rawlist = _psutil_bsd.get_system_connections()
+    for item in rawlist:
+        fd, fam, type, laddr, raddr, status, pid = item
+        # TODO: apply filter at C level
+        if fam in families and type in types:
+            status = _conn_status_map[status]
+            nt = nt_sys_connection(fd, fam, type, laddr, raddr, status, pid)
+            ret.append(nt)
+    return ret
 
 get_pid_list = _psutil_bsd.get_pid_list
 pid_exists = _psposix.pid_exists
