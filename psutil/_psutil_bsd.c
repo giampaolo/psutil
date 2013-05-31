@@ -389,6 +389,7 @@ get_process_threads(PyObject* self, PyObject* args)
     long pid;
     int mib[4];
     struct kinfo_proc *kip = NULL;
+    struct kinfo_proc *kipp;
     int error;
     unsigned int i;
     size_t size;
@@ -973,7 +974,6 @@ get_process_connections(PyObject* self, PyObject* args)
 
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
-    struct kinfo_proc kipp;
     char *tcplist = NULL;
     struct tcpcb *tcp;
 
