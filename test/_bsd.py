@@ -38,7 +38,15 @@ def sysctl(cmdline):
 
 def muse(field):
     """Thin wrapper around 'muse' cmdline utility."""
-    out = sh('muse', stderr=DEVNULL)
+    try:
+        out = sh('muse')
+    except RuntimeError:
+        err = sys.exc_info()[1]
+        if "permission denied" in str(err).lower():
+            # happens in case of limited user
+            raise unittest.SkipTest(str(err))
+        else:
+            raise
     for line in out.split('\n'):
         if line.startswith(field):
             break
