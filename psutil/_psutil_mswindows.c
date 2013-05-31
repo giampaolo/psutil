@@ -1376,39 +1376,6 @@ get_process_username(PyObject* self, PyObject* args)
 #define AF_INET6 23
 #endif
 
-static char *state_to_string(ULONG state)
-{
-    switch (state)
-    {
-    case MIB_TCP_STATE_CLOSED:
-        return "CLOSE";
-    case MIB_TCP_STATE_LISTEN:
-        return "LISTEN";
-    case MIB_TCP_STATE_SYN_SENT:
-        return "SYN_SENT";
-    case MIB_TCP_STATE_SYN_RCVD:
-        return "SYN_RECV";
-    case MIB_TCP_STATE_ESTAB:
-        return "ESTABLISHED";
-    case MIB_TCP_STATE_FIN_WAIT1:
-        return "FIN_WAIT1";
-    case MIB_TCP_STATE_FIN_WAIT2:
-        return "FIN_WAIT2";
-    case MIB_TCP_STATE_CLOSE_WAIT:
-        return "CLOSE_WAIT";
-    case MIB_TCP_STATE_CLOSING:
-        return "CLOSING";
-    case MIB_TCP_STATE_LAST_ACK:
-        return "LAST_ACK";
-    case MIB_TCP_STATE_TIME_WAIT:
-        return "TIME_WAIT";
-    case MIB_TCP_STATE_DELETE_TCB:
-        return "DELETE_TCB";
-    default:
-        return "";
-    }
-}
-
 /* mingw support */
 #ifndef _IPRTRMIB_H
 typedef struct _MIB_TCP6ROW_OWNER_PID
@@ -1478,6 +1445,10 @@ typedef struct _MIB_UDP6TABLE_OWNER_PID
                            Py_DECREF(_AF_INET6);\
                            Py_DECREF(_SOCK_STREAM);\
                            Py_DECREF(_SOCK_DGRAM);
+
+// a signaler for connections without an actual status
+static int PSUTIL_CONN_NONE = 128;
+
 
 /*
  * Return a list of network connections opened by a process
@@ -1641,13 +1612,13 @@ get_process_connections(PyObject* self, PyObject* args)
                 if (addressTupleRemote == NULL)
                     goto error;
 
-                connectionTuple = Py_BuildValue("(iiiNNs)",
+                connectionTuple = Py_BuildValue("(iiiNNi)",
                     -1,
                     AF_INET,
                     SOCK_STREAM,
                     addressTupleLocal,
                     addressTupleRemote,
-                    state_to_string(tcp4Table->table[i].dwState)
+                    tcp4Table->table[i].dwState
                     );
                 if (!connectionTuple)
                     goto error;
@@ -1729,13 +1700,13 @@ get_process_connections(PyObject* self, PyObject* args)
                 if (addressTupleRemote == NULL)
                     goto error;
 
-                connectionTuple = Py_BuildValue("(iiiNNs)",
+                connectionTuple = Py_BuildValue("(iiiNNi)",
                     -1,
                     AF_INET6,
                     SOCK_STREAM,
                     addressTupleLocal,
                     addressTupleRemote,
-                    state_to_string(tcp6Table->table[i].dwState)
+                    tcp6Table->table[i].dwState
                     );
                 if (!connectionTuple)
                     goto error;
@@ -1796,13 +1767,13 @@ get_process_connections(PyObject* self, PyObject* args)
                 if (addressTupleLocal == NULL)
                     goto error;
 
-                connectionTuple = Py_BuildValue("(iiiNNs)",
+                connectionTuple = Py_BuildValue("(iiiNNi)",
                     -1,
                     AF_INET,
                     SOCK_DGRAM,
                     addressTupleLocal,
                     PyTuple_New(0),
-                    ""
+                    PSUTIL_CONN_NONE
                     );
                 if (!connectionTuple)
                     goto error;
@@ -1863,13 +1834,13 @@ get_process_connections(PyObject* self, PyObject* args)
                 if (addressTupleLocal == NULL)
                     goto error;
 
-                connectionTuple = Py_BuildValue("(iiiNNs)",
+                connectionTuple = Py_BuildValue("(iiiNNi)",
                     -1,
                     AF_INET6,
                     SOCK_DGRAM,
                     addressTupleLocal,
                     PyTuple_New(0),
-                    ""
+                    PSUTIL_CONN_NONE
                     );
                 if (!connectionTuple)
                     goto error;
@@ -3051,7 +3022,7 @@ struct module_state {
         INITERROR;
     }
 
-    // Public constants
+    // process status constants
     // http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx
     PyModule_AddIntConstant(module, "ABOVE_NORMAL_PRIORITY_CLASS",
                                      ABOVE_NORMAL_PRIORITY_CLASS);
@@ -3065,7 +3036,37 @@ struct module_state {
                                      NORMAL_PRIORITY_CLASS);
     PyModule_AddIntConstant(module, "REALTIME_PRIORITY_CLASS",
                                      REALTIME_PRIORITY_CLASS);
-    // private constants
+    // connection status constants
+    // http://msdn.microsoft.com/en-us/library/cc669305.aspx
+    PyModule_AddIntConstant(module, "MIB_TCP_STATE_CLOSED",
+                                     MIB_TCP_STATE_CLOSED);
+    PyModule_AddIntConstant(module, "MIB_TCP_STATE_CLOSING",
+                                     MIB_TCP_STATE_CLOSING);
+    PyModule_AddIntConstant(module, "MIB_TCP_STATE_CLOSE_WAIT",
+                                     MIB_TCP_STATE_CLOSE_WAIT);
+    PyModule_AddIntConstant(module, "MIB_TCP_STATE_LISTEN",
+                                     MIB_TCP_STATE_LISTEN);
+    PyModule_AddIntConstant(module, "MIB_TCP_STATE_ESTAB",
+                                     MIB_TCP_STATE_ESTAB);
+    PyModule_AddIntConstant(module, "MIB_TCP_STATE_SYN_SENT",
+                                     MIB_TCP_STATE_SYN_SENT);
+    PyModule_AddIntConstant(module, "MIB_TCP_STATE_SYN_RCVD",
+                                     MIB_TCP_STATE_SYN_RCVD);
+    PyModule_AddIntConstant(module, "MIB_TCP_STATE_FIN_WAIT1",
+                                     MIB_TCP_STATE_FIN_WAIT1);
+    PyModule_AddIntConstant(module, "MIB_TCP_STATE_FIN_WAIT2",
+                                     MIB_TCP_STATE_FIN_WAIT2);
+    PyModule_AddIntConstant(module, "MIB_TCP_STATE_LAST_ACK",
+                                     MIB_TCP_STATE_LAST_ACK);
+    PyModule_AddIntConstant(module, "MIB_TCP_STATE_TIME_WAIT",
+                                     MIB_TCP_STATE_TIME_WAIT);
+    PyModule_AddIntConstant(module, "MIB_TCP_STATE_TIME_WAIT",
+                                     MIB_TCP_STATE_TIME_WAIT);
+    PyModule_AddIntConstant(module, "MIB_TCP_STATE_DELETE_TCB",
+                                     MIB_TCP_STATE_DELETE_TCB);
+    PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE",
+                                     PSUTIL_CONN_NONE);
+    // ...for internal use in _psutil_mswindows.py
     PyModule_AddIntConstant(module, "INFINITE", INFINITE);
     PyModule_AddIntConstant(module, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED);
     SetSeDebug();

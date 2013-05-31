@@ -24,6 +24,9 @@ __all__ = [
     "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
     "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
     "STATUS_WAKING", "STATUS_LOCKED",
+    "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
+    "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
+    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
     # classes
     "Process", "Popen",
     # functions
@@ -59,7 +62,12 @@ from psutil._common import (deprecated as _deprecated,
 from psutil._common import (STATUS_RUNNING, STATUS_IDLE, STATUS_SLEEPING,
                             STATUS_DISK_SLEEP, STATUS_STOPPED,
                             STATUS_TRACING_STOP, STATUS_ZOMBIE, STATUS_DEAD,
-                            STATUS_WAKING, STATUS_LOCKED)
+                            STATUS_WAKING, STATUS_LOCKED,
+                            #
+                            CONN_ESTABLISHED, CONN_SYN_SENT, CONN_SYN_RECV,
+                            CONN_FIN_WAIT1, CONN_FIN_WAIT2, CONN_TIME_WAIT,
+                            CONN_CLOSE, CONN_CLOSE_WAIT, CONN_LAST_ACK,
+                            CONN_LISTEN, CONN_CLOSING, CONN_NONE)
 
 # import the appropriate module for our platform only
 if sys.platform.startswith("linux"):
@@ -80,7 +88,8 @@ elif sys.platform.startswith("win32"):
                                      HIGH_PRIORITY_CLASS,
                                      IDLE_PRIORITY_CLASS,
                                      NORMAL_PRIORITY_CLASS,
-                                     REALTIME_PRIORITY_CLASS)
+                                     REALTIME_PRIORITY_CLASS,
+                                     CONN_DELETE_TCB)
 
 elif sys.platform.startswith("darwin"):
     import psutil._psosx as _psplatform

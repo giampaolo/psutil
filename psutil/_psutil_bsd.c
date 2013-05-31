@@ -841,6 +841,7 @@ error:
 }
 
 
+<<<<<<< local
 /*
  * mathes Linux net/tcp_states.h:
  * http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
@@ -882,6 +883,12 @@ psutil_fetch_tcplist(void)
     char *buf;
     size_t len;
     int error;
+=======
+// a kvm_read that returns true if everything is read
+#define KVM_READ(kaddr, paddr, len) \
+    ((len) < SSIZE_MAX && \
+    kvm_read(kd, (u_long)(kaddr), (char *)(paddr), (len)) == (ssize_t)(len))
+>>>>>>> other
 
     for (;;) {
         if (sysctlbyname("net.inet.tcp.pcblist", NULL, &len, NULL, 0) < 0) {
@@ -993,6 +1000,9 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif)
     return NULL;
 }
 
+// a signaler for connections without an actual status
+static int PSUTIL_CONN_NONE = 128;
+
 /*
  * Return connections opened by process.
  */
@@ -1044,11 +1054,31 @@ get_process_connections(PyObject* self, PyObject* args)
         goto error;
     }
 
+<<<<<<< local
     for (i = 0; i < cnt; i++) {
         int lport, rport;
+=======
+    ofiles = malloc((filed.fd_lastfile+1) * sizeof(struct file *));
+    if (ofiles == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    if (!KVM_READ(filed.fd_ofiles, ofiles,
+                  (filed.fd_lastfile+1) * sizeof(struct file *))) {
+        PyErr_SetString(PyExc_RuntimeError, "kvm_read() failed");
+        goto error;
+    }
+
+    for (i = 0; i <= filed.fd_lastfile; i++) {
+        int lport, rport, state;
+>>>>>>> other
         char lip[200], rip[200];
+<<<<<<< local
         char path[PATH_MAX];
         char *state;
+=======
+>>>>>>> other
         int inseq;
         tuple = NULL;
         laddr = NULL;
@@ -1075,11 +1105,24 @@ get_process_connections(PyObject* self, PyObject* args)
             if ((kif->kf_sock_domain == AF_INET) ||
                 (kif->kf_sock_domain == AF_INET6)) {
                 // fill status
+<<<<<<< local
                 state = "";
                 if (kif->kf_sock_type == SOCK_STREAM) {
                     tcp = psutil_search_tcplist(tcplist, kif);
                     if (tcp != NULL)
                         state = get_connection_status((int)tcp->t_state);
+=======
+                if (proto.pr_type == SOCK_STREAM) {
+                    if (kvm_read(kd, (u_long)inpcb.inp_ppcb, (char *)&tcpcb,
+                                 sizeof(struct tcpcb)) != sizeof(struct tcpcb)) {
+                        PyErr_SetString(PyExc_RuntimeError, "kvm_read() state failed");
+                        goto error;
+                    }
+                    state = (int)tcpcb.t_state;
+                }
+                else {
+                    state = PSUTIL_CONN_NONE;
+>>>>>>> other
                 }
 
                 // build addr and port
@@ -1106,9 +1149,15 @@ get_process_connections(PyObject* self, PyObject* args)
                 }
                 if (!raddr)
                     goto error;
+<<<<<<< local
                 tuple = Py_BuildValue("(iiiNNs)", kif->kf_fd,
                                                   kif->kf_sock_domain,
                                                   kif->kf_sock_type,
+=======
+                tuple = Py_BuildValue("(iiiNNi)", i,
+                                                  dom.dom_family,
+                                                  proto.pr_type,
+>>>>>>> other
                                                   laddr,
                                                   raddr,
                                                   state);
@@ -1127,12 +1176,18 @@ get_process_connections(PyObject* self, PyObject* args)
                         (sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
                          sun->sun_path);
 
+<<<<<<< local
                 tuple = Py_BuildValue("(iiisOs)", kif->kf_fd,
                                                   kif->kf_sock_domain,
                                                   kif->kf_sock_type,
+=======
+                tuple = Py_BuildValue("(iiisOi)", i,
+                                                  dom.dom_family,
+                                                  proto.pr_type,
+>>>>>>> other
                                                   path,
                                                   Py_None,
-                                                  "");
+                                                  PSUTIL_CONN_NONE);
                 if (!tuple)
                     goto error;
                 if (PyList_Append(retList, tuple))
@@ -1836,6 +1891,7 @@ void init_psutil_bsd(void)
 #else
     PyObject *module = Py_InitModule("_psutil_bsd", PsutilMethods);
 #endif
+    // process status constants
     PyModule_AddIntConstant(module, "SSTOP", SSTOP);
     PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
     PyModule_AddIntConstant(module, "SRUN", SRUN);
@@ -1843,6 +1899,19 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "SWAIT", SWAIT);
     PyModule_AddIntConstant(module, "SLOCK", SLOCK);
     PyModule_AddIntConstant(module, "SZOMB", SZOMB);
+    // connection status constants
+    PyModule_AddIntConstant(module, "TCPS_CLOSED", TCPS_CLOSED);
+    PyModule_AddIntConstant(module, "TCPS_CLOSING", TCPS_CLOSING);
+    PyModule_AddIntConstant(module, "TCPS_CLOSE_WAIT", TCPS_CLOSE_WAIT);
+    PyModule_AddIntConstant(module, "TCPS_LISTEN", TCPS_LISTEN);
+    PyModule_AddIntConstant(module, "TCPS_ESTABLISHED", TCPS_ESTABLISHED);
+    PyModule_AddIntConstant(module, "TCPS_SYN_SENT", TCPS_SYN_SENT);
+    PyModule_AddIntConstant(module, "TCPS_SYN_RECEIVED", TCPS_SYN_RECEIVED);
+    PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_1", TCPS_FIN_WAIT_1);
+    PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
+    PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
+    PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
+    PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
     if (module == NULL) {
         INITERROR;

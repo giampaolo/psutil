@@ -21,7 +21,10 @@ from psutil._compat import PY3, xrange, long, wraps
 # Windows specific extended namespace
 __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
                   "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
-                  "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS"]
+                  "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
+                  #
+                  "CONN_DELETE_TCB",
+                  ]
 
 
 # --- module level constants (gets pushed up to psutil module)
@@ -46,8 +49,25 @@ except Exception:
     TOTAL_PHYMEM = None
     warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
 
+CONN_DELETE_TCB = constant(11, "DELETE_TCB")
 WAIT_TIMEOUT = 0x00000102 # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED])
+TCP_STATES_TABLE = {
+    _psutil_mswindows.MIB_TCP_STATE_ESTAB : CONN_ESTABLISHED,
+    _psutil_mswindows.MIB_TCP_STATE_SYN_SENT : CONN_SYN_SENT,
+    _psutil_mswindows.MIB_TCP_STATE_SYN_RCVD : CONN_SYN_RECV,
+    _psutil_mswindows.MIB_TCP_STATE_FIN_WAIT1 : CONN_FIN_WAIT1,
+    _psutil_mswindows.MIB_TCP_STATE_FIN_WAIT2 : CONN_FIN_WAIT2,
+    _psutil_mswindows.MIB_TCP_STATE_TIME_WAIT : CONN_TIME_WAIT,
+    _psutil_mswindows.MIB_TCP_STATE_CLOSED : CONN_CLOSE,
+    _psutil_mswindows.MIB_TCP_STATE_CLOSE_WAIT : CONN_CLOSE_WAIT,
+    _psutil_mswindows.MIB_TCP_STATE_LAST_ACK : CONN_LAST_ACK,
+    _psutil_mswindows.MIB_TCP_STATE_LISTEN : CONN_LISTEN,
+    _psutil_mswindows.MIB_TCP_STATE_CLOSING : CONN_CLOSING,
+    _psutil_mswindows.MIB_TCP_STATE_DELETE_TCB : CONN_DELETE_TCB,
+    _psutil_mswindows.PSUTIL_CONN_NONE : CONN_NONE,
+}
+
 
 # process priority constants:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
@@ -366,8 +386,15 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        ret = _psutil_mswindows.get_process_connections(self.pid, families, types)
-        return [nt_connection(*conn) for conn in ret]
+        rawlist = _psutil_mswindows.get_process_connections(self.pid, families,
+                                                            types)
+        ret = []
+        for item in rawlist:
+            fd, fam, type, laddr, raddr, status = item
+            status = TCP_STATES_TABLE[status]
+            nt = nt_connection(fd, fam, type, laddr, raddr, status)
+            ret.append(nt)
+        return ret
 
     @wrap_exceptions
     def get_process_nice(self):

@@ -1299,6 +1299,23 @@ class TestProcess(TestCase):
         fileobj.close()
         self.assertTrue(fileobj.name not in p.get_open_files())
 
+<<<<<<< local
+=======
+    def test_connection_constants(self):
+        ints = []
+        strs = []
+        for name in dir(psutil):
+            if name.startswith('CONN_'):
+                num = getattr(psutil, name)
+                str_ = str(num)
+                assert str_.isupper(), str_
+                assert str_ not in strs, str_
+                assert num not in ints, num
+                ints.append(num)
+                strs.append(str_)
+
+    @skip_on_access_denied(only_if=BSD)
+>>>>>>> other
     def test_get_connections(self):
         arg = "import socket, time;" \
               "s = socket.socket();" \
@@ -1309,15 +1326,17 @@ class TestProcess(TestCase):
         sproc = get_test_subprocess([PYTHON, "-c", arg])
         p = psutil.Process(sproc.pid)
         for x in range(100):
-            cons = p.get_connections()
-            if cons:
+            if p.get_connections():
+                # give the subprocess some more time to bind()
+                time.sleep(.01)
+                cons = p.get_connections()
                 break
             time.sleep(.01)
         self.assertEqual(len(cons), 1)
         con = cons[0]
         self.assertEqual(con.family, socket.AF_INET)
         self.assertEqual(con.type, socket.SOCK_STREAM)
-        self.assertEqual(con.status, "LISTEN")
+        self.assertEqual(con.status, psutil.CONN_LISTEN, str(con.status))
         ip, port = con.local_address
         self.assertEqual(ip, '127.0.0.1')
         self.assertEqual(con.remote_address, ())
@@ -1357,7 +1376,7 @@ class TestProcess(TestCase):
         self.assertEqual(conn.type, socket.SOCK_STREAM)
         self.assertEqual(conn.local_address, TESTFN)
         self.assertTrue(not conn.remote_address)
-        self.assertTrue(not conn.status)
+        self.assertEqual(conn.status, psutil.CONN_NONE, str(conn.status))
         sock.close()
         # udp
         safe_remove(TESTFN)
@@ -1431,7 +1450,8 @@ class TestProcess(TestCase):
                     self.assertEqual(conn.type, socket.SOCK_STREAM)
                     self.assertEqual(conn.local_address[0], "127.0.0.1")
                     self.assertEqual(conn.remote_address, ())
-                    self.assertEqual(conn.status, "LISTEN")
+                    self.assertEqual(conn.status, psutil.CONN_LISTEN,
+                                    str(conn.status))
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet4", "tcp", "tcp4"):
@@ -1444,7 +1464,8 @@ class TestProcess(TestCase):
                     self.assertEqual(conn.type, socket.SOCK_DGRAM)
                     self.assertEqual(conn.local_address[0], "127.0.0.1")
                     self.assertEqual(conn.remote_address, ())
-                    self.assertEqual(conn.status, "")
+                    self.assertEqual(conn.status, psutil.CONN_NONE,
+                                     str(conn.status))
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet4", "udp", "udp4"):
@@ -1457,7 +1478,8 @@ class TestProcess(TestCase):
                     self.assertEqual(conn.type, socket.SOCK_STREAM)
                     self.assertIn(conn.local_address[0], ("::", "::1"))
                     self.assertEqual(conn.remote_address, ())
-                    self.assertEqual(conn.status, "LISTEN")
+                    self.assertEqual(conn.status, psutil.CONN_LISTEN,
+                                     str(conn.status))
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet6", "tcp", "tcp6"):
@@ -1470,7 +1492,8 @@ class TestProcess(TestCase):
                     self.assertEqual(conn.type, socket.SOCK_DGRAM)
                     self.assertIn(conn.local_address[0], ("::", "::1"))
                     self.assertEqual(conn.remote_address, ())
-                    self.assertEqual(conn.status, "")
+                    self.assertEqual(conn.status, psutil.CONN_NONE,
+                                     str(conn.status))
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet6", "udp", "udp6"):
@@ -1929,14 +1952,14 @@ class TestFetchAllProcesses(TestCase):
         # table across all platforms.
         valid_conn_states = ["ESTABLISHED", "SYN_SENT", "SYN_RECV", "FIN_WAIT1",
                              "FIN_WAIT2", "TIME_WAIT", "CLOSE", "CLOSE_WAIT",
-                             "LAST_ACK", "LISTEN", "CLOSING", ""]
+                             "LAST_ACK", "LISTEN", "CLOSING", "NONE"]
         for conn in ret:
             self.assertIn(conn.type, (socket.SOCK_STREAM, socket.SOCK_DGRAM))
             self.assertIn(conn.family, (socket.AF_INET, socket.AF_INET6))
             check_ip_address(conn.local_address, conn.family)
             check_ip_address(conn.remote_address, conn.family)
             if conn.status not in valid_conn_states:
-                self.fail("%s is not a valid status" %conn.status)
+                self.fail("%s is not a valid status" % conn.status)
             # actually try to bind the local socket; ignore IPv6
             # sockets as their address might be represented as
             # an IPv4-mapped-address (e.g. "::127.0.0.1")
