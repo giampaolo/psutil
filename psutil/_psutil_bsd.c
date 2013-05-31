@@ -976,7 +976,6 @@ get_process_connections(PyObject* self, PyObject* args)
 
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
-    struct kinfo_proc kipp;
     char *tcplist = NULL;
     struct tcpcb *tcp;
 

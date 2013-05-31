@@ -497,6 +497,7 @@ if not hasattr(unittest, 'skip'):
     unittest.TestCase = TestCase
     unittest.skipIf = skipIf
     unittest.skipUnless = skipUnless
+    unittest.SkipTest = SkipTest
     del TestCase, skipIf, skipUnless
 
 
