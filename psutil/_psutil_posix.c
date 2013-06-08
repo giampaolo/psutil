@@ -127,6 +127,3 @@ void init_psutil_posix(void)
     return module;
 #endif
 }
-
-
-

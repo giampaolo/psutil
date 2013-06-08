@@ -12,7 +12,7 @@ Python.
 
 from __future__ import division
 
-__version__ = "0.7.2"
+__version__ = "1.0.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
@@ -96,6 +96,11 @@ elif sys.platform.startswith("darwin"):
 
 elif sys.platform.startswith("freebsd"):
     import psutil._psbsd as _psplatform
+
+elif sys.platform.startswith("sunos"):
+    import psutil._pssunos as _psplatform
+    from psutil._pssunos import (CONN_IDLE,
+                                 CONN_BOUND)
 
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
@@ -309,9 +314,11 @@ class Process(object):
             cmdline = self.cmdline
             if cmdline and hasattr(os, 'access') and hasattr(os, 'X_OK'):
                 exe = cmdline[0]  # the possible exe
-                rexe = os.path.realpath(exe)  # ...in case it's a symlink
-                if os.path.isabs(rexe) and os.path.isfile(rexe) \
-                and os.access(rexe, os.X_OK):
+                # Attempt to guess only in case of an absolute path.
+                # It is not safe otherwise as the process might have
+                # changed cwd.
+                if os.path.isabs(exe) and os.path.isfile(exe) \
+                and os.access(exe, os.X_OK):
                     return exe
             if isinstance(fallback, AccessDenied):
                 raise fallback
@@ -1367,6 +1374,8 @@ def test():
                         user = ''
                 else:
                     raise
+            except Error:
+                user = ''
             if os.name == 'nt' and '\\' in user:
                 user = user.split('\\')[1]
             vms = pinfo['memory_info'] and \

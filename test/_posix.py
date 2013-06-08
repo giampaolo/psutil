@@ -25,12 +25,15 @@ def ps(cmd):
     """
     if not LINUX:
         cmd = cmd.replace(" --no-headers ", " ")
+    if SUNOS:
+        cmd = cmd.replace("-o command", "-o comm")
+        cmd = cmd.replace("-o start", "-o stime")
     p = subprocess.Popen(cmd, shell=1, stdout=subprocess.PIPE)
     output = p.communicate()[0].strip()
     if PY3:
         output = str(output, sys.stdout.encoding)
     if not LINUX:
-        output = output.split('\n')[1]
+        output = output.split('\n')[1].strip()
     try:
         return int(output)
     except ValueError:
@@ -121,22 +124,24 @@ class PosixSpecificTestCase(TestCase):
     def test_process_cmdline(self):
         ps_cmdline = ps("ps --no-headers -o command -p %s" %self.pid)
         psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline)
+        if SUNOS:
+            # ps on Solaris only shows the first part of the cmdline
+            psutil_cmdline = psutil_cmdline.split(" ")[0]
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
     @retry_before_failing()
     def test_get_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
-        p = get_test_subprocess(["ps", "ax", "-o", "pid"], stdout=subprocess.PIPE)
+        p = subprocess.Popen("ps ax", shell=True, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
         if PY3:
             output = str(output, sys.stdout.encoding)
-        output = output.replace('PID', '')
-        p.wait()
         pids_ps = []
-        for pid in output.split('\n'):
-            if pid:
-                pids_ps.append(int(pid.strip()))
+        lines = output.split('\n')
+        for line in lines[1:]:
+            if line:
+                pids_ps.append(int(line.strip().split(' ')[0]))
         # remove ps subprocess pid which is supposed to be dead in meantime
         pids_ps.remove(p.pid)
         pids_psutil = psutil.get_pid_list()
@@ -173,7 +178,6 @@ class PosixSpecificTestCase(TestCase):
         for u in psutil.get_users():
             self.assertTrue(u.name in users, u.name)
             self.assertTrue(u.terminal in terminals, u.terminal)
-
 
 def test_main():
     test_suite = unittest.TestSuite()

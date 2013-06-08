@@ -90,6 +90,13 @@ elif sys.platform.startswith("linux"):
                             sources=['psutil/_psutil_linux.c'],
                             ),
                   posix_extension]
+# Solaris
+elif sys.platform.lower().startswith('sunos'):
+    extensions = [Extension('_psutil_sunos',
+                            sources=['psutil/_psutil_sunos.c'],
+                            libraries=['kstat'],
+                            ),
+                  posix_extension]
 else:
     sys.exit('platform %s is not supported' % sys.platform)
 

@@ -53,6 +53,7 @@ LINUX = sys.platform.startswith("linux")
 WINDOWS = sys.platform.startswith("win32")
 OSX = sys.platform.startswith("darwin")
 BSD = sys.platform.startswith("freebsd")
+SUNOS = sys.platform.startswith("sunos")
 
 
 _subprocesses_started = set()
@@ -202,8 +203,8 @@ def retry_before_failing(ntimes=None):
                 try:
                     return fun(*args, **kwargs)
                 except AssertionError:
-                    pass
-            raise
+                    err = sys.exc_info()[1]
+            raise err
         return wrapper
     return decorator
 
@@ -399,7 +400,6 @@ class TestSystemAPIs(TestCase):
         warnings.filterwarnings("error")
         p = psutil.Process(os.getpid())
         try:
-            self.assertRaises(DeprecationWarning, __import__, 'psutil.error')
             self.assertRaises(DeprecationWarning, psutil.virtmem_usage)
             self.assertRaises(DeprecationWarning, psutil.used_phymem)
             self.assertRaises(DeprecationWarning, psutil.avail_phymem)
@@ -904,7 +904,7 @@ class TestProcess(TestCase):
         else:
             assert terminal, repr(terminal)
 
-    @skipIf(OSX, warn=False)  # XXX why (I forgot)?
+    @skipIf(OSX or SUNOS, warn=False)
     @skip_on_not_implemented(only_if=LINUX)
     def test_get_io_counters(self):
         p = psutil.Process(os.getpid())
@@ -1311,6 +1311,11 @@ class TestProcess(TestCase):
                 assert num not in ints, num
                 ints.append(num)
                 strs.append(str_)
+        if SUNOS:
+            psutil.CONN_IDLE
+            psutil.CONN_BOUND
+        if WINDOWS:
+            psutil.CONN_DELETE_TCB
 
     def test_get_connections(self):
         arg = "import socket, time;" \
@@ -1336,7 +1341,7 @@ class TestProcess(TestCase):
         ip, port = con.local_address
         self.assertEqual(ip, '127.0.0.1')
         self.assertEqual(con.remote_address, ())
-        if WINDOWS:
+        if WINDOWS or SUNOS:
             self.assertEqual(con.fd, -1)
         else:
             assert con.fd > 0, con
@@ -1367,7 +1372,8 @@ class TestProcess(TestCase):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         sock.bind(TESTFN)
         conn = psutil.Process(os.getpid()).get_connections(kind='unix')[0]
-        self.assertEqual(conn.fd, sock.fileno())
+        if conn.fd != -1:  # != sunos and windows
+            self.assertEqual(conn.fd, sock.fileno())
         self.assertEqual(conn.family, socket.AF_UNIX)
         self.assertEqual(conn.type, socket.SOCK_STREAM)
         self.assertEqual(conn.local_address, TESTFN)
@@ -1382,7 +1388,8 @@ class TestProcess(TestCase):
         self.assertEqual(conn.type, socket.SOCK_DGRAM)
         sock.close()
 
-    @skipUnless(hasattr(socket, "fromfd") and not WINDOWS)
+    @skipUnless(hasattr(socket, "fromfd"))
+    @skipIf(WINDOWS or SUNOS)
     def test_connection_fromfd(self):
         sock = socket.socket()
         sock.bind(('localhost', 0))
@@ -1689,12 +1696,15 @@ class TestProcess(TestCase):
         self.assertTrue(p.name)
 
         if os.name == 'posix':
-            self.assertEqual(p.uids.real, 0)
-            self.assertEqual(p.gids.real, 0)
+            try:
+                self.assertEqual(p.uids.real, 0)
+                self.assertEqual(p.gids.real, 0)
+            except psutil.AccessDenied:
+                pass
 
         self.assertIn(p.ppid, (0, 1))
         #self.assertEqual(p.exe, "")
-        self.assertEqual(p.cmdline, [])
+        p.cmdline
         try:
             p.get_num_threads()
         except psutil.AccessDenied:
@@ -1706,12 +1716,15 @@ class TestProcess(TestCase):
             pass
 
         # username property
-        if POSIX:
-            self.assertEqual(p.username, 'root')
-        elif WINDOWS:
-            self.assertEqual(p.username, 'NT AUTHORITY\\SYSTEM')
-        else:
-            p.username
+        try:
+            if POSIX:
+                self.assertEqual(p.username, 'root')
+            elif WINDOWS:
+                self.assertEqual(p.username, 'NT AUTHORITY\\SYSTEM')
+            else:
+                p.username
+        except psutil.AccessDenied:
+            pass
 
         self.assertIn(0, psutil.get_pid_list())
         self.assertTrue(psutil.pid_exists(0))
@@ -1949,6 +1962,10 @@ class TestFetchAllProcesses(TestCase):
         valid_conn_states = ["ESTABLISHED", "SYN_SENT", "SYN_RECV", "FIN_WAIT1",
                              "FIN_WAIT2", "TIME_WAIT", "CLOSE", "CLOSE_WAIT",
                              "LAST_ACK", "LISTEN", "CLOSING", "NONE"]
+        if SUNOS:
+            valid_conn_states += ["IDLE", "BOUND"]
+        if WINDOWS:
+            valid_conn_states += ["DELETE_TCB"]
         for conn in ret:
             self.assertIn(conn.type, (socket.SOCK_STREAM, socket.SOCK_DGRAM))
             self.assertIn(conn.family, (socket.AF_INET, socket.AF_INET6))
@@ -2184,6 +2201,8 @@ def test_main():
         from _osx import OSXSpecificTestCase as stc
     elif BSD:
         from _bsd import BSDSpecificTestCase as stc
+    elif SUNOS:
+        from _sunos import SunOSSpecificTestCase as stc
     tests.append(stc)
 
     if hasattr(os, 'getuid'):

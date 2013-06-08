@@ -1,10 +1,11 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-0.7.2 - XXXX-XX-XX
+1.0.0 - XXXX-XX-XX
 ------------------
 
 NEW FEATURES
 
+ * #18:  Solaris support (yay!)  (thanks Justin Venus)
  * #367: Process.get_connections() 'status' strings are now constants.
  * #380: test suite exits with non-zero on failure.  (patch by floppymaster)
  * #224: Process.get_threads() now displays real thread IDs. (patch by Adrien Fallou)
