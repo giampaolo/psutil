@@ -2,7 +2,7 @@
 #
 # $Id: iotop.py 1160 2011-10-14 18:50:36Z g.rodola@gmail.com $
 #
-# Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
+# Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 

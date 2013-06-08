@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
+# Copyright (c) 2009 Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -113,7 +113,7 @@ def main():
                   'tty', 'ionice', 'uptime', 'taskmgr', 'process', 'df',
                   'iotop', 'iostat', 'ifconfig', 'taskset', 'who', 'pidof',
                   'pmap', 'smem', 'monitoring',],
-        author='Giampaolo Rodola, Jay Loden',
+        author='Giampaolo Rodola',
         author_email='psutil@googlegroups.com',
         maintainer='Giampaolo Rodola',
         maintainer_email='g.rodola <at> gmail <dot> com',

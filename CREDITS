@@ -1,4 +1,3 @@
-
 Intro
 =====
 
@@ -11,23 +10,22 @@ name (N), e-mail (E), web-address (W), country (C), description (D), (I) issues
 (issue tracker is at http://code.google.com/p/psutil/issues/list).
 Really thanks to all of you.
 
-
-Maintainers
-===========
+Author
+======
 
 N: Giampaolo Rodola'
 C: Italy
 E: g.rodola@gmail.com
 W: http://www.linkedin.com/in/grodola
 
+Contributors
+============
+
 N: Jay Loden
 C: NJ, USA
 E: jloden@gmail.com
+D: original co-author, initial design/bootstrap and continuing bug fixes
 W: http://www.jayloden.com
-
-
-Contributors
-============
 
 N: Jeremy Whitlock
 E: jcscoobyrs@gmail.com
