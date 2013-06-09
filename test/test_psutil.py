@@ -30,9 +30,9 @@ import stat
 import collections
 import datetime
 try:
-    import curses
+    import ast  # python >= 2.6
 except ImportError:
-    curses = None
+    ast = None
 
 import psutil
 from psutil._compat import PY3, callable, long, wraps
@@ -2113,17 +2113,14 @@ class TestExampleScripts(unittest.TestCase):
         assert out, out
         return out
 
-    def assert_curses_script(self, exe, args=None):
+    def assert_syntax(self, exe, args=None):
+        exe = os.path.join(EXAMPLES_DIR, exe)
+        f = open(exe, 'r')
         try:
-            sh(os.path.join(EXAMPLES_DIR, exe))
-        except RuntimeError:
-            err = str(sys.exc_info()[1])
-            if curses is not None:
-                assert '_curses.error' in err, err
-            else:
-                assert 'platform not supported' in err, err
-        else:
-            self.fail('RuntimeError not raised')
+            src = f.read()
+        finally:
+            f.close()
+        ast.parse(src)
 
     def test_check_presence(self):
         # make sure all example scripts have a test method defined
@@ -2156,19 +2153,21 @@ class TestExampleScripts(unittest.TestCase):
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 
+    @skipIf(ast is None, warn=True)
     def test_killall(self):
-        pass
+        self.assert_syntax('killall.py')
 
-    # --- curses
-
+    @skipIf(ast is None, warn=True)
     def test_nettop(self):
-        self.assert_curses_script('nettop.py')
+        self.assert_syntax('nettop.py')
 
+    @skipIf(ast is None, warn=True)
     def test_top(self):
-        self.assert_curses_script('top.py')
+        self.assert_syntax('top.py')
 
+    @skipIf(ast is None, warn=True)
     def test_iotop(self):
-        self.assert_curses_script('iotop.py')
+        self.assert_syntax('iotop.py')
 
 
 def cleanup():
