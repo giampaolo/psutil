@@ -6,11 +6,29 @@
 
 import sys
 import os
+import shutil
+import fnmatch
 try:
     from setuptools import setup, Extension
 except ImportError:
     from distutils.core import setup, Extension
 
+
+def clean():
+    """'python setup.py clean' custom command."""
+    def rglob(pattern):
+        return [os.path.join(dirpath, f)
+            for dirpath, dirnames, files in os.walk('.')
+            for f in fnmatch.filter(files, pattern)]
+
+    for dirpath, dirnames, files in os.walk('.'):
+        if dirpath.endswith('__pycache__'):
+            sys.stdout.write('removing %s\n' % dirpath)
+            shutil.rmtree(dirpath)
+    for pattern in ['*.py[co]', '*~', '*.orig', '*.rej', '*.swp']:
+        for x in rglob(pattern):
+           sys.stdout.write('removing %s\n' % x)
+           os.remove(x)
 
 def get_version():
     INIT = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -102,6 +120,10 @@ else:
 
 
 def main():
+    # "python setup.py clean" custom command
+    if len(sys.argv) > 1 and sys.argv[1] == 'clean':
+        return clean()
+
     setup_args = dict(
         name='psutil',
         version=VERSION,
