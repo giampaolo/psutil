@@ -399,6 +399,7 @@ def disk_io_counters():
     finally:
         f.close()
     for line in lines:
+        # http://www.mjmwired.net/kernel/Documentation/iostats.txt
         _, _, name, reads, _, rbytes, rtime, writes, _, wbytes, wtime = \
             line.split()[:11]
         if name in partitions:
