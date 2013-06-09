@@ -144,6 +144,7 @@ def main():
         license='License :: OSI Approved :: BSD License',
         packages=['psutil'],
         test_suite='test.test_psutil',
+        # see: python setup.py register --list-classifiers
         classifiers=[
               'Development Status :: 5 - Production/Stable',
               'Environment :: Console',
@@ -153,6 +154,7 @@ def main():
               'Operating System :: POSIX',
               'Operating System :: POSIX :: Linux',
               'Operating System :: POSIX :: BSD :: FreeBSD',
+              'Operating System :: POSIX :: SunOS/Solaris',
               'Operating System :: OS Independent',
               'Programming Language :: C',
               'Programming Language :: Python',
