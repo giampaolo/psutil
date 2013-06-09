@@ -11,8 +11,6 @@ import unittest
 import platform
 import signal
 import time
-import warnings
-import atexit
 import sys
 import subprocess
 import errno
@@ -27,14 +25,14 @@ try:
     import wmi
 except ImportError:
     err = sys.exc_info()[1]
-    atexit.register(warn, "Couldn't run wmi tests: %s" % str(err))
+    register_warning("Couldn't run wmi tests: %s" % str(err))
     wmi = None
 try:
     import win32api
     import win32con
 except ImportError:
     err = sys.exc_info()[1]
-    atexit.register(warn, "Couldn't run pywin32 tests: %s" % str(err))
+    register_warning("Couldn't run pywin32 tests: %s" % str(err))
     win32api = None
 
 

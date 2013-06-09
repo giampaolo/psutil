@@ -89,9 +89,13 @@ def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=DEVNULL,
     _subprocesses_started.add(sproc.pid)
     return sproc
 
-def warn(msg, warntype=RuntimeWarning):
+def warn(msg):
     """Raise a warning msg."""
-    warnings.warn(msg, warntype)
+    warnings.warn(msg, UserWarning)
+
+def register_warning(msg):
+    """Register a warning which will be printed on interpreter exit."""
+    atexit.register(lambda: warn(msg))
 
 def sh(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     """run cmd in a subprocess and return its output.
@@ -214,8 +218,8 @@ def skipIf(condition, reason="", warn=False):
     only in python 2.7 and 3.2.
     If 'reason' argument is provided this will be printed during
     tests execution.
-    If 'warn' is provided a RuntimeWarning will be shown when all
-    tests are run.
+    If 'warn' is True a UserWarning will be shown on interpreter
+    exit.
     """
     def outer(fun, *args, **kwargs):
         def inner(self):
@@ -227,7 +231,7 @@ def skipIf(condition, reason="", warn=False):
                     msg = "%s was skipped" % objname
                     if reason:
                         msg += "; reason: " + repr(reason)
-                    atexit.register(warn, msg)
+                    register_warning(msg)
                 return
             else:
                 return fun(self, *args, **kwargs)
@@ -251,8 +255,8 @@ def skip_on_access_denied(only_if=None):
                 if only_if is not None:
                     if not only_if:
                         raise
-                atexit.register(warn, "%r was skipped because it raised " \
-                                      "AccessDenied" % fun.__name__)
+                register_warning("%r was skipped because it raised " \
+                                 "AccessDenied" % fun.__name__)
         return wrapper
     return decorator
 
@@ -267,8 +271,8 @@ def skip_on_not_implemented(only_if=None):
                 if only_if is not None:
                     if not only_if:
                         raise
-                atexit.register(warn, "%r was skipped because it raised " \
-                                      "NotImplementedError" % fun.__name__)
+                register_warning("%r was skipped because it raised " \
+                                 "NotImplementedError" % fun.__name__)
         return wrapper
     return decorator
 
@@ -1802,7 +1806,7 @@ class TestFetchAllProcesses(TestCase):
                             ret = attr
                         valid_procs += 1
                     except NotImplementedError:
-                        atexit.register(warn, "%r was skipped because not "
+                        register_warning("%r was skipped because not "
                             "implemented" % (self.__class__.__name__ + \
                                              '.test_' + name))
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
@@ -2208,8 +2212,8 @@ def test_main():
         if os.getuid() == 0:
             tests.append(LimitedUserTestCase)
         else:
-            atexit.register(warn, "Couldn't run limited user tests ("
-                                  "super-user privileges are required)")
+            register_warning("LimitedUserTestCase was skipped (super-user "
+                           "privileges are required)")
 
     tests.append(TestExampleScripts)
 
