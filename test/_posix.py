@@ -98,7 +98,8 @@ class PosixSpecificTestCase(TestCase):
         name_psutil = psutil.Process(self.pid).name.lower()
         self.assertEqual(name_ps, name_psutil)
 
-    @skipIf(OSX or BSD)
+    @unittest.skipIf(OSX or BSD,
+                    'ps -o start not available')
     def test_process_create_time(self):
         time_ps = ps("ps --no-headers -o start -p %s" %self.pid).split(' ')[0]
         time_psutil = psutil.Process(self.pid).create_time

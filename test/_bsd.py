@@ -151,42 +151,42 @@ class BSDSpecificTestCase(TestCase):
 
     # --- virtual_memory(); tests against muse
 
-    @skipUnless(MUSE_AVAILABLE)
+    @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     def test_total(self):
         num = muse('Total')
         self.assertEqual(psutil.virtual_memory().total, num)
 
-    @skipUnless(MUSE_AVAILABLE)
+    @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
     def test_active(self):
         num = muse('Active')
         self.assert_eq_w_tol(psutil.virtual_memory().active, num, TOLERANCE)
 
-    @skipUnless(MUSE_AVAILABLE)
+    @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
     def test_inactive(self):
         num = muse('Inactive')
         self.assert_eq_w_tol(psutil.virtual_memory().inactive, num, TOLERANCE)
 
-    @skipUnless(MUSE_AVAILABLE)
+    @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
     def test_wired(self):
         num = muse('Wired')
         self.assert_eq_w_tol(psutil.virtual_memory().wired, num, TOLERANCE)
 
-    @skipUnless(MUSE_AVAILABLE)
+    @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
     def test_cached(self):
         num = muse('Cache')
         self.assert_eq_w_tol(psutil.virtual_memory().cached, num, TOLERANCE)
 
-    @skipUnless(MUSE_AVAILABLE)
+    @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
     def test_free(self):
         num = muse('Free')
         self.assert_eq_w_tol(psutil.virtual_memory().free, num, TOLERANCE)
 
-    @skipUnless(MUSE_AVAILABLE)
+    @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
     def test_buffers(self):
         num = muse('Buffer')

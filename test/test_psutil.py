@@ -9,6 +9,9 @@ psutil test suite (you can quickly run it with "python setup.py test").
 
 Note: this is targeted for both python 2.x and 3.x so there's no need
 to use 2to3 tool first.
+
+If you're on Python < 2.7 it is recommended to install unittest2 module
+from: https://pypi.python.org/pypi/unittest2
 """
 
 from __future__ import division
@@ -38,6 +41,10 @@ import psutil
 from psutil._compat import PY3, callable, long, wraps
 
 
+# ===================================================================
+# --- Constants
+# ===================================================================
+
 # conf for retry_before_failing() decorator
 NO_RETRIES = 10
 # bytes tolerance for OS memory related tests
@@ -55,6 +62,10 @@ OSX = sys.platform.startswith("darwin")
 BSD = sys.platform.startswith("freebsd")
 SUNOS = sys.platform.startswith("sunos")
 
+
+# ===================================================================
+# --- Utility functions
+# ===================================================================
 
 _subprocesses_started = set()
 
@@ -212,38 +223,6 @@ def retry_before_failing(ntimes=None):
         return wrapper
     return decorator
 
-def skipIf(condition, reason="", warn=False):
-    """Decorator which skip a test under if condition is satisfied.
-    This is a substitute of unittest.skipIf which is available
-    only in python 2.7 and 3.2.
-    If 'reason' argument is provided this will be printed during
-    tests execution.
-    If 'warn' is True a UserWarning will be shown on interpreter
-    exit.
-    """
-    def outer(fun, *args, **kwargs):
-        def inner(self):
-            if condition:
-                sys.stdout.write("skipped-")
-                sys.stdout.flush()
-                if warn:
-                    objname = "%s.%s" % (self.__class__.__name__, fun.__name__)
-                    msg = "%s was skipped" % objname
-                    if reason:
-                        msg += "; reason: " + repr(reason)
-                    register_warning(msg)
-                return
-            else:
-                return fun(self, *args, **kwargs)
-        return inner
-    return outer
-
-def skipUnless(condition, reason="", warn=False):
-    """Contrary of skipIf."""
-    if not condition:
-        return skipIf(True, reason, warn)
-    return skipIf(False)
-
 def skip_on_access_denied(only_if=None):
     """Decorator to Ignore AccessDenied exceptions."""
     def decorator(fun):
@@ -255,8 +234,13 @@ def skip_on_access_denied(only_if=None):
                 if only_if is not None:
                     if not only_if:
                         raise
-                register_warning("%r was skipped because it raised " \
-                                 "AccessDenied" % fun.__name__)
+                msg = "%r was skipped because it raised AccessDenied" \
+                      % fun.__name__
+                self = args[0]
+                if hasattr(self, 'skip'):  # python >= 2.7
+                    self.skip(msg)
+                else:
+                    register_warning(msg)
         return wrapper
     return decorator
 
@@ -271,8 +255,13 @@ def skip_on_not_implemented(only_if=None):
                 if only_if is not None:
                     if not only_if:
                         raise
-                register_warning("%r was skipped because it raised " \
-                                 "NotImplementedError" % fun.__name__)
+                msg = "%r was skipped because it raised NotImplementedError" \
+                      % fun.__name__
+                self = args[0]
+                if hasattr(self, 'skip'):  # python >= 2.7
+                    self.skip(msg)
+                else:
+                    register_warning(msg)
         return wrapper
     return decorator
 
@@ -333,13 +322,6 @@ class ThreadTask(threading.Thread):
 
 class TestCase(unittest.TestCase):
 
-    # Python 2.4 compatibility
-    if not hasattr(unittest.TestCase, "assertIn"):
-        def assertIn(self, member, container, msg=None):
-            if member not in container:
-                self.fail(msg or \
-                        '%s not found in %s' % (repr(member), repr(container)))
-
     def assert_eq_w_tol(self, first, second, tolerance):
         difference = abs(first - second)
         if difference <= tolerance:
@@ -348,6 +330,59 @@ class TestCase(unittest.TestCase):
               % (first, second, tolerance, difference)
         raise AssertionError(msg)
 
+
+# ===================================================================
+# --- Support for python < 2.7 in case unittest2 is not installed
+# ===================================================================
+
+if not hasattr(unittest, 'skip'):
+    register_warning("unittest2 module is not installed; a serie of pretty " \
+                     "darn ugly workarounds will be used instead")
+
+    class SkipTest(Exception):
+        pass
+
+    class TestCase(TestCase):
+
+        def skip(self, msg):
+            raise SkipTest(msg)
+
+        def assertIn(self, member, container, msg=None):
+            if member not in container:
+                self.fail(msg or \
+                    '%s not found in %s' % (repr(member), repr(container)))
+
+    def skipIf(condition, reason="", warn=False):
+        def outer(fun, *args, **kwargs):
+            def inner(self):
+                if condition:
+                    sys.stdout.write("skipped-")
+                    sys.stdout.flush()
+                    if warn:
+                        objname = "%s.%s" % (self.__class__.__name__, fun.__name__)
+                        msg = "%s was skipped" % objname
+                        if reason:
+                            msg += "; reason: " + repr(reason)
+                        register_warning(msg)
+                    return
+                else:
+                    return fun(self, *args, **kwargs)
+            return inner
+        return outer
+
+    def skipUnless(condition, reason="", warn=False):
+        if not condition:
+            return unittest.skipIf(True, reason, warn)
+        return unittest.skipIf(False)
+
+    unittest.skipIf = skipIf
+    unittest.skipUnless = skipUnless
+    del skipIf, skipUnless
+
+
+# ===================================================================
+# --- System-related API tests
+# ===================================================================
 
 class TestSystemAPIs(TestCase):
     """Tests for system-related APIs."""
@@ -392,7 +427,7 @@ class TestSystemAPIs(TestCase):
         self.assertEqual(psutil.NUM_CPUS, len(psutil.cpu_times(percpu=True)))
         assert psutil.NUM_CPUS >= 1, psutil.NUM_CPUS
 
-    @skipUnless(POSIX)
+    @unittest.skipUnless(POSIX, 'posix only')
     def test_PAGESIZE(self):
         # pagesize is used internally to perform different calculations
         # and it's determined by using SC_PAGE_SIZE; make sure
@@ -583,8 +618,8 @@ class TestSystemAPIs(TestCase):
                     self._test_cpu_percent(percent)
                 self._test_cpu_percent(sum(cpu))
 
-    @skipIf(POSIX and not hasattr(os, 'statvfs'),
-            reason="os.statvfs() function not available on this platform")
+    @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
+                     "os.statvfs() function not available on this platform")
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
         assert usage.total > 0, usage
@@ -606,8 +641,8 @@ class TestSystemAPIs(TestCase):
         else:
             self.fail("OSError not raised")
 
-    @skipIf(POSIX and not hasattr(os, 'statvfs'),
-            reason="os.statvfs() function not available on this platform")
+    @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
+                     "os.statvfs() function not available on this platform")
     def test_disk_partitions(self):
         for disk in psutil.disk_partitions(all=False):
             if WINDOWS and 'cdrom' in disk.opts:
@@ -714,6 +749,10 @@ class TestSystemAPIs(TestCase):
             datetime.datetime.fromtimestamp(user.started)
 
 
+# ===================================================================
+# --- psutil.Process class tests
+# ===================================================================
+
 class TestProcess(TestCase):
     """Tests for psutil.Process class."""
 
@@ -801,7 +840,7 @@ class TestProcess(TestCase):
         # timeout < 0 not allowed
         self.assertRaises(ValueError, p.wait, -1)
 
-    @skipUnless(POSIX)
+    @unittest.skipUnless(POSIX, '')  # XXX why is this skipped on Windows?
     def test_wait_non_children(self):
         # test wait() against processes which are not our children
         code = "import sys;"
@@ -869,7 +908,8 @@ class TestProcess(TestCase):
     # XXX fails on OSX: not sure if it's for os.times(). We should
     # try this with Python 2.7 and re-enable the test.
 
-    @skipUnless(sys.version_info > (2, 6, 1) and not OSX)
+    @unittest.skipUnless(sys.version_info > (2, 6, 1) and not OSX,
+                         'os.times() is not reliable on this Python version')
     def test_cpu_times2(self):
         user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()
         utime, ktime = os.times()[:2]
@@ -900,7 +940,7 @@ class TestProcess(TestCase):
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
 
-    @skipIf(WINDOWS)
+    @unittest.skipIf(WINDOWS, 'windows only')
     def test_terminal(self):
         terminal = psutil.Process(os.getpid()).terminal
         if sys.stdin.isatty():
@@ -908,7 +948,7 @@ class TestProcess(TestCase):
         else:
             assert terminal, repr(terminal)
 
-    @skipIf(OSX or SUNOS, warn=False)
+    @unittest.skipIf(OSX or SUNOS, 'not available on this platform')
     @skip_on_not_implemented(only_if=LINUX)
     def test_get_io_counters(self):
         p = psutil.Process(os.getpid())
@@ -938,7 +978,8 @@ class TestProcess(TestCase):
         assert io2.read_bytes >= io1.read_bytes, (io1, io2)
 
     # Linux and Windows Vista+
-    @skipUnless(hasattr(psutil.Process, 'get_ionice'))
+    @unittest.skipUnless(hasattr(psutil.Process, 'get_ionice'),
+                         'Linux and Windows Vista only')
     def test_get_set_ionice(self):
         if LINUX:
             from psutil import (IOPRIO_CLASS_NONE, IOPRIO_CLASS_RT,
@@ -1002,7 +1043,7 @@ class TestProcess(TestCase):
             if thread._running:
                 thread.stop()
 
-    @skipUnless(WINDOWS)
+    @unittest.skipUnless(WINDOWS, 'Windows only')
     def test_get_num_handles(self):
         # a better test is done later into test/_windows.py
         p = psutil.Process(os.getpid())
@@ -1224,20 +1265,23 @@ class TestProcess(TestCase):
         else:
             p.username
 
-    @skipIf(not hasattr(psutil.Process, "getcwd"))
+    @unittest.skipUnless(hasattr(psutil.Process, "getcwd"),
+                         'not available on this platform')
     def test_getcwd(self):
         sproc = get_test_subprocess(wait=True)
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.getcwd(), os.getcwd())
 
-    @skipIf(not hasattr(psutil.Process, "getcwd"))
+    @unittest.skipIf(not hasattr(psutil.Process, "getcwd"),
+                     'not available on this platform')
     def test_getcwd_2(self):
         cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(10)"]
         sproc = get_test_subprocess(cmd, wait=True)
         p = psutil.Process(sproc.pid)
         call_until(p.getcwd, "ret == os.path.dirname(os.getcwd())", timeout=1)
 
-    @skipIf(not hasattr(psutil.Process, "get_cpu_affinity"))
+    @unittest.skipIf(not hasattr(psutil.Process, "get_cpu_affinity"),
+                     'not available on this platform')
     def test_cpu_affinity(self):
         p = psutil.Process(os.getpid())
         initial = p.get_cpu_affinity()
@@ -1359,7 +1403,7 @@ class TestProcess(TestCase):
         # test kind arg
         self.assertRaises(ValueError, p.get_connections, 'foo')
 
-    @skipUnless(supports_ipv6())
+    @unittest.skipUnless(supports_ipv6(), 'IPv6 is not supported')
     def test_get_connections_ipv6(self):
         s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         s.bind(('::1', 0))
@@ -1369,7 +1413,7 @@ class TestProcess(TestCase):
         self.assertEqual(len(cons), 1)
         self.assertEqual(cons[0].local_address[0], '::1')
 
-    @skipUnless(hasattr(socket, 'AF_UNIX'))
+    @unittest.skipUnless(hasattr(socket, 'AF_UNIX'), 'AF_UNIX is not supported')
     def test_get_connections_unix(self):
         # tcp
         safe_remove(TESTFN)
@@ -1392,8 +1436,10 @@ class TestProcess(TestCase):
         self.assertEqual(conn.type, socket.SOCK_DGRAM)
         sock.close()
 
-    @skipUnless(hasattr(socket, "fromfd"))
-    @skipIf(WINDOWS or SUNOS)
+    @unittest.skipUnless(hasattr(socket, "fromfd"),
+                         'socket.fromfd() is not availble')
+    @unittest.skipIf(WINDOWS or SUNOS,
+                     'connection fd available on this platform')
     def test_connection_fromfd(self):
         sock = socket.socket()
         sock.bind(('localhost', 0))
@@ -1508,7 +1554,7 @@ class TestProcess(TestCase):
                         else:
                             self.assertEqual(cons, [], cons)
 
-    @skipUnless(POSIX)
+    @unittest.skipUnless(POSIX, 'posix only')
     def test_get_num_fds(self):
         p = psutil.Process(os.getpid())
         start = p.get_num_fds()
@@ -1693,7 +1739,7 @@ class TestProcess(TestCase):
         self.assertIn(str(sproc.pid), str(p))
         self.assertIn("terminated", str(p))
 
-    @skipIf(LINUX)
+    @unittest.skipIf(LINUX, 'PID 0 not available on Linux')
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
         p = psutil.Process(0)
@@ -1765,6 +1811,10 @@ class TestProcess(TestCase):
             proc.kill()
             proc.wait()
 
+
+# ===================================================================
+# --- Featch all processes test
+# ===================================================================
 
 class TestFetchAllProcesses(TestCase):
     # Iterates over all running processes and performs some sanity
@@ -2064,6 +2114,11 @@ class TestFetchAllProcesses(TestCase):
         self.assertTrue(ret.voluntary >= 0)
         self.assertTrue(ret.involuntary >= 0)
 
+
+# ===================================================================
+# --- Limited user tests
+# ===================================================================
+
 if hasattr(os, 'getuid'):
     class LimitedUserTestCase(TestProcess):
         """Repeat the previous tests by using a limited user.
@@ -2105,6 +2160,10 @@ if hasattr(os, 'getuid'):
             else:
                 self.fail("exception not raised")
 
+
+# ===================================================================
+# --- Example script tests
+# ===================================================================
 
 class TestExampleScripts(unittest.TestCase):
     """Tests for scripts in the examples directory."""
@@ -2157,19 +2216,23 @@ class TestExampleScripts(unittest.TestCase):
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 
-    @skipIf(ast is None, warn=True)
+    @unittest.skipIf(ast is None,
+                     'ast module not available on this python version')
     def test_killall(self):
         self.assert_syntax('killall.py')
 
-    @skipIf(ast is None, warn=True)
+    @unittest.skipIf(ast is None,
+                     'ast module not available on this python version')
     def test_nettop(self):
         self.assert_syntax('nettop.py')
 
-    @skipIf(ast is None, warn=True)
+    @unittest.skipIf(ast is None,
+                     'ast module not available on this python version')
     def test_top(self):
         self.assert_syntax('top.py')
 
-    @skipIf(ast is None, warn=True)
+    @unittest.skipIf(ast is None,
+                     'ast module not available on this python version')
     def test_iotop(self):
         self.assert_syntax('iotop.py')
 

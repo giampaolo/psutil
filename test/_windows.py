@@ -36,7 +36,6 @@ except ImportError:
     win32api = None
 
 
-
 class WindowsSpecificTestCase(TestCase):
 
     def setUp(self):
@@ -148,7 +147,8 @@ class WindowsSpecificTestCase(TestCase):
 
         # --- psutil namespace functions and constants tests
 
-        @skipUnless(hasattr(os, 'NUMBER_OF_PROCESSORS'))
+        @unittest.skipUnless(hasattr(os, 'NUMBER_OF_PROCESSORS'),
+                             'NUMBER_OF_PROCESSORS env var is not available')
         def test_NUM_CPUS(self):
             num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
             self.assertEqual(num_cpus, psutil.NUM_CPUS)

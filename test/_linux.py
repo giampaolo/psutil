@@ -21,7 +21,7 @@ import psutil
 
 class LinuxSpecificTestCase(TestCase):
 
-    @skipIf(POSIX and not hasattr(os, 'statvfs'),
+    @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
             reason="os.statvfs() function not available on this platform")
     @skip_on_not_implemented()
     def test_disks(self):
