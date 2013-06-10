@@ -45,7 +45,7 @@ def muse(field):
     return int(line.split()[1])
 
 
-class BSDSpecificTestCase(TestCase):
+class BSDSpecificTestCase(unittest.TestCase):
 
     def setUp(self):
         self.pid = get_test_subprocess().pid

@@ -188,6 +188,7 @@ def check_ip_address(addr, family):
     assert 0 <= port <= 65535, port
 
 def safe_remove(fname):
+    """Deletes a file and does not exception if it doesn't exist."""
     try:
         os.remove(fname)
     except OSError:
@@ -320,17 +321,6 @@ class ThreadTask(threading.Thread):
         self.join()
 
 
-class TestCase(unittest.TestCase):
-
-    def assert_eq_w_tol(self, first, second, tolerance):
-        difference = abs(first - second)
-        if difference <= tolerance:
-            return
-        msg = '%r != %r within %r delta (%r difference)' \
-              % (first, second, tolerance, difference)
-        raise AssertionError(msg)
-
-
 # ===================================================================
 # --- Support for python < 2.7 in case unittest2 is not installed
 # ===================================================================
@@ -342,7 +332,7 @@ if not hasattr(unittest, 'skip'):
     class SkipTest(Exception):
         pass
 
-    class TestCase(TestCase):
+    class TestCase(unittest.TestCase):
 
         def _safe_repr(self, obj):
             MAX_LENGTH = 80
@@ -390,10 +380,22 @@ if not hasattr(unittest, 'skip'):
                 self.fail(msg or '%s is not an instance of %r' \
                         % (self._safe_repr(a), b))
 
+        def assertAlmostEqual(self, a, b, msg=None, delta=None):
+            if delta is not None:
+                if abs(a - b) <= delta:
+                    return
+                self.fail(msg or '%s != %s within %s delta' \
+                                  % (self._safe_repr(a), self._safe_repr(b),
+                                     self._safe_repr(delta)))
+            else:
+                self.assertEqual(a, b, msg=msg)
+
 
     def skipIf(condition, reason):
-        def outer(fun, *args, **kwargs):
-            def inner(self):
+        def decorator(fun):
+            @wraps(fun)
+            def wrapper(*args, **kwargs):
+                self = args[0]
                 if condition:
                     sys.stdout.write("skipped-")
                     sys.stdout.flush()
@@ -406,25 +408,26 @@ if not hasattr(unittest, 'skip'):
                         register_warning(msg)
                     return
                 else:
-                    return fun(self, *args, **kwargs)
-            return inner
-        return outer
+                    return fun(*args, **kwargs)
+            return wrapper
+        return decorator
 
     def skipUnless(condition, reason):
         if not condition:
-            return unittest.skipIf(True, reason, warn)
-        return unittest.skipIf(False)
+            return unittest.skipIf(True, reason)
+        return unittest.skipIf(False, reason)
 
+    unittest.TestCase = TestCase
     unittest.skipIf = skipIf
     unittest.skipUnless = skipUnless
-    del skipIf, skipUnless
+    del TestCase, skipIf, skipUnless
 
 
 # ===================================================================
 # --- System-related API tests
 # ===================================================================
 
-class TestSystemAPIs(TestCase):
+class TestSystemAPIs(unittest.TestCase):
     """Tests for system-related APIs."""
 
     def setUp(self):
@@ -793,7 +796,7 @@ class TestSystemAPIs(TestCase):
 # --- psutil.Process class tests
 # ===================================================================
 
-class TestProcess(TestCase):
+class TestProcess(unittest.TestCase):
     """Tests for psutil.Process class."""
 
     def setUp(self):
@@ -1212,35 +1215,45 @@ class TestProcess(TestCase):
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
-    if os.name == 'posix':
+    @unittest.skipUnless(POSIX, 'posix only')
+    def test_uids(self):
+        p = psutil.Process(os.getpid())
+        real, effective, saved = p.uids
+        # os.getuid() refers to "real" uid
+        self.assertEqual(real, os.getuid())
+        # os.geteuid() refers to "effective" uid
+        self.assertEqual(effective, os.geteuid())
+        # no such thing as os.getsuid() ("saved" uid), but starting
+        # from python 2.7 we have os.getresuid()[2]
+        if hasattr(os, "getresuid"):
+            self.assertEqual(saved, os.getresuid()[2])
 
-        def test_uids(self):
-            p = psutil.Process(os.getpid())
-            real, effective, saved = p.uids
-            # os.getuid() refers to "real" uid
-            self.assertEqual(real, os.getuid())
-            # os.geteuid() refers to "effective" uid
-            self.assertEqual(effective, os.geteuid())
-            # no such thing as os.getsuid() ("saved" uid), but starting
-            # from python 2.7 we have os.getresuid()[2]
-            if hasattr(os, "getresuid"):
-                self.assertEqual(saved, os.getresuid()[2])
+    @unittest.skipUnless(POSIX, 'posix only')
+    def test_gids(self):
+        p = psutil.Process(os.getpid())
+        real, effective, saved = p.gids
+        # os.getuid() refers to "real" uid
+        self.assertEqual(real, os.getgid())
+        # os.geteuid() refers to "effective" uid
+        self.assertEqual(effective, os.getegid())
+        # no such thing as os.getsuid() ("saved" uid), but starting
+        # from python 2.7 we have os.getresgid()[2]
+        if hasattr(os, "getresuid"):
+            self.assertEqual(saved, os.getresgid()[2])
 
-        def test_gids(self):
-            p = psutil.Process(os.getpid())
-            real, effective, saved = p.gids
-            # os.getuid() refers to "real" uid
-            self.assertEqual(real, os.getgid())
-            # os.geteuid() refers to "effective" uid
-            self.assertEqual(effective, os.getegid())
-            # no such thing as os.getsuid() ("saved" uid), but starting
-            # from python 2.7 we have os.getresgid()[2]
-            if hasattr(os, "getresuid"):
-                self.assertEqual(saved, os.getresgid()[2])
-
-        def test_nice(self):
-            p = psutil.Process(os.getpid())
-            self.assertRaises(TypeError, p.set_nice, "str")
+    def test_nice(self):
+        p = psutil.Process(os.getpid())
+        self.assertRaises(TypeError, p.set_nice, "str")
+        if os.name == 'nt':
+            try:
+                self.assertEqual(p.get_nice(), psutil.NORMAL_PRIORITY_CLASS)
+                p.set_nice(psutil.HIGH_PRIORITY_CLASS)
+                self.assertEqual(p.get_nice(), psutil.HIGH_PRIORITY_CLASS)
+                p.set_nice(psutil.NORMAL_PRIORITY_CLASS)
+                self.assertEqual(p.get_nice(), psutil.NORMAL_PRIORITY_CLASS)
+            finally:
+                p.set_nice(psutil.NORMAL_PRIORITY_CLASS)
+        else:
             try:
                 try:
                     first_nice = p.get_nice()
@@ -1257,20 +1270,6 @@ class TestProcess(TestCase):
                     p.set_nice(first_nice)
                 except psutil.AccessDenied:
                     pass
-
-    if os.name == 'nt':
-
-        def test_nice(self):
-            p = psutil.Process(os.getpid())
-            self.assertRaises(TypeError, p.set_nice, "str")
-            try:
-                self.assertEqual(p.get_nice(), psutil.NORMAL_PRIORITY_CLASS)
-                p.set_nice(psutil.HIGH_PRIORITY_CLASS)
-                self.assertEqual(p.get_nice(), psutil.HIGH_PRIORITY_CLASS)
-                p.set_nice(psutil.NORMAL_PRIORITY_CLASS)
-                self.assertEqual(p.get_nice(), psutil.NORMAL_PRIORITY_CLASS)
-            finally:
-                p.set_nice(psutil.NORMAL_PRIORITY_CLASS)
 
     def test_status(self):
         p = psutil.Process(os.getpid())
@@ -1856,7 +1855,7 @@ class TestProcess(TestCase):
 # --- Featch all processes test
 # ===================================================================
 
-class TestFetchAllProcesses(TestCase):
+class TestFetchAllProcesses(unittest.TestCase):
     # Iterates over all running processes and performs some sanity
     # checks against Process API's returned values.
 

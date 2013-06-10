@@ -36,7 +36,7 @@ except ImportError:
     win32api = None
 
 
-class WindowsSpecificTestCase(TestCase):
+class WindowsSpecificTestCase(unittest.TestCase):
 
     def setUp(self):
         sproc = get_test_subprocess()

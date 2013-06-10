@@ -46,7 +46,7 @@ def vm_stat(field):
     return int(re.search('\d+', line).group(0)) * PAGESIZE
 
 
-class OSXSpecificTestCase(TestCase):
+class OSXSpecificTestCase(unittest.TestCase):
 
     def setUp(self):
         self.pid = get_test_subprocess().pid

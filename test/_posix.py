@@ -40,7 +40,7 @@ def ps(cmd):
         return output
 
 
-class PosixSpecificTestCase(TestCase):
+class PosixSpecificTestCase(unittest.TestCase):
     """Compare psutil results against 'ps' command line utility."""
 
     # for ps -o arguments see: http://unixhelp.ed.ac.uk/CGI/man-cgi?ps
