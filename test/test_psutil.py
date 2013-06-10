@@ -208,7 +208,7 @@ def retry_before_failing(ntimes=None):
                     return fun(*args, **kwargs)
                 except AssertionError:
                     err = sys.exc_info()[1]
-            raise err
+            raise
         return wrapper
     return decorator
 
