@@ -337,29 +337,69 @@ class TestCase(unittest.TestCase):
 
 if not hasattr(unittest, 'skip'):
     register_warning("unittest2 module is not installed; a serie of pretty " \
-                     "darn ugly workarounds will be used instead")
+                     "darn ugly workarounds will be used as workaround")
 
     class SkipTest(Exception):
         pass
 
     class TestCase(TestCase):
 
+        def _safe_repr(self, obj):
+            MAX_LENGTH = 80
+            try:
+                result = repr(obj)
+            except Exception:
+                result = object.__repr__(obj)
+            if len(result) < MAX_LENGTH:
+                return result
+            return result[:MAX_LENGTH] + ' [truncated]...'
+
+        def _fail_w_msg(self, a, b, middle, msg):
+            self.fail(msg or '%s %s %s' % (self._safe_repr(a), middle,
+                                           self._safe_repr(b)))
+
         def skip(self, msg):
             raise SkipTest(msg)
 
-        def assertIn(self, member, container, msg=None):
-            if member not in container:
-                self.fail(msg or \
-                    '%s not found in %s' % (repr(member), repr(container)))
+        def assertIn(self, a, b, msg=None):
+            if a not in b:
+                self._fail_w_msg(a, b, 'not found in', msg)
 
-    def skipIf(condition, reason="", warn=False):
+        def assertNotIn(self, a, b, msg=None):
+            if a in b:
+                self._fail_w_msg(a, b, 'found in', msg)
+
+        def assertGreater(self, a, b, msg=None):
+            if not a > b:
+                self._fail_w_msg(a, b, 'not greater than', msg)
+
+        def assertGreaterEqual(self, a, b, msg=None):
+            if not a >= b:
+                self._fail_w_msg(a, b, 'not greater than or equal to', msg)
+
+        def assertLess(self, a, b, msg=None):
+            if not a < b:
+                self._fail_w_msg(a, b, 'not less than', msg)
+
+        def assertLessEqual(self, a, b, msg=None):
+            if not a <= b:
+                self._fail_w_msg(a, b, 'not less or equal to', msg)
+
+        def assertIsInstance(self, a, b, msg=None):
+            if not isinstance(a, b):
+                self.fail(msg or '%s is not an instance of %r' \
+                        % (self._safe_repr(a), b))
+
+
+    def skipIf(condition, reason):
         def outer(fun, *args, **kwargs):
             def inner(self):
                 if condition:
                     sys.stdout.write("skipped-")
                     sys.stdout.flush()
                     if warn:
-                        objname = "%s.%s" % (self.__class__.__name__, fun.__name__)
+                        objname = "%s.%s" % (self.__class__.__name__,
+                                             fun.__name__)
                         msg = "%s was skipped" % objname
                         if reason:
                             msg += "; reason: " + repr(reason)
@@ -370,7 +410,7 @@ if not hasattr(unittest, 'skip'):
             return inner
         return outer
 
-    def skipUnless(condition, reason="", warn=False):
+    def skipUnless(condition, reason):
         if not condition:
             return unittest.skipIf(True, reason, warn)
         return unittest.skipIf(False)
@@ -394,38 +434,38 @@ class TestSystemAPIs(TestCase):
         reap_children()
 
     def test_process_iter(self):
-        assert os.getpid() in [x.pid for x in psutil.process_iter()]
+        self.assertIn(os.getpid(), [x.pid for x in psutil.process_iter()])
         sproc = get_test_subprocess()
-        assert sproc.pid in [x.pid for x in psutil.process_iter()]
+        self.assertIn(sproc.pid, [x.pid for x in psutil.process_iter()])
         p = psutil.Process(sproc.pid)
         p.kill()
         p.wait()
-        assert sproc.pid not in [x.pid for x in psutil.process_iter()]
+        self.assertNotIn(sproc.pid, [x.pid for x in psutil.process_iter()])
 
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM
-        assert isinstance(x, (int, long))
-        assert x > 0
+        self.assertIsInstance(x, (int, long))
+        self.assertGreater(x, 0)
         self.assertEqual(x, psutil.virtual_memory().total)
 
     def test_BOOT_TIME(self, arg=None):
         x = arg or psutil.BOOT_TIME
-        assert isinstance(x, float), x
-        assert x > 0, x
-        assert x < time.time(), x
+        self.assertIsInstance(x, float)
+        self.assertGreater(x, 0)
+        self.assertLess(x, time.time())
 
     def test_get_boot_time(self):
         self.test_BOOT_TIME(psutil.get_boot_time())
         if WINDOWS:
             # work around float precision issues; give it 1 secs tolerance
             diff = abs(psutil.get_boot_time() - psutil.BOOT_TIME)
-            assert diff < 1, diff
+            self.assertLess(diff, 1)
         else:
             self.assertEqual(psutil.get_boot_time(), psutil.BOOT_TIME)
 
     def test_NUM_CPUS(self):
         self.assertEqual(psutil.NUM_CPUS, len(psutil.cpu_times(percpu=True)))
-        assert psutil.NUM_CPUS >= 1, psutil.NUM_CPUS
+        self.assertGreaterEqual(psutil.NUM_CPUS, 1)
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_PAGESIZE(self):
@@ -540,8 +580,8 @@ class TestSystemAPIs(TestCase):
         times = psutil.cpu_times()
         sum(times)
         for cp_time in times:
-            assert isinstance(cp_time, float)
-            assert cp_time >= 0.0, cp_time
+            self.assertIsInstance(cp_time, float)
+            self.assertGreaterEqual(cp_time, 0.0)
             total += cp_time
         self.assertEqual(total, sum(times))
         str(times)
@@ -559,8 +599,8 @@ class TestSystemAPIs(TestCase):
             total = 0
             sum(times)
             for cp_time in times:
-                assert isinstance(cp_time, float)
-                assert cp_time >= 0.0, cp_time
+                self.assertIsInstance(cp_time, float)
+                self.assertGreaterEqual(cp_time, 0.0)
                 total += cp_time
             self.assertEqual(total, sum(times))
             str(times)
@@ -582,9 +622,9 @@ class TestSystemAPIs(TestCase):
         self.fail()
 
     def _test_cpu_percent(self, percent):
-        assert isinstance(percent, float), percent
-        assert percent >= 0.0, percent
-        assert percent <= 100.0, percent
+        self.assertIsInstance(percent, float)
+        self.assertGreaterEqual(percent, 0.0)
+        self.assertLessEqual(percent, 100.0)
 
     def test_sys_cpu_percent(self):
         psutil.cpu_percent(interval=0.001)
@@ -655,7 +695,7 @@ class TestSystemAPIs(TestCase):
                 disk.device
             assert os.path.isdir(disk.mountpoint), disk
             assert disk.fstype, disk
-            assert isinstance(disk.opts, str)
+            self.assertIsInstance(disk.opts, str)
         for disk in psutil.disk_partitions(all=True):
             if not WINDOWS:
                 try:
@@ -667,8 +707,8 @@ class TestSystemAPIs(TestCase):
                         raise
                 else:
                     assert os.path.isdir(disk.mountpoint), disk.mountpoint
-            assert isinstance(disk.fstype, str)
-            assert isinstance(disk.opts, str)
+            self.assertIsInstance(disk.fstype, str)
+            self.assertIsInstance(disk.opts, str)
 
         def find_mount_point(path):
             path = os.path.abspath(path)
@@ -736,7 +776,7 @@ class TestSystemAPIs(TestCase):
                 # http://code.google.com/p/psutil/issues/detail?id=338
                 while key[-1].isdigit():
                     key = key[:-1]
-                assert key not in ret, (key, ret.keys())
+                self.assertNotIn(key, ret.keys())
 
     def test_get_users(self):
         users = psutil.get_users()
@@ -888,12 +928,12 @@ class TestProcess(TestCase):
         p.get_cpu_percent(interval=0.001)
         for x in range(100):
             percent = p.get_cpu_percent(interval=None)
-            assert isinstance(percent, float)
-            assert percent >= 0.0, percent
+            self.assertIsInstance(percent, float)
+            self.assertGreaterEqual(percent, 0.0)
             if os.name != 'posix':
-                assert percent <= 100.0, percent
+                self.assertLessEqual(percent, 100.0)
             else:
-                assert percent >= 0.0, percent
+                self.assertGreaterEqual(percent, 0.0)
 
     def test_cpu_times(self):
         times = psutil.Process(os.getpid()).get_cpu_times()
@@ -1047,7 +1087,7 @@ class TestProcess(TestCase):
     def test_get_num_handles(self):
         # a better test is done later into test/_windows.py
         p = psutil.Process(os.getpid())
-        assert p.get_num_handles() > 0
+        self.assertGreater(p.get_num_handles(), 0)
 
     def test_get_threads(self):
         p = psutil.Process(os.getpid())
@@ -1079,8 +1119,8 @@ class TestProcess(TestCase):
         # step 1 - get a base value to compare our results
         rss1, vms1 = p.get_memory_info()
         percent1 = p.get_memory_percent()
-        assert rss1 > 0
-        assert vms1 > 0
+        self.assertGreater(rss1, 0)
+        self.assertGreater(vms1, 0)
 
         # step 2 - allocate some memory
         memarr = [None] * 1500000
@@ -1088,9 +1128,9 @@ class TestProcess(TestCase):
         rss2, vms2 = p.get_memory_info()
         percent2 = p.get_memory_percent()
         # make sure that the memory usage bumped up
-        assert rss2 > rss1
-        assert vms2 >= vms1  # vms might be equal
-        assert percent2 > percent1
+        self.assertGreater(rss2, rss1)
+        self.assertGreaterEqual(vms2, vms1)  # vms might be equal
+        self.assertGreater(percent2, percent1)
         del memarr
 
 #    def test_get_ext_memory_info(self):
@@ -1122,12 +1162,12 @@ class TestProcess(TestCase):
                 elif fname in ('addr', 'perms'):
                     assert value, value
                 else:
-                    assert isinstance(value, (int, long))
+                    self.assertIsInstance(value, (int, long))
                     assert value >= 0, value
 
     def test_get_memory_percent(self):
         p = psutil.Process(os.getpid())
-        assert p.get_memory_percent() > 0.0
+        self.assertGreater(p.get_memory_percent(), 0.0)
 
     def test_pid(self):
         sproc = get_test_subprocess()
@@ -1905,7 +1945,7 @@ class TestFetchAllProcesses(TestCase):
 
     def exe(self, ret):
         if not ret:
-            assert ret == ''
+            self.assertEqual(ret, '')
         else:
             assert os.path.isabs(ret), ret
             # Note: os.stat() may return False even if the file is there
@@ -1927,7 +1967,7 @@ class TestFetchAllProcesses(TestCase):
     def create_time(self, ret):
         self.assertTrue(ret > 0)
         if not WINDOWS:
-            assert ret >= psutil.BOOT_TIME, (ret, psutil.BOOT_TIME)
+            self.assertGreaterEqual(ret, psutil.BOOT_TIME)
         # make sure returned value can be pretty printed
         # with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(ret))
@@ -2003,7 +2043,7 @@ class TestFetchAllProcesses(TestCase):
             if WINDOWS:
                 assert f.fd == -1, f
             else:
-                assert isinstance(f.fd, int), f
+                self.assertIsInstance(f.fd, int)
             assert os.path.isabs(f.path), f
             assert os.path.isfile(f.path), f
 
@@ -2093,14 +2133,14 @@ class TestFetchAllProcesses(TestCase):
                 elif fname in ('addr', 'perms'):
                     self.assertTrue(value)
                 else:
-                    assert isinstance(value, (int, long))
+                    self.assertIsInstance(value, (int, long))
                     assert value >= 0, value
 
     def get_num_handles(self, ret):
         if WINDOWS:
-            assert ret >= 0
+            self.assertGreaterEqual(ret, 0)
         else:
-            assert ret > 0
+            self.assertGreaterEqual(ret, 0)
 
     def get_nice(self, ret):
         if POSIX:

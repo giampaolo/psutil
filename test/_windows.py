@@ -294,9 +294,9 @@ class TestDualProcessImplementation(unittest.TestCase):
         def assert_ge_0(obj):
             if isinstance(obj, tuple):
                 for value in obj:
-                    assert value >= 0, value
+                    self.assertGreaterEqual(value, 0)
             elif isinstance(obj, (int, long, float)):
-                assert obj >= 0, obj
+                self.assertGreaterEqual(obj, 0)
             else:
                 assert 0  # case not handled which needs to be fixed
 
@@ -306,11 +306,11 @@ class TestDualProcessImplementation(unittest.TestCase):
             else:
                 if isinstance(ret2, (int, long, float)):
                     diff = abs(ret1 - ret2)
-                    assert diff <= tolerance, diff
+                    self.assertLessEqual(diff, tolerance)
                 elif isinstance(ret2, tuple):
                     for a, b in zip(ret1, ret2):
                         diff = abs(a - b)
-                        assert diff <= tolerance, diff
+                        self.assertLessEqual(diff, tolerance)
 
         failures = []
         for name, tolerance in self.fun_names:

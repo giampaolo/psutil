@@ -120,17 +120,17 @@ class LinuxSpecificTestCase(TestCase):
         # guest >= 2.6.24
         # guest_nice >= 3.2.0
         if kernel_ver_info >= (2, 6, 11):
-            assert 'steal' in fields, fields
+            self.assertIn('steal', fields)
         else:
-            assert 'steal' not in fields, fields
+            self.assertNotIn('steal', fields)
         if kernel_ver_info >= (2, 6, 24):
-            assert 'guest' in fields, fields
+            self.assertIn('guest', fields)
         else:
-            assert 'guest' not in fields, fields
+            self.assertNotIn('guest', fields)
         if kernel_ver_info >= (3, 2, 0):
-            assert 'guest_nice' in fields, fields
+            self.assertIn('guest_nice', fields)
         else:
-            assert 'guest_nice' not in fields, fields
+            self.assertNotIn('guest_nice', fields)
 
 
 def test_main():
