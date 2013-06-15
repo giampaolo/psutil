@@ -222,13 +222,13 @@ get_process_io_counters(PyObject* self, PyObject* args)
 static PyObject*
 query_process_thread(PyObject* self, PyObject* args)
 {
-    int tid;
+    int pid, tid;
     char path[100];
     lwpstatus_t info;
 
-    if (! PyArg_ParseTuple(args, "i", &tid))
+    if (! PyArg_ParseTuple(args, "ii", &pid, &tid))
         return NULL;
-    sprintf(path, "/proc/%i/lwp/1/lwpstatus", tid);
+    sprintf(path, "/proc/%i/lwp/%i/lwpstatus", pid, tid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("dd", TV2DOUBLE(info.pr_utime),

@@ -318,7 +318,8 @@ class Process(object):
             if tid.isdigit():  # XXX is this necessary?
                 tid = int(tid)
                 try:
-                    utime, stime = _psutil_sunos.query_process_thread(tid)
+                    utime, stime = _psutil_sunos.query_process_thread(self.pid,
+                                                                      tid)
                 except EnvironmentError:
                     # ENOENT == thread gone in meantime
                     err = sys.exc_info()[1]
