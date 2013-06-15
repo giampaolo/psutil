@@ -16,18 +16,24 @@ except ImportError:
 
 def clean():
     """'python setup.py clean' custom command."""
-    def rglob(pattern):
+    def rglob(path, pattern):
         return [os.path.join(dirpath, f)
-            for dirpath, dirnames, files in os.walk('.')
+            for dirpath, dirnames, files in os.walk(path)
             for f in fnmatch.filter(files, pattern)]
 
+    for dirname in ('build', 'dist'):
+        if os.path.isdir(dirname):
+            sys.stdout.write('removing directory: %s\n' % dirname)
+            shutil.rmtree(dirname)
+
     for dirpath, dirnames, files in os.walk('.'):
-        if dirpath.endswith('__pycache__'):
-            sys.stdout.write('removing %s\n' % dirpath)
+        if dirpath.endswith(('__pycache__', '.egg-info')):
+            sys.stdout.write('removing directory %s\n' % dirpath)
             shutil.rmtree(dirpath)
-    for pattern in ['*.py[co]', '*~', '*.orig', '*.rej', '*.swp']:
-        for x in rglob(pattern):
-           sys.stdout.write('removing %s\n' % x)
+
+    for pattern in ['*.py[co]', '*.s[ol]', '*~', '*.orig', '*.rej', '*.swp']:
+        for x in rglob('.', pattern):
+           sys.stdout.write('removing file %s\n' % x)
            os.remove(x)
 
 def get_version():
