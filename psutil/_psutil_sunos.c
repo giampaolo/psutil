@@ -1044,9 +1044,9 @@ get_process_connections(PyObject* self, PyObject* args)
             }
         }
 #endif
+        free(databuf.buf);
     }
 
-    free(databuf.buf);
     close(sd);
     return py_retlist;
 
