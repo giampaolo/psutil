@@ -315,21 +315,19 @@ class Process(object):
         tids = os.listdir('/proc/%d/lwp' % self.pid)
         hit_enoent = False
         for tid in tids:
-            if tid.isdigit():  # XXX is this necessary?
-                tid = int(tid)
-                try:
-                    utime, stime = _psutil_sunos.query_process_thread(self.pid,
-                                                                      tid)
-                except EnvironmentError:
-                    # ENOENT == thread gone in meantime
-                    err = sys.exc_info()[1]
-                    if err.errno == errno.ENOENT:
-                        hit_enoent = True
-                        continue
-                    raise
-                else:
-                    nt = nt_thread(tid, utime, stime)
-                    ret.append(nt)
+            tid = int(tid)
+            try:
+                utime, stime = _psutil_sunos.query_process_thread(self.pid, tid)
+            except EnvironmentError:
+                # ENOENT == thread gone in meantime
+                err = sys.exc_info()[1]
+                if err.errno == errno.ENOENT:
+                    hit_enoent = True
+                    continue
+                raise
+            else:
+                nt = nt_thread(tid, utime, stime)
+                ret.append(nt)
         if hit_enoent:
             # raise NSP if the process disappeared on us
             os.stat('/proc/%s' % self.pid)

@@ -233,8 +233,14 @@ class TestProcessObjectLeaks(Base):
             s.bind(TESTFN)
             s.listen(1)
             socks.append(s)
+        kind = 'all'
+        # TODO: UNIX sockets are temporarily implemented by parsing
+        # 'pfiles' cmd  output; we don't want that part of the code to
+        # be executed.
+        if SUNOS:
+            kind = 'inet'
         try:
-            self.execute('get_connections', kind='all')
+            self.execute('get_connections', kind=kind)
         finally:
             for s in socks:
                 s.close()
