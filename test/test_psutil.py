@@ -2225,7 +2225,7 @@ class TestExampleScripts(unittest.TestCase):
         exe = os.path.join(EXAMPLES_DIR, exe)
         if args:
             exe = exe + ' ' + args
-        out = sh(exe).strip()
+        out = sh(sys.executable + ' ' + exe).strip()
         assert out, out
         return out
 
