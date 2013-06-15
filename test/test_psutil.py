@@ -1005,7 +1005,8 @@ class TestProcess(unittest.TestCase):
         else:
             assert terminal, repr(terminal)
 
-    @unittest.skipIf(OSX or SUNOS, 'not available on this platform')
+    @unittest.skipIf(not hasattr(psutil.Process, 'get_io_counters'),
+                     'not available on this platform')
     @skip_on_not_implemented(only_if=LINUX)
     def test_get_io_counters(self):
         p = psutil.Process(os.getpid())

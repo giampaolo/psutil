@@ -107,7 +107,7 @@ def get_system_users():
     localhost = (':0.0', ':0')
     for item in rawlist:
         user, tty, hostname, tstamp, user_process = item
-        # XXX the underlying C function includes entries about
+        # note: the underlying C function includes entries about
         # system boot, run level and others.  We might want
         # to use them in the future.
         if not user_process:
@@ -197,7 +197,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_name(self):
-        # XXX document max len == 15?
+        # note: max len == 15
         return _psutil_sunos.get_process_name_and_args(self.pid)[0]
 
     @wrap_exceptions
@@ -310,7 +310,6 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_threads(self):
-        # TODO: this always raises AD except for root user
         ret = []
         tids = os.listdir('/proc/%d/lwp' % self.pid)
         hit_enoent = False
@@ -333,7 +332,6 @@ class Process(object):
             os.stat('/proc/%s' % self.pid)
         return ret
 
-    # TODO this needs to be shared with the Linux implementation
     @wrap_exceptions
     def get_open_files(self):
         retlist = []

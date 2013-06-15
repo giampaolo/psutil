@@ -510,13 +510,13 @@ get_disk_io_counters(PyObject* self, PyObject* args)
                     return PyErr_SetFromErrno(PyExc_OSError);;
                 }
                 py_disk_info = Py_BuildValue("(IIKKLL)",
-                                             kio.reads,
-                                             kio.writes,
-                                             kio.nread,
-                                             kio.nwritten,
-                                             kio.rtime,  // XXX are these ms?
-                                             kio.wtime   // XXX are these ms?
-                                             );
+                     kio.reads,
+                     kio.writes,
+                     kio.nread,
+                     kio.nwritten,
+                     kio.rtime / 1000 / 1000,  // from nano to milli secs
+                     kio.wtime / 1000 / 1000   // from nano to milli secs
+                );
 
                 if (!py_disk_info)
                     goto error;
@@ -1069,7 +1069,6 @@ static PyMethodDef
 PsutilMethods[] =
 {
      // --- process-related functions
-
      {"get_process_basic_info", get_process_basic_info, METH_VARARGS,
         "Return process ppid, rss, vms, ctime, nice, nthreads, status and tty"},
      {"get_process_name_and_args", get_process_name_and_args, METH_VARARGS,
@@ -1087,9 +1086,7 @@ PsutilMethods[] =
      {"get_process_connections", get_process_connections, METH_VARARGS,
         "Return TCP and UDP connections opened by process."},
 
-
      // --- system-related functions
-
      {"get_swap_mem", get_swap_mem, METH_VARARGS,
         "Return information about system swap memory."},
      {"get_system_users", get_system_users, METH_VARARGS,
