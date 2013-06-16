@@ -662,6 +662,7 @@ get_process_memory_maps(PyObject* self, PyObject* args)
         p += 1;
     }
 
+    free(xmap);
     return py_retlist;
 
 error:
