@@ -293,6 +293,9 @@ class TestModuleFunctionsLeaks(Base):
     def test_virtual_memory(self):
         self.execute('virtual_memory')
 
+    # TODO: remove this skip when this gets fixed
+    @unittest.skipIf(SUNOS,
+                     "not worth being tested on SUNOS (uses a subprocess)")
     def test_swap_memory(self):
         self.execute('swap_memory')
 

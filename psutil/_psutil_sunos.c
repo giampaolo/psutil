@@ -547,7 +547,7 @@ static PyObject*
 get_process_memory_maps(PyObject* self, PyObject* args)
 {
     int pid;
-    int fd;
+    int fd = -1;
     char path[100];
     char perms[10];
     char *name;
@@ -662,10 +662,13 @@ get_process_memory_maps(PyObject* self, PyObject* args)
         p += 1;
     }
 
+    close(fd);
     free(xmap);
     return py_retlist;
 
 error:
+    if (fd != -1)
+        close(fd);
     Py_XDECREF(pytuple);
     Py_DECREF(py_retlist);
     if (xmap != NULL)
