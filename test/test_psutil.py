@@ -15,7 +15,6 @@ from: https://pypi.python.org/pypi/unittest2
 """
 
 from __future__ import division
-import unittest
 import os
 import sys
 import subprocess
@@ -32,6 +31,10 @@ import tempfile
 import stat
 import collections
 import datetime
+try:
+    import unittest2 as unittest  # pyhon < 2.7 + unittest2 installed
+except ImportError:
+    import unittest
 try:
     import ast  # python >= 2.6
 except ImportError:
