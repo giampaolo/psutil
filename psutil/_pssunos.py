@@ -222,13 +222,21 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_nice(self):
-        if self.pid in (2, 3):
-            # Special case PIDs: internally getpriority(3) return ESRCH
-            # (no such process), no matter what (even as root).
-            # The process actually exists though, as it has a name,
-            # creation time, etc.
-            raise AccessDenied(self.pid, self._process_name)
-        return _psutil_posix.getpriority(self.pid)
+        # For some reason getpriority(3) return ESRCH (no such process)
+        # for certain low-pid processes, no matter what (even as root).
+        # The process actually exists though, as it has a name,
+        # creation time, etc.
+        # The best thing we can do here appears to be raising AD.
+        # Note: tested on Solaris 11; on Open Solaris 5 everything is
+        # fine.
+        try:
+            return _psutil_posix.getpriority(self.pid)
+        except EnvironmentError:
+            err = sys.exc_info()[1]
+            if err.errno in (errno.ENOENT, errno.ESRCH):
+                if pid_exists(self.pid):
+                    raise AccessDenied(self.pid, self._process_name)
+            raise
 
     @wrap_exceptions
     def set_process_nice(self, value):
