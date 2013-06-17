@@ -207,14 +207,14 @@ class PosixSpecificTestCase(unittest.TestCase):
                 continue
             else:
                 try:
-                    call(p, name)
                     num1 = p.get_num_fds()
-                    call(p, name)
+                    for x in range(2):
+                        call(p, name)
                     num2 = p.get_num_fds()
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                except psutil.AccessDenied:
                     pass
                 else:
-                    if num2 > num1:
+                    if abs(num2 - num1) > 1:
                         fail = "failure while processing Process.%s method " \
                                "(before=%s, after=%s)" % (name, num1, num2)
                         failures.append(fail)

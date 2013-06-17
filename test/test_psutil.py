@@ -1835,7 +1835,8 @@ class TestProcess(unittest.TestCase):
 
     def test__all__(self):
         for name in dir(psutil):
-            if name in ('callable', 'defaultdict', 'error', 'namedtuple'):
+            if name in ('callable', 'defaultdict', 'error', 'namedtuple',
+                        'test'):
                 continue
             if not name.startswith('_'):
                 try:
