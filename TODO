@@ -1,0 +1,92 @@
+TODO
+====
+
+A collection of ideas and notes about stuff to implement in future versions.
+"#NNN" occurrences refer to bug tracker issues at:
+https://code.google.com/p/psutil/issues/list
+
+
+HIGHER PRIORITY
+===============
+
+ * #387: system-wide connections (netstat).
+
+ * OpenBSD support.
+
+ * #371: CPU temperature (apparently OSX and Linux only).
+
+ * #250: net ifaces speed.
+
+ * (Linux) resource limit get/set - see man prlimit.
+
+ * Process.name on Windows is slow:
+   http://stackoverflow.com/questions/6587036/
+
+ * Windows binary for Python 3.3 64-bit.
+
+ * #269: expose network ifaces RX/TW queues.
+
+
+LOWER PRIORITY
+==============
+
+ * #355: Android support.
+
+ * #276: GNU/Hurd support.
+
+ * NetBSD support?
+
+ * DranflyBSD support?
+
+ * AIX support?
+
+ * examples/pidof.py (same as 'pidof' cli tool)
+
+ * examples/pstree.py (same as 'pstree' cli tool)
+    * get_threads() should also return thread names in order to implement it
+
+ * examples/taskmgr-gui.py (using tk).
+
+ * system-wide # open file descriptors:
+    * https://jira.hyperic.com/browse/SIGAR-30
+    * http://www.netadmintools.com/part295.html
+
+ * Number of system threads.
+    * Windows: http://msdn.microsoft.com/en-us/library/windows/desktop/ms684824(v=vs.85).aspx
+
+ * #357: what CPU a process is on.
+
+
+DEBATABLE
+=========
+
+ * #322: cpu_percent() always returns 0.0 on first call; shall we introduce a
+   default=0.0 parameter?
+
+ * cpu_percent(): current default interval is 0.1 so that by default it will
+   produce a meaningful value. It represents a trap in case the user iterates
+   over multiple processes though, as it introduces a big slowdown.
+   Should it default to 0.0?
+
+ * Rename psutil.network_*() to psutil.net_*().
+
+ * Rename connection ntuple's fields 'local_address', 'remote_address' to
+   'laddr', 'raddr'  (note in accordance with http://bugs.python.org/issue17675)
+
+ * Process per-cpus percent (XXX Windows only?), see:
+   https://groups.google.com/forum/?fromgroups#!topic/psutil/ErrKTxAbu50
+
+ * Should we expose OS constants (psutil.WINDOWS, psutil.OSX etc.)?
+
+ * Python 3.3. exposed different sched.h functions:
+   http://docs.python.org/dev/whatsnew/3.3.html#os
+   http://bugs.python.org/issue12655
+   http://docs.python.org/dev/library/os.html#interface-to-the-scheduler
+   It might be worth to take a look and figure out whether we can include some
+   of those in psutil.
+   Also, we probably can probably reimplement wait_pid() on POSIX which is
+   currently implemented as a busy-loop.
+
+ * Certain systems (XXX figure out which ones exactly) provide CPU times about
+   process children. On those systems Process.get_cpu_times() might return
+   a (user, system, user_children, system_children) ntuple.
