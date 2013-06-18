@@ -343,8 +343,6 @@ get_process_memory_maps(PyObject* self, PyObject* args)
                     (info.max_protection & VM_PROT_WRITE) ? 'w' : '-',
                     (info.max_protection & VM_PROT_EXECUTE) ? 'x' : '-');
 
-            address += size;
-
             err = proc_regionfilename(pid, address, buf, sizeof(buf));
 
             if (info.share_mode == SM_COW && info.ref_count == 1) {
@@ -400,6 +398,9 @@ get_process_memory_maps(PyObject* self, PyObject* args)
                 goto error;
             Py_DECREF(py_tuple);
         }
+
+        //increment address for the next map/file
+        address += size;
     }
 
     if (task != MACH_PORT_NULL)
