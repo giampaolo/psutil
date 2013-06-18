@@ -122,32 +122,32 @@ class BSDSpecificTestCase(unittest.TestCase):
     @retry_before_failing()
     def test_vmem_active(self):
         syst = sysctl("vm.stats.vm.v_active_count") * PAGESIZE
-        self.assert_eq_w_tol(psutil.virtual_memory().active, syst, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().active, syst, TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_inactive(self):
         syst = sysctl("vm.stats.vm.v_inactive_count") * PAGESIZE
-        self.assert_eq_w_tol(psutil.virtual_memory().inactive, syst, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().inactive, syst, TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_wired(self):
         syst = sysctl("vm.stats.vm.v_wire_count") * PAGESIZE
-        self.assert_eq_w_tol(psutil.virtual_memory().wired, syst, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().wired, syst, TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_cached(self):
         syst = sysctl("vm.stats.vm.v_cache_count") * PAGESIZE
-        self.assert_eq_w_tol(psutil.virtual_memory().cached, syst, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().cached, syst, TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_free(self):
         syst = sysctl("vm.stats.vm.v_free_count") * PAGESIZE
-        self.assert_eq_w_tol(psutil.virtual_memory().free, syst, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().free, syst, TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_buffers(self):
         syst = sysctl("vfs.bufspace")
-        self.assert_eq_w_tol(psutil.virtual_memory().buffers, syst, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().buffers, syst, TOLERANCE)
 
     # --- virtual_memory(); tests against muse
 
@@ -160,37 +160,37 @@ class BSDSpecificTestCase(unittest.TestCase):
     @retry_before_failing()
     def test_active(self):
         num = muse('Active')
-        self.assert_eq_w_tol(psutil.virtual_memory().active, num, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().active, num, TOLERANCE)
 
     @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
     def test_inactive(self):
         num = muse('Inactive')
-        self.assert_eq_w_tol(psutil.virtual_memory().inactive, num, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().inactive, num, TOLERANCE)
 
     @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
     def test_wired(self):
         num = muse('Wired')
-        self.assert_eq_w_tol(psutil.virtual_memory().wired, num, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().wired, num, TOLERANCE)
 
     @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
     def test_cached(self):
         num = muse('Cache')
-        self.assert_eq_w_tol(psutil.virtual_memory().cached, num, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().cached, num, TOLERANCE)
 
     @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
     def test_free(self):
         num = muse('Free')
-        self.assert_eq_w_tol(psutil.virtual_memory().free, num, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().free, num, TOLERANCE)
 
     @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
     def test_buffers(self):
         num = muse('Buffer')
-        self.assert_eq_w_tol(psutil.virtual_memory().buffers, num, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().buffers, num, TOLERANCE)
 
 
 def test_main():
