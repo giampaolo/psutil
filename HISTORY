@@ -16,6 +16,7 @@ NEW FEATURES
 BUG FIXES
 
  * #379: [Linux] Process.get_memory_maps() may raise ValueError.
+ * #394: [OS X] Mapped memory regions report incorrect file name.
 
 API CHANGES
 
