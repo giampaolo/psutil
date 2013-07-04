@@ -7,7 +7,7 @@ NEW FEATURES
 
  * #18:  Solaris support (yay!)  (thanks Justin Venus)
  * #224: Process.get_threads() now displays real thread IDs.  (patch by Adrien
-   Fallou)
+         Fallou)
  * #367: Process.get_connections() 'status' strings are now constants.
  * #380: test suite exits with non-zero on failure.  (patch by floppymaster)
  * #391: extensively use unittest2 module in unit tests and provide
@@ -16,7 +16,8 @@ NEW FEATURES
 BUG FIXES
 
  * #379: [Linux] Process.get_memory_maps() may raise ValueError.
- * #394: [OS X] Mapped memory regions report incorrect file name.
+ * #394: [OSX] Mapped memory regions report incorrect file name.
+ * #404: [Linux] sched_*affinity() are implicitly declared.  (patch by Arfrever)
 
 API CHANGES
 
