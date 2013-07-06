@@ -6,12 +6,12 @@
  * Linux-specific functions.
  */
 
+#define _GNU_SOURCE
 #include <Python.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <mntent.h>
 #include <utmp.h>
-#define _GNU_SOURCE
 #include <sched.h>
 #include <sys/syscall.h>
 #include <sys/sysinfo.h>
