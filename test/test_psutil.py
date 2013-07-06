@@ -1221,8 +1221,10 @@ class TestProcess(unittest.TestCase):
                 self.assertEqual(exe.replace(ver, ''), PYTHON.replace(ver, ''))
 
     def test_cmdline(self):
-        sproc = get_test_subprocess([PYTHON, "-E"], wait=True)
-        self.assertEqual(psutil.Process(sproc.pid).cmdline, [PYTHON, "-E"])
+        cmdline = [PYTHON, "-c", "import time; time.sleep(10)"]
+        sproc = get_test_subprocess(cmdline, wait=True)
+        self.assertEqual(' '.join(psutil.Process(sproc.pid).cmdline),
+                         ' '.join(cmdline))
 
     def test_name(self):
         sproc = get_test_subprocess(PYTHON, wait=True)
@@ -1981,7 +1983,7 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def create_time(self, ret):
         self.assertTrue(ret > 0)
-        if not WINDOWS:
+        if not WINDOWS and not SUNOS:
             self.assertGreaterEqual(ret, psutil.BOOT_TIME)
         # make sure returned value can be pretty printed
         # with strftime

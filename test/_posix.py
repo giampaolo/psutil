@@ -164,6 +164,9 @@ class PosixSpecificTestCase(unittest.TestCase):
                          [x for x in pids_ps if x not in pids_psutil]
             self.fail("difference: " + str(difference))
 
+    # for some reason ifconfig -a does not report differente interfaces
+    # psutil does
+    @unittest.skipIf(SUNOS, "test not reliable on SUNOS")
     def test_nic_names(self):
         p = subprocess.Popen("ifconfig -a", shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
