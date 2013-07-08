@@ -1467,7 +1467,7 @@ error:
  * Return a Python list of named tuples with overall network I/O information
  */
 static PyObject*
-get_network_io_counters(PyObject* self, PyObject* args)
+get_net_io_counters(PyObject* self, PyObject* args)
 {
     char *buf = NULL, *lim, *next;
     struct if_msghdr *ifm;
@@ -1776,7 +1776,7 @@ PsutilMethods[] =
      {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
          "Return a list of tuples including device, mount point and "
          "fs type for all partitions mounted on the system."},
-     {"get_network_io_counters", get_network_io_counters, METH_VARARGS,
+     {"get_net_io_counters", get_net_io_counters, METH_VARARGS,
          "Return dict of tuples of networks I/O information."},
      {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
          "Return a Python dict of tuples for disk I/O information"},

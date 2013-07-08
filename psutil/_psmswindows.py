@@ -175,7 +175,7 @@ def get_system_users():
 
 get_pid_list = _psutil_mswindows.get_pid_list
 pid_exists = _psutil_mswindows.pid_exists
-network_io_counters = _psutil_mswindows.get_network_io_counters
+net_io_counters = _psutil_mswindows.get_net_io_counters
 disk_io_counters = _psutil_mswindows.get_disk_io_counters
 
 # --- decorator

@@ -334,7 +334,7 @@ def pid_exists(pid):
     """Check For the existence of a unix pid."""
     return _psposix.pid_exists(pid)
 
-def network_io_counters():
+def net_io_counters():
     """Return network I/O statistics for every network interface
     installed on the system as a dict of raw tuples.
     """

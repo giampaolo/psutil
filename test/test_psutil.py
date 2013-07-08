@@ -493,7 +493,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertRaises(DeprecationWarning, psutil.avail_virtmem)
             self.assertRaises(DeprecationWarning, psutil.phymem_usage)
             self.assertRaises(DeprecationWarning, psutil.get_process_list)
-            self.assertRaises(DeprecationWarning, psutil.get_process_list)
+            self.assertRaises(DeprecationWarning, psutil.network_io_counters)
             if LINUX:
                 self.assertRaises(DeprecationWarning, psutil.phymem_buffers)
                 self.assertRaises(DeprecationWarning, psutil.cached_phymem)
@@ -738,7 +738,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
 
-    def test_network_io_counters(self):
+    def test_net_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.bytes_sent)
             self.assertEqual(nt[1], nt.bytes_recv)
@@ -757,9 +757,9 @@ class TestSystemAPIs(unittest.TestCase):
             assert nt.dropin >= 0, nt
             assert nt.dropout >= 0, nt
 
-        ret = psutil.network_io_counters(pernic=False)
+        ret = psutil.net_io_counters(pernic=False)
         check_ntuple(ret)
-        ret = psutil.network_io_counters(pernic=True)
+        ret = psutil.net_io_counters(pernic=True)
         assert ret != []
         for key in ret:
             assert key

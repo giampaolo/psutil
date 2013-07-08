@@ -33,7 +33,7 @@ __all__ = [
     "pid_exists", "get_pid_list", "process_iter",                   # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent",                # cpu
-    "network_io_counters",                                          # network
+    "net_io_counters",                                              # network
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
     "get_users", "get_boot_time",                                   # others
     ]
@@ -1238,7 +1238,7 @@ def disk_io_counters(perdisk=False):
 # --- network related functions
 # =====================================================================
 
-def network_io_counters(pernic=False):
+def net_io_counters(pernic=False):
     """Return network I/O statistics as a namedtuple including
     the following attributes:
 
@@ -1257,7 +1257,7 @@ def network_io_counters(pernic=False):
     with network interface names as the keys and the namedtuple
     described above as the values.
     """
-    rawdict = _psplatform.network_io_counters()
+    rawdict = _psplatform.net_io_counters()
     if not rawdict:
         raise RuntimeError("couldn't find any network interface")
     if pernic:
@@ -1332,6 +1332,10 @@ def used_virtmem():
 @_deprecated("psutil.virtmem_usage().free")
 def avail_virtmem():
     return virtmem_usage().free
+
+@_deprecated("psutil.net_io_counters()")
+def network_io_counters(pernic=False):
+    return net_io_counters()
 
 def test():
     """List info of all currently running processes emulating ps aux

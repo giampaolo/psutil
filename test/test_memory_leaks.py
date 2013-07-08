@@ -312,8 +312,8 @@ class TestModuleFunctionsLeaks(Base):
     def test_disk_partitions(self):
         self.execute('disk_partitions')
 
-    def test_network_io_counters(self):
-        self.execute('network_io_counters')
+    def test_net_io_counters(self):
+        self.execute('net_io_counters')
 
     def test_disk_io_counters(self):
         self.execute('disk_io_counters')

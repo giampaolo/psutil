@@ -2186,7 +2186,7 @@ get_disk_usage(PyObject* self, PyObject* args)
  * Return a Python list of named tuples with overall network I/O information
  */
 static PyObject*
-get_network_io_counters(PyObject* self, PyObject* args)
+get_net_io_counters(PyObject* self, PyObject* args)
 {
     int attempts = 0;
     int outBufLen = 15000;
@@ -2942,7 +2942,7 @@ PsutilMethods[] =
         "Return system per-cpu times as a list of tuples"},
     {"get_disk_usage", get_disk_usage, METH_VARARGS,
         "Return path's disk total and free as a Python tuple."},
-    {"get_network_io_counters", get_network_io_counters, METH_VARARGS,
+    {"get_net_io_counters", get_net_io_counters, METH_VARARGS,
         "Return dict of tuples of networks I/O information."},
     {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
          "Return dict of tuples of disks I/O information."},

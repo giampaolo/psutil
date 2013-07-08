@@ -34,7 +34,7 @@ _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle iowait')
 
 disk_io_counters = _psutil_sunos.get_disk_io_counters
-network_io_counters = _psutil_sunos.get_network_io_counters
+net_io_counters = _psutil_sunos.get_net_io_counters
 get_disk_usage = _psposix.get_disk_usage
 get_system_boot_time = lambda: _psutil_sunos.get_process_basic_info(0)[3]
 

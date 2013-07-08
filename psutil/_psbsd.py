@@ -138,7 +138,7 @@ def get_system_users():
 get_pid_list = _psutil_bsd.get_pid_list
 pid_exists = _psposix.pid_exists
 get_disk_usage = _psposix.get_disk_usage
-network_io_counters = _psutil_bsd.get_network_io_counters
+net_io_counters = _psutil_bsd.get_net_io_counters
 disk_io_counters = _psutil_bsd.get_disk_io_counters
 
 

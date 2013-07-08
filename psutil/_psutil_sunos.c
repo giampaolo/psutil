@@ -681,7 +681,7 @@ error:
  * Return a list of tuples for network I/O statistics.
  */
 static PyObject*
-get_network_io_counters(PyObject* self, PyObject* args)
+get_net_io_counters(PyObject* self, PyObject* args)
 {
     kstat_ctl_t    *kc = NULL;
     kstat_t *ksp;
@@ -1100,7 +1100,7 @@ PsutilMethods[] =
         "Return system per-CPU times."},
      {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
         "Return a Python dict of tuples for disk I/O statistics."},
-     {"get_network_io_counters", get_network_io_counters, METH_VARARGS,
+     {"get_net_io_counters", get_net_io_counters, METH_VARARGS,
         "Return a Python dict of tuples for network I/O statistics."},
 
      {NULL, NULL, 0, NULL}

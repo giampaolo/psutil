@@ -72,12 +72,12 @@ def bytes2human(n):
 
 def poll(interval):
     """Retrieve raw stats within an interval window."""
-    tot_before = psutil.network_io_counters()
-    pnic_before = psutil.network_io_counters(pernic=True)
+    tot_before = psutil.net_io_counters()
+    pnic_before = psutil.net_io_counters(pernic=True)
     # sleep some time
     time.sleep(interval)
-    tot_after = psutil.network_io_counters()
-    pnic_after = psutil.network_io_counters(pernic=True)
+    tot_after = psutil.net_io_counters()
+    pnic_after = psutil.net_io_counters(pernic=True)
     return (tot_before, tot_after, pnic_before, pnic_after)
 
 

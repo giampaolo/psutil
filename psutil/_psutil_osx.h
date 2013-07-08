@@ -37,6 +37,6 @@ static PyObject* get_system_cpu_times(PyObject* self, PyObject* args);
 static PyObject* get_system_per_cpu_times(PyObject* self, PyObject* args);
 static PyObject* get_system_boot_time(PyObject* self, PyObject* args);
 static PyObject* get_disk_partitions(PyObject* self, PyObject* args);
-static PyObject* get_network_io_counters(PyObject* self, PyObject* args);
+static PyObject* get_net_io_counters(PyObject* self, PyObject* args);
 static PyObject* get_disk_io_counters(PyObject* self, PyObject* args);
 static PyObject* get_system_users(PyObject* self, PyObject* args);

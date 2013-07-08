@@ -172,7 +172,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         output = p.communicate()[0].strip()
         if PY3:
             output = str(output, sys.stdout.encoding)
-        for nic in psutil.network_io_counters(pernic=True).keys():
+        for nic in psutil.net_io_counters(pernic=True).keys():
             for line in output.split():
                 if line.startswith(nic):
                     break

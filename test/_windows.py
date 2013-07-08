@@ -76,7 +76,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
         out = p.communicate()[0]
         if PY3:
             out = str(out, sys.stdout.encoding)
-        nics = psutil.network_io_counters(pernic=True).keys()
+        nics = psutil.net_io_counters(pernic=True).keys()
         for nic in nics:
             if "pseudo-interface" in nic.replace(' ', '-').lower():
                 continue
