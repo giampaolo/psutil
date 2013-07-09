@@ -610,10 +610,25 @@ get_process_memory_info(PyObject* self, PyObject* args)
 
     CloseHandle(hProcess);
 
-// py 2.4
-#if (PY_MAJOR_VERSION == 2) && (PY_MINOR_VERSION <= 4)
+// PROCESS_MEMORY_COUNTERS values are defined as SIZE_T which on 64bits
+// is an (unsigned long long) and on 32bits is an (unsigned int).
+// "_WIN64" is defined if we're running a 64bit Python interpreter not
+// exclusively if the *system* is 64bit.
+#if defined(_WIN64)
+    return Py_BuildValue("(kKKKKKKKKK)",
+                            cnt.PageFaultCount,  // unsigned long
+        (unsigned long long)cnt.PeakWorkingSetSize,
+        (unsigned long long)cnt.WorkingSetSize,
+        (unsigned long long)cnt.QuotaPeakPagedPoolUsage,
+        (unsigned long long)cnt.QuotaPagedPoolUsage,
+        (unsigned long long)cnt.QuotaPeakNonPagedPoolUsage,
+        (unsigned long long)cnt.QuotaNonPagedPoolUsage,
+        (unsigned long long)cnt.PagefileUsage,
+        (unsigned long long)cnt.PeakPagefileUsage,
+        (unsigned long long)private);
+#else
     return Py_BuildValue("(kIIIIIIIII)",
-        cnt.PageFaultCount,
+                      cnt.PageFaultCount,    // unsigned long
         (unsigned int)cnt.PeakWorkingSetSize,
         (unsigned int)cnt.WorkingSetSize,
         (unsigned int)cnt.QuotaPeakPagedPoolUsage,
@@ -623,19 +638,6 @@ get_process_memory_info(PyObject* self, PyObject* args)
         (unsigned int)cnt.PagefileUsage,
         (unsigned int)cnt.PeakPagefileUsage,
         (unsigned int)private);
-#else
-// py >= 2.5
-    return Py_BuildValue("(knnnnnnnnn)",
-        cnt.PageFaultCount,
-        cnt.PeakWorkingSetSize,
-        cnt.WorkingSetSize,
-        cnt.QuotaPeakPagedPoolUsage,
-        cnt.QuotaPagedPoolUsage,
-        cnt.QuotaPeakNonPagedPoolUsage,
-        cnt.QuotaNonPagedPoolUsage,
-        cnt.PagefileUsage,
-        cnt.PeakPagefileUsage,
-        private);
 #endif
 }
 
@@ -649,8 +651,7 @@ get_process_memory_info_2(PyObject* self, PyObject* args)
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
     PVOID buffer;
-    ULONG m0;
-    SIZE_T m1, m2, m3, m4, m5, m6, m7, m8, m9;
+    SIZE_T private;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
@@ -658,31 +659,41 @@ get_process_memory_info_2(PyObject* self, PyObject* args)
     if (! get_process_info(pid, &process, &buffer)) {
         return NULL;
     }
-    m0 = process->PageFaultCount;
-    m1 = process->PeakWorkingSetSize;
-    m2 = process->WorkingSetSize;
-    m3 = process->QuotaPeakPagedPoolUsage;
-    m4 = process->QuotaPagedPoolUsage;
-    m5 = process->QuotaPeakNonPagedPoolUsage;
-    m6 = process->QuotaNonPagedPoolUsage;
-    m7 = process->PagefileUsage;
-    m8 = process->PeakPagefileUsage;
-#if (_WIN32_WINNT >= 0x0501)
-    m9 = process->PrivatePageCount;  // private me
-#else
-    m9 = 0;
-#endif
-    free(buffer);
 
-// py 2.4
-#if (PY_MAJOR_VERSION == 2) && (PY_MINOR_VERSION <= 4)
-    return Py_BuildValue("(kIIIIIIIII)",
-        (unsigned int)m0, (unsigned int)m1, (unsigned int)m2, (unsigned int)m3,
-        (unsigned int)m4, (unsigned int)m5, (unsigned int)m6, (unsigned int)m7,
-        (unsigned int)m8, (unsigned int)m9);
+#if (_WIN32_WINNT >= 0x0501)
+    private = process->PrivatePageCount;
 #else
-    return Py_BuildValue("(knnnnnnnnn)",
-        m0, m1, m2, m3, m4, m5, m6, m7, m8, m9);
+    private = 0;
+#endif
+
+// SYSTEM_PROCESS_INFORMATIONvalues are defined as SIZE_T which on 64
+// bits is an (unsigned long long) and on 32bits is an (unsigned int).
+// "_WIN64" is defined if we're running a 64bit Python interpreter not
+// exclusively if the *system* is 64bit.
+#if defined(_WIN64)
+    return Py_BuildValue("(kKKKKKKKKK)",
+                            process->PageFaultCount,  // unsigned long
+        (unsigned long long)process->PeakWorkingSetSize,
+        (unsigned long long)process->WorkingSetSize,
+        (unsigned long long)process->QuotaPeakPagedPoolUsage,
+        (unsigned long long)process->QuotaPagedPoolUsage,
+        (unsigned long long)process->QuotaPeakNonPagedPoolUsage,
+        (unsigned long long)process->QuotaNonPagedPoolUsage,
+        (unsigned long long)process->PagefileUsage,
+        (unsigned long long)process->PeakPagefileUsage,
+        (unsigned long long)private);
+#else
+    return Py_BuildValue("(kIIIIIIIII)",
+                      process->PageFaultCount,    // unsigned long
+        (unsigned int)process->PeakWorkingSetSize,
+        (unsigned int)process->WorkingSetSize,
+        (unsigned int)process->QuotaPeakPagedPoolUsage,
+        (unsigned int)process->QuotaPagedPoolUsage,
+        (unsigned int)process->QuotaPeakNonPagedPoolUsage,
+        (unsigned int)process->QuotaNonPagedPoolUsage,
+        (unsigned int)process->PagefileUsage,
+        (unsigned int)process->PeakPagefileUsage,
+        (unsigned int)private);
 #endif
 }
 

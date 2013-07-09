@@ -15,6 +15,8 @@ NEW FEATURES
 
 BUG FIXES
 
+ * #374: [Windows] negative memory usage reported when processes use a lot of
+         memory.
  * #379: [Linux] Process.get_memory_maps() may raise ValueError.
  * #394: [OSX] Mapped memory regions report incorrect file name.
  * #404: [Linux] sched_*affinity() are implicitly declared.  (patch by Arfrever)
