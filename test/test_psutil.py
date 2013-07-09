@@ -84,7 +84,7 @@ def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=DEVNULL,
         pyline = ""
         if wait:
             pyline += "open(r'%s', 'w'); " % TESTFN
-        pyline += "import time; time.sleep(3600);"
+        pyline += "import time; time.sleep(2);"
         cmd_ = [PYTHON, "-c", pyline]
     else:
         cmd_ = cmd
@@ -902,7 +902,7 @@ class TestProcess(unittest.TestCase):
         # test wait() against processes which are not our children
         code = "import sys;"
         code += "from subprocess import Popen, PIPE;"
-        code += "cmd = ['%s', '-c', 'import time; time.sleep(10)'];" %PYTHON
+        code += "cmd = ['%s', '-c', 'import time; time.sleep(2)'];" %PYTHON
         code += "sp = Popen(cmd, stdout=PIPE);"
         code += "sys.stdout.write(str(sp.pid));"
         sproc = get_test_subprocess([PYTHON, "-c", code], stdout=subprocess.PIPE)
@@ -1221,7 +1221,7 @@ class TestProcess(unittest.TestCase):
                 self.assertEqual(exe.replace(ver, ''), PYTHON.replace(ver, ''))
 
     def test_cmdline(self):
-        cmdline = [PYTHON, "-c", "import time; time.sleep(10)"]
+        cmdline = [PYTHON, "-c", "import time; time.sleep(2)"]
         sproc = get_test_subprocess(cmdline, wait=True)
         self.assertEqual(' '.join(psutil.Process(sproc.pid).cmdline),
                          ' '.join(cmdline))
@@ -1331,7 +1331,7 @@ class TestProcess(unittest.TestCase):
     @unittest.skipIf(not hasattr(psutil.Process, "getcwd"),
                      'not available on this platform')
     def test_getcwd_2(self):
-        cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(10)"]
+        cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(2)"]
         sproc = get_test_subprocess(cmd, wait=True)
         p = psutil.Process(sproc.pid)
         call_until(p.getcwd, "ret == os.path.dirname(os.getcwd())", timeout=1)
@@ -1368,7 +1368,7 @@ class TestProcess(unittest.TestCase):
             assert os.path.isfile(file), file
 
         # another process
-        cmdline = "import time; f = open(r'%s', 'r'); time.sleep(100);" % TESTFN
+        cmdline = "import time; f = open(r'%s', 'r'); time.sleep(2);" % TESTFN
         sproc = get_test_subprocess([PYTHON, "-c", cmdline], wait=True)
         p = psutil.Process(sproc.pid)
         for x in range(100):
@@ -1427,7 +1427,7 @@ class TestProcess(unittest.TestCase):
               "s.bind(('127.0.0.1', 0));" \
               "s.listen(1);" \
               "conn, addr = s.accept();" \
-              "time.sleep(100);"
+              "time.sleep(2);"
         sproc = get_test_subprocess([PYTHON, "-c", arg])
         p = psutil.Process(sproc.pid)
         for x in range(100):
@@ -1525,7 +1525,7 @@ class TestProcess(unittest.TestCase):
         udp_template = "import socket, time;" \
                        "s = socket.socket($family, socket.SOCK_DGRAM);" \
                        "s.bind(('$addr', 0));" \
-                       "time.sleep(100);"
+                       "time.sleep(2);"
 
         from string import Template
         tcp4_template = Template(tcp_template).substitute(family=socket.AF_INET,
@@ -1661,9 +1661,9 @@ class TestProcess(unittest.TestCase):
         # A (parent) -> B (child) -> C (grandchild)
         s =  "import subprocess, os, sys, time;"
         s += "PYTHON = os.path.realpath(sys.executable);"
-        s += "cmd = [PYTHON, '-c', 'import time; time.sleep(3600);'];"
+        s += "cmd = [PYTHON, '-c', 'import time; time.sleep(2);'];"
         s += "subprocess.Popen(cmd);"
-        s += "time.sleep(3600);"
+        s += "time.sleep(2);"
         get_test_subprocess(cmd=[PYTHON, "-c", s])
         p = psutil.Process(os.getpid())
         self.assertEqual(len(p.get_children(recursive=False)), 1)
@@ -1738,7 +1738,7 @@ class TestProcess(unittest.TestCase):
         # process dies after we create the Process object.
         # Example:
         #  >>> proc = Process(1234)
-        #  >>> time.sleep(5)  # time-consuming task, process dies in meantime
+        #  >>> time.sleep(2)  # time-consuming task, process dies in meantime
         #  >>> proc.name
         # Refers to Issue #15
         sproc = get_test_subprocess()
@@ -1856,7 +1856,7 @@ class TestProcess(unittest.TestCase):
         # XXX this test causes a ResourceWarning on Python 3 because
         # psutil.__subproc instance doesn't get propertly freed.
         # Not sure what to do though.
-        cmd = [PYTHON, "-c", "import time; time.sleep(3600);"]
+        cmd = [PYTHON, "-c", "import time; time.sleep(2);"]
         proc = psutil.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:
             proc.name

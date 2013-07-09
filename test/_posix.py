@@ -199,7 +199,7 @@ class PosixSpecificTestCase(unittest.TestCase):
             else:
                 ret = attr
 
-        p = psutil.Process(self.pid)
+        p = psutil.Process(os.getpid())
         attrs = []
         failures = []
         for name in dir(psutil.Process):
