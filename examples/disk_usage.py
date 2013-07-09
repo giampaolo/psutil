@@ -9,6 +9,7 @@ List all mounted disk partitions a-la "df -h" command.
 """
 
 import sys
+import os
 import psutil
 from psutil._compat import print_
 
@@ -33,6 +34,9 @@ def main():
     templ = "%-17s %8s %8s %8s %5s%% %9s  %s"
     print_(templ % ("Device", "Total", "Used", "Free", "Use ", "Type", "Mount"))
     for part in psutil.disk_partitions(all=False):
+        if os.name == 'nt' and 'cdrom' in part.opts:
+            # may raise ENOENT if there's no cd-rom in the drive
+            continue
         usage = psutil.disk_usage(part.mountpoint)
         print_(templ % (part.device,
                         bytes2human(usage.total),
