@@ -317,6 +317,8 @@ class TestDualProcessImplementation(unittest.TestCase):
             meth1 = wrap_exceptions(getattr(_psutil_mswindows, name))
             meth2 = wrap_exceptions(getattr(_psutil_mswindows, name + '_2'))
             for p in psutil.process_iter():
+                if name == 'get_process_memory_info' and p.pid == os.getpid():
+                    continue
                 #
                 try:
                     ret1 = meth1(p.pid)
