@@ -16,9 +16,9 @@ a portable way by using Python, implementing many functionalities offered by
 command line tools such as:  **ps, top, df, kill, free, lsof, free, netstat,
 ifconfig, nice, ionice, iostat, iotop, uptime, pidof, tty, who, taskset, pmap**.
 
-It currently supports **Linux**, **Windows**, **OSX** and **FreeBSD** both
-**32-bit** and **64-bit** with Python versions from **2.4** to **3.3** by using
-a single code base.
+It currently supports **Linux**, **Windows**, **OSX**, **FreeBSD**,
+**Sun Solaris** both **32-bit** and **64-bit** with Python versions from **2.4**
+to **3.3** by using a single code base.
 
 ==============
 Example usages
