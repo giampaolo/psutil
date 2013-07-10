@@ -10,10 +10,10 @@ HIGHER PRIORITY
 ===============
 
  * #387: system-wide connections (netstat).
-
  * OpenBSD support.
 
- * #371: CPU temperature (apparently OSX and Linux only).
+ * #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
+   lm-sensors lib).
 
  * #250: net ifaces speed.
 
@@ -56,19 +56,22 @@ LOWER PRIORITY
 
  * #357: what CPU a process is on.
 
+ * thread names:
+    * https://code.google.com/p/plcrashreporter/issues/detail?id=65
+
 
 DEBATABLE
 =========
 
- * #322: cpu_percent() always returns 0.0 on first call; shall we introduce a
-   default=0.0 parameter?
+ * [Linux]: process cgroups (http://en.wikipedia.org/wiki/Cgroups). They look
+   similar to prlimit() in terms of functionality but uglier (they should allow
+   limiting per-process network IO resources though, which is great). Needs
+   further reading.
 
  * cpu_percent(): current default interval is 0.1 so that by default it will
    produce a meaningful value. It represents a trap in case the user iterates
    over multiple processes though, as it introduces a big slowdown.
    Should it default to 0.0?
-
- * Rename psutil.network_*() to psutil.net_*().
 
  * Rename connection ntuple's fields 'local_address', 'remote_address' to
    'laddr', 'raddr'  (note in accordance with http://bugs.python.org/issue17675)
@@ -84,8 +87,8 @@ DEBATABLE
    http://docs.python.org/dev/library/os.html#interface-to-the-scheduler
    It might be worth to take a look and figure out whether we can include some
    of those in psutil.
-   Also, we probably can probably reimplement wait_pid() on POSIX which is
-   currently implemented as a busy-loop.
+   Also, we can probably reimplement wait_pid() on POSIX which is currently
+   implemented as a busy-loop.
 
  * Certain systems (XXX figure out which ones exactly) provide CPU times about
    process children. On those systems Process.get_cpu_times() might return
