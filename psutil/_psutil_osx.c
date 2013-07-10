@@ -891,9 +891,8 @@ get_process_threads(PyObject* self, PyObject* args)
     mach_port_t task = MACH_PORT_NULL;
     struct task_basic_info tasks_info;
     thread_act_port_array_t thread_list = NULL;
-    thread_info_data_t thinfo_basic, thinfo_with_id;
+    thread_info_data_t thinfo_basic;
     thread_basic_info_t basic_info_th;
-    thread_identifier_info_t id_info_th;
     mach_msg_type_number_t thread_count, thread_info_count;
 
     PyObject* retList = PyList_New(0);
@@ -949,15 +948,9 @@ get_process_threads(PyObject* self, PyObject* args)
             goto error;
         }
 
-        kr = thread_info(thread_list[j], THREAD_IDENTIFIER_INFO,
-                        (thread_info_t)thinfo_with_id, &thread_info_count);
-        if (kr != KERN_SUCCESS){
-            PyErr_Format(PyExc_RuntimeError, "thread_info() with flag THREAD_IDENTIFIER_INFO failed");
-            goto error;
-        }
         basic_info_th = (thread_basic_info_t)thinfo_basic;
-        id_info_th = (thread_identifier_info_t)thinfo_with_id;
-        pyTuple = Py_BuildValue("Iff", id_info_th->thread_id,
+        pyTuple = Py_BuildValue("Iff",
+                    j+1,
                     (float)basic_info_th->user_time.microseconds / 1000000.0,
                     (float)basic_info_th->system_time.microseconds / 1000000.0
                   );
