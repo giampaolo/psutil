@@ -194,10 +194,25 @@ nt_user = namedtuple('user', 'name terminal host started')
 nt_meminfo = namedtuple('meminfo', 'rss vms')
 nt_cputimes = namedtuple('cputimes', 'user system')
 nt_openfile = namedtuple('openfile', 'path fd')
-nt_connection = namedtuple('connection', 'fd family type local_address remote_address status')
 nt_thread = namedtuple('thread', 'id user_time system_time')
 nt_uids = namedtuple('user', 'real effective saved')
 nt_gids = namedtuple('group', 'real effective saved')
 nt_io = namedtuple('io', 'read_count write_count read_bytes write_bytes')
 nt_ionice = namedtuple('ionice', 'ioclass value')
 nt_ctxsw = namedtuple('amount', 'voluntary involuntary')
+
+class nt_connection(namedtuple('connection',
+                               'fd family type laddr raddr status')):
+        __slots__ = ()
+
+        @property
+        def local_address(self):
+            warnings.warn("'local_address' field is deprecated; use 'laddr'" \
+                          "instead", category=DeprecationWarning, stacklevel=2)
+            return self.laddr
+
+        @property
+        def remote_address(self):
+            warnings.warn("'remote_address' field is deprecated; use 'raddr'" \
+                          "instead", category=DeprecationWarning, stacklevel=2)
+            return self.raddr

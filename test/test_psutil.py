@@ -482,6 +482,9 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(os.sysconf("SC_PAGE_SIZE"), resource.getpagesize())
 
     def test_deprecated_apis(self):
+        s = socket.socket()
+        s.bind(('localhost', 0))
+        s.listen(1)
         warnings.filterwarnings("error")
         p = psutil.Process(os.getpid())
         try:
@@ -503,7 +506,13 @@ class TestSystemAPIs(unittest.TestCase):
                 pass
             else:
                 self.fail("p.nice didn't raise DeprecationWarning")
+            ret = call_until(p.get_connections, "len(ret) != 0", timeout=1)
+            self.assertRaises(DeprecationWarning,
+                              getattr, ret[0], 'local_address')
+            self.assertRaises(DeprecationWarning,
+                              getattr, ret[0], 'remote_address')
         finally:
+            s.close()
             warnings.resetwarnings()
 
     def test_deprecated_apis_retval(self):
@@ -1442,9 +1451,9 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(con.family, socket.AF_INET)
         self.assertEqual(con.type, socket.SOCK_STREAM)
         self.assertEqual(con.status, psutil.CONN_LISTEN, str(con.status))
-        ip, port = con.local_address
+        ip, port = con.laddr
         self.assertEqual(ip, '127.0.0.1')
-        self.assertEqual(con.remote_address, ())
+        self.assertEqual(con.raddr, ())
         if WINDOWS or SUNOS:
             self.assertEqual(con.fd, -1)
         else:
@@ -1453,8 +1462,8 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(con[0], con.fd)
         self.assertEqual(con[1], con.family)
         self.assertEqual(con[2], con.type)
-        self.assertEqual(con[3], con.local_address)
-        self.assertEqual(con[4], con.remote_address)
+        self.assertEqual(con[3], con.laddr)
+        self.assertEqual(con[4], con.raddr)
         self.assertEqual(con[5], con.status)
         # test kind arg
         self.assertRaises(ValueError, p.get_connections, 'foo')
@@ -1467,7 +1476,7 @@ class TestProcess(unittest.TestCase):
         cons = psutil.Process(os.getpid()).get_connections()
         s.close()
         self.assertEqual(len(cons), 1)
-        self.assertEqual(cons[0].local_address[0], '::1')
+        self.assertEqual(cons[0].laddr[0], '::1')
 
     @unittest.skipUnless(hasattr(socket, 'AF_UNIX'), 'AF_UNIX is not supported')
     def test_get_connections_unix(self):
@@ -1480,8 +1489,8 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(conn.fd, sock.fileno())
         self.assertEqual(conn.family, socket.AF_UNIX)
         self.assertEqual(conn.type, socket.SOCK_STREAM)
-        self.assertEqual(conn.local_address, TESTFN)
-        self.assertTrue(not conn.remote_address)
+        self.assertEqual(conn.laddr, TESTFN)
+        self.assertTrue(not conn.raddr)
         self.assertEqual(conn.status, psutil.CONN_NONE, str(conn.status))
         sock.close()
         # udp
@@ -1509,7 +1518,7 @@ class TestProcess(unittest.TestCase):
             self.fail("couldn't find socket fd")
         dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
         try:
-            self.assertEqual(dupsock.getsockname(), conn.local_address)
+            self.assertEqual(dupsock.getsockname(), conn.laddr)
             self.assertNotEqual(sock.fileno(), dupsock.fileno())
         finally:
             sock.close()
@@ -1557,8 +1566,8 @@ class TestProcess(unittest.TestCase):
                 if p.pid == tcp4_proc.pid:
                     self.assertEqual(conn.family, socket.AF_INET)
                     self.assertEqual(conn.type, socket.SOCK_STREAM)
-                    self.assertEqual(conn.local_address[0], "127.0.0.1")
-                    self.assertEqual(conn.remote_address, ())
+                    self.assertEqual(conn.laddr[0], "127.0.0.1")
+                    self.assertEqual(conn.raddr, ())
                     self.assertEqual(conn.status, psutil.CONN_LISTEN,
                                     str(conn.status))
                     for kind in all_kinds:
@@ -1571,8 +1580,8 @@ class TestProcess(unittest.TestCase):
                 elif p.pid == udp4_proc.pid:
                     self.assertEqual(conn.family, socket.AF_INET)
                     self.assertEqual(conn.type, socket.SOCK_DGRAM)
-                    self.assertEqual(conn.local_address[0], "127.0.0.1")
-                    self.assertEqual(conn.remote_address, ())
+                    self.assertEqual(conn.laddr[0], "127.0.0.1")
+                    self.assertEqual(conn.raddr, ())
                     self.assertEqual(conn.status, psutil.CONN_NONE,
                                      str(conn.status))
                     for kind in all_kinds:
@@ -1585,8 +1594,8 @@ class TestProcess(unittest.TestCase):
                 elif p.pid == getattr(tcp6_proc, "pid", None):
                     self.assertEqual(conn.family, socket.AF_INET6)
                     self.assertEqual(conn.type, socket.SOCK_STREAM)
-                    self.assertIn(conn.local_address[0], ("::", "::1"))
-                    self.assertEqual(conn.remote_address, ())
+                    self.assertIn(conn.laddr[0], ("::", "::1"))
+                    self.assertEqual(conn.raddr, ())
                     self.assertEqual(conn.status, psutil.CONN_LISTEN,
                                      str(conn.status))
                     for kind in all_kinds:
@@ -1599,8 +1608,8 @@ class TestProcess(unittest.TestCase):
                 elif p.pid == getattr(udp6_proc, "pid", None):
                     self.assertEqual(conn.family, socket.AF_INET6)
                     self.assertEqual(conn.type, socket.SOCK_DGRAM)
-                    self.assertIn(conn.local_address[0], ("::", "::1"))
-                    self.assertEqual(conn.remote_address, ())
+                    self.assertIn(conn.laddr[0], ("::", "::1"))
+                    self.assertEqual(conn.raddr, ())
                     self.assertEqual(conn.status, psutil.CONN_NONE,
                                      str(conn.status))
                     for kind in all_kinds:
@@ -2080,8 +2089,8 @@ class TestFetchAllProcesses(unittest.TestCase):
         for conn in ret:
             self.assertIn(conn.type, (socket.SOCK_STREAM, socket.SOCK_DGRAM))
             self.assertIn(conn.family, (socket.AF_INET, socket.AF_INET6))
-            check_ip_address(conn.local_address, conn.family)
-            check_ip_address(conn.remote_address, conn.family)
+            check_ip_address(conn.laddr, conn.family)
+            check_ip_address(conn.raddr, conn.family)
             if conn.status not in valid_conn_states:
                 self.fail("%s is not a valid status" % conn.status)
             # actually try to bind the local socket; ignore IPv6
@@ -2090,7 +2099,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             # and that's rejected by bind()
             if conn.family == socket.AF_INET:
                 s = socket.socket(conn.family, conn.type)
-                s.bind((conn.local_address[0], 0))
+                s.bind((conn.laddr[0], 0))
                 s.close()
 
             if not WINDOWS and hasattr(socket, 'fromfd'):

@@ -38,9 +38,9 @@ def main():
         else:
             for c in cons:
                 raddr = ""
-                laddr = "%s:%s" % (c.local_address)
-                if c.remote_address:
-                    raddr = "%s:%s" % (c.remote_address)
+                laddr = "%s:%s" % (c.laddr)
+                if c.raddr:
+                    raddr = "%s:%s" % (c.raddr)
                 print_(templ % (proto_map[(c.family, c.type)],
                                 laddr,
                                 raddr,

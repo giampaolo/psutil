@@ -112,11 +112,11 @@ def run(pid):
                 type = 'UDP'
             else:
                 type = 'UNIX'
-            lip, lport = conn.local_address
-            if not conn.remote_address:
+            lip, lport = conn.laddr
+            if not conn.raddr:
                 rip, rport = '*', '*'
             else:
-                rip, rport = conn.remote_address
+                rip, rport = conn.raddr
             print_('',  '%s:%s -> %s:%s type=%s status=%s' \
                          % (lip, lport, rip, rport, type, conn.status))
 

@@ -30,7 +30,7 @@ CPU
 >>> import psutil
 >>> psutil.cpu_times()
 cputimes(user=3961.46, nice=169.729, system=2150.659, idle=16900.540,
-         iowait=629.509, irq=0.0, softirq=19.422)
+         iowait=629.509, irq=0.0, softirq=19.422, steal=0.0, guest=0, nice=0.0)
 >>>
 >>> for x in range(3):
 ...     psutil.cpu_percent(interval=1)
@@ -46,7 +46,15 @@ cputimes(user=3961.46, nice=169.729, system=2150.659, idle=16900.540,
 [7.0, 8.5]
 [1.2, 9.0]
 >>>
-
+>>> for x in range(3):
+...     psutil.cpu_times_percent(interval=1, percpu=False)
+...
+cpupercent(user=1.5, nice=0.0, system=0.5, idle=96.5, iowait=1.5, irq=0.0,
+           softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+cpupercent(user=1.0, nice=0.0, system=0.0, idle=99.0, iowait=0.0, irq=0.0,
+           softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+cpupercent(user=2.0, nice=0.0, system=0.0, idle=98.0, iowait=0.0, irq=0.0,
+           softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
 
 Memory
 ======
@@ -80,21 +88,22 @@ iostat(read_count=719566, write_count=1082197, read_bytes=18626220032,
 Network
 =======
 
->>> psutil.network_io_counters(pernic=True)
+>>> psutil.net_io_counters(pernic=True)
 {'lo': iostat(bytes_sent=799953745, bytes_recv=799953745,
               packets_sent=453698, packets_recv=453698),
  'eth0': iostat(bytes_sent=734324837, bytes_recv=4163935363,
                 packets_sent=3605828, packets_recv=4096685)}
 >>>
 
-
-Users
-=====
+Other system info
+=================
 
 >>> psutil.get_users()
 [user(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0),
  user(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0)]
 >>>
+>>> psutil.get_boot_time()
+1365519115.0
 
 
 Process management
@@ -163,14 +172,14 @@ io(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632)
 [openfile(path='/home/giampaolo/svn/psutil/somefile', fd=3)]
 >>>
 >>> p.get_connections()
-[connection(fd=115, family=2, type=1, local_address=('10.0.0.1', 48776),
-            remote_address=('93.186.135.91', 80), status='ESTABLISHED'),
- connection(fd=117, family=2, type=1, local_address=('10.0.0.1', 43761),
-            remote_address=('72.14.234.100', 80), status='CLOSING'),
- connection(fd=119, family=2, type=1, local_address=('10.0.0.1', 60759),
-            remote_address=('72.14.234.104', 80), status='ESTABLISHED'),
- connection(fd=123, family=2, type=1, local_address=('10.0.0.1', 51314),
-            remote_address=('72.14.234.83', 443), status='SYN_SENT')]
+[connection(fd=115, family=2, type=1, laddr=('10.0.0.1', 48776),
+            raddr=('93.186.135.91', 80), status='ESTABLISHED'),
+ connection(fd=117, family=2, type=1, laddr=('10.0.0.1', 43761),
+            raddr=('72.14.234.100', 80), status='CLOSING'),
+ connection(fd=119, family=2, type=1, laddr=('10.0.0.1', 60759),
+            raddr=('72.14.234.104', 80), status='ESTABLISHED'),
+ connection(fd=123, family=2, type=1, laddr=('10.0.0.1', 51314),
+            raddr=('72.14.234.83', 443), status='SYN_SENT')]
 >>>
 >>> p.get_num_threads()
 4

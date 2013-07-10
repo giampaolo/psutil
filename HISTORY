@@ -25,7 +25,9 @@ API CHANGES
 
  * Process.get_connections() 'status' field is no longer a string but a constant
    object (psutil.CONN_*).
- * psutil.network_io_counters() renamed to psutil.net_io_counters()
+ * Process.get_connections() 'local_address' and 'remote_address' fields renamed
+   to 'laddr' and 'raddr'.
+ * psutil.network_io_counters() renamed to psutil.net_io_counters().
 
 
 0.7.1 - 2013-05-03
