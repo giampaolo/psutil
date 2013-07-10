@@ -2272,7 +2272,7 @@ get_net_io_counters(PyObject* self, PyObject* args)
             goto error;
 
         sprintf(ifname, "%wS", pCurrAddresses->FriendlyName);
-        py_nic_name = PyString_FromString(ifname);
+        py_nic_name = Py_BuildValue("s", ifname);
         if (py_nic_name == NULL)
             goto error;
         if (PyDict_SetItem(py_retdict, py_nic_name, py_nic_info))
