@@ -102,22 +102,26 @@ class OSXSpecificTestCase(unittest.TestCase):
     @retry_before_failing()
     def test_vmem_free(self):
         num = vm_stat("free")
-        self.assertAlmostEqual(psutil.virtual_memory().free, num, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().free, num,
+                               delta=TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_active(self):
         num = vm_stat("active")
-        self.assertAlmostEqual(psutil.virtual_memory().active, num, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().active, num,
+                               delta=TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_inactive(self):
         num = vm_stat("inactive")
-        self.assertAlmostEqual(psutil.virtual_memory().inactive, num, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().inactive, num,
+                               delta=TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_wired(self):
         num = vm_stat("wired")
-        self.assertAlmostEqual(psutil.virtual_memory().wired, num, TOLERANCE)
+        self.assertAlmostEqual(psutil.virtual_memory().wired, num,
+                               delta=TOLERANCE)
 
     # --- swap mem
 
