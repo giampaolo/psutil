@@ -1,5 +1,14 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+
+1.0.1 - 2013-07-12
+------------------
+
+BUG FIXES
+
+ * #405: network_io_counters(pernic=True) no longer works as intended in 1.0.0.
+
+
 1.0.0 - 2013-07-10
 ------------------
 

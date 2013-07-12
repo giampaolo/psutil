@@ -12,7 +12,7 @@ Python.
 
 from __future__ import division
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
@@ -1335,7 +1335,7 @@ def avail_virtmem():
 
 @_deprecated("psutil.net_io_counters()")
 def network_io_counters(pernic=False):
-    return net_io_counters()
+    return net_io_counters(pernic)
 
 def test():
     """List info of all currently running processes emulating ps aux
