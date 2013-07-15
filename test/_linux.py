@@ -150,24 +150,35 @@ class LinuxSpecificTestCase(unittest.TestCase):
             addr[1] = int(addr[1])
             return tuple(addr)
 
-        cons = psutil.net_connections(kind='inet')
-        out = sh('netstat -antup').strip()
-        lines = out.split('\n')[2:]
+        # retry as long as netstat and psutil return the same number
+        # of connections
+        for x in range(10):
+            cons = psutil.net_connections(kind='inet')
+            out = sh('netstat -antup').strip()
+            lines = out.split('\n')[2:]
+            if len(cons) == len(lines):
+                break
+        else:
+            self.skip("len connections mismatch (psutil=%s, netstat=%s)" \
+                      % (len(cons), len(lines)))
+
         for line in lines:
             status = None
             conn = cons.pop(0)
             if line.startswith('tcp'):
-                proto, _, _, laddr, raddr, status, pid_name = line.split()[:7]
+                proto, _, _, laddr, raddr, status = line.split()[:6]
             else:
-                proto, _, _, laddr, raddr, pid_name = line.split()[:7]
+                proto, _, _, laddr, raddr = line.split()[:5]
 
             self.assertEqual(convert_addr(laddr), conn.laddr)
             if '*' not in raddr:
                 self.assertEqual(convert_addr(raddr), conn.raddr)
             if status is not None:
                 self.assertEqual(status, str(conn.status))
-            pid = pid_name.split('/')[0]
-            if pid.isdigit():
+
+            pid = re.search(r'\s\d+/', line)
+            if pid is not None:
+                pid = pid.group(0).strip().replace('/', '')
                 self.assertEqual(int(pid), conn.pid)
             else:
                 self.assertEqual(conn.pid, None)
