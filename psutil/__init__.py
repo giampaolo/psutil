@@ -33,7 +33,7 @@ __all__ = [
     "pid_exists", "get_pid_list", "process_iter",                   # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent",                # cpu
-    "net_io_counters",                                              # network
+    "net_io_counters", "net_connections",                           # network
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
     "get_users", "get_boot_time",                                   # others
     ]
@@ -1266,6 +1266,26 @@ def net_io_counters(pernic=False):
         return rawdict
     else:
         return _nt_net_iostat(*[sum(x) for x in zip(*rawdict.values())])
+
+def net_connections(kind='inet'):
+    """Return opened connections as a list of namedtuples.
+    The kind parameter filters for connections that fit the following
+    criteria:
+
+    Kind Value      Connections using
+    inet            IPv4 and IPv6
+    inet4           IPv4
+    inet6           IPv6
+    tcp             TCP
+    tcp4            TCP over IPv4
+    tcp6            TCP over IPv6
+    udp             UDP
+    udp4            UDP over IPv4
+    udp6            UDP over IPv6
+    unix            UNIX socket (both UDP and TCP protocols)
+    all             the sum of all the possible families and protocols
+    """
+    return _psplatform.get_net_connections(kind)
 
 # =====================================================================
 # --- other system related functions

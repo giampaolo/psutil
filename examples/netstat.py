@@ -5,7 +5,8 @@
 # found in the LICENSE file.
 
 """
-A clone of 'netstat'.
+A clone of 'netstat -antup', shows all TCP and UDP connections opened
+by the system.
 """
 
 import socket
@@ -15,7 +16,6 @@ import psutil
 from psutil._compat import print_
 
 
-AD = "-"
 AF_INET6 = getattr(socket, 'AF_INET6', object())
 proto_map = {(AF_INET, SOCK_STREAM)  : 'tcp',
              (AF_INET6, SOCK_STREAM) : 'tcp6',
@@ -26,27 +26,25 @@ def main():
     templ = "%-5s %-22s %-22s %-13s %-6s %s"
     print_(templ % ("Proto", "Local addr", "Remote addr", "Status", "PID",
                     "Program name"))
-    for p in psutil.process_iter():
-        name = '?'
-        try:
-            name = p.name
-            cons = p.get_connections(kind='inet')
-        except psutil.AccessDenied:
-            print_(templ % (AD, AD, AD, AD, p.pid, name))
-        except psutil.NoSuchProcess:
-            continue
-        else:
-            for c in cons:
-                raddr = ""
-                laddr = "%s:%s" % (c.laddr)
-                if c.raddr:
-                    raddr = "%s:%s" % (c.raddr)
-                print_(templ % (proto_map[(c.family, c.type)],
-                                laddr,
-                                raddr,
-                                str(c.status),
-                                p.pid,
-                                name[:15]))
+    for conn in psutil.net_connections():
+        pid = name = '-'
+        if conn.pid is not None:
+            try:
+                pid = conn.pid
+                p = psutil.Process(conn.pid)
+                name = p.name
+            except (psutil.AccessDenied, psutil.NoSuchProcess):
+                pass
+        raddr = ""
+        laddr = "%s:%s" % (conn.laddr)
+        if conn.raddr:
+            raddr = "%s:%s" % (conn.raddr)
+        print_(templ % (proto_map[(conn.family, conn.type)],
+                        laddr,
+                        raddr,
+                        str(conn.status),
+                        pid,
+                        name[:15]))
 
 if __name__ == '__main__':
     main()
