@@ -457,10 +457,7 @@ def _decode_address(addr, family):
                             struct.pack('<4I', *struct.unpack('<4I', ip)))
     return (ip, port)
 
-nt_sys_connection = namedtuple('connection',
-                               'fd family type laddr raddr status pid')
-
-def get_net_connections(kind='inet'):
+def get_net_connections(kind):
     """Return connections opened by the system as a list of namedtuples.
     The kind parameter filters for connections that fit the following
     criteria:

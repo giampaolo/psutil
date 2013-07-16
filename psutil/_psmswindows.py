@@ -173,6 +173,27 @@ def get_system_users():
         retlist.append(nt)
     return retlist
 
+def get_net_connections(kind, _pid=-1):
+    """Return socket connections.  If pid == -1 return system-wide
+    connections (as opposed to connections opened by one process only).
+    """
+    if kind not in conn_tmap:
+        raise ValueError("invalid %r kind argument; choose between %s"
+                         % (kind, ', '.join([repr(x) for x in conn_tmap])))
+    families, types = conn_tmap[kind]
+    rawlist = _psutil_mswindows.get_process_connections(_pid, families, types)
+    ret = []
+    for item in rawlist:
+        fd, fam, type, laddr, raddr, status, pid = item
+        status = TCP_STATES_TABLE[status]
+        if _pid == -1:
+            nt = nt_sys_connection(fd, fam, type, laddr, raddr, status, pid)
+        else:
+            nt = nt_connection(fd, fam, type, laddr, raddr, status)
+        ret.append(nt)
+    return ret
+
+
 get_pid_list = _psutil_mswindows.get_pid_list
 pid_exists = _psutil_mswindows.pid_exists
 net_io_counters = _psutil_mswindows.get_net_io_counters
@@ -382,19 +403,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_connections(self, kind='inet'):
-        if kind not in conn_tmap:
-            raise ValueError("invalid %r kind argument; choose between %s"
-                             % (kind, ', '.join([repr(x) for x in conn_tmap])))
-        families, types = conn_tmap[kind]
-        rawlist = _psutil_mswindows.get_process_connections(self.pid, families,
-                                                            types)
-        ret = []
-        for item in rawlist:
-            fd, fam, type, laddr, raddr, status = item
-            status = TCP_STATES_TABLE[status]
-            nt = nt_connection(fd, fam, type, laddr, raddr, status)
-            ret.append(nt)
-        return ret
+        return get_net_connections(kind, self.pid)
 
     @wrap_exceptions
     def get_process_nice(self):
