@@ -389,7 +389,6 @@ get_process_threads(PyObject* self, PyObject* args)
     long pid;
     int mib[4];
     struct kinfo_proc *kip = NULL;
-    struct kinfo_proc *kipp;
     int error;
     unsigned int i;
     size_t size;
@@ -841,40 +840,6 @@ error:
 }
 
 
-/*
- * mathes Linux net/tcp_states.h:
- * http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
- */
-static char *
-get_connection_status(int st) {
-    switch (st) {
-        case TCPS_CLOSED:
-            return "CLOSE";
-        case TCPS_CLOSING:
-            return "CLOSING";
-        case TCPS_CLOSE_WAIT:
-            return "CLOSE_WAIT";
-        case TCPS_LISTEN:
-            return "LISTEN";
-        case TCPS_ESTABLISHED:
-            return "ESTABLISHED";
-        case TCPS_SYN_SENT:
-            return "SYN_SENT";
-        case TCPS_SYN_RECEIVED:
-            return "SYN_RECV";
-        case TCPS_FIN_WAIT_1:
-            return "FIN_WAIT_1";
-        case TCPS_FIN_WAIT_2:
-            return "FIN_WAIT_2";
-        case TCPS_LAST_ACK:
-            return "LAST_ACK";
-        case TCPS_TIME_WAIT:
-            return "TIME_WAIT";
-        default:
-            return "?";
-    }
-}
-
 /* The tcplist fetching and walking is borrowed from netstat/inet.c. */
 static char *
 psutil_fetch_tcplist(void)
@@ -1029,10 +994,6 @@ get_process_connections(PyObject* self, PyObject* args)
     }
     if (!PySequence_Check(af_filter) || !PySequence_Check(type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
-        goto error;
-    }
-
-    if (psutil_get_kinfo_proc(pid, &kipp) == -1) {
         goto error;
     }
 

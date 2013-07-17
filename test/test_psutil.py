@@ -1380,6 +1380,7 @@ class TestProcess(unittest.TestCase):
         cmdline = "import time; f = open(r'%s', 'r'); time.sleep(2);" % TESTFN
         sproc = get_test_subprocess([PYTHON, "-c", cmdline], wait=True)
         p = psutil.Process(sproc.pid)
+
         for x in range(100):
             filenames = [x.path for x in p.get_open_files()]
             if TESTFN in filenames:
@@ -1439,13 +1440,7 @@ class TestProcess(unittest.TestCase):
               "time.sleep(2);"
         sproc = get_test_subprocess([PYTHON, "-c", arg])
         p = psutil.Process(sproc.pid)
-        for x in range(100):
-            if p.get_connections():
-                # give the subprocess some more time to bind()
-                time.sleep(.01)
-                cons = p.get_connections()
-                break
-            time.sleep(.01)
+        cons = call_until(p.get_connections, "len(ret) != 0", timeout=1)
         self.assertEqual(len(cons), 1)
         con = cons[0]
         self.assertEqual(con.family, socket.AF_INET)
