@@ -1515,9 +1515,11 @@ get_process_connections(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    if (psutil_pid_is_running(pid) == 0) {
-        ConnDecrefPyObjs();
-        return NoSuchProcess();
+    if (pid != -1) {
+        if (psutil_pid_is_running(pid) == 0) {
+            ConnDecrefPyObjs();
+            return NoSuchProcess();
+        }
     }
 
     /* Import some functions. */
@@ -1580,8 +1582,10 @@ get_process_connections(PyObject* self, PyObject* args)
 
             for (i = 0; i < tcp4Table->dwNumEntries; i++)
             {
-                if (tcp4Table->table[i].dwOwningPid != pid) {
-                    continue;
+                if (pid != -1) {
+                    if (tcp4Table->table[i].dwOwningPid != pid) {
+                        continue;
+                    }
                 }
 
                 if (tcp4Table->table[i].dwLocalAddr != 0 ||
@@ -1623,13 +1627,14 @@ get_process_connections(PyObject* self, PyObject* args)
                 if (addressTupleRemote == NULL)
                     goto error;
 
-                connectionTuple = Py_BuildValue("(iiiNNi)",
+                connectionTuple = Py_BuildValue("(iiiNNiI)",
                     -1,
                     AF_INET,
                     SOCK_STREAM,
                     addressTupleLocal,
                     addressTupleRemote,
-                    tcp4Table->table[i].dwState
+                    tcp4Table->table[i].dwState,
+                    tcp4Table->table[i].dwOwningPid
                     );
                 if (!connectionTuple)
                     goto error;
@@ -1668,8 +1673,10 @@ get_process_connections(PyObject* self, PyObject* args)
 
             for (i = 0; i < tcp6Table->dwNumEntries; i++)
             {
-                if (tcp6Table->table[i].dwOwningPid != pid) {
-                    continue;
+                if (pid != -1) {
+                    if (tcp6Table->table[i].dwOwningPid != pid) {
+                        continue;
+                    }
                 }
 
                 if (memcmp(tcp6Table->table[i].ucLocalAddr, null_address, 16) != 0 ||
@@ -1711,13 +1718,14 @@ get_process_connections(PyObject* self, PyObject* args)
                 if (addressTupleRemote == NULL)
                     goto error;
 
-                connectionTuple = Py_BuildValue("(iiiNNi)",
+                connectionTuple = Py_BuildValue("(iiiNNiI)",
                     -1,
                     AF_INET6,
                     SOCK_STREAM,
                     addressTupleLocal,
                     addressTupleRemote,
-                    tcp6Table->table[i].dwState
+                    tcp6Table->table[i].dwState,
+                    tcp6Table->table[i].dwOwningPid
                     );
                 if (!connectionTuple)
                     goto error;
@@ -1756,8 +1764,10 @@ get_process_connections(PyObject* self, PyObject* args)
 
             for (i = 0; i < udp4Table->dwNumEntries; i++)
             {
-                if (udp4Table->table[i].dwOwningPid != pid) {
-                    continue;
+                if (pid != -1) {
+                    if (udp4Table->table[i].dwOwningPid != pid) {
+                        continue;
+                    }
                 }
 
                 if (udp4Table->table[i].dwLocalAddr != 0 ||
@@ -1778,13 +1788,14 @@ get_process_connections(PyObject* self, PyObject* args)
                 if (addressTupleLocal == NULL)
                     goto error;
 
-                connectionTuple = Py_BuildValue("(iiiNNi)",
+                connectionTuple = Py_BuildValue("(iiiNNiI)",
                     -1,
                     AF_INET,
                     SOCK_DGRAM,
                     addressTupleLocal,
                     PyTuple_New(0),
-                    PSUTIL_CONN_NONE
+                    PSUTIL_CONN_NONE,
+                    udp4Table->table[i].dwOwningPid
                     );
                 if (!connectionTuple)
                     goto error;
@@ -1823,8 +1834,10 @@ get_process_connections(PyObject* self, PyObject* args)
 
             for (i = 0; i < udp6Table->dwNumEntries; i++)
             {
-                if (udp6Table->table[i].dwOwningPid != pid) {
-                    continue;
+                if (pid != -1) {
+                    if (udp6Table->table[i].dwOwningPid != pid) {
+                        continue;
+                    }
                 }
 
                 if (memcmp(udp6Table->table[i].ucLocalAddr, null_address, 16) != 0 ||
@@ -1845,13 +1858,14 @@ get_process_connections(PyObject* self, PyObject* args)
                 if (addressTupleLocal == NULL)
                     goto error;
 
-                connectionTuple = Py_BuildValue("(iiiNNi)",
+                connectionTuple = Py_BuildValue("(iiiNNiI)",
                     -1,
                     AF_INET6,
                     SOCK_DGRAM,
                     addressTupleLocal,
                     PyTuple_New(0),
-                    PSUTIL_CONN_NONE
+                    PSUTIL_CONN_NONE,
+                    udp6Table->table[i].dwOwningPid
                     );
                 if (!connectionTuple)
                     goto error;

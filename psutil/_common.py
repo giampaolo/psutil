@@ -189,6 +189,7 @@ nt_net_iostat = namedtuple('iostat',
     'bytes_sent bytes_recv packets_sent packets_recv errin errout dropin dropout')
 nt_disk_iostat = namedtuple('iostat', 'read_count write_count read_bytes write_bytes read_time write_time')
 nt_user = namedtuple('user', 'name terminal host started')
+nt_sys_connection = namedtuple('connection', 'fd family type laddr raddr status pid')
 
 # processes
 nt_meminfo = namedtuple('meminfo', 'rss vms')
