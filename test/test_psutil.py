@@ -225,7 +225,7 @@ def check_connection(conn):
        assert not conn.raddr, repr(conn.raddr)
        assert conn.status == psutil.CONN_NONE, str(conn.status)
 
-    if getattr(conn, 'fd', -1) != -1:
+    if getattr(conn, 'fd', -1) not in (-1, None):
         assert conn.fd > 0, conn
         if hasattr(socket, 'fromfd') and not WINDOWS:
             dupsock = None
@@ -245,6 +245,24 @@ def check_connection(conn):
                 if dupsock is not None:
                     dupsock.close()
 
+def compare_connection(conn, pid, kind='all'):
+    """Compare a connection namedutuple against those returned by
+    psutil.net_connections().
+    """
+    pid_found = False
+    for c in psutil.net_connections(kind=kind):
+        if c.pid == pid:
+            pid_found = True
+            if conn.family == c.family \
+            and conn.type == c.type \
+            and conn.laddr == c.laddr \
+            and conn.raddr == c.raddr \
+            and conn.status == c.status:
+                return
+    if not pid_found:
+        assert 0, "no connections referring to pid %s were found" % pid
+    else:
+        assert 0, "%s wasn't found for pid %s" % (conn, pid)
 
 def safe_remove(fname):
     """Deletes a file and does not exception if it doesn't exist."""
@@ -869,6 +887,22 @@ class TestSystemAPIs(unittest.TestCase):
             user.host
             assert user.started > 0.0, user
             datetime.datetime.fromtimestamp(user.started)
+
+    def test_net_connections(self):
+        map = {}
+        for conn in psutil.net_connections():
+            check_connection(conn)
+            # TODO subject to race condition (must be removed later)
+            if conn.pid is not None:
+                if conn.pid not in map:
+                    map[conn.pid] = \
+                            psutil.Process(conn.pid).get_connections(kind='all')
+                for c in map[conn.pid]:
+                    if c.laddr == conn.laddr and c.raddr == conn.raddr:
+                        break
+                else:
+                    self.fail("connection %s not found amonst those of " \
+                              "pid %s" % (conn, conn.pid))
 
 
 # ===================================================================
@@ -1514,16 +1548,22 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(con[5], con.status)
         # test kind arg
         self.assertRaises(ValueError, p.get_connections, 'foo')
+        # compare it with system connections
+        compare_connection(con, sproc.pid, kind='tcp4')
 
     @unittest.skipUnless(supports_ipv6(), 'IPv6 is not supported')
     def test_get_connections_ipv6(self):
         s = socket.socket(AF_INET6, SOCK_STREAM)
-        s.bind(('::1', 0))
-        s.listen(1)
-        cons = psutil.Process(os.getpid()).get_connections()
-        s.close()
-        self.assertEqual(len(cons), 1)
-        self.assertEqual(cons[0].laddr[0], '::1')
+        try:
+            s.bind(('::1', 0))
+            s.listen(1)
+            cons = psutil.Process(os.getpid()).get_connections()
+            self.assertEqual(len(cons), 1)
+            conn = cons[0]
+            self.assertEqual(conn.laddr[0], '::1')
+            compare_connection(conn, os.getpid(), kind='tcp6')
+        finally:
+            s.close()
 
     @unittest.skipUnless(hasattr(socket, 'AF_UNIX'), 'AF_UNIX is not supported')
     def test_get_connections_unix(self):
@@ -1539,6 +1579,7 @@ class TestProcess(unittest.TestCase):
                 self.assertEqual(conn.family, AF_UNIX)
                 self.assertEqual(conn.type, type)
                 self.assertEqual(conn.laddr, TESTFN)
+                compare_connection(conn, os.getpid(), kind='unix')
             finally:
                 sock.close()
 
@@ -1614,6 +1655,7 @@ class TestProcess(unittest.TestCase):
                     self.assertEqual(conn.raddr, ())
                     self.assertEqual(conn.status, psutil.CONN_LISTEN,
                                     str(conn.status))
+                    compare_connection(conn, tcp4_proc.pid, kind='tcp4')
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet4", "tcp", "tcp4"):
@@ -1628,6 +1670,7 @@ class TestProcess(unittest.TestCase):
                     self.assertEqual(conn.raddr, ())
                     self.assertEqual(conn.status, psutil.CONN_NONE,
                                      str(conn.status))
+                    compare_connection(conn, udp4_proc.pid, kind='udp4')
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet4", "udp", "udp4"):
@@ -1642,6 +1685,7 @@ class TestProcess(unittest.TestCase):
                     self.assertEqual(conn.raddr, ())
                     self.assertEqual(conn.status, psutil.CONN_LISTEN,
                                      str(conn.status))
+                    compare_connection(conn, tcp6_proc.pid, kind='tcp6')
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet6", "tcp", "tcp6"):
@@ -1656,6 +1700,7 @@ class TestProcess(unittest.TestCase):
                     self.assertEqual(conn.raddr, ())
                     self.assertEqual(conn.status, psutil.CONN_NONE,
                                      str(conn.status))
+                    compare_connection(conn, udp6_proc.pid, kind='udp6')
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet6", "udp", "udp6"):
