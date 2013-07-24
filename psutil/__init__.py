@@ -77,7 +77,13 @@ if sys.platform.startswith("linux"):
                                  IOPRIO_CLASS_NONE,
                                  IOPRIO_CLASS_RT,
                                  IOPRIO_CLASS_BE,
-                                 IOPRIO_CLASS_IDLE)
+                                 IOPRIO_CLASS_IDLE,
+                                 RLIMIT_AS, RLIMIT_CORE, RLIMIT_CPU,
+                                 RLIMIT_DATA, RLIMIT_FSIZE, RLIMIT_LOCKS,
+                                 RLIMIT_MEMLOCK, RLIMIT_MSGQUEUE, RLIMIT_NICE,
+                                 RLIMIT_NOFILE, RLIMIT_NPROC, RLIMIT_RSS,
+                                 RLIMIT_RTPRIO, RLIMIT_RTTIME,
+                                 RLIMIT_SIGPENDING, RLIMIT_STACK)
     phymem_buffers = _psplatform.phymem_buffers
     cached_phymem = _psplatform.cached_phymem
 
@@ -207,7 +213,7 @@ class Process(object):
         """
         excluded_names = set(['send_signal', 'suspend', 'resume', 'terminate',
                               'kill', 'wait', 'is_running', 'as_dict', 'parent',
-                              'get_children', 'nice'])
+                              'get_children', 'nice', 'get_rlimit'])
         retdict = dict()
         for name in set(attrs or dir(self)):
             if name.startswith('_'):
@@ -419,7 +425,7 @@ class Process(object):
         whether PID has been reused."""
         return self._platform_impl.set_process_nice(value)
 
-    # available only on Linux and Windows >= Vista
+    # Linux and Windows >= Vista only
     if hasattr(_psplatform.Process, "get_process_ionice"):
 
         def get_ionice(self):
@@ -447,7 +453,35 @@ class Process(object):
             """
             return self._platform_impl.set_process_ionice(ioclass, value)
 
-    # available on Windows and Linux only
+    # Linux only
+    if hasattr(_psplatform.Process, "process_rlimit"):
+
+        def get_rlimit(self, resource):
+            """Get process resource limits as a (soft, hard) tuple.
+            'resource' is one of the RLIMIT_* constants.
+
+            See "man prlimit" for further info.
+            """
+            # if pid is 0 prlimit() applies to the calling process and
+            # we don't want that
+            if self.pid == 0:
+                raise ValueError("can't use this method for PID 0 process")
+            return self._platform_impl.process_rlimit(resource)
+
+        def set_rlimit(self, resource, limits):
+            """Set process resource limits.
+            'resource' is one of the RLIMIT_* constants.
+            'limits' is supposed to be a (soft, hard) tuple.
+
+            See "man prlimit" for further info.
+            """
+            # if pid is 0 prlimit() applies to the calling process and
+            # we don't want that
+            if self.pid == 0:
+                raise ValueError("can't use this method for PID 0 process")
+            self._platform_impl.process_rlimit(resource, limits)
+
+    # Windows and Linux only
     if hasattr(_psplatform.Process, "get_process_cpu_affinity"):
 
         def get_cpu_affinity(self):

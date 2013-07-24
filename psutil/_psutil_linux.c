@@ -15,6 +15,8 @@
 #include <sched.h>
 #include <sys/syscall.h>
 #include <sys/sysinfo.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <linux/unistd.h>
 
 #include "_psutil_linux.h"
@@ -92,6 +94,48 @@ linux_ioprio_set(PyObject* self, PyObject* args)
     return Py_None;
 }
 #endif
+
+
+/*
+ * A wrapper around prlimit(2); sets process resource limits.
+ * This can be used for both get and set, in which case extra
+ * 'soft' and 'hard' args must be provided.
+ */
+static PyObject*
+linux_prlimit(PyObject* self, PyObject* args)
+{
+    long pid;
+    int ret, resource;
+    struct rlimit old, new;
+    struct rlimit *newp;
+    PyObject *soft = NULL;
+    PyObject *hard = NULL;
+
+    if (! PyArg_ParseTuple(args, "li|ii", &pid, &resource, &soft, &hard))
+        return NULL;
+
+    if (soft == NULL && hard == NULL) {
+        // get
+        ret = prlimit(pid, resource, NULL, &old);
+        if (ret == -1)
+            return PyErr_SetFromErrno(PyExc_OSError);
+        return Py_BuildValue("LL", (long long)old.rlim_cur,
+                                   (long long)old.rlim_max);
+    }
+    else {
+        // set
+        newp = NULL;
+        new.rlim_cur = (long long)soft;
+        new.rlim_max = (long long)hard;
+        newp = &new;
+        ret = prlimit(pid, resource, newp, &old);
+        if (ret == -1)
+            return PyErr_SetFromErrno(PyExc_OSError);
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+}
+
 
 
 /*
@@ -261,12 +305,21 @@ error:
 static PyMethodDef
 PsutilMethods[] =
 {
+      // --- per-process functions
+
 #if HAS_IOPRIO
      {"ioprio_get", linux_ioprio_get, METH_VARARGS,
         "Get process I/O priority"},
      {"ioprio_set", linux_ioprio_set, METH_VARARGS,
         "Set process I/O priority"},
 #endif
+     {"prlimit", linux_prlimit, METH_VARARGS,
+        "Get or set process resource limits."},
+     {"set_process_cpu_affinity", set_process_cpu_affinity, METH_VARARGS,
+        "Set process CPU affinity; expects a bitmask."},
+
+     // --- system related functions
+
      {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
         "Return disk mounted partitions as a list of tuples including "
         "device, mount point and filesystem type"},
@@ -274,8 +327,6 @@ PsutilMethods[] =
         "A wrapper around sysinfo(), return system memory usage statistics"},
      {"get_process_cpu_affinity", get_process_cpu_affinity, METH_VARARGS,
         "Return process CPU affinity as a Python long (the bitmask)."},
-     {"set_process_cpu_affinity", set_process_cpu_affinity, METH_VARARGS,
-        "Set process CPU affinity; expects a bitmask."},
      {"get_system_users", get_system_users, METH_VARARGS,
         "Return currently connected users as a list of tuples"},
 
@@ -335,6 +386,23 @@ void init_psutil_linux(void)
 #else
     PyObject *module = Py_InitModule("_psutil_linux", PsutilMethods);
 #endif
+    PyModule_AddIntConstant(module, "RLIMIT_AS", RLIMIT_AS);
+    PyModule_AddIntConstant(module, "RLIMIT_CORE", RLIMIT_CORE);
+    PyModule_AddIntConstant(module, "RLIMIT_CPU", RLIMIT_CPU);
+    PyModule_AddIntConstant(module, "RLIMIT_DATA", RLIMIT_DATA);
+    PyModule_AddIntConstant(module, "RLIMIT_FSIZE", RLIMIT_FSIZE);
+    PyModule_AddIntConstant(module, "RLIMIT_LOCKS", RLIMIT_LOCKS);
+    PyModule_AddIntConstant(module, "RLIMIT_MEMLOCK", RLIMIT_MEMLOCK);
+    PyModule_AddIntConstant(module, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE);
+    PyModule_AddIntConstant(module, "RLIMIT_NICE", RLIMIT_NICE);
+    PyModule_AddIntConstant(module, "RLIMIT_NOFILE", RLIMIT_NOFILE);
+    PyModule_AddIntConstant(module, "RLIMIT_NPROC", RLIMIT_NPROC);
+    PyModule_AddIntConstant(module, "RLIMIT_RSS", RLIMIT_RSS);
+    PyModule_AddIntConstant(module, "RLIMIT_RTPRIO", RLIMIT_RTPRIO);
+    PyModule_AddIntConstant(module, "RLIMIT_RTTIME", RLIMIT_RTTIME);
+    PyModule_AddIntConstant(module, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING);
+    PyModule_AddIntConstant(module, "RLIMIT_STACK", RLIMIT_STACK);
+
     if (module == NULL) {
         INITERROR;
     }

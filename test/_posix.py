@@ -193,9 +193,14 @@ class PosixSpecificTestCase(unittest.TestCase):
         # Note: this fails from time to time; I'm keen on thinking
         # it doesn't mean something is broken
         def call(p, attr):
+            args = ()
             attr = getattr(p, name, None)
             if attr is not None and callable(attr):
-                ret = attr()
+                if name == 'get_rlimit':
+                    args = (psutil.RLIMIT_NOFILE,)
+                elif name == 'set_rlimit':
+                    args = (psutil.RLIMIT_NOFILE, (5, 5))
+                ret = attr(*args)
             else:
                 ret = attr
 

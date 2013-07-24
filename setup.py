@@ -140,7 +140,7 @@ def main():
         keywords=['ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice',
                   'tty', 'ionice', 'uptime', 'taskmgr', 'process', 'df',
                   'iotop', 'iostat', 'ifconfig', 'taskset', 'who', 'pidof',
-                  'pmap', 'smem', 'monitoring',],
+                  'pmap', 'smem', 'monitoring', 'ulimit', 'prlimit',],
         author='Giampaolo Rodola',
         author_email='psutil@googlegroups.com',
         maintainer='Giampaolo Rodola',

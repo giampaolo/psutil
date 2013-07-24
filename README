@@ -198,6 +198,14 @@ amount(voluntary=78, involuntary=19)
 0
 >>> p.set_nice(10)
 >>>
+>>> p.set_ionice(psutil.IOPRIO_CLASS_IDLE)  # IO priority (Windows and Linux only)
+>>> p.get_ionice()
+ionice(ioclass=3, value=0)
+>>>
+>>> p.set_rlimit(psutil.RLIMIT_NOFILE, (5, 5))  # resource limits (Linux only)
+>>> p.get_rlimit(psutil.RLIMIT_NOFILE)
+(5, 5)
+>>>
 >>> p.suspend()
 >>> p.resume()
 >>>

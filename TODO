@@ -17,8 +17,6 @@ HIGHER PRIORITY
 
  * #250: net ifaces speed.
 
- * (Linux) resource limit get/set - see man prlimit.
-
  * Process.name on Windows is slow:
    http://stackoverflow.com/questions/6587036/
 

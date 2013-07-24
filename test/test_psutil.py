@@ -1149,6 +1149,29 @@ class TestProcess(unittest.TestCase):
             self.assertRaises(ValueError, p.set_ionice, 3)
             self.assertRaises(TypeError, p.set_ionice, 2, 1)
 
+    @unittest.skipUnless(LINUX, "feature not supported on this platform")
+    def test_get_rlimit(self):
+        import resource
+        p = psutil.Process(os.getpid())
+        names = [x for x in dir(psutil) if x.startswith('RLIMIT_')]
+        for name in names:
+            value = getattr(psutil, name)
+            if name in dir(resource):
+                self.assertEqual(value, getattr(resource, name))
+                self.assertEqual(p.get_rlimit(value), resource.getrlimit(value))
+            else:
+                ret = p.get_rlimit(value)
+                self.assertEqual(len(ret), 2)
+                self.assertGreaterEqual(ret[0], -1)
+                self.assertGreaterEqual(ret[1], -1)
+
+    @unittest.skipUnless(LINUX, "feature not supported on this platform")
+    def test_set_rlimit(self):
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        p.set_rlimit(psutil.RLIMIT_NOFILE, (5, 5))
+        self.assertEqual(p.get_rlimit(psutil.RLIMIT_NOFILE), (5, 5))
+
     def test_get_num_threads(self):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
@@ -1806,9 +1829,15 @@ class TestProcess(unittest.TestCase):
                         'nice'):
                 continue
             try:
+                #if name == 'get_rlimit'
+                args = ()
                 meth = getattr(p, name)
                 if callable(meth):
-                    meth()
+                    if name == 'get_rlimit':
+                        args = (psutil.RLIMIT_NOFILE,)
+                    elif name == 'set_rlimit':
+                        args = (psutil.RLIMIT_NOFILE, (5, 5))
+                    meth(*args)
             except psutil.NoSuchProcess:
                 pass
             except NotImplementedError:
@@ -1959,9 +1988,12 @@ class TestFetchAllProcesses(unittest.TestCase):
                 ret = default
                 try:
                     try:
+                        args = ()
                         attr = getattr(p, name, None)
                         if attr is not None and callable(attr):
-                            ret = attr()
+                            if name == 'get_rlimit':
+                                args = (psutil.RLIMIT_NOFILE,)
+                            ret = attr(*args)
                         else:
                             ret = attr
                         valid_procs += 1
@@ -2183,6 +2215,11 @@ class TestFetchAllProcesses(unittest.TestCase):
     def get_num_ctx_switches(self, ret):
         self.assertTrue(ret.voluntary >= 0)
         self.assertTrue(ret.involuntary >= 0)
+
+    def get_rlimit(self, ret):
+        self.assertEqual(len(ret), 2)
+        self.assertGreaterEqual(ret[0], -1)
+        self.assertGreaterEqual(ret[1], -1)
 
 
 # ===================================================================

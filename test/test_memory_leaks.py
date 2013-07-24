@@ -211,6 +211,16 @@ class TestProcessObjectLeaks(Base):
     def test_get_memory_maps(self):
         self.execute('get_memory_maps')
 
+    @unittest.skipUnless(LINUX, "feature not supported on this platform")
+    def test_get_rlimit(self):
+        self.execute('get_rlimit', psutil.RLIMIT_NOFILE)
+
+
+    @unittest.skipUnless(LINUX, "feature not supported on this platform")
+    def test_get_rlimit(self):
+        limit = psutil.Process(os.getpid()).get_rlimit(psutil.RLIMIT_NOFILE)
+        self.execute('set_rlimit', psutil.RLIMIT_NOFILE, limit)
+
     # Linux implementation is pure python so since it's slow we skip it
     @unittest.skipIf(LINUX, "not worth being tested on Linux (pure python)")
     def test_get_connections(self):

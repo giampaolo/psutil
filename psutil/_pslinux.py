@@ -23,6 +23,11 @@ from psutil import _psposix
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
 from psutil._compat import PY3, xrange, long, namedtuple, wraps
+from _psutil_linux import (RLIMIT_AS, RLIMIT_CORE, RLIMIT_CPU, RLIMIT_DATA,
+                           RLIMIT_FSIZE, RLIMIT_LOCKS, RLIMIT_MEMLOCK,
+                           RLIMIT_MSGQUEUE, RLIMIT_NICE, RLIMIT_NOFILE,
+                           RLIMIT_NPROC, RLIMIT_RSS, RLIMIT_RTPRIO,
+                           RLIMIT_RTTIME, RLIMIT_SIGPENDING, RLIMIT_STACK)
 
 __extra__all__ = [
     # io prio constants
@@ -32,6 +37,11 @@ __extra__all__ = [
     "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING",
+    # process resources constants
+    "RLIMIT_AS", "RLIMIT_CORE", "RLIMIT_CPU", "RLIMIT_DATA", "RLIMIT_FSIZE",
+    "RLIMIT_LOCKS", "RLIMIT_MEMLOCK", "RLIMIT_MSGQUEUE", "RLIMIT_NICE",
+    "RLIMIT_NOFILE", "RLIMIT_NPROC", "RLIMIT_RSS", "RLIMIT_RTPRIO",
+    "RLIMIT_RTTIME", "RLIMIT_SIGPENDING", "RLIMIT_STACK",
     # other
     "phymem_buffers", "cached_phymem"]
 
@@ -840,6 +850,18 @@ class Process(object):
             if not 0 <= value <= 8:
                 raise ValueError("value argument range expected is between 0 and 8")
             return _psutil_linux.ioprio_set(self.pid, ioclass, value)
+
+    @wrap_exceptions
+    def process_rlimit(self, resource, limits=None):
+        if limits is None:
+            # get
+            return _psutil_linux.prlimit(self.pid, resource)
+        else:
+            # set
+            if len(limits) != 2:
+                raise ValueError("second argument must be a (soft, hard) tuple")
+            soft, hard = limits
+            _psutil_linux.prlimit(self.pid, resource, soft, hard)
 
     @wrap_exceptions
     def get_process_status(self):
