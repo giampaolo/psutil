@@ -114,16 +114,22 @@ linux_prlimit(PyObject* self, PyObject* args)
     if (! PyArg_ParseTuple(args, "li|ii", &pid, &resource, &soft, &hard))
         return NULL;
 
+    // get
     if (soft == NULL && hard == NULL) {
-        // get
         ret = prlimit(pid, resource, NULL, &old);
         if (ret == -1)
             return PyErr_SetFromErrno(PyExc_OSError);
-        return Py_BuildValue("LL", (long long)old.rlim_cur,
-                                   (long long)old.rlim_max);
+#if defined(HAVE_LONG_LONG)
+        if (sizeof(old.rlim_cur) > sizeof(long)) {
+            return Py_BuildValue("LL", (PY_LONG_LONG)old.rlim_cur,
+                                       (PY_LONG_LONG)old.rlim_max);
+        }
+#endif
+        return Py_BuildValue("ll", (long)old.rlim_cur,
+                                   (long)old.rlim_max);
     }
+    // set
     else {
-        // set
         newp = NULL;
         new.rlim_cur = (long long)soft;
         new.rlim_max = (long long)hard;
