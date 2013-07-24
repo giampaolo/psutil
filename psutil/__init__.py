@@ -78,6 +78,7 @@ if sys.platform.startswith("linux"):
                                  IOPRIO_CLASS_RT,
                                  IOPRIO_CLASS_BE,
                                  IOPRIO_CLASS_IDLE,
+                                 RLIM_INFINITY,
                                  RLIMIT_AS, RLIMIT_CORE, RLIMIT_CPU,
                                  RLIMIT_DATA, RLIMIT_FSIZE, RLIMIT_LOCKS,
                                  RLIMIT_MEMLOCK, RLIMIT_MSGQUEUE, RLIMIT_NICE,

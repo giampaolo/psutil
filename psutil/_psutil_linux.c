@@ -400,6 +400,8 @@ void init_psutil_linux(void)
 #else
     PyObject *module = Py_InitModule("_psutil_linux", PsutilMethods);
 #endif
+    PyModule_AddIntConstant(module, "RLIM_INFINITY", RLIM_INFINITY);
+
     PyModule_AddIntConstant(module, "RLIMIT_AS", RLIMIT_AS);
     PyModule_AddIntConstant(module, "RLIMIT_CORE", RLIMIT_CORE);
     PyModule_AddIntConstant(module, "RLIMIT_CPU", RLIMIT_CPU);

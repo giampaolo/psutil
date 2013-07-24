@@ -23,6 +23,7 @@ from psutil import _psposix
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
 from psutil._compat import PY3, xrange, long, namedtuple, wraps
+from _psutil_linux import RLIM_INFINITY
 from _psutil_linux import (RLIMIT_AS, RLIMIT_CORE, RLIMIT_CPU, RLIMIT_DATA,
                            RLIMIT_FSIZE, RLIMIT_LOCKS, RLIMIT_MEMLOCK,
                            RLIMIT_MSGQUEUE, RLIMIT_NICE, RLIMIT_NOFILE,
@@ -38,6 +39,7 @@ __extra__all__ = [
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING",
     # process resources constants
+    "RLIM_INFINITY",
     "RLIMIT_AS", "RLIMIT_CORE", "RLIMIT_CPU", "RLIMIT_DATA", "RLIMIT_FSIZE",
     "RLIMIT_LOCKS", "RLIMIT_MEMLOCK", "RLIMIT_MSGQUEUE", "RLIMIT_NICE",
     "RLIMIT_NOFILE", "RLIMIT_NPROC", "RLIMIT_RSS", "RLIMIT_RTPRIO",
