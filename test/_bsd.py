@@ -22,7 +22,10 @@ from test_psutil import *
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-MUSE_AVAILABLE = which('muse')
+if os.getuid() == 0:  # muse requires root privileges
+    MUSE_AVAILABLE = which('muse')
+else:
+    MUSE_AVAILABLE = False
 
 
 def sysctl(cmdline):
@@ -38,7 +41,7 @@ def sysctl(cmdline):
 
 def muse(field):
     """Thin wrapper around 'muse' cmdline utility."""
-    out = sh('muse', stderr=DEVNULL)
+    out = sh('muse')
     for line in out.split('\n'):
         if line.startswith(field):
             break

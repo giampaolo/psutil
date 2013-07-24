@@ -389,6 +389,7 @@ get_process_threads(PyObject* self, PyObject* args)
     long pid;
     int mib[4];
     struct kinfo_proc *kip = NULL;
+    struct kinfo_proc *kipp = NULL;
     int error;
     unsigned int i;
     size_t size;

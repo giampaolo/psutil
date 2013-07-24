@@ -64,7 +64,10 @@ DEVNULL = open(os.devnull, 'r+')
 TESTFN = os.path.join(os.getcwd(), "$testfile")
 TESTFN_UNICODE = TESTFN + "ƒőő"
 if not PY3:
-    TESTFN_UNICODE = unicode(TESTFN_UNICODE, sys.getfilesystemencoding())
+    try:
+        TESTFN_UNICODE = unicode(TESTFN_UNICODE, sys.getfilesystemencoding())
+    except UnicodeDecodeError:
+        TESTFN_UNICODE = TESTFN + "???"
 
 EXAMPLES_DIR = os.path.abspath(os.path.join(os.path.dirname(
                                os.path.dirname(__file__)), 'examples'))
@@ -262,7 +265,7 @@ def safe_remove(path):
         err = sys.exc_info()[1]
         if err.args[0] == errno.ENOENT:
             return
-        elif err.args[0] == errno.EISDIR:
+        elif err.args[0] in (errno.EISDIR, errno.EPERM):
             try:
                 os.rmdir(path)
             except OSError:
