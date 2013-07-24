@@ -111,8 +111,16 @@ linux_prlimit(PyObject* self, PyObject* args)
     PyObject *soft = NULL;
     PyObject *hard = NULL;
 
-    if (! PyArg_ParseTuple(args, "li|ii", &pid, &resource, &soft, &hard))
+    if (! PyArg_ParseTuple(args,
+#if defined(HAVE_LONG_LONG)
+                           "li|LL",
+#else
+                           "li|ll",
+#endif
+                           &pid, &resource, &soft, &hard))
+    {
         return NULL;
+    }
 
     // get
     if (soft == NULL && hard == NULL) {
@@ -131,8 +139,8 @@ linux_prlimit(PyObject* self, PyObject* args)
     // set
     else {
         newp = NULL;
-        new.rlim_cur = (long long)soft;
-        new.rlim_max = (long long)hard;
+        new.rlim_cur = soft;
+        new.rlim_max = hard;
         newp = &new;
         ret = prlimit(pid, resource, newp, &old);
         if (ret == -1)
