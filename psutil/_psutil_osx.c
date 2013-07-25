@@ -432,7 +432,7 @@ get_num_cpus(PyObject* self, PyObject* args)
     len = sizeof(ncpu);
 
     if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
@@ -568,7 +568,7 @@ get_virtual_mem(PyObject* self, PyObject* args)
     mib[1] = HW_MEMSIZE;
     if (sysctl(mib, 2, &total, &len, NULL, 0)) {
         if (errno != 0)
-            PyErr_SetFromErrno(0);
+            PyErr_SetFromErrno(PyExc_OSError);
         else
             PyErr_Format(PyExc_RuntimeError, "sysctl(HW_MEMSIZE) failed");
         return NULL;
@@ -606,7 +606,7 @@ get_swap_mem(PyObject* self, PyObject* args)
     size = sizeof(totals);
     if (sysctl(mib, 2, &totals, &size, NULL, 0) == -1) {
         if (errno != 0)
-            PyErr_SetFromErrno(0);
+            PyErr_SetFromErrno(PyExc_OSError);
         else
             PyErr_Format(PyExc_RuntimeError, "sysctl(VM_SWAPUSAGE) failed");
         return NULL;
@@ -730,7 +730,7 @@ get_system_boot_time(PyObject* self, PyObject* args)
     time_t boot_time = 0;
 
     if (sysctl(request, 2, &result, &result_len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
     boot_time = result.tv_sec;
@@ -762,7 +762,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     num = getfsstat(NULL, 0, MNT_NOWAIT);
     Py_END_ALLOW_THREADS
     if (num == -1) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
@@ -777,7 +777,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     num = getfsstat(fs, len, MNT_NOWAIT);
     Py_END_ALLOW_THREADS
     if (num == -1) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
@@ -1389,7 +1389,7 @@ get_net_io_counters(PyObject* self, PyObject* args)
     mib[5] = 0;
 
     if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
@@ -1400,7 +1400,7 @@ get_net_io_counters(PyObject* self, PyObject* args)
     }
 
     if (sysctl(mib, 6, buf, &len, NULL, 0) < 0) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 

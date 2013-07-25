@@ -151,7 +151,7 @@ get_system_boot_time(PyObject* self, PyObject* args)
     size_t len = sizeof(boottime);
 
     if (sysctl(request, 2, &boottime, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
     return Py_BuildValue("d", (double)boottime.tv_sec);
@@ -498,7 +498,7 @@ get_num_cpus(PyObject* self, PyObject* args)
     len = sizeof(ncpu);
 
     if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
@@ -618,7 +618,7 @@ get_virtual_mem(PyObject* self, PyObject* args)
     );
 
 error:
-    PyErr_SetFromErrno(0);
+    PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
 
@@ -669,7 +669,7 @@ get_swap_mem(PyObject* self, PyObject* args)
                             nodein + nodeout);                      // swap out
 
 sbn_error:
-    PyErr_SetFromErrno(0);
+    PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
 
@@ -686,7 +686,7 @@ get_system_cpu_times(PyObject* self, PyObject* args)
     size = sizeof(cpu_time);
 
     if (sysctlbyname("kern.cp_time", &cpu_time, &size, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
@@ -851,7 +851,7 @@ psutil_fetch_tcplist(void)
 
     for (;;) {
         if (sysctlbyname("net.inet.tcp.pcblist", NULL, &len, NULL, 0) < 0) {
-            PyErr_SetFromErrno(0);
+            PyErr_SetFromErrno(PyExc_OSError);
             return NULL;
         }
         buf = malloc(len);
@@ -861,7 +861,7 @@ psutil_fetch_tcplist(void)
         }
         if (sysctlbyname("net.inet.tcp.pcblist", buf, &len, NULL, 0) < 0) {
             free(buf);
-            PyErr_SetFromErrno(0);
+            PyErr_SetFromErrno(PyExc_OSError);
             return NULL;
         }
         return buf;
@@ -1006,7 +1006,7 @@ get_process_connections(PyObject* self, PyObject* args)
 
     tcplist = psutil_fetch_tcplist();
     if (tcplist == NULL) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
@@ -1146,7 +1146,7 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     size = sizeof(maxcpus);
     if (sysctlbyname("kern.smp.maxcpus", &maxcpus, &size, NULL, 0) < 0) {
         Py_DECREF(py_retlist);
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
     long cpu_time[maxcpus][CPUSTATES];
@@ -1156,14 +1156,14 @@ get_system_per_cpu_times(PyObject* self, PyObject* args)
     mib[1] = HW_NCPU;
     len = sizeof(ncpu);
     if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
     // per-cpu info
     size = sizeof(cpu_time);
     if (sysctlbyname("kern.cp_times", &cpu_time, &size, NULL, 0) == -1) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
@@ -1342,7 +1342,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     num = getfsstat(NULL, 0, MNT_NOWAIT);
     Py_END_ALLOW_THREADS
     if (num == -1) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
@@ -1357,7 +1357,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     num = getfsstat(fs, len, MNT_NOWAIT);
     Py_END_ALLOW_THREADS
     if (num == -1) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
@@ -1448,7 +1448,7 @@ get_net_io_counters(PyObject* self, PyObject* args)
     mib[5] = 0;
 
     if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
@@ -1459,7 +1459,7 @@ get_net_io_counters(PyObject* self, PyObject* args)
     }
 
     if (sysctl(mib, 6, buf, &len, NULL, 0) < 0) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
@@ -1606,7 +1606,7 @@ get_system_users(PyObject* self, PyObject* args)
 
     fp = fopen(_PATH_UTMP, "r");
     if (fp == NULL) {
-        PyErr_SetFromErrno(0);
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
