@@ -9,6 +9,7 @@ NEW FEATURES
 
 BUG FIXES
 
+ * #411: [Windows] examples/disk_usage.py may pop-up a GUI error.
  * #413: [Windows] Process.get_memory_info() leaks memory.
 
 
