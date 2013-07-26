@@ -5,7 +5,11 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 NEW FEATURES
 
- * 412: [Linux] get/set process resource limits.
+ * #412: [Linux] get/set process resource limits.
+
+BUG FIXES
+
+ * #413: [Windows] Process.get_memory_info() leaks memory.
 
 
 1.0.1 - 2013-07-12

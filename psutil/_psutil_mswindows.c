@@ -652,6 +652,13 @@ get_process_memory_info_2(PyObject* self, PyObject* args)
     PSYSTEM_PROCESS_INFORMATION process;
     PVOID buffer;
     SIZE_T private;
+    unsigned long pfault_count;
+
+#if defined(_WIN64)
+    unsigned long long m1, m2, m3, m4, m5, m6, m7, m8;
+#else
+    unsigned int m1, m2, m3, m4, m5, m6, m7, m8;
+#endif
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
@@ -665,36 +672,30 @@ get_process_memory_info_2(PyObject* self, PyObject* args)
 #else
     private = 0;
 #endif
+    pfault_count = process->PageFaultCount;
 
-// SYSTEM_PROCESS_INFORMATIONvalues are defined as SIZE_T which on 64
+    m1 = process->PeakWorkingSetSize;
+    m2 = process->WorkingSetSize;
+    m3 = process->QuotaPeakPagedPoolUsage;
+    m4 = process->QuotaPagedPoolUsage;
+    m5 = process->QuotaPeakNonPagedPoolUsage;
+    m6 = process->QuotaNonPagedPoolUsage;
+    m7 = process->PagefileUsage;
+    m8 = process->PeakPagefileUsage;
+
+    free(buffer);
+
+// SYSTEM_PROCESS_INFORMATION values are defined as SIZE_T which on 64
 // bits is an (unsigned long long) and on 32bits is an (unsigned int).
 // "_WIN64" is defined if we're running a 64bit Python interpreter not
 // exclusively if the *system* is 64bit.
 #if defined(_WIN64)
     return Py_BuildValue("(kKKKKKKKKK)",
-                            process->PageFaultCount,  // unsigned long
-        (unsigned long long)process->PeakWorkingSetSize,
-        (unsigned long long)process->WorkingSetSize,
-        (unsigned long long)process->QuotaPeakPagedPoolUsage,
-        (unsigned long long)process->QuotaPagedPoolUsage,
-        (unsigned long long)process->QuotaPeakNonPagedPoolUsage,
-        (unsigned long long)process->QuotaNonPagedPoolUsage,
-        (unsigned long long)process->PagefileUsage,
-        (unsigned long long)process->PeakPagefileUsage,
-        (unsigned long long)private);
 #else
     return Py_BuildValue("(kIIIIIIIII)",
-                      process->PageFaultCount,    // unsigned long
-        (unsigned int)process->PeakWorkingSetSize,
-        (unsigned int)process->WorkingSetSize,
-        (unsigned int)process->QuotaPeakPagedPoolUsage,
-        (unsigned int)process->QuotaPagedPoolUsage,
-        (unsigned int)process->QuotaPeakNonPagedPoolUsage,
-        (unsigned int)process->QuotaNonPagedPoolUsage,
-        (unsigned int)process->PagefileUsage,
-        (unsigned int)process->PeakPagefileUsage,
-        (unsigned int)private);
 #endif
+         pfault_count, m1, m2, m3, m4, m5, m6, m7, m8, private
+    );
 }
 
 

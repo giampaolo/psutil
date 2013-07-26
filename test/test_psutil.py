@@ -56,7 +56,7 @@ NO_RETRIES = 10
 TOLERANCE = 500 * 1024  # 500KB
 
 AF_INET6 = getattr(socket, "AF_INET6")
-AF_UNIX = getattr(socket, "AF_UNIX")
+AF_UNIX = getattr(socket, "AF_UNIX", None)
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 TESTFN = os.path.join(os.getcwd(), "$testfile")
