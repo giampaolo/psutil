@@ -149,6 +149,7 @@ class Process(object):
          - parent
          - get_children()
          - set_nice()
+         - set_rlimit()
          - suspend()
          - resume()
          - send_signal()
@@ -459,6 +460,7 @@ class Process(object):
 
         def get_rlimit(self, resource):
             """Get process resource limits as a (soft, hard) tuple.
+
             'resource' is one of the RLIMIT_* constants.
 
             See "man prlimit" for further info.
@@ -469,8 +471,11 @@ class Process(object):
                 raise ValueError("can't use this method for PID 0 process")
             return self._platform_impl.process_rlimit(resource)
 
+        @_assert_pid_not_reused
         def set_rlimit(self, resource, limits):
-            """Set process resource limits.
+            """Set process resource limits pre-emptively checking
+            whether PID has been reused.
+
             'resource' is one of the RLIMIT_* constants.
             'limits' is supposed to be a (soft, hard) tuple.
 
