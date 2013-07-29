@@ -567,7 +567,14 @@ get_process_exe(PyObject* self, PyObject* args) {
 
     if (GetProcessImageFileName(hProcess, &exe, nSize) == 0) {
         CloseHandle(hProcess);
-        return PyErr_SetFromWindowsErr(0);
+        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+            // see https://code.google.com/p/psutil/issues/detail?id=414
+            AccessDenied();
+        }
+        else {
+            PyErr_SetFromWindowsErr(0);
+        }
+        return NULL;
     }
 
     CloseHandle(hProcess);
