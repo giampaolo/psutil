@@ -43,7 +43,7 @@ except ImportError:
     ast = None
 
 import psutil
-from psutil._compat import PY3, callable, long, wraps
+from psutil._compat import PY3, callable, long, wraps, u
 
 
 # ===================================================================
@@ -60,6 +60,8 @@ AF_UNIX = getattr(socket, "AF_UNIX", None)
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 TESTFN = os.path.join(os.getcwd(), "$testfile")
+TESTFN_UNICODE = u(TESTFN + "-\xe0\xf2\u0258\u0141\u011f")
+
 EXAMPLES_DIR = os.path.abspath(os.path.join(os.path.dirname(
                                os.path.dirname(__file__)), 'examples'))
 
@@ -491,6 +493,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     def setUp(self):
         safe_remove(TESTFN)
+        safe_remove(TESTFN_UNICODE)
 
     def tearDown(self):
         reap_children()
@@ -751,6 +754,14 @@ class TestSystemAPIs(unittest.TestCase):
                 raise
         else:
             self.fail("OSError not raised")
+
+    @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
+                     "os.statvfs() function not available on this platform")
+    def test_disk_usage_unicode(self):
+        # see: https://code.google.com/p/psutil/issues/detail?id=416
+        f = open(TESTFN_UNICODE, 'w')
+        f.close()
+        psutil.disk_usage(TESTFN_UNICODE)
 
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
                      "os.statvfs() function not available on this platform")
@@ -2355,9 +2366,12 @@ def cleanup():
     reap_children(search_all=True)
     DEVNULL.close()
     safe_remove(TESTFN)
+    safe_remove(TESTFN_UNICODE)
 
 atexit.register(cleanup)
 safe_remove(TESTFN)
+safe_remove(TESTFN_UNICODE)
+
 
 def test_main():
     tests = []

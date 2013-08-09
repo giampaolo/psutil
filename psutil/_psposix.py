@@ -13,6 +13,7 @@ import sys
 import time
 import glob
 
+from psutil._compat import PY3, unicode
 from psutil._error import TimeoutExpired
 from psutil._common import nt_diskinfo, usage_percent, memoize
 
@@ -96,7 +97,21 @@ def wait_pid(pid, timeout=None):
 
 def get_disk_usage(path):
     """Return disk usage associated with path."""
-    st = os.statvfs(path)
+    try:
+        st = os.statvfs(path)
+    except UnicodeEncodeError:
+        if not PY3 and isinstance(path, unicode):
+            # this is a bug with os.statvfs() and unicode on
+            # Python 2, see:
+            # - https://code.google.com/p/psutil/issues/detail?id=416
+            # - http://bugs.python.org/issue18695
+            try:
+                path = path.encode(sys.getfilesystemencoding())
+            except UnicodeEncodeError:
+                pass
+            st = os.statvfs(path)
+        else:
+            raise
     free = (st.f_bavail * st.f_frsize)
     total = (st.f_blocks * st.f_frsize)
     used = (st.f_blocks - st.f_bfree) * st.f_frsize

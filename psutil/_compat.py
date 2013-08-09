@@ -25,12 +25,20 @@ if PY3:
     int = int
     long = int
     xrange = range
+    unicode = str
     exec_ = getattr(__builtin__, "exec")
     print_ = getattr(__builtin__, "print")
+
+    def u(s):
+        return s
 else:
     int = int
     long = long
     xrange = xrange
+    unicode = unicode
+
+    def u(s):
+        return unicode(s, "unicode_escape")
 
     def exec_(code, globs=None, locs=None):
         if globs is None:
