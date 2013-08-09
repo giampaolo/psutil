@@ -11,6 +11,7 @@ BUG FIXES
 
  * #411: [Windows] examples/disk_usage.py may pop-up a GUI error.
  * #413: [Windows] Process.get_memory_info() leaks memory.
+ * #416: [Windows] psutil.disk_usage() doesn't work well with unicode paths.
 
 
 1.0.1 - 2013-07-12
