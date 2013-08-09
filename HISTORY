@@ -9,10 +9,17 @@ NEW FEATURES
 
 BUG FIXES
 
+ * #408: STATUS_* and CONN_* constants don't properly serialize on JSON.
  * #411: [Windows] examples/disk_usage.py may pop-up a GUI error.
  * #413: [Windows] Process.get_memory_info() leaks memory.
  * #414: [Windows] Process.exe on Windows XP may raise ERROR_INVALID_PARAMETER.
  * #416: psutil.disk_usage() doesn't work well with unicode path names.
+
+API CHANGES
+
+ * #408: STATUS_* and CONN_* constants (returned by Process' status() and
+         get_connections() methods respectively) have been turned from constant
+         objects to plain Python strings.
 
 
 1.0.1 - 2013-07-12

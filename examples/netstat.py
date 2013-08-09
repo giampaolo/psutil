@@ -44,7 +44,7 @@ def main():
                 print_(templ % (proto_map[(c.family, c.type)],
                                 laddr,
                                 raddr,
-                                str(c.status),
+                                c.status,
                                 p.pid,
                                 name[:15]))
 

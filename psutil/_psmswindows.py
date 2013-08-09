@@ -49,7 +49,7 @@ except Exception:
     TOTAL_PHYMEM = None
     warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
 
-CONN_DELETE_TCB = constant(11, "DELETE_TCB")
+CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102 # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED])
 TCP_STATES_TABLE = {

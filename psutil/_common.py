@@ -28,38 +28,6 @@ def usage_percent(used, total, _round=None):
     else:
         return ret
 
-class constant(int):
-    """A constant type; overrides base int to provide a useful name on str()."""
-
-    def __new__(cls, value, name, doc=None):
-        inst = super(constant, cls).__new__(cls, value)
-        inst._name = name
-        if doc is not None:
-            inst.__doc__ = doc
-        return inst
-
-    def __str__(self):
-        return self._name
-
-    def __eq__(self, other):
-        # Use both int or str values when comparing for equality
-        # (useful for serialization):
-        # >>> st = constant(0, "running")
-        # >>> st == 0
-        # True
-        # >>> st == 'running'
-        # True
-        if isinstance(other, int):
-            return int(self) == other
-        if isinstance(other, long):
-            return long(self) == other
-        if isinstance(other, str):
-            return self._name == other
-        return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
 def memoize(f):
     """A simple memoize decorator for functions."""
     cache= {}
@@ -119,31 +87,31 @@ def isfile_strict(path):
 
 # --- constants
 
-STATUS_RUNNING = constant(0, "running")
-STATUS_SLEEPING = constant(1, "sleeping")
-STATUS_DISK_SLEEP = constant(2, "disk sleep")
-STATUS_STOPPED = constant(3, "stopped")
-STATUS_TRACING_STOP = constant(4, "tracing stop")
-STATUS_ZOMBIE = constant(5, "zombie")
-STATUS_DEAD = constant(6, "dead")
-STATUS_WAKE_KILL = constant(7, "wake kill")
-STATUS_WAKING = constant(8, "waking")
-STATUS_IDLE = constant(9, "idle")  # BSD
-STATUS_LOCKED = constant(10, "locked")  # BSD
-STATUS_WAITING = constant(11, "waiting")  # BSD
+STATUS_RUNNING = "running"
+STATUS_SLEEPING = "sleeping"
+STATUS_DISK_SLEEP = "disk-sleep"
+STATUS_STOPPED = "stopped"
+STATUS_TRACING_STOP = "tracing-stop"
+STATUS_ZOMBIE = "zombie"
+STATUS_DEAD = "dead"
+STATUS_WAKE_KILL = "wake-kill"
+STATUS_WAKING = "waking"
+STATUS_IDLE = "idle"  # BSD
+STATUS_LOCKED = "locked"  # BSD
+STATUS_WAITING = "waiting"  # BSD
 
-CONN_ESTABLISHED = constant(0, "ESTABLISHED")
-CONN_SYN_SENT = constant(1, "SYN_SENT")
-CONN_SYN_RECV = constant(2, "SYN_RECV")
-CONN_FIN_WAIT1 = constant(3, "FIN_WAIT1")
-CONN_FIN_WAIT2 = constant(4, "FIN_WAIT2")
-CONN_TIME_WAIT = constant(5, "TIME_WAIT")
-CONN_CLOSE = constant(6, "CLOSE")
-CONN_CLOSE_WAIT = constant(7, "CLOSE_WAIT")
-CONN_LAST_ACK = constant(8, "LAST_ACK")
-CONN_LISTEN = constant(9, "LISTEN")
-CONN_CLOSING = constant(10, "CLOSING")
-CONN_NONE = constant(20, "NONE")
+CONN_ESTABLISHED = "ESTABLISHED"
+CONN_SYN_SENT = "SYN_SENT"
+CONN_SYN_RECV = "SYN_RECV"
+CONN_FIN_WAIT1 = "FIN_WAIT1"
+CONN_FIN_WAIT2 = "FIN_WAIT2"
+CONN_TIME_WAIT = "TIME_WAIT"
+CONN_CLOSE = "CLOSE"
+CONN_CLOSE_WAIT = "CLOSE_WAIT"
+CONN_LAST_ACK = "LAST_ACK"
+CONN_LISTEN = "LISTEN"
+CONN_CLOSING = "CLOSING"
+CONN_NONE = "NONE"
 
 # --- Process.get_connections() 'kind' parameter mapping
 

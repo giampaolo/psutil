@@ -80,9 +80,9 @@ def poll(interval):
                                 'get_memory_percent', 'get_cpu_percent',
                                 'get_cpu_times', 'name', 'status'])
             try:
-                procs_status[str(p.dict['status'])] += 1
+                procs_status[p.dict['status']] += 1
             except KeyError:
-                procs_status[str(p.dict['status'])] = 1
+                procs_status[p.dict['status']] = 1
         except psutil.NoSuchProcess:
             pass
         else:

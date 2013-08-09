@@ -225,7 +225,7 @@ def check_connection(conn):
             s.close()
     elif conn.family == AF_UNIX:
        assert not conn.raddr, repr(conn.raddr)
-       assert conn.status == psutil.CONN_NONE, str(conn.status)
+       assert conn.status == psutil.CONN_NONE, conn.status
 
     if getattr(conn, 'fd', -1) != -1:
         assert conn.fd > 0, conn
@@ -1390,20 +1390,6 @@ class TestProcess(unittest.TestCase):
     def test_status(self):
         p = psutil.Process(os.getpid())
         self.assertEqual(p.status, psutil.STATUS_RUNNING)
-        self.assertEqual(str(p.status), "running")
-
-    def test_status_constants(self):
-        # STATUS_* constants are supposed to be comparable also by
-        # using their str representation
-        self.assertTrue(psutil.STATUS_RUNNING == 0)
-        self.assertTrue(psutil.STATUS_RUNNING == long(0))
-        self.assertTrue(psutil.STATUS_RUNNING == 'running')
-        self.assertFalse(psutil.STATUS_RUNNING == 1)
-        self.assertFalse(psutil.STATUS_RUNNING == 'sleeping')
-        self.assertFalse(psutil.STATUS_RUNNING != 0)
-        self.assertFalse(psutil.STATUS_RUNNING != 'running')
-        self.assertTrue(psutil.STATUS_RUNNING != 1)
-        self.assertTrue(psutil.STATUS_RUNNING != 'sleeping')
 
     def test_username(self):
         sproc = get_test_subprocess()
@@ -1536,7 +1522,7 @@ class TestProcess(unittest.TestCase):
         check_connection(con)
         self.assertEqual(con.family, AF_INET)
         self.assertEqual(con.type, SOCK_STREAM)
-        self.assertEqual(con.status, psutil.CONN_LISTEN, str(con.status))
+        self.assertEqual(con.status, psutil.CONN_LISTEN, con.status)
         self.assertEqual(con.laddr[0], '127.0.0.1')
         self.assertEqual(con.raddr, ())
         # test positions
@@ -1646,8 +1632,7 @@ class TestProcess(unittest.TestCase):
                     self.assertEqual(conn.type, SOCK_STREAM)
                     self.assertEqual(conn.laddr[0], "127.0.0.1")
                     self.assertEqual(conn.raddr, ())
-                    self.assertEqual(conn.status, psutil.CONN_LISTEN,
-                                    str(conn.status))
+                    self.assertEqual(conn.status, psutil.CONN_LISTEN)
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet4", "tcp", "tcp4"):
@@ -1660,8 +1645,7 @@ class TestProcess(unittest.TestCase):
                     self.assertEqual(conn.type, SOCK_DGRAM)
                     self.assertEqual(conn.laddr[0], "127.0.0.1")
                     self.assertEqual(conn.raddr, ())
-                    self.assertEqual(conn.status, psutil.CONN_NONE,
-                                     str(conn.status))
+                    self.assertEqual(conn.status, psutil.CONN_NONE)
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet4", "udp", "udp4"):
@@ -1674,8 +1658,7 @@ class TestProcess(unittest.TestCase):
                     self.assertEqual(conn.type, SOCK_STREAM)
                     self.assertIn(conn.laddr[0], ("::", "::1"))
                     self.assertEqual(conn.raddr, ())
-                    self.assertEqual(conn.status, psutil.CONN_LISTEN,
-                                     str(conn.status))
+                    self.assertEqual(conn.status, psutil.CONN_LISTEN)
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet6", "tcp", "tcp6"):
@@ -1688,8 +1671,7 @@ class TestProcess(unittest.TestCase):
                     self.assertEqual(conn.type, SOCK_DGRAM)
                     self.assertIn(conn.laddr[0], ("::", "::1"))
                     self.assertEqual(conn.raddr, ())
-                    self.assertEqual(conn.status, psutil.CONN_NONE,
-                                     str(conn.status))
+                    self.assertEqual(conn.status, psutil.CONN_NONE)
                     for kind in all_kinds:
                         cons = p.get_connections(kind=kind)
                         if kind in ("all", "inet", "inet6", "udp", "udp6"):
@@ -1791,9 +1773,8 @@ class TestProcess(unittest.TestCase):
             if p.status == psutil.STATUS_STOPPED:
                 break
             time.sleep(0.01)
-        self.assertEqual(str(p.status), "stopped")
         p.resume()
-        assert p.status != psutil.STATUS_STOPPED, p.status
+        self.assertNotEqual(p.status, psutil.STATUS_STOPPED)
 
     def test_invalid_pid(self):
         self.assertRaises(TypeError, psutil.Process, "1")
@@ -1801,16 +1782,14 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(ValueError, psutil.Process, -1)
 
     def test_as_dict(self):
-        sproc = get_test_subprocess()
-        p = psutil.Process(sproc.pid)
+        p = psutil.Process(os.getpid())
         d = p.as_dict()
         try:
             import json
         except ImportError:
             pass
         else:
-            # dict is supposed to be hashable
-            json.dumps(d)
+            json.loads(json.dumps(d))
         #
         d = p.as_dict(attrs=['exe', 'name'])
         self.assertEqual(sorted(d.keys()), ['exe', 'name'])
@@ -2103,8 +2082,8 @@ class TestFetchAllProcesses(unittest.TestCase):
             self.assertIn(ret, self._usernames)
 
     def status(self, ret):
-        self.assertTrue(ret >= 0)
-        self.assertTrue(str(ret) != '?')
+        self.assertTrue(ret != "")
+        self.assertTrue(ret != '?')
 
     def get_io_counters(self, ret):
         for field in ret:
