@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -61,7 +62,9 @@ AF_UNIX = getattr(socket, "AF_UNIX", None)
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 TESTFN = os.path.join(os.getcwd(), "$testfile")
-TESTFN_UNICODE = u(TESTFN + "-\xe0\xf2\u0258\u0141\u011f")
+TESTFN_UNICODE = TESTFN + "ƒőő"
+if not PY3:
+    TESTFN_UNICODE = unicode(TESTFN_UNICODE, sys.getfilesystemencoding())
 
 EXAMPLES_DIR = os.path.abspath(os.path.join(os.path.dirname(
                                os.path.dirname(__file__)), 'examples'))
@@ -250,13 +253,22 @@ def check_connection(conn):
 
 
 def safe_remove(fname):
-    """Deletes a file and does not exception if it doesn't exist."""
-    try:
-        os.remove(fname)
-    except OSError:
-        err = sys.exc_info()[1]
-        if err.args[0] != errno.ENOENT:
-            raise
+    """Deletes a file or directory and ignore exception in case it
+    doesn't exist.
+    """
+    fun = None
+    if os.path.isfile(fname):
+        fun = os.remove
+    elif os.path.isdir(fname):
+        fun = os.rmdir
+
+    if fun is not None:
+        try:
+            fun(fname)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.args[0] != errno.ENOENT:
+                raise
 
 def call_until(fun, expr, timeout=1):
     """Keep calling function for timeout secs and exit if eval()
@@ -769,8 +781,7 @@ class TestSystemAPIs(unittest.TestCase):
                      "os.statvfs() function not available on this platform")
     def test_disk_usage_unicode(self):
         # see: https://code.google.com/p/psutil/issues/detail?id=416
-        f = open(TESTFN_UNICODE, 'w')
-        f.close()
+        os.mkdir(TESTFN_UNICODE)
         psutil.disk_usage(TESTFN_UNICODE)
 
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),

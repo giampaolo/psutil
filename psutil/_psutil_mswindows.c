@@ -2187,7 +2187,6 @@ get_disk_usage(PyObject* self, PyObject* args)
     char *path;
 
     if (PyArg_ParseTuple(args, "u", &path)) {
-        printf("unicode\n\n");
         Py_BEGIN_ALLOW_THREADS
         retval = GetDiskFreeSpaceExW(path, &_, &total, &free);
         Py_END_ALLOW_THREADS
@@ -2199,7 +2198,6 @@ get_disk_usage(PyObject* self, PyObject* args)
 #if PY_MAJOR_VERSION <= 2
     PyErr_Clear();  // drop the argument parsing error
     if (PyArg_ParseTuple(args, "s", &path)) {
-        printf("str\n\n");
         Py_BEGIN_ALLOW_THREADS
         retval = GetDiskFreeSpaceEx(path, &_, &total, &free);
         Py_END_ALLOW_THREADS
