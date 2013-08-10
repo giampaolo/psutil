@@ -2184,22 +2184,37 @@ get_disk_usage(PyObject* self, PyObject* args)
 {
     BOOL retval;
     ULARGE_INTEGER _, total, free;
-    const wchar_t *path;
+    char *path;
 
-    if (! PyArg_ParseTuple(args, "u", &path))
-        return NULL;
-
-    Py_BEGIN_ALLOW_THREADS
-    retval = GetDiskFreeSpaceExW(path, &_, &total, &free);
-    Py_END_ALLOW_THREADS
-    if (retval == 0) {
-        return PyErr_SetFromWindowsErr(0);
+    if (PyArg_ParseTuple(args, "u", &path)) {
+        printf("unicode\n\n");
+        Py_BEGIN_ALLOW_THREADS
+        retval = GetDiskFreeSpaceExW(path, &_, &total, &free);
+        Py_END_ALLOW_THREADS
+        goto return_;
     }
 
-    return Py_BuildValue("(LL)", total.QuadPart, free.QuadPart);
+    // on Python 2 we also want to accept plain strings other
+    // than Unicode
+#if PY_MAJOR_VERSION <= 2
+    PyErr_Clear();  // drop the argument parsing error
+    if (PyArg_ParseTuple(args, "s", &path)) {
+        printf("str\n\n");
+        Py_BEGIN_ALLOW_THREADS
+        retval = GetDiskFreeSpaceEx(path, &_, &total, &free);
+        Py_END_ALLOW_THREADS
+        goto return_;
+    }
+#endif
 
+    return NULL;
+
+return_:
+    if (retval == 0)
+        return PyErr_SetFromWindowsErr(0);
+    else
+        return Py_BuildValue("(LL)", total.QuadPart, free.QuadPart);
 }
-
 
 /*
  * Return a Python list of named tuples with overall network I/O information
