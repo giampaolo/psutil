@@ -31,6 +31,7 @@ import tempfile
 import stat
 import collections
 import datetime
+import shutil
 import socket
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
 try:
@@ -742,6 +743,15 @@ class TestSystemAPIs(unittest.TestCase):
         assert usage.total > usage.used, usage
         assert usage.total > usage.free, usage
         assert 0 <= usage.percent <= 100, usage.percent
+        if hasattr(shutil, 'disk_usage'):
+            # py >= 3.3, see: http://bugs.python.org/issue12442
+            shutil_usage = shutil.disk_usage(os.getcwd())
+            tolerance = 5 * 1024 * 1024  # 5MB
+            self.assertEqual(usage.total, shutil_usage.total)
+            self.assertAlmostEqual(usage.free, shutil_usage.free,
+                                   delta=tolerance)
+            self.assertAlmostEqual(usage.used, shutil_usage.used,
+                                   delta=tolerance)
 
         # if path does not exist OSError ENOENT is expected across
         # all platforms

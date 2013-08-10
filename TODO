@@ -91,3 +91,20 @@ DEBATABLE
  * Certain systems (XXX figure out which ones exactly) provide CPU times about
    process children. On those systems Process.get_cpu_times() might return
    a (user, system, user_children, system_children) ntuple.
+
+ * Enrich exception classes hierarchy on Python >= 3.3 / post PEP-3151 so that:
+   - NoSuchProcess inherits from ProcessLookupError
+   - AccessDenied inherits from PermissionError
+   - TimeoutExpired inherits from TimeoutError (debatable)
+   See: http://docs.python.org/3/library/exceptions.html#os-exceptions
+
+ * Process.get_threads() might grow an extra "id" parameter so that it can be
+   used as such:
+
+    >>> p = psutil.Process(pid)
+    >>> p.get_threads(id=psutil.get_current_thread_id())
+    thread(id=2539, user_time=0.03, system_time=0.02)
+    >>>
+
+   note: this leads to questions such as "should we have a custom NoSuchThread
+   exception? Also see issue #418.
