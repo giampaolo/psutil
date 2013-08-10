@@ -252,23 +252,25 @@ def check_connection(conn):
                     dupsock.close()
 
 
-def safe_remove(fname):
+def safe_remove(path):
     """Deletes a file or directory and ignore exception in case it
     doesn't exist.
     """
-    fun = None
-    if os.path.isfile(fname):
-        fun = os.remove
-    elif os.path.isdir(fname):
-        fun = os.rmdir
-
-    if fun is not None:
-        try:
-            fun(fname)
-        except OSError:
-            err = sys.exc_info()[1]
-            if err.args[0] != errno.ENOENT:
-                raise
+    try:
+        os.remove(path)
+    except OSError:
+        err = sys.exc_info()[1]
+        if err.args[0] == errno.ENOENT:
+            return
+        elif err.args[0] == errno.EISDIR:
+            try:
+                os.rmdir(path)
+            except OSError:
+                err = sys.exc_info()[1]
+                if err.args[0] != errno.ENOENT:
+                    raise
+        else:
+            raise
 
 def call_until(fun, expr, timeout=1):
     """Keep calling function for timeout secs and exit if eval()
