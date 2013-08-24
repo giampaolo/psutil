@@ -120,7 +120,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
 
     def test_cpu_times(self):
         fields = psutil.cpu_times()._fields
-        kernel_ver = re.findall('\d.\d.\d', os.uname()[2])[0]
+        kernel_ver = re.findall('\d+\.\d+\.\d+', os.uname()[2])[0]
         kernel_ver_info = tuple(map(int, kernel_ver.split('.')))
         # steal >= 2.6.11
         # guest >= 2.6.24
