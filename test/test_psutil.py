@@ -254,25 +254,22 @@ def check_connection(conn):
                 if dupsock is not None:
                     dupsock.close()
 
-
-def safe_remove(path):
-    """Deletes a file or directory and ignore exception in case it
-    doesn't exist.
-    """
+def safe_remove(file):
+    "Convenience function for removing temporary test files"
     try:
-        os.remove(path)
+        os.remove(file)
     except OSError:
         err = sys.exc_info()[1]
-        if err.args[0] == errno.ENOENT:
-            return
-        elif err.args[0] in (errno.EISDIR, errno.EPERM):
-            try:
-                os.rmdir(path)
-            except OSError:
-                err = sys.exc_info()[1]
-                if err.args[0] != errno.ENOENT:
-                    raise
-        else:
+        if err.errno != errno.ENOENT:
+            raise
+
+def safe_rmdir(dir):
+    "Convenience function for removing temporary test directories"
+    try:
+        os.rmdir(dir)
+    except OSError:
+        err = sys.exc_info()[1]
+        if err.errno != errno.ENOENT:
             raise
 
 def call_until(fun, expr, timeout=1):
@@ -511,7 +508,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     def setUp(self):
         safe_remove(TESTFN)
-        safe_remove(TESTFN_UNICODE)
+        safe_rmdir(TESTFN_UNICODE)
 
     def tearDown(self):
         reap_children()
@@ -2371,11 +2368,11 @@ def cleanup():
     reap_children(search_all=True)
     DEVNULL.close()
     safe_remove(TESTFN)
-    safe_remove(TESTFN_UNICODE)
+    safe_rmdir(TESTFN_UNICODE)
 
 atexit.register(cleanup)
 safe_remove(TESTFN)
-safe_remove(TESTFN_UNICODE)
+safe_rmdir(TESTFN_UNICODE)
 
 
 def test_main():
