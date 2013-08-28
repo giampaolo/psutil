@@ -401,7 +401,6 @@ void init_psutil_linux(void)
     PyObject *module = Py_InitModule("_psutil_linux", PsutilMethods);
 #endif
     PyModule_AddIntConstant(module, "RLIM_INFINITY", RLIM_INFINITY);
-
     PyModule_AddIntConstant(module, "RLIMIT_AS", RLIMIT_AS);
     PyModule_AddIntConstant(module, "RLIMIT_CORE", RLIMIT_CORE);
     PyModule_AddIntConstant(module, "RLIMIT_CPU", RLIMIT_CPU);
@@ -409,15 +408,25 @@ void init_psutil_linux(void)
     PyModule_AddIntConstant(module, "RLIMIT_FSIZE", RLIMIT_FSIZE);
     PyModule_AddIntConstant(module, "RLIMIT_LOCKS", RLIMIT_LOCKS);
     PyModule_AddIntConstant(module, "RLIMIT_MEMLOCK", RLIMIT_MEMLOCK);
-    PyModule_AddIntConstant(module, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE);
-    PyModule_AddIntConstant(module, "RLIMIT_NICE", RLIMIT_NICE);
     PyModule_AddIntConstant(module, "RLIMIT_NOFILE", RLIMIT_NOFILE);
     PyModule_AddIntConstant(module, "RLIMIT_NPROC", RLIMIT_NPROC);
     PyModule_AddIntConstant(module, "RLIMIT_RSS", RLIMIT_RSS);
-    PyModule_AddIntConstant(module, "RLIMIT_RTPRIO", RLIMIT_RTPRIO);
-    PyModule_AddIntConstant(module, "RLIMIT_RTTIME", RLIMIT_RTTIME);
-    PyModule_AddIntConstant(module, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING);
     PyModule_AddIntConstant(module, "RLIMIT_STACK", RLIMIT_STACK);
+#ifdef RLIMIT_MSGQUEUE
+    PyModule_AddIntConstant(module, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE);
+#endif
+#ifdef RLIMIT_NICE
+    PyModule_AddIntConstant(module, "RLIMIT_NICE", RLIMIT_NICE);
+#endif
+#ifdef RLIMIT_RTPRIO
+    PyModule_AddIntConstant(module, "RLIMIT_RTPRIO", RLIMIT_RTPRIO);
+#endif
+#ifdef RLIMIT_RTTIME
+    PyModule_AddIntConstant(module, "RLIMIT_RTTIME", RLIMIT_RTTIME);
+#endif
+#ifdef RLIMIT_SIGPENDING
+    PyModule_AddIntConstant(module, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING);
+#endif
 
     if (module == NULL) {
         INITERROR;
