@@ -244,33 +244,6 @@ psutil_get_name(long pid)
 }
 
 
-/* returns parent pid (as a Python int) for given pid or None on failure */
-PyObject*
-psutil_get_ppid(long pid)
-{
-    HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    PROCESSENTRY32 pe = { 0 };
-    pe.dwSize = sizeof(PROCESSENTRY32);
-
-    if( Process32First(h, &pe)) {
-        do {
-            if (pe.th32ProcessID == pid) {
-                CloseHandle(h);
-                return Py_BuildValue("I", pe.th32ParentProcessID);
-            }
-        } while(Process32Next(h, &pe));
-
-        // the process was never found, set NoSuchProcess exception
-        NoSuchProcess();
-        CloseHandle(h);
-        return NULL;
-    }
-
-    CloseHandle(h);
-    return PyErr_SetFromWindowsErr(0);
-}
-
-
 /*
  * returns a Python list representing the arguments for the process
  * with given pid or NULL on error.

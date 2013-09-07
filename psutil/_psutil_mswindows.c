@@ -477,37 +477,6 @@ get_process_name(PyObject* self, PyObject* args) {
 
 
 /*
- * Return process parent pid as a Python integer.
- */
-static PyObject*
-get_process_ppid(PyObject* self, PyObject* args) {
-    long pid;
-    int pid_return;
-    PyObject* ppid;
-
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-    if ((pid == 0) || (pid == 4)) {
-        return Py_BuildValue("l", 0);
-    }
-
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0) {
-        return NoSuchProcess();
-    }
-    if (pid_return == -1) {
-        return NULL;
-    }
-
-    ppid = psutil_get_ppid(pid);
-    if (ppid == NULL) {
-        return NULL;  // exception set in psutil_get_ppid()
-    }
-    return ppid;
-}
-
-/*
  * Return process cmdline as a Python list of cmdline arguments.
  */
 static PyObject*
@@ -2941,8 +2910,6 @@ PsutilMethods[] =
         "Return process cmdline as a list of cmdline arguments"},
     {"get_process_exe", get_process_exe, METH_VARARGS,
         "Return path of the process executable"},
-    {"get_process_ppid", get_process_ppid, METH_VARARGS,
-        "Return process ppid as an integer"},
     {"kill_process", kill_process, METH_VARARGS,
         "Kill the process identified by the given PID"},
     {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
