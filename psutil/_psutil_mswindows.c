@@ -2879,6 +2879,55 @@ error:
     return NULL;
 }
 
+
+/*
+ * Return a {pid:ppid, ...} dict for all running processes.
+ */
+static PyObject*
+get_ppid_map(PyObject* self, PyObject* args)
+{
+    PyObject* pid = NULL;
+    PyObject* ppid = NULL;
+    PyObject* py_retdict = PyDict_New();
+    HANDLE handle = NULL;
+    PROCESSENTRY32 pe = {0};
+    pe.dwSize = sizeof(PROCESSENTRY32);
+
+    if (py_retdict == NULL)
+        return NULL;
+    handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (handle == INVALID_HANDLE_VALUE) {
+        PyErr_SetFromWindowsErr(0);
+        Py_DECREF(py_retdict);
+        return NULL;
+    }
+
+    if (Process32First(handle, &pe)) {
+        do {
+            pid = Py_BuildValue("I", pe.th32ProcessID);
+            if (pid == NULL)
+                goto error;
+            ppid = Py_BuildValue("I", pe.th32ParentProcessID);
+            if (ppid == NULL)
+                goto error;
+            if (PyDict_SetItem(py_retdict, pid, ppid))
+                goto error;
+        } while (Process32Next(handle, &pe));
+    }
+
+    CloseHandle(handle);
+    return py_retdict;
+
+error:
+    Py_XDECREF(pid);
+    Py_XDECREF(ppid);
+    Py_DECREF(py_retdict);
+    CloseHandle(handle);
+    return NULL;
+}
+
+
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -2945,6 +2994,8 @@ PsutilMethods[] =
         "Return the number of context switches performed by process."},
     {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
         "Return a list of process's memory mappings"},
+    {"get_ppid_map", get_ppid_map, METH_VARARGS,
+        "Return a {pid:ppid, ...} dict for all running processes"},
 
     // --- alternative pinfo interface
     {"get_process_cpu_times_2", get_process_cpu_times_2, METH_VARARGS,

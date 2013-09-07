@@ -173,10 +173,14 @@ def get_system_users():
         retlist.append(nt)
     return retlist
 
+
 get_pid_list = _psutil_mswindows.get_pid_list
 pid_exists = _psutil_mswindows.pid_exists
 net_io_counters = _psutil_mswindows.get_net_io_counters
 disk_io_counters = _psutil_mswindows.get_disk_io_counters
+get_ppid_map = _psutil_mswindows.get_ppid_map  # not meant to be public
+
+
 
 # --- decorator
 
@@ -224,10 +228,12 @@ class Process(object):
         """Return process cmdline as a list of arguments."""
         return _psutil_mswindows.get_process_cmdline(self.pid)
 
-    @wrap_exceptions
     def get_process_ppid(self):
         """Return process parent pid."""
-        return _psutil_mswindows.get_process_ppid(self.pid)
+        try:
+            return get_ppid_map()[self.pid]
+        except KeyError:
+            raise NoSuchProcess(self.pid, self._process_name)
 
     def _get_raw_meminfo(self):
         try:

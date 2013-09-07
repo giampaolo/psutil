@@ -558,26 +558,55 @@ class Process(object):
         process Y won't be returned either as the reference to
         process A is lost.
         """
+        if hasattr(_psplatform, 'get_ppid_map'):
+            # Windows only: obtain a {pid:ppid, ...} dict for all running
+            # processes in one shot (faster).
+            ppid_map = _psplatform.get_ppid_map()
+        else:
+            ppid_map = None
+
         ret = []
         if not recursive:
-            for p in process_iter():
-                try:
-                    if p.ppid == self.pid:
-                        # if child happens to be older than its parent
-                        # (self) it means child's PID has been reused
-                        if self.create_time <= p.create_time:
-                            ret.append(p)
-                except NoSuchProcess:
-                    pass
+            if ppid_map is None:
+                # 'slow' version, common to all platforms except Windows
+                for p in process_iter():
+                    try:
+                        if p.ppid == self.pid:
+                            # if child happens to be older than its parent
+                            # (self) it means child's PID has been reused
+                            if self.create_time <= p.create_time:
+                                ret.append(p)
+                    except NoSuchProcess:
+                        pass
+            else:
+                # Windows only (faster)
+                for pid, ppid in ppid_map.items():
+                    if ppid == self.pid:
+                        try:
+                            child = Process(pid)
+                            # if child happens to be older than its parent
+                            # (self) it means child's PID has been reused
+                            if self.create_time <= child.create_time:
+                                ret.append(child)
+                        except NoSuchProcess:
+                            pass
         else:
             # construct a dict where 'values' are all the processes
             # having 'key' as their parent
             table = defaultdict(list)
-            for p in process_iter():
-                try:
-                    table[p.ppid].append(p)
-                except NoSuchProcess:
-                    pass
+            if ppid_map is None:
+                for p in process_iter():
+                    try:
+                        table[p.ppid].append(p)
+                    except NoSuchProcess:
+                        pass
+            else:
+                for pid, ppid in ppid_map.items():
+                    try:
+                        p = Process(pid)
+                        table[ppid].append(p)
+                    except NoSuchProcess:
+                        pass
             # At this point we have a mapping table where table[self.pid]
             # are the current process's children.
             # Below, we look for all descendants recursively, similarly
