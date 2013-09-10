@@ -440,41 +440,6 @@ get_num_cpus(PyObject* self, PyObject* args)
     return Py_BuildValue("I", system_info.dwNumberOfProcessors);
 }
 
-/*
- * Return process name as a Python string.
- */
-static PyObject*
-get_process_name(PyObject* self, PyObject* args) {
-    long pid;
-    int pid_return;
-    PyObject* name;
-
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-
-    if (pid == 0) {
-        return Py_BuildValue("s", "System Idle Process");
-    }
-    else if (pid == 4) {
-        return Py_BuildValue("s", "System");
-    }
-
-    pid_return = psutil_pid_is_running(pid);
-    if (pid_return == 0) {
-        return NoSuchProcess();
-    }
-    if (pid_return == -1) {
-        return NULL;
-    }
-
-    name = psutil_get_name(pid);
-    if (name == NULL) {
-        return NULL;  // exception set in psutil_get_name()
-    }
-    return name;
-}
-
 
 /*
  * Return process cmdline as a Python list of cmdline arguments.
@@ -2904,8 +2869,6 @@ PsutilMethods[] =
 {
     // --- per-process functions
 
-    {"get_process_name", get_process_name, METH_VARARGS,
-        "Return process name"},
     {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
         "Return process cmdline as a list of cmdline arguments"},
     {"get_process_exe", get_process_exe, METH_VARARGS,

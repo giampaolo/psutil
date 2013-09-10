@@ -18,5 +18,4 @@ int psutil_pid_in_proclist(DWORD pid);
 int psutil_pid_is_running(DWORD pid);
 int psutil_handlep_is_running(HANDLE hProcess);
 PyObject* psutil_get_arg_list(long pid);
-PyObject* psutil_get_name(long pid);
 DWORD* psutil_get_pids(DWORD *numberOfReturnedPIDs);

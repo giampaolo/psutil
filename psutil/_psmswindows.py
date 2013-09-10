@@ -213,8 +213,17 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_name(self):
-        """Return process name as a string of limited len (15)."""
-        return _psutil_mswindows.get_process_name(self.pid)
+        """Return process name, which on Windows is always the final
+        part of the executable.
+        """
+        # This is how PIDs 0 and 4 are always represented in taskmgr
+        # and process-hacker.
+        if self.pid == 0:
+            return "System Idle Process"
+        elif self.pid == 4:
+            return "System"
+        else:
+            return os.path.basename(self.get_process_exe())
 
     @wrap_exceptions
     def get_process_exe(self):
