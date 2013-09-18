@@ -108,3 +108,9 @@ DEBATABLE
 
    note: this leads to questions such as "should we have a custom NoSuchThread
    exception? Also see issue #418.
+
+  * should psutil.TimeoutExpired exception have a 'msg' kwarg similar to
+    NoSuchProcess and AccessDenied? Not that we need it, but currently we
+    cannot raise a TimeoutExpired exception with a specific error string.
+    Side note: tests' call_until() should raise TimeoutExpired instead of
+    RuntimeError.

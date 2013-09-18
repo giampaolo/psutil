@@ -34,6 +34,7 @@ import collections
 import datetime
 import shutil
 import socket
+import textwrap
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
 try:
     import unittest2 as unittest  # pyhon < 2.7 + unittest2 installed
@@ -1822,7 +1823,7 @@ class TestProcess(unittest.TestCase):
         if not isinstance(d['connections'], list):
             self.assertEqual(d['connections'], 'foo')
 
-    def test_zombie_process(self):
+    def test_halfway_terminated_process(self):
         # Test that NoSuchProcess exception gets raised in case the
         # process dies after we create the Process object.
         # Example:
@@ -1875,6 +1876,60 @@ class TestProcess(unittest.TestCase):
         self.assertFalse(p.is_running())
         if hasattr(p, "set_cpu_affinity"):
             self.assertRaises(psutil.NoSuchProcess, p.set_cpu_affinity, [0])
+
+    @unittest.skipUnless(POSIX, 'posix only')
+    def test_zombie_process(self):
+        # Note: in this test we'll be creating two sub processes.
+        # Both of them are supposed to be freed / killed by
+        # reap_children() as they are attributable to 'us'
+        # (os.getpid()) via get_children(recursive=True).
+        src = textwrap.dedent("""\
+        import os, sys, time, socket
+        child_pid = os.fork()
+        if child_pid > 0:
+            time.sleep(3000)
+        else:
+            # this is the zombie process
+            s = socket.socket(socket.AF_UNIX)
+            s.connect('%s')
+            s.sendall(str(os.getpid()))
+            s.close()
+        """ % TESTFN)
+        f = sock = None
+        try:
+            f = tempfile.NamedTemporaryFile()
+            f.write(src)
+            f.flush()
+            sock = socket.socket(socket.AF_UNIX)
+            sock.settimeout(2)
+            sock.bind(TESTFN)
+            sock.listen(1)
+            subp = get_test_subprocess([PYTHON, f.name], stdout=None,
+                                       stderr=None)
+            conn, _ = sock.accept()
+            zpid = int(conn.recv(1024))
+            zproc = psutil.Process(zpid)
+            # Make sure we can re-instantiate the process after its
+            # status changed to zombie.
+            # All our API (pid_exists(), Process(), get_pid_list())
+            # is supposed to support zombie processes and treat them
+            # like any other process in a different status.
+            # Reason is we want to support the use case where one
+            # wants to identify and kill all zombie processes on
+            # the system.
+            call_until(lambda: zproc.status, "ret == psutil.STATUS_ZOMBIE")
+            self.assertTrue(psutil.pid_exists(zpid))
+            zproc = psutil.Process(zpid)
+            zproc.as_dict()
+            descendants = [x.pid for x in \
+                    psutil.Process(os.getpid()).get_children(recursive=True)]
+            self.assertIn(zpid, descendants)
+        finally:
+            if f is not None:
+                f.close()
+            if sock is not None:
+                sock.close()
+            reap_children(search_all=True)
 
     def test__str__(self):
         sproc = get_test_subprocess()
