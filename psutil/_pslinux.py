@@ -529,24 +529,30 @@ class Process(object):
         except KeyError:
             return None
 
-    @wrap_exceptions
-    def get_process_io_counters(self):
-        f = open("/proc/%s/io" % self.pid)
-        try:
-            for line in f:
-                if line.startswith("rchar"):
-                    read_count = int(line.split()[1])
-                elif line.startswith("wchar"):
-                    write_count = int(line.split()[1])
-                elif line.startswith("read_bytes"):
-                    read_bytes = int(line.split()[1])
-                elif line.startswith("write_bytes"):
-                    write_bytes = int(line.split()[1])
-            return nt_io(read_count, write_count, read_bytes, write_bytes)
-        finally:
-            f.close()
-
-    if not os.path.exists('/proc/%s/io' % os.getpid()):
+    if os.path.exists('/proc/%s/io' % os.getpid()):
+        @wrap_exceptions
+        def get_process_io_counters(self):
+            fname = "/proc/%s/io" % self.pid
+            f = open(fname)
+            try:
+                rcount = wcount = rbytes = wbytes = None
+                for line in f:
+                    if rcount is None and line.startswith("syscr"):
+                        rcount = int(line.split()[1])
+                    elif wcount is None and line.startswith("syscw"):
+                        wcount = int(line.split()[1])
+                    elif rbytes is None and line.startswith("read_bytes"):
+                        rbytes = int(line.split()[1])
+                    elif wbytes is None and line.startswith("write_bytes"):
+                        wbytes = int(line.split()[1])
+                for x in (rcount, wcount, rbytes, wbytes):
+                    if x is None:
+                        raise NotImplementedError(
+                            "couldn't read all necessary info from %r" % fname)
+                return nt_io(rcount, wcount, rbytes, wbytes)
+            finally:
+                f.close()
+    else:
         def get_process_io_counters(self):
             raise NotImplementedError("couldn't find /proc/%s/io (kernel " \
                                       "too old?)" % self.pid)
