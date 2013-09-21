@@ -295,7 +295,7 @@ class Process(object):
     def name(self):
         """The process name."""
         name = self._platform_impl.get_process_name()
-        if os.name == 'posix':
+        if os.name == 'posix' and len(name) >= 15:
             # On UNIX the name gets truncated to the first 15 characters.
             # If it matches the first part of the cmdline we return that
             # one instead because it's usually more explicative.
