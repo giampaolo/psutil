@@ -172,7 +172,7 @@ get_disk_partitions(PyObject* self, PyObject* args)
     file = setmntent(MOUNTED, "r");
     Py_END_ALLOW_THREADS
     if ((file == 0) || (file == NULL)) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, MOUNTED);
         goto error;
     }
 
