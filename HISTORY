@@ -1,4 +1,4 @@
- Bug tracker at http://code.google.com/p/psutil/issues
+Bug tracker at http://code.google.com/p/psutil/issues
 
 1.1.0 - XXXX-XX-XX
 ------------------
@@ -19,6 +19,7 @@ BUG FIXES
  * #414: [Windows] Process.exe on Windows XP may raise ERROR_INVALID_PARAMETER.
  * #416: psutil.disk_usage() doesn't work well with unicode path names.
  * #430: [Linux] process IO counters report wrong number of r/w syscalls.
+ * #435: [Linux] psutil.net_io_counters() might report erreneous NIC names.
 
 API CHANGES
 

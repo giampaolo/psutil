@@ -356,8 +356,8 @@ def net_io_counters():
 
     retdict = {}
     for line in lines[2:]:
-        colon = line.find(':')
-        assert colon > 0, line
+        colon = line.find(': ')
+        assert colon > 0, repr(line)
         name = line[:colon].strip()
         fields = line[colon+1:].strip().split()
         bytes_recv = int(fields[0])
