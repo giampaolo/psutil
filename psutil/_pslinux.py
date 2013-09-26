@@ -363,7 +363,7 @@ def net_io_counters():
         bytes_recv = int(fields[0])
         packets_recv = int(fields[1])
         errin = int(fields[2])
-        dropin = int(fields[2])
+        dropin = int(fields[3])
         bytes_sent = int(fields[8])
         packets_sent = int(fields[9])
         errout = int(fields[10])

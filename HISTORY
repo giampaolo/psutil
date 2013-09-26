@@ -20,6 +20,7 @@ BUG FIXES
  * #416: psutil.disk_usage() doesn't work well with unicode path names.
  * #430: [Linux] process IO counters report wrong number of r/w syscalls.
  * #435: [Linux] psutil.net_io_counters() might report erreneous NIC names.
+ * #436: [Linux] psutil.net_io_counters() reports a wrong 'dropin' value.
 
 API CHANGES
 
