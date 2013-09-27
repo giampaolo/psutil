@@ -677,7 +677,7 @@ get_virtual_mem(PyObject* self, PyObject* args)
 static PyObject*
 get_system_cpu_times(PyObject* self, PyObject* args)
 {
-    float idle, kernel, user;
+    float idle, kernel, user, system;
     FILETIME idle_time, kernel_time, user_time;
 
     if (!GetSystemTimes(&idle_time, &kernel_time, &user_time)) {
@@ -694,9 +694,8 @@ get_system_cpu_times(PyObject* self, PyObject* args)
     // Kernel time includes idle time.
     // We return only busy kernel time subtracting idle time from
     // kernel time.
-    return Py_BuildValue("(fff)", user,
-                                  kernel - idle,
-                                  idle);
+    system = (kernel - idle);
+    return Py_BuildValue("(fff)", user, system, idle);
 }
 
 
