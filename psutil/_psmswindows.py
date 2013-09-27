@@ -146,18 +146,13 @@ _cputimes_ntuple = namedtuple('cputimes', 'user system idle')
 
 def get_system_cpu_times():
     """Return system CPU times as a named tuple."""
-    user, system, idle = 0, 0, 0
-    # computes system global times summing each processor value
-    for cpu_time in _psutil_mswindows.get_system_cpu_times():
-        user += cpu_time[0]
-        system += cpu_time[1]
-        idle += cpu_time[2]
+    user, system, idle = _psutil_mswindows.get_system_cpu_times()
     return _cputimes_ntuple(user, system, idle)
 
 def get_system_per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
     ret = []
-    for cpu_t in _psutil_mswindows.get_system_cpu_times():
+    for cpu_t in _psutil_mswindows.get_system_per_cpu_times():
         user, system, idle = cpu_t
         item = _cputimes_ntuple(user, system, idle)
         ret.append(item)

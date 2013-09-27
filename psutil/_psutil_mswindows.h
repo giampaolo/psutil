@@ -55,6 +55,7 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args);
 static PyObject* get_system_boot_time(PyObject* self, PyObject* args);
 static PyObject* get_virtual_mem(PyObject* self, PyObject* args);
 static PyObject* get_system_cpu_times(PyObject* self, PyObject* args);
+static PyObject* get_system_per_cpu_times(PyObject* self, PyObject* args);
 static PyObject* pid_exists(PyObject* self, PyObject* args);
 static PyObject* get_disk_usage(PyObject* self, PyObject* args);
 static PyObject* get_disk_partitions(PyObject* self, PyObject* args);
