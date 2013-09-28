@@ -97,6 +97,9 @@ def _convert_raw_path(s):
 # --- public functions
 
 get_system_boot_time = _psutil_mswindows.get_system_boot_time
+# ...so that we can test it from test_memory_leask.py
+get_num_cpus = _psutil_mswindows.get_num_cpus()
+
 
 nt_virtmem_info = namedtuple('vmem', ' '.join([
     # all platforms

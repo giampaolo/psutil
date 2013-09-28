@@ -296,6 +296,13 @@ class TestModuleFunctionsLeaks(Base):
         if callable(obj):
             retvalue = obj(*args, **kwargs)
 
+    @unittest.skipUnless(hasattr(psutil._psplatform, "get_num_cpus"),
+                "platform module does not expose a get_num_cpus() function")
+    @unittest.skipIf(LINUX, "not worth being tested on POSIX (pure python)")
+    def test_NUM_CPUS(self):
+        psutil.get_num_cpus = psutil._psplatform.get_num_cpus
+        self.execute('get_num_cpus')
+
     @unittest.skipIf(POSIX, "not worth being tested on POSIX (pure python)")
     def test_pid_exists(self):
         self.execute('pid_exists', os.getpid())

@@ -62,6 +62,8 @@ _TCP_STATES_TABLE = {_psutil_osx.TCPS_ESTABLISHED : CONN_ESTABLISHED,
 # --- functions
 
 get_system_boot_time = _psutil_osx.get_system_boot_time
+# ...so that we can test it from test_memory_leask.py
+get_num_cpus = _psutil_osx.get_num_cpus()
 
 nt_virtmem_info = namedtuple('vmem', ' '.join([
     # all platforms

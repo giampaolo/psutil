@@ -57,7 +57,7 @@ def get_system_boot_time():
     finally:
         f.close()
 
-def _get_num_cpus():
+def get_num_cpus():
     """Return the number of CPUs on the system"""
     try:
         return os.sysconf("SC_NPROCESSORS_ONLN")
@@ -107,7 +107,7 @@ except Exception:
     BOOT_TIME = None
     warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
 try:
-    NUM_CPUS = _get_num_cpus()
+    NUM_CPUS = get_num_cpus()
 except Exception:
     NUM_CPUS = None
     warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)

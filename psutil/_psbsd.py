@@ -45,6 +45,8 @@ except Exception:
 
 _PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
+# ...so that we can test it from test_memory_leask.py
+get_num_cpus = _psutil_bsd.get_num_cpus()
 
 # --- public functions
 
