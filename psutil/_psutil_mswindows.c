@@ -670,11 +670,40 @@ get_virtual_mem(PyObject* self, PyObject* args)
 
 
 /*
- * Return a Python list of tuples representing user, kernel and idle
- * CPU times for every CPU on the system.
+ * Retrieves system CPU timing information as a (user, system, idle)
+ * tuple. On a multiprocessor system, the values returned are the
+ * sum of the designated times across all processors.
  */
 static PyObject*
 get_system_cpu_times(PyObject* self, PyObject* args)
+{
+    float idle, kernel, user, system;
+    FILETIME idle_time, kernel_time, user_time;
+
+    if (!GetSystemTimes(&idle_time, &kernel_time, &user_time)) {
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    idle = (float)((HI_T * idle_time.dwHighDateTime) + \
+                   (LO_T * idle_time.dwLowDateTime));
+    user = (float)((HI_T * user_time.dwHighDateTime) + \
+                   (LO_T * user_time.dwLowDateTime));
+    kernel = (float)((HI_T * kernel_time.dwHighDateTime) + \
+                     (LO_T * kernel_time.dwLowDateTime));
+
+    // Kernel time includes idle time.
+    // We return only busy kernel time subtracting idle time from
+    // kernel time.
+    system = (kernel - idle);
+    return Py_BuildValue("(fff)", user, system, idle);
+}
+
+
+/*
+ * Same as above but for all system CPUs.
+ */
+static PyObject*
+get_system_per_cpu_times(PyObject* self, PyObject* args)
 {
     float idle, kernel, user;
     typedef DWORD (_stdcall *NTQSI_PROC) (int, PVOID, ULONG, PULONG);
@@ -761,6 +790,7 @@ error:
     PyErr_SetFromWindowsErr(0);
     return NULL;
 }
+
 
 
 /*
@@ -2952,6 +2982,8 @@ PsutilMethods[] =
     {"get_virtual_mem", get_virtual_mem, METH_VARARGS,
         "Return the total amount of physical memory, in bytes"},
     {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
+        "Return system cpu times as a list"},
+    {"get_system_per_cpu_times", get_system_per_cpu_times, METH_VARARGS,
         "Return system per-cpu times as a list of tuples"},
     {"get_disk_usage", get_disk_usage, METH_VARARGS,
         "Return path's disk total and free as a Python tuple."},

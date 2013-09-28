@@ -675,18 +675,19 @@ class TestSystemAPIs(unittest.TestCase):
             total += cp_time
         self.assertEqual(total, sum(times))
         str(times)
-        # CPU times are always supposed to increase over time or
-        # remain the same but never go backwards, see:
-        # https://code.google.com/p/psutil/issues/detail?id=392
-        last = psutil.cpu_times()
-        for x in range(100):
-            new = psutil.cpu_times()
-            for field in new._fields:
-                new_t = getattr(new, field)
-                last_t = getattr(last, field)
-                self.assertGreaterEqual(new_t, last_t,
-                                        msg="%s %s" % (new_t, last_t))
-            last = new
+        if not WINDOWS:
+            # CPU times are always supposed to increase over time or
+            # remain the same but never go backwards, see:
+            # https://code.google.com/p/psutil/issues/detail?id=392
+            last = psutil.cpu_times()
+            for x in range(100):
+                new = psutil.cpu_times()
+                for field in new._fields:
+                    new_t = getattr(new, field)
+                    last_t = getattr(last, field)
+                    self.assertGreaterEqual(new_t, last_t,
+                                            msg="%s %s" % (new_t, last_t))
+                last = new
 
     def test_sys_cpu_times2(self):
         t1 = sum(psutil.cpu_times())
@@ -708,21 +709,22 @@ class TestSystemAPIs(unittest.TestCase):
             str(times)
         self.assertEqual(len(psutil.cpu_times(percpu=True)[0]),
                          len(psutil.cpu_times(percpu=False)))
-        # CPU times are always supposed to increase over time or
-        # remain the same but never go backwards, see:
-        # https://code.google.com/p/psutil/issues/detail?id=392
-        last = psutil.cpu_times(percpu=True)
-        for x in range(100):
-            new = psutil.cpu_times(percpu=True)
-            for index in range(len(new)):
-                newcpu = new[index]
-                lastcpu = last[index]
-                for field in newcpu._fields:
-                    new_t = getattr(newcpu, field)
-                    last_t = getattr(lastcpu, field)
-                    self.assertGreaterEqual(new_t, last_t,
-                                            msg="%s %s" % (lastcpu, newcpu))
-            last = new
+        if not WINDOWS:
+            # CPU times are always supposed to increase over time or
+            # remain the same but never go backwards, see:
+            # https://code.google.com/p/psutil/issues/detail?id=392
+            last = psutil.cpu_times(percpu=True)
+            for x in range(100):
+                new = psutil.cpu_times(percpu=True)
+                for index in range(len(new)):
+                    newcpu = new[index]
+                    lastcpu = last[index]
+                    for field in newcpu._fields:
+                        new_t = getattr(newcpu, field)
+                        last_t = getattr(lastcpu, field)
+                        self.assertGreaterEqual(new_t, last_t,
+                                                msg="%s %s" % (lastcpu, newcpu))
+                last = new
 
     def test_sys_per_cpu_times2(self):
         tot1 = psutil.cpu_times(percpu=True)
