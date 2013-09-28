@@ -1,10 +1,11 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-1.1.0 - XXXX-XX-XX
+1.1.0 - 2013-09-28
 ------------------
 
 ENHANCEMENTS
 
+ * #410: tar.gz and windows binary files are now hosted on PYPI.
  * #412: [Linux] get/set process resource limits.
  * #415: [Windows] Process.get_children() is an order of magnitude faster.
  * #426: [Windows] Process.name is an order of magnitude faster.

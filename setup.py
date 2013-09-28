@@ -133,8 +133,6 @@ def main():
     setup_args = dict(
         name='psutil',
         version=VERSION,
-        download_url="http://psutil.googlecode.com/files/psutil-%s.tar.gz" \
-                     % VERSION,
         description='A process and system utilities module for Python',
         long_description=get_description(),
         keywords=['ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice',
