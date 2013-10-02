@@ -8,7 +8,6 @@
 
 import errno
 import os
-import struct
 import subprocess
 import socket
 
@@ -64,7 +63,7 @@ def swap_memory():
     if PY3:
         stdout = stdout.decode(sys.stdout.encoding)
     if p.returncode != 0:
-        raise RuntimeError("'swap -l -k' failed (retcode=%s)" % retcode)
+        raise RuntimeError("'swap -l -k' failed (retcode=%s)" % p.returncode)
 
     lines = stdout.strip().split('\n')[1:]
     if not lines:
@@ -312,10 +311,8 @@ class Process(object):
     @wrap_exceptions
     def get_process_status(self):
         code = _psutil_sunos.get_process_basic_info(self.pid)[6]
-        if code in _status_map:
-            return _status_map[code]
-        # XXX is this legit? will we even ever get here?
-        return "?"
+        # XXX is '?' legit? (we're not supposed to return it anyway)
+        return _status_map.get(code, '?')
 
     @wrap_exceptions
     def get_process_threads(self):

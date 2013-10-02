@@ -9,14 +9,13 @@
 import errno
 import os
 import sys
-import platform
 import warnings
 
 import _psutil_mswindows
 from _psutil_mswindows import ERROR_ACCESS_DENIED
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
-from psutil._compat import PY3, xrange, long, wraps
+from psutil._compat import PY3, xrange, wraps
 
 # Windows specific extended namespace
 __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
@@ -131,7 +130,6 @@ def get_disk_usage(path):
     try:
         total, free = _psutil_mswindows.get_disk_usage(path)
     except WindowsError:
-        err = sys.exc_info()[1]
         if not os.path.exists(path):
             raise OSError(errno.ENOENT, "No such file or directory: '%s'" % path)
         raise

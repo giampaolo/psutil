@@ -30,10 +30,8 @@ import errno
 import threading
 import tempfile
 import stat
-import collections
 import datetime
 import shutil
-import socket
 import textwrap
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
 try:
@@ -46,7 +44,7 @@ except ImportError:
     ast = None
 
 import psutil
-from psutil._compat import PY3, callable, long, wraps, u
+from psutil._compat import PY3, callable, long, wraps
 
 
 # ===================================================================
@@ -232,8 +230,8 @@ def check_connection(conn):
             s.bind((conn.laddr[0], 0))
             s.close()
     elif conn.family == AF_UNIX:
-       assert not conn.raddr, repr(conn.raddr)
-       assert conn.status == psutil.CONN_NONE, conn.status
+        assert not conn.raddr, repr(conn.raddr)
+        assert conn.status == psutil.CONN_NONE, conn.status
 
     if getattr(conn, 'fd', -1) != -1:
         assert conn.fd > 0, conn
@@ -1031,7 +1029,7 @@ class TestProcess(unittest.TestCase):
         # test wait() against processes which are not our children
         code = "import sys;"
         code += "from subprocess import Popen, PIPE;"
-        code += "cmd = ['%s', '-c', 'import time; time.sleep(2)'];" %PYTHON
+        code += "cmd = ['%s', '-c', 'import time; time.sleep(2)'];" % PYTHON
         code += "sp = Popen(cmd, stdout=PIPE);"
         code += "sys.stdout.write(str(sp.pid));"
         sproc = get_test_subprocess([PYTHON, "-c", code], stdout=subprocess.PIPE)

@@ -309,10 +309,8 @@ class Process(object):
     @wrap_exceptions
     def get_process_status(self):
         code = _psutil_osx.get_process_status(self.pid)
-        if code in _status_map:
-            return _status_map[code]
-        # XXX is this legit? will we even ever get here?
-        return "?"
+        # XXX is '?' legit? (we're not supposed to return it anyway)
+        return _status_map.get(code, '?')
 
     @wrap_exceptions
     def get_process_threads(self):

@@ -8,7 +8,6 @@
 
 import os
 import errno
-import psutil
 import sys
 import time
 import glob

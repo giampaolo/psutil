@@ -9,7 +9,6 @@ A clone of 'who' command; print information about users who are
 currently logged in.
 """
 
-import sys
 from datetime import datetime
 
 import psutil

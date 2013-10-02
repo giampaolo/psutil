@@ -876,9 +876,9 @@ class Process(object):
             for line in f:
                 if line.startswith("State:"):
                     letter = line.split()[1]
-                    if letter in _status_map:
-                        return _status_map[letter]
-                    return constant(-1, '?')
+                    # XXX is '?' legit? (we're not supposed to return
+                    # it anyway)
+                    return _status_map.get(letter, '?')
         finally:
             f.close()
 
@@ -1031,7 +1031,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_num_fds(self):
-       return len(os.listdir("/proc/%s/fd" % self.pid))
+        return len(os.listdir("/proc/%s/fd" % self.pid))
 
     @wrap_exceptions
     def get_process_ppid(self):

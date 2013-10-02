@@ -13,7 +13,7 @@ import stat
 import errno
 import warnings
 
-from psutil._compat import namedtuple, long, wraps
+from psutil._compat import namedtuple, wraps
 
 # --- functions
 
@@ -30,7 +30,7 @@ def usage_percent(used, total, _round=None):
 
 def memoize(f):
     """A simple memoize decorator for functions."""
-    cache= {}
+    cache = {}
     def memf(*x):
         if x not in cache:
             cache[x] = f(*x)
@@ -171,16 +171,16 @@ nt_ctxsw = namedtuple('amount', 'voluntary involuntary')
 
 class nt_connection(namedtuple('connection',
                                'fd family type laddr raddr status')):
-        __slots__ = ()
+    __slots__ = ()
 
-        @property
-        def local_address(self):
-            warnings.warn("'local_address' field is deprecated; use 'laddr'" \
-                          "instead", category=DeprecationWarning, stacklevel=2)
-            return self.laddr
+    @property
+    def local_address(self):
+        warnings.warn("'local_address' field is deprecated; use 'laddr'" \
+                      "instead", category=DeprecationWarning, stacklevel=2)
+        return self.laddr
 
-        @property
-        def remote_address(self):
-            warnings.warn("'remote_address' field is deprecated; use 'raddr'" \
-                          "instead", category=DeprecationWarning, stacklevel=2)
-            return self.raddr
+    @property
+    def remote_address(self):
+        warnings.warn("'remote_address' field is deprecated; use 'raddr'" \
+                      "instead", category=DeprecationWarning, stacklevel=2)
+        return self.raddr
