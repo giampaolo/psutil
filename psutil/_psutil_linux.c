@@ -22,7 +22,10 @@
 #include "_psutil_linux.h"
 
 
+ // Linux >= 2.6.13
 #define HAS_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
+ // Linux >= 2.6.36 kernels, glibc >= 2.13
+#define HAS_PRLIMIT defined(prlimit)
 
 #if HAS_IOPRIO
 enum {
@@ -96,6 +99,7 @@ linux_ioprio_set(PyObject* self, PyObject* args)
 #endif
 
 
+#ifdef HAS_PRLIMIT
 /*
  * A wrapper around prlimit(2); sets process resource limits.
  * This can be used for both get and set, in which case extra
@@ -149,7 +153,7 @@ linux_prlimit(PyObject* self, PyObject* args)
         return Py_None;
     }
 }
-
+#endif
 
 
 /*
@@ -327,8 +331,10 @@ PsutilMethods[] =
      {"ioprio_set", linux_ioprio_set, METH_VARARGS,
         "Set process I/O priority"},
 #endif
+#ifdef HAS_PRLIMIT
      {"prlimit", linux_prlimit, METH_VARARGS,
         "Get or set process resource limits."},
+#endif
      {"set_process_cpu_affinity", set_process_cpu_affinity, METH_VARARGS,
         "Set process CPU affinity; expects a bitmask."},
 
@@ -400,6 +406,9 @@ void init_psutil_linux(void)
 #else
     PyObject *module = Py_InitModule("_psutil_linux", PsutilMethods);
 #endif
+
+
+#ifdef HAS_PRLIMIT
     PyModule_AddIntConstant(module, "RLIM_INFINITY", RLIM_INFINITY);
     PyModule_AddIntConstant(module, "RLIMIT_AS", RLIMIT_AS);
     PyModule_AddIntConstant(module, "RLIMIT_CORE", RLIMIT_CORE);
@@ -412,20 +421,21 @@ void init_psutil_linux(void)
     PyModule_AddIntConstant(module, "RLIMIT_NPROC", RLIMIT_NPROC);
     PyModule_AddIntConstant(module, "RLIMIT_RSS", RLIMIT_RSS);
     PyModule_AddIntConstant(module, "RLIMIT_STACK", RLIMIT_STACK);
-#ifdef RLIMIT_MSGQUEUE
-    PyModule_AddIntConstant(module, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE);
-#endif
-#ifdef RLIMIT_NICE
-    PyModule_AddIntConstant(module, "RLIMIT_NICE", RLIMIT_NICE);
-#endif
-#ifdef RLIMIT_RTPRIO
-    PyModule_AddIntConstant(module, "RLIMIT_RTPRIO", RLIMIT_RTPRIO);
-#endif
-#ifdef RLIMIT_RTTIME
-    PyModule_AddIntConstant(module, "RLIMIT_RTTIME", RLIMIT_RTTIME);
-#endif
-#ifdef RLIMIT_SIGPENDING
-    PyModule_AddIntConstant(module, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING);
+    #ifdef RLIMIT_MSGQUEUE
+        PyModule_AddIntConstant(module, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE);
+    #endif
+    #ifdef RLIMIT_NICE
+        PyModule_AddIntConstant(module, "RLIMIT_NICE", RLIMIT_NICE);
+    #endif
+    #ifdef RLIMIT_RTPRIO
+        PyModule_AddIntConstant(module, "RLIMIT_RTPRIO", RLIMIT_RTPRIO);
+    #endif
+    #ifdef RLIMIT_RTTIME
+        PyModule_AddIntConstant(module, "RLIMIT_RTTIME", RLIMIT_RTTIME);
+    #endif
+    #ifdef RLIMIT_SIGPENDING
+        PyModule_AddIntConstant(module, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING);
+    #endif
 #endif
 
     if (module == NULL) {

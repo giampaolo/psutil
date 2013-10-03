@@ -1,5 +1,14 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+1.2.0 - XXXX-XX-XX
+------------------
+
+BUG FIXES
+
+ * #438: [Linux] psutil won't compile on kernels < 2.6.36 due to missing
+         prlimit(2) syscall.
+
+
 1.1.0 - 2013-09-28
 ------------------
 
@@ -14,7 +23,7 @@ ENHANCEMENTS
 
 BUG FIXES
 
- * #391# [Windows] psutil.cpu_times_percent() returns negative percentages.
+ * #391: [Windows] psutil.cpu_times_percent() returns negative percentages.
  * #408: STATUS_* and CONN_* constants don't properly serialize on JSON.
  * #411: [Windows] examples/disk_usage.py may pop-up a GUI error.
  * #413: [Windows] Process.get_memory_info() leaks memory.

@@ -19,6 +19,32 @@ from psutil._compat import PY3
 import psutil
 
 
+def get_kernel_version():
+    # return a tuple such as (2, 6, 36)
+    major, minor, micro = os.uname()[2].split('.')[:3]
+    major = int(major)
+    minor = int(minor)
+    try:
+        micro = int(micro)
+    except ValueError:
+        s = ""
+        for x in micro:
+            if x.isdigit():
+                s += x
+            else:
+                break
+        if s:
+            micro = int(s)
+        else:
+            micro = 0
+    return (major, minor, micro)
+
+try:
+    KERNEL_VERSION = get_kernel_version()
+except Exception:
+    KERNEL_VERSION = None
+
+
 class LinuxSpecificTestCase(unittest.TestCase):
 
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
@@ -137,6 +163,43 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertIn('guest_nice', fields)
         else:
             self.assertNotIn('guest_nice', fields)
+
+    # --- tests for specific kernel versions
+
+    @unittest.skipUnless(isinstance(KERNEL_VERSION, tuple),
+        "could not determine Linux kernel version")
+    @unittest.skipUnless(KERNEL_VERSION >= (2, 6, 36),
+        "prlimit() not available on this Linux kernel version")
+    def test_prlimit_availability(self):
+        # prlimit() should be available starting from kernel 2.6.36
+        p = psutil.Process(os.getpid())
+        p.get_rlimit(psutil.RLIMIT_NOFILE)
+        # if prlimit() is supported *at least* these constants should
+        # be available
+        self.assertTrue(hasattr(psutil, "RLIM_INFINITY"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_AS"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_CORE"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_CPU"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_DATA"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_FSIZE"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_LOCKS"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_MEMLOCK"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_NOFILE"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_NPROC"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_RSS"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_STACK"))
+
+    @unittest.skipUnless(isinstance(KERNEL_VERSION, tuple),
+        "could not determine Linux kernel version")
+    @unittest.skipUnless(KERNEL_VERSION >= (3, 0),
+        "prlimit() not available on this Linux kernel version")
+    def test_resource_consts_kernel_v(self):
+        # more recent constants
+        self.assertTrue(hasattr(psutil, "RLIMIT_MSGQUEUE"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_NICE"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_RTPRIO"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_RTTIME"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_SIGPENDING"))
 
 
 def test_main():

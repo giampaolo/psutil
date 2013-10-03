@@ -77,14 +77,37 @@ if sys.platform.startswith("linux"):
                                  IOPRIO_CLASS_NONE,
                                  IOPRIO_CLASS_RT,
                                  IOPRIO_CLASS_BE,
-                                 IOPRIO_CLASS_IDLE,
-                                 RLIM_INFINITY,
-                                 RLIMIT_AS, RLIMIT_CORE, RLIMIT_CPU,
-                                 RLIMIT_DATA, RLIMIT_FSIZE, RLIMIT_LOCKS,
-                                 RLIMIT_MEMLOCK, RLIMIT_MSGQUEUE, RLIMIT_NICE,
-                                 RLIMIT_NOFILE, RLIMIT_NPROC, RLIMIT_RSS,
-                                 RLIMIT_RTPRIO, RLIMIT_RTTIME,
-                                 RLIMIT_SIGPENDING, RLIMIT_STACK)
+                                 IOPRIO_CLASS_IDLE)
+    # Linux >= 2.6.36
+    if _psplatform.HAS_PRLIMIT:
+        from psutil._pslinux import (RLIM_INFINITY, RLIMIT_AS, RLIMIT_CORE,
+                                     RLIMIT_CPU, RLIMIT_DATA, RLIMIT_FSIZE,
+                                     RLIMIT_LOCKS, RLIMIT_MEMLOCK, RLIMIT_NOFILE,
+                                     RLIMIT_NPROC, RLIMIT_RSS, RLIMIT_STACK)
+        # Kinda ugly but considerably faster than using hasattr() and
+        # setattr() against the module object (we are at import time
+        # and we demand speed).
+        try:
+            RLIMIT_MSGQUEUE = _psplatform.RLIMIT_MSGQUEUE
+        except AttributeError:
+            pass
+        try:
+            RLIMIT_NICE = _psplatform.RLIMIT_NICE
+        except AttributeError:
+            pass
+        try:
+            RLIMIT_RTPRIO = _psplatform.RLIMIT_RTPRIO
+        except AttributeError:
+            pass
+        try:
+            RLIMIT_RTTIME = _psplatform.RLIMIT_RTTIME
+        except AttributeError:
+            pass
+        try:
+            RLIMIT_SIGPENDING = _psplatform.RLIMIT_SIGPENDING
+        except AttributeError:
+            pass
+
     phymem_buffers = _psplatform.phymem_buffers
     cached_phymem = _psplatform.cached_phymem
 
