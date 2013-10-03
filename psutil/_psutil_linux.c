@@ -23,11 +23,11 @@
 
 
  // Linux >= 2.6.13
-#define HAS_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
+#define HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
  // Linux >= 2.6.36 kernels, glibc >= 2.13
-#define HAS_PRLIMIT defined(prlimit)
+#define HAVE_PRLIMIT defined(prlimit)
 
-#if HAS_IOPRIO
+#if HAVE_IOPRIO
 enum {
     IOPRIO_WHO_PROCESS = 1,
 };
@@ -99,7 +99,7 @@ linux_ioprio_set(PyObject* self, PyObject* args)
 #endif
 
 
-#ifdef HAS_PRLIMIT
+#ifdef HAVE_PRLIMIT
 /*
  * A wrapper around prlimit(2); sets process resource limits.
  * This can be used for both get and set, in which case extra
@@ -325,13 +325,13 @@ PsutilMethods[] =
 {
       // --- per-process functions
 
-#if HAS_IOPRIO
+#if HAVE_IOPRIO
      {"ioprio_get", linux_ioprio_get, METH_VARARGS,
         "Get process I/O priority"},
      {"ioprio_set", linux_ioprio_set, METH_VARARGS,
         "Set process I/O priority"},
 #endif
-#ifdef HAS_PRLIMIT
+#ifdef HAVE_PRLIMIT
      {"prlimit", linux_prlimit, METH_VARARGS,
         "Get or set process resource limits."},
 #endif
@@ -408,7 +408,7 @@ void init_psutil_linux(void)
 #endif
 
 
-#ifdef HAS_PRLIMIT
+#ifdef HAVE_PRLIMIT
     PyModule_AddIntConstant(module, "RLIM_INFINITY", RLIM_INFINITY);
     PyModule_AddIntConstant(module, "RLIMIT_AS", RLIMIT_AS);
     PyModule_AddIntConstant(module, "RLIMIT_CORE", RLIMIT_CORE);
