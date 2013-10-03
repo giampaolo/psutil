@@ -23,18 +23,18 @@ def clean():
 
     for dirname in ('build', 'dist'):
         if os.path.isdir(dirname):
-            sys.stdout.write('removing directory: %s\n' % dirname)
+            sys.stdout.write('rmdir: %s\n' % dirname)
             shutil.rmtree(dirname)
 
     for dirpath, dirnames, files in os.walk('.'):
         if dirpath.endswith(('__pycache__', '.egg-info')):
-            sys.stdout.write('removing directory %s\n' % dirpath)
+            sys.stdout.write('rmdir %s\n' % dirpath)
             shutil.rmtree(dirpath)
 
     for pattern in ['*.py[co]', '*.s[ol]', '*~', '*.orig', '*.rej', '*.swp']:
         for x in rglob('.', pattern):
-           sys.stdout.write('removing file %s\n' % x)
-           os.remove(x)
+            sys.stdout.write('rm %s\n' % x)
+            os.remove(x)
 
 def get_version():
     INIT = os.path.abspath(os.path.join(os.path.dirname(__file__),
