@@ -7,6 +7,7 @@
  */
 
 #define _GNU_SOURCE
+#define _FILE_OFFSET_BITS 64  // needed for prlimit()
 #include <Python.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -25,7 +26,10 @@
  // Linux >= 2.6.13
 #define HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
  // Linux >= 2.6.36 kernels, glibc >= 2.13
-#define HAVE_PRLIMIT defined(prlimit)
+#ifdef __NR_prlimit64
+    #define HAVE_PRLIMIT
+#endif
+
 
 #if HAVE_IOPRIO
 enum {
