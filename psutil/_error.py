@@ -22,7 +22,7 @@ class NoSuchProcess(Error):
     """
 
     def __init__(self, pid, name=None, msg=None):
-        super(NoSuchProcess, self).__init__()
+        Error.__init__(self)
         self.pid = pid
         self.name = name
         self.msg = msg
@@ -41,7 +41,7 @@ class AccessDenied(Error):
     """Exception raised when permission to perform an action is denied."""
 
     def __init__(self, pid=None, name=None, msg=None):
-        super(AccessDenied, self).__init__()
+        Error.__init__(self)
         self.pid = pid
         self.name = name
         self.msg = msg
@@ -63,7 +63,7 @@ class TimeoutExpired(Error):
     """
 
     def __init__(self, pid=None, name=None):
-        super(TimeoutExpired, self).__init__()
+        Error.__init__(self)
         self.pid = pid
         self.name = name
         if (pid is not None) and (name is not None):
