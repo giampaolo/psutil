@@ -1918,10 +1918,17 @@ class TestProcess(unittest.TestCase):
         else:
             # this is the zombie process
             s = socket.socket(socket.AF_UNIX)
-            s.connect('%s')
-            s.sendall(str(os.getpid()))
+            s.connect('{TESTFN}')
+            if sys.version_info < (3, ):
+                pid = str(os.getpid())
+            else:
+                pid = bytes(str(os.getpid()), 'ascii')
+            s.sendall(pid)
             s.close()
-        """ % TESTFN)
+        """)
+        src = src.replace('{TESTFN}', TESTFN)
+        if PY3:
+            src = bytes(src, 'ascii')
         f = sock = None
         try:
             f = tempfile.NamedTemporaryFile()
