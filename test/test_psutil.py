@@ -1211,7 +1211,8 @@ class TestProcess(unittest.TestCase):
             self.assertRaises(ValueError, p.set_ionice, 3)
             self.assertRaises(TypeError, p.set_ionice, 2, 1)
 
-    @unittest.skipUnless(LINUX, "feature not supported on this platform")
+    @unittest.skipUnless(hasattr(psutil.Process, 'get_prlimit'),
+        "feature not supported on this platform")
     def test_get_rlimit(self):
         import resource
         p = psutil.Process(os.getpid())
@@ -1227,7 +1228,8 @@ class TestProcess(unittest.TestCase):
                 self.assertGreaterEqual(ret[0], -1)
                 self.assertGreaterEqual(ret[1], -1)
 
-    @unittest.skipUnless(LINUX, "feature not supported on this platform")
+    @unittest.skipUnless(hasattr(psutil.Process, 'set_prlimit'),
+        "feature not supported on this platform")
     def test_set_rlimit(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
