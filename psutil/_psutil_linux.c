@@ -6,7 +6,9 @@
  * Linux-specific functions.
  */
 
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+    #define _GNU_SOURCE
+#endif
 #define _FILE_OFFSET_BITS 64  // needed for prlimit()
 #include <Python.h>
 #include <errno.h>
