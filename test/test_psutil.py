@@ -1944,17 +1944,12 @@ class TestProcess(unittest.TestCase):
             zpid = int(conn.recv(1024))
             zproc = psutil.Process(zpid)
             # Make sure we can re-instantiate the process after its
-            # status changed to zombie.
-            # All our API (pid_exists(), Process(), get_pid_list())
-            # is supposed to support zombie processes and treat them
-            # like any other process in a different status.
-            # Reason is we want to support the use case where one
-            # wants to identify and kill all zombie processes on
-            # the system.
+            # status changed to zombie and at least be able to
+            # query its status.
+            # XXX should we also assume ppid should be querable?
             call_until(lambda: zproc.status, "ret == psutil.STATUS_ZOMBIE")
             self.assertTrue(psutil.pid_exists(zpid))
             zproc = psutil.Process(zpid)
-            zproc.as_dict()
             descendants = [x.pid for x in \
                     psutil.Process(os.getpid()).get_children(recursive=True)]
             self.assertIn(zpid, descendants)
