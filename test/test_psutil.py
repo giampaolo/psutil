@@ -1677,18 +1677,18 @@ class TestProcess(unittest.TestCase):
             import socket, time
             s = socket.socket($family, socket.SOCK_DGRAM)
             s.bind(('$addr', 0))
-            time.sleep(2000)
+            time.sleep(2)
         """)
 
         from string import Template
-        tcp4_template = Template(tcp_template).substitute(family=AF_INET,
-                                                          addr="127.0.0.1")
-        udp4_template = Template(udp_template).substitute(family=AF_INET,
-                                                          addr="127.0.0.1")
-        tcp6_template = Template(tcp_template).substitute(family=AF_INET6,
-                                                          addr="::1")
-        udp6_template = Template(udp_template).substitute(family=AF_INET6,
-                                                          addr="::1")
+        tcp4_template = Template(tcp_template).substitute(
+            family=int(AF_INET), addr="127.0.0.1")
+        udp4_template = Template(udp_template).substitute(
+            family=int(AF_INET), addr="127.0.0.1")
+        tcp6_template = Template(tcp_template).substitute(
+            family=int(AF_INET6), addr="::1")
+        udp6_template = Template(udp_template).substitute(
+            family=int(AF_INET6), addr="::1")
 
         # launch various subprocess instantiating a socket of various
         # families and types to enrich psutil results
