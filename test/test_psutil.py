@@ -1663,16 +1663,20 @@ class TestProcess(unittest.TestCase):
             dupsock.close()
 
     def test_get_connections_all(self):
-        tcp_template = "import socket;" \
-                       "s = socket.socket($family, SOCK_STREAM);" \
-                       "s.bind(('$addr', 0));" \
-                       "s.listen(1);" \
-                       "conn, addr = s.accept();"
+        tcp_template = textwrap.dedent("""
+            import socket
+            s = socket.socket($family, socket.SOCK_STREAM)
+            s.bind(('$addr', 0))
+            s.listen(1)
+            conn, addr = s.accept()
+        """)
 
-        udp_template = "import socket, time;" \
-                       "s = socket.socket($family, SOCK_DGRAM);" \
-                       "s.bind(('$addr', 0));" \
-                       "time.sleep(2);"
+        udp_template = textwrap.dedent("""
+            import socket, time
+            s = socket.socket($family, socket.SOCK_DGRAM)
+            s.bind(('$addr', 0))
+            time.sleep(2000)
+        """)
 
         from string import Template
         tcp4_template = Template(tcp_template).substitute(family=AF_INET,
@@ -1686,11 +1690,11 @@ class TestProcess(unittest.TestCase):
 
         # launch various subprocess instantiating a socket of various
         # families and types to enrich psutil results
-        tcp4_proc = get_test_subprocess([PYTHON, "-c", tcp4_template])
-        udp4_proc = get_test_subprocess([PYTHON, "-c", udp4_template])
+        tcp4_proc = pyrun(tcp4_template)
+        udp4_proc = pyrun(udp4_template)
         if supports_ipv6():
-            tcp6_proc = get_test_subprocess([PYTHON, "-c", tcp6_template])
-            udp6_proc = get_test_subprocess([PYTHON, "-c", udp6_template])
+            tcp6_proc = pyrun(tcp6_template)
+            udp6_proc = pyrun(udp6_template)
         else:
             tcp6_proc = None
             udp6_proc = None
