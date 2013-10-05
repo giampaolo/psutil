@@ -1232,7 +1232,8 @@ class TestProcess(unittest.TestCase):
             self.assertRaises(ValueError, p.set_ionice, 3)
             self.assertRaises(TypeError, p.set_ionice, 2, 1)
 
-    @unittest.skipUnless(LINUX, "feature not supported on this platform")
+    @unittest.skipUnless(hasattr(psutil.Process, 'get_prlimit'),
+        "feature not supported on this platform")
     def test_get_rlimit(self):
         import resource
         p = psutil.Process(os.getpid())
@@ -1248,7 +1249,8 @@ class TestProcess(unittest.TestCase):
                 self.assertGreaterEqual(ret[0], -1)
                 self.assertGreaterEqual(ret[1], -1)
 
-    @unittest.skipUnless(LINUX, "feature not supported on this platform")
+    @unittest.skipUnless(hasattr(psutil.Process, 'set_prlimit'),
+        "feature not supported on this platform")
     def test_set_rlimit(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -2359,6 +2361,7 @@ if hasattr(os, 'getuid') and os.getuid() == 0:
                 setattr(self, attr, types.MethodType(test_, self))
 
         def setUp(self):
+            safe_remove(TESTFN)
             os.setegid(1000)
             os.seteuid(1000)
             TestProcess.setUp(self)
@@ -2375,6 +2378,10 @@ if hasattr(os, 'getuid') and os.getuid() == 0:
                 pass
             else:
                 self.fail("exception not raised")
+
+        def test_zombie_process(self):
+            # causes problems if test test suite is run as root
+            pass
 
 
 # ===================================================================
