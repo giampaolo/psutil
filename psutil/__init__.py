@@ -910,6 +910,12 @@ class Process(object):
     def wait(self, timeout=None):
         """Wait for process to terminate and, if process is a children
         of the current one also return its exit code, else None.
+
+        If the process is already terminated immediately return None
+        instead of raising NoSuchProcess.
+
+        If timeout (in seconds) is specified and process is still alive
+        after the timeout expired raise TimeoutExpired.
         """
         if timeout is not None and not timeout >= 0:
             raise ValueError("timeout must be a positive integer")
