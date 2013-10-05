@@ -133,7 +133,9 @@ def pyrun(src):
     try:
         f.write(src)
         f.flush()
-        return get_test_subprocess([PYTHON, f.name], stdout=None, stderr=None)
+        subp = get_test_subprocess([PYTHON, f.name], stdout=None, stderr=None)
+        wait_for_pid(subp.pid)
+        return subp
     finally:
         f.close()
 
@@ -1702,60 +1704,42 @@ class TestProcess(unittest.TestCase):
         # check matches against subprocesses just created
         all_kinds = ("all", "inet", "inet4", "inet6", "tcp", "tcp4", "tcp6",
                      "udp", "udp4", "udp6")
+
+        def check_conn(proc, conn, family, type, laddr, raddr, status, kinds):
+            self.assertEqual(conn.family, family)
+            self.assertEqual(conn.type, type)
+            self.assertIn(conn.laddr[0], laddr)
+            self.assertEqual(conn.raddr, raddr)
+            self.assertEqual(conn.status, status)
+            for kind in all_kinds:
+                cons = proc.get_connections(kind=kind)
+                if kind in kinds:
+                    assert cons != [], cons
+                else:
+                    self.assertEqual(cons, [], cons)
+
         for p in psutil.Process(os.getpid()).get_children():
             for conn in p.get_connections():
                 # TCP v4
                 if p.pid == tcp4_proc.pid:
-                    self.assertEqual(conn.family, AF_INET)
-                    self.assertEqual(conn.type, SOCK_STREAM)
-                    self.assertEqual(conn.laddr[0], "127.0.0.1")
-                    self.assertEqual(conn.raddr, ())
-                    self.assertEqual(conn.status, psutil.CONN_LISTEN)
-                    for kind in all_kinds:
-                        cons = p.get_connections(kind=kind)
-                        if kind in ("all", "inet", "inet4", "tcp", "tcp4"):
-                            assert cons != [], cons
-                        else:
-                            self.assertEqual(cons, [], cons)
+                    check_conn(p, conn, AF_INET, SOCK_STREAM, "127.0.0.1", (),
+                               psutil.CONN_LISTEN,
+                               ("all", "inet", "inet4", "tcp", "tcp4"))
                 # UDP v4
                 elif p.pid == udp4_proc.pid:
-                    self.assertEqual(conn.family, AF_INET)
-                    self.assertEqual(conn.type, SOCK_DGRAM)
-                    self.assertEqual(conn.laddr[0], "127.0.0.1")
-                    self.assertEqual(conn.raddr, ())
-                    self.assertEqual(conn.status, psutil.CONN_NONE)
-                    for kind in all_kinds:
-                        cons = p.get_connections(kind=kind)
-                        if kind in ("all", "inet", "inet4", "udp", "udp4"):
-                            assert cons != [], cons
-                        else:
-                            self.assertEqual(cons, [], cons)
+                    check_conn(p, conn, AF_INET, SOCK_DGRAM, "127.0.0.1", (),
+                               psutil.CONN_NONE,
+                               ("all", "inet", "inet4", "udp", "udp4"))
                 # TCP v6
                 elif p.pid == getattr(tcp6_proc, "pid", None):
-                    self.assertEqual(conn.family, AF_INET6)
-                    self.assertEqual(conn.type, SOCK_STREAM)
-                    self.assertIn(conn.laddr[0], ("::", "::1"))
-                    self.assertEqual(conn.raddr, ())
-                    self.assertEqual(conn.status, psutil.CONN_LISTEN)
-                    for kind in all_kinds:
-                        cons = p.get_connections(kind=kind)
-                        if kind in ("all", "inet", "inet6", "tcp", "tcp6"):
-                            assert cons != [], cons
-                        else:
-                            self.assertEqual(cons, [], cons)
+                    check_conn(p, conn, AF_INET6, SOCK_STREAM, ("::", "::1"),
+                               (), psutil.CONN_LISTEN,
+                               ("all", "inet", "inet6", "tcp", "tcp6"))
                 # UDP v6
                 elif p.pid == getattr(udp6_proc, "pid", None):
-                    self.assertEqual(conn.family, AF_INET6)
-                    self.assertEqual(conn.type, SOCK_DGRAM)
-                    self.assertIn(conn.laddr[0], ("::", "::1"))
-                    self.assertEqual(conn.raddr, ())
-                    self.assertEqual(conn.status, psutil.CONN_NONE)
-                    for kind in all_kinds:
-                        cons = p.get_connections(kind=kind)
-                        if kind in ("all", "inet", "inet6", "udp", "udp6"):
-                            assert cons != [], cons
-                        else:
-                            self.assertEqual(cons, [], cons)
+                    check_conn(p, conn, AF_INET6, SOCK_DGRAM, ("::", "::1"),
+                               (), psutil.CONN_NONE,
+                               ("all", "inet", "inet6", "udp", "udp6"))
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_get_num_fds(self):
