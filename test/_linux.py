@@ -19,32 +19,6 @@ from psutil._compat import PY3
 import psutil
 
 
-def get_kernel_version():
-    # return a tuple such as (2, 6, 36)
-    major, minor, micro = os.uname()[2].split('.')[:3]
-    major = int(major)
-    minor = int(minor)
-    try:
-        micro = int(micro)
-    except ValueError:
-        s = ""
-        for x in micro:
-            if x.isdigit():
-                s += x
-            else:
-                break
-        if s:
-            micro = int(s)
-        else:
-            micro = 0
-    return (major, minor, micro)
-
-try:
-    KERNEL_VERSION = get_kernel_version()
-except Exception:
-    KERNEL_VERSION = None
-
-
 class LinuxSpecificTestCase(unittest.TestCase):
 
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
@@ -166,9 +140,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
 
     # --- tests for specific kernel versions
 
-    @unittest.skipUnless(isinstance(KERNEL_VERSION, tuple),
-        "could not determine Linux kernel version")
-    @unittest.skipUnless(KERNEL_VERSION >= (2, 6, 36),
+    @unittest.skipUnless(get_kernel_version() >= (2, 6, 36),
         "prlimit() not available on this Linux kernel version")
     def test_prlimit_availability(self):
         # prlimit() should be available starting from kernel 2.6.36
@@ -189,10 +161,8 @@ class LinuxSpecificTestCase(unittest.TestCase):
         self.assertTrue(hasattr(psutil, "RLIMIT_RSS"))
         self.assertTrue(hasattr(psutil, "RLIMIT_STACK"))
 
-    @unittest.skipUnless(isinstance(KERNEL_VERSION, tuple),
-        "could not determine Linux kernel version")
-    @unittest.skipUnless(KERNEL_VERSION >= (3, 0),
-        "prlimit() not available on this Linux kernel version")
+    @unittest.skipUnless(get_kernel_version() >= (3, 0),
+        "prlimit constants not available on this Linux kernel version")
     def test_resource_consts_kernel_v(self):
         # more recent constants
         self.assertTrue(hasattr(psutil, "RLIMIT_MSGQUEUE"))

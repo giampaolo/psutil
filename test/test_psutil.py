@@ -177,6 +177,27 @@ def which(program):
                 return exe_file
     return None
 
+if POSIX:
+    def get_kernel_version():
+        """Return a tuple such as (2, 6, 36)."""
+        major, minor, micro = os.uname()[2].split('.')[:3]
+        major = int(major)
+        minor = int(minor)
+        try:
+            micro = int(micro)
+        except ValueError:
+            s = ""
+            for x in micro:
+                if x.isdigit():
+                    s += x
+                else:
+                    break
+            if s:
+                micro = int(s)
+            else:
+                micro = 0
+        return (major, minor, micro)
+
 def wait_for_pid(pid, timeout=1):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
@@ -1234,8 +1255,9 @@ class TestProcess(unittest.TestCase):
             self.assertRaises(ValueError, p.set_ionice, 3)
             self.assertRaises(TypeError, p.set_ionice, 2, 1)
 
-    @unittest.skipUnless(hasattr(psutil.Process, 'get_prlimit'),
-        "feature not supported on this platform")
+    @unittest.skipUnless(LINUX, "only available on Linux")
+    @unittest.skipUnless(get_kernel_version >= (2, 6, 36),
+        "only available on Linux >= 2.6.36")
     def test_get_rlimit(self):
         import resource
         p = psutil.Process(os.getpid())
@@ -1251,8 +1273,9 @@ class TestProcess(unittest.TestCase):
                 self.assertGreaterEqual(ret[0], -1)
                 self.assertGreaterEqual(ret[1], -1)
 
-    @unittest.skipUnless(hasattr(psutil.Process, 'set_prlimit'),
-        "feature not supported on this platform")
+    @unittest.skipUnless(LINUX, "only available on Linux")
+    @unittest.skipUnless(get_kernel_version >= (2, 6, 36),
+        "only available on Linux >= 2.6.36")
     def test_set_rlimit(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
