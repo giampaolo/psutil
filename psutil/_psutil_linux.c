@@ -148,7 +148,6 @@ linux_prlimit(PyObject* self, PyObject* args)
     }
     // set
     else {
-        /*
         newp = NULL;
         new.rlim_cur = soft;
         new.rlim_max = hard;
@@ -156,7 +155,6 @@ linux_prlimit(PyObject* self, PyObject* args)
         ret = prlimit(pid, resource, newp, &old);
         if (ret == -1)
             return PyErr_SetFromErrno(PyExc_OSError);
-            */
         Py_INCREF(Py_None);
         return Py_None;
     }
