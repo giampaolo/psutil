@@ -6,10 +6,10 @@
  * Linux-specific functions.
  */
 
+
 #ifndef _GNU_SOURCE
-    #define _GNU_SOURCE
+    #define _GNU_SOURCE 1
 #endif
-#define _FILE_OFFSET_BITS 64  // needed for prlimit()
 #include <Python.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -18,18 +18,18 @@
 #include <sched.h>
 #include <sys/syscall.h>
 #include <sys/sysinfo.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <linux/unistd.h>
 
 #include "_psutil_linux.h"
 
 
  // Linux >= 2.6.13
 #define HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
- // Linux >= 2.6.36 kernels, glibc >= 2.13
-#ifdef __NR_prlimit64
-    #define HAVE_PRLIMIT
+
+// Linux >= 2.6.36; HAVE_PRLIMIT is a macro defined in setup.py
+#ifdef HAVE_PRLIMIT
+    #define _FILE_OFFSET_BITS 64
+    #include <time.h>
+    #include <sys/resource.h>
 #endif
 
 

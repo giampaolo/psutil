@@ -8,6 +8,7 @@ import sys
 import os
 import shutil
 import fnmatch
+import traceback
 try:
     from setuptools import setup, Extension
 except ImportError:
@@ -60,6 +61,31 @@ def get_description():
         return f.read()
     finally:
         f.close()
+
+if os.name == 'posix':
+    def get_kernel_version():
+        # return a tuple such as (2, 6, 36)
+        try:
+            major, minor, micro = os.uname()[2].split('.')[:3]
+            major = int(major)
+            minor = int(minor)
+            try:
+                micro = int(micro)
+            except ValueError:
+                s = ""
+                for x in micro:
+                    if x.isdigit():
+                        s += x
+                    else:
+                        break
+                if s:
+                    micro = int(s)
+                else:
+                    micro = 0
+            return (major, minor, micro)
+        except Exception:
+            # for no reason we want to crash during installation
+            traceback.print_exc(file=sys.stderr)
 
 VERSION = get_version()
 
@@ -124,10 +150,15 @@ elif sys.platform.startswith("freebsd"):
     ]
 # Linux
 elif sys.platform.startswith("linux"):
+    kernel_ver = get_kernel_version()
+    macros = []
+    if kernel_ver is not None and kernel_ver >= (2, 6, 36):
+        macros.append(("HAVE_PRLIMIT", 1))
+
     extensions = [Extension(
         '_psutil_linux',
         sources=['psutil/_psutil_linux.c'],
-            ),
+        define_macros=macros),
         posix_extension,
     ]
 # Solaris
