@@ -117,18 +117,11 @@ linux_prlimit(PyObject* self, PyObject* args)
     long pid;
     int ret, resource;
     struct rlimit old, new;
-    struct rlimit *newp;
+    struct rlimit *newp = NULL;
     PyObject *soft = NULL;
     PyObject *hard = NULL;
 
-    if (! PyArg_ParseTuple(args,
-#if defined(HAVE_LONG_LONG)
-                           "li|LL",
-#else
-                           "li|ll",
-#endif
-                           &pid, &resource, &soft, &hard))
-    {
+    if (! PyArg_ParseTuple(args, "li|OO", &pid, &resource, &soft, &hard)) {
         return NULL;
     }
 
@@ -146,11 +139,24 @@ linux_prlimit(PyObject* self, PyObject* args)
         return Py_BuildValue("ll", (long)old.rlim_cur,
                                    (long)old.rlim_max);
     }
+
     // set
     else {
-        newp = NULL;
-        new.rlim_cur = soft;
-        new.rlim_max = hard;
+#if defined(HAVE_LARGEFILE_SUPPORT)
+        new.rlim_cur = PyLong_AsLongLong(soft);
+        if (new.rlim_cur == (rlim_t)-1 && PyErr_Occurred())
+            return NULL;
+        new.rlim_max = PyLong_AsLongLong(hard);
+        if (new.rlim_max == (rlim_t)-1 && PyErr_Occurred())
+            return NULL;
+#else
+        new.rlim_cur = PyLong_AsLong(soft);
+        if (new.rlim_cur == (rlim_t)-1 && PyErr_Occurred())
+            return NULL;
+        new.rlim_max = PyLong_AsLong(hard);
+        if (new.rlim_max == (rlim_t)-1 && PyErr_Occurred())
+            return NULL;
+#endif
         newp = &new;
         ret = prlimit(pid, resource, newp, &old);
         if (ret == -1)
