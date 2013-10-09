@@ -24,8 +24,19 @@ def pid_exists(pid):
     try:
         os.kill(pid, 0)
     except OSError:
-        e = sys.exc_info()[1]
-        return e.errno == errno.EPERM
+        err = sys.exc_info()[1]
+        if err.errno == errno.ESRCH:
+            # ESRCH == No such process
+            return False
+        elif err.errno == errno.EPERM:
+            # EPERM clearly means there's a process to deny access to
+            return True
+        else:
+            # According to "man 2 kill" possible error values are
+            # (EINVAL, EPERM, ESRCH) therefore we should bever get
+            # here. If we do let's be explicit in considering this
+            # an error.
+            raise err
     else:
         return True
 
