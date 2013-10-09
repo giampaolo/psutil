@@ -1,5 +1,14 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+1.2.0 - XXXX-XX-XX
+------------------
+
+ENHANCEMENTS
+
+ * #439: psutil.Process()'s pid argument can be omitted and defaults to
+         os.getpid() (current process).
+
+
 1.1.1 - 2013-10-08
 ------------------
 

@@ -1863,8 +1863,10 @@ class TestProcess(unittest.TestCase):
 
     def test_invalid_pid(self):
         self.assertRaises(TypeError, psutil.Process, "1")
-        self.assertRaises(TypeError, psutil.Process, None)
         self.assertRaises(ValueError, psutil.Process, -1)
+
+    def test_pid_no_arg(self):
+        self.assertEqual(psutil.Process().pid, os.getpid())
 
     def test_as_dict(self):
         p = psutil.Process(os.getpid())
