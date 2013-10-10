@@ -64,28 +64,25 @@ def get_description():
 
 if os.name == 'posix':
     def get_kernel_version():
-        # return a tuple such as (2, 6, 36)
-        try:
-            major, minor, micro = os.uname()[2].split('.')[:3]
-            major = int(major)
-            minor = int(minor)
-            try:
-                micro = int(micro)
-            except ValueError:
-                s = ""
-                for x in micro:
-                    if x.isdigit():
-                        s += x
-                    else:
-                        break
-                if s:
-                    micro = int(s)
-                else:
-                    micro = 0
-            return (major, minor, micro)
-        except Exception:
-            # for no reason we want to crash during installation
-            traceback.print_exc(file=sys.stderr)
+        """Return a tuple such as (2, 6, 36)."""
+        s = ""
+        uname = os.uname()[2]
+        for c in uname:
+            if c.isdigit() or c == '.':
+                s += c
+            else:
+                break
+        if not s:
+            raise ValueError("can't parse %r" % uname)
+        minor = 0
+        micro = 0
+        nums = s.split('.')
+        major = int(nums[0])
+        if len(nums) >= 2:
+            minor = int(nums[1])
+        if len(nums) >= 3:
+            micro = int(nums[2])
+        return (major, minor, micro)
 
 VERSION = get_version()
 
