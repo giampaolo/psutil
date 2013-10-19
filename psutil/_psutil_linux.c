@@ -25,8 +25,10 @@
  // Linux >= 2.6.13
 #define HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
 
-// Linux >= 2.6.36; HAVE_PRLIMIT is a macro defined in setup.py
-#ifdef HAVE_PRLIMIT
+// Linux >= 2.6.36 (supposedly)
+#define HAVE_PRLIMIT defined(PSUTIL_KERN_PRLIMIT) && defined(__NR_prlimit64)
+
+#if HAVE_PRLIMIT
     #define _FILE_OFFSET_BITS 64
     #include <time.h>
     #include <sys/resource.h>
@@ -105,7 +107,7 @@ linux_ioprio_set(PyObject* self, PyObject* args)
 #endif
 
 
-#ifdef HAVE_PRLIMIT
+#if HAVE_PRLIMIT
 /*
  * A wrapper around prlimit(2); sets process resource limits.
  * This can be used for both get and set, in which case extra
@@ -343,7 +345,7 @@ PsutilMethods[] =
      {"ioprio_set", linux_ioprio_set, METH_VARARGS,
         "Set process I/O priority"},
 #endif
-#ifdef HAVE_PRLIMIT
+#if HAVE_PRLIMIT
      {"prlimit", linux_prlimit, METH_VARARGS,
         "Get or set process resource limits."},
 #endif
@@ -420,7 +422,7 @@ void init_psutil_linux(void)
 #endif
 
 
-#ifdef HAVE_PRLIMIT
+#if HAVE_PRLIMIT
     PyModule_AddIntConstant(module, "RLIM_INFINITY", RLIM_INFINITY);
     PyModule_AddIntConstant(module, "RLIMIT_AS", RLIMIT_AS);
     PyModule_AddIntConstant(module, "RLIMIT_CORE", RLIMIT_CORE);

@@ -147,7 +147,7 @@ elif sys.platform.startswith("linux"):
     kernel_ver = get_kernel_version()
     macros = []
     if kernel_ver is not None and kernel_ver >= (2, 6, 36):
-        macros.append(("HAVE_PRLIMIT", 1))
+        macros.append(("PSUTIL_KERN_PRLIMIT", 1))
 
     extensions = [Extension(
         '_psutil_linux',

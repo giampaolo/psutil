@@ -9,6 +9,11 @@ ENHANCEMENTS
          os.getpid() (current process).
  * #449: new psutil.wait_procs() function.
 
+BUG FIXES
+
+ * #442: [Linux] psutil won't compile on Debian 6.0 because of missing
+         prlimit(2) syscall.
+
 
 1.1.1 - 2013-10-08
 ------------------
