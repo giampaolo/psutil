@@ -1065,6 +1065,29 @@ error:
 }
 
 
+static PyObject*
+get_boot_time(PyObject* self, PyObject* args)
+{
+    float boot_time = 0.0;
+    struct utmpx *ut;
+
+    while (NULL != (ut = getutxent())) {
+        if (ut->ut_type == BOOT_TIME) {
+            boot_time = (float)ut->ut_tv.tv_sec;
+            break;
+        }
+    }
+    endutent();
+    if (boot_time != 0.0) {
+        return Py_BuildValue("f", boot_time);
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError, "can't determine boot time");
+        return NULL;
+    }
+}
+
+
 /*
  * define the psutil C module methods and initialize the module.
  */
@@ -1102,6 +1125,8 @@ PsutilMethods[] =
         "Return a Python dict of tuples for disk I/O statistics."},
      {"get_net_io_counters", get_net_io_counters, METH_VARARGS,
         "Return a Python dict of tuples for network I/O statistics."},
+     {"get_boot_time", get_boot_time, METH_VARARGS,
+        "Return system boot time in seconds since the EPOCH."},
 
      {NULL, NULL, 0, NULL}
 };

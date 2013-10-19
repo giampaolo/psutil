@@ -24,8 +24,13 @@ __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
 NUM_CPUS = os.sysconf("SC_NPROCESSORS_ONLN")
-BOOT_TIME = _psutil_sunos.get_process_basic_info(0)[3]
 TOTAL_PHYMEM = os.sysconf('SC_PHYS_PAGES') * PAGE_SIZE
+try:
+    BOOT_TIME = _psutil_sunos.get_boot_time()
+except Exception:
+    BOOT_TIME = None
+    warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
+
 CONN_IDLE = "IDLE"
 CONN_BOUND = "BOUND"
 
@@ -56,13 +61,10 @@ TCP_STATUSES = {
     _psutil_sunos.TCPS_BOUND: CONN_BOUND,  # sunos specific
 }
 
-
-PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-
 disk_io_counters = _psutil_sunos.get_disk_io_counters
 net_io_counters = _psutil_sunos.get_net_io_counters
 get_disk_usage = _psposix.get_disk_usage
-get_system_boot_time = lambda: _psutil_sunos.get_process_basic_info(0)[3]
+get_system_boot_time = _psutil_sunos.get_boot_time
 
 
 nt_virtmem_info = namedtuple('vmem', ' '.join([
@@ -106,7 +108,7 @@ def swap_memory():
     used = total - free
     percent = usage_percent(used, total, _round=1)
     return nt_swapmeminfo(total, used, free, percent,
-                          sin * PAGESIZE, sout * PAGESIZE)
+                          sin * PAGE_SIZE, sout * PAGE_SIZE)
 
 
 def get_pid_list():
