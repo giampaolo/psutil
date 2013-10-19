@@ -84,8 +84,6 @@ if os.name == 'posix':
             micro = int(nums[2])
         return (major, minor, micro)
 
-VERSION = get_version()
-
 
 # POSIX
 if os.name == 'posix':
@@ -110,8 +108,7 @@ if sys.platform.startswith("win32"):
             'psutil/arch/mswindows/security.c',
         ],
         define_macros=[
-            ('_WIN32_WINNT', get_winver()),
-            ('_AVAIL_WINVER_', get_winver()),
+            ('PSUTIL_WINVER', get_winver()),
         ],
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32", "iphlpapi",
@@ -177,7 +174,7 @@ def main():
 
     setup_args = dict(
         name='psutil',
-        version=VERSION,
+        version=get_version(),
         description='A process and system utilities module for Python',
         long_description=get_description(),
         keywords=[

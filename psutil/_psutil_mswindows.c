@@ -524,7 +524,7 @@ get_process_memory_info(PyObject* self, PyObject* args)
 {
     HANDLE hProcess;
     DWORD pid;
-#if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
+#if (PSUTIL_WINVER >= 0x0501)  // Windows XP with SP2
     PROCESS_MEMORY_COUNTERS_EX cnt;
 #else
     PROCESS_MEMORY_COUNTERS cnt;
@@ -545,7 +545,7 @@ get_process_memory_info(PyObject* self, PyObject* args)
         return PyErr_SetFromWindowsErr(0);
     }
 
-#if (_WIN32_WINNT >= 0x0501)
+#if (PSUTIL_WINVER >= 0x0501)  // Windows XP with SP2
     private = cnt.PrivateUsage;
 #endif
 
@@ -608,7 +608,7 @@ get_process_memory_info_2(PyObject* self, PyObject* args)
         return NULL;
     }
 
-#if (_WIN32_WINNT >= 0x0501)
+#if (PSUTIL_WINVER >= 0x0501)  // Windows XP with SP2
     private = process->PrivatePageCount;
 #else
     private = 0;
@@ -1910,7 +1910,7 @@ set_process_priority(PyObject* self, PyObject* args)
 }
 
 
-#if (_WIN32_WINNT >= 0x0600)  // Windows Vista
+#if (PSUTIL_WINVER >= 0x0600)  // Windows Vista
 /*
  * Get process IO priority as a Python integer.
  */
@@ -2934,7 +2934,7 @@ PsutilMethods[] =
         "Return process priority."},
     {"set_process_priority", set_process_priority, METH_VARARGS,
         "Set process priority."},
-#if (_WIN32_WINNT >= 0x0600)  // Windows Vista
+#if (PSUTIL_WINVER >= 0x0600)  // Windows Vista
     {"get_process_io_priority", get_process_io_priority, METH_VARARGS,
         "Return process IO priority."},
     {"set_process_io_priority", set_process_io_priority, METH_VARARGS,
