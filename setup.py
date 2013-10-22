@@ -108,7 +108,10 @@ if sys.platform.startswith("win32"):
             'psutil/arch/mswindows/security.c',
         ],
         define_macros=[
-            ('PSUTIL_WINVER', get_winver()),
+            # be nice to mingw, see: 
+            # http://www.mingw.org/wiki/Use_more_recent_defined_functions
+            ('_WIN32_WINNT', get_winver()),
+            ('_AVAIL_WINVER_', get_winver()),
         ],
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32", "iphlpapi",
