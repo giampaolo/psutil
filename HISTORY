@@ -1,13 +1,7 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-1.2.0 - 2013-10-22
+1.1.2 - 2013-10-22
 ------------------
-
-ENHANCEMENTS
-
- * #439: psutil.Process()'s pid argument can be omitted and defaults to
-         os.getpid() (current process).
- * #449: new psutil.wait_procs() function.
 
 BUG FIXES
 

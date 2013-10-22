@@ -12,7 +12,7 @@ Python.
 
 from __future__ import division
 
-__version__ = "1.2.0"
+__version__ = "1.1.2"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
@@ -30,7 +30,7 @@ __all__ = [
     # classes
     "Process", "Popen",
     # functions
-    "pid_exists", "get_pid_list", "process_iter", "wait_procs",     # proc
+    "pid_exists", "get_pid_list", "process_iter",                   # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent",                # cpu
     "net_io_counters",                                              # network
@@ -178,9 +178,8 @@ def _assert_pid_not_reused(fun):
 class Process(object):
     """Represents an OS process."""
 
-    def __init__(self, pid=None):
+    def __init__(self, pid):
         """Create a new Process object for the given pid.
-        If pid is omitted os.getpid() is assumed.
         Raises NoSuchProcess if pid does not exist.
 
         Note that most of the methods of this class do not make sure
@@ -207,14 +206,11 @@ class Process(object):
             instances use process_iter() which pre-emptively checks
             process identity for every yielded instance
         """
-        if pid is None:
-            pid = os.getpid()
-        else:
-            if not _PY3:
-                if not isinstance(pid, (int, long)):
-                    raise TypeError('pid must be an integer')
-            if pid < 0:
-                raise ValueError('pid must be a positive integer')
+        if not _PY3:
+            if not isinstance(pid, (int, long)):
+                raise TypeError('pid must be an integer')
+        if pid < 0:
+            raise ValueError('pid must be a positive integer')
         self._pid = pid
         self._gone = False
         self._ppid = None
@@ -1061,87 +1057,6 @@ def process_iter():
             # no way to tell whether the pid of the cached process
             # has been reused. Just return the cached version.
             yield proc
-
-def wait_procs(procs, timeout, callback=None):
-    """Convenience function which waits for a list of processes to
-    terminate.
-
-    Return a (gone, alive) tuple indicating which processes
-    are gone and which ones are still alive.
-
-    The gone ones will have a new 'retcode' attribute indicating
-    process exit status (may be None).
-
-    'callback' is a callable function which gets called every
-    time a process terminates (a Process instance is passed as
-    callback argument).
-
-    Function will return as soon as all processes terminate or when
-    timeout occurs.
-
-    Tipical use case is:
-
-     - send SIGTERM to a list of processes
-     - give them some time to terminate
-     - send SIGKILL to those ones which are still alive
-
-    Example:
-
-    >>> def on_terminate(proc):
-    ...     print("process {} terminated".format(proc))
-    ...
-    >>> for p in procs:
-    ...    p.terminate()
-    ...
-    >>> gone, still_alive = wait_procs(procs, 3, callback=on_terminate)
-    >>> for p in still_alive:
-    ...     p.kill()
-    """
-    def assert_gone(proc, timeout):
-        try:
-            retcode = proc.wait(timeout=timeout)
-        except TimeoutExpired:
-            pass
-        else:
-            if retcode is not None or not proc.is_running():
-                proc.retcode = retcode
-                gone.add(proc)
-                if callback is not None:
-                    callback(proc)
-
-    timer = getattr(time, 'monotonic', time.time)
-    gone = set()
-    alive = set(procs)
-    if callback is not None and not callable(callback):
-        raise TypeError("callback %r is not a callable" % callable)
-    deadline = timer() + timeout
-
-    while alive:
-        if timeout <= 0:
-            break
-        len_total = len(alive)
-        for proc in alive:
-            # Make sure that every complete iteration (all processes)
-            # will last max 1 sec.
-            # We do this because we don't want to wait too long on a
-            # single process: in case it terminates too late other
-            # processes may disappear in the meantime and their PID
-            # be reused.
-            max_timeout = 1.0 / (len_total - len(gone))
-            timeout = min((deadline - timer()), max_timeout)
-            if timeout <= 0:
-                break
-            assert_gone(proc, timeout)
-        alive = alive - gone
-
-    if alive:
-        # Last attempt over processes survived so far.
-        # timeout == 0 won't make this function wait any longer.
-        for proc in alive:
-            assert_gone(proc, 0)
-        alive = alive - gone
-
-    return (list(gone), list(alive))
 
 
 # =====================================================================

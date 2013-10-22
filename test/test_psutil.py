@@ -566,43 +566,6 @@ class TestSystemAPIs(unittest.TestCase):
         p.wait()
         self.assertNotIn(sproc.pid, [x.pid for x in psutil.process_iter()])
 
-    def test_wait_procs(self):
-        l = []
-        callback = lambda p: l.append(p.pid)
-
-        sproc1 = get_test_subprocess()
-        sproc2 = get_test_subprocess()
-        sproc3 = get_test_subprocess()
-        procs = [psutil.Process(x.pid) for x in (sproc1, sproc2, sproc3)]
-        t = time.time()
-        gone, alive = psutil.wait_procs(procs, 0.01, callback=callback)
-
-        self.assertLess(time.time() - t, 0.5)
-        self.assertEqual(gone, [])
-        self.assertEqual(len(alive), 3)
-        self.assertEqual(l, [])
-        for p in alive:
-            self.assertFalse(hasattr(p, 'retcode'))
-
-        sproc3.terminate()
-        gone, alive = psutil.wait_procs(procs, 0.01, callback=callback)
-        self.assertEqual(len(gone), 1)
-        self.assertEqual(len(alive), 2)
-        self.assertIn(sproc3.pid, [x.pid for x in gone])
-        self.assertEqual(gone.pop().retcode, signal.SIGTERM)
-        self.assertEqual(l, [sproc3.pid])
-        for p in alive:
-            self.assertFalse(hasattr(p, 'retcode'))
-
-        sproc1.terminate()
-        sproc2.terminate()
-        gone, alive = psutil.wait_procs(procs, 0.01, callback=callback)
-        self.assertEqual(len(gone), 3)
-        self.assertEqual(len(alive), 0)
-        self.assertEqual(set(l), set([sproc1.pid, sproc2.pid, sproc3.pid]))
-        for p in gone:
-            self.assertTrue(hasattr(p, 'retcode'))
-
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM
         self.assertIsInstance(x, (int, long))
@@ -1900,9 +1863,6 @@ class TestProcess(unittest.TestCase):
     def test_invalid_pid(self):
         self.assertRaises(TypeError, psutil.Process, "1")
         self.assertRaises(ValueError, psutil.Process, -1)
-
-    def test_pid_no_arg(self):
-        self.assertEqual(psutil.Process().pid, os.getpid())
 
     def test_as_dict(self):
         p = psutil.Process(os.getpid())
