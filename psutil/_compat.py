@@ -59,12 +59,9 @@ else:
 # removed in 3.0, reintroduced in 3.2
 try:
     callable = callable
-except Exception:
+except NameError:
     def callable(obj):
-        for klass in type(obj).__mro__:
-            if "__call__" in klass.__dict__:
-                return True
-        return False
+        return any("__call__" in klass.__dict__ for klass in type(obj).__mro__)
 
 
 # --- stdlib additions
