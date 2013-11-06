@@ -17,6 +17,7 @@
 #include <features.h>
 #include <utmp.h>
 #include <sched.h>
+#include <linux/version.h>
 #include <sys/syscall.h>
 #include <sys/sysinfo.h>
 
@@ -27,9 +28,10 @@
 #define HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
 
 // Linux >= 2.6.36 (supposedly) and glibc >= 13
-#define HAVE_PRLIMIT defined(PSUTIL_KERN_PRLIMIT) && \
-                     defined(__NR_prlimit64) && \
-                     (__GLIBC__ >= 2 && __GLIBC_MINOR__ >= 13)
+#define HAVE_PRLIMIT \
+    (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)) && \
+    (__GLIBC__ >= 2 && __GLIBC_MINOR__ >= 13) && \
+    defined(__NR_prlimit64)
 
 #if HAVE_PRLIMIT
     #define _FILE_OFFSET_BITS 64

@@ -62,29 +62,6 @@ def get_description():
     finally:
         f.close()
 
-if os.name == 'posix':
-    def get_kernel_version():
-        """Return a tuple such as (2, 6, 36)."""
-        s = ""
-        uname = os.uname()[2]
-        for c in uname:
-            if c.isdigit() or c == '.':
-                s += c
-            else:
-                break
-        if not s:
-            raise ValueError("can't parse %r" % uname)
-        minor = 0
-        micro = 0
-        nums = s.split('.')
-        major = int(nums[0])
-        if len(nums) >= 2:
-            minor = int(nums[1])
-        if len(nums) >= 3:
-            micro = int(nums[2])
-        return (major, minor, micro)
-
-
 # POSIX
 if os.name == 'posix':
     posix_extension = Extension(
@@ -108,7 +85,7 @@ if sys.platform.startswith("win32"):
             'psutil/arch/mswindows/security.c',
         ],
         define_macros=[
-            # be nice to mingw, see: 
+            # be nice to mingw, see:
             # http://www.mingw.org/wiki/Use_more_recent_defined_functions
             ('_WIN32_WINNT', get_winver()),
             ('_AVAIL_WINVER_', get_winver()),
@@ -147,15 +124,9 @@ elif sys.platform.startswith("freebsd"):
     ]
 # Linux
 elif sys.platform.startswith("linux"):
-    kernel_ver = get_kernel_version()
-    macros = []
-    if kernel_ver is not None and kernel_ver >= (2, 6, 36):
-        macros.append(("PSUTIL_KERN_PRLIMIT", 1))
-
     extensions = [Extension(
         '_psutil_linux',
-        sources=['psutil/_psutil_linux.c'],
-        define_macros=macros),
+        sources=['psutil/_psutil_linux.c']),
         posix_extension,
     ]
 # Solaris
