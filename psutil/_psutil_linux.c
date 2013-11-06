@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <mntent.h>
+#include <features.h>
 #include <utmp.h>
 #include <sched.h>
 #include <sys/syscall.h>
@@ -25,8 +26,10 @@
  // Linux >= 2.6.13
 #define HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
 
-// Linux >= 2.6.36 (supposedly)
-#define HAVE_PRLIMIT defined(PSUTIL_KERN_PRLIMIT) && defined(__NR_prlimit64)
+// Linux >= 2.6.36 (supposedly) and glibc >= 13
+#define HAVE_PRLIMIT defined(PSUTIL_KERN_PRLIMIT) && \
+                     defined(__NR_prlimit64) && \
+                     (__GLIBC__ >= 2 && __GLIBC_MINOR__ >= 13)
 
 #if HAVE_PRLIMIT
     #define _FILE_OFFSET_BITS 64
