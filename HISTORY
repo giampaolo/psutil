@@ -1,5 +1,14 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+1.1.3 - 2013-11-07
+------------------
+
+BUG FIXES
+
+ * #442: [Linux] psutil won't compile on certain version of Linux because of
+         missing prlimit(2) syscall.
+
+
 1.1.2 - 2013-10-22
 ------------------
 
@@ -14,7 +23,7 @@ BUG FIXES
 
 BUG FIXES
 
- * #438: [Linux] psutil won't compile on kernels < 2.6.36 due to missing
+ * #442: [Linux] psutil won't compile on kernels < 2.6.36 due to missing
          prlimit(2) syscall.
 
 
