@@ -821,10 +821,11 @@ class Process(object):
         except OSError:
             err = sys.exc_info()[1]
             if err.errno == errno.EINVAL:
-                allcpus = list(range(len(get_system_per_cpu_times())))
+                allcpus = tuple(range(len(get_system_per_cpu_times())))
                 for cpu in value:
                     if cpu not in allcpus:
-                        raise ValueError("invalid CPU %i" % cpu)
+                        raise ValueError("invalid CPU #%i (choose between %s)" \
+                            % (cpu, allcpus))
             raise
 
     # only starting from kernel 2.6.13
