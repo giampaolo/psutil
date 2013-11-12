@@ -78,7 +78,8 @@ WINDOWS = sys.platform.startswith("win32")
 OSX = sys.platform.startswith("darwin")
 BSD = sys.platform.startswith("freebsd")
 SUNOS = sys.platform.startswith("sunos")
-
+VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil) \
+                       if x.startswith('STATUS_')]
 
 # ===================================================================
 # --- Utility functions
@@ -2211,6 +2212,7 @@ class TestFetchAllProcesses(unittest.TestCase):
     def status(self, ret):
         self.assertTrue(ret != "")
         self.assertTrue(ret != '?')
+        self.assertIn(ret, VALID_PROC_STATUSES)
 
     def get_io_counters(self, ret):
         for field in ret:
