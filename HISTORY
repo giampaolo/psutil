@@ -1,5 +1,14 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+1.1.4- XXXX-XX-XX
+-----------------
+
+BUG FIXES
+
+ * #348: [Windows XP/Vista] fixed "ImportError: DLL load failed" occurring on
+         module import.
+
+
 1.1.3 - 2013-11-07
 ------------------
 

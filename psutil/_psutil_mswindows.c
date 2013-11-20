@@ -9,6 +9,12 @@
 // Fixes clash between winsock2.h and windows.h
 #define WIN32_LEAN_AND_MEAN
 
+
+// see https://code.google.com/p/psutil/issues/detail?id=348
+#if WINVER < 0x0701  // Windows 7
+    #define PSAPI_VERSION 1
+#endif
+
 #include <Python.h>
 #include <windows.h>
 #include <Psapi.h>
