@@ -12,7 +12,7 @@ Python.
 
 from __future__ import division
 
-__version__ = "1.1.4"
+__version__ = "1.2.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
