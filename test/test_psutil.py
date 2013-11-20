@@ -593,7 +593,7 @@ class TestSystemAPIs(unittest.TestCase):
         if POSIX:
             self.assertEqual(gone.pop().retcode, signal.SIGTERM)
         else:
-            self.assertEqual(gone.pop().retcode, 0)
+            self.assertEqual(gone.pop().retcode, 1)
         self.assertEqual(l, [sproc3.pid])
         for p in alive:
             self.assertFalse(hasattr(p, 'retcode'))
