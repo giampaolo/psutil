@@ -178,8 +178,9 @@ def _assert_pid_not_reused(fun):
 class Process(object):
     """Represents an OS process."""
 
-    def __init__(self, pid):
+    def __init__(self, pid=None):
         """Create a new Process object for the given pid.
+        If pid is omitted current process pid is assumed.
         Raises NoSuchProcess if pid does not exist.
 
         Note that most of the methods of this class do not make sure
@@ -206,11 +207,14 @@ class Process(object):
             instances use process_iter() which pre-emptively checks
             process identity for every yielded instance
         """
-        if not _PY3:
-            if not isinstance(pid, (int, long)):
-                raise TypeError('pid must be an integer')
-        if pid < 0:
-            raise ValueError('pid must be a positive integer')
+        if pid is None:
+            pid = os.getpid()
+        else:
+            if not _PY3:
+                if not isinstance(pid, (int, long)):
+                    raise TypeError('pid must be an integer')
+            if pid < 0:
+                raise ValueError('pid must be a positive integer')
         self._pid = pid
         self._gone = False
         self._ppid = None

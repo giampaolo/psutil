@@ -5,6 +5,8 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 ENHANCEMENTS
 
+ * #439: assume os.getpid() if no argument is passed to psutil.Process
+         constructor.
  * #440: new psutil.wait_procs() utility function which waits for multiple
          processes to terminate.
 

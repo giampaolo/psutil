@@ -1036,6 +1036,9 @@ class TestProcess(unittest.TestCase):
     def tearDown(self):
         reap_children()
 
+    def test_no_pid(self):
+        self.assertEqual(psutil.Process().pid, os.getpid())
+
     def test_kill(self):
         sproc = get_test_subprocess(wait=True)
         test_pid = sproc.pid
