@@ -1,7 +1,12 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-1.1.4- XXXX-XX-XX
------------------
+1.2.0 - XXXX-XX-XX
+------------------
+
+ENHANCEMENTS
+
+ * #440: new psutil.wait_procs() utility function which waits for multiple
+         processes to terminate.
 
 BUG FIXES
 
