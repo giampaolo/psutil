@@ -14,9 +14,9 @@ import os
 import sys
 if os.name != 'posix':
     sys.exit('platform not supported')
-import time
-import curses
 import atexit
+import curses
+import time
 from datetime import datetime, timedelta
 
 import psutil
@@ -33,6 +33,7 @@ win = curses.initscr()
 atexit.register(tear_down)
 curses.endwin()
 lineno = 0
+
 
 def print_line(line, highlight=False):
     """A thin wrapper around curses's addstr()."""
@@ -62,12 +63,13 @@ def bytes2human(n):
     symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
     prefix = {}
     for i, s in enumerate(symbols):
-        prefix[s] = 1 << (i+1)*10
+        prefix[s] = 1 << (i + 1) * 10
     for s in reversed(symbols):
         if n >= prefix[s]:
             value = int(float(n) / prefix[s])
             return '%s%s' % (value, s)
     return "%sB" % n
+
 
 def poll(interval):
     # sleep some time
@@ -92,11 +94,12 @@ def poll(interval):
     processes = sorted(procs, key=lambda p: p.dict['cpu_percent'], reverse=True)
     return (processes, procs_status)
 
+
 def print_header(procs_status, num_procs):
     """Print system-related info, above the process list."""
 
     def get_dashes(perc):
-        dashes =  "|" * int((float(perc) / 10 * 4))
+        dashes = "|" * int((float(perc) / 10 * 4))
         empty_dashes = " " * (40 - len(dashes))
         return dashes, empty_dashes
 
@@ -138,8 +141,9 @@ def print_header(procs_status, num_procs):
     uptime = datetime.now() - datetime.fromtimestamp(psutil.BOOT_TIME)
     av1, av2, av3 = os.getloadavg()
     line = " Load average: %.2f %.2f %.2f  Uptime: %s" \
-            % (av1, av2, av3, str(uptime).split('.')[0])
+        % (av1, av2, av3, str(uptime).split('.')[0])
     print_line(line)
+
 
 def refresh_window(procs, procs_status):
     """Print results on screen by using curses."""
@@ -154,7 +158,7 @@ def refresh_window(procs, procs_status):
     for p in procs:
         # TIME+ column shows process CPU cumulative time and it
         # is expressed as: "mm:ss.ms"
-        if p.dict['cpu_times'] != None:
+        if p.dict['cpu_times'] is not None:
             ctime = timedelta(seconds=sum(p.dict['cpu_times']))
             ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
                                   str((ctime.seconds % 60)).zfill(2),

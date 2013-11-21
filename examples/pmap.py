@@ -14,6 +14,7 @@ import sys
 import psutil
 from psutil._compat import print_
 
+
 def main():
     if len(sys.argv) != 2:
         sys.exit('usage: pmap pid')
@@ -24,10 +25,11 @@ def main():
     total_rss = 0
     for m in p.get_memory_maps(grouped=False):
         total_rss += m.rss
-        print_(templ % (m.addr.split('-')[0].zfill(16),
-                        str(m.rss / 1024) + 'K' ,
-                        m.perms,
-                        m.path))
+        print_(templ % (
+            m.addr.split('-')[0].zfill(16),
+            str(m.rss / 1024) + 'K',
+            m.perms,
+            m.path))
     print_("-" * 33)
     print_(templ % ("Total", str(total_rss / 1024) + 'K', '', ''))
 

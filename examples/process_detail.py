@@ -10,8 +10,8 @@ Print detailed information about a process.
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 """
 
-import os
 import datetime
+import os
 import socket
 import sys
 
@@ -22,12 +22,13 @@ def convert_bytes(n):
     symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
     prefix = {}
     for i, s in enumerate(symbols):
-        prefix[s] = 1 << (i+1)*10
+        prefix[s] = 1 << (i + 1) * 10
     for s in reversed(symbols):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
             return '%.1f%s' % (value, s)
     return "%sB" % n
+
 
 def print_(a, b):
     if sys.stdout.isatty() and os.name == 'posix':
@@ -37,6 +38,7 @@ def print_(a, b):
     # python 2/3 compatibility layer
     sys.stdout.write(fmt + '\n')
     sys.stdout.flush()
+
 
 def run(pid):
     ACCESS_DENIED = ''
@@ -53,13 +55,13 @@ def run(pid):
             parent = ''
     except psutil.Error:
         parent = ''
-    started = datetime.datetime.fromtimestamp(pinfo['create_time']
-                                                ).strftime('%Y-%M-%d %H:%M')
+    started = datetime.datetime.fromtimestamp(
+        pinfo['create_time']).strftime('%Y-%M-%d %H:%M')
     io = pinfo.get('io_counters', ACCESS_DENIED)
     mem = '%s%% (resident=%s, virtual=%s) ' % (
-                                      round(pinfo['memory_percent'], 1),
-                                      convert_bytes(pinfo['memory_info'].rss),
-                                      convert_bytes(pinfo['memory_info'].vms))
+        round(pinfo['memory_percent'], 1),
+        convert_bytes(pinfo['memory_info'].rss),
+        convert_bytes(pinfo['memory_info'].vms))
     children = p.get_children()
 
     print_('pid', pinfo['pid'])
@@ -78,16 +80,17 @@ def run(pid):
     if hasattr(p, 'getcwd'):
         print_('cwd', pinfo['cwd'])
     print_('memory', mem)
-    print_('cpu', '%s%% (user=%s, system=%s)' % (pinfo['cpu_percent'],
-                                    getattr(pinfo['cpu_times'], 'user', '?'),
-                                    getattr(pinfo['cpu_times'], 'system', '?')))
+    print_('cpu', '%s%% (user=%s, system=%s)' % (
+        pinfo['cpu_percent'],
+        getattr(pinfo['cpu_times'], 'user', '?'),
+        getattr(pinfo['cpu_times'], 'system', '?')))
     print_('status', pinfo['status'])
     print_('niceness', pinfo['nice'])
     print_('num threads', pinfo['num_threads'])
     if io != ACCESS_DENIED:
-        print_('I/O', 'bytes-read=%s, bytes-written=%s' % \
-                                               (convert_bytes(io.read_bytes),
-                                                convert_bytes(io.write_bytes)))
+        print_('I/O', 'bytes-read=%s, bytes-written=%s' % (
+            convert_bytes(io.read_bytes),
+            convert_bytes(io.write_bytes)))
     if children:
         print_('children', '')
         for child in children:
@@ -101,8 +104,8 @@ def run(pid):
     if pinfo['threads']:
         print_('running threads', '')
         for thread in pinfo['threads']:
-            print_('',  'id=%s, user-time=%s, sys-time=%s' \
-                         % (thread.id, thread.user_time, thread.system_time))
+            print_('',  'id=%s, user-time=%s, sys-time=%s' % (
+                thread.id, thread.user_time, thread.system_time))
     if pinfo['connections'] != ACCESS_DENIED:
         print_('open connections', '')
         for conn in pinfo['connections']:
@@ -117,8 +120,9 @@ def run(pid):
                 rip, rport = '*', '*'
             else:
                 rip, rport = conn.raddr
-            print_('',  '%s:%s -> %s:%s type=%s status=%s' \
-                         % (lip, lport, rip, rport, type, conn.status))
+            print_('',  '%s:%s -> %s:%s type=%s status=%s' % (
+                lip, lport, rip, rport, type, conn.status))
+
 
 def main(argv=None):
     if argv is None:

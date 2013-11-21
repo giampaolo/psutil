@@ -37,6 +37,7 @@ atexit.register(tear_down)
 curses.endwin()
 lineno = 0
 
+
 def print_line(line, highlight=False):
     """A thin wrapper around curses's addstr()."""
     global lineno
@@ -65,12 +66,13 @@ def bytes2human(n):
     symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
     prefix = {}
     for i, s in enumerate(symbols):
-        prefix[s] = 1 << (i+1)*10
+        prefix[s] = 1 << (i + 1) * 10
     for s in reversed(symbols):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
             return '%.2f %s/s' % (value, s)
     return '%.2f B/s' % (n)
+
 
 def poll(interval):
     """Calculate IO usage by comparing IO statics before and
@@ -134,16 +136,18 @@ def refresh_window(procs, disks_read, disks_write):
     print_line(header, highlight=True)
 
     for p in procs:
-        line = templ % (p.pid,
-                        p._username[:7],
-                        bytes2human(p._read_per_sec),
-                        bytes2human(p._write_per_sec),
-                        p._cmdline)
+        line = templ % (
+            p.pid,
+            p._username[:7],
+            bytes2human(p._read_per_sec),
+            bytes2human(p._write_per_sec),
+            p._cmdline)
         try:
             print_line(line)
         except curses.error:
             break
     win.refresh()
+
 
 def main():
     try:

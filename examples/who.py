@@ -18,12 +18,11 @@ from psutil._compat import print_
 def main():
     users = psutil.get_users()
     for user in users:
-        print_("%-15s %-15s %s  (%s)" % \
-            (user.name,
-             user.terminal or '-',
-             datetime.fromtimestamp(user.started).strftime("%Y-%m-%d %H:%M"),
-             user.host)
-        )
+        print_("%-15s %-15s %s  (%s)" % (
+            user.name,
+            user.terminal or '-',
+            datetime.fromtimestamp(user.started).strftime("%Y-%m-%d %H:%M"),
+            user.host))
 
 if __name__ == '__main__':
     main()
