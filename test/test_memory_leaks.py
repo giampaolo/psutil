@@ -10,29 +10,30 @@ functions many times and compare process memory usage before and
 after the calls.  It might produce false positives.
 """
 
-import os
 import gc
-import unittest
-import time
+import os
 import socket
-import threading
-import types
 import sys
+import threading
+import time
+import types
+import unittest
 
 import psutil
 import psutil._common
+
 from psutil._compat import PY3, callable, xrange
 from test_psutil import *
 
-# disable cache for Process class properties
-psutil._common.cached_property.enabled = False
 
 LOOPS = 1000
 TOLERANCE = 4096
 
+# disable cache for Process class properties
+psutil._common.cached_property.enabled = False
+
 
 class Base(unittest.TestCase):
-
     proc = psutil.Process(os.getpid())
 
     def execute(self, function, *args, **kwargs):
@@ -72,7 +73,7 @@ class Base(unittest.TestCase):
             rss3 = self.get_mem()
             difference = rss3 - rss2
             if rss3 > rss2:
-                self.fail("rss2=%s, rss3=%s, difference=%s" \
+                self.fail("rss2=%s, rss3=%s, difference=%s"
                           % (rss2, rss3, difference))
 
     def get_mem(self):
@@ -93,6 +94,7 @@ class TestProcessObjectLeaks(Base):
             if attr[5:] not in supported_attrs:
                 meth = getattr(self, attr)
                 name = meth.__func__.__name__.replace('test_', '')
+
                 @unittest.skipIf(True,
                                  "%s not supported on this platform" % name)
                 def test_(self):
@@ -215,7 +217,6 @@ class TestProcessObjectLeaks(Base):
     def test_get_rlimit(self):
         self.execute('get_rlimit', psutil.RLIMIT_NOFILE)
 
-
     @unittest.skipUnless(LINUX, "feature not supported on this platform")
     def test_get_rlimit(self):
         limit = psutil.Process(os.getpid()).get_rlimit(psutil.RLIMIT_NOFILE)
@@ -262,6 +263,7 @@ DEAD_PROC.kill()
 DEAD_PROC.wait()
 del p
 
+
 class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
     """Same as above but looks for leaks occurring when dealing with
     zombie processes raising NoSuchProcess exception.
@@ -294,10 +296,11 @@ class TestModuleFunctionsLeaks(Base):
     def call(self, function, *args, **kwargs):
         obj = getattr(psutil, function)
         if callable(obj):
-            retvalue = obj(*args, **kwargs)
+            obj(*args, **kwargs)
 
-    @unittest.skipUnless(hasattr(psutil._psplatform, "get_num_cpus"),
-                "platform module does not expose a get_num_cpus() function")
+    @unittest.skipUnless(
+        hasattr(psutil._psplatform, "get_num_cpus"),
+        "platform module does not expose a get_num_cpus() function")
     @unittest.skipIf(LINUX, "not worth being tested on POSIX (pure python)")
     def test_NUM_CPUS(self):
         psutil.get_num_cpus = psutil._psplatform.get_num_cpus
@@ -346,7 +349,7 @@ def test_main():
     test_suite = unittest.TestSuite()
     tests = [TestProcessObjectLeaksZombie,
              TestProcessObjectLeaks,
-             TestModuleFunctionsLeaks,]
+             TestModuleFunctionsLeaks]
     for test in tests:
         test_suite.addTest(unittest.makeSuite(test))
     result = unittest.TextTestRunner(verbosity=2).run(test_suite)
