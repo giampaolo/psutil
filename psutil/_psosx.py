@@ -13,10 +13,11 @@ import warnings
 
 import _psutil_osx
 import _psutil_posix
+
 from psutil import _psposix
-from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
-from psutil._compat import namedtuple, wraps
 from psutil._common import *
+from psutil._compat import namedtuple, wraps
+from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 
 __extra__all__ = []
 
@@ -42,28 +43,39 @@ except Exception:
     TOTAL_PHYMEM = None
     warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
 
-_PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-_cputimes_ntuple = namedtuple('cputimes', 'user nice system idle')
+PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
-_TCP_STATES_TABLE = {_psutil_osx.TCPS_ESTABLISHED : CONN_ESTABLISHED,
-                     _psutil_osx.TCPS_SYN_SENT : CONN_SYN_SENT,
-                     _psutil_osx.TCPS_SYN_RECEIVED : CONN_SYN_RECV,
-                     _psutil_osx.TCPS_FIN_WAIT_1 : CONN_FIN_WAIT1,
-                     _psutil_osx.TCPS_FIN_WAIT_2 : CONN_FIN_WAIT2,
-                     _psutil_osx.TCPS_TIME_WAIT : CONN_TIME_WAIT,
-                     _psutil_osx.TCPS_CLOSED : CONN_CLOSE,
-                     _psutil_osx.TCPS_CLOSE_WAIT : CONN_CLOSE_WAIT,
-                     _psutil_osx.TCPS_LAST_ACK : CONN_LAST_ACK,
-                     _psutil_osx.TCPS_LISTEN : CONN_LISTEN,
-                     _psutil_osx.TCPS_CLOSING : CONN_CLOSING,
-                     _psutil_osx.PSUTIL_CONN_NONE : CONN_NONE,
-                     }
+TCP_STATUSES = {
+    _psutil_osx.TCPS_ESTABLISHED: CONN_ESTABLISHED,
+    _psutil_osx.TCPS_SYN_SENT: CONN_SYN_SENT,
+    _psutil_osx.TCPS_SYN_RECEIVED: CONN_SYN_RECV,
+    _psutil_osx.TCPS_FIN_WAIT_1: CONN_FIN_WAIT1,
+    _psutil_osx.TCPS_FIN_WAIT_2: CONN_FIN_WAIT2,
+    _psutil_osx.TCPS_TIME_WAIT: CONN_TIME_WAIT,
+    _psutil_osx.TCPS_CLOSED: CONN_CLOSE,
+    _psutil_osx.TCPS_CLOSE_WAIT: CONN_CLOSE_WAIT,
+    _psutil_osx.TCPS_LAST_ACK: CONN_LAST_ACK,
+    _psutil_osx.TCPS_LISTEN: CONN_LISTEN,
+    _psutil_osx.TCPS_CLOSING: CONN_CLOSING,
+    _psutil_osx.PSUTIL_CONN_NONE: CONN_NONE,
+}
+
+PROC_STATUSES = {
+    _psutil_osx.SIDL: STATUS_IDLE,
+    _psutil_osx.SRUN: STATUS_RUNNING,
+    _psutil_osx.SSLEEP: STATUS_SLEEPING,
+    _psutil_osx.SSTOP: STATUS_STOPPED,
+    _psutil_osx.SZOMB: STATUS_ZOMBIE,
+}
+
 
 # --- functions
 
 get_system_boot_time = _psutil_osx.get_system_boot_time
 # ...so that we can test it from test_memory_leask.py
 get_num_cpus = _psutil_osx.get_num_cpus()
+
 
 nt_virtmem_info = namedtuple('vmem', ' '.join([
     # all platforms
@@ -82,16 +94,21 @@ def virtual_memory():
     return nt_virtmem_info(total, avail, percent, used, free,
                            active, inactive, wired)
 
+
 def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     total, used, free, sin, sout = _psutil_osx.get_swap_mem()
     percent = usage_percent(used, total, _round=1)
     return nt_swapmeminfo(total, used, free, percent, sin, sout)
 
+
+_cputimes_ntuple = namedtuple('cputimes', 'user nice system idle')
+
 def get_system_cpu_times():
     """Return system CPU times as a namedtuple."""
     user, nice, system, idle = _psutil_osx.get_system_cpu_times()
     return _cputimes_ntuple(user, nice, system, idle)
+
 
 def get_system_per_cpu_times():
     """Return system CPU times as a named tuple"""
@@ -102,6 +119,7 @@ def get_system_per_cpu_times():
         ret.append(item)
     return ret
 
+
 def disk_partitions(all=False):
     retlist = []
     partitions = _psutil_osx.get_disk_partitions()
@@ -110,12 +128,12 @@ def disk_partitions(all=False):
         if device == 'none':
             device = ''
         if not all:
-            if not os.path.isabs(device) \
-            or not os.path.exists(device):
+            if not os.path.isabs(device) or not os.path.exists(device):
                 continue
         ntuple = nt_partition(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
+
 
 def get_system_users():
     retlist = []
@@ -137,7 +155,6 @@ get_disk_usage = _psposix.get_disk_usage
 net_io_counters = _psutil_osx.get_net_io_counters
 disk_io_counters = _psutil_osx.get_disk_io_counters
 
-# --- decorator
 
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError exceptions into
@@ -156,14 +173,6 @@ def wrap_exceptions(fun):
             raise
     return wrapper
 
-
-_status_map = {
-    _psutil_osx.SIDL : STATUS_IDLE,
-    _psutil_osx.SRUN : STATUS_RUNNING,
-    _psutil_osx.SSLEEP : STATUS_SLEEPING,
-    _psutil_osx.SSTOP : STATUS_STOPPED,
-    _psutil_osx.SZOMB : STATUS_ZOMBIE,
-}
 
 class Process(object):
     """Wrapper class around underlying C implementation."""
@@ -231,8 +240,8 @@ class Process(object):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms, pfaults, pageins = _psutil_osx.get_process_memory_info(self.pid)
         return self._nt_ext_mem(rss, vms,
-                                pfaults * _PAGESIZE,
-                                pageins * _PAGESIZE)
+                                pfaults * PAGESIZE,
+                                pageins * PAGESIZE)
 
     @wrap_exceptions
     def get_cpu_times(self):
@@ -280,7 +289,7 @@ class Process(object):
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
-            status = _TCP_STATES_TABLE[status]
+            status = TCP_STATUSES[status]
             nt = nt_connection(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
         return ret
@@ -310,7 +319,7 @@ class Process(object):
     def get_process_status(self):
         code = _psutil_osx.get_process_status(self.pid)
         # XXX is '?' legit? (we're not supposed to return it anyway)
-        return _status_map.get(code, '?')
+        return PROC_STATUSES.get(code, '?')
 
     @wrap_exceptions
     def get_process_threads(self):
@@ -322,9 +331,11 @@ class Process(object):
             retlist.append(ntuple)
         return retlist
 
-    nt_mmap_grouped = namedtuple('mmap',
+    nt_mmap_grouped = namedtuple(
+        'mmap',
         'path rss private swapped dirtied ref_count shadow_depth')
-    nt_mmap_ext = namedtuple('mmap',
+    nt_mmap_ext = namedtuple(
+        'mmap',
         'addr perms path rss private swapped dirtied ref_count shadow_depth')
 
     @wrap_exceptions
