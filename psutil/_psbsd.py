@@ -13,10 +13,11 @@ import warnings
 
 import _psutil_bsd
 import _psutil_posix
+
 from psutil import _psposix
-from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
-from psutil._compat import namedtuple, wraps
 from psutil._common import *
+from psutil._compat import namedtuple, wraps
+from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 
 __extra__all__ = []
 
@@ -42,15 +43,33 @@ except Exception:
     BOOT_TIME = None
     warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
 
+PROC_STATUSES = {
+    _psutil_bsd.SSTOP: STATUS_STOPPED,
+    _psutil_bsd.SSLEEP: STATUS_SLEEPING,
+    _psutil_bsd.SRUN: STATUS_RUNNING,
+    _psutil_bsd.SIDL: STATUS_IDLE,
+    _psutil_bsd.SWAIT: STATUS_WAITING,
+    _psutil_bsd.SLOCK: STATUS_LOCKED,
+    _psutil_bsd.SZOMB: STATUS_ZOMBIE,
+}
 
-_PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-_cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
-# ...so that we can test it from test_memory_leask.py
-get_num_cpus = _psutil_bsd.get_num_cpus()
+TCP_STATUSES = {
+    _psutil_bsd.TCPS_ESTABLISHED: CONN_ESTABLISHED,
+    _psutil_bsd.TCPS_SYN_SENT: CONN_SYN_SENT,
+    _psutil_bsd.TCPS_SYN_RECEIVED: CONN_SYN_RECV,
+    _psutil_bsd.TCPS_FIN_WAIT_1: CONN_FIN_WAIT1,
+    _psutil_bsd.TCPS_FIN_WAIT_2: CONN_FIN_WAIT2,
+    _psutil_bsd.TCPS_TIME_WAIT: CONN_TIME_WAIT,
+    _psutil_bsd.TCPS_CLOSED: CONN_CLOSE,
+    _psutil_bsd.TCPS_CLOSE_WAIT: CONN_CLOSE_WAIT,
+    _psutil_bsd.TCPS_LAST_ACK: CONN_LAST_ACK,
+    _psutil_bsd.TCPS_LISTEN: CONN_LISTEN,
+    _psutil_bsd.TCPS_CLOSING: CONN_CLOSING,
+    _psutil_bsd.PSUTIL_CONN_NONE: CONN_NONE,
+}
 
-# --- public functions
+PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 
-get_system_boot_time = _psutil_bsd.get_system_boot_time
 
 nt_virtmem_info = namedtuple('vmem', ' '.join([
     # all platforms
@@ -65,25 +84,30 @@ nt_virtmem_info = namedtuple('vmem', ' '.join([
 
 def virtual_memory():
     """System virtual memory as a namedutple."""
-    mem =  _psutil_bsd.get_virtual_mem()
+    mem = _psutil_bsd.get_virtual_mem()
     total, free, active, inactive, wired, cached, buffers, shared = mem
     avail = inactive + cached + free
-    used =  active + wired + cached
+    used = active + wired + cached
     percent = usage_percent((total - avail), total, _round=1)
     return nt_virtmem_info(total, avail, percent, used, free,
                            active, inactive, buffers, cached, shared, wired)
 
+
 def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
     total, used, free, sin, sout = \
-        [x * _PAGESIZE for x in _psutil_bsd.get_swap_mem()]
+        [x * PAGESIZE for x in _psutil_bsd.get_swap_mem()]
     percent = usage_percent(used, total, _round=1)
     return nt_swapmeminfo(total, used, free, percent, sin, sout)
+
+
+_cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
 
 def get_system_cpu_times():
     """Return system per-CPU times as a named tuple"""
     user, nice, system, idle, irq = _psutil_bsd.get_system_cpu_times()
     return _cputimes_ntuple(user, nice, system, idle, irq)
+
 
 def get_system_per_cpu_times():
     """Return system CPU times as a named tuple"""
@@ -109,7 +133,9 @@ if not hasattr(_psutil_bsd, "get_system_per_cpu_times"):
             raise NotImplementedError("supported only starting from FreeBSD 8")
         get_system_per_cpu_times.__called__ = True
         return [get_system_cpu_times]
+
 get_system_per_cpu_times.__called__ = False
+
 
 def disk_partitions(all=False):
     retlist = []
@@ -119,12 +145,12 @@ def disk_partitions(all=False):
         if device == 'none':
             device = ''
         if not all:
-            if not os.path.isabs(device) \
-            or not os.path.exists(device):
+            if not os.path.isabs(device) or not os.path.exists(device):
                 continue
         ntuple = nt_partition(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
+
 
 def get_system_users():
     retlist = []
@@ -137,11 +163,15 @@ def get_system_users():
         retlist.append(nt)
     return retlist
 
+
 get_pid_list = _psutil_bsd.get_pid_list
 pid_exists = _psposix.pid_exists
 get_disk_usage = _psposix.get_disk_usage
 net_io_counters = _psutil_bsd.get_net_io_counters
 disk_io_counters = _psutil_bsd.get_disk_io_counters
+# not public; it's here because we need to test it from test_memory_leask.py
+get_num_cpus = _psutil_bsd.get_num_cpus()
+get_system_boot_time = _psutil_bsd.get_system_boot_time
 
 
 def wrap_exceptions(fun):
@@ -160,30 +190,6 @@ def wrap_exceptions(fun):
                 raise AccessDenied(self.pid, self._process_name)
             raise
     return wrapper
-
-_status_map = {
-    _psutil_bsd.SSTOP : STATUS_STOPPED,
-    _psutil_bsd.SSLEEP : STATUS_SLEEPING,
-    _psutil_bsd.SRUN : STATUS_RUNNING,
-    _psutil_bsd.SIDL : STATUS_IDLE,
-    _psutil_bsd.SWAIT : STATUS_WAITING,
-    _psutil_bsd.SLOCK : STATUS_LOCKED,
-    _psutil_bsd.SZOMB : STATUS_ZOMBIE,
-}
-
-_conn_status_map = {_psutil_bsd.TCPS_ESTABLISHED : CONN_ESTABLISHED,
-                    _psutil_bsd.TCPS_SYN_SENT : CONN_SYN_SENT,
-                    _psutil_bsd.TCPS_SYN_RECEIVED : CONN_SYN_RECV,
-                    _psutil_bsd.TCPS_FIN_WAIT_1 : CONN_FIN_WAIT1,
-                    _psutil_bsd.TCPS_FIN_WAIT_2 : CONN_FIN_WAIT2,
-                    _psutil_bsd.TCPS_TIME_WAIT : CONN_TIME_WAIT,
-                    _psutil_bsd.TCPS_CLOSED : CONN_CLOSE,
-                    _psutil_bsd.TCPS_CLOSE_WAIT : CONN_CLOSE_WAIT,
-                    _psutil_bsd.TCPS_LAST_ACK : CONN_LAST_ACK,
-                    _psutil_bsd.TCPS_LISTEN : CONN_LISTEN,
-                    _psutil_bsd.TCPS_CLOSING : CONN_CLOSING,
-                    _psutil_bsd.PSUTIL_CONN_NONE : CONN_NONE,
-                    }
 
 
 class Process(object):
@@ -318,7 +324,7 @@ class Process(object):
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
-            status = _conn_status_map[status]
+            status = TCP_STATUSES[status]
             nt = nt_connection(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
         return ret
@@ -341,8 +347,8 @@ class Process(object):
     @wrap_exceptions
     def get_process_status(self):
         code = _psutil_bsd.get_process_status(self.pid)
-        if code in _status_map:
-            return _status_map[code]
+        if code in PROC_STATUSES:
+            return PROC_STATUSES[code]
         # XXX is this legit? will we even ever get here?
         return "?"
 
@@ -351,10 +357,10 @@ class Process(object):
         rc, wc, rb, wb = _psutil_bsd.get_process_io_counters(self.pid)
         return nt_io(rc, wc, rb, wb)
 
-    nt_mmap_grouped = namedtuple('mmap',
-        'path rss, private, ref_count, shadow_count')
-    nt_mmap_ext = namedtuple('mmap',
-        'addr, perms path rss, private, ref_count, shadow_count')
+    nt_mmap_grouped = namedtuple(
+        'mmap', 'path rss, private, ref_count, shadow_count')
+    nt_mmap_ext = namedtuple(
+        'mmap', 'addr, perms path rss, private, ref_count, shadow_count')
 
     @wrap_exceptions
     def get_memory_maps(self):
@@ -364,6 +370,7 @@ class Process(object):
     if not hasattr(_psutil_bsd, 'get_process_open_files'):
         def _not_implemented(self):
             raise NotImplementedError("supported only starting from FreeBSD 8")
+
         get_open_files = _not_implemented
         get_process_cwd = _not_implemented
         get_memory_maps = _not_implemented
