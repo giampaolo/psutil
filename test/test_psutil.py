@@ -16,32 +16,33 @@ from: https://pypi.python.org/pypi/unittest2
 """
 
 from __future__ import division
-import os
-import sys
-import subprocess
-import time
-import signal
-import types
-import traceback
-import socket
-import warnings
+
 import atexit
-import errno
-import threading
-import tempfile
-import stat
 import datetime
+import errno
+import os
 import shutil
+import signal
+import socket
+import stat
+import subprocess
+import sys
+import tempfile
 import textwrap
+import threading
+import time
+import traceback
+import types
+import warnings
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
-try:
-    import unittest2 as unittest  # pyhon < 2.7 + unittest2 installed
-except ImportError:
-    import unittest
 try:
     import ast  # python >= 2.6
 except ImportError:
     ast = None
+try:
+    import unittest2 as unittest  # pyhon < 2.7 + unittest2 installed
+except ImportError:
+    import unittest
 
 import psutil
 from psutil._compat import PY3, callable, long, wraps
@@ -78,7 +79,7 @@ WINDOWS = sys.platform.startswith("win32")
 OSX = sys.platform.startswith("darwin")
 BSD = sys.platform.startswith("freebsd")
 SUNOS = sys.platform.startswith("sunos")
-VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil) \
+VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
 
 # ===================================================================
@@ -118,6 +119,7 @@ def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=DEVNULL,
     _subprocesses_started.add(sproc.pid)
     return sproc
 
+
 _testfiles = []
 
 def pyrun(src):
@@ -140,13 +142,16 @@ def pyrun(src):
     finally:
         f.close()
 
+
 def warn(msg):
     """Raise a warning msg."""
     warnings.warn(msg, UserWarning)
 
+
 def register_warning(msg):
     """Register a warning which will be printed on interpreter exit."""
     atexit.register(lambda: warn(msg))
+
 
 def sh(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     """run cmd in a subprocess and return its output.
@@ -161,6 +166,7 @@ def sh(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     if PY3:
         stdout = str(stdout, sys.stdout.encoding)
     return stdout.strip()
+
 
 def which(program):
     """Same as UNIX which command. Return None on command not found."""
@@ -177,6 +183,7 @@ def which(program):
             if is_exe(exe_file):
                 return exe_file
     return None
+
 
 if POSIX:
     def get_kernel_version():
@@ -200,6 +207,7 @@ if POSIX:
             micro = int(nums[2])
         return (major, minor, micro)
 
+
 def wait_for_pid(pid, timeout=1):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
@@ -213,6 +221,7 @@ def wait_for_pid(pid, timeout=1):
         time.sleep(0.0001)
         if time.time() >= raise_at:
             raise RuntimeError("Timed out")
+
 
 def reap_children(search_all=False):
     """Kill any subprocess started by this test suite and ensure that
@@ -236,6 +245,7 @@ def reap_children(search_all=False):
         else:
             child.wait(timeout=3)
 
+
 def check_ip_address(addr, family):
     """Attempts to check IP address's validity."""
     if not addr:
@@ -255,9 +265,10 @@ def check_ip_address(addr, family):
     else:
         raise ValueError("unknown family %r", family)
 
+
 def check_connection(conn):
     """Check validity of a connection namedtuple."""
-    valid_conn_states = [getattr(psutil, x) for x in dir(psutil) if \
+    valid_conn_states = [getattr(psutil, x) for x in dir(psutil) if
                          x.startswith('CONN_')]
 
     assert conn.type in (SOCK_STREAM, SOCK_DGRAM), repr(conn.type)
@@ -299,6 +310,7 @@ def check_connection(conn):
                 if dupsock is not None:
                     dupsock.close()
 
+
 def safe_remove(file):
     "Convenience function for removing temporary test files"
     try:
@@ -308,6 +320,7 @@ def safe_remove(file):
         if err.errno != errno.ENOENT:
             raise
 
+
 def safe_rmdir(dir):
     "Convenience function for removing temporary test directories"
     try:
@@ -316,6 +329,7 @@ def safe_rmdir(dir):
         err = sys.exc_info()[1]
         if err.errno != errno.ENOENT:
             raise
+
 
 def call_until(fun, expr, timeout=1):
     """Keep calling function for timeout secs and exit if eval()
@@ -328,6 +342,7 @@ def call_until(fun, expr, timeout=1):
             return ret
         time.sleep(0.001)
     raise RuntimeError('timed out (ret=%r)' % ret)
+
 
 def retry_before_failing(ntimes=None):
     """Decorator which runs a test function and retries N times before
@@ -344,6 +359,7 @@ def retry_before_failing(ntimes=None):
             raise
         return wrapper
     return decorator
+
 
 def skip_on_access_denied(only_if=None):
     """Decorator to Ignore AccessDenied exceptions."""
@@ -366,6 +382,7 @@ def skip_on_access_denied(only_if=None):
         return wrapper
     return decorator
 
+
 def skip_on_not_implemented(only_if=None):
     """Decorator to Ignore NotImplementedError exceptions."""
     def decorator(fun):
@@ -386,6 +403,7 @@ def skip_on_not_implemented(only_if=None):
                     register_warning(msg)
         return wrapper
     return decorator
+
 
 def supports_ipv6():
     """Return True if IPv6 is supported on this platform."""
@@ -415,7 +433,7 @@ class ThreadTask(threading.Thread):
         self._flag = threading.Event()
 
     def __repr__(self):
-        name =  self.__class__.__name__
+        name = self.__class__.__name__
         return '<%s running=%s at %#x>' % (name, self._running, id(self))
 
     def start(self, interval=0.001):
@@ -447,7 +465,7 @@ class ThreadTask(threading.Thread):
 # ===================================================================
 
 if not hasattr(unittest, 'skip'):
-    register_warning("unittest2 module is not installed; a serie of pretty " \
+    register_warning("unittest2 module is not installed; a serie of pretty "
                      "darn ugly workarounds will be used")
 
     class SkipTest(Exception):
@@ -498,19 +516,18 @@ if not hasattr(unittest, 'skip'):
 
         def assertIsInstance(self, a, b, msg=None):
             if not isinstance(a, b):
-                self.fail(msg or '%s is not an instance of %r' \
-                        % (self._safe_repr(a), b))
+                self.fail(msg or '%s is not an instance of %r'
+                          % (self._safe_repr(a), b))
 
         def assertAlmostEqual(self, a, b, msg=None, delta=None):
             if delta is not None:
                 if abs(a - b) <= delta:
                     return
-                self.fail(msg or '%s != %s within %s delta' \
-                                  % (self._safe_repr(a), self._safe_repr(b),
-                                     self._safe_repr(delta)))
+                self.fail(msg or '%s != %s within %s delta'
+                          % (self._safe_repr(a), self._safe_repr(b),
+                             self._safe_repr(delta)))
             else:
                 self.assertEqual(a, b, msg=msg)
-
 
     def skipIf(condition, reason):
         def decorator(fun):
@@ -696,7 +713,7 @@ class TestSystemAPIs(unittest.TestCase):
                 if not value >= 0:
                     self.fail("%r < 0 (%s)" % (name, value))
                 if value > mem.total:
-                    self.fail("%r > total (total=%s, %s=%s)" \
+                    self.fail("%r > total (total=%s, %s=%s)"
                               % (name, mem.total, name, value))
 
     def test_swap_memory(self):
@@ -1195,10 +1212,10 @@ class TestProcess(unittest.TestCase):
         # using a tolerance  of +/- 0.1 seconds.
         # It will fail if the difference between the values is > 0.1s.
         if (max([user_time, utime]) - min([user_time, utime])) > 0.1:
-            self.fail("expected: %s, found: %s" %(utime, user_time))
+            self.fail("expected: %s, found: %s" % (utime, user_time))
 
         if (max([kernel_time, ktime]) - min([kernel_time, ktime])) > 0.1:
-            self.fail("expected: %s, found: %s" %(ktime, kernel_time))
+            self.fail("expected: %s, found: %s" % (ktime, kernel_time))
 
     def test_create_time(self):
         sproc = get_test_subprocess(wait=True)
@@ -1305,7 +1322,7 @@ class TestProcess(unittest.TestCase):
             self.assertRaises(TypeError, p.set_ionice, 2, 1)
 
     @unittest.skipUnless(hasattr(psutil.Process, 'get_rlimit'),
-        "only available on Linux >= 2.6.36")
+                         "only available on Linux >= 2.6.36")
     def test_get_rlimit(self):
         import resource
         p = psutil.Process(os.getpid())
@@ -1322,7 +1339,7 @@ class TestProcess(unittest.TestCase):
                 self.assertGreaterEqual(ret[1], -1)
 
     @unittest.skipUnless(hasattr(psutil.Process, 'set_rlimit'),
-        "only available on Linux >= 2.6.36")
+                         "only available on Linux >= 2.6.36")
     def test_set_rlimit(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -1396,8 +1413,8 @@ class TestProcess(unittest.TestCase):
         self.assertGreater(percent2, percent1)
         del memarr
 
-#    def test_get_ext_memory_info(self):
-#       # tested later in fetch all test suite
+    # def test_get_ext_memory_info(self):
+    # # tested later in fetch all test suite
 
     def test_get_memory_maps(self):
         p = psutil.Process(os.getpid())
@@ -1860,7 +1877,7 @@ class TestProcess(unittest.TestCase):
     def test_get_children_recursive(self):
         # here we create a subprocess which creates another one as in:
         # A (parent) -> B (child) -> C (grandchild)
-        s =  "import subprocess, os, sys, time;"
+        s = "import subprocess, os, sys, time;"
         s += "PYTHON = os.path.realpath(sys.executable);"
         s += "cmd = [PYTHON, '-c', 'import time; time.sleep(2);'];"
         s += "subprocess.Popen(cmd);"
@@ -1935,7 +1952,7 @@ class TestProcess(unittest.TestCase):
         # process dies after we create the Process object.
         # Example:
         #  >>> proc = Process(1234)
-        #  >>> time.sleep(2)  # time-consuming task, process dies in meantime
+        # >>> time.sleep(2)  # time-consuming task, process dies in meantime
         #  >>> proc.name
         # Refers to Issue #15
         sproc = get_test_subprocess()
@@ -1945,12 +1962,12 @@ class TestProcess(unittest.TestCase):
 
         for name in dir(p):
             if name.startswith('_')\
-            or name in ('pid', 'send_signal', 'is_running', 'set_ionice',
-                        'wait', 'set_cpu_affinity', 'create_time', 'set_nice',
-                        'nice'):
+                or name in ('pid', 'send_signal', 'is_running', 'set_ionice',
+                            'wait', 'set_cpu_affinity', 'create_time', 'set_nice',
+                            'nice'):
                 continue
             try:
-                #if name == 'get_rlimit'
+                # if name == 'get_rlimit'
                 args = ()
                 meth = getattr(p, name)
                 if callable(meth):
@@ -2023,8 +2040,8 @@ class TestProcess(unittest.TestCase):
             call_until(lambda: zproc.status, "ret == psutil.STATUS_ZOMBIE")
             self.assertTrue(psutil.pid_exists(zpid))
             zproc = psutil.Process(zpid)
-            descendants = [x.pid for x in \
-                    psutil.Process(os.getpid()).get_children(recursive=True)]
+            descendants = [x.pid for x in
+                psutil.Process(os.getpid()).get_children(recursive=True)]
             self.assertIn(zpid, descendants)
         finally:
             if sock is not None:
@@ -2124,8 +2141,9 @@ class TestProcess(unittest.TestCase):
 # ===================================================================
 
 class TestFetchAllProcesses(unittest.TestCase):
-    # Iterates over all running processes and performs some sanity
-    # checks against Process API's returned values.
+    """Test which iterates over all running processes and performs
+    some sanity checks against Process API's returned values.
+    """
 
     def setUp(self):
         if POSIX:
@@ -2167,8 +2185,8 @@ class TestFetchAllProcesses(unittest.TestCase):
                         valid_procs += 1
                     except NotImplementedError:
                         register_warning("%r was skipped because not "
-                            "implemented" % (self.__class__.__name__ + \
-                                             '.test_' + name))
+                                         "implemented" % (self.__class__.__name__ +
+                                                          '.test_' + name))
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         err = sys.exc_info()[1]
                         self.assertEqual(err.pid, p.pid)
@@ -2192,7 +2210,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                     s += ')\n'
                     s += '-' * 70
                     s += "\n%s" % traceback.format_exc()
-                    s =  "\n".join((" " * 4) + i for i in s.splitlines())
+                    s = "\n".join((" " * 4) + i for i in s.splitlines())
                     failures.append(s)
                     break
 
@@ -2404,6 +2422,7 @@ if hasattr(os, 'getuid') and os.getuid() == 0:
             # ignore AccessDenied exceptions
             for attr in [x for x in dir(self) if x.startswith('test')]:
                 meth = getattr(self, attr)
+
                 def test_(self):
                     try:
                         meth()
@@ -2472,8 +2491,8 @@ class TestExampleScripts(unittest.TestCase):
         for name in os.listdir(EXAMPLES_DIR):
             if name.endswith('.py'):
                 if 'test_' + os.path.splitext(name)[0] not in meths:
-                    #self.assert_stdout(name)
-                    self.fail('no test defined for %r script' \
+                    # self.assert_stdout(name)
+                    self.fail('no test defined for %r script'
                               % os.path.join(EXAMPLES_DIR, name))
 
     def test_disk_usage(self):
