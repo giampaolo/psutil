@@ -10,6 +10,7 @@ HIGHER PRIORITY
 ===============
 
  * #387: system-wide connections (netstat).
+
  * OpenBSD support.
 
  * #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
@@ -114,3 +115,32 @@ DEBATABLE
     cannot raise a TimeoutExpired exception with a specific error string.
     Side note: tests' call_until() should raise TimeoutExpired instead of
     RuntimeError.
+
+COMPATIBILITY BREAKAGE
+======================
+
+H = higher priority
+? = debatable
+
+Which can be safely removed (long deprecated):
+
+ * psutil.Process.nice
+ * get_process_list
+ * psutil.*mem* functions
+ * psutil.error.py
+
+Which can be safely renamed:
+
+ * _psmswindows.py            -> _pswindows.py
+ * _psutil_mswindows.c        -> _psutil_windows.c
+ * _psutil_mswindows.h        -> _psutil_windows.h
+
+Risky renames:
+
+ * psutil.get_pid_list()      -> psutil.get_pids()
+ * psutil.Process.ppid        -> get_ppid()
+ * psutil.Process.status      -> get_status()
+ * psutil.Process.uids        -> get_uids()
+ * psutil.Process.gids        -> get_gids()
+ * psutil.Process.username    -> get_username()
+ * psutil.Process.getcwd      -> get_cwd()
