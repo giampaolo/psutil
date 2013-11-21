@@ -12,10 +12,22 @@ import sys
 import warnings
 
 import _psutil_mswindows
+
 from _psutil_mswindows import ERROR_ACCESS_DENIED
-from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 from psutil._common import *
 from psutil._compat import PY3, xrange, wraps
+from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
+
+# process priority constants:
+# http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
+from _psutil_mswindows import (ABOVE_NORMAL_PRIORITY_CLASS,
+                               BELOW_NORMAL_PRIORITY_CLASS,
+                               HIGH_PRIORITY_CLASS,
+                               IDLE_PRIORITY_CLASS,
+                               NORMAL_PRIORITY_CLASS,
+                               REALTIME_PRIORITY_CLASS,
+                               INFINITE)
+
 
 # Windows specific extended namespace
 __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
@@ -24,7 +36,6 @@ __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
                   #
                   "CONN_DELETE_TCB",
                   ]
-
 
 # --- module level constants (gets pushed up to psutil module)
 
@@ -49,38 +60,30 @@ except Exception:
     warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
 
 CONN_DELETE_TCB = "DELETE_TCB"
-WAIT_TIMEOUT = 0x00000102 # 258 in decimal
+WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED])
-TCP_STATES_TABLE = {
-    _psutil_mswindows.MIB_TCP_STATE_ESTAB : CONN_ESTABLISHED,
-    _psutil_mswindows.MIB_TCP_STATE_SYN_SENT : CONN_SYN_SENT,
-    _psutil_mswindows.MIB_TCP_STATE_SYN_RCVD : CONN_SYN_RECV,
-    _psutil_mswindows.MIB_TCP_STATE_FIN_WAIT1 : CONN_FIN_WAIT1,
-    _psutil_mswindows.MIB_TCP_STATE_FIN_WAIT2 : CONN_FIN_WAIT2,
-    _psutil_mswindows.MIB_TCP_STATE_TIME_WAIT : CONN_TIME_WAIT,
-    _psutil_mswindows.MIB_TCP_STATE_CLOSED : CONN_CLOSE,
-    _psutil_mswindows.MIB_TCP_STATE_CLOSE_WAIT : CONN_CLOSE_WAIT,
-    _psutil_mswindows.MIB_TCP_STATE_LAST_ACK : CONN_LAST_ACK,
-    _psutil_mswindows.MIB_TCP_STATE_LISTEN : CONN_LISTEN,
-    _psutil_mswindows.MIB_TCP_STATE_CLOSING : CONN_CLOSING,
-    _psutil_mswindows.MIB_TCP_STATE_DELETE_TCB : CONN_DELETE_TCB,
-    _psutil_mswindows.PSUTIL_CONN_NONE : CONN_NONE,
+
+TCP_STATUSES = {
+    _psutil_mswindows.MIB_TCP_STATE_ESTAB: CONN_ESTABLISHED,
+    _psutil_mswindows.MIB_TCP_STATE_SYN_SENT: CONN_SYN_SENT,
+    _psutil_mswindows.MIB_TCP_STATE_SYN_RCVD: CONN_SYN_RECV,
+    _psutil_mswindows.MIB_TCP_STATE_FIN_WAIT1: CONN_FIN_WAIT1,
+    _psutil_mswindows.MIB_TCP_STATE_FIN_WAIT2: CONN_FIN_WAIT2,
+    _psutil_mswindows.MIB_TCP_STATE_TIME_WAIT: CONN_TIME_WAIT,
+    _psutil_mswindows.MIB_TCP_STATE_CLOSED: CONN_CLOSE,
+    _psutil_mswindows.MIB_TCP_STATE_CLOSE_WAIT: CONN_CLOSE_WAIT,
+    _psutil_mswindows.MIB_TCP_STATE_LAST_ACK: CONN_LAST_ACK,
+    _psutil_mswindows.MIB_TCP_STATE_LISTEN: CONN_LISTEN,
+    _psutil_mswindows.MIB_TCP_STATE_CLOSING: CONN_CLOSING,
+    _psutil_mswindows.MIB_TCP_STATE_DELETE_TCB: CONN_DELETE_TCB,
+    _psutil_mswindows.PSUTIL_CONN_NONE: CONN_NONE,
 }
 
-
-# process priority constants:
-# http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
-from _psutil_mswindows import (ABOVE_NORMAL_PRIORITY_CLASS,
-                               BELOW_NORMAL_PRIORITY_CLASS,
-                               HIGH_PRIORITY_CLASS,
-                               IDLE_PRIORITY_CLASS,
-                               NORMAL_PRIORITY_CLASS,
-                               REALTIME_PRIORITY_CLASS,
-                               INFINITE)
 
 @memoize
 def _win32_QueryDosDevice(s):
     return _psutil_mswindows.win32_QueryDosDevice(s)
+
 
 def _convert_raw_path(s):
     # convert paths using native DOS format like:
@@ -116,6 +119,7 @@ def virtual_memory():
     percent = usage_percent((total - avail), total, _round=1)
     return nt_virtmem_info(total, avail, percent, used, free)
 
+
 def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     mem = _psutil_mswindows.get_virtual_mem()
@@ -124,6 +128,7 @@ def swap_memory():
     used = total - free
     percent = usage_percent(used, total, _round=1)
     return nt_swapmeminfo(total, used, free, percent, 0, 0)
+
 
 def get_disk_usage(path):
     """Return disk usage associated with path."""
@@ -136,6 +141,7 @@ def get_disk_usage(path):
     used = total - free
     percent = usage_percent(used, total, _round=1)
     return nt_diskinfo(total, used, free, percent)
+
 
 def disk_partitions(all):
     """Return disk partitions."""
@@ -150,6 +156,7 @@ def get_system_cpu_times():
     user, system, idle = _psutil_mswindows.get_system_cpu_times()
     return _cputimes_ntuple(user, system, idle)
 
+
 def get_system_per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
     ret = []
@@ -158,6 +165,7 @@ def get_system_per_cpu_times():
         item = _cputimes_ntuple(user, system, idle)
         ret.append(item)
     return ret
+
 
 def get_system_users():
     """Return currently connected users as a list of namedtuples."""
@@ -176,9 +184,6 @@ net_io_counters = _psutil_mswindows.get_net_io_counters
 disk_io_counters = _psutil_mswindows.get_disk_io_counters
 get_ppid_map = _psutil_mswindows.get_ppid_map  # not meant to be public
 
-
-
-# --- decorator
 
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError and WindowsError
@@ -258,17 +263,17 @@ class Process(object):
         t = self._get_raw_meminfo()
         return nt_meminfo(t[2], t[7])
 
-    _nt_ext_mem = namedtuple('meminfo',
-        ' '.join(['num_page_faults',
-                  'peak_wset',
-                  'wset',
-                  'peak_paged_pool',
-                  'paged_pool',
-                  'peak_nonpaged_pool',
-                  'nonpaged_pool',
-                  'pagefile',
-                  'peak_pagefile',
-                  'private',]))
+    _nt_ext_mem = namedtuple('meminfo', ' '.join([
+        'num_page_faults',
+        'peak_wset',
+        'wset',
+        'peak_paged_pool',
+        'paged_pool',
+        'peak_nonpaged_pool',
+        'nonpaged_pool',
+        'pagefile',
+        'peak_pagefile',
+        'private']))
 
     @wrap_exceptions
     def get_ext_memory_info(self):
@@ -402,7 +407,7 @@ class Process(object):
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
-            status = TCP_STATES_TABLE[status]
+            status = TCP_STATUSES[status]
             nt = nt_connection(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
         return ret
@@ -424,10 +429,10 @@ class Process(object):
         @wrap_exceptions
         def set_process_ionice(self, value, _):
             if _:
-                raise TypeError("set_process_ionice() on Windows takes only " \
+                raise TypeError("set_process_ionice() on Windows takes only "
                                 "1 argument (2 given)")
             if value not in (2, 1, 0):
-                raise ValueError("value must be 2 (normal), 1 (low) or 0 " \
+                raise ValueError("value must be 2 (normal), 1 (low) or 0 "
                                  "(very low); got %r" % value)
             return _psutil_mswindows.set_process_io_priority(self.pid, value)
 
@@ -464,7 +469,7 @@ class Process(object):
                 raise ValueError("invalid argument %r" % l)
             out = 0
             for b in l:
-                out |= 2**b
+                out |= 2 ** b
             return out
 
         # SetProcessAffinityMask() states that ERROR_INVALID_PARAMETER
@@ -490,4 +495,5 @@ class Process(object):
 
     @wrap_exceptions
     def get_num_ctx_switches(self):
-        return nt_ctxsw(*_psutil_mswindows.get_process_num_ctx_switches(self.pid))
+        tupl = _psutil_mswindows.get_process_num_ctx_switches(self.pid)
+        return nt_ctxsw(*tupl)
