@@ -8,15 +8,16 @@
 
 import errno
 import os
-import subprocess
 import socket
+import subprocess
 
-import _psutil_sunos
 import _psutil_posix
+import _psutil_sunos
+
 from psutil import _psposix
-from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
-from psutil._compat import namedtuple, PY3
 from psutil._common import *
+from psutil._compat import namedtuple, PY3
+from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
@@ -25,21 +26,47 @@ PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
 NUM_CPUS = os.sysconf("SC_NPROCESSORS_ONLN")
 BOOT_TIME = _psutil_sunos.get_process_basic_info(0)[3]
 TOTAL_PHYMEM = os.sysconf('SC_PHYS_PAGES') * PAGE_SIZE
-
 CONN_IDLE = "IDLE"
 CONN_BOUND = "BOUND"
 
-_PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-_cputimes_ntuple = namedtuple('cputimes', 'user system idle iowait')
+PROC_STATUSES = {
+    _psutil_sunos.SSLEEP: STATUS_SLEEPING,
+    _psutil_sunos.SRUN: STATUS_RUNNING,
+    _psutil_sunos.SZOMB: STATUS_ZOMBIE,
+    _psutil_sunos.SSTOP: STATUS_STOPPED,
+    _psutil_sunos.SIDL: STATUS_IDLE,
+    _psutil_sunos.SONPROC: STATUS_RUNNING,  # same as run
+    _psutil_sunos.SWAIT: STATUS_WAITING,
+}
+
+TCP_STATUSES = {
+    _psutil_sunos.TCPS_ESTABLISHED: CONN_ESTABLISHED,
+    _psutil_sunos.TCPS_SYN_SENT: CONN_SYN_SENT,
+    _psutil_sunos.TCPS_SYN_RCVD: CONN_SYN_RECV,
+    _psutil_sunos.TCPS_FIN_WAIT_1: CONN_FIN_WAIT1,
+    _psutil_sunos.TCPS_FIN_WAIT_2: CONN_FIN_WAIT2,
+    _psutil_sunos.TCPS_TIME_WAIT: CONN_TIME_WAIT,
+    _psutil_sunos.TCPS_CLOSED: CONN_CLOSE,
+    _psutil_sunos.TCPS_CLOSE_WAIT: CONN_CLOSE_WAIT,
+    _psutil_sunos.TCPS_LAST_ACK: CONN_LAST_ACK,
+    _psutil_sunos.TCPS_LISTEN: CONN_LISTEN,
+    _psutil_sunos.TCPS_CLOSING: CONN_CLOSING,
+    _psutil_sunos.PSUTIL_CONN_NONE: CONN_NONE,
+    _psutil_sunos.TCPS_IDLE: CONN_IDLE,  # sunos specific
+    _psutil_sunos.TCPS_BOUND: CONN_BOUND,  # sunos specific
+}
+
+
+PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 
 disk_io_counters = _psutil_sunos.get_disk_io_counters
 net_io_counters = _psutil_sunos.get_net_io_counters
 get_disk_usage = _psposix.get_disk_usage
 get_system_boot_time = lambda: _psutil_sunos.get_process_basic_info(0)[3]
 
+
 nt_virtmem_info = namedtuple('vmem', ' '.join([
-    # all platforms
-    'total', 'available', 'percent', 'used', 'free']))
+    'total', 'available', 'percent', 'used', 'free']))  # all platforms
 
 def virtual_memory():
     # we could have done this with kstat, but imho this is good enough
@@ -50,9 +77,9 @@ def virtual_memory():
     percent = usage_percent(used, total, _round=1)
     return nt_virtmem_info(total, avail, percent, used, free)
 
+
 def swap_memory():
     sin, sout = _psutil_sunos.get_swap_mem()
-
     # XXX
     # we are supposed to get total/free by doing so:
     # http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/cmd/swap/swap.c
@@ -79,25 +106,32 @@ def swap_memory():
     used = total - free
     percent = usage_percent(used, total, _round=1)
     return nt_swapmeminfo(total, used, free, percent,
-                          sin * _PAGESIZE, sout * _PAGESIZE)
+                          sin * PAGESIZE, sout * PAGESIZE)
+
 
 def get_pid_list():
     """Returns a list of PIDs currently running on the system."""
     return [int(x) for x in os.listdir('/proc') if x.isdigit()]
 
+
 def pid_exists(pid):
     """Check for the existence of a unix pid."""
     return _psposix.pid_exists(pid)
+
+
+_cputimes_ntuple = namedtuple('cputimes', 'user system idle iowait')
 
 def get_system_cpu_times():
     """Return system-wide CPU times as a named tuple"""
     ret = _psutil_sunos.get_system_per_cpu_times()
     return _cputimes_ntuple(*[sum(x) for x in zip(*ret)])
 
+
 def get_system_per_cpu_times():
     """Return system per-CPU times as a list of named tuples"""
     ret = _psutil_sunos.get_system_per_cpu_times()
     return [_cputimes_ntuple(*x) for x in ret]
+
 
 def get_system_users():
     """Return currently connected users as a list of namedtuples."""
@@ -116,6 +150,7 @@ def get_system_users():
         nt = nt_user(user, tty, hostname, tstamp)
         retlist.append(nt)
     return retlist
+
 
 def disk_partitions(all=False):
     """Return system disk partitions."""
@@ -142,6 +177,7 @@ def wrap_exceptions(callable):
     """Call callable into a try/except clause and translate ENOENT,
     EACCES and EPERM in NoSuchProcess or AccessDenied exceptions.
     """
+
     def wrapper(self, *args, **kwargs):
         try:
             return callable(self, *args, **kwargs)
@@ -156,33 +192,6 @@ def wrap_exceptions(callable):
                 raise AccessDenied(self.pid, self._process_name)
             raise
     return wrapper
-
-
-_status_map = {
-    _psutil_sunos.SSLEEP : STATUS_SLEEPING,
-    _psutil_sunos.SRUN : STATUS_RUNNING,
-    _psutil_sunos.SZOMB : STATUS_ZOMBIE,
-    _psutil_sunos.SSTOP : STATUS_STOPPED,
-    _psutil_sunos.SIDL : STATUS_IDLE,
-    _psutil_sunos.SONPROC : STATUS_RUNNING,  # same as run
-    _psutil_sunos.SWAIT : STATUS_WAITING,
-}
-
-_conn_status_map = {_psutil_sunos.TCPS_ESTABLISHED : CONN_ESTABLISHED,
-                    _psutil_sunos.TCPS_SYN_SENT : CONN_SYN_SENT,
-                    _psutil_sunos.TCPS_SYN_RCVD : CONN_SYN_RECV,
-                    _psutil_sunos.TCPS_FIN_WAIT_1 : CONN_FIN_WAIT1,
-                    _psutil_sunos.TCPS_FIN_WAIT_2 : CONN_FIN_WAIT2,
-                    _psutil_sunos.TCPS_TIME_WAIT : CONN_TIME_WAIT,
-                    _psutil_sunos.TCPS_CLOSED : CONN_CLOSE,
-                    _psutil_sunos.TCPS_CLOSE_WAIT : CONN_CLOSE_WAIT,
-                    _psutil_sunos.TCPS_LAST_ACK : CONN_LAST_ACK,
-                    _psutil_sunos.TCPS_LISTEN : CONN_LISTEN,
-                    _psutil_sunos.TCPS_CLOSING : CONN_CLOSING,
-                    _psutil_sunos.PSUTIL_CONN_NONE : CONN_NONE,
-                    _psutil_sunos.TCPS_IDLE : CONN_IDLE,  # sunos specific
-                    _psutil_sunos.TCPS_BOUND : CONN_BOUND,  # sunos specific
-                    }
 
 
 class Process(object):
@@ -253,12 +262,14 @@ class Process(object):
 
     @wrap_exceptions
     def get_process_uids(self):
-        real, effective, saved, _, _, _ = _psutil_sunos.get_process_cred(self.pid)
+        real, effective, saved, _, _, _ = \
+            _psutil_sunos.get_process_cred(self.pid)
         return nt_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_process_gids(self):
-        _, _, _, real, effective, saved = _psutil_sunos.get_process_cred(self.pid)
+        _, _, _, real, effective, saved = \
+            _psutil_sunos.get_process_cred(self.pid)
         return nt_uids(real, effective, saved)
 
     @wrap_exceptions
@@ -312,7 +323,7 @@ class Process(object):
     def get_process_status(self):
         code = _psutil_sunos.get_process_basic_info(self.pid)[6]
         # XXX is '?' legit? (we're not supposed to return it anyway)
-        return _status_map.get(code, '?')
+        return PROC_STATUSES.get(code, '?')
 
     @wrap_exceptions
     def get_process_threads(self):
@@ -369,7 +380,7 @@ class Process(object):
         # does not include this part! Argh!!)
         cmd = "pfiles %s" % pid
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,
-                                              stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE)
         stdout, stderr = p.communicate()
         if PY3:
             stdout, stderr = [x.decode(sys.stdout.encoding)
@@ -386,7 +397,7 @@ class Process(object):
             line = line.lstrip()
             if line.startswith('sockname: AF_UNIX'):
                 path = line.split(' ', 2)[2]
-                type = lines[i-2].strip()
+                type = lines[i - 2].strip()
                 if type == 'SOCK_STREAM':
                     type = socket.SOCK_STREAM
                 elif type == 'SOCK_DGRAM':
@@ -401,7 +412,8 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        rawlist = _psutil_sunos.get_process_connections(self.pid, families, types)
+        rawlist = _psutil_sunos.get_process_connections(
+            self.pid, families, types)
         # The underlying C implementation retrieves all OS connections
         # and filters them by PID.  At this point we can't tell whether
         # an empty list means there were no connections for process or
@@ -417,13 +429,13 @@ class Process(object):
                 continue
             if type not in types:
                 continue
-            status = _conn_status_map[status]
+            status = TCP_STATUSES[status]
             nt = nt_connection(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
 
         # UNIX sockets
         if socket.AF_UNIX in families:
-            ret.extend([nt_connection(*conn) for conn in \
+            ret.extend([nt_connection(*conn) for conn in
                         self._get_unix_sockets(self.pid)])
         return ret
 
@@ -465,7 +477,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_num_fds(self):
-       return len(os.listdir("/proc/%s/fd" % self.pid))
+        return len(os.listdir("/proc/%s/fd" % self.pid))
 
     @wrap_exceptions
     def get_num_ctx_switches(self):
