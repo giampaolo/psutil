@@ -8,22 +8,23 @@
 
 from __future__ import division
 
-import os
+import base64
 import errno
+import os
+import re
 import socket
 import struct
 import sys
-import base64
-import re
 import warnings
 
-import _psutil_posix
 import _psutil_linux
-from psutil import _psposix
-from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
-from psutil._common import *
+import _psutil_posix
+
 from _psutil_linux import *  # needed for RLIMIT_* constants
+from psutil import _psposix
+from psutil._common import *
 from psutil._compat import PY3, xrange, long, namedtuple, wraps
+from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 
 
 __extra__all__ = [

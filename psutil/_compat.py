@@ -10,16 +10,13 @@ __all__ = ["PY3", "int", "long", "xrange", "exec_", "callable",
            "namedtuple", "property", "defaultdict"]
 
 import sys
-
-
-# --- python 2/3 compatibility layer
-
-PY3 = sys.version_info >= (3,)
-
 try:
     import __builtin__
 except ImportError:
     import builtins as __builtin__  # py3
+
+PY3 = sys.version_info >= (3,)
+
 
 if PY3:
     int = int
@@ -90,22 +87,22 @@ except ImportError:
             names = list(field_names)
             seen = set()
             for i, name in enumerate(names):
-                if (not min(c.isalnum() or c=='_' for c in name) or _iskeyword(name)
+                if (not min(c.isalnum() or c == '_' for c in name) or _iskeyword(name)
                     or not name or name[0].isdigit() or name.startswith('_')
                     or name in seen):
                     names[i] = '_%d' % i
                 seen.add(name)
             field_names = tuple(names)
         for name in (typename,) + field_names:
-            if not min(c.isalnum() or c=='_' for c in name):
-                raise ValueError('Type names and field names can only contain ' \
+            if not min(c.isalnum() or c == '_' for c in name):
+                raise ValueError('Type names and field names can only contain '
                                  'alphanumeric characters and underscores: %r'
                                  % name)
             if _iskeyword(name):
-                raise ValueError('Type names and field names cannot be a keyword: %r' \
+                raise ValueError('Type names and field names cannot be a keyword: %r'
                                  % name)
             if name[0].isdigit():
-                raise ValueError('Type names and field names cannot start with a ' \
+                raise ValueError('Type names and field names cannot start with a '
                                  'number: %r' % name)
         seen_names = set()
         for name in field_names:
@@ -154,8 +151,9 @@ except ImportError:
             sys.stdout.flush()
 
         # Execute the template string in a temporary namespace
-        namespace = dict(_itemgetter=_itemgetter, __name__='namedtuple_%s' % typename,
-                         _property=property, _tuple=tuple)
+        namespace = dict(
+            _itemgetter=_itemgetter, __name__='namedtuple_%s' % typename,
+            _property=property, _tuple=tuple)
         try:
             exec_(template, namespace)
         except SyntaxError:
@@ -169,7 +167,8 @@ except ImportError:
         # for example) or sys._getframe is not defined for arguments
         # greater than 0 (IronPython).
         try:
-            result.__module__ = _sys._getframe(1).f_globals.get('__name__', '__main__')
+            result.__module__ = _sys._getframe(
+                1).f_globals.get('__name__', '__main__')
         except (AttributeError, ValueError):
             pass
 
@@ -208,8 +207,8 @@ except ImportError:
     class defaultdict(dict):
 
         def __init__(self, default_factory=None, *a, **kw):
-            if (default_factory is not None and
-                not hasattr(default_factory, '__call__')):
+            if (default_factory is not None and \
+            not hasattr(default_factory, '__call__')):
                 raise TypeError('first argument must be callable')
             dict.__init__(self, *a, **kw)
             self.default_factory = default_factory
