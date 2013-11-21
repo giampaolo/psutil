@@ -36,7 +36,7 @@ __all__ = [
     "net_io_counters",                                              # network
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
     "get_users", "get_boot_time",                                   # others
-    ]
+]
 
 import sys
 import os
@@ -58,8 +58,7 @@ from psutil._compat import (wraps as _wraps,
 from psutil._common import (deprecated as _deprecated,
                             nt_disk_iostat as _nt_disk_iostat,
                             nt_net_iostat as _nt_net_iostat,
-                            nt_sysmeminfo as _nt_sysmeminfo,
-                            isfile_strict as _isfile_strict)
+                            nt_sysmeminfo as _nt_sysmeminfo)
 
 from psutil._common import (STATUS_RUNNING,
                             STATUS_IDLE,
@@ -437,7 +436,8 @@ class Process(object):
         if os.name == 'posix':
             if pwd is None:
                 # might happen if python was installed from sources
-                raise ImportError("requires pwd module shipped with standard python")
+                raise ImportError(
+                    "requires pwd module shipped with standard python")
             return pwd.getpwuid(self.uids.real).pw_name
         else:
             return self._platform_impl.get_process_username()
@@ -791,7 +791,7 @@ class Process(object):
                 path = tupl[2]
                 nums = tupl[3:]
                 try:
-                    d[path] = map(lambda x, y: x+y, d[path], nums)
+                    d[path] = map(lambda x, y: x + y, d[path], nums)
                 except KeyError:
                     d[path] = nums
             nt = self._platform_impl.nt_mmap_grouped
@@ -839,7 +839,7 @@ class Process(object):
             # pid + creation time, on the other hand, is supposed to
             # identify a process univocally.
             return self.create_time == \
-                   self._platform_impl.get_process_create_time()
+                self._platform_impl.get_process_create_time()
         except NoSuchProcess:
             self._gone = True
             return False
@@ -1001,15 +1001,25 @@ class Popen(Process):
                 return object.__getattribute__(self.__subproc, name)
             except AttributeError:
                 raise AttributeError("%s instance has no attribute '%s'"
-                                      %(self.__class__.__name__, name))
+                                     % (self.__class__.__name__, name))
 
 
 # =====================================================================
 # --- system processes related functions
 # =====================================================================
 
-get_pid_list = _psplatform.get_pid_list
-pid_exists = _psplatform.pid_exists
+def get_pid_list():
+    """Return a list of current running PIDs."""
+    return _psplatform.get_pid_list()
+
+
+def pid_exists(pid):
+    """Return True if given PID exists in the current process list.
+    This is faster than doing "pid in psutil.get_pid_list()" and
+    should be preferred.
+    """
+    return _psplatform.pid_exists(pid)
+
 
 _pmap = {}
 
@@ -1042,7 +1052,7 @@ def process_iter():
 
     for pid in gone_pids:
         remove(pid)
-    for pid, proc in sorted(list(_pmap.items()) + \
+    for pid, proc in sorted(list(_pmap.items()) +
                             list(dict.fromkeys(new_pids).items())):
         try:
             if proc is None:  # new process
@@ -1061,6 +1071,7 @@ def process_iter():
             # no way to tell whether the pid of the cached process
             # has been reused. Just return the cached version.
             yield proc
+
 
 def wait_procs(procs, timeout, callback=None):
     """Convenience function which waits for a list of processes to
@@ -1126,7 +1137,7 @@ def wait_procs(procs, timeout, callback=None):
             # We do this because we don't want to wait too long on a
             # single process: in case it terminates too late other
             # processes may disappear in the meantime and their PID
-            # be reused.
+            # reused.
             max_timeout = 1.0 / (len_total - len(gone))
             timeout = min((deadline - timer()), max_timeout)
             if timeout <= 0:
@@ -1136,7 +1147,7 @@ def wait_procs(procs, timeout, callback=None):
 
     if alive:
         # Last attempt over processes survived so far.
-        # timeout == 0 won't make this function wait any longer.
+        # timeout == 0 won't make this function wait any further.
         for proc in alive:
             assert_gone(proc, 0)
         alive = alive - gone
@@ -1334,6 +1345,7 @@ def cpu_times_percent(interval=0.1, percpu=False):
             ret.append(calculate(t1, t2))
         return ret
 
+
 # =====================================================================
 # --- system memory related functions
 # =====================================================================
@@ -1393,6 +1405,7 @@ def virtual_memory():
     """
     return _psplatform.virtual_memory()
 
+
 def swap_memory():
     """Return system swap memory statistics as a namedtuple including
     the following attributes:
@@ -1408,6 +1421,7 @@ def swap_memory():
     """
     return _psplatform.swap_memory()
 
+
 # =====================================================================
 # --- disks/paritions related functions
 # =====================================================================
@@ -1419,6 +1433,7 @@ def disk_usage(path):
     """
     return _psplatform.get_disk_usage(path)
 
+
 def disk_partitions(all=False):
     """Return mounted partitions as a list of namedtuples including
     device, mount point, filesystem type and mount options (a raw
@@ -1428,6 +1443,7 @@ def disk_partitions(all=False):
     all others.
     """
     return _psplatform.disk_partitions(all)
+
 
 def disk_io_counters(perdisk=False):
     """Return system disk I/O statistics as a namedtuple including
@@ -1457,6 +1473,7 @@ def disk_io_counters(perdisk=False):
         return rawdict
     else:
         return _nt_disk_iostat(*[sum(x) for x in zip(*rawdict.values())])
+
 
 # =====================================================================
 # --- network related functions
@@ -1491,6 +1508,7 @@ def net_io_counters(pernic=False):
     else:
         return _nt_net_iostat(*[sum(x) for x in zip(*rawdict.values())])
 
+
 # =====================================================================
 # --- other system related functions
 # =====================================================================
@@ -1500,6 +1518,7 @@ def get_boot_time():
     This is also available as psutil.BOOT_TIME.
     """
     return _psplatform.get_system_boot_time()
+
 
 def get_users():
     """Return users currently connected on the system as a list of
@@ -1513,6 +1532,7 @@ def get_users():
     """
     return _psplatform.get_system_users()
 
+
 # =====================================================================
 # --- deprecated functions
 # =====================================================================
@@ -1524,6 +1544,7 @@ def get_process_list():
     """
     return list(process_iter())
 
+
 @_deprecated()
 def phymem_usage():
     """Return the amount of total, used and free physical memory
@@ -1533,33 +1554,41 @@ def phymem_usage():
     mem = virtual_memory()
     return _nt_sysmeminfo(mem.total, mem.used, mem.free, mem.percent)
 
+
 @_deprecated("psutil.swap_memory()")
 def virtmem_usage():
     return swap_memory()
+
 
 @_deprecated("psutil.phymem_usage().free")
 def avail_phymem():
     return phymem_usage().free
 
+
 @_deprecated("psutil.phymem_usage().used")
 def used_phymem():
     return phymem_usage().used
+
 
 @_deprecated("psutil.virtmem_usage().total")
 def total_virtmem():
     return virtmem_usage().total
 
+
 @_deprecated("psutil.virtmem_usage().used")
 def used_virtmem():
     return virtmem_usage().used
+
 
 @_deprecated("psutil.virtmem_usage().free")
 def avail_virtmem():
     return virtmem_usage().free
 
+
 @_deprecated("psutil.net_io_counters()")
 def network_io_counters(pernic=False):
     return net_io_counters(pernic)
+
 
 def test():
     """List info of all currently running processes emulating ps aux
@@ -1591,7 +1620,8 @@ def test():
                     ctime = ctime.strftime("%b%d")
             else:
                 ctime = ''
-            cputime = time.strftime("%M:%S", time.localtime(sum(pinfo['cpu_times'])))
+            cputime = time.strftime("%M:%S",
+                                    time.localtime(sum(pinfo['cpu_times'])))
             try:
                 user = p.username
             except KeyError:
@@ -1607,11 +1637,11 @@ def test():
             if os.name == 'nt' and '\\' in user:
                 user = user.split('\\')[1]
             vms = pinfo['memory_info'] and \
-                  int(pinfo['memory_info'].vms / 1024) or '?'
+                int(pinfo['memory_info'].vms / 1024) or '?'
             rss = pinfo['memory_info'] and \
-                  int(pinfo['memory_info'].rss / 1024) or '?'
+                int(pinfo['memory_info'].rss / 1024) or '?'
             memp = pinfo['memory_percent'] and \
-                   round(pinfo['memory_percent'], 1) or '?'
+                round(pinfo['memory_percent'], 1) or '?'
             print_(templ % (user[:10],
                             pinfo['pid'],
                             pinfo['cpu_percent'],
@@ -1623,9 +1653,10 @@ def test():
                             cputime,
                             pinfo['name'].strip() or '?'))
 
-if __name__ == "__main__":
-    test()
 
 del property, cached_property, division
 if sys.version_info < (3, 0):
     del num
+
+if __name__ == "__main__":
+    test()
