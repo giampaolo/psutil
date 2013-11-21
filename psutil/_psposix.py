@@ -6,15 +6,15 @@
 
 """Routines common to all posix systems."""
 
-import os
 import errno
+import glob
+import os
 import sys
 import time
-import glob
 
+from psutil._common import nt_diskinfo, usage_percent, memoize
 from psutil._compat import PY3, unicode
 from psutil._error import TimeoutExpired
-from psutil._common import nt_diskinfo, usage_percent, memoize
 
 
 def pid_exists(pid):
@@ -39,6 +39,7 @@ def pid_exists(pid):
             raise err
     else:
         return True
+
 
 def wait_pid(pid, timeout=None):
     """Wait for process with pid 'pid' to terminate and return its
@@ -105,6 +106,7 @@ def wait_pid(pid, timeout=None):
                 # should never happen
                 raise RuntimeError("unknown process exit status")
 
+
 def get_disk_usage(path):
     """Return disk usage associated with path."""
     try:
@@ -130,6 +132,7 @@ def get_disk_usage(path):
     # reserved blocks that we are currently not considering:
     # http://goo.gl/sWGbH
     return nt_diskinfo(total, used, free, percent)
+
 
 @memoize
 def _get_terminal_map():
