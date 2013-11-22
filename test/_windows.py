@@ -6,19 +6,20 @@
 
 """Windows specific tests.  These are implicitly run by test_psutil.py."""
 
+import errno
 import os
-import unittest
 import platform
 import signal
-import time
-import sys
 import subprocess
-import errno
+import sys
+import time
 import traceback
+import unittest
 
-import psutil
 import _psutil_mswindows
+import psutil
 from psutil._compat import PY3, callable, long
+from psutil._psmswindows import ACCESS_DENIED_SET
 from test_psutil import *
 
 try:
@@ -34,6 +35,20 @@ except ImportError:
     err = sys.exc_info()[1]
     register_warning("Couldn't run pywin32 tests: %s" % str(err))
     win32api = None
+
+
+def wrap_exceptions(callable):
+    def wrapper(self, *args, **kwargs):
+        try:
+            return callable(self, *args, **kwargs)
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno in ACCESS_DENIED_SET:
+                raise psutil.AccessDenied(None, None)
+            if err.errno == errno.ESRCH:
+                raise psutil.NoSuchProcess(None, None)
+            raise
+    return wrapper
 
 
 class WindowsSpecificTestCase(unittest.TestCase):
@@ -113,7 +128,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
             p = psutil.Process(self.pid)
             domain, _, username = w.GetOwner()
-            username = "%s\\%s" %(domain, username)
+            username = "%s\\%s" % (domain, username)
             self.assertEqual(p.username, username)
 
         def test_process_rss_memory(self):
@@ -144,9 +159,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
                                           time.localtime(p.create_time))
             self.assertEqual(wmic_create, psutil_create)
 
-
         # --- psutil namespace functions and constants tests
-
         @unittest.skipUnless(hasattr(os, 'NUMBER_OF_PROCESSORS'),
                              'NUMBER_OF_PROCESSORS env var is not available')
         def test_NUM_CPUS(self):
@@ -177,8 +190,9 @@ class WindowsSpecificTestCase(unittest.TestCase):
             psutil_pids = psutil.get_pid_list()
             psutil_pids.sort()
             if wmi_pids != psutil_pids:
-                difference = filter(lambda x:x not in wmi_pids, psutil_pids) + \
-                             filter(lambda x:x not in psutil_pids, wmi_pids)
+                difference = \
+                    filter(lambda x: x not in wmi_pids, psutil_pids) + \
+                    filter(lambda x: x not in psutil_pids, wmi_pids)
                 self.fail("difference: " + str(difference))
 
         def test_disks(self):
@@ -217,7 +231,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
             handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION,
                                           win32con.FALSE, os.getpid())
             after = p.get_num_handles()
-            self.assertEqual(after, before+1)
+            self.assertEqual(after, before + 1)
             win32api.CloseHandle(handle)
             self.assertEqual(p.get_num_handles(), before)
 
@@ -232,13 +246,12 @@ class WindowsSpecificTestCase(unittest.TestCase):
                     ret = attr
 
             p = psutil.Process(self.pid)
-            attrs = []
             failures = []
             for name in dir(psutil.Process):
                 if name.startswith('_') \
-                or name.startswith('set_') \
-                or name in ('terminate', 'kill', 'suspend', 'resume', 'nice',
-                            'send_signal', 'wait', 'get_children', 'as_dict'):
+                    or name.startswith('set_') \
+                    or name in ('terminate', 'kill', 'suspend', 'resume', 'nice',
+                                'send_signal', 'wait', 'get_children', 'as_dict'):
                     continue
                 else:
                     try:
@@ -256,22 +269,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
             if failures:
                 self.fail('\n' + '\n'.join(failures))
 
-
-import _psutil_mswindows
-from psutil._psmswindows import ACCESS_DENIED_SET
-
-def wrap_exceptions(callable):
-    def wrapper(self, *args, **kwargs):
-        try:
-            return callable(self, *args, **kwargs)
-        except OSError:
-            err = sys.exc_info()[1]
-            if err.errno in ACCESS_DENIED_SET:
-                raise psutil.AccessDenied(None, None)
-            if err.errno == errno.ESRCH:
-                raise psutil.NoSuchProcess(None, None)
-            raise
-    return wrapper
 
 class TestDualProcessImplementation(unittest.TestCase):
     fun_names = [
@@ -343,10 +340,9 @@ class TestDualProcessImplementation(unittest.TestCase):
                         assert_ge_0(ret1)
                         assert_ge_0(ret2)
                 except AssertionError:
-                    err = sys.exc_info()[1]
                     trace = traceback.format_exc()
-                    msg = '%s\npid=%s, method=%r, ret_1=%r, ret_2=%r' \
-                           % (trace, p.pid, name, ret1, ret2)
+                    msg = '%s\npid=%s, method=%r, ret_1=%r, ret_2=%r' % (
+                          trace, p.pid, name, ret1, ret2)
                     failures.append(msg)
                     break
         if failures:

@@ -7,22 +7,21 @@
 """Linux specific tests.  These are implicitly run by test_psutil.py."""
 
 from __future__ import division
-import unittest
-import subprocess
-import sys
-import time
 import os
 import re
+import sys
+import time
+import unittest
 
 from test_psutil import *
-from psutil._compat import PY3
 import psutil
 
 
 class LinuxSpecificTestCase(unittest.TestCase):
 
-    @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
-            reason="os.statvfs() function not available on this platform")
+    @unittest.skipIf(
+        POSIX and not hasattr(os, 'statvfs'),
+        reason="os.statvfs() function not available on this platform")
     @skip_on_not_implemented()
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
@@ -55,7 +54,9 @@ class LinuxSpecificTestCase(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         maps = p.get_memory_maps(grouped=False)
         pmap = sh('pmap -x %s' % p.pid).split('\n')
-        del pmap[0]; del pmap[0]  # get rid of header
+        # get rid of header
+        del pmap[0]
+        del pmap[0]
         while maps and pmap:
             this = maps.pop(0)
             other = pmap.pop(0)
@@ -140,7 +141,8 @@ class LinuxSpecificTestCase(unittest.TestCase):
 
     # --- tests for specific kernel versions
 
-    @unittest.skipUnless(get_kernel_version() >= (2, 6, 36),
+    @unittest.skipUnless(
+        get_kernel_version() >= (2, 6, 36),
         "prlimit() not available on this Linux kernel version")
     def test_prlimit_availability(self):
         # prlimit() should be available starting from kernel 2.6.36
@@ -161,7 +163,8 @@ class LinuxSpecificTestCase(unittest.TestCase):
         self.assertTrue(hasattr(psutil, "RLIMIT_RSS"))
         self.assertTrue(hasattr(psutil, "RLIMIT_STACK"))
 
-    @unittest.skipUnless(get_kernel_version() >= (3, 0),
+    @unittest.skipUnless(
+        get_kernel_version() >= (3, 0),
         "prlimit constants not available on this Linux kernel version")
     def test_resource_consts_kernel_v(self):
         # more recent constants

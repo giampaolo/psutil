@@ -225,6 +225,7 @@ def swap_memory():
         f.close()
     return nt_swapmeminfo(total, used, free, percent, sin, sout)
 
+
 @deprecated('psutil.virtual_memory().cached')
 def cached_phymem():
     return virtual_memory().cached
@@ -747,10 +748,10 @@ class Process(object):
                     unvol = int(line.split()[1])
                 if vol is not None and unvol is not None:
                     return nt_ctxsw(vol, unvol)
-            raise NotImplementedError("the 'voluntary_ctxt_switches' and "
-                                      "'nonvoluntary_ctxt_switches' fields were not found in "
-                                      "/proc/%s/status; the kernel is probably older than 2.6.23"
-                                      % self.pid)
+            raise NotImplementedError(
+                "'voluntary_ctxt_switches' and 'nonvoluntary_ctxt_switches'"
+                "fields were not found in /proc/%s/status; the kernel is "
+                "probably older than 2.6.23" % self.pid)
         finally:
             f.close()
 
