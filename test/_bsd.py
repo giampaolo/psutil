@@ -38,6 +38,7 @@ def sysctl(cmdline):
     except ValueError:
         return result
 
+
 def muse(field):
     """Thin wrapper around 'muse' cmdline utility."""
     out = sh('muse')
@@ -65,7 +66,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         self.assertEqual(btime, psutil.BOOT_TIME)
 
     def test_process_create_time(self):
-        cmdline = "ps -o lstart -p %s" %self.pid
+        cmdline = "ps -o lstart -p %s" % self.pid
         p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0]
         if PY3:
