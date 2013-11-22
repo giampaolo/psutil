@@ -278,7 +278,7 @@ set_process_cpu_affinity(PyObject* self, PyObject* args)
     unsigned int len = sizeof(mask);
     long pid;
 
-    if (!PyArg_ParseTuple(args, "ll", &pid, &mask)) {
+    if (!PyArg_ParseTuple(args, "lk", &pid, &mask)) {
         return NULL;
     }
     if (sched_setaffinity(pid, len, (cpu_set_t *)&mask)) {
