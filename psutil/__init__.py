@@ -12,7 +12,7 @@ Python.
 
 from __future__ import division
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
@@ -157,6 +157,7 @@ else:
 
 __all__.extend(_psplatform.__extra__all__)
 
+
 NUM_CPUS = _psplatform.NUM_CPUS
 BOOT_TIME = _psplatform.BOOT_TIME
 TOTAL_PHYMEM = _psplatform.TOTAL_PHYMEM
@@ -211,9 +212,9 @@ class Process(object):
         else:
             if not _PY3:
                 if not isinstance(pid, (int, long)):
-                    raise TypeError('pid must be an integer')
+                    raise TypeError('pid must be an integer (got %r)' % pid)
             if pid < 0:
-                raise ValueError('pid must be a positive integer')
+                raise ValueError('pid must be a positive integer (got %s)' % pid)
         self._pid = pid
         self._gone = False
         self._ppid = None
@@ -656,7 +657,7 @@ class Process(object):
                     except NoSuchProcess:
                         pass
             # At this point we have a mapping table where table[self.pid]
-            # are the current process's children.
+            # are the current process' children.
             # Below, we look for all descendants recursively, similarly
             # to a recursive function call.
             checkpids = [self.pid]
@@ -730,10 +731,10 @@ class Process(object):
             return 0.0
         # the utilization of a single CPU
         single_cpu_percent = overall_percent * NUM_CPUS
-        # on posix a percentage > 100 is legitimate
+        # On POSIX a percentage > 100 is legitimate:
         # http://stackoverflow.com/questions/1032357/comprehending-top-cpu-usage
-        # on windows we use this ugly hack to avoid troubles with float
-        # precision issues
+        # On windows we use this ugly hack in order to avoid float
+        # precision issues.
         if os.name != 'posix':
             if single_cpu_percent > 100.0:
                 return 100.0
@@ -975,6 +976,10 @@ class Popen(Process):
     """
 
     def __init__(self, *args, **kwargs):
+        # Here we avoid to call the original Process constructor
+        # because if the process spawned by subprocess.Popen
+        # terminates too quickly we'll get NoSuchProcess, see:
+        # https://code.google.com/p/psutil/issues/detail?id=193
         self.__subproc = subprocess.Popen(*args, **kwargs)
         self._pid = self.__subproc.pid
         self._gone = False
