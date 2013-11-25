@@ -1,12 +1,14 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-1.2.1 - XXXX-XX-XX
+1.2.1 - 2013-11-25
 ------------------
 
 BUG FIXES
 
- * #443: [Linux] can't set CPU affinity with systems with more than 64 cores.
+ * #348: [Windows XP] fixed "ImportError: DLL load failed" occurring on module
+         import.
  * #425: [Solaris] crash on import due to failure at determining BOOT_TIME.
+ * #443: [Linux] can't set CPU affinity with systems with more than 64 cores.
 
 
 1.2.0 - 2013-11-20
