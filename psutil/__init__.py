@@ -1135,7 +1135,6 @@ def wait_procs(procs, timeout, callback=None):
     while alive:
         if timeout <= 0:
             break
-        len_total = len(alive)
         for proc in alive:
             # Make sure that every complete iteration (all processes)
             # will last max 1 sec.
@@ -1143,7 +1142,10 @@ def wait_procs(procs, timeout, callback=None):
             # single process: in case it terminates too late other
             # processes may disappear in the meantime and their PID
             # reused.
-            max_timeout = 1.0 / (len_total - len(gone))
+            try:
+                max_timeout = 1.0 / (len(alive) - len(gone))
+            except ZeroDivisionError:
+                max_timeout = 1.0  # one alive remaining
             timeout = min((deadline - timer()), max_timeout)
             if timeout <= 0:
                 break
