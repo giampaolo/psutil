@@ -90,6 +90,8 @@ if sys.platform.startswith("win32"):
             # http://www.mingw.org/wiki/Use_more_recent_defined_functions
             ('_WIN32_WINNT', get_winver()),
             ('_AVAIL_WINVER_', get_winver()),
+            # see: https://code.google.com/p/psutil/issues/detail?id=348
+            ('PSAPI_VERSION', 1),
         ],
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32", "iphlpapi",
