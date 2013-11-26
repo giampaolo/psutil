@@ -561,6 +561,12 @@ if not hasattr(unittest, 'skip'):
     del TestCase, skipIf, skipUnless
 
 
+# python 2.4
+if not hasattr(subprocess.Popen, 'terminate'):
+    subprocess.Popen.terminate = \
+        lambda self: psutil.Process(self.pid).terminate()
+
+
 # ===================================================================
 # --- System-related API tests
 # ===================================================================
