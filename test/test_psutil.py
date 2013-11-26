@@ -355,7 +355,7 @@ def retry_before_failing(ntimes=None):
                 try:
                     return fun(*args, **kwargs)
                 except AssertionError:
-                    err = sys.exc_info()[1]
+                    pass
             raise
         return wrapper
     return decorator
@@ -2040,8 +2040,8 @@ class TestProcess(unittest.TestCase):
             call_until(lambda: zproc.status, "ret == psutil.STATUS_ZOMBIE")
             self.assertTrue(psutil.pid_exists(zpid))
             zproc = psutil.Process(zpid)
-            descendants = [x.pid for x in
-                psutil.Process(os.getpid()).get_children(recursive=True)]
+            descendants = [x.pid for x in psutil.Process(
+                           os.getpid()).get_children(recursive=True)]
             self.assertIn(zpid, descendants)
         finally:
             if sock is not None:

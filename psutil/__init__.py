@@ -373,8 +373,9 @@ class Process(object):
                 # Attempt to guess only in case of an absolute path.
                 # It is not safe otherwise as the process might have
                 # changed cwd.
-                if os.path.isabs(exe) and os.path.isfile(exe) \
-                and os.access(exe, os.X_OK):
+                if (os.path.isabs(exe)
+                        and os.path.isfile(exe)
+                        and os.access(exe, os.X_OK)):
                     return exe
             if isinstance(fallback, AccessDenied):
                 raise fallback

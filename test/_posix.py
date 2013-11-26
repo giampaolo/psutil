@@ -207,10 +207,10 @@ class PosixSpecificTestCase(unittest.TestCase):
         p = psutil.Process(os.getpid())
         failures = []
         for name in dir(psutil.Process):
-            if name.startswith('_') \
-            or name.startswith('set_') \
-            or name in ('terminate', 'kill', 'suspend', 'resume', 'nice',
-                        'send_signal', 'wait', 'get_children', 'as_dict'):
+            if (name.startswith('_')
+                    or name.startswith('set_')
+                    or name in ('terminate', 'kill', 'suspend', 'resume', 'nice',
+                                'send_signal', 'wait', 'get_children', 'as_dict')):
                 continue
             else:
                 try:
