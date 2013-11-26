@@ -70,8 +70,8 @@ if not PY3:
     except UnicodeDecodeError:
         TESTFN_UNICODE = TESTFN + "???"
 
-EXAMPLES_DIR = os.path.abspath(os.path.join(os.path.dirname(
-                               os.path.dirname(__file__)), 'examples'))
+EXAMPLES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                               '..', 'examples'))
 
 POSIX = os.name == 'posix'
 LINUX = sys.platform.startswith("linux")
