@@ -24,7 +24,7 @@
 #include "_psutil_linux.h"
 
 
- // Linux >= 2.6.13
+// Linux >= 2.6.13
 #define HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
 
 // Linux >= 2.6.36 (supposedly) and glibc >= 13
@@ -68,8 +68,8 @@ ioprio_set(int which, int who, int ioprio)
 /*
  * Return a (ioclass, iodata) Python tuple representing process I/O priority.
  */
-static PyObject*
-linux_ioprio_get(PyObject* self, PyObject* args)
+static PyObject *
+linux_ioprio_get(PyObject *self, PyObject *args)
 {
     long pid;
     int ioprio, ioclass, iodata;
@@ -91,8 +91,8 @@ linux_ioprio_get(PyObject* self, PyObject* args)
  * ioclass can be either IOPRIO_CLASS_RT, IOPRIO_CLASS_BE, IOPRIO_CLASS_IDLE
  * or 0. iodata goes from 0 to 7 depending on ioclass specified.
  */
-static PyObject*
-linux_ioprio_set(PyObject* self, PyObject* args)
+static PyObject *
+linux_ioprio_set(PyObject *self, PyObject *args)
 {
     long pid;
     int ioprio, ioclass, iodata;
@@ -118,8 +118,8 @@ linux_ioprio_set(PyObject* self, PyObject* args)
  * This can be used for both get and set, in which case extra
  * 'soft' and 'hard' args must be provided.
  */
-static PyObject*
-linux_prlimit(PyObject* self, PyObject* args)
+static PyObject *
+linux_prlimit(PyObject *self, PyObject *args)
 {
     long pid;
     int ret, resource;
@@ -139,29 +139,29 @@ linux_prlimit(PyObject* self, PyObject* args)
             return PyErr_SetFromErrno(PyExc_OSError);
 #if defined(HAVE_LONG_LONG)
         if (sizeof(old.rlim_cur) > sizeof(long)) {
-            return Py_BuildValue("LL", (PY_LONG_LONG)old.rlim_cur,
-                                       (PY_LONG_LONG)old.rlim_max);
+            return Py_BuildValue("LL",
+                                 (PY_LONG_LONG)old.rlim_cur,
+                                 (PY_LONG_LONG)old.rlim_max);
         }
 #endif
-        return Py_BuildValue("ll", (long)old.rlim_cur,
-                                   (long)old.rlim_max);
+        return Py_BuildValue("ll", (long)old.rlim_cur, (long)old.rlim_max);
     }
 
     // set
     else {
 #if defined(HAVE_LARGEFILE_SUPPORT)
         new.rlim_cur = PyLong_AsLongLong(soft);
-        if (new.rlim_cur == (rlim_t)-1 && PyErr_Occurred())
+        if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
             return NULL;
         new.rlim_max = PyLong_AsLongLong(hard);
-        if (new.rlim_max == (rlim_t)-1 && PyErr_Occurred())
+        if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
             return NULL;
 #else
         new.rlim_cur = PyLong_AsLong(soft);
-        if (new.rlim_cur == (rlim_t)-1 && PyErr_Occurred())
+        if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
             return NULL;
         new.rlim_max = PyLong_AsLong(hard);
-        if (new.rlim_max == (rlim_t)-1 && PyErr_Occurred())
+        if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
             return NULL;
 #endif
         newp = &new;
@@ -179,13 +179,13 @@ linux_prlimit(PyObject* self, PyObject* args)
  * Return disk mounted partitions as a list of tuples including device,
  * mount point and filesystem type
  */
-static PyObject*
-get_disk_partitions(PyObject* self, PyObject* args)
+static PyObject *
+get_disk_partitions(PyObject *self, PyObject *args)
 {
     FILE *file = NULL;
     struct mntent *entry;
-    PyObject* py_retlist = PyList_New(0);
-    PyObject* py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -204,10 +204,11 @@ get_disk_partitions(PyObject* self, PyObject* args)
             PyErr_Format(PyExc_RuntimeError, "getmntent() failed");
             goto error;
         }
-        py_tuple = Py_BuildValue("(ssss)", entry->mnt_fsname,  // device
-                                           entry->mnt_dir,     // mount point
-                                           entry->mnt_type,    // fs type
-                                           entry->mnt_opts);   // options
+        py_tuple = Py_BuildValue("(ssss)",
+                                 entry->mnt_fsname,  // device
+                                 entry->mnt_dir,     // mount point
+                                 entry->mnt_type,    // fs type
+                                 entry->mnt_opts);   // options
         if (! py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
@@ -229,8 +230,8 @@ error:
 /*
  * A wrapper around sysinfo(), return system memory usage statistics.
  */
-static PyObject*
-get_sysinfo(PyObject* self, PyObject* args)
+static PyObject *
+get_sysinfo(PyObject *self, PyObject *args)
 {
     struct sysinfo info;
     if (sysinfo(&info) != 0) {
@@ -238,7 +239,8 @@ get_sysinfo(PyObject* self, PyObject* args)
     }
 
     // note: BOOT_TIME might also be determined from here
-    return Py_BuildValue("(KKKKKK)",
+    return Py_BuildValue(
+        "(KKKKKK)",
         (unsigned long long)info.totalram  * info.mem_unit,   // total
         (unsigned long long)info.freeram   * info.mem_unit,   // free
         (unsigned long long)info.bufferram * info.mem_unit,   // buffer
@@ -251,8 +253,8 @@ get_sysinfo(PyObject* self, PyObject* args)
 /*
  * Return process CPU affinity as a Python long (the bitmask)
  */
-static PyObject*
-get_process_cpu_affinity(PyObject* self, PyObject* args)
+static PyObject *
+get_process_cpu_affinity(PyObject *self, PyObject *args)
 {
     unsigned long mask;
     unsigned int len = sizeof(mask);
@@ -271,8 +273,8 @@ get_process_cpu_affinity(PyObject* self, PyObject* args)
 /*
  * Set process CPU affinity; expects a bitmask
  */
-static PyObject*
-set_process_cpu_affinity(PyObject* self, PyObject* args)
+static PyObject *
+set_process_cpu_affinity(PyObject *self, PyObject *args)
 {
     unsigned long mask;
     unsigned int len = sizeof(mask);
@@ -292,8 +294,8 @@ set_process_cpu_affinity(PyObject* self, PyObject* args)
 /*
  * Return currently connected users as a list of tuples.
  */
-static PyObject*
-get_system_users(PyObject* self, PyObject* args)
+static PyObject *
+get_system_users(PyObject *self, PyObject *args)
 {
     PyObject *ret_list = PyList_New(0);
     PyObject *tuple = NULL;
@@ -302,7 +304,6 @@ get_system_users(PyObject* self, PyObject* args)
 
     if (ret_list == NULL)
         return NULL;
-
     setutent();
     while (NULL != (ut = getutent())) {
         tuple = NULL;
@@ -311,14 +312,15 @@ get_system_users(PyObject* self, PyObject* args)
             user_proc = Py_True;
         else
             user_proc = Py_False;
-        tuple = Py_BuildValue("(sssfO)",
+        tuple = Py_BuildValue(
+            "(sssfO)",
             ut->ut_user,              // username
             ut->ut_line,              // tty
             ut->ut_host,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
             user_proc                 // (bool) user process
         );
-        if (! tuple)
+    if (! tuple)
             goto error;
         if (PyList_Append(ret_list, tuple))
             goto error;
@@ -342,34 +344,32 @@ error:
 static PyMethodDef
 PsutilMethods[] =
 {
-      // --- per-process functions
-
+    // --- per-process functions
 #if HAVE_IOPRIO
-     {"ioprio_get", linux_ioprio_get, METH_VARARGS,
-        "Get process I/O priority"},
-     {"ioprio_set", linux_ioprio_set, METH_VARARGS,
-        "Set process I/O priority"},
+    {"ioprio_get", linux_ioprio_get, METH_VARARGS,
+     "Get process I/O priority"},
+    {"ioprio_set", linux_ioprio_set, METH_VARARGS,
+     "Set process I/O priority"},
 #endif
 #if HAVE_PRLIMIT
-     {"prlimit", linux_prlimit, METH_VARARGS,
-        "Get or set process resource limits."},
+    {"prlimit", linux_prlimit, METH_VARARGS,
+     "Get or set process resource limits."},
 #endif
-     {"set_process_cpu_affinity", set_process_cpu_affinity, METH_VARARGS,
-        "Set process CPU affinity; expects a bitmask."},
+    {"set_process_cpu_affinity", set_process_cpu_affinity, METH_VARARGS,
+     "Set process CPU affinity; expects a bitmask."},
 
-     // --- system related functions
+    // --- system related functions
+    {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
+     "Return disk mounted partitions as a list of tuples including "
+     "device, mount point and filesystem type"},
+    {"get_sysinfo", get_sysinfo, METH_VARARGS,
+     "A wrapper around sysinfo(), return system memory usage statistics"},
+    {"get_process_cpu_affinity", get_process_cpu_affinity, METH_VARARGS,
+     "Return process CPU affinity as a Python long (the bitmask)."},
+    {"get_system_users", get_system_users, METH_VARARGS,
+     "Return currently connected users as a list of tuples"},
 
-     {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
-        "Return disk mounted partitions as a list of tuples including "
-        "device, mount point and filesystem type"},
-     {"get_sysinfo", get_sysinfo, METH_VARARGS,
-        "A wrapper around sysinfo(), return system memory usage statistics"},
-     {"get_process_cpu_affinity", get_process_cpu_affinity, METH_VARARGS,
-        "Return process CPU affinity as a Python long (the bitmask)."},
-     {"get_system_users", get_system_users, METH_VARARGS,
-        "Return currently connected users as a list of tuples"},
-
-     {NULL, NULL, 0, NULL}
+    {NULL, NULL, 0, NULL}
 };
 
 struct module_state {
@@ -397,16 +397,16 @@ psutil_linux_clear(PyObject *m) {
 }
 
 static struct PyModuleDef
-moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "psutil_linux",
-        NULL,
-        sizeof(struct module_state),
-        PsutilMethods,
-        NULL,
-        psutil_linux_traverse,
-        psutil_linux_clear,
-        NULL
+        moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "psutil_linux",
+    NULL,
+    sizeof(struct module_state),
+    PsutilMethods,
+    NULL,
+    psutil_linux_traverse,
+    psutil_linux_clear,
+    NULL
 };
 
 #define INITERROR return NULL
@@ -440,21 +440,21 @@ void init_psutil_linux(void)
     PyModule_AddIntConstant(module, "RLIMIT_NPROC", RLIMIT_NPROC);
     PyModule_AddIntConstant(module, "RLIMIT_RSS", RLIMIT_RSS);
     PyModule_AddIntConstant(module, "RLIMIT_STACK", RLIMIT_STACK);
-    #ifdef RLIMIT_MSGQUEUE
-        PyModule_AddIntConstant(module, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE);
-    #endif
-    #ifdef RLIMIT_NICE
-        PyModule_AddIntConstant(module, "RLIMIT_NICE", RLIMIT_NICE);
-    #endif
-    #ifdef RLIMIT_RTPRIO
-        PyModule_AddIntConstant(module, "RLIMIT_RTPRIO", RLIMIT_RTPRIO);
-    #endif
-    #ifdef RLIMIT_RTTIME
-        PyModule_AddIntConstant(module, "RLIMIT_RTTIME", RLIMIT_RTTIME);
-    #endif
-    #ifdef RLIMIT_SIGPENDING
-        PyModule_AddIntConstant(module, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING);
-    #endif
+#ifdef RLIMIT_MSGQUEUE
+    PyModule_AddIntConstant(module, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE);
+#endif
+#ifdef RLIMIT_NICE
+    PyModule_AddIntConstant(module, "RLIMIT_NICE", RLIMIT_NICE);
+#endif
+#ifdef RLIMIT_RTPRIO
+    PyModule_AddIntConstant(module, "RLIMIT_RTPRIO", RLIMIT_RTPRIO);
+#endif
+#ifdef RLIMIT_RTTIME
+    PyModule_AddIntConstant(module, "RLIMIT_RTTIME", RLIMIT_RTTIME);
+#endif
+#ifdef RLIMIT_SIGPENDING
+    PyModule_AddIntConstant(module, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING);
+#endif
 #endif
 
     if (module == NULL) {
