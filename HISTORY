@@ -8,7 +8,7 @@ BUG FIXES
  * #348: [Windows XP] fixed "ImportError: DLL load failed" occurring on module
          import.
  * #425: [Solaris] crash on import due to failure at determining BOOT_TIME.
- * #443: [Linux] can't set CPU affinity with systems with more than 64 cores.
+ * #443: [Linux] can't set CPU affinity on systems with more than 64 cores.
 
 
 1.2.0 - 2013-11-20

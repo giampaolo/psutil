@@ -58,6 +58,7 @@ LOWER PRIORITY
  * thread names:
     * https://code.google.com/p/plcrashreporter/issues/detail?id=65
 
+ * Asynchronous psutil.Popen (see http://www.python.org/dev/peps/pep-3145/)
 
 DEBATABLE
 =========
