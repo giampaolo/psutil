@@ -7,6 +7,7 @@
  * module methods.
  */
 
+
 #include <Python.h>
 #include <assert.h>
 #include <errno.h>
@@ -35,7 +36,7 @@ int
 psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 {
     int err;
-    struct kinfo_proc * result;
+    struct kinfo_proc *result;
     int done;
     static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0 };
     // Declaring name as const requires us to cast it when passing it to
@@ -82,7 +83,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount)
         // error, toss away our buffer and start again.
         if (err == 0) {
             err = sysctl((int *) name, (sizeof(name) / sizeof(*name)) - 1,
-                          result, &length, NULL, 0);
+                         result, &length, NULL, 0);
             if (err == -1)
                 err = errno;
             if (err == 0) {
@@ -203,7 +204,7 @@ char
 
 
 /* returns the command line as a python list object */
-PyObject*
+PyObject *
 psutil_get_arg_list(long pid)
 {
     char *argstr = NULL;
@@ -225,7 +226,7 @@ psutil_get_arg_list(long pid)
     // arguments add each string to the list then step forward to the next
     // separator
     if (argsize > 0) {
-        while(pos < argsize) {
+        while (pos < argsize) {
             item = Py_BuildValue("s", &argstr[pos]);
             if (!item)
                 goto error;
