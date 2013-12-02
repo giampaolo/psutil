@@ -17,7 +17,6 @@
 #include "ntextapi.h"
 
 
-
 /*
  * A wrapper around OpenProcess setting NSP exception if process
  * no longer exists.
@@ -76,7 +75,7 @@ psutil_get_peb_address(HANDLE ProcessHandle)
 {
     _NtQueryInformationProcess NtQueryInformationProcess =
         (_NtQueryInformationProcess)GetProcAddress(
-        GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
+            GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
     PROCESS_BASIC_INFORMATION pbi;
 
     NtQueryInformationProcess(ProcessHandle, 0, &pbi, sizeof(pbi), NULL);
@@ -84,7 +83,7 @@ psutil_get_peb_address(HANDLE ProcessHandle)
 }
 
 
-DWORD*
+DWORD *
 psutil_get_pids(DWORD *numberOfReturnedPIDs) {
     /* Win32 SDK says the only way to know if our process array
      * wasn't large enough is to check the returned size and make
@@ -113,7 +112,7 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
             PyErr_SetFromWindowsErr(0);
             return NULL;
         }
-    } while(enumReturnSz == procArraySz * sizeof(DWORD));
+    } while (enumReturnSz == procArraySz * sizeof(DWORD));
 
     // The number of elements is the returned size / size of each element
     *numberOfReturnedPIDs = enumReturnSz / sizeof(DWORD);
@@ -220,7 +219,7 @@ handlep_is_running(HANDLE hProcess)
  * returns a Python list representing the arguments for the process
  * with given pid or NULL on error.
  */
-PyObject*
+PyObject *
 psutil_get_arg_list(long pid)
 {
     int nArgs, i;
@@ -235,7 +234,7 @@ psutil_get_arg_list(long pid)
     PyObject *argList = NULL;
 
     hProcess = psutil_handle_from_pid(pid);
-    if(hProcess == NULL) {
+    if (hProcess == NULL) {
         return NULL;
     }
 
@@ -244,10 +243,10 @@ psutil_get_arg_list(long pid)
     /* get the address of ProcessParameters */
 #ifdef _WIN64
     if (!ReadProcessMemory(hProcess, (PCHAR)pebAddress + 32,
-        &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
+                           &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
 #else
     if (!ReadProcessMemory(hProcess, (PCHAR)pebAddress + 0x10,
-        &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
+                           &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
 #endif
     {
         ////printf("Could not read the address of ProcessParameters!\n");
@@ -258,10 +257,10 @@ psutil_get_arg_list(long pid)
     /* read the CommandLine UNICODE_STRING structure */
 #ifdef _WIN64
     if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 112,
-        &commandLine, sizeof(commandLine), NULL))
+                           &commandLine, sizeof(commandLine), NULL))
 #else
     if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 0x40,
-        &commandLine, sizeof(commandLine), NULL))
+                           &commandLine, sizeof(commandLine), NULL))
 #endif
     {
         ////printf("Could not read CommandLine!\n");
@@ -271,7 +270,7 @@ psutil_get_arg_list(long pid)
 
 
     /* allocate memory to hold the command line */
-    commandLineContents = (WCHAR *)malloc(commandLine.Length+1);
+    commandLineContents = (WCHAR *)malloc(commandLine.Length + 1);
     if (commandLineContents == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -279,7 +278,7 @@ psutil_get_arg_list(long pid)
 
     /* read the command line */
     if (!ReadProcessMemory(hProcess, commandLine.Buffer,
-        commandLineContents, commandLine.Length, NULL))
+                           commandLineContents, commandLine.Length, NULL))
     {
         ////printf("Could not read the command line string!\n");
         PyErr_SetFromWindowsErr(0);
@@ -291,7 +290,7 @@ psutil_get_arg_list(long pid)
 
     // null-terminate the string to prevent wcslen from returning incorrect length
     // the length specifier is in characters, but commandLine.Length is in bytes
-    commandLineContents[(commandLine.Length/sizeof(WCHAR))] = '\0';
+    commandLineContents[(commandLine.Length / sizeof(WCHAR))] = '\0';
 
     // attemempt tp parse the command line using Win32 API, fall back on string
     // cmdline version otherwise
@@ -303,11 +302,11 @@ psutil_get_arg_list(long pid)
                                                 commandLine.Length / 2);
         if (arg_from_wchar == NULL)
             goto error;
-        #if PY_MAJOR_VERSION >= 3
-            argList = Py_BuildValue("N", PyUnicode_AsUTF8String(arg_from_wchar));
-        #else
-            argList = Py_BuildValue("N", PyUnicode_FromObject(arg_from_wchar));
-        #endif
+#if PY_MAJOR_VERSION >= 3
+        argList = Py_BuildValue("N", PyUnicode_AsUTF8String(arg_from_wchar));
+#else
+        argList = Py_BuildValue("N", PyUnicode_FromObject(arg_from_wchar));
+#endif
         if (!argList)
             goto error;
     }
@@ -317,21 +316,21 @@ psutil_get_arg_list(long pid)
         argList = Py_BuildValue("[]");
         if (argList == NULL)
             goto error;
-        for(i=0; i<nArgs; i++) {
+        for (i = 0; i < nArgs; i++) {
             arg_from_wchar = NULL;
             arg = NULL;
             ////printf("%d: %.*S (%d characters)\n", i, wcslen(szArglist[i]),
             //                  szArglist[i], wcslen(szArglist[i]));
             arg_from_wchar = PyUnicode_FromWideChar(szArglist[i],
                                                     wcslen(szArglist[i])
-                                                    );
+                                                   );
             if (arg_from_wchar == NULL)
                 goto error;
-            #if PY_MAJOR_VERSION >= 3
-                arg = PyUnicode_FromObject(arg_from_wchar);
-            #else
-                arg = PyUnicode_AsUTF8String(arg_from_wchar);
-            #endif
+#if PY_MAJOR_VERSION >= 3
+            arg = PyUnicode_FromObject(arg_from_wchar);
+#else
+            arg = PyUnicode_AsUTF8String(arg_from_wchar);
+#endif
             if (arg == NULL)
                 goto error;
             Py_XDECREF(arg_from_wchar);
@@ -362,13 +361,11 @@ error:
 
 
 #define PH_FIRST_PROCESS(Processes) ((PSYSTEM_PROCESS_INFORMATION)(Processes))
-
 #define PH_NEXT_PROCESS(Process) ( \
-    ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
-    (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
-    ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : \
-    NULL \
-    )
+   ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
+   (PSYSTEM_PROCESS_INFORMATION)((PCHAR)(Process) + \
+        ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset) : \
+   NULL)
 
 const STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
 const STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
@@ -388,12 +385,12 @@ get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess, PVOID *retB
     PSYSTEM_PROCESS_INFORMATION process;
 
     // get NtQuerySystemInformation
-    typedef DWORD (_stdcall *NTQSI_PROC) (int, PVOID, ULONG, PULONG);
+    typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
     NTQSI_PROC NtQuerySystemInformation;
     HINSTANCE hNtDll;
     hNtDll = LoadLibrary(TEXT("ntdll.dll"));
     NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
-                                hNtDll, "NtQuerySystemInformation");
+        hNtDll, "NtQuerySystemInformation");
 
     bufferSize = initialBufferSize;
     buffer = malloc(bufferSize);
