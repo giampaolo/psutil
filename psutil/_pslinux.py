@@ -178,9 +178,9 @@ def virtual_memory():
                 active = int(line.split()[1]) * 1024
             elif line.startswith('Inactive:'):
                 inactive = int(line.split()[1]) * 1024
-            if cached is not None \
-            and active is not None \
-            and inactive is not None:
+            if (cached is not None
+                    and active is not None
+                    and inactive is not None):
                 break
         else:
             # we might get here when dealing with exotic Linux flavors, see:

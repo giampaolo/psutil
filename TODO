@@ -18,10 +18,7 @@ HIGHER PRIORITY
 
  * #250: net ifaces speed.
 
- * Process.name on Windows is slow:
-   http://stackoverflow.com/questions/6587036/
-
- * Windows binary for Python 3.3 64-bit.
+ * #424: Windows binary for Python 3.3 64-bit.
 
  * #269: expose network ifaces RX/TW queues.
 
@@ -46,7 +43,7 @@ LOWER PRIORITY
 
  * examples/taskmgr-gui.py (using tk).
 
- * system-wide # open file descriptors:
+ * system-wide number of open file descriptors:
     * https://jira.hyperic.com/browse/SIGAR-30
     * http://www.netadmintools.com/part295.html
 
@@ -72,12 +69,6 @@ DEBATABLE
    produce a meaningful value. It represents a trap in case the user iterates
    over multiple processes though, as it introduces a big slowdown.
    Should it default to 0.0?
-
- * Rename connection ntuple's fields 'local_address', 'remote_address' to
-   'laddr', 'raddr'  (note in accordance with http://bugs.python.org/issue17675)
-
- * Process per-cpus percent (XXX Windows only?), see:
-   https://groups.google.com/forum/?fromgroups#!topic/psutil/ErrKTxAbu50
 
  * Should we expose OS constants (psutil.WINDOWS, psutil.OSX etc.)?
 
@@ -117,6 +108,7 @@ DEBATABLE
     Side note: tests' call_until() should raise TimeoutExpired instead of
     RuntimeError.
 
+
 COMPATIBILITY BREAKAGE
 ======================
 
@@ -136,7 +128,7 @@ Which can be safely renamed:
  * _psutil_mswindows.c        -> _psutil_windows.c
  * _psutil_mswindows.h        -> _psutil_windows.h
 
-Risky renames:
+Risky renamings:
 
  * psutil.get_pid_list()      -> psutil.get_pids()
  * psutil.Process.ppid        -> get_ppid()

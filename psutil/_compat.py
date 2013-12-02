@@ -87,9 +87,11 @@ except ImportError:
             names = list(field_names)
             seen = set()
             for i, name in enumerate(names):
-                if (not min(c.isalnum() or c == '_' for c in name) or _iskeyword(name)
-                    or not name or name[0].isdigit() or name.startswith('_')
-                    or name in seen):
+                if ((not min(c.isalnum() or c == '_' for c in name)
+                        or _iskeyword(name)
+                        or not name or name[0].isdigit()
+                        or name.startswith('_')
+                        or name in seen)):
                     names[i] = '_%d' % i
                 seen.add(name)
             field_names = tuple(names)
@@ -99,8 +101,8 @@ except ImportError:
                                  'alphanumeric characters and underscores: %r'
                                  % name)
             if _iskeyword(name):
-                raise ValueError('Type names and field names cannot be a keyword: %r'
-                                 % name)
+                raise ValueError(
+                    'Type names and field names cannot be a keyword: %r' % name)
             if name[0].isdigit():
                 raise ValueError('Type names and field names cannot start with a '
                                  'number: %r' % name)
@@ -207,8 +209,8 @@ except ImportError:
     class defaultdict(dict):
 
         def __init__(self, default_factory=None, *a, **kw):
-            if (default_factory is not None and \
-            not hasattr(default_factory, '__call__')):
+            if ((default_factory is not None and
+                    not hasattr(default_factory, '__call__'))):
                 raise TypeError('first argument must be callable')
             dict.__init__(self, *a, **kw)
             self.default_factory = default_factory

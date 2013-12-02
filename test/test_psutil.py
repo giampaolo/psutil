@@ -70,8 +70,8 @@ if not PY3:
     except UnicodeDecodeError:
         TESTFN_UNICODE = TESTFN + "???"
 
-EXAMPLES_DIR = os.path.abspath(os.path.join(os.path.dirname(
-                               os.path.dirname(__file__)), 'examples'))
+EXAMPLES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                               '..', 'examples'))
 
 POSIX = os.name == 'posix'
 LINUX = sys.platform.startswith("linux")
@@ -355,7 +355,7 @@ def retry_before_failing(ntimes=None):
                 try:
                     return fun(*args, **kwargs)
                 except AssertionError:
-                    err = sys.exc_info()[1]
+                    pass
             raise
         return wrapper
     return decorator
@@ -561,6 +561,12 @@ if not hasattr(unittest, 'skip'):
     del TestCase, skipIf, skipUnless
 
 
+# python 2.4
+if not hasattr(subprocess.Popen, 'terminate'):
+    subprocess.Popen.terminate = \
+        lambda self: psutil.Process(self.pid).terminate()
+
+
 # ===================================================================
 # --- System-related API tests
 # ===================================================================
@@ -592,8 +598,9 @@ class TestSystemAPIs(unittest.TestCase):
         sproc2 = get_test_subprocess()
         sproc3 = get_test_subprocess()
         procs = [psutil.Process(x.pid) for x in (sproc1, sproc2, sproc3)]
+        self.assertRaises(ValueError, psutil.wait_procs, procs, timeout=-1)
         t = time.time()
-        gone, alive = psutil.wait_procs(procs, 0.01, callback=callback)
+        gone, alive = psutil.wait_procs(procs, timeout=0.01, callback=callback)
 
         self.assertLess(time.time() - t, 0.5)
         self.assertEqual(gone, [])
@@ -603,7 +610,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertFalse(hasattr(p, 'retcode'))
 
         sproc3.terminate()
-        gone, alive = psutil.wait_procs(procs, 0.03, callback=callback)
+        gone, alive = psutil.wait_procs(procs, timeout=0.03, callback=callback)
         self.assertEqual(len(gone), 1)
         self.assertEqual(len(alive), 2)
         self.assertIn(sproc3.pid, [x.pid for x in gone])
@@ -617,12 +624,21 @@ class TestSystemAPIs(unittest.TestCase):
 
         sproc1.terminate()
         sproc2.terminate()
-        gone, alive = psutil.wait_procs(procs, 0.03, callback=callback)
+        gone, alive = psutil.wait_procs(procs, timeout=0.03, callback=callback)
         self.assertEqual(len(gone), 3)
         self.assertEqual(len(alive), 0)
         self.assertEqual(set(l), set([sproc1.pid, sproc2.pid, sproc3.pid]))
         for p in gone:
             self.assertTrue(hasattr(p, 'retcode'))
+
+    def test_wait_procs_no_timeout(self):
+        sproc1 = get_test_subprocess()
+        sproc2 = get_test_subprocess()
+        sproc3 = get_test_subprocess()
+        procs = [psutil.Process(x.pid) for x in (sproc1, sproc2, sproc3)]
+        for p in procs:
+            p.terminate()
+        gone, alive = psutil.wait_procs(procs)
 
     def test_TOTAL_PHYMEM(self):
         x = psutil.TOTAL_PHYMEM
@@ -2040,8 +2056,8 @@ class TestProcess(unittest.TestCase):
             call_until(lambda: zproc.status, "ret == psutil.STATUS_ZOMBIE")
             self.assertTrue(psutil.pid_exists(zpid))
             zproc = psutil.Process(zpid)
-            descendants = [x.pid for x in
-                psutil.Process(os.getpid()).get_children(recursive=True)]
+            descendants = [x.pid for x in psutil.Process(
+                           os.getpid()).get_children(recursive=True)]
             self.assertIn(zpid, descendants)
         finally:
             if sock is not None:

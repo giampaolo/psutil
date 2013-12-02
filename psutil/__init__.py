@@ -12,7 +12,7 @@ Python.
 
 from __future__ import division
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
@@ -373,8 +373,9 @@ class Process(object):
                 # Attempt to guess only in case of an absolute path.
                 # It is not safe otherwise as the process might have
                 # changed cwd.
-                if os.path.isabs(exe) and os.path.isfile(exe) \
-                and os.access(exe, os.X_OK):
+                if (os.path.isabs(exe)
+                        and os.path.isfile(exe)
+                        and os.access(exe, os.X_OK)):
                     return exe
             if isinstance(fallback, AccessDenied):
                 raise fallback
@@ -1078,7 +1079,7 @@ def process_iter():
             yield proc
 
 
-def wait_procs(procs, timeout, callback=None):
+def wait_procs(procs, timeout=None, callback=None):
     """Convenience function which waits for a list of processes to
     terminate.
 
@@ -1109,7 +1110,7 @@ def wait_procs(procs, timeout, callback=None):
     >>> for p in procs:
     ...    p.terminate()
     ...
-    >>> gone, still_alive = wait_procs(procs, 3, callback=on_terminate)
+    >>> gone, still_alive = wait_procs(procs, timeout=3, callback=on_terminate)
     >>> for p in still_alive:
     ...     p.kill()
     """
@@ -1125,15 +1126,18 @@ def wait_procs(procs, timeout, callback=None):
                 if callback is not None:
                     callback(proc)
 
+    if timeout is not None and not timeout >= 0:
+        raise ValueError("timeout must be a positive integer, got %s" % timeout)
     timer = getattr(time, 'monotonic', time.time)
     gone = set()
     alive = set(procs)
     if callback is not None and not callable(callback):
         raise TypeError("callback %r is not a callable" % callable)
-    deadline = timer() + timeout
+    if timeout is not None:
+        deadline = timer() + timeout
 
     while alive:
-        if timeout <= 0:
+        if timeout is not None and timeout <= 0:
             break
         for proc in alive:
             # Make sure that every complete iteration (all processes)
@@ -1146,10 +1150,13 @@ def wait_procs(procs, timeout, callback=None):
                 max_timeout = 1.0 / (len(alive) - len(gone))
             except ZeroDivisionError:
                 max_timeout = 1.0  # one alive remaining
-            timeout = min((deadline - timer()), max_timeout)
-            if timeout <= 0:
-                break
-            assert_gone(proc, timeout)
+            if timeout is not None:
+                timeout = min((deadline - timer()), max_timeout)
+                if timeout <= 0:
+                    break
+                assert_gone(proc, timeout)
+            else:
+                assert_gone(proc, max_timeout)
         alive = alive - gone
 
     if alive:
