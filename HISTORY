@@ -1,5 +1,13 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+1.2.2 - XXXX-XX-XX
+------------------
+
+ENHANCEMENTS
+
+* #447: psutil.wait_procs() timeout parameter is now optional.
+
+
 1.2.1 - 2013-11-25
 ------------------
 
