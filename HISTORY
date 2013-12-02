@@ -7,6 +7,11 @@ ENHANCEMENTS
 
 * #447: psutil.wait_procs() timeout parameter is now optional.
 
+BUG FIXES
+
+* #448: [Windows] Process get_children() and ppid memory leak (patch by
+        Ulrich Klank.
+
 
 1.2.1 - 2013-11-25
 ------------------

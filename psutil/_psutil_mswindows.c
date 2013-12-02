@@ -2882,6 +2882,8 @@ get_ppid_map(PyObject *self, PyObject *args)
                 goto error;
             if (PyDict_SetItem(py_retdict, pid, ppid))
                 goto error;
+            Py_DECREF(pid);
+            Py_DECREF(ppid);
         } while (Process32Next(handle, &pe));
     }
 
