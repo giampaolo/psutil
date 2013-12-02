@@ -7,6 +7,7 @@
  * module methods.
  */
 
+
 #include <Python.h>
 #include <assert.h>
 #include <errno.h>
@@ -137,7 +138,7 @@ psutil_get_argmax()
 
 
 /* return process args as a python list */
-PyObject*
+PyObject *
 psutil_get_arg_list(long pid)
 {
     int mib[3];
