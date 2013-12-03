@@ -115,6 +115,7 @@ COMPATIBILITY BREAKAGE
 H = high risk in terms of breakage
 M = medium risk in terms of breakage
 S = little risk in terms of breakage
+? = debatable
 
 Removals:
 
@@ -126,6 +127,7 @@ Removals:
  * (M) local_address and remote_address get_connection() namedtuple fields
        (deprecated in 1.0.0)
  * (M) psutil.BOOT_TIME  (deprecated in 0.7.0)
+ * (H?) psutil.TOTAL_PHYMEM
 
 Renames:
 
