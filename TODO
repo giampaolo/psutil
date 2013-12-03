@@ -112,26 +112,32 @@ DEBATABLE
 COMPATIBILITY BREAKAGE
 ======================
 
-H = high risk in terms of breackage
-S = safe
+H = high risk in terms of breakage
+M = medium risk in terms of breakage
+S = little risk in terms of breakage
 
 Removals:
 
- * (S) psutil.Process.nice
- * (S) get_process_list
- * (S) psutil.*mem* functions
- * (S) psutil.error.py
+ * (S) psutil.Process.nice  (deprecated in 0.5.0)
+ * (S) get_process_list  (deprecated in 0.5.0)
+ * (S) psutil.*mem* functions  (deprecated in 0.3.0 and 0.6.0)
+ * (S) psutil.error.py  (deprecated in 0.7.0 but never documented)
+ * (M) psutil.network_io_counters  (deprecated in 1.0.0)
+ * (M) local_address and remote_address get_connection() namedtuple fields
+       (deprecated in 1.0.0)
+ * (M) psutil.BOOT_TIME  (deprecated in 0.7.0)
 
 Renames:
 
  * (S) rename/unify all _ps*.py process functions
- * (S) _psmswindows.py            -> _pswindows.py
- * (S) _psutil_mswindows.c        -> _psutil_windows.c
- * (S) _psutil_mswindows.h        -> _psutil_windows.h
- * (H) psutil.get_pid_list()      -> psutil.get_pids()
- * (H) psutil.Process.ppid        -> get_ppid()
- * (H) psutil.Process.status      -> get_status()
- * (H) psutil.Process.uids        -> get_uids()
- * (H) psutil.Process.gids        -> get_gids()
- * (H) psutil.Process.username    -> get_username()
- * (H) psutil.Process.getcwd      -> get_cwd()
+ * (S) _psmswindows.py         -> _pswindows.py
+ * (S) _psutil_mswindows.c     -> _psutil_windows.c
+ * (S) _psutil_mswindows.h     -> _psutil_windows.h
+ * (H) psutil.get_pid_list()   -> psutil.get_pids()
+ * (H) psutil.Process.ppid     -> get_ppid()
+ * (H) psutil.Process.status   -> get_status()
+ * (H) psutil.Process.uids     -> get_uids()
+ * (H) psutil.Process.gids     -> get_gids()
+ * (H) psutil.Process.username -> get_username()
+ * (H) psutil.Process.getcwd   -> get_cwd()
+ * (H) psutil.NUM_CPUS         -> cpu_count() (consistent with os.cpu_count())
