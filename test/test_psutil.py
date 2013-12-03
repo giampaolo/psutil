@@ -2084,6 +2084,13 @@ class TestProcess(unittest.TestCase):
         self.assertIn(str(sproc.pid), str(p))
         self.assertIn("terminated", str(p))
 
+    def test__eq__(self):
+        self.assertTrue(psutil.Process() == psutil.Process())
+
+    def test__hash__(self):
+        s = set([psutil.Process(), psutil.Process()])
+        self.assertEqual(len(s), 1)
+
     @unittest.skipIf(LINUX, 'PID 0 not available on Linux')
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux

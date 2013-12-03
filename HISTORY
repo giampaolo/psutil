@@ -1,11 +1,12 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-1.2.2 - XXXX-XX-XX
+1.3.0 - XXXX-XX-XX
 ------------------
 
 ENHANCEMENTS
 
-* #447: psutil.wait_procs() timeout parameter is now optional.
+ * #447: psutil.wait_procs() timeout parameter is now optional.
+ * #452: Process instances are now hashable and can be used with set()s.
 
 BUG FIXES
 

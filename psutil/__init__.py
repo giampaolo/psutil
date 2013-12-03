@@ -247,6 +247,21 @@ class Process(object):
     def __repr__(self):
         return "<%s at %s>" % (self.__str__(), id(self))
 
+    def __eq__(self, other):
+        # Test for equality with another Process object based on PID.
+        # Note that this is not supposed to indentify a Process
+        # univocally over the time (the PID alone is not enough as
+        # it might refer to a process whose PID has been reused).
+        # We merely do this in order to be able to use Process with
+        # set()s, see:
+        # https://code.google.com/p/psutil/issues/detail?id=452
+        if not isinstance(other, Process):
+            return False
+        return self.pid == other.pid
+
+    def __hash__(self):
+        return self.pid
+
     # --- utility methods
 
     def as_dict(self, attrs=[], ad_value=None):
