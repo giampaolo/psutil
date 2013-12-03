@@ -112,28 +112,26 @@ DEBATABLE
 COMPATIBILITY BREAKAGE
 ======================
 
-H = higher priority
-? = debatable
+H = high risk in terms of breackage
+S = safe
 
-Which can be safely removed (long deprecated):
+Removals:
 
- * psutil.Process.nice
- * get_process_list
- * psutil.*mem* functions
- * psutil.error.py
+ * (S) psutil.Process.nice
+ * (S) get_process_list
+ * (S) psutil.*mem* functions
+ * (S) psutil.error.py
 
-Which can be safely renamed:
+Renames:
 
- * _psmswindows.py            -> _pswindows.py
- * _psutil_mswindows.c        -> _psutil_windows.c
- * _psutil_mswindows.h        -> _psutil_windows.h
-
-Risky renamings:
-
- * psutil.get_pid_list()      -> psutil.get_pids()
- * psutil.Process.ppid        -> get_ppid()
- * psutil.Process.status      -> get_status()
- * psutil.Process.uids        -> get_uids()
- * psutil.Process.gids        -> get_gids()
- * psutil.Process.username    -> get_username()
- * psutil.Process.getcwd      -> get_cwd()
+ * (S) rename/unify all _ps*.py process functions
+ * (S) _psmswindows.py            -> _pswindows.py
+ * (S) _psutil_mswindows.c        -> _psutil_windows.c
+ * (S) _psutil_mswindows.h        -> _psutil_windows.h
+ * (H) psutil.get_pid_list()      -> psutil.get_pids()
+ * (H) psutil.Process.ppid        -> get_ppid()
+ * (H) psutil.Process.status      -> get_status()
+ * (H) psutil.Process.uids        -> get_uids()
+ * (H) psutil.Process.gids        -> get_gids()
+ * (H) psutil.Process.username    -> get_username()
+ * (H) psutil.Process.getcwd      -> get_cwd()
