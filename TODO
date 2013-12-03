@@ -57,6 +57,7 @@ LOWER PRIORITY
 
  * Asynchronous psutil.Popen (see http://www.python.org/dev/peps/pep-3145/)
 
+
 DEBATABLE
 =========
 
@@ -143,3 +144,12 @@ Renames:
  * (H) psutil.Process.username -> get_username()
  * (H) psutil.Process.getcwd   -> get_cwd()
  * (H) psutil.NUM_CPUS         -> cpu_count() (consistent with os.cpu_count())
+
+
+REJECTED IDEAS
+==============
+
+ * Process objects equality (__eq__):
+   https://code.google.com/p/psutil/issues/detail?id=211
+   * similary (and unfortunately) they cannot be used in set()s because other
+     than __hash__ a set() also requires __eq__
