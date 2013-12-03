@@ -822,25 +822,14 @@ class Process(object):
         return from_bitmask(bitmask)
 
     @wrap_exceptions
-    def set_process_cpu_affinity(self, value):
-        def to_bitmask(l):
-            if not l:
-                raise ValueError("invalid argument %r" % l)
-            out = 0
-            for b in l:
-                if not isinstance(b, (int, long)) or b < 0:
-                    raise ValueError("invalid argument %r" % b)
-                out |= 2 ** b
-            return out
-
-        bitmask = to_bitmask(value)
+    def set_process_cpu_affinity(self, cpus):
         try:
-            _psutil_linux.set_process_cpu_affinity(self.pid, bitmask)
+            _psutil_linux.set_process_cpu_affinity(self.pid, cpus)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno == errno.EINVAL:
                 allcpus = tuple(range(len(get_system_per_cpu_times())))
-                for cpu in value:
+                for cpu in cpus:
                     if cpu not in allcpus:
                         raise ValueError("invalid CPU #%i (choose between %s)"
                                          % (cpu, allcpus))

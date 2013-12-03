@@ -276,18 +276,52 @@ get_process_cpu_affinity(PyObject *self, PyObject *args)
 static PyObject *
 set_process_cpu_affinity(PyObject *self, PyObject *args)
 {
-    unsigned long mask;
-    unsigned int len = sizeof(mask);
+    cpu_set_t cpu_set;
+    size_t len;
     long pid;
+    int i, seq_len;
+    PyObject *py_cpu_set;
+    PyObject *py_cpu_seq = NULL;
 
-    if (!PyArg_ParseTuple(args, "lk", &pid, &mask)) {
-        return NULL;
+    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set)) {
+        goto error;
     }
-    if (sched_setaffinity(pid, len, (cpu_set_t *)&mask)) {
-        return PyErr_SetFromErrno(PyExc_OSError);
+
+    if (!PySequence_Check(py_cpu_set)) {
+        PyErr_Format(PyExc_TypeError, "sequence argument expected, got %s",
+                     Py_TYPE(py_cpu_set)->tp_name);
+        goto error;
     }
+
+    py_cpu_seq = PySequence_Fast(py_cpu_set, "expected a sequence or integer");
+    if (!py_cpu_seq) {
+        goto error;
+    }
+    seq_len = PySequence_Fast_GET_SIZE(py_cpu_seq);
+    CPU_ZERO(&cpu_set);
+    for (i = 0; i < seq_len; i++) {
+        PyObject *item = PySequence_Fast_GET_ITEM(py_cpu_seq, i);
+        long value = PyInt_AsLong(item);
+        if (value == -1 && PyErr_Occurred()) {
+            goto error;
+        }
+        CPU_SET(value, &cpu_set);
+    }
+
+    len = sizeof(cpu_set);
+    if (sched_setaffinity(pid, len, &cpu_set)) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    Py_DECREF(py_cpu_seq);
     Py_INCREF(Py_None);
     return Py_None;
+
+error:
+    if (py_cpu_seq != NULL)
+        Py_DECREF(py_cpu_seq);
+    return NULL;
 }
 
 

@@ -1614,9 +1614,12 @@ class TestProcess(unittest.TestCase):
         p.set_cpu_affinity(all_cpus)
         self.assertEqual(p.get_cpu_affinity(), all_cpus)
         #
+        self.assertRaises(TypeError, p.set_cpu_affinity, 1)
         p.set_cpu_affinity(initial)
         invalid_cpu = [len(psutil.cpu_times(percpu=True)) + 10]
         self.assertRaises(ValueError, p.set_cpu_affinity, invalid_cpu)
+        self.assertRaises(ValueError, p.set_cpu_affinity, range(10000, 11000))
+
 
     def test_get_open_files(self):
         # current process
