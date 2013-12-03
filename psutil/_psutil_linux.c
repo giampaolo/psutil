@@ -288,8 +288,10 @@ set_process_cpu_affinity(PyObject *self, PyObject *args)
     }
 
     if (!PySequence_Check(py_cpu_set)) {
-        PyErr_Format(PyExc_TypeError, "sequence argument expected, got %s",
-                     Py_TYPE(py_cpu_set)->tp_name);
+        // does not work on Python 2.4
+        // PyErr_Format(PyExc_TypeError, "sequence argument expected, got %s",
+        //              Py_TYPE(py_cpu_set)->tp_name);
+        PyErr_Format(PyExc_TypeError, "sequence argument expected");
         goto error;
     }
 
