@@ -44,6 +44,9 @@ try:
 except ImportError:
     import unittest
 
+# consider all unhandled warnings as application errors
+warnings.filterwarnings("error")
+
 import psutil
 from psutil._compat import PY3, callable, long, wraps
 
