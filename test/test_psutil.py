@@ -2047,13 +2047,13 @@ class TestProcess(unittest.TestCase):
             s.sendall(pid)
             s.close()
         """ % TESTFN)
-        pyrun(src)
         sock = None
         try:
             sock = socket.socket(socket.AF_UNIX)
             sock.settimeout(2)
             sock.bind(TESTFN)
             sock.listen(1)
+            pyrun(src)
             conn, _ = sock.accept()
             zpid = int(conn.recv(1024))
             zproc = psutil.Process(zpid)
