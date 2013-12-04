@@ -248,16 +248,20 @@ class Process(object):
         return "<%s at %s>" % (self.__str__(), id(self))
 
     def __eq__(self, other):
-        # Test for equality with another Process object based on PID.
-        # Note that this is not supposed to indentify a Process
-        # univocally over the time (the PID alone is not enough as
+        # Test for equality with another Process object based
+        # on PID and creation time.
+        # This pair is supposed to indentify a Process instance
+        # univocally over time (the PID alone is not enough as
         # it might refer to a process whose PID has been reused).
-        # We merely do this in order to be able to use Process with
-        # set()s, see:
-        # https://code.google.com/p/psutil/issues/detail?id=452
+        # Here we get the cached version of create_time which was
+        # determined in __init__.
+        # If not present it means AD was raised therefore the
+        # comparison will be based on PID only.
         if not isinstance(other, Process):
             return False
-        return self.pid == other.pid
+        p1 = (self.pid, self.__dict__.get('create_time', None))
+        p2 = (other.pid, other.__dict__.get('create_time', None))
+        return p1 == p2
 
     def __hash__(self):
         return self.pid
