@@ -44,9 +44,6 @@ try:
 except ImportError:
     import unittest
 
-# consider all unhandled warnings as application errors
-warnings.filterwarnings("error")
-
 import psutil
 from psutil._compat import PY3, callable, long, wraps
 
@@ -119,7 +116,7 @@ def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=DEVNULL,
                 warn("couldn't make sure test file was actually created")
         else:
             wait_for_pid(sproc.pid)
-    _subprocesses_started.add(sproc.pid)
+    _subprocesses_started.add(psutil.Process(sproc.pid))
     return sproc
 
 
@@ -231,22 +228,27 @@ def reap_children(search_all=False):
     no zombies stick around to hog resources and create problems when
     looking for refleaks.
     """
-    pids = _subprocesses_started
+    procs = _subprocesses_started.copy()
     if search_all:
         this_process = psutil.Process(os.getpid())
         for p in this_process.get_children(recursive=True):
-            pids.add(p.pid)
-    while pids:
-        pid = pids.pop()
+            procs.add(p)
+    for p in procs:
         try:
-            child = psutil.Process(pid)
-            child.kill()
+            p.terminate()
         except psutil.NoSuchProcess:
             pass
-        except psutil.AccessDenied:
-            warn("couldn't kill child process with pid %s" % pid)
-        else:
-            child.wait(timeout=3)
+    gone, alive = psutil.wait_procs(procs, timeout=3)
+    for p in alive:
+        warn("couldn't terminate process %s" % p)
+        try:
+            p.kill()
+        except psutil.NoSuchProcess:
+            pass
+    _, alive = psutil.wait_procs(alive, timeout=3)
+    if alive:
+        warn("couldn't not kill processes %s" % str(alive))
+
 
 
 def check_ip_address(addr, family):
