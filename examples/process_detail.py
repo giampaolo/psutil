@@ -106,7 +106,7 @@ def run(pid):
         for thread in pinfo['threads']:
             print_('', 'id=%s, user-time=%s, sys-time=%s' % (
                 thread.id, thread.user_time, thread.system_time))
-    if pinfo['connections'] != ACCESS_DENIED:
+    if pinfo['connections'] not in (ACCESS_DENIED, []):
         print_('open connections', '')
         for conn in pinfo['connections']:
             if conn.type == socket.SOCK_STREAM:

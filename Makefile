@@ -1,9 +1,17 @@
+# Shortcuts for various tasks.
+
 PYTHON=python
 
 all: test
 
 install: clean
-	$(PYTHON) setup.py install --user
+	if test $(PYTHON) = python2.4; then \
+		$(PYTHON) setup.py install; \
+	elif test $(PYTHON) = python2.5; then \
+		$(PYTHON) setup.py install; \
+	else \
+		$(PYTHON) setup.py install --user; \
+	fi
 
 test: install
 	$(PYTHON) test/test_psutil.py
