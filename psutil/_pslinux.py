@@ -139,11 +139,6 @@ def get_num_cpus():
 # we'll crash later as they're used for determining process CPU stats
 # and creation_time
 try:
-    BOOT_TIME = get_system_boot_time()
-except Exception:
-    BOOT_TIME = None
-    warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
-try:
     TOTAL_PHYMEM = _psutil_linux.get_sysinfo()[0]
 except Exception:
     TOTAL_PHYMEM = None
@@ -603,7 +598,7 @@ class Process(object):
         # unit is jiffies (clock ticks).
         # We first divide it for clock ticks and then add uptime returning
         # seconds since the epoch, in UTC.
-        starttime = (float(values[19]) / CLOCK_TICKS) + BOOT_TIME
+        starttime = (float(values[19]) / CLOCK_TICKS) + get_system_boot_time()
         return starttime
 
     @wrap_exceptions

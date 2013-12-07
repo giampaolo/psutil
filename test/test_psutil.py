@@ -651,20 +651,11 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertGreater(x, 0)
         self.assertEqual(x, psutil.virtual_memory().total)
 
-    def test_BOOT_TIME(self, arg=None):
-        x = arg or psutil.BOOT_TIME
-        self.assertIsInstance(x, float)
-        self.assertGreater(x, 0)
-        self.assertLess(x, time.time())
-
     def test_get_boot_time(self):
-        self.test_BOOT_TIME(psutil.get_boot_time())
-        if WINDOWS:
-            # work around float precision issues; give it 1 secs tolerance
-            diff = abs(psutil.get_boot_time() - psutil.BOOT_TIME)
-            self.assertLess(diff, 1)
-        else:
-            self.assertEqual(psutil.get_boot_time(), psutil.BOOT_TIME)
+        bt = psutil.get_boot_time()
+        self.assertIsInstance(bt, float)
+        self.assertGreater(bt, 0)
+        self.assertLess(bt, time.time())
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_PAGESIZE(self):
@@ -682,6 +673,7 @@ class TestSystemAPIs(unittest.TestCase):
         p = psutil.Process(os.getpid())
         try:
             self.assertRaises(DeprecationWarning, getattr, psutil, 'NUM_CPUS')
+            self.assertRaises(DeprecationWarning, getattr, psutil, 'BOOT_TIME')
             self.assertRaises(DeprecationWarning, psutil.virtmem_usage)
             self.assertRaises(DeprecationWarning, psutil.used_phymem)
             self.assertRaises(DeprecationWarning, psutil.avail_phymem)
@@ -713,6 +705,7 @@ class TestSystemAPIs(unittest.TestCase):
         warnings.filterwarnings("ignore")
         try:
             self.assertEqual(psutil.NUM_CPUS, psutil.cpu_count())
+            self.assertEqual(psutil.BOOT_TIME, psutil.get_boot_time())
         finally:
             warnings.resetwarnings()
 
@@ -2143,7 +2136,7 @@ class TestProcess(unittest.TestCase):
     def test__all__(self):
         for name in dir(psutil):
             if name in ('callable', 'defaultdict', 'error', 'namedtuple',
-                        'test', 'NUM_CPUS'):
+                        'test', 'NUM_CPUS', 'BOOT_TIME'):
                 continue
             if not name.startswith('_'):
                 try:
@@ -2287,7 +2280,7 @@ class TestFetchAllProcesses(unittest.TestCase):
     def create_time(self, ret):
         self.assertTrue(ret > 0)
         # this can't be taken for granted on all platforms
-        #self.assertGreaterEqual(ret, psutil.BOOT_TIME)
+        #self.assertGreaterEqual(ret, psutil.get_boot_time())
         # make sure returned value can be pretty printed
         # with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(ret))

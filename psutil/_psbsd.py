@@ -32,11 +32,6 @@ try:
 except Exception:
     TOTAL_PHYMEM = None
     warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
-try:
-    BOOT_TIME = _psutil_bsd.get_system_boot_time()
-except Exception:
-    BOOT_TIME = None
-    warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
 
 PROC_STATUSES = {
     _psutil_bsd.SSTOP: STATUS_STOPPED,
@@ -119,6 +114,11 @@ def get_num_cpus():
     return _psutil_bsd.get_num_cpus()
 
 
+def get_system_boot_time():
+    """The system boot time expressed in seconds since the epoch."""
+    return _psutil_bsd.get_system_boot_time()
+
+
 # XXX
 # Ok, this is very dirty.
 # On FreeBSD < 8 we cannot gather per-cpu information, see:
@@ -170,9 +170,6 @@ pid_exists = _psposix.pid_exists
 get_disk_usage = _psposix.get_disk_usage
 net_io_counters = _psutil_bsd.get_net_io_counters
 disk_io_counters = _psutil_bsd.get_disk_io_counters
-# not public; it's here because we need to test it from test_memory_leask.py
-get_num_cpus = _psutil_bsd.get_num_cpus()
-get_system_boot_time = _psutil_bsd.get_system_boot_time
 
 
 def wrap_exceptions(fun):

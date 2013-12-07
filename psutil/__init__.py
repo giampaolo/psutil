@@ -19,7 +19,7 @@ __all__ = [
     # exceptions
     "Error", "NoSuchProcess", "AccessDenied", "TimeoutExpired",
     # constants
-    "TOTAL_PHYMEM", "BOOT_TIME",
+    "TOTAL_PHYMEM",
     "version_info", "__version__",
     "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
     "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
@@ -159,7 +159,6 @@ else:
 __all__.extend(_psplatform.__extra__all__)
 
 
-BOOT_TIME = _psplatform.BOOT_TIME
 TOTAL_PHYMEM = _psplatform.TOTAL_PHYMEM
 
 
@@ -1645,6 +1644,13 @@ def _replace_module():
             msg = "NUM_CPUS constant is deprecated; use cpu_count() instead"
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
             return cpu_count()
+
+        @property
+        def BOOT_TIME(self):
+            msg = "BOOT_TIME constant is deprecated; " \
+                  "use get_boot_time() instead"
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return get_boot_time()
 
     mod = ModuleWrapper()
     mod.__dict__ = globals()

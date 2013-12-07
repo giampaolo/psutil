@@ -24,11 +24,6 @@ __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
 TOTAL_PHYMEM = os.sysconf('SC_PHYS_PAGES') * PAGE_SIZE
-try:
-    BOOT_TIME = _psutil_sunos.get_boot_time()
-except Exception:
-    BOOT_TIME = None
-    warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
 
 CONN_IDLE = "IDLE"
 CONN_BOUND = "BOUND"
@@ -63,8 +58,6 @@ TCP_STATUSES = {
 disk_io_counters = _psutil_sunos.get_disk_io_counters
 net_io_counters = _psutil_sunos.get_net_io_counters
 get_disk_usage = _psposix.get_disk_usage
-get_system_boot_time = _psutil_sunos.get_boot_time
-
 
 nt_virtmem_info = namedtuple('vmem', ' '.join([
     'total', 'available', 'percent', 'used', 'free']))  # all platforms
@@ -137,6 +130,11 @@ def get_system_per_cpu_times():
 def get_num_cpus():
     """Return the number of logical CPUs in the system."""
     return os.sysconf("SC_NPROCESSORS_ONLN")
+
+
+def get_system_boot_time():
+    """The system boot time expressed in seconds since the epoch."""
+    return _psutil_sunos.get_boot_time()
 
 
 def get_system_users():
