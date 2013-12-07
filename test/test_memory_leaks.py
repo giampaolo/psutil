@@ -17,7 +17,11 @@ import sys
 import threading
 import time
 import types
-import unittest
+
+if sys.version_info < (2, 7):
+    import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
+else:
+    import unittest
 
 import psutil
 import psutil._common

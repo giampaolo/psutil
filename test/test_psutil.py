@@ -37,9 +37,10 @@ try:
     import ast  # python >= 2.6
 except ImportError:
     ast = None
-try:
-    import unittest2 as unittest  # pyhon < 2.7 + unittest2 installed
-except ImportError:
+
+if sys.version_info < (2, 7):
+    import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
+else:
     import unittest
 
 import psutil
@@ -463,107 +464,6 @@ class ThreadTask(threading.Thread):
         self.join()
 
 
-# ===================================================================
-# --- Support for python < 2.7 in case unittest2 is not installed
-# ===================================================================
-
-if not hasattr(unittest, 'skip'):
-    register_warning("unittest2 module is not installed; a serie of pretty "
-                     "darn ugly workarounds will be used")
-
-    class SkipTest(Exception):
-        pass
-
-    class TestCase(unittest.TestCase):
-
-        def _safe_repr(self, obj):
-            MAX_LENGTH = 80
-            try:
-                result = repr(obj)
-            except Exception:
-                result = object.__repr__(obj)
-            if len(result) < MAX_LENGTH:
-                return result
-            return result[:MAX_LENGTH] + ' [truncated]...'
-
-        def _fail_w_msg(self, a, b, middle, msg):
-            self.fail(msg or '%s %s %s' % (self._safe_repr(a), middle,
-                                           self._safe_repr(b)))
-
-        def skip(self, msg):
-            raise SkipTest(msg)
-
-        def assertIn(self, a, b, msg=None):
-            if a not in b:
-                self._fail_w_msg(a, b, 'not found in', msg)
-
-        def assertNotIn(self, a, b, msg=None):
-            if a in b:
-                self._fail_w_msg(a, b, 'found in', msg)
-
-        def assertGreater(self, a, b, msg=None):
-            if not a > b:
-                self._fail_w_msg(a, b, 'not greater than', msg)
-
-        def assertGreaterEqual(self, a, b, msg=None):
-            if not a >= b:
-                self._fail_w_msg(a, b, 'not greater than or equal to', msg)
-
-        def assertLess(self, a, b, msg=None):
-            if not a < b:
-                self._fail_w_msg(a, b, 'not less than', msg)
-
-        def assertLessEqual(self, a, b, msg=None):
-            if not a <= b:
-                self._fail_w_msg(a, b, 'not less or equal to', msg)
-
-        def assertIsInstance(self, a, b, msg=None):
-            if not isinstance(a, b):
-                self.fail(msg or '%s is not an instance of %r'
-                          % (self._safe_repr(a), b))
-
-        def assertAlmostEqual(self, a, b, msg=None, delta=None):
-            if delta is not None:
-                if abs(a - b) <= delta:
-                    return
-                self.fail(msg or '%s != %s within %s delta'
-                          % (self._safe_repr(a), self._safe_repr(b),
-                             self._safe_repr(delta)))
-            else:
-                self.assertEqual(a, b, msg=msg)
-
-    def skipIf(condition, reason):
-        def decorator(fun):
-            @wraps(fun)
-            def wrapper(*args, **kwargs):
-                self = args[0]
-                if condition:
-                    sys.stdout.write("skipped-")
-                    sys.stdout.flush()
-                    if warn:
-                        objname = "%s.%s" % (self.__class__.__name__,
-                                             fun.__name__)
-                        msg = "%s was skipped" % objname
-                        if reason:
-                            msg += "; reason: " + repr(reason)
-                        register_warning(msg)
-                    return
-                else:
-                    return fun(*args, **kwargs)
-            return wrapper
-        return decorator
-
-    def skipUnless(condition, reason):
-        if not condition:
-            return unittest.skipIf(True, reason)
-        return unittest.skipIf(False, reason)
-
-    unittest.TestCase = TestCase
-    unittest.skipIf = skipIf
-    unittest.skipUnless = skipUnless
-    del TestCase, skipIf, skipUnless
-
-
 # python 2.4
 if not hasattr(subprocess.Popen, 'terminate'):
     subprocess.Popen.terminate = \
@@ -746,7 +646,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_pid_exists(self):
         sproc = get_test_subprocess(wait=True)
-        assert psutil.pid_exists(sproc.pid)
+        self.assertTrue(psutil.pid_exists(sproc.pid))
         p = psutil.Process(sproc.pid)
         p.kill()
         p.wait()
@@ -1013,9 +913,9 @@ class TestSystemAPIs(unittest.TestCase):
         ret = psutil.net_io_counters(pernic=False)
         check_ntuple(ret)
         ret = psutil.net_io_counters(pernic=True)
-        assert ret != []
+        self.assertNotEqual(ret, [])
         for key in ret:
-            assert key
+            self.assertTrue(key)
             check_ntuple(ret[key])
 
     def test_disk_io_counters(self):
@@ -1050,7 +950,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_get_users(self):
         users = psutil.get_users()
-        assert users
+        self.assertNotEqual(users, [])
         for user in users:
             assert user.name, user
             user.terminal

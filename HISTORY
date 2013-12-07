@@ -9,6 +9,7 @@ ENHANCEMENTS
  * #451: psutil BOOT_TIME, TOTAL_PHYMEM and NUM_CPUS module level constants
          are deprecated.  (hack provided by Josiah Carlson)
  * #452: Process instances are now hashable and can be used with set()s.
+ * #453: unittest2 module is required on Python < 2.7.
 
 BUG FIXES
 
