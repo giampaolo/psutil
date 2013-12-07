@@ -8,7 +8,6 @@
 
 from __future__ import division
 import errno
-import functools
 import os
 import socket
 import stat
@@ -67,7 +66,7 @@ def usage_percent(used, total, _round=None):
 
 def memoize(f):
     """A simple memoize decorator for functions."""
-    @functools.wraps(f)
+    @wraps(f)
     def memf(*x):
         if x not in cache:
             cache[x] = f(*x)
