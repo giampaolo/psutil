@@ -99,7 +99,7 @@ def get_system_boot_time():
 
 
 def get_num_cpus():
-    """Return the number of CPUs on the system"""
+    """Return the number of logical CPUs in the system."""
     try:
         return os.sysconf("SC_NPROCESSORS_ONLN")
     except ValueError:
@@ -130,7 +130,7 @@ def get_num_cpus():
                 num += 1
 
     if num == 0:
-        raise RuntimeError("couldn't determine platform's NUM_CPUS")
+        raise RuntimeError("couldn't determine platform's number of CPUs")
     return num
 
 
@@ -143,11 +143,6 @@ try:
 except Exception:
     BOOT_TIME = None
     warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
-try:
-    NUM_CPUS = get_num_cpus()
-except Exception:
-    NUM_CPUS = None
-    warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
 try:
     TOTAL_PHYMEM = _psutil_linux.get_sysinfo()[0]
 except Exception:

@@ -28,11 +28,6 @@ __extra__all__ = []
 # we'll crash later as they're used for determining process CPU stats
 # and creation_time
 try:
-    NUM_CPUS = _psutil_bsd.get_num_cpus()
-except Exception:
-    NUM_CPUS = None
-    warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
-try:
     TOTAL_PHYMEM = _psutil_bsd.get_virtual_mem()[0]
 except Exception:
     TOTAL_PHYMEM = None
@@ -118,16 +113,22 @@ def get_system_per_cpu_times():
         ret.append(item)
     return ret
 
+
+def get_num_cpus():
+    """Return the number of logical CPUs in the system."""
+    return _psutil_bsd.get_num_cpus()
+
+
 # XXX
 # Ok, this is very dirty.
 # On FreeBSD < 8 we cannot gather per-cpu information, see:
 # http://code.google.com/p/psutil/issues/detail?id=226
-# If NUM_CPUS > 1, on first call we return single cpu times to avoid a
+# If num cpus > 1, on first call we return single cpu times to avoid a
 # crash at psutil import time.
 # Next calls will fail with NotImplementedError
 if not hasattr(_psutil_bsd, "get_system_per_cpu_times"):
     def get_system_per_cpu_times():
-        if NUM_CPUS == 1:
+        if get_num_cpus() == 1:
             return [get_system_cpu_times]
         if get_system_per_cpu_times.__called__:
             raise NotImplementedError("supported only starting from FreeBSD 8")

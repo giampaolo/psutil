@@ -44,11 +44,6 @@ __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
 # we'll crash later as they're used for determining process CPU stats
 # and creation_time
 try:
-    NUM_CPUS = _psutil_mswindows.get_num_cpus()
-except Exception:
-    NUM_CPUS = None
-    warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
-try:
     BOOT_TIME = _psutil_mswindows.get_system_boot_time()
 except Exception:
     BOOT_TIME = None
@@ -165,6 +160,11 @@ def get_system_per_cpu_times():
         item = _cputimes_ntuple(user, system, idle)
         ret.append(item)
     return ret
+
+
+def get_num_cpus():
+    """Return the number of logical CPUs in the system."""
+    return _psutil_mswindows.get_num_cpus()
 
 
 def get_system_users():

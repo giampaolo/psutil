@@ -23,7 +23,6 @@ from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
-NUM_CPUS = os.sysconf("SC_NPROCESSORS_ONLN")
 TOTAL_PHYMEM = os.sysconf('SC_PHYS_PAGES') * PAGE_SIZE
 try:
     BOOT_TIME = _psutil_sunos.get_boot_time()
@@ -133,6 +132,11 @@ def get_system_per_cpu_times():
     """Return system per-CPU times as a list of named tuples"""
     ret = _psutil_sunos.get_system_per_cpu_times()
     return [_cputimes_ntuple(*x) for x in ret]
+
+
+def get_num_cpus():
+    """Return the number of logical CPUs in the system."""
+    return os.sysconf("SC_NPROCESSORS_ONLN")
 
 
 def get_system_users():

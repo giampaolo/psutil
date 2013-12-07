@@ -6,6 +6,8 @@ Bug tracker at http://code.google.com/p/psutil/issues
 ENHANCEMENTS
 
  * #447: psutil.wait_procs() timeout parameter is now optional.
+ * #451: psutil.NUM_CPUS constant is deprecated in favor of psutil.cpu_count()
+         (hack provided by Josiah Carlson).
  * #452: Process instances are now hashable and can be used with set()s.
 
 BUG FIXES
@@ -14,6 +16,10 @@ BUG FIXES
         systems with more than 64 CPUs.
 * #448: [Windows] Process get_children() and ppid memory leak (patch by
         Ulrich Klank.
+
+API CHANGES
+
+ - psutil.NUM_CPUS is deprecated and is now an alias for psutil.cpu_cpunt().
 
 
 1.2.1 - 2013-11-25

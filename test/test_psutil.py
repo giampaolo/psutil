@@ -48,6 +48,7 @@ import psutil
 from psutil._compat import PY3, callable, long, wraps
 
 
+
 # ===================================================================
 # --- Constants
 # ===================================================================
@@ -665,10 +666,6 @@ class TestSystemAPIs(unittest.TestCase):
         else:
             self.assertEqual(psutil.get_boot_time(), psutil.BOOT_TIME)
 
-    def test_NUM_CPUS(self):
-        self.assertEqual(psutil.NUM_CPUS, len(psutil.cpu_times(percpu=True)))
-        self.assertGreaterEqual(psutil.NUM_CPUS, 1)
-
     @unittest.skipUnless(POSIX, 'posix only')
     def test_PAGESIZE(self):
         # pagesize is used internally to perform different calculations
@@ -684,6 +681,7 @@ class TestSystemAPIs(unittest.TestCase):
         warnings.filterwarnings("error")
         p = psutil.Process(os.getpid())
         try:
+            self.assertRaises(DeprecationWarning, getattr, psutil, 'NUM_CPUS')
             self.assertRaises(DeprecationWarning, psutil.virtmem_usage)
             self.assertRaises(DeprecationWarning, psutil.used_phymem)
             self.assertRaises(DeprecationWarning, psutil.avail_phymem)
@@ -709,6 +707,13 @@ class TestSystemAPIs(unittest.TestCase):
                               getattr, ret[0], 'remote_address')
         finally:
             s.close()
+            warnings.resetwarnings()
+
+        # check value against new APIs
+        warnings.filterwarnings("ignore")
+        try:
+            self.assertEqual(psutil.NUM_CPUS, psutil.cpu_count())
+        finally:
             warnings.resetwarnings()
 
     def test_deprecated_apis_retval(self):
@@ -789,6 +794,10 @@ class TestSystemAPIs(unittest.TestCase):
             psutil.test()
         finally:
             sys.stdout = stdout
+
+    def test_cpu_count(self):
+        self.assertEqual(psutil.cpu_count(), len(psutil.cpu_times(percpu=True)))
+        self.assertGreaterEqual(psutil.cpu_count(), 1)
 
     def test_sys_cpu_times(self):
         total = 0
@@ -877,7 +886,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_sys_per_cpu_percent(self):
         self.assertEqual(len(psutil.cpu_percent(interval=0.001, percpu=True)),
-                         psutil.NUM_CPUS)
+                         psutil.cpu_count())
         for x in range(1000):
             percents = psutil.cpu_percent(interval=None, percpu=True)
             for percent in percents:
@@ -894,7 +903,7 @@ class TestSystemAPIs(unittest.TestCase):
     def test_sys_per_cpu_times_percent(self):
         self.assertEqual(len(psutil.cpu_times_percent(interval=0.001,
                                                       percpu=True)),
-                         psutil.NUM_CPUS)
+                         psutil.cpu_count())
         for x in range(1000):
             cpus = psutil.cpu_times_percent(interval=None, percpu=True)
             for cpu in cpus:
@@ -2134,7 +2143,7 @@ class TestProcess(unittest.TestCase):
     def test__all__(self):
         for name in dir(psutil):
             if name in ('callable', 'defaultdict', 'error', 'namedtuple',
-                        'test'):
+                        'test', 'NUM_CPUS'):
                 continue
             if not name.startswith('_'):
                 try:
@@ -2144,7 +2153,8 @@ class TestProcess(unittest.TestCase):
                         fun = getattr(psutil, name)
                         if fun is None:
                             continue
-                        if 'deprecated' not in fun.__doc__.lower():
+                        if (fun.__doc__ is not None and
+                                'deprecated' not in fun.__doc__.lower()):
                             self.fail('%r not in psutil.__all__' % name)
 
     def test_Popen(self):
