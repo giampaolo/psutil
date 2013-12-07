@@ -4,37 +4,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import fnmatch
 import os
-import shutil
 import sys
 try:
     from setuptools import setup, Extension
 except ImportError:
     from distutils.core import setup, Extension
-
-
-def clean():
-    """'python setup.py clean' custom command."""
-    def rglob(path, pattern):
-        return [os.path.join(dirpath, f)
-                for dirpath, dirnames, files in os.walk(path)
-                for f in fnmatch.filter(files, pattern)]
-
-    for dirname in ('build', 'dist'):
-        if os.path.isdir(dirname):
-            sys.stdout.write('rmdir: %s\n' % dirname)
-            shutil.rmtree(dirname)
-
-    for dirpath, dirnames, files in os.walk('.'):
-        if dirpath.endswith(('__pycache__', '.egg-info')):
-            sys.stdout.write('rmdir %s\n' % dirpath)
-            shutil.rmtree(dirpath)
-
-    for pattern in ['*.py[co]', '*.s[ol]', '*~', '*.orig', '*.rej', '*.swp']:
-        for x in rglob('.', pattern):
-            sys.stdout.write('rm %s\n' % x)
-            os.remove(x)
 
 
 def get_version():
@@ -62,6 +37,7 @@ def get_description():
         return f.read()
     finally:
         f.close()
+
 
 # POSIX
 if os.name == 'posix':
@@ -145,10 +121,6 @@ else:
 
 
 def main():
-    # "python setup.py clean" custom command
-    if len(sys.argv) > 1 and sys.argv[1] == 'clean':
-        return clean()
-
     setup_args = dict(
         name='psutil',
         version=get_version(),
