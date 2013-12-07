@@ -1,6 +1,7 @@
 # Shortcuts for various tasks.
 
 PYTHON=python
+TEST_SCRIPT=test/test_psutil.py
 
 all: test
 
@@ -14,7 +15,7 @@ install: clean
 	fi
 
 test: install
-	$(PYTHON) test/test_psutil.py
+	$(PYTHON) $(TEST_SCRIPT)
 
 memtest: install
 	$(PYTHON) test/test_memory_leaks.py
