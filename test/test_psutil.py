@@ -381,10 +381,7 @@ def skip_on_access_denied(only_if=None):
                 msg = "%r was skipped because it raised AccessDenied" \
                       % fun.__name__
                 self = args[0]
-                if hasattr(self, 'skip'):  # python >= 2.7
-                    self.skip(msg)
-                else:
-                    register_warning(msg)
+                self.skip(msg)
         return wrapper
     return decorator
 
@@ -403,10 +400,7 @@ def skip_on_not_implemented(only_if=None):
                 msg = "%r was skipped because it raised NotImplementedError" \
                       % fun.__name__
                 self = args[0]
-                if hasattr(self, 'skip'):  # python >= 2.7
-                    self.skip(msg)
-                else:
-                    register_warning(msg)
+                self.skip(msg)
         return wrapper
     return decorator
 
