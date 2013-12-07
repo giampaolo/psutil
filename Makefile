@@ -2,6 +2,7 @@
 
 PYTHON=python
 TEST_SCRIPT=test/test_psutil.py
+FLAGS=
 
 all: test
 
@@ -16,6 +17,10 @@ install: clean
 
 test: install
 	$(PYTHON) $(TEST_SCRIPT)
+
+nosetests: install
+	# make nosetests FLAGS=test_name
+	nosetests test/test_psutil.py -v -m $(FLAGS)
 
 memtest: install
 	$(PYTHON) test/test_memory_leaks.py
