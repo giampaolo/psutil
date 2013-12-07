@@ -49,6 +49,7 @@ if HAS_PRLIMIT:
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+BOOT_TIME = None  # set later
 
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
 IOPRIO_CLASS_NONE = 0
@@ -88,11 +89,14 @@ TCP_STATUSES = {
 
 def get_system_boot_time():
     """Return the system boot time expressed in seconds since the epoch."""
+    global BOOT_TIME
     f = open('/proc/stat', 'r')
     try:
         for line in f:
             if line.startswith('btime'):
-                return float(line.strip().split()[1])
+                ret = float(line.strip().split()[1])
+                BOOT_TIME = ret
+                return ret
         raise RuntimeError("line 'btime' not found")
     finally:
         f.close()
@@ -598,7 +602,9 @@ class Process(object):
         # unit is jiffies (clock ticks).
         # We first divide it for clock ticks and then add uptime returning
         # seconds since the epoch, in UTC.
-        starttime = (float(values[19]) / CLOCK_TICKS) + get_system_boot_time()
+        # Also use cached value if available.
+        boot_time = BOOT_TIME or get_system_boot_time()
+        starttime = (float(values[19]) / CLOCK_TICKS) + boot_time
         return starttime
 
     @wrap_exceptions
