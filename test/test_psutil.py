@@ -56,6 +56,8 @@ from psutil._compat import PY3, callable, long, wraps
 NO_RETRIES = 10
 # bytes tolerance for OS memory related tests
 TOLERANCE = 500 * 1024  # 500KB
+# the timeout used in functions which have to wait
+GLOBAL_TIMEOUT = 3
 
 AF_INET6 = getattr(socket, "AF_INET6")
 AF_UNIX = getattr(socket, "AF_UNIX", None)
@@ -208,7 +210,7 @@ if POSIX:
         return (major, minor, micro)
 
 
-def wait_for_pid(pid, timeout=1):
+def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
     """
@@ -238,14 +240,14 @@ def reap_children(search_all=False):
             p.terminate()
         except psutil.NoSuchProcess:
             pass
-    gone, alive = psutil.wait_procs(procs, timeout=3)
+    gone, alive = psutil.wait_procs(procs, timeout=GLOBAL_TIMEOUT)
     for p in alive:
         warn("couldn't terminate process %s" % p)
         try:
             p.kill()
         except psutil.NoSuchProcess:
             pass
-    _, alive = psutil.wait_procs(alive, timeout=3)
+    _, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
     if alive:
         warn("couldn't not kill processes %s" % str(alive))
 
@@ -335,7 +337,7 @@ def safe_rmdir(dir):
             raise
 
 
-def call_until(fun, expr, timeout=1):
+def call_until(fun, expr, timeout=GLOBAL_TIMEOUT):
     """Keep calling function for timeout secs and exit if eval()
     expression is True.
     """
@@ -586,7 +588,7 @@ class TestSystemAPIs(unittest.TestCase):
                 pass
             else:
                 self.fail("p.nice didn't raise DeprecationWarning")
-            ret = call_until(p.get_connections, "len(ret) != 0", timeout=1)
+            ret = call_until(p.get_connections, "len(ret) != 0")
             self.assertRaises(DeprecationWarning,
                               getattr, ret[0], 'local_address')
             self.assertRaises(DeprecationWarning,
@@ -1501,7 +1503,7 @@ class TestProcess(unittest.TestCase):
         cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(2)"]
         sproc = get_test_subprocess(cmd, wait=True)
         p = psutil.Process(sproc.pid)
-        call_until(p.getcwd, "ret == os.path.dirname(os.getcwd())", timeout=1)
+        call_until(p.getcwd, "ret == os.path.dirname(os.getcwd())")
 
     @unittest.skipIf(not hasattr(psutil.Process, "get_cpu_affinity"),
                      'not available on this platform')
@@ -1600,7 +1602,7 @@ class TestProcess(unittest.TestCase):
               "time.sleep(2);"
         sproc = get_test_subprocess([PYTHON, "-c", arg])
         p = psutil.Process(sproc.pid)
-        cons = call_until(p.get_connections, "len(ret) != 0", timeout=1)
+        cons = call_until(p.get_connections, "len(ret) != 0")
         self.assertEqual(len(cons), 1)
         con = cons[0]
         check_connection(con)
@@ -1947,7 +1949,7 @@ class TestProcess(unittest.TestCase):
         sock = None
         try:
             sock = socket.socket(socket.AF_UNIX)
-            sock.settimeout(2)
+            sock.settimeout(GLOBAL_TIMEOUT)
             sock.bind(TESTFN)
             sock.listen(1)
             pyrun(src)
