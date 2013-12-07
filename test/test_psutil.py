@@ -1965,27 +1965,6 @@ class TestProcess(unittest.TestCase):
                 sock.close()
             reap_children(search_all=True)
 
-    def test__str__(self):
-        sproc = get_test_subprocess()
-        p = psutil.Process(sproc.pid)
-        self.assertIn(str(sproc.pid), str(p))
-        # python shows up as 'Python' in cmdline on OS X so test fails on OS X
-        if not OSX:
-            self.assertIn(os.path.basename(PYTHON), str(p))
-        sproc = get_test_subprocess()
-        p = psutil.Process(sproc.pid)
-        p.kill()
-        p.wait()
-        self.assertIn(str(sproc.pid), str(p))
-        self.assertIn("terminated", str(p))
-
-    def test__eq__(self):
-        self.assertTrue(psutil.Process() == psutil.Process())
-
-    def test__hash__(self):
-        s = set([psutil.Process(), psutil.Process()])
-        self.assertEqual(len(s), 1)
-
     @unittest.skipIf(LINUX, 'PID 0 not available on Linux')
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
@@ -2025,23 +2004,6 @@ class TestProcess(unittest.TestCase):
 
         self.assertIn(0, psutil.get_pid_list())
         self.assertTrue(psutil.pid_exists(0))
-
-    def test__all__(self):
-        for name in dir(psutil):
-            if name in ('callable', 'defaultdict', 'error', 'namedtuple',
-                        'test', 'NUM_CPUS', 'BOOT_TIME', 'TOTAL_PHYMEM'):
-                continue
-            if not name.startswith('_'):
-                try:
-                    __import__(name)
-                except ImportError:
-                    if name not in psutil.__all__:
-                        fun = getattr(psutil, name)
-                        if fun is None:
-                            continue
-                        if (fun.__doc__ is not None and
-                                'deprecated' not in fun.__doc__.lower()):
-                            self.fail('%r not in psutil.__all__' % name)
 
     def test_Popen(self):
         # Popen class test
@@ -2380,6 +2342,52 @@ if hasattr(os, 'getuid') and os.getuid() == 0:
 
 
 # ===================================================================
+# --- Misc tests
+# ===================================================================
+
+class TestMisc(unittest.TestCase):
+    """Misc / generic tests."""
+
+    def test__str__(self):
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        self.assertIn(str(sproc.pid), str(p))
+        # python shows up as 'Python' in cmdline on OS X so test fails on OS X
+        if not OSX:
+            self.assertIn(os.path.basename(PYTHON), str(p))
+        sproc = get_test_subprocess()
+        p = psutil.Process(sproc.pid)
+        p.kill()
+        p.wait()
+        self.assertIn(str(sproc.pid), str(p))
+        self.assertIn("terminated", str(p))
+
+    def test__eq__(self):
+        self.assertTrue(psutil.Process() == psutil.Process())
+
+    def test__hash__(self):
+        s = set([psutil.Process(), psutil.Process()])
+        self.assertEqual(len(s), 1)
+
+    def test__all__(self):
+        for name in dir(psutil):
+            if name in ('callable', 'defaultdict', 'error', 'namedtuple',
+                        'test', 'NUM_CPUS', 'BOOT_TIME', 'TOTAL_PHYMEM'):
+                continue
+            if not name.startswith('_'):
+                try:
+                    __import__(name)
+                except ImportError:
+                    if name not in psutil.__all__:
+                        fun = getattr(psutil, name)
+                        if fun is None:
+                            continue
+                        if (fun.__doc__ is not None and
+                                'deprecated' not in fun.__doc__.lower()):
+                            self.fail('%r not in psutil.__all__' % name)
+
+
+# ===================================================================
 # --- Example script tests
 # ===================================================================
 
@@ -2481,6 +2489,8 @@ def test_main():
     tests.append(TestSystemAPIs)
     tests.append(TestProcess)
     tests.append(TestFetchAllProcesses)
+    tests.append(TestMisc)
+    tests.append(TestExampleScripts)
 
     if POSIX:
         from _posix import PosixSpecificTestCase
@@ -2507,8 +2517,6 @@ def test_main():
         else:
             register_warning("LimitedUserTestCase was skipped (super-user "
                              "privileges are required)")
-
-    tests.append(TestExampleScripts)
 
     for test_class in tests:
         test_suite.addTest(unittest.makeSuite(test_class))
