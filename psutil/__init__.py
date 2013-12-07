@@ -1559,6 +1559,8 @@ def get_boot_time():
     """Return the system boot time expressed in seconds since the epoch.
     This is also available as psutil.BOOT_TIME.
     """
+    # Note: we are not caching this because it is subject to
+    # system clock updates.
     return _psplatform.get_system_boot_time()
 
 
