@@ -19,7 +19,6 @@ __all__ = [
     # exceptions
     "Error", "NoSuchProcess", "AccessDenied", "TimeoutExpired",
     # constants
-    "TOTAL_PHYMEM",
     "version_info", "__version__",
     "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
     "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
@@ -159,7 +158,7 @@ else:
 __all__.extend(_psplatform.__extra__all__)
 
 
-TOTAL_PHYMEM = _psplatform.TOTAL_PHYMEM
+_TOTAL_PHYMEM = None
 
 
 def _assert_pid_not_reused(fun):
@@ -748,7 +747,7 @@ class Process(object):
         except ZeroDivisionError:
             # interval was too low
             return 0.0
-        # the utilization of a single CPU
+        # the utilization of a single CPU (note: cpu_count() value is cached)
         single_cpu_percent = overall_percent * cpu_count()
         # On POSIX a percentage > 100 is legitimate:
         # http://stackoverflow.com/questions/1032357/comprehending-top-cpu-usage
@@ -788,8 +787,10 @@ class Process(object):
         (RSS) and calculate process memory utilization as a percentage.
         """
         rss = self._platform_impl.get_memory_info()[0]
+        # use cached value if available
+        total_phymem = _TOTAL_PHYMEM or virtual_memory().total
         try:
-            return (rss / float(TOTAL_PHYMEM)) * 100
+            return (rss / float(total_phymem)) * 100
         except ZeroDivisionError:
             return 0.0
 
@@ -1445,7 +1446,11 @@ def virtual_memory():
     The sum of 'used' and 'available' does not necessarily equal total.
     On Windows 'available' and 'free' are the same.
     """
-    return _psplatform.virtual_memory()
+    global _TOTAL_PHYMEM
+    ret = _psplatform.virtual_memory()
+    # cached for later use in Process.get_memory_percent()
+    _TOTAL_PHYMEM = ret.total
+    return ret
 
 
 def swap_memory():
@@ -1653,6 +1658,13 @@ def _replace_module():
                   "use get_boot_time() instead"
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
             return get_boot_time()
+
+        @property
+        def TOTAL_PHYMEM(self):
+            msg = "TOTAL_PHYMEM constant is deprecated; " \
+                  "use virtual_memory().total instead"
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return virtual_memory().total
 
     mod = ModuleWrapper()
     mod.__dict__ = globals()

@@ -23,16 +23,6 @@ __extra__all__ = []
 
 # --- constants
 
-# Since these constants get determined at import time we do not want to
-# crash immediately; instead we'll set them to None and most likely
-# we'll crash later as they're used for determining process CPU stats
-# and creation_time
-try:
-    TOTAL_PHYMEM = _psutil_osx.get_virtual_mem()[0]
-except Exception:
-    TOTAL_PHYMEM = None
-    warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
-
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h

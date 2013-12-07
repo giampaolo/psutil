@@ -138,17 +138,6 @@ def get_num_cpus():
     return num
 
 
-# Since these constants get determined at import time we do not want to
-# crash immediately; instead we'll set them to None and most likely
-# we'll crash later as they're used for determining process CPU stats
-# and creation_time
-try:
-    TOTAL_PHYMEM = _psutil_linux.get_sysinfo()[0]
-except Exception:
-    TOTAL_PHYMEM = None
-    warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
-
-
 # --- system memory
 
 nt_virtmem_info = namedtuple('vmem', ' '.join([

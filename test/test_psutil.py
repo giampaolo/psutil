@@ -645,12 +645,6 @@ class TestSystemAPIs(unittest.TestCase):
             p.terminate()
         gone, alive = psutil.wait_procs(procs)
 
-    def test_TOTAL_PHYMEM(self):
-        x = psutil.TOTAL_PHYMEM
-        self.assertIsInstance(x, (int, long))
-        self.assertGreater(x, 0)
-        self.assertEqual(x, psutil.virtual_memory().total)
-
     def test_get_boot_time(self):
         bt = psutil.get_boot_time()
         self.assertIsInstance(bt, float)
@@ -674,6 +668,8 @@ class TestSystemAPIs(unittest.TestCase):
         try:
             self.assertRaises(DeprecationWarning, getattr, psutil, 'NUM_CPUS')
             self.assertRaises(DeprecationWarning, getattr, psutil, 'BOOT_TIME')
+            self.assertRaises(DeprecationWarning, getattr, psutil,
+                              'TOTAL_PHYMEM')
             self.assertRaises(DeprecationWarning, psutil.virtmem_usage)
             self.assertRaises(DeprecationWarning, psutil.used_phymem)
             self.assertRaises(DeprecationWarning, psutil.avail_phymem)
@@ -706,6 +702,7 @@ class TestSystemAPIs(unittest.TestCase):
         try:
             self.assertEqual(psutil.NUM_CPUS, psutil.cpu_count())
             self.assertEqual(psutil.BOOT_TIME, psutil.get_boot_time())
+            self.assertEqual(psutil.TOTAL_PHYMEM, psutil.virtual_memory().total)
         finally:
             warnings.resetwarnings()
 
@@ -726,8 +723,10 @@ class TestSystemAPIs(unittest.TestCase):
         assert mem.used > 0, mem
         assert mem.free >= 0, mem
         for name in mem._fields:
+            value = getattr(mem, name)
+            if name != 'percent':
+                self.assertIsInstance(value, (int, long))
             if name != 'total':
-                value = getattr(mem, name)
                 if not value >= 0:
                     self.fail("%r < 0 (%s)" % (name, value))
                 if value > mem.total:
@@ -2136,7 +2135,7 @@ class TestProcess(unittest.TestCase):
     def test__all__(self):
         for name in dir(psutil):
             if name in ('callable', 'defaultdict', 'error', 'namedtuple',
-                        'test', 'NUM_CPUS', 'BOOT_TIME'):
+                        'test', 'NUM_CPUS', 'BOOT_TIME', 'TOTAL_PHYMEM'):
                 continue
             if not name.startswith('_'):
                 try:

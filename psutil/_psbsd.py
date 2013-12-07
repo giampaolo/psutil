@@ -9,7 +9,6 @@
 import errno
 import os
 import sys
-import warnings
 
 import _psutil_bsd
 import _psutil_posix
@@ -22,16 +21,6 @@ from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 __extra__all__ = []
 
 # --- constants
-
-# Since these constants get determined at import time we do not want to
-# crash immediately; instead we'll set them to None and most likely
-# we'll crash later as they're used for determining process CPU stats
-# and creation_time
-try:
-    TOTAL_PHYMEM = _psutil_bsd.get_virtual_mem()[0]
-except Exception:
-    TOTAL_PHYMEM = None
-    warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
 
 PROC_STATUSES = {
     _psutil_bsd.SSTOP: STATUS_STOPPED,

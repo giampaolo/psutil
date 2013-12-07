@@ -6,10 +6,8 @@ Bug tracker at http://code.google.com/p/psutil/issues
 ENHANCEMENTS
 
  * #447: psutil.wait_procs() timeout parameter is now optional.
- * #451: psutil.NUM_CPUS constant is deprecated in favor of psutil.cpu_count()
-         (hack provided by Josiah Carlson).
- * #451: psutil.BOOT_TIME constant is deprecated in favor of
-         psutil.get_boot_time()).
+ * #451: psutil BOOT_TIME, TOTAL_PHYMEM and NUM_CPUS module level constants
+         are deprecated.  (hack provided by Josiah Carlson)
  * #452: Process instances are now hashable and can be used with set()s.
 
 BUG FIXES
@@ -21,9 +19,10 @@ BUG FIXES
 
 API CHANGES
 
- - psutil.NUM_CPUS is deprecated and is now an alias for psutil.cpu_cpunt().
- - psutil.BOOT_TIME is deprecated and is now an alias for
-   psutil.get_boot_time().
+Deprecated constants:
+ - psutil.NUM_CPUS     (in favor of psutil.cpu_cpunt()).
+ - psutil.BOOT_TIME    (in favor of psutil.get_boot_time()).
+ - psutil.TOTAL_PHYMEM (in favor of psutil.virtual_memory().total).
 
 
 1.2.1 - 2013-11-25

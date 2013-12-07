@@ -23,7 +23,6 @@ from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
-TOTAL_PHYMEM = os.sysconf('SC_PHYS_PAGES') * PAGE_SIZE
 
 CONN_IDLE = "IDLE"
 CONN_BOUND = "BOUND"

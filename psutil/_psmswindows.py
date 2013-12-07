@@ -39,16 +39,6 @@ __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
 
 # --- module level constants (gets pushed up to psutil module)
 
-# Since these constants get determined at import time we do not want to
-# crash immediately; instead we'll set them to None and most likely
-# we'll crash later as they're used for determining process CPU stats
-# and creation_time
-try:
-    TOTAL_PHYMEM = _psutil_mswindows.get_virtual_mem()[0]
-except Exception:
-    TOTAL_PHYMEM = None
-    warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
-
 CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED])
