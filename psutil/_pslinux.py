@@ -23,7 +23,7 @@ import _psutil_posix
 from _psutil_linux import *  # needed for RLIMIT_* constants
 from psutil import _psposix
 from psutil._common import *
-from psutil._compat import PY3, xrange, long, namedtuple, wraps
+from psutil._compat import PY3, xrange, namedtuple, wraps
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 
 
