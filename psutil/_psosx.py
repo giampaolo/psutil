@@ -23,26 +23,6 @@ __extra__all__ = []
 
 # --- constants
 
-# Since these constants get determined at import time we do not want to
-# crash immediately; instead we'll set them to None and most likely
-# we'll crash later as they're used for determining process CPU stats
-# and creation_time
-try:
-    NUM_CPUS = _psutil_osx.get_num_cpus()
-except Exception:
-    NUM_CPUS = None
-    warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
-try:
-    BOOT_TIME = _psutil_osx.get_system_boot_time()
-except Exception:
-    BOOT_TIME = None
-    warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
-try:
-    TOTAL_PHYMEM = _psutil_osx.get_virtual_mem()[0]
-except Exception:
-    TOTAL_PHYMEM = None
-    warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
-
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
@@ -71,11 +51,6 @@ PROC_STATUSES = {
 
 
 # --- functions
-
-get_system_boot_time = _psutil_osx.get_system_boot_time
-# ...so that we can test it from test_memory_leask.py
-get_num_cpus = _psutil_osx.get_num_cpus()
-
 
 nt_virtmem_info = namedtuple('vmem', ' '.join([
     # all platforms
@@ -118,6 +93,16 @@ def get_system_per_cpu_times():
         item = _cputimes_ntuple(user, nice, system, idle)
         ret.append(item)
     return ret
+
+
+def get_num_cpus():
+    """Return the number of logical CPUs in the system."""
+    return _psutil_osx.get_num_cpus()
+
+
+def get_system_boot_time():
+    """The system boot time expressed in seconds since the epoch."""
+    return _psutil_osx.get_system_boot_time()
 
 
 def disk_partitions(all=False):

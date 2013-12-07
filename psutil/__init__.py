@@ -12,14 +12,13 @@ Python.
 
 from __future__ import division
 
-__version__ = "1.2.2"
+__version__ = "1.3.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
     # exceptions
     "Error", "NoSuchProcess", "AccessDenied", "TimeoutExpired",
     # constants
-    "NUM_CPUS", "TOTAL_PHYMEM", "BOOT_TIME",
     "version_info", "__version__",
     "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
     "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
@@ -58,7 +57,8 @@ from psutil._compat import (wraps as _wraps,
 from psutil._common import (deprecated as _deprecated,
                             nt_disk_iostat as _nt_disk_iostat,
                             nt_net_iostat as _nt_net_iostat,
-                            nt_sysmeminfo as _nt_sysmeminfo)
+                            nt_sysmeminfo as _nt_sysmeminfo,
+                            memoize as _memoize)
 
 from psutil._common import (STATUS_RUNNING,
                             STATUS_IDLE,
@@ -158,9 +158,7 @@ else:
 __all__.extend(_psplatform.__extra__all__)
 
 
-NUM_CPUS = _psplatform.NUM_CPUS
-BOOT_TIME = _psplatform.BOOT_TIME
-TOTAL_PHYMEM = _psplatform.TOTAL_PHYMEM
+_TOTAL_PHYMEM = None
 
 
 def _assert_pid_not_reused(fun):
@@ -749,8 +747,8 @@ class Process(object):
         except ZeroDivisionError:
             # interval was too low
             return 0.0
-        # the utilization of a single CPU
-        single_cpu_percent = overall_percent * NUM_CPUS
+        # the utilization of a single CPU (note: cpu_count() value is cached)
+        single_cpu_percent = overall_percent * cpu_count()
         # On POSIX a percentage > 100 is legitimate:
         # http://stackoverflow.com/questions/1032357/comprehending-top-cpu-usage
         # On windows we use this ugly hack in order to avoid float
@@ -789,8 +787,10 @@ class Process(object):
         (RSS) and calculate process memory utilization as a percentage.
         """
         rss = self._platform_impl.get_memory_info()[0]
+        # use cached value if available
+        total_phymem = _TOTAL_PHYMEM or virtual_memory().total
         try:
-            return (rss / float(TOTAL_PHYMEM)) * 100
+            return (rss / float(total_phymem)) * 100
         except ZeroDivisionError:
             return 0.0
 
@@ -1192,6 +1192,16 @@ def wait_procs(procs, timeout=None, callback=None):
 # --- CPU related functions
 # =====================================================================
 
+@_memoize
+def cpu_count():
+    """Return the number of logical CPUs in the system.
+    Similar to multiprocessing.cpu_count() and os.cpu_count() in
+    Python 3.4.
+    This replaces the deprecated psutil.NUM_CPUS constant.
+    """
+    return _psplatform.get_num_cpus()
+
+
 def cpu_times(percpu=False):
     """Return system-wide CPU times as a namedtuple object.
     Every CPU time represents the time CPU has spent in the given mode.
@@ -1436,7 +1446,11 @@ def virtual_memory():
     The sum of 'used' and 'available' does not necessarily equal total.
     On Windows 'available' and 'free' are the same.
     """
-    return _psplatform.virtual_memory()
+    global _TOTAL_PHYMEM
+    ret = _psplatform.virtual_memory()
+    # cached for later use in Process.get_memory_percent()
+    _TOTAL_PHYMEM = ret.total
+    return ret
 
 
 def swap_memory():
@@ -1550,6 +1564,8 @@ def get_boot_time():
     """Return the system boot time expressed in seconds since the epoch.
     This is also available as psutil.BOOT_TIME.
     """
+    # Note: we are not caching this because it is subject to
+    # system clock updates.
     return _psplatform.get_system_boot_time()
 
 
@@ -1623,6 +1639,39 @@ def network_io_counters(pernic=False):
     return net_io_counters(pernic)
 
 
+def _replace_module():
+    """Dirty hack to replace the module object in order to access
+    deprecated module constants, see:
+    http://www.dr-josiah.com/2013/12/properties-on-python-modules.html
+    """
+    class ModuleWrapper(object):
+
+        @property
+        def NUM_CPUS(self):
+            msg = "NUM_CPUS constant is deprecated; use cpu_count() instead"
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return cpu_count()
+
+        @property
+        def BOOT_TIME(self):
+            msg = "BOOT_TIME constant is deprecated; " \
+                  "use get_boot_time() instead"
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return get_boot_time()
+
+        @property
+        def TOTAL_PHYMEM(self):
+            msg = "TOTAL_PHYMEM constant is deprecated; " \
+                  "use virtual_memory().total instead"
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return virtual_memory().total
+
+    mod = ModuleWrapper()
+    mod.__dict__ = globals()
+    mod._module = sys.modules[__name__]
+    sys.modules[__name__] = mod
+
+
 def test():
     """List info of all currently running processes emulating ps aux
     output.
@@ -1687,9 +1736,11 @@ def test():
                             pinfo['name'].strip() or '?'))
 
 
-del property, cached_property, division
+_replace_module()
+del property, cached_property, division, _replace_module
 if sys.version_info < (3, 0):
     del num
+
 
 if __name__ == "__main__":
     test()

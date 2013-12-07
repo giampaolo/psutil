@@ -34,9 +34,9 @@ class SunOSSpecificTestCase(unittest.TestCase):
         self.assertEqual(psutil_swap.used, used)
         self.assertEqual(psutil_swap.free, free)
 
-    def test_BOOT_TIME(self):
-        psutil_bt = datetime.datetime.fromtimestamp(psutil.BOOT_TIME).strftime(
-            "%b %d %H:%M")
+    def test_get_boot_time(self):
+        bt = psutil.get_boot_time()
+        psutil_bt = datetime.datetime.fromtimestamp(bt).strftime("%b %d %H:%M")
         sys_bt = sh('last reboot | head -1')
         sys_bt = ' '.join(sys_bt.split()[-3:])
         self.assertEqual(sys_bt, psutil_bt)

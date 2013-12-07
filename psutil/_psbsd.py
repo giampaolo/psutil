@@ -9,7 +9,6 @@
 import errno
 import os
 import sys
-import warnings
 
 import _psutil_bsd
 import _psutil_posix
@@ -22,26 +21,6 @@ from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 __extra__all__ = []
 
 # --- constants
-
-# Since these constants get determined at import time we do not want to
-# crash immediately; instead we'll set them to None and most likely
-# we'll crash later as they're used for determining process CPU stats
-# and creation_time
-try:
-    NUM_CPUS = _psutil_bsd.get_num_cpus()
-except Exception:
-    NUM_CPUS = None
-    warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
-try:
-    TOTAL_PHYMEM = _psutil_bsd.get_virtual_mem()[0]
-except Exception:
-    TOTAL_PHYMEM = None
-    warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
-try:
-    BOOT_TIME = _psutil_bsd.get_system_boot_time()
-except Exception:
-    BOOT_TIME = None
-    warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
 
 PROC_STATUSES = {
     _psutil_bsd.SSTOP: STATUS_STOPPED,
@@ -118,16 +97,27 @@ def get_system_per_cpu_times():
         ret.append(item)
     return ret
 
+
+def get_num_cpus():
+    """Return the number of logical CPUs in the system."""
+    return _psutil_bsd.get_num_cpus()
+
+
+def get_system_boot_time():
+    """The system boot time expressed in seconds since the epoch."""
+    return _psutil_bsd.get_system_boot_time()
+
+
 # XXX
 # Ok, this is very dirty.
 # On FreeBSD < 8 we cannot gather per-cpu information, see:
 # http://code.google.com/p/psutil/issues/detail?id=226
-# If NUM_CPUS > 1, on first call we return single cpu times to avoid a
+# If num cpus > 1, on first call we return single cpu times to avoid a
 # crash at psutil import time.
 # Next calls will fail with NotImplementedError
 if not hasattr(_psutil_bsd, "get_system_per_cpu_times"):
     def get_system_per_cpu_times():
-        if NUM_CPUS == 1:
+        if get_num_cpus() == 1:
             return [get_system_cpu_times]
         if get_system_per_cpu_times.__called__:
             raise NotImplementedError("supported only starting from FreeBSD 8")
@@ -169,9 +159,6 @@ pid_exists = _psposix.pid_exists
 get_disk_usage = _psposix.get_disk_usage
 net_io_counters = _psutil_bsd.get_net_io_counters
 disk_io_counters = _psutil_bsd.get_disk_io_counters
-# not public; it's here because we need to test it from test_memory_leask.py
-get_num_cpus = _psutil_bsd.get_num_cpus()
-get_system_boot_time = _psutil_bsd.get_system_boot_time
 
 
 def wrap_exceptions(fun):

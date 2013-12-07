@@ -334,7 +334,7 @@ get_process_create_time(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // special case for PIDs 0 and 4, return BOOT_TIME
+    // special case for PIDs 0 and 4, return system boot time
     if (0 == pid || 4 == pid) {
         return get_system_boot_time(NULL, NULL);
     }
@@ -407,7 +407,7 @@ get_process_create_time_2(PyObject *self, PyObject *args)
     if (! get_process_info(pid, &process, &buffer)) {
         return NULL;
     }
-    // special case for PIDs 0 and 4, return BOOT_TIME
+    // special case for PIDs 0 and 4, return system boot time
     if (0 == pid || 4 == pid) {
         return get_system_boot_time(NULL, NULL);
     }

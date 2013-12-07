@@ -49,6 +49,7 @@ if HAS_PRLIMIT:
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+BOOT_TIME = None  # set later
 
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
 IOPRIO_CLASS_NONE = 0
@@ -88,18 +89,21 @@ TCP_STATUSES = {
 
 def get_system_boot_time():
     """Return the system boot time expressed in seconds since the epoch."""
+    global BOOT_TIME
     f = open('/proc/stat', 'r')
     try:
         for line in f:
             if line.startswith('btime'):
-                return float(line.strip().split()[1])
+                ret = float(line.strip().split()[1])
+                BOOT_TIME = ret
+                return ret
         raise RuntimeError("line 'btime' not found")
     finally:
         f.close()
 
 
 def get_num_cpus():
-    """Return the number of CPUs on the system"""
+    """Return the number of logical CPUs in the system."""
     try:
         return os.sysconf("SC_NPROCESSORS_ONLN")
     except ValueError:
@@ -130,29 +134,8 @@ def get_num_cpus():
                 num += 1
 
     if num == 0:
-        raise RuntimeError("couldn't determine platform's NUM_CPUS")
+        raise RuntimeError("couldn't determine platform's number of CPUs")
     return num
-
-
-# Since these constants get determined at import time we do not want to
-# crash immediately; instead we'll set them to None and most likely
-# we'll crash later as they're used for determining process CPU stats
-# and creation_time
-try:
-    BOOT_TIME = get_system_boot_time()
-except Exception:
-    BOOT_TIME = None
-    warnings.warn("couldn't determine platform's BOOT_TIME", RuntimeWarning)
-try:
-    NUM_CPUS = get_num_cpus()
-except Exception:
-    NUM_CPUS = None
-    warnings.warn("couldn't determine platform's NUM_CPUS", RuntimeWarning)
-try:
-    TOTAL_PHYMEM = _psutil_linux.get_sysinfo()[0]
-except Exception:
-    TOTAL_PHYMEM = None
-    warnings.warn("couldn't determine platform's TOTAL_PHYMEM", RuntimeWarning)
 
 
 # --- system memory
@@ -608,7 +591,9 @@ class Process(object):
         # unit is jiffies (clock ticks).
         # We first divide it for clock ticks and then add uptime returning
         # seconds since the epoch, in UTC.
-        starttime = (float(values[19]) / CLOCK_TICKS) + BOOT_TIME
+        # Also use cached value if available.
+        boot_time = BOOT_TIME or get_system_boot_time()
+        starttime = (float(values[19]) / CLOCK_TICKS) + boot_time
         return starttime
 
     @wrap_exceptions

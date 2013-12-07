@@ -162,9 +162,9 @@ class WindowsSpecificTestCase(unittest.TestCase):
         # --- psutil namespace functions and constants tests
         @unittest.skipUnless(hasattr(os, 'NUMBER_OF_PROCESSORS'),
                              'NUMBER_OF_PROCESSORS env var is not available')
-        def test_NUM_CPUS(self):
+        def test_cpu_count(self):
             num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
-            self.assertEqual(num_cpus, psutil.NUM_CPUS)
+            self.assertEqual(num_cpus, psutil.cpu_count())
 
         def test_TOTAL_PHYMEM(self):
             w = wmi.WMI().Win32_ComputerSystem()[0]

@@ -238,7 +238,7 @@ get_sysinfo(PyObject *self, PyObject *args)
         return PyErr_SetFromErrno(PyExc_OSError);
     }
 
-    // note: BOOT_TIME might also be determined from here
+    // note: boot time might also be determined from here
     return Py_BuildValue(
         "(KKKKKK)",
         (unsigned long long)info.totalram  * info.mem_unit,   // total

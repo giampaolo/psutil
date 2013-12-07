@@ -48,6 +48,7 @@ import psutil
 from psutil._compat import PY3, callable, long, wraps
 
 
+
 # ===================================================================
 # --- Constants
 # ===================================================================
@@ -644,30 +645,11 @@ class TestSystemAPIs(unittest.TestCase):
             p.terminate()
         gone, alive = psutil.wait_procs(procs)
 
-    def test_TOTAL_PHYMEM(self):
-        x = psutil.TOTAL_PHYMEM
-        self.assertIsInstance(x, (int, long))
-        self.assertGreater(x, 0)
-        self.assertEqual(x, psutil.virtual_memory().total)
-
-    def test_BOOT_TIME(self, arg=None):
-        x = arg or psutil.BOOT_TIME
-        self.assertIsInstance(x, float)
-        self.assertGreater(x, 0)
-        self.assertLess(x, time.time())
-
     def test_get_boot_time(self):
-        self.test_BOOT_TIME(psutil.get_boot_time())
-        if WINDOWS:
-            # work around float precision issues; give it 1 secs tolerance
-            diff = abs(psutil.get_boot_time() - psutil.BOOT_TIME)
-            self.assertLess(diff, 1)
-        else:
-            self.assertEqual(psutil.get_boot_time(), psutil.BOOT_TIME)
-
-    def test_NUM_CPUS(self):
-        self.assertEqual(psutil.NUM_CPUS, len(psutil.cpu_times(percpu=True)))
-        self.assertGreaterEqual(psutil.NUM_CPUS, 1)
+        bt = psutil.get_boot_time()
+        self.assertIsInstance(bt, float)
+        self.assertGreater(bt, 0)
+        self.assertLess(bt, time.time())
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_PAGESIZE(self):
@@ -684,6 +666,10 @@ class TestSystemAPIs(unittest.TestCase):
         warnings.filterwarnings("error")
         p = psutil.Process(os.getpid())
         try:
+            self.assertRaises(DeprecationWarning, getattr, psutil, 'NUM_CPUS')
+            self.assertRaises(DeprecationWarning, getattr, psutil, 'BOOT_TIME')
+            self.assertRaises(DeprecationWarning, getattr, psutil,
+                              'TOTAL_PHYMEM')
             self.assertRaises(DeprecationWarning, psutil.virtmem_usage)
             self.assertRaises(DeprecationWarning, psutil.used_phymem)
             self.assertRaises(DeprecationWarning, psutil.avail_phymem)
@@ -711,6 +697,15 @@ class TestSystemAPIs(unittest.TestCase):
             s.close()
             warnings.resetwarnings()
 
+        # check value against new APIs
+        warnings.filterwarnings("ignore")
+        try:
+            self.assertEqual(psutil.NUM_CPUS, psutil.cpu_count())
+            self.assertEqual(psutil.BOOT_TIME, psutil.get_boot_time())
+            self.assertEqual(psutil.TOTAL_PHYMEM, psutil.virtual_memory().total)
+        finally:
+            warnings.resetwarnings()
+
     def test_deprecated_apis_retval(self):
         warnings.filterwarnings("ignore")
         p = psutil.Process(os.getpid())
@@ -728,8 +723,10 @@ class TestSystemAPIs(unittest.TestCase):
         assert mem.used > 0, mem
         assert mem.free >= 0, mem
         for name in mem._fields:
+            value = getattr(mem, name)
+            if name != 'percent':
+                self.assertIsInstance(value, (int, long))
             if name != 'total':
-                value = getattr(mem, name)
                 if not value >= 0:
                     self.fail("%r < 0 (%s)" % (name, value))
                 if value > mem.total:
@@ -789,6 +786,10 @@ class TestSystemAPIs(unittest.TestCase):
             psutil.test()
         finally:
             sys.stdout = stdout
+
+    def test_cpu_count(self):
+        self.assertEqual(psutil.cpu_count(), len(psutil.cpu_times(percpu=True)))
+        self.assertGreaterEqual(psutil.cpu_count(), 1)
 
     def test_sys_cpu_times(self):
         total = 0
@@ -877,7 +878,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_sys_per_cpu_percent(self):
         self.assertEqual(len(psutil.cpu_percent(interval=0.001, percpu=True)),
-                         psutil.NUM_CPUS)
+                         psutil.cpu_count())
         for x in range(1000):
             percents = psutil.cpu_percent(interval=None, percpu=True)
             for percent in percents:
@@ -894,7 +895,7 @@ class TestSystemAPIs(unittest.TestCase):
     def test_sys_per_cpu_times_percent(self):
         self.assertEqual(len(psutil.cpu_times_percent(interval=0.001,
                                                       percpu=True)),
-                         psutil.NUM_CPUS)
+                         psutil.cpu_count())
         for x in range(1000):
             cpus = psutil.cpu_times_percent(interval=None, percpu=True)
             for cpu in cpus:
@@ -2134,7 +2135,7 @@ class TestProcess(unittest.TestCase):
     def test__all__(self):
         for name in dir(psutil):
             if name in ('callable', 'defaultdict', 'error', 'namedtuple',
-                        'test'):
+                        'test', 'NUM_CPUS', 'BOOT_TIME', 'TOTAL_PHYMEM'):
                 continue
             if not name.startswith('_'):
                 try:
@@ -2144,7 +2145,8 @@ class TestProcess(unittest.TestCase):
                         fun = getattr(psutil, name)
                         if fun is None:
                             continue
-                        if 'deprecated' not in fun.__doc__.lower():
+                        if (fun.__doc__ is not None and
+                                'deprecated' not in fun.__doc__.lower()):
                             self.fail('%r not in psutil.__all__' % name)
 
     def test_Popen(self):
@@ -2277,7 +2279,7 @@ class TestFetchAllProcesses(unittest.TestCase):
     def create_time(self, ret):
         self.assertTrue(ret > 0)
         # this can't be taken for granted on all platforms
-        #self.assertGreaterEqual(ret, psutil.BOOT_TIME)
+        #self.assertGreaterEqual(ret, psutil.get_boot_time())
         # make sure returned value can be pretty printed
         # with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(ret))
