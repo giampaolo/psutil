@@ -2386,6 +2386,24 @@ class TestMisc(unittest.TestCase):
                                 'deprecated' not in fun.__doc__.lower()):
                             self.fail('%r not in psutil.__all__' % name)
 
+    def test_cached_property(self):
+        from psutil._common import cached_property
+
+        class Foo(object):
+            @cached_property
+            def bar(self):
+                "bar docstring"
+                calls.append(None)
+                return 1
+
+        calls = []
+        f = Foo()
+        self.assertEqual(f.bar, 1)
+        self.assertEqual(f.bar, 1)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(Foo.bar.__doc__, "bar docstring")
+        self.assertRaises(AttributeError, setattr, f, 'bar', 3)
+
 
 # ===================================================================
 # --- Example script tests

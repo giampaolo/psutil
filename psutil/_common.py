@@ -75,18 +75,20 @@ def memoize(f):
     return memf
 
 
-class cached_property(object):
+# http://code.activestate.com/recipes/576563-cached-property/
+def cached_property(fun):
     """A memoize decorator for class properties."""
-    enabled = True
-
-    def __init__(self, func):
-        self.func = func
-
-    def __get__(self, instance, type):
-        ret = self.func(instance)
-        if self.enabled:
-            instance.__dict__[self.func.__name__] = ret
+    @wraps(fun)
+    def get(self):
+        try:
+            return self._cache[fun]
+        except AttributeError:
+            self._cache = {}
+        except KeyError:
+            pass
+        ret = self._cache[fun] = fun(self)
         return ret
+    return property(get)
 
 
 # http://goo.gl/jYLvf
