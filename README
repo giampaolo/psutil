@@ -20,7 +20,7 @@ ifconfig, nice, ionice, iostat, iotop, uptime, pidof, tty, who, taskset, pmap**.
 
 It currently supports **Linux**, **Windows**, **OSX**, **FreeBSD**,
 **Sun Solaris** both **32-bit** and **64-bit** with Python versions from **2.4**
-to **3.3** by using a single code base.
+to **3.4** by using a single code base.
 
 ==============
 Example usages
@@ -57,6 +57,11 @@ cpupercent(user=1.0, nice=0.0, system=0.0, idle=99.0, iowait=0.0, irq=0.0,
            softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
 cpupercent(user=2.0, nice=0.0, system=0.0, idle=98.0, iowait=0.0, irq=0.0,
            softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+>>>
+>>> psutil.cpu_count()
+4
+>>>
+
 
 Memory
 ======
@@ -109,11 +114,6 @@ Other system info
 >>>
 >>> psutil.get_boot_time()
 1365519115.0
->>>
->>> psutil.NUM_CPUS
-4
->>> psutil.TOTAL_PHYMEM
-8374120448L
 >>>
 
 
@@ -234,3 +234,22 @@ giampaolo  31475  0.0  0.0   20760    3024 /dev/pts/0 Jun19   00:00  python2.4
 giampaolo  31721  0.0  2.2  773060  181896 ?          00:04   10:30  chrome
 root       31763  0.0  0.0       0       0 ?          00:05   00:00  kworker/0:1
 >>>
+
+Further process APIs
+====================
+
+>>> for p in psutil.process_iter():
+...     print(p)
+...
+psutil.Process(pid=1, name='init')
+psutil.Process(pid=2, name='kthreadd')
+psutil.Process(pid=3, name='ksoftirqd/0')
+...
+>>>
+>>> def on_terminate(proc):
+...     print("process {} terminated".format(proc))
+...
+>>> # waits for multiple processes to terminate
+>>> gone, alive = psutil.wait_procs(procs_list, 3, callback=on_terminate)
+>>>
+}}}

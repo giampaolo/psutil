@@ -6,10 +6,8 @@
 # found in the LICENSE file.
 
 """
-psutil test suite (you can quickly run it with "python setup.py test").
-
-Note: this is targeted for both python 2.x and 3.x so there's no need
-to use 2to3 tool first.
+psutil test suite. Run it with:
+$ make test
 
 If you're on Python < 2.7 it is recommended to install unittest2 module
 from: https://pypi.python.org/pypi/unittest2

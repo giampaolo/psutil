@@ -127,8 +127,6 @@ Removals:
  * (M) psutil.network_io_counters  (deprecated in 1.0.0)
  * (M) local_address and remote_address get_connection() namedtuple fields
        (deprecated in 1.0.0)
- * (M) psutil.BOOT_TIME  (deprecated in 0.7.0)
- * (H?) psutil.TOTAL_PHYMEM
 
 Renames:
 
@@ -143,13 +141,9 @@ Renames:
  * (H) psutil.Process.gids     -> get_gids()
  * (H) psutil.Process.username -> get_username()
  * (H) psutil.Process.getcwd   -> get_cwd()
- * (H) psutil.NUM_CPUS         -> cpu_count() (consistent with os.cpu_count())
 
 
 REJECTED IDEAS
 ==============
 
- * Process objects equality (__eq__):
-   https://code.google.com/p/psutil/issues/detail?id=211
-   * similary (and unfortunately) they cannot be used in set()s because other
-     than __hash__ a set() also requires __eq__
+STUB
