@@ -1,16 +1,12 @@
-PYTHON=python3
+PYTHON=python
 
 all: test
 
-install:
-	if [ $PYTHON = "python2.4" ];then \
-		echo "This can only be used on OSX/i386" ; \
-		exit 1 ;\
-	else \
-		sudo $(PYTHON) setup.py install; \
-	fi
+install: clean
+	$(PYTHON) setup.py install --user
 
 test: install
+	$(PYTHON) test/test_psutil.py
 
 memtest: install
 	$(PYTHON) test/test_memory_leaks.py

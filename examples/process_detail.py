@@ -99,12 +99,12 @@ def run(pid):
     if pinfo['open_files'] != ACCESS_DENIED:
         print_('open files', '')
         for file in pinfo['open_files']:
-            print_('',  'fd=%s %s ' % (file.fd, file.path))
+            print_('', 'fd=%s %s ' % (file.fd, file.path))
 
     if pinfo['threads']:
         print_('running threads', '')
         for thread in pinfo['threads']:
-            print_('',  'id=%s, user-time=%s, sys-time=%s' % (
+            print_('', 'id=%s, user-time=%s, sys-time=%s' % (
                 thread.id, thread.user_time, thread.system_time))
     if pinfo['connections'] != ACCESS_DENIED:
         print_('open connections', '')
@@ -120,7 +120,7 @@ def run(pid):
                 rip, rport = '*', '*'
             else:
                 rip, rport = conn.raddr
-            print_('',  '%s:%s -> %s:%s type=%s status=%s' % (
+            print_('', '%s:%s -> %s:%s type=%s status=%s' % (
                 lip, lport, rip, rport, type, conn.status))
 
 

@@ -156,7 +156,7 @@ nt_sysmeminfo = namedtuple('usage', 'total used free percent')
 # XXX - would 'available' be better than 'free' as for virtual_memory() nt?
 nt_swapmeminfo = namedtuple('swap', 'total used free percent sin sout')
 nt_diskinfo = namedtuple('usage', 'total used free percent')
-nt_partition = namedtuple('partition',  'device mountpoint fstype opts')
+nt_partition = namedtuple('partition', 'device mountpoint fstype opts')
 nt_net_iostat = namedtuple(
     'iostat',
     'bytes_sent bytes_recv packets_sent packets_recv errin errout dropin dropout')

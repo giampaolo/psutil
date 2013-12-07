@@ -250,7 +250,6 @@ def reap_children(search_all=False):
         warn("couldn't not kill processes %s" % str(alive))
 
 
-
 def check_ip_address(addr, family):
     """Attempts to check IP address's validity."""
     if not addr:
@@ -1624,7 +1623,6 @@ class TestProcess(unittest.TestCase):
         invalid_cpu = [len(psutil.cpu_times(percpu=True)) + 10]
         self.assertRaises(ValueError, p.set_cpu_affinity, invalid_cpu)
         self.assertRaises(ValueError, p.set_cpu_affinity, range(10000, 11000))
-
 
     def test_get_open_files(self):
         # current process
