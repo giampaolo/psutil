@@ -2416,7 +2416,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(f.bar, 1)
         self.assertEqual(f.bar, 1)
         self.assertEqual(len(calls), 1)
-        self.assertEqual(Foo.bar.__doc__, "bar docstring")
+        if sys.version_info >= (2, 5):
+            self.assertEqual(Foo.bar.__doc__, "bar docstring")
         self.assertRaises(AttributeError, setattr, f, 'bar', 3)
 
     def test_memoize(self):
