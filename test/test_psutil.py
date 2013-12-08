@@ -2374,7 +2374,11 @@ class TestMisc(unittest.TestCase):
         self.assertIn("terminated", str(p))
 
     def test__eq__(self):
-        self.assertTrue(psutil.Process() == psutil.Process())
+        p1 = psutil.Process()
+        p2 = psutil.Process()
+        self.assertEqual(p1, p2)
+        p2.__dict__['create_time'] = 10
+        self.assertNotEqual(p1, p2)
 
     def test__hash__(self):
         s = set([psutil.Process(), psutil.Process()])
