@@ -6,8 +6,8 @@
 
 """Module which provides compatibility with older Python versions."""
 
-__all__ = ["PY3", "int", "long", "xrange", "exec_", "callable",
-           "namedtuple", "property", "defaultdict"]
+__all__ = ["PY3", "int", "long", "xrange", "exec_", "callable", "namedtuple",
+           "property", "wraps", "defaultdict", "update_wrapper", "lru_cache"]
 
 import sys
 try:
@@ -15,8 +15,7 @@ try:
 except ImportError:
     import builtins as __builtin__  # py3
 
-PY3 = sys.version_info >= (3,)
-
+PY3 = sys.version_info[0] == 3
 
 if PY3:
     int = int
@@ -63,6 +62,9 @@ except NameError:
 
 # --- stdlib additions
 
+# py 2.6 collections.namedtuple
+# Taken from: http://code.activestate.com/recipes/500261/
+# Credits: Raymond Hettinger
 try:
     from collections import namedtuple
 except ImportError:
@@ -71,16 +73,10 @@ except ImportError:
     import sys as _sys
 
     def namedtuple(typename, field_names, verbose=False, rename=False):
-        """A collections.namedtuple implementation written in Python
-        to support Python versions < 2.6.
-
-        Taken from: http://code.activestate.com/recipes/500261/
+        """A collections.namedtuple implementation, see:
+        http://docs.python.org/library/collections.html#namedtuple
         """
-        # Parse and validate the field names.  Validation serves two
-        # purposes, generating informative error messages and preventing
-        # template injection attacks.
         if isinstance(field_names, basestring):
-             # names separated by whitespace and/or commas
             field_names = field_names.replace(',', ' ').split()
         field_names = tuple(map(str, field_names))
         if rename:
@@ -115,9 +111,7 @@ except ImportError:
                 raise ValueError('Encountered duplicate field name: %r' % name)
             seen_names.add(name)
 
-        # Create and fill-in the class template
         numfields = len(field_names)
-        # tuple repr without parens or quotes
         argtxt = repr(field_names).replace("'", "")[1:-1]
         reprtxt = ', '.join('%s=%%r' % name for name in field_names)
         template = '''class %(typename)s(tuple):
@@ -131,7 +125,8 @@ except ImportError:
             'Make a new %(typename)s object from a sequence or iterable'
             result = new(cls, iterable)
             if len(result) != %(numfields)d:
-                raise TypeError('Expected %(numfields)d arguments, got %%d' %% len(result))
+                raise TypeError(
+                    'Expected %(numfields)d arguments, got %%d' %% len(result))
             return result \n
         def __repr__(self):
             return '%(typename)s(%(reprtxt)s)' %% self \n
@@ -139,7 +134,6 @@ except ImportError:
             'Return a new dict which maps field names to their values'
             return dict(zip(self._fields, self)) \n
         def _replace(_self, **kwds):
-            'Return a new %(typename)s object replacing specified fields with new values'
             result = _self._make(map(kwds.pop, %(field_names)r, _self))
             if kwds:
                 raise ValueError('Got unexpected field names: %%r' %% kwds.keys())
@@ -152,7 +146,6 @@ except ImportError:
             sys.stdout.write(template + '\n')
             sys.stdout.flush()
 
-        # Execute the template string in a temporary namespace
         namespace = dict(
             _itemgetter=_itemgetter, __name__='namedtuple_%s' % typename,
             _property=property, _tuple=tuple)
@@ -162,12 +155,6 @@ except ImportError:
             e = sys.exc_info()[1]
             raise SyntaxError(e.message + ':\n' + template)
         result = namespace[typename]
-
-        # For pickling to work, the __module__ variable needs to be set
-        # to the frame where the named tuple is created.  Bypass this
-        # step in enviroments where sys._getframe is not defined (Jython
-        # for example) or sys._getframe is not defined for arguments
-        # greater than 0 (IronPython).
         try:
             result.__module__ = _sys._getframe(
                 1).f_globals.get('__name__', '__main__')
@@ -177,7 +164,7 @@ except ImportError:
         return result
 
 
-# hack to support property.setter/deleter on python < 2.6
+# hack to support property getter/setter/deleter on python < 2.6
 # http://docs.python.org/library/functions.html?highlight=property#property
 if hasattr(property, 'setter'):
     property = property
@@ -202,7 +189,7 @@ else:
 # py 2.5 collections.defauldict
 # Taken from:
 # http://code.activestate.com/recipes/523034-emulate-collectionsdefaultdict/
-# credits: Jason Kirtland
+# Credits: Jason Kirtland
 try:
     from collections import defaultdict
 except ImportError:
@@ -256,15 +243,9 @@ try:
 except ImportError:
     def wraps(original):
         def inner(fn):
-            # see functools.WRAPPER_ASSIGNMENTS
-            for attribute in ['__module__',
-                              '__name__',
-                              '__doc__'
-                              ]:
+            for attribute in ['__module__', '__name__', '__doc__']:
                 setattr(fn, attribute, getattr(original, attribute))
-            # see functools.WRAPPER_UPDATES
-            for attribute in ['__dict__',
-                              ]:
+            for attribute in ['__dict__']:
                 if hasattr(fn, attribute):
                     getattr(fn, attribute).update(getattr(original, attribute))
                 else:
@@ -321,7 +302,6 @@ except ImportError:
                   kwd_mark=(object(), ),
                   fasttypes=set((int, str, frozenset, type(None))),
                   sorted=sorted, tuple=tuple, type=type, len=len):
-        'Make a cache key from optionally typed positional and keyword arguments'
         key = args
         if kwds:
             sorted_items = sorted(kwds.items())

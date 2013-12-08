@@ -204,3 +204,9 @@ I: 448
 N: Josiah Carlson
 E: josiah.carlson@gmail.com
 I: 451, 452
+
+N: Raymond Hettinger
+D: namedtuple and lru_cache backward compatible implementations.
+
+N: Jason Kirtland
+D: backward compatible implementation of collections.defaultdict.
