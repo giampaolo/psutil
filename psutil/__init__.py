@@ -1646,6 +1646,10 @@ def _replace_module():
     """
     class ModuleWrapper(object):
 
+        def __repr__(self):
+            return repr(self._module)
+        __str__ = __repr__
+
         @property
         def NUM_CPUS(self):
             msg = "NUM_CPUS constant is deprecated; use cpu_count() instead"
