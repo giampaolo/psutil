@@ -132,25 +132,25 @@ def isfile_strict(path):
 # --- Process.get_connections() 'kind' parameter mapping
 
 conn_tmap = {
-    "all":   ([AF_INET, AF_INET6, AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
-    "tcp":   ([AF_INET, AF_INET6], [SOCK_STREAM]),
-    "tcp4":  ([AF_INET],           [SOCK_STREAM]),
-    "udp":   ([AF_INET, AF_INET6], [SOCK_DGRAM]),
-    "udp4":  ([AF_INET],           [SOCK_DGRAM]),
-    "inet":  ([AF_INET, AF_INET6], [SOCK_STREAM, SOCK_DGRAM]),
-    "inet4": ([AF_INET],           [SOCK_STREAM, SOCK_DGRAM]),
-    "inet6": ([AF_INET6],          [SOCK_STREAM, SOCK_DGRAM]),
+    "all": ([AF_INET, AF_INET6, AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
+    "tcp": ([AF_INET, AF_INET6], [SOCK_STREAM]),
+    "tcp4": ([AF_INET], [SOCK_STREAM]),
+    "udp": ([AF_INET, AF_INET6], [SOCK_DGRAM]),
+    "udp4": ([AF_INET], [SOCK_DGRAM]),
+    "inet": ([AF_INET, AF_INET6], [SOCK_STREAM, SOCK_DGRAM]),
+    "inet4": ([AF_INET], [SOCK_STREAM, SOCK_DGRAM]),
+    "inet6": ([AF_INET6], [SOCK_STREAM, SOCK_DGRAM]),
 }
 
 if AF_INET6 is not None:
     conn_tmap.update({
-        "tcp6": ([AF_INET6],       [SOCK_STREAM]),
-        "udp6": ([AF_INET6],       [SOCK_DGRAM]),
+        "tcp6": ([AF_INET6], [SOCK_STREAM]),
+        "udp6": ([AF_INET6], [SOCK_DGRAM]),
     })
 
 if AF_UNIX is not None:
     conn_tmap.update({
-        "unix": ([AF_UNIX],        [SOCK_STREAM, SOCK_DGRAM]),
+        "unix": ([AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
     })
 
 del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM, socket
