@@ -88,6 +88,17 @@ VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
 # --- Utility functions
 # ===================================================================
 
+def cleanup():
+    reap_children(search_all=True)
+    safe_remove(TESTFN)
+    safe_rmdir(TESTFN_UNICODE)
+    for path in _testfiles:
+        safe_remove(path)
+
+atexit.register(cleanup)
+atexit.register(lambda: DEVNULL.close())
+
+
 _subprocesses_started = set()
 
 def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=DEVNULL,
@@ -2516,19 +2527,6 @@ class TestExampleScripts(unittest.TestCase):
                      'ast module not available on this python version')
     def test_iotop(self):
         self.assert_syntax('iotop.py')
-
-
-def cleanup():
-    reap_children(search_all=True)
-    DEVNULL.close()
-    safe_remove(TESTFN)
-    safe_rmdir(TESTFN_UNICODE)
-    for path in _testfiles:
-        safe_remove(path)
-
-atexit.register(cleanup)
-safe_remove(TESTFN)
-safe_rmdir(TESTFN_UNICODE)
 
 
 def test_main():
