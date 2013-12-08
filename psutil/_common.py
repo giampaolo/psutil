@@ -157,30 +157,45 @@ del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM, socket
 
 # --- namedtuples
 
-# system
-nt_sysmeminfo = namedtuple('usage', 'total used free percent')
-# XXX - would 'available' be better than 'free' as for virtual_memory() nt?
-nt_swapmeminfo = namedtuple('swap', 'total used free percent sin sout')
-nt_diskinfo = namedtuple('usage', 'total used free percent')
-nt_partition = namedtuple('partition', 'device mountpoint fstype opts')
-nt_net_iostat = namedtuple(
-    'iostat',
-    'bytes_sent bytes_recv packets_sent packets_recv errin errout dropin dropout')
-nt_disk_iostat = namedtuple(
-    'iostat',
-    'read_count write_count read_bytes write_bytes read_time write_time')
-nt_user = namedtuple('user', 'name terminal host started')
+# psutil.virtual_memory()  (expanded later)
+nt_sysmeminfo = namedtuple('usage', ['total', 'used', 'free', 'percent'])
+# psutil.swap_memory()
+nt_swapmeminfo = namedtuple('swap', ['total', 'used', 'free', 'percent',
+                                     'sin', 'sout'])
+# psutil.disk_usage()
+nt_diskinfo = namedtuple('usage', ['total', 'used', 'free', 'percent'])
+# psutil.disk_partitions()
+nt_partition = namedtuple('partition', ['device', 'mountpoint', 'fstype', 'opts'])
+# psutil.net_io_counters()
+nt_net_iostat = namedtuple('iostat', ['bytes_sent', 'bytes_recv',
+                                      'packets_sent', 'packets_recv',
+                                      'errin', 'errout', 'dropin', 'dropout'])
+# psutil.disk_io_counters()
+nt_disk_iostat = namedtuple('iostat', ['read_count', 'write_count',
+                                       'read_bytes', 'write_bytes',
+                                       'read_time', 'write_time'])
+# psutil.get_users()
+nt_user = namedtuple('user', ['name', 'terminal', 'host', 'started'])
 
-# processes
-nt_meminfo = namedtuple('meminfo', 'rss vms')
-nt_cputimes = namedtuple('cputimes', 'user system')
-nt_openfile = namedtuple('openfile', 'path fd')
-nt_thread = namedtuple('thread', 'id user_time system_time')
-nt_uids = namedtuple('user', 'real effective saved')
-nt_gids = namedtuple('group', 'real effective saved')
-nt_io = namedtuple('io', 'read_count write_count read_bytes write_bytes')
-nt_ionice = namedtuple('ionice', 'ioclass value')
-nt_ctxsw = namedtuple('amount', 'voluntary involuntary')
+# psutil.Process.get_memory_info()
+nt_meminfo = namedtuple('meminfo', ['rss', 'vms'])
+# psutil.Process.get_cpu_times()
+nt_cputimes = namedtuple('cputimes', ['user', 'system'])
+# psutil.Process.get_open_files()
+nt_openfile = namedtuple('openfile', ['path', 'fd'])
+# psutil.Process.get_threads()
+nt_thread = namedtuple('thread', ['id', 'user_time', 'system_time'])
+# psutil.Process.uids
+nt_uids = namedtuple('user', ['real', 'effective', 'saved'])
+# psutil.Process.gids
+nt_gids = namedtuple('group', ['real', 'effective', 'saved'])
+# psutil.Process.get_io_counters()
+nt_io = namedtuple('io', ['read_count', 'write_count',
+                          'read_bytes', 'write_bytes'])
+# psutil.Process.get_ionice()
+nt_ionice = namedtuple('ionice', ['ioclass', 'value'])
+# psutil.Process.get_ctx_switches()
+nt_ctxsw = namedtuple('amount', ['voluntary', 'involuntary'])
 
 
 # --- misc
