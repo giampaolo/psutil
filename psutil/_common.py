@@ -69,9 +69,11 @@ def memoize(fun):
     @wraps(fun)
     def wrapper(*args, **kwargs):
         key = (args, frozenset(sorted(kwargs.items())))
-        if key not in cache:
-            cache[key] = fun(*args, **kwargs)
-        return cache[key]
+        try:
+            return cache[key]
+        except KeyError:
+            ret = cache[key] = fun(*args, **kwargs)
+        return ret
     cache = {}
     return wrapper
 
