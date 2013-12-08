@@ -68,7 +68,7 @@ def memoize(fun):
     """A simple memoize decorator for functions."""
     @wraps(fun)
     def wrapper(*args, **kwargs):
-        key = (args, frozenset(kwargs.items()))
+        key = (args, frozenset(sorted(kwargs.items())))
         if key not in cache:
             cache[key] = fun(*args, **kwargs)
         return cache[key]
