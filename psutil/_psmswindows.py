@@ -9,7 +9,6 @@
 import errno
 import os
 import sys
-import warnings
 
 import _psutil_mswindows
 
@@ -60,7 +59,7 @@ TCP_STATUSES = {
 }
 
 
-@memoize
+@lru_cache(maxsize=512)
 def _win32_QueryDosDevice(s):
     return _psutil_mswindows.win32_QueryDosDevice(s)
 
