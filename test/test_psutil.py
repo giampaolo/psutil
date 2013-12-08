@@ -2404,6 +2404,36 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(Foo.bar.__doc__, "bar docstring")
         self.assertRaises(AttributeError, setattr, f, 'bar', 3)
 
+    def test_memoize(self):
+        from psutil._common import memoize
+
+        @memoize
+        def foo(*args, **kwargs):
+            "foo docstring"
+            calls.append(None)
+            return (args, kwargs)
+
+        calls = []
+        # no args
+        for x in range(2):
+            ret = foo()
+            expected = ((), {})
+            self.assertEqual(ret, expected)
+            self.assertEqual(len(calls), 1)
+        # with args
+        for x in range(2):
+            ret = foo(1)
+            expected = ((1, ), {})
+            self.assertEqual(ret, expected)
+            self.assertEqual(len(calls), 2)
+        # with args + kwargs
+        for x in range(2):
+            ret = foo(1, bar=2)
+            expected = ((1, ), {'bar': 2})
+            self.assertEqual(ret, expected)
+            self.assertEqual(len(calls), 3)
+        self.assertEqual(foo.__doc__, "foo docstring")
+
 
 # ===================================================================
 # --- Example script tests

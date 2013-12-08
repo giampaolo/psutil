@@ -64,15 +64,16 @@ def usage_percent(used, total, _round=None):
         return ret
 
 
-def memoize(f):
+def memoize(fun):
     """A simple memoize decorator for functions."""
-    @wraps(f)
-    def memf(*x):
-        if x not in cache:
-            cache[x] = f(*x)
-        return cache[x]
+    @wraps(fun)
+    def wrapper(*args, **kwargs):
+        key = (args, frozenset(kwargs.items()))
+        if key not in cache:
+            cache[key] = fun(*args, **kwargs)
+        return cache[key]
     cache = {}
-    return memf
+    return wrapper
 
 
 # http://code.activestate.com/recipes/576563-cached-property/
