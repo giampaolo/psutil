@@ -9,7 +9,6 @@
 import errno
 import os
 import sys
-import warnings
 
 import _psutil_osx
 import _psutil_posix
@@ -223,7 +222,8 @@ class Process(object):
     @wrap_exceptions
     def get_ext_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
-        rss, vms, pfaults, pageins = _psutil_osx.get_process_memory_info(self.pid)
+        rss, vms, pfaults, pageins = \
+            _psutil_osx.get_process_memory_info(self.pid)
         return self._nt_ext_mem(rss, vms,
                                 pfaults * PAGESIZE,
                                 pageins * PAGESIZE)
@@ -270,7 +270,8 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        rawlist = _psutil_osx.get_process_connections(self.pid, families, types)
+        rawlist = _psutil_osx.get_process_connections(self.pid, families,
+                                                      types)
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item

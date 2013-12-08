@@ -96,7 +96,8 @@ class WindowsSpecificTestCase(unittest.TestCase):
             if "pseudo-interface" in nic.replace(' ', '-').lower():
                 continue
             if nic not in out:
-                self.fail("%r nic wasn't found in 'ipconfig /all' output" % nic)
+                self.fail(
+                    "%r nic wasn't found in 'ipconfig /all' output" % nic)
 
     def test_exe(self):
         for p in psutil.process_iter():
@@ -122,7 +123,8 @@ class WindowsSpecificTestCase(unittest.TestCase):
         def test_process_cmdline(self):
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
             p = psutil.Process(self.pid)
-            self.assertEqual(' '.join(p.cmdline), w.CommandLine.replace('"', ''))
+            self.assertEqual(' '.join(p.cmdline),
+                             w.CommandLine.replace('"', ''))
 
         def test_process_username(self):
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
@@ -218,7 +220,8 @@ class WindowsSpecificTestCase(unittest.TestCase):
                         self.assertEqual(usage.free, wmi_free)
                         # 10 MB tollerance
                         if abs(usage.free - wmi_free) > 10 * 1024 * 1024:
-                            self.fail("psutil=%s, wmi=%s" % usage.free, wmi_free)
+                            self.fail("psutil=%s, wmi=%s" % (
+                                usage.free, wmi_free))
                         break
                 else:
                     self.fail("can't find partition %s" % repr(ps_part))
@@ -241,17 +244,18 @@ class WindowsSpecificTestCase(unittest.TestCase):
             def call(p, attr):
                 attr = getattr(p, name, None)
                 if attr is not None and callable(attr):
-                    ret = attr()
+                    attr()
                 else:
-                    ret = attr
+                    attr
 
             p = psutil.Process(self.pid)
             failures = []
             for name in dir(psutil.Process):
                 if name.startswith('_') \
                     or name.startswith('set_') \
-                    or name in ('terminate', 'kill', 'suspend', 'resume', 'nice',
-                                'send_signal', 'wait', 'get_children', 'as_dict'):
+                    or name in ('terminate', 'kill', 'suspend', 'resume',
+                                'nice', 'send_signal', 'wait', 'get_children',
+                                'as_dict'):
                     continue
                 else:
                     try:
@@ -263,8 +267,9 @@ class WindowsSpecificTestCase(unittest.TestCase):
                         pass
                     else:
                         if num2 > num1:
-                            fail = "failure while processing Process.%s method " \
-                                   "(before=%s, after=%s)" % (name, num1, num2)
+                            fail = \
+                                "failure while processing Process.%s method " \
+                                "(before=%s, after=%s)" % (name, num1, num2)
                             failures.append(fail)
             if failures:
                 self.fail('\n' + '\n'.join(failures))

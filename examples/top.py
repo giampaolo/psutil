@@ -91,7 +91,8 @@ def poll(interval):
             procs.append(p)
 
     # return processes sorted by CPU percent usage
-    processes = sorted(procs, key=lambda p: p.dict['cpu_percent'], reverse=True)
+    processes = sorted(procs, key=lambda p: p.dict['cpu_percent'],
+                       reverse=True)
     return (processes, procs_status)
 
 
@@ -104,7 +105,8 @@ def print_header(procs_status, num_procs):
         return dashes, empty_dashes
 
     # cpu usage
-    for cpu_num, perc in enumerate(psutil.cpu_percent(interval=0, percpu=True)):
+    percs = psutil.cpu_percent(interval=0, percpu=True)
+    for cpu_num, perc in enumerate(percs):
         dashes, empty_dashes = get_dashes(perc)
         print_line(" CPU%-2s [%s%s] %5s%%" % (cpu_num, dashes, empty_dashes,
                                               perc))

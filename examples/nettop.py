@@ -108,12 +108,14 @@ def refresh_window(tot_before, tot_after, pnic_before, pnic_after):
         print_line(templ % (
             "bytes-sent",
             bytes2human(stats_after.bytes_sent),
-            bytes2human(stats_after.bytes_sent - stats_before.bytes_sent) + '/s',
+            bytes2human(
+                stats_after.bytes_sent - stats_before.bytes_sent) + '/s',
         ))
         print_line(templ % (
             "bytes-recv",
             bytes2human(stats_after.bytes_recv),
-            bytes2human(stats_after.bytes_recv - stats_before.bytes_recv) + '/s',
+            bytes2human(
+                stats_after.bytes_recv - stats_before.bytes_recv) + '/s',
         ))
         print_line(templ % (
             "pkts-sent",

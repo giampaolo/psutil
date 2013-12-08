@@ -223,9 +223,10 @@ def phymem_buffers():
 
 @memoize
 def _get_cputimes_ntuple():
-    """ Return a (nt, rindex) tuple depending on the CPU times available
+    """Return a (nt, rindex) tuple depending on the CPU times available
     on this Linux kernel version which may be:
-    user, nice, system, idle, iowait, irq, softirq [steal, [guest, [guest_nice]]]
+    (user, nice, system, idle, iowait, irq, softirq, [steal, [guest,
+     [guest_nice]]])
     """
     f = open('/proc/stat', 'r')
     try:
@@ -253,7 +254,8 @@ def _get_cputimes_ntuple():
 def get_system_cpu_times():
     """Return a named tuple representing the following system-wide
     CPU times:
-    user, nice, system, idle, iowait, irq, softirq [steal, [guest, [guest_nice]]]
+    (user, nice, system, idle, iowait, irq, softirq [steal, [guest,
+     [guest_nice]]])
     Last 3 fields may not be available on all Linux kernel versions.
     """
     f = open('/proc/stat', 'r')
@@ -633,7 +635,8 @@ class Process(object):
                          'shared_dirty', 'private_clean', 'private_dirty',
                          'referenced', 'anonymous', 'swap', ]
     nt_mmap_grouped = namedtuple('mmap', ' '.join(_mmap_base_fields))
-    nt_mmap_ext = namedtuple('mmap', 'addr perms ' + ' '.join(_mmap_base_fields))
+    nt_mmap_ext = namedtuple('mmap', 'addr perms ' +
+                             ' '.join(_mmap_base_fields))
 
     def get_memory_maps(self):
         """Return process's mapped memory regions as a list of nameduples.
@@ -709,8 +712,9 @@ class Process(object):
 
     if not os.path.exists('/proc/%s/smaps' % os.getpid()):
         def get_memory_maps(self, ext):
-            msg = "couldn't find /proc/%s/smaps; kernel < 2.6.14 or CONFIG_MMU " \
-                  "kernel configuration option is not enabled" % self.pid
+            msg = "couldn't find /proc/%s/smaps; kernel < 2.6.14 or "  \
+                  "CONFIG_MMU kernel configuration option is not enabled" \
+                  % self.pid
             raise NotImplementedError(msg)
 
     @wrap_exceptions
@@ -832,7 +836,8 @@ class Process(object):
         def set_process_ionice(self, ioclass, value):
             if ioclass in (IOPRIO_CLASS_NONE, None):
                 if value:
-                    raise ValueError("can't specify value with IOPRIO_CLASS_NONE")
+                    msg = "can't specify value with IOPRIO_CLASS_NONE"
+                    raise ValueError(msg)
                 ioclass = IOPRIO_CLASS_NONE
                 value = 0
             if ioclass in (IOPRIO_CLASS_RT, IOPRIO_CLASS_BE):
@@ -840,7 +845,8 @@ class Process(object):
                     value = 4
             elif ioclass == IOPRIO_CLASS_IDLE:
                 if value:
-                    raise ValueError("can't specify value with IOPRIO_CLASS_IDLE")
+                    msg = "can't specify value with IOPRIO_CLASS_IDLE"
+                    raise ValueError(msg)
                 value = 0
             else:
                 value = 0

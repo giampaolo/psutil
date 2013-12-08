@@ -33,7 +33,8 @@ def bytes2human(n):
 
 def main():
     templ = "%-17s %8s %8s %8s %5s%% %9s  %s"
-    print_(templ % ("Device", "Total", "Used", "Free", "Use ", "Type", "Mount"))
+    print_(templ % ("Device", "Total", "Used", "Free", "Use ", "Type",
+                    "Mount"))
     for part in psutil.disk_partitions(all=False):
         if os.name == 'nt':
             if 'cdrom' in part.opts or part.fstype == '':

@@ -212,7 +212,8 @@ class Process(object):
                 if not isinstance(pid, (int, long)):
                     raise TypeError('pid must be an integer (got %r)' % pid)
             if pid < 0:
-                raise ValueError('pid must be a positive integer (got %s)' % pid)
+                raise ValueError('pid must be a positive integer (got %s)'
+                                 % pid)
         self._pid = pid
         self._gone = False
         self._ppid = None
@@ -227,7 +228,8 @@ class Process(object):
         except AccessDenied:
             pass
         except NoSuchProcess:
-            raise NoSuchProcess(pid, None, 'no process found with pid %s' % pid)
+            msg = 'no process found with pid %s' % pid
+            raise NoSuchProcess(pid, None, msg)
 
     def __str__(self):
         try:
@@ -279,8 +281,8 @@ class Process(object):
         process information.
         """
         excluded_names = set(['send_signal', 'suspend', 'resume', 'terminate',
-                              'kill', 'wait', 'is_running', 'as_dict', 'parent',
-                              'get_children', 'nice', 'get_rlimit'])
+                              'kill', 'wait', 'is_running', 'as_dict',
+                              'parent', 'get_children', 'nice', 'get_rlimit'])
         retdict = dict()
         for name in set(attrs or dir(self)):
             if name.startswith('_'):
@@ -750,7 +752,8 @@ class Process(object):
         # the utilization of a single CPU (note: cpu_count() value is cached)
         single_cpu_percent = overall_percent * cpu_count()
         # On POSIX a percentage > 100 is legitimate:
-        # http://stackoverflow.com/questions/1032357/comprehending-top-cpu-usage
+        # http://stackoverflow.com/questions/1032357/
+        #   comprehending-top-cpu-usage
         # On windows we use this ugly hack in order to avoid float
         # precision issues.
         if os.name != 'posix':
@@ -953,7 +956,8 @@ class Process(object):
         """Get or set process niceness (priority).
         Deprecated, use get_nice() instead.
         """
-        msg = "this property is deprecated; use Process.get_nice() method instead"
+        msg = "this property is deprecated; " \
+              "use Process.get_nice() method instead"
         warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
         return self.get_nice()
 
@@ -961,7 +965,8 @@ class Process(object):
     def nice(self, value):
         # invoked on "p.nice = num"; change process niceness
         # deprecated in favor of set_nice()
-        msg = "this property is deprecated; use Process.set_nice() method instead"
+        msg = "this property is deprecated; " \
+              "use Process.set_nice() method instead"
         warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
         return self.set_nice(value)
 
@@ -974,7 +979,7 @@ class Popen(Process):
 
       >>> import psutil
       >>> from subprocess import PIPE
-      >>> p = psutil.Popen(["/usr/bin/python", "-c", "print 'hi'"], stdout=PIPE)
+      >>> p = psutil.Popen(["python", "-c", "print 'hi'"], stdout=PIPE)
       >>> p.name
       'python'
       >>> p.uids
@@ -1129,8 +1134,8 @@ def wait_procs(procs, timeout=None, callback=None):
     >>> for p in procs:
     ...    p.terminate()
     ...
-    >>> gone, still_alive = wait_procs(procs, timeout=3, callback=on_terminate)
-    >>> for p in still_alive:
+    >>> gone, alive = wait_procs(procs, timeout=3, callback=on_terminate)
+    >>> for p in alive:
     ...     p.kill()
     """
     def assert_gone(proc, timeout):
@@ -1146,7 +1151,8 @@ def wait_procs(procs, timeout=None, callback=None):
                     callback(proc)
 
     if timeout is not None and not timeout >= 0:
-        raise ValueError("timeout must be a positive integer, got %s" % timeout)
+        msg = "timeout must be a positive integer, got %s" % timeout
+        raise ValueError(msg)
     timer = getattr(time, 'monotonic', time.time)
     gone = set()
     alive = set(procs)
@@ -1690,8 +1696,8 @@ def test():
     if os.name == 'posix':
         attrs.append('uids')
         attrs.append('terminal')
-    print_(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY", "START",
-                    "TIME", "COMMAND"))
+    print_(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY",
+                    "START", "TIME", "COMMAND"))
     for p in sorted(process_iter(), key=lambda p: p.pid):
         try:
             pinfo = p.as_dict(attrs, ad_value='')

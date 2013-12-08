@@ -26,7 +26,7 @@ memtest: install
 	$(PYTHON) test/test_memory_leaks.py
 
 pep8:
-	pep8 psutil/ test/ examples/ setup.py --ignore E501,E302
+	pep8 psutil/ test/ examples/ setup.py --ignore E302
 
 pyflakes:
 	pyflakes psutil/ test/ examples/ setup.py

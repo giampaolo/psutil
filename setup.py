@@ -85,7 +85,9 @@ elif sys.platform.startswith("darwin"):
             'psutil/_psutil_common.c',
             'psutil/arch/osx/process_info.c'
         ],
-        extra_link_args=['-framework', 'CoreFoundation', '-framework', 'IOKit'],
+        extra_link_args=[
+            '-framework', 'CoreFoundation', '-framework', 'IOKit'
+        ],
     ),
         posix_extension,
     ]

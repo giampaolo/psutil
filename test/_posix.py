@@ -91,7 +91,8 @@ class PosixSpecificTestCase(unittest.TestCase):
 
     def test_process_name(self):
         # use command + arg since "comm" keyword not supported on all platforms
-        name_ps = ps("ps --no-headers -o command -p %s" % self.pid).split(' ')[0]
+        name_ps = ps("ps --no-headers -o command -p %s" % (
+            self.pid)).split(' ')[0]
         # remove path if there is any, from the command
         name_ps = os.path.basename(name_ps).lower()
         name_psutil = psutil.Process(self.pid).name.lower()
@@ -200,17 +201,18 @@ class PosixSpecificTestCase(unittest.TestCase):
                     args = (psutil.RLIMIT_NOFILE,)
                 elif name == 'set_rlimit':
                     args = (psutil.RLIMIT_NOFILE, (5, 5))
-                ret = attr(*args)
+                attr(*args)
             else:
-                ret = attr
+                attr
 
         p = psutil.Process(os.getpid())
         failures = []
+        ignored_names = ('terminate', 'kill', 'suspend', 'resume', 'nice',
+                         'send_signal', 'wait', 'get_children', 'as_dict')
         for name in dir(psutil.Process):
             if (name.startswith('_')
                     or name.startswith('set_')
-                    or name in ('terminate', 'kill', 'suspend', 'resume', 'nice',
-                                'send_signal', 'wait', 'get_children', 'as_dict')):
+                    or name in ignored_names):
                 continue
             else:
                 try:

@@ -75,7 +75,8 @@ def swap_memory():
     sin, sout = _psutil_sunos.get_swap_mem()
     # XXX
     # we are supposed to get total/free by doing so:
-    # http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/cmd/swap/swap.c
+    # http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/
+    #     usr/src/cmd/swap/swap.c
     # ...nevertheless I can't manage to obtain the same numbers as 'swap'
     # cmdline utility, so let's parse its output (sigh!)
     p = subprocess.Popen(['swap', '-l', '-k'], stdout=subprocess.PIPE)
@@ -283,7 +284,8 @@ class Process(object):
     @wrap_exceptions
     def get_process_terminal(self):
         hit_enoent = False
-        tty = wrap_exceptions(_psutil_sunos.get_process_basic_info(self.pid)[0])
+        tty = wrap_exceptions(
+            _psutil_sunos.get_process_basic_info(self.pid)[0])
         if tty != _psutil_sunos.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
@@ -336,7 +338,8 @@ class Process(object):
         for tid in tids:
             tid = int(tid)
             try:
-                utime, stime = _psutil_sunos.query_process_thread(self.pid, tid)
+                utime, stime = _psutil_sunos.query_process_thread(
+                    self.pid, tid)
             except EnvironmentError:
                 # ENOENT == thread gone in meantime
                 err = sys.exc_info()[1]
@@ -448,7 +451,8 @@ class Process(object):
     @wrap_exceptions
     def get_memory_maps(self):
         def toaddr(start, end):
-            return '%s-%s' % (hex(start)[2:].strip('L'), hex(end)[2:].strip('L'))
+            return '%s-%s' % (hex(start)[2:].strip('L'),
+                              hex(end)[2:].strip('L'))
 
         retlist = []
         rawlist = _psutil_sunos.get_process_memory_maps(self.pid)

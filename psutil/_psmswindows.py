@@ -111,7 +111,8 @@ def get_disk_usage(path):
         total, free = _psutil_mswindows.get_disk_usage(path)
     except WindowsError:
         if not os.path.exists(path):
-            raise OSError(errno.ENOENT, "No such file or directory: '%s'" % path)
+            msg = "No such file or directory: '%s'" % path
+            raise OSError(errno.ENOENT, msg)
         raise
     used = total - free
     percent = usage_percent(used, total, _round=1)
@@ -244,7 +245,8 @@ class Process(object):
         """Returns a tuple or RSS/VMS memory usage in bytes."""
         # on Windows RSS == WorkingSetSize and VSM == PagefileUsage
         # fields of PROCESS_MEMORY_COUNTERS struct:
-        # http://msdn.microsoft.com/en-us/library/windows/desktop/ms684877(v=vs.85).aspx
+        # http://msdn.microsoft.com/en-us/library/windows/desktop/
+        #     ms684877(v=vs.85).aspx
         t = self._get_raw_meminfo()
         return nt_meminfo(t[2], t[7])
 

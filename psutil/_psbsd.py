@@ -307,7 +307,8 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        rawlist = _psutil_bsd.get_process_connections(self.pid, families, types)
+        rawlist = _psutil_bsd.get_process_connections(self.pid, families,
+                                                      types)
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item

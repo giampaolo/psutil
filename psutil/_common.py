@@ -165,7 +165,8 @@ nt_swapmeminfo = namedtuple('swap', ['total', 'used', 'free', 'percent',
 # psutil.disk_usage()
 nt_diskinfo = namedtuple('usage', ['total', 'used', 'free', 'percent'])
 # psutil.disk_partitions()
-nt_partition = namedtuple('partition', ['device', 'mountpoint', 'fstype', 'opts'])
+nt_partition = namedtuple('partition', ['device', 'mountpoint', 'fstype',
+                                        'opts'])
 # psutil.net_io_counters()
 nt_net_iostat = namedtuple('iostat', ['bytes_sent', 'bytes_recv',
                                       'packets_sent', 'packets_recv',

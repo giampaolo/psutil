@@ -97,16 +97,16 @@ except ImportError:
                                  'alphanumeric characters and underscores: %r'
                                  % name)
             if _iskeyword(name):
-                raise ValueError(
-                    'Type names and field names cannot be a keyword: %r' % name)
+                raise ValueError('Type names and field names cannot be a '
+                                 'keyword: %r' % name)
             if name[0].isdigit():
-                raise ValueError('Type names and field names cannot start with a '
-                                 'number: %r' % name)
+                raise ValueError('Type names and field names cannot start '
+                                 'with a number: %r' % name)
         seen_names = set()
         for name in field_names:
             if name.startswith('_') and not rename:
-                raise ValueError('Field names cannot start with an underscore: %r'
-                                 % name)
+                raise ValueError(
+                    'Field names cannot start with an underscore: %r' % name)
             if name in seen_names:
                 raise ValueError('Encountered duplicate field name: %r' % name)
             seen_names.add(name)
@@ -136,7 +136,8 @@ except ImportError:
         def _replace(_self, **kwds):
             result = _self._make(map(kwds.pop, %(field_names)r, _self))
             if kwds:
-                raise ValueError('Got unexpected field names: %%r' %% kwds.keys())
+                raise ValueError(
+                    'Got unexpected field names: %%r' %% kwds.keys())
             return result \n
         def __getnewargs__(self):
             return tuple(self) \n\n''' % locals()

@@ -100,8 +100,8 @@ atexit.register(lambda: DEVNULL.close())
 
 _subprocesses_started = set()
 
-def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL, stdin=DEVNULL,
-                        wait=False):
+def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL,
+                        stdin=DEVNULL, wait=False):
     """Return a subprocess.Popen object to use in tests.
     By default stdout and stderr are redirected to /dev/null and the
     python interpreter is used as test process.
@@ -606,7 +606,8 @@ class TestSystemAPIs(unittest.TestCase):
         try:
             self.assertEqual(psutil.NUM_CPUS, psutil.cpu_count())
             self.assertEqual(psutil.BOOT_TIME, psutil.get_boot_time())
-            self.assertEqual(psutil.TOTAL_PHYMEM, psutil.virtual_memory().total)
+            self.assertEqual(psutil.TOTAL_PHYMEM,
+                             psutil.virtual_memory().total)
         finally:
             warnings.resetwarnings()
 
@@ -614,7 +615,8 @@ class TestSystemAPIs(unittest.TestCase):
         warnings.filterwarnings("ignore")
         p = psutil.Process(os.getpid())
         try:
-            self.assertEqual(psutil.total_virtmem(), psutil.swap_memory().total)
+            self.assertEqual(psutil.total_virtmem(),
+                             psutil.swap_memory().total)
             self.assertEqual(p.nice, p.get_nice())
         finally:
             warnings.resetwarnings()
@@ -692,7 +694,8 @@ class TestSystemAPIs(unittest.TestCase):
             sys.stdout = stdout
 
     def test_cpu_count(self):
-        self.assertEqual(psutil.cpu_count(), len(psutil.cpu_times(percpu=True)))
+        self.assertEqual(psutil.cpu_count(),
+                         len(psutil.cpu_times(percpu=True)))
         self.assertGreaterEqual(psutil.cpu_count(), 1)
 
     def test_sys_cpu_times(self):
@@ -752,8 +755,8 @@ class TestSystemAPIs(unittest.TestCase):
                     for field in newcpu._fields:
                         new_t = getattr(newcpu, field)
                         last_t = getattr(lastcpu, field)
-                        self.assertGreaterEqual(new_t, last_t,
-                                                msg="%s %s" % (lastcpu, newcpu))
+                        self.assertGreaterEqual(
+                            new_t, last_t, msg="%s %s" % (lastcpu, newcpu))
                 last = new
 
     def test_sys_per_cpu_times2(self):
@@ -873,7 +876,8 @@ class TestSystemAPIs(unittest.TestCase):
                 try:
                     os.stat(disk.mountpoint)
                 except OSError:
-                    # http://mail.python.org/pipermail/python-dev/2012-June/120787.html
+                    # http://mail.python.org/pipermail/python-dev/
+                    #     2012-June/120787.html
                     err = sys.exc_info()[1]
                     if err.errno not in (errno.EPERM, errno.EACCES):
                         raise
@@ -1067,8 +1071,8 @@ class TestProcess(unittest.TestCase):
         code += "cmd = ['%s', '-c', 'import time; time.sleep(2)'];" % PYTHON
         code += "sp = Popen(cmd, stdout=PIPE);"
         code += "sys.stdout.write(str(sp.pid));"
-        sproc = get_test_subprocess([PYTHON, "-c", code], stdout=subprocess.PIPE)
-
+        sproc = get_test_subprocess([PYTHON, "-c", code],
+                                    stdout=subprocess.PIPE)
         grandson_pid = int(sproc.stdout.read())
         grandson_proc = psutil.Process(grandson_pid)
         try:
@@ -1256,7 +1260,8 @@ class TestProcess(unittest.TestCase):
             value = getattr(psutil, name)
             if name in dir(resource):
                 self.assertEqual(value, getattr(resource, name))
-                self.assertEqual(p.get_rlimit(value), resource.getrlimit(value))
+                self.assertEqual(p.get_rlimit(value),
+                                 resource.getrlimit(value))
             else:
                 ret = p.get_rlimit(value)
                 self.assertEqual(len(ret), 2)
@@ -1463,7 +1468,8 @@ class TestProcess(unittest.TestCase):
                     first_nice = p.get_nice()
                     p.set_nice(1)
                     self.assertEqual(p.get_nice(), 1)
-                    # going back to previous nice value raises AccessDenied on OSX
+                    # going back to previous nice value raises
+                    # AccessDenied on OSX
                     if not OSX:
                         p.set_nice(0)
                         self.assertEqual(p.get_nice(), 0)
@@ -1635,14 +1641,15 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(len(cons), 1)
         self.assertEqual(cons[0].laddr[0], '::1')
 
-    @unittest.skipUnless(hasattr(socket, 'AF_UNIX'), 'AF_UNIX is not supported')
+    @unittest.skipUnless(hasattr(socket, 'AF_UNIX'),
+                         'AF_UNIX is not supported')
     def test_get_connections_unix(self):
         def check(type):
             safe_remove(TESTFN)
             sock = socket.socket(AF_UNIX, type)
             try:
                 sock.bind(TESTFN)
-                conn = psutil.Process(os.getpid()).get_connections(kind='unix')[0]
+                conn = psutil.Process().get_connections(kind='unix')[0]
                 check_connection(conn)
                 if conn.fd != -1:  # != sunos and windows
                     self.assertEqual(conn.fd, sock.fileno())
@@ -1890,8 +1897,8 @@ class TestProcess(unittest.TestCase):
         for name in dir(p):
             if name.startswith('_')\
                 or name in ('pid', 'send_signal', 'is_running', 'set_ionice',
-                            'wait', 'set_cpu_affinity', 'create_time', 'set_nice',
-                            'nice'):
+                            'wait', 'set_cpu_affinity', 'create_time', 'nice',
+                            'set_nice'):
                 continue
             try:
                 # if name == 'get_rlimit'
@@ -2021,7 +2028,8 @@ class TestProcess(unittest.TestCase):
         # psutil.__subproc instance doesn't get propertly freed.
         # Not sure what to do though.
         cmd = [PYTHON, "-c", "import time; time.sleep(2);"]
-        proc = psutil.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = psutil.Popen(cmd, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
         try:
             proc.name
             proc.stdin
@@ -2081,9 +2089,9 @@ class TestFetchAllProcesses(unittest.TestCase):
                             ret = attr
                         valid_procs += 1
                     except NotImplementedError:
-                        register_warning("%r was skipped because not "
-                                         "implemented" % (self.__class__.__name__ +
-                                                          '.test_' + name))
+                        msg = "%r was skipped because not implemented" % (
+                            self.__class__.__name__ + '.test_' + name)
+                        register_warning(msg)
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         err = sys.exc_info()[1]
                         self.assertEqual(err.pid, p.pid)
@@ -2267,8 +2275,9 @@ class TestFetchAllProcesses(unittest.TestCase):
                 if fname == 'path':
                     if not value.startswith('['):
                         assert os.path.isabs(nt.path), nt.path
-                        # commented as on Linux we might get '/foo/bar (deleted)'
-                        #assert os.path.exists(nt.path), nt.path
+                        # commented as on Linux we might get
+                        # '/foo/bar (deleted)'
+                        # assert os.path.exists(nt.path), nt.path
                 elif fname in ('addr', 'perms'):
                     self.assertTrue(value)
                 else:
@@ -2362,7 +2371,8 @@ class TestMisc(unittest.TestCase):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         self.assertIn(str(sproc.pid), str(p))
-        # python shows up as 'Python' in cmdline on OS X so test fails on OS X
+        # python shows up as 'Python' in cmdline on OS X so
+        # test fails on OS X
         if not OSX:
             self.assertIn(os.path.basename(PYTHON), str(p))
         sproc = get_test_subprocess()
