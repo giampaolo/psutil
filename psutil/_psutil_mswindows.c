@@ -1217,7 +1217,6 @@ win32_QueryDosDevice(PyObject *self, PyObject *args)
         TCHAR szDeviceName[3] = {d, TEXT(':'), TEXT('\0')};
         TCHAR szTarget[512] = {0};
         if (QueryDosDevice(szDeviceName, szTarget, 511) != 0) {
-            //_tprintf (TEXT("%c:\\   =>   %s\n"), d, szTarget);
             if (_tcscmp(lpDevicePath, szTarget) == 0) {
                 _stprintf(szBuff, TEXT("%c:"), d);
                 return Py_BuildValue("s", szBuff);
@@ -2368,7 +2367,7 @@ get_disk_io_counters(PyObject *self, PyObject *args)
         else {
             // XXX we might get here with ERROR_INSUFFICIENT_BUFFER when
             // compiling with mingw32; not sure what to do.
-            //return PyErr_SetFromWindowsErr(0);
+            // return PyErr_SetFromWindowsErr(0);
             ;;
         }
 

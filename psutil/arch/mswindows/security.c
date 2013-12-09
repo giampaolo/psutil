@@ -45,7 +45,7 @@ int HasSystemPrivilege(HANDLE hProcess) {
     DWORD dwRetval = 0;
     TCHAR privName[256];
     DWORD dwNameSize = 256;
-    //PTOKEN_PRIVILEGES tp = NULL;
+    // PTOKEN_PRIVILEGES tp = NULL;
     BYTE *pBuffer = NULL;
     TOKEN_PRIVILEGES *tp = NULL;
     HANDLE hToken = token_from_handle(hProcess);
@@ -65,7 +65,7 @@ int HasSystemPrivilege(HANDLE hProcess) {
     }
 
     // allocate buffer and call GetTokenInformation again
-    //tp = (PTOKEN_PRIVILEGES) GlobalAlloc(GPTR, dwSize);
+    // tp = (PTOKEN_PRIVILEGES) GlobalAlloc(GPTR, dwSize);
     pBuffer = (BYTE *) malloc(dwSize);
     if (pBuffer == NULL) {
         PyErr_NoMemory();
@@ -103,8 +103,7 @@ int HasSystemPrivilege(HANDLE hProcess) {
             free(pBuffer);
             return 1;
         }
-
-    } //for
+    }
 
     free(pBuffer);
     return 0;

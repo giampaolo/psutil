@@ -159,7 +159,6 @@ psutil_get_open_files(long pid, HANDLE processHandle)
 
     // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH
     if (!NT_SUCCESS(status)) {
-        //printf("NtQuerySystemInformation failed!\n");
         Py_DECREF(filesList);
         free(handleInfo);
         return NULL;
@@ -199,7 +198,6 @@ psutil_get_open_files(long pid, HANDLE processHandle)
                             0
                         )))
         {
-            //printf("[%#x] Error!\n", handle.Handle);
             continue;
         }
 
@@ -213,7 +211,6 @@ psutil_get_open_files(long pid, HANDLE processHandle)
                             NULL
                         )))
         {
-            //printf("[%#x] Error!\n", handle.Handle);
             free(objectTypeInfo);
             CloseHandle(dupHandle);
             continue;
@@ -265,7 +262,7 @@ psutil_get_open_files(long pid, HANDLE processHandle)
                ignore it */
             fileNameLength = objectName.Length / 2;
             if (wcscmp(objectTypeInfo->Name.Buffer, L"File") == 0) {
-                //printf("%.*S\n", objectName.Length / 2, objectName.Buffer);
+                // printf("%.*S\n", objectName.Length / 2, objectName.Buffer);
                 fileFromWchar = PyUnicode_FromWideChar(objectName.Buffer,
                                                        fileNameLength);
                 if (fileFromWchar == NULL)

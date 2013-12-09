@@ -913,8 +913,6 @@ get_process_connections(PyObject *self, PyObject *args)
         databuf.len = 0;
         databuf.buf = (char *)malloc((int)mibhdr->len);
         if (!databuf.buf) {
-            //perror("malloc");
-            //break;
             PyErr_NoMemory();
             goto error;
         }

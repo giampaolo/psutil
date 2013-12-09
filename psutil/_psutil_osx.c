@@ -404,7 +404,7 @@ get_process_memory_maps(PyObject *self, PyObject *args)
             Py_DECREF(py_tuple);
         }
 
-        //increment address for the next map/file
+        // increment address for the next map/file
         address += size;
     }
 

@@ -152,7 +152,7 @@ psutil_get_arg_list(long pid)
     PyObject *arg = NULL;
     PyObject *arglist = NULL;
 
-    //special case for PID 0 (kernel_task) where cmdline cannot be fetched
+    // special case for PID 0 (kernel_task) where cmdline cannot be fetched
     if (pid == 0) {
         return Py_BuildValue("[]");
     }
