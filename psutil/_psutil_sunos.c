@@ -250,7 +250,8 @@ get_swap_mem(PyObject *self, PyObject *args)
 // total/free swap mem: commented out as for some reason I can't
 // manage to get the same results shown by "swap -l", despite the
 // code below is exactly the same as:
-// http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/cmd/swap/swap.c
+// http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/
+//    cmd/swap/swap.c
 // We're going to parse "swap -l" output from Python (sigh!)
 
 /*
@@ -526,7 +527,8 @@ get_disk_io_counters(PyObject *self, PyObject *args)
                 );
                 if (!py_disk_info)
                     goto error;
-                if (PyDict_SetItemString(py_retdict, ksp->ks_name, py_disk_info))
+                if (PyDict_SetItemString(py_retdict, ksp->ks_name,
+                                         py_disk_info))
                     goto error;
                 Py_DECREF(py_disk_info);
             }
@@ -636,7 +638,8 @@ get_process_memory_maps(PyObject *self, PyObject *args)
                 stk_base_sz = status.pr_stkbase + status.pr_stksize;
                 brk_base_sz = status.pr_brkbase + status.pr_brksize;
 
-                if ((pr_addr_sz > status.pr_stkbase) && (p->pr_vaddr < stk_base_sz)) {
+                if ((pr_addr_sz > status.pr_stkbase) &&
+                        (p->pr_vaddr < stk_base_sz)) {
                     name = "[stack]";
                 }
                 else if ((p->pr_mflags & MA_ANON) && \
@@ -792,9 +795,11 @@ static int PSUTIL_CONN_NONE = 128;
  * Return TCP and UDP connections opened by process.
  *
  * Thanks to:
- * https://github.com/DavidGriffith/finx/blob/master/nxsensor-3.5.0-1/src/sysdeps/solaris.c
+ * https://github.com/DavidGriffith/finx/blob/master/
+ *     nxsensor-3.5.0-1/src/sysdeps/solaris.c
  * ...and:
- * https://hg.java.net/hg/solaris~on-src/file/tip/usr/src/cmd/cmd-inet/usr.bin/netstat/netstat.c
+ * https://hg.java.net/hg/solaris~on-src/file/tip/usr/src/cmd/
+ *     cmd-inet/usr.bin/netstat/netstat.c
  */
 static PyObject *
 get_process_connections(PyObject *self, PyObject *args)
@@ -962,7 +967,8 @@ get_process_connections(PyObject *self, PyObject *args)
         }
 #if defined(AF_INET6)
         // TCPv6
-        else if (mibhdr->level == MIB2_TCP6 && mibhdr->name == MIB2_TCP6_CONN) {
+        else if (mibhdr->level == MIB2_TCP6 && mibhdr->name == MIB2_TCP6_CONN)
+        {
             tp6 = (mib2_tcp6ConnEntry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_tcp6ConnEntry_t);
 
@@ -971,8 +977,10 @@ get_process_connections(PyObject *self, PyObject *args)
                 if (tp6->tcp6ConnCreationProcess != pid)
                     continue;
                 // construct local/remote addresses
-                inet_ntop(AF_INET6, &tp6->tcp6ConnLocalAddress, lip, sizeof(lip));
-                inet_ntop(AF_INET6, &tp6->tcp6ConnRemAddress, rip, sizeof(rip));
+                inet_ntop(AF_INET6, &tp6->tcp6ConnLocalAddress, lip,
+                          sizeof(lip));
+                inet_ntop(AF_INET6, &tp6->tcp6ConnRemAddress, rip,
+                          sizeof(rip));
                 lport = tp6->tcp6ConnLocalPort;
                 rport = tp6->tcp6ConnRemPort;
 
@@ -1003,7 +1011,8 @@ get_process_connections(PyObject *self, PyObject *args)
             }
         }
 #endif
-        else if (mibhdr->level == MIB2_UDP || mibhdr->level == MIB2_UDP_ENTRY) {
+        else if (mibhdr->level == MIB2_UDP || mibhdr->level == MIB2_UDP_ENTRY)
+        {
             ude = (mib2_udpEntry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_udpEntry_t);
             for (i = 0; i < num_ent; i++, ude++) {
@@ -1029,7 +1038,8 @@ get_process_connections(PyObject *self, PyObject *args)
             }
         }
 #if defined(AF_INET6)
-        else if (mibhdr->level == MIB2_UDP6 || mibhdr->level == MIB2_UDP6_ENTRY) {
+        else if (mibhdr->level == MIB2_UDP6 ||
+                    mibhdr->level == MIB2_UDP6_ENTRY) {
             ude6 = (mib2_udp6Entry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_udp6Entry_t);
             for (i = 0; i < num_ent; i++, ude6++) {
@@ -1115,7 +1125,8 @@ PsutilMethods[] =
      "Return info about a process thread"},
     {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
      "Return process memory mappings"},
-    {"get_process_num_ctx_switches", get_process_num_ctx_switches, METH_VARARGS,
+    {"get_process_num_ctx_switches", get_process_num_ctx_switches,
+     METH_VARARGS,
      "Return the number of context switches performed by process"},
     {"get_process_connections", get_process_connections, METH_VARARGS,
      "Return TCP and UDP connections opened by process."},
@@ -1213,8 +1224,10 @@ void init_psutil_sunos(void)
     PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
     PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
     PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
-    PyModule_AddIntConstant(module, "TCPS_IDLE", TCPS_IDLE);  // sunos specific
-    PyModule_AddIntConstant(module, "TCPS_BOUND", TCPS_BOUND);  // sunos specific
+    // sunos specific
+    PyModule_AddIntConstant(module, "TCPS_IDLE", TCPS_IDLE);
+    // sunos specific
+    PyModule_AddIntConstant(module, "TCPS_BOUND", TCPS_BOUND);
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
     if (module == NULL) {

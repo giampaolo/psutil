@@ -212,7 +212,6 @@ int UnsetSeDebug()
        ) {
         if (GetLastError() == ERROR_NO_TOKEN) {
             if (! ImpersonateSelf(SecurityImpersonation)) {
-                //Log2File("Error setting impersonation! [UnsetSeDebug()]", L_DEBUG);
                 return 0;
             }
 
@@ -220,16 +219,15 @@ int UnsetSeDebug()
                                  TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
                                  FALSE,
                                  &hToken)
-               ) {
-                //Log2File("Error Opening Thread Token! [UnsetSeDebug()]", L_DEBUG);
+               )
+            {
                 return 0;
             }
         }
     }
 
-    //now disable SeDebug
+    // now disable SeDebug
     if (! SetPrivilege(hToken, SE_DEBUG_NAME, FALSE)) {
-        //Log2File("Error unsetting SeDebug Privilege [SetPrivilege()]", L_WARN);
         return 0;
     }
 

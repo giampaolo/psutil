@@ -153,10 +153,11 @@ psutil_get_open_files(long pid, HANDLE processHandle)
                          NULL
                      )) == STATUS_INFO_LENGTH_MISMATCH)
     {
-        handleInfo = (PSYSTEM_HANDLE_INFORMATION)realloc(handleInfo, handleInfoSize *= 2);
+        handleInfo = (PSYSTEM_HANDLE_INFORMATION) \
+            realloc(handleInfo, handleInfoSize *= 2);
     }
 
-    /* NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH. */
+    // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH
     if (!NT_SUCCESS(status)) {
         //printf("NtQuerySystemInformation failed!\n");
         Py_DECREF(filesList);
@@ -270,9 +271,11 @@ psutil_get_open_files(long pid, HANDLE processHandle)
                 if (fileFromWchar == NULL)
                     goto error_py_fun;
 #if PY_MAJOR_VERSION >= 3
-                arg = Py_BuildValue("N", PyUnicode_AsUTF8String(fileFromWchar));
+                arg = Py_BuildValue("N",
+                                    PyUnicode_AsUTF8String(fileFromWchar));
 #else
-                arg = Py_BuildValue("N", PyUnicode_FromObject(fileFromWchar));
+                arg = Py_BuildValue("N",
+                                    PyUnicode_FromObject(fileFromWchar));
 #endif
                 if (!arg)
                     goto error_py_fun;

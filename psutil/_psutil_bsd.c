@@ -41,7 +41,7 @@
 #endif
 #include <devstat.h>      /* get io counters */
 #include <sys/vmmeter.h>  /* needed for vmtotal struct */
-#include <libutil.h>      /* process open files, shared libs (kinfo_getvmmap) */
+#include <libutil.h>      // process open files, shared libs (kinfo_getvmmap)
 #include <sys/mount.h>
 
 #include <net/if.h>       /* net io counters */
@@ -80,9 +80,7 @@ psutil_get_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
         return -1;
     }
 
-    /*
-     * sysctl stores 0 in the size if we can't find the process information.
-     */
+    // sysctl stores 0 in the size if we can't find the process information.
     if (size == 0) {
         NoSuchProcess();
         return -1;
@@ -108,7 +106,8 @@ get_pid_list(PyObject *self, PyObject *args)
         return NULL;
     }
     if (psutil_get_proc_list(&proclist, &num_processes) != 0) {
-        PyErr_SetString(PyExc_RuntimeError, "failed to retrieve process list.");
+        PyErr_SetString(PyExc_RuntimeError,
+                        "failed to retrieve process list.");
         goto error;
     }
 
@@ -233,8 +232,8 @@ get_process_cmdline(PyObject *self, PyObject *args)
     // get the commandline, defined in arch/bsd/process_info.c
     arglist = psutil_get_arg_list(pid);
 
-    // psutil_get_arg_list() returns NULL only if psutil_get_cmd_args failed with ESRCH
-    // (no process with that PID)
+    // psutil_get_arg_list() returns NULL only if psutil_get_cmd_args
+    // failed with ESRCH (no process with that PID)
     if (NULL == arglist) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
@@ -384,7 +383,8 @@ get_process_num_threads(PyObject *self, PyObject *args)
  * Retrieves all threads used by process returning a list of tuples
  * including thread id, user time and system time.
  * Thanks to Robert N. M. Watson:
- * http://fxr.googlebit.com/source/usr.bin/procstat/procstat_threads.c?v=8-CURRENT
+ * http://fxr.googlebit.com/source/usr.bin/procstat/
+ *     procstat_threads.c?v=8-CURRENT
  */
 static PyObject *
 get_process_threads(PyObject *self, PyObject *args)
@@ -404,9 +404,7 @@ get_process_threads(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
-    /*
-     * We need to re-query for thread information, so don't use *kipp.
-     */
+    // we need to re-query for thread information, so don't use *kipp
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID | KERN_PROC_INC_THREAD;
@@ -597,7 +595,8 @@ get_virtual_mem(PyObject *self, PyObject *args)
         goto error;
     if (sysctlbyname("vm.stats.vm.v_active_count", &active, &size, NULL, 0))
         goto error;
-    if (sysctlbyname("vm.stats.vm.v_inactive_count", &inactive, &size, NULL, 0))
+    if (sysctlbyname("vm.stats.vm.v_inactive_count",
+                     &inactive, &size, NULL, 0))
         goto error;
     if (sysctlbyname("vm.stats.vm.v_wire_count", &wired, &size, NULL, 0))
         goto error;
@@ -945,18 +944,22 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif)
             continue;
 
         if (kif->kf_sock_domain == AF_INET) {
-            if (!psutil_sockaddr_matches(AF_INET, inp->inp_lport, &inp->inp_laddr,
-                                         &kif->kf_sa_local))
+            if (!psutil_sockaddr_matches(
+                    AF_INET, inp->inp_lport, &inp->inp_laddr,
+                    &kif->kf_sa_local))
                 continue;
-            if (!psutil_sockaddr_matches(AF_INET, inp->inp_fport, &inp->inp_faddr,
-                                         &kif->kf_sa_peer))
+            if (!psutil_sockaddr_matches(
+                    AF_INET, inp->inp_fport, &inp->inp_faddr,
+                    &kif->kf_sa_peer))
                 continue;
         } else {
-            if (!psutil_sockaddr_matches(AF_INET6, inp->inp_lport, &inp->in6p_laddr,
-                                         &kif->kf_sa_local))
+            if (!psutil_sockaddr_matches(
+                    AF_INET6, inp->inp_lport, &inp->in6p_laddr,
+                    &kif->kf_sa_local))
                 continue;
-            if (!psutil_sockaddr_matches(AF_INET6, inp->inp_fport, &inp->in6p_faddr,
-                                         &kif->kf_sa_peer))
+            if (!psutil_sockaddr_matches(
+                    AF_INET6, inp->inp_fport, &inp->in6p_faddr,
+                    &kif->kf_sa_peer))
                 continue;
         }
 
@@ -1054,12 +1057,18 @@ get_process_connections(PyObject *self, PyObject *args)
                 }
 
                 // build addr and port
-                inet_ntop(kif->kf_sock_domain,
-                          psutil_sockaddr_addr(kif->kf_sock_domain, &kif->kf_sa_local),
-                          lip, sizeof(lip));
-                inet_ntop(kif->kf_sock_domain,
-                          psutil_sockaddr_addr(kif->kf_sock_domain, &kif->kf_sa_peer),
-                          rip, sizeof(rip));
+                inet_ntop(
+                    kif->kf_sock_domain,
+                    psutil_sockaddr_addr(kif->kf_sock_domain,
+                                         &kif->kf_sa_local),
+                    lip,
+                    sizeof(lip));
+                inet_ntop(
+                    kif->kf_sock_domain,
+                    psutil_sockaddr_addr(kif->kf_sock_domain,
+                                         &kif->kf_sa_peer),
+                    rip,
+                    sizeof(rip));
                 lport = htons(psutil_sockaddr_port(kif->kf_sock_domain,
                                                    &kif->kf_sa_local));
                 rport = htons(psutil_sockaddr_port(kif->kf_sock_domain,
@@ -1095,9 +1104,10 @@ get_process_connections(PyObject *self, PyObject *args)
                 struct sockaddr_un *sun;
 
                 sun = (struct sockaddr_un *)&kif->kf_sa_local;
-                snprintf(path, sizeof(path), "%.*s",
-                         (sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
-                         sun->sun_path);
+                snprintf(
+                    path, sizeof(path), "%.*s",
+                    (sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
+                    sun->sun_path);
 
                 tuple = Py_BuildValue("(iiisOi)",
                                       kif->kf_fd,
@@ -1209,6 +1219,7 @@ void remove_spaces(char *str) {
     while (*p1++ = *p2++);
 }
 
+
 /*
  * Return a list of tuples for every process memory maps.
  * 'procstat' cmdline utility has been used as an example.
@@ -1258,7 +1269,6 @@ get_process_memory_maps(PyObject *self, PyObject *args)
                 sizeof(perms));
         strlcat(perms, kve->kve_protection & KVME_PROT_EXEC ? "x" : "-",
                 sizeof(perms));
-
 
         if (strlen(kve->kve_path) == 0) {
             switch (kve->kve_type) {
@@ -1486,7 +1496,8 @@ get_net_io_counters(PyObject *self, PyObject *args)
             strncpy(ifc_name, sdl->sdl_data, sdl->sdl_nlen);
             ifc_name[sdl->sdl_nlen] = 0;
             // XXX: ignore usbus interfaces:
-            // http://lists.freebsd.org/pipermail/freebsd-current/2011-October/028752.html
+            // http://lists.freebsd.org/pipermail/freebsd-current/
+            //     2011-October/028752.html
             // 'ifconfig -a' doesn't show them, nor do we.
             if (strncmp(ifc_name, "usbus", 5) == 0) {
                 continue;
@@ -1706,7 +1717,8 @@ PsutilMethods[] =
      "Return extended memory info for a process as a Python tuple."},
     {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
      "Return number of threads used by process"},
-    {"get_process_num_ctx_switches", get_process_num_ctx_switches, METH_VARARGS,
+    {"get_process_num_ctx_switches", get_process_num_ctx_switches,
+     METH_VARARGS,
      "Return the number of context switches performed by process"},
     {"get_process_threads", get_process_threads, METH_VARARGS,
      "Return process threads"},

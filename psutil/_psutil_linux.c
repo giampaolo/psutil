@@ -6,7 +6,6 @@
  * Linux-specific functions.
  */
 
-
 #ifndef _GNU_SOURCE
     #define _GNU_SOURCE 1
 #endif
@@ -60,9 +59,9 @@ ioprio_set(int which, int who, int ioprio)
 #define IOPRIO_CLASS_SHIFT  13
 #define IOPRIO_PRIO_MASK  ((1UL << IOPRIO_CLASS_SHIFT) - 1)
 
-#define IOPRIO_PRIO_CLASS(mask)  ((mask) >> IOPRIO_CLASS_SHIFT)
-#define IOPRIO_PRIO_DATA(mask)  ((mask) & IOPRIO_PRIO_MASK)
-#define IOPRIO_PRIO_VALUE(class, data)  (((class) << IOPRIO_CLASS_SHIFT) | data)
+#define IOPRIO_PRIO_CLASS(mask) ((mask) >> IOPRIO_CLASS_SHIFT)
+#define IOPRIO_PRIO_DATA(mask) ((mask) & IOPRIO_PRIO_MASK)
+#define IOPRIO_PRIO_VALUE(class, data) (((class) << IOPRIO_CLASS_SHIFT) | data)
 
 
 /*

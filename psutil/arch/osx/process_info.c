@@ -3,8 +3,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Helper functions related to fetching process information. Used by _psutil_osx
- * module methods.
+ * Helper functions related to fetching process information.
+ * Used by _psutil_osx module methods.
  */
 
 
@@ -175,7 +175,8 @@ psutil_get_arg_list(long pid)
     mib[1] = KERN_PROCARGS2;
     mib[2] = pid;
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
-        if (EINVAL == errno) { // invalid == access denied OR nonexistent PID
+        if (EINVAL == errno) {
+            // EINVAL == access denied OR nonexistent PID
             if ( psutil_pid_exists(pid) ) {
                 AccessDenied();
             } else {
@@ -256,9 +257,7 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp)
         return -1;
     }
 
-    /*
-     * sysctl succeeds but len is zero, happens when process has gone away
-     */
+    // sysctl succeeds but len is zero, happens when process has gone away
     if (len == 0) {
         NoSuchProcess();
         return -1;

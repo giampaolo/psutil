@@ -59,7 +59,8 @@ get_system_boot_time(PyObject *self, PyObject *args)
     and 01-01-1601, from time_t the divide by 1e+7 to get to the same
     base granularity.
     */
-    ll = (((LONGLONG)(fileTime.dwHighDateTime)) << 32) + fileTime.dwLowDateTime;
+    ll = (((LONGLONG)(fileTime.dwHighDateTime)) << 32) \
+        + fileTime.dwLowDateTime;
     pt = (time_t)((ll - 116444736000000000ull) / 10000000ull);
 
     // XXX - By using GetTickCount() time will wrap around to zero if the
@@ -192,7 +193,8 @@ process_wait(PyObject *self, PyObject *args)
         return AccessDenied();
     }
 
-    hProcess = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION, FALSE, pid);
+    hProcess = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION,
+                           FALSE, pid);
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // no such process; we do not want to raise NSP but
@@ -270,16 +272,14 @@ get_process_cpu_times(PyObject *self, PyObject *args)
     CloseHandle(hProcess);
 
     /*
-    user and kernel times are represented as a FILETIME structure wich contains
-    a 64-bit value representing the number of 100-nanosecond intervals since
-    January 1, 1601 (UTC).
-    http://msdn.microsoft.com/en-us/library/ms724284(VS.85).aspx
-
-    To convert it into a float representing the seconds that the process has
-    executed in user/kernel mode I borrowed the code below from Python's
-    Modules/posixmodule.c
-    */
-
+     * User and kernel times are represented as a FILETIME structure
+     * wich contains a 64-bit value representing the number of
+     * 100-nanosecond intervals since January 1, 1601 (UTC):
+     * http://msdn.microsoft.com/en-us/library/ms724284(VS.85).aspx
+     * To convert it into a float representing the seconds that the
+     * process has executed in user/kernel mode I borrowed the code
+     * below from Python's Modules/posixmodule.c
+     */
     return Py_BuildValue(
        "(dd)",
        (double)(ftUser.dwHighDateTime * 429.4967296 + \
@@ -468,8 +468,9 @@ get_process_cmdline(PyObject *self, PyObject *args) {
 
     // XXX the assumptio below probably needs to go away
 
-    // May fail any of several ReadProcessMemory calls etc. and not indicate
-    // a real problem so we ignore any errors and just live without commandline
+    // May fail any of several ReadProcessMemory calls etc. and
+    // not indicate a real problem so we ignore any errors and
+    // just live without commandline.
     arglist = psutil_get_arg_list(pid);
     if ( NULL == arglist ) {
         // carry on anyway, clear any exceptions too
@@ -638,7 +639,7 @@ get_process_memory_info_2(PyObject *self, PyObject *args)
 #else
     return Py_BuildValue("(kIIIIIIIII)",
 #endif
-                         pfault_count, m1, m2, m3, m4, m5, m6, m7, m8, private);
+        pfault_count, m1, m2, m3, m4, m5, m6, m7, m8, private);
 }
 
 
@@ -747,15 +748,16 @@ get_system_per_cpu_times(PyObject *self, PyObject *args)
                             NULL)
                    )
                 {
-                    // computes system global times summing each processor value
+                    // computes system global times summing each
+                    // processor value
                     idle = user = kernel = 0;
                     for (i = 0; i < si.dwNumberOfProcessors; i++) {
                         arg = NULL;
-                        user = (float)((HI_T * sppi[i].UserTime.HighPart) + \
+                        user = (float)((HI_T * sppi[i].UserTime.HighPart) +
                                        (LO_T * sppi[i].UserTime.LowPart));
-                        idle = (float)((HI_T * sppi[i].IdleTime.HighPart) + \
+                        idle = (float)((HI_T * sppi[i].IdleTime.HighPart) +
                                        (LO_T * sppi[i].IdleTime.LowPart));
-                        kernel = (float)((HI_T * sppi[i].KernelTime.HighPart) + \
+                        kernel = (float)((HI_T * sppi[i].KernelTime.HighPart) +
                                          (LO_T * sppi[i].KernelTime.LowPart));
                         // kernel time includes idle time on windows
                         // we return only busy kernel time subtracting
@@ -844,12 +846,14 @@ get_process_cwd(PyObject *self, PyObject *args)
     // Read the currentDirectory UNICODE_STRING structure.
     // 0x24 refers to "CurrentDirectoryPath" of RTL_USER_PROCESS_PARAMETERS
     // structure, see:
-    // http://wj32.wordpress.com/2009/01/24/howto-get-the-command-line-of-processes/
+    // http://wj32.wordpress.com/2009/01/24/
+    //     howto-get-the-command-line-of-processes/
 #ifdef _WIN64
     if (!ReadProcessMemory(processHandle, (PCHAR)rtlUserProcParamsAddress + 56,
                            &currentDirectory, sizeof(currentDirectory), NULL))
 #else
-    if (!ReadProcessMemory(processHandle, (PCHAR)rtlUserProcParamsAddress + 0x24,
+    if (!ReadProcessMemory(processHandle,
+                           (PCHAR)rtlUserProcParamsAddress + 0x24,
                            &currentDirectory, sizeof(currentDirectory), NULL))
 #endif
     {
@@ -1118,22 +1122,22 @@ get_process_threads(PyObject *self, PyObject *args)
                 continue;
             }
 
-            rc = GetThreadTimes(hThread, &ftDummy, &ftDummy, &ftKernel, &ftUser);
+            rc = GetThreadTimes(hThread, &ftDummy, &ftDummy, &ftKernel,
+                                &ftUser);
             if (rc == 0) {
                 PyErr_SetFromWindowsErr(0);
                 goto error;
             }
 
             /*
-            user and kernel times are represented as a FILETIME structure
-            wich contains a 64-bit value representing the number of
-            100-nanosecond intervals since January 1, 1601 (UTC).
-            http://msdn.microsoft.com/en-us/library/ms724284(VS.85).aspx
-
-            To convert it into a float representing the seconds that the
-            process has executed in user/kernel mode I borrowed the code
-            below from Python's Modules/posixmodule.c
-            */
+             * User and kernel times are represented as a FILETIME structure
+             * wich contains a 64-bit value representing the number of
+             * 100-nanosecond intervals since January 1, 1601 (UTC):
+             * http://msdn.microsoft.com/en-us/library/ms724284(VS.85).aspx
+             * To convert it into a float representing the seconds that the
+             * process has executed in user/kernel mode I borrowed the code
+             * below from Python's Modules/posixmodule.c
+             */
             pyTuple = Py_BuildValue(
                 "kdd",
                 te32.th32ThreadID,
@@ -1311,8 +1315,8 @@ get_process_username(PyObject *self, PyObject *args)
         domainName = malloc(domainNameSize * sizeof(TCHAR));
         if (domainName == NULL)
             return PyErr_NoMemory();
-        if (!LookupAccountSid(NULL, user->User.Sid, name, &nameSize, domainName,
-                              &domainNameSize, &nameUse))
+        if (!LookupAccountSid(NULL, user->User.Sid, name, &nameSize,
+                              domainName, &domainNameSize, &nameUse))
         {
             free(name);
             free(domainName);
@@ -1640,8 +1644,8 @@ get_process_connections(PyObject *self, PyObject *args)
                     continue;
                 }
 
-                if (memcmp(tcp6Table->table[i].ucLocalAddr, null_address, 16) != 0 ||
-                        tcp6Table->table[i].dwLocalPort != 0)
+                if (memcmp(tcp6Table->table[i].ucLocalAddr, null_address, 16)
+                        != 0 || tcp6Table->table[i].dwLocalPort != 0)
                 {
                     struct in6_addr addr;
 
@@ -1662,7 +1666,8 @@ get_process_connections(PyObject *self, PyObject *args)
 
                 // On Windows <= XP, remote addr is filled even if socket
                 // is in LISTEN mode in which case we just ignore it.
-                if ((memcmp(tcp6Table->table[i].ucRemoteAddr, null_address, 16) != 0 ||
+                if ((memcmp(tcp6Table->table[i].ucRemoteAddr, null_address, 16)
+                        != 0 ||
                         tcp6Table->table[i].dwRemotePort != 0) &&
                         (tcp6Table->table[i].dwState != MIB_TCP_STATE_LISTEN))
                 {
@@ -1801,8 +1806,8 @@ get_process_connections(PyObject *self, PyObject *args)
                     continue;
                 }
 
-                if (memcmp(udp6Table->table[i].ucLocalAddr, null_address, 16) != 0 ||
-                        udp6Table->table[i].dwLocalPort != 0)
+                if (memcmp(udp6Table->table[i].ucLocalAddr, null_address, 16)
+                        != 0 || udp6Table->table[i].dwLocalPort != 0)
                 {
                     struct in6_addr addr;
 
@@ -1892,7 +1897,8 @@ set_process_priority(PyObject *self, PyObject *args)
     int priority;
     int retval;
     HANDLE hProcess;
-    DWORD dwDesiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
+    DWORD dwDesiredAccess = \
+        PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
     if (! PyArg_ParseTuple(args, "li", &pid, &priority)) {
         return NULL;
     }
@@ -2086,7 +2092,8 @@ set_process_cpu_affinity(PyObject *self, PyObject *args)
 {
     DWORD pid;
     HANDLE hProcess;
-    DWORD dwDesiredAccess = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
+    DWORD dwDesiredAccess = \
+        PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
     DWORD_PTR mask;
 
 #ifdef _WIN64
@@ -2227,7 +2234,7 @@ get_net_io_counters(PyObject *self, PyObject *args)
     } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (attempts < 3));
 
     if (dwRetVal != NO_ERROR) {
-        PyErr_SetString(PyExc_RuntimeError,  "GetAdaptersAddresses() failed.");
+        PyErr_SetString(PyExc_RuntimeError, "GetAdaptersAddresses() failed.");
         goto error;
     }
 
@@ -2351,8 +2358,11 @@ get_disk_io_counters(PyObject *self, PyObject *args)
                 (diskPerformance.WriteTime.QuadPart * 10) / 1000);
             if (!py_disk_info)
                 goto error;
-            if (PyDict_SetItemString(py_retdict, szDeviceDisplay, py_disk_info))
+            if (PyDict_SetItemString(py_retdict, szDeviceDisplay,
+                                     py_disk_info))
+            {
                 goto error;
+            }
             Py_XDECREF(py_disk_info);
         }
         else {
@@ -2462,14 +2472,15 @@ get_disk_partitions(PyObject *self, PyObject *args)
             }
             // floppy disk: skip it by default as it introduces a
             // considerable slowdown.
-            if ((type == DRIVE_REMOVABLE) && (strcmp(drive_letter, "A:\\") == 0)) {
+            if ((type == DRIVE_REMOVABLE) &&
+                    (strcmp(drive_letter, "A:\\")  == 0)) {
                 goto next;
             }
         }
 
-        ret = GetVolumeInformation(drive_letter, NULL, _ARRAYSIZE(drive_letter),
-                                   NULL, NULL, &pflags, fs_type,
-                                   _ARRAYSIZE(fs_type));
+        ret = GetVolumeInformation(
+            drive_letter, NULL, _ARRAYSIZE(drive_letter),
+            NULL, NULL, &pflags, fs_type, _ARRAYSIZE(fs_type));
         if (ret == 0) {
             // We might get here in case of a floppy hard drive, in
             // which case the error is (21, "device not ready").
@@ -2495,11 +2506,12 @@ get_disk_partitions(PyObject *self, PyObject *args)
         }
         strcat(opts, get_drive_type(type));
 
-        py_tuple = Py_BuildValue("(ssss)",
-                                 drive_letter,
-                                 drive_letter,
-                                 fs_type,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
-                                 opts);
+        py_tuple = Py_BuildValue(
+            "(ssss)",
+            drive_letter,
+            drive_letter,
+            fs_type,  // either FAT, FAT32, NTFS, HPFS, CDFS, UDF or NWFS
+            opts);
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
@@ -2635,7 +2647,8 @@ get_system_users(PyObject *self, PyObject *args)
         }
 
         unix_time = ((LONGLONG)station_info.ConnectTime.dwHighDateTime) << 32;
-        unix_time += station_info.ConnectTime.dwLowDateTime - 116444736000000000LL;
+        unix_time += \
+            station_info.ConnectTime.dwLowDateTime - 116444736000000000LL;
         unix_time /= 10000000;
 
         py_tuple = Py_BuildValue("sOd", buffer_user, py_address,
@@ -2958,7 +2971,8 @@ PsutilMethods[] =
      "Return True if one of the process threads is in a suspended state"},
     {"get_process_num_handles", get_process_num_handles, METH_VARARGS,
      "Return the number of handles opened by process."},
-    {"get_process_num_ctx_switches", get_process_num_ctx_switches, METH_VARARGS,
+    {"get_process_num_ctx_switches", get_process_num_ctx_switches,
+     METH_VARARGS,
      "Return the number of context switches performed by process."},
     {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
      "Return a list of process's memory mappings"},

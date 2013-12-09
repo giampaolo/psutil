@@ -82,7 +82,8 @@ get_pid_list(PyObject *self, PyObject *args)
         return NULL;
 
     if (psutil_get_proc_list(&proclist, &num_processes) != 0) {
-        PyErr_SetString(PyExc_RuntimeError, "failed to retrieve process list.");
+        PyErr_SetString(PyExc_RuntimeError,
+                        "failed to retrieve process list.");
         goto error;
     }
 
@@ -175,6 +176,7 @@ get_process_exe(PyObject *self, PyObject *args)
     }
     return Py_BuildValue("s", buf);
 }
+
 
 /*
  * Return process cmdline as a Python list of cmdline arguments.
@@ -502,9 +504,8 @@ get_process_memory_info(PyObject *self, PyObject *args)
     // Note: determining other memory stats on OSX is a mess:
     // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
     // I just give up...
-    //struct proc_regioninfo pri;
-    //psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, &pri, sizeof(pri))
-
+    // struct proc_regioninfo pri;
+    // psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, &pri, sizeof(pri))
     return Py_BuildValue(
         "(KKkk)",
         pti.pti_resident_size,  // resident memory size (rss)
@@ -641,10 +642,12 @@ get_system_cpu_times(PyObject *self, PyObject *args)
     host_cpu_load_info_data_t r_load;
 
     mach_port_t host_port = mach_host_self();
-    error = host_statistics(host_port, HOST_CPU_LOAD_INFO, (host_info_t)&r_load, &count);
+    error = host_statistics(host_port, HOST_CPU_LOAD_INFO,
+                            (host_info_t)&r_load, &count);
     if (error != KERN_SUCCESS) {
         return PyErr_Format(PyExc_RuntimeError,
-                            "Error in host_statistics(): %s", mach_error_string(error));
+                            "Error in host_statistics(): %s",
+                            mach_error_string(error));
     }
     mach_port_deallocate(mach_task_self(), host_port);
 
@@ -928,7 +931,8 @@ get_process_threads(PyObject *self, PyObject *args)
     }
 
     info_count = TASK_BASIC_INFO_COUNT;
-    err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info, &info_count);
+    err = task_info(task, TASK_BASIC_INFO, (task_info_t)&tasks_info,
+                    &info_count);
     if (err != KERN_SUCCESS) {
         // errcode 4 is "invalid argument" (access denied)
         if (err == 4) {
@@ -936,7 +940,8 @@ get_process_threads(PyObject *self, PyObject *args)
         }
         else {
             // otherwise throw a runtime error with appropriate error code
-            PyErr_Format(PyExc_RuntimeError, "task_info(TASK_BASIC_INFO) failed");
+            PyErr_Format(PyExc_RuntimeError,
+                         "task_info(TASK_BASIC_INFO) failed");
         }
         goto error;
     }
@@ -953,7 +958,8 @@ get_process_threads(PyObject *self, PyObject *args)
         kr = thread_info(thread_list[j], THREAD_BASIC_INFO,
                          (thread_info_t)thinfo_basic, &thread_info_count);
         if (kr != KERN_SUCCESS) {
-            PyErr_Format(PyExc_RuntimeError, "thread_info() with flag THREAD_BASIC_INFO failed");
+            PyErr_Format(PyExc_RuntimeError,
+                         "thread_info() with flag THREAD_BASIC_INFO failed");
             goto error;
         }
 
@@ -1029,7 +1035,8 @@ get_process_open_files(PyObject *self, PyObject *args)
     pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
     if (pidinfo_result <= 0) {
         // may be be ignored later if errno != 0
-        PyErr_Format(PyExc_RuntimeError, "proc_pidinfo(PROC_PIDLISTFDS) failed");
+        PyErr_Format(PyExc_RuntimeError,
+                     "proc_pidinfo(PROC_PIDLISTFDS) failed");
         goto error;
     }
 
@@ -1042,7 +1049,8 @@ get_process_open_files(PyObject *self, PyObject *args)
                                   pidinfo_result);
     if (pidinfo_result <= 0) {
         // may be be ignored later if errno != 0
-        PyErr_Format(PyExc_RuntimeError, "proc_pidinfo(PROC_PIDLISTFDS) failed");
+        PyErr_Format(PyExc_RuntimeError,
+                     "proc_pidinfo(PROC_PIDLISTFDS) failed");
         goto error;
     }
 
@@ -1074,7 +1082,8 @@ get_process_open_files(PyObject *self, PyObject *args)
             }
             if (nb < sizeof(vi)) {
                 PyErr_Format(PyExc_RuntimeError,
-                             "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed (buffer mismatch)");
+                             "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed "
+                             "(buffer mismatch)");
                 goto error;
             }
             // --- /errors checking
@@ -1187,8 +1196,8 @@ get_process_connections(PyObject *self, PyObject *args)
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET)
         {
-            nb = proc_pidfdinfo(pid, fdp_pointer->proc_fd, PROC_PIDFDSOCKETINFO,
-                                &si, sizeof(si));
+            nb = proc_pidfdinfo(pid, fdp_pointer->proc_fd,
+                                PROC_PIDFDSOCKETINFO, &si, sizeof(si));
 
             // --- errors checking
             if (nb <= 0) {
@@ -1200,14 +1209,16 @@ get_process_connections(PyObject *self, PyObject *args)
                     PyErr_SetFromErrno(PyExc_OSError);
                 }
                 else {
-                    PyErr_Format(PyExc_RuntimeError,
-                                 "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
+                    PyErr_Format(
+                        PyExc_RuntimeError,
+                        "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
                 }
                 goto error;
             }
             if (nb < sizeof(si)) {
                 PyErr_Format(PyExc_RuntimeError,
-                             "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed (buffer mismatch)");
+                             "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed "
+                             "(buffer mismatch)");
                 goto error;
             }
             // --- /errors checking
@@ -1487,7 +1498,8 @@ get_disk_io_counters(PyObject *self, PyObject *args)
     if (IOServiceGetMatchingServices(kIOMasterPortDefault,
                                      IOServiceMatching(kIOMediaClass),
                                      &disk_list) != kIOReturnSuccess) {
-        PyErr_SetString(PyExc_RuntimeError, "Unable to get the list of disks.");
+        PyErr_SetString(PyExc_RuntimeError,
+                        "unable to get the list of disks.");
         goto error;
     }
 
@@ -1498,8 +1510,10 @@ get_disk_io_counters(PyObject *self, PyObject *args)
         props_dict = NULL;
         stats_dict = NULL;
 
-        if (IORegistryEntryGetParentEntry(disk, kIOServicePlane, &parent) != kIOReturnSuccess) {
-            PyErr_SetString(PyExc_RuntimeError, "Unable to get the disk's parent.");
+        if (IORegistryEntryGetParentEntry(disk, kIOServicePlane, &parent)
+                != kIOReturnSuccess) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "unable to get the disk's parent.");
             IOObjectRelease(disk);
             goto error;
         }
@@ -1513,7 +1527,7 @@ get_disk_io_counters(PyObject *self, PyObject *args)
                 ) != kIOReturnSuccess)
             {
                 PyErr_SetString(PyExc_RuntimeError,
-                                "Unable to get the parent's properties.");
+                                "unable to get the parent's properties.");
                 IOObjectRelease(disk);
                 IOObjectRelease(parent);
                 goto error;
@@ -1527,7 +1541,7 @@ get_disk_io_counters(PyObject *self, PyObject *args)
                 ) != kIOReturnSuccess)
             {
                 PyErr_SetString(PyExc_RuntimeError,
-                                "Unable to get the disk properties.");
+                                "unable to get the disk properties.");
                 CFRelease(props_dict);
                 IOObjectRelease(disk);
                 IOObjectRelease(parent);
@@ -1536,7 +1550,7 @@ get_disk_io_counters(PyObject *self, PyObject *args)
 
             const int kMaxDiskNameSize = 64;
             CFStringRef disk_name_ref = (CFStringRef)CFDictionaryGetValue(
-                                            parent_dict, CFSTR(kIOBSDNameKey));
+                parent_dict, CFSTR(kIOBSDNameKey));
             char disk_name[kMaxDiskNameSize];
 
             CFStringGetCString(disk_name_ref,
@@ -1548,7 +1562,8 @@ get_disk_io_counters(PyObject *self, PyObject *args)
                 props_dict, CFSTR(kIOBlockStorageDriverStatisticsKey));
 
             if (stats_dict == NULL) {
-                PyErr_SetString(PyExc_RuntimeError, "Unable to get disk stats.");
+                PyErr_SetString(PyExc_RuntimeError,
+                                "Unable to get disk stats.");
                 goto error;
             }
 
@@ -1562,42 +1577,43 @@ get_disk_io_counters(PyObject *self, PyObject *args)
 
             /* Get disk reads/writes */
             if ((number = (CFNumberRef)CFDictionaryGetValue(
-                              stats_dict,
-                              CFSTR(kIOBlockStorageDriverStatisticsReadsKey))))
+                    stats_dict,
+                    CFSTR(kIOBlockStorageDriverStatisticsReadsKey))))
             {
                 CFNumberGetValue(number, kCFNumberSInt64Type, &reads);
             }
             if ((number = (CFNumberRef)CFDictionaryGetValue(
-                              stats_dict,
-                              CFSTR(kIOBlockStorageDriverStatisticsWritesKey))))
+                    stats_dict,
+                    CFSTR(kIOBlockStorageDriverStatisticsWritesKey))))
             {
                 CFNumberGetValue(number, kCFNumberSInt64Type, &writes);
             }
 
             /* Get disk bytes read/written */
             if ((number = (CFNumberRef)CFDictionaryGetValue(
-                              stats_dict,
-                              CFSTR(kIOBlockStorageDriverStatisticsBytesReadKey))))
+                    stats_dict,
+                    CFSTR(kIOBlockStorageDriverStatisticsBytesReadKey))))
             {
                 CFNumberGetValue(number, kCFNumberSInt64Type, &read_bytes);
             }
             if ((number = (CFNumberRef)CFDictionaryGetValue(
-                              stats_dict,
-                              CFSTR(kIOBlockStorageDriverStatisticsBytesWrittenKey))))
+                    stats_dict,
+                    CFSTR(kIOBlockStorageDriverStatisticsBytesWrittenKey))))
             {
                 CFNumberGetValue(number, kCFNumberSInt64Type, &write_bytes);
             }
 
             /* Get disk time spent reading/writing (nanoseconds) */
             if ((number = (CFNumberRef)CFDictionaryGetValue(
-                              stats_dict,
-                              CFSTR(kIOBlockStorageDriverStatisticsTotalReadTimeKey))))
+                    stats_dict,
+                    CFSTR(kIOBlockStorageDriverStatisticsTotalReadTimeKey))))
             {
                 CFNumberGetValue(number, kCFNumberSInt64Type, &read_time);
             }
             if ((number = (CFNumberRef)CFDictionaryGetValue(
-                              stats_dict,
-                              CFSTR(kIOBlockStorageDriverStatisticsTotalWriteTimeKey)))) {
+                    stats_dict,
+                    CFSTR(kIOBlockStorageDriverStatisticsTotalWriteTimeKey))))
+            {
                 CFNumberGetValue(number, kCFNumberSInt64Type, &write_time);
             }
 
@@ -1717,7 +1733,8 @@ PsutilMethods[] =
      "Return files opened by process as a list of tuples"},
     {"get_process_num_fds", get_process_num_fds, METH_VARARGS,
      "Return the number of fds opened by process."},
-    {"get_process_num_ctx_switches", get_process_num_ctx_switches, METH_VARARGS,
+    {"get_process_num_ctx_switches", get_process_num_ctx_switches,
+     METH_VARARGS,
      "Return the number of context switches performed by process"},
     {"get_process_connections", get_process_connections, METH_VARARGS,
      "Get process TCP and UDP connections as a list of tuples"},
