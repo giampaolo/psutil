@@ -24,31 +24,31 @@
 #include <net/route.h>
 
 #include <sys/socket.h>
-#include <sys/socketvar.h>    /* for struct xsocket */
-/* for xinpcb struct */
+#include <sys/socketvar.h>    // for struct xsocket
+// for xinpcb struct
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
-#include <netinet/tcp_var.h>   /* for struct xtcpcb */
-#include <netinet/tcp_fsm.h>   /* for TCP connection states */
-#include <arpa/inet.h>         /* for inet_ntop() */
+#include <netinet/tcp_var.h>   // for struct xtcpcb
+#include <netinet/tcp_fsm.h>   // for TCP connection states
+#include <arpa/inet.h>         // for inet_ntop()
 
 #if __FreeBSD_version < 900000
-#include <utmp.h>         /* system users */
+#include <utmp.h>         // system users
 #else
 #include <utmpx.h>
 #endif
-#include <devstat.h>      /* get io counters */
-#include <sys/vmmeter.h>  /* needed for vmtotal struct */
+#include <devstat.h>      // get io counters
+#include <sys/vmmeter.h>  // needed for vmtotal struct
 #include <libutil.h>      // process open files, shared libs (kinfo_getvmmap)
 #include <sys/mount.h>
 
-#include <net/if.h>       /* net io counters */
+#include <net/if.h>       // net io counters
 #include <net/if_dl.h>
 #include <net/route.h>
 
-#include <netinet/in.h>   /* process open files/connections */
+#include <netinet/in.h>   // process open files/connections
 #include <sys/un.h>
 
 #include "_psutil_bsd.h"
@@ -144,7 +144,7 @@ error:
 static PyObject *
 get_system_boot_time(PyObject *self, PyObject *args)
 {
-    /* fetch sysctl "kern.boottime" */
+    // fetch sysctl "kern.boottime"
     static int request[2] = { CTL_KERN, KERN_BOOTTIME };
     struct timeval boottime;
     size_t len = sizeof(boottime);
@@ -846,7 +846,7 @@ error:
 }
 
 
-/* The tcplist fetching and walking is borrowed from netstat/inet.c. */
+// The tcplist fetching and walking is borrowed from netstat/inet.c.
 static char *
 psutil_fetch_tcplist(void)
 {

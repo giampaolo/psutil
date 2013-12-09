@@ -1264,7 +1264,7 @@ get_process_username(PyObject *self, PyObject *args)
 
     CloseHandle(processHandle);
 
-    /* Get the user SID. */
+    // Get the user SID.
 
     bufferSize = 0x100;
     user = malloc(bufferSize);
@@ -1489,7 +1489,7 @@ get_process_connections(PyObject *self, PyObject *args)
         return NoSuchProcess();
     }
 
-    /* Import some functions. */
+    // Import some functions.
     {
         HMODULE ntdll;
         HMODULE iphlpapi;
@@ -1523,7 +1523,7 @@ get_process_connections(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    /* TCP IPv4 */
+    // TCP IPv4
 
     if ((PySequence_Contains(af_filter, _AF_INET) == 1) &&
             (PySequence_Contains(type_filter, _SOCK_STREAM) == 1))
@@ -1613,7 +1613,7 @@ get_process_connections(PyObject *self, PyObject *args)
         free(table);
     }
 
-    /* TCP IPv6 */
+    // TCP IPv6
 
     if ((PySequence_Contains(af_filter, _AF_INET6) == 1) &&
             (PySequence_Contains(type_filter, _SOCK_STREAM) == 1))
@@ -1706,7 +1706,7 @@ get_process_connections(PyObject *self, PyObject *args)
         free(table);
     }
 
-    /* UDP IPv4 */
+    // UDP IPv4
 
     if ((PySequence_Contains(af_filter, _AF_INET) == 1) &&
             (PySequence_Contains(type_filter, _SOCK_DGRAM) == 1))
@@ -1775,7 +1775,7 @@ get_process_connections(PyObject *self, PyObject *args)
         free(table);
     }
 
-    /* UDP IPv6 */
+    // UDP IPv6
 
     if ((PySequence_Contains(af_filter, _AF_INET6) == 1) &&
             (PySequence_Contains(type_filter, _SOCK_DGRAM) == 1))

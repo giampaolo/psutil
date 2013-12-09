@@ -734,7 +734,7 @@ error:
 static PyObject *
 get_system_boot_time(PyObject *self, PyObject *args)
 {
-    /* fetch sysctl "kern.boottime" */
+    // fetch sysctl "kern.boottime"
     static int request[2] = { CTL_KERN, KERN_BOOTTIME };
     struct timeval result;
     size_t result_len = sizeof result;
@@ -1494,7 +1494,7 @@ get_disk_io_counters(PyObject *self, PyObject *args)
     if (py_retdict == NULL)
         return NULL;
 
-    /* Get list of disks */
+    // Get list of disks
     if (IOServiceGetMatchingServices(kIOMasterPortDefault,
                                      IOServiceMatching(kIOMediaClass),
                                      &disk_list) != kIOReturnSuccess) {
@@ -1503,7 +1503,7 @@ get_disk_io_counters(PyObject *self, PyObject *args)
         goto error;
     }
 
-    /* Iterate over disks */
+    // Iterate over disks
     while ((disk = IOIteratorNext(disk_list)) != 0) {
         py_disk_info = NULL;
         parent_dict = NULL;
@@ -1575,7 +1575,7 @@ get_disk_io_counters(PyObject *self, PyObject *args)
             int64_t read_time = 0;
             int64_t write_time = 0;
 
-            /* Get disk reads/writes */
+            // Get disk reads/writes
             if ((number = (CFNumberRef)CFDictionaryGetValue(
                     stats_dict,
                     CFSTR(kIOBlockStorageDriverStatisticsReadsKey))))
@@ -1589,7 +1589,7 @@ get_disk_io_counters(PyObject *self, PyObject *args)
                 CFNumberGetValue(number, kCFNumberSInt64Type, &writes);
             }
 
-            /* Get disk bytes read/written */
+            // Get disk bytes read/written
             if ((number = (CFNumberRef)CFDictionaryGetValue(
                     stats_dict,
                     CFSTR(kIOBlockStorageDriverStatisticsBytesReadKey))))
@@ -1603,7 +1603,7 @@ get_disk_io_counters(PyObject *self, PyObject *args)
                 CFNumberGetValue(number, kCFNumberSInt64Type, &write_bytes);
             }
 
-            /* Get disk time spent reading/writing (nanoseconds) */
+            // Get disk time spent reading/writing (nanoseconds)
             if ((number = (CFNumberRef)CFDictionaryGetValue(
                     stats_dict,
                     CFSTR(kIOBlockStorageDriverStatisticsTotalReadTimeKey))))

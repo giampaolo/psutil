@@ -46,7 +46,7 @@ psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess)
         return NULL;
     }
 
-    /* make sure the process is running */
+    // make sure the process is running
     GetExitCodeProcess(hProcess, &processExitCode);
     if (processExitCode == 0) {
         NoSuchProcess();
@@ -85,7 +85,7 @@ psutil_get_peb_address(HANDLE ProcessHandle)
 
 DWORD *
 psutil_get_pids(DWORD *numberOfReturnedPIDs) {
-    /* Win32 SDK says the only way to know if our process array
+    // Win32 SDK says the only way to know if our process array
      * wasn't large enough is to check the returned size and make
      * sure that it doesn't match the size of the array.
      * If it does we allocate a larger array and try again */
@@ -241,7 +241,7 @@ psutil_get_arg_list(long pid)
 
     pebAddress = psutil_get_peb_address(hProcess);
 
-    /* get the address of ProcessParameters */
+    // get the address of ProcessParameters
 #ifdef _WIN64
     if (!ReadProcessMemory(hProcess, (PCHAR)pebAddress + 32,
                            &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
@@ -255,7 +255,7 @@ psutil_get_arg_list(long pid)
         goto error;
     }
 
-    /* read the CommandLine UNICODE_STRING structure */
+    // read the CommandLine UNICODE_STRING structure
 #ifdef _WIN64
     if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 112,
                            &commandLine, sizeof(commandLine), NULL))
@@ -270,14 +270,14 @@ psutil_get_arg_list(long pid)
     }
 
 
-    /* allocate memory to hold the command line */
+    // allocate memory to hold the command line
     commandLineContents = (WCHAR *)malloc(commandLine.Length + 1);
     if (commandLineContents == NULL) {
         PyErr_NoMemory();
         goto error;
     }
 
-    /* read the command line */
+    // read the command line
     if (!ReadProcessMemory(hProcess, commandLine.Buffer,
                            commandLineContents, commandLine.Length, NULL))
     {

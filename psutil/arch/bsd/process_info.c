@@ -141,7 +141,7 @@ char
     *pathsize = size;
     if (sysctl(mib, 4, path, &size, NULL, 0) == -1) {
         free(path);
-        return NULL;       /* Insufficient privileges */
+        return NULL;       // Insufficient privileges
     }
 
     return path;
@@ -168,7 +168,7 @@ char
     size_t size = sizeof(argmax);
     char *procargs = NULL;
 
-    /* Get the maximum process arguments size. */
+    // Get the maximum process arguments size.
     mib[0] = CTL_KERN;
     mib[1] = KERN_ARGMAX;
 
@@ -176,7 +176,7 @@ char
     if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1)
         return NULL;
 
-    /* Allocate space for the arguments. */
+    // Allocate space for the arguments.
     procargs = (char *)malloc(argmax);
     if (procargs == NULL) {
         PyErr_NoMemory();
@@ -194,7 +194,7 @@ char
     size = argmax;
     if (sysctl(mib, 4, procargs, &size, NULL, 0) == -1) {
         free(procargs);
-        return NULL;       /* Insufficient privileges */
+        return NULL;       // Insufficient privileges
     }
 
     // return string and set the length of arguments
@@ -203,7 +203,7 @@ char
 }
 
 
-/* returns the command line as a python list object */
+// returns the command line as a python list object
 PyObject *
 psutil_get_arg_list(long pid)
 {

@@ -11,7 +11,7 @@
 #include <Python.h>
 #include <assert.h>
 #include <errno.h>
-#include <limits.h>  /* for INT_MAX */
+#include <limits.h>  // for INT_MAX
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -59,12 +59,12 @@ psutil_pid_exists(long pid)
 int
 psutil_get_proc_list(kinfo_proc **procList, size_t *procCount)
 {
-    /* Declaring mib as const requires use of a cast since the
+    // Declaring mib as const requires use of a cast since the
      * sysctl prototype doesn't include the const modifier. */
     static const int mib3[3] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
     size_t           size, size2;
     void            *ptr;
-    int              err, lim = 8;  /* some limit */
+    int              err, lim = 8;  // some limit
 
     assert( procList != NULL);
     assert(*procList == NULL);
@@ -72,7 +72,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount)
 
     *procCount = 0;
 
-    /* We start by calling sysctl with ptr == NULL and size == 0.
+    // We start by calling sysctl with ptr == NULL and size == 0.
      * That will succeed, and set size to the appropriate length.
      * We then allocate a buffer of at least that size and call
      * sysctl with that buffer.  If that succeeds, we're done.
@@ -89,7 +89,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount)
             return errno;
         }
 
-        size2 = size + (size >> 3);  /* add some */
+        size2 = size + (size >> 3);  // add some
         if (size2 > size) {
             ptr = malloc(size2);
             if (ptr == NULL) {
@@ -122,7 +122,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount)
 }
 
 
-/* Read the maximum argument size for processes */
+// Read the maximum argument size for processes
 int
 psutil_get_argmax()
 {
@@ -137,7 +137,7 @@ psutil_get_argmax()
 }
 
 
-/* return process args as a python list */
+// return process args as a python list
 PyObject *
 psutil_get_arg_list(long pid)
 {
@@ -157,7 +157,7 @@ psutil_get_arg_list(long pid)
         return Py_BuildValue("[]");
     }
 
-    /* read argmax and allocate memory for argument space. */
+    // read argmax and allocate memory for argument space.
     argmax = psutil_get_argmax();
     if (! argmax) {
         PyErr_SetFromErrno(PyExc_OSError);
@@ -170,7 +170,7 @@ psutil_get_arg_list(long pid)
         goto error;
     }
 
-    /* read argument space */
+    // read argument space
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROCARGS2;
     mib[2] = pid;
@@ -187,7 +187,7 @@ psutil_get_arg_list(long pid)
     }
 
     arg_end = &procargs[argmax];
-    /* copy the number of arguments to nargs */
+    // copy the number of arguments to nargs
     memcpy(&nargs, procargs, sizeof(nargs));
 
     arg_ptr = procargs + sizeof(nargs);
@@ -206,7 +206,7 @@ psutil_get_arg_list(long pid)
         }
     }
 
-    /* iterate through arguments */
+    // iterate through arguments
     curr_arg = arg_ptr;
     arglist = Py_BuildValue("[]");
     if (!arglist)
