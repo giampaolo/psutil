@@ -22,6 +22,7 @@ NoSuchProcess(void) {
     return NULL;
 }
 
+
 /*
  * Set OSError(errno=EACCES, strerror="Permission denied") Python exception.
  */

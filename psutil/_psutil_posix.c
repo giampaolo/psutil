@@ -33,6 +33,7 @@ posix_getpriority(PyObject *self, PyObject *args)
     return Py_BuildValue("i", priority);
 }
 
+
 /*
  * Given a PID and a value change process priority.
  */

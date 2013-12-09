@@ -704,6 +704,7 @@ get_system_cpu_times(PyObject *self, PyObject *args)
                         );
 }
 
+
 /*
  * XXX
  * These functions are available on FreeBSD 8 only.
