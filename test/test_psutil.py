@@ -227,7 +227,7 @@ def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
     """
     raise_at = time.time() + timeout
     while 1:
-        if pid in psutil.get_pid_list():
+        if pid in psutil.get_pids():
             # give it one more iteration to allow full initialization
             time.sleep(0.01)
             return
@@ -576,6 +576,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertRaises(DeprecationWarning, getattr, psutil, 'BOOT_TIME')
             self.assertRaises(DeprecationWarning, getattr, psutil,
                               'TOTAL_PHYMEM')
+            self.assertRaises(DeprecationWarning, psutil.get_pid_list)
             self.assertRaises(DeprecationWarning, psutil.virtmem_usage)
             self.assertRaises(DeprecationWarning, psutil.used_phymem)
             self.assertRaises(DeprecationWarning, psutil.avail_phymem)
@@ -606,6 +607,7 @@ class TestSystemAPIs(unittest.TestCase):
         # check value against new APIs
         warnings.filterwarnings("ignore")
         try:
+            self.assertEqual(psutil.get_pid_list(), psutil.get_pids())
             self.assertEqual(psutil.NUM_CPUS, psutil.cpu_count())
             self.assertEqual(psutil.BOOT_TIME, psutil.get_boot_time())
             self.assertEqual(psutil.TOTAL_PHYMEM,
@@ -665,23 +667,23 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_pid_exists_2(self):
         reap_children()
-        pids = psutil.get_pid_list()
+        pids = psutil.get_pids()
         for pid in pids:
             try:
                 assert psutil.pid_exists(pid)
             except AssertionError:
                 # in case the process disappeared in meantime fail only
-                # if it is no longer in get_pid_list()
+                # if it is no longer in get_pids()
                 time.sleep(.1)
-                if pid in psutil.get_pid_list():
+                if pid in psutil.get_pids():
                     self.fail(pid)
         pids = range(max(pids) + 5000, max(pids) + 6000)
         for pid in pids:
             self.assertFalse(psutil.pid_exists(pid))
 
-    def test_get_pid_list(self):
+    def test_get_pids(self):
         plist = [x.pid for x in psutil.process_iter()]
-        pidlist = psutil.get_pid_list()
+        pidlist = psutil.get_pids()
         self.assertEqual(plist.sort(), pidlist.sort())
         # make sure every pid is unique
         self.assertEqual(len(pidlist), len(set(pidlist)))
@@ -1878,7 +1880,7 @@ class TestProcess(unittest.TestCase):
         d = p.as_dict(attrs=['exe', 'name'])
         self.assertEqual(sorted(d.keys()), ['exe', 'name'])
         #
-        p = psutil.Process(min(psutil.get_pid_list()))
+        p = psutil.Process(min(psutil.get_pids()))
         d = p.as_dict(attrs=['get_connections'], ad_value='foo')
         if not isinstance(d['connections'], list):
             self.assertEqual(d['connections'], 'foo')
@@ -2022,7 +2024,7 @@ class TestProcess(unittest.TestCase):
         except psutil.AccessDenied:
             pass
 
-        self.assertIn(0, psutil.get_pid_list())
+        self.assertIn(0, psutil.get_pids())
         self.assertTrue(psutil.pid_exists(0))
 
     def test_Popen(self):

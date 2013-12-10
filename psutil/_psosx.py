@@ -133,7 +133,7 @@ def get_system_users():
     return retlist
 
 
-get_pid_list = _psutil_osx.get_pid_list
+get_pids = _psutil_osx.get_pids
 pid_exists = _psposix.pid_exists
 get_disk_usage = _psposix.get_disk_usage
 net_io_counters = _psutil_osx.get_net_io_counters

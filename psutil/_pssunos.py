@@ -103,7 +103,7 @@ def swap_memory():
                           sin * PAGE_SIZE, sout * PAGE_SIZE)
 
 
-def get_pid_list():
+def get_pids():
     """Returns a list of PIDs currently running on the system."""
     return [int(x) for x in os.listdir('/proc') if x.isdigit()]
 

@@ -27,7 +27,7 @@ static PyObject* get_process_tty_nr(PyObject* self, PyObject* args);
 static PyObject* get_process_memory_maps(PyObject* self, PyObject* args);
 
 // --- system-related functions
-static PyObject* get_pid_list(PyObject* self, PyObject* args);
+static PyObject* get_pids(PyObject* self, PyObject* args);
 static PyObject* get_num_cpus(PyObject* self, PyObject* args);
 static PyObject* get_virtual_mem(PyObject* self, PyObject* args);
 static PyObject* get_swap_mem(PyObject* self, PyObject* args);

@@ -69,7 +69,7 @@ psutil_sys_vminfo(vm_statistics_data_t *vmstat)
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject *
-get_pid_list(PyObject *self, PyObject *args)
+get_pids(PyObject *self, PyObject *args)
 {
     kinfo_proc *proclist = NULL;
     kinfo_proc *orig_address = NULL;
@@ -1752,7 +1752,7 @@ PsutilMethods[] =
 
     // --- system-related functions
 
-    {"get_pid_list", get_pid_list, METH_VARARGS,
+    {"get_pids", get_pids, METH_VARARGS,
      "Returns a list of PIDs currently running on the system"},
     {"get_num_cpus", get_num_cpus, METH_VARARGS,
      "Return number of CPUs on the system"},

@@ -342,7 +342,7 @@ def get_system_users():
 
 # --- processes
 
-def get_pid_list():
+def get_pids():
     """Returns a list of PIDs currently running on the system."""
     pids = [int(x) for x in os.listdir('/proc') if x.isdigit()]
     return pids

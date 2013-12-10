@@ -95,7 +95,7 @@ pid_exists(PyObject *self, PyObject *args)
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject *
-get_pid_list(PyObject *self, PyObject *args)
+get_pids(PyObject *self, PyObject *args)
 {
     DWORD *proclist = NULL;
     DWORD numberOfReturnedPIDs;
@@ -2993,7 +2993,7 @@ PsutilMethods[] =
      "Alternative implementation"},
 
     // --- system-related functions
-    {"get_pid_list", get_pid_list, METH_VARARGS,
+    {"get_pids", get_pids, METH_VARARGS,
      "Returns a list of PIDs currently running on the system"},
     {"pid_exists", pid_exists, METH_VARARGS,
      "Determine if the process exists in the current process list."},

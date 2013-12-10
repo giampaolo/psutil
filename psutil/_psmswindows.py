@@ -164,7 +164,7 @@ def get_system_users():
     return retlist
 
 
-get_pid_list = _psutil_mswindows.get_pid_list
+get_pids = _psutil_mswindows.get_pids
 pid_exists = _psutil_mswindows.pid_exists
 net_io_counters = _psutil_mswindows.get_net_io_counters
 disk_io_counters = _psutil_mswindows.get_disk_io_counters

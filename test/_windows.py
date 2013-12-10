@@ -189,7 +189,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
             w = wmi.WMI().Win32_Process()
             wmi_pids = [x.ProcessId for x in w]
             wmi_pids.sort()
-            psutil_pids = psutil.get_pid_list()
+            psutil_pids = psutil.get_pids()
             psutil_pids.sort()
             if wmi_pids != psutil_pids:
                 difference = \
@@ -356,7 +356,7 @@ class TestDualProcessImplementation(unittest.TestCase):
     def test_zombies(self):
         # test that NPS is raised by the 2nd implementation in case a
         # process no longer exists
-        ZOMBIE_PID = max(psutil.get_pid_list()) + 5000
+        ZOMBIE_PID = max(psutil.get_pids()) + 5000
         for name, _ in self.fun_names:
             meth = wrap_exceptions(getattr(_psutil_mswindows, name))
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)

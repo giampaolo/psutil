@@ -152,7 +152,7 @@ class PosixSpecificTestCase(unittest.TestCase):
                 pids_ps.append(pid)
         # remove ps subprocess pid which is supposed to be dead in meantime
         pids_ps.remove(p.pid)
-        pids_psutil = psutil.get_pid_list()
+        pids_psutil = psutil.get_pids()
         pids_ps.sort()
         pids_psutil.sort()
 
