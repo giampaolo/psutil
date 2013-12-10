@@ -115,7 +115,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 char
 *psutil_get_cmd_path(long pid, size_t *pathsize)
 {
-    int  mib[4];
+    int mib[4];
     char *path;
     size_t size = 0;
 

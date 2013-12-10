@@ -19,6 +19,7 @@ import atexit
 import datetime
 import errno
 import os
+import select
 import shutil
 import signal
 import socket
@@ -32,7 +33,6 @@ import time
 import traceback
 import types
 import warnings
-import select
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
 try:
     import ast  # python >= 2.6

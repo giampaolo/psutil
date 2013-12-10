@@ -145,7 +145,7 @@ psutil_get_open_files(long pid, HANDLE processHandle)
     }
 
     // NtQuerySystemInformation won't give us the correct buffer size,
-       so we guess by doubling the buffer size. */
+    // so we guess by doubling the buffer size.
     while ((status = NtQuerySystemInformation(
                          SystemHandleInformation,
                          handleInfo,
@@ -179,7 +179,7 @@ psutil_get_open_files(long pid, HANDLE processHandle)
             continue;
 
         // Skip handles with the following access codes as the next call
-           to NtDuplicateObject() or NtQueryObject() might hang forever. */
+        // to NtDuplicateObject() or NtQueryObject() might hang forever.
         if ((handle.GrantedAccess == 0x0012019f)
                 || (handle.GrantedAccess == 0x001a019f)
                 || (handle.GrantedAccess == 0x00120189)

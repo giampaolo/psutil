@@ -360,7 +360,6 @@ get_process_num_ctx_switches(PyObject *self, PyObject *args)
 }
 
 
-
 /*
  * Return number of threads used by process as a Python integer.
  */
@@ -703,6 +702,7 @@ get_system_cpu_times(PyObject *self, PyObject *args)
                          (double)cpu_time[CP_INTR] / CLOCKS_PER_SEC
                         );
 }
+
 
 /*
  * XXX

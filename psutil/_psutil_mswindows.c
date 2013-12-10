@@ -39,7 +39,7 @@
 static PyObject *
 get_system_boot_time(PyObject *self, PyObject *args)
 {
-    double uptime;
+    double  uptime;
     time_t pt;
     FILETIME fileTime;
     long long ll;
@@ -2909,7 +2909,6 @@ error:
     CloseHandle(handle);
     return NULL;
 }
-
 
 
 // ------------------------ Python init ---------------------------

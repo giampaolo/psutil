@@ -637,7 +637,7 @@ get_swap_mem(PyObject *self, PyObject *args)
 static PyObject *
 get_system_cpu_times(PyObject *self, PyObject *args)
 {
-    mach_msg_type_number_t  count = HOST_CPU_LOAD_INFO_COUNT;
+    mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
     kern_return_t error;
     host_cpu_load_info_data_t r_load;
 

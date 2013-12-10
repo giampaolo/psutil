@@ -28,7 +28,7 @@ HANDLE
 psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess)
 {
     HANDLE hProcess;
-    DWORD  processExitCode = 0;
+    DWORD processExitCode = 0;
 
     if (pid == 0) {
         // otherwise we'd get NoSuchProcess

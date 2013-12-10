@@ -302,10 +302,10 @@ get_swap_mem(PyObject *self, PyObject *args)
     return Py_BuildValue("(kk)", t, f);
 */
 
-    kstat_ctl_t    *kc;
-    kstat_t        *k;
-    cpu_stat_t    *cpu;
-    int            cpu_count = 0;
+    kstat_ctl_t *kc;
+    kstat_t     *k;
+    cpu_stat_t  *cpu;
+    int         cpu_count = 0;
     int         flag = 0;
     uint_t      sin = 0;
     uint_t      sout = 0;

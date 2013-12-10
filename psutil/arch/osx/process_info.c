@@ -47,7 +47,6 @@ psutil_pid_exists(long pid)
 }
 
 
-
 /*
  * Returns a list of all BSD processes on the system.  This routine
  * allocates the list and puts it in *procList and a count of the
@@ -72,7 +71,8 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount)
 
     *procCount = 0;
 
-    /* We start by calling sysctl with ptr == NULL and size == 0.
+    /*
+     * We start by calling sysctl with ptr == NULL and size == 0.
      * That will succeed, and set size to the appropriate length.
      * We then allocate a buffer of at least that size and call
      * sysctl with that buffer.  If that succeeds, we're done.
