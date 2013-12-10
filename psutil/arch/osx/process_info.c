@@ -60,7 +60,7 @@ int
 psutil_get_proc_list(kinfo_proc **procList, size_t *procCount)
 {
     // Declaring mib as const requires use of a cast since the
-     * sysctl prototype doesn't include the const modifier. */
+    // sysctl prototype doesn't include the const modifier. 
     static const int mib3[3] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
     size_t           size, size2;
     void            *ptr;
@@ -72,7 +72,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount)
 
     *procCount = 0;
 
-    // We start by calling sysctl with ptr == NULL and size == 0.
+    /* We start by calling sysctl with ptr == NULL and size == 0.
      * That will succeed, and set size to the appropriate length.
      * We then allocate a buffer of at least that size and call
      * sysctl with that buffer.  If that succeeds, we're done.

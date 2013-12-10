@@ -1256,20 +1256,24 @@ get_process_connections(PyObject *self, PyObject *args)
             if ((family == AF_INET) || (family == AF_INET6)) {
                 if (family == AF_INET) {
                     inet_ntop(AF_INET,
-                              &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_46.i46a_addr4,
+                              &si.psi.soi_proto.pri_tcp.tcpsi_ini. \
+                                  insi_laddr.ina_46.i46a_addr4,
                               lip,
                               sizeof(lip));
                     inet_ntop(AF_INET,
-                              &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_46.i46a_addr4,
+                              &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr. \
+                                  ina_46.i46a_addr4,
                               rip,
                               sizeof(rip));
                 }
                 else {
                     inet_ntop(AF_INET6,
-                              &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_laddr.ina_6,
+                              &si.psi.soi_proto.pri_tcp.tcpsi_ini. \
+                                  insi_laddr.ina_6,
                               lip, sizeof(lip));
                     inet_ntop(AF_INET6,
-                              &si.psi.soi_proto.pri_tcp.tcpsi_ini.insi_faddr.ina_6,
+                              &si.psi.soi_proto.pri_tcp.tcpsi_ini. \
+                                  insi_faddr.ina_6,
                               rip, sizeof(rip));
                 }
 

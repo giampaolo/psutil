@@ -1,4 +1,5 @@
 # Shortcuts for various tasks.
+.PHONY: install test nosetests memtest pep8 pyflakes clean
 
 PYTHON=python
 TEST_SCRIPT=test/test_psutil.py
