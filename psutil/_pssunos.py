@@ -129,7 +129,11 @@ def get_system_per_cpu_times():
 
 def get_num_cpus():
     """Return the number of logical CPUs in the system."""
-    return os.sysconf("SC_NPROCESSORS_ONLN")
+    try:
+        return os.sysconf("SC_NPROCESSORS_ONLN")
+    except ValueError:
+        # mimic os.cpu_count() behavior
+        return None
 
 
 def get_system_boot_time():

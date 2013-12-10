@@ -485,6 +485,7 @@ get_process_cpu_times(PyObject *self, PyObject *args)
 
 /*
  * Return a Python integer indicating the number of CPUs on the system
+ * XXX this could be shared with OSX
  */
 static PyObject *
 get_num_cpus(PyObject *self, PyObject *args)
@@ -498,11 +499,13 @@ get_num_cpus(PyObject *self, PyObject *args)
     len = sizeof(ncpu);
 
     if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        // mimic os.cpu_count()
+        Py_INCREF(Py_None);
+        return Py_None;
     }
-
-    return Py_BuildValue("i", ncpu);
+    else {
+        return Py_BuildValue("i", ncpu);
+    }
 }
 
 

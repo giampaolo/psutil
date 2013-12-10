@@ -435,10 +435,13 @@ get_num_cpus(PyObject *self, PyObject *args)
 
     GetSystemInfo(&system_info);
     if (system_info.dwNumberOfProcessors == 0) {
-        // GetSystemInfo failed for some reason; return 1 as default
-        return Py_BuildValue("I", 1);
+        // mimic os.cpu_count()
+        Py_INCREF(Py_None);
+        return Py_None;
     }
-    return Py_BuildValue("I", system_info.dwNumberOfProcessors);
+    else {
+        return Py_BuildValue("I", system_info.dwNumberOfProcessors);
+    }
 }
 
 

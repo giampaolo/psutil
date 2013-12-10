@@ -134,7 +134,8 @@ def get_num_cpus():
                 num += 1
 
     if num == 0:
-        raise RuntimeError("couldn't determine platform's number of CPUs")
+        # mimic os.cpu_count()
+        return None
     return num
 
 

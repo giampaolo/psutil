@@ -1201,9 +1201,9 @@ def wait_procs(procs, timeout=None, callback=None):
 @_memoize
 def cpu_count():
     """Return the number of logical CPUs in the system.
-    Similar to multiprocessing.cpu_count() and os.cpu_count() in
-    Python 3.4.
-    This replaces the deprecated psutil.NUM_CPUS constant.
+    Return None if undetermined.
+    This is the same as os.cpu_count() from Python 3.4 and
+    replaces the deprecated psutil.NUM_CPUS constant.
     """
     return _psplatform.get_num_cpus()
 
