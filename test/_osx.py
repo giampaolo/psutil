@@ -98,7 +98,7 @@ class OSXSpecificTestCase(unittest.TestCase):
 
     def test_vmem_total(self):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
-        self.assertEqual(sysctl_hwphymem, psutil.TOTAL_PHYMEM)
+        self.assertEqual(sysctl_hwphymem, psutil.virtual_memory().total)
 
     @retry_before_failing()
     def test_vmem_free(self):

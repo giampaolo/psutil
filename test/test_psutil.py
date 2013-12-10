@@ -32,6 +32,7 @@ import time
 import traceback
 import types
 import warnings
+import select
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
 try:
     import ast  # python >= 2.6
@@ -1965,6 +1966,7 @@ class TestProcess(unittest.TestCase):
             sock.listen(1)
             pyrun(src)
             conn, _ = sock.accept()
+            select.select([conn.fileno()], [], [], GLOBAL_TIMEOUT)
             zpid = int(conn.recv(1024))
             zproc = psutil.Process(zpid)
             # Make sure we can re-instantiate the process after its
