@@ -168,42 +168,42 @@ class Process(object):
         self._process_name = None
 
     @wrap_exceptions
-    def get_process_name(self):
+    def get_name(self):
         """Return process name as a string of limited len (15)."""
         return _psutil_osx.get_process_name(self.pid)
 
     @wrap_exceptions
-    def get_process_exe(self):
+    def get_exe(self):
         return _psutil_osx.get_process_exe(self.pid)
 
     @wrap_exceptions
-    def get_process_cmdline(self):
+    def get_cmdline(self):
         """Return process cmdline as a list of arguments."""
         if not pid_exists(self.pid):
             raise NoSuchProcess(self.pid, self._process_name)
         return _psutil_osx.get_process_cmdline(self.pid)
 
     @wrap_exceptions
-    def get_process_ppid(self):
+    def get_ppid(self):
         """Return process parent pid."""
         return _psutil_osx.get_process_ppid(self.pid)
 
     @wrap_exceptions
-    def get_process_cwd(self):
+    def get_cwd(self):
         return _psutil_osx.get_process_cwd(self.pid)
 
     @wrap_exceptions
-    def get_process_uids(self):
+    def get_uids(self):
         real, effective, saved = _psutil_osx.get_process_uids(self.pid)
         return nt_uids(real, effective, saved)
 
     @wrap_exceptions
-    def get_process_gids(self):
+    def get_gids(self):
         real, effective, saved = _psutil_osx.get_process_gids(self.pid)
         return nt_gids(real, effective, saved)
 
     @wrap_exceptions
-    def get_process_terminal(self):
+    def get_terminal(self):
         tty_nr = _psutil_osx.get_process_tty_nr(self.pid)
         tmap = _psposix._get_terminal_map()
         try:
@@ -234,7 +234,7 @@ class Process(object):
         return nt_cputimes(user, system)
 
     @wrap_exceptions
-    def get_process_create_time(self):
+    def get_create_time(self):
         """Return the start time of the process as a number of seconds since
         the epoch."""
         return _psutil_osx.get_process_create_time(self.pid)
@@ -244,7 +244,7 @@ class Process(object):
         return nt_ctxsw(*_psutil_osx.get_process_num_ctx_switches(self.pid))
 
     @wrap_exceptions
-    def get_process_num_threads(self):
+    def get_num_threads(self):
         """Return the number of threads belonging to the process."""
         return _psutil_osx.get_process_num_threads(self.pid)
 
@@ -294,7 +294,7 @@ class Process(object):
             raise TimeoutExpired(self.pid, self._process_name)
 
     @wrap_exceptions
-    def get_process_nice(self):
+    def get_nice(self):
         return _psutil_posix.getpriority(self.pid)
 
     @wrap_exceptions
@@ -302,13 +302,13 @@ class Process(object):
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
-    def get_process_status(self):
+    def get_status(self):
         code = _psutil_osx.get_process_status(self.pid)
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
     @wrap_exceptions
-    def get_process_threads(self):
+    def get_threads(self):
         """Return the number of threads belonging to the process."""
         rawlist = _psutil_osx.get_process_threads(self.pid)
         retlist = []

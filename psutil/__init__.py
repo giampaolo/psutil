@@ -168,7 +168,7 @@ def _assert_pid_not_reused(fun):
     @_wraps(fun)
     def wrapper(self, *args, **kwargs):
         if not self.is_running():
-            raise NoSuchProcess(self.pid, self._platform_impl._process_name)
+            raise NoSuchProcess(self.pid, self._proc._process_name)
         return fun(self, *args, **kwargs)
     return wrapper
 
@@ -219,7 +219,7 @@ class Process(object):
         self._ppid = None
         # platform-specific modules define an _psplatform.Process
         # implementation class
-        self._platform_impl = _psplatform.Process(pid)
+        self._proc = _psplatform.Process(pid)
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
         # cache creation time for later use in is_running() method
@@ -352,16 +352,16 @@ class Process(object):
         # XXX should we check creation time here rather than in
         # Process.parent?
         if os.name == 'posix':
-            return self._platform_impl.get_process_ppid()
+            return self._proc.get_ppid()
         else:
             if self._ppid is None:
-                self._ppid = self._platform_impl.get_process_ppid()
+                self._ppid = self._proc.get_ppid()
             return self._ppid
 
     @cached_property
     def name(self):
         """The process name."""
-        name = self._platform_impl.get_process_name()
+        name = self._proc.get_name()
         if os.name == 'posix' and len(name) >= 15:
             # On UNIX the name gets truncated to the first 15 characters.
             # If it matches the first part of the cmdline we return that
@@ -377,7 +377,7 @@ class Process(object):
                     if extended_name.startswith(name):
                         name = extended_name
         # XXX - perhaps needs refactoring
-        self._platform_impl._process_name = name
+        self._proc._process_name = name
         return name
 
     @cached_property
@@ -401,7 +401,7 @@ class Process(object):
             return fallback
 
         try:
-            exe = self._platform_impl.get_process_exe()
+            exe = self._proc.get_exe()
         except AccessDenied:
             err = sys.exc_info()[1]
             return guess_it(fallback=err)
@@ -419,12 +419,12 @@ class Process(object):
     @property
     def cmdline(self):
         """The command line process has been called with."""
-        return self._platform_impl.get_process_cmdline()
+        return self._proc.get_cmdline()
 
     @property
     def status(self):
         """The process current status as a STATUS_* constant."""
-        return self._platform_impl.get_process_status()
+        return self._proc.get_status()
 
     if os.name == 'posix':
 
@@ -433,21 +433,21 @@ class Process(object):
             """Return a named tuple denoting the process real,
             effective, and saved user ids.
             """
-            return self._platform_impl.get_process_uids()
+            return self._proc.get_uids()
 
         @property
         def gids(self):
             """Return a named tuple denoting the process real,
             effective, and saved group ids.
             """
-            return self._platform_impl.get_process_gids()
+            return self._proc.get_gids()
 
         @property
         def terminal(self):
             """The terminal associated with this process, if any,
             else None.
             """
-            return self._platform_impl.get_process_terminal()
+            return self._proc.get_terminal()
 
     @property
     def username(self):
@@ -461,20 +461,20 @@ class Process(object):
                     "requires pwd module shipped with standard python")
             return pwd.getpwuid(self.uids.real).pw_name
         else:
-            return self._platform_impl.get_process_username()
+            return self._proc.get_username()
 
     @cached_property
     def create_time(self):
         """The process creation time as a floating point number
         expressed in seconds since the epoch, in UTC.
         """
-        return self._platform_impl.get_process_create_time()
+        return self._proc.get_create_time()
 
     def getcwd(self):
         """Return a string representing the process current working
         directory.
         """
-        return self._platform_impl.get_process_cwd()
+        return self._proc.get_cwd()
 
     # Linux, BSD and Windows only
     if hasattr(_psplatform.Process, "get_process_io_counters"):
@@ -484,17 +484,17 @@ class Process(object):
             the number of read/write calls performed and the amount of
             bytes read and written by the process.
             """
-            return self._platform_impl.get_process_io_counters()
+            return self._proc.get_io_counters()
 
     def get_nice(self):
         """Get process niceness (priority)."""
-        return self._platform_impl.get_process_nice()
+        return self._proc.get_nice()
 
     @_assert_pid_not_reused
     def set_nice(self, value):
         """Set process niceness (priority) pre-emptively checking
         whether PID has been reused."""
-        return self._platform_impl.set_process_nice(value)
+        return self._proc.set_process_nice(value)
 
     # Linux and Windows >= Vista only
     if hasattr(_psplatform.Process, "get_process_ionice"):
@@ -508,7 +508,7 @@ class Process(object):
 
             Available on Linux and Windows > Vista only.
             """
-            return self._platform_impl.get_process_ionice()
+            return self._proc.get_ionice()
 
         def set_ionice(self, ioclass, value=None):
             """Set process I/O niceness (priority).
@@ -522,7 +522,7 @@ class Process(object):
 
             Available on Linux and Windows > Vista only.
             """
-            return self._platform_impl.set_process_ionice(ioclass, value)
+            return self._proc.set_process_ionice(ioclass, value)
 
     # Linux only
     if hasattr(_psplatform.Process, "process_rlimit"):
@@ -538,7 +538,7 @@ class Process(object):
             # we don't want that
             if self.pid == 0:
                 raise ValueError("can't use this method for PID 0 process")
-            return self._platform_impl.process_rlimit(resource)
+            return self._proc.process_rlimit(resource)
 
         @_assert_pid_not_reused
         def set_rlimit(self, resource, limits):
@@ -554,21 +554,21 @@ class Process(object):
             # we don't want that
             if self.pid == 0:
                 raise ValueError("can't use this method for PID 0 process")
-            self._platform_impl.process_rlimit(resource, limits)
+            self._proc.process_rlimit(resource, limits)
 
     # Windows and Linux only
     if hasattr(_psplatform.Process, "get_process_cpu_affinity"):
 
         def get_cpu_affinity(self):
             """Get process current CPU affinity."""
-            return self._platform_impl.get_process_cpu_affinity()
+            return self._proc.get_cpu_affinity()
 
         def set_cpu_affinity(self, cpus):
             """Set process current CPU affinity.
             'cpus' is a list of CPUs for which you want to set the
             affinity (e.g. [0, 1]).
             """
-            return self._platform_impl.set_process_cpu_affinity(cpus)
+            return self._proc.set_process_cpu_affinity(cpus)
 
     if os.name == 'nt':
 
@@ -576,7 +576,7 @@ class Process(object):
             """Return the number of handles opened by this process
             (Windows only).
             """
-            return self._platform_impl.get_num_handles()
+            return self._proc.get_num_handles()
 
     if os.name == 'posix':
 
@@ -584,23 +584,23 @@ class Process(object):
             """Return the number of file descriptors opened by this
             process (POSIX only).
             """
-            return self._platform_impl.get_num_fds()
+            return self._proc.get_num_fds()
 
     def get_num_ctx_switches(self):
         """Return the number voluntary and involuntary context switches
         performed by this process.
         """
-        return self._platform_impl.get_num_ctx_switches()
+        return self._proc.get_num_ctx_switches()
 
     def get_num_threads(self):
         """Return the number of threads used by this process."""
-        return self._platform_impl.get_process_num_threads()
+        return self._proc.get_num_threads()
 
     def get_threads(self):
         """Return threads opened by process as a list of namedtuples
         including thread id and thread CPU times (user/system).
         """
-        return self._platform_impl.get_process_threads()
+        return self._proc.get_threads()
 
     @_assert_pid_not_reused
     def get_children(self, recursive=False):
@@ -723,15 +723,15 @@ class Process(object):
         blocking = interval is not None and interval > 0.0
         if blocking:
             st1 = sum(cpu_times())
-            pt1 = self._platform_impl.get_cpu_times()
+            pt1 = self._proc.get_cpu_times()
             time.sleep(interval)
             st2 = sum(cpu_times())
-            pt2 = self._platform_impl.get_cpu_times()
+            pt2 = self._proc.get_cpu_times()
         else:
             st1 = self._last_sys_cpu_times
             pt1 = self._last_proc_cpu_times
             st2 = sum(cpu_times())
-            pt2 = self._platform_impl.get_cpu_times()
+            pt2 = self._proc.get_cpu_times()
             if st1 is None or pt1 is None:
                 self._last_sys_cpu_times = st2
                 self._last_proc_cpu_times = pt2
@@ -765,7 +765,7 @@ class Process(object):
         """Return a tuple whose values are process CPU user and system
         times. The same as os.times() but per-process.
         """
-        return self._platform_impl.get_cpu_times()
+        return self._proc.get_cpu_times()
 
     def get_memory_info(self):
         """Return a tuple representing RSS (Resident Set Size) and VMS
@@ -776,20 +776,20 @@ class Process(object):
         On Windows RSS and VMS refer to "Mem Usage" and "VM Size" columns
         of taskmgr.exe.
         """
-        return self._platform_impl.get_memory_info()
+        return self._proc.get_memory_info()
 
     def get_ext_memory_info(self):
         """Return a namedtuple with variable fields depending on the
         platform representing extended memory information about
         the process. All numbers are expressed in bytes.
         """
-        return self._platform_impl.get_ext_memory_info()
+        return self._proc.get_ext_memory_info()
 
     def get_memory_percent(self):
         """Compare physical system memory to process resident memory
         (RSS) and calculate process memory utilization as a percentage.
         """
-        rss = self._platform_impl.get_memory_info()[0]
+        rss = self._proc.get_memory_info()[0]
         # use cached value if available
         total_phymem = _TOTAL_PHYMEM or virtual_memory().total
         try:
@@ -808,7 +808,7 @@ class Process(object):
         entity and the namedtuple will also include the mapped region's
         address space ('addr') and permission set ('perms').
         """
-        it = self._platform_impl.get_memory_maps()
+        it = self._proc.get_memory_maps()
         if grouped:
             d = {}
             for tupl in it:
@@ -818,17 +818,17 @@ class Process(object):
                     d[path] = map(lambda x, y: x + y, d[path], nums)
                 except KeyError:
                     d[path] = nums
-            nt = self._platform_impl.nt_mmap_grouped
+            nt = self._proc.nt_mmap_grouped
             return [nt(path, *d[path]) for path in d]
         else:
-            nt = self._platform_impl.nt_mmap_ext
+            nt = self._proc.nt_mmap_ext
             return [nt(*x) for x in it]
 
     def get_open_files(self):
         """Return files opened by process as a list of namedtuples
         including absolute file name and file descriptor number.
         """
-        return self._platform_impl.get_open_files()
+        return self._proc.get_open_files()
 
     def get_connections(self, kind='inet'):
         """Return connections opened by process as a list of namedtuples.
@@ -848,7 +848,7 @@ class Process(object):
         unix            UNIX socket (both UDP and TCP protocols)
         all             the sum of all the possible families and protocols
         """
-        return self._platform_impl.get_connections(kind)
+        return self._proc.get_connections(kind)
 
     def is_running(self):
         """Return whether this process is running.
@@ -863,7 +863,7 @@ class Process(object):
             # pid + creation time, on the other hand, is supposed to
             # identify a process univocally.
             return self.create_time == \
-                self._platform_impl.get_process_create_time()
+                self._proc.get_create_time()
         except NoSuchProcess:
             self._gone = True
             return False
@@ -880,7 +880,7 @@ class Process(object):
                 os.kill(self.pid, sig)
             except OSError:
                 err = sys.exc_info()[1]
-                name = self._platform_impl._process_name
+                name = self._proc._process_name
                 if err.errno == errno.ESRCH:
                     self._gone = True
                     raise NoSuchProcess(self.pid, name)
@@ -889,7 +889,7 @@ class Process(object):
                 raise
         else:
             if sig == signal.SIGTERM:
-                self._platform_impl.kill_process()
+                self._proc.kill_process()
             else:
                 raise ValueError("only SIGTERM is supported on Windows")
 
@@ -899,9 +899,9 @@ class Process(object):
         whether PID has been reused.
         On Windows it suspends all process threads.
         """
-        if hasattr(self._platform_impl, "suspend_process"):
+        if hasattr(self._proc, "suspend_process"):
             # windows
-            self._platform_impl.suspend_process()
+            self._proc.suspend_process()
         else:
             # posix
             self.send_signal(signal.SIGSTOP)
@@ -912,9 +912,9 @@ class Process(object):
         whether PID has been reused.
         On Windows it resumes all process threads.
         """
-        if hasattr(self._platform_impl, "resume_process"):
+        if hasattr(self._proc, "resume_process"):
             # windows
-            self._platform_impl.resume_process()
+            self._proc.resume_process()
         else:
             # posix
             self.send_signal(signal.SIGCONT)
@@ -933,7 +933,7 @@ class Process(object):
         if os.name == 'posix':
             self.send_signal(signal.SIGKILL)
         else:
-            self._platform_impl.kill_process()
+            self._proc.kill_process()
 
     def wait(self, timeout=None):
         """Wait for process to terminate and, if process is a children
@@ -947,7 +947,7 @@ class Process(object):
         """
         if timeout is not None and not timeout >= 0:
             raise ValueError("timeout must be a positive integer")
-        return self._platform_impl.process_wait(timeout)
+        return self._proc.process_wait(timeout)
 
     # --- deprecated API
 
@@ -1009,7 +1009,7 @@ class Popen(Process):
         self._pid = self.__subproc.pid
         self._gone = False
         self._ppid = None
-        self._platform_impl = _psplatform.Process(self._pid)
+        self._proc = _psplatform.Process(self._pid)
         self._last_sys_cpu_times = None
         self._last_proc_cpu_times = None
         try:

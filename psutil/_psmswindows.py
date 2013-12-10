@@ -199,7 +199,7 @@ class Process(object):
         self._process_name = None
 
     @wrap_exceptions
-    def get_process_name(self):
+    def get_name(self):
         """Return process name, which on Windows is always the final
         part of the executable.
         """
@@ -213,18 +213,18 @@ class Process(object):
             return os.path.basename(self.get_process_exe())
 
     @wrap_exceptions
-    def get_process_exe(self):
+    def get_exe(self):
         # Note: os.path.exists(path) may return False even if the file
         # is there, see:
         # http://stackoverflow.com/questions/3112546/os-path-exists-lies
         return _convert_raw_path(_psutil_mswindows.get_process_exe(self.pid))
 
     @wrap_exceptions
-    def get_process_cmdline(self):
+    def get_cmdline(self):
         """Return process cmdline as a list of arguments."""
         return _psutil_mswindows.get_process_cmdline(self.pid)
 
-    def get_process_ppid(self):
+    def get_ppid(self):
         """Return process parent pid."""
         try:
             return get_ppid_map()[self.pid]
@@ -305,14 +305,14 @@ class Process(object):
         return ret
 
     @wrap_exceptions
-    def get_process_username(self):
+    def get_username(self):
         """Return the name of the user that owns the process"""
         if self.pid in (0, 4):
             return 'NT AUTHORITY\\SYSTEM'
         return _psutil_mswindows.get_process_username(self.pid)
 
     @wrap_exceptions
-    def get_process_create_time(self):
+    def get_create_time(self):
         # special case for kernel process PIDs; return system boot time
         if self.pid in (0, 4):
             return get_system_boot_time()
@@ -325,11 +325,11 @@ class Process(object):
             raise
 
     @wrap_exceptions
-    def get_process_num_threads(self):
+    def get_num_threads(self):
         return _psutil_mswindows.get_process_num_threads(self.pid)
 
     @wrap_exceptions
-    def get_process_threads(self):
+    def get_threads(self):
         rawlist = _psutil_mswindows.get_process_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
@@ -358,7 +358,7 @@ class Process(object):
         return _psutil_mswindows.resume_process(self.pid)
 
     @wrap_exceptions
-    def get_process_cwd(self):
+    def get_cwd(self):
         if self.pid in (0, 4):
             raise AccessDenied(self.pid, self._process_name)
         # return a normalized pathname since the native C function appends
@@ -400,7 +400,7 @@ class Process(object):
         return ret
 
     @wrap_exceptions
-    def get_process_nice(self):
+    def get_nice(self):
         return _psutil_mswindows.get_process_priority(self.pid)
 
     @wrap_exceptions
@@ -410,7 +410,7 @@ class Process(object):
     # available on Windows >= Vista
     if hasattr(_psutil_mswindows, "get_process_io_priority"):
         @wrap_exceptions
-        def get_process_ionice(self):
+        def get_ionice(self):
             return _psutil_mswindows.get_process_io_priority(self.pid)
 
         @wrap_exceptions
@@ -424,7 +424,7 @@ class Process(object):
             return _psutil_mswindows.set_process_io_priority(self.pid, value)
 
     @wrap_exceptions
-    def get_process_io_counters(self):
+    def get_io_counters(self):
         try:
             ret = _psutil_mswindows.get_process_io_counters(self.pid)
         except OSError:
@@ -436,7 +436,7 @@ class Process(object):
         return nt_io(*ret)
 
     @wrap_exceptions
-    def get_process_status(self):
+    def get_status(self):
         suspended = _psutil_mswindows.is_process_suspended(self.pid)
         if suspended:
             return STATUS_STOPPED
@@ -444,7 +444,7 @@ class Process(object):
             return STATUS_RUNNING
 
     @wrap_exceptions
-    def get_process_cpu_affinity(self):
+    def get_cpu_affinity(self):
         from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
         bitmask = _psutil_mswindows.get_process_cpu_affinity(self.pid)
         return from_bitmask(bitmask)

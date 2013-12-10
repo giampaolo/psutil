@@ -470,7 +470,7 @@ class Process(object):
         self._process_name = None
 
     @wrap_exceptions
-    def get_process_name(self):
+    def get_name(self):
         f = open("/proc/%s/stat" % self.pid)
         try:
             name = f.read().split(' ')[1].replace('(', '').replace(')', '')
@@ -479,7 +479,7 @@ class Process(object):
         # XXX - gets changed later and probably needs refactoring
         return name
 
-    def get_process_exe(self):
+    def get_exe(self):
         try:
             exe = os.readlink("/proc/%s/exe" % self.pid)
         except (OSError, IOError):
@@ -510,7 +510,7 @@ class Process(object):
         return exe
 
     @wrap_exceptions
-    def get_process_cmdline(self):
+    def get_cmdline(self):
         f = open("/proc/%s/cmdline" % self.pid)
         try:
             # return the args as a list
@@ -519,7 +519,7 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def get_process_terminal(self):
+    def get_terminal(self):
         tmap = _psposix._get_terminal_map()
         f = open("/proc/%s/stat" % self.pid)
         try:
@@ -533,7 +533,7 @@ class Process(object):
 
     if os.path.exists('/proc/%s/io' % os.getpid()):
         @wrap_exceptions
-        def get_process_io_counters(self):
+        def get_io_counters(self):
             fname = "/proc/%s/io" % self.pid
             f = open(fname)
             try:
@@ -555,7 +555,7 @@ class Process(object):
             finally:
                 f.close()
     else:
-        def get_process_io_counters(self):
+        def get_io_counters(self):
             raise NotImplementedError("couldn't find /proc/%s/io (kernel "
                                       "too old?)" % self.pid)
 
@@ -581,7 +581,7 @@ class Process(object):
             raise TimeoutExpired(self.pid, self._process_name)
 
     @wrap_exceptions
-    def get_process_create_time(self):
+    def get_create_time(self):
         f = open("/proc/%s/stat" % self.pid)
         try:
             st = f.read().strip()
@@ -719,7 +719,7 @@ class Process(object):
             raise NotImplementedError(msg)
 
     @wrap_exceptions
-    def get_process_cwd(self):
+    def get_cwd(self):
         # readlink() might return paths containing null bytes causing
         # problems when used with other fs-related functions (os.*,
         # open(), ...)
@@ -746,7 +746,7 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def get_process_num_threads(self):
+    def get_num_threads(self):
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:
@@ -757,7 +757,7 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def get_process_threads(self):
+    def get_threads(self):
         thread_ids = os.listdir("/proc/%s/task" % self.pid)
         thread_ids.sort()
         retlist = []
@@ -790,7 +790,7 @@ class Process(object):
         return retlist
 
     @wrap_exceptions
-    def get_process_nice(self):
+    def get_nice(self):
         #f = open('/proc/%s/stat' % self.pid, 'r')
         # try:
         #   data = f.read()
@@ -806,7 +806,7 @@ class Process(object):
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
-    def get_process_cpu_affinity(self):
+    def get_cpu_affinity(self):
         from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
         bitmask = _psutil_linux.get_process_cpu_affinity(self.pid)
         return from_bitmask(bitmask)
@@ -829,7 +829,7 @@ class Process(object):
     if hasattr(_psutil_linux, "ioprio_get"):
 
         @wrap_exceptions
-        def get_process_ionice(self):
+        def get_ionice(self):
             ioclass, value = _psutil_linux.ioprio_get(self.pid)
             return nt_ionice(ioclass, value)
 
@@ -871,7 +871,7 @@ class Process(object):
                 _psutil_linux.prlimit(self.pid, resource, soft, hard)
 
     @wrap_exceptions
-    def get_process_status(self):
+    def get_status(self):
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:
@@ -1035,7 +1035,7 @@ class Process(object):
         return len(os.listdir("/proc/%s/fd" % self.pid))
 
     @wrap_exceptions
-    def get_process_ppid(self):
+    def get_ppid(self):
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:
@@ -1047,7 +1047,7 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def get_process_uids(self):
+    def get_uids(self):
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:
@@ -1059,7 +1059,7 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def get_process_gids(self):
+    def get_gids(self):
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:

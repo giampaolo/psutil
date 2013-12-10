@@ -212,12 +212,12 @@ class Process(object):
         self._process_name = None
 
     @wrap_exceptions
-    def get_process_name(self):
+    def get_name(self):
         # note: max len == 15
         return _psutil_sunos.get_process_name_and_args(self.pid)[0]
 
     @wrap_exceptions
-    def get_process_exe(self):
+    def get_exe(self):
         # Will be guess later from cmdline but we want to explicitly
         # invoke cmdline here in order to get an AccessDenied
         # exception if the user has not enough privileges.
@@ -225,19 +225,19 @@ class Process(object):
         return ""
 
     @wrap_exceptions
-    def get_process_cmdline(self):
+    def get_cmdline(self):
         return _psutil_sunos.get_process_name_and_args(self.pid)[1].split(' ')
 
     @wrap_exceptions
-    def get_process_create_time(self):
+    def get_create_time(self):
         return _psutil_sunos.get_process_basic_info(self.pid)[3]
 
     @wrap_exceptions
-    def get_process_num_threads(self):
+    def get_num_threads(self):
         return _psutil_sunos.get_process_basic_info(self.pid)[5]
 
     @wrap_exceptions
-    def get_process_nice(self):
+    def get_nice(self):
         # For some reason getpriority(3) return ESRCH (no such process)
         # for certain low-pid processes, no matter what (even as root).
         # The process actually exists though, as it has a name,
@@ -265,17 +265,17 @@ class Process(object):
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
-    def get_process_ppid(self):
+    def get_ppid(self):
         return _psutil_sunos.get_process_basic_info(self.pid)[0]
 
     @wrap_exceptions
-    def get_process_uids(self):
+    def get_uids(self):
         real, effective, saved, _, _, _ = \
             _psutil_sunos.get_process_cred(self.pid)
         return nt_uids(real, effective, saved)
 
     @wrap_exceptions
-    def get_process_gids(self):
+    def get_gids(self):
         _, _, _, real, effective, saved = \
             _psutil_sunos.get_process_cred(self.pid)
         return nt_uids(real, effective, saved)
@@ -286,7 +286,7 @@ class Process(object):
         return nt_cputimes(user, system)
 
     @wrap_exceptions
-    def get_process_terminal(self):
+    def get_terminal(self):
         hit_enoent = False
         tty = wrap_exceptions(
             _psutil_sunos.get_process_basic_info(self.pid)[0])
@@ -305,7 +305,7 @@ class Process(object):
             os.stat('/proc/%s' % self.pid)
 
     @wrap_exceptions
-    def get_process_cwd(self):
+    def get_cwd(self):
         # /proc/PID/path/cwd may not be resolved by readlink() even if
         # it exists (ls shows it). If that's the case and the process
         # is still alive return None (we can return None also on BSD).
@@ -329,13 +329,13 @@ class Process(object):
     get_ext_memory_info = get_memory_info
 
     @wrap_exceptions
-    def get_process_status(self):
+    def get_status(self):
         code = _psutil_sunos.get_process_basic_info(self.pid)[6]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
     @wrap_exceptions
-    def get_process_threads(self):
+    def get_threads(self):
         ret = []
         tids = os.listdir('/proc/%d/lwp' % self.pid)
         hit_enoent = False

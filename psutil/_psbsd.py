@@ -189,22 +189,22 @@ class Process(object):
         self._process_name = None
 
     @wrap_exceptions
-    def get_process_name(self):
+    def get_name(self):
         """Return process name as a string of limited len (15)."""
         return _psutil_bsd.get_process_name(self.pid)
 
     @wrap_exceptions
-    def get_process_exe(self):
+    def get_exe(self):
         """Return process executable pathname."""
         return _psutil_bsd.get_process_exe(self.pid)
 
     @wrap_exceptions
-    def get_process_cmdline(self):
+    def get_cmdline(self):
         """Return process cmdline as a list of arguments."""
         return _psutil_bsd.get_process_cmdline(self.pid)
 
     @wrap_exceptions
-    def get_process_terminal(self):
+    def get_terminal(self):
         tty_nr = _psutil_bsd.get_process_tty_nr(self.pid)
         tmap = _psposix._get_terminal_map()
         try:
@@ -213,27 +213,27 @@ class Process(object):
             return None
 
     @wrap_exceptions
-    def get_process_ppid(self):
+    def get_ppid(self):
         """Return process parent pid."""
         return _psutil_bsd.get_process_ppid(self.pid)
 
     # XXX - available on FreeBSD >= 8 only
     if hasattr(_psutil_bsd, "get_process_cwd"):
         @wrap_exceptions
-        def get_process_cwd(self):
+        def get_cwd(self):
             """Return process current working directory."""
             # sometimes we get an empty string, in which case we turn
             # it into None
             return _psutil_bsd.get_process_cwd(self.pid) or None
 
     @wrap_exceptions
-    def get_process_uids(self):
+    def get_uids(self):
         """Return real, effective and saved user ids."""
         real, effective, saved = _psutil_bsd.get_process_uids(self.pid)
         return nt_uids(real, effective, saved)
 
     @wrap_exceptions
-    def get_process_gids(self):
+    def get_gids(self):
         """Return real, effective and saved group ids."""
         real, effective, saved = _psutil_bsd.get_process_gids(self.pid)
         return nt_gids(real, effective, saved)
@@ -257,13 +257,13 @@ class Process(object):
         return self._nt_ext_mem(*_psutil_bsd.get_process_memory_info(self.pid))
 
     @wrap_exceptions
-    def get_process_create_time(self):
+    def get_create_time(self):
         """Return the start time of the process as a number of seconds since
         the epoch."""
         return _psutil_bsd.get_process_create_time(self.pid)
 
     @wrap_exceptions
-    def get_process_num_threads(self):
+    def get_num_threads(self):
         """Return the number of threads belonging to the process."""
         return _psutil_bsd.get_process_num_threads(self.pid)
 
@@ -277,7 +277,7 @@ class Process(object):
         return _psutil_bsd.get_process_num_fds(self.pid)
 
     @wrap_exceptions
-    def get_process_threads(self):
+    def get_threads(self):
         """Return the number of threads belonging to the process."""
         rawlist = _psutil_bsd.get_process_threads(self.pid)
         retlist = []
@@ -325,7 +325,7 @@ class Process(object):
             raise TimeoutExpired(self.pid, self._process_name)
 
     @wrap_exceptions
-    def get_process_nice(self):
+    def get_nice(self):
         return _psutil_posix.getpriority(self.pid)
 
     @wrap_exceptions
@@ -333,7 +333,7 @@ class Process(object):
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
-    def get_process_status(self):
+    def get_status(self):
         code = _psutil_bsd.get_process_status(self.pid)
         if code in PROC_STATUSES:
             return PROC_STATUSES[code]
@@ -341,7 +341,7 @@ class Process(object):
         return "?"
 
     @wrap_exceptions
-    def get_process_io_counters(self):
+    def get_io_counters(self):
         rc, wc, rb, wb = _psutil_bsd.get_process_io_counters(self.pid)
         return nt_io(rc, wc, rb, wb)
 
