@@ -5,9 +5,9 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 ENHANCEMENTS
 
+XXX - TODO: reference deprecated APIs
+
  * #447: psutil.wait_procs() timeout parameter is now optional.
- * #451: psutil BOOT_TIME, TOTAL_PHYMEM and NUM_CPUS module level constants
-         are deprecated.  (hack provided by Josiah Carlson)
  * #452: Process instances are now hashable and can be used with set()s.
  * #453: unittest2 module is required on Python < 2.7.
 
@@ -20,13 +20,14 @@ BUG FIXES
  * #454: Process cached properties such as "name", "exe" and "create_time"
          should be read-only.
 
-
 API CHANGES
 
-Deprecated constants:
- - psutil.NUM_CPUS     (in favor of psutil.cpu_cpunt()).
- - psutil.BOOT_TIME    (in favor of psutil.get_boot_time()).
- - psutil.TOTAL_PHYMEM (in favor of psutil.virtual_memory().total).
+Deprecated APIs (still available as aliases producing a DeprecationWarning):
+
+ - psutil.NUM_CPUS        (use psutil.cpu_cpunt())
+ - psutil.BOOT_TIME       (use psutil.get_boot_time())
+ - psutil.TOTAL_PHYMEM    (use psutil.virtual_memory().total)
+ - psutil.Process.getcwd  (renamed in psutil.Process.get_cwd)
 
 
 1.2.1 - 2013-11-25

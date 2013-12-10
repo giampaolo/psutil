@@ -208,7 +208,8 @@ class PosixSpecificTestCase(unittest.TestCase):
         p = psutil.Process(os.getpid())
         failures = []
         ignored_names = ('terminate', 'kill', 'suspend', 'resume', 'nice',
-                         'send_signal', 'wait', 'get_children', 'as_dict')
+                         'send_signal', 'wait', 'get_children', 'as_dict',
+                         'getcwd')
         for name in dir(psutil.Process):
             if (name.startswith('_')
                     or name.startswith('set_')

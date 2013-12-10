@@ -571,6 +571,7 @@ class TestSystemAPIs(unittest.TestCase):
         warnings.filterwarnings("error")
         p = psutil.Process()
         try:
+            # system APIs
             self.assertRaises(DeprecationWarning, getattr, psutil, 'NUM_CPUS')
             self.assertRaises(DeprecationWarning, getattr, psutil, 'BOOT_TIME')
             self.assertRaises(DeprecationWarning, getattr, psutil,
@@ -587,12 +588,12 @@ class TestSystemAPIs(unittest.TestCase):
             if LINUX:
                 self.assertRaises(DeprecationWarning, psutil.phymem_buffers)
                 self.assertRaises(DeprecationWarning, psutil.cached_phymem)
-            try:
-                p.nice
-            except DeprecationWarning:
-                pass
-            else:
-                self.fail("p.nice didn't raise DeprecationWarning")
+
+            # Process class
+            self.assertRaises(DeprecationWarning, getattr, p, 'nice')
+            self.assertRaises(DeprecationWarning, p.getcwd)
+
+            # named tuples
             ret = call_until(p.get_connections, "len(ret) != 0")
             self.assertRaises(DeprecationWarning,
                               getattr, ret[0], 'local_address')
@@ -1501,20 +1502,20 @@ class TestProcess(unittest.TestCase):
         else:
             p.username
 
-    @unittest.skipUnless(hasattr(psutil.Process, "getcwd"),
+    @unittest.skipUnless(hasattr(psutil.Process, "get_cwd"),
                          'not available on this platform')
-    def test_getcwd(self):
+    def test_get_cwd(self):
         sproc = get_test_subprocess(wait=True)
         p = psutil.Process(sproc.pid)
-        self.assertEqual(p.getcwd(), os.getcwd())
+        self.assertEqual(p.get_cwd(), os.getcwd())
 
-    @unittest.skipIf(not hasattr(psutil.Process, "getcwd"),
+    @unittest.skipIf(not hasattr(psutil.Process, "get_cwd"),
                      'not available on this platform')
-    def test_getcwd_2(self):
+    def test_get_cwd_2(self):
         cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(2)"]
         sproc = get_test_subprocess(cmd, wait=True)
         p = psutil.Process(sproc.pid)
-        call_until(p.getcwd, "ret == os.path.dirname(os.getcwd())")
+        call_until(p.get_cwd, "ret == os.path.dirname(os.getcwd())")
 
     @unittest.skipIf(not hasattr(psutil.Process, "get_cpu_affinity"),
                      'not available on this platform')
@@ -1899,7 +1900,7 @@ class TestProcess(unittest.TestCase):
             if name.startswith('_')\
                 or name in ('pid', 'send_signal', 'is_running', 'set_ionice',
                             'wait', 'set_cpu_affinity', 'create_time', 'nice',
-                            'set_nice'):
+                            'set_nice', 'getcwd'):
                 continue
             try:
                 # if name == 'get_rlimit'
@@ -2063,7 +2064,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         valid_procs = 0
         excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
                           'kill', 'wait', 'as_dict', 'get_cpu_percent', 'nice',
-                          'parent', 'get_children', 'pid']
+                          'parent', 'get_children', 'pid', 'getcwd']
         attrs = []
         for name in dir(psutil.Process):
             if name.startswith("_"):
@@ -2243,7 +2244,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         for conn in ret:
             check_connection(conn)
 
-    def getcwd(self, ret):
+    def get_cwd(self, ret):
         if ret is not None:  # BSD may return None
             assert os.path.isabs(ret), ret
             try:

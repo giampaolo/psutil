@@ -194,8 +194,8 @@ class TestProcessObjectLeaks(Base):
     def test_resume(self):
         self.execute('resume')
 
-    def test_getcwd(self):
-        self.execute('getcwd')
+    def test_get_cwd(self):
+        self.execute('get_cwd')
 
     def test_get_cpu_affinity(self):
         self.execute('get_cpu_affinity')

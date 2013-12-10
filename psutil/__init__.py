@@ -280,9 +280,10 @@ class Process(object):
         AccessDenied exception is raised when retrieving that particular
         process information.
         """
-        excluded_names = set(['send_signal', 'suspend', 'resume', 'terminate',
-                              'kill', 'wait', 'is_running', 'as_dict',
-                              'parent', 'get_children', 'nice', 'get_rlimit'])
+        excluded_names = set(
+            ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
+             'is_running', 'as_dict', 'parent', 'get_children', 'nice',
+             'get_rlimit', 'getcwd'])
         retdict = dict()
         for name in set(attrs or dir(self)):
             if name.startswith('_'):
@@ -470,10 +471,8 @@ class Process(object):
         """
         return self._proc.get_create_time()
 
-    def getcwd(self):
-        """Return a string representing the process current working
-        directory.
-        """
+    def get_cwd(self):
+        """Return process current working directory."""
         return self._proc.get_cwd()
 
     # Linux, BSD and Windows only
@@ -618,6 +617,8 @@ class Process(object):
             ├─ C (child)
             └─ D (child)
 
+        >>> import psutil
+        >>> p = psutil.Process()
         >>> p.get_children()
         B, C, D
         >>> p.get_children(recursive=True)
@@ -711,6 +712,7 @@ class Process(object):
 
         Examples:
 
+          >>> import psutil
           >>> p = psutil.Process(os.getpid())
           >>> # blocking
           >>> p.get_cpu_percent(interval=1)
@@ -969,6 +971,14 @@ class Process(object):
               "use Process.set_nice() method instead"
         warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
         return self.set_nice(value)
+
+    def getcwd(self):
+        """Return process current working directory.
+        Deprecated, use get_cwd() instead.
+        """
+        msg = "this method is deprecated; use Process.get_cwd() instead"
+        warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+        return self.get_cwd()
 
 
 class Popen(Process):
