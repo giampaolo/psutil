@@ -243,7 +243,7 @@ def reap_children(search_all=False):
     """
     procs = _subprocesses_started.copy()
     if search_all:
-        this_process = psutil.Process(os.getpid())
+        this_process = psutil.Process()
         for p in this_process.get_children(recursive=True):
             procs.add(p)
     for p in procs:
@@ -569,7 +569,7 @@ class TestSystemAPIs(unittest.TestCase):
         s.bind(('localhost', 0))
         s.listen(1)
         warnings.filterwarnings("error")
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         try:
             self.assertRaises(DeprecationWarning, getattr, psutil, 'NUM_CPUS')
             self.assertRaises(DeprecationWarning, getattr, psutil, 'BOOT_TIME')
@@ -614,7 +614,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_deprecated_apis_retval(self):
         warnings.filterwarnings("ignore")
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         try:
             self.assertEqual(psutil.total_virtmem(),
                              psutil.swap_memory().total)
@@ -983,7 +983,7 @@ class TestProcess(unittest.TestCase):
     def tearDown(self):
         reap_children()
 
-    def test_no_pid(self):
+    def test_pid(self):
         self.assertEqual(psutil.Process().pid, os.getpid())
 
     def test_kill(self):
@@ -1107,7 +1107,7 @@ class TestProcess(unittest.TestCase):
         self.assertFalse(p.is_running())
 
     def test_cpu_percent(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         p.get_cpu_percent(interval=0.001)
         p.get_cpu_percent(interval=0.001)
         for x in range(100):
@@ -1120,7 +1120,7 @@ class TestProcess(unittest.TestCase):
                 self.assertGreaterEqual(percent, 0.0)
 
     def test_cpu_times(self):
-        times = psutil.Process(os.getpid()).get_cpu_times()
+        times = psutil.Process().get_cpu_times()
         assert (times.user > 0.0) or (times.system > 0.0), times
         # make sure returned values can be pretty printed with strftime
         time.strftime("%H:%M:%S", time.localtime(times.user))
@@ -1135,7 +1135,7 @@ class TestProcess(unittest.TestCase):
     @unittest.skipUnless(sys.version_info > (2, 6, 1) and not OSX,
                          'os.times() is not reliable on this Python version')
     def test_cpu_times2(self):
-        user_time, kernel_time = psutil.Process(os.getpid()).get_cpu_times()
+        user_time, kernel_time = psutil.Process().get_cpu_times()
         utime, ktime = os.times()[:2]
 
         # Use os.times()[:2] as base values to compare our results
@@ -1166,7 +1166,7 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipIf(WINDOWS, 'windows only')
     def test_terminal(self):
-        terminal = psutil.Process(os.getpid()).terminal
+        terminal = psutil.Process().terminal
         if sys.stdin.isatty():
             self.assertEqual(terminal, sh('tty'))
         else:
@@ -1176,7 +1176,7 @@ class TestProcess(unittest.TestCase):
                      'not available on this platform')
     @skip_on_not_implemented(only_if=LINUX)
     def test_get_io_counters(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         # test reads
         io1 = p.get_io_counters()
         f = open(PYTHON, 'rb')
@@ -1213,7 +1213,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(IOPRIO_CLASS_RT, 1)
             self.assertEqual(IOPRIO_CLASS_BE, 2)
             self.assertEqual(IOPRIO_CLASS_IDLE, 3)
-            p = psutil.Process(os.getpid())
+            p = psutil.Process()
             try:
                 p.set_ionice(2)
                 ioclass, value = p.get_ionice()
@@ -1237,7 +1237,7 @@ class TestProcess(unittest.TestCase):
             finally:
                 p.set_ionice(IOPRIO_CLASS_NONE)
         else:
-            p = psutil.Process(os.getpid())
+            p = psutil.Process()
             original = p.get_ionice()
             try:
                 value = 0  # very low
@@ -1255,7 +1255,7 @@ class TestProcess(unittest.TestCase):
                          "only available on Linux >= 2.6.36")
     def test_get_rlimit(self):
         import resource
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         names = [x for x in dir(psutil) if x.startswith('RLIMIT_')]
         for name in names:
             value = getattr(psutil, name)
@@ -1281,7 +1281,7 @@ class TestProcess(unittest.TestCase):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
         # but this does not apply across all platforms (OSX, Windows)
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         step1 = p.get_num_threads()
 
         thread = ThreadTask()
@@ -1297,11 +1297,11 @@ class TestProcess(unittest.TestCase):
     @unittest.skipUnless(WINDOWS, 'Windows only')
     def test_get_num_handles(self):
         # a better test is done later into test/_windows.py
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         self.assertGreater(p.get_num_handles(), 0)
 
     def test_get_threads(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         step1 = p.get_threads()
 
         thread = ThreadTask()
@@ -1325,7 +1325,7 @@ class TestProcess(unittest.TestCase):
                 thread.stop()
 
     def test_get_memory_info(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
 
         # step 1 - get a base value to compare our results
         rss1, vms1 = p.get_memory_info()
@@ -1348,7 +1348,7 @@ class TestProcess(unittest.TestCase):
     # # tested later in fetch all test suite
 
     def test_get_memory_maps(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         maps = p.get_memory_maps()
         paths = [x for x in maps]
         self.assertEqual(len(paths), len(set(paths)))
@@ -1377,7 +1377,7 @@ class TestProcess(unittest.TestCase):
                     assert value >= 0, value
 
     def test_get_memory_percent(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         self.assertGreater(p.get_memory_percent(), 0.0)
 
     def test_pid(self):
@@ -1427,7 +1427,7 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_uids(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         real, effective, saved = p.uids
         # os.getuid() refers to "real" uid
         self.assertEqual(real, os.getuid())
@@ -1440,7 +1440,7 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_gids(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         real, effective, saved = p.gids
         # os.getuid() refers to "real" uid
         self.assertEqual(real, os.getgid())
@@ -1452,7 +1452,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(saved, os.getresgid()[2])
 
     def test_nice(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         self.assertRaises(TypeError, p.set_nice, "str")
         if os.name == 'nt':
             try:
@@ -1483,7 +1483,7 @@ class TestProcess(unittest.TestCase):
                     pass
 
     def test_status(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         self.assertEqual(p.status, psutil.STATUS_RUNNING)
 
     def test_username(self):
@@ -1519,7 +1519,7 @@ class TestProcess(unittest.TestCase):
     @unittest.skipIf(not hasattr(psutil.Process, "get_cpu_affinity"),
                      'not available on this platform')
     def test_cpu_affinity(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         initial = p.get_cpu_affinity()
         all_cpus = list(range(len(psutil.cpu_percent(percpu=True))))
         #
@@ -1538,7 +1538,7 @@ class TestProcess(unittest.TestCase):
 
     def test_get_open_files(self):
         # current process
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         files = p.get_open_files()
         self.assertFalse(TESTFN in files)
         f = open(TESTFN, 'w')
@@ -1567,7 +1567,7 @@ class TestProcess(unittest.TestCase):
     def test_get_open_files2(self):
         # test fd and path fields
         fileobj = open(TESTFN, 'w')
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         for path, fd in p.get_open_files():
             if path == fileobj.name or fd == fileobj.fileno():
                 break
@@ -1637,7 +1637,7 @@ class TestProcess(unittest.TestCase):
         s = socket.socket(AF_INET6, SOCK_STREAM)
         s.bind(('::1', 0))
         s.listen(1)
-        cons = psutil.Process(os.getpid()).get_connections()
+        cons = psutil.Process().get_connections()
         s.close()
         self.assertEqual(len(cons), 1)
         self.assertEqual(cons[0].laddr[0], '::1')
@@ -1671,7 +1671,7 @@ class TestProcess(unittest.TestCase):
         sock = socket.socket()
         sock.bind(('localhost', 0))
         sock.listen(1)
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         for conn in p.get_connections():
             if conn.fd == sock.fileno():
                 break
@@ -1740,7 +1740,7 @@ class TestProcess(unittest.TestCase):
                 else:
                     self.assertEqual(cons, [], cons)
 
-        for p in psutil.Process(os.getpid()).get_children():
+        for p in psutil.Process().get_children():
             for conn in p.get_connections():
                 # TCP v4
                 if p.pid == tcp4_proc.pid:
@@ -1765,7 +1765,7 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_get_num_fds(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         start = p.get_num_fds()
         file = open(TESTFN, 'w')
         self.assertEqual(p.get_num_fds(), start + 1)
@@ -1777,7 +1777,7 @@ class TestProcess(unittest.TestCase):
 
     @skip_on_not_implemented(only_if=LINUX)
     def test_get_num_ctx_switches(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         before = sum(p.get_num_ctx_switches())
         for x in range(500000):
             after = sum(p.get_num_ctx_switches())
@@ -1798,7 +1798,7 @@ class TestProcess(unittest.TestCase):
             self.assertTrue(p.ppid != this_parent)
 
     def test_get_children(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         self.assertEqual(p.get_children(), [])
         self.assertEqual(p.get_children(recursive=True), [])
         sproc = get_test_subprocess()
@@ -1818,7 +1818,7 @@ class TestProcess(unittest.TestCase):
         s += "subprocess.Popen(cmd);"
         s += "time.sleep(2);"
         get_test_subprocess(cmd=[PYTHON, "-c", s])
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         self.assertEqual(len(p.get_children(recursive=False)), 1)
         # give the grandchild some time to start
         stop_at = time.time() + 1.5
@@ -1865,7 +1865,7 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(ValueError, psutil.Process, -1)
 
     def test_as_dict(self):
-        p = psutil.Process(os.getpid())
+        p = psutil.Process()
         d = p.as_dict()
         try:
             import json
@@ -1976,8 +1976,8 @@ class TestProcess(unittest.TestCase):
             call_until(lambda: zproc.status, "ret == psutil.STATUS_ZOMBIE")
             self.assertTrue(psutil.pid_exists(zpid))
             zproc = psutil.Process(zpid)
-            descendants = [x.pid for x in psutil.Process(
-                           os.getpid()).get_children(recursive=True)]
+            descendants = [x.pid for x in psutil.Process().get_children(
+                           recursive=True)]
             self.assertIn(zpid, descendants)
         finally:
             if sock is not None:
@@ -2351,7 +2351,7 @@ if hasattr(os, 'getuid') and os.getuid() == 0:
 
         def test_nice(self):
             try:
-                psutil.Process(os.getpid()).set_nice(-1)
+                psutil.Process().set_nice(-1)
             except psutil.AccessDenied:
                 pass
             else:
