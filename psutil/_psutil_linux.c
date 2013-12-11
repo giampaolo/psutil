@@ -253,7 +253,7 @@ get_sysinfo(PyObject *self, PyObject *args)
  * Return process CPU affinity as a Python long (the bitmask)
  */
 static PyObject *
-get_process_cpu_affinity(PyObject *self, PyObject *args)
+get_proc_cpu_affinity(PyObject *self, PyObject *args)
 {
     unsigned long mask;
     unsigned int len = sizeof(mask);
@@ -273,7 +273,7 @@ get_process_cpu_affinity(PyObject *self, PyObject *args)
  * Set process CPU affinity; expects a bitmask
  */
 static PyObject *
-set_process_cpu_affinity(PyObject *self, PyObject *args)
+set_proc_cpu_affinity(PyObject *self, PyObject *args)
 {
     cpu_set_t cpu_set;
     size_t len;
@@ -394,7 +394,7 @@ PsutilMethods[] =
     {"prlimit", linux_prlimit, METH_VARARGS,
      "Get or set process resource limits."},
 #endif
-    {"set_process_cpu_affinity", set_process_cpu_affinity, METH_VARARGS,
+    {"set_proc_cpu_affinity", set_proc_cpu_affinity, METH_VARARGS,
      "Set process CPU affinity; expects a bitmask."},
 
     // --- system related functions
@@ -403,7 +403,7 @@ PsutilMethods[] =
      "device, mount point and filesystem type"},
     {"get_sysinfo", get_sysinfo, METH_VARARGS,
      "A wrapper around sysinfo(), return system memory usage statistics"},
-    {"get_process_cpu_affinity", get_process_cpu_affinity, METH_VARARGS,
+    {"get_proc_cpu_affinity", get_proc_cpu_affinity, METH_VARARGS,
      "Return process CPU affinity as a Python long (the bitmask)."},
     {"get_system_users", get_system_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},

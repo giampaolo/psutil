@@ -370,7 +370,7 @@ const STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
  * On success return 1, else 0 with Python exception already set.
  */
 int
-get_process_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
+get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
                  PVOID *retBuffer)
 {
     static ULONG initialBufferSize = 0x4000;

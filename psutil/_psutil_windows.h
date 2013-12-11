@@ -9,36 +9,36 @@
 
 // --- per-process functions
 
-static PyObject* get_process_cmdline(PyObject* self, PyObject* args);
-static PyObject* get_process_exe(PyObject* self, PyObject* args);
-static PyObject* get_process_cpu_times(PyObject* self, PyObject* args);
-static PyObject* get_process_create_time(PyObject* self, PyObject* args);
-static PyObject* get_process_memory_info(PyObject* self, PyObject* args);
-static PyObject* get_process_cwd(PyObject* self, PyObject* args);
-static PyObject* get_process_open_files(PyObject* self, PyObject* args);
-static PyObject* get_process_username(PyObject* self, PyObject* args);
-static PyObject* get_process_connections(PyObject* self, PyObject* args);
-static PyObject* get_process_num_threads(PyObject* self, PyObject* args);
-static PyObject* get_process_threads(PyObject* self, PyObject* args);
-static PyObject* get_process_priority(PyObject* self, PyObject* args);
-static PyObject* set_process_priority(PyObject* self, PyObject* args);
+static PyObject* get_proc_cmdline(PyObject* self, PyObject* args);
+static PyObject* get_proc_exe(PyObject* self, PyObject* args);
+static PyObject* get_proc_cpu_times(PyObject* self, PyObject* args);
+static PyObject* get_proc_create_time(PyObject* self, PyObject* args);
+static PyObject* get_proc_memory_info(PyObject* self, PyObject* args);
+static PyObject* get_proc_cwd(PyObject* self, PyObject* args);
+static PyObject* get_proc_open_files(PyObject* self, PyObject* args);
+static PyObject* get_proc_username(PyObject* self, PyObject* args);
+static PyObject* get_proc_connections(PyObject* self, PyObject* args);
+static PyObject* get_proc_num_threads(PyObject* self, PyObject* args);
+static PyObject* get_proc_threads(PyObject* self, PyObject* args);
+static PyObject* get_proc_priority(PyObject* self, PyObject* args);
+static PyObject* set_proc_priority(PyObject* self, PyObject* args);
 #if (PSUTIL_WINVER >= 0x0600)  // Windows Vista
-static PyObject* get_process_io_priority(PyObject* self, PyObject* args);
-static PyObject* set_process_io_priority(PyObject* self, PyObject* args);
+static PyObject* get_proc_io_priority(PyObject* self, PyObject* args);
+static PyObject* set_proc_io_priority(PyObject* self, PyObject* args);
 #endif
-static PyObject* get_process_io_counters(PyObject* self, PyObject* args);
-static PyObject* get_process_cpu_affinity(PyObject* self, PyObject* args);
-static PyObject* set_process_cpu_affinity(PyObject* self, PyObject* args);
-static PyObject* get_process_num_handles(PyObject* self, PyObject* args);
-static PyObject* get_process_num_ctx_switches(PyObject* self, PyObject* args);
-static PyObject* get_process_memory_maps(PyObject* self, PyObject* args);
+static PyObject* get_proc_io_counters(PyObject* self, PyObject* args);
+static PyObject* get_proc_cpu_affinity(PyObject* self, PyObject* args);
+static PyObject* set_proc_cpu_affinity(PyObject* self, PyObject* args);
+static PyObject* get_proc_num_handles(PyObject* self, PyObject* args);
+static PyObject* get_proc_num_ctx_switches(PyObject* self, PyObject* args);
+static PyObject* get_proc_memory_maps(PyObject* self, PyObject* args);
 static PyObject* get_ppid_map(PyObject* self, PyObject* args);
 
-static PyObject* get_process_cpu_times_2(PyObject* self, PyObject* args);
-static PyObject* get_process_create_time_2(PyObject* self, PyObject* args);
-static PyObject* get_process_num_handles_2(PyObject* self, PyObject* args);
-static PyObject* get_process_io_counters_2(PyObject* self, PyObject* args);
-static PyObject* get_process_memory_info_2(PyObject* self, PyObject* args);
+static PyObject* get_proc_cpu_times_2(PyObject* self, PyObject* args);
+static PyObject* get_proc_create_time_2(PyObject* self, PyObject* args);
+static PyObject* get_proc_num_handles_2(PyObject* self, PyObject* args);
+static PyObject* get_proc_io_counters_2(PyObject* self, PyObject* args);
+static PyObject* get_proc_memory_info_2(PyObject* self, PyObject* args);
 
 static PyObject* suspend_process(PyObject* self, PyObject* args);
 static PyObject* resume_process(PyObject* self, PyObject* args);

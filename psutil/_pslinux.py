@@ -802,19 +802,19 @@ class Process(object):
         return _psutil_posix.getpriority(self.pid)
 
     @wrap_exceptions
-    def set_process_nice(self, value):
+    def set_proc_nice(self, value):
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def get_cpu_affinity(self):
         from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
-        bitmask = _psutil_linux.get_process_cpu_affinity(self.pid)
+        bitmask = _psutil_linux.get_proc_cpu_affinity(self.pid)
         return from_bitmask(bitmask)
 
     @wrap_exceptions
-    def set_process_cpu_affinity(self, cpus):
+    def set_proc_cpu_affinity(self, cpus):
         try:
-            _psutil_linux.set_process_cpu_affinity(self.pid, cpus)
+            _psutil_linux.set_proc_cpu_affinity(self.pid, cpus)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno == errno.EINVAL:
@@ -834,7 +834,7 @@ class Process(object):
             return nt_ionice(ioclass, value)
 
         @wrap_exceptions
-        def set_process_ionice(self, ioclass, value):
+        def set_proc_ionice(self, ioclass, value):
             if ioclass in (IOPRIO_CLASS_NONE, None):
                 if value:
                     msg = "can't specify value with IOPRIO_CLASS_NONE"

@@ -476,7 +476,7 @@ class Process(object):
         return self._proc.get_cwd()
 
     # Linux, BSD and Windows only
-    if hasattr(_psplatform.Process, "get_process_io_counters"):
+    if hasattr(_psplatform.Process, "get_io_counters"):
 
         def get_io_counters(self):
             """Return process I/O statistics as a namedtuple including
@@ -493,10 +493,10 @@ class Process(object):
     def set_nice(self, value):
         """Set process niceness (priority) pre-emptively checking
         whether PID has been reused."""
-        return self._proc.set_process_nice(value)
+        return self._proc.set_proc_nice(value)
 
     # Linux and Windows >= Vista only
-    if hasattr(_psplatform.Process, "get_process_ionice"):
+    if hasattr(_psplatform.Process, "get_ionice"):
 
         def get_ionice(self):
             """Return process I/O niceness (priority).
@@ -521,7 +521,7 @@ class Process(object):
 
             Available on Linux and Windows > Vista only.
             """
-            return self._proc.set_process_ionice(ioclass, value)
+            return self._proc.set_proc_ionice(ioclass, value)
 
     # Linux only
     if hasattr(_psplatform.Process, "process_rlimit"):
@@ -556,7 +556,7 @@ class Process(object):
             self._proc.process_rlimit(resource, limits)
 
     # Windows and Linux only
-    if hasattr(_psplatform.Process, "get_process_cpu_affinity"):
+    if hasattr(_psplatform.Process, "get_cpu_affinity"):
 
         def get_cpu_affinity(self):
             """Get process current CPU affinity."""
@@ -567,7 +567,7 @@ class Process(object):
             'cpus' is a list of CPUs for which you want to set the
             affinity (e.g. [0, 1]).
             """
-            return self._proc.set_process_cpu_affinity(cpus)
+            return self._proc.set_proc_cpu_affinity(cpus)
 
     if os.name == 'nt':
 

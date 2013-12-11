@@ -217,12 +217,12 @@ class Process(object):
         # Note: os.path.exists(path) may return False even if the file
         # is there, see:
         # http://stackoverflow.com/questions/3112546/os-path-exists-lies
-        return _convert_raw_path(_psutil_windows.get_process_exe(self.pid))
+        return _convert_raw_path(_psutil_windows.get_proc_exe(self.pid))
 
     @wrap_exceptions
     def get_cmdline(self):
         """Return process cmdline as a list of arguments."""
-        return _psutil_windows.get_process_cmdline(self.pid)
+        return _psutil_windows.get_proc_cmdline(self.pid)
 
     def get_ppid(self):
         """Return process parent pid."""
@@ -233,11 +233,11 @@ class Process(object):
 
     def _get_raw_meminfo(self):
         try:
-            return _psutil_windows.get_process_memory_info(self.pid)
+            return _psutil_windows.get_proc_memory_info(self.pid)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                return _psutil_windows.get_process_memory_info_2(self.pid)
+                return _psutil_windows.get_proc_memory_info_2(self.pid)
             raise
 
     @wrap_exceptions
@@ -271,7 +271,7 @@ class Process(object):
 
     def get_memory_maps(self):
         try:
-            raw = _psutil_windows.get_process_memory_maps(self.pid)
+            raw = _psutil_windows.get_proc_memory_maps(self.pid)
         except OSError:
             # XXX - can't use wrap_exceptions decorator as we're
             # returning a generator; probably needs refactoring.
@@ -309,7 +309,7 @@ class Process(object):
         """Return the name of the user that owns the process"""
         if self.pid in (0, 4):
             return 'NT AUTHORITY\\SYSTEM'
-        return _psutil_windows.get_process_username(self.pid)
+        return _psutil_windows.get_proc_username(self.pid)
 
     @wrap_exceptions
     def get_create_time(self):
@@ -317,20 +317,20 @@ class Process(object):
         if self.pid in (0, 4):
             return get_system_boot_time()
         try:
-            return _psutil_windows.get_process_create_time(self.pid)
+            return _psutil_windows.get_proc_create_time(self.pid)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                return _psutil_windows.get_process_create_time_2(self.pid)
+                return _psutil_windows.get_proc_create_time_2(self.pid)
             raise
 
     @wrap_exceptions
     def get_num_threads(self):
-        return _psutil_windows.get_process_num_threads(self.pid)
+        return _psutil_windows.get_proc_num_threads(self.pid)
 
     @wrap_exceptions
     def get_threads(self):
-        rawlist = _psutil_windows.get_process_threads(self.pid)
+        rawlist = _psutil_windows.get_proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
             ntuple = nt_thread(thread_id, utime, stime)
@@ -340,11 +340,11 @@ class Process(object):
     @wrap_exceptions
     def get_cpu_times(self):
         try:
-            ret = _psutil_windows.get_process_cpu_times(self.pid)
+            ret = _psutil_windows.get_proc_cpu_times(self.pid)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                ret = _psutil_windows.get_process_cpu_times_2(self.pid)
+                ret = _psutil_windows.get_proc_cpu_times_2(self.pid)
             else:
                 raise
         return nt_cputimes(*ret)
@@ -363,7 +363,7 @@ class Process(object):
             raise AccessDenied(self.pid, self._process_name)
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
-        path = _psutil_windows.get_process_cwd(self.pid)
+        path = _psutil_windows.get_proc_cwd(self.pid)
         return os.path.normpath(path)
 
     @wrap_exceptions
@@ -375,7 +375,7 @@ class Process(object):
         # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
         # Convert the first part in the corresponding drive letter
         # (e.g. "C:\") by using Windows's QueryDosDevice()
-        raw_file_names = _psutil_windows.get_process_open_files(self.pid)
+        raw_file_names = _psutil_windows.get_proc_open_files(self.pid)
         for file in raw_file_names:
             file = _convert_raw_path(file)
             if isfile_strict(file) and file not in retlist:
@@ -389,8 +389,8 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        rawlist = _psutil_windows.get_process_connections(self.pid, families,
-                                                            types)
+        rawlist = _psutil_windows.get_proc_connections(self.pid, families,
+                                                       types)
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
@@ -401,36 +401,36 @@ class Process(object):
 
     @wrap_exceptions
     def get_nice(self):
-        return _psutil_windows.get_process_priority(self.pid)
+        return _psutil_windows.get_proc_priority(self.pid)
 
     @wrap_exceptions
-    def set_process_nice(self, value):
-        return _psutil_windows.set_process_priority(self.pid, value)
+    def set_proc_nice(self, value):
+        return _psutil_windows.set_proc_priority(self.pid, value)
 
     # available on Windows >= Vista
     if hasattr(_psutil_windows, "get_process_io_priority"):
         @wrap_exceptions
         def get_ionice(self):
-            return _psutil_windows.get_process_io_priority(self.pid)
+            return _psutil_windows.get_proc_io_priority(self.pid)
 
         @wrap_exceptions
-        def set_process_ionice(self, value, _):
+        def set_proc_ionice(self, value, _):
             if _:
-                raise TypeError("set_process_ionice() on Windows takes only "
+                raise TypeError("set_proc_ionice() on Windows takes only "
                                 "1 argument (2 given)")
             if value not in (2, 1, 0):
                 raise ValueError("value must be 2 (normal), 1 (low) or 0 "
                                  "(very low); got %r" % value)
-            return _psutil_windows.set_process_io_priority(self.pid, value)
+            return _psutil_windows.set_proc_io_priority(self.pid, value)
 
     @wrap_exceptions
     def get_io_counters(self):
         try:
-            ret = _psutil_windows.get_process_io_counters(self.pid)
+            ret = _psutil_windows.get_proc_io_counters(self.pid)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                ret = _psutil_windows.get_process_io_counters_2(self.pid)
+                ret = _psutil_windows.get_proc_io_counters_2(self.pid)
             else:
                 raise
         return nt_io(*ret)
@@ -446,11 +446,11 @@ class Process(object):
     @wrap_exceptions
     def get_cpu_affinity(self):
         from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
-        bitmask = _psutil_windows.get_process_cpu_affinity(self.pid)
+        bitmask = _psutil_windows.get_proc_cpu_affinity(self.pid)
         return from_bitmask(bitmask)
 
     @wrap_exceptions
-    def set_process_cpu_affinity(self, value):
+    def set_proc_cpu_affinity(self, value):
         def to_bitmask(l):
             if not l:
                 raise ValueError("invalid argument %r" % l)
@@ -468,19 +468,19 @@ class Process(object):
                 raise ValueError("invalid CPU %r" % cpu)
 
         bitmask = to_bitmask(value)
-        _psutil_windows.set_process_cpu_affinity(self.pid, bitmask)
+        _psutil_windows.set_proc_cpu_affinity(self.pid, bitmask)
 
     @wrap_exceptions
     def get_num_handles(self):
         try:
-            return _psutil_windows.get_process_num_handles(self.pid)
+            return _psutil_windows.get_proc_num_handles(self.pid)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                return _psutil_windows.get_process_num_handles_2(self.pid)
+                return _psutil_windows.get_proc_num_handles_2(self.pid)
             raise
 
     @wrap_exceptions
     def get_num_ctx_switches(self):
-        tupl = _psutil_windows.get_process_num_ctx_switches(self.pid)
+        tupl = _psutil_windows.get_proc_num_ctx_switches(self.pid)
         return nt_ctxsw(*tupl)

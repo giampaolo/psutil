@@ -8,13 +8,13 @@
 
 // processes
 static PyObject* query_process_thread(PyObject* self, PyObject* args);
-static PyObject* get_process_basic_info(PyObject* self, PyObject* args);
-static PyObject* get_process_name_and_args(PyObject* self, PyObject* args);
-static PyObject* get_process_cpu_times(PyObject* self, PyObject* args);
-static PyObject* get_process_cred(PyObject* self, PyObject* args);
-static PyObject* get_process_memory_maps(PyObject* self, PyObject* args);
-static PyObject* get_process_num_ctx_switches(PyObject* self, PyObject* args);
-static PyObject* get_process_connections(PyObject* self, PyObject* args);
+static PyObject* get_proc_basic_info(PyObject* self, PyObject* args);
+static PyObject* get_proc_name_and_args(PyObject* self, PyObject* args);
+static PyObject* get_proc_cpu_times(PyObject* self, PyObject* args);
+static PyObject* get_proc_cred(PyObject* self, PyObject* args);
+static PyObject* get_proc_memory_maps(PyObject* self, PyObject* args);
+static PyObject* get_proc_num_ctx_switches(PyObject* self, PyObject* args);
+static PyObject* get_proc_connections(PyObject* self, PyObject* args);
 
 // system
 static PyObject* get_swap_mem(PyObject* self, PyObject* args);

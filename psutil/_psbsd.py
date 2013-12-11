@@ -191,21 +191,21 @@ class Process(object):
     @wrap_exceptions
     def get_name(self):
         """Return process name as a string of limited len (15)."""
-        return _psutil_bsd.get_process_name(self.pid)
+        return _psutil_bsd.get_proc_name(self.pid)
 
     @wrap_exceptions
     def get_exe(self):
         """Return process executable pathname."""
-        return _psutil_bsd.get_process_exe(self.pid)
+        return _psutil_bsd.get_proc_exe(self.pid)
 
     @wrap_exceptions
     def get_cmdline(self):
         """Return process cmdline as a list of arguments."""
-        return _psutil_bsd.get_process_cmdline(self.pid)
+        return _psutil_bsd.get_proc_cmdline(self.pid)
 
     @wrap_exceptions
     def get_terminal(self):
-        tty_nr = _psutil_bsd.get_process_tty_nr(self.pid)
+        tty_nr = _psutil_bsd.get_proc_tty_nr(self.pid)
         tmap = _psposix._get_terminal_map()
         try:
             return tmap[tty_nr]
@@ -215,71 +215,71 @@ class Process(object):
     @wrap_exceptions
     def get_ppid(self):
         """Return process parent pid."""
-        return _psutil_bsd.get_process_ppid(self.pid)
+        return _psutil_bsd.get_proc_ppid(self.pid)
 
     # XXX - available on FreeBSD >= 8 only
-    if hasattr(_psutil_bsd, "get_process_cwd"):
+    if hasattr(_psutil_bsd, "get_proc_cwd"):
         @wrap_exceptions
         def get_cwd(self):
             """Return process current working directory."""
             # sometimes we get an empty string, in which case we turn
             # it into None
-            return _psutil_bsd.get_process_cwd(self.pid) or None
+            return _psutil_bsd.get_proc_cwd(self.pid) or None
 
     @wrap_exceptions
     def get_uids(self):
         """Return real, effective and saved user ids."""
-        real, effective, saved = _psutil_bsd.get_process_uids(self.pid)
+        real, effective, saved = _psutil_bsd.get_proc_uids(self.pid)
         return nt_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_gids(self):
         """Return real, effective and saved group ids."""
-        real, effective, saved = _psutil_bsd.get_process_gids(self.pid)
+        real, effective, saved = _psutil_bsd.get_proc_gids(self.pid)
         return nt_gids(real, effective, saved)
 
     @wrap_exceptions
     def get_cpu_times(self):
         """return a tuple containing process user/kernel time."""
-        user, system = _psutil_bsd.get_process_cpu_times(self.pid)
+        user, system = _psutil_bsd.get_proc_cpu_times(self.pid)
         return nt_cputimes(user, system)
 
     @wrap_exceptions
     def get_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
-        rss, vms = _psutil_bsd.get_process_memory_info(self.pid)[:2]
+        rss, vms = _psutil_bsd.get_proc_memory_info(self.pid)[:2]
         return nt_meminfo(rss, vms)
 
     _nt_ext_mem = namedtuple('meminfo', 'rss vms text data stack')
 
     @wrap_exceptions
     def get_ext_memory_info(self):
-        return self._nt_ext_mem(*_psutil_bsd.get_process_memory_info(self.pid))
+        return self._nt_ext_mem(*_psutil_bsd.get_proc_memory_info(self.pid))
 
     @wrap_exceptions
     def get_create_time(self):
         """Return the start time of the process as a number of seconds since
         the epoch."""
-        return _psutil_bsd.get_process_create_time(self.pid)
+        return _psutil_bsd.get_proc_create_time(self.pid)
 
     @wrap_exceptions
     def get_num_threads(self):
         """Return the number of threads belonging to the process."""
-        return _psutil_bsd.get_process_num_threads(self.pid)
+        return _psutil_bsd.get_proc_num_threads(self.pid)
 
     @wrap_exceptions
     def get_num_ctx_switches(self):
-        return nt_ctxsw(*_psutil_bsd.get_process_num_ctx_switches(self.pid))
+        return nt_ctxsw(*_psutil_bsd.get_proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
     def get_num_fds(self):
         """Return the number of file descriptors opened by this process."""
-        return _psutil_bsd.get_process_num_fds(self.pid)
+        return _psutil_bsd.get_proc_num_fds(self.pid)
 
     @wrap_exceptions
     def get_threads(self):
         """Return the number of threads belonging to the process."""
-        rawlist = _psutil_bsd.get_process_threads(self.pid)
+        rawlist = _psutil_bsd.get_proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
             ntuple = nt_thread(thread_id, utime, stime)
@@ -291,12 +291,12 @@ class Process(object):
         """Return files opened by process as a list of namedtuples."""
         # XXX - C implementation available on FreeBSD >= 8 only
         # else fallback on lsof parser
-        if hasattr(_psutil_bsd, "get_process_open_files"):
-            rawlist = _psutil_bsd.get_process_open_files(self.pid)
+        if hasattr(_psutil_bsd, "get_proc_open_files"):
+            rawlist = _psutil_bsd.get_proc_open_files(self.pid)
             return [nt_openfile(path, fd) for path, fd in rawlist]
         else:
             lsof = _psposix.LsofParser(self.pid, self._process_name)
-            return lsof.get_process_open_files()
+            return lsof.get_proc_open_files()
 
     @wrap_exceptions
     def get_connections(self, kind='inet'):
@@ -307,8 +307,8 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        rawlist = _psutil_bsd.get_process_connections(self.pid, families,
-                                                      types)
+        rawlist = _psutil_bsd.get_proc_connections(self.pid, families,
+                                                   types)
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
@@ -329,12 +329,12 @@ class Process(object):
         return _psutil_posix.getpriority(self.pid)
 
     @wrap_exceptions
-    def set_process_nice(self, value):
+    def set_proc_nice(self, value):
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def get_status(self):
-        code = _psutil_bsd.get_process_status(self.pid)
+        code = _psutil_bsd.get_proc_status(self.pid)
         if code in PROC_STATUSES:
             return PROC_STATUSES[code]
         # XXX is this legit? will we even ever get here?
@@ -342,7 +342,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_io_counters(self):
-        rc, wc, rb, wb = _psutil_bsd.get_process_io_counters(self.pid)
+        rc, wc, rb, wb = _psutil_bsd.get_proc_io_counters(self.pid)
         return nt_io(rc, wc, rb, wb)
 
     nt_mmap_grouped = namedtuple(
@@ -352,14 +352,14 @@ class Process(object):
 
     @wrap_exceptions
     def get_memory_maps(self):
-        return _psutil_bsd.get_process_memory_maps(self.pid)
+        return _psutil_bsd.get_proc_memory_maps(self.pid)
 
     # FreeBSD < 8 does not support kinfo_getfile() and kinfo_getvmmap()
-    if not hasattr(_psutil_bsd, 'get_process_open_files'):
+    if not hasattr(_psutil_bsd, 'get_proc_open_files'):
         def _not_implemented(self):
             raise NotImplementedError("supported only starting from FreeBSD 8")
 
         get_open_files = _not_implemented
-        get_process_cwd = _not_implemented
+        get_proc_cwd = _not_implemented
         get_memory_maps = _not_implemented
         get_num_fds = _not_implemented

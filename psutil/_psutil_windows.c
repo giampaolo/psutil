@@ -241,7 +241,7 @@ process_wait(PyObject *self, PyObject *args)
  * Return a Python tuple (user_time, kernel_time)
  */
 static PyObject *
-get_process_cpu_times(PyObject *self, PyObject *args)
+get_proc_cpu_times(PyObject *self, PyObject *args)
 {
     long        pid;
     HANDLE      hProcess;
@@ -294,7 +294,7 @@ get_process_cpu_times(PyObject *self, PyObject *args)
  * Alternative implementation of the one above but bypasses ACCESS DENIED.
  */
 static PyObject *
-get_process_cpu_times_2(PyObject *self, PyObject *args)
+get_proc_cpu_times_2(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -304,7 +304,7 @@ get_process_cpu_times_2(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (! get_process_info(pid, &process, &buffer)) {
+    if (! get_proc_info(pid, &process, &buffer)) {
         return NULL;
     }
     user = (double)process->UserTime.HighPart * 429.4967296 + \
@@ -321,7 +321,7 @@ get_process_cpu_times_2(PyObject *self, PyObject *args)
  * seconds since the epoch.
  */
 static PyObject *
-get_process_create_time(PyObject *self, PyObject *args)
+get_proc_create_time(PyObject *self, PyObject *args)
 {
     long        pid;
     long long   unix_time;
@@ -394,7 +394,7 @@ get_process_create_time(PyObject *self, PyObject *args)
  * Alternative implementation of the one above but bypasses ACCESS DENIED.
  */
 static PyObject *
-get_process_create_time_2(PyObject *self, PyObject *args)
+get_proc_create_time_2(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -404,7 +404,7 @@ get_process_create_time_2(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (! get_process_info(pid, &process, &buffer)) {
+    if (! get_proc_info(pid, &process, &buffer)) {
         return NULL;
     }
     // special case for PIDs 0 and 4, return system boot time
@@ -449,7 +449,7 @@ get_num_cpus(PyObject *self, PyObject *args)
  * Return process cmdline as a Python list of cmdline arguments.
  */
 static PyObject *
-get_process_cmdline(PyObject *self, PyObject *args) {
+get_proc_cmdline(PyObject *self, PyObject *args) {
     long pid;
     int pid_return;
     PyObject *arglist;
@@ -489,7 +489,7 @@ get_process_cmdline(PyObject *self, PyObject *args) {
  * Return process executable path.
  */
 static PyObject *
-get_process_exe(PyObject *self, PyObject *args) {
+get_proc_exe(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
     wchar_t exe[MAX_PATH];
@@ -525,7 +525,7 @@ get_process_exe(PyObject *self, PyObject *args) {
  * Return process memory information as a Python tuple.
  */
 static PyObject *
-get_process_memory_info(PyObject *self, PyObject *args)
+get_proc_memory_info(PyObject *self, PyObject *args)
 {
     HANDLE hProcess;
     DWORD pid;
@@ -594,7 +594,7 @@ get_process_memory_info(PyObject *self, PyObject *args)
  * Alternative implementation of the one above but bypasses ACCESS DENIED.
  */
 static PyObject *
-get_process_memory_info_2(PyObject *self, PyObject *args)
+get_proc_memory_info_2(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -611,7 +611,7 @@ get_process_memory_info_2(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (! get_process_info(pid, &process, &buffer)) {
+    if (! get_proc_info(pid, &process, &buffer)) {
         return NULL;
     }
 
@@ -804,7 +804,7 @@ error:
  */
 
 static PyObject *
-get_process_cwd(PyObject *self, PyObject *args)
+get_proc_cwd(PyObject *self, PyObject *args)
 {
     long pid;
     HANDLE processHandle = NULL;
@@ -1042,7 +1042,7 @@ resume_process(PyObject *self, PyObject *args)
 
 
 static PyObject *
-get_process_num_threads(PyObject *self, PyObject *args)
+get_proc_num_threads(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -1052,7 +1052,7 @@ get_process_num_threads(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (! get_process_info(pid, &process, &buffer)) {
+    if (! get_proc_info(pid, &process, &buffer)) {
         return NULL;
     }
     num = (int)process->NumberOfThreads;
@@ -1062,7 +1062,7 @@ get_process_num_threads(PyObject *self, PyObject *args)
 
 
 static PyObject *
-get_process_threads(PyObject *self, PyObject *args)
+get_proc_threads(PyObject *self, PyObject *args)
 {
     HANDLE hThread;
     THREADENTRY32 te32 = {0};
@@ -1174,7 +1174,7 @@ error:
 
 
 static PyObject *
-get_process_open_files(PyObject *self, PyObject *args)
+get_proc_open_files(PyObject *self, PyObject *args)
 {
     long       pid;
     HANDLE     processHandle;
@@ -1235,7 +1235,7 @@ win32_QueryDosDevice(PyObject *self, PyObject *args)
  * Return process username as a "DOMAIN//USERNAME" string.
  */
 static PyObject *
-get_process_username(PyObject *self, PyObject *args)
+get_proc_username(PyObject *self, PyObject *args)
 {
     long pid;
     HANDLE processHandle;
@@ -1439,7 +1439,7 @@ static int PSUTIL_CONN_NONE = 128;
  * Return a list of network connections opened by a process
  */
 static PyObject *
-get_process_connections(PyObject *self, PyObject *args)
+get_proc_connections(PyObject *self, PyObject *args)
 {
     static long null_address[4] = { 0, 0, 0, 0 };
 
@@ -1865,7 +1865,7 @@ error:
  * Get process priority as a Python integer.
  */
 static PyObject *
-get_process_priority(PyObject *self, PyObject *args)
+get_proc_priority(PyObject *self, PyObject *args)
 {
     long pid;
     DWORD priority;
@@ -1893,7 +1893,7 @@ get_process_priority(PyObject *self, PyObject *args)
  * Set process priority.
  */
 static PyObject *
-set_process_priority(PyObject *self, PyObject *args)
+set_proc_priority(PyObject *self, PyObject *args)
 {
     long pid;
     int priority;
@@ -1926,7 +1926,7 @@ set_process_priority(PyObject *self, PyObject *args)
  * Get process IO priority as a Python integer.
  */
 static PyObject *
-get_process_io_priority(PyObject *self, PyObject *args)
+get_proc_io_priority(PyObject *self, PyObject *args)
 {
     long pid;
     HANDLE hProcess;
@@ -1960,7 +1960,7 @@ get_process_io_priority(PyObject *self, PyObject *args)
  * Set process IO priority.
  */
 static PyObject *
-set_process_io_priority(PyObject *self, PyObject *args)
+set_proc_io_priority(PyObject *self, PyObject *args)
 {
     long pid;
     int prio;
@@ -2002,7 +2002,7 @@ set_process_io_priority(PyObject *self, PyObject *args)
  * Return a Python tuple referencing process I/O counters.
  */
 static PyObject *
-get_process_io_counters(PyObject *self, PyObject *args)
+get_proc_io_counters(PyObject *self, PyObject *args)
 {
     DWORD pid;
     HANDLE hProcess;
@@ -2032,7 +2032,7 @@ get_process_io_counters(PyObject *self, PyObject *args)
  * Alternative implementation of the one above but bypasses ACCESS DENIED.
  */
 static PyObject *
-get_process_io_counters_2(PyObject *self, PyObject *args)
+get_proc_io_counters_2(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -2042,7 +2042,7 @@ get_process_io_counters_2(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (! get_process_info(pid, &process, &buffer)) {
+    if (! get_proc_info(pid, &process, &buffer)) {
         return NULL;
     }
     rcount = process->ReadOperationCount.QuadPart;
@@ -2058,7 +2058,7 @@ get_process_io_counters_2(PyObject *self, PyObject *args)
  * Return process CPU affinity as a bitmask
  */
 static PyObject *
-get_process_cpu_affinity(PyObject *self, PyObject *args)
+get_proc_cpu_affinity(PyObject *self, PyObject *args)
 {
     DWORD pid;
     HANDLE hProcess;
@@ -2090,7 +2090,7 @@ get_process_cpu_affinity(PyObject *self, PyObject *args)
  * Set process CPU affinity
  */
 static PyObject *
-set_process_cpu_affinity(PyObject *self, PyObject *args)
+set_proc_cpu_affinity(PyObject *self, PyObject *args)
 {
     DWORD pid;
     HANDLE hProcess;
@@ -2137,7 +2137,7 @@ is_process_suspended(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (! get_process_info(pid, &process, &buffer)) {
+    if (! get_proc_info(pid, &process, &buffer)) {
         return NULL;
     }
     for (i = 0; i < process->NumberOfThreads; i++) {
@@ -2698,7 +2698,7 @@ error:
  * Return the number of handles opened by process.
  */
 static PyObject *
-get_process_num_handles(PyObject *self, PyObject *args)
+get_proc_num_handles(PyObject *self, PyObject *args)
 {
     DWORD pid;
     HANDLE hProcess;
@@ -2724,7 +2724,7 @@ get_process_num_handles(PyObject *self, PyObject *args)
  * Alternative implementation of the one above but bypasses ACCESS DENIED.
  */
 static PyObject *
-get_process_num_handles_2(PyObject *self, PyObject *args)
+get_proc_num_handles_2(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -2734,7 +2734,7 @@ get_process_num_handles_2(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (! get_process_info(pid, &process, &buffer)) {
+    if (! get_proc_info(pid, &process, &buffer)) {
         return NULL;
     }
     count = process->HandleCount;
@@ -2747,7 +2747,7 @@ get_process_num_handles_2(PyObject *self, PyObject *args)
  * Return the number of context switches executed by process.
  */
 static PyObject *
-get_process_num_ctx_switches(PyObject *self, PyObject *args)
+get_proc_num_ctx_switches(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -2758,7 +2758,7 @@ get_process_num_ctx_switches(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (! get_process_info(pid, &process, &buffer)) {
+    if (! get_proc_info(pid, &process, &buffer)) {
         return NULL;
     }
     for (i = 0; i < process->NumberOfThreads; i++) {
@@ -2798,7 +2798,7 @@ static char *get_region_protection_string(ULONG protection)
  * Return a list of process's memory mappings.
  */
 static PyObject *
-get_process_memory_maps(PyObject *self, PyObject *args)
+get_proc_memory_maps(PyObject *self, PyObject *args)
 {
     DWORD pid;
     HANDLE hProcess = NULL;
@@ -2921,75 +2921,74 @@ PsutilMethods[] =
 {
     // --- per-process functions
 
-    {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
+    {"get_proc_cmdline", get_proc_cmdline, METH_VARARGS,
      "Return process cmdline as a list of cmdline arguments"},
-    {"get_process_exe", get_process_exe, METH_VARARGS,
+    {"get_proc_exe", get_proc_exe, METH_VARARGS,
      "Return path of the process executable"},
     {"kill_process", kill_process, METH_VARARGS,
      "Kill the process identified by the given PID"},
-    {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
+    {"get_proc_cpu_times", get_proc_cpu_times, METH_VARARGS,
      "Return tuple of user/kern time for the given PID"},
-    {"get_process_create_time", get_process_create_time, METH_VARARGS,
+    {"get_proc_create_time", get_proc_create_time, METH_VARARGS,
      "Return a float indicating the process create time expressed in "
      "seconds since the epoch"},
-    {"get_process_memory_info", get_process_memory_info, METH_VARARGS,
+    {"get_proc_memory_info", get_proc_memory_info, METH_VARARGS,
      "Return a tuple of process memory information"},
-    {"get_process_cwd", get_process_cwd, METH_VARARGS,
+    {"get_proc_cwd", get_proc_cwd, METH_VARARGS,
      "Return process current working directory"},
     {"suspend_process", suspend_process, METH_VARARGS,
      "Suspend a process"},
     {"resume_process", resume_process, METH_VARARGS,
      "Resume a process"},
-    {"get_process_open_files", get_process_open_files, METH_VARARGS,
+    {"get_proc_open_files", get_proc_open_files, METH_VARARGS,
      "Return files opened by process"},
-    {"get_process_username", get_process_username, METH_VARARGS,
+    {"get_proc_username", get_proc_username, METH_VARARGS,
      "Return the username of a process"},
-    {"get_process_connections", get_process_connections, METH_VARARGS,
+    {"get_proc_connections", get_proc_connections, METH_VARARGS,
      "Return the network connections of a process"},
-    {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
+    {"get_proc_num_threads", get_proc_num_threads, METH_VARARGS,
      "Return the network connections of a process"},
-    {"get_process_threads", get_process_threads, METH_VARARGS,
+    {"get_proc_threads", get_proc_threads, METH_VARARGS,
      "Return process threads information as a list of tuple"},
     {"process_wait", process_wait, METH_VARARGS,
      "Wait for process to terminate and return its exit code."},
-    {"get_process_priority", get_process_priority, METH_VARARGS,
+    {"get_proc_priority", get_proc_priority, METH_VARARGS,
      "Return process priority."},
-    {"set_process_priority", set_process_priority, METH_VARARGS,
+    {"set_proc_priority", set_proc_priority, METH_VARARGS,
      "Set process priority."},
 #if (_WIN32_WINNT >= 0x0600)  // Windows Vista
-    {"get_process_io_priority", get_process_io_priority, METH_VARARGS,
+    {"get_proc_io_priority", get_proc_io_priority, METH_VARARGS,
      "Return process IO priority."},
-    {"set_process_io_priority", set_process_io_priority, METH_VARARGS,
+    {"set_proc_io_priority", set_proc_io_priority, METH_VARARGS,
      "Set process IO priority."},
 #endif
-    {"get_process_cpu_affinity", get_process_cpu_affinity, METH_VARARGS,
+    {"get_proc_cpu_affinity", get_proc_cpu_affinity, METH_VARARGS,
      "Return process CPU affinity as a bitmask."},
-    {"set_process_cpu_affinity", set_process_cpu_affinity, METH_VARARGS,
+    {"set_proc_cpu_affinity", set_proc_cpu_affinity, METH_VARARGS,
      "Set process CPU affinity."},
-    {"get_process_io_counters", get_process_io_counters, METH_VARARGS,
+    {"get_proc_io_counters", get_proc_io_counters, METH_VARARGS,
      "Get process I/O counters."},
     {"is_process_suspended", is_process_suspended, METH_VARARGS,
      "Return True if one of the process threads is in a suspended state"},
-    {"get_process_num_handles", get_process_num_handles, METH_VARARGS,
+    {"get_proc_num_handles", get_proc_num_handles, METH_VARARGS,
      "Return the number of handles opened by process."},
-    {"get_process_num_ctx_switches", get_process_num_ctx_switches,
-     METH_VARARGS,
+    {"get_proc_num_ctx_switches", get_proc_num_ctx_switches, METH_VARARGS,
      "Return the number of context switches performed by process."},
-    {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
+    {"get_proc_memory_maps", get_proc_memory_maps, METH_VARARGS,
      "Return a list of process's memory mappings"},
     {"get_ppid_map", get_ppid_map, METH_VARARGS,
      "Return a {pid:ppid, ...} dict for all running processes"},
 
     // --- alternative pinfo interface
-    {"get_process_cpu_times_2", get_process_cpu_times_2, METH_VARARGS,
+    {"get_proc_cpu_times_2", get_proc_cpu_times_2, METH_VARARGS,
      "Alternative implementation"},
-    {"get_process_create_time_2", get_process_create_time_2, METH_VARARGS,
+    {"get_proc_create_time_2", get_proc_create_time_2, METH_VARARGS,
      "Alternative implementation"},
-    {"get_process_num_handles_2", get_process_num_handles_2, METH_VARARGS,
+    {"get_proc_num_handles_2", get_proc_num_handles_2, METH_VARARGS,
      "Alternative implementation"},
-    {"get_process_io_counters_2", get_process_io_counters_2, METH_VARARGS,
+    {"get_proc_io_counters_2", get_proc_io_counters_2, METH_VARARGS,
      "Alternative implementation"},
-    {"get_process_memory_info_2", get_process_memory_info_2, METH_VARARGS,
+    {"get_proc_memory_info_2", get_proc_memory_info_2, METH_VARARGS,
      "Alternative implementation"},
 
     // --- system-related functions

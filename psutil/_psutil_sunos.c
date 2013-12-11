@@ -74,7 +74,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size)
  * as a Python tuple.
  */
 static PyObject *
-get_process_basic_info(PyObject *self, PyObject *args)
+get_proc_basic_info(PyObject *self, PyObject *args)
 {
     int pid;
     char path[100];
@@ -102,7 +102,7 @@ get_process_basic_info(PyObject *self, PyObject *args)
  * Return process name and args as a Python tuple.
  */
 static PyObject *
-get_process_name_and_args(PyObject *self, PyObject *args)
+get_proc_name_and_args(PyObject *self, PyObject *args)
 {
     int pid;
     char path[100];
@@ -121,7 +121,7 @@ get_process_name_and_args(PyObject *self, PyObject *args)
  * Return process user and system CPU times as a Python tuple.
  */
 static PyObject *
-get_process_cpu_times(PyObject *self, PyObject *args)
+get_proc_cpu_times(PyObject *self, PyObject *args)
 {
     int pid;
     char path[100];
@@ -143,7 +143,7 @@ get_process_cpu_times(PyObject *self, PyObject *args)
  * Return process uids/gids as a Python tuple.
  */
 static PyObject *
-get_process_cred(PyObject *self, PyObject *args)
+get_proc_cred(PyObject *self, PyObject *args)
 {
     int pid;
     char path[100];
@@ -164,7 +164,7 @@ get_process_cred(PyObject *self, PyObject *args)
  * Return process uids/gids as a Python tuple.
  */
 static PyObject *
-get_process_num_ctx_switches(PyObject *self, PyObject *args)
+get_proc_num_ctx_switches(PyObject *self, PyObject *args)
 {
     int pid;
     char path[100];
@@ -191,7 +191,7 @@ get_process_num_ctx_switches(PyObject *self, PyObject *args)
  *    ...they should be meaningless anyway.
  *
 static PyObject*
-get_process_io_counters(PyObject* self, PyObject* args)
+get_proc_io_counters(PyObject* self, PyObject* args)
 {
     int pid;
     char path[100];
@@ -552,7 +552,7 @@ error:
  * Return process memory mappings.
  */
 static PyObject *
-get_process_memory_maps(PyObject *self, PyObject *args)
+get_proc_memory_maps(PyObject *self, PyObject *args)
 {
     int pid;
     int fd = -1;
@@ -802,7 +802,7 @@ static int PSUTIL_CONN_NONE = 128;
  *     cmd-inet/usr.bin/netstat/netstat.c
  */
 static PyObject *
-get_process_connections(PyObject *self, PyObject *args)
+get_proc_connections(PyObject *self, PyObject *args)
 {
     long pid;
     int sd = NULL;
@@ -1111,22 +1111,21 @@ static PyMethodDef
 PsutilMethods[] =
 {
     // --- process-related functions
-    {"get_process_basic_info", get_process_basic_info, METH_VARARGS,
+    {"get_proc_basic_info", get_proc_basic_info, METH_VARARGS,
      "Return process ppid, rss, vms, ctime, nice, nthreads, status and tty"},
-    {"get_process_name_and_args", get_process_name_and_args, METH_VARARGS,
+    {"get_proc_name_and_args", get_proc_name_and_args, METH_VARARGS,
      "Return process name and args."},
-    {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
+    {"get_proc_cpu_times", get_proc_cpu_times, METH_VARARGS,
      "Return process user and system CPU times."},
-    {"get_process_cred", get_process_cred, METH_VARARGS,
+    {"get_proc_cred", get_proc_cred, METH_VARARGS,
      "Return process uids/gids."},
     {"query_process_thread", query_process_thread, METH_VARARGS,
      "Return info about a process thread"},
-    {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
+    {"get_proc_memory_maps", get_proc_memory_maps, METH_VARARGS,
      "Return process memory mappings"},
-    {"get_process_num_ctx_switches", get_process_num_ctx_switches,
-     METH_VARARGS,
+    {"get_proc_num_ctx_switches", get_proc_num_ctx_switches, METH_VARARGS,
      "Return the number of context switches performed by process"},
-    {"get_process_connections", get_process_connections, METH_VARARGS,
+    {"get_proc_connections", get_proc_connections, METH_VARARGS,
      "Return TCP and UDP connections opened by process."},
 
     // --- system-related functions

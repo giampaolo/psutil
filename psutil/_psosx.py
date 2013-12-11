@@ -170,41 +170,41 @@ class Process(object):
     @wrap_exceptions
     def get_name(self):
         """Return process name as a string of limited len (15)."""
-        return _psutil_osx.get_process_name(self.pid)
+        return _psutil_osx.get_proc_name(self.pid)
 
     @wrap_exceptions
     def get_exe(self):
-        return _psutil_osx.get_process_exe(self.pid)
+        return _psutil_osx.get_proc_exe(self.pid)
 
     @wrap_exceptions
     def get_cmdline(self):
         """Return process cmdline as a list of arguments."""
         if not pid_exists(self.pid):
             raise NoSuchProcess(self.pid, self._process_name)
-        return _psutil_osx.get_process_cmdline(self.pid)
+        return _psutil_osx.get_proc_cmdline(self.pid)
 
     @wrap_exceptions
     def get_ppid(self):
         """Return process parent pid."""
-        return _psutil_osx.get_process_ppid(self.pid)
+        return _psutil_osx.get_proc_ppid(self.pid)
 
     @wrap_exceptions
     def get_cwd(self):
-        return _psutil_osx.get_process_cwd(self.pid)
+        return _psutil_osx.get_proc_cwd(self.pid)
 
     @wrap_exceptions
     def get_uids(self):
-        real, effective, saved = _psutil_osx.get_process_uids(self.pid)
+        real, effective, saved = _psutil_osx.get_proc_uids(self.pid)
         return nt_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_gids(self):
-        real, effective, saved = _psutil_osx.get_process_gids(self.pid)
+        real, effective, saved = _psutil_osx.get_proc_gids(self.pid)
         return nt_gids(real, effective, saved)
 
     @wrap_exceptions
     def get_terminal(self):
-        tty_nr = _psutil_osx.get_process_tty_nr(self.pid)
+        tty_nr = _psutil_osx.get_proc_tty_nr(self.pid)
         tmap = _psposix._get_terminal_map()
         try:
             return tmap[tty_nr]
@@ -214,7 +214,7 @@ class Process(object):
     @wrap_exceptions
     def get_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
-        rss, vms = _psutil_osx.get_process_memory_info(self.pid)[:2]
+        rss, vms = _psutil_osx.get_proc_memory_info(self.pid)[:2]
         return nt_meminfo(rss, vms)
 
     _nt_ext_mem = namedtuple('meminfo', 'rss vms pfaults pageins')
@@ -223,30 +223,30 @@ class Process(object):
     def get_ext_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms, pfaults, pageins = \
-            _psutil_osx.get_process_memory_info(self.pid)
+            _psutil_osx.get_proc_memory_info(self.pid)
         return self._nt_ext_mem(rss, vms,
                                 pfaults * PAGESIZE,
                                 pageins * PAGESIZE)
 
     @wrap_exceptions
     def get_cpu_times(self):
-        user, system = _psutil_osx.get_process_cpu_times(self.pid)
+        user, system = _psutil_osx.get_proc_cpu_times(self.pid)
         return nt_cputimes(user, system)
 
     @wrap_exceptions
     def get_create_time(self):
         """Return the start time of the process as a number of seconds since
         the epoch."""
-        return _psutil_osx.get_process_create_time(self.pid)
+        return _psutil_osx.get_proc_create_time(self.pid)
 
     @wrap_exceptions
     def get_num_ctx_switches(self):
-        return nt_ctxsw(*_psutil_osx.get_process_num_ctx_switches(self.pid))
+        return nt_ctxsw(*_psutil_osx.get_proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
     def get_num_threads(self):
         """Return the number of threads belonging to the process."""
-        return _psutil_osx.get_process_num_threads(self.pid)
+        return _psutil_osx.get_proc_num_threads(self.pid)
 
     @wrap_exceptions
     def get_open_files(self):
@@ -254,7 +254,7 @@ class Process(object):
         if self.pid == 0:
             return []
         files = []
-        rawlist = _psutil_osx.get_process_open_files(self.pid)
+        rawlist = _psutil_osx.get_proc_open_files(self.pid)
         for path, fd in rawlist:
             if isfile_strict(path):
                 ntuple = nt_openfile(path, fd)
@@ -270,8 +270,8 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        rawlist = _psutil_osx.get_process_connections(self.pid, families,
-                                                      types)
+        rawlist = _psutil_osx.get_proc_connections(self.pid, families,
+                                                   types)
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
@@ -284,7 +284,7 @@ class Process(object):
     def get_num_fds(self):
         if self.pid == 0:
             return 0
-        return _psutil_osx.get_process_num_fds(self.pid)
+        return _psutil_osx.get_proc_num_fds(self.pid)
 
     @wrap_exceptions
     def process_wait(self, timeout=None):
@@ -298,19 +298,19 @@ class Process(object):
         return _psutil_posix.getpriority(self.pid)
 
     @wrap_exceptions
-    def set_process_nice(self, value):
+    def set_proc_nice(self, value):
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def get_status(self):
-        code = _psutil_osx.get_process_status(self.pid)
+        code = _psutil_osx.get_proc_status(self.pid)
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
     @wrap_exceptions
     def get_threads(self):
         """Return the number of threads belonging to the process."""
-        rawlist = _psutil_osx.get_process_threads(self.pid)
+        rawlist = _psutil_osx.get_proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
             ntuple = nt_thread(thread_id, utime, stime)
@@ -326,4 +326,4 @@ class Process(object):
 
     @wrap_exceptions
     def get_memory_maps(self):
-        return _psutil_osx.get_process_memory_maps(self.pid)
+        return _psutil_osx.get_proc_memory_maps(self.pid)

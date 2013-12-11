@@ -116,7 +116,7 @@ error:
  * Return process name from kinfo_proc as a Python string.
  */
 static PyObject *
-get_process_name(PyObject *self, PyObject *args)
+get_proc_name(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -134,7 +134,7 @@ get_process_name(PyObject *self, PyObject *args)
  * Return process current working directory.
  */
 static PyObject *
-get_process_cwd(PyObject *self, PyObject *args)
+get_proc_cwd(PyObject *self, PyObject *args)
 {
     long pid;
     struct proc_vnodepathinfo pathinfo;
@@ -156,7 +156,7 @@ get_process_cwd(PyObject *self, PyObject *args)
  * Return path of the process executable.
  */
 static PyObject *
-get_process_exe(PyObject *self, PyObject *args)
+get_proc_exe(PyObject *self, PyObject *args)
 {
     long pid;
     char buf[PATH_MAX];
@@ -182,7 +182,7 @@ get_process_exe(PyObject *self, PyObject *args)
  * Return process cmdline as a Python list of cmdline arguments.
  */
 static PyObject *
-get_process_cmdline(PyObject *self, PyObject *args)
+get_proc_cmdline(PyObject *self, PyObject *args)
 {
     long pid;
     PyObject *arglist = NULL;
@@ -201,7 +201,7 @@ get_process_cmdline(PyObject *self, PyObject *args)
  * Return process parent pid from kinfo_proc as a Python integer.
  */
 static PyObject *
-get_process_ppid(PyObject *self, PyObject *args)
+get_proc_ppid(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -219,7 +219,7 @@ get_process_ppid(PyObject *self, PyObject *args)
  * Return process real uid from kinfo_proc as a Python integer.
  */
 static PyObject *
-get_process_uids(PyObject *self, PyObject *args)
+get_proc_uids(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -240,7 +240,7 @@ get_process_uids(PyObject *self, PyObject *args)
  * Return process real group id from ki_comm as a Python integer.
  */
 static PyObject *
-get_process_gids(PyObject *self, PyObject *args)
+get_proc_gids(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -261,7 +261,7 @@ get_process_gids(PyObject *self, PyObject *args)
  * Return process controlling terminal number as an integer.
  */
 static PyObject *
-get_process_tty_nr(PyObject *self, PyObject *args)
+get_proc_tty_nr(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -280,7 +280,7 @@ get_process_tty_nr(PyObject *self, PyObject *args)
  * 'procstat' cmdline utility has been used as an example.
  */
 static PyObject *
-get_process_memory_maps(PyObject *self, PyObject *args)
+get_proc_memory_maps(PyObject *self, PyObject *args)
 {
     char buf[PATH_MAX];
     char addr_str[34];
@@ -454,7 +454,7 @@ get_num_cpus(PyObject *self, PyObject *args)
  * Return a Python tuple (user_time, kernel_time)
  */
 static PyObject *
-get_process_cpu_times(PyObject *self, PyObject *args)
+get_proc_cpu_times(PyObject *self, PyObject *args)
 {
     long pid;
     struct proc_taskinfo pti;
@@ -475,7 +475,7 @@ get_process_cpu_times(PyObject *self, PyObject *args)
  * seconds since the epoch.
  */
 static PyObject *
-get_process_create_time(PyObject *self, PyObject *args)
+get_proc_create_time(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -493,7 +493,7 @@ get_process_create_time(PyObject *self, PyObject *args)
  * Return extended memory info about a process.
  */
 static PyObject *
-get_process_memory_info(PyObject *self, PyObject *args)
+get_proc_memory_info(PyObject *self, PyObject *args)
 {
     long pid;
     struct proc_taskinfo pti;
@@ -523,7 +523,7 @@ get_process_memory_info(PyObject *self, PyObject *args)
  * Return number of threads used by process as a Python integer.
  */
 static PyObject *
-get_process_num_threads(PyObject *self, PyObject *args)
+get_proc_num_threads(PyObject *self, PyObject *args)
 {
     long pid;
     struct proc_taskinfo pti;
@@ -541,7 +541,7 @@ get_process_num_threads(PyObject *self, PyObject *args)
  * Return the number of context switches performed by process.
  */
 static PyObject *
-get_process_num_ctx_switches(PyObject *self, PyObject *args)
+get_proc_num_ctx_switches(PyObject *self, PyObject *args)
 {
     long pid;
     struct proc_taskinfo pti;
@@ -879,7 +879,7 @@ error:
  * Return process status as a Python integer.
  */
 static PyObject *
-get_process_status(PyObject *self, PyObject *args)
+get_proc_status(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
@@ -897,7 +897,7 @@ get_process_status(PyObject *self, PyObject *args)
  * Return process threads
  */
 static PyObject *
-get_process_threads(PyObject *self, PyObject *args)
+get_proc_threads(PyObject *self, PyObject *args)
 {
     long pid;
     int err, j, ret;
@@ -1013,7 +1013,7 @@ error:
  * - /usr/include/sys/proc_info.h
  */
 static PyObject *
-get_process_open_files(PyObject *self, PyObject *args)
+get_proc_open_files(PyObject *self, PyObject *args)
 {
     long pid;
     int pidinfo_result;
@@ -1136,7 +1136,7 @@ static int PSUTIL_CONN_NONE = 128;
  * - /usr/include/sys/proc_info.h
  */
 static PyObject *
-get_process_connections(PyObject *self, PyObject *args)
+get_proc_connections(PyObject *self, PyObject *args)
 {
     long pid;
     int pidinfo_result;
@@ -1362,7 +1362,7 @@ error:
  * Return number of file descriptors opened by process.
  */
 static PyObject *
-get_process_num_fds(PyObject *self, PyObject *args)
+get_proc_num_fds(PyObject *self, PyObject *args)
 {
     long pid;
     int pidinfo_result;
@@ -1709,45 +1709,44 @@ PsutilMethods[] =
 {
     // --- per-process functions
 
-    {"get_process_name", get_process_name, METH_VARARGS,
+    {"get_proc_name", get_proc_name, METH_VARARGS,
      "Return process name"},
-    {"get_process_cmdline", get_process_cmdline, METH_VARARGS,
+    {"get_proc_cmdline", get_proc_cmdline, METH_VARARGS,
      "Return process cmdline as a list of cmdline arguments"},
-    {"get_process_exe", get_process_exe, METH_VARARGS,
+    {"get_proc_exe", get_proc_exe, METH_VARARGS,
      "Return path of the process executable"},
-    {"get_process_cwd", get_process_cwd, METH_VARARGS,
+    {"get_proc_cwd", get_proc_cwd, METH_VARARGS,
      "Return process current working directory."},
-    {"get_process_ppid", get_process_ppid, METH_VARARGS,
+    {"get_proc_ppid", get_proc_ppid, METH_VARARGS,
      "Return process ppid as an integer"},
-    {"get_process_uids", get_process_uids, METH_VARARGS,
+    {"get_proc_uids", get_proc_uids, METH_VARARGS,
      "Return process real user id as an integer"},
-    {"get_process_gids", get_process_gids, METH_VARARGS,
+    {"get_proc_gids", get_proc_gids, METH_VARARGS,
      "Return process real group id as an integer"},
-    {"get_process_cpu_times", get_process_cpu_times, METH_VARARGS,
+    {"get_proc_cpu_times", get_proc_cpu_times, METH_VARARGS,
      "Return tuple of user/kern time for the given PID"},
-    {"get_process_create_time", get_process_create_time, METH_VARARGS,
+    {"get_proc_create_time", get_proc_create_time, METH_VARARGS,
      "Return a float indicating the process create time expressed in "
      "seconds since the epoch"},
-    {"get_process_memory_info", get_process_memory_info, METH_VARARGS,
+    {"get_proc_memory_info", get_proc_memory_info, METH_VARARGS,
      "Return memory information about a process"},
-    {"get_process_num_threads", get_process_num_threads, METH_VARARGS,
+    {"get_proc_num_threads", get_proc_num_threads, METH_VARARGS,
      "Return number of threads used by process"},
-    {"get_process_status", get_process_status, METH_VARARGS,
+    {"get_proc_status", get_proc_status, METH_VARARGS,
      "Return process status as an integer"},
-    {"get_process_threads", get_process_threads, METH_VARARGS,
+    {"get_proc_threads", get_proc_threads, METH_VARARGS,
      "Return process threads as a list of tuples"},
-    {"get_process_open_files", get_process_open_files, METH_VARARGS,
+    {"get_proc_open_files", get_proc_open_files, METH_VARARGS,
      "Return files opened by process as a list of tuples"},
-    {"get_process_num_fds", get_process_num_fds, METH_VARARGS,
+    {"get_proc_num_fds", get_proc_num_fds, METH_VARARGS,
      "Return the number of fds opened by process."},
-    {"get_process_num_ctx_switches", get_process_num_ctx_switches,
-     METH_VARARGS,
+    {"get_proc_num_ctx_switches", get_proc_num_ctx_switches, METH_VARARGS,
      "Return the number of context switches performed by process"},
-    {"get_process_connections", get_process_connections, METH_VARARGS,
+    {"get_proc_connections", get_proc_connections, METH_VARARGS,
      "Get process TCP and UDP connections as a list of tuples"},
-    {"get_process_tty_nr", get_process_tty_nr, METH_VARARGS,
+    {"get_proc_tty_nr", get_proc_tty_nr, METH_VARARGS,
      "Return process tty number as an integer"},
-    {"get_process_memory_maps", get_process_memory_maps, METH_VARARGS,
+    {"get_proc_memory_maps", get_proc_memory_maps, METH_VARARGS,
      "Return a list of tuples for every process's memory map"},
 
     // --- system-related functions

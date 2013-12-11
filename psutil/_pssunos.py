@@ -214,27 +214,27 @@ class Process(object):
     @wrap_exceptions
     def get_name(self):
         # note: max len == 15
-        return _psutil_sunos.get_process_name_and_args(self.pid)[0]
+        return _psutil_sunos.get_proc_name_and_args(self.pid)[0]
 
     @wrap_exceptions
     def get_exe(self):
         # Will be guess later from cmdline but we want to explicitly
         # invoke cmdline here in order to get an AccessDenied
         # exception if the user has not enough privileges.
-        self.get_process_cmdline()
+        self.get_proc_cmdline()
         return ""
 
     @wrap_exceptions
     def get_cmdline(self):
-        return _psutil_sunos.get_process_name_and_args(self.pid)[1].split(' ')
+        return _psutil_sunos.get_proc_name_and_args(self.pid)[1].split(' ')
 
     @wrap_exceptions
     def get_create_time(self):
-        return _psutil_sunos.get_process_basic_info(self.pid)[3]
+        return _psutil_sunos.get_proc_basic_info(self.pid)[3]
 
     @wrap_exceptions
     def get_num_threads(self):
-        return _psutil_sunos.get_process_basic_info(self.pid)[5]
+        return _psutil_sunos.get_proc_basic_info(self.pid)[5]
 
     @wrap_exceptions
     def get_nice(self):
@@ -255,7 +255,7 @@ class Process(object):
             raise
 
     @wrap_exceptions
-    def set_process_nice(self, value):
+    def set_proc_nice(self, value):
         if self.pid in (2, 3):
             # Special case PIDs: internally setpriority(3) return ESRCH
             # (no such process), no matter what.
@@ -266,30 +266,30 @@ class Process(object):
 
     @wrap_exceptions
     def get_ppid(self):
-        return _psutil_sunos.get_process_basic_info(self.pid)[0]
+        return _psutil_sunos.get_proc_basic_info(self.pid)[0]
 
     @wrap_exceptions
     def get_uids(self):
         real, effective, saved, _, _, _ = \
-            _psutil_sunos.get_process_cred(self.pid)
+            _psutil_sunos.get_proc_cred(self.pid)
         return nt_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_gids(self):
         _, _, _, real, effective, saved = \
-            _psutil_sunos.get_process_cred(self.pid)
+            _psutil_sunos.get_proc_cred(self.pid)
         return nt_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_cpu_times(self):
-        user, system = _psutil_sunos.get_process_cpu_times(self.pid)
+        user, system = _psutil_sunos.get_proc_cpu_times(self.pid)
         return nt_cputimes(user, system)
 
     @wrap_exceptions
     def get_terminal(self):
         hit_enoent = False
         tty = wrap_exceptions(
-            _psutil_sunos.get_process_basic_info(self.pid)[0])
+            _psutil_sunos.get_proc_basic_info(self.pid)[0])
         if tty != _psutil_sunos.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
@@ -321,7 +321,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_memory_info(self):
-        ret = _psutil_sunos.get_process_basic_info(self.pid)
+        ret = _psutil_sunos.get_proc_basic_info(self.pid)
         rss, vms = ret[1] * 1024, ret[2] * 1024
         return nt_meminfo(rss, vms)
 
@@ -330,7 +330,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_status(self):
-        code = _psutil_sunos.get_process_basic_info(self.pid)[6]
+        code = _psutil_sunos.get_proc_basic_info(self.pid)[6]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
@@ -422,7 +422,7 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        rawlist = _psutil_sunos.get_process_connections(
+        rawlist = _psutil_sunos.get_proc_connections(
             self.pid, families, types)
         # The underlying C implementation retrieves all OS connections
         # and filters them by PID.  At this point we can't tell whether
@@ -459,7 +459,7 @@ class Process(object):
                               hex(end)[2:].strip('L'))
 
         retlist = []
-        rawlist = _psutil_sunos.get_process_memory_maps(self.pid)
+        rawlist = _psutil_sunos.get_proc_memory_maps(self.pid)
         hit_enoent = False
         for item in rawlist:
             addr, addrsize, perm, name, rss, anon, locked = item
@@ -492,7 +492,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_num_ctx_switches(self):
-        return nt_ctxsw(*_psutil_sunos.get_process_num_ctx_switches(self.pid))
+        return nt_ctxsw(*_psutil_sunos.get_proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
     def process_wait(self, timeout=None):

@@ -8,27 +8,27 @@
 
 // --- per-process functions
 
-static PyObject* get_process_cpu_times(PyObject* self, PyObject* args);
-static PyObject* get_process_name(PyObject* self, PyObject* args);
-static PyObject* get_process_exe(PyObject* self, PyObject* args);
-static PyObject* get_process_cmdline(PyObject* self, PyObject* args);
-static PyObject* get_process_ppid(PyObject* self, PyObject* args);
-static PyObject* get_process_uids(PyObject* self, PyObject* args);
-static PyObject* get_process_gids(PyObject* self, PyObject* args);
-static PyObject* get_process_connections(PyObject* self, PyObject* args);
-static PyObject* get_process_create_time(PyObject* self, PyObject* args);
-static PyObject* get_process_memory_info(PyObject* self, PyObject* args);
-static PyObject* get_process_num_threads(PyObject* self, PyObject* args);
-static PyObject* get_process_num_fds(PyObject* self, PyObject* args);
-static PyObject* get_process_threads(PyObject* self, PyObject* args);
-static PyObject* get_process_status(PyObject* self, PyObject* args);
-static PyObject* get_process_io_counters(PyObject* self, PyObject* args);
-static PyObject* get_process_tty_nr(PyObject* self, PyObject* args);
-static PyObject* get_process_memory_maps(PyObject* self, PyObject* args);
-static PyObject* get_process_num_ctx_switches(PyObject* self, PyObject* args);
+static PyObject* get_proc_cpu_times(PyObject* self, PyObject* args);
+static PyObject* get_proc_name(PyObject* self, PyObject* args);
+static PyObject* get_proc_exe(PyObject* self, PyObject* args);
+static PyObject* get_proc_cmdline(PyObject* self, PyObject* args);
+static PyObject* get_proc_ppid(PyObject* self, PyObject* args);
+static PyObject* get_proc_uids(PyObject* self, PyObject* args);
+static PyObject* get_proc_gids(PyObject* self, PyObject* args);
+static PyObject* get_proc_connections(PyObject* self, PyObject* args);
+static PyObject* get_proc_create_time(PyObject* self, PyObject* args);
+static PyObject* get_proc_memory_info(PyObject* self, PyObject* args);
+static PyObject* get_proc_num_threads(PyObject* self, PyObject* args);
+static PyObject* get_proc_num_fds(PyObject* self, PyObject* args);
+static PyObject* get_proc_threads(PyObject* self, PyObject* args);
+static PyObject* get_proc_status(PyObject* self, PyObject* args);
+static PyObject* get_proc_io_counters(PyObject* self, PyObject* args);
+static PyObject* get_proc_tty_nr(PyObject* self, PyObject* args);
+static PyObject* get_proc_memory_maps(PyObject* self, PyObject* args);
+static PyObject* get_proc_num_ctx_switches(PyObject* self, PyObject* args);
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
-static PyObject* get_process_open_files(PyObject* self, PyObject* args);
-static PyObject* get_process_cwd(PyObject* self, PyObject* args);
+static PyObject* get_proc_open_files(PyObject* self, PyObject* args);
+static PyObject* get_proc_cwd(PyObject* self, PyObject* args);
 #endif
 
 // --- system-related functions
