@@ -14,7 +14,7 @@ import _psutil_mswindows
 
 from _psutil_mswindows import ERROR_ACCESS_DENIED
 from psutil._common import *
-from psutil._compat import PY3, xrange, wraps
+from psutil._compat import PY3, xrange, wraps, lru_cache
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 
 # process priority constants:
@@ -210,7 +210,7 @@ class Process(object):
         elif self.pid == 4:
             return "System"
         else:
-            return os.path.basename(self.get_process_exe())
+            return os.path.basename(self.get_exe())
 
     @wrap_exceptions
     def get_exe(self):

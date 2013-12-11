@@ -259,7 +259,7 @@ psutil_get_open_files(long pid, HANDLE processHandle)
         if (objectName.Length)
         {
             // The object has a name.  Make sure it is a file otherwise
-               ignore it */
+            // ignore it
             fileNameLength = objectName.Length / 2;
             if (wcscmp(objectTypeInfo->Name.Buffer, L"File") == 0) {
                 // printf("%.*S\n", objectName.Length / 2, objectName.Buffer);

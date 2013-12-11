@@ -86,9 +86,9 @@ psutil_get_peb_address(HANDLE ProcessHandle)
 DWORD *
 psutil_get_pids(DWORD *numberOfReturnedPIDs) {
     // Win32 SDK says the only way to know if our process array
-     * wasn't large enough is to check the returned size and make
-     * sure that it doesn't match the size of the array.
-     * If it does we allocate a larger array and try again */
+    // wasn't large enough is to check the returned size and make
+    // sure that it doesn't match the size of the array.
+    // If it does we allocate a larger array and try again
 
     // Stores the actual array
     DWORD *procArray = NULL;
@@ -264,7 +264,6 @@ psutil_get_arg_list(long pid)
                            &commandLine, sizeof(commandLine), NULL))
 #endif
     {
-        ////printf("Could not read CommandLine!\n");
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
@@ -281,12 +280,9 @@ psutil_get_arg_list(long pid)
     if (!ReadProcessMemory(hProcess, commandLine.Buffer,
                            commandLineContents, commandLine.Length, NULL))
     {
-        ////printf("Could not read the command line string!\n");
         PyErr_SetFromWindowsErr(0);
         goto error;
     }
-
-    // printf("%.*S\n", commandLine.Length / 2, commandLineContents);
 
     // Null-terminate the string to prevent wcslen from returning
     // incorrect length the length specifier is in characters, but
@@ -320,8 +316,6 @@ psutil_get_arg_list(long pid)
         for (i = 0; i < nArgs; i++) {
             arg_from_wchar = NULL;
             arg = NULL;
-            // printf("%d: %.*S (%d characters)\n", i, wcslen(szArglist[i]),
-            //                   szArglist[i], wcslen(szArglist[i]));
             arg_from_wchar = PyUnicode_FromWideChar(szArglist[i],
                                                     wcslen(szArglist[i]));
             if (arg_from_wchar == NULL)
