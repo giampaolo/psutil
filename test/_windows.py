@@ -16,10 +16,10 @@ import time
 import traceback
 import unittest
 
-import _psutil_mswindows
+import _psutil_windows
 import psutil
 from psutil._compat import PY3, callable, long
-from psutil._psmswindows import ACCESS_DENIED_SET
+from psutil._pswindows import ACCESS_DENIED_SET
 from test_psutil import *
 
 try:
@@ -316,8 +316,8 @@ class TestDualProcessImplementation(unittest.TestCase):
 
         failures = []
         for name, tolerance in self.fun_names:
-            meth1 = wrap_exceptions(getattr(_psutil_mswindows, name))
-            meth2 = wrap_exceptions(getattr(_psutil_mswindows, name + '_2'))
+            meth1 = wrap_exceptions(getattr(_psutil_windows, name))
+            meth2 = wrap_exceptions(getattr(_psutil_windows, name + '_2'))
             for p in psutil.process_iter():
                 if name == 'get_process_memory_info' and p.pid == os.getpid():
                     continue
@@ -358,7 +358,7 @@ class TestDualProcessImplementation(unittest.TestCase):
         # process no longer exists
         ZOMBIE_PID = max(psutil.get_pids()) + 5000
         for name, _ in self.fun_names:
-            meth = wrap_exceptions(getattr(_psutil_mswindows, name))
+            meth = wrap_exceptions(getattr(_psutil_windows, name))
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
 

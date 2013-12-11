@@ -53,13 +53,13 @@ if sys.platform.startswith("win32"):
         return '0x0%s' % ((maj * 100) + min)
 
     extensions = [Extension(
-        '_psutil_mswindows',
+        '_psutil_windows',
         sources=[
-            'psutil/_psutil_mswindows.c',
+            'psutil/_psutil_windows.c',
             'psutil/_psutil_common.c',
-            'psutil/arch/mswindows/process_info.c',
-            'psutil/arch/mswindows/process_handles.c',
-            'psutil/arch/mswindows/security.c',
+            'psutil/arch/windows/process_info.c',
+            'psutil/arch/windows/process_handles.c',
+            'psutil/arch/windows/security.c',
         ],
         define_macros=[
             # be nice to mingw, see:

@@ -3,7 +3,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Windows platform-specific module methods for _psutil_mswindows
+ * Windows platform-specific module methods for _psutil_windows
  */
 
 // Fixes clash between winsock2.h and windows.h
@@ -24,12 +24,12 @@
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
 
-#include "_psutil_mswindows.h"
+#include "_psutil_windows.h"
 #include "_psutil_common.h"
-#include "arch/mswindows/security.h"
-#include "arch/mswindows/process_info.h"
-#include "arch/mswindows/process_handles.h"
-#include "arch/mswindows/ntextapi.h"
+#include "arch/windows/security.h"
+#include "arch/windows/process_info.h"
+#include "arch/windows/process_handles.h"
+#include "arch/windows/ntextapi.h"
 
 
 /*
@@ -3039,42 +3039,42 @@ static struct module_state _state;
 
 #if PY_MAJOR_VERSION >= 3
 
-static int psutil_mswindows_traverse(PyObject *m, visitproc visit, void *arg) {
+static int psutil_windows_traverse(PyObject *m, visitproc visit, void *arg) {
     Py_VISIT(GETSTATE(m)->error);
     return 0;
 }
 
-static int psutil_mswindows_clear(PyObject *m) {
+static int psutil_windows_clear(PyObject *m) {
     Py_CLEAR(GETSTATE(m)->error);
     return 0;
 }
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "psutil_mswindows",
+    "psutil_windows",
     NULL,
     sizeof(struct module_state),
     PsutilMethods,
     NULL,
-    psutil_mswindows_traverse,
-    psutil_mswindows_clear,
+    psutil_windows_traverse,
+    psutil_windows_clear,
     NULL
 };
 
 #define INITERROR return NULL
 
-PyObject *PyInit__psutil_mswindows(void)
+PyObject *PyInit__psutil_windows(void)
 
 #else
 #define INITERROR return
-void init_psutil_mswindows(void)
+void init_psutil_windows(void)
 #endif
 {
     struct module_state *st = NULL;
 #if PY_MAJOR_VERSION >= 3
     PyObject *module = PyModule_Create(&moduledef);
 #else
-    PyObject *module = Py_InitModule("_psutil_mswindows", PsutilMethods);
+    PyObject *module = Py_InitModule("_psutil_windows", PsutilMethods);
 #endif
 
     if (module == NULL) {
@@ -3132,7 +3132,7 @@ void init_psutil_mswindows(void)
         module, "MIB_TCP_STATE_DELETE_TCB", MIB_TCP_STATE_DELETE_TCB);
     PyModule_AddIntConstant(
         module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
-    // ...for internal use in _psutil_mswindows.py
+    // ...for internal use in _psutil_windows.py
     PyModule_AddIntConstant(
         module, "INFINITE", INFINITE); PyModule_AddIntConstant(
         module, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED); SetSeDebug();

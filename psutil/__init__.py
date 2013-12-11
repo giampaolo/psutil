@@ -132,14 +132,14 @@ if sys.platform.startswith("linux"):
             pass
 
 elif sys.platform.startswith("win32"):
-    import psutil._psmswindows as _psplatform
-    from psutil._psmswindows import (ABOVE_NORMAL_PRIORITY_CLASS,
-                                     BELOW_NORMAL_PRIORITY_CLASS,
-                                     HIGH_PRIORITY_CLASS,
-                                     IDLE_PRIORITY_CLASS,
-                                     NORMAL_PRIORITY_CLASS,
-                                     REALTIME_PRIORITY_CLASS,
-                                     CONN_DELETE_TCB)
+    import psutil._pswindows as _psplatform
+    from psutil._pswindows import (ABOVE_NORMAL_PRIORITY_CLASS,
+                                   BELOW_NORMAL_PRIORITY_CLASS,
+                                   HIGH_PRIORITY_CLASS,
+                                   IDLE_PRIORITY_CLASS,
+                                   NORMAL_PRIORITY_CLASS,
+                                   REALTIME_PRIORITY_CLASS,
+                                   CONN_DELETE_TCB)
 
 elif sys.platform.startswith("darwin"):
     import psutil._psosx as _psplatform
