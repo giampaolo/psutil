@@ -858,7 +858,11 @@ class Process(object):
 
     if HAS_PRLIMIT:
         @wrap_exceptions
-        def process_rlimit(self, resource, limits=None):
+        def prlimit(self, resource, limits=None):
+            # if pid is 0 prlimit() applies to the calling process and
+            # we don't want that
+            if self.pid == 0:
+                raise ValueError("can't use prlimit() against PID 0 process")
             if limits is None:
                 # get
                 return _psutil_linux.prlimit(self.pid, resource)

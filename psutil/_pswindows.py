@@ -350,11 +350,11 @@ class Process(object):
         return nt_cputimes(*ret)
 
     @wrap_exceptions
-    def suspend_process(self):
+    def suspend(self):
         return _psutil_windows.suspend_process(self.pid)
 
     @wrap_exceptions
-    def resume_process(self):
+    def resume(self):
         return _psutil_windows.resume_process(self.pid)
 
     @wrap_exceptions

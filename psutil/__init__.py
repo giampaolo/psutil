@@ -528,7 +528,7 @@ class Process(object):
             return self._proc.set_proc_ionice(ioclass, value)
 
     # Linux only
-    if hasattr(_psplatform.Process, "process_rlimit"):
+    if hasattr(_psplatform.Process, "prlimit"):
 
         def get_rlimit(self, resource):
             """Get process resource limits as a (soft, hard) tuple.
@@ -537,11 +537,7 @@ class Process(object):
 
             See "man prlimit" for further info.
             """
-            # if pid is 0 prlimit() applies to the calling process and
-            # we don't want that
-            if self.pid == 0:
-                raise ValueError("can't use this method for PID 0 process")
-            return self._proc.process_rlimit(resource)
+            return self._proc.prlimit(resource)
 
         @_assert_pid_not_reused
         def set_rlimit(self, resource, limits):
@@ -553,11 +549,7 @@ class Process(object):
 
             See "man prlimit" for further info.
             """
-            # if pid is 0 prlimit() applies to the calling process and
-            # we don't want that
-            if self.pid == 0:
-                raise ValueError("can't use this method for PID 0 process")
-            self._proc.process_rlimit(resource, limits)
+            self._proc.prlimit(resource, limits)
 
     # Windows and Linux only
     if hasattr(_psplatform.Process, "get_cpu_affinity"):
@@ -905,9 +897,9 @@ class Process(object):
         whether PID has been reused.
         On Windows it suspends all process threads.
         """
-        if hasattr(self._proc, "suspend_process"):
+        if hasattr(self._proc, "suspend"):
             # windows
-            self._proc.suspend_process()
+            self._proc.suspend()
         else:
             # posix
             self.send_signal(signal.SIGSTOP)
@@ -918,9 +910,9 @@ class Process(object):
         whether PID has been reused.
         On Windows it resumes all process threads.
         """
-        if hasattr(self._proc, "resume_process"):
+        if hasattr(self._proc, "resume"):
             # windows
-            self._proc.resume_process()
+            self._proc.resume()
         else:
             # posix
             self.send_signal(signal.SIGCONT)
