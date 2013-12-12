@@ -139,6 +139,23 @@ def get_num_cpus():
     return num
 
 
+def get_num_phys_cpus():
+    """Return the number of physical CPUs in the system."""
+    f = open('/proc/cpuinfo', 'r')
+    try:
+        lines = f.readlines()
+    finally:
+        f.close()
+    found = set()
+    for line in lines:
+        if line.lower().startswith('physical id'):
+            found.add(line.strip())
+    if found:
+        return len(found)
+    else:
+        return None  # mimic os.cpu_count()
+
+
 # --- system memory
 
 nt_virtmem_info = namedtuple('vmem', ' '.join([

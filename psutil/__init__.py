@@ -31,7 +31,8 @@ __all__ = [
     # functions
     "pid_exists", "get_pids", "process_iter", "wait_procs",         # proc
     "virtual_memory", "swap_memory",                                # memory
-    "cpu_times", "cpu_percent", "cpu_times_percent",                # cpu
+    "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
+    "phys_cpu_count",
     "net_io_counters",                                              # network
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
     "get_users", "get_boot_time",                                   # others
@@ -1212,6 +1213,14 @@ def cpu_count():
     replaces the deprecated psutil.NUM_CPUS constant.
     """
     return _psplatform.get_num_cpus()
+
+
+@_memoize
+def phys_cpu_count():
+    """Return the number of physical CPUs in the system.
+    Return None if undetermined.
+    """
+    return _psplatform.get_num_phys_cpus()
 
 
 def cpu_times(percpu=False):
