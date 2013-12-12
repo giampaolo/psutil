@@ -216,6 +216,7 @@ class Process(object):
                                  % pid)
         self._pid = pid
         self._gone = False
+        # used for caching on Windows only (on POSIX ppid may change)
         self._ppid = None
         # platform-specific modules define an _psplatform.Process
         # implementation class
