@@ -517,7 +517,11 @@ get_proc_exe(PyObject *self, PyObject *args) {
     }
 
     CloseHandle(hProcess);
+#if PY_MAJOR_VERSION >= 3
+    return Py_BuildValue("u", exe);
+#else
     return Py_BuildValue("s", exe);
+#endif
 }
 
 

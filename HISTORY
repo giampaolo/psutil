@@ -19,6 +19,7 @@ BUG FIXES
          Ulrich Klank.
  * #454: Process cached properties such as "name", "exe" and "create_time"
          should be read-only.
+ * #456: [Windows] Process.exe does not handle unicode paths.
 
 API CHANGES
 
