@@ -226,6 +226,9 @@ class Process(object):
         try:
             self.create_time
         except AccessDenied:
+            # we should never get here as AFAIK we're able to get
+            # process creation time on all platforms even as a
+            # limited user
             pass
         except NoSuchProcess:
             msg = 'no process found with pid %s' % pid
@@ -861,11 +864,11 @@ class Process(object):
             return False
         try:
             # Checking if pid is alive is not enough as the pid might
-            # have been reused by another process.
-            # pid + creation time, on the other hand, is supposed to
-            # identify a process univocally.
-            return self.create_time == \
-                self._proc.get_create_time()
+            # have been reused by another process: we also want to
+            # check process identity.
+            # Process identity / uniqueness over time is greanted by
+            # (pid + creation time) and that is verified in __eq__.
+            return self == Process(self.pid)
         except NoSuchProcess:
             self._gone = True
             return False
