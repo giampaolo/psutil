@@ -423,8 +423,8 @@ error:
 
 
 /*
- * Return a Python integer indicating the number of CPUs on the system.
- * XXX this could be shared with BSD
+ * Return the number of logical CPUs in the system.
+ * XXX this could be shared with BSD.
  */
 static PyObject *
 get_num_cpus(PyObject *self, PyObject *args)
@@ -445,6 +445,23 @@ get_num_cpus(PyObject *self, PyObject *args)
     else {
         return Py_BuildValue("i", ncpu);
     }
+}
+
+
+/*
+ * Return the number of physical CPUs in the system.
+ */
+static PyObject *
+get_num_phys_cpus(PyObject *self, PyObject *args)
+{
+    int num;
+    size_t size = sizeof(int);
+    if (sysctlbyname("hw.physicalcpu", &num, &size, NULL, 0)) {
+        // mimic os.cpu_count()
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+    return Py_BuildValue("i", num);
 }
 
 
@@ -1754,7 +1771,9 @@ PsutilMethods[] =
     {"get_pids", get_pids, METH_VARARGS,
      "Returns a list of PIDs currently running on the system"},
     {"get_num_cpus", get_num_cpus, METH_VARARGS,
-     "Return number of CPUs on the system"},
+     "Return number of logical CPUs on the system"},
+    {"get_num_phys_cpus", get_num_phys_cpus, METH_VARARGS,
+     "Return number of physical CPUs on the system"},
     {"get_virtual_mem", get_virtual_mem, METH_VARARGS,
      "Return system virtual memory stats"},
     {"get_swap_mem", get_swap_mem, METH_VARARGS,

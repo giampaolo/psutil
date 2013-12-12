@@ -703,8 +703,8 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertGreaterEqual(count, 1)
 
     def test_phys_cpu_count(self):
-        count = psutil.phys_cpu_count()
-        self.assertGreaterEqual(count, 1)
+        self.assertGreaterEqual(psutil.phys_cpu_count(), 1)
+        self.assertGreaterEqual(psutil.cpu_count(), psutil.phys_cpu_count())
 
     def test_sys_cpu_times(self):
         total = 0
