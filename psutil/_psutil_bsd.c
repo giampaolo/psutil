@@ -484,7 +484,7 @@ get_proc_cpu_times(PyObject *self, PyObject *args)
 
 
 /*
- * Return a Python integer indicating the number of CPUs on the system
+ * Return the number of logical CPUs in the system.
  * XXX this could be shared with OSX
  */
 static PyObject *
@@ -506,6 +506,36 @@ get_num_cpus(PyObject *self, PyObject *args)
     else {
         return Py_BuildValue("i", ncpu);
     }
+}
+
+
+/*
+ * Return an XML string from which we'll determine the number of
+ * physical CPU cores in the system.
+ */
+static PyObject *
+get_num_phys_cpus(PyObject *self, PyObject *args)
+{
+    void *topology = NULL;
+    size_t size = 0;
+
+    if (sysctlbyname("kern.sched.topology_spec", NULL, &size, NULL, 0))
+        goto error;
+
+    topology = malloc(size);
+    if (!topology) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    if (sysctlbyname("kern.sched.topology_spec", topology, &size, NULL, 0))
+        goto error;
+
+    return Py_BuildValue("s", topology);
+
+error:
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 
@@ -1746,7 +1776,9 @@ PsutilMethods[] =
     {"get_pids", get_pids, METH_VARARGS,
      "Returns a list of PIDs currently running on the system"},
     {"get_num_cpus", get_num_cpus, METH_VARARGS,
-     "Return number of CPUs on the system"},
+     "Return number of logical CPUs on the system"},
+    {"get_num_phys_cpus", get_num_phys_cpus, METH_VARARGS,
+     "Return an XML string to determine the number physical CPUs."},
     {"get_virtual_mem", get_virtual_mem, METH_VARARGS,
      "Return system virtual memory usage statistics"},
     {"get_swap_mem", get_swap_mem, METH_VARARGS,

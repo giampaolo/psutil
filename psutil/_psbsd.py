@@ -103,6 +103,28 @@ def get_num_cpus():
     return _psutil_bsd.get_num_cpus()
 
 
+def get_num_phys_cpus():
+    """Return the number of physical CPUs in the system."""
+    # From the C module we'll get an XML string similar to this:
+    # http://manpages.ubuntu.com/manpages/precise/man4/smp.4freebsd.html
+    # We may get None in case "sysctl kern.sched.topology_spec"
+    # is not supported on this BSD version, in which case we'll mimic
+    # os.cpu_count() and return None.
+    s = _psutil_bsd.get_num_phys_cpus()
+    if s is not None:
+        # get rid of padding chars appended at the end of the string
+        index = s.rfind("</groups>")
+        if index != -1:
+            s = s[:index+9]
+            if sys.version_info >= (2, 5):
+                import xml.etree.ElementTree as ET
+                root = ET.fromstring(s)
+                return len(root.findall('group/children/group/cpu')) or None
+            else:
+                s = s[s.find('<children>'):]
+                return s.count("<cpu") or None
+
+
 def get_system_boot_time():
     """The system boot time expressed in seconds since the epoch."""
     return _psutil_bsd.get_system_boot_time()

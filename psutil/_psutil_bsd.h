@@ -35,6 +35,7 @@ static PyObject* get_proc_cwd(PyObject* self, PyObject* args);
 
 static PyObject* get_pids(PyObject* self, PyObject* args);
 static PyObject* get_num_cpus(PyObject* self, PyObject* args);
+static PyObject* get_num_phys_cpus(PyObject* self, PyObject* args);
 static PyObject* get_virtual_mem(PyObject* self, PyObject* args);
 static PyObject* get_swap_mem(PyObject* self, PyObject* args);
 static PyObject* get_system_cpu_times(PyObject* self, PyObject* args);
