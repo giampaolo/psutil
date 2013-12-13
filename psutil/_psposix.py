@@ -6,15 +6,15 @@
 
 """Routines common to all posix systems."""
 
-import os
 import errno
-import psutil
+import glob
+import os
 import sys
 import time
-import glob
 
-from psutil._error import TimeoutExpired
 from psutil._common import nt_diskinfo, usage_percent, memoize
+from psutil._compat import PY3, unicode
+from psutil._error import TimeoutExpired
 
 
 def pid_exists(pid):
@@ -24,10 +24,22 @@ def pid_exists(pid):
     try:
         os.kill(pid, 0)
     except OSError:
-        e = sys.exc_info()[1]
-        return e.errno == errno.EPERM
+        err = sys.exc_info()[1]
+        if err.errno == errno.ESRCH:
+            # ESRCH == No such process
+            return False
+        elif err.errno == errno.EPERM:
+            # EPERM clearly means there's a process to deny access to
+            return True
+        else:
+            # According to "man 2 kill" possible error values are
+            # (EINVAL, EPERM, ESRCH) therefore we should bever get
+            # here. If we do let's be explicit in considering this
+            # an error.
+            raise err
     else:
         return True
+
 
 def wait_pid(pid, timeout=None):
     """Wait for process with pid 'pid' to terminate and return its
@@ -94,9 +106,24 @@ def wait_pid(pid, timeout=None):
                 # should never happen
                 raise RuntimeError("unknown process exit status")
 
+
 def get_disk_usage(path):
     """Return disk usage associated with path."""
-    st = os.statvfs(path)
+    try:
+        st = os.statvfs(path)
+    except UnicodeEncodeError:
+        if not PY3 and isinstance(path, unicode):
+            # this is a bug with os.statvfs() and unicode on
+            # Python 2, see:
+            # - https://code.google.com/p/psutil/issues/detail?id=416
+            # - http://bugs.python.org/issue18695
+            try:
+                path = path.encode(sys.getfilesystemencoding())
+            except UnicodeEncodeError:
+                pass
+            st = os.statvfs(path)
+        else:
+            raise
     free = (st.f_bavail * st.f_frsize)
     total = (st.f_blocks * st.f_frsize)
     used = (st.f_blocks - st.f_bfree) * st.f_frsize
@@ -105,6 +132,7 @@ def get_disk_usage(path):
     # reserved blocks that we are currently not considering:
     # http://goo.gl/sWGbH
     return nt_diskinfo(total, used, free, percent)
+
 
 @memoize
 def _get_terminal_map():

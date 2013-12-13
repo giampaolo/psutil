@@ -180,3 +180,33 @@ I: 386
 
 N: Adrien Fallou
 I: 224
+
+N: Gisle Vanem
+E: gisle.vanem@gmail.com
+I: 411
+
+N: thepyr0
+E: thepyr0@gmail.com
+I: 414
+
+N: John Pankov
+E: john.pankov@gmail.com
+I: 435
+
+N: Matt Good
+W: http://matt-good.net/
+I: 438
+
+N: Ulrich Klank
+E: ulrich.klank@scitics.de
+I: 448
+
+N: Josiah Carlson
+E: josiah.carlson@gmail.com
+I: 451, 452
+
+N: Raymond Hettinger
+D: namedtuple and lru_cache backward compatible implementations.
+
+N: Jason Kirtland
+D: backward compatible implementation of collections.defaultdict.

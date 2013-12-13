@@ -7,22 +7,21 @@
 """Linux specific tests.  These are implicitly run by test_psutil.py."""
 
 from __future__ import division
-import unittest
-import subprocess
-import sys
-import time
 import os
 import re
+import sys
+import time
+import unittest
 
 from test_psutil import *
-from psutil._compat import PY3
 import psutil
 
 
 class LinuxSpecificTestCase(unittest.TestCase):
 
-    @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
-            reason="os.statvfs() function not available on this platform")
+    @unittest.skipIf(
+        POSIX and not hasattr(os, 'statvfs'),
+        reason="os.statvfs() function not available on this platform")
     @skip_on_not_implemented()
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
@@ -55,7 +54,9 @@ class LinuxSpecificTestCase(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         maps = p.get_memory_maps(grouped=False)
         pmap = sh('pmap -x %s' % p.pid).split('\n')
-        del pmap[0]; del pmap[0]  # get rid of header
+        # get rid of header
+        del pmap[0]
+        del pmap[0]
         while maps and pmap:
             this = maps.pop(0)
             other = pmap.pop(0)
@@ -120,7 +121,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
 
     def test_cpu_times(self):
         fields = psutil.cpu_times()._fields
-        kernel_ver = re.findall('\d.\d.\d', os.uname()[2])[0]
+        kernel_ver = re.findall('\d+\.\d+\.\d+', os.uname()[2])[0]
         kernel_ver_info = tuple(map(int, kernel_ver.split('.')))
         # steal >= 2.6.11
         # guest >= 2.6.24
@@ -137,6 +138,41 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertIn('guest_nice', fields)
         else:
             self.assertNotIn('guest_nice', fields)
+
+    # --- tests for specific kernel versions
+
+    @unittest.skipUnless(
+        get_kernel_version() >= (2, 6, 36),
+        "prlimit() not available on this Linux kernel version")
+    def test_prlimit_availability(self):
+        # prlimit() should be available starting from kernel 2.6.36
+        p = psutil.Process(os.getpid())
+        p.get_rlimit(psutil.RLIMIT_NOFILE)
+        # if prlimit() is supported *at least* these constants should
+        # be available
+        self.assertTrue(hasattr(psutil, "RLIM_INFINITY"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_AS"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_CORE"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_CPU"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_DATA"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_FSIZE"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_LOCKS"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_MEMLOCK"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_NOFILE"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_NPROC"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_RSS"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_STACK"))
+
+    @unittest.skipUnless(
+        get_kernel_version() >= (3, 0),
+        "prlimit constants not available on this Linux kernel version")
+    def test_resource_consts_kernel_v(self):
+        # more recent constants
+        self.assertTrue(hasattr(psutil, "RLIMIT_MSGQUEUE"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_NICE"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_RTPRIO"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_RTTIME"))
+        self.assertTrue(hasattr(psutil, "RLIMIT_SIGPENDING"))
 
 
 def test_main():

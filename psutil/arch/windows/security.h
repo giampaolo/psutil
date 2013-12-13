@@ -9,7 +9,6 @@
 
 #include <windows.h>
 
-
 BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege);
 int SetSeDebug();
 int UnsetSeDebug();

@@ -1,5 +1,121 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+1.3.0 - XXXX-XX-XX
+------------------
+
+ENHANCEMENTS
+
+XXX - TODO: reference deprecated APIs
+
+ * #447: psutil.wait_procs() timeout parameter is now optional.
+ * #452: Process instances are now hashable and can be used with set()s.
+ * #453: unittest2 module is required on Python < 2.7.
+
+BUG FIXES
+
+ * #443: [Linux] fixed a potential problem with Process.set_cpu_affinity() on
+         systems with more than 64 CPUs.
+ * #448: [Windows] Process get_children() and ppid memory leak (patch by
+         Ulrich Klank.
+ * #454: Process cached properties such as "name", "exe" and "create_time"
+         should be read-only.
+ * #456: [Windows] Process.exe does not handle unicode paths.
+
+API CHANGES
+
+Deprecated APIs (still available as aliases producing a DeprecationWarning):
+
+ - psutil.NUM_CPUS          (use psutil.cpu_cpunt())
+ - psutil.BOOT_TIME         (use psutil.get_boot_time())
+ - psutil.TOTAL_PHYMEM      (use psutil.virtual_memory().total)
+ - psutil.get_pid_list()    (renamed to psutil.get_pids())
+ - psutil.Process.getcwd()  (renamed to psutil.Process.get_cwd())
+
+
+1.2.1 - 2013-11-25
+------------------
+
+BUG FIXES
+
+ * #348: [Windows XP] fixed "ImportError: DLL load failed" occurring on module
+         import.
+ * #425: [Solaris] crash on import due to failure at determining BOOT_TIME.
+ * #443: [Linux] can't set CPU affinity on systems with more than 64 cores.
+
+
+1.2.0 - 2013-11-20
+------------------
+
+ENHANCEMENTS
+
+ * #439: assume os.getpid() if no argument is passed to psutil.Process
+         constructor.
+ * #440: new psutil.wait_procs() utility function which waits for multiple
+         processes to terminate.
+
+BUG FIXES
+
+ * #348: [Windows XP/Vista] fixed "ImportError: DLL load failed" occurring on
+         module import.
+
+
+1.1.3 - 2013-11-07
+------------------
+
+BUG FIXES
+
+ * #442: [Linux] psutil won't compile on certain version of Linux because of
+         missing prlimit(2) syscall.
+
+
+1.1.2 - 2013-10-22
+------------------
+
+BUG FIXES
+
+ * #442: [Linux] psutil won't compile on Debian 6.0 because of missing
+         prlimit(2) syscall.
+
+
+1.1.1 - 2013-10-08
+------------------
+
+BUG FIXES
+
+ * #442: [Linux] psutil won't compile on kernels < 2.6.36 due to missing
+         prlimit(2) syscall.
+
+
+1.1.0 - 2013-09-28
+------------------
+
+ENHANCEMENTS
+
+ * #410: tar.gz and windows binary files are now hosted on PYPI.
+ * #412: [Linux] get/set process resource limits.
+ * #415: [Windows] Process.get_children() is an order of magnitude faster.
+ * #426: [Windows] Process.name is an order of magnitude faster.
+ * #431: [UNIX] Process.name is slightly faster because it unnecessarily
+         retrieved also process cmdline.
+
+BUG FIXES
+
+ * #391: [Windows] psutil.cpu_times_percent() returns negative percentages.
+ * #408: STATUS_* and CONN_* constants don't properly serialize on JSON.
+ * #411: [Windows] examples/disk_usage.py may pop-up a GUI error.
+ * #413: [Windows] Process.get_memory_info() leaks memory.
+ * #414: [Windows] Process.exe on Windows XP may raise ERROR_INVALID_PARAMETER.
+ * #416: psutil.disk_usage() doesn't work well with unicode path names.
+ * #430: [Linux] process IO counters report wrong number of r/w syscalls.
+ * #435: [Linux] psutil.net_io_counters() might report erreneous NIC names.
+ * #436: [Linux] psutil.net_io_counters() reports a wrong 'dropin' value.
+
+API CHANGES
+
+ * #408: STATUS_* and CONN_* constants (returned by Process' status() and
+         get_connections() methods respectively) have been turned from constant
+         objects to plain Python strings.
+
 
 1.0.1 - 2013-07-12
 ------------------

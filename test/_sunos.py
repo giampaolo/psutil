@@ -6,6 +6,8 @@
 
 """Sun OS specific tests.  These are implicitly run by test_psutil.py."""
 
+import datetime
+
 import psutil
 from test_psutil import *
 
@@ -31,6 +33,13 @@ class SunOSSpecificTestCase(unittest.TestCase):
         self.assertEqual(psutil_swap.total, total)
         self.assertEqual(psutil_swap.used, used)
         self.assertEqual(psutil_swap.free, free)
+
+    def test_get_boot_time(self):
+        bt = psutil.get_boot_time()
+        psutil_bt = datetime.datetime.fromtimestamp(bt).strftime("%b %d %H:%M")
+        sys_bt = sh('last reboot | head -1')
+        sys_bt = ' '.join(sys_bt.split()[-3:])
+        self.assertEqual(sys_bt, psutil_bt)
 
 
 def test_main():

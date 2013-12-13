@@ -2,7 +2,6 @@
  * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
- *
  */
 
 typedef enum _KTHREAD_STATE
@@ -61,7 +60,6 @@ typedef enum _KWAIT_REASON
     MaximumWaitReason = 37
 } KWAIT_REASON, *PKWAIT_REASON;
 
-
 typedef struct _CLIENT_ID
 {
     HANDLE UniqueProcess;
@@ -74,7 +72,6 @@ typedef struct _UNICODE_STRING {
     USHORT MaximumLength;
     PWSTR Buffer;
 } UNICODE_STRING, *PUNICODE_STRING;
-
 
 typedef struct _SYSTEM_TIMEOFDAY_INFORMATION
 {
@@ -260,7 +257,6 @@ typedef struct _PROCESS_BASIC_INFORMATION
     ULONG_PTR UniqueProcessId;
     PVOID Reserved3;
 } PROCESS_BASIC_INFORMATION, *PPROCESS_BASIC_INFORMATION;
-
 
 typedef enum _PROCESSINFOCLASS {
     ProcessBasicInformation,

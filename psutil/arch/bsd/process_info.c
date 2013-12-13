@@ -3,9 +3,10 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Helper functions related to fetching process information. Used by _psutil_bsd
- * module methods.
+ * Helper functions related to fetching process information.
+ * Used by _psutil_bsd module methods.
  */
+
 
 #include <Python.h>
 #include <assert.h>
@@ -35,7 +36,7 @@ int
 psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 {
     int err;
-    struct kinfo_proc * result;
+    struct kinfo_proc *result;
     int done;
     static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0 };
     // Declaring name as const requires us to cast it when passing it to
@@ -82,7 +83,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount)
         // error, toss away our buffer and start again.
         if (err == 0) {
             err = sysctl((int *) name, (sizeof(name) / sizeof(*name)) - 1,
-                          result, &length, NULL, 0);
+                         result, &length, NULL, 0);
             if (err == -1)
                 err = errno;
             if (err == 0) {
@@ -114,7 +115,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 char
 *psutil_get_cmd_path(long pid, size_t *pathsize)
 {
-    int  mib[4];
+    int mib[4];
     char *path;
     size_t size = 0;
 
@@ -140,7 +141,7 @@ char
     *pathsize = size;
     if (sysctl(mib, 4, path, &size, NULL, 0) == -1) {
         free(path);
-        return NULL;       /* Insufficient privileges */
+        return NULL;       // Insufficient privileges
     }
 
     return path;
@@ -167,7 +168,7 @@ char
     size_t size = sizeof(argmax);
     char *procargs = NULL;
 
-    /* Get the maximum process arguments size. */
+    // Get the maximum process arguments size.
     mib[0] = CTL_KERN;
     mib[1] = KERN_ARGMAX;
 
@@ -175,7 +176,7 @@ char
     if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1)
         return NULL;
 
-    /* Allocate space for the arguments. */
+    // Allocate space for the arguments.
     procargs = (char *)malloc(argmax);
     if (procargs == NULL) {
         PyErr_NoMemory();
@@ -193,7 +194,7 @@ char
     size = argmax;
     if (sysctl(mib, 4, procargs, &size, NULL, 0) == -1) {
         free(procargs);
-        return NULL;       /* Insufficient privileges */
+        return NULL;       // Insufficient privileges
     }
 
     // return string and set the length of arguments
@@ -202,8 +203,8 @@ char
 }
 
 
-/* returns the command line as a python list object */
-PyObject*
+// returns the command line as a python list object
+PyObject *
 psutil_get_arg_list(long pid)
 {
     char *argstr = NULL;
@@ -225,7 +226,7 @@ psutil_get_arg_list(long pid)
     // arguments add each string to the list then step forward to the next
     // separator
     if (argsize > 0) {
-        while(pos < argsize) {
+        while (pos < argsize) {
             item = Py_BuildValue("s", &argstr[pos]);
             if (!item)
                 goto error;

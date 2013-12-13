@@ -10,6 +10,7 @@ HIGHER PRIORITY
 ===============
 
  * #387: system-wide connections (netstat).
+
  * OpenBSD support.
 
  * #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
@@ -17,12 +18,7 @@ HIGHER PRIORITY
 
  * #250: net ifaces speed.
 
- * (Linux) resource limit get/set - see man prlimit.
-
- * Process.name on Windows is slow:
-   http://stackoverflow.com/questions/6587036/
-
- * Windows binary for Python 3.3 64-bit.
+ * #424: Windows binary for Python 3.3 64-bit.
 
  * #269: expose network ifaces RX/TW queues.
 
@@ -47,7 +43,7 @@ LOWER PRIORITY
 
  * examples/taskmgr-gui.py (using tk).
 
- * system-wide # open file descriptors:
+ * system-wide number of open file descriptors:
     * https://jira.hyperic.com/browse/SIGAR-30
     * http://www.netadmintools.com/part295.html
 
@@ -58,6 +54,8 @@ LOWER PRIORITY
 
  * thread names:
     * https://code.google.com/p/plcrashreporter/issues/detail?id=65
+
+ * Asynchronous psutil.Popen (see http://www.python.org/dev/peps/pep-3145/)
 
 
 DEBATABLE
@@ -73,12 +71,6 @@ DEBATABLE
    over multiple processes though, as it introduces a big slowdown.
    Should it default to 0.0?
 
- * Rename connection ntuple's fields 'local_address', 'remote_address' to
-   'laddr', 'raddr'  (note in accordance with http://bugs.python.org/issue17675)
-
- * Process per-cpus percent (XXX Windows only?), see:
-   https://groups.google.com/forum/?fromgroups#!topic/psutil/ErrKTxAbu50
-
  * Should we expose OS constants (psutil.WINDOWS, psutil.OSX etc.)?
 
  * Python 3.3. exposed different sched.h functions:
@@ -93,3 +85,60 @@ DEBATABLE
  * Certain systems (XXX figure out which ones exactly) provide CPU times about
    process children. On those systems Process.get_cpu_times() might return
    a (user, system, user_children, system_children) ntuple.
+
+ * Enrich exception classes hierarchy on Python >= 3.3 / post PEP-3151 so that:
+   - NoSuchProcess inherits from ProcessLookupError
+   - AccessDenied inherits from PermissionError
+   - TimeoutExpired inherits from TimeoutError (debatable)
+   See: http://docs.python.org/3/library/exceptions.html#os-exceptions
+
+ * Process.get_threads() might grow an extra "id" parameter so that it can be
+   used as such:
+
+    >>> p = psutil.Process(pid)
+    >>> p.get_threads(id=psutil.get_current_thread_id())
+    thread(id=2539, user_time=0.03, system_time=0.02)
+    >>>
+
+   note: this leads to questions such as "should we have a custom NoSuchThread
+   exception? Also see issue #418.
+
+  * should psutil.TimeoutExpired exception have a 'msg' kwarg similar to
+    NoSuchProcess and AccessDenied? Not that we need it, but currently we
+    cannot raise a TimeoutExpired exception with a specific error string.
+    Side note: tests' call_until() should raise TimeoutExpired instead of
+    RuntimeError.
+
+
+COMPATIBILITY BREAKAGE
+======================
+
+H = high risk in terms of breakage
+M = medium risk in terms of breakage
+S = little risk in terms of breakage
+? = debatable
+
+Removals:
+
+ * (S) psutil.Process.nice  (deprecated in 0.5.0)
+ * (S) get_process_list  (deprecated in 0.5.0)
+ * (S) psutil.*mem* functions  (deprecated in 0.3.0 and 0.6.0)
+ * (S) psutil.error.py  (deprecated in 0.7.0 but never documented)
+ * (M) psutil.network_io_counters  (deprecated in 1.0.0)
+ * (M) local_address and remote_address get_connection() namedtuple fields
+       (deprecated in 1.0.0)
+
+Renames:
+
+ * (S) rename/unify all _ps*.py process functions
+ * (H) psutil.Process.ppid     -> get_ppid()
+ * (H) psutil.Process.status   -> get_status()
+ * (H) psutil.Process.uids     -> get_uids()
+ * (H) psutil.Process.gids     -> get_gids()
+ * (H) psutil.Process.username -> get_username()
+
+
+REJECTED IDEAS
+==============
+
+STUB

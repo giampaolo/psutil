@@ -15,12 +15,14 @@ class Error(Exception):
     from this one.
     """
 
+
 class NoSuchProcess(Error):
     """Exception raised when a process with a certain PID doesn't
     or no longer exists (zombie).
     """
 
     def __init__(self, pid, name=None, msg=None):
+        Error.__init__(self)
         self.pid = pid
         self.name = name
         self.msg = msg
@@ -39,6 +41,7 @@ class AccessDenied(Error):
     """Exception raised when permission to perform an action is denied."""
 
     def __init__(self, pid=None, name=None, msg=None):
+        Error.__init__(self)
         self.pid = pid
         self.name = name
         self.msg = msg
@@ -60,6 +63,7 @@ class TimeoutExpired(Error):
     """
 
     def __init__(self, pid=None, name=None):
+        Error.__init__(self)
         self.pid = pid
         self.name = name
         if (pid is not None) and (name is not None):

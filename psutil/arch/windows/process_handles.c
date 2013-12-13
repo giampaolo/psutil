@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, Jay Loden, Giampaolo Rodola'. All rights reserved.
+ * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -15,7 +15,7 @@
 #include "process_handles.h"
 
 #ifndef NT_SUCCESS
-    #define NT_SUCCESS(x) ((x) >= 0)
+#define NT_SUCCESS(x) ((x) >= 0)
 #endif
 #define STATUS_INFO_LENGTH_MISMATCH 0xc0000004
 
@@ -28,9 +28,9 @@
 typedef LONG NTSTATUS;
 
 typedef struct _UNICODE_STRING {
-  USHORT  Length;
-  USHORT  MaximumLength;
-  PWSTR  Buffer;
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR Buffer;
 } UNICODE_STRING, *PUNICODE_STRING;
 
 typedef NTSTATUS (NTAPI *_NtQuerySystemInformation)(
@@ -38,7 +38,7 @@ typedef NTSTATUS (NTAPI *_NtQuerySystemInformation)(
     PVOID SystemInformation,
     ULONG SystemInformationLength,
     PULONG ReturnLength
-    );
+);
 
 typedef NTSTATUS (NTAPI *_NtDuplicateObject)(
     HANDLE SourceProcessHandle,
@@ -48,7 +48,7 @@ typedef NTSTATUS (NTAPI *_NtDuplicateObject)(
     ACCESS_MASK DesiredAccess,
     ULONG Attributes,
     ULONG Options
-    );
+);
 
 typedef NTSTATUS (NTAPI *_NtQueryObject)(
     HANDLE ObjectHandle,
@@ -56,10 +56,9 @@ typedef NTSTATUS (NTAPI *_NtQueryObject)(
     PVOID ObjectInformation,
     ULONG ObjectInformationLength,
     PULONG ReturnLength
-    );
+);
 
-typedef struct _SYSTEM_HANDLE
-{
+typedef struct _SYSTEM_HANDLE {
     ULONG ProcessId;
     BYTE ObjectTypeNumber;
     BYTE Flags;
@@ -68,14 +67,12 @@ typedef struct _SYSTEM_HANDLE
     ACCESS_MASK GrantedAccess;
 } SYSTEM_HANDLE, *PSYSTEM_HANDLE;
 
-typedef struct _SYSTEM_HANDLE_INFORMATION
-{
+typedef struct _SYSTEM_HANDLE_INFORMATION {
     ULONG HandleCount;
     SYSTEM_HANDLE Handles[1];
 } SYSTEM_HANDLE_INFORMATION, *PSYSTEM_HANDLE_INFORMATION;
 
-typedef enum _POOL_TYPE
-{
+typedef enum _POOL_TYPE {
     NonPagedPool,
     PagedPool,
     NonPagedPoolMustSucceed,
@@ -85,8 +82,7 @@ typedef enum _POOL_TYPE
     NonPagedPoolCacheAlignedMustS
 } POOL_TYPE, *PPOOL_TYPE;
 
-typedef struct _OBJECT_TYPE_INFORMATION
-{
+typedef struct _OBJECT_TYPE_INFORMATION {
     UNICODE_STRING Name;
     ULONG TotalNumberOfObjects;
     ULONG TotalNumberOfHandles;
@@ -111,13 +107,15 @@ typedef struct _OBJECT_TYPE_INFORMATION
     ULONG NonPagedPoolUsage;
 } OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
 
-PVOID GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName)
+
+PVOID
+GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName)
 {
     return GetProcAddress(GetModuleHandleA(LibraryName), ProcName);
 }
 
 
-PyObject*
+PyObject *
 psutil_get_open_files(long pid, HANDLE processHandle)
 {
     _NtQuerySystemInformation NtQuerySystemInformation =
@@ -130,7 +128,6 @@ psutil_get_open_files(long pid, HANDLE processHandle)
     NTSTATUS                    status;
     PSYSTEM_HANDLE_INFORMATION  handleInfo;
     ULONG                       handleInfoSize = 0x10000;
-
     ULONG                       i;
     ULONG                       fileNameLength;
     PyObject                    *filesList = Py_BuildValue("[]");
@@ -147,28 +144,27 @@ psutil_get_open_files(long pid, HANDLE processHandle)
         return NULL;
     }
 
-    /* NtQuerySystemInformation won't give us the correct buffer size,
-       so we guess by doubling the buffer size. */
+    // NtQuerySystemInformation won't give us the correct buffer size,
+    // so we guess by doubling the buffer size.
     while ((status = NtQuerySystemInformation(
-        SystemHandleInformation,
-        handleInfo,
-        handleInfoSize,
-        NULL
-        )) == STATUS_INFO_LENGTH_MISMATCH)
+                         SystemHandleInformation,
+                         handleInfo,
+                         handleInfoSize,
+                         NULL
+                     )) == STATUS_INFO_LENGTH_MISMATCH)
     {
-        handleInfo = (PSYSTEM_HANDLE_INFORMATION)realloc(handleInfo, handleInfoSize *= 2);
+        handleInfo = (PSYSTEM_HANDLE_INFORMATION) \
+            realloc(handleInfo, handleInfoSize *= 2);
     }
 
-    /* NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH. */
+    // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH
     if (!NT_SUCCESS(status)) {
-        //printf("NtQuerySystemInformation failed!\n");
         Py_DECREF(filesList);
         free(handleInfo);
         return NULL;
     }
 
-    for (i = 0; i < handleInfo->HandleCount; i++)
-    {
+    for (i = 0; i < handleInfo->HandleCount; i++) {
         SYSTEM_HANDLE            handle = handleInfo->Handles[i];
         HANDLE                   dupHandle = NULL;
         POBJECT_TYPE_INFORMATION objectTypeInfo = NULL;
@@ -178,45 +174,43 @@ psutil_get_open_files(long pid, HANDLE processHandle)
         fileFromWchar = NULL;
         arg = NULL;
 
-        /* Check if this handle belongs to the PID the user specified. */
+        // Check if this handle belongs to the PID the user specified.
         if (handle.ProcessId != pid)
             continue;
 
-        /* Skip handles with the following access codes as the next call
-           to NtDuplicateObject() or NtQueryObject() might hang forever. */
-        if((handle.GrantedAccess == 0x0012019f)
-        || (handle.GrantedAccess == 0x001a019f)
-        || (handle.GrantedAccess == 0x00120189)
-        || (handle.GrantedAccess == 0x00100000)) {
+        // Skip handles with the following access codes as the next call
+        // to NtDuplicateObject() or NtQueryObject() might hang forever.
+        if ((handle.GrantedAccess == 0x0012019f)
+                || (handle.GrantedAccess == 0x001a019f)
+                || (handle.GrantedAccess == 0x00120189)
+                || (handle.GrantedAccess == 0x00100000)) {
             continue;
         }
 
-        /* Duplicate the handle so we can query it. */
+        // Duplicate the handle so we can query it.
         if (!NT_SUCCESS(NtDuplicateObject(
-            processHandle,
-            handle.Handle,
-            GetCurrentProcess(),
-            &dupHandle,
-            0,
-            0,
-            0
-            )))
+                            processHandle,
+                            handle.Handle,
+                            GetCurrentProcess(),
+                            &dupHandle,
+                            0,
+                            0,
+                            0
+                        )))
         {
-            //printf("[%#x] Error!\n", handle.Handle);
             continue;
         }
 
-        /* Query the object type. */
+        // Query the object type.
         objectTypeInfo = (POBJECT_TYPE_INFORMATION)malloc(0x1000);
         if (!NT_SUCCESS(NtQueryObject(
-            dupHandle,
-            ObjectTypeInformation,
-            objectTypeInfo,
-            0x1000,
-            NULL
-            )))
+                            dupHandle,
+                            ObjectTypeInformation,
+                            objectTypeInfo,
+                            0x1000,
+                            NULL
+                        )))
         {
-            //printf("[%#x] Error!\n", handle.Handle);
             free(objectTypeInfo);
             CloseHandle(dupHandle);
             continue;
@@ -224,24 +218,24 @@ psutil_get_open_files(long pid, HANDLE processHandle)
 
         objectNameInfo = malloc(0x1000);
         if (!NT_SUCCESS(NtQueryObject(
-            dupHandle,
-            ObjectNameInformation,
-            objectNameInfo,
-            0x1000,
-            &returnLength
-            )))
+                            dupHandle,
+                            ObjectNameInformation,
+                            objectNameInfo,
+                            0x1000,
+                            &returnLength
+                        )))
         {
-            /* Reallocate the buffer and try again. */
+            // Reallocate the buffer and try again.
             objectNameInfo = realloc(objectNameInfo, returnLength);
             if (!NT_SUCCESS(NtQueryObject(
-                dupHandle,
-                ObjectNameInformation,
-                objectNameInfo,
-                returnLength,
-                NULL
-                )))
+                                dupHandle,
+                                ObjectNameInformation,
+                                objectNameInfo,
+                                returnLength,
+                                NULL
+                            )))
             {
-                /* We have the type name, so just display that.*/
+                // We have the type name, so just display that.
                 /*
                 printf(
                     "[%#x] %.*S: (could not get name)\n",
@@ -258,26 +252,28 @@ psutil_get_open_files(long pid, HANDLE processHandle)
             }
         }
 
-        /* Cast our buffer into an UNICODE_STRING. */
+        // Cast our buffer into an UNICODE_STRING.
         objectName = *(PUNICODE_STRING)objectNameInfo;
 
-        /* Print the information! */
+        // Print the information!
         if (objectName.Length)
         {
-            /* The object has a name.  Make sure it is a file otherwise
-               ignore it */
+            // The object has a name.  Make sure it is a file otherwise
+            // ignore it
             fileNameLength = objectName.Length / 2;
             if (wcscmp(objectTypeInfo->Name.Buffer, L"File") == 0) {
-                //printf("%.*S\n", objectName.Length / 2, objectName.Buffer);
+                // printf("%.*S\n", objectName.Length / 2, objectName.Buffer);
                 fileFromWchar = PyUnicode_FromWideChar(objectName.Buffer,
                                                        fileNameLength);
                 if (fileFromWchar == NULL)
                     goto error_py_fun;
-                #if PY_MAJOR_VERSION >= 3
-                    arg = Py_BuildValue("N", PyUnicode_AsUTF8String(fileFromWchar));
-                #else
-                    arg = Py_BuildValue("N", PyUnicode_FromObject(fileFromWchar));
-                #endif
+#if PY_MAJOR_VERSION >= 3
+                arg = Py_BuildValue("N",
+                                    PyUnicode_AsUTF8String(fileFromWchar));
+#else
+                arg = Py_BuildValue("N",
+                                    PyUnicode_FromObject(fileFromWchar));
+#endif
                 if (!arg)
                     goto error_py_fun;
                 Py_XDECREF(fileFromWchar);
@@ -299,7 +295,7 @@ psutil_get_open_files(long pid, HANDLE processHandle)
         }
         else
         {
-            /* Print something else. */
+            // Print something else.
             /*
             printf(
                 "[%#x] %.*S: (unnamed)\n",

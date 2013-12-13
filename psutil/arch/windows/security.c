@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <Python.h>
 
+
 /*
  * Convert a process handle to a process token handle.
  */
@@ -44,9 +45,9 @@ int HasSystemPrivilege(HANDLE hProcess) {
     DWORD dwRetval = 0;
     TCHAR privName[256];
     DWORD dwNameSize = 256;
-    //PTOKEN_PRIVILEGES tp = NULL;
+    // PTOKEN_PRIVILEGES tp = NULL;
     BYTE *pBuffer = NULL;
-    TOKEN_PRIVILEGES* tp = NULL;
+    TOKEN_PRIVILEGES *tp = NULL;
     HANDLE hToken = token_from_handle(hProcess);
 
     if (NULL == hToken) {
@@ -64,32 +65,34 @@ int HasSystemPrivilege(HANDLE hProcess) {
     }
 
     // allocate buffer and call GetTokenInformation again
-    //tp = (PTOKEN_PRIVILEGES) GlobalAlloc(GPTR, dwSize);
+    // tp = (PTOKEN_PRIVILEGES) GlobalAlloc(GPTR, dwSize);
     pBuffer = (BYTE *) malloc(dwSize);
     if (pBuffer == NULL) {
         PyErr_NoMemory();
         return -1;
     }
 
-    if (! GetTokenInformation(hToken, TokenPrivileges, pBuffer, dwSize, &dwSize) ) {
+    if (! GetTokenInformation(hToken, TokenPrivileges, pBuffer,
+                              dwSize, &dwSize))
+    {
         PyErr_SetFromWindowsErr(0);
         free(pBuffer);
         return -1;
     }
 
     // convert the BYTE buffer to a TOKEN_PRIVILEGES struct pointer
-    tp = (TOKEN_PRIVILEGES*)pBuffer;
+    tp = (TOKEN_PRIVILEGES *)pBuffer;
 
     // check all the privileges looking for SeTcbPrivilege
-    for(i=0; i < tp->PrivilegeCount; i++) {
+    for (i = 0; i < tp->PrivilegeCount; i++) {
         // reset the buffer contents and the buffer size
         strcpy(privName, "");
         dwNameSize = sizeof(privName) / sizeof(TCHAR);
         if (! LookupPrivilegeName(NULL,
-                &tp->Privileges[i].Luid,
-                (LPTSTR)privName,
-                &dwNameSize)) {
-
+                                  &tp->Privileges[i].Luid,
+                                  (LPTSTR)privName,
+                                  &dwNameSize))
+        {
             PyErr_SetFromWindowsErr(0);
             free(pBuffer);
             return -1;
@@ -100,8 +103,7 @@ int HasSystemPrivilege(HANDLE hProcess) {
             free(pBuffer);
             return 1;
         }
-
-    } //for
+    }
 
     free(pBuffer);
     return 0;
@@ -113,9 +115,9 @@ BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
     TOKEN_PRIVILEGES tp;
     LUID luid;
     TOKEN_PRIVILEGES tpPrevious;
-    DWORD cbPrevious=sizeof(TOKEN_PRIVILEGES);
+    DWORD cbPrevious = sizeof(TOKEN_PRIVILEGES);
 
-    if(!LookupPrivilegeValue( NULL, Privilege, &luid )) return FALSE;
+    if (!LookupPrivilegeValue( NULL, Privilege, &luid )) return FALSE;
 
     // first pass.  get current privilege setting
     tp.PrivilegeCount = 1;
@@ -137,13 +139,13 @@ BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
     tpPrevious.PrivilegeCount = 1;
     tpPrevious.Privileges[0].Luid = luid;
 
-    if(bEnablePrivilege) {
+    if (bEnablePrivilege) {
         tpPrevious.Privileges[0].Attributes |= (SE_PRIVILEGE_ENABLED);
     }
 
     else {
-        tpPrevious.Privileges[0].Attributes ^= (SE_PRIVILEGE_ENABLED &
-                tpPrevious.Privileges[0].Attributes);
+        tpPrevious.Privileges[0].Attributes ^=
+            (SE_PRIVILEGE_ENABLED & tpPrevious.Privileges[0].Attributes);
     }
 
     AdjustTokenPrivileges(
@@ -164,13 +166,13 @@ BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
 int SetSeDebug()
 {
     HANDLE hToken;
-    if(! OpenThreadToken(GetCurrentThread(),
-                         TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
-                         FALSE,
-                         &hToken)
-                         ){
-        if (GetLastError() == ERROR_NO_TOKEN){
-            if (!ImpersonateSelf(SecurityImpersonation)){
+    if (! OpenThreadToken(GetCurrentThread(),
+                          TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+                          FALSE,
+                          &hToken)
+       ) {
+        if (GetLastError() == ERROR_NO_TOKEN) {
+            if (!ImpersonateSelf(SecurityImpersonation)) {
                 CloseHandle(hToken);
                 return 0;
             }
@@ -178,7 +180,7 @@ int SetSeDebug()
                                  TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
                                  FALSE,
                                  &hToken)
-                                 ){
+               ) {
                 RevertToSelf();
                 CloseHandle(hToken);
                 return 0;
@@ -187,7 +189,7 @@ int SetSeDebug()
     }
 
     // enable SeDebugPrivilege (open any process)
-    if (! SetPrivilege(hToken, SE_DEBUG_NAME, TRUE)){
+    if (! SetPrivilege(hToken, SE_DEBUG_NAME, TRUE)) {
         RevertToSelf();
         CloseHandle(hToken);
         return 0;
@@ -202,31 +204,29 @@ int SetSeDebug()
 int UnsetSeDebug()
 {
     HANDLE hToken;
-    if(! OpenThreadToken(GetCurrentThread(),
-                        TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
-                        FALSE,
-                        &hToken)
-                        ){
-        if(GetLastError() == ERROR_NO_TOKEN){
-            if(! ImpersonateSelf(SecurityImpersonation)){
-                //Log2File("Error setting impersonation! [UnsetSeDebug()]", L_DEBUG);
+    if (! OpenThreadToken(GetCurrentThread(),
+                          TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+                          FALSE,
+                          &hToken)
+       ) {
+        if (GetLastError() == ERROR_NO_TOKEN) {
+            if (! ImpersonateSelf(SecurityImpersonation)) {
                 return 0;
             }
 
-            if(!OpenThreadToken(GetCurrentThread(),
-                                TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
-                                FALSE,
-                                &hToken)
-                                ){
-                //Log2File("Error Opening Thread Token! [UnsetSeDebug()]", L_DEBUG);
+            if (!OpenThreadToken(GetCurrentThread(),
+                                 TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+                                 FALSE,
+                                 &hToken)
+               )
+            {
                 return 0;
             }
         }
     }
 
-    //now disable SeDebug
-    if(!SetPrivilege(hToken, SE_DEBUG_NAME, FALSE)){
-        //Log2File("Error unsetting SeDebug Privilege [SetPrivilege()]", L_WARN);
+    // now disable SeDebug
+    if (! SetPrivilege(hToken, SE_DEBUG_NAME, FALSE)) {
         return 0;
     }
 

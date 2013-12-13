@@ -6,12 +6,12 @@
 
 """OSX specific tests.  These are implicitly run by test_psutil.py."""
 
-import unittest
-import subprocess
-import time
-import sys
 import os
 import re
+import subprocess
+import sys
+import time
+import unittest
 
 import psutil
 
@@ -35,6 +35,7 @@ def sysctl(cmdline):
     except ValueError:
         return result
 
+
 def vm_stat(field):
     """Wrapper around 'vm_stat' cmdline utility."""
     out = sh('vm_stat')
@@ -55,7 +56,7 @@ class OSXSpecificTestCase(unittest.TestCase):
         reap_children()
 
     def test_process_create_time(self):
-        cmdline = "ps -o lstart -p %s" %self.pid
+        cmdline = "ps -o lstart -p %s" % self.pid
         p = subprocess.Popen(cmdline, shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0]
         if PY3:
@@ -97,7 +98,7 @@ class OSXSpecificTestCase(unittest.TestCase):
 
     def test_vmem_total(self):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
-        self.assertEqual(sysctl_hwphymem, psutil.TOTAL_PHYMEM)
+        self.assertEqual(sysctl_hwphymem, psutil.virtual_memory().total)
 
     @retry_before_failing()
     def test_vmem_free(self):

@@ -3,8 +3,10 @@ Quick links
 ===========
 
 * `Home page <http://code.google.com/p/psutil>`_
-* `Download <http://code.google.com/p/psutil/downloads/list>`_
+* `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
 * `Documentation <http://code.google.com/p/psutil/wiki/Documentation>`_
+* `Forum <http://groups.google.com/group/psutil/topics>`_
+* `What's new <https://psutil.googlecode.com/hg/HISTORY>`_
 
 =======
 Summary
@@ -18,7 +20,7 @@ ifconfig, nice, ionice, iostat, iotop, uptime, pidof, tty, who, taskset, pmap**.
 
 It currently supports **Linux**, **Windows**, **OSX**, **FreeBSD**,
 **Sun Solaris** both **32-bit** and **64-bit** with Python versions from **2.4**
-to **3.3** by using a single code base.
+to **3.4** by using a single code base.
 
 ==============
 Example usages
@@ -55,6 +57,11 @@ cpupercent(user=1.0, nice=0.0, system=0.0, idle=99.0, iowait=0.0, irq=0.0,
            softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
 cpupercent(user=2.0, nice=0.0, system=0.0, idle=98.0, iowait=0.0, irq=0.0,
            softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+>>>
+>>> psutil.cpu_count()
+4
+>>>
+
 
 Memory
 ======
@@ -79,7 +86,7 @@ Disks
 >>> psutil.disk_usage('/')
 usage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
 >>>
->>> psutil.disk_io_counters()
+>>> psutil.disk_io_counters(perdisk=False)
 iostat(read_count=719566, write_count=1082197, read_bytes=18626220032,
        write_bytes=24081764352, read_time=5023392, write_time=63199568)
 >>>
@@ -89,11 +96,14 @@ Network
 =======
 
 >>> psutil.net_io_counters(pernic=True)
-{'lo': iostat(bytes_sent=799953745, bytes_recv=799953745,
-              packets_sent=453698, packets_recv=453698),
- 'eth0': iostat(bytes_sent=734324837, bytes_recv=4163935363,
-                packets_sent=3605828, packets_recv=4096685)}
+{'eth0': iostat(bytes_sent=485291293, bytes_recv=6004858642,
+                packets_sent=3251564, packets_recv=4787798,
+                errin=0, errout=0, dropin=0, dropout=0),
+ 'lo': iostat(bytes_sent=2838627, bytes_recv=2838627, packets_sent=30567,
+              packets_recv=30567, errin=0, errout=0, dropin=0, dropout=0)}
+
 >>>
+
 
 Other system info
 =================
@@ -104,13 +114,14 @@ Other system info
 >>>
 >>> psutil.get_boot_time()
 1365519115.0
+>>>
 
 
 Process management
 ==================
 
 >>> import psutil
->>> psutil.get_pid_list()
+>>> psutil.get_pids()
 [1, 2, 3, 4, 5, 6, 7, 46, 48, 50, 51, 178, 182, 222, 223, 224,
 268, 1215, 1216, 1220, 1221, 1243, 1244, 1301, 1601, 2237, 2355,
 2637, 2774, 3932, 4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245,
@@ -123,7 +134,7 @@ Process management
 'python'
 >>> p.exe
 '/usr/bin/python'
->>> p.getcwd()
+>>> p.get_cwd()
 '/home/giampaolo'
 >>> p.cmdline
 ['/usr/bin/python', 'main.py']
@@ -198,6 +209,14 @@ amount(voluntary=78, involuntary=19)
 0
 >>> p.set_nice(10)
 >>>
+>>> p.set_ionice(psutil.IOPRIO_CLASS_IDLE)  # IO priority (Windows and Linux only)
+>>> p.get_ionice()
+ionice(ioclass=3, value=0)
+>>>
+>>> p.set_rlimit(psutil.RLIMIT_NOFILE, (5, 5))  # resource limits (Linux only)
+>>> p.get_rlimit(psutil.RLIMIT_NOFILE)
+(5, 5)
+>>>
 >>> p.suspend()
 >>> p.resume()
 >>>
@@ -215,3 +234,22 @@ giampaolo  31475  0.0  0.0   20760    3024 /dev/pts/0 Jun19   00:00  python2.4
 giampaolo  31721  0.0  2.2  773060  181896 ?          00:04   10:30  chrome
 root       31763  0.0  0.0       0       0 ?          00:05   00:00  kworker/0:1
 >>>
+
+Further process APIs
+====================
+
+>>> for p in psutil.process_iter():
+...     print(p)
+...
+psutil.Process(pid=1, name='init')
+psutil.Process(pid=2, name='kthreadd')
+psutil.Process(pid=3, name='ksoftirqd/0')
+...
+>>>
+>>> def on_terminate(proc):
+...     print("process {} terminated".format(proc))
+...
+>>> # waits for multiple processes to terminate
+>>> gone, alive = psutil.wait_procs(procs_list, 3, callback=on_terminate)
+>>>
+}}}
