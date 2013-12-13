@@ -148,6 +148,11 @@ def get_num_cpus():
     return _psutil_windows.get_num_cpus()
 
 
+def get_num_phys_cpus():
+    """Return the number of physical CPUs in the system."""
+    return _psutil_windows.get_num_phys_cpus()
+
+
 def get_system_boot_time():
     """The system boot time expressed in seconds since the epoch."""
     return _psutil_windows.get_system_boot_time()

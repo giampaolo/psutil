@@ -445,6 +445,70 @@ get_num_cpus(PyObject *self, PyObject *args)
 }
 
 
+typedef BOOL (WINAPI *LPFN_GLPI) (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,
+                                  PDWORD);
+
+/*
+ * Return the number physical CPU cores on the system.
+ */
+static PyObject *
+get_num_phys_cpus(PyObject *self, PyObject *args)
+{
+    LPFN_GLPI glpi;
+    DWORD rc;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer = NULL;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr = NULL;
+    DWORD length = 0;
+    DWORD offset = 0;
+    int ncpus = 0;
+
+    glpi = (LPFN_GLPI)GetProcAddress(GetModuleHandle(TEXT("kernel32")),
+                                     "GetLogicalProcessorInformation");
+    if (glpi == NULL)
+        goto return_none;
+
+    while (1) {
+        rc = glpi(buffer, &length);
+        if (rc == FALSE) {
+            if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+                if (buffer)
+                    free(buffer);
+                buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(
+                    length);
+                if (NULL == buffer) {
+                    PyErr_NoMemory();
+                    return NULL;
+                }
+            }
+            else {
+                goto return_none;
+            }
+        }
+        else {
+            break;
+        }
+    }
+
+    ptr = buffer;
+    while (offset + sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION) <= length) {
+        if (ptr->Relationship == RelationProcessorCore)
+            ncpus += 1;
+        offset += sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
+        ptr++;
+    }
+
+    if (ncpus == 0)
+        goto return_none;
+    else
+        return Py_BuildValue("i", ncpus);
+
+return_none:
+    // mimic os.cpu_count()
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
 /*
  * Return process cmdline as a Python list of cmdline arguments.
  */
@@ -3001,7 +3065,9 @@ PsutilMethods[] =
     {"pid_exists", pid_exists, METH_VARARGS,
      "Determine if the process exists in the current process list."},
     {"get_num_cpus", get_num_cpus, METH_VARARGS,
-     "Returns the number of CPUs on the system"},
+     "Returns the number of logical CPUs on the system"},
+    {"get_num_phys_cpus", get_num_phys_cpus, METH_VARARGS,
+     "Returns the number of physical CPUs on the system"},
     {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"get_virtual_mem", get_virtual_mem, METH_VARARGS,
