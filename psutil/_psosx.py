@@ -142,7 +142,7 @@ def users():
     return retlist
 
 
-get_pids = cext.pids
+pids = cext.pids
 pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage
 net_io_counters = cext.net_io_counters

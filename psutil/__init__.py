@@ -22,7 +22,7 @@ __all__ = [
     "version_info", "__version__",
     "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
     "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
-    "STATUS_WAKING", "STATUS_LOCKED",
+    "STATUS_WAKING", "STATUS_LOCKED", "STATUS_WAITING", "STATUS_LOCKED",
     "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
@@ -61,7 +61,6 @@ from psutil._common import (deprecated_method as _deprecated_method,
                             nt_sys_vmem as _nt_sys_vmem)
 
 from psutil._common import (STATUS_RUNNING,
-                            STATUS_IDLE,
                             STATUS_SLEEPING,
                             STATUS_DISK_SLEEP,
                             STATUS_STOPPED,
@@ -69,7 +68,10 @@ from psutil._common import (STATUS_RUNNING,
                             STATUS_ZOMBIE,
                             STATUS_DEAD,
                             STATUS_WAKING,
-                            STATUS_LOCKED)
+                            STATUS_LOCKED,
+                            STATUS_IDLE,  # bsd
+                            STATUS_WAITING,  # bsd
+                            STATUS_LOCKED)  # bsd
 
 from psutil._common import (CONN_ESTABLISHED,
                             CONN_SYN_SENT,
@@ -280,7 +282,7 @@ class Process(object):
 
         If 'attrs' is specified it must be a list of strings
         reflecting available Process class' attribute names
-        (e.g. ['get_cpu_times', 'name']) else all public (read
+        (e.g. ['cpu_times', 'name']) else all public (read
         only) attributes are assumed.
 
         'ad_value' is the value which gets assigned in case
@@ -630,19 +632,19 @@ class Process(object):
 
         >>> import psutil
         >>> p = psutil.Process()
-        >>> p.get_children()
+        >>> p.children()
         B, C, D
-        >>> p.get_children(recursive=True)
+        >>> p.children(recursive=True)
         B, X, Y, C, D
 
         Note that in the example above if process X disappears
         process Y won't be listed as the reference to process A
         is lost.
         """
-        if hasattr(_psplatform, 'get_ppid_map'):
+        if hasattr(_psplatform, 'ppid_map'):
             # Windows only: obtain a {pid:ppid, ...} dict for all running
             # processes in one shot (faster).
-            ppid_map = _psplatform.get_ppid_map()
+            ppid_map = _psplatform.ppid_map()
         else:
             ppid_map = None
 
@@ -726,10 +728,10 @@ class Process(object):
           >>> import psutil
           >>> p = psutil.Process(os.getpid())
           >>> # blocking
-          >>> p.get_cpu_percent(interval=1)
+          >>> p.cpu_percent(interval=1)
           2.0
           >>> # non-blocking (percentage since last call)
-          >>> p.get_cpu_percent(interval=0)
+          >>> p.cpu_percent(interval=0)
           2.9
           >>>
         """
@@ -1559,7 +1561,7 @@ def virtual_memory():
     """
     global _TOTAL_PHYMEM
     ret = _psplatform.virtual_memory()
-    # cached for later use in Process.get_memory_percent()
+    # cached for later use in Process.memory_percent()
     _TOTAL_PHYMEM = ret.total
     return ret
 

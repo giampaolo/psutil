@@ -169,7 +169,7 @@ pids = cext.pids
 pid_exists = cext.pid_exists
 net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
-get_ppid_map = cext.ppid_map  # not meant to be public
+ppid_map = cext.ppid_map  # not meant to be public
 
 
 def wrap_exceptions(fun):
@@ -228,7 +228,7 @@ class Process(object):
     def ppid(self):
         """Return process parent pid."""
         try:
-            return get_ppid_map()[self.pid]
+            return ppid_map()[self.pid]
         except KeyError:
             raise NoSuchProcess(self.pid, self._process_name)
 
@@ -396,7 +396,7 @@ class Process(object):
         return cext.proc_priority_set(self.pid, value)
 
     # available on Windows >= Vista
-    if hasattr(cext, "get_process_io_priority"):
+    if hasattr(cext, "proc_io_priority_get"):
         @wrap_exceptions
         def ionice_get(self):
             return cext.proc_io_priority(self.pid)

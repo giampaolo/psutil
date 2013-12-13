@@ -166,7 +166,7 @@ def isfile_strict(path):
         return stat.S_ISREG(st.st_mode)
 
 
-# --- Process.get_connections() 'kind' parameter mapping
+# --- Process.connections() 'kind' parameter mapping
 
 conn_tmap = {
     "all": ([AF_INET, AF_INET6, AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
@@ -221,30 +221,30 @@ nt_sys_user = namedtuple('user', ['name', 'terminal', 'host', 'started'])
 
 # --- namedtuples for psutil.Process methods
 
-# psutil.Process.get_memory_info()
+# psutil.Process.memory_info()
 nt_proc_mem = namedtuple('mem', ['rss', 'vms'])
-# psutil.Process.get_cpu_times()
+# psutil.Process.cpu_times()
 nt_proc_cpu = namedtuple('cputimes', ['user', 'system'])
-# psutil.Process.get_open_files()
+# psutil.Process.open_files()
 nt_proc_file = namedtuple('openfile', ['path', 'fd'])
-# psutil.Process.get_threads()
+# psutil.Process.threads()
 nt_proc_thread = namedtuple('thread', ['id', 'user_time', 'system_time'])
 # psutil.Process.uids
 nt_proc_uids = namedtuple('uids', ['real', 'effective', 'saved'])
 # psutil.Process.gids
 nt_proc_gids = namedtuple('gids', ['real', 'effective', 'saved'])
-# psutil.Process.get_io_counters()
+# psutil.Process.io_counters()
 nt_proc_io = namedtuple('io', ['read_count', 'write_count',
                                'read_bytes', 'write_bytes'])
-# psutil.Process.get_ionice()
+# psutil.Process.ionice()
 nt_proc_ionice = namedtuple('ionice', ['ioclass', 'value'])
-# psutil.Process.get_ctx_switches()
+# psutil.Process.ctx_switches()
 nt_proc_ctxsw = namedtuple('ctxsw', ['voluntary', 'involuntary'])
 
 
 # --- misc
 
-# backward compatibility layer for Process.get_connections() ntuple
+# backward compatibility layer for Process.connections() ntuple
 class nt_proc_conn(
     namedtuple('connection',
                ['fd', 'family', 'type', 'laddr', 'raddr', 'status'])):

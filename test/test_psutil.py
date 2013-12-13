@@ -1189,10 +1189,10 @@ class TestProcess(unittest.TestCase):
         else:
             assert terminal, repr(terminal)
 
-    @unittest.skipIf(not hasattr(psutil.Process, 'get_io_counters'),
+    @unittest.skipIf(not hasattr(psutil.Process, 'io_counters'),
                      'not available on this platform')
     @skip_on_not_implemented(only_if=LINUX)
-    def test_get_io_counters(self):
+    def test_io_counters(self):
         p = psutil.Process()
         # test reads
         io1 = p.io_counters()
@@ -1220,9 +1220,9 @@ class TestProcess(unittest.TestCase):
         assert io2.read_bytes >= io1.read_bytes, (io1, io2)
 
     # Linux and Windows Vista+
-    @unittest.skipUnless(hasattr(psutil.Process, 'get_ionice'),
+    @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
                          'Linux and Windows Vista only')
-    def test_get_set_ionice(self):
+    def test_ionice(self):
         if LINUX:
             from psutil import (IOPRIO_CLASS_NONE, IOPRIO_CLASS_RT,
                                 IOPRIO_CLASS_BE, IOPRIO_CLASS_IDLE)
@@ -1268,9 +1268,9 @@ class TestProcess(unittest.TestCase):
             self.assertRaises(ValueError, p.set_ionice, 3)
             self.assertRaises(TypeError, p.set_ionice, 2, 1)
 
-    @unittest.skipUnless(hasattr(psutil.Process, 'get_rlimit'),
+    @unittest.skipUnless(hasattr(psutil.Process, 'rlimit'),
                          "only available on Linux >= 2.6.36")
-    def test_get_rlimit(self):
+    def test_rlimit_get(self):
         import resource
         p = psutil.Process(os.getpid())
         names = [x for x in dir(psutil) if x.startswith('RLIMIT')]
@@ -1290,13 +1290,13 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipUnless(hasattr(psutil.Process, 'set_rlimit'),
                          "only available on Linux >= 2.6.36")
-    def test_set_rlimit(self):
+    def test_rlimit_set(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.set_rlimit(psutil.RLIMIT_NOFILE, (5, 5))
         self.assertEqual(p.rlimit(psutil.RLIMIT_NOFILE), (5, 5))
 
-    def test_get_num_threads(self):
+    def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
         # but this does not apply across all platforms (OSX, Windows)
@@ -1314,12 +1314,12 @@ class TestProcess(unittest.TestCase):
                 thread.stop()
 
     @unittest.skipUnless(WINDOWS, 'Windows only')
-    def test_get_num_handles(self):
+    def test_num_handles(self):
         # a better test is done later into test/_windows.py
         p = psutil.Process()
         self.assertGreater(p.num_handles(), 0)
 
-    def test_get_threads(self):
+    def test_threads(self):
         p = psutil.Process()
         step1 = p.threads()
 
@@ -1343,7 +1343,7 @@ class TestProcess(unittest.TestCase):
             if thread._running:
                 thread.stop()
 
-    def test_get_memory_info(self):
+    def test_memory_info(self):
         p = psutil.Process()
 
         # step 1 - get a base value to compare our results
@@ -1363,10 +1363,10 @@ class TestProcess(unittest.TestCase):
         self.assertGreater(percent2, percent1)
         del memarr
 
-    # def test_get_ext_memory_info(self):
+    # def test_ext_memory_info(self):
     # # tested later in fetch all test suite
 
-    def test_get_memory_maps(self):
+    def test_memory_maps(self):
         p = psutil.Process()
         maps = p.memory_maps()
         paths = [x for x in maps]
@@ -1395,7 +1395,7 @@ class TestProcess(unittest.TestCase):
                     self.assertIsInstance(value, (int, long))
                     assert value >= 0, value
 
-    def test_get_memory_percent(self):
+    def test_memory_percent(self):
         p = psutil.Process()
         self.assertGreater(p.memory_percent(), 0.0)
 
@@ -1516,22 +1516,22 @@ class TestProcess(unittest.TestCase):
         else:
             p.username
 
-    @unittest.skipUnless(hasattr(psutil.Process, "get_cwd"),
+    @unittest.skipUnless(hasattr(psutil.Process, "cwd"),
                          'not available on this platform')
-    def test_get_cwd(self):
+    def test_cwd(self):
         sproc = get_test_subprocess(wait=True)
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.cwd(), os.getcwd())
 
-    @unittest.skipIf(not hasattr(psutil.Process, "get_cwd"),
+    @unittest.skipIf(not hasattr(psutil.Process, "cwd"),
                      'not available on this platform')
-    def test_get_cwd_2(self):
+    def test_cwd_2(self):
         cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(2)"]
         sproc = get_test_subprocess(cmd, wait=True)
         p = psutil.Process(sproc.pid)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
 
-    @unittest.skipIf(not hasattr(psutil.Process, "get_cpu_affinity"),
+    @unittest.skipIf(not hasattr(psutil.Process, "cpu_affinity"),
                      'not available on this platform')
     def test_cpu_affinity(self):
         p = psutil.Process()
@@ -1551,7 +1551,7 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(ValueError, p.set_cpu_affinity, invalid_cpu)
         self.assertRaises(ValueError, p.set_cpu_affinity, range(10000, 11000))
 
-    def test_get_open_files(self):
+    def test_open_files(self):
         # current process
         p = psutil.Process()
         files = p.open_files()
@@ -1579,7 +1579,7 @@ class TestProcess(unittest.TestCase):
         for file in filenames:
             assert os.path.isfile(file), file
 
-    def test_get_open_files2(self):
+    def test_open_files2(self):
         # test fd and path fields
         fileobj = open(TESTFN, 'w')
         p = psutil.Process()
@@ -1619,7 +1619,7 @@ class TestProcess(unittest.TestCase):
         if WINDOWS:
             psutil.CONN_DELETE_TCB
 
-    def test_get_connections(self):
+    def test_connections(self):
         arg = "import socket, time;" \
               "s = socket.socket();" \
               "s.bind(('127.0.0.1', 0));" \
@@ -1648,7 +1648,7 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(ValueError, p.connections, 'foo')
 
     @unittest.skipUnless(supports_ipv6(), 'IPv6 is not supported')
-    def test_get_connections_ipv6(self):
+    def test_connections_ipv6(self):
         s = socket.socket(AF_INET6, SOCK_STREAM)
         s.bind(('::1', 0))
         s.listen(1)
@@ -1659,7 +1659,7 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipUnless(hasattr(socket, 'AF_UNIX'),
                          'AF_UNIX is not supported')
-    def test_get_connections_unix(self):
+    def test_connections_unix(self):
         def check(type):
             safe_remove(TESTFN)
             sock = socket.socket(AF_UNIX, type)
@@ -1701,7 +1701,7 @@ class TestProcess(unittest.TestCase):
             sock.close()
             dupsock.close()
 
-    def test_get_connections_all(self):
+    def test_connections_all(self):
         tcp_template = textwrap.dedent("""
             import socket
             s = socket.socket($family, socket.SOCK_STREAM)
@@ -1779,7 +1779,7 @@ class TestProcess(unittest.TestCase):
                                ("all", "inet", "inet6", "udp", "udp6"))
 
     @unittest.skipUnless(POSIX, 'posix only')
-    def test_get_num_fds(self):
+    def test_num_fds(self):
         p = psutil.Process()
         start = p.num_fds()
         file = open(TESTFN, 'w')
@@ -1791,7 +1791,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(p.num_fds(), start)
 
     @skip_on_not_implemented(only_if=LINUX)
-    def test_get_num_ctx_switches(self):
+    def test_num_ctx_switches(self):
         p = psutil.Process()
         before = sum(p.num_ctx_switches())
         for x in range(500000):
@@ -1919,7 +1919,7 @@ class TestProcess(unittest.TestCase):
                     or name in excluded_names):
                 continue
             try:
-                # if name == 'get_rlimit'
+                # if name == 'rlimit'
                 args = ()
                 meth = getattr(p, name)
                 if callable(meth):
@@ -2113,7 +2113,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                     except NotImplementedError:
                         msg = "%r was skipped because not implemented" % (
                             self.__class__.__name__ + '.test_' + name)
-                        self.addSkip(msg)
+                        warn(msg)
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         err = sys.exc_info()[1]
                         self.assertEqual(err.pid, p.pid)

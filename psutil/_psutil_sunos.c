@@ -191,7 +191,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args)
  *    ...they should be meaningless anyway.
  *
 static PyObject*
-get_proc_io_counters(PyObject* self, PyObject* args)
+proc_io_counters(PyObject* self, PyObject* args)
 {
     int pid;
     char path[100];

@@ -106,7 +106,7 @@ class BSDSpecificTestCase(unittest.TestCase):
 
     def test_memory_maps(self):
         out = sh('procstat -v %s' % self.pid)
-        maps = psutil.Process(self.pid).get_memory_maps(grouped=False)
+        maps = psutil.Process(self.pid).memory_maps(grouped=False)
         lines = out.split('\n')[1:]
         while lines:
             line = lines.pop()

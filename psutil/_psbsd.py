@@ -58,7 +58,7 @@ PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 # extend base mem ntuple with BSD-specific memory metrics
 nt_sys_vmem = namedtuple(
     nt_sys_vmem.__name__,
-    list(nt_sys_vmem._fields) + ['active', 'inactive', 'buffers', 'cached'
+    list(nt_sys_vmem._fields) + ['active', 'inactive', 'buffers', 'cached',
                                  'shared', 'wired'])
 
 nt_sys_cputimes = namedtuple(
@@ -91,7 +91,7 @@ def cpu_times():
     return nt_sys_cputimes(user, nice, system, idle, irq)
 
 
-if hasattr(cext, "get_sys_per_cpu_times"):
+if hasattr(cext, "per_cpu_times"):
     def per_cpu_times():
         """Return system CPU times as a named tuple"""
         ret = []
@@ -178,7 +178,7 @@ def users():
     return retlist
 
 
-get_pids = cext.pids
+pids = cext.pids
 pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage
 net_io_counters = cext.net_io_counters
@@ -347,7 +347,7 @@ class Process(object):
 
     # FreeBSD < 8 does not support functions based on kinfo_getfile()
     # and kinfo_getvmmap()
-    if hasattr(cext, 'get_proc_open_files'):
+    if hasattr(cext, 'proc_open_files'):
 
         @wrap_exceptions
         def open_files(self):

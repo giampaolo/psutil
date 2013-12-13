@@ -328,7 +328,7 @@ class TestDualProcessImplementation(unittest.TestCase):
             meth1 = wrap_exceptions(getattr(_psutil_windows, name))
             meth2 = wrap_exceptions(getattr(_psutil_windows, name + '_2'))
             for p in psutil.process_iter():
-                if name == 'get_proc_memory_info' and p.pid == os.getpid():
+                if name == 'proc_memory_info' and p.pid == os.getpid():
                     continue
                 #
                 try:
