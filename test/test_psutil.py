@@ -697,13 +697,13 @@ class TestSystemAPIs(unittest.TestCase):
             sys.stdout = stdout
 
     def test_cpu_count(self):
-        count = psutil.cpu_count()
-        self.assertEqual(count, len(psutil.cpu_times(percpu=True)))
-        self.assertGreaterEqual(count, 1)
-
-    def test_phys_cpu_count(self):
-        self.assertGreaterEqual(psutil.phys_cpu_count(), 1)
-        self.assertGreaterEqual(psutil.cpu_count(), psutil.phys_cpu_count())
+        logical = psutil.cpu_count()
+        self.assertEqual(logical, len(psutil.cpu_times(percpu=True)))
+        self.assertGreaterEqual(logical, 1)
+        #
+        physical = psutil.cpu_count(logical=False)
+        self.assertGreaterEqual(physical, 1)
+        self.assertGreaterEqual(logical, physical)
 
     def test_sys_cpu_times(self):
         total = 0

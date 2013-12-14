@@ -32,7 +32,6 @@ __all__ = [
     "pid_exists", "get_pids", "process_iter", "wait_procs",         # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
-    "phys_cpu_count",
     "net_io_counters",                                              # network
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
     "get_users", "get_boot_time",                                   # others
@@ -1206,21 +1205,21 @@ def wait_procs(procs, timeout=None, callback=None):
 # =====================================================================
 
 @_memoize
-def cpu_count():
-    """Return the number of logical CPUs in the system.
-    Return None if undetermined.
-    This is the same as os.cpu_count() from Python 3.4 and
-    replaces the deprecated psutil.NUM_CPUS constant.
-    """
-    return _psplatform.get_num_cpus()
+def cpu_count(logical=True):
+    """Return the number of logical CPUs in the system (same as
+    os.cpu_count() in Python 3.4).
 
+    If logical is False return the number of actual *physical*
+    cores only (hyper thread CPUs are excluded).
 
-@_memoize
-def phys_cpu_count():
-    """Return the number of physical CPUs in the system.
     Return None if undetermined.
+
+    The return value is cached after first call.
     """
-    return _psplatform.get_num_phys_cpus()
+    if logical:
+        return _psplatform.get_num_cpus()
+    else:
+        return _psplatform.get_num_phys_cpus()
 
 
 def cpu_times(percpu=False):
