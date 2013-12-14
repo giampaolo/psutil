@@ -102,7 +102,7 @@ def swap_memory():
     free = mem[3]
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return nt_swapmeminfo(total, used, free, percent, 0, 0)
+    return nt_sys_swap(total, used, free, percent, 0, 0)
 
 
 def get_disk_usage(path):
@@ -116,13 +116,13 @@ def get_disk_usage(path):
         raise
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return nt_diskinfo(total, used, free, percent)
+    return nt_sys_diskusage(total, used, free, percent)
 
 
 def disk_partitions(all):
     """Return disk partitions."""
     rawlist = _psutil_windows.get_disk_partitions(all)
-    return [nt_partition(*x) for x in rawlist]
+    return [nt_sys_diskpart(*x) for x in rawlist]
 
 
 _cputimes_ntuple = namedtuple('cputimes', 'user system idle')
@@ -164,7 +164,7 @@ def get_system_users():
     rawlist = _psutil_windows.get_system_users()
     for item in rawlist:
         user, hostname, tstamp = item
-        nt = nt_user(user, None, hostname, tstamp)
+        nt = nt_sys_user(user, None, hostname, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -253,7 +253,7 @@ class Process(object):
         # http://msdn.microsoft.com/en-us/library/windows/desktop/
         #     ms684877(v=vs.85).aspx
         t = self._get_raw_meminfo()
-        return nt_meminfo(t[2], t[7])
+        return nt_proc_mem(t[2], t[7])
 
     _nt_ext_mem = namedtuple('meminfo', ' '.join([
         'num_page_faults',
@@ -338,7 +338,7 @@ class Process(object):
         rawlist = _psutil_windows.get_proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = nt_thread(thread_id, utime, stime)
+            ntuple = nt_proc_thread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
 
@@ -352,7 +352,7 @@ class Process(object):
                 ret = _psutil_windows.get_proc_cpu_times_2(self.pid)
             else:
                 raise
-        return nt_cputimes(*ret)
+        return nt_proc_cpu(*ret)
 
     @wrap_exceptions
     def suspend(self):
@@ -384,7 +384,7 @@ class Process(object):
         for file in raw_file_names:
             file = _convert_raw_path(file)
             if isfile_strict(file) and file not in retlist:
-                ntuple = nt_openfile(file, -1)
+                ntuple = nt_proc_file(file, -1)
                 retlist.append(ntuple)
         return retlist
 
@@ -438,7 +438,7 @@ class Process(object):
                 ret = _psutil_windows.get_proc_io_counters_2(self.pid)
             else:
                 raise
-        return nt_io(*ret)
+        return nt_proc_io(*ret)
 
     @wrap_exceptions
     def get_status(self):
@@ -488,4 +488,4 @@ class Process(object):
     @wrap_exceptions
     def get_num_ctx_switches(self):
         tupl = _psutil_windows.get_proc_num_ctx_switches(self.pid)
-        return nt_ctxsw(*tupl)
+        return nt_proc_ctxsw(*tupl)

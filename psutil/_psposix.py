@@ -12,7 +12,7 @@ import os
 import sys
 import time
 
-from psutil._common import nt_diskinfo, usage_percent, memoize
+from psutil._common import nt_sys_diskusage, usage_percent, memoize
 from psutil._compat import PY3, unicode
 from psutil._error import TimeoutExpired
 
@@ -131,7 +131,7 @@ def get_disk_usage(path):
     # NB: the percentage is -5% than what shown by df due to
     # reserved blocks that we are currently not considering:
     # http://goo.gl/sWGbH
-    return nt_diskinfo(total, used, free, percent)
+    return nt_sys_diskusage(total, used, free, percent)
 
 
 @memoize

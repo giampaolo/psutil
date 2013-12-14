@@ -224,7 +224,7 @@ def swap_memory():
             sin = sout = 0
     finally:
         f.close()
-    return nt_swapmeminfo(total, used, free, percent, sin, sout)
+    return nt_sys_swap(total, used, free, percent, sin, sout)
 
 
 @deprecated(replacement='psutil.virtual_memory().cached')
@@ -330,7 +330,7 @@ def disk_partitions(all=False):
         if not all:
             if device == '' or fstype not in phydevs:
                 continue
-        ntuple = nt_partition(device, mountpoint, fstype, opts)
+        ntuple = nt_sys_diskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -352,7 +352,7 @@ def get_system_users():
             continue
         if hostname == ':0.0':
             hostname = 'localhost'
-        nt = nt_user(user, tty or None, hostname, tstamp)
+        nt = nt_sys_user(user, tty or None, hostname, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -568,7 +568,7 @@ class Process(object):
                     if x is None:
                         raise NotImplementedError(
                             "couldn't read all necessary info from %r" % fname)
-                return nt_io(rcount, wcount, rbytes, wbytes)
+                return nt_proc_io(rcount, wcount, rbytes, wbytes)
             finally:
                 f.close()
     else:
@@ -588,7 +588,7 @@ class Process(object):
         values = st.split(' ')
         utime = float(values[11]) / CLOCK_TICKS
         stime = float(values[12]) / CLOCK_TICKS
-        return nt_cputimes(utime, stime)
+        return nt_proc_cpu(utime, stime)
 
     @wrap_exceptions
     def process_wait(self, timeout=None):
@@ -621,8 +621,8 @@ class Process(object):
         f = open("/proc/%s/statm" % self.pid)
         try:
             vms, rss = f.readline().split()[:2]
-            return nt_meminfo(int(rss) * PAGESIZE,
-                              int(vms) * PAGESIZE)
+            return nt_proc_mem(int(rss) * PAGESIZE,
+                               int(vms) * PAGESIZE)
         finally:
             f.close()
 
@@ -754,7 +754,7 @@ class Process(object):
                 elif line.startswith("nonvoluntary_ctxt_switches"):
                     unvol = int(line.split()[1])
                 if vol is not None and unvol is not None:
-                    return nt_ctxsw(vol, unvol)
+                    return nt_proc_ctxsw(vol, unvol)
             raise NotImplementedError(
                 "'voluntary_ctxt_switches' and 'nonvoluntary_ctxt_switches'"
                 "fields were not found in /proc/%s/status; the kernel is "
@@ -799,7 +799,7 @@ class Process(object):
             values = st.split(' ')
             utime = float(values[11]) / CLOCK_TICKS
             stime = float(values[12]) / CLOCK_TICKS
-            ntuple = nt_thread(int(thread_id), utime, stime)
+            ntuple = nt_proc_thread(int(thread_id), utime, stime)
             retlist.append(ntuple)
         if hit_enoent:
             # raise NSP if the process disappeared on us
@@ -848,7 +848,7 @@ class Process(object):
         @wrap_exceptions
         def get_ionice(self):
             ioclass, value = _psutil_linux.ioprio_get(self.pid)
-            return nt_ionice(ioclass, value)
+            return nt_proc_ionice(ioclass, value)
 
         @wrap_exceptions
         def set_proc_ionice(self, ioclass, value):
@@ -927,7 +927,7 @@ class Process(object):
                     # so we skip it. A regular file is always supposed
                     # to be absolutized though.
                     if file.startswith('/') and isfile_strict(file):
-                        ntuple = nt_openfile(file, int(fd))
+                        ntuple = nt_proc_file(file, int(fd))
                         retlist.append(ntuple)
         if hit_enoent:
             # raise NSP if the process disappeared on us
@@ -1074,7 +1074,7 @@ class Process(object):
             for line in f:
                 if line.startswith('Uid:'):
                     _, real, effective, saved, fs = line.split()
-                    return nt_uids(int(real), int(effective), int(saved))
+                    return nt_proc_uids(int(real), int(effective), int(saved))
             raise NotImplementedError("line not found")
         finally:
             f.close()
@@ -1086,7 +1086,7 @@ class Process(object):
             for line in f:
                 if line.startswith('Gid:'):
                     _, real, effective, saved, fs = line.split()
-                    return nt_gids(int(real), int(effective), int(saved))
+                    return nt_proc_gids(int(real), int(effective), int(saved))
             raise NotImplementedError("line not found")
         finally:
             f.close()

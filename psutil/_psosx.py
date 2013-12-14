@@ -73,7 +73,7 @@ def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     total, used, free, sin, sout = _psutil_osx.get_swap_mem()
     percent = usage_percent(used, total, _round=1)
-    return nt_swapmeminfo(total, used, free, percent, sin, sout)
+    return nt_sys_swap(total, used, free, percent, sin, sout)
 
 
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle')
@@ -119,7 +119,7 @@ def disk_partitions(all=False):
         if not all:
             if not os.path.isabs(device) or not os.path.exists(device):
                 continue
-        ntuple = nt_partition(device, mountpoint, fstype, opts)
+        ntuple = nt_sys_diskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -133,7 +133,7 @@ def get_system_users():
             continue  # reboot or shutdown
         if not tstamp:
             continue
-        nt = nt_user(user, tty or None, hostname or None, tstamp)
+        nt = nt_sys_user(user, tty or None, hostname or None, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -200,12 +200,12 @@ class Process(object):
     @wrap_exceptions
     def get_uids(self):
         real, effective, saved = _psutil_osx.get_proc_uids(self.pid)
-        return nt_uids(real, effective, saved)
+        return nt_proc_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_gids(self):
         real, effective, saved = _psutil_osx.get_proc_gids(self.pid)
-        return nt_gids(real, effective, saved)
+        return nt_proc_gids(real, effective, saved)
 
     @wrap_exceptions
     def get_terminal(self):
@@ -220,7 +220,7 @@ class Process(object):
     def get_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms = _psutil_osx.get_proc_memory_info(self.pid)[:2]
-        return nt_meminfo(rss, vms)
+        return nt_proc_mem(rss, vms)
 
     _nt_ext_mem = namedtuple('meminfo', 'rss vms pfaults pageins')
 
@@ -236,7 +236,7 @@ class Process(object):
     @wrap_exceptions
     def get_cpu_times(self):
         user, system = _psutil_osx.get_proc_cpu_times(self.pid)
-        return nt_cputimes(user, system)
+        return nt_proc_cpu(user, system)
 
     @wrap_exceptions
     def get_create_time(self):
@@ -246,7 +246,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_num_ctx_switches(self):
-        return nt_ctxsw(*_psutil_osx.get_proc_num_ctx_switches(self.pid))
+        return nt_proc_ctxsw(*_psutil_osx.get_proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
     def get_num_threads(self):
@@ -262,7 +262,7 @@ class Process(object):
         rawlist = _psutil_osx.get_proc_open_files(self.pid)
         for path, fd in rawlist:
             if isfile_strict(path):
-                ntuple = nt_openfile(path, fd)
+                ntuple = nt_proc_file(path, fd)
                 files.append(ntuple)
         return files
 
@@ -318,7 +318,7 @@ class Process(object):
         rawlist = _psutil_osx.get_proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = nt_thread(thread_id, utime, stime)
+            ntuple = nt_proc_thread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
 

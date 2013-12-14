@@ -77,7 +77,7 @@ def swap_memory():
     total, used, free, sin, sout = \
         [x * PAGESIZE for x in _psutil_bsd.get_swap_mem()]
     percent = usage_percent(used, total, _round=1)
-    return nt_swapmeminfo(total, used, free, percent, sin, sout)
+    return nt_sys_swap(total, used, free, percent, sin, sout)
 
 
 _cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
@@ -115,7 +115,7 @@ def get_num_phys_cpus():
         # get rid of padding chars appended at the end of the string
         index = s.rfind("</groups>")
         if index != -1:
-            s = s[:index+9]
+            s = s[:index + 9]
             if sys.version_info >= (2, 5):
                 import xml.etree.ElementTree as ET
                 root = ET.fromstring(s)
@@ -159,7 +159,7 @@ def disk_partitions(all=False):
         if not all:
             if not os.path.isabs(device) or not os.path.exists(device):
                 continue
-        ntuple = nt_partition(device, mountpoint, fstype, opts)
+        ntuple = nt_sys_diskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -171,7 +171,7 @@ def get_system_users():
         user, tty, hostname, tstamp = item
         if tty == '~':
             continue  # reboot or shutdown
-        nt = nt_user(user, tty or None, hostname, tstamp)
+        nt = nt_sys_user(user, tty or None, hostname, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -252,25 +252,25 @@ class Process(object):
     def get_uids(self):
         """Return real, effective and saved user ids."""
         real, effective, saved = _psutil_bsd.get_proc_uids(self.pid)
-        return nt_uids(real, effective, saved)
+        return nt_proc_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_gids(self):
         """Return real, effective and saved group ids."""
         real, effective, saved = _psutil_bsd.get_proc_gids(self.pid)
-        return nt_gids(real, effective, saved)
+        return nt_proc_gids(real, effective, saved)
 
     @wrap_exceptions
     def get_cpu_times(self):
         """return a tuple containing process user/kernel time."""
         user, system = _psutil_bsd.get_proc_cpu_times(self.pid)
-        return nt_cputimes(user, system)
+        return nt_proc_cpu(user, system)
 
     @wrap_exceptions
     def get_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms = _psutil_bsd.get_proc_memory_info(self.pid)[:2]
-        return nt_meminfo(rss, vms)
+        return nt_proc_mem(rss, vms)
 
     _nt_ext_mem = namedtuple('meminfo', 'rss vms text data stack')
 
@@ -291,7 +291,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_num_ctx_switches(self):
-        return nt_ctxsw(*_psutil_bsd.get_proc_num_ctx_switches(self.pid))
+        return nt_proc_ctxsw(*_psutil_bsd.get_proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
     def get_num_fds(self):
@@ -304,7 +304,7 @@ class Process(object):
         rawlist = _psutil_bsd.get_proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = nt_thread(thread_id, utime, stime)
+            ntuple = nt_proc_thread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
 
@@ -315,7 +315,7 @@ class Process(object):
         # else fallback on lsof parser
         if hasattr(_psutil_bsd, "get_proc_open_files"):
             rawlist = _psutil_bsd.get_proc_open_files(self.pid)
-            return [nt_openfile(path, fd) for path, fd in rawlist]
+            return [nt_proc_file(path, fd) for path, fd in rawlist]
         else:
             lsof = _psposix.LsofParser(self.pid, self._process_name)
             return lsof.get_proc_open_files()
@@ -365,7 +365,7 @@ class Process(object):
     @wrap_exceptions
     def get_io_counters(self):
         rc, wc, rb, wb = _psutil_bsd.get_proc_io_counters(self.pid)
-        return nt_io(rc, wc, rb, wb)
+        return nt_proc_io(rc, wc, rb, wb)
 
     nt_mmap_grouped = namedtuple(
         'mmap', 'path rss, private, ref_count, shadow_count')

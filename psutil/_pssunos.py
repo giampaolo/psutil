@@ -99,8 +99,8 @@ def swap_memory():
         free += int(int(f) * 1024)
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return nt_swapmeminfo(total, used, free, percent,
-                          sin * PAGE_SIZE, sout * PAGE_SIZE)
+    return nt_sys_swap(total, used, free, percent,
+                       sin * PAGE_SIZE, sout * PAGE_SIZE)
 
 
 def get_pids():
@@ -159,7 +159,7 @@ def get_system_users():
             continue
         if hostname in localhost:
             hostname = 'localhost'
-        nt = nt_user(user, tty, hostname, tstamp)
+        nt = nt_sys_user(user, tty, hostname, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -180,7 +180,7 @@ def disk_partitions(all=False):
             # filter by filesystem having a total size > 0.
             if not get_disk_usage(mountpoint).total:
                 continue
-        ntuple = nt_partition(device, mountpoint, fstype, opts)
+        ntuple = nt_sys_diskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -276,18 +276,18 @@ class Process(object):
     def get_uids(self):
         real, effective, saved, _, _, _ = \
             _psutil_sunos.get_proc_cred(self.pid)
-        return nt_uids(real, effective, saved)
+        return nt_proc_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_gids(self):
         _, _, _, real, effective, saved = \
             _psutil_sunos.get_proc_cred(self.pid)
-        return nt_uids(real, effective, saved)
+        return nt_proc_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_cpu_times(self):
         user, system = _psutil_sunos.get_proc_cpu_times(self.pid)
-        return nt_cputimes(user, system)
+        return nt_proc_cpu(user, system)
 
     @wrap_exceptions
     def get_terminal(self):
@@ -327,7 +327,7 @@ class Process(object):
     def get_memory_info(self):
         ret = _psutil_sunos.get_proc_basic_info(self.pid)
         rss, vms = ret[1] * 1024, ret[2] * 1024
-        return nt_meminfo(rss, vms)
+        return nt_proc_mem(rss, vms)
 
     # it seems Solaris uses rss and vms only
     get_ext_memory_info = get_memory_info
@@ -356,7 +356,7 @@ class Process(object):
                     continue
                 raise
             else:
-                nt = nt_thread(tid, utime, stime)
+                nt = nt_proc_thread(tid, utime, stime)
                 ret.append(nt)
         if hit_enoent:
             # raise NSP if the process disappeared on us
@@ -382,7 +382,7 @@ class Process(object):
                     raise
                 else:
                     if isfile_strict(file):
-                        retlist.append(nt_openfile(file, int(fd)))
+                        retlist.append(nt_proc_file(file, int(fd)))
         if hit_enoent:
             # raise NSP if the process disappeared on us
             os.stat('/proc/%s' % self.pid)
@@ -496,7 +496,8 @@ class Process(object):
 
     @wrap_exceptions
     def get_num_ctx_switches(self):
-        return nt_ctxsw(*_psutil_sunos.get_proc_num_ctx_switches(self.pid))
+        return nt_proc_ctxsw(
+            *_psutil_sunos.get_proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
     def process_wait(self, timeout=None):

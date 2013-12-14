@@ -55,9 +55,9 @@ from psutil._compat import property, callable, defaultdict, namedtuple
 from psutil._compat import (wraps as _wraps,
                             PY3 as _PY3)
 from psutil._common import (deprecated as _deprecated,
-                            nt_disk_iostat as _nt_disk_iostat,
-                            nt_net_iostat as _nt_net_iostat,
-                            nt_sysmeminfo as _nt_sysmeminfo,
+                            nt_sys_diskio as _nt_sys_diskio,
+                            nt_sys_netio as _nt_sys_netio,
+                            nt_sys_vmem as _nt_sys_vmem,
                             memoize as _memoize)
 
 from psutil._common import (STATUS_RUNNING,
@@ -1549,10 +1549,10 @@ def disk_io_counters(perdisk=False):
         raise RuntimeError("couldn't find any physical disk")
     if perdisk:
         for disk, fields in rawdict.items():
-            rawdict[disk] = _nt_disk_iostat(*fields)
+            rawdict[disk] = _nt_sys_diskio(*fields)
         return rawdict
     else:
-        return _nt_disk_iostat(*[sum(x) for x in zip(*rawdict.values())])
+        return _nt_sys_diskio(*[sum(x) for x in zip(*rawdict.values())])
 
 
 # =====================================================================
@@ -1583,10 +1583,10 @@ def net_io_counters(pernic=False):
         raise RuntimeError("couldn't find any network interface")
     if pernic:
         for nic, fields in rawdict.items():
-            rawdict[nic] = _nt_net_iostat(*fields)
+            rawdict[nic] = _nt_sys_netio(*fields)
         return rawdict
     else:
-        return _nt_net_iostat(*[sum(x) for x in zip(*rawdict.values())])
+        return _nt_sys_netio(*[sum(x) for x in zip(*rawdict.values())])
 
 
 # =====================================================================
@@ -1636,7 +1636,7 @@ def phymem_usage():
     Deprecated; use psutil.virtual_memory() instead.
     """
     mem = virtual_memory()
-    return _nt_sysmeminfo(mem.total, mem.used, mem.free, mem.percent)
+    return _nt_sys_vmem(mem.total, mem.used, mem.free, mem.percent)
 
 
 @_deprecated(replacement="psutil.swap_memory()")
