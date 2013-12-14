@@ -8,4 +8,3 @@
 
 PyObject* NoSuchProcess(void);
 PyObject* AccessDenied(void);
-

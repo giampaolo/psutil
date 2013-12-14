@@ -7,12 +7,12 @@
 #include <Python.h>
 #include <windows.h>
 
+DWORD* psutil_get_pids(DWORD *numberOfReturnedPIDs);
+HANDLE psutil_handle_from_pid(DWORD pid);
+HANDLE psutil_handle_from_pid(DWORD pid);
 HANDLE psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess);
-HANDLE psutil_handle_from_pid(DWORD pid);
-PVOID psutil_get_peb_address(HANDLE ProcessHandle);
-HANDLE psutil_handle_from_pid(DWORD pid);
+int psutil_handlep_is_running(HANDLE hProcess);
 int psutil_pid_in_proclist(DWORD pid);
 int psutil_pid_is_running(DWORD pid);
-int psutil_handlep_is_running(HANDLE hProcess);
+PVOID psutil_get_peb_address(HANDLE ProcessHandle);
 PyObject* psutil_get_arg_list(long pid);
-DWORD* psutil_get_pids(DWORD *numberOfReturnedPIDs);
