@@ -80,16 +80,16 @@ def swap_memory():
     return nt_sys_swap(total, used, free, percent, sin, sout)
 
 
-def get_system_cpu_times():
+def get_sys_cpu_times():
     """Return system per-CPU times as a named tuple"""
-    user, nice, system, idle, irq = _psutil_bsd.get_system_cpu_times()
+    user, nice, system, idle, irq = _psutil_bsd.get_sys_cpu_times()
     return nt_sys_cputimes(user, nice, system, idle, irq)
 
 
-def get_system_per_cpu_times():
+def get_sys_per_cpu_times():
     """Return system CPU times as a named tuple"""
     ret = []
-    for cpu_t in _psutil_bsd.get_system_per_cpu_times():
+    for cpu_t in _psutil_bsd.get_sys_per_cpu_times():
         user, nice, system, idle, irq = cpu_t
         item = nt_sys_cputimes(user, nice, system, idle, irq)
         ret.append(item)
@@ -123,9 +123,9 @@ def get_num_phys_cpus():
                 return s.count("<cpu") or None
 
 
-def get_system_boot_time():
+def get_boot_time():
     """The system boot time expressed in seconds since the epoch."""
-    return _psutil_bsd.get_system_boot_time()
+    return _psutil_bsd.get_boot_time()
 
 
 # XXX
@@ -135,16 +135,16 @@ def get_system_boot_time():
 # If num cpus > 1, on first call we return single cpu times to avoid a
 # crash at psutil import time.
 # Next calls will fail with NotImplementedError
-if not hasattr(_psutil_bsd, "get_system_per_cpu_times"):
-    def get_system_per_cpu_times():
+if not hasattr(_psutil_bsd, "get_sys_per_cpu_times"):
+    def get_sys_per_cpu_times():
         if get_num_cpus() == 1:
-            return [get_system_cpu_times]
-        if get_system_per_cpu_times.__called__:
+            return [get_sys_cpu_times]
+        if get_sys_per_cpu_times.__called__:
             raise NotImplementedError("supported only starting from FreeBSD 8")
-        get_system_per_cpu_times.__called__ = True
-        return [get_system_cpu_times]
+        get_sys_per_cpu_times.__called__ = True
+        return [get_sys_cpu_times]
 
-get_system_per_cpu_times.__called__ = False
+get_sys_per_cpu_times.__called__ = False
 
 
 def disk_partitions(all=False):

@@ -129,16 +129,16 @@ def disk_partitions(all):
     return [nt_sys_diskpart(*x) for x in rawlist]
 
 
-def get_system_cpu_times():
+def get_sys_cpu_times():
     """Return system CPU times as a named tuple."""
-    user, system, idle = _psutil_windows.get_system_cpu_times()
+    user, system, idle = _psutil_windows.get_sys_cpu_times()
     return nt_sys_cputimes(user, system, idle)
 
 
-def get_system_per_cpu_times():
+def get_sys_per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
     ret = []
-    for cpu_t in _psutil_windows.get_system_per_cpu_times():
+    for cpu_t in _psutil_windows.get_sys_per_cpu_times():
         user, system, idle = cpu_t
         item = nt_sys_cputimes(user, system, idle)
         ret.append(item)
@@ -155,9 +155,9 @@ def get_num_phys_cpus():
     return _psutil_windows.get_num_phys_cpus()
 
 
-def get_system_boot_time():
+def get_boot_time():
     """The system boot time expressed in seconds since the epoch."""
-    return _psutil_windows.get_system_boot_time()
+    return _psutil_windows.get_boot_time()
 
 
 def get_users():
@@ -310,7 +310,7 @@ class Process(object):
     def get_create_time(self):
         # special case for kernel process PIDs; return system boot time
         if self.pid in (0, 4):
-            return get_system_boot_time()
+            return get_boot_time()
         try:
             return _psutil_windows.get_proc_create_time(self.pid)
         except OSError:
@@ -457,7 +457,7 @@ class Process(object):
         # SetProcessAffinityMask() states that ERROR_INVALID_PARAMETER
         # is returned for an invalid CPU but this seems not to be true,
         # therefore we check CPUs validy beforehand.
-        allcpus = list(range(len(get_system_per_cpu_times())))
+        allcpus = list(range(len(get_sys_per_cpu_times())))
         for cpu in value:
             if cpu not in allcpus:
                 raise ValueError("invalid CPU %r" % cpu)

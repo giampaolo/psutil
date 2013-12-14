@@ -201,7 +201,7 @@ def _get_cputimes_ntuple():
     return (namedtuple('cputimes', ' '.join(fields)), rindex)
 
 
-def get_system_cpu_times():
+def get_sys_cpu_times():
     """Return a named tuple representing the following system-wide
     CPU times:
     (user, nice, system, idle, iowait, irq, softirq [steal, [guest,
@@ -219,7 +219,7 @@ def get_system_cpu_times():
     return nt(*fields)
 
 
-def get_system_per_cpu_times():
+def get_sys_per_cpu_times():
     """Return a list of namedtuple representing the CPU times
     for every CPU available on the system.
     """
@@ -314,7 +314,7 @@ def get_users():
     return retlist
 
 
-def get_system_boot_time():
+def get_boot_time():
     """Return the system boot time expressed in seconds since the epoch."""
     global BOOT_TIME
     f = open('/proc/stat', 'r')
@@ -612,7 +612,7 @@ class Process(object):
         # We first divide it for clock ticks and then add uptime returning
         # seconds since the epoch, in UTC.
         # Also use cached value if available.
-        boot_time = BOOT_TIME or get_system_boot_time()
+        boot_time = BOOT_TIME or get_boot_time()
         starttime = (float(values[19]) / CLOCK_TICKS) + boot_time
         return starttime
 
@@ -833,7 +833,7 @@ class Process(object):
         except OSError:
             err = sys.exc_info()[1]
             if err.errno == errno.EINVAL:
-                allcpus = tuple(range(len(get_system_per_cpu_times())))
+                allcpus = tuple(range(len(get_sys_per_cpu_times())))
                 for cpu in cpus:
                     if cpu not in allcpus:
                         raise ValueError("invalid CPU #%i (choose between %s)"

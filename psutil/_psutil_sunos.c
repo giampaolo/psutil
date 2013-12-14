@@ -433,7 +433,7 @@ error:
  * Return system-wide CPU times.
  */
 static PyObject *
-get_system_per_cpu_times(PyObject *self, PyObject *args)
+get_sys_per_cpu_times(PyObject *self, PyObject *args)
 {
     kstat_ctl_t *kc;
     kstat_t *ksp;
@@ -1175,7 +1175,7 @@ PsutilMethods[] =
      "Return currently connected users."},
     {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
      "Return disk partitions."},
-    {"get_system_per_cpu_times", get_system_per_cpu_times, METH_VARARGS,
+    {"get_sys_per_cpu_times", get_sys_per_cpu_times, METH_VARARGS,
      "Return system per-CPU times."},
     {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
      "Return a Python dict of tuples for disk I/O statistics."},

@@ -142,7 +142,7 @@ error:
  * seconds since the epoch.
  */
 static PyObject *
-get_system_boot_time(PyObject *self, PyObject *args)
+get_boot_time(PyObject *self, PyObject *args)
 {
     // fetch sysctl "kern.boottime"
     static int request[2] = { CTL_KERN, KERN_BOOTTIME };
@@ -715,7 +715,7 @@ sbn_error:
  * Return a Python tuple representing user, kernel and idle CPU times
  */
 static PyObject *
-get_system_cpu_times(PyObject *self, PyObject *args)
+get_sys_cpu_times(PyObject *self, PyObject *args)
 {
     long cpu_time[CPUSTATES];
     size_t size;
@@ -1178,7 +1178,7 @@ error:
  * Return a Python list of tuple representing per-cpu times
  */
 static PyObject *
-get_system_per_cpu_times(PyObject *self, PyObject *args)
+get_sys_per_cpu_times(PyObject *self, PyObject *args)
 {
     static int maxcpus;
     int mib[2];
@@ -1782,13 +1782,13 @@ PsutilMethods[] =
      "Return system virtual memory usage statistics"},
     {"get_swap_mem", get_swap_mem, METH_VARARGS,
      "Return swap mem stats"},
-    {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
+    {"get_sys_cpu_times", get_sys_cpu_times, METH_VARARGS,
      "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
-    {"get_system_per_cpu_times", get_system_per_cpu_times, METH_VARARGS,
+    {"get_sys_per_cpu_times", get_sys_per_cpu_times, METH_VARARGS,
      "Return system per-cpu times as a list of tuples"},
 #endif
-    {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
+    {"get_boot_time", get_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
      "Return a list of tuples including device, mount point and "

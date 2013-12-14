@@ -37,7 +37,7 @@
  * since the epoch.
  */
 static PyObject *
-get_system_boot_time(PyObject *self, PyObject *args)
+get_boot_time(PyObject *self, PyObject *args)
 {
     double  uptime;
     time_t pt;
@@ -336,7 +336,7 @@ get_proc_create_time(PyObject *self, PyObject *args)
 
     // special case for PIDs 0 and 4, return system boot time
     if (0 == pid || 4 == pid) {
-        return get_system_boot_time(NULL, NULL);
+        return get_boot_time(NULL, NULL);
     }
 
     hProcess = psutil_handle_from_pid(pid);
@@ -409,7 +409,7 @@ get_proc_create_time_2(PyObject *self, PyObject *args)
     }
     // special case for PIDs 0 and 4, return system boot time
     if (0 == pid || 4 == pid) {
-        return get_system_boot_time(NULL, NULL);
+        return get_boot_time(NULL, NULL);
     }
     /*
     Convert the LARGE_INTEGER union to a Unix time.
@@ -748,7 +748,7 @@ get_virtual_mem(PyObject *self, PyObject *args)
  * sum of the designated times across all processors.
  */
 static PyObject *
-get_system_cpu_times(PyObject *self, PyObject *args)
+get_sys_cpu_times(PyObject *self, PyObject *args)
 {
     float idle, kernel, user, system;
     FILETIME idle_time, kernel_time, user_time;
@@ -776,7 +776,7 @@ get_system_cpu_times(PyObject *self, PyObject *args)
  * Same as above but for all system CPUs.
  */
 static PyObject *
-get_system_per_cpu_times(PyObject *self, PyObject *args)
+get_sys_per_cpu_times(PyObject *self, PyObject *args)
 {
     float idle, kernel, user;
     typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
@@ -3068,13 +3068,13 @@ PsutilMethods[] =
      "Returns the number of logical CPUs on the system"},
     {"get_num_phys_cpus", get_num_phys_cpus, METH_VARARGS,
      "Returns the number of physical CPUs on the system"},
-    {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
+    {"get_boot_time", get_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"get_virtual_mem", get_virtual_mem, METH_VARARGS,
      "Return the total amount of physical memory, in bytes"},
-    {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
+    {"get_sys_cpu_times", get_sys_cpu_times, METH_VARARGS,
      "Return system cpu times as a list"},
-    {"get_system_per_cpu_times", get_system_per_cpu_times, METH_VARARGS,
+    {"get_sys_per_cpu_times", get_sys_per_cpu_times, METH_VARARGS,
      "Return system per-cpu times as a list of tuples"},
     {"get_disk_usage", get_disk_usage, METH_VARARGS,
      "Return path's disk total and free as a Python tuple."},

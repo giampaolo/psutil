@@ -116,15 +116,15 @@ def pid_exists(pid):
     return _psposix.pid_exists(pid)
 
 
-def get_system_cpu_times():
+def get_sys_cpu_times():
     """Return system-wide CPU times as a named tuple"""
-    ret = _psutil_sunos.get_system_per_cpu_times()
+    ret = _psutil_sunos.get_sys_per_cpu_times()
     return nt_sys_cputimes(*[sum(x) for x in zip(*ret)])
 
 
-def get_system_per_cpu_times():
+def get_sys_per_cpu_times():
     """Return system per-CPU times as a list of named tuples"""
-    ret = _psutil_sunos.get_system_per_cpu_times()
+    ret = _psutil_sunos.get_sys_per_cpu_times()
     return [_cputimes_ntuple(*x) for x in ret]
 
 
@@ -141,7 +141,7 @@ def get_num_phys_cpus():
     return _psutil_sunos.get_num_phys_cpus()
 
 
-def get_system_boot_time():
+def get_boot_time():
     """The system boot time expressed in seconds since the epoch."""
     return _psutil_sunos.get_boot_time()
 

@@ -1256,9 +1256,9 @@ def cpu_times(percpu=False):
     The order of the list is consistent across calls.
     """
     if not percpu:
-        return _psplatform.get_system_cpu_times()
+        return _psplatform.get_sys_cpu_times()
     else:
-        return _psplatform.get_system_per_cpu_times()
+        return _psplatform.get_sys_per_cpu_times()
 
 
 _last_cpu_times = cpu_times()
@@ -1599,7 +1599,7 @@ def get_boot_time():
     """
     # Note: we are not caching this because it is subject to
     # system clock updates.
-    return _psplatform.get_system_boot_time()
+    return _psplatform.get_boot_time()
 
 
 def get_users():

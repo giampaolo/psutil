@@ -38,11 +38,11 @@ static PyObject* get_num_cpus(PyObject* self, PyObject* args);
 static PyObject* get_num_phys_cpus(PyObject* self, PyObject* args);
 static PyObject* get_virtual_mem(PyObject* self, PyObject* args);
 static PyObject* get_swap_mem(PyObject* self, PyObject* args);
-static PyObject* get_system_cpu_times(PyObject* self, PyObject* args);
+static PyObject* get_sys_cpu_times(PyObject* self, PyObject* args);
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
-static PyObject* get_system_per_cpu_times(PyObject* self, PyObject* args);
+static PyObject* get_sys_per_cpu_times(PyObject* self, PyObject* args);
 #endif
-static PyObject* get_system_boot_time(PyObject* self, PyObject* args);
+static PyObject* get_boot_time(PyObject* self, PyObject* args);
 static PyObject* get_disk_partitions(PyObject* self, PyObject* args);
 static PyObject* get_net_io_counters(PyObject* self, PyObject* args);
 static PyObject* get_disk_io_counters(PyObject* self, PyObject* args);

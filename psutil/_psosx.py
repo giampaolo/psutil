@@ -77,16 +77,16 @@ def swap_memory():
     return nt_sys_swap(total, used, free, percent, sin, sout)
 
 
-def get_system_cpu_times():
+def get_sys_cpu_times():
     """Return system CPU times as a namedtuple."""
-    user, nice, system, idle = _psutil_osx.get_system_cpu_times()
+    user, nice, system, idle = _psutil_osx.get_sys_cpu_times()
     return nt_sys_cputimes(user, nice, system, idle)
 
 
-def get_system_per_cpu_times():
+def get_sys_per_cpu_times():
     """Return system CPU times as a named tuple"""
     ret = []
-    for cpu_t in _psutil_osx.get_system_per_cpu_times():
+    for cpu_t in _psutil_osx.get_sys_per_cpu_times():
         user, nice, system, idle = cpu_t
         item = _cputimes_ntuple(user, nice, system, idle)
         ret.append(item)
@@ -103,9 +103,9 @@ def get_num_phys_cpus():
     return _psutil_osx.get_num_phys_cpus()
 
 
-def get_system_boot_time():
+def get_boot_time():
     """The system boot time expressed in seconds since the epoch."""
-    return _psutil_osx.get_system_boot_time()
+    return _psutil_osx.get_boot_time()
 
 
 def disk_partitions(all=False):

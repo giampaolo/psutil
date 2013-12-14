@@ -655,7 +655,7 @@ get_swap_mem(PyObject *self, PyObject *args)
  * Return a Python tuple representing user, kernel and idle CPU times
  */
 static PyObject *
-get_system_cpu_times(PyObject *self, PyObject *args)
+get_sys_cpu_times(PyObject *self, PyObject *args)
 {
     mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
     kern_return_t error;
@@ -685,7 +685,7 @@ get_system_cpu_times(PyObject *self, PyObject *args)
  * Return a Python list of tuple representing per-cpu times
  */
 static PyObject *
-get_system_per_cpu_times(PyObject *self, PyObject *args)
+get_sys_per_cpu_times(PyObject *self, PyObject *args)
 {
     natural_t cpu_count;
     processor_info_array_t info_array;
@@ -752,7 +752,7 @@ error:
  * seconds since the epoch.
  */
 static PyObject *
-get_system_boot_time(PyObject *self, PyObject *args)
+get_boot_time(PyObject *self, PyObject *args)
 {
     // fetch sysctl "kern.boottime"
     static int request[2] = { CTL_KERN, KERN_BOOTTIME };
@@ -1778,11 +1778,11 @@ PsutilMethods[] =
      "Return system virtual memory stats"},
     {"get_swap_mem", get_swap_mem, METH_VARARGS,
      "Return stats about swap memory, in bytes"},
-    {"get_system_cpu_times", get_system_cpu_times, METH_VARARGS,
+    {"get_sys_cpu_times", get_sys_cpu_times, METH_VARARGS,
      "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
-    {"get_system_per_cpu_times", get_system_per_cpu_times, METH_VARARGS,
+    {"get_sys_per_cpu_times", get_sys_per_cpu_times, METH_VARARGS,
      "Return system per-cpu times as a list of tuples"},
-    {"get_system_boot_time", get_system_boot_time, METH_VARARGS,
+    {"get_boot_time", get_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
      "Return a list of tuples including device, mount point and "
