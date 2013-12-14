@@ -174,37 +174,37 @@ def _assert_pid_not_reused(fun):
 
 
 class Process(object):
-    """Represents an OS process."""
+    """Represents an OS process with the given PID.
+    If PID is omitted current process PID (os.getpid()) is used.
+    Raise NoSuchProcess if PID does not exist.
+
+    Note that most of the methods of this class do not make sure
+    the PID of the process being queried has been reused over time.
+    That means you might end up retrieving an information referring
+    to another process in case the original one this instance
+    refers to is gone in the meantime.
+
+    The only exceptions for which process identity is pre-emptively
+    checked and guaranteed are:
+
+     - parent
+     - get_children()
+     - set_nice()
+     - set_rlimit()
+     - suspend()
+     - resume()
+     - send_signal()
+     - terminate()
+     - kill()
+
+    To prevent this problem for all other methods you can:
+      - use is_running() before querying the process
+      - if you're continuously iterating over a set of Process
+        instances use process_iter() which pre-emptively checks
+        process identity for every yielded instance
+    """
 
     def __init__(self, pid=None):
-        """Create a new Process object for the given pid.
-        If pid is omitted current process pid is assumed.
-        Raises NoSuchProcess if pid does not exist.
-
-        Note that most of the methods of this class do not make sure
-        the PID of the process being queried has been reused over time.
-        That means you might end up retrieving an information referring
-        to another process in case the original one this instance
-        refers to is gone in the meantime.
-
-        The only exceptions for which process identity is pre-emptively
-        checked are:
-         - parent
-         - get_children()
-         - set_nice()
-         - set_rlimit()
-         - suspend()
-         - resume()
-         - send_signal()
-         - terminate()
-         - kill()
-
-        To prevent this problem for all other methods you can:
-          - use is_running() before querying the process
-          - if you're continuously iterating over a set of Process
-            instances use process_iter() which pre-emptively checks
-            process identity for every yielded instance
-        """
         if pid is None:
             pid = os.getpid()
         else:
@@ -273,16 +273,17 @@ class Process(object):
     # --- utility methods
 
     def as_dict(self, attrs=[], ad_value=None):
-        """Utility method returning process information as a hashable
-        dictionary.
+        """Utility method returning process information as a
+        hashable dictionary.
 
-        If 'attrs' is specified it must be a list of strings reflecting
-        available Process class's attribute names (e.g. ['get_cpu_times',
-        'name']) else all public (read only) attributes are assumed.
+        If 'attrs' is specified it must be a list of strings
+        reflecting available Process class' attribute names
+        (e.g. ['get_cpu_times', 'name']) else all public (read
+        only) attributes are assumed.
 
-        'ad_value' is the value which gets assigned to a dict key in case
-        AccessDenied exception is raised when retrieving that particular
-        process information.
+        'ad_value' is the value which gets assigned in case
+        AccessDenied  exception is raised when retrieving that
+        particular process information.
         """
         excluded_names = set(
             ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
@@ -343,12 +344,12 @@ class Process(object):
 
     @property
     def pid(self):
-        """The process pid."""
+        """The process PID."""
         return self._pid
 
     @property
     def ppid(self):
-        """The process parent pid."""
+        """The process parent PID."""
         # On POSIX we don't want to cache the ppid as it may unexpectedly
         # change to 1 (init) in case this process turns into a zombie:
         # https://code.google.com/p/psutil/issues/detail?id=321
@@ -423,7 +424,7 @@ class Process(object):
 
     @property
     def cmdline(self):
-        """The command line process has been called with."""
+        """The command line this process has been called with."""
         return self._proc.get_cmdline()
 
     @property
@@ -435,15 +436,15 @@ class Process(object):
 
         @property
         def uids(self):
-            """Return a named tuple denoting the process real,
-            effective, and saved user ids.
+            """Return process UIDs as a (real, effective, saved)
+            namedtuple.
             """
             return self._proc.get_uids()
 
         @property
         def gids(self):
-            """Return a named tuple denoting the process real,
-            effective, and saved group ids.
+            """Return process GIDs as a (real, effective, saved)
+            namedtuple.
             """
             return self._proc.get_gids()
 
@@ -476,16 +477,18 @@ class Process(object):
         return self._proc.get_create_time()
 
     def get_cwd(self):
-        """Return process current working directory."""
+        """Process current working directory."""
         return self._proc.get_cwd()
 
     # Linux, BSD and Windows only
     if hasattr(_psplatform.Process, "get_io_counters"):
 
         def get_io_counters(self):
-            """Return process I/O statistics as a namedtuple including
-            the number of read/write calls performed and the amount of
-            bytes read and written by the process.
+            """Return process I/O statistics as a
+            (read_count, write_count, read_bytes, write_bytes)
+            namedtuple.
+            Those are the number of read/write calls performed and the
+            amount of bytes read and written by the process.
             """
             return self._proc.get_io_counters()
 
@@ -531,7 +534,8 @@ class Process(object):
     if hasattr(_psplatform.Process, "prlimit"):
 
         def get_rlimit(self, resource):
-            """Get process resource limits as a (soft, hard) tuple.
+            """Get process resource limits as a (soft, hard)
+            namedtuple.
 
             'resource' is one of the RLIMIT_* constants.
 
@@ -582,8 +586,8 @@ class Process(object):
             return self._proc.get_num_fds()
 
     def get_num_ctx_switches(self):
-        """Return the number voluntary and involuntary context switches
-        performed by this process.
+        """Return the number of voluntary and involuntary context
+        switches performed by this process.
         """
         return self._proc.get_num_ctx_switches()
 
@@ -592,15 +596,16 @@ class Process(object):
         return self._proc.get_num_threads()
 
     def get_threads(self):
-        """Return threads opened by process as a list of namedtuples
-        including thread id and thread CPU times (user/system).
+        """Return threads opened by process as a list of
+        (id, user_time, system_time) namedtuples representing
+        thread id and thread CPU times (user/system).
         """
         return self._proc.get_threads()
 
     @_assert_pid_not_reused
     def get_children(self, recursive=False):
         """Return the children of this process as a list of Process
-        objects pre-emptively checking whether PID has been reused.
+        instances, pre-emptively checking whether PID has been reused.
         If recursive is True return all the parent descendants.
 
         Example (A == this process):
@@ -621,8 +626,8 @@ class Process(object):
         B, X, Y, C, D
 
         Note that in the example above if process X disappears
-        process Y won't be returned either as the reference to
-        process A is lost.
+        process Y won't be listed as the reference to process A
+        is lost.
         """
         if hasattr(_psplatform, 'get_ppid_map'):
             # Windows only: obtain a {pid:ppid, ...} dict for all running
@@ -760,8 +765,9 @@ class Process(object):
         return round(single_cpu_percent, 1)
 
     def get_cpu_times(self):
-        """Return a tuple whose values are process CPU user and system
-        times. The same as os.times() but per-process.
+        """Return a (user, system) namedtuple representing  the
+        accumulated process time, in seconds.
+        This is the same as os.times() but per-process.
         """
         return self._proc.get_cpu_times()
 
@@ -769,17 +775,17 @@ class Process(object):
         """Return a tuple representing RSS (Resident Set Size) and VMS
         (Virtual Memory Size) in bytes.
 
-        On UNIX RSS and VMS are the same values shown by ps.
+        On UNIX RSS and VMS are the same values shown by 'ps'.
 
-        On Windows RSS and VMS refer to "Mem Usage" and "VM Size" columns
-        of taskmgr.exe.
+        On Windows RSS and VMS refer to "Mem Usage" and "VM Size"
+        columns of taskmgr.exe.
         """
         return self._proc.get_memory_info()
 
     def get_ext_memory_info(self):
         """Return a namedtuple with variable fields depending on the
         platform representing extended memory information about
-        the process. All numbers are expressed in bytes.
+        this process. All numbers are expressed in bytes.
         """
         return self._proc.get_ext_memory_info()
 
@@ -796,7 +802,7 @@ class Process(object):
             return 0.0
 
     def get_memory_maps(self, grouped=True):
-        """Return process's mapped memory regions as a list of nameduples
+        """Return process' mapped memory regions as a list of nameduples
         whose fields are variable depending on the platform.
 
         If 'grouped' is True the mapped regions with the same 'path'
@@ -823,15 +829,17 @@ class Process(object):
             return [nt(*x) for x in it]
 
     def get_open_files(self):
-        """Return files opened by process as a list of namedtuples
-        including absolute file name and file descriptor number.
+        """Return files opened by process as a list of
+        (path, fd) namedtuples including the absolute file name
+        and file descriptor number.
         """
         return self._proc.get_open_files()
 
     def get_connections(self, kind='inet'):
-        """Return connections opened by process as a list of namedtuples.
-        The kind parameter filters for connections that fit the following
-        criteria:
+        """Return connections opened by process as a list of
+        (fd, family, type, laddr, raddr, status) namedtuples.
+        The 'kind' parameter filters for connections that match the
+        following criteria:
 
         Kind Value      Connections using
         inet            IPv4 and IPv6
@@ -851,16 +859,16 @@ class Process(object):
     def is_running(self):
         """Return whether this process is running.
         It also checks if PID has been reused by another process in
-        which case returns False.
+        which case return False.
         """
         if self._gone:
             return False
         try:
-            # Checking if pid is alive is not enough as the pid might
+            # Checking if PID is alive is not enough as the PID might
             # have been reused by another process: we also want to
             # check process identity.
             # Process identity / uniqueness over time is greanted by
-            # (pid + creation time) and that is verified in __eq__.
+            # (PID + creation time) and that is verified in __eq__.
             return self == Process(self.pid)
         except NoSuchProcess:
             self._gone = True
@@ -895,7 +903,7 @@ class Process(object):
     def suspend(self):
         """Suspend process execution with SIGSTOP pre-emptively checking
         whether PID has been reused.
-        On Windows it suspends all process threads.
+        On Windows this has the effect ot suspending all process threads.
         """
         if hasattr(self._proc, "suspend"):
             # windows
@@ -908,7 +916,7 @@ class Process(object):
     def resume(self):
         """Resume process execution with SIGCONT pre-emptively checking
         whether PID has been reused.
-        On Windows it resumes all process threads.
+        On Windows this has the effect of resuming all process threads.
         """
         if hasattr(self._proc, "resume"):
             # windows
@@ -927,7 +935,8 @@ class Process(object):
     @_assert_pid_not_reused
     def kill(self):
         """Kill the current process with SIGKILL pre-emptively checking
-        whether PID has been reused."""
+        whether PID has been reused.
+        """
         if os.name == 'posix':
             self.send_signal(signal.SIGKILL)
         else:
@@ -935,13 +944,13 @@ class Process(object):
 
     def wait(self, timeout=None):
         """Wait for process to terminate and, if process is a children
-        of the current one also return its exit code, else None.
+        of os.getpid(), also return its exit code, else None.
 
         If the process is already terminated immediately return None
         instead of raising NoSuchProcess.
 
         If timeout (in seconds) is specified and process is still alive
-        after the timeout expired raise TimeoutExpired.
+        raise TimeoutExpired.
         """
         if timeout is not None and not timeout >= 0:
             raise ValueError("timeout must be a positive integer")
@@ -981,7 +990,8 @@ class Popen(Process):
     """A more convenient interface to stdlib subprocess module.
     It starts a sub process and deals with it exactly as when using
     subprocess.Popen class but in addition also provides all the
-    property and methods of psutil.Process class in a single interface:
+    properties and methods of psutil.Process class as a unified
+    interface:
 
       >>> import psutil
       >>> from subprocess import PIPE
@@ -1002,7 +1012,7 @@ class Popen(Process):
     For method names common to both classes such as kill(), terminate()
     and wait(), psutil.Process implementation takes precedence.
 
-    For a complete documentation refers to:
+    For a complete documentation refer to:
     http://docs.python.org/library/subprocess.html
     """
 
@@ -1060,8 +1070,8 @@ def pid_exists(pid):
 _pmap = {}
 
 def process_iter():
-    """Return a generator yielding a Process class instance for all
-    running processes on the local machine.
+    """Return a generator yielding a Process instance for all
+    running processes.
 
     Every new Process instance is only created once and then cached
     into an internal table which is updated every time this is used.
@@ -1119,14 +1129,13 @@ def wait_procs(procs, timeout=None, callback=None):
     The gone ones will have a new 'retcode' attribute indicating
     process exit status (may be None).
 
-    'callback' is a callable function which gets called every
-    time a process terminates (a Process instance is passed as
-    callback argument).
+    'callback' is a function which gets called every time a process
+    terminates (a Process instance is passed as callback argument).
 
     Function will return as soon as all processes terminate or when
     timeout occurs.
 
-    Tipical use case is:
+    Typical use case is:
 
      - send SIGTERM to a list of processes
      - give them some time to terminate
@@ -1226,10 +1235,10 @@ def cpu_count(logical=True):
 
 
 def cpu_times(percpu=False):
-    """Return system-wide CPU times as a namedtuple object.
+    """Return system-wide CPU times as a namedtuple.
     Every CPU time represents the time CPU has spent in the given mode.
-    The attributes availability varies depending on the platform.
-    Here follows a list of all available attributes:
+    The namedtuple's fields availability varies depending on the platform.
+    Here follows a list of all available fields:
      - user
      - system
      - idle
@@ -1478,7 +1487,7 @@ def virtual_memory():
 
 def swap_memory():
     """Return system swap memory statistics as a namedtuple including
-    the following attributes:
+    the following fields:
 
      - total:   total swap memory in bytes
      - used:    used swap memory in bytes
@@ -1505,9 +1514,10 @@ def disk_usage(path):
 
 
 def disk_partitions(all=False):
-    """Return mounted partitions as a list of namedtuples including
-    device, mount point, filesystem type and mount options (a raw
-    string separated by commas which may vary depending on the platform).
+    """Return mounted partitions as a list of
+    (device, mountpoint, fstype, opts) namedtuple.
+    'opts' field is a raw string separated by commas indicating mount
+    options which may vary depending on the platform.
 
     If "all" parameter is False return physical devices only and ignore
     all others.
@@ -1517,7 +1527,7 @@ def disk_partitions(all=False):
 
 def disk_io_counters(perdisk=False):
     """Return system disk I/O statistics as a namedtuple including
-    the following attributes:
+    the following fields:
 
      - read_count:  number of reads
      - write_count: number of writes
@@ -1551,7 +1561,7 @@ def disk_io_counters(perdisk=False):
 
 def net_io_counters(pernic=False):
     """Return network I/O statistics as a namedtuple including
-    the following attributes:
+    the following fields:
 
      - bytes_sent:   number of bytes sent
      - bytes_recv:   number of bytes received
@@ -1594,7 +1604,7 @@ def get_boot_time():
 
 def get_users():
     """Return users currently connected on the system as a list of
-    namedtuples including the following attributes.
+    namedtuples including the following fields.
 
      - user: the name of the user
      - terminal: the tty or pseudo-tty associated with the user, if any.
