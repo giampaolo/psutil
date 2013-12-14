@@ -390,7 +390,7 @@ class Process(object):
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
             status = TCP_STATUSES[status]
-            nt = nt_connection(fd, fam, type, laddr, raddr, status)
+            nt = nt_proc_conn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
         return ret
 

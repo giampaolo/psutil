@@ -227,7 +227,7 @@ nt_proc_ctxsw = namedtuple('ctxsw', ['voluntary', 'involuntary'])
 # --- misc
 
 # backward compatibility layer for Process.get_connections() ntuple
-class nt_connection(
+class nt_proc_conn(
     namedtuple('connection',
                ['fd', 'family', 'type', 'laddr', 'raddr', 'status'])):
     __slots__ = ()

@@ -445,12 +445,12 @@ class Process(object):
             if type not in types:
                 continue
             status = TCP_STATUSES[status]
-            nt = nt_connection(fd, fam, type, laddr, raddr, status)
+            nt = nt_proc_conn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
 
         # UNIX sockets
         if socket.AF_UNIX in families:
-            ret.extend([nt_connection(*conn) for conn in
+            ret.extend([nt_proc_conn(*conn) for conn in
                         self._get_unix_sockets(self.pid)])
         return ret
 

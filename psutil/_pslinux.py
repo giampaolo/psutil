@@ -997,8 +997,8 @@ class Process(object):
                             else:
                                 status = CONN_NONE
                             fd = int(inodes[inode])
-                            conn = nt_connection(fd, family, type_, laddr,
-                                                 raddr, status)
+                            conn = nt_proc_conn(fd, family, type_, laddr,
+                                                raddr, status)
                             retlist.append(conn)
                     elif family == socket.AF_UNIX:
                         tokens = line.split()
@@ -1011,8 +1011,8 @@ class Process(object):
                                 path = ""
                             fd = int(inodes[inode])
                             type_ = int(type_)
-                            conn = nt_connection(fd, family, type_, path,
-                                                 None, CONN_NONE)
+                            conn = nt_proc_conn(fd, family, type_, path,
+                                                None, CONN_NONE)
                             retlist.append(conn)
                     else:
                         raise ValueError(family)
