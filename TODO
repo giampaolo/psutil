@@ -61,6 +61,9 @@ LOWER PRIORITY
 DEBATABLE
 =========
 
+ * advanced cmdline interface exposing the whole API and providing different
+   kind of outputs (e.g. pprinted, colorized, json).
+
  * [Linux]: process cgroups (http://en.wikipedia.org/wiki/Cgroups). They look
    similar to prlimit() in terms of functionality but uglier (they should allow
    limiting per-process network IO resources though, which is great). Needs
