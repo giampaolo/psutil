@@ -51,13 +51,12 @@ PROC_STATUSES = {
 
 # --- functions
 
-nt_virtmem_info = namedtuple('vmem', ' '.join([
-    # all platforms
-    'total', 'available', 'percent', 'used', 'free',
-    # OSX specific
-    'active',
-    'inactive',
-    'wired']))
+nt_sys_vmem = namedtuple(
+    'vmem', [
+        # all platforms
+        'total', 'available', 'percent', 'used', 'free',
+        # OSX specific
+        'active', 'inactive', 'wired'])
 
 def virtual_memory():
     """System virtual memory as a namedtuple."""
@@ -65,8 +64,8 @@ def virtual_memory():
     avail = inactive + free
     used = active + inactive + wired
     percent = usage_percent((total - avail), total, _round=1)
-    return nt_virtmem_info(total, avail, percent, used, free,
-                           active, inactive, wired)
+    return nt_sys_vmem(total, avail, percent, used, free,
+                       active, inactive, wired)
 
 
 def swap_memory():

@@ -50,7 +50,7 @@ TCP_STATUSES = {
     _psutil_sunos.TCPS_LISTEN: CONN_LISTEN,
     _psutil_sunos.TCPS_CLOSING: CONN_CLOSING,
     _psutil_sunos.PSUTIL_CONN_NONE: CONN_NONE,
-    _psutil_sunos.TCPS_IDLE: CONN_IDLE,  # sunos specific
+    _psutil_sunosTC.ptPS_IDLE: CONN_IDLE,  # sunos specific
     _psutil_sunos.TCPS_BOUND: CONN_BOUND,  # sunos specific
 }
 
@@ -58,8 +58,6 @@ disk_io_counters = _psutil_sunos.get_disk_io_counters
 net_io_counters = _psutil_sunos.get_net_io_counters
 get_disk_usage = _psposix.get_disk_usage
 
-nt_virtmem_info = namedtuple('vmem', ' '.join([
-    'total', 'available', 'percent', 'used', 'free']))  # all platforms
 
 def virtual_memory():
     # we could have done this with kstat, but imho this is good enough
@@ -68,7 +66,7 @@ def virtual_memory():
     free = avail = os.sysconf('SC_AVPHYS_PAGES') * PAGE_SIZE
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return nt_virtmem_info(total, avail, percent, used, free)
+    return nt_sys_vmem(total, avail, percent, used, free)
 
 
 def swap_memory():

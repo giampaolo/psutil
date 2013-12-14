@@ -78,9 +78,8 @@ def _convert_raw_path(s):
 # --- public functions
 
 
-nt_virtmem_info = namedtuple('vmem', ' '.join([
-    # all platforms
-    'total', 'available', 'percent', 'used', 'free']))
+nt_sys_vmem = namedtuple(
+    'vmem', ['total', 'available', 'percent', 'used', 'free'])
 
 def virtual_memory():
     """System virtual memory as a namedtuple."""
@@ -92,7 +91,7 @@ def virtual_memory():
     free = availphys
     used = total - avail
     percent = usage_percent((total - avail), total, _round=1)
-    return nt_virtmem_info(total, avail, percent, used, free)
+    return nt_sys_vmem(total, avail, percent, used, free)
 
 
 def swap_memory():

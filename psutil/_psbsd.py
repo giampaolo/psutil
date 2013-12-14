@@ -50,16 +50,17 @@ TCP_STATUSES = {
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 
 
-nt_virtmem_info = namedtuple('vmem', ' '.join([
-    # all platforms
-    'total', 'available', 'percent', 'used', 'free',
-    # FreeBSD specific
-    'active',
-    'inactive',
-    'buffers',
-    'cached',
-    'shared',
-    'wired']))
+nt_sys_vmem = namedtuple(
+    'vmem', [
+        # all platforms
+        'total', 'available', 'percent', 'used', 'free',
+        # FreeBSD specific
+        'active',
+        'inactive',
+        'buffers',
+        'cached',
+        'shared',
+        'wired'])
 
 def virtual_memory():
     """System virtual memory as a namedutple."""
@@ -68,8 +69,8 @@ def virtual_memory():
     avail = inactive + cached + free
     used = active + wired + cached
     percent = usage_percent((total - avail), total, _round=1)
-    return nt_virtmem_info(total, avail, percent, used, free,
-                           active, inactive, buffers, cached, shared, wired)
+    return nt_sys_vmem(total, avail, percent, used, free,
+                       active, inactive, buffers, cached, shared, wired)
 
 
 def swap_memory():
