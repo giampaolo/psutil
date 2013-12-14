@@ -38,6 +38,9 @@ __extra__all__ = [
     # other
     "phymem_buffers", "cached_phymem"]
 
+
+# --- constants
+
 HAS_PRLIMIT = hasattr(_psutil_linux, "prlimit")
 
 # RLIMIT_* constants, not guaranteed to be present on all kernels
@@ -92,75 +95,6 @@ nt_sys_vmem = namedtuple(
 
 nt_proc_extmem = namedtuple(
     'extmem', ['rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty'])
-
-
-def get_system_boot_time():
-    """Return the system boot time expressed in seconds since the epoch."""
-    global BOOT_TIME
-    f = open('/proc/stat', 'r')
-    try:
-        for line in f:
-            if line.startswith('btime'):
-                ret = float(line.strip().split()[1])
-                BOOT_TIME = ret
-                return ret
-        raise RuntimeError("line 'btime' not found")
-    finally:
-        f.close()
-
-
-def get_num_cpus():
-    """Return the number of logical CPUs in the system."""
-    try:
-        return os.sysconf("SC_NPROCESSORS_ONLN")
-    except ValueError:
-        # as a second fallback we try to parse /proc/cpuinfo
-        num = 0
-        f = open('/proc/cpuinfo', 'r')
-        try:
-            lines = f.readlines()
-        finally:
-            f.close()
-        for line in lines:
-            if line.lower().startswith('processor'):
-                num += 1
-
-    # unknown format (e.g. amrel/sparc architectures), see:
-    # http://code.google.com/p/psutil/issues/detail?id=200
-    # try to parse /proc/stat as a last resort
-    if num == 0:
-        f = open('/proc/stat', 'r')
-        try:
-            lines = f.readlines()
-        finally:
-            f.close()
-        search = re.compile('cpu\d')
-        for line in lines:
-            line = line.split(' ')[0]
-            if search.match(line):
-                num += 1
-
-    if num == 0:
-        # mimic os.cpu_count()
-        return None
-    return num
-
-
-def get_num_phys_cpus():
-    """Return the number of physical CPUs in the system."""
-    f = open('/proc/cpuinfo', 'r')
-    try:
-        lines = f.readlines()
-    finally:
-        f.close()
-    found = set()
-    for line in lines:
-        if line.lower().startswith('physical id'):
-            found.add(line.strip())
-    if found:
-        return len(found)
-    else:
-        return None  # mimic os.cpu_count()
 
 
 # --- system memory
@@ -306,33 +240,58 @@ def get_system_per_cpu_times():
         f.close()
 
 
-# --- disks
-
-def disk_partitions(all=False):
-    """Return mounted disk partitions as a list of nameduples"""
-    phydevs = []
-    f = open("/proc/filesystems", "r")
+def get_num_cpus():
+    """Return the number of logical CPUs in the system."""
     try:
-        for line in f:
-            if not line.startswith("nodev"):
-                phydevs.append(line.strip())
+        return os.sysconf("SC_NPROCESSORS_ONLN")
+    except ValueError:
+        # as a second fallback we try to parse /proc/cpuinfo
+        num = 0
+        f = open('/proc/cpuinfo', 'r')
+        try:
+            lines = f.readlines()
+        finally:
+            f.close()
+        for line in lines:
+            if line.lower().startswith('processor'):
+                num += 1
+
+    # unknown format (e.g. amrel/sparc architectures), see:
+    # http://code.google.com/p/psutil/issues/detail?id=200
+    # try to parse /proc/stat as a last resort
+    if num == 0:
+        f = open('/proc/stat', 'r')
+        try:
+            lines = f.readlines()
+        finally:
+            f.close()
+        search = re.compile('cpu\d')
+        for line in lines:
+            line = line.split(' ')[0]
+            if search.match(line):
+                num += 1
+
+    if num == 0:
+        # mimic os.cpu_count()
+        return None
+    return num
+
+
+def get_num_phys_cpus():
+    """Return the number of physical CPUs in the system."""
+    f = open('/proc/cpuinfo', 'r')
+    try:
+        lines = f.readlines()
     finally:
         f.close()
-
-    retlist = []
-    partitions = _psutil_linux.get_disk_partitions()
-    for partition in partitions:
-        device, mountpoint, fstype, opts = partition
-        if device == 'none':
-            device = ''
-        if not all:
-            if device == '' or fstype not in phydevs:
-                continue
-        ntuple = nt_sys_diskpart(device, mountpoint, fstype, opts)
-        retlist.append(ntuple)
-    return retlist
-
-get_disk_usage = _psposix.get_disk_usage
+    found = set()
+    for line in lines:
+        if line.lower().startswith('physical id'):
+            found.add(line.strip())
+    if found:
+        return len(found)
+    else:
+        return None  # mimic os.cpu_count()
 
 
 # --- other system functions
@@ -353,6 +312,21 @@ def get_system_users():
         nt = nt_sys_user(user, tty or None, hostname, tstamp)
         retlist.append(nt)
     return retlist
+
+
+def get_system_boot_time():
+    """Return the system boot time expressed in seconds since the epoch."""
+    global BOOT_TIME
+    f = open('/proc/stat', 'r')
+    try:
+        for line in f:
+            if line.startswith('btime'):
+                ret = float(line.strip().split()[1])
+                BOOT_TIME = ret
+                return ret
+        raise RuntimeError("line 'btime' not found")
+    finally:
+        f.close()
 
 
 # --- processes
@@ -450,6 +424,34 @@ def disk_io_counters():
             wtime = int(wtime)
             retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime)
     return retdict
+
+
+def disk_partitions(all=False):
+    """Return mounted disk partitions as a list of nameduples"""
+    phydevs = []
+    f = open("/proc/filesystems", "r")
+    try:
+        for line in f:
+            if not line.startswith("nodev"):
+                phydevs.append(line.strip())
+    finally:
+        f.close()
+
+    retlist = []
+    partitions = _psutil_linux.get_disk_partitions()
+    for partition in partitions:
+        device, mountpoint, fstype, opts = partition
+        if device == 'none':
+            device = ''
+        if not all:
+            if device == '' or fstype not in phydevs:
+                continue
+        ntuple = nt_sys_diskpart(device, mountpoint, fstype, opts)
+        retlist.append(ntuple)
+    return retlist
+
+
+get_disk_usage = _psposix.get_disk_usage
 
 
 # --- decorators

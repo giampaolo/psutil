@@ -49,12 +49,16 @@ TCP_STATUSES = {
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 
-
 # extend base mem ntuple with BSD-specific memory metrics
 nt_sys_vmem = namedtuple(
     nt_sys_vmem.__name__,
     list(nt_sys_vmem._fields) + ['active', 'inactive', 'buffers', 'cached'
                                  'shared', 'wired'])
+
+nt_sys_cputimes = namedtuple(
+    'cputimes', ['user', 'nice', 'system', 'idle', 'irq'])
+
+nt_proc_extmem = namedtuple('meminfo', ['rss', 'vms', 'text', 'data', 'stack'])
 
 
 def virtual_memory():
@@ -76,12 +80,10 @@ def swap_memory():
     return nt_sys_swap(total, used, free, percent, sin, sout)
 
 
-_cputimes_ntuple = namedtuple('cputimes', 'user nice system idle irq')
-
 def get_system_cpu_times():
     """Return system per-CPU times as a named tuple"""
     user, nice, system, idle, irq = _psutil_bsd.get_system_cpu_times()
-    return _cputimes_ntuple(user, nice, system, idle, irq)
+    return nt_sys_cputimes(user, nice, system, idle, irq)
 
 
 def get_system_per_cpu_times():
@@ -89,7 +91,7 @@ def get_system_per_cpu_times():
     ret = []
     for cpu_t in _psutil_bsd.get_system_per_cpu_times():
         user, nice, system, idle, irq = cpu_t
-        item = _cputimes_ntuple(user, nice, system, idle, irq)
+        item = nt_sys_cputimes(user, nice, system, idle, irq)
         ret.append(item)
     return ret
 
@@ -268,11 +270,9 @@ class Process(object):
         rss, vms = _psutil_bsd.get_proc_memory_info(self.pid)[:2]
         return nt_proc_mem(rss, vms)
 
-    _nt_ext_mem = namedtuple('meminfo', 'rss vms text data stack')
-
     @wrap_exceptions
     def get_ext_memory_info(self):
-        return self._nt_ext_mem(*_psutil_bsd.get_proc_memory_info(self.pid))
+        return nt_proc_extmem(*_psutil_bsd.get_proc_memory_info(self.pid))
 
     @wrap_exceptions
     def get_create_time(self):

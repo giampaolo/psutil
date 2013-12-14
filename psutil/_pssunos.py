@@ -57,6 +57,8 @@ TCP_STATUSES = {
 nt_sys_cputimes = namedtuple('cputimes', ['user', 'system', ' idle', 'iowait'])
 
 
+# --- functions
+
 disk_io_counters = _psutil_sunos.get_disk_io_counters
 net_io_counters = _psutil_sunos.get_net_io_counters
 get_disk_usage = _psposix.get_disk_usage
