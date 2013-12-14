@@ -19,7 +19,7 @@ import warnings
 
 from psutil import _common
 from psutil import _psposix
-from psutil._common import (isfile_strict, usage_percent, deprecated, memoize)
+from psutil._common import (isfile_strict, usage_percent, deprecated)
 from psutil._compat import PY3, xrange, namedtuple, wraps
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_linux as cext

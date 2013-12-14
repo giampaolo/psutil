@@ -51,14 +51,13 @@ except ImportError:
 
 from psutil._error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
 from psutil._common import cached_property, memoize
-from psutil._compat import property, callable, defaultdict, namedtuple
+from psutil._compat import property, callable, defaultdict
 from psutil._compat import (wraps as _wraps,
                             PY3 as _PY3)
 from psutil._common import (deprecated_method as _deprecated_method,
                             deprecated as _deprecated,
                             sdiskio as _nt_sys_diskio,
-                            snetio as _nt_sys_netio,
-                            svmem as _nt_sys_vmem)
+                            snetio as _nt_sys_netio)
 
 from psutil._common import (STATUS_RUNNING,
                             STATUS_SLEEPING,
@@ -1719,8 +1718,7 @@ def phymem_usage():
     on the system in bytes plus the percentage usage.
     Deprecated; use psutil.virtual_memory() instead.
     """
-    mem = virtual_memory()
-    return _nt_sys_vmem(mem.total, mem.used, mem.free, mem.percent)
+    return virtual_memory()
 
 
 @_deprecated(replacement="psutil.swap_memory()")
