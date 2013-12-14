@@ -33,13 +33,13 @@ pyflakes:
 	pyflakes psutil/ test/ examples/ setup.py
 
 clean:
-	rm -v -rf `find . -name __pycache__`
-	rm -v -rf `find . -name '*.egg-info' `
-	rm -v -f `find . -type f -name '*.py[co]' `
-	rm -v -f `find . -type f -name '*.so' `
-	rm -v -f `find . -type f -name '.*~' `
-	rm -v -f `find . -type f -name '*.orig' `
-	rm -v -f `find . -type f -name '*.bak' `
-	rm -v -f `find . -type f -name '*.rej' `
+	rm -rf `find . -name __pycache__`
+	rm -rf `find . -name '*.egg-info' `
+	rm -f `find . -type f -name '*.py[co]' `
+	rm -f `find . -type f -name '*.so' `
+	rm -f `find . -type f -name '.*~' `
+	rm -f `find . -type f -name '*.orig' `
+	rm -f `find . -type f -name '*.bak' `
+	rm -f `find . -type f -name '*.rej' `
 	rm -rf build
 	rm -rf dist
