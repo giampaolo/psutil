@@ -204,7 +204,7 @@ nt_sys_user = namedtuple('user', ['name', 'terminal', 'host', 'started'])
 # --- namedtuples for psutil.Process methods
 
 # psutil.Process.get_memory_info()
-nt_proc_mem = namedtuple('memusage', ['rss', 'vms'])
+nt_proc_mem = namedtuple('mem', ['rss', 'vms'])
 # psutil.Process.get_cpu_times()
 nt_proc_cpu = namedtuple('cputimes', ['user', 'system'])
 # psutil.Process.get_open_files()

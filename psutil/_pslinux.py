@@ -86,6 +86,13 @@ TCP_STATUSES = {
     "0B": CONN_CLOSING
 }
 
+nt_sys_vmem = namedtuple(
+    nt_sys_vmem.__name__,
+    list(nt_sys_vmem._fields) + ['active', 'inactive', 'buffers', 'cached'])
+
+nt_proc_extmem = namedtuple(
+    'extmem', ['rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty'])
+
 
 def get_system_boot_time():
     """Return the system boot time expressed in seconds since the epoch."""
@@ -157,12 +164,6 @@ def get_num_phys_cpus():
 
 
 # --- system memory
-
-# extend base mem ntuple with linux-specific memory metrics
-nt_sys_vmem = namedtuple(
-    nt_sys_vmem.__name__,
-    list(nt_sys_vmem._fields) + ['active', 'inactive', 'buffers', 'cached'])
-
 
 def virtual_memory():
     total, free, buffers, shared, _, _ = _psutil_linux.get_sysinfo()
@@ -623,8 +624,6 @@ class Process(object):
         finally:
             f.close()
 
-    _nt_ext_mem = namedtuple('meminfo', 'rss vms shared text lib data dirty')
-
     @wrap_exceptions
     def get_ext_memory_info(self):
         #  ============================================================
@@ -644,7 +643,7 @@ class Process(object):
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
         finally:
             f.close()
-        return self._nt_ext_mem(rss, vms, shared, text, lib, data, dirty)
+        return nt_proc_extmem(rss, vms, shared, text, lib, data, dirty)
 
     _mmap_base_fields = ['path', 'rss', 'size', 'pss', 'shared_clean',
                          'shared_dirty', 'private_clean', 'private_dirty',

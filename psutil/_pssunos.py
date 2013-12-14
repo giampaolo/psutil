@@ -54,6 +54,9 @@ TCP_STATUSES = {
     _psutil_sunos.TCPS_BOUND: CONN_BOUND,  # sunos specific
 }
 
+nt_sys_cputimes = namedtuple('cputimes', ['user', 'system', ' idle', 'iowait'])
+
+
 disk_io_counters = _psutil_sunos.get_disk_io_counters
 net_io_counters = _psutil_sunos.get_net_io_counters
 get_disk_usage = _psposix.get_disk_usage
@@ -111,12 +114,10 @@ def pid_exists(pid):
     return _psposix.pid_exists(pid)
 
 
-_cputimes_ntuple = namedtuple('cputimes', 'user system idle iowait')
-
 def get_system_cpu_times():
     """Return system-wide CPU times as a named tuple"""
     ret = _psutil_sunos.get_system_per_cpu_times()
-    return _cputimes_ntuple(*[sum(x) for x in zip(*ret)])
+    return nt_sys_cputimes(*[sum(x) for x in zip(*ret)])
 
 
 def get_system_per_cpu_times():

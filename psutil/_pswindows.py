@@ -59,6 +59,14 @@ TCP_STATUSES = {
 }
 
 
+nt_sys_cputimes = namedtuple('cputimes', ['user', 'system', 'idle'])
+
+nt_proc_extmem = namedtuple(
+    'meminfo', ['num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
+                'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
+                'pagefile', 'peak_pagefile', 'private']))
+
+
 @lru_cache(maxsize=512)
 def _win32_QueryDosDevice(s):
     return _psutil_windows.win32_QueryDosDevice(s)
@@ -121,12 +129,10 @@ def disk_partitions(all):
     return [nt_sys_diskpart(*x) for x in rawlist]
 
 
-_cputimes_ntuple = namedtuple('cputimes', 'user system idle')
-
 def get_system_cpu_times():
     """Return system CPU times as a named tuple."""
     user, system, idle = _psutil_windows.get_system_cpu_times()
-    return _cputimes_ntuple(user, system, idle)
+    return nt_sys_cputimes(user, system, idle)
 
 
 def get_system_per_cpu_times():
@@ -134,7 +140,7 @@ def get_system_per_cpu_times():
     ret = []
     for cpu_t in _psutil_windows.get_system_per_cpu_times():
         user, system, idle = cpu_t
-        item = _cputimes_ntuple(user, system, idle)
+        item = nt_sys_cputimes(user, system, idle)
         ret.append(item)
     return ret
 
@@ -251,21 +257,9 @@ class Process(object):
         t = self._get_raw_meminfo()
         return nt_proc_mem(t[2], t[7])
 
-    _nt_ext_mem = namedtuple('meminfo', ' '.join([
-        'num_page_faults',
-        'peak_wset',
-        'wset',
-        'peak_paged_pool',
-        'paged_pool',
-        'peak_nonpaged_pool',
-        'nonpaged_pool',
-        'pagefile',
-        'peak_pagefile',
-        'private']))
-
     @wrap_exceptions
     def get_ext_memory_info(self):
-        return self._nt_ext_mem(*self._get_raw_meminfo())
+        return nt_proc_extmem(*self._get_raw_meminfo())
 
     nt_mmap_grouped = namedtuple('mmap', 'path rss')
     nt_mmap_ext = namedtuple('mmap', 'addr perms path rss')

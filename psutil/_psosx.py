@@ -48,14 +48,17 @@ PROC_STATUSES = {
     _psutil_osx.SZOMB: STATUS_ZOMBIE,
 }
 
-
-# --- functions
-
 # extend base mem ntuple with OSX-specific memory metrics
 nt_sys_vmem = namedtuple(
     nt_sys_vmem.__name__,
     list(nt_sys_vmem._fields) + ['active', 'inactive', 'wired'])
 
+nt_sys_cputimes = namedtuple('cputimes', ['user', 'nice', 'system', 'idle'])
+
+nt_proc_extmem = namedtuple('meminfo', ['rss', 'vms', 'pfaults', 'pageins'])
+
+
+# --- functions
 
 def virtual_memory():
     """System virtual memory as a namedtuple."""
@@ -74,12 +77,10 @@ def swap_memory():
     return nt_sys_swap(total, used, free, percent, sin, sout)
 
 
-_cputimes_ntuple = namedtuple('cputimes', 'user nice system idle')
-
 def get_system_cpu_times():
     """Return system CPU times as a namedtuple."""
     user, nice, system, idle = _psutil_osx.get_system_cpu_times()
-    return _cputimes_ntuple(user, nice, system, idle)
+    return nt_sys_cputimes(user, nice, system, idle)
 
 
 def get_system_per_cpu_times():
@@ -220,16 +221,14 @@ class Process(object):
         rss, vms = _psutil_osx.get_proc_memory_info(self.pid)[:2]
         return nt_proc_mem(rss, vms)
 
-    _nt_ext_mem = namedtuple('meminfo', 'rss vms pfaults pageins')
-
     @wrap_exceptions
     def get_ext_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms, pfaults, pageins = \
             _psutil_osx.get_proc_memory_info(self.pid)
-        return self._nt_ext_mem(rss, vms,
-                                pfaults * PAGESIZE,
-                                pageins * PAGESIZE)
+        return nt_proc_extmem(rss, vms,
+                              pfaults * PAGESIZE,
+                              pageins * PAGESIZE)
 
     @wrap_exceptions
     def get_cpu_times(self):
