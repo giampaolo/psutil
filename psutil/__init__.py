@@ -1664,43 +1664,6 @@ def network_io_counters(pernic=False):
     return net_io_counters(pernic)
 
 
-def _replace_module():
-    """Dirty hack to replace the module object in order to access
-    deprecated module constants, see:
-    http://www.dr-josiah.com/2013/12/properties-on-python-modules.html
-    """
-    class ModuleWrapper(object):
-
-        def __repr__(self):
-            return repr(self._module)
-        __str__ = __repr__
-
-        @property
-        def NUM_CPUS(self):
-            msg = "NUM_CPUS constant is deprecated; use cpu_count() instead"
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            return cpu_count()
-
-        @property
-        def BOOT_TIME(self):
-            msg = "BOOT_TIME constant is deprecated; " \
-                  "use get_boot_time() instead"
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            return get_boot_time()
-
-        @property
-        def TOTAL_PHYMEM(self):
-            msg = "TOTAL_PHYMEM constant is deprecated; " \
-                  "use virtual_memory().total instead"
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            return virtual_memory().total
-
-    mod = ModuleWrapper()
-    mod.__dict__ = globals()
-    mod._module = sys.modules[__name__]
-    sys.modules[__name__] = mod
-
-
 def test():
     """List info of all currently running processes emulating ps aux
     output.
@@ -1765,11 +1728,47 @@ def test():
                             pinfo['name'].strip() or '?'))
 
 
+def _replace_module():
+    """Dirty hack to replace the module object in order to access
+    deprecated module constants, see:
+    http://www.dr-josiah.com/2013/12/properties-on-python-modules.html
+    """
+    class ModuleWrapper(object):
+
+        def __repr__(self):
+            return repr(self._module)
+        __str__ = __repr__
+
+        @property
+        def NUM_CPUS(self):
+            msg = "NUM_CPUS constant is deprecated; use cpu_count() instead"
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return cpu_count()
+
+        @property
+        def BOOT_TIME(self):
+            msg = "BOOT_TIME constant is deprecated; " \
+                  "use get_boot_time() instead"
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return get_boot_time()
+
+        @property
+        def TOTAL_PHYMEM(self):
+            msg = "TOTAL_PHYMEM constant is deprecated; " \
+                  "use virtual_memory().total instead"
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return virtual_memory().total
+
+    mod = ModuleWrapper()
+    mod.__dict__ = globals()
+    mod._module = sys.modules[__name__]
+    sys.modules[__name__] = mod
+
+
 _replace_module()
 del property, cached_property, division, _replace_module
 if sys.version_info < (3, 0):
     del num
-
 
 if __name__ == "__main__":
     test()
