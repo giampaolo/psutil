@@ -268,7 +268,7 @@ class Process(object):
         return p1 == p2
 
     def __hash__(self):
-        return self.pid
+        return hash((self.pid, self.__dict__.get('create_time', None)))
 
     # --- utility methods
 
