@@ -471,6 +471,7 @@ class ThreadTask(threading.Thread):
         self.join()
 
 
+# python 2.4
 if not hasattr(subprocess.Popen, 'terminate'):
     subprocess.Popen.terminate = \
         lambda self: psutil.Process(self.pid).terminate()
@@ -2465,6 +2466,13 @@ class TestMisc(unittest.TestCase):
             expected = ((1, ), {'bar': 2})
             self.assertEqual(ret, expected)
             self.assertEqual(len(calls), 3)
+        # clear cache
+        foo.cache_clear()
+        ret = foo()
+        expected = ((), {})
+        self.assertEqual(ret, expected)
+        self.assertEqual(len(calls), 4)
+        # docstring
         self.assertEqual(foo.__doc__, "foo docstring")
 
 

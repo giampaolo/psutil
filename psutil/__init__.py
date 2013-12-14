@@ -1209,12 +1209,15 @@ def cpu_count(logical=True):
     """Return the number of logical CPUs in the system (same as
     os.cpu_count() in Python 3.4).
 
-    If logical is False return the number of actual *physical*
-    cores only (hyper thread CPUs are excluded).
+    If logical is False return the number of physical cores only
+    (hyper thread CPUs are excluded).
 
     Return None if undetermined.
 
     The return value is cached after first call.
+    If desired cache can be cleared like this:
+
+    >>> psutil.cpu_count.cache_clear()
     """
     if logical:
         return _psplatform.get_num_cpus()

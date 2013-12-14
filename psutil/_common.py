@@ -65,7 +65,19 @@ def usage_percent(used, total, _round=None):
 
 
 def memoize(fun):
-    """A simple memoize decorator for functions."""
+    """A simple memoize decorator for functions supporting (hashable)
+    positional arguments.
+    It also provides a cache_clear() function for clearing the cache:
+
+    >>> @memoize
+    ... def foo()
+    ...     return 1
+    ...
+    >>> foo()
+    1
+    >>> foo.cache_clear()
+    >>>
+    """
     @wraps(fun)
     def wrapper(*args, **kwargs):
         key = (args, frozenset(sorted(kwargs.items())))
@@ -74,7 +86,13 @@ def memoize(fun):
         except KeyError:
             ret = cache[key] = fun(*args, **kwargs)
         return ret
+
+    def cache_clear():
+        """Clear cache."""
+        cache.clear()
+
     cache = {}
+    wrapper.cache_clear = cache_clear
     return wrapper
 
 
