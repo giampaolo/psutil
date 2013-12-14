@@ -1609,61 +1609,57 @@ def get_users():
 # --- deprecated functions
 # =====================================================================
 
-@_deprecated("psutil.get_pids()")
+@_deprecated(replacement="psutil.get_pids()")
 def get_pid_list():
-    """Return a list of current running PIDs (deprecated)."""
     return get_pids()
 
 
-@_deprecated()
+@_deprecated(replacement="list(process_iter())")
 def get_process_list():
-    """Return a list of Process class instances for all running
-    processes on the local machine (deprecated).
-    """
     return list(process_iter())
 
 
-@_deprecated()
+@_deprecated(replacement="psutil.virtual_memory()")
 def phymem_usage():
     """Return the amount of total, used and free physical memory
     on the system in bytes plus the percentage usage.
-    Deprecated by psutil.virtual_memory().
+    Deprecated; use psutil.virtual_memory() instead.
     """
     mem = virtual_memory()
     return _nt_sysmeminfo(mem.total, mem.used, mem.free, mem.percent)
 
 
-@_deprecated("psutil.swap_memory()")
+@_deprecated(replacement="psutil.swap_memory()")
 def virtmem_usage():
     return swap_memory()
 
 
-@_deprecated("psutil.phymem_usage().free")
+@_deprecated(replacement="psutil.phymem_usage().free")
 def avail_phymem():
     return phymem_usage().free
 
 
-@_deprecated("psutil.phymem_usage().used")
+@_deprecated(replacement="psutil.phymem_usage().used")
 def used_phymem():
     return phymem_usage().used
 
 
-@_deprecated("psutil.virtmem_usage().total")
+@_deprecated(replacement="psutil.virtmem_usage().total")
 def total_virtmem():
     return virtmem_usage().total
 
 
-@_deprecated("psutil.virtmem_usage().used")
+@_deprecated(replacement="psutil.virtmem_usage().used")
 def used_virtmem():
     return virtmem_usage().used
 
 
-@_deprecated("psutil.virtmem_usage().free")
+@_deprecated(replacement="psutil.virtmem_usage().free")
 def avail_virtmem():
     return virtmem_usage().free
 
 
-@_deprecated("psutil.net_io_counters()")
+@_deprecated(replacement="psutil.net_io_counters()")
 def network_io_counters(pernic=False):
     return net_io_counters(pernic)
 

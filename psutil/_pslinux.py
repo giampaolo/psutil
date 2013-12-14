@@ -227,12 +227,12 @@ def swap_memory():
     return nt_swapmeminfo(total, used, free, percent, sin, sout)
 
 
-@deprecated('psutil.virtual_memory().cached')
+@deprecated(replacement='psutil.virtual_memory().cached')
 def cached_phymem():
     return virtual_memory().cached
 
 
-@deprecated('psutil.virtual_memory().buffers')
+@deprecated(replacement='psutil.virtual_memory().buffers')
 def phymem_buffers():
     return virtual_memory().buffers
 
