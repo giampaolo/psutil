@@ -1105,6 +1105,46 @@ get_boot_time(PyObject *self, PyObject *args)
 
 
 /*
+ * Return the number of physical CPU cores on the system.
+ */
+static PyObject *
+get_num_phys_cpus(PyObject *self, PyObject *args)
+{
+    kstat_ctl_t *kc;
+    kstat_t *ksp;
+    int ncpus = 0;
+
+    kc = kstat_open();
+    if (kc == NULL)
+        goto error;
+    ksp = kstat_lookup(kc, "cpu_info", -1, NULL);
+    if (ksp == NULL)
+        goto error;
+
+    for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
+        if (strcmp(ksp->ks_module, "cpu_info") != 0)
+            continue;
+        if (kstat_read(kc, ksp, NULL) == NULL)
+            goto error;
+        ncpus += 1;
+    }
+
+    kstat_close(kc);
+    if (ncpus > 0)
+        return Py_BuildValue("i", ncpus);
+    else
+        goto error;
+
+error:
+    // mimic os.cpu_count()
+    if (kc != NULL)
+        kstat_close(kc);
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -1143,6 +1183,8 @@ PsutilMethods[] =
      "Return a Python dict of tuples for network I/O statistics."},
     {"get_boot_time", get_boot_time, METH_VARARGS,
      "Return system boot time in seconds since the EPOCH."},
+    {"get_num_phys_cpus", get_num_phys_cpus, METH_VARARGS,
+     "Return the number of physical CPUs on the system."},
 
     {NULL, NULL, 0, NULL}
 };

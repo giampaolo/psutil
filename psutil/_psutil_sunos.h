@@ -24,3 +24,4 @@ static PyObject* get_system_per_cpu_times(PyObject* self, PyObject* args);
 static PyObject* get_disk_io_counters(PyObject* self, PyObject* args);
 static PyObject* get_net_io_counters(PyObject* self, PyObject* args);
 static PyObject* get_boot_time(PyObject* self, PyObject* args);
+static PyObject* get_num_phys_cpus(PyObject* self, PyObject* args);
