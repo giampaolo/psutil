@@ -60,6 +60,8 @@ cpupercent(user=2.0, nice=0.0, system=0.0, idle=98.0, iowait=0.0, irq=0.0,
 >>>
 >>> psutil.cpu_count()
 4
+>>> psutil.cpu_count(logical=False)
+2
 >>>
 
 
@@ -87,7 +89,7 @@ Disks
 usage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
 >>>
 >>> psutil.disk_io_counters(perdisk=False)
-iostat(read_count=719566, write_count=1082197, read_bytes=18626220032,
+diskio(read_count=719566, write_count=1082197, read_bytes=18626220032,
        write_bytes=24081764352, read_time=5023392, write_time=63199568)
 >>>
 
@@ -96,11 +98,11 @@ Network
 =======
 
 >>> psutil.net_io_counters(pernic=True)
-{'eth0': iostat(bytes_sent=485291293, bytes_recv=6004858642,
-                packets_sent=3251564, packets_recv=4787798,
-                errin=0, errout=0, dropin=0, dropout=0),
- 'lo': iostat(bytes_sent=2838627, bytes_recv=2838627, packets_sent=30567,
-              packets_recv=30567, errin=0, errout=0, dropin=0, dropout=0)}
+{'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642,
+               packets_sent=3251564, packets_recv=4787798,
+               errin=0, errout=0, dropin=0, dropout=0),
+ 'lo': netio(bytes_sent=2838627, bytes_recv=2838627, packets_sent=30567,
+             packets_recv=30567, errin=0, errout=0, dropin=0, dropout=0)}
 
 >>>
 
@@ -149,9 +151,9 @@ Process management
 '/dev/pts/0'
 >>>
 >>> p.uids
-user(real=1000, effective=1000, saved=1000)
+uids(real=1000, effective=1000, saved=1000)
 >>> p.gids
-group(real=1000, effective=1000, saved=1000)
+gids(real=1000, effective=1000, saved=1000)
 >>>
 >>> p.get_cpu_times()
 cputimes(user=1.02, system=0.31)
@@ -165,9 +167,10 @@ cputimes(user=1.02, system=0.31)
 0.63423
 >>>
 >>> p.get_memory_info()
-meminfo(rss=7471104, vms=68513792)
+mem(rss=7471104, vms=68513792)
 >>> p.get_ext_memory_info()
-meminfo(rss=9662464, vms=49192960, shared=3612672, text=2564096, lib=0, data=5754880, dirty=0)
+extmem(rss=9662464, vms=49192960, shared=3612672, text=2564096, lib=0,
+       data=5754880, dirty=0)
 >>> p.get_memory_maps()
 [mmap(path='/lib/x86_64-linux-gnu/libutil-2.15.so', rss=16384, anonymous=8192, swap=0),
  mmap(path='/lib/x86_64-linux-gnu/libc-2.15.so', rss=6384, anonymous=15, swap=0),
@@ -203,7 +206,7 @@ io(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632)
  thread(id=5237, user_time=0.0707, system_time=1.1)]
 >>>
 >>> p.get_num_ctx_switches()
-amount(voluntary=78, involuntary=19)
+ctxsw(voluntary=78, involuntary=19)
 >>>
 >>> p.get_nice()
 0
