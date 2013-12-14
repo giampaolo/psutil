@@ -210,3 +210,6 @@ D: namedtuple and lru_cache backward compatible implementations.
 
 N: Jason Kirtland
 D: backward compatible implementation of collections.defaultdict.
+
+M: Ken Seeho
+D: @cached_property decorator

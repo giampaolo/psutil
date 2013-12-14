@@ -97,6 +97,7 @@ def memoize(fun):
 
 
 # http://code.activestate.com/recipes/576563-cached-property/
+# Credits: Ken Seeho
 def cached_property(fun):
     """A memoize decorator for class properties."""
     @wraps(fun)
@@ -112,7 +113,7 @@ def cached_property(fun):
     return property(get)
 
 
-# http://goo.gl/jYLvf
+# http://code.activestate.com/recipes/577819-deprecated-decorator/
 def deprecated(replacement=None):
     """A decorator which can be used to mark functions as deprecated."""
     def outer(fun):

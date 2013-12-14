@@ -195,6 +195,10 @@ try:
     from collections import defaultdict
 except ImportError:
     class defaultdict(dict):
+        """Dict subclass that calls a factory function to supply
+        missing values:
+        http://docs.python.org/library/collections.html#collections.defaultdict
+        """
 
         def __init__(self, default_factory=None, *a, **kw):
             if ((default_factory is not None and
