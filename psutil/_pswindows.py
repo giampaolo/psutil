@@ -160,10 +160,10 @@ def get_system_boot_time():
     return _psutil_windows.get_system_boot_time()
 
 
-def get_system_users():
+def get_users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = _psutil_windows.get_system_users()
+    rawlist = _psutil_windows.get_users()
     for item in rawlist:
         user, hostname, tstamp = item
         nt = nt_sys_user(user, None, hostname, tstamp)

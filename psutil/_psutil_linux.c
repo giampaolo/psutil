@@ -334,7 +334,7 @@ error:
  * Return currently connected users as a list of tuples.
  */
 static PyObject *
-get_system_users(PyObject *self, PyObject *args)
+get_users(PyObject *self, PyObject *args)
 {
     PyObject *ret_list = PyList_New(0);
     PyObject *tuple = NULL;
@@ -405,7 +405,7 @@ PsutilMethods[] =
      "A wrapper around sysinfo(), return system memory usage statistics"},
     {"get_proc_cpu_affinity", get_proc_cpu_affinity, METH_VARARGS,
      "Return process CPU affinity as a Python long (the bitmask)."},
-    {"get_system_users", get_system_users, METH_VARARGS,
+    {"get_users", get_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},
 
     {NULL, NULL, 0, NULL}

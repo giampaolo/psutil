@@ -341,7 +341,7 @@ get_swap_mem(PyObject *self, PyObject *args)
  * Return users currently connected on the system.
  */
 static PyObject *
-get_system_users(PyObject *self, PyObject *args)
+get_users(PyObject *self, PyObject *args)
 {
     struct utmpx *ut;
     PyObject *ret_list = PyList_New(0);
@@ -1171,7 +1171,7 @@ PsutilMethods[] =
     // --- system-related functions
     {"get_swap_mem", get_swap_mem, METH_VARARGS,
      "Return information about system swap memory."},
-    {"get_system_users", get_system_users, METH_VARARGS,
+    {"get_users", get_users, METH_VARARGS,
      "Return currently connected users."},
     {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
      "Return disk partitions."},

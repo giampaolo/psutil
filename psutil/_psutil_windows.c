@@ -2615,7 +2615,7 @@ error:
  * Return a Python dict of tuples for disk I/O information
  */
 static PyObject *
-get_system_users(PyObject *self, PyObject *args)
+get_users(PyObject *self, PyObject *args)
 {
     HANDLE hServer = NULL;
     LPTSTR buffer_user = NULL;
@@ -3082,7 +3082,7 @@ PsutilMethods[] =
      "Return dict of tuples of networks I/O information."},
     {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
      "Return dict of tuples of disks I/O information."},
-    {"get_system_users", get_system_users, METH_VARARGS,
+    {"get_users", get_users, METH_VARARGS,
      "Return a list of currently connected users."},
     {"get_disk_partitions", get_disk_partitions, METH_VARARGS,
      "Return disk partitions."},

@@ -177,7 +177,7 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
 
 
 // ================================================
-// get_system_users support ()
+// get_users() support
 // ================================================
 
 typedef struct _WINSTATION_INFO {

@@ -146,10 +146,10 @@ def get_system_boot_time():
     return _psutil_sunos.get_boot_time()
 
 
-def get_system_users():
+def get_users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = _psutil_sunos.get_system_users()
+    rawlist = _psutil_sunos.get_users()
     localhost = (':0.0', ':0')
     for item in rawlist:
         user, tty, hostname, tstamp, user_process = item

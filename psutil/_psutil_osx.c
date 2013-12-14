@@ -1679,7 +1679,7 @@ error:
  * Return currently connected users as a list of tuples.
  */
 static PyObject *
-get_system_users(PyObject *self, PyObject *args)
+get_users(PyObject *self, PyObject *args)
 {
     struct utmpx *utx;
     PyObject *ret_list = PyList_New(0);
@@ -1791,7 +1791,7 @@ PsutilMethods[] =
      "Return dict of tuples of networks I/O information."},
     {"get_disk_io_counters", get_disk_io_counters, METH_VARARGS,
      "Return dict of tuples of disks I/O information."},
-    {"get_system_users", get_system_users, METH_VARARGS,
+    {"get_users", get_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},
 
     {NULL, NULL, 0, NULL}

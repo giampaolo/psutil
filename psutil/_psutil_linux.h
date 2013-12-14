@@ -12,4 +12,4 @@ static PyObject* get_disk_partitions(PyObject* self, PyObject* args);
 static PyObject* get_sysinfo(PyObject* self, PyObject* args);
 static PyObject* get_proc_cpu_affinity(PyObject* self, PyObject* args);
 static PyObject* set_proc_cpu_affinity(PyObject* self, PyObject* args);
-static PyObject* get_system_users(PyObject* self, PyObject* args);
+static PyObject* get_users(PyObject* self, PyObject* args);

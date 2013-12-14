@@ -296,10 +296,10 @@ def get_num_phys_cpus():
 
 # --- other system functions
 
-def get_system_users():
+def get_users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = _psutil_linux.get_system_users()
+    rawlist = _psutil_linux.get_users()
     for item in rawlist:
         user, tty, hostname, tstamp, user_process = item
         # note: the underlying C function includes entries about

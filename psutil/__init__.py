@@ -1612,7 +1612,7 @@ def get_users():
      - started: the creation time as a floating point number expressed in
        seconds since the epoch.
     """
-    return _psplatform.get_system_users()
+    return _psplatform.get_users()
 
 
 # =====================================================================

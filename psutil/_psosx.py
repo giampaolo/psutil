@@ -123,9 +123,9 @@ def disk_partitions(all=False):
     return retlist
 
 
-def get_system_users():
+def get_users():
     retlist = []
-    rawlist = _psutil_osx.get_system_users()
+    rawlist = _psutil_osx.get_users()
     for item in rawlist:
         user, tty, hostname, tstamp = item
         if tty == '~':
