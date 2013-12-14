@@ -158,15 +158,11 @@ def get_num_phys_cpus():
 
 # --- system memory
 
+# extend base mem ntuple with linux-specific memory metrics
 nt_sys_vmem = namedtuple(
-    'vmem', [
-        # all platforms
-        'total', 'available', 'percent', 'used', 'free',
-        # linux specific
-        'active',
-        'inactive',
-        'buffers',
-        'cached'])
+    nt_sys_vmem.__name__,
+    list(nt_sys_vmem._fields) + ['active', 'inactive', 'buffers', 'cached'])
+
 
 def virtual_memory():
     total, free, buffers, shared, _, _ = _psutil_linux.get_sysinfo()
@@ -197,7 +193,7 @@ def virtual_memory():
     used = total - free
     percent = usage_percent((total - avail), total, _round=1)
     return nt_sys_vmem(total, avail, percent, used, free,
-                           active, inactive, buffers, cached)
+                       active, inactive, buffers, cached)
 
 
 def swap_memory():

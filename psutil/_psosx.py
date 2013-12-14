@@ -51,12 +51,11 @@ PROC_STATUSES = {
 
 # --- functions
 
+# extend base mem ntuple with OSX-specific memory metrics
 nt_sys_vmem = namedtuple(
-    'vmem', [
-        # all platforms
-        'total', 'available', 'percent', 'used', 'free',
-        # OSX specific
-        'active', 'inactive', 'wired'])
+    nt_sys_vmem.__name__,
+    list(nt_sys_vmem._fields) + ['active', 'inactive', 'wired'])
+
 
 def virtual_memory():
     """System virtual memory as a namedtuple."""

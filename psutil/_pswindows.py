@@ -78,9 +78,6 @@ def _convert_raw_path(s):
 # --- public functions
 
 
-nt_sys_vmem = namedtuple(
-    'vmem', ['total', 'available', 'percent', 'used', 'free'])
-
 def virtual_memory():
     """System virtual memory as a namedtuple."""
     mem = _psutil_windows.get_virtual_mem()

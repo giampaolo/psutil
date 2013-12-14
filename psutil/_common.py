@@ -178,7 +178,6 @@ del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM, socket
 # --- namedtuples for psutil.* system-related functions
 
 # psutil.virtual_memory()  (expanded later)
-
 nt_sys_vmem = namedtuple('vmem', ['total', 'available', 'percent', 'used',
                                   'free'])
 # psutil.swap_memory()

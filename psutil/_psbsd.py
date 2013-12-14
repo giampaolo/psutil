@@ -50,17 +50,12 @@ TCP_STATUSES = {
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 
 
+# extend base mem ntuple with BSD-specific memory metrics
 nt_sys_vmem = namedtuple(
-    'vmem', [
-        # all platforms
-        'total', 'available', 'percent', 'used', 'free',
-        # FreeBSD specific
-        'active',
-        'inactive',
-        'buffers',
-        'cached',
-        'shared',
-        'wired'])
+    nt_sys_vmem.__name__,
+    list(nt_sys_vmem._fields) + ['active', 'inactive', 'buffers', 'cached'
+                                 'shared', 'wired'])
+
 
 def virtual_memory():
     """System virtual memory as a namedutple."""
