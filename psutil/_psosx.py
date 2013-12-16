@@ -10,13 +10,13 @@ import errno
 import os
 import sys
 
-import _psutil_osx
-import _psutil_posix
-
 from psutil import _psposix
+from psutil import _psutil_osx
+from psutil import _psutil_posix
 from psutil._common import *
 from psutil._compat import namedtuple, wraps
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
+
 
 __extra__all__ = []
 

@@ -10,12 +10,11 @@ import errno
 import os
 import sys
 
-import _psutil_windows
-
-from _psutil_windows import ERROR_ACCESS_DENIED
+from psutil import _psutil_windows
 from psutil._common import *
 from psutil._compat import PY3, xrange, wraps, lru_cache
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
+from psutil._psutil_windows import ERROR_ACCESS_DENIED
 
 # process priority constants:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
@@ -28,7 +27,6 @@ from _psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,
                              INFINITE)
 
 
-# Windows specific extended namespace
 __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
                   "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
                   "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
@@ -64,7 +62,7 @@ nt_sys_cputimes = namedtuple('cputimes', ['user', 'system', 'idle'])
 nt_proc_extmem = namedtuple(
     'meminfo', ['num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
                 'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
-                'pagefile', 'peak_pagefile', 'private']))
+                'pagefile', 'peak_pagefile', 'private'])
 
 
 @lru_cache(maxsize=512)

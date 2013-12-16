@@ -1,5 +1,5 @@
 # Shortcuts for various tasks.
-.PHONY: install test nosetests memtest pep8 pyflakes clean
+.PHONY: install uninstall test nosetests memtest pep8 pyflakes clean
 
 PYTHON=python
 TEST_SCRIPT=test/test_psutil.py
@@ -17,7 +17,7 @@ install: clean
 	fi
 
 uninstall:
-	pip-`$(PYTHON) -c "import sys; sys.stdout.write('.'.join(map(str, sys.version_info)[:2]))"` uninstall -y psutil
+	pip-`$(PYTHON) -c "import sys; sys.stdout.write('.'.join(map(str, sys.version_info)[:2]))"` uninstall -y -v psutil
 
 test: install
 	$(PYTHON) $(TEST_SCRIPT)

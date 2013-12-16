@@ -11,10 +11,9 @@ import os
 import socket
 import subprocess
 
-import _psutil_posix
-import _psutil_sunos
-
 from psutil import _psposix
+from psutil import _psutil_posix
+from psutil import _psutil_sunos
 from psutil._common import *
 from psutil._compat import namedtuple, PY3
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
