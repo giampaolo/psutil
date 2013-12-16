@@ -16,6 +16,9 @@ install: clean
 		$(PYTHON) setup.py install --user; \
 	fi
 
+uninstall:
+	pip-`$(PYTHON) -c "import sys; sys.stdout.write('.'.join(map(str, sys.version_info)[:2]))"` uninstall -y psutil
+
 test: install
 	$(PYTHON) $(TEST_SCRIPT)
 
