@@ -12,9 +12,11 @@ except ImportError:
     from distutils.core import setup, Extension
 
 
+HERE = os.path.join(os.path.dirname(__file__))
+
+
 def get_version():
-    INIT = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                           'psutil', '__init__.py'))
+    INIT = os.path.join(HERE, 'psutil/__init__.py')
     f = open(INIT, 'r')
     try:
         for line in f:
@@ -31,7 +33,7 @@ def get_version():
 
 
 def get_description():
-    README = os.path.abspath(os.path.join(os.path.dirname(__file__), 'README'))
+    README = os.path.join(HERE, 'README')
     f = open(README, 'r')
     try:
         return f.read()
