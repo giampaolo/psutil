@@ -16,11 +16,11 @@ import time
 import traceback
 import unittest
 
-import _psutil_windows
-import psutil
+from psutil import _psutil_windows
 from psutil._compat import PY3, callable, long
 from psutil._pswindows import ACCESS_DENIED_SET
 from test_psutil import *
+import psutil
 
 try:
     import wmi
