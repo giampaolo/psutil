@@ -117,6 +117,11 @@ DEBATABLE
     NoSuchProcess and AccessDenied? Not that we need it, but currently we
     cannot raise a TimeoutExpired exception with a specific error string.
 
+  * move exceptions into __init__.py so that visualized exception will look
+    like psutil.{EXCEPTION} instead of psutil._error.{EXCEPTION}.
+    __init__.py can push the exceptions into _ps*.py module after having
+    imported them.
+
 
 COMPATIBILITY BREAKAGE
 ======================

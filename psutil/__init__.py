@@ -1163,7 +1163,7 @@ def wait_procs(procs, timeout=None, callback=None):
     >>> for p in alive:
     ...     p.kill()
     """
-    def assert_gone(proc, timeout):
+    def check_gone(proc, timeout):
         try:
             returncode = proc.wait(timeout=timeout)
         except TimeoutExpired:
@@ -1204,16 +1204,16 @@ def wait_procs(procs, timeout=None, callback=None):
                 timeout = min((deadline - timer()), max_timeout)
                 if timeout <= 0:
                     break
-                assert_gone(proc, timeout)
+                check_gone(proc, timeout)
             else:
-                assert_gone(proc, max_timeout)
+                check_gone(proc, max_timeout)
         alive = alive - gone
 
     if alive:
         # Last attempt over processes survived so far.
         # timeout == 0 won't make this function wait any further.
         for proc in alive:
-            assert_gone(proc, 0)
+            check_gone(proc, 0)
         alive = alive - gone
 
     return (list(gone), list(alive))
