@@ -19,8 +19,7 @@ from psutil._error import TimeoutExpired
 
 def pid_exists(pid):
     """Check whether pid exists in the current process table."""
-    if pid < 0:
-        return False
+    assert not pid <= 0, pid
     try:
         os.kill(pid, 0)
     except OSError:
@@ -33,7 +32,7 @@ def pid_exists(pid):
             return True
         else:
             # According to "man 2 kill" possible error values are
-            # (EINVAL, EPERM, ESRCH) therefore we should bever get
+            # (EINVAL, EPERM, ESRCH) therefore we should never get
             # here. If we do let's be explicit in considering this
             # an error.
             raise err

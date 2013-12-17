@@ -1064,7 +1064,17 @@ def pid_exists(pid):
     This is faster than doing "pid in psutil.get_pids()" and
     should be preferred.
     """
-    return _psplatform.pid_exists(pid)
+    if pid < 0:
+        return False
+    elif pid == 0 and os.name == 'posix':
+        # On POSIX we use os.kill() to determine PID existence.
+        # According to "man 2 kill" PID 0 has a special meaning
+        # though: it refers to <<every process in the process
+        # group of the calling process>> and that is not we want
+        # to do here.
+        return pid in get_pids()
+    else:
+        return _psplatform.pid_exists(pid)
 
 
 _pmap = {}

@@ -21,6 +21,8 @@ BUG FIXES
  * #454: Process cached properties such as "name", "exe" and "create_time"
          should be read-only.
  * #456: [Windows] Process.exe does not handle unicode paths.
+ * #457: [POSIX] pid_exists() always return True for PID 0.
+
 
 API CHANGES
 
