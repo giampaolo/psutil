@@ -1265,10 +1265,11 @@ class TestProcess(unittest.TestCase):
                          "only available on Linux >= 2.6.36")
     def test_get_rlimit(self):
         import resource
-        p = psutil.Process()
-        names = [x for x in dir(psutil) if x.startswith('RLIMIT_')]
+        p = psutil.Process(os.getpid())
+        names = [x for x in dir(psutil) if x.startswith('RLIM')]
         for name in names:
             value = getattr(psutil, name)
+            self.assertGreaterEqual(value, 0)
             if name in dir(resource):
                 self.assertEqual(value, getattr(resource, name))
                 self.assertEqual(p.get_rlimit(value),
