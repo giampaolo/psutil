@@ -12,7 +12,7 @@ except ImportError:
     from distutils.core import setup, Extension
 
 
-HERE = os.path.join(os.path.dirname(__file__))
+HERE = os.path.abspath(os.path.dirname(__file__))
 
 
 def get_version():
