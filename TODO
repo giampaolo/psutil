@@ -140,6 +140,10 @@ Renames:
  * (H) psutil.Process.gids     -> get_gids()
  * (H) psutil.Process.username -> get_username()
 
+ Others:
+
+  * (M) make *cpu_percent's 'default' parameter default to 0.
+
 
 REJECTED IDEAS
 ==============
