@@ -294,7 +294,7 @@ class Process(object):
             timeout = int(timeout * 1000)
         ret = _psutil_windows.process_wait(self.pid, timeout)
         if ret == WAIT_TIMEOUT:
-            raise TimeoutExpired(self.pid, self._process_name)
+            raise TimeoutExpired(timeout, self.pid, self._process_name)
         return ret
 
     @wrap_exceptions

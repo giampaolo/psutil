@@ -62,16 +62,16 @@ class TimeoutExpired(Error):
     is still alive.
     """
 
-    def __init__(self, pid=None, name=None):
+    def __init__(self, seconds, pid=None, name=None):
         Error.__init__(self)
+        self.seconds = seconds
         self.pid = pid
         self.name = name
+        self.msg = "timeout after %s seconds" % seconds
         if (pid is not None) and (name is not None):
-            self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
+            self.msg += " (pid=%s, name=%s)" % (pid, repr(name))
         elif (pid is not None):
-            self.msg = "(pid=%s)" % self.pid
-        else:
-            self.msg = ""
+            self.msg += " (pid=%s)" % self.pid
 
     def __str__(self):
         return self.msg

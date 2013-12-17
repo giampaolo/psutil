@@ -340,7 +340,7 @@ class Process(object):
         try:
             return _psposix.wait_pid(self.pid, timeout)
         except TimeoutExpired:
-            raise TimeoutExpired(self.pid, self._process_name)
+            raise TimeoutExpired(timeout, self.pid, self._process_name)
 
     @wrap_exceptions
     def get_nice(self):
