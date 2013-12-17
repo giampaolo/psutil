@@ -514,7 +514,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(len(alive), 3)
         self.assertEqual(l, [])
         for p in alive:
-            self.assertFalse(hasattr(p, 'retcode'))
+            self.assertFalse(hasattr(p, 'returncode'))
 
         sproc3.terminate()
         gone, alive = psutil.wait_procs(procs, timeout=0.03, callback=callback)
@@ -522,12 +522,12 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(len(alive), 2)
         self.assertIn(sproc3.pid, [x.pid for x in gone])
         if POSIX:
-            self.assertEqual(gone.pop().retcode, signal.SIGTERM)
+            self.assertEqual(gone.pop().returncode, signal.SIGTERM)
         else:
-            self.assertEqual(gone.pop().retcode, 1)
+            self.assertEqual(gone.pop().returncode, 1)
         self.assertEqual(l, [sproc3.pid])
         for p in alive:
-            self.assertFalse(hasattr(p, 'retcode'))
+            self.assertFalse(hasattr(p, 'returncode'))
 
         sproc1.terminate()
         sproc2.terminate()
@@ -536,7 +536,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(len(alive), 0)
         self.assertEqual(set(l), set([sproc1.pid, sproc2.pid, sproc3.pid]))
         for p in gone:
-            self.assertTrue(hasattr(p, 'retcode'))
+            self.assertTrue(hasattr(p, 'returncode'))
 
     def test_wait_procs_no_timeout(self):
         sproc1 = get_test_subprocess()

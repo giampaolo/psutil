@@ -34,6 +34,10 @@ Deprecated APIs (still available as aliases producing a DeprecationWarning):
  - psutil.get_pid_list()    (renamed to psutil.get_pids())
  - psutil.Process.getcwd()  (renamed to psutil.Process.get_cwd())
 
+Others:
+ - Process instances' "retcode" attribute returned by psutil.wait_procs() has
+   been renamed to "returncode" for consistency with subprocess.Popen.
+
 
 1.2.1 - 2013-11-25
 ------------------

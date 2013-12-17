@@ -1136,7 +1136,7 @@ def wait_procs(procs, timeout=None, callback=None):
     Return a (gone, alive) tuple indicating which processes
     are gone and which ones are still alive.
 
-    The gone ones will have a new 'retcode' attribute indicating
+    The gone ones will have a new 'returncode' attribute indicating
     process exit status (may be None).
 
     'callback' is a function which gets called every time a process
@@ -1165,12 +1165,12 @@ def wait_procs(procs, timeout=None, callback=None):
     """
     def assert_gone(proc, timeout):
         try:
-            retcode = proc.wait(timeout=timeout)
+            returncode = proc.wait(timeout=timeout)
         except TimeoutExpired:
             pass
         else:
-            if retcode is not None or not proc.is_running():
-                proc.retcode = retcode
+            if returncode is not None or not proc.is_running():
+                proc.returncode = returncode
                 gone.add(proc)
                 if callback is not None:
                     callback(proc)
