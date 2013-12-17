@@ -11,11 +11,11 @@ import os
 import sys
 
 from psutil import _psposix
-from psutil import _psutil_osx
-from psutil import _psutil_posix
 from psutil._common import *
 from psutil._compat import namedtuple, wraps
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
+import _psutil_osx
+import _psutil_posix
 
 
 __extra__all__ = []

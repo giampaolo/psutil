@@ -17,13 +17,13 @@ import struct
 import sys
 import warnings
 
+from _psutil_linux import *  # needed for RLIMIT_* constants
 from psutil import _psposix
-from psutil import _psutil_linux
-from psutil import _psutil_posix
 from psutil._common import *
 from psutil._compat import PY3, xrange, namedtuple, wraps
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
-from psutil._psutil_linux import *  # needed for RLIMIT_* constants
+import _psutil_linux
+import _psutil_posix
 
 
 __extra__all__ = [

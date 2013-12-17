@@ -10,11 +10,10 @@ import errno
 import os
 import sys
 
-from psutil import _psutil_windows
 from psutil._common import *
 from psutil._compat import PY3, xrange, wraps, lru_cache
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
-from psutil._psutil_windows import ERROR_ACCESS_DENIED
+import _psutil_windows
 
 # process priority constants:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
@@ -38,7 +37,8 @@ __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
 
 CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
-ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED])
+ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
+                               _psutil_windows.ERROR_ACCESS_DENIED])
 
 TCP_STATUSES = {
     _psutil_windows.MIB_TCP_STATE_ESTAB: CONN_ESTABLISHED,

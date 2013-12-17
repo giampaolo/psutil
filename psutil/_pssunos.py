@@ -12,11 +12,11 @@ import socket
 import subprocess
 
 from psutil import _psposix
-from psutil import _psutil_posix
-from psutil import _psutil_sunos
 from psutil._common import *
 from psutil._compat import namedtuple, PY3
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
+import _psutil_posix
+import _psutil_sunos
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]

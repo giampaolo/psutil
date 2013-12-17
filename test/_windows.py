@@ -16,12 +16,6 @@ import time
 import traceback
 import unittest
 
-from psutil import _psutil_windows
-from psutil._compat import PY3, callable, long
-from psutil._pswindows import ACCESS_DENIED_SET
-from test_psutil import *
-import psutil
-
 try:
     import wmi
 except ImportError:
@@ -35,6 +29,12 @@ except ImportError:
     err = sys.exc_info()[1]
     register_warning("Couldn't run pywin32 tests: %s" % str(err))
     win32api = None
+
+from psutil._compat import PY3, callable, long
+from psutil._pswindows import ACCESS_DENIED_SET
+from test_psutil import *
+import _psutil_windows
+import psutil
 
 
 def wrap_exceptions(callable):

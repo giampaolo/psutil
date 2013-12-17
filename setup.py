@@ -44,7 +44,7 @@ def get_description():
 # POSIX
 if os.name == 'posix':
     posix_extension = Extension(
-        'psutil/_psutil_posix',
+        '_psutil_posix',
         sources=['psutil/_psutil_posix.c'],
     )
 # Windows
@@ -55,7 +55,7 @@ if sys.platform.startswith("win32"):
         return '0x0%s' % ((maj * 100) + min)
 
     extensions = [Extension(
-        'psutil/_psutil_windows',
+        '_psutil_windows',
         sources=[
             'psutil/_psutil_windows.c',
             'psutil/_psutil_common.c',
@@ -81,7 +81,7 @@ if sys.platform.startswith("win32"):
 # OS X
 elif sys.platform.startswith("darwin"):
     extensions = [Extension(
-        'psutil/_psutil_osx',
+        '_psutil_osx',
         sources=[
             'psutil/_psutil_osx.c',
             'psutil/_psutil_common.c',
@@ -96,7 +96,7 @@ elif sys.platform.startswith("darwin"):
 # FreeBSD
 elif sys.platform.startswith("freebsd"):
     extensions = [Extension(
-        'psutil/_psutil_bsd',
+        '_psutil_bsd',
         sources=[
             'psutil/_psutil_bsd.c',
             'psutil/_psutil_common.c',
@@ -108,14 +108,14 @@ elif sys.platform.startswith("freebsd"):
 # Linux
 elif sys.platform.startswith("linux"):
     extensions = [Extension(
-        'psutil/_psutil_linux',
+        '_psutil_linux',
         sources=['psutil/_psutil_linux.c']),
         posix_extension,
     ]
 # Solaris
 elif sys.platform.lower().startswith('sunos'):
     extensions = [Extension(
-        'psutil/_psutil_sunos',
+        '_psutil_sunos',
         sources=['psutil/_psutil_sunos.c'],
         libraries=['kstat', 'nsl'],),
         posix_extension,
