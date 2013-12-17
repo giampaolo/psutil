@@ -855,6 +855,7 @@ class TestSystemAPIs(unittest.TestCase):
         # XXX this test is not really reliable as it always fails on
         # Python 3.X (2.X is fine)
         try:
+            safe_rmdir(TESTFN_UNICODE)
             os.mkdir(TESTFN_UNICODE)
             psutil.disk_usage(TESTFN_UNICODE)
         except UnicodeEncodeError:
@@ -1266,7 +1267,8 @@ class TestProcess(unittest.TestCase):
     def test_get_rlimit(self):
         import resource
         p = psutil.Process(os.getpid())
-        names = [x for x in dir(psutil) if x.startswith('RLIM')]
+        names = [x for x in dir(psutil) if x.startswith('RLIMIT')]
+        assert names
         for name in names:
             value = getattr(psutil, name)
             self.assertGreaterEqual(value, 0)
