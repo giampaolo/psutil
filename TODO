@@ -9,14 +9,17 @@ https://code.google.com/p/psutil/issues/list
 HIGHER PRIORITY
 ===============
 
- * #387: system-wide connections (netstat).
+ * #387: system-wide connections (netstat) aka psutil.net_connections().
+
+ * #250: net ifaces speed.
+
+ * #376: ifconfig functionalities aka psutil.net_ifaces (could be merged
+         with #250)
 
  * OpenBSD support.
 
  * #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
    lm-sensors lib).
-
- * #250: net ifaces speed.
 
  * #424: Windows binary for Python 3.3 64-bit.
 
@@ -69,9 +72,10 @@ DEBATABLE
    limiting per-process network IO resources though, which is great). Needs
    further reading.
 
- * cpu_percent(): current default interval is 0.1 so that by default it will
-   produce a meaningful value. It represents a trap in case the user iterates
-   over multiple processes though, as it introduces a big slowdown.
+ * psutil.cpu_percent() and psutil.Process.get_cpu_percent():
+   current default interval is 0.1 so that by default it will produce a
+   meaningful value. It represents a trap in case the user iterates over
+   multiple processes though, as it introduces a big slowdown.
    Should it default to 0.0?
 
  * Should we expose OS constants (psutil.WINDOWS, psutil.OSX etc.)?
@@ -98,19 +102,20 @@ DEBATABLE
  * Process.get_threads() might grow an extra "id" parameter so that it can be
    used as such:
 
-    >>> p = psutil.Process(pid)
+    >>> p = psutil.Process(os.getpid())
     >>> p.get_threads(id=psutil.get_current_thread_id())
     thread(id=2539, user_time=0.03, system_time=0.02)
     >>>
 
-   note: this leads to questions such as "should we have a custom NoSuchThread
+   Note: this leads to questions such as "should we have a custom NoSuchThread
    exception? Also see issue #418.
+
+   Note #2: this would work with os.getpid() only.
+   psutil.get_current_thread_id() might be desirable as per issue #418 though.
 
   * should psutil.TimeoutExpired exception have a 'msg' kwarg similar to
     NoSuchProcess and AccessDenied? Not that we need it, but currently we
     cannot raise a TimeoutExpired exception with a specific error string.
-    Side note: tests' call_until() should raise TimeoutExpired instead of
-    RuntimeError.
 
 
 COMPATIBILITY BREAKAGE
@@ -133,7 +138,6 @@ Removals:
 
 Renames:
 
- * (S) rename/unify all _ps*.py process functions
  * (H) psutil.Process.ppid     -> get_ppid()
  * (H) psutil.Process.status   -> get_status()
  * (H) psutil.Process.uids     -> get_uids()
