@@ -1,10 +1,10 @@
 # Shortcuts for various tasks.
 
-.PHONY: install uninstall test nosetests memtest pep8 pyflakes clean
+.PHONY: install uninstall test nosetests memtest pep8 pyflakes clean upload-src
 
-PYTHON=python
-TEST_SCRIPT=test/test_psutil.py
-FLAGS=
+PYTHON ?= python
+TSCRIPT ?= test/test_psutil.py
+FLAGS ?=
 
 all: test
 
@@ -21,7 +21,7 @@ uninstall:
 	pip-`$(PYTHON) -c "import sys; sys.stdout.write('.'.join(map(str, sys.version_info)[:2]))"` uninstall -y -v psutil
 
 test: install
-	$(PYTHON) $(TEST_SCRIPT)
+	$(PYTHON) $(TSCRIPT)
 
 nosetests: install
 	# make nosetests FLAGS=test_name
@@ -38,12 +38,15 @@ pyflakes:
 
 clean:
 	rm -rf `find . -type d -name __pycache__`
-	rm -f `find . -type f -name *.py[co]`
-	rm -f `find . -type f -name *.so`
-	rm -f `find . -type f -name .*~`
-	rm -f `find . -type f -name *.orig`
-	rm -f `find . -type f -name *.bak`
-	rm -f `find . -type f -name *.rej`
+	rm -f `find . -type f -name \*.py[co]`
+	rm -f `find . -type f -name \*.so`
+	rm -f `find . -type f -name .\*~`
+	rm -f `find . -type f -name \*.orig`
+	rm -f `find . -type f -name \*.bak`
+	rm -f `find . -type f -name \*.rej`
 	rm -rf *.egg-info
 	rm -rf build
 	rm -rf dist
+
+upload-src: clean
+	$(PYTHON) setup.py sdist upload
