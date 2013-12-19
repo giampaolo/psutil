@@ -23,8 +23,8 @@ uninstall:
 test: install
 	$(PYTHON) $(TSCRIPT)
 
-nosetests: install
-	# make nosetests FLAGS=test_name
+nosetest: install
+	# $ make nosetest FLAGS=test_name
 	nosetests test/test_psutil.py -v -m $(FLAGS)
 
 memtest: install

@@ -122,6 +122,8 @@ DEBATABLE
     __init__.py can push the exceptions into _ps*.py module after having
     imported them.
 
+  * support wheels? http://pythonwheels.com/
+
 
 COMPATIBILITY BREAKAGE
 ======================
