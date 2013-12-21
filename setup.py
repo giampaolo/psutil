@@ -4,6 +4,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""psutil is a cross-platform library for retrieving information on
+running processes and system utilization (CPU, memory, disks, network)
+in Python.
+"""
+
 import os
 import sys
 try:
@@ -128,7 +133,7 @@ def main():
     setup_args = dict(
         name='psutil',
         version=get_version(),
-        description='A process and system utilities module for Python',
+        description=__doc__,
         long_description=get_description(),
         keywords=[
             'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice',
@@ -137,14 +142,11 @@ def main():
             'pmap', 'smem', 'monitoring', 'ulimit', 'prlimit',
         ],
         author='Giampaolo Rodola',
-        author_email='psutil@googlegroups.com',
-        maintainer='Giampaolo Rodola',
-        maintainer_email='g.rodola <at> gmail <dot> com',
+        author_email='g.rodola <at> gmail <dot> com',
         url='http://code.google.com/p/psutil/',
         platforms='Platform Independent',
         license='License :: OSI Approved :: BSD License',
         packages=['psutil'],
-        test_suite='test.test_psutil',
         # see: python setup.py register --list-classifiers
         classifiers=[
             'Development Status :: 5 - Production/Stable',
@@ -173,6 +175,8 @@ def main():
             'Programming Language :: Python :: 3.1',
             'Programming Language :: Python :: 3.2',
             'Programming Language :: Python :: 3.3',
+            'Programming Language :: Python :: Implementation :: CPython',
+            'Programming Language :: Python :: Implementation :: PyPy',
             'Programming Language :: Python',
             'Topic :: Software Development :: Libraries :: Python Modules',
             'Topic :: Software Development :: Libraries',

@@ -5,9 +5,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""psutil is a module providing convenience functions for managing
-processes and gather system information in a portable way by using
-Python.
+"""psutil is a cross-platform library for retrieving information on
+running processes and system utilization (CPU, memory, disks, network)
+in Python.
 """
 
 from __future__ import division
@@ -50,15 +50,14 @@ except ImportError:
     pwd = None
 
 from psutil._error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
-from psutil._common import cached_property
+from psutil._common import cached_property, memoize
 from psutil._compat import property, callable, defaultdict, namedtuple
 from psutil._compat import (wraps as _wraps,
                             PY3 as _PY3)
 from psutil._common import (deprecated as _deprecated,
                             nt_sys_diskio as _nt_sys_diskio,
                             nt_sys_netio as _nt_sys_netio,
-                            nt_sys_vmem as _nt_sys_vmem,
-                            memoize as _memoize)
+                            nt_sys_vmem as _nt_sys_vmem)
 
 from psutil._common import (STATUS_RUNNING,
                             STATUS_IDLE,
@@ -1223,7 +1222,7 @@ def wait_procs(procs, timeout=None, callback=None):
 # --- CPU related functions
 # =====================================================================
 
-@_memoize
+@memoize
 def cpu_count(logical=True):
     """Return the number of logical CPUs in the system (same as
     os.cpu_count() in Python 3.4).
@@ -1786,7 +1785,7 @@ def _replace_module():
 
 
 _replace_module()
-del property, cached_property, division, _replace_module
+del property, cached_property, memoize, division, _replace_module
 if sys.version_info < (3, 0):
     del num
 
