@@ -25,6 +25,8 @@ HIGHER PRIORITY
 
  * #269: expose network ifaces RX/TW queues.
 
+ * Windows make file.
+
 
 LOWER PRIORITY
 ==============
