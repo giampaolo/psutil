@@ -1,6 +1,6 @@
 @ECHO OFF
 
-REM ===========================================================================
+REM ==========================================================================
 REM Shortcuts for various tasks, emulating UNIX "make".
 REM Use this to script for various tasks such as runing tests, install
 REM psutil, etc.
@@ -11,13 +11,12 @@ REM The following assumptions are made:
 REM - Python is installed in C:\PythonXY\python.exe
 REM - the right Visual Studio version is installed
 REM - in case of Python 2.4 and 2.5 use mingw32 compiler
-REM ===========================================================================
+REM ==========================================================================
 
 
 SET PYTHON=C:\Python27\python.exe
 SET PATH=%PYTHON%;%PATH%
 SET PATH=C:\MinGW\bin;%PATH%
-
 
 
 if "%1" == "help" (
@@ -50,18 +49,19 @@ if "%1" == "build" (
     ) else (
         %PYTHON% setup.py build
     )
+    if %errorlevel% neq 0 goto :error
     goto :eof
 )
 
 if "%1" == "install" (
-    install:
+    :install
     call :build
     %PYTHON% setup.py install
-    goto :eo
+    goto :eof
 )
 
 if "%1" == "uninstall" (
-    uninstall:
+    :uninstall
     rmdir /S /Q %PYTHON%\Lib\site-packages\psutil
     del /F /S /Q %PYTHON%\Lib\site-packages\psutil*
     del /F /S /Q %PYTHON%\Lib\site-packages\_psutil*
@@ -69,21 +69,26 @@ if "%1" == "uninstall" (
 )
 
 if "%1" == "test" (
-    test:
+    :test
     call :install
     %PYTHON% test/test_psutil.py
     goto :eof
 )
 
 if "%1" == "create-exes" (
-    create-exes:
+    :create-exes
     call :clean
     C:\Python26\python.exe setup.py build bdist_wininst
+    if %errorlevel% neq 0 goto :error
     C:\Python27\python.exe setup.py build bdist_wininst
+    if %errorlevel% neq 0 goto :error
     C:\Python33\python.exe setup.py build bdist_wininst
+    if %errorlevel% neq 0 goto :error
     goto :eof
 )
 
-goto :help
+:error
+    echo last command returned an error; exiting
+    exit /b %errorlevel%
 
-:eof
+goto :help
