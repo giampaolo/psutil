@@ -1,6 +1,9 @@
-# Shortcuts for various tasks.
+# Shortcuts for various tasks (UNIX only).
+# To use a specific Python version run:
+# $ make install PYTHON=python3.3
 
-.PHONY: install uninstall test nosetests memtest pep8 pyflakes clean upload-src
+.PHONY: build install uninstall test nosetests memtest pep8 pyflakes clean \
+		upload-src
 
 PYTHON ?= python
 TSCRIPT ?= test/test_psutil.py
@@ -8,7 +11,22 @@ FLAGS ?=
 
 all: test
 
-install: clean
+clean:
+	rm -rf `find . -type d -name __pycache__`
+	rm -f `find . -type f -name \*.py[co]`
+	rm -f `find . -type f -name \*.so`
+	rm -f `find . -type f -name .\*~`
+	rm -f `find . -type f -name \*.orig`
+	rm -f `find . -type f -name \*.bak`
+	rm -f `find . -type f -name \*.rej`
+	rm -rf *.egg-info
+	rm -rf build
+	rm -rf dist
+
+build: clean
+	$(PYTHON) setup.py build
+
+install: build
 	if test $(PYTHON) = python2.4; then \
 		$(PYTHON) setup.py install; \
 	elif test $(PYTHON) = python2.5; then \
@@ -35,18 +53,6 @@ pep8:
 
 pyflakes:
 	pyflakes psutil/ test/ examples/ setup.py
-
-clean:
-	rm -rf `find . -type d -name __pycache__`
-	rm -f `find . -type f -name \*.py[co]`
-	rm -f `find . -type f -name \*.so`
-	rm -f `find . -type f -name .\*~`
-	rm -f `find . -type f -name \*.orig`
-	rm -f `find . -type f -name \*.bak`
-	rm -f `find . -type f -name \*.rej`
-	rm -rf *.egg-info
-	rm -rf build
-	rm -rf dist
 
 upload-src: clean
 	$(PYTHON) setup.py sdist upload
