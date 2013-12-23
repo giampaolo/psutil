@@ -19,60 +19,30 @@ SET PATH=%PYTHON%;%PATH%
 SET PATH=C:\MinGW\bin;%PATH%
 
 
-if "%1" == "" goto help
 
 if "%1" == "help" (
     :help
-    echo Please use `make ^<target^>` where ^<target^> is one of:
-    echo clean build install uninstall test
-    goto :EOF
+    echo Run `make ^<target^>` where ^<target^> is one of:
+    echo   clean         clean build files
+    echo   build         compile without installing
+    echo   install       compile and install
+    echo   uninstall     uninstall
+    echo   test          run tests
+    echo   create-exes   create exe installers in dist directory
+    goto :eof
 )
 
 if "%1" == "clean" (
-    call :clean
-    goto :EOF
+    :clean
+    for /r %%R in (__pycache__) do if exist %%R (rmdir /S /Q %%R)
+    for /r %%R in (*.pyc) do if exist %%R (del /s %%R)
+    if exist build (rmdir /S /Q build)
+    if exist dist (rmdir /S /Q dist)
+    goto :eof
 )
 
 if "%1" == "build" (
-    call :build
-    goto :EOF
-)
-
-if "%1" == "install" (
-    call :install
-    goto :EOF
-)
-
-if "%1" == "uninstall" (
-    rmdir /S /Q %PYTHON%\Lib\site-packages\psutil
-    del /F /S /Q %PYTHON%\Lib\site-packages\psutil*
-    del /F /S /Q %PYTHON%\Lib\site-packages\_psutil*
-    goto :EOF
-)
-
-if "%1" == "test" (
-    call :install
-    %PYTHON% test/test_psutil.py
-    goto :EOF
-)
-
-if "%1" == "create-exes" (
-    call :clean
-    C:\Python26\python.exe setup.py build bdist_wininst
-    C:\Python27\python.exe setup.py build bdist_wininst
-    C:\Python33\python.exe setup.py build bdist_wininst
-    goto :EOF
-)
-
-
-goto :help
-
-:install
-    call :build
-    %PYTHON% setup.py install
-    goto :EOF
-
-:build
+    :build
     if %PYTHON%==C:\Python24\python.exe (
         %PYTHON% setup.py build -c mingw32
     ) else if %PYTHON%==C:\Python25\python.exe (
@@ -80,11 +50,40 @@ goto :help
     ) else (
         %PYTHON% setup.py build
     )
-    goto :EOF
+    goto :eof
+)
 
-:clean
-    for /F "tokens=*" %%G IN ('dir /B /AD /S __pycache__') DO rmdir /S /Q %%G
-    for /r %%R in (*.pyc) do if exist %%R (del /s %%R)
-    if exist build (rmdir /S /Q build)
-    if exist dist (rmdir /S /Q dist)
-    goto :EOF
+if "%1" == "install" (
+    install:
+    call :build
+    %PYTHON% setup.py install
+    goto :eo
+)
+
+if "%1" == "uninstall" (
+    uninstall:
+    rmdir /S /Q %PYTHON%\Lib\site-packages\psutil
+    del /F /S /Q %PYTHON%\Lib\site-packages\psutil*
+    del /F /S /Q %PYTHON%\Lib\site-packages\_psutil*
+    goto :eof
+)
+
+if "%1" == "test" (
+    test:
+    call :install
+    %PYTHON% test/test_psutil.py
+    goto :eof
+)
+
+if "%1" == "create-exes" (
+    create-exes:
+    call :clean
+    C:\Python26\python.exe setup.py build bdist_wininst
+    C:\Python27\python.exe setup.py build bdist_wininst
+    C:\Python33\python.exe setup.py build bdist_wininst
+    goto :eof
+)
+
+goto :help
+
+:eof
