@@ -6,14 +6,19 @@ REM Use this script for various tasks such as installing psutil or
 REM running tests (for tests run "make.bat test").
 REM This script is modeled after my Windows installation so it might
 REM need some adjustements in order to work on your system.
-REM The following assumptions are made:
-REM - the default Python interpreter is in C:\Python27\python.exe
-REM - the right Visual Studio version is installed
-REM - in case of Python 2.4 and 2.5 mingw32 compiler is used
+REM By default C:\Python27\python.exe is used.
+REM To run another Python version run:
+REM set PYTHON=C:\Python33\python.exe & make test
+REM In case of Python 2.4 and 2.5 mingw32 compiler is used.
 REM ==========================================================================
 
 
-SET PYTHON=C:\Python27\python.exe
+if "%PYTHON%" == "" (
+    SET PYTHON=C:\Python27\python.exe
+)
+if "%TSCRIPT%" == "" (
+    SET TSCRIPT=test\test_psutil.py
+)
 SET PATH=%PYTHON%;%PATH%
 SET PATH=C:\MinGW\bin;%PATH%
 
@@ -71,7 +76,7 @@ if "%1" == "uninstall" (
 if "%1" == "test" (
     :test
     call :install
-    %PYTHON% test/test_psutil.py
+    %PYTHON% %TSCRIPT%
     goto :eof
 )
 
