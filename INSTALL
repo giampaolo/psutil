@@ -1,28 +1,37 @@
-==================
-Using easy_install
-==================
+============================
+Installing using pip on UNIX
+============================
 
-The easiest way to install psutil from sources is using easy_install.
-Get the latest easy_install version from http://pypi.python.org/pypi/setuptools
-and just run:
+The easiest way to install psutil on UNIX is by using pip (but first you might
+need to install python header files; see later).
+First install pip:
 
-    easy_install psutil
+    wget https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py
+    python ez_setup.py
 
-This should get the most updated psutil version from the Python pypi repository,
-unpack it, compile it and install it automatically.
+...then run:
+
+    pip install psutil
 
 
-===================================
-Installing on Windows using mingw32
-===================================
+=====================
+Installing on Windows
+=====================
+
+Just get the right installer for your Python version and architecture from:
+https://pypi.python.org/pypi/psutil/#downloads
+
+
+==================================
+Compiling on Windows using mingw32
+==================================
 
 After the mingw [1] environment is properly set up on your system you can
 compile Windows sources by entering:
 
     setup.py build -c mingw32
 
-To compile and install just append the "install" keyword at the end of the
-command line above, like this:
+To compile and install:
 
     setup.py build -c mingw32 install
 
@@ -35,28 +44,54 @@ Entering this line in the command prompt should do the work:
 NOTE: this assumes MinGW is installed in C:\MinGW, if not simply replace the
 path in the command above with an appropriate location.
 
+You can also use make.bat which automatizes some of that:
+
+    make.bat build
+
 [1] http://www.mingw.org/
 
 
-=========================================
-Installing on Windows using Visual Studio
-=========================================
+========================================
+Compiling on Windows using Visual Studio
+========================================
 
-To use Visual Studio to install psutil, you must have the same version of
-Visual Studio used to compile your installation of Python. For older versions
-of Python that will be Visual Studio 2003. For 2.6 and later it should be
-Visual Studio 2008. If you do not have the requisite version of Visual Studio
-available then it is recommended to use MinGW to compile psutil instead.
-If you do have Visual Studio installed, you can use the basic distutils
-commands:
+To use Visual Studio to compile psutil you must have the same version of
+Visual Studio used to compile your installation of Python which is::
 
-     setup.py build
+    Python 2.4:  VS 2003
+    Python 2.5:  VS 2003
+    Python 2.6:  VS 2008
+    Python 2.7:  VS 2008
+    Python 3.3+: VS 2010
 
-...or to install and build:
+...then run:
 
-     setup.py install
+    setup.py build
 
-distutils should take care of any necessary magic to compile from there.
+...or:
+
+    make.bat build
+
+If you do not have the right version of Visual Studio available then try using
+MinGW instead.
+
+
+===================
+Installing on Linux
+===================
+
+gcc is required and so the python headers. They can easily be installed by
+using the distro package manager. For example, on Debian amd Ubuntu:
+
+    sudo apt-get install python-dev
+
+...on Redhat and CentOS:
+
+    sudo yum install python-devel
+
+Once done, you can build/install psutil with:
+
+    python setup.py install
 
 
 ==================
@@ -68,14 +103,11 @@ the 'XcodeTools' installer from Apple. Then you can run the standard distutils
 commands.
 To build only:
 
-     python setup.py build
+    python setup.py build
 
 To install and build:
 
-     python setup.py install
-
-NOTE: due to developer's hardware limitations psutil has only been compiled and
-tested on OS X 10.4.11 so may or may not work on other versions.
+    python setup.py install
 
 
 =====================
@@ -88,23 +120,22 @@ the standard distutils commands.
 
 Build only:
 
-     python setup.py build
+    python setup.py build
 
 Install and build:
 
-     python setup.py install
+    python setup.py install
 
 
-===================
-Installing on Linux
-===================
+========
+Makefile
+========
 
-gcc is required and so the python headers. They can easily be installed by using
-the distro package manager. For example, on Ubuntu:
+A makefile is available for both UNIX and Windows (make.bat).  It provides
+some automations for the tasks described above and might be preferred over
+using setup.py. With it you can::
 
-     sudo apt-get install python-dev
-
-Once done, you can install/build psutil with:
-
-     python setup.py install
-
+    make install    # just install
+    make uninstall  # uninstall (needs pip)
+    make test       # run tests
+    make clean      # remove installation files
