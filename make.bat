@@ -3,7 +3,7 @@
 REM ==========================================================================
 REM Shortcuts for various tasks, emulating UNIX "make" on Windows.
 REM Use this script for various tasks such as installing psutil or
-REM running tests (for tests run "make.bat test").
+REM running tests ("make.bat test").
 REM This script is modeled after my Windows installation so it might
 REM need some adjustements in order to work on your system.
 REM By default C:\Python27\python.exe is used.
@@ -31,6 +31,7 @@ if "%1" == "help" (
     echo   install       compile and install
     echo   uninstall     uninstall
     echo   test          run tests
+    echo   memtest       run memory leak tests
     echo   build-exes    create exe installers in dist directory
     echo   upload-exes   upload exe installers on pypi
     goto :eof
@@ -40,6 +41,10 @@ if "%1" == "clean" (
     :clean
     for /r %%R in (__pycache__) do if exist %%R (rmdir /S /Q %%R)
     for /r %%R in (*.pyc) do if exist %%R (del /s %%R)
+    for /r %%R in (*.orig) do if exist %%R (del /s %%R)
+    for /r %%R in (*.bak) do if exist %%R (del /s %%R))
+    for /r %%R in (*.rej) do if exist %%R (del /s %%R)
+    if exist psutil.egg-info (rmdir /S /Q psutil.egg-info)
     if exist build (rmdir /S /Q build)
     if exist dist (rmdir /S /Q dist)
     goto :eof
@@ -77,6 +82,13 @@ if "%1" == "test" (
     :test
     call :install
     %PYTHON% %TSCRIPT%
+    goto :eof
+)
+
+if "%1" == "memtest" (
+    :memtest
+    call :install
+    %PYTHON% test\test_memory_leaks.py
     goto :eof
 )
 
