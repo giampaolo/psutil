@@ -1,11 +1,11 @@
 @ECHO OFF
 
 REM ==========================================================================
-REM Shortcuts for various tasks, emulating UNIX "make".
-REM Use this script for various tasks such as running tests or install psutil.
-REM To run tests run "make.bat test".
-REM This script is modeled after my Windows installation so it might need some
-REM adjustements in order to work on your system.
+REM Shortcuts for various tasks, emulating UNIX "make" on Windows.
+REM Use this script for various tasks such as installing psutil or
+REM running tests (for tests run "make.bat test").
+REM This script is modeled after my Windows installation so it might
+REM need some adjustements in order to work on your system.
 REM The following assumptions are made:
 REM - the default Python interpreter is in C:\Python27\python.exe
 REM - the right Visual Studio version is installed
@@ -26,7 +26,8 @@ if "%1" == "help" (
     echo   install       compile and install
     echo   uninstall     uninstall
     echo   test          run tests
-    echo   create-exes   create exe installers in dist directory
+    echo   build-exes    create exe installers in dist directory
+    echo   upload-exes   upload exe installers on pypi
     goto :eof
 )
 
@@ -74,21 +75,25 @@ if "%1" == "test" (
     goto :eof
 )
 
-if "%1" == "create-exes" (
-    :create-exes
+if "%1" == "build-exes" (
+    :build-exes
     call :clean
-
-    for %%x in ("C:\Python26\python.exe setup.py build bdist_wininst"
-                "C:\Python27\python.exe setup.py build bdist_wininst") do (
-        set myvar=%%x
-        %myvar%
-    )
-
+    C:\Python26\python.exe setup.py build bdist_wininst & if %errorlevel% neq 0 goto :error
+    C:\Python27\python.exe setup.py build bdist_wininst & if %errorlevel% neq 0 goto :error
+    C:\Python33\python.exe setup.py build bdist_wininst & if %errorlevel% neq 0 goto :error
     goto :eof
 )
+
+if "%1" == "upload-exes" (
+    :upload-exes
+    C:\Python26\python.exe setup.py bdist_wininst upload  & if %errorlevel% neq 0 goto :error
+    C:\Python27\python.exe setup.py bdist_wininst upload  & if %errorlevel% neq 0 goto :error
+    C:\Python33\python.exe setup.py bdist_wininst upload  & if %errorlevel% neq 0 goto :error
+    goto :eof
+)
+
+goto :help
 
 :error
     echo last command returned an error; exiting
     exit /b %errorlevel%
-
-goto :help
