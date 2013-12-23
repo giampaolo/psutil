@@ -67,7 +67,10 @@ nt_proc_extmem = namedtuple(
 
 @lru_cache(maxsize=512)
 def _win32_QueryDosDevice(s):
-    return _psutil_windows.win32_QueryDosDevice(s)
+    try:
+        return _psutil_windows.win32_QueryDosDevice(s)
+    except UnicodeEncodeError:
+        import pdb; pdb.set_trace()
 
 
 def _convert_raw_path(s):
@@ -269,7 +272,7 @@ class Process(object):
             # XXX - can't use wrap_exceptions decorator as we're
             # returning a generator; probably needs refactoring.
             err = sys.exc_info()[1]
-            if err.errno in (errno.EPERM, errno.EACCES, ERROR_ACCESS_DENIED):
+            if err.errno in ACCESS_DENIED_SET:
                 raise AccessDenied(self.pid, self._process_name)
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._process_name)

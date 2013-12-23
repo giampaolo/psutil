@@ -16,6 +16,8 @@ import time
 import traceback
 import unittest
 
+from test_psutil import *
+
 try:
     import wmi
 except ImportError:
@@ -32,7 +34,6 @@ except ImportError:
 
 from psutil._compat import PY3, callable, long
 from psutil._pswindows import ACCESS_DENIED_SET
-from test_psutil import *
 import _psutil_windows
 import psutil
 
