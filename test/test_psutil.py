@@ -91,6 +91,10 @@ VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
 def cleanup():
     reap_children(search_all=True)
     safe_remove(TESTFN)
+    try:
+        safe_rmdir(TESTFN_UNICODE)
+    except UnicodeEncodeError:
+        pass
     for path in _testfiles:
         safe_remove(path)
 
@@ -858,6 +862,7 @@ class TestSystemAPIs(unittest.TestCase):
             safe_rmdir(TESTFN_UNICODE)
             os.mkdir(TESTFN_UNICODE)
             psutil.disk_usage(TESTFN_UNICODE)
+            safe_rmdir(TESTFN_UNICODE)
         except UnicodeEncodeError:
             pass
 

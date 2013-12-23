@@ -19,6 +19,7 @@ clean:
 	rm -f `find . -type f -name \*.orig`
 	rm -f `find . -type f -name \*.bak`
 	rm -f `find . -type f -name \*.rej`
+	rm -rf *\$testfile*
 	rm -rf *.egg-info
 	rm -rf build
 	rm -rf dist
