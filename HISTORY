@@ -32,8 +32,8 @@ Deprecated APIs (still available as aliases producing a DeprecationWarning):
  - psutil.NUM_CPUS          (use psutil.cpu_cpunt())
  - psutil.BOOT_TIME         (use psutil.get_boot_time())
  - psutil.TOTAL_PHYMEM      (use psutil.virtual_memory().total)
- - psutil.get_pid_list()    (renamed to psutil.get_pids())
- - psutil.Process.getcwd()  (renamed to psutil.Process.get_cwd())
+ - psutil.get_pid_list()    (renamed to psutil.pids())
+ XXX list Process class renamings
 
 Others:
  - Process instances' "retcode" attribute returned by psutil.wait_procs() has

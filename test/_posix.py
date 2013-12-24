@@ -134,7 +134,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
     @retry_before_failing()
-    def test_get_pids(self):
+    def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
         if SUNOS:
@@ -152,7 +152,7 @@ class PosixSpecificTestCase(unittest.TestCase):
                 pids_ps.append(pid)
         # remove ps subprocess pid which is supposed to be dead in meantime
         pids_ps.remove(p.pid)
-        pids_psutil = psutil.get_pids()
+        pids_psutil = psutil.pids()
         pids_ps.sort()
         pids_psutil.sort()
 

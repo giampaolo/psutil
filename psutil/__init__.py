@@ -29,7 +29,7 @@ __all__ = [
     # classes
     "Process", "Popen",
     # functions
-    "pid_exists", "get_pids", "process_iter", "wait_procs",         # proc
+    "pid_exists", "pids", "process_iter", "wait_procs",             # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
     "net_io_counters",                                              # network
@@ -1111,14 +1111,14 @@ class Popen(Process):
 # --- system processes related functions
 # =====================================================================
 
-def get_pids():
+def pids():
     """Return a list of current running PIDs."""
     return _psplatform.get_pids()
 
 
 def pid_exists(pid):
     """Return True if given PID exists in the current process list.
-    This is faster than doing "pid in psutil.get_pids()" and
+    This is faster than doing "pid in psutil.pids()" and
     should be preferred.
     """
     if pid < 0:
@@ -1129,7 +1129,7 @@ def pid_exists(pid):
         # though: it refers to <<every process in the process
         # group of the calling process>> and that is not we want
         # to do here.
-        return pid in get_pids()
+        return pid in pids()
     else:
         return _psplatform.pid_exists(pid)
 
@@ -1158,7 +1158,7 @@ def process_iter():
     def remove(pid):
         _pmap.pop(pid, None)
 
-    a = set(get_pids())
+    a = set(pids())
     b = set(_pmap.keys())
     new_pids = a - b
     gone_pids = b - a
@@ -1686,9 +1686,9 @@ def get_users():
 # --- deprecated functions
 # =====================================================================
 
-@_deprecated(replacement="psutil.get_pids()")
+@_deprecated(replacement="psutil.pids()")
 def get_pid_list():
-    return get_pids()
+    return pids()
 
 
 @_deprecated(replacement="list(process_iter())")
