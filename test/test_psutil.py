@@ -619,7 +619,6 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_deprecated_apis_retval(self):
         warnings.filterwarnings("ignore")
-        p = psutil.Process()
         try:
             self.assertEqual(psutil.total_virtmem(),
                              psutil.swap_memory().total)
@@ -1001,6 +1000,8 @@ class TestProcess(unittest.TestCase):
 
     def test_pid(self):
         self.assertEqual(psutil.Process().pid, os.getpid())
+        sproc = get_test_subprocess()
+        self.assertEqual(psutil.Process(sproc.pid).pid, sproc.pid)
 
     def test_kill(self):
         sproc = get_test_subprocess(wait=True)
@@ -1397,10 +1398,6 @@ class TestProcess(unittest.TestCase):
     def test_get_memory_percent(self):
         p = psutil.Process()
         self.assertGreater(p.memory_percent(), 0.0)
-
-    def test_pid(self):
-        sproc = get_test_subprocess()
-        self.assertEqual(psutil.Process(sproc.pid).pid, sproc.pid)
 
     def test_is_running(self):
         sproc = get_test_subprocess(wait=True)
@@ -2083,7 +2080,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         valid_procs = 0
         excluded_names = set([
             'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-            'as_dict', 'cpu_percent',  'parent', 'children', 'pid'])
+            'as_dict', 'cpu_percent', 'parent', 'children', 'pid'])
         attrs = []
         for name in dir(psutil.Process):
             if name.startswith("_"):

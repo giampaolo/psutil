@@ -653,79 +653,81 @@ class Process(object):
     nt_mmap_ext = namedtuple('mmap', 'addr perms ' +
                              ' '.join(_mmap_base_fields))
 
-    def get_memory_maps(self):
-        """Return process's mapped memory regions as a list of nameduples.
-        Fields are explained in 'man proc'; here is an updated (Apr 2012)
-        version: http://goo.gl/fmebo
-        """
-        f = None
-        try:
-            f = open("/proc/%s/smaps" % self.pid)
-            first_line = f.readline()
-            current_block = [first_line]
+    if os.path.exists('/proc/%s/smaps' % os.getpid()):
+        def get_memory_maps(self):
+            """Return process's mapped memory regions as a list of nameduples.
+            Fields are explained in 'man proc'; here is an updated (Apr 2012)
+            version: http://goo.gl/fmebo
+            """
+            f = None
+            try:
+                f = open("/proc/%s/smaps" % self.pid)
+                first_line = f.readline()
+                current_block = [first_line]
 
-            def get_blocks():
-                data = {}
-                for line in f:
-                    fields = line.split(None, 5)
-                    if not fields[0].endswith(':'):
-                        # new block section
-                        yield (current_block.pop(), data)
-                        current_block.append(line)
-                    else:
+                def get_blocks():
+                    data = {}
+                    for line in f:
+                        fields = line.split(None, 5)
+                        if not fields[0].endswith(':'):
+                            # new block section
+                            yield (current_block.pop(), data)
+                            current_block.append(line)
+                        else:
+                            try:
+                                data[fields[0]] = int(fields[1]) * 1024
+                            except ValueError:
+                                if fields[0].startswith('VmFlags:'):
+                                    # see issue #369
+                                    continue
+                                else:
+                                    raise ValueError("don't know how to inte"
+                                                     "rpret line %r" % line)
+                    yield (current_block.pop(), data)
+
+                if first_line:  # smaps file can be empty
+                    for header, data in get_blocks():
+                        hfields = header.split(None, 5)
                         try:
-                            data[fields[0]] = int(fields[1]) * 1024
+                            addr, perms, offset, dev, inode, path = hfields
                         except ValueError:
-                            if fields[0].startswith('VmFlags:'):
-                                # see issue #369
-                                continue
-                            else:
-                                raise ValueError("don't know how to interpret"
-                                                 " line %r" % line)
-                yield (current_block.pop(), data)
-
-            if first_line:  # smaps file can be empty
-                for header, data in get_blocks():
-                    hfields = header.split(None, 5)
-                    try:
-                        addr, perms, offset, dev, inode, path = hfields
-                    except ValueError:
-                        addr, perms, offset, dev, inode, path = hfields + ['']
-                    if not path:
-                        path = '[anon]'
-                    else:
-                        path = path.strip()
-                    yield (addr, perms, path,
-                           data['Rss:'],
-                           data.get('Size:', 0),
-                           data.get('Pss:', 0),
-                           data.get('Shared_Clean:', 0),
-                           data.get('Shared_Dirty:', 0),
-                           data.get('Private_Clean:', 0),
-                           data.get('Private_Dirty:', 0),
-                           data.get('Referenced:', 0),
-                           data.get('Anonymous:', 0),
-                           data.get('Swap:', 0))
+                            addr, perms, offset, dev, inode, path = \
+                                hfields + ['']
+                        if not path:
+                            path = '[anon]'
+                        else:
+                            path = path.strip()
+                        yield (addr, perms, path,
+                               data['Rss:'],
+                               data.get('Size:', 0),
+                               data.get('Pss:', 0),
+                               data.get('Shared_Clean:', 0),
+                               data.get('Shared_Dirty:', 0),
+                               data.get('Private_Clean:', 0),
+                               data.get('Private_Dirty:', 0),
+                               data.get('Referenced:', 0),
+                               data.get('Anonymous:', 0),
+                               data.get('Swap:', 0))
+                f.close()
+            except EnvironmentError:
+                # XXX - Can't use wrap_exceptions decorator as we're
+                # returning a generator;  this probably needs some
+                # refactoring in order to avoid this code duplication.
+                if f is not None:
+                    f.close()
+                err = sys.exc_info()[1]
+                if err.errno in (errno.ENOENT, errno.ESRCH):
+                    raise NoSuchProcess(self.pid, self._process_name)
+                if err.errno in (errno.EPERM, errno.EACCES):
+                    raise AccessDenied(self.pid, self._process_name)
+                raise
+            except:
+                if f is not None:
+                    f.close()
+                raise
             f.close()
-        except EnvironmentError:
-            # XXX - Can't use wrap_exceptions decorator as we're
-            # returning a generator;  this probably needs some
-            # refactoring in order to avoid this code duplication.
-            if f is not None:
-                f.close()
-            err = sys.exc_info()[1]
-            if err.errno in (errno.ENOENT, errno.ESRCH):
-                raise NoSuchProcess(self.pid, self._process_name)
-            if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._process_name)
-            raise
-        except:
-            if f is not None:
-                f.close()
-            raise
-        f.close()
 
-    if not os.path.exists('/proc/%s/smaps' % os.getpid()):
+    else:
         def get_memory_maps(self, ext):
             msg = "couldn't find /proc/%s/smaps; kernel < 2.6.14 or "  \
                   "CONFIG_MMU kernel configuration option is not enabled" \

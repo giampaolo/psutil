@@ -53,7 +53,9 @@ pep8:
 	pep8 psutil/ test/ examples/ setup.py --ignore E302
 
 pyflakes:
-	pyflakes psutil/ test/ examples/ setup.py
+	# ignore doctests
+	export PYFLAKES_NODOCTEST=1 && \
+		pyflakes psutil/ test/ examples/ setup.py
 
 upload-src: clean
 	$(PYTHON) setup.py sdist upload

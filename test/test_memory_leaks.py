@@ -27,14 +27,13 @@ import psutil
 import psutil._common
 
 from psutil._compat import callable, xrange
-from test_psutil import *
+from test_psutil import WINDOWS, POSIX, OSX, LINUX, SUNOS, TESTFN
+from test_psutil import (reap_children, supports_ipv6, safe_remove,
+                         get_test_subprocess)
 
 
 LOOPS = 1000
 TOLERANCE = 4096
-
-# disable cache for Process class properties
-psutil._common.cached_property.enabled = False
 
 
 class Base(unittest.TestCase):

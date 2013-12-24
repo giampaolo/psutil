@@ -67,10 +67,7 @@ nt_proc_extmem = namedtuple(
 
 @lru_cache(maxsize=512)
 def _win32_QueryDosDevice(s):
-    try:
-        return _psutil_windows.win32_QueryDosDevice(s)
-    except UnicodeEncodeError:
-        import pdb; pdb.set_trace()
+    return _psutil_windows.win32_QueryDosDevice(s)
 
 
 def _convert_raw_path(s):
