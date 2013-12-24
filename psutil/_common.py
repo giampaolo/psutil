@@ -132,6 +132,24 @@ def deprecated(replacement=None):
     return outer
 
 
+def deprecated_method(replacement):
+    """A decorator which can be used to mark a method as deprecated
+    'replcement' is the method name which will be called instead.
+    """
+    def outer(fun):
+        msg = "%s() is deprecated; use %s() instead" % (
+            fun.__name__, replacement)
+        if fun.__doc__ is None:
+            fun.__doc__ = msg
+
+        @wraps(fun)
+        def inner(self, *args, **kwargs):
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return getattr(self, replacement)(*args, **kwargs)
+        return inner
+    return outer
+
+
 def isfile_strict(path):
     """Same as os.path.isfile() but does not swallow EACCES / EPERM
     exceptions, see:

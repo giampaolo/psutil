@@ -54,7 +54,8 @@ from psutil._common import cached_property, memoize
 from psutil._compat import property, callable, defaultdict, namedtuple
 from psutil._compat import (wraps as _wraps,
                             PY3 as _PY3)
-from psutil._common import (deprecated as _deprecated,
+from psutil._common import (deprecated_method as _deprecated_method,
+                            deprecated as _deprecated,
                             nt_sys_diskio as _nt_sys_diskio,
                             nt_sys_netio as _nt_sys_netio,
                             nt_sys_vmem as _nt_sys_vmem)
@@ -286,20 +287,33 @@ class Process(object):
         """
         excluded_names = set(
             ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-             'is_running', 'as_dict', 'parent', 'get_children', 'nice',
-             'get_rlimit', 'getcwd'])
+             'is_running', 'as_dict', 'parent', 'children',  'rlimit'])
         retdict = dict()
-        for name in set(attrs or dir(self)):
+        ls = set(attrs or dir(self))
+        for name in ls:
             if name.startswith('_'):
                 continue
             if name.startswith('set_'):
                 continue
+            if name.startswith('get_'):
+                msg = "%s() is deprecated; use %s() instead" % (name, name[4:])
+                warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+                name = name[4:]
+                if name in ls:
+                    continue
+            if name == 'getcwd':
+                msg = "getcwd() is deprecated; use cwd() instead"
+                warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+                name = 'cwd'
+                if name in ls:
+                    continue
+
             if name in excluded_names:
                 continue
             try:
                 attr = getattr(self, name)
                 if callable(attr):
-                    if name == 'get_cpu_percent':
+                    if name == 'cpu_percent':
                         ret = attr(interval=0)
                     else:
                         ret = attr()
@@ -314,11 +328,6 @@ class Process(object):
                 if attrs:
                     raise
                 continue
-            if name.startswith('get'):
-                if name[3] == '_':
-                    name = name[4:]
-                elif name == 'getcwd':
-                    name = 'cwd'
             retdict[name] = ret
         return retdict
 
@@ -475,14 +484,14 @@ class Process(object):
         """
         return self._proc.get_create_time()
 
-    def get_cwd(self):
+    def cwd(self):
         """Process current working directory."""
         return self._proc.get_cwd()
 
     # Linux, BSD and Windows only
     if hasattr(_psplatform.Process, "get_io_counters"):
 
-        def get_io_counters(self):
+        def io_counters(self):
             """Return process I/O statistics as a
             (read_count, write_count, read_bytes, write_bytes)
             namedtuple.
@@ -491,7 +500,7 @@ class Process(object):
             """
             return self._proc.get_io_counters()
 
-    def get_nice(self):
+    def nice(self):
         """Get process niceness (priority)."""
         return self._proc.get_nice()
 
@@ -504,7 +513,7 @@ class Process(object):
     # Linux and Windows >= Vista only
     if hasattr(_psplatform.Process, "get_ionice"):
 
-        def get_ionice(self):
+        def ionice(self):
             """Return process I/O niceness (priority).
 
             On Linux this is a (ioclass, value) namedtuple.
@@ -532,7 +541,7 @@ class Process(object):
     # Linux only
     if hasattr(_psplatform.Process, "prlimit"):
 
-        def get_rlimit(self, resource):
+        def rlimit(self, resource):
             """Get process resource limits as a (soft, hard)
             namedtuple.
 
@@ -557,7 +566,7 @@ class Process(object):
     # Windows and Linux only
     if hasattr(_psplatform.Process, "get_cpu_affinity"):
 
-        def get_cpu_affinity(self):
+        def cpu_affinity(self):
             """Get process current CPU affinity."""
             return self._proc.get_cpu_affinity()
 
@@ -570,7 +579,7 @@ class Process(object):
 
     if os.name == 'nt':
 
-        def get_num_handles(self):
+        def num_handles(self):
             """Return the number of handles opened by this process
             (Windows only).
             """
@@ -578,23 +587,23 @@ class Process(object):
 
     if os.name == 'posix':
 
-        def get_num_fds(self):
+        def num_fds(self):
             """Return the number of file descriptors opened by this
             process (POSIX only).
             """
             return self._proc.get_num_fds()
 
-    def get_num_ctx_switches(self):
+    def num_ctx_switches(self):
         """Return the number of voluntary and involuntary context
         switches performed by this process.
         """
         return self._proc.get_num_ctx_switches()
 
-    def get_num_threads(self):
+    def num_threads(self):
         """Return the number of threads used by this process."""
         return self._proc.get_num_threads()
 
-    def get_threads(self):
+    def threads(self):
         """Return threads opened by process as a list of
         (id, user_time, system_time) namedtuples representing
         thread id and thread CPU times (user/system).
@@ -602,7 +611,7 @@ class Process(object):
         return self._proc.get_threads()
 
     @_assert_pid_not_reused
-    def get_children(self, recursive=False):
+    def children(self, recursive=False):
         """Return the children of this process as a list of Process
         instances, pre-emptively checking whether PID has been reused.
         If recursive is True return all the parent descendants.
@@ -697,7 +706,7 @@ class Process(object):
                                 checkpids.append(child.pid)
         return ret
 
-    def get_cpu_percent(self, interval=0.1):
+    def cpu_percent(self, interval=0.1):
         """Return a float representing the current process CPU
         utilization as a percentage.
 
@@ -763,14 +772,14 @@ class Process(object):
                 return 100.0
         return round(single_cpu_percent, 1)
 
-    def get_cpu_times(self):
+    def cpu_times(self):
         """Return a (user, system) namedtuple representing  the
         accumulated process time, in seconds.
         This is the same as os.times() but per-process.
         """
         return self._proc.get_cpu_times()
 
-    def get_memory_info(self):
+    def memory_info(self):
         """Return a tuple representing RSS (Resident Set Size) and VMS
         (Virtual Memory Size) in bytes.
 
@@ -781,14 +790,14 @@ class Process(object):
         """
         return self._proc.get_memory_info()
 
-    def get_ext_memory_info(self):
+    def ext_memory_info(self):
         """Return a namedtuple with variable fields depending on the
         platform representing extended memory information about
         this process. All numbers are expressed in bytes.
         """
         return self._proc.get_ext_memory_info()
 
-    def get_memory_percent(self):
+    def memory_percent(self):
         """Compare physical system memory to process resident memory
         (RSS) and calculate process memory utilization as a percentage.
         """
@@ -800,7 +809,7 @@ class Process(object):
         except ZeroDivisionError:
             return 0.0
 
-    def get_memory_maps(self, grouped=True):
+    def memory_maps(self, grouped=True):
         """Return process' mapped memory regions as a list of nameduples
         whose fields are variable depending on the platform.
 
@@ -827,14 +836,14 @@ class Process(object):
             nt = self._proc.nt_mmap_ext
             return [nt(*x) for x in it]
 
-    def get_open_files(self):
+    def open_files(self):
         """Return files opened by process as a list of
         (path, fd) namedtuples including the absolute file name
         and file descriptor number.
         """
         return self._proc.get_open_files()
 
-    def get_connections(self, kind='inet'):
+    def connections(self, kind='inet'):
         """Return connections opened by process as a list of
         (fd, family, type, laddr, raddr, status) namedtuples.
         The 'kind' parameter filters for connections that match the
@@ -955,34 +964,83 @@ class Process(object):
             raise ValueError("timeout must be a positive integer")
         return self._proc.process_wait(timeout)
 
-    # --- deprecated API
+    # --- deprecated APIs
 
-    @property
-    def nice(self):
-        """Get or set process niceness (priority).
-        Deprecated, use get_nice() instead.
-        """
-        msg = "this property is deprecated; " \
-              "use Process.get_nice() method instead"
-        warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-        return self.get_nice()
+    @_deprecated_method(replacement='children')
+    def get_children(self):
+        pass
 
-    @nice.setter
-    def nice(self, value):
-        # invoked on "p.nice = num"; change process niceness
-        # deprecated in favor of set_nice()
-        msg = "this property is deprecated; " \
-              "use Process.set_nice() method instead"
-        warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-        return self.set_nice(value)
+    @_deprecated_method(replacement='connections')
+    def get_connections(self):
+        pass
 
+    @_deprecated_method(replacement='cpu_affinity')
+    def get_cpu_affinity(self):
+        pass
+
+    @_deprecated_method(replacement='cpu_percent')
+    def get_cpu_percent(self):
+        pass
+
+    @_deprecated_method(replacement='cpu_times')
+    def get_cpu_times(self):
+        pass
+
+    @_deprecated_method(replacement='cwd')
     def getcwd(self):
-        """Return process current working directory.
-        Deprecated, use get_cwd() instead.
-        """
-        msg = "this method is deprecated; use Process.get_cwd() instead"
-        warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-        return self.get_cwd()
+        pass
+
+    @_deprecated_method(replacement='ext_memory_info')
+    def get_ext_memory_info(self):
+        pass
+
+    @_deprecated_method(replacement='io_counters')
+    def get_io_counters(self):
+        pass
+
+    @_deprecated_method(replacement='ionice')
+    def get_ionice(self):
+        pass
+
+    @_deprecated_method(replacement='memory_info')
+    def get_memory_info(self):
+        pass
+
+    @_deprecated_method(replacement='memory_maps')
+    def get_memory_maps(self):
+        pass
+
+    @_deprecated_method(replacement='memory_percent')
+    def get_memory_percent(self):
+        pass
+
+    @_deprecated_method(replacement='nice')
+    def get_nice(self):
+        pass
+
+    @_deprecated_method(replacement='num_ctx_switches')
+    def get_num_ctx_switches(self):
+        pass
+
+    @_deprecated_method(replacement='num_fds')
+    def get_num_fds(self):
+        pass
+
+    @_deprecated_method(replacement='num_threads')
+    def get_num_threads(self):
+        pass
+
+    @_deprecated_method(replacement='open_files')
+    def get_open_files(self):
+        pass
+
+    @_deprecated_method(replacement='rlimit')
+    def get_rlimit(self):
+        pass
+
+    @_deprecated_method(replacement='threads')
+    def get_threads(self):
+        pass
 
 
 class Popen(Process):

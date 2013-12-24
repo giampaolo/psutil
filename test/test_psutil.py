@@ -592,11 +592,11 @@ class TestSystemAPIs(unittest.TestCase):
                 self.assertRaises(DeprecationWarning, psutil.cached_phymem)
 
             # Process class
-            self.assertRaises(DeprecationWarning, getattr, p, 'nice')
-            self.assertRaises(DeprecationWarning, p.getcwd)
+            #self.assertRaises(DeprecationWarning, p.getcwd)
+            self.assertRaises(DeprecationWarning, p.get_connections)
 
             # named tuples
-            ret = call_until(p.get_connections, "len(ret) != 0")
+            ret = call_until(p.connections, "len(ret) != 0")
             self.assertRaises(DeprecationWarning,
                               getattr, ret[0], 'local_address')
             self.assertRaises(DeprecationWarning,
@@ -622,7 +622,6 @@ class TestSystemAPIs(unittest.TestCase):
         try:
             self.assertEqual(psutil.total_virtmem(),
                              psutil.swap_memory().total)
-            self.assertEqual(p.nice, p.get_nice())
         finally:
             warnings.resetwarnings()
 
@@ -1913,18 +1912,20 @@ class TestProcess(unittest.TestCase):
         p.kill()
         p.wait()
 
+        excluded_names = ('pid', 'send_signal', 'is_running', 'set_ionice',
+                          'wait', 'set_cpu_affinity', 'create_time', 'nice',
+                          'set_nice', 'getcwd')
         for name in dir(p):
-            if name.startswith('_')\
-                or name in ('pid', 'send_signal', 'is_running', 'set_ionice',
-                            'wait', 'set_cpu_affinity', 'create_time', 'nice',
-                            'set_nice', 'getcwd'):
+            if (name.startswith('_')
+                    or name.startswith('get')  # deprecated APIs
+                    or name in excluded_names):
                 continue
             try:
                 # if name == 'get_rlimit'
                 args = ()
                 meth = getattr(p, name)
                 if callable(meth):
-                    if name == 'get_rlimit':
+                    if name == 'rlimit':
                         args = (psutil.RLIMIT_NOFILE,)
                     elif name == 'set_rlimit':
                         args = (psutil.RLIMIT_NOFILE, (5, 5))
@@ -2079,12 +2080,15 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def test_fetch_all(self):
         valid_procs = 0
-        excluded_names = ['send_signal', 'suspend', 'resume', 'terminate',
-                          'kill', 'wait', 'as_dict', 'get_cpu_percent', 'nice',
-                          'parent', 'get_children', 'pid', 'getcwd']
+        excluded_names = set([
+            'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
+            'as_dict', 'cpu_percent',  'parent', 'children', 'pid'])
         attrs = []
         for name in dir(psutil.Process):
             if name.startswith("_"):
+                continue
+            if name.startswith("get"):
+                # deprecated APIs
                 continue
             if name.startswith("set_"):
                 continue
@@ -2102,7 +2106,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                         args = ()
                         attr = getattr(p, name, None)
                         if attr is not None and callable(attr):
-                            if name == 'get_rlimit':
+                            if name == 'rlimit':
                                 args = (psutil.RLIMIT_NOFILE,)
                             ret = attr(*args)
                         else:
@@ -2200,12 +2204,12 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertTrue(ret != '?')
         self.assertIn(ret, VALID_PROC_STATUSES)
 
-    def get_io_counters(self, ret):
+    def io_counters(self, ret):
         for field in ret:
             if field != -1:
                 self.assertTrue(field >= 0)
 
-    def get_ionice(self, ret):
+    def ionice(self, ret):
         if LINUX:
             self.assertTrue(ret.ioclass >= 0)
             self.assertTrue(ret.value >= 0)
@@ -2213,24 +2217,24 @@ class TestFetchAllProcesses(unittest.TestCase):
             self.assertTrue(ret >= 0)
             self.assertIn(ret, (0, 1, 2))
 
-    def get_num_threads(self, ret):
+    def num_threads(self, ret):
         self.assertTrue(ret >= 1)
 
-    def get_threads(self, ret):
+    def threads(self, ret):
         for t in ret:
             self.assertTrue(t.id >= 0)
             self.assertTrue(t.user_time >= 0)
             self.assertTrue(t.system_time >= 0)
 
-    def get_cpu_times(self, ret):
+    def cpu_times(self, ret):
         self.assertTrue(ret.user >= 0)
         self.assertTrue(ret.system >= 0)
 
-    def get_memory_info(self, ret):
+    def memory_info(self, ret):
         self.assertTrue(ret.rss >= 0)
         self.assertTrue(ret.vms >= 0)
 
-    def get_ext_memory_info(self, ret):
+    def ext_memory_info(self, ret):
         for name in ret._fields:
             self.assertTrue(getattr(ret, name) >= 0)
         if POSIX and ret.vms != 0:
@@ -2245,7 +2249,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             assert ret.peak_nonpaged_pool >= ret.nonpaged_pool, ret
             assert ret.peak_pagefile >= ret.pagefile, ret
 
-    def get_open_files(self, ret):
+    def open_files(self, ret):
         for f in ret:
             if WINDOWS:
                 assert f.fd == -1, f
@@ -2254,14 +2258,14 @@ class TestFetchAllProcesses(unittest.TestCase):
             assert os.path.isabs(f.path), f
             assert os.path.isfile(f.path), f
 
-    def get_num_fds(self, ret):
+    def num_fds(self, ret):
         self.assertTrue(ret >= 0)
 
-    def get_connections(self, ret):
+    def connections(self, ret):
         for conn in ret:
             check_connection(conn)
 
-    def get_cwd(self, ret):
+    def cwd(self, ret):
         if ret is not None:  # BSD may return None
             assert os.path.isabs(ret), ret
             try:
@@ -2274,13 +2278,13 @@ class TestFetchAllProcesses(unittest.TestCase):
             else:
                 self.assertTrue(stat.S_ISDIR(st.st_mode))
 
-    def get_memory_percent(self, ret):
+    def memory_percent(self, ret):
         assert 0 <= ret <= 100, ret
 
     def is_running(self, ret):
         self.assertTrue(ret)
 
-    def get_cpu_affinity(self, ret):
+    def cpu_affinity(self, ret):
         assert ret != [], ret
 
     def terminal(self, ret):
@@ -2288,7 +2292,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             assert os.path.isabs(ret), ret
             assert os.path.exists(ret), ret
 
-    def get_memory_maps(self, ret):
+    def memory_maps(self, ret):
         for nt in ret:
             for fname in nt._fields:
                 value = getattr(nt, fname)
@@ -2304,13 +2308,13 @@ class TestFetchAllProcesses(unittest.TestCase):
                     self.assertIsInstance(value, (int, long))
                     assert value >= 0, value
 
-    def get_num_handles(self, ret):
+    def num_handles(self, ret):
         if WINDOWS:
             self.assertGreaterEqual(ret, 0)
         else:
             self.assertGreaterEqual(ret, 0)
 
-    def get_nice(self, ret):
+    def nice(self, ret):
         if POSIX:
             assert -20 <= ret <= 20, ret
         else:
@@ -2318,11 +2322,11 @@ class TestFetchAllProcesses(unittest.TestCase):
                           if x.endswith('_PRIORITY_CLASS')]
             self.assertIn(ret, priorities)
 
-    def get_num_ctx_switches(self, ret):
+    def num_ctx_switches(self, ret):
         self.assertTrue(ret.voluntary >= 0)
         self.assertTrue(ret.involuntary >= 0)
 
-    def get_rlimit(self, ret):
+    def rlimit(self, ret):
         self.assertEqual(len(ret), 2)
         self.assertGreaterEqual(ret[0], -1)
         self.assertGreaterEqual(ret[1], -1)

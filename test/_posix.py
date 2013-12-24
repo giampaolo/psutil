@@ -197,7 +197,7 @@ class PosixSpecificTestCase(unittest.TestCase):
             args = ()
             attr = getattr(p, name, None)
             if attr is not None and callable(attr):
-                if name == 'get_rlimit':
+                if name == 'rlimit':
                     args = (psutil.RLIMIT_NOFILE,)
                 elif name == 'set_rlimit':
                     args = (psutil.RLIMIT_NOFILE, (5, 5))
@@ -213,6 +213,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         for name in dir(psutil.Process):
             if (name.startswith('_')
                     or name.startswith('set_')
+                    or name.startswith('get')  # deprecated APIs
                     or name in ignored_names):
                 continue
             else:
