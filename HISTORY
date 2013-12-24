@@ -30,7 +30,7 @@ API CHANGES
 Deprecated APIs (still available as aliases producing a DeprecationWarning):
 
  - psutil.NUM_CPUS          (use psutil.cpu_cpunt())
- - psutil.BOOT_TIME         (use psutil.get_boot_time())
+ - psutil.BOOT_TIME         (use psutil.boot_time())
  - psutil.TOTAL_PHYMEM      (use psutil.virtual_memory().total)
  - psutil.get_pid_list()    (renamed to psutil.pids())
  XXX list Process class renamings

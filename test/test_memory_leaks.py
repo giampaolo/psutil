@@ -308,7 +308,7 @@ class TestModuleFunctionsLeaks(Base):
         self.execute('get_num_cpus')
 
     @unittest.skipIf(LINUX, "not worth being tested on POSIX (pure python)")
-    def test_get_boot_time(self):
+    def test_boot_time(self):
         self.execute('get_boot_time')
 
     @unittest.skipIf(POSIX, "not worth being tested on POSIX (pure python)")

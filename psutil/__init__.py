@@ -34,7 +34,7 @@ __all__ = [
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
     "net_io_counters",                                              # network
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
-    "get_users", "get_boot_time",                                   # others
+    "get_users", "boot_time",                                       # others
 ]
 
 import sys
@@ -1660,7 +1660,7 @@ def net_io_counters(pernic=False):
 # --- other system related functions
 # =====================================================================
 
-def get_boot_time():
+def boot_time():
     """Return the system boot time expressed in seconds since the epoch.
     This is also available as psutil.BOOT_TIME.
     """
@@ -1824,10 +1824,9 @@ def _replace_module():
 
         @property
         def BOOT_TIME(self):
-            msg = "BOOT_TIME constant is deprecated; " \
-                  "use get_boot_time() instead"
+            msg = "BOOT_TIME constant is deprecated; use boot_time() instead"
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            return get_boot_time()
+            return boot_time()
 
         @property
         def TOTAL_PHYMEM(self):

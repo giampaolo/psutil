@@ -58,12 +58,12 @@ class BSDSpecificTestCase(unittest.TestCase):
     def tearDown(self):
         reap_children()
 
-    def test_get_boot_time(self):
+    def test_boot_time(self):
         s = sysctl('sysctl kern.boottime')
         s = s[s.find(" sec = ") + 7:]
         s = s[:s.find(',')]
         btime = int(s)
-        self.assertEqual(btime, psutil.get_boot_time())
+        self.assertEqual(btime, psutil.boot_time())
 
     def test_process_create_time(self):
         cmdline = "ps -o lstart -p %s" % self.pid

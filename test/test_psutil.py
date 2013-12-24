@@ -551,8 +551,8 @@ class TestSystemAPIs(unittest.TestCase):
             p.terminate()
         gone, alive = psutil.wait_procs(procs)
 
-    def test_get_boot_time(self):
-        bt = psutil.get_boot_time()
+    def test_boot_time(self):
+        bt = psutil.boot_time()
         self.assertIsInstance(bt, float)
         self.assertGreater(bt, 0)
         self.assertLess(bt, time.time())
@@ -610,7 +610,7 @@ class TestSystemAPIs(unittest.TestCase):
         try:
             self.assertEqual(psutil.get_pid_list(), psutil.pids())
             self.assertEqual(psutil.NUM_CPUS, psutil.cpu_count())
-            self.assertEqual(psutil.BOOT_TIME, psutil.get_boot_time())
+            self.assertEqual(psutil.BOOT_TIME, psutil.boot_time())
             self.assertEqual(psutil.TOTAL_PHYMEM,
                              psutil.virtual_memory().total)
         finally:
@@ -2177,7 +2177,7 @@ class TestFetchAllProcesses(unittest.TestCase):
     def create_time(self, ret):
         self.assertTrue(ret > 0)
         # this can't be taken for granted on all platforms
-        #self.assertGreaterEqual(ret, psutil.get_boot_time())
+        #self.assertGreaterEqual(ret, psutil.boot_time())
         # make sure returned value can be pretty printed
         # with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(ret))

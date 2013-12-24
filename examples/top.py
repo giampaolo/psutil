@@ -140,7 +140,7 @@ def print_header(procs_status, num_procs):
     st.sort(key=lambda x: x[:3] in ('run', 'sle'), reverse=1)
     print_line(" Processes: %s (%s)" % (num_procs, ' '.join(st)))
     # load average, uptime
-    uptime = datetime.now() - datetime.fromtimestamp(psutil.get_boot_time())
+    uptime = datetime.now() - datetime.fromtimestamp(psutil.boot_time())
     av1, av2, av3 = os.getloadavg()
     line = " Load average: %.2f %.2f %.2f  Uptime: %s" \
         % (av1, av2, av3, str(uptime).split('.')[0])
