@@ -188,7 +188,7 @@ class Process(object):
     checked and guaranteed are:
 
      - parent
-     - get_children()
+     - children()
      - set_nice()
      - set_rlimit()
      - suspend()

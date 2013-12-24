@@ -52,7 +52,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
         sproc = get_test_subprocess()
         time.sleep(1)
         p = psutil.Process(sproc.pid)
-        maps = p.get_memory_maps(grouped=False)
+        maps = p.memory_maps(grouped=False)
         pmap = sh('pmap -x %s' % p.pid).split('\n')
         # get rid of header
         del pmap[0]
@@ -147,7 +147,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
     def test_prlimit_availability(self):
         # prlimit() should be available starting from kernel 2.6.36
         p = psutil.Process(os.getpid())
-        p.get_rlimit(psutil.RLIMIT_NOFILE)
+        p.rlimit(psutil.RLIMIT_NOFILE)
         # if prlimit() is supported *at least* these constants should
         # be available
         self.assertTrue(hasattr(psutil, "RLIM_INFINITY"))

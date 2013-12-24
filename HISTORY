@@ -27,20 +27,46 @@ BUG FIXES
 
 API CHANGES
 
-Renamed psutil.* APIs (still available as aliases producing a
-DeprecationWarning):
+For consistency a lot of psutil APIs have been renamed.
+The old names are still working but will produce a DeprecationWarning and will
+be remove in next major psutil version.
 
- ---------------------------------------------------------
-| Old name                | New name                      |
- ---------------------------------------------------------
-| - psutil.NUM_CPUS       | psutil.cpu_cpunt())           |
-| - psutil.BOOT_TIME      | psutil.boot_time())           |
-| - psutil.TOTAL_PHYMEM   | psutil.virtual_memory().total |
-| - psutil.get_pid_list() | psutil.pids()                 |
-| - psutil.get_users()    | psutil.users()                |
- ----------------------------------------------------------
+- psutil.* functions and constants renamings:
 
- TODO: list Process class renamings
+   ----.--------------------------------------
+  | Old name                | New name        |
+   --------------------------------------------
+  | - NUM_CPUS       | cpu_cpunt()            |
+  | - BOOT_TIME      | boot_time()            |
+  | - TOTAL_PHYMEM   | virtual_memory().total |
+  | - get_pid_list() | pids()                 |
+  | - get_users()    | users()                |
+   --------------------------------------------
+
+- psutil.Process class methods renaming:
+
+   ----.-------------------------------------------
+  | Old name                | New name             |
+   ------------------------------------------------
+  | get_children()         |    children()         |
+  | get_connections()      |    connections()      |
+  | get_cpu_affinity()     |    cpu_affinity()     |
+  | get_cpu_percent()      |    cpu_percent()      |
+  | get_cpu_times()        |    cpu_times()        |
+  | get_ext_memory_info()  |    ext_memory_info()  |
+  | get_io_counters()      |    io_counters()      |
+  | get_ionice()           |    ionice()           |
+  | get_memory_info()      |    memory_info()      |
+  | get_memory_maps()      |    memory_maps()      |
+  | get_memory_percent()   |    memory_percent()   |
+  | get_nice()             |    nice()             |
+  | get_num_ctx_switches() |    num_ctx_switches() |
+  | get_num_fds()          |    num_fds()          |
+  | get_num_threads()      |    num_threads()      |
+  | get_open_files()       |    open_files()       |
+  | get_rlimit()           |    rlimit()           |
+  | get_threads()          |    threads()          |
+   ------------------------------------------------
 
 Others:
  - Process instances' "retcode" attribute returned by psutil.wait_procs() has

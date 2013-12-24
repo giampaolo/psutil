@@ -26,7 +26,7 @@ else:
 import psutil
 import psutil._common
 
-from psutil._compat import PY3, callable, xrange
+from psutil._compat import callable, xrange
 from test_psutil import *
 
 
@@ -140,18 +140,18 @@ class TestProcessObjectLeaks(Base):
     def test_status(self):
         self.execute('status')
 
-    def test_get_nice(self):
-        self.execute('get_nice')
+    def test_nice(self):
+        self.execute('nice')
 
     def test_set_nice(self):
         niceness = psutil.Process(os.getpid()).get_nice()
         self.execute('set_nice', niceness)
 
-    def test_get_io_counters(self):
-        self.execute('get_io_counters')
+    def test_io_counters(self):
+        self.execute('io_counters')
 
-    def test_get_ionice(self):
-        self.execute('get_ionice')
+    def test_ionice(self):
+        self.execute('ionice')
 
     def test_set_ionice(self):
         if WINDOWS:
@@ -166,26 +166,26 @@ class TestProcessObjectLeaks(Base):
     def test_create_time(self):
         self.execute('create_time')
 
-    def test_get_num_threads(self):
-        self.execute('get_num_threads')
+    def test_num_threads(self):
+        self.execute('num_threads')
 
-    def test_get_num_handles(self):
-        self.execute('get_num_handles')
+    def test_num_handles(self):
+        self.execute('num_handles')
 
-    def test_get_num_fds(self):
-        self.execute('get_num_fds')
+    def test_num_fds(self):
+        self.execute('num_fds')
 
-    def test_get_threads(self):
-        self.execute('get_threads')
+    def test_threads(self):
+        self.execute('threads')
 
-    def test_get_cpu_times(self):
-        self.execute('get_cpu_times')
+    def test_cpu_times(self):
+        self.execute('cpu_times')
 
-    def test_get_memory_info(self):
-        self.execute('get_memory_info')
+    def test_memory_info(self):
+        self.execute('memory_info')
 
-    def test_get_ext_memory_info(self):
-        self.execute('get_ext_memory_info')
+    def test_ext_memory_info(self):
+        self.execute('ext_memory_info')
 
     def test_terminal(self):
         self.execute('terminal')
@@ -194,41 +194,41 @@ class TestProcessObjectLeaks(Base):
     def test_resume(self):
         self.execute('resume')
 
-    def test_get_cwd(self):
-        self.execute('get_cwd')
+    def test_cwd(self):
+        self.execute('cwd')
 
-    def test_get_cpu_affinity(self):
-        self.execute('get_cpu_affinity')
+    def test_cpu_affinity(self):
+        self.execute('cpu_affinity')
 
     def test_set_cpu_affinity(self):
         affinity = psutil.Process(os.getpid()).get_cpu_affinity()
         self.execute('set_cpu_affinity', affinity)
 
-    def test_get_open_files(self):
+    def test_open_files(self):
         safe_remove(TESTFN)  # needed after UNIX socket test has run
         f = open(TESTFN, 'w')
         try:
-            self.execute('get_open_files')
+            self.execute('open_files')
         finally:
             f.close()
 
     # OSX implementation is unbelievably slow
     @unittest.skipIf(OSX, "OSX implementation is too slow")
-    def test_get_memory_maps(self):
-        self.execute('get_memory_maps')
+    def test_memory_maps(self):
+        self.execute('memory_maps')
 
     @unittest.skipUnless(LINUX, "feature not supported on this platform")
-    def test_get_rlimit(self):
-        self.execute('get_rlimit', psutil.RLIMIT_NOFILE)
+    def test_rlimit(self):
+        self.execute('rlimit', psutil.RLIMIT_NOFILE)
 
     @unittest.skipUnless(LINUX, "feature not supported on this platform")
-    def test_get_rlimit(self):
+    def test_set_rlimit(self):
         limit = psutil.Process(os.getpid()).get_rlimit(psutil.RLIMIT_NOFILE)
         self.execute('set_rlimit', psutil.RLIMIT_NOFILE, limit)
 
     # Linux implementation is pure python so since it's slow we skip it
     @unittest.skipIf(LINUX, "not worth being tested on Linux (pure python)")
-    def test_get_connections(self):
+    def test_connections(self):
         def create_socket(family, type):
             sock = socket.socket(family, type)
             sock.bind(('', 0))
@@ -255,7 +255,7 @@ class TestProcessObjectLeaks(Base):
         if SUNOS:
             kind = 'inet'
         try:
-            self.execute('get_connections', kind=kind)
+            self.execute('connections', kind=kind)
         finally:
             for s in socks:
                 s.close()
@@ -305,11 +305,11 @@ class TestModuleFunctionsLeaks(Base):
     @unittest.skipIf(LINUX, "not worth being tested on POSIX (pure python)")
     def test_cpu_count(self):
         psutil.get_num_cpus = psutil._psplatform.get_num_cpus
-        self.execute('get_num_cpus')
+        self.execute('num_cpus')
 
     @unittest.skipIf(LINUX, "not worth being tested on POSIX (pure python)")
     def test_boot_time(self):
-        self.execute('get_boot_time')
+        self.execute('boot_time')
 
     @unittest.skipIf(POSIX, "not worth being tested on POSIX (pure python)")
     def test_pid_exists(self):
@@ -344,10 +344,9 @@ class TestModuleFunctionsLeaks(Base):
         self.execute('disk_io_counters')
 
     # XXX - on Windows this produces a false positive
-    @unittest.skipIf(WINDOWS,
-                     "XXX produces a false positive on Windows")
+    @unittest.skipIf(WINDOWS, "XXX produces a false positive on Windows")
     def test_users(self):
-        self.execute('get_users')
+        self.execute('users')
 
 
 def test_main():

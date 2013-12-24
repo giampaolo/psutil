@@ -1915,7 +1915,7 @@ class TestProcess(unittest.TestCase):
 
         excluded_names = ('pid', 'send_signal', 'is_running', 'set_ionice',
                           'wait', 'set_cpu_affinity', 'create_time', 'nice',
-                          'set_nice', 'getcwd')
+                          'set_nice')
         for name in dir(p):
             if (name.startswith('_')
                     or name.startswith('get')  # deprecated APIs

@@ -77,7 +77,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         # so that the results are the same
         time.sleep(0.1)
         rss_ps = ps("ps --no-headers -o rss -p %s" % self.pid)
-        rss_psutil = psutil.Process(self.pid).get_memory_info()[0] / 1024
+        rss_psutil = psutil.Process(self.pid).memory_info()[0] / 1024
         self.assertEqual(rss_ps, rss_psutil)
 
     @skip_on_access_denied()
@@ -86,7 +86,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         # so that the results are the same
         time.sleep(0.1)
         vsz_ps = ps("ps --no-headers -o vsz -p %s" % self.pid)
-        vsz_psutil = psutil.Process(self.pid).get_memory_info()[1] / 1024
+        vsz_psutil = psutil.Process(self.pid).memory_info()[1] / 1024
         self.assertEqual(vsz_ps, vsz_psutil)
 
     def test_process_name(self):
@@ -208,8 +208,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         p = psutil.Process(os.getpid())
         failures = []
         ignored_names = ('terminate', 'kill', 'suspend', 'resume', 'nice',
-                         'send_signal', 'wait', 'get_children', 'as_dict',
-                         'getcwd')
+                         'send_signal', 'wait', 'children', 'as_dict')
         for name in dir(psutil.Process):
             if (name.startswith('_')
                     or name.startswith('set_')
@@ -218,10 +217,10 @@ class PosixSpecificTestCase(unittest.TestCase):
                 continue
             else:
                 try:
-                    num1 = p.get_num_fds()
+                    num1 = p.num_fds()
                     for x in range(2):
                         call(p, name)
-                    num2 = p.get_num_fds()
+                    num2 = p.num_fds()
                 except psutil.AccessDenied:
                     pass
                 else:
