@@ -180,13 +180,13 @@ class PosixSpecificTestCase(unittest.TestCase):
             else:
                 self.fail("couldn't find %s nic in 'ifconfig -a' output" % nic)
 
-    def test_get_users(self):
+    def test_users(self):
         out = sh("who")
         lines = out.split('\n')
         users = [x.split()[0] for x in lines]
-        self.assertEqual(len(users), len(psutil.get_users()))
+        self.assertEqual(len(users), len(psutil.users()))
         terminals = [x.split()[1] for x in lines]
-        for u in psutil.get_users():
+        for u in psutil.users():
             self.assertTrue(u.name in users, u.name)
             self.assertTrue(u.terminal in terminals, u.terminal)
 

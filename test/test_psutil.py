@@ -578,6 +578,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertRaises(DeprecationWarning, getattr, psutil,
                               'TOTAL_PHYMEM')
             self.assertRaises(DeprecationWarning, psutil.get_pid_list)
+            self.assertRaises(DeprecationWarning, psutil.get_users)
             self.assertRaises(DeprecationWarning, psutil.virtmem_usage)
             self.assertRaises(DeprecationWarning, psutil.used_phymem)
             self.assertRaises(DeprecationWarning, psutil.avail_phymem)
@@ -974,8 +975,8 @@ class TestSystemAPIs(unittest.TestCase):
                     key = key[:-1]
                 self.assertNotIn(key, ret.keys())
 
-    def test_get_users(self):
-        users = psutil.get_users()
+    def test_users(self):
+        users = psutil.users()
         self.assertNotEqual(users, [])
         for user in users:
             assert user.name, user

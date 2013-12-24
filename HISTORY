@@ -27,13 +27,20 @@ BUG FIXES
 
 API CHANGES
 
-Deprecated APIs (still available as aliases producing a DeprecationWarning):
+Renamed psutil.* APIs (still available as aliases producing a
+DeprecationWarning):
 
- - psutil.NUM_CPUS          (use psutil.cpu_cpunt())
- - psutil.BOOT_TIME         (use psutil.boot_time())
- - psutil.TOTAL_PHYMEM      (use psutil.virtual_memory().total)
- - psutil.get_pid_list()    (renamed to psutil.pids())
- XXX list Process class renamings
+ ---------------------------------------------------------
+| Old name                | New name                      |
+ ---------------------------------------------------------
+| - psutil.NUM_CPUS       | psutil.cpu_cpunt())           |
+| - psutil.BOOT_TIME      | psutil.boot_time())           |
+| - psutil.TOTAL_PHYMEM   | psutil.virtual_memory().total |
+| - psutil.get_pid_list() | psutil.pids()                 |
+| - psutil.get_users()    | psutil.users()                |
+ ----------------------------------------------------------
+
+ TODO: list Process class renamings
 
 Others:
  - Process instances' "retcode" attribute returned by psutil.wait_procs() has

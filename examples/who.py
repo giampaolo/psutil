@@ -16,7 +16,7 @@ from psutil._compat import print_
 
 
 def main():
-    users = psutil.get_users()
+    users = psutil.users()
     for user in users:
         print_("%-15s %-15s %s  (%s)" % (
             user.name,

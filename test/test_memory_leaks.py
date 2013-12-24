@@ -346,7 +346,7 @@ class TestModuleFunctionsLeaks(Base):
     # XXX - on Windows this produces a false positive
     @unittest.skipIf(WINDOWS,
                      "XXX produces a false positive on Windows")
-    def test_get_users(self):
+    def test_users(self):
         self.execute('get_users')
 
 

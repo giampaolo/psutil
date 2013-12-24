@@ -215,7 +215,7 @@ nt_sys_netio = namedtuple('netio', ['bytes_sent', 'bytes_recv',
 nt_sys_diskio = namedtuple('diskio', ['read_count', 'write_count',
                                       'read_bytes', 'write_bytes',
                                       'read_time', 'write_time'])
-# psutil.get_users()
+# psutil.users()
 nt_sys_user = namedtuple('user', ['name', 'terminal', 'host', 'started'])
 
 

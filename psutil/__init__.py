@@ -34,7 +34,7 @@ __all__ = [
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
     "net_io_counters",                                              # network
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
-    "get_users", "boot_time",                                       # others
+    "users", "boot_time",                                           # others
 ]
 
 import sys
@@ -1669,7 +1669,7 @@ def boot_time():
     return _psplatform.get_boot_time()
 
 
-def get_users():
+def users():
     """Return users currently connected on the system as a list of
     namedtuples including the following fields.
 
@@ -1694,6 +1694,11 @@ def get_pid_list():
 @_deprecated(replacement="list(process_iter())")
 def get_process_list():
     return list(process_iter())
+
+
+@_deprecated(replacement="psutil.users()")
+def get_users():
+    return psutil.users()
 
 
 @_deprecated(replacement="psutil.virtual_memory()")
