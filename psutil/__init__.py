@@ -289,7 +289,7 @@ class Process(object):
             ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
              'is_running', 'as_dict', 'parent', 'children',  'rlimit'])
         retdict = dict()
-        ls = set(attrs or dir(self))
+        ls = set(attrs or [x for x in dir(self) if not x.startswith('get')])
         for name in ls:
             if name.startswith('_'):
                 continue
@@ -1750,8 +1750,8 @@ def test():
 
     today_day = datetime.date.today()
     templ = "%-10s %5s %4s %4s %7s %7s %-13s %5s %7s  %s"
-    attrs = ['pid', 'get_cpu_percent', 'get_memory_percent', 'name',
-             'get_cpu_times', 'create_time', 'get_memory_info']
+    attrs = ['pid', 'cpu_percent', 'memory_percent', 'name', 'cpu_times',
+             'create_time', 'memory_info']
     if os.name == 'posix':
         attrs.append('uids')
         attrs.append('terminal')

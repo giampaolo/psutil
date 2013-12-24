@@ -247,7 +247,7 @@ def reap_children(search_all=False):
     procs = _subprocesses_started.copy()
     if search_all:
         this_process = psutil.Process()
-        for p in this_process.get_children(recursive=True):
+        for p in this_process.children(recursive=True):
             procs.add(p)
     for p in procs:
         try:
@@ -592,7 +592,7 @@ class TestSystemAPIs(unittest.TestCase):
                 self.assertRaises(DeprecationWarning, psutil.cached_phymem)
 
             # Process class
-            #self.assertRaises(DeprecationWarning, p.getcwd)
+            self.assertRaises(DeprecationWarning, p.getcwd)
             self.assertRaises(DeprecationWarning, p.get_connections)
 
             # named tuples
@@ -1123,10 +1123,10 @@ class TestProcess(unittest.TestCase):
 
     def test_cpu_percent(self):
         p = psutil.Process()
-        p.get_cpu_percent(interval=0.001)
-        p.get_cpu_percent(interval=0.001)
+        p.cpu_percent(interval=0.001)
+        p.cpu_percent(interval=0.001)
         for x in range(100):
-            percent = p.get_cpu_percent(interval=None)
+            percent = p.cpu_percent(interval=None)
             self.assertIsInstance(percent, float)
             self.assertGreaterEqual(percent, 0.0)
             if os.name != 'posix':
@@ -1135,7 +1135,7 @@ class TestProcess(unittest.TestCase):
                 self.assertGreaterEqual(percent, 0.0)
 
     def test_cpu_times(self):
-        times = psutil.Process().get_cpu_times()
+        times = psutil.Process().cpu_times()
         assert (times.user > 0.0) or (times.system > 0.0), times
         # make sure returned values can be pretty printed with strftime
         time.strftime("%H:%M:%S", time.localtime(times.user))
@@ -1150,7 +1150,7 @@ class TestProcess(unittest.TestCase):
     @unittest.skipUnless(sys.version_info > (2, 6, 1) and not OSX,
                          'os.times() is not reliable on this Python version')
     def test_cpu_times2(self):
-        user_time, kernel_time = psutil.Process().get_cpu_times()
+        user_time, kernel_time = psutil.Process().cpu_times()
         utime, ktime = os.times()[:2]
 
         # Use os.times()[:2] as base values to compare our results
@@ -1193,25 +1193,25 @@ class TestProcess(unittest.TestCase):
     def test_get_io_counters(self):
         p = psutil.Process()
         # test reads
-        io1 = p.get_io_counters()
+        io1 = p.io_counters()
         f = open(PYTHON, 'rb')
         f.read()
         f.close()
-        io2 = p.get_io_counters()
+        io2 = p.io_counters()
         if not BSD:
             assert io2.read_count > io1.read_count, (io1, io2)
             self.assertEqual(io2.write_count, io1.write_count)
         assert io2.read_bytes >= io1.read_bytes, (io1, io2)
         assert io2.write_bytes >= io1.write_bytes, (io1, io2)
         # test writes
-        io1 = p.get_io_counters()
+        io1 = p.io_counters()
         f = tempfile.TemporaryFile(prefix=TESTFILE_PREFIX)
         if PY3:
             f.write(bytes("x" * 1000000, 'ascii'))
         else:
             f.write("x" * 1000000)
         f.close()
-        io2 = p.get_io_counters()
+        io2 = p.io_counters()
         assert io2.write_count >= io1.write_count, (io1, io2)
         assert io2.write_bytes >= io1.write_bytes, (io1, io2)
         assert io2.read_count >= io1.read_count, (io1, io2)
@@ -1231,21 +1231,21 @@ class TestProcess(unittest.TestCase):
             p = psutil.Process()
             try:
                 p.set_ionice(2)
-                ioclass, value = p.get_ionice()
+                ioclass, value = p.ionice()
                 self.assertEqual(ioclass, 2)
                 self.assertEqual(value, 4)
                 #
                 p.set_ionice(3)
-                ioclass, value = p.get_ionice()
+                ioclass, value = p.ionice()
                 self.assertEqual(ioclass, 3)
                 self.assertEqual(value, 0)
                 #
                 p.set_ionice(2, 0)
-                ioclass, value = p.get_ionice()
+                ioclass, value = p.ionice()
                 self.assertEqual(ioclass, 2)
                 self.assertEqual(value, 0)
                 p.set_ionice(2, 7)
-                ioclass, value = p.get_ionice()
+                ioclass, value = p.ionice()
                 self.assertEqual(ioclass, 2)
                 self.assertEqual(value, 7)
                 self.assertRaises(ValueError, p.set_ionice, 2, 10)
@@ -1253,13 +1253,13 @@ class TestProcess(unittest.TestCase):
                 p.set_ionice(IOPRIO_CLASS_NONE)
         else:
             p = psutil.Process()
-            original = p.get_ionice()
+            original = p.ionice()
             try:
                 value = 0  # very low
                 if original == value:
                     value = 1  # low
                 p.set_ionice(value)
-                self.assertEqual(p.get_ionice(), value)
+                self.assertEqual(p.ionice(), value)
             finally:
                 p.set_ionice(original)
             #
@@ -1278,10 +1278,10 @@ class TestProcess(unittest.TestCase):
             self.assertGreaterEqual(value, 0)
             if name in dir(resource):
                 self.assertEqual(value, getattr(resource, name))
-                self.assertEqual(p.get_rlimit(value),
+                self.assertEqual(p.rlimit(value),
                                  resource.getrlimit(value))
             else:
-                ret = p.get_rlimit(value)
+                ret = p.rlimit(value)
                 self.assertEqual(len(ret), 2)
                 self.assertGreaterEqual(ret[0], -1)
                 self.assertGreaterEqual(ret[1], -1)
@@ -1292,19 +1292,19 @@ class TestProcess(unittest.TestCase):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.set_rlimit(psutil.RLIMIT_NOFILE, (5, 5))
-        self.assertEqual(p.get_rlimit(psutil.RLIMIT_NOFILE), (5, 5))
+        self.assertEqual(p.rlimit(psutil.RLIMIT_NOFILE), (5, 5))
 
     def test_get_num_threads(self):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
         # but this does not apply across all platforms (OSX, Windows)
         p = psutil.Process()
-        step1 = p.get_num_threads()
+        step1 = p.num_threads()
 
         thread = ThreadTask()
         thread.start()
         try:
-            step2 = p.get_num_threads()
+            step2 = p.num_threads()
             self.assertEqual(step2, step1 + 1)
             thread.stop()
         finally:
@@ -1315,17 +1315,17 @@ class TestProcess(unittest.TestCase):
     def test_get_num_handles(self):
         # a better test is done later into test/_windows.py
         p = psutil.Process()
-        self.assertGreater(p.get_num_handles(), 0)
+        self.assertGreater(p.num_handles(), 0)
 
     def test_get_threads(self):
         p = psutil.Process()
-        step1 = p.get_threads()
+        step1 = p.threads()
 
         thread = ThreadTask()
         thread.start()
 
         try:
-            step2 = p.get_threads()
+            step2 = p.threads()
             self.assertEqual(len(step2), len(step1) + 1)
             # on Linux, first thread id is supposed to be this process
             if LINUX:
@@ -1345,16 +1345,16 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process()
 
         # step 1 - get a base value to compare our results
-        rss1, vms1 = p.get_memory_info()
-        percent1 = p.get_memory_percent()
+        rss1, vms1 = p.memory_info()
+        percent1 = p.memory_percent()
         self.assertGreater(rss1, 0)
         self.assertGreater(vms1, 0)
 
         # step 2 - allocate some memory
         memarr = [None] * 1500000
 
-        rss2, vms2 = p.get_memory_info()
-        percent2 = p.get_memory_percent()
+        rss2, vms2 = p.memory_info()
+        percent2 = p.memory_percent()
         # make sure that the memory usage bumped up
         self.assertGreater(rss2, rss1)
         self.assertGreaterEqual(vms2, vms1)  # vms might be equal
@@ -1366,10 +1366,10 @@ class TestProcess(unittest.TestCase):
 
     def test_get_memory_maps(self):
         p = psutil.Process()
-        maps = p.get_memory_maps()
+        maps = p.memory_maps()
         paths = [x for x in maps]
         self.assertEqual(len(paths), len(set(paths)))
-        ext_maps = p.get_memory_maps(grouped=False)
+        ext_maps = p.memory_maps(grouped=False)
 
         for nt in maps:
             if not nt.path.startswith('['):
@@ -1395,7 +1395,7 @@ class TestProcess(unittest.TestCase):
 
     def test_get_memory_percent(self):
         p = psutil.Process()
-        self.assertGreater(p.get_memory_percent(), 0.0)
+        self.assertGreater(p.memory_percent(), 0.0)
 
     def test_pid(self):
         sproc = get_test_subprocess()
@@ -1473,24 +1473,24 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(TypeError, p.set_nice, "str")
         if os.name == 'nt':
             try:
-                self.assertEqual(p.get_nice(), psutil.NORMAL_PRIORITY_CLASS)
+                self.assertEqual(p.nice(), psutil.NORMAL_PRIORITY_CLASS)
                 p.set_nice(psutil.HIGH_PRIORITY_CLASS)
-                self.assertEqual(p.get_nice(), psutil.HIGH_PRIORITY_CLASS)
+                self.assertEqual(p.nice(), psutil.HIGH_PRIORITY_CLASS)
                 p.set_nice(psutil.NORMAL_PRIORITY_CLASS)
-                self.assertEqual(p.get_nice(), psutil.NORMAL_PRIORITY_CLASS)
+                self.assertEqual(p.nice(), psutil.NORMAL_PRIORITY_CLASS)
             finally:
                 p.set_nice(psutil.NORMAL_PRIORITY_CLASS)
         else:
             try:
                 try:
-                    first_nice = p.get_nice()
+                    first_nice = p.nice()
                     p.set_nice(1)
-                    self.assertEqual(p.get_nice(), 1)
+                    self.assertEqual(p.nice(), 1)
                     # going back to previous nice value raises
                     # AccessDenied on OSX
                     if not OSX:
                         p.set_nice(0)
-                        self.assertEqual(p.get_nice(), 0)
+                        self.assertEqual(p.nice(), 0)
                 except psutil.AccessDenied:
                     pass
             finally:
@@ -1523,7 +1523,7 @@ class TestProcess(unittest.TestCase):
     def test_get_cwd(self):
         sproc = get_test_subprocess(wait=True)
         p = psutil.Process(sproc.pid)
-        self.assertEqual(p.get_cwd(), os.getcwd())
+        self.assertEqual(p.cwd(), os.getcwd())
 
     @unittest.skipIf(not hasattr(psutil.Process, "get_cwd"),
                      'not available on this platform')
@@ -1531,21 +1531,21 @@ class TestProcess(unittest.TestCase):
         cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(2)"]
         sproc = get_test_subprocess(cmd, wait=True)
         p = psutil.Process(sproc.pid)
-        call_until(p.get_cwd, "ret == os.path.dirname(os.getcwd())")
+        call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
 
     @unittest.skipIf(not hasattr(psutil.Process, "get_cpu_affinity"),
                      'not available on this platform')
     def test_cpu_affinity(self):
         p = psutil.Process()
-        initial = p.get_cpu_affinity()
+        initial = p.cpu_affinity()
         all_cpus = list(range(len(psutil.cpu_percent(percpu=True))))
         #
         for n in all_cpus:
             p.set_cpu_affinity([n])
-            self.assertEqual(p.get_cpu_affinity(), [n])
+            self.assertEqual(p.cpu_affinity(), [n])
         #
         p.set_cpu_affinity(all_cpus)
-        self.assertEqual(p.get_cpu_affinity(), all_cpus)
+        self.assertEqual(p.cpu_affinity(), all_cpus)
         #
         self.assertRaises(TypeError, p.set_cpu_affinity, 1)
         p.set_cpu_affinity(initial)
@@ -1556,11 +1556,11 @@ class TestProcess(unittest.TestCase):
     def test_get_open_files(self):
         # current process
         p = psutil.Process()
-        files = p.get_open_files()
+        files = p.open_files()
         self.assertFalse(TESTFN in files)
         f = open(TESTFN, 'w')
-        call_until(p.get_open_files, "len(ret) != %i" % len(files))
-        filenames = [x.path for x in p.get_open_files()]
+        call_until(p.open_files, "len(ret) != %i" % len(files))
+        filenames = [x.path for x in p.open_files()]
         self.assertIn(TESTFN, filenames)
         f.close()
         for file in filenames:
@@ -1572,7 +1572,7 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
 
         for x in range(100):
-            filenames = [x.path for x in p.get_open_files()]
+            filenames = [x.path for x in p.open_files()]
             if TESTFN in filenames:
                 break
             time.sleep(.01)
@@ -1585,23 +1585,23 @@ class TestProcess(unittest.TestCase):
         # test fd and path fields
         fileobj = open(TESTFN, 'w')
         p = psutil.Process()
-        for path, fd in p.get_open_files():
+        for path, fd in p.open_files():
             if path == fileobj.name or fd == fileobj.fileno():
                 break
         else:
-            self.fail("no file found; files=%s" % repr(p.get_open_files()))
+            self.fail("no file found; files=%s" % repr(p.open_files()))
         self.assertEqual(path, fileobj.name)
         if WINDOWS:
             self.assertEqual(fd, -1)
         else:
             self.assertEqual(fd, fileobj.fileno())
         # test positions
-        ntuple = p.get_open_files()[0]
+        ntuple = p.open_files()[0]
         self.assertEqual(ntuple[0], ntuple.path)
         self.assertEqual(ntuple[1], ntuple.fd)
         # test file is gone
         fileobj.close()
-        self.assertTrue(fileobj.name not in p.get_open_files())
+        self.assertTrue(fileobj.name not in p.open_files())
 
     def test_connection_constants(self):
         ints = []
@@ -1630,7 +1630,7 @@ class TestProcess(unittest.TestCase):
               "time.sleep(2);"
         sproc = get_test_subprocess([PYTHON, "-c", arg])
         p = psutil.Process(sproc.pid)
-        cons = call_until(p.get_connections, "len(ret) != 0")
+        cons = call_until(p.connections, "len(ret) != 0")
         self.assertEqual(len(cons), 1)
         con = cons[0]
         check_connection(con)
@@ -1647,14 +1647,14 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(con[4], con.raddr)
         self.assertEqual(con[5], con.status)
         # test kind arg
-        self.assertRaises(ValueError, p.get_connections, 'foo')
+        self.assertRaises(ValueError, p.connections, 'foo')
 
     @unittest.skipUnless(supports_ipv6(), 'IPv6 is not supported')
     def test_get_connections_ipv6(self):
         s = socket.socket(AF_INET6, SOCK_STREAM)
         s.bind(('::1', 0))
         s.listen(1)
-        cons = psutil.Process().get_connections()
+        cons = psutil.Process().connections()
         s.close()
         self.assertEqual(len(cons), 1)
         self.assertEqual(cons[0].laddr[0], '::1')
@@ -1667,7 +1667,7 @@ class TestProcess(unittest.TestCase):
             sock = socket.socket(AF_UNIX, type)
             try:
                 sock.bind(TESTFN)
-                conn = psutil.Process().get_connections(kind='unix')[0]
+                conn = psutil.Process().connections(kind='unix')[0]
                 check_connection(conn)
                 if conn.fd != -1:  # != sunos and windows
                     self.assertEqual(conn.fd, sock.fileno())
@@ -1689,7 +1689,7 @@ class TestProcess(unittest.TestCase):
         sock.bind(('localhost', 0))
         sock.listen(1)
         p = psutil.Process()
-        for conn in p.get_connections():
+        for conn in p.connections():
             if conn.fd == sock.fileno():
                 break
         else:
@@ -1751,14 +1751,14 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(conn.raddr, raddr)
             self.assertEqual(conn.status, status)
             for kind in all_kinds:
-                cons = proc.get_connections(kind=kind)
+                cons = proc.connections(kind=kind)
                 if kind in kinds:
                     assert cons != [], cons
                 else:
                     self.assertEqual(cons, [], cons)
 
-        for p in psutil.Process().get_children():
-            for conn in p.get_connections():
+        for p in psutil.Process().children():
+            for conn in p.connections():
                 # TCP v4
                 if p.pid == tcp4_proc.pid:
                     check_conn(p, conn, AF_INET, SOCK_STREAM, "127.0.0.1", (),
@@ -1783,21 +1783,21 @@ class TestProcess(unittest.TestCase):
     @unittest.skipUnless(POSIX, 'posix only')
     def test_get_num_fds(self):
         p = psutil.Process()
-        start = p.get_num_fds()
+        start = p.num_fds()
         file = open(TESTFN, 'w')
-        self.assertEqual(p.get_num_fds(), start + 1)
+        self.assertEqual(p.num_fds(), start + 1)
         sock = socket.socket()
-        self.assertEqual(p.get_num_fds(), start + 2)
+        self.assertEqual(p.num_fds(), start + 2)
         file.close()
         sock.close()
-        self.assertEqual(p.get_num_fds(), start)
+        self.assertEqual(p.num_fds(), start)
 
     @skip_on_not_implemented(only_if=LINUX)
     def test_get_num_ctx_switches(self):
         p = psutil.Process()
-        before = sum(p.get_num_ctx_switches())
+        before = sum(p.num_ctx_switches())
         for x in range(500000):
-            after = sum(p.get_num_ctx_switches())
+            after = sum(p.num_ctx_switches())
             if after > before:
                 return
         self.fail("num ctx switches still the same after 50.000 iterations")
@@ -1816,11 +1816,11 @@ class TestProcess(unittest.TestCase):
 
     def test_get_children(self):
         p = psutil.Process()
-        self.assertEqual(p.get_children(), [])
-        self.assertEqual(p.get_children(recursive=True), [])
+        self.assertEqual(p.children(), [])
+        self.assertEqual(p.children(recursive=True), [])
         sproc = get_test_subprocess()
-        children1 = p.get_children()
-        children2 = p.get_children(recursive=True)
+        children1 = p.children()
+        children2 = p.children(recursive=True)
         for children in (children1, children2):
             self.assertEqual(len(children), 1)
             self.assertEqual(children[0].pid, sproc.pid)
@@ -1836,11 +1836,11 @@ class TestProcess(unittest.TestCase):
         s += "time.sleep(2);"
         get_test_subprocess(cmd=[PYTHON, "-c", s])
         p = psutil.Process()
-        self.assertEqual(len(p.get_children(recursive=False)), 1)
+        self.assertEqual(len(p.children(recursive=False)), 1)
         # give the grandchild some time to start
         stop_at = time.time() + 1.5
         while time.time() < stop_at:
-            children = p.get_children(recursive=True)
+            children = p.children(recursive=True)
             if len(children) > 1:
                 break
         self.assertEqual(len(children), 2)
@@ -1860,7 +1860,7 @@ class TestProcess(unittest.TestCase):
         pid = sorted(table.items(), key=lambda x: x[1])[-1][0]
         p = psutil.Process(pid)
         try:
-            c = p.get_children(recursive=True)
+            c = p.children(recursive=True)
         except psutil.AccessDenied:  # windows
             pass
         else:
@@ -1895,7 +1895,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(sorted(d.keys()), ['exe', 'name'])
         #
         p = psutil.Process(min(psutil.get_pids()))
-        d = p.as_dict(attrs=['get_connections'], ad_value='foo')
+        d = p.as_dict(attrs=['connections'], ad_value='foo')
         if not isinstance(d['connections'], list):
             self.assertEqual(d['connections'], 'foo')
 
@@ -1995,7 +1995,7 @@ class TestProcess(unittest.TestCase):
             call_until(lambda: zproc.status, "ret == psutil.STATUS_ZOMBIE")
             self.assertTrue(psutil.pid_exists(zpid))
             zproc = psutil.Process(zpid)
-            descendants = [x.pid for x in psutil.Process().get_children(
+            descendants = [x.pid for x in psutil.Process().children(
                            recursive=True)]
             self.assertIn(zpid, descendants)
         finally:
@@ -2020,12 +2020,12 @@ class TestProcess(unittest.TestCase):
         #self.assertEqual(p.exe, "")
         p.cmdline
         try:
-            p.get_num_threads()
+            p.num_threads()
         except psutil.AccessDenied:
             pass
 
         try:
-            p.get_memory_info()
+            p.memory_info()
         except psutil.AccessDenied:
             pass
 
