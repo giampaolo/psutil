@@ -1700,7 +1700,7 @@ def get_process_list():
 
 @_deprecated(replacement="psutil.users()")
 def get_users():
-    return psutil.users()
+    return users()
 
 
 @_deprecated(replacement="psutil.virtual_memory()")

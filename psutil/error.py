@@ -12,7 +12,7 @@ and are supposed to be accessed from 'psutil' namespace as in:
 """
 
 import warnings
-from psutil._error import *
+from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 
 
 warnings.warn("psutil.error module is deprecated and scheduled for removal; "

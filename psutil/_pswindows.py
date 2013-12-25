@@ -10,22 +10,18 @@ import errno
 import os
 import sys
 
-from psutil._common import *
-from psutil._compat import PY3, xrange, wraps, lru_cache
+from psutil import _common
+from psutil._common import (conn_tmap, usage_percent, isfile_strict)
+from psutil._common import (nt_proc_conn, nt_proc_cpu, nt_proc_ctxsw,
+                            nt_proc_file, nt_proc_mem, nt_proc_io,
+                            nt_proc_thread, nt_sys_diskpart, nt_sys_diskusage,
+                            nt_sys_swap, nt_sys_user, nt_sys_vmem)
+from psutil._compat import PY3, xrange, wraps, lru_cache, namedtuple
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_windows
 
-# process priority constants:
+# process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
-from _psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,
-                             BELOW_NORMAL_PRIORITY_CLASS,
-                             HIGH_PRIORITY_CLASS,
-                             IDLE_PRIORITY_CLASS,
-                             NORMAL_PRIORITY_CLASS,
-                             REALTIME_PRIORITY_CLASS,
-                             INFINITE)
-
-
 __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
                   "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
                   "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
@@ -41,19 +37,19 @@ ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
                                _psutil_windows.ERROR_ACCESS_DENIED])
 
 TCP_STATUSES = {
-    _psutil_windows.MIB_TCP_STATE_ESTAB: CONN_ESTABLISHED,
-    _psutil_windows.MIB_TCP_STATE_SYN_SENT: CONN_SYN_SENT,
-    _psutil_windows.MIB_TCP_STATE_SYN_RCVD: CONN_SYN_RECV,
-    _psutil_windows.MIB_TCP_STATE_FIN_WAIT1: CONN_FIN_WAIT1,
-    _psutil_windows.MIB_TCP_STATE_FIN_WAIT2: CONN_FIN_WAIT2,
-    _psutil_windows.MIB_TCP_STATE_TIME_WAIT: CONN_TIME_WAIT,
-    _psutil_windows.MIB_TCP_STATE_CLOSED: CONN_CLOSE,
-    _psutil_windows.MIB_TCP_STATE_CLOSE_WAIT: CONN_CLOSE_WAIT,
-    _psutil_windows.MIB_TCP_STATE_LAST_ACK: CONN_LAST_ACK,
-    _psutil_windows.MIB_TCP_STATE_LISTEN: CONN_LISTEN,
-    _psutil_windows.MIB_TCP_STATE_CLOSING: CONN_CLOSING,
-    _psutil_windows.MIB_TCP_STATE_DELETE_TCB: CONN_DELETE_TCB,
-    _psutil_windows.PSUTIL_CONN_NONE: CONN_NONE,
+    _psutil_windows.MIB_TCP_STATE_ESTAB: _common.CONN_ESTABLISHED,
+    _psutil_windows.MIB_TCP_STATE_SYN_SENT: _common.CONN_SYN_SENT,
+    _psutil_windows.MIB_TCP_STATE_SYN_RCVD: _common.CONN_SYN_RECV,
+    _psutil_windows.MIB_TCP_STATE_FIN_WAIT1: _common.CONN_FIN_WAIT1,
+    _psutil_windows.MIB_TCP_STATE_FIN_WAIT2: _common.CONN_FIN_WAIT2,
+    _psutil_windows.MIB_TCP_STATE_TIME_WAIT: _common.CONN_TIME_WAIT,
+    _psutil_windows.MIB_TCP_STATE_CLOSED: _common.CONN_CLOSE,
+    _psutil_windows.MIB_TCP_STATE_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
+    _psutil_windows.MIB_TCP_STATE_LAST_ACK: _common.CONN_LAST_ACK,
+    _psutil_windows.MIB_TCP_STATE_LISTEN: _common.CONN_LISTEN,
+    _psutil_windows.MIB_TCP_STATE_CLOSING: _common.CONN_CLOSING,
+    _psutil_windows.MIB_TCP_STATE_DELETE_TCB: _common.CONN_DELETE_TCB,
+    _psutil_windows.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
 
 
@@ -288,7 +284,7 @@ class Process(object):
     @wrap_exceptions
     def process_wait(self, timeout=None):
         if timeout is None:
-            timeout = INFINITE
+            timeout = _psutil_windows.INFINITE
         else:
             # WaitForSingleObject() expects time in milliseconds
             timeout = int(timeout * 1000)
@@ -432,9 +428,9 @@ class Process(object):
     def get_status(self):
         suspended = _psutil_windows.is_process_suspended(self.pid)
         if suspended:
-            return STATUS_STOPPED
+            return _common.STATUS_STOPPED
         else:
-            return STATUS_RUNNING
+            return _common.STATUS_RUNNING
 
     @wrap_exceptions
     def get_cpu_affinity(self):
