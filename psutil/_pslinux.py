@@ -17,7 +17,6 @@ import struct
 import sys
 import warnings
 
-from _psutil_linux import *  # needed for RLIMIT_* constants
 from psutil import _psposix
 from psutil._common import *
 from psutil._compat import PY3, xrange, namedtuple, wraps
