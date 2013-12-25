@@ -86,14 +86,32 @@ def get_sys_cpu_times():
     return nt_sys_cputimes(user, nice, system, idle, irq)
 
 
-def get_sys_per_cpu_times():
-    """Return system CPU times as a named tuple"""
-    ret = []
-    for cpu_t in _psutil_bsd.get_sys_per_cpu_times():
-        user, nice, system, idle, irq = cpu_t
-        item = nt_sys_cputimes(user, nice, system, idle, irq)
-        ret.append(item)
-    return ret
+if hasattr(_psutil_bsd, "get_sys_per_cpu_times"):
+    def get_sys_per_cpu_times():
+        """Return system CPU times as a named tuple"""
+        ret = []
+        for cpu_t in _psutil_bsd.get_sys_per_cpu_times():
+            user, nice, system, idle, irq = cpu_t
+            item = nt_sys_cputimes(user, nice, system, idle, irq)
+            ret.append(item)
+        return ret
+else:
+    # XXX
+    # Ok, this is very dirty.
+    # On FreeBSD < 8 we cannot gather per-cpu information, see:
+    # http://code.google.com/p/psutil/issues/detail?id=226
+    # If num cpus > 1, on first call we return single cpu times to avoid a
+    # crash at psutil import time.
+    # Next calls will fail with NotImplementedError
+    def get_sys_per_cpu_times():
+        if get_num_cpus() == 1:
+            return [get_sys_cpu_times]
+        if get_sys_per_cpu_times.__called__:
+            raise NotImplementedError("supported only starting from FreeBSD 8")
+        get_sys_per_cpu_times.__called__ = True
+        return [get_sys_cpu_times]
+
+    get_sys_per_cpu_times.__called__ = False
 
 
 def get_num_cpus():
@@ -126,25 +144,6 @@ def get_num_phys_cpus():
 def get_boot_time():
     """The system boot time expressed in seconds since the epoch."""
     return _psutil_bsd.get_boot_time()
-
-
-# XXX
-# Ok, this is very dirty.
-# On FreeBSD < 8 we cannot gather per-cpu information, see:
-# http://code.google.com/p/psutil/issues/detail?id=226
-# If num cpus > 1, on first call we return single cpu times to avoid a
-# crash at psutil import time.
-# Next calls will fail with NotImplementedError
-if not hasattr(_psutil_bsd, "get_sys_per_cpu_times"):
-    def get_sys_per_cpu_times():
-        if get_num_cpus() == 1:
-            return [get_sys_cpu_times]
-        if get_sys_per_cpu_times.__called__:
-            raise NotImplementedError("supported only starting from FreeBSD 8")
-        get_sys_per_cpu_times.__called__ = True
-        return [get_sys_cpu_times]
-
-get_sys_per_cpu_times.__called__ = False
 
 
 def disk_partitions(all=False):
