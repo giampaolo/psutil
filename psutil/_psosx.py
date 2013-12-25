@@ -10,8 +10,13 @@ import errno
 import os
 import sys
 
+from psutil import _common
 from psutil import _psposix
-from psutil._common import *
+from psutil._common import (conn_tmap, usage_percent, isfile_strict)
+from psutil._common import (nt_proc_conn, nt_proc_cpu, nt_proc_ctxsw,
+                            nt_proc_file, nt_proc_mem, nt_proc_thread,
+                            nt_proc_gids, nt_proc_uids, nt_sys_diskpart,
+                            nt_sys_swap, nt_sys_user, nt_sys_vmem)
 from psutil._compat import namedtuple, wraps
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_osx
@@ -26,26 +31,26 @@ PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
 TCP_STATUSES = {
-    _psutil_osx.TCPS_ESTABLISHED: CONN_ESTABLISHED,
-    _psutil_osx.TCPS_SYN_SENT: CONN_SYN_SENT,
-    _psutil_osx.TCPS_SYN_RECEIVED: CONN_SYN_RECV,
-    _psutil_osx.TCPS_FIN_WAIT_1: CONN_FIN_WAIT1,
-    _psutil_osx.TCPS_FIN_WAIT_2: CONN_FIN_WAIT2,
-    _psutil_osx.TCPS_TIME_WAIT: CONN_TIME_WAIT,
-    _psutil_osx.TCPS_CLOSED: CONN_CLOSE,
-    _psutil_osx.TCPS_CLOSE_WAIT: CONN_CLOSE_WAIT,
-    _psutil_osx.TCPS_LAST_ACK: CONN_LAST_ACK,
-    _psutil_osx.TCPS_LISTEN: CONN_LISTEN,
-    _psutil_osx.TCPS_CLOSING: CONN_CLOSING,
-    _psutil_osx.PSUTIL_CONN_NONE: CONN_NONE,
+    _psutil_osx.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
+    _psutil_osx.TCPS_SYN_SENT: _common.CONN_SYN_SENT,
+    _psutil_osx.TCPS_SYN_RECEIVED: _common.CONN_SYN_RECV,
+    _psutil_osx.TCPS_FIN_WAIT_1: _common.CONN_FIN_WAIT1,
+    _psutil_osx.TCPS_FIN_WAIT_2: _common.CONN_FIN_WAIT2,
+    _psutil_osx.TCPS_TIME_WAIT: _common.CONN_TIME_WAIT,
+    _psutil_osx.TCPS_CLOSED: _common.CONN_CLOSE,
+    _psutil_osx.TCPS_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
+    _psutil_osx.TCPS_LAST_ACK: _common.CONN_LAST_ACK,
+    _psutil_osx.TCPS_LISTEN: _common.CONN_LISTEN,
+    _psutil_osx.TCPS_CLOSING: _common.CONN_CLOSING,
+    _psutil_osx.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
 
 PROC_STATUSES = {
-    _psutil_osx.SIDL: STATUS_IDLE,
-    _psutil_osx.SRUN: STATUS_RUNNING,
-    _psutil_osx.SSLEEP: STATUS_SLEEPING,
-    _psutil_osx.SSTOP: STATUS_STOPPED,
-    _psutil_osx.SZOMB: STATUS_ZOMBIE,
+    _psutil_osx.SIDL: _common.STATUS_IDLE,
+    _psutil_osx.SRUN: _common.STATUS_RUNNING,
+    _psutil_osx.SSLEEP: _common.STATUS_SLEEPING,
+    _psutil_osx.SSTOP: _common.STATUS_STOPPED,
+    _psutil_osx.SZOMB: _common.STATUS_ZOMBIE,
 }
 
 # extend base mem ntuple with OSX-specific memory metrics
@@ -88,7 +93,7 @@ def get_sys_per_cpu_times():
     ret = []
     for cpu_t in _psutil_osx.get_sys_per_cpu_times():
         user, nice, system, idle = cpu_t
-        item = _cputimes_ntuple(user, nice, system, idle)
+        item = nt_sys_cputimes(user, nice, system, idle)
         ret.append(item)
     return ret
 
