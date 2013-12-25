@@ -18,7 +18,13 @@ import sys
 import warnings
 
 from psutil import _psposix
-from psutil._common import *
+from psutil import _common
+from psutil._common import (usage_percent, deprecated, memoize, isfile_strict)
+from psutil._common import (nt_proc_conn, nt_proc_cpu, nt_proc_ctxsw,
+                            nt_proc_file, nt_proc_gids, nt_proc_io,
+                            nt_proc_ionice, nt_proc_mem, nt_proc_thread,
+                            nt_proc_uids, nt_sys_diskpart, nt_sys_swap,
+                            nt_sys_user, nt_sys_vmem)
 from psutil._compat import PY3, xrange, namedtuple, wraps
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_linux
@@ -60,31 +66,31 @@ IOPRIO_CLASS_IDLE = 3
 
 # taken from /fs/proc/array.c
 PROC_STATUSES = {
-    "R": STATUS_RUNNING,
-    "S": STATUS_SLEEPING,
-    "D": STATUS_DISK_SLEEP,
-    "T": STATUS_STOPPED,
-    "t": STATUS_TRACING_STOP,
-    "Z": STATUS_ZOMBIE,
-    "X": STATUS_DEAD,
-    "x": STATUS_DEAD,
-    "K": STATUS_WAKE_KILL,
-    "W": STATUS_WAKING
+    "R": _common.STATUS_RUNNING,
+    "S": _common.STATUS_SLEEPING,
+    "D": _common.STATUS_DISK_SLEEP,
+    "T": _common.STATUS_STOPPED,
+    "t": _common.STATUS_TRACING_STOP,
+    "Z": _common.STATUS_ZOMBIE,
+    "X": _common.STATUS_DEAD,
+    "x": _common.STATUS_DEAD,
+    "K": _common.STATUS_WAKE_KILL,
+    "W": _common.STATUS_WAKING
 }
 
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
 TCP_STATUSES = {
-    "01": CONN_ESTABLISHED,
-    "02": CONN_SYN_SENT,
-    "03": CONN_SYN_RECV,
-    "04": CONN_FIN_WAIT1,
-    "05": CONN_FIN_WAIT2,
-    "06": CONN_TIME_WAIT,
-    "07": CONN_CLOSE,
-    "08": CONN_CLOSE_WAIT,
-    "09": CONN_LAST_ACK,
-    "0A": CONN_LISTEN,
-    "0B": CONN_CLOSING
+    "01": _common.CONN_ESTABLISHED,
+    "02": _common.CONN_SYN_SENT,
+    "03": _common.CONN_SYN_RECV,
+    "04": _common.CONN_FIN_WAIT1,
+    "05": _common.CONN_FIN_WAIT2,
+    "06": _common.CONN_TIME_WAIT,
+    "07": _common.CONN_CLOSE,
+    "08": _common.CONN_CLOSE_WAIT,
+    "09": _common.CONN_LAST_ACK,
+    "0A": _common.CONN_LISTEN,
+    "0B": _common.CONN_CLOSING
 }
 
 nt_sys_vmem = namedtuple(
@@ -995,7 +1001,7 @@ class Process(object):
                             if type_ == socket.SOCK_STREAM:
                                 status = TCP_STATUSES[status]
                             else:
-                                status = CONN_NONE
+                                status = _common.CONN_NONE
                             fd = int(inodes[inode])
                             conn = nt_proc_conn(fd, family, type_, laddr,
                                                 raddr, status)
@@ -1012,7 +1018,7 @@ class Process(object):
                             fd = int(inodes[inode])
                             type_ = int(type_)
                             conn = nt_proc_conn(fd, family, type_, path,
-                                                None, CONN_NONE)
+                                                None, _common.CONN_NONE)
                             retlist.append(conn)
                     else:
                         raise ValueError(family)
