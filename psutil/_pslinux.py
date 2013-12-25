@@ -17,9 +17,9 @@ import struct
 import sys
 import warnings
 
-from psutil import _psposix
 from psutil import _common
-from psutil._common import (usage_percent, deprecated, memoize, isfile_strict)
+from psutil import _psposix
+from psutil._common import (isfile_strict,  usage_percent, deprecated, memoize)
 from psutil._common import (nt_proc_conn, nt_proc_cpu, nt_proc_ctxsw,
                             nt_proc_file, nt_proc_gids, nt_proc_io,
                             nt_proc_ionice, nt_proc_mem, nt_proc_thread,

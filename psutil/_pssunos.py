@@ -10,9 +10,15 @@ import errno
 import os
 import socket
 import subprocess
+import sys
 
+from psutil import _common
 from psutil import _psposix
-from psutil._common import *
+from psutil._common import (conn_tmap, usage_percent, isfile_strict)
+from psutil._common import (nt_proc_conn, nt_proc_cpu, nt_proc_ctxsw,
+                            nt_proc_file, nt_proc_mem, nt_proc_thread,
+                            nt_proc_uids, nt_sys_diskpart, nt_sys_swap,
+                            nt_sys_user, nt_sys_vmem)
 from psutil._compat import namedtuple, PY3
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_posix
@@ -27,30 +33,30 @@ CONN_IDLE = "IDLE"
 CONN_BOUND = "BOUND"
 
 PROC_STATUSES = {
-    _psutil_sunos.SSLEEP: STATUS_SLEEPING,
-    _psutil_sunos.SRUN: STATUS_RUNNING,
-    _psutil_sunos.SZOMB: STATUS_ZOMBIE,
-    _psutil_sunos.SSTOP: STATUS_STOPPED,
-    _psutil_sunos.SIDL: STATUS_IDLE,
-    _psutil_sunos.SONPROC: STATUS_RUNNING,  # same as run
-    _psutil_sunos.SWAIT: STATUS_WAITING,
+    _psutil_sunos.SSLEEP: _common.STATUS_SLEEPING,
+    _psutil_sunos.SRUN: _common.STATUS_RUNNING,
+    _psutil_sunos.SZOMB: _common.STATUS_ZOMBIE,
+    _psutil_sunos.SSTOP: _common.STATUS_STOPPED,
+    _psutil_sunos.SIDL: _common.STATUS_IDLE,
+    _psutil_sunos.SONPROC: _common.STATUS_RUNNING,  # same as run
+    _psutil_sunos.SWAIT: _common.STATUS_WAITING,
 }
 
 TCP_STATUSES = {
-    _psutil_sunos.TCPS_ESTABLISHED: CONN_ESTABLISHED,
-    _psutil_sunos.TCPS_SYN_SENT: CONN_SYN_SENT,
-    _psutil_sunos.TCPS_SYN_RCVD: CONN_SYN_RECV,
-    _psutil_sunos.TCPS_FIN_WAIT_1: CONN_FIN_WAIT1,
-    _psutil_sunos.TCPS_FIN_WAIT_2: CONN_FIN_WAIT2,
-    _psutil_sunos.TCPS_TIME_WAIT: CONN_TIME_WAIT,
-    _psutil_sunos.TCPS_CLOSED: CONN_CLOSE,
-    _psutil_sunos.TCPS_CLOSE_WAIT: CONN_CLOSE_WAIT,
-    _psutil_sunos.TCPS_LAST_ACK: CONN_LAST_ACK,
-    _psutil_sunos.TCPS_LISTEN: CONN_LISTEN,
-    _psutil_sunos.TCPS_CLOSING: CONN_CLOSING,
-    _psutil_sunos.PSUTIL_CONN_NONE: CONN_NONE,
-    _psutil_sunosTC.ptPS_IDLE: CONN_IDLE,  # sunos specific
-    _psutil_sunos.TCPS_BOUND: CONN_BOUND,  # sunos specific
+    _psutil_sunos.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
+    _psutil_sunos.TCPS_SYN_SENT: _common.CONN_SYN_SENT,
+    _psutil_sunos.TCPS_SYN_RCVD: _common.CONN_SYN_RECV,
+    _psutil_sunos.TCPS_FIN_WAIT_1: _common.CONN_FIN_WAIT1,
+    _psutil_sunos.TCPS_FIN_WAIT_2: _common.CONN_FIN_WAIT2,
+    _psutil_sunos.TCPS_TIME_WAIT: _common.CONN_TIME_WAIT,
+    _psutil_sunos.TCPS_CLOSED: _common.CONN_CLOSE,
+    _psutil_sunos.TCPS_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
+    _psutil_sunos.TCPS_LAST_ACK: _common.CONN_LAST_ACK,
+    _psutil_sunos.TCPS_LISTEN: _common.CONN_LISTEN,
+    _psutil_sunos.TCPS_CLOSING: _common.CONN_CLOSING,
+    _psutil_sunos.PSUTIL_CONN_NONE: _common.CONN_NONE,
+    _psutil_sunos.TCPS_IDLE: _common.CONN_IDLE,  # sunos specific
+    _psutil_sunos.TCPS_BOUND: _common.CONN_BOUND,  # sunos specific
 }
 
 nt_sys_cputimes = namedtuple('cputimes', ['user', 'system', ' idle', 'iowait'])
@@ -124,7 +130,7 @@ def get_sys_cpu_times():
 def get_sys_per_cpu_times():
     """Return system per-CPU times as a list of named tuples"""
     ret = _psutil_sunos.get_sys_per_cpu_times()
-    return [_cputimes_ntuple(*x) for x in ret]
+    return [nt_sys_cputimes(*x) for x in ret]
 
 
 def get_num_cpus():
@@ -418,7 +424,7 @@ class Process(object):
                     type = socket.SOCK_DGRAM
                 else:
                     type = -1
-                yield (-1, socket.AF_UNIX, type, path, "", CONN_NONE)
+                yield (-1, socket.AF_UNIX, type, path, "", _common.CONN_NONE)
 
     @wrap_exceptions
     def get_connections(self, kind='inet'):
