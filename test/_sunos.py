@@ -7,9 +7,11 @@
 """Sun OS specific tests.  These are implicitly run by test_psutil.py."""
 
 import datetime
+import sys
+import unittest
 
+from test import sh
 import psutil
-from test_psutil import *
 
 
 class SunOSSpecificTestCase(unittest.TestCase):

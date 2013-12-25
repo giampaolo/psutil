@@ -16,7 +16,8 @@ import time
 import traceback
 import unittest
 
-from test_psutil import *
+from test_psutil import (register_warning, get_test_subprocess, wait_for_pid,
+                         reap_children)
 
 try:
     import wmi
@@ -173,16 +174,16 @@ class WindowsSpecificTestCase(unittest.TestCase):
             w = wmi.WMI().Win32_ComputerSystem()[0]
             self.assertEqual(int(w.TotalPhysicalMemory), psutil.TOTAL_PHYMEM)
 
-        def test__UPTIME(self):
-            # _UPTIME constant is not public but it is used internally
-            # as value to return for pid 0 creation time.
-            # WMI behaves the same.
-            w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-            p = psutil.Process(0)
-            wmic_create = str(w.CreationDate.split('.')[0])
-            psutil_create = time.strftime("%Y%m%d%H%M%S",
-                                          time.localtime(p.create_time))
-            # XXX - ? no actual test here
+        # def test__UPTIME(self):
+        #     # _UPTIME constant is not public but it is used internally
+        #     # as value to return for pid 0 creation time.
+        #     # WMI behaves the same.
+        #     w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        #     p = psutil.Process(0)
+        #     wmic_create = str(w.CreationDate.split('.')[0])
+        #     psutil_create = time.strftime("%Y%m%d%H%M%S",
+        #                                   time.localtime(p.create_time))
+        #
 
         def test_pids(self):
             # Note: this test might fail if the OS is starting/killing
