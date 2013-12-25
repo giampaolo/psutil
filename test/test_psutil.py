@@ -84,6 +84,7 @@ SUNOS = sys.platform.startswith("sunos")
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
 
+
 # ===================================================================
 # --- Utility functions
 # ===================================================================
@@ -349,6 +350,7 @@ def safe_rmdir(dir):
         err = sys.exc_info()[1]
         if err.errno != errno.ENOENT:
             raise
+
 
 def call_until(fun, expr, timeout=GLOBAL_TIMEOUT):
     """Keep calling function for timeout secs and exit if eval()

@@ -12,13 +12,13 @@ FLAGS ?=
 all: test
 
 clean:
-	rm -rf `find . -type d -name __pycache__`
 	rm -f `find . -type f -name \*.py[co]`
 	rm -f `find . -type f -name \*.so`
 	rm -f `find . -type f -name .\*~`
 	rm -f `find . -type f -name \*.orig`
 	rm -f `find . -type f -name \*.bak`
 	rm -f `find . -type f -name \*.rej`
+	rm -rf `find . -type d -name __pycache__`
 	rm -rf *\$testfile*
 	rm -rf *.egg-info
 	rm -rf build
@@ -44,7 +44,7 @@ test: install
 
 nosetest: install
 	# $ make nosetest FLAGS=test_name
-	nosetests test/test_psutil.py -v -m $(FLAGS)
+	nosetests $(TSCRIPT) -v -m $(FLAGS)
 
 memtest: install
 	$(PYTHON) test/test_memory_leaks.py

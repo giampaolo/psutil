@@ -20,6 +20,7 @@ from test_psutil import LINUX, SUNOS, OSX, BSD, PYTHON
 from test_psutil import (get_test_subprocess, skip_on_access_denied,
                          retry_before_failing, reap_children, sh)
 
+
 def ps(cmd):
     """Expects a ps command with a -o argument and parse the result
     returning only the value of interest.

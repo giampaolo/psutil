@@ -141,6 +141,7 @@ def get_num_cpus():
         # mimic os.cpu_count() behavior
         return None
 
+
 def get_num_phys_cpus():
     """Return the number of physical CPUs in the system."""
     return _psutil_sunos.get_num_phys_cpus()
