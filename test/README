@@ -1,0 +1,15 @@
+- The recommended way to run tests (also on Windows) is to cd into parent
+  directory and run:
+
+    make test
+
+- If you're on Python < 2.7 unittest2 module must be installed first:
+  https://pypi.python.org/pypi/unittest2
+
+- The main test script is test_psutil.py, which also imports platform-specific
+  _*.py scripts (which should be ignored).
+
+- test_memory_leaks.py looks for memory leaks into C extension modules and must
+  be run separately with:
+
+    make memtest

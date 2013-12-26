@@ -9,8 +9,8 @@
 psutil test suite. Run it with:
 $ make test
 
-If you're on Python < 2.7 it is recommended to install unittest2 module
-from: https://pypi.python.org/pypi/unittest2
+If you're on Python < 2.7 unittest2 module must be installed first:
+https://pypi.python.org/pypi/unittest2
 """
 
 from __future__ import division

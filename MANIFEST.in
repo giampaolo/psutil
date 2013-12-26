@@ -7,5 +7,5 @@ include README
 include setup.py
 include TODO
 recursive-include psutil *.py *.c *.h
-recursive-include test *.py
+recursive-include test *.py README
 recursive-include examples *.py
