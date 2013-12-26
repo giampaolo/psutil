@@ -571,7 +571,7 @@ get_proc_exe(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    if (GetProcessImageFileName(hProcess, &exe, nSize) == 0) {
+    if (GetProcessImageFileName(hProcess, (LPTSTR)&exe, nSize) == 0) {
         CloseHandle(hProcess);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // see https://code.google.com/p/psutil/issues/detail?id=414
