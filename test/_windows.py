@@ -76,7 +76,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
         p.username
         self.assertTrue(p.create_time >= 0.0)
         try:
-            rss, vms = p.get_memory_info()
+            rss, vms = p.memory_info()
         except psutil.AccessDenied:
             # expected on Windows Vista and Windows 7
             if not platform.uname()[1] in ('vista', 'win-7', 'win7'):
@@ -139,14 +139,14 @@ class WindowsSpecificTestCase(unittest.TestCase):
             time.sleep(0.1)
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
             p = psutil.Process(self.pid)
-            rss = p.get_memory_info().rss
+            rss = p.memory_info().rss
             self.assertEqual(rss, int(w.WorkingSetSize))
 
         def test_process_vms_memory(self):
             time.sleep(0.1)
             w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
             p = psutil.Process(self.pid)
-            vms = p.get_memory_info().vms
+            vms = p.memory_info().vms
             # http://msdn.microsoft.com/en-us/library/aa394372(VS.85).aspx
             # ...claims that PageFileUsage is represented in Kilo
             # bytes but funnily enough on certain platforms bytes are
@@ -170,9 +170,10 @@ class WindowsSpecificTestCase(unittest.TestCase):
             num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
             self.assertEqual(num_cpus, psutil.cpu_count())
 
-        def test_TOTAL_PHYMEM(self):
+        def test_total_phymem(self):
             w = wmi.WMI().Win32_ComputerSystem()[0]
-            self.assertEqual(int(w.TotalPhysicalMemory), psutil.TOTAL_PHYMEM)
+            self.assertEqual(int(w.TotalPhysicalMemory),
+                             psutil.virtual_memory().total)
 
         # def test__UPTIME(self):
         #     # _UPTIME constant is not public but it is used internally
@@ -230,17 +231,17 @@ class WindowsSpecificTestCase(unittest.TestCase):
 
     if win32api is not None:
 
-        def test_get_num_handles(self):
+        def test_num_handles(self):
             p = psutil.Process(os.getpid())
-            before = p.get_num_handles()
+            before = p.num_handles()
             handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION,
                                           win32con.FALSE, os.getpid())
-            after = p.get_num_handles()
+            after = p.num_handles()
             self.assertEqual(after, before + 1)
             win32api.CloseHandle(handle)
-            self.assertEqual(p.get_num_handles(), before)
+            self.assertEqual(p.num_handles(), before)
 
-        def test_get_num_handles_2(self):
+        def test_num_handles_2(self):
             # Note: this fails from time to time; I'm keen on thinking
             # it doesn't mean something is broken
             def call(p, attr):
@@ -255,16 +256,17 @@ class WindowsSpecificTestCase(unittest.TestCase):
             for name in dir(psutil.Process):
                 if name.startswith('_') \
                     or name.startswith('set_') \
+                    or name.startswith('get')  \
                     or name in ('terminate', 'kill', 'suspend', 'resume',
-                                'nice', 'send_signal', 'wait', 'get_children',
+                                'nice', 'send_signal', 'wait', 'children',
                                 'as_dict'):
                     continue
                 else:
                     try:
                         call(p, name)
-                        num1 = p.get_num_handles()
+                        num1 = p.num_handles()
                         call(p, name)
-                        num2 = p.get_num_handles()
+                        num2 = p.num_handles()
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         pass
                     else:

@@ -135,13 +135,13 @@ if sys.platform.startswith("linux"):
 
 elif sys.platform.startswith("win32"):
     import psutil._pswindows as _psplatform
-    from psutil._pswindows import (ABOVE_NORMAL_PRIORITY_CLASS,
-                                   BELOW_NORMAL_PRIORITY_CLASS,
-                                   HIGH_PRIORITY_CLASS,
-                                   IDLE_PRIORITY_CLASS,
-                                   NORMAL_PRIORITY_CLASS,
-                                   REALTIME_PRIORITY_CLASS,
-                                   CONN_DELETE_TCB)
+    from _psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,
+                                 BELOW_NORMAL_PRIORITY_CLASS,
+                                 HIGH_PRIORITY_CLASS,
+                                 IDLE_PRIORITY_CLASS,
+                                 NORMAL_PRIORITY_CLASS,
+                                 REALTIME_PRIORITY_CLASS)
+    from psutil._pswindows import CONN_DELETE_TCB
 
 elif sys.platform.startswith("darwin"):
     import psutil._psosx as _psplatform
@@ -1000,9 +1000,10 @@ class Process(object):
     def get_io_counters(self):
         pass
 
-    @_deprecated_method(replacement='ionice')
-    def get_ionice(self):
-        pass
+    if hasattr(_psplatform.Process, "get_ionice"):
+        @_deprecated_method(replacement='ionice')
+        def get_ionice(self):
+            pass
 
     @_deprecated_method(replacement='memory_info')
     def get_memory_info(self):
@@ -1024,9 +1025,15 @@ class Process(object):
     def get_num_ctx_switches(self):
         pass
 
-    @_deprecated_method(replacement='num_fds')
-    def get_num_fds(self):
-        pass
+    if os.name == 'posix':
+        @_deprecated_method(replacement='num_fds')
+        def get_num_fds(self):
+            pass
+
+    if os.name == 'nt':
+        @_deprecated_method(replacement='num_handles')
+        def get_num_handles(self):
+            pass
 
     @_deprecated_method(replacement='num_threads')
     def get_num_threads(self):
@@ -1036,9 +1043,10 @@ class Process(object):
     def get_open_files(self):
         pass
 
-    @_deprecated_method(replacement='rlimit')
-    def get_rlimit(self):
-        pass
+    if hasattr(_psplatform.Process, "prlimit"):
+        @_deprecated_method(replacement='rlimit')
+        def get_rlimit(self):
+            pass
 
     @_deprecated_method(replacement='threads')
     def get_threads(self):

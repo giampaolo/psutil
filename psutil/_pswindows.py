@@ -48,7 +48,7 @@ TCP_STATUSES = {
     _psutil_windows.MIB_TCP_STATE_LAST_ACK: _common.CONN_LAST_ACK,
     _psutil_windows.MIB_TCP_STATE_LISTEN: _common.CONN_LISTEN,
     _psutil_windows.MIB_TCP_STATE_CLOSING: _common.CONN_CLOSING,
-    _psutil_windows.MIB_TCP_STATE_DELETE_TCB: _common.CONN_DELETE_TCB,
+    _psutil_windows.MIB_TCP_STATE_DELETE_TCB: CONN_DELETE_TCB,
     _psutil_windows.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
 
