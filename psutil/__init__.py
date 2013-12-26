@@ -368,16 +368,16 @@ class Process(object):
         # XXX should we check creation time here rather than in
         # Process.parent?
         if os.name == 'posix':
-            return self._proc.get_ppid()
+            return self._proc.ppid()
         else:
             if self._ppid is None:
-                self._ppid = self._proc.get_ppid()
+                self._ppid = self._proc.ppid()
             return self._ppid
 
     @cached_property
     def name(self):
         """The process name."""
-        name = self._proc.get_name()
+        name = self._proc.name()
         if os.name == 'posix' and len(name) >= 15:
             # On UNIX the name gets truncated to the first 15 characters.
             # If it matches the first part of the cmdline we return that
@@ -417,7 +417,7 @@ class Process(object):
             return fallback
 
         try:
-            exe = self._proc.get_exe()
+            exe = self._proc.exe()
         except AccessDenied:
             err = sys.exc_info()[1]
             return guess_it(fallback=err)
@@ -435,12 +435,12 @@ class Process(object):
     @property
     def cmdline(self):
         """The command line this process has been called with."""
-        return self._proc.get_cmdline()
+        return self._proc.cmdline()
 
     @property
     def status(self):
         """The process current status as a STATUS_* constant."""
-        return self._proc.get_status()
+        return self._proc.status()
 
     if os.name == 'posix':
 
@@ -449,21 +449,21 @@ class Process(object):
             """Return process UIDs as a (real, effective, saved)
             namedtuple.
             """
-            return self._proc.get_uids()
+            return self._proc.uids()
 
         @property
         def gids(self):
             """Return process GIDs as a (real, effective, saved)
             namedtuple.
             """
-            return self._proc.get_gids()
+            return self._proc.gids()
 
         @property
         def terminal(self):
             """The terminal associated with this process, if any,
             else None.
             """
-            return self._proc.get_terminal()
+            return self._proc.terminal()
 
     @property
     def username(self):
@@ -477,21 +477,21 @@ class Process(object):
                     "requires pwd module shipped with standard python")
             return pwd.getpwuid(self.uids.real).pw_name
         else:
-            return self._proc.get_username()
+            return self._proc.username()
 
     @cached_property
     def create_time(self):
         """The process creation time as a floating point number
         expressed in seconds since the epoch, in UTC.
         """
-        return self._proc.get_create_time()
+        return self._proc.create_time()
 
     def cwd(self):
         """Process current working directory."""
-        return self._proc.get_cwd()
+        return self._proc.cwd()
 
     # Linux, BSD and Windows only
-    if hasattr(_psplatform.Process, "get_io_counters"):
+    if hasattr(_psplatform.Process, "io_counters"):
 
         def io_counters(self):
             """Return process I/O statistics as a
@@ -500,11 +500,11 @@ class Process(object):
             Those are the number of read/write calls performed and the
             amount of bytes read and written by the process.
             """
-            return self._proc.get_io_counters()
+            return self._proc.io_counters()
 
     def nice(self):
         """Get process niceness (priority)."""
-        return self._proc.get_nice()
+        return self._proc.nice()
 
     @_assert_pid_not_reused
     def set_nice(self, value):
@@ -513,7 +513,7 @@ class Process(object):
         return self._proc.set_proc_nice(value)
 
     # Linux and Windows >= Vista only
-    if hasattr(_psplatform.Process, "get_ionice"):
+    if hasattr(_psplatform.Process, "ionice"):
 
         def ionice(self):
             """Return process I/O niceness (priority).
@@ -524,7 +524,7 @@ class Process(object):
 
             Available on Linux and Windows > Vista only.
             """
-            return self._proc.get_ionice()
+            return self._proc.ionice()
 
         def set_ionice(self, ioclass, value=None):
             """Set process I/O niceness (priority).
@@ -538,7 +538,7 @@ class Process(object):
 
             Available on Linux and Windows > Vista only.
             """
-            return self._proc.set_proc_ionice(ioclass, value)
+            return self._proc.set_ionice(ioclass, value)
 
     # Linux only
     if hasattr(_psplatform.Process, "prlimit"):
@@ -566,11 +566,11 @@ class Process(object):
             self._proc.prlimit(resource, limits)
 
     # Windows and Linux only
-    if hasattr(_psplatform.Process, "get_cpu_affinity"):
+    if hasattr(_psplatform.Process, "cpu_affinity"):
 
         def cpu_affinity(self):
             """Get process current CPU affinity."""
-            return self._proc.get_cpu_affinity()
+            return self._proc.cpu_affinity()
 
         def set_cpu_affinity(self, cpus):
             """Set process current CPU affinity.
@@ -585,7 +585,7 @@ class Process(object):
             """Return the number of handles opened by this process
             (Windows only).
             """
-            return self._proc.get_num_handles()
+            return self._proc.num_handles()
 
     if os.name == 'posix':
 
@@ -593,24 +593,24 @@ class Process(object):
             """Return the number of file descriptors opened by this
             process (POSIX only).
             """
-            return self._proc.get_num_fds()
+            return self._proc.num_fds()
 
     def num_ctx_switches(self):
         """Return the number of voluntary and involuntary context
         switches performed by this process.
         """
-        return self._proc.get_num_ctx_switches()
+        return self._proc.num_ctx_switches()
 
     def num_threads(self):
         """Return the number of threads used by this process."""
-        return self._proc.get_num_threads()
+        return self._proc.num_threads()
 
     def threads(self):
         """Return threads opened by process as a list of
         (id, user_time, system_time) namedtuples representing
         thread id and thread CPU times (user/system).
         """
-        return self._proc.get_threads()
+        return self._proc.threads()
 
     @_assert_pid_not_reused
     def children(self, recursive=False):
@@ -736,15 +736,15 @@ class Process(object):
         blocking = interval is not None and interval > 0.0
         if blocking:
             st1 = sum(cpu_times())
-            pt1 = self._proc.get_cpu_times()
+            pt1 = self._proc.cpu_times()
             time.sleep(interval)
             st2 = sum(cpu_times())
-            pt2 = self._proc.get_cpu_times()
+            pt2 = self._proc.cpu_times()
         else:
             st1 = self._last_sys_cpu_times
             pt1 = self._last_proc_cpu_times
             st2 = sum(cpu_times())
-            pt2 = self._proc.get_cpu_times()
+            pt2 = self._proc.cpu_times()
             if st1 is None or pt1 is None:
                 self._last_sys_cpu_times = st2
                 self._last_proc_cpu_times = pt2
@@ -779,7 +779,7 @@ class Process(object):
         accumulated process time, in seconds.
         This is the same as os.times() but per-process.
         """
-        return self._proc.get_cpu_times()
+        return self._proc.cpu_times()
 
     def memory_info(self):
         """Return a tuple representing RSS (Resident Set Size) and VMS
@@ -790,20 +790,20 @@ class Process(object):
         On Windows RSS and VMS refer to "Mem Usage" and "VM Size"
         columns of taskmgr.exe.
         """
-        return self._proc.get_memory_info()
+        return self._proc.memory_info()
 
     def ext_memory_info(self):
         """Return a namedtuple with variable fields depending on the
         platform representing extended memory information about
         this process. All numbers are expressed in bytes.
         """
-        return self._proc.get_ext_memory_info()
+        return self._proc.ext_memory_info()
 
     def memory_percent(self):
         """Compare physical system memory to process resident memory
         (RSS) and calculate process memory utilization as a percentage.
         """
-        rss = self._proc.get_memory_info()[0]
+        rss = self._proc.memory_info()[0]
         # use cached value if available
         total_phymem = _TOTAL_PHYMEM or virtual_memory().total
         try:
@@ -822,7 +822,7 @@ class Process(object):
         entity and the namedtuple will also include the mapped region's
         address space ('addr') and permission set ('perms').
         """
-        it = self._proc.get_memory_maps()
+        it = self._proc.memory_maps()
         if grouped:
             d = {}
             for tupl in it:
@@ -843,7 +843,7 @@ class Process(object):
         (path, fd) namedtuples including the absolute file name
         and file descriptor number.
         """
-        return self._proc.get_open_files()
+        return self._proc.open_files()
 
     def connections(self, kind='inet'):
         """Return connections opened by process as a list of
@@ -864,7 +864,7 @@ class Process(object):
         unix            UNIX socket (both UDP and TCP protocols)
         all             the sum of all the possible families and protocols
         """
-        return self._proc.get_connections(kind)
+        return self._proc.connections(kind)
 
     def is_running(self):
         """Return whether this process is running.
@@ -976,7 +976,7 @@ class Process(object):
     def get_connections(self):
         pass
 
-    if hasattr(_psplatform.Process, "get_cpu_affinity"):
+    if hasattr(_psplatform.Process, "cpu_affinity"):
         @_deprecated_method(replacement='cpu_affinity')
         def get_cpu_affinity(self):
             pass
@@ -997,12 +997,12 @@ class Process(object):
     def get_ext_memory_info(self):
         pass
 
-    if hasattr(_psplatform.Process, "get_io_counters"):
+    if hasattr(_psplatform.Process, "io_counters"):
         @_deprecated_method(replacement='io_counters')
         def get_io_counters(self):
             pass
 
-    if hasattr(_psplatform.Process, "get_ionice"):
+    if hasattr(_psplatform.Process, "ionice"):
         @_deprecated_method(replacement='ionice')
         def get_ionice(self):
             pass

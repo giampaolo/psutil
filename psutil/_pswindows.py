@@ -200,7 +200,7 @@ class Process(object):
         self._process_name = None
 
     @wrap_exceptions
-    def get_name(self):
+    def name(self):
         """Return process name, which on Windows is always the final
         part of the executable.
         """
@@ -211,21 +211,21 @@ class Process(object):
         elif self.pid == 4:
             return "System"
         else:
-            return os.path.basename(self.get_exe())
+            return os.path.basename(self.exe())
 
     @wrap_exceptions
-    def get_exe(self):
+    def exe(self):
         # Note: os.path.exists(path) may return False even if the file
         # is there, see:
         # http://stackoverflow.com/questions/3112546/os-path-exists-lies
         return _convert_raw_path(cext.get_proc_exe(self.pid))
 
     @wrap_exceptions
-    def get_cmdline(self):
+    def cmdline(self):
         """Return process cmdline as a list of arguments."""
         return cext.get_proc_cmdline(self.pid)
 
-    def get_ppid(self):
+    def ppid(self):
         """Return process parent pid."""
         try:
             return get_ppid_map()[self.pid]
@@ -242,7 +242,7 @@ class Process(object):
             raise
 
     @wrap_exceptions
-    def get_memory_info(self):
+    def memory_info(self):
         """Returns a tuple or RSS/VMS memory usage in bytes."""
         # on Windows RSS == WorkingSetSize and VSM == PagefileUsage
         # fields of PROCESS_MEMORY_COUNTERS struct:
@@ -252,13 +252,13 @@ class Process(object):
         return nt_proc_mem(t[2], t[7])
 
     @wrap_exceptions
-    def get_ext_memory_info(self):
+    def ext_memory_info(self):
         return nt_proc_extmem(*self._get_raw_meminfo())
 
     nt_mmap_grouped = namedtuple('mmap', 'path rss')
     nt_mmap_ext = namedtuple('mmap', 'addr perms path rss')
 
-    def get_memory_maps(self):
+    def memory_maps(self):
         try:
             raw = cext.get_proc_memory_maps(self.pid)
         except OSError:
@@ -294,14 +294,14 @@ class Process(object):
         return ret
 
     @wrap_exceptions
-    def get_username(self):
+    def username(self):
         """Return the name of the user that owns the process"""
         if self.pid in (0, 4):
             return 'NT AUTHORITY\\SYSTEM'
         return cext.get_proc_username(self.pid)
 
     @wrap_exceptions
-    def get_create_time(self):
+    def create_time(self):
         # special case for kernel process PIDs; return system boot time
         if self.pid in (0, 4):
             return get_boot_time()
@@ -314,11 +314,11 @@ class Process(object):
             raise
 
     @wrap_exceptions
-    def get_num_threads(self):
+    def num_threads(self):
         return cext.get_proc_num_threads(self.pid)
 
     @wrap_exceptions
-    def get_threads(self):
+    def threads(self):
         rawlist = cext.get_proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
@@ -327,7 +327,7 @@ class Process(object):
         return retlist
 
     @wrap_exceptions
-    def get_cpu_times(self):
+    def cpu_times(self):
         try:
             ret = cext.get_proc_cpu_times(self.pid)
         except OSError:
@@ -347,7 +347,7 @@ class Process(object):
         return cext.resume_process(self.pid)
 
     @wrap_exceptions
-    def get_cwd(self):
+    def cwd(self):
         if self.pid in (0, 4):
             raise AccessDenied(self.pid, self._process_name)
         # return a normalized pathname since the native C function appends
@@ -356,7 +356,7 @@ class Process(object):
         return os.path.normpath(path)
 
     @wrap_exceptions
-    def get_open_files(self):
+    def open_files(self):
         if self.pid in (0, 4):
             return []
         retlist = []
@@ -373,7 +373,7 @@ class Process(object):
         return retlist
 
     @wrap_exceptions
-    def get_connections(self, kind='inet'):
+    def connections(self, kind='inet'):
         if kind not in conn_tmap:
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
@@ -388,7 +388,7 @@ class Process(object):
         return ret
 
     @wrap_exceptions
-    def get_nice(self):
+    def nice(self):
         return cext.get_proc_priority(self.pid)
 
     @wrap_exceptions
@@ -398,7 +398,7 @@ class Process(object):
     # available on Windows >= Vista
     if hasattr(cext, "get_process_io_priority"):
         @wrap_exceptions
-        def get_ionice(self):
+        def ionice(self):
             return cext.get_proc_io_priority(self.pid)
 
         @wrap_exceptions
@@ -412,7 +412,7 @@ class Process(object):
             return cext.set_proc_io_priority(self.pid, value)
 
     @wrap_exceptions
-    def get_io_counters(self):
+    def io_counters(self):
         try:
             ret = cext.get_proc_io_counters(self.pid)
         except OSError:
@@ -424,7 +424,7 @@ class Process(object):
         return nt_proc_io(*ret)
 
     @wrap_exceptions
-    def get_status(self):
+    def status(self):
         suspended = cext.is_process_suspended(self.pid)
         if suspended:
             return _common.STATUS_STOPPED
@@ -432,7 +432,7 @@ class Process(object):
             return _common.STATUS_RUNNING
 
     @wrap_exceptions
-    def get_cpu_affinity(self):
+    def cpu_affinity(self):
         from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
         bitmask = cext.get_proc_cpu_affinity(self.pid)
         return from_bitmask(bitmask)
@@ -459,7 +459,7 @@ class Process(object):
         cext.set_proc_cpu_affinity(self.pid, bitmask)
 
     @wrap_exceptions
-    def get_num_handles(self):
+    def num_handles(self):
         try:
             return cext.get_proc_num_handles(self.pid)
         except OSError:
@@ -469,6 +469,6 @@ class Process(object):
             raise
 
     @wrap_exceptions
-    def get_num_ctx_switches(self):
+    def num_ctx_switches(self):
         tupl = cext.get_proc_num_ctx_switches(self.pid)
         return nt_proc_ctxsw(*tupl)

@@ -491,7 +491,7 @@ class Process(object):
         self._process_name = None
 
     @wrap_exceptions
-    def get_name(self):
+    def name(self):
         f = open("/proc/%s/stat" % self.pid)
         try:
             name = f.read().split(' ')[1].replace('(', '').replace(')', '')
@@ -500,7 +500,7 @@ class Process(object):
         # XXX - gets changed later and probably needs refactoring
         return name
 
-    def get_exe(self):
+    def exe(self):
         try:
             exe = os.readlink("/proc/%s/exe" % self.pid)
         except (OSError, IOError):
@@ -531,7 +531,7 @@ class Process(object):
         return exe
 
     @wrap_exceptions
-    def get_cmdline(self):
+    def cmdline(self):
         f = open("/proc/%s/cmdline" % self.pid)
         try:
             # return the args as a list
@@ -540,7 +540,7 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def get_terminal(self):
+    def terminal(self):
         tmap = _psposix._get_terminal_map()
         f = open("/proc/%s/stat" % self.pid)
         try:
@@ -554,7 +554,7 @@ class Process(object):
 
     if os.path.exists('/proc/%s/io' % os.getpid()):
         @wrap_exceptions
-        def get_io_counters(self):
+        def io_counters(self):
             fname = "/proc/%s/io" % self.pid
             f = open(fname)
             try:
@@ -576,12 +576,12 @@ class Process(object):
             finally:
                 f.close()
     else:
-        def get_io_counters(self):
+        def io_counters(self):
             raise NotImplementedError("couldn't find /proc/%s/io (kernel "
                                       "too old?)" % self.pid)
 
     @wrap_exceptions
-    def get_cpu_times(self):
+    def cpu_times(self):
         f = open("/proc/%s/stat" % self.pid)
         try:
             st = f.read().strip()
@@ -602,7 +602,7 @@ class Process(object):
             raise TimeoutExpired(timeout, self.pid, self._process_name)
 
     @wrap_exceptions
-    def get_create_time(self):
+    def create_time(self):
         f = open("/proc/%s/stat" % self.pid)
         try:
             st = f.read().strip()
@@ -621,7 +621,7 @@ class Process(object):
         return starttime
 
     @wrap_exceptions
-    def get_memory_info(self):
+    def memory_info(self):
         f = open("/proc/%s/statm" % self.pid)
         try:
             vms, rss = f.readline().split()[:2]
@@ -631,7 +631,7 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def get_ext_memory_info(self):
+    def ext_memory_info(self):
         #  ============================================================
         # | FIELD  | DESCRIPTION                         | AKA  | TOP  |
         #  ============================================================
@@ -659,7 +659,7 @@ class Process(object):
                              ' '.join(_mmap_base_fields))
 
     if os.path.exists('/proc/%s/smaps' % os.getpid()):
-        def get_memory_maps(self):
+        def memory_maps(self):
             """Return process's mapped memory regions as a list of nameduples.
             Fields are explained in 'man proc'; here is an updated (Apr 2012)
             version: http://goo.gl/fmebo
@@ -733,14 +733,14 @@ class Process(object):
             f.close()
 
     else:
-        def get_memory_maps(self, ext):
+        def memory_maps(self, ext):
             msg = "couldn't find /proc/%s/smaps; kernel < 2.6.14 or "  \
                   "CONFIG_MMU kernel configuration option is not enabled" \
                   % self.pid
             raise NotImplementedError(msg)
 
     @wrap_exceptions
-    def get_cwd(self):
+    def cwd(self):
         # readlink() might return paths containing null bytes causing
         # problems when used with other fs-related functions (os.*,
         # open(), ...)
@@ -748,7 +748,7 @@ class Process(object):
         return path.replace('\x00', '')
 
     @wrap_exceptions
-    def get_num_ctx_switches(self):
+    def num_ctx_switches(self):
         vol = unvol = None
         f = open("/proc/%s/status" % self.pid)
         try:
@@ -767,7 +767,7 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def get_num_threads(self):
+    def num_threads(self):
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:
@@ -778,7 +778,7 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def get_threads(self):
+    def threads(self):
         thread_ids = os.listdir("/proc/%s/task" % self.pid)
         thread_ids.sort()
         retlist = []
@@ -811,7 +811,7 @@ class Process(object):
         return retlist
 
     @wrap_exceptions
-    def get_nice(self):
+    def nice(self):
         #f = open('/proc/%s/stat' % self.pid, 'r')
         # try:
         #   data = f.read()
@@ -827,7 +827,7 @@ class Process(object):
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
-    def get_cpu_affinity(self):
+    def cpu_affinity(self):
         from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
         bitmask = cext.get_proc_cpu_affinity(self.pid)
         return from_bitmask(bitmask)
@@ -850,12 +850,12 @@ class Process(object):
     if hasattr(cext, "ioprio_get"):
 
         @wrap_exceptions
-        def get_ionice(self):
+        def ionice(self):
             ioclass, value = cext.ioprio_get(self.pid)
             return nt_proc_ionice(ioclass, value)
 
         @wrap_exceptions
-        def set_proc_ionice(self, ioclass, value):
+        def set_ionice(self, ioclass, value):
             if ioclass in (IOPRIO_CLASS_NONE, None):
                 if value:
                     msg = "can't specify value with IOPRIO_CLASS_NONE"
@@ -896,7 +896,7 @@ class Process(object):
                 cext.prlimit(self.pid, resource, soft, hard)
 
     @wrap_exceptions
-    def get_status(self):
+    def status(self):
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:
@@ -909,7 +909,7 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def get_open_files(self):
+    def open_files(self):
         retlist = []
         files = os.listdir("/proc/%s/fd" % self.pid)
         hit_enoent = False
@@ -939,7 +939,7 @@ class Process(object):
         return retlist
 
     @wrap_exceptions
-    def get_connections(self, kind='inet'):
+    def connections(self, kind='inet'):
         """Return connections opened by process as a list of namedtuples.
         The kind parameter filters for connections that fit the following
         criteria:
@@ -1056,11 +1056,11 @@ class Process(object):
         return ret
 
     @wrap_exceptions
-    def get_num_fds(self):
+    def num_fds(self):
         return len(os.listdir("/proc/%s/fd" % self.pid))
 
     @wrap_exceptions
-    def get_ppid(self):
+    def ppid(self):
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:
@@ -1072,7 +1072,7 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def get_uids(self):
+    def uids(self):
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:
@@ -1084,7 +1084,7 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def get_gids(self):
+    def gids(self):
         f = open("/proc/%s/status" % self.pid)
         try:
             for line in f:

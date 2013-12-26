@@ -177,42 +177,42 @@ class Process(object):
         self._process_name = None
 
     @wrap_exceptions
-    def get_name(self):
+    def name(self):
         """Return process name as a string of limited len (15)."""
         return cext.get_proc_name(self.pid)
 
     @wrap_exceptions
-    def get_exe(self):
+    def exe(self):
         return cext.get_proc_exe(self.pid)
 
     @wrap_exceptions
-    def get_cmdline(self):
+    def cmdline(self):
         """Return process cmdline as a list of arguments."""
         if not pid_exists(self.pid):
             raise NoSuchProcess(self.pid, self._process_name)
         return cext.get_proc_cmdline(self.pid)
 
     @wrap_exceptions
-    def get_ppid(self):
+    def ppid(self):
         """Return process parent pid."""
         return cext.get_proc_ppid(self.pid)
 
     @wrap_exceptions
-    def get_cwd(self):
+    def cwd(self):
         return cext.get_proc_cwd(self.pid)
 
     @wrap_exceptions
-    def get_uids(self):
+    def uids(self):
         real, effective, saved = cext.get_proc_uids(self.pid)
         return nt_proc_uids(real, effective, saved)
 
     @wrap_exceptions
-    def get_gids(self):
+    def gids(self):
         real, effective, saved = cext.get_proc_gids(self.pid)
         return nt_proc_gids(real, effective, saved)
 
     @wrap_exceptions
-    def get_terminal(self):
+    def terminal(self):
         tty_nr = cext.get_proc_tty_nr(self.pid)
         tmap = _psposix._get_terminal_map()
         try:
@@ -221,13 +221,13 @@ class Process(object):
             return None
 
     @wrap_exceptions
-    def get_memory_info(self):
+    def memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms = cext.get_proc_memory_info(self.pid)[:2]
         return nt_proc_mem(rss, vms)
 
     @wrap_exceptions
-    def get_ext_memory_info(self):
+    def ext_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms, pfaults, pageins = cext.get_proc_memory_info(self.pid)
         return nt_proc_extmem(rss, vms,
@@ -235,27 +235,27 @@ class Process(object):
                               pageins * PAGESIZE)
 
     @wrap_exceptions
-    def get_cpu_times(self):
+    def cpu_times(self):
         user, system = cext.get_proc_cpu_times(self.pid)
         return nt_proc_cpu(user, system)
 
     @wrap_exceptions
-    def get_create_time(self):
+    def create_time(self):
         """Return the start time of the process as a number of seconds since
         the epoch."""
         return cext.get_proc_create_time(self.pid)
 
     @wrap_exceptions
-    def get_num_ctx_switches(self):
+    def num_ctx_switches(self):
         return nt_proc_ctxsw(*cext.get_proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
-    def get_num_threads(self):
+    def num_threads(self):
         """Return the number of threads belonging to the process."""
         return cext.get_proc_num_threads(self.pid)
 
     @wrap_exceptions
-    def get_open_files(self):
+    def open_files(self):
         """Return files opened by process."""
         if self.pid == 0:
             return []
@@ -268,7 +268,7 @@ class Process(object):
         return files
 
     @wrap_exceptions
-    def get_connections(self, kind='inet'):
+    def connections(self, kind='inet'):
         """Return etwork connections opened by a process as a list of
         namedtuples.
         """
@@ -286,7 +286,7 @@ class Process(object):
         return ret
 
     @wrap_exceptions
-    def get_num_fds(self):
+    def num_fds(self):
         if self.pid == 0:
             return 0
         return cext.get_proc_num_fds(self.pid)
@@ -299,7 +299,7 @@ class Process(object):
             raise TimeoutExpired(timeout, self.pid, self._process_name)
 
     @wrap_exceptions
-    def get_nice(self):
+    def nice(self):
         return _psutil_posix.getpriority(self.pid)
 
     @wrap_exceptions
@@ -307,13 +307,13 @@ class Process(object):
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
-    def get_status(self):
+    def status(self):
         code = cext.get_proc_status(self.pid)
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
     @wrap_exceptions
-    def get_threads(self):
+    def threads(self):
         """Return the number of threads belonging to the process."""
         rawlist = cext.get_proc_threads(self.pid)
         retlist = []
@@ -330,5 +330,5 @@ class Process(object):
         'addr perms path rss private swapped dirtied ref_count shadow_depth')
 
     @wrap_exceptions
-    def get_memory_maps(self):
+    def memory_maps(self):
         return cext.get_proc_memory_maps(self.pid)

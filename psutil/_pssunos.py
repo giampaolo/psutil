@@ -223,12 +223,12 @@ class Process(object):
         self._process_name = None
 
     @wrap_exceptions
-    def get_name(self):
+    def name(self):
         # note: max len == 15
         return cext.get_proc_name_and_args(self.pid)[0]
 
     @wrap_exceptions
-    def get_exe(self):
+    def exe(self):
         # Will be guess later from cmdline but we want to explicitly
         # invoke cmdline here in order to get an AccessDenied
         # exception if the user has not enough privileges.
@@ -236,19 +236,19 @@ class Process(object):
         return ""
 
     @wrap_exceptions
-    def get_cmdline(self):
+    def cmdline(self):
         return cext.get_proc_name_and_args(self.pid)[1].split(' ')
 
     @wrap_exceptions
-    def get_create_time(self):
+    def create_time(self):
         return cext.get_proc_basic_info(self.pid)[3]
 
     @wrap_exceptions
-    def get_num_threads(self):
+    def num_threads(self):
         return cext.get_proc_basic_info(self.pid)[5]
 
     @wrap_exceptions
-    def get_nice(self):
+    def nice(self):
         # For some reason getpriority(3) return ESRCH (no such process)
         # for certain low-pid processes, no matter what (even as root).
         # The process actually exists though, as it has a name,
@@ -276,26 +276,26 @@ class Process(object):
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
-    def get_ppid(self):
+    def ppid(self):
         return cext.get_proc_basic_info(self.pid)[0]
 
     @wrap_exceptions
-    def get_uids(self):
+    def uids(self):
         real, effective, saved, _, _, _ = cext.get_proc_cred(self.pid)
         return nt_proc_uids(real, effective, saved)
 
     @wrap_exceptions
-    def get_gids(self):
+    def gids(self):
         _, _, _, real, effective, saved = cext.get_proc_cred(self.pid)
         return nt_proc_uids(real, effective, saved)
 
     @wrap_exceptions
-    def get_cpu_times(self):
+    def cpu_times(self):
         user, system = cext.get_proc_cpu_times(self.pid)
         return nt_proc_cpu(user, system)
 
     @wrap_exceptions
-    def get_terminal(self):
+    def terminal(self):
         hit_enoent = False
         tty = wrap_exceptions(
             cext.get_proc_basic_info(self.pid)[0])
@@ -314,7 +314,7 @@ class Process(object):
             os.stat('/proc/%s' % self.pid)
 
     @wrap_exceptions
-    def get_cwd(self):
+    def cwd(self):
         # /proc/PID/path/cwd may not be resolved by readlink() even if
         # it exists (ls shows it). If that's the case and the process
         # is still alive return None (we can return None also on BSD).
@@ -329,7 +329,7 @@ class Process(object):
             raise
 
     @wrap_exceptions
-    def get_memory_info(self):
+    def memory_info(self):
         ret = cext.get_proc_basic_info(self.pid)
         rss, vms = ret[1] * 1024, ret[2] * 1024
         return nt_proc_mem(rss, vms)
@@ -338,13 +338,13 @@ class Process(object):
     get_ext_memory_info = get_memory_info
 
     @wrap_exceptions
-    def get_status(self):
+    def status(self):
         code = cext.get_proc_basic_info(self.pid)[6]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
     @wrap_exceptions
-    def get_threads(self):
+    def threads(self):
         ret = []
         tids = os.listdir('/proc/%d/lwp' % self.pid)
         hit_enoent = False
@@ -369,7 +369,7 @@ class Process(object):
         return ret
 
     @wrap_exceptions
-    def get_open_files(self):
+    def open_files(self):
         retlist = []
         hit_enoent = False
         pathdir = '/proc/%d/path' % self.pid
@@ -426,7 +426,7 @@ class Process(object):
                 yield (-1, socket.AF_UNIX, type, path, "", _common.CONN_NONE)
 
     @wrap_exceptions
-    def get_connections(self, kind='inet'):
+    def connections(self, kind='inet'):
         if kind not in conn_tmap:
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
@@ -461,7 +461,7 @@ class Process(object):
     nt_mmap_ext = namedtuple('mmap', 'addr perms path rss anon locked')
 
     @wrap_exceptions
-    def get_memory_maps(self):
+    def memory_maps(self):
         def toaddr(start, end):
             return '%s-%s' % (hex(start)[2:].strip('L'),
                               hex(end)[2:].strip('L'))
@@ -495,11 +495,11 @@ class Process(object):
         return retlist
 
     @wrap_exceptions
-    def get_num_fds(self):
+    def num_fds(self):
         return len(os.listdir("/proc/%s/fd" % self.pid))
 
     @wrap_exceptions
-    def get_num_ctx_switches(self):
+    def num_ctx_switches(self):
         return nt_proc_ctxsw(*cext.get_proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions

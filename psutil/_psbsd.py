@@ -92,7 +92,7 @@ def get_sys_cpu_times():
 
 
 if hasattr(cext, "get_sys_per_cpu_times"):
-    def get_sys_per_cpu_times():
+    def sys_per_cpu_times():
         """Return system CPU times as a named tuple"""
         ret = []
         for cpu_t in cext.get_sys_per_cpu_times():
@@ -108,7 +108,7 @@ else:
     # If num cpus > 1, on first call we return single cpu times to avoid a
     # crash at psutil import time.
     # Next calls will fail with NotImplementedError
-    def get_sys_per_cpu_times():
+    def sys_per_cpu_times():
         if get_num_cpus() == 1:
             return [get_sys_cpu_times]
         if get_sys_per_cpu_times.__called__:
@@ -213,22 +213,22 @@ class Process(object):
         self._process_name = None
 
     @wrap_exceptions
-    def get_name(self):
+    def name(self):
         """Return process name as a string of limited len (15)."""
         return cext.get_proc_name(self.pid)
 
     @wrap_exceptions
-    def get_exe(self):
+    def exe(self):
         """Return process executable pathname."""
         return cext.get_proc_exe(self.pid)
 
     @wrap_exceptions
-    def get_cmdline(self):
+    def cmdline(self):
         """Return process cmdline as a list of arguments."""
         return cext.get_proc_cmdline(self.pid)
 
     @wrap_exceptions
-    def get_terminal(self):
+    def terminal(self):
         tty_nr = cext.get_proc_tty_nr(self.pid)
         tmap = _psposix._get_terminal_map()
         try:
@@ -237,55 +237,55 @@ class Process(object):
             return None
 
     @wrap_exceptions
-    def get_ppid(self):
+    def ppid(self):
         """Return process parent pid."""
         return cext.get_proc_ppid(self.pid)
 
     @wrap_exceptions
-    def get_uids(self):
+    def uids(self):
         """Return real, effective and saved user ids."""
         real, effective, saved = cext.get_proc_uids(self.pid)
         return nt_proc_uids(real, effective, saved)
 
     @wrap_exceptions
-    def get_gids(self):
+    def gids(self):
         """Return real, effective and saved group ids."""
         real, effective, saved = cext.get_proc_gids(self.pid)
         return nt_proc_gids(real, effective, saved)
 
     @wrap_exceptions
-    def get_cpu_times(self):
+    def cpu_times(self):
         """return a tuple containing process user/kernel time."""
         user, system = cext.get_proc_cpu_times(self.pid)
         return nt_proc_cpu(user, system)
 
     @wrap_exceptions
-    def get_memory_info(self):
+    def memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms = cext.get_proc_memory_info(self.pid)[:2]
         return nt_proc_mem(rss, vms)
 
     @wrap_exceptions
-    def get_ext_memory_info(self):
+    def ext_memory_info(self):
         return nt_proc_extmem(*cext.get_proc_memory_info(self.pid))
 
     @wrap_exceptions
-    def get_create_time(self):
+    def create_time(self):
         """Return the start time of the process as a number of seconds since
         the epoch."""
         return cext.get_proc_create_time(self.pid)
 
     @wrap_exceptions
-    def get_num_threads(self):
+    def num_threads(self):
         """Return the number of threads belonging to the process."""
         return cext.get_proc_num_threads(self.pid)
 
     @wrap_exceptions
-    def get_num_ctx_switches(self):
+    def num_ctx_switches(self):
         return nt_proc_ctxsw(*cext.get_proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
-    def get_threads(self):
+    def threads(self):
         """Return the number of threads belonging to the process."""
         rawlist = cext.get_proc_threads(self.pid)
         retlist = []
@@ -295,7 +295,7 @@ class Process(object):
         return retlist
 
     @wrap_exceptions
-    def get_connections(self, kind='inet'):
+    def connections(self, kind='inet'):
         """Return etwork connections opened by a process as a list of
         namedtuples.
         """
@@ -320,7 +320,7 @@ class Process(object):
             raise TimeoutExpired(timeout, self.pid, self._process_name)
 
     @wrap_exceptions
-    def get_nice(self):
+    def nice(self):
         return _psutil_posix.getpriority(self.pid)
 
     @wrap_exceptions
@@ -328,7 +328,7 @@ class Process(object):
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
-    def get_status(self):
+    def status(self):
         code = cext.get_proc_status(self.pid)
         if code in PROC_STATUSES:
             return PROC_STATUSES[code]
@@ -336,7 +336,7 @@ class Process(object):
         return "?"
 
     @wrap_exceptions
-    def get_io_counters(self):
+    def io_counters(self):
         rc, wc, rb, wb = cext.get_proc_io_counters(self.pid)
         return nt_proc_io(rc, wc, rb, wb)
 
@@ -350,7 +350,7 @@ class Process(object):
     if hasattr(cext, 'get_proc_open_files'):
 
         @wrap_exceptions
-        def get_open_files(self):
+        def open_files(self):
             """Return files opened by process as a list of namedtuples."""
             # XXX - C implementation available on FreeBSD >= 8 only
             # else fallback on lsof parser
@@ -362,18 +362,18 @@ class Process(object):
                 return lsof.get_proc_open_files()
 
         @wrap_exceptions
-        def get_cwd(self):
+        def cwd(self):
             """Return process current working directory."""
             # sometimes we get an empty string, in which case we turn
             # it into None
             return cext.get_proc_cwd(self.pid) or None
 
         @wrap_exceptions
-        def get_memory_maps(self):
+        def memory_maps(self):
             return cext.get_proc_memory_maps(self.pid)
 
         @wrap_exceptions
-        def get_num_fds(self):
+        def num_fds(self):
             """Return the number of file descriptors opened by this process."""
             return cext.get_proc_num_fds(self.pid)
 
@@ -381,7 +381,7 @@ class Process(object):
         def _not_implemented(self):
             raise NotImplementedError("supported only starting from FreeBSD 8")
 
-        get_open_files = _not_implemented
-        get_proc_cwd = _not_implemented
-        get_memory_maps = _not_implemented
-        get_num_fds = _not_implemented
+        open_files = _not_implemented
+        proc_cwd = _not_implemented
+        memory_maps = _not_implemented
+        num_fds = _not_implemented
