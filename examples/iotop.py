@@ -18,7 +18,7 @@ Author: Giampaolo Rodola' <g.rodola@gmail.com>
 import os
 import sys
 import psutil
-if not hasattr(psutil.Process, 'get_io_counters') or os.name != 'posix':
+if not hasattr(psutil.Process, 'io_counters') or os.name != 'posix':
     sys.exit('platform not supported')
 import time
 import curses
@@ -84,7 +84,7 @@ def poll(interval):
     procs = [p for p in psutil.process_iter()]
     for p in procs[:]:
         try:
-            p._before = p.get_io_counters()
+            p._before = p.io_counters()
         except psutil.Error:
             procs.remove(p)
             continue
@@ -96,7 +96,7 @@ def poll(interval):
     # then retrieve the same info again
     for p in procs[:]:
         try:
-            p._after = p.get_io_counters()
+            p._after = p.io_counters()
             p._cmdline = ' '.join(p.cmdline)
             if not p._cmdline:
                 p._cmdline = p.name

@@ -78,9 +78,9 @@ def poll(interval):
     procs_status = {}
     for p in psutil.process_iter():
         try:
-            p.dict = p.as_dict(['username', 'get_nice', 'get_memory_info',
-                                'get_memory_percent', 'get_cpu_percent',
-                                'get_cpu_times', 'name', 'status'])
+            p.dict = p.as_dict(['username', 'nice', 'memory_info',
+                                'memory_percent', 'cpu_percent',
+                                'cpu_times', 'name', 'status'])
             try:
                 procs_status[p.dict['status']] += 1
             except KeyError:

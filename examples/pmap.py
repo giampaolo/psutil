@@ -23,7 +23,7 @@ def main():
     templ = "%-16s %10s  %-7s %s"
     print_(templ % ("Address", "RSS", "Mode", "Mapping"))
     total_rss = 0
-    for m in p.get_memory_maps(grouped=False):
+    for m in p.memory_maps(grouped=False):
         total_rss += m.rss
         print_(templ % (
             m.addr.split('-')[0].zfill(16),
