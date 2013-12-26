@@ -22,7 +22,7 @@ from psutil._common import (nt_proc_conn, nt_proc_cpu, nt_proc_ctxsw,
 from psutil._compat import namedtuple, PY3
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_posix
-import _psutil_sunos
+import _psutil_sunos as cext
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
@@ -33,30 +33,30 @@ CONN_IDLE = "IDLE"
 CONN_BOUND = "BOUND"
 
 PROC_STATUSES = {
-    _psutil_sunos.SSLEEP: _common.STATUS_SLEEPING,
-    _psutil_sunos.SRUN: _common.STATUS_RUNNING,
-    _psutil_sunos.SZOMB: _common.STATUS_ZOMBIE,
-    _psutil_sunos.SSTOP: _common.STATUS_STOPPED,
-    _psutil_sunos.SIDL: _common.STATUS_IDLE,
-    _psutil_sunos.SONPROC: _common.STATUS_RUNNING,  # same as run
-    _psutil_sunos.SWAIT: _common.STATUS_WAITING,
+    cext.SSLEEP: _common.STATUS_SLEEPING,
+    cext.SRUN: _common.STATUS_RUNNING,
+    cext.SZOMB: _common.STATUS_ZOMBIE,
+    cext.SSTOP: _common.STATUS_STOPPED,
+    cext.SIDL: _common.STATUS_IDLE,
+    cext.SONPROC: _common.STATUS_RUNNING,  # same as run
+    cext.SWAIT: _common.STATUS_WAITING,
 }
 
 TCP_STATUSES = {
-    _psutil_sunos.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
-    _psutil_sunos.TCPS_SYN_SENT: _common.CONN_SYN_SENT,
-    _psutil_sunos.TCPS_SYN_RCVD: _common.CONN_SYN_RECV,
-    _psutil_sunos.TCPS_FIN_WAIT_1: _common.CONN_FIN_WAIT1,
-    _psutil_sunos.TCPS_FIN_WAIT_2: _common.CONN_FIN_WAIT2,
-    _psutil_sunos.TCPS_TIME_WAIT: _common.CONN_TIME_WAIT,
-    _psutil_sunos.TCPS_CLOSED: _common.CONN_CLOSE,
-    _psutil_sunos.TCPS_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
-    _psutil_sunos.TCPS_LAST_ACK: _common.CONN_LAST_ACK,
-    _psutil_sunos.TCPS_LISTEN: _common.CONN_LISTEN,
-    _psutil_sunos.TCPS_CLOSING: _common.CONN_CLOSING,
-    _psutil_sunos.PSUTIL_CONN_NONE: _common.CONN_NONE,
-    _psutil_sunos.TCPS_IDLE: CONN_IDLE,  # sunos specific
-    _psutil_sunos.TCPS_BOUND: CONN_BOUND,  # sunos specific
+    cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
+    cext.TCPS_SYN_SENT: _common.CONN_SYN_SENT,
+    cext.TCPS_SYN_RCVD: _common.CONN_SYN_RECV,
+    cext.TCPS_FIN_WAIT_1: _common.CONN_FIN_WAIT1,
+    cext.TCPS_FIN_WAIT_2: _common.CONN_FIN_WAIT2,
+    cext.TCPS_TIME_WAIT: _common.CONN_TIME_WAIT,
+    cext.TCPS_CLOSED: _common.CONN_CLOSE,
+    cext.TCPS_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
+    cext.TCPS_LAST_ACK: _common.CONN_LAST_ACK,
+    cext.TCPS_LISTEN: _common.CONN_LISTEN,
+    cext.TCPS_CLOSING: _common.CONN_CLOSING,
+    cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
+    cext.TCPS_IDLE: CONN_IDLE,  # sunos specific
+    cext.TCPS_BOUND: CONN_BOUND,  # sunos specific
 }
 
 nt_sys_cputimes = namedtuple('cputimes', ['user', 'system', 'idle', 'iowait'])
@@ -64,8 +64,8 @@ nt_sys_cputimes = namedtuple('cputimes', ['user', 'system', 'idle', 'iowait'])
 
 # --- functions
 
-disk_io_counters = _psutil_sunos.get_disk_io_counters
-net_io_counters = _psutil_sunos.get_net_io_counters
+disk_io_counters = cext.get_disk_io_counters
+net_io_counters = cext.get_net_io_counters
 get_disk_usage = _psposix.get_disk_usage
 
 
@@ -80,7 +80,7 @@ def virtual_memory():
 
 
 def swap_memory():
-    sin, sout = _psutil_sunos.get_swap_mem()
+    sin, sout = cext.get_swap_mem()
     # XXX
     # we are supposed to get total/free by doing so:
     # http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/
@@ -123,13 +123,13 @@ def pid_exists(pid):
 
 def get_sys_cpu_times():
     """Return system-wide CPU times as a named tuple"""
-    ret = _psutil_sunos.get_sys_per_cpu_times()
+    ret = cext.get_sys_per_cpu_times()
     return nt_sys_cputimes(*[sum(x) for x in zip(*ret)])
 
 
 def get_sys_per_cpu_times():
     """Return system per-CPU times as a list of named tuples"""
-    ret = _psutil_sunos.get_sys_per_cpu_times()
+    ret = cext.get_sys_per_cpu_times()
     return [nt_sys_cputimes(*x) for x in ret]
 
 
@@ -144,18 +144,18 @@ def get_num_cpus():
 
 def get_num_phys_cpus():
     """Return the number of physical CPUs in the system."""
-    return _psutil_sunos.get_num_phys_cpus()
+    return cext.get_num_phys_cpus()
 
 
 def get_boot_time():
     """The system boot time expressed in seconds since the epoch."""
-    return _psutil_sunos.get_boot_time()
+    return cext.get_boot_time()
 
 
 def get_users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = _psutil_sunos.get_users()
+    rawlist = cext.get_users()
     localhost = (':0.0', ':0')
     for item in rawlist:
         user, tty, hostname, tstamp, user_process = item
@@ -176,7 +176,7 @@ def disk_partitions(all=False):
     # TODO - the filtering logic should be better checked so that
     # it tries to reflect 'df' as much as possible
     retlist = []
-    partitions = _psutil_sunos.get_disk_partitions()
+    partitions = cext.get_disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
@@ -225,7 +225,7 @@ class Process(object):
     @wrap_exceptions
     def get_name(self):
         # note: max len == 15
-        return _psutil_sunos.get_proc_name_and_args(self.pid)[0]
+        return cext.get_proc_name_and_args(self.pid)[0]
 
     @wrap_exceptions
     def get_exe(self):
@@ -237,15 +237,15 @@ class Process(object):
 
     @wrap_exceptions
     def get_cmdline(self):
-        return _psutil_sunos.get_proc_name_and_args(self.pid)[1].split(' ')
+        return cext.get_proc_name_and_args(self.pid)[1].split(' ')
 
     @wrap_exceptions
     def get_create_time(self):
-        return _psutil_sunos.get_proc_basic_info(self.pid)[3]
+        return cext.get_proc_basic_info(self.pid)[3]
 
     @wrap_exceptions
     def get_num_threads(self):
-        return _psutil_sunos.get_proc_basic_info(self.pid)[5]
+        return cext.get_proc_basic_info(self.pid)[5]
 
     @wrap_exceptions
     def get_nice(self):
@@ -277,31 +277,29 @@ class Process(object):
 
     @wrap_exceptions
     def get_ppid(self):
-        return _psutil_sunos.get_proc_basic_info(self.pid)[0]
+        return cext.get_proc_basic_info(self.pid)[0]
 
     @wrap_exceptions
     def get_uids(self):
-        real, effective, saved, _, _, _ = \
-            _psutil_sunos.get_proc_cred(self.pid)
+        real, effective, saved, _, _, _ = cext.get_proc_cred(self.pid)
         return nt_proc_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_gids(self):
-        _, _, _, real, effective, saved = \
-            _psutil_sunos.get_proc_cred(self.pid)
+        _, _, _, real, effective, saved = cext.get_proc_cred(self.pid)
         return nt_proc_uids(real, effective, saved)
 
     @wrap_exceptions
     def get_cpu_times(self):
-        user, system = _psutil_sunos.get_proc_cpu_times(self.pid)
+        user, system = cext.get_proc_cpu_times(self.pid)
         return nt_proc_cpu(user, system)
 
     @wrap_exceptions
     def get_terminal(self):
         hit_enoent = False
         tty = wrap_exceptions(
-            _psutil_sunos.get_proc_basic_info(self.pid)[0])
-        if tty != _psutil_sunos.PRNODEV:
+            cext.get_proc_basic_info(self.pid)[0])
+        if tty != cext.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
                     return os.readlink('/proc/%d/path/%d' % (self.pid, x))
@@ -332,7 +330,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_memory_info(self):
-        ret = _psutil_sunos.get_proc_basic_info(self.pid)
+        ret = cext.get_proc_basic_info(self.pid)
         rss, vms = ret[1] * 1024, ret[2] * 1024
         return nt_proc_mem(rss, vms)
 
@@ -341,7 +339,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_status(self):
-        code = _psutil_sunos.get_proc_basic_info(self.pid)[6]
+        code = cext.get_proc_basic_info(self.pid)[6]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
@@ -353,7 +351,7 @@ class Process(object):
         for tid in tids:
             tid = int(tid)
             try:
-                utime, stime = _psutil_sunos.query_process_thread(
+                utime, stime = cext.query_process_thread(
                     self.pid, tid)
             except EnvironmentError:
                 # ENOENT == thread gone in meantime
@@ -433,8 +431,7 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        rawlist = _psutil_sunos.get_proc_connections(
-            self.pid, families, types)
+        rawlist = cext.get_proc_connections(self.pid, families, types)
         # The underlying C implementation retrieves all OS connections
         # and filters them by PID.  At this point we can't tell whether
         # an empty list means there were no connections for process or
@@ -470,7 +467,7 @@ class Process(object):
                               hex(end)[2:].strip('L'))
 
         retlist = []
-        rawlist = _psutil_sunos.get_proc_memory_maps(self.pid)
+        rawlist = cext.get_proc_memory_maps(self.pid)
         hit_enoent = False
         for item in rawlist:
             addr, addrsize, perm, name, rss, anon, locked = item
@@ -503,8 +500,7 @@ class Process(object):
 
     @wrap_exceptions
     def get_num_ctx_switches(self):
-        return nt_proc_ctxsw(
-            *_psutil_sunos.get_proc_num_ctx_switches(self.pid))
+        return nt_proc_ctxsw(*cext.get_proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
     def process_wait(self, timeout=None):
