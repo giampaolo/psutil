@@ -6,7 +6,6 @@
 
 """Sun OS specific tests.  These are implicitly run by test_psutil.py."""
 
-import datetime
 import sys
 
 from test_psutil import sh, unittest

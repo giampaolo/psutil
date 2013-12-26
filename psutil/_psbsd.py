@@ -92,7 +92,7 @@ def cpu_times():
 
 
 if hasattr(cext, "get_sys_per_cpu_times"):
-    def sys_per_cpu_times():
+    def per_cpu_times():
         """Return system CPU times as a named tuple"""
         ret = []
         for cpu_t in cext.get_sys_per_cpu_times():
@@ -108,15 +108,15 @@ else:
     # If num cpus > 1, on first call we return single cpu times to avoid a
     # crash at psutil import time.
     # Next calls will fail with NotImplementedError
-    def sys_per_cpu_times():
-        if get_num_cpus() == 1:
-            return [get_sys_cpu_times]
-        if get_sys_per_cpu_times.__called__:
+    def per_cpu_times():
+        if cpu_count_logical() == 1:
+            return [cpu_times()]
+        if per_cpu_times.__called__:
             raise NotImplementedError("supported only starting from FreeBSD 8")
-        get_sys_per_cpu_times.__called__ = True
-        return [get_sys_cpu_times]
+        per_cpu_times.__called__ = True
+        return [cpu_times()]
 
-    get_sys_per_cpu_times.__called__ = False
+    per_cpu_times.__called__ = False
 
 
 def cpu_count_logical():

@@ -335,7 +335,7 @@ class Process(object):
         return nt_proc_mem(rss, vms)
 
     # it seems Solaris uses rss and vms only
-    get_ext_memory_info = get_memory_info
+    ext_memory_info = memory_info
 
     @wrap_exceptions
     def status(self):

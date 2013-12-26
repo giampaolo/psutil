@@ -304,7 +304,7 @@ class Process(object):
     def create_time(self):
         # special case for kernel process PIDs; return system boot time
         if self.pid in (0, 4):
-            return get_boot_time()
+            return boot_time()
         try:
             return cext.get_proc_create_time(self.pid)
         except OSError:
@@ -450,7 +450,7 @@ class Process(object):
         # SetProcessAffinityMask() states that ERROR_INVALID_PARAMETER
         # is returned for an invalid CPU but this seems not to be true,
         # therefore we check CPUs validy beforehand.
-        allcpus = list(range(len(get_sys_per_cpu_times())))
+        allcpus = list(range(len(per_cpu_times())))
         for cpu in value:
             if cpu not in allcpus:
                 raise ValueError("invalid CPU %r" % cpu)
