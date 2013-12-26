@@ -1772,7 +1772,7 @@ def test():
         attrs.append('terminal')
     print_(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY",
                     "START", "TIME", "COMMAND"))
-    for p in sorted(process_iter(), key=lambda p: p.pid):
+    for p in process_iter():
         try:
             pinfo = p.as_dict(attrs, ad_value='')
         except NoSuchProcess:
