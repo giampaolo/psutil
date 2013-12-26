@@ -18,7 +18,7 @@
  * Given a PID return process priority as a Python integer.
  */
 static PyObject *
-posix_getpriority(PyObject *self, PyObject *args)
+psutil_posix_getpriority(PyObject *self, PyObject *args)
 {
     long pid;
     int priority;
@@ -38,7 +38,7 @@ posix_getpriority(PyObject *self, PyObject *args)
  * Given a PID and a value change process priority.
  */
 static PyObject *
-posix_setpriority(PyObject *self, PyObject *args)
+psutil_posix_setpriority(PyObject *self, PyObject *args)
 {
     long pid;
     int priority;
@@ -61,9 +61,9 @@ posix_setpriority(PyObject *self, PyObject *args)
 static PyMethodDef
 PsutilMethods[] =
 {
-    {"getpriority", posix_getpriority, METH_VARARGS,
+    {"getpriority", psutil_posix_getpriority, METH_VARARGS,
      "Return process priority"},
-    {"setpriority", posix_setpriority, METH_VARARGS,
+    {"setpriority", psutil_posix_setpriority, METH_VARARGS,
      "Set process priority"},
     {NULL, NULL, 0, NULL}
 };

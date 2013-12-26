@@ -6,10 +6,10 @@
 
 #include <Python.h>
 
-static PyObject* get_disk_partitions(PyObject* self, PyObject* args);
-static PyObject* get_proc_cpu_affinity(PyObject* self, PyObject* args);
-static PyObject* get_sysinfo(PyObject* self, PyObject* args);
-static PyObject* get_users(PyObject* self, PyObject* args);
-static PyObject* linux_ioprio_get(PyObject* self, PyObject* args);
-static PyObject* linux_ioprio_set(PyObject* self, PyObject* args);
-static PyObject* set_proc_cpu_affinity(PyObject* self, PyObject* args);
+static PyObject* psutil_get_disk_partitions(PyObject* self, PyObject* args);
+static PyObject* psutil_get_proc_cpu_affinity(PyObject* self, PyObject* args);
+static PyObject* psutil_get_sysinfo(PyObject* self, PyObject* args);
+static PyObject* psutil_get_users(PyObject* self, PyObject* args);
+static PyObject* psutil_linux_ioprio_get(PyObject* self, PyObject* args);
+static PyObject* psutil_linux_ioprio_set(PyObject* self, PyObject* args);
+static PyObject* psutil_set_proc_cpu_affinity(PyObject* self, PyObject* args);
