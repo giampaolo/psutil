@@ -5,9 +5,9 @@
 .PHONY: build install uninstall test nosetests memtest pep8 pyflakes clean \
 		upload-src
 
-PYTHON ?= python
-TSCRIPT ?= test/test_psutil.py
-FLAGS ?=
+PYTHON=python
+TSCRIPT=test/test_psutil.py
+FLAGS=
 
 all: test
 

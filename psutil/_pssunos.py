@@ -55,11 +55,11 @@ TCP_STATUSES = {
     _psutil_sunos.TCPS_LISTEN: _common.CONN_LISTEN,
     _psutil_sunos.TCPS_CLOSING: _common.CONN_CLOSING,
     _psutil_sunos.PSUTIL_CONN_NONE: _common.CONN_NONE,
-    _psutil_sunos.TCPS_IDLE: _common.CONN_IDLE,  # sunos specific
-    _psutil_sunos.TCPS_BOUND: _common.CONN_BOUND,  # sunos specific
+    _psutil_sunos.TCPS_IDLE: CONN_IDLE,  # sunos specific
+    _psutil_sunos.TCPS_BOUND: CONN_BOUND,  # sunos specific
 }
 
-nt_sys_cputimes = namedtuple('cputimes', ['user', 'system', ' idle', 'iowait'])
+nt_sys_cputimes = namedtuple('cputimes', ['user', 'system', 'idle', 'iowait'])
 
 
 # --- functions
@@ -232,7 +232,7 @@ class Process(object):
         # Will be guess later from cmdline but we want to explicitly
         # invoke cmdline here in order to get an AccessDenied
         # exception if the user has not enough privileges.
-        self.get_proc_cmdline()
+        self.get_cmdline()
         return ""
 
     @wrap_exceptions

@@ -976,9 +976,10 @@ class Process(object):
     def get_connections(self):
         pass
 
-    @_deprecated_method(replacement='cpu_affinity')
-    def get_cpu_affinity(self):
-        pass
+    if hasattr(_psplatform.Process, "get_cpu_affinity"):
+        @_deprecated_method(replacement='cpu_affinity')
+        def get_cpu_affinity(self):
+            pass
 
     @_deprecated_method(replacement='cpu_percent')
     def get_cpu_percent(self):
@@ -996,9 +997,10 @@ class Process(object):
     def get_ext_memory_info(self):
         pass
 
-    @_deprecated_method(replacement='io_counters')
-    def get_io_counters(self):
-        pass
+    if hasattr(_psplatform.Process, "get_io_counters"):
+        @_deprecated_method(replacement='io_counters')
+        def get_io_counters(self):
+            pass
 
     if hasattr(_psplatform.Process, "get_ionice"):
         @_deprecated_method(replacement='ionice')
