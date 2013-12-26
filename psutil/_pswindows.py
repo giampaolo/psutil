@@ -106,7 +106,7 @@ def swap_memory():
 def disk_usage(path):
     """Return disk usage associated with path."""
     try:
-        total, free = cext.disk_usage(path)
+        total, free = cext.get_disk_usage(path)
     except WindowsError:
         if not os.path.exists(path):
             msg = "No such file or directory: '%s'" % path
@@ -165,7 +165,7 @@ def users():
     return retlist
 
 
-get_pids = cext.get_pids
+pids = cext.get_pids
 pid_exists = cext.pid_exists
 net_io_counters = cext.get_net_io_counters
 disk_io_counters = cext.get_disk_io_counters

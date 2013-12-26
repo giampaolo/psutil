@@ -109,7 +109,7 @@ psutil_pids(PyObject *self, PyObject *args)
     if (retlist == NULL) {
         return NULL;
     }
-    proclist = psutil_pids(&numberOfReturnedPIDs);
+    proclist = psutil_get_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
         goto error;
     }
@@ -339,7 +339,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args)
 
     // special case for PIDs 0 and 4, return system boot time
     if (0 == pid || 4 == pid) {
-        return get_boot_time(NULL, NULL);
+        return psutil_boot_time(NULL, NULL);
     }
 
     hProcess = psutil_handle_from_pid(pid);
@@ -412,7 +412,7 @@ psutil_proc_create_time_2(PyObject *self, PyObject *args)
     }
     // special case for PIDs 0 and 4, return system boot time
     if (0 == pid || 4 == pid) {
-        return get_boot_time(NULL, NULL);
+        return psutil_boot_time(NULL, NULL);
     }
     /*
     Convert the LARGE_INTEGER union to a Unix time.
@@ -541,7 +541,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     // May fail any of several ReadProcessMemory calls etc. and
     // not indicate a real problem so we ignore any errors and
     // just live without commandline.
-    arglist = psutil_arg_list(pid);
+    arglist = psutil_get_arg_list(pid);
     if ( NULL == arglist ) {
         // carry on anyway, clear any exceptions too
         PyErr_Clear();
@@ -1257,7 +1257,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    filesList = psutil_open_files(pid, processHandle);
+    filesList = psutil_get_open_files(pid, processHandle);
     CloseHandle(processHandle);
     if (filesList == NULL) {
         return PyErr_SetFromWindowsErr(0);
