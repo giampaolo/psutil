@@ -8,7 +8,6 @@
 
 """BSD specific tests.  These are implicitly run by test_psutil.py."""
 
-import unittest
 import subprocess
 import time
 import sys
@@ -18,7 +17,7 @@ import psutil
 
 from psutil._compat import PY3
 from test_psutil import (TOLERANCE, sh, get_test_subprocess, which,
-                         retry_before_failing, reap_children)
+                         retry_before_failing, reap_children, unittest)
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")

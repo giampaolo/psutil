@@ -11,13 +11,12 @@ import re
 import subprocess
 import sys
 import time
-import unittest
 
 import psutil
 
 from psutil._compat import PY3
 from test_psutil import (TOLERANCE, sh, get_test_subprocess, reap_children,
-                         retry_before_failing)
+                         retry_before_failing, unittest)
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")

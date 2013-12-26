@@ -65,8 +65,13 @@ if "%1" == "build" (
 
 if "%1" == "install" (
     :install
-    call :build
-    %PYTHON% setup.py install
+    if %PYTHON%==C:\Python24\python.exe (
+        %PYTHON% setup.py build -c mingw32 install
+    ) else if %PYTHON%==C:\Python25\python.exe (
+        %PYTHON% setup.py build -c mingw32 install
+    ) else (
+        %PYTHON% setup.py build install
+    )
     goto :eof
 )
 

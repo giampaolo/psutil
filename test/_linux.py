@@ -11,11 +11,10 @@ import os
 import re
 import sys
 import time
-import unittest
 
 from test_psutil import (POSIX, TOLERANCE, skip_on_not_implemented, sh,
                          get_test_subprocess, retry_before_failing,
-                         get_kernel_version)
+                         get_kernel_version, unittest)
 import psutil
 
 

@@ -8,9 +8,8 @@
 
 import datetime
 import sys
-import unittest
 
-from test import sh
+from test_psutil import sh, unittest
 import psutil
 
 

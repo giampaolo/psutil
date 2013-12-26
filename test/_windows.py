@@ -14,10 +14,9 @@ import subprocess
 import sys
 import time
 import traceback
-import unittest
 
 from test_psutil import (register_warning, get_test_subprocess, wait_for_pid,
-                         reap_children)
+                         reap_children, unittest)
 
 try:
     import wmi
@@ -300,9 +299,9 @@ class TestDualProcessImplementation(unittest.TestCase):
         def assert_ge_0(obj):
             if isinstance(obj, tuple):
                 for value in obj:
-                    assert value >= 0, value
+                    self.assertGreaterEqual(value, 0)
             elif isinstance(obj, (int, long, float)):
-                assert value >= 0, value
+                self.assertGreaterEqual(obj, 0)
             else:
                 assert 0  # case not handled which needs to be fixed
 
