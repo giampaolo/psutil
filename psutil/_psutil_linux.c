@@ -179,7 +179,7 @@ psutil_linux_prlimit(PyObject *self, PyObject *args)
  * mount point and filesystem type
  */
 static PyObject *
-psutil_get_disk_partitions(PyObject *self, PyObject *args)
+psutil_disk_partitions(PyObject *self, PyObject *args)
 {
     FILE *file = NULL;
     struct mntent *entry;
@@ -230,7 +230,7 @@ error:
  * A wrapper around sysinfo(), return system memory usage statistics.
  */
 static PyObject *
-psutil_get_sysinfo(PyObject *self, PyObject *args)
+psutil_sysinfo(PyObject *self, PyObject *args)
 {
     struct sysinfo info;
     if (sysinfo(&info) != 0) {
@@ -253,7 +253,7 @@ psutil_get_sysinfo(PyObject *self, PyObject *args)
  * Return process CPU affinity as a Python long (the bitmask)
  */
 static PyObject *
-psutil_get_proc_cpu_affinity(PyObject *self, PyObject *args)
+psutil_proc_cpu_affinity(PyObject *self, PyObject *args)
 {
     unsigned long mask;
     unsigned int len = sizeof(mask);
@@ -334,7 +334,7 @@ error:
  * Return currently connected users as a list of tuples.
  */
 static PyObject *
-psutil_get_users(PyObject *self, PyObject *args)
+psutil_users(PyObject *self, PyObject *args)
 {
     PyObject *ret_list = PyList_New(0);
     PyObject *tuple = NULL;
@@ -398,14 +398,14 @@ PsutilMethods[] =
      "Set process CPU affinity; expects a bitmask."},
 
     // --- system related functions
-    {"get_disk_partitions", psutil_get_disk_partitions, METH_VARARGS,
+    {"get_disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk mounted partitions as a list of tuples including "
      "device, mount point and filesystem type"},
-    {"get_sysinfo", psutil_get_sysinfo, METH_VARARGS,
+    {"get_sysinfo", psutil_sysinfo, METH_VARARGS,
      "A wrapper around sysinfo(), return system memory usage statistics"},
-    {"get_proc_cpu_affinity", psutil_get_proc_cpu_affinity, METH_VARARGS,
+    {"get_proc_cpu_affinity", psutil_proc_cpu_affinity, METH_VARARGS,
      "Return process CPU affinity as a Python long (the bitmask)."},
-    {"get_users", psutil_get_users, METH_VARARGS,
+    {"get_users", psutil_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},
 
     {NULL, NULL, 0, NULL}

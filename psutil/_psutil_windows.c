@@ -40,7 +40,7 @@
  * since the epoch.
  */
 static PyObject *
-psutil_get_boot_time(PyObject *self, PyObject *args)
+psutil_boot_time(PyObject *self, PyObject *args)
 {
     double  uptime;
     time_t pt;
@@ -98,7 +98,7 @@ psutil_pid_exists(PyObject *self, PyObject *args)
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject *
-psutil_get_pids(PyObject *self, PyObject *args)
+psutil_pids(PyObject *self, PyObject *args)
 {
     DWORD *proclist = NULL;
     DWORD numberOfReturnedPIDs;
@@ -109,7 +109,7 @@ psutil_get_pids(PyObject *self, PyObject *args)
     if (retlist == NULL) {
         return NULL;
     }
-    proclist = psutil_get_pids(&numberOfReturnedPIDs);
+    proclist = psutil_pids(&numberOfReturnedPIDs);
     if (NULL == proclist) {
         goto error;
     }
@@ -244,7 +244,7 @@ psutil_process_wait(PyObject *self, PyObject *args)
  * Return a Python tuple (user_time, kernel_time)
  */
 static PyObject *
-psutil_get_proc_cpu_times(PyObject *self, PyObject *args)
+psutil_proc_cpu_times(PyObject *self, PyObject *args)
 {
     long        pid;
     HANDLE      hProcess;
@@ -297,7 +297,7 @@ psutil_get_proc_cpu_times(PyObject *self, PyObject *args)
  * Alternative implementation of the one above but bypasses ACCESS DENIED.
  */
 static PyObject *
-psutil_get_proc_cpu_times_2(PyObject *self, PyObject *args)
+psutil_proc_cpu_times_2(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -324,7 +324,7 @@ psutil_get_proc_cpu_times_2(PyObject *self, PyObject *args)
  * seconds since the epoch.
  */
 static PyObject *
-psutil_get_proc_create_time(PyObject *self, PyObject *args)
+psutil_proc_create_time(PyObject *self, PyObject *args)
 {
     long        pid;
     long long   unix_time;
@@ -397,7 +397,7 @@ psutil_get_proc_create_time(PyObject *self, PyObject *args)
  * Alternative implementation of the one above but bypasses ACCESS DENIED.
  */
 static PyObject *
-psutil_get_proc_create_time_2(PyObject *self, PyObject *args)
+psutil_proc_create_time_2(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -431,7 +431,7 @@ psutil_get_proc_create_time_2(PyObject *self, PyObject *args)
  * Return a Python integer indicating the number of CPUs on the system.
  */
 static PyObject *
-psutil_get_num_cpus(PyObject *self, PyObject *args)
+psutil_num_cpus(PyObject *self, PyObject *args)
 {
     SYSTEM_INFO system_info;
     system_info.dwNumberOfProcessors = 0;
@@ -455,7 +455,7 @@ typedef BOOL (WINAPI *LPFN_GLPI) (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,
  * Return the number physical CPU cores on the system.
  */
 static PyObject *
-psutil_get_num_phys_cpus(PyObject *self, PyObject *args)
+psutil_num_phys_cpus(PyObject *self, PyObject *args)
 {
     LPFN_GLPI glpi;
     DWORD rc;
@@ -516,7 +516,7 @@ return_none:
  * Return process cmdline as a Python list of cmdline arguments.
  */
 static PyObject *
-psutil_get_proc_cmdline(PyObject *self, PyObject *args) {
+psutil_proc_cmdline(PyObject *self, PyObject *args) {
     long pid;
     int pid_return;
     PyObject *arglist;
@@ -541,7 +541,7 @@ psutil_get_proc_cmdline(PyObject *self, PyObject *args) {
     // May fail any of several ReadProcessMemory calls etc. and
     // not indicate a real problem so we ignore any errors and
     // just live without commandline.
-    arglist = psutil_get_arg_list(pid);
+    arglist = psutil_arg_list(pid);
     if ( NULL == arglist ) {
         // carry on anyway, clear any exceptions too
         PyErr_Clear();
@@ -556,7 +556,7 @@ psutil_get_proc_cmdline(PyObject *self, PyObject *args) {
  * Return process executable path.
  */
 static PyObject *
-psutil_get_proc_exe(PyObject *self, PyObject *args) {
+psutil_proc_exe(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
     wchar_t exe[MAX_PATH];
@@ -592,7 +592,7 @@ psutil_get_proc_exe(PyObject *self, PyObject *args) {
  * Return process memory information as a Python tuple.
  */
 static PyObject *
-psutil_get_proc_memory_info(PyObject *self, PyObject *args)
+psutil_proc_memory_info(PyObject *self, PyObject *args)
 {
     HANDLE hProcess;
     DWORD pid;
@@ -661,7 +661,7 @@ psutil_get_proc_memory_info(PyObject *self, PyObject *args)
  * Alternative implementation of the one above but bypasses ACCESS DENIED.
  */
 static PyObject *
-psutil_get_proc_memory_info_2(PyObject *self, PyObject *args)
+psutil_proc_memory_info_2(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -718,7 +718,7 @@ psutil_get_proc_memory_info_2(PyObject *self, PyObject *args)
  * in bytes.
  */
 static PyObject *
-psutil_get_virtual_mem(PyObject *self, PyObject *args)
+psutil_virtual_mem(PyObject *self, PyObject *args)
 {
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
@@ -747,7 +747,7 @@ psutil_get_virtual_mem(PyObject *self, PyObject *args)
  * sum of the designated times across all processors.
  */
 static PyObject *
-psutil_get_sys_cpu_times(PyObject *self, PyObject *args)
+psutil_cpu_times(PyObject *self, PyObject *args)
 {
     float idle, kernel, user, system;
     FILETIME idle_time, kernel_time, user_time;
@@ -775,7 +775,7 @@ psutil_get_sys_cpu_times(PyObject *self, PyObject *args)
  * Same as above but for all system CPUs.
  */
 static PyObject *
-psutil_get_sys_per_cpu_times(PyObject *self, PyObject *args)
+psutil_per_cpu_times(PyObject *self, PyObject *args)
 {
     float idle, kernel, user;
     typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
@@ -871,7 +871,7 @@ error:
  */
 
 static PyObject *
-psutil_get_proc_cwd(PyObject *self, PyObject *args)
+psutil_proc_cwd(PyObject *self, PyObject *args)
 {
     long pid;
     HANDLE processHandle = NULL;
@@ -1109,7 +1109,7 @@ psutil_resume_process(PyObject *self, PyObject *args)
 
 
 static PyObject *
-psutil_get_proc_num_threads(PyObject *self, PyObject *args)
+psutil_proc_num_threads(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -1129,7 +1129,7 @@ psutil_get_proc_num_threads(PyObject *self, PyObject *args)
 
 
 static PyObject *
-psutil_get_proc_threads(PyObject *self, PyObject *args)
+psutil_proc_threads(PyObject *self, PyObject *args)
 {
     HANDLE hThread;
     THREADENTRY32 te32 = {0};
@@ -1241,7 +1241,7 @@ error:
 
 
 static PyObject *
-psutil_get_proc_open_files(PyObject *self, PyObject *args)
+psutil_proc_open_files(PyObject *self, PyObject *args)
 {
     long       pid;
     HANDLE     processHandle;
@@ -1257,7 +1257,7 @@ psutil_get_proc_open_files(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    filesList = psutil_get_open_files(pid, processHandle);
+    filesList = psutil_open_files(pid, processHandle);
     CloseHandle(processHandle);
     if (filesList == NULL) {
         return PyErr_SetFromWindowsErr(0);
@@ -1302,7 +1302,7 @@ psutil_win32_QueryDosDevice(PyObject *self, PyObject *args)
  * Return process username as a "DOMAIN//USERNAME" string.
  */
 static PyObject *
-psutil_get_proc_username(PyObject *self, PyObject *args)
+psutil_proc_username(PyObject *self, PyObject *args)
 {
     long pid;
     HANDLE processHandle;
@@ -1506,7 +1506,7 @@ static int PSUTIL_CONN_NONE = 128;
  * Return a list of network connections opened by a process
  */
 static PyObject *
-psutil_get_proc_connections(PyObject *self, PyObject *args)
+psutil_proc_connections(PyObject *self, PyObject *args)
 {
     static long null_address[4] = { 0, 0, 0, 0 };
 
@@ -1932,7 +1932,7 @@ error:
  * Get process priority as a Python integer.
  */
 static PyObject *
-psutil_get_proc_priority(PyObject *self, PyObject *args)
+psutil_proc_priority(PyObject *self, PyObject *args)
 {
     long pid;
     DWORD priority;
@@ -1993,7 +1993,7 @@ psutil_set_proc_priority(PyObject *self, PyObject *args)
  * Get process IO priority as a Python integer.
  */
 static PyObject *
-psutil_get_proc_io_priority(PyObject *self, PyObject *args)
+psutil_proc_io_priority(PyObject *self, PyObject *args)
 {
     long pid;
     HANDLE hProcess;
@@ -2069,7 +2069,7 @@ psutil_set_proc_io_priority(PyObject *self, PyObject *args)
  * Return a Python tuple referencing process I/O counters.
  */
 static PyObject *
-psutil_get_proc_io_counters(PyObject *self, PyObject *args)
+psutil_proc_io_counters(PyObject *self, PyObject *args)
 {
     DWORD pid;
     HANDLE hProcess;
@@ -2099,7 +2099,7 @@ psutil_get_proc_io_counters(PyObject *self, PyObject *args)
  * Alternative implementation of the one above but bypasses ACCESS DENIED.
  */
 static PyObject *
-psutil_get_proc_io_counters_2(PyObject *self, PyObject *args)
+psutil_proc_io_counters_2(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -2125,7 +2125,7 @@ psutil_get_proc_io_counters_2(PyObject *self, PyObject *args)
  * Return process CPU affinity as a bitmask
  */
 static PyObject *
-psutil_get_proc_cpu_affinity(PyObject *self, PyObject *args)
+psutil_proc_cpu_affinity(PyObject *self, PyObject *args)
 {
     DWORD pid;
     HANDLE hProcess;
@@ -2224,7 +2224,7 @@ psutil_is_process_suspended(PyObject *self, PyObject *args)
  * Return path's disk total and free as a Python tuple.
  */
 static PyObject *
-psutil_get_disk_usage(PyObject *self, PyObject *args)
+psutil_disk_usage(PyObject *self, PyObject *args)
 {
     BOOL retval;
     ULARGE_INTEGER _, total, free;
@@ -2263,7 +2263,7 @@ return_:
  * Return a Python list of named tuples with overall network I/O information
  */
 static PyObject *
-psutil_get_net_io_counters(PyObject *self, PyObject *args)
+psutil_net_io_counters(PyObject *self, PyObject *args)
 {
     int attempts = 0;
     int outBufLen = 15000;
@@ -2385,7 +2385,7 @@ typedef struct _DISK_PERFORMANCE_WIN_2008 {
  * Return a Python dict of tuples for disk I/O information
  */
 static PyObject *
-psutil_get_disk_io_counters(PyObject *self, PyObject *args)
+psutil_disk_io_counters(PyObject *self, PyObject *args)
 {
     DISK_PERFORMANCE_WIN_2008 diskPerformance;
     DWORD dwSize;
@@ -2487,7 +2487,7 @@ static char *get_drive_type(int type)
  * (drive_letter, drive_letter, type, "")
  */
 static PyObject *
-psutil_get_disk_partitions(PyObject *self, PyObject *args)
+psutil_disk_partitions(PyObject *self, PyObject *args)
 {
     DWORD num_bytes;
     char drive_strings[255];
@@ -2616,7 +2616,7 @@ error:
  * Return a Python dict of tuples for disk I/O information
  */
 static PyObject *
-psutil_get_users(PyObject *self, PyObject *args)
+psutil_users(PyObject *self, PyObject *args)
 {
     HANDLE hServer = NULL;
     LPTSTR buffer_user = NULL;
@@ -2767,7 +2767,7 @@ error:
  * Return the number of handles opened by process.
  */
 static PyObject *
-psutil_get_proc_num_handles(PyObject *self, PyObject *args)
+psutil_proc_num_handles(PyObject *self, PyObject *args)
 {
     DWORD pid;
     HANDLE hProcess;
@@ -2793,7 +2793,7 @@ psutil_get_proc_num_handles(PyObject *self, PyObject *args)
  * Alternative implementation of the one above but bypasses ACCESS DENIED.
  */
 static PyObject *
-psutil_get_proc_num_handles_2(PyObject *self, PyObject *args)
+psutil_proc_num_handles_2(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -2816,7 +2816,7 @@ psutil_get_proc_num_handles_2(PyObject *self, PyObject *args)
  * Return the number of context switches executed by process.
  */
 static PyObject *
-psutil_get_proc_num_ctx_switches(PyObject *self, PyObject *args)
+psutil_proc_num_ctx_switches(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -2867,7 +2867,7 @@ static char *get_region_protection_string(ULONG protection)
  * Return a list of process's memory mappings.
  */
 static PyObject *
-psutil_get_proc_memory_maps(PyObject *self, PyObject *args)
+psutil_proc_memory_maps(PyObject *self, PyObject *args)
 {
     DWORD pid;
     HANDLE hProcess = NULL;
@@ -2938,7 +2938,7 @@ error:
  * Return a {pid:ppid, ...} dict for all running processes.
  */
 static PyObject *
-psutil_get_ppid_map(PyObject *self, PyObject *args)
+psutil_ppid_map(PyObject *self, PyObject *args)
 {
     PyObject *pid = NULL;
     PyObject *ppid = NULL;
@@ -2990,102 +2990,102 @@ PsutilMethods[] =
 {
     // --- per-process functions
 
-    {"get_proc_cmdline", psutil_get_proc_cmdline, METH_VARARGS,
+    {"get_proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
      "Return process cmdline as a list of cmdline arguments"},
-    {"get_proc_exe", psutil_get_proc_exe, METH_VARARGS,
+    {"get_proc_exe", psutil_proc_exe, METH_VARARGS,
      "Return path of the process executable"},
     {"kill_process", psutil_kill_process, METH_VARARGS,
      "Kill the process identified by the given PID"},
-    {"get_proc_cpu_times", psutil_get_proc_cpu_times, METH_VARARGS,
+    {"get_proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,
      "Return tuple of user/kern time for the given PID"},
-    {"get_proc_create_time", psutil_get_proc_create_time, METH_VARARGS,
+    {"get_proc_create_time", psutil_proc_create_time, METH_VARARGS,
      "Return a float indicating the process create time expressed in "
      "seconds since the epoch"},
-    {"get_proc_memory_info", psutil_get_proc_memory_info, METH_VARARGS,
+    {"get_proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
      "Return a tuple of process memory information"},
-    {"get_proc_cwd", psutil_get_proc_cwd, METH_VARARGS,
+    {"get_proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory"},
     {"suspend_process", psutil_suspend_process, METH_VARARGS,
      "Suspend a process"},
     {"resume_process", psutil_resume_process, METH_VARARGS,
      "Resume a process"},
-    {"get_proc_open_files", psutil_get_proc_open_files, METH_VARARGS,
+    {"get_proc_open_files", psutil_proc_open_files, METH_VARARGS,
      "Return files opened by process"},
-    {"get_proc_username", psutil_get_proc_username, METH_VARARGS,
+    {"get_proc_username", psutil_proc_username, METH_VARARGS,
      "Return the username of a process"},
-    {"get_proc_connections", psutil_get_proc_connections, METH_VARARGS,
+    {"get_proc_connections", psutil_proc_connections, METH_VARARGS,
      "Return the network connections of a process"},
-    {"get_proc_num_threads", psutil_get_proc_num_threads, METH_VARARGS,
+    {"get_proc_num_threads", psutil_proc_num_threads, METH_VARARGS,
      "Return the network connections of a process"},
-    {"get_proc_threads", psutil_get_proc_threads, METH_VARARGS,
+    {"get_proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads information as a list of tuple"},
     {"process_wait", psutil_process_wait, METH_VARARGS,
      "Wait for process to terminate and return its exit code."},
-    {"get_proc_priority", psutil_get_proc_priority, METH_VARARGS,
+    {"get_proc_priority", psutil_proc_priority, METH_VARARGS,
      "Return process priority."},
     {"set_proc_priority", psutil_set_proc_priority, METH_VARARGS,
      "Set process priority."},
 #if (_WIN32_WINNT >= 0x0600)  // Windows Vista
-    {"get_proc_io_priority", psutil_get_proc_io_priority, METH_VARARGS,
+    {"get_proc_io_priority", psutil_proc_io_priority, METH_VARARGS,
      "Return process IO priority."},
     {"set_proc_io_priority", psutil_set_proc_io_priority, METH_VARARGS,
      "Set process IO priority."},
 #endif
-    {"get_proc_cpu_affinity", psutil_get_proc_cpu_affinity, METH_VARARGS,
+    {"get_proc_cpu_affinity", psutil_proc_cpu_affinity, METH_VARARGS,
      "Return process CPU affinity as a bitmask."},
     {"set_proc_cpu_affinity", psutil_set_proc_cpu_affinity, METH_VARARGS,
      "Set process CPU affinity."},
-    {"get_proc_io_counters", psutil_get_proc_io_counters, METH_VARARGS,
+    {"get_proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
      "Get process I/O counters."},
     {"is_process_suspended", psutil_is_process_suspended, METH_VARARGS,
      "Return True if one of the process threads is in a suspended state"},
-    {"get_proc_num_handles", psutil_get_proc_num_handles, METH_VARARGS,
+    {"get_proc_num_handles", psutil_proc_num_handles, METH_VARARGS,
      "Return the number of handles opened by process."},
-    {"get_proc_num_ctx_switches", psutil_get_proc_num_ctx_switches, METH_VARARGS,
+    {"get_proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
      "Return the number of context switches performed by process."},
-    {"get_proc_memory_maps", psutil_get_proc_memory_maps, METH_VARARGS,
+    {"get_proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
      "Return a list of process's memory mappings"},
-    {"get_ppid_map", psutil_get_ppid_map, METH_VARARGS,
+    {"get_ppid_map", psutil_ppid_map, METH_VARARGS,
      "Return a {pid:ppid, ...} dict for all running processes"},
 
     // --- alternative pinfo interface
-    {"get_proc_cpu_times_2", psutil_get_proc_cpu_times_2, METH_VARARGS,
+    {"get_proc_cpu_times_2", psutil_proc_cpu_times_2, METH_VARARGS,
      "Alternative implementation"},
-    {"get_proc_create_time_2", psutil_get_proc_create_time_2, METH_VARARGS,
+    {"get_proc_create_time_2", psutil_proc_create_time_2, METH_VARARGS,
      "Alternative implementation"},
-    {"get_proc_num_handles_2", psutil_get_proc_num_handles_2, METH_VARARGS,
+    {"get_proc_num_handles_2", psutil_proc_num_handles_2, METH_VARARGS,
      "Alternative implementation"},
-    {"get_proc_io_counters_2", psutil_get_proc_io_counters_2, METH_VARARGS,
+    {"get_proc_io_counters_2", psutil_proc_io_counters_2, METH_VARARGS,
      "Alternative implementation"},
-    {"get_proc_memory_info_2", psutil_get_proc_memory_info_2, METH_VARARGS,
+    {"get_proc_memory_info_2", psutil_proc_memory_info_2, METH_VARARGS,
      "Alternative implementation"},
 
     // --- system-related functions
-    {"get_pids", psutil_get_pids, METH_VARARGS,
+    {"get_pids", psutil_pids, METH_VARARGS,
      "Returns a list of PIDs currently running on the system"},
     {"pid_exists", psutil_pid_exists, METH_VARARGS,
      "Determine if the process exists in the current process list."},
-    {"get_num_cpus", psutil_get_num_cpus, METH_VARARGS,
+    {"get_num_cpus", psutil_num_cpus, METH_VARARGS,
      "Returns the number of logical CPUs on the system"},
-    {"get_num_phys_cpus", psutil_get_num_phys_cpus, METH_VARARGS,
+    {"get_num_phys_cpus", psutil_num_phys_cpus, METH_VARARGS,
      "Returns the number of physical CPUs on the system"},
-    {"get_boot_time", psutil_get_boot_time, METH_VARARGS,
+    {"get_boot_time", psutil_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
-    {"get_virtual_mem", psutil_get_virtual_mem, METH_VARARGS,
+    {"get_virtual_mem", psutil_virtual_mem, METH_VARARGS,
      "Return the total amount of physical memory, in bytes"},
-    {"get_sys_cpu_times", psutil_get_sys_cpu_times, METH_VARARGS,
+    {"get_sys_cpu_times", psutil_cpu_times, METH_VARARGS,
      "Return system cpu times as a list"},
-    {"get_sys_per_cpu_times", psutil_get_sys_per_cpu_times, METH_VARARGS,
+    {"get_sys_per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
      "Return system per-cpu times as a list of tuples"},
-    {"get_disk_usage", psutil_get_disk_usage, METH_VARARGS,
+    {"get_disk_usage", psutil_disk_usage, METH_VARARGS,
      "Return path's disk total and free as a Python tuple."},
-    {"get_net_io_counters", psutil_get_net_io_counters, METH_VARARGS,
+    {"get_net_io_counters", psutil_net_io_counters, METH_VARARGS,
      "Return dict of tuples of networks I/O information."},
-    {"get_disk_io_counters", psutil_get_disk_io_counters, METH_VARARGS,
+    {"get_disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
      "Return dict of tuples of disks I/O information."},
-    {"get_users", psutil_get_users, METH_VARARGS,
+    {"get_users", psutil_users, METH_VARARGS,
      "Return a list of currently connected users."},
-    {"get_disk_partitions", psutil_get_disk_partitions, METH_VARARGS,
+    {"get_disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk partitions."},
 
     // --- windows API bindings

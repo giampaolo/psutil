@@ -74,7 +74,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size)
  * as a Python tuple.
  */
 static PyObject *
-psutil_get_proc_basic_info(PyObject *self, PyObject *args)
+psutil_proc_basic_info(PyObject *self, PyObject *args)
 {
     int pid;
     char path[100];
@@ -102,7 +102,7 @@ psutil_get_proc_basic_info(PyObject *self, PyObject *args)
  * Return process name and args as a Python tuple.
  */
 static PyObject *
-psutil_get_proc_name_and_args(PyObject *self, PyObject *args)
+psutil_proc_name_and_args(PyObject *self, PyObject *args)
 {
     int pid;
     char path[100];
@@ -121,7 +121,7 @@ psutil_get_proc_name_and_args(PyObject *self, PyObject *args)
  * Return process user and system CPU times as a Python tuple.
  */
 static PyObject *
-psutil_get_proc_cpu_times(PyObject *self, PyObject *args)
+psutil_proc_cpu_times(PyObject *self, PyObject *args)
 {
     int pid;
     char path[100];
@@ -143,7 +143,7 @@ psutil_get_proc_cpu_times(PyObject *self, PyObject *args)
  * Return process uids/gids as a Python tuple.
  */
 static PyObject *
-psutil_get_proc_cred(PyObject *self, PyObject *args)
+psutil_proc_cred(PyObject *self, PyObject *args)
 {
     int pid;
     char path[100];
@@ -164,7 +164,7 @@ psutil_get_proc_cred(PyObject *self, PyObject *args)
  * Return process uids/gids as a Python tuple.
  */
 static PyObject *
-psutil_get_proc_num_ctx_switches(PyObject *self, PyObject *args)
+psutil_proc_num_ctx_switches(PyObject *self, PyObject *args)
 {
     int pid;
     char path[100];
@@ -244,7 +244,7 @@ psutil_query_process_thread(PyObject *self, PyObject *args)
  * Return information about system virtual memory.
  */
 static PyObject *
-psutil_get_swap_mem(PyObject *self, PyObject *args)
+psutil_swap_mem(PyObject *self, PyObject *args)
 {
 // XXX (arghhh!)
 // total/free swap mem: commented out as for some reason I can't
@@ -341,7 +341,7 @@ psutil_get_swap_mem(PyObject *self, PyObject *args)
  * Return users currently connected on the system.
  */
 static PyObject *
-psutil_get_users(PyObject *self, PyObject *args)
+psutil_users(PyObject *self, PyObject *args)
 {
     struct utmpx *ut;
     PyObject *ret_list = PyList_New(0);
@@ -387,7 +387,7 @@ error:
  * mount point and filesystem type.
  */
 static PyObject *
-psutil_get_disk_partitions(PyObject *self, PyObject *args)
+psutil_disk_partitions(PyObject *self, PyObject *args)
 {
     FILE *file;
     struct mnttab mt;
@@ -433,7 +433,7 @@ error:
  * Return system-wide CPU times.
  */
 static PyObject *
-psutil_get_sys_per_cpu_times(PyObject *self, PyObject *args)
+psutil_per_cpu_times(PyObject *self, PyObject *args)
 {
     kstat_ctl_t *kc;
     kstat_t *ksp;
@@ -493,7 +493,7 @@ error:
  * Return disk IO statistics.
  */
 static PyObject *
-psutil_get_disk_io_counters(PyObject *self, PyObject *args)
+psutil_disk_io_counters(PyObject *self, PyObject *args)
 {
     kstat_ctl_t *kc;
     kstat_t *ksp;
@@ -552,7 +552,7 @@ error:
  * Return process memory mappings.
  */
 static PyObject *
-psutil_get_proc_memory_maps(PyObject *self, PyObject *args)
+psutil_proc_memory_maps(PyObject *self, PyObject *args)
 {
     int pid;
     int fd = -1;
@@ -690,7 +690,7 @@ error:
  * Return a list of tuples for network I/O statistics.
  */
 static PyObject *
-psutil_get_net_io_counters(PyObject *self, PyObject *args)
+psutil_net_io_counters(PyObject *self, PyObject *args)
 {
     kstat_ctl_t    *kc = NULL;
     kstat_t *ksp;
@@ -802,7 +802,7 @@ static int PSUTIL_CONN_NONE = 128;
  *     cmd-inet/usr.bin/netstat/netstat.c
  */
 static PyObject *
-psutil_get_proc_connections(PyObject *self, PyObject *args)
+psutil_proc_connections(PyObject *self, PyObject *args)
 {
     long pid;
     int sd = NULL;
@@ -1082,7 +1082,7 @@ error:
 
 
 static PyObject *
-psutil_get_boot_time(PyObject *self, PyObject *args)
+psutil_boot_time(PyObject *self, PyObject *args)
 {
     float boot_time = 0.0;
     struct utmpx *ut;
@@ -1108,7 +1108,7 @@ psutil_get_boot_time(PyObject *self, PyObject *args)
  * Return the number of physical CPU cores on the system.
  */
 static PyObject *
-psutil_get_num_phys_cpus(PyObject *self, PyObject *args)
+psutil_num_phys_cpus(PyObject *self, PyObject *args)
 {
     kstat_ctl_t *kc;
     kstat_t *ksp;
@@ -1151,39 +1151,39 @@ static PyMethodDef
 PsutilMethods[] =
 {
     // --- process-related functions
-    {"get_proc_basic_info", psutil_get_proc_basic_info, METH_VARARGS,
+    {"get_proc_basic_info", psutil_proc_basic_info, METH_VARARGS,
      "Return process ppid, rss, vms, ctime, nice, nthreads, status and tty"},
-    {"get_proc_name_and_args", psutil_get_proc_name_and_args, METH_VARARGS,
+    {"get_proc_name_and_args", psutil_proc_name_and_args, METH_VARARGS,
      "Return process name and args."},
-    {"get_proc_cpu_times", psutil_get_proc_cpu_times, METH_VARARGS,
+    {"get_proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,
      "Return process user and system CPU times."},
-    {"get_proc_cred", psutil_get_proc_cred, METH_VARARGS,
+    {"get_proc_cred", psutil_proc_cred, METH_VARARGS,
      "Return process uids/gids."},
     {"query_process_thread", psutil_query_process_thread, METH_VARARGS,
      "Return info about a process thread"},
-    {"get_proc_memory_maps", psutil_get_proc_memory_maps, METH_VARARGS,
+    {"get_proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
      "Return process memory mappings"},
-    {"get_proc_num_ctx_switches", psutil_get_proc_num_ctx_switches, METH_VARARGS,
+    {"get_proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
      "Return the number of context switches performed by process"},
-    {"get_proc_connections", psutil_get_proc_connections, METH_VARARGS,
+    {"get_proc_connections", psutil_proc_connections, METH_VARARGS,
      "Return TCP and UDP connections opened by process."},
 
     // --- system-related functions
-    {"get_swap_mem", psutil_get_swap_mem, METH_VARARGS,
+    {"get_swap_mem", psutil_swap_mem, METH_VARARGS,
      "Return information about system swap memory."},
-    {"get_users", psutil_get_users, METH_VARARGS,
+    {"get_users", psutil_users, METH_VARARGS,
      "Return currently connected users."},
-    {"get_disk_partitions", psutil_get_disk_partitions, METH_VARARGS,
+    {"get_disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk partitions."},
-    {"get_sys_per_cpu_times", psutil_get_sys_per_cpu_times, METH_VARARGS,
+    {"get_sys_per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
      "Return system per-CPU times."},
-    {"get_disk_io_counters", psutil_get_disk_io_counters, METH_VARARGS,
+    {"get_disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
      "Return a Python dict of tuples for disk I/O statistics."},
-    {"get_net_io_counters", psutil_get_net_io_counters, METH_VARARGS,
+    {"get_net_io_counters", psutil_net_io_counters, METH_VARARGS,
      "Return a Python dict of tuples for network I/O statistics."},
-    {"get_boot_time", psutil_get_boot_time, METH_VARARGS,
+    {"get_boot_time", psutil_boot_time, METH_VARARGS,
      "Return system boot time in seconds since the EPOCH."},
-    {"get_num_phys_cpus", psutil_get_num_phys_cpus, METH_VARARGS,
+    {"get_num_phys_cpus", psutil_num_phys_cpus, METH_VARARGS,
      "Return the number of physical CPUs on the system."},
 
     {NULL, NULL, 0, NULL}
