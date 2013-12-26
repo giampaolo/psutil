@@ -157,6 +157,7 @@ def pyrun(src):
         wait_for_pid(subp.pid)
         return subp
     finally:
+        os.close(fd)
         f.close()
 
 
@@ -245,6 +246,7 @@ def reap_children(search_all=False):
     no zombies stick around to hog resources and create problems when
     looking for refleaks.
     """
+    global _subprocesses_started
     procs = _subprocesses_started.copy()
     if search_all:
         this_process = psutil.Process()
@@ -265,6 +267,7 @@ def reap_children(search_all=False):
     _, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
     if alive:
         warn("couldn't not kill processes %s" % str(alive))
+    _subprocesses_started = set(alive)
 
 
 def check_ip_address(addr, family):
