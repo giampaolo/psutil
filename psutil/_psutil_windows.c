@@ -2550,8 +2550,8 @@ get_disk_partitions(PyObject *self, PyObject *args)
         }
 
         ret = GetVolumeInformation(
-            drive_letter, NULL, _ARRAYSIZE(drive_letter),
-            NULL, NULL, &pflags, fs_type, _ARRAYSIZE(fs_type));
+            (LPCTSTR)drive_letter, NULL, _ARRAYSIZE(drive_letter),
+            NULL, NULL, &pflags, (LPTSTR)fs_type, _ARRAYSIZE(fs_type));
         if (ret == 0) {
             // We might get here in case of a floppy hard drive, in
             // which case the error is (21, "device not ready").
