@@ -242,15 +242,6 @@ class Process(object):
         """Return process parent pid."""
         return _psutil_bsd.get_proc_ppid(self.pid)
 
-    # XXX - available on FreeBSD >= 8 only
-    if hasattr(_psutil_bsd, "get_proc_cwd"):
-        @wrap_exceptions
-        def get_cwd(self):
-            """Return process current working directory."""
-            # sometimes we get an empty string, in which case we turn
-            # it into None
-            return _psutil_bsd.get_proc_cwd(self.pid) or None
-
     @wrap_exceptions
     def get_uids(self):
         """Return real, effective and saved user ids."""
@@ -295,11 +286,6 @@ class Process(object):
         return nt_proc_ctxsw(*_psutil_bsd.get_proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
-    def get_num_fds(self):
-        """Return the number of file descriptors opened by this process."""
-        return _psutil_bsd.get_proc_num_fds(self.pid)
-
-    @wrap_exceptions
     def get_threads(self):
         """Return the number of threads belonging to the process."""
         rawlist = _psutil_bsd.get_proc_threads(self.pid)
@@ -308,18 +294,6 @@ class Process(object):
             ntuple = nt_proc_thread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
-
-    @wrap_exceptions
-    def get_open_files(self):
-        """Return files opened by process as a list of namedtuples."""
-        # XXX - C implementation available on FreeBSD >= 8 only
-        # else fallback on lsof parser
-        if hasattr(_psutil_bsd, "get_proc_open_files"):
-            rawlist = _psutil_bsd.get_proc_open_files(self.pid)
-            return [nt_proc_file(path, fd) for path, fd in rawlist]
-        else:
-            lsof = _psposix.LsofParser(self.pid, self._process_name)
-            return lsof.get_proc_open_files()
 
     @wrap_exceptions
     def get_connections(self, kind='inet'):
@@ -373,12 +347,39 @@ class Process(object):
     nt_mmap_ext = namedtuple(
         'mmap', 'addr, perms path rss, private, ref_count, shadow_count')
 
-    @wrap_exceptions
-    def get_memory_maps(self):
-        return _psutil_bsd.get_proc_memory_maps(self.pid)
+    # FreeBSD < 8 does not support functions based on kinfo_getfile()
+    # and kinfo_getvmmap()
+    if hasattr(_psutil_bsd, 'get_proc_open_files'):
 
-    # FreeBSD < 8 does not support kinfo_getfile() and kinfo_getvmmap()
-    if not hasattr(_psutil_bsd, 'get_proc_open_files'):
+        @wrap_exceptions
+        def get_open_files(self):
+            """Return files opened by process as a list of namedtuples."""
+            # XXX - C implementation available on FreeBSD >= 8 only
+            # else fallback on lsof parser
+            if hasattr(_psutil_bsd, "get_proc_open_files"):
+                rawlist = _psutil_bsd.get_proc_open_files(self.pid)
+                return [nt_proc_file(path, fd) for path, fd in rawlist]
+            else:
+                lsof = _psposix.LsofParser(self.pid, self._process_name)
+                return lsof.get_proc_open_files()
+
+        @wrap_exceptions
+        def get_cwd(self):
+            """Return process current working directory."""
+            # sometimes we get an empty string, in which case we turn
+            # it into None
+            return _psutil_bsd.get_proc_cwd(self.pid) or None
+
+        @wrap_exceptions
+        def get_memory_maps(self):
+            return _psutil_bsd.get_proc_memory_maps(self.pid)
+
+        @wrap_exceptions
+        def get_num_fds(self):
+            """Return the number of file descriptors opened by this process."""
+            return _psutil_bsd.get_proc_num_fds(self.pid)
+
+    else:
         def _not_implemented(self):
             raise NotImplementedError("supported only starting from FreeBSD 8")
 
