@@ -428,10 +428,10 @@ psutil_proc_create_time_2(PyObject *self, PyObject *args)
 
 
 /*
- * Return a Python integer indicating the number of CPUs on the system.
+ * Return the number of logical CPUs.
  */
 static PyObject *
-psutil_num_cpus(PyObject *self, PyObject *args)
+psutil_cpu_count_logical(PyObject *self, PyObject *args)
 {
     SYSTEM_INFO system_info;
     system_info.dwNumberOfProcessors = 0;
@@ -452,10 +452,10 @@ typedef BOOL (WINAPI *LPFN_GLPI) (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,
                                   PDWORD);
 
 /*
- * Return the number physical CPU cores on the system.
+ * Return the number of physical CPU cores.
  */
 static PyObject *
-psutil_num_phys_cpus(PyObject *self, PyObject *args)
+psutil_cpu_count_phys(PyObject *self, PyObject *args)
 {
     LPFN_GLPI glpi;
     DWORD rc;
@@ -1932,7 +1932,7 @@ error:
  * Get process priority as a Python integer.
  */
 static PyObject *
-psutil_proc_priority(PyObject *self, PyObject *args)
+psutil_proc_priority_get(PyObject *self, PyObject *args)
 {
     long pid;
     DWORD priority;
@@ -1960,7 +1960,7 @@ psutil_proc_priority(PyObject *self, PyObject *args)
  * Set process priority.
  */
 static PyObject *
-psutil_set_proc_priority(PyObject *self, PyObject *args)
+psutil_proc_priority_set(PyObject *self, PyObject *args)
 {
     long pid;
     int priority;
@@ -1993,7 +1993,7 @@ psutil_set_proc_priority(PyObject *self, PyObject *args)
  * Get process IO priority as a Python integer.
  */
 static PyObject *
-psutil_proc_io_priority(PyObject *self, PyObject *args)
+psutil_proc_io_priority_get(PyObject *self, PyObject *args)
 {
     long pid;
     HANDLE hProcess;
@@ -2027,7 +2027,7 @@ psutil_proc_io_priority(PyObject *self, PyObject *args)
  * Set process IO priority.
  */
 static PyObject *
-psutil_set_proc_io_priority(PyObject *self, PyObject *args)
+psutil_proc_io_priority_set(PyObject *self, PyObject *args)
 {
     long pid;
     int prio;
@@ -2125,7 +2125,7 @@ psutil_proc_io_counters_2(PyObject *self, PyObject *args)
  * Return process CPU affinity as a bitmask
  */
 static PyObject *
-psutil_proc_cpu_affinity(PyObject *self, PyObject *args)
+psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
 {
     DWORD pid;
     HANDLE hProcess;
@@ -2157,7 +2157,7 @@ psutil_proc_cpu_affinity(PyObject *self, PyObject *args)
  * Set process CPU affinity
  */
 static PyObject *
-psutil_set_proc_cpu_affinity(PyObject *self, PyObject *args)
+psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
 {
     DWORD pid;
     HANDLE hProcess;
@@ -2455,7 +2455,7 @@ error:
 }
 
 
-static char *get_drive_type(int type)
+static char *psutil_get_drive_type(int type)
 {
     switch (type) {
     case DRIVE_FIXED:
@@ -2575,7 +2575,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args)
         if (strlen(opts) > 0) {
             strcat(opts, ",");
         }
-        strcat(opts, get_drive_type(type));
+        strcat(opts, psutil_get_drive_type(type));
 
         py_tuple = Py_BuildValue(
             "(ssss)",
@@ -3021,19 +3021,19 @@ PsutilMethods[] =
      "Return process threads information as a list of tuple"},
     {"process_wait", psutil_proc_wait, METH_VARARGS,
      "Wait for process to terminate and return its exit code."},
-    {"get_proc_priority", psutil_proc_priority, METH_VARARGS,
+    {"get_proc_priority", psutil_proc_priority_get, METH_VARARGS,
      "Return process priority."},
-    {"set_proc_priority", psutil_set_proc_priority, METH_VARARGS,
+    {"set_proc_priority", psutil_proc_priority_set, METH_VARARGS,
      "Set process priority."},
 #if (_WIN32_WINNT >= 0x0600)  // Windows Vista
-    {"get_proc_io_priority", psutil_proc_io_priority, METH_VARARGS,
+    {"get_proc_io_priority", psutil_proc_io_priority_get, METH_VARARGS,
      "Return process IO priority."},
-    {"set_proc_io_priority", psutil_set_proc_io_priority, METH_VARARGS,
+    {"set_proc_io_priority", psutil_proc_io_priority_set, METH_VARARGS,
      "Set process IO priority."},
 #endif
-    {"get_proc_cpu_affinity", psutil_proc_cpu_affinity, METH_VARARGS,
+    {"get_proc_cpu_affinity", psutil_proc_cpu_affinity_get, METH_VARARGS,
      "Return process CPU affinity as a bitmask."},
-    {"set_proc_cpu_affinity", psutil_set_proc_cpu_affinity, METH_VARARGS,
+    {"set_proc_cpu_affinity", psutil_proc_cpu_affinity_set, METH_VARARGS,
      "Set process CPU affinity."},
     {"get_proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
      "Get process I/O counters."},
@@ -3065,9 +3065,9 @@ PsutilMethods[] =
      "Returns a list of PIDs currently running on the system"},
     {"pid_exists", psutil_pid_exists, METH_VARARGS,
      "Determine if the process exists in the current process list."},
-    {"get_num_cpus", psutil_num_cpus, METH_VARARGS,
+    {"get_num_cpus", psutil_cpu_count_logical, METH_VARARGS,
      "Returns the number of logical CPUs on the system"},
-    {"get_num_phys_cpus", psutil_num_phys_cpus, METH_VARARGS,
+    {"get_num_phys_cpus", psutil_cpu_count_phys, METH_VARARGS,
      "Returns the number of physical CPUs on the system"},
     {"get_boot_time", psutil_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},

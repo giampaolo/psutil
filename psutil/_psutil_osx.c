@@ -427,7 +427,7 @@ error:
  * XXX this could be shared with BSD.
  */
 static PyObject *
-psutil_num_cpus(PyObject *self, PyObject *args)
+psutil_cpu_count_logical(PyObject *self, PyObject *args)
 {
     int mib[2];
     int ncpu;
@@ -452,7 +452,7 @@ psutil_num_cpus(PyObject *self, PyObject *args)
  * Return the number of physical CPUs in the system.
  */
 static PyObject *
-psutil_num_phys_cpus(PyObject *self, PyObject *args)
+psutil_cpu_count_phys(PyObject *self, PyObject *args)
 {
     int num;
     size_t size = sizeof(int);
@@ -1770,9 +1770,9 @@ PsutilMethods[] =
 
     {"get_pids", psutil_pids, METH_VARARGS,
      "Returns a list of PIDs currently running on the system"},
-    {"get_num_cpus", psutil_num_cpus, METH_VARARGS,
+    {"get_num_cpus", psutil_cpu_count_logical, METH_VARARGS,
      "Return number of logical CPUs on the system"},
-    {"get_num_phys_cpus", psutil_num_phys_cpus, METH_VARARGS,
+    {"get_num_phys_cpus", psutil_cpu_count_phys, METH_VARARGS,
      "Return number of physical CPUs on the system"},
     {"get_virtual_mem", psutil_virtual_mem, METH_VARARGS,
      "Return system virtual memory stats"},

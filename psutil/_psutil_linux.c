@@ -68,7 +68,7 @@ ioprio_set(int which, int who, int ioprio)
  * Return a (ioclass, iodata) Python tuple representing process I/O priority.
  */
 static PyObject *
-psutil_linux_ioprio_get(PyObject *self, PyObject *args)
+psutil_proc_ioprio_get(PyObject *self, PyObject *args)
 {
     long pid;
     int ioprio, ioclass, iodata;
@@ -91,7 +91,7 @@ psutil_linux_ioprio_get(PyObject *self, PyObject *args)
  * or 0. iodata goes from 0 to 7 depending on ioclass specified.
  */
 static PyObject *
-psutil_linux_ioprio_set(PyObject *self, PyObject *args)
+psutil_proc_ioprio_set(PyObject *self, PyObject *args)
 {
     long pid;
     int ioprio, ioclass, iodata;
@@ -253,7 +253,7 @@ psutil_sysinfo(PyObject *self, PyObject *args)
  * Return process CPU affinity as a Python long (the bitmask)
  */
 static PyObject *
-psutil_proc_cpu_affinity(PyObject *self, PyObject *args)
+psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
 {
     unsigned long mask;
     unsigned int len = sizeof(mask);
@@ -273,7 +273,7 @@ psutil_proc_cpu_affinity(PyObject *self, PyObject *args)
  * Set process CPU affinity; expects a bitmask
  */
 static PyObject *
-psutil_set_proc_cpu_affinity(PyObject *self, PyObject *args)
+psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
 {
     cpu_set_t cpu_set;
     size_t len;
@@ -385,16 +385,16 @@ PsutilMethods[] =
 {
     // --- per-process functions
 #if HAVE_IOPRIO
-    {"ioprio_get", psutil_linux_ioprio_get, METH_VARARGS,
+    {"ioprio_get", psutil_proc_ioprio_get, METH_VARARGS,
      "Get process I/O priority"},
-    {"ioprio_set", psutil_linux_ioprio_set, METH_VARARGS,
+    {"ioprio_set", psutil_proc_ioprio_set, METH_VARARGS,
      "Set process I/O priority"},
 #endif
 #if HAVE_PRLIMIT
     {"prlimit", psutil_linux_prlimit, METH_VARARGS,
      "Get or set process resource limits."},
 #endif
-    {"set_proc_cpu_affinity", psutil_set_proc_cpu_affinity, METH_VARARGS,
+    {"set_proc_cpu_affinity", psutil_proc_cpu_affinity_set, METH_VARARGS,
      "Set process CPU affinity; expects a bitmask."},
 
     // --- system related functions
@@ -403,7 +403,7 @@ PsutilMethods[] =
      "device, mount point and filesystem type"},
     {"get_sysinfo", psutil_sysinfo, METH_VARARGS,
      "A wrapper around sysinfo(), return system memory usage statistics"},
-    {"get_proc_cpu_affinity", psutil_proc_cpu_affinity, METH_VARARGS,
+    {"get_proc_cpu_affinity", psutil_proc_cpu_affinity_get, METH_VARARGS,
      "Return process CPU affinity as a Python long (the bitmask)."},
     {"get_users", psutil_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},

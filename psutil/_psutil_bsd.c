@@ -488,7 +488,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args)
  * XXX this could be shared with OSX
  */
 static PyObject *
-psutil_num_cpus(PyObject *self, PyObject *args)
+psutil_cpu_count_logical(PyObject *self, PyObject *args)
 {
     int mib[2];
     int ncpu;
@@ -514,7 +514,7 @@ psutil_num_cpus(PyObject *self, PyObject *args)
  * physical CPU cores in the system.
  */
 static PyObject *
-psutil_num_phys_cpus(PyObject *self, PyObject *args)
+psutil_cpu_count_phys(PyObject *self, PyObject *args)
 {
     void *topology = NULL;
     size_t size = 0;
@@ -1774,9 +1774,9 @@ PsutilMethods[] =
 
     {"get_pids", psutil_pids, METH_VARARGS,
      "Returns a list of PIDs currently running on the system"},
-    {"get_num_cpus", psutil_num_cpus, METH_VARARGS,
+    {"get_num_cpus", psutil_cpu_count_logical, METH_VARARGS,
      "Return number of logical CPUs on the system"},
-    {"get_num_phys_cpus", psutil_num_phys_cpus, METH_VARARGS,
+    {"get_num_phys_cpus", psutil_cpu_count_phys, METH_VARARGS,
      "Return an XML string to determine the number physical CPUs."},
     {"get_virtual_mem", psutil_virtual_mem, METH_VARARGS,
      "Return system virtual memory usage statistics"},

@@ -35,14 +35,14 @@ static PyObject* psutil_proc_cwd(PyObject* self, PyObject* args);
 // --- system-related functions
 
 static PyObject* psutil_boot_time(PyObject* self, PyObject* args);
+static PyObject* psutil_cpu_count_logical(PyObject* self, PyObject* args);
+static PyObject* psutil_cpu_count_phys(PyObject* self, PyObject* args);
+static PyObject* psutil_cpu_times(PyObject* self, PyObject* args);
 static PyObject* psutil_disk_io_counters(PyObject* self, PyObject* args);
 static PyObject* psutil_disk_partitions(PyObject* self, PyObject* args);
 static PyObject* psutil_net_io_counters(PyObject* self, PyObject* args);
-static PyObject* psutil_num_cpus(PyObject* self, PyObject* args);
-static PyObject* psutil_num_phys_cpus(PyObject* self, PyObject* args);
 static PyObject* psutil_pids(PyObject* self, PyObject* args);
 static PyObject* psutil_swap_mem(PyObject* self, PyObject* args);
-static PyObject* psutil_cpu_times(PyObject* self, PyObject* args);
 static PyObject* psutil_users(PyObject* self, PyObject* args);
 static PyObject* psutil_virtual_mem(PyObject* self, PyObject* args);
 

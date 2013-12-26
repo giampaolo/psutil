@@ -223,7 +223,7 @@ get_proc_io_counters(PyObject* self, PyObject* args)
  * Return information about a given process thread.
  */
 static PyObject *
-psutil_query_process_thread(PyObject *self, PyObject *args)
+psutil_proc_query_thread(PyObject *self, PyObject *args)
 {
     int pid, tid;
     char path[100];
@@ -1108,7 +1108,7 @@ psutil_boot_time(PyObject *self, PyObject *args)
  * Return the number of physical CPU cores on the system.
  */
 static PyObject *
-psutil_num_phys_cpus(PyObject *self, PyObject *args)
+psutil_cpu_count_phys(PyObject *self, PyObject *args)
 {
     kstat_ctl_t *kc;
     kstat_t *ksp;
@@ -1159,7 +1159,7 @@ PsutilMethods[] =
      "Return process user and system CPU times."},
     {"get_proc_cred", psutil_proc_cred, METH_VARARGS,
      "Return process uids/gids."},
-    {"query_process_thread", psutil_query_process_thread, METH_VARARGS,
+    {"query_process_thread", psutil_proc_query_thread, METH_VARARGS,
      "Return info about a process thread"},
     {"get_proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
      "Return process memory mappings"},
@@ -1183,7 +1183,7 @@ PsutilMethods[] =
      "Return a Python dict of tuples for network I/O statistics."},
     {"get_boot_time", psutil_boot_time, METH_VARARGS,
      "Return system boot time in seconds since the EPOCH."},
-    {"get_num_phys_cpus", psutil_num_phys_cpus, METH_VARARGS,
+    {"get_num_phys_cpus", psutil_cpu_count_phys, METH_VARARGS,
      "Return the number of physical CPUs on the system."},
 
     {NULL, NULL, 0, NULL}
