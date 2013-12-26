@@ -140,7 +140,7 @@ error:
  * Kill a process given its PID.
  */
 static PyObject *
-psutil_kill_process(PyObject *self, PyObject *args)
+psutil_proc_kill(PyObject *self, PyObject *args)
 {
     HANDLE hProcess;
     long pid;
@@ -181,7 +181,7 @@ psutil_kill_process(PyObject *self, PyObject *args)
  * Wait for process to terminate and return its exit code.
  */
 static PyObject *
-psutil_process_wait(PyObject *self, PyObject *args)
+psutil_proc_wait(PyObject *self, PyObject *args)
 {
     HANDLE hProcess;
     DWORD ExitCode;
@@ -1006,7 +1006,7 @@ error:
  * Resume or suspends a process
  */
 int
-suspend_resume_process(DWORD pid, int suspend)
+psutil_proc_suspend_or_resume(DWORD pid, int suspend)
 {
     // a huge thanks to http://www.codeproject.com/KB/threads/pausep.aspx
     HANDLE hThreadSnap = NULL;
@@ -1075,7 +1075,7 @@ suspend_resume_process(DWORD pid, int suspend)
 
 
 static PyObject *
-psutil_suspend_process(PyObject *self, PyObject *args)
+psutil_proc_suspend(PyObject *self, PyObject *args)
 {
     long pid;
     int suspend = 1;
@@ -1083,7 +1083,7 @@ psutil_suspend_process(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (! suspend_resume_process(pid, suspend)) {
+    if (! psutil_proc_suspend_or_resume(pid, suspend)) {
         return NULL;
     }
     Py_INCREF(Py_None);
@@ -1092,7 +1092,7 @@ psutil_suspend_process(PyObject *self, PyObject *args)
 
 
 static PyObject *
-psutil_resume_process(PyObject *self, PyObject *args)
+psutil_proc_resume(PyObject *self, PyObject *args)
 {
     long pid;
     int suspend = 0;
@@ -1100,7 +1100,7 @@ psutil_resume_process(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (! suspend_resume_process(pid, suspend)) {
+    if (! psutil_proc_suspend_or_resume(pid, suspend)) {
         return NULL;
     }
     Py_INCREF(Py_None);
@@ -2194,7 +2194,7 @@ psutil_set_proc_cpu_affinity(PyObject *self, PyObject *args)
  * suspended status.
  */
 static PyObject *
-psutil_is_process_suspended(PyObject *self, PyObject *args)
+psutil_proc_is_suspended(PyObject *self, PyObject *args)
 {
     DWORD pid;
     ULONG i;
@@ -2994,7 +2994,7 @@ PsutilMethods[] =
      "Return process cmdline as a list of cmdline arguments"},
     {"get_proc_exe", psutil_proc_exe, METH_VARARGS,
      "Return path of the process executable"},
-    {"kill_process", psutil_kill_process, METH_VARARGS,
+    {"kill_process", psutil_proc_kill, METH_VARARGS,
      "Kill the process identified by the given PID"},
     {"get_proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,
      "Return tuple of user/kern time for the given PID"},
@@ -3005,9 +3005,9 @@ PsutilMethods[] =
      "Return a tuple of process memory information"},
     {"get_proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory"},
-    {"suspend_process", psutil_suspend_process, METH_VARARGS,
+    {"suspend_process", psutil_proc_suspend, METH_VARARGS,
      "Suspend a process"},
-    {"resume_process", psutil_resume_process, METH_VARARGS,
+    {"resume_process", psutil_proc_resume, METH_VARARGS,
      "Resume a process"},
     {"get_proc_open_files", psutil_proc_open_files, METH_VARARGS,
      "Return files opened by process"},
@@ -3019,7 +3019,7 @@ PsutilMethods[] =
      "Return the network connections of a process"},
     {"get_proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads information as a list of tuple"},
-    {"process_wait", psutil_process_wait, METH_VARARGS,
+    {"process_wait", psutil_proc_wait, METH_VARARGS,
      "Wait for process to terminate and return its exit code."},
     {"get_proc_priority", psutil_proc_priority, METH_VARARGS,
      "Return process priority."},
@@ -3037,7 +3037,7 @@ PsutilMethods[] =
      "Set process CPU affinity."},
     {"get_proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
      "Get process I/O counters."},
-    {"is_process_suspended", psutil_is_process_suspended, METH_VARARGS,
+    {"is_process_suspended", psutil_proc_is_suspended, METH_VARARGS,
      "Return True if one of the process threads is in a suspended state"},
     {"get_proc_num_handles", psutil_proc_num_handles, METH_VARARGS,
      "Return the number of handles opened by process."},
