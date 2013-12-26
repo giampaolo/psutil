@@ -80,7 +80,7 @@ class Base(unittest.TestCase):
                           % (rss2, rss3, difference))
 
     def get_mem(self):
-        return psutil.Process(os.getpid()).get_memory_info()[0]
+        return psutil.Process(os.getpid()).memory_info()[0]
 
     def call(self, *args, **kwargs):
         raise NotImplementedError("must be implemented in subclass")
@@ -143,7 +143,7 @@ class TestProcessObjectLeaks(Base):
         self.execute('nice')
 
     def test_set_nice(self):
-        niceness = psutil.Process(os.getpid()).get_nice()
+        niceness = psutil.Process(os.getpid()).nice()
         self.execute('set_nice', niceness)
 
     def test_io_counters(self):
@@ -154,7 +154,7 @@ class TestProcessObjectLeaks(Base):
 
     def test_set_ionice(self):
         if WINDOWS:
-            value = psutil.Process(os.getpid()).get_ionice()
+            value = psutil.Process(os.getpid()).ionice()
             self.execute('set_ionice', value)
         else:
             self.execute('set_ionice', psutil.IOPRIO_CLASS_NONE)
@@ -200,7 +200,7 @@ class TestProcessObjectLeaks(Base):
         self.execute('cpu_affinity')
 
     def test_set_cpu_affinity(self):
-        affinity = psutil.Process(os.getpid()).get_cpu_affinity()
+        affinity = psutil.Process(os.getpid()).cpu_affinity()
         self.execute('set_cpu_affinity', affinity)
 
     def test_open_files(self):
@@ -222,7 +222,7 @@ class TestProcessObjectLeaks(Base):
 
     @unittest.skipUnless(LINUX, "feature not supported on this platform")
     def test_set_rlimit(self):
-        limit = psutil.Process(os.getpid()).get_rlimit(psutil.RLIMIT_NOFILE)
+        limit = psutil.Process(os.getpid()).rlimit(psutil.RLIMIT_NOFILE)
         self.execute('set_rlimit', psutil.RLIMIT_NOFILE, limit)
 
     # Linux implementation is pure python so since it's slow we skip it
@@ -302,9 +302,14 @@ class TestModuleFunctionsLeaks(Base):
             obj(*args, **kwargs)
 
     @unittest.skipIf(LINUX, "not worth being tested on POSIX (pure python)")
-    def test_cpu_count(self):
-        psutil.get_num_cpus = psutil._psplatform.get_num_cpus
-        self.execute('num_cpus')
+    def test_cpu_count_logical(self):
+        psutil.cpu_count = psutil._psplatform.cpu_count_logical
+        self.execute('cpu_count')
+
+    @unittest.skipIf(LINUX, "not worth being tested on POSIX (pure python)")
+    def test_cpu_count_physical(self):
+        psutil.cpu_count = psutil._psplatform.cpu_count_physical
+        self.execute('cpu_count')
 
     @unittest.skipIf(LINUX, "not worth being tested on POSIX (pure python)")
     def test_boot_time(self):

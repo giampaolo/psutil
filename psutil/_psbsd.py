@@ -85,7 +85,7 @@ def swap_memory():
     return nt_sys_swap(total, used, free, percent, sin, sout)
 
 
-def get_sys_cpu_times():
+def cpu_times():
     """Return system per-CPU times as a named tuple"""
     user, nice, system, idle, irq = cext.get_sys_cpu_times()
     return nt_sys_cputimes(user, nice, system, idle, irq)
@@ -119,12 +119,12 @@ else:
     get_sys_per_cpu_times.__called__ = False
 
 
-def get_num_cpus():
+def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
     return cext.get_num_cpus()
 
 
-def get_num_phys_cpus():
+def cpu_count_physical():
     """Return the number of physical CPUs in the system."""
     # From the C module we'll get an XML string similar to this:
     # http://manpages.ubuntu.com/manpages/precise/man4/smp.4freebsd.html
@@ -146,7 +146,7 @@ def get_num_phys_cpus():
                 return s.count("<cpu") or None
 
 
-def get_boot_time():
+def boot_time():
     """The system boot time expressed in seconds since the epoch."""
     return cext.get_boot_time()
 
@@ -166,7 +166,7 @@ def disk_partitions(all=False):
     return retlist
 
 
-def get_users():
+def users():
     retlist = []
     rawlist = cext.get_users()
     for item in rawlist:
@@ -180,7 +180,7 @@ def get_users():
 
 get_pids = cext.get_pids
 pid_exists = _psposix.pid_exists
-get_disk_usage = _psposix.get_disk_usage
+disk_usage = _psposix.disk_usage
 net_io_counters = cext.get_net_io_counters
 disk_io_counters = cext.get_disk_io_counters
 
@@ -352,14 +352,8 @@ class Process(object):
         @wrap_exceptions
         def open_files(self):
             """Return files opened by process as a list of namedtuples."""
-            # XXX - C implementation available on FreeBSD >= 8 only
-            # else fallback on lsof parser
-            if hasattr(cext, "get_proc_open_files"):
-                rawlist = cext.get_proc_open_files(self.pid)
-                return [nt_proc_file(path, fd) for path, fd in rawlist]
-            else:
-                lsof = _psposix.LsofParser(self.pid, self._process_name)
-                return lsof.get_proc_open_files()
+            rawlist = cext.get_proc_open_files(self.pid)
+            return [nt_proc_file(path, fd) for path, fd in rawlist]
 
         @wrap_exceptions
         def cwd(self):

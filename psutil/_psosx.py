@@ -82,13 +82,13 @@ def swap_memory():
     return nt_sys_swap(total, used, free, percent, sin, sout)
 
 
-def get_sys_cpu_times():
+def cpu_times():
     """Return system CPU times as a namedtuple."""
     user, nice, system, idle = cext.get_sys_cpu_times()
     return nt_sys_cputimes(user, nice, system, idle)
 
 
-def get_sys_per_cpu_times():
+def per_cpu_times():
     """Return system CPU times as a named tuple"""
     ret = []
     for cpu_t in cext.get_sys_per_cpu_times():
@@ -98,17 +98,17 @@ def get_sys_per_cpu_times():
     return ret
 
 
-def get_num_cpus():
+def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
     return cext.get_num_cpus()
 
 
-def get_num_phys_cpus():
+def cpu_count_physical():
     """Return the number of physical CPUs in the system."""
     return cext.get_num_phys_cpus()
 
 
-def get_boot_time():
+def boot_time():
     """The system boot time expressed in seconds since the epoch."""
     return cext.get_boot_time()
 
@@ -128,7 +128,7 @@ def disk_partitions(all=False):
     return retlist
 
 
-def get_users():
+def users():
     retlist = []
     rawlist = cext.get_users()
     for item in rawlist:
@@ -144,7 +144,7 @@ def get_users():
 
 get_pids = cext.get_pids
 pid_exists = _psposix.pid_exists
-get_disk_usage = _psposix.get_disk_usage
+disk_usage = _psposix.disk_usage
 net_io_counters = cext.get_net_io_counters
 disk_io_counters = cext.get_disk_io_counters
 

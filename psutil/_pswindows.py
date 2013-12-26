@@ -103,10 +103,10 @@ def swap_memory():
     return nt_sys_swap(total, used, free, percent, 0, 0)
 
 
-def get_disk_usage(path):
+def disk_usage(path):
     """Return disk usage associated with path."""
     try:
-        total, free = cext.get_disk_usage(path)
+        total, free = cext.disk_usage(path)
     except WindowsError:
         if not os.path.exists(path):
             msg = "No such file or directory: '%s'" % path
@@ -123,13 +123,13 @@ def disk_partitions(all):
     return [nt_sys_diskpart(*x) for x in rawlist]
 
 
-def get_sys_cpu_times():
+def cpu_times():
     """Return system CPU times as a named tuple."""
     user, system, idle = cext.get_sys_cpu_times()
     return nt_sys_cputimes(user, system, idle)
 
 
-def get_sys_per_cpu_times():
+def per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
     ret = []
     for cpu_t in cext.get_sys_per_cpu_times():
@@ -139,22 +139,22 @@ def get_sys_per_cpu_times():
     return ret
 
 
-def get_num_cpus():
+def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
     return cext.get_num_cpus()
 
 
-def get_num_phys_cpus():
+def cpu_count_physical():
     """Return the number of physical CPUs in the system."""
     return cext.get_num_phys_cpus()
 
 
-def get_boot_time():
+def boot_time():
     """The system boot time expressed in seconds since the epoch."""
     return cext.get_boot_time()
 
 
-def get_users():
+def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
     rawlist = cext.get_users()

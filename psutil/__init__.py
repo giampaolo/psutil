@@ -1125,7 +1125,7 @@ class Popen(Process):
 
 def pids():
     """Return a list of current running PIDs."""
-    return _psplatform.get_pids()
+    return _psplatform.pids()
 
 
 def pid_exists(pid):
@@ -1308,9 +1308,9 @@ def cpu_count(logical=True):
     >>> psutil.cpu_count.cache_clear()
     """
     if logical:
-        return _psplatform.get_num_cpus()
+        return _psplatform.cpu_count_logical()
     else:
-        return _psplatform.get_num_phys_cpus()
+        return _psplatform.cpu_count_physical()
 
 
 def cpu_times(percpu=False):
@@ -1335,9 +1335,9 @@ def cpu_times(percpu=False):
     The order of the list is consistent across calls.
     """
     if not percpu:
-        return _psplatform.get_sys_cpu_times()
+        return _psplatform.cpu_times()
     else:
-        return _psplatform.get_sys_per_cpu_times()
+        return _psplatform.per_cpu_times()
 
 
 _last_cpu_times = cpu_times()
@@ -1589,7 +1589,7 @@ def disk_usage(path):
     including total, used and free space expressed in bytes plus the
     percentage usage.
     """
-    return _psplatform.get_disk_usage(path)
+    return _psplatform.disk_usage(path)
 
 
 def disk_partitions(all=False):
@@ -1678,7 +1678,7 @@ def boot_time():
     """
     # Note: we are not caching this because it is subject to
     # system clock updates.
-    return _psplatform.get_boot_time()
+    return _psplatform.boot_time()
 
 
 def users():
@@ -1691,7 +1691,7 @@ def users():
      - started: the creation time as a floating point number expressed in
        seconds since the epoch.
     """
-    return _psplatform.get_users()
+    return _psplatform.users()
 
 
 # =====================================================================

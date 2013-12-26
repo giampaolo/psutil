@@ -106,7 +106,7 @@ def wait_pid(pid, timeout=None):
                 raise RuntimeError("unknown process exit status")
 
 
-def get_disk_usage(path):
+def disk_usage(path):
     """Return disk usage associated with path."""
     try:
         st = os.statvfs(path)

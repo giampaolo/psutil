@@ -66,7 +66,7 @@ nt_sys_cputimes = namedtuple('cputimes', ['user', 'system', 'idle', 'iowait'])
 
 disk_io_counters = cext.get_disk_io_counters
 net_io_counters = cext.get_net_io_counters
-get_disk_usage = _psposix.get_disk_usage
+disk_usage = _psposix.disk_usage
 
 
 def virtual_memory():
@@ -111,7 +111,7 @@ def swap_memory():
                        sin * PAGE_SIZE, sout * PAGE_SIZE)
 
 
-def get_pids():
+def pids():
     """Returns a list of PIDs currently running on the system."""
     return [int(x) for x in os.listdir('/proc') if x.isdigit()]
 
@@ -121,19 +121,19 @@ def pid_exists(pid):
     return _psposix.pid_exists(pid)
 
 
-def get_sys_cpu_times():
+def cpu_times():
     """Return system-wide CPU times as a named tuple"""
     ret = cext.get_sys_per_cpu_times()
     return nt_sys_cputimes(*[sum(x) for x in zip(*ret)])
 
 
-def get_sys_per_cpu_times():
+def per_cpu_times():
     """Return system per-CPU times as a list of named tuples"""
     ret = cext.get_sys_per_cpu_times()
     return [nt_sys_cputimes(*x) for x in ret]
 
 
-def get_num_cpus():
+def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
     try:
         return os.sysconf("SC_NPROCESSORS_ONLN")
@@ -142,17 +142,17 @@ def get_num_cpus():
         return None
 
 
-def get_num_phys_cpus():
+def cpu_count_physical():
     """Return the number of physical CPUs in the system."""
     return cext.get_num_phys_cpus()
 
 
-def get_boot_time():
+def boot_time():
     """The system boot time expressed in seconds since the epoch."""
     return cext.get_boot_time()
 
 
-def get_users():
+def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
     rawlist = cext.get_users()
@@ -185,7 +185,7 @@ def disk_partitions(all=False):
             # Differently from, say, Linux, we don't have a list of
             # common fs types so the best we can do, AFAIK, is to
             # filter by filesystem having a total size > 0.
-            if not get_disk_usage(mountpoint).total:
+            if not disk_usage(mountpoint).total:
                 continue
         ntuple = nt_sys_diskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
