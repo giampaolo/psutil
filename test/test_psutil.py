@@ -166,11 +166,6 @@ def warn(msg):
     warnings.warn(msg, UserWarning)
 
 
-def register_warning(msg):
-    """Register a warning which will be printed on interpreter exit."""
-    atexit.register(lambda: warn(msg))
-
-
 def sh(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     """run cmd in a subprocess and return its output.
     raises RuntimeError on error.
@@ -2118,7 +2113,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                     except NotImplementedError:
                         msg = "%r was skipped because not implemented" % (
                             self.__class__.__name__ + '.test_' + name)
-                        register_warning(msg)
+                        self.addSkip(msg)
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         err = sys.exc_info()[1]
                         self.assertEqual(err.pid, p.pid)
@@ -2340,6 +2335,7 @@ class TestFetchAllProcesses(unittest.TestCase):
 # ===================================================================
 
 if hasattr(os, 'getuid') and os.getuid() == 0:
+
     class LimitedUserTestCase(TestProcess):
         """Repeat the previous tests by using a limited user.
         Executed only on UNIX and only if the user who run the test script
@@ -2385,6 +2381,11 @@ if hasattr(os, 'getuid') and os.getuid() == 0:
         def test_zombie_process(self):
             # causes problems if test test suite is run as root
             pass
+else:
+
+    class LimitedUserTestCase(unittest.TestCase):
+        def test_it(self):
+            unittest.skip("super user privileges are required")
 
 
 # ===================================================================
@@ -2585,12 +2586,14 @@ def test_main():
     tests.append(TestFetchAllProcesses)
     tests.append(TestMisc)
     tests.append(TestExampleScripts)
+    tests.append(LimitedUserTestCase)
 
     if POSIX:
         from _posix import PosixSpecificTestCase
         tests.append(PosixSpecificTestCase)
 
     # import the specific platform test suite
+    stc = None
     if LINUX:
         from _linux import LinuxSpecificTestCase as stc
     elif WINDOWS:
@@ -2603,14 +2606,8 @@ def test_main():
         from _bsd import BSDSpecificTestCase as stc
     elif SUNOS:
         from _sunos import SunOSSpecificTestCase as stc
-    tests.append(stc)
-
-    if hasattr(os, 'getuid'):
-        if 'LimitedUserTestCase' in globals():
-            tests.append(LimitedUserTestCase)
-        else:
-            register_warning("LimitedUserTestCase was skipped (super-user "
-                             "privileges are required)")
+    if stc is not None:
+        tests.append(stc)
 
     for test_class in tests:
         test_suite.addTest(unittest.makeSuite(test_class))
