@@ -1,26 +1,27 @@
-@ECHO OFF
+@echo off
 
-REM ==========================================================================
-REM Shortcuts for various tasks, emulating UNIX "make" on Windows.
-REM Use this script for various tasks such as installing psutil or
-REM running tests ("make.bat test").
-REM This script is modeled after my Windows installation so it might
-REM need some adjustements in order to work on your system.
-REM By default C:\Python27\python.exe is used.
-REM To run another Python version run:
-REM set PYTHON=C:\Python33\python.exe & make test
-REM In case of Python 2.4 and 2.5 mingw32 compiler is used.
-REM ==========================================================================
+rem ==========================================================================
+rem Shortcuts for various tasks, emulating UNIX "make" on Windows.
+rem It is primarly intended as a shortcut for compiling / installing
+rem psutil and running tests (just run "make.bat test").
+rem This script is modeled after my Windows installation which uses:
+rem - mingw32 for Python 2.4 and 2.5
+rem - Visual studio 2008 for Python 2.6, 2.7, 3.2
+rem - Visual studio 2010 for Python 3.3+
+rem By default C:\Python27\python.exe is used.
+rem To use another Python version run:
+rem     set PYTHON=C:\Python24\python.exe & make.bat test
+rem ==========================================================================
 
 
 if "%PYTHON%" == "" (
-    SET PYTHON=C:\Python27\python.exe
+    set PYTHON=C:\Python27\python.exe
 )
 if "%TSCRIPT%" == "" (
-    SET TSCRIPT=test\test_psutil.py
+    set TSCRIPT=test\test_psutil.py
 )
-SET PATH=%PYTHON%;%PATH%
-SET PATH=C:\MinGW\bin;%PATH%
+set PATH=%PYTHON%;%PATH%
+set PATH=C:\MinGW\bin;%PATH%
 
 
 if "%1" == "help" (
