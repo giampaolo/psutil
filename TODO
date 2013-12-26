@@ -126,6 +126,14 @@ DEBATABLE
 
   * support wheels? http://pythonwheels.com/
 
+  * process_iter() might grow an "attrs" parameter similar to Process.as_dict()
+    invoke the necessary methods and include the results into a "cache"
+    attribute attached to the returned Process instances so that one can avoid
+    catching NSP and AccessDenied:
+        for p in process_iter(attrs=['cpu_percent']):
+            print(p.cache['cpu_percent'])
+    This also leads questions as whether we should introduce a sorting order.
+
 
 COMPATIBILITY BREAKAGE
 ======================
