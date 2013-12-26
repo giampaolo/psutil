@@ -1814,7 +1814,7 @@ class TestProcess(unittest.TestCase):
                 continue
             self.assertTrue(p.ppid != this_parent)
 
-    def test_get_children(self):
+    def test_children(self):
         p = psutil.Process()
         self.assertEqual(p.children(), [])
         self.assertEqual(p.children(recursive=True), [])
@@ -1826,7 +1826,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(children[0].pid, sproc.pid)
             self.assertEqual(children[0].ppid, os.getpid())
 
-    def test_get_children_recursive(self):
+    def test_children_recursive(self):
         # here we create a subprocess which creates another one as in:
         # A (parent) -> B (child) -> C (grandchild)
         s = "import subprocess, os, sys, time;"
@@ -1847,7 +1847,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(children[0].ppid, os.getpid())
         self.assertEqual(children[1].ppid, children[0].pid)
 
-    def test_get_children_duplicates(self):
+    def test_children_duplicates(self):
         # find the process which has the highest number of children
         from psutil._compat import defaultdict
         table = defaultdict(int)
@@ -1960,7 +1960,7 @@ class TestProcess(unittest.TestCase):
         # Note: in this test we'll be creating two sub processes.
         # Both of them are supposed to be freed / killed by
         # reap_children() as they are attributable to 'us'
-        # (os.getpid()) via get_children(recursive=True).
+        # (os.getpid()) via children(recursive=True).
         src = textwrap.dedent("""\
         import os, sys, time, socket
         child_pid = os.fork()

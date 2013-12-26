@@ -300,9 +300,9 @@ class TestDualProcessImplementation(unittest.TestCase):
         def assert_ge_0(obj):
             if isinstance(obj, tuple):
                 for value in obj:
-                    self.assertGreaterEqual(value, 0)
+                    assert value >= 0, value
             elif isinstance(obj, (int, long, float)):
-                self.assertGreaterEqual(obj, 0)
+                assert value >= 0, value
             else:
                 assert 0  # case not handled which needs to be fixed
 

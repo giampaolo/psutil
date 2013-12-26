@@ -31,6 +31,9 @@
 #include "arch/windows/process_handles.h"
 #include "arch/windows/ntextapi.h"
 
+#ifdef __MINGW32__
+#include "arch/windows/glpi.h"
+#endif
 
 /*
  * Return a Python float representing the system uptime expressed in seconds
