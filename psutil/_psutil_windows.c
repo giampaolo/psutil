@@ -2478,7 +2478,9 @@ static char *get_drive_type(int type)
 }
 
 
+#ifndef _ARRAYSIZE
 #define _ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
+#endif
 
 /*
  * Return disk partitions as a list of tuples such as
