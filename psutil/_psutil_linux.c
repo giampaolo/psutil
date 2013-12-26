@@ -230,7 +230,7 @@ error:
  * A wrapper around sysinfo(), return system memory usage statistics.
  */
 static PyObject *
-psutil_sysinfo(PyObject *self, PyObject *args)
+psutil_linux_sysinfo(PyObject *self, PyObject *args)
 {
     struct sysinfo info;
     if (sysinfo(&info) != 0) {
@@ -384,29 +384,35 @@ static PyMethodDef
 PsutilMethods[] =
 {
     // --- per-process functions
+
 #if HAVE_IOPRIO
-    {"ioprio_get", psutil_proc_ioprio_get, METH_VARARGS,
+    {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS,
      "Get process I/O priority"},
-    {"ioprio_set", psutil_proc_ioprio_set, METH_VARARGS,
+    {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS,
      "Set process I/O priority"},
 #endif
-#if HAVE_PRLIMIT
-    {"prlimit", psutil_linux_prlimit, METH_VARARGS,
-     "Get or set process resource limits."},
-#endif
-    {"set_proc_cpu_affinity", psutil_proc_cpu_affinity_set, METH_VARARGS,
+    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
+     "Return process CPU affinity as a Python long (the bitmask)."},
+    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
      "Set process CPU affinity; expects a bitmask."},
 
     // --- system related functions
-    {"get_disk_partitions", psutil_disk_partitions, METH_VARARGS,
+
+    {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk mounted partitions as a list of tuples including "
      "device, mount point and filesystem type"},
-    {"get_sysinfo", psutil_sysinfo, METH_VARARGS,
-     "A wrapper around sysinfo(), return system memory usage statistics"},
-    {"get_proc_cpu_affinity", psutil_proc_cpu_affinity_get, METH_VARARGS,
-     "Return process CPU affinity as a Python long (the bitmask)."},
-    {"get_users", psutil_users, METH_VARARGS,
+    {"users", psutil_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},
+
+    // --- linux specific
+
+    {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS,
+     "A wrapper around sysinfo(), return system memory usage statistics"},
+#if HAVE_PRLIMIT
+    {"linux_prlimit", psutil_linux_prlimit, METH_VARARGS,
+     "Get or set process resource limits."},
+#endif
+
 
     {NULL, NULL, 0, NULL}
 };

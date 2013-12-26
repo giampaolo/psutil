@@ -45,7 +45,7 @@ __extra__all__ = [
 
 # --- constants
 
-HAS_PRLIMIT = hasattr(cext, "prlimit")
+HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
 
 # RLIMIT_* constants, not guaranteed to be present on all kernels
 if HAS_PRLIMIT:
@@ -104,7 +104,7 @@ nt_proc_extmem = namedtuple(
 # --- system memory
 
 def virtual_memory():
-    total, free, buffers, shared, _, _ = cext.get_sysinfo()
+    total, free, buffers, shared, _, _ = cext.linux_sysinfo()
     cached = active = inactive = None
     f = open('/proc/meminfo', 'r')
     try:
@@ -136,7 +136,7 @@ def virtual_memory():
 
 
 def swap_memory():
-    _, _, _, _, total, free = cext.get_sysinfo()
+    _, _, _, _, total, free = cext.linux_sysinfo()
     used = total - free
     percent = usage_percent(used, total, _round=1)
     # get pgin/pgouts
@@ -303,7 +303,7 @@ def cpu_count_physical():
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext.get_users()
+    rawlist = cext.users()
     for item in rawlist:
         user, tty, hostname, tstamp, user_process = item
         # note: the underlying C function includes entries about
@@ -442,7 +442,7 @@ def disk_partitions(all=False):
         f.close()
 
     retlist = []
-    partitions = cext.get_disk_partitions()
+    partitions = cext.disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
@@ -828,13 +828,13 @@ class Process(object):
     @wrap_exceptions
     def cpu_affinity(self):
         from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
-        bitmask = cext.get_proc_cpu_affinity(self.pid)
+        bitmask = cext.proc_cpu_affinity_get(self.pid)
         return from_bitmask(bitmask)
 
     @wrap_exceptions
     def set_proc_cpu_affinity(self, cpus):
         try:
-            cext.set_proc_cpu_affinity(self.pid, cpus)
+            cext.proc_cpu_affinity_set(self.pid, cpus)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno == errno.EINVAL:
@@ -846,11 +846,11 @@ class Process(object):
             raise
 
     # only starting from kernel 2.6.13
-    if hasattr(cext, "ioprio_get"):
+    if hasattr(cext, "proc_ioprio_get"):
 
         @wrap_exceptions
         def ionice(self):
-            ioclass, value = cext.ioprio_get(self.pid)
+            ioclass, value = cext.proc_ioprio_get(self.pid)
             return nt_proc_ionice(ioclass, value)
 
         @wrap_exceptions
@@ -874,7 +874,7 @@ class Process(object):
             if not 0 <= value <= 8:
                 raise ValueError(
                     "value argument range expected is between 0 and 8")
-            return cext.ioprio_set(self.pid, ioclass, value)
+            return cext.proc_ioprio_set(self.pid, ioclass, value)
 
     if HAS_PRLIMIT:
         @wrap_exceptions
@@ -885,14 +885,14 @@ class Process(object):
                 raise ValueError("can't use prlimit() against PID 0 process")
             if limits is None:
                 # get
-                return cext.prlimit(self.pid, resource)
+                return cext.linux_prlimit(self.pid, resource)
             else:
                 # set
                 if len(limits) != 2:
                     raise ValueError(
                         "second argument must be a (soft, hard) tuple")
                 soft, hard = limits
-                cext.prlimit(self.pid, resource, soft, hard)
+                cext.linux_prlimit(self.pid, resource, soft, hard)
 
     @wrap_exceptions
     def status(self):
