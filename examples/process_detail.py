@@ -62,7 +62,7 @@ def run(pid):
         round(pinfo['memory_percent'], 1),
         convert_bytes(pinfo['memory_info'].rss),
         convert_bytes(pinfo['memory_info'].vms))
-    children = p.get_children()
+    children = p.children()
 
     print_('pid', pinfo['pid'])
     print_('name', pinfo['name'])

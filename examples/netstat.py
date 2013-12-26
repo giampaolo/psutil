@@ -33,7 +33,7 @@ def main():
         name = '?'
         try:
             name = p.name
-            cons = p.get_connections(kind='inet')
+            cons = p.connections(kind='inet')
         except psutil.AccessDenied:
             print_(templ % (AD, AD, AD, AD, p.pid, name))
         except psutil.NoSuchProcess:
