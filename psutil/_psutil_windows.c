@@ -2232,7 +2232,7 @@ get_disk_usage(PyObject *self, PyObject *args)
 
     if (PyArg_ParseTuple(args, "u", &path)) {
         Py_BEGIN_ALLOW_THREADS
-        retval = GetDiskFreeSpaceExW((LPCTSTR)path, &_, &total, &free);
+        retval = GetDiskFreeSpaceExW((LPCWSTR)path, &_, &total, &free);
         Py_END_ALLOW_THREADS
         goto return_;
     }
