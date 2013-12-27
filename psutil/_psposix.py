@@ -19,7 +19,13 @@ from psutil._error import TimeoutExpired
 
 def pid_exists(pid):
     """Check whether pid exists in the current process table."""
-    assert not pid <= 0, pid
+    if pid == 0:
+        # According to "man 2 kill" PID 0 has a special meaning:
+        # it refers to <<every process in the process group of the
+        # calling process>> so we don't want to go any further.
+        # If we get here it means this UNIX platform *does* have
+        # a process with id 0.
+        return True
     try:
         os.kill(pid, 0)
     except OSError:
