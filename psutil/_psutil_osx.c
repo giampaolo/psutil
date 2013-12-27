@@ -81,7 +81,7 @@ psutil_pids(PyObject *self, PyObject *args)
     if (retlist == NULL)
         return NULL;
 
-    if (psutil_proc_list(&proclist, &num_processes) != 0) {
+    if (psutil_get_proc_list(&proclist, &num_processes) != 0) {
         PyErr_SetString(PyExc_RuntimeError,
                         "failed to retrieve process list.");
         goto error;
@@ -123,7 +123,7 @@ psutil_proc_name(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("s", kp.kp_proc.p_comm);
@@ -192,7 +192,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args)
     }
 
     // get the commandline, defined in arch/osx/process_info.c
-    arglist = psutil_arg_list(pid);
+    arglist = psutil_get_arg_list(pid);
     return arglist;
 }
 
@@ -208,7 +208,7 @@ psutil_proc_ppid(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("l", (long)kp.kp_eproc.e_ppid);
@@ -226,7 +226,7 @@ psutil_proc_uids(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("lll",
@@ -247,7 +247,7 @@ psutil_proc_gids(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("lll",
@@ -268,7 +268,7 @@ psutil_proc_tty_nr(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("i", kp.kp_eproc.e_tdev);
@@ -499,7 +499,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("d", TV2DOUBLE(kp.kp_proc.p_starttime));
@@ -903,7 +903,7 @@ psutil_proc_status(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_get_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
     return Py_BuildValue("i", (int)kp.kp_proc.p_stat);
