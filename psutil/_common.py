@@ -13,6 +13,10 @@ import socket
 import stat
 import sys
 import warnings
+try:
+    import threading
+except ImportError:
+    import dummy_threading as threading
 
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
 
@@ -81,16 +85,25 @@ def memoize(fun):
     @wraps(fun)
     def wrapper(*args, **kwargs):
         key = (args, frozenset(sorted(kwargs.items())))
+        lock.acquire()
         try:
-            return cache[key]
-        except KeyError:
-            ret = cache[key] = fun(*args, **kwargs)
+            try:
+                return cache[key]
+            except KeyError:
+                ret = cache[key] = fun(*args, **kwargs)
+        finally:
+            lock.release()
         return ret
 
     def cache_clear():
         """Clear cache."""
-        cache.clear()
+        lock.acquire()
+        try:
+            cache.clear()
+        finally:
+            lock.release()
 
+    lock = threading.RLock()
     cache = {}
     wrapper.cache_clear = cache_clear
     return wrapper
