@@ -163,6 +163,8 @@ __all__.extend(_psplatform.__extra__all__)
 
 
 _TOTAL_PHYMEM = None
+_POSIX = os.name == 'posix'
+_WINDOWS = os.name == 'nt'
 
 
 def _assert_pid_not_reused(fun):
@@ -212,9 +214,8 @@ class Process(object):
         if pid is None:
             pid = os.getpid()
         else:
-            if not _PY3:
-                if not isinstance(pid, (int, long)):
-                    raise TypeError('pid must be an integer (got %r)' % pid)
+            if not _PY3 and not isinstance(pid, (int, long)):
+                raise TypeError('pid must be an integer (got %r)' % pid)
             if pid < 0:
                 raise ValueError('pid must be a positive integer (got %s)'
                                  % pid)
@@ -369,7 +370,7 @@ class Process(object):
 
         # XXX should we check creation time here rather than in
         # Process.parent?
-        if os.name == 'posix':
+        if _POSIX:
             return self._proc.ppid()
         else:
             if self._ppid is None:
@@ -380,7 +381,7 @@ class Process(object):
     def name(self):
         """The process name."""
         name = self._proc.name()
-        if os.name == 'posix' and len(name) >= 15:
+        if _POSIX and len(name) >= 15:
             # On UNIX the name gets truncated to the first 15 characters.
             # If it matches the first part of the cmdline we return that
             # one instead because it's usually more explicative.
@@ -444,7 +445,7 @@ class Process(object):
         """The process current status as a STATUS_* constant."""
         return self._proc.status()
 
-    if os.name == 'posix':
+    if _POSIX:
 
         @property
         def uids(self):
@@ -472,7 +473,7 @@ class Process(object):
         """The name of the user that owns the process.
         On UNIX this is calculated by using *real* process uid.
         """
-        if os.name == 'posix':
+        if _POSIX:
             if pwd is None:
                 # might happen if python was installed from sources
                 raise ImportError(
@@ -581,7 +582,7 @@ class Process(object):
             """
             return self._proc.cpu_affinity_set(cpus)
 
-    if os.name == 'nt':
+    if _WINDOWS:
 
         def num_handles(self):
             """Return the number of handles opened by this process
@@ -589,7 +590,7 @@ class Process(object):
             """
             return self._proc.num_handles()
 
-    if os.name == 'posix':
+    if _POSIX:
 
         def num_fds(self):
             """Return the number of file descriptors opened by this
@@ -771,7 +772,7 @@ class Process(object):
         #   comprehending-top-cpu-usage
         # On windows we use this ugly hack in order to avoid float
         # precision issues.
-        if os.name != 'posix':
+        if not _POSIX:
             if single_cpu_percent > 100.0:
                 return 100.0
         return round(single_cpu_percent, 1)
@@ -893,7 +894,7 @@ class Process(object):
         On Windows only SIGTERM is valid and is treated as an alias
         for kill().
         """
-        if os.name == 'posix':
+        if _POSIX:
             try:
                 os.kill(self.pid, sig)
             except OSError:
@@ -949,7 +950,7 @@ class Process(object):
         """Kill the current process with SIGKILL pre-emptively checking
         whether PID has been reused.
         """
-        if os.name == 'posix':
+        if _POSIX:
             self.send_signal(signal.SIGKILL)
         else:
             self._proc.kill()
@@ -1029,12 +1030,12 @@ class Process(object):
     def get_num_ctx_switches(self):
         pass
 
-    if os.name == 'posix':
+    if _POSIX:
         @_deprecated_method(replacement='num_fds')
         def get_num_fds(self):
             pass
 
-    if os.name == 'nt':
+    if _WINDOWS:
         @_deprecated_method(replacement='num_handles')
         def get_num_handles(self):
             pass
@@ -1137,7 +1138,7 @@ def pid_exists(pid):
     """
     if pid < 0:
         return False
-    elif pid == 0 and os.name == 'posix':
+    elif pid == 0 and _POSIX:
         # On POSIX we use os.kill() to determine PID existence.
         # According to "man 2 kill" PID 0 has a special meaning
         # though: it refers to <<every process in the process
@@ -1444,7 +1445,6 @@ def cpu_times_percent(interval=0.1, percpu=False):
     global _last_cpu_times_2
     global _last_per_cpu_times_2
     blocking = interval is not None and interval > 0.0
-    WINDOWS = os.name == 'nt'
 
     def calculate(t1, t2):
         global _ptime_cpu_perc_nt
@@ -1457,7 +1457,7 @@ def cpu_times_percent(interval=0.1, percpu=False):
             except ZeroDivisionError:
                 field_perc = 0.0
             field_perc = round(field_perc, 1)
-            if WINDOWS:
+            if _WINDOWS:
                 # XXX
                 # Work around:
                 # https://code.google.com/p/psutil/issues/detail?id=392
@@ -1771,7 +1771,7 @@ def test():
     templ = "%-10s %5s %4s %4s %7s %7s %-13s %5s %7s  %s"
     attrs = ['pid', 'cpu_percent', 'memory_percent', 'name', 'cpu_times',
              'create_time', 'memory_info']
-    if os.name == 'posix':
+    if _POSIX:
         attrs.append('uids')
         attrs.append('terminal')
     print_(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY",
@@ -1795,7 +1795,7 @@ def test():
             try:
                 user = p.username
             except KeyError:
-                if os.name == 'posix':
+                if _POSIX:
                     if pinfo['uids']:
                         user = str(pinfo['uids'].real)
                     else:
@@ -1804,7 +1804,7 @@ def test():
                     raise
             except Error:
                 user = ''
-            if os.name == 'nt' and '\\' in user:
+            if _WINDOWS and '\\' in user:
                 user = user.split('\\')[1]
             vms = pinfo['memory_info'] and \
                 int(pinfo['memory_info'].vms / 1024) or '?'
