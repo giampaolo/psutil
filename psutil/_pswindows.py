@@ -388,17 +388,17 @@ class Process(object):
         return ret
 
     @wrap_exceptions
-    def nice(self):
+    def nice_get(self):
         return cext.proc_priority_get(self.pid)
 
     @wrap_exceptions
-    def set_proc_nice(self, value):
+    def nice_set(self, value):
         return cext.proc_priority_set(self.pid, value)
 
     # available on Windows >= Vista
     if hasattr(cext, "get_process_io_priority"):
         @wrap_exceptions
-        def ionice(self):
+        def ionice_get(self):
             return cext.proc_io_priority(self.pid)
 
         @wrap_exceptions
@@ -432,13 +432,13 @@ class Process(object):
             return _common.STATUS_RUNNING
 
     @wrap_exceptions
-    def cpu_affinity(self):
+    def cpu_affinity_get(self):
         from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
         bitmask = cext.proc_cpu_affinity_get(self.pid)
         return from_bitmask(bitmask)
 
     @wrap_exceptions
-    def set_proc_cpu_affinity(self, value):
+    def cpu_affinity_set(self, value):
         def to_bitmask(l):
             if not l:
                 raise ValueError("invalid argument %r" % l)

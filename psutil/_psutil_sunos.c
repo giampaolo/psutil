@@ -1175,7 +1175,7 @@ PsutilMethods[] =
      "Return currently connected users."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk partitions."},
-    {"cpu_times", psutil_per_cpu_times, METH_VARARGS,
+    {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
      "Return system per-CPU times."},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
      "Return a Python dict of tuples for disk I/O statistics."},

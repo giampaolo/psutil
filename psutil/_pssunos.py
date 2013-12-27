@@ -232,7 +232,7 @@ class Process(object):
         # Will be guess later from cmdline but we want to explicitly
         # invoke cmdline here in order to get an AccessDenied
         # exception if the user has not enough privileges.
-        self.get_cmdline()
+        self.cmdline()
         return ""
 
     @wrap_exceptions
@@ -248,7 +248,7 @@ class Process(object):
         return cext.proc_basic_info(self.pid)[5]
 
     @wrap_exceptions
-    def nice(self):
+    def nice_get(self):
         # For some reason getpriority(3) return ESRCH (no such process)
         # for certain low-pid processes, no matter what (even as root).
         # The process actually exists though, as it has a name,
@@ -266,7 +266,7 @@ class Process(object):
             raise
 
     @wrap_exceptions
-    def set_proc_nice(self, value):
+    def nice_set(self, value):
         if self.pid in (2, 3):
             # Special case PIDs: internally setpriority(3) return ESRCH
             # (no such process), no matter what.

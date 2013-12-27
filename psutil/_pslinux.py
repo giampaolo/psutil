@@ -810,7 +810,7 @@ class Process(object):
         return retlist
 
     @wrap_exceptions
-    def nice(self):
+    def nice_get(self):
         #f = open('/proc/%s/stat' % self.pid, 'r')
         # try:
         #   data = f.read()
@@ -822,17 +822,17 @@ class Process(object):
         return _psutil_posix.getpriority(self.pid)
 
     @wrap_exceptions
-    def set_proc_nice(self, value):
+    def nice_set(self, value):
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
-    def cpu_affinity(self):
+    def cpu_affinity_get(self):
         from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
         bitmask = cext.proc_cpu_affinity_get(self.pid)
         return from_bitmask(bitmask)
 
     @wrap_exceptions
-    def set_proc_cpu_affinity(self, cpus):
+    def cpu_affinity_set(self, cpus):
         try:
             cext.proc_cpu_affinity_set(self.pid, cpus)
         except OSError:
@@ -849,12 +849,12 @@ class Process(object):
     if hasattr(cext, "proc_ioprio_get"):
 
         @wrap_exceptions
-        def ionice(self):
+        def ionice_get(self):
             ioclass, value = cext.proc_ioprio_get(self.pid)
             return nt_proc_ionice(ioclass, value)
 
         @wrap_exceptions
-        def set_ionice(self, ioclass, value):
+        def ionice_set(self, ioclass, value):
             if ioclass in (IOPRIO_CLASS_NONE, None):
                 if value:
                     msg = "can't specify value with IOPRIO_CLASS_NONE"

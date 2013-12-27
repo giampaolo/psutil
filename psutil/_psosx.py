@@ -299,11 +299,11 @@ class Process(object):
             raise TimeoutExpired(timeout, self.pid, self._process_name)
 
     @wrap_exceptions
-    def nice(self):
+    def nice_get(self):
         return _psutil_posix.getpriority(self.pid)
 
     @wrap_exceptions
-    def set_proc_nice(self, value):
+    def nice_set(self, value):
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions

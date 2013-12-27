@@ -504,13 +504,13 @@ class Process(object):
 
     def nice(self):
         """Get process niceness (priority)."""
-        return self._proc.nice()
+        return self._proc.nice_get()
 
     @_assert_pid_not_reused
     def set_nice(self, value):
         """Set process niceness (priority) pre-emptively checking
         whether PID has been reused."""
-        return self._proc.set_proc_nice(value)
+        return self._proc.nice_set(value)
 
     # Linux and Windows >= Vista only
     if hasattr(_psplatform.Process, "ionice"):
@@ -524,7 +524,7 @@ class Process(object):
 
             Available on Linux and Windows > Vista only.
             """
-            return self._proc.ionice()
+            return self._proc.ionice_get()
 
         def set_ionice(self, ioclass, value=None):
             """Set process I/O niceness (priority).
@@ -538,7 +538,7 @@ class Process(object):
 
             Available on Linux and Windows > Vista only.
             """
-            return self._proc.set_ionice(ioclass, value)
+            return self._proc.ionice_set(ioclass, value)
 
     # Linux only
     if hasattr(_psplatform.Process, "prlimit"):
@@ -570,14 +570,14 @@ class Process(object):
 
         def cpu_affinity(self):
             """Get process current CPU affinity."""
-            return self._proc.cpu_affinity()
+            return self._proc.cpu_affinity_get()
 
         def set_cpu_affinity(self, cpus):
             """Set process current CPU affinity.
             'cpus' is a list of CPUs for which you want to set the
             affinity (e.g. [0, 1]).
             """
-            return self._proc.set_proc_cpu_affinity(cpus)
+            return self._proc.cpu_affinity_set(cpus)
 
     if os.name == 'nt':
 
