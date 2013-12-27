@@ -905,7 +905,7 @@ class Process(object):
                 raise
         else:
             if sig == signal.SIGTERM:
-                self._proc.kill_process()
+                self._proc.kill()
             else:
                 raise ValueError("only SIGTERM is supported on Windows")
 
@@ -950,7 +950,7 @@ class Process(object):
         if os.name == 'posix':
             self.send_signal(signal.SIGKILL)
         else:
-            self._proc.kill_process()
+            self._proc.kill()
 
     def wait(self, timeout=None):
         """Wait for process to terminate and, if process is a children
@@ -964,7 +964,7 @@ class Process(object):
         """
         if timeout is not None and not timeout >= 0:
             raise ValueError("timeout must be a positive integer")
-        return self._proc.process_wait(timeout)
+        return self._proc.wait(timeout)
 
     # --- deprecated APIs
 

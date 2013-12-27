@@ -503,7 +503,7 @@ class Process(object):
         return nt_proc_ctxsw(*cext.proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
-    def process_wait(self, timeout=None):
+    def wait(self, timeout=None):
         try:
             return _psposix.wait_pid(self.pid, timeout)
         except TimeoutExpired:

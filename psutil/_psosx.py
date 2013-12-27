@@ -292,7 +292,7 @@ class Process(object):
         return cext.proc_num_fds(self.pid)
 
     @wrap_exceptions
-    def process_wait(self, timeout=None):
+    def wait(self, timeout=None):
         try:
             return _psposix.wait_pid(self.pid, timeout)
         except TimeoutExpired:

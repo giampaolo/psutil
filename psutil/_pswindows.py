@@ -277,18 +277,18 @@ class Process(object):
                 yield (addr, perm, path, rss)
 
     @wrap_exceptions
-    def kill_process(self):
+    def kill(self):
         """Terminates the process with the given PID."""
-        return cext.kill_process(self.pid)
+        return cext.proc_kill(self.pid)
 
     @wrap_exceptions
-    def process_wait(self, timeout=None):
+    def wait(self, timeout=None):
         if timeout is None:
             timeout = cext.INFINITE
         else:
             # WaitForSingleObject() expects time in milliseconds
             timeout = int(timeout * 1000)
-        ret = cext.process_wait(self.pid, timeout)
+        ret = cext.proc_wait(self.pid, timeout)
         if ret == WAIT_TIMEOUT:
             raise TimeoutExpired(timeout, self.pid, self._process_name)
         return ret
@@ -340,11 +340,11 @@ class Process(object):
 
     @wrap_exceptions
     def suspend(self):
-        return cext.suspend_process(self.pid)
+        return cext.proc_suspend(self.pid)
 
     @wrap_exceptions
     def resume(self):
-        return cext.resume_process(self.pid)
+        return cext.proc_resume(self.pid)
 
     @wrap_exceptions
     def cwd(self):
@@ -389,11 +389,11 @@ class Process(object):
 
     @wrap_exceptions
     def nice(self):
-        return cext.proc_priority(self.pid)
+        return cext.proc_priority_get(self.pid)
 
     @wrap_exceptions
     def set_proc_nice(self, value):
-        return cext.set_proc_priority(self.pid, value)
+        return cext.proc_priority_set(self.pid, value)
 
     # available on Windows >= Vista
     if hasattr(cext, "get_process_io_priority"):
@@ -425,7 +425,7 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        suspended = cext.is_process_suspended(self.pid)
+        suspended = cext.proc_is_suspended(self.pid)
         if suspended:
             return _common.STATUS_STOPPED
         else:
@@ -434,7 +434,7 @@ class Process(object):
     @wrap_exceptions
     def cpu_affinity(self):
         from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
-        bitmask = cext.proc_cpu_affinity(self.pid)
+        bitmask = cext.proc_cpu_affinity_get(self.pid)
         return from_bitmask(bitmask)
 
     @wrap_exceptions
@@ -456,7 +456,7 @@ class Process(object):
                 raise ValueError("invalid CPU %r" % cpu)
 
         bitmask = to_bitmask(value)
-        cext.set_proc_cpu_affinity(self.pid, bitmask)
+        cext.proc_cpu_affinity_set(self.pid, bitmask)
 
     @wrap_exceptions
     def num_handles(self):
