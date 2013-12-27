@@ -160,9 +160,9 @@ def wrap_exceptions(fun):
         except OSError:
             err = sys.exc_info()[1]
             if err.errno == errno.ESRCH:
-                raise NoSuchProcess(self.pid, self._process_name)
+                raise NoSuchProcess(self.pid, self._name)
             if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._process_name)
+                raise AccessDenied(self.pid, self._name)
             raise
     return wrapper
 
@@ -170,11 +170,11 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_process_name"]
+    __slots__ = ["pid", "_name"]
 
     def __init__(self, pid):
         self.pid = pid
-        self._process_name = None
+        self._name = None
 
     @wrap_exceptions
     def name(self):
@@ -189,7 +189,7 @@ class Process(object):
     def cmdline(self):
         """Return process cmdline as a list of arguments."""
         if not pid_exists(self.pid):
-            raise NoSuchProcess(self.pid, self._process_name)
+            raise NoSuchProcess(self.pid, self._name)
         return cext.proc_cmdline(self.pid)
 
     @wrap_exceptions
@@ -296,7 +296,7 @@ class Process(object):
         try:
             return _psposix.wait_pid(self.pid, timeout)
         except TimeoutExpired:
-            raise TimeoutExpired(timeout, self.pid, self._process_name)
+            raise TimeoutExpired(timeout, self.pid, self._name)
 
     @wrap_exceptions
     def nice_get(self):

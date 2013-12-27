@@ -174,7 +174,7 @@ def _assert_pid_not_reused(fun):
     @_wraps(fun)
     def wrapper(self, *args, **kwargs):
         if not self.is_running():
-            raise NoSuchProcess(self.pid, self._proc._process_name)
+            raise NoSuchProcess(self.pid, self._proc._name)
         return fun(self, *args, **kwargs)
     return wrapper
 
@@ -395,8 +395,7 @@ class Process(object):
                     extended_name = os.path.basename(cmdline[0])
                     if extended_name.startswith(name):
                         name = extended_name
-        # XXX - perhaps needs refactoring
-        self._proc._process_name = name
+        self._proc._name = name
         return name
 
     @cached_property
@@ -899,12 +898,11 @@ class Process(object):
                 os.kill(self.pid, sig)
             except OSError:
                 err = sys.exc_info()[1]
-                name = self._proc._process_name
                 if err.errno == errno.ESRCH:
                     self._gone = True
-                    raise NoSuchProcess(self.pid, name)
+                    raise NoSuchProcess(self.pid, self._proc._name)
                 if err.errno == errno.EPERM:
-                    raise AccessDenied(self.pid, name)
+                    raise AccessDenied(self.pid, self._proc._name)
                 raise
         else:
             if sig == signal.SIGTERM:

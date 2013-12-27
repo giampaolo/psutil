@@ -183,9 +183,9 @@ def wrap_exceptions(fun):
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                raise AccessDenied(self.pid, self._process_name)
+                raise AccessDenied(self.pid, self._name)
             if err.errno == errno.ESRCH:
-                raise NoSuchProcess(self.pid, self._process_name)
+                raise NoSuchProcess(self.pid, self._name)
             raise
     return wrapper
 
@@ -193,11 +193,11 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_process_name"]
+    __slots__ = ["pid", "_name"]
 
     def __init__(self, pid):
         self.pid = pid
-        self._process_name = None
+        self._name = None
 
     @wrap_exceptions
     def name(self):
@@ -230,7 +230,7 @@ class Process(object):
         try:
             return ppid_map()[self.pid]
         except KeyError:
-            raise NoSuchProcess(self.pid, self._process_name)
+            raise NoSuchProcess(self.pid, self._name)
 
     def _get_raw_meminfo(self):
         try:
@@ -266,9 +266,9 @@ class Process(object):
             # returning a generator; probably needs refactoring.
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                raise AccessDenied(self.pid, self._process_name)
+                raise AccessDenied(self.pid, self._name)
             if err.errno == errno.ESRCH:
-                raise NoSuchProcess(self.pid, self._process_name)
+                raise NoSuchProcess(self.pid, self._name)
             raise
         else:
             for addr, perm, path, rss in raw:
@@ -290,7 +290,7 @@ class Process(object):
             timeout = int(timeout * 1000)
         ret = cext.proc_wait(self.pid, timeout)
         if ret == WAIT_TIMEOUT:
-            raise TimeoutExpired(timeout, self.pid, self._process_name)
+            raise TimeoutExpired(timeout, self.pid, self._name)
         return ret
 
     @wrap_exceptions
@@ -349,7 +349,7 @@ class Process(object):
     @wrap_exceptions
     def cwd(self):
         if self.pid in (0, 4):
-            raise AccessDenied(self.pid, self._process_name)
+            raise AccessDenied(self.pid, self._name)
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
         path = cext.proc_cwd(self.pid)

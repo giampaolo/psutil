@@ -206,9 +206,9 @@ def wrap_exceptions(callable):
             # process is gone in meantime.
             err = sys.exc_info()[1]
             if err.errno in (errno.ENOENT, errno.ESRCH):
-                raise NoSuchProcess(self.pid, self._process_name)
+                raise NoSuchProcess(self.pid, self._name)
             if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._process_name)
+                raise AccessDenied(self.pid, self._name)
             raise
     return wrapper
 
@@ -216,11 +216,11 @@ def wrap_exceptions(callable):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_process_name"]
+    __slots__ = ["pid", "_name"]
 
     def __init__(self, pid):
         self.pid = pid
-        self._process_name = None
+        self._name = None
 
     @wrap_exceptions
     def name(self):
@@ -262,7 +262,7 @@ class Process(object):
             err = sys.exc_info()[1]
             if err.errno in (errno.ENOENT, errno.ESRCH):
                 if pid_exists(self.pid):
-                    raise AccessDenied(self.pid, self._process_name)
+                    raise AccessDenied(self.pid, self._name)
             raise
 
     @wrap_exceptions
@@ -272,7 +272,7 @@ class Process(object):
             # (no such process), no matter what.
             # The process actually exists though, as it has a name,
             # creation time, etc.
-            raise AccessDenied(self.pid, self._process_name)
+            raise AccessDenied(self.pid, self._name)
         return _psutil_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
@@ -406,9 +406,9 @@ class Process(object):
                               for x in (stdout, stderr)]
         if p.returncode != 0:
             if 'permission denied' in stderr.lower():
-                raise AccessDenied(self.pid, self._process_name)
+                raise AccessDenied(self.pid, self._name)
             if 'no such process' in stderr.lower():
-                raise NoSuchProcess(self.pid, self._process_name)
+                raise NoSuchProcess(self.pid, self._name)
             raise RuntimeError("%r command error\n%s" % (cmd, stderr))
 
         lines = stdout.split('\n')[2:]
@@ -507,4 +507,4 @@ class Process(object):
         try:
             return _psposix.wait_pid(self.pid, timeout)
         except TimeoutExpired:
-            raise TimeoutExpired(timeout, self.pid, self._process_name)
+            raise TimeoutExpired(timeout, self.pid, self._name)

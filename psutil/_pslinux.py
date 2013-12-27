@@ -474,9 +474,9 @@ def wrap_exceptions(fun):
             # process is gone in meantime.
             err = sys.exc_info()[1]
             if err.errno in (errno.ENOENT, errno.ESRCH):
-                raise NoSuchProcess(self.pid, self._process_name)
+                raise NoSuchProcess(self.pid, self._name)
             if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._process_name)
+                raise AccessDenied(self.pid, self._name)
             raise
     return wrapper
 
@@ -484,11 +484,11 @@ def wrap_exceptions(fun):
 class Process(object):
     """Linux process implementation."""
 
-    __slots__ = ["pid", "_process_name"]
+    __slots__ = ["pid", "_name"]
 
     def __init__(self, pid):
         self.pid = pid
-        self._process_name = None
+        self._name = None
 
     @wrap_exceptions
     def name(self):
@@ -513,9 +513,9 @@ class Process(object):
                     return ""
                 else:
                     # ok, it is a process which has gone away
-                    raise NoSuchProcess(self.pid, self._process_name)
+                    raise NoSuchProcess(self.pid, self._name)
             if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._process_name)
+                raise AccessDenied(self.pid, self._name)
             raise
 
         # readlink() might return paths containing null bytes causing
@@ -599,7 +599,7 @@ class Process(object):
         try:
             return _psposix.wait_pid(self.pid, timeout)
         except TimeoutExpired:
-            raise TimeoutExpired(timeout, self.pid, self._process_name)
+            raise TimeoutExpired(timeout, self.pid, self._name)
 
     @wrap_exceptions
     def create_time(self):
@@ -721,9 +721,9 @@ class Process(object):
                     f.close()
                 err = sys.exc_info()[1]
                 if err.errno in (errno.ENOENT, errno.ESRCH):
-                    raise NoSuchProcess(self.pid, self._process_name)
+                    raise NoSuchProcess(self.pid, self._name)
                 if err.errno in (errno.EPERM, errno.EACCES):
-                    raise AccessDenied(self.pid, self._process_name)
+                    raise AccessDenied(self.pid, self._name)
                 raise
             except:
                 if f is not None:
