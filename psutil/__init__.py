@@ -515,7 +515,7 @@ class Process(object):
         return self._proc.nice_set(value)
 
     # Linux and Windows >= Vista only
-    if hasattr(_psplatform.Process, "ionice"):
+    if hasattr(_psplatform.Process, "ionice_get"):
 
         def ionice(self):
             """Return process I/O niceness (priority).
@@ -969,6 +969,8 @@ class Process(object):
 
     # --- deprecated APIs
 
+    _locals = set(locals())
+
     @_deprecated_method(replacement='children')
     def get_children(self):
         pass
@@ -977,7 +979,7 @@ class Process(object):
     def get_connections(self):
         pass
 
-    if hasattr(_psplatform.Process, "cpu_affinity"):
+    if "cpu_affinity" in _locals:
         @_deprecated_method(replacement='cpu_affinity')
         def get_cpu_affinity(self):
             pass
@@ -998,12 +1000,12 @@ class Process(object):
     def get_ext_memory_info(self):
         pass
 
-    if hasattr(_psplatform.Process, "io_counters"):
+    if "io_counters" in _locals:
         @_deprecated_method(replacement='io_counters')
         def get_io_counters(self):
             pass
 
-    if hasattr(_psplatform.Process, "ionice"):
+    if "ionice" in _locals:
         @_deprecated_method(replacement='ionice')
         def get_ionice(self):
             pass
@@ -1028,12 +1030,12 @@ class Process(object):
     def get_num_ctx_switches(self):
         pass
 
-    if _POSIX:
+    if 'num_fds' in _locals:
         @_deprecated_method(replacement='num_fds')
         def get_num_fds(self):
             pass
 
-    if _WINDOWS:
+    if 'num_handles' in _locals:
         @_deprecated_method(replacement='num_handles')
         def get_num_handles(self):
             pass
@@ -1046,7 +1048,7 @@ class Process(object):
     def get_open_files(self):
         pass
 
-    if hasattr(_psplatform.Process, "prlimit"):
+    if "rlimit" in _locals:
         @_deprecated_method(replacement='rlimit')
         def get_rlimit(self):
             pass
@@ -1054,6 +1056,8 @@ class Process(object):
     @_deprecated_method(replacement='threads')
     def get_threads(self):
         pass
+
+    del _locals
 
 
 class Popen(Process):

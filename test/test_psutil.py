@@ -593,8 +593,41 @@ class TestSystemAPIs(unittest.TestCase):
                 self.assertRaises(DeprecationWarning, psutil.cached_phymem)
 
             # Process class
-            self.assertRaises(DeprecationWarning, p.getcwd)
+            names = dir(psutil.Process)
+            self.assertRaises(DeprecationWarning, p.get_children)
             self.assertRaises(DeprecationWarning, p.get_connections)
+            if 'cpu_affinity' in names:
+                self.assertRaises(DeprecationWarning, p.get_cpu_affinity)
+            self.assertRaises(DeprecationWarning, p.get_cpu_percent)
+            self.assertRaises(DeprecationWarning, p.get_cpu_times)
+            self.assertRaises(DeprecationWarning, p.getcwd)
+            self.assertRaises(DeprecationWarning, p.get_ext_memory_info)
+            if 'io_counters' in names:
+                self.assertRaises(DeprecationWarning, p.get_io_counters)
+            if 'ionice' in names:
+                self.assertRaises(DeprecationWarning, p.get_ionice)
+            self.assertRaises(DeprecationWarning, p.get_memory_info)
+            self.assertRaises(DeprecationWarning, p.get_memory_maps)
+            self.assertRaises(DeprecationWarning, p.get_memory_percent)
+            self.assertRaises(DeprecationWarning, p.get_nice)
+            self.assertRaises(DeprecationWarning, p.get_num_ctx_switches)
+            if 'num_fds' in names:
+                self.assertRaises(DeprecationWarning, p.get_num_fds)
+            if 'num_handles' in names:
+                self.assertRaises(DeprecationWarning, p.get_num_handles)
+            self.assertRaises(DeprecationWarning, p.get_num_threads)
+            self.assertRaises(DeprecationWarning, p.get_open_files)
+            if 'rlimit' in names:
+                self.assertRaises(DeprecationWarning, p.get_rlimit)
+            self.assertRaises(DeprecationWarning, p.get_threads)
+            # ...just to be extra sure:
+            for name in names:
+                if name.startswith('get'):
+                    meth = getattr(p, name)
+                    try:
+                        self.assertRaises(DeprecationWarning, meth)
+                    except AssertionError:
+                        self.fail("%s did not raise DeprecationWarning" % name)
 
             # named tuples
             ret = call_until(p.connections, "len(ret) != 0")
