@@ -69,7 +69,7 @@ nt_proc_extmem = namedtuple('meminfo', ['rss', 'vms', 'text', 'data', 'stack'])
 
 def virtual_memory():
     """System virtual memory as a namedutple."""
-    mem = cext.get_virtual_mem()
+    mem = cext.virtual_mem()
     total, free, active, inactive, wired, cached, buffers, shared = mem
     avail = inactive + cached + free
     used = active + wired + cached
@@ -80,14 +80,14 @@ def virtual_memory():
 
 def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
-    total, used, free, sin, sout = [x * PAGESIZE for x in cext.get_swap_mem()]
+    total, used, free, sin, sout = [x * PAGESIZE for x in cext.swap_mem()]
     percent = usage_percent(used, total, _round=1)
     return nt_sys_swap(total, used, free, percent, sin, sout)
 
 
 def cpu_times():
     """Return system per-CPU times as a named tuple"""
-    user, nice, system, idle, irq = cext.get_sys_cpu_times()
+    user, nice, system, idle, irq = cext.cpu_times()
     return nt_sys_cputimes(user, nice, system, idle, irq)
 
 
@@ -95,7 +95,7 @@ if hasattr(cext, "get_sys_per_cpu_times"):
     def per_cpu_times():
         """Return system CPU times as a named tuple"""
         ret = []
-        for cpu_t in cext.get_sys_per_cpu_times():
+        for cpu_t in cext.per_cpu_times():
             user, nice, system, idle, irq = cpu_t
             item = nt_sys_cputimes(user, nice, system, idle, irq)
             ret.append(item)
@@ -121,7 +121,7 @@ else:
 
 def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
-    return cext.get_num_cpus()
+    return cext.cpu_count_logical()
 
 
 def cpu_count_physical():
@@ -131,7 +131,7 @@ def cpu_count_physical():
     # We may get None in case "sysctl kern.sched.topology_spec"
     # is not supported on this BSD version, in which case we'll mimic
     # os.cpu_count() and return None.
-    s = cext.get_num_phys_cpus()
+    s = cext.cpu_count_phys()
     if s is not None:
         # get rid of padding chars appended at the end of the string
         index = s.rfind("</groups>")
@@ -148,12 +148,12 @@ def cpu_count_physical():
 
 def boot_time():
     """The system boot time expressed in seconds since the epoch."""
-    return cext.get_boot_time()
+    return cext.boot_time()
 
 
 def disk_partitions(all=False):
     retlist = []
-    partitions = cext.get_disk_partitions()
+    partitions = cext.disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
@@ -168,7 +168,7 @@ def disk_partitions(all=False):
 
 def users():
     retlist = []
-    rawlist = cext.get_users()
+    rawlist = cext.users()
     for item in rawlist:
         user, tty, hostname, tstamp = item
         if tty == '~':
@@ -178,11 +178,11 @@ def users():
     return retlist
 
 
-get_pids = cext.get_pids
+get_pids = cext.pids
 pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage
-net_io_counters = cext.get_net_io_counters
-disk_io_counters = cext.get_disk_io_counters
+net_io_counters = cext.net_io_counters
+disk_io_counters = cext.disk_io_counters
 
 
 def wrap_exceptions(fun):
@@ -215,21 +215,21 @@ class Process(object):
     @wrap_exceptions
     def name(self):
         """Return process name as a string of limited len (15)."""
-        return cext.get_proc_name(self.pid)
+        return cext.proc_name(self.pid)
 
     @wrap_exceptions
     def exe(self):
         """Return process executable pathname."""
-        return cext.get_proc_exe(self.pid)
+        return cext.proc_exe(self.pid)
 
     @wrap_exceptions
     def cmdline(self):
         """Return process cmdline as a list of arguments."""
-        return cext.get_proc_cmdline(self.pid)
+        return cext.proc_cmdline(self.pid)
 
     @wrap_exceptions
     def terminal(self):
-        tty_nr = cext.get_proc_tty_nr(self.pid)
+        tty_nr = cext.proc_tty_nr(self.pid)
         tmap = _psposix._get_terminal_map()
         try:
             return tmap[tty_nr]
@@ -239,55 +239,55 @@ class Process(object):
     @wrap_exceptions
     def ppid(self):
         """Return process parent pid."""
-        return cext.get_proc_ppid(self.pid)
+        return cext.proc_ppid(self.pid)
 
     @wrap_exceptions
     def uids(self):
         """Return real, effective and saved user ids."""
-        real, effective, saved = cext.get_proc_uids(self.pid)
+        real, effective, saved = cext.proc_uids(self.pid)
         return nt_proc_uids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
         """Return real, effective and saved group ids."""
-        real, effective, saved = cext.get_proc_gids(self.pid)
+        real, effective, saved = cext.proc_gids(self.pid)
         return nt_proc_gids(real, effective, saved)
 
     @wrap_exceptions
     def cpu_times(self):
         """return a tuple containing process user/kernel time."""
-        user, system = cext.get_proc_cpu_times(self.pid)
+        user, system = cext.proc_cpu_times(self.pid)
         return nt_proc_cpu(user, system)
 
     @wrap_exceptions
     def memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
-        rss, vms = cext.get_proc_memory_info(self.pid)[:2]
+        rss, vms = cext.proc_memory_info(self.pid)[:2]
         return nt_proc_mem(rss, vms)
 
     @wrap_exceptions
     def ext_memory_info(self):
-        return nt_proc_extmem(*cext.get_proc_memory_info(self.pid))
+        return nt_proc_extmem(*cext.proc_memory_info(self.pid))
 
     @wrap_exceptions
     def create_time(self):
         """Return the start time of the process as a number of seconds since
         the epoch."""
-        return cext.get_proc_create_time(self.pid)
+        return cext.proc_create_time(self.pid)
 
     @wrap_exceptions
     def num_threads(self):
         """Return the number of threads belonging to the process."""
-        return cext.get_proc_num_threads(self.pid)
+        return cext.proc_num_threads(self.pid)
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        return nt_proc_ctxsw(*cext.get_proc_num_ctx_switches(self.pid))
+        return nt_proc_ctxsw(*cext.proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
     def threads(self):
         """Return the number of threads belonging to the process."""
-        rawlist = cext.get_proc_threads(self.pid)
+        rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
             ntuple = nt_proc_thread(thread_id, utime, stime)
@@ -303,7 +303,7 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        rawlist = cext.get_proc_connections(self.pid, families, types)
+        rawlist = cext.proc_connections(self.pid, families, types)
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
@@ -329,7 +329,7 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        code = cext.get_proc_status(self.pid)
+        code = cext.proc_status(self.pid)
         if code in PROC_STATUSES:
             return PROC_STATUSES[code]
         # XXX is this legit? will we even ever get here?
@@ -337,7 +337,7 @@ class Process(object):
 
     @wrap_exceptions
     def io_counters(self):
-        rc, wc, rb, wb = cext.get_proc_io_counters(self.pid)
+        rc, wc, rb, wb = cext.proc_io_counters(self.pid)
         return nt_proc_io(rc, wc, rb, wb)
 
     nt_mmap_grouped = namedtuple(
@@ -352,7 +352,7 @@ class Process(object):
         @wrap_exceptions
         def open_files(self):
             """Return files opened by process as a list of namedtuples."""
-            rawlist = cext.get_proc_open_files(self.pid)
+            rawlist = cext.proc_open_files(self.pid)
             return [nt_proc_file(path, fd) for path, fd in rawlist]
 
         @wrap_exceptions
@@ -360,16 +360,16 @@ class Process(object):
             """Return process current working directory."""
             # sometimes we get an empty string, in which case we turn
             # it into None
-            return cext.get_proc_cwd(self.pid) or None
+            return cext.proc_cwd(self.pid) or None
 
         @wrap_exceptions
         def memory_maps(self):
-            return cext.get_proc_memory_maps(self.pid)
+            return cext.proc_memory_maps(self.pid)
 
         @wrap_exceptions
         def num_fds(self):
             """Return the number of file descriptors opened by this process."""
-            return cext.get_proc_num_fds(self.pid)
+            return cext.proc_num_fds(self.pid)
 
     else:
         def _not_implemented(self):

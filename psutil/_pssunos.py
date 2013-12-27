@@ -64,8 +64,8 @@ nt_sys_cputimes = namedtuple('cputimes', ['user', 'system', 'idle', 'iowait'])
 
 # --- functions
 
-disk_io_counters = cext.get_disk_io_counters
-net_io_counters = cext.get_net_io_counters
+disk_io_counters = cext.disk_io_counters
+net_io_counters = cext.net_io_counters
 disk_usage = _psposix.disk_usage
 
 
@@ -80,7 +80,7 @@ def virtual_memory():
 
 
 def swap_memory():
-    sin, sout = cext.get_swap_mem()
+    sin, sout = cext.swap_mem()
     # XXX
     # we are supposed to get total/free by doing so:
     # http://cvs.opensolaris.org/source/xref/onnv/onnv-gate/
@@ -123,13 +123,13 @@ def pid_exists(pid):
 
 def cpu_times():
     """Return system-wide CPU times as a named tuple"""
-    ret = cext.get_sys_per_cpu_times()
+    ret = cext.per_cpu_times()
     return nt_sys_cputimes(*[sum(x) for x in zip(*ret)])
 
 
 def per_cpu_times():
     """Return system per-CPU times as a list of named tuples"""
-    ret = cext.get_sys_per_cpu_times()
+    ret = cext.per_cpu_times()
     return [nt_sys_cputimes(*x) for x in ret]
 
 
@@ -144,18 +144,18 @@ def cpu_count_logical():
 
 def cpu_count_physical():
     """Return the number of physical CPUs in the system."""
-    return cext.get_num_phys_cpus()
+    return cext.cpu_count_phys()
 
 
 def boot_time():
     """The system boot time expressed in seconds since the epoch."""
-    return cext.get_boot_time()
+    return cext.boot_time()
 
 
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext.get_users()
+    rawlist = cext.users()
     localhost = (':0.0', ':0')
     for item in rawlist:
         user, tty, hostname, tstamp, user_process = item
@@ -176,7 +176,7 @@ def disk_partitions(all=False):
     # TODO - the filtering logic should be better checked so that
     # it tries to reflect 'df' as much as possible
     retlist = []
-    partitions = cext.get_disk_partitions()
+    partitions = cext.disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
         if device == 'none':
@@ -225,7 +225,7 @@ class Process(object):
     @wrap_exceptions
     def name(self):
         # note: max len == 15
-        return cext.get_proc_name_and_args(self.pid)[0]
+        return cext.proc_name_and_args(self.pid)[0]
 
     @wrap_exceptions
     def exe(self):
@@ -237,15 +237,15 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        return cext.get_proc_name_and_args(self.pid)[1].split(' ')
+        return cext.proc_name_and_args(self.pid)[1].split(' ')
 
     @wrap_exceptions
     def create_time(self):
-        return cext.get_proc_basic_info(self.pid)[3]
+        return cext.proc_basic_info(self.pid)[3]
 
     @wrap_exceptions
     def num_threads(self):
-        return cext.get_proc_basic_info(self.pid)[5]
+        return cext.proc_basic_info(self.pid)[5]
 
     @wrap_exceptions
     def nice(self):
@@ -277,28 +277,28 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        return cext.get_proc_basic_info(self.pid)[0]
+        return cext.proc_basic_info(self.pid)[0]
 
     @wrap_exceptions
     def uids(self):
-        real, effective, saved, _, _, _ = cext.get_proc_cred(self.pid)
+        real, effective, saved, _, _, _ = cext.proc_cred(self.pid)
         return nt_proc_uids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
-        _, _, _, real, effective, saved = cext.get_proc_cred(self.pid)
+        _, _, _, real, effective, saved = cext.proc_cred(self.pid)
         return nt_proc_uids(real, effective, saved)
 
     @wrap_exceptions
     def cpu_times(self):
-        user, system = cext.get_proc_cpu_times(self.pid)
+        user, system = cext.proc_cpu_times(self.pid)
         return nt_proc_cpu(user, system)
 
     @wrap_exceptions
     def terminal(self):
         hit_enoent = False
         tty = wrap_exceptions(
-            cext.get_proc_basic_info(self.pid)[0])
+            cext.proc_basic_info(self.pid)[0])
         if tty != cext.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
@@ -330,7 +330,7 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        ret = cext.get_proc_basic_info(self.pid)
+        ret = cext.proc_basic_info(self.pid)
         rss, vms = ret[1] * 1024, ret[2] * 1024
         return nt_proc_mem(rss, vms)
 
@@ -339,7 +339,7 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        code = cext.get_proc_basic_info(self.pid)[6]
+        code = cext.proc_basic_info(self.pid)[6]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
@@ -431,7 +431,7 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        rawlist = cext.get_proc_connections(self.pid, families, types)
+        rawlist = cext.proc_connections(self.pid, families, types)
         # The underlying C implementation retrieves all OS connections
         # and filters them by PID.  At this point we can't tell whether
         # an empty list means there were no connections for process or
@@ -467,7 +467,7 @@ class Process(object):
                               hex(end)[2:].strip('L'))
 
         retlist = []
-        rawlist = cext.get_proc_memory_maps(self.pid)
+        rawlist = cext.proc_memory_maps(self.pid)
         hit_enoent = False
         for item in rawlist:
             addr, addrsize, perm, name, rss, anon, locked = item
@@ -500,7 +500,7 @@ class Process(object):
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        return nt_proc_ctxsw(*cext.get_proc_num_ctx_switches(self.pid))
+        return nt_proc_ctxsw(*cext.proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
     def process_wait(self, timeout=None):

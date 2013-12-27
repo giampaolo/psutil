@@ -82,7 +82,7 @@ def _convert_raw_path(s):
 
 def virtual_memory():
     """System virtual memory as a namedtuple."""
-    mem = cext.get_virtual_mem()
+    mem = cext.virtual_mem()
     totphys, availphys, totpagef, availpagef, totvirt, freevirt = mem
     #
     total = totphys
@@ -95,7 +95,7 @@ def virtual_memory():
 
 def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
-    mem = cext.get_virtual_mem()
+    mem = cext.virtual_mem()
     total = mem[2]
     free = mem[3]
     used = total - free
@@ -106,7 +106,7 @@ def swap_memory():
 def disk_usage(path):
     """Return disk usage associated with path."""
     try:
-        total, free = cext.get_disk_usage(path)
+        total, free = cext.disk_usage(path)
     except WindowsError:
         if not os.path.exists(path):
             msg = "No such file or directory: '%s'" % path
@@ -119,20 +119,20 @@ def disk_usage(path):
 
 def disk_partitions(all):
     """Return disk partitions."""
-    rawlist = cext.get_disk_partitions(all)
+    rawlist = cext.disk_partitions(all)
     return [nt_sys_diskpart(*x) for x in rawlist]
 
 
 def cpu_times():
     """Return system CPU times as a named tuple."""
-    user, system, idle = cext.get_sys_cpu_times()
+    user, system, idle = cext.cpu_times()
     return nt_sys_cputimes(user, system, idle)
 
 
 def per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
     ret = []
-    for cpu_t in cext.get_sys_per_cpu_times():
+    for cpu_t in cext.per_cpu_times():
         user, system, idle = cpu_t
         item = nt_sys_cputimes(user, system, idle)
         ret.append(item)
@@ -141,23 +141,23 @@ def per_cpu_times():
 
 def cpu_count_logical():
     """Return the number of logical CPUs in the system."""
-    return cext.get_num_cpus()
+    return cext.cpu_count_logical()
 
 
 def cpu_count_physical():
     """Return the number of physical CPUs in the system."""
-    return cext.get_num_phys_cpus()
+    return cext.cpu_count_phys()
 
 
 def boot_time():
     """The system boot time expressed in seconds since the epoch."""
-    return cext.get_boot_time()
+    return cext.boot_time()
 
 
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
-    rawlist = cext.get_users()
+    rawlist = cext.users()
     for item in rawlist:
         user, hostname, tstamp = item
         nt = nt_sys_user(user, None, hostname, tstamp)
@@ -165,11 +165,11 @@ def users():
     return retlist
 
 
-pids = cext.get_pids
+pids = cext.pids
 pid_exists = cext.pid_exists
-net_io_counters = cext.get_net_io_counters
-disk_io_counters = cext.get_disk_io_counters
-get_ppid_map = cext.get_ppid_map  # not meant to be public
+net_io_counters = cext.net_io_counters
+disk_io_counters = cext.disk_io_counters
+get_ppid_map = cext.ppid_map  # not meant to be public
 
 
 def wrap_exceptions(fun):
@@ -218,12 +218,12 @@ class Process(object):
         # Note: os.path.exists(path) may return False even if the file
         # is there, see:
         # http://stackoverflow.com/questions/3112546/os-path-exists-lies
-        return _convert_raw_path(cext.get_proc_exe(self.pid))
+        return _convert_raw_path(cext.proc_exe(self.pid))
 
     @wrap_exceptions
     def cmdline(self):
         """Return process cmdline as a list of arguments."""
-        return cext.get_proc_cmdline(self.pid)
+        return cext.proc_cmdline(self.pid)
 
     def ppid(self):
         """Return process parent pid."""
@@ -234,11 +234,11 @@ class Process(object):
 
     def _get_raw_meminfo(self):
         try:
-            return cext.get_proc_memory_info(self.pid)
+            return cext.proc_memory_info(self.pid)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                return cext.get_proc_memory_info_2(self.pid)
+                return cext.proc_memory_info_2(self.pid)
             raise
 
     @wrap_exceptions
@@ -260,7 +260,7 @@ class Process(object):
 
     def memory_maps(self):
         try:
-            raw = cext.get_proc_memory_maps(self.pid)
+            raw = cext.proc_memory_maps(self.pid)
         except OSError:
             # XXX - can't use wrap_exceptions decorator as we're
             # returning a generator; probably needs refactoring.
@@ -298,7 +298,7 @@ class Process(object):
         """Return the name of the user that owns the process"""
         if self.pid in (0, 4):
             return 'NT AUTHORITY\\SYSTEM'
-        return cext.get_proc_username(self.pid)
+        return cext.proc_username(self.pid)
 
     @wrap_exceptions
     def create_time(self):
@@ -306,20 +306,20 @@ class Process(object):
         if self.pid in (0, 4):
             return boot_time()
         try:
-            return cext.get_proc_create_time(self.pid)
+            return cext.proc_create_time(self.pid)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                return cext.get_proc_create_time_2(self.pid)
+                return cext.proc_create_time_2(self.pid)
             raise
 
     @wrap_exceptions
     def num_threads(self):
-        return cext.get_proc_num_threads(self.pid)
+        return cext.proc_num_threads(self.pid)
 
     @wrap_exceptions
     def threads(self):
-        rawlist = cext.get_proc_threads(self.pid)
+        rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
             ntuple = nt_proc_thread(thread_id, utime, stime)
@@ -329,11 +329,11 @@ class Process(object):
     @wrap_exceptions
     def cpu_times(self):
         try:
-            ret = cext.get_proc_cpu_times(self.pid)
+            ret = cext.proc_cpu_times(self.pid)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                ret = cext.get_proc_cpu_times_2(self.pid)
+                ret = cext.proc_cpu_times_2(self.pid)
             else:
                 raise
         return nt_proc_cpu(*ret)
@@ -352,7 +352,7 @@ class Process(object):
             raise AccessDenied(self.pid, self._process_name)
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
-        path = cext.get_proc_cwd(self.pid)
+        path = cext.proc_cwd(self.pid)
         return os.path.normpath(path)
 
     @wrap_exceptions
@@ -364,7 +364,7 @@ class Process(object):
         # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
         # Convert the first part in the corresponding drive letter
         # (e.g. "C:\") by using Windows's QueryDosDevice()
-        raw_file_names = cext.get_proc_open_files(self.pid)
+        raw_file_names = cext.proc_open_files(self.pid)
         for file in raw_file_names:
             file = _convert_raw_path(file)
             if isfile_strict(file) and file not in retlist:
@@ -378,7 +378,7 @@ class Process(object):
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
         families, types = conn_tmap[kind]
-        rawlist = cext.get_proc_connections(self.pid, families, types)
+        rawlist = cext.proc_connections(self.pid, families, types)
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
@@ -389,7 +389,7 @@ class Process(object):
 
     @wrap_exceptions
     def nice(self):
-        return cext.get_proc_priority(self.pid)
+        return cext.proc_priority(self.pid)
 
     @wrap_exceptions
     def set_proc_nice(self, value):
@@ -399,7 +399,7 @@ class Process(object):
     if hasattr(cext, "get_process_io_priority"):
         @wrap_exceptions
         def ionice(self):
-            return cext.get_proc_io_priority(self.pid)
+            return cext.proc_io_priority(self.pid)
 
         @wrap_exceptions
         def set_proc_ionice(self, value, _):
@@ -414,11 +414,11 @@ class Process(object):
     @wrap_exceptions
     def io_counters(self):
         try:
-            ret = cext.get_proc_io_counters(self.pid)
+            ret = cext.proc_io_counters(self.pid)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                ret = cext.get_proc_io_counters_2(self.pid)
+                ret = cext.proc_io_counters_2(self.pid)
             else:
                 raise
         return nt_proc_io(*ret)
@@ -434,7 +434,7 @@ class Process(object):
     @wrap_exceptions
     def cpu_affinity(self):
         from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
-        bitmask = cext.get_proc_cpu_affinity(self.pid)
+        bitmask = cext.proc_cpu_affinity(self.pid)
         return from_bitmask(bitmask)
 
     @wrap_exceptions
@@ -461,14 +461,14 @@ class Process(object):
     @wrap_exceptions
     def num_handles(self):
         try:
-            return cext.get_proc_num_handles(self.pid)
+            return cext.proc_num_handles(self.pid)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
-                return cext.get_proc_num_handles_2(self.pid)
+                return cext.proc_num_handles_2(self.pid)
             raise
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        tupl = cext.get_proc_num_ctx_switches(self.pid)
+        tupl = cext.proc_num_ctx_switches(self.pid)
         return nt_proc_ctxsw(*tupl)

@@ -287,11 +287,11 @@ class WindowsSpecificTestCase(unittest.TestCase):
 class TestDualProcessImplementation(unittest.TestCase):
     fun_names = [
         # function name, tolerance
-        ('get_proc_cpu_times', 0.2),
-        ('get_proc_create_time', 0.5),
-        ('get_proc_num_handles', 1),  # 1 because impl #1 opens a handle
-        ('get_proc_io_counters', 0),
-        ('get_proc_memory_info', 1024),  # KB
+        ('proc_cpu_times', 0.2),
+        ('proc_create_time', 0.5),
+        ('proc_num_handles', 1),  # 1 because impl #1 opens a handle
+        ('proc_io_counters', 0),
+        ('proc_memory_info', 1024),  # KB
     ]
 
     def test_compare_values(self):
