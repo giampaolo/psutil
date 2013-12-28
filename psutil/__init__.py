@@ -568,7 +568,7 @@ class Process(object):
             self._proc.prlimit(resource, limits)
 
     # Windows and Linux only
-    if hasattr(_psplatform.Process, "cpu_affinity"):
+    if hasattr(_psplatform.Process, "cpu_affinity_get"):
 
         def cpu_affinity(self):
             """Get process current CPU affinity."""

@@ -19,6 +19,7 @@ import atexit
 import datetime
 import errno
 import os
+import re
 import select
 import shutil
 import signal
@@ -78,6 +79,8 @@ EXAMPLES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
 POSIX = os.name == 'posix'
 LINUX = sys.platform.startswith("linux")
 WINDOWS = sys.platform.startswith("win32")
+if WINDOWS:
+    WIN_VISTA = (6, 0, 0)
 OSX = sys.platform.startswith("darwin")
 BSD = sys.platform.startswith("freebsd")
 SUNOS = sys.platform.startswith("sunos")
@@ -434,6 +437,17 @@ def supports_ipv6():
     finally:
         if sock is not None:
             sock.close()
+
+
+if WINDOWS:
+    def get_winver():
+        wv = sys.getwindowsversion()
+        if hasattr(wv, 'service_pack_major'):  # python >= 2.7
+            sp = wv.service_pack_major or 0
+        else:
+            r = re.search("\s\d$", wv.service_pack)
+            sp = int(r.group(0)) if r else 0
+        return (wv.major, wv.minor, sp)
 
 
 class ThreadTask(threading.Thread):
@@ -1114,7 +1128,8 @@ class TestProcess(unittest.TestCase):
         # timeout < 0 not allowed
         self.assertRaises(ValueError, p.wait, -1)
 
-    @unittest.skipUnless(POSIX, '')  # XXX why is this skipped on Windows?
+    # XXX why is this skipped on Windows?
+    @unittest.skipUnless(POSIX, 'skipped on Windows')
     def test_wait_non_children(self):
         # test wait() against processes which are not our children
         code = "import sys;"
@@ -1214,7 +1229,7 @@ class TestProcess(unittest.TestCase):
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
 
-    @unittest.skipIf(WINDOWS, 'windows only')
+    @unittest.skipIf(WINDOWS, 'Windows only')
     def test_terminal(self):
         terminal = psutil.Process().terminal
         if sys.stdin.isatty():
@@ -1222,8 +1237,8 @@ class TestProcess(unittest.TestCase):
         else:
             assert terminal, repr(terminal)
 
-    @unittest.skipIf(not hasattr(psutil.Process, 'io_counters'),
-                     'not available on this platform')
+    @unittest.skipUnless(LINUX or BSD or WINDOWS,
+                         'not available on this platform')
     @skip_on_not_implemented(only_if=LINUX)
     def test_io_counters(self):
         p = psutil.Process()
@@ -1252,8 +1267,7 @@ class TestProcess(unittest.TestCase):
         assert io2.read_count >= io1.read_count, (io1, io2)
         assert io2.read_bytes >= io1.read_bytes, (io1, io2)
 
-    # Linux and Windows Vista+
-    @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
+    @unittest.skipUnless(LINUX or (WINDOWS and get_winver() >= WIN_VISTA),
                          'Linux and Windows Vista only')
     def test_ionice(self):
         if LINUX:
@@ -1301,7 +1315,7 @@ class TestProcess(unittest.TestCase):
             self.assertRaises(ValueError, p.set_ionice, 3)
             self.assertRaises(TypeError, p.set_ionice, 2, 1)
 
-    @unittest.skipUnless(hasattr(psutil.Process, 'rlimit'),
+    @unittest.skipUnless(LINUX and get_kernel_version() >= (2, 6, 36),
                          "only available on Linux >= 2.6.36")
     def test_rlimit_get(self):
         import resource
@@ -1321,7 +1335,7 @@ class TestProcess(unittest.TestCase):
                 self.assertGreaterEqual(ret[0], -1)
                 self.assertGreaterEqual(ret[1], -1)
 
-    @unittest.skipUnless(hasattr(psutil.Process, 'set_rlimit'),
+    @unittest.skipUnless(LINUX and get_kernel_version() >= (2, 6, 36),
                          "only available on Linux >= 2.6.36")
     def test_rlimit_set(self):
         sproc = get_test_subprocess()
@@ -1549,23 +1563,18 @@ class TestProcess(unittest.TestCase):
         else:
             p.username
 
-    @unittest.skipUnless(hasattr(psutil.Process, "cwd"),
-                         'not available on this platform')
     def test_cwd(self):
         sproc = get_test_subprocess(wait=True)
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.cwd(), os.getcwd())
 
-    @unittest.skipIf(not hasattr(psutil.Process, "cwd"),
-                     'not available on this platform')
     def test_cwd_2(self):
         cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(2)"]
         sproc = get_test_subprocess(cmd, wait=True)
         p = psutil.Process(sproc.pid)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
 
-    @unittest.skipIf(not hasattr(psutil.Process, "cpu_affinity"),
-                     'not available on this platform')
+    @unittest.skipUnless(WINDOWS or LINUX, 'not available on this platform')
     def test_cpu_affinity(self):
         p = psutil.Process()
         initial = p.cpu_affinity()
@@ -1714,7 +1723,7 @@ class TestProcess(unittest.TestCase):
     @unittest.skipUnless(hasattr(socket, "fromfd"),
                          'socket.fromfd() is not availble')
     @unittest.skipIf(WINDOWS or SUNOS,
-                     'connection fd available on this platform')
+                     'connection fd not available on this platform')
     def test_connection_fromfd(self):
         sock = socket.socket()
         sock.bind(('localhost', 0))
@@ -2034,9 +2043,12 @@ class TestProcess(unittest.TestCase):
                 sock.close()
             reap_children(search_all=True)
 
-    @unittest.skipIf(LINUX, 'PID 0 not available on Linux')
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
+        if 0 not in psutil.pids():
+            self.assertRaises(psutil.NoSuchProcess, psutil.Process, 0)
+            return
+
         p = psutil.Process(0)
         self.assertTrue(p.name)
 
