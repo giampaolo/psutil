@@ -1054,19 +1054,17 @@ class TestProcess(unittest.TestCase):
         sproc = get_test_subprocess(wait=True)
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
-        name = p.name
         p.kill()
         p.wait()
-        self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
+        self.assertFalse(psutil.pid_exists(test_pid))
 
     def test_terminate(self):
         sproc = get_test_subprocess(wait=True)
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
-        name = p.name
         p.terminate()
         p.wait()
-        self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
+        self.assertFalse(psutil.pid_exists(test_pid))
 
     def test_send_signal(self):
         if POSIX:
@@ -1076,10 +1074,9 @@ class TestProcess(unittest.TestCase):
         sproc = get_test_subprocess()
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
-        name = p.name
         p.send_signal(sig)
         p.wait()
-        self.assertFalse(psutil.pid_exists(test_pid) and name == PYTHON)
+        self.assertFalse(psutil.pid_exists(test_pid))
 
     def test_wait(self):
         # check exit code signal
