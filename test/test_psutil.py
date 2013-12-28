@@ -77,10 +77,10 @@ EXAMPLES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                '..', 'examples'))
 
 POSIX = os.name == 'posix'
-LINUX = sys.platform.startswith("linux")
-WINDOWS = sys.platform.startswith("win32")
+WINDOWS = os.name == 'nt'
 if WINDOWS:
     WIN_VISTA = (6, 0, 0)
+LINUX = sys.platform.startswith("linux")
 OSX = sys.platform.startswith("darwin")
 BSD = sys.platform.startswith("freebsd")
 SUNOS = sys.platform.startswith("sunos")
@@ -1087,7 +1087,7 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         p.kill()
         code = p.wait()
-        if os.name == 'posix':
+        if POSIX:
             self.assertEqual(code, signal.SIGKILL)
         else:
             self.assertEqual(code, 0)
@@ -1097,7 +1097,7 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         p.terminate()
         code = p.wait()
-        if os.name == 'posix':
+        if POSIX:
             self.assertEqual(code, signal.SIGTERM)
         else:
             self.assertEqual(code, 0)
@@ -1165,7 +1165,7 @@ class TestProcess(unittest.TestCase):
                     raise
             else:
                 break
-        if os.name == 'posix':
+        if POSIX:
             self.assertEqual(code, signal.SIGKILL)
         else:
             self.assertEqual(code, 0)
@@ -1179,7 +1179,7 @@ class TestProcess(unittest.TestCase):
             percent = p.cpu_percent(interval=None)
             self.assertIsInstance(percent, float)
             self.assertGreaterEqual(percent, 0.0)
-            if os.name != 'posix':
+            if not POSIX:
                 self.assertLessEqual(percent, 100.0)
             else:
                 self.assertGreaterEqual(percent, 0.0)
@@ -1516,7 +1516,7 @@ class TestProcess(unittest.TestCase):
     def test_nice(self):
         p = psutil.Process()
         self.assertRaises(TypeError, p.set_nice, "str")
-        if os.name == 'nt':
+        if WINDOWS:
             try:
                 self.assertEqual(p.nice(), psutil.NORMAL_PRIORITY_CLASS)
                 p.set_nice(psutil.HIGH_PRIORITY_CLASS)
@@ -1979,7 +1979,7 @@ class TestProcess(unittest.TestCase):
 
         # other methods
         try:
-            if os.name == 'posix':
+            if POSIX:
                 p.set_nice(1)
             else:
                 p.set_nice(psutil.NORMAL_PRIORITY_CLASS)
@@ -2052,7 +2052,7 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(0)
         self.assertTrue(p.name)
 
-        if os.name == 'posix':
+        if POSIX:
             try:
                 self.assertEqual(p.uids.real, 0)
                 self.assertEqual(p.gids.real, 0)
@@ -2239,7 +2239,7 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def username(self, ret):
         self.assertTrue(ret)
-        if os.name == 'posix':
+        if POSIX:
             self.assertIn(ret, self._usernames)
 
     def status(self, ret):
