@@ -543,7 +543,7 @@ class Process(object):
             return self._proc.ionice_set(ioclass, value)
 
     # Linux only
-    if hasattr(_psplatform.Process, "prlimit"):
+    if hasattr(_psplatform.Process, "rlimit"):
 
         def rlimit(self, resource):
             """Get process resource limits as a (soft, hard)
@@ -553,7 +553,7 @@ class Process(object):
 
             See "man prlimit" for further info.
             """
-            return self._proc.prlimit(resource)
+            return self._proc.rlimit(resource)
 
         @_assert_pid_not_reused
         def set_rlimit(self, resource, limits):
@@ -565,7 +565,7 @@ class Process(object):
 
             See "man prlimit" for further info.
             """
-            self._proc.prlimit(resource, limits)
+            self._proc.rlimit(resource, limits)
 
     # Windows and Linux only
     if hasattr(_psplatform.Process, "cpu_affinity_get"):

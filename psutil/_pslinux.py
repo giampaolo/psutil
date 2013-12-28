@@ -878,7 +878,7 @@ class Process(object):
 
     if HAS_PRLIMIT:
         @wrap_exceptions
-        def prlimit(self, resource, limits=None):
+        def rlimit(self, resource, limits=None):
             # if pid is 0 prlimit() applies to the calling process and
             # we don't want that
             if self.pid == 0:
