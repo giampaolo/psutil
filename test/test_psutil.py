@@ -19,6 +19,7 @@ import atexit
 import datetime
 import errno
 import os
+import pickle
 import re
 import select
 import shutil
@@ -39,6 +40,10 @@ try:
     import ast  # python >= 2.6
 except ImportError:
     ast = None
+try:
+    import json  # python >= 2.6
+except ImportError:
+    pass
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
@@ -1920,17 +1925,9 @@ class TestProcess(unittest.TestCase):
 
     def test_as_dict(self):
         p = psutil.Process()
-        d = p.as_dict()
-        try:
-            import json
-        except ImportError:
-            pass
-        else:
-            json.loads(json.dumps(d))
-        #
         d = p.as_dict(attrs=['exe', 'name'])
         self.assertEqual(sorted(d.keys()), ['exe', 'name'])
-        #
+
         p = psutil.Process(min(psutil.pids()))
         d = p.as_dict(attrs=['connections'], ad_value='foo')
         if not isinstance(d['connections'], list):
@@ -2535,6 +2532,25 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(len(calls), 4)
         # docstring
         self.assertEqual(foo.__doc__, "foo docstring")
+
+    def test_serialization(self):
+        def check(ret):
+            if json is not None:
+                json.loads(json.dumps(ret))
+            a = pickle.dumps(ret)
+            b = pickle.loads(a)
+            self.assertEqual(ret, b)
+
+        check(psutil.Process().as_dict())
+        check(psutil.virtual_memory())
+        check(psutil.swap_memory())
+        check(psutil.cpu_times())
+        check(psutil.cpu_times_percent(interval=0))
+        check(psutil.net_io_counters())
+        check(psutil.disk_io_counters())
+        check(psutil.disk_partitions())
+        check(psutil.disk_usage(os.getcwd()))
+        check(psutil.users())
 
 
 # ===================================================================

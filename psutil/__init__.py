@@ -56,9 +56,9 @@ from psutil._compat import (wraps as _wraps,
                             PY3 as _PY3)
 from psutil._common import (deprecated_method as _deprecated_method,
                             deprecated as _deprecated,
-                            nt_sys_diskio as _nt_sys_diskio,
-                            nt_sys_netio as _nt_sys_netio,
-                            nt_sys_vmem as _nt_sys_vmem)
+                            sdiskio as _nt_sys_diskio,
+                            snetio as _nt_sys_netio,
+                            svmem as _nt_sys_vmem)
 
 from psutil._common import (STATUS_RUNNING,
                             STATUS_SLEEPING,
@@ -834,10 +834,10 @@ class Process(object):
                     d[path] = map(lambda x, y: x + y, d[path], nums)
                 except KeyError:
                     d[path] = nums
-            nt = self._proc.nt_mmap_grouped
+            nt = _psplatform.pmmap_grouped
             return [nt(path, *d[path]) for path in d]
         else:
-            nt = self._proc.nt_mmap_ext
+            nt = _psplatform.pmmap_ext
             return [nt(*x) for x in it]
 
     def open_files(self):
@@ -1429,7 +1429,6 @@ def cpu_percent(interval=0.1, percpu=False):
 # the same program.
 _last_cpu_times_2 = _last_cpu_times
 _last_per_cpu_times_2 = _last_per_cpu_times
-_ptime_cpu_perc_nt = None
 
 def cpu_times_percent(interval=0.1, percpu=False):
     """Same as cpu_percent() but provides utilization percentages
@@ -1449,7 +1448,6 @@ def cpu_times_percent(interval=0.1, percpu=False):
     blocking = interval is not None and interval > 0.0
 
     def calculate(t1, t2):
-        global _ptime_cpu_perc_nt
         nums = []
         all_delta = sum(t2) - sum(t1)
         for field in t1._fields:
@@ -1477,9 +1475,7 @@ def cpu_times_percent(interval=0.1, percpu=False):
                 elif field_perc < 0.0:
                     field_perc = 0.0
             nums.append(field_perc)
-        if _ptime_cpu_perc_nt is None:
-            _ptime_cpu_perc_nt = namedtuple('cpupercent', ' '.join(t1._fields))
-        return _ptime_cpu_perc_nt(*nums)
+        return _psplatform.scputimes(*nums)
 
     # system-wide usage
     if not percpu:

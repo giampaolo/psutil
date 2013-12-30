@@ -209,57 +209,55 @@ del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM, socket
 # --- namedtuples for psutil.* system-related functions
 
 # psutil.virtual_memory()  (expanded later)
-nt_sys_vmem = namedtuple('vmem', ['total', 'available', 'percent', 'used',
-                                  'free'])
+svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 # psutil.swap_memory()
-nt_sys_swap = namedtuple('swap', ['total', 'used', 'free', 'percent',
-                                  'sin', 'sout'])
+sswap = namedtuple('sswap', ['total', 'used', 'free', 'percent', 'sin',
+                             'sout'])
 # psutil.disk_usage()
-nt_sys_diskusage = namedtuple('diskusage', ['total', 'used', 'free',
-                                            'percent'])
-# psutil.disk_partitions()
-nt_sys_diskpart = namedtuple('partition', ['device', 'mountpoint', 'fstype',
-                                           'opts'])
-# psutil.net_io_counters()
-nt_sys_netio = namedtuple('netio', ['bytes_sent', 'bytes_recv',
-                                    'packets_sent', 'packets_recv',
-                                    'errin', 'errout', 'dropin', 'dropout'])
+sdiskusage = namedtuple('sdiskusage', ['total', 'used', 'free', 'percent'])
 # psutil.disk_io_counters()
-nt_sys_diskio = namedtuple('diskio', ['read_count', 'write_count',
-                                      'read_bytes', 'write_bytes',
-                                      'read_time', 'write_time'])
+sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
+                                 'read_bytes', 'write_bytes',
+                                 'read_time', 'write_time'])
+# psutil.disk_partitions()
+sdiskpart = namedtuple('sdiskpart', ['device', 'mountpoint', 'fstype', 'opts'])
+# psutil.net_io_counters()
+snetio = namedtuple('snetio', ['bytes_sent', 'bytes_recv',
+                               'packets_sent', 'packets_recv',
+                               'errin', 'errout',
+                               'dropin', 'dropout'])
 # psutil.users()
-nt_sys_user = namedtuple('user', ['name', 'terminal', 'host', 'started'])
+suser = namedtuple('suser', ['name', 'terminal', 'host', 'started'])
 
 
 # --- namedtuples for psutil.Process methods
 
 # psutil.Process.memory_info()
-nt_proc_mem = namedtuple('mem', ['rss', 'vms'])
+pmem = namedtuple('pmem', ['rss', 'vms'])
 # psutil.Process.cpu_times()
-nt_proc_cpu = namedtuple('cputimes', ['user', 'system'])
+pcputimes = namedtuple('pcputimes', ['user', 'system'])
 # psutil.Process.open_files()
-nt_proc_file = namedtuple('openfile', ['path', 'fd'])
+popenfile = namedtuple('popenfile', ['path', 'fd'])
 # psutil.Process.threads()
-nt_proc_thread = namedtuple('thread', ['id', 'user_time', 'system_time'])
+pthread = namedtuple('pthread', ['id', 'user_time', 'system_time'])
 # psutil.Process.uids
-nt_proc_uids = namedtuple('uids', ['real', 'effective', 'saved'])
+puids = namedtuple('puids', ['real', 'effective', 'saved'])
 # psutil.Process.gids
-nt_proc_gids = namedtuple('gids', ['real', 'effective', 'saved'])
+pgids = namedtuple('pgids', ['real', 'effective', 'saved'])
 # psutil.Process.io_counters()
-nt_proc_io = namedtuple('io', ['read_count', 'write_count',
-                               'read_bytes', 'write_bytes'])
+pio = namedtuple('pio', ['read_count', 'write_count',
+                         'read_bytes', 'write_bytes'])
 # psutil.Process.ionice()
-nt_proc_ionice = namedtuple('ionice', ['ioclass', 'value'])
+pionice = namedtuple('pionice', ['ioclass', 'value'])
 # psutil.Process.ctx_switches()
-nt_proc_ctxsw = namedtuple('ctxsw', ['voluntary', 'involuntary'])
+pctxsw = namedtuple('pctxsw', ['voluntary', 'involuntary'])
 
 
 # --- misc
 
 # backward compatibility layer for Process.connections() ntuple
-class nt_proc_conn(
-    namedtuple('connection',
+class pconn(
+    namedtuple('pconn',
                ['fd', 'family', 'type', 'laddr', 'raddr', 'status'])):
     __slots__ = ()
 
