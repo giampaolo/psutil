@@ -88,18 +88,49 @@ TCP_STATUSES = {
     "0B": _common.CONN_CLOSING
 }
 
+
+# --- named tuples
+
+def _get_cputimes_fields():
+    """Return a namedtuple of variable fields depending on the
+    CPU times available on this Linux kernel version which may be:
+    (user, nice, system, idle, iowait, irq, softirq, [steal, [guest,
+     [guest_nice]]])
+    """
+    f = open('/proc/stat', 'r')
+    try:
+        values = f.readline().split()[1:]
+    finally:
+        f.close()
+    fields = ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq']
+    vlen = len(values)
+    if vlen >= 8:
+        # Linux >= 2.6.11
+        fields.append('steal')
+    if vlen >= 9:
+        # Linux >= 2.6.24
+        fields.append('guest')
+    if vlen >= 10:
+        # Linux >= 3.2.0
+        fields.append('guest_nice')
+    return fields
+
+
+scputimes = namedtuple('scputimes', _get_cputimes_fields())
+
 svmem = namedtuple(
-    _common.svmem.__name__,
-    list(_common.svmem._fields) + ['active', 'inactive', 'buffers', 'cached'])
+    'svmem', ['total', 'available', 'percent', 'used', 'free',
+              'active', 'inactive', 'buffers', 'cached'])
 
-pextmem = namedtuple(
-    'pextmem', ['rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty'])
+pextmem = namedtuple('pextmem', 'rss vms shared text lib data dirty')
 
-_mmap_base_fields = ['path', 'rss', 'size', 'pss', 'shared_clean',
-                     'shared_dirty', 'private_clean', 'private_dirty',
-                     'referenced', 'anonymous', 'swap', ]
-pmmap_grouped = namedtuple('pmmap_grouped', ' '.join(_mmap_base_fields))
-pmmap_ext = namedtuple('pmmap_ext', 'addr perms ' + ' '.join(_mmap_base_fields))
+pmmap_grouped = namedtuple(
+    'pmmap_grouped', ['path', 'rss', 'size', 'pss', 'shared_clean',
+                      'shared_dirty', 'private_clean', 'private_dirty',
+                      'referenced', 'anonymous', 'swap'])
+
+pmmap_ext = namedtuple(
+    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
 
 # --- system memory
@@ -174,36 +205,7 @@ def phymem_buffers():
     return virtual_memory().buffers
 
 
-# --- CPU
-
-@memoize
-def _get_cputimes_ntuple():
-    """Return a namedtuple of variable fields depending on the
-    CPU times available on this Linux kernel version which may be:
-    (user, nice, system, idle, iowait, irq, softirq, [steal, [guest,
-     [guest_nice]]])
-    """
-    f = open('/proc/stat', 'r')
-    try:
-        values = f.readline().split()[1:]
-    finally:
-        f.close()
-    fields = ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq']
-    vlen = len(values)
-    if vlen >= 8:
-        # Linux >= 2.6.11
-        fields.append('steal')
-    if vlen >= 9:
-        # Linux >= 2.6.24
-        fields.append('guest')
-    if vlen >= 10:
-        # Linux >= 3.2.0
-        fields.append('guest_nice')
-    return namedtuple('scputimes', fields)
-
-
-scputimes = _get_cputimes_ntuple()
-
+# --- CPUs
 
 def cpu_times():
     """Return a named tuple representing the following system-wide
