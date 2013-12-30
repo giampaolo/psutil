@@ -42,6 +42,7 @@ if "%1" == "clean" (
     :clean
     for /r %%R in (__pycache__) do if exist %%R (rmdir /S /Q %%R)
     for /r %%R in (*.pyc) do if exist %%R (del /s %%R)
+    for /r %%R in (*.pyd) do if exist %%R (del /s %%R)
     for /r %%R in (*.orig) do if exist %%R (del /s %%R)
     for /r %%R in (*.bak) do if exist %%R (del /s %%R)
     for /r %%R in (*.rej) do if exist %%R (del /s %%R)
