@@ -1,11 +1,12 @@
 include CREDITS
 include HISTORY
 include LICENSE
+include make.bat
 include Makefile
 include MANIFEST.in
 include README
 include setup.py
 include TODO
+recursive-include examples *.py
 recursive-include psutil *.py *.c *.h
 recursive-include test *.py README
-recursive-include examples *.py
