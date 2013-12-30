@@ -124,9 +124,6 @@ class LinuxSpecificTestCase(unittest.TestCase):
         fields = psutil.cpu_times()._fields
         kernel_ver = re.findall('\d+\.\d+\.\d+', os.uname()[2])[0]
         kernel_ver_info = tuple(map(int, kernel_ver.split('.')))
-        # steal >= 2.6.11
-        # guest >= 2.6.24
-        # guest_nice >= 3.2.0
         if kernel_ver_info >= (2, 6, 11):
             self.assertIn('steal', fields)
         else:

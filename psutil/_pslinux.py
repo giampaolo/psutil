@@ -178,8 +178,8 @@ def phymem_buffers():
 
 @memoize
 def _get_cputimes_ntuple():
-    """Return a (nt, rindex) tuple depending on the CPU times available
-    on this Linux kernel version which may be:
+    """Return a namedtuple of variable fields depending on the
+    CPU times available on this Linux kernel version which may be:
     (user, nice, system, idle, iowait, irq, softirq, [steal, [guest,
      [guest_nice]]])
     """
@@ -189,24 +189,20 @@ def _get_cputimes_ntuple():
     finally:
         f.close()
     fields = ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq']
-    rindex = 8
     vlen = len(values)
     if vlen >= 8:
         # Linux >= 2.6.11
         fields.append('steal')
-        rindex += 1
     if vlen >= 9:
         # Linux >= 2.6.24
         fields.append('guest')
-        rindex += 1
     if vlen >= 10:
         # Linux >= 3.2.0
         fields.append('guest_nice')
-        rindex += 1
-    return (namedtuple('scputimes', ' '.join(fields)), rindex)
+    return namedtuple('scputimes', fields)
 
 
-scputimes = _get_cputimes_ntuple()[0]
+scputimes = _get_cputimes_ntuple()
 
 
 def cpu_times():
@@ -221,8 +217,7 @@ def cpu_times():
         values = f.readline().split()
     finally:
         f.close()
-    rindex = _get_cputimes_ntuple()[1]
-    fields = values[1:rindex]
+    fields = values[1:len(scputimes._fields) + 1]
     fields = [float(x) / CLOCK_TICKS for x in fields]
     return scputimes(*fields)
 
@@ -231,7 +226,6 @@ def per_cpu_times():
     """Return a list of namedtuple representing the CPU times
     for every CPU available on the system.
     """
-    rindex = _get_cputimes_ntuple()[1]
     cpus = []
     f = open('/proc/stat', 'r')
     try:
@@ -239,7 +233,8 @@ def per_cpu_times():
         f.readline()
         for line in f:
             if line.startswith('cpu'):
-                fields = line.split()[1:rindex]
+                values = line.split()
+                fields = values[1:len(scputimes._fields) + 1]
                 fields = [float(x) / CLOCK_TICKS for x in fields]
                 entry = scputimes(*fields)
                 cpus.append(entry)
