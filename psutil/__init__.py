@@ -451,26 +451,6 @@ class Process(object):
         """The process current status as a STATUS_* constant."""
         return self._proc.status()
 
-    if _POSIX:
-
-        def uids(self):
-            """Return process UIDs as a (real, effective, saved)
-            namedtuple.
-            """
-            return self._proc.uids()
-
-        def gids(self):
-            """Return process GIDs as a (real, effective, saved)
-            namedtuple.
-            """
-            return self._proc.gids()
-
-        def terminal(self):
-            """The terminal associated with this process, if any,
-            else None.
-            """
-            return self._proc.terminal()
-
     def username(self):
         """The name of the user that owns the process.
         On UNIX this is calculated by using *real* process uid.
@@ -506,6 +486,32 @@ class Process(object):
                 raise NoSuchProcess(self.pid, self._name)
             self._proc.nice_set(value)
 
+    if _POSIX:
+
+        def uids(self):
+            """Return process UIDs as a (real, effective, saved)
+            namedtuple.
+            """
+            return self._proc.uids()
+
+        def gids(self):
+            """Return process GIDs as a (real, effective, saved)
+            namedtuple.
+            """
+            return self._proc.gids()
+
+        def terminal(self):
+            """The terminal associated with this process, if any,
+            else None.
+            """
+            return self._proc.terminal()
+
+        def num_fds(self):
+            """Return the number of file descriptors opened by this
+            process (POSIX only).
+            """
+            return self._proc.num_fds()
+
     # Linux, BSD and Windows only
     if hasattr(_psplatform.Process, "io_counters"):
 
@@ -522,25 +528,17 @@ class Process(object):
     if hasattr(_psplatform.Process, "ionice_get"):
 
         def ionice(self, ioclass=None, value=None):
-            """Return process I/O niceness (priority).
+            """Get or set process I/O niceness (priority).
 
-            On Linux this is a (ioclass, value) namedtuple.
-            On Windows it's an integer which can be equal to 2 (normal),
-            1 (low) or 0 (very low).
+            On Linux 'ioclass' is one of the IOPRIO_CLASS_* constants.
+            'value' is a number which goes from 0 to 7. The higher the
+            value, the lower the I/O priority of the process.
+
+            On Windows only 'ioclass' is used and it can be set to 2
+            (normal), 1 (low) or 0 (very low).
 
             Available on Linux and Windows > Vista only.
             """
-            # """Set process I/O niceness (priority).
-
-            # On Linux 'ioclass' is one of the IOPRIO_CLASS_* constants.
-            # 'value' is a number which goes from 0 to 7. The higher the
-            # value, the lower the I/O priority of the process.
-
-            # On Windows only 'ioclass' is used and it can be set to 2
-            # (normal), 1 (low) or 0 (very low).
-
-            # Available on Linux and Windows > Vista only.
-            # """
             if ioclass is None:
                 if value is not None:
                     raise ValueError("'ioclass' must be specified")
@@ -552,21 +550,15 @@ class Process(object):
     if hasattr(_psplatform.Process, "rlimit"):
 
         def rlimit(self, resource, limits=None):
-            """Get process resource limits as a (soft, hard)
-            namedtuple.
+            """Get or set process resource limits as a (soft, hard)
+            tuple.
 
             'resource' is one of the RLIMIT_* constants.
+            'limits' is supposed to be a (soft, hard)  tuple.
 
             See "man prlimit" for further info.
+            Available on Linux only.
             """
-            # """Set process resource limits pre-emptively checking
-            # whether PID has been reused.
-
-            # 'resource' is one of the RLIMIT_* constants.
-            # 'limits' is supposed to be a (soft, hard) tuple.
-
-            # See "man prlimit" for further info.
-            # """
             if limits is None:
                 return self._proc.rlimit(resource)
             else:
@@ -592,14 +584,6 @@ class Process(object):
             (Windows only).
             """
             return self._proc.num_handles()
-
-    if _POSIX:
-
-        def num_fds(self):
-            """Return the number of file descriptors opened by this
-            process (POSIX only).
-            """
-            return self._proc.num_fds()
 
     def num_ctx_switches(self):
         """Return the number of voluntary and involuntary context

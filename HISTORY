@@ -30,67 +30,89 @@ BUG FIXES
 
 API CHANGES
 
-For consistency a lot of psutil APIs have been renamed.
-The old names are still working but will produce a DeprecationWarning and will
-be remove in next major psutil version.
+For the sake of consistency a lot of psutil APIs have been renamed.
+In most cases accessing the old names will work but it will cause a DeprecationWarning.
 
-- psutil.* functions and constants renamings:
+ * psutil.* module level constants have being replaced by functions:
 
-   ----.--------------------------------------
-  | Old name         | New name               |
-   --------------------------------------------
-  | - NUM_CPUS       | cpu_cpunt()            |
-  | - BOOT_TIME      | boot_time()            |
-  | - TOTAL_PHYMEM   | virtual_memory().total |
-  | - get_pid_list() | pids()                 |
-  | - get_users()    | users()                |
-   --------------------------------------------
+    ---------------------------------------------------------
+   | Old name                | Replacement                   |
+    ---------------------------------------------------------
+   | - psutil.NUM_CPUS       | psutil.cpu_cpunt()            |
+   | - psutil.BOOT_TIME      | psutil.boot_time()            |
+   | - psutil.TOTAL_PHYMEM   | psutil.virtual_memory().total |
+    ---------------------------------------------------------
 
-- psutil.Process class methods renaming:
+ * Renamed psutil.* functions:
 
-   ------------------------------------------------
-  | Old name                | New name             |
-   ------------------------------------------------
-  | get_children()         |    children()         |
-  | get_connections()      |    connections()      |
-  | get_cpu_affinity()     |    cpu_affinity()     |
-  | get_cpu_percent()      |    cpu_percent()      |
-  | get_cpu_times()        |    cpu_times()        |
-  | get_ext_memory_info()  |    ext_memory_info()  |
-  | get_io_counters()      |    io_counters()      |
-  | get_ionice()           |    ionice()           |
-  | get_memory_info()      |    memory_info()      |
-  | get_memory_maps()      |    memory_maps()      |
-  | get_memory_percent()   |    memory_percent()   |
-  | get_nice()             |    nice()             |
-  | get_num_ctx_switches() |    num_ctx_switches() |
-  | get_num_fds()          |    num_fds()          |
-  | get_num_threads()      |    num_threads()      |
-  | get_open_files()       |    open_files()       |
-  | get_rlimit()           |    rlimit()           |
-  | get_threads()          |    threads()          |
-   ------------------------------------------------
+    -----------------------------------------------
+   | Old name                 | Replacement        |
+    -----------------------------------------------
+   | - psutil.get_pid_list()  | psutil.pids()      |
+   | - psutil.get_users()     | psutil.users()     |
+   | - psutil.get_boot_time() | psutil.boot_time() |
+    -----------------------------------------------
 
-- All psutil.Process class properties except 'pid' are now methods:
+ * All psutil.Process get_* methods lost the "get_" prefix.
+   Assuming "p = psutil.Process()":
 
-   -----------------------------
-  | Old name    | New name      |
-   -----------------------------
-  | name        | name()        |
-  | parent      | parent()      |
-  | ppid        | ppid()        |
-  | exe         | exe()         |
-  | cmdline     | cmdline()     |
-  | status      | status()      |
-  | uids        | uids()        |
-  | gids        | gids()        |
-  | username    | username()    |
-  | create_time | create_time() |
-   -----------------------------
+    -------------------------------------------------
+   | Old name                 | Replacement          |
+    -------------------------------------------------
+   | p.get_children()         | p.children()         |
+   | p.get_connections()      | p.connections()      |
+   | p.get_cpu_affinity()     | p.cpu_affinity()     |
+   | p.get_cpu_percent()      | p.cpu_percent()      |
+   | p.get_cpu_times()        | p.cpu_times()        |
+   | p.get_ext_memory_info()  | p.ext_memory_info()  |
+   | p.get_io_counters()      | p.io_counters()      |
+   | p.get_ionice()           | p.ionice()           |
+   | p.get_memory_info()      | p.memory_info()      |
+   | p.get_memory_maps()      | p.memory_maps()      |
+   | p.get_memory_percent()   | p.memory_percent()   |
+   | p.get_nice()             | p.nice()             |
+   | p.get_num_ctx_switches() | p.num_ctx_switches() |
+   | p.get_num_fds()          | p.num_fds()          |
+   | p.get_num_threads()      | p.num_threads()      |
+   | p.get_open_files()       | p.open_files()       |
+   | p.get_rlimit()           | p.rlimit()           |
+   | p.get_threads()          | p.threads()          |
+    -------------------------------------------------
 
-Others:
- - Process instances' "retcode" attribute returned by psutil.wait_procs() has
-   been renamed to "returncode" for consistency with subprocess.Popen.
+ * All psutil.Process set_* methods lost the "set_" prefix.
+   Assuming "p = psutil.Process()":
+
+    --------------------------------------------------------
+   | Old name             | Replacement                     |
+    --------------------------------------------------------
+   | p.set_nice()         | p.nice(value)                   |
+   | p.set_ionice()       | p.ionice(ioclass, value=None)   |
+   | p.set_cpu_affinity() | p.cpu_affinity(cpus)            |
+   | p.set_rlimit()       | p.rlimit(resource, limits=None) |
+    --------------------------------------------------------
+
+ * Expect for 'pid' all psutil.Process class properties have been turned into
+   methods. This is the only case which there are no aliases.
+   Assuming "p = psutil.Process()":
+
+    ---------------------------------
+   | Old name      | Replacement     |
+    ---------------------------------
+   | p.name        | p.name()        |
+   | p.parent      | p.parent()      |
+   | p.ppid        | p.ppid()        |
+   | p.exe         | p.exe()         |
+   | p.cmdline     | p.cmdline()     |
+   | p.status      | p.status()      |
+   | p.uids        | p.uids()        |
+   | p.gids        | p.gids()        |
+   | p.username    | p.username()    |
+   | p.create_time | p.create_time() |
+    ---------------------------------
+
+ * Others:
+  * Process instances' "retcode" attribute returned by psutil.wait_procs() has
+    been renamed to "returncode" for consistency with subprocess.Popen.
 
 
 1.2.1 - 2013-11-25
