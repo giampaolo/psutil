@@ -210,6 +210,9 @@ class Process(object):
     """
 
     def __init__(self, pid=None):
+        self._init(pid)
+
+    def _init(self, pid, _ignore_nsp=False):
         if pid is None:
             pid = os.getpid()
         else:
@@ -236,8 +239,9 @@ class Process(object):
             # limited user
             pass
         except NoSuchProcess:
-            msg = 'no process found with pid %s' % pid
-            raise NoSuchProcess(pid, None, msg)
+            if not _ignore_nsp:
+                msg = 'no process found with pid %s' % pid
+                raise NoSuchProcess(pid, None, msg)
 
     def __str__(self):
         try:
@@ -1090,24 +1094,11 @@ class Popen(Process):
     """
 
     def __init__(self, *args, **kwargs):
-        # Here we avoid to call the original Process constructor
-        # because if the process spawned by subprocess.Popen
-        # terminates too quickly we'll get NoSuchProcess, see:
+        # Explicitly avoid raise NoSuchProcess in case the process
+        # spawned by subprocess.Popen terminates too quickly, see:
         # https://code.google.com/p/psutil/issues/detail?id=193
         self.__subproc = subprocess.Popen(*args, **kwargs)
-        self._pid = self.__subproc.pid
-        self._gone = False
-        self._ppid = None
-        self._proc = _psplatform.Process(self._pid)
-        self._last_sys_cpu_times = None
-        self._last_proc_cpu_times = None
-        try:
-            self.create_time
-        except AccessDenied:
-            pass
-        except NoSuchProcess:
-            raise NoSuchProcess(self._pid, None,
-                                "no process found with pid %s" % self._pid)
+        self._init(self.__subproc.pid, _ignore_nsp=True)
 
     def __dir__(self):
         return list(set(dir(Popen) + dir(subprocess.Popen)))

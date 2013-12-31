@@ -16,6 +16,8 @@ XXX - TODO: reference deprecated APIs
 
 BUG FIXES
 
+ * #193: psutil.Popen constructor can throw an exception if the spawned process
+         terminates quickly.
  * #443: [Linux] fixed a potential problem with Process.set_cpu_affinity() on
          systems with more than 64 CPUs.
  * #448: [Windows] Process get_children() and ppid memory leak (patch by
