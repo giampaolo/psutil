@@ -1281,27 +1281,27 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(IOPRIO_CLASS_IDLE, 3)
             p = psutil.Process()
             try:
-                p.set_ionice(2)
+                p.ionice(2)
                 ioclass, value = p.ionice()
                 self.assertEqual(ioclass, 2)
                 self.assertEqual(value, 4)
                 #
-                p.set_ionice(3)
+                p.ionice(3)
                 ioclass, value = p.ionice()
                 self.assertEqual(ioclass, 3)
                 self.assertEqual(value, 0)
                 #
-                p.set_ionice(2, 0)
+                p.ionice(2, 0)
                 ioclass, value = p.ionice()
                 self.assertEqual(ioclass, 2)
                 self.assertEqual(value, 0)
-                p.set_ionice(2, 7)
+                p.ionice(2, 7)
                 ioclass, value = p.ionice()
                 self.assertEqual(ioclass, 2)
                 self.assertEqual(value, 7)
-                self.assertRaises(ValueError, p.set_ionice, 2, 10)
+                self.assertRaises(ValueError, p.ionice, 2, 10)
             finally:
-                p.set_ionice(IOPRIO_CLASS_NONE)
+                p.ionice(IOPRIO_CLASS_NONE)
         else:
             p = psutil.Process()
             original = p.ionice()
@@ -1309,13 +1309,13 @@ class TestProcess(unittest.TestCase):
                 value = 0  # very low
                 if original == value:
                     value = 1  # low
-                p.set_ionice(value)
+                p.ionice(value)
                 self.assertEqual(p.ionice(), value)
             finally:
-                p.set_ionice(original)
+                p.ionice(original)
             #
-            self.assertRaises(ValueError, p.set_ionice, 3)
-            self.assertRaises(TypeError, p.set_ionice, 2, 1)
+            self.assertRaises(ValueError, p.ionice, 3)
+            self.assertRaises(TypeError, p.ionice, 2, 1)
 
     @unittest.skipUnless(LINUX and get_kernel_version() >= (2, 6, 36),
                          "only available on Linux >= 2.6.36")
@@ -1342,7 +1342,7 @@ class TestProcess(unittest.TestCase):
     def test_rlimit_set(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
-        p.set_rlimit(psutil.RLIMIT_NOFILE, (5, 5))
+        p.rlimit(psutil.RLIMIT_NOFILE, (5, 5))
         self.assertEqual(p.rlimit(psutil.RLIMIT_NOFILE), (5, 5))
 
     def test_num_threads(self):
@@ -1517,32 +1517,32 @@ class TestProcess(unittest.TestCase):
 
     def test_nice(self):
         p = psutil.Process()
-        self.assertRaises(TypeError, p.set_nice, "str")
+        self.assertRaises(TypeError, p.nice, "str")
         if WINDOWS:
             try:
                 self.assertEqual(p.nice(), psutil.NORMAL_PRIORITY_CLASS)
-                p.set_nice(psutil.HIGH_PRIORITY_CLASS)
+                p.nice(psutil.HIGH_PRIORITY_CLASS)
                 self.assertEqual(p.nice(), psutil.HIGH_PRIORITY_CLASS)
-                p.set_nice(psutil.NORMAL_PRIORITY_CLASS)
+                p.nice(psutil.NORMAL_PRIORITY_CLASS)
                 self.assertEqual(p.nice(), psutil.NORMAL_PRIORITY_CLASS)
             finally:
-                p.set_nice(psutil.NORMAL_PRIORITY_CLASS)
+                p.nice(psutil.NORMAL_PRIORITY_CLASS)
         else:
             try:
                 try:
                     first_nice = p.nice()
-                    p.set_nice(1)
+                    p.nice(1)
                     self.assertEqual(p.nice(), 1)
                     # going back to previous nice value raises
                     # AccessDenied on OSX
                     if not OSX:
-                        p.set_nice(0)
+                        p.nice(0)
                         self.assertEqual(p.nice(), 0)
                 except psutil.AccessDenied:
                     pass
             finally:
                 try:
-                    p.set_nice(first_nice)
+                    p.nice(first_nice)
                 except psutil.AccessDenied:
                     pass
 
@@ -1583,17 +1583,17 @@ class TestProcess(unittest.TestCase):
         all_cpus = list(range(len(psutil.cpu_percent(percpu=True))))
         #
         for n in all_cpus:
-            p.set_cpu_affinity([n])
+            p.cpu_affinity([n])
             self.assertEqual(p.cpu_affinity(), [n])
         #
-        p.set_cpu_affinity(all_cpus)
+        p.cpu_affinity(all_cpus)
         self.assertEqual(p.cpu_affinity(), all_cpus)
         #
-        self.assertRaises(TypeError, p.set_cpu_affinity, 1)
-        p.set_cpu_affinity(initial)
+        self.assertRaises(TypeError, p.cpu_affinity, 1)
+        p.cpu_affinity(initial)
         invalid_cpu = [len(psutil.cpu_times(percpu=True)) + 10]
-        self.assertRaises(ValueError, p.set_cpu_affinity, invalid_cpu)
-        self.assertRaises(ValueError, p.set_cpu_affinity, range(10000, 11000))
+        self.assertRaises(ValueError, p.cpu_affinity, invalid_cpu)
+        self.assertRaises(ValueError, p.cpu_affinity, range(10000, 11000))
 
     def test_open_files(self):
         # current process
@@ -1974,20 +1974,20 @@ class TestProcess(unittest.TestCase):
         # other methods
         try:
             if POSIX:
-                p.set_nice(1)
+                p.nice(1)
             else:
-                p.set_nice(psutil.NORMAL_PRIORITY_CLASS)
+                p.nice(psutil.NORMAL_PRIORITY_CLASS)
         except psutil.NoSuchProcess:
             pass
         else:
             self.fail("exception not raised")
         if hasattr(p, 'set_ionice'):
-            self.assertRaises(psutil.NoSuchProcess, p.set_ionice, 2)
+            self.assertRaises(psutil.NoSuchProcess, p.ionice, 2)
         self.assertRaises(psutil.NoSuchProcess, p.send_signal, signal.SIGTERM)
-        self.assertRaises(psutil.NoSuchProcess, p.set_nice, 0)
+        self.assertRaises(psutil.NoSuchProcess, p.nice, 0)
         self.assertFalse(p.is_running())
         if hasattr(p, "set_cpu_affinity"):
-            self.assertRaises(psutil.NoSuchProcess, p.set_cpu_affinity, [0])
+            self.assertRaises(psutil.NoSuchProcess, p.cpu_affinity, [0])
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_zombie_process(self):
@@ -2411,7 +2411,7 @@ if hasattr(os, 'getuid') and os.getuid() == 0:
 
         def test_nice(self):
             try:
-                psutil.Process().set_nice(-1)
+                psutil.Process().nice(-1)
             except psutil.AccessDenied:
                 pass
             else:
