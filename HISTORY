@@ -1,6 +1,6 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-1.3.0 - XXXX-XX-XX
+2.0.0 - XXXX-XX-XX
 ------------------
 
 ENHANCEMENTS
@@ -37,7 +37,7 @@ be remove in next major psutil version.
 - psutil.* functions and constants renamings:
 
    ----.--------------------------------------
-  | Old name                | New name        |
+  | Old name         | New name               |
    --------------------------------------------
   | - NUM_CPUS       | cpu_cpunt()            |
   | - BOOT_TIME      | boot_time()            |
@@ -48,7 +48,7 @@ be remove in next major psutil version.
 
 - psutil.Process class methods renaming:
 
-   ----.-------------------------------------------
+   ------------------------------------------------
   | Old name                | New name             |
    ------------------------------------------------
   | get_children()         |    children()         |
@@ -70,6 +70,23 @@ be remove in next major psutil version.
   | get_rlimit()           |    rlimit()           |
   | get_threads()          |    threads()          |
    ------------------------------------------------
+
+- All psutil.Process class properties except 'pid' are now methods:
+
+   -----------------------------
+  | Old name    | New name      |
+   -----------------------------
+  | name        | name()        |
+  | parent      | parent()      |
+  | ppid        | ppid()        |
+  | exe         | exe()         |
+  | cmdline     | cmdline()     |
+  | status      | status()      |
+  | uids        | uids()        |
+  | gids        | gids()        |
+  | username    | username()    |
+  | create_time | create_time() |
+   -----------------------------
 
 Others:
  - Process instances' "retcode" attribute returned by psutil.wait_procs() has

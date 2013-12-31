@@ -97,10 +97,10 @@ def poll(interval):
     for p in procs[:]:
         try:
             p._after = p.io_counters()
-            p._cmdline = ' '.join(p.cmdline)
+            p._cmdline = ' '.join(p.cmdline())
             if not p._cmdline:
-                p._cmdline = p.name
-            p._username = p.username
+                p._cmdline = p.name()
+            p._username = p.username()
         except psutil.NoSuchProcess:
             procs.remove(p)
     disks_after = psutil.disk_io_counters()

@@ -54,22 +54,22 @@ class PosixSpecificTestCase(unittest.TestCase):
 
     def test_process_parent_pid(self):
         ppid_ps = ps("ps --no-headers -o ppid -p %s" % self.pid)
-        ppid_psutil = psutil.Process(self.pid).ppid
+        ppid_psutil = psutil.Process(self.pid).ppid()
         self.assertEqual(ppid_ps, ppid_psutil)
 
     def test_process_uid(self):
         uid_ps = ps("ps --no-headers -o uid -p %s" % self.pid)
-        uid_psutil = psutil.Process(self.pid).uids.real
+        uid_psutil = psutil.Process(self.pid).uids().real
         self.assertEqual(uid_ps, uid_psutil)
 
     def test_process_gid(self):
         gid_ps = ps("ps --no-headers -o rgid -p %s" % self.pid)
-        gid_psutil = psutil.Process(self.pid).gids.real
+        gid_psutil = psutil.Process(self.pid).gids().real
         self.assertEqual(gid_ps, gid_psutil)
 
     def test_process_username(self):
         username_ps = ps("ps --no-headers -o user -p %s" % self.pid)
-        username_psutil = psutil.Process(self.pid).username
+        username_psutil = psutil.Process(self.pid).username()
         self.assertEqual(username_ps, username_psutil)
 
     @skip_on_access_denied()
@@ -96,14 +96,14 @@ class PosixSpecificTestCase(unittest.TestCase):
             self.pid)).split(' ')[0]
         # remove path if there is any, from the command
         name_ps = os.path.basename(name_ps).lower()
-        name_psutil = psutil.Process(self.pid).name.lower()
+        name_psutil = psutil.Process(self.pid).name().lower()
         self.assertEqual(name_ps, name_psutil)
 
     @unittest.skipIf(OSX or BSD,
                      'ps -o start not available')
     def test_process_create_time(self):
         time_ps = ps("ps --no-headers -o start -p %s" % self.pid).split(' ')[0]
-        time_psutil = psutil.Process(self.pid).create_time
+        time_psutil = psutil.Process(self.pid).create_time()
         if SUNOS:
             time_psutil = round(time_psutil)
         time_psutil_tstamp = datetime.datetime.fromtimestamp(
@@ -113,7 +113,7 @@ class PosixSpecificTestCase(unittest.TestCase):
     def test_process_exe(self):
         ps_pathname = ps("ps --no-headers -o command -p %s" %
                          self.pid).split(' ')[0]
-        psutil_pathname = psutil.Process(self.pid).exe
+        psutil_pathname = psutil.Process(self.pid).exe()
         try:
             self.assertEqual(ps_pathname, psutil_pathname)
         except AssertionError:
@@ -128,7 +128,7 @@ class PosixSpecificTestCase(unittest.TestCase):
 
     def test_process_cmdline(self):
         ps_cmdline = ps("ps --no-headers -o command -p %s" % self.pid)
-        psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline)
+        psutil_cmdline = " ".join(psutil.Process(self.pid).cmdline())
         if SUNOS:
             # ps on Solaris only shows the first part of the cmdline
             psutil_cmdline = psutil_cmdline.split(" ")[0]

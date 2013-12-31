@@ -238,9 +238,9 @@ pcputimes = namedtuple('pcputimes', ['user', 'system'])
 popenfile = namedtuple('popenfile', ['path', 'fd'])
 # psutil.Process.threads()
 pthread = namedtuple('pthread', ['id', 'user_time', 'system_time'])
-# psutil.Process.uids
+# psutil.Process.uids()
 puids = namedtuple('puids', ['real', 'effective', 'saved'])
-# psutil.Process.gids
+# psutil.Process.gids()
 pgids = namedtuple('pgids', ['real', 'effective', 'saved'])
 # psutil.Process.io_counters()
 pio = namedtuple('pio', ['read_count', 'write_count',

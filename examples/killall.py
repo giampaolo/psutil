@@ -21,7 +21,7 @@ def main():
 
     killed = []
     for proc in psutil.process_iter():
-        if proc.name == NAME and proc.pid != os.getpid():
+        if proc.name() == NAME and proc.pid != os.getpid():
             proc.kill()
             killed.append(proc.pid)
     if not killed:

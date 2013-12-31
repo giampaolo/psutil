@@ -64,12 +64,12 @@ class WindowsSpecificTestCase(unittest.TestCase):
 
     def test_special_pid(self):
         p = psutil.Process(4)
-        self.assertEqual(p.name, 'System')
+        self.assertEqual(p.name(), 'System')
         # use __str__ to access all common Process properties to check
         # that nothing strange happens
         str(p)
-        p.username
-        self.assertTrue(p.create_time >= 0.0)
+        p.username()
+        self.assertTrue(p.create_time() >= 0.0)
         try:
             rss, vms = p.memory_info()
         except psutil.AccessDenied:
@@ -99,7 +99,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
     def test_exe(self):
         for p in psutil.process_iter():
             try:
-                self.assertEqual(os.path.basename(p.exe), p.name)
+                self.assertEqual(os.path.basename(p.exe()), p.name())
             except psutil.Error:
                 pass
 
@@ -109,19 +109,19 @@ class WindowsSpecificTestCase(unittest.TestCase):
     def test_process_name(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
-        self.assertEqual(p.name, w.Caption)
+        self.assertEqual(p.name(), w.Caption)
 
     @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_process_exe(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
-        self.assertEqual(p.exe, w.ExecutablePath)
+        self.assertEqual(p.exe(), w.ExecutablePath)
 
     @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_process_cmdline(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
-        self.assertEqual(' '.join(p.cmdline),
+        self.assertEqual(' '.join(p.cmdline()),
                          w.CommandLine.replace('"', ''))
 
     @unittest.skipIf(wmi is None, "wmi module is not installed")
@@ -130,7 +130,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
         p = psutil.Process(self.pid)
         domain, _, username = w.GetOwner()
         username = "%s\\%s" % (domain, username)
-        self.assertEqual(p.username, username)
+        self.assertEqual(p.username(), username)
 
     @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_process_rss_memory(self):
@@ -160,7 +160,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
         p = psutil.Process(self.pid)
         wmic_create = str(w.CreationDate.split('.')[0])
         psutil_create = time.strftime("%Y%m%d%H%M%S",
-                                      time.localtime(p.create_time))
+                                      time.localtime(p.create_time()))
         self.assertEqual(wmic_create, psutil_create)
 
     # --- psutil namespace functions and constants tests
@@ -186,7 +186,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
     #     p = psutil.Process(0)
     #     wmic_create = str(w.CreationDate.split('.')[0])
     #     psutil_create = time.strftime("%Y%m%d%H%M%S",
-    #                                   time.localtime(p.create_time))
+    #                                   time.localtime(p.create_time()))
     #
 
     @unittest.skipIf(wmi is None, "wmi module is not installed")

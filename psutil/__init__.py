@@ -12,7 +12,7 @@ in Python.
 
 from __future__ import division
 
-__version__ = "1.3.0"
+__version__ = "2.0.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
@@ -222,6 +222,9 @@ class Process(object):
                 raise ValueError('pid must be a positive integer (got %s)'
                                  % pid)
         self._pid = pid
+        self._name = None
+        self._exe = None
+        self._create_time = None
         self._gone = False
         # used for caching on Windows only (on POSIX ppid may change)
         self._ppid = None
@@ -232,7 +235,7 @@ class Process(object):
         self._last_proc_cpu_times = None
         # cache creation time for later use in is_running() method
         try:
-            self.create_time
+            self.create_time()
         except AccessDenied:
             # we should never get here as AFAIK we're able to get
             # process creation time on all platforms even as a
@@ -246,7 +249,7 @@ class Process(object):
     def __str__(self):
         try:
             pid = self.pid
-            name = repr(self.name)
+            name = repr(self.name())
         except NoSuchProcess:
             details = "(pid=%s (terminated))" % self.pid
         except AccessDenied:
@@ -271,8 +274,8 @@ class Process(object):
         # comparison will be based on PID only.
         if not isinstance(other, Process):
             return False
-        p1 = (self.pid, self.__dict__.get('create_time', None))
-        p2 = (other.pid, other.__dict__.get('create_time', None))
+        p1 = (self.pid, self.__dict__.get('_create_time', None))
+        p2 = (other.pid, other.__dict__.get('_create_time', None))
         return p1 == p2
 
     def __hash__(self):
@@ -339,18 +342,16 @@ class Process(object):
             retdict[name] = ret
         return retdict
 
-    @property
-    @_assert_pid_not_reused
     def parent(self):
         """Return the parent process as a Process object pre-emptively
         checking whether PID has been reused.
         If no parent is known return None.
         """
-        ppid = self.ppid
+        ppid = self.ppid()
         if ppid is not None:
             try:
                 parent = Process(ppid)
-                if parent.create_time <= self.create_time:
+                if parent.create_time() <= self.create_time():
                     return parent
                 # ...else ppid has been reused by another process
             except NoSuchProcess:
@@ -363,16 +364,17 @@ class Process(object):
         """The process PID."""
         return self._pid
 
-    @property
     def ppid(self):
-        """The process parent PID."""
+        """The process parent PID.
+        On Windows the return value is cached after first call.
+        """
         # On POSIX we don't want to cache the ppid as it may unexpectedly
         # change to 1 (init) in case this process turns into a zombie:
         # https://code.google.com/p/psutil/issues/detail?id=321
         # http://stackoverflow.com/questions/356722/
 
         # XXX should we check creation time here rather than in
-        # Process.parent?
+        # Process.parent()?
         if _POSIX:
             return self._proc.ppid()
         else:
@@ -380,34 +382,36 @@ class Process(object):
                 self._ppid = self._proc.ppid()
             return self._ppid
 
-    @cached_property
     def name(self):
-        """The process name."""
-        name = self._proc.name()
-        if _POSIX and len(name) >= 15:
-            # On UNIX the name gets truncated to the first 15 characters.
-            # If it matches the first part of the cmdline we return that
-            # one instead because it's usually more explicative.
-            # Examples are "gnome-keyring-d" vs. "gnome-keyring-daemon".
-            try:
-                cmdline = self.cmdline
-            except AccessDenied:
-                pass
-            else:
-                if cmdline:
-                    extended_name = os.path.basename(cmdline[0])
-                    if extended_name.startswith(name):
-                        name = extended_name
-        self._proc._name = name
-        return name
+        """The process name. The return value is cached after first call."""
+        if self._name is None:
+            name = self._proc.name()
+            if _POSIX and len(name) >= 15:
+                # On UNIX the name gets truncated to the first 15 characters.
+                # If it matches the first part of the cmdline we return that
+                # one instead because it's usually more explicative.
+                # Examples are "gnome-keyring-d" vs. "gnome-keyring-daemon".
+                try:
+                    cmdline = self.cmdline()
+                except AccessDenied:
+                    pass
+                else:
+                    if cmdline:
+                        extended_name = os.path.basename(cmdline[0])
+                        if extended_name.startswith(name):
+                            name = extended_name
+            self._proc._name = name
+            self._name = name
+        return self._name
 
-    @cached_property
     def exe(self):
-        """The process executable path. May also be an empty string."""
+        """The process executable path. May also be an empty string.
+        The return value is cached after first call.
+        """
         def guess_it(fallback):
             # try to guess exe from cmdline[0] in absence of a native
             # exe representation
-            cmdline = self.cmdline
+            cmdline = self.cmdline()
             if cmdline and hasattr(os, 'access') and hasattr(os, 'X_OK'):
                 exe = cmdline[0]  # the possible exe
                 # Attempt to guess only in case of an absolute path.
@@ -421,56 +425,52 @@ class Process(object):
                 raise fallback
             return fallback
 
-        try:
-            exe = self._proc.exe()
-        except AccessDenied:
-            err = sys.exc_info()[1]
-            return guess_it(fallback=err)
-        else:
-            if not exe:
-                # underlying implementation can legitimately return an
-                # empty string; if that's the case we don't want to
-                # raise AD while guessing from the cmdline
-                try:
-                    exe = guess_it(fallback=exe)
-                except AccessDenied:
-                    pass
-            return exe
+        if self._exe is None:
+            try:
+                exe = self._proc.exe()
+            except AccessDenied:
+                err = sys.exc_info()[1]
+                return guess_it(fallback=err)
+            else:
+                if not exe:
+                    # underlying implementation can legitimately return an
+                    # empty string; if that's the case we don't want to
+                    # raise AD while guessing from the cmdline
+                    try:
+                        exe = guess_it(fallback=exe)
+                    except AccessDenied:
+                        pass
+                self._exe = exe
+        return self._exe
 
-    @property
     def cmdline(self):
         """The command line this process has been called with."""
         return self._proc.cmdline()
 
-    @property
     def status(self):
         """The process current status as a STATUS_* constant."""
         return self._proc.status()
 
     if _POSIX:
 
-        @property
         def uids(self):
             """Return process UIDs as a (real, effective, saved)
             namedtuple.
             """
             return self._proc.uids()
 
-        @property
         def gids(self):
             """Return process GIDs as a (real, effective, saved)
             namedtuple.
             """
             return self._proc.gids()
 
-        @property
         def terminal(self):
             """The terminal associated with this process, if any,
             else None.
             """
             return self._proc.terminal()
 
-    @property
     def username(self):
         """The name of the user that owns the process.
         On UNIX this is calculated by using *real* process uid.
@@ -480,16 +480,18 @@ class Process(object):
                 # might happen if python was installed from sources
                 raise ImportError(
                     "requires pwd module shipped with standard python")
-            return pwd.getpwuid(self.uids.real).pw_name
+            return pwd.getpwuid(self.uids().real).pw_name
         else:
             return self._proc.username()
 
-    @cached_property
     def create_time(self):
         """The process creation time as a floating point number
         expressed in seconds since the epoch, in UTC.
+        The return value is cached after first call.
         """
-        return self._proc.create_time()
+        if self._create_time is None:
+            self._create_time = self._proc.create_time()
+        return self._create_time
 
     def cwd(self):
         """Process current working directory."""
@@ -657,10 +659,10 @@ class Process(object):
                 # 'slow' version, common to all platforms except Windows
                 for p in process_iter():
                     try:
-                        if p.ppid == self.pid:
+                        if p.ppid() == self.pid:
                             # if child happens to be older than its parent
                             # (self) it means child's PID has been reused
-                            if self.create_time <= p.create_time:
+                            if self.create_time() <= p.create_time():
                                 ret.append(p)
                     except NoSuchProcess:
                         pass
@@ -672,7 +674,7 @@ class Process(object):
                             child = Process(pid)
                             # if child happens to be older than its parent
                             # (self) it means child's PID has been reused
-                            if self.create_time <= child.create_time:
+                            if self.create_time() <= child.create_time():
                                 ret.append(child)
                         except NoSuchProcess:
                             pass
@@ -683,7 +685,7 @@ class Process(object):
             if ppid_map is None:
                 for p in process_iter():
                     try:
-                        table[p.ppid].append(p)
+                        table[p.ppid()].append(p)
                     except NoSuchProcess:
                         pass
             else:
@@ -703,7 +705,7 @@ class Process(object):
                     try:
                         # if child happens to be older than its parent
                         # (self) it means child's PID has been reused
-                        intime = self.create_time <= child.create_time
+                        intime = self.create_time() <= child.create_time()
                     except NoSuchProcess:
                         pass
                     else:
@@ -1073,11 +1075,11 @@ class Popen(Process):
       >>> import psutil
       >>> from subprocess import PIPE
       >>> p = psutil.Popen(["python", "-c", "print 'hi'"], stdout=PIPE)
-      >>> p.name
+      >>> p.name()
       'python'
-      >>> p.uids
+      >>> p.uids()
       user(real=1000, effective=1000, saved=1000)
-      >>> p.username
+      >>> p.username()
       'giampaolo'
       >>> p.communicate()
       ('hi\n', None)
@@ -1780,7 +1782,7 @@ def test():
             cputime = time.strftime("%M:%S",
                                     time.localtime(sum(pinfo['cpu_times'])))
             try:
-                user = p.username
+                user = p.username()
             except KeyError:
                 if _POSIX:
                     if pinfo['uids']:

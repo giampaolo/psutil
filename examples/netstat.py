@@ -32,7 +32,7 @@ def main():
     for p in psutil.process_iter():
         name = '?'
         try:
-            name = p.name
+            name = p.name()
             cons = p.connections(kind='inet')
         except psutil.AccessDenied:
             print_(templ % (AD, AD, AD, AD, p.pid, name))

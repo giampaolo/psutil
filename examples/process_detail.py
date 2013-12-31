@@ -18,6 +18,9 @@ import sys
 import psutil
 
 
+POSIX = os.name == 'posix'
+
+
 def convert_bytes(n):
     symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
     prefix = {}
@@ -31,7 +34,7 @@ def convert_bytes(n):
 
 
 def print_(a, b):
-    if sys.stdout.isatty() and os.name == 'posix':
+    if sys.stdout.isatty() and POSIX:
         fmt = '\x1b[1;32m%-17s\x1b[0m %s' % (a, b)
     else:
         fmt = '%-15s %s' % (a, b)
@@ -49,8 +52,9 @@ def run(pid):
         sys.exit(str(sys.exc_info()[1]))
 
     try:
-        if p.parent:
-            parent = '(%s)' % p.parent.name
+        parent = p.parent()
+        if parent:
+            parent = '(%s)' % parent.name()
         else:
             parent = ''
     except psutil.Error:
@@ -71,11 +75,11 @@ def run(pid):
     print_('cmdline', ' '.join(pinfo['cmdline']))
     print_('started', started)
     print_('user', pinfo['username'])
-    if os.name == 'posix' and pinfo['uids'] and pinfo['gids']:
+    if POSIX and pinfo['uids'] and pinfo['gids']:
         print_('uids', 'real=%s, effective=%s, saved=%s' % pinfo['uids'])
-    if os.name == 'posix' and pinfo['gids']:
+    if POSIX and pinfo['gids']:
         print_('gids', 'real=%s, effective=%s, saved=%s' % pinfo['gids'])
-    if os.name == 'posix':
+    if POSIX:
         print_('terminal', pinfo['terminal'] or '')
     if hasattr(p, 'getcwd'):
         print_('cwd', pinfo['cwd'])
@@ -94,7 +98,7 @@ def run(pid):
     if children:
         print_('children', '')
         for child in children:
-            print_('', 'pid=%s name=%s' % (child.pid, child.name))
+            print_('', 'pid=%s name=%s' % (child.pid, child.name()))
 
     if pinfo['open_files'] != ACCESS_DENIED:
         print_('open files', '')

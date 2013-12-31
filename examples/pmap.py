@@ -19,7 +19,7 @@ def main():
     if len(sys.argv) != 2:
         sys.exit('usage: pmap pid')
     p = psutil.Process(int(sys.argv[1]))
-    print_("pid=%s, name=%s" % (p.pid, p.name))
+    print_("pid=%s, name=%s" % (p.pid, p.name()))
     templ = "%-16s %10s  %-7s %s"
     print_(templ % ("Address", "RSS", "Mode", "Mapping"))
     total_rss = 0

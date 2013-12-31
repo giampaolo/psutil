@@ -1124,7 +1124,7 @@ class TestProcess(unittest.TestCase):
         # test timeout
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
-        p.name
+        p.name()
         self.assertRaises(psutil.TimeoutExpired, p.wait, 0.01)
 
         # timeout < 0 not allowed
@@ -1218,7 +1218,7 @@ class TestProcess(unittest.TestCase):
         sproc = get_test_subprocess(wait=True)
         now = time.time()
         p = psutil.Process(sproc.pid)
-        create_time = p.create_time
+        create_time = p.create_time()
 
         # Use time.time() as base value to compare our result using a
         # tolerance of +/- 1 second.
@@ -1229,11 +1229,11 @@ class TestProcess(unittest.TestCase):
                       % (now, create_time, difference))
 
         # make sure returned value can be pretty printed with strftime
-        time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time))
+        time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
 
     @unittest.skipIf(WINDOWS, 'Windows only')
     def test_terminal(self):
-        terminal = psutil.Process().terminal
+        terminal = psutil.Process().terminal()
         if sys.stdin.isatty():
             self.assertEqual(terminal, sh('tty'))
         else:
@@ -1460,7 +1460,7 @@ class TestProcess(unittest.TestCase):
 
     def test_exe(self):
         sproc = get_test_subprocess(wait=True)
-        exe = psutil.Process(sproc.pid).exe
+        exe = psutil.Process(sproc.pid).exe()
         try:
             self.assertEqual(exe, PYTHON)
         except AssertionError:
@@ -1480,19 +1480,19 @@ class TestProcess(unittest.TestCase):
     def test_cmdline(self):
         cmdline = [PYTHON, "-c", "import time; time.sleep(2)"]
         sproc = get_test_subprocess(cmdline, wait=True)
-        self.assertEqual(' '.join(psutil.Process(sproc.pid).cmdline),
+        self.assertEqual(' '.join(psutil.Process(sproc.pid).cmdline()),
                          ' '.join(cmdline))
 
     def test_name(self):
         sproc = get_test_subprocess(PYTHON, wait=True)
-        name = psutil.Process(sproc.pid).name.lower()
+        name = psutil.Process(sproc.pid).name().lower()
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_uids(self):
         p = psutil.Process()
-        real, effective, saved = p.uids
+        real, effective, saved = p.uids()
         # os.getuid() refers to "real" uid
         self.assertEqual(real, os.getuid())
         # os.geteuid() refers to "effective" uid
@@ -1505,7 +1505,7 @@ class TestProcess(unittest.TestCase):
     @unittest.skipUnless(POSIX, 'posix only')
     def test_gids(self):
         p = psutil.Process()
-        real, effective, saved = p.gids
+        real, effective, saved = p.gids()
         # os.getuid() refers to "real" uid
         self.assertEqual(real, os.getgid())
         # os.geteuid() refers to "effective" uid
@@ -1548,14 +1548,14 @@ class TestProcess(unittest.TestCase):
 
     def test_status(self):
         p = psutil.Process()
-        self.assertEqual(p.status, psutil.STATUS_RUNNING)
+        self.assertEqual(p.status(), psutil.STATUS_RUNNING)
 
     def test_username(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         if POSIX:
             import pwd
-            self.assertEqual(p.username, pwd.getpwuid(os.getuid()).pw_name)
+            self.assertEqual(p.username(), pwd.getpwuid(os.getuid()).pw_name)
         elif WINDOWS and 'USERNAME' in os.environ:
             expected_username = os.environ['USERNAME']
             expected_domain = os.environ['USERDOMAIN']
@@ -1848,13 +1848,13 @@ class TestProcess(unittest.TestCase):
         this_parent = os.getpid()
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
-        self.assertEqual(p.ppid, this_parent)
-        self.assertEqual(p.parent.pid, this_parent)
+        self.assertEqual(p.ppid(), this_parent)
+        self.assertEqual(p.parent().pid, this_parent)
         # no other process is supposed to have us as parent
         for p in psutil.process_iter():
             if p.pid == sproc.pid:
                 continue
-            self.assertTrue(p.ppid != this_parent)
+            self.assertTrue(p.ppid() != this_parent)
 
     def test_children(self):
         p = psutil.Process()
@@ -1866,7 +1866,7 @@ class TestProcess(unittest.TestCase):
         for children in (children1, children2):
             self.assertEqual(len(children), 1)
             self.assertEqual(children[0].pid, sproc.pid)
-            self.assertEqual(children[0].ppid, os.getpid())
+            self.assertEqual(children[0].ppid(), os.getpid())
 
     def test_children_recursive(self):
         # here we create a subprocess which creates another one as in:
@@ -1886,8 +1886,8 @@ class TestProcess(unittest.TestCase):
             if len(children) > 1:
                 break
         self.assertEqual(len(children), 2)
-        self.assertEqual(children[0].ppid, os.getpid())
-        self.assertEqual(children[1].ppid, children[0].pid)
+        self.assertEqual(children[0].ppid(), os.getpid())
+        self.assertEqual(children[1].ppid(), children[0].pid)
 
     def test_children_duplicates(self):
         # find the process which has the highest number of children
@@ -1895,7 +1895,7 @@ class TestProcess(unittest.TestCase):
         table = defaultdict(int)
         for p in psutil.process_iter():
             try:
-                table[p.ppid] += 1
+                table[p.ppid()] += 1
             except psutil.Error:
                 pass
         # this is the one, now let's make sure there are no duplicates
@@ -1913,11 +1913,11 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         p.suspend()
         for x in range(100):
-            if p.status == psutil.STATUS_STOPPED:
+            if p.status() == psutil.STATUS_STOPPED:
                 break
             time.sleep(0.01)
         p.resume()
-        self.assertNotEqual(p.status, psutil.STATUS_STOPPED)
+        self.assertNotEqual(p.status(), psutil.STATUS_STOPPED)
 
     def test_invalid_pid(self):
         self.assertRaises(TypeError, psutil.Process, "1")
@@ -1939,7 +1939,7 @@ class TestProcess(unittest.TestCase):
         # Example:
         #  >>> proc = Process(1234)
         # >>> time.sleep(2)  # time-consuming task, process dies in meantime
-        #  >>> proc.name
+        #  >>> proc.name()
         # Refers to Issue #15
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -2026,7 +2026,7 @@ class TestProcess(unittest.TestCase):
             # status changed to zombie and at least be able to
             # query its status.
             # XXX should we also assume ppid should be querable?
-            call_until(lambda: zproc.status, "ret == psutil.STATUS_ZOMBIE")
+            call_until(lambda: zproc.status(), "ret == psutil.STATUS_ZOMBIE")
             self.assertTrue(psutil.pid_exists(zpid))
             zproc = psutil.Process(zpid)
             descendants = [x.pid for x in psutil.Process().children(
@@ -2044,18 +2044,18 @@ class TestProcess(unittest.TestCase):
             return
 
         p = psutil.Process(0)
-        self.assertTrue(p.name)
+        self.assertTrue(p.name())
 
         if POSIX:
             try:
-                self.assertEqual(p.uids.real, 0)
-                self.assertEqual(p.gids.real, 0)
+                self.assertEqual(p.uids().real, 0)
+                self.assertEqual(p.gids().real, 0)
             except psutil.AccessDenied:
                 pass
 
-        self.assertIn(p.ppid, (0, 1))
-        #self.assertEqual(p.exe, "")
-        p.cmdline
+        self.assertIn(p.ppid(), (0, 1))
+        #self.assertEqual(p.exe(), "")
+        p.cmdline()
         try:
             p.num_threads()
         except psutil.AccessDenied:
@@ -2089,7 +2089,7 @@ class TestProcess(unittest.TestCase):
         proc = psutil.Popen(cmd, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
         try:
-            proc.name
+            proc.name()
             proc.stdin
             self.assertTrue(hasattr(proc, 'name'))
             self.assertTrue(hasattr(proc, 'stdin'))
@@ -2159,7 +2159,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                         if err.name:
                             # make sure exception's name attr is set
                             # with the actual process name
-                            self.assertEqual(err.name, p.name)
+                            self.assertEqual(err.name, p.name())
                         self.assertTrue(str(err))
                         self.assertTrue(err.msg)
                     else:
@@ -2229,7 +2229,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         # gid == 30 (nodoby); not sure why.
         for gid in ret:
             self.assertTrue(gid >= 0)
-            #self.assertIn(uid, self.gids)
+            #self.assertIn(uid, self.gids
 
     def username(self, ret):
         self.assertTrue(ret)

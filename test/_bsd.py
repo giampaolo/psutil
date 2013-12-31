@@ -72,7 +72,7 @@ class BSDSpecificTestCase(unittest.TestCase):
         if PY3:
             output = str(output, sys.stdout.encoding)
         start_ps = output.replace('STARTED', '').strip()
-        start_psutil = psutil.Process(self.pid).create_time
+        start_psutil = psutil.Process(self.pid).create_time()
         start_psutil = time.strftime("%a %b %e %H:%M:%S %Y",
                                      time.localtime(start_psutil))
         self.assertEqual(start_ps, start_psutil)
