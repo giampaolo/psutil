@@ -497,6 +497,15 @@ class Process(object):
         """Process current working directory."""
         return self._proc.cwd()
 
+    def nice(self, value=None):
+        """Get or set process niceness (priority)."""
+        if value is None:
+            return self._proc.nice_get()
+        else:
+            if not self.is_running():
+                raise NoSuchProcess(self.pid, self._name)
+            self._proc.nice_set(value)
+
     # Linux, BSD and Windows only
     if hasattr(_psplatform.Process, "io_counters"):
 
@@ -509,20 +518,10 @@ class Process(object):
             """
             return self._proc.io_counters()
 
-    def nice(self):
-        """Get process niceness (priority)."""
-        return self._proc.nice_get()
-
-    @_assert_pid_not_reused
-    def set_nice(self, value):
-        """Set process niceness (priority) pre-emptively checking
-        whether PID has been reused."""
-        return self._proc.nice_set(value)
-
     # Linux and Windows >= Vista only
     if hasattr(_psplatform.Process, "ionice_get"):
 
-        def ionice(self):
+        def ionice(self, ioclass=None, value=None):
             """Return process I/O niceness (priority).
 
             On Linux this is a (ioclass, value) namedtuple.
@@ -531,26 +530,28 @@ class Process(object):
 
             Available on Linux and Windows > Vista only.
             """
-            return self._proc.ionice_get()
+            # """Set process I/O niceness (priority).
 
-        def set_ionice(self, ioclass, value=None):
-            """Set process I/O niceness (priority).
+            # On Linux 'ioclass' is one of the IOPRIO_CLASS_* constants.
+            # 'value' is a number which goes from 0 to 7. The higher the
+            # value, the lower the I/O priority of the process.
 
-            On Linux 'ioclass' is one of the IOPRIO_CLASS_* constants.
-            'value' is a number which goes from 0 to 7. The higher the
-            value, the lower the I/O priority of the process.
+            # On Windows only 'ioclass' is used and it can be set to 2
+            # (normal), 1 (low) or 0 (very low).
 
-            On Windows only 'ioclass' is used and it can be set to 2
-            (normal), 1 (low) or 0 (very low).
-
-            Available on Linux and Windows > Vista only.
-            """
-            return self._proc.ionice_set(ioclass, value)
+            # Available on Linux and Windows > Vista only.
+            # """
+            if ioclass is None:
+                if value is not None:
+                    raise ValueError("'ioclass' must be specified")
+                return self._proc.ionice_get()
+            else:
+                return self._proc.ionice_set(ioclass, value)
 
     # Linux only
     if hasattr(_psplatform.Process, "rlimit"):
 
-        def rlimit(self, resource):
+        def rlimit(self, resource, limits=None):
             """Get process resource limits as a (soft, hard)
             namedtuple.
 
@@ -558,33 +559,31 @@ class Process(object):
 
             See "man prlimit" for further info.
             """
-            return self._proc.rlimit(resource)
+            # """Set process resource limits pre-emptively checking
+            # whether PID has been reused.
 
-        @_assert_pid_not_reused
-        def set_rlimit(self, resource, limits):
-            """Set process resource limits pre-emptively checking
-            whether PID has been reused.
+            # 'resource' is one of the RLIMIT_* constants.
+            # 'limits' is supposed to be a (soft, hard) tuple.
 
-            'resource' is one of the RLIMIT_* constants.
-            'limits' is supposed to be a (soft, hard) tuple.
-
-            See "man prlimit" for further info.
-            """
-            self._proc.rlimit(resource, limits)
+            # See "man prlimit" for further info.
+            # """
+            if limits is None:
+                return self._proc.rlimit(resource)
+            else:
+                return self._proc.rlimit(resource, limits)
 
     # Windows and Linux only
     if hasattr(_psplatform.Process, "cpu_affinity_get"):
 
-        def cpu_affinity(self):
-            """Get process current CPU affinity."""
-            return self._proc.cpu_affinity_get()
-
-        def set_cpu_affinity(self, cpus):
-            """Set process current CPU affinity.
-            'cpus' is a list of CPUs for which you want to set the
-            affinity (e.g. [0, 1]).
+        def cpu_affinity(self, cpus=None):
+            """Get or set process CPU affinity.
+            If specified 'cpus' must be a list of CPUs for which you
+            want to set the affinity (e.g. [0, 1]).
             """
-            return self._proc.cpu_affinity_set(cpus)
+            if cpus is None:
+                return self._proc.cpu_affinity_get()
+            else:
+                self._proc.cpu_affinity_set(cpus)
 
     if _WINDOWS:
 
@@ -989,6 +988,10 @@ class Process(object):
         def get_cpu_affinity(self):
             pass
 
+        @_deprecated_method(replacement='cpu_affinity')
+        def set_cpu_affinity(self, cpus):
+            pass
+
     @_deprecated_method(replacement='cpu_percent')
     def get_cpu_percent(self):
         pass
@@ -1013,6 +1016,10 @@ class Process(object):
     if "ionice" in _locals:
         @_deprecated_method(replacement='ionice')
         def get_ionice(self):
+            pass
+
+        @_deprecated_method(replacement='ionice')
+        def set_ionice(self, ioclass, value=None):
             pass
 
     @_deprecated_method(replacement='memory_info')
@@ -1058,8 +1065,16 @@ class Process(object):
         def get_rlimit(self):
             pass
 
+        @_deprecated_method(replacement='rlimit')
+        def set_rlimit(self, resource, limits):
+            pass
+
     @_deprecated_method(replacement='threads')
     def get_threads(self):
+        pass
+
+    @_deprecated_method(replacement='nice')
+    def set_nice(self, value):
         pass
 
     del _locals
