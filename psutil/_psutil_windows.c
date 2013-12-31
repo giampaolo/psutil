@@ -500,6 +500,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args)
         ptr++;
     }
 
+    free(buffer);
     if (ncpus == 0)
         goto return_none;
     else
@@ -507,6 +508,8 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args)
 
 return_none:
     // mimic os.cpu_count()
+    if (buffer != NULL)
+        free(buffer);
     Py_INCREF(Py_None);
     return Py_None;
 }
