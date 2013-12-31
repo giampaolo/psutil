@@ -15,10 +15,6 @@ import sys
 from psutil import _common
 from psutil import _psposix
 from psutil._common import (conn_tmap, usage_percent, isfile_strict)
-from psutil._common import (nt_proc_conn, nt_proc_cpu, nt_proc_ctxsw,
-                            nt_proc_file, nt_proc_mem, nt_proc_thread,
-                            nt_proc_uids, nt_sys_diskpart, nt_sys_swap,
-                            nt_sys_user, nt_sys_vmem)
 from psutil._compat import namedtuple, PY3
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_posix
@@ -59,7 +55,12 @@ TCP_STATUSES = {
     cext.TCPS_BOUND: CONN_BOUND,  # sunos specific
 }
 
-nt_sys_cputimes = namedtuple('cputimes', ['user', 'system', 'idle', 'iowait'])
+scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
+svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
+pextmem = namedtuple('pextmem', ['rss', 'vms'])
+pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss', 'anon', 'locked'])
+pmmap_ext = namedtuple(
+    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
 
 # --- functions
@@ -76,7 +77,7 @@ def virtual_memory():
     free = avail = os.sysconf('SC_AVPHYS_PAGES') * PAGE_SIZE
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return nt_sys_vmem(total, avail, percent, used, free)
+    return svmem(total, avail, percent, used, free)
 
 
 def swap_memory():
@@ -107,7 +108,7 @@ def swap_memory():
         free += int(int(f) * 1024)
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return nt_sys_swap(total, used, free, percent,
+    return _common.sswap(total, used, free, percent,
                        sin * PAGE_SIZE, sout * PAGE_SIZE)
 
 
@@ -124,13 +125,13 @@ def pid_exists(pid):
 def cpu_times():
     """Return system-wide CPU times as a named tuple"""
     ret = cext.per_cpu_times()
-    return nt_sys_cputimes(*[sum(x) for x in zip(*ret)])
+    return scputimes(*[sum(x) for x in zip(*ret)])
 
 
 def per_cpu_times():
     """Return system per-CPU times as a list of named tuples"""
     ret = cext.per_cpu_times()
-    return [nt_sys_cputimes(*x) for x in ret]
+    return [scputimes(*x) for x in ret]
 
 
 def cpu_count_logical():
@@ -166,7 +167,7 @@ def users():
             continue
         if hostname in localhost:
             hostname = 'localhost'
-        nt = nt_sys_user(user, tty, hostname, tstamp)
+        nt = _common.suser(user, tty, hostname, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -187,7 +188,7 @@ def disk_partitions(all=False):
             # filter by filesystem having a total size > 0.
             if not disk_usage(mountpoint).total:
                 continue
-        ntuple = nt_sys_diskpart(device, mountpoint, fstype, opts)
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -282,17 +283,17 @@ class Process(object):
     @wrap_exceptions
     def uids(self):
         real, effective, saved, _, _, _ = cext.proc_cred(self.pid)
-        return nt_proc_uids(real, effective, saved)
+        return _common.puids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
         _, _, _, real, effective, saved = cext.proc_cred(self.pid)
-        return nt_proc_uids(real, effective, saved)
+        return _common.puids(real, effective, saved)
 
     @wrap_exceptions
     def cpu_times(self):
         user, system = cext.proc_cpu_times(self.pid)
-        return nt_proc_cpu(user, system)
+        return _common.pcputimes(user, system)
 
     @wrap_exceptions
     def terminal(self):
@@ -332,7 +333,7 @@ class Process(object):
     def memory_info(self):
         ret = cext.proc_basic_info(self.pid)
         rss, vms = ret[1] * 1024, ret[2] * 1024
-        return nt_proc_mem(rss, vms)
+        return _common.pmem(rss, vms)
 
     # it seems Solaris uses rss and vms only
     ext_memory_info = memory_info
@@ -361,7 +362,7 @@ class Process(object):
                     continue
                 raise
             else:
-                nt = nt_proc_thread(tid, utime, stime)
+                nt = _common.pthread(tid, utime, stime)
                 ret.append(nt)
         if hit_enoent:
             # raise NSP if the process disappeared on us
@@ -387,7 +388,7 @@ class Process(object):
                     raise
                 else:
                     if isfile_strict(file):
-                        retlist.append(nt_proc_file(file, int(fd)))
+                        retlist.append(_common.popenfile(file, int(fd)))
         if hit_enoent:
             # raise NSP if the process disappeared on us
             os.stat('/proc/%s' % self.pid)
@@ -448,12 +449,12 @@ class Process(object):
             if type not in types:
                 continue
             status = TCP_STATUSES[status]
-            nt = nt_proc_conn(fd, fam, type, laddr, raddr, status)
+            nt = _common.pconn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
 
         # UNIX sockets
         if socket.AF_UNIX in families:
-            ret.extend([nt_proc_conn(*conn) for conn in
+            ret.extend([_common.pconn(*conn) for conn in
                         self._get_unix_sockets(self.pid)])
         return ret
 
@@ -500,7 +501,7 @@ class Process(object):
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        return nt_proc_ctxsw(*cext.proc_num_ctx_switches(self.pid))
+        return _common.pctxsw(*cext.proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
     def wait(self, timeout=None):
