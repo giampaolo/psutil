@@ -11,11 +11,7 @@ import os
 import sys
 
 from psutil import _common
-from psutil._common import (conn_tmap, usage_percent, isfile_strict)
-from psutil._common import (nt_proc_conn, nt_proc_cpu, nt_proc_ctxsw,
-                            nt_proc_file, nt_proc_mem, nt_proc_io,
-                            nt_proc_thread, nt_sys_diskpart, nt_sys_diskusage,
-                            nt_sys_swap, nt_sys_user, nt_sys_vmem)
+from psutil._common import conn_tmap, usage_percent, isfile_strict
 from psutil._compat import PY3, xrange, wraps, lru_cache, namedtuple
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_windows as cext
@@ -53,12 +49,15 @@ TCP_STATUSES = {
 }
 
 
-nt_sys_cputimes = namedtuple('cputimes', ['user', 'system', 'idle'])
-
-nt_proc_extmem = namedtuple(
-    'meminfo', ['num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
+scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
+svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
+pextmem = namedtuple(
+    'pextmem', ['num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
                 'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
                 'pagefile', 'peak_pagefile', 'private'])
+pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
+pmmap_ext = namedtuple(
+    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
 
 @lru_cache(maxsize=512)
@@ -90,7 +89,7 @@ def virtual_memory():
     free = availphys
     used = total - avail
     percent = usage_percent((total - avail), total, _round=1)
-    return nt_sys_vmem(total, avail, percent, used, free)
+    return svmem(total, avail, percent, used, free)
 
 
 def swap_memory():
@@ -100,7 +99,7 @@ def swap_memory():
     free = mem[3]
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return nt_sys_swap(total, used, free, percent, 0, 0)
+    return _common.sswap(total, used, free, percent, 0, 0)
 
 
 def disk_usage(path):
@@ -114,19 +113,19 @@ def disk_usage(path):
         raise
     used = total - free
     percent = usage_percent(used, total, _round=1)
-    return nt_sys_diskusage(total, used, free, percent)
+    return _common.sdiskusage(total, used, free, percent)
 
 
 def disk_partitions(all):
     """Return disk partitions."""
     rawlist = cext.disk_partitions(all)
-    return [nt_sys_diskpart(*x) for x in rawlist]
+    return [_common.sdiskpart(*x) for x in rawlist]
 
 
 def cpu_times():
     """Return system CPU times as a named tuple."""
     user, system, idle = cext.cpu_times()
-    return nt_sys_cputimes(user, system, idle)
+    return scputimes(user, system, idle)
 
 
 def per_cpu_times():
@@ -134,7 +133,7 @@ def per_cpu_times():
     ret = []
     for cpu_t in cext.per_cpu_times():
         user, system, idle = cpu_t
-        item = nt_sys_cputimes(user, system, idle)
+        item = scputimes(user, system, idle)
         ret.append(item)
     return ret
 
@@ -160,7 +159,7 @@ def users():
     rawlist = cext.users()
     for item in rawlist:
         user, hostname, tstamp = item
-        nt = nt_sys_user(user, None, hostname, tstamp)
+        nt = _common.suser(user, None, hostname, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -249,14 +248,11 @@ class Process(object):
         # http://msdn.microsoft.com/en-us/library/windows/desktop/
         #     ms684877(v=vs.85).aspx
         t = self._get_raw_meminfo()
-        return nt_proc_mem(t[2], t[7])
+        return _common.pmem(t[2], t[7])
 
     @wrap_exceptions
     def ext_memory_info(self):
-        return nt_proc_extmem(*self._get_raw_meminfo())
-
-    nt_mmap_grouped = namedtuple('mmap', 'path rss')
-    nt_mmap_ext = namedtuple('mmap', 'addr perms path rss')
+        return pextmem(*self._get_raw_meminfo())
 
     def memory_maps(self):
         try:
@@ -322,7 +318,7 @@ class Process(object):
         rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = nt_proc_thread(thread_id, utime, stime)
+            ntuple = _common.pthread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
 
@@ -336,7 +332,7 @@ class Process(object):
                 ret = cext.proc_cpu_times_2(self.pid)
             else:
                 raise
-        return nt_proc_cpu(*ret)
+        return _common.pcputimes(*ret)
 
     @wrap_exceptions
     def suspend(self):
@@ -368,7 +364,7 @@ class Process(object):
         for file in raw_file_names:
             file = _convert_raw_path(file)
             if isfile_strict(file) and file not in retlist:
-                ntuple = nt_proc_file(file, -1)
+                ntuple = _common.popenfile(file, -1)
                 retlist.append(ntuple)
         return retlist
 
@@ -383,7 +379,7 @@ class Process(object):
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
             status = TCP_STATUSES[status]
-            nt = nt_proc_conn(fd, fam, type, laddr, raddr, status)
+            nt = _common.pconn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
         return ret
 
@@ -399,17 +395,17 @@ class Process(object):
     if hasattr(cext, "proc_io_priority_get"):
         @wrap_exceptions
         def ionice_get(self):
-            return cext.proc_io_priority(self.pid)
+            return cext.proc_io_priority_get(self.pid)
 
         @wrap_exceptions
-        def set_proc_ionice(self, value, _):
+        def ionice_set(self, value, _):
             if _:
                 raise TypeError("set_proc_ionice() on Windows takes only "
                                 "1 argument (2 given)")
             if value not in (2, 1, 0):
                 raise ValueError("value must be 2 (normal), 1 (low) or 0 "
                                  "(very low); got %r" % value)
-            return cext.set_proc_io_priority(self.pid, value)
+            return cext.proc_io_priority_set(self.pid, value)
 
     @wrap_exceptions
     def io_counters(self):
@@ -421,7 +417,7 @@ class Process(object):
                 ret = cext.proc_io_counters_2(self.pid)
             else:
                 raise
-        return nt_proc_io(*ret)
+        return _common.pio(*ret)
 
     @wrap_exceptions
     def status(self):
@@ -471,4 +467,4 @@ class Process(object):
     @wrap_exceptions
     def num_ctx_switches(self):
         tupl = cext.proc_num_ctx_switches(self.pid)
-        return nt_proc_ctxsw(*tupl)
+        return _common.pctxsw(*tupl)

@@ -3029,9 +3029,9 @@ PsutilMethods[] =
     {"proc_priority_set", psutil_proc_priority_set, METH_VARARGS,
      "Set process priority."},
 #if (_WIN32_WINNT >= 0x0600)  // Windows Vista
-    {"proc_io_priority", psutil_proc_io_priority_get, METH_VARARGS,
+    {"proc_io_priority_get", psutil_proc_io_priority_get, METH_VARARGS,
      "Return process IO priority."},
-    {"set_proc_io_priority", psutil_proc_io_priority_set, METH_VARARGS,
+    {"proc_io_priority_set", psutil_proc_io_priority_set, METH_VARARGS,
      "Set process IO priority."},
 #endif
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,

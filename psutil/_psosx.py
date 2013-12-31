@@ -12,11 +12,7 @@ import sys
 
 from psutil import _common
 from psutil import _psposix
-from psutil._common import (conn_tmap, usage_percent, isfile_strict)
-from psutil._common import (nt_proc_conn, nt_proc_cpu, nt_proc_ctxsw,
-                            nt_proc_file, nt_proc_mem, nt_proc_thread,
-                            nt_proc_gids, nt_proc_uids, nt_sys_diskpart,
-                            nt_sys_swap, nt_sys_user, nt_sys_vmem)
+from psutil._common import conn_tmap, usage_percent, isfile_strict
 from psutil._compat import namedtuple, wraps
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_osx as cext
@@ -53,14 +49,20 @@ PROC_STATUSES = {
     cext.SZOMB: _common.STATUS_ZOMBIE,
 }
 
-# extend base mem ntuple with OSX-specific memory metrics
-nt_sys_vmem = namedtuple(
-    nt_sys_vmem.__name__,
-    list(nt_sys_vmem._fields) + ['active', 'inactive', 'wired'])
+scputimes = namedtuple('scputimes', ['user', 'nice', 'system', 'idle'])
 
-nt_sys_cputimes = namedtuple('cputimes', ['user', 'nice', 'system', 'idle'])
+svmem = namedtuple(
+    'svmem', ['total', 'available', 'percent', 'used', 'free',
+              'active', 'inactive', 'wired'])
 
-nt_proc_extmem = namedtuple('meminfo', ['rss', 'vms', 'pfaults', 'pageins'])
+pextmem = namedtuple('pextmem', ['rss', 'vms', 'pfaults', 'pageins'])
+
+pmmap_grouped = namedtuple(
+    'pmmap_grouped',
+    'path rss private swapped dirtied ref_count shadow_depth')
+
+pmmap_ext = namedtuple(
+    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
 
 # --- functions
@@ -71,21 +73,21 @@ def virtual_memory():
     avail = inactive + free
     used = active + inactive + wired
     percent = usage_percent((total - avail), total, _round=1)
-    return nt_sys_vmem(total, avail, percent, used, free,
-                       active, inactive, wired)
+    return svmem(total, avail, percent, used, free,
+                 active, inactive, wired)
 
 
 def swap_memory():
     """Swap system memory as a (total, used, free, sin, sout) tuple."""
     total, used, free, sin, sout = cext.swap_mem()
     percent = usage_percent(used, total, _round=1)
-    return nt_sys_swap(total, used, free, percent, sin, sout)
+    return _common.sswap(total, used, free, percent, sin, sout)
 
 
 def cpu_times():
     """Return system CPU times as a namedtuple."""
     user, nice, system, idle = cext.cpu_times()
-    return nt_sys_cputimes(user, nice, system, idle)
+    return scputimes(user, nice, system, idle)
 
 
 def per_cpu_times():
@@ -93,7 +95,7 @@ def per_cpu_times():
     ret = []
     for cpu_t in cext.per_cpu_times():
         user, nice, system, idle = cpu_t
-        item = nt_sys_cputimes(user, nice, system, idle)
+        item = scputimes(user, nice, system, idle)
         ret.append(item)
     return ret
 
@@ -123,7 +125,7 @@ def disk_partitions(all=False):
         if not all:
             if not os.path.isabs(device) or not os.path.exists(device):
                 continue
-        ntuple = nt_sys_diskpart(device, mountpoint, fstype, opts)
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
 
@@ -137,7 +139,7 @@ def users():
             continue  # reboot or shutdown
         if not tstamp:
             continue
-        nt = nt_sys_user(user, tty or None, hostname or None, tstamp)
+        nt = _common.suser(user, tty or None, hostname or None, tstamp)
         retlist.append(nt)
     return retlist
 
@@ -204,12 +206,12 @@ class Process(object):
     @wrap_exceptions
     def uids(self):
         real, effective, saved = cext.proc_uids(self.pid)
-        return nt_proc_uids(real, effective, saved)
+        return _common.puids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
         real, effective, saved = cext.proc_gids(self.pid)
-        return nt_proc_gids(real, effective, saved)
+        return _common.pgids(real, effective, saved)
 
     @wrap_exceptions
     def terminal(self):
@@ -224,20 +226,18 @@ class Process(object):
     def memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms = cext.proc_memory_info(self.pid)[:2]
-        return nt_proc_mem(rss, vms)
+        return _common.pmem(rss, vms)
 
     @wrap_exceptions
     def ext_memory_info(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms, pfaults, pageins = cext.proc_memory_info(self.pid)
-        return nt_proc_extmem(rss, vms,
-                              pfaults * PAGESIZE,
-                              pageins * PAGESIZE)
+        return pextmem(rss, vms, pfaults * PAGESIZE, pageins * PAGESIZE)
 
     @wrap_exceptions
     def cpu_times(self):
         user, system = cext.proc_cpu_times(self.pid)
-        return nt_proc_cpu(user, system)
+        return _common.pcputimes(user, system)
 
     @wrap_exceptions
     def create_time(self):
@@ -247,7 +247,7 @@ class Process(object):
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        return nt_proc_ctxsw(*cext.proc_num_ctx_switches(self.pid))
+        return _common.pctxsw(*cext.proc_num_ctx_switches(self.pid))
 
     @wrap_exceptions
     def num_threads(self):
@@ -263,7 +263,7 @@ class Process(object):
         rawlist = cext.proc_open_files(self.pid)
         for path, fd in rawlist:
             if isfile_strict(path):
-                ntuple = nt_proc_file(path, fd)
+                ntuple = _common.popenfile(path, fd)
                 files.append(ntuple)
         return files
 
@@ -281,7 +281,7 @@ class Process(object):
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
             status = TCP_STATUSES[status]
-            nt = nt_proc_conn(fd, fam, type, laddr, raddr, status)
+            nt = _common.pconn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
         return ret
 
@@ -318,16 +318,9 @@ class Process(object):
         rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
-            ntuple = nt_proc_thread(thread_id, utime, stime)
+            ntuple = _common.pthread(thread_id, utime, stime)
             retlist.append(ntuple)
         return retlist
-
-    nt_mmap_grouped = namedtuple(
-        'mmap',
-        'path rss private swapped dirtied ref_count shadow_depth')
-    nt_mmap_ext = namedtuple(
-        'mmap',
-        'addr perms path rss private swapped dirtied ref_count shadow_depth')
 
     @wrap_exceptions
     def memory_maps(self):
