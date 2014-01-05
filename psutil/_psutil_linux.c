@@ -24,22 +24,22 @@
 
 
 // Linux >= 2.6.13
-#define HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
+#define PSUTIL_HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
 
 // Linux >= 2.6.36 (supposedly) and glibc >= 13
-#define HAVE_PRLIMIT \
+#define PSUTIL_HAVE_PRLIMIT \
     (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)) && \
     (__GLIBC__ >= 2 && __GLIBC_MINOR__ >= 13) && \
     defined(__NR_prlimit64)
 
-#if HAVE_PRLIMIT
+#if PSUTIL_HAVE_PRLIMIT
     #define _FILE_OFFSET_BITS 64
     #include <time.h>
     #include <sys/resource.h>
 #endif
 
 
-#if HAVE_IOPRIO
+#if PSUTIL_HAVE_IOPRIO
 enum {
     IOPRIO_WHO_PROCESS = 1,
 };
@@ -111,7 +111,7 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args)
 #endif
 
 
-#if HAVE_PRLIMIT
+#if PSUTIL_HAVE_PRLIMIT
 /*
  * A wrapper around prlimit(2); sets process resource limits.
  * This can be used for both get and set, in which case extra
@@ -136,7 +136,7 @@ psutil_linux_prlimit(PyObject *self, PyObject *args)
         ret = prlimit(pid, resource, NULL, &old);
         if (ret == -1)
             return PyErr_SetFromErrno(PyExc_OSError);
-#if defined(HAVE_LONG_LONG)
+#if defined(PSUTIL_HAVE_LONG_LONG)
         if (sizeof(old.rlim_cur) > sizeof(long)) {
             return Py_BuildValue("LL",
                                  (PY_LONG_LONG)old.rlim_cur,
@@ -148,7 +148,7 @@ psutil_linux_prlimit(PyObject *self, PyObject *args)
 
     // set
     else {
-#if defined(HAVE_LARGEFILE_SUPPORT)
+#if defined(PSUTIL_HAVE_LARGEFILE_SUPPORT)
         new.rlim_cur = PyLong_AsLongLong(soft);
         if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
             return NULL;
@@ -385,7 +385,7 @@ PsutilMethods[] =
 {
     // --- per-process functions
 
-#if HAVE_IOPRIO
+#if PSUTIL_HAVE_IOPRIO
     {"proc_ioprio_get", psutil_proc_ioprio_get, METH_VARARGS,
      "Get process I/O priority"},
     {"proc_ioprio_set", psutil_proc_ioprio_set, METH_VARARGS,
@@ -408,7 +408,7 @@ PsutilMethods[] =
 
     {"linux_sysinfo", psutil_linux_sysinfo, METH_VARARGS,
      "A wrapper around sysinfo(), return system memory usage statistics"},
-#if HAVE_PRLIMIT
+#if PSUTIL_HAVE_PRLIMIT
     {"linux_prlimit", psutil_linux_prlimit, METH_VARARGS,
      "Get or set process resource limits."},
 #endif
@@ -472,7 +472,7 @@ void init_psutil_linux(void)
 #endif
 
 
-#if HAVE_PRLIMIT
+#if PSUTIL_HAVE_PRLIMIT
     PyModule_AddIntConstant(module, "RLIM_INFINITY", RLIM_INFINITY);
     PyModule_AddIntConstant(module, "RLIMIT_AS", RLIMIT_AS);
     PyModule_AddIntConstant(module, "RLIMIT_CORE", RLIMIT_CORE);
