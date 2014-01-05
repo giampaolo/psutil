@@ -192,10 +192,12 @@ class Process(object):
     The only exceptions for which process identity is pre-emptively
     checked and guaranteed are:
 
-     - parent
+     - parent()
      - children()
-     - set_nice()
-     - set_rlimit()
+     - nice() (set)
+     - ionice() (set)
+     - rlimit() (set)
+     - cpu_affinity (set)
      - suspend()
      - resume()
      - send_signal()
@@ -279,7 +281,7 @@ class Process(object):
         return p1 == p2
 
     def __hash__(self):
-        return hash((self.pid, self.__dict__.get('create_time', None)))
+        return hash((self.pid, self.__dict__.get('_create_time', None)))
 
     # --- utility methods
 
@@ -1102,7 +1104,7 @@ class Popen(Process):
         self._init(self.__subproc.pid, _ignore_nsp=True)
 
     def __dir__(self):
-        return list(set(dir(Popen) + dir(subprocess.Popen)))
+        return sorted(set(dir(Popen) + dir(subprocess.Popen)))
 
     def __getattribute__(self, name):
         try:

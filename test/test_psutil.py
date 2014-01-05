@@ -43,7 +43,7 @@ except ImportError:
 try:
     import json  # python >= 2.6
 except ImportError:
-    pass
+    json = None
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
@@ -451,7 +451,10 @@ if WINDOWS:
             sp = wv.service_pack_major or 0
         else:
             r = re.search("\s\d$", wv.service_pack)
-            sp = int(r.group(0)) if r else 0
+            if r:
+                sp = int(r.group(0))
+            else:
+                sp = 0
         return (wv.major, wv.minor, sp)
 
 
@@ -2453,7 +2456,7 @@ class TestMisc(unittest.TestCase):
         p1 = psutil.Process()
         p2 = psutil.Process()
         self.assertEqual(p1, p2)
-        p2.__dict__['create_time'] = 10
+        p2.__dict__['_create_time'] = 10
         self.assertNotEqual(p1, p2)
 
     def test__hash__(self):

@@ -37,7 +37,7 @@ install: build
 	fi
 
 uninstall:
-	pip-`$(PYTHON) -c "import sys; sys.stdout.write('.'.join(map(str, sys.version_info)[:2]))"` uninstall -y -v psutil
+	pip-`$(PYTHON) -c "import sys; sys.stdout.write('.'.join(list(map(str, sys.version_info))[:2]))"` uninstall -y -v psutil
 
 test: install
 	$(PYTHON) $(TSCRIPT)
