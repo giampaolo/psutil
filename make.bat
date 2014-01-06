@@ -20,7 +20,6 @@ if "%PYTHON%" == "" (
 if "%TSCRIPT%" == "" (
     set TSCRIPT=test\test_psutil.py
 )
-set PATH=%PYTHON%;%PATH%
 set PATH=C:\MinGW\bin;%PATH%
 
 

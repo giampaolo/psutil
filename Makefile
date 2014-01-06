@@ -40,7 +40,7 @@ uninstall:
 	if test $(PYTHON) = python2.4; then \
 		pip-2.4 uninstall -y -v psutil; \
 	else \
-		cd /tmp; $(PYTHON) -m pip uninstall -y -v psutil; \
+		cd ..; $(PYTHON) -m pip uninstall -y -v psutil; \
 	fi
 
 test: install

@@ -450,12 +450,12 @@ if WINDOWS:
         if hasattr(wv, 'service_pack_major'):  # python >= 2.7
             sp = wv.service_pack_major or 0
         else:
-            r = re.search("\s\d$", wv.service_pack)
+            r = re.search("\s\d$", wv[4])
             if r:
                 sp = int(r.group(0))
             else:
                 sp = 0
-        return (wv.major, wv.minor, sp)
+        return (wv[0], wv[1], sp)
 
 
 class ThreadTask(threading.Thread):
@@ -1562,11 +1562,11 @@ class TestProcess(unittest.TestCase):
         elif WINDOWS and 'USERNAME' in os.environ:
             expected_username = os.environ['USERNAME']
             expected_domain = os.environ['USERDOMAIN']
-            domain, username = p.username.split('\\')
+            domain, username = p.username().split('\\')
             self.assertEqual(domain, expected_domain)
             self.assertEqual(username, expected_username)
         else:
-            p.username
+            p.username()
 
     def test_cwd(self):
         sproc = get_test_subprocess(wait=True)
@@ -2072,11 +2072,11 @@ class TestProcess(unittest.TestCase):
         # username property
         try:
             if POSIX:
-                self.assertEqual(p.username, 'root')
+                self.assertEqual(p.username(), 'root')
             elif WINDOWS:
-                self.assertEqual(p.username, 'NT AUTHORITY\\SYSTEM')
+                self.assertEqual(p.username(), 'NT AUTHORITY\\SYSTEM')
             else:
-                p.username
+                p.username()
         except psutil.AccessDenied:
             pass
 
