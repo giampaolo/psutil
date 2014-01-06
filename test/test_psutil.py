@@ -2458,6 +2458,7 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(p1, p2)
         p2.__dict__['_create_time'] = 10
         self.assertNotEqual(p1, p2)
+        self.assertNotEqual(p1, 'foo')
 
     def test__hash__(self):
         s = set([psutil.Process(), psutil.Process()])

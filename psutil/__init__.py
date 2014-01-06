@@ -276,10 +276,13 @@ class Process(object):
         # If not present it means AD was raised therefore the
         # comparison will be based on PID only.
         if not isinstance(other, Process):
-            return False
+            return NotImplemented
         p1 = (self.pid, self.__dict__.get('_create_time', None))
         p2 = (other.pid, other.__dict__.get('_create_time', None))
         return p1 == p2
+
+    def __ne__(self, other):
+        return not self == other
 
     def __hash__(self):
         if self._hash is None:
