@@ -228,6 +228,7 @@ class Process(object):
         self._exe = None
         self._create_time = None
         self._gone = False
+        self._hash = None
         # used for caching on Windows only (on POSIX ppid may change)
         self._ppid = None
         # platform-specific modules define an _psplatform.Process
@@ -281,7 +282,10 @@ class Process(object):
         return p1 == p2
 
     def __hash__(self):
-        return hash((self.pid, self.__dict__.get('_create_time', None)))
+        if self._hash is None:
+            self._hash = \
+                hash((self.pid, self.__dict__.get('_create_time', None)))
+        return self._hash
 
     # --- utility methods
 
