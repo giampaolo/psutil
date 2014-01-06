@@ -3091,7 +3091,7 @@ void init_psutil_windows(void)
     }
 
     st = GETSTATE(module);
-    st->error = PyErr_NewException("_psutil_mswindow.Error", NULL, NULL);
+    st->error = PyErr_NewException("_psutil_windows.Error", NULL, NULL);
     if (st->error == NULL) {
         Py_DECREF(module);
         INITERROR;

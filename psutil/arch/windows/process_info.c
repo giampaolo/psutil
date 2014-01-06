@@ -4,7 +4,7 @@
  * found in the LICENSE file.
  *
  * Helper functions related to fetching process information. Used by
- * _psutil_mswindows module methods.
+ * _psutil_windows module methods.
  */
 
 #include <Python.h>

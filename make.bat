@@ -78,9 +78,12 @@ if "%1" == "install" (
 
 if "%1" == "uninstall" (
     :uninstall
-    rmdir /S /Q %PYTHON%\Lib\site-packages\psutil
-    del /F /S /Q %PYTHON%\Lib\site-packages\psutil*
-    del /F /S /Q %PYTHON%\Lib\site-packages\_psutil*
+    for %%A in ("%PYTHON%") do (
+        set folder=%%~dpA
+    )
+    for /F "delims=" %%i in ('dir /b %folder%\Lib\site-packages\*psutil*') do (
+        rmdir /S /Q %folder%\Lib\site-packages\%%i
+    )
     goto :eof
 )
 
