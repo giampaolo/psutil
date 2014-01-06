@@ -361,6 +361,24 @@ class Process(object):
             except NoSuchProcess:
                 pass
 
+    def is_running(self):
+        """Return whether this process is running.
+        It also checks if PID has been reused by another process in
+        which case return False.
+        """
+        if self._gone:
+            return False
+        try:
+            # Checking if PID is alive is not enough as the PID might
+            # have been reused by another process: we also want to
+            # check process identity.
+            # Process identity / uniqueness over time is greanted by
+            # (PID + creation time) and that is verified in __eq__.
+            return self == Process(self.pid)
+        except NoSuchProcess:
+            self._gone = True
+            return False
+
     # --- actual API
 
     @property
@@ -859,24 +877,6 @@ class Process(object):
         all             the sum of all the possible families and protocols
         """
         return self._proc.connections(kind)
-
-    def is_running(self):
-        """Return whether this process is running.
-        It also checks if PID has been reused by another process in
-        which case return False.
-        """
-        if self._gone:
-            return False
-        try:
-            # Checking if PID is alive is not enough as the PID might
-            # have been reused by another process: we also want to
-            # check process identity.
-            # Process identity / uniqueness over time is greanted by
-            # (PID + creation time) and that is verified in __eq__.
-            return self == Process(self.pid)
-        except NoSuchProcess:
-            self._gone = True
-            return False
 
     @_assert_pid_not_reused
     def send_signal(self, sig):
