@@ -1431,7 +1431,7 @@ psutil_proc_username(PyObject *self, PyObject *args)
 #define AF_INET6 23
 #endif
 
-#define ConnDecrefPyObjs() \
+#define _psutil_conn_decref_objs() \
     Py_DECREF(_AF_INET); \
     Py_DECREF(_AF_INET6);\
     Py_DECREF(_SOCK_STREAM);\
@@ -1483,18 +1483,18 @@ psutil_proc_connections(PyObject *self, PyObject *args)
     PyObject *addressTupleRemote = NULL;
 
     if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter)) {
-        ConnDecrefPyObjs();
+        _psutil_conn_decref_objs();
         return NULL;
     }
 
     if (!PySequence_Check(af_filter) || !PySequence_Check(type_filter)) {
-        ConnDecrefPyObjs();
+        _psutil_conn_decref_objs();
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         return NULL;
     }
 
     if (psutil_pid_is_running(pid) == 0) {
-        ConnDecrefPyObjs();
+        _psutil_conn_decref_objs();
         return NoSuchProcess();
     }
 
@@ -1522,13 +1522,13 @@ psutil_proc_connections(PyObject *self, PyObject *args)
     if ((getExtendedTcpTable == NULL) || (getExtendedUdpTable == NULL)) {
         PyErr_SetString(PyExc_NotImplementedError,
                         "feature not supported on this Windows version");
-        ConnDecrefPyObjs();
+        _psutil_conn_decref_objs();
         return NULL;
     }
 
     connectionsList = PyList_New(0);
     if (connectionsList == NULL) {
-        ConnDecrefPyObjs();
+        _psutil_conn_decref_objs();
         return NULL;
     }
 
@@ -1852,11 +1852,11 @@ psutil_proc_connections(PyObject *self, PyObject *args)
         free(table);
     }
 
-    ConnDecrefPyObjs();
+    _psutil_conn_decref_objs();
     return connectionsList;
 
 error:
-    ConnDecrefPyObjs();
+    _psutil_conn_decref_objs();
     Py_XDECREF(connectionTuple);
     Py_XDECREF(addressTupleLocal);
     Py_XDECREF(addressTupleRemote);
