@@ -2456,7 +2456,7 @@ class TestMisc(unittest.TestCase):
         p1 = psutil.Process()
         p2 = psutil.Process()
         self.assertEqual(p1, p2)
-        p2.__dict__['_create_time'] = 10
+        p2._ident = (0, 0)
         self.assertNotEqual(p1, p2)
         self.assertNotEqual(p1, 'foo')
 

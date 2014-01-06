@@ -248,6 +248,11 @@ class Process(object):
             if not _ignore_nsp:
                 msg = 'no process found with pid %s' % pid
                 raise NoSuchProcess(pid, None, msg)
+        # This pair is supposed to indentify a Process instance
+        # univocally over time (the PID alone is not enough as
+        # it might refer to a process whose PID has been reused).
+        # This will be used later in __eq__() and is_running().
+        self._ident = (self.pid, self._create_time)
 
     def __str__(self):
         try:
@@ -268,26 +273,16 @@ class Process(object):
     def __eq__(self, other):
         # Test for equality with another Process object based
         # on PID and creation time.
-        # This pair is supposed to indentify a Process instance
-        # univocally over time (the PID alone is not enough as
-        # it might refer to a process whose PID has been reused).
-        # Here we get the cached version of create_time which was
-        # determined in __init__.
-        # If not present it means AD was raised therefore the
-        # comparison will be based on PID only.
         if not isinstance(other, Process):
             return NotImplemented
-        p1 = (self.pid, self.__dict__.get('_create_time', None))
-        p2 = (other.pid, other.__dict__.get('_create_time', None))
-        return p1 == p2
+        return self._ident == other._ident
 
     def __ne__(self, other):
         return not self == other
 
     def __hash__(self):
         if self._hash is None:
-            self._hash = \
-                hash((self.pid, self.__dict__.get('_create_time', None)))
+            self._hash = hash(self._ident)
         return self._hash
 
     # --- utility methods
