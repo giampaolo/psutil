@@ -338,8 +338,7 @@ def boot_time():
 
 def pids():
     """Returns a list of PIDs currently running on the system."""
-    pids = [int(x) for x in os.listdir('/proc') if x.isdigit()]
-    return pids
+    return [int(x) for x in os.listdir('/proc') if x.isdigit()]
 
 
 def pid_exists(pid):

@@ -173,7 +173,7 @@ def _assert_pid_not_reused(fun):
     @_wraps(fun)
     def wrapper(self, *args, **kwargs):
         if not self.is_running():
-            raise NoSuchProcess(self.pid, self._proc._name)
+            raise NoSuchProcess(self.pid, self._name)
         return fun(self, *args, **kwargs)
     return wrapper
 
@@ -892,9 +892,9 @@ class Process(object):
                 err = sys.exc_info()[1]
                 if err.errno == errno.ESRCH:
                     self._gone = True
-                    raise NoSuchProcess(self.pid, self._proc._name)
+                    raise NoSuchProcess(self.pid, self._name)
                 if err.errno == errno.EPERM:
-                    raise AccessDenied(self.pid, self._proc._name)
+                    raise AccessDenied(self.pid, self._name)
                 raise
         else:
             if sig == signal.SIGTERM:
@@ -1099,7 +1099,7 @@ class Popen(Process):
     """
 
     def __init__(self, *args, **kwargs):
-        # Explicitly avoid raise NoSuchProcess in case the process
+        # Explicitly avoid to raise NoSuchProcess in case the process
         # spawned by subprocess.Popen terminates too quickly, see:
         # https://code.google.com/p/psutil/issues/detail?id=193
         self.__subproc = subprocess.Popen(*args, **kwargs)
