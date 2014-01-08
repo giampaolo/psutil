@@ -328,10 +328,7 @@ class Process(object):
             try:
                 attr = getattr(self, name)
                 if callable(attr):
-                    if name == 'cpu_percent':
-                        ret = attr(interval=0)
-                    else:
-                        ret = attr()
+                    ret = attr()
                 else:
                     ret = attr
             except AccessDenied:
@@ -720,16 +717,18 @@ class Process(object):
                                 checkpids.append(child.pid)
         return ret
 
-    def cpu_percent(self, interval=0.1):
+    def cpu_percent(self, interval=None):
         """Return a float representing the current process CPU
         utilization as a percentage.
+
+        When interval is 0.0 or None (default) compares process times
+        to system CPU times elapsed since last call, returning
+        immediately (non-blocking). That means that the first time
+        this is called it will return a meaningful 0.0 value.
 
         When interval is > 0.0 compares process times to system CPU
         times elapsed before and after the interval (blocking).
 
-        When interval is 0.0 or None compares process times to system
-        CPU times elapsed since last call, returning immediately
-        (non-blocking).
         In this case is recommended for accuracy that this function
         be called with at least 0.1 seconds between calls.
 
@@ -1343,7 +1342,7 @@ def cpu_times(percpu=False):
 _last_cpu_times = cpu_times()
 _last_per_cpu_times = cpu_times(percpu=True)
 
-def cpu_percent(interval=0.1, percpu=False):
+def cpu_percent(interval=0.0, percpu=False):
     """Return a float representing the current system-wide CPU
     utilization as a percentage.
 
@@ -1425,7 +1424,7 @@ def cpu_percent(interval=0.1, percpu=False):
 _last_cpu_times_2 = _last_cpu_times
 _last_per_cpu_times_2 = _last_per_cpu_times
 
-def cpu_times_percent(interval=0.1, percpu=False):
+def cpu_times_percent(interval=0.0, percpu=False):
     """Same as cpu_percent() but provides utilization percentages
     for each specific CPU time as is returned by cpu_times().
     For instance, on Linux we'll get:

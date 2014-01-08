@@ -13,6 +13,8 @@ XXX - TODO: reference deprecated APIs
  * #453: unittest2 module is required on Python < 2.7.
  * #459: added a make file for running tests and other repetitive tasks (also
          on Windows).
+ * #463: timeout parameter of cpu_percent* functions now defaults to 0.0 so
+         that slowdowns are not accidentally introduced.
 
 BUG FIXES
 
@@ -111,6 +113,7 @@ In most cases accessing the old names will work but it will cause a DeprecationW
     ---------------------------------
 
  * Others:
+  * timeout parameter of cpu_percent* functions defaults to 0.0 instead of 0.1.
   * Process instances' "retcode" attribute returned by psutil.wait_procs() has
     been renamed to "returncode" for consistency with subprocess.Popen.
 
