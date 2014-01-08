@@ -456,8 +456,7 @@ static struct PyModuleDef
 
 #define INITERROR return NULL
 
-PyObject *
-PyInit__psutil_linux(void)
+PyMODINIT_FUNC PyInit__psutil_linux(void)
 
 #else
 #define INITERROR return

@@ -106,8 +106,7 @@ static struct PyModuleDef moduledef = {
 
 #define INITERROR return NULL
 
-PyObject *
-PyInit__psutil_posix(void)
+PyMODINIT_FUNC PyInit__psutil_posix(void)
 
 #else
 #define INITERROR return

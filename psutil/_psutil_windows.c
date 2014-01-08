@@ -3131,7 +3131,7 @@ static struct PyModuleDef moduledef = {
 
 #define INITERROR return NULL
 
-PyObject *PyInit__psutil_windows(void)
+PyMODINIT_FUNC PyInit__psutil_windows(void)
 
 #else
 #define INITERROR return
