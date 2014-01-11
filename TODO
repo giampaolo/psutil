@@ -143,7 +143,7 @@ M = medium risk in terms of breakage
 S = little risk in terms of breakage
 ? = debatable
 
-Removals:
+Removals (will likely happen in 2.2):
 
  * (S) psutil.Process.nice  (deprecated in 0.5.0)
  * (S) get_process_list  (deprecated in 0.5.0)
@@ -152,18 +152,6 @@ Removals:
  * (M) psutil.network_io_counters  (deprecated in 1.0.0)
  * (M) local_address and remote_address get_connection() namedtuple fields
        (deprecated in 1.0.0)
-
-Renames:
-
- * (H) psutil.Process.ppid     -> get_ppid()
- * (H) psutil.Process.status   -> get_status()
- * (H) psutil.Process.uids     -> get_uids()
- * (H) psutil.Process.gids     -> get_gids()
- * (H) psutil.Process.username -> get_username()
-
- Others:
-
-  * (M) make *cpu_percent's 'default' parameter default to 0.
 
 
 REJECTED IDEAS
