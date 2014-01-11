@@ -630,7 +630,7 @@ class Process(object):
             f.close()
 
     @wrap_exceptions
-    def ext_memory_info(self):
+    def memory_info_ex(self):
         #  ============================================================
         # | FIELD  | DESCRIPTION                         | AKA  | TOP  |
         #  ============================================================

@@ -262,7 +262,7 @@ class Process(object):
         return _common.pmem(rss, vms)
 
     @wrap_exceptions
-    def ext_memory_info(self):
+    def memory_info_ex(self):
         return pextmem(*cext.proc_memory_info(self.pid))
 
     @wrap_exceptions

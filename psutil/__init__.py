@@ -803,12 +803,12 @@ class Process(object):
         """
         return self._proc.memory_info()
 
-    def ext_memory_info(self):
+    def memory_info_ex(self):
         """Return a namedtuple with variable fields depending on the
         platform representing extended memory information about
         this process. All numbers are expressed in bytes.
         """
-        return self._proc.ext_memory_info()
+        return self._proc.memory_info_ex()
 
     def memory_percent(self):
         """Compare physical system memory to process resident memory
@@ -991,7 +991,7 @@ class Process(object):
     def getcwd(self):
         pass
 
-    @_deprecated_method(replacement='ext_memory_info')
+    @_deprecated_method(replacement='memory_info_ex')
     def get_ext_memory_info(self):
         pass
 

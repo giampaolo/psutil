@@ -183,8 +183,8 @@ class TestProcessObjectLeaks(Base):
     def test_memory_info(self):
         self.execute('memory_info')
 
-    def test_ext_memory_info(self):
-        self.execute('ext_memory_info')
+    def test_memory_info_ex(self):
+        self.execute('memory_info_ex')
 
     def test_terminal(self):
         self.execute('terminal')

@@ -1415,7 +1415,7 @@ class TestProcess(unittest.TestCase):
         self.assertGreater(percent2, percent1)
         del memarr
 
-    # def test_ext_memory_info(self):
+    # def test_memory_info_ex(self):
     # # tested later in fetch all test suite
 
     def test_memory_maps(self):
@@ -2274,7 +2274,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertTrue(ret.rss >= 0)
         self.assertTrue(ret.vms >= 0)
 
-    def ext_memory_info(self, ret):
+    def memory_info_ex(self, ret):
         for name in ret._fields:
             self.assertTrue(getattr(ret, name) >= 0)
         if POSIX and ret.vms != 0:

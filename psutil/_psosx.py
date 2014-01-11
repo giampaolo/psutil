@@ -229,7 +229,7 @@ class Process(object):
         return _common.pmem(rss, vms)
 
     @wrap_exceptions
-    def ext_memory_info(self):
+    def memory_info_ex(self):
         """Return a tuple with the process' RSS and VMS size."""
         rss, vms, pfaults, pageins = cext.proc_memory_info(self.pid)
         return pextmem(rss, vms, pfaults * PAGESIZE, pageins * PAGESIZE)

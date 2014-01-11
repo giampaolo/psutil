@@ -56,6 +56,7 @@ In most cases accessing the old names will work but it will cause a DeprecationW
     -----------------------------------------------
 
  * All psutil.Process get_* methods lost the "get_" prefix.
+   get_ext_memory_info() renamed to memory_info_ex().
    Assuming "p = psutil.Process()":
 
     -------------------------------------------------
@@ -66,7 +67,7 @@ In most cases accessing the old names will work but it will cause a DeprecationW
    | p.get_cpu_affinity()     | p.cpu_affinity()     |
    | p.get_cpu_percent()      | p.cpu_percent()      |
    | p.get_cpu_times()        | p.cpu_times()        |
-   | p.get_ext_memory_info()  | p.ext_memory_info()  |
+   | p.get_ext_memory_info()  | p.memory_info_ex()   |
    | p.get_io_counters()      | p.io_counters()      |
    | p.get_ionice()           | p.ionice()           |
    | p.get_memory_info()      | p.memory_info()      |
@@ -79,6 +80,7 @@ In most cases accessing the old names will work but it will cause a DeprecationW
    | p.get_open_files()       | p.open_files()       |
    | p.get_rlimit()           | p.rlimit()           |
    | p.get_threads()          | p.threads()          |
+   | p.getcwd()               | p.cwd()              |
     -------------------------------------------------
 
  * All psutil.Process set_* methods lost the "set_" prefix.

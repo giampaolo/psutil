@@ -251,7 +251,7 @@ class Process(object):
         return _common.pmem(t[2], t[7])
 
     @wrap_exceptions
-    def ext_memory_info(self):
+    def memory_info_ex(self):
         return pextmem(*self._get_raw_meminfo())
 
     def memory_maps(self):
