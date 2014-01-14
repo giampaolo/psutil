@@ -5,6 +5,7 @@ Quick links
 
 * `Home page <http://code.google.com/p/psutil>`_
 * `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
+* `Blog <http://grodola.blogspot.it/search/label/psutil>`_
 * `Documentation <http://code.google.com/p/psutil/wiki/Documentation>`_
 * `Forum <http://groups.google.com/group/psutil/topics>`_
 * `What's new <https://psutil.googlecode.com/hg/HISTORY>`_
@@ -31,233 +32,221 @@ Example usages
 CPU
 ===
 
->>> import psutil
->>> psutil.cpu_times()
-scputimes(user=3961.46, nice=169.729, system=2150.659, idle=16900.540,
-          iowait=629.59, irq=0.0, softirq=19.42, steal=0.0, guest=0, nice=0.0)
->>>
->>> for x in range(3):
-...     psutil.cpu_percent(interval=1)
-...
-4.0
-5.9
-3.8
->>>
->>> for x in range(3):
-...     psutil.cpu_percent(interval=1, percpu=True)
-...
-[4.0, 6.9]
-[7.0, 8.5]
-[1.2, 9.0]
->>>
->>> for x in range(3):
-...     psutil.cpu_times_percent(interval=1, percpu=False)
-...
-scputimes(user=1.5, nice=0.0, system=0.5, idle=96.5, iowait=1.5, irq=0.0,
-          softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
-scputimes(user=1.0, nice=0.0, system=0.0, idle=99.0, iowait=0.0, irq=0.0,
-          softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
-scputimes(user=2.0, nice=0.0, system=0.0, idle=98.0, iowait=0.0, irq=0.0,
-          softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
->>>
->>> psutil.cpu_count()
-4
->>> psutil.cpu_count(logical=False)
-2
->>>
+.. code-block:: python
 
+    >>> import psutil
+    >>> psutil.cpu_times()
+    scputimes(user=3961.46, nice=169.729, system=2150.659, idle=16900.540, iowait=629.59, irq=0.0, softirq=19.42, steal=0.0, guest=0, nice=0.0)
+    >>>
+    >>> for x in range(3):
+    ...     psutil.cpu_percent(interval=1)
+    ...
+    4.0
+    5.9
+    3.8
+    >>>
+    >>> for x in range(3):
+    ...     psutil.cpu_percent(interval=1, percpu=True)
+    ...
+    [4.0, 6.9]
+    [7.0, 8.5]
+    [1.2, 9.0]
+    >>>
+    >>> for x in range(3):
+    ...     psutil.cpu_times_percent(interval=1, percpu=False)
+    ...
+    scputimes(user=1.5, nice=0.0, system=0.5, idle=96.5, iowait=1.5, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+    scputimes(user=1.0, nice=0.0, system=0.0, idle=99.0, iowait=0.0, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+    scputimes(user=2.0, nice=0.0, system=0.0, idle=98.0, iowait=0.0, irq=0.0, softirq=0.0, steal=0.0, guest=0.0, guest_nice=0.0)
+    >>>
+    >>> psutil.cpu_count()
+    4
+    >>> psutil.cpu_count(logical=False)
+    2
+    >>>
 
 Memory
 ======
 
->>> psutil.virtual_memory()
-svmem(total=8374149120L, available=2081050624L, percent=75.1, used=8074080256L,
-      free=300068864L, active=3294920704, inactive=1361616896,
-      buffers=529895424L, cached=1251086336)
->>> psutil.swap_memory()
-sswap(total=2097147904L, used=296128512L, free=1801019392L, percent=14.1,
-      sin=304193536, sout=677842944)
->>>
+.. code-block:: python
 
+    >>> psutil.virtual_memory()
+    svmem(total=8374149120L, available=2081050624L, percent=75.1, used=8074080256L, free=300068864L, active=3294920704, inactive=1361616896, buffers=529895424L, cached=1251086336)
+    >>> psutil.swap_memory()
+    sswap(total=2097147904L, used=296128512L, free=1801019392L, percent=14.1, sin=304193536, sout=677842944)
+    >>>
 
 Disks
 =====
 
->>> psutil.disk_partitions()
-[sdiskpart(device='/dev/sda1', mountpoint='/', fstype='ext4', opts='rw,nosuid'),
- sdiskpart(device='/dev/sda2', mountpoint='/home', fstype='ext, opts='rw')]
->>>
->>> psutil.disk_usage('/')
-sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
->>>
->>> psutil.disk_io_counters(perdisk=False)
-sdiskio(read_count=719566, write_count=1082197, read_bytes=18626220032,
-        write_bytes=24081764352, read_time=5023392, write_time=63199568)
->>>
+.. code-block:: python
 
+    >>> psutil.disk_partitions()
+    [sdiskpart(device='/dev/sda1', mountpoint='/', fstype='ext4', opts='rw,nosuid'),
+     sdiskpart(device='/dev/sda2', mountpoint='/home', fstype='ext, opts='rw')]
+    >>>
+    >>> psutil.disk_usage('/')
+    sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
+    >>>
+    >>> psutil.disk_io_counters(perdisk=False)
+    sdiskio(read_count=719566, write_count=1082197, read_bytes=18626220032, write_bytes=24081764352, read_time=5023392, write_time=63199568)
+    >>>
 
 Network
 =======
 
->>> psutil.net_io_counters(pernic=True)
-{'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642,
-               packets_sent=3251564, packets_recv=4787798,
-               errin=0, errout=0, dropin=0, dropout=0),
- 'lo': netio(bytes_sent=2838627, bytes_recv=2838627, packets_sent=30567,
-             packets_recv=30567, errin=0, errout=0, dropin=0, dropout=0)}
+.. code-block:: python
 
->>>
-
+    >>> psutil.net_io_counters(pernic=True)
+    {'eth0': netio(bytes_sent=485291293, bytes_recv=6004858642, packets_sent=3251564, packets_recv=4787798, errin=0, errout=0, dropin=0, dropout=0),
+     'lo': netio(bytes_sent=2838627, bytes_recv=2838627, packets_sent=30567, packets_recv=30567, errin=0, errout=0, dropin=0, dropout=0)}
+    >>>
 
 Other system info
 =================
 
->>> psutil.users()
-[user(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0),
- user(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0)]
->>>
->>> psutil.boot_time()
-1365519115.0
->>>
+.. code-block:: python
 
+    >>> psutil.users()
+    [user(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0),
+     user(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0)]
+    >>>
+    >>> psutil.boot_time()
+    1365519115.0
+    >>>
 
 Process management
 ==================
 
->>> import psutil
->>> psutil.pids()
-[1, 2, 3, 4, 5, 6, 7, 46, 48, 50, 51, 178, 182, 222, 223, 224,
-268, 1215, 1216, 1220, 1221, 1243, 1244, 1301, 1601, 2237, 2355,
-2637, 2774, 3932, 4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245,
-4263, 4282, 4306, 4311, 4312, 4313, 4314, 4337, 4339, 4357, 4358,
-4363, 4383, 4395, 4408, 4433, 4443, 4445, 4446, 5167, 5234, 5235,
-5252, 5318, 5424, 5644, 6987, 7054, 7055, 7071]
->>>
->>> p = psutil.Process(7055)
->>> p.name()
-'python'
->>> p.exe()
-'/usr/bin/python'
->>> p.cwd()
-'/home/giampaolo'
->>> p.cmdline()
-['/usr/bin/python', 'main.py']
->>>
->>> p.status()
-'running'
->>> p.username()
-'giampaolo'
->>> p.create_time()
-1267551141.5019531
->>> p.terminal()
-'/dev/pts/0'
->>>
->>> p.uids()
-puids(real=1000, effective=1000, saved=1000)
->>> p.gids()
-pgids(real=1000, effective=1000, saved=1000)
->>>
->>> p.cpu_times()
-pcputimes(user=1.02, system=0.31)
->>> p.cpu_percent(interval=1.0)
-12.1
->>> p.cpu_affinity()
-[0, 1, 2, 3]
->>> p.set_cpu_affinity([0])
->>>
->>> p.memory_percent()
-0.63423
->>>
->>> p.memory_info()
-pmem(rss=7471104, vms=68513792)
->>> p.ext_memory_info()
-èextmem(rss=9662464, vms=49192960, shared=3612672, text=2564096, lib=0,
-        data=5754880, dirty=0)
->>> p.memory_maps()
-[pmmap_grouped(path='/lib/x86_64-linux-gnu/libutil-2.15.so', rss=16384,
-               anonymous=8192, swap=0),
- pmmap_grouped(path='/lib/x86_64-linux-gnu/libc-2.15.so', rss=6384,
-               anonymous=15, swap=0),
- pmmap_grouped(path='/lib/x86_64-linux-gnu/libcrypto.so.1.0.0', rss=34124,
-               anonymous=1245, swap=0),
- pmmap_grouped(path='[heap]', rss=54653, anonymous=8192, swap=0),
- pmmap_grouped(path='[stack]', rss=1542, anonymous=166, swap=0),
- ...]
->>>
->>> p.io_counters()
-pio(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632)
->>>
->>> p.open_files()
-[popenfile(path='/home/giampaolo/svn/psutil/somefile', fd=3)]
->>>
->>> p.connections()
-[pconn(fd=115, family=2, type=1, laddr=('10.0.0.1', 48776),
-       raddr=('93.186.135.91', 80), status='ESTABLISHED'),
- pconn(fd=117, family=2, type=1, laddr=('10.0.0.1', 43761),
-       raddr=('72.14.234.100', 80), status='CLOSING'),
- pconn(fd=119, family=2, type=1, laddr=('10.0.0.1', 60759),
-       raddr=('72.14.234.104', 80), status='ESTABLISHED'),
- pconn(fd=123, family=2, type=1, laddr=('10.0.0.1', 51314),
-       raddr=('72.14.234.83', 443), status='SYN_SENT')]
->>>
->>> p.num_threads()
-4
->>> p.num_fds()
-8
->>> p.threads()
-[pthread(id=5234, user_time=22.5, system_time=9.2891),
- pthread(id=5235, user_time=0.0, system_time=0.0),
- pthread(id=5236, user_time=0.0, system_time=0.0),
- pthread(id=5237, user_time=0.0707, system_time=1.1)]
->>>
->>> p.num_ctx_switches()
-pctxsw(voluntary=78, involuntary=19)
->>>
->>> p.nice()
-0
->>> p.set_nice(10)
->>>
->>> p.set_ionice(psutil.IOPRIO_CLASS_IDLE)  # IO priority (Win and Linux only)
->>> p.ionice()
-pionice(ioclass=3, value=0)
->>>
->>> p.set_rlimit(psutil.RLIMIT_NOFILE, (5, 5))  # resource limits (Linux only)
->>> p.rlimit(psutil.RLIMIT_NOFILE)
-(5, 5)
->>>
->>> p.suspend()
->>> p.resume()
->>>
->>> p.terminate()
->>> p.wait(timeout=3)
-0
->>>
->>> psutil.test()
-USER         PID %CPU %MEM     VSZ     RSS TTY        START    TIME  COMMAND
-root           1  0.0  0.0   24584    2240 ?          Jun17   00:00  init
-root           2  0.0  0.0       0       0 ?          Jun17   00:00  kthreadd
-root           3  0.0  0.0       0       0 ?          Jun17   00:05  ksoftirqd/0
-...
-giampaolo  31475  0.0  0.0   20760    3024 /dev/pts/0 Jun19   00:00  python2.4
-giampaolo  31721  0.0  2.2  773060  181896 ?          00:04   10:30  chrome
-root       31763  0.0  0.0       0       0 ?          00:05   00:00  kworker/0:1
->>>
+.. code-block:: python
+
+    >>> import psutil
+    >>> psutil.pids()
+    [1, 2, 3, 4, 5, 6, 7, 46, 48, 50, 51, 178, 182, 222, 223, 224,
+     268, 1215, 1216, 1220, 1221, 1243, 1244, 1301, 1601, 2237, 2355,
+     2637, 2774, 3932, 4176, 4177, 4185, 4187, 4189, 4225, 4243, 4245,
+     4263, 4282, 4306, 4311, 4312, 4313, 4314, 4337, 4339, 4357, 4358,
+     4363, 4383, 4395, 4408, 4433, 4443, 4445, 4446, 5167, 5234, 5235,
+     5252, 5318, 5424, 5644, 6987, 7054, 7055, 7071]
+    >>>
+    >>> p = psutil.Process(7055)
+    >>> p.name()
+    'python'
+    >>> p.exe()
+    '/usr/bin/python'
+    >>> p.cwd()
+    '/home/giampaolo'
+    >>> p.cmdline()
+    ['/usr/bin/python', 'main.py']
+    >>>
+    >>> p.status()
+    'running'
+    >>> p.username()
+    'giampaolo'
+    >>> p.create_time()
+    1267551141.5019531
+    >>> p.terminal()
+    '/dev/pts/0'
+    >>>
+    >>> p.uids()
+    puids(real=1000, effective=1000, saved=1000)
+    >>> p.gids()
+    pgids(real=1000, effective=1000, saved=1000)
+    >>>
+    >>> p.cpu_times()
+    pcputimes(user=1.02, system=0.31)
+    >>> p.cpu_percent(interval=1.0)
+    12.1
+    >>> p.cpu_affinity()
+    [0, 1, 2, 3]
+    >>> p.set_cpu_affinity([0])
+    >>>
+    >>> p.memory_percent()
+    0.63423
+    >>>
+    >>> p.memory_info()
+    pmem(rss=7471104, vms=68513792)
+    >>> p.ext_memory_info()
+    extmem(rss=9662464, vms=49192960, shared=3612672, text=2564096, lib=0, data=5754880, dirty=0)
+    >>> p.memory_maps()
+    [pmmap_grouped(path='/lib/x86_64-linux-gnu/libutil-2.15.so', rss=16384, anonymous=8192, swap=0),
+     pmmap_grouped(path='/lib/x86_64-linux-gnu/libc-2.15.so', rss=6384, anonymous=15, swap=0),
+     pmmap_grouped(path='/lib/x86_64-linux-gnu/libcrypto.so.1.0.0', rss=34124, anonymous=1245, swap=0),
+     pmmap_grouped(path='[heap]', rss=54653, anonymous=8192, swap=0),
+     pmmap_grouped(path='[stack]', rss=1542, anonymous=166, swap=0),
+     ...]
+    >>>
+    >>> p.io_counters()
+    pio(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632)
+    >>>
+    >>> p.open_files()
+    [popenfile(path='/home/giampaolo/svn/psutil/somefile', fd=3)]
+    >>>
+    >>> p.connections()
+    [pconn(fd=115, family=2, type=1, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED'),
+     pconn(fd=117, family=2, type=1, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING'),
+     pconn(fd=119, family=2, type=1, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED'),
+     pconn(fd=123, family=2, type=1, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT')]
+    >>>
+    >>> p.num_threads()
+    4
+    >>> p.num_fds()
+    8
+    >>> p.threads()
+    [pthread(id=5234, user_time=22.5, system_time=9.2891),
+     pthread(id=5235, user_time=0.0, system_time=0.0),
+     pthread(id=5236, user_time=0.0, system_time=0.0),
+     pthread(id=5237, user_time=0.0707, system_time=1.1)]
+    >>>
+    >>> p.num_ctx_switches()
+    pctxsw(voluntary=78, involuntary=19)
+    >>>
+    >>> p.nice()
+    0
+    >>> p.set_nice(10)
+    >>>
+    >>> p.set_ionice(psutil.IOPRIO_CLASS_IDLE)  # IO priority (Win and Linux only)
+    >>> p.ionice()
+    pionice(ioclass=3, value=0)
+    >>>
+    >>> p.set_rlimit(psutil.RLIMIT_NOFILE, (5, 5))  # resource limits (Linux only)
+    >>> p.rlimit(psutil.RLIMIT_NOFILE)
+    (5, 5)
+    >>>
+    >>> p.suspend()
+    >>> p.resume()
+    >>>
+    >>> p.terminate()
+    >>> p.wait(timeout=3)
+    0
+    >>>
+    >>> psutil.test()
+    USER         PID %CPU %MEM     VSZ     RSS TTY        START    TIME  COMMAND
+    root           1  0.0  0.0   24584    2240            Jun17   00:00  init
+    root           2  0.0  0.0       0       0            Jun17   00:00  kthreadd
+    root           3  0.0  0.0       0       0            Jun17   00:05  ksoftirqd/0
+    ...
+    giampaolo  31475  0.0  0.0   20760    3024 /dev/pts/0 Jun19   00:00  python2.4
+    giampaolo  31721  0.0  2.2  773060  181896            00:04   10:30  chrome
+    root       31763  0.0  0.0       0       0            00:05   00:00  kworker/0:1
+    >>>
 
 Further process APIs
 ====================
 
->>> for p in psutil.process_iter():
-...     print(p)
-...
-psutil.Process(pid=1, name='init')
-psutil.Process(pid=2, name='kthreadd')
-psutil.Process(pid=3, name='ksoftirqd/0')
-...
->>>
->>> def on_terminate(proc):
-...     print("process {} terminated".format(proc))
-...
->>> # waits for multiple processes to terminate
->>> gone, alive = psutil.wait_procs(procs_list, 3, callback=on_terminate)
->>>
-}}}
+.. code-block:: python
+
+    >>> for p in psutil.process_iter():
+    ...     print(p)
+    ...
+    psutil.Process(pid=1, name='init')
+    psutil.Process(pid=2, name='kthreadd')
+    psutil.Process(pid=3, name='ksoftirqd/0')
+    ...
+    >>>
+    >>> def on_terminate(proc):
+    ...     print("process {} terminated".format(proc))
+    ...
+    >>> # waits for multiple processes to terminate
+    >>> gone, alive = psutil.wait_procs(procs_list, 3, callback=on_terminate)
+    >>>

@@ -1350,7 +1350,9 @@ def cpu_percent(interval=0.0, percpu=False):
     and after the interval (blocking).
 
     When interval is 0.0 or None compares system CPU times elapsed
-    since last call or module import, returning immediately.
+    since last call or module import, returning immediately (non
+    blocking). That means the first time this is called it will
+    return a meaningless 0.0 value which you should ignore.
     In this case is recommended for accuracy that this function be
     called with at least 0.1 seconds between calls.
 
