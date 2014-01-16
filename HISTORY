@@ -5,8 +5,6 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 ENHANCEMENTS
 
-XXX - TODO: reference deprecated APIs
-
  * #427: number of logical and physical CPUs (psutil.cpu_count()).
  * #447: psutil.wait_procs() timeout parameter is now optional.
  * #452: Process instances are now hashable and can be used with set()s.

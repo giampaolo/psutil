@@ -34,10 +34,10 @@ import _psutil_windows
 import psutil
 
 
-def wrap_exceptions(callable):
+def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
-            return callable(self, *args, **kwargs)
+            return fun(self, *args, **kwargs)
         except OSError:
             err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:

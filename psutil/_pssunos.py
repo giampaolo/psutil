@@ -193,14 +193,13 @@ def disk_partitions(all=False):
     return retlist
 
 
-def wrap_exceptions(callable):
+def wrap_exceptions(fun):
     """Call callable into a try/except clause and translate ENOENT,
     EACCES and EPERM in NoSuchProcess or AccessDenied exceptions.
     """
-
     def wrapper(self, *args, **kwargs):
         try:
-            return callable(self, *args, **kwargs)
+            return fun(self, *args, **kwargs)
         except EnvironmentError:
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if
