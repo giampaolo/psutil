@@ -345,6 +345,9 @@ def safe_remove(file):
     except OSError:
         err = sys.exc_info()[1]
         if err.errno != errno.ENOENT:
+            # file is being used by another process
+            if WINDOWS and isinstance(err, WindowsError) and err.errno == 13:
+                return
             raise
 
 
