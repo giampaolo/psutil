@@ -26,13 +26,15 @@ set PATH=C:\MinGW\bin;%PATH%
 if "%1" == "help" (
     :help
     echo Run `make ^<target^>` where ^<target^> is one of:
-    echo   clean         clean build files
     echo   build         compile without installing
-    echo   install       compile and install
-    echo   uninstall     uninstall
-    echo   test          run tests
-    echo   memtest       run memory leak tests
     echo   build-exes    create exe installers in dist directory
+    echo   clean         clean build files
+    echo   install       compile and install
+    echo   memtest       run memory leak tests
+    echo   test          run tests
+    echo   test-process  run process related tests
+    echo   test-system   run system APIs related tests
+    echo   uninstall     uninstall
     echo   upload-exes   upload exe installers on pypi
     goto :eof
 )
@@ -91,6 +93,20 @@ if "%1" == "test" (
     :test
     call :install
     %PYTHON% %TSCRIPT%
+    goto :eof
+)
+
+if "%1" == "test-process" (
+    :test
+    call :install
+    %PYTHON% -m unittest -v test.test_psutil.TestProcess
+    goto :eof
+)
+
+if "%1" == "test-system" (
+    :test
+    call :install
+    %PYTHON% -m unittest -v test.test_psutil.TestSystem
     goto :eof
 )
 
