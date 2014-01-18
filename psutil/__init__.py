@@ -878,14 +878,8 @@ class Process(object):
         """
         return self._proc.connections(kind)
 
-    @_assert_pid_not_reused
-    def send_signal(self, sig):
-        """Send a signal to process pre-emptively checking whether
-        PID has been reused (see signal module constants) .
-        On Windows only SIGTERM is valid and is treated as an alias
-        for kill().
-        """
-        if _POSIX:
+    if _POSIX:
+        def _send_signal(self, sig):
             try:
                 os.kill(self.pid, sig)
             except OSError:
@@ -896,6 +890,16 @@ class Process(object):
                 if err.errno == errno.EPERM:
                     raise AccessDenied(self.pid, self._name)
                 raise
+
+    @_assert_pid_not_reused
+    def send_signal(self, sig):
+        """Send a signal to process pre-emptively checking whether
+        PID has been reused (see signal module constants) .
+        On Windows only SIGTERM is valid and is treated as an alias
+        for kill().
+        """
+        if _POSIX:
+            self._send_signal(sig)
         else:
             if sig == signal.SIGTERM:
                 self._proc.kill()
@@ -909,7 +913,7 @@ class Process(object):
         On Windows this has the effect ot suspending all process threads.
         """
         if _POSIX:
-            self.send_signal(signal.SIGSTOP)
+            self._send_signal(signal.SIGSTOP)
         else:
             self._proc.suspend()
 
@@ -920,7 +924,7 @@ class Process(object):
         On Windows this has the effect of resuming all process threads.
         """
         if _POSIX:
-            self.send_signal(signal.SIGCONT)
+            self._send_signal(signal.SIGCONT)
         else:
             self._proc.resume()
 
@@ -931,7 +935,7 @@ class Process(object):
         On Windows this is an alias for kill().
         """
         if _POSIX:
-            self.send_signal(signal.SIGTERM)
+            self._send_signal(signal.SIGTERM)
         else:
             self._proc.kill()
 
@@ -941,7 +945,7 @@ class Process(object):
         whether PID has been reused.
         """
         if _POSIX:
-            self.send_signal(signal.SIGKILL)
+            self._send_signal(signal.SIGKILL)
         else:
             self._proc.kill()
 
