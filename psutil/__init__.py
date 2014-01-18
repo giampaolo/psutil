@@ -908,12 +908,10 @@ class Process(object):
         whether PID has been reused.
         On Windows this has the effect ot suspending all process threads.
         """
-        if hasattr(self._proc, "suspend"):
-            # windows
-            self._proc.suspend()
-        else:
-            # posix
+        if _POSIX:
             self.send_signal(signal.SIGSTOP)
+        else:
+            self._proc.suspend()
 
     @_assert_pid_not_reused
     def resume(self):
@@ -921,19 +919,21 @@ class Process(object):
         whether PID has been reused.
         On Windows this has the effect of resuming all process threads.
         """
-        if hasattr(self._proc, "resume"):
-            # windows
-            self._proc.resume()
-        else:
-            # posix
+        if _POSIX:
             self.send_signal(signal.SIGCONT)
+        else:
+            self._proc.resume()
 
+    @_assert_pid_not_reused
     def terminate(self):
         """Terminate the process with SIGTERM pre-emptively checking
         whether PID has been reused.
         On Windows this is an alias for kill().
         """
-        self.send_signal(signal.SIGTERM)
+        if _POSIX:
+            self.send_signal(signal.SIGTERM)
+        else:
+            self._proc.kill()
 
     @_assert_pid_not_reused
     def kill(self):
