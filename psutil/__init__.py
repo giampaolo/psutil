@@ -424,7 +424,8 @@ class Process(object):
         return self._name
 
     def exe(self):
-        """The process executable path. May also be an empty string.
+        """The process executable as an absolute path.
+        May also be an empty string.
         The return value is cached after first call.
         """
         def guess_it(fallback):
@@ -493,7 +494,7 @@ class Process(object):
         return self._create_time
 
     def cwd(self):
-        """Process current working directory."""
+        """Process current working directory as an absolute path."""
         return self._proc.cwd()
 
     def nice(self, value=None):
@@ -740,7 +741,7 @@ class Process(object):
           >>> p.cpu_percent(interval=1)
           2.0
           >>> # non-blocking (percentage since last call)
-          >>> p.cpu_percent(interval=0)
+          >>> p.cpu_percent(interval=None)
           2.9
           >>>
         """
@@ -877,14 +878,8 @@ class Process(object):
         """
         return self._proc.connections(kind)
 
-    @_assert_pid_not_reused
-    def send_signal(self, sig):
-        """Send a signal to process pre-emptively checking whether
-        PID has been reused (see signal module constants) .
-        On Windows only SIGTERM is valid and is treated as an alias
-        for kill().
-        """
-        if _POSIX:
+    if _POSIX:
+        def _send_signal(self, sig):
             try:
                 os.kill(self.pid, sig)
             except OSError:
@@ -895,6 +890,16 @@ class Process(object):
                 if err.errno == errno.EPERM:
                     raise AccessDenied(self.pid, self._name)
                 raise
+
+    @_assert_pid_not_reused
+    def send_signal(self, sig):
+        """Send a signal to process pre-emptively checking whether
+        PID has been reused (see signal module constants) .
+        On Windows only SIGTERM is valid and is treated as an alias
+        for kill().
+        """
+        if _POSIX:
+            self._send_signal(sig)
         else:
             if sig == signal.SIGTERM:
                 self._proc.kill()
@@ -907,12 +912,10 @@ class Process(object):
         whether PID has been reused.
         On Windows this has the effect ot suspending all process threads.
         """
-        if hasattr(self._proc, "suspend"):
-            # windows
-            self._proc.suspend()
+        if _POSIX:
+            self._send_signal(signal.SIGSTOP)
         else:
-            # posix
-            self.send_signal(signal.SIGSTOP)
+            self._proc.suspend()
 
     @_assert_pid_not_reused
     def resume(self):
@@ -920,19 +923,21 @@ class Process(object):
         whether PID has been reused.
         On Windows this has the effect of resuming all process threads.
         """
-        if hasattr(self._proc, "resume"):
-            # windows
-            self._proc.resume()
+        if _POSIX:
+            self._send_signal(signal.SIGCONT)
         else:
-            # posix
-            self.send_signal(signal.SIGCONT)
+            self._proc.resume()
 
+    @_assert_pid_not_reused
     def terminate(self):
         """Terminate the process with SIGTERM pre-emptively checking
         whether PID has been reused.
         On Windows this is an alias for kill().
         """
-        self.send_signal(signal.SIGTERM)
+        if _POSIX:
+            self._send_signal(signal.SIGTERM)
+        else:
+            self._proc.kill()
 
     @_assert_pid_not_reused
     def kill(self):
@@ -940,7 +945,7 @@ class Process(object):
         whether PID has been reused.
         """
         if _POSIX:
-            self.send_signal(signal.SIGKILL)
+            self._send_signal(signal.SIGKILL)
         else:
             self._proc.kill()
 
@@ -953,6 +958,8 @@ class Process(object):
 
         If timeout (in seconds) is specified and process is still alive
         raise TimeoutExpired.
+
+        To wait for multiple Process(es) use psutil.wait_procs().
         """
         if timeout is not None and not timeout >= 0:
             raise ValueError("timeout must be a positive integer")
@@ -1342,7 +1349,7 @@ def cpu_times(percpu=False):
 _last_cpu_times = cpu_times()
 _last_per_cpu_times = cpu_times(percpu=True)
 
-def cpu_percent(interval=0.0, percpu=False):
+def cpu_percent(interval=None, percpu=False):
     """Return a float representing the current system-wide CPU
     utilization as a percentage.
 
@@ -1350,7 +1357,9 @@ def cpu_percent(interval=0.0, percpu=False):
     and after the interval (blocking).
 
     When interval is 0.0 or None compares system CPU times elapsed
-    since last call or module import, returning immediately.
+    since last call or module import, returning immediately (non
+    blocking). That means the first time this is called it will
+    return a meaningless 0.0 value which you should ignore.
     In this case is recommended for accuracy that this function be
     called with at least 0.1 seconds between calls.
 
@@ -1371,7 +1380,7 @@ def cpu_percent(interval=0.0, percpu=False):
       [2.0, 1.0]
       >>>
       >>> # non-blocking (percentage since last call)
-      >>> psutil.cpu_percent(interval=0)
+      >>> psutil.cpu_percent(interval=None)
       2.9
       >>>
     """
@@ -1424,7 +1433,7 @@ def cpu_percent(interval=0.0, percpu=False):
 _last_cpu_times_2 = _last_cpu_times
 _last_per_cpu_times_2 = _last_per_cpu_times
 
-def cpu_times_percent(interval=0.0, percpu=False):
+def cpu_times_percent(interval=None, percpu=False):
     """Same as cpu_percent() but provides utilization percentages
     for each specific CPU time as is returned by cpu_times().
     For instance, on Linux we'll get:

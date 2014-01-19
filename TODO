@@ -62,6 +62,14 @@ LOWER PRIORITY
 
  * Asynchronous psutil.Popen (see http://www.python.org/dev/peps/pep-3145/)
 
+ * Doc / wiki which compares similarities between UNIX cli tools and psutil.
+   Example:
+   df -a  ->  psutil.disk_partitions
+   lsof   ->  psutil.Process.open_files() and psutil.Process.open_connections()
+   killall->  (actual script)
+   tty    ->  psutil.Process.terminal()
+   who    ->  psutil.users()
+
 
 DEBATABLE
 =========
@@ -133,6 +141,8 @@ DEBATABLE
         for p in process_iter(attrs=['cpu_percent']):
             print(p.cache['cpu_percent'])
     This also leads questions as whether we should introduce a sorting order.
+
+  * round Process.memory_percent() result?
 
 
 COMPATIBILITY BREAKAGE
