@@ -1952,24 +1952,34 @@ class TestProcess(unittest.TestCase):
         p.kill()
         p.wait()
 
-        excluded_names = ('pid', 'send_signal', 'is_running', 'set_ionice',
-                          'wait', 'set_cpu_affinity', 'create_time', 'nice',
-                          'set_nice')
+        excluded_names = ('pid', 'is_running', 'wait', 'create_time')
         for name in dir(p):
             if (name.startswith('_')
                     or name.startswith('get')  # deprecated APIs
+                    or name.startswith('set')  # deprecated APIs
                     or name in excluded_names):
                 continue
             try:
-                # if name == 'rlimit'
-                args = ()
                 meth = getattr(p, name)
-                if callable(meth):
-                    if name == 'rlimit':
-                        args = (psutil.RLIMIT_NOFILE,)
-                    elif name == 'set_rlimit':
-                        args = (psutil.RLIMIT_NOFILE, (5, 5))
-                    meth(*args)
+                # get/set methods
+                if name == 'nice':
+                    if POSIX:
+                        meth(1)
+                    else:
+                        meth(psutil.NORMAL_PRIORITY_CLASS)
+                elif name == 'ionice':
+                    meth()
+                    meth(2)
+                elif name == 'rlimit':
+                    meth(psutil.RLIMIT_NOFILE)
+                    meth(psutil.RLIMIT_NOFILE, (5, 5))
+                elif name == 'cpu_affinity':
+                    meth()
+                    meth([0])
+                elif name == 'send_signal':
+                    meth(signal.SIGTERM)
+                else:
+                    meth()
             except psutil.NoSuchProcess:
                 pass
             except NotImplementedError:
@@ -1977,23 +1987,7 @@ class TestProcess(unittest.TestCase):
             else:
                 self.fail("NoSuchProcess exception not raised for %r" % name)
 
-        # other methods
-        try:
-            if POSIX:
-                p.nice(1)
-            else:
-                p.nice(psutil.NORMAL_PRIORITY_CLASS)
-        except psutil.NoSuchProcess:
-            pass
-        else:
-            self.fail("exception not raised")
-        if hasattr(p, 'set_ionice'):
-            self.assertRaises(psutil.NoSuchProcess, p.ionice, 2)
-        self.assertRaises(psutil.NoSuchProcess, p.send_signal, signal.SIGTERM)
-        self.assertRaises(psutil.NoSuchProcess, p.nice, 0)
         self.assertFalse(p.is_running())
-        if hasattr(p, "set_cpu_affinity"):
-            self.assertRaises(psutil.NoSuchProcess, p.cpu_affinity, [0])
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_zombie_process(self):

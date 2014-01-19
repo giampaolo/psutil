@@ -46,6 +46,12 @@ uninstall:
 test: install
 	$(PYTHON) $(TSCRIPT)
 
+test-process: install
+	$(PYTHON) -m unittest -v test.test_psutil.TestProcess
+
+test-system: install
+	$(PYTHON) -m unittest -v test.test_psutil.TestSystemAPIs
+
 nosetest: install
 	# $ make nosetest FLAGS=test_name
 	nosetests $(TSCRIPT) -v -m $(FLAGS)
