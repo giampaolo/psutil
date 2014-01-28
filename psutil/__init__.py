@@ -1271,10 +1271,7 @@ def wait_procs(procs, timeout=None, callback=None):
             # single process: in case it terminates too late other
             # processes may disappear in the meantime and their PID
             # reused.
-            try:
-                max_timeout = 1.0 / (len(alive) - len(gone))
-            except ZeroDivisionError:
-                max_timeout = 1.0  # one alive remaining
+            max_timeout = 1.0 / len(alive)
             if timeout is not None:
                 timeout = min((deadline - timer()), max_timeout)
                 if timeout <= 0:

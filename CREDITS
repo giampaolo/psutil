@@ -213,3 +213,7 @@ D: backward compatible implementation of collections.defaultdict.
 
 M: Ken Seeho
 D: @cached_property decorator
+
+N: crusaderky
+E: crusaderky@gmail.com
+I: 470

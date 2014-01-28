@@ -26,6 +26,7 @@ BUG FIXES
          should be read-only.
  * #457: [POSIX] pid_exists() always return True for PID 0.
  * #461: namedtuples are not pickle-able.
+ * #470: wait_procs() might not wait.
 
 
 API CHANGES
