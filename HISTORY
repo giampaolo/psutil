@@ -7,26 +7,25 @@ ENHANCEMENTS
 
  * #427: number of logical and physical CPUs (psutil.cpu_count()).
  * #447: psutil.wait_procs() timeout parameter is now optional.
- * #452: Process instances are now hashable and can be used with set()s.
- * #453: unittest2 module is required on Python < 2.7.
- * #459: added a make file for running tests and other repetitive tasks (also
+ * #452: make Process instances hashable and usable with set()s.
+ * #453: tests on Python < 2.7 require unittest2 module.
+ * #459: add a make file for running tests and other repetitive tasks (also
          on Windows).
- * #463: timeout parameter of cpu_percent* functions now defaults to 0.0 so
-         that slowdowns are not accidentally introduced.
+ * #463: make timeout parameter of cpu_percent* functions default to 0.0 'cause
+         it's a commond trap to introduce slowdowns.
+ * #468: move documentation to readthedocs.com.
 
 BUG FIXES
 
  * #193: psutil.Popen constructor can throw an exception if the spawned process
          terminates quickly.
- * #443: [Linux] fixed a potential problem with Process.set_cpu_affinity() on
-         systems with more than 64 CPUs.
- * #448: [Windows] Process get_children() and ppid memory leak (patch by
-         Ulrich Klank.
- * #454: Process cached properties such as "name", "exe" and "create_time"
-         should be read-only.
- * #457: [POSIX] pid_exists() always return True for PID 0.
+ * #443: [Linux] fix a potential overflow issue for Process.set_cpu_affinity()
+         on systems with more than 64 CPUs.
+ * #448: [Windows] get_children() and ppid() memory leak (patch by Ulrich
+         Klank).
+ * #457: [POSIX] pid_exists() always returns True for PID 0.
  * #461: namedtuples are not pickle-able.
- * #470: wait_procs() might not wait.
+ * #470: wait_procs() might not wait.  (patch by crusaderky)
 
 
 API CHANGES
@@ -94,7 +93,7 @@ In most cases accessing the old names will work but it will cause a DeprecationW
    | p.set_rlimit()       | p.rlimit(resource, limits=None) |
     --------------------------------------------------------
 
- * Expect for 'pid' all psutil.Process class properties have been turned into
+ * Except for 'pid' all psutil.Process class properties have been turned into
    methods. This is the only case which there are no aliases.
    Assuming "p = psutil.Process()":
 
@@ -142,7 +141,7 @@ ENHANCEMENTS
 
 BUG FIXES
 
- * #348: [Windows XP/Vista] fixed "ImportError: DLL load failed" occurring on
+ * #348: [Windows XP/Vista] fix "ImportError: DLL load failed" occurring on
          module import.
 
 
@@ -178,7 +177,7 @@ BUG FIXES
 
 ENHANCEMENTS
 
- * #410: tar.gz and windows binary files are now hosted on PYPI.
+ * #410: host tar.gz and windows binary files are on PYPI.
  * #412: [Linux] get/set process resource limits.
  * #415: [Windows] Process.get_children() is an order of magnitude faster.
  * #426: [Windows] Process.name is an order of magnitude faster.
@@ -199,9 +198,7 @@ BUG FIXES
 
 API CHANGES
 
- * #408: STATUS_* and CONN_* constants (returned by Process' status() and
-         get_connections() methods respectively) have been turned from constant
-         objects to plain Python strings.
+ * #408: turn STATUS_* and CONN_* constants into plain Python strings.
 
 
 1.0.1 - 2013-07-12
@@ -220,12 +217,12 @@ NEW FEATURES
  * #18:  Solaris support (yay!)  (thanks Justin Venus)
  * #367: Process.get_connections() 'status' strings are now constants.
  * #380: test suite exits with non-zero on failure.  (patch by floppymaster)
- * #391: extensively use unittest2 module in unit tests and provide
-         workarounds if this is not installed on python < 2.7.
+ * #391: introduce unittest2 facilities and provide workarounds if unittest2
+         is not installed (python < 2.7).
 
 BUG FIXES
 
- * #374: [Windows] negative memory usage reported when processes use a lot of
+ * #374: [Windows] negative memory usage reported if process uses a lot of
          memory.
  * #379: [Linux] Process.get_memory_maps() may raise ValueError.
  * #394: [OSX] Mapped memory regions report incorrect file name.
@@ -233,10 +230,10 @@ BUG FIXES
 
 API CHANGES
 
- * Process.get_connections() 'status' field is no longer a string but a constant
-   object (psutil.CONN_*).
- * Process.get_connections() 'local_address' and 'remote_address' fields renamed
-   to 'laddr' and 'raddr'.
+ * Process.get_connections() 'status' field is no longer a string but a
+   constant object (psutil.CONN_*).
+ * Process.get_connections() 'local_address' and 'remote_address' fields
+   renamed to 'laddr' and 'raddr'.
  * psutil.network_io_counters() renamed to psutil.net_io_counters().
 
 
