@@ -20,15 +20,20 @@ rem If you compile by using mingw on Python 2.4 and 2.5 you need to patch
 rem distutils first: http://stackoverflow.com/questions/13592192
 rem ==========================================================================
 
-
 if "%PYTHON%" == "" (
     set PYTHON=C:\Python27\python.exe
 )
 if "%TSCRIPT%" == "" (
     set TSCRIPT=test\test_psutil.py
 )
+
+rem Needed to compile using Mingw.
 set PATH=C:\MinGW\bin;%PATH%
 
+rem Needed to locate the .pypirc file and upload exes on PYPI.
+set HOME=%USERPROFILE%
+
+rem ==========================================================================
 
 if "%1" == "help" (
     :help
@@ -156,10 +161,6 @@ if "%1" == "upload-exes" (
     C:\Python33\python.exe setup.py bdist_wininst upload || goto :error
     C:\Python34\python.exe setup.py bdist_wininst upload || goto :error
     rem 64 bit versions
-    rem Python 2.7 + VS 2008 requires vcvars64.bat to be run first:
-    rem http://stackoverflow.com/questions/11072521/
-    rem Windows SDK and .NET Framework 3.5 SP1 also need to be installed (sigh)
-    "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
     C:\Python27-64\python.exe setup.py build bdist_wininst upload || goto :error
     C:\Python33-64\python.exe setup.py build bdist_wininst upload || goto :error
     C:\Python34-64\python.exe setup.py build bdist_wininst upload || goto :error
