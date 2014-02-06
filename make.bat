@@ -3,14 +3,21 @@
 rem ==========================================================================
 rem Shortcuts for various tasks, emulating UNIX "make" on Windows.
 rem It is primarly intended as a shortcut for compiling / installing
-rem psutil and running tests (just run "make.bat test").
+rem psutil ("make.bat build", "make.bat install") and running tests
+rem ("make.bat test").
+rem
 rem This script is modeled after my Windows installation which uses:
 rem - mingw32 for Python 2.4 and 2.5
 rem - Visual studio 2008 for Python 2.6, 2.7, 3.2
 rem - Visual studio 2010 for Python 3.3+
+rem
 rem By default C:\Python27\python.exe is used.
-rem To use another Python version run:
-rem     set PYTHON=C:\Python24\python.exe & make.bat test
+rem To compile for a specific Python version run:
+rem
+rem     set PYTHON=C:\Python24\python.exe & make.bat build
+rem
+rem If you compile by using mingw on Python 2.4 and 2.5 you need to patch
+rem distutils first: http://stackoverflow.com/questions/13592192
 rem ==========================================================================
 
 
