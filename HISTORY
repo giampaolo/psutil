@@ -5,6 +5,7 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 ENHANCEMENTS
 
+ * #424: [Windows] installer for Python 3.X 64 bit.
  * #427: number of logical and physical CPUs (psutil.cpu_count()).
  * #447: psutil.wait_procs() timeout parameter is now optional.
  * #452: make Process instances hashable and usable with set()s.

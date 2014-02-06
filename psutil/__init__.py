@@ -1318,9 +1318,8 @@ def cpu_count(logical=True):
 
 def cpu_times(percpu=False):
     """Return system-wide CPU times as a namedtuple.
-    Every CPU time represents the time CPU has spent in the given mode.
-    The namedtuple's fields availability varies depending on the platform.
-    Here follows a list of all available fields:
+    Every CPU time represents the seconds the CPU has spent in the given mode.
+    The namedtuple's fields availability varies depending on the platform:
      - user
      - system
      - idle
