@@ -126,18 +126,19 @@ if "%1" == "memtest" (
 
 if "%1" == "build-exes" (
     :build-exes
-    call :clean
-    C:\Python26\python.exe setup.py build bdist_wininst & if %errorlevel% neq 0 goto :error
-    C:\Python27\python.exe setup.py build bdist_wininst & if %errorlevel% neq 0 goto :error
-    C:\Python33\python.exe setup.py build bdist_wininst & if %errorlevel% neq 0 goto :error
+    C:\Python26\python.exe setup.py build bdist_wininst || goto :error
+    C:\Python27\python.exe setup.py build bdist_wininst || goto :error
+    C:\Python33\python.exe setup.py build bdist_wininst || goto :error
+    echo OK
     goto :eof
 )
 
 if "%1" == "upload-exes" (
     :upload-exes
-    C:\Python26\python.exe setup.py bdist_wininst upload  & if %errorlevel% neq 0 goto :error
-    C:\Python27\python.exe setup.py bdist_wininst upload  & if %errorlevel% neq 0 goto :error
-    C:\Python33\python.exe setup.py bdist_wininst upload  & if %errorlevel% neq 0 goto :error
+    C:\Python26\python.exe setup.py bdist_wininst upload || goto :error
+    C:\Python27\python.exe setup.py bdist_wininst upload || goto :error
+    C:\Python33\python.exe setup.py bdist_wininst upload || goto :error
+    echo OK
     goto :eof
 )
 
@@ -145,4 +146,6 @@ goto :help
 
 :error
     echo last command returned an error; exiting
+    echo %errorlevel%
     exit /b %errorlevel%
+    goto :eof
