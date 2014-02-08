@@ -26,6 +26,8 @@ BUG FIXES
          Klank).
  * #457: [POSIX] pid_exists() always returns True for PID 0.
  * #461: namedtuples are not pickle-able.
+ * #466: [Linux] process exe improper null bytes handling.  (patch by
+         Gautam Singh)
  * #470: wait_procs() might not wait.  (patch by crusaderky)
  * #471: [Windows] process exe improper unicode handling. (patch by
          alex@mroja.net)

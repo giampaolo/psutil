@@ -518,17 +518,12 @@ class Process(object):
                 raise AccessDenied(self.pid, self._name)
             raise
 
-        # readlink() might return paths containing null bytes causing
-        # problems when used with other fs-related functions (os.*,
-        # open(), ...)
-        exe = exe.replace('\x00', '')
+        # readlink() might return paths containing null bytes ('\x00').
         # Certain names have ' (deleted)' appended. Usually this is
         # bogus as the file actually exists. Either way that's not
         # important as we don't want to discriminate executables which
         # have been deleted.
-        if exe.endswith(" (deleted)") and not os.path.exists(exe):
-            exe = exe[:-10]
-        return exe
+        return exe.split('\x00')[0]
 
     @wrap_exceptions
     def cmdline(self):
