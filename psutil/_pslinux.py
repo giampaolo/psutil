@@ -509,7 +509,7 @@ class Process(object):
                 # no such file error; might be raised also if the
                 # path actually exists for system processes with
                 # low pids (about 0-20)
-                if os.path.lexists("/proc/%s/exe" % self.pid):
+                if os.path.lexists("/proc/%s" % self.pid):
                     return ""
                 else:
                     # ok, it is a process which has gone away
