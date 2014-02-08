@@ -562,9 +562,8 @@ static PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
-    wchar_t exe[MAX_PATH];
-    DWORD nSize = MAX_PATH;
-
+    const DWORD nSize = MAX_PATH;
+    wchar_t exe[nSize];
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }
@@ -573,8 +572,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (NULL == hProcess) {
         return NULL;
     }
-
-    if (GetProcessImageFileName(hProcess, (LPTSTR)&exe, nSize) == 0) {
+    if (GetProcessImageFileNameW(hProcess, &exe, nSize) == 0) {
         CloseHandle(hProcess);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // see https://code.google.com/p/psutil/issues/detail?id=414
@@ -585,9 +583,8 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         }
         return NULL;
     }
-
     CloseHandle(hProcess);
-    return Py_BuildValue("s", exe);
+    return Py_BuildValue("u", exe);
 }
 
 
