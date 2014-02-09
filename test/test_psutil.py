@@ -2097,6 +2097,7 @@ class TestProcess(unittest.TestCase):
         finally:
             proc.kill()
             proc.wait()
+            self.assertIsNotNone(proc.returncode)
 
 
 # ===================================================================

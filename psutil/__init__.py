@@ -1124,6 +1124,11 @@ class Popen(Process):
                 raise AttributeError("%s instance has no attribute '%s'"
                                      % (self.__class__.__name__, name))
 
+    def wait(self, timeout=None):
+        ret = super(Popen, self).wait(timeout)
+        self.__subproc.returncode = ret
+        return ret
+
 
 # =====================================================================
 # --- system processes related functions

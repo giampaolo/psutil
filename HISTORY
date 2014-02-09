@@ -31,6 +31,7 @@ BUG FIXES
  * #470: wait_procs() might not wait.  (patch by crusaderky)
  * #471: [Windows] process exe improper unicode handling. (patch by
          alex@mroja.net)
+ * #473: psutil.Popen.wait() does not set returncode attribute.
 
 
 API CHANGES
