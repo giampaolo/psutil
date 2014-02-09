@@ -1100,6 +1100,11 @@ class Popen(Process):
     For method names common to both classes such as kill(), terminate()
     and wait(), psutil.Process implementation takes precedence.
 
+    Unlike subprocess.Popen this class pre-emptively checks wheter PID
+    has been reused on send_signal(), terminate() and kill() so that
+    you don't accidentally terminate another process, fixing
+    http://bugs.python.org/issue6973.
+
     For a complete documentation refer to:
     http://docs.python.org/library/subprocess.html
     """
@@ -1125,6 +1130,8 @@ class Popen(Process):
                                      % (self.__class__.__name__, name))
 
     def wait(self, timeout=None):
+        if self.__subproc.returncode is not None:
+            return self.__subproc.returncode
         ret = super(Popen, self).wait(timeout)
         self.__subproc.returncode = ret
         return ret
