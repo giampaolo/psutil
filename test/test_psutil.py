@@ -311,7 +311,12 @@ def check_connection(conn):
         # and that's rejected by bind()
         if conn.family == AF_INET:
             s = socket.socket(conn.family, conn.type)
-            s.bind((conn.laddr[0], 0))
+            try:
+                s.bind((conn.laddr[0], 0))
+            except socket.error:
+                err = sys.exc_info()[1]
+                if err.errno != errno.EADDRNOTAVAIL:
+                    raise
             s.close()
     elif conn.family == AF_UNIX:
         assert not conn.raddr, repr(conn.raddr)
