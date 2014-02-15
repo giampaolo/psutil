@@ -164,6 +164,7 @@ __all__.extend(_psplatform.__extra__all__)
 _TOTAL_PHYMEM = None
 _POSIX = os.name == 'posix'
 _WINDOWS = os.name == 'nt'
+_timer = getattr(time, 'monotonic', time.time)
 
 
 def _assert_pid_not_reused(fun):
@@ -749,16 +750,21 @@ class Process(object):
           >>>
         """
         blocking = interval is not None and interval > 0.0
+        num_cpus = cpu_count()
+        if _POSIX:
+            timer = lambda: _timer() * num_cpus
+        else:
+            timer = lambda: sum(cpu_times())
         if blocking:
-            st1 = sum(cpu_times())
+            st1 = timer()
             pt1 = self._proc.cpu_times()
             time.sleep(interval)
-            st2 = sum(cpu_times())
+            st2 = timer()
             pt2 = self._proc.cpu_times()
         else:
             st1 = self._last_sys_cpu_times
             pt1 = self._last_proc_cpu_times
-            st2 = sum(cpu_times())
+            st2 = timer()
             pt2 = self._proc.cpu_times()
             if st1 is None or pt1 is None:
                 self._last_sys_cpu_times = st2
@@ -778,7 +784,7 @@ class Process(object):
             # interval was too low
             return 0.0
         # the utilization of a single CPU (note: cpu_count() value is cached)
-        single_cpu_percent = overall_percent * cpu_count()
+        single_cpu_percent = overall_percent * num_cpus
         # On POSIX a percentage > 100 is legitimate:
         # http://stackoverflow.com/questions/1032357/
         #   comprehending-top-cpu-usage
@@ -1268,13 +1274,12 @@ def wait_procs(procs, timeout=None, callback=None):
     if timeout is not None and not timeout >= 0:
         msg = "timeout must be a positive integer, got %s" % timeout
         raise ValueError(msg)
-    timer = getattr(time, 'monotonic', time.time)
     gone = set()
     alive = set(procs)
     if callback is not None and not callable(callback):
         raise TypeError("callback %r is not a callable" % callable)
     if timeout is not None:
-        deadline = timer() + timeout
+        deadline = _timer() + timeout
 
     while alive:
         if timeout is not None and timeout <= 0:
@@ -1288,7 +1293,7 @@ def wait_procs(procs, timeout=None, callback=None):
             # reused.
             max_timeout = 1.0 / len(alive)
             if timeout is not None:
-                timeout = min((deadline - timer()), max_timeout)
+                timeout = min((deadline - _timer()), max_timeout)
                 if timeout <= 0:
                     break
                 check_gone(proc, timeout)
