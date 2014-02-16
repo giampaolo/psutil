@@ -1,14 +1,16 @@
 Intro
 =====
 
-We would like to recognize some of the people who have been instrumental in the
+I would like to recognize some of the people who have been instrumental in the
 development of psutil.
-I'm sure we are forgetting some people (feel free to email us), but here is a
+I'm sure I'm forgetting some people (feel free to email me), but here is a
 short list.
 It's modeled after the Linux CREDITS file where the fields are:
 name (N), e-mail (E), web-address (W), country (C), description (D), (I) issues
 (issue tracker is at http://code.google.com/p/psutil/issues/list).
 Really thanks to all of you.
+
+- Giampaolo
 
 Author
 ======
