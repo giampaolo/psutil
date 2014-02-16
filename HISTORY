@@ -33,7 +33,7 @@ BUG FIXES
  * #471: [Windows] process exe improper unicode handling. (patch by
          alex@mroja.net)
  * #473: psutil.Popen.wait() does not set returncode attribute.
-
+ * #476: [Linux] encoding error for process name and cmdline.
 
 API CHANGES
 

@@ -52,6 +52,7 @@ if HAS_PRLIMIT:
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 BOOT_TIME = None  # set later
+DEFAULT_ENCODING = sys.getdefaultencoding()
 
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
 IOPRIO_CLASS_NONE = 0
@@ -492,7 +493,11 @@ class Process(object):
 
     @wrap_exceptions
     def name(self):
-        f = open("/proc/%s/stat" % self.pid)
+        fname = "/proc/%s/stat" % self.pid
+        if PY3:
+            f = open(fname, encoding=DEFAULT_ENCODING)
+        else:
+            f = open(fname)
         try:
             name = f.read().split(' ')[1].replace('(', '').replace(')', '')
         finally:
@@ -527,7 +532,11 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        f = open("/proc/%s/cmdline" % self.pid)
+        fname = "/proc/%s/cmdline" % self.pid
+        if PY3:
+            f = open(fname, encoding=DEFAULT_ENCODING)
+        else:
+            f = open(fname)
         try:
             # return the args as a list
             return [x for x in f.read().split('\x00') if x]
