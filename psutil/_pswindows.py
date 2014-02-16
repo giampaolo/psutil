@@ -13,7 +13,6 @@ import sys
 from psutil import _common
 from psutil._common import conn_tmap, usage_percent, isfile_strict
 from psutil._compat import PY3, xrange, wraps, lru_cache, namedtuple
-from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_windows as cext
 
 # process priority constants, import from __init__.py:
@@ -58,6 +57,11 @@ pextmem = namedtuple(
 pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
+
+# set later from __init__.py
+NoSuchProcess = None
+AccessDenied = None
+TimeoutExpired = None
 
 
 @lru_cache(maxsize=512)

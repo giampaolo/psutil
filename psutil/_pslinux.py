@@ -21,7 +21,6 @@ from psutil import _common
 from psutil import _psposix
 from psutil._common import (isfile_strict, usage_percent, deprecated)
 from psutil._compat import PY3, xrange, namedtuple, wraps, b
-from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_linux as cext
 import _psutil_posix
 
@@ -88,6 +87,11 @@ TCP_STATUSES = {
     "0A": _common.CONN_LISTEN,
     "0B": _common.CONN_CLOSING
 }
+
+# set later from __init__.py
+NoSuchProcess = None
+AccessDenied = None
+TimeoutExpired = None
 
 
 # --- named tuples
@@ -611,7 +615,7 @@ class Process(object):
     def wait(self, timeout=None):
         try:
             return _psposix.wait_pid(self.pid, timeout)
-        except TimeoutExpired:
+        except _psposix.TimeoutExpired:
             raise TimeoutExpired(timeout, self.pid, self._name)
 
     @wrap_exceptions

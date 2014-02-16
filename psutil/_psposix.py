@@ -14,7 +14,10 @@ import time
 
 from psutil._common import sdiskusage, usage_percent, memoize
 from psutil._compat import PY3, unicode
-from psutil._error import TimeoutExpired
+
+
+class TimeoutExpired(Exception):
+    pass
 
 
 def pid_exists(pid):
@@ -60,7 +63,7 @@ def wait_pid(pid, timeout=None):
     def check_timeout(delay):
         if timeout is not None:
             if timer() >= stop_at:
-                raise TimeoutExpired(timeout, pid)
+                raise TimeoutExpired()
         time.sleep(delay)
         return min(delay * 2, 0.04)
 

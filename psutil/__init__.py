@@ -49,7 +49,6 @@ try:
 except ImportError:
     pwd = None
 
-from psutil._error import Error, NoSuchProcess, AccessDenied, TimeoutExpired
 from psutil._common import cached_property, memoize
 from psutil._compat import property, callable, defaultdict
 from psutil._compat import (wraps as _wraps,
@@ -166,6 +165,86 @@ _POSIX = os.name == 'posix'
 _WINDOWS = os.name == 'nt'
 _timer = getattr(time, 'monotonic', time.time)
 
+
+# =====================================================================
+# --- exceptions
+# =====================================================================
+
+class Error(Exception):
+    """Base exception class. All other psutil exceptions inherit
+    from this one.
+    """
+
+
+class NoSuchProcess(Error):
+    """Exception raised when a process with a certain PID doesn't
+    or no longer exists (zombie).
+    """
+
+    def __init__(self, pid, name=None, msg=None):
+        Error.__init__(self)
+        self.pid = pid
+        self.name = name
+        self.msg = msg
+        if msg is None:
+            if name:
+                details = "(pid=%s, name=%s)" % (self.pid, repr(self.name))
+            else:
+                details = "(pid=%s)" % self.pid
+            self.msg = "process no longer exists " + details
+
+    def __str__(self):
+        return self.msg
+
+
+class AccessDenied(Error):
+    """Exception raised when permission to perform an action is denied."""
+
+    def __init__(self, pid=None, name=None, msg=None):
+        Error.__init__(self)
+        self.pid = pid
+        self.name = name
+        self.msg = msg
+        if msg is None:
+            if (pid is not None) and (name is not None):
+                self.msg = "(pid=%s, name=%s)" % (pid, repr(name))
+            elif (pid is not None):
+                self.msg = "(pid=%s)" % self.pid
+            else:
+                self.msg = ""
+
+    def __str__(self):
+        return self.msg
+
+
+class TimeoutExpired(Error):
+    """Raised on Process.wait(timeout) if timeout expires and process
+    is still alive.
+    """
+
+    def __init__(self, seconds, pid=None, name=None):
+        Error.__init__(self)
+        self.seconds = seconds
+        self.pid = pid
+        self.name = name
+        self.msg = "timeout after %s seconds" % seconds
+        if (pid is not None) and (name is not None):
+            self.msg += " (pid=%s, name=%s)" % (pid, repr(name))
+        elif (pid is not None):
+            self.msg += " (pid=%s)" % self.pid
+
+    def __str__(self):
+        return self.msg
+
+# push exception classes into platform specific module namespace
+_psplatform.NoSuchProcess = NoSuchProcess
+_psplatform.AccessDenied = AccessDenied
+_psplatform.TimeoutExpired = TimeoutExpired
+
+
+# =====================================================================
+# --- Process class
+# =====================================================================
 
 def _assert_pid_not_reused(fun):
     """Decorator which raises NoSuchProcess in case a process is no
@@ -1082,6 +1161,10 @@ class Process(object):
 
     del _locals
 
+
+# =====================================================================
+# --- Popen class
+# =====================================================================
 
 class Popen(Process):
     """A more convenient interface to stdlib subprocess module.

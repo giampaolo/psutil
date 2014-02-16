@@ -16,7 +16,6 @@ from psutil import _common
 from psutil import _psposix
 from psutil._common import (conn_tmap, usage_percent, isfile_strict)
 from psutil._compat import namedtuple, PY3
-from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_posix
 import _psutil_sunos as cext
 
@@ -62,6 +61,10 @@ pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss', 'anon', 'locked'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
+# set later from __init__.py
+NoSuchProcess = None
+AccessDenied = None
+TimeoutExpired = None
 
 # --- functions
 
@@ -506,5 +509,5 @@ class Process(object):
     def wait(self, timeout=None):
         try:
             return _psposix.wait_pid(self.pid, timeout)
-        except TimeoutExpired:
+        except _psposix.TimeoutExpired:
             raise TimeoutExpired(timeout, self.pid, self._name)

@@ -17,6 +17,8 @@ ENHANCEMENTS
  * #468: move documentation to readthedocs.com.
  * #477: process cpu_percent() is about 30% faster.  (suggested by crusaderky)
  * #478: [Linux] almost all APIs are about 30% faster on Python 3.X.
+ * #479: long deprecated psutil.error module is gone; exception classes now
+         live in "psutil" namespace only.
 
 BUG FIXES
 
@@ -122,6 +124,8 @@ In most cases accessing the old names will work but it will cause a DeprecationW
 
  * Others:
   * timeout parameter of cpu_percent* functions defaults to 0.0 instead of 0.1.
+  * long deprecated psutil.error module is gone; exception classes now live in
+    "psutil" namespace only.
   * Process instances' "retcode" attribute returned by psutil.wait_procs() has
     been renamed to "returncode" for consistency with subprocess.Popen.
 

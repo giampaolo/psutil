@@ -14,7 +14,6 @@ from psutil import _common
 from psutil import _psposix
 from psutil._common import conn_tmap, usage_percent
 from psutil._compat import namedtuple, wraps
-from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_bsd as cext
 import _psutil_posix
 
@@ -61,6 +60,11 @@ pmmap_grouped = namedtuple(
     'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr, perms path rss, private, ref_count, shadow_count')
+
+# set later from __init__.py
+NoSuchProcess = None
+AccessDenied = None
+TimeoutExpired = None
 
 
 def virtual_memory():
@@ -312,7 +316,7 @@ class Process(object):
     def wait(self, timeout=None):
         try:
             return _psposix.wait_pid(self.pid, timeout)
-        except TimeoutExpired:
+        except _psposix.TimeoutExpired:
             raise TimeoutExpired(timeout, self.pid, self._name)
 
     @wrap_exceptions
