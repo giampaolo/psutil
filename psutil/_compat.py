@@ -27,6 +27,9 @@ if PY3:
 
     def u(s):
         return s
+
+    def b(s):
+        return s.encode("latin-1")
 else:
     int = int
     long = long
@@ -35,6 +38,9 @@ else:
 
     def u(s):
         return unicode(s, "unicode_escape")
+
+    def b(s):
+        return s
 
     def exec_(code, globs=None, locs=None):
         if globs is None:

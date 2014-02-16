@@ -20,7 +20,7 @@ import warnings
 from psutil import _common
 from psutil import _psposix
 from psutil._common import (isfile_strict, usage_percent, deprecated)
-from psutil._compat import PY3, xrange, namedtuple, wraps
+from psutil._compat import PY3, xrange, namedtuple, wraps, b
 from psutil._error import AccessDenied, NoSuchProcess, TimeoutExpired
 import _psutil_linux as cext
 import _psutil_posix
@@ -98,7 +98,7 @@ def _get_cputimes_fields():
     (user, nice, system, idle, iowait, irq, softirq, [steal, [guest,
      [guest_nice]]])
     """
-    f = open('/proc/stat', 'r')
+    f = open('/proc/stat', 'rb')
     try:
         values = f.readline().split()[1:]
     finally:
@@ -139,14 +139,15 @@ pmmap_ext = namedtuple(
 def virtual_memory():
     total, free, buffers, shared, _, _ = cext.linux_sysinfo()
     cached = active = inactive = None
-    f = open('/proc/meminfo', 'r')
+    f = open('/proc/meminfo', 'rb')
+    CACHED, ACTIVE, INACTIVE = b("Cached:"), b("Active:"), b("Inactive:")
     try:
         for line in f:
-            if line.startswith('Cached:'):
+            if line.startswith(CACHED):
                 cached = int(line.split()[1]) * 1024
-            elif line.startswith('Active:'):
+            elif line.startswith(ACTIVE):
                 active = int(line.split()[1]) * 1024
-            elif line.startswith('Inactive:'):
+            elif line.startswith(INACTIVE):
                 inactive = int(line.split()[1]) * 1024
             if (cached is not None
                     and active is not None
@@ -173,15 +174,16 @@ def swap_memory():
     used = total - free
     percent = usage_percent(used, total, _round=1)
     # get pgin/pgouts
-    f = open("/proc/vmstat", "r")
+    f = open("/proc/vmstat", "rb")
+    SIN, SOUT = b('pswpin'), b('pswpout')
     sin = sout = None
     try:
         for line in f:
             # values are expressed in 4 kilo bytes, we want bytes instead
-            if line.startswith('pswpin'):
-                sin = int(line.split(' ')[1]) * 4 * 1024
-            elif line.startswith('pswpout'):
-                sout = int(line.split(' ')[1]) * 4 * 1024
+            if line.startswith(SIN):
+                sin = int(line.split(b(' '))[1]) * 4 * 1024
+            elif line.startswith(SOUT):
+                sout = int(line.split(b(' '))[1]) * 4 * 1024
             if sin is not None and sout is not None:
                 break
         else:
@@ -215,7 +217,7 @@ def cpu_times():
      [guest_nice]]])
     Last 3 fields may not be available on all Linux kernel versions.
     """
-    f = open('/proc/stat', 'r')
+    f = open('/proc/stat', 'rb')
     try:
         values = f.readline().split()
     finally:
@@ -230,12 +232,13 @@ def per_cpu_times():
     for every CPU available on the system.
     """
     cpus = []
-    f = open('/proc/stat', 'r')
+    f = open('/proc/stat', 'rb')
     try:
         # get rid of the first line which refers to system wide CPU stats
         f.readline()
+        CPU = b('cpu')
         for line in f:
-            if line.startswith('cpu'):
+            if line.startswith(CPU):
                 values = line.split()
                 fields = values[1:len(scputimes._fields) + 1]
                 fields = [float(x) / CLOCK_TICKS for x in fields]
@@ -253,20 +256,21 @@ def cpu_count_logical():
     except ValueError:
         # as a second fallback we try to parse /proc/cpuinfo
         num = 0
-        f = open('/proc/cpuinfo', 'r')
+        f = open('/proc/cpuinfo', 'rb')
         try:
             lines = f.readlines()
         finally:
             f.close()
+        PROCESSOR = b('processor')
         for line in lines:
-            if line.lower().startswith('processor'):
+            if line.lower().startswith(PROCESSOR):
                 num += 1
 
     # unknown format (e.g. amrel/sparc architectures), see:
     # http://code.google.com/p/psutil/issues/detail?id=200
     # try to parse /proc/stat as a last resort
     if num == 0:
-        f = open('/proc/stat', 'r')
+        f = open('/proc/stat', 'rt')
         try:
             lines = f.readlines()
         finally:
@@ -285,14 +289,15 @@ def cpu_count_logical():
 
 def cpu_count_physical():
     """Return the number of physical CPUs in the system."""
-    f = open('/proc/cpuinfo', 'r')
+    f = open('/proc/cpuinfo', 'rb')
     try:
         lines = f.readlines()
     finally:
         f.close()
     found = set()
+    PHYSICAL_ID = b('physical id')
     for line in lines:
-        if line.lower().startswith('physical id'):
+        if line.lower().startswith(PHYSICAL_ID):
             found.add(line.strip())
     if found:
         return len(found)
@@ -323,10 +328,11 @@ def users():
 def boot_time():
     """Return the system boot time expressed in seconds since the epoch."""
     global BOOT_TIME
-    f = open('/proc/stat', 'r')
+    f = open('/proc/stat', 'rb')
     try:
+        BTIME = b('btime')
         for line in f:
-            if line.startswith('btime'):
+            if line.startswith(BTIME):
                 ret = float(line.strip().split()[1])
                 BOOT_TIME = ret
                 return ret
@@ -339,7 +345,7 @@ def boot_time():
 
 def pids():
     """Returns a list of PIDs currently running on the system."""
-    return [int(x) for x in os.listdir('/proc') if x.isdigit()]
+    return [int(x) for x in os.listdir(b('/proc')) if x.isdigit()]
 
 
 def pid_exists(pid):
@@ -353,7 +359,7 @@ def net_io_counters():
     """Return network I/O statistics for every network interface
     installed on the system as a dict of raw tuples.
     """
-    f = open("/proc/net/dev", "r")
+    f = open("/proc/net/dev", "rt")
     try:
         lines = f.readlines()
     finally:
@@ -391,7 +397,7 @@ def disk_io_counters():
 
     # determine partitions we want to look for
     partitions = []
-    f = open("/proc/partitions", "r")
+    f = open("/proc/partitions", "rt")
     try:
         lines = f.readlines()[2:]
     finally:
@@ -411,7 +417,7 @@ def disk_io_counters():
                 partitions.append(name)
     #
     retdict = {}
-    f = open("/proc/diskstats", "r")
+    f = open("/proc/diskstats", "rt")
     try:
         lines = f.readlines()
     finally:
@@ -434,10 +440,11 @@ def disk_io_counters():
 def disk_partitions(all=False):
     """Return mounted disk partitions as a list of nameduples"""
     phydevs = []
-    f = open("/proc/filesystems", "r")
+    f = open("/proc/filesystems", "rb")
     try:
+        NODEV = b("nodev")
         for line in f:
-            if not line.startswith("nodev"):
+            if not line.startswith(NODEV):
                 phydevs.append(line.strip())
     finally:
         f.close()
@@ -495,9 +502,9 @@ class Process(object):
     def name(self):
         fname = "/proc/%s/stat" % self.pid
         if PY3:
-            f = open(fname, encoding=DEFAULT_ENCODING)
+            f = open(fname, "rt", encoding=DEFAULT_ENCODING)
         else:
-            f = open(fname)
+            f = open(fname, "rt")
         try:
             name = f.read().split(' ')[1].replace('(', '').replace(')', '')
         finally:
@@ -534,9 +541,9 @@ class Process(object):
     def cmdline(self):
         fname = "/proc/%s/cmdline" % self.pid
         if PY3:
-            f = open(fname, encoding=DEFAULT_ENCODING)
+            f = open(fname, "rt", encoding=DEFAULT_ENCODING)
         else:
-            f = open(fname)
+            f = open(fname, "rt")
         try:
             # return the args as a list
             return [x for x in f.read().split('\x00') if x]
@@ -546,9 +553,9 @@ class Process(object):
     @wrap_exceptions
     def terminal(self):
         tmap = _psposix._get_terminal_map()
-        f = open("/proc/%s/stat" % self.pid)
+        f = open("/proc/%s/stat" % self.pid, 'rb')
         try:
-            tty_nr = int(f.read().split(' ')[6])
+            tty_nr = int(f.read().split(b(' '))[6])
         finally:
             f.close()
         try:
@@ -560,17 +567,19 @@ class Process(object):
         @wrap_exceptions
         def io_counters(self):
             fname = "/proc/%s/io" % self.pid
-            f = open(fname)
+            f = open(fname, 'rb')
+            SYSCR, SYSCW = b("syscr"), b("syscw")
+            READ_BYTES, WRITE_BYTES = b("read_bytes"), b("write_bytes")
             try:
                 rcount = wcount = rbytes = wbytes = None
                 for line in f:
-                    if rcount is None and line.startswith("syscr"):
+                    if rcount is None and line.startswith(SYSCR):
                         rcount = int(line.split()[1])
-                    elif wcount is None and line.startswith("syscw"):
+                    elif wcount is None and line.startswith(SYSCW):
                         wcount = int(line.split()[1])
-                    elif rbytes is None and line.startswith("read_bytes"):
+                    elif rbytes is None and line.startswith(READ_BYTES):
                         rbytes = int(line.split()[1])
-                    elif wbytes is None and line.startswith("write_bytes"):
+                    elif wbytes is None and line.startswith(WRITE_BYTES):
                         wbytes = int(line.split()[1])
                 for x in (rcount, wcount, rbytes, wbytes):
                     if x is None:
@@ -586,14 +595,14 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        f = open("/proc/%s/stat" % self.pid)
+        f = open("/proc/%s/stat" % self.pid, 'rb')
         try:
             st = f.read().strip()
         finally:
             f.close()
         # ignore the first two values ("pid (exe)")
-        st = st[st.find(')') + 2:]
-        values = st.split(' ')
+        st = st[st.find(b(')')) + 2:]
+        values = st.split(b(' '))
         utime = float(values[11]) / CLOCK_TICKS
         stime = float(values[12]) / CLOCK_TICKS
         return _common.pcputimes(utime, stime)
@@ -607,14 +616,14 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        f = open("/proc/%s/stat" % self.pid)
+        f = open("/proc/%s/stat" % self.pid, 'rb')
         try:
             st = f.read().strip()
         finally:
             f.close()
         # ignore the first two values ("pid (exe)")
-        st = st[st.rfind(')') + 2:]
-        values = st.split(' ')
+        st = st[st.rfind(b(')')) + 2:]
+        values = st.split(b(' '))
         # According to documentation, starttime is in field 21 and the
         # unit is jiffies (clock ticks).
         # We first divide it for clock ticks and then add uptime returning
@@ -625,7 +634,7 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        f = open("/proc/%s/statm" % self.pid)
+        f = open("/proc/%s/statm" % self.pid, 'rb')
         try:
             vms, rss = f.readline().split()[:2]
             return _common.pmem(int(rss) * PAGESIZE,
@@ -646,7 +655,7 @@ class Process(object):
         # | data   | data + stack                        | drs  | DATA |
         # | dirty  | dirty pages (unused in Linux 2.6)   | dt   |      |
         #  ============================================================
-        f = open("/proc/%s/statm" % self.pid)
+        f = open("/proc/%s/statm" % self.pid, "rb")
         try:
             vms, rss, shared, text, lib, data, dirty = \
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
@@ -662,7 +671,7 @@ class Process(object):
             """
             f = None
             try:
-                f = open("/proc/%s/smaps" % self.pid)
+                f = open("/proc/%s/smaps" % self.pid, "rt")
                 first_line = f.readline()
                 current_block = [first_line]
 
@@ -746,12 +755,14 @@ class Process(object):
     @wrap_exceptions
     def num_ctx_switches(self):
         vol = unvol = None
-        f = open("/proc/%s/status" % self.pid)
+        f = open("/proc/%s/status" % self.pid, "rb")
+        VOLUNTARY = b("voluntary_ctxt_switches")
+        NON_VOLUNTARY = b("nonvoluntary_ctxt_switches")
         try:
             for line in f:
-                if line.startswith("voluntary_ctxt_switches"):
+                if line.startswith(VOLUNTARY):
                     vol = int(line.split()[1])
-                elif line.startswith("nonvoluntary_ctxt_switches"):
+                elif line.startswith(NON_VOLUNTARY):
                     unvol = int(line.split()[1])
                 if vol is not None and unvol is not None:
                     return _common.pctxsw(vol, unvol)
@@ -764,10 +775,11 @@ class Process(object):
 
     @wrap_exceptions
     def num_threads(self):
-        f = open("/proc/%s/status" % self.pid)
+        f = open("/proc/%s/status" % self.pid, "rb")
         try:
+            THREADS = b("Threads:")
             for line in f:
-                if line.startswith("Threads:"):
+                if line.startswith(THREADS):
                     return int(line.split()[1])
             raise NotImplementedError("line not found")
         finally:
@@ -781,7 +793,7 @@ class Process(object):
         hit_enoent = False
         for thread_id in thread_ids:
             try:
-                f = open("/proc/%s/task/%s/stat" % (self.pid, thread_id))
+                f = open("/proc/%s/task/%s/stat" % (self.pid, thread_id), 'rb')
             except EnvironmentError:
                 err = sys.exc_info()[1]
                 if err.errno == errno.ENOENT:
@@ -795,8 +807,8 @@ class Process(object):
             finally:
                 f.close()
             # ignore the first two values ("pid (exe)")
-            st = st[st.find(')') + 2:]
-            values = st.split(' ')
+            st = st[st.find(b(')')) + 2:]
+            values = st.split(b(' '))
             utime = float(values[11]) / CLOCK_TICKS
             stime = float(values[12]) / CLOCK_TICKS
             ntuple = _common.pthread(int(thread_id), utime, stime)
@@ -893,11 +905,14 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        f = open("/proc/%s/status" % self.pid)
+        f = open("/proc/%s/status" % self.pid, 'rb')
         try:
+            STATE = b("State:")
             for line in f:
-                if line.startswith("State:"):
+                if line.startswith(STATE):
                     letter = line.split()[1]
+                    if PY3:
+                        letter = letter.decode()
                     # XXX is '?' legit? (we're not supposed to return
                     # it anyway)
                     return PROC_STATUSES.get(letter, '?')
@@ -976,7 +991,7 @@ class Process(object):
         def process(file, family, type_):
             retlist = []
             try:
-                f = open(file, 'r')
+                f = open(file, 'rt')
             except IOError:
                 # IPv6 not supported on this platform
                 err = sys.exc_info()[1]
@@ -1057,10 +1072,11 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        f = open("/proc/%s/status" % self.pid)
+        f = open("/proc/%s/status" % self.pid, 'rb')
         try:
+            PPID = b("PPid:")
             for line in f:
-                if line.startswith("PPid:"):
+                if line.startswith(PPID):
                     # PPid: nnnn
                     return int(line.split()[1])
             raise NotImplementedError("line not found")
@@ -1069,10 +1085,11 @@ class Process(object):
 
     @wrap_exceptions
     def uids(self):
-        f = open("/proc/%s/status" % self.pid)
+        f = open("/proc/%s/status" % self.pid, 'rb')
         try:
+            UID = b('Uid:')
             for line in f:
-                if line.startswith('Uid:'):
+                if line.startswith(UID):
                     _, real, effective, saved, fs = line.split()
                     return _common.puids(int(real), int(effective), int(saved))
             raise NotImplementedError("line not found")
@@ -1081,10 +1098,11 @@ class Process(object):
 
     @wrap_exceptions
     def gids(self):
-        f = open("/proc/%s/status" % self.pid)
+        f = open("/proc/%s/status" % self.pid, 'rb')
         try:
+            GID = b('Gid:')
             for line in f:
-                if line.startswith('Gid:'):
+                if line.startswith(GID):
                     _, real, effective, saved, fs = line.split()
                     return _common.pgids(int(real), int(effective), int(saved))
             raise NotImplementedError("line not found")

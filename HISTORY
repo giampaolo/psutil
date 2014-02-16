@@ -16,6 +16,7 @@ ENHANCEMENTS
          it's a commond trap to introduce slowdowns.
  * #468: move documentation to readthedocs.com.
  * #477: process cpu_percent() is about 30% faster.  (suggested by crusaderky)
+ * #478: [Linux] almost all APIs are about 30% faster on Python 3.X.
 
 BUG FIXES
 
