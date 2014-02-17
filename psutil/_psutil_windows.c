@@ -3199,8 +3199,11 @@ void init_psutil_windows(void)
         module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
     // ...for internal use in _psutil_windows.py
     PyModule_AddIntConstant(
-        module, "INFINITE", INFINITE); PyModule_AddIntConstant(
-        module, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED); SetSeDebug();
+        module, "INFINITE", INFINITE);
+    PyModule_AddIntConstant(
+        module, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED);
+
+    SetSeDebug();
 
 #if PY_MAJOR_VERSION >= 3
     return module;

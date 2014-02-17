@@ -328,6 +328,8 @@ class Process(object):
             if not _ignore_nsp:
                 msg = 'no process found with pid %s' % pid
                 raise NoSuchProcess(pid, None, msg)
+            else:
+                self._gone = True
         # This pair is supposed to indentify a Process instance
         # univocally over time (the PID alone is not enough as
         # it might refer to a process whose PID has been reused).

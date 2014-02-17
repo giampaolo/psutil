@@ -102,6 +102,7 @@ DEBATABLE
  * Certain systems (XXX figure out which ones exactly) provide CPU times about
    process children. On those systems Process.get_cpu_times() might return
    a (user, system, user_children, system_children) ntuple.
+   Also, os.times() provides 'elapsed' times as well.
 
  * Enrich exception classes hierarchy on Python >= 3.3 / post PEP-3151 so that:
    - NoSuchProcess inherits from ProcessLookupError
