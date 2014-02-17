@@ -15,13 +15,12 @@
  * Convert a process handle to a process token handle.
  */
 HANDLE
-token_from_handle(HANDLE hProcess) {
+psutil_token_from_handle(HANDLE hProcess) {
     HANDLE hToken = NULL;
 
-    if (! OpenProcessToken(hProcess, TOKEN_QUERY, &hToken) ) {
+    if (! OpenProcessToken(hProcess, TOKEN_QUERY, &hToken)) {
         return PyErr_SetFromWindowsErr(0);
     }
-
     return hToken;
 }
 
@@ -39,7 +38,8 @@ token_from_handle(HANDLE hProcess) {
  * string “SeTcbPrivilege. If the function returns this string, then this
  * account has Local System privileges
  */
-int HasSystemPrivilege(HANDLE hProcess) {
+int
+psutil_has_system_privilege(HANDLE hProcess) {
     DWORD i;
     DWORD dwSize = 0;
     DWORD dwRetval = 0;
@@ -48,7 +48,7 @@ int HasSystemPrivilege(HANDLE hProcess) {
     // PTOKEN_PRIVILEGES tp = NULL;
     BYTE *pBuffer = NULL;
     TOKEN_PRIVILEGES *tp = NULL;
-    HANDLE hToken = token_from_handle(hProcess);
+    HANDLE hToken = psutil_token_from_handle(hProcess);
 
     if (NULL == hToken) {
         return -1;
@@ -110,7 +110,8 @@ int HasSystemPrivilege(HANDLE hProcess) {
 }
 
 
-BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
+BOOL
+psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
 {
     TOKEN_PRIVILEGES tp;
     LUID luid;
@@ -163,7 +164,8 @@ BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
 }
 
 
-int SetSeDebug()
+int
+psutil_set_se_debug()
 {
     HANDLE hToken;
     if (! OpenThreadToken(GetCurrentThread(),
@@ -189,7 +191,7 @@ int SetSeDebug()
     }
 
     // enable SeDebugPrivilege (open any process)
-    if (! SetPrivilege(hToken, SE_DEBUG_NAME, TRUE)) {
+    if (! psutil_set_privilege(hToken, SE_DEBUG_NAME, TRUE)) {
         RevertToSelf();
         CloseHandle(hToken);
         return 0;
@@ -201,7 +203,8 @@ int SetSeDebug()
 }
 
 
-int UnsetSeDebug()
+int
+psutil_unset_se_debug()
 {
     HANDLE hToken;
     if (! OpenThreadToken(GetCurrentThread(),
@@ -226,7 +229,7 @@ int UnsetSeDebug()
     }
 
     // now disable SeDebug
-    if (! SetPrivilege(hToken, SE_DEBUG_NAME, FALSE)) {
+    if (! psutil_set_privilege(hToken, SE_DEBUG_NAME, FALSE)) {
         return 0;
     }
 

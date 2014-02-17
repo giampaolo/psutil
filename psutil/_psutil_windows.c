@@ -3203,7 +3203,8 @@ void init_psutil_windows(void)
     PyModule_AddIntConstant(
         module, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED);
 
-    SetSeDebug();
+    // set SeDebug for the current process
+    psutil_set_se_debug();
 
 #if PY_MAJOR_VERSION >= 3
     return module;

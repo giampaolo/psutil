@@ -9,9 +9,9 @@
 
 #include <windows.h>
 
-BOOL SetPrivilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege);
-HANDLE token_from_handle(HANDLE hProcess);
-int HasSystemPrivilege(HANDLE hProcess);
-int SetSeDebug();
-int UnsetSeDebug();
+BOOL psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege);
+HANDLE psutil_token_from_handle(HANDLE hProcess);
+int psutil_has_system_privilege(HANDLE hProcess);
+int psutil_set_se_debug();
+int psutil_unset_se_debug();
 
