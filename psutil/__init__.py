@@ -12,6 +12,7 @@ in Python.
 
 from __future__ import division
 
+__author__ = "Giampaolo Rodola'"
 __version__ = "2.0.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
