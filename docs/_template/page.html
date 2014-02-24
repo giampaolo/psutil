@@ -1,0 +1,66 @@
+{% extends "!page.html" %}
+{% block extrahead %}
+{{ super() }}
+{% if not embedded %}<script type="text/javascript" src="{{ pathto('_static/copybutton.js', 1) }}"></script>{% endif %}
+<script type="text/javascript">
+
+  // Store editor pop-up help state in localStorage
+  // so it does not re-pop-up itself between page loads.
+  // Do not even to pretend to support IE gracefully.
+  (function($) {
+
+    $(document).ready(function() {
+        var box = $("#editor-trap");
+        var klass = "toggled";
+        var storageKey = "toggled";
+
+        function toggle() {
+            box.toggleClass(klass);
+            // Store the toggle status in local storage as "has value string" or null
+            window.localStorage.setItem(storageKey, box.hasClass(klass) ? "toggled" : "not-toggled");
+        }
+
+        box.click(toggle);
+
+        // Check the persistent state of the editor pop-up
+        // Note that localStorage does not necessarily support boolean values (ugh!)
+        // http://stackoverflow.com/questions/3263161/cannot-set-boolean-values-in-localstorage
+        var v = window.localStorage.getItem(storageKey);
+        if(v == "toggled" || !v) {
+          box.addClass(klass);
+        }
+
+    });
+
+  })(jQuery);
+</script>
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-2097050-4']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+{% endblock %}
+
+{% block rootrellink %}
+    <li><a href="http://code.google.com/p/psutil/"><img src="{{ pathto('_static/logo.png', 1) }}" style="height: 30px; vertical-align: middle; padding-right: 1em;" /> Project Homepage</a>{{ reldelim1 }}</li>
+	<li><a href="{{ pathto('index') }}">{{ shorttitle }}</a>{{ reldelim1 }}</li>
+{% endblock %}
+
+
+{% block footer %}
+<div class="footer">
+    &copy; Copyright {{ copyright|e }}.
+    <br />
+    Last updated on {{ last_updated|e }}.
+    <br />
+    Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version|e }}.
+</div>
+{% endblock %}

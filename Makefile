@@ -19,10 +19,11 @@ clean:
 	rm -f `find . -type f -name \*.bak`
 	rm -f `find . -type f -name \*.rej`
 	rm -rf `find . -type d -name __pycache__`
-	rm -rf *\$testfile*
 	rm -rf *.egg-info
+	rm -rf *\$testfile*
 	rm -rf build
 	rm -rf dist
+	rm -rf docs/_build
 
 build: clean
 	$(PYTHON) setup.py build
