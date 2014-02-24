@@ -217,17 +217,14 @@ class Process(object):
 
     @wrap_exceptions
     def name(self):
-        """Return process name as a string of limited len (15)."""
         return cext.proc_name(self.pid)
 
     @wrap_exceptions
     def exe(self):
-        """Return process executable pathname."""
         return cext.proc_exe(self.pid)
 
     @wrap_exceptions
     def cmdline(self):
-        """Return process cmdline as a list of arguments."""
         return cext.proc_cmdline(self.pid)
 
     @wrap_exceptions
@@ -241,30 +238,25 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        """Return process parent pid."""
         return cext.proc_ppid(self.pid)
 
     @wrap_exceptions
     def uids(self):
-        """Return real, effective and saved user ids."""
         real, effective, saved = cext.proc_uids(self.pid)
         return _common.puids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
-        """Return real, effective and saved group ids."""
         real, effective, saved = cext.proc_gids(self.pid)
         return _common.pgids(real, effective, saved)
 
     @wrap_exceptions
     def cpu_times(self):
-        """return a tuple containing process user/kernel time."""
         user, system = cext.proc_cpu_times(self.pid)
         return _common.pcputimes(user, system)
 
     @wrap_exceptions
     def memory_info(self):
-        """Return a tuple with the process' RSS and VMS size."""
         rss, vms = cext.proc_memory_info(self.pid)[:2]
         return _common.pmem(rss, vms)
 
@@ -274,13 +266,10 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        """Return the start time of the process as a number of seconds since
-        the epoch."""
         return cext.proc_create_time(self.pid)
 
     @wrap_exceptions
     def num_threads(self):
-        """Return the number of threads belonging to the process."""
         return cext.proc_num_threads(self.pid)
 
     @wrap_exceptions
@@ -289,7 +278,6 @@ class Process(object):
 
     @wrap_exceptions
     def threads(self):
-        """Return the number of threads belonging to the process."""
         rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
@@ -299,9 +287,6 @@ class Process(object):
 
     @wrap_exceptions
     def connections(self, kind='inet'):
-        """Return etwork connections opened by a process as a list of
-        namedtuples.
-        """
         if kind not in conn_tmap:
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))

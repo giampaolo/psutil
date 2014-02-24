@@ -961,22 +961,6 @@ class Process(object):
 
     @wrap_exceptions
     def connections(self, kind='inet'):
-        """Return connections opened by process as a list of namedtuples.
-        The kind parameter filters for connections that fit the following
-        criteria:
-
-        Kind Value      Number of connections using
-        inet            IPv4 and IPv6
-        inet4           IPv4
-        inet6           IPv6
-        tcp             TCP
-        tcp4            TCP over IPv4
-        tcp6            TCP over IPv6
-        udp             UDP
-        udp4            UDP over IPv4
-        udp6            UDP over IPv6
-        all             the sum of all the possible families and protocols
-        """
         # Note: in case of UNIX sockets we're only able to determine the
         # local bound path while the remote endpoint is not retrievable:
         # http://goo.gl/R3GHM

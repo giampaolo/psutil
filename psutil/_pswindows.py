@@ -228,11 +228,9 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        """Return process cmdline as a list of arguments."""
         return cext.proc_cmdline(self.pid)
 
     def ppid(self):
-        """Return process parent pid."""
         try:
             return ppid_map()[self.pid]
         except KeyError:
@@ -249,7 +247,6 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        """Returns a tuple or RSS/VMS memory usage in bytes."""
         # on Windows RSS == WorkingSetSize and VSM == PagefileUsage
         # fields of PROCESS_MEMORY_COUNTERS struct:
         # http://msdn.microsoft.com/en-us/library/windows/desktop/
@@ -281,7 +278,6 @@ class Process(object):
 
     @wrap_exceptions
     def kill(self):
-        """Terminates the process with the given PID."""
         return cext.proc_kill(self.pid)
 
     @wrap_exceptions
@@ -301,7 +297,6 @@ class Process(object):
 
     @wrap_exceptions
     def username(self):
-        """Return the name of the user that owns the process"""
         if self.pid in (0, 4):
             return 'NT AUTHORITY\\SYSTEM'
         return cext.proc_username(self.pid)
