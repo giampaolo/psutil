@@ -860,22 +860,18 @@ class Process(object):
         self._last_proc_cpu_times = pt2
 
         try:
-            # the utilization split between all CPUs
-            overall_percent = (delta_proc / delta_time) * 100
+            # The utilization split between all CPUs.
+            # Note: a percentage > 100 is legitimate as it can result
+            # from a process with multiple threads running on different
+            # CPU cores, see:
+            # http://stackoverflow.com/questions/1032357
+            # https://code.google.com/p/psutil/issues/detail?id=474
+            overall_percent = ((delta_proc / delta_time) * 100) * num_cpus
         except ZeroDivisionError:
             # interval was too low
             return 0.0
-        # the utilization of a single CPU (note: cpu_count() value is cached)
-        single_cpu_percent = overall_percent * num_cpus
-        # On POSIX a percentage > 100 is legitimate:
-        # http://stackoverflow.com/questions/1032357/
-        #   comprehending-top-cpu-usage
-        # On windows we use this ugly hack in order to avoid float
-        # precision issues.
-        if not _POSIX:
-            if single_cpu_percent > 100.0:
-                return 100.0
-        return round(single_cpu_percent, 1)
+        else:
+            return round(overall_percent, 1)
 
     def cpu_times(self):
         """Return a (user, system) namedtuple representing  the

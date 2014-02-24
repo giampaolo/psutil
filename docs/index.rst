@@ -722,6 +722,10 @@ Process class
       2.9
       >>>
 
+     .. note::
+        a percentage > 100 is legitimate as it can result from a process with
+        multiple threads running on different CPU cores.
+
      .. warning::
         the first time this method is called with interval = ``0.0`` or
         ``None`` it will return a meaningless ``0.0`` value which you are
