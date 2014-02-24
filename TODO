@@ -25,7 +25,9 @@ HIGHER PRIORITY
 
  * #269: expose network ifaces RX/TW queues.
 
- * Windows make file.
+ * Process.threads(): thread names
+
+ * Asynchronous psutil.Popen (see http://www.python.org/dev/peps/pep-3145/)
 
 
 LOWER PRIORITY
@@ -44,7 +46,7 @@ LOWER PRIORITY
  * examples/pidof.py (same as 'pidof' cli tool)
 
  * examples/pstree.py (same as 'pstree' cli tool)
-    * get_threads() should also return thread names in order to implement it
+    * threads() should also return thread names in order to implement it
 
  * examples/taskmgr-gui.py (using tk).
 
@@ -60,8 +62,6 @@ LOWER PRIORITY
  * thread names:
     * https://code.google.com/p/plcrashreporter/issues/detail?id=65
 
- * Asynchronous psutil.Popen (see http://www.python.org/dev/peps/pep-3145/)
-
  * Doc / wiki which compares similarities between UNIX cli tools and psutil.
    Example:
    df -a  ->  psutil.disk_partitions
@@ -74,6 +74,8 @@ LOWER PRIORITY
 DEBATABLE
 =========
 
+ * support wheels? http://pythonwheels.com/
+
  * advanced cmdline interface exposing the whole API and providing different
    kind of outputs (e.g. pprinted, colorized, json).
 
@@ -81,12 +83,6 @@ DEBATABLE
    similar to prlimit() in terms of functionality but uglier (they should allow
    limiting per-process network IO resources though, which is great). Needs
    further reading.
-
- * psutil.cpu_percent() and psutil.Process.get_cpu_percent():
-   current default interval is 0.1 so that by default it will produce a
-   meaningful value. It represents a trap in case the user iterates over
-   multiple processes though, as it introduces a big slowdown.
-   Should it default to 0.0?
 
  * Should we expose OS constants (psutil.WINDOWS, psutil.OSX etc.)?
 
@@ -100,7 +96,7 @@ DEBATABLE
    implemented as a busy-loop.
 
  * Certain systems (XXX figure out which ones exactly) provide CPU times about
-   process children. On those systems Process.get_cpu_times() might return
+   process children. On those systems Process.cpu_times() might return
    a (user, system, user_children, system_children) ntuple.
    Also, os.times() provides 'elapsed' times as well.
 
@@ -110,11 +106,11 @@ DEBATABLE
    - TimeoutExpired inherits from TimeoutError (debatable)
    See: http://docs.python.org/3/library/exceptions.html#os-exceptions
 
- * Process.get_threads() might grow an extra "id" parameter so that it can be
+ * Process.threads() might grow an extra "id" parameter so that it can be
    used as such:
 
     >>> p = psutil.Process(os.getpid())
-    >>> p.get_threads(id=psutil.get_current_thread_id())
+    >>> p.threads(id=psutil.current_thread_id())
     thread(id=2539, user_time=0.03, system_time=0.02)
     >>>
 
@@ -122,18 +118,11 @@ DEBATABLE
    exception? Also see issue #418.
 
    Note #2: this would work with os.getpid() only.
-   psutil.get_current_thread_id() might be desirable as per issue #418 though.
+   psutil.current_thread_id() might be desirable as per issue #418 though.
 
   * should psutil.TimeoutExpired exception have a 'msg' kwarg similar to
     NoSuchProcess and AccessDenied? Not that we need it, but currently we
     cannot raise a TimeoutExpired exception with a specific error string.
-
-  * move exceptions into __init__.py so that visualized exception will look
-    like psutil.{EXCEPTION} instead of psutil._error.{EXCEPTION}.
-    __init__.py can push the exceptions into _ps*.py module after having
-    imported them.
-
-  * support wheels? http://pythonwheels.com/
 
   * process_iter() might grow an "attrs" parameter similar to Process.as_dict()
     invoke the necessary methods and include the results into a "cache"
@@ -149,19 +138,13 @@ DEBATABLE
 COMPATIBILITY BREAKAGE
 ======================
 
-H = high risk in terms of breakage
-M = medium risk in terms of breakage
-S = little risk in terms of breakage
-? = debatable
-
 Removals (will likely happen in 2.2):
 
  * (S) psutil.Process.nice  (deprecated in 0.5.0)
  * (S) get_process_list  (deprecated in 0.5.0)
  * (S) psutil.*mem* functions  (deprecated in 0.3.0 and 0.6.0)
- * (S) psutil.error.py  (deprecated in 0.7.0 but never documented)
  * (M) psutil.network_io_counters  (deprecated in 1.0.0)
- * (M) local_address and remote_address get_connection() namedtuple fields
+ * (M) local_address and remote_address Process.connection() namedtuple fields
        (deprecated in 1.0.0)
 
 
