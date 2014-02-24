@@ -50,7 +50,7 @@ try:
 except ImportError:
     pwd = None
 
-from psutil._common import cached_property, memoize
+from psutil._common import memoize
 from psutil._compat import property, callable, defaultdict
 from psutil._compat import (wraps as _wraps,
                             PY3 as _PY3)
@@ -1959,7 +1959,7 @@ def _replace_module():
 
 
 _replace_module()
-del property, cached_property, memoize, division, _replace_module
+del property, memoize, division, _replace_module
 if sys.version_info < (3, 0):
     del num
 
