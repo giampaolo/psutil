@@ -481,6 +481,9 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except EnvironmentError:
+            # support for private module import
+            if NoSuchProcess is None or AccessDenied is None:
+                raise
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if
             # process is gone in meantime.

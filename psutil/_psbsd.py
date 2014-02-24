@@ -194,6 +194,9 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except OSError:
+            # support for private module import
+            if NoSuchProcess is None or AccessDenied is None:
+                raise
             err = sys.exc_info()[1]
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._name)
