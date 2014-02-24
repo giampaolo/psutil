@@ -293,6 +293,9 @@ class Process(object):
             timeout = int(timeout * 1000)
         ret = cext.proc_wait(self.pid, timeout)
         if ret == WAIT_TIMEOUT:
+            # support for private module import
+            if TimeoutExpired is None:
+                raise RuntimeError("timeout expired")
             raise TimeoutExpired(timeout, self.pid, self._name)
         return ret
 

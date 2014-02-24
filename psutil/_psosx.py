@@ -303,6 +303,9 @@ class Process(object):
         try:
             return _psposix.wait_pid(self.pid, timeout)
         except _psposix.TimeoutExpired:
+            # support for private module import
+            if TimeoutExpired is None:
+                raise
             raise TimeoutExpired(timeout, self.pid, self._name)
 
     @wrap_exceptions
