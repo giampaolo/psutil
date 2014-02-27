@@ -8,6 +8,29 @@
 A clone of top / htop.
 
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
+
+$ python examples/top.py
+ CPU0  [|                                       ]   4.9%
+ CPU1  [|||                                     ]   7.8%
+ CPU2  [                                        ]   2.0%
+ CPU3  [|||||                                   ]  13.9%
+ Mem   [|||||||||||||||||||                     ]  49.8%  4920M/9888M
+ Swap  [                                        ]   0.0%     0M/0M
+ Processes: 287 (running=1 sleeping=286)
+ Load average: 0.34 0.54 0.46  Uptime: 3 days, 10:16:37
+
+PID    USER       NI  VIRT   RES   CPU% MEM%     TIME+  NAME
+989    giampaol    0   66M   12M    7.4  0.1   0:00.61  python
+2083   root        0  506M  159M    6.5  1.6   0:29.26  Xorg
+4503   giampaol    0  599M   25M    6.5  0.3   3:32.60  gnome-terminal
+3868   giampaol    0  358M    8M    2.8  0.1  23:12.60  pulseaudio
+3936   giampaol    0    1G  111M    2.8  1.1  33:41.67  compiz
+4401   giampaol    0  536M  141M    2.8  1.4  35:42.73  skype
+4047   giampaol    0  743M   76M    1.8  0.8  42:03.33  unity-panel-service
+13155  giampaol    0    1G  280M    1.8  2.8  41:57.34  chrome
+10     root        0    0B    0B    0.9  0.0   4:01.81  rcu_sched
+339    giampaol    0    1G  113M    0.9  1.1   8:15.73  chrome
+...
 """
 
 import os

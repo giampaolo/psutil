@@ -6,6 +6,13 @@
 
 """
 List all mounted disk partitions a-la "df -h" command.
+
+$ python examples/disk_usage.py
+Device               Total     Used     Free  Use %      Type  Mount
+/dev/sdb3            18.9G    14.7G     3.3G    77%      ext4  /
+/dev/sda6           345.9G    83.8G   244.5G    24%      ext4  /home
+/dev/sda1           296.0M    43.1M   252.9M    14%      vfat  /boot/efi
+/dev/sda2           600.0M   312.4M   287.6M    52%   fuseblk  /media/Recovery
 """
 
 import sys

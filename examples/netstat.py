@@ -6,6 +6,17 @@
 
 """
 A clone of 'netstat'.
+
+$ python examples/netstat.py
+Proto Local addr         Remote addr      Status        PID    Program name
+tcp   127.0.0.1:48256    127.0.0.1:45884  ESTABLISHED   13646  chrome
+tcp   127.0.0.1:47073    127.0.0.1:45884  ESTABLISHED   13646  chrome
+tcp   127.0.0.1:47072    127.0.0.1:45884  ESTABLISHED   13646  chrome
+tcp   127.0.0.1:45884                     LISTEN        13651  GoogleTalkPlugi
+tcp   127.0.0.1:60948                     LISTEN        13651  GoogleTalkPlugi
+tcp   172.17.42.1:49102  127.0.0.1:19305  CLOSE_WAIT    13651  GoogleTalkPlugi
+tcp   172.17.42.1:55797  127.0.0.1:443    CLOSE_WAIT    13651  GoogleTalkPlugi
+...
 """
 
 import socket

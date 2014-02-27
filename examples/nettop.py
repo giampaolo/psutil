@@ -10,6 +10,25 @@
 Shows real-time network statistics.
 
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
+
+$ python examples/nettop.py
+-----------------------------------------------------------
+total bytes:           sent: 1.49 G       received: 4.82 G
+total packets:         sent: 7338724      received: 8082712
+
+wlan0                     TOTAL         PER-SEC
+-----------------------------------------------------------
+bytes-sent               1.29 G        0.00 B/s
+bytes-recv               3.48 G        0.00 B/s
+pkts-sent               7221782               0
+pkts-recv               6753724               0
+
+eth1                      TOTAL         PER-SEC
+-----------------------------------------------------------
+bytes-sent             131.77 M        0.00 B/s
+bytes-recv               1.28 G        0.00 B/s
+pkts-sent                     0               0
+pkts-recv               1214470               0
 """
 
 import sys

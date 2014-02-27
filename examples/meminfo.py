@@ -6,6 +6,28 @@
 
 """
 Print system memory information.
+
+$ python examples/meminfo.py
+MEMORY
+------
+Total      :    9.7G
+Available  :    4.9G
+Percent    :    49.0
+Used       :    8.2G
+Free       :    1.4G
+Active     :    5.6G
+Inactive   :    2.1G
+Buffers    :  341.2M
+Cached     :    3.2G
+
+SWAP
+----
+Total      :      0B
+Used       :      0B
+Free       :      0B
+Percent    :     0.0
+Sin        :      0B
+Sout       :      0B
 """
 
 import psutil

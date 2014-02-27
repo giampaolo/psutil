@@ -6,6 +6,11 @@
 
 """
 A clone of 'free' cmdline utility.
+
+$ python examples/free.py
+             total       used       free     shared    buffers      cache
+Mem:      10125520    8625996    1499524          0     349500    3307836
+Swap:            0          0          0
 """
 
 import psutil

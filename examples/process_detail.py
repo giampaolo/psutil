@@ -6,8 +6,28 @@
 
 """
 Print detailed information about a process.
-
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
+
+$ python examples/process_detail.py
+pid               820
+name              python
+exe               /usr/bin/python2.7
+parent            29613 (bash)
+cmdline           python examples/process_detail.py
+started           2014-41-27 03:41
+user              giampaolo
+uids              real=1000, effective=1000, saved=1000
+gids              real=1000, effective=1000, saved=1000
+terminal          /dev/pts/17
+cwd               /ssd/svn/psutil
+memory            0.1% (resident=10.6M, virtual=58.5M)
+cpu               0.0% (user=0.09, system=0.0)
+status            running
+niceness          0
+num threads       1
+I/O               bytes-read=0B, bytes-written=0B
+open files
+running threads   id=820, user-time=0.09, sys-time=0.0
 """
 
 import datetime
