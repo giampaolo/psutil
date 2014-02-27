@@ -20,6 +20,7 @@ $ python examples/top.py
  Load average: 0.34 0.54 0.46  Uptime: 3 days, 10:16:37
 
 PID    USER       NI  VIRT   RES   CPU% MEM%     TIME+  NAME
+------------------------------------------------------------
 989    giampaol    0   66M   12M    7.4  0.1   0:00.61  python
 2083   root        0  506M  159M    6.5  1.6   0:29.26  Xorg
 4503   giampaol    0  599M   25M    6.5  0.3   3:32.60  gnome-terminal

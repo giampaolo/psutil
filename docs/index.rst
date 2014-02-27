@@ -177,6 +177,8 @@ Memory
 
   The sum of **used** and **available** does not necessarily equal **total**.
   On Windows **available** and **free** are the same.
+  See `examples/meminfo.py <http://code.google.com/p/psutil/source/browse/examples/meminfo.py>`_
+  script providing an example on how to convert bytes in a human readable form.
 
     >>> import psutil
     >>> mem = psutil.virtual_memory()
@@ -205,6 +207,8 @@ Memory
     (cumulative)
 
   **sin** and **sout** on Windows are meaningless and are always set to ``0``.
+  See `examples/meminfo.py <http://code.google.com/p/psutil/source/browse/examples/meminfo.py>`_
+  script providing an example on how to convert bytes in a human readable form.
 
     >>> import psutil
     >>> psutil.swap_memory()
@@ -226,8 +230,8 @@ Disks
   ``'ext3'`` for an ext3 hard drive o ``'iso9660'`` for the CD-ROM drive).
   On Windows it is determined via
   `GetDriveType <http://msdn.microsoft.com/en-us/library/aa364939(v=vs.85).aspx>`_
-  and can be either ``"removable"``, ``"fixed"``, ``"remote"``, ``"cdrom"``, ``"
-  unmounted"`` or ``"ramdisk"``. On OSX and FreeBSD it is retrieved via
+  and can be either ``"removable"``, ``"fixed"``, ``"remote"``, ``"cdrom"``,
+  ``"unmounted"`` or ``"ramdisk"``. On OSX and FreeBSD it is retrieved via
   `getfsstat(2) <http://www.manpagez.com/man/2/getfsstat/>`_. See
   `disk_usage.py <http://code.google.com/p/psutil/source/browse/examples/disk_usage.py>`_
   script providing an example usage.
@@ -249,6 +253,9 @@ Disks
   `Python 3.3 <http://bugs.python.org/issue12442>`_  this is also
   available as
   `shutil.disk_usage() <http://docs.python.org/3/library/shutil.html#shutil.disk_usage>`_.
+  See
+  `disk_usage.py <http://code.google.com/p/psutil/source/browse/examples/disk_usage.py>`_
+  script providing an example usage.
 
     >>> import psutil
     >>> psutil.disk_usage('/')
@@ -269,6 +276,8 @@ Disks
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
   the namedutuple described above as the values.
+  See `examples/iotop.py <http://code.google.com/p/psutil/source/browse/examples/iotop.py>`_
+  for an example application.
 
     >>> import psutil
     >>> psutil.disk_io_counters()
@@ -300,6 +309,8 @@ Network
   If *pernic* is ``True`` return the same information for every network
   interface installed on the system as a dictionary with network interface
   names as the keys and the namedtuple described above as the values.
+  See `examples/nettop.py <http://code.google.com/p/psutil/source/browse/examples/nettop.py>`_
+  for an example application.
 
     >>> import psutil
     >>> psutil.net_io_counters()
@@ -815,6 +826,8 @@ Process class
      is ``False`` every mapped region is shown as a single entity and the
      namedtuple will also include the mapped region's address space (*addr*)
      and permission set (*perms*).
+     See `examples/pmap.py <http://code.google.com/p/psutil/source/browse/examples/pmap.py>`_
+     for an example application.
 
       >>> import psutil
       >>> p = psutil.Process()
