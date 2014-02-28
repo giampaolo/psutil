@@ -145,7 +145,7 @@ def main():
         author_email='g.rodola <at> gmail <dot> com',
         url='http://code.google.com/p/psutil/',
         platforms='Platform Independent',
-        license='License :: OSI Approved :: BSD License',
+        license='BSD',
         packages=['psutil'],
         # see: python setup.py register --list-classifiers
         classifiers=[

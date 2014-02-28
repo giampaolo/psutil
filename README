@@ -1,3 +1,14 @@
+.. image:: https://pypip.in/d/psutil/badge.png
+    :target: https://crate.io/packages/psutil/
+    :alt: Download this month
+
+.. image:: https://pypip.in/v/psutil/badge.png
+    :target: https://pypi.python.org/pypi/psutil/
+    :alt: Latest version
+
+.. image:: https://pypip.in/license/psutil/badge.png
+    :target: https://pypi.python.org/pypi/psutil/
+    :alt: License
 
 ===========
 Quick links
