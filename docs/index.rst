@@ -7,9 +7,9 @@
    This documentation refers to new 2.0.0 version of psutil which is currently
    under development.
    Instructions on how to port existing 1.2.1 code are
-   `here <http://grodola.blogspot.com/2014/01/psutil-20.html>`_.
+   `here <http://grodola.blogspot.com/2014/01/psutil-20.html>`__.
    Old 1.2.1 documentation is still available
-   `here <https://code.google.com/p/psutil/wiki/Documentation>`_.
+   `here <https://code.google.com/p/psutil/wiki/Documentation>`__.
 
 psutil documentation
 ====================
@@ -17,11 +17,11 @@ psutil documentation
 Quick links
 -----------
 
-* `Home page <http://code.google.com/p/psutil>`_
-* `Blog <http://grodola.blogspot.com/search/label/psutil>`_
-* `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
-* `Forum <http://groups.google.com/group/psutil/topics>`_
-* `What's new <https://psutil.googlecode.com/hg/HISTORY>`_
+* `Home page <http://code.google.com/p/psutil>`__
+* `Blog <http://grodola.blogspot.com/search/label/psutil>`__
+* `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`__
+* `Forum <http://groups.google.com/group/psutil/topics>`__
+* `What's new <https://psutil.googlecode.com/hg/HISTORY>`__
 
 About
 -----
@@ -40,7 +40,7 @@ From project's home page:
   It currently supports **Linux, Windows, OSX, FreeBSD** and **Sun Solaris**,
   both **32-bit** and **64-bit** architectures, with Python versions from
   **2.4** to **3.4**.
-  `Pypy <http://pypy.org/>`_ is also known to work.
+  `Pypy <http://pypy.org/>`__ is also known to work.
 
 The psutil documentation you're reading is distributed as a single HTML page.
 
@@ -129,7 +129,7 @@ CPU
 .. function:: cpu_count(logical=True)
 
     Return the number of logical CPUs in the system (same as
-    `os.cpu_count() <http://docs.python.org/3/library/os.html#os.cpu_count>`_
+    `os.cpu_count() <http://docs.python.org/3/library/os.html#os.cpu_count>`__
     in Python 3.4).
     If *logical* is ``False`` return the number of physical cores only (hyper
     thread CPUs are excluded). Return ``None`` if undetermined.
@@ -177,7 +177,7 @@ Memory
 
   The sum of **used** and **available** does not necessarily equal **total**.
   On Windows **available** and **free** are the same.
-  See `examples/meminfo.py <http://code.google.com/p/psutil/source/browse/examples/meminfo.py>`_
+  See `examples/meminfo.py <http://code.google.com/p/psutil/source/browse/examples/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
     >>> import psutil
@@ -207,7 +207,7 @@ Memory
     (cumulative)
 
   **sin** and **sout** on Windows are meaningless and are always set to ``0``.
-  See `examples/meminfo.py <http://code.google.com/p/psutil/source/browse/examples/meminfo.py>`_
+  See `examples/meminfo.py <http://code.google.com/p/psutil/source/browse/examples/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
     >>> import psutil
@@ -223,17 +223,17 @@ Disks
   mount point and filesystem type, similarly to "df" command on UNIX. If *all*
   parameter is ``False`` return physical devices only (e.g. hard disks, cd-rom
   drives, USB keys) and ignore all others (e.g. memory partitions such as
-  `/dev/shm <http://www.cyberciti.biz/tips/what-is-devshm-and-its-practical-usage.html>`_).
+  `/dev/shm <http://www.cyberciti.biz/tips/what-is-devshm-and-its-practical-usage.html>`__).
   Namedtuple's **fstype** field is a string which varies depending on the
   platform.
   On Linux it can be one of the values found in /proc/filesystems (e.g.
   ``'ext3'`` for an ext3 hard drive o ``'iso9660'`` for the CD-ROM drive).
   On Windows it is determined via
-  `GetDriveType <http://msdn.microsoft.com/en-us/library/aa364939(v=vs.85).aspx>`_
+  `GetDriveType <http://msdn.microsoft.com/en-us/library/aa364939(v=vs.85).aspx>`__
   and can be either ``"removable"``, ``"fixed"``, ``"remote"``, ``"cdrom"``,
   ``"unmounted"`` or ``"ramdisk"``. On OSX and FreeBSD it is retrieved via
-  `getfsstat(2) <http://www.manpagez.com/man/2/getfsstat/>`_. See
-  `disk_usage.py <http://code.google.com/p/psutil/source/browse/examples/disk_usage.py>`_
+  `getfsstat(2) <http://www.manpagez.com/man/2/getfsstat/>`__. See
+  `disk_usage.py <http://code.google.com/p/psutil/source/browse/examples/disk_usage.py>`__
   script providing an example usage.
 
     >>> import psutil
@@ -246,15 +246,15 @@ Disks
   Return disk usage statistics about the given *path* as a namedtuple including
   **total**, **used** and **free** space expressed in bytes, plus the
   **percentage** usage.
-  `OSError <http://docs.python.org/3/library/exceptions.html#OSError>`_ is
+  `OSError <http://docs.python.org/3/library/exceptions.html#OSError>`__ is
   raised if *path* does not exist. See
-  `examples/disk_usage.py <http://code.google.com/p/psutil/source/browse/examples/disk_usage.py>`_
+  `examples/disk_usage.py <http://code.google.com/p/psutil/source/browse/examples/disk_usage.py>`__
   script providing an example usage. Starting from
-  `Python 3.3 <http://bugs.python.org/issue12442>`_  this is also
+  `Python 3.3 <http://bugs.python.org/issue12442>`__  this is also
   available as
-  `shutil.disk_usage() <http://docs.python.org/3/library/shutil.html#shutil.disk_usage>`_.
+  `shutil.disk_usage() <http://docs.python.org/3/library/shutil.html#shutil.disk_usage>`__.
   See
-  `disk_usage.py <http://code.google.com/p/psutil/source/browse/examples/disk_usage.py>`_
+  `disk_usage.py <http://code.google.com/p/psutil/source/browse/examples/disk_usage.py>`__
   script providing an example usage.
 
     >>> import psutil
@@ -276,7 +276,7 @@ Disks
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
   the namedutuple described above as the values.
-  See `examples/iotop.py <http://code.google.com/p/psutil/source/browse/examples/iotop.py>`_
+  See `examples/iotop.py <http://code.google.com/p/psutil/source/browse/examples/iotop.py>`__
   for an example application.
 
     >>> import psutil
@@ -309,7 +309,7 @@ Network
   If *pernic* is ``True`` return the same information for every network
   interface installed on the system as a dictionary with network interface
   names as the keys and the namedtuple described above as the values.
-  See `examples/nettop.py <http://code.google.com/p/psutil/source/browse/examples/nettop.py>`_
+  See `examples/nettop.py <http://code.google.com/p/psutil/source/browse/examples/nettop.py>`__
   for an example application.
 
     >>> import psutil
@@ -449,16 +449,16 @@ Process class
 .. class:: Process(pid=None)
 
   Represents an OS process with the given *pid*. If *pid* is omitted current
-  process *pid* (`os.getpid() <http://docs.python.org/library/os.html#os.getpid>`_)
+  process *pid* (`os.getpid() <http://docs.python.org/library/os.html#os.getpid>`__)
   is used.
   Raise :class:`NoSuchProcess` if *pid* does not exist.
   When accessing methods of this class always be  prepared to catch
   :class:`NoSuchProcess` and :class:`AccessDenied` exceptions.
-  `hash() <http://docs.python.org/2/library/functions.html#hash>`_ builtin can
+  `hash() <http://docs.python.org/2/library/functions.html#hash>`__ builtin can
   be used against instances of this class in order to identify a process
   univocally over time (the hash is determined by mixing process PID
   and creation time). As such it can also be used with
-  `set()s <http://docs.python.org/2/library/stdtypes.html#types-set>`_.
+  `set()s <http://docs.python.org/2/library/stdtypes.html#types-set>`__.
 
   .. warning::
 
@@ -511,7 +511,7 @@ Process class
 
      The process creation time as a floating point number expressed in seconds
      since the epoch, in
-     `UTC <http://en.wikipedia.org/wiki/Coordinated_universal_time>`_.
+     `UTC <http://en.wikipedia.org/wiki/Coordinated_universal_time>`__.
      The return value is cached after first call.
 
         >>> import psutil, datetime
@@ -559,7 +559,7 @@ Process class
 
      The **real**, **effective** and **saved** user ids of this process as a
      nameduple. This is the same as
-     `os.getresuid() <http://docs.python.org//library/os.html#os.getresuid>`_
+     `os.getresuid() <http://docs.python.org//library/os.html#os.getresuid>`__
      but can be used for every process PID.
 
      Availability: UNIX
@@ -568,7 +568,7 @@ Process class
 
      The **real**, **effective** and **saved** group ids of this process as a
      nameduple. This is the same as
-     `os.getresgid() <http://docs.python.org//library/os.html#os.getresgid>`_
+     `os.getresgid() <http://docs.python.org//library/os.html#os.getresgid>`__
      but can be used for every process PID.
 
      Availability: UNIX
@@ -583,7 +583,7 @@ Process class
   .. method:: nice(value=None)
 
      Get or set process
-     `niceness <blogs.techrepublic.com.com/opensource/?p=140>`_ (priority).
+     `niceness <blogs.techrepublic.com.com/opensource/?p=140>`__ (priority).
      On UNIX this is a number which usually goes from ``-20`` to ``20``.
      The higher the nice value, the lower the priority of the process.
 
@@ -595,8 +595,8 @@ Process class
         >>>
 
      On Windows this is available as well by using
-     `GetPriorityClass <http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx>`_
-     and `SetPriorityClass <http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx>`_
+     `GetPriorityClass <http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx>`__
+     and `SetPriorityClass <http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx>`__
      and *value* is one of the
      :data:`psutil.*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
      constants.
@@ -604,16 +604,16 @@ Process class
 
         >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
 
-     Starting from `Python 3.3 <http://bugs.python.org/issue10784>`_ this
+     Starting from `Python 3.3 <http://bugs.python.org/issue10784>`__ this
      same functionality is available as
-     `os.getpriority() <http://docs.python.org/3/library/os.html#os.getpriority>`_
+     `os.getpriority() <http://docs.python.org/3/library/os.html#os.getpriority>`__
      and
-     `os.setpriority() <http://docs.python.org/3/library/os.html#os.setpriority>`_.
+     `os.setpriority() <http://docs.python.org/3/library/os.html#os.setpriority>`__.
 
   .. method:: ionice(ioclass=None, value=None)
 
      Get or set
-     `process I/O niceness <http://friedcpu.wordpress.com/2007/07/17/why-arent-you-using-ionice-yet/>`_ (priority).
+     `process I/O niceness <http://friedcpu.wordpress.com/2007/07/17/why-arent-you-using-ionice-yet/>`__ (priority).
      On Linux *ioclass* is one of the
      :data:`psutil.IOPRIO_CLASS_*<psutil.IOPRIO_CLASS_NONE>` constants.
      *value* is a number which goes from  ``0`` to ``7``. The higher the value,
@@ -637,11 +637,11 @@ Process class
   .. method:: rlimit(resource, limits=None)
 
      Get or set process resource limits (see
-     `man prlimit <http://linux.die.net/man/2/prlimit>`_). *resource* is one of
+     `man prlimit <http://linux.die.net/man/2/prlimit>`__). *resource* is one of
      the :data:`psutil.RLIMIT_* <psutil.RLIMIT_INFINITY>` constants.
      *limits* is a ``(soft, hard)`` tuple.
-     This is the same as `resource.getrlimit() <http://docs.python.org/library/resource.html#resource.getrlimit>`_
-     and `resource.setrlimit() <http://docs.python.org/library/resource.html#resource.setrlimit>`_
+     This is the same as `resource.getrlimit() <http://docs.python.org/library/resource.html#resource.getrlimit>`__
+     and `resource.setrlimit() <http://docs.python.org/library/resource.html#resource.setrlimit>`__
      but can be used for every process PID and only on Linux.
      Example:
 
@@ -663,7 +663,7 @@ Process class
      Return process I/O statistics as a namedtuple including the number of read
      and write operations performed by the process and the amount of bytes read
      and written. For Linux refer to
-     `/proc filesysem documentation <https://www.kernel.org/doc/Documentation/filesystems/proc.txt>`_.
+     `/proc filesysem documentation <https://www.kernel.org/doc/Documentation/filesystems/proc.txt>`__.
      On BSD there's apparently no way to retrieve bytes counters, hence ``-1``
      is returned for **read_bytes** and **write_bytes** fields. OSX is not
      supported.
@@ -706,9 +706,9 @@ Process class
      Return a tuple whose values are process CPU **user** and **system**
      times which means the amount of time expressed in seconds that a process
      has spent in
-     `user / system mode <http://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1>`_.
+     `user / system mode <http://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1>`__.
      This is similar to
-     `os.times() <http://docs.python.org//library/os.html#os.times>`_
+     `os.times() <http://docs.python.org//library/os.html#os.times>`__
      but can be used for every process PID.
 
   .. method:: cpu_percent(interval=None)
@@ -745,7 +745,7 @@ Process class
   .. method:: cpu_affinity(cpus=None)
 
      Get or set process current
-     `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`_.
+     `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`__.
      CPU affinity consists in telling the OS to run a certain process on a
      limited set of CPUs only. The number of eligible CPUs can be obtained with
      ``list(range(psutil.cpu_count()))``.
@@ -800,7 +800,7 @@ Process class
      +--------+---------+-------+-------+--------------------+
 
      Windows metrics are extracted from
-     `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`_ structure.
+     `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure.
      Example on Linux:
 
      >>> import psutil
@@ -820,13 +820,13 @@ Process class
      applications should rely on namedtuple's `path` and `rss` fields only.
      This method is useful to obtain a detailed representation of process
      memory usage as explained
-     `here <http://bmaurer.blogspot.it/2006/03/memory-usage-with-smaps.html>`_.
+     `here <http://bmaurer.blogspot.it/2006/03/memory-usage-with-smaps.html>`__.
      If *grouped* is ``True`` the mapped regions with the same *path* are
      grouped together and the different memory fields are summed.  If *grouped*
      is ``False`` every mapped region is shown as a single entity and the
      namedtuple will also include the mapped region's address space (*addr*)
      and permission set (*perms*).
-     See `examples/pmap.py <http://code.google.com/p/psutil/source/browse/examples/pmap.py>`_
+     See `examples/pmap.py <http://code.google.com/p/psutil/source/browse/examples/pmap.py>`__
      for an example application.
 
       >>> import psutil
@@ -884,16 +884,16 @@ Process class
     Every namedtuple provides 6 attributes:
 
     - **fd**: the socket file descriptor. This can be passed to
-      `socket.fromfd() <http://docs.python.org/library/socket.html#socket.fromfd>`_
+      `socket.fromfd() <http://docs.python.org/library/socket.html#socket.fromfd>`__
       to obtain a usable socket object.
       This is only available on UNIX; on Windows ``-1`` is always returned.
     - **family**: the address family, either `AF_INET
-      <http://docs.python.org//library/socket.html#socket.AF_INET>`_ or
-      `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`_.
+      <http://docs.python.org//library/socket.html#socket.AF_INET>`__ or
+      `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__.
     - **type**: the address type, either `SOCK_STREAM
-      <http://docs.python.org//library/socket.html#socket.SOCK_STREAM>`_ or
+      <http://docs.python.org//library/socket.html#socket.SOCK_STREAM>`__ or
       `SOCK_DGRAM
-      <http://docs.python.org//library/socket.html#socket.SOCK_DGRAM>`_.
+      <http://docs.python.org//library/socket.html#socket.SOCK_DGRAM>`__.
     - **laddr**: the local address as a ``(ip, port)`` tuple.
     - **raddr**: the remote address as a ``(ip, port)`` tuple. When the remote
       endpoint is not connected the tuple is empty.
@@ -959,7 +959,7 @@ Process class
   .. method:: send_signal(signal)
 
      Send a signal to process (see
-     `signal module <http://docs.python.org//library/signal.html>`_
+     `signal module <http://docs.python.org//library/signal.html>`__
      constants) pre-emptively checking whether PID has been reused.
      This is the same as ``os.kill(pid, sig)``.
      On Windows only **SIGTERM** is valid and is treated as an alias for
@@ -992,7 +992,7 @@ Process class
      checking whether PID has been reused.
      On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
      On Windows this is done by using
-     `TerminateProcess <http://msdn.microsoft.com/en-us/library/windows/desktop/ms686714(v=vs.85).aspx>`_.
+     `TerminateProcess <http://msdn.microsoft.com/en-us/library/windows/desktop/ms686714(v=vs.85).aspx>`__.
 
   .. method:: wait(timeout=None)
 
@@ -1013,9 +1013,9 @@ Popen class
 .. class:: Popen(*args, **kwargs)
 
   A more convenient interface to stdlib
-  `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`_.
+  `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__.
   It starts a sub process and deals with it exactly as when using
-  `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`_
+  `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__
   but in addition it also provides all the methods of
   :class:`psutil.Process` class in a single interface.
   For method names common to both classes such as
@@ -1024,11 +1024,11 @@ Popen class
   :meth:`kill() <psutil.Process.kill()>`
   :class:`psutil.Process` implementation takes precedence.
   For a complete documentation refer to
-  `subprocess module documentation <http://docs.python.org/library/subprocess.html>`_.
+  `subprocess module documentation <http://docs.python.org/library/subprocess.html>`__.
 
   .. note::
 
-     Unlike `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`_
+     Unlike `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__
      this class pre-emptively checks wheter PID has been reused on
      :meth:`send_signal() <psutil.Process.send_signal()>`,
      :meth:`terminate() <psutil.Process.terminate()>` and
@@ -1099,7 +1099,7 @@ Constants
           REALTIME_PRIORITY_CLASS
 
   A set of integers representing the priority of a process on Windows (see
-  `MSDN documentation <http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx>`_).
+  `MSDN documentation <http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx>`__).
   They can be used in conjunction with
   :meth:`psutil.Process.nice()` to get or set process priority.
 
@@ -1121,9 +1121,9 @@ Constants
   *IOPRIO_CLASS_IDLE* means the process will get I/O time when no-one else
   needs the disk.
   For further information refer to manuals of
-  `ionice <http://linux.die.net/man/1/ionice>`_
+  `ionice <http://linux.die.net/man/1/ionice>`__
   command line utility or
-  `ioprio_get <http://linux.die.net/man/2/ioprio_get>`_
+  `ioprio_get <http://linux.die.net/man/2/ioprio_get>`__
   system call.
 
   Availability: Linux
@@ -1150,6 +1150,6 @@ Constants
 
   Constants used for getting and setting process resource limits to be used in
   conjunction with :meth:`psutil.Process.rlimit()`. See
-  `man prlimit <http://linux.die.net/man/2/prlimit>`_ for futher information.
+  `man prlimit <http://linux.die.net/man/2/prlimit>`__ for futher information.
 
   Availability: Linux
