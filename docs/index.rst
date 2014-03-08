@@ -4,8 +4,7 @@
 
 .. warning::
 
-   This documentation refers to new 2.0.0 version of psutil which is currently
-   under development.
+   This documentation refers to new 2.0.0 version of psutil.
    Instructions on how to port existing 1.2.1 code are
    `here <http://grodola.blogspot.com/2014/01/psutil-20.html>`__.
    Old 1.2.1 documentation is still available
@@ -875,8 +874,6 @@ Process class
       >>> p = psutil.Process()
       >>> p.open_files()
       [popenfile(path='/home/giampaolo/svn/psutil/file.ext', fd=3)]
-
-     .. warning:: this method on Windows might hang forever, see https://code.google.com/p/psutil/issues/detail?id=340
 
   .. method:: connections(kind="inet")
 
