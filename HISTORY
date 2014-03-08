@@ -25,6 +25,8 @@ BUG FIXES
 
  * #193: psutil.Popen constructor can throw an exception if the spawned process
          terminates quickly.
+ * #340: [Windows] process get_open_files() no longer hangs.  (patch by
+         jtang@vahna.net)
  * #443: [Linux] fix a potential overflow issue for Process.set_cpu_affinity()
          on systems with more than 64 CPUs.
  * #448: [Windows] get_children() and ppid() memory leak (patch by Ulrich

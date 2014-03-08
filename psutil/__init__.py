@@ -386,9 +386,6 @@ class Process(object):
         excluded_names = set(
             ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
              'is_running', 'as_dict', 'parent', 'children', 'rlimit'])
-        if _WINDOWS and not attrs:
-            # see: https://code.google.com/p/psutil/issues/detail?id=340
-            excluded_names.add('open_files')
         retdict = dict()
         ls = set(attrs or [x for x in dir(self) if not x.startswith('get')])
         for name in ls:
