@@ -51,7 +51,7 @@ else:
     import unittest
 
 import psutil
-from psutil._compat import PY3, callable, long, wraps
+from psutil._compat import PY3, callable, long, wraps, unicode
 
 
 # ===================================================================
@@ -278,7 +278,7 @@ def check_ip_address(addr, family):
     if not addr:
         return
     if family in (AF_INET, AF_INET6):
-        assert isinstance(addr, tuple)
+        assert isinstance(addr, tuple), addr
         ip, port = addr
         assert isinstance(port, int), port
         if family == AF_INET:
@@ -288,7 +288,7 @@ def check_ip_address(addr, family):
                 assert 0 <= num <= 255, ip
         assert 0 <= port <= 65535, port
     elif family == AF_UNIX:
-        assert isinstance(addr, (str, None))
+        assert isinstance(addr, (str, None)), addr
     else:
         raise ValueError("unknown family %r", family)
 
@@ -2214,7 +2214,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertTrue(ret >= 0)
 
     def name(self, ret):
-        self.assertTrue(isinstance(ret, str))
+        self.assertIsInstance(ret, (str, unicode))
         self.assertTrue(ret)
 
     def create_time(self, ret):

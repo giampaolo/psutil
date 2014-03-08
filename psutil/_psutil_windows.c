@@ -562,8 +562,8 @@ static PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
-    const DWORD nSize = MAX_PATH;
-    wchar_t exe[nSize];
+    DWORD nSize = MAX_PATH;
+    wchar_t exe[MAX_PATH];
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
     }

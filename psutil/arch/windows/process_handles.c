@@ -120,8 +120,6 @@ psutil_get_open_files(long pid, HANDLE processHandle)
 {
     _NtQuerySystemInformation NtQuerySystemInformation =
         GetLibraryProcAddress("ntdll.dll", "NtQuerySystemInformation");
-    _NtDuplicateObject NtDuplicateObject =
-        GetLibraryProcAddress("ntdll.dll", "NtDuplicateObject");
     _NtQueryObject NtQueryObject =
         GetLibraryProcAddress("ntdll.dll", "NtQueryObject");
 
@@ -167,10 +165,12 @@ psutil_get_open_files(long pid, HANDLE processHandle)
     for (i = 0; i < handleInfo->HandleCount; i++) {
         SYSTEM_HANDLE            handle = handleInfo->Handles[i];
         HANDLE                   dupHandle = NULL;
+        HANDLE                   mapHandle = NULL;
         POBJECT_TYPE_INFORMATION objectTypeInfo = NULL;
         PVOID                    objectNameInfo;
         UNICODE_STRING           objectName;
         ULONG                    returnLength;
+        DWORD                    error = 0;
         fileFromWchar = NULL;
         arg = NULL;
 
@@ -187,19 +187,33 @@ psutil_get_open_files(long pid, HANDLE processHandle)
             continue;
         }
 
-        // Duplicate the handle so we can query it.
-        if (!NT_SUCCESS(NtDuplicateObject(
-                            processHandle,
-                            handle.Handle,
-                            GetCurrentProcess(),
-                            &dupHandle,
-                            0,
-                            0,
-                            0
-                        )))
-        {
+        if (!DuplicateHandle(processHandle,
+                             handle.Handle,
+                             GetCurrentProcess(),
+                             &dupHandle,
+                             0,
+                             TRUE,
+                             DUPLICATE_SAME_ACCESS))
+         {
+             //printf("[%#x] Error: %d \n", handle.Handle, GetLastError());
+             continue;
+         }
+
+
+        mapHandle = CreateFileMapping(dupHandle,
+                                      NULL,
+                                      PAGE_READONLY,
+                                      0,
+                                      0,
+                                      NULL);
+        if (mapHandle == NULL &&
+           (error == ERROR_INVALID_HANDLE ||
+            error == ERROR_BAD_EXE_FORMAT)) {
+            CloseHandle(dupHandle);
+            //printf("CreateFileMapping Error: %d\n", error);
             continue;
         }
+        CloseHandle(mapHandle);
 
         // Query the object type.
         objectTypeInfo = (POBJECT_TYPE_INFORMATION)malloc(0x1000);
