@@ -6,12 +6,14 @@ The easiest way to install psutil on UNIX is by using pip (but first you might
 need to install python header files; see later).
 First install pip:
 
-    wget https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py
+    $ wget https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py
     python ez_setup.py
 
 ...then run:
 
-    pip install psutil
+    $ pip install psutil
+
+You may need to install gcc and python header files first (see later).
 
 
 =====================
@@ -84,15 +86,15 @@ Installing on Linux
 gcc is required and so the python headers. They can easily be installed by
 using the distro package manager. For example, on Debian amd Ubuntu:
 
-    sudo apt-get install python-dev
+    $ sudo apt-get install gcc python-dev
 
 ...on Redhat and CentOS:
 
-    sudo yum install python-devel
+    $ sudo yum install gcc python-devel
 
 Once done, you can build/install psutil with:
 
-    python setup.py install
+    $ python setup.py install
 
 
 ==================
@@ -104,11 +106,11 @@ the 'XcodeTools' installer from Apple. Then you can run the standard distutils
 commands.
 To build only:
 
-    python setup.py build
+    $ python setup.py build
 
 To install and build:
 
-    python setup.py install
+    $ python setup.py install
 
 
 =====================
@@ -121,11 +123,11 @@ the standard distutils commands.
 
 Build only:
 
-    python setup.py build
+    $ python setup.py build
 
 Install and build:
 
-    python setup.py install
+    $ python setup.py install
 
 
 ========
@@ -136,7 +138,7 @@ A makefile is available for both UNIX and Windows (make.bat).  It provides
 some automations for the tasks described above and might be preferred over
 using setup.py. With it you can::
 
-    make install    # just install
-    make uninstall  # uninstall (needs pip)
-    make test       # run tests
-    make clean      # remove installation files
+    $ make install    # just install
+    $ make uninstall  # uninstall (needs pip)
+    $ make test       # run tests
+    $ make clean      # remove installation files
