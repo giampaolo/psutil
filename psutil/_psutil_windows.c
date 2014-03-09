@@ -562,7 +562,6 @@ static PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
-    DWORD nSize = MAX_PATH;
     wchar_t exe[MAX_PATH];
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
@@ -572,7 +571,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (NULL == hProcess) {
         return NULL;
     }
-    if (GetProcessImageFileNameW(hProcess, &exe, nSize) == 0) {
+    if (GetProcessImageFileNameW(hProcess, &exe, MAX_PATH) == 0) {
         CloseHandle(hProcess);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // see https://code.google.com/p/psutil/issues/detail?id=414
