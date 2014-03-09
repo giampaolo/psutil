@@ -6,7 +6,7 @@
 
    This documentation refers to new 2.0.0 version of psutil.
    Instructions on how to port existing 1.2.1 code are
-   `here <http://grodola.blogspot.com/2014/01/psutil-20.html>`__.
+   `here <http://grodola.blogspot.com/2014/01/psutil-20-porting.html>`__.
    Old 1.2.1 documentation is still available
    `here <https://code.google.com/p/psutil/wiki/Documentation>`__.
 
