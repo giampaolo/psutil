@@ -37,9 +37,9 @@ LOWER PRIORITY
 
  * #276: GNU/Hurd support.
 
- * NetBSD support?
+ * #429: NetBSD support.
 
- * DranflyBSD support?
+ * DragonFlyBSD support?
 
  * AIX support?
 
