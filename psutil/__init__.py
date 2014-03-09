@@ -1047,6 +1047,8 @@ class Process(object):
         """
         if timeout is not None and not timeout >= 0:
             raise ValueError("timeout must be a positive integer")
+        if not self.is_running():
+            return None
         return self._proc.wait(timeout)
 
     # --- deprecated APIs

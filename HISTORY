@@ -14,7 +14,6 @@ ENHANCEMENTS
          on Windows).
  * #463: make timeout parameter of cpu_percent* functions default to 0.0 'cause
          it's a commond trap to introduce slowdowns.
- * #468: host documentation on readthedocs.org.
  * #468: move documentation to readthedocs.com.
  * #477: process cpu_percent() is about 30% faster.  (suggested by crusaderky)
  * #478: [Linux] almost all APIs are about 30% faster on Python 3.X.
