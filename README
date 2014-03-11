@@ -25,16 +25,16 @@ Quick links
 Summary
 =======
 
-psutil is a module providing an interface for retrieving information on all
-running processes and system utilization (CPU, memory, disks, network, users)
-in a portable way by using Python, implementing many functionalities offered by
-command line tools such as:  **ps, top, df, kill, free, lsof, free, netstat,
-ifconfig, nice, ionice, iostat, iotop, uptime, pidof, tty, who, taskset,
-pmap**.
-
-It currently supports **Linux**, **Windows**, **OSX**, **FreeBSD**,
-**Sun Solaris** both **32-bit** and **64-bit** with Python versions from
-**2.4** to **3.4** by using a single code base.
+psutil (python system and process utilities) is a cross-platform library for
+retrieving information on **running processes** and **system utilization**
+(CPU, memory, disks, network) in Python. It is useful mainly for **system
+monitoring**, **profiling and limiting process resources** and **management of
+running processes**. It implements many functionalities offered by command line
+tools such as: ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
+ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap. It currently supports
+**Linux, Windows, OSX, FreeBSD** and **Sun Solaris**, both **32-bit** and
+**64-bit** architectures, with Python versions from **2.4 to 3.4**. Pypi is
+also known to work.
 
 ==============
 Example usages
@@ -59,9 +59,10 @@ CPU
     >>> for x in range(3):
     ...     psutil.cpu_percent(interval=1, percpu=True)
     ...
-    [4.0, 6.9]
-    [7.0, 8.5]
-    [1.2, 9.0]
+    [4.0, 6.9, 3.7, 9.2]
+    [7.0, 8.5, 2.4, 2.1]
+    [1.2, 9.0, 9.9, 7.2]
+    >>>
     >>>
     >>> for x in range(3):
     ...     psutil.cpu_times_percent(interval=1, percpu=False)
