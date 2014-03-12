@@ -6,11 +6,6 @@
  * OS X platform-specific module methods for _psutil_osx
  */
 
-
-// fix compilation issue on OSX 5.10, see:
-// https://code.google.com/p/psutil/issues/detail?id=421
-#define NEW_MIB_COMPLIANT
-
 #include <Python.h>
 #include <assert.h>
 #include <errno.h>

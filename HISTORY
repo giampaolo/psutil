@@ -5,7 +5,8 @@ Bug tracker at http://code.google.com/p/psutil/issues
 
 BUG FIXES
 
- * 421: [OSX] psutil does not compile on OSX 10.5 (patch by Naveed Roudsari)
+ * 421: [Solaris] psutil does not compile on OSX 10.5 (patch by Naveed
+        Roudsari)
 
 
 2.0.0 - 2014-03-10
