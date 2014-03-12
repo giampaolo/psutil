@@ -20,7 +20,7 @@ import warnings
 from psutil import _common
 from psutil import _psposix
 from psutil._common import (isfile_strict, usage_percent, deprecated)
-from psutil._compat import PY3, xrange, namedtuple, wraps, b
+from psutil._compat import PY3, xrange, namedtuple, wraps, b, defaultdict
 import _psutil_linux as cext
 import _psutil_posix
 
@@ -358,6 +358,219 @@ def pid_exists(pid):
 
 
 # --- network
+
+class Connections:
+    """A wrapper on top of /proc/net/* files, retrieving per-process
+    and system-wide open connections (TCP, UDP, UNIX) similarly to
+    "netstat -an".
+
+    Note: in case of UNIX sockets we're only able to determine the
+    local endpoint/path, not the one it's connected to.
+    According to [1] it would be possible but not easily.
+
+    [1] http://serverfault.com/a/417946
+    """
+
+    def __init__(self):
+        tcp4 = ("tcp", socket.AF_INET, socket.SOCK_STREAM)
+        tcp6 = ("tcp6", socket.AF_INET6, socket.SOCK_STREAM)
+        udp4 = ("udp", socket.AF_INET, socket.SOCK_DGRAM)
+        udp6 = ("udp6", socket.AF_INET6, socket.SOCK_DGRAM)
+        unix = ("unix", socket.AF_UNIX, None)
+        self.tmap = {
+            "all": (tcp4, tcp6, udp4, udp6, unix),
+            "tcp": (tcp4, tcp6),
+            "tcp4": (tcp4,),
+            "tcp6": (tcp6,),
+            "udp": (udp4, udp6),
+            "udp4": (udp4,),
+            "udp6": (udp6,),
+            "unix": (unix,),
+            "inet": (tcp4, tcp6, udp4, udp6),
+            "inet4": (tcp4, udp4),
+            "inet6": (tcp6, udp6),
+        }
+
+    def get_proc_inodes(self, pid):
+        inodes = defaultdict(list)
+        for fd in os.listdir("/proc/%s/fd" % pid):
+            try:
+                inode = os.readlink("/proc/%s/fd/%s" % (pid, fd))
+            except OSError:
+                # TODO: need comment here
+                continue
+            else:
+                if inode.startswith('socket:['):
+                    # the process is using a socket
+                    inode = inode[8:][:-1]
+                    inodes[inode].append((pid, int(fd)))
+        return inodes
+
+    def get_all_inodes(self):
+        inodes = {}
+        for pid in pids():
+            try:
+                inodes.update(self.get_proc_inodes(pid))
+            except OSError:
+                # os.listdir() is gonna raise a lot of access denied
+                # exceptions in case of unprivileged user; that's fine
+                # as we'll just end up returning a connection with PID
+                # and fd set to None anyway.
+                # Both netstat -an and lsof does the same so it's
+                # unlikely we can do any better.
+                # ENOENT just means a PID disappeared on us.
+                err = sys.exc_info()[1]
+                if err.errno not in (errno.ENOENT, errno.EPERM, errno.EACCES):
+                    raise
+        return inodes
+
+    def decode_address(self, addr, family):
+        """Accept an "ip:port" address as displayed in /proc/net/*
+        and convert it into a human readable form, like:
+
+        "0500000A:0016" -> ("10.0.0.5", 22)
+        "0000000000000000FFFF00000100007F:9E49" -> ("::ffff:127.0.0.1", 40521)
+
+        The IP address portion is a little or big endian four-byte
+        hexadecimal number; that is, the least significant byte is listed
+        first, so we need to reverse the order of the bytes to convert it
+        to an IP address.
+        The port is represented as a two-byte hexadecimal number.
+
+        Reference:
+        http://linuxdevcenter.com/pub/a/linux/2000/11/16/LinuxAdmin.html
+        """
+        ip, port = addr.split(':')
+        port = int(port, 16)
+        if PY3:
+            ip = ip.encode('ascii')
+        # this usually refers to a local socket in listen mode with
+        # no end-points connected
+        if not port:
+            return ()
+        if family == socket.AF_INET:
+            # see: http://code.google.com/p/psutil/issues/detail?id=201
+            if sys.byteorder == 'little':
+                ip = socket.inet_ntop(family, base64.b16decode(ip)[::-1])
+            else:
+                ip = socket.inet_ntop(family, base64.b16decode(ip))
+        else:  # IPv6
+            # old version - let's keep it, just in case...
+            # ip = ip.decode('hex')
+            # return socket.inet_ntop(socket.AF_INET6,
+            #          ''.join(ip[i:i+4][::-1] for i in xrange(0, 16, 4)))
+            ip = base64.b16decode(ip)
+            # see: http://code.google.com/p/psutil/issues/detail?id=201
+            if sys.byteorder == 'little':
+                ip = socket.inet_ntop(
+                    socket.AF_INET6,
+                    struct.pack('>4I', *struct.unpack('<4I', ip)))
+            else:
+                ip = socket.inet_ntop(
+                    socket.AF_INET6,
+                    struct.pack('<4I', *struct.unpack('<4I', ip)))
+        return (ip, port)
+
+    def process_inet(self, file, family, type_, inodes, filter_pid=None):
+        """Parse /proc/net/tcp* and /proc/net/udp* files."""
+        if file.endswith('6') and not os.path.exists(file):
+            # IPv6 not supported
+            return
+        f = open(file, 'rt')
+        try:
+            f.readline()  # skip the first line
+            for line in f:
+                _, laddr, raddr, status, _, _, _, _, _, inode = \
+                    line.split()[:10]
+                if inode in inodes:
+                    # We assume inet sockets are unique, so we error
+                    # out if there are multiple references to the
+                    # same inode. We won't do this for UNIX sockets.
+                    if len(inodes[inode]) > 1:
+                        raise ValueError("ambiguos inode with multiple "
+                                         "PIDs references")
+                    pid, fd = inodes[inode][0]
+                else:
+                    pid, fd = None, -1
+                if filter_pid is not None and filter_pid != pid:
+                    continue
+                else:
+                    if type_ == socket.SOCK_STREAM:
+                        status = TCP_STATUSES[status]
+                    else:
+                        status = _common.CONN_NONE
+                    laddr = self.decode_address(laddr, family)
+                    raddr = self.decode_address(raddr, family)
+                    yield (fd, family, type_, laddr, raddr, status, pid)
+        finally:
+            f.close()
+
+    def process_unix(self, file, family, inodes, filter_pid=None):
+        """Parse /proc/net/unix files."""
+        f = open(file, 'rt')
+        try:
+            f.readline()  # skip the first line
+            for line in f:
+                tokens = line.split()
+                _, _, _, _, type_, _, inode = tokens[0:7]
+                if inode in inodes:
+                    # With UNIX sockets we can have a single inode
+                    # referencing many file descriptors.
+                    pairs = inodes[inode]
+                else:
+                    pairs = [(None, -1)]
+                for pid, fd in pairs:
+                    if filter_pid is not None and filter_pid != pid:
+                        continue
+                    else:
+                        if len(tokens) == 8:
+                            path = tokens[-1]
+                        else:
+                            path = ""
+                        type_ = int(type_)
+                        raddr = None
+                        status = _common.CONN_NONE
+                        yield (fd, family, type_, path, raddr, status, pid)
+        finally:
+            f.close()
+
+    def retrieve(self, kind, pid=None):
+        if kind not in self.tmap:
+            raise ValueError("invalid %r kind argument; choose between %s"
+                             % (kind, ', '.join([repr(x) for x in self.tmap])))
+        if pid is not None:
+            inodes = self.get_proc_inodes(pid)
+            if not inodes:
+                # no connections for this process
+                return []
+        else:
+            inodes = self.get_all_inodes()
+        ret = []
+        for f, family, type_ in self.tmap[kind]:
+            if family in (socket.AF_INET, socket.AF_INET6):
+                ls = self.process_inet(
+                    "/proc/net/%s" % f, family, type_, inodes, filter_pid=pid)
+            else:
+                ls = self.process_unix(
+                    "/proc/net/%s" % f, family, inodes, filter_pid=pid)
+            for fd, family, type_, laddr, raddr, status, bound_pid in ls:
+                if pid:
+                    conn = _common.pconn(fd, family, type_, laddr, raddr,
+                                         status)
+                else:
+                    conn = _common.sconn(fd, family, type_, laddr, raddr,
+                                         status, bound_pid)
+                ret.append(conn)
+        return ret
+
+
+_connections = Connections()
+
+
+def net_connections(kind='inet'):
+    """Return system-wide open connections."""
+    return _connections.retrieve(kind)
+
 
 def net_io_counters():
     """Return network I/O statistics for every network interface
@@ -961,107 +1174,7 @@ class Process(object):
 
     @wrap_exceptions
     def connections(self, kind='inet'):
-        """Get connections opened by this process.
-        Note: in case of UNIX sockets we're only able to determine the
-        local bound path while the remote endpoint is not retrievable:
-        http://goo.gl/R3GHM
-        """
-        def get_tmap():
-            tcp4 = ("tcp", socket.AF_INET, socket.SOCK_STREAM)
-            tcp6 = ("tcp6", socket.AF_INET6, socket.SOCK_STREAM)
-            udp4 = ("udp", socket.AF_INET, socket.SOCK_DGRAM)
-            udp6 = ("udp6", socket.AF_INET6, socket.SOCK_DGRAM)
-            unix = ("unix", socket.AF_UNIX, None)
-            return {
-                "all": (tcp4, tcp6, udp4, udp6, unix),
-                "tcp": (tcp4, tcp6),
-                "tcp4": (tcp4,),
-                "tcp6": (tcp6,),
-                "udp": (udp4, udp6),
-                "udp4": (udp4,),
-                "udp6": (udp6,),
-                "unix": (unix,),
-                "inet": (tcp4, tcp6, udp4, udp6),
-                "inet4": (tcp4, udp4),
-                "inet6": (tcp6, udp6),
-            }
-
-        def get_inodes(pid):
-            inodes = {}
-            # os.listdir() is gonna raise a lot of access denied
-            # exceptions in case of unprivileged user; that's fine:
-            # lsof does the same so it's unlikely that we can to better.
-            for fd in os.listdir("/proc/%s/fd" % pid):
-                try:
-                    inode = os.readlink("/proc/%s/fd/%s" % (pid, fd))
-                except OSError:
-                    continue
-                if inode.startswith('socket:['):
-                    # the process is using a socket
-                    inode = inode[8:][:-1]
-                    inodes[inode] = fd
-            return inodes
-
-        def process_file(file, family, type_):
-            retlist = []
-            try:
-                f = open(file, 'rt')
-            except IOError:
-                # IPv6 not supported on this platform
-                err = sys.exc_info()[1]
-                if err.errno == errno.ENOENT and file.endswith('6'):
-                    return []
-                else:
-                    raise
-            try:
-                f.readline()  # skip the first line
-                for line in f:
-                    # IPv4 / IPv6
-                    if family in (socket.AF_INET, socket.AF_INET6):
-                        _, laddr, raddr, status, _, _, _, _, _, inode = \
-                            line.split()[:10]
-                        if inode in inodes:
-                            laddr = self._decode_address(laddr, family)
-                            raddr = self._decode_address(raddr, family)
-                            if type_ == socket.SOCK_STREAM:
-                                status = TCP_STATUSES[status]
-                            else:
-                                status = _common.CONN_NONE
-                            fd = int(inodes[inode])
-                            conn = _common.pconn(fd, family, type_, laddr,
-                                                 raddr, status)
-                            retlist.append(conn)
-                    elif family == socket.AF_UNIX:
-                        tokens = line.split()
-                        _, _, _, _, type_, _, inode = tokens[0:7]
-                        if inode in inodes:
-
-                            if len(tokens) == 8:
-                                path = tokens[-1]
-                            else:
-                                path = ""
-                            fd = int(inodes[inode])
-                            type_ = int(type_)
-                            conn = _common.pconn(fd, family, type_, path,
-                                                 None, _common.CONN_NONE)
-                            retlist.append(conn)
-                    else:
-                        raise ValueError(family)
-                return retlist
-            finally:
-                f.close()
-
-        tmap = get_tmap()
-        if kind not in tmap:
-            raise ValueError("invalid %r kind argument; choose between %s"
-                             % (kind, ', '.join([repr(x) for x in tmap])))
-        inodes = get_inodes(self.pid)
-        if not inodes:
-            # no connections for this process
-            return []
-        ret = []
-        for f, family, type_ in tmap[kind]:
-            ret += process_file("/proc/net/%s" % f, family, type_)
+        ret = _connections.retrieve(kind, self.pid)
         # raise NSP if the process disappeared on us
         os.stat('/proc/%s' % self.pid)
         return ret
@@ -1108,51 +1221,3 @@ class Process(object):
             raise NotImplementedError("line not found")
         finally:
             f.close()
-
-    @staticmethod
-    def _decode_address(addr, family):
-        """Accept an "ip:port" address as displayed in /proc/net/*
-        and convert it into a human readable form, like:
-
-        "0500000A:0016" -> ("10.0.0.5", 22)
-        "0000000000000000FFFF00000100007F:9E49" -> ("::ffff:127.0.0.1", 40521)
-
-        The IP address portion is a little or big endian four-byte
-        hexadecimal number; that is, the least significant byte is listed
-        first, so we need to reverse the order of the bytes to convert it
-        to an IP address.
-        The port is represented as a two-byte hexadecimal number.
-
-        Reference:
-        http://linuxdevcenter.com/pub/a/linux/2000/11/16/LinuxAdmin.html
-        """
-        ip, port = addr.split(':')
-        port = int(port, 16)
-        if PY3:
-            ip = ip.encode('ascii')
-        # this usually refers to a local socket in listen mode with
-        # no end-points connected
-        if not port:
-            return ()
-        if family == socket.AF_INET:
-            # see: http://code.google.com/p/psutil/issues/detail?id=201
-            if sys.byteorder == 'little':
-                ip = socket.inet_ntop(family, base64.b16decode(ip)[::-1])
-            else:
-                ip = socket.inet_ntop(family, base64.b16decode(ip))
-        else:  # IPv6
-            # old version - let's keep it, just in case...
-            # ip = ip.decode('hex')
-            # return socket.inet_ntop(socket.AF_INET6,
-            #          ''.join(ip[i:i+4][::-1] for i in xrange(0, 16, 4)))
-            ip = base64.b16decode(ip)
-            # see: http://code.google.com/p/psutil/issues/detail?id=201
-            if sys.byteorder == 'little':
-                ip = socket.inet_ntop(
-                    socket.AF_INET6,
-                    struct.pack('>4I', *struct.unpack('<4I', ip)))
-            else:
-                ip = socket.inet_ntop(
-                    socket.AF_INET6,
-                    struct.pack('<4I', *struct.unpack('<4I', ip)))
-        return (ip, port)

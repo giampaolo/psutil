@@ -891,9 +891,13 @@ Process class
       <http://docs.python.org//library/socket.html#socket.SOCK_STREAM>`__ or
       `SOCK_DGRAM
       <http://docs.python.org//library/socket.html#socket.SOCK_DGRAM>`__.
-    - **laddr**: the local address as a ``(ip, port)`` tuple.
-    - **raddr**: the remote address as a ``(ip, port)`` tuple. When the remote
-      endpoint is not connected the tuple is empty.
+    - **laddr**: the local address as a ``(ip, port)`` tuple or a ``path``
+      in case of AF_UNIX sockets.
+    - **raddr**: the remote address as a ``(ip, port)`` tuple or an absolute
+      ``path`` in case of UNIX sockets.
+      When the remote endpoint is not connected you'll get an empty tuple
+      (AF_INET) or ``None`` (AF_UNIX).
+      On Linux AF_UNIX sockets will always have this set to ``None``.
     - **status**: represents the status of a TCP connection. The return value
       is one of the :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constants.
       For UDP and UNIX sockets this is always going to be

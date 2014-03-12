@@ -209,6 +209,9 @@ snetio = namedtuple('snetio', ['bytes_sent', 'bytes_recv',
                                'dropin', 'dropout'])
 # psutil.users()
 suser = namedtuple('suser', ['name', 'terminal', 'host', 'started'])
+# psutil.net_connections()
+sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
+                             'status', 'pid'])
 
 
 # --- namedtuples for psutil.Process methods

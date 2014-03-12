@@ -1656,6 +1656,14 @@ class TestProcess(unittest.TestCase):
         fileobj.close()
         self.assertTrue(fileobj.name not in p.open_files())
 
+    def compare_proc_sys_cons(self, pid, proc_cons):
+        from psutil._common import pconn
+        sys_cons = []
+        for c in psutil.net_connections(kind='all'):
+            if c.pid == pid:
+                sys_cons.append(pconn(*c[:-1]))
+        self.assertEqual(sorted(proc_cons), sorted(sys_cons))
+
     def test_connection_constants(self):
         ints = []
         strs = []
@@ -1701,16 +1709,19 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(con[5], con.status)
         # test kind arg
         self.assertRaises(ValueError, p.connections, 'foo')
+        # compare against system-wide connections
+        self.compare_proc_sys_cons(p.pid, cons)
 
     @unittest.skipUnless(supports_ipv6(), 'IPv6 is not supported')
     def test_connections_ipv6(self):
         s = socket.socket(AF_INET6, SOCK_STREAM)
+        self.addCleanup(s.close)
         s.bind(('::1', 0))
         s.listen(1)
         cons = psutil.Process().connections()
-        s.close()
         self.assertEqual(len(cons), 1)
         self.assertEqual(cons[0].laddr[0], '::1')
+        self.compare_proc_sys_cons(os.getpid(), cons)
 
     @unittest.skipUnless(hasattr(socket, 'AF_UNIX'),
                          'AF_UNIX is not supported')
@@ -1720,13 +1731,15 @@ class TestProcess(unittest.TestCase):
             sock = socket.socket(AF_UNIX, type)
             try:
                 sock.bind(TESTFN)
-                conn = psutil.Process().connections(kind='unix')[0]
+                cons = psutil.Process().connections(kind='unix')
+                conn = cons[0]
                 check_connection(conn)
                 if conn.fd != -1:  # != sunos and windows
                     self.assertEqual(conn.fd, sock.fileno())
                 self.assertEqual(conn.family, AF_UNIX)
                 self.assertEqual(conn.type, type)
                 self.assertEqual(conn.laddr, TESTFN)
+                self.compare_proc_sys_cons(os.getpid(), cons)
             finally:
                 sock.close()
 
@@ -1806,12 +1819,13 @@ class TestProcess(unittest.TestCase):
             for kind in all_kinds:
                 cons = proc.connections(kind=kind)
                 if kind in kinds:
-                    assert cons != [], cons
+                    self.assertNotEqual(cons, [])
                 else:
-                    self.assertEqual(cons, [], cons)
+                    self.assertEqual(cons, [])
 
         for p in psutil.Process().children():
-            for conn in p.connections():
+            cons = p.connections()
+            for conn in cons:
                 # TCP v4
                 if p.pid == tcp4_proc.pid:
                     check_conn(p, conn, AF_INET, SOCK_STREAM, "127.0.0.1", (),
@@ -1832,6 +1846,7 @@ class TestProcess(unittest.TestCase):
                     check_conn(p, conn, AF_INET6, SOCK_DGRAM, ("::", "::1"),
                                (), psutil.CONN_NONE,
                                ("all", "inet", "inet6", "udp", "udp6"))
+            self.compare_proc_sys_cons(p.pid, cons)
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_num_fds(self):
