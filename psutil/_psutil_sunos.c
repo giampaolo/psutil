@@ -18,6 +18,10 @@
 #undef _FILE_OFFSET_BITS
 #define _STRUCTURED_PROC 1
 
+// fix compilation issue on OSX 5.10, see:
+// https://code.google.com/p/psutil/issues/detail?id=421
+#define NEW_MIB_COMPLIANT
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
