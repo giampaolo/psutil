@@ -991,9 +991,9 @@ class Process(object):
             # os.listdir() is gonna raise a lot of access denied
             # exceptions in case of unprivileged user; that's fine:
             # lsof does the same so it's unlikely that we can to better.
-            for fd in os.listdir("/proc/%s/fd" % self.pid):
+            for fd in os.listdir("/proc/%s/fd" % pid):
                 try:
-                    inode = os.readlink("/proc/%s/fd/%s" % (self.pid, fd))
+                    inode = os.readlink("/proc/%s/fd/%s" % (pid, fd))
                 except OSError:
                     continue
                 if inode.startswith('socket:['):
