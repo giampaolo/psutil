@@ -961,28 +961,48 @@ class Process(object):
 
     @wrap_exceptions
     def connections(self, kind='inet'):
-        # Note: in case of UNIX sockets we're only able to determine the
-        # local bound path while the remote endpoint is not retrievable:
-        # http://goo.gl/R3GHM
-        inodes = {}
-        # os.listdir() is gonna raise a lot of access denied
-        # exceptions in case of unprivileged user; that's fine:
-        # lsof does the same so it's unlikely that we can to better.
-        for fd in os.listdir("/proc/%s/fd" % self.pid):
-            try:
-                inode = os.readlink("/proc/%s/fd/%s" % (self.pid, fd))
-            except OSError:
-                continue
-            if inode.startswith('socket:['):
-                # the process is using a socket
-                inode = inode[8:][:-1]
-                inodes[inode] = fd
+        """Get connections opened by this process.
+        Note: in case of UNIX sockets we're only able to determine the
+        local bound path while the remote endpoint is not retrievable:
+        http://goo.gl/R3GHM
+        """
+        def get_tmap():
+            tcp4 = ("tcp", socket.AF_INET, socket.SOCK_STREAM)
+            tcp6 = ("tcp6", socket.AF_INET6, socket.SOCK_STREAM)
+            udp4 = ("udp", socket.AF_INET, socket.SOCK_DGRAM)
+            udp6 = ("udp6", socket.AF_INET6, socket.SOCK_DGRAM)
+            unix = ("unix", socket.AF_UNIX, None)
+            return {
+                "all": (tcp4, tcp6, udp4, udp6, unix),
+                "tcp": (tcp4, tcp6),
+                "tcp4": (tcp4,),
+                "tcp6": (tcp6,),
+                "udp": (udp4, udp6),
+                "udp4": (udp4,),
+                "udp6": (udp6,),
+                "unix": (unix,),
+                "inet": (tcp4, tcp6, udp4, udp6),
+                "inet4": (tcp4, udp4),
+                "inet6": (tcp6, udp6),
+            }
 
-        if not inodes:
-            # no connections for this process
-            return []
+        def get_inodes(pid):
+            inodes = {}
+            # os.listdir() is gonna raise a lot of access denied
+            # exceptions in case of unprivileged user; that's fine:
+            # lsof does the same so it's unlikely that we can to better.
+            for fd in os.listdir("/proc/%s/fd" % self.pid):
+                try:
+                    inode = os.readlink("/proc/%s/fd/%s" % (self.pid, fd))
+                except OSError:
+                    continue
+                if inode.startswith('socket:['):
+                    # the process is using a socket
+                    inode = inode[8:][:-1]
+                    inodes[inode] = fd
+            return inodes
 
-        def process(file, family, type_):
+        def process_file(file, family, type_):
             retlist = []
             try:
                 f = open(file, 'rt')
@@ -1031,31 +1051,17 @@ class Process(object):
             finally:
                 f.close()
 
-        tcp4 = ("tcp", socket.AF_INET, socket.SOCK_STREAM)
-        tcp6 = ("tcp6", socket.AF_INET6, socket.SOCK_STREAM)
-        udp4 = ("udp", socket.AF_INET, socket.SOCK_DGRAM)
-        udp6 = ("udp6", socket.AF_INET6, socket.SOCK_DGRAM)
-        unix = ("unix", socket.AF_UNIX, None)
-
-        tmap = {
-            "all": (tcp4, tcp6, udp4, udp6, unix),
-            "tcp": (tcp4, tcp6),
-            "tcp4": (tcp4,),
-            "tcp6": (tcp6,),
-            "udp": (udp4, udp6),
-            "udp4": (udp4,),
-            "udp6": (udp6,),
-            "unix": (unix,),
-            "inet": (tcp4, tcp6, udp4, udp6),
-            "inet4": (tcp4, udp4),
-            "inet6": (tcp6, udp6),
-        }
+        tmap = get_tmap()
         if kind not in tmap:
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in tmap])))
+        inodes = get_inodes(self.pid)
+        if not inodes:
+            # no connections for this process
+            return []
         ret = []
         for f, family, type_ in tmap[kind]:
-            ret += process("/proc/net/%s" % f, family, type_)
+            ret += process_file("/proc/net/%s" % f, family, type_)
         # raise NSP if the process disappeared on us
         os.stat('/proc/%s' % self.pid)
         return ret
