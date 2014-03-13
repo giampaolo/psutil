@@ -1662,6 +1662,9 @@ class TestProcess(unittest.TestCase):
         for c in psutil.net_connections(kind='all'):
             if c.pid == pid:
                 sys_cons.append(pconn(*c[:-1]))
+        if BSD:
+            # on BSD all fds are set to -1
+            proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
         self.assertEqual(sorted(proc_cons), sorted(sys_cons))
 
     def test_connection_constants(self):
@@ -1846,7 +1849,6 @@ class TestProcess(unittest.TestCase):
                     check_conn(p, conn, AF_INET6, SOCK_DGRAM, ("::", "::1"),
                                (), psutil.CONN_NONE,
                                ("all", "inet", "inet6", "udp", "udp6"))
-            self.compare_proc_sys_cons(p.pid, cons)
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_num_fds(self):

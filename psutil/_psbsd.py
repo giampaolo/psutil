@@ -178,6 +178,23 @@ def users():
     return retlist
 
 
+def net_connections(kind):
+    if kind not in _common.conn_tmap:
+        raise ValueError("invalid %r kind argument; choose between %s"
+                        % (kind, ', '.join([repr(x) for x in conn_tmap])))
+    families, types = conn_tmap[kind]
+    ret = []
+    rawlist = cext.net_connections()
+    for item in rawlist:
+        fd, fam, type, laddr, raddr, status, pid = item
+        # TODO: apply filter at C level
+        if fam in families and type in types:
+            status = TCP_STATUSES[status]
+            nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
+            ret.append(nt)
+    return ret
+
+
 pids = cext.pids
 pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage
