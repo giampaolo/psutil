@@ -426,16 +426,21 @@ Functions
 Exceptions
 ----------
 
+.. class:: Error()
+
+  Base exception class. All other exceptions inherit from this one.
+
 .. class:: NoSuchProcess(pid, name=None, msg=None)
 
    Raised by :class:`Process` class methods when no process with the given
    *pid* is found in the current process list or when a process no longer
-   exists.
+   exists. "name" is the name the process had before disappearing
+   and gets set only if :meth:`Process.name()` was previosly called.
 
 .. class:: AccessDenied(pid=None, name=None, msg=None)
 
     Raised by :class:`Process` class methods when permission to perform an
-    action is denied.
+    action is denied. "name" is the name of the process (may be ``None``).
 
 .. class:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
 
