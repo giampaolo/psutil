@@ -980,6 +980,19 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
 
+    def test_net_connections(self):
+        def check(cons, families, types_):
+            for conn in cons:
+                self.assertIn(conn.family, families, msg=conn)
+                if conn.family != socket.AF_UNIX:
+                    self.assertIn(conn.type, types_, msg=conn)
+
+        from psutil._common import conn_tmap
+        for kind, groups in conn_tmap.items():
+            families, types_ = groups
+            cons = psutil.net_connections(kind)
+            check(cons, families, types_)
+
     def test_net_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.bytes_sent)
