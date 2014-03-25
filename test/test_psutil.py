@@ -932,7 +932,9 @@ class TestSystemAPIs(unittest.TestCase):
                      "os.statvfs() function not available on this platform")
     def test_disk_partitions(self):
         # all = False
-        for disk in psutil.disk_partitions(all=False):
+        ls = psutil.disk_partitions(all=False)
+        self.assertTrue(ls, msg=ls)
+        for disk in ls:
             if WINDOWS and 'cdrom' in disk.opts:
                 continue
             if not POSIX:
@@ -950,6 +952,8 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertIsInstance(disk.opts, str)
 
         # all = True
+        ls = psutil.disk_partitions(all=True)
+        self.assertTrue(ls, msg=ls)
         for disk in psutil.disk_partitions(all=True):
             if not WINDOWS:
                 try:

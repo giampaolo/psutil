@@ -444,11 +444,10 @@ def disk_io_counters():
 def disk_partitions(all=False):
     """Return mounted disk partitions as a list of nameduples"""
     phydevs = []
-    f = open("/proc/filesystems", "rb")
+    f = open("/proc/filesystems", "r")
     try:
-        NODEV = b("nodev")
         for line in f:
-            if not line.startswith(NODEV):
+            if not line.startswith("nodev"):
                 phydevs.append(line.strip())
     finally:
         f.close()

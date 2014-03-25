@@ -7,6 +7,7 @@ BUG FIXES
 
  * 421: [Solaris] psutil does not compile on OSX 10.5 (patch by Naveed
         Roudsari)
+ * 489: [Linux] psutil.disk_partitions() return an empty list.
 
 
 2.0.0 - 2014-03-10
