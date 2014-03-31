@@ -362,7 +362,7 @@ Functions
 
 .. function:: pids()
 
-  Return a list of current running PIDs. To iterate over all process
+  Return a list of current running PIDs. To iterate over all processes
   :func:`process_iter()` should be preferred.
 
 .. function:: pid_exists(pid)
