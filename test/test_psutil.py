@@ -984,7 +984,7 @@ class TestSystemAPIs(unittest.TestCase):
         def check(cons, families, types_):
             for conn in cons:
                 self.assertIn(conn.family, families, msg=conn)
-                if conn.family != socket.AF_UNIX:
+                if conn.family != getattr(socket, 'AF_UNIX', object()):
                     self.assertIn(conn.type, types_, msg=conn)
 
         from psutil._common import conn_tmap

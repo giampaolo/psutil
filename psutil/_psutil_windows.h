@@ -10,7 +10,6 @@
 // --- per-process functions
 
 static PyObject* psutil_proc_cmdline(PyObject* self, PyObject* args);
-static PyObject* psutil_proc_connections(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_cpu_affinity_set(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_cpu_times(PyObject* self, PyObject* args);
@@ -53,6 +52,7 @@ static PyObject* psutil_cpu_times(PyObject* self, PyObject* args);
 static PyObject* psutil_disk_io_counters(PyObject* self, PyObject* args);
 static PyObject* psutil_disk_partitions(PyObject* self, PyObject* args);
 static PyObject* psutil_disk_usage(PyObject* self, PyObject* args);
+static PyObject* psutil_net_connections(PyObject* self, PyObject* args);
 static PyObject* psutil_net_io_counters(PyObject* self, PyObject* args);
 static PyObject* psutil_per_cpu_times(PyObject* self, PyObject* args);
 static PyObject* psutil_pid_exists(PyObject* self, PyObject* args);
