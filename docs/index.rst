@@ -319,6 +319,91 @@ Network
     {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
     'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
 
+.. function:: net_connections(kind='inet')
+
+  Return system-wide socket connections as a list of namedutples.
+  Every namedtuple provides 7 attributes:
+
+  - **fd**: the socket file descriptor, if retrievable, else ``-1``.
+    If the connection refers to the current process this may be passed to
+    `socket.fromfd() <http://docs.python.org/library/socket.html#socket.fromfd>`__
+    to obtain a usable socket object.
+  - **family**: the address family, either `AF_INET
+    <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
+    `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
+    or `AF_UNIX <http://docs.python.org//library/socket.html#socket.AF_UNIX>`__.
+  - **type**: the address type, either `SOCK_STREAM
+    <http://docs.python.org//library/socket.html#socket.SOCK_STREAM>`__ or
+    `SOCK_DGRAM
+    <http://docs.python.org//library/socket.html#socket.SOCK_DGRAM>`__.
+  - **laddr**: the local address as a ``(ip, port)`` tuple or a ``path``
+    in case of AF_UNIX sockets.
+  - **raddr**: the remote address as a ``(ip, port)`` tuple or an absolute
+    ``path`` in case of UNIX sockets.
+    When the remote endpoint is not connected you'll get an empty tuple
+    (AF_INET*) or ``None`` (AF_UNIX).
+    On Linux AF_UNIX sockets will always have this set to ``None``.
+  - **status**: represents the status of a TCP connection. The return value
+    is one of the :data:`psutil.CONN_* <psutil.CONN_ESTABLISHED>` constants
+    (a string).
+    For UDP and UNIX sockets this is always going to be
+    :const:`psutil.CONN_NONE`.
+  - **pid**: the PID of the process which opened the socket, if retrievable,
+    else ``None``. On some platforms (e.g. Linux) the availability of this
+    field changes depending on process privileges (root is needed).
+
+  The *kind* parameter is a string which filters for connections that fit the
+  following criteria:
+
+  .. table::
+
+   +----------------+-----------------------------------------------------+
+   | **Kind value** | **Connections using**                               |
+   +================+=====================================================+
+   | "inet"         | IPv4 and IPv6                                       |
+   +----------------+-----------------------------------------------------+
+   | "inet4"        | IPv4                                                |
+   +----------------+-----------------------------------------------------+
+   | "inet6"        | IPv6                                                |
+   +----------------+-----------------------------------------------------+
+   | "tcp"          | TCP                                                 |
+   +----------------+-----------------------------------------------------+
+   | "tcp4"         | TCP over IPv4                                       |
+   +----------------+-----------------------------------------------------+
+   | "tcp6"         | TCP over IPv6                                       |
+   +----------------+-----------------------------------------------------+
+   | "udp"          | UDP                                                 |
+   +----------------+-----------------------------------------------------+
+   | "udp4"         | UDP over IPv4                                       |
+   +----------------+-----------------------------------------------------+
+   | "udp6"         | UDP over IPv6                                       |
+   +----------------+-----------------------------------------------------+
+   | "unix"         | UNIX socket (both UDP and TCP protocols)            |
+   +----------------+-----------------------------------------------------+
+   | "all"          | the sum of all the possible families and protocols  |
+   +----------------+-----------------------------------------------------+
+
+  To get per-process connections use :meth:`Process.connections`.
+  Also, see
+  `netstat.py sample script <https://code.google.com/p/psutil/source/browse/examples/netstat.py>`__.
+  Example:
+
+    >>> import psutil
+    >>> psutil.net_connections()
+    >>> p.connections()
+    [pconn(fd=115, family=2, type=1, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED', pid=1254),
+     pconn(fd=117, family=2, type=1, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING', pid=2987),
+     pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED', pid=None),
+     pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT', pid=None)
+     ...]
+
+  .. note:: (Solaris) UNIX sockets are not supported.
+
+  *Availability: all platforms except OSX*
+
+  *New in 2.1.0*
+
+
 Other system info
 -----------------
 
@@ -885,8 +970,9 @@ Process class
       to obtain a usable socket object.
       This is only available on UNIX; on Windows ``-1`` is always returned.
     - **family**: the address family, either `AF_INET
-      <http://docs.python.org//library/socket.html#socket.AF_INET>`__ or
-      `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__.
+      <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
+      `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
+      or `AF_UNIX <http://docs.python.org//library/socket.html#socket.AF_UNIX>`__.
     - **type**: the address type, either `SOCK_STREAM
       <http://docs.python.org//library/socket.html#socket.SOCK_STREAM>`__ or
       `SOCK_DGRAM
