@@ -797,6 +797,7 @@ static int PSUTIL_CONN_NONE = 128;
 
 /*
  * Return TCP and UDP connections opened by process.
+ * UNIX sockets are excluded.
  *
  * Thanks to:
  * https://github.com/DavidGriffith/finx/blob/master/
@@ -806,7 +807,7 @@ static int PSUTIL_CONN_NONE = 128;
  *     cmd-inet/usr.bin/netstat/netstat.c
  */
 static PyObject *
-psutil_proc_connections(PyObject *self, PyObject *args)
+psutil_net_connections(PyObject *self, PyObject *args)
 {
     long pid;
     int sd = NULL;
@@ -820,6 +821,7 @@ psutil_proc_connections(PyObject *self, PyObject *args)
     int i, flags, getcode, num_ent, state;
     char lip[200], rip[200];
     int lport, rport;
+    int processed_pid;
     struct strbuf ctlbuf, databuf;
     struct T_optmgmt_req *tor = (struct T_optmgmt_req *)buf;
     struct T_optmgmt_ack *toa = (struct T_optmgmt_ack *)buf;
@@ -933,8 +935,8 @@ psutil_proc_connections(PyObject *self, PyObject *args)
             tp = (mib2_tcpConnEntry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_tcpConnEntry_t);
             for (i = 0; i < num_ent; i++, tp++) {
-                // check PID
-                if (tp->tcpConnCreationProcess != pid)
+                processed_pid = tp->tcpConnCreationProcess;
+                if (pid != -1 && processed_pid != pid)
                     continue;
                 // construct local/remote addresses
                 inet_ntop(AF_INET, &tp->tcpConnLocalAddress, lip, sizeof(lip));
@@ -957,8 +959,9 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                 state = tp->tcpConnEntryInfo.ce_state;
 
                 // add item
-                py_tuple = Py_BuildValue("(iiiNNi)", -1, AF_INET, SOCK_STREAM,
-                                         py_laddr, py_raddr, state);
+                py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET, SOCK_STREAM,
+                                         py_laddr, py_raddr, state,
+                                         processed_pid);
                 if (!py_tuple) {
                     goto error;
                 }
@@ -975,14 +978,12 @@ psutil_proc_connections(PyObject *self, PyObject *args)
             num_ent = mibhdr->len / sizeof(mib2_tcp6ConnEntry_t);
 
             for (i = 0; i < num_ent; i++, tp6++) {
-                // check PID
-                if (tp6->tcp6ConnCreationProcess != pid)
+                processed_pid = tp6->tcp6ConnCreationProcess;
+                if (pid != -1 && processed_pid != pid)
                     continue;
                 // construct local/remote addresses
-                inet_ntop(AF_INET6, &tp6->tcp6ConnLocalAddress, lip,
-                          sizeof(lip));
-                inet_ntop(AF_INET6, &tp6->tcp6ConnRemAddress, rip,
-                          sizeof(rip));
+                inet_ntop(AF_INET6, &tp6->tcp6ConnLocalAddress, lip, sizeof(lip));
+                inet_ntop(AF_INET6, &tp6->tcp6ConnRemAddress, rip, sizeof(rip));
                 lport = tp6->tcp6ConnLocalPort;
                 rport = tp6->tcp6ConnRemPort;
 
@@ -1001,9 +1002,8 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                 state = tp6->tcp6ConnEntryInfo.ce_state;
 
                 // add item
-                py_tuple = Py_BuildValue("(iiiNNi)", -1, AF_INET6, SOCK_STREAM,
-                                         py_laddr, py_raddr, state);
-
+                py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET6, SOCK_STREAM,
+                                         py_laddr, py_raddr, state, processed_pid);
                 if (!py_tuple) {
                     goto error;
                 }
@@ -1013,13 +1013,20 @@ psutil_proc_connections(PyObject *self, PyObject *args)
             }
         }
 #endif
-        else if (mibhdr->level == MIB2_UDP || mibhdr->level == MIB2_UDP_ENTRY)
-        {
+        // UDPv4
+        else if (mibhdr->level == MIB2_UDP || mibhdr->level == MIB2_UDP_ENTRY) {
             ude = (mib2_udpEntry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_udpEntry_t);
             for (i = 0; i < num_ent; i++, ude++) {
-                // check PID
-                if (ude->udpCreationProcess != pid)
+                processed_pid = ude->udpCreationProcess;
+                if (pid != -1 && processed_pid != pid)
+                    continue;
+                // XXX Very ugly hack! It seems we get here only the first
+                // time we bump into a UDPv4 socket.  PID is a very high
+                // number (clearly impossible) and the address does not
+                // belong to any valid interface.  Not sure what else
+                // to do other than skipping.
+                if (processed_pid > 131072)
                     continue;
                 inet_ntop(AF_INET, &ude->udpLocalAddress, lip, sizeof(lip));
                 lport = ude->udpLocalPort;
@@ -1029,8 +1036,9 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                 py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                py_tuple = Py_BuildValue("(iiiNNi)", -1, AF_INET, SOCK_DGRAM,
-                                         py_laddr, py_raddr, PSUTIL_CONN_NONE);
+                py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET, SOCK_DGRAM,
+                                         py_laddr, py_raddr, PSUTIL_CONN_NONE,
+                                         processed_pid);
                 if (!py_tuple) {
                     goto error;
                 }
@@ -1040,13 +1048,13 @@ psutil_proc_connections(PyObject *self, PyObject *args)
             }
         }
 #if defined(AF_INET6)
-        else if (mibhdr->level == MIB2_UDP6 ||
-                    mibhdr->level == MIB2_UDP6_ENTRY) {
+        // UDPv6
+        else if (mibhdr->level == MIB2_UDP6 || mibhdr->level == MIB2_UDP6_ENTRY) {
             ude6 = (mib2_udp6Entry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_udp6Entry_t);
             for (i = 0; i < num_ent; i++, ude6++) {
-                // check PID
-                if (ude6->udp6CreationProcess != pid)
+                processed_pid = ude6->udp6CreationProcess;
+                if (pid != -1 && processed_pid != pid)
                     continue;
                 inet_ntop(AF_INET6, &ude6->udp6LocalAddress, lip, sizeof(lip));
                 lport = ude6->udp6LocalPort;
@@ -1056,8 +1064,9 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                 py_raddr = Py_BuildValue("()");
                 if (!py_raddr)
                     goto error;
-                py_tuple = Py_BuildValue("(iiiNNi)", -1, AF_INET6, SOCK_DGRAM,
-                                         py_laddr, py_raddr, PSUTIL_CONN_NONE);
+                py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET6, SOCK_DGRAM,
+                                         py_laddr, py_raddr, PSUTIL_CONN_NONE,
+                                         processed_pid);
                 if (!py_tuple) {
                     goto error;
                 }
@@ -1169,8 +1178,6 @@ PsutilMethods[] =
      "Return process memory mappings"},
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
      "Return the number of context switches performed by process"},
-    {"proc_connections", psutil_proc_connections, METH_VARARGS,
-     "Return TCP and UDP connections opened by process."},
 
     // --- system-related functions
     {"swap_mem", psutil_swap_mem, METH_VARARGS,
@@ -1189,8 +1196,10 @@ PsutilMethods[] =
      "Return system boot time in seconds since the EPOCH."},
     {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
      "Return the number of physical CPUs on the system."},
+    {"net_connections", psutil_net_connections, METH_VARARGS,
+     "Return TCP and UDP syste-wide open connections."},
 
-    {NULL, NULL, 0, NULL}
+{NULL, NULL, 0, NULL}
 };
 
 

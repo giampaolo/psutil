@@ -989,6 +989,8 @@ class TestSystemAPIs(unittest.TestCase):
 
         from psutil._common import conn_tmap
         for kind, groups in conn_tmap.items():
+            if SUNOS and kind == 'unix':
+                continue
             families, types_ = groups
             cons = psutil.net_connections(kind)
             check(cons, families, types_)
@@ -1755,7 +1757,10 @@ class TestProcess(unittest.TestCase):
                 self.assertEqual(conn.family, AF_UNIX)
                 self.assertEqual(conn.type, type)
                 self.assertEqual(conn.laddr, TESTFN)
-                self.compare_proc_sys_cons(os.getpid(), cons)
+                if not SUNOS:
+                    # XXX Solaris can't retrieve system-wide UNIX
+                    # sockets.
+                    self.compare_proc_sys_cons(os.getpid(), cons)
             finally:
                 sock.close()
 
