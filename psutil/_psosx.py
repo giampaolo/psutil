@@ -148,6 +148,23 @@ def users():
     return retlist
 
 
+def net_connections(kind='inet'):
+    # Note: on OSX this will fail with AccessDenied unless
+    # the process is owned by root.
+    ret = []
+    for pid in pids():
+        try:
+            cons = Process(pid).connections(kind)
+        except NoSuchProcess:
+            continue
+        else:
+            if cons:
+                for c in cons:
+                    c = list(c) + [pid]
+                    ret.append(_common.sconn(*c))
+    return ret
+
+
 pids = cext.pids
 pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage

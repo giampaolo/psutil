@@ -396,6 +396,8 @@ Network
      pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT', pid=None)
      ...]
 
+  .. note:: (OSX) :class:`psutil.AccessDenied` is always raised unless running 
+     as root (lsof does the same).
   .. note:: (Solaris) UNIX sockets are not supported.
 
   *Availability: all platforms except OSX*

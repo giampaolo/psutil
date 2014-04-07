@@ -9,7 +9,7 @@ ENHANCEMENTS
 
 BUG FIXES
 
- * 421: [Solaris] psutil does not compile on OSX 10.5 (patch by Naveed
+ * 421: [Solaris] psutil does not compile on SunOS 5.10 (patch by Naveed
         Roudsari)
 
 
