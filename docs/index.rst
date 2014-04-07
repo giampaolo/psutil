@@ -390,7 +390,6 @@ Network
 
     >>> import psutil
     >>> psutil.net_connections()
-    >>> p.connections()
     [pconn(fd=115, family=2, type=1, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED', pid=1254),
      pconn(fd=117, family=2, type=1, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING', pid=2987),
      pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED', pid=None),
@@ -963,6 +962,7 @@ Process class
   .. method:: connections(kind="inet")
 
     Return socket connections opened by process as a list of namedutples.
+    To get system-wide connections use :func:`psutil.net_connections()`.
     Every namedtuple provides 6 attributes:
 
     - **fd**: the socket file descriptor. This can be passed to
