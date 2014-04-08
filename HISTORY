@@ -1,11 +1,11 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-2.1.0 - XXXX-XX-XX
+2.1.0 - 2014-04-08
 ------------------
 
 ENHANCEMENTS
 
- * 387: system-wide open connections.
+ * 387: system-wide open connections a-la netstat.
 
 BUG FIXES
 

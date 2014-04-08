@@ -627,7 +627,7 @@ Process class
 
      Utility method which returns the parent process as a :class:`Process`
      object pre-emptively checking whether PID has been reused. If no parent
-     PID is known returns ``None``.
+     PID is known return ``None``.
 
   .. method:: status()
 
