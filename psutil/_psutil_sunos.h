@@ -8,7 +8,6 @@
 
 // processes
 static PyObject* psutil_proc_basic_info(PyObject* self, PyObject* args);
-static PyObject* psutil_proc_connections(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_cpu_times(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_cred(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_memory_maps(PyObject* self, PyObject* args);
@@ -25,3 +24,4 @@ static PyObject* psutil_net_io_counters(PyObject* self, PyObject* args);
 static PyObject* psutil_per_cpu_times(PyObject* self, PyObject* args);
 static PyObject* psutil_swap_mem(PyObject* self, PyObject* args);
 static PyObject* psutil_users(PyObject* self, PyObject* args);
+static PyObject* psutil_net_connections(PyObject* self, PyObject* args);

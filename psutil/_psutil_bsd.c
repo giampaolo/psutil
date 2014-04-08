@@ -25,6 +25,8 @@
 
 #include <sys/socket.h>
 #include <sys/socketvar.h>    // for struct xsocket
+#include <sys/un.h>
+#include <sys/unpcb.h>
 // for xinpcb struct
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -1718,6 +1720,328 @@ error:
 }
 
 
+
+/*
+ * System-wide open connections.
+ */
+
+#define HASHSIZE 1009
+static struct xfile *psutil_xfiles;
+static int psutil_nxfiles;
+
+int
+psutil_populate_xfiles()
+{
+    size_t len;
+
+    if ((psutil_xfiles = malloc(len = sizeof *psutil_xfiles)) == NULL) {
+        PyErr_NoMemory();
+        return 0;
+    }
+    while (sysctlbyname("kern.file", psutil_xfiles, &len, 0, 0) == -1) {
+        if (errno != ENOMEM) {
+            PyErr_SetFromErrno(0);
+            return 0;
+        }
+        len *= 2;
+        if ((psutil_xfiles = realloc(psutil_xfiles, len)) == NULL) {
+            PyErr_NoMemory();
+            return 0;
+        }
+    }
+    if (len > 0 && psutil_xfiles->xf_size != sizeof *psutil_xfiles) {
+        PyErr_Format(PyExc_RuntimeError, "struct xfile size mismatch");
+        return 0;
+    }
+    psutil_nxfiles = len / sizeof *psutil_xfiles;
+    return 1;
+}
+
+int
+psutil_get_pid_from_sock(int sock_hash)
+{
+    struct xfile *xf;
+    int hash, n;
+    for (xf = psutil_xfiles, n = 0; n < psutil_nxfiles; ++n, ++xf) {
+        if (xf->xf_data == NULL)
+            continue;
+        hash = (int)((uintptr_t)xf->xf_data % HASHSIZE);
+        if (sock_hash == hash) {
+            return xf->xf_pid;
+        }
+    }
+    return -1;
+}
+
+
+int psutil_gather_inet(int proto, PyObject *py_retlist)
+{
+    struct xinpgen *xig, *exig;
+    struct xinpcb *xip;
+    struct xtcpcb *xtp;
+    struct inpcb *inp;
+    struct xsocket *so;
+    struct sock *sock;
+    const char *varname;
+    size_t len, bufsize;
+    void *buf;
+    int hash, retry, vflag, type;
+
+    PyObject *tuple = NULL;
+    PyObject *laddr = NULL;
+    PyObject *raddr = NULL;
+
+    switch (proto) {
+    case IPPROTO_TCP:
+        varname = "net.inet.tcp.pcblist";
+        type = SOCK_STREAM;
+        break;
+    case IPPROTO_UDP:
+        varname = "net.inet.udp.pcblist";
+        type = SOCK_DGRAM;
+        break;
+    }
+
+    buf = NULL;
+    bufsize = 8192;
+    retry = 5;
+    do {
+        for (;;) {
+            buf = realloc(buf, bufsize);
+            if (buf == NULL) {
+                // XXX
+                continue;
+            }
+            len = bufsize;
+            if (sysctlbyname(varname, buf, &len, NULL, 0) == 0)
+                break;
+            if (errno != ENOMEM) {
+                PyErr_SetFromErrno(0);
+                goto error;
+            }
+            bufsize *= 2;
+        }
+        xig = (struct xinpgen *)buf;
+        exig = (struct xinpgen *)(void *)((char *)buf + len - sizeof *exig);
+        if (xig->xig_len != sizeof *xig || exig->xig_len != sizeof *exig) {
+            PyErr_Format(PyExc_RuntimeError, "struct xinpgen size mismatch");
+            goto error;
+        }
+    } while (xig->xig_gen != exig->xig_gen && retry--);
+
+
+    for (;;) {
+        xig = (struct xinpgen *)(void *)((char *)xig + xig->xig_len);
+        if (xig >= exig)
+            break;
+
+        switch (proto) {
+        case IPPROTO_TCP:
+            xtp = (struct xtcpcb *)xig;
+            if (xtp->xt_len != sizeof *xtp) {
+                PyErr_Format(PyExc_RuntimeError, "struct xtcpcb size mismatch");
+                goto error;
+            }
+            break;
+        case IPPROTO_UDP:
+            xip = (struct xinpcb *)xig;
+            if (xip->xi_len != sizeof *xip) {
+                PyErr_Format(PyExc_RuntimeError, "struct xinpcb size mismatch");
+                goto error;
+            }
+            inp = &xip->xi_inp;
+            so = &xip->xi_socket;
+            break;
+        }
+
+        inp = &xtp->xt_inp;
+        so = &xtp->xt_socket;
+        char lip[200], rip[200];
+        int family, lport, rport, pid, status;
+
+        hash = (int)((uintptr_t)so->xso_so % HASHSIZE);
+        pid = psutil_get_pid_from_sock(hash);
+        if (pid < 0)
+            continue;
+        lport = ntohs(inp->inp_lport);
+        rport = ntohs(inp->inp_fport);
+        status = xtp->xt_tp.t_state;
+
+        if (inp->inp_vflag & INP_IPV4) {
+            family = AF_INET;
+            inet_ntop(AF_INET, &inp->inp_laddr.s_addr, lip, sizeof(lip));
+            inet_ntop(AF_INET, &inp->inp_faddr.s_addr, rip, sizeof(rip));
+        }
+        else if (inp->inp_vflag & INP_IPV6) {
+            family = AF_INET6;
+            inet_ntop(AF_INET6, &inp->in6p_laddr.s6_addr, lip, sizeof(lip));
+            inet_ntop(AF_INET6, &inp->in6p_faddr.s6_addr, rip, sizeof(rip));
+        }
+
+        // construct python tuple/list
+        laddr = Py_BuildValue("(si)", lip, lport);
+        if (!laddr)
+            goto error;
+        if (rport != 0) {
+            raddr = Py_BuildValue("(si)", rip, rport);
+        }
+        else {
+            raddr = Py_BuildValue("()");
+        }
+        if (!raddr)
+            goto error;
+        tuple = Py_BuildValue("(iiiNNii)", -1, family, type, laddr, raddr,
+                                               status, pid);
+        if (!tuple)
+            goto error;
+        if (PyList_Append(py_retlist, tuple))
+            goto error;
+        Py_DECREF(tuple);
+  }
+
+    free(buf);
+    return 1;
+
+error:
+    Py_XDECREF(tuple);
+    Py_XDECREF(laddr);
+    Py_XDECREF(raddr);
+    free(buf);
+    return 0;
+}
+
+
+int psutil_gather_unix(int proto, PyObject *py_retlist)
+{
+    struct xunpgen *xug, *exug;
+    struct xunpcb *xup;
+    struct sock *sock;
+    const char *varname, *protoname;
+    size_t len, bufsize;
+    void *buf;
+    int hash, retry;
+    int family, lport, rport, pid;
+    struct sockaddr_un *sun;
+    char path[PATH_MAX];
+
+    PyObject *tuple = NULL;
+    PyObject *laddr = NULL;
+    PyObject *raddr = NULL;
+
+    switch (proto) {
+    case SOCK_STREAM:
+        varname = "net.local.stream.pcblist";
+        protoname = "stream";
+        break;
+    case SOCK_DGRAM:
+        varname = "net.local.dgram.pcblist";
+        protoname = "dgram";
+        break;
+    }
+
+    buf = NULL;
+    bufsize = 8192;
+    retry = 5;
+
+    do {
+        for (;;) {
+            buf = realloc(buf, bufsize);
+            if (buf == NULL) {
+                PyErr_NoMemory();
+                goto error;
+            }
+            len = bufsize;
+            if (sysctlbyname(varname, buf, &len, NULL, 0) == 0)
+                break;
+            if (errno != ENOMEM) {
+                PyErr_SetFromErrno(0);
+                goto error;
+            }
+            bufsize *= 2;
+        }
+        xug = (struct xunpgen *)buf;
+        exug = (struct xunpgen *)(void *)
+            ((char *)buf + len - sizeof *exug);
+        if (xug->xug_len != sizeof *xug || exug->xug_len != sizeof *exug) {
+            PyErr_Format(PyExc_RuntimeError, "struct xinpgen size mismatch");
+            goto error;
+        }
+    } while (xug->xug_gen != exug->xug_gen && retry--);
+
+    for (;;) {
+        xug = (struct xunpgen *)(void *)((char *)xug + xug->xug_len);
+        if (xug >= exug)
+            break;
+        xup = (struct xunpcb *)xug;
+        if (xup->xu_len != sizeof *xup) {
+            warnx("struct xunpgen size mismatch");
+            goto error;
+        }
+
+        hash = (int)((uintptr_t) xup->xu_socket.xso_so % HASHSIZE);
+        pid = psutil_get_pid_from_sock(hash);
+        if (pid < 0)
+            continue;
+
+        sun = (struct sockaddr_un *)&xup->xu_addr;
+        snprintf(path, sizeof(path), "%.*s",
+                 (sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
+                 sun->sun_path);
+
+        tuple = Py_BuildValue("(iiisOii)", -1, AF_UNIX, proto, path, Py_None,
+                                               PSUTIL_CONN_NONE, pid);
+        if (!tuple)
+            goto error;
+        if (PyList_Append(py_retlist, tuple))
+            goto error;
+        Py_DECREF(tuple);
+        Py_INCREF(Py_None);
+    }
+
+    free(buf);
+    return 1;
+
+error:
+    Py_XDECREF(tuple);
+    Py_XDECREF(laddr);
+    Py_XDECREF(raddr);
+    free(buf);
+    return 0;
+}
+
+
+/*
+ * Return system-wide open connections.
+ */
+static PyObject*
+psutil_net_connections(PyObject* self, PyObject* args)
+{
+    PyObject *af_filter = NULL;
+    PyObject *type_filter = NULL;
+    PyObject *py_retlist = PyList_New(0);
+
+    if (psutil_populate_xfiles() != 1)
+        goto error;
+
+    if (psutil_gather_inet(IPPROTO_TCP, py_retlist) == 0)
+        goto error;
+    if (psutil_gather_inet(IPPROTO_UDP, py_retlist) == 0)
+        goto error;
+    if (psutil_gather_unix(SOCK_STREAM, py_retlist) == 0)
+       goto error;
+    if (psutil_gather_unix(SOCK_DGRAM, py_retlist) == 0)
+        goto error;
+
+    free(psutil_xfiles);
+    return py_retlist;
+
+error:
+    Py_DECREF(py_retlist);
+    free(psutil_xfiles);
+    return NULL;
+}
+
+
 /*
  * define the psutil C module methods and initialize the module.
  */
@@ -1799,6 +2123,8 @@ PsutilMethods[] =
      "Return a Python dict of tuples for disk I/O information"},
     {"users", psutil_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},
+    {"net_connections", psutil_net_connections, METH_VARARGS,
+     "Return system-wide open connections."},
 
     {NULL, NULL, 0, NULL}
 };

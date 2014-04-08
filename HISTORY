@@ -3,9 +3,13 @@ Bug tracker at http://code.google.com/p/psutil/issues
 2.1.0 - XXXX-XX-XX
 ------------------
 
+ENHANCEMENTS
+
+ * 387: system-wide open connections.
+
 BUG FIXES
 
- * 421: [Solaris] psutil does not compile on OSX 10.5 (patch by Naveed
+ * 421: [Solaris] psutil does not compile on SunOS 5.10 (patch by Naveed
         Roudsari)
  * 489: [Linux] psutil.disk_partitions() return an empty list.
 

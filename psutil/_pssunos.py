@@ -196,6 +196,35 @@ def disk_partitions(all=False):
     return retlist
 
 
+def net_connections(kind, _pid=-1):
+    """Return socket connections.  If pid == -1 return system-wide
+    connections (as opposed to connections opened by one process only).
+    Only INET sockets are returned (UNIX are not).
+    """
+    cmap = _common.conn_tmap.copy()
+    if _pid == -1:
+        cmap.pop('unix', 0)
+    if kind not in cmap:
+        raise ValueError("invalid %r kind argument; choose between %s"
+                         % (kind, ', '.join([repr(x) for x in cmap])))
+    families, types = _common.conn_tmap[kind]
+    rawlist = cext.net_connections(_pid, families, types)
+    ret = []
+    for item in rawlist:
+        fd, fam, type_, laddr, raddr, status, pid = item
+        if fam not in families:
+            continue
+        if type_ not in types:
+            continue
+        status = TCP_STATUSES[status]
+        if _pid == -1:
+            nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
+        else:
+            nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
+        ret.append(nt)
+    return ret
+
+
 def wrap_exceptions(fun):
     """Call callable into a try/except clause and translate ENOENT,
     EACCES and EPERM in NoSuchProcess or AccessDenied exceptions.
@@ -433,32 +462,17 @@ class Process(object):
 
     @wrap_exceptions
     def connections(self, kind='inet'):
-        if kind not in conn_tmap:
-            raise ValueError("invalid %r kind argument; choose between %s"
-                             % (kind, ', '.join([repr(x) for x in conn_tmap])))
-        families, types = conn_tmap[kind]
-        rawlist = cext.proc_connections(self.pid, families, types)
+        ret = net_connections(kind, _pid=self.pid)
         # The underlying C implementation retrieves all OS connections
         # and filters them by PID.  At this point we can't tell whether
         # an empty list means there were no connections for process or
         # process is no longer active so we force NSP in case the PID
         # is no longer there.
-        if not rawlist:
+        if not ret:
             os.stat('/proc/%s' % self.pid)  # will raise NSP if process is gone
 
-        ret = []
-        for item in rawlist:
-            fd, fam, type, laddr, raddr, status = item
-            if fam not in families:
-                continue
-            if type not in types:
-                continue
-            status = TCP_STATUSES[status]
-            nt = _common.pconn(fd, fam, type, laddr, raddr, status)
-            ret.append(nt)
-
         # UNIX sockets
-        if socket.AF_UNIX in families:
+        if kind in ('all', 'unix'):
             ret.extend([_common.pconn(*conn) for conn in
                         self._get_unix_sockets(self.pid)])
         return ret

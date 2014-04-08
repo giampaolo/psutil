@@ -227,6 +227,8 @@ class TestProcessObjectLeaks(Base):
 
     # Linux implementation is pure python so since it's slow we skip it
     @unittest.skipIf(LINUX, "not worth being tested on Linux (pure python)")
+    # Windows implementation is based on a single system-wide function
+    @unittest.skipIf(WINDOWS, "tested later")
     def test_connections(self):
         def create_socket(family, type):
             sock = socket.socket(family, type)
@@ -351,6 +353,10 @@ class TestModuleFunctionsLeaks(Base):
     @unittest.skipIf(WINDOWS, "XXX produces a false positive on Windows")
     def test_users(self):
         self.execute('users')
+
+    @unittest.skipIf(POSIX, "not worth being tested on POSIX (pure python)")
+    def test_net_connections(self):
+        self.execute('net_connections')
 
 
 def test_main():

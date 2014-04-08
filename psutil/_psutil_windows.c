@@ -1500,7 +1500,7 @@ static int PSUTIL_CONN_NONE = 128;
  * Return a list of network connections opened by a process
  */
 static PyObject *
-psutil_proc_connections(PyObject *self, PyObject *args)
+psutil_net_connections(PyObject *self, PyObject *args)
 {
     static long null_address[4] = { 0, 0, 0, 0 };
 
@@ -1548,9 +1548,11 @@ psutil_proc_connections(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (psutil_pid_is_running(pid) == 0) {
-        _psutil_conn_decref_objs();
-        return NoSuchProcess();
+    if (pid != -1) {
+        if (psutil_pid_is_running(pid) == 0) {
+            _psutil_conn_decref_objs();
+            return NoSuchProcess();
+        }
     }
 
     // Import some functions.
@@ -1611,9 +1613,12 @@ psutil_proc_connections(PyObject *self, PyObject *args)
         {
             tcp4Table = table;
 
-            for (i = 0; i < tcp4Table->dwNumEntries; i++) {
-                if (tcp4Table->table[i].dwOwningPid != pid) {
-                    continue;
+            for (i = 0; i < tcp4Table->dwNumEntries; i++)
+            {
+                if (pid != -1) {
+                    if (tcp4Table->table[i].dwOwningPid != pid) {
+                        continue;
+                    }
                 }
 
                 if (tcp4Table->table[i].dwLocalAddr != 0 ||
@@ -1659,13 +1664,14 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                     goto error;
 
                 connectionTuple = Py_BuildValue(
-                    "(iiiNNi)",
+                    "(iiiNNiI)",
                     -1,
                     AF_INET,
                     SOCK_STREAM,
                     addressTupleLocal,
                     addressTupleRemote,
-                    tcp4Table->table[i].dwState);
+                    tcp4Table->table[i].dwState,
+                    tcp4Table->table[i].dwOwningPid);
                 if (!connectionTuple)
                     goto error;
                 if (PyList_Append(connectionsList, connectionTuple))
@@ -1703,8 +1709,10 @@ psutil_proc_connections(PyObject *self, PyObject *args)
 
             for (i = 0; i < tcp6Table->dwNumEntries; i++)
             {
-                if (tcp6Table->table[i].dwOwningPid != pid) {
-                    continue;
+                if (pid != -1) {
+                    if (tcp6Table->table[i].dwOwningPid != pid) {
+                        continue;
+                    }
                 }
 
                 if (memcmp(tcp6Table->table[i].ucLocalAddr, null_address, 16)
@@ -1752,13 +1760,14 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                     goto error;
 
                 connectionTuple = Py_BuildValue(
-                    "(iiiNNi)",
+                    "(iiiNNiI)",
                     -1,
                     AF_INET6,
                     SOCK_STREAM,
                     addressTupleLocal,
                     addressTupleRemote,
-                    tcp6Table->table[i].dwState);
+                    tcp6Table->table[i].dwState,
+                    tcp6Table->table[i].dwOwningPid);
                 if (!connectionTuple)
                     goto error;
                 if (PyList_Append(connectionsList, connectionTuple))
@@ -1796,12 +1805,14 @@ psutil_proc_connections(PyObject *self, PyObject *args)
 
             for (i = 0; i < udp4Table->dwNumEntries; i++)
             {
-                if (udp4Table->table[i].dwOwningPid != pid) {
-                    continue;
+                if (pid != -1) {
+                    if (udp4Table->table[i].dwOwningPid != pid) {
+                        continue;
+                    }
                 }
 
                 if (udp4Table->table[i].dwLocalAddr != 0 ||
-                        udp4Table->table[i].dwLocalPort != 0)
+                    udp4Table->table[i].dwLocalPort != 0)
                 {
                     struct in_addr addr;
 
@@ -1812,8 +1823,7 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                         addressBufferLocal,
                         BYTESWAP_USHORT(udp4Table->table[i].dwLocalPort));
                 }
-                else
-                {
+                else {
                     addressTupleLocal = PyTuple_New(0);
                 }
 
@@ -1821,13 +1831,14 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                     goto error;
 
                 connectionTuple = Py_BuildValue(
-                    "(iiiNNi)",
+                    "(iiiNNiI)",
                     -1,
                     AF_INET,
                     SOCK_DGRAM,
                     addressTupleLocal,
                     PyTuple_New(0),
-                    PSUTIL_CONN_NONE);
+                    PSUTIL_CONN_NONE,
+                    udp4Table->table[i].dwOwningPid);
                 if (!connectionTuple)
                     goto error;
                 if (PyList_Append(connectionsList, connectionTuple))
@@ -1865,8 +1876,10 @@ psutil_proc_connections(PyObject *self, PyObject *args)
 
             for (i = 0; i < udp6Table->dwNumEntries; i++)
             {
-                if (udp6Table->table[i].dwOwningPid != pid) {
-                    continue;
+                if (pid != -1) {
+                    if (udp6Table->table[i].dwOwningPid != pid) {
+                        continue;
+                    }
                 }
 
                 if (memcmp(udp6Table->table[i].ucLocalAddr, null_address, 16)
@@ -1889,13 +1902,14 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                     goto error;
 
                 connectionTuple = Py_BuildValue(
-                    "(iiiNNi)",
+                    "(iiiNNiI)",
                     -1,
                     AF_INET6,
                     SOCK_DGRAM,
                     addressTupleLocal,
                     PyTuple_New(0),
-                    PSUTIL_CONN_NONE);
+                    PSUTIL_CONN_NONE,
+                    udp6Table->table[i].dwOwningPid);
                 if (!connectionTuple)
                     goto error;
                 if (PyList_Append(connectionsList, connectionTuple))
@@ -3007,8 +3021,6 @@ PsutilMethods[] =
      "Return files opened by process"},
     {"proc_username", psutil_proc_username, METH_VARARGS,
      "Return the username of a process"},
-    {"proc_connections", psutil_proc_connections, METH_VARARGS,
-     "Return the network connections of a process"},
     {"proc_num_threads", psutil_proc_num_threads, METH_VARARGS,
      "Return the network connections of a process"},
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
@@ -3081,6 +3093,9 @@ PsutilMethods[] =
      "Return a list of currently connected users."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk partitions."},
+    {"net_connections", psutil_net_connections, METH_VARARGS,
+     "Return system-wide connections"},
+
 
     // --- windows API bindings
     {"win32_QueryDosDevice", psutil_win32_QueryDosDevice, METH_VARARGS,
