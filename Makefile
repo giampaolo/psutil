@@ -69,4 +69,11 @@ pyflakes:
 		pyflakes psutil/ test/ examples/ setup.py
 
 upload-src: clean
+	# Upload source tarball on https://pypi.python.org/pypi/psutil.
 	$(PYTHON) setup.py sdist upload
+
+upload-doc:
+	# Build and upload doc on https://pythonhosted.org/psutil.
+	# Requires "pip install sphinx-pypi-upload"
+	cd docs; make html
+	$(PYTHON) setup.py upload_sphinx --upload-dir=docs/_build/html
