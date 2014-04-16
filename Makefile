@@ -2,12 +2,8 @@
 # To use a specific Python version run:
 # $ make install PYTHON=python3.3
 
-.PHONY: build install uninstall test nosetests memtest pep8 pyflakes clean \
-		upload-src
-
 PYTHON=python
 TSCRIPT=test/test_psutil.py
-FLAGS=
 
 all: test
 
@@ -53,27 +49,27 @@ test-process: install
 test-system: install
 	$(PYTHON) -m unittest -v test.test_psutil.TestSystemAPIs
 
-nosetest: install
-	# $ make nosetest FLAGS=test_name
-	nosetests $(TSCRIPT) -v -m $(FLAGS)
+# Run a specific test by name; e.g. "make test-by-name disk_" will run
+# all test methods whose name contains "disk_".
+test-by-name:
+	@nosetests test/test_psutil.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
 
 memtest: install
 	$(PYTHON) test/test_memory_leaks.py
 
 pep8:
-	pep8 psutil/ test/ examples/ setup.py --ignore E302
+	@hg locate '*py' | xargs pep8
 
 pyflakes:
-	# ignore doctests
-	export PYFLAKES_NODOCTEST=1 && \
-		pyflakes psutil/ test/ examples/ setup.py
+	@export PYFLAKES_NODOCTEST=1 && \
+		hg locate '*py' | xargs pyflakes
 
+# Upload source tarball on https://pypi.python.org/pypi/psutil.
 upload-src: clean
-	# Upload source tarball on https://pypi.python.org/pypi/psutil.
 	$(PYTHON) setup.py sdist upload
 
+# Build and upload doc on https://pythonhosted.org/psutil/.
+# Requires "pip install sphinx-pypi-upload"
 upload-doc:
-	# Build and upload doc on https://pythonhosted.org/psutil.
-	# Requires "pip install sphinx-pypi-upload"
 	cd docs; make html
 	$(PYTHON) setup.py upload_sphinx --upload-dir=docs/_build/html
