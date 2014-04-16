@@ -2,8 +2,9 @@
 # To use a specific Python version run:
 # $ make install PYTHON=python3.3
 
-PYTHON=python
-TSCRIPT=test/test_psutil.py
+# You can set these variables from the command line.
+PYTHON    = python
+TSCRIPT   = test/test_psutil.py
 
 all: test
 
@@ -50,9 +51,10 @@ test-system: install
 	$(PYTHON) -m unittest -v test.test_psutil.TestSystemAPIs
 
 # Run a specific test by name; e.g. "make test-by-name disk_" will run
-# all test methods whose name contains "disk_".
+# all test methods containing "disk_" in their name.
+# Requires "pip install nose".
 test-by-name:
-	@nosetests test/test_psutil.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
+	@$(PYTHON) -m nose test/test_psutil.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
 
 memtest: install
 	$(PYTHON) test/test_memory_leaks.py
@@ -69,7 +71,7 @@ upload-src: clean
 	$(PYTHON) setup.py sdist upload
 
 # Build and upload doc on https://pythonhosted.org/psutil/.
-# Requires "pip install sphinx-pypi-upload"
+# Requires "pip install sphinx-pypi-upload".
 upload-doc:
 	cd docs; make html
 	$(PYTHON) setup.py upload_sphinx --upload-dir=docs/_build/html
