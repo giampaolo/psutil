@@ -486,7 +486,7 @@ class Connections:
                     # We assume inet sockets are unique, so we error
                     # out if there are multiple references to the
                     # same inode. We won't do this for UNIX sockets.
-                    if len(inodes[inode]) > 1:
+                    if len(inodes[inode]) > 1 and type_ != socket.AF_UNIX:
                         raise ValueError("ambiguos inode with multiple "
                                          "PIDs references")
                     pid, fd = inodes[inode][0]

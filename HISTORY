@@ -1,5 +1,13 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+2.1.1 - XXXX-XX-XX
+------------------
+
+BUG FIXES
+
+ * 491: [Linux] psutil.net_connections() exceptions. (patch by Alexander Grothe)
+
+
 2.1.0 - 2014-04-08
 ------------------
 
