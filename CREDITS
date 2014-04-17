@@ -18,7 +18,7 @@ Author
 N: Giampaolo Rodola'
 C: Italy
 E: g.rodola@gmail.com
-W: http://www.linkedin.com/in/grodola
+W: http://grodola.blogspot.com/
 
 Contributors
 ============
@@ -26,11 +26,12 @@ Contributors
 N: Jay Loden
 C: NJ, USA
 E: jloden@gmail.com
-D: original co-author, initial design/bootstrap and continuing bug fixes
+D: original co-author, initial design/bootstrap and occasional bug fixes
 W: http://www.jayloden.com
 
 N: Jeremy Whitlock
 E: jcscoobyrs@gmail.com
+D: great help with OSX C development.
 I: 125, 150, 174, 206
 
 N: wj32
@@ -41,7 +42,7 @@ I: 114, 115
 N: Yan Raber
 C: Bologna, Italy
 E: yanraber@gmail.com
-D: help on Windows development
+D: help on Windows development (initial version of Process.username())
 
 N: Justin Venus
 E: justin.venus@gmail.com
@@ -51,7 +52,7 @@ I: 18
 N: Dave Daeschler
 C: USA
 E: david.daeschler@gmail.com
-D: initial design/bootstrap and continuing bug fixes
+D: some contributions to initial design/bootstrap
 
 N: cjgohlke
 E: cjgohlke@gmail.com
@@ -240,4 +241,3 @@ I: 340
 N: Naveed Roudsari
 E: naveed.roudsari@gmail.com
 I: 421
-

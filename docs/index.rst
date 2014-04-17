@@ -1095,7 +1095,7 @@ Process class
      :class:`NoSuchProcess`. If *timeout* is specified and process is still
      alive raise :class:`TimeoutExpired` exception. It can also be used in a
      non-blocking fashion by specifying ``timeout=0`` in which case it will
-     either immediately return or raise :class:`TimeoutExpired`.
+     either return immediately or raise :class:`TimeoutExpired`.
      To wait for multiple processes use :func:`psutil.wait_procs()`.
 
 
