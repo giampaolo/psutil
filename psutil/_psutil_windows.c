@@ -2274,8 +2274,9 @@ static PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args)
 {
     int attempts = 0;
+    int i;
     int outBufLen = 15000;
-    char ifname[2000];
+    char ifname[MAX_PATH];
     DWORD dwRetVal = 0;
     MIB_IFROW *pIfRow = NULL;
     ULONG flags = 0;
@@ -2346,6 +2347,20 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
             goto error;
 
         sprintf(ifname, "%wS", pCurrAddresses->FriendlyName);
+
+#if PY_MAJOR_VERSION >= 3
+        // XXX - Dirty hack to avoid encoding errors on Python 3, see:
+        // https://code.google.com/p/psutil/issues/detail?id=446#c9
+        for (i = 0; i < MAX_PATH; i++) {
+            if (*(ifname+i) < 0 || *(ifname+i) > 256) {
+                // replace the non unicode character
+                *(ifname+i) = '?';
+            }
+            else if (*(ifname+i) == '\0') {
+                break;
+            }
+        }
+#endif
         py_nic_name = Py_BuildValue("s", ifname);
         if (py_nic_name == NULL)
             goto error;

@@ -19,6 +19,8 @@ BUG FIXES
 
  * 421: [Solaris] psutil does not compile on SunOS 5.10 (patch by Naveed
         Roudsari)
+ * 446: [Windows] fix encoding error when using net_io_counters() on Python 3.
+        (patch by szigeti.gabor.niif)
  * 489: [Linux] psutil.disk_partitions() return an empty list.
 
 
