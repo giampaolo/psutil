@@ -9,8 +9,6 @@ https://code.google.com/p/psutil/issues/list
 HIGHER PRIORITY
 ===============
 
- * #387: system-wide connections (netstat) aka psutil.net_connections().
-
  * #250: net ifaces speed.
 
  * #376: ifconfig functionalities aka psutil.net_ifaces (could be merged
@@ -21,13 +19,11 @@ HIGHER PRIORITY
  * #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
    lm-sensors lib).
 
- * #424: Windows binary for Python 3.3 64-bit.
-
  * #269: expose network ifaces RX/TW queues.
 
  * Process.threads(): thread names
 
- * Asynchronous psutil.Popen (see http://www.python.org/dev/peps/pep-3145/)
+ * Asynchronous psutil.Popen (see http://bugs.python.org/issue1191964)
 
 
 LOWER PRIORITY

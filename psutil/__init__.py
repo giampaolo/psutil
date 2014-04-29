@@ -13,7 +13,7 @@ in Python.
 from __future__ import division
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [

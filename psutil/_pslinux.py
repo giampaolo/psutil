@@ -754,7 +754,10 @@ class Process(object):
         # bogus as the file actually exists. Either way that's not
         # important as we don't want to discriminate executables which
         # have been deleted.
-        return exe.split('\x00')[0]
+        exe = exe.split('\x00')[0]
+        if exe.endswith(' (deleted)') and not os.path.exists(exe):
+            exe = exe[:-10]
+        return exe
 
     @wrap_exceptions
     def cmdline(self):

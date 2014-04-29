@@ -1,10 +1,12 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
-2.1.1 - XXXX-XX-XX
+2.1.1 - 2014-04-29
 ------------------
 
 BUG FIXES
 
+ * 446: [Windows] fix encoding error when using net_io_counters() on Python 3.
+        (patch by Szigeti Gabor Niif)
  * 491: [Linux] psutil.net_connections() exceptions. (patch by Alexander Grothe)
 
 
@@ -19,8 +21,6 @@ BUG FIXES
 
  * 421: [Solaris] psutil does not compile on SunOS 5.10 (patch by Naveed
         Roudsari)
- * 446: [Windows] fix encoding error when using net_io_counters() on Python 3.
-        (patch by szigeti.gabor.niif)
  * 489: [Linux] psutil.disk_partitions() return an empty list.
 
 
