@@ -7,6 +7,7 @@ BUG FIXES
 
  * 446: [Windows] fix encoding error when using net_io_counters() on Python 3.
         (patch by Szigeti Gabor Niif)
+ * 460: [Windows] net_io_counters() wraps after 4G.
  * 491: [Linux] psutil.net_connections() exceptions. (patch by Alexander Grothe)
 
 

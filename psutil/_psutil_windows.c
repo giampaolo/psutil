@@ -2334,7 +2334,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
             goto error;
         }
 
-        py_nic_info = Py_BuildValue("(IIIIIIII)",
+        py_nic_info = Py_BuildValue("(kkkkkkkk)",
                                     pIfRow->dwOutOctets,
                                     pIfRow->dwInOctets,
                                     pIfRow->dwOutUcastPkts,
