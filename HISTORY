@@ -1,5 +1,14 @@
 Bug tracker at http://code.google.com/p/psutil/issues
 
+2.1.2 - (unreleased) XXXX-XX-XX
+-------------------------------
+
+BUG FIXES
+
+ * 503: [Linux]: in rare conditions Process exe(), open_files() and
+        connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
+
+
 2.1.1 - 2014-04-29
 ------------------
 

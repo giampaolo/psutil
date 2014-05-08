@@ -420,7 +420,8 @@ class Connections:
                 # unlikely we can do any better.
                 # ENOENT just means a PID disappeared on us.
                 err = sys.exc_info()[1]
-                if err.errno not in (errno.ENOENT, errno.EPERM, errno.EACCES):
+                if err.errno not in (
+                        errno.ENOENT, errno.ESRCH, errno.EPERM, errno.EACCES):
                     raise
         return inodes
 
@@ -736,7 +737,7 @@ class Process(object):
             exe = os.readlink("/proc/%s/exe" % self.pid)
         except (OSError, IOError):
             err = sys.exc_info()[1]
-            if err.errno == errno.ENOENT:
+            if err.errno in (errno.ENOENT, errno.ESRCH):
                 # no such file error; might be raised also if the
                 # path actually exists for system processes with
                 # low pids (about 0-20)
@@ -1157,7 +1158,7 @@ class Process(object):
                 except OSError:
                     # ENOENT == file which is gone in the meantime
                     err = sys.exc_info()[1]
-                    if err.errno == errno.ENOENT:
+                    if err.errno in (errno.ENOENT, errno.ESRCH):
                         hit_enoent = True
                         continue
                     raise
