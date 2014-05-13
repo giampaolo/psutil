@@ -9,6 +9,10 @@ BUG FIXES
         connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
  * 504: [Linux]: can't build RPM packages via setup.py
 
+ENHANCEMENTS
+
+ * 492: use tox to run tests on multiple python versions.  (patch by msabramo)
+
 
 2.1.1 - 2014-04-30
 ------------------

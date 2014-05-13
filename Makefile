@@ -50,6 +50,9 @@ test-process: install
 test-system: install
 	$(PYTHON) -m unittest -v test.test_psutil.TestSystemAPIs
 
+test-memleaks: install
+	$(PYTHON) -m unittest -v test.test_memory_leaks
+
 # Run a specific test by name; e.g. "make test-by-name disk_" will run
 # all test methods containing "disk_" in their name.
 # Requires "pip install nose".
