@@ -7,9 +7,10 @@ BUG FIXES
 
  * 503: [Linux]: in rare conditions Process exe(), open_files() and
         connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
+ * 504: [Linux]: can't build RPM packages via setup.py
 
 
-2.1.1 - 2014-04-29
+2.1.1 - 2014-04-30
 ------------------
 
 BUG FIXES

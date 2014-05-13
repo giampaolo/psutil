@@ -177,7 +177,7 @@ Process management
     12.1
     >>> p.cpu_affinity()
     [0, 1, 2, 3]
-    >>> p.set_cpu_affinity([0])
+    >>> p.cpu_affinity([0])  # set
     >>>
     >>> p.memory_percent()
     0.63423
@@ -221,13 +221,13 @@ Process management
     >>>
     >>> p.nice()
     0
-    >>> p.set_nice(10)
+    >>> p.nice(10)  # set
     >>>
-    >>> p.set_ionice(psutil.IOPRIO_CLASS_IDLE)  # IO priority (Win and Linux only)
+    >>> p.ionice(psutil.IOPRIO_CLASS_IDLE)  # IO priority (Win and Linux only)
     >>> p.ionice()
     pionice(ioclass=3, value=0)
     >>>
-    >>> p.set_rlimit(psutil.RLIMIT_NOFILE, (5, 5))  # resource limits (Linux only)
+    >>> p.rlimit(psutil.RLIMIT_NOFILE, (5, 5))  # set resource limits (Linux only)
     >>> p.rlimit(psutil.RLIMIT_NOFILE)
     (5, 5)
     >>>

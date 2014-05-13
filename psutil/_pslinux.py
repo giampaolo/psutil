@@ -443,12 +443,12 @@ class Connections:
         """
         ip, port = addr.split(':')
         port = int(port, 16)
-        if PY3:
-            ip = ip.encode('ascii')
         # this usually refers to a local socket in listen mode with
         # no end-points connected
         if not port:
             return ()
+        if PY3:
+            ip = ip.encode('ascii')
         if family == socket.AF_INET:
             # see: http://code.google.com/p/psutil/issues/detail?id=201
             if sys.byteorder == 'little':

@@ -133,7 +133,7 @@ def main():
     setup_args = dict(
         name='psutil',
         version=get_version(),
-        description=__doc__,
+        description=__doc__.replace('\n', '').strip(),
         long_description=get_description(),
         keywords=[
             'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice',
