@@ -59,9 +59,6 @@ test-memleaks: install
 test-by-name:
 	@$(PYTHON) -m nose test/test_psutil.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
 
-memtest: install
-	$(PYTHON) test/test_memory_leaks.py
-
 pep8:
 	@hg locate '*py' | xargs pep8
 

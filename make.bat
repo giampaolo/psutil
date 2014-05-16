@@ -122,7 +122,7 @@ if "%1" == "test-system" (
     goto :eof
 )
 
-if "%1" == "memtest" (
+if "%1" == "test-memleaks" (
     :memtest
     call :install
     %PYTHON% test\test_memory_leaks.py
