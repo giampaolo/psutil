@@ -10,6 +10,10 @@
     :target: https://pypi.python.org/pypi/psutil/
     :alt: License
 
+.. image:: https://api.travis-ci.org/giampaolo/psutil.png?branch=master
+    :target: https://travis-ci.org/giampaolo/psutil
+    :alt: Travis
+
 ===========
 Quick links
 ===========
