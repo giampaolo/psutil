@@ -1,10 +1,11 @@
+include .travis.yml
 include CREDITS
 include HISTORY
 include LICENSE
 include make.bat
 include Makefile
 include MANIFEST.in
-include README
+include README.rst
 include setup.py
 include TODO
 include tox.ini
