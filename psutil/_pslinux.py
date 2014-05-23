@@ -159,7 +159,7 @@ def virtual_memory():
                 break
         else:
             # we might get here when dealing with exotic Linux flavors, see:
-            # http://code.google.com/p/psutil/issues/detail?id=313
+            # https://github.com/giampaolo/psutil/issues/313
             msg = "'cached', 'active' and 'inactive' memory stats couldn't " \
                   "be determined and were set to 0"
             warnings.warn(msg, RuntimeWarning)
@@ -192,7 +192,7 @@ def swap_memory():
                 break
         else:
             # we might get here when dealing with exotic Linux flavors, see:
-            # http://code.google.com/p/psutil/issues/detail?id=313
+            # https://github.com/giampaolo/psutil/issues/313
             msg = "'sin' and 'sout' swap memory stats couldn't " \
                   "be determined and were set to 0"
             warnings.warn(msg, RuntimeWarning)
@@ -271,7 +271,7 @@ def cpu_count_logical():
                 num += 1
 
     # unknown format (e.g. amrel/sparc architectures), see:
-    # http://code.google.com/p/psutil/issues/detail?id=200
+    # https://github.com/giampaolo/psutil/issues/200
     # try to parse /proc/stat as a last resort
     if num == 0:
         f = open('/proc/stat', 'rt')
@@ -450,7 +450,7 @@ class Connections:
         if PY3:
             ip = ip.encode('ascii')
         if family == socket.AF_INET:
-            # see: http://code.google.com/p/psutil/issues/detail?id=201
+            # see: https://github.com/giampaolo/psutil/issues/201
             if sys.byteorder == 'little':
                 ip = socket.inet_ntop(family, base64.b16decode(ip)[::-1])
             else:
@@ -461,7 +461,7 @@ class Connections:
             # return socket.inet_ntop(socket.AF_INET6,
             #          ''.join(ip[i:i+4][::-1] for i in xrange(0, 16, 4)))
             ip = base64.b16decode(ip)
-            # see: http://code.google.com/p/psutil/issues/detail?id=201
+            # see: https://github.com/giampaolo/psutil/issues/201
             if sys.byteorder == 'little':
                 ip = socket.inet_ntop(
                     socket.AF_INET6,
@@ -478,62 +478,58 @@ class Connections:
             # IPv6 not supported
             return
         f = open(file, 'rt')
-        try:
-            f.readline()  # skip the first line
-            for line in f:
-                _, laddr, raddr, status, _, _, _, _, _, inode = \
-                    line.split()[:10]
-                if inode in inodes:
-                    # We assume inet sockets are unique, so we error
-                    # out if there are multiple references to the
-                    # same inode. We won't do this for UNIX sockets.
-                    if len(inodes[inode]) > 1 and type_ != socket.AF_UNIX:
-                        raise ValueError("ambiguos inode with multiple "
-                                         "PIDs references")
-                    pid, fd = inodes[inode][0]
+        f.readline()  # skip the first line
+        for line in f:
+            _, laddr, raddr, status, _, _, _, _, _, inode = \
+                line.split()[:10]
+            if inode in inodes:
+                # We assume inet sockets are unique, so we error
+                # out if there are multiple references to the
+                # same inode. We won't do this for UNIX sockets.
+                if len(inodes[inode]) > 1 and type_ != socket.AF_UNIX:
+                    raise ValueError("ambiguos inode with multiple "
+                                     "PIDs references")
+                pid, fd = inodes[inode][0]
+            else:
+                pid, fd = None, -1
+            if filter_pid is not None and filter_pid != pid:
+                continue
+            else:
+                if type_ == socket.SOCK_STREAM:
+                    status = TCP_STATUSES[status]
                 else:
-                    pid, fd = None, -1
-                if filter_pid is not None and filter_pid != pid:
-                    continue
-                else:
-                    if type_ == socket.SOCK_STREAM:
-                        status = TCP_STATUSES[status]
-                    else:
-                        status = _common.CONN_NONE
-                    laddr = self.decode_address(laddr, family)
-                    raddr = self.decode_address(raddr, family)
-                    yield (fd, family, type_, laddr, raddr, status, pid)
-        finally:
-            f.close()
+                    status = _common.CONN_NONE
+                laddr = self.decode_address(laddr, family)
+                raddr = self.decode_address(raddr, family)
+                yield (fd, family, type_, laddr, raddr, status, pid)
+        f.close()
 
     def process_unix(self, file, family, inodes, filter_pid=None):
         """Parse /proc/net/unix files."""
         f = open(file, 'rt')
-        try:
-            f.readline()  # skip the first line
-            for line in f:
-                tokens = line.split()
-                _, _, _, _, type_, _, inode = tokens[0:7]
-                if inode in inodes:
-                    # With UNIX sockets we can have a single inode
-                    # referencing many file descriptors.
-                    pairs = inodes[inode]
+        f.readline()  # skip the first line
+        for line in f:
+            tokens = line.split()
+            _, _, _, _, type_, _, inode = tokens[0:7]
+            if inode in inodes:
+                # With UNIX sockets we can have a single inode
+                # referencing many file descriptors.
+                pairs = inodes[inode]
+            else:
+                pairs = [(None, -1)]
+            for pid, fd in pairs:
+                if filter_pid is not None and filter_pid != pid:
+                    continue
                 else:
-                    pairs = [(None, -1)]
-                for pid, fd in pairs:
-                    if filter_pid is not None and filter_pid != pid:
-                        continue
+                    if len(tokens) == 8:
+                        path = tokens[-1]
                     else:
-                        if len(tokens) == 8:
-                            path = tokens[-1]
-                        else:
-                            path = ""
-                        type_ = int(type_)
-                        raddr = None
-                        status = _common.CONN_NONE
-                        yield (fd, family, type_, path, raddr, status, pid)
-        finally:
-            f.close()
+                        path = ""
+                    type_ = int(type_)
+                    raddr = None
+                    status = _common.CONN_NONE
+                    yield (fd, family, type_, path, raddr, status, pid)
+        f.close()
 
     def retrieve(self, kind, pid=None):
         if kind not in self.tmap:
@@ -631,7 +627,7 @@ def disk_io_counters():
                 # we're dealing with a disk entity for which no
                 # partitions have been defined (e.g. 'sda' but
                 # 'sda1' was not around), see:
-                # http://code.google.com/p/psutil/issues/detail?id=338
+                # https://github.com/giampaolo/psutil/issues/338
                 partitions.append(name)
     #
     retdict = {}
@@ -1046,7 +1042,7 @@ class Process(object):
 
     @wrap_exceptions
     def nice_get(self):
-        #f = open('/proc/%s/stat' % self.pid, 'r')
+        # f = open('/proc/%s/stat' % self.pid, 'r')
         # try:
         #   data = f.read()
         #   return int(data.split()[18])

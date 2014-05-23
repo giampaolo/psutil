@@ -7,7 +7,7 @@ I'm sure I'm forgetting some people (feel free to email me), but here is a
 short list.
 It's modeled after the Linux CREDITS file where the fields are:
 name (N), e-mail (E), web-address (W), country (C), description (D), (I) issues
-(issue tracker is at http://code.google.com/p/psutil/issues/list).
+(issue tracker is at https://github.com/giampaolo/psutil/issues).
 Really thanks to all of you.
 
 - Giampaolo

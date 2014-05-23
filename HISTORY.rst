@@ -1,4 +1,4 @@
-Bug tracker at http://code.google.com/p/psutil/issues
+Bug tracker at https://github.com/giampaolo/psutil/issues
 
 2.1.2 - (unreleased) XXXX-XX-XX
 -------------------------------
@@ -8,9 +8,12 @@ BUG FIXES
  * 503: [Linux]: in rare conditions Process exe(), open_files() and
         connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
  * 504: [Linux]: can't build RPM packages via setup.py
+ * 506: [Linux]: python 2.4 support was broken
 
 ENHANCEMENTS
 
+ * 407: project moved from Google Code to Github; code moved from Mercurial
+        to Git.
  * 492: use tox to run tests on multiple python versions.  (patch by msabramo)
 
 
@@ -87,82 +90,116 @@ In most cases accessing the old names will work but it will cause a DeprecationW
 
  * psutil.* module level constants have being replaced by functions:
 
-    ---------------------------------------------------------
-   | Old name                | Replacement                   |
-    ---------------------------------------------------------
-   | - psutil.NUM_CPUS       | psutil.cpu_cpunt()            |
-   | - psutil.BOOT_TIME      | psutil.boot_time()            |
-   | - psutil.TOTAL_PHYMEM   | psutil.virtual_memory().total |
-    ---------------------------------------------------------
+   +-----------------------+-------------------------------+
+   | Old name              | Replacement                   |
+   +=======================+===============================+
+   | psutil.NUM_CPUS       | psutil.cpu_cpunt()            |
+   +-----------------------+-------------------------------+
+   | psutil.BOOT_TIME      | psutil.boot_time()            |
+   +-----------------------+-------------------------------+
+   | psutil.TOTAL_PHYMEM   | psutil.virtual_memory().total |
+   +-----------------------+-------------------------------+
 
  * Renamed psutil.* functions:
 
-    -----------------------------------------------
-   | Old name                 | Replacement        |
-    -----------------------------------------------
-   | - psutil.get_pid_list()  | psutil.pids()      |
-   | - psutil.get_users()     | psutil.users()     |
-   | - psutil.get_boot_time() | psutil.boot_time() |
-    -----------------------------------------------
+   +--------------------------+-------------------------------+
+   | Old name                 | Replacement                   |
+   +==========================+===============================+
+   | - psutil.get_pid_list()  | psutil.pids()                 |
+   +--------------------------+-------------------------------+
+   | - psutil.get_users()     | psutil.users()                |
+   +--------------------------+-------------------------------+
+   | - psutil.get_boot_time() | psutil.boot_time()            |
+   +--------------------------+-------------------------------+
 
- * All psutil.Process get_* methods lost the "get_" prefix.
+ * All psutil.Process ``get_*`` methods lost the ``get_`` prefix.
    get_ext_memory_info() renamed to memory_info_ex().
    Assuming "p = psutil.Process()":
 
-    -------------------------------------------------
+   +--------------------------+----------------------+
    | Old name                 | Replacement          |
-    -------------------------------------------------
+   +==========================+======================+
    | p.get_children()         | p.children()         |
+   +--------------------------+----------------------+
    | p.get_connections()      | p.connections()      |
+   +--------------------------+----------------------+
    | p.get_cpu_affinity()     | p.cpu_affinity()     |
+   +--------------------------+----------------------+
    | p.get_cpu_percent()      | p.cpu_percent()      |
+   +--------------------------+----------------------+
    | p.get_cpu_times()        | p.cpu_times()        |
+   +--------------------------+----------------------+
    | p.get_ext_memory_info()  | p.memory_info_ex()   |
+   +--------------------------+----------------------+
    | p.get_io_counters()      | p.io_counters()      |
+   +--------------------------+----------------------+
    | p.get_ionice()           | p.ionice()           |
+   +--------------------------+----------------------+
    | p.get_memory_info()      | p.memory_info()      |
+   +--------------------------+----------------------+
    | p.get_memory_maps()      | p.memory_maps()      |
+   +--------------------------+----------------------+
    | p.get_memory_percent()   | p.memory_percent()   |
+   +--------------------------+----------------------+
    | p.get_nice()             | p.nice()             |
+   +--------------------------+----------------------+
    | p.get_num_ctx_switches() | p.num_ctx_switches() |
+   +--------------------------+----------------------+
    | p.get_num_fds()          | p.num_fds()          |
+   +--------------------------+----------------------+
    | p.get_num_threads()      | p.num_threads()      |
+   +--------------------------+----------------------+
    | p.get_open_files()       | p.open_files()       |
+   +--------------------------+----------------------+
    | p.get_rlimit()           | p.rlimit()           |
+   +--------------------------+----------------------+
    | p.get_threads()          | p.threads()          |
+   +--------------------------+----------------------+
    | p.getcwd()               | p.cwd()              |
-    -------------------------------------------------
+   +--------------------------+----------------------+
 
- * All psutil.Process set_* methods lost the "set_" prefix.
+ * All psutil.Process ``set_*`` methods lost the ``set_`` prefix.
    Assuming "p = psutil.Process()":
 
-    --------------------------------------------------------
+   +----------------------+---------------------------------+
    | Old name             | Replacement                     |
-    --------------------------------------------------------
+   +======================+=================================+
    | p.set_nice()         | p.nice(value)                   |
+   +----------------------+---------------------------------+
    | p.set_ionice()       | p.ionice(ioclass, value=None)   |
+   +----------------------+---------------------------------+
    | p.set_cpu_affinity() | p.cpu_affinity(cpus)            |
+   +----------------------+---------------------------------+
    | p.set_rlimit()       | p.rlimit(resource, limits=None) |
-    --------------------------------------------------------
+   +----------------------+---------------------------------+
 
  * Except for 'pid' all psutil.Process class properties have been turned into
    methods. This is the only case which there are no aliases.
    Assuming "p = psutil.Process()":
 
-    ---------------------------------
+   +---------------+-----------------+
    | Old name      | Replacement     |
-    ---------------------------------
+   +===============+=================+
    | p.name        | p.name()        |
+   +---------------+-----------------+
    | p.parent      | p.parent()      |
+   +---------------+-----------------+
    | p.ppid        | p.ppid()        |
+   +---------------+-----------------+
    | p.exe         | p.exe()         |
+   +---------------+-----------------+
    | p.cmdline     | p.cmdline()     |
+   +---------------+-----------------+
    | p.status      | p.status()      |
+   +---------------+-----------------+
    | p.uids        | p.uids()        |
+   +---------------+-----------------+
    | p.gids        | p.gids()        |
+   +---------------+-----------------+
    | p.username    | p.username()    |
+   +---------------+-----------------+
    | p.create_time | p.create_time() |
-    ---------------------------------
+   +---------------+-----------------+
 
  * Others:
   * timeout parameter of cpu_percent* functions defaults to 0.0 instead of 0.1.
@@ -399,46 +436,46 @@ NEW FEATURES
  * #297: [OSX] the Process methods below were always raising AccessDenied for
          any process except the current one. Now this is no longer true. Also
          they are 2.5x faster.
-           - name
-           - get_memory_info()
-           - get_memory_percent()
-           - get_cpu_times()
-           - get_cpu_percent()
-           - get_num_threads()
+         - name
+         - get_memory_info()
+         - get_memory_percent()
+         - get_cpu_times()
+         - get_cpu_percent()
+         - get_num_threads()
  * #300: examples/pmap.py script.
  * #301: process_iter() now yields processes sorted by their PIDs.
  * #302: process number of voluntary and involuntary context switches.
  * #303: [Windows] the Process methods below were always raising AccessDenied
          for any process not owned by current user. Now this is no longer true:
-          - create_time
-          - get_cpu_times()
-          - get_cpu_percent()
-          - get_memory_info()
-          - get_memory_percent()
-          - get_num_handles()
-          - get_io_counters()
+         - create_time
+         - get_cpu_times()
+         - get_cpu_percent()
+         - get_memory_info()
+         - get_memory_percent()
+         - get_num_handles()
+         - get_io_counters()
  * #305: add examples/netstat.py script.
  * #311: system memory functions has been refactorized and rewritten and now
          provide a more detailed and consistent representation of the system
          memory. New psutil.virtual_memory() function provides the following
          memory amounts:
-          - total
-          - available
-          - percent
-          - used
-          - active [POSIX]
-          - inactive [POSIX]
-          - buffers (BSD, Linux)
-          - cached (BSD, OSX)
-          - wired (OSX, BSD)
-          - shared [FreeBSD]
+         - total
+         - available
+         - percent
+         - used
+         - active [POSIX]
+         - inactive [POSIX]
+         - buffers (BSD, Linux)
+         - cached (BSD, OSX)
+         - wired (OSX, BSD)
+         - shared [FreeBSD]
          New psutil.swap_memory() provides:
-          - total
-          - used
-          - free
-          - percent
-          - sin (no. of bytes the system has swapped in from disk (cumulative))
-          - sout (no. of bytes the system has swapped out from disk (cumulative))
+         - total
+         - used
+         - free
+         - percent
+         - sin (no. of bytes the system has swapped in from disk (cumulative))
+         - sout (no. of bytes the system has swapped out from disk (cumulative))
          All old memory-related functions are deprecated.
          Also two new example scripts were added:  free.py and meminfo.py.
  * #312: psutil.network_io_counters() namedtuple includes 4 new fields:

@@ -14,7 +14,7 @@ import sys
 
 from psutil import _common
 from psutil import _psposix
-from psutil._common import (conn_tmap, usage_percent, isfile_strict)
+from psutil._common import usage_percent, isfile_strict
 from psutil._compat import namedtuple, PY3
 import _psutil_posix
 import _psutil_sunos as cext
@@ -112,7 +112,7 @@ def swap_memory():
     used = total - free
     percent = usage_percent(used, total, _round=1)
     return _common.sswap(total, used, free, percent,
-                       sin * PAGE_SIZE, sout * PAGE_SIZE)
+                         sin * PAGE_SIZE, sout * PAGE_SIZE)
 
 
 def pids():

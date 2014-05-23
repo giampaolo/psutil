@@ -104,7 +104,7 @@ else:
     # XXX
     # Ok, this is very dirty.
     # On FreeBSD < 8 we cannot gather per-cpu information, see:
-    # http://code.google.com/p/psutil/issues/detail?id=226
+    # https://github.com/giampaolo/psutil/issues/226
     # If num cpus > 1, on first call we return single cpu times to avoid a
     # crash at psutil import time.
     # Next calls will fail with NotImplementedError
@@ -181,7 +181,7 @@ def users():
 def net_connections(kind):
     if kind not in _common.conn_tmap:
         raise ValueError("invalid %r kind argument; choose between %s"
-                        % (kind, ', '.join([repr(x) for x in conn_tmap])))
+                         % (kind, ', '.join([repr(x) for x in conn_tmap])))
     families, types = conn_tmap[kind]
     ret = []
     rawlist = cext.net_connections()

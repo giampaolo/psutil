@@ -301,7 +301,7 @@ class TestDualProcessImplementation(unittest.TestCase):
         # case the first fails because of limited permission error.
         # Here we test that the two methods return the exact same value,
         # see:
-        # http://code.google.com/p/psutil/issues/detail?id=304
+        # https://github.com/giampaolo/psutil/issues/304
         def assert_ge_0(obj):
             if isinstance(obj, tuple):
                 for value in obj:

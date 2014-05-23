@@ -123,7 +123,7 @@ def disk_usage(path):
         if not PY3 and isinstance(path, unicode):
             # this is a bug with os.statvfs() and unicode on
             # Python 2, see:
-            # - https://code.google.com/p/psutil/issues/detail?id=416
+            # - https://github.com/giampaolo/psutil/issues/416
             # - http://bugs.python.org/issue18695
             try:
                 path = path.encode(sys.getfilesystemencoding())

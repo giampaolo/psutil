@@ -1,6 +1,7 @@
 include .travis.yml
 include CREDITS
-include HISTORY
+include HISTORY.rst
+include INSTALL.rst
 include LICENSE
 include make.bat
 include Makefile

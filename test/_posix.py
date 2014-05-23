@@ -17,7 +17,8 @@ import psutil
 from psutil._compat import PY3
 from test_psutil import LINUX, SUNOS, OSX, BSD, PYTHON
 from test_psutil import (get_test_subprocess, skip_on_access_denied,
-                         retry_before_failing, reap_children, sh, unittest)
+                         retry_before_failing, reap_children, sh, unittest,
+                         get_kernel_version)
 
 
 def ps(cmd):
@@ -73,6 +74,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         self.assertEqual(username_ps, username_psutil)
 
     @skip_on_access_denied()
+    @retry_before_failing()
     def test_process_rss_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -82,6 +84,7 @@ class PosixSpecificTestCase(unittest.TestCase):
         self.assertEqual(rss_ps, rss_psutil)
 
     @skip_on_access_denied()
+    @retry_before_failing()
     def test_process_vsz_memory(self):
         # give python interpreter some time to properly initialize
         # so that the results are the same
@@ -181,6 +184,7 @@ class PosixSpecificTestCase(unittest.TestCase):
             else:
                 self.fail("couldn't find %s nic in 'ifconfig -a' output" % nic)
 
+    @retry_before_failing()
     def test_users(self):
         out = sh("who")
         lines = out.split('\n')
@@ -208,8 +212,10 @@ class PosixSpecificTestCase(unittest.TestCase):
 
         p = psutil.Process(os.getpid())
         failures = []
-        ignored_names = ('terminate', 'kill', 'suspend', 'resume', 'nice',
-                         'send_signal', 'wait', 'children', 'as_dict')
+        ignored_names = ['terminate', 'kill', 'suspend', 'resume', 'nice',
+                         'send_signal', 'wait', 'children', 'as_dict']
+        if LINUX and get_kernel_version() < (2, 6, 36):
+            ignored_names.append('rlimit')
         for name in dir(psutil.Process):
             if (name.startswith('_')
                     or name.startswith('set_')

@@ -19,7 +19,7 @@
 #define _STRUCTURED_PROC 1
 
 // fix compilation issue on SunOS 5.10, see:
-// https://code.google.com/p/psutil/issues/detail?id=421
+// https://github.com/giampaolo/psutil/issues/421
 #define NEW_MIB_COMPLIANT
 
 #include <sys/types.h>

@@ -51,7 +51,7 @@ except ImportError:
     pwd = None
 
 from psutil._common import memoize
-from psutil._compat import property, callable, defaultdict
+from psutil._compat import property, callable, long, defaultdict
 from psutil._compat import (wraps as _wraps,
                             PY3 as _PY3)
 from psutil._common import (deprecated_method as _deprecated_method,
@@ -59,7 +59,7 @@ from psutil._common import (deprecated_method as _deprecated_method,
                             sdiskio as _nt_sys_diskio,
                             snetio as _nt_sys_netio)
 
-from psutil._common import (STATUS_RUNNING,
+from psutil._common import (STATUS_RUNNING,  # NOQA
                             STATUS_SLEEPING,
                             STATUS_DISK_SLEEP,
                             STATUS_STOPPED,
@@ -87,16 +87,16 @@ from psutil._common import (CONN_ESTABLISHED,
 
 if sys.platform.startswith("linux"):
     import psutil._pslinux as _psplatform
-    from psutil._pslinux import (phymem_buffers,
+    from psutil._pslinux import (phymem_buffers,  # NOQA
                                  cached_phymem)
 
-    from psutil._pslinux import (IOPRIO_CLASS_NONE,
+    from psutil._pslinux import (IOPRIO_CLASS_NONE,  # NOQA
                                  IOPRIO_CLASS_RT,
                                  IOPRIO_CLASS_BE,
                                  IOPRIO_CLASS_IDLE)
     # Linux >= 2.6.36
     if _psplatform.HAS_PRLIMIT:
-        from _psutil_linux import (RLIM_INFINITY,
+        from _psutil_linux import (RLIM_INFINITY,  # NOQA
                                    RLIMIT_AS,
                                    RLIMIT_CORE,
                                    RLIMIT_CPU,
@@ -136,13 +136,13 @@ if sys.platform.startswith("linux"):
 
 elif sys.platform.startswith("win32"):
     import psutil._pswindows as _psplatform
-    from _psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,
+    from _psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,  # NOQA
                                  BELOW_NORMAL_PRIORITY_CLASS,
                                  HIGH_PRIORITY_CLASS,
                                  IDLE_PRIORITY_CLASS,
                                  NORMAL_PRIORITY_CLASS,
                                  REALTIME_PRIORITY_CLASS)
-    from psutil._pswindows import CONN_DELETE_TCB
+    from psutil._pswindows import CONN_DELETE_TCB  # NOQA
 
 elif sys.platform.startswith("darwin"):
     import psutil._psosx as _psplatform
@@ -152,7 +152,7 @@ elif sys.platform.startswith("freebsd"):
 
 elif sys.platform.startswith("sunos"):
     import psutil._pssunos as _psplatform
-    from psutil._pssunos import (CONN_IDLE,
+    from psutil._pssunos import (CONN_IDLE,  # NOQA
                                  CONN_BOUND)
 
 else:
@@ -472,7 +472,7 @@ class Process(object):
         """
         # On POSIX we don't want to cache the ppid as it may unexpectedly
         # change to 1 (init) in case this process turns into a zombie:
-        # https://code.google.com/p/psutil/issues/detail?id=321
+        # https://github.com/giampaolo/psutil/issues/321
         # http://stackoverflow.com/questions/356722/
 
         # XXX should we check creation time here rather than in
@@ -862,7 +862,7 @@ class Process(object):
             # from a process with multiple threads running on different
             # CPU cores, see:
             # http://stackoverflow.com/questions/1032357
-            # https://code.google.com/p/psutil/issues/detail?id=474
+            # https://github.com/giampaolo/psutil/issues/474
             overall_percent = ((delta_proc / delta_time) * 100) * num_cpus
         except ZeroDivisionError:
             # interval was too low
@@ -929,7 +929,7 @@ class Process(object):
                 except KeyError:
                     d[path] = nums
             nt = _psplatform.pmmap_grouped
-            return [nt(path, *d[path]) for path in d]
+            return [nt(path, *d[path]) for path in d]  # NOQA
         else:
             nt = _psplatform.pmmap_ext
             return [nt(*x) for x in it]
@@ -1200,7 +1200,7 @@ class Popen(Process):
     def __init__(self, *args, **kwargs):
         # Explicitly avoid to raise NoSuchProcess in case the process
         # spawned by subprocess.Popen terminates too quickly, see:
-        # https://code.google.com/p/psutil/issues/detail?id=193
+        # https://github.com/giampaolo/psutil/issues/193
         self.__subproc = subprocess.Popen(*args, **kwargs)
         self._init(self.__subproc.pid, _ignore_nsp=True)
 
@@ -1253,6 +1253,7 @@ def pid_exists(pid):
 
 
 _pmap = {}
+
 
 def process_iter():
     """Return a generator yielding a Process instance for all
@@ -1444,6 +1445,7 @@ def cpu_times(percpu=False):
 _last_cpu_times = cpu_times()
 _last_per_cpu_times = cpu_times(percpu=True)
 
+
 def cpu_percent(interval=None, percpu=False):
     """Return a float representing the current system-wide CPU
     utilization as a percentage.
@@ -1528,6 +1530,7 @@ def cpu_percent(interval=None, percpu=False):
 _last_cpu_times_2 = _last_cpu_times
 _last_per_cpu_times_2 = _last_per_cpu_times
 
+
 def cpu_times_percent(interval=None, percpu=False):
     """Same as cpu_percent() but provides utilization percentages
     for each specific CPU time as is returned by cpu_times().
@@ -1558,7 +1561,7 @@ def cpu_times_percent(interval=None, percpu=False):
             if _WINDOWS:
                 # XXX
                 # Work around:
-                # https://code.google.com/p/psutil/issues/detail?id=392
+                # https://github.com/giampaolo/psutil/issues/392
                 # CPU times are always supposed to increase over time
                 # or at least remain the same and that's because time
                 # cannot go backwards.
@@ -1789,9 +1792,11 @@ def net_connections(kind='inet'):
     """
     return _psplatform.net_connections(kind)
 
+
 # =====================================================================
 # --- other system related functions
 # =====================================================================
+
 
 def boot_time():
     """Return the system boot time expressed in seconds since the epoch.

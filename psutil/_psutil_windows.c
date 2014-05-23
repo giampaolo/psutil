@@ -155,7 +155,7 @@ psutil_proc_kill(PyObject *self, PyObject *args)
     hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
     if (hProcess == NULL) {
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            // see http://code.google.com/p/psutil/issues/detail?id=24
+            // see https://github.com/giampaolo/psutil/issues/24
             NoSuchProcess();
         }
         else {
@@ -574,7 +574,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (GetProcessImageFileNameW(hProcess, &exe, MAX_PATH) == 0) {
         CloseHandle(hProcess);
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            // see https://code.google.com/p/psutil/issues/detail?id=414
+            // see https://github.com/giampaolo/psutil/issues/414
             AccessDenied();
         }
         else {
@@ -2350,7 +2350,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
 
 #if PY_MAJOR_VERSION >= 3
         // XXX - Dirty hack to avoid encoding errors on Python 3, see:
-        // https://code.google.com/p/psutil/issues/detail?id=446#c9
+        // https://github.com/giampaolo/psutil/issues/446#c9
         for (i = 0; i < MAX_PATH; i++) {
             if (*(ifname+i) < 0 || *(ifname+i) > 256) {
                 // replace the non unicode character
@@ -2388,7 +2388,7 @@ error:
 }
 
 // fix for mingw32, see
-// https://code.google.com/p/psutil/issues/detail?id=351#c2
+// https://github.com/giampaolo/psutil/issues/351#c2
 typedef struct _DISK_PERFORMANCE_WIN_2008 {
     LARGE_INTEGER BytesRead;
     LARGE_INTEGER BytesWritten;
@@ -2530,7 +2530,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args)
     }
 
     // avoid to visualize a message box in case something goes wrong
-    // see http://code.google.com/p/psutil/issues/detail?id=264
+    // see https://github.com/giampaolo/psutil/issues/264
     SetErrorMode(SEM_FAILCRITICALERRORS);
 
     if (! PyArg_ParseTuple(args, "O", &py_all)) {

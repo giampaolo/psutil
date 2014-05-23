@@ -38,7 +38,7 @@ def get_version():
 
 
 def get_description():
-    README = os.path.join(HERE, 'README')
+    README = os.path.join(HERE, 'README.rst')
     f = open(README, 'r')
     try:
         return f.read()
@@ -73,7 +73,7 @@ if sys.platform.startswith("win32"):
             # http://www.mingw.org/wiki/Use_more_recent_defined_functions
             ('_WIN32_WINNT', get_winver()),
             ('_AVAIL_WINVER_', get_winver()),
-            # see: https://code.google.com/p/psutil/issues/detail?id=348
+            # see: https://github.com/giampaolo/psutil/issues/348
             ('PSAPI_VERSION', 1),
         ],
         libraries=[
@@ -143,7 +143,7 @@ def main():
         ],
         author='Giampaolo Rodola',
         author_email='g.rodola <at> gmail <dot> com',
-        url='http://code.google.com/p/psutil/',
+        url='https://github.com/giampaolo/psutil',
         platforms='Platform Independent',
         license='BSD',
         packages=['psutil'],

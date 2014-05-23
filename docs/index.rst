@@ -16,11 +16,11 @@ psutil documentation
 Quick links
 -----------
 
-* `Home page <http://code.google.com/p/psutil>`__
+* `Home page <https://github.com/giampaolo/psutil>`__
 * `Blog <http://grodola.blogspot.com/search/label/psutil>`__
 * `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`__
 * `Forum <http://groups.google.com/group/psutil/topics>`__
-* `What's new <https://psutil.googlecode.com/hg/HISTORY>`__
+* `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
 
 About
 -----
@@ -176,7 +176,7 @@ Memory
 
   The sum of **used** and **available** does not necessarily equal **total**.
   On Windows **available** and **free** are the same.
-  See `examples/meminfo.py <http://code.google.com/p/psutil/source/browse/examples/meminfo.py>`__
+  See `examples/meminfo.py <https://github.com/giampaolo/psutil/blob/master/examples/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
     >>> import psutil
@@ -206,7 +206,7 @@ Memory
     (cumulative)
 
   **sin** and **sout** on Windows are meaningless and are always set to ``0``.
-  See `examples/meminfo.py <http://code.google.com/p/psutil/source/browse/examples/meminfo.py>`__
+  See `examples/meminfo.py <https://github.com/giampaolo/psutil/blob/master/examples/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
     >>> import psutil
@@ -232,7 +232,7 @@ Disks
   and can be either ``"removable"``, ``"fixed"``, ``"remote"``, ``"cdrom"``,
   ``"unmounted"`` or ``"ramdisk"``. On OSX and FreeBSD it is retrieved via
   `getfsstat(2) <http://www.manpagez.com/man/2/getfsstat/>`__. See
-  `disk_usage.py <http://code.google.com/p/psutil/source/browse/examples/disk_usage.py>`__
+  `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/examples/disk_usage.py>`__
   script providing an example usage.
 
     >>> import psutil
@@ -247,13 +247,13 @@ Disks
   **percentage** usage.
   `OSError <http://docs.python.org/3/library/exceptions.html#OSError>`__ is
   raised if *path* does not exist. See
-  `examples/disk_usage.py <http://code.google.com/p/psutil/source/browse/examples/disk_usage.py>`__
+  `examples/disk_usage.py <https://github.com/giampaolo/psutil/blob/master/examples/disk_usage.py>`__
   script providing an example usage. Starting from
   `Python 3.3 <http://bugs.python.org/issue12442>`__  this is also
   available as
   `shutil.disk_usage() <http://docs.python.org/3/library/shutil.html#shutil.disk_usage>`__.
   See
-  `disk_usage.py <http://code.google.com/p/psutil/source/browse/examples/disk_usage.py>`__
+  `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/examples/disk_usage.py>`__
   script providing an example usage.
 
     >>> import psutil
@@ -275,7 +275,7 @@ Disks
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
   the namedutuple described above as the values.
-  See `examples/iotop.py <http://code.google.com/p/psutil/source/browse/examples/iotop.py>`__
+  See `examples/iotop.py <https://github.com/giampaolo/psutil/blob/master/examples/iotop.py>`__
   for an example application.
 
     >>> import psutil
@@ -308,7 +308,7 @@ Network
   If *pernic* is ``True`` return the same information for every network
   interface installed on the system as a dictionary with network interface
   names as the keys and the namedtuple described above as the values.
-  See `examples/nettop.py <http://code.google.com/p/psutil/source/browse/examples/nettop.py>`__
+  See `examples/nettop.py <https://github.com/giampaolo/psutil/blob/master/examples/nettop.py>`__
   for an example application.
 
     >>> import psutil
@@ -385,7 +385,7 @@ Network
 
   To get per-process connections use :meth:`Process.connections`.
   Also, see
-  `netstat.py sample script <https://code.google.com/p/psutil/source/browse/examples/netstat.py>`__.
+  `netstat.py sample script <https://github.com/giampaolo/psutil/blob/master/examples/netstat.py>`__.
   Example:
 
     >>> import psutil
@@ -914,7 +914,7 @@ Process class
      is ``False`` every mapped region is shown as a single entity and the
      namedtuple will also include the mapped region's address space (*addr*)
      and permission set (*perms*).
-     See `examples/pmap.py <http://code.google.com/p/psutil/source/browse/examples/pmap.py>`__
+     See `examples/pmap.py <https://github.com/giampaolo/psutil/blob/master/examples/pmap.py>`__
      for an example application.
 
       >>> import psutil

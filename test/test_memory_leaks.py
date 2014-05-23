@@ -16,7 +16,6 @@ import socket
 import sys
 import threading
 import time
-import types
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
@@ -27,13 +26,20 @@ import psutil
 import psutil._common
 
 from psutil._compat import callable, xrange
-from test_psutil import WINDOWS, POSIX, OSX, LINUX, SUNOS, TESTFN
+from test_psutil import (WINDOWS, POSIX, OSX, LINUX, SUNOS, TESTFN,
+                         RLIMIT_SUPPORT)
 from test_psutil import (reap_children, supports_ipv6, safe_remove,
                          get_test_subprocess)
 
 
 LOOPS = 1000
 TOLERANCE = 4096
+SKIP_PYTHON_IMPL = True
+
+
+def skip_if_linux():
+    return unittest.skipIf(LINUX and SKIP_PYTHON_IMPL,
+                           "not worth being tested on LINUX (pure python)")
 
 
 class Base(unittest.TestCase):
@@ -89,21 +95,6 @@ class Base(unittest.TestCase):
 class TestProcessObjectLeaks(Base):
     """Test leaks of Process class methods and properties"""
 
-    def __init__(self, *args, **kwargs):
-        Base.__init__(self, *args, **kwargs)
-        # skip tests which are not supported by Process API
-        supported_attrs = dir(psutil.Process)
-        for attr in [x for x in dir(self) if x.startswith('test')]:
-            if attr[5:] not in supported_attrs:
-                meth = getattr(self, attr)
-                name = meth.__func__.__name__.replace('test_', '')
-
-                @unittest.skipIf(True,
-                                 "%s not supported on this platform" % name)
-                def test_(self):
-                    pass
-                setattr(self, attr, types.MethodType(test_, self))
-
     def setUp(self):
         gc.collect()
 
@@ -118,91 +109,122 @@ class TestProcessObjectLeaks(Base):
         except psutil.Error:
             pass
 
+    @skip_if_linux()
     def test_name(self):
         self.execute('name')
 
+    @skip_if_linux()
     def test_cmdline(self):
         self.execute('cmdline')
 
+    @skip_if_linux()
     def test_exe(self):
         self.execute('exe')
 
+    @skip_if_linux()
     def test_ppid(self):
         self.execute('ppid')
 
+    @unittest.skipUnless(POSIX, "POSIX only")
+    @skip_if_linux()
     def test_uids(self):
         self.execute('uids')
 
+    @unittest.skipUnless(POSIX, "POSIX only")
+    @skip_if_linux()
     def test_gids(self):
         self.execute('gids')
 
+    @skip_if_linux()
     def test_status(self):
         self.execute('status')
 
-    def test_nice(self):
+    def test_nice_get(self):
         self.execute('nice')
 
-    def test_set_nice(self):
+    def test_nice_set(self):
         niceness = psutil.Process(os.getpid()).nice()
-        self.execute('set_nice', niceness)
+        self.execute('nice', niceness)
 
-    def test_io_counters(self):
-        self.execute('io_counters')
-
-    def test_ionice(self):
+    @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
+                         "Linux and Windows Vista only")
+    def test_ionice_get(self):
         self.execute('ionice')
 
-    def test_set_ionice(self):
+    @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
+                         "Linux and Windows Vista only")
+    def test_ionice_set(self):
         if WINDOWS:
             value = psutil.Process(os.getpid()).ionice()
-            self.execute('set_ionice', value)
+            self.execute('ionice', value)
         else:
-            self.execute('set_ionice', psutil.IOPRIO_CLASS_NONE)
+            self.execute('ionice', psutil.IOPRIO_CLASS_NONE)
+
+    @unittest.skipIf(OSX, "feature not supported on this platform")
+    @skip_if_linux()
+    def test_io_counters(self):
+        self.execute('io_counters')
 
     def test_username(self):
         self.execute('username')
 
+    @skip_if_linux()
     def test_create_time(self):
         self.execute('create_time')
 
+    @skip_if_linux()
     def test_num_threads(self):
         self.execute('num_threads')
 
+    @unittest.skipUnless(WINDOWS, "Windows only")
     def test_num_handles(self):
         self.execute('num_handles')
 
+    @unittest.skipUnless(POSIX, "POSIX only")
+    @skip_if_linux()
     def test_num_fds(self):
         self.execute('num_fds')
 
+    @skip_if_linux()
     def test_threads(self):
         self.execute('threads')
 
+    @skip_if_linux()
     def test_cpu_times(self):
         self.execute('cpu_times')
 
+    @skip_if_linux()
     def test_memory_info(self):
         self.execute('memory_info')
 
+    @skip_if_linux()
     def test_memory_info_ex(self):
         self.execute('memory_info_ex')
 
+    @unittest.skipUnless(POSIX, "POSIX only")
+    @skip_if_linux()
     def test_terminal(self):
         self.execute('terminal')
 
-    @unittest.skipIf(POSIX, "not worth being tested on POSIX (pure python)")
+    @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
+                     "not worth being tested on POSIX (pure python)")
     def test_resume(self):
         self.execute('resume')
 
+    @skip_if_linux()
     def test_cwd(self):
         self.execute('cwd')
 
-    def test_cpu_affinity(self):
+    @unittest.skipUnless(WINDOWS or LINUX, "Windows or Linux only")
+    def test_cpu_affinity_get(self):
         self.execute('cpu_affinity')
 
-    def test_set_cpu_affinity(self):
+    @unittest.skipUnless(WINDOWS or LINUX, "Windows or Linux only")
+    def test_cpu_affinity_set(self):
         affinity = psutil.Process(os.getpid()).cpu_affinity()
-        self.execute('set_cpu_affinity', affinity)
+        self.execute('cpu_affinity', affinity)
 
+    @skip_if_linux()
     def test_open_files(self):
         safe_remove(TESTFN)  # needed after UNIX socket test has run
         f = open(TESTFN, 'w')
@@ -213,20 +235,24 @@ class TestProcessObjectLeaks(Base):
 
     # OSX implementation is unbelievably slow
     @unittest.skipIf(OSX, "OSX implementation is too slow")
+    @skip_if_linux()
     def test_memory_maps(self):
         self.execute('memory_maps')
 
-    @unittest.skipUnless(LINUX, "feature not supported on this platform")
-    def test_rlimit(self):
+    @unittest.skipUnless(LINUX, "Linux only")
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
+                         "only available on Linux >= 2.6.36")
+    def test_rlimit_get(self):
         self.execute('rlimit', psutil.RLIMIT_NOFILE)
 
-    @unittest.skipUnless(LINUX, "feature not supported on this platform")
-    def test_set_rlimit(self):
-        limit = psutil.Process(os.getpid()).rlimit(psutil.RLIMIT_NOFILE)
-        self.execute('set_rlimit', psutil.RLIMIT_NOFILE, limit)
+    @unittest.skipUnless(LINUX, "Linux only")
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
+                         "only available on Linux >= 2.6.36")
+    def test_rlimit_set(self):
+        limit = psutil.Process().rlimit(psutil.RLIMIT_NOFILE)
+        self.execute('rlimit', psutil.RLIMIT_NOFILE, limit)
 
-    # Linux implementation is pure python so since it's slow we skip it
-    @unittest.skipIf(LINUX, "not worth being tested on Linux (pure python)")
+    @skip_if_linux()
     # Windows implementation is based on a single system-wide function
     @unittest.skipIf(WINDOWS, "tested later")
     def test_connections(self):
@@ -303,21 +329,22 @@ class TestModuleFunctionsLeaks(Base):
         if callable(obj):
             obj(*args, **kwargs)
 
-    @unittest.skipIf(LINUX, "not worth being tested on POSIX (pure python)")
+    @skip_if_linux()
     def test_cpu_count_logical(self):
         psutil.cpu_count = psutil._psplatform.cpu_count_logical
         self.execute('cpu_count')
 
-    @unittest.skipIf(LINUX, "not worth being tested on POSIX (pure python)")
+    @skip_if_linux()
     def test_cpu_count_physical(self):
         psutil.cpu_count = psutil._psplatform.cpu_count_physical
         self.execute('cpu_count')
 
-    @unittest.skipIf(LINUX, "not worth being tested on POSIX (pure python)")
+    @skip_if_linux()
     def test_boot_time(self):
         self.execute('boot_time')
 
-    @unittest.skipIf(POSIX, "not worth being tested on POSIX (pure python)")
+    @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
+                     "not worth being tested on POSIX (pure python)")
     def test_pid_exists(self):
         self.execute('pid_exists', os.getpid())
 
@@ -330,22 +357,29 @@ class TestModuleFunctionsLeaks(Base):
     def test_swap_memory(self):
         self.execute('swap_memory')
 
+    @skip_if_linux()
     def test_cpu_times(self):
         self.execute('cpu_times')
 
+    @skip_if_linux()
     def test_per_cpu_times(self):
         self.execute('cpu_times', percpu=True)
 
-    @unittest.skipIf(POSIX, "not worth being tested on POSIX (pure python)")
+    @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
+                     "not worth being tested on POSIX (pure python)")
     def test_disk_usage(self):
         self.execute('disk_usage', '.')
 
     def test_disk_partitions(self):
         self.execute('disk_partitions')
 
+    @skip_if_linux()
     def test_net_io_counters(self):
         self.execute('net_io_counters')
 
+    @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
+                     '/proc/diskstats not available on this Linux version')
+    @skip_if_linux()
     def test_disk_io_counters(self):
         self.execute('disk_io_counters')
 
@@ -354,7 +388,8 @@ class TestModuleFunctionsLeaks(Base):
     def test_users(self):
         self.execute('users')
 
-    @unittest.skipIf(POSIX, "not worth being tested on POSIX (pure python)")
+    @unittest.skipIf(LINUX,
+                     "not worth being tested on Linux (pure python)")
     def test_net_connections(self):
         self.execute('net_connections')
 

@@ -18,6 +18,7 @@ clean:
 	rm -rf `find . -type d -name __pycache__`
 	rm -rf *.egg-info
 	rm -rf *\$testfile*
+	rm -rf .tox
 	rm -rf build
 	rm -rf dist
 	rm -rf docs/_build
@@ -59,12 +60,19 @@ test-memleaks: install
 test-by-name:
 	@$(PYTHON) -m nose test/test_psutil.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
 
+# requires "pip install pep8"
 pep8:
-	@hg locate '*py' | xargs pep8
+	@git ls-files | grep \\.py$ | xargs pep8
 
+# requires "pip install pyflakes"
 pyflakes:
 	@export PYFLAKES_NODOCTEST=1 && \
-		hg locate '*py' | xargs pyflakes
+		git ls-files | grep \\.py$ | xargs pyflakes
+
+# requires "pip install flake8"
+flake8:
+	@git ls-files | grep \\.py$ | xargs flake8
+
 
 # Upload source tarball on https://pypi.python.org/pypi/psutil.
 upload-src: clean

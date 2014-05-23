@@ -18,12 +18,12 @@
 Quick links
 ===========
 
-* `Home page <http://code.google.com/p/psutil>`_
-* `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
-* `Blog <http://grodola.blogspot.com/search/label/psutil>`_
+* `Home page <https://github.com/giampaolo/psutil>`_
 * `Documentation <http://pythonhosted.org/psutil/>`_
+* `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
 * `Forum <http://groups.google.com/group/psutil/topics>`_
-* `What's new <https://psutil.googlecode.com/hg/HISTORY>`_
+* `Blog <http://grodola.blogspot.com/search/label/psutil>`_
+* `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`_
 
 =======
 Summary
@@ -39,6 +39,27 @@ ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap. It currently supports
 **Linux, Windows, OSX, FreeBSD** and **Sun Solaris**, both **32-bit** and
 **64-bit** architectures, with Python versions from **2.4 to 3.4**. Pypi is
 also known to work.
+
+====================
+Example applications
+====================
+
+.. image:: http://psutil.googlecode.com/svn/wiki/images/top-thumb.png
+    :target: http://psutil.googlecode.com/svn/wiki/images/top.png
+    :alt: top
+
+.. image:: http://psutil.googlecode.com/svn/wiki/images/nettop-thumb.png
+    :target: http://psutil.googlecode.com/svn/wiki/images/nettop.png
+    :alt: nettop
+
+.. image:: http://psutil.googlecode.com/svn/wiki/images/iotop-thumb.png
+    :target: http://psutil.googlecode.com/svn/wiki/images/iotop.png
+    :alt: iotop
+
+See also:
+
+ * https://github.com/nicolargo/glances
+ * https://github.com/Jahaja/psdash
 
 ==============
 Example usages
@@ -272,3 +293,54 @@ Further process APIs
     >>> # waits for multiple processes to terminate
     >>> gone, alive = psutil.wait_procs(procs_list, 3, callback=on_terminate)
     >>>
+
+======
+Donate
+======
+
+A lot of time and effort went into making psutil as it is right now.
+If you feel psutil is useful to you or your business and want to support its future development please consider donating me (`Giampaolo Rodola' <http://grodola.blogspot.com/p/about.html>`_) some money.
+I only ask for a small donation, but of course I appreciate any amount.
+
+.. image:: https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif
+    :target: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=A9ZS7PKKRM3S8
+    :alt: Donate via PayPal
+
+Don't want to donate money? Then maybe you could `write me a recommendation on Linkedin <http://www.linkedin.com/in/grodola>`_.
+
+============
+Mailing list
+============
+
+http://groups.google.com/group/psutil/
+
+========
+Timeline
+========
+
+ * 2014-04-30: `psutil-2.1.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.1.tar.gz>`_
+ * 2014-04-08: `psutil-2.1.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.0.tar.gz>`_
+ * 2014-03-10: `psutil-2.0.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.0.0.tar.gz>`_
+ * 2013-11-25: `psutil-1.2.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.2.1.tar.gz>`_
+ * 2013-11-20: `psutil-1.2.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.2.0.tar.gz>`_
+ * 2013-11-07: `psutil-1.1.3.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.1.3.tar.gz>`_
+ * 2013-10-22: `psutil-1.1.2.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.1.2.tar.gz>`_
+ * 2013-10-08: `psutil-1.1.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.1.1.tar.gz>`_
+ * 2013-09-28: `psutil-1.1.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.1.0.tar.gz>`_
+ * 2013-07-12: `psutil-1.0.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.0.1.tar.gz>`_
+ * 2013-07-10: `psutil-1.0.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-1.0.0.tar.gz>`_
+ * 2013-05-03: `psutil-0.7.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.7.1.tar.gz>`_
+ * 2013-04-12: `psutil-0.7.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.7.0.tar.gz>`_
+ * 2012-08-16: `psutil-0.6.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.6.1.tar.gz>`_
+ * 2012-08-13: `psutil-0.6.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.6.0.tar.gz>`_
+ * 2012-06-29: `psutil-0.5.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.5.1.tar.gz>`_
+ * 2012-06-27: `psutil-0.5.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.5.0.tar.gz>`_
+ * 2011-12-14: `psutil-0.4.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.4.1.tar.gz>`_
+ * 2011-10-29: `psutil-0.4.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.4.0.tar.gz>`_
+ * 2011-07-08: `psutil-0.3.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.3.0.tar.gz>`_
+ * 2011-03-20: `psutil-0.2.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.2.1.tar.gz>`_
+ * 2010-11-13: `psutil-0.2.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.2.0.tar.gz>`_
+ * 2010-03-02: `psutil-0.1.3.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.1.3.tar.gz>`_
+ * 2009-05-06: `psutil-0.1.2.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.1.2.tar.gz>`_
+ * 2009-03-06: `psutil-0.1.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.1.1.tar.gz>`_
+ * 2009-01-27: `psutil-0.1.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-0.1.0.tar.gz>`_
