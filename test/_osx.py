@@ -49,10 +49,12 @@ def vm_stat(field):
 
 class OSXSpecificTestCase(unittest.TestCase):
 
-    def setUp(self):
-        self.pid = get_test_subprocess().pid
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = get_test_subprocess().pid
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         reap_children()
 
     def test_process_create_time(self):

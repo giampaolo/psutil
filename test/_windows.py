@@ -50,12 +50,12 @@ def wrap_exceptions(fun):
 
 class WindowsSpecificTestCase(unittest.TestCase):
 
-    def setUp(self):
-        sproc = get_test_subprocess()
-        wait_for_pid(sproc.pid)
-        self.pid = sproc.pid
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = get_test_subprocess().pid
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         reap_children()
 
     def test_issue_24(self):

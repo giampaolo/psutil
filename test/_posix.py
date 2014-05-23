@@ -18,7 +18,7 @@ from psutil._compat import PY3
 from test_psutil import LINUX, SUNOS, OSX, BSD, PYTHON
 from test_psutil import (get_test_subprocess, skip_on_access_denied,
                          retry_before_failing, reap_children, sh, unittest,
-                         get_kernel_version)
+                         get_kernel_version, wait_for_pid)
 
 
 def ps(cmd):
@@ -45,13 +45,17 @@ def ps(cmd):
 class PosixSpecificTestCase(unittest.TestCase):
     """Compare psutil results against 'ps' command line utility."""
 
-    # for ps -o arguments see: http://unixhelp.ed.ac.uk/CGI/man-cgi?ps
-    def setUp(self):
-        self.pid = get_test_subprocess([PYTHON, "-E", "-O"],
-                                       stdin=subprocess.PIPE).pid
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = get_test_subprocess([PYTHON, "-E", "-O"],
+                                      stdin=subprocess.PIPE).pid
+        wait_for_pid(cls.pid)
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         reap_children()
+
+    # for ps -o arguments see: http://unixhelp.ed.ac.uk/CGI/man-cgi?ps
 
     def test_process_parent_pid(self):
         ppid_ps = ps("ps --no-headers -o ppid -p %s" % self.pid)
