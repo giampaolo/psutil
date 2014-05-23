@@ -2533,7 +2533,8 @@ class TestMisc(unittest.TestCase):
     def test__all__(self):
         for name in dir(psutil):
             if name in ('callable', 'defaultdict', 'error', 'namedtuple',
-                        'test', 'NUM_CPUS', 'BOOT_TIME', 'TOTAL_PHYMEM'):
+                        'long', 'test', 'NUM_CPUS', 'BOOT_TIME',
+                        'TOTAL_PHYMEM'):
                 continue
             if not name.startswith('_'):
                 try:
