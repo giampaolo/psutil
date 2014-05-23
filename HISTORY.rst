@@ -1,6 +1,5 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
-===============================
 2.1.2 - (unreleased) XXXX-XX-XX
 ===============================
 
@@ -20,7 +19,6 @@ Enhancements
  * 492: use tox to run tests on multiple python versions.  (patch by msabramo)
 
 
-==================
 2.1.1 - 2014-04-30
 ==================
 
@@ -33,7 +31,6 @@ Bug fixes
  * 491: [Linux] psutil.net_connections() exceptions. (patch by Alexander Grothe)
 
 
-==================
 2.1.0 - 2014-04-08
 ==================
 
@@ -50,7 +47,6 @@ Bug fixes
  * 489: [Linux] psutil.disk_partitions() return an empty list.
 
 
-==================
 2.0.0 - 2014-03-10
 ==================
 
@@ -222,7 +218,6 @@ DeprecationWarning.
     been renamed to "returncode" for consistency with subprocess.Popen.
 
 
-==================
 1.2.1 - 2013-11-25
 ==================
 
@@ -235,7 +230,6 @@ Bug fixes
  * #443: [Linux] can't set CPU affinity on systems with more than 64 cores.
 
 
-==================
 1.2.0 - 2013-11-20
 ==================
 
@@ -254,7 +248,6 @@ Bug fixes
    module import.
 
 
-==================
 1.1.3 - 2013-11-07
 ==================
 
@@ -265,7 +258,6 @@ Bug fixes
    missing prlimit(2) syscall.
 
 
-==================
 1.1.2 - 2013-10-22
 ==================
 
@@ -276,7 +268,6 @@ Bug fixes
    prlimit(2) syscall.
 
 
-==================
 1.1.1 - 2013-10-08
 ==================
 
@@ -287,7 +278,6 @@ Bug fixes
    prlimit(2) syscall.
 
 
-==================
 1.1.0 - 2013-09-28
 ==================
 
@@ -320,7 +310,6 @@ API changes
  * #408: turn STATUS_* and CONN_* constants into plain Python strings.
 
 
-==================
 1.0.1 - 2013-07-12
 ==================
 
@@ -330,7 +319,6 @@ Bug fixes
  * #405: network_io_counters(pernic=True) no longer works as intended in 1.0.0.
 
 
-==================
 1.0.0 - 2013-07-10
 ==================
 
@@ -362,7 +350,6 @@ API changes
  * psutil.network_io_counters() renamed to psutil.net_io_counters().
 
 
-==================
 0.7.1 - 2013-05-03
 ==================
 
@@ -376,7 +363,6 @@ Bug fixes
    AccessDenied.
 
 
-==================
 0.7.0 - 2013-04-12
 ==================
 
@@ -442,7 +428,6 @@ API changes
  * psutil.error module is deprecated and scheduled for removal.
 
 
-==================
 0.6.1 - 2012-08-16
 ==================
 
@@ -465,7 +450,6 @@ API changes
  * process exe is no longer resolved in case it's a symlink.
 
 
-==================
 0.6.0 - 2012-08-13
 ==================
 
@@ -557,7 +541,6 @@ API changes
    memory instead of virtual memory.
 
 
-==================
 0.5.1 - 2012-06-29
 ==================
 
@@ -574,7 +557,6 @@ Bugfixes
  * #294: [Windows] Process CPU affinity is only able to set CPU #0.
 
 
-==================
 0.5.0 - 2012-06-27
 ==================
 
@@ -647,7 +629,6 @@ API changes
    representation.
 
 
-==================
 0.4.1 - 2011-12-14
 ==================
 
@@ -662,7 +643,6 @@ Bugfixes
    suspend() and resume() methods.
 
 
-==================
 0.4.0 - 2011-10-29
 ==================
 
@@ -704,7 +684,6 @@ Bugfixes
  * #226: [FreeBSD] crash at import time on FreeBSD 7 and minor.
 
 
-==================
 0.3.0 - 2011-07-08
 ==================
 
@@ -735,7 +714,6 @@ Bugfixes
    raise NoSuchProcess exception while process still exists.
 
 
-==================
 0.2.1 - 2011-03-20
 ==================
 
@@ -780,7 +758,6 @@ API changes
    "gids" properties.
 
 
-==================
 0.2.0 - 2010-11-13
 ==================
 
@@ -844,7 +821,6 @@ API changes
    immediately by default (see issue 123).
 
 
-==================
 0.1.3 - 2010-03-02
 ==================
 
@@ -876,7 +852,6 @@ Bugfixes
    used first.
 
 
-==================
 0.1.2 - 2009-05-06
 ==================
 
@@ -901,7 +876,6 @@ Bugfixes
  * #42: [Windows] get_memory_percent() raises AccessDenied.
 
 
-==================
 0.1.1 - 2009-03-06
 ==================
 
@@ -939,7 +913,6 @@ Bugfixes
    FreeBSD platforms.
 
 
-==================
 0.1.0 - 2009-01-27
 ==================
 

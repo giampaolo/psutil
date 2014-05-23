@@ -9,6 +9,7 @@ python:
 install:
     - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
 script:
+    - pip install flake8
     - python setup.py build
     - python setup.py install
     - python test/test_psutil.py
