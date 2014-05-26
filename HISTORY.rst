@@ -3,16 +3,14 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 2.1.2 - (unreleased) XXXX-XX-XX
 ===============================
 
-Bug fixes
----------
+**Bug fixes**
 
 - #503: [Linux]: in rare conditions Process exe(), open_files() and
   connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
 - #504: [Linux]: can't build RPM packages via setup.py
 - #506: [Linux]: python 2.4 support was broken
 
-Enhancements
-------------
+**Enhancements**
 
 - #407: project moved from Google Code to Github; code moved from Mercurial
   to Git.
@@ -22,8 +20,7 @@ Enhancements
 2.1.1 - 2014-04-30
 ==================
 
-Bug fixes
----------
+**Bug fixes**
 
 - #446: [Windows] fix encoding error when using net_io_counters() on Python 3.
   (patch by Szigeti Gabor Niif)
@@ -34,13 +31,11 @@ Bug fixes
 2.1.0 - 2014-04-08
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #387: system-wide open connections a-la netstat.
 
-Bug fixes
----------
+**Bug fixes**
 
 - #421: [Solaris] psutil does not compile on SunOS 5.10 (patch by Naveed
   Roudsari)
@@ -50,8 +45,7 @@ Bug fixes
 2.0.0 - 2014-03-10
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #424: [Windows] installer for Python 3.X 64 bit.
 - #427: number of logical and physical CPUs (psutil.cpu_count()).
@@ -68,8 +62,7 @@ Enhancements
 - #479: long deprecated psutil.error module is gone; exception classes now
   live in "psutil" namespace only.
 
-Bug fixes
----------
+**Bug fixes**
 
 - #193: psutil.Popen constructor can throw an exception if the spawned process
   terminates quickly.
@@ -90,8 +83,7 @@ Bug fixes
 - #474: [Windows] Process.cpu_percent() is no longer capped at 100%.
 - #476: [Linux] encoding error for process name and cmdline.
 
-API changes
------------
+**API changes**
 
 For the sake of consistency a lot of psutil APIs have been renamed.
 In most cases accessing the old names will work but it will cause a
@@ -220,8 +212,7 @@ DeprecationWarning.
 1.2.1 - 2013-11-25
 ==================
 
-Bug fixes
----------
+**Bug fixes**
 
 - #348: [Windows XP] fixed "ImportError: DLL load failed" occurring on module
   import.
@@ -232,16 +223,14 @@ Bug fixes
 1.2.0 - 2013-11-20
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #439: assume os.getpid() if no argument is passed to psutil.Process
   constructor.
 - #440: new psutil.wait_procs() utility function which waits for multiple
   processes to terminate.
 
-Bug fixes
----------
+**Bug fixes**
 
 - #348: [Windows XP/Vista] fix "ImportError: DLL load failed" occurring on
   module import.
@@ -250,8 +239,7 @@ Bug fixes
 1.1.3 - 2013-11-07
 ==================
 
-Bug fixes
----------
+**Bug fixes**
 
 - #442: [Linux] psutil won't compile on certain version of Linux because of
   missing prlimit(2) syscall.
@@ -260,8 +248,7 @@ Bug fixes
 1.1.2 - 2013-10-22
 ==================
 
-Bug fixes
----------
+**Bug fixes**
 
 - #442: [Linux] psutil won't compile on Debian 6.0 because of missing
   prlimit(2) syscall.
@@ -270,8 +257,7 @@ Bug fixes
 1.1.1 - 2013-10-08
 ==================
 
-Bug fixes
----------
+**Bug fixes**
 
 - #442: [Linux] psutil won't compile on kernels < 2.6.36 due to missing
   prlimit(2) syscall.
@@ -280,8 +266,7 @@ Bug fixes
 1.1.0 - 2013-09-28
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #410: host tar.gz and windows binary files are on PYPI.
 - #412: [Linux] get/set process resource limits.
@@ -290,8 +275,7 @@ Enhancements
 - #431: [UNIX] Process.name is slightly faster because it unnecessarily
   retrieved also process cmdline.
 
-Bug fixes
----------
+**Bug fixes**
 
 - #391: [Windows] psutil.cpu_times_percent() returns negative percentages.
 - #408: STATUS_* and CONN_* constants don't properly serialize on JSON.
@@ -303,8 +287,7 @@ Bug fixes
 - #435: [Linux] psutil.net_io_counters() might report erreneous NIC names.
 - #436: [Linux] psutil.net_io_counters() reports a wrong 'dropin' value.
 
-API changes
------------
+**API changes**
 
 - #408: turn STATUS_* and CONN_* constants into plain Python strings.
 
@@ -312,8 +295,7 @@ API changes
 1.0.1 - 2013-07-12
 ==================
 
-Bug fixes
----------
+**Bug fixes**
 
 - #405: network_io_counters(pernic=True) no longer works as intended in 1.0.0.
 
@@ -321,8 +303,7 @@ Bug fixes
 1.0.0 - 2013-07-10
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #18:  Solaris support (yay!)  (thanks Justin Venus)
 - #367: Process.get_connections() 'status' strings are now constants.
@@ -330,8 +311,7 @@ Enhancements
 - #391: introduce unittest2 facilities and provide workarounds if unittest2
   is not installed (python < 2.7).
 
-Bug fixes
----------
+**Bug fixes**
 
 - #374: [Windows] negative memory usage reported if process uses a lot of
   memory.
@@ -339,8 +319,7 @@ Bug fixes
 - #394: [OSX] Mapped memory regions report incorrect file name.
 - #404: [Linux] sched_*affinity() are implicitly declared. (patch by Arfrever)
 
-API changes
------------
+**API changes**
 
 - Process.get_connections() 'status' field is no longer a string but a
   constant object (psutil.CONN_*).
@@ -352,8 +331,7 @@ API changes
 0.7.1 - 2013-05-03
 ==================
 
-Bug fixes
----------
+**Bug fixes**
 
 - #325: [BSD] psutil.virtual_memory() can raise SystemError.
   (patch by Jan Beich)
@@ -365,8 +343,7 @@ Bug fixes
 0.7.0 - 2013-04-12
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #233: code migrated to Mercurial (yay!)
 - #246: psutil.error module is deprecated and scheduled for removal.
@@ -377,8 +354,7 @@ Enhancements
   Also, psutil.cpu_percent() is more accurate.
 - #362: cpu_times_percent() (per-CPU-time utilization as a percentage)
 
-Bug fixes
----------
+**Bug fixes**
 
 - #234: [Windows] disk_io_counters() fails to list certain disks.
 - #264: [Windows] use of psutil.disk_partitions() may cause a message box to
@@ -417,8 +393,7 @@ Bug fixes
 - #366: [FreeBSD] get_memory_maps(), get_num_fds(), get_open_files() and
   getcwd() Process methods raise RuntimeError instead of AccessDenied.
 
-API changes
------------
+**API changes**
 
 - Process.cmdline property is no longer cached after first access.
 - Process.ppid property is no longer cached after first access.
@@ -430,20 +405,17 @@ API changes
 0.6.1 - 2012-08-16
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #316: process cmdline property now makes a better job at guessing the process
   executable from the cmdline.
 
-Bug fixes
----------
+**Bug fixes**
 
 - #316: process exe was resolved in case it was a symlink.
 - #318: python 2.4 compatibility was broken.
 
-API changes
------------
+**API changes**
 
  * process exe can now return an empty string instead of raising AccessDenied.
  * process exe is no longer resolved in case it's a symlink.
@@ -452,8 +424,7 @@ API changes
 0.6.0 - 2012-08-13
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #216: [POSIX] get_connections() UNIX sockets support.
 - #220: [FreeBSD] get_connections() has been rewritten in C and no longer
@@ -511,8 +482,7 @@ Enhancements
   errin, errout dropin and dropout, reflecting the number of packets
   dropped and with errors.
 
-Bugfixes
---------
+**Bugfixes**
 
 - #298: [OSX and BSD] memory leak in get_num_fds().
 - #299: potential memory leak every time PyList_New(0) is used.
@@ -529,8 +499,7 @@ Bugfixes
 - #309: get_open_files() might not return files which can not be accessed
   due to limited permissions. AccessDenied is now raised instead.
 
-API changes
------------
+**API changes**
 
 - psutil.phymem_usage() is deprecated       (use psutil.virtual_memory())
 - psutil.virtmem_usage() is deprecated      (use psutil.swap_memory())
@@ -543,14 +512,12 @@ API changes
 0.5.1 - 2012-06-29
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #293: [Windows] process executable path is now determined by asking the OS
   instead of being guessed from process cmdline.
 
-Bugfixes
---------
+**Bugfixes**
 
 - #292: [Linux] race condition in process files/threads/connections.
 - #294: [Windows] Process CPU affinity is only able to set CPU #0.
@@ -559,8 +526,7 @@ Bugfixes
 0.5.0 - 2012-06-27
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #195: [Windows] number of handles opened by process.
 - #209: psutil.disk_partitions() now provides also mount options.
@@ -590,8 +556,7 @@ Enhancements
 - #290: Process.nice property is deprecated in favor of new get_nice() and
   set_nice() methods.
 
-Bugfixes
---------
+**Bugfixes**
 
 - #193: psutil.Popen constructor can throw an exception if the spawned process
   terminates quickly.
@@ -615,8 +580,7 @@ Bugfixes
   reused.
 - #314: Process.get_children() can sometimes return non-children.
 
-API changes
------------
+**API changes**
 
 - Process.nice property is deprecated in favor of new get_nice() and set_nice()
   methods.
@@ -631,8 +595,7 @@ API changes
 0.4.1 - 2011-12-14
 ==================
 
-Bugfixes
---------
+**Bugfixes**
 
 - #228: some example scripts were not working with python 3.
 - #230: [Windows / OSX] memory leak in Process.get_connections().
@@ -645,8 +608,7 @@ Bugfixes
 0.4.0 - 2011-10-29
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #150: network I/O counters. (OSX and Windows patch by Jeremy Whitlock)
 - #154: [FreeBSD] add support for process getcwd()
@@ -662,8 +624,7 @@ Enhancements
 - #223: examples/top.py script.
 - #227: examples/nettop.py script.
 
-Bugfixes
---------
+**Bugfixes**
 
 - #135: [OSX] psutil cannot create Process object.
 - #144: [Linux] no longer support 0 special PID.
@@ -686,8 +647,7 @@ Bugfixes
 0.3.0 - 2011-07-08
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #125: system per-cpu percentage utilization and times.
 - #163: per-process associated terminal (TTY).
@@ -698,8 +658,7 @@ Enhancements
 - #174: mounted disk partitions.
 - #179: setuptools is now used in setup.py
 
-Bugfixes
---------
+**Bugfixes**
 
 - #159: SetSeDebug() does not close handles or unset impersonation on return.
 - #164: [Windows] wait function raises a TimeoutException when a process
@@ -716,8 +675,7 @@ Bugfixes
 0.2.1 - 2011-03-20
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #64: per-process I/O counters.
 - #116: per-process wait() (wait for process to terminate and return its exit
@@ -738,8 +696,7 @@ Enhancements
 - #153: [OSX] get_process_connection() implementation has been rewritten
   in C and no longer relies on lsof resulting in a 3x speedup.
 
-Bugfixes
---------
+**Bugfixes**
 
 - #83:  process cmdline is empty on OSX 64-bit.
 - #130: a race condition can cause IOError exception be raised on
@@ -750,8 +707,7 @@ Bugfixes
   bytes.
 - #151: exe and getcwd() for PID 0 on Linux return inconsistent data.
 
-API changes
------------
+**API changes**
 
 - Process "uid" and "gid" properties are deprecated in favor of "uids" and
   "gids" properties.
@@ -760,8 +716,7 @@ API changes
 0.2.0 - 2010-11-13
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #79: per-process open files.
 - #88: total system physical cached memory.
@@ -784,8 +739,7 @@ Enhancements
   new 'interval' parameter.
 - #129: per-process number of threads.
 
-Bugfixes
---------
+**Bugfixes**
 
 - #80: fixed warnings when installing psutil with easy_install.
 - #81: psutil fails to compile with Visual Studio.
@@ -802,8 +756,7 @@ Bugfixes
   no longer cached and correctly raise NoSuchProcess exception if the process
   disappears.
 
-API changes
------------
+**API changes**
 
 - psutil.Process.path property is deprecated and works as an alias for "exe"
   property.
@@ -823,8 +776,7 @@ API changes
 0.1.3 - 2010-03-02
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #14: per-process username
 - #51: per-process current working directory (Windows and Linux only)
@@ -833,8 +785,7 @@ Enhancements
 - #71: implemented suspend/resume process
 - #75: python 3 support
 
-Bugfixes
---------
+**Bugfixes**
 
 - #36: process cpu_times() and memory_info() functions succeeded also for dead
   processes while a NoSuchProcess exception is supposed to be raised.
@@ -854,8 +805,7 @@ Bugfixes
 0.1.2 - 2009-05-06
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #32: Per-process CPU user/kernel times
 - #33: Process create time
@@ -867,8 +817,7 @@ Enhancements
 - #46: Total system physical memory
 - #44: Total system used/free virtual and physical memory
 
-Bugfixes
---------
+**Bugfixes**
 
 - #36: [Windows] NoSuchProcess not raised when accessing timing methods.
 - #40: test_get_cpu_times() failing on FreeBSD and OS X.
@@ -878,8 +827,7 @@ Bugfixes
 0.1.1 - 2009-03-06
 ==================
 
-Enhancements
-------------
+**Enhancements**
 
 - #4: FreeBSD support for all functions of psutil
 - #9: Process.uid and Process.gid now retrieve process UID and GID.
@@ -897,8 +845,7 @@ Enhancements
 - #?:  Process objects can now also be compared with == operator for equality
   (PID, name, command line are compared).
 
-Bugfixes
---------
+**Bugfixes**
 
 - #16: [Windows] Special case for "System Idle Process" (PID 0) which
   otherwise would return an "invalid parameter" exception.
