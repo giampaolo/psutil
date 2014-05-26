@@ -15,8 +15,7 @@ import sys
 import time
 import traceback
 
-from test_psutil import (get_test_subprocess, wait_for_pid, reap_children,
-                         unittest)
+from test_psutil import (get_test_subprocess, reap_children, unittest)
 
 try:
     import wmi
