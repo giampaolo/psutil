@@ -417,8 +417,8 @@ DeprecationWarning.
 
 **API changes**
 
- * process exe can now return an empty string instead of raising AccessDenied.
- * process exe is no longer resolved in case it's a symlink.
+- process exe can now return an empty string instead of raising AccessDenied.
+- process exe is no longer resolved in case it's a symlink.
 
 
 0.6.0 - 2012-08-13

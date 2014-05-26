@@ -14,9 +14,19 @@
 
 import datetime
 import os
+import sys
 
-PROJECT_NAME = u"psutil"
-AUTHOR = u"Giampaolo Rodola'"
+
+if sys.version_info >= (3, ):
+    def u(s):
+        return s
+else:
+    def u(s):
+        return unicode(s, "unicode_escape")  # NOQA
+
+
+PROJECT_NAME = u("psutil")
+AUTHOR = u("Giampaolo Rodola'")
 THIS_YEAR = str(datetime.datetime.now().year)
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -65,7 +75,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = PROJECT_NAME
-copyright = u'2009-%s, %s' % (THIS_YEAR, AUTHOR)
+copyright = u('2009-%s, %s' % (THIS_YEAR, AUTHOR))
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -211,7 +221,7 @@ htmlhelp_basename = '%s-doc' % PROJECT_NAME
 # [howto/manual]).
 latex_documents = [
     ('index', '%s.tex' % PROJECT_NAME,
-     u'%s documentation' % PROJECT_NAME, AUTHOR),
+     u('%s documentation' % PROJECT_NAME, AUTHOR)),
 ]
 
 # The name of an image file (relative to this directory) to place at
@@ -243,7 +253,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', PROJECT_NAME, u'%s documentation' % PROJECT_NAME, [AUTHOR], 1)
+    ('index', PROJECT_NAME, u('%s documentation') % PROJECT_NAME, [AUTHOR], 1)
 ]
 
 # If true, show URL addresses after external links.

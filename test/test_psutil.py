@@ -2267,8 +2267,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             # Note: os.stat() may return False even if the file is there
             # hence we skip the test, see:
             # http://stackoverflow.com/questions/3112546/os-path-exists-lies
-            if POSIX:
-                assert os.path.isfile(ret), ret
+            if POSIX and os.path.isfile(ret):
                 if hasattr(os, 'access') and hasattr(os, "X_OK"):
                     # XXX may fail on OSX
                     self.assertTrue(os.access(ret, os.X_OK))
