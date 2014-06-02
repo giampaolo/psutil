@@ -22,7 +22,9 @@ if sys.version_info >= (3, ):
         return s
 else:
     def u(s):
-        return unicode(s, "unicode_escape")  # NOQA
+        if not isinstance(s, unicode):  # NOQA
+            s = unicode(s, "unicode_escape")  # NOQA
+        return s
 
 
 PROJECT_NAME = u("psutil")
@@ -149,7 +151,7 @@ html_title = "{project} {version} documentation".format(**locals())
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = 'favicon.ico'
+html_favicon = '_static/favicon.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -221,7 +223,7 @@ htmlhelp_basename = '%s-doc' % PROJECT_NAME
 # [howto/manual]).
 latex_documents = [
     ('index', '%s.tex' % PROJECT_NAME,
-     u('%s documentation' % PROJECT_NAME, AUTHOR)),
+     u('%s documentation') % PROJECT_NAME, AUTHOR),
 ]
 
 # The name of an image file (relative to this directory) to place at
