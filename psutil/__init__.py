@@ -133,6 +133,36 @@ if sys.platform.startswith("linux"):
         except AttributeError:
             pass
         del _psutil_linux
+    else:
+        # For the pure Python readonly prlimit implementation that reads /proc
+        (
+	        RLIM_INFINITY,  # NOQA
+	        RLIMIT_AS,
+	        RLIMIT_CORE,
+	        RLIMIT_CPU,
+	        RLIMIT_DATA,
+	        RLIMIT_FSIZE,
+	        RLIMIT_LOCKS,
+	        RLIMIT_MEMLOCK,
+	        RLIMIT_NOFILE,
+	        RLIMIT_NPROC,
+	        RLIMIT_RSS,
+	        RLIMIT_STACK,
+        ) = range(1, 13)
+        _PROC_LIMITS = {
+	        RLIMIT_AS: "Max address space",
+	        RLIMIT_CORE: "Max core file size",
+	        RLIMIT_CPU: "Max cpu time",
+	        RLIMIT_DATA: "Max data size",
+	        RLIMIT_FSIZE: "Max file size",
+	        RLIMIT_LOCKS: "Max file locks",
+	        RLIMIT_MEMLOCK: "Max locked memory",
+	        RLIMIT_NOFILE: "Max open files",
+	        RLIMIT_NPROC: "Max processes",
+	        RLIMIT_RSS: "Max resident set",
+	        RLIMIT_STACK: "Max stack size",
+	        }
+
 
 elif sys.platform.startswith("win32"):
     import psutil._pswindows as _psplatform
@@ -666,6 +696,44 @@ class Process(object):
                 return self._proc.rlimit(resource)
             else:
                 return self._proc.rlimit(resource, limits)
+
+    elif sys.platform.startswith("linux"):
+        # Fallback implementation that reads /proc/X/limits
+        # Obviously, it only supports _reading_ the limit, not setting it
+        def rlimit(self, resource, limits=None):
+            """Get or set process resource limits as a (soft, hard)
+            tuple.
+
+            'resource' is one of the RLIMIT_* constants.
+            'limits' is supposed to be a (soft, hard)  tuple.
+
+            See "man prlimit" for further info.
+            Available on Linux only.
+            """
+
+            if limits is not None:
+                raise NotImplementedError("Changing resource limits not supported in this installation"
+                                          " (the prlimit syscall is not available")
+            with open("/proc/%s/limits" % (self.pid,), "r") as file_:
+                lines = file_.readlines()
+            looking_for = _PROC_LIMITS[resource]
+            for line in lines:
+                tokens = line.split(looking_for)
+                if len(tokens) == 2:
+                    soft, hard, _unit = tokens[1].split()
+
+                    if soft == 'unlimited':
+                        soft = -1
+                    else:
+                        soft = long(soft)
+
+                    if hard == 'unlimited':
+                        hard = -1
+                    else:
+                        hard = long(hard)
+
+                    return soft, hard
+            return -1, -1
 
     # Windows and Linux only
     if hasattr(_psplatform.Process, "cpu_affinity_get"):
