@@ -1040,6 +1040,42 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertTrue(key)
             check_ntuple(ret[key])
 
+    def test_net_if_addrs(self):
+        nics = psutil.net_if_addrs()
+        assert nics, nics
+
+        self.assertEqual(sorted(nics.keys()),
+                         sorted(psutil.net_io_counters(pernic=True).keys()))
+
+        families = [getattr(socket, x) for x in dir(socket)
+                    if x.startswith('AF_')]
+        # if psutil.AF_LINK:
+        #     families.append(psutil.AF_LINK)
+        for nic, addrs in nics.items():
+            self.assertEqual(len(set(addrs)), len(addrs))
+            for addr in addrs:
+                assert isinstance(addr.family, int), addr
+                assert isinstance(addr.address, (str, types.NoneType)), addr
+                assert isinstance(addr.netmask, (str, types.NoneType)), addr
+                assert isinstance(addr.broadcast, (str, types.NoneType)), addr
+                assert addr.family in families, (addr, families)
+                if addr.family == socket.AF_INET:
+                    s = socket.socket(addr.family)
+                    try:
+                        s.bind((addr.address, 0))
+                    finally:
+                        s.close()
+                elif addr.family == socket.AF_INET6:
+                    info = socket.getaddrinfo(
+                        addr.address, 0, socket.AF_INET6, socket.SOCK_STREAM,
+                        0, socket.AI_PASSIVE)[0]
+                    af, socktype, proto, canonname, sa = info
+                    s = socket.socket(af, socktype, proto)
+                    try:
+                        s.bind(sa)
+                    finally:
+                        s.close()
+
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
     def test_disk_io_counters(self):
@@ -2665,6 +2701,9 @@ class TestExampleScripts(unittest.TestCase):
 
     def test_netstat(self):
         self.assert_stdout('netstat.py')
+
+    def test_ifconfig(self):
+        self.assert_stdout('ifconfig.py')
 
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))

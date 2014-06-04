@@ -598,6 +598,9 @@ def net_io_counters():
     return retdict
 
 
+net_if_addrs = _psutil_posix.net_if_addrs
+
+
 # --- disks
 
 def disk_io_counters():

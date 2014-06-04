@@ -393,6 +393,9 @@ class TestModuleFunctionsLeaks(Base):
     def test_net_connections(self):
         self.execute('net_connections')
 
+    def test_net_if_addrs(self):
+        self.execute('net_if_addrs')
+
 
 def test_main():
     test_suite = unittest.TestSuite()

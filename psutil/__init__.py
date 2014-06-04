@@ -33,7 +33,7 @@ __all__ = [
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
-    "net_io_counters", "net_connections",                           # network
+    "net_io_counters", "net_connections", "net_if_addrs",           # network
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
     "users", "boot_time",                                           # others
 ]
@@ -57,7 +57,8 @@ from psutil._compat import (wraps as _wraps,
 from psutil._common import (deprecated_method as _deprecated_method,
                             deprecated as _deprecated,
                             sdiskio as _nt_sys_diskio,
-                            snetio as _nt_sys_netio)
+                            snetio as _nt_sys_netio,
+                            snic as _snic)
 
 from psutil._common import (STATUS_RUNNING,  # NOQA
                             STATUS_SLEEPING,
@@ -1791,6 +1792,26 @@ def net_connections(kind='inet'):
     all             the sum of all the possible families and protocols
     """
     return _psplatform.net_connections(kind)
+
+
+def net_if_addrs():
+    """Return all NICs installed on the system as a dictionary whose
+    keys are NIC names and value is a namedtuple including:
+
+     - family  (one of the socket.AF_* constant)
+     - address
+     - netmask
+     - broadcast
+
+    address, netmask and broadcast may be None in case NIC address is
+    not assigned.
+    """
+    rawlist = _psplatform.net_if_addrs()
+    rawlist.sort(key=lambda x: x[1])  # sort by family
+    ret = defaultdict(list)
+    for name, fam, addr, mask, broadcast in rawlist:
+        ret[name].append(_snic(fam, addr, mask, broadcast))
+    return dict(ret)
 
 
 # =====================================================================
