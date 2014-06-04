@@ -105,7 +105,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family)
             return Py_None;
         }
         else {
-            return PyString_FromString(buf);
+            return Py_BuildValue("s", buf);
         }
     }
 #ifdef __linux
@@ -137,7 +137,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family)
             ptr += 3;
         }
         *--ptr = '\0';
-        return PyString_FromString(buf);
+        return Py_BuildValue("s", buf);
     }
     else {
         Py_INCREF(Py_None);

@@ -1055,9 +1055,9 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(len(set(addrs)), len(addrs))
             for addr in addrs:
                 assert isinstance(addr.family, int), addr
-                assert isinstance(addr.address, (str, types.NoneType)), addr
-                assert isinstance(addr.netmask, (str, types.NoneType)), addr
-                assert isinstance(addr.broadcast, (str, types.NoneType)), addr
+                assert isinstance(addr.address, (str, type(None))), addr
+                assert isinstance(addr.netmask, (str, type(None))), addr
+                assert isinstance(addr.broadcast, (str, type(None))), addr
                 assert addr.family in families, (addr, families)
                 if addr.family == socket.AF_INET:
                     s = socket.socket(addr.family)
