@@ -3,18 +3,19 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 2.1.2 - (unreleased) XXXX-XX-XX
 ===============================
 
+**Enhancements**
+
+- #407: project moved from Google Code to Github; code moved from Mercurial
+  to Git.
+- #492: use tox to run tests on multiple python versions.  (patch by msabramo)
+- #511: new examples/ps.py sample code.
+
 **Bug fixes**
 
 - #503: [Linux]: in rare conditions Process exe(), open_files() and
   connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
 - #504: [Linux]: can't build RPM packages via setup.py
 - #506: [Linux]: python 2.4 support was broken
-
-**Enhancements**
-
-- #407: project moved from Google Code to Github; code moved from Mercurial
-  to Git.
-- #492: use tox to run tests on multiple python versions.  (patch by msabramo)
 
 
 2.1.1 - 2014-04-30

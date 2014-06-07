@@ -2663,6 +2663,9 @@ class TestExampleScripts(unittest.TestCase):
     def test_who(self):
         self.assert_stdout('who.py')
 
+    def test_ps(self):
+        self.assert_stdout('ps.py')
+
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
