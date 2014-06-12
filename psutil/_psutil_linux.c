@@ -472,7 +472,8 @@ void init_psutil_linux(void)
 
 
 #if PSUTIL_HAVE_PRLIMIT
-    PyModule_AddIntConstant(module, "RLIM_INFINITY", RLIM_INFINITY);
+    PyModule_AddObject(module, "RLIM_INFINITY",
+                       Py_BuildValue("k", RLIM_INFINITY));
     PyModule_AddIntConstant(module, "RLIMIT_AS", RLIMIT_AS);
     PyModule_AddIntConstant(module, "RLIMIT_CORE", RLIMIT_CORE);
     PyModule_AddIntConstant(module, "RLIMIT_CPU", RLIMIT_CPU);
