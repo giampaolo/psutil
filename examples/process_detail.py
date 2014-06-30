@@ -80,7 +80,7 @@ def run(pid):
     except psutil.Error:
         parent = ''
     started = datetime.datetime.fromtimestamp(
-        pinfo['create_time']).strftime('%Y-%M-%d %H:%M')
+        pinfo['create_time']).strftime('%Y-%m-%d %H:%M')
     io = pinfo.get('io_counters', ACCESS_DENIED)
     mem = '%s%% (resident=%s, virtual=%s) ' % (
         round(pinfo['memory_percent'], 1),
