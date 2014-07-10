@@ -206,12 +206,13 @@ psutil_get_open_files(long pid, HANDLE processHandle)
                                       0,
                                       0,
                                       NULL);
-        if (mapHandle == NULL &&
-           (error == ERROR_INVALID_HANDLE ||
-            error == ERROR_BAD_EXE_FORMAT)) {
-            CloseHandle(dupHandle);
-            //printf("CreateFileMapping Error: %d\n", error);
-            continue;
+        if (mapHandle == NULL) {
+            error = GetLastError();
+            if (error == ERROR_INVALID_HANDLE || error == ERROR_BAD_EXE_FORMAT)) {
+                CloseHandle(dupHandle);
+                //printf("CreateFileMapping Error: %d\n", error);
+                continue;
+            }
         }
         CloseHandle(mapHandle);
 
