@@ -16,6 +16,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
 - #504: [Linux]: can't build RPM packages via setup.py
 - #506: [Linux]: python 2.4 support was broken
+- #340: [Windows]: Process.get_open_files() no longer hangs.  (patch by
+  Jeff Tang)
 
 
 2.1.1 - 2014-04-30
