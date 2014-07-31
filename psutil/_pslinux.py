@@ -648,7 +648,8 @@ def disk_io_counters():
             rtime = int(rtime)
             wtime = int(wtime)
             tot_time = int(tot_time)
-            retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime, tot_time)
+            retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
+                             tot_time)
     return retdict
 
 
