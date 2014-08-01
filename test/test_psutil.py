@@ -1628,6 +1628,8 @@ class TestProcess(unittest.TestCase):
     def test_cpu_affinity(self):
         p = psutil.Process()
         initial = p.cpu_affinity()
+        if hasattr(os, "sched_getaffinity"):
+            self.assertEqual(initial, list(os.sched_getaffinity(p.pid)))
         all_cpus = list(range(len(psutil.cpu_percent(percpu=True))))
         # setting on travis doesn't seem to work (always return all
         # CPUs on get):
@@ -1635,9 +1637,15 @@ class TestProcess(unittest.TestCase):
         for n in all_cpus:
             p.cpu_affinity([n])
             self.assertEqual(p.cpu_affinity(), [n])
+            if hasattr(os, "sched_getaffinity"):
+                self.assertEqual(p.cpu_affinity(),
+                                 list(os.sched_getaffinity(p.pid)))
         #
         p.cpu_affinity(all_cpus)
         self.assertEqual(p.cpu_affinity(), all_cpus)
+        if hasattr(os, "sched_getaffinity"):
+            self.assertEqual(p.cpu_affinity(),
+                             list(os.sched_getaffinity(p.pid)))
         #
         self.assertRaises(TypeError, p.cpu_affinity, 1)
         p.cpu_affinity(initial)
