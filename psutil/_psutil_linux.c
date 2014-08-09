@@ -255,17 +255,31 @@ psutil_linux_sysinfo(PyObject *self, PyObject *args)
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
 {
-    unsigned long mask;
-    unsigned int len = sizeof(mask);
+    cpu_set_t cpuset;
+    unsigned int len = sizeof(cpu_set_t);
     long pid;
 
     if (!PyArg_ParseTuple(args, "i", &pid)) {
         return NULL;
     }
-    if (sched_getaffinity(pid, len, (cpu_set_t *)&mask) < 0) {
+
+    if (sched_getaffinity(pid, len, (cpu_set_t *)&cpuset) < 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-    return Py_BuildValue("l", mask);
+
+    int cpu_count = CPU_COUNT(&cpuset);
+    PyObject* ret_list = PyList_New(0);
+
+    int i;
+    for (i = 0; i < cpu_count; ++i)
+    {
+        if (CPU_ISSET(i, &cpuset))
+        {
+            PyList_Append(ret_list, Py_BuildValue("i", i));
+        }
+    }
+
+    return ret_list;
 }
 
 

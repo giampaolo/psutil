@@ -1058,9 +1058,7 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_affinity_get(self):
-        from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
-        bitmask = cext.proc_cpu_affinity_get(self.pid)
-        return from_bitmask(bitmask)
+        return cext.proc_cpu_affinity_get(self.pid)
 
     @wrap_exceptions
     def cpu_affinity_set(self, cpus):
