@@ -256,15 +256,15 @@ static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
 {
     cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
     unsigned int len = sizeof(cpu_set_t);
     long pid;
-
+    
     if (!PyArg_ParseTuple(args, "i", &pid)) {
         return NULL;
     }
 
-    if (sched_getaffinity(pid, len, (cpu_set_t *)&cpuset) < 0) {
+    CPU_ZERO(&cpuset);
+    if (sched_getaffinity(pid, len, &cpuset) < 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
 
