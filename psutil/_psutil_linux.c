@@ -258,7 +258,8 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
     cpu_set_t cpuset;
     unsigned int len = sizeof(cpu_set_t);
     long pid;
-    
+    int i;
+ 
     if (!PyArg_ParseTuple(args, "i", &pid)) {
         return NULL;
     }
@@ -270,7 +271,6 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
 
     PyObject* ret_list = PyList_New(0);
 
-    int i;
     for (i = 0; i < CPU_SETSIZE; ++i)
     {
         if (CPU_ISSET(i, &cpuset))
