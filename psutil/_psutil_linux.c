@@ -293,7 +293,12 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
     int cpucount_s = CPU_COUNT_S(setsize, mask);
     for (cpu = 0, count = cpucount_s; count; cpu++) {
         if (CPU_ISSET_S(cpu, setsize, mask)) {
-            PyObject *cpu_num = PyInt_FromLong(cpu);
+            PyObject *cpu_num;
+#if PY_MAJOR_VERSION >= 3
+            cpu_num = PyLong_FromLong(cpu);
+#else
+            cpu_num = PyInt_FromLong(cpu);
+#endif
             --count;
             if (cpu_num == NULL)
                 goto error;
