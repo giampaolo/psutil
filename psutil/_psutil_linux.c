@@ -257,7 +257,7 @@ psutil_linux_sysinfo(PyObject *self, PyObject *args)
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
 {
-    int cpu, ncpus, count;
+    int cpu, ncpus, count, cpucount_s;
     long pid;
     size_t setsize;
     cpu_set_t *mask = NULL;
@@ -290,7 +290,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
     if (res == NULL)
         goto error;
     
-    int cpucount_s = CPU_COUNT_S(setsize, mask);
+    cpucount_s = CPU_COUNT_S(setsize, mask);
     for (cpu = 0, count = cpucount_s; count; cpu++) {
         if (CPU_ISSET_S(cpu, setsize, mask)) {
 #if PY_MAJOR_VERSION >= 3
