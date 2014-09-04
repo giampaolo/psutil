@@ -452,7 +452,7 @@ class Process(object):
             # Checking if PID is alive is not enough as the PID might
             # have been reused by another process: we also want to
             # check process identity.
-            # Process identity / uniqueness over time is greanted by
+            # Process identity / uniqueness over time is created by
             # (PID + creation time) and that is verified in __eq__.
             return self == Process(self.pid)
         except NoSuchProcess:
