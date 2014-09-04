@@ -443,8 +443,8 @@ class Process(object):
 
     def is_running(self):
         """Return whether this process is running.
-        It also checks if PID has been reused by another process in
-        which case return False.
+        It also checks if PID has been reused by another process, in
+        which case it returns False.
         """
         if self._gone:
             return False
