@@ -638,8 +638,13 @@ def disk_io_counters():
         f.close()
     for line in lines:
         # http://www.mjmwired.net/kernel/Documentation/iostats.txt
-        _, _, name, reads, _, rbytes, rtime, writes, _, wbytes, wtime = \
-            line.split()[:11]
+        fields = line.split()
+        if len(fields) > 7:
+            _, _, name, reads, _, rbytes, rtime, writes, _, wbytes, wtime = \
+                fields[:11]
+        else: # from kernel 2.6 to 2.6.25
+            _, _, name, reads, rbytes, writes, wbytes = fields
+            rtime, wtime = 0, 0
         if name in partitions:
             rbytes = int(rbytes) * SECTOR_SIZE
             wbytes = int(wbytes) * SECTOR_SIZE
