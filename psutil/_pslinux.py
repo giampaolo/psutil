@@ -642,7 +642,7 @@ def disk_io_counters():
         if len(fields) > 7:
             _, _, name, reads, _, rbytes, rtime, writes, _, wbytes, wtime = \
                 fields[:11]
-        else: # from kernel 2.6 to 2.6.25
+        else:  # from kernel 2.6 to 2.6.25
             _, _, name, reads, rbytes, writes, wbytes = fields
             rtime, wtime = 0, 0
         if name in partitions:
