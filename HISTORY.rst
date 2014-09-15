@@ -20,6 +20,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #506: [Linux]: python 2.4 support was broken.
 - #522: [Linux]: Process.cpu_affinity() might return EINVAL.  (patch by David
   Daeschler)
+- #529: [Windows]: Process.exe() may raise unhandled WindowsError exception
+  for PIDs 0 and 4.  (patch by Jeff Tang)
 - #530: [Linux]: psutil.disk_io_counters() may crash on old Linux distros
   (< 2.6.5)  (patch by Yaolong Huang)
 - #533: [Linux]: Process.memory_maps() may raise TypeError on old Linux distros.
