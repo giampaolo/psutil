@@ -960,7 +960,7 @@ class Process(object):
             f.close()
 
     else:
-        def memory_maps(self, ext):
+        def memory_maps(self):
             msg = "couldn't find /proc/%s/smaps; kernel < 2.6.14 or "  \
                   "CONFIG_MMU kernel configuration option is not enabled" \
                   % self.pid
