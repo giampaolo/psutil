@@ -18,7 +18,10 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
 - #504: [Linux]: can't build RPM packages via setup.py
 - #506: [Linux]: python 2.4 support was broken.
-- #522: [Linux]: Process.cpu_affinity() might return EINVAL.  (patch by David Daeschler)
+- #522: [Linux]: Process.cpu_affinity() might return EINVAL.  (patch by David
+  Daeschler)
+- #530: [Linux]: psutil.disk_io_counters() may crash on old Linux distros
+  (< 2.6.5)  (patch by Yaolong Huang)
 - #533: [Linux]: Process.memory_maps() may raise TypeError on old Linux distros.
 
 
