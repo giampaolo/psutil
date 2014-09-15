@@ -248,9 +248,7 @@ class Process(object):
 
         # see https://github.com/giampaolo/psutil/issues/414
         # see https://github.com/giampaolo/psutil/issues/528
-        if self.pid == 0:
-            raise AccessDenied(self.pid, self._name)
-        elif self.pid == 4:
+        if self.pid in (0, 4):
             raise AccessDenied(self.pid, self._name)
         return _convert_raw_path(cext.proc_exe(self.pid))
 
