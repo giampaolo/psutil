@@ -20,7 +20,7 @@ import warnings
 from psutil import _common
 from psutil import _psposix
 from psutil._common import (isfile_strict, usage_percent, deprecated)
-from psutil._compat import PY3, xrange, namedtuple, wraps, b, defaultdict
+from psutil._compat import PY3, namedtuple, wraps, b, defaultdict
 import _psutil_linux as cext
 import _psutil_posix
 
@@ -1058,9 +1058,7 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_affinity_get(self):
-        from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
-        bitmask = cext.proc_cpu_affinity_get(self.pid)
-        return from_bitmask(bitmask)
+        return cext.proc_cpu_affinity_get(self.pid)
 
     @wrap_exceptions
     def cpu_affinity_set(self, cpus):
