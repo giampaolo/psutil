@@ -573,13 +573,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     }
     if (GetProcessImageFileNameW(hProcess, &exe, MAX_PATH) == 0) {
         CloseHandle(hProcess);
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            // see https://github.com/giampaolo/psutil/issues/414
-            AccessDenied();
-        }
-        else {
-            PyErr_SetFromWindowsErr(0);
-        }
+        PyErr_SetFromWindowsErr(0);
         return NULL;
     }
     CloseHandle(hProcess);
