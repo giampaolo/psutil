@@ -318,6 +318,7 @@ http://groups.google.com/group/psutil/
 Timeline
 ========
 
+- 2014-09-21: `psutil-2.1.2.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.2.tar.gz>`_
 - 2014-04-30: `psutil-2.1.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.1.tar.gz>`_
 - 2014-04-08: `psutil-2.1.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.0.tar.gz>`_
 - 2014-03-10: `psutil-2.0.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.0.0.tar.gz>`_
