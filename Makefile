@@ -86,4 +86,5 @@ upload-doc:
 
 # git-tag a new release
 git-tag-release:
-	git tag -a release-`python -c "import setup; print(setup.VERSION)"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
+	git tag -a release-`python -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
+	echo "done; now run 'git push --follow-tags' to push the new tag on the remote repo"

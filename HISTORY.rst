@@ -1,5 +1,11 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+2.1.3 (unreleased)
+==================
+
+XXX
+
+
 2.1.2 - 2014-09-21
 ==================
 
