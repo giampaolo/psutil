@@ -12,19 +12,20 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
-- #340: [Windows]: Process.get_open_files() no longer hangs.  (patch by
+- #340: [Windows] Process.get_open_files() no longer hangs.  (patch by
   Jeff Tang)
-- #503: [Linux]: in rare conditions Process exe(), open_files() and
+- #501: [Windows] disk_io_counters() may return negative values.
+- #503: [Linux] in rare conditions Process exe(), open_files() and
   connections() methods can raise OSError(ESRCH) instead of NoSuchProcess.
-- #504: [Linux]: can't build RPM packages via setup.py
-- #506: [Linux]: python 2.4 support was broken.
-- #522: [Linux]: Process.cpu_affinity() might return EINVAL.  (patch by David
+- #504: [Linux] can't build RPM packages via setup.py
+- #506: [Linux] python 2.4 support was broken.
+- #522: [Linux] Process.cpu_affinity() might return EINVAL.  (patch by David
   Daeschler)
-- #529: [Windows]: Process.exe() may raise unhandled WindowsError exception
+- #529: [Windows] Process.exe() may raise unhandled WindowsError exception
   for PIDs 0 and 4.  (patch by Jeff Tang)
-- #530: [Linux]: psutil.disk_io_counters() may crash on old Linux distros
+- #530: [Linux] psutil.disk_io_counters() may crash on old Linux distros
   (< 2.6.5)  (patch by Yaolong Huang)
-- #533: [Linux]: Process.memory_maps() may raise TypeError on old Linux distros.
+- #533: [Linux] Process.memory_maps() may raise TypeError on old Linux distros.
 
 
 2.1.1 - 2014-04-30
