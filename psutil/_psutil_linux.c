@@ -22,6 +22,8 @@
 
 #include "_psutil_linux.h"
 
+/* The minimum number of CPUs allocated in a cpu_set_t */
+static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
 
 // Linux >= 2.6.13
 #define PSUTIL_HAVE_IOPRIO defined(__NR_ioprio_get) && defined(__NR_ioprio_set)
@@ -255,17 +257,65 @@ psutil_linux_sysinfo(PyObject *self, PyObject *args)
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
 {
-    unsigned long mask;
-    unsigned int len = sizeof(mask);
+    int cpu, ncpus, count, cpucount_s;
     long pid;
+    size_t setsize;
+    cpu_set_t *mask = NULL;
+    PyObject *res = NULL;
 
     if (!PyArg_ParseTuple(args, "i", &pid)) {
         return NULL;
     }
-    if (sched_getaffinity(pid, len, (cpu_set_t *)&mask) < 0) {
-        return PyErr_SetFromErrno(PyExc_OSError);
+
+    ncpus = NCPUS_START;
+    while (1) {
+        setsize = CPU_ALLOC_SIZE(ncpus);
+        mask = CPU_ALLOC(ncpus);
+        if (mask == NULL)
+            return PyErr_NoMemory();
+        if (sched_getaffinity(pid, setsize, mask) == 0)
+            break;
+        CPU_FREE(mask);
+        if (errno != EINVAL)
+            return PyErr_SetFromErrno(PyExc_OSError);
+        if (ncpus > INT_MAX / 2) {
+            PyErr_SetString(PyExc_OverflowError, "could not allocate "
+                            "a large enough CPU set");
+            return NULL;
+        }
+        ncpus = ncpus * 2;
     }
-    return Py_BuildValue("l", mask);
+
+    res = PyList_New(0);
+    if (res == NULL)
+        goto error;
+    
+    cpucount_s = CPU_COUNT_S(setsize, mask);
+    for (cpu = 0, count = cpucount_s; count; cpu++) {
+        if (CPU_ISSET_S(cpu, setsize, mask)) {
+#if PY_MAJOR_VERSION >= 3
+            PyObject *cpu_num = PyLong_FromLong(cpu);
+#else
+            PyObject *cpu_num = PyInt_FromLong(cpu);
+#endif
+            --count;
+            if (cpu_num == NULL)
+                goto error;
+            if (PyList_Append(res, cpu_num)) {
+                Py_DECREF(cpu_num);
+                goto error;
+            }
+            Py_DECREF(cpu_num);
+        }
+    }
+    CPU_FREE(mask);
+    return res;
+
+error:
+    if (mask)
+        CPU_FREE(mask);
+    Py_XDECREF(res);
+    return NULL;
 }
 
 

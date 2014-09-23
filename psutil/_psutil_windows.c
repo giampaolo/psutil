@@ -573,13 +573,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     }
     if (GetProcessImageFileNameW(hProcess, &exe, MAX_PATH) == 0) {
         CloseHandle(hProcess);
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            // see https://github.com/giampaolo/psutil/issues/414
-            AccessDenied();
-        }
-        else {
-            PyErr_SetFromWindowsErr(0);
-        }
+        PyErr_SetFromWindowsErr(0);
         return NULL;
     }
     CloseHandle(hProcess);
@@ -2441,13 +2435,13 @@ psutil_disk_io_counters(PyObject *self, PyObject *args)
         {
             sprintf(szDeviceDisplay, "PhysicalDrive%d", devNum);
             py_disk_info = Py_BuildValue(
-                "(IILLLL)",
+                "(IILLKK)",
                 diskPerformance.ReadCount,
                 diskPerformance.WriteCount,
                 diskPerformance.BytesRead,
                 diskPerformance.BytesWritten,
-                (diskPerformance.ReadTime.QuadPart * 10) / 1000,
-                (diskPerformance.WriteTime.QuadPart * 10) / 1000);
+                (unsigned long long)(diskPerformance.ReadTime.QuadPart * 10) / 1000,
+                (unsigned long long)(diskPerformance.WriteTime.QuadPart * 10) / 1000);
             if (!py_disk_info)
                 goto error;
             if (PyDict_SetItemString(py_retdict, szDeviceDisplay,

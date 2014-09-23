@@ -20,7 +20,7 @@ import warnings
 from psutil import _common
 from psutil import _psposix
 from psutil._common import (isfile_strict, usage_percent, deprecated)
-from psutil._compat import PY3, xrange, namedtuple, wraps, b, defaultdict
+from psutil._compat import PY3, namedtuple, wraps, b, defaultdict
 import _psutil_linux as cext
 import _psutil_posix
 
@@ -641,8 +641,14 @@ def disk_io_counters():
         f.close()
     for line in lines:
         # http://www.mjmwired.net/kernel/Documentation/iostats.txt
-        _, _, name, reads, _, rbytes, rtime, writes, _, wbytes, wtime = \
-            line.split()[:11]
+        fields = line.split()
+        if len(fields) > 7:
+            _, _, name, reads, _, rbytes, rtime, writes, _, wbytes, wtime = \
+                fields[:11]
+        else:
+            # from kernel 2.6.0 to 2.6.25
+            _, _, name, reads, rbytes, writes, wbytes = fields
+            rtime, wtime = 0, 0
         if name in partitions:
             rbytes = int(rbytes) * SECTOR_SIZE
             wbytes = int(wbytes) * SECTOR_SIZE
@@ -963,7 +969,7 @@ class Process(object):
             f.close()
 
     else:
-        def memory_maps(self, ext):
+        def memory_maps(self):
             msg = "couldn't find /proc/%s/smaps; kernel < 2.6.14 or "  \
                   "CONFIG_MMU kernel configuration option is not enabled" \
                   % self.pid
@@ -1061,9 +1067,7 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_affinity_get(self):
-        from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
-        bitmask = cext.proc_cpu_affinity_get(self.pid)
-        return from_bitmask(bitmask)
+        return cext.proc_cpu_affinity_get(self.pid)
 
     @wrap_exceptions
     def cpu_affinity_set(self, cpus):

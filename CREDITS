@@ -52,7 +52,9 @@ I: 18
 N: Dave Daeschler
 C: USA
 E: david.daeschler@gmail.com
-D: some contributions to initial design/bootstrap
+W: http://daviddaeschler.com
+D: some contributions to initial design/bootstrap plus occasional bug fixing
+I: 522
 
 N: cjgohlke
 E: cjgohlke@gmail.com
@@ -235,9 +237,6 @@ N: Francois Charron
 E: francois.charron.1@gmail.com
 I: 474
 
-E: jtang@vahna.net
-I: 340
-
 N: Naveed Roudsari
 E: naveed.roudsari@gmail.com
 I: 421
@@ -253,3 +252,12 @@ I: 446
 N: msabramo
 E: msabramo@gmail.com
 I: 492
+
+N: Jeff Tang
+W: https://github.com/mrjefftang
+I: 340, 529
+
+N: Yaolong Huang
+E: airekans@gmail.com
+W: http://airekans.github.io/
+I: 530

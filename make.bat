@@ -10,6 +10,7 @@ rem This script is modeled after my Windows installation which uses:
 rem - mingw32 for Python 2.4 and 2.5
 rem - Visual studio 2008 for Python 2.6, 2.7, 3.2
 rem - Visual studio 2010 for Python 3.3+
+rem ...therefore it might not work on your Windows installation.
 rem
 rem By default C:\Python27\python.exe is used.
 rem To compile for a specific Python version run:
@@ -40,14 +41,17 @@ if "%1" == "help" (
     echo Run `make ^<target^>` where ^<target^> is one of:
     echo   build         compile without installing
     echo   build-exes    create exe installers in dist directory
+    echo   build-wheels  create wheel installers in dist directory
     echo   clean         clean build files
     echo   install       compile and install
     echo   memtest       run memory leak tests
+    echo   setup-env     install pip, unittest2, wheels for all python versions
     echo   test          run tests
     echo   test-process  run process related tests
     echo   test-system   run system APIs related tests
     echo   uninstall     uninstall
     echo   upload-exes   upload exe installers on pypi
+    echo   upload-wheels upload wheel installers on pypi
     goto :eof
 )
 
@@ -164,6 +168,56 @@ if "%1" == "upload-exes" (
     C:\Python27-64\python.exe setup.py build bdist_wininst upload || goto :error
     C:\Python33-64\python.exe setup.py build bdist_wininst upload || goto :error
     C:\Python34-64\python.exe setup.py build bdist_wininst upload || goto :error
+    echo OK
+    goto :eof
+)
+
+if "%1" == "setup-env" (
+    :setup-env
+    C:\python27\python.exe -c "import urllib2; url = urllib2.urlopen('https://raw.github.com/pypa/pip/master/contrib/get-pip.py'); data = url.read(); f = open('get-pip.py', 'w'); f.write(data)"
+    C:\python26\python.exe get-pip.py & C:\python26\scripts\pip install unittest2 wheel --upgrade
+    C:\python27\python.exe get-pip.py & C:\python27\scripts\pip install wheel --upgrade
+    C:\python33\python.exe get-pip.py & C:\python33\scripts\pip install wheel --upgrade
+    C:\python34\scripts\easy_install.exe wheel
+    rem 64-bit versions
+    C:\python27-64\python.exe get-pip.py & C:\python27-64\scripts\pip install wheel --upgrade
+    C:\python33-64\python.exe get-pip.py & C:\python33-64\scripts\pip install wheel --upgrade
+    C:\python34-64\scripts\easy_install.exe wheel
+    goto :eof
+)
+
+if "%1" == "build-wheels" (
+    :build-wheels
+    C:\Python26\python.exe setup.py build bdist_wheel || goto :error
+    C:\Python27\python.exe setup.py build bdist_wheel || goto :error
+    C:\Python33\python.exe setup.py build bdist_wheel || goto :error
+    C:\Python34\python.exe setup.py build bdist_wheel || goto :error
+    rem 64 bit versions
+    rem Python 2.7 + VS 2008 requires vcvars64.bat to be run first:
+    rem http://stackoverflow.com/questions/11072521/
+    rem Windows SDK and .NET Framework 3.5 SP1 also need to be installed (sigh)
+    "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
+    C:\Python27-64\python.exe setup.py build bdist_wheel || goto :error
+    C:\Python33-64\python.exe setup.py build bdist_wheel || goto :error
+    C:\Python34-64\python.exe setup.py build bdist_wheel || goto :error
+    echo OK
+    goto :eof
+)
+
+if "%1" == "upload-wheels" (
+    :build-wheels
+    C:\Python26\python.exe setup.py build bdist_wheel upload || goto :error
+    C:\Python27\python.exe setup.py build bdist_wheel upload || goto :error
+    C:\Python33\python.exe setup.py build bdist_wheel upload || goto :error
+    C:\Python34\python.exe setup.py build bdist_wheel upload || goto :error
+    rem 64 bit versions
+    rem Python 2.7 + VS 2008 requires vcvars64.bat to be run first:
+    rem http://stackoverflow.com/questions/11072521/
+    rem Windows SDK and .NET Framework 3.5 SP1 also need to be installed (sigh)
+    "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
+    C:\Python27-64\python.exe setup.py build bdist_wheel upload || goto :error
+    C:\Python33-64\python.exe setup.py build bdist_wheel upload || goto :error
+    C:\Python34-64\python.exe setup.py build bdist_wheel upload || goto :error
     echo OK
     goto :eof
 )
