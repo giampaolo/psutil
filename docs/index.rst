@@ -10,6 +10,8 @@
    Old 1.2.1 documentation is still available
    `here <https://code.google.com/p/psutil/wiki/Documentation>`__.
 
+.. contents::
+   
 psutil documentation
 ====================
 
@@ -20,7 +22,6 @@ Quick links
 * `Blog <http://grodola.blogspot.com/search/label/psutil>`__
 * `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`__
 * `Forum <http://groups.google.com/group/psutil/topics>`__
-* `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
 
 About
 -----
@@ -42,6 +43,11 @@ From project's home page:
   `PyPy <http://pypy.org/>`__ is also known to work.
 
 The psutil documentation you're reading is distributed as a single HTML page.
+
+Installation
+============
+
+.. include:: ../INSTALL.rst
 
 System related functions
 ========================
@@ -1253,3 +1259,8 @@ Constants
   `man prlimit <http://linux.die.net/man/2/prlimit>`__ for futher information.
 
   Availability: Linux
+
+History
+=======
+
+.. include:: ../HISTORY.rst
