@@ -169,10 +169,10 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
     for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
         family = ifa->ifa_addr->sa_family;
 
-        py_address = psutil_convert_ipaddr(ifa->ifa_addr, family);
+        py_address = Py_BuildValue("s", "0.0.0.0"); // psutil_convert_ipaddr(ifa->ifa_addr, family);
         if (py_address == NULL)
             goto error;
-        py_netmask = psutil_convert_ipaddr(ifa->ifa_netmask, family);
+        py_netmask = Py_BuildValue("s", "0.0.0.0"); // psutil_convert_ipaddr(ifa->ifa_netmask, family);
         if (py_netmask == NULL)
             goto error;
 /*
