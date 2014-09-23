@@ -200,6 +200,8 @@ XXX - temporary
             py_netmask,
             py_broadcast
         );
+        printf("4\n");
+
         if (! py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
@@ -209,8 +211,12 @@ XXX - temporary
         Py_DECREF(py_netmask);
         Py_DECREF(py_broadcast);
     }
+    printf("5\n");
+
 
     freeifaddrs(ifaddr);
+    printf("6\n");
+
     return py_retlist;
 
 error:
