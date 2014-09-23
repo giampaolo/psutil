@@ -175,11 +175,16 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
         py_netmask = psutil_convert_ipaddr(ifa->ifa_netmask, family);
         if (py_netmask == NULL)
             goto error;
+/*
+XXX - temporary
 #ifdef __linux
         py_broadcast = psutil_convert_ipaddr(ifa->ifa_ifu.ifu_broadaddr, family);
 #else
         py_broadcast = psutil_convert_ipaddr(ifa->ifa_broadaddr, family);
 #endif
+*/
+        py_broadcast = Py_BuildValue("s", "0.0.0.0");
+
         if (py_broadcast == NULL)
             goto error;
 
