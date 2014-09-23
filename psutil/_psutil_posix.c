@@ -161,12 +161,16 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
     PyObject *py_netmask = NULL;
     PyObject *py_broadcast = NULL;
 
+    printf("1\n");
     if (getifaddrs(&ifaddr) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
+    printf("2\n");
     for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+        printf("3\n");
+
         family = ifa->ifa_addr->sa_family;
 
         py_address = Py_BuildValue("s", "0.0.0.0"); // psutil_convert_ipaddr(ifa->ifa_addr, family);
