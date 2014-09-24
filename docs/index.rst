@@ -402,6 +402,36 @@ Network
 
   *New in 2.1.0*
 
+.. function:: net_if_addrs()
+
+  Return all NICs installed on the system as a dictionary whose keys are NIC
+  names and value is a namedtuple including:
+
+  - **family**
+  - **address**
+  - **netmask**
+  - **broadcast**
+
+  *family* is one of the ``socket.AF_*`` constants.  *address*, *netmask* and
+  *broadcast* may be ``None`` in case the NIC address is not assigned.
+  On OSX and FreeBSD :const:`psutil.AF_LINK` is also available and it refers
+  to a MAC address.
+  Note: the supported address families are limited to AF_INET, AF_INET6,
+  AF_PACKET (Linux) and AF_LINK (OSX / FreeBSD). If you're interested in others
+  (e.g. AF_BLUETOOTH) you can use the more powerful
+  `netifaces <https://pypi.python.org/pypi/netifaces/>`__ extension.
+  Example:
+
+    >>> import psutil
+    >>> psutil.net_if_addrs()
+    {'lo': [snic(family=2, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1'),
+            snic(family=10, address='::1', netmask='ffff:ffff:ffff:ffff', broadcast=None)],
+     'wlan0': [snic(family=2, address='192.168.0.10', netmask='255.255.255.0', broadcast='192.168.0.255'),
+               snic(family=10, address='2a02:8109:83c0:224c::5', netmask='ffff:ffff:ffff', broadcast=None)]}
+    >>>
+
+  *New in 2.2.0*
+
 
 Other system info
 -----------------
@@ -1255,3 +1285,5 @@ Constants
   To be used in conjunction with :func:`psutil.net_if_addrs()`.
 
   Availability: OSX, FreeBSD
+
+  *New in 2.2.0*

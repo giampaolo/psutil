@@ -35,6 +35,7 @@ from psutil._compat import print_
 
 af_map = {
     getattr(socket, "AF_PACKET", 17): 'packet',
+    getattr(psutil, "AF_LINK", -1): 'link',
     socket.AF_INET: 'inet',
     socket.AF_INET6: 'inet6',
 }

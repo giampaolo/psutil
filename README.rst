@@ -37,8 +37,8 @@ running processes**. It implements many functionalities offered by command line
 tools such as: ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
 ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap. It currently supports
 **Linux, Windows, OSX, FreeBSD** and **Sun Solaris**, both **32-bit** and
-**64-bit** architectures, with Python versions from **2.4 to 3.4**. Pypi is
-also known to work.
+**64-bit** architectures, with Python versions from **2.4 to 3.4**.
+`PyPy <http://pypy.org/>`_ is also known to work.
 
 ====================
 Example applications
@@ -144,6 +144,13 @@ Network
      pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED', pid=None),
      pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT', pid=None)
      ...]
+    >>>
+    >>> psutil.net_if_addrs()
+    {'lo': [snic(family=2, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1'),
+            snic(family=10, address='::1', netmask='ffff:ffff:ffff:ffff', broadcast=None)],
+     'wlan0': [snic(family=2, address='192.168.0.10', netmask='255.255.255.0', broadcast='192.168.0.255'),
+               snic(family=10, address='2a02:8109:83c0:224c::5', netmask='ffff:ffff:ffff', broadcast=None)]}
+    >>>
 
 Other system info
 =================
