@@ -1044,8 +1044,10 @@ class TestSystemAPIs(unittest.TestCase):
         nics = psutil.net_if_addrs()
         assert nics, nics
 
-        self.assertEqual(sorted(nics.keys()),
-                         sorted(psutil.net_io_counters(pernic=True).keys()))
+        # Not reliable on all platforms (net_if_addrs() reports more
+        # interfaces).
+        # self.assertEqual(sorted(nics.keys()),
+        #                  sorted(psutil.net_io_counters(pernic=True).keys()))
 
         families = [getattr(socket, x) for x in dir(socket)
                     if x.startswith('AF_')]
