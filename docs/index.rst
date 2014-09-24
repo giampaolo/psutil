@@ -199,7 +199,7 @@ Memory
   * **total**: total swap memory in bytes
   * **used**: used swap memory in bytes
   * **free**: free swap memory in bytes
-  * **percent**: the percentage usage
+  * **percent**: the percentage usage calculated as ``(total - available) / total * 100``
   * **sin**: the number of bytes the system has swapped in from disk
     (cumulative)
   * **sout**: the number of bytes the system has swapped out from disk
