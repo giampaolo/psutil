@@ -161,37 +161,28 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
     PyObject *py_netmask = NULL;
     PyObject *py_broadcast = NULL;
 
-    printf("1\n");
     if (getifaddrs(&ifaddr) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
-    printf("2\n");
     for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-        printf("3\n");
-
+        if (!ifa->ifa_addr)
+            continue;
         family = ifa->ifa_addr->sa_family;
-
-        py_address = Py_BuildValue("s", "0.0.0.0"); // psutil_convert_ipaddr(ifa->ifa_addr, family);
+        py_address = psutil_convert_ipaddr(ifa->ifa_addr, family);
         if (py_address == NULL)
             goto error;
-        py_netmask = Py_BuildValue("s", "0.0.0.0"); // psutil_convert_ipaddr(ifa->ifa_netmask, family);
+        py_netmask = psutil_convert_ipaddr(ifa->ifa_netmask, family);
         if (py_netmask == NULL)
             goto error;
-/*
-XXX - temporary
 #ifdef __linux
         py_broadcast = psutil_convert_ipaddr(ifa->ifa_ifu.ifu_broadaddr, family);
 #else
         py_broadcast = psutil_convert_ipaddr(ifa->ifa_broadaddr, family);
 #endif
-*/
-        py_broadcast = Py_BuildValue("s", "0.0.0.0");
-
         if (py_broadcast == NULL)
             goto error;
-
         py_tuple = Py_BuildValue(
             "(siOOO)",
             ifa->ifa_name,
@@ -200,7 +191,6 @@ XXX - temporary
             py_netmask,
             py_broadcast
         );
-        printf("4\n");
 
         if (! py_tuple)
             goto error;
@@ -211,12 +201,8 @@ XXX - temporary
         Py_DECREF(py_netmask);
         Py_DECREF(py_broadcast);
     }
-    printf("5\n");
-
 
     freeifaddrs(ifaddr);
-    printf("6\n");
-
     return py_retlist;
 
 error:
