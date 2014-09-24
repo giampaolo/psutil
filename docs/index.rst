@@ -1245,3 +1245,13 @@ Constants
   `man prlimit <http://linux.die.net/man/2/prlimit>`__ for futher information.
 
   Availability: Linux
+
+.. _const-aflink:
+.. data:: AF_LINK
+
+  Constant which identifies a MAC address associated with a network interface.
+  Starting from Python 3.4 this is also available as
+  `socket.AF_LINK <https://docs.python.org/3/library/socket.html#socket.AF_LINK>`__.
+  To be used in conjunction with :func:`psutil.net_if_addrs()`.
+
+  Availability: OSX, FreeBSD

@@ -1051,8 +1051,8 @@ class TestSystemAPIs(unittest.TestCase):
 
         families = [getattr(socket, x) for x in dir(socket)
                     if x.startswith('AF_')]
-        # if psutil.AF_LINK:
-        #     families.append(psutil.AF_LINK)
+        if hasattr(psutil, "AF_LINK"):
+            families.append(psutil.AF_LINK)
         for nic, addrs in nics.items():
             self.assertEqual(len(set(addrs)), len(addrs))
             for addr in addrs:
@@ -1077,6 +1077,11 @@ class TestSystemAPIs(unittest.TestCase):
                         s.bind(sa)
                     finally:
                         s.close()
+
+        if BSD or OSX:
+            psutil.AF_LINK
+            if hasattr(socket, "AF_LINK"):  # python >= 3.4
+                self.assertEqual(psutil.AF_LINK, socket.AF_LINK)
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')

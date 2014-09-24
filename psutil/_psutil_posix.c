@@ -117,7 +117,8 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family)
 #endif
 #if defined(__FreeBSD__) || defined(__APPLE__)
     else if (addr->sa_family == AF_LINK) {
-        // XXX socket module does not expose AF_LINK
+        // Note: prior to Python 3.4 socket module does not expose
+        // AF_LINK so we'll do.
         struct sockaddr_dl *dladdr = (struct sockaddr_dl *)addr;
         len = dladdr->sdl_alen;
         data = LLADDR(dladdr);
@@ -282,6 +283,10 @@ void init_psutil_posix(void)
     PyObject *module = PyModule_Create(&moduledef);
 #else
     PyObject *module = Py_InitModule("_psutil_posix", PsutilMethods);
+#endif
+
+#if defined(__FreeBSD__) || defined(__APPLE__)
+    PyModule_AddIntConstant(module, "AF_LINK", AF_LINK);
 #endif
 
     if (module == NULL) {
