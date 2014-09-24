@@ -60,6 +60,7 @@ See also:
 
  * https://github.com/nicolargo/glances
  * https://github.com/Jahaja/psdash
+ * https://code.google.com/p/grr/
 
 ==============
 Example usages
