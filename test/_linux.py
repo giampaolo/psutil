@@ -7,8 +7,11 @@
 """Linux specific tests.  These are implicitly run by test_psutil.py."""
 
 from __future__ import division
+import fcntl
 import os
 import re
+import socket
+import struct
 import sys
 import time
 
@@ -17,6 +20,29 @@ from test_psutil import (skip_on_not_implemented, sh, get_test_subprocess,
                          retry_before_failing, get_kernel_version, unittest)
 
 import psutil
+
+
+def get_ipv4_address(ifname):
+    SIOCGIFADDR = 0x8915
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        return socket.inet_ntoa(
+            fcntl.ioctl(s.fileno(),
+                        SIOCGIFADDR,
+                        struct.pack('256s', ifname[:15]))[20:24])
+    finally:
+        s.close()
+
+
+def get_mac_address(ifname):
+    SIOCGIFHWADDR = 0x8927
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        info = fcntl.ioctl(
+            s.fileno(), SIOCGIFHWADDR, struct.pack('256s', ifname[:15]))
+        return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
+    finally:
+        s.close()
 
 
 class LinuxSpecificTestCase(unittest.TestCase):
@@ -138,6 +164,15 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertIn('guest_nice', fields)
         else:
             self.assertNotIn('guest_nice', fields)
+
+    def test_net_if_addrs(self):
+        for name, addrs in psutil.net_if_addrs().items():
+            for addr in addrs:
+                if addr.family == socket.AF_PACKET:
+                    self.assertEqual(addr.address, get_mac_address(name))
+                elif addr.family == socket.AF_INET:
+                    self.assertEqual(addr.address, get_ipv4_address(name))
+                # TODO: test for AF_INET6 family
 
     # --- tests for specific kernel versions
 
