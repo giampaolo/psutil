@@ -20,6 +20,7 @@ from test_psutil import (skip_on_not_implemented, sh, get_test_subprocess,
                          retry_before_failing, get_kernel_version, unittest)
 
 import psutil
+from psutil._compat import b, PY3
 
 
 def get_ipv4_address(ifname):
@@ -29,7 +30,7 @@ def get_ipv4_address(ifname):
         return socket.inet_ntoa(
             fcntl.ioctl(s.fileno(),
                         SIOCGIFADDR,
-                        struct.pack('256s', ifname[:15]))[20:24])
+                        struct.pack('256s', b(ifname[:15])))[20:24])
     finally:
         s.close()
 
@@ -39,7 +40,9 @@ def get_mac_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         info = fcntl.ioctl(
-            s.fileno(), SIOCGIFHWADDR, struct.pack('256s', ifname[:15]))
+            s.fileno(), SIOCGIFHWADDR, struct.pack('256s', b(ifname[:15])))
+        if PY3:
+            ord = lambda x: x
         return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
     finally:
         s.close()
