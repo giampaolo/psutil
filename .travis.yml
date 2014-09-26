@@ -13,6 +13,7 @@ script:
     - python setup.py build
     - python setup.py install
     - python test/test_psutil.py
+    - python test/test_memory_leaks.py
     - make flake8
 os:
     - linux
