@@ -44,6 +44,7 @@ import time
 import signal
 import warnings
 import errno
+import socket
 import subprocess
 try:
     import pwd
@@ -1806,10 +1807,16 @@ def net_if_addrs():
     address, netmask and broadcast may be None in case NIC address is
     not assigned.
     """
+    has_enums = sys.version_info >= (3, 4)
     rawlist = _psplatform.net_if_addrs()
     rawlist.sort(key=lambda x: x[1])  # sort by family
     ret = defaultdict(list)
     for name, fam, addr, mask, broadcast in rawlist:
+        if has_enums:
+            try:
+                fam = socket.AddressFamily(fam)
+            except ValueError:
+                pass
         ret[name].append(_snic(fam, addr, mask, broadcast))
     return dict(ret)
 

@@ -44,7 +44,7 @@ def get_mac_address(ifname):
         if PY3:
             ord = lambda x: x
         else:
-            ord = ord
+            ord = __builtins__.ord
         return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
     finally:
         s.close()

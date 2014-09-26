@@ -1061,6 +1061,8 @@ class TestSystemAPIs(unittest.TestCase):
                 assert isinstance(addr.netmask, (str, type(None))), addr
                 assert isinstance(addr.broadcast, (str, type(None))), addr
                 assert addr.family in families, (addr, families)
+                if sys.version_info >= (3, 4):
+                    self.assertIsInstance(addr.family, socket.AddressFamily)
                 if addr.family == socket.AF_INET:
                     s = socket.socket(addr.family)
                     try:
