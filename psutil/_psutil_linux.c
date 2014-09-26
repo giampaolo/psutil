@@ -251,11 +251,14 @@ psutil_linux_sysinfo(PyObject *self, PyObject *args)
 }
 
 
-#ifdef CPU_ALLOC
-
 /*
  * Return process CPU affinity as a Python list
+ * The dual implementation exists because of:
+ * https://github.com/giampaolo/psutil/issues/536
  */
+
+#ifdef CPU_ALLOC
+
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
 {
@@ -291,7 +294,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
     res = PyList_New(0);
     if (res == NULL)
         goto error;
-    
+
     cpucount_s = CPU_COUNT_S(setsize, mask);
     for (cpu = 0, count = cpucount_s; count; cpu++) {
         if (CPU_ISSET_S(cpu, setsize, mask)) {
@@ -321,9 +324,7 @@ error:
 }
 #else
 
-/*
- * Return process CPU affinity as a Python list (when the system doesnt support CPU_ALLOC)
- */
+
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
 {
@@ -332,26 +333,24 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
     long pid;
 	int i;
 	PyObject* ret_list;
-	
+
     if (!PyArg_ParseTuple(args, "i", &pid)) {
         return NULL;
     }
-	
+
 	CPU_ZERO(&cpuset);
     if (sched_getaffinity(pid, len, &cpuset) < 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-	
+
     ret_list = PyList_New(0);
-	
-    for (i = 0; i < CPU_SETSIZE; ++i)
-    {
-        if (CPU_ISSET(i, &cpuset))
-        {
+
+    for (i = 0; i < CPU_SETSIZE; ++i) {
+        if (CPU_ISSET(i, &cpuset)) {
             PyList_Append(ret_list, Py_BuildValue("i", i));
         }
     }
-	
+
     return ret_list;
 }
 #endif
@@ -414,7 +413,7 @@ error:
     if (py_cpu_seq != NULL) {
         Py_DECREF(py_cpu_seq);
 	}
-	
+
     return NULL;
 }
 

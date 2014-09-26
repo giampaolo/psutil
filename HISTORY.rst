@@ -1,9 +1,11 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
-2.1.3 (unreleased)
-==================
+2.1.3 2014-09-26
+================
 
-XXX
+**Bug fixes**
+
+- #536: [Linux]: fix "undefined symbol: CPU_ALLOC" compilation error.
 
 
 2.1.2 - 2014-09-21
