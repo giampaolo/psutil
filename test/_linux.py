@@ -17,7 +17,8 @@ import time
 
 from test_psutil import POSIX, TOLERANCE, TRAVIS
 from test_psutil import (skip_on_not_implemented, sh, get_test_subprocess,
-                         retry_before_failing, get_kernel_version, unittest)
+                         retry_before_failing, get_kernel_version, unittest,
+                         which)
 
 import psutil
 from psutil._compat import b, PY3
@@ -44,7 +45,8 @@ def get_mac_address(ifname):
         if PY3:
             ord = lambda x: x
         else:
-            ord = __builtins__.ord
+            import __builtin__
+            ord = __builtin__.ord
         return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
     finally:
         s.close()
@@ -170,7 +172,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
         else:
             self.assertNotIn('guest_nice', fields)
 
-    def test_net_if_addrs(self):
+    def test_net_if_addrs_ips(self):
         for name, addrs in psutil.net_if_addrs().items():
             for addr in addrs:
                 if addr.family == socket.AF_PACKET:
@@ -178,6 +180,18 @@ class LinuxSpecificTestCase(unittest.TestCase):
                 elif addr.family == socket.AF_INET:
                     self.assertEqual(addr.address, get_ipv4_address(name))
                 # TODO: test for AF_INET6 family
+
+    @unittest.skipUnless(which('ip'), "'ip' utility not available")
+    def test_net_if_names(self):
+        out = sh("ip addr").strip()
+        nics = psutil.net_if_addrs().keys()
+        found = 0
+        for line in out.split('\n'):
+            if not line.startswith(' '):
+                found += 1
+                name = line.split(':')[1].strip()
+                self.assertIn(name, nics)
+        self.assertEqual(len(nics), found)
 
     # --- tests for specific kernel versions
 
