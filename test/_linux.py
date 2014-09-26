@@ -43,6 +43,8 @@ def get_mac_address(ifname):
             s.fileno(), SIOCGIFHWADDR, struct.pack('256s', b(ifname[:15])))
         if PY3:
             ord = lambda x: x
+        else:
+            ord = ord
         return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
     finally:
         s.close()
