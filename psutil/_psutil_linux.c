@@ -251,8 +251,10 @@ psutil_linux_sysinfo(PyObject *self, PyObject *args)
 }
 
 
+#ifdef CPU_ALLOC
+
 /*
- * Return process CPU affinity as a Python long (the bitmask)
+ * Return process CPU affinity as a Python list
  */
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
@@ -317,7 +319,42 @@ error:
     Py_XDECREF(res);
     return NULL;
 }
+#else
 
+/*
+ * Return process CPU affinity as a Python list (when the system doesnt support CPU_ALLOC)
+ */
+static PyObject *
+psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
+{
+    cpu_set_t cpuset;
+    unsigned int len = sizeof(cpu_set_t);
+    long pid;
+	int i;
+	PyObject* ret_list;
+	
+    if (!PyArg_ParseTuple(args, "i", &pid)) {
+        return NULL;
+    }
+	
+	CPU_ZERO(&cpuset);
+    if (sched_getaffinity(pid, len, &cpuset) < 0) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+	
+    ret_list = PyList_New(0);
+	
+    for (i = 0; i < CPU_SETSIZE; ++i)
+    {
+        if (CPU_ISSET(i, &cpuset))
+        {
+            PyList_Append(ret_list, Py_BuildValue("i", i));
+        }
+    }
+	
+    return ret_list;
+}
+#endif
 
 /*
  * Set process CPU affinity; expects a bitmask
@@ -374,8 +411,10 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
     return Py_None;
 
 error:
-    if (py_cpu_seq != NULL)
+    if (py_cpu_seq != NULL) {
         Py_DECREF(py_cpu_seq);
+	}
+	
     return NULL;
 }
 
