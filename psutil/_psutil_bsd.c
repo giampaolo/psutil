@@ -60,7 +60,7 @@
 
 // convert a timeval struct to a double
 #define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
-
+// convert a bintime struct to milliseconds
 #define BT2MSEC(bt)     (bt.sec * 1000 + ( ( (uint64_t) 1000000000 * (uint32_t) (bt.frac >> 32) ) >> 32 ) / 1000000)
 
 /*
