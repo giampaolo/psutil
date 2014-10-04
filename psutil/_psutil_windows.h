@@ -60,6 +60,7 @@ static PyObject* psutil_pids(PyObject* self, PyObject* args);
 static PyObject* psutil_ppid_map(PyObject* self, PyObject* args);
 static PyObject* psutil_users(PyObject* self, PyObject* args);
 static PyObject* psutil_virtual_mem(PyObject* self, PyObject* args);
+static PyObject* psutil_net_if_addrs(PyObject* self, PyObject* args);
 
 // --- windows API bindings
 

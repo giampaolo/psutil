@@ -194,6 +194,7 @@ pid_exists = cext.pid_exists
 net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
 ppid_map = cext.ppid_map  # not meant to be public
+net_if_addrs = cext.net_if_addrs
 
 
 def wrap_exceptions(fun):

@@ -20,6 +20,7 @@
 #include <winsock2.h>
 #include <iphlpapi.h>
 #include <wtsapi32.h>
+#include <ws2tcpip.h>
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -3000,6 +3001,138 @@ error:
 }
 
 
+
+/*
+ * Return NICs addresses.
+ */
+
+#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
+#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
+
+static PyObject *
+psutil_net_if_addrs(PyObject *self, PyObject *args)
+{
+    DWORD dwSize = 0;
+    DWORD dwRetVal = 0;
+    unsigned int i = 0;
+    ULONG family;
+    LPVOID lpMsgBuf = NULL;
+    ULONG outBufLen = 0;
+    ULONG iterations = 0;
+    PCTSTR WSAAPI intRet;
+    char buff[100];
+    char ifname[MAX_PATH];
+    DWORD bufflen = 100;
+    PIP_ADAPTER_ADDRESSES pAddresses = NULL;
+    PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
+    PIP_ADAPTER_UNICAST_ADDRESS pUnicast = NULL;
+
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
+    PyObject *py_address = NULL;
+
+
+    // allocate a 15 KB buffer to start with
+    outBufLen = 15000;
+    do {
+        pAddresses = (IP_ADAPTER_ADDRESSES *)MALLOC(outBufLen);
+        if (pAddresses == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
+        dwRetVal = GetAdaptersAddresses(
+            AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, pAddresses, &outBufLen);
+        if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
+            FREE(pAddresses);
+            pAddresses = NULL;
+        }
+        else {
+            break;
+        }
+        iterations++;
+    } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (iterations < 3));
+
+    if (dwRetVal != NO_ERROR) {
+        PyErr_SetString(PyExc_RuntimeError, "GetAdaptersAddresses failed");
+        goto error;
+    }
+
+    pCurrAddresses = pAddresses;
+    while (pCurrAddresses) {
+        pUnicast = pCurrAddresses->FirstUnicastAddress;
+
+        // find out the IP address associated with the NIC
+        if (pUnicast != NULL) {
+            for (i = 0; pUnicast != NULL; i++) {
+                family = pUnicast->Address.lpSockaddr->sa_family;
+                if (family == AF_INET) {
+                    struct sockaddr_in *sa_in = (struct sockaddr_in *)
+                        pUnicast->Address.lpSockaddr;
+                    intRet = inet_ntop(AF_INET, &(sa_in->sin_addr), buff,
+                                       bufflen);
+                }
+                else if (family == AF_INET6) {
+                    struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)
+                        pUnicast->Address.lpSockaddr;
+                    intRet = inet_ntop(AF_INET6, &(sa_in6->sin6_addr),
+                                       buff, bufflen);
+                }
+                else {
+                    // we should never get here
+                    pUnicast = pUnicast->Next;
+                    continue;
+                }
+
+                if (intRet == NULL) {
+                    PyErr_SetFromWindowsErr(GetLastError());
+                    goto error;
+                }
+                sprintf(ifname, "%wS", pCurrAddresses->FriendlyName);
+                py_address = PyString_FromString(buff);
+                if (py_address == NULL)
+                    goto error;
+
+                Py_INCREF(Py_None);
+                Py_INCREF(Py_None);
+                py_tuple = Py_BuildValue(
+                    "(siOOO)",
+                    ifname,
+                    family,
+                    py_address,
+                    Py_None,
+                    Py_None
+                );
+
+                if (! py_tuple)
+                    goto error;
+                if (PyList_Append(py_retlist, py_tuple))
+                    goto error;
+                Py_DECREF(py_tuple);
+                Py_DECREF(py_address);
+
+                pUnicast = pUnicast->Next;
+            }
+        }
+
+        pCurrAddresses = pCurrAddresses->Next;
+    }
+
+    if (pAddresses)
+        FREE(pAddresses);
+
+    return py_retlist;
+
+error:
+    if (pAddresses)
+        FREE(pAddresses);
+    Py_DECREF(py_retlist);
+    Py_XDECREF(py_tuple);
+    Py_XDECREF(py_address);
+    return NULL;
+}
+
+
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -3104,7 +3237,8 @@ PsutilMethods[] =
      "Return disk partitions."},
     {"net_connections", psutil_net_connections, METH_VARARGS,
      "Return system-wide connections"},
-
+    {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS,
+     "Return NICs addresses."},
 
     // --- windows API bindings
     {"win32_QueryDosDevice", psutil_win32_QueryDosDevice, METH_VARARGS,

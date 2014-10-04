@@ -78,7 +78,7 @@ if sys.platform.startswith("win32"):
         ],
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32", "iphlpapi",
-            "wtsapi32",
+            "wtsapi32", "ws2_32",
         ],
         # extra_compile_args=["/Z7"],
         # extra_link_args=["/DEBUG"]
