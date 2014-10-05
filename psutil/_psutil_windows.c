@@ -3020,6 +3020,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
     ULONG outBufLen = 0;
     ULONG iterations = 0;
     PCTSTR WSAAPI intRet;
+    char *ptr;
     char buff[100];
     char ifname[MAX_PATH];
     DWORD bufflen = 100;
@@ -3030,6 +3031,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
+    PyObject *py_mac_address = NULL;
 
 
     // allocate a 15 KB buffer to start with
@@ -3060,6 +3062,43 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
     pCurrAddresses = pAddresses;
     while (pCurrAddresses) {
         pUnicast = pCurrAddresses->FirstUnicastAddress;
+        sprintf(ifname, "%wS", pCurrAddresses->FriendlyName);
+
+        // MAC address
+        if (pCurrAddresses->PhysicalAddressLength != 0) {
+            ptr = buff;
+            *ptr = '\0';
+            for (i = 0; i < (int) pCurrAddresses->PhysicalAddressLength; i++) {
+                if (i == (pCurrAddresses->PhysicalAddressLength - 1)) {
+                    sprintf(ptr, "%.2X\n",
+                            (int)pCurrAddresses->PhysicalAddress[i]);
+                }
+                else {
+                    sprintf(ptr, "%.2X-",
+                            (int)pCurrAddresses->PhysicalAddress[i]);
+                }
+                ptr += 3;
+            }
+            *--ptr = '\0';
+
+            py_mac_address = PyString_FromString(buff);
+            Py_INCREF(Py_None);
+            Py_INCREF(Py_None);
+            py_tuple = Py_BuildValue(
+                "(siOOO)",
+                ifname,
+                -1,  // this will be converted later to AF_LINK
+                py_mac_address,
+                Py_None,
+                Py_None
+            );
+            if (! py_tuple)
+                goto error;
+            if (PyList_Append(py_retlist, py_tuple))
+                goto error;
+            Py_DECREF(py_tuple);
+            Py_DECREF(py_mac_address);
+        }
 
         // find out the IP address associated with the NIC
         if (pUnicast != NULL) {
@@ -3087,7 +3126,6 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
                     PyErr_SetFromWindowsErr(GetLastError());
                     goto error;
                 }
-                sprintf(ifname, "%wS", pCurrAddresses->FriendlyName);
                 py_address = PyString_FromString(buff);
                 if (py_address == NULL)
                     goto error;
