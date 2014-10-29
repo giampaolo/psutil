@@ -541,6 +541,10 @@ class TestSystemAPIs(unittest.TestCase):
         p.wait()
         self.assertNotIn(sproc.pid, [x.pid for x in psutil.process_iter()])
 
+    @retry_before_failing(50)
+    def test_process_iter_against_pids(self):
+        self.assertEqual(len(list(psutil.process_iter())), len(psutil.pids()))
+
     def test_wait_procs(self):
         l = []
         callback = lambda p: l.append(p.pid)
@@ -862,20 +866,20 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_sys_cpu_percent(self):
         psutil.cpu_percent(interval=0.001)
-        for x in range(1000):
+        for x in range(100):
             self._test_cpu_percent(psutil.cpu_percent(interval=None))
 
     def test_sys_per_cpu_percent(self):
         self.assertEqual(len(psutil.cpu_percent(interval=0.001, percpu=True)),
                          psutil.cpu_count())
-        for x in range(1000):
+        for x in range(100):
             percents = psutil.cpu_percent(interval=None, percpu=True)
             for percent in percents:
                 self._test_cpu_percent(percent)
 
     def test_sys_cpu_times_percent(self):
         psutil.cpu_times_percent(interval=0.001)
-        for x in range(1000):
+        for x in range(100):
             cpu = psutil.cpu_times_percent(interval=None)
             for percent in cpu:
                 self._test_cpu_percent(percent)
@@ -885,7 +889,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(len(psutil.cpu_times_percent(interval=0.001,
                                                       percpu=True)),
                          psutil.cpu_count())
-        for x in range(1000):
+        for x in range(100):
             cpus = psutil.cpu_times_percent(interval=None, percpu=True)
             for cpu in cpus:
                 for percent in cpu:
