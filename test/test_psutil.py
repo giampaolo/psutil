@@ -2100,16 +2100,23 @@ class TestProcess(unittest.TestCase):
             select.select([conn.fileno()], [], [], GLOBAL_TIMEOUT)
             zpid = int(conn.recv(1024))
             zproc = psutil.Process(zpid)
-            # Make sure we can re-instantiate the process after its
-            # status changed to zombie and at least be able to
-            # query its status.
-            # XXX should we also assume ppid should be querable?
             call_until(lambda: zproc.status(), "ret == psutil.STATUS_ZOMBIE")
-            self.assertTrue(psutil.pid_exists(zpid))
+            # A zombie process should always be instantiable
             zproc = psutil.Process(zpid)
+            # ...and at least its status always be querable
+            self.assertEqual(zproc.status(), psutil.STATUS_ZOMBIE)
+            # ...its parent should 'see' it
             descendants = [x.pid for x in psutil.Process().children(
                            recursive=True)]
             self.assertIn(zpid, descendants)
+            # XXX should we also assume ppid be usable?  Note: this
+            # would be an important use case as the only way to get
+            # rid of a zombie is to kill its parent.
+            # self.assertEqual(zpid.ppid(), os.getpid())
+            # ...and all other APIs should be able to deal with it
+            self.assertTrue(psutil.pid_exists(zpid))
+            self.assertIn(zpid, psutil.pids())
+            self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
         finally:
             if sock is not None:
                 sock.close()
