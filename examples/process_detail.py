@@ -68,8 +68,8 @@ def run(pid):
     try:
         p = psutil.Process(pid)
         pinfo = p.as_dict(ad_value=ACCESS_DENIED)
-    except psutil.NoSuchProcess:
-        sys.exit(str(sys.exc_info()[1]))
+    except psutil.NoSuchProcess as err:
+        sys.exit(str(err))
 
     try:
         parent = p.parent()

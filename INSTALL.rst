@@ -56,8 +56,6 @@ Compiling on Windows using Visual Studio
 To use Visual Studio to compile psutil you must have the same version of
 Visual Studio used to compile your installation of Python which is::
 
-    Python 2.4:  VS 2003
-    Python 2.5:  VS 2003
     Python 2.6:  VS 2008
     Python 2.7:  VS 2008
     Python 3.3+: VS 2010

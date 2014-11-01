@@ -31,7 +31,6 @@ Sout       :      0B
 """
 
 import psutil
-from psutil._compat import print_
 
 
 def bytes2human(n):
@@ -56,13 +55,13 @@ def pprint_ntuple(nt):
         value = getattr(nt, name)
         if name != 'percent':
             value = bytes2human(value)
-        print_('%-10s : %7s' % (name.capitalize(), value))
+        print('%-10s : %7s' % (name.capitalize(), value))
 
 
 def main():
-    print_('MEMORY\n------')
+    print('MEMORY\n------')
     pprint_ntuple(psutil.virtual_memory())
-    print_('\nSWAP\n----')
+    print('\nSWAP\n----')
     pprint_ntuple(psutil.swap_memory())
 
 if __name__ == '__main__':

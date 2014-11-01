@@ -227,11 +227,8 @@ class TestProcessObjectLeaks(Base):
     @skip_if_linux()
     def test_open_files(self):
         safe_remove(TESTFN)  # needed after UNIX socket test has run
-        f = open(TESTFN, 'w')
-        try:
+        with open(TESTFN, 'w'):
             self.execute('open_files')
-        finally:
-            f.close()
 
     # OSX implementation is unbelievably slow
     @unittest.skipIf(OSX, "OSX implementation is too slow")

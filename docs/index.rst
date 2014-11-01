@@ -38,7 +38,7 @@ From project's home page:
   ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap*.
   It currently supports **Linux, Windows, OSX, FreeBSD** and **Sun Solaris**,
   both **32-bit** and **64-bit** architectures, with Python versions from
-  **2.4** to **3.4**.
+  **2.6** to **3.4**.
   `Pypy <http://pypy.org/>`__ is also known to work.
 
 The psutil documentation you're reading is distributed as a single HTML page.

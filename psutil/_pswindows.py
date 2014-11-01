@@ -7,12 +7,13 @@
 """Windows platform implementation."""
 
 import errno
+import functools
 import os
-import sys
+from collections import namedtuple
 
 from psutil import _common
 from psutil._common import conn_tmap, usage_percent, isfile_strict
-from psutil._compat import PY3, xrange, wraps, lru_cache, namedtuple
+from psutil._compat import PY3, xrange, lru_cache
 import _psutil_windows as cext
 
 # process priority constants, import from __init__.py:
@@ -200,15 +201,14 @@ def wrap_exceptions(fun):
     """Decorator which translates bare OSError and WindowsError
     exceptions into NoSuchProcess and AccessDenied.
     """
-    @wraps(fun)
+    @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except OSError:
+        except OSError as err:
             # support for private module import
             if NoSuchProcess is None or AccessDenied is None:
                 raise
-            err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
                 raise AccessDenied(self.pid, self._name)
             if err.errno == errno.ESRCH:
@@ -265,8 +265,7 @@ class Process(object):
     def _get_raw_meminfo(self):
         try:
             return cext.proc_memory_info(self.pid)
-        except OSError:
-            err = sys.exc_info()[1]
+        except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 return cext.proc_memory_info_2(self.pid)
             raise
@@ -287,10 +286,9 @@ class Process(object):
     def memory_maps(self):
         try:
             raw = cext.proc_memory_maps(self.pid)
-        except OSError:
+        except OSError as err:
             # XXX - can't use wrap_exceptions decorator as we're
             # returning a generator; probably needs refactoring.
-            err = sys.exc_info()[1]
             if err.errno in ACCESS_DENIED_SET:
                 raise AccessDenied(self.pid, self._name)
             if err.errno == errno.ESRCH:
@@ -334,8 +332,7 @@ class Process(object):
             return boot_time()
         try:
             return cext.proc_create_time(self.pid)
-        except OSError:
-            err = sys.exc_info()[1]
+        except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 return cext.proc_create_time_2(self.pid)
             raise
@@ -357,8 +354,7 @@ class Process(object):
     def cpu_times(self):
         try:
             ret = cext.proc_cpu_times(self.pid)
-        except OSError:
-            err = sys.exc_info()[1]
+        except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 ret = cext.proc_cpu_times_2(self.pid)
             else:
@@ -431,8 +427,7 @@ class Process(object):
     def io_counters(self):
         try:
             ret = cext.proc_io_counters(self.pid)
-        except OSError:
-            err = sys.exc_info()[1]
+        except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 ret = cext.proc_io_counters_2(self.pid)
             else:
@@ -478,8 +473,7 @@ class Process(object):
     def num_handles(self):
         try:
             return cext.proc_num_handles(self.pid)
-        except OSError:
-            err = sys.exc_info()[1]
+        except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 return cext.proc_num_handles_2(self.pid)
             raise

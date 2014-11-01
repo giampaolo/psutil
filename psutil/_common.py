@@ -8,19 +8,18 @@
 
 from __future__ import division
 import errno
+import functools
 import os
 import socket
 import stat
-import sys
 import warnings
 try:
     import threading
 except ImportError:
     import dummy_threading as threading
 
+from collections import namedtuple
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
-
-from psutil._compat import namedtuple, wraps
 
 # --- constants
 
@@ -82,7 +81,7 @@ def memoize(fun):
     >>> foo.cache_clear()
     >>>
     """
-    @wraps(fun)
+    @functools.wraps(fun)
     def wrapper(*args, **kwargs):
         key = (args, frozenset(sorted(kwargs.items())))
         lock.acquire()
@@ -119,7 +118,7 @@ def deprecated(replacement=None):
         if fun.__doc__ is None:
             fun.__doc__ = msg
 
-        @wraps(fun)
+        @functools.wraps(fun)
         def inner(*args, **kwargs):
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
             return fun(*args, **kwargs)
@@ -138,7 +137,7 @@ def deprecated_method(replacement):
         if fun.__doc__ is None:
             fun.__doc__ = msg
 
-        @wraps(fun)
+        @functools.wraps(fun)
         def inner(self, *args, **kwargs):
             warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
             return getattr(self, replacement)(*args, **kwargs)
@@ -153,8 +152,7 @@ def isfile_strict(path):
     """
     try:
         st = os.stat(path)
-    except OSError:
-        err = sys.exc_info()[1]
+    except OSError as err:
         if err.errno in (errno.EPERM, errno.EACCES):
             raise
         return False

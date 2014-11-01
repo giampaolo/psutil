@@ -31,8 +31,7 @@ def pid_exists(pid):
         return True
     try:
         os.kill(pid, 0)
-    except OSError:
-        err = sys.exc_info()[1]
+    except OSError as err:
         if err.errno == errno.ESRCH:
             # ESRCH == No such process
             return False
@@ -78,8 +77,7 @@ def wait_pid(pid, timeout=None):
     while 1:
         try:
             retpid, status = waitcall()
-        except OSError:
-            err = sys.exc_info()[1]
+        except OSError as err:
             if err.errno == errno.EINTR:
                 delay = check_timeout(delay)
                 continue
@@ -150,8 +148,7 @@ def _get_terminal_map():
         assert name not in ret
         try:
             ret[os.stat(name).st_rdev] = name
-        except OSError:
-            err = sys.exc_info()[1]
+        except OSError as err:
             if err.errno != errno.ENOENT:
                 raise
     return ret

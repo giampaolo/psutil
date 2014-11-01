@@ -22,8 +22,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 def get_version():
     INIT = os.path.join(HERE, 'psutil/__init__.py')
-    f = open(INIT, 'r')
-    try:
+    with open(INIT, 'r') as f:
         for line in f:
             if line.startswith('__version__'):
                 ret = eval(line.strip().split(' = ')[1])
@@ -33,17 +32,12 @@ def get_version():
                 return ret
         else:
             raise ValueError("couldn't find version string")
-    finally:
-        f.close()
 
 
 def get_description():
     README = os.path.join(HERE, 'README.rst')
-    f = open(README, 'r')
-    try:
+    with open(README, 'r') as f:
         return f.read()
-    finally:
-        f.close()
 
 
 # POSIX
@@ -166,8 +160,6 @@ def main():
             'Operating System :: POSIX',
             'Programming Language :: C',
             'Programming Language :: Python :: 2',
-            'Programming Language :: Python :: 2.4',
-            'Programming Language :: Python :: 2.5',
             'Programming Language :: Python :: 2.6',
             'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',

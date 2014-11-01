@@ -38,22 +38,23 @@ __all__ = [
     "users", "boot_time",                                           # others
 ]
 
-import sys
-import os
-import time
-import signal
-import warnings
+import collections
 import errno
+import functools
+import os
+import signal
 import subprocess
+import sys
+import time
+import warnings
 try:
     import pwd
 except ImportError:
     pwd = None
 
 from psutil._common import memoize
-from psutil._compat import property, callable, long, defaultdict
-from psutil._compat import (wraps as _wraps,
-                            PY3 as _PY3)
+from psutil._compat import callable, long
+from psutil._compat import PY3 as _PY3
 from psutil._common import (deprecated_method as _deprecated_method,
                             deprecated as _deprecated,
                             sdiskio as _nt_sys_diskio,
@@ -251,7 +252,7 @@ def _assert_pid_not_reused(fun):
     """Decorator which raises NoSuchProcess in case a process is no
     longer running or its PID has been reused.
     """
-    @_wraps(fun)
+    @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
         if not self.is_running():
             raise NoSuchProcess(self.pid, self._name)
@@ -531,8 +532,7 @@ class Process(object):
         if self._exe is None:
             try:
                 exe = self._proc.exe()
-            except AccessDenied:
-                err = sys.exc_info()[1]
+            except AccessDenied as err:
                 return guess_it(fallback=err)
             else:
                 if not exe:
@@ -767,7 +767,7 @@ class Process(object):
         else:
             # construct a dict where 'values' are all the processes
             # having 'key' as their parent
-            table = defaultdict(list)
+            table = collections.defaultdict(list)
             if ppid_map is None:
                 for p in process_iter():
                     try:
@@ -966,8 +966,7 @@ class Process(object):
         def _send_signal(self, sig):
             try:
                 os.kill(self.pid, sig)
-            except OSError:
-                err = sys.exc_info()[1]
+            except OSError as err:
                 if err.errno == errno.ESRCH:
                     self._gone = True
                     raise NoSuchProcess(self.pid, self._name)
@@ -1888,7 +1887,6 @@ def test():
     output.
     """
     import datetime
-    from psutil._compat import print_
 
     today_day = datetime.date.today()
     templ = "%-10s %5s %4s %4s %7s %7s %-13s %5s %7s  %s"
@@ -1897,8 +1895,8 @@ def test():
     if _POSIX:
         attrs.append('uids')
         attrs.append('terminal')
-    print_(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY",
-                    "START", "TIME", "COMMAND"))
+    print(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY",
+                   "START", "TIME", "COMMAND"))
     for p in process_iter():
         try:
             pinfo = p.as_dict(attrs, ad_value='')
@@ -1935,16 +1933,17 @@ def test():
                 int(pinfo['memory_info'].rss / 1024) or '?'
             memp = pinfo['memory_percent'] and \
                 round(pinfo['memory_percent'], 1) or '?'
-            print_(templ % (user[:10],
-                            pinfo['pid'],
-                            pinfo['cpu_percent'],
-                            memp,
-                            vms,
-                            rss,
-                            pinfo.get('terminal', '') or '?',
-                            ctime,
-                            cputime,
-                            pinfo['name'].strip() or '?'))
+            print(templ % (
+                user[:10],
+                pinfo['pid'],
+                pinfo['cpu_percent'],
+                memp,
+                vms,
+                rss,
+                pinfo.get('terminal', '') or '?',
+                ctime,
+                cputime,
+                pinfo['name'].strip() or '?'))
 
 
 def _replace_module():
@@ -1984,7 +1983,7 @@ def _replace_module():
 
 
 _replace_module()
-del property, memoize, division, _replace_module
+del memoize, division, _replace_module
 if sys.version_info < (3, 0):
     del num
 

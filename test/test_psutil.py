@@ -16,8 +16,10 @@ https://pypi.python.org/pypi/unittest2
 from __future__ import division
 
 import atexit
+import collections
 import datetime
 import errno
+import functools
 import os
 import pickle
 import re
@@ -51,7 +53,7 @@ else:
     import unittest
 
 import psutil
-from psutil._compat import PY3, callable, long, wraps, unicode
+from psutil._compat import PY3, callable, long, unicode
 
 
 # ===================================================================
@@ -161,16 +163,16 @@ def pyrun(src):
     # >= 2.6 only
     fd, path = tempfile.mkstemp(prefix=TESTFILE_PREFIX)
     _testfiles.append(path)
-    f = open(path, 'wb')
-    try:
-        f.write(src)
-        f.flush()
-        subp = get_test_subprocess([PYTHON, f.name], stdout=None, stderr=None)
-        wait_for_pid(subp.pid)
-        return subp
-    finally:
-        os.close(fd)
-        f.close()
+    with open(path, 'wb') as f:
+        try:
+            f.write(src)
+            f.flush()
+            subp = get_test_subprocess([PYTHON, f.name], stdout=None,
+                                       stderr=None)
+            wait_for_pid(subp.pid)
+            return subp
+        finally:
+            os.close(fd)
 
 
 def warn(msg):
@@ -323,8 +325,7 @@ def check_connection(conn):
             s = socket.socket(conn.family, conn.type)
             try:
                 s.bind((conn.laddr[0], 0))
-            except socket.error:
-                err = sys.exc_info()[1]
+            except socket.error as err:
                 if err.errno != errno.EADDRNOTAVAIL:
                     raise
             s.close()
@@ -339,15 +340,12 @@ def check_connection(conn):
             try:
                 try:
                     dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
-                except (socket.error, OSError):
-                    err = sys.exc_info()[1]
+                except (socket.error, OSError) as err:
                     if err.args[0] != errno.EBADF:
                         raise
                 else:
-                    # python >= 2.5
-                    if hasattr(dupsock, "family"):
-                        assert dupsock.family == conn.family
-                        assert dupsock.type == conn.type
+                    assert dupsock.family == conn.family
+                    assert dupsock.type == conn.type
             finally:
                 if dupsock is not None:
                     dupsock.close()
@@ -357,8 +355,7 @@ def safe_remove(file):
     "Convenience function for removing temporary test files"
     try:
         os.remove(file)
-    except OSError:
-        err = sys.exc_info()[1]
+    except OSError as err:
         if err.errno != errno.ENOENT:
             # file is being used by another process
             if WINDOWS and isinstance(err, WindowsError) and err.errno == 13:
@@ -370,8 +367,7 @@ def safe_rmdir(dir):
     "Convenience function for removing temporary test directories"
     try:
         os.rmdir(dir)
-    except OSError:
-        err = sys.exc_info()[1]
+    except OSError as err:
         if err.errno != errno.ENOENT:
             raise
 
@@ -394,7 +390,7 @@ def retry_before_failing(ntimes=None):
     actually failing.
     """
     def decorator(fun):
-        @wraps(fun)
+        @functools.wraps(fun)
         def wrapper(*args, **kwargs):
             for x in range(ntimes or NO_RETRIES):
                 try:
@@ -409,7 +405,7 @@ def retry_before_failing(ntimes=None):
 def skip_on_access_denied(only_if=None):
     """Decorator to Ignore AccessDenied exceptions."""
     def decorator(fun):
-        @wraps(fun)
+        @functools.wraps(fun)
         def wrapper(*args, **kwargs):
             try:
                 return fun(*args, **kwargs)
@@ -428,7 +424,7 @@ def skip_on_access_denied(only_if=None):
 def skip_on_not_implemented(only_if=None):
     """Decorator to Ignore NotImplementedError exceptions."""
     def decorator(fun):
-        @wraps(fun)
+        @functools.wraps(fun)
         def wrapper(*args, **kwargs):
             try:
                 return fun(*args, **kwargs)
@@ -511,12 +507,6 @@ class ThreadTask(threading.Thread):
             raise ValueError("already stopped")
         self._running = False
         self.join()
-
-
-# python 2.4
-if not hasattr(subprocess.Popen, 'terminate'):
-    subprocess.Popen.terminate = \
-        lambda self: psutil.Process(self.pid).terminate()
 
 
 # ===================================================================
@@ -921,8 +911,7 @@ class TestSystemAPIs(unittest.TestCase):
         fname = tempfile.mktemp()
         try:
             psutil.disk_usage(fname)
-        except OSError:
-            err = sys.exc_info()[1]
+        except OSError as err:
             if err.args[0] != errno.ENOENT:
                 raise
         else:
@@ -976,10 +965,9 @@ class TestSystemAPIs(unittest.TestCase):
             if not WINDOWS:
                 try:
                     os.stat(disk.mountpoint)
-                except OSError:
+                except OSError as err:
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
-                    err = sys.exc_info()[1]
                     if err.errno not in (errno.EPERM, errno.EACCES):
                         raise
                 else:
@@ -1296,9 +1284,8 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process()
         # test reads
         io1 = p.io_counters()
-        f = open(PYTHON, 'rb')
-        f.read()
-        f.close()
+        with open(PYTHON, 'rb') as f:
+            f.read()
         io2 = p.io_counters()
         if not BSD:
             assert io2.read_count > io1.read_count, (io1, io2)
@@ -1662,11 +1649,10 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process()
         files = p.open_files()
         self.assertFalse(TESTFN in files)
-        f = open(TESTFN, 'w')
-        call_until(p.open_files, "len(ret) != %i" % len(files))
-        filenames = [x.path for x in p.open_files()]
-        self.assertIn(TESTFN, filenames)
-        f.close()
+        with open(TESTFN, 'w'):
+            call_until(p.open_files, "len(ret) != %i" % len(files))
+            filenames = [x.path for x in p.open_files()]
+            self.assertIn(TESTFN, filenames)
         for file in filenames:
             assert os.path.isfile(file), file
 
@@ -1687,25 +1673,24 @@ class TestProcess(unittest.TestCase):
 
     def test_open_files2(self):
         # test fd and path fields
-        fileobj = open(TESTFN, 'w')
-        p = psutil.Process()
-        for path, fd in p.open_files():
-            if path == fileobj.name or fd == fileobj.fileno():
-                break
-        else:
-            self.fail("no file found; files=%s" % repr(p.open_files()))
-        self.assertEqual(path, fileobj.name)
-        if WINDOWS:
-            self.assertEqual(fd, -1)
-        else:
-            self.assertEqual(fd, fileobj.fileno())
-        # test positions
-        ntuple = p.open_files()[0]
-        self.assertEqual(ntuple[0], ntuple.path)
-        self.assertEqual(ntuple[1], ntuple.fd)
-        # test file is gone
-        fileobj.close()
-        self.assertTrue(fileobj.name not in p.open_files())
+        with open(TESTFN, 'w') as fileobj:
+            p = psutil.Process()
+            for path, fd in p.open_files():
+                if path == fileobj.name or fd == fileobj.fileno():
+                    break
+            else:
+                self.fail("no file found; files=%s" % repr(p.open_files()))
+            self.assertEqual(path, fileobj.name)
+            if WINDOWS:
+                self.assertEqual(fd, -1)
+            else:
+                self.assertEqual(fd, fileobj.fileno())
+            # test positions
+            ntuple = p.open_files()[0]
+            self.assertEqual(ntuple[0], ntuple.path)
+            self.assertEqual(ntuple[1], ntuple.fd)
+            # test file is gone
+            self.assertTrue(fileobj.name not in p.open_files())
 
     def compare_proc_sys_cons(self, pid, proc_cons):
         from psutil._common import pconn
@@ -1973,8 +1958,7 @@ class TestProcess(unittest.TestCase):
 
     def test_children_duplicates(self):
         # find the process which has the highest number of children
-        from psutil._compat import defaultdict
-        table = defaultdict(int)
+        table = collections.defaultdict(int)
         for p in psutil.process_iter():
             try:
                 table[p.ppid()] += 1
@@ -2241,8 +2225,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                         msg = "%r was skipped because not implemented" % (
                             self.__class__.__name__ + '.test_' + name)
                         warn(msg)
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):
-                        err = sys.exc_info()[1]
+                    except (psutil.NoSuchProcess, psutil.AccessDenied) as err:
                         self.assertEqual(err.pid, p.pid)
                         if err.name:
                             # make sure exception's name attr is set
@@ -2255,8 +2238,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                             assert ret, ret
                         meth = getattr(self, name)
                         meth(ret)
-                except Exception:
-                    err = sys.exc_info()[1]
+                except Exception as err:
                     s = '\n' + '=' * 70 + '\n'
                     s += "FAIL: test_%s (proc=%s" % (name, p)
                     if ret != default:
@@ -2394,8 +2376,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             assert os.path.isabs(ret), ret
             try:
                 st = os.stat(ret)
-            except OSError:
-                err = sys.exc_info()[1]
+            except OSError as err:
                 # directory has been removed in mean time
                 if err.errno != errno.ENOENT:
                     raise
@@ -2460,58 +2441,53 @@ class TestFetchAllProcesses(unittest.TestCase):
 # --- Limited user tests
 # ===================================================================
 
-if hasattr(os, 'getuid') and os.getuid() == 0:
+@unittest.skipUnless(hasattr(os, 'getuid') and os.getuid() == 0,
+                     "super user privileges are required")
+class LimitedUserTestCase(TestProcess):
+    """Repeat the previous tests by using a limited user.
+    Executed only on UNIX and only if the user who run the test script
+    is root.
+    """
+    # the uid/gid the test suite runs under
+    PROCESS_UID = os.getuid()
+    PROCESS_GID = os.getgid()
 
-    class LimitedUserTestCase(TestProcess):
-        """Repeat the previous tests by using a limited user.
-        Executed only on UNIX and only if the user who run the test script
-        is root.
-        """
-        # the uid/gid the test suite runs under
-        PROCESS_UID = os.getuid()
-        PROCESS_GID = os.getgid()
+    def __init__(self, *args, **kwargs):
+        TestProcess.__init__(self, *args, **kwargs)
+        # re-define all existent test methods in order to
+        # ignore AccessDenied exceptions
+        for attr in [x for x in dir(self) if x.startswith('test')]:
+            meth = getattr(self, attr)
 
-        def __init__(self, *args, **kwargs):
-            TestProcess.__init__(self, *args, **kwargs)
-            # re-define all existent test methods in order to
-            # ignore AccessDenied exceptions
-            for attr in [x for x in dir(self) if x.startswith('test')]:
-                meth = getattr(self, attr)
+            def test_(self):
+                try:
+                    meth()
+                except psutil.AccessDenied:
+                    pass
+            setattr(self, attr, types.MethodType(test_, self))
 
-                def test_(self):
-                    try:
-                        meth()
-                    except psutil.AccessDenied:
-                        pass
-                setattr(self, attr, types.MethodType(test_, self))
+    def setUp(self):
+        safe_remove(TESTFN)
+        os.setegid(1000)
+        os.seteuid(1000)
+        TestProcess.setUp(self)
 
-        def setUp(self):
-            safe_remove(TESTFN)
-            os.setegid(1000)
-            os.seteuid(1000)
-            TestProcess.setUp(self)
+    def tearDown(self):
+        os.setegid(self.PROCESS_UID)
+        os.seteuid(self.PROCESS_GID)
+        TestProcess.tearDown(self)
 
-        def tearDown(self):
-            os.setegid(self.PROCESS_UID)
-            os.seteuid(self.PROCESS_GID)
-            TestProcess.tearDown(self)
-
-        def test_nice(self):
-            try:
-                psutil.Process().nice(-1)
-            except psutil.AccessDenied:
-                pass
-            else:
-                self.fail("exception not raised")
-
-        def test_zombie_process(self):
-            # causes problems if test test suite is run as root
+    def test_nice(self):
+        try:
+            psutil.Process().nice(-1)
+        except psutil.AccessDenied:
             pass
-else:
+        else:
+            self.fail("exception not raised")
 
-    class LimitedUserTestCase(unittest.TestCase):
-        def test_it(self):
-            unittest.skip("super user privileges are required")
+    def test_zombie_process(self):
+        # causes problems if test test suite is run as root
+        pass
 
 
 # ===================================================================
@@ -2550,7 +2526,7 @@ class TestMisc(unittest.TestCase):
 
     def test__all__(self):
         for name in dir(psutil):
-            if name in ('callable', 'defaultdict', 'error', 'namedtuple',
+            if name in ('callable', 'error', 'namedtuple',
                         'long', 'test', 'NUM_CPUS', 'BOOT_TIME',
                         'TOTAL_PHYMEM'):
                 continue
@@ -2639,8 +2615,7 @@ class TestExampleScripts(unittest.TestCase):
             exe = exe + ' ' + args
         try:
             out = sh(sys.executable + ' ' + exe).strip()
-        except RuntimeError:
-            err = sys.exc_info()[1]
+        except RuntimeError as err:
             if 'AccessDenied' in str(err):
                 return str(err)
             else:
@@ -2650,11 +2625,8 @@ class TestExampleScripts(unittest.TestCase):
 
     def assert_syntax(self, exe, args=None):
         exe = os.path.join(EXAMPLES_DIR, exe)
-        f = open(exe, 'r')
-        try:
+        with open(exe, 'r') as f:
             src = f.read()
-        finally:
-            f.close()
         ast.parse(src)
 
     def test_check_presence(self):

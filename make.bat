@@ -7,7 +7,6 @@ rem psutil ("make.bat build", "make.bat install") and running tests
 rem ("make.bat test").
 rem
 rem This script is modeled after my Windows installation which uses:
-rem - mingw32 for Python 2.4 and 2.5
 rem - Visual studio 2008 for Python 2.6, 2.7, 3.2
 rem - Visual studio 2010 for Python 3.3+
 rem ...therefore it might not work on your Windows installation.
@@ -17,8 +16,6 @@ rem To compile for a specific Python version run:
 rem
 rem     set PYTHON=C:\Python24\python.exe & make.bat build
 rem
-rem If you compile by using mingw on Python 2.4 and 2.5 you need to patch
-rem distutils first: http://stackoverflow.com/questions/13592192
 rem ==========================================================================
 
 if "%PYTHON%" == "" (

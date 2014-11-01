@@ -37,8 +37,7 @@ def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except OSError:
-            err = sys.exc_info()[1]
+        except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 raise psutil.AccessDenied(None, None)
             if err.errno == errno.ESRCH:
@@ -215,8 +214,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
                         break
                     try:
                         usage = psutil.disk_usage(ps_part.mountpoint)
-                    except OSError:
-                        err = sys.exc_info()[1]
+                    except OSError as err:
                         if err.errno == errno.ENOENT:
                             # usually this is the floppy
                             break

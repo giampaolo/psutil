@@ -7,13 +7,13 @@
 """OSX platform implementation."""
 
 import errno
+import functools
 import os
-import sys
+from collections import namedtuple
 
 from psutil import _common
 from psutil import _psposix
 from psutil._common import conn_tmap, usage_percent, isfile_strict
-from psutil._compat import namedtuple, wraps
 import _psutil_osx as cext
 import _psutil_posix
 
@@ -176,15 +176,14 @@ def wrap_exceptions(fun):
     """Decorator which translates bare OSError exceptions into
     NoSuchProcess and AccessDenied.
     """
-    @wraps(fun)
+    @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except OSError:
+        except OSError as err:
             # support for private module import
             if NoSuchProcess is None or AccessDenied is None:
                 raise
-            err = sys.exc_info()[1]
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._name)
             if err.errno in (errno.EPERM, errno.EACCES):
