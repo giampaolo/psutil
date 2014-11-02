@@ -249,21 +249,21 @@ def cpu_count_logical():
                 if line.lower().startswith(b'processor'):
                     num += 1
 
-    # unknown format (e.g. amrel/sparc architectures), see:
-    # https://github.com/giampaolo/psutil/issues/200
-    # try to parse /proc/stat as a last resort
-    if num == 0:
-        search = re.compile('cpu\d')
-        with open('/proc/stat', 'rt') as f:
-            for line in f:
-                line = line.split(' ')[0]
-                if search.match(line):
-                    num += 1
+        # unknown format (e.g. amrel/sparc architectures), see:
+        # https://github.com/giampaolo/psutil/issues/200
+        # try to parse /proc/stat as a last resort
+        if num == 0:
+            search = re.compile('cpu\d')
+            with open('/proc/stat', 'rt') as f:
+                for line in f:
+                    line = line.split(' ')[0]
+                    if search.match(line):
+                        num += 1
 
-    if num == 0:
-        # mimic os.cpu_count()
-        return None
-    return num
+        if num == 0:
+            # mimic os.cpu_count()
+            return None
+        return num
 
 
 def cpu_count_physical():
