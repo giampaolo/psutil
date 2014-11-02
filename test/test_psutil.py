@@ -327,14 +327,13 @@ def check_connection(conn):
         if hasattr(socket, 'fromfd') and not WINDOWS:
             dupsock = None
             try:
-                try:
-                    dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
-                except (socket.error, OSError) as err:
-                    if err.args[0] != errno.EBADF:
-                        raise
-                else:
-                    assert dupsock.family == conn.family
-                    assert dupsock.type == conn.type
+                dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
+            except (socket.error, OSError) as err:
+                if err.args[0] != errno.EBADF:
+                    raise
+            else:
+                assert dupsock.family == conn.family
+                assert dupsock.type == conn.type
             finally:
                 if dupsock is not None:
                     dupsock.close()
@@ -435,13 +434,12 @@ def supports_ipv6():
         return False
     sock = None
     try:
-        try:
-            sock = socket.socket(AF_INET6, SOCK_STREAM)
-            sock.bind(("::1", 0))
-        except (socket.error, socket.gaierror):
-            return False
-        else:
-            return True
+        sock = socket.socket(AF_INET6, SOCK_STREAM)
+        sock.bind(("::1", 0))
+    except (socket.error, socket.gaierror):
+        return False
+    else:
+        return True
     finally:
         if sock is not None:
             sock.close()
@@ -1556,17 +1554,16 @@ class TestProcess(unittest.TestCase):
                 p.nice(psutil.NORMAL_PRIORITY_CLASS)
         else:
             try:
-                try:
-                    first_nice = p.nice()
-                    p.nice(1)
-                    self.assertEqual(p.nice(), 1)
-                    # going back to previous nice value raises
-                    # AccessDenied on OSX
-                    if not OSX:
-                        p.nice(0)
-                        self.assertEqual(p.nice(), 0)
-                except psutil.AccessDenied:
-                    pass
+                first_nice = p.nice()
+                p.nice(1)
+                self.assertEqual(p.nice(), 1)
+                # going back to previous nice value raises
+                # AccessDenied on OSX
+                if not OSX:
+                    p.nice(0)
+                    self.assertEqual(p.nice(), 0)
+            except psutil.AccessDenied:
+                pass
             finally:
                 try:
                     p.nice(first_nice)
