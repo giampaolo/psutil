@@ -15,11 +15,13 @@ https://pypi.python.org/pypi/unittest2
 
 from __future__ import division
 
+import ast
 import atexit
 import collections
 import datetime
 import errno
 import functools
+import json
 import os
 import pickle
 import re
@@ -38,14 +40,6 @@ import traceback
 import types
 import warnings
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
-try:
-    import ast  # python >= 2.6
-except ImportError:
-    ast = None
-try:
-    import json  # python >= 2.6
-except ImportError:
-    json = None
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
