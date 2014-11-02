@@ -153,20 +153,15 @@ def pyrun(src):
     """
     if PY3:
         src = bytes(src, 'ascii')
-    # could have used NamedTemporaryFile(delete=False) but it's
-    # >= 2.6 only
-    fd, path = tempfile.mkstemp(prefix=TESTFILE_PREFIX)
-    _testfiles.append(path)
-    with open(path, 'wb') as f:
-        try:
-            f.write(src)
-            f.flush()
-            subp = get_test_subprocess([PYTHON, f.name], stdout=None,
-                                       stderr=None)
-            wait_for_pid(subp.pid)
-            return subp
-        finally:
-            os.close(fd)
+    with tempfile.NamedTemporaryFile(
+            prefix=TESTFILE_PREFIX, delete=False) as f:
+        _testfiles.append(f.name)
+        f.write(src)
+        f.flush()
+        subp = get_test_subprocess([PYTHON, f.name], stdout=None,
+                                   stderr=None)
+        wait_for_pid(subp.pid)
+        return subp
 
 
 def warn(msg):
