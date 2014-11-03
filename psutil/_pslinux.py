@@ -815,14 +815,14 @@ class Process(object):
         return pextmem(rss, vms, shared, text, lib, data, dirty)
 
     if os.path.exists('/proc/%s/smaps' % os.getpid()):
+
+        @wrap_exceptions
         def memory_maps(self):
             """Return process's mapped memory regions as a list of nameduples.
             Fields are explained in 'man proc'; here is an updated (Apr 2012)
             version: http://goo.gl/fmebo
             """
-            f = None
-            try:
-                f = open("/proc/%s/smaps" % self.pid, "rt")
+            with open("/proc/%s/smaps" % self.pid, "rt") as f:
                 first_line = f.readline()
                 current_block = [first_line]
 
@@ -846,6 +846,7 @@ class Process(object):
                                                      "rpret line %r" % line)
                     yield (current_block.pop(), data)
 
+                ls = []
                 if first_line:  # smaps file can be empty
                     for header, data in get_blocks():
                         hfields = header.split(None, 5)
@@ -858,34 +859,20 @@ class Process(object):
                             path = '[anon]'
                         else:
                             path = path.strip()
-                        yield (addr, perms, path,
-                               data['Rss:'],
-                               data.get('Size:', 0),
-                               data.get('Pss:', 0),
-                               data.get('Shared_Clean:', 0),
-                               data.get('Shared_Dirty:', 0),
-                               data.get('Private_Clean:', 0),
-                               data.get('Private_Dirty:', 0),
-                               data.get('Referenced:', 0),
-                               data.get('Anonymous:', 0),
-                               data.get('Swap:', 0))
-                f.close()
-            except EnvironmentError as err:
-                # XXX - Can't use wrap_exceptions decorator as we're
-                # returning a generator;  this probably needs some
-                # refactoring in order to avoid this code duplication.
-                if f is not None:
-                    f.close()
-                if err.errno in (errno.ENOENT, errno.ESRCH):
-                    raise NoSuchProcess(self.pid, self._name)
-                if err.errno in (errno.EPERM, errno.EACCES):
-                    raise AccessDenied(self.pid, self._name)
-                raise
-            except:
-                if f is not None:
-                    f.close()
-                raise
-            f.close()
+                        ls.append((
+                            addr, perms, path,
+                            data['Rss:'],
+                            data.get('Size:', 0),
+                            data.get('Pss:', 0),
+                            data.get('Shared_Clean:', 0),
+                            data.get('Shared_Dirty:', 0),
+                            data.get('Private_Clean:', 0),
+                            data.get('Private_Dirty:', 0),
+                            data.get('Referenced:', 0),
+                            data.get('Anonymous:', 0),
+                            data.get('Swap:', 0)
+                        ))
+            return ls
 
     else:
         def memory_maps(self):
