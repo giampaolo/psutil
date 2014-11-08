@@ -73,7 +73,7 @@ class Base(unittest.TestCase):
             # Let's keep calling fun for 3 more seconds and fail if
             # we notice any difference.
             stop_at = time.time() + 3
-            while 1:
+            while True:
                 self.call(function, *args, **kwargs)
                 if time.time() >= stop_at:
                     break

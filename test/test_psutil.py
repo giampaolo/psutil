@@ -236,7 +236,7 @@ def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
     Used in the test suite to give time the sub process to initialize.
     """
     raise_at = time.time() + timeout
-    while 1:
+    while True:
         if pid in psutil.pids():
             # give it one more iteration to allow full initialization
             time.sleep(0.01)
@@ -816,7 +816,7 @@ class TestSystemAPIs(unittest.TestCase):
     def test_sys_per_cpu_times2(self):
         tot1 = psutil.cpu_times(percpu=True)
         stop_at = time.time() + 0.1
-        while 1:
+        while True:
             if time.time() >= stop_at:
                 break
         tot2 = psutil.cpu_times(percpu=True)
@@ -1076,28 +1076,31 @@ class TestProcess(unittest.TestCase):
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
         p.kill()
-        p.wait()
+        sig = p.wait()
         self.assertFalse(psutil.pid_exists(test_pid))
+        if POSIX:
+            self.assertEqual(sig, signal.SIGKILL)
 
     def test_terminate(self):
         sproc = get_test_subprocess(wait=True)
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
         p.terminate()
-        p.wait()
+        sig = p.wait()
         self.assertFalse(psutil.pid_exists(test_pid))
+        if POSIX:
+            self.assertEqual(sig, signal.SIGTERM)
 
     def test_send_signal(self):
-        if POSIX:
-            sig = signal.SIGKILL
-        else:
-            sig = signal.SIGTERM
+        sig = signal.SIGKILL if POSIX else signal.SIGTERM
         sproc = get_test_subprocess()
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
         p.send_signal(sig)
-        p.wait()
+        exit_sig = p.wait()
         self.assertFalse(psutil.pid_exists(test_pid))
+        if POSIX:
+            self.assertEqual(exit_sig, sig)
 
     def test_wait(self):
         # check exit code signal
@@ -1175,7 +1178,7 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(psutil.TimeoutExpired, p.wait, 0)
         p.kill()
         stop_at = time.time() + 2
-        while 1:
+        while True:
             try:
                 code = p.wait(0)
             except psutil.TimeoutExpired:
@@ -1338,7 +1341,7 @@ class TestProcess(unittest.TestCase):
         import resource
         p = psutil.Process(os.getpid())
         names = [x for x in dir(psutil) if x.startswith('RLIMIT')]
-        assert names
+        assert names, names
         for name in names:
             value = getattr(psutil, name)
             self.assertGreaterEqual(value, 0)

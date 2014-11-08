@@ -273,10 +273,8 @@ def cpu_count_physical():
         for line in f:
             if line.lower().startswith(b'physical id'):
                 found.add(line.strip())
-    if found:
-        return len(found)
-    else:
-        return None  # mimic os.cpu_count()
+    # mimic os.cpu_count()
+    return len(found) if found else None
 
 
 # --- other system functions

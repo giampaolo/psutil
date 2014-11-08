@@ -74,7 +74,7 @@ def wait_pid(pid, timeout=None):
         waitcall = lambda: os.waitpid(pid, 0)
 
     delay = 0.0001
-    while 1:
+    while True:
         try:
             retpid, status = waitcall()
         except OSError as err:
@@ -88,7 +88,7 @@ def wait_pid(pid, timeout=None):
                 # - pid never existed in the first place
                 # In both cases we'll eventually return None as we
                 # can't determine its exit status code.
-                while 1:
+                while True:
                     if pid_exists(pid):
                         delay = check_timeout(delay)
                     else:
