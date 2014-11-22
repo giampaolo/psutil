@@ -165,6 +165,7 @@ class TestProcessObjectLeaks(Base):
     def test_io_counters(self):
         self.execute('io_counters')
 
+    @unittest.skipUnless(WINDOWS, "not worth being tested on posix")
     def test_username(self):
         self.execute('username')
 

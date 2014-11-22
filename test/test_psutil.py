@@ -1347,8 +1347,7 @@ class TestProcess(unittest.TestCase):
             self.assertGreaterEqual(value, 0)
             if name in dir(resource):
                 self.assertEqual(value, getattr(resource, name))
-                self.assertEqual(p.rlimit(value),
-                                 resource.getrlimit(value))
+                self.assertEqual(p.rlimit(value), resource.getrlimit(value))
             else:
                 ret = p.rlimit(value)
                 self.assertEqual(len(ret), 2)
