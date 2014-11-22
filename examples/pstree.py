@@ -28,8 +28,9 @@ $ python examples/pstree.py
 
 from __future__ import print_function
 import collections
-import psutil
 import sys
+
+import psutil
 
 
 def print_tree(parent, tree, indent=''):
