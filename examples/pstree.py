@@ -33,7 +33,6 @@ import sys
 
 
 def print_tree(parent, tree, indent=''):
-    sys.stdout.flush()
     try:
         name = psutil.Process(parent).name()
     except psutil.Error:
