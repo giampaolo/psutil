@@ -2628,6 +2628,9 @@ class TestExampleScripts(unittest.TestCase):
     def test_ps(self):
         self.assert_stdout('ps.py')
 
+    def test_pstree(self):
+        self.assert_stdout('pstree.py')
+
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
