@@ -41,9 +41,6 @@ LOWER PRIORITY
 
  * examples/pidof.py (same as 'pidof' cli tool)
 
- * examples/pstree.py (same as 'pstree' cli tool)
-    * threads() should also return thread names in order to implement it
-
  * examples/taskmgr-gui.py (using tk).
 
  * system-wide number of open file descriptors:

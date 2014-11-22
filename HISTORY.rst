@@ -6,6 +6,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 **Enhancements**
 
 - #521: dropped support for Python 2.4 and 2.5.
+- #553: new examples/pstree.py script.
 
 **Bug fixes**
 
