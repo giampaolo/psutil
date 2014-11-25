@@ -964,6 +964,10 @@ class Process(object):
 
     if _POSIX:
         def _send_signal(self, sig):
+            # XXX: according to "man 2 kill" PID 0 has a special
+            # meaning as it refers to <<every process in the process
+            # group of the calling process>>, so should we prevent
+            # it here?
             try:
                 os.kill(self.pid, sig)
             except OSError as err:
