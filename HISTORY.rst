@@ -1,7 +1,7 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
-2.1.3 2014-09-26
-================
+2.2.0 - XXXX-XX-XX
+==================
 
 **Enhancements**
 
@@ -11,6 +11,11 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 **Bug fixes**
 
 - #496: [Solaris]: can't import psutil.
+
+
+2.1.3 - 2014-09-26
+==================
+
 - #536: [Linux]: fix "undefined symbol: CPU_ALLOC" compilation error.
 
 
