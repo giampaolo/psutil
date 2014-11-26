@@ -2420,8 +2420,9 @@ class LimitedUserTestCase(TestProcess):
     is root.
     """
     # the uid/gid the test suite runs under
-    PROCESS_UID = os.getuid()
-    PROCESS_GID = os.getgid()
+    if hasattr(os, 'getuid'):
+        PROCESS_UID = os.getuid()
+        PROCESS_GID = os.getgid()
 
     def __init__(self, *args, **kwargs):
         TestProcess.__init__(self, *args, **kwargs)
