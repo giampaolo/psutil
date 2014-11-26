@@ -400,7 +400,7 @@ Network
      as root (lsof does the same).
   .. note:: (Solaris) UNIX sockets are not supported.
 
-  *New in 2.1.0*
+  .. versionadded:: 2.1.0
 
 
 Other system info

@@ -408,4 +408,3 @@ class Process(object):
                         raise ValueError("invalid CPU #%i (choose between %s)"
                                          % (cpu, allcpus))
             raise
-

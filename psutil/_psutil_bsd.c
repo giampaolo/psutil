@@ -520,6 +520,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args)
 {
     void *topology = NULL;
     size_t size = 0;
+    PyObject *py_str;
 
     if (sysctlbyname("kern.sched.topology_spec", NULL, &size, NULL, 0))
         goto error;
@@ -533,9 +534,13 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args)
     if (sysctlbyname("kern.sched.topology_spec", topology, &size, NULL, 0))
         goto error;
 
-    return Py_BuildValue("s", topology);
+    py_str = Py_BuildValue("s", topology);
+    free(topology);
+    return py_str;
 
 error:
+    if (topology != NULL)
+        free(topology);
     Py_RETURN_NONE;
 }
 
