@@ -7,6 +7,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 - #521: dropped support for Python 2.4 and 2.5.
 - #553: new examples/pstree.py script.
+- #569: [FreeBSD] added support for process CPU affinity.
 
 **Bug fixes**
 

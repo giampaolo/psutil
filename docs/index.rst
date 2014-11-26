@@ -847,7 +847,9 @@ Process class
       >>> p.cpu_affinity([0])  # set; from now on, process will run on CPU #0 only
       >>>
 
-     Availability: Linux, Windows
+     Availability: Linux, Windows, BSD
+
+     .. versionchanged:: 2.2.0 added support for FreeBSD
 
   .. method:: memory_info()
 

@@ -387,3 +387,25 @@ class Process(object):
         proc_cwd = _not_implemented
         memory_maps = _not_implemented
         num_fds = _not_implemented
+
+    @wrap_exceptions
+    def cpu_affinity_get(self):
+        return cext.proc_cpu_affinity_get(self.pid)
+
+    @wrap_exceptions
+    def cpu_affinity_set(self, cpus):
+        try:
+            cext.proc_cpu_affinity_set(self.pid, cpus)
+        except OSError as err:
+            # 'man cpuset_setaffinity' about EDEADLK:
+            # <<the call would leave a thread without a valid CPU to run
+            # on because the set does not overlap with the thread's
+            # anonymous mask>>
+            if err.errno in (errno.EINVAL, errno.EDEADLK):
+                allcpus = tuple(range(len(per_cpu_times())))
+                for cpu in cpus:
+                    if cpu not in allcpus:
+                        raise ValueError("invalid CPU #%i (choose between %s)"
+                                         % (cpu, allcpus))
+            raise
+

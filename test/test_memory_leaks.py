@@ -26,7 +26,7 @@ import psutil
 import psutil._common
 
 from psutil._compat import callable, xrange
-from test_psutil import (WINDOWS, POSIX, OSX, LINUX, SUNOS, TESTFN,
+from test_psutil import (WINDOWS, POSIX, OSX, LINUX, SUNOS, BSD, TESTFN,
                          RLIMIT_SUPPORT)
 from test_psutil import (reap_children, supports_ipv6, safe_remove,
                          get_test_subprocess)
@@ -216,11 +216,13 @@ class TestProcessObjectLeaks(Base):
     def test_cwd(self):
         self.execute('cwd')
 
-    @unittest.skipUnless(WINDOWS or LINUX, "Windows or Linux only")
+    @unittest.skipUnless(WINDOWS or LINUX or BSD,
+                         "Windows or Linux or BSD only")
     def test_cpu_affinity_get(self):
         self.execute('cpu_affinity')
 
-    @unittest.skipUnless(WINDOWS or LINUX, "Windows or Linux only")
+    @unittest.skipUnless(WINDOWS or LINUX or BSD,
+                         "Windows or Linux or BSD only")
     def test_cpu_affinity_set(self):
         affinity = psutil.Process(os.getpid()).cpu_affinity()
         self.execute('cpu_affinity', affinity)

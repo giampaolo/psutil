@@ -672,13 +672,14 @@ class Process(object):
             else:
                 return self._proc.rlimit(resource, limits)
 
-    # Windows and Linux only
+    # Windows, Linux and BSD only
     if hasattr(_psplatform.Process, "cpu_affinity_get"):
 
         def cpu_affinity(self, cpus=None):
             """Get or set process CPU affinity.
             If specified 'cpus' must be a list of CPUs for which you
             want to set the affinity (e.g. [0, 1]).
+            (Windows, Linux and BSD only).
             """
             if cpus is None:
                 return self._proc.cpu_affinity_get()

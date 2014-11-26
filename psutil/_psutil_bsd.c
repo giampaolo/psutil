@@ -21,6 +21,7 @@
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/cpuset.h>
 #include <net/route.h>
 
 #include <sys/socket.h>
@@ -2041,6 +2042,112 @@ error:
 
 
 /*
+ * Get process CPU affinity.
+ * Reference: http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
+ */
+static PyObject*
+psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args)
+{
+    long pid;
+    int ret;
+    int i;
+    cpuset_t mask;
+    PyObject* py_retlist;
+    PyObject* py_cpu_num;
+
+    if (!PyArg_ParseTuple(args, "i", &pid)) {
+        return NULL;
+    }
+
+    ret = cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, pid,
+                             sizeof(mask), &mask);
+    if (ret != 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    py_retlist = PyList_New(0);
+    if (py_retlist == NULL)
+        return NULL;
+
+    for (i = 0; i < CPU_SETSIZE; i++) {
+        if (CPU_ISSET(i, &mask)) {
+            py_cpu_num = Py_BuildValue("i", i);
+            if (py_cpu_num == NULL)
+                goto error;
+            if (PyList_Append(py_retlist, py_cpu_num))
+                goto error;
+        }
+    }
+
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_cpu_num);
+    Py_DECREF(py_retlist);
+    return NULL;
+}
+
+
+/*
+ * Set process CPU affinity.
+ * Reference: http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
+ */
+static PyObject *
+psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
+{
+    long pid;
+    int i;
+    int seq_len;
+    int ret;
+    cpuset_t cpu_set;
+    PyObject *py_cpu_set;
+    PyObject *py_cpu_seq = NULL;
+
+    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set)) {
+        goto error;
+    }
+
+    py_cpu_seq = PySequence_Fast(py_cpu_set, "expected a sequence or integer");
+    if (!py_cpu_seq) {
+        goto error;
+    }
+    seq_len = PySequence_Fast_GET_SIZE(py_cpu_seq);
+
+    // calculate the mask
+    CPU_ZERO(&cpu_set);
+    for (i = 0; i < seq_len; i++) {
+        PyObject *item = PySequence_Fast_GET_ITEM(py_cpu_seq, i);
+#if PY_MAJOR_VERSION >= 3
+        long value = PyLong_AsLong(item);
+#else
+        long value = PyInt_AsLong(item);
+#endif
+        if (value == -1 && PyErr_Occurred()) {
+            goto error;
+        }
+        CPU_SET(value, &cpu_set);
+    }
+
+    // set affinity
+    ret = cpuset_setaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, pid,
+                             sizeof(cpu_set), &cpu_set);
+    if (ret != 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    Py_DECREF(py_cpu_seq);
+    Py_RETURN_NONE;
+
+error:
+    if (py_cpu_seq != NULL)
+        Py_DECREF(py_cpu_seq);
+    return NULL;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -2081,6 +2188,10 @@ PsutilMethods[] =
      "Return process IO counters"},
     {"proc_tty_nr", psutil_proc_tty_nr, METH_VARARGS,
      "Return process tty (terminal) number"},
+    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
+     "Return process CPU affinity."},
+    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
+     "Set process CPU affinity."},
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
      "Return files opened by process as a list of (path, fd) tuples"},

@@ -1592,7 +1592,8 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
 
-    @unittest.skipUnless(WINDOWS or LINUX, 'not available on this platform')
+    @unittest.skipUnless(WINDOWS or LINUX or BSD,
+                         'not available on this platform')
     @unittest.skipIf(LINUX and TRAVIS, "unknown failure on travis")
     def test_cpu_affinity(self):
         p = psutil.Process()
