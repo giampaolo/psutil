@@ -59,8 +59,8 @@ Example applications
 See also:
 
  * https://github.com/nicolargo/glances
+ * https://github.com/google/grr
  * https://github.com/Jahaja/psdash
- * https://code.google.com/p/grr/
 
 ==============
 Example usages
@@ -210,7 +210,7 @@ Process management
     >>>
     >>> p.memory_info()
     pmem(rss=7471104, vms=68513792)
-    >>> p.ext_memory_info()
+    >>> p.memory_info_ex()
     extmem(rss=9662464, vms=49192960, shared=3612672, text=2564096, lib=0, data=5754880, dirty=0)
     >>> p.memory_maps()
     [pmmap_grouped(path='/lib/x86_64-linux-gnu/libutil-2.15.so', rss=16384, anonymous=8192, swap=0),

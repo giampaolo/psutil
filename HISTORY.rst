@@ -11,6 +11,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 **Bug fixes**
 
 - #496: [Solaris]: can't import psutil.
+- #547: [UNIX]: Process.username() may raise KeyError if UID can't be resolved.
 
 
 2.1.3 - 2014-09-26

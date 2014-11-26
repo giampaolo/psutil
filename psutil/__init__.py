@@ -563,7 +563,12 @@ class Process(object):
                 # might happen if python was installed from sources
                 raise ImportError(
                     "requires pwd module shipped with standard python")
-            return pwd.getpwuid(self.uids().real).pw_name
+            real_uid = self.uids().real
+            try:
+                return pwd.getpwuid(real_uid).pw_name
+            except KeyError:
+                # the uid can't be resolved by the system
+                return str(real_uid)
         else:
             return self._proc.username()
 
