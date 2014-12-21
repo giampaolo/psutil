@@ -69,7 +69,7 @@ TimeoutExpired = None
 
 
 def virtual_memory():
-    """System virtual memory as a namedutple."""
+    """System virtual memory as a namedtuple."""
     mem = cext.virtual_mem()
     total, free, active, inactive, wired, cached, buffers, shared = mem
     avail = inactive + cached + free
@@ -87,14 +87,14 @@ def swap_memory():
 
 
 def cpu_times():
-    """Return system per-CPU times as a named tuple"""
+    """Return system per-CPU times as a namedtuple"""
     user, nice, system, idle, irq = cext.cpu_times()
     return scputimes(user, nice, system, idle, irq)
 
 
 if hasattr(cext, "per_cpu_times"):
     def per_cpu_times():
-        """Return system CPU times as a named tuple"""
+        """Return system CPU times as a namedtuple"""
         ret = []
         for cpu_t in cext.per_cpu_times():
             user, nice, system, idle, irq = cpu_t
