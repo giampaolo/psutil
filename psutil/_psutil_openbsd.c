@@ -21,9 +21,12 @@
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/sched.h> /* for CPUSTATES & CP_* */
+#include <sys/vmmeter.h> /* for struct vmtotal and VM_METER */
+#include <kvm.h>
+#include <sys/socket.h>
 #include <net/route.h>
 
-#include <sys/socket.h>
 #include <sys/socketvar.h>    // for struct xsocket
 #include <sys/un.h>
 #include <sys/unpcb.h>
@@ -32,6 +35,8 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>   // for struct xtcpcb
 #include <netinet/tcp_fsm.h>   // for TCP connection states
 #include <arpa/inet.h>         // for inet_ntop()
@@ -174,6 +179,7 @@ psutil_proc_name(PyObject *self, PyObject *args)
 }
 
 
+#if 0
 /*
  * Return process pathname executable.
  * Thanks to Robert N. M. Watson:
@@ -213,7 +219,7 @@ psutil_proc_exe(PyObject *self, PyObject *args)
     }
     return Py_BuildValue("s", pathname);
 }
-
+#endif
 
 /*
  * Return process cmdline as a Python list of cmdline arguments.
@@ -354,8 +360,8 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args)
         return NULL;
     }
     return Py_BuildValue("(ll)",
-                         kp.ki_rusage.ru_nvcsw,
-                         kp.ki_rusage.ru_nivcsw);
+                         kp.p_uru_nvcsw,
+                         kp.p_uru_nivcsw);
 }
 
 
@@ -441,7 +447,7 @@ psutil_proc_threads(PyObject *self, PyObject *args)
         pyTuple = Py_BuildValue("Idd",
                                 0, //thread id?
                                 kipp->p_uutime_sec,
-                                kipp->p_ustime_sec
+                                kipp->p_ustime_sec);
         if (pyTuple == NULL)
             goto error;
         if (PyList_Append(retList, pyTuple))
@@ -477,8 +483,8 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args)
         return NULL;
     }
     // convert from microseconds to seconds
-    user_t = TV2DOUBLE(kp.p_uutime);
-    sys_t = TV2DOUBLE(kp.p_ustime);
+    user_t = KPT2DOUBLE(kp.p_uutime);
+    sys_t = KPT2DOUBLE(kp.p_ustime);
     return Py_BuildValue("(dd)", user_t, sys_t);
 }
 
@@ -554,7 +560,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args)
     if (psutil_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
-    return Py_BuildValue("d", TV2DOUBLE(kp.ki_start));
+    return Py_BuildValue("d", KPT2DOUBLE(kp.p_ustart));
 }
 
 
@@ -575,8 +581,8 @@ psutil_proc_io_counters(PyObject *self, PyObject *args)
     }
     // there's apparently no way to determine bytes count, hence return -1.
     return Py_BuildValue("(llll)",
-                         kp.uru_inblock,
-                         kp.uru_oublock,
+                         kp.p_uru_inblock,
+                         kp.p_uru_oublock,
                          -1,
                          -1);
 }
@@ -599,10 +605,10 @@ psutil_proc_memory_info(PyObject *self, PyObject *args)
     }
     return Py_BuildValue("(lllll)",
                          ptoa(kp.p_vm_rssize),    // rss
-                         (long)kp.ki_size,      // vms
-                         ptoa(kp.ki_tsize),     // text
-                         ptoa(kp.ki_dsize),     // data
-                         ptoa(kp.ki_ssize));    // stack
+                         (long)kp.p_vm_map_size,      // vms
+                         ptoa(kp.p_vm_tsize),     // text
+                         ptoa(kp.p_vm_dsize),     // data
+                         ptoa(kp.p_vm_ssize));    // stack
 }
 
 
@@ -671,44 +677,20 @@ error:
 static PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args)
 {
-    kvm_t *kd;
-    struct kvm_swap kvmsw[1];
-    unsigned int swapin, swapout, nodein, nodeout;
-    size_t size = sizeof(unsigned int);
-
-    kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open failed");
-    if (kd == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "kvm_open failed");
-        return NULL;
-    }
-
-    if (kvm_getswapinfo(kd, kvmsw, 1, 0) < 0) {
-        kvm_close(kd);
-        PyErr_SetString(PyExc_RuntimeError, "kvm_getswapinfo failed");
-        return NULL;
-    }
-
-    kvm_close(kd);
-
-    if (sysctlbyname("vm.stats.vm.v_swapin", &swapin, &size, NULL, 0) == -1)
-        goto sbn_error;
-    if (sysctlbyname("vm.stats.vm.v_swapout", &swapout, &size, NULL, 0) == -1)
-        goto sbn_error;
-    if (sysctlbyname("vm.stats.vm.v_vnodein", &nodein, &size, NULL, 0) == -1)
-        goto sbn_error;
-    if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1)
-        goto sbn_error;
+    int mib[] = {CTL_VM, VM_METER};
+    struct vmtotal vmtotal;
+    size_t size;
+    size = sizeof(vmtotal);
+    if (sysctl(mib, 2, &vmtotal, &size, NULL, 0) < 0)
+        errx(1,"failed to get vm.meter");
 
     return Py_BuildValue("(iiiII)",
-                         kvmsw[0].ksw_total,                     // total
-                         kvmsw[0].ksw_used,                      // used
-                         kvmsw[0].ksw_total - kvmsw[0].ksw_used, // free
-                         swapin + swapout,                       // swap in
-                         nodein + nodeout);                      // swap out
+                         vmtotal.t_rm + vmtotal.t_free,
+                         vmtotal.t_rm,
+                         vmtotal.t_free,
+                         0 /* XXX swap in */,
+                         0 /* XXX swap out */);
 
-sbn_error:
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
 }
 
 
@@ -1422,30 +1404,12 @@ psutil_disk_partitions(PyObject *self, PyObject *args)
             strlcat(opts, ",noexec", sizeof(opts));
         if (flags & MNT_NOSUID)
             strlcat(opts, ",nosuid", sizeof(opts));
-        if (flags & MNT_UNION)
-            strlcat(opts, ",union", sizeof(opts));
         if (flags & MNT_ASYNC)
             strlcat(opts, ",async", sizeof(opts));
-        if (flags & MNT_SUIDDIR)
-            strlcat(opts, ",suiddir", sizeof(opts));
         if (flags & MNT_SOFTDEP)
             strlcat(opts, ",softdep", sizeof(opts));
-        if (flags & MNT_NOSYMFOLLOW)
-            strlcat(opts, ",nosymfollow", sizeof(opts));
-        if (flags & MNT_GJOURNAL)
-            strlcat(opts, ",gjournal", sizeof(opts));
-        if (flags & MNT_MULTILABEL)
-            strlcat(opts, ",multilabel", sizeof(opts));
-        if (flags & MNT_ACLS)
-            strlcat(opts, ",acls", sizeof(opts));
         if (flags & MNT_NOATIME)
             strlcat(opts, ",noatime", sizeof(opts));
-        if (flags & MNT_NOCLUSTERR)
-            strlcat(opts, ",noclusterr", sizeof(opts));
-        if (flags & MNT_NOCLUSTERW)
-            strlcat(opts, ",noclusterw", sizeof(opts));
-        if (flags & MNT_NFS4ACLS)
-            strlcat(opts, ",nfs4acls", sizeof(opts));
 
         py_tuple = Py_BuildValue("(ssss)",
                                  fs[i].f_mntfromname,  // device
@@ -1563,6 +1527,7 @@ error:
 }
 
 
+#if 0
 /*
  * Return a Python dict of tuples for disk I/O information
  */
@@ -1633,7 +1598,7 @@ error:
         free(stats.dinfo);
     return NULL;
 }
-
+#endif
 
 /*
  * Return currently connected users as a list of tuples.
@@ -1718,7 +1683,7 @@ error:
 /*
  * System-wide open connections.
  */
-
+#if 0
 #define HASHSIZE 1009
 static struct xfile *psutil_xfiles;
 static int psutil_nxfiles;
@@ -1766,7 +1731,6 @@ psutil_get_pid_from_sock(int sock_hash)
     }
     return -1;
 }
-
 
 int psutil_gather_inet(int proto, PyObject *py_retlist)
 {
@@ -2013,10 +1977,10 @@ psutil_net_connections(PyObject* self, PyObject* args)
     PyObject *af_filter = NULL;
     PyObject *type_filter = NULL;
     PyObject *py_retlist = PyList_New(0);
-
+/*
     if (psutil_populate_xfiles() != 1)
         goto error;
-
+*/
     if (psutil_gather_inet(IPPROTO_TCP, py_retlist) == 0)
         goto error;
     if (psutil_gather_inet(IPPROTO_UDP, py_retlist) == 0)
@@ -2026,15 +1990,16 @@ psutil_net_connections(PyObject* self, PyObject* args)
     if (psutil_gather_unix(SOCK_DGRAM, py_retlist) == 0)
         goto error;
 
-    free(psutil_xfiles);
+//    free(psutil_xfiles);
     return py_retlist;
 
 error:
     Py_DECREF(py_retlist);
-    free(psutil_xfiles);
+//    free(psutil_xfiles);
     return NULL;
 }
 
+#endif
 
 /*
  * define the psutil C module methods and initialize the module.
@@ -2048,8 +2013,10 @@ PsutilMethods[] =
      "Return process name"},
     {"proc_connections", psutil_proc_connections, METH_VARARGS,
      "Return connections opened by process"},
+/*
     {"proc_exe", psutil_proc_exe, METH_VARARGS,
      "Return process pathname executable"},
+*/
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
      "Return process cmdline as a list of cmdline arguments"},
     {"proc_ppid", psutil_proc_ppid, METH_VARARGS,
@@ -2073,8 +2040,10 @@ PsutilMethods[] =
      "Return process threads"},
     {"proc_status", psutil_proc_status, METH_VARARGS,
      "Return process status as an integer"},
+/*
     {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
      "Return process IO counters"},
+*/
     {"proc_tty_nr", psutil_proc_tty_nr, METH_VARARGS,
      "Return process tty (terminal) number"},
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
@@ -2117,9 +2086,10 @@ PsutilMethods[] =
      "Return a Python dict of tuples for disk I/O information"},
     {"users", psutil_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},
+#if 0
     {"net_connections", psutil_net_connections, METH_VARARGS,
      "Return system-wide open connections."},
-
+#endif
     {NULL, NULL, 0, NULL}
 };
 
@@ -2195,7 +2165,7 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
     PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
     PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
-    PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+    PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", 128); /*PSUTIL_CONN_NONE */
 
     if (module == NULL) {
         INITERROR;
