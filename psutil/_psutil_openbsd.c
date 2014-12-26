@@ -22,7 +22,7 @@
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/sched.h> /* for CPUSTATES & CP_* */
-#include <sys/vmmeter.h> /* for struct vmtotal and VM_METER */
+#include <sys/swap.h>
 #include <kvm.h>
 #include <sys/socket.h>
 #include <net/route.h>
@@ -515,6 +515,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args)
 }
 
 
+#if 0
 /*
  * Return an XML string from which we'll determine the number of
  * physical CPU cores in the system.
@@ -543,7 +544,7 @@ error:
     Py_INCREF(Py_None);
     return Py_None;
 }
-
+#endif
 
 /*
  * Return a Python float indicating the process create time expressed in
@@ -620,50 +621,25 @@ psutil_virtual_mem(PyObject *self, PyObject *args)
 {
     unsigned int   total, active, inactive, wired, cached, free;
     size_t         size = sizeof(total);
-    struct vmtotal vm;
-    int            mib[] = {CTL_VM, VM_METER};
+    struct uvmexp  uvmexp;
+    int            mib[] = {CTL_VM, VM_UVMEXP};
     long           pagesize = getpagesize();
-#if __FreeBSD_version > 702101
-    long buffers;
-#else
-    int buffers;
-#endif
-    size_t buffers_size = sizeof(buffers);
-
-    if (sysctlbyname("vm.stats.vm.v_page_count", &total, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_active_count", &active, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_inactive_count",
-                     &inactive, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_wire_count", &wired, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_cache_count", &cached, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_free_count", &free, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vfs.bufspace", &buffers, &buffers_size, NULL, 0))
-        goto error;
-
-    size = sizeof(vm);
-    if (sysctl(mib, 2, &vm, &size, NULL, 0) != 0)
-        goto error;
-
+    size = sizeof(uvmexp);
+    if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+        warnx(1,"failed to get vm.uvmexp");
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
     return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) total    * pagesize,
-        (unsigned long long) free     * pagesize,
-        (unsigned long long) active   * pagesize,
-        (unsigned long long) inactive * pagesize,
-        (unsigned long long) wired    * pagesize,
-        (unsigned long long) cached   * pagesize,
-        (unsigned long long) buffers,
-        (unsigned long long) (vm.t_vmshr + vm.t_rmshr) * pagesize  // shared
+        (unsigned long long) uvmexp.npages    * pagesize,
+        (unsigned long long) uvmexp.free     * pagesize,
+        (unsigned long long) uvmexp.active   * pagesize,
+        (unsigned long long) uvmexp.inactive * pagesize,
+        (unsigned long long) uvmexp.wired    * pagesize,
+        (unsigned long long) 0,
+        (unsigned long long) 0,
+        (unsigned long long) 0
     );
-
-error:
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
 }
 
 
@@ -677,17 +653,41 @@ error:
 static PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args)
 {
-    int mib[] = {CTL_VM, VM_METER};
-    struct vmtotal vmtotal;
-    size_t size;
-    size = sizeof(vmtotal);
-    if (sysctl(mib, 2, &vmtotal, &size, NULL, 0) < 0)
-        errx(1,"failed to get vm.meter");
+    unsigned long swap_total, swap_free;
+    struct swapent *swdev;
+    int nswap, i;
+    if ((nswap = swapctl(SWAP_NSWAP, 0, 0)) == 0) {
+        warn(1,"failed to get swap device count");
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    if ((swdev = calloc(nswap, sizeof(*swdev))) == NULL) {
+        warn(1,"failed to allocate memory for swdev structures");
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
+        free(swdev);
+        warn(1,"failed to get swap stats");
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    /* Total things up */
+    swap_total = swap_free = 0;
+    for (i = 0; i < nswap; i++) {
+        if (swdev[i].se_flags & SWF_ENABLE) {
+            swap_free += (swdev[i].se_nblks - swdev[i].se_inuse);
+            swap_total += swdev[i].se_nblks;
+        }
+    }
 
     return Py_BuildValue("(iiiII)",
-                         vmtotal.t_rm + vmtotal.t_free,
-                         vmtotal.t_rm,
-                         vmtotal.t_free,
+                         swap_total * DEV_BSIZE,
+                         (swap_total - swap_free) * DEV_BSIZE,
+                         swap_free * DEV_BSIZE,
                          0 /* XXX swap in */,
                          0 /* XXX swap out */);
 
@@ -702,10 +702,11 @@ psutil_cpu_times(PyObject *self, PyObject *args)
 {
     long cpu_time[CPUSTATES];
     size_t size;
+    int mib[] = {CTL_KERN, KERN_CPTIME};
 
     size = sizeof(cpu_time);
-
-    if (sysctlbyname("kern.cp_time", &cpu_time, &size, NULL, 0) == -1) {
+    if (sysctl(mib, 2, &cpu_time, &size, NULL, 0) < 0) {
+        warnx(1,"failed to get kern.cptime");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
@@ -1527,13 +1528,13 @@ error:
 }
 
 
-#if 0
 /*
  * Return a Python dict of tuples for disk I/O information
  */
 static PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args)
 {
+#if 0
     int i;
     struct statinfo stats;
 
@@ -1596,9 +1597,9 @@ error:
     Py_DECREF(py_retdict);
     if (stats.dinfo != NULL)
         free(stats.dinfo);
+#endif
     return NULL;
 }
-#endif
 
 /*
  * Return currently connected users as a list of tuples.
@@ -2011,9 +2012,9 @@ PsutilMethods[] =
 
     {"proc_name", psutil_proc_name, METH_VARARGS,
      "Return process name"},
+/*
     {"proc_connections", psutil_proc_connections, METH_VARARGS,
      "Return connections opened by process"},
-/*
     {"proc_exe", psutil_proc_exe, METH_VARARGS,
      "Return process pathname executable"},
 */
@@ -2063,8 +2064,10 @@ PsutilMethods[] =
      "Returns a list of PIDs currently running on the system"},
     {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS,
      "Return number of logical CPUs on the system"},
+/*
     {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
      "Return an XML string to determine the number physical CPUs."},
+*/
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
      "Return system virtual memory usage statistics"},
     {"swap_mem", psutil_swap_mem, METH_VARARGS,
