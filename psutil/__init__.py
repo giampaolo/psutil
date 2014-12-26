@@ -151,6 +151,9 @@ elif sys.platform.startswith("darwin"):
 elif sys.platform.startswith("freebsd"):
     import psutil._psbsd as _psplatform
 
+elif sys.platform.startswith("openbsd"):
+    import psutil._psbsd as _psplatform
+
 elif sys.platform.startswith("sunos"):
     import psutil._pssunos as _psplatform
     from psutil._pssunos import (CONN_IDLE,  # NOQA

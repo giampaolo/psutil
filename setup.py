@@ -104,6 +104,18 @@ elif sys.platform.startswith("freebsd"):
         libraries=["devstat"]),
         posix_extension,
     ]
+# OpenBSD
+elif sys.platform.startswith("openbsd"):
+    extensions = [Extension(
+        '_psutil_bsd',
+        sources=[
+            'psutil/_psutil_openbsd.c',
+            'psutil/_psutil_common.c',
+            'psutil/arch/bsd/process_info_openbsd.c'
+        ],
+        libraries=["kvm"]),
+        posix_extension,
+    ]
 # Linux
 elif sys.platform.startswith("linux"):
     extensions = [Extension(
@@ -155,6 +167,7 @@ def main():
             'Operating System :: Microsoft',
             'Operating System :: OS Independent',
             'Operating System :: POSIX :: BSD :: FreeBSD',
+            'Operating System :: POSIX :: BSD :: OpenBSD',
             'Operating System :: POSIX :: Linux',
             'Operating System :: POSIX :: SunOS/Solaris',
             'Operating System :: POSIX',
