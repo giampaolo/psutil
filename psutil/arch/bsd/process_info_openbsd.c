@@ -14,15 +14,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
 #include <sys/types.h>
-#include <sys/sysctl.h>
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <signal.h>
+#include <kvm.h>
 
 #include "process_info.h"
-
 
 /*
  * Returns a list of all BSD processes on the system.  This routine
@@ -42,73 +43,46 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount)
     // Declaring name as const requires us to cast it when passing it to
     // sysctl because the prototype doesn't include the const modifier.
     size_t              length;
+    char errbuf[_POSIX2_LINE_MAX];
+    struct kinfo_proc *x;
+    int cnt;
+    kvm_t *kd;
 
     assert( procList != NULL);
     assert(*procList == NULL);
     assert(procCount != NULL);
 
-    *procCount = 0;
+    kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
 
-    /*
-     * We start by calling sysctl with result == NULL and length == 0.
-     * That will succeed, and set length to the appropriate length.
-     * We then allocate a buffer of that size and call sysctl again
-     * with that buffer.  If that succeeds, we're done.  If that fails
-     * with ENOMEM, we have to throw away our buffer and loop.  Note
-     * that the loop causes use to call sysctl with NULL again; this
-     * is necessary because the ENOMEM failure case sets length to
-     * the amount of data returned, not the amount of data that
-     * could have been returned.
-     */
-    result = NULL;
-    done = 0;
-    do {
-        assert(result == NULL);
-        // Call sysctl with a NULL buffer.
-        length = 0;
-        err = sysctl((int *)name, (sizeof(name) / sizeof(*name)) - 1,
-                     NULL, &length, NULL, 0);
-        if (err == -1)
-            err = errno;
-
-        // Allocate an appropriately sized buffer based on the results
-        // from the previous call.
-        if (err == 0) {
-            result = malloc(length);
-            if (result == NULL)
-                err = ENOMEM;
-        }
-
-        // Call sysctl again with the new buffer.  If we get an ENOMEM
-        // error, toss away our buffer and start again.
-        if (err == 0) {
-            err = sysctl((int *) name, (sizeof(name) / sizeof(*name)) - 1,
-                         result, &length, NULL, 0);
-            if (err == -1)
-                err = errno;
-            if (err == 0) {
-                done = 1;
-            }
-            else if (err == ENOMEM) {
-                assert(result != NULL);
-                free(result);
-                result = NULL;
-                err = 0;
-            }
-        }
-    } while (err == 0 && ! done);
-
-    // Clean up and establish post conditions.
-    if (err != 0 && result != NULL) {
-        free(result);
-        result = NULL;
+    if (kd == NULL) {
+        fprintf(stderr, "WWWWWWWWWWWWWWWWWW\n");
+        return errno;
     }
 
-    *procList = result;
-    *procCount = length / sizeof(struct kinfo_proc);
+    result = kvm_getprocs(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc), &cnt);
+    if (result == NULL) {
+        fprintf(stderr, "UUUUUUUUUUUUUUUUUU\n");
+        err(1, NULL);
+        return errno;
+    }
 
-    assert((err == 0) == (*procList != NULL));
-    return err;
+    *procCount = (size_t)cnt;
+
+    size_t mlen = cnt * sizeof(struct kinfo_proc);
+
+    if ((*procList = malloc(mlen)) == NULL) {
+        fprintf(stderr, "ZZZZZZZZZZZZZZZZZZ\n");
+        err(1, NULL);
+        return errno;
+    }
+
+    memcpy(*procList, result, mlen);
+
+    assert(*procList != NULL);
+
+    kvm_close(kd);
+
+    return 0;
 }
 
 
@@ -124,7 +98,7 @@ char
      */
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PATHNAME;
+    mib[2] = KERN_PROC_ARGS;
     mib[3] = pid;
 
     // call with a null buffer first to determine if we need a buffer
@@ -202,14 +176,33 @@ char
     return procargs;
 }
 
+char **
+get_argv(long pid)
+{
+    static char **argv;
+    char **p;
+    int argv_mib[] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_ARGV};
+    size_t argv_size = 128;
+    /* Loop and reallocate until we have enough space to fit argv. */
+    for (;; argv_size *= 2) {
+        if ((argv = realloc(argv, argv_size)) == NULL)
+            err(1, NULL);
+        if (sysctl(argv_mib, 4, argv, &argv_size, NULL, 0) == 0)
+            break;
+        if (errno == ESRCH) {
+            PyErr_SetFromErrno(PyExc_OSError);
+            return NULL;
+        }
+        if (errno != ENOMEM)
+            err(1, NULL);
+    }
 
 // returns the command line as a python list object
 PyObject *
 psutil_get_arg_list(long pid)
 {
-    char *argstr = NULL;
-    int pos = 0;
-    size_t argsize = 0;
+    static char **argv;
+    char **p;
     PyObject *retlist = Py_BuildValue("[]");
     PyObject *item = NULL;
 
@@ -217,35 +210,16 @@ psutil_get_arg_list(long pid)
         return retlist;
     }
 
-    argstr = psutil_get_cmd_args(pid, &argsize);
-    if (argstr == NULL) {
-        goto error;
-    }
+    if ((argv = get_argv(pid)) == NULL)
+        return NULL;
 
-    // args are returned as a flattened string with \0 separators between
-    // arguments add each string to the list then step forward to the next
-    // separator
-    if (argsize > 0) {
-        while (pos < argsize) {
-            item = Py_BuildValue("s", &argstr[pos]);
-            if (!item)
-                goto error;
-            if (PyList_Append(retlist, item))
-                goto error;
-            Py_DECREF(item);
-            pos = pos + strlen(&argstr[pos]) + 1;
-        }
+    for (p = argv; *p != NULL; p++) {
+        item = Py_BuildValue("s", *p);
+        PyList_Append(retlist, item);
+        Py_DECREF(item);
     }
-
-    free(argstr);
     return retlist;
 
-error:
-    Py_XDECREF(item);
-    Py_DECREF(retlist);
-    if (argstr != NULL)
-        free(argstr);
-    return NULL;
 }
 
 

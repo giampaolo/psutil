@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
+ * Copyright (c) 2014, Landry Breuil. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * FreeBSD platform-specific module methods for _psutil_bsd
+ * OpenBSD platform-specific module methods for _psutil_bsd
  */
 
 
@@ -16,8 +16,8 @@
 #include <fcntl.h>
 #include <paths.h>
 #include <sys/types.h>
-#include <sys/sysctl.h>
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/file.h>
@@ -36,14 +36,7 @@
 #include <netinet/tcp_fsm.h>   // for TCP connection states
 #include <arpa/inet.h>         // for inet_ntop()
 
-#if __FreeBSD_version < 900000
 #include <utmp.h>         // system users
-#else
-#include <utmpx.h>
-#endif
-#include <devstat.h>      // get io counters
-#include <sys/vmmeter.h>  // needed for vmtotal struct
-#include <libutil.h>      // process open files, shared libs (kinfo_getvmmap)
 #include <sys/mount.h>
 
 #include <net/if.h>       // net io counters
@@ -60,6 +53,7 @@
 
 // convert a timeval struct to a double
 #define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
+#define KPT2DOUBLE(t)   (t ## _sec + t ## _usec / 1000000.0)
 
 
 /*
@@ -68,7 +62,7 @@
 static int
 psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
 {
-    int mib[4];
+    int mib[6];
     size_t size;
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
@@ -77,7 +71,10 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
 
     size = sizeof(struct kinfo_proc);
 
-    if (sysctl((int *)mib, 4, proc, &size, NULL, 0) == -1) {
+    mib[4] = size;
+    mib[5] = 1;
+
+    if (sysctl((int*)mib, 6, proc, &size, NULL, 0) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         return -1;
     }
@@ -116,7 +113,7 @@ psutil_pids(PyObject *self, PyObject *args)
     if (num_processes > 0) {
         orig_address = proclist; // save so we can free it after we're done
         for (idx = 0; idx < num_processes; idx++) {
-            pid = Py_BuildValue("i", proclist->ki_pid);
+            pid = Py_BuildValue("i", proclist->p_pid);
             if (!pid)
                 goto error;
             if (PyList_Append(retlist, pid))
@@ -173,7 +170,7 @@ psutil_proc_name(PyObject *self, PyObject *args)
     if (psutil_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
-    return Py_BuildValue("s", kp.ki_comm);
+    return Py_BuildValue("s", kp.p_comm);
 }
 
 
@@ -257,7 +254,7 @@ psutil_proc_ppid(PyObject *self, PyObject *args)
     if (psutil_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
-    return Py_BuildValue("l", (long)kp.ki_ppid);
+    return Py_BuildValue("l", (long)kp.p_ppid);
 }
 
 
@@ -275,7 +272,7 @@ psutil_proc_status(PyObject *self, PyObject *args)
     if (psutil_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
-    return Py_BuildValue("i", (int)kp.ki_stat);
+    return Py_BuildValue("i", (int)kp.p_stat);
 }
 
 
@@ -295,9 +292,9 @@ psutil_proc_uids(PyObject *self, PyObject *args)
         return NULL;
     }
     return Py_BuildValue("lll",
-                         (long)kp.ki_ruid,
-                         (long)kp.ki_uid,
-                         (long)kp.ki_svuid);
+                         (long)kp.p_ruid,
+                         (long)kp.p_uid,
+                         (long)kp.p_svuid);
 }
 
 
@@ -317,9 +314,9 @@ psutil_proc_gids(PyObject *self, PyObject *args)
         return NULL;
     }
     return Py_BuildValue("lll",
-                         (long)kp.ki_rgid,
-                         (long)kp.ki_groups[0],
-                         (long)kp.ki_svuid);
+                         (long)kp.p_rgid,
+                         (long)kp.p_groups[0],
+                         (long)kp.p_svuid);
 }
 
 
@@ -338,7 +335,7 @@ psutil_proc_tty_nr(PyObject *self, PyObject *args)
     if (psutil_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
-    return Py_BuildValue("i", kp.ki_tdev);
+    return Py_BuildValue("i", kp.p_tdev);
 }
 
 
@@ -376,7 +373,8 @@ psutil_proc_num_threads(PyObject *self, PyObject *args)
     if (psutil_kinfo_proc(pid, &kp) == -1) {
         return NULL;
     }
-    return Py_BuildValue("l", (long)kp.ki_numthreads);
+/* TODO: get all the procs with kvm_getprocs() and count those iwth the desired ki_pid */
+    return Py_BuildValue("l", (long)0);
 }
 
 
@@ -408,7 +406,7 @@ psutil_proc_threads(PyObject *self, PyObject *args)
     // we need to re-query for thread information, so don't use *kipp
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID | KERN_PROC_INC_THREAD;
+    mib[2] = KERN_PROC_PID /* | KERN_PROC_INC_THREAD */;
     mib[3] = pid;
 
     size = 0;
@@ -441,9 +439,9 @@ psutil_proc_threads(PyObject *self, PyObject *args)
     for (i = 0; i < size / sizeof(*kipp); i++) {
         kipp = &kip[i];
         pyTuple = Py_BuildValue("Idd",
-                                kipp->ki_tid,
-                                TV2DOUBLE(kipp->ki_rusage.ru_utime),
-                                TV2DOUBLE(kipp->ki_rusage.ru_stime));
+                                0, //thread id?
+                                kipp->p_uutime_sec,
+                                kipp->p_ustime_sec
         if (pyTuple == NULL)
             goto error;
         if (PyList_Append(retList, pyTuple))
@@ -479,8 +477,8 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args)
         return NULL;
     }
     // convert from microseconds to seconds
-    user_t = TV2DOUBLE(kp.ki_rusage.ru_utime);
-    sys_t = TV2DOUBLE(kp.ki_rusage.ru_stime);
+    user_t = TV2DOUBLE(kp.p_uutime);
+    sys_t = TV2DOUBLE(kp.p_ustime);
     return Py_BuildValue("(dd)", user_t, sys_t);
 }
 
@@ -577,8 +575,8 @@ psutil_proc_io_counters(PyObject *self, PyObject *args)
     }
     // there's apparently no way to determine bytes count, hence return -1.
     return Py_BuildValue("(llll)",
-                         kp.ki_rusage.ru_inblock,
-                         kp.ki_rusage.ru_oublock,
+                         kp.uru_inblock,
+                         kp.uru_oublock,
                          -1,
                          -1);
 }
@@ -587,6 +585,7 @@ psutil_proc_io_counters(PyObject *self, PyObject *args)
 /*
  * Return extended memory info for a process as a Python tuple.
  */
+#define ptoa(x)         ((paddr_t)(x) << PAGE_SHIFT)
 static PyObject *
 psutil_proc_memory_info(PyObject *self, PyObject *args)
 {
@@ -599,7 +598,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args)
         return NULL;
     }
     return Py_BuildValue("(lllll)",
-                         ptoa(kp.ki_rssize),    // rss
+                         ptoa(kp.p_vm_rssize),    // rss
                          (long)kp.ki_size,      // vms
                          ptoa(kp.ki_tsize),     // text
                          ptoa(kp.ki_dsize),     // data
@@ -1194,14 +1193,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args)
     if (py_retlist == NULL)
         return NULL;
 
-    // retrieve maxcpus value
-    size = sizeof(maxcpus);
-    if (sysctlbyname("kern.smp.maxcpus", &maxcpus, &size, NULL, 0) < 0) {
-        Py_DECREF(py_retlist);
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-    long cpu_time[maxcpus][CPUSTATES];
 
     // retrieve the number of cpus
     mib[0] = CTL_HW;
@@ -1211,12 +1202,15 @@ psutil_per_cpu_times(PyObject *self, PyObject *args)
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
+    long cpu_time[ncpu][CPUSTATES];
 
     // per-cpu info
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_CPTIME;
     size = sizeof(cpu_time);
-    if (sysctlbyname("kern.cp_times", &cpu_time, &size, NULL, 0) == -1) {
+    if (sysctl(mib, 2, &cpu_time, &size, NULL, 0) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
+        return NULL;
     }
 
     for (i = 0; i < ncpu; i++) {
@@ -2186,8 +2180,8 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
     PyModule_AddIntConstant(module, "SRUN", SRUN);
     PyModule_AddIntConstant(module, "SIDL", SIDL);
-    PyModule_AddIntConstant(module, "SWAIT", SWAIT);
-    PyModule_AddIntConstant(module, "SLOCK", SLOCK);
+    PyModule_AddIntConstant(module, "SWAIT", -1);
+    PyModule_AddIntConstant(module, "SLOCK", -1);
     PyModule_AddIntConstant(module, "SZOMB", SZOMB);
     // connection status constants
     PyModule_AddIntConstant(module, "TCPS_CLOSED", TCPS_CLOSED);
