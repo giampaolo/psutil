@@ -626,7 +626,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args)
     long           pagesize = getpagesize();
     size = sizeof(uvmexp);
     if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
-        warnx(1,"failed to get vm.uvmexp");
+        warn("failed to get vm.uvmexp");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
@@ -657,20 +657,20 @@ psutil_swap_mem(PyObject *self, PyObject *args)
     struct swapent *swdev;
     int nswap, i;
     if ((nswap = swapctl(SWAP_NSWAP, 0, 0)) == 0) {
-        warn(1,"failed to get swap device count");
+        warn("failed to get swap device count");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
     if ((swdev = calloc(nswap, sizeof(*swdev))) == NULL) {
-        warn(1,"failed to allocate memory for swdev structures");
+        warn("failed to allocate memory for swdev structures");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
     if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
         free(swdev);
-        warn(1,"failed to get swap stats");
+        warn("failed to get swap stats");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
@@ -706,7 +706,7 @@ psutil_cpu_times(PyObject *self, PyObject *args)
 
     size = sizeof(cpu_time);
     if (sysctl(mib, 2, &cpu_time, &size, NULL, 0) < 0) {
-        warnx(1,"failed to get kern.cptime");
+        warnx("failed to get kern.cptime");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
