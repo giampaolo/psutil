@@ -257,3 +257,43 @@ psutil_raise_ad_or_nsp(pid) {
         AccessDenied();
     }
 }
+
+/*
+ * mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an int as arg
+ * and returns an array with cnt struct kinfo_file
+ */
+struct kinfo_file *
+kinfo_getfile(long pid, int* cnt) {
+
+    int mib[6];
+    size_t len;
+    struct kinfo_file* kf;
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_FILE;
+    mib[2] = KERN_FILE_BYPID;
+    mib[3] = (int) pid;
+    mib[4] = sizeof(struct kinfo_file);
+    mib[5] = 0;
+
+    /* get the size of what would be returned */
+    if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
+        warn("failed in first call to KERN_FILE_BYPID");
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    if ((kf = malloc(len)) == NULL) {
+        warn("failed malloc before second KERN_FILE_BYPID call");
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    mib[5] = (int)(len / sizeof(struct kinfo_file));
+    if (sysctl(mib, 6, kf, &len, NULL, 0) < 0) {
+        warn("failed in second call to KERN_FILE_BYPID");
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    *cnt = (int)(len / sizeof(struct kinfo_file));
+/*    printf ("returning %d files for pid %d\n", *cnt,pid); */
+    return kf;
+}

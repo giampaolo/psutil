@@ -8,6 +8,9 @@
 
 typedef struct kinfo_proc kinfo_proc;
 
+#ifdef __OpenBSD__
+struct kinfo_file * kinfo_getfile(long pid, int* cnt);
+#endif
 char *psutil_get_cmd_args(long pid, size_t *argsize);
 char *psutil_get_cmd_path(long pid, size_t *pathsize);
 int psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount);
