@@ -184,48 +184,6 @@ psutil_proc_name(PyObject *self, PyObject *args)
 }
 
 
-#if 0
-/*
- * Return process pathname executable.
- * Thanks to Robert N. M. Watson:
- * http://fxr.googlebit.com/source/usr.bin/procstat/procstat_bin.c?v=8-CURRENT
- */
-static PyObject *
-psutil_proc_exe(PyObject *self, PyObject *args)
-{
-    long pid;
-    char pathname[PATH_MAX];
-    int error;
-    int mib[4];
-    size_t size;
-
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PATHNAME;
-    mib[3] = pid;
-
-    size = sizeof(pathname);
-    error = sysctl(mib, 4, pathname, &size, NULL, 0);
-    if (error == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-    if (size == 0 || strlen(pathname) == 0) {
-        if (psutil_pid_exists(pid) == 0) {
-            return NoSuchProcess();
-        }
-        else {
-            strcpy(pathname, "");
-        }
-    }
-    return Py_BuildValue("s", pathname);
-}
-#endif
-
 /*
  * Return process cmdline as a Python list of cmdline arguments.
  */
@@ -1933,9 +1891,9 @@ PsutilMethods[] =
 /*
     {"proc_connections", psutil_proc_connections, METH_VARARGS,
      "Return connections opened by process"},
-    {"proc_exe", psutil_proc_exe, METH_VARARGS,
-     "Return process pathname executable"},
 */
+    {"proc_exe", psutil_proc_name, METH_VARARGS,
+     "Return process name"},
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
      "Return process cmdline as a list of cmdline arguments"},
     {"proc_ppid", psutil_proc_ppid, METH_VARARGS,
