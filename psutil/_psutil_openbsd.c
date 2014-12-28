@@ -824,6 +824,7 @@ psutil_sockaddr_addrlen(int family)
         return (sizeof(struct in6_addr));
 }
 
+#if 0
 static int
 psutil_sockaddr_matches(int family, int port, void *pcb_addr,
                         struct sockaddr_storage *ss)
@@ -880,7 +881,7 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif)
     return NULL;
 }
 
-
+#endif
 // a signaler for connections without an actual status
 static int PSUTIL_CONN_NONE = 128;
 
@@ -924,15 +925,15 @@ psutil_proc_connections(PyObject *self, PyObject *args)
         goto error;
     }
 
+/*
     tcplist = psutil_fetch_tcplist();
     if (tcplist == NULL) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
-
+*/
     for (i = 0; i < cnt; i++) {
-        int lport, rport, state;
-        char lip[200], rip[200];
+        int state;
         char path[PATH_MAX];
         int inseq;
         tuple = NULL;
@@ -940,16 +941,16 @@ psutil_proc_connections(PyObject *self, PyObject *args)
         raddr = NULL;
 
         kif = &freep[i];
-        if (kif->kf_type == KF_TYPE_SOCKET)
+        if (kif->f_type == DTYPE_SOCKET)
         {
             // apply filters
-            _family = PyLong_FromLong((long)kif->kf_sock_domain);
+            _family = PyLong_FromLong((long)kif->so_family);
             inseq = PySequence_Contains(af_filter, _family);
             Py_DECREF(_family);
             if (inseq == 0) {
                 continue;
             }
-            _type = PyLong_FromLong((long)kif->kf_sock_type);
+            _type = PyLong_FromLong((long)kif->so_type);
             inseq = PySequence_Contains(type_filter, _type);
             Py_DECREF(_type);
             if (inseq == 0) {
@@ -957,40 +958,27 @@ psutil_proc_connections(PyObject *self, PyObject *args)
             }
 
             // IPv4 / IPv6 socket
-            if ((kif->kf_sock_domain == AF_INET) ||
-                    (kif->kf_sock_domain == AF_INET6)) {
+            if ((kif->so_family == AF_INET) ||
+                    (kif->so_family == AF_INET6)) {
                 // fill status
                 state = PSUTIL_CONN_NONE;
-                if (kif->kf_sock_type == SOCK_STREAM) {
-                    tcp = psutil_search_tcplist(tcplist, kif);
-                    if (tcp != NULL)
-                        state = (int)tcp->t_state;
+                if (kif->so_type == SOCK_STREAM) {
+                    /* need to read so_pcb
+                    state = kif->so_state;
+                    printf("state=%d\n",state);
+ */
                 }
 
-                // build addr and port
-                inet_ntop(
-                    kif->kf_sock_domain,
-                    psutil_sockaddr_addr(kif->kf_sock_domain,
-                                         &kif->kf_sa_local),
-                    lip,
-                    sizeof(lip));
-                inet_ntop(
-                    kif->kf_sock_domain,
-                    psutil_sockaddr_addr(kif->kf_sock_domain,
-                                         &kif->kf_sa_peer),
-                    rip,
-                    sizeof(rip));
-                lport = htons(psutil_sockaddr_port(kif->kf_sock_domain,
-                                                   &kif->kf_sa_local));
-                rport = htons(psutil_sockaddr_port(kif->kf_sock_domain,
-                                                   &kif->kf_sa_peer));
-
                 // construct python tuple/list
-                laddr = Py_BuildValue("(si)", lip, lport);
+                laddr = Py_BuildValue("(si)",
+                                      psutil_addr_from_addru(kif->so_family, kif->inp_laddru),
+                                      ntohs(kif->inp_lport));
                 if (!laddr)
                     goto error;
-                if (rport != 0) {
-                    raddr = Py_BuildValue("(si)", rip, rport);
+                if (ntohs(kif->inp_fport) != 0) {
+                    raddr = Py_BuildValue("(si)",
+                                          psutil_addr_from_addru(kif->so_family, kif->inp_faddru),
+                                          ntohs(kif->inp_fport));
                 }
                 else {
                     raddr = Py_BuildValue("()");
@@ -998,9 +986,9 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                 if (!raddr)
                     goto error;
                 tuple = Py_BuildValue("(iiiNNi)",
-                                      kif->kf_fd,
-                                      kif->kf_sock_domain,
-                                      kif->kf_sock_type,
+                                      kif->fd_fd,
+                                      kif->so_family,
+                                      kif->so_type,
                                       laddr,
                                       raddr,
                                       state);
@@ -1011,20 +999,13 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                 Py_DECREF(tuple);
             }
             // UNIX socket
-            else if (kif->kf_sock_domain == AF_UNIX) {
-                struct sockaddr_un *sun;
-
-                sun = (struct sockaddr_un *)&kif->kf_sa_local;
-                snprintf(
-                    path, sizeof(path), "%.*s",
-                    (sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
-                    sun->sun_path);
+            else if (kif->so_family == AF_UNIX) {
 
                 tuple = Py_BuildValue("(iiisOi)",
-                                      kif->kf_fd,
-                                      kif->kf_sock_domain,
-                                      kif->kf_sock_type,
-                                      path,
+                                      kif->fd_fd,
+                                      kif->so_family,
+                                      kif->so_type,
+                                      kif->unp_path,
                                       Py_None,
                                       PSUTIL_CONN_NONE);
                 if (!tuple)
@@ -1051,7 +1032,6 @@ error:
         free(tcplist);
     return NULL;
 }
-#endif
 
 /*
  * Return a Python list of tuple representing per-cpu times
@@ -1874,10 +1854,8 @@ PsutilMethods[] =
 
     {"proc_name", psutil_proc_name, METH_VARARGS,
      "Return process name"},
-/*
     {"proc_connections", psutil_proc_connections, METH_VARARGS,
      "Return connections opened by process"},
-*/
     {"proc_exe", psutil_proc_name, METH_VARARGS,
      "Return process name"},
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
