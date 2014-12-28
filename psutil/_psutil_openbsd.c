@@ -683,8 +683,7 @@ psutil_swap_mem(PyObject *self, PyObject *args)
             swap_total += swdev[i].se_nblks;
         }
     }
-
-    return Py_BuildValue("(iiiII)",
+    return Py_BuildValue("(LLLII)",
                          swap_total * DEV_BSIZE,
                          (swap_total - swap_free) * DEV_BSIZE,
                          swap_free * DEV_BSIZE,
