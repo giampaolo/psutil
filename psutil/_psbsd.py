@@ -134,6 +134,8 @@ def cpu_count_physical():
     # We may get None in case "sysctl kern.sched.topology_spec"
     # is not supported on this BSD version, in which case we'll mimic
     # os.cpu_count() and return None.
+    if sys.platform.startswith("openbsd"):
+        return cext.cpu_count_logical()
     s = cext.cpu_count_phys()
     if s is not None:
         # get rid of padding chars appended at the end of the string
