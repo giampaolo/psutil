@@ -478,37 +478,6 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args)
 }
 
 
-#if 0
-/*
- * Return an XML string from which we'll determine the number of
- * physical CPU cores in the system.
- */
-static PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args)
-{
-    void *topology = NULL;
-    size_t size = 0;
-
-    if (sysctlbyname("kern.sched.topology_spec", NULL, &size, NULL, 0))
-        goto error;
-
-    topology = malloc(size);
-    if (!topology) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    if (sysctlbyname("kern.sched.topology_spec", topology, &size, NULL, 0))
-        goto error;
-
-    return Py_BuildValue("s", topology);
-
-error:
-    Py_INCREF(Py_None);
-    return Py_None;
-}
-#endif
-
 /*
  * Return a Python float indicating the process create time expressed in
  * seconds since the epoch.
