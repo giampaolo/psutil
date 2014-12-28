@@ -81,6 +81,8 @@ def virtual_memory():
 
 def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
+    if sys.platform.startswith("openbsd"):
+        PAGESIZE = 1
     total, used, free, sin, sout = [x * PAGESIZE for x in cext.swap_mem()]
     percent = usage_percent(used, total, _round=1)
     return _common.sswap(total, used, free, percent, sin, sout)
