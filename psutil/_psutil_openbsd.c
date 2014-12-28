@@ -808,60 +808,16 @@ psutil_proc_num_fds(PyObject *self, PyObject *args)
     return Py_BuildValue("i", cnt);
 }
 
-
 /*
- * Return process current working directory.
+ * No way to get cwd on OpenBSD
  */
 static PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args)
 {
-    long pid;
-    PyObject *path = NULL;
-    struct kinfo_file *freep = NULL;
-    struct kinfo_file *kif;
-    struct kinfo_proc kipp;
-
-    int i, cnt;
-
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        goto error;
-    if (psutil_kinfo_proc(pid, &kipp) == -1)
-        goto error;
-
-    freep = kinfo_getfile(pid, &cnt);
-    if (freep == NULL) {
-        psutil_raise_ad_or_nsp(pid);
-        goto error;
-    }
-
-    for (i = 0; i < cnt; i++) {
-        kif = &freep[i];
-        if (kif->kf_fd == KF_FD_TYPE_CWD) {
-            path = Py_BuildValue("s", kif->kf_path);
-            if (!path)
-                goto error;
-            break;
-        }
-    }
-    /*
-     * For lower pids it seems we can't retrieve any information
-     * (lsof can't do that it either).  Since this happens even
-     * as root we return an empty string instead of AccessDenied.
-     */
-    if (path == NULL) {
-        path = Py_BuildValue("s", "");
-    }
-    free(freep);
-    return path;
-
-error:
-    Py_XDECREF(path);
-    if (freep != NULL)
-        free(freep);
-    return NULL;
+    return Py_BuildValue("s", "");
 }
 
-
+#if 0
 // The tcplist fetching and walking is borrowed from netstat/inet.c.
 static char *
 psutil_fetch_tcplist(void)
