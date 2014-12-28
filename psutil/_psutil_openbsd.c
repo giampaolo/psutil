@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/user.h>
+#include <sys/disk.h> /* struct diskstats */
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/sched.h> /* for CPUSTATES & CP_* */
@@ -1487,70 +1488,61 @@ error:
 static PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args)
 {
-#if 0
-    int i;
-    struct statinfo stats;
+    int i, dk_ndrive, mib[3];
+    size_t len;
+    struct diskstats *stats;
 
     PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;
     if (py_retdict == NULL)
         return NULL;
 
-    if (devstat_checkversion(NULL) < 0) {
-        PyErr_Format(PyExc_RuntimeError, "devstat_checkversion() failed");
+    mib[0] = CTL_HW;
+    mib[1] = HW_DISKSTATS;
+    len = 0;
+    if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0) {
+        warn("can't get hw.diskstats size");
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
+    dk_ndrive = (int)(len / sizeof(struct diskstats));
 
-    stats.dinfo = (struct devinfo *)malloc(sizeof(struct devinfo));
-    if (stats.dinfo == NULL) {
+    stats = malloc(len);
+    if (stats == NULL) {
+        warn("can't malloc");
         PyErr_NoMemory();
         goto error;
     }
-    bzero(stats.dinfo, sizeof(struct devinfo));
-
-    if (devstat_getdevs(NULL, &stats) == -1) {
-        PyErr_Format(PyExc_RuntimeError, "devstat_getdevs() failed");
+    if (sysctl(mib, 2, stats, &len, NULL, 0) < 0 ) {
+        warn("could not read hw.diskstats");
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
-    for (i = 0; i < stats.dinfo->numdevs; i++) {
-        py_disk_info = NULL;
-        struct devstat current;
-        char disk_name[128];
-        current = stats.dinfo->devices[i];
-        snprintf(disk_name, sizeof(disk_name), "%s%d",
-                 current.device_name,
-                 current.unit_number);
-
+    for (i = 0; i < dk_ndrive; i++) {
         py_disk_info = Py_BuildValue(
             "(KKKKLL)",
-            current.operations[DEVSTAT_READ],   // no reads
-            current.operations[DEVSTAT_WRITE],  // no writes
-            current.bytes[DEVSTAT_READ],        // bytes read
-            current.bytes[DEVSTAT_WRITE],       // bytes written
-            (long long)devstat_compute_etime(
-                &current.duration[DEVSTAT_READ], NULL),  // r time
-            (long long)devstat_compute_etime(
-                &current.duration[DEVSTAT_WRITE], NULL));  // w time
+            stats[i].ds_rxfer,
+            stats[i].ds_wxfer,
+            stats[i].ds_rbytes,
+            stats[i].ds_wbytes,
+            (long long) TV2DOUBLE(stats[i].ds_time) / 2, /* assume half read - half writes.. */
+            (long long) TV2DOUBLE(stats[i].ds_time) / 2);
         if (!py_disk_info)
             goto error;
-        if (PyDict_SetItemString(py_retdict, disk_name, py_disk_info))
+        if (PyDict_SetItemString(py_retdict, stats[i].ds_name, py_disk_info))
             goto error;
         Py_DECREF(py_disk_info);
     }
 
-    if (stats.dinfo->mem_ptr) {
-        free(stats.dinfo->mem_ptr);
-    }
-    free(stats.dinfo);
+    free(stats);
     return py_retdict;
 
 error:
     Py_XDECREF(py_disk_info);
     Py_DECREF(py_retdict);
-    if (stats.dinfo != NULL)
-        free(stats.dinfo);
-#endif
+    if (stats != NULL)
+        free(stats);
     return NULL;
 }
 
