@@ -797,6 +797,23 @@ psutil_sockaddr_addr(int family, struct sockaddr_storage *ss)
         return (&sin6->sin6_addr);
     }
 }
+#endif
+// see sys/kern/kern_sysctl.c lines 1100 and usr.bin/fstat/fstat.c print_inet_details()
+char *
+psutil_addr_from_addru(int family, uint32_t addr[4])
+{
+    struct in_addr a;
+    memcpy(&a, addr, sizeof(a));
+    if (family == AF_INET) {
+        if (a.s_addr == INADDR_ANY)
+            return "*";
+        else
+            return inet_ntoa(a);
+    } else {
+        /* XXX TODO */
+        return NULL;
+    }
+}
 
 static socklen_t
 psutil_sockaddr_addrlen(int family)
