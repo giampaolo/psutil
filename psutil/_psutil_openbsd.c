@@ -1614,7 +1614,6 @@ psutil_users(PyObject *self, PyObject *args)
     if (ret_list == NULL)
         return NULL;
 
-#if __FreeBSD_version < 900000
     struct utmp ut;
     FILE *fp;
 
@@ -1645,33 +1644,7 @@ psutil_users(PyObject *self, PyObject *args)
     }
 
     fclose(fp);
-#else
-    struct utmpx *utx;
 
-    while ((utx = getutxent()) != NULL) {
-        if (utx->ut_type != USER_PROCESS)
-            continue;
-        tuple = Py_BuildValue(
-            "(sssf)",
-            utx->ut_user,  // username
-            utx->ut_line,  // tty
-            utx->ut_host,  // hostname
-            (float)utx->ut_tv.tv_sec  // start time
-        );
-
-        if (!tuple) {
-            endutxent();
-            goto error;
-        }
-        if (PyList_Append(ret_list, tuple)) {
-            endutxent();
-            goto error;
-        }
-        Py_DECREF(tuple);
-    }
-
-    endutxent();
-#endif
     return ret_list;
 
 error:
