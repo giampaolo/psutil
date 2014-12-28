@@ -25,6 +25,10 @@
 #include <sys/swap.h>
 #include <kvm.h>
 #include <sys/socket.h>
+#include <sys/vnode.h> /* for VREG */
+#define _KERNEL /* for DTYPE_VNODE */
+#include <sys/file.h>
+#undef _KERNEL
 #include <net/route.h>
 
 #include <sys/socketvar.h>    // for struct xsocket
@@ -721,16 +725,7 @@ psutil_cpu_times(PyObject *self, PyObject *args)
 
 
 /*
- * XXX
- * These functions are available on FreeBSD 8 only.
- * In the upper python layer we do various tricks to avoid crashing
- * and/or to provide alternatives where possible.
- */
-
-
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
-/*
- * Return files opened by process as a list of (path, fd) tuples
+ * Return files opened by process as a list of ("", fd) tuples
  */
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args)
@@ -758,10 +753,10 @@ psutil_proc_open_files(PyObject *self, PyObject *args)
 
     for (i = 0; i < cnt; i++) {
         kif = &freep[i];
-        if ((kif->kf_type == KF_TYPE_VNODE) &&
-                (kif->kf_vnode_type == KF_VTYPE_VREG))
+        if ((kif->f_type == DTYPE_VNODE) &&
+                (kif->v_type == VREG))
         {
-            tuple = Py_BuildValue("(si)", kif->kf_path, kif->kf_fd);
+            tuple = Py_BuildValue("(si)", "", kif->fd_fd);
             if (tuple == NULL)
                 goto error;
             if (PyList_Append(retList, tuple))
@@ -1111,7 +1106,7 @@ error:
         free(tcplist);
     return NULL;
 }
-
+#endif
 
 /*
  * Return a Python list of tuple representing per-cpu times
@@ -1177,6 +1172,7 @@ error:
 }
 
 
+#if 0
 // remove spaces from string
 void remove_spaces(char *str) {
     char *p1 = str;
@@ -1977,16 +1973,16 @@ PsutilMethods[] =
 */
     {"proc_tty_nr", psutil_proc_tty_nr, METH_VARARGS,
      "Return process tty (terminal) number"},
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
-    {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
-     "Return files opened by process as a list of (path, fd) tuples"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory."},
+    {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
+     "Return files opened by process as a list of (path, fd) tuples"},
+#if 0
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
      "Return a list of tuples for every process's memory map"},
+#endif
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS,
      "Return the number of file descriptors opened by this process"},
-#endif
 
     // --- system-related functions
 
