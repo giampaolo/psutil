@@ -2000,10 +2000,8 @@ PsutilMethods[] =
      "Return swap mem stats"},
     {"cpu_times", psutil_cpu_times, METH_VARARGS,
      "Return system cpu times as a tuple (user, system, nice, idle, irc)"},
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
     {"per_cpu_times", psutil_per_cpu_times, METH_VARARGS,
      "Return system per-cpu times as a list of tuples"},
-#endif
     {"boot_time", psutil_boot_time, METH_VARARGS,
      "Return the system boot time expressed in seconds since the epoch."},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
