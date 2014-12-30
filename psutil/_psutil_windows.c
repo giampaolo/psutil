@@ -1404,7 +1404,7 @@ psutil_proc_username(PyObject *self, PyObject *args)
     memcpy(&fullName[domainNameSize + 1], name, nameSize);
     fullName[domainNameSize + 1 + nameSize] = '\0';
 
-    returnObject = Py_BuildValue("s", fullName);
+    returnObject = PyUnicode_Decode(fullName, _tcslen(fullName), "latin1", "ignore");
 
     free(fullName);
     free(name);
@@ -2655,6 +2655,8 @@ psutil_users(PyObject *self, PyObject *args)
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
+    PyObject *buffer_user_encoded = NULL;
+
     if (py_retlist == NULL) {
         return NULL;
     }
@@ -2739,12 +2741,14 @@ psutil_users(PyObject *self, PyObject *args)
             station_info.ConnectTime.dwLowDateTime - 116444736000000000LL;
         unix_time /= 10000000;
 
-        py_tuple = Py_BuildValue("sOd", buffer_user, py_address,
+        buffer_user_encoded = PyUnicode_Decode(buffer_user, _tcslen(buffer_user), "latin1", "ignore");
+        py_tuple = Py_BuildValue("OOd", buffer_user_encoded, py_address,
                                  (double)unix_time);
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_XDECREF(buffer_user_encoded);
         Py_XDECREF(py_address);
         Py_XDECREF(py_tuple);
     }
@@ -2757,6 +2761,7 @@ psutil_users(PyObject *self, PyObject *args)
     return py_retlist;
 
 error:
+    Py_XDECREF(buffer_user_encoded);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
     Py_DECREF(py_retlist);
