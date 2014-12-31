@@ -10,11 +10,13 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
-- #496: [Solaris]: can't import psutil.
-- #547: [UNIX]: Process.username() may raise KeyError if UID can't be resolved.
-- #556: [Linux]: lots of file handles were left open.
-- #561: [Linux]: net_connections() might skip some legitimate UNIX sockets.
+- #496: [Solaris] can't import psutil.
+- #547: [UNIX] Process.username() may raise KeyError if UID can't be resolved.
+- #556: [Linux] lots of file handles were left open.
+- #561: [Linux] net_connections() might skip some legitimate UNIX sockets.
   (patch by spacewander)
+- #565: [Windows] use proper encoding for psutil.Process.username() and
+  psutil.users(). (patch by Sylvain Mouquet)
 
 
 2.1.3 - 2014-09-26
