@@ -10,6 +10,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
+- #446: [Windows] get rid of the unicode hack for net_io_counters() NIC names.
 - #496: [Solaris] can't import psutil.
 - #547: [UNIX] Process.username() may raise KeyError if UID can't be resolved.
 - #556: [Linux] lots of file handles were left open.

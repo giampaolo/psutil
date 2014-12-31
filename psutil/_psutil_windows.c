@@ -2342,21 +2342,9 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
             goto error;
 
         sprintf(ifname, "%wS", pCurrAddresses->FriendlyName);
+        py_nic_name = PyUnicode_Decode(
+            ifname, _tcslen(ifname), Py_FileSystemDefaultEncoding, "replace");
 
-#if PY_MAJOR_VERSION >= 3
-        // XXX - Dirty hack to avoid encoding errors on Python 3, see:
-        // https://github.com/giampaolo/psutil/issues/446#c9
-        for (i = 0; i < MAX_PATH; i++) {
-            if (*(ifname+i) < 0 || *(ifname+i) > 256) {
-                // replace the non unicode character
-                *(ifname+i) = '?';
-            }
-            else if (*(ifname+i) == '\0') {
-                break;
-            }
-        }
-#endif
-        py_nic_name = Py_BuildValue("s", ifname);
         if (py_nic_name == NULL)
             goto error;
         if (PyDict_SetItem(py_retdict, py_nic_name, py_nic_info))
