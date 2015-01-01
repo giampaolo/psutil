@@ -325,14 +325,18 @@ error:
 #else
 
 
+/*
+ * Alternative implementation in case CPU_ALLOC is not defined.
+ */
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
 {
     cpu_set_t cpuset;
     unsigned int len = sizeof(cpu_set_t);
     long pid;
-	int i;
-	PyObject* ret_list;
+    int i;
+    PyObject* py_retlist;
+    PyObject *py_cpu_num;
 
     if (!PyArg_ParseTuple(args, "i", &pid)) {
         return NULL;
@@ -343,15 +347,23 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
         return PyErr_SetFromErrno(PyExc_OSError);
     }
 
-    ret_list = PyList_New(0);
-
+    py_retlist = PyList_New(0);
     for (i = 0; i < CPU_SETSIZE; ++i) {
         if (CPU_ISSET(i, &cpuset)) {
-            PyList_Append(ret_list, Py_BuildValue("i", i));
+            py_cpu_num = Py_BuildValue("i", i);
+            if (py_cpu_num == NULL)
+                goto error;
+            if (PyList_Append(py_retlist, py_cpu_num))
+                goto error;
         }
     }
 
-    return ret_list;
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_cpu_num);
+    Py_DECREF(py_retlist);
+    return NULL;
 }
 #endif
 

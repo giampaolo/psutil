@@ -127,6 +127,8 @@ DEBATABLE
 
   * round Process.memory_percent() result?
 
+  * #550: number of threads per core.
+
 
 COMPATIBILITY BREAKAGE
 ======================
