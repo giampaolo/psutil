@@ -107,8 +107,7 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args)
     if (retval == -1) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 #endif
 
@@ -169,8 +168,7 @@ psutil_linux_prlimit(PyObject *self, PyObject *args)
         ret = prlimit(pid, resource, newp, &old);
         if (ret == -1)
             return PyErr_SetFromErrno(PyExc_OSError);
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 }
 #endif
@@ -416,8 +414,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
     }
 
     Py_DECREF(py_cpu_seq);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 
 error:
     if (py_cpu_seq != NULL) {

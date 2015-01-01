@@ -172,8 +172,7 @@ psutil_proc_kill(PyObject *self, PyObject *args)
     }
 
     CloseHandle(hProcess);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -202,8 +201,7 @@ psutil_proc_wait(PyObject *self, PyObject *args)
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // no such process; we do not want to raise NSP but
             // return None instead.
-            Py_INCREF(Py_None);
-            return Py_None;
+            Py_RETURN_NONE;
         }
         else {
             PyErr_SetFromWindowsErr(0);
@@ -439,8 +437,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args)
     GetSystemInfo(&system_info);
     if (system_info.dwNumberOfProcessors == 0) {
         // mimic os.cpu_count()
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     else {
         return Py_BuildValue("I", system_info.dwNumberOfProcessors);
@@ -510,8 +507,7 @@ return_none:
     // mimic os.cpu_count()
     if (buffer != NULL)
         free(buffer);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -1079,8 +1075,7 @@ psutil_proc_suspend(PyObject *self, PyObject *args)
     if (! psutil_proc_suspend_or_resume(pid, suspend)) {
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -1096,8 +1091,7 @@ psutil_proc_resume(PyObject *self, PyObject *args)
     if (! psutil_proc_suspend_or_resume(pid, suspend)) {
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -1986,8 +1980,7 @@ psutil_proc_priority_set(PyObject *self, PyObject *args)
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -2062,8 +2055,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args)
     );
 
     CloseHandle(hProcess);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 #endif
 
@@ -2187,8 +2179,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
     }
 
     CloseHandle(hProcess);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 

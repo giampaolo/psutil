@@ -1147,8 +1147,7 @@ error:
     // mimic os.cpu_count()
     if (kc != NULL)
         kstat_close(kc);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
