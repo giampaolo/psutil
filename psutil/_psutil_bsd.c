@@ -93,6 +93,20 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
 
 
 /*
+ * Set exception to AccessDenied if pid exists else NoSuchProcess.
+ */
+int
+psutil_raise_ad_or_nsp(long pid) {
+    if (psutil_pid_exists(pid) == 0) {
+        NoSuchProcess();
+    }
+    else {
+        AccessDenied();
+    }
+}
+
+
+/*
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject *
@@ -1254,7 +1268,7 @@ void remove_spaces(char *str) {
     do
         while (*p2 == ' ')
             p2++;
-    while (*p1++ = *p2++);
+    while ((*p1++ = *p2++));
 }
 
 
@@ -1978,7 +1992,6 @@ int psutil_gather_unix(int proto, PyObject *py_retlist)
             break;
         xup = (struct xunpcb *)xug;
         if (xup->xu_len != sizeof *xup) {
-            warnx("struct xunpgen size mismatch");
             goto error;
         }
 
