@@ -5,9 +5,9 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Enhancements**
 
-- #521: dropped support for Python 2.4 and 2.5.
+- #521: drop support for Python 2.4 and 2.5.
 - #553: new examples/pstree.py script.
-- #569: [FreeBSD] added support for process CPU affinity.
+- #569: [FreeBSD] add support for process CPU affinity.
 
 **Bug fixes**
 
@@ -21,7 +21,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   psutil.users(). (patch by Sylvain Mouquet)
 - #567: [Linux] in the alternative implementation of CPU affinity PyList_Append
   and Py_BuildValue return values are not checked.
-- #569: [FreeBSD] fixed memory leak in psutil.cpu_count(logical=False).
+- #569: [FreeBSD] fix memory leak in psutil.cpu_count(logical=False).
 
 
 2.1.3 - 2014-09-26

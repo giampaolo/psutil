@@ -129,6 +129,8 @@ DEBATABLE
 
   * #550: number of threads per core.
 
+  * Have psutil.Process().cpu_affinity([]) be an alias for "all CPUs"?
+
 
 COMPATIBILITY BREAKAGE
 ======================

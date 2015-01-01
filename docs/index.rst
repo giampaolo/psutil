@@ -845,6 +845,12 @@ Process class
       >>> p.cpu_affinity()  # get
       [0, 1, 2, 3]
       >>> p.cpu_affinity([0])  # set; from now on, process will run on CPU #0 only
+      >>> p.cpu_affinity()
+      [0]
+      >>>
+      >>> # reset affinity against all CPUs
+      >>> all_cpus = list(range(psutil.cpu_count()))
+      >>> p.cpu_affinity(all_cpus)
       >>>
 
      Availability: Linux, Windows, BSD
