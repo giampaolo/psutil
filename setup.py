@@ -41,7 +41,7 @@ def get_description():
 
 
 VERSION = get_version()
-VERSION_MACRO = ('_PSUTIL_VERSION', int(VERSION.replace('.', '')))
+VERSION_MACRO = ('PSUTIL_VERSION', int(VERSION.replace('.', '')))
 
 
 # POSIX

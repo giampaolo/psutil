@@ -1248,7 +1248,7 @@ void init_psutil_sunos(void)
 #else
     PyObject *module = Py_InitModule("_psutil_sunos", PsutilMethods);
 #endif
-    PyModule_AddIntConstant(module, "version", _PSUTIL_VERSION);
+    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 
     PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
     PyModule_AddIntConstant(module, "SRUN", SRUN);
