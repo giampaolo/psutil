@@ -168,6 +168,20 @@ _WINDOWS = os.name == 'nt'
 _timer = getattr(time, 'monotonic', time.time)
 
 
+# Sanity check in case the user messed up with psutil installation
+# or did something weird with sys.path. In this case we might end
+# up importing a python module using a C extension module which
+# was compiled for a different version of psutil.
+# We want to prevent that by failing sooner rather than later.
+# See: https://github.com/giampaolo/psutil/issues/564
+if (int(__version__.replace('.', '')) !=
+        getattr(_psplatform.cext, 'version', None)):
+    msg = "version conflict: %r C extension module was built for another " \
+          "version of psutil (different than %s)" % (_psplatform.cext.__file__,
+                                                     __version__)
+    raise ImportError(msg)
+
+
 # =====================================================================
 # --- exceptions
 # =====================================================================

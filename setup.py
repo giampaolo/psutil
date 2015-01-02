@@ -40,6 +40,10 @@ def get_description():
         return f.read()
 
 
+VERSION = get_version()
+VERSION_MACRO = ('_PSUTIL_VERSION', int(VERSION.replace('.', '')))
+
+
 # POSIX
 if os.name == 'posix':
     posix_extension = Extension(
@@ -63,6 +67,7 @@ if sys.platform.startswith("win32"):
             'psutil/arch/windows/security.c',
         ],
         define_macros=[
+            VERSION_MACRO,
             # be nice to mingw, see:
             # http://www.mingw.org/wiki/Use_more_recent_defined_functions
             ('_WIN32_WINNT', get_winver()),
@@ -86,6 +91,7 @@ elif sys.platform.startswith("darwin"):
             'psutil/_psutil_common.c',
             'psutil/arch/osx/process_info.c'
         ],
+        define_macros=[VERSION_MACRO],
         extra_link_args=[
             '-framework', 'CoreFoundation', '-framework', 'IOKit'
         ],
@@ -101,6 +107,7 @@ elif sys.platform.startswith("freebsd"):
             'psutil/_psutil_common.c',
             'psutil/arch/bsd/process_info.c'
         ],
+        define_macros=[VERSION_MACRO],
         libraries=["devstat"]),
         posix_extension,
     ]
@@ -108,7 +115,8 @@ elif sys.platform.startswith("freebsd"):
 elif sys.platform.startswith("linux"):
     extensions = [Extension(
         '_psutil_linux',
-        sources=['psutil/_psutil_linux.c']),
+        sources=['psutil/_psutil_linux.c'],
+        define_macros=[VERSION_MACRO]),
         posix_extension,
     ]
 # Solaris
@@ -116,6 +124,7 @@ elif sys.platform.lower().startswith('sunos'):
     extensions = [Extension(
         '_psutil_sunos',
         sources=['psutil/_psutil_sunos.c'],
+        define_macros=[VERSION_MACRO],
         libraries=['kstat', 'nsl'],),
         posix_extension,
     ]
@@ -126,7 +135,7 @@ else:
 def main():
     setup_args = dict(
         name='psutil',
-        version=get_version(),
+        version=VERSION,
         description=__doc__.replace('\n', '').strip(),
         long_description=get_description(),
         keywords=[

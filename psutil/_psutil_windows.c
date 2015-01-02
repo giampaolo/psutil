@@ -3163,6 +3163,8 @@ void init_psutil_windows(void)
         INITERROR;
     }
 
+    PyModule_AddIntConstant(module, "version", _PSUTIL_VERSION);
+
     // process status constants
     // http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx
     PyModule_AddIntConstant(

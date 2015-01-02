@@ -566,6 +566,7 @@ void init_psutil_linux(void)
 #endif
 
 
+    PyModule_AddIntConstant(module, "version", _PSUTIL_VERSION);
 #if PSUTIL_HAVE_PRLIMIT
     PyModule_AddIntConstant(module, "RLIM_INFINITY", RLIM_INFINITY);
     PyModule_AddIntConstant(module, "RLIMIT_AS", RLIMIT_AS);
