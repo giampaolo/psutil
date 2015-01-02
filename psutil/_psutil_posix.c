@@ -161,6 +161,7 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
     PyObject *py_netmask = NULL;
     PyObject *py_broadcast = NULL;
 
+
     if (getifaddrs(&ifaddr) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
@@ -171,6 +172,10 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
             continue;
         family = ifa->ifa_addr->sa_family;
         py_address = psutil_convert_ipaddr(ifa->ifa_addr, family);
+        // If the primary address can't be determined just skip it.
+        // I've never seen this happen on Linux but I did on FreeBSD.
+        if (py_address == Py_None)
+            continue;
         if (py_address == NULL)
             goto error;
         py_netmask = psutil_convert_ipaddr(ifa->ifa_netmask, family);

@@ -170,6 +170,7 @@ pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage
 net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
+net_if_addrs = _psutil_posix.net_if_addrs
 
 
 def wrap_exceptions(fun):
