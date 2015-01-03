@@ -1009,6 +1009,7 @@ class TestSystemAPIs(unittest.TestCase):
                 continue
             families, types_ = groups
             cons = psutil.net_connections(kind)
+            self.assertEqual(len(cons), len(set(cons)))
             check(cons, families, types_)
 
     def test_net_io_counters(self):

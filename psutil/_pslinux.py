@@ -503,7 +503,7 @@ class Connections:
                 return []
         else:
             inodes = self.get_all_inodes()
-        ret = []
+        ret = set()
         for f, family, type_ in self.tmap[kind]:
             if family in (socket.AF_INET, socket.AF_INET6):
                 ls = self.process_inet(
@@ -518,8 +518,8 @@ class Connections:
                 else:
                     conn = _common.sconn(fd, family, type_, laddr, raddr,
                                          status, bound_pid)
-                ret.append(conn)
-        return ret
+                ret.add(conn)
+        return list(ret)
 
 
 _connections = Connections()

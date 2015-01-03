@@ -169,7 +169,7 @@ def net_connections(kind, _pid=-1):
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
     families, types = conn_tmap[kind]
     rawlist = cext.net_connections(_pid, families, types)
-    ret = []
+    ret = set()
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
         status = TCP_STATUSES[status]
@@ -179,8 +179,8 @@ def net_connections(kind, _pid=-1):
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
         else:
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
-        ret.append(nt)
-    return ret
+        ret.add(nt)
+    return list(ret)
 
 
 def users():

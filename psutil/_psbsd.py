@@ -185,7 +185,7 @@ def net_connections(kind):
         raise ValueError("invalid %r kind argument; choose between %s"
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
     families, types = conn_tmap[kind]
-    ret = []
+    ret = set()
     rawlist = cext.net_connections()
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
@@ -202,8 +202,8 @@ def net_connections(kind):
             fam = sockfam_to_enum(fam)
             type = socktype_to_enum(type)
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
-            ret.append(nt)
-    return ret
+            ret.add(nt)
+    return list(ret)
 
 
 pids = cext.pids
