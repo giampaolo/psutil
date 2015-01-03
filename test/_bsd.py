@@ -106,6 +106,7 @@ class BSDSpecificTestCase(unittest.TestCase):
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 self.fail("psutil=%s, df=%s" % (usage.used, used))
 
+    @retry_before_failing()
     def test_memory_maps(self):
         out = sh('procstat -v %s' % self.pid)
         maps = psutil.Process(self.pid).memory_maps(grouped=False)

@@ -6,11 +6,11 @@
 
 """Module which provides compatibility with older Python versions."""
 
-__all__ = ["PY3", "long", "xrange", "unicode", "callable", "lru_cache"]
-
 import collections
 import functools
 import sys
+
+__all__ = ["PY3", "long", "xrange", "unicode", "callable", "lru_cache"]
 
 PY3 = sys.version_info[0] == 3
 

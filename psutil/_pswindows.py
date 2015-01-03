@@ -13,8 +13,10 @@ from collections import namedtuple
 
 from psutil import _common
 from psutil._common import conn_tmap, usage_percent, isfile_strict
+from psutil._common import sockfam_to_enum, socktype_to_enum
 from psutil._compat import PY3, xrange, lru_cache
 import _psutil_windows as cext
+
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
@@ -168,16 +170,18 @@ def net_connections(kind, _pid=-1):
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
     families, types = conn_tmap[kind]
     rawlist = cext.net_connections(_pid, families, types)
-    ret = []
+    ret = set()
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
         status = TCP_STATUSES[status]
+        fam = sockfam_to_enum(fam)
+        type = socktype_to_enum(type)
         if _pid == -1:
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
         else:
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
-        ret.append(nt)
-    return ret
+        ret.add(nt)
+    return list(ret)
 
 
 def users():
@@ -446,7 +450,8 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_affinity_get(self):
-        from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
+        def from_bitmask(x):
+            return [i for i in xrange(64) if (1 << i) & x]
         bitmask = cext.proc_cpu_affinity_get(self.pid)
         return from_bitmask(bitmask)
 

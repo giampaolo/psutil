@@ -15,7 +15,8 @@ from collections import namedtuple
 
 from psutil import _common
 from psutil import _psposix
-from psutil._common import conn_tmap, usage_percent
+from psutil._common import conn_tmap, usage_percent, sockfam_to_enum
+from psutil._common import socktype_to_enum
 import _psutil_bsd as cext
 import _psutil_posix
 
@@ -50,7 +51,7 @@ TCP_STATUSES = {
 }
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-AF_LINK = socket.AF_LINK
+AF_LINK = _psutil_posix.AF_LINK
 
 # extend base mem ntuple with BSD-specific memory metrics
 svmem = namedtuple(
@@ -186,16 +187,25 @@ def net_connections(kind):
         raise ValueError("invalid %r kind argument; choose between %s"
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
     families, types = conn_tmap[kind]
-    ret = []
+    ret = set()
     rawlist = cext.net_connections()
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
         # TODO: apply filter at C level
         if fam in families and type in types:
-            status = TCP_STATUSES[status]
+            try:
+                status = TCP_STATUSES[status]
+            except KeyError:
+                # XXX: Not sure why this happens. I saw this occurring
+                # with IPv6 sockets opened by 'vim'. Those sockets
+                # have a very short lifetime so maybe the kernel
+                # can't initialize their status?
+                status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
+            fam = sockfam_to_enum(fam)
+            type = socktype_to_enum(type)
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
-            ret.append(nt)
-    return ret
+            ret.add(nt)
+    return list(ret)
 
 
 pids = cext.pids
@@ -315,6 +325,8 @@ class Process(object):
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
+            fam = sockfam_to_enum(fam)
+            type = socktype_to_enum(type)
             status = TCP_STATUSES[status]
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
@@ -397,6 +409,14 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_affinity_set(self, cpus):
+        # Pre-emptively check if CPUs are valid because the C
+        # function has a weird behavior in case of invalid CPUs,
+        # see: https://github.com/giampaolo/psutil/issues/586
+        allcpus = tuple(range(len(per_cpu_times())))
+        for cpu in cpus:
+            if cpu not in allcpus:
+                raise ValueError("invalid CPU #%i (choose between %s)"
+                                 % (cpu, allcpus))
         try:
             cext.proc_cpu_affinity_set(self.pid, cpus)
         except OSError as err:
@@ -405,7 +425,6 @@ class Process(object):
             # on because the set does not overlap with the thread's
             # anonymous mask>>
             if err.errno in (errno.EINVAL, errno.EDEADLK):
-                allcpus = tuple(range(len(per_cpu_times())))
                 for cpu in cpus:
                     if cpu not in allcpus:
                         raise ValueError("invalid CPU #%i (choose between %s)"

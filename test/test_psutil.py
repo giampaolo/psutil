@@ -47,13 +47,18 @@ try:
 except ImportError:
     ipaddress = None
 
+try:
+    import enum  # python >= 3.4
+except ImportError:
+    enum = None
+
+import psutil
+from psutil._compat import PY3, callable, long, unicode
+
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
 else:
     import unittest
-
-import psutil
-from psutil._compat import PY3, callable, long, unicode
 
 
 # ===================================================================
@@ -282,18 +287,20 @@ def reap_children(search_all=False):
 
 def check_ip_address(addr, family):
     """Attempts to check IP address's validity."""
+    if enum and PY3:
+        assert isinstance(family, enum.IntEnum), family
     if family == AF_INET:
         octs = [int(x) for x in addr.split('.')]
         assert len(octs) == 4, addr
         for num in octs:
             assert 0 <= num <= 255, addr
-        if ipaddress is not None:
+        if ipaddress:
             if not PY3:
                 addr = unicode(addr)
             ipaddress.IPv4Address(addr)
     elif family == AF_INET6:
         assert isinstance(addr, str), addr
-        if ipaddress is not None:
+        if ipaddress:
             if not PY3:
                 addr = unicode(addr)
             ipaddress.IPv6Address(addr)
@@ -542,9 +549,10 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(len(list(psutil.process_iter())), len(psutil.pids()))
 
     def test_wait_procs(self):
-        l = []
-        callback = lambda p: l.append(p.pid)
+        def callback(p):
+            l.append(p.pid)
 
+        l = []
         sproc1 = get_test_subprocess()
         sproc2 = get_test_subprocess()
         sproc3 = get_test_subprocess()
@@ -1003,6 +1011,7 @@ class TestSystemAPIs(unittest.TestCase):
                 continue
             families, types_ = groups
             cons = psutil.net_connections(kind)
+            self.assertEqual(len(cons), len(set(cons)))
             check(cons, families, types_)
 
     def test_net_io_counters(self):
@@ -1073,7 +1082,8 @@ class TestSystemAPIs(unittest.TestCase):
                             check_ip_address(ip, addr.family)
 
         if BSD or OSX or SUNOS:
-            self.assertEqual(psutil.AF_LINK, socket.AF_LINK)
+            if hasattr(socket, "AF_LINK"):
+                self.assertEqual(psutil.AF_LINK, socket.AF_LINK)
         elif LINUX:
             self.assertEqual(psutil.AF_LINK, socket.AF_PACKET)
         elif WINDOWS:
@@ -1705,7 +1715,7 @@ class TestProcess(unittest.TestCase):
             assert os.path.isfile(file), file
 
         # another process
-        cmdline = "import time; f = open(r'%s', 'r'); time.sleep(2);" % TESTFN
+        cmdline = "import time; f = open(r'%s', 'r'); time.sleep(60);" % TESTFN
         sproc = get_test_subprocess([PYTHON, "-c", cmdline], wait=True)
         p = psutil.Process(sproc.pid)
 
@@ -1983,9 +1993,9 @@ class TestProcess(unittest.TestCase):
         # A (parent) -> B (child) -> C (grandchild)
         s = "import subprocess, os, sys, time;"
         s += "PYTHON = os.path.realpath(sys.executable);"
-        s += "cmd = [PYTHON, '-c', 'import time; time.sleep(2);'];"
+        s += "cmd = [PYTHON, '-c', 'import time; time.sleep(4);'];"
         s += "subprocess.Popen(cmd);"
-        s += "time.sleep(2);"
+        s += "time.sleep(4);"
         get_test_subprocess(cmd=[PYTHON, "-c", s])
         p = psutil.Process()
         self.assertEqual(len(p.children(recursive=False)), 1)
@@ -2737,7 +2747,7 @@ class TestExampleScripts(unittest.TestCase):
         self.assertIn(str(os.getpid()), output)
 
 
-def test_main():
+def main():
     tests = []
     test_suite = unittest.TestSuite()
     tests.append(TestSystemAPIs)
@@ -2774,5 +2784,5 @@ def test_main():
     return result.wasSuccessful()
 
 if __name__ == '__main__':
-    if not test_main():
+    if not main():
         sys.exit(1)

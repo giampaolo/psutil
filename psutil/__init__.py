@@ -12,33 +12,6 @@ in Python.
 
 from __future__ import division
 
-__author__ = "Giampaolo Rodola'"
-__version__ = "3.0.0"
-version_info = tuple([int(num) for num in __version__.split('.')])
-
-__all__ = [
-    # exceptions
-    "Error", "NoSuchProcess", "AccessDenied", "TimeoutExpired",
-    # constants
-    "version_info", "__version__",
-    "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
-    "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
-    "STATUS_WAKING", "STATUS_LOCKED", "STATUS_WAITING", "STATUS_LOCKED",
-    "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
-    "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
-    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
-    "AF_LINK",
-    # classes
-    "Process", "Popen",
-    # functions
-    "pid_exists", "pids", "process_iter", "wait_procs",             # proc
-    "virtual_memory", "swap_memory",                                # memory
-    "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
-    "net_io_counters", "net_connections", "net_if_addrs",           # network
-    "disk_io_counters", "disk_partitions", "disk_usage",            # disk
-    "users", "boot_time",                                           # others
-]
-
 import collections
 import errno
 import functools
@@ -73,7 +46,7 @@ from psutil._common import (STATUS_RUNNING,  # NOQA
                             STATUS_LOCKED,
                             STATUS_IDLE,  # bsd
                             STATUS_WAITING,  # bsd
-                            STATUS_LOCKED)  # bsd
+)
 
 from psutil._common import (CONN_ESTABLISHED,
                             CONN_SYN_SENT,
@@ -89,7 +62,7 @@ from psutil._common import (CONN_ESTABLISHED,
                             CONN_NONE)
 
 if sys.platform.startswith("linux"):
-    import psutil._pslinux as _psplatform
+    from psutil import _pslinux as _psplatform
     from psutil._pslinux import (phymem_buffers,  # NOQA
                                  cached_phymem)
 
@@ -138,7 +111,7 @@ if sys.platform.startswith("linux"):
         del _psutil_linux
 
 elif sys.platform.startswith("win32"):
-    import psutil._pswindows as _psplatform
+    from psutil import _pswindows as _psplatform
     from _psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,  # NOQA
                                  BELOW_NORMAL_PRIORITY_CLASS,
                                  HIGH_PRIORITY_CLASS,
@@ -148,23 +121,46 @@ elif sys.platform.startswith("win32"):
     from psutil._pswindows import CONN_DELETE_TCB  # NOQA
 
 elif sys.platform.startswith("darwin"):
-    import psutil._psosx as _psplatform
+    from psutil import _psosx as _psplatform
 
 elif sys.platform.startswith("freebsd"):
-    import psutil._psbsd as _psplatform
+    from psutil import _psbsd as _psplatform
 
 elif sys.platform.startswith("sunos"):
-    import psutil._pssunos as _psplatform
+    from psutil import _pssunos as _psplatform
     from psutil._pssunos import (CONN_IDLE,  # NOQA
                                  CONN_BOUND)
 
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
-# extend the local __all__ context
+
+__all__ = [
+    # exceptions
+    "Error", "NoSuchProcess", "AccessDenied", "TimeoutExpired",
+    # constants
+    "version_info", "__version__",
+    "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
+    "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
+    "STATUS_WAKING", "STATUS_LOCKED", "STATUS_WAITING", "STATUS_LOCKED",
+    "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
+    "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
+    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
+    "AF_LINK",
+    # classes
+    "Process", "Popen",
+    # functions
+    "pid_exists", "pids", "process_iter", "wait_procs",             # proc
+    "virtual_memory", "swap_memory",                                # memory
+    "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
+    "net_io_counters", "net_connections", "net_if_addrs",           # network
+    "disk_io_counters", "disk_partitions", "disk_usage",            # disk
+    "users", "boot_time",                                           # others
+]
 __all__.extend(_psplatform.__extra__all__)
-
-
+__author__ = "Giampaolo Rodola'"
+__version__ = "3.0.0"
+version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
 _POSIX = os.name == 'posix'
@@ -855,9 +851,11 @@ class Process(object):
         blocking = interval is not None and interval > 0.0
         num_cpus = cpu_count()
         if _POSIX:
-            timer = lambda: _timer() * num_cpus
+            def timer():
+                return _timer() * num_cpus
         else:
-            timer = lambda: sum(cpu_times())
+            def timer():
+                return sum(cpu_times())
         if blocking:
             st1 = timer()
             pt1 = self._proc.cpu_times()

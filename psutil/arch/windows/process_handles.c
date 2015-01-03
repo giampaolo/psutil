@@ -10,28 +10,26 @@
 #endif
 
 #include <Python.h>
-#include <windows.h>
 #include <stdio.h>
+#include <windows.h>
+#include <strsafe.h>
 #include "process_handles.h"
 
 #ifndef NT_SUCCESS
 #define NT_SUCCESS(x) ((x) >= 0)
 #endif
+
 #define STATUS_INFO_LENGTH_MISMATCH 0xc0000004
 
-#define SystemHandleInformation 16
+#include <winternl.h>
 #define ObjectBasicInformation 0
 #define ObjectNameInformation 1
 #define ObjectTypeInformation 2
 
+#define HANDLE_TYPE_FILE 28
+
 
 typedef LONG NTSTATUS;
-
-typedef struct _UNICODE_STRING {
-    USHORT Length;
-    USHORT MaximumLength;
-    PWSTR Buffer;
-} UNICODE_STRING, *PUNICODE_STRING;
 
 typedef NTSTATUS (NTAPI *_NtQuerySystemInformation)(
     ULONG SystemInformationClass,
@@ -58,19 +56,29 @@ typedef NTSTATUS (NTAPI *_NtQueryObject)(
     PULONG ReturnLength
 );
 
-typedef struct _SYSTEM_HANDLE {
-    ULONG ProcessId;
-    BYTE ObjectTypeNumber;
-    BYTE Flags;
-    USHORT Handle;
-    PVOID Object;
-    ACCESS_MASK GrantedAccess;
-} SYSTEM_HANDLE, *PSYSTEM_HANDLE;
 
-typedef struct _SYSTEM_HANDLE_INFORMATION {
-    ULONG HandleCount;
-    SYSTEM_HANDLE Handles[1];
-} SYSTEM_HANDLE_INFORMATION, *PSYSTEM_HANDLE_INFORMATION;
+// Undocumented FILE_INFORMATION_CLASS: FileNameInformation
+const SYSTEM_INFORMATION_CLASS SystemExtendedHandleInformation = (SYSTEM_INFORMATION_CLASS)64;
+
+typedef struct _SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX
+{
+    PVOID Object;
+    HANDLE UniqueProcessId;
+    HANDLE HandleValue;
+    ULONG GrantedAccess;
+    USHORT CreatorBackTraceIndex;
+    USHORT ObjectTypeIndex;
+    ULONG HandleAttributes;
+    ULONG Reserved;
+} SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX, *PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX;
+
+typedef struct _SYSTEM_HANDLE_INFORMATION_EX
+{
+    ULONG_PTR NumberOfHandles;
+    ULONG_PTR Reserved;
+    SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX Handles[1];
+} SYSTEM_HANDLE_INFORMATION_EX, *PSYSTEM_HANDLE_INFORMATION_EX;
+
 
 typedef enum _POOL_TYPE {
     NonPagedPool,
@@ -114,28 +122,62 @@ GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName)
     return GetProcAddress(GetModuleHandleA(LibraryName), ProcName);
 }
 
+void PrintError(LPTSTR lpszFunction)
+{
+    // Retrieve the system error message for the last-error code
+
+    LPVOID lpMsgBuf;
+    LPVOID lpDisplayBuf;
+    DWORD dw = GetLastError();
+
+    FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        dw,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPTSTR) &lpMsgBuf,
+        0, NULL );
+
+    // Display the error message
+    lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT,
+        (lstrlen((LPCTSTR)lpMsgBuf) + lstrlen((LPCTSTR)lpszFunction) + 40) * sizeof(TCHAR));
+    StringCchPrintf((LPTSTR)lpDisplayBuf,
+        LocalSize(lpDisplayBuf) / sizeof(TCHAR),
+        TEXT("%s failed with error %d: %s"),
+        lpszFunction, dw, lpMsgBuf);
+
+    wprintf(lpDisplayBuf);
+    LocalFree(lpMsgBuf);
+    LocalFree(GetLastError);
+}
 
 PyObject *
 psutil_get_open_files(long pid, HANDLE processHandle)
 {
     _NtQuerySystemInformation NtQuerySystemInformation =
         GetLibraryProcAddress("ntdll.dll", "NtQuerySystemInformation");
+
     _NtQueryObject NtQueryObject =
         GetLibraryProcAddress("ntdll.dll", "NtQueryObject");
 
     NTSTATUS                    status;
-    PSYSTEM_HANDLE_INFORMATION  handleInfo;
+    PSYSTEM_HANDLE_INFORMATION_EX  handleInfo;
     ULONG                       handleInfoSize = 0x10000;
     ULONG                       i;
     ULONG                       fileNameLength;
     PyObject                    *filesList = Py_BuildValue("[]");
     PyObject                    *arg = NULL;
     PyObject                    *fileFromWchar = NULL;
+    DWORD nReturn = 0;
 
     if (filesList == NULL)
         return NULL;
 
-    handleInfo = (PSYSTEM_HANDLE_INFORMATION)malloc(handleInfoSize);
+    handleInfo = (PSYSTEM_HANDLE_INFORMATION_EX)HeapAlloc(GetProcessHeap(), 0,
+            handleInfoSize);
+
     if (handleInfo == NULL) {
         Py_DECREF(filesList);
         PyErr_NoMemory();
@@ -145,25 +187,27 @@ psutil_get_open_files(long pid, HANDLE processHandle)
     // NtQuerySystemInformation won't give us the correct buffer size,
     // so we guess by doubling the buffer size.
     while ((status = NtQuerySystemInformation(
-                         SystemHandleInformation,
+                         SystemExtendedHandleInformation,
                          handleInfo,
                          handleInfoSize,
-                         NULL
+                         &nReturn
                      )) == STATUS_INFO_LENGTH_MISMATCH)
     {
-        handleInfo = (PSYSTEM_HANDLE_INFORMATION) \
-            realloc(handleInfo, handleInfoSize *= 2);
+        handleInfoSize *=2;
+        HeapFree(GetProcessHeap(), 0, handleInfo);
+        handleInfo = (PSYSTEM_HANDLE_INFORMATION_EX)HeapAlloc(
+            GetProcessHeap(), 0, handleInfoSize);
     }
 
     // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH
     if (!NT_SUCCESS(status)) {
         Py_DECREF(filesList);
-        free(handleInfo);
+        HeapFree(GetProcessHeap(), 0, handleInfo);
         return NULL;
     }
 
-    for (i = 0; i < handleInfo->HandleCount; i++) {
-        SYSTEM_HANDLE            handle = handleInfo->Handles[i];
+     for (i = 0; i < handleInfo->NumberOfHandles; i++) {
+        PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX handle = &handleInfo->Handles[i];
         HANDLE                   dupHandle = NULL;
         HANDLE                   mapHandle = NULL;
         POBJECT_TYPE_INFORMATION objectTypeInfo = NULL;
@@ -175,30 +219,32 @@ psutil_get_open_files(long pid, HANDLE processHandle)
         arg = NULL;
 
         // Check if this handle belongs to the PID the user specified.
-        if (handle.ProcessId != pid)
-            continue;
-
-        // Skip handles with the following access codes as the next call
-        // to NtDuplicateObject() or NtQueryObject() might hang forever.
-        if ((handle.GrantedAccess == 0x0012019f)
-                || (handle.GrantedAccess == 0x001a019f)
-                || (handle.GrantedAccess == 0x00120189)
-                || (handle.GrantedAccess == 0x00100000)) {
+        if (handle->UniqueProcessId != (HANDLE)pid ||
+                handle->ObjectTypeIndex != HANDLE_TYPE_FILE)
+        {
             continue;
         }
 
-        if (!DuplicateHandle(processHandle,
-                             handle.Handle,
+        // Skip handles with the following access codes as the next call
+        // to NtDuplicateObject() or NtQueryObject() might hang forever.
+        if ((handle->GrantedAccess == 0x0012019f)
+                || (handle->GrantedAccess == 0x001a019f)
+                || (handle->GrantedAccess == 0x00120189)
+                || (handle->GrantedAccess == 0x00100000)) {
+            continue;
+        }
+
+       if (!DuplicateHandle(processHandle,
+                             handle->HandleValue,
                              GetCurrentProcess(),
                              &dupHandle,
                              0,
                              TRUE,
                              DUPLICATE_SAME_ACCESS))
          {
-             //printf("[%#x] Error: %d \n", handle.Handle, GetLastError());
+             //printf("[%#x] Error: %d \n", handle->HandleValue, GetLastError());
              continue;
          }
-
 
         mapHandle = CreateFileMapping(dupHandle,
                                       NULL,
@@ -254,7 +300,7 @@ psutil_get_open_files(long pid, HANDLE processHandle)
                 /*
                 printf(
                     "[%#x] %.*S: (could not get name)\n",
-                    handle.Handle,
+                    handle->HandleValue,
                     objectTypeInfo->Name.Length / 2,
                     objectTypeInfo->Name.Buffer
                     );
@@ -300,7 +346,7 @@ psutil_get_open_files(long pid, HANDLE processHandle)
             /*
             printf(
                 "[%#x] %.*S: %.*S\n",
-                handle.Handle,
+                handle->Handle,
                 objectTypeInfo->Name.Length / 2,
                 objectTypeInfo->Name.Buffer,
                 objectName.Length / 2,
@@ -314,7 +360,7 @@ psutil_get_open_files(long pid, HANDLE processHandle)
             /*
             printf(
                 "[%#x] %.*S: (unnamed)\n",
-                handle.Handle,
+                handle->Handle,
                 objectTypeInfo->Name.Length / 2,
                 objectTypeInfo->Name.Buffer
                 );
@@ -325,7 +371,7 @@ psutil_get_open_files(long pid, HANDLE processHandle)
         free(objectNameInfo);
         CloseHandle(dupHandle);
     }
-    free(handleInfo);
+    HeapFree(GetProcessHeap(), 0, handleInfo);
     CloseHandle(processHandle);
     return filesList;
 
