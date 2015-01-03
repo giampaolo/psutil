@@ -95,7 +95,7 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
 /*
  * Set exception to AccessDenied if pid exists else NoSuchProcess.
  */
-int
+void
 psutil_raise_ad_or_nsp(long pid) {
     if (psutil_pid_exists(pid) == 0) {
         NoSuchProcess();
@@ -905,7 +905,6 @@ psutil_fetch_tcplist(void)
 {
     char *buf;
     size_t len;
-    int error;
 
     for (;;) {
         if (sysctlbyname("net.inet.tcp.pcblist", NULL, &len, NULL, 0) < 0) {
@@ -1158,7 +1157,7 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                 sun = (struct sockaddr_un *)&kif->kf_sa_local;
                 snprintf(
                     path, sizeof(path), "%.*s",
-                    (sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
+                    (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
                     sun->sun_path);
 
                 tuple = Py_BuildValue("(iiisOi)",
@@ -1799,11 +1798,10 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
     struct xtcpcb *xtp;
     struct inpcb *inp;
     struct xsocket *so;
-    struct sock *sock;
     const char *varname;
     size_t len, bufsize;
     void *buf;
-    int hash, retry, vflag, type;
+    int hash, retry, type;
 
     PyObject *tuple = NULL;
     PyObject *laddr = NULL;
@@ -1933,12 +1931,11 @@ int psutil_gather_unix(int proto, PyObject *py_retlist)
 {
     struct xunpgen *xug, *exug;
     struct xunpcb *xup;
-    struct sock *sock;
     const char *varname, *protoname;
     size_t len, bufsize;
     void *buf;
     int hash, retry;
-    int family, lport, rport, pid;
+    int pid;
     struct sockaddr_un *sun;
     char path[PATH_MAX];
 
@@ -2002,7 +1999,7 @@ int psutil_gather_unix(int proto, PyObject *py_retlist)
 
         sun = (struct sockaddr_un *)&xup->xu_addr;
         snprintf(path, sizeof(path), "%.*s",
-                 (sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
+                 (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
                  sun->sun_path);
 
         tuple = Py_BuildValue("(iiisOii)", -1, AF_UNIX, proto, path, Py_None,
@@ -2033,8 +2030,6 @@ error:
 static PyObject*
 psutil_net_connections(PyObject* self, PyObject* args)
 {
-    PyObject *af_filter = NULL;
-    PyObject *type_filter = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (psutil_populate_xfiles() != 1)
