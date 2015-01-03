@@ -670,11 +670,8 @@ class Process(object):
     @wrap_exceptions
     def name(self):
         fname = "/proc/%s/stat" % self.pid
-        if PY3:
-            f = open(fname, "rt", encoding=DEFAULT_ENCODING)
-        else:
-            f = open(fname, "rt")
-        with f:
+        kw = dict(encoding=DEFAULT_ENCODING) if PY3 else dict()
+        with open(fname, "rt", **kw) as f:
             # XXX - gets changed later and probably needs refactoring
             return f.read().split(' ')[1].replace('(', '').replace(')', '')
 
@@ -708,12 +705,8 @@ class Process(object):
     @wrap_exceptions
     def cmdline(self):
         fname = "/proc/%s/cmdline" % self.pid
-        if PY3:
-            f = open(fname, "rt", encoding=DEFAULT_ENCODING)
-        else:
-            f = open(fname, "rt")
-        with f:
-            # return the args as a list
+        kw = dict(encoding=DEFAULT_ENCODING) if PY3 else dict()
+        with open(fname, "rt", **kw) as f:
             return [x for x in f.read().split('\x00') if x]
 
     @wrap_exceptions
@@ -918,8 +911,10 @@ class Process(object):
         retlist = []
         hit_enoent = False
         for thread_id in thread_ids:
+            fname = "/proc/%s/task/%s/stat" % (self.pid, thread_id)
             try:
-                f = open("/proc/%s/task/%s/stat" % (self.pid, thread_id), 'rb')
+                with open(fname, 'rb') as f:
+                    st = f.read().strip()
             except EnvironmentError as err:
                 if err.errno == errno.ENOENT:
                     # no such file or directory; it means thread
@@ -927,8 +922,6 @@ class Process(object):
                     hit_enoent = True
                     continue
                 raise
-            with f:
-                st = f.read().strip()
             # ignore the first two values ("pid (exe)")
             st = st[st.find(b')') + 2:]
             values = st.split(b' ')
