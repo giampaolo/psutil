@@ -385,7 +385,7 @@ class Process(object):
 
     # --- utility methods
 
-    def as_dict(self, attrs=[], ad_value=None):
+    def as_dict(self, attrs=None, ad_value=None):
         """Utility method returning process information as a
         hashable dictionary.
 
