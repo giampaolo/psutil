@@ -15,7 +15,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   "localhost"
 - #579: [Windows] fixed many compiler warnings.
 - #585: [FreeBSD] net_connections() may raise KeyError.
-
+- #586: [FreeBSD] cpu_affinity() segfaults on set in case an invalid CPU
+  number is provided.
 
 2.2.1 - 2015-02-02
 ==================

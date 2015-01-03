@@ -406,6 +406,14 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_affinity_set(self, cpus):
+        # Pre-emptively check if CPUs are valid because the C
+        # function has a weird behavior in case of invalid CPUs
+        #, see: https://github.com/giampaolo/psutil/issues/586
+        allcpus = tuple(range(len(per_cpu_times())))
+        for cpu in cpus:
+            if cpu not in allcpus:
+                raise ValueError("invalid CPU #%i (choose between %s)"
+                                 % (cpu, allcpus))
         try:
             cext.proc_cpu_affinity_set(self.pid, cpus)
         except OSError as err:
@@ -414,7 +422,6 @@ class Process(object):
             # on because the set does not overlap with the thread's
             # anonymous mask>>
             if err.errno in (errno.EINVAL, errno.EDEADLK):
-                allcpus = tuple(range(len(per_cpu_times())))
                 for cpu in cpus:
                     if cpu not in allcpus:
                         raise ValueError("invalid CPU #%i (choose between %s)"
