@@ -103,9 +103,8 @@ class TestProcessObjectLeaks(Base):
 
     def call(self, function, *args, **kwargs):
         try:
-            obj = getattr(self.proc, function)
-            if callable(obj):
-                obj(*args, **kwargs)
+            meth = getattr(self.proc, function)
+            meth(*args, **kwargs)
         except psutil.Error:
             pass
 
@@ -325,9 +324,8 @@ class TestModuleFunctionsLeaks(Base):
         gc.collect()
 
     def call(self, function, *args, **kwargs):
-        obj = getattr(psutil, function)
-        if callable(obj):
-            obj(*args, **kwargs)
+        fun = getattr(psutil, function)
+        fun(*args, **kwargs)
 
     @skip_if_linux()
     def test_cpu_count_logical(self):
