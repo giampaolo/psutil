@@ -2117,14 +2117,12 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
     PyObject *py_cpu_set;
     PyObject *py_cpu_seq = NULL;
 
-    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set)) {
-        goto error;
-    }
+    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set))
+        return NULL;
 
     py_cpu_seq = PySequence_Fast(py_cpu_set, "expected a sequence or integer");
-    if (!py_cpu_seq) {
-        goto error;
-    }
+    if (!py_cpu_seq)
+        return NULL;
     seq_len = PySequence_Fast_GET_SIZE(py_cpu_seq);
 
     // calculate the mask
