@@ -9,7 +9,6 @@
 import errno
 import functools
 import os
-import socket
 import sys
 from collections import namedtuple
 
