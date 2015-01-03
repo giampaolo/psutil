@@ -43,7 +43,7 @@ def skip_if_linux():
 
 
 class Base(unittest.TestCase):
-    proc = psutil.Process(os.getpid())
+    proc = psutil.Process()
 
     def execute(self, function, *args, **kwargs):
         def call_many_times():
@@ -86,7 +86,7 @@ class Base(unittest.TestCase):
                           % (rss2, rss3, difference))
 
     def get_mem(self):
-        return psutil.Process(os.getpid()).memory_info()[0]
+        return psutil.Process().memory_info()[0]
 
     def call(self, *args, **kwargs):
         raise NotImplementedError("must be implemented in subclass")
@@ -143,7 +143,7 @@ class TestProcessObjectLeaks(Base):
         self.execute('nice')
 
     def test_nice_set(self):
-        niceness = psutil.Process(os.getpid()).nice()
+        niceness = psutil.Process().nice()
         self.execute('nice', niceness)
 
     @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
@@ -155,7 +155,7 @@ class TestProcessObjectLeaks(Base):
                          "Linux and Windows Vista only")
     def test_ionice_set(self):
         if WINDOWS:
-            value = psutil.Process(os.getpid()).ionice()
+            value = psutil.Process().ionice()
             self.execute('ionice', value)
         else:
             self.execute('ionice', psutil.IOPRIO_CLASS_NONE)
@@ -224,7 +224,7 @@ class TestProcessObjectLeaks(Base):
     @unittest.skipUnless(WINDOWS or LINUX or BSD,
                          "Windows or Linux or BSD only")
     def test_cpu_affinity_set(self):
-        affinity = psutil.Process(os.getpid()).cpu_affinity()
+        affinity = psutil.Process().cpu_affinity()
         self.execute('cpu_affinity', affinity)
 
     @skip_if_linux()
