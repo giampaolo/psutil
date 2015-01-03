@@ -2659,6 +2659,10 @@ class TestExampleScripts(unittest.TestCase):
     def test_iotop(self):
         self.assert_syntax('iotop.py')
 
+    def test_pidof(self):
+        output = self.assert_stdout('pidof.py python')
+        self.assertIn(str(os.getpid()), output)
+
 
 def test_main():
     tests = []
