@@ -1032,23 +1032,26 @@ class Process(object):
         hit_enoent = False
         for fd in files:
             file = "/proc/%s/fd/%s" % (self.pid, fd)
-            if os.path.islink(file):
-                try:
-                    file = os.readlink(file)
-                except OSError as err:
-                    # ENOENT == file which is gone in the meantime
-                    if err.errno in (errno.ENOENT, errno.ESRCH):
-                        hit_enoent = True
-                        continue
-                    raise
+            try:
+                file = os.readlink(file)
+            except OSError as err:
+                # ENOENT == file which is gone in the meantime
+                if err.errno in (errno.ENOENT, errno.ESRCH):
+                    hit_enoent = True
+                    continue
+                elif err.errno == errno.EINVAL:
+                    # not a link
+                    continue
                 else:
-                    # If file is not an absolute path there's no way
-                    # to tell whether it's a regular file or not,
-                    # so we skip it. A regular file is always supposed
-                    # to be absolutized though.
-                    if file.startswith('/') and isfile_strict(file):
-                        ntuple = _common.popenfile(file, int(fd))
-                        retlist.append(ntuple)
+                    raise
+            else:
+                # If file is not an absolute path there's no way
+                # to tell whether it's a regular file or not,
+                # so we skip it. A regular file is always supposed
+                # to be absolutized though.
+                if file.startswith('/') and isfile_strict(file):
+                    ntuple = _common.popenfile(file, int(fd))
+                    retlist.append(ntuple)
         if hit_enoent:
             # raise NSP if the process disappeared on us
             os.stat('/proc/%s' % self.pid)

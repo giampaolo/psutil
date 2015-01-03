@@ -24,6 +24,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #567: [Linux] in the alternative implementation of CPU affinity PyList_Append
   and Py_BuildValue return values are not checked.
 - #569: [FreeBSD] fix memory leak in psutil.cpu_count(logical=False).
+- #571: [Linux] Process.open_files() might swallow AccessDenied exceptions and
+  return an incomplete list of open files.
 
 
 2.1.3 - 2014-09-26
