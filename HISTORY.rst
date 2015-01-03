@@ -9,6 +9,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #553: new examples/pstree.py script.
 - #564: C extension version mismatch in case the user messed up with psutil
   installation or with sys.path is now detected at import time.
+- #568: New examples/pidof.py script.
 - #569: [FreeBSD] add support for process CPU affinity.
 
 **Bug fixes**

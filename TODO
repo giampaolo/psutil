@@ -39,8 +39,6 @@ LOWER PRIORITY
 
  * AIX support?
 
- * examples/pidof.py (same as 'pidof' cli tool)
-
  * examples/taskmgr-gui.py (using tk).
 
  * system-wide number of open file descriptors:
