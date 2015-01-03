@@ -1798,10 +1798,12 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
     struct xtcpcb *xtp;
     struct inpcb *inp;
     struct xsocket *so;
-    const char *varname;
+    const char *varname = NULL;
     size_t len, bufsize;
     void *buf;
-    int hash, retry, type;
+    int hash;
+    int retry;
+    int type = NULL;
 
     PyObject *tuple = NULL;
     PyObject *laddr = NULL;
@@ -1873,7 +1875,8 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
         inp = &xtp->xt_inp;
         so = &xtp->xt_socket;
         char lip[200], rip[200];
-        int family, lport, rport, pid, status;
+        int family = NULL;
+        int lport, rport, pid, status;
 
         hash = (int)((uintptr_t)so->xso_so % HASHSIZE);
         pid = psutil_get_pid_from_sock(hash);
@@ -1931,10 +1934,13 @@ int psutil_gather_unix(int proto, PyObject *py_retlist)
 {
     struct xunpgen *xug, *exug;
     struct xunpcb *xup;
-    const char *varname, *protoname;
-    size_t len, bufsize;
+    const char *varname = NULL;
+    const char *protoname = NULL;
+    size_t len;
+    size_t bufsize;
     void *buf;
-    int hash, retry;
+    int hash;
+    int retry;
     int pid;
     struct sockaddr_un *sun;
     char path[PATH_MAX];
