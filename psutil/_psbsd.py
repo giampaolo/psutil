@@ -18,6 +18,7 @@ from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
 from ._common import conn_tmap, usage_percent, sockfam_to_enum
 from ._common import socktype_to_enum
+from ._common import NIC_DUPLEX_FULL, NIC_DUPLEX_HALF, NIC_DUPLEX_UNKNOWN
 
 
 __extra__all__ = []
@@ -205,6 +206,18 @@ def net_connections(kind):
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
             ret.add(nt)
     return list(ret)
+
+
+def net_if_stats():
+    """Get NIC stats (isup, duplex, speed, mtu)."""
+    names = net_io_counters().keys()
+    ret = {}
+    for name in names:
+        isup, duplex, speed, mtu = cext.net_if_stats(name)
+        if hasattr(_common, 'NicDuplex'):
+            duplex = _common.NicDuplex(duplex)
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+    return ret
 
 
 pids = cext.pids

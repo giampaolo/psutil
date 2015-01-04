@@ -481,8 +481,8 @@ error:
 
 
 /*
- * Return stats (isup?, duplex, speed) about a particular network
- * interface.  References:
+ * Return stats about a particular network interface.
+ * References:
  * https://github.com/dpaleino/wicd/blob/master/wicd/backends/be-ioctl.py
  * http://www.i-scream.org/libstatgrab/
  */
@@ -506,7 +506,7 @@ psutil_net_if_stats(PyObject* self, PyObject* args)
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
         goto error;
-    strncpy(ifr.ifr_name, nic_name, sizeof ifr.ifr_name);
+    strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
 
     // is up?
     ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
