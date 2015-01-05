@@ -23,13 +23,20 @@ def pidof(pgname):
         try:
             name = proc.name()
         except psutil.Error:
-            name = ""
+            pass
+        else:
+            if name == pgname:
+                pids.append(str(proc.pid))
+                continue
+
         try:
             cmdline = proc.cmdline()
         except psutil.Error:
-            cmdline = []
-        if name == pgname or cmdline and cmdline[0] == pgname:
-            pids.append(str(proc.pid))
+            pass
+        else:
+            if cmdline and cmdline[0] == pgname:
+                pids.append(str(proc.pid))
+
     return pids
 
 

@@ -2660,7 +2660,7 @@ class TestExampleScripts(unittest.TestCase):
         self.assert_syntax('iotop.py')
 
     def test_pidof(self):
-        output = self.assert_stdout('pidof.py python')
+        output = self.assert_stdout('pidof.py %s' % psutil.Process().name())
         self.assertIn(str(os.getpid()), output)
 
 
