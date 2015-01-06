@@ -14,7 +14,7 @@ rem
 rem By default C:\Python27\python.exe is used.
 rem To compile for a specific Python version run:
 rem
-rem     set PYTHON=C:\Python24\python.exe & make.bat build
+rem     set PYTHON=C:\Python26\python.exe & make.bat build
 rem
 rem ==========================================================================
 
@@ -68,26 +68,14 @@ if "%1" == "clean" (
 
 if "%1" == "build" (
     :build
-    if %PYTHON%==C:\Python24\python.exe (
-        %PYTHON% setup.py build -c mingw32
-    ) else if %PYTHON%==C:\Python25\python.exe (
-        %PYTHON% setup.py build -c mingw32
-    ) else (
-        %PYTHON% setup.py build
-    )
+    %PYTHON% setup.py build
     if %errorlevel% neq 0 goto :error
     goto :eof
 )
 
 if "%1" == "install" (
     :install
-    if %PYTHON%==C:\Python24\python.exe (
-        %PYTHON% setup.py build -c mingw32 install
-    ) else if %PYTHON%==C:\Python25\python.exe (
-        %PYTHON% setup.py build -c mingw32 install
-    ) else (
-        %PYTHON% setup.py build install
-    )
+    %PYTHON% setup.py build install
     goto :eof
 )
 
