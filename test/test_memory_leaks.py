@@ -85,6 +85,10 @@ class Base(unittest.TestCase):
                 self.fail("rss2=%s, rss3=%s, difference=%s"
                           % (rss2, rss3, difference))
 
+    def execute_w_exc(self, exc, function, *args, **kwargs):
+        kwargs['_exc'] = exc
+        self.execute(function, *args, **kwargs)
+
     def get_mem(self):
         return psutil.Process().memory_info()[0]
 
@@ -102,11 +106,15 @@ class TestProcessObjectLeaks(Base):
         reap_children()
 
     def call(self, function, *args, **kwargs):
-        try:
-            meth = getattr(self.proc, function)
-            meth(*args, **kwargs)
-        except psutil.Error:
-            pass
+        meth = getattr(self.proc, function)
+        if '_exc' in kwargs:
+            exc = kwargs.pop('_exc')
+            self.assertRaises(exc, meth, *args, **kwargs)
+        else:
+            try:
+                meth(*args, **kwargs)
+            except psutil.Error:
+                pass
 
     @skip_if_linux()
     def test_name(self):
@@ -158,6 +166,7 @@ class TestProcessObjectLeaks(Base):
             self.execute('ionice', value)
         else:
             self.execute('ionice', psutil.IOPRIO_CLASS_NONE)
+            self.execute_w_exc(OSError, 'ionice', -1)
 
     @unittest.skipIf(OSX, "feature not supported on this platform")
     @skip_if_linux()
@@ -225,6 +234,7 @@ class TestProcessObjectLeaks(Base):
     def test_cpu_affinity_set(self):
         affinity = psutil.Process().cpu_affinity()
         self.execute('cpu_affinity', affinity)
+        self.execute_w_exc(ValueError, 'cpu_affinity', [9999])
 
     @skip_if_linux()
     def test_open_files(self):
@@ -250,6 +260,7 @@ class TestProcessObjectLeaks(Base):
     def test_rlimit_set(self):
         limit = psutil.Process().rlimit(psutil.RLIMIT_NOFILE)
         self.execute('rlimit', psutil.RLIMIT_NOFILE, limit)
+        self.execute_w_exc(OSError, 'rlimit', -1)
 
     @skip_if_linux()
     # Windows implementation is based on a single system-wide function
@@ -299,6 +310,12 @@ class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
     zombie processes raising NoSuchProcess exception.
     """
     proc = DEAD_PROC
+
+    def call(self, *args, **kwargs):
+        try:
+            TestProcessObjectLeaks.call(self, *args, **kwargs)
+        except psutil.NoSuchProcess:
+            pass
 
     if not POSIX:
         def test_kill(self):

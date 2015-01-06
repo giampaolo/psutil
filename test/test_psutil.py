@@ -968,6 +968,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
 
+    @skip_on_access_denied()
     def test_net_connections(self):
         def check(cons, families, types_):
             for conn in cons:
