@@ -25,7 +25,7 @@ else:
 import psutil
 import psutil._common
 
-from psutil._compat import callable, xrange
+from psutil._compat import xrange
 from test_psutil import (WINDOWS, POSIX, OSX, LINUX, SUNOS, BSD, TESTFN,
                          RLIMIT_SUPPORT)
 from test_psutil import (reap_children, supports_ipv6, safe_remove,
@@ -234,7 +234,7 @@ class TestProcessObjectLeaks(Base):
     def test_cpu_affinity_set(self):
         affinity = psutil.Process().cpu_affinity()
         self.execute('cpu_affinity', affinity)
-        self.execute_w_exc(ValueError, 'cpu_affinity', [9999])
+        self.execute_w_exc(ValueError, 'cpu_affinity', [-1])
 
     @skip_if_linux()
     def test_open_files(self):
