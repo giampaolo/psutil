@@ -2341,6 +2341,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertTrue(ret >= 0)
 
     def connections(self, ret):
+        self.assertEqual(len(ret), len(set(ret)))
         for conn in ret:
             check_connection(conn)
 
