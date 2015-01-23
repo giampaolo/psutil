@@ -25,8 +25,6 @@
 #include<linux/sockios.h>
 #include<linux/if.h>
 #include<linux/ethtool.h>
-#include<string.h>
-#include<stdio.h>
 
 #include "_psutil_linux.h"
 
