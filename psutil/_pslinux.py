@@ -309,6 +309,11 @@ def boot_time():
         raise RuntimeError("line 'btime' not found")
 
 
+def nics_info(nic):
+    """Return the NIC information """
+    return cext.nics_info(nic)
+
+
 # --- processes
 
 def pids():

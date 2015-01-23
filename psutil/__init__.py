@@ -36,6 +36,7 @@ __all__ = [
     "net_io_counters", "net_connections",                           # network
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
     "users", "boot_time",                                           # others
+    "nics_info",                                                    # nics
 ]
 
 import collections
@@ -1841,6 +1842,10 @@ def users():
        seconds since the epoch.
     """
     return _psplatform.users()
+
+
+def nics_info(nic):
+    return _psplatform.nics_info(nic)
 
 
 # =====================================================================
