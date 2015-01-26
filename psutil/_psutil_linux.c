@@ -20,12 +20,6 @@
 #include <sys/syscall.h>
 #include <sys/sysinfo.h>
 
-#include<sys/ioctl.h>
-#include<netinet/in.h>
-#include<linux/sockios.h>
-#include<linux/if.h>
-#include<linux/ethtool.h>
-
 #include "_psutil_linux.h"
 
 /* The minimum number of CPUs allocated in a cpu_set_t */
@@ -346,7 +340,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
         return NULL;
     }
 
-	CPU_ZERO(&cpuset);
+    CPU_ZERO(&cpuset);
     if (sched_getaffinity(pid, len, &cpuset) < 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
@@ -425,7 +419,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
 error:
     if (py_cpu_seq != NULL) {
         Py_DECREF(py_cpu_seq);
-	}
+    }
 
     return NULL;
 }
@@ -477,50 +471,6 @@ error:
     return NULL;
 }
 
-/*
-* Return the nic details of given nic
-*/
-
-static PyObject *
-psutil_nics_info(PyObject *self, PyObject *args)
-{
-    int fd, rc;
-    struct ifreq ifr;
-    struct ethtool_cmd edata;
-    struct ethtool_value updata;
-    PyObject *py_tuple = NULL;
-    char *nic;
-
-    if(!PyArg_ParseTuple(args, "s", &nic)){
-        return NULL;
-    }
-
-    strncpy(ifr.ifr_name, nic, sizeof(ifr.ifr_name));
-
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (fd < 0) {
-        printf("TODO:...");
-    }
-
-    ifr.ifr_data = &edata;
-
-    edata.cmd = ETHTOOL_GSET;
-    rc = ioctl(fd, SIOCETHTOOL, &ifr);
-
-
-    ifr.ifr_data = &updata;
-    updata.cmd = ETHTOOL_GLINK;
-    rc = ioctl(fd, SIOCETHTOOL, &ifr);
-
-    py_tuple = Py_BuildValue("(iii)",
-            edata.speed,
-            edata.duplex,
-            updata.data);
-    return py_tuple;
-}
-
-
-
 
 /*
  * Define the psutil C module methods and initialize the module.
@@ -558,8 +508,6 @@ PsutilMethods[] =
      "Get or set process resource limits."},
 #endif
 
-    {"nics_info", psutil_nics_info, METH_VARARGS,
-     "Returns all nics and their info as a dict of tuples" },
 
     {NULL, NULL, 0, NULL}
 };

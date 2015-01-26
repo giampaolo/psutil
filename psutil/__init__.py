@@ -1844,8 +1844,8 @@ def users():
     return _psplatform.users()
 
 
-def nics_info(nic):
-    return _psplatform.nics_info(nic)
+def nics_info():
+    return _psplatform.nics_info()
 
 
 # =====================================================================
