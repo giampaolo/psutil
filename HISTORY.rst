@@ -1,5 +1,14 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+2.2.1 - 2015-02-02
+==================
+
+**Bug fixes**
+
+- #496: [Linux] fix "ValueError: ambiguos inode with multiple PIDs references"
+  (patch by Bruno Binet)
+
+
 2.2.0 - 2015-01-06
 ==================
 
