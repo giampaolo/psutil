@@ -37,8 +37,9 @@ running processes**. It implements many functionalities offered by command line
 tools such as: ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
 ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap. It currently supports
 **Linux, Windows, OSX, FreeBSD** and **Sun Solaris**, both **32-bit** and
-**64-bit** architectures, with Python versions from **2.4 to 3.4**.
-`PyPy <http://pypy.org/>`_ is also known to work.
+**64-bit** architectures, with Python versions from **2.6 to 3.4** (users of
+Python 2.4 and 2.5 may use `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
+`PyPy <http://pypy.org/>`__ is also known to work.
 
 ====================
 Example applications
@@ -59,6 +60,7 @@ Example applications
 See also:
 
  * https://github.com/nicolargo/glances
+ * https://github.com/google/grr
  * https://github.com/Jahaja/psdash
 
 ==============
@@ -144,13 +146,6 @@ Network
      pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED', pid=None),
      pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT', pid=None)
      ...]
-    >>>
-    >>> psutil.net_if_addrs()
-    {'lo': [snic(family=2, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1'),
-            snic(family=10, address='::1', netmask='ffff:ffff:ffff:ffff', broadcast=None)],
-     'wlan0': [snic(family=2, address='192.168.0.10', netmask='255.255.255.0', broadcast='192.168.0.255'),
-               snic(family=10, address='2a02:8109:83c0:224c::5', netmask='ffff:ffff:ffff', broadcast=None)]}
-    >>>
 
 Other system info
 =================
@@ -216,7 +211,7 @@ Process management
     >>>
     >>> p.memory_info()
     pmem(rss=7471104, vms=68513792)
-    >>> p.ext_memory_info()
+    >>> p.memory_info_ex()
     extmem(rss=9662464, vms=49192960, shared=3612672, text=2564096, lib=0, data=5754880, dirty=0)
     >>> p.memory_maps()
     [pmmap_grouped(path='/lib/x86_64-linux-gnu/libutil-2.15.so', rss=16384, anonymous=8192, swap=0),
@@ -325,6 +320,9 @@ http://groups.google.com/group/psutil/
 Timeline
 ========
 
+- 2015-02-02: `psutil-2.2.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.2.1.tar.gz>`_
+- 2015-01-06: `psutil-2.2.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.2.0.tar.gz>`_
+- 2014-09-26: `psutil-2.1.3.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.3.tar.gz>`_
 - 2014-09-21: `psutil-2.1.2.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.2.tar.gz>`_
 - 2014-04-30: `psutil-2.1.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.1.tar.gz>`_
 - 2014-04-08: `psutil-2.1.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.0.tar.gz>`_

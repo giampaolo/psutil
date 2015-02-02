@@ -13,7 +13,7 @@ in Python.
 from __future__ import division
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "2.1.3"
+__version__ = "2.2.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
@@ -38,23 +38,23 @@ __all__ = [
     "users", "boot_time",                                           # others
 ]
 
-import sys
-import os
-import time
-import signal
-import warnings
+import collections
 import errno
-import socket
+import functools
+import os
+import signal
 import subprocess
+import sys
+import time
+import warnings
 try:
     import pwd
 except ImportError:
     pwd = None
 
 from psutil._common import memoize
-from psutil._compat import property, callable, long, defaultdict
-from psutil._compat import (wraps as _wraps,
-                            PY3 as _PY3)
+from psutil._compat import callable, long
+from psutil._compat import PY3 as _PY3
 from psutil._common import (deprecated_method as _deprecated_method,
                             deprecated as _deprecated,
                             sdiskio as _nt_sys_diskio,
@@ -169,6 +169,20 @@ _WINDOWS = os.name == 'nt'
 _timer = getattr(time, 'monotonic', time.time)
 
 
+# Sanity check in case the user messed up with psutil installation
+# or did something weird with sys.path. In this case we might end
+# up importing a python module using a C extension module which
+# was compiled for a different version of psutil.
+# We want to prevent that by failing sooner rather than later.
+# See: https://github.com/giampaolo/psutil/issues/564
+if (int(__version__.replace('.', '')) !=
+        getattr(_psplatform.cext, 'version', None)):
+    msg = "version conflict: %r C extension module was built for another " \
+          "version of psutil (different than %s)" % (_psplatform.cext.__file__,
+                                                     __version__)
+    raise ImportError(msg)
+
+
 # =====================================================================
 # --- exceptions
 # =====================================================================
@@ -253,7 +267,7 @@ def _assert_pid_not_reused(fun):
     """Decorator which raises NoSuchProcess in case a process is no
     longer running or its PID has been reused.
     """
-    @_wraps(fun)
+    @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
         if not self.is_running():
             raise NoSuchProcess(self.pid, self._name)
@@ -372,7 +386,7 @@ class Process(object):
 
     # --- utility methods
 
-    def as_dict(self, attrs=[], ad_value=None):
+    def as_dict(self, attrs=None, ad_value=None):
         """Utility method returning process information as a
         hashable dictionary.
 
@@ -533,8 +547,7 @@ class Process(object):
         if self._exe is None:
             try:
                 exe = self._proc.exe()
-            except AccessDenied:
-                err = sys.exc_info()[1]
+            except AccessDenied as err:
                 return guess_it(fallback=err)
             else:
                 if not exe:
@@ -565,7 +578,12 @@ class Process(object):
                 # might happen if python was installed from sources
                 raise ImportError(
                     "requires pwd module shipped with standard python")
-            return pwd.getpwuid(self.uids().real).pw_name
+            real_uid = self.uids().real
+            try:
+                return pwd.getpwuid(real_uid).pw_name
+            except KeyError:
+                # the uid can't be resolved by the system
+                return str(real_uid)
         else:
             return self._proc.username()
 
@@ -669,13 +687,14 @@ class Process(object):
             else:
                 return self._proc.rlimit(resource, limits)
 
-    # Windows and Linux only
+    # Windows, Linux and BSD only
     if hasattr(_psplatform.Process, "cpu_affinity_get"):
 
         def cpu_affinity(self, cpus=None):
             """Get or set process CPU affinity.
             If specified 'cpus' must be a list of CPUs for which you
             want to set the affinity (e.g. [0, 1]).
+            (Windows, Linux and BSD only).
             """
             if cpus is None:
                 return self._proc.cpu_affinity_get()
@@ -769,7 +788,7 @@ class Process(object):
         else:
             # construct a dict where 'values' are all the processes
             # having 'key' as their parent
-            table = defaultdict(list)
+            table = collections.defaultdict(list)
             if ppid_map is None:
                 for p in process_iter():
                     try:
@@ -966,10 +985,13 @@ class Process(object):
 
     if _POSIX:
         def _send_signal(self, sig):
+            # XXX: according to "man 2 kill" PID 0 has a special
+            # meaning as it refers to <<every process in the process
+            # group of the calling process>>, so should we prevent
+            # it here?
             try:
                 os.kill(self.pid, sig)
-            except OSError:
-                err = sys.exc_info()[1]
+            except OSError as err:
                 if err.errno == errno.ESRCH:
                     self._gone = True
                     raise NoSuchProcess(self.pid, self._name)
@@ -1916,7 +1938,6 @@ def test():
     output.
     """
     import datetime
-    from psutil._compat import print_
 
     today_day = datetime.date.today()
     templ = "%-10s %5s %4s %4s %7s %7s %-13s %5s %7s  %s"
@@ -1925,8 +1946,8 @@ def test():
     if _POSIX:
         attrs.append('uids')
         attrs.append('terminal')
-    print_(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY",
-                    "START", "TIME", "COMMAND"))
+    print(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY",
+                   "START", "TIME", "COMMAND"))
     for p in process_iter():
         try:
             pinfo = p.as_dict(attrs, ad_value='')
@@ -1963,16 +1984,17 @@ def test():
                 int(pinfo['memory_info'].rss / 1024) or '?'
             memp = pinfo['memory_percent'] and \
                 round(pinfo['memory_percent'], 1) or '?'
-            print_(templ % (user[:10],
-                            pinfo['pid'],
-                            pinfo['cpu_percent'],
-                            memp,
-                            vms,
-                            rss,
-                            pinfo.get('terminal', '') or '?',
-                            ctime,
-                            cputime,
-                            pinfo['name'].strip() or '?'))
+            print(templ % (
+                user[:10],
+                pinfo['pid'],
+                pinfo['cpu_percent'],
+                memp,
+                vms,
+                rss,
+                pinfo.get('terminal', '') or '?',
+                ctime,
+                cputime,
+                pinfo['name'].strip() or '?'))
 
 
 def _replace_module():
@@ -2012,7 +2034,7 @@ def _replace_module():
 
 
 _replace_module()
-del property, memoize, division, _replace_module
+del memoize, division, _replace_module
 if sys.version_info < (3, 0):
     del num
 

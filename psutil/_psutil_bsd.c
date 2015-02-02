@@ -21,6 +21,7 @@
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/cpuset.h>
 #include <net/route.h>
 
 #include <sys/socket.h>
@@ -88,6 +89,20 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
         return -1;
     }
     return 0;
+}
+
+
+/*
+ * Set exception to AccessDenied if pid exists else NoSuchProcess.
+ */
+int
+psutil_raise_ad_or_nsp(long pid) {
+    if (psutil_pid_exists(pid) == 0) {
+        NoSuchProcess();
+    }
+    else {
+        AccessDenied();
+    }
 }
 
 
@@ -502,8 +517,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args)
 
     if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
         // mimic os.cpu_count()
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     else {
         return Py_BuildValue("i", ncpu);
@@ -520,6 +534,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args)
 {
     void *topology = NULL;
     size_t size = 0;
+    PyObject *py_str;
 
     if (sysctlbyname("kern.sched.topology_spec", NULL, &size, NULL, 0))
         goto error;
@@ -533,11 +548,14 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args)
     if (sysctlbyname("kern.sched.topology_spec", topology, &size, NULL, 0))
         goto error;
 
-    return Py_BuildValue("s", topology);
+    py_str = Py_BuildValue("s", topology);
+    free(topology);
+    return py_str;
 
 error:
-    Py_INCREF(Py_None);
-    return Py_None;
+    if (topology != NULL)
+        free(topology);
+    Py_RETURN_NONE;
 }
 
 
@@ -1250,7 +1268,7 @@ void remove_spaces(char *str) {
     do
         while (*p2 == ' ')
             p2++;
-    while (*p1++ = *p2++);
+    while ((*p1++ = *p2++));
 }
 
 
@@ -1974,7 +1992,6 @@ int psutil_gather_unix(int proto, PyObject *py_retlist)
             break;
         xup = (struct xunpcb *)xug;
         if (xup->xu_len != sizeof *xup) {
-            warnx("struct xunpgen size mismatch");
             goto error;
         }
 
@@ -2043,6 +2060,112 @@ error:
 
 
 /*
+ * Get process CPU affinity.
+ * Reference: http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
+ */
+static PyObject*
+psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args)
+{
+    long pid;
+    int ret;
+    int i;
+    cpuset_t mask;
+    PyObject* py_retlist;
+    PyObject* py_cpu_num;
+
+    if (!PyArg_ParseTuple(args, "i", &pid)) {
+        return NULL;
+    }
+
+    ret = cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, pid,
+                             sizeof(mask), &mask);
+    if (ret != 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    py_retlist = PyList_New(0);
+    if (py_retlist == NULL)
+        return NULL;
+
+    for (i = 0; i < CPU_SETSIZE; i++) {
+        if (CPU_ISSET(i, &mask)) {
+            py_cpu_num = Py_BuildValue("i", i);
+            if (py_cpu_num == NULL)
+                goto error;
+            if (PyList_Append(py_retlist, py_cpu_num))
+                goto error;
+        }
+    }
+
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_cpu_num);
+    Py_DECREF(py_retlist);
+    return NULL;
+}
+
+
+/*
+ * Set process CPU affinity.
+ * Reference: http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
+ */
+static PyObject *
+psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
+{
+    long pid;
+    int i;
+    int seq_len;
+    int ret;
+    cpuset_t cpu_set;
+    PyObject *py_cpu_set;
+    PyObject *py_cpu_seq = NULL;
+
+    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set)) {
+        goto error;
+    }
+
+    py_cpu_seq = PySequence_Fast(py_cpu_set, "expected a sequence or integer");
+    if (!py_cpu_seq) {
+        goto error;
+    }
+    seq_len = PySequence_Fast_GET_SIZE(py_cpu_seq);
+
+    // calculate the mask
+    CPU_ZERO(&cpu_set);
+    for (i = 0; i < seq_len; i++) {
+        PyObject *item = PySequence_Fast_GET_ITEM(py_cpu_seq, i);
+#if PY_MAJOR_VERSION >= 3
+        long value = PyLong_AsLong(item);
+#else
+        long value = PyInt_AsLong(item);
+#endif
+        if (value == -1 && PyErr_Occurred()) {
+            goto error;
+        }
+        CPU_SET(value, &cpu_set);
+    }
+
+    // set affinity
+    ret = cpuset_setaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, pid,
+                             sizeof(cpu_set), &cpu_set);
+    if (ret != 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    Py_DECREF(py_cpu_seq);
+    Py_RETURN_NONE;
+
+error:
+    if (py_cpu_seq != NULL)
+        Py_DECREF(py_cpu_seq);
+    return NULL;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -2083,6 +2206,10 @@ PsutilMethods[] =
      "Return process IO counters"},
     {"proc_tty_nr", psutil_proc_tty_nr, METH_VARARGS,
      "Return process tty (terminal) number"},
+    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
+     "Return process CPU affinity."},
+    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
+     "Set process CPU affinity."},
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
      "Return files opened by process as a list of (path, fd) tuples"},
@@ -2181,6 +2308,8 @@ void init_psutil_bsd(void)
 #else
     PyObject *module = Py_InitModule("_psutil_bsd", PsutilMethods);
 #endif
+    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
+
     // process status constants
     PyModule_AddIntConstant(module, "SSTOP", SSTOP);
     PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);

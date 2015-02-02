@@ -15,9 +15,14 @@ https://pypi.python.org/pypi/unittest2
 
 from __future__ import division
 
+import ast
 import atexit
+import collections
+import contextlib
 import datetime
 import errno
+import functools
+import json
 import os
 import pickle
 import re
@@ -36,14 +41,6 @@ import traceback
 import types
 import warnings
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
-try:
-    import ast  # python >= 2.6
-except ImportError:
-    ast = None
-try:
-    import json  # python >= 2.6
-except ImportError:
-    json = None
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
@@ -51,7 +48,7 @@ else:
     import unittest
 
 import psutil
-from psutil._compat import PY3, callable, long, wraps, unicode
+from psutil._compat import PY3, callable, long, unicode
 
 
 # ===================================================================
@@ -157,20 +154,15 @@ def pyrun(src):
     """
     if PY3:
         src = bytes(src, 'ascii')
-    # could have used NamedTemporaryFile(delete=False) but it's
-    # >= 2.6 only
-    fd, path = tempfile.mkstemp(prefix=TESTFILE_PREFIX)
-    _testfiles.append(path)
-    f = open(path, 'wb')
-    try:
+    with tempfile.NamedTemporaryFile(
+            prefix=TESTFILE_PREFIX, delete=False) as f:
+        _testfiles.append(f.name)
         f.write(src)
         f.flush()
-        subp = get_test_subprocess([PYTHON, f.name], stdout=None, stderr=None)
+        subp = get_test_subprocess([PYTHON, f.name], stdout=None,
+                                   stderr=None)
         wait_for_pid(subp.pid)
         return subp
-    finally:
-        os.close(fd)
-        f.close()
 
 
 def warn(msg):
@@ -244,7 +236,7 @@ def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
     Used in the test suite to give time the sub process to initialize.
     """
     raise_at = time.time() + timeout
-    while 1:
+    while True:
         if pid in psutil.pids():
             # give it one more iteration to allow full initialization
             time.sleep(0.01)
@@ -321,13 +313,12 @@ def check_connection(conn):
         # and that's rejected by bind()
         if conn.family == AF_INET:
             s = socket.socket(conn.family, conn.type)
-            try:
-                s.bind((conn.laddr[0], 0))
-            except socket.error:
-                err = sys.exc_info()[1]
-                if err.errno != errno.EADDRNOTAVAIL:
-                    raise
-            s.close()
+            with contextlib.closing(s):
+                try:
+                    s.bind((conn.laddr[0], 0))
+                except socket.error as err:
+                    if err.errno != errno.EADDRNOTAVAIL:
+                        raise
     elif conn.family == AF_UNIX:
         assert not conn.raddr, repr(conn.raddr)
         assert conn.status == psutil.CONN_NONE, conn.status
@@ -335,30 +326,22 @@ def check_connection(conn):
     if getattr(conn, 'fd', -1) != -1:
         assert conn.fd > 0, conn
         if hasattr(socket, 'fromfd') and not WINDOWS:
-            dupsock = None
             try:
-                try:
-                    dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
-                except (socket.error, OSError):
-                    err = sys.exc_info()[1]
-                    if err.args[0] != errno.EBADF:
-                        raise
-                else:
-                    # python >= 2.5
-                    if hasattr(dupsock, "family"):
-                        assert dupsock.family == conn.family
-                        assert dupsock.type == conn.type
-            finally:
-                if dupsock is not None:
-                    dupsock.close()
+                dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
+            except (socket.error, OSError) as err:
+                if err.args[0] != errno.EBADF:
+                    raise
+            else:
+                with contextlib.closing(dupsock):
+                    assert dupsock.family == conn.family
+                    assert dupsock.type == conn.type
 
 
 def safe_remove(file):
     "Convenience function for removing temporary test files"
     try:
         os.remove(file)
-    except OSError:
-        err = sys.exc_info()[1]
+    except OSError as err:
         if err.errno != errno.ENOENT:
             # file is being used by another process
             if WINDOWS and isinstance(err, WindowsError) and err.errno == 13:
@@ -370,8 +353,7 @@ def safe_rmdir(dir):
     "Convenience function for removing temporary test directories"
     try:
         os.rmdir(dir)
-    except OSError:
-        err = sys.exc_info()[1]
+    except OSError as err:
         if err.errno != errno.ENOENT:
             raise
 
@@ -394,7 +376,7 @@ def retry_before_failing(ntimes=None):
     actually failing.
     """
     def decorator(fun):
-        @wraps(fun)
+        @functools.wraps(fun)
         def wrapper(*args, **kwargs):
             for x in range(ntimes or NO_RETRIES):
                 try:
@@ -409,7 +391,7 @@ def retry_before_failing(ntimes=None):
 def skip_on_access_denied(only_if=None):
     """Decorator to Ignore AccessDenied exceptions."""
     def decorator(fun):
-        @wraps(fun)
+        @functools.wraps(fun)
         def wrapper(*args, **kwargs):
             try:
                 return fun(*args, **kwargs)
@@ -428,7 +410,7 @@ def skip_on_access_denied(only_if=None):
 def skip_on_not_implemented(only_if=None):
     """Decorator to Ignore NotImplementedError exceptions."""
     def decorator(fun):
-        @wraps(fun)
+        @functools.wraps(fun)
         def wrapper(*args, **kwargs):
             try:
                 return fun(*args, **kwargs)
@@ -450,13 +432,12 @@ def supports_ipv6():
         return False
     sock = None
     try:
-        try:
-            sock = socket.socket(AF_INET6, SOCK_STREAM)
-            sock.bind(("::1", 0))
-        except (socket.error, socket.gaierror):
-            return False
-        else:
-            return True
+        sock = socket.socket(AF_INET6, SOCK_STREAM)
+        sock.bind(("::1", 0))
+    except (socket.error, socket.gaierror):
+        return False
+    else:
+        return True
     finally:
         if sock is not None:
             sock.close()
@@ -513,12 +494,6 @@ class ThreadTask(threading.Thread):
         self.join()
 
 
-# python 2.4
-if not hasattr(subprocess.Popen, 'terminate'):
-    subprocess.Popen.terminate = \
-        lambda self: psutil.Process(self.pid).terminate()
-
-
 # ===================================================================
 # --- System-related API tests
 # ===================================================================
@@ -540,6 +515,10 @@ class TestSystemAPIs(unittest.TestCase):
         p.kill()
         p.wait()
         self.assertNotIn(sproc.pid, [x.pid for x in psutil.process_iter()])
+
+    @retry_before_failing(50)
+    def test_process_iter_against_pids(self):
+        self.assertEqual(len(list(psutil.process_iter())), len(psutil.pids()))
 
     def test_wait_procs(self):
         l = []
@@ -606,12 +585,9 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(os.sysconf("SC_PAGE_SIZE"), resource.getpagesize())
 
     def test_deprecated_apis(self):
-        s = socket.socket()
-        s.bind(('localhost', 0))
-        s.listen(1)
-        warnings.filterwarnings("error")
-        p = psutil.Process()
-        try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error")
+            p = psutil.Process()
             # system APIs
             self.assertRaises(DeprecationWarning, getattr, psutil, 'NUM_CPUS')
             self.assertRaises(DeprecationWarning, getattr, psutil, 'BOOT_TIME')
@@ -670,33 +646,29 @@ class TestSystemAPIs(unittest.TestCase):
                         self.fail("%s did not raise DeprecationWarning" % name)
 
             # named tuples
-            ret = call_until(p.connections, "len(ret) != 0")
-            self.assertRaises(DeprecationWarning,
-                              getattr, ret[0], 'local_address')
-            self.assertRaises(DeprecationWarning,
-                              getattr, ret[0], 'remote_address')
-        finally:
-            s.close()
-            warnings.resetwarnings()
+            with contextlib.closing(socket.socket()) as s:
+                s.bind(('localhost', 0))
+                s.listen(1)
+                ret = call_until(p.connections, "len(ret) != 0")
+                self.assertRaises(DeprecationWarning,
+                                  getattr, ret[0], 'local_address')
+                self.assertRaises(DeprecationWarning,
+                                  getattr, ret[0], 'remote_address')
 
         # check value against new APIs
-        warnings.filterwarnings("ignore")
-        try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
             self.assertEqual(psutil.get_pid_list(), psutil.pids())
             self.assertEqual(psutil.NUM_CPUS, psutil.cpu_count())
             self.assertEqual(psutil.BOOT_TIME, psutil.boot_time())
             self.assertEqual(psutil.TOTAL_PHYMEM,
                              psutil.virtual_memory().total)
-        finally:
-            warnings.resetwarnings()
 
     def test_deprecated_apis_retval(self):
-        warnings.filterwarnings("ignore")
-        try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
             self.assertEqual(psutil.total_virtmem(),
                              psutil.swap_memory().total)
-        finally:
-            warnings.resetwarnings()
 
     def test_virtual_memory(self):
         mem = psutil.virtual_memory()
@@ -844,7 +816,7 @@ class TestSystemAPIs(unittest.TestCase):
     def test_sys_per_cpu_times2(self):
         tot1 = psutil.cpu_times(percpu=True)
         stop_at = time.time() + 0.1
-        while 1:
+        while True:
             if time.time() >= stop_at:
                 break
         tot2 = psutil.cpu_times(percpu=True)
@@ -862,20 +834,20 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_sys_cpu_percent(self):
         psutil.cpu_percent(interval=0.001)
-        for x in range(1000):
+        for x in range(100):
             self._test_cpu_percent(psutil.cpu_percent(interval=None))
 
     def test_sys_per_cpu_percent(self):
         self.assertEqual(len(psutil.cpu_percent(interval=0.001, percpu=True)),
                          psutil.cpu_count())
-        for x in range(1000):
+        for x in range(100):
             percents = psutil.cpu_percent(interval=None, percpu=True)
             for percent in percents:
                 self._test_cpu_percent(percent)
 
     def test_sys_cpu_times_percent(self):
         psutil.cpu_times_percent(interval=0.001)
-        for x in range(1000):
+        for x in range(100):
             cpu = psutil.cpu_times_percent(interval=None)
             for percent in cpu:
                 self._test_cpu_percent(percent)
@@ -885,7 +857,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(len(psutil.cpu_times_percent(interval=0.001,
                                                       percpu=True)),
                          psutil.cpu_count())
-        for x in range(1000):
+        for x in range(100):
             cpus = psutil.cpu_times_percent(interval=None, percpu=True)
             for cpu in cpus:
                 for percent in cpu:
@@ -917,8 +889,7 @@ class TestSystemAPIs(unittest.TestCase):
         fname = tempfile.mktemp()
         try:
             psutil.disk_usage(fname)
-        except OSError:
-            err = sys.exc_info()[1]
+        except OSError as err:
             if err.args[0] != errno.ENOENT:
                 raise
         else:
@@ -972,10 +943,9 @@ class TestSystemAPIs(unittest.TestCase):
             if not WINDOWS:
                 try:
                     os.stat(disk.mountpoint)
-                except OSError:
+                except OSError as err:
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
-                    err = sys.exc_info()[1]
                     if err.errno not in (errno.EPERM, errno.EACCES):
                         raise
                 else:
@@ -998,6 +968,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
 
+    @skip_on_access_denied()
     def test_net_connections(self):
         def check(cons, families, types_):
             for conn in cons:
@@ -1151,28 +1122,31 @@ class TestProcess(unittest.TestCase):
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
         p.kill()
-        p.wait()
+        sig = p.wait()
         self.assertFalse(psutil.pid_exists(test_pid))
+        if POSIX:
+            self.assertEqual(sig, signal.SIGKILL)
 
     def test_terminate(self):
         sproc = get_test_subprocess(wait=True)
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
         p.terminate()
-        p.wait()
+        sig = p.wait()
         self.assertFalse(psutil.pid_exists(test_pid))
+        if POSIX:
+            self.assertEqual(sig, signal.SIGTERM)
 
     def test_send_signal(self):
-        if POSIX:
-            sig = signal.SIGKILL
-        else:
-            sig = signal.SIGTERM
+        sig = signal.SIGKILL if POSIX else signal.SIGTERM
         sproc = get_test_subprocess()
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
         p.send_signal(sig)
-        p.wait()
+        exit_sig = p.wait()
         self.assertFalse(psutil.pid_exists(test_pid))
+        if POSIX:
+            self.assertEqual(exit_sig, sig)
 
     def test_wait(self):
         # check exit code signal
@@ -1250,7 +1224,7 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(psutil.TimeoutExpired, p.wait, 0)
         p.kill()
         stop_at = time.time() + 2
-        while 1:
+        while True:
             try:
                 code = p.wait(0)
             except psutil.TimeoutExpired:
@@ -1337,9 +1311,8 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process()
         # test reads
         io1 = p.io_counters()
-        f = open(PYTHON, 'rb')
-        f.read()
-        f.close()
+        with open(PYTHON, 'rb') as f:
+            f.read()
         io2 = p.io_counters()
         if not BSD:
             assert io2.read_count > io1.read_count, (io1, io2)
@@ -1348,12 +1321,11 @@ class TestProcess(unittest.TestCase):
         assert io2.write_bytes >= io1.write_bytes, (io1, io2)
         # test writes
         io1 = p.io_counters()
-        f = tempfile.TemporaryFile(prefix=TESTFILE_PREFIX)
-        if PY3:
-            f.write(bytes("x" * 1000000, 'ascii'))
-        else:
-            f.write("x" * 1000000)
-        f.close()
+        with tempfile.TemporaryFile(prefix=TESTFILE_PREFIX) as f:
+            if PY3:
+                f.write(bytes("x" * 1000000, 'ascii'))
+            else:
+                f.write("x" * 1000000)
         io2 = p.io_counters()
         assert io2.write_count >= io1.write_count, (io1, io2)
         assert io2.write_bytes >= io1.write_bytes, (io1, io2)
@@ -1415,14 +1387,13 @@ class TestProcess(unittest.TestCase):
         import resource
         p = psutil.Process(os.getpid())
         names = [x for x in dir(psutil) if x.startswith('RLIMIT')]
-        assert names
+        assert names, names
         for name in names:
             value = getattr(psutil, name)
             self.assertGreaterEqual(value, 0)
             if name in dir(resource):
                 self.assertEqual(value, getattr(resource, name))
-                self.assertEqual(p.rlimit(value),
-                                 resource.getrlimit(value))
+                self.assertEqual(p.rlimit(value), resource.getrlimit(value))
             else:
                 ret = p.rlimit(value)
                 self.assertEqual(len(ret), 2)
@@ -1621,17 +1592,16 @@ class TestProcess(unittest.TestCase):
                 p.nice(psutil.NORMAL_PRIORITY_CLASS)
         else:
             try:
-                try:
-                    first_nice = p.nice()
-                    p.nice(1)
-                    self.assertEqual(p.nice(), 1)
-                    # going back to previous nice value raises
-                    # AccessDenied on OSX
-                    if not OSX:
-                        p.nice(0)
-                        self.assertEqual(p.nice(), 0)
-                except psutil.AccessDenied:
-                    pass
+                first_nice = p.nice()
+                p.nice(1)
+                self.assertEqual(p.nice(), 1)
+                # going back to previous nice value raises
+                # AccessDenied on OSX
+                if not OSX:
+                    p.nice(0)
+                    self.assertEqual(p.nice(), 0)
+            except psutil.AccessDenied:
+                pass
             finally:
                 try:
                     p.nice(first_nice)
@@ -1668,7 +1638,8 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
 
-    @unittest.skipUnless(WINDOWS or LINUX, 'not available on this platform')
+    @unittest.skipUnless(WINDOWS or LINUX or BSD,
+                         'not available on this platform')
     @unittest.skipIf(LINUX and TRAVIS, "unknown failure on travis")
     def test_cpu_affinity(self):
         p = psutil.Process()
@@ -1703,11 +1674,10 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process()
         files = p.open_files()
         self.assertFalse(TESTFN in files)
-        f = open(TESTFN, 'w')
-        call_until(p.open_files, "len(ret) != %i" % len(files))
-        filenames = [x.path for x in p.open_files()]
-        self.assertIn(TESTFN, filenames)
-        f.close()
+        with open(TESTFN, 'w'):
+            call_until(p.open_files, "len(ret) != %i" % len(files))
+            filenames = [x.path for x in p.open_files()]
+            self.assertIn(TESTFN, filenames)
         for file in filenames:
             assert os.path.isfile(file), file
 
@@ -1728,25 +1698,24 @@ class TestProcess(unittest.TestCase):
 
     def test_open_files2(self):
         # test fd and path fields
-        fileobj = open(TESTFN, 'w')
-        p = psutil.Process()
-        for path, fd in p.open_files():
-            if path == fileobj.name or fd == fileobj.fileno():
-                break
-        else:
-            self.fail("no file found; files=%s" % repr(p.open_files()))
-        self.assertEqual(path, fileobj.name)
-        if WINDOWS:
-            self.assertEqual(fd, -1)
-        else:
-            self.assertEqual(fd, fileobj.fileno())
-        # test positions
-        ntuple = p.open_files()[0]
-        self.assertEqual(ntuple[0], ntuple.path)
-        self.assertEqual(ntuple[1], ntuple.fd)
-        # test file is gone
-        fileobj.close()
-        self.assertTrue(fileobj.name not in p.open_files())
+        with open(TESTFN, 'w') as fileobj:
+            p = psutil.Process()
+            for path, fd in p.open_files():
+                if path == fileobj.name or fd == fileobj.fileno():
+                    break
+            else:
+                self.fail("no file found; files=%s" % repr(p.open_files()))
+            self.assertEqual(path, fileobj.name)
+            if WINDOWS:
+                self.assertEqual(fd, -1)
+            else:
+                self.assertEqual(fd, fileobj.fileno())
+            # test positions
+            ntuple = p.open_files()[0]
+            self.assertEqual(ntuple[0], ntuple.path)
+            self.assertEqual(ntuple[1], ntuple.fd)
+            # test file is gone
+            self.assertTrue(fileobj.name not in p.open_files())
 
     def compare_proc_sys_cons(self, pid, proc_cons):
         from psutil._common import pconn
@@ -1809,14 +1778,13 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipUnless(supports_ipv6(), 'IPv6 is not supported')
     def test_connections_ipv6(self):
-        s = socket.socket(AF_INET6, SOCK_STREAM)
-        self.addCleanup(s.close)
-        s.bind(('::1', 0))
-        s.listen(1)
-        cons = psutil.Process().connections()
-        self.assertEqual(len(cons), 1)
-        self.assertEqual(cons[0].laddr[0], '::1')
-        self.compare_proc_sys_cons(os.getpid(), cons)
+        with contextlib.closing(socket.socket(AF_INET6, SOCK_STREAM)) as s:
+            s.bind(('::1', 0))
+            s.listen(1)
+            cons = psutil.Process().connections()
+            self.assertEqual(len(cons), 1)
+            self.assertEqual(cons[0].laddr[0], '::1')
+            self.compare_proc_sys_cons(os.getpid(), cons)
 
     @unittest.skipUnless(hasattr(socket, 'AF_UNIX'),
                          'AF_UNIX is not supported')
@@ -1824,7 +1792,7 @@ class TestProcess(unittest.TestCase):
         def check(type):
             safe_remove(TESTFN)
             sock = socket.socket(AF_UNIX, type)
-            try:
+            with contextlib.closing(sock):
                 sock.bind(TESTFN)
                 cons = psutil.Process().connections(kind='unix')
                 conn = cons[0]
@@ -1838,8 +1806,6 @@ class TestProcess(unittest.TestCase):
                     # XXX Solaris can't retrieve system-wide UNIX
                     # sockets.
                     self.compare_proc_sys_cons(os.getpid(), cons)
-            finally:
-                sock.close()
 
         check(SOCK_STREAM)
         check(SOCK_DGRAM)
@@ -1849,23 +1815,19 @@ class TestProcess(unittest.TestCase):
     @unittest.skipIf(WINDOWS or SUNOS,
                      'connection fd not available on this platform')
     def test_connection_fromfd(self):
-        sock = socket.socket()
-        sock.bind(('localhost', 0))
-        sock.listen(1)
-        p = psutil.Process()
-        for conn in p.connections():
-            if conn.fd == sock.fileno():
-                break
-        else:
-            sock.close()
-            self.fail("couldn't find socket fd")
-        dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
-        try:
-            self.assertEqual(dupsock.getsockname(), conn.laddr)
-            self.assertNotEqual(sock.fileno(), dupsock.fileno())
-        finally:
-            sock.close()
-            dupsock.close()
+        with contextlib.closing(socket.socket()) as sock:
+            sock.bind(('localhost', 0))
+            sock.listen(1)
+            p = psutil.Process()
+            for conn in p.connections():
+                if conn.fd == sock.fileno():
+                    break
+            else:
+                self.fail("couldn't find socket fd")
+            dupsock = socket.fromfd(conn.fd, conn.family, conn.type)
+            with contextlib.closing(dupsock):
+                self.assertEqual(dupsock.getsockname(), conn.laddr)
+                self.assertNotEqual(sock.fileno(), dupsock.fileno())
 
     def test_connections_all(self):
         tcp_template = textwrap.dedent("""
@@ -1950,8 +1912,10 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process()
         start = p.num_fds()
         file = open(TESTFN, 'w')
+        self.addCleanup(file.close)
         self.assertEqual(p.num_fds(), start + 1)
         sock = socket.socket()
+        self.addCleanup(sock.close)
         self.assertEqual(p.num_fds(), start + 2)
         file.close()
         sock.close()
@@ -2014,8 +1978,7 @@ class TestProcess(unittest.TestCase):
 
     def test_children_duplicates(self):
         # find the process which has the highest number of children
-        from psutil._compat import defaultdict
-        table = defaultdict(int)
+        table = collections.defaultdict(int)
         for p in psutil.process_iter():
             try:
                 table[p.ppid()] += 1
@@ -2115,46 +2078,51 @@ class TestProcess(unittest.TestCase):
         # reap_children() as they are attributable to 'us'
         # (os.getpid()) via children(recursive=True).
         src = textwrap.dedent("""\
-        import os, sys, time, socket
+        import os, sys, time, socket, contextlib
         child_pid = os.fork()
         if child_pid > 0:
             time.sleep(3000)
         else:
             # this is the zombie process
             s = socket.socket(socket.AF_UNIX)
-            s.connect('%s')
-            if sys.version_info < (3, ):
-                pid = str(os.getpid())
-            else:
-                pid = bytes(str(os.getpid()), 'ascii')
-            s.sendall(pid)
-            s.close()
+            with contextlib.closing(s):
+                s.connect('%s')
+                if sys.version_info < (3, ):
+                    pid = str(os.getpid())
+                else:
+                    pid = bytes(str(os.getpid()), 'ascii')
+                s.sendall(pid)
         """ % TESTFN)
-        sock = None
-        try:
-            sock = socket.socket(socket.AF_UNIX)
-            sock.settimeout(GLOBAL_TIMEOUT)
-            sock.bind(TESTFN)
-            sock.listen(1)
-            pyrun(src)
-            conn, _ = sock.accept()
-            select.select([conn.fileno()], [], [], GLOBAL_TIMEOUT)
-            zpid = int(conn.recv(1024))
-            zproc = psutil.Process(zpid)
-            # Make sure we can re-instantiate the process after its
-            # status changed to zombie and at least be able to
-            # query its status.
-            # XXX should we also assume ppid should be querable?
-            call_until(lambda: zproc.status(), "ret == psutil.STATUS_ZOMBIE")
-            self.assertTrue(psutil.pid_exists(zpid))
-            zproc = psutil.Process(zpid)
-            descendants = [x.pid for x in psutil.Process().children(
-                           recursive=True)]
-            self.assertIn(zpid, descendants)
-        finally:
-            if sock is not None:
-                sock.close()
-            reap_children(search_all=True)
+        with contextlib.closing(socket.socket(socket.AF_UNIX)) as sock:
+            try:
+                sock.settimeout(GLOBAL_TIMEOUT)
+                sock.bind(TESTFN)
+                sock.listen(1)
+                pyrun(src)
+                conn, _ = sock.accept()
+                select.select([conn.fileno()], [], [], GLOBAL_TIMEOUT)
+                zpid = int(conn.recv(1024))
+                zproc = psutil.Process(zpid)
+                call_until(lambda: zproc.status(),
+                           "ret == psutil.STATUS_ZOMBIE")
+                # A zombie process should always be instantiable
+                zproc = psutil.Process(zpid)
+                # ...and at least its status always be querable
+                self.assertEqual(zproc.status(), psutil.STATUS_ZOMBIE)
+                # ...its parent should 'see' it
+                descendants = [x.pid for x in psutil.Process().children(
+                               recursive=True)]
+                self.assertIn(zpid, descendants)
+                # XXX should we also assume ppid be usable?  Note: this
+                # would be an important use case as the only way to get
+                # rid of a zombie is to kill its parent.
+                # self.assertEqual(zpid.ppid(), os.getpid())
+                # ...and all other APIs should be able to deal with it
+                self.assertTrue(psutil.pid_exists(zpid))
+                self.assertIn(zpid, psutil.pids())
+                self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
+            finally:
+                reap_children(search_all=True)
 
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
@@ -2275,8 +2243,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                         msg = "%r was skipped because not implemented" % (
                             self.__class__.__name__ + '.test_' + name)
                         warn(msg)
-                    except (psutil.NoSuchProcess, psutil.AccessDenied):
-                        err = sys.exc_info()[1]
+                    except (psutil.NoSuchProcess, psutil.AccessDenied) as err:
                         self.assertEqual(err.pid, p.pid)
                         if err.name:
                             # make sure exception's name attr is set
@@ -2289,8 +2256,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                             assert ret, ret
                         meth = getattr(self, name)
                         meth(ret)
-                except Exception:
-                    err = sys.exc_info()[1]
+                except Exception as err:
                     s = '\n' + '=' * 70 + '\n'
                     s += "FAIL: test_%s (proc=%s" % (name, p)
                     if ret != default:
@@ -2420,6 +2386,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertTrue(ret >= 0)
 
     def connections(self, ret):
+        self.assertEqual(len(ret), len(set(ret)))
         for conn in ret:
             check_connection(conn)
 
@@ -2428,8 +2395,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             assert os.path.isabs(ret), ret
             try:
                 st = os.stat(ret)
-            except OSError:
-                err = sys.exc_info()[1]
+            except OSError as err:
                 # directory has been removed in mean time
                 if err.errno != errno.ENOENT:
                     raise
@@ -2494,58 +2460,54 @@ class TestFetchAllProcesses(unittest.TestCase):
 # --- Limited user tests
 # ===================================================================
 
-if hasattr(os, 'getuid') and os.getuid() == 0:
-
-    class LimitedUserTestCase(TestProcess):
-        """Repeat the previous tests by using a limited user.
-        Executed only on UNIX and only if the user who run the test script
-        is root.
-        """
-        # the uid/gid the test suite runs under
+@unittest.skipUnless(hasattr(os, 'getuid') and os.getuid() == 0,
+                     "super user privileges are required")
+class LimitedUserTestCase(TestProcess):
+    """Repeat the previous tests by using a limited user.
+    Executed only on UNIX and only if the user who run the test script
+    is root.
+    """
+    # the uid/gid the test suite runs under
+    if hasattr(os, 'getuid'):
         PROCESS_UID = os.getuid()
         PROCESS_GID = os.getgid()
 
-        def __init__(self, *args, **kwargs):
-            TestProcess.__init__(self, *args, **kwargs)
-            # re-define all existent test methods in order to
-            # ignore AccessDenied exceptions
-            for attr in [x for x in dir(self) if x.startswith('test')]:
-                meth = getattr(self, attr)
+    def __init__(self, *args, **kwargs):
+        TestProcess.__init__(self, *args, **kwargs)
+        # re-define all existent test methods in order to
+        # ignore AccessDenied exceptions
+        for attr in [x for x in dir(self) if x.startswith('test')]:
+            meth = getattr(self, attr)
 
-                def test_(self):
-                    try:
-                        meth()
-                    except psutil.AccessDenied:
-                        pass
-                setattr(self, attr, types.MethodType(test_, self))
+            def test_(self):
+                try:
+                    meth()
+                except psutil.AccessDenied:
+                    pass
+            setattr(self, attr, types.MethodType(test_, self))
 
-        def setUp(self):
-            safe_remove(TESTFN)
-            os.setegid(1000)
-            os.seteuid(1000)
-            TestProcess.setUp(self)
+    def setUp(self):
+        safe_remove(TESTFN)
+        os.setegid(1000)
+        os.seteuid(1000)
+        TestProcess.setUp(self)
 
-        def tearDown(self):
-            os.setegid(self.PROCESS_UID)
-            os.seteuid(self.PROCESS_GID)
-            TestProcess.tearDown(self)
+    def tearDown(self):
+        os.setegid(self.PROCESS_UID)
+        os.seteuid(self.PROCESS_GID)
+        TestProcess.tearDown(self)
 
-        def test_nice(self):
-            try:
-                psutil.Process().nice(-1)
-            except psutil.AccessDenied:
-                pass
-            else:
-                self.fail("exception not raised")
-
-        def test_zombie_process(self):
-            # causes problems if test test suite is run as root
+    def test_nice(self):
+        try:
+            psutil.Process().nice(-1)
+        except psutil.AccessDenied:
             pass
-else:
+        else:
+            self.fail("exception not raised")
 
-    class LimitedUserTestCase(unittest.TestCase):
-        def test_it(self):
-            unittest.skip("super user privileges are required")
+    def test_zombie_process(self):
+        # causes problems if test test suite is run as root
+        pass
 
 
 # ===================================================================
@@ -2584,7 +2546,7 @@ class TestMisc(unittest.TestCase):
 
     def test__all__(self):
         for name in dir(psutil):
-            if name in ('callable', 'defaultdict', 'error', 'namedtuple',
+            if name in ('callable', 'error', 'namedtuple',
                         'long', 'test', 'NUM_CPUS', 'BOOT_TIME',
                         'TOTAL_PHYMEM'):
                 continue
@@ -2673,8 +2635,7 @@ class TestExampleScripts(unittest.TestCase):
             exe = exe + ' ' + args
         try:
             out = sh(sys.executable + ' ' + exe).strip()
-        except RuntimeError:
-            err = sys.exc_info()[1]
+        except RuntimeError as err:
             if 'AccessDenied' in str(err):
                 return str(err)
             else:
@@ -2684,11 +2645,8 @@ class TestExampleScripts(unittest.TestCase):
 
     def assert_syntax(self, exe, args=None):
         exe = os.path.join(EXAMPLES_DIR, exe)
-        f = open(exe, 'r')
-        try:
+        with open(exe, 'r') as f:
             src = f.read()
-        finally:
-            f.close()
         ast.parse(src)
 
     def test_check_presence(self):
@@ -2719,6 +2677,9 @@ class TestExampleScripts(unittest.TestCase):
     def test_ps(self):
         self.assert_stdout('ps.py')
 
+    def test_pstree(self):
+        self.assert_stdout('pstree.py')
+
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
@@ -2747,6 +2708,10 @@ class TestExampleScripts(unittest.TestCase):
                      'ast module not available on this python version')
     def test_iotop(self):
         self.assert_syntax('iotop.py')
+
+    def test_pidof(self):
+        output = self.assert_stdout('pidof.py %s' % psutil.Process().name())
+        self.assertIn(str(os.getpid()), output)
 
 
 def test_main():

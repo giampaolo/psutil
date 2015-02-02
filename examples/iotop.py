@@ -167,7 +167,7 @@ def refresh_window(procs, disks_read, disks_write):
 def main():
     try:
         interval = 0
-        while 1:
+        while True:
             args = poll(interval)
             refresh_window(*args)
             interval = 1

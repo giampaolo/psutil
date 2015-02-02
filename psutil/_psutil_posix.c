@@ -64,8 +64,7 @@ psutil_posix_setpriority(PyObject *self, PyObject *args)
     if (retval == -1) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 

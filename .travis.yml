@@ -5,7 +5,7 @@ python:
     - 3.2
     - 3.3
     - 3.4
-    - pypy
+    # - pypy
 install:
     - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
 script:
@@ -13,6 +13,7 @@ script:
     - python setup.py build
     - python setup.py install
     - python test/test_psutil.py
+    - python test/test_memory_leaks.py
     - make flake8
 os:
     - linux

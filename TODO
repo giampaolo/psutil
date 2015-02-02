@@ -39,11 +39,6 @@ LOWER PRIORITY
 
  * AIX support?
 
- * examples/pidof.py (same as 'pidof' cli tool)
-
- * examples/pstree.py (same as 'pstree' cli tool)
-    * threads() should also return thread names in order to implement it
-
  * examples/taskmgr-gui.py (using tk).
 
  * system-wide number of open file descriptors:
@@ -129,6 +124,10 @@ DEBATABLE
     This also leads questions as whether we should introduce a sorting order.
 
   * round Process.memory_percent() result?
+
+  * #550: number of threads per core.
+
+  * Have psutil.Process().cpu_affinity([]) be an alias for "all CPUs"?
 
 
 COMPATIBILITY BREAKAGE

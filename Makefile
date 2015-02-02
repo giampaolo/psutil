@@ -27,20 +27,10 @@ build: clean
 	$(PYTHON) setup.py build
 
 install: build
-	if test $(PYTHON) = python2.4; then \
-		$(PYTHON) setup.py install; \
-	elif test $(PYTHON) = python2.5; then \
-		$(PYTHON) setup.py install; \
-	else \
-		$(PYTHON) setup.py install --user; \
-	fi
+	$(PYTHON) setup.py install --user; \
 
 uninstall:
-	if test $(PYTHON) = python2.4; then \
-		pip-2.4 uninstall -y -v psutil; \
-	else \
-		cd ..; $(PYTHON) -m pip uninstall -y -v psutil; \
-	fi
+	cd ..; $(PYTHON) -m pip uninstall -y -v psutil; \
 
 test: install
 	$(PYTHON) $(TSCRIPT)

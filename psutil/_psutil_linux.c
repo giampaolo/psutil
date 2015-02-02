@@ -107,8 +107,7 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args)
     if (retval == -1) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 #endif
 
@@ -169,8 +168,7 @@ psutil_linux_prlimit(PyObject *self, PyObject *args)
         ret = prlimit(pid, resource, newp, &old);
         if (ret == -1)
             return PyErr_SetFromErrno(PyExc_OSError);
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 }
 #endif
@@ -252,8 +250,13 @@ psutil_linux_sysinfo(PyObject *self, PyObject *args)
 
 
 /*
- * Return process CPU affinity as a Python long (the bitmask)
+ * Return process CPU affinity as a Python list
+ * The dual implementation exists because of:
+ * https://github.com/giampaolo/psutil/issues/536
  */
+
+#ifdef CPU_ALLOC
+
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
 {
@@ -289,7 +292,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
     res = PyList_New(0);
     if (res == NULL)
         goto error;
-    
+
     cpucount_s = CPU_COUNT_S(setsize, mask);
     for (cpu = 0, count = cpucount_s; count; cpu++) {
         if (CPU_ISSET_S(cpu, setsize, mask)) {
@@ -317,7 +320,50 @@ error:
     Py_XDECREF(res);
     return NULL;
 }
+#else
 
+
+/*
+ * Alternative implementation in case CPU_ALLOC is not defined.
+ */
+static PyObject *
+psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
+{
+    cpu_set_t cpuset;
+    unsigned int len = sizeof(cpu_set_t);
+    long pid;
+    int i;
+    PyObject* py_retlist;
+    PyObject *py_cpu_num;
+
+    if (!PyArg_ParseTuple(args, "i", &pid)) {
+        return NULL;
+    }
+
+	CPU_ZERO(&cpuset);
+    if (sched_getaffinity(pid, len, &cpuset) < 0) {
+        return PyErr_SetFromErrno(PyExc_OSError);
+    }
+
+    py_retlist = PyList_New(0);
+    for (i = 0; i < CPU_SETSIZE; ++i) {
+        if (CPU_ISSET(i, &cpuset)) {
+            py_cpu_num = Py_BuildValue("i", i);
+            if (py_cpu_num == NULL)
+                goto error;
+            if (PyList_Append(py_retlist, py_cpu_num))
+                goto error;
+        }
+    }
+
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_cpu_num);
+    Py_DECREF(py_retlist);
+    return NULL;
+}
+#endif
 
 /*
  * Set process CPU affinity; expects a bitmask
@@ -337,10 +383,8 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
     }
 
     if (!PySequence_Check(py_cpu_set)) {
-        // does not work on Python 2.4
-        // PyErr_Format(PyExc_TypeError, "sequence argument expected, got %s",
-        //              Py_TYPE(py_cpu_set)->tp_name);
-        PyErr_Format(PyExc_TypeError, "sequence argument expected");
+        PyErr_Format(PyExc_TypeError, "sequence argument expected, got %s",
+                     Py_TYPE(py_cpu_set)->tp_name);
         goto error;
     }
 
@@ -370,12 +414,13 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
     }
 
     Py_DECREF(py_cpu_seq);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 
 error:
-    if (py_cpu_seq != NULL)
+    if (py_cpu_seq != NULL) {
         Py_DECREF(py_cpu_seq);
+	}
+
     return NULL;
 }
 
@@ -521,6 +566,7 @@ void init_psutil_linux(void)
 #endif
 
 
+    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 #if PSUTIL_HAVE_PRLIMIT
     PyModule_AddIntConstant(module, "RLIM_INFINITY", RLIM_INFINITY);
     PyModule_AddIntConstant(module, "RLIMIT_AS", RLIMIT_AS);

@@ -439,8 +439,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args)
 
     if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
         // mimic os.cpu_count()
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     else {
         return Py_BuildValue("i", ncpu);
@@ -458,8 +457,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args)
     size_t size = sizeof(int);
     if (sysctlbyname("hw.physicalcpu", &num, &size, NULL, 0)) {
         // mimic os.cpu_count()
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     return Py_BuildValue("i", num);
 }
@@ -1851,6 +1849,7 @@ init_psutil_osx(void)
 #else
     PyObject *module = Py_InitModule("_psutil_osx", PsutilMethods);
 #endif
+    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
     // process status constants, defined in:
     // http://fxr.watson.org/fxr/source/bsd/sys/proc.h?v=xnu-792.6.70#L149
     PyModule_AddIntConstant(module, "SIDL", SIDL);

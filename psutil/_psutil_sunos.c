@@ -456,29 +456,24 @@ psutil_per_cpu_times(PyObject *self, PyObject *args)
         goto error;
     }
 
-    numcpus = sysconf(_SC_NPROCESSORS_ONLN) - 1;
-    for (i = 0; i <= numcpus; i++) {
-        ksp = kstat_lookup(kc, "cpu_stat", i, NULL);
-        if (ksp == NULL) {
-            PyErr_SetFromErrno(PyExc_OSError);
-            goto error;
+    for (ksp = kc->kc_chain; ksp != NULL; ksp = ksp->ks_next) {
+        if (strcmp(ksp->ks_module, "cpu_stat") == 0) {
+            if (kstat_read(kc, ksp, &cs) == -1) {
+                PyErr_SetFromErrno(PyExc_OSError);
+                goto error;
+            }
+            py_cputime = Py_BuildValue("ffff",
+                                       (float)cs.cpu_sysinfo.cpu[CPU_USER],
+                                       (float)cs.cpu_sysinfo.cpu[CPU_KERNEL],
+                                       (float)cs.cpu_sysinfo.cpu[CPU_IDLE],
+                                       (float)cs.cpu_sysinfo.cpu[CPU_WAIT]);
+            if (py_cputime == NULL)
+                goto error;
+            if (PyList_Append(py_retlist, py_cputime))
+                goto error;
+            Py_DECREF(py_cputime);
+            py_cputime = NULL;
         }
-        if (kstat_read(kc, ksp, &cs) == -1) {
-            PyErr_SetFromErrno(PyExc_OSError);
-            goto error;
-        }
-
-        py_cputime = Py_BuildValue("ffff",
-                                   (float)cs.cpu_sysinfo.cpu[CPU_USER],
-                                   (float)cs.cpu_sysinfo.cpu[CPU_KERNEL],
-                                   (float)cs.cpu_sysinfo.cpu[CPU_IDLE],
-                                   (float)cs.cpu_sysinfo.cpu[CPU_WAIT]);
-        if (py_cputime == NULL)
-            goto error;
-        if (PyList_Append(py_retlist, py_cputime))
-            goto error;
-        Py_DECREF(py_cputime);
-
     }
 
     kstat_close(kc);
@@ -1152,8 +1147,7 @@ error:
     // mimic os.cpu_count()
     if (kc != NULL)
         kstat_close(kc);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -1254,6 +1248,8 @@ void init_psutil_sunos(void)
 #else
     PyObject *module = Py_InitModule("_psutil_sunos", PsutilMethods);
 #endif
+    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
+
     PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
     PyModule_AddIntConstant(module, "SRUN", SRUN);
     PyModule_AddIntConstant(module, "SZOMB", SZOMB);

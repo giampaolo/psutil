@@ -54,7 +54,7 @@ C: USA
 E: david.daeschler@gmail.com
 W: http://daviddaeschler.com
 D: some contributions to initial design/bootstrap plus occasional bug fixing
-I: 522
+I: 522, 536
 
 N: cjgohlke
 E: cjgohlke@gmail.com
@@ -261,3 +261,22 @@ N: Yaolong Huang
 E: airekans@gmail.com
 W: http://airekans.github.io/
 I: 530
+
+N: Anders Chrigström
+W: https://github.com/anders-chrigstrom
+I: 496
+
+N: spacewander
+E: spacewanderlzx@gmail.com
+I: 561
+
+N: Sylvain Mouquet
+E: sylvain.mouquet@gmail.com
+I: 565
+
+N: karthikrev
+I: 568
+
+N: Bruno Binet
+E: bruno.binet@gmail.com
+I: 572

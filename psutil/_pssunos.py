@@ -11,11 +11,12 @@ import os
 import socket
 import subprocess
 import sys
+from collections import namedtuple
 
 from psutil import _common
 from psutil import _psposix
 from psutil._common import usage_percent, isfile_strict
-from psutil._compat import namedtuple, PY3
+from psutil._compat import PY3
 import _psutil_posix
 import _psutil_sunos as cext
 
@@ -232,14 +233,13 @@ def wrap_exceptions(fun):
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except EnvironmentError:
+        except EnvironmentError as err:
             # support for private module import
             if NoSuchProcess is None or AccessDenied is None:
                 raise
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if
             # process is gone in meantime.
-            err = sys.exc_info()[1]
             if err.errno in (errno.ENOENT, errno.ESRCH):
                 raise NoSuchProcess(self.pid, self._name)
             if err.errno in (errno.EPERM, errno.EACCES):
@@ -293,8 +293,7 @@ class Process(object):
         # fine.
         try:
             return _psutil_posix.getpriority(self.pid)
-        except EnvironmentError:
-            err = sys.exc_info()[1]
+        except EnvironmentError as err:
             if err.errno in (errno.ENOENT, errno.ESRCH):
                 if pid_exists(self.pid):
                     raise AccessDenied(self.pid, self._name)
@@ -338,8 +337,7 @@ class Process(object):
             for x in (0, 1, 2, 255):
                 try:
                     return os.readlink('/proc/%d/path/%d' % (self.pid, x))
-                except OSError:
-                    err = sys.exc_info()[1]
+                except OSError as err:
                     if err.errno == errno.ENOENT:
                         hit_enoent = True
                         continue
@@ -356,8 +354,7 @@ class Process(object):
         # Reference: http://goo.gl/55XgO
         try:
             return os.readlink("/proc/%s/path/cwd" % self.pid)
-        except OSError:
-            err = sys.exc_info()[1]
+        except OSError as err:
             if err.errno == errno.ENOENT:
                 os.stat("/proc/%s" % self.pid)
                 return None
@@ -388,9 +385,8 @@ class Process(object):
             try:
                 utime, stime = cext.query_process_thread(
                     self.pid, tid)
-            except EnvironmentError:
+            except EnvironmentError as err:
                 # ENOENT == thread gone in meantime
-                err = sys.exc_info()[1]
                 if err.errno == errno.ENOENT:
                     hit_enoent = True
                     continue
@@ -413,9 +409,8 @@ class Process(object):
             if os.path.islink(path):
                 try:
                     file = os.readlink(path)
-                except OSError:
+                except OSError as err:
                     # ENOENT == file which is gone in the meantime
-                    err = sys.exc_info()[1]
                     if err.errno == errno.ENOENT:
                         hit_enoent = True
                         continue
@@ -495,8 +490,7 @@ class Process(object):
             if not name.startswith('['):
                 try:
                     name = os.readlink('/proc/%s/path/%s' % (self.pid, name))
-                except OSError:
-                    err = sys.exc_info()[1]
+                except OSError as err:
                     if err.errno == errno.ENOENT:
                         # sometimes the link may not be resolved by
                         # readlink() even if it exists (ls shows it).

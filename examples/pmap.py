@@ -33,26 +33,25 @@ ffffffffff600000         0K  r-xp    [vsyscall]
 import sys
 
 import psutil
-from psutil._compat import print_
 
 
 def main():
     if len(sys.argv) != 2:
         sys.exit('usage: pmap <pid>')
     p = psutil.Process(int(sys.argv[1]))
-    print_("pid=%s, name=%s" % (p.pid, p.name()))
+    print("pid=%s, name=%s" % (p.pid, p.name()))
     templ = "%-16s %10s  %-7s %s"
-    print_(templ % ("Address", "RSS", "Mode", "Mapping"))
+    print(templ % ("Address", "RSS", "Mode", "Mapping"))
     total_rss = 0
     for m in p.memory_maps(grouped=False):
         total_rss += m.rss
-        print_(templ % (
+        print(templ % (
             m.addr.split('-')[0].zfill(16),
             str(m.rss / 1024) + 'K',
             m.perms,
             m.path))
-    print_("-" * 33)
-    print_(templ % ("Total", str(total_rss / 1024) + 'K', '', ''))
+    print("-" * 33)
+    print(templ % ("Total", str(total_rss / 1024) + 'K', '', ''))
 
 if __name__ == '__main__':
     main()

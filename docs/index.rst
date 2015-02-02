@@ -38,8 +38,8 @@ From project's home page:
   ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap*.
   It currently supports **Linux, Windows, OSX, FreeBSD** and **Sun Solaris**,
   both **32-bit** and **64-bit** architectures, with Python versions from
-  **2.4** to **3.4**.
-  `Pypy <http://pypy.org/>`__ is also known to work.
+  **2.6 to 3.4** (users of Python 2.4 and 2.5 may use `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
+  `PyPy <http://pypy.org/>`__ is also known to work.
 
 The psutil documentation you're reading is distributed as a single HTML page.
 
@@ -400,7 +400,7 @@ Network
      as root (lsof does the same).
   .. note:: (Solaris) UNIX sockets are not supported.
 
-  *New in 2.1.0*
+  .. versionadded:: 2.1.0
 
 .. function:: net_if_addrs()
 
@@ -639,7 +639,7 @@ Process class
         >>> datetime.datetime.fromtimestamp(p.create_time()).strftime("%Y-%m-%d %H:%M:%S")
         '2011-03-05 18:03:52'
 
-  .. method:: as_dict(attrs=[], ad_value=None)
+  .. method:: as_dict(attrs=None, ad_value=None)
 
      Utility method returning process information as a hashable dictionary.
      If *attrs* is specified it must be a list of strings reflecting available
@@ -875,9 +875,17 @@ Process class
       >>> p.cpu_affinity()  # get
       [0, 1, 2, 3]
       >>> p.cpu_affinity([0])  # set; from now on, process will run on CPU #0 only
+      >>> p.cpu_affinity()
+      [0]
+      >>>
+      >>> # reset affinity against all CPUs
+      >>> all_cpus = list(range(psutil.cpu_count()))
+      >>> p.cpu_affinity(all_cpus)
       >>>
 
-     Availability: Linux, Windows
+     Availability: Linux, Windows, BSD
+
+     .. versionchanged:: 2.2.0 added support for FreeBSD
 
   .. method:: memory_info()
 

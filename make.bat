@@ -7,7 +7,6 @@ rem psutil ("make.bat build", "make.bat install") and running tests
 rem ("make.bat test").
 rem
 rem This script is modeled after my Windows installation which uses:
-rem - mingw32 for Python 2.4 and 2.5
 rem - Visual studio 2008 for Python 2.6, 2.7, 3.2
 rem - Visual studio 2010 for Python 3.3+
 rem ...therefore it might not work on your Windows installation.
@@ -15,10 +14,8 @@ rem
 rem By default C:\Python27\python.exe is used.
 rem To compile for a specific Python version run:
 rem
-rem     set PYTHON=C:\Python24\python.exe & make.bat build
+rem     set PYTHON=C:\Python26\python.exe & make.bat build
 rem
-rem If you compile by using mingw on Python 2.4 and 2.5 you need to patch
-rem distutils first: http://stackoverflow.com/questions/13592192
 rem ==========================================================================
 
 if "%PYTHON%" == "" (
@@ -44,9 +41,9 @@ if "%1" == "help" (
     echo   build-wheels  create wheel installers in dist directory
     echo   clean         clean build files
     echo   install       compile and install
-    echo   memtest       run memory leak tests
     echo   setup-env     install pip, unittest2, wheels for all python versions
     echo   test          run tests
+    echo   test-memleaks run memory leak tests
     echo   test-process  run process related tests
     echo   test-system   run system APIs related tests
     echo   uninstall     uninstall
@@ -71,26 +68,14 @@ if "%1" == "clean" (
 
 if "%1" == "build" (
     :build
-    if %PYTHON%==C:\Python24\python.exe (
-        %PYTHON% setup.py build -c mingw32
-    ) else if %PYTHON%==C:\Python25\python.exe (
-        %PYTHON% setup.py build -c mingw32
-    ) else (
-        %PYTHON% setup.py build
-    )
+    %PYTHON% setup.py build
     if %errorlevel% neq 0 goto :error
     goto :eof
 )
 
 if "%1" == "install" (
     :install
-    if %PYTHON%==C:\Python24\python.exe (
-        %PYTHON% setup.py build -c mingw32 install
-    ) else if %PYTHON%==C:\Python25\python.exe (
-        %PYTHON% setup.py build -c mingw32 install
-    ) else (
-        %PYTHON% setup.py build install
-    )
+    %PYTHON% setup.py build install
     goto :eof
 )
 
@@ -135,9 +120,6 @@ if "%1" == "test-memleaks" (
 
 if "%1" == "build-exes" (
     :build-exes
-    rem mingw 32 versions
-    C:\Python24\python.exe setup.py build -c mingw32 bdist_wininst || goto :error
-    C:\Python25\python.exe setup.py build -c mingw32 bdist_wininst || goto :error
     rem "standard" 32 bit versions, using VS 2008 (2.6, 2.7) or VS 2010 (3.3+)
     C:\Python26\python.exe setup.py build bdist_wininst || goto :error
     C:\Python27\python.exe setup.py build bdist_wininst || goto :error
@@ -157,8 +139,6 @@ if "%1" == "build-exes" (
 
 if "%1" == "upload-exes" (
     :upload-exes
-    rem mingw 32 versions
-    C:\Python25\python.exe setup.py build -c mingw32 bdist_wininst upload || goto :error
     rem "standard" 32 bit versions, using VS 2008 (2.6, 2.7) or VS 2010 (3.3+)
     C:\Python26\python.exe setup.py bdist_wininst upload || goto :error
     C:\Python27\python.exe setup.py bdist_wininst upload || goto :error

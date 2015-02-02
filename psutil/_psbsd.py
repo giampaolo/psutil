@@ -7,13 +7,14 @@
 """FreeBSD platform implementation."""
 
 import errno
+import functools
 import os
 import sys
+from collections import namedtuple
 
 from psutil import _common
 from psutil import _psposix
 from psutil._common import conn_tmap, usage_percent
-from psutil._compat import namedtuple, wraps
 import _psutil_bsd as cext
 import _psutil_posix
 
@@ -68,7 +69,7 @@ TimeoutExpired = None
 
 
 def virtual_memory():
-    """System virtual memory as a namedutple."""
+    """System virtual memory as a namedtuple."""
     mem = cext.virtual_mem()
     total, free, active, inactive, wired, cached, buffers, shared = mem
     avail = inactive + cached + free
@@ -86,14 +87,14 @@ def swap_memory():
 
 
 def cpu_times():
-    """Return system per-CPU times as a named tuple"""
+    """Return system per-CPU times as a namedtuple"""
     user, nice, system, idle, irq = cext.cpu_times()
     return scputimes(user, nice, system, idle, irq)
 
 
 if hasattr(cext, "per_cpu_times"):
     def per_cpu_times():
-        """Return system CPU times as a named tuple"""
+        """Return system CPU times as a namedtuple"""
         ret = []
         for cpu_t in cext.per_cpu_times():
             user, nice, system, idle, irq = cpu_t
@@ -206,15 +207,14 @@ def wrap_exceptions(fun):
     """Decorator which translates bare OSError exceptions into
     NoSuchProcess and AccessDenied.
     """
-    @wraps(fun)
+    @functools.wraps(fun)
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)
-        except OSError:
+        except OSError as err:
             # support for private module import
             if NoSuchProcess is None or AccessDenied is None:
                 raise
-            err = sys.exc_info()[1]
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._name)
             if err.errno in (errno.EPERM, errno.EACCES):
@@ -387,3 +387,24 @@ class Process(object):
         proc_cwd = _not_implemented
         memory_maps = _not_implemented
         num_fds = _not_implemented
+
+    @wrap_exceptions
+    def cpu_affinity_get(self):
+        return cext.proc_cpu_affinity_get(self.pid)
+
+    @wrap_exceptions
+    def cpu_affinity_set(self, cpus):
+        try:
+            cext.proc_cpu_affinity_set(self.pid, cpus)
+        except OSError as err:
+            # 'man cpuset_setaffinity' about EDEADLK:
+            # <<the call would leave a thread without a valid CPU to run
+            # on because the set does not overlap with the thread's
+            # anonymous mask>>
+            if err.errno in (errno.EINVAL, errno.EDEADLK):
+                allcpus = tuple(range(len(per_cpu_times())))
+                for cpu in cpus:
+                    if cpu not in allcpus:
+                        raise ValueError("invalid CPU #%i (choose between %s)"
+                                         % (cpu, allcpus))
+            raise

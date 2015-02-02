@@ -173,8 +173,7 @@ psutil_proc_kill(PyObject *self, PyObject *args)
     }
 
     CloseHandle(hProcess);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -203,8 +202,7 @@ psutil_proc_wait(PyObject *self, PyObject *args)
         if (GetLastError() == ERROR_INVALID_PARAMETER) {
             // no such process; we do not want to raise NSP but
             // return None instead.
-            Py_INCREF(Py_None);
-            return Py_None;
+            Py_RETURN_NONE;
         }
         else {
             PyErr_SetFromWindowsErr(0);
@@ -440,8 +438,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args)
     GetSystemInfo(&system_info);
     if (system_info.dwNumberOfProcessors == 0) {
         // mimic os.cpu_count()
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
     else {
         return Py_BuildValue("I", system_info.dwNumberOfProcessors);
@@ -511,8 +508,7 @@ return_none:
     // mimic os.cpu_count()
     if (buffer != NULL)
         free(buffer);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -1080,8 +1076,7 @@ psutil_proc_suspend(PyObject *self, PyObject *args)
     if (! psutil_proc_suspend_or_resume(pid, suspend)) {
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -1097,8 +1092,7 @@ psutil_proc_resume(PyObject *self, PyObject *args)
     if (! psutil_proc_suspend_or_resume(pid, suspend)) {
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -1405,7 +1399,8 @@ psutil_proc_username(PyObject *self, PyObject *args)
     memcpy(&fullName[domainNameSize + 1], name, nameSize);
     fullName[domainNameSize + 1 + nameSize] = '\0';
 
-    returnObject = Py_BuildValue("s", fullName);
+    returnObject = PyUnicode_Decode(
+        fullName, _tcslen(fullName), Py_FileSystemDefaultEncoding, "replace");
 
     free(fullName);
     free(name);
@@ -1986,8 +1981,7 @@ psutil_proc_priority_set(PyObject *self, PyObject *args)
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -2062,8 +2056,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args)
     );
 
     CloseHandle(hProcess);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 #endif
 
@@ -2187,8 +2180,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
     }
 
     CloseHandle(hProcess);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 
@@ -2342,21 +2334,9 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
             goto error;
 
         sprintf(ifname, "%wS", pCurrAddresses->FriendlyName);
+        py_nic_name = PyUnicode_Decode(
+            ifname, _tcslen(ifname), Py_FileSystemDefaultEncoding, "replace");
 
-#if PY_MAJOR_VERSION >= 3
-        // XXX - Dirty hack to avoid encoding errors on Python 3, see:
-        // https://github.com/giampaolo/psutil/issues/446#c9
-        for (i = 0; i < MAX_PATH; i++) {
-            if (*(ifname+i) < 0 || *(ifname+i) > 256) {
-                // replace the non unicode character
-                *(ifname+i) = '?';
-            }
-            else if (*(ifname+i) == '\0') {
-                break;
-            }
-        }
-#endif
-        py_nic_name = Py_BuildValue("s", ifname);
         if (py_nic_name == NULL)
             goto error;
         if (PyDict_SetItem(py_retdict, py_nic_name, py_nic_info))
@@ -2656,6 +2636,8 @@ psutil_users(PyObject *self, PyObject *args)
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
+    PyObject *py_buffer_user_encoded = NULL;
+
     if (py_retlist == NULL) {
         return NULL;
     }
@@ -2740,12 +2722,16 @@ psutil_users(PyObject *self, PyObject *args)
             station_info.ConnectTime.dwLowDateTime - 116444736000000000LL;
         unix_time /= 10000000;
 
-        py_tuple = Py_BuildValue("sOd", buffer_user, py_address,
+        py_buffer_user_encoded = PyUnicode_Decode(
+            buffer_user, _tcslen(buffer_user), Py_FileSystemDefaultEncoding,
+            "replace");
+        py_tuple = Py_BuildValue("OOd", py_buffer_user_encoded, py_address,
                                  (double)unix_time);
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_XDECREF(py_buffer_user_encoded);
         Py_XDECREF(py_address);
         Py_XDECREF(py_tuple);
     }
@@ -2758,6 +2744,7 @@ psutil_users(PyObject *self, PyObject *args)
     return py_retlist;
 
 error:
+    Py_XDECREF(py_buffer_user_encoded);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
     Py_DECREF(py_retlist);
@@ -3347,6 +3334,8 @@ void init_psutil_windows(void)
         Py_DECREF(module);
         INITERROR;
     }
+
+    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 
     // process status constants
     // http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx

@@ -1,9 +1,47 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
-2.1.3 (unreleased)
+2.2.1 - 2015-02-02
 ==================
 
-XXX
+**Bug fixes**
+
+- #496: [Linux] fix "ValueError: ambiguos inode with multiple PIDs references"
+  (patch by Bruno Binet)
+
+
+2.2.0 - 2015-01-06
+==================
+
+**Enhancements**
+
+- #521: drop support for Python 2.4 and 2.5.
+- #553: new examples/pstree.py script.
+- #564: C extension version mismatch in case the user messed up with psutil
+  installation or with sys.path is now detected at import time.
+- #568: New examples/pidof.py script.
+- #569: [FreeBSD] add support for process CPU affinity.
+
+**Bug fixes**
+
+- #496: [Solaris] can't import psutil.
+- #547: [UNIX] Process.username() may raise KeyError if UID can't be resolved.
+- #551: [Windows] get rid of the unicode hack for net_io_counters() NIC names.
+- #556: [Linux] lots of file handles were left open.
+- #561: [Linux] net_connections() might skip some legitimate UNIX sockets.
+  (patch by spacewander)
+- #565: [Windows] use proper encoding for psutil.Process.username() and
+  psutil.users(). (patch by Sylvain Mouquet)
+- #567: [Linux] in the alternative implementation of CPU affinity PyList_Append
+  and Py_BuildValue return values are not checked.
+- #569: [FreeBSD] fix memory leak in psutil.cpu_count(logical=False).
+- #571: [Linux] Process.open_files() might swallow AccessDenied exceptions and
+  return an incomplete list of open files.
+
+
+2.1.3 - 2014-09-26
+==================
+
+- #536: [Linux]: fix "undefined symbol: CPU_ALLOC" compilation error.
 
 
 2.1.2 - 2014-09-21
