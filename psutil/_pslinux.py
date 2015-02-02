@@ -446,12 +446,12 @@ class Connections:
                 _, laddr, raddr, status, _, _, _, _, _, inode = \
                     line.split()[:10]
                 if inode in inodes:
-                    # We assume inet sockets are unique, so we error
-                    # out if there are multiple references to the
-                    # same inode. We won't do this for UNIX sockets.
-                    if len(inodes[inode]) > 1 and family != socket.AF_UNIX:
-                        raise ValueError("ambiguos inode with multiple "
-                                         "PIDs references")
+                    # # We assume inet sockets are unique, so we error
+                    # # out if there are multiple references to the
+                    # # same inode. We won't do this for UNIX sockets.
+                    # if len(inodes[inode]) > 1 and family != socket.AF_UNIX:
+                    #     raise ValueError("ambiguos inode with multiple "
+                    #                      "PIDs references")
                     pid, fd = inodes[inode][0]
                 else:
                     pid, fd = None, -1
