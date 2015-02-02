@@ -1830,9 +1830,11 @@ def net_if_addrs():
     not assigned.
     """
     has_enums = sys.version_info >= (3, 4)
+    if has_enums:
+        import socket
     rawlist = _psplatform.net_if_addrs()
     rawlist.sort(key=lambda x: x[1])  # sort by family
-    ret = defaultdict(list)
+    ret = collections.defaultdict(list)
     for name, fam, addr, mask, broadcast in rawlist:
         if has_enums:
             try:
