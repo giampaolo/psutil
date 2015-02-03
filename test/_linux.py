@@ -7,6 +7,7 @@
 """Linux specific tests.  These are implicitly run by test_psutil.py."""
 
 from __future__ import division
+import contextlib
 import fcntl
 import os
 import re
@@ -30,13 +31,11 @@ def get_ipv4_address(ifname):
     if PY3:
         ifname = bytes(ifname, 'ascii')
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
+    with contextlib.closing(s):
         return socket.inet_ntoa(
             fcntl.ioctl(s.fileno(),
                         SIOCGIFADDR,
                         struct.pack('256s', ifname))[20:24])
-    finally:
-        s.close()
 
 
 def get_mac_address(ifname):
@@ -45,7 +44,7 @@ def get_mac_address(ifname):
     if PY3:
         ifname = bytes(ifname, 'ascii')
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
+    with contextlib.closing(s):
         info = fcntl.ioctl(
             s.fileno(), SIOCGIFHWADDR, struct.pack('256s', ifname))
         if PY3:
@@ -54,8 +53,6 @@ def get_mac_address(ifname):
             import __builtin__
             ord = __builtin__.ord
         return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
-    finally:
-        s.close()
 
 
 class LinuxSpecificTestCase(unittest.TestCase):
