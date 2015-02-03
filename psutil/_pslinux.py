@@ -17,6 +17,8 @@ import socket
 import struct
 import sys
 import warnings
+import fcntl
+import array
 from collections import namedtuple, defaultdict
 
 from psutil import _common
@@ -60,6 +62,13 @@ IOPRIO_CLASS_NONE = 0
 IOPRIO_CLASS_RT = 1
 IOPRIO_CLASS_BE = 2
 IOPRIO_CLASS_IDLE = 3
+
+# NIC flags
+ETHTOOL_GSET = 0x00000001   # Get NIC settings
+SIOCETHTOOL = 0x8946        # /usr/include/linux/sockios.h
+ETHTOOL_GLINK = 0x0000000a  # /usr/include/linux/ethtool.h
+SIOCGIFADDR = 0x8915        # /usr/include/linux/sockios.h
+
 
 # taken from /fs/proc/array.c
 PROC_STATUSES = {
@@ -307,6 +316,65 @@ def boot_time():
                 BOOT_TIME = ret
                 return ret
         raise RuntimeError("line 'btime' not found")
+
+
+def get_nic_basic_info(nic):
+    """Return the basic NIC info like speed, duplex, auto"""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    fd = sock.fileno()
+    ecmd = array.array('B', struct.pack('I39s', ETHTOOL_GSET, '\x00'*39))
+    ifreq = struct.pack('16sP', nic, ecmd.buffer_info()[0])
+    try:
+        fcntl.ioctl(fd, SIOCETHTOOL, ifreq)
+    except IOError:
+        return (None, None, None)
+    res = ecmd.tostring()
+    speed, duplex, auto = struct.unpack('12xHB3xB24x', res)
+    return nic, speed, duplex, auto
+
+
+def get_nic_ifup(nic):
+    """Returns True if NIC is up else False"""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    fd = sock.fileno()
+    ecmd = array.array('B', struct.pack('2I', ETHTOOL_GLINK, 0))
+    ifreq = struct.pack('16sP', nic, ecmd.buffer_info()[0])
+    try:
+        fcntl.ioctl(fd, SIOCETHTOOL, ifreq)
+    except IOError:
+        return None
+    res = ecmd.tostring()
+    return bool(struct.unpack('4xI', res)[0])
+
+
+def get_nic_ipaddr(nic):
+    """ Returns IP Address of given NIC"""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    fd = sock.fileno()
+    ifreq = struct.pack('16sH14s', nic, socket.AF_INET, '\x00'*14)
+    try:
+        res = fcntl.ioctl(fd, SIOCGIFADDR, ifreq)
+    except IOError:
+        return None
+    ip = struct.unpack('16sH2x4s8x', res)[2]
+    return socket.inet_ntoa(ip)
+
+
+def nics_info():
+    """Returns NIC informations for every network interface
+    installed on the system as a dict of raw tuples.
+    """
+    with open("/proc/net/dev", "rt") as f:
+        lines = f.readlines()
+    retdict = {}
+    for line in lines[2:]:
+        nic, _ = line.split(":")
+        nic = nic.lstrip()
+        basics = get_nic_basic_info(nic)
+        ifup = get_nic_ifup(nic)
+        ipaddr = get_nic_ipaddr(nic)
+        retdict[nic] = basics + (ifup, ipaddr)
+    return retdict
 
 
 # --- processes

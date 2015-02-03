@@ -340,7 +340,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
         return NULL;
     }
 
-	CPU_ZERO(&cpuset);
+    CPU_ZERO(&cpuset);
     if (sched_getaffinity(pid, len, &cpuset) < 0) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
@@ -419,7 +419,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
 error:
     if (py_cpu_seq != NULL) {
         Py_DECREF(py_cpu_seq);
-	}
+    }
 
     return NULL;
 }
