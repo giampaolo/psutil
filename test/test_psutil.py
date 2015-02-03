@@ -1027,29 +1027,25 @@ class TestSystemAPIs(unittest.TestCase):
         for nic, addrs in nics.items():
             self.assertEqual(len(set(addrs)), len(addrs))
             for addr in addrs:
-                assert isinstance(addr.family, int), addr
-                assert isinstance(addr.address, (str, type(None))), addr
-                assert isinstance(addr.netmask, (str, type(None))), addr
-                assert isinstance(addr.broadcast, (str, type(None))), addr
-                assert addr.family in families, (addr, families)
+                self.assertIsInstance(addr.family, int)
+                self.assertIsInstance(addr.address, (str, type(None)))
+                self.assertIsInstance(addr.netmask, (str, type(None)))
+                self.assertIsInstance(addr.broadcast, (str, type(None)))
+                self.assertIn(addr.family, families)
                 if sys.version_info >= (3, 4):
                     self.assertIsInstance(addr.family, socket.AddressFamily)
                 if addr.family == socket.AF_INET:
                     s = socket.socket(addr.family)
-                    try:
+                    with contextlib.closing(s):
                         s.bind((addr.address, 0))
-                    finally:
-                        s.close()
                 elif addr.family == socket.AF_INET6:
                     info = socket.getaddrinfo(
                         addr.address, 0, socket.AF_INET6, socket.SOCK_STREAM,
                         0, socket.AI_PASSIVE)[0]
                     af, socktype, proto, canonname, sa = info
                     s = socket.socket(af, socktype, proto)
-                    try:
+                    with contextlib.closing(s):
                         s.bind(sa)
-                    finally:
-                        s.close()
 
         if BSD or OSX:
             psutil.AF_LINK
