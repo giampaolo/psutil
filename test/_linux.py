@@ -187,14 +187,14 @@ class LinuxSpecificTestCase(unittest.TestCase):
     @unittest.skipUnless(which('ip'), "'ip' utility not available")
     def test_net_if_names(self):
         out = sh("ip addr").strip()
-        nics = psutil.net_if_addrs().keys()
+        nics = psutil.net_if_addrs()
         found = 0
         for line in out.split('\n'):
             line = line.strip()
             if re.search("^\d+:", line):
                 found += 1
                 name = line.split(':')[1].strip()
-                self.assertIn(name, nics)
+                self.assertIn(name, nics.keys())
         self.assertEqual(len(nics), found, msg="%s\n---\n%s" % (nics, out))
 
     # --- tests for specific kernel versions
