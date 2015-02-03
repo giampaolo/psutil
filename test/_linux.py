@@ -10,6 +10,7 @@ from __future__ import division
 import contextlib
 import fcntl
 import os
+import pprint
 import re
 import socket
 import struct
@@ -185,6 +186,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
                 # TODO: test for AF_INET6 family
 
     @unittest.skipUnless(which('ip'), "'ip' utility not available")
+    @unittest.skipIf(TRAVIS, "skipped on Travis")
     def test_net_if_names(self):
         out = sh("ip addr").strip()
         nics = psutil.net_if_addrs()
@@ -195,7 +197,8 @@ class LinuxSpecificTestCase(unittest.TestCase):
                 found += 1
                 name = line.split(':')[1].strip()
                 self.assertIn(name, nics.keys())
-        self.assertEqual(len(nics), found, msg="%s\n---\n%s" % (nics, out))
+        self.assertEqual(len(nics), found, msg="%s\n---\n%s" % (
+            pprint.pformat(nics), out))
 
     # --- tests for specific kernel versions
 
