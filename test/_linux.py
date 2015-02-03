@@ -21,27 +21,33 @@ from test_psutil import (skip_on_not_implemented, sh, get_test_subprocess,
                          which)
 
 import psutil
-from psutil._compat import b, PY3
+from psutil._compat import PY3
 
 
 def get_ipv4_address(ifname):
     SIOCGIFADDR = 0x8915
+    ifname = ifname[:15]
+    if PY3:
+        ifname = bytes(ifname, 'ascii')
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         return socket.inet_ntoa(
             fcntl.ioctl(s.fileno(),
                         SIOCGIFADDR,
-                        struct.pack('256s', b(ifname[:15])))[20:24])
+                        struct.pack('256s', ifname))[20:24])
     finally:
         s.close()
 
 
 def get_mac_address(ifname):
     SIOCGIFHWADDR = 0x8927
+    ifname = ifname[:15]
+    if PY3:
+        ifname = bytes(ifname, 'ascii')
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         info = fcntl.ioctl(
-            s.fileno(), SIOCGIFHWADDR, struct.pack('256s', b(ifname[:15])))
+            s.fileno(), SIOCGIFHWADDR, struct.pack('256s', ifname))
         if PY3:
             ord = lambda x: x
         else:

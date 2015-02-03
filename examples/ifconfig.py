@@ -30,7 +30,6 @@ docker0
 import socket
 
 import psutil
-from psutil._compat import print_
 
 
 af_map = {
@@ -43,15 +42,15 @@ af_map = {
 
 def main():
     for nic, addrs in psutil.net_if_addrs().items():
-        print_("%s" % (nic))
+        print("%s" % (nic))
         for addr in addrs:
-            print_("    %s address:%s, broadcast:%s, netmask:%s" % (
+            print("    %s address:%s, broadcast:%s, netmask:%s" % (
                 af_map.get(addr.family, addr.family),
                 addr.address,
                 addr.broadcast or "-",
                 addr.netmask or "-",
             ))
-        print_("")
+        print("")
 
 
 if __name__ == '__main__':
