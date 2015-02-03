@@ -190,11 +190,12 @@ class LinuxSpecificTestCase(unittest.TestCase):
         nics = psutil.net_if_addrs().keys()
         found = 0
         for line in out.split('\n'):
-            if not line.startswith(' '):
+            line = line.strip()
+            if re.search("^\d+:", line):
                 found += 1
                 name = line.split(':')[1].strip()
                 self.assertIn(name, nics)
-        self.assertEqual(len(nics), found)
+        self.assertEqual(len(nics), found, msg="%s\n---\n%s" % (nics, out))
 
     # --- tests for specific kernel versions
 
