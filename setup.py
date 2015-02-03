@@ -72,6 +72,7 @@ if sys.platform.startswith("win32"):
             # http://www.mingw.org/wiki/Use_more_recent_defined_functions
             ('_WIN32_WINNT', get_winver()),
             ('_AVAIL_WINVER_', get_winver()),
+            ('_CRT_SECURE_NO_WARNINGS', None),
             # see: https://github.com/giampaolo/psutil/issues/348
             ('PSAPI_VERSION', 1),
         ],

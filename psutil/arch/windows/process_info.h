@@ -4,8 +4,13 @@
  * found in the LICENSE file.
  */
 
+#if !defined(__PROCESS_INFO_H)
+#define __PROCESS_INFO_H
+
 #include <Python.h>
 #include <windows.h>
+#include "security.h"
+#include "ntextapi.h"
 
 DWORD* psutil_get_pids(DWORD *numberOfReturnedPIDs);
 HANDLE psutil_handle_from_pid(DWORD pid);
@@ -15,3 +20,7 @@ int psutil_pid_in_proclist(DWORD pid);
 int psutil_pid_is_running(DWORD pid);
 PVOID psutil_get_peb_address(HANDLE ProcessHandle);
 PyObject* psutil_get_arg_list(long pid);
+int psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
+                         PVOID *retBuffer);
+
+#endif

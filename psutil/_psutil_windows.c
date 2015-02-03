@@ -567,7 +567,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (NULL == hProcess) {
         return NULL;
     }
-    if (GetProcessImageFileNameW(hProcess, &exe, MAX_PATH) == 0) {
+    if (GetProcessImageFileNameW(hProcess, exe, MAX_PATH) == 0) {
         CloseHandle(hProcess);
         PyErr_SetFromWindowsErr(0);
         return NULL;
@@ -601,7 +601,9 @@ psutil_proc_memory_info(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (! GetProcessMemoryInfo(hProcess, &cnt, sizeof(cnt)) ) {
+    if (! GetProcessMemoryInfo(hProcess, (PPROCESS_MEMORY_COUNTERS)&cnt,
+                               sizeof(cnt)) )
+    {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
     }
@@ -2124,8 +2126,8 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
 {
     DWORD pid;
     HANDLE hProcess;
-    PDWORD_PTR proc_mask;
-    PDWORD_PTR system_mask;
+    DWORD_PTR proc_mask;
+    DWORD_PTR system_mask;
 
     if (! PyArg_ParseTuple(args, "l", &pid)) {
         return NULL;
@@ -2260,7 +2262,6 @@ static PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args)
 {
     int attempts = 0;
-    int i;
     int outBufLen = 15000;
     char ifname[MAX_PATH];
     DWORD dwRetVal = 0;

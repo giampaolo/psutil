@@ -188,7 +188,7 @@ psutil_get_open_files(long pid, HANDLE processHandle)
         }
 
         if (!DuplicateHandle(processHandle,
-                             handle.Handle,
+                             (HANDLE)handle.Handle,
                              GetCurrentProcess(),
                              &dupHandle,
                              0,
