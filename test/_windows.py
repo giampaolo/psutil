@@ -113,7 +113,9 @@ class WindowsSpecificTestCase(unittest.TestCase):
     def test_process_exe(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
-        self.assertEqual(p.exe(), w.ExecutablePath)
+        # Note: wmi reports the exe as a lower case string.
+        # Being Windows paths case-insensitive we ignore that.
+        self.assertEqual(p.exe().lower(), w.ExecutablePath.lower())
 
     @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_process_cmdline(self):

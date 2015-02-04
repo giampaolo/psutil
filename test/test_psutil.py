@@ -125,7 +125,7 @@ def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL,
         pyline = ""
         if wait:
             pyline += "open(r'%s', 'w'); " % TESTFN
-        pyline += "import time; time.sleep(2);"
+        pyline += "import time; time.sleep(60);"
         cmd_ = [PYTHON, "-c", pyline]
     else:
         cmd_ = cmd
