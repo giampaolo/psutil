@@ -416,6 +416,8 @@ Network
   *broadcast* may be ``None`` in case the NIC address is not assigned.
   On OSX and FreeBSD :const:`psutil.AF_LINK` is also available and it refers
   to a MAC address.
+  On (all?) other UNIX variants ``socket.AF_PACKET`` refers to the NIC MAC
+  address.
   Note: the supported address families are limited to AF_INET, AF_INET6,
   AF_PACKET (Linux) and AF_LINK (OSX / FreeBSD). If you're interested in others
   (e.g. AF_BLUETOOTH) you can use the more powerful

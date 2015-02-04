@@ -8,48 +8,58 @@
 A clone of 'ifconfig' on UNIX.
 
 $ python examples/ifconfig.py
-lo
-    inet address:127.0.0.1, broadcast:127.0.0.1, netmask:255.0.0.0
-    inet6 address:::1, broadcast:-, netmask:-
-    packet address:00:00:00:00:00:00, broadcast:00:00:00:00:00:00, netmask:-
+lo:
+    IPv4     address   : 127.0.0.1
+             broadcast : 127.0.0.1
+             netmask   : 255.0.0.0
+    IPv6     address   : ::1
+             netmask   : ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+    HWADDR   address   : 00:00:00:00:00:00
+             broadcast : 00:00:00:00:00:00
 
-eth0
-    inet address:192.168.0.10, broadcast:192.168.0.255, netmask:255.255.255.0
-    inet6 address:2a02:8109:83c0:224c::5, broadcast:-, netmask:-
-    inet6 address:2a02:8109:83c0:224c:3975, broadcast:-, netmask:-
-    inet6 address:2a02:8109:83c0:224c:c685, broadcast:-, netmask:-
-    inet6 address:fe80::c685:8ff:fe45:6412, broadcast:-, netmask:-
-    packet address:c4:85:08:45:06:41, broadcast:ff:ff:ff:ff:ff:ff, netmask:-
+wlan0:
+    IPv4     address   : 192.168.1.3
+             broadcast : 192.168.1.255
+             netmask   : 255.255.255.0
+    IPv6     address   : fe80::c685:8ff:fe45:641%wlan0
+             netmask   : ffff:ffff:ffff:ffff::
+    HWADDR   address   : c4:85:08:45:06:41
+             broadcast : ff:ff:ff:ff:ff:ff
 
-docker0
-    inet address:172.17.42.1, broadcast:172.17.42.1, netmask:255.255.0.0
-    inet6 address:fe80::64f5:58ff:fef9:779a, broadcast:-, netmask:-
-    packet address:66:f5:58:f9:77:9a, broadcast:ff:ff:ff:ff:ff:ff, netmask:-
+docker0:
+    IPv4     address   : 172.17.42.1
+             broadcast : 172.17.42.1
+             netmask   : 255.255.0.0
+    IPv6     address   : fe80::ac6d:3aff:fe0d:a19c%docker0
+             netmask   : ffff:ffff:ffff:ffff::
+    HWADDR   address   : ae:6d:3a:0d:a1:9c
+             broadcast : ff:ff:ff:ff:ff:ff
 """
 
+from __future__ import print_function
 import socket
 
 import psutil
 
 
 af_map = {
-    getattr(socket, "AF_PACKET", 17): 'packet',
-    getattr(psutil, "AF_LINK", -1): 'link',
-    socket.AF_INET: 'inet',
-    socket.AF_INET6: 'inet6',
+    getattr(socket, "AF_PACKET", 17): 'HWADDR',
+    getattr(psutil, "AF_LINK", -1): 'HWADDR',  # OSX / BSD only
+    socket.AF_INET: 'IPv4',
+    socket.AF_INET6: 'IPv6',
 }
 
 
 def main():
     for nic, addrs in psutil.net_if_addrs().items():
-        print("%s" % (nic))
+        print("%s:" % (nic))
         for addr in addrs:
-            print("    %s address:%s, broadcast:%s, netmask:%s" % (
-                af_map.get(addr.family, addr.family),
-                addr.address,
-                addr.broadcast or "-",
-                addr.netmask or "-",
-            ))
+            print("    %-8s" % af_map.get(addr.family, addr.family), end="")
+            print(" address   : %s" % addr.address)
+            if addr.broadcast:
+                print("             broadcast : %s" % addr.broadcast)
+            if addr.netmask:
+                print("             netmask   : %s" % addr.netmask)
         print("")
 
 
