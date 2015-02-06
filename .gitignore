@@ -1,9 +1,18 @@
 syntax: glob
-build/
-*.pyc
+*.al
+*.bak
 *.egg-info
-dist/
+*.la
+*.lo
+*.o
+*.orig
+*.pyc
 *.pyd
-.idea/
+*.rej
+*.so
+*.swp
 .cache/
+.idea/
 .tox/
+build/
+dist/
