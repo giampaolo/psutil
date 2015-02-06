@@ -11,11 +11,11 @@ import functools
 import os
 from collections import namedtuple
 
-from psutil import _common
-from psutil import _psposix
-from psutil._common import conn_tmap, usage_percent, isfile_strict
-import _psutil_osx as cext
-import _psutil_posix
+from . import _common
+from . import _psposix
+from ._common import conn_tmap, usage_percent, isfile_strict
+from . import _psutil_osx as cext
+from . import _psutil_posix
 
 
 __extra__all__ = []

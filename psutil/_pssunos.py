@@ -13,12 +13,12 @@ import subprocess
 import sys
 from collections import namedtuple
 
-from psutil import _common
-from psutil import _psposix
-from psutil._common import usage_percent, isfile_strict
-from psutil._compat import PY3
-import _psutil_posix
-import _psutil_sunos as cext
+from . import _common
+from . import _psposix
+from ._common import usage_percent, isfile_strict
+from ._compat import PY3
+from . import _psutil_posix
+from . import _psutil_sunos as cext
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
