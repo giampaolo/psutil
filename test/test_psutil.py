@@ -1028,7 +1028,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(len(set(addrs)), len(addrs))
             for addr in addrs:
                 self.assertIsInstance(addr.family, int)
-                self.assertIsInstance(addr.address, (str, type(None)))
+                self.assertIsInstance(addr.address, str)
                 self.assertIsInstance(addr.netmask, (str, type(None)))
                 self.assertIsInstance(addr.broadcast, (str, type(None)))
                 self.assertIn(addr.family, families)
