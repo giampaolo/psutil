@@ -1822,9 +1822,7 @@ def net_connections(kind='inet'):
 
 
 def boot_time():
-    """Return the system boot time expressed in seconds since the epoch.
-    This is also available as psutil.BOOT_TIME.
-    """
+    """Return the system boot time expressed in seconds since the epoch."""
     # Note: we are not caching this because it is subject to
     # system clock updates.
     return _psplatform.boot_time()
