@@ -11,10 +11,6 @@ __all__ = ["PY3", "long", "xrange", "unicode", "callable", "lru_cache"]
 import collections
 import functools
 import sys
-try:
-    import __builtin__
-except ImportError:
-    import builtins as __builtin__  # py3
 
 PY3 = sys.version_info[0] == 3
 
