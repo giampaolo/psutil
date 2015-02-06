@@ -115,7 +115,10 @@ elif sys.platform.startswith("freebsd"):
 elif sys.platform.startswith("linux"):
     extensions = [Extension(
         '_psutil_linux',
-        sources=['psutil/_psutil_linux.c'],
+        sources=[
+            'psutil/_psutil_linux.c',
+            'psutil/_psutil_common.c'
+        ],
         define_macros=[VERSION_MACRO]),
         posix_extension,
     ]
@@ -123,7 +126,10 @@ elif sys.platform.startswith("linux"):
 elif sys.platform.lower().startswith('sunos'):
     extensions = [Extension(
         '_psutil_sunos',
-        sources=['psutil/_psutil_sunos.c'],
+        sources=[
+            'psutil/_psutil_sunos.c',
+            'psutil/_psutil_common.c'
+        ],
         define_macros=[VERSION_MACRO],
         libraries=['kstat', 'nsl'],),
         posix_extension,
