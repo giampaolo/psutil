@@ -370,7 +370,7 @@ class TestDualProcessImplementation(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
 
-def test_main():
+def main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(WindowsSpecificTestCase))
     test_suite.addTest(unittest.makeSuite(TestDualProcessImplementation))
@@ -378,5 +378,5 @@ def test_main():
     return result.wasSuccessful()
 
 if __name__ == '__main__':
-    if not test_main():
+    if not main():
         sys.exit(1)

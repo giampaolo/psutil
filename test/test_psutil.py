@@ -46,6 +46,7 @@ try:
     import ipaddress  # python >= 3.3
 except ImportError:
     ipaddress = None
+
 try:
     import enum  # python >= 3.4
 except ImportError:
@@ -2692,7 +2693,7 @@ class TestExampleScripts(unittest.TestCase):
         self.assertIn(str(os.getpid()), output)
 
 
-def test_main():
+def main():
     tests = []
     test_suite = unittest.TestSuite()
     tests.append(TestSystemAPIs)
@@ -2729,5 +2730,5 @@ def test_main():
     return result.wasSuccessful()
 
 if __name__ == '__main__':
-    if not test_main():
+    if not main():
         sys.exit(1)
