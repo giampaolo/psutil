@@ -10,6 +10,12 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   psutil.Process.connections() were turned from int to enums on Python > 3.4.
 
 
+**Bug fixes**
+
+- #555: [Linux] psutil.users() correctly handles ":0" as an alias for
+  "localhost"
+
+
 2.2.1 - 2015-02-02
 ==================
 
