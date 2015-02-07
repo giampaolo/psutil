@@ -1,3 +1,4 @@
+include .gitignore
 include .travis.yml
 include CREDITS
 include HISTORY.rst

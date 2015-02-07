@@ -42,6 +42,11 @@ import types
 import warnings
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
 
+try:
+    import ipaddress  # python >= 3.3
+except ImportError:
+    ipaddress = None
+
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
 else:
@@ -277,25 +282,26 @@ def reap_children(search_all=False):
 
 def check_ip_address(addr, family):
     """Attempts to check IP address's validity."""
-    if not addr:
-        return
-    if family in (AF_INET, AF_INET6):
-        assert isinstance(addr, tuple), addr
-        ip, port = addr
-        assert isinstance(port, int), port
-        if family == AF_INET:
-            ip = list(map(int, ip.split('.')))
-            assert len(ip) == 4, ip
-            for num in ip:
-                assert 0 <= num <= 255, ip
-        assert 0 <= port <= 65535, port
-    elif family == AF_UNIX:
-        assert isinstance(addr, (str, None)), addr
+    if family == AF_INET:
+        octs = [int(x) for x in addr.split('.')]
+        assert len(octs) == 4, addr
+        for num in octs:
+            assert 0 <= num <= 255, addr
+        if ipaddress is not None:
+            if not PY3:
+                addr = unicode(addr)
+            ipaddress.IPv4Address(addr)
+    elif family == AF_INET6:
+        assert isinstance(addr, str), addr
+        if ipaddress is not None:
+            if not PY3:
+                addr = unicode(addr)
+            ipaddress.IPv6Address(addr)
     else:
         raise ValueError("unknown family %r", family)
 
 
-def check_connection(conn):
+def check_connection_ntuple(conn):
     """Check validity of a connection namedtuple."""
     valid_conn_states = [getattr(psutil, x) for x in dir(psutil) if
                          x.startswith('CONN_')]
@@ -303,8 +309,21 @@ def check_connection(conn):
     assert conn.type in (SOCK_STREAM, SOCK_DGRAM), repr(conn.type)
     assert conn.family in (AF_INET, AF_INET6, AF_UNIX), repr(conn.family)
     assert conn.status in valid_conn_states, conn.status
-    check_ip_address(conn.laddr, conn.family)
-    check_ip_address(conn.raddr, conn.family)
+
+    # check IP address and port sanity
+    for addr in (conn.laddr, conn.raddr):
+        if not addr:
+            continue
+        if conn.family in (AF_INET, AF_INET6):
+            assert isinstance(addr, tuple), addr
+            ip, port = addr
+            assert isinstance(port, int), port
+            assert 0 <= port <= 65535, port
+            check_ip_address(ip, conn.family)
+        elif conn.family == AF_UNIX:
+            assert isinstance(addr, (str, None)), addr
+        else:
+            raise ValueError("unknown family %r", conn.family)
 
     if conn.family in (AF_INET, AF_INET6):
         # actually try to bind the local socket; ignore IPv6
@@ -1754,7 +1773,7 @@ class TestProcess(unittest.TestCase):
         cons = call_until(p.connections, "len(ret) != 0")
         self.assertEqual(len(cons), 1)
         con = cons[0]
-        check_connection(con)
+        check_connection_ntuple(con)
         self.assertEqual(con.family, AF_INET)
         self.assertEqual(con.type, SOCK_STREAM)
         self.assertEqual(con.status, psutil.CONN_LISTEN, con.status)
@@ -1792,7 +1811,7 @@ class TestProcess(unittest.TestCase):
                 sock.bind(TESTFN)
                 cons = psutil.Process().connections(kind='unix')
                 conn = cons[0]
-                check_connection(conn)
+                check_connection_ntuple(conn)
                 if conn.fd != -1:  # != sunos and windows
                     self.assertEqual(conn.fd, sock.fileno())
                 self.assertEqual(conn.family, AF_UNIX)
@@ -2384,7 +2403,7 @@ class TestFetchAllProcesses(unittest.TestCase):
     def connections(self, ret):
         self.assertEqual(len(ret), len(set(ret)))
         for conn in ret:
-            check_connection(conn)
+            check_connection_ntuple(conn)
 
     def cwd(self, ret):
         if ret is not None:  # BSD may return None

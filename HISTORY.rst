@@ -1,5 +1,13 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+3.0.0 - XXXX-XX-XX
+==================
+
+**Enhancements**
+
+- #581: add .gitignore. (patch by Gabi Davar)
+
+
 2.2.1 - 2015-02-02
 ==================
 

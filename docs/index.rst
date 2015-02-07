@@ -20,6 +20,7 @@ Quick links
 * `Blog <http://grodola.blogspot.com/search/label/psutil>`__
 * `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`__
 * `Forum <http://groups.google.com/group/psutil/topics>`__
+- `Installation <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 * `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
 
 About

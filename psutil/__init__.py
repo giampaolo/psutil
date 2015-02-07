@@ -13,7 +13,7 @@ in Python.
 from __future__ import division
 
 __author__ = "Giampaolo Rodola'"
-__version__ = "2.2.1"
+__version__ = "3.0.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 
 __all__ = [
@@ -1851,9 +1851,7 @@ def net_if_addrs():
 
 
 def boot_time():
-    """Return the system boot time expressed in seconds since the epoch.
-    This is also available as psutil.BOOT_TIME.
-    """
+    """Return the system boot time expressed in seconds since the epoch."""
     # Note: we are not caching this because it is subject to
     # system clock updates.
     return _psplatform.boot_time()

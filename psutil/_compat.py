@@ -6,42 +6,22 @@
 
 """Module which provides compatibility with older Python versions."""
 
-__all__ = ["PY3", "int", "long", "xrange", "exec_", "callable", "lru_cache"]
+__all__ = ["PY3", "long", "xrange", "unicode", "callable", "lru_cache"]
 
 import collections
 import functools
 import sys
-try:
-    import __builtin__
-except ImportError:
-    import builtins as __builtin__  # py3
 
 PY3 = sys.version_info[0] == 3
 
 if PY3:
-    int = int
     long = int
     xrange = range
     unicode = str
-    basestring = str
-    exec_ = getattr(__builtin__, "exec")
 else:
-    int = int
     long = long
     xrange = xrange
     unicode = unicode
-    basestring = basestring
-
-    def exec_(code, globs=None, locs=None):
-        if globs is None:
-            frame = sys._getframe(1)
-            globs = frame.f_globals
-            if locs is None:
-                locs = frame.f_locals
-            del frame
-        elif locs is None:
-            locs = globs
-        exec("""exec code in globs, locs""")
 
 
 # removed in 3.0, reintroduced in 3.2
