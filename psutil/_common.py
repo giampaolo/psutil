@@ -172,7 +172,7 @@ def sockfam_to_enum(num):
         return num
     try:
         return socket.AddressFamily(num)
-    except ValueError:
+    except (ValueError, AttributeError):
         return num
 
 
@@ -184,7 +184,7 @@ def socktype_to_enum(num):
         return num
     try:
         return socket.AddressType(num)
-    except ValueError:
+    except (ValueError, AttributeError):
         return num
 
 

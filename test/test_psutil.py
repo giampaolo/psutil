@@ -286,20 +286,20 @@ def reap_children(search_all=False):
 
 def check_ip_address(addr, family):
     """Attempts to check IP address's validity."""
-    if enum is not None:
+    if enum and PY3:
         assert isinstance(family, enum.IntEnum), family
     if family == AF_INET:
         octs = [int(x) for x in addr.split('.')]
         assert len(octs) == 4, addr
         for num in octs:
             assert 0 <= num <= 255, addr
-        if ipaddress is not None:
+        if ipaddress:
             if not PY3:
                 addr = unicode(addr)
             ipaddress.IPv4Address(addr)
     elif family == AF_INET6:
         assert isinstance(addr, str), addr
-        if ipaddress is not None:
+        if ipaddress:
             if not PY3:
                 addr = unicode(addr)
             ipaddress.IPv6Address(addr)
