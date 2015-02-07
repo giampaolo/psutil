@@ -13,10 +13,10 @@ from collections import namedtuple
 
 from . import _common
 from . import _psposix
-from ._common import (conn_tmap, usage_percent, isfile_strict,
-                      sockfam_to_enum, socktype_to_enum)
 from . import _psutil_osx as cext
 from . import _psutil_posix
+from ._common import (conn_tmap, usage_percent, isfile_strict,
+                      sockfam_to_enum, socktype_to_enum)
 
 
 __extra__all__ = []

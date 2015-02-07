@@ -28,41 +28,36 @@ except ImportError:
 from ._common import memoize
 from ._compat import callable, long
 from ._compat import PY3 as _PY3
-from ._common import (
-    deprecated_method as _deprecated_method,
-    deprecated as _deprecated,
-    sdiskio as _nt_sys_diskio,
-    snetio as _nt_sys_netio
+from ._common import (deprecated_method as _deprecated_method,
+                      deprecated as _deprecated,
+                      sdiskio as _nt_sys_diskio,
+                      snetio as _nt_sys_netio)
+
+from ._common import (STATUS_RUNNING,  # NOQA
+                      STATUS_SLEEPING,
+                      STATUS_DISK_SLEEP,
+                      STATUS_STOPPED,
+                      STATUS_TRACING_STOP,
+                      STATUS_ZOMBIE,
+                      STATUS_DEAD,
+                      STATUS_WAKING,
+                      STATUS_LOCKED,
+                      STATUS_IDLE,  # bsd
+                      STATUS_WAITING,  # bsd
 )
 
-from ._common import (
-    STATUS_RUNNING,  # NOQA
-    STATUS_SLEEPING,
-    STATUS_DISK_SLEEP,
-    STATUS_STOPPED,
-    STATUS_TRACING_STOP,
-    STATUS_ZOMBIE,
-    STATUS_DEAD,
-    STATUS_WAKING,
-    STATUS_LOCKED,
-    STATUS_IDLE,  # bsd
-    STATUS_WAITING,  # bsd
-)  # bsd
-
-from ._common import (
-    CONN_ESTABLISHED,
-    CONN_SYN_SENT,
-    CONN_SYN_RECV,
-    CONN_FIN_WAIT1,
-    CONN_FIN_WAIT2,
-    CONN_TIME_WAIT,
-    CONN_CLOSE,
-    CONN_CLOSE_WAIT,
-    CONN_LAST_ACK,
-    CONN_LISTEN,
-    CONN_CLOSING,
-    CONN_NONE
-)
+from ._common import (CONN_ESTABLISHED,
+                      CONN_SYN_SENT,
+                      CONN_SYN_RECV,
+                      CONN_FIN_WAIT1,
+                      CONN_FIN_WAIT2,
+                      CONN_TIME_WAIT,
+                      CONN_CLOSE,
+                      CONN_CLOSE_WAIT,
+                      CONN_LAST_ACK,
+                      CONN_LISTEN,
+                      CONN_CLOSING,
+                      CONN_NONE)
 
 if sys.platform.startswith("linux"):
     from . import _pslinux as _psplatform

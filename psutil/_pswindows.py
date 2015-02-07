@@ -12,10 +12,10 @@ import os
 from collections import namedtuple
 
 from . import _common
+from . import _psutil_windows as cext
 from ._common import (conn_tmap, usage_percent, isfile_strict,
                       sockfam_to_enum, socktype_to_enum)
 from ._compat import PY3, xrange, lru_cache
-from . import _psutil_windows as cext
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx

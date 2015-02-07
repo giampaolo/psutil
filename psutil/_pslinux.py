@@ -21,10 +21,10 @@ from collections import namedtuple, defaultdict
 
 from . import _common
 from . import _psposix
-from ._common import (isfile_strict, usage_percent, deprecated)
-from ._compat import PY3
 from . import _psutil_linux as cext
 from . import _psutil_posix
+from ._common import (isfile_strict, usage_percent, deprecated)
+from ._compat import PY3
 
 
 __extra__all__ = [
