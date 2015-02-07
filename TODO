@@ -21,7 +21,8 @@ HIGHER PRIORITY
 
  * #269: expose network ifaces RX/TW queues.
 
- * Process.threads(): thread names
+ * Process.threads(): thread names; patch for OSX available at:
+   https://code.google.com/p/plcrashreporter/issues/detail?id=65
 
  * Asynchronous psutil.Popen (see http://bugs.python.org/issue1191964)
 
@@ -50,10 +51,7 @@ LOWER PRIORITY
 
  * #357: what CPU a process is on.
 
- * thread names:
-    * https://code.google.com/p/plcrashreporter/issues/detail?id=65
-
- * Doc / wiki which compares similarities between UNIX cli tools and psutil.
+  * Doc / wiki which compares similarities between UNIX cli tools and psutil.
    Example:
    df -a  ->  psutil.disk_partitions
    lsof   ->  psutil.Process.open_files() and psutil.Process.open_connections()
@@ -65,7 +63,13 @@ LOWER PRIORITY
 DEBATABLE
 =========
 
- * support wheels? http://pythonwheels.com/
+ * psutil.proc_tree() something which obtains a {pid:ppid, ...} dict for
+   all running processes in one shot. This can be factored out from
+   Process.children() and exposed as a first class function.
+   PROS: on Windows we can take advantage of _psutil_windows.ppid_map()
+   which is faster than iterating over all pids and calling ppid().
+   CONS: examples/pstree.py shows this can be easily done in the user code
+   so maybe it's not worth the addition.
 
  * advanced cmdline interface exposing the whole API and providing different
    kind of outputs (e.g. pprinted, colorized, json).
