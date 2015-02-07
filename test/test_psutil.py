@@ -51,13 +51,13 @@ try:
 except ImportError:
     enum = None
 
+import psutil
+from psutil._compat import PY3, callable, long, unicode
+
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
 else:
     import unittest
-
-import psutil
-from psutil._compat import PY3, callable, long, unicode
 
 
 # ===================================================================
@@ -546,9 +546,10 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(len(list(psutil.process_iter())), len(psutil.pids()))
 
     def test_wait_procs(self):
-        l = []
-        callback = lambda p: l.append(p.pid)
+        def callback(p):
+            l.append(p.pid)
 
+        l = []
         sproc1 = get_test_subprocess()
         sproc2 = get_test_subprocess()
         sproc3 = get_test_subprocess()

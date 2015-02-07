@@ -68,10 +68,12 @@ def wait_pid(pid, timeout=None):
 
     timer = getattr(time, 'monotonic', time.time)
     if timeout is not None:
-        waitcall = lambda: os.waitpid(pid, os.WNOHANG)
+        def waitcall():
+            return os.waitpid(pid, os.WNOHANG)
         stop_at = timer() + timeout
     else:
-        waitcall = lambda: os.waitpid(pid, 0)
+        def waitcall():
+            return os.waitpid(pid, 0)
 
     delay = 0.0001
     while True:
