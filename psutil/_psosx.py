@@ -13,7 +13,8 @@ from collections import namedtuple
 
 from psutil import _common
 from psutil import _psposix
-from psutil._common import conn_tmap, usage_percent, isfile_strict
+from psutil._common import (conn_tmap, usage_percent, isfile_strict,
+                            sockfam_to_enum, socktype_to_enum)
 import _psutil_osx as cext
 import _psutil_posix
 
@@ -292,6 +293,8 @@ class Process(object):
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
             status = TCP_STATUSES[status]
+            fam = sockfam_to_enum(fam)
+            type = socktype_to_enum(type)
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
         return ret

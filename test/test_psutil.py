@@ -46,6 +46,10 @@ try:
     import ipaddress  # python >= 3.3
 except ImportError:
     ipaddress = None
+try:
+    import enum  # python >= 3.4
+except ImportError:
+    enum = None
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
@@ -282,6 +286,8 @@ def reap_children(search_all=False):
 
 def check_ip_address(addr, family):
     """Attempts to check IP address's validity."""
+    if enum is not None:
+        assert isinstance(family, enum.IntEnum), family
     if family == AF_INET:
         octs = [int(x) for x in addr.split('.')]
         assert len(octs) == 4, addr

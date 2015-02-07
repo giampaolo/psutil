@@ -12,7 +12,8 @@ import os
 from collections import namedtuple
 
 from psutil import _common
-from psutil._common import conn_tmap, usage_percent, isfile_strict
+from psutil._common import (conn_tmap, usage_percent, isfile_strict,
+                            sockfam_to_enum, socktype_to_enum)
 from psutil._compat import PY3, xrange, lru_cache
 import _psutil_windows as cext
 
@@ -171,6 +172,8 @@ def net_connections(kind, _pid=-1):
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
         status = TCP_STATUSES[status]
+        fam = sockfam_to_enum(fam)
+        type = socktype_to_enum(type)
         if _pid == -1:
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
         else:

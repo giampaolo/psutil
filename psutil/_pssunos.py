@@ -15,7 +15,8 @@ from collections import namedtuple
 
 from psutil import _common
 from psutil import _psposix
-from psutil._common import usage_percent, isfile_strict
+from psutil._common import (usage_percent, isfile_strict, sockfam_to_enum,
+                            socktype_to_enum)
 from psutil._compat import PY3
 import _psutil_posix
 import _psutil_sunos as cext
@@ -218,6 +219,8 @@ def net_connections(kind, _pid=-1):
         if type_ not in types:
             continue
         status = TCP_STATUSES[status]
+        fam = sockfam_to_enum(fam)
+        type_ = socktype_to_enum(type_)
         if _pid == -1:
             nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
         else:

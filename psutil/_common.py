@@ -17,6 +17,10 @@ try:
     import threading
 except ImportError:
     import dummy_threading as threading
+try:
+    import enum  # py >= 3.4
+except ImportError:
+    enum = None
 
 from collections import namedtuple
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
@@ -160,6 +164,30 @@ def isfile_strict(path):
         return stat.S_ISREG(st.st_mode)
 
 
+def sockfam_to_enum(num):
+    """Convert a numeric socket family value to an IntEnum member.
+    If it's not a known member, return the numeric value itself.
+    """
+    if enum is None:
+        return num
+    try:
+        return socket.AddressFamily(num)
+    except ValueError:
+        return num
+
+
+def socktype_to_enum(num):
+    """Convert a numeric socket type value to an IntEnum member.
+    If it's not a known member, return the numeric value itself.
+    """
+    if enum is None:
+        return num
+    try:
+        return socket.AddressType(num)
+    except ValueError:
+        return num
+
+
 # --- Process.connections() 'kind' parameter mapping
 
 conn_tmap = {
@@ -184,7 +212,7 @@ if AF_UNIX is not None:
         "unix": ([AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
     })
 
-del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM, socket
+del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
 
 
 # --- namedtuples for psutil.* system-related functions

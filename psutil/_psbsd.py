@@ -14,7 +14,8 @@ from collections import namedtuple
 
 from psutil import _common
 from psutil import _psposix
-from psutil._common import conn_tmap, usage_percent
+from psutil._common import (conn_tmap, usage_percent, sockfam_to_enum,
+                            socktype_to_enum)
 import _psutil_bsd as cext
 import _psutil_posix
 
@@ -191,6 +192,8 @@ def net_connections(kind):
         # TODO: apply filter at C level
         if fam in families and type in types:
             status = TCP_STATUSES[status]
+            fam = sockfam_to_enum(fam)
+            type = socktype_to_enum(type)
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
             ret.append(nt)
     return ret
@@ -312,6 +315,8 @@ class Process(object):
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
+            fam = sockfam_to_enum(fam)
+            type = socktype_to_enum(type)
             status = TCP_STATUSES[status]
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
