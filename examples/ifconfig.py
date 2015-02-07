@@ -43,10 +43,9 @@ import psutil
 
 
 af_map = {
-    getattr(socket, "AF_PACKET", 17): 'HWADDR',
-    getattr(psutil, "AF_LINK", -1): 'HWADDR',  # OSX / BSD only
     socket.AF_INET: 'IPv4',
     socket.AF_INET6: 'IPv6',
+    psutil.AF_LINK: 'HWADDR',
 }
 
 

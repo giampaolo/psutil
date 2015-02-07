@@ -9,6 +9,7 @@
 import errno
 import functools
 import os
+import socket
 from collections import namedtuple
 
 from psutil import _common
@@ -23,6 +24,7 @@ __extra__all__ = []
 # --- constants
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+AF_LINK = socket.AF_LINK
 
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
 TCP_STATUSES = {

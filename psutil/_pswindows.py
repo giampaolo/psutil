@@ -31,6 +31,7 @@ CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
                                cext.ERROR_ACCESS_DENIED])
+AF_LINK = -1
 
 TCP_STATUSES = {
     cext.MIB_TCP_STATE_ESTAB: _common.CONN_ESTABLISHED,

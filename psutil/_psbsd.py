@@ -9,6 +9,7 @@
 import errno
 import functools
 import os
+import socket
 import sys
 from collections import namedtuple
 
@@ -49,6 +50,7 @@ TCP_STATUSES = {
 }
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+AF_LINK = socket.AF_LINK
 
 # extend base mem ntuple with BSD-specific memory metrics
 svmem = namedtuple(

@@ -27,6 +27,7 @@ __all__ = [
     "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
+    "AF_LINK",
     # classes
     "Process", "Popen",
     # functions
@@ -160,9 +161,11 @@ elif sys.platform.startswith("sunos"):
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
+# extend the local __all__ context
 __all__.extend(_psplatform.__extra__all__)
 
 
+AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
 _POSIX = os.name == 'posix'
 _WINDOWS = os.name == 'nt'
@@ -1818,16 +1821,22 @@ def net_connections(kind='inet'):
 
 
 def net_if_addrs():
-    """Return all NICs installed on the system as a dictionary whose
-    keys are NIC names and value is a namedtuple including:
+    """Return the addresses associated to each NIC (network interface
+    card) installed on the system as a dictionary whose keys are the
+    NIC names and value is a list of namedtuples for each address
+    assigned to the NIC. Each namedtuple includes 4 fields:
 
-     - family  (one of the socket.AF_* constant)
+     - family
      - address
      - netmask
      - broadcast
 
-    address, netmask and broadcast may be None in case NIC address is
-    not assigned.
+    'family' can be either socket.AF_INET, socket.AF_INET6 or
+    psutil.AF_LINK, which refers to a MAC address.
+    'address' is the primary address, 'netmask' and 'broadcast'
+    may be None.
+    Note: you can have more than one address of the same family
+    associated with each interface.
     """
     has_enums = sys.version_info >= (3, 4)
     if has_enums:

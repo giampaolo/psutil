@@ -207,7 +207,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
     def test_net_if_addrs_ips(self):
         for name, addrs in psutil.net_if_addrs().items():
             for addr in addrs:
-                if addr.family == socket.AF_PACKET:
+                if addr.family == psutil.AF_LINK:
                     self.assertEqual(addr.address, get_mac_address(name))
                 elif addr.family == socket.AF_INET:
                     self.assertEqual(addr.address, get_ipv4_address(name))

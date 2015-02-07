@@ -405,35 +405,44 @@ Network
 
 .. function:: net_if_addrs()
 
-  Return all NICs installed on the system as a dictionary whose keys are NIC
-  names and value is a namedtuple including:
+  Return the addresses associated to each NIC (network interface card)
+  installed on the system as a dictionary whose keys are the NIC names and
+  value is a list of namedtuples for each address assigned to the NIC.
+  Each namedtuple includes 4 fields:
 
   - **family**
   - **address**
   - **netmask**
   - **broadcast**
 
-  *family* is one of the ``socket.AF_*`` constants.  *address*, *netmask* and
-  *broadcast* may be ``None`` in case the NIC address is not assigned.
-  On OSX and FreeBSD :const:`psutil.AF_LINK` is also available and it refers
-  to a MAC address.
-  On (all?) other UNIX variants ``socket.AF_PACKET`` refers to the NIC MAC
-  address.
-  Note: the supported address families are limited to AF_INET, AF_INET6,
-  AF_PACKET (Linux) and AF_LINK (OSX / FreeBSD). If you're interested in others
-  (e.g. AF_BLUETOOTH) you can use the more powerful
-  `netifaces <https://pypi.python.org/pypi/netifaces/>`__ extension.
-  Example:
+  *family* can be either
+  `AF_INET <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
+  `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
+  or :const:`psutil.AF_LINK`, which refers to a MAC address.
+  *address* is the primary address, *netmask* and *broadcast* may be ``None``.
+  Example::
 
     >>> import psutil
     >>> psutil.net_if_addrs()
-    {'lo': [snic(family=2, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1'),
-            snic(family=10, address='::1', netmask='ffff:ffff:ffff:ffff', broadcast=None)],
-     'wlan0': [snic(family=2, address='192.168.0.10', netmask='255.255.255.0', broadcast='192.168.0.255'),
-               snic(family=10, address='2a02:8109:83c0:224c::5', netmask='ffff:ffff:ffff', broadcast=None)]}
+    {'lo': [snic(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1'),
+            snic(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None),
+            snic(family=<AddressFamily.AF_PACKET: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00')],
+     'wlan0': [snic(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255'),
+               snic(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None),
+               snic(family=<AddressFamily.AF_PACKET: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff')]}
     >>>
 
-  *New in 2.2.0*
+  See also `examples/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/examples/ifconfig.py>`__
+  for an example application.
+
+  .. note:: if you're interested in others families (e.g. AF_BLUETOOTH) you can
+    use the more powerful `netifaces <https://pypi.python.org/pypi/netifaces/>`__
+    extension.
+
+  .. note:: you can have more than one address of the same family associated
+    with each interface (that's why dict values are lists).
+
+  *New in 3.0.0*
 
 
 Other system info
@@ -1291,10 +1300,6 @@ Constants
 .. data:: AF_LINK
 
   Constant which identifies a MAC address associated with a network interface.
-  Starting from Python 3.4 this is also available as
-  `socket.AF_LINK <https://docs.python.org/3/library/socket.html#socket.AF_LINK>`__.
   To be used in conjunction with :func:`psutil.net_if_addrs()`.
 
-  Availability: OSX, FreeBSD
-
-  *New in 2.2.0*
+  *New in 3.0.0*

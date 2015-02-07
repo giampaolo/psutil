@@ -297,6 +297,8 @@ def check_ip_address(addr, family):
             if not PY3:
                 addr = unicode(addr)
             ipaddress.IPv6Address(addr)
+    elif family == psutil.AF_LINK:
+        assert re.match('([a-fA-F0-9]{2}[:|\-]?){6}', addr) is not None, addr
     else:
         raise ValueError("unknown family %r", family)
 
@@ -1039,10 +1041,7 @@ class TestSystemAPIs(unittest.TestCase):
         # self.assertEqual(sorted(nics.keys()),
         #                  sorted(psutil.net_io_counters(pernic=True).keys()))
 
-        families = [getattr(socket, x) for x in dir(socket)
-                    if x.startswith('AF_')]
-        if hasattr(psutil, "AF_LINK"):
-            families.append(psutil.AF_LINK)
+        families = set([socket.AF_INET, AF_INET6, psutil.AF_LINK])
         for nic, addrs in nics.items():
             self.assertEqual(len(set(addrs)), len(addrs))
             for addr in addrs:
@@ -1065,11 +1064,20 @@ class TestSystemAPIs(unittest.TestCase):
                     s = socket.socket(af, socktype, proto)
                     with contextlib.closing(s):
                         s.bind(sa)
+                for ip in (addr.address, addr.netmask, addr.broadcast):
+                    if ip is not None:
+                        # TODO: skip AF_INET6 for now because I get:
+                        # AddressValueError: Only hex digits permitted in
+                        # u'c6f3%lxcbr0' in u'fe80::c8e0:fff:fe54:c6f3%lxcbr0'
+                        if addr.family != AF_INET6:
+                            check_ip_address(ip, addr.family)
 
-        if BSD or OSX:
-            psutil.AF_LINK
-            if hasattr(socket, "AF_LINK"):  # python >= 3.4
-                self.assertEqual(psutil.AF_LINK, socket.AF_LINK)
+        if BSD or OSX or SUNOS:
+            self.assertEqual(psutil.AF_LINK, socket.AF_LINK)
+        elif LINUX:
+            self.assertEqual(psutil.AF_LINK, socket.AF_PACKET)
+        elif WINDOWS:
+            self.assertEqual(psutil.AF_LINK, -1)
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
