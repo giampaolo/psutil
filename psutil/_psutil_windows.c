@@ -18,6 +18,7 @@
 #include <tchar.h>
 #include <tlhelp32.h>
 #include <winsock2.h>
+#include <WS2tcpip.h>
 #include <iphlpapi.h>
 #include <wtsapi32.h>
 
@@ -2264,7 +2265,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
     int outBufLen = 15000;
     char ifname[MAX_PATH];
     DWORD dwRetVal = 0;
-    MIB_IFROW *pIfRow = NULL;
+    MIB_IF_ROW2 *pIfRow = NULL;
     ULONG flags = 0;
     ULONG family = AF_UNSPEC;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
@@ -2306,29 +2307,30 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
     while (pCurrAddresses) {
         py_nic_name = NULL;
         py_nic_info = NULL;
-        pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
+        pIfRow = (MIB_IF_ROW2 *) malloc(sizeof(MIB_IF_ROW2));
 
         if (pIfRow == NULL) {
             PyErr_NoMemory();
             goto error;
         }
+        SecureZeroMemory((PVOID)pIfRow, sizeof(MIB_IF_ROW2));
 
-        pIfRow->dwIndex = pCurrAddresses->IfIndex;
-        dwRetVal = GetIfEntry(pIfRow);
+        pIfRow->InterfaceIndex = pCurrAddresses->IfIndex;
+        dwRetVal = GetIfEntry2(pIfRow);
         if (dwRetVal != NO_ERROR) {
             PyErr_SetString(PyExc_RuntimeError, "GetIfEntry() failed.");
             goto error;
         }
 
         py_nic_info = Py_BuildValue("(kkkkkkkk)",
-                                    pIfRow->dwOutOctets,
-                                    pIfRow->dwInOctets,
-                                    pIfRow->dwOutUcastPkts,
-                                    pIfRow->dwInUcastPkts,
-                                    pIfRow->dwInErrors,
-                                    pIfRow->dwOutErrors,
-                                    pIfRow->dwInDiscards,
-                                    pIfRow->dwOutDiscards);
+                                    pIfRow->OutOctets,
+                                    pIfRow->InOctets,
+                                    pIfRow->OutUcastPkts,
+                                    pIfRow->InUcastPkts,
+                                    pIfRow->InErrors,
+                                    pIfRow->OutErrors,
+                                    pIfRow->InDiscards,
+                                    pIfRow->OutDiscards);
         if (!py_nic_info)
             goto error;
 
