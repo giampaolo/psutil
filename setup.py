@@ -47,7 +47,7 @@ VERSION_MACRO = ('PSUTIL_VERSION', int(VERSION.replace('.', '')))
 # POSIX
 if os.name == 'posix':
     posix_extension = Extension(
-        '_psutil_posix',
+        'psutil._psutil_posix',
         sources=['psutil/_psutil_posix.c'],
     )
 # Windows
@@ -58,7 +58,7 @@ if sys.platform.startswith("win32"):
         return '0x0%s' % ((maj * 100) + min)
 
     extensions = [Extension(
-        '_psutil_windows',
+        'psutil._psutil_windows',
         sources=[
             'psutil/_psutil_windows.c',
             'psutil/_psutil_common.c',
@@ -85,7 +85,7 @@ if sys.platform.startswith("win32"):
 # OS X
 elif sys.platform.startswith("darwin"):
     extensions = [Extension(
-        '_psutil_osx',
+        'psutil._psutil_osx',
         sources=[
             'psutil/_psutil_osx.c',
             'psutil/_psutil_common.c',
@@ -101,7 +101,7 @@ elif sys.platform.startswith("darwin"):
 # FreeBSD
 elif sys.platform.startswith("freebsd"):
     extensions = [Extension(
-        '_psutil_bsd',
+        'psutil._psutil_bsd',
         sources=[
             'psutil/_psutil_bsd.c',
             'psutil/_psutil_common.c',
@@ -114,7 +114,7 @@ elif sys.platform.startswith("freebsd"):
 # Linux
 elif sys.platform.startswith("linux"):
     extensions = [Extension(
-        '_psutil_linux',
+        'psutil._psutil_linux',
         sources=['psutil/_psutil_linux.c'],
         define_macros=[VERSION_MACRO]),
         posix_extension,
@@ -122,7 +122,7 @@ elif sys.platform.startswith("linux"):
 # Solaris
 elif sys.platform.lower().startswith('sunos'):
     extensions = [Extension(
-        '_psutil_sunos',
+        'psutil._psutil_sunos',
         sources=['psutil/_psutil_sunos.c'],
         define_macros=[VERSION_MACRO],
         libraries=['kstat', 'nsl'],),
