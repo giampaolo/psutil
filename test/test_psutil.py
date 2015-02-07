@@ -1650,7 +1650,6 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(ValueError, p.cpu_affinity, invalid_cpu)
         self.assertRaises(ValueError, p.cpu_affinity, range(10000, 11000))
 
-    @unittest.skipUnless(POSIX, 'skipped on Windows')
     def test_open_files(self):
         # current process
         p = psutil.Process()
@@ -1678,7 +1677,6 @@ class TestProcess(unittest.TestCase):
         for file in filenames:
             assert os.path.isfile(file), file
 
-    @unittest.skipUnless(POSIX, 'skipped on Windows')
     def test_open_files2(self):
         # test fd and path fields
         with open(TESTFN, 'w') as fileobj:

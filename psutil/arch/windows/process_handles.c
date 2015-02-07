@@ -151,7 +151,7 @@ psutil_get_open_files(long pid, HANDLE processHandle)
                          NULL
                      )) == STATUS_INFO_LENGTH_MISMATCH)
     {
-        handleInfo = (PSYSTEM_HANDLE_INFORMATION) \
+        handleInfo = (PSYSTEM_HANDLE_INFORMATION)
             realloc(handleInfo, handleInfoSize *= 2);
     }
 

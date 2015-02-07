@@ -29,7 +29,7 @@ except ImportError:
 
 from psutil._compat import PY3, callable, long
 from psutil._pswindows import ACCESS_DENIED_SET
-import _psutil_windows
+import psutil._psutil_windows as _psutil_windows
 import psutil
 
 
@@ -289,8 +289,8 @@ class TestDualProcessImplementation(unittest.TestCase):
         ('proc_cpu_times', 0.2),
         ('proc_create_time', 0.5),
         ('proc_num_handles', 1),  # 1 because impl #1 opens a handle
-        # ('proc_io_counters', 0), # fails every time ...
         ('proc_memory_info', 1024),  # KB
+        ('proc_io_counters', 0),
     ]
 
     def test_compare_values(self):
