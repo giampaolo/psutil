@@ -19,12 +19,12 @@ import sys
 import warnings
 from collections import namedtuple, defaultdict
 
-from psutil import _common
-from psutil import _psposix
-from psutil._common import (isfile_strict, usage_percent, deprecated)
-from psutil._compat import PY3
-import _psutil_linux as cext
-import _psutil_posix
+from . import _common
+from . import _psposix
+from . import _psutil_linux as cext
+from . import _psutil_posix
+from ._common import (isfile_strict, usage_percent, deprecated)
+from ._compat import PY3
 
 
 __extra__all__ = [
