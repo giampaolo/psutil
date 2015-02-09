@@ -70,7 +70,7 @@ if sys.platform.startswith("linux"):
                                  IOPRIO_CLASS_IDLE)
     # Linux >= 2.6.36
     if _psplatform.HAS_PRLIMIT:
-        from psutil._psutil_linux import (RLIM_INFINITY,  # NOQA
+        from _psutil_linux import (RLIM_INFINITY,  # NOQA
                                    RLIMIT_AS,
                                    RLIMIT_CORE,
                                    RLIMIT_CPU,
@@ -85,7 +85,7 @@ if sys.platform.startswith("linux"):
         # Kinda ugly but considerably faster than using hasattr() and
         # setattr() against the module object (we are at import time:
         # speed matters).
-        from psutil import _psutil_linux
+        import _psutil_linux
         try:
             RLIMIT_MSGQUEUE = _psutil_linux.RLIMIT_MSGQUEUE
         except AttributeError:
@@ -110,12 +110,12 @@ if sys.platform.startswith("linux"):
 
 elif sys.platform.startswith("win32"):
     from psutil import _pswindows as _psplatform
-    from psutil._psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,  # NOQA
-                                        BELOW_NORMAL_PRIORITY_CLASS,
-                                        HIGH_PRIORITY_CLASS,
-                                        IDLE_PRIORITY_CLASS,
-                                        NORMAL_PRIORITY_CLASS,
-                                        REALTIME_PRIORITY_CLASS)
+    from _psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,  # NOQA
+                                 BELOW_NORMAL_PRIORITY_CLASS,
+                                 HIGH_PRIORITY_CLASS,
+                                 IDLE_PRIORITY_CLASS,
+                                 NORMAL_PRIORITY_CLASS,
+                                 REALTIME_PRIORITY_CLASS)
     from psutil._pswindows import CONN_DELETE_TCB  # NOQA
 
 elif sys.platform.startswith("darwin"):
