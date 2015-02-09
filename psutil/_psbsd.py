@@ -191,7 +191,14 @@ def net_connections(kind):
         fd, fam, type, laddr, raddr, status, pid = item
         # TODO: apply filter at C level
         if fam in families and type in types:
-            status = TCP_STATUSES[status]
+            try:
+                status = TCP_STATUSES[status]
+            except KeyError:
+                # XXX: Not sure why this happens. I saw this occurring
+                # with IPv6 sockets opened by 'vim'. Those sockets
+                # have a very short lifetime so maybe the kernel
+                # can't initialize their status?
+                status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
             fam = sockfam_to_enum(fam)
             type = socktype_to_enum(type)
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
