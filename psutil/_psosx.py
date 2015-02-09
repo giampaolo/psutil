@@ -24,6 +24,7 @@ __extra__all__ = []
 # --- constants
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+AF_LINK = cext_posix.AF_LINK
 
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
 TCP_STATUSES = {
@@ -171,6 +172,7 @@ pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage
 net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
+net_if_addrs = cext_posix.net_if_addrs
 
 
 def wrap_exceptions(fun):

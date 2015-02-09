@@ -238,6 +238,8 @@ suser = namedtuple('suser', ['name', 'terminal', 'host', 'started'])
 # psutil.net_connections()
 sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
                              'status', 'pid'])
+# psutil.net_if_addrs()
+snic = namedtuple('snic', ['family', 'address', 'netmask', 'broadcast'])
 
 
 # --- namedtuples for psutil.Process methods

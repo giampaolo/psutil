@@ -33,6 +33,7 @@ CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
                                cext.ERROR_ACCESS_DENIED])
+AF_LINK = -1
 
 TCP_STATUSES = {
     cext.MIB_TCP_STATE_ESTAB: _common.CONN_ESTABLISHED,
@@ -199,6 +200,7 @@ pid_exists = cext.pid_exists
 net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
 ppid_map = cext.ppid_map  # not meant to be public
+net_if_addrs = cext.net_if_addrs
 
 
 def wrap_exceptions(fun):

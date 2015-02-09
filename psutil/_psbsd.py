@@ -50,6 +50,7 @@ TCP_STATUSES = {
 }
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+AF_LINK = cext_posix.AF_LINK
 
 # extend base mem ntuple with BSD-specific memory metrics
 svmem = namedtuple(
@@ -211,6 +212,7 @@ pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage
 net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
+net_if_addrs = cext_posix.net_if_addrs
 
 
 def wrap_exceptions(fun):

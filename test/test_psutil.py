@@ -304,6 +304,8 @@ def check_ip_address(addr, family):
             if not PY3:
                 addr = unicode(addr)
             ipaddress.IPv6Address(addr)
+    elif family == psutil.AF_LINK:
+        assert re.match('([a-fA-F0-9]{2}[:|\-]?){6}', addr) is not None, addr
     else:
         raise ValueError("unknown family %r", family)
 
@@ -1038,6 +1040,54 @@ class TestSystemAPIs(unittest.TestCase):
         for key in ret:
             self.assertTrue(key)
             check_ntuple(ret[key])
+
+    def test_net_if_addrs(self):
+        nics = psutil.net_if_addrs()
+        assert nics, nics
+
+        # Not reliable on all platforms (net_if_addrs() reports more
+        # interfaces).
+        # self.assertEqual(sorted(nics.keys()),
+        #                  sorted(psutil.net_io_counters(pernic=True).keys()))
+
+        families = set([socket.AF_INET, AF_INET6, psutil.AF_LINK])
+        for nic, addrs in nics.items():
+            self.assertEqual(len(set(addrs)), len(addrs))
+            for addr in addrs:
+                self.assertIsInstance(addr.family, int)
+                self.assertIsInstance(addr.address, str)
+                self.assertIsInstance(addr.netmask, (str, type(None)))
+                self.assertIsInstance(addr.broadcast, (str, type(None)))
+                self.assertIn(addr.family, families)
+                if sys.version_info >= (3, 4):
+                    self.assertIsInstance(addr.family, socket.AddressFamily)
+                if addr.family == socket.AF_INET:
+                    s = socket.socket(addr.family)
+                    with contextlib.closing(s):
+                        s.bind((addr.address, 0))
+                elif addr.family == socket.AF_INET6:
+                    info = socket.getaddrinfo(
+                        addr.address, 0, socket.AF_INET6, socket.SOCK_STREAM,
+                        0, socket.AI_PASSIVE)[0]
+                    af, socktype, proto, canonname, sa = info
+                    s = socket.socket(af, socktype, proto)
+                    with contextlib.closing(s):
+                        s.bind(sa)
+                for ip in (addr.address, addr.netmask, addr.broadcast):
+                    if ip is not None:
+                        # TODO: skip AF_INET6 for now because I get:
+                        # AddressValueError: Only hex digits permitted in
+                        # u'c6f3%lxcbr0' in u'fe80::c8e0:fff:fe54:c6f3%lxcbr0'
+                        if addr.family != AF_INET6:
+                            check_ip_address(ip, addr.family)
+
+        if BSD or OSX or SUNOS:
+            if hasattr(socket, "AF_LINK"):
+                self.assertEqual(psutil.AF_LINK, socket.AF_LINK)
+        elif LINUX:
+            self.assertEqual(psutil.AF_LINK, socket.AF_PACKET)
+        elif WINDOWS:
+            self.assertEqual(psutil.AF_LINK, -1)
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
@@ -2665,6 +2715,9 @@ class TestExampleScripts(unittest.TestCase):
 
     def test_netstat(self):
         self.assert_stdout('netstat.py')
+
+    def test_ifconfig(self):
+        self.assert_stdout('ifconfig.py')
 
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))

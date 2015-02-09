@@ -54,6 +54,7 @@ CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 BOOT_TIME = None  # set later
 DEFAULT_ENCODING = sys.getdefaultencoding()
+AF_LINK = socket.AF_PACKET
 
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
 IOPRIO_CLASS_NONE = 0
@@ -553,6 +554,9 @@ def net_io_counters():
         retdict[name] = (bytes_sent, bytes_recv, packets_sent, packets_recv,
                          errin, errout, dropin, dropout)
     return retdict
+
+
+net_if_addrs = cext_posix.net_if_addrs
 
 
 # --- disks

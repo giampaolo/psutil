@@ -11,6 +11,7 @@ in Python.
 """
 
 from __future__ import division
+
 import collections
 import errno
 import functools
@@ -31,7 +32,9 @@ from ._compat import PY3 as _PY3
 from ._common import (deprecated_method as _deprecated_method,
                       deprecated as _deprecated,
                       sdiskio as _nt_sys_diskio,
-                      snetio as _nt_sys_netio)
+                      snetio as _nt_sys_netio,
+                      snic as _nt_snic,
+                      )
 
 from ._common import (STATUS_RUNNING,  # NOQA
                       STATUS_SLEEPING,
@@ -144,13 +147,14 @@ __all__ = [
     "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
+    "AF_LINK",
     # classes
     "Process", "Popen",
     # functions
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
-    "net_io_counters", "net_connections",                           # network
+    "net_io_counters", "net_connections", "net_if_addrs",           # network
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
     "users", "boot_time",                                           # others
 ]
@@ -158,6 +162,7 @@ __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
 __version__ = "3.0.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
+AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
 _POSIX = os.name == 'posix'
 _WINDOWS = os.name == 'nt'
@@ -1812,6 +1817,40 @@ def net_connections(kind='inet'):
     all             the sum of all the possible families and protocols
     """
     return _psplatform.net_connections(kind)
+
+
+def net_if_addrs():
+    """Return the addresses associated to each NIC (network interface
+    card) installed on the system as a dictionary whose keys are the
+    NIC names and value is a list of namedtuples for each address
+    assigned to the NIC. Each namedtuple includes 4 fields:
+
+     - family
+     - address
+     - netmask
+     - broadcast
+
+    'family' can be either socket.AF_INET, socket.AF_INET6 or
+    psutil.AF_LINK, which refers to a MAC address.
+    'address' is the primary address, 'netmask' and 'broadcast'
+    may be None.
+    Note: you can have more than one address of the same family
+    associated with each interface.
+    """
+    has_enums = sys.version_info >= (3, 4)
+    if has_enums:
+        import socket
+    rawlist = _psplatform.net_if_addrs()
+    rawlist.sort(key=lambda x: x[1])  # sort by family
+    ret = collections.defaultdict(list)
+    for name, fam, addr, mask, broadcast in rawlist:
+        if has_enums:
+            try:
+                fam = socket.AddressFamily(fam)
+            except ValueError:
+                pass
+        ret[name].append(_nt_snic(fam, addr, mask, broadcast))
+    return dict(ret)
 
 
 # =====================================================================

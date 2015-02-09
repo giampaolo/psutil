@@ -200,7 +200,7 @@ Memory
   * **total**: total swap memory in bytes
   * **used**: used swap memory in bytes
   * **free**: free swap memory in bytes
-  * **percent**: the percentage usage
+  * **percent**: the percentage usage calculated as ``(total - available) / total * 100``
   * **sin**: the number of bytes the system has swapped in from disk
     (cumulative)
   * **sout**: the number of bytes the system has swapped out from disk
@@ -402,6 +402,47 @@ Network
   .. note:: (Solaris) UNIX sockets are not supported.
 
   .. versionadded:: 2.1.0
+
+.. function:: net_if_addrs()
+
+  Return the addresses associated to each NIC (network interface card)
+  installed on the system as a dictionary whose keys are the NIC names and
+  value is a list of namedtuples for each address assigned to the NIC.
+  Each namedtuple includes 4 fields:
+
+  - **family**
+  - **address**
+  - **netmask**
+  - **broadcast**
+
+  *family* can be either
+  `AF_INET <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
+  `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
+  or :const:`psutil.AF_LINK`, which refers to a MAC address.
+  *address* is the primary address, *netmask* and *broadcast* may be ``None``.
+  Example::
+
+    >>> import psutil
+    >>> psutil.net_if_addrs()
+    {'lo': [snic(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1'),
+            snic(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None),
+            snic(family=<AddressFamily.AF_PACKET: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00')],
+     'wlan0': [snic(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255'),
+               snic(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None),
+               snic(family=<AddressFamily.AF_PACKET: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff')]}
+    >>>
+
+  See also `examples/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/examples/ifconfig.py>`__
+  for an example application.
+
+  .. note:: if you're interested in others families (e.g. AF_BLUETOOTH) you can
+    use the more powerful `netifaces <https://pypi.python.org/pypi/netifaces/>`__
+    extension.
+
+  .. note:: you can have more than one address of the same family associated
+    with each interface (that's why dict values are lists).
+
+  *New in 3.0.0*
 
 
 Other system info
@@ -1255,3 +1296,11 @@ Constants
   `man prlimit <http://linux.die.net/man/2/prlimit>`__ for futher information.
 
   Availability: Linux
+
+.. _const-aflink:
+.. data:: AF_LINK
+
+  Constant which identifies a MAC address associated with a network interface.
+  To be used in conjunction with :func:`psutil.net_if_addrs()`.
+
+  *New in 3.0.0*
