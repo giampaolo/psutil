@@ -837,7 +837,8 @@ Process class
      `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`__.
      CPU affinity consists in telling the OS to run a certain process on a
      limited set of CPUs only. The number of eligible CPUs can be obtained with
-     ``list(range(psutil.cpu_count()))``.
+     ``list(range(psutil.cpu_count()))``. On set raises ``ValueError`` in case
+     an invalid CPU number is specified.
 
       >>> import psutil
       >>> psutil.cpu_count()

@@ -9,11 +9,12 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #582: connection constants returned by psutil.net_connections() and
   psutil.Process.connections() were turned from int to enums on Python > 3.4.
 
-
 **Bug fixes**
 
 - #555: [Linux] psutil.users() correctly handles ":0" as an alias for
   "localhost"
+- #579: [Windows] fixed many compiler warnings.
+- #585: [FreeBSD] net_connections() may raise KeyError.
 
 
 2.2.1 - 2015-02-02
