@@ -16,8 +16,8 @@ from psutil import _common
 from psutil import _psposix
 from psutil._common import conn_tmap, usage_percent, sockfam_to_enum
 from psutil._common import socktype_to_enum
-import _psutil_bsd as cext
-import _psutil_posix
+import psutil._psutil_bsd as cext
+import psutil._psutil_posix as cext_posix
 
 
 __extra__all__ = []
@@ -341,11 +341,11 @@ class Process(object):
 
     @wrap_exceptions
     def nice_get(self):
-        return _psutil_posix.getpriority(self.pid)
+        return cext_posix.getpriority(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
-        return _psutil_posix.setpriority(self.pid, value)
+        return cext_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def status(self):
