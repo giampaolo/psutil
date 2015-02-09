@@ -53,7 +53,8 @@ def get_mac_address(ifname):
         info = fcntl.ioctl(
             s.fileno(), SIOCGIFHWADDR, struct.pack('256s', ifname))
         if PY3:
-            ord = lambda x: x
+            def ord(x):
+                return x
         else:
             import __builtin__
             ord = __builtin__.ord
