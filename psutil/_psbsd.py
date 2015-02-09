@@ -12,12 +12,12 @@ import os
 import sys
 from collections import namedtuple
 
-from psutil import _common
-from psutil import _psposix
-from psutil._common import conn_tmap, usage_percent, sockfam_to_enum
-from psutil._common import socktype_to_enum
-import _psutil_bsd as cext
-import _psutil_posix
+from . import _common
+from . import _psposix
+from . import _psutil_bsd as cext
+from . import _psutil_posix as cext_posix
+from ._common import conn_tmap, usage_percent, sockfam_to_enum
+from ._common import socktype_to_enum
 
 
 __extra__all__ = []
@@ -50,7 +50,7 @@ TCP_STATUSES = {
 }
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-AF_LINK = _psutil_posix.AF_LINK
+AF_LINK = cext_posix.AF_LINK
 
 # extend base mem ntuple with BSD-specific memory metrics
 svmem = namedtuple(
@@ -212,7 +212,7 @@ pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage
 net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
-net_if_addrs = _psutil_posix.net_if_addrs
+net_if_addrs = cext_posix.net_if_addrs
 
 
 def wrap_exceptions(fun):
@@ -343,11 +343,11 @@ class Process(object):
 
     @wrap_exceptions
     def nice_get(self):
-        return _psutil_posix.getpriority(self.pid)
+        return cext_posix.getpriority(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
-        return _psutil_posix.setpriority(self.pid, value)
+        return cext_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def status(self):

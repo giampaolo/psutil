@@ -26,68 +26,69 @@ try:
 except ImportError:
     pwd = None
 
-from psutil._common import memoize
-from psutil._compat import callable, long
-from psutil._compat import PY3 as _PY3
-from psutil._common import (deprecated_method as _deprecated_method,
-                            deprecated as _deprecated,
-                            sdiskio as _nt_sys_diskio,
-                            snetio as _nt_sys_netio,
-                            snic as _snic)
+from ._common import memoize
+from ._compat import callable, long
+from ._compat import PY3 as _PY3
+from ._common import (deprecated_method as _deprecated_method,
+                      deprecated as _deprecated,
+                      sdiskio as _nt_sys_diskio,
+                      snetio as _nt_sys_netio,
+                      snic as _nt_snic,
+                      )
 
-from psutil._common import (STATUS_RUNNING,  # NOQA
-                            STATUS_SLEEPING,
-                            STATUS_DISK_SLEEP,
-                            STATUS_STOPPED,
-                            STATUS_TRACING_STOP,
-                            STATUS_ZOMBIE,
-                            STATUS_DEAD,
-                            STATUS_WAKING,
-                            STATUS_LOCKED,
-                            STATUS_IDLE,  # bsd
-                            STATUS_WAITING,  # bsd
+from ._common import (STATUS_RUNNING,  # NOQA
+                      STATUS_SLEEPING,
+                      STATUS_DISK_SLEEP,
+                      STATUS_STOPPED,
+                      STATUS_TRACING_STOP,
+                      STATUS_ZOMBIE,
+                      STATUS_DEAD,
+                      STATUS_WAKING,
+                      STATUS_LOCKED,
+                      STATUS_IDLE,  # bsd
+                      STATUS_WAITING,  # bsd
 )
 
-from psutil._common import (CONN_ESTABLISHED,
-                            CONN_SYN_SENT,
-                            CONN_SYN_RECV,
-                            CONN_FIN_WAIT1,
-                            CONN_FIN_WAIT2,
-                            CONN_TIME_WAIT,
-                            CONN_CLOSE,
-                            CONN_CLOSE_WAIT,
-                            CONN_LAST_ACK,
-                            CONN_LISTEN,
-                            CONN_CLOSING,
-                            CONN_NONE)
+from ._common import (CONN_ESTABLISHED,
+                      CONN_SYN_SENT,
+                      CONN_SYN_RECV,
+                      CONN_FIN_WAIT1,
+                      CONN_FIN_WAIT2,
+                      CONN_TIME_WAIT,
+                      CONN_CLOSE,
+                      CONN_CLOSE_WAIT,
+                      CONN_LAST_ACK,
+                      CONN_LISTEN,
+                      CONN_CLOSING,
+                      CONN_NONE)
 
 if sys.platform.startswith("linux"):
-    from psutil import _pslinux as _psplatform
-    from psutil._pslinux import (phymem_buffers,  # NOQA
-                                 cached_phymem)
+    from . import _pslinux as _psplatform
+    from ._pslinux import (phymem_buffers,  # NOQA
+                           cached_phymem)
 
-    from psutil._pslinux import (IOPRIO_CLASS_NONE,  # NOQA
-                                 IOPRIO_CLASS_RT,
-                                 IOPRIO_CLASS_BE,
-                                 IOPRIO_CLASS_IDLE)
+    from ._pslinux import (IOPRIO_CLASS_NONE,  # NOQA
+                           IOPRIO_CLASS_RT,
+                           IOPRIO_CLASS_BE,
+                           IOPRIO_CLASS_IDLE)
     # Linux >= 2.6.36
     if _psplatform.HAS_PRLIMIT:
-        from _psutil_linux import (RLIM_INFINITY,  # NOQA
-                                   RLIMIT_AS,
-                                   RLIMIT_CORE,
-                                   RLIMIT_CPU,
-                                   RLIMIT_DATA,
-                                   RLIMIT_FSIZE,
-                                   RLIMIT_LOCKS,
-                                   RLIMIT_MEMLOCK,
-                                   RLIMIT_NOFILE,
-                                   RLIMIT_NPROC,
-                                   RLIMIT_RSS,
-                                   RLIMIT_STACK)
+        from ._psutil_linux import (RLIM_INFINITY,  # NOQA
+                                    RLIMIT_AS,
+                                    RLIMIT_CORE,
+                                    RLIMIT_CPU,
+                                    RLIMIT_DATA,
+                                    RLIMIT_FSIZE,
+                                    RLIMIT_LOCKS,
+                                    RLIMIT_MEMLOCK,
+                                    RLIMIT_NOFILE,
+                                    RLIMIT_NPROC,
+                                    RLIMIT_RSS,
+                                    RLIMIT_STACK)
         # Kinda ugly but considerably faster than using hasattr() and
         # setattr() against the module object (we are at import time:
         # speed matters).
-        import _psutil_linux
+        from . import _psutil_linux
         try:
             RLIMIT_MSGQUEUE = _psutil_linux.RLIMIT_MSGQUEUE
         except AttributeError:
@@ -111,25 +112,25 @@ if sys.platform.startswith("linux"):
         del _psutil_linux
 
 elif sys.platform.startswith("win32"):
-    from psutil import _pswindows as _psplatform
-    from _psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,  # NOQA
-                                 BELOW_NORMAL_PRIORITY_CLASS,
-                                 HIGH_PRIORITY_CLASS,
-                                 IDLE_PRIORITY_CLASS,
-                                 NORMAL_PRIORITY_CLASS,
-                                 REALTIME_PRIORITY_CLASS)
-    from psutil._pswindows import CONN_DELETE_TCB  # NOQA
+    from . import _pswindows as _psplatform
+    from ._psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,  # NOQA
+                                  BELOW_NORMAL_PRIORITY_CLASS,
+                                  HIGH_PRIORITY_CLASS,
+                                  IDLE_PRIORITY_CLASS,
+                                  NORMAL_PRIORITY_CLASS,
+                                  REALTIME_PRIORITY_CLASS)
+    from ._pswindows import CONN_DELETE_TCB  # NOQA
 
 elif sys.platform.startswith("darwin"):
-    from psutil import _psosx as _psplatform
+    from . import _psosx as _psplatform
 
 elif sys.platform.startswith("freebsd"):
-    from psutil import _psbsd as _psplatform
+    from . import _psbsd as _psplatform
 
 elif sys.platform.startswith("sunos"):
-    from psutil import _pssunos as _psplatform
-    from psutil._pssunos import (CONN_IDLE,  # NOQA
-                                 CONN_BOUND)
+    from . import _pssunos as _psplatform
+    from ._pssunos import (CONN_IDLE,  # NOQA
+                           CONN_BOUND)
 
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
@@ -1848,7 +1849,7 @@ def net_if_addrs():
                 fam = socket.AddressFamily(fam)
             except ValueError:
                 pass
-        ret[name].append(_snic(fam, addr, mask, broadcast))
+        ret[name].append(_nt_snic(fam, addr, mask, broadcast))
     return dict(ret)
 
 

@@ -25,6 +25,10 @@ clean:
 
 build: clean
 	$(PYTHON) setup.py build
+	@# copies *.so files in ./psutil directory in order to allow
+	@# "import psutil" when using the interactive interpreter from within
+	@# this directory .
+	$(PYTHON) setup.py build_ext -i
 
 install: build
 	$(PYTHON) setup.py install --user; \
@@ -47,7 +51,7 @@ test-memleaks: install
 # Run a specific test by name; e.g. "make test-by-name disk_" will run
 # all test methods containing "disk_" in their name.
 # Requires "pip install nose".
-test-by-name:
+test-by-name: install
 	@$(PYTHON) -m nose test/test_psutil.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
 
 # requires "pip install pep8"
