@@ -18,8 +18,8 @@ from psutil import _psposix
 from psutil._common import isfile_strict, socktype_to_enum, sockfam_to_enum
 from psutil._common import usage_percent
 from psutil._compat import PY3
-import _psutil_posix
-import _psutil_sunos as cext
+import psutil._psutil_posix as cext_posix
+import psutil._psutil_sunos as cext
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
@@ -295,7 +295,7 @@ class Process(object):
         # Note: tested on Solaris 11; on Open Solaris 5 everything is
         # fine.
         try:
-            return _psutil_posix.getpriority(self.pid)
+            return cext_posix.getpriority(self.pid)
         except EnvironmentError as err:
             if err.errno in (errno.ENOENT, errno.ESRCH):
                 if pid_exists(self.pid):
@@ -310,7 +310,7 @@ class Process(object):
             # The process actually exists though, as it has a name,
             # creation time, etc.
             raise AccessDenied(self.pid, self._name)
-        return _psutil_posix.setpriority(self.pid, value)
+        return cext_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def ppid(self):
