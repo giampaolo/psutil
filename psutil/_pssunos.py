@@ -15,11 +15,11 @@ from collections import namedtuple
 
 from psutil import _common
 from psutil import _psposix
-from psutil import _psutil_posix
-from psutil import _psutil_sunos as cext
 from psutil._common import isfile_strict, socktype_to_enum, sockfam_to_enum
 from psutil._common import usage_percent
 from psutil._compat import PY3
+import _psutil_posix
+import _psutil_sunos as cext
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
