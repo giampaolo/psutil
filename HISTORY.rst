@@ -9,6 +9,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #581: add .gitignore. (patch by Gabi Davar)
 - #582: connection constants returned by psutil.net_connections() and
   psutil.Process.connections() were turned from int to enums on Python > 3.4.
+- #589: Process.cpu_affinity() accepts any kind of iterable (set, tuple, ...),
+  not only lists.
 
 **Bug fixes**
 

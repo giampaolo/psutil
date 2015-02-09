@@ -1679,6 +1679,7 @@ class TestProcess(unittest.TestCase):
         initial = p.cpu_affinity()
         if hasattr(os, "sched_getaffinity"):
             self.assertEqual(initial, list(os.sched_getaffinity(p.pid)))
+        self.assertEqual(len(initial), len(set(initial)))
         all_cpus = list(range(len(psutil.cpu_percent(percpu=True))))
         # setting on travis doesn't seem to work (always return all
         # CPUs on get):
@@ -1698,9 +1699,13 @@ class TestProcess(unittest.TestCase):
         #
         self.assertRaises(TypeError, p.cpu_affinity, 1)
         p.cpu_affinity(initial)
+        # it should work with all iterables, not only lists
+        p.cpu_affinity(set(all_cpus))
+        p.cpu_affinity(tuple(all_cpus))
         invalid_cpu = [len(psutil.cpu_times(percpu=True)) + 10]
         self.assertRaises(ValueError, p.cpu_affinity, invalid_cpu)
         self.assertRaises(ValueError, p.cpu_affinity, range(10000, 11000))
+        self.assertRaises(TypeError, p.cpu_affinity, [0, "1"])
 
     def test_open_files(self):
         # current process

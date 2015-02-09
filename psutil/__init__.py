@@ -696,10 +696,13 @@ class Process(object):
             want to set the affinity (e.g. [0, 1]).
             (Windows, Linux and BSD only).
             """
+            # Automatically remove duplicates both on get and
+            # set (for get it's not really necessary, it's
+            # just for extra safety).
             if cpus is None:
-                return self._proc.cpu_affinity_get()
+                return list(set(self._proc.cpu_affinity_get()))
             else:
-                self._proc.cpu_affinity_set(cpus)
+                self._proc.cpu_affinity_set(list(set(cpus)))
 
     if _WINDOWS:
 
