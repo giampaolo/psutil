@@ -12,12 +12,12 @@ import os
 import sys
 from collections import namedtuple
 
-from . import _common
-from . import _psposix
-from . import _psutil_bsd as cext
-from . import _psutil_posix
-from ._common import (conn_tmap, usage_percent, sockfam_to_enum,
-                      socktype_to_enum)
+from psutil import _common
+from psutil import _psposix
+from psutil._common import (conn_tmap, usage_percent, sockfam_to_enum,
+                            socktype_to_enum)
+import _psutil_bsd as cext
+import _psutil_posix
 
 
 __extra__all__ = []
