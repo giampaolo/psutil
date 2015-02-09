@@ -101,6 +101,9 @@ VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
 # whether we're running this test suite on Travis (https://travis-ci.org/)
 TRAVIS = bool(os.environ.get('TRAVIS'))
 
+if TRAVIS or 'tox' in sys.argv[0]:
+    import ipaddress
+
 
 # ===================================================================
 # --- Utility functions

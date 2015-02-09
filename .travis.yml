@@ -10,6 +10,7 @@ install:
     - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install ipaddress unittest2; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install ipaddress; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install ipaddress; fi
+    - if [[ $TRAVIS_PYTHON_VERSION == '3.3' ]]; then pip install ipaddress; fi
 script:
     - pip install flake8
     - python setup.py build
