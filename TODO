@@ -11,9 +11,6 @@ HIGHER PRIORITY
 
  * #250: net ifaces speed.
 
- * #376: ifconfig functionalities aka psutil.net_ifaces (could be merged
-         with #250)
-
  * OpenBSD support.
 
  * #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
