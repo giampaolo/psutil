@@ -26,15 +26,12 @@ try:
 except ImportError:
     pwd = None
 
+from . import _common
 from ._common import memoize
 from ._compat import callable, long
 from ._compat import PY3 as _PY3
 from ._common import (deprecated_method as _deprecated_method,
-                      deprecated as _deprecated,
-                      sdiskio as _nt_sys_diskio,
-                      snetio as _nt_sys_netio,
-                      snic as _nt_snic,
-                      )
+                      deprecated as _deprecated,)
 
 from ._common import (STATUS_RUNNING,  # NOQA
                       STATUS_SLEEPING,
@@ -1758,10 +1755,10 @@ def disk_io_counters(perdisk=False):
         raise RuntimeError("couldn't find any physical disk")
     if perdisk:
         for disk, fields in rawdict.items():
-            rawdict[disk] = _nt_sys_diskio(*fields)
+            rawdict[disk] = _common.sdiskio(*fields)
         return rawdict
     else:
-        return _nt_sys_diskio(*[sum(x) for x in zip(*rawdict.values())])
+        return _common.sdiskio(*[sum(x) for x in zip(*rawdict.values())])
 
 
 # =====================================================================
@@ -1792,10 +1789,10 @@ def net_io_counters(pernic=False):
         raise RuntimeError("couldn't find any network interface")
     if pernic:
         for nic, fields in rawdict.items():
-            rawdict[nic] = _nt_sys_netio(*fields)
+            rawdict[nic] = _common.snetio(*fields)
         return rawdict
     else:
-        return _nt_sys_netio(*[sum(x) for x in zip(*rawdict.values())])
+        return _common.snetio(*[sum(x) for x in zip(*rawdict.values())])
 
 
 def net_connections(kind='inet'):
@@ -1852,7 +1849,7 @@ def net_if_addrs():
                 fam = socket.AddressFamily(fam)
             except ValueError:
                 pass
-        ret[name].append(_nt_snic(fam, addr, mask, broadcast))
+        ret[name].append(_common.snic(fam, addr, mask, broadcast))
     return dict(ret)
 
 
