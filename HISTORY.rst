@@ -11,6 +11,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #581: add .gitignore. (patch by Gabi Davar)
 - #582: connection constants returned by psutil.net_connections() and
   psutil.Process.connections() were turned from int to enums on Python > 3.4.
+- #587: Move native extension into the package.
 - #589: Process.cpu_affinity() accepts any kind of iterable (set, tuple, ...),
   not only lists.
 
@@ -18,6 +19,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 - #555: [Linux] psutil.users() correctly handles ":0" as an alias for
   "localhost"
+- #579: [Windows] Fixed open_files() for PID>64K.
 - #579: [Windows] fixed many compiler warnings.
 - #585: [FreeBSD] net_connections() may raise KeyError.
 - #586: [FreeBSD] cpu_affinity() segfaults on set in case an invalid CPU

@@ -3007,7 +3007,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
     LPVOID lpMsgBuf = NULL;
     ULONG outBufLen = 0;
     ULONG iterations = 0;
-    PCTSTR WSAAPI intRet;
+    PCTSTR intRet;
     char *ptr;
     char buff[100];
     char ifname[MAX_PATH];
