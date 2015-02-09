@@ -9,6 +9,7 @@
 import errno
 import functools
 import os
+import sys
 from collections import namedtuple
 
 from . import _common
@@ -16,7 +17,17 @@ from . import _psutil_windows as cext
 from ._common import conn_tmap, usage_percent, isfile_strict
 from ._common import sockfam_to_enum, socktype_to_enum
 from ._compat import PY3, xrange, lru_cache
+from ._psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,
+                              BELOW_NORMAL_PRIORITY_CLASS,
+                              HIGH_PRIORITY_CLASS,
+                              IDLE_PRIORITY_CLASS,
+                              NORMAL_PRIORITY_CLASS,
+                              REALTIME_PRIORITY_CLASS)
 
+if sys.version_info >= (3, 4):
+    import enum
+else:
+    enum = None
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
@@ -50,6 +61,17 @@ TCP_STATUSES = {
     cext.MIB_TCP_STATE_DELETE_TCB: CONN_DELETE_TCB,
     cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
+
+if enum is not None:
+    class IOPriority(enum.IntEnum):
+        ABOVE_NORMAL_PRIORITY_CLASS = ABOVE_NORMAL_PRIORITY_CLASS
+        BELOW_NORMAL_PRIORITY_CLASS = BELOW_NORMAL_PRIORITY_CLASS
+        HIGH_PRIORITY_CLASS = HIGH_PRIORITY_CLASS
+        IDLE_PRIORITY_CLASS = IDLE_PRIORITY_CLASS
+        NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
+        REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
+
+    globals().update(IOPriority.__members__)
 
 
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
@@ -417,7 +439,10 @@ class Process(object):
     if hasattr(cext, "proc_io_priority_get"):
         @wrap_exceptions
         def ionice_get(self):
-            return cext.proc_io_priority_get(self.pid)
+            value = cext.proc_io_priority_get(self.pid)
+            if enum is not None:
+                value = IOPriority(value)
+            return value
 
         @wrap_exceptions
         def ionice_set(self, value, _):

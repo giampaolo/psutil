@@ -41,16 +41,10 @@ import traceback
 import types
 import warnings
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
-
 try:
     import ipaddress  # python >= 3.3
 except ImportError:
     ipaddress = None
-
-try:
-    import enum  # python >= 3.4
-except ImportError:
-    enum = None
 
 import psutil
 from psutil._compat import PY3, callable, long, unicode
@@ -59,6 +53,10 @@ if sys.version_info < (2, 7):
     import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
 else:
     import unittest
+if sys.version_info >= (3, 4):
+    import enum
+else:
+    enum = None
 
 
 # ===================================================================
@@ -1383,6 +1381,8 @@ class TestProcess(unittest.TestCase):
             try:
                 p.ionice(2)
                 ioclass, value = p.ionice()
+                if enum is not None:
+                    self.assertIsInstance(ioclass, enum.IntEnum)
                 self.assertEqual(ioclass, 2)
                 self.assertEqual(value, 4)
                 #

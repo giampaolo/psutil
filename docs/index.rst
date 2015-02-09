@@ -756,13 +756,17 @@ Process class
       >>> p = psutil.Process()
       >>> p.ionice(psutil.IOPRIO_CLASS_IDLE)  # set
       >>> p.ionice()  # get
-      pionice(ioclass=3, value=0)
+      pionice(ioclass=<IOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
       >>>
 
      On Windows only *ioclass* is used and it can be set to ``2`` (normal),
      ``1`` (low) or ``0`` (very low).
 
      Availability: Linux and Windows > Vista
+
+     .. versionchanged:: 3.0.0 on >= Python 3.4 the returned ``ioclass``
+        constant is an `enum <https://docs.python.org/3/library/enum.html#module-enum>`__
+        instead of a plain integer.
 
   .. method:: rlimit(resource, limits=None)
 
@@ -1248,6 +1252,10 @@ Constants
 
   Availability: Windows
 
+  .. versionchanged:: 3.0.0 on Python >= 3.4 thse constants are
+    `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
+    instead of a plain integer.
+
 .. _const-ioprio:
 .. data:: IOPRIO_CLASS_NONE
           IOPRIO_CLASS_RT
@@ -1270,6 +1278,10 @@ Constants
   system call.
 
   Availability: Linux
+
+  .. versionchanged:: 3.0.0 on Python >= 3.4 thse constants are
+    `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
+    instead of a plain integer.
 
 .. _const-rlimit:
 .. data:: RLIMIT_INFINITY

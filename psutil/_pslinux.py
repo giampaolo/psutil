@@ -26,6 +26,11 @@ from . import _psutil_posix as cext_posix
 from ._common import isfile_strict, usage_percent, deprecated
 from ._compat import PY3
 
+if sys.version_info >= (3, 4):
+    import enum
+else:
+    enum = None
+
 
 __extra__all__ = [
     # io prio constants
@@ -57,10 +62,19 @@ DEFAULT_ENCODING = sys.getdefaultencoding()
 AF_LINK = socket.AF_PACKET
 
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
-IOPRIO_CLASS_NONE = 0
-IOPRIO_CLASS_RT = 1
-IOPRIO_CLASS_BE = 2
-IOPRIO_CLASS_IDLE = 3
+if enum is None:
+    IOPRIO_CLASS_NONE = 0
+    IOPRIO_CLASS_RT = 1
+    IOPRIO_CLASS_BE = 2
+    IOPRIO_CLASS_IDLE = 3
+else:
+    class IOPriority(enum.IntEnum):
+        IOPRIO_CLASS_NONE = 0
+        IOPRIO_CLASS_RT = 1
+        IOPRIO_CLASS_BE = 2
+        IOPRIO_CLASS_IDLE = 3
+
+    globals().update(IOPriority.__members__)
 
 # taken from /fs/proc/array.c
 PROC_STATUSES = {
@@ -974,6 +988,8 @@ class Process(object):
         @wrap_exceptions
         def ionice_get(self):
             ioclass, value = cext.proc_ioprio_get(self.pid)
+            if enum is not None:
+                ioclass = IOPriority(ioclass)
             return _common.pionice(ioclass, value)
 
         @wrap_exceptions

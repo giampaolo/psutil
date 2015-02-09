@@ -262,7 +262,7 @@ Process management
     >>>
     >>> p.ionice(psutil.IOPRIO_CLASS_IDLE)  # IO priority (Win and Linux only)
     >>> p.ionice()
-    pionice(ioclass=3, value=0)
+    pionice(ioclass=<IOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
     >>>
     >>> p.rlimit(psutil.RLIMIT_NOFILE, (5, 5))  # set resource limits (Linux only)
     >>> p.rlimit(psutil.RLIMIT_NOFILE)
