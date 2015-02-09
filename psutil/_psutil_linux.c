@@ -301,7 +301,6 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
 #else
             PyObject *cpu_num = PyInt_FromLong(cpu);
 #endif
-            --count;
             if (cpu_num == NULL)
                 goto error;
             if (PyList_Append(res, cpu_num)) {
@@ -309,6 +308,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
                 goto error;
             }
             Py_DECREF(cpu_num);
+            --count;
         }
     }
     CPU_FREE(mask);
@@ -346,6 +346,8 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
     }
 
     py_retlist = PyList_New(0);
+    if (py_retlist == NULL)
+        goto error;
     for (i = 0; i < CPU_SETSIZE; ++i) {
         if (CPU_ISSET(i, &cpuset)) {
             py_cpu_num = Py_BuildValue("i", i);
@@ -353,6 +355,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
                 goto error;
             if (PyList_Append(py_retlist, py_cpu_num))
                 goto error;
+            Py_DECREF(py_cpu_num);
         }
     }
 
