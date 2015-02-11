@@ -1090,6 +1090,7 @@ class TestSystemAPIs(unittest.TestCase):
         elif WINDOWS:
             self.assertEqual(psutil.AF_LINK, -1)
 
+    @unittest.skipIf(TRAVIS, "EPERM on travis")
     def test_net_if_stats(self):
         nics = psutil.net_if_stats()
         assert nics, nics
@@ -1107,9 +1108,10 @@ class TestSystemAPIs(unittest.TestCase):
     def test_net_functions_names(self):
         a = psutil.net_io_counters(pernic=True).keys()
         b = psutil.net_if_addrs().keys()
-        c = psutil.net_if_stats().keys()
         self.assertEqual(sorted(a), sorted(b))
-        self.assertEqual(sorted(b), sorted(c))
+        if not TRAVIS:
+            c = psutil.net_if_stats().keys()
+            self.assertEqual(sorted(b), sorted(c))
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')

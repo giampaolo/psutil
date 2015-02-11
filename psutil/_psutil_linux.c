@@ -481,8 +481,8 @@ error:
 
 
 /*
- * Return stats about a particular network interface.
- * References:
+ * Return stats about a particular network
+ * interface.  References:
  * https://github.com/dpaleino/wicd/blob/master/wicd/backends/be-ioctl.py
  * http://www.i-scream.org/libstatgrab/
  */
