@@ -24,6 +24,7 @@ from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
 from ._common import isfile_strict, usage_percent, deprecated
+from ._common import NIC_DUPLEX_FULL, NIC_DUPLEX_HALF, NIC_DUPLEX_UNKNOWN
 from ._compat import PY3
 
 if sys.version_info >= (3, 4):
@@ -568,6 +569,20 @@ def net_io_counters():
         retdict[name] = (bytes_sent, bytes_recv, packets_sent, packets_recv,
                          errin, errout, dropin, dropout)
     return retdict
+
+
+def net_if_stats():
+    """Get NIC stats (isup, duplex, speed, mtu)."""
+    duplex_map = {cext.DUPLEX_FULL: NIC_DUPLEX_FULL,
+                  cext.DUPLEX_HALF: NIC_DUPLEX_HALF,
+                  cext.DUPLEX_UNKNOWN: NIC_DUPLEX_UNKNOWN}
+    names = net_io_counters().keys()
+    ret = {}
+    for name in names:
+        isup, duplex, speed, mtu = cext.net_if_stats(name)
+        duplex = duplex_map[duplex]
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+    return ret
 
 
 net_if_addrs = cext_posix.net_if_addrs

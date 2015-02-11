@@ -444,6 +444,30 @@ Network
 
   *New in 3.0.0*
 
+.. function:: net_if_stats()
+
+  Return information about each NIC (network interface card) installed on the
+  system as a dictionary whose keys are the NIC names and value is a namedtuple
+  with the following fields:
+
+  - **isup**
+  - **duplex**
+  - **speed**
+  - **mtu**
+
+  *isup* is a boolean indicating whether the NIC is up and running, *duplex*
+  can be either :const:`NIC_DUPLEX_FULL`, :const:`NIC_DUPLEX_HALF` or
+  :const:`NIC_DUPLEX_UNKNOWN`, *speed* is the NIC speed expressed in mega bits
+  (MB), if it can't be determined (e.g. 'localhost') it will be set to ``0``,
+  *mtu* is the maximum transmission unit expressed in bytes. Example:
+
+    >>> import psutil
+    >>> psutil.net_if_stats()
+    {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500),
+     'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536)}
+
+  *New in 3.0.0*
+
 
 Other system info
 -----------------
@@ -1252,7 +1276,7 @@ Constants
 
   Availability: Windows
 
-  .. versionchanged:: 3.0.0 on Python >= 3.4 thse constants are
+  .. versionchanged:: 3.0.0 on Python >= 3.4 these constants are
     `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
     instead of a plain integer.
 
@@ -1314,5 +1338,18 @@ Constants
 
   Constant which identifies a MAC address associated with a network interface.
   To be used in conjunction with :func:`psutil.net_if_addrs()`.
+
+  *New in 3.0.0*
+
+.. _const-duplex:
+.. data:: NIC_DUPLEX_FULL
+          NIC_DUPLEX_HALF
+          NIC_DUPLEX_UNKNOWN
+
+  Constants which identifies whether a NIC (network interface card) has full or
+  half mode speed.  NIC_DUPLEX_FULL means the NIC is able to send and receive
+  data (files) simultaneously, NIC_DUPLEX_FULL means the NIC can either send or
+  receive data at a time.
+  To be used in conjunction with :func:`psutil.net_if_stats()`.
 
   *New in 3.0.0*

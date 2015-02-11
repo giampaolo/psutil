@@ -43,8 +43,7 @@ from ._common import (STATUS_RUNNING,  # NOQA
                       STATUS_WAKING,
                       STATUS_LOCKED,
                       STATUS_IDLE,  # bsd
-                      STATUS_WAITING,  # bsd
-)
+                      STATUS_WAITING)  # bsd
 
 from ._common import (CONN_ESTABLISHED,
                       CONN_SYN_SENT,
@@ -58,6 +57,10 @@ from ._common import (CONN_ESTABLISHED,
                       CONN_LISTEN,
                       CONN_CLOSING,
                       CONN_NONE)
+
+from ._common import (NIC_DUPLEX_FULL,  # NOQA
+                      NIC_DUPLEX_HALF,
+                      NIC_DUPLEX_UNKNOWN)
 
 if sys.platform.startswith("linux"):
     from . import _pslinux as _psplatform
@@ -152,6 +155,7 @@ __all__ = [
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
     "net_io_counters", "net_connections", "net_if_addrs",           # network
+    "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
     "users", "boot_time",                                           # others
 ]
@@ -1851,6 +1855,21 @@ def net_if_addrs():
                 pass
         ret[name].append(_common.snic(fam, addr, mask, broadcast))
     return dict(ret)
+
+
+def net_if_stats():
+    """Return information about each NIC (network interface card)
+    installed on the system as a dictionary whose keys are the
+    NIC names and value is a namedtuple with the following fields:
+
+     - isup: whether the interface is up (bool)
+     - duplex: can be either NIC_DUPLEX_FULL, NIC_DUPLEX_HALF or
+               NIC_DUPLEX_UNKNOWN
+     - speed: the NIC speed expressed in mega bits (MB); if it can't
+              be determined (e.g. 'localhost') it will be set to 0.
+     - mtu: the maximum transmission unit expressed in bytes.
+    """
+    return _psplatform.net_if_stats()
 
 
 # =====================================================================
