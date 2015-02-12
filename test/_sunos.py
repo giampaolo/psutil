@@ -34,12 +34,6 @@ class SunOSSpecificTestCase(unittest.TestCase):
         self.assertEqual(psutil_swap.used, used)
         self.assertEqual(psutil_swap.free, free)
 
-    def test_nic_names(self):
-        # Internally the C implementation uses almost the same
-        # routine so we want to make sure NIC names are the same.
-        self.assertEqual(sorted(psutil.net_io_counters(pernic=True).keys()),
-                         sorted(psutil.net_if_stats().keys()))
-
 
 def test_main():
     test_suite = unittest.TestSuite()

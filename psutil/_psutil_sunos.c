@@ -1173,17 +1173,15 @@ psutil_net_if_stats(PyObject* self, PyObject* args)
     PyObject *py_retdict = PyDict_New();
     PyObject *py_ifc_info = NULL;
     PyObject *py_is_up = NULL;
-    PyObject *py_ret = NULL;
 
     if (py_retdict == NULL)
         return NULL;
     kc = kstat_open();
     if (kc == NULL)
-        return PyErr_SetFromErrno(PyExc_OSError);
-
+        goto error;
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock == -1)
-        return PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
 
     for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
         if (strcmp(ksp->ks_class, "net") == 0) {
@@ -1248,12 +1246,17 @@ psutil_net_if_stats(PyObject* self, PyObject* args)
     }
 
     close(sock);
+    kstat_close(kc);
     return py_retdict;
 
 error:
     Py_XDECREF(py_is_up);
+    Py_XDECREF(py_ifc_info);
+    Py_DECREF(py_retdict);
     if (sock != 0)
         close(sock);
+    if (kc != NULL)
+        kstat_close(kc);
     PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
