@@ -34,8 +34,8 @@ else:
 __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
                   "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
                   "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
-                  #
                   "CONN_DELETE_TCB",
+                  "AF_LINK",
                   ]
 
 # --- module level constants (gets pushed up to psutil module)
@@ -44,7 +44,11 @@ CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
                                cext.ERROR_ACCESS_DENIED])
-AF_LINK = -1
+if enum is None:
+    AF_LINK = -1
+else:
+    AddressFamily = enum.IntEnum('AddressFamily', {'AF_LINK': -1})
+    AF_LINK = AddressFamily.AF_LINK
 
 TCP_STATUSES = {
     cext.MIB_TCP_STATE_ESTAB: _common.CONN_ESTABLISHED,

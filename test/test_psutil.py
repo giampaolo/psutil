@@ -1061,7 +1061,7 @@ class TestSystemAPIs(unittest.TestCase):
                 self.assertIsInstance(addr.broadcast, (str, type(None)))
                 self.assertIn(addr.family, families)
                 if sys.version_info >= (3, 4):
-                    self.assertIsInstance(addr.family, socket.AddressFamily)
+                    self.assertIsInstance(addr.family, enum.IntEnum)
                 if addr.family == socket.AF_INET:
                     s = socket.socket(addr.family)
                     with contextlib.closing(s):
