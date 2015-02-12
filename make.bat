@@ -13,9 +13,10 @@ rem ...therefore it might not work on your Windows installation.
 rem
 rem By default C:\Python27\python.exe is used.
 rem To compile for a specific Python version run:
+rem     set PYTHON=C:\Python34\python.exe & make.bat build
 rem
-rem     set PYTHON=C:\Python26\python.exe & make.bat build
-rem
+rem To use a different test script:
+rem      set PYTHON=C:\Python34\python.exe & set TSCRIPT=foo.py & make.bat test
 rem ==========================================================================
 
 if "%PYTHON%" == "" (
@@ -160,15 +161,19 @@ if "%1" == "upload-exes" (
 
 if "%1" == "setup-env" (
     :setup-env
+    echo downloading pip installer
     C:\python27\python.exe -c "import urllib2; url = urllib2.urlopen('https://raw.github.com/pypa/pip/master/contrib/get-pip.py'); data = url.read(); f = open('get-pip.py', 'w'); f.write(data)"
-    C:\python26\python.exe get-pip.py & C:\python26\scripts\pip install unittest2 wheel --upgrade
-    C:\python27\python.exe get-pip.py & C:\python27\scripts\pip install wheel --upgrade
-    C:\python33\python.exe get-pip.py & C:\python33\scripts\pip install wheel --upgrade
+    C:\python26\python.exe get-pip.py & C:\python26\scripts\pip install unittest2 wheel ipaddress --upgrade
+    C:\python27\python.exe get-pip.py & C:\python27\scripts\pip install wheel ipaddress --upgrade
+    C:\python33\python.exe get-pip.py & C:\python33\scripts\pip install wheel ipaddress --upgrade
     C:\python34\scripts\easy_install.exe wheel
     rem 64-bit versions
-    C:\python27-64\python.exe get-pip.py & C:\python27-64\scripts\pip install wheel --upgrade
-    C:\python33-64\python.exe get-pip.py & C:\python33-64\scripts\pip install wheel --upgrade
+    C:\python27-64\python.exe get-pip.py & C:\python27-64\scripts\pip install wheel ipaddress --upgrade
+    C:\python33-64\python.exe get-pip.py & C:\python33-64\scripts\pip install wheel ipaddress --upgrade
     C:\python34-64\scripts\easy_install.exe wheel
+    rem install ipdb only for py 2.7 and 3.4
+    C:\python27\scripts\pip install ipdb --upgrade
+    C:\python34\scripts\easy_install.exe ipdb
     goto :eof
 )
 
