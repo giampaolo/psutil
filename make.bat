@@ -40,6 +40,7 @@ if "%1" == "help" (
     echo   build         compile without installing
     echo   build-exes    create exe installers in dist directory
     echo   build-wheels  create wheel installers in dist directory
+    echo   build-all     build exes + wheels
     echo   clean         clean build files
     echo   install       compile and install
     echo   setup-env     install pip, unittest2, wheels for all python versions
@@ -50,6 +51,7 @@ if "%1" == "help" (
     echo   uninstall     uninstall
     echo   upload-exes   upload exe installers on pypi
     echo   upload-wheels upload wheel installers on pypi
+    echo   upload-all    upload exes + wheels
     goto :eof
 )
 
@@ -144,39 +146,6 @@ if "%1" == "build-exes" (
     goto :eof
 )
 
-if "%1" == "upload-exes" (
-    :upload-exes
-    rem "standard" 32 bit versions, using VS 2008 (2.6, 2.7) or VS 2010 (3.3+)
-    C:\Python26\python.exe setup.py bdist_wininst upload || goto :error
-    C:\Python27\python.exe setup.py bdist_wininst upload || goto :error
-    C:\Python33\python.exe setup.py bdist_wininst upload || goto :error
-    C:\Python34\python.exe setup.py bdist_wininst upload || goto :error
-    rem 64 bit versions
-    C:\Python27-64\python.exe setup.py build bdist_wininst upload || goto :error
-    C:\Python33-64\python.exe setup.py build bdist_wininst upload || goto :error
-    C:\Python34-64\python.exe setup.py build bdist_wininst upload || goto :error
-    echo OK
-    goto :eof
-)
-
-if "%1" == "setup-env" (
-    :setup-env
-    echo downloading pip installer
-    C:\python27\python.exe -c "import urllib2; url = urllib2.urlopen('https://raw.github.com/pypa/pip/master/contrib/get-pip.py'); data = url.read(); f = open('get-pip.py', 'w'); f.write(data)"
-    C:\python26\python.exe get-pip.py & C:\python26\scripts\pip install unittest2 wheel ipaddress --upgrade
-    C:\python27\python.exe get-pip.py & C:\python27\scripts\pip install wheel ipaddress --upgrade
-    C:\python33\python.exe get-pip.py & C:\python33\scripts\pip install wheel ipaddress --upgrade
-    C:\python34\scripts\easy_install.exe wheel
-    rem 64-bit versions
-    C:\python27-64\python.exe get-pip.py & C:\python27-64\scripts\pip install wheel ipaddress --upgrade
-    C:\python33-64\python.exe get-pip.py & C:\python33-64\scripts\pip install wheel ipaddress --upgrade
-    C:\python34-64\scripts\easy_install.exe wheel
-    rem install ipdb only for py 2.7 and 3.4
-    C:\python27\scripts\pip install ipdb --upgrade
-    C:\python34\scripts\easy_install.exe ipdb
-    goto :eof
-)
-
 if "%1" == "build-wheels" (
     :build-wheels
     C:\Python26\python.exe setup.py build bdist_wheel || goto :error
@@ -191,6 +160,30 @@ if "%1" == "build-wheels" (
     C:\Python27-64\python.exe setup.py build bdist_wheel || goto :error
     C:\Python33-64\python.exe setup.py build bdist_wheel || goto :error
     C:\Python34-64\python.exe setup.py build bdist_wheel || goto :error
+    echo OK
+    goto :eof
+)
+
+if "%1" == "build-all" (
+    :build-all
+    rem for some reason this needs to be called twice (f**king windows...)
+    call :build-exes
+    call :build-exes
+    echo OK
+    goto :eof
+)
+
+if "%1" == "upload-exes" (
+    :upload-exes
+    rem "standard" 32 bit versions, using VS 2008 (2.6, 2.7) or VS 2010 (3.3+)
+    C:\Python26\python.exe setup.py bdist_wininst upload || goto :error
+    C:\Python27\python.exe setup.py bdist_wininst upload || goto :error
+    C:\Python33\python.exe setup.py bdist_wininst upload || goto :error
+    C:\Python34\python.exe setup.py bdist_wininst upload || goto :error
+    rem 64 bit versions
+    C:\Python27-64\python.exe setup.py build bdist_wininst upload || goto :error
+    C:\Python33-64\python.exe setup.py build bdist_wininst upload || goto :error
+    C:\Python34-64\python.exe setup.py build bdist_wininst upload || goto :error
     echo OK
     goto :eof
 )
@@ -210,6 +203,32 @@ if "%1" == "upload-wheels" (
     C:\Python33-64\python.exe setup.py build bdist_wheel upload || goto :error
     C:\Python34-64\python.exe setup.py build bdist_wheel upload || goto :error
     echo OK
+    goto :eof
+)
+
+if "%1" == "upload-all" (
+    :build-all
+    call :upload-exes
+    call :upload-wheels
+    echo OK
+    goto :eof
+)
+
+if "%1" == "setup-env" (
+    :setup-env
+    echo downloading pip installer
+    C:\python27\python.exe -c "import urllib2; url = urllib2.urlopen('https://raw.github.com/pypa/pip/master/contrib/get-pip.py'); data = url.read(); f = open('get-pip.py', 'w'); f.write(data)"
+    C:\python26\python.exe get-pip.py & C:\python26\scripts\pip install unittest2 wheel ipaddress --upgrade
+    C:\python27\python.exe get-pip.py & C:\python27\scripts\pip install wheel ipaddress --upgrade
+    C:\python33\python.exe get-pip.py & C:\python33\scripts\pip install wheel ipaddress --upgrade
+    C:\python34\scripts\easy_install.exe wheel
+    rem 64-bit versions
+    C:\python27-64\python.exe get-pip.py & C:\python27-64\scripts\pip install wheel ipaddress --upgrade
+    C:\python33-64\python.exe get-pip.py & C:\python33-64\scripts\pip install wheel ipaddress --upgrade
+    C:\python34-64\scripts\easy_install.exe wheel
+    rem install ipdb only for py 2.7 and 3.4
+    C:\python27\scripts\pip install ipdb --upgrade
+    C:\python34\scripts\easy_install.exe ipdb
     goto :eof
 )
 
