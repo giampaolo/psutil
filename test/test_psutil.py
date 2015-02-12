@@ -450,7 +450,6 @@ def skip_on_access_denied(only_if=None):
                         raise
                 msg = "%r was skipped because it raised AccessDenied" \
                       % fun.__name__
-                self = args[0]
                 raise unittest.SkipTest(msg)
         return wrapper
     return decorator
@@ -469,7 +468,6 @@ def skip_on_not_implemented(only_if=None):
                         raise
                 msg = "%r was skipped because it raised NotImplementedError" \
                       % fun.__name__
-                self = args[0]
                 raise unittest.SkipTest(msg)
         return wrapper
     return decorator

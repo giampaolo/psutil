@@ -818,6 +818,7 @@ psutil_net_connections(PyObject *self, PyObject *args)
     char lip[200], rip[200];
     int lport, rport;
     int processed_pid;
+    int databuf_init = 0;
     struct strbuf ctlbuf, databuf;
     struct T_optmgmt_req *tor = (struct T_optmgmt_req *)buf;
     struct T_optmgmt_ack *toa = (struct T_optmgmt_ack *)buf;
@@ -918,6 +919,7 @@ psutil_net_connections(PyObject *self, PyObject *args)
             PyErr_NoMemory();
             goto error;
         }
+        databuf_init = 1;
 
         flags = 0;
         getcode = getmsg(sd, (struct strbuf *)0, &databuf, &flags);
@@ -1083,7 +1085,8 @@ error:
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
     Py_DECREF(py_retlist);
-    // TODO : free databuf
+    if (databuf_init == 1)
+        free(databuf.buf);
     if (sd != 0)
         close(sd);
     return NULL;
