@@ -168,7 +168,7 @@ class TestProcessObjectLeaks(Base):
             self.execute('ionice', psutil.IOPRIO_CLASS_NONE)
             self.execute_w_exc(OSError, 'ionice', -1)
 
-    @unittest.skipIf(OSX, "feature not supported on this platform")
+    @unittest.skipIf(OSX or SUNOS, "feature not supported on this platform")
     @skip_if_linux()
     def test_io_counters(self):
         self.execute('io_counters')

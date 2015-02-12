@@ -831,7 +831,7 @@ Process class
       >>> p.io_counters()
       pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0)
 
-     Availability: all platforms except OSX
+     Availability: all platforms except OSX and Solaris
 
   .. method:: num_ctx_switches()
 
