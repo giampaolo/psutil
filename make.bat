@@ -80,7 +80,8 @@ if "%1" == "build" (
 
 if "%1" == "install" (
     :install
-    %PYTHON% setup.py build install
+    call :build
+    %PYTHON% setup.py install
     goto :eof
 )
 
