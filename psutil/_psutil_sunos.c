@@ -30,6 +30,8 @@
 #include <sys/mntent.h>  // for MNTTAB
 #include <sys/mnttab.h>
 #include <sys/procfs.h>
+#include <sys/sockio.h>
+#include <sys/socket.h>
 #include <fcntl.h>
 #include <utmpx.h>
 #include <kstat.h>
@@ -38,6 +40,7 @@
 #include <stropts.h>
 #include <inet/tcp.h>
 #include <arpa/inet.h>
+#include <net/if.h>
 
 #include "_psutil_sunos.h"
 
@@ -1152,6 +1155,113 @@ error:
 
 
 /*
+ * Return stats about a particular network
+ * interface.  References:
+ * https://github.com/dpaleino/wicd/blob/master/wicd/backends/be-ioctl.py
+ * http://www.i-scream.org/libstatgrab/
+ */
+static PyObject*
+psutil_net_if_stats(PyObject* self, PyObject* args)
+{
+    kstat_ctl_t *kc = NULL;
+    kstat_t *ksp;
+    kstat_named_t *knp;
+    int ret;
+    int sock = 0;
+    int speed;
+    int duplex;
+    int mtu;
+
+    PyObject *py_retdict = PyDict_New();
+    PyObject *py_ifc_info = NULL;
+    PyObject *py_is_up = NULL;
+    PyObject *py_ret = NULL;
+
+    if (py_retdict == NULL)
+        return NULL;
+    kc = kstat_open();
+    if (kc == NULL)
+        return PyErr_SetFromErrno(PyExc_OSError);
+
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock == -1)
+        return PyErr_SetFromErrno(PyExc_OSError);
+
+    for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
+        if (strcmp(ksp->ks_class, "net") == 0) {
+            struct ifreq ifr;
+
+            kstat_read(kc, ksp, NULL);
+            if (ksp->ks_type != KSTAT_TYPE_NAMED)
+                continue;
+            if (strcmp(ksp->ks_class, "net") != 0)
+                continue;
+
+            strncpy(ifr.ifr_name, ksp->ks_name, sizeof(ifr.ifr_name));
+            ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
+            if (ret == -1)
+                continue;  // not a network interface
+
+            // is up?
+            if ((ifr.ifr_flags & IFF_UP) != 0) {
+                if ((knp = kstat_data_lookup(ksp, "link_up")) != NULL) {
+                    if (knp->value.ui32 != 0u)
+                        py_is_up = Py_True;
+                    else
+                        py_is_up = Py_False;
+                }
+                else {
+                    py_is_up = Py_True;
+                }
+            }
+            else {
+                py_is_up = Py_False;
+            }
+            Py_INCREF(py_is_up);
+
+            // duplex
+            duplex = 0;  // unknown
+            if ((knp = kstat_data_lookup(ksp, "link_duplex")) != NULL) {
+                if (knp->value.ui32 == 1)
+                    duplex = 1;  // half
+                else if (knp->value.ui32 == 2)
+                    duplex = 2;  // full
+            }
+
+            // speed
+            if ((knp = kstat_data_lookup(ksp, "ifspeed")) != NULL)
+                speed = knp->value.ui64 / 10000000;
+            else
+                speed = 0;
+
+            // mtu
+            ret = ioctl(sock, SIOCGIFMTU, &ifr);
+            if (ret == -1)
+                goto error;
+            mtu = ifr.ifr_mtu;
+
+            py_ifc_info = Py_BuildValue("(Oiii)", py_is_up, duplex, speed, mtu);
+            if (!py_ifc_info)
+                goto error;
+            if (PyDict_SetItemString(py_retdict, ksp->ks_name, py_ifc_info))
+                goto error;
+            Py_DECREF(py_ifc_info);
+        }
+    }
+
+    close(sock);
+    return py_retdict;
+
+error:
+    Py_XDECREF(py_is_up);
+    if (sock != 0)
+        close(sock);
+    PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -1192,6 +1302,8 @@ PsutilMethods[] =
      "Return the number of physical CPUs on the system."},
     {"net_connections", psutil_net_connections, METH_VARARGS,
      "Return TCP and UDP syste-wide open connections."},
+    {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
+     "Return NIC stats (isup, duplex, speed, mtu)"},
 
 {NULL, NULL, 0, NULL}
 };

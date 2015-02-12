@@ -46,9 +46,14 @@ VERSION_MACRO = ('PSUTIL_VERSION', int(VERSION.replace('.', '')))
 
 # POSIX
 if os.name == 'posix':
+    libraries = []
+    if sys.platform.startswith("sunos"):
+        libraries.append('socket')
+
     posix_extension = Extension(
         'psutil._psutil_posix',
         sources=['psutil/_psutil_posix.c'],
+        libraries=libraries,
     )
 # Windows
 if sys.platform.startswith("win32"):
@@ -126,7 +131,7 @@ elif sys.platform.lower().startswith('sunos'):
         'psutil._psutil_sunos',
         sources=['psutil/_psutil_sunos.c'],
         define_macros=[VERSION_MACRO],
-        libraries=['kstat', 'nsl'],),
+        libraries=['kstat', 'nsl', 'socket']),
         posix_extension,
     ]
 else:

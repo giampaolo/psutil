@@ -25,7 +25,7 @@ from ._compat import PY3
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
-AF_LINK = socket.AF_LINK
+AF_LINK = cext_posix.AF_LINK
 
 CONN_IDLE = "IDLE"
 CONN_BOUND = "BOUND"
@@ -229,6 +229,17 @@ def net_connections(kind, _pid=-1):
             nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
         ret.add(nt)
     return list(ret)
+
+
+def net_if_stats():
+    """Get NIC stats (isup, duplex, speed, mtu)."""
+    ret = cext.net_if_stats()
+    for name, items in ret.items():
+        isup, duplex, speed, mtu = items
+        if hasattr(_common, 'NicDuplex'):
+            duplex = _common.NicDuplex(duplex)
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+    return ret
 
 
 def wrap_exceptions(fun):
