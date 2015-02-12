@@ -25,6 +25,10 @@
 #include <net/if_dl.h>
 #endif
 
+#if defined(__sun)
+#include <netdb.h>
+#endif
+
 #include "_psutil_posix.h"
 
 
@@ -148,6 +152,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family)
 
 /*
  * Return NICs information a-la ifconfig as a list of tuples.
+ * TODO: on Solaris we won't get any MAC address.
  */
 static PyObject*
 psutil_net_if_addrs(PyObject* self, PyObject* args)
@@ -289,7 +294,7 @@ void init_psutil_posix(void)
     PyObject *module = Py_InitModule("_psutil_posix", PsutilMethods);
 #endif
 
-#if defined(__FreeBSD__) || defined(__APPLE__)
+#if defined(__FreeBSD__) || defined(__APPLE__) || defined(__sun)
     PyModule_AddIntConstant(module, "AF_LINK", AF_LINK);
 #endif
 
