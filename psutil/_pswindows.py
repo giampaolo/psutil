@@ -67,7 +67,7 @@ TCP_STATUSES = {
 }
 
 if enum is not None:
-    class IOPriority(enum.IntEnum):
+    class Priority(enum.IntEnum):
         ABOVE_NORMAL_PRIORITY_CLASS = ABOVE_NORMAL_PRIORITY_CLASS
         BELOW_NORMAL_PRIORITY_CLASS = BELOW_NORMAL_PRIORITY_CLASS
         HIGH_PRIORITY_CLASS = HIGH_PRIORITY_CLASS
@@ -75,7 +75,7 @@ if enum is not None:
         NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
         REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
 
-    globals().update(IOPriority.__members__)
+    globals().update(Priority.__members__)
 
 
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
@@ -433,7 +433,10 @@ class Process(object):
 
     @wrap_exceptions
     def nice_get(self):
-        return cext.proc_priority_get(self.pid)
+        value = cext.proc_priority_get(self.pid)
+        if enum is not None:
+            value = Priority(value)
+        return value
 
     @wrap_exceptions
     def nice_set(self, value):
@@ -443,10 +446,7 @@ class Process(object):
     if hasattr(cext, "proc_io_priority_get"):
         @wrap_exceptions
         def ionice_get(self):
-            value = cext.proc_io_priority_get(self.pid)
-            if enum is not None:
-                value = IOPriority(value)
-            return value
+            return cext.proc_io_priority_get(self.pid)
 
         @wrap_exceptions
         def ionice_set(self, value, _):
