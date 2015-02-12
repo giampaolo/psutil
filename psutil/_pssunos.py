@@ -316,7 +316,9 @@ class Process(object):
         try:
             return cext_posix.getpriority(self.pid)
         except EnvironmentError as err:
-            if err.errno in (errno.ENOENT, errno.ESRCH):
+            # 48 is 'operation not supported' but errno does not expose
+            # it. It occurs for low system pids.
+            if err.errno in (errno.ENOENT, errno.ESRCH, 48):
                 if pid_exists(self.pid):
                     raise AccessDenied(self.pid, self._name)
             raise

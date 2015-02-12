@@ -1166,6 +1166,8 @@ psutil_net_if_stats(PyObject* self, PyObject* args)
     kstat_named_t *knp;
     int ret;
     int sock = 0;
+    int duplex;
+    int speed;
 
     PyObject *py_retdict = PyDict_New();
     PyObject *py_ifc_info = NULL;
@@ -1224,7 +1226,7 @@ psutil_net_if_stats(PyObject* self, PyObject* args)
             // speed
             if ((knp = kstat_data_lookup(ksp, "ifspeed")) != NULL)
                 // expressed in bits per sec, we want mega bits per sec
-                speed = knp->value.ui64 / 1000000;
+                speed = (int)knp->value.ui64 / 1000000;
             else
                 speed = 0;
 
@@ -1232,9 +1234,9 @@ psutil_net_if_stats(PyObject* self, PyObject* args)
             ret = ioctl(sock, SIOCGIFMTU, &ifr);
             if (ret == -1)
                 goto error;
-            mtu = ifr.ifr_mtu;
 
-            py_ifc_info = Py_BuildValue("(Oiii)", py_is_up, duplex, speed, mtu);
+            py_ifc_info = Py_BuildValue("(Oiii)", py_is_up, duplex, speed,
+                                        ifr.ifr_mtu);
             if (!py_ifc_info)
                 goto error;
             if (PyDict_SetItemString(py_retdict, ksp->ks_name, py_ifc_info))
