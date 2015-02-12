@@ -383,6 +383,7 @@ Network
    | "all"          | the sum of all the possible families and protocols  |
    +----------------+-----------------------------------------------------+
 
+  On OSX this function requires root privileges.
   To get per-process connections use :meth:`Process.connections`.
   Also, see
   `netstat.py sample script <https://github.com/giampaolo/psutil/blob/master/examples/netstat.py>`__.

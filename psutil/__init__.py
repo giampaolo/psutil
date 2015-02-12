@@ -1812,6 +1812,8 @@ def net_connections(kind='inet'):
     udp6            UDP over IPv6
     unix            UNIX socket (both UDP and TCP protocols)
     all             the sum of all the possible families and protocols
+
+    On OSX this function requires root privileges.
     """
     return _psplatform.net_connections(kind)
 
