@@ -214,16 +214,6 @@ class LinuxSpecificTestCase(unittest.TestCase):
                     self.assertEqual(addr.address, get_ipv4_address(name))
                 # TODO: test for AF_INET6 family
 
-    def test_net_if_addrs_names(self):
-        names = []
-        with open("/proc/net/dev", "r") as f:
-            lines = f.readlines()
-            for line in lines[2:]:
-                colon = line.find(':')
-                assert colon > 0, line
-                names.append(line[:colon].strip())
-        self.assertEqual(sorted(psutil.net_if_addrs().keys()), sorted(names))
-
     @unittest.skipUnless(which('ip'), "'ip' utility not available")
     @unittest.skipIf(TRAVIS, "skipped on Travis")
     def test_net_if_names(self):
