@@ -1166,9 +1166,6 @@ psutil_net_if_stats(PyObject* self, PyObject* args)
     kstat_named_t *knp;
     int ret;
     int sock = 0;
-    int speed;
-    int duplex;
-    int mtu;
 
     PyObject *py_retdict = PyDict_New();
     PyObject *py_ifc_info = NULL;
@@ -1226,7 +1223,8 @@ psutil_net_if_stats(PyObject* self, PyObject* args)
 
             // speed
             if ((knp = kstat_data_lookup(ksp, "ifspeed")) != NULL)
-                speed = knp->value.ui64 / 10000000;
+                // expressed in bits per sec, we want mega bits per sec
+                speed = knp->value.ui64 / 1000000;
             else
                 speed = 0;
 
