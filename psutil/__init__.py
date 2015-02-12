@@ -1850,7 +1850,8 @@ def net_if_addrs():
             try:
                 fam = socket.AddressFamily(fam)
             except ValueError:
-                pass
+                if os.name == 'nt' and fam == -1:
+                    fam = _psplatform.AF_LINK
         ret[name].append(_common.snic(fam, addr, mask, broadcast))
     return dict(ret)
 

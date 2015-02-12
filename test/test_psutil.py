@@ -1061,7 +1061,7 @@ class TestSystemAPIs(unittest.TestCase):
                 self.assertIsInstance(addr.broadcast, (str, type(None)))
                 self.assertIn(addr.family, families)
                 if sys.version_info >= (3, 4):
-                    self.assertIsInstance(addr.family, socket.AddressFamily)
+                    self.assertIsInstance(addr.family, enum.IntEnum)
                 if addr.family == socket.AF_INET:
                     s = socket.socket(addr.family)
                     with contextlib.closing(s):
@@ -1405,6 +1405,7 @@ class TestProcess(unittest.TestCase):
         else:
             p = psutil.Process()
             original = p.ionice()
+            self.assertIsInstance(original, int)
             try:
                 value = 0  # very low
                 if original == value:
@@ -1619,7 +1620,12 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(TypeError, p.nice, "str")
         if WINDOWS:
             try:
-                self.assertEqual(p.nice(), psutil.NORMAL_PRIORITY_CLASS)
+                init = p.nice()
+                if sys.version_info > (3, 4):
+                    self.assertIsInstance(init, enum.IntEnum)
+                else:
+                    self.assertIsInstance(init, int)
+                self.assertEqual(init, psutil.NORMAL_PRIORITY_CLASS)
                 p.nice(psutil.HIGH_PRIORITY_CLASS)
                 self.assertEqual(p.nice(), psutil.HIGH_PRIORITY_CLASS)
                 p.nice(psutil.NORMAL_PRIORITY_CLASS)

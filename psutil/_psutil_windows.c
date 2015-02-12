@@ -3069,7 +3069,14 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
             }
             *--ptr = '\0';
 
+#if PY_MAJOR_VERSION >= 3
+            py_mac_address = PyUnicode_FromString(buff);
+#else
             py_mac_address = PyString_FromString(buff);
+#endif
+            if (py_mac_address == NULL)
+                goto error;
+
             Py_INCREF(Py_None);
             Py_INCREF(Py_None);
             py_tuple = Py_BuildValue(
@@ -3114,7 +3121,11 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
                     PyErr_SetFromWindowsErr(GetLastError());
                     goto error;
                 }
+#if PY_MAJOR_VERSION >= 3
+                py_address = PyUnicode_FromString(buff);
+#else
                 py_address = PyString_FromString(buff);
+#endif
                 if (py_address == NULL)
                     goto error;
 
