@@ -19,12 +19,17 @@ import sys
 import warnings
 from collections import namedtuple, defaultdict
 
-from psutil import _common
-from psutil import _psposix
-from psutil._common import (isfile_strict, usage_percent, deprecated)
-from psutil._compat import PY3
-import _psutil_linux as cext
-import _psutil_posix
+from . import _common
+from . import _psposix
+from . import _psutil_linux as cext
+from . import _psutil_posix as cext_posix
+from ._common import isfile_strict, usage_percent, deprecated
+from ._compat import PY3
+
+if sys.version_info >= (3, 4):
+    import enum
+else:
+    enum = None
 
 
 __extra__all__ = [
@@ -54,12 +59,22 @@ CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 BOOT_TIME = None  # set later
 DEFAULT_ENCODING = sys.getdefaultencoding()
+AF_LINK = socket.AF_PACKET
 
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
-IOPRIO_CLASS_NONE = 0
-IOPRIO_CLASS_RT = 1
-IOPRIO_CLASS_BE = 2
-IOPRIO_CLASS_IDLE = 3
+if enum is None:
+    IOPRIO_CLASS_NONE = 0
+    IOPRIO_CLASS_RT = 1
+    IOPRIO_CLASS_BE = 2
+    IOPRIO_CLASS_IDLE = 3
+else:
+    class IOPriority(enum.IntEnum):
+        IOPRIO_CLASS_NONE = 0
+        IOPRIO_CLASS_RT = 1
+        IOPRIO_CLASS_BE = 2
+        IOPRIO_CLASS_IDLE = 3
+
+    globals().update(IOPriority.__members__)
 
 # taken from /fs/proc/array.c
 PROC_STATUSES = {
@@ -290,7 +305,7 @@ def users():
         # to use them in the future.
         if not user_process:
             continue
-        if hostname == ':0.0':
+        if hostname == ':0.0' or hostname == ':0':
             hostname = 'localhost'
         nt = _common.suser(user, tty or None, hostname, tstamp)
         retlist.append(nt)
@@ -446,12 +461,12 @@ class Connections:
                 _, laddr, raddr, status, _, _, _, _, _, inode = \
                     line.split()[:10]
                 if inode in inodes:
-                    # We assume inet sockets are unique, so we error
-                    # out if there are multiple references to the
-                    # same inode. We won't do this for UNIX sockets.
-                    if len(inodes[inode]) > 1 and family != socket.AF_UNIX:
-                        raise ValueError("ambiguos inode with multiple "
-                                         "PIDs references")
+                    # # We assume inet sockets are unique, so we error
+                    # # out if there are multiple references to the
+                    # # same inode. We won't do this for UNIX sockets.
+                    # if len(inodes[inode]) > 1 and family != socket.AF_UNIX:
+                    #     raise ValueError("ambiguos inode with multiple "
+                    #                      "PIDs references")
                     pid, fd = inodes[inode][0]
                 else:
                     pid, fd = None, -1
@@ -503,7 +518,7 @@ class Connections:
                 return []
         else:
             inodes = self.get_all_inodes()
-        ret = []
+        ret = set()
         for f, family, type_ in self.tmap[kind]:
             if family in (socket.AF_INET, socket.AF_INET6):
                 ls = self.process_inet(
@@ -518,8 +533,8 @@ class Connections:
                 else:
                     conn = _common.sconn(fd, family, type_, laddr, raddr,
                                          status, bound_pid)
-                ret.append(conn)
-        return ret
+                ret.add(conn)
+        return list(ret)
 
 
 _connections = Connections()
@@ -553,6 +568,9 @@ def net_io_counters():
         retdict[name] = (bytes_sent, bytes_recv, packets_sent, packets_recv,
                          errin, errout, dropin, dropout)
     return retdict
+
+
+net_if_addrs = cext_posix.net_if_addrs
 
 
 # --- disks
@@ -941,11 +959,11 @@ class Process(object):
         #   return int(data.split()[18])
 
         # Use C implementation
-        return _psutil_posix.getpriority(self.pid)
+        return cext_posix.getpriority(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
-        return _psutil_posix.setpriority(self.pid, value)
+        return cext_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def cpu_affinity_get(self):
@@ -970,6 +988,8 @@ class Process(object):
         @wrap_exceptions
         def ionice_get(self):
             ioclass, value = cext.proc_ioprio_get(self.pid)
+            if enum is not None:
+                ioclass = IOPriority(ioclass)
             return _common.pionice(ioclass, value)
 
         @wrap_exceptions

@@ -12,8 +12,8 @@ import os
 import sys
 import time
 
-from psutil._common import sdiskusage, usage_percent, memoize
-from psutil._compat import PY3, unicode
+from ._common import sdiskusage, usage_percent, memoize
+from ._compat import PY3, unicode
 
 
 class TimeoutExpired(Exception):
@@ -68,10 +68,12 @@ def wait_pid(pid, timeout=None):
 
     timer = getattr(time, 'monotonic', time.time)
     if timeout is not None:
-        waitcall = lambda: os.waitpid(pid, os.WNOHANG)
+        def waitcall():
+            return os.waitpid(pid, os.WNOHANG)
         stop_at = timer() + timeout
     else:
-        waitcall = lambda: os.waitpid(pid, 0)
+        def waitcall():
+            return os.waitpid(pid, 0)
 
     delay = 0.0001
     while True:

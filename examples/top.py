@@ -34,14 +34,15 @@ PID    USER       NI  VIRT   RES   CPU% MEM%     TIME+  NAME
 ...
 """
 
-import os
-import sys
-if os.name != 'posix':
-    sys.exit('platform not supported')
-import atexit
-import curses
-import time
 from datetime import datetime, timedelta
+import atexit
+import os
+import time
+import sys
+try:
+    import curses
+except ImportError:
+    sys.exit('platform not supported')
 
 import psutil
 

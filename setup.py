@@ -46,9 +46,14 @@ VERSION_MACRO = ('PSUTIL_VERSION', int(VERSION.replace('.', '')))
 
 # POSIX
 if os.name == 'posix':
+    libraries = []
+    if sys.platform.startswith("sunos"):
+        libraries.append('socket')
+
     posix_extension = Extension(
-        '_psutil_posix',
+        'psutil._psutil_posix',
         sources=['psutil/_psutil_posix.c'],
+        libraries=libraries,
     )
 # Windows
 if sys.platform.startswith("win32"):
@@ -58,7 +63,7 @@ if sys.platform.startswith("win32"):
         return '0x0%s' % ((maj * 100) + min)
 
     extensions = [Extension(
-        '_psutil_windows',
+        'psutil._psutil_windows',
         sources=[
             'psutil/_psutil_windows.c',
             'psutil/_psutil_common.c',
@@ -72,12 +77,13 @@ if sys.platform.startswith("win32"):
             # http://www.mingw.org/wiki/Use_more_recent_defined_functions
             ('_WIN32_WINNT', get_winver()),
             ('_AVAIL_WINVER_', get_winver()),
+            ('_CRT_SECURE_NO_WARNINGS', None),
             # see: https://github.com/giampaolo/psutil/issues/348
             ('PSAPI_VERSION', 1),
         ],
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32", "iphlpapi",
-            "wtsapi32",
+            "wtsapi32", "ws2_32",
         ],
         # extra_compile_args=["/Z7"],
         # extra_link_args=["/DEBUG"]
@@ -85,7 +91,7 @@ if sys.platform.startswith("win32"):
 # OS X
 elif sys.platform.startswith("darwin"):
     extensions = [Extension(
-        '_psutil_osx',
+        'psutil._psutil_osx',
         sources=[
             'psutil/_psutil_osx.c',
             'psutil/_psutil_common.c',
@@ -101,7 +107,7 @@ elif sys.platform.startswith("darwin"):
 # FreeBSD
 elif sys.platform.startswith("freebsd"):
     extensions = [Extension(
-        '_psutil_bsd',
+        'psutil._psutil_bsd',
         sources=[
             'psutil/_psutil_bsd.c',
             'psutil/_psutil_common.c',
@@ -114,7 +120,7 @@ elif sys.platform.startswith("freebsd"):
 # Linux
 elif sys.platform.startswith("linux"):
     extensions = [Extension(
-        '_psutil_linux',
+        'psutil._psutil_linux',
         sources=['psutil/_psutil_linux.c'],
         define_macros=[VERSION_MACRO]),
         posix_extension,
@@ -122,7 +128,7 @@ elif sys.platform.startswith("linux"):
 # Solaris
 elif sys.platform.lower().startswith('sunos'):
     extensions = [Extension(
-        '_psutil_sunos',
+        'psutil._psutil_sunos',
         sources=['psutil/_psutil_sunos.c'],
         define_macros=[VERSION_MACRO],
         libraries=['kstat', 'nsl'],),

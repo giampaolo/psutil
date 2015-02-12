@@ -14,7 +14,7 @@ import time
 
 import psutil
 
-from psutil._compat import PY3
+from psutil._compat import PY3, callable
 from test_psutil import LINUX, SUNOS, OSX, BSD, PYTHON
 from test_psutil import (get_test_subprocess, skip_on_access_denied,
                          retry_before_failing, reap_children, sh, unittest,

@@ -20,6 +20,7 @@ Quick links
 
 - `Home page <https://github.com/giampaolo/psutil>`_
 - `Documentation <http://pythonhosted.org/psutil/>`_
+- `Installation <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 - `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
 - `Forum <http://groups.google.com/group/psutil/topics>`_
 - `Blog <http://grodola.blogspot.com/search/label/psutil>`_
@@ -141,11 +142,20 @@ Network
      'lo': netio(bytes_sent=2838627, bytes_recv=2838627, packets_sent=30567, packets_recv=30567, errin=0, errout=0, dropin=0, dropout=0)}
     >>>
     >>> psutil.net_connections()
-    [pconn(fd=115, family=2, type=1, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED', pid=1254),
-     pconn(fd=117, family=2, type=1, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING', pid=2987),
-     pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED', pid=None),
-     pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT', pid=None)
+    [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED', pid=1254),
+     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING', pid=2987),
+     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED', pid=None),
+     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT', pid=None)
      ...]
+    >>>
+    >>> psutil.net_if_addrs()
+    {'lo': [snic(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1'),
+            snic(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None),
+            snic(family=<AddressFamily.AF_PACKET: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00')],
+     'wlan0': [snic(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255'),
+               snic(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None),
+               snic(family=<AddressFamily.AF_PACKET: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff')]}
+    >>>
 
 Other system info
 =================
@@ -228,10 +238,10 @@ Process management
     [popenfile(path='/home/giampaolo/svn/psutil/somefile', fd=3)]
     >>>
     >>> p.connections()
-    [pconn(fd=115, family=2, type=1, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED'),
-     pconn(fd=117, family=2, type=1, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING'),
-     pconn(fd=119, family=2, type=1, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED'),
-     pconn(fd=123, family=2, type=1, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT')]
+    [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED'),
+     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING'),
+     pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED'),
+     pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT')]
     >>>
     >>> p.num_threads()
     4
@@ -252,7 +262,7 @@ Process management
     >>>
     >>> p.ionice(psutil.IOPRIO_CLASS_IDLE)  # IO priority (Win and Linux only)
     >>> p.ionice()
-    pionice(ioclass=3, value=0)
+    pionice(ioclass=<IOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
     >>>
     >>> p.rlimit(psutil.RLIMIT_NOFILE, (5, 5))  # set resource limits (Linux only)
     >>> p.rlimit(psutil.RLIMIT_NOFILE)
@@ -320,6 +330,8 @@ http://groups.google.com/group/psutil/
 Timeline
 ========
 
+- 2015-02-02: `psutil-2.2.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.2.1.tar.gz>`_
+- 2015-01-06: `psutil-2.2.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.2.0.tar.gz>`_
 - 2014-09-26: `psutil-2.1.3.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.3.tar.gz>`_
 - 2014-09-21: `psutil-2.1.2.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.2.tar.gz>`_
 - 2014-04-30: `psutil-2.1.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.1.tar.gz>`_

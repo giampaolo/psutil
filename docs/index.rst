@@ -18,8 +18,9 @@ Quick links
 
 * `Home page <https://github.com/giampaolo/psutil>`__
 * `Blog <http://grodola.blogspot.com/search/label/psutil>`__
-* `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`__
 * `Forum <http://groups.google.com/group/psutil/topics>`__
+* `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`__
+* `Installation <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 * `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
 
 About
@@ -199,7 +200,7 @@ Memory
   * **total**: total swap memory in bytes
   * **used**: used swap memory in bytes
   * **free**: free swap memory in bytes
-  * **percent**: the percentage usage
+  * **percent**: the percentage usage calculated as ``(total - available) / total * 100``
   * **sin**: the number of bytes the system has swapped in from disk
     (cumulative)
   * **sout**: the number of bytes the system has swapped out from disk
@@ -391,10 +392,10 @@ Network
 
     >>> import psutil
     >>> psutil.net_connections()
-    [pconn(fd=115, family=2, type=1, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED', pid=1254),
-     pconn(fd=117, family=2, type=1, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING', pid=2987),
-     pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED', pid=None),
-     pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT', pid=None)
+    [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED', pid=1254),
+     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING', pid=2987),
+     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED', pid=None),
+     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT', pid=None)
      ...]
 
   .. note:: (OSX) :class:`psutil.AccessDenied` is always raised unless running
@@ -402,6 +403,47 @@ Network
   .. note:: (Solaris) UNIX sockets are not supported.
 
   .. versionadded:: 2.1.0
+
+.. function:: net_if_addrs()
+
+  Return the addresses associated to each NIC (network interface card)
+  installed on the system as a dictionary whose keys are the NIC names and
+  value is a list of namedtuples for each address assigned to the NIC.
+  Each namedtuple includes 4 fields:
+
+  - **family**
+  - **address**
+  - **netmask**
+  - **broadcast**
+
+  *family* can be either
+  `AF_INET <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
+  `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
+  or :const:`psutil.AF_LINK`, which refers to a MAC address.
+  *address* is the primary address, *netmask* and *broadcast* may be ``None``.
+  Example::
+
+    >>> import psutil
+    >>> psutil.net_if_addrs()
+    {'lo': [snic(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1'),
+            snic(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None),
+            snic(family=<AddressFamily.AF_PACKET: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00')],
+     'wlan0': [snic(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255'),
+               snic(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None),
+               snic(family=<AddressFamily.AF_PACKET: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff')]}
+    >>>
+
+  See also `examples/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/examples/ifconfig.py>`__
+  for an example application.
+
+  .. note:: if you're interested in others families (e.g. AF_BLUETOOTH) you can
+    use the more powerful `netifaces <https://pypi.python.org/pypi/netifaces/>`__
+    extension.
+
+  .. note:: you can have more than one address of the same family associated
+    with each interface (that's why dict values are lists).
+
+  *New in 3.0.0*
 
 
 Other system info
@@ -715,13 +757,17 @@ Process class
       >>> p = psutil.Process()
       >>> p.ionice(psutil.IOPRIO_CLASS_IDLE)  # set
       >>> p.ionice()  # get
-      pionice(ioclass=3, value=0)
+      pionice(ioclass=<IOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
       >>>
 
      On Windows only *ioclass* is used and it can be set to ``2`` (normal),
      ``1`` (low) or ``0`` (very low).
 
      Availability: Linux and Windows > Vista
+
+     .. versionchanged:: 3.0.0 on >= Python 3.4 the returned ``ioclass``
+        constant is an `enum <https://docs.python.org/3/library/enum.html#module-enum>`__
+        instead of a plain integer.
 
   .. method:: rlimit(resource, limits=None)
 
@@ -762,7 +808,7 @@ Process class
       >>> p.io_counters()
       pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0)
 
-     Availability: all platforms except OSX
+     Availability: all platforms except OSX and Solaris
 
   .. method:: num_ctx_switches()
 
@@ -837,7 +883,8 @@ Process class
      `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`__.
      CPU affinity consists in telling the OS to run a certain process on a
      limited set of CPUs only. The number of eligible CPUs can be obtained with
-     ``list(range(psutil.cpu_count()))``.
+     ``list(range(psutil.cpu_count()))``. On set raises ``ValueError`` in case
+     an invalid CPU number is specified.
 
       >>> import psutil
       >>> psutil.cpu_count()
@@ -1041,10 +1088,10 @@ Process class
       >>> p.name()
       'firefox'
       >>> p.connections()
-      [pconn(fd=115, family=2, type=1, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED'),
-       pconn(fd=117, family=2, type=1, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING'),
-       pconn(fd=119, family=2, type=1, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED'),
-       pconn(fd=123, family=2, type=1, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT')]
+      [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED'),
+       pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING'),
+       pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED'),
+       pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT')]
 
   .. method:: is_running()
 
@@ -1206,6 +1253,10 @@ Constants
 
   Availability: Windows
 
+  .. versionchanged:: 3.0.0 on Python >= 3.4 thse constants are
+    `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
+    instead of a plain integer.
+
 .. _const-ioprio:
 .. data:: IOPRIO_CLASS_NONE
           IOPRIO_CLASS_RT
@@ -1228,6 +1279,10 @@ Constants
   system call.
 
   Availability: Linux
+
+  .. versionchanged:: 3.0.0 on Python >= 3.4 thse constants are
+    `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
+    instead of a plain integer.
 
 .. _const-rlimit:
 .. data:: RLIMIT_INFINITY
@@ -1254,3 +1309,11 @@ Constants
   `man prlimit <http://linux.die.net/man/2/prlimit>`__ for futher information.
 
   Availability: Linux
+
+.. _const-aflink:
+.. data:: AF_LINK
+
+  Constant which identifies a MAC address associated with a network interface.
+  To be used in conjunction with :func:`psutil.net_if_addrs()`.
+
+  *New in 3.0.0*

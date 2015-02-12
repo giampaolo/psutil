@@ -12,32 +12,6 @@ in Python.
 
 from __future__ import division
 
-__author__ = "Giampaolo Rodola'"
-__version__ = "2.2.0"
-version_info = tuple([int(num) for num in __version__.split('.')])
-
-__all__ = [
-    # exceptions
-    "Error", "NoSuchProcess", "AccessDenied", "TimeoutExpired",
-    # constants
-    "version_info", "__version__",
-    "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
-    "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
-    "STATUS_WAKING", "STATUS_LOCKED", "STATUS_WAITING", "STATUS_LOCKED",
-    "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
-    "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
-    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
-    # classes
-    "Process", "Popen",
-    # functions
-    "pid_exists", "pids", "process_iter", "wait_procs",             # proc
-    "virtual_memory", "swap_memory",                                # memory
-    "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
-    "net_io_counters", "net_connections",                           # network
-    "disk_io_counters", "disk_partitions", "disk_usage",            # disk
-    "users", "boot_time",                                           # others
-]
-
 import collections
 import errno
 import functools
@@ -52,67 +26,66 @@ try:
 except ImportError:
     pwd = None
 
-from psutil._common import memoize
-from psutil._compat import callable, long
-from psutil._compat import PY3 as _PY3
-from psutil._common import (deprecated_method as _deprecated_method,
-                            deprecated as _deprecated,
-                            sdiskio as _nt_sys_diskio,
-                            snetio as _nt_sys_netio)
+from . import _common
+from ._common import memoize
+from ._compat import callable, long
+from ._compat import PY3 as _PY3
+from ._common import (deprecated_method as _deprecated_method,
+                      deprecated as _deprecated,)
 
-from psutil._common import (STATUS_RUNNING,  # NOQA
-                            STATUS_SLEEPING,
-                            STATUS_DISK_SLEEP,
-                            STATUS_STOPPED,
-                            STATUS_TRACING_STOP,
-                            STATUS_ZOMBIE,
-                            STATUS_DEAD,
-                            STATUS_WAKING,
-                            STATUS_LOCKED,
-                            STATUS_IDLE,  # bsd
-                            STATUS_WAITING,  # bsd
-                            STATUS_LOCKED)  # bsd
+from ._common import (STATUS_RUNNING,  # NOQA
+                      STATUS_SLEEPING,
+                      STATUS_DISK_SLEEP,
+                      STATUS_STOPPED,
+                      STATUS_TRACING_STOP,
+                      STATUS_ZOMBIE,
+                      STATUS_DEAD,
+                      STATUS_WAKING,
+                      STATUS_LOCKED,
+                      STATUS_IDLE,  # bsd
+                      STATUS_WAITING,  # bsd
+)
 
-from psutil._common import (CONN_ESTABLISHED,
-                            CONN_SYN_SENT,
-                            CONN_SYN_RECV,
-                            CONN_FIN_WAIT1,
-                            CONN_FIN_WAIT2,
-                            CONN_TIME_WAIT,
-                            CONN_CLOSE,
-                            CONN_CLOSE_WAIT,
-                            CONN_LAST_ACK,
-                            CONN_LISTEN,
-                            CONN_CLOSING,
-                            CONN_NONE)
+from ._common import (CONN_ESTABLISHED,
+                      CONN_SYN_SENT,
+                      CONN_SYN_RECV,
+                      CONN_FIN_WAIT1,
+                      CONN_FIN_WAIT2,
+                      CONN_TIME_WAIT,
+                      CONN_CLOSE,
+                      CONN_CLOSE_WAIT,
+                      CONN_LAST_ACK,
+                      CONN_LISTEN,
+                      CONN_CLOSING,
+                      CONN_NONE)
 
 if sys.platform.startswith("linux"):
-    import psutil._pslinux as _psplatform
-    from psutil._pslinux import (phymem_buffers,  # NOQA
-                                 cached_phymem)
+    from . import _pslinux as _psplatform
+    from ._pslinux import (phymem_buffers,  # NOQA
+                           cached_phymem)
 
-    from psutil._pslinux import (IOPRIO_CLASS_NONE,  # NOQA
-                                 IOPRIO_CLASS_RT,
-                                 IOPRIO_CLASS_BE,
-                                 IOPRIO_CLASS_IDLE)
+    from ._pslinux import (IOPRIO_CLASS_NONE,  # NOQA
+                           IOPRIO_CLASS_RT,
+                           IOPRIO_CLASS_BE,
+                           IOPRIO_CLASS_IDLE)
     # Linux >= 2.6.36
     if _psplatform.HAS_PRLIMIT:
-        from _psutil_linux import (RLIM_INFINITY,  # NOQA
-                                   RLIMIT_AS,
-                                   RLIMIT_CORE,
-                                   RLIMIT_CPU,
-                                   RLIMIT_DATA,
-                                   RLIMIT_FSIZE,
-                                   RLIMIT_LOCKS,
-                                   RLIMIT_MEMLOCK,
-                                   RLIMIT_NOFILE,
-                                   RLIMIT_NPROC,
-                                   RLIMIT_RSS,
-                                   RLIMIT_STACK)
+        from ._psutil_linux import (RLIM_INFINITY,  # NOQA
+                                    RLIMIT_AS,
+                                    RLIMIT_CORE,
+                                    RLIMIT_CPU,
+                                    RLIMIT_DATA,
+                                    RLIMIT_FSIZE,
+                                    RLIMIT_LOCKS,
+                                    RLIMIT_MEMLOCK,
+                                    RLIMIT_NOFILE,
+                                    RLIMIT_NPROC,
+                                    RLIMIT_RSS,
+                                    RLIMIT_STACK)
         # Kinda ugly but considerably faster than using hasattr() and
         # setattr() against the module object (we are at import time:
         # speed matters).
-        import _psutil_linux
+        from . import _psutil_linux
         try:
             RLIMIT_MSGQUEUE = _psutil_linux.RLIMIT_MSGQUEUE
         except AttributeError:
@@ -136,32 +109,57 @@ if sys.platform.startswith("linux"):
         del _psutil_linux
 
 elif sys.platform.startswith("win32"):
-    import psutil._pswindows as _psplatform
-    from _psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,  # NOQA
-                                 BELOW_NORMAL_PRIORITY_CLASS,
-                                 HIGH_PRIORITY_CLASS,
-                                 IDLE_PRIORITY_CLASS,
-                                 NORMAL_PRIORITY_CLASS,
-                                 REALTIME_PRIORITY_CLASS)
-    from psutil._pswindows import CONN_DELETE_TCB  # NOQA
+    from . import _pswindows as _psplatform
+    from ._psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,  # NOQA
+                                  BELOW_NORMAL_PRIORITY_CLASS,
+                                  HIGH_PRIORITY_CLASS,
+                                  IDLE_PRIORITY_CLASS,
+                                  NORMAL_PRIORITY_CLASS,
+                                  REALTIME_PRIORITY_CLASS)
+    from ._pswindows import CONN_DELETE_TCB  # NOQA
 
 elif sys.platform.startswith("darwin"):
-    import psutil._psosx as _psplatform
+    from . import _psosx as _psplatform
 
 elif sys.platform.startswith("freebsd"):
-    import psutil._psbsd as _psplatform
+    from . import _psbsd as _psplatform
 
 elif sys.platform.startswith("sunos"):
-    import psutil._pssunos as _psplatform
-    from psutil._pssunos import (CONN_IDLE,  # NOQA
-                                 CONN_BOUND)
+    from . import _pssunos as _psplatform
+    from ._pssunos import (CONN_IDLE,  # NOQA
+                           CONN_BOUND)
 
 else:
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
+
+__all__ = [
+    # exceptions
+    "Error", "NoSuchProcess", "AccessDenied", "TimeoutExpired",
+    # constants
+    "version_info", "__version__",
+    "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
+    "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
+    "STATUS_WAKING", "STATUS_LOCKED", "STATUS_WAITING", "STATUS_LOCKED",
+    "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
+    "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
+    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
+    "AF_LINK",
+    # classes
+    "Process", "Popen",
+    # functions
+    "pid_exists", "pids", "process_iter", "wait_procs",             # proc
+    "virtual_memory", "swap_memory",                                # memory
+    "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
+    "net_io_counters", "net_connections", "net_if_addrs",           # network
+    "disk_io_counters", "disk_partitions", "disk_usage",            # disk
+    "users", "boot_time",                                           # others
+]
 __all__.extend(_psplatform.__extra__all__)
-
-
+__author__ = "Giampaolo Rodola'"
+__version__ = "3.0.0"
+version_info = tuple([int(num) for num in __version__.split('.')])
+AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
 _POSIX = os.name == 'posix'
 _WINDOWS = os.name == 'nt'
@@ -695,10 +693,13 @@ class Process(object):
             want to set the affinity (e.g. [0, 1]).
             (Windows, Linux and BSD only).
             """
+            # Automatically remove duplicates both on get and
+            # set (for get it's not really necessary, it's
+            # just for extra safety).
             if cpus is None:
-                return self._proc.cpu_affinity_get()
+                return list(set(self._proc.cpu_affinity_get()))
             else:
-                self._proc.cpu_affinity_set(cpus)
+                self._proc.cpu_affinity_set(list(set(cpus)))
 
     if _WINDOWS:
 
@@ -851,9 +852,11 @@ class Process(object):
         blocking = interval is not None and interval > 0.0
         num_cpus = cpu_count()
         if _POSIX:
-            timer = lambda: _timer() * num_cpus
+            def timer():
+                return _timer() * num_cpus
         else:
-            timer = lambda: sum(cpu_times())
+            def timer():
+                return sum(cpu_times())
         if blocking:
             st1 = timer()
             pt1 = self._proc.cpu_times()
@@ -1752,10 +1755,10 @@ def disk_io_counters(perdisk=False):
         raise RuntimeError("couldn't find any physical disk")
     if perdisk:
         for disk, fields in rawdict.items():
-            rawdict[disk] = _nt_sys_diskio(*fields)
+            rawdict[disk] = _common.sdiskio(*fields)
         return rawdict
     else:
-        return _nt_sys_diskio(*[sum(x) for x in zip(*rawdict.values())])
+        return _common.sdiskio(*[sum(x) for x in zip(*rawdict.values())])
 
 
 # =====================================================================
@@ -1786,10 +1789,10 @@ def net_io_counters(pernic=False):
         raise RuntimeError("couldn't find any network interface")
     if pernic:
         for nic, fields in rawdict.items():
-            rawdict[nic] = _nt_sys_netio(*fields)
+            rawdict[nic] = _common.snetio(*fields)
         return rawdict
     else:
-        return _nt_sys_netio(*[sum(x) for x in zip(*rawdict.values())])
+        return _common.snetio(*[sum(x) for x in zip(*rawdict.values())])
 
 
 def net_connections(kind='inet'):
@@ -1818,15 +1821,47 @@ def net_connections(kind='inet'):
     return _psplatform.net_connections(kind)
 
 
+def net_if_addrs():
+    """Return the addresses associated to each NIC (network interface
+    card) installed on the system as a dictionary whose keys are the
+    NIC names and value is a list of namedtuples for each address
+    assigned to the NIC. Each namedtuple includes 4 fields:
+
+     - family
+     - address
+     - netmask
+     - broadcast
+
+    'family' can be either socket.AF_INET, socket.AF_INET6 or
+    psutil.AF_LINK, which refers to a MAC address.
+    'address' is the primary address, 'netmask' and 'broadcast'
+    may be None.
+    Note: you can have more than one address of the same family
+    associated with each interface.
+    """
+    has_enums = sys.version_info >= (3, 4)
+    if has_enums:
+        import socket
+    rawlist = _psplatform.net_if_addrs()
+    rawlist.sort(key=lambda x: x[1])  # sort by family
+    ret = collections.defaultdict(list)
+    for name, fam, addr, mask, broadcast in rawlist:
+        if has_enums:
+            try:
+                fam = socket.AddressFamily(fam)
+            except ValueError:
+                pass
+        ret[name].append(_common.snic(fam, addr, mask, broadcast))
+    return dict(ret)
+
+
 # =====================================================================
 # --- other system related functions
 # =====================================================================
 
 
 def boot_time():
-    """Return the system boot time expressed in seconds since the epoch.
-    This is also available as psutil.BOOT_TIME.
-    """
+    """Return the system boot time expressed in seconds since the epoch."""
     # Note: we are not caching this because it is subject to
     # system clock updates.
     return _psplatform.boot_time()

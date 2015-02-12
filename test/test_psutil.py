@@ -41,14 +41,22 @@ import traceback
 import types
 import warnings
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
+try:
+    import ipaddress  # python >= 3.3
+except ImportError:
+    ipaddress = None
+
+import psutil
+from psutil._compat import PY3, callable, long, unicode
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
 else:
     import unittest
-
-import psutil
-from psutil._compat import PY3, callable, long, unicode
+if sys.version_info >= (3, 4):
+    import enum
+else:
+    enum = None
 
 
 # ===================================================================
@@ -91,6 +99,9 @@ VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
 # whether we're running this test suite on Travis (https://travis-ci.org/)
 TRAVIS = bool(os.environ.get('TRAVIS'))
 
+if TRAVIS or 'tox' in sys.argv[0]:
+    import ipaddress
+
 
 # ===================================================================
 # --- Utility functions
@@ -125,7 +136,7 @@ def get_test_subprocess(cmd=None, stdout=DEVNULL, stderr=DEVNULL,
         pyline = ""
         if wait:
             pyline += "open(r'%s', 'w'); " % TESTFN
-        pyline += "import time; time.sleep(2);"
+        pyline += "import time; time.sleep(60);"
         cmd_ = [PYTHON, "-c", pyline]
     else:
         cmd_ = cmd
@@ -277,25 +288,30 @@ def reap_children(search_all=False):
 
 def check_ip_address(addr, family):
     """Attempts to check IP address's validity."""
-    if not addr:
-        return
-    if family in (AF_INET, AF_INET6):
-        assert isinstance(addr, tuple), addr
-        ip, port = addr
-        assert isinstance(port, int), port
-        if family == AF_INET:
-            ip = list(map(int, ip.split('.')))
-            assert len(ip) == 4, ip
-            for num in ip:
-                assert 0 <= num <= 255, ip
-        assert 0 <= port <= 65535, port
-    elif family == AF_UNIX:
-        assert isinstance(addr, (str, None)), addr
+    if enum and PY3:
+        assert isinstance(family, enum.IntEnum), family
+    if family == AF_INET:
+        octs = [int(x) for x in addr.split('.')]
+        assert len(octs) == 4, addr
+        for num in octs:
+            assert 0 <= num <= 255, addr
+        if ipaddress:
+            if not PY3:
+                addr = unicode(addr)
+            ipaddress.IPv4Address(addr)
+    elif family == AF_INET6:
+        assert isinstance(addr, str), addr
+        if ipaddress:
+            if not PY3:
+                addr = unicode(addr)
+            ipaddress.IPv6Address(addr)
+    elif family == psutil.AF_LINK:
+        assert re.match('([a-fA-F0-9]{2}[:|\-]?){6}', addr) is not None, addr
     else:
         raise ValueError("unknown family %r", family)
 
 
-def check_connection(conn):
+def check_connection_ntuple(conn):
     """Check validity of a connection namedtuple."""
     valid_conn_states = [getattr(psutil, x) for x in dir(psutil) if
                          x.startswith('CONN_')]
@@ -303,8 +319,21 @@ def check_connection(conn):
     assert conn.type in (SOCK_STREAM, SOCK_DGRAM), repr(conn.type)
     assert conn.family in (AF_INET, AF_INET6, AF_UNIX), repr(conn.family)
     assert conn.status in valid_conn_states, conn.status
-    check_ip_address(conn.laddr, conn.family)
-    check_ip_address(conn.raddr, conn.family)
+
+    # check IP address and port sanity
+    for addr in (conn.laddr, conn.raddr):
+        if not addr:
+            continue
+        if conn.family in (AF_INET, AF_INET6):
+            assert isinstance(addr, tuple), addr
+            ip, port = addr
+            assert isinstance(port, int), port
+            assert 0 <= port <= 65535, port
+            check_ip_address(ip, conn.family)
+        elif conn.family == AF_UNIX:
+            assert isinstance(addr, (str, None)), addr
+        else:
+            raise ValueError("unknown family %r", conn.family)
 
     if conn.family in (AF_INET, AF_INET6):
         # actually try to bind the local socket; ignore IPv6
@@ -521,9 +550,10 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(len(list(psutil.process_iter())), len(psutil.pids()))
 
     def test_wait_procs(self):
-        l = []
-        callback = lambda p: l.append(p.pid)
+        def callback(p):
+            l.append(p.pid)
 
+        l = []
         sproc1 = get_test_subprocess()
         sproc2 = get_test_subprocess()
         sproc3 = get_test_subprocess()
@@ -968,6 +998,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
 
+    @skip_on_access_denied()
     def test_net_connections(self):
         def check(cons, families, types_):
             for conn in cons:
@@ -981,6 +1012,7 @@ class TestSystemAPIs(unittest.TestCase):
                 continue
             families, types_ = groups
             cons = psutil.net_connections(kind)
+            self.assertEqual(len(cons), len(set(cons)))
             check(cons, families, types_)
 
     def test_net_io_counters(self):
@@ -1009,6 +1041,54 @@ class TestSystemAPIs(unittest.TestCase):
         for key in ret:
             self.assertTrue(key)
             check_ntuple(ret[key])
+
+    def test_net_if_addrs(self):
+        nics = psutil.net_if_addrs()
+        assert nics, nics
+
+        # Not reliable on all platforms (net_if_addrs() reports more
+        # interfaces).
+        # self.assertEqual(sorted(nics.keys()),
+        #                  sorted(psutil.net_io_counters(pernic=True).keys()))
+
+        families = set([socket.AF_INET, AF_INET6, psutil.AF_LINK])
+        for nic, addrs in nics.items():
+            self.assertEqual(len(set(addrs)), len(addrs))
+            for addr in addrs:
+                self.assertIsInstance(addr.family, int)
+                self.assertIsInstance(addr.address, str)
+                self.assertIsInstance(addr.netmask, (str, type(None)))
+                self.assertIsInstance(addr.broadcast, (str, type(None)))
+                self.assertIn(addr.family, families)
+                if sys.version_info >= (3, 4):
+                    self.assertIsInstance(addr.family, socket.AddressFamily)
+                if addr.family == socket.AF_INET:
+                    s = socket.socket(addr.family)
+                    with contextlib.closing(s):
+                        s.bind((addr.address, 0))
+                elif addr.family == socket.AF_INET6:
+                    info = socket.getaddrinfo(
+                        addr.address, 0, socket.AF_INET6, socket.SOCK_STREAM,
+                        0, socket.AI_PASSIVE)[0]
+                    af, socktype, proto, canonname, sa = info
+                    s = socket.socket(af, socktype, proto)
+                    with contextlib.closing(s):
+                        s.bind(sa)
+                for ip in (addr.address, addr.netmask, addr.broadcast):
+                    if ip is not None:
+                        # TODO: skip AF_INET6 for now because I get:
+                        # AddressValueError: Only hex digits permitted in
+                        # u'c6f3%lxcbr0' in u'fe80::c8e0:fff:fe54:c6f3%lxcbr0'
+                        if addr.family != AF_INET6:
+                            check_ip_address(ip, addr.family)
+
+        if BSD or OSX or SUNOS:
+            if hasattr(socket, "AF_LINK"):
+                self.assertEqual(psutil.AF_LINK, socket.AF_LINK)
+        elif LINUX:
+            self.assertEqual(psutil.AF_LINK, socket.AF_PACKET)
+        elif WINDOWS:
+            self.assertEqual(psutil.AF_LINK, -1)
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
@@ -1301,6 +1381,8 @@ class TestProcess(unittest.TestCase):
             try:
                 p.ionice(2)
                 ioclass, value = p.ionice()
+                if enum is not None:
+                    self.assertIsInstance(ioclass, enum.IntEnum)
                 self.assertEqual(ioclass, 2)
                 self.assertEqual(value, 4)
                 #
@@ -1600,6 +1682,7 @@ class TestProcess(unittest.TestCase):
         initial = p.cpu_affinity()
         if hasattr(os, "sched_getaffinity"):
             self.assertEqual(initial, list(os.sched_getaffinity(p.pid)))
+        self.assertEqual(len(initial), len(set(initial)))
         all_cpus = list(range(len(psutil.cpu_percent(percpu=True))))
         # setting on travis doesn't seem to work (always return all
         # CPUs on get):
@@ -1619,9 +1702,13 @@ class TestProcess(unittest.TestCase):
         #
         self.assertRaises(TypeError, p.cpu_affinity, 1)
         p.cpu_affinity(initial)
+        # it should work with all iterables, not only lists
+        p.cpu_affinity(set(all_cpus))
+        p.cpu_affinity(tuple(all_cpus))
         invalid_cpu = [len(psutil.cpu_times(percpu=True)) + 10]
         self.assertRaises(ValueError, p.cpu_affinity, invalid_cpu)
         self.assertRaises(ValueError, p.cpu_affinity, range(10000, 11000))
+        self.assertRaises(TypeError, p.cpu_affinity, [0, "1"])
 
     def test_open_files(self):
         # current process
@@ -1636,7 +1723,7 @@ class TestProcess(unittest.TestCase):
             assert os.path.isfile(file), file
 
         # another process
-        cmdline = "import time; f = open(r'%s', 'r'); time.sleep(2);" % TESTFN
+        cmdline = "import time; f = open(r'%s', 'r'); time.sleep(60);" % TESTFN
         sproc = get_test_subprocess([PYTHON, "-c", cmdline], wait=True)
         p = psutil.Process(sproc.pid)
 
@@ -1712,7 +1799,7 @@ class TestProcess(unittest.TestCase):
         cons = call_until(p.connections, "len(ret) != 0")
         self.assertEqual(len(cons), 1)
         con = cons[0]
-        check_connection(con)
+        check_connection_ntuple(con)
         self.assertEqual(con.family, AF_INET)
         self.assertEqual(con.type, SOCK_STREAM)
         self.assertEqual(con.status, psutil.CONN_LISTEN, con.status)
@@ -1750,7 +1837,7 @@ class TestProcess(unittest.TestCase):
                 sock.bind(TESTFN)
                 cons = psutil.Process().connections(kind='unix')
                 conn = cons[0]
-                check_connection(conn)
+                check_connection_ntuple(conn)
                 if conn.fd != -1:  # != sunos and windows
                     self.assertEqual(conn.fd, sock.fileno())
                 self.assertEqual(conn.family, AF_UNIX)
@@ -1914,9 +2001,9 @@ class TestProcess(unittest.TestCase):
         # A (parent) -> B (child) -> C (grandchild)
         s = "import subprocess, os, sys, time;"
         s += "PYTHON = os.path.realpath(sys.executable);"
-        s += "cmd = [PYTHON, '-c', 'import time; time.sleep(2);'];"
+        s += "cmd = [PYTHON, '-c', 'import time; time.sleep(4);'];"
         s += "subprocess.Popen(cmd);"
-        s += "time.sleep(2);"
+        s += "time.sleep(4);"
         get_test_subprocess(cmd=[PYTHON, "-c", s])
         p = psutil.Process()
         self.assertEqual(len(p.children(recursive=False)), 1)
@@ -2340,8 +2427,9 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertTrue(ret >= 0)
 
     def connections(self, ret):
+        self.assertEqual(len(ret), len(set(ret)))
         for conn in ret:
-            check_connection(conn)
+            check_connection_ntuple(conn)
 
     def cwd(self, ret):
         if ret is not None:  # BSD may return None
@@ -2636,6 +2724,9 @@ class TestExampleScripts(unittest.TestCase):
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
+    def test_ifconfig(self):
+        self.assert_stdout('ifconfig.py')
+
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 
@@ -2664,7 +2755,7 @@ class TestExampleScripts(unittest.TestCase):
         self.assertIn(str(os.getpid()), output)
 
 
-def test_main():
+def main():
     tests = []
     test_suite = unittest.TestSuite()
     tests.append(TestSystemAPIs)
@@ -2701,5 +2792,5 @@ def test_main():
     return result.wasSuccessful()
 
 if __name__ == '__main__':
-    if not test_main():
+    if not main():
         sys.exit(1)

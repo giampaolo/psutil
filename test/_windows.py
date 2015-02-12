@@ -29,7 +29,7 @@ except ImportError:
 
 from psutil._compat import PY3, callable, long
 from psutil._pswindows import ACCESS_DENIED_SET
-import _psutil_windows
+import psutil._psutil_windows as _psutil_windows
 import psutil
 
 
@@ -113,7 +113,9 @@ class WindowsSpecificTestCase(unittest.TestCase):
     def test_process_exe(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
-        self.assertEqual(p.exe(), w.ExecutablePath)
+        # Note: wmi reports the exe as a lower case string.
+        # Being Windows paths case-insensitive we ignore that.
+        self.assertEqual(p.exe().lower(), w.ExecutablePath.lower())
 
     @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_process_cmdline(self):
@@ -163,7 +165,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
 
     # --- psutil namespace functions and constants tests
 
-    @unittest.skipUnless(hasattr(os, 'NUMBER_OF_PROCESSORS'),
+    @unittest.skipUnless('NUMBER_OF_PROCESSORS' in os.environ,
                          'NUMBER_OF_PROCESSORS env var is not available')
     def test_cpu_count(self):
         num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
@@ -287,8 +289,8 @@ class TestDualProcessImplementation(unittest.TestCase):
         ('proc_cpu_times', 0.2),
         ('proc_create_time', 0.5),
         ('proc_num_handles', 1),  # 1 because impl #1 opens a handle
-        ('proc_io_counters', 0),
         ('proc_memory_info', 1024),  # KB
+        ('proc_io_counters', 0),
     ]
 
     def test_compare_values(self):
@@ -368,7 +370,7 @@ class TestDualProcessImplementation(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
 
-def test_main():
+def main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(WindowsSpecificTestCase))
     test_suite.addTest(unittest.makeSuite(TestDualProcessImplementation))
@@ -376,5 +378,5 @@ def test_main():
     return result.wasSuccessful()
 
 if __name__ == '__main__':
-    if not test_main():
+    if not main():
         sys.exit(1)

@@ -30,14 +30,15 @@ PID   USER      DISK READ  DISK WRITE  COMMAND
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 """
 
-import os
-import sys
-import psutil
-if not hasattr(psutil.Process, 'io_counters') or os.name != 'posix':
-    sys.exit('platform not supported')
-import time
-import curses
 import atexit
+import time
+import sys
+try:
+    import curses
+except ImportError:
+    sys.exit('platform not supported')
+
+import psutil
 
 
 # --- curses stuff

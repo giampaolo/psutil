@@ -4,6 +4,9 @@
  * found in the LICENSE file.
  */
 
+#if !defined(__NTEXTAPI_H__)
+#define __NTEXTAPI_H__
+
 typedef enum _KTHREAD_STATE {
     Initialized,
     Ready,
@@ -285,3 +288,5 @@ typedef enum _PROCESSINFOCLASS {
     ProcessImageInformation,
     MaxProcessInfoClass
 } PROCESSINFOCLASS;
+
+#endif // __NTEXTAPI_H__

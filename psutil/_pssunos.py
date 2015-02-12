@@ -13,17 +13,19 @@ import subprocess
 import sys
 from collections import namedtuple
 
-from psutil import _common
-from psutil import _psposix
-from psutil._common import usage_percent, isfile_strict
-from psutil._compat import PY3
-import _psutil_posix
-import _psutil_sunos as cext
+from . import _common
+from . import _psposix
+from . import _psutil_posix as cext_posix
+from . import _psutil_sunos as cext
+from ._common import isfile_strict, socktype_to_enum, sockfam_to_enum
+from ._common import usage_percent
+from ._compat import PY3
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
+AF_LINK = cext_posix.AF_LINK
 
 CONN_IDLE = "IDLE"
 CONN_BOUND = "BOUND"
@@ -72,6 +74,7 @@ TimeoutExpired = None
 disk_io_counters = cext.disk_io_counters
 net_io_counters = cext.net_io_counters
 disk_usage = _psposix.disk_usage
+net_if_addrs = cext_posix.net_if_addrs
 
 
 def virtual_memory():
@@ -210,7 +213,7 @@ def net_connections(kind, _pid=-1):
                          % (kind, ', '.join([repr(x) for x in cmap])))
     families, types = _common.conn_tmap[kind]
     rawlist = cext.net_connections(_pid, families, types)
-    ret = []
+    ret = set()
     for item in rawlist:
         fd, fam, type_, laddr, raddr, status, pid = item
         if fam not in families:
@@ -218,12 +221,14 @@ def net_connections(kind, _pid=-1):
         if type_ not in types:
             continue
         status = TCP_STATUSES[status]
+        fam = sockfam_to_enum(fam)
+        type_ = socktype_to_enum(type_)
         if _pid == -1:
             nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
         else:
             nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
-        ret.append(nt)
-    return ret
+        ret.add(nt)
+    return list(ret)
 
 
 def wrap_exceptions(fun):
@@ -292,7 +297,7 @@ class Process(object):
         # Note: tested on Solaris 11; on Open Solaris 5 everything is
         # fine.
         try:
-            return _psutil_posix.getpriority(self.pid)
+            return cext_posix.getpriority(self.pid)
         except EnvironmentError as err:
             if err.errno in (errno.ENOENT, errno.ESRCH):
                 if pid_exists(self.pid):
@@ -307,7 +312,7 @@ class Process(object):
             # The process actually exists though, as it has a name,
             # creation time, etc.
             raise AccessDenied(self.pid, self._name)
-        return _psutil_posix.setpriority(self.pid, value)
+        return cext_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def ppid(self):

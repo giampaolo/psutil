@@ -9,12 +9,25 @@
 import errno
 import functools
 import os
+import sys
 from collections import namedtuple
 
-from psutil import _common
-from psutil._common import conn_tmap, usage_percent, isfile_strict
-from psutil._compat import PY3, xrange, lru_cache
-import _psutil_windows as cext
+from . import _common
+from . import _psutil_windows as cext
+from ._common import conn_tmap, usage_percent, isfile_strict
+from ._common import sockfam_to_enum, socktype_to_enum
+from ._compat import PY3, xrange, lru_cache
+from ._psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,
+                              BELOW_NORMAL_PRIORITY_CLASS,
+                              HIGH_PRIORITY_CLASS,
+                              IDLE_PRIORITY_CLASS,
+                              NORMAL_PRIORITY_CLASS,
+                              REALTIME_PRIORITY_CLASS)
+
+if sys.version_info >= (3, 4):
+    import enum
+else:
+    enum = None
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
@@ -31,6 +44,7 @@ CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
                                cext.ERROR_ACCESS_DENIED])
+AF_LINK = -1
 
 TCP_STATUSES = {
     cext.MIB_TCP_STATE_ESTAB: _common.CONN_ESTABLISHED,
@@ -47,6 +61,17 @@ TCP_STATUSES = {
     cext.MIB_TCP_STATE_DELETE_TCB: CONN_DELETE_TCB,
     cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
+
+if enum is not None:
+    class IOPriority(enum.IntEnum):
+        ABOVE_NORMAL_PRIORITY_CLASS = ABOVE_NORMAL_PRIORITY_CLASS
+        BELOW_NORMAL_PRIORITY_CLASS = BELOW_NORMAL_PRIORITY_CLASS
+        HIGH_PRIORITY_CLASS = HIGH_PRIORITY_CLASS
+        IDLE_PRIORITY_CLASS = IDLE_PRIORITY_CLASS
+        NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
+        REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
+
+    globals().update(IOPriority.__members__)
 
 
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
@@ -167,16 +192,18 @@ def net_connections(kind, _pid=-1):
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
     families, types = conn_tmap[kind]
     rawlist = cext.net_connections(_pid, families, types)
-    ret = []
+    ret = set()
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
         status = TCP_STATUSES[status]
+        fam = sockfam_to_enum(fam)
+        type = socktype_to_enum(type)
         if _pid == -1:
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
         else:
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
-        ret.append(nt)
-    return ret
+        ret.add(nt)
+    return list(ret)
 
 
 def users():
@@ -195,6 +222,7 @@ pid_exists = cext.pid_exists
 net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
 ppid_map = cext.ppid_map  # not meant to be public
+net_if_addrs = cext.net_if_addrs
 
 
 def wrap_exceptions(fun):
@@ -411,7 +439,10 @@ class Process(object):
     if hasattr(cext, "proc_io_priority_get"):
         @wrap_exceptions
         def ionice_get(self):
-            return cext.proc_io_priority_get(self.pid)
+            value = cext.proc_io_priority_get(self.pid)
+            if enum is not None:
+                value = IOPriority(value)
+            return value
 
         @wrap_exceptions
         def ionice_set(self, value, _):
@@ -444,7 +475,8 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_affinity_get(self):
-        from_bitmask = lambda x: [i for i in xrange(64) if (1 << i) & x]
+        def from_bitmask(x):
+            return [i for i in xrange(64) if (1 << i) & x]
         bitmask = cext.proc_cpu_affinity_get(self.pid)
         return from_bitmask(bitmask)
 
