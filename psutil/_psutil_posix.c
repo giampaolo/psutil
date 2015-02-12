@@ -461,8 +461,10 @@ PsutilMethods[] =
      "Set process priority"},
     {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS,
      "Retrieve NICs information"},
+#if defined(__FreeBSD__) || defined(__APPLE__)
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
      "Return NIC stats."},
+#endif
     {NULL, NULL, 0, NULL}
 };
 
