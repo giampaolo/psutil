@@ -27,7 +27,7 @@ build: clean
 	$(PYTHON) setup.py build
 	@# copies *.so files in ./psutil directory in order to allow
 	@# "import psutil" when using the interactive interpreter from within
-	@# this directory .
+	@# this directory.
 	$(PYTHON) setup.py build_ext -i
 
 install: build

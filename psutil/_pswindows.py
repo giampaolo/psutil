@@ -16,7 +16,7 @@ from . import _common
 from . import _psutil_windows as cext
 from ._common import conn_tmap, usage_percent, isfile_strict
 from ._common import sockfam_to_enum, socktype_to_enum
-from ._compat import PY3, xrange, lru_cache
+from ._compat import PY3, xrange, lru_cache, long
 from ._psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,
                               BELOW_NORMAL_PRIORITY_CLASS,
                               HIGH_PRIORITY_CLASS,
@@ -496,7 +496,11 @@ class Process(object):
         allcpus = list(range(len(per_cpu_times())))
         for cpu in value:
             if cpu not in allcpus:
-                raise ValueError("invalid CPU %r" % cpu)
+                if not isinstance(cpu, (int, long)):
+                    raise TypeError(
+                        "invalid CPU %r; an integer is required" % cpu)
+                else:
+                    raise ValueError("invalid CPU %r" % cpu)
 
         bitmask = to_bitmask(value)
         cext.proc_cpu_affinity_set(self.pid, bitmask)

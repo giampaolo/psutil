@@ -70,6 +70,11 @@ if "%1" == "build" (
     :build
     %PYTHON% setup.py build
     if %errorlevel% neq 0 goto :error
+	rem copies *.pyd files in ./psutil directory in order to allow
+	rem "import psutil" when using the interactive interpreter from 
+    rem within this directory.
+    %PYTHON% setup.py build_ext -i
+    if %errorlevel% neq 0 goto :error
     goto :eof
 )
 
