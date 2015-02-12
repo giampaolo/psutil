@@ -167,6 +167,18 @@ def net_connections(kind='inet'):
     return ret
 
 
+def net_if_stats():
+    """Get NIC stats (isup, duplex, speed, mtu)."""
+    names = net_io_counters().keys()
+    ret = {}
+    for name in names:
+        isup, duplex, speed, mtu = cext_posix.net_if_stats(name)
+        if hasattr(_common, 'NicDuplex'):
+            duplex = _common.NicDuplex(duplex)
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+    return ret
+
+
 pids = cext.pids
 pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage
