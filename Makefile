@@ -46,13 +46,17 @@ test-system: install
 	$(PYTHON) -m unittest -v test.test_psutil.TestSystemAPIs
 
 test-memleaks: install
-	$(PYTHON) -m unittest -v test.test_memory_leaks
+	$(PYTHON) test/test_memory_leaks.py
 
 # Run a specific test by name; e.g. "make test-by-name disk_" will run
 # all test methods containing "disk_" in their name.
 # Requires "pip install nose".
 test-by-name: install
 	@$(PYTHON) -m nose test/test_psutil.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
+
+# same as above but for test_memory_leaks.py script
+test-memleaks-by-name: install
+	@$(PYTHON) -m nose test/test_memory_leaks.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
 
 # requires "pip install pep8"
 pep8:
