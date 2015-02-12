@@ -1105,14 +1105,6 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertGreaterEqual(speed, 0)
             self.assertGreaterEqual(mtu, 0)
 
-    def test_net_functions_names(self):
-        a = psutil.net_io_counters(pernic=True).keys()
-        b = psutil.net_if_addrs().keys()
-        self.assertEqual(sorted(a), sorted(b))
-        if not TRAVIS:
-            c = psutil.net_if_stats().keys()
-            self.assertEqual(sorted(b), sorted(c))
-
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
     def test_disk_io_counters(self):

@@ -2316,11 +2316,11 @@ psutil_net_if_stats(PyObject *self, PyObject *args)
     int ret;
     int duplex;
     int speed;
+    int mtu;
     struct ifreq ifr;
     struct ifmediareq ifmed;
 
     PyObject *py_is_up = NULL;
-    PyObject *py_mtu = NULL;
 
     if (! PyArg_ParseTuple(args, "s", &nic_name))
         return NULL;
@@ -2344,10 +2344,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args)
     ret = ioctl(sock, SIOCGIFMTU, &ifr);
     if (ret == -1)
         goto error;
-    py_mtu = Py_BuildValue("i", ifr.ifr_mtu);
-    if (!py_mtu)
-        goto error;
-    Py_INCREF(py_mtu);
+    mtu = ifr.ifr_mtu;
 
     // speed / duplex
     memset(&ifmed, 0, sizeof(struct ifmediareq));
@@ -2369,13 +2366,11 @@ psutil_net_if_stats(PyObject *self, PyObject *args)
 
     close(sock);
     Py_DECREF(py_is_up);
-    Py_DECREF(py_mtu);
 
-    return Py_BuildValue("[OiiO]", py_is_up, duplex, speed, py_mtu);
+    return Py_BuildValue("[Oiii]", py_is_up, duplex, speed, mtu);
 
 error:
     Py_XDECREF(py_is_up);
-    Py_XDECREF(py_mtu);
     if (sock != 0)
         close(sock);
     PyErr_SetFromErrno(PyExc_OSError);
