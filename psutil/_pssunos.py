@@ -25,7 +25,7 @@ from ._compat import PY3
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
-AF_LINK = socket.AF_LINK
+AF_LINK = cext_posix.AF_LINK
 
 CONN_IDLE = "IDLE"
 CONN_BOUND = "BOUND"

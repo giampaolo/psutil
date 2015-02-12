@@ -442,8 +442,6 @@ psutil_per_cpu_times(PyObject *self, PyObject *args)
     kstat_ctl_t *kc;
     kstat_t *ksp;
     cpu_stat_t cs;
-    int numcpus;
-    int i;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_cputime = NULL;
 
@@ -805,7 +803,7 @@ static PyObject *
 psutil_net_connections(PyObject *self, PyObject *args)
 {
     long pid;
-    int sd = NULL;
+    int sd = 0;
     mib2_tcpConnEntry_t *tp = NULL;
     mib2_udpEntry_t     *ude;
 #if defined(AF_INET6)
@@ -1083,7 +1081,7 @@ error:
     Py_XDECREF(py_raddr);
     Py_DECREF(py_retlist);
     // TODO : free databuf
-    if (sd != NULL)
+    if (sd != 0)
         close(sd);
     return NULL;
 }
@@ -1132,7 +1130,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args)
     for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
         if (strcmp(ksp->ks_module, "cpu_info") != 0)
             continue;
-        if (kstat_read(kc, ksp, NULL) == NULL)
+        if (kstat_read(kc, ksp, NULL) == -1)
             goto error;
         ncpus += 1;
     }
