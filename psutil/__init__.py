@@ -1820,6 +1820,8 @@ def net_connections(kind='inet'):
     udp6            UDP over IPv6
     unix            UNIX socket (both UDP and TCP protocols)
     all             the sum of all the possible families and protocols
+
+    On OSX this function requires root privileges.
     """
     return _psplatform.net_connections(kind)
 
@@ -1853,7 +1855,8 @@ def net_if_addrs():
             try:
                 fam = socket.AddressFamily(fam)
             except ValueError:
-                pass
+                if os.name == 'nt' and fam == -1:
+                    fam = _psplatform.AF_LINK
         ret[name].append(_common.snic(fam, addr, mask, broadcast))
     return dict(ret)
 

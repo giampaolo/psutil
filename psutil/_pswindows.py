@@ -16,7 +16,7 @@ from . import _common
 from . import _psutil_windows as cext
 from ._common import conn_tmap, usage_percent, isfile_strict
 from ._common import sockfam_to_enum, socktype_to_enum
-from ._compat import PY3, xrange, lru_cache
+from ._compat import PY3, xrange, lru_cache, long
 from ._psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,
                               BELOW_NORMAL_PRIORITY_CLASS,
                               HIGH_PRIORITY_CLASS,
@@ -34,8 +34,8 @@ else:
 __extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
                   "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
                   "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
-                  #
                   "CONN_DELETE_TCB",
+                  "AF_LINK",
                   ]
 
 # --- module level constants (gets pushed up to psutil module)
@@ -44,7 +44,11 @@ CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
                                cext.ERROR_ACCESS_DENIED])
-AF_LINK = -1
+if enum is None:
+    AF_LINK = -1
+else:
+    AddressFamily = enum.IntEnum('AddressFamily', {'AF_LINK': -1})
+    AF_LINK = AddressFamily.AF_LINK
 
 TCP_STATUSES = {
     cext.MIB_TCP_STATE_ESTAB: _common.CONN_ESTABLISHED,
@@ -63,7 +67,7 @@ TCP_STATUSES = {
 }
 
 if enum is not None:
-    class IOPriority(enum.IntEnum):
+    class Priority(enum.IntEnum):
         ABOVE_NORMAL_PRIORITY_CLASS = ABOVE_NORMAL_PRIORITY_CLASS
         BELOW_NORMAL_PRIORITY_CLASS = BELOW_NORMAL_PRIORITY_CLASS
         HIGH_PRIORITY_CLASS = HIGH_PRIORITY_CLASS
@@ -71,7 +75,7 @@ if enum is not None:
         NORMAL_PRIORITY_CLASS = NORMAL_PRIORITY_CLASS
         REALTIME_PRIORITY_CLASS = REALTIME_PRIORITY_CLASS
 
-    globals().update(IOPriority.__members__)
+    globals().update(Priority.__members__)
 
 
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
@@ -429,7 +433,10 @@ class Process(object):
 
     @wrap_exceptions
     def nice_get(self):
-        return cext.proc_priority_get(self.pid)
+        value = cext.proc_priority_get(self.pid)
+        if enum is not None:
+            value = Priority(value)
+        return value
 
     @wrap_exceptions
     def nice_set(self, value):
@@ -439,10 +446,7 @@ class Process(object):
     if hasattr(cext, "proc_io_priority_get"):
         @wrap_exceptions
         def ionice_get(self):
-            value = cext.proc_io_priority_get(self.pid)
-            if enum is not None:
-                value = IOPriority(value)
-            return value
+            return cext.proc_io_priority_get(self.pid)
 
         @wrap_exceptions
         def ionice_set(self, value, _):
@@ -496,7 +500,11 @@ class Process(object):
         allcpus = list(range(len(per_cpu_times())))
         for cpu in value:
             if cpu not in allcpus:
-                raise ValueError("invalid CPU %r" % cpu)
+                if not isinstance(cpu, (int, long)):
+                    raise TypeError(
+                        "invalid CPU %r; an integer is required" % cpu)
+                else:
+                    raise ValueError("invalid CPU %r" % cpu)
 
         bitmask = to_bitmask(value)
         cext.proc_cpu_affinity_set(self.pid, bitmask)
