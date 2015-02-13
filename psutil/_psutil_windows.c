@@ -2327,8 +2327,6 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
     char ifname[MAX_PATH];
     DWORD dwRetVal = 0;
     MIB_IFROW *pIfRow = NULL;
-    ULONG flags = 0;
-    ULONG family = AF_UNSPEC;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
 
@@ -3018,12 +3016,8 @@ error:
 static PyObject *
 psutil_net_if_addrs(PyObject *self, PyObject *args)
 {
-    DWORD dwSize = 0;
     unsigned int i = 0;
     ULONG family;
-    LPVOID lpMsgBuf = NULL;
-    ULONG outBufLen = 0;
-
     PCTSTR intRet;
     char *ptr;
     char buff[100];
