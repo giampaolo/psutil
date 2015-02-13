@@ -166,7 +166,8 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
     PyObject *py_netmask = NULL;
     PyObject *py_broadcast = NULL;
 
-
+    if (py_retlist == NULL)
+        return NULL
     if (getifaddrs(&ifaddr) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;

@@ -3021,6 +3021,8 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
     PyObject *py_address = NULL;
     PyObject *py_mac_address = NULL;
 
+    if (py_retlist == NULL)
+        return NULL;
 
     // allocate a 15 KB buffer to start with
     outBufLen = 15000;
