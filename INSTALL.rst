@@ -35,8 +35,8 @@ your installation of Python, that is::
 
     Python 2.6:  VS 2008
     Python 2.7:  VS 2008
-    Python 3.3, 3.4: VS 2010 (you can download it form `MS website <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`__)
-    Python 3.5: `VS 2015 UP <http://www.visualstudio.com/en-au/news/vs2015-preview-vs>`__
+    Python 3.3, 3.4: VS 2010 (you can download it from `MS website <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`_)
+    Python 3.5: `VS 2015 UP <http://www.visualstudio.com/en-au/news/vs2015-preview-vs>`_
 
 ...then run::
 
