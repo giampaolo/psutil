@@ -77,7 +77,6 @@ if enum is not None:
 
     globals().update(Priority.__members__)
 
-
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 pextmem = namedtuple(
