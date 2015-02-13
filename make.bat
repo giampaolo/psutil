@@ -56,7 +56,6 @@ if "%1" == "help" (
 )
 
 if "%1" == "clean" (
-    :clean
     for /r %%R in (__pycache__) do if exist %%R (rmdir /S /Q %%R)
     for /r %%R in (*.pyc) do if exist %%R (del /s %%R)
     for /r %%R in (*.pyd) do if exist %%R (del /s %%R)
@@ -89,7 +88,6 @@ if "%1" == "install" (
 )
 
 if "%1" == "uninstall" (
-    :uninstall
     for %%A in ("%PYTHON%") do (
         set folder=%%~dpA
     )
@@ -100,28 +98,24 @@ if "%1" == "uninstall" (
 )
 
 if "%1" == "test" (
-    :test
-    call :install
+    call :build
     %PYTHON% %TSCRIPT%
     goto :eof
 )
 
 if "%1" == "test-process" (
-    :test
     call :install
     %PYTHON% -m unittest -v test.test_psutil.TestProcess
     goto :eof
 )
 
 if "%1" == "test-system" (
-    :test
     call :install
     %PYTHON% -m unittest -v test.test_psutil.TestSystem
     goto :eof
 )
 
 if "%1" == "test-memleaks" (
-    :memtest
     call :install
     %PYTHON% test\test_memory_leaks.py
     goto :eof
@@ -165,7 +159,6 @@ if "%1" == "build-wheels" (
 )
 
 if "%1" == "build-all" (
-    :build-all
     rem for some reason this needs to be called twice (f**king windows...)
     call :build-exes
     call :build-exes
@@ -207,7 +200,6 @@ if "%1" == "upload-wheels" (
 )
 
 if "%1" == "upload-all" (
-    :build-all
     call :upload-exes
     call :upload-wheels
     echo OK
@@ -215,7 +207,6 @@ if "%1" == "upload-all" (
 )
 
 if "%1" == "setup-env" (
-    :setup-env
     echo downloading pip installer
     C:\python27\python.exe -c "import urllib2; url = urllib2.urlopen('https://raw.github.com/pypa/pip/master/contrib/get-pip.py'); data = url.read(); f = open('get-pip.py', 'w'); f.write(data)"
     C:\python26\python.exe get-pip.py & C:\python26\scripts\pip install unittest2 wheel ipaddress --upgrade
@@ -235,6 +226,8 @@ if "%1" == "setup-env" (
 goto :help
 
 :error
+    echo ------------------------------------------------
     echo last command exited with error code %errorlevel%
+    echo ------------------------------------------------
     exit /b %errorlevel%
     goto :eof
