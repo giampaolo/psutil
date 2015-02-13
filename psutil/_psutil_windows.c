@@ -36,6 +36,58 @@
 #include "arch/windows/glpi.h"
 #endif
 
+
+/*
+ * ============================================================================
+ * Utilities
+ * ============================================================================
+ */
+
+#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
+#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
+
+PIP_ADAPTER_ADDRESSES
+psutil_get_nic_addresses() {
+    // allocate a 15 KB buffer to start with
+    int outBufLen = 15000;
+    DWORD dwRetVal = 0;
+    ULONG iterations = 0;
+    PIP_ADAPTER_ADDRESSES pAddresses = NULL;
+
+    do {
+        pAddresses = (IP_ADAPTER_ADDRESSES *)MALLOC(outBufLen);
+        if (pAddresses == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+        dwRetVal = GetAdaptersAddresses(
+            AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, pAddresses, &outBufLen);
+        if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
+            FREE(pAddresses);
+            pAddresses = NULL;
+        }
+        else {
+            break;
+        }
+        iterations++;
+    } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (iterations < 3));
+
+    if (dwRetVal != NO_ERROR) {
+        PyErr_SetString(PyExc_RuntimeError, "GetAdaptersAddresses failed");
+        return NULL;
+    }
+
+    return pAddresses;
+}
+
+
+/*
+ * ============================================================================
+ * Public Python API
+ * ============================================================================
+ */
+
+
 /*
  * Return a Python float representing the system uptime expressed in seconds
  * since the epoch.
@@ -2262,8 +2314,6 @@ return_:
 static PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args)
 {
-    int attempts = 0;
-    int outBufLen = 15000;
     char ifname[MAX_PATH];
     DWORD dwRetVal = 0;
     MIB_IFROW *pIfRow = NULL;
@@ -2276,35 +2326,13 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
     PyObject *py_nic_info = NULL;
     PyObject *py_nic_name = NULL;
 
-    if (py_retdict == NULL) {
+    if (py_retdict == NULL)
         return NULL;
-    }
-    do {
-        pAddresses = (IP_ADAPTER_ADDRESSES *) malloc(outBufLen);
-        if (pAddresses == NULL) {
-            PyErr_NoMemory();
-            goto error;
-        }
-
-        dwRetVal = GetAdaptersAddresses(family, flags, NULL, pAddresses,
-                                        &outBufLen);
-        if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
-            free(pAddresses);
-            pAddresses = NULL;
-        }
-        else {
-            break;
-        }
-
-        attempts++;
-    } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (attempts < 3));
-
-    if (dwRetVal != NO_ERROR) {
-        PyErr_SetString(PyExc_RuntimeError, "GetAdaptersAddresses() failed.");
+    pAddresses = psutil_get_nic_addresses();
+    if (pAddresses == NULL)
         goto error;
-    }
-
     pCurrAddresses = pAddresses;
+
     while (pCurrAddresses) {
         py_nic_name = NULL;
         py_nic_info = NULL;
@@ -2989,24 +3017,19 @@ error:
 }
 
 
-
 /*
  * Return NICs addresses.
  */
-
-#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
-#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
 
 static PyObject *
 psutil_net_if_addrs(PyObject *self, PyObject *args)
 {
     DWORD dwSize = 0;
-    DWORD dwRetVal = 0;
     unsigned int i = 0;
     ULONG family;
     LPVOID lpMsgBuf = NULL;
     ULONG outBufLen = 0;
-    ULONG iterations = 0;
+
     PCTSTR intRet;
     char *ptr;
     char buff[100];
@@ -3024,32 +3047,11 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
     if (py_retlist == NULL)
         return NULL;
 
-    // allocate a 15 KB buffer to start with
-    outBufLen = 15000;
-    do {
-        pAddresses = (IP_ADAPTER_ADDRESSES *)MALLOC(outBufLen);
-        if (pAddresses == NULL) {
-            PyErr_NoMemory();
-            goto error;
-        }
-        dwRetVal = GetAdaptersAddresses(
-            AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, pAddresses, &outBufLen);
-        if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
-            FREE(pAddresses);
-            pAddresses = NULL;
-        }
-        else {
-            break;
-        }
-        iterations++;
-    } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (iterations < 3));
-
-    if (dwRetVal != NO_ERROR) {
-        PyErr_SetString(PyExc_RuntimeError, "GetAdaptersAddresses failed");
+    pAddresses = psutil_get_nic_addresses();
+    if (pAddresses == NULL)
         goto error;
-    }
-
     pCurrAddresses = pAddresses;
+
     while (pCurrAddresses) {
         pUnicast = pCurrAddresses->FirstUnicastAddress;
         sprintf(ifname, "%wS", pCurrAddresses->FriendlyName);
