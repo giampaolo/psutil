@@ -221,10 +221,10 @@ class PosixSpecificTestCase(unittest.TestCase):
         if LINUX and get_kernel_version() < (2, 6, 36):
             ignored_names.append('rlimit')
         for name in dir(psutil.Process):
-            if (name.startswith('_')
-                    or name.startswith('set_')
-                    or name.startswith('get')  # deprecated APIs
-                    or name in ignored_names):
+            if (name.startswith('_') or
+                    name.startswith('set_') or
+                    name.startswith('get') or  # deprecated APIs
+                    name in ignored_names):
                 continue
             else:
                 try:

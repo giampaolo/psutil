@@ -2098,10 +2098,10 @@ class TestProcess(unittest.TestCase):
         if LINUX and not RLIMIT_SUPPORT:
             excluded_names.append('rlimit')
         for name in dir(p):
-            if (name.startswith('_')
-                    or name.startswith('get')  # deprecated APIs
-                    or name.startswith('set')  # deprecated APIs
-                    or name in excluded_names):
+            if (name.startswith('_') or
+                    name.startswith('get') or  # deprecated APIs
+                    name.startswith('set') or  # deprecated APIs
+                    name in excluded_names):
                 continue
             try:
                 meth = getattr(p, name)
