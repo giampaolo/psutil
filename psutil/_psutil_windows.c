@@ -3148,14 +3148,12 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
         pCurrAddresses = pCurrAddresses->Next;
     }
 
-    if (pAddresses)
-        FREE(pAddresses);
-
+    free(pAddresses);
     return py_retlist;
 
 error:
     if (pAddresses)
-        FREE(pAddresses);
+        free(pAddresses);
     Py_DECREF(py_retlist);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
