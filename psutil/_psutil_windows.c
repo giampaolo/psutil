@@ -137,35 +137,37 @@ typedef struct _MIB_UDP6TABLE_OWNER_PID {
     MIB_UDP6ROW_OWNER_PID table[ANY_SIZE];
 } MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
 
-                                 
+
 PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses() {
     // allocate a 15 KB buffer to start with
     int outBufLen = 15000;
     DWORD dwRetVal = 0;
-    ULONG iterations = 0;
+    ULONG attempts = 0;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
 
     do {
-        pAddresses = (IP_ADAPTER_ADDRESSES *)MALLOC(outBufLen);
+        pAddresses = (IP_ADAPTER_ADDRESSES *) malloc(outBufLen);
         if (pAddresses == NULL) {
             PyErr_NoMemory();
             return NULL;
         }
-        dwRetVal = GetAdaptersAddresses(
-            AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, pAddresses, &outBufLen);
+
+        dwRetVal = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, pAddresses,
+                                        &outBufLen);
         if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
-            FREE(pAddresses);
+            free(pAddresses);
             pAddresses = NULL;
         }
         else {
             break;
         }
-        iterations++;
-    } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (iterations < 3));
+
+        attempts++;
+    } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (attempts < 3));
 
     if (dwRetVal != NO_ERROR) {
-        PyErr_SetString(PyExc_RuntimeError, "GetAdaptersAddresses failed");
+        PyErr_SetString(PyExc_RuntimeError, "GetAdaptersAddresses() failed.");
         return NULL;
     }
 
@@ -179,7 +181,7 @@ psutil_get_nic_addresses() {
  * ============================================================================
  */
 
- 
+
 /*
  * Return a Python float representing the system uptime expressed in seconds
  * since the epoch.

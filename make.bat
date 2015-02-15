@@ -98,7 +98,7 @@ if "%1" == "uninstall" (
 )
 
 if "%1" == "test" (
-    call :build
+    call :install
     %PYTHON% %TSCRIPT%
     goto :eof
 )
