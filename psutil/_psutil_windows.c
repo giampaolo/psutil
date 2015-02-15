@@ -36,6 +36,152 @@
 #include "arch/windows/glpi.h"
 #endif
 
+
+/*
+ * ============================================================================
+ * Utilities
+ * ============================================================================
+ */
+
+ // a flag for connections without an actual status
+static int PSUTIL_CONN_NONE = 128;
+
+#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
+#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
+#define LO_T ((float)1e-7)
+#define HI_T (LO_T*4294967296.0)
+#define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
+#ifndef AF_INET6
+#define AF_INET6 23
+#endif
+#define _psutil_conn_decref_objs() \
+    Py_DECREF(_AF_INET); \
+    Py_DECREF(_AF_INET6);\
+    Py_DECREF(_SOCK_STREAM);\
+    Py_DECREF(_SOCK_DGRAM);
+
+typedef BOOL (WINAPI *LPFN_GLPI)
+    (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,  PDWORD);
+
+// fix for mingw32, see
+// https://github.com/giampaolo/psutil/issues/351#c2
+typedef struct _DISK_PERFORMANCE_WIN_2008 {
+    LARGE_INTEGER BytesRead;
+    LARGE_INTEGER BytesWritten;
+    LARGE_INTEGER ReadTime;
+    LARGE_INTEGER WriteTime;
+    LARGE_INTEGER IdleTime;
+    DWORD         ReadCount;
+    DWORD         WriteCount;
+    DWORD         QueueDepth;
+    DWORD         SplitCount;
+    LARGE_INTEGER QueryTime;
+    DWORD         StorageDeviceNumber;
+    WCHAR         StorageManagerName[8];
+} DISK_PERFORMANCE_WIN_2008;
+
+// --- network connections mingw32 support
+#ifndef _IPRTRMIB_H
+typedef struct _MIB_TCP6ROW_OWNER_PID {
+    UCHAR ucLocalAddr[16];
+    DWORD dwLocalScopeId;
+    DWORD dwLocalPort;
+    UCHAR ucRemoteAddr[16];
+    DWORD dwRemoteScopeId;
+    DWORD dwRemotePort;
+    DWORD dwState;
+    DWORD dwOwningPid;
+} MIB_TCP6ROW_OWNER_PID, *PMIB_TCP6ROW_OWNER_PID;
+
+typedef struct _MIB_TCP6TABLE_OWNER_PID {
+    DWORD dwNumEntries;
+    MIB_TCP6ROW_OWNER_PID table[ANY_SIZE];
+} MIB_TCP6TABLE_OWNER_PID, *PMIB_TCP6TABLE_OWNER_PID;
+#endif
+
+#ifndef __IPHLPAPI_H__
+typedef struct in6_addr {
+    union {
+        UCHAR Byte[16];
+        USHORT Word[8];
+    } u;
+} IN6_ADDR, *PIN6_ADDR, FAR *LPIN6_ADDR;
+
+typedef enum _UDP_TABLE_CLASS {
+    UDP_TABLE_BASIC,
+    UDP_TABLE_OWNER_PID,
+    UDP_TABLE_OWNER_MODULE
+} UDP_TABLE_CLASS, *PUDP_TABLE_CLASS;
+
+typedef struct _MIB_UDPROW_OWNER_PID {
+    DWORD dwLocalAddr;
+    DWORD dwLocalPort;
+    DWORD dwOwningPid;
+} MIB_UDPROW_OWNER_PID, *PMIB_UDPROW_OWNER_PID;
+
+typedef struct _MIB_UDPTABLE_OWNER_PID {
+    DWORD dwNumEntries;
+    MIB_UDPROW_OWNER_PID table[ANY_SIZE];
+} MIB_UDPTABLE_OWNER_PID, *PMIB_UDPTABLE_OWNER_PID;
+#endif
+
+typedef struct _MIB_UDP6ROW_OWNER_PID {
+    UCHAR ucLocalAddr[16];
+    DWORD dwLocalScopeId;
+    DWORD dwLocalPort;
+    DWORD dwOwningPid;
+} MIB_UDP6ROW_OWNER_PID, *PMIB_UDP6ROW_OWNER_PID;
+
+typedef struct _MIB_UDP6TABLE_OWNER_PID {
+    DWORD dwNumEntries;
+    MIB_UDP6ROW_OWNER_PID table[ANY_SIZE];
+} MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
+
+
+PIP_ADAPTER_ADDRESSES
+psutil_get_nic_addresses() {
+    // allocate a 15 KB buffer to start with
+    int outBufLen = 15000;
+    DWORD dwRetVal = 0;
+    ULONG attempts = 0;
+    PIP_ADAPTER_ADDRESSES pAddresses = NULL;
+
+    do {
+        pAddresses = (IP_ADAPTER_ADDRESSES *) malloc(outBufLen);
+        if (pAddresses == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+
+        dwRetVal = GetAdaptersAddresses(AF_UNSPEC, 0, NULL, pAddresses,
+                                        &outBufLen);
+        if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
+            free(pAddresses);
+            pAddresses = NULL;
+        }
+        else {
+            break;
+        }
+
+        attempts++;
+    } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (attempts < 3));
+
+    if (dwRetVal != NO_ERROR) {
+        PyErr_SetString(PyExc_RuntimeError, "GetAdaptersAddresses() failed.");
+        return NULL;
+    }
+
+    return pAddresses;
+}
+
+
+/*
+ * ============================================================================
+ * Public Python API
+ * ============================================================================
+ */
+
+
 /*
  * Return a Python float representing the system uptime expressed in seconds
  * since the epoch.
@@ -446,9 +592,6 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args)
 }
 
 
-typedef BOOL (WINAPI *LPFN_GLPI) (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,
-                                  PDWORD);
-
 /*
  * Return the number of physical CPU cores.
  */
@@ -727,10 +870,6 @@ psutil_virtual_mem(PyObject *self, PyObject *args)
                          memInfo.ullTotalVirtual,   // total virtual
                          memInfo.ullAvailVirtual);  // avail virtual
 }
-
-
-#define LO_T ((float)1e-7)
-#define HI_T (LO_T*4294967296.0)
 
 
 /*
@@ -1411,81 +1550,6 @@ psutil_proc_username(PyObject *self, PyObject *args)
 
     return returnObject;
 }
-
-
-// --- network connections mingw32 support
-
-#ifndef _IPRTRMIB_H
-typedef struct _MIB_TCP6ROW_OWNER_PID {
-    UCHAR ucLocalAddr[16];
-    DWORD dwLocalScopeId;
-    DWORD dwLocalPort;
-    UCHAR ucRemoteAddr[16];
-    DWORD dwRemoteScopeId;
-    DWORD dwRemotePort;
-    DWORD dwState;
-    DWORD dwOwningPid;
-} MIB_TCP6ROW_OWNER_PID, *PMIB_TCP6ROW_OWNER_PID;
-
-typedef struct _MIB_TCP6TABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_TCP6ROW_OWNER_PID table[ANY_SIZE];
-} MIB_TCP6TABLE_OWNER_PID, *PMIB_TCP6TABLE_OWNER_PID;
-#endif
-
-#ifndef __IPHLPAPI_H__
-typedef struct in6_addr {
-    union {
-        UCHAR Byte[16];
-        USHORT Word[8];
-    } u;
-} IN6_ADDR, *PIN6_ADDR, FAR *LPIN6_ADDR;
-
-typedef enum _UDP_TABLE_CLASS {
-    UDP_TABLE_BASIC,
-    UDP_TABLE_OWNER_PID,
-    UDP_TABLE_OWNER_MODULE
-} UDP_TABLE_CLASS, *PUDP_TABLE_CLASS;
-
-typedef struct _MIB_UDPROW_OWNER_PID {
-    DWORD dwLocalAddr;
-    DWORD dwLocalPort;
-    DWORD dwOwningPid;
-} MIB_UDPROW_OWNER_PID, *PMIB_UDPROW_OWNER_PID;
-
-typedef struct _MIB_UDPTABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_UDPROW_OWNER_PID table[ANY_SIZE];
-} MIB_UDPTABLE_OWNER_PID, *PMIB_UDPTABLE_OWNER_PID;
-#endif
-
-typedef struct _MIB_UDP6ROW_OWNER_PID {
-    UCHAR ucLocalAddr[16];
-    DWORD dwLocalScopeId;
-    DWORD dwLocalPort;
-    DWORD dwOwningPid;
-} MIB_UDP6ROW_OWNER_PID, *PMIB_UDP6ROW_OWNER_PID;
-
-typedef struct _MIB_UDP6TABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_UDP6ROW_OWNER_PID table[ANY_SIZE];
-} MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
-
-
-#define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
-
-#ifndef AF_INET6
-#define AF_INET6 23
-#endif
-
-#define _psutil_conn_decref_objs() \
-    Py_DECREF(_AF_INET); \
-    Py_DECREF(_AF_INET6);\
-    Py_DECREF(_SOCK_STREAM);\
-    Py_DECREF(_SOCK_DGRAM);
-
-// a signaler for connections without an actual status
-static int PSUTIL_CONN_NONE = 128;
 
 
 /*
@@ -2262,13 +2326,9 @@ return_:
 static PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args)
 {
-    int attempts = 0;
-    int outBufLen = 15000;
     char ifname[MAX_PATH];
     DWORD dwRetVal = 0;
     MIB_IFROW *pIfRow = NULL;
-    ULONG flags = 0;
-    ULONG family = AF_UNSPEC;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
 
@@ -2276,35 +2336,13 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
     PyObject *py_nic_info = NULL;
     PyObject *py_nic_name = NULL;
 
-    if (py_retdict == NULL) {
+    if (py_retdict == NULL)
         return NULL;
-    }
-    do {
-        pAddresses = (IP_ADAPTER_ADDRESSES *) malloc(outBufLen);
-        if (pAddresses == NULL) {
-            PyErr_NoMemory();
-            goto error;
-        }
-
-        dwRetVal = GetAdaptersAddresses(family, flags, NULL, pAddresses,
-                                        &outBufLen);
-        if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
-            free(pAddresses);
-            pAddresses = NULL;
-        }
-        else {
-            break;
-        }
-
-        attempts++;
-    } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (attempts < 3));
-
-    if (dwRetVal != NO_ERROR) {
-        PyErr_SetString(PyExc_RuntimeError, "GetAdaptersAddresses() failed.");
+    pAddresses = psutil_get_nic_addresses();
+    if (pAddresses == NULL)
         goto error;
-    }
-
     pCurrAddresses = pAddresses;
+
     while (pCurrAddresses) {
         py_nic_name = NULL;
         py_nic_info = NULL;
@@ -2363,22 +2401,6 @@ error:
     return NULL;
 }
 
-// fix for mingw32, see
-// https://github.com/giampaolo/psutil/issues/351#c2
-typedef struct _DISK_PERFORMANCE_WIN_2008 {
-    LARGE_INTEGER BytesRead;
-    LARGE_INTEGER BytesWritten;
-    LARGE_INTEGER ReadTime;
-    LARGE_INTEGER WriteTime;
-    LARGE_INTEGER IdleTime;
-    DWORD         ReadCount;
-    DWORD         WriteCount;
-    DWORD         QueueDepth;
-    DWORD         SplitCount;
-    LARGE_INTEGER QueryTime;
-    DWORD         StorageDeviceNumber;
-    WCHAR         StorageManagerName[8];
-} DISK_PERFORMANCE_WIN_2008;
 
 /*
  * Return a Python dict of tuples for disk I/O information
@@ -2989,24 +3011,15 @@ error:
 }
 
 
-
 /*
  * Return NICs addresses.
  */
 
-#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
-#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
-
 static PyObject *
 psutil_net_if_addrs(PyObject *self, PyObject *args)
 {
-    DWORD dwSize = 0;
-    DWORD dwRetVal = 0;
     unsigned int i = 0;
     ULONG family;
-    LPVOID lpMsgBuf = NULL;
-    ULONG outBufLen = 0;
-    ULONG iterations = 0;
     PCTSTR intRet;
     char *ptr;
     char buff[100];
@@ -3021,33 +3034,14 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
     PyObject *py_address = NULL;
     PyObject *py_mac_address = NULL;
 
+    if (py_retlist == NULL)
+        return NULL;
 
-    // allocate a 15 KB buffer to start with
-    outBufLen = 15000;
-    do {
-        pAddresses = (IP_ADAPTER_ADDRESSES *)MALLOC(outBufLen);
-        if (pAddresses == NULL) {
-            PyErr_NoMemory();
-            goto error;
-        }
-        dwRetVal = GetAdaptersAddresses(
-            AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, pAddresses, &outBufLen);
-        if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
-            FREE(pAddresses);
-            pAddresses = NULL;
-        }
-        else {
-            break;
-        }
-        iterations++;
-    } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (iterations < 3));
-
-    if (dwRetVal != NO_ERROR) {
-        PyErr_SetString(PyExc_RuntimeError, "GetAdaptersAddresses failed");
+    pAddresses = psutil_get_nic_addresses();
+    if (pAddresses == NULL)
         goto error;
-    }
-
     pCurrAddresses = pAddresses;
+
     while (pCurrAddresses) {
         pUnicast = pCurrAddresses->FirstUnicastAddress;
         sprintf(ifname, "%wS", pCurrAddresses->FriendlyName);
@@ -3154,14 +3148,12 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
         pCurrAddresses = pCurrAddresses->Next;
     }
 
-    if (pAddresses)
-        FREE(pAddresses);
-
+    free(pAddresses);
     return py_retlist;
 
 error:
     if (pAddresses)
-        FREE(pAddresses);
+        free(pAddresses);
     Py_DECREF(py_retlist);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);

@@ -1508,9 +1508,9 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
     size_t len;
     PyObject *py_retdict = PyDict_New();
     PyObject *py_ifc_info = NULL;
+
     if (py_retdict == NULL)
         return NULL;
-
     mib[0] = CTL_NET;          // networking subsystem
     mib[1] = PF_ROUTE;         // type of information
     mib[2] = 0;                // protocol (IPPROTO_xxx)
@@ -1599,9 +1599,9 @@ psutil_disk_io_counters(PyObject *self, PyObject *args)
 
     PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;
+
     if (py_retdict == NULL)
         return NULL;
-
     if (devstat_checkversion(NULL) < 0) {
         PyErr_Format(PyExc_RuntimeError, "devstat_checkversion() failed");
         goto error;
@@ -2040,9 +2040,10 @@ psutil_net_connections(PyObject* self, PyObject* args)
 {
     PyObject *py_retlist = PyList_New(0);
 
+    if (py_retlist == NULL)
+        return NULL;
     if (psutil_populate_xfiles() != 1)
         goto error;
-
     if (psutil_gather_inet(IPPROTO_TCP, py_retlist) == 0)
         goto error;
     if (psutil_gather_inet(IPPROTO_UDP, py_retlist) == 0)
