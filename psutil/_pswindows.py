@@ -207,6 +207,16 @@ def net_connections(kind, _pid=-1):
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
         ret.add(nt)
     return list(ret)
+    
+    
+def net_if_stats():
+    ret = cext.net_if_stats()
+    for name, items in ret.items():
+        isup, duplex, speed, mtu = items
+        if hasattr(_common, 'NicDuplex'):
+            duplex = _common.NicDuplex(duplex)
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+    return ret
 
 
 def users():

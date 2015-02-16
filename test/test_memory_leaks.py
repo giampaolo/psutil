@@ -412,6 +412,10 @@ class TestModuleFunctionsLeaks(Base):
     def test_net_if_addrs(self):
         self.execute('net_if_addrs')
 
+    @unittest.skipIf(TRAVIS, "EPERM on travis")
+    def test_net_if_stats(self):
+        self.execute('net_if_stats')
+
 
 def test_main():
     test_suite = unittest.TestSuite()

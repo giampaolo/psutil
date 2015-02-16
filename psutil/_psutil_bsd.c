@@ -28,6 +28,7 @@
 #include <sys/socketvar.h>    // for struct xsocket
 #include <sys/un.h>
 #include <sys/unpcb.h>
+#include <sys/sockio.h>
 // for xinpcb struct
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -50,6 +51,7 @@
 #include <net/if.h>       // net io counters
 #include <net/if_dl.h>
 #include <net/route.h>
+#include <net/if_media.h>
 
 #include <netinet/in.h>   // process open files/connections
 #include <sys/un.h>

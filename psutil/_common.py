@@ -56,6 +56,18 @@ CONN_LISTEN = "LISTEN"
 CONN_CLOSING = "CLOSING"
 CONN_NONE = "NONE"
 
+if enum is None:
+    NIC_DUPLEX_FULL = 2
+    NIC_DUPLEX_HALF = 1
+    NIC_DUPLEX_UNKNOWN = 0
+else:
+    class NicDuplex(enum.IntEnum):
+        NIC_DUPLEX_FULL = 2
+        NIC_DUPLEX_HALF = 1
+        NIC_DUPLEX_UNKNOWN = 0
+
+    globals().update(NicDuplex.__members__)
+
 
 # --- functions
 
@@ -240,6 +252,8 @@ sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
                              'status', 'pid'])
 # psutil.net_if_addrs()
 snic = namedtuple('snic', ['family', 'address', 'netmask', 'broadcast'])
+# psutil.net_if_stats
+snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
 
 
 # --- namedtuples for psutil.Process methods

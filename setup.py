@@ -131,7 +131,7 @@ elif sys.platform.lower().startswith('sunos'):
         'psutil._psutil_sunos',
         sources=['psutil/_psutil_sunos.c'],
         define_macros=[VERSION_MACRO],
-        libraries=['kstat', 'nsl'],),
+        libraries=['kstat', 'nsl', 'socket']),
         posix_extension,
     ]
 else:

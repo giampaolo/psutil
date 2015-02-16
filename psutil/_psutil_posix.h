@@ -7,5 +7,6 @@
 #include <Python.h>
 
 static PyObject* psutil_net_if_addrs(PyObject* self, PyObject* args);
+static PyObject* psutil_net_if_stats(PyObject* self, PyObject* args);
 static PyObject* psutil_posix_getpriority(PyObject* self, PyObject* args);
 static PyObject* psutil_posix_setpriority(PyObject* self, PyObject* args);

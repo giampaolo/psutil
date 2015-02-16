@@ -231,6 +231,17 @@ def net_connections(kind, _pid=-1):
     return list(ret)
 
 
+def net_if_stats():
+    """Get NIC stats (isup, duplex, speed, mtu)."""
+    ret = cext.net_if_stats()
+    for name, items in ret.items():
+        isup, duplex, speed, mtu = items
+        if hasattr(_common, 'NicDuplex'):
+            duplex = _common.NicDuplex(duplex)
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+    return ret
+
+
 def wrap_exceptions(fun):
     """Call callable into a try/except clause and translate ENOENT,
     EACCES and EPERM in NoSuchProcess or AccessDenied exceptions.

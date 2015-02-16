@@ -1090,6 +1090,21 @@ class TestSystemAPIs(unittest.TestCase):
         elif WINDOWS:
             self.assertEqual(psutil.AF_LINK, -1)
 
+    @unittest.skipIf(TRAVIS, "EPERM on travis")
+    def test_net_if_stats(self):
+        nics = psutil.net_if_stats()
+        assert nics, nics
+        all_duplexes = (psutil.NIC_DUPLEX_FULL,
+                        psutil.NIC_DUPLEX_HALF,
+                        psutil.NIC_DUPLEX_UNKNOWN)
+        for nic, stats in nics.items():
+            isup, duplex, speed, mtu = stats
+            self.assertIsInstance(isup, bool)
+            self.assertIn(duplex, all_duplexes)
+            self.assertIn(duplex, all_duplexes)
+            self.assertGreaterEqual(speed, 0)
+            self.assertGreaterEqual(mtu, 0)
+
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
     def test_disk_io_counters(self):

@@ -25,3 +25,4 @@ static PyObject* psutil_per_cpu_times(PyObject* self, PyObject* args);
 static PyObject* psutil_swap_mem(PyObject* self, PyObject* args);
 static PyObject* psutil_users(PyObject* self, PyObject* args);
 static PyObject* psutil_net_connections(PyObject* self, PyObject* args);
+static PyObject* psutil_net_if_stats(PyObject* self, PyObject* args);

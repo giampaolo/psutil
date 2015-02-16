@@ -19,6 +19,11 @@
 #include <linux/version.h>
 #include <sys/syscall.h>
 #include <sys/sysinfo.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <linux/sockios.h>
+#include <linux/if.h>
+#include <linux/ethtool.h>
 
 #include "_psutil_linux.h"
 
@@ -476,6 +481,87 @@ error:
 
 
 /*
+ * Return stats about a particular network
+ * interface.  References:
+ * https://github.com/dpaleino/wicd/blob/master/wicd/backends/be-ioctl.py
+ * http://www.i-scream.org/libstatgrab/
+ */
+static PyObject*
+psutil_net_if_stats(PyObject* self, PyObject* args)
+{
+    char *nic_name;
+    int sock = 0;
+    int ret;
+    int duplex;
+    int speed;
+    int mtu;
+    struct ifreq ifr;
+    struct ethtool_cmd ethcmd;
+    PyObject *py_is_up = NULL;
+    PyObject *py_ret = NULL;
+
+    if (! PyArg_ParseTuple(args, "s", &nic_name))
+        return NULL;
+
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock == -1)
+        goto error;
+    strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+
+    // is up?
+    ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
+    if (ret == -1)
+        goto error;
+    if ((ifr.ifr_flags & IFF_UP) != 0)
+        py_is_up = Py_True;
+    else
+        py_is_up = Py_False;
+    Py_INCREF(py_is_up);
+
+    // MTU
+    ret = ioctl(sock, SIOCGIFMTU, &ifr);
+    if (ret == -1)
+        goto error;
+    mtu = ifr.ifr_mtu;
+
+    // duplex and speed
+    memset(&ethcmd, 0, sizeof ethcmd);
+    ethcmd.cmd = ETHTOOL_GSET;
+    ifr.ifr_data = (caddr_t)&ethcmd;
+    ret = ioctl(sock, SIOCETHTOOL, &ifr);
+
+    if (ret != -1) {
+        duplex = ethcmd.duplex;
+        speed = ethcmd.speed;
+    }
+    else {
+        if (errno == EOPNOTSUPP) {
+            // we typically get here in case of wi-fi cards
+            duplex = DUPLEX_UNKNOWN;
+            speed = 0;
+        }
+        else {
+            goto error;
+        }
+    }
+
+    close(sock);
+    py_ret = Py_BuildValue("[Oiii]", py_is_up, duplex, speed, mtu);
+    if (!py_ret)
+        goto error;
+    Py_DECREF(py_is_up);
+    return py_ret;
+
+error:
+    Py_XDECREF(py_is_up);
+    if (sock != 0)
+        close(sock);
+    PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+}
+
+
+/*
  * Define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -501,6 +587,8 @@ PsutilMethods[] =
      "device, mount point and filesystem type"},
     {"users", psutil_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},
+    {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
+     "Return NIC stats (isup, duplex, speed, mtu)"},
 
     // --- linux specific
 
@@ -599,6 +687,9 @@ void init_psutil_linux(void)
     PyModule_AddIntConstant(module, "RLIMIT_SIGPENDING", RLIMIT_SIGPENDING);
 #endif
 #endif
+    PyModule_AddIntConstant(module, "DUPLEX_HALF", DUPLEX_HALF);
+    PyModule_AddIntConstant(module, "DUPLEX_FULL", DUPLEX_FULL);
+    PyModule_AddIntConstant(module, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN);
 
     if (module == NULL) {
         INITERROR;
