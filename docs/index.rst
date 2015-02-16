@@ -460,7 +460,10 @@ Network
   can be either :const:`NIC_DUPLEX_FULL`, :const:`NIC_DUPLEX_HALF` or
   :const:`NIC_DUPLEX_UNKNOWN`, *speed* is the NIC speed expressed in mega bits
   (MB), if it can't be determined (e.g. 'localhost') it will be set to ``0``,
-  *mtu* is the maximum transmission unit expressed in bytes. Example:
+  *mtu* is the maximum transmission unit expressed in bytes.
+  See also `examples/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/examples/ifconfig.py>`__
+  for an example application.
+  Example:
 
     >>> import psutil
     >>> psutil.net_if_stats()
