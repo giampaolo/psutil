@@ -3263,6 +3263,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args)
     }
 
     free(pIfTable);
+    free(pAddresses);
     return py_retdict;
 
 error:
@@ -3271,6 +3272,8 @@ error:
     Py_DECREF(py_retdict);
     if (pIfTable != NULL)
         free(pIfTable);
+    if (pAddresses != NULL)
+        free(pAddresses);
     return NULL;
 }
 
