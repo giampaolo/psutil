@@ -1283,7 +1283,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args)
     long pid;
     int ptrwidth;
     int i, cnt;
-    char addr[30];
+    char addr[1000];
     char perms[4];
     const char *path;
     struct kinfo_proc kp;

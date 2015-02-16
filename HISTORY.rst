@@ -25,6 +25,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #585: [FreeBSD] net_connections() may raise KeyError.
 - #586: [FreeBSD] cpu_affinity() segfaults on set in case an invalid CPU
   number is provided.
+- #593: [FreeBSD] Process().memory_maps() segfaults.
+
 
 2.2.1 - 2015-02-02
 ==================
