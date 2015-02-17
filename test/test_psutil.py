@@ -2171,10 +2171,15 @@ class TestProcess(unittest.TestCase):
                 zproc = psutil.Process(zpid)
                 # ...and at least its status always be querable
                 self.assertEqual(zproc.status(), psutil.STATUS_ZOMBIE)
+                # ...and it should be considered 'running'
+                self.assertTrue(zproc.is_running())
+                # ...and as_dict() shouldn't crash
+                zproc.as_dict()
                 # ...its parent should 'see' it
-                descendants = [x.pid for x in psutil.Process().children(
-                               recursive=True)]
-                self.assertIn(zpid, descendants)
+                # edit: not true on BSD and OSX
+                # descendants = [x.pid for x in psutil.Process().children(
+                #                recursive=True)]
+                # self.assertIn(zpid, descendants)
                 # XXX should we also assume ppid be usable?  Note: this
                 # would be an important use case as the only way to get
                 # rid of a zombie is to kill its parent.
@@ -2182,6 +2187,8 @@ class TestProcess(unittest.TestCase):
                 # ...and all other APIs should be able to deal with it
                 self.assertTrue(psutil.pid_exists(zpid))
                 self.assertIn(zpid, psutil.pids())
+                self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
+                psutil._pmap = {}
                 self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
             finally:
                 reap_children(search_all=True)

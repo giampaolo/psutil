@@ -108,6 +108,7 @@ TCP_STATUSES = {
 
 # set later from __init__.py
 NoSuchProcess = None
+ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
 

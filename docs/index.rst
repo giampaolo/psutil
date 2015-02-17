@@ -591,6 +591,20 @@ Exceptions
    exists. "name" is the name the process had before disappearing
    and gets set only if :meth:`Process.name()` was previosly called.
 
+.. class:: ZombieProcess(pid, name=None, msg=None)
+
+   Raised by :class:`Process` class methods when querying a zombie process.
+   This is raised on OSX, BSD and Solaris only, and not always: depending
+   on the query the OS may be able to succeed in retrieving the process
+   information anyway.
+   On Linux all zombie processes are querable (hence this is never raised).
+   Windows doesn't have zombie processes. Note: this is a subclass of
+   :class:`NoSuchProcess` so if you're not interested in retrieving zombies
+   while iterating over all processes (e.g. via :func:`process_iter()`) you
+   can ignore this exception and just catch :class:`NoSuchProcess`.
+
+   *New in 3.0.0*
+
 .. class:: AccessDenied(pid=None, name=None, msg=None)
 
     Raised by :class:`Process` class methods when permission to perform an
@@ -686,12 +700,16 @@ Process class
      :class:`Process` class's attribute names (e.g. ``['cpu_times', 'name']``)
      else all public (read only) attributes are assumed. *ad_value* is the
      value which gets assigned to a dict key in case :class:`AccessDenied`
-     exception is raised when retrieving that particular process information.
+     or :class:`ZombieProcess` exception is raised when retrieving that
+     particular process information.
 
         >>> import psutil
         >>> p = psutil.Process()
         >>> p.as_dict(attrs=['pid', 'name', 'username'])
         {'username': 'giampaolo', 'pid': 12366, 'name': 'python'}
+
+     .. versionchanged:: 3.0.0 *ad_value* is used also when incurring into
+        :class:`ZombieProcess` exception, not only :class:`AccessDenied`
 
   .. method:: parent()
 

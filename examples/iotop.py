@@ -117,7 +117,7 @@ def poll(interval):
             if not p._cmdline:
                 p._cmdline = p.name()
             p._username = p.username()
-        except psutil.NoSuchProcess:
+        except (psutil.NoSuchProcess, psutil.ZombieProcess):
             procs.remove(p)
     disks_after = psutil.disk_io_counters()
 

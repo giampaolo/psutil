@@ -138,7 +138,8 @@ else:
 
 __all__ = [
     # exceptions
-    "Error", "NoSuchProcess", "AccessDenied", "TimeoutExpired",
+    "Error", "NoSuchProcess", "ZombieProcess", "AccessDenied",
+    "TimeoutExpired",
     # constants
     "version_info", "__version__",
     "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
@@ -197,7 +198,7 @@ class Error(Exception):
 
 class NoSuchProcess(Error):
     """Exception raised when a process with a certain PID doesn't
-    or no longer exists (zombie).
+    or no longer exists.
     """
 
     def __init__(self, pid, name=None, msg=None):
@@ -211,6 +212,30 @@ class NoSuchProcess(Error):
             else:
                 details = "(pid=%s)" % self.pid
             self.msg = "process no longer exists " + details
+
+    def __str__(self):
+        return self.msg
+
+
+class ZombieProcess(NoSuchProcess):
+    """Exception raised when querying a zombie process. This is
+    raised on OSX, BSD and Solaris only, and not always: depending
+    on the query the OS may be able to succeed anyway.
+    On Linux all zombie processes are querable (hence this is never
+    raised). Windows doesn't have zombie processes.
+    """
+
+    def __init__(self, pid, name=None, msg=None):
+        Error.__init__(self)
+        self.pid = pid
+        self.name = name
+        self.msg = msg
+        if msg is None:
+            if name:
+                details = "(pid=%s, name=%s)" % (self.pid, repr(self.name))
+            else:
+                details = "(pid=%s)" % self.pid
+            self.msg = "process still exists but it's a zombie " + details
 
     def __str__(self):
         return self.msg
@@ -257,6 +282,7 @@ class TimeoutExpired(Error):
 
 # push exception classes into platform specific module namespace
 _psplatform.NoSuchProcess = NoSuchProcess
+_psplatform.ZombieProcess = ZombieProcess
 _psplatform.AccessDenied = AccessDenied
 _psplatform.TimeoutExpired = TimeoutExpired
 
@@ -343,6 +369,11 @@ class Process(object):
             # process creation time on all platforms even as a
             # limited user
             pass
+        except ZombieProcess:
+            # Let's consider a zombie process as legitimate as
+            # tehcnically it's still alive (it can be queried,
+            # although not always, and it's returned by pids()).
+            pass
         except NoSuchProcess:
             if not _ignore_nsp:
                 msg = 'no process found with pid %s' % pid
@@ -359,6 +390,8 @@ class Process(object):
         try:
             pid = self.pid
             name = repr(self.name())
+        except ZombieProcess:
+            details = "(pid=%s (zombie))" % self.pid
         except NoSuchProcess:
             details = "(pid=%s (terminated))" % self.pid
         except AccessDenied:
@@ -398,8 +431,8 @@ class Process(object):
         only) attributes are assumed.
 
         'ad_value' is the value which gets assigned in case
-        AccessDenied  exception is raised when retrieving that
-        particular process information.
+        AccessDenied or ZombieProcess exception is raised when
+        retrieving that particular process information.
         """
         excluded_names = set(
             ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
@@ -432,7 +465,7 @@ class Process(object):
                     ret = attr()
                 else:
                     ret = attr
-            except AccessDenied:
+            except (AccessDenied, ZombieProcess):
                 ret = ad_value
             except NotImplementedError:
                 # in case of not implemented functionality (may happen
@@ -569,7 +602,10 @@ class Process(object):
 
     def status(self):
         """The process current status as a STATUS_* constant."""
-        return self._proc.status()
+        try:
+            return self._proc.status()
+        except ZombieProcess:
+            return STATUS_ZOMBIE
 
     def username(self):
         """The name of the user that owns the process.
@@ -776,7 +812,7 @@ class Process(object):
                             # (self) it means child's PID has been reused
                             if self.create_time() <= p.create_time():
                                 ret.append(p)
-                    except NoSuchProcess:
+                    except (NoSuchProcess, ZombieProcess):
                         pass
             else:
                 # Windows only (faster)
@@ -788,7 +824,7 @@ class Process(object):
                             # (self) it means child's PID has been reused
                             if self.create_time() <= child.create_time():
                                 ret.append(child)
-                        except NoSuchProcess:
+                        except (NoSuchProcess, ZombieProcess):
                             pass
         else:
             # construct a dict where 'values' are all the processes
@@ -798,14 +834,14 @@ class Process(object):
                 for p in process_iter():
                     try:
                         table[p.ppid()].append(p)
-                    except NoSuchProcess:
+                    except (NoSuchProcess, ZombieProcess):
                         pass
             else:
                 for pid, ppid in ppid_map.items():
                     try:
                         p = Process(pid)
                         table[ppid].append(p)
-                    except NoSuchProcess:
+                    except (NoSuchProcess, ZombieProcess):
                         pass
             # At this point we have a mapping table where table[self.pid]
             # are the current process' children.
@@ -818,7 +854,7 @@ class Process(object):
                         # if child happens to be older than its parent
                         # (self) it means child's PID has been reused
                         intime = self.create_time() <= child.create_time()
-                    except NoSuchProcess:
+                    except (NoSuchProcess, ZombieProcess):
                         pass
                     else:
                         if intime:
