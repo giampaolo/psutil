@@ -1164,7 +1164,7 @@ class TestProcess(unittest.TestCase):
         # test wait() against processes which are not our children
         code = "import sys;"
         code += "from subprocess import Popen, PIPE;"
-        code += "cmd = ['%s', '-c', 'import time; time.sleep(2)'];" % PYTHON
+        code += "cmd = ['%s', '-c', 'import time; time.sleep(60)'];" % PYTHON
         code += "sp = Popen(cmd, stdout=PIPE);"
         code += "sys.stdout.write(str(sp.pid));"
         sproc = get_test_subprocess([PYTHON, "-c", code],
@@ -1507,7 +1507,7 @@ class TestProcess(unittest.TestCase):
                 self.assertEqual(exe.replace(ver, ''), PYTHON.replace(ver, ''))
 
     def test_cmdline(self):
-        cmdline = [PYTHON, "-c", "import time; time.sleep(2)"]
+        cmdline = [PYTHON, "-c", "import time; time.sleep(60)"]
         sproc = get_test_subprocess(cmdline, wait=True)
         self.assertEqual(' '.join(psutil.Process(sproc.pid).cmdline()),
                          ' '.join(cmdline))
@@ -1604,7 +1604,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(p.cwd(), os.getcwd())
 
     def test_cwd_2(self):
-        cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(2)"]
+        cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(60)"]
         sproc = get_test_subprocess(cmd, wait=True)
         p = psutil.Process(sproc.pid)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
@@ -1732,7 +1732,7 @@ class TestProcess(unittest.TestCase):
               "s.bind(('127.0.0.1', 0));" \
               "s.listen(1);" \
               "conn, addr = s.accept();" \
-              "time.sleep(2);"
+              "time.sleep(60);"
         sproc = get_test_subprocess([PYTHON, "-c", arg])
         p = psutil.Process(sproc.pid)
         cons = call_until(p.connections, "len(ret) != 0")
@@ -1822,7 +1822,7 @@ class TestProcess(unittest.TestCase):
             import socket, time
             s = socket.socket($family, socket.SOCK_DGRAM)
             s.bind(('$addr', 0))
-            time.sleep(2)
+            time.sleep(60)
         """)
 
         from string import Template
@@ -1940,9 +1940,9 @@ class TestProcess(unittest.TestCase):
         # A (parent) -> B (child) -> C (grandchild)
         s = "import subprocess, os, sys, time;"
         s += "PYTHON = os.path.realpath(sys.executable);"
-        s += "cmd = [PYTHON, '-c', 'import time; time.sleep(4);'];"
+        s += "cmd = [PYTHON, '-c', 'import time; time.sleep(60);'];"
         s += "subprocess.Popen(cmd);"
-        s += "time.sleep(4);"
+        s += "time.sleep(60);"
         get_test_subprocess(cmd=[PYTHON, "-c", s])
         p = psutil.Process()
         self.assertEqual(len(p.children(recursive=False)), 1)
@@ -2187,7 +2187,7 @@ class TestProcess(unittest.TestCase):
         # XXX this test causes a ResourceWarning on Python 3 because
         # psutil.__subproc instance doesn't get propertly freed.
         # Not sure what to do though.
-        cmd = [PYTHON, "-c", "import time; time.sleep(2);"]
+        cmd = [PYTHON, "-c", "import time; time.sleep(60);"]
         proc = psutil.Popen(cmd, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
         try:
