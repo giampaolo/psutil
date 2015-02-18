@@ -1857,6 +1857,8 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
 
 
     for (;;) {
+        int lport, rport, pid, status, family;
+
         xig = (struct xinpgen *)(void *)((char *)xig + xig->xig_len);
         if (xig >= exig)
             break;
@@ -1871,6 +1873,7 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
                 }
                 inp = &xtp->xt_inp;
                 so = &xtp->xt_socket;
+                status = xtp->xt_tp.t_state;
                 break;
             case IPPROTO_UDP:
                 xip = (struct xinpcb *)xig;
@@ -1881,6 +1884,7 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
                 }
                 inp = &xip->xi_inp;
                 so = &xip->xi_socket;
+                status = PSUTIL_CONN_NONE;
                 break;
             default:
                 PyErr_Format(PyExc_RuntimeError, "invalid proto");
@@ -1888,8 +1892,6 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
         }
 
         char lip[200], rip[200];
-        int family = NULL;
-        int lport, rport, pid, status;
 
         hash = (int)((uintptr_t)so->xso_so % HASHSIZE);
         pid = psutil_get_pid_from_sock(hash);
@@ -1897,7 +1899,6 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
             continue;
         lport = ntohs(inp->inp_lport);
         rport = ntohs(inp->inp_fport);
-        status = xtp->xt_tp.t_state;
 
         if (inp->inp_vflag & INP_IPV4) {
             family = AF_INET;

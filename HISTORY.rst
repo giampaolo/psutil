@@ -21,6 +21,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 - #428: [all UNIXes except Linux] correct handling of zombie processes;
   introduced new ZombieProcess exception class.
+- #512: [BSD] fix segfault in net_connections().
 - #555: [Linux] psutil.users() correctly handles ":0" as an alias for
   "localhost"
 - #579: [Windows] Fixed open_files() for PID>64K.
