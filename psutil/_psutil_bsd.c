@@ -769,7 +769,10 @@ psutil_cpu_times(PyObject *self, PyObject *args)
 
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 /*
- * Return files opened by process as a list of (path, fd) tuples
+ * Return files opened by process as a list of (path, fd) tuples.
+ * TODO: this is broken as it may report empty paths. 'procstat'
+ * utility has the same problem see:
+ * https://github.com/giampaolo/psutil/issues/595
  */
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args)
