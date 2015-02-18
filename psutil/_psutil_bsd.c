@@ -1796,6 +1796,9 @@ psutil_get_pid_from_sock(int sock_hash)
 }
 
 
+// Reference:
+// https://gitorious.org/freebsd/freebsd/source/
+//     f1d6f4778d2044502209708bc167c05f9aa48615:usr.bin/sockstat/sockstat.c
 int psutil_gather_inet(int proto, PyObject *py_retlist)
 {
     struct xinpgen *xig, *exig;
@@ -1866,6 +1869,8 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
                                  "struct xtcpcb size mismatch");
                     goto error;
                 }
+                inp = &xtp->xt_inp;
+                so = &xtp->xt_socket;
                 break;
             case IPPROTO_UDP:
                 xip = (struct xinpcb *)xig;
@@ -1877,10 +1882,11 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
                 inp = &xip->xi_inp;
                 so = &xip->xi_socket;
                 break;
+            default:
+                PyErr_Format(PyExc_RuntimeError, "invalid proto");
+                goto error;
         }
 
-        inp = &xtp->xt_inp;
-        so = &xtp->xt_socket;
         char lip[200], rip[200];
         int family = NULL;
         int lport, rport, pid, status;
@@ -1923,7 +1929,7 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
         if (PyList_Append(py_retlist, tuple))
             goto error;
         Py_DECREF(tuple);
-  }
+    }
 
     free(buf);
     return 1;
