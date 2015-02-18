@@ -1727,34 +1727,30 @@ class TestProcess(unittest.TestCase):
             psutil.CONN_DELETE_TCB
 
     def test_connections(self):
-        arg = "import socket, time;" \
-              "s = socket.socket();" \
-              "s.bind(('127.0.0.1', 0));" \
-              "s.listen(1);" \
-              "conn, addr = s.accept();" \
-              "time.sleep(60);"
-        sproc = get_test_subprocess([PYTHON, "-c", arg])
-        p = psutil.Process(sproc.pid)
-        cons = call_until(p.connections, "len(ret) != 0")
-        self.assertEqual(len(cons), 1)
-        con = cons[0]
-        check_connection_ntuple(con)
-        self.assertEqual(con.family, AF_INET)
-        self.assertEqual(con.type, SOCK_STREAM)
-        self.assertEqual(con.status, psutil.CONN_LISTEN, con.status)
-        self.assertEqual(con.laddr[0], '127.0.0.1')
-        self.assertEqual(con.raddr, ())
-        # test positions
-        self.assertEqual(con[0], con.fd)
-        self.assertEqual(con[1], con.family)
-        self.assertEqual(con[2], con.type)
-        self.assertEqual(con[3], con.laddr)
-        self.assertEqual(con[4], con.raddr)
-        self.assertEqual(con[5], con.status)
-        # test kind arg
-        self.assertRaises(ValueError, p.connections, 'foo')
-        # compare against system-wide connections
-        self.compare_proc_sys_cons(p.pid, cons)
+        with contextlib.closing(socket.socket()) as s:
+            s.bind(('127.0.0.1', 0))
+            s.listen(1)
+            p = psutil.Process()
+            cons = call_until(p.connections, "len(ret) != 0")
+            self.assertEqual(len(cons), 1)
+            con = cons[0]
+            check_connection_ntuple(con)
+            self.assertEqual(con.family, AF_INET)
+            self.assertEqual(con.type, SOCK_STREAM)
+            self.assertEqual(con.status, psutil.CONN_LISTEN, con.status)
+            self.assertEqual(con.laddr, s.getsockname())
+            self.assertEqual(con.raddr, ())
+            # test positions
+            self.assertEqual(con[0], con.fd)
+            self.assertEqual(con[1], con.family)
+            self.assertEqual(con[2], con.type)
+            self.assertEqual(con[3], con.laddr)
+            self.assertEqual(con[4], con.raddr)
+            self.assertEqual(con[5], con.status)
+            # test kind arg
+            self.assertRaises(ValueError, p.connections, 'foo')
+            # compare against system-wide connections
+            self.compare_proc_sys_cons(p.pid, cons)
 
     @unittest.skipUnless(supports_ipv6(), 'IPv6 is not supported')
     def test_connections_ipv6(self):
