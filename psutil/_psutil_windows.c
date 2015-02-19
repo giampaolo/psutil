@@ -2479,22 +2479,22 @@ error:
 static char *psutil_get_drive_type(int type)
 {
     switch (type) {
-    case DRIVE_FIXED:
-        return "fixed";
-    case DRIVE_CDROM:
-        return "cdrom";
-    case DRIVE_REMOVABLE:
-        return "removable";
-    case DRIVE_UNKNOWN:
-        return "unknown";
-    case DRIVE_NO_ROOT_DIR:
-        return "unmounted";
-    case DRIVE_REMOTE:
-        return "remote";
-    case DRIVE_RAMDISK:
-        return "ramdisk";
-    default:
-        return "?";
+        case DRIVE_FIXED:
+            return "fixed";
+        case DRIVE_CDROM:
+            return "cdrom";
+        case DRIVE_REMOVABLE:
+            return "removable";
+        case DRIVE_UNKNOWN:
+            return "unknown";
+        case DRIVE_NO_ROOT_DIR:
+            return "unmounted";
+        case DRIVE_REMOTE:
+            return "remote";
+        case DRIVE_RAMDISK:
+            return "ramdisk";
+        default:
+            return "?";
     }
 }
 
@@ -2869,24 +2869,24 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args)
 static char *get_region_protection_string(ULONG protection)
 {
     switch (protection & 0xff) {
-    case PAGE_NOACCESS:
-        return "";
-    case PAGE_READONLY:
-        return "r";
-    case PAGE_READWRITE:
-        return "rw";
-    case PAGE_WRITECOPY:
-        return "wc";
-    case PAGE_EXECUTE:
-        return "x";
-    case PAGE_EXECUTE_READ:
-        return "xr";
-    case PAGE_EXECUTE_READWRITE:
-        return "xrw";
-    case PAGE_EXECUTE_WRITECOPY:
-        return "xwc";
-    default:
-        return "?";
+        case PAGE_NOACCESS:
+            return "";
+        case PAGE_READONLY:
+            return "r";
+        case PAGE_READWRITE:
+            return "rw";
+        case PAGE_WRITECOPY:
+            return "wc";
+        case PAGE_EXECUTE:
+            return "x";
+        case PAGE_EXECUTE_READ:
+            return "xr";
+        case PAGE_EXECUTE_READWRITE:
+            return "xrw";
+        case PAGE_EXECUTE_WRITECOPY:
+            return "xwc";
+        default:
+            return "?";
     }
 }
 

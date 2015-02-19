@@ -1325,36 +1325,36 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args)
 
         if (strlen(kve->kve_path) == 0) {
             switch (kve->kve_type) {
-            case KVME_TYPE_NONE:
-                path = "[none]";
-                break;
-            case KVME_TYPE_DEFAULT:
-                path = "[default]";
-                break;
-            case KVME_TYPE_VNODE:
-                path = "[vnode]";
-                break;
-            case KVME_TYPE_SWAP:
-                path = "[swap]";
-                break;
-            case KVME_TYPE_DEVICE:
-                path = "[device]";
-                break;
-            case KVME_TYPE_PHYS:
-                path = "[phys]";
-                break;
-            case KVME_TYPE_DEAD:
-                path = "[dead]";
-                break;
-            case KVME_TYPE_SG:
-                path = "[sg]";
-                break;
-            case KVME_TYPE_UNKNOWN:
-                path = "[unknown]";
-                break;
-            default:
-                path = "[?]";
-                break;
+                case KVME_TYPE_NONE:
+                    path = "[none]";
+                    break;
+                case KVME_TYPE_DEFAULT:
+                    path = "[default]";
+                    break;
+                case KVME_TYPE_VNODE:
+                    path = "[vnode]";
+                    break;
+                case KVME_TYPE_SWAP:
+                    path = "[swap]";
+                    break;
+                case KVME_TYPE_DEVICE:
+                    path = "[device]";
+                    break;
+                case KVME_TYPE_PHYS:
+                    path = "[phys]";
+                    break;
+                case KVME_TYPE_DEAD:
+                    path = "[dead]";
+                    break;
+                case KVME_TYPE_SG:
+                    path = "[sg]";
+                    break;
+                case KVME_TYPE_UNKNOWN:
+                    path = "[unknown]";
+                    break;
+                default:
+                    path = "[?]";
+                    break;
             }
         }
         else {
@@ -1812,14 +1812,14 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
     PyObject *raddr = NULL;
 
     switch (proto) {
-    case IPPROTO_TCP:
-        varname = "net.inet.tcp.pcblist";
-        type = SOCK_STREAM;
-        break;
-    case IPPROTO_UDP:
-        varname = "net.inet.udp.pcblist";
-        type = SOCK_DGRAM;
-        break;
+        case IPPROTO_TCP:
+            varname = "net.inet.tcp.pcblist";
+            type = SOCK_STREAM;
+            break;
+        case IPPROTO_UDP:
+            varname = "net.inet.udp.pcblist";
+            type = SOCK_DGRAM;
+            break;
     }
 
     buf = NULL;
@@ -1856,22 +1856,24 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
             break;
 
         switch (proto) {
-        case IPPROTO_TCP:
-            xtp = (struct xtcpcb *)xig;
-            if (xtp->xt_len != sizeof *xtp) {
-                PyErr_Format(PyExc_RuntimeError, "struct xtcpcb size mismatch");
-                goto error;
-            }
-            break;
-        case IPPROTO_UDP:
-            xip = (struct xinpcb *)xig;
-            if (xip->xi_len != sizeof *xip) {
-                PyErr_Format(PyExc_RuntimeError, "struct xinpcb size mismatch");
-                goto error;
-            }
-            inp = &xip->xi_inp;
-            so = &xip->xi_socket;
-            break;
+            case IPPROTO_TCP:
+                xtp = (struct xtcpcb *)xig;
+                if (xtp->xt_len != sizeof *xtp) {
+                    PyErr_Format(PyExc_RuntimeError,
+                                 "struct xtcpcb size mismatch");
+                    goto error;
+                }
+                break;
+            case IPPROTO_UDP:
+                xip = (struct xinpcb *)xig;
+                if (xip->xi_len != sizeof *xip) {
+                    PyErr_Format(PyExc_RuntimeError,
+                                 "struct xinpcb size mismatch");
+                    goto error;
+                }
+                inp = &xip->xi_inp;
+                so = &xip->xi_socket;
+                break;
         }
 
         inp = &xtp->xt_inp;
@@ -1952,14 +1954,14 @@ int psutil_gather_unix(int proto, PyObject *py_retlist)
     PyObject *raddr = NULL;
 
     switch (proto) {
-    case SOCK_STREAM:
-        varname = "net.local.stream.pcblist";
-        protoname = "stream";
-        break;
-    case SOCK_DGRAM:
-        varname = "net.local.dgram.pcblist";
-        protoname = "dgram";
-        break;
+        case SOCK_STREAM:
+            varname = "net.local.stream.pcblist";
+            protoname = "stream";
+            break;
+        case SOCK_DGRAM:
+            varname = "net.local.dgram.pcblist";
+            protoname = "dgram";
+            break;
     }
 
     buf = NULL;

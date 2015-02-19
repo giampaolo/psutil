@@ -2096,9 +2096,10 @@ class TestProcess(unittest.TestCase):
                 self.assertTrue(zproc.is_running())
                 # ...and as_dict() shouldn't crash
                 zproc.as_dict()
-                succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE)
-                succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE,
-                                        (5, 5))
+                if hasattr(zproc, "rlimit"):
+                    succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE)
+                    succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE,
+                                            (5, 5))
                 # set methods
                 succeed_or_zombie_p_exc(zproc.parent)
                 succeed_or_zombie_p_exc(zproc.cpu_affinity, [0])

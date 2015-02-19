@@ -356,32 +356,30 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args)
 
             if (strlen(buf) == 0) {
                 switch (info.share_mode) {
-                /*
-                case SM_LARGE_PAGE:
-                    // Treat SM_LARGE_PAGE the same as SM_PRIVATE
-                    // since they are not shareable and are wired.
-                */
-                case SM_COW:
-                    strcpy(buf, "[cow]");
-                    break;
-                case SM_PRIVATE:
-                    strcpy(buf, "[prv]");
-                    break;
-                case SM_EMPTY:
-                    strcpy(buf, "[nul]");
-                    break;
-                case SM_SHARED:
-                case SM_TRUESHARED:
-                    strcpy(buf, "[shm]");
-                    break;
-                case SM_PRIVATE_ALIASED:
-                    strcpy(buf, "[ali]");
-                    break;
-                case SM_SHARED_ALIASED:
-                    strcpy(buf, "[s/a]");
-                    break;
-                default:
-                    strcpy(buf, "[???]");
+                    // case SM_LARGE_PAGE:
+                        // Treat SM_LARGE_PAGE the same as SM_PRIVATE
+                        // since they are not shareable and are wired.
+                    case SM_COW:
+                        strcpy(buf, "[cow]");
+                        break;
+                    case SM_PRIVATE:
+                        strcpy(buf, "[prv]");
+                        break;
+                    case SM_EMPTY:
+                        strcpy(buf, "[nul]");
+                        break;
+                    case SM_SHARED:
+                    case SM_TRUESHARED:
+                        strcpy(buf, "[shm]");
+                        break;
+                    case SM_PRIVATE_ALIASED:
+                        strcpy(buf, "[ali]");
+                        break;
+                    case SM_SHARED_ALIASED:
+                        strcpy(buf, "[s/a]");
+                        break;
+                    default:
+                        strcpy(buf, "[???]");
                 }
             }
 
