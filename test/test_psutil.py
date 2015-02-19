@@ -755,7 +755,7 @@ class TestSystemAPIs(unittest.TestCase):
                     self.fail(pid)
         pids = range(max(pids) + 5000, max(pids) + 6000)
         for pid in pids:
-            self.assertFalse(psutil.pid_exists(pid))
+            self.assertFalse(psutil.pid_exists(pid), msg=pid)
 
     def test_pids(self):
         plist = [x.pid for x in psutil.process_iter()]
@@ -2752,7 +2752,7 @@ class TestExampleScripts(unittest.TestCase):
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
-    @skipIf(TRAVIS, "permission denied on travis")
+    @unittest.skipIf(TRAVIS, "permission denied on travis")
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
