@@ -1805,7 +1805,7 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
     void *buf;
     int hash;
     int retry;
-    int type = NULL;
+    int type;
 
     PyObject *tuple = NULL;
     PyObject *laddr = NULL;

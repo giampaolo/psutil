@@ -10,6 +10,7 @@ import errno
 import functools
 import os
 import sys
+import xml.etree.ElementTree as ET
 from collections import namedtuple
 
 from . import _common
@@ -135,19 +136,21 @@ def cpu_count_physical():
     # We may get None in case "sysctl kern.sched.topology_spec"
     # is not supported on this BSD version, in which case we'll mimic
     # os.cpu_count() and return None.
+    ret = None
     s = cext.cpu_count_phys()
     if s is not None:
         # get rid of padding chars appended at the end of the string
         index = s.rfind("</groups>")
         if index != -1:
             s = s[:index + 9]
-            if sys.version_info >= (2, 5):
-                import xml.etree.ElementTree as ET
-                root = ET.fromstring(s)
-                return len(root.findall('group/children/group/cpu')) or None
-            else:
-                s = s[s.find('<children>'):]
-                return s.count("<cpu") or None
+            root = ET.fromstring(s)
+            ret = len(root.findall('group/children/group/cpu')) or None
+    if not ret:
+        # If logical CPUs are 1 it's obvious we'll have only 1
+        # physical CPU.
+        if cpu_count_logical() == 1:
+            return 1
+    return ret
 
 
 def boot_time():
