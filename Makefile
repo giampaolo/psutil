@@ -16,6 +16,7 @@ clean:
 	rm -f `find . -type f -name \*.bak`
 	rm -f `find . -type f -name \*.rej`
 	rm -rf `find . -type d -name __pycache__`
+	rm -rf *.core
 	rm -rf *.egg-info
 	rm -rf *\$testfile*
 	rm -rf .tox

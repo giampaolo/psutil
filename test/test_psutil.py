@@ -2752,6 +2752,7 @@ class TestExampleScripts(unittest.TestCase):
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
+    @skipIf(TRAVIS, "permission denied on travis")
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 

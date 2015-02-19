@@ -593,15 +593,14 @@ Exceptions
 
 .. class:: ZombieProcess(pid, name=None, msg=None)
 
-   Raised by :class:`Process` class methods when querying a zombie process.
-   This is raised on OSX, BSD and Solaris only, and not always: depending
-   on the query the OS may be able to succeed in retrieving the process
-   information anyway.
-   On Linux all zombie processes are querable (hence this is never raised).
-   Windows doesn't have zombie processes. Note: this is a subclass of
-   :class:`NoSuchProcess` so if you're not interested in retrieving zombies
-   while iterating over all processes (e.g. via :func:`process_iter()`) you
-   can ignore this exception and just catch :class:`NoSuchProcess`.
+   This may be raised by :class:`Process` class methods when querying a zombie
+   process on UNIX (Windows doesn't have zombie processes). Depending on the
+   method called the OS may be able to succeed in retrieving the process
+   information or not.
+   Note: this is a subclass of :class:`NoSuchProcess` so if you're not
+   interested in retrieving zombies while iterating over all processes (e.g.
+   via :func:`process_iter()`) you can ignore this exception and just catch
+   :class:`NoSuchProcess`.
 
    *New in 3.0.0*
 

@@ -669,7 +669,7 @@ disk_usage = _psposix.disk_usage
 
 # --- decorators
 
-def wrap_exceptions(fun):
+def wrap_exceptions(fun, catch_zombie=False):
     """Decorator which translates bare OSError and IOError exceptions
     into NoSuchProcess and AccessDenied.
     """
@@ -685,7 +685,13 @@ def wrap_exceptions(fun):
             # ESRCH (no such process) can get raised on read() if
             # process is gone in meantime.
             if err.errno in (errno.ENOENT, errno.ESRCH):
-                raise NoSuchProcess(self.pid, self._name)
+                if not catch_zombie:
+                    raise NoSuchProcess(self.pid, self._name)
+                else:
+                    if not pid_exists(self.pid):
+                        raise NoSuchProcess(self.pid, self._name)
+                    else:
+                        raise ZombieProcess(self.pid, self._name)
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
             raise
@@ -720,8 +726,10 @@ class Process(object):
                 if os.path.lexists("/proc/%s" % self.pid):
                     return ""
                 else:
-                    # ok, it is a process which has gone away
-                    raise NoSuchProcess(self.pid, self._name)
+                    if not pid_exists(self.pid):
+                        raise NoSuchProcess(self.pid, self._name)
+                    else:
+                        raise ZombieProcess(self.pid, self._name)
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
             raise
@@ -906,7 +914,7 @@ class Process(object):
                   % self.pid
             raise NotImplementedError(msg)
 
-    @wrap_exceptions
+    @wrap_exceptions(catch_zombie=True)
     def cwd(self):
         # readlink() might return paths containing null bytes causing
         # problems when used with other fs-related functions (os.*,
