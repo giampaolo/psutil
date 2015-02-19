@@ -2124,6 +2124,9 @@ class TestProcess(unittest.TestCase):
                     meth(signal.SIGTERM)
                 else:
                     meth()
+            except psutil.ZombieProcess:
+                self.fail("ZombieProcess for %r was not supposed to happen" %
+                          name)
             except psutil.NoSuchProcess:
                 pass
             except NotImplementedError:
