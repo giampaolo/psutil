@@ -107,8 +107,7 @@ def run(pid):
         print_('gids', 'real=%s, effective=%s, saved=%s' % pinfo['gids'])
     if POSIX:
         print_('terminal', pinfo['terminal'] or '')
-    if hasattr(p, 'getcwd'):
-        print_('cwd', pinfo['cwd'])
+    print_('cwd', pinfo['cwd'])
     print_('memory', mem)
     print_('cpu', '%s%% (user=%s, system=%s)' % (
         pinfo['cpu_percent'],

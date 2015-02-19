@@ -15,6 +15,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #587: Move native extension into the package.
 - #589: Process.cpu_affinity() accepts any kind of iterable (set, tuple, ...),
   not only lists.
+- #594: all deprecated APIs were removed.
 
 **Bug fixes**
 

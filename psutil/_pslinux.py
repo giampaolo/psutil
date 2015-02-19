@@ -23,7 +23,7 @@ from . import _common
 from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
-from ._common import isfile_strict, usage_percent, deprecated
+from ._common import isfile_strict, usage_percent
 from ._common import NIC_DUPLEX_FULL, NIC_DUPLEX_HALF, NIC_DUPLEX_UNKNOWN
 from ._compat import PY3
 
@@ -213,16 +213,6 @@ def swap_memory():
             warnings.warn(msg, RuntimeWarning)
             sin = sout = 0
     return _common.sswap(total, used, free, percent, sin, sout)
-
-
-@deprecated(replacement='psutil.virtual_memory().cached')
-def cached_phymem():
-    return virtual_memory().cached
-
-
-@deprecated(replacement='psutil.virtual_memory().buffers')
-def phymem_buffers():
-    return virtual_memory().buffers
 
 
 # --- CPUs

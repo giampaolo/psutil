@@ -9,7 +9,6 @@
 import errno
 import functools
 import os
-import sys
 import xml.etree.ElementTree as ET
 from collections import namedtuple
 

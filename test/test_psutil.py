@@ -614,92 +614,6 @@ class TestSystemAPIs(unittest.TestCase):
         import resource
         self.assertEqual(os.sysconf("SC_PAGE_SIZE"), resource.getpagesize())
 
-    def test_deprecated_apis(self):
-        with warnings.catch_warnings():
-            warnings.filterwarnings("error")
-            p = psutil.Process()
-            # system APIs
-            self.assertRaises(DeprecationWarning, getattr, psutil, 'NUM_CPUS')
-            self.assertRaises(DeprecationWarning, getattr, psutil, 'BOOT_TIME')
-            self.assertRaises(DeprecationWarning, getattr, psutil,
-                              'TOTAL_PHYMEM')
-            self.assertRaises(DeprecationWarning, psutil.get_pid_list)
-            self.assertRaises(DeprecationWarning, psutil.get_users)
-            self.assertRaises(DeprecationWarning, psutil.virtmem_usage)
-            self.assertRaises(DeprecationWarning, psutil.used_phymem)
-            self.assertRaises(DeprecationWarning, psutil.avail_phymem)
-            self.assertRaises(DeprecationWarning, psutil.total_virtmem)
-            self.assertRaises(DeprecationWarning, psutil.used_virtmem)
-            self.assertRaises(DeprecationWarning, psutil.avail_virtmem)
-            self.assertRaises(DeprecationWarning, psutil.phymem_usage)
-            self.assertRaises(DeprecationWarning, psutil.get_process_list)
-            self.assertRaises(DeprecationWarning, psutil.network_io_counters)
-            if LINUX:
-                self.assertRaises(DeprecationWarning, psutil.phymem_buffers)
-                self.assertRaises(DeprecationWarning, psutil.cached_phymem)
-
-            # Process class
-            names = dir(psutil.Process)
-            self.assertRaises(DeprecationWarning, p.get_children)
-            self.assertRaises(DeprecationWarning, p.get_connections)
-            if 'cpu_affinity' in names:
-                self.assertRaises(DeprecationWarning, p.get_cpu_affinity)
-            self.assertRaises(DeprecationWarning, p.get_cpu_percent)
-            self.assertRaises(DeprecationWarning, p.get_cpu_times)
-            self.assertRaises(DeprecationWarning, p.getcwd)
-            self.assertRaises(DeprecationWarning, p.get_ext_memory_info)
-            if 'io_counters' in names:
-                self.assertRaises(DeprecationWarning, p.get_io_counters)
-            if 'ionice' in names:
-                self.assertRaises(DeprecationWarning, p.get_ionice)
-            self.assertRaises(DeprecationWarning, p.get_memory_info)
-            self.assertRaises(DeprecationWarning, p.get_memory_maps)
-            self.assertRaises(DeprecationWarning, p.get_memory_percent)
-            self.assertRaises(DeprecationWarning, p.get_nice)
-            self.assertRaises(DeprecationWarning, p.get_num_ctx_switches)
-            if 'num_fds' in names:
-                self.assertRaises(DeprecationWarning, p.get_num_fds)
-            if 'num_handles' in names:
-                self.assertRaises(DeprecationWarning, p.get_num_handles)
-            self.assertRaises(DeprecationWarning, p.get_num_threads)
-            self.assertRaises(DeprecationWarning, p.get_open_files)
-            if 'rlimit' in names:
-                self.assertRaises(DeprecationWarning, p.get_rlimit)
-            self.assertRaises(DeprecationWarning, p.get_threads)
-            # ...just to be extra sure:
-            for name in names:
-                if name.startswith('get'):
-                    meth = getattr(p, name)
-                    try:
-                        self.assertRaises(DeprecationWarning, meth)
-                    except AssertionError:
-                        self.fail("%s did not raise DeprecationWarning" % name)
-
-            # named tuples
-            with contextlib.closing(socket.socket()) as s:
-                s.bind(('localhost', 0))
-                s.listen(1)
-                ret = call_until(p.connections, "len(ret) != 0")
-                self.assertRaises(DeprecationWarning,
-                                  getattr, ret[0], 'local_address')
-                self.assertRaises(DeprecationWarning,
-                                  getattr, ret[0], 'remote_address')
-
-        # check value against new APIs
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore")
-            self.assertEqual(psutil.get_pid_list(), psutil.pids())
-            self.assertEqual(psutil.NUM_CPUS, psutil.cpu_count())
-            self.assertEqual(psutil.BOOT_TIME, psutil.boot_time())
-            self.assertEqual(psutil.TOTAL_PHYMEM,
-                             psutil.virtual_memory().total)
-
-    def test_deprecated_apis_retval(self):
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore")
-            self.assertEqual(psutil.total_virtmem(),
-                             psutil.swap_memory().total)
-
     def test_virtual_memory(self):
         mem = psutil.virtual_memory()
         assert mem.total > 0, mem
@@ -2099,8 +2013,6 @@ class TestProcess(unittest.TestCase):
             excluded_names.append('rlimit')
         for name in dir(p):
             if (name.startswith('_') or
-                    name.startswith('get') or  # deprecated APIs
-                    name.startswith('set') or  # deprecated APIs
                     name in excluded_names):
                 continue
             try:
@@ -2141,7 +2053,7 @@ class TestProcess(unittest.TestCase):
         def succeed_or_zombie_p_exc(fun, *args, **kwargs):
             try:
                 fun(*args, **kwargs)
-            except psutil.ZombieProcess:
+            except (psutil.ZombieProcess, psutil.AccessDenied):
                 pass
 
         # Note: in this test we'll be creating two sub processes.
@@ -2310,11 +2222,6 @@ class TestFetchAllProcesses(unittest.TestCase):
         attrs = []
         for name in dir(psutil.Process):
             if name.startswith("_"):
-                continue
-            if name.startswith("get"):
-                # deprecated APIs
-                continue
-            if name.startswith("set_"):
                 continue
             if name in excluded_names:
                 continue

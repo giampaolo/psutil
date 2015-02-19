@@ -20,7 +20,6 @@ import signal
 import subprocess
 import sys
 import time
-import warnings
 try:
     import pwd
 except ImportError:
@@ -30,8 +29,6 @@ from . import _common
 from ._common import memoize
 from ._compat import callable, long
 from ._compat import PY3 as _PY3
-from ._common import (deprecated_method as _deprecated_method,
-                      deprecated as _deprecated,)
 
 from ._common import (STATUS_RUNNING,  # NOQA
                       STATUS_SLEEPING,
@@ -64,8 +61,6 @@ from ._common import (NIC_DUPLEX_FULL,  # NOQA
 
 if sys.platform.startswith("linux"):
     from . import _pslinux as _psplatform
-    from ._pslinux import (phymem_buffers,  # NOQA
-                           cached_phymem)
 
     from ._pslinux import (IOPRIO_CLASS_NONE,  # NOQA
                            IOPRIO_CLASS_RT,
@@ -438,25 +433,10 @@ class Process(object):
             ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
              'is_running', 'as_dict', 'parent', 'children', 'rlimit'])
         retdict = dict()
-        ls = set(attrs or [x for x in dir(self) if not x.startswith('get')])
+        ls = set(attrs or [x for x in dir(self)])
         for name in ls:
             if name.startswith('_'):
                 continue
-            if name.startswith('set_'):
-                continue
-            if name.startswith('get_'):
-                msg = "%s() is deprecated; use %s() instead" % (name, name[4:])
-                warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-                name = name[4:]
-                if name in ls:
-                    continue
-            if name == 'getcwd':
-                msg = "getcwd() is deprecated; use cwd() instead"
-                warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-                name = 'cwd'
-                if name in ls:
-                    continue
-
             if name in excluded_names:
                 continue
             try:
@@ -1115,114 +1095,6 @@ class Process(object):
         if timeout is not None and not timeout >= 0:
             raise ValueError("timeout must be a positive integer")
         return self._proc.wait(timeout)
-
-    # --- deprecated APIs
-
-    _locals = set(locals())
-
-    @_deprecated_method(replacement='children')
-    def get_children(self):
-        pass
-
-    @_deprecated_method(replacement='connections')
-    def get_connections(self):
-        pass
-
-    if "cpu_affinity" in _locals:
-        @_deprecated_method(replacement='cpu_affinity')
-        def get_cpu_affinity(self):
-            pass
-
-        @_deprecated_method(replacement='cpu_affinity')
-        def set_cpu_affinity(self, cpus):
-            pass
-
-    @_deprecated_method(replacement='cpu_percent')
-    def get_cpu_percent(self):
-        pass
-
-    @_deprecated_method(replacement='cpu_times')
-    def get_cpu_times(self):
-        pass
-
-    @_deprecated_method(replacement='cwd')
-    def getcwd(self):
-        pass
-
-    @_deprecated_method(replacement='memory_info_ex')
-    def get_ext_memory_info(self):
-        pass
-
-    if "io_counters" in _locals:
-        @_deprecated_method(replacement='io_counters')
-        def get_io_counters(self):
-            pass
-
-    if "ionice" in _locals:
-        @_deprecated_method(replacement='ionice')
-        def get_ionice(self):
-            pass
-
-        @_deprecated_method(replacement='ionice')
-        def set_ionice(self, ioclass, value=None):
-            pass
-
-    @_deprecated_method(replacement='memory_info')
-    def get_memory_info(self):
-        pass
-
-    @_deprecated_method(replacement='memory_maps')
-    def get_memory_maps(self):
-        pass
-
-    @_deprecated_method(replacement='memory_percent')
-    def get_memory_percent(self):
-        pass
-
-    @_deprecated_method(replacement='nice')
-    def get_nice(self):
-        pass
-
-    @_deprecated_method(replacement='num_ctx_switches')
-    def get_num_ctx_switches(self):
-        pass
-
-    if 'num_fds' in _locals:
-        @_deprecated_method(replacement='num_fds')
-        def get_num_fds(self):
-            pass
-
-    if 'num_handles' in _locals:
-        @_deprecated_method(replacement='num_handles')
-        def get_num_handles(self):
-            pass
-
-    @_deprecated_method(replacement='num_threads')
-    def get_num_threads(self):
-        pass
-
-    @_deprecated_method(replacement='open_files')
-    def get_open_files(self):
-        pass
-
-    if "rlimit" in _locals:
-        @_deprecated_method(replacement='rlimit')
-        def get_rlimit(self):
-            pass
-
-        @_deprecated_method(replacement='rlimit')
-        def set_rlimit(self, resource, limits):
-            pass
-
-    @_deprecated_method(replacement='threads')
-    def get_threads(self):
-        pass
-
-    @_deprecated_method(replacement='nice')
-    def set_nice(self, value):
-        pass
-
-    del _locals
 
 
 # =====================================================================
@@ -1944,69 +1816,6 @@ def users():
     return _psplatform.users()
 
 
-# =====================================================================
-# --- deprecated functions
-# =====================================================================
-
-@_deprecated(replacement="psutil.pids()")
-def get_pid_list():
-    return pids()
-
-
-@_deprecated(replacement="list(process_iter())")
-def get_process_list():
-    return list(process_iter())
-
-
-@_deprecated(replacement="psutil.users()")
-def get_users():
-    return users()
-
-
-@_deprecated(replacement="psutil.virtual_memory()")
-def phymem_usage():
-    """Return the amount of total, used and free physical memory
-    on the system in bytes plus the percentage usage.
-    Deprecated; use psutil.virtual_memory() instead.
-    """
-    return virtual_memory()
-
-
-@_deprecated(replacement="psutil.swap_memory()")
-def virtmem_usage():
-    return swap_memory()
-
-
-@_deprecated(replacement="psutil.phymem_usage().free")
-def avail_phymem():
-    return phymem_usage().free
-
-
-@_deprecated(replacement="psutil.phymem_usage().used")
-def used_phymem():
-    return phymem_usage().used
-
-
-@_deprecated(replacement="psutil.virtmem_usage().total")
-def total_virtmem():
-    return virtmem_usage().total
-
-
-@_deprecated(replacement="psutil.virtmem_usage().used")
-def used_virtmem():
-    return virtmem_usage().used
-
-
-@_deprecated(replacement="psutil.virtmem_usage().free")
-def avail_virtmem():
-    return virtmem_usage().free
-
-
-@_deprecated(replacement="psutil.net_io_counters()")
-def network_io_counters(pernic=False):
-    return net_io_counters(pernic)
-
-
 def test():
     """List info of all currently running processes emulating ps aux
     output.
@@ -2071,44 +1880,7 @@ def test():
                 pinfo['name'].strip() or '?'))
 
 
-def _replace_module():
-    """Dirty hack to replace the module object in order to access
-    deprecated module constants, see:
-    http://www.dr-josiah.com/2013/12/properties-on-python-modules.html
-    """
-    class ModuleWrapper(object):
-
-        def __repr__(self):
-            return repr(self._module)
-        __str__ = __repr__
-
-        @property
-        def NUM_CPUS(self):
-            msg = "NUM_CPUS constant is deprecated; use cpu_count() instead"
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            return cpu_count()
-
-        @property
-        def BOOT_TIME(self):
-            msg = "BOOT_TIME constant is deprecated; use boot_time() instead"
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            return boot_time()
-
-        @property
-        def TOTAL_PHYMEM(self):
-            msg = "TOTAL_PHYMEM constant is deprecated; " \
-                  "use virtual_memory().total instead"
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            return virtual_memory().total
-
-    mod = ModuleWrapper()
-    mod.__dict__ = globals()
-    mod._module = sys.modules[__name__]
-    sys.modules[__name__] = mod
-
-
-_replace_module()
-del memoize, division, _replace_module
+del memoize, division
 if sys.version_info < (3, 0):
     del num
 
