@@ -1893,6 +1893,13 @@ def net_if_addrs():
             except ValueError:
                 if os.name == 'nt' and fam == -1:
                     fam = _psplatform.AF_LINK
+            else:
+                if (hasattr(_psplatform, "AF_LINK") and
+                        _psplatform.AF_LINK == fam):
+                    # Linux defines AF_LINK as an alias for AF_PACKET.
+                    # We re-set the family here so that repr(family)
+                    # will show AF_LINK rather than AF_PACKET
+                    fam = _psplatform.AF_LINK
         ret[name].append(_common.snic(fam, addr, mask, broadcast))
     return dict(ret)
 

@@ -60,7 +60,12 @@ CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 BOOT_TIME = None  # set later
 DEFAULT_ENCODING = sys.getdefaultencoding()
-AF_LINK = socket.AF_PACKET
+if enum is None:
+    AF_LINK = socket.AF_PACKET
+else:
+    AddressFamily = enum.IntEnum('AddressFamily',
+                                 {'AF_LINK': socket.AF_PACKET})
+    AF_LINK = AddressFamily.AF_LINK
 
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
 if enum is None:
