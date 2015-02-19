@@ -2138,6 +2138,12 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_zombie_process(self):
+        def succeed_or_zombie_p_exc(fun, *args, **kwargs):
+            try:
+                fun(*args, **kwargs)
+            except psutil.ZombieProcess:
+                pass
+
         # Note: in this test we'll be creating two sub processes.
         # Both of them are supposed to be freed / killed by
         # reap_children() as they are attributable to 'us'
@@ -2178,6 +2184,25 @@ class TestProcess(unittest.TestCase):
                 self.assertTrue(zproc.is_running())
                 # ...and as_dict() shouldn't crash
                 zproc.as_dict()
+                zproc.rlimit(psutil.RLIMIT_NOFILE)
+                zproc.rlimit(psutil.RLIMIT_NOFILE, (5, 5))
+                # set methods
+                succeed_or_zombie_p_exc(zproc.parent)
+                succeed_or_zombie_p_exc(zproc.cpu_affinity, [0])
+                succeed_or_zombie_p_exc(zproc.nice, 0)
+                if hasattr(zproc, 'ionice'):
+                    if LINUX:
+                        succeed_or_zombie_p_exc(zproc.ionice, 2, 0)
+                    else:
+                        succeed_or_zombie_p_exc(zproc.ionice, 0)  # Windows
+                if hasattr(zproc, 'rlimit'):
+                    succeed_or_zombie_p_exc(zproc.rlimit,
+                                            psutil.RLIMIT_NOFILE, (5, 5))
+                succeed_or_zombie_p_exc(zproc.suspend)
+                succeed_or_zombie_p_exc(zproc.resume)
+                succeed_or_zombie_p_exc(zproc.terminate)
+                succeed_or_zombie_p_exc(zproc.kill)
+
                 # ...its parent should 'see' it
                 # edit: not true on BSD and OSX
                 # descendants = [x.pid for x in psutil.Process().children(
