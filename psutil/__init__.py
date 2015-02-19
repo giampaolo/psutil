@@ -220,13 +220,17 @@ class ZombieProcess(NoSuchProcess):
     raised). Windows doesn't have zombie processes.
     """
 
-    def __init__(self, pid, name=None, msg=None):
+    def __init__(self, pid, name=None, ppid=None, msg=None):
         Error.__init__(self)
         self.pid = pid
+        self.ppid = ppid
         self.name = name
         self.msg = msg
         if msg is None:
-            if name:
+            if name and ppid:
+                details = "(pid=%s, name=%s, ppid=%s)" % (
+                    self.pid, repr(self.name), self.ppid)
+            elif name:
                 details = "(pid=%s, name=%s)" % (self.pid, repr(self.name))
             else:
                 details = "(pid=%s)" % self.pid
@@ -509,11 +513,13 @@ class Process(object):
         # XXX should we check creation time here rather than in
         # Process.parent()?
         if _POSIX:
-            return self._proc.ppid()
+            ppid = self._proc.ppid()
         else:
             if self._ppid is None:
-                self._ppid = self._proc.ppid()
-            return self._ppid
+                ppid = self._proc.ppid()
+            self._ppid = ppid
+        self._proc._ppid = ppid
+        return ppid
 
     def name(self):
         """The process name. The return value is cached after first call."""

@@ -697,18 +697,19 @@ def wrap_exceptions_w_zombie(fun):
             if not pid_exists(self.pid):
                 raise
             else:
-                raise ZombieProcess(self.pid, self._name)
+                raise ZombieProcess(self.pid, self._name, self._ppid)
     return wrapper
 
 
 class Process(object):
     """Linux process implementation."""
 
-    __slots__ = ["pid", "_name"]
+    __slots__ = ["pid", "_name", "_ppid"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
+        self._ppid = None
 
     @wrap_exceptions
     def name(self):
@@ -732,7 +733,7 @@ class Process(object):
                     if not pid_exists(self.pid):
                         raise NoSuchProcess(self.pid, self._name)
                     else:
-                        raise ZombieProcess(self.pid, self._name)
+                        raise ZombieProcess(self.pid, self._name, self._ppid)
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
             raise
@@ -1064,7 +1065,7 @@ class Process(object):
                 if err.errno == errno.ENOSYS and pid_exists(self.pid):
                     # I saw this happening on Travis:
                     # https://travis-ci.org/giampaolo/psutil/jobs/51368273
-                    raise ZombieProcess(self.pid, self._name)
+                    raise ZombieProcess(self.pid, self._name, self._ppid)
                 else:
                     raise
 

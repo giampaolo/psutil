@@ -262,7 +262,7 @@ def wrap_exceptions(fun):
                 if not pid_exists(self.pid):
                     raise NoSuchProcess(self.pid, self._name)
                 else:
-                    raise ZombieProcess(self.pid, self._name)
+                    raise ZombieProcess(self.pid, self._name, self._ppid)
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
             raise
@@ -272,11 +272,12 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name"]
+    __slots__ = ["pid", "_name", "_ppid"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
+        self._ppid = None
 
     @wrap_exceptions
     def name(self):

@@ -591,7 +591,7 @@ Exceptions
    exists. "name" is the name the process had before disappearing
    and gets set only if :meth:`Process.name()` was previosly called.
 
-.. class:: ZombieProcess(pid, name=None, msg=None)
+.. class:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
    This may be raised by :class:`Process` class methods when querying a zombie
    process on UNIX (Windows doesn't have zombie processes). Depending on the
