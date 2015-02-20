@@ -257,6 +257,21 @@ def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
             raise RuntimeError("Timed out")
 
 
+def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True):
+    """Wait for a file to be written on disk."""
+    stop_at = time.time() + 3
+    while time.time() < stop_at:
+        try:
+            open(fname, "r")
+        except IOError:
+            time.sleep(0.001)
+        else:
+            if delete_file:
+                os.remove(fname)
+            return
+    raise RuntimeError("timed out (couldn't create file)")
+
+
 def reap_children(search_all=False):
     """Kill any subprocess started by this test suite and ensure that
     no zombies stick around to hog resources and create problems when
@@ -1731,7 +1746,7 @@ class TestProcess(unittest.TestCase):
             s.bind(('127.0.0.1', 0))
             s.listen(1)
             p = psutil.Process()
-            cons = call_until(p.connections, "len(ret) != 0")
+            cons = p.connections()
             self.assertEqual(len(cons), 1)
             con = cons[0]
             check_connection_ntuple(con)
@@ -1807,37 +1822,45 @@ class TestProcess(unittest.TestCase):
 
     def test_connections_all(self):
         tcp_template = textwrap.dedent("""
-            import socket
+            import socket, time
             s = socket.socket($family, socket.SOCK_STREAM)
             s.bind(('$addr', 0))
             s.listen(1)
-            conn, addr = s.accept()
+            with open('$testfn', 'w'):
+                pass
+            time.sleep(60)
         """)
 
         udp_template = textwrap.dedent("""
             import socket, time
             s = socket.socket($family, socket.SOCK_DGRAM)
             s.bind(('$addr', 0))
+            with open('$testfn', 'w'):
+                pass
             time.sleep(60)
         """)
 
         from string import Template
         tcp4_template = Template(tcp_template).substitute(
-            family=int(AF_INET), addr="127.0.0.1")
+            family=int(AF_INET), addr="127.0.0.1", testfn=TESTFN)
         udp4_template = Template(udp_template).substitute(
-            family=int(AF_INET), addr="127.0.0.1")
+            family=int(AF_INET), addr="127.0.0.1", testfn=TESTFN)
         tcp6_template = Template(tcp_template).substitute(
-            family=int(AF_INET6), addr="::1")
+            family=int(AF_INET6), addr="::1", testfn=TESTFN)
         udp6_template = Template(udp_template).substitute(
-            family=int(AF_INET6), addr="::1")
+            family=int(AF_INET6), addr="::1", testfn=TESTFN)
 
         # launch various subprocess instantiating a socket of various
         # families and types to enrich psutil results
         tcp4_proc = pyrun(tcp4_template)
+        wait_for_file(TESTFN)
         udp4_proc = pyrun(udp4_template)
+        wait_for_file(TESTFN)
         if supports_ipv6():
             tcp6_proc = pyrun(tcp6_template)
+            wait_for_file(TESTFN)
             udp6_proc = pyrun(udp6_template)
+            wait_for_file(TESTFN)
         else:
             tcp6_proc = None
             udp6_proc = None
