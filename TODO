@@ -9,8 +9,6 @@ https://github.com/giampaolo/psutil/issues
 HIGHER PRIORITY
 ===============
 
- * #250: net ifaces speed.
-
  * OpenBSD support.
 
  * #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
