@@ -121,6 +121,29 @@ class BSDSpecificTestCase(unittest.TestCase):
             if not map.path.startswith('['):
                 self.assertEqual(fields[10], map.path)
 
+    def test_exe(self):
+        out = sh('procstat -b %s' % self.pid)
+        self.assertEqual(psutil.Process(self.pid).exe(),
+                         out.split('\n')[1].split()[-1])
+
+    def test_cmdline(self):
+        out = sh('procstat -c %s' % self.pid)
+        self.assertEqual(' '.join(psutil.Process(self.pid).cmdline()),
+                         ' '.join(out.split('\n')[1].split()[2:]))
+
+    def test_uids_gids(self):
+        out = sh('procstat -s %s' % self.pid)
+        euid, ruid, suid, egid, rgid, sgid = out.split('\n')[1].split()[2:8]
+        p = psutil.Process(self.pid)
+        uids = p.uids()
+        gids = p.gids()
+        self.assertEqual(uids.real, int(ruid))
+        self.assertEqual(uids.effective, int(euid))
+        self.assertEqual(uids.saved, int(suid))
+        self.assertEqual(gids.real, int(rgid))
+        self.assertEqual(gids.effective, int(egid))
+        self.assertEqual(gids.saved, int(sgid))
+
     # --- virtual_memory(); tests against sysctl
 
     def test_vmem_total(self):
