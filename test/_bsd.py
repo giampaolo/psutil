@@ -8,10 +8,10 @@
 
 """BSD specific tests.  These are implicitly run by test_psutil.py."""
 
-import subprocess
-import time
-import sys
 import os
+import subprocess
+import sys
+import time
 
 import psutil
 

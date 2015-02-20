@@ -446,7 +446,7 @@ def skip_on_access_denied(only_if=None):
                 msg = "%r was skipped because it raised AccessDenied" \
                       % fun.__name__
                 self = args[0]
-                self.skip(msg)
+                raise unittest.SkipTest(msg)
         return wrapper
     return decorator
 
@@ -465,7 +465,7 @@ def skip_on_not_implemented(only_if=None):
                 msg = "%r was skipped because it raised NotImplementedError" \
                       % fun.__name__
                 self = args[0]
-                self.skip(msg)
+                raise unittest.SkipTest(msg)
         return wrapper
     return decorator
 
@@ -1741,6 +1741,7 @@ class TestProcess(unittest.TestCase):
         if WINDOWS:
             psutil.CONN_DELETE_TCB
 
+    @skip_on_access_denied(only_if=OSX)
     def test_connections(self):
         with contextlib.closing(socket.socket()) as s:
             s.bind(('127.0.0.1', 0))
@@ -1768,6 +1769,7 @@ class TestProcess(unittest.TestCase):
             self.compare_proc_sys_cons(p.pid, cons)
 
     @unittest.skipUnless(supports_ipv6(), 'IPv6 is not supported')
+    @skip_on_access_denied(only_if=OSX)
     def test_connections_ipv6(self):
         with contextlib.closing(socket.socket(AF_INET6, SOCK_STREAM)) as s:
             s.bind(('::1', 0))
@@ -1779,6 +1781,7 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipUnless(hasattr(socket, 'AF_UNIX'),
                          'AF_UNIX is not supported')
+    @skip_on_access_denied(only_if=OSX)
     def test_connections_unix(self):
         def check(type):
             safe_remove(TESTFN)
@@ -2125,7 +2128,8 @@ class TestProcess(unittest.TestCase):
                                             (5, 5))
                 # set methods
                 succeed_or_zombie_p_exc(zproc.parent)
-                succeed_or_zombie_p_exc(zproc.cpu_affinity, [0])
+                if hasattr(zproc, 'cpu_affinity'):
+                    succeed_or_zombie_p_exc(zproc.cpu_affinity, [0])
                 succeed_or_zombie_p_exc(zproc.nice, 0)
                 if hasattr(zproc, 'ionice'):
                     if LINUX:
