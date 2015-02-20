@@ -451,7 +451,7 @@ def skip_on_access_denied(only_if=None):
                 msg = "%r was skipped because it raised AccessDenied" \
                       % fun.__name__
                 self = args[0]
-                self.skip(msg)
+                raise unittest.SkipTest(msg)
         return wrapper
     return decorator
 
@@ -470,7 +470,7 @@ def skip_on_not_implemented(only_if=None):
                 msg = "%r was skipped because it raised NotImplementedError" \
                       % fun.__name__
                 self = args[0]
-                self.skip(msg)
+                raise unittest.SkipTest(msg)
         return wrapper
     return decorator
 
@@ -1728,6 +1728,7 @@ class TestProcess(unittest.TestCase):
             proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
         self.assertEqual(sorted(proc_cons), sorted(sys_cons))
 
+    @skip_on_access_denied(only_if=OSX)
     def test_connections(self):
         def check_conn(proc, conn, family, type, laddr, raddr, status, kinds):
             all_kinds = ("all", "inet", "inet4", "inet6", "tcp", "tcp4",
@@ -1823,6 +1824,7 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipUnless(hasattr(socket, 'AF_UNIX'),
                          'AF_UNIX is not supported')
+    @skip_on_access_denied(only_if=OSX)
     def test_connections_unix(self):
         def check(type):
             safe_remove(TESTFN)
@@ -2101,7 +2103,8 @@ class TestProcess(unittest.TestCase):
                                             (5, 5))
                 # set methods
                 succeed_or_zombie_p_exc(zproc.parent)
-                succeed_or_zombie_p_exc(zproc.cpu_affinity, [0])
+                if hasattr(zproc, 'cpu_affinity'):
+                    succeed_or_zombie_p_exc(zproc.cpu_affinity, [0])
                 succeed_or_zombie_p_exc(zproc.nice, 0)
                 if hasattr(zproc, 'ionice'):
                     if LINUX:
