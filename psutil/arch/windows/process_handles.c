@@ -414,7 +414,8 @@ psutil_get_open_files(long pid, HANDLE processHandle)
             //printf("[%#x] CreateFileMapping: 0x%x \n",
             //       hHandle->HandleValue,
             //       GetLastError());
-            if (GetLastError() != ERROR_ACCESS_DENIED) {
+            if (GetLastError() == ERROR_INVALID_HANDLE)
+            {
                 goto loop_cleanup;
             }
         }
@@ -458,6 +459,10 @@ psutil_get_open_files(long pid, HANDLE processHandle)
 loop_cleanup:
         Py_XDECREF(pyFilePath);
         pyFilePath = NULL;
+        if (hMap) {
+            CloseHandle(hMap);
+            hMap = NULL;
+        }
         if (pObjectName)
         {
             HeapFree(hHeap, 0, pObjectName);
@@ -477,6 +482,8 @@ loop_cleanup:
 
 cleanup:
     Py_XDECREF(pyFilePath);
+    if (hMap)
+        CloseHandle(hMap);
     if (pObjectName)
         HeapFree(hHeap, 0, pObjectName);
     if (lpszFilePath)
