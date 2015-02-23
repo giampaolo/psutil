@@ -122,199 +122,6 @@ GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName)
 }
 
 PyObject *
-psutil_get_open_files_GetFinalPathNameByHandle(long pid, HANDLE processHandle)
-{
-    _NtQuerySystemInformation NtQuerySystemInformation =
-        GetLibraryProcAddress("ntdll.dll", "NtQuerySystemInformation");
-
-    _NtQueryObject NtQueryObject =
-        GetLibraryProcAddress("ntdll.dll", "NtQueryObject");
-
-    NTSTATUS                            status;
-    HANDLE                              hHeap = NULL;
-    PSYSTEM_HANDLE_INFORMATION_EX       pSystemHandleInformationInfo = NULL;
-    ULONG                               systemHandleInformationInfoSize = 0x8000;
-    PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX  hHandle;
-    ULONG                               i;
-    DWORD                               nReturn = 0;
-    BOOLEAN                             error = FALSE;
-    PyObject*                           pyListFiles = Py_BuildValue("[]");
-    PyObject*                           pyFilePath;
-    PyObject*                           pyListObj;
-    HANDLE                              hFile = NULL;
-    LPTSTR                              lpszFilePath = NULL;
-    DWORD                               dwFilePathSize = MAX_PATH+1;
-    DWORD                               dwFilePathLength = 0;
-
-    if (!(hHeap = GetProcessHeap()))
-    {
-        PyErr_NoMemory();
-        error = TRUE;
-        goto cleanup;
-    }
-
-    // Py_BuildValue raises an exception if NULL is returned
-    if (pyListFiles == NULL)
-    {
-        error = TRUE;
-        goto cleanup;
-    }
-
-    // NtQuerySystemInformation won't give us the correct buffer size,
-    // so we guess by doubling the buffer size.
-    do {
-        if (pSystemHandleInformationInfo != NULL)
-            HeapFree(hHeap, 0, pSystemHandleInformationInfo);
-
-        systemHandleInformationInfoSize *= 2;
-        pSystemHandleInformationInfo = (PSYSTEM_HANDLE_INFORMATION_EX)
-                        HeapAlloc(hHeap, 0, systemHandleInformationInfoSize);
-
-        if (pSystemHandleInformationInfo == NULL)
-        {
-            PyErr_NoMemory();
-            error = TRUE;
-            goto cleanup;
-        }
-    } while ((status = NtQuerySystemInformation(
-                            SystemExtendedHandleInformation,
-                            pSystemHandleInformationInfo,
-                            systemHandleInformationInfoSize,
-                            &nReturn)) == STATUS_INFO_LENGTH_MISMATCH);
-    // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH
-    // Check to verify it returned a success condition
-    if (!NT_SUCCESS(status)) {
-        error = TRUE;
-        goto cleanup;
-    }
-
-    for (i = 0; i < pSystemHandleInformationInfo->NumberOfHandles; i++)
-    {
-        hHandle = &pSystemHandleInformationInfo->Handles[i];
-
-        // Check if this hHandle belongs to the PID the user specified.
-        if (hHandle->UniqueProcessId != (HANDLE)pid ||
-            hHandle->ObjectTypeIndex != HANDLE_TYPE_FILE)
-        {
-            continue;
-        }
-
-        if (!DuplicateHandle(processHandle,
-                             hHandle->HandleValue,
-                             GetCurrentProcess(),
-                             &hFile,
-                             0,
-                             TRUE,
-                             DUPLICATE_SAME_ACCESS))
-        {
-            //printf("[%#x] DuplicateHandle: 0x%x \n",
-            //       hHandle->HandleValue,
-            //       GetLastError());
-            continue;
-        }
-
-
-        // Call GetFinalPathNameByHandle to get the size
-        dwFilePathLength = GetFinalPathNameByHandle(hFile,
-                                                    lpszFilePath,
-                                                    0, // dwFilePathSize
-                                                    VOLUME_NAME_DOS); 
-        if (!dwFilePathLength) {
-            continue;
-        }
-        lpszFilePath = HeapAlloc(hHeap,
-                                 HEAP_ZERO_MEMORY, 
-                                 dwFilePathLength * sizeof(TCHAR));
-        if (lpszFilePath == NULL) {
-            PyErr_NoMemory();
-            error = TRUE;
-            goto cleanup;
-        }
-        dwFilePathLength = GetFinalPathNameByHandle(hFile,
-                                                    lpszFilePath,
-                                                    dwFilePathLength,
-                                                    VOLUME_NAME_DOS); 
-        if (!dwFilePathLength)
-        {
-            //printf("[%#x] GetFinalPathNameByHandle: 0x%x \n",
-            //       hHandle->HandleValue,
-            //       GetLastError());
-            continue;
-        }
-
-        if (dwFilePathLength > 4)
-        {
-            //printf("DEBUG: lpszFilePath =  %S \n", lpszFilePath);
-
-            pyFilePath = PyUnicode_FromWideChar(lpszFilePath, dwFilePathLength);
-
-            if (pyFilePath == NULL)
-            {
-                error = TRUE;
-                goto cleanup;
-            }
-
-            // Strip off the leading \\?\ characters
-            pyListObj = PyUnicode_Substring(pyFilePath, 4, dwFilePathLength);
-
-            if (pyListObj == NULL)
-            {
-                error = TRUE;
-                goto cleanup;
-            }
-
-            pyFilePath = NULL;
-
-            if (PyList_Append(pyListFiles, pyListObj))
-            {
-                error = TRUE;
-                goto cleanup;
-            }
-
-            // Give up ownership once pyListFiles has it
-            pyListObj = NULL;
-        }
-
-        Py_XDECREF(pyFilePath);
-        Py_XDECREF(pyListObj);
-
-        if (hFile)
-        {
-            CloseHandle(hFile);
-            hFile = NULL;
-        }
-        if (lpszFilePath)
-        {
-            HeapFree(hHeap, 0, lpszFilePath);
-            lpszFilePath = NULL;
-        }
-    }
-
-cleanup:
-    Py_XDECREF(pyFilePath);
-    Py_XDECREF(pyListObj);
-
-    if (lpszFilePath)
-        HeapFree(hHeap, 0, lpszFilePath);
-    if (pSystemHandleInformationInfo != NULL)
-        HeapFree(hHeap, 0, pSystemHandleInformationInfo);
-    if (hHeap)
-        CloseHandle(hHeap);
-    if (hFile)
-        CloseHandle(hFile);
-
-    if (error)
-    {
-        Py_XDECREF(pyListFiles);
-        return NULL;
-    }
-    else 
-    {
-        return pyListFiles;
-    }
-}
-
-PyObject *
 psutil_get_open_files(long pid, HANDLE processHandle)
 {
     _NtQuerySystemInformation NtQuerySystemInformation =
@@ -403,7 +210,8 @@ psutil_get_open_files(long pid, HANDLE processHandle)
                              TRUE,
                              DUPLICATE_SAME_ACCESS))
         {
-            //printf("[%#x] DuplicateHandle: 0x%x \n",
+            //printf("[%d] DuplicateHandle (%#x): %#x \n",
+            //       pid,
             //       hHandle->HandleValue,
             //       GetLastError());
             goto loop_cleanup;
@@ -411,18 +219,25 @@ psutil_get_open_files(long pid, HANDLE processHandle)
 
         hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
         if (hMap == NULL) {
-            //printf("[%#x] CreateFileMapping: 0x%x \n",
+            //printf("[%d] CreateFileMapping (%#x): %#x \n",
+            //       pid,
             //       hHandle->HandleValue,
             //       GetLastError());
-            if (GetLastError() == ERROR_INVALID_HANDLE)
+            if (GetLastError() == ERROR_BAD_EXE_FORMAT)
             {
                 goto loop_cleanup;
             }
         }
         CloseHandle(hMap);
+        
+        //printf("[%#d] Pre-NtQueryObject (%#x)\n", pid, hHandle->HandleValue);
 
         // Call NtQueryObject to determine the correct size
-        NtQueryObject(hFile, ObjectNameInformation, pObjectName, 0, &objectNameSize);
+        NtQueryObject(hFile,
+                      ObjectNameInformation,
+                      pObjectName,
+                      0,
+                      &objectNameSize);
         pObjectName = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, objectNameSize);
         if (!NT_SUCCESS(NtQueryObject(hFile, 
                                       ObjectNameInformation,
@@ -430,7 +245,8 @@ psutil_get_open_files(long pid, HANDLE processHandle)
                                       objectNameSize,
                                       NULL)))
         {
-            //printf("[%#x] NtQueryObject(ObjectNameInformation): 0x%x \n",
+            //printf("[%d] ObjectNameInformation (%#x): %#x \n",
+            //       pid,
             //       hHandle->HandleValue,
             //       GetLastError());
             goto loop_cleanup;
@@ -438,7 +254,8 @@ psutil_get_open_files(long pid, HANDLE processHandle)
 
         if (pObjectName->Length)
         {
-            //printf("DEBUG: pObjectName->Buffer = %S \n", pObjectName->Buffer);
+            //printf("DEBUG: pObjectName->Buffer = %S \n",
+            //       pObjectName->Buffer);
 
             pyFilePath = PyUnicode_FromWideChar(pObjectName->Buffer,
                                                 pObjectName->Length / 2);
@@ -504,4 +321,3 @@ cleanup:
         return pyListFiles;
     }
 }
-
