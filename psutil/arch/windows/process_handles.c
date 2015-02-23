@@ -411,7 +411,12 @@ psutil_get_open_files(long pid, HANDLE processHandle)
 
         hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
         if (hMap == NULL) {
-            goto loop_cleanup;
+            //printf("[%#x] CreateFileMapping: 0x%x \n",
+            //       hHandle->HandleValue,
+            //       GetLastError());
+            if (GetLastError() != ERROR_ACCESS_DENIED) {
+                goto loop_cleanup;
+            }
         }
         CloseHandle(hMap);
 
@@ -424,9 +429,9 @@ psutil_get_open_files(long pid, HANDLE processHandle)
                                       objectNameSize,
                                       NULL)))
         {
-            printf("[%#x] NtQueryObject(ObjectNameInformation): 0x%x \n",
-                   hHandle->HandleValue,
-                   GetLastError());
+            //printf("[%#x] NtQueryObject(ObjectNameInformation): 0x%x \n",
+            //       hHandle->HandleValue,
+            //       GetLastError());
             goto loop_cleanup;
         }
 
