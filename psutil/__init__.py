@@ -515,10 +515,9 @@ class Process(object):
         if _POSIX:
             ppid = self._proc.ppid()
         else:
-            if self._ppid is None:
-                ppid = self._proc.ppid()
-            self._ppid = ppid
-        self._proc._ppid = ppid
+            # Cache the PPID if it is not set
+            self._ppid = self._ppid or self._proc.ppid()
+            ppid = self._ppid
         return ppid
 
     def name(self):
