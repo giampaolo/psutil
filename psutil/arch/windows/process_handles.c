@@ -145,8 +145,6 @@ psutil_get_open_files(long pid, HANDLE processHandle)
     HANDLE                              hFile = NULL;
     HANDLE                              hMap = NULL;
     LPTSTR                              lpszFilePath = NULL;
-    DWORD                               dwFilePathSize = MAX_PATH+1;
-    DWORD                               dwFilePathLength = 0;
 
 
     if (!(hHeap = GetProcessHeap()))
@@ -301,16 +299,22 @@ cleanup:
     Py_XDECREF(pyFilePath);
     if (hMap)
         CloseHandle(hMap);
+    hMap = NULL;
     if (pObjectName)
         HeapFree(hHeap, 0, pObjectName);
+    pObjectName = NULL;
     if (lpszFilePath)
         HeapFree(hHeap, 0, lpszFilePath);
+    lpszFilePath = NULL;
     if (pSystemHandleInformationInfo != NULL)
         HeapFree(hHeap, 0, pSystemHandleInformationInfo);
+    pSystemHandleInformationInfo = NULL;
     if (hHeap)
         CloseHandle(hHeap);
+    hHeap = NULL;
     if (hFile)
         CloseHandle(hFile);
+    hFile = NULL;
     if (error)
     {
         Py_XDECREF(pyListFiles);
