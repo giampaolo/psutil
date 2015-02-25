@@ -958,7 +958,7 @@ class Process(object):
             return 0.0
 
     def memory_maps(self, grouped=True):
-        """Return process' mapped memory regions as a list of nameduples
+        """Return process' mapped memory regions as a list of namedtuples
         whose fields are variable depending on the platform.
 
         If 'grouped' is True the mapped regions with the same 'path'
@@ -1376,7 +1376,7 @@ def cpu_times(percpu=False):
      - guest (Linux >= 2.6.24)
      - guest_nice (Linux >= 3.2.0)
 
-    When percpu is True return a list of nameduples for each CPU.
+    When percpu is True return a list of namedtuples for each CPU.
     First element of the list refers to first CPU, second element
     to second CPU and so on.
     The order of the list is consistent across calls.
@@ -1663,7 +1663,7 @@ def disk_io_counters(perdisk=False):
 
     If perdisk is True return the same information for every
     physical disk installed on the system as a dictionary
-    with partition names as the keys and the namedutuple
+    with partition names as the keys and the namedtuple
     described above as the values.
 
     On recent Windows versions 'diskperf -y' command may need to be
