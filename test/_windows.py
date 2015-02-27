@@ -302,7 +302,7 @@ class TestDualProcessImplementation(unittest.TestCase):
         def assert_ge_0(obj):
             if isinstance(obj, tuple):
                 for value in obj:
-                    self.assertGreaterEqual(value, 0)
+                    self.assertGreaterEqual(value, 0, msg=obj)
             elif isinstance(obj, (int, long, float)):
                 self.assertGreaterEqual(obj, 0)
             else:
@@ -320,42 +320,47 @@ class TestDualProcessImplementation(unittest.TestCase):
                         diff = abs(a - b)
                         self.assertLessEqual(diff, tolerance)
 
+        from psutil._pswindows import ntpinfo
         failures = []
-        for name, tolerance in self.fun_names:
-            meth1 = wrap_exceptions(getattr(_psutil_windows, name))
-            meth2 = wrap_exceptions(getattr(_psutil_windows, name + '_2'))
-            for p in psutil.process_iter():
+        for p in psutil.process_iter():
+            try:
+                nt = ntpinfo(*_psutil_windows.proc_info(p.pid))
+            except psutil.NoSuchProcess:
+                continue
+            assert_ge_0(nt)
+
+            for name, tolerance in self.fun_names:
                 if name == 'proc_memory_info' and p.pid == os.getpid():
                     continue
-                #
-                try:
-                    ret1 = meth1(p.pid)
-                except psutil.NoSuchProcess:
+                if name == 'proc_create_time' and p.pid in (0, 4):
                     continue
-                except psutil.AccessDenied:
-                    ret1 = None
-                #
+                meth = wrap_exceptions(getattr(_psutil_windows, name))
                 try:
-                    ret2 = meth2(p.pid)
-                except psutil.NoSuchProcess:
-                    # this is supposed to fail only in case of zombie process
-                    # never for permission error
+                    ret = meth(p.pid)
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
-
                 # compare values
                 try:
-                    if ret1 is None:
-                        assert_ge_0(ret2)
-                    else:
-                        compare_with_tolerance(ret1, ret2, tolerance)
-                        assert_ge_0(ret1)
-                        assert_ge_0(ret2)
+                    if name == 'proc_cpu_times':
+                        compare_with_tolerance(ret[0], nt.user_time, tolerance)
+                        compare_with_tolerance(ret[1],
+                                               nt.kernel_time, tolerance)
+                    elif name == 'proc_create_time':
+                        compare_with_tolerance(ret, nt.create_time, tolerance)
+                    elif name == 'proc_num_handles':
+                        compare_with_tolerance(ret, nt.num_handles, tolerance)
+                    elif name == 'proc_io_counters':
+                        compare_with_tolerance(ret[0], nt.io_rcount, tolerance)
+                        compare_with_tolerance(ret[1], nt.io_wcount, tolerance)
+                        compare_with_tolerance(ret[2], nt.io_rbytes, tolerance)
+                        compare_with_tolerance(ret[3], nt.io_wbytes, tolerance)
                 except AssertionError:
                     trace = traceback.format_exc()
                     msg = '%s\npid=%s, method=%r, ret_1=%r, ret_2=%r' % (
-                          trace, p.pid, name, ret1, ret2)
+                        trace, p.pid, name, ret, nt)
                     failures.append(msg)
                     break
+
         if failures:
             self.fail('\n\n'.join(failures))
 

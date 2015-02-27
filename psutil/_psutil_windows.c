@@ -439,32 +439,6 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args)
 
 
 /*
- * Alternative implementation of the one above but bypasses ACCESS DENIED.
- */
-static PyObject *
-psutil_proc_cpu_times_2(PyObject *self, PyObject *args)
-{
-    DWORD pid;
-    PSYSTEM_PROCESS_INFORMATION process;
-    PVOID buffer;
-    double user, kernel;
-
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-    if (! psutil_get_proc_info(pid, &process, &buffer)) {
-        return NULL;
-    }
-    user = (double)process->UserTime.HighPart * 429.4967296 + \
-           (double)process->UserTime.LowPart * 1e-7;
-    kernel = (double)process->KernelTime.HighPart * 429.4967296 + \
-             (double)process->KernelTime.LowPart * 1e-7;
-    free(buffer);
-    return Py_BuildValue("(dd)", user, kernel);
-}
-
-
-/*
  * Return a Python float indicating the process create time expressed in
  * seconds since the epoch.
  */
@@ -537,39 +511,6 @@ psutil_proc_create_time(PyObject *self, PyObject *args)
     return Py_BuildValue("d", (double)unix_time);
 }
 
-
-/*
- * Alternative implementation of the one above but bypasses ACCESS DENIED.
- */
-static PyObject *
-psutil_proc_create_time_2(PyObject *self, PyObject *args)
-{
-    DWORD pid;
-    PSYSTEM_PROCESS_INFORMATION process;
-    PVOID buffer;
-    long long   unix_time;
-
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-    if (! psutil_get_proc_info(pid, &process, &buffer)) {
-        return NULL;
-    }
-    // special case for PIDs 0 and 4, return system boot time
-    if (0 == pid || 4 == pid) {
-        return psutil_boot_time(NULL, NULL);
-    }
-    /*
-    Convert the LARGE_INTEGER union to a Unix time.
-    It's the best I could find by googling and borrowing code here and there.
-    The time returned has a precision of 1 second.
-    */
-    unix_time = ((LONGLONG)process->CreateTime.HighPart) << 32;
-    unix_time += process->CreateTime.LowPart - 116444736000000000LL;
-    unix_time /= 10000000;
-    free(buffer);
-    return Py_BuildValue("d", (double)unix_time);
-}
 
 
 /*
@@ -1234,26 +1175,6 @@ psutil_proc_resume(PyObject *self, PyObject *args)
         return NULL;
     }
     Py_RETURN_NONE;
-}
-
-
-static PyObject *
-psutil_proc_num_threads(PyObject *self, PyObject *args)
-{
-    DWORD pid;
-    PSYSTEM_PROCESS_INFORMATION process;
-    PVOID buffer;
-    int num;
-
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-    if (! psutil_get_proc_info(pid, &process, &buffer)) {
-        return NULL;
-    }
-    num = (int)process->NumberOfThreads;
-    free(buffer);
-    return Py_BuildValue("i", num);
 }
 
 
@@ -2158,32 +2079,6 @@ psutil_proc_io_counters(PyObject *self, PyObject *args)
 
 
 /*
- * Alternative implementation of the one above but bypasses ACCESS DENIED.
- */
-static PyObject *
-psutil_proc_io_counters_2(PyObject *self, PyObject *args)
-{
-    DWORD pid;
-    PSYSTEM_PROCESS_INFORMATION process;
-    PVOID buffer;
-    LONGLONG rcount, wcount, rbytes, wbytes;
-
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-    if (! psutil_get_proc_info(pid, &process, &buffer)) {
-        return NULL;
-    }
-    rcount = process->ReadOperationCount.QuadPart;
-    wcount = process->WriteOperationCount.QuadPart;
-    rbytes = process->ReadTransferCount.QuadPart;
-    wbytes = process->WriteTransferCount.QuadPart;
-    free(buffer);
-    return Py_BuildValue("KKKK", rcount, wcount, rbytes, wbytes);
-}
-
-
-/*
  * Return process CPU affinity as a bitmask
  */
 static PyObject *
@@ -2817,52 +2712,66 @@ psutil_proc_num_handles(PyObject *self, PyObject *args)
 }
 
 
-/*
- * Alternative implementation of the one above but bypasses ACCESS DENIED.
- */
 static PyObject *
-psutil_proc_num_handles_2(PyObject *self, PyObject *args)
+psutil_proc_info(PyObject *self, PyObject *args)
 {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
     PVOID buffer;
-    ULONG count;
-
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
-        return NULL;
-    }
-    if (! psutil_get_proc_info(pid, &process, &buffer)) {
-        return NULL;
-    }
-    count = process->HandleCount;
-    free(buffer);
-    return Py_BuildValue("k", count);
-}
-
-
-/*
- * Return the number of context switches executed by process.
- */
-static PyObject *
-psutil_proc_num_ctx_switches(PyObject *self, PyObject *args)
-{
-    DWORD pid;
-    PSYSTEM_PROCESS_INFORMATION process;
-    PVOID buffer;
+    ULONG num_handles;
     ULONG i;
-    ULONG total = 0;
+    ULONG ctx_switches = 0;
+    double user_time;
+    double kernel_time;
+    long long create_time;
+    int num_threads;
+    LONGLONG io_rcount, io_wcount, io_rbytes, io_wbytes;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
-    if (! psutil_get_proc_info(pid, &process, &buffer)) {
+    if (! psutil_get_proc_info(pid, &process, &buffer))
         return NULL;
+
+    num_handles = process->HandleCount;
+    for (i = 0; i < process->NumberOfThreads; i++)
+        ctx_switches += process->Threads[i].ContextSwitches;
+    user_time = (double)process->UserTime.HighPart * 429.4967296 + \
+                (double)process->UserTime.LowPart * 1e-7;
+    kernel_time = (double)process->KernelTime.HighPart * 429.4967296 + \
+                  (double)process->KernelTime.LowPart * 1e-7;
+    // Convert the LARGE_INTEGER union to a Unix time.
+    // It's the best I could find by googling and borrowing code here
+    // and there. The time returned has a precision of 1 second.
+    if (0 == pid || 4 == pid) {
+        // the python module will translate this into BOOT_TIME later
+        create_time = 0;
     }
-    for (i = 0; i < process->NumberOfThreads; i++) {
-        total += process->Threads[i].ContextSwitches;
+    else {
+        create_time = ((LONGLONG)process->CreateTime.HighPart) << 32;
+        create_time += process->CreateTime.LowPart - 116444736000000000LL;
+        create_time /= 10000000;
     }
+    num_threads = (int)process->NumberOfThreads;
+    io_rcount = process->ReadOperationCount.QuadPart;
+    io_wcount = process->WriteOperationCount.QuadPart;
+    io_rbytes = process->ReadTransferCount.QuadPart;
+    io_wbytes = process->WriteTransferCount.QuadPart;
     free(buffer);
-    return Py_BuildValue("ki", total, 0);
+
+    return Py_BuildValue(
+        "kkdddiKKKK",
+        num_handles,
+        ctx_switches,
+        user_time,
+        kernel_time,
+        (double)create_time,
+        num_threads,
+        io_rcount,
+        io_wcount,
+        io_rbytes,
+        io_wbytes
+    );
 }
 
 
@@ -3298,6 +3207,8 @@ PsutilMethods[] =
      "seconds since the epoch"},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
      "Return a tuple of process memory information"},
+    {"proc_memory_info_2", psutil_proc_memory_info, METH_VARARGS,
+     "Alternate implementation"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory"},
     {"proc_suspend", psutil_proc_suspend, METH_VARARGS,
@@ -3308,8 +3219,6 @@ PsutilMethods[] =
      "Return files opened by process"},
     {"proc_username", psutil_proc_username, METH_VARARGS,
      "Return the username of a process"},
-    {"proc_num_threads", psutil_proc_num_threads, METH_VARARGS,
-     "Return the network connections of a process"},
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads information as a list of tuple"},
     {"proc_wait", psutil_proc_wait, METH_VARARGS,
@@ -3334,22 +3243,12 @@ PsutilMethods[] =
      "Return True if one of the process threads is in a suspended state"},
     {"proc_num_handles", psutil_proc_num_handles, METH_VARARGS,
      "Return the number of handles opened by process."},
-    {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
-     "Return the number of context switches performed by process."},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
      "Return a list of process's memory mappings"},
 
     // --- alternative pinfo interface
-    {"proc_cpu_times_2", psutil_proc_cpu_times_2, METH_VARARGS,
-     "Alternative implementation"},
-    {"proc_create_time_2", psutil_proc_create_time_2, METH_VARARGS,
-     "Alternative implementation"},
-    {"proc_num_handles_2", psutil_proc_num_handles_2, METH_VARARGS,
-     "Alternative implementation"},
-    {"proc_io_counters_2", psutil_proc_io_counters_2, METH_VARARGS,
-     "Alternative implementation"},
-    {"proc_memory_info_2", psutil_proc_memory_info_2, METH_VARARGS,
-     "Alternative implementation"},
+    {"proc_info", psutil_proc_info, METH_VARARGS,
+     "Various process information"},
 
     // --- system-related functions
     {"pids", psutil_pids, METH_VARARGS,

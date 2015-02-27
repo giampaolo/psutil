@@ -513,13 +513,10 @@ class Process(object):
         # XXX should we check creation time here rather than in
         # Process.parent()?
         if _POSIX:
-            ppid = self._proc.ppid()
+            return self._proc.ppid()
         else:
-            if self._ppid is None:
-                ppid = self._proc.ppid()
-            self._ppid = ppid
-        self._proc._ppid = ppid
-        return ppid
+            self._ppid = self._ppid or self._proc.ppid()
+            return self._ppid
 
     def name(self):
         """The process name. The return value is cached after first call."""

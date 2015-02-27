@@ -86,6 +86,10 @@ pextmem = namedtuple(
 pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
+ntpinfo = namedtuple(
+   'ntpinfo', ['num_handles', 'ctx_switches', 'user_time', 'kernel_time',
+               'create_time', 'num_threads', 'io_rcount', 'io_wcount',
+               'io_rbytes', 'io_wbytes'])
 
 # set later from __init__.py
 NoSuchProcess = None
@@ -309,6 +313,8 @@ class Process(object):
             return cext.proc_memory_info(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
+                # TODO: the C ext can probably be refactored in order
+                # to get this from cext.proc_info()
                 return cext.proc_memory_info_2(self.pid)
             raise
 
@@ -376,12 +382,12 @@ class Process(object):
             return cext.proc_create_time(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                return cext.proc_create_time_2(self.pid)
+                return ntpinfo(*cext.proc_info(self.pid)).create_time
             raise
 
     @wrap_exceptions
     def num_threads(self):
-        return cext.proc_num_threads(self.pid)
+        return ntpinfo(*cext.proc_info(self.pid)).num_threads
 
     @wrap_exceptions
     def threads(self):
@@ -398,7 +404,8 @@ class Process(object):
             ret = cext.proc_cpu_times(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                ret = cext.proc_cpu_times_2(self.pid)
+                nt = ntpinfo(*cext.proc_info(self.pid))
+                ret = (nt.user_time, nt.kernel_time)
             else:
                 raise
         return _common.pcputimes(*ret)
@@ -474,7 +481,8 @@ class Process(object):
             ret = cext.proc_io_counters(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                ret = cext.proc_io_counters_2(self.pid)
+                nt = ntpinfo(*cext.proc_info(self.pid))
+                ret = (nt.io_rcount, nt.io_wcount, nt.io_rbytes, nt.io_wbytes)
             else:
                 raise
         return _common.pio(*ret)
@@ -525,10 +533,11 @@ class Process(object):
             return cext.proc_num_handles(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                return cext.proc_num_handles_2(self.pid)
+                return ntpinfo(*cext.proc_info(self.pid)).num_handles
             raise
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        tupl = cext.proc_num_ctx_switches(self.pid)
-        return _common.pctxsw(*tupl)
+        ctx_switches = ntpinfo(*cext.proc_info(self.pid)).ctx_switches
+        # only voluntary ctx switches are supported
+        return _common.pctxsw(ctx_switches, 0)
