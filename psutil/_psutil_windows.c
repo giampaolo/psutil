@@ -685,6 +685,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     pentry.dwSize = sizeof(PROCESSENTRY32);
     ok = Process32First(hSnapShot, &pentry);
     if (! ok) {
+        CloseHandle(hSnapShot);
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }

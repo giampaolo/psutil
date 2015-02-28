@@ -356,10 +356,10 @@ class TestDualProcessImplementation(unittest.TestCase):
                         compare_with_tolerance(ret[3], nt.io_wbytes, tolerance)
                     elif name == 'proc_memory_info':
                         try:
-                            rawtuple = _psutil_windows.proc_memory_info_2(p.pid)
+                            rawtupl = _psutil_windows.proc_memory_info_2(p.pid)
                         except psutil.NoSuchProcess:
                             continue
-                        compare_with_tolerance(ret, rawtuple, tolerance)
+                        compare_with_tolerance(ret, rawtupl, tolerance)
                 except AssertionError:
                     trace = traceback.format_exc()
                     msg = '%s\npid=%s, method=%r, ret_1=%r, ret_2=%r' % (
