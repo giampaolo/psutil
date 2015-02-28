@@ -370,6 +370,16 @@ class TestDualProcessImplementation(unittest.TestCase):
         if failures:
             self.fail('\n\n'.join(failures))
 
+    def test_compare_name_exe(self):
+        for p in psutil.process_iter():
+            try:
+                a = os.path.basename(p.exe())
+                b = p.name()
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+            else:
+                self.assertEqual(a, b)
+
     def test_zombies(self):
         # test that NPS is raised by the 2nd implementation in case a
         # process no longer exists

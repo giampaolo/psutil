@@ -23,6 +23,7 @@ static PyObject* psutil_proc_kill(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_memory_info(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_memory_info_2(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_memory_maps(PyObject* self, PyObject* args);
+static PyObject* psutil_proc_name(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_num_handles(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_open_files(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_priority_get(PyObject* self, PyObject* args);

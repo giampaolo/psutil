@@ -663,6 +663,46 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
 
 /*
+ * Return process base name.
+ * Note: psutil_proc_exe() is attempted first because it's faster
+ * but it raise AccessDenied for processes owned by other users
+ * in which case we fall back on using this.
+ */
+static PyObject *
+psutil_proc_name(PyObject *self, PyObject *args) {
+    long pid;
+    int ok;
+    PROCESSENTRY32 pentry;
+    HANDLE hSnapShot;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, pid);
+    if (hSnapShot == INVALID_HANDLE_VALUE) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+    pentry.dwSize = sizeof(PROCESSENTRY32);
+    ok = Process32First(hSnapShot, &pentry);
+    if (! ok) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+    while (ok) {
+        if (pentry.th32ProcessID == pid) {
+            CloseHandle(hSnapShot);
+            return Py_BuildValue("s", pentry.szExeFile);
+        }
+        ok = Process32Next(hSnapShot, &pentry);
+    }
+
+    CloseHandle(hSnapShot);
+    NoSuchProcess();
+    return NULL;
+}
+
+
+/*
  * Return process memory information as a Python tuple.
  */
 static PyObject *
@@ -3198,6 +3238,8 @@ PsutilMethods[] =
      "Return process cmdline as a list of cmdline arguments"},
     {"proc_exe", psutil_proc_exe, METH_VARARGS,
      "Return path of the process executable"},
+    {"proc_name", psutil_proc_name, METH_VARARGS,
+     "Return process name"},
     {"proc_kill", psutil_proc_kill, METH_VARARGS,
      "Kill the process identified by the given PID"},
     {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,

@@ -16,6 +16,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #589: Process.cpu_affinity() accepts any kind of iterable (set, tuple, ...),
   not only lists.
 - #594: all deprecated APIs were removed.
+- #599: [Windows] process name() can now be determined for all processes even
+  when running as a limited user.
 
 **Bug fixes**
 

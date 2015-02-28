@@ -284,7 +284,14 @@ class Process(object):
         elif self.pid == 4:
             return "System"
         else:
-            return os.path.basename(self.exe())
+            try:
+                # Note: this will fail with AD for most PIDs owned
+                # by another user but it's faster.
+                return os.path.basename(self.exe())
+            except OSError as err:
+                if err.errno in ACCESS_DENIED_SET:
+                    return cext.proc_name(self.pid)
+                raise
 
     @wrap_exceptions
     def exe(self):
