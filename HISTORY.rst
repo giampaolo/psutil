@@ -5,6 +5,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Enhancements**
 
+- #250: new psutil.net_if_stats() returning NIC statistics (isup, duplex,
+  speed, MTU).
 - #376: new psutil.net_if_addrs() returning all NIC addresses a-la ifconfig.
 - #469: on Python >= 3.4 ``IOPRIO_CLASS_*`` and ``*_PRIORITY_CLASS`` constants
   returned by psutil.Process' ionice() and nice() methods are enums instead of

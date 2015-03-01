@@ -1769,26 +1769,27 @@ class TestProcess(unittest.TestCase):
         """)
 
         from string import Template
+        testfile = os.path.basename(TESTFN)
         tcp4_template = Template(tcp_template).substitute(
-            family=int(AF_INET), addr="127.0.0.1", testfn=TESTFN)
+            family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
         udp4_template = Template(udp_template).substitute(
-            family=int(AF_INET), addr="127.0.0.1", testfn=TESTFN)
+            family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
         tcp6_template = Template(tcp_template).substitute(
-            family=int(AF_INET6), addr="::1", testfn=TESTFN)
+            family=int(AF_INET6), addr="::1", testfn=testfile)
         udp6_template = Template(udp_template).substitute(
-            family=int(AF_INET6), addr="::1", testfn=TESTFN)
+            family=int(AF_INET6), addr="::1", testfn=testfile)
 
         # launch various subprocess instantiating a socket of various
         # families and types to enrich psutil results
         tcp4_proc = pyrun(tcp4_template)
-        tcp4_addr = eval(wait_for_file(TESTFN))
+        tcp4_addr = eval(wait_for_file(testfile))
         udp4_proc = pyrun(udp4_template)
-        udp4_addr = eval(wait_for_file(TESTFN))
+        udp4_addr = eval(wait_for_file(testfile))
         if supports_ipv6():
             tcp6_proc = pyrun(tcp6_template)
-            tcp6_addr = eval(wait_for_file(TESTFN))
+            tcp6_addr = eval(wait_for_file(testfile))
             udp6_proc = pyrun(udp6_template)
-            udp6_addr = eval(wait_for_file(TESTFN))
+            udp6_addr = eval(wait_for_file(testfile))
         else:
             tcp6_proc = None
             udp6_proc = None
