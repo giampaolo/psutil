@@ -38,12 +38,10 @@ psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess)
 
     hProcess = OpenProcess(dwDesiredAccess, FALSE, pid);
     if (hProcess == NULL) {
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
+        if (GetLastError() == ERROR_INVALID_PARAMETER)
             NoSuchProcess();
-        }
-        else {
+        else
             PyErr_SetFromWindowsErr(0);
-        }
         return NULL;
     }
 
@@ -129,13 +127,10 @@ psutil_pid_is_running(DWORD pid)
     DWORD exitCode;
 
     // Special case for PID 0 System Idle Process
-    if (pid == 0) {
+    if (pid == 0)
         return 1;
-    }
-
-    if (pid < 0) {
+    if (pid < 0)
         return 0;
-    }
 
     hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                            FALSE, pid);
@@ -183,10 +178,8 @@ psutil_pid_in_proclist(DWORD pid)
     DWORD i;
 
     proclist = psutil_get_pids(&numberOfReturnedPIDs);
-    if (NULL == proclist) {
+    if (proclist == NULL)
         return -1;
-    }
-
     for (i = 0; i < numberOfReturnedPIDs; i++) {
         if (pid == proclist[i]) {
             free(proclist);
@@ -205,13 +198,12 @@ int
 handlep_is_running(HANDLE hProcess)
 {
     DWORD dwCode;
-    if (NULL == hProcess) {
+
+    if (NULL == hProcess)
         return 0;
-    }
     if (GetExitCodeProcess(hProcess, &dwCode)) {
-        if (dwCode == STILL_ACTIVE) {
+        if (dwCode == STILL_ACTIVE)
             return 1;
-        }
     }
     return 0;
 }
@@ -236,10 +228,8 @@ psutil_get_arg_list(long pid)
     PyObject *argList = NULL;
 
     hProcess = psutil_handle_from_pid(pid);
-    if (hProcess == NULL) {
+    if (hProcess == NULL)
         return NULL;
-    }
-
     pebAddress = psutil_get_peb_address(hProcess);
 
     // get the address of ProcessParameters
@@ -419,9 +409,8 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
         goto error;
     }
 
-    if (bufferSize <= 0x20000) {
+    if (bufferSize <= 0x20000)
         initialBufferSize = bufferSize;
-    }
 
     process = PH_FIRST_PROCESS(buffer);
     do {

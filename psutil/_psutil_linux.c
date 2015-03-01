@@ -79,13 +79,11 @@ psutil_proc_ioprio_get(PyObject *self, PyObject *args)
 {
     long pid;
     int ioprio, ioclass, iodata;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
     ioprio = ioprio_get(IOPRIO_WHO_PROCESS, pid);
-    if (ioprio == -1) {
+    if (ioprio == -1)
         return PyErr_SetFromErrno(PyExc_OSError);
-    }
     ioclass = IOPRIO_PRIO_CLASS(ioprio);
     iodata = IOPRIO_PRIO_DATA(ioprio);
     return Py_BuildValue("ii", ioclass, iodata);
@@ -104,14 +102,12 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args)
     int ioprio, ioclass, iodata;
     int retval;
 
-    if (! PyArg_ParseTuple(args, "lii", &pid, &ioclass, &iodata)) {
+    if (! PyArg_ParseTuple(args, "lii", &pid, &ioclass, &iodata))
         return NULL;
-    }
     ioprio = IOPRIO_PRIO_VALUE(ioclass, iodata);
     retval = ioprio_set(IOPRIO_WHO_PROCESS, pid, ioprio);
-    if (retval == -1) {
+    if (retval == -1)
         return PyErr_SetFromErrno(PyExc_OSError);
-    }
     Py_RETURN_NONE;
 }
 #endif
@@ -133,9 +129,8 @@ psutil_linux_prlimit(PyObject *self, PyObject *args)
     PyObject *soft = NULL;
     PyObject *hard = NULL;
 
-    if (! PyArg_ParseTuple(args, "li|OO", &pid, &resource, &soft, &hard)) {
+    if (! PyArg_ParseTuple(args, "li|OO", &pid, &resource, &soft, &hard))
         return NULL;
-    }
 
     // get
     if (soft == NULL && hard == NULL) {
@@ -238,10 +233,9 @@ static PyObject *
 psutil_linux_sysinfo(PyObject *self, PyObject *args)
 {
     struct sysinfo info;
-    if (sysinfo(&info) != 0) {
-        return PyErr_SetFromErrno(PyExc_OSError);
-    }
 
+    if (sysinfo(&info) != 0)
+        return PyErr_SetFromErrno(PyExc_OSError);
     // note: boot time might also be determined from here
     return Py_BuildValue(
         "(KKKKKK)",
@@ -271,10 +265,8 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
     cpu_set_t *mask = NULL;
     PyObject *res = NULL;
 
-    if (!PyArg_ParseTuple(args, "i", &pid)) {
+    if (!PyArg_ParseTuple(args, "i", &pid))
         return NULL;
-    }
-
     ncpus = NCPUS_START;
     while (1) {
         setsize = CPU_ALLOC_SIZE(ncpus);
@@ -341,14 +333,11 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
     PyObject* py_retlist;
     PyObject *py_cpu_num;
 
-    if (!PyArg_ParseTuple(args, "i", &pid)) {
+    if (!PyArg_ParseTuple(args, "i", &pid))
         return NULL;
-    }
-
 	CPU_ZERO(&cpuset);
-    if (sched_getaffinity(pid, len, &cpuset) < 0) {
+    if (sched_getaffinity(pid, len, &cpuset) < 0)
         return PyErr_SetFromErrno(PyExc_OSError);
-    }
 
     py_retlist = PyList_New(0);
     if (py_retlist == NULL)
@@ -386,9 +375,8 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
     PyObject *py_cpu_set;
     PyObject *py_cpu_seq = NULL;
 
-    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set)) {
-        goto error;
-    }
+    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set))
+        return NULL;
 
     if (!PySequence_Check(py_cpu_set)) {
         PyErr_Format(PyExc_TypeError, "sequence argument expected, got %s",
@@ -397,9 +385,8 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
     }
 
     py_cpu_seq = PySequence_Fast(py_cpu_set, "expected a sequence or integer");
-    if (!py_cpu_seq) {
+    if (!py_cpu_seq)
         goto error;
-    }
     seq_len = PySequence_Fast_GET_SIZE(py_cpu_seq);
     CPU_ZERO(&cpu_set);
     for (i = 0; i < seq_len; i++) {
@@ -409,9 +396,8 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
 #else
         long value = PyInt_AsLong(item);
 #endif
-        if (value == -1 && PyErr_Occurred()) {
+        if (value == -1 && PyErr_Occurred())
             goto error;
-        }
         CPU_SET(value, &cpu_set);
     }
 
@@ -425,10 +411,8 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 
 error:
-    if (py_cpu_seq != NULL) {
+    if (py_cpu_seq != NULL)
         Py_DECREF(py_cpu_seq);
-	}
-
     return NULL;
 }
 
@@ -691,9 +675,8 @@ void init_psutil_linux(void)
     PyModule_AddIntConstant(module, "DUPLEX_FULL", DUPLEX_FULL);
     PyModule_AddIntConstant(module, "DUPLEX_UNKNOWN", DUPLEX_UNKNOWN);
 
-    if (module == NULL) {
+    if (module == NULL)
         INITERROR;
-    }
 #if PY_MAJOR_VERSION >= 3
     return module;
 #endif

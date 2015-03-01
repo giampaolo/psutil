@@ -32,15 +32,12 @@ psutil_pid_exists(long pid)
     int kill_ret;
 
     // save some time if it's an invalid PID
-    if (pid < 0) {
+    if (pid < 0)
         return 0;
-    }
-
     // if kill returns success of permission denied we know it's a valid PID
     kill_ret = kill(pid , 0);
-    if ( (0 == kill_ret) || (EPERM == errno) ) {
+    if ( (0 == kill_ret) || (EPERM == errno))
         return 1;
-    }
 
     // otherwise return 0 for PID not found
     return 0;
@@ -85,34 +82,29 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount)
      */
     while (lim-- > 0) {
         size = 0;
-        if (sysctl((int *)mib3, 3, NULL, &size, NULL, 0) == -1) {
+        if (sysctl((int *)mib3, 3, NULL, &size, NULL, 0) == -1)
             return errno;
-        }
-
         size2 = size + (size >> 3);  // add some
         if (size2 > size) {
             ptr = malloc(size2);
-            if (ptr == NULL) {
+            if (ptr == NULL)
                 ptr = malloc(size);
-            } else {
+            else
                 size = size2;
-            }
         }
         else {
             ptr = malloc(size);
         }
-        if (ptr == NULL) {
+        if (ptr == NULL)
             return ENOMEM;
-        }
 
         if (sysctl((int *)mib3, 3, ptr, &size, NULL, 0) == -1) {
             err = errno;
             free(ptr);
-            if (err != ENOMEM) {
+            if (err != ENOMEM)
                 return err;
-            }
-
-        } else {
+        }
+        else {
             *procList = (kinfo_proc *)ptr;
             *procCount = size / sizeof(kinfo_proc);
             return 0;
@@ -130,9 +122,8 @@ psutil_get_argmax()
     int mib[] = { CTL_KERN, KERN_ARGMAX };
     size_t size = sizeof(argmax);
 
-    if (sysctl(mib, 2, &argmax, &size, NULL, 0) == 0) {
+    if (sysctl(mib, 2, &argmax, &size, NULL, 0) == 0)
         return argmax;
-    }
     return 0;
 }
 
@@ -153,9 +144,8 @@ psutil_get_arg_list(long pid)
     PyObject *arglist = NULL;
 
     // special case for PID 0 (kernel_task) where cmdline cannot be fetched
-    if (pid == 0) {
+    if (pid == 0)
         return Py_BuildValue("[]");
-    }
 
     // read argmax and allocate memory for argument space.
     argmax = psutil_get_argmax();
@@ -177,11 +167,10 @@ psutil_get_arg_list(long pid)
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
         if (EINVAL == errno) {
             // EINVAL == access denied OR nonexistent PID
-            if ( psutil_pid_exists(pid) ) {
+            if (psutil_pid_exists(pid))
                 AccessDenied();
-            } else {
+            else
                 NoSuchProcess();
-            }
         }
         goto error;
     }
@@ -201,9 +190,8 @@ psutil_get_arg_list(long pid)
 
     // skip ahead to the first argument
     for (; arg_ptr < arg_end; arg_ptr++) {
-        if (*arg_ptr != '\0') {
+        if (*arg_ptr != '\0')
             break;
-        }
     }
 
     // iterate through arguments
