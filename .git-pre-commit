@@ -14,9 +14,12 @@ if [ ! -z "$pdb" ] ; then
 fi
 
 # flake8
-flake8=`git diff --cached --name-only | grep -E '\.py$' | xargs -r flake8`
+flake8=`git diff --cached --name-only | grep -E '\.py$'`
 if [ ! -z "$flake8" ] ; then
-    echo "commit aborted: python code is not flake8-compliant"
-    echo $flake8
-    exit 1
+    flake8=`echo "$flake8" | xargs flake8`
+    if [ ! -z "$flake8" ] ; then
+        echo "commit aborted: python code is not flake8-compliant"
+        echo $flake8
+        exit 1
+    fi
 fi
