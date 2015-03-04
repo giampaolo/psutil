@@ -87,3 +87,25 @@ upload-doc:
 git-tag-release:
 	git tag -a release-`python -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
 	echo "done; now run 'git push --follow-tags' to push the new tag on the remote repo"
+
+define GIT_PRE_COMMIT_HOOK
+    #!/bin/bash
+    pdb=`git diff --cached --name-only | grep -E '\.py$$' | xargs grep -n -H -E '(pdb\.set_trace\(\))'`
+    if [ ! -z "$$pdb" ] ; then
+        echo "commit aborted: you forgot a pdb in your python code"
+        echo $$pdb
+        exit 1
+    fi
+    flake8=`git diff --cached --name-only | grep -E '\.py$$' | xargs -r flake8`
+    if [ ! -z "$$flake8" ] ; then
+        echo "commit aborted: python code is not flake8-compliant"
+        echo $$flake8
+        exit 1
+    fi
+endef
+export GIT_PRE_COMMIT_HOOK
+
+# install GIT pre-commit hooks
+install-git-hooks:
+	echo "$$GIT_PRE_COMMIT_HOOK" > .git/hooks/pre-commit
+	chmod +x .git/hooks/pre-commit

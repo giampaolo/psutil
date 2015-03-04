@@ -20,6 +20,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #594: all deprecated APIs were removed.
 - #599: [Windows] process name() can now be determined for all processes even
   when running as a limited user.
+- #602: pre-commit GIT hook.
 
 **Bug fixes**
 
