@@ -13,11 +13,11 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <ifaddrs.h>
+#include <net/if.h>
 
 #ifdef __linux
 #include <netdb.h>
 #include <linux/if_packet.h>
-#include <linux/if.h>
 #endif  // end linux
 
 #if defined(__FreeBSD__) || defined(__APPLE__)
@@ -188,7 +188,7 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
         if (py_netmask == NULL)
             goto error;
 
-#ifdef __linux
+#if defined(__linux) || defined(__FreeBSD__)
         if (ifa->ifa_flags & IFF_BROADCAST) {
             py_broadcast = psutil_convert_ipaddr(ifa->ifa_broadaddr, family);
             Py_INCREF(Py_None);
