@@ -468,9 +468,10 @@ class Process(object):
         """
         ppid = self.ppid()
         if ppid is not None:
+            ctime = self.create_time()
             try:
                 parent = Process(ppid)
-                if parent.create_time() <= self.create_time():
+                if parent.create_time() <= ctime:
                     return parent
                 # ...else ppid has been reused by another process
             except NoSuchProcess:
