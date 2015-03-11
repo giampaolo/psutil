@@ -1,0 +1,30 @@
+AIX support is experimental and incomplete at this time.
+The following functions and methods are UNSUPPORTED on the AIX platform:
+
+    psutil.Process.memory_maps
+    psutil.Process.num_ctx_switches
+
+
+Process.io_counters read count is always 0
+
+
+TestSystemAPIs.test_pid_exists_2           there are pids in /proc that don't really exist
+TestProcess.test_name                      isolated python calls execve which changes process name
+TestProcess.test_num_fds                   opening a socket doesn't create fd in /proc/pid/fd (until data is sent??)
+TestProcess.test_open_files                /dev/null shows in open_files but it isn't a file
+TestProcess.test_pid_0                     pid 0 doesn't have a name on AIX
+TestProcess.test_prog_w_funky_name         funky name test doesn't work on UNIX environments
+TestProcess.test_zombie_process            trying to create a zombie process doesn't create a zombie process on AIX
+
+TestProcess.test_memory_maps               missing API
+TestProcess.test_num_ctx_switches          missing API
+TestExampleScripts.test_pmap               missing API
+
+TestProcess.test_send_signal               unknown
+TestFetchAllProcesses.test_fetch_all       unknown
+TestProcess.test_Popen                     unknown (flaky)
+TestProcess.test_children                  unknown (flaky)
+TestProcess.test_children_recursive        unknown (flaky)
+TestProcess.test_connections               unknown (flaky)
+TestSystemAPIs.test_wait_procs_no_timeout  unknown (flaky)
+TestProcess.test_cmdline                   long args are cut from cmdline in /proc/pid/psinfo and getargs (flaky)
