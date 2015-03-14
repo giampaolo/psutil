@@ -51,6 +51,12 @@ enum {
     IOPRIO_WHO_PROCESS = 1,
 };
 
+// May happen on old RedHat versions, see:
+// https://github.com/giampaolo/psutil/issues/607
+#ifndef DUPLEX_UNKNOWN
+    #define DUPLEX_UNKNOWN 0xff
+#endif
+
 static inline int
 ioprio_get(int which, int who)
 {
