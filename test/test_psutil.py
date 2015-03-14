@@ -2467,6 +2467,7 @@ class TestFetchAllProcesses(unittest.TestCase):
 # --- Limited user tests
 # ===================================================================
 
+@unittest.skipUnless(POSIX, "UNIX only")
 @unittest.skipUnless(hasattr(os, 'getuid') and os.getuid() == 0,
                      "super user privileges are required")
 class LimitedUserTestCase(TestProcess):
