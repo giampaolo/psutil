@@ -218,6 +218,8 @@ class PosixSpecificTestCase(unittest.TestCase):
                          'send_signal', 'wait', 'children', 'as_dict']
         if LINUX and get_kernel_version() < (2, 6, 36):
             ignored_names.append('rlimit')
+        if LINUX and get_kernel_version() < (2, 6, 23):
+            ignored_names.append('num_ctx_switches')
         for name in dir(psutil.Process):
             if (name.startswith('_') or name in ignored_names):
                 continue
