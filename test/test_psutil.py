@@ -2495,9 +2495,9 @@ class LimitedUserTestCase(TestProcess):
 
     def setUp(self):
         safe_remove(TESTFN)
+        TestProcess.setUp(self)
         os.setegid(1000)
         os.seteuid(1000)
-        TestProcess.setUp(self)
 
     def tearDown(self):
         os.setegid(self.PROCESS_UID)
