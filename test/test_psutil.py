@@ -264,12 +264,14 @@ def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True):
         try:
             with open(fname, "r") as f:
                 data = f.read()
+            if not data:
+                continue
             if delete_file:
                 os.remove(fname)
             return data
         except IOError:
             time.sleep(0.001)
-    raise RuntimeError("timed out (couldn't create file)")
+    raise RuntimeError("timed out (couldn't read file)")
 
 
 def reap_children(search_all=False):
