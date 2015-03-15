@@ -336,8 +336,8 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
     unsigned int len = sizeof(cpu_set_t);
     long pid;
     int i;
-    PyObject* py_retlist;
-    PyObject *py_cpu_num;
+    PyObject* py_retlist = NULL;
+    PyObject *py_cpu_num = NULL;
 
     if (!PyArg_ParseTuple(args, "i", &pid))
         return NULL;

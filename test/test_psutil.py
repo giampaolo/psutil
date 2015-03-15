@@ -264,12 +264,14 @@ def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True):
         try:
             with open(fname, "r") as f:
                 data = f.read()
+            if not data:
+                continue
             if delete_file:
                 os.remove(fname)
             return data
         except IOError:
             time.sleep(0.001)
-    raise RuntimeError("timed out (couldn't create file)")
+    raise RuntimeError("timed out (couldn't read file)")
 
 
 def reap_children(search_all=False):
@@ -710,6 +712,10 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(logical, len(psutil.cpu_times(percpu=True)))
         self.assertGreaterEqual(logical, 1)
         #
+        with open("/proc/cpuinfo") as fd:
+            cpuinfo_data = fd.read()
+        if "physical id" not in cpuinfo_data:
+            raise unittest.SkipTest("cpuinfo doesn't include physical id")
         physical = psutil.cpu_count(logical=False)
         self.assertGreaterEqual(physical, 1)
         self.assertGreaterEqual(logical, physical)
@@ -2495,9 +2501,9 @@ class LimitedUserTestCase(TestProcess):
 
     def setUp(self):
         safe_remove(TESTFN)
+        TestProcess.setUp(self)
         os.setegid(1000)
         os.seteuid(1000)
-        TestProcess.setUp(self)
 
     def tearDown(self):
         os.setegid(self.PROCESS_UID)
