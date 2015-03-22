@@ -1157,7 +1157,7 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
 
     for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
         if (strcmp(ksp->ks_class, "net") == 0) {
-            struct ifreq ifr;
+            struct lifreq ifr;
 
             kstat_read(kc, ksp, NULL);
             if (ksp->ks_type != KSTAT_TYPE_NAMED)
@@ -1165,13 +1165,13 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
             if (strcmp(ksp->ks_class, "net") != 0)
                 continue;
 
-            strncpy(ifr.ifr_name, ksp->ks_name, sizeof(ifr.ifr_name));
-            ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
+            strncpy(ifr.lifr_name, ksp->ks_name, sizeof(ifr.lifr_name));
+            ret = ioctl(sock, SIOCGLIFFLAGS, &ifr);
             if (ret == -1)
                 continue;  // not a network interface
 
             // is up?
-            if ((ifr.ifr_flags & IFF_UP) != 0) {
+            if ((ifr.lifr_flags & IFF_UP) != 0) {
                 if ((knp = kstat_data_lookup(ksp, "link_up")) != NULL) {
                     if (knp->value.ui32 != 0u)
                         py_is_up = Py_True;
@@ -1204,12 +1204,12 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
                 speed = 0;
 
             // mtu
-            ret = ioctl(sock, SIOCGIFMTU, &ifr);
+            ret = ioctl(sock, SIOCGLIFMTU, &ifr);
             if (ret == -1)
                 goto error;
 
             py_ifc_info = Py_BuildValue("(Oiii)", py_is_up, duplex, speed,
-                                        ifr.ifr_mtu);
+                                        ifr.lifr_mtu);
             if (!py_ifc_info)
                 goto error;
             if (PyDict_SetItemString(py_retdict, ksp->ks_name, py_ifc_info))
