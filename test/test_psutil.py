@@ -755,7 +755,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(logical, len(psutil.cpu_times(percpu=True)))
         self.assertGreaterEqual(logical, 1)
         #
-        if LINUX:
+        if os.path.exists("/proc/cpuinfo"):
             with open("/proc/cpuinfo") as fd:
                 cpuinfo_data = fd.read()
             if "physical id" not in cpuinfo_data:
