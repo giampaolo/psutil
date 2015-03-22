@@ -95,13 +95,13 @@ def swap_memory():
     # ...nevertheless I can't manage to obtain the same numbers as 'swap'
     # cmdline utility, so let's parse its output (sigh!)
     p = subprocess.Popen(['/usr/bin/env', 'PATH=/usr/sbin:/sbin:%s' %
-                          os.environ['PATH'], 'swap', '-l', '-k'],
+                          os.environ['PATH'], 'swap', '-l'],
                          stdout=subprocess.PIPE)
     stdout, stderr = p.communicate()
     if PY3:
         stdout = stdout.decode(sys.stdout.encoding)
     if p.returncode != 0:
-        raise RuntimeError("'swap -l -k' failed (retcode=%s)" % p.returncode)
+        raise RuntimeError("'swap -l' failed (retcode=%s)" % p.returncode)
 
     lines = stdout.strip().split('\n')[1:]
     if not lines:
@@ -110,10 +110,8 @@ def swap_memory():
     for line in lines:
         line = line.split()
         t, f = line[-2:]
-        t = t.replace('K', '')
-        f = f.replace('K', '')
-        total += int(int(t) * 1024)
-        free += int(int(f) * 1024)
+        total += int(int(t) * 512)
+        free += int(int(f) * 512)
     used = total - free
     percent = usage_percent(used, total, _round=1)
     return _common.sswap(total, used, free, percent,
