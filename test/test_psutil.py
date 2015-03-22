@@ -1385,7 +1385,10 @@ class TestProcess(unittest.TestCase):
     def test_terminal(self):
         terminal = psutil.Process().terminal()
         if sys.stdin.isatty():
-            self.assertEqual(terminal, sh('tty'))
+            tty = sh('tty')
+            if os.path.islink(tty):
+                tty = os.path.abspath(os.readlink(tty))
+            self.assertEqual(terminal, tty)
         else:
             assert terminal, repr(terminal)
 
