@@ -1645,7 +1645,8 @@ class TestProcess(unittest.TestCase):
             if not nt.path.startswith('['):
                 assert os.path.isabs(nt.path), nt.path
                 if POSIX:
-                    assert os.path.exists(nt.path), nt.path
+                    assert os.path.exists(nt.path) or \
+                        os.path.islink(nt.path), nt.path
                 else:
                     # XXX - On Windows we have this strange behavior with
                     # 64 bit dlls: they are visible via explorer but cannot
