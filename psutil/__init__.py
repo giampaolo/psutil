@@ -468,9 +468,10 @@ class Process(object):
         """
         ppid = self.ppid()
         if ppid is not None:
+            ctime = self.create_time()
             try:
                 parent = Process(ppid)
-                if parent.create_time() <= self.create_time():
+                if parent.create_time() <= ctime:
                     return parent
                 # ...else ppid has been reused by another process
             except NoSuchProcess:
@@ -513,13 +514,10 @@ class Process(object):
         # XXX should we check creation time here rather than in
         # Process.parent()?
         if _POSIX:
-            ppid = self._proc.ppid()
+            return self._proc.ppid()
         else:
-            if self._ppid is None:
-                ppid = self._proc.ppid()
-            self._ppid = ppid
-        self._proc._ppid = ppid
-        return ppid
+            self._ppid = self._ppid or self._proc.ppid()
+            return self._ppid
 
     def name(self):
         """The process name. The return value is cached after first call."""
@@ -958,7 +956,7 @@ class Process(object):
             return 0.0
 
     def memory_maps(self, grouped=True):
-        """Return process' mapped memory regions as a list of nameduples
+        """Return process' mapped memory regions as a list of namedtuples
         whose fields are variable depending on the platform.
 
         If 'grouped' is True the mapped regions with the same 'path'
@@ -1376,7 +1374,7 @@ def cpu_times(percpu=False):
      - guest (Linux >= 2.6.24)
      - guest_nice (Linux >= 3.2.0)
 
-    When percpu is True return a list of nameduples for each CPU.
+    When percpu is True return a list of namedtuples for each CPU.
     First element of the list refers to first CPU, second element
     to second CPU and so on.
     The order of the list is consistent across calls.
@@ -1663,7 +1661,7 @@ def disk_io_counters(perdisk=False):
 
     If perdisk is True return the same information for every
     physical disk installed on the system as a dictionary
-    with partition names as the keys and the namedutuple
+    with partition names as the keys and the namedtuple
     described above as the values.
 
     On recent Windows versions 'diskperf -y' command may need to be

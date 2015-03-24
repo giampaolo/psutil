@@ -41,13 +41,12 @@ psutil_posix_getpriority(PyObject *self, PyObject *args)
     long pid;
     int priority;
     errno = 0;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
     priority = getpriority(PRIO_PROCESS, pid);
-    if (errno != 0) {
+    if (errno != 0)
         return PyErr_SetFromErrno(PyExc_OSError);
-    }
     return Py_BuildValue("i", priority);
 }
 
@@ -61,13 +60,12 @@ psutil_posix_setpriority(PyObject *self, PyObject *args)
     long pid;
     int priority;
     int retval;
-    if (! PyArg_ParseTuple(args, "li", &pid, &priority)) {
+
+    if (! PyArg_ParseTuple(args, "li", &pid, &priority))
         return NULL;
-    }
     retval = setpriority(PRIO_PROCESS, pid, priority);
-    if (retval == -1) {
+    if (retval == -1)
         return PyErr_SetFromErrno(PyExc_OSError);
-    }
     Py_RETURN_NONE;
 }
 
@@ -525,9 +523,8 @@ void init_psutil_posix(void)
     PyModule_AddIntConstant(module, "AF_LINK", AF_LINK);
 #endif
 
-    if (module == NULL) {
+    if (module == NULL)
         INITERROR;
-    }
 #if PY_MAJOR_VERSION >= 3
     return module;
 #endif

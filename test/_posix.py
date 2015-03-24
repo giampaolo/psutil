@@ -111,11 +111,14 @@ class PosixSpecificTestCase(unittest.TestCase):
     def test_process_create_time(self):
         time_ps = ps("ps --no-headers -o start -p %s" % self.pid).split(' ')[0]
         time_psutil = psutil.Process(self.pid).create_time()
-        if SUNOS:
-            time_psutil = round(time_psutil)
         time_psutil_tstamp = datetime.datetime.fromtimestamp(
             time_psutil).strftime("%H:%M:%S")
-        self.assertEqual(time_ps, time_psutil_tstamp)
+        # sometimes ps shows the time rounded up instead of down, so we check
+        # for both possible values
+        round_time_psutil = round(time_psutil)
+        round_time_psutil_tstamp = datetime.datetime.fromtimestamp(
+            round_time_psutil).strftime("%H:%M:%S")
+        self.assertIn(time_ps, [time_psutil_tstamp, round_time_psutil_tstamp])
 
     def test_process_exe(self):
         ps_pathname = ps("ps --no-headers -o command -p %s" %
@@ -218,6 +221,8 @@ class PosixSpecificTestCase(unittest.TestCase):
                          'send_signal', 'wait', 'children', 'as_dict']
         if LINUX and get_kernel_version() < (2, 6, 36):
             ignored_names.append('rlimit')
+        if LINUX and get_kernel_version() < (2, 6, 23):
+            ignored_names.append('num_ctx_switches')
         for name in dir(psutil.Process):
             if (name.startswith('_') or name in ignored_names):
                 continue

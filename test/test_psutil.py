@@ -264,12 +264,14 @@ def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True):
         try:
             with open(fname, "r") as f:
                 data = f.read()
+            if not data:
+                continue
             if delete_file:
                 os.remove(fname)
             return data
         except IOError:
             time.sleep(0.001)
-    raise RuntimeError("timed out (couldn't create file)")
+    raise RuntimeError("timed out (couldn't read file)")
 
 
 def reap_children(search_all=False):
@@ -710,6 +712,10 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(logical, len(psutil.cpu_times(percpu=True)))
         self.assertGreaterEqual(logical, 1)
         #
+        with open("/proc/cpuinfo") as fd:
+            cpuinfo_data = fd.read()
+        if "physical id" not in cpuinfo_data:
+            raise unittest.SkipTest("cpuinfo doesn't include physical id")
         physical = psutil.cpu_count(logical=False)
         self.assertGreaterEqual(physical, 1)
         self.assertGreaterEqual(logical, physical)
@@ -1769,26 +1775,27 @@ class TestProcess(unittest.TestCase):
         """)
 
         from string import Template
+        testfile = os.path.basename(TESTFN)
         tcp4_template = Template(tcp_template).substitute(
-            family=int(AF_INET), addr="127.0.0.1", testfn=TESTFN)
+            family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
         udp4_template = Template(udp_template).substitute(
-            family=int(AF_INET), addr="127.0.0.1", testfn=TESTFN)
+            family=int(AF_INET), addr="127.0.0.1", testfn=testfile)
         tcp6_template = Template(tcp_template).substitute(
-            family=int(AF_INET6), addr="::1", testfn=TESTFN)
+            family=int(AF_INET6), addr="::1", testfn=testfile)
         udp6_template = Template(udp_template).substitute(
-            family=int(AF_INET6), addr="::1", testfn=TESTFN)
+            family=int(AF_INET6), addr="::1", testfn=testfile)
 
         # launch various subprocess instantiating a socket of various
         # families and types to enrich psutil results
         tcp4_proc = pyrun(tcp4_template)
-        tcp4_addr = eval(wait_for_file(TESTFN))
+        tcp4_addr = eval(wait_for_file(testfile))
         udp4_proc = pyrun(udp4_template)
-        udp4_addr = eval(wait_for_file(TESTFN))
+        udp4_addr = eval(wait_for_file(testfile))
         if supports_ipv6():
             tcp6_proc = pyrun(tcp6_template)
-            tcp6_addr = eval(wait_for_file(TESTFN))
+            tcp6_addr = eval(wait_for_file(testfile))
             udp6_proc = pyrun(udp6_template)
-            udp6_addr = eval(wait_for_file(TESTFN))
+            udp6_addr = eval(wait_for_file(testfile))
         else:
             tcp6_proc = None
             udp6_proc = None
@@ -2494,9 +2501,9 @@ class LimitedUserTestCase(TestProcess):
 
     def setUp(self):
         safe_remove(TESTFN)
+        TestProcess.setUp(self)
         os.setegid(1000)
         os.seteuid(1000)
-        TestProcess.setUp(self)
 
     def tearDown(self):
         os.setegid(self.PROCESS_UID)

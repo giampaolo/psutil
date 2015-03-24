@@ -638,7 +638,7 @@ def disk_io_counters():
 
 
 def disk_partitions(all=False):
-    """Return mounted disk partitions as a list of nameduples"""
+    """Return mounted disk partitions as a list of namedtuples"""
     phydevs = []
     with open("/proc/filesystems", "r") as f:
         for line in f:
@@ -855,7 +855,7 @@ class Process(object):
 
         @wrap_exceptions
         def memory_maps(self):
-            """Return process's mapped memory regions as a list of nameduples.
+            """Return process's mapped memory regions as a list of named tuples.
             Fields are explained in 'man proc'; here is an updated (Apr 2012)
             version: http://goo.gl/fmebo
             """

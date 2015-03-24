@@ -204,13 +204,11 @@ proc_io_counters(PyObject* self, PyObject* args)
     char path[100];
     prusage_t info;
 
-    if (! PyArg_ParseTuple(args, "i", &pid)) {
+    if (! PyArg_ParseTuple(args, "i", &pid))
         return NULL;
-    }
     sprintf(path, "/proc/%i/usage", pid);
-    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info))) {
+    if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
-    }
 
     // On Solaris we only have 'pr_ioch' which accounts for bytes read
     // *and* written.
@@ -318,9 +316,8 @@ psutil_swap_mem(PyObject *self, PyObject *args)
     uint_t      sout = 0;
 
     kc = kstat_open();
-    if (kc == NULL) {
+    if (kc == NULL)
         return PyErr_SetFromErrno(PyExc_OSError);;
-    }
 
     k = kc->kc_chain;
     while (k != NULL) {
@@ -572,17 +569,14 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args)
     PyObject *pytuple = NULL;
     PyObject *py_retlist = PyList_New(0);
 
-    if (py_retlist == NULL) {
+    if (py_retlist == NULL)
         return NULL;
-    }
-    if (! PyArg_ParseTuple(args, "i", &pid)) {
+    if (! PyArg_ParseTuple(args, "i", &pid))
         goto error;
-    }
 
     sprintf(path, "/proc/%i/status", pid);
-    if (! psutil_file_to_struct(path, (void *)&status, sizeof(status))) {
+    if (! psutil_file_to_struct(path, (void *)&status, sizeof(status)))
         goto error;
-    }
 
     sprintf(path, "/proc/%i/xmap", pid);
     if (stat(path, &st) == -1) {
@@ -718,9 +712,8 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
             (strcmp(ksp->ks_module, "lo") != 0)) {
             goto skip;
         */
-        if ((strcmp(ksp->ks_module, "link") != 0)) {
+        if ((strcmp(ksp->ks_module, "link") != 0))
             goto next;
-        }
 
         if (kstat_read(kc, ksp, NULL) == -1) {
             errno = 0;
@@ -946,9 +939,8 @@ psutil_net_connections(PyObject *self, PyObject *args)
                 py_laddr = Py_BuildValue("(si)", lip, lport);
                 if (!py_laddr)
                     goto error;
-                if (rport != 0) {
+                if (rport != 0)
                     py_raddr = Py_BuildValue("(si)", rip, rport);
-                }
                 else {
                     py_raddr = Py_BuildValue("()");
                 }
@@ -960,9 +952,8 @@ psutil_net_connections(PyObject *self, PyObject *args)
                 py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET, SOCK_STREAM,
                                          py_laddr, py_raddr, state,
                                          processed_pid);
-                if (!py_tuple) {
+                if (!py_tuple)
                     goto error;
-                }
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
                 Py_DECREF(py_tuple);
@@ -989,12 +980,10 @@ psutil_net_connections(PyObject *self, PyObject *args)
                 py_laddr = Py_BuildValue("(si)", lip, lport);
                 if (!py_laddr)
                     goto error;
-                if (rport != 0) {
+                if (rport != 0)
                     py_raddr = Py_BuildValue("(si)", rip, rport);
-                }
-                else {
+                else
                     py_raddr = Py_BuildValue("()");
-                }
                 if (!py_raddr)
                     goto error;
                 state = tp6->tcp6ConnEntryInfo.ce_state;
@@ -1002,9 +991,8 @@ psutil_net_connections(PyObject *self, PyObject *args)
                 // add item
                 py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET6, SOCK_STREAM,
                                          py_laddr, py_raddr, state, processed_pid);
-                if (!py_tuple) {
+                if (!py_tuple)
                     goto error;
-                }
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
                 Py_DECREF(py_tuple);
@@ -1037,9 +1025,8 @@ psutil_net_connections(PyObject *self, PyObject *args)
                 py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET, SOCK_DGRAM,
                                          py_laddr, py_raddr, PSUTIL_CONN_NONE,
                                          processed_pid);
-                if (!py_tuple) {
+                if (!py_tuple)
                     goto error;
-                }
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
                 Py_DECREF(py_tuple);
@@ -1047,7 +1034,9 @@ psutil_net_connections(PyObject *self, PyObject *args)
         }
 #if defined(AF_INET6)
         // UDPv6
-        else if (mibhdr->level == MIB2_UDP6 || mibhdr->level == MIB2_UDP6_ENTRY) {
+        else if (mibhdr->level == MIB2_UDP6 ||
+                    mibhdr->level == MIB2_UDP6_ENTRY)
+            {
             ude6 = (mib2_udp6Entry_t *)databuf.buf;
             num_ent = mibhdr->len / sizeof(mib2_udp6Entry_t);
             for (i = 0; i < num_ent; i++, ude6++) {
@@ -1065,9 +1054,8 @@ psutil_net_connections(PyObject *self, PyObject *args)
                 py_tuple = Py_BuildValue("(iiiNNiI)", -1, AF_INET6, SOCK_DGRAM,
                                          py_laddr, py_raddr, PSUTIL_CONN_NONE,
                                          processed_pid);
-                if (!py_tuple) {
+                if (!py_tuple)
                     goto error;
-                }
                 if (PyList_Append(py_retlist, py_tuple))
                     goto error;
                 Py_DECREF(py_tuple);
@@ -1393,9 +1381,8 @@ void init_psutil_sunos(void)
     PyModule_AddIntConstant(module, "TCPS_BOUND", TCPS_BOUND);
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
-    if (module == NULL) {
+    if (module == NULL)
         INITERROR;
-    }
 #if PY_MAJOR_VERSION >= 3
     return module;
 #endif

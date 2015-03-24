@@ -5,6 +5,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Enhancements**
 
+- #250: new psutil.net_if_stats() returning NIC statistics (isup, duplex,
+  speed, MTU).
 - #376: new psutil.net_if_addrs() returning all NIC addresses a-la ifconfig.
 - #469: on Python >= 3.4 ``IOPRIO_CLASS_*`` and ``*_PRIORITY_CLASS`` constants
   returned by psutil.Process' ionice() and nice() methods are enums instead of
@@ -16,6 +18,9 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #589: Process.cpu_affinity() accepts any kind of iterable (set, tuple, ...),
   not only lists.
 - #594: all deprecated APIs were removed.
+- #599: [Windows] process name() can now be determined for all processes even
+  when running as a limited user.
+- #602: pre-commit GIT hook.
 
 **Bug fixes**
 
@@ -30,6 +35,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #586: [FreeBSD] cpu_affinity() segfaults on set in case an invalid CPU
   number is provided.
 - #593: [FreeBSD] Process().memory_maps() segfaults.
+- #606: Process.parent() may swallow NoSuchProcess exceptions.
 
 
 2.2.1 - 2015-02-02

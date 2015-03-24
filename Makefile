@@ -87,3 +87,8 @@ upload-doc:
 git-tag-release:
 	git tag -a release-`python -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
 	echo "done; now run 'git push --follow-tags' to push the new tag on the remote repo"
+
+# install GIT pre-commit hook
+install-git-hooks:
+	cp .git-pre-commit .git/hooks/pre-commit
+	chmod +x .git/hooks/pre-commit

@@ -14,7 +14,10 @@ HIGHER PRIORITY
  * #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
    lm-sensors lib).
 
- * #269: expose network ifaces RX/TW queues.
+ * #269: expose network ifaces RX/TW queues. This should probably go into
+   net_if_stats(). Figure out on what platforms this is supported:
+   Linux: yes
+   Others: ?
 
  * Process.threads(): thread names; patch for OSX available at:
    https://code.google.com/p/plcrashreporter/issues/detail?id=65
@@ -85,10 +88,18 @@ DEBATABLE
    Also, we can probably reimplement wait_pid() on POSIX which is currently
    implemented as a busy-loop.
 
- * Certain systems (XXX figure out which ones exactly) provide CPU times about
-   process children. On those systems Process.cpu_times() might return
-   a (user, system, user_children, system_children) ntuple.
-   Also, os.times() provides 'elapsed' times as well.
+ * Certain systems provide CPU times about process children. On those systems
+   Process.cpu_times() might return a (user, system, user_children,
+   system_children) ntuple.
+   * Linux: /proc/{PID}/stat
+   * Solaris: pr_cutime and pr_cstime
+   * FreeBSD: none
+   * OSX: none
+   * Windows: none
+
+ * ...also, os.times() provides 'elapsed' times as well.
+
+ * ...also Linux provides guest_time and cguest_time.
 
  * Enrich exception classes hierarchy on Python >= 3.3 / post PEP-3151 so that:
    - NoSuchProcess inherits from ProcessLookupError

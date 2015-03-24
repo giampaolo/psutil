@@ -67,7 +67,7 @@ CPU
   - **guest** *(Linux 2.6.24+)*
   - **guest_nice** *(Linux 3.2.0+)*
 
-  When *percpu* is ``True`` return a list of nameduples for each logical CPU
+  When *percpu* is ``True`` return a list of namedtuples for each logical CPU
   on the system.
   First element of the list refers to first CPU, second element to second CPU
   and so on.
@@ -275,7 +275,7 @@ Disks
 
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
-  the namedutuple described above as the values.
+  the namedtuple described above as the values.
   See `examples/iotop.py <https://github.com/giampaolo/psutil/blob/master/examples/iotop.py>`__
   for an example application.
 
@@ -322,7 +322,7 @@ Network
 
 .. function:: net_connections(kind='inet')
 
-  Return system-wide socket connections as a list of namedutples.
+  Return system-wide socket connections as a list of namedtuples.
   Every namedtuple provides 7 attributes:
 
   - **fd**: the socket file descriptor, if retrievable, else ``-1``.
@@ -733,7 +733,7 @@ Process class
   .. method:: uids()
 
      The **real**, **effective** and **saved** user ids of this process as a
-     nameduple. This is the same as
+     namedtuple. This is the same as
      `os.getresuid() <http://docs.python.org//library/os.html#os.getresuid>`__
      but can be used for every process PID.
 
@@ -742,7 +742,7 @@ Process class
   .. method:: gids()
 
      The **real**, **effective** and **saved** group ids of this process as a
-     nameduple. This is the same as
+     namedtuple. This is the same as
      `os.getresgid() <http://docs.python.org//library/os.html#os.getresgid>`__
      but can be used for every process PID.
 
@@ -1003,7 +1003,7 @@ Process class
 
   .. method:: memory_maps(grouped=True)
 
-     Return process's mapped memory regions as a list of nameduples whose
+     Return process's mapped memory regions as a list of namedtuples whose
      fields are variable depending on the platform. As such, portable
      applications should rely on namedtuple's `path` and `rss` fields only.
      This method is useful to obtain a detailed representation of process
@@ -1066,7 +1066,7 @@ Process class
 
   .. method:: connections(kind="inet")
 
-    Return socket connections opened by process as a list of namedutples.
+    Return socket connections opened by process as a list of namedtuples.
     To get system-wide connections use :func:`psutil.net_connections()`.
     Every namedtuple provides 6 attributes:
 
