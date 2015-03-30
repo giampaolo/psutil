@@ -87,9 +87,9 @@ pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 ntpinfo = namedtuple(
-   'ntpinfo', ['num_handles', 'ctx_switches', 'user_time', 'kernel_time',
-               'create_time', 'num_threads', 'io_rcount', 'io_wcount',
-               'io_rbytes', 'io_wbytes'])
+    'ntpinfo', ['num_handles', 'ctx_switches', 'user_time', 'kernel_time',
+                'create_time', 'num_threads', 'io_rcount', 'io_wcount',
+                'io_rbytes', 'io_wbytes'])
 
 # set later from __init__.py
 NoSuchProcess = None
