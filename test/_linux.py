@@ -61,30 +61,6 @@ def get_mac_address(ifname):
         return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 
 
-def get_nic_names():
-    """Find the names of all available network interfaces."""
-    # Thanks to:
-    # https://code.fluendo.com/flumotion/svn/flumotion/trunk/flumotion/common/
-    #     netutils.py
-    ptr_size = len(struct.pack('P', 0))
-    size = 24 + 2 * (ptr_size)
-    max_possible = 128
-    inbytes = max_possible * size
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    with contextlib.closing(s):
-        names = array.array('B', b'\0' * inbytes)
-        outbytes = struct.unpack('iP', fcntl.ioctl(
-            s.fileno(),
-            SIOCGIFCONF,
-            struct.pack('iP', inbytes, names.buffer_info()[0])))[0]
-        namestr = names.tostring()
-        ret = [namestr[i:i + size].split(b'\0', 1)[0]
-               for i in range(0, outbytes, size)]
-        if PY3:
-            ret = [x.decode() for x in ret]
-        return ret
-
-
 class LinuxSpecificTestCase(unittest.TestCase):
 
     @unittest.skipIf(
@@ -228,10 +204,6 @@ class LinuxSpecificTestCase(unittest.TestCase):
                 self.assertIn(name, nics.keys())
         self.assertEqual(len(nics), found, msg="%s\n---\n%s" % (
             pprint.pformat(nics), out))
-
-    def test_net_if_names_2(self):
-        self.assertEqual(sorted(get_nic_names()),
-                         sorted(psutil.net_if_addrs()))
 
     # --- tests for specific kernel versions
 
