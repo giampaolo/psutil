@@ -279,14 +279,38 @@ def cpu_count_logical():
 
 
 def cpu_count_physical():
-    """Return the number of physical CPUs in the system."""
+    """Return the number of physical cores in the system."""
     with open('/proc/cpuinfo', 'rb') as f:
-        found = set()
+        # For each 'physical id' found, find its corresponding
+        # 'cpu cores' count and then total them up.
+        proc_core_counts = {}
+        current_proc_id = None
+        current_core_count = 0
         for line in f:
-            if line.lower().startswith(b'physical id'):
-                found.add(line.strip())
-    # mimic os.cpu_count()
-    return len(found) if found else None
+            line = line.lower().strip()
+            if line:
+                line_info = line.split(':')
+                if len(line_info) == 2:
+                    info_key, info_value = line_info
+                    if info_key.startswith(b'physical id'):
+                        current_proc_id = info_value.strip()
+                    if info_key.startswith(b'cpu cores'):
+                        current_core_count = int(info_value)
+            else:
+                # New section of cpuinfo
+                current_proc_id = None
+                current_core_count = 0
+
+            if current_proc_id and current_core_count:
+                proc_core_counts[current_proc_id] = current_core_count
+                current_proc_id = None
+                current_core_count = 0
+
+    if proc_core_counts:
+        return sum(proc_core_counts.values())
+    else:
+        # mimic os.cpu_count()
+        return None
 
 
 # --- other system functions
