@@ -111,9 +111,9 @@ Memory
 .. code-block:: python
 
     >>> psutil.virtual_memory()
-    svmem(total=8374149120L, available=2081050624L, percent=75.1, used=8074080256L, free=300068864L, active=3294920704, inactive=1361616896, buffers=529895424L, cached=1251086336)
+    svmem(total=8374149120, available=2081050624, percent=75.1, used=8074080256, free=300068864, active=3294920704, inactive=1361616896, buffers=529895424, cached=1251086336)
     >>> psutil.swap_memory()
-    sswap(total=2097147904L, used=296128512L, free=1801019392L, percent=14.1, sin=304193536, sout=677842944)
+    sswap(total=2097147904, used=296128512, free=1801019392, percent=14.1, sin=304193536, sout=677842944)
     >>>
 
 Disks
