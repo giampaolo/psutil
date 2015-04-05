@@ -19,7 +19,7 @@
 #include <linux/if_packet.h>
 #endif  // end linux
 
-#if defined(__FreeBSD__) || defined(__APPLE__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
 #include <netdb.h>
 #include <netinet/in.h>
 #include <net/if_dl.h>
