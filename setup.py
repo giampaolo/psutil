@@ -126,6 +126,7 @@ elif sys.platform.startswith("openbsd"):
             'psutil/_psutil_common.c',
             'psutil/arch/bsd/process_info_openbsd.c'
         ],
+        define_macros=[VERSION_MACRO],
         libraries=["kvm"]),
         posix_extension,
     ]
