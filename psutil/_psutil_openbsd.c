@@ -1060,7 +1060,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args)
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
-    long cpu_time[CPUSTATES];
+    uint64_t cpu_time[CPUSTATES];
 
     for (i = 0; i < ncpu; i++) {
         // per-cpu info
