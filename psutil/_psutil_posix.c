@@ -116,7 +116,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family)
         data = (const char *)lladdr->sll_addr;
     }
 #endif
-#if defined(__FreeBSD__) || defined(__APPLE__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
     else if (addr->sa_family == AF_LINK) {
         // Note: prior to Python 3.4 socket module does not expose
         // AF_LINK so we'll do.
@@ -519,7 +519,7 @@ void init_psutil_posix(void)
     PyObject *module = Py_InitModule("_psutil_posix", PsutilMethods);
 #endif
 
-#if defined(__FreeBSD__) || defined(__APPLE__) || defined(__sun)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__sun)
     PyModule_AddIntConstant(module, "AF_LINK", AF_LINK);
 #endif
 
