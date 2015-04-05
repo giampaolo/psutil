@@ -12,11 +12,14 @@ import functools
 import os
 import socket
 import stat
-import warnings
 try:
     import threading
 except ImportError:
     import dummy_threading as threading
+try:
+    import enum  # py >= 3.4
+except ImportError:
+    enum = None
 
 from collections import namedtuple
 from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
@@ -51,6 +54,18 @@ CONN_LAST_ACK = "LAST_ACK"
 CONN_LISTEN = "LISTEN"
 CONN_CLOSING = "CLOSING"
 CONN_NONE = "NONE"
+
+if enum is None:
+    NIC_DUPLEX_FULL = 2
+    NIC_DUPLEX_HALF = 1
+    NIC_DUPLEX_UNKNOWN = 0
+else:
+    class NicDuplex(enum.IntEnum):
+        NIC_DUPLEX_FULL = 2
+        NIC_DUPLEX_HALF = 1
+        NIC_DUPLEX_UNKNOWN = 0
+
+    globals().update(NicDuplex.__members__)
 
 
 # --- functions
@@ -108,43 +123,6 @@ def memoize(fun):
     return wrapper
 
 
-# http://code.activestate.com/recipes/577819-deprecated-decorator/
-def deprecated(replacement=None):
-    """A decorator which can be used to mark functions as deprecated."""
-    def outer(fun):
-        msg = "psutil.%s is deprecated" % fun.__name__
-        if replacement is not None:
-            msg += "; use %s instead" % replacement
-        if fun.__doc__ is None:
-            fun.__doc__ = msg
-
-        @functools.wraps(fun)
-        def inner(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            return fun(*args, **kwargs)
-
-        return inner
-    return outer
-
-
-def deprecated_method(replacement):
-    """A decorator which can be used to mark a method as deprecated
-    'replcement' is the method name which will be called instead.
-    """
-    def outer(fun):
-        msg = "%s() is deprecated; use %s() instead" % (
-            fun.__name__, replacement)
-        if fun.__doc__ is None:
-            fun.__doc__ = msg
-
-        @functools.wraps(fun)
-        def inner(self, *args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
-            return getattr(self, replacement)(*args, **kwargs)
-        return inner
-    return outer
-
-
 def isfile_strict(path):
     """Same as os.path.isfile() but does not swallow EACCES / EPERM
     exceptions, see:
@@ -158,6 +136,30 @@ def isfile_strict(path):
         return False
     else:
         return stat.S_ISREG(st.st_mode)
+
+
+def sockfam_to_enum(num):
+    """Convert a numeric socket family value to an IntEnum member.
+    If it's not a known member, return the numeric value itself.
+    """
+    if enum is None:
+        return num
+    try:
+        return socket.AddressFamily(num)
+    except (ValueError, AttributeError):
+        return num
+
+
+def socktype_to_enum(num):
+    """Convert a numeric socket type value to an IntEnum member.
+    If it's not a known member, return the numeric value itself.
+    """
+    if enum is None:
+        return num
+    try:
+        return socket.AddressType(num)
+    except (ValueError, AttributeError):
+        return num
 
 
 # --- Process.connections() 'kind' parameter mapping
@@ -184,7 +186,7 @@ if AF_UNIX is not None:
         "unix": ([AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
     })
 
-del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM, socket
+del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
 
 
 # --- namedtuples for psutil.* system-related functions
@@ -210,6 +212,10 @@ suser = namedtuple('suser', ['name', 'terminal', 'host', 'started'])
 # psutil.net_connections()
 sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
                              'status', 'pid'])
+# psutil.net_if_addrs()
+snic = namedtuple('snic', ['family', 'address', 'netmask', 'broadcast'])
+# psutil.net_if_stats()
+snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
 
 
 # --- namedtuples for psutil.Process methods
@@ -233,24 +239,6 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 pionice = namedtuple('pionice', ['ioclass', 'value'])
 # psutil.Process.ctx_switches()
 pctxsw = namedtuple('pctxsw', ['voluntary', 'involuntary'])
-
-
-# --- misc
-
-# backward compatibility layer for Process.connections() ntuple
-class pconn(
-    namedtuple('pconn',
-               ['fd', 'family', 'type', 'laddr', 'raddr', 'status'])):
-    __slots__ = ()
-
-    @property
-    def local_address(self):
-        warnings.warn("'local_address' field is deprecated; use 'laddr'"
-                      "instead", category=DeprecationWarning, stacklevel=2)
-        return self.laddr
-
-    @property
-    def remote_address(self):
-        warnings.warn("'remote_address' field is deprecated; use 'raddr'"
-                      "instead", category=DeprecationWarning, stacklevel=2)
-        return self.raddr
+# psutil.Process.connections()
+pconn = namedtuple('pconn', ['fd', 'family', 'type', 'laddr', 'raddr',
+                             'status'])

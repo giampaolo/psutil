@@ -11,11 +11,12 @@ import functools
 import os
 from collections import namedtuple
 
-from psutil import _common
-from psutil import _psposix
-from psutil._common import conn_tmap, usage_percent, isfile_strict
-import _psutil_osx as cext
-import _psutil_posix
+from . import _common
+from . import _psposix
+from . import _psutil_osx as cext
+from . import _psutil_posix as cext_posix
+from ._common import conn_tmap, usage_percent, isfile_strict
+from ._common import sockfam_to_enum, socktype_to_enum
 
 
 __extra__all__ = []
@@ -23,6 +24,7 @@ __extra__all__ = []
 # --- constants
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+AF_LINK = cext_posix.AF_LINK
 
 # http://students.mimuw.edu.pl/lxr/source/include/net/tcp_states.h
 TCP_STATUSES = {
@@ -65,6 +67,7 @@ pmmap_ext = namedtuple(
 
 # set later from __init__.py
 NoSuchProcess = None
+ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
 
@@ -165,11 +168,24 @@ def net_connections(kind='inet'):
     return ret
 
 
+def net_if_stats():
+    """Get NIC stats (isup, duplex, speed, mtu)."""
+    names = net_io_counters().keys()
+    ret = {}
+    for name in names:
+        isup, duplex, speed, mtu = cext_posix.net_if_stats(name)
+        if hasattr(_common, 'NicDuplex'):
+            duplex = _common.NicDuplex(duplex)
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+    return ret
+
+
 pids = cext.pids
 pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage
 net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
+net_if_addrs = cext_posix.net_if_addrs
 
 
 def wrap_exceptions(fun):
@@ -182,10 +198,14 @@ def wrap_exceptions(fun):
             return fun(self, *args, **kwargs)
         except OSError as err:
             # support for private module import
-            if NoSuchProcess is None or AccessDenied is None:
+            if (NoSuchProcess is None or AccessDenied is None or
+                    ZombieProcess is None):
                 raise
             if err.errno == errno.ESRCH:
-                raise NoSuchProcess(self.pid, self._name)
+                if not pid_exists(self.pid):
+                    raise NoSuchProcess(self.pid, self._name)
+                else:
+                    raise ZombieProcess(self.pid, self._name, self._ppid)
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
             raise
@@ -195,11 +215,12 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name"]
+    __slots__ = ["pid", "_name", "_ppid"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
+        self._ppid = None
 
     @wrap_exceptions
     def name(self):
@@ -292,6 +313,8 @@ class Process(object):
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
             status = TCP_STATUSES[status]
+            fam = sockfam_to_enum(fam)
+            type = socktype_to_enum(type)
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
         return ret
@@ -314,11 +337,11 @@ class Process(object):
 
     @wrap_exceptions
     def nice_get(self):
-        return _psutil_posix.getpriority(self.pid)
+        return cext_posix.getpriority(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
-        return _psutil_posix.setpriority(self.pid, value)
+        return cext_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def status(self):

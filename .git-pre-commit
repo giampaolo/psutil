@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# This script gets executed on "git commit -am '...'".
+# You can install it with "make install-git-hooks".
+
+# pdb
+pdb=`git diff --cached --name-only | \
+         grep -E '\.py$' | \
+         xargs grep -n -H -E '(pdb\.set_trace\(\))'`
+if [ ! -z "$pdb" ] ; then
+    echo "commit aborted: you forgot a pdb in your python code"
+    echo $pdb
+    exit 1
+fi
+
+# flake8
+flake8=`git diff --cached --name-only | grep -E '\.py$'`
+if [ ! -z "$flake8" ] ; then
+    flake8=`echo "$flake8" | xargs flake8`
+    if [ ! -z "$flake8" ] ; then
+        echo "commit aborted: python code is not flake8-compliant"
+        echo $flake8
+        exit 1
+    fi
+fi

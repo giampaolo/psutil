@@ -18,9 +18,8 @@ HANDLE
 psutil_token_from_handle(HANDLE hProcess) {
     HANDLE hToken = NULL;
 
-    if (! OpenProcessToken(hProcess, TOKEN_QUERY, &hToken)) {
+    if (! OpenProcessToken(hProcess, TOKEN_QUERY, &hToken))
         return PyErr_SetFromWindowsErr(0);
-    }
     return hToken;
 }
 
@@ -50,10 +49,8 @@ psutil_has_system_privilege(HANDLE hProcess) {
     TOKEN_PRIVILEGES *tp = NULL;
     HANDLE hToken = psutil_token_from_handle(hProcess);
 
-    if (NULL == hToken) {
+    if (NULL == hToken)
         return -1;
-    }
-
     // call GetTokenInformation first to get the buffer size
     if (! GetTokenInformation(hToken, TokenPrivileges, NULL, 0, &dwSize)) {
         dwRetval = GetLastError();
@@ -140,14 +137,11 @@ psutil_set_privilege(HANDLE hToken, LPCTSTR Privilege, BOOL bEnablePrivilege)
     tpPrevious.PrivilegeCount = 1;
     tpPrevious.Privileges[0].Luid = luid;
 
-    if (bEnablePrivilege) {
+    if (bEnablePrivilege)
         tpPrevious.Privileges[0].Attributes |= (SE_PRIVILEGE_ENABLED);
-    }
-
-    else {
+    else
         tpPrevious.Privileges[0].Attributes ^=
             (SE_PRIVILEGE_ENABLED & tpPrevious.Privileges[0].Attributes);
-    }
 
     AdjustTokenPrivileges(
         hToken,
@@ -213,15 +207,12 @@ psutil_unset_se_debug()
                           &hToken)
        ) {
         if (GetLastError() == ERROR_NO_TOKEN) {
-            if (! ImpersonateSelf(SecurityImpersonation)) {
+            if (! ImpersonateSelf(SecurityImpersonation))
                 return 0;
-            }
-
             if (!OpenThreadToken(GetCurrentThread(),
                                  TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
                                  FALSE,
-                                 &hToken)
-               )
+                                 &hToken))
             {
                 return 0;
             }
@@ -229,9 +220,8 @@ psutil_unset_se_debug()
     }
 
     // now disable SeDebug
-    if (! psutil_set_privilege(hToken, SE_DEBUG_NAME, FALSE)) {
+    if (! psutil_set_privilege(hToken, SE_DEBUG_NAME, FALSE))
         return 0;
-    }
 
     CloseHandle(hToken);
     return 1;

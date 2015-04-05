@@ -13,17 +13,19 @@ import subprocess
 import sys
 from collections import namedtuple
 
-from psutil import _common
-from psutil import _psposix
-from psutil._common import usage_percent, isfile_strict
-from psutil._compat import PY3
-import _psutil_posix
-import _psutil_sunos as cext
+from . import _common
+from . import _psposix
+from . import _psutil_posix as cext_posix
+from . import _psutil_sunos as cext
+from ._common import isfile_strict, socktype_to_enum, sockfam_to_enum
+from ._common import usage_percent
+from ._compat import PY3
 
 
 __extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
+AF_LINK = cext_posix.AF_LINK
 
 CONN_IDLE = "IDLE"
 CONN_BOUND = "BOUND"
@@ -64,6 +66,7 @@ pmmap_ext = namedtuple(
 
 # set later from __init__.py
 NoSuchProcess = None
+ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
 
@@ -72,6 +75,7 @@ TimeoutExpired = None
 disk_io_counters = cext.disk_io_counters
 net_io_counters = cext.net_io_counters
 disk_usage = _psposix.disk_usage
+net_if_addrs = cext_posix.net_if_addrs
 
 
 def virtual_memory():
@@ -210,7 +214,7 @@ def net_connections(kind, _pid=-1):
                          % (kind, ', '.join([repr(x) for x in cmap])))
     families, types = _common.conn_tmap[kind]
     rawlist = cext.net_connections(_pid, families, types)
-    ret = []
+    ret = set()
     for item in rawlist:
         fd, fam, type_, laddr, raddr, status, pid = item
         if fam not in families:
@@ -218,11 +222,24 @@ def net_connections(kind, _pid=-1):
         if type_ not in types:
             continue
         status = TCP_STATUSES[status]
+        fam = sockfam_to_enum(fam)
+        type_ = socktype_to_enum(type_)
         if _pid == -1:
             nt = _common.sconn(fd, fam, type_, laddr, raddr, status, pid)
         else:
             nt = _common.pconn(fd, fam, type_, laddr, raddr, status)
-        ret.append(nt)
+        ret.add(nt)
+    return list(ret)
+
+
+def net_if_stats():
+    """Get NIC stats (isup, duplex, speed, mtu)."""
+    ret = cext.net_if_stats()
+    for name, items in ret.items():
+        isup, duplex, speed, mtu = items
+        if hasattr(_common, 'NicDuplex'):
+            duplex = _common.NicDuplex(duplex)
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
     return ret
 
 
@@ -235,13 +252,17 @@ def wrap_exceptions(fun):
             return fun(self, *args, **kwargs)
         except EnvironmentError as err:
             # support for private module import
-            if NoSuchProcess is None or AccessDenied is None:
+            if (NoSuchProcess is None or AccessDenied is None or
+                    ZombieProcess is None):
                 raise
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if
             # process is gone in meantime.
             if err.errno in (errno.ENOENT, errno.ESRCH):
-                raise NoSuchProcess(self.pid, self._name)
+                if not pid_exists(self.pid):
+                    raise NoSuchProcess(self.pid, self._name)
+                else:
+                    raise ZombieProcess(self.pid, self._name, self._ppid)
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
             raise
@@ -251,11 +272,12 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name"]
+    __slots__ = ["pid", "_name", "_ppid"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
+        self._ppid = None
 
     @wrap_exceptions
     def name(self):
@@ -292,9 +314,11 @@ class Process(object):
         # Note: tested on Solaris 11; on Open Solaris 5 everything is
         # fine.
         try:
-            return _psutil_posix.getpriority(self.pid)
+            return cext_posix.getpriority(self.pid)
         except EnvironmentError as err:
-            if err.errno in (errno.ENOENT, errno.ESRCH):
+            # 48 is 'operation not supported' but errno does not expose
+            # it. It occurs for low system pids.
+            if err.errno in (errno.ENOENT, errno.ESRCH, 48):
                 if pid_exists(self.pid):
                     raise AccessDenied(self.pid, self._name)
             raise
@@ -307,7 +331,7 @@ class Process(object):
             # The process actually exists though, as it has a name,
             # creation time, etc.
             raise AccessDenied(self.pid, self._name)
-        return _psutil_posix.setpriority(self.pid, value)
+        return cext_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def ppid(self):

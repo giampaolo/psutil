@@ -9,14 +9,15 @@
 import errno
 import functools
 import os
-import sys
+import xml.etree.ElementTree as ET
 from collections import namedtuple
 
-from psutil import _common
-from psutil import _psposix
-from psutil._common import conn_tmap, usage_percent
-import _psutil_bsd as cext
-import _psutil_posix
+from . import _common
+from . import _psposix
+from . import _psutil_bsd as cext
+from . import _psutil_posix as cext_posix
+from ._common import conn_tmap, usage_percent, sockfam_to_enum
+from ._common import socktype_to_enum
 
 
 __extra__all__ = []
@@ -49,6 +50,7 @@ TCP_STATUSES = {
 }
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+AF_LINK = cext_posix.AF_LINK
 
 # extend base mem ntuple with BSD-specific memory metrics
 svmem = namedtuple(
@@ -64,6 +66,7 @@ pmmap_ext = namedtuple(
 
 # set later from __init__.py
 NoSuchProcess = None
+ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
 
@@ -136,19 +139,21 @@ def cpu_count_physical():
     # os.cpu_count() and return None.
     if sys.platform.startswith("openbsd"):
         return cext.cpu_count_logical()
+    ret = None
     s = cext.cpu_count_phys()
     if s is not None:
         # get rid of padding chars appended at the end of the string
         index = s.rfind("</groups>")
         if index != -1:
             s = s[:index + 9]
-            if sys.version_info >= (2, 5):
-                import xml.etree.ElementTree as ET
-                root = ET.fromstring(s)
-                return len(root.findall('group/children/group/cpu')) or None
-            else:
-                s = s[s.find('<children>'):]
-                return s.count("<cpu") or None
+            root = ET.fromstring(s)
+            ret = len(root.findall('group/children/group/cpu')) or None
+    if not ret:
+        # If logical CPUs are 1 it's obvious we'll have only 1
+        # physical CPU.
+        if cpu_count_logical() == 1:
+            return 1
+    return ret
 
 
 def boot_time():
@@ -188,15 +193,36 @@ def net_connections(kind):
         raise ValueError("invalid %r kind argument; choose between %s"
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
     families, types = conn_tmap[kind]
-    ret = []
+    ret = set()
     rawlist = cext.net_connections()
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
         # TODO: apply filter at C level
         if fam in families and type in types:
-            status = TCP_STATUSES[status]
+            try:
+                status = TCP_STATUSES[status]
+            except KeyError:
+                # XXX: Not sure why this happens. I saw this occurring
+                # with IPv6 sockets opened by 'vim'. Those sockets
+                # have a very short lifetime so maybe the kernel
+                # can't initialize their status?
+                status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
+            fam = sockfam_to_enum(fam)
+            type = socktype_to_enum(type)
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
-            ret.append(nt)
+            ret.add(nt)
+    return list(ret)
+
+
+def net_if_stats():
+    """Get NIC stats (isup, duplex, speed, mtu)."""
+    names = net_io_counters().keys()
+    ret = {}
+    for name in names:
+        isup, duplex, speed, mtu = cext_posix.net_if_stats(name)
+        if hasattr(_common, 'NicDuplex'):
+            duplex = _common.NicDuplex(duplex)
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
     return ret
 
 
@@ -205,6 +231,7 @@ pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage
 net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
+net_if_addrs = cext_posix.net_if_addrs
 
 
 def wrap_exceptions(fun):
@@ -217,10 +244,14 @@ def wrap_exceptions(fun):
             return fun(self, *args, **kwargs)
         except OSError as err:
             # support for private module import
-            if NoSuchProcess is None or AccessDenied is None:
+            if (NoSuchProcess is None or AccessDenied is None or
+                    ZombieProcess is None):
                 raise
             if err.errno == errno.ESRCH:
-                raise NoSuchProcess(self.pid, self._name)
+                if not pid_exists(self.pid):
+                    raise NoSuchProcess(self.pid, self._name)
+                else:
+                    raise ZombieProcess(self.pid, self._name, self._ppid)
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
             raise
@@ -230,11 +261,12 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name"]
+    __slots__ = ["pid", "_name", "_ppid"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
+        self._ppid = None
 
     @wrap_exceptions
     def name(self):
@@ -316,6 +348,8 @@ class Process(object):
         ret = []
         for item in rawlist:
             fd, fam, type, laddr, raddr, status = item
+            fam = sockfam_to_enum(fam)
+            type = socktype_to_enum(type)
             status = TCP_STATUSES[status]
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
@@ -333,11 +367,11 @@ class Process(object):
 
     @wrap_exceptions
     def nice_get(self):
-        return _psutil_posix.getpriority(self.pid)
+        return cext_posix.getpriority(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
-        return _psutil_posix.setpriority(self.pid, value)
+        return cext_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def status(self):
@@ -391,3 +425,31 @@ class Process(object):
         proc_cwd = _not_implemented
         memory_maps = _not_implemented
         num_fds = _not_implemented
+
+    @wrap_exceptions
+    def cpu_affinity_get(self):
+        return cext.proc_cpu_affinity_get(self.pid)
+
+    @wrap_exceptions
+    def cpu_affinity_set(self, cpus):
+        # Pre-emptively check if CPUs are valid because the C
+        # function has a weird behavior in case of invalid CPUs,
+        # see: https://github.com/giampaolo/psutil/issues/586
+        allcpus = tuple(range(len(per_cpu_times())))
+        for cpu in cpus:
+            if cpu not in allcpus:
+                raise ValueError("invalid CPU #%i (choose between %s)"
+                                 % (cpu, allcpus))
+        try:
+            cext.proc_cpu_affinity_set(self.pid, cpus)
+        except OSError as err:
+            # 'man cpuset_setaffinity' about EDEADLK:
+            # <<the call would leave a thread without a valid CPU to run
+            # on because the set does not overlap with the thread's
+            # anonymous mask>>
+            if err.errno in (errno.EINVAL, errno.EDEADLK):
+                for cpu in cpus:
+                    if cpu not in allcpus:
+                        raise ValueError("invalid CPU #%i (choose between %s)"
+                                         % (cpu, allcpus))
+            raise

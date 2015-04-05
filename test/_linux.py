@@ -7,16 +7,58 @@
 """Linux specific tests.  These are implicitly run by test_psutil.py."""
 
 from __future__ import division
+import array
+import contextlib
+import fcntl
 import os
+import pprint
 import re
+import socket
+import struct
 import sys
 import time
 
 from test_psutil import POSIX, TOLERANCE, TRAVIS
 from test_psutil import (skip_on_not_implemented, sh, get_test_subprocess,
-                         retry_before_failing, get_kernel_version, unittest)
+                         retry_before_failing, get_kernel_version, unittest,
+                         which)
 
 import psutil
+from psutil._compat import PY3
+
+
+SIOCGIFADDR = 0x8915
+SIOCGIFCONF = 0x8912
+SIOCGIFHWADDR = 0x8927
+
+
+def get_ipv4_address(ifname):
+    ifname = ifname[:15]
+    if PY3:
+        ifname = bytes(ifname, 'ascii')
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    with contextlib.closing(s):
+        return socket.inet_ntoa(
+            fcntl.ioctl(s.fileno(),
+                        SIOCGIFADDR,
+                        struct.pack('256s', ifname))[20:24])
+
+
+def get_mac_address(ifname):
+    ifname = ifname[:15]
+    if PY3:
+        ifname = bytes(ifname, 'ascii')
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    with contextlib.closing(s):
+        info = fcntl.ioctl(
+            s.fileno(), SIOCGIFHWADDR, struct.pack('256s', ifname))
+        if PY3:
+            def ord(x):
+                return x
+        else:
+            import __builtin__
+            ord = __builtin__.ord
+        return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 
 
 class LinuxSpecificTestCase(unittest.TestCase):
@@ -138,6 +180,30 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertIn('guest_nice', fields)
         else:
             self.assertNotIn('guest_nice', fields)
+
+    def test_net_if_addrs_ips(self):
+        for name, addrs in psutil.net_if_addrs().items():
+            for addr in addrs:
+                if addr.family == psutil.AF_LINK:
+                    self.assertEqual(addr.address, get_mac_address(name))
+                elif addr.family == socket.AF_INET:
+                    self.assertEqual(addr.address, get_ipv4_address(name))
+                # TODO: test for AF_INET6 family
+
+    @unittest.skipUnless(which('ip'), "'ip' utility not available")
+    @unittest.skipIf(TRAVIS, "skipped on Travis")
+    def test_net_if_names(self):
+        out = sh("ip addr").strip()
+        nics = psutil.net_if_addrs()
+        found = 0
+        for line in out.split('\n'):
+            line = line.strip()
+            if re.search("^\d+:", line):
+                found += 1
+                name = line.split(':')[1].strip()
+                self.assertIn(name, nics.keys())
+        self.assertEqual(len(nics), found, msg="%s\n---\n%s" % (
+            pprint.pformat(nics), out))
 
     # --- tests for specific kernel versions
 

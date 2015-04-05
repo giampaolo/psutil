@@ -21,12 +21,14 @@
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/cpuset.h>
 #include <net/route.h>
 
 #include <sys/socket.h>
 #include <sys/socketvar.h>    // for struct xsocket
 #include <sys/un.h>
 #include <sys/unpcb.h>
+#include <sys/sockio.h>
 // for xinpcb struct
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -49,6 +51,7 @@
 #include <net/if.h>       // net io counters
 #include <net/if_dl.h>
 #include <net/route.h>
+#include <net/if_media.h>
 
 #include <netinet/in.h>   // process open files/connections
 #include <sys/un.h>
@@ -92,6 +95,18 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
 
 
 /*
+ * Set exception to AccessDenied if pid exists else NoSuchProcess.
+ */
+void
+psutil_raise_ad_or_nsp(long pid) {
+    if (psutil_pid_exists(pid) == 0)
+        NoSuchProcess();
+    else
+        AccessDenied();
+}
+
+
+/*
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject *
@@ -104,9 +119,8 @@ psutil_pids(PyObject *self, PyObject *args)
     PyObject *retlist = PyList_New(0);
     PyObject *pid = NULL;
 
-    if (retlist == NULL) {
+    if (retlist == NULL)
         return NULL;
-    }
     if (psutil_get_proc_list(&proclist, &num_processes) != 0) {
         PyErr_SetString(PyExc_RuntimeError,
                         "failed to retrieve process list.");
@@ -132,9 +146,8 @@ psutil_pids(PyObject *self, PyObject *args)
 error:
     Py_XDECREF(pid);
     Py_DECREF(retlist);
-    if (orig_address != NULL) {
+    if (orig_address != NULL)
         free(orig_address);
-    }
     return NULL;
 }
 
@@ -167,12 +180,10 @@ psutil_proc_name(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    }
     return Py_BuildValue("s", kp.ki_comm);
 }
 
@@ -191,9 +202,8 @@ psutil_proc_exe(PyObject *self, PyObject *args)
     int mib[4];
     size_t size;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
@@ -207,12 +217,10 @@ psutil_proc_exe(PyObject *self, PyObject *args)
         return NULL;
     }
     if (size == 0 || strlen(pathname) == 0) {
-        if (psutil_pid_exists(pid) == 0) {
+        if (psutil_pid_exists(pid) == 0)
             return NoSuchProcess();
-        }
-        else {
+        else
             strcpy(pathname, "");
-        }
     }
     return Py_BuildValue("s", pathname);
 }
@@ -227,18 +235,16 @@ psutil_proc_cmdline(PyObject *self, PyObject *args)
     long pid;
     PyObject *arglist = NULL;
 
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
 
     // get the commandline, defined in arch/bsd/process_info.c
     arglist = psutil_get_arg_list(pid);
 
     // psutil_get_arg_list() returns NULL only if psutil_cmd_args
     // failed with ESRCH (no process with that PID)
-    if (NULL == arglist) {
+    if (NULL == arglist)
         return PyErr_SetFromErrno(PyExc_OSError);
-    }
     return Py_BuildValue("N", arglist);
 }
 
@@ -251,12 +257,10 @@ psutil_proc_ppid(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    }
     return Py_BuildValue("l", (long)kp.ki_ppid);
 }
 
@@ -269,12 +273,10 @@ psutil_proc_status(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    }
     return Py_BuildValue("i", (int)kp.ki_stat);
 }
 
@@ -288,12 +290,10 @@ psutil_proc_uids(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    }
     return Py_BuildValue("lll",
                          (long)kp.ki_ruid,
                          (long)kp.ki_uid,
@@ -310,12 +310,10 @@ psutil_proc_gids(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    }
     return Py_BuildValue("lll",
                          (long)kp.ki_rgid,
                          (long)kp.ki_groups[0],
@@ -332,12 +330,10 @@ psutil_proc_tty_nr(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    }
     return Py_BuildValue("i", kp.ki_tdev);
 }
 
@@ -350,12 +346,10 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    }
     return Py_BuildValue("(ll)",
                          kp.ki_rusage.ru_nvcsw,
                          kp.ki_rusage.ru_nivcsw);
@@ -370,12 +364,10 @@ psutil_proc_num_threads(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    }
     return Py_BuildValue("l", (long)kp.ki_numthreads);
 }
 
@@ -456,9 +448,8 @@ psutil_proc_threads(PyObject *self, PyObject *args)
 error:
     Py_XDECREF(pyTuple);
     Py_DECREF(retList);
-    if (kip != NULL) {
+    if (kip != NULL)
         free(kip);
-    }
     return NULL;
 }
 
@@ -472,12 +463,10 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args)
     long pid;
     double user_t, sys_t;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    }
     // convert from microseconds to seconds
     user_t = TV2DOUBLE(kp.ki_rusage.ru_utime);
     sys_t = TV2DOUBLE(kp.ki_rusage.ru_stime);
@@ -500,14 +489,10 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args)
     mib[1] = HW_NCPU;
     len = sizeof(ncpu);
 
-    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        // mimic os.cpu_count()
-        Py_INCREF(Py_None);
-        return Py_None;
-    }
-    else {
+    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1)
+        Py_RETURN_NONE;  // mimic os.cpu_count()
+    else
         return Py_BuildValue("i", ncpu);
-    }
 }
 
 
@@ -520,6 +505,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args)
 {
     void *topology = NULL;
     size_t size = 0;
+    PyObject *py_str;
 
     if (sysctlbyname("kern.sched.topology_spec", NULL, &size, NULL, 0))
         goto error;
@@ -533,11 +519,14 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args)
     if (sysctlbyname("kern.sched.topology_spec", topology, &size, NULL, 0))
         goto error;
 
-    return Py_BuildValue("s", topology);
+    py_str = Py_BuildValue("s", topology);
+    free(topology);
+    return py_str;
 
 error:
-    Py_INCREF(Py_None);
-    return Py_None;
+    if (topology != NULL)
+        free(topology);
+    Py_RETURN_NONE;
 }
 
 
@@ -550,12 +539,10 @@ psutil_proc_create_time(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    }
     return Py_BuildValue("d", TV2DOUBLE(kp.ki_start));
 }
 
@@ -569,12 +556,10 @@ psutil_proc_io_counters(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    }
     // there's apparently no way to determine bytes count, hence return -1.
     return Py_BuildValue("(llll)",
                          kp.ki_rusage.ru_inblock,
@@ -592,12 +577,10 @@ psutil_proc_memory_info(PyObject *self, PyObject *args)
 {
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    }
     return Py_BuildValue("(lllll)",
                          ptoa(kp.ki_rssize),    // rss
                          (long)kp.ki_size,      // vms
@@ -749,7 +732,10 @@ psutil_cpu_times(PyObject *self, PyObject *args)
 
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 /*
- * Return files opened by process as a list of (path, fd) tuples
+ * Return files opened by process as a list of (path, fd) tuples.
+ * TODO: this is broken as it may report empty paths. 'procstat'
+ * utility has the same problem see:
+ * https://github.com/giampaolo/psutil/issues/595
  */
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args)
@@ -867,9 +853,8 @@ psutil_proc_cwd(PyObject *self, PyObject *args)
      * (lsof can't do that it either).  Since this happens even
      * as root we return an empty string instead of AccessDenied.
      */
-    if (path == NULL) {
+    if (path == NULL)
         path = Py_BuildValue("s", "");
-    }
     free(freep);
     return path;
 
@@ -887,7 +872,6 @@ psutil_fetch_tcplist(void)
 {
     char *buf;
     size_t len;
-    int error;
 
     for (;;) {
         if (sysctlbyname("net.inet.tcp.pcblist", NULL, &len, NULL, 0) < 0) {
@@ -917,7 +901,8 @@ psutil_sockaddr_port(int family, struct sockaddr_storage *ss)
     if (family == AF_INET) {
         sin = (struct sockaddr_in *)ss;
         return (sin->sin_port);
-    } else {
+    }
+    else {
         sin6 = (struct sockaddr_in6 *)ss;
         return (sin6->sin6_port);
     }
@@ -932,7 +917,8 @@ psutil_sockaddr_addr(int family, struct sockaddr_storage *ss)
     if (family == AF_INET) {
         sin = (struct sockaddr_in *)ss;
         return (&sin->sin_addr);
-    } else {
+    }
+    else {
         sin6 = (struct sockaddr_in6 *)ss;
         return (&sin6->sin6_addr);
     }
@@ -1030,12 +1016,10 @@ psutil_proc_connections(PyObject *self, PyObject *args)
     PyObject *_family = NULL;
     PyObject *_type = NULL;
 
-    if (retList == NULL) {
+    if (retList == NULL)
         return NULL;
-    }
-    if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter)) {
+    if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter))
         goto error;
-    }
     if (!PySequence_Check(af_filter) || !PySequence_Check(type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         goto error;
@@ -1063,22 +1047,18 @@ psutil_proc_connections(PyObject *self, PyObject *args)
         raddr = NULL;
 
         kif = &freep[i];
-        if (kif->kf_type == KF_TYPE_SOCKET)
-        {
+        if (kif->kf_type == KF_TYPE_SOCKET) {
             // apply filters
             _family = PyLong_FromLong((long)kif->kf_sock_domain);
             inseq = PySequence_Contains(af_filter, _family);
             Py_DECREF(_family);
-            if (inseq == 0) {
+            if (inseq == 0)
                 continue;
-            }
             _type = PyLong_FromLong((long)kif->kf_sock_type);
             inseq = PySequence_Contains(type_filter, _type);
             Py_DECREF(_type);
-            if (inseq == 0) {
+            if (inseq == 0)
                 continue;
-            }
-
             // IPv4 / IPv6 socket
             if ((kif->kf_sock_domain == AF_INET) ||
                     (kif->kf_sock_domain == AF_INET6)) {
@@ -1112,12 +1092,10 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                 laddr = Py_BuildValue("(si)", lip, lport);
                 if (!laddr)
                     goto error;
-                if (rport != 0) {
+                if (rport != 0)
                     raddr = Py_BuildValue("(si)", rip, rport);
-                }
-                else {
+                else
                     raddr = Py_BuildValue("()");
-                }
                 if (!raddr)
                     goto error;
                 tuple = Py_BuildValue("(iiiNNi)",
@@ -1140,7 +1118,7 @@ psutil_proc_connections(PyObject *self, PyObject *args)
                 sun = (struct sockaddr_un *)&kif->kf_sa_local;
                 snprintf(
                     path, sizeof(path), "%.*s",
-                    (sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
+                    (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
                     sun->sun_path);
 
                 tuple = Py_BuildValue("(iiisOi)",
@@ -1250,7 +1228,7 @@ void remove_spaces(char *str) {
     do
         while (*p2 == ' ')
             p2++;
-    while (*p1++ = *p2++);
+    while ((*p1++ = *p2++));
 }
 
 
@@ -1264,7 +1242,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args)
     long pid;
     int ptrwidth;
     int i, cnt;
-    char addr[30];
+    char addr[1000];
     char perms[4];
     const char *path;
     struct kinfo_proc kp;
@@ -1274,15 +1252,12 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args)
     PyObject *pytuple = NULL;
     PyObject *retlist = PyList_New(0);
 
-    if (retlist == NULL) {
+    if (retlist == NULL)
         return NULL;
-    }
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
-    }
-    if (psutil_kinfo_proc(pid, &kp) == -1) {
+    if (psutil_kinfo_proc(pid, &kp) == -1)
         goto error;
-    }
 
     freep = kinfo_getvmmap(pid, &cnt);
     if (freep == NULL) {
@@ -1306,36 +1281,36 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args)
 
         if (strlen(kve->kve_path) == 0) {
             switch (kve->kve_type) {
-            case KVME_TYPE_NONE:
-                path = "[none]";
-                break;
-            case KVME_TYPE_DEFAULT:
-                path = "[default]";
-                break;
-            case KVME_TYPE_VNODE:
-                path = "[vnode]";
-                break;
-            case KVME_TYPE_SWAP:
-                path = "[swap]";
-                break;
-            case KVME_TYPE_DEVICE:
-                path = "[device]";
-                break;
-            case KVME_TYPE_PHYS:
-                path = "[phys]";
-                break;
-            case KVME_TYPE_DEAD:
-                path = "[dead]";
-                break;
-            case KVME_TYPE_SG:
-                path = "[sg]";
-                break;
-            case KVME_TYPE_UNKNOWN:
-                path = "[unknown]";
-                break;
-            default:
-                path = "[?]";
-                break;
+                case KVME_TYPE_NONE:
+                    path = "[none]";
+                    break;
+                case KVME_TYPE_DEFAULT:
+                    path = "[default]";
+                    break;
+                case KVME_TYPE_VNODE:
+                    path = "[vnode]";
+                    break;
+                case KVME_TYPE_SWAP:
+                    path = "[swap]";
+                    break;
+                case KVME_TYPE_DEVICE:
+                    path = "[device]";
+                    break;
+                case KVME_TYPE_PHYS:
+                    path = "[phys]";
+                    break;
+                case KVME_TYPE_DEAD:
+                    path = "[dead]";
+                    break;
+                case KVME_TYPE_SG:
+                    path = "[sg]";
+                    break;
+                case KVME_TYPE_UNKNOWN:
+                    path = "[unknown]";
+                    break;
+                default:
+                    path = "[?]";
+                    break;
             }
         }
         else {
@@ -1489,9 +1464,9 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
     size_t len;
     PyObject *py_retdict = PyDict_New();
     PyObject *py_ifc_info = NULL;
+
     if (py_retdict == NULL)
         return NULL;
-
     mib[0] = CTL_NET;          // networking subsystem
     mib[1] = PF_ROUTE;         // type of information
     mib[2] = 0;                // protocol (IPPROTO_xxx)
@@ -1533,9 +1508,8 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
             // http://lists.freebsd.org/pipermail/freebsd-current/
             //     2011-October/028752.html
             // 'ifconfig -a' doesn't show them, nor do we.
-            if (strncmp(ifc_name, "usbus", 5) == 0) {
+            if (strncmp(ifc_name, "usbus", 5) == 0)
                 continue;
-            }
 
             py_ifc_info = Py_BuildValue("(kkkkkkki)",
                                         if2m->ifm_data.ifi_obytes,
@@ -1580,9 +1554,9 @@ psutil_disk_io_counters(PyObject *self, PyObject *args)
 
     PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;
+
     if (py_retdict == NULL)
         return NULL;
-
     if (devstat_checkversion(NULL) < 0) {
         PyErr_Format(PyExc_RuntimeError, "devstat_checkversion() failed");
         goto error;
@@ -1626,9 +1600,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args)
         Py_DECREF(py_disk_info);
     }
 
-    if (stats.dinfo->mem_ptr) {
+    if (stats.dinfo->mem_ptr)
         free(stats.dinfo->mem_ptr);
-    }
     free(stats.dinfo);
     return py_retdict;
 
@@ -1766,14 +1739,16 @@ psutil_get_pid_from_sock(int sock_hash)
         if (xf->xf_data == NULL)
             continue;
         hash = (int)((uintptr_t)xf->xf_data % HASHSIZE);
-        if (sock_hash == hash) {
+        if (sock_hash == hash)
             return xf->xf_pid;
-        }
     }
     return -1;
 }
 
 
+// Reference:
+// https://gitorious.org/freebsd/freebsd/source/
+//     f1d6f4778d2044502209708bc167c05f9aa48615:usr.bin/sockstat/sockstat.c
 int psutil_gather_inet(int proto, PyObject *py_retlist)
 {
     struct xinpgen *xig, *exig;
@@ -1781,25 +1756,26 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
     struct xtcpcb *xtp;
     struct inpcb *inp;
     struct xsocket *so;
-    struct sock *sock;
-    const char *varname;
+    const char *varname = NULL;
     size_t len, bufsize;
     void *buf;
-    int hash, retry, vflag, type;
+    int hash;
+    int retry;
+    int type;
 
     PyObject *tuple = NULL;
     PyObject *laddr = NULL;
     PyObject *raddr = NULL;
 
     switch (proto) {
-    case IPPROTO_TCP:
-        varname = "net.inet.tcp.pcblist";
-        type = SOCK_STREAM;
-        break;
-    case IPPROTO_UDP:
-        varname = "net.inet.udp.pcblist";
-        type = SOCK_DGRAM;
-        break;
+        case IPPROTO_TCP:
+            varname = "net.inet.tcp.pcblist";
+            type = SOCK_STREAM;
+            break;
+        case IPPROTO_UDP:
+            varname = "net.inet.udp.pcblist";
+            type = SOCK_DGRAM;
+            break;
     }
 
     buf = NULL;
@@ -1808,10 +1784,8 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
     do {
         for (;;) {
             buf = realloc(buf, bufsize);
-            if (buf == NULL) {
-                // XXX
-                continue;
-            }
+            if (buf == NULL)
+                continue;  // XXX
             len = bufsize;
             if (sysctlbyname(varname, buf, &len, NULL, 0) == 0)
                 break;
@@ -1831,33 +1805,41 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
 
 
     for (;;) {
+        int lport, rport, pid, status, family;
+
         xig = (struct xinpgen *)(void *)((char *)xig + xig->xig_len);
         if (xig >= exig)
             break;
 
         switch (proto) {
-        case IPPROTO_TCP:
-            xtp = (struct xtcpcb *)xig;
-            if (xtp->xt_len != sizeof *xtp) {
-                PyErr_Format(PyExc_RuntimeError, "struct xtcpcb size mismatch");
+            case IPPROTO_TCP:
+                xtp = (struct xtcpcb *)xig;
+                if (xtp->xt_len != sizeof *xtp) {
+                    PyErr_Format(PyExc_RuntimeError,
+                                 "struct xtcpcb size mismatch");
+                    goto error;
+                }
+                inp = &xtp->xt_inp;
+                so = &xtp->xt_socket;
+                status = xtp->xt_tp.t_state;
+                break;
+            case IPPROTO_UDP:
+                xip = (struct xinpcb *)xig;
+                if (xip->xi_len != sizeof *xip) {
+                    PyErr_Format(PyExc_RuntimeError,
+                                 "struct xinpcb size mismatch");
+                    goto error;
+                }
+                inp = &xip->xi_inp;
+                so = &xip->xi_socket;
+                status = PSUTIL_CONN_NONE;
+                break;
+            default:
+                PyErr_Format(PyExc_RuntimeError, "invalid proto");
                 goto error;
-            }
-            break;
-        case IPPROTO_UDP:
-            xip = (struct xinpcb *)xig;
-            if (xip->xi_len != sizeof *xip) {
-                PyErr_Format(PyExc_RuntimeError, "struct xinpcb size mismatch");
-                goto error;
-            }
-            inp = &xip->xi_inp;
-            so = &xip->xi_socket;
-            break;
         }
 
-        inp = &xtp->xt_inp;
-        so = &xtp->xt_socket;
         char lip[200], rip[200];
-        int family, lport, rport, pid, status;
 
         hash = (int)((uintptr_t)so->xso_so % HASHSIZE);
         pid = psutil_get_pid_from_sock(hash);
@@ -1865,7 +1847,6 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
             continue;
         lport = ntohs(inp->inp_lport);
         rport = ntohs(inp->inp_fport);
-        status = xtp->xt_tp.t_state;
 
         if (inp->inp_vflag & INP_IPV4) {
             family = AF_INET;
@@ -1882,12 +1863,10 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
         laddr = Py_BuildValue("(si)", lip, lport);
         if (!laddr)
             goto error;
-        if (rport != 0) {
+        if (rport != 0)
             raddr = Py_BuildValue("(si)", rip, rport);
-        }
-        else {
+        else
             raddr = Py_BuildValue("()");
-        }
         if (!raddr)
             goto error;
         tuple = Py_BuildValue("(iiiNNii)", -1, family, type, laddr, raddr,
@@ -1897,7 +1876,7 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
         if (PyList_Append(py_retlist, tuple))
             goto error;
         Py_DECREF(tuple);
-  }
+    }
 
     free(buf);
     return 1;
@@ -1915,12 +1894,14 @@ int psutil_gather_unix(int proto, PyObject *py_retlist)
 {
     struct xunpgen *xug, *exug;
     struct xunpcb *xup;
-    struct sock *sock;
-    const char *varname, *protoname;
-    size_t len, bufsize;
+    const char *varname = NULL;
+    const char *protoname = NULL;
+    size_t len;
+    size_t bufsize;
     void *buf;
-    int hash, retry;
-    int family, lport, rport, pid;
+    int hash;
+    int retry;
+    int pid;
     struct sockaddr_un *sun;
     char path[PATH_MAX];
 
@@ -1929,14 +1910,14 @@ int psutil_gather_unix(int proto, PyObject *py_retlist)
     PyObject *raddr = NULL;
 
     switch (proto) {
-    case SOCK_STREAM:
-        varname = "net.local.stream.pcblist";
-        protoname = "stream";
-        break;
-    case SOCK_DGRAM:
-        varname = "net.local.dgram.pcblist";
-        protoname = "dgram";
-        break;
+        case SOCK_STREAM:
+            varname = "net.local.stream.pcblist";
+            protoname = "stream";
+            break;
+        case SOCK_DGRAM:
+            varname = "net.local.dgram.pcblist";
+            protoname = "dgram";
+            break;
     }
 
     buf = NULL;
@@ -1973,10 +1954,8 @@ int psutil_gather_unix(int proto, PyObject *py_retlist)
         if (xug >= exug)
             break;
         xup = (struct xunpcb *)xug;
-        if (xup->xu_len != sizeof *xup) {
-            warnx("struct xunpgen size mismatch");
+        if (xup->xu_len != sizeof *xup)
             goto error;
-        }
 
         hash = (int)((uintptr_t) xup->xu_socket.xso_so % HASHSIZE);
         pid = psutil_get_pid_from_sock(hash);
@@ -1985,7 +1964,7 @@ int psutil_gather_unix(int proto, PyObject *py_retlist)
 
         sun = (struct sockaddr_un *)&xup->xu_addr;
         snprintf(path, sizeof(path), "%.*s",
-                 (sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
+                 (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
                  sun->sun_path);
 
         tuple = Py_BuildValue("(iiisOii)", -1, AF_UNIX, proto, path, Py_None,
@@ -2016,13 +1995,12 @@ error:
 static PyObject*
 psutil_net_connections(PyObject* self, PyObject* args)
 {
-    PyObject *af_filter = NULL;
-    PyObject *type_filter = NULL;
     PyObject *py_retlist = PyList_New(0);
 
+    if (py_retlist == NULL)
+        return NULL;
     if (psutil_populate_xfiles() != 1)
         goto error;
-
     if (psutil_gather_inet(IPPROTO_TCP, py_retlist) == 0)
         goto error;
     if (psutil_gather_inet(IPPROTO_UDP, py_retlist) == 0)
@@ -2038,6 +2016,107 @@ psutil_net_connections(PyObject* self, PyObject* args)
 error:
     Py_DECREF(py_retlist);
     free(psutil_xfiles);
+    return NULL;
+}
+
+
+/*
+ * Get process CPU affinity.
+ * Reference: http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
+ */
+static PyObject*
+psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args)
+{
+    long pid;
+    int ret;
+    int i;
+    cpuset_t mask;
+    PyObject* py_retlist;
+    PyObject* py_cpu_num;
+
+    if (!PyArg_ParseTuple(args, "i", &pid))
+        return NULL;
+    ret = cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, pid,
+                             sizeof(mask), &mask);
+    if (ret != 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    py_retlist = PyList_New(0);
+    if (py_retlist == NULL)
+        return NULL;
+
+    for (i = 0; i < CPU_SETSIZE; i++) {
+        if (CPU_ISSET(i, &mask)) {
+            py_cpu_num = Py_BuildValue("i", i);
+            if (py_cpu_num == NULL)
+                goto error;
+            if (PyList_Append(py_retlist, py_cpu_num))
+                goto error;
+        }
+    }
+
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_cpu_num);
+    Py_DECREF(py_retlist);
+    return NULL;
+}
+
+
+/*
+ * Set process CPU affinity.
+ * Reference: http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
+ */
+static PyObject *
+psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
+{
+    long pid;
+    int i;
+    int seq_len;
+    int ret;
+    cpuset_t cpu_set;
+    PyObject *py_cpu_set;
+    PyObject *py_cpu_seq = NULL;
+
+    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set))
+        return NULL;
+
+    py_cpu_seq = PySequence_Fast(py_cpu_set, "expected a sequence or integer");
+    if (!py_cpu_seq)
+        return NULL;
+    seq_len = PySequence_Fast_GET_SIZE(py_cpu_seq);
+
+    // calculate the mask
+    CPU_ZERO(&cpu_set);
+    for (i = 0; i < seq_len; i++) {
+        PyObject *item = PySequence_Fast_GET_ITEM(py_cpu_seq, i);
+#if PY_MAJOR_VERSION >= 3
+        long value = PyLong_AsLong(item);
+#else
+        long value = PyInt_AsLong(item);
+#endif
+        if (value == -1 && PyErr_Occurred())
+            goto error;
+        CPU_SET(value, &cpu_set);
+    }
+
+    // set affinity
+    ret = cpuset_setaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, pid,
+                             sizeof(cpu_set), &cpu_set);
+    if (ret != 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    Py_DECREF(py_cpu_seq);
+    Py_RETURN_NONE;
+
+error:
+    if (py_cpu_seq != NULL)
+        Py_DECREF(py_cpu_seq);
     return NULL;
 }
 
@@ -2083,6 +2162,10 @@ PsutilMethods[] =
      "Return process IO counters"},
     {"proc_tty_nr", psutil_proc_tty_nr, METH_VARARGS,
      "Return process tty (terminal) number"},
+    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
+     "Return process CPU affinity."},
+    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
+     "Set process CPU affinity."},
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
      "Return files opened by process as a list of (path, fd) tuples"},
@@ -2181,6 +2264,8 @@ void init_psutil_bsd(void)
 #else
     PyObject *module = Py_InitModule("_psutil_bsd", PsutilMethods);
 #endif
+    PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
+
     // process status constants
     PyModule_AddIntConstant(module, "SSTOP", SSTOP);
     PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
@@ -2203,9 +2288,8 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
     PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
-    if (module == NULL) {
+    if (module == NULL)
         INITERROR;
-    }
 #if PY_MAJOR_VERSION >= 3
     return module;
 #endif

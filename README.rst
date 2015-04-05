@@ -20,6 +20,7 @@ Quick links
 
 - `Home page <https://github.com/giampaolo/psutil>`_
 - `Documentation <http://pythonhosted.org/psutil/>`_
+- `Installation <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 - `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
 - `Forum <http://groups.google.com/group/psutil/topics>`_
 - `Blog <http://grodola.blogspot.com/search/label/psutil>`_
@@ -37,8 +38,9 @@ running processes**. It implements many functionalities offered by command line
 tools such as: ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
 ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap. It currently supports
 **Linux, Windows, OSX, FreeBSD** and **Sun Solaris**, both **32-bit** and
-**64-bit** architectures, with Python versions from **2.4 to 3.4**. PyPy is
-also known to work.
+**64-bit** architectures, with Python versions from **2.6 to 3.4** (users of
+Python 2.4 and 2.5 may use `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
+`PyPy <http://pypy.org/>`__ is also known to work.
 
 ====================
 Example applications
@@ -109,9 +111,9 @@ Memory
 .. code-block:: python
 
     >>> psutil.virtual_memory()
-    svmem(total=8374149120L, available=2081050624L, percent=75.1, used=8074080256L, free=300068864L, active=3294920704, inactive=1361616896, buffers=529895424L, cached=1251086336)
+    svmem(total=8374149120, available=2081050624, percent=75.1, used=8074080256, free=300068864, active=3294920704, inactive=1361616896, buffers=529895424, cached=1251086336)
     >>> psutil.swap_memory()
-    sswap(total=2097147904L, used=296128512L, free=1801019392L, percent=14.1, sin=304193536, sout=677842944)
+    sswap(total=2097147904, used=296128512, free=1801019392, percent=14.1, sin=304193536, sout=677842944)
     >>>
 
 Disks
@@ -140,11 +142,23 @@ Network
      'lo': netio(bytes_sent=2838627, bytes_recv=2838627, packets_sent=30567, packets_recv=30567, errin=0, errout=0, dropin=0, dropout=0)}
     >>>
     >>> psutil.net_connections()
-    [pconn(fd=115, family=2, type=1, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED', pid=1254),
-     pconn(fd=117, family=2, type=1, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING', pid=2987),
-     pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED', pid=None),
-     pconn(fd=-1, family=2, type=1, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT', pid=None)
+    [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED', pid=1254),
+     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING', pid=2987),
+     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED', pid=None),
+     pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT', pid=None)
      ...]
+    >>>
+    >>> psutil.net_if_addrs()
+    {'lo': [snic(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1'),
+            snic(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None),
+            snic(family=<AddressFamily.AF_LINK: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00')],
+     'wlan0': [snic(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255'),
+               snic(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None),
+               snic(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff')]}
+    >>>
+    >>> psutil.net_if_stats()
+    {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500),
+     'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536)}
 
 Other system info
 =================
@@ -227,10 +241,10 @@ Process management
     [popenfile(path='/home/giampaolo/svn/psutil/somefile', fd=3)]
     >>>
     >>> p.connections()
-    [pconn(fd=115, family=2, type=1, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED'),
-     pconn(fd=117, family=2, type=1, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING'),
-     pconn(fd=119, family=2, type=1, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED'),
-     pconn(fd=123, family=2, type=1, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT')]
+    [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED'),
+     pconn(fd=117, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 43761), raddr=('72.14.234.100', 80), status='CLOSING'),
+     pconn(fd=119, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 60759), raddr=('72.14.234.104', 80), status='ESTABLISHED'),
+     pconn(fd=123, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT')]
     >>>
     >>> p.num_threads()
     4
@@ -251,7 +265,7 @@ Process management
     >>>
     >>> p.ionice(psutil.IOPRIO_CLASS_IDLE)  # IO priority (Win and Linux only)
     >>> p.ionice()
-    pionice(ioclass=3, value=0)
+    pionice(ioclass=<IOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
     >>>
     >>> p.rlimit(psutil.RLIMIT_NOFILE, (5, 5))  # set resource limits (Linux only)
     >>> p.rlimit(psutil.RLIMIT_NOFILE)
@@ -319,6 +333,8 @@ http://groups.google.com/group/psutil/
 Timeline
 ========
 
+- 2015-02-02: `psutil-2.2.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.2.1.tar.gz>`_
+- 2015-01-06: `psutil-2.2.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.2.0.tar.gz>`_
 - 2014-09-26: `psutil-2.1.3.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.3.tar.gz>`_
 - 2014-09-21: `psutil-2.1.2.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.2.tar.gz>`_
 - 2014-04-30: `psutil-2.1.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-2.1.1.tar.gz>`_

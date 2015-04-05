@@ -19,12 +19,18 @@ import sys
 import warnings
 from collections import namedtuple, defaultdict
 
-from psutil import _common
-from psutil import _psposix
-from psutil._common import (isfile_strict, usage_percent, deprecated)
-from psutil._compat import PY3
-import _psutil_linux as cext
-import _psutil_posix
+from . import _common
+from . import _psposix
+from . import _psutil_linux as cext
+from . import _psutil_posix as cext_posix
+from ._common import isfile_strict, usage_percent
+from ._common import NIC_DUPLEX_FULL, NIC_DUPLEX_HALF, NIC_DUPLEX_UNKNOWN
+from ._compat import PY3
+
+if sys.version_info >= (3, 4):
+    import enum
+else:
+    enum = None
 
 
 __extra__all__ = [
@@ -54,12 +60,27 @@ CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 BOOT_TIME = None  # set later
 DEFAULT_ENCODING = sys.getdefaultencoding()
+if enum is None:
+    AF_LINK = socket.AF_PACKET
+else:
+    AddressFamily = enum.IntEnum('AddressFamily',
+                                 {'AF_LINK': socket.AF_PACKET})
+    AF_LINK = AddressFamily.AF_LINK
 
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
-IOPRIO_CLASS_NONE = 0
-IOPRIO_CLASS_RT = 1
-IOPRIO_CLASS_BE = 2
-IOPRIO_CLASS_IDLE = 3
+if enum is None:
+    IOPRIO_CLASS_NONE = 0
+    IOPRIO_CLASS_RT = 1
+    IOPRIO_CLASS_BE = 2
+    IOPRIO_CLASS_IDLE = 3
+else:
+    class IOPriority(enum.IntEnum):
+        IOPRIO_CLASS_NONE = 0
+        IOPRIO_CLASS_RT = 1
+        IOPRIO_CLASS_BE = 2
+        IOPRIO_CLASS_IDLE = 3
+
+    globals().update(IOPriority.__members__)
 
 # taken from /fs/proc/array.c
 PROC_STATUSES = {
@@ -92,6 +113,7 @@ TCP_STATUSES = {
 
 # set later from __init__.py
 NoSuchProcess = None
+ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
 
@@ -150,9 +172,9 @@ def virtual_memory():
                 active = int(line.split()[1]) * 1024
             elif line.startswith(b"Inactive:"):
                 inactive = int(line.split()[1]) * 1024
-            if (cached is not None
-                    and active is not None
-                    and inactive is not None):
+            if (cached is not None and
+                    active is not None and
+                    inactive is not None):
                 break
         else:
             # we might get here when dealing with exotic Linux flavors, see:
@@ -191,16 +213,6 @@ def swap_memory():
             warnings.warn(msg, RuntimeWarning)
             sin = sout = 0
     return _common.sswap(total, used, free, percent, sin, sout)
-
-
-@deprecated(replacement='psutil.virtual_memory().cached')
-def cached_phymem():
-    return virtual_memory().cached
-
-
-@deprecated(replacement='psutil.virtual_memory().buffers')
-def phymem_buffers():
-    return virtual_memory().buffers
 
 
 # --- CPUs
@@ -290,7 +302,7 @@ def users():
         # to use them in the future.
         if not user_process:
             continue
-        if hostname == ':0.0':
+        if hostname == ':0.0' or hostname == ':0':
             hostname = 'localhost'
         nt = _common.suser(user, tty or None, hostname, tstamp)
         retlist.append(nt)
@@ -446,12 +458,12 @@ class Connections:
                 _, laddr, raddr, status, _, _, _, _, _, inode = \
                     line.split()[:10]
                 if inode in inodes:
-                    # We assume inet sockets are unique, so we error
-                    # out if there are multiple references to the
-                    # same inode. We won't do this for UNIX sockets.
-                    if len(inodes[inode]) > 1 and family != socket.AF_UNIX:
-                        raise ValueError("ambiguos inode with multiple "
-                                         "PIDs references")
+                    # # We assume inet sockets are unique, so we error
+                    # # out if there are multiple references to the
+                    # # same inode. We won't do this for UNIX sockets.
+                    # if len(inodes[inode]) > 1 and family != socket.AF_UNIX:
+                    #     raise ValueError("ambiguos inode with multiple "
+                    #                      "PIDs references")
                     pid, fd = inodes[inode][0]
                 else:
                     pid, fd = None, -1
@@ -503,7 +515,7 @@ class Connections:
                 return []
         else:
             inodes = self.get_all_inodes()
-        ret = []
+        ret = set()
         for f, family, type_ in self.tmap[kind]:
             if family in (socket.AF_INET, socket.AF_INET6):
                 ls = self.process_inet(
@@ -518,8 +530,8 @@ class Connections:
                 else:
                     conn = _common.sconn(fd, family, type_, laddr, raddr,
                                          status, bound_pid)
-                ret.append(conn)
-        return ret
+                ret.add(conn)
+        return list(ret)
 
 
 _connections = Connections()
@@ -553,6 +565,23 @@ def net_io_counters():
         retdict[name] = (bytes_sent, bytes_recv, packets_sent, packets_recv,
                          errin, errout, dropin, dropout)
     return retdict
+
+
+def net_if_stats():
+    """Get NIC stats (isup, duplex, speed, mtu)."""
+    duplex_map = {cext.DUPLEX_FULL: NIC_DUPLEX_FULL,
+                  cext.DUPLEX_HALF: NIC_DUPLEX_HALF,
+                  cext.DUPLEX_UNKNOWN: NIC_DUPLEX_UNKNOWN}
+    names = net_io_counters().keys()
+    ret = {}
+    for name in names:
+        isup, duplex, speed, mtu = cext.net_if_stats(name)
+        duplex = duplex_map[duplex]
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+    return ret
+
+
+net_if_addrs = cext_posix.net_if_addrs
 
 
 # --- disks
@@ -609,7 +638,7 @@ def disk_io_counters():
 
 
 def disk_partitions(all=False):
-    """Return mounted disk partitions as a list of nameduples"""
+    """Return mounted disk partitions as a list of namedtuples"""
     phydevs = []
     with open("/proc/filesystems", "r") as f:
         for line in f:
@@ -658,23 +687,35 @@ def wrap_exceptions(fun):
     return wrapper
 
 
+def wrap_exceptions_w_zombie(fun):
+    """Same as above but also handles zombies."""
+    @functools.wraps(fun)
+    def wrapper(self, *args, **kwargs):
+        try:
+            return wrap_exceptions(fun)(self)
+        except NoSuchProcess:
+            if not pid_exists(self.pid):
+                raise
+            else:
+                raise ZombieProcess(self.pid, self._name, self._ppid)
+    return wrapper
+
+
 class Process(object):
     """Linux process implementation."""
 
-    __slots__ = ["pid", "_name"]
+    __slots__ = ["pid", "_name", "_ppid"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
+        self._ppid = None
 
     @wrap_exceptions
     def name(self):
         fname = "/proc/%s/stat" % self.pid
-        if PY3:
-            f = open(fname, "rt", encoding=DEFAULT_ENCODING)
-        else:
-            f = open(fname, "rt")
-        with f:
+        kw = dict(encoding=DEFAULT_ENCODING) if PY3 else dict()
+        with open(fname, "rt", **kw) as f:
             # XXX - gets changed later and probably needs refactoring
             return f.read().split(' ')[1].replace('(', '').replace(')', '')
 
@@ -689,8 +730,10 @@ class Process(object):
                 if os.path.lexists("/proc/%s" % self.pid):
                     return ""
                 else:
-                    # ok, it is a process which has gone away
-                    raise NoSuchProcess(self.pid, self._name)
+                    if not pid_exists(self.pid):
+                        raise NoSuchProcess(self.pid, self._name)
+                    else:
+                        raise ZombieProcess(self.pid, self._name, self._ppid)
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
             raise
@@ -708,12 +751,8 @@ class Process(object):
     @wrap_exceptions
     def cmdline(self):
         fname = "/proc/%s/cmdline" % self.pid
-        if PY3:
-            f = open(fname, "rt", encoding=DEFAULT_ENCODING)
-        else:
-            f = open(fname, "rt")
-        with f:
-            # return the args as a list
+        kw = dict(encoding=DEFAULT_ENCODING) if PY3 else dict()
+        with open(fname, "rt", **kw) as f:
             return [x for x in f.read().split('\x00') if x]
 
     @wrap_exceptions
@@ -816,7 +855,7 @@ class Process(object):
 
         @wrap_exceptions
         def memory_maps(self):
-            """Return process's mapped memory regions as a list of nameduples.
+            """Return process's mapped memory regions as a list of named tuples.
             Fields are explained in 'man proc'; here is an updated (Apr 2012)
             version: http://goo.gl/fmebo
             """
@@ -879,7 +918,7 @@ class Process(object):
                   % self.pid
             raise NotImplementedError(msg)
 
-    @wrap_exceptions
+    @wrap_exceptions_w_zombie
     def cwd(self):
         # readlink() might return paths containing null bytes causing
         # problems when used with other fs-related functions (os.*,
@@ -918,8 +957,10 @@ class Process(object):
         retlist = []
         hit_enoent = False
         for thread_id in thread_ids:
+            fname = "/proc/%s/task/%s/stat" % (self.pid, thread_id)
             try:
-                f = open("/proc/%s/task/%s/stat" % (self.pid, thread_id), 'rb')
+                with open(fname, 'rb') as f:
+                    st = f.read().strip()
             except EnvironmentError as err:
                 if err.errno == errno.ENOENT:
                     # no such file or directory; it means thread
@@ -927,8 +968,6 @@ class Process(object):
                     hit_enoent = True
                     continue
                 raise
-            with f:
-                st = f.read().strip()
             # ignore the first two values ("pid (exe)")
             st = st[st.find(b')') + 2:]
             values = st.split(b' ')
@@ -948,11 +987,11 @@ class Process(object):
         #   return int(data.split()[18])
 
         # Use C implementation
-        return _psutil_posix.getpriority(self.pid)
+        return cext_posix.getpriority(self.pid)
 
     @wrap_exceptions
     def nice_set(self, value):
-        return _psutil_posix.setpriority(self.pid, value)
+        return cext_posix.setpriority(self.pid, value)
 
     @wrap_exceptions
     def cpu_affinity_get(self):
@@ -977,6 +1016,8 @@ class Process(object):
         @wrap_exceptions
         def ionice_get(self):
             ioclass, value = cext.proc_ioprio_get(self.pid)
+            if enum is not None:
+                ioclass = IOPriority(ioclass)
             return _common.pionice(ioclass, value)
 
         @wrap_exceptions
@@ -1009,16 +1050,24 @@ class Process(object):
             # we don't want that
             if self.pid == 0:
                 raise ValueError("can't use prlimit() against PID 0 process")
-            if limits is None:
-                # get
-                return cext.linux_prlimit(self.pid, resource)
-            else:
-                # set
-                if len(limits) != 2:
-                    raise ValueError(
-                        "second argument must be a (soft, hard) tuple")
-                soft, hard = limits
-                cext.linux_prlimit(self.pid, resource, soft, hard)
+            try:
+                if limits is None:
+                    # get
+                    return cext.linux_prlimit(self.pid, resource)
+                else:
+                    # set
+                    if len(limits) != 2:
+                        raise ValueError(
+                            "second argument must be a (soft, hard) tuple")
+                    soft, hard = limits
+                    cext.linux_prlimit(self.pid, resource, soft, hard)
+            except OSError as err:
+                if err.errno == errno.ENOSYS and pid_exists(self.pid):
+                    # I saw this happening on Travis:
+                    # https://travis-ci.org/giampaolo/psutil/jobs/51368273
+                    raise ZombieProcess(self.pid, self._name, self._ppid)
+                else:
+                    raise
 
     @wrap_exceptions
     def status(self):
@@ -1039,23 +1088,26 @@ class Process(object):
         hit_enoent = False
         for fd in files:
             file = "/proc/%s/fd/%s" % (self.pid, fd)
-            if os.path.islink(file):
-                try:
-                    file = os.readlink(file)
-                except OSError as err:
-                    # ENOENT == file which is gone in the meantime
-                    if err.errno in (errno.ENOENT, errno.ESRCH):
-                        hit_enoent = True
-                        continue
-                    raise
+            try:
+                file = os.readlink(file)
+            except OSError as err:
+                # ENOENT == file which is gone in the meantime
+                if err.errno in (errno.ENOENT, errno.ESRCH):
+                    hit_enoent = True
+                    continue
+                elif err.errno == errno.EINVAL:
+                    # not a link
+                    continue
                 else:
-                    # If file is not an absolute path there's no way
-                    # to tell whether it's a regular file or not,
-                    # so we skip it. A regular file is always supposed
-                    # to be absolutized though.
-                    if file.startswith('/') and isfile_strict(file):
-                        ntuple = _common.popenfile(file, int(fd))
-                        retlist.append(ntuple)
+                    raise
+            else:
+                # If file is not an absolute path there's no way
+                # to tell whether it's a regular file or not,
+                # so we skip it. A regular file is always supposed
+                # to be absolutized though.
+                if file.startswith('/') and isfile_strict(file):
+                    ntuple = _common.popenfile(file, int(fd))
+                    retlist.append(ntuple)
         if hit_enoent:
             # raise NSP if the process disappeared on us
             os.stat('/proc/%s' % self.pid)

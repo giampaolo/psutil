@@ -26,6 +26,8 @@ static PyObject* psutil_proc_status(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_threads(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_tty_nr(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_uids(PyObject* self, PyObject* args);
+static PyObject* psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args);
+static PyObject* psutil_proc_cpu_affinity_set(PyObject* self, PyObject* args);
 
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 static PyObject* psutil_proc_open_files(PyObject* self, PyObject* args);

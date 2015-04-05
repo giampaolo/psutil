@@ -79,13 +79,19 @@ def run(pid):
             parent = ''
     except psutil.Error:
         parent = ''
-    started = datetime.datetime.fromtimestamp(
-        pinfo['create_time']).strftime('%Y-%m-%d %H:%M')
+    if pinfo['create_time'] != ACCESS_DENIED:
+        started = datetime.datetime.fromtimestamp(
+            pinfo['create_time']).strftime('%Y-%m-%d %H:%M')
+    else:
+        started = ACCESS_DENIED
     io = pinfo.get('io_counters', ACCESS_DENIED)
-    mem = '%s%% (resident=%s, virtual=%s) ' % (
-        round(pinfo['memory_percent'], 1),
-        convert_bytes(pinfo['memory_info'].rss),
-        convert_bytes(pinfo['memory_info'].vms))
+    if pinfo['memory_info'] != ACCESS_DENIED:
+        mem = '%s%% (resident=%s, virtual=%s) ' % (
+            round(pinfo['memory_percent'], 1),
+            convert_bytes(pinfo['memory_info'].rss),
+            convert_bytes(pinfo['memory_info'].vms))
+    else:
+        mem = ACCESS_DENIED
     children = p.children()
 
     print_('pid', pinfo['pid'])
@@ -101,8 +107,7 @@ def run(pid):
         print_('gids', 'real=%s, effective=%s, saved=%s' % pinfo['gids'])
     if POSIX:
         print_('terminal', pinfo['terminal'] or '')
-    if hasattr(p, 'getcwd'):
-        print_('cwd', pinfo['cwd'])
+    print_('cwd', pinfo['cwd'])
     print_('memory', mem)
     print_('cpu', '%s%% (user=%s, system=%s)' % (
         pinfo['cpu_percent'],

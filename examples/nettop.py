@@ -31,13 +31,13 @@ pkts-sent                     0               0
 pkts-recv               1214470               0
 """
 
-import sys
-import os
-if os.name != 'posix':
-    sys.exit('platform not supported')
 import atexit
-import curses
 import time
+import sys
+try:
+    import curses
+except ImportError:
+    sys.exit('platform not supported')
 
 import psutil
 

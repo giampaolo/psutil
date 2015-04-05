@@ -16,6 +16,7 @@ clean:
 	rm -f `find . -type f -name \*.bak`
 	rm -f `find . -type f -name \*.rej`
 	rm -rf `find . -type d -name __pycache__`
+	rm -rf *.core
 	rm -rf *.egg-info
 	rm -rf *\$testfile*
 	rm -rf .tox
@@ -25,6 +26,10 @@ clean:
 
 build: clean
 	$(PYTHON) setup.py build
+	@# copies *.so files in ./psutil directory in order to allow
+	@# "import psutil" when using the interactive interpreter from within
+	@# this directory.
+	$(PYTHON) setup.py build_ext -i
 
 install: build
 	$(PYTHON) setup.py install --user; \
@@ -42,13 +47,17 @@ test-system: install
 	$(PYTHON) -m unittest -v test.test_psutil.TestSystemAPIs
 
 test-memleaks: install
-	$(PYTHON) -m unittest -v test.test_memory_leaks
+	$(PYTHON) test/test_memory_leaks.py
 
 # Run a specific test by name; e.g. "make test-by-name disk_" will run
 # all test methods containing "disk_" in their name.
 # Requires "pip install nose".
-test-by-name:
+test-by-name: install
 	@$(PYTHON) -m nose test/test_psutil.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
+
+# same as above but for test_memory_leaks.py script
+test-memleaks-by-name: install
+	@$(PYTHON) -m nose test/test_memory_leaks.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
 
 # requires "pip install pep8"
 pep8:
@@ -78,3 +87,8 @@ upload-doc:
 git-tag-release:
 	git tag -a release-`python -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
 	echo "done; now run 'git push --follow-tags' to push the new tag on the remote repo"
+
+# install GIT pre-commit hook
+install-git-hooks:
+	cp .git-pre-commit .git/hooks/pre-commit
+	chmod +x .git/hooks/pre-commit

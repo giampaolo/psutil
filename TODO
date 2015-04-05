@@ -9,19 +9,18 @@ https://github.com/giampaolo/psutil/issues
 HIGHER PRIORITY
 ===============
 
- * #250: net ifaces speed.
-
- * #376: ifconfig functionalities aka psutil.net_ifaces (could be merged
-         with #250)
-
  * OpenBSD support.
 
  * #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
    lm-sensors lib).
 
- * #269: expose network ifaces RX/TW queues.
+ * #269: expose network ifaces RX/TW queues. This should probably go into
+   net_if_stats(). Figure out on what platforms this is supported:
+   Linux: yes
+   Others: ?
 
- * Process.threads(): thread names
+ * Process.threads(): thread names; patch for OSX available at:
+   https://code.google.com/p/plcrashreporter/issues/detail?id=65
 
  * Asynchronous psutil.Popen (see http://bugs.python.org/issue1191964)
 
@@ -39,8 +38,6 @@ LOWER PRIORITY
 
  * AIX support?
 
- * examples/pidof.py (same as 'pidof' cli tool)
-
  * examples/taskmgr-gui.py (using tk).
 
  * system-wide number of open file descriptors:
@@ -52,10 +49,7 @@ LOWER PRIORITY
 
  * #357: what CPU a process is on.
 
- * thread names:
-    * https://code.google.com/p/plcrashreporter/issues/detail?id=65
-
- * Doc / wiki which compares similarities between UNIX cli tools and psutil.
+  * Doc / wiki which compares similarities between UNIX cli tools and psutil.
    Example:
    df -a  ->  psutil.disk_partitions
    lsof   ->  psutil.Process.open_files() and psutil.Process.open_connections()
@@ -67,7 +61,13 @@ LOWER PRIORITY
 DEBATABLE
 =========
 
- * support wheels? http://pythonwheels.com/
+ * psutil.proc_tree() something which obtains a {pid:ppid, ...} dict for
+   all running processes in one shot. This can be factored out from
+   Process.children() and exposed as a first class function.
+   PROS: on Windows we can take advantage of _psutil_windows.ppid_map()
+   which is faster than iterating over all pids and calling ppid().
+   CONS: examples/pstree.py shows this can be easily done in the user code
+   so maybe it's not worth the addition.
 
  * advanced cmdline interface exposing the whole API and providing different
    kind of outputs (e.g. pprinted, colorized, json).
@@ -88,10 +88,18 @@ DEBATABLE
    Also, we can probably reimplement wait_pid() on POSIX which is currently
    implemented as a busy-loop.
 
- * Certain systems (XXX figure out which ones exactly) provide CPU times about
-   process children. On those systems Process.cpu_times() might return
-   a (user, system, user_children, system_children) ntuple.
-   Also, os.times() provides 'elapsed' times as well.
+ * Certain systems provide CPU times about process children. On those systems
+   Process.cpu_times() might return a (user, system, user_children,
+   system_children) ntuple.
+   * Linux: /proc/{PID}/stat
+   * Solaris: pr_cutime and pr_cstime
+   * FreeBSD: none
+   * OSX: none
+   * Windows: none
+
+ * ...also, os.times() provides 'elapsed' times as well.
+
+ * ...also Linux provides guest_time and cguest_time.
 
  * Enrich exception classes hierarchy on Python >= 3.3 / post PEP-3151 so that:
    - NoSuchProcess inherits from ProcessLookupError
@@ -126,6 +134,10 @@ DEBATABLE
     This also leads questions as whether we should introduce a sorting order.
 
   * round Process.memory_percent() result?
+
+  * #550: number of threads per core.
+
+  * Have psutil.Process().cpu_affinity([]) be an alias for "all CPUs"?
 
 
 COMPATIBILITY BREAKAGE
