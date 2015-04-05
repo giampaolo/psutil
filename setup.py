@@ -120,7 +120,7 @@ elif sys.platform.startswith("freebsd"):
 # OpenBSD
 elif sys.platform.startswith("openbsd"):
     extensions = [Extension(
-        '_psutil_bsd',
+        'psutil._psutil_bsd',
         sources=[
             'psutil/_psutil_openbsd.c',
             'psutil/_psutil_common.c',
