@@ -123,7 +123,7 @@ elif sys.platform.startswith("freebsd"):
     from . import _psbsd as _psplatform
 
 elif sys.platform.startswith("openbsd"):
-    import psutil._psbsd as _psplatform
+    from . import _psbsd as _psplatform
 
 elif sys.platform.startswith("sunos"):
     from . import _pssunos as _psplatform
