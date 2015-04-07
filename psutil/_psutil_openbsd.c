@@ -585,7 +585,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args)
 static PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args)
 {
-    unsigned long swap_total, swap_free;
+    uint64_t swap_total, swap_free;
     struct swapent *swdev;
     int nswap, i;
     if ((nswap = swapctl(SWAP_NSWAP, 0, 0)) == 0) {
