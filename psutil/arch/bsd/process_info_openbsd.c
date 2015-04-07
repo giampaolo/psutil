@@ -187,7 +187,7 @@ get_argv(long pid)
         if ((argv = realloc(argv, argv_size)) == NULL)
             err(1, NULL);
         if (sysctl(argv_mib, 4, argv, &argv_size, NULL, 0) == 0)
-            break;
+            return argv;
         if (errno == ESRCH) {
             PyErr_SetFromErrno(PyExc_OSError);
             return NULL;
