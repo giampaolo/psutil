@@ -1995,6 +1995,7 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "SWAIT", -1);
     PyModule_AddIntConstant(module, "SLOCK", -1);
     PyModule_AddIntConstant(module, "SZOMB", SZOMB);
+    PyModule_AddIntConstant(module, "SRUN", SONPROC);
     // connection status constants
     PyModule_AddIntConstant(module, "TCPS_CLOSED", TCPS_CLOSED);
     PyModule_AddIntConstant(module, "TCPS_CLOSING", TCPS_CLOSING);
