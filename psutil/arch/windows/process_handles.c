@@ -134,6 +134,9 @@ psutil_get_open_files(long dwPid, HANDLE hProcess)
                              DUPLICATE_SAME_ACCESS))
             goto loop_cleanup;
 
+        // Guess buffer size is MAX_PATH + 1
+        g_dwLength = (MAX_PATH+1) * sizeof(WCHAR);
+
         do
         {
             // Release any previously allocated buffer
@@ -145,6 +148,10 @@ psutil_get_open_files(long dwPid, HANDLE hProcess)
             }
 
             // NtQueryObject puts the required buffer size in g_dwLength
+            // WinXP edge case puts g_dwLength == 0, just skip this handle
+            if (g_dwLength == 0)
+                goto loop_cleanup;
+
             g_dwSize = g_dwLength;
             if (g_dwSize > 0)
             {
@@ -154,6 +161,7 @@ psutil_get_open_files(long dwPid, HANDLE hProcess)
 
                 if (g_pNameBuffer == NULL)
                     goto loop_cleanup;
+
             }
 
             dwWait = psutil_NtQueryObject();
