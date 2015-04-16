@@ -36,6 +36,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   number is provided.
 - #593: [FreeBSD] Process().memory_maps() segfaults.
 - #606: Process.parent() may swallow NoSuchProcess exceptions.
+- #611L [SunOS] net_io_counters has send and received swapped
 
 
 2.2.1 - 2015-02-02

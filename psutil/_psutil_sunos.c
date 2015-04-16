@@ -736,18 +736,18 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
 
 #if defined(_INT64_TYPE)
         py_ifc_info = Py_BuildValue("(KKKKkkii)",
-                                    rbytes->value.ui64,
                                     wbytes->value.ui64,
-                                    rpkts->value.ui64,
+                                    rbytes->value.ui64,
                                     wpkts->value.ui64,
+                                    rpkts->value.ui64,
                                     ierrs->value.ui32,
                                     oerrs->value.ui32,
 #else
         py_ifc_info = Py_BuildValue("(kkkkkkii)",
-                                    rbytes->value.ui32,
                                     wbytes->value.ui32,
-                                    rpkts->value.ui32,
+                                    rbytes->value.ui32,
                                     wpkts->value.ui32,
+                                    rpkts->value.ui32,
                                     ierrs->value.ui32,
                                     oerrs->value.ui32,
 #endif
