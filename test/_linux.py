@@ -7,7 +7,6 @@
 """Linux specific tests.  These are implicitly run by test_psutil.py."""
 
 from __future__ import division
-import array
 import contextlib
 import fcntl
 import os
