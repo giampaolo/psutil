@@ -712,10 +712,11 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(logical, len(psutil.cpu_times(percpu=True)))
         self.assertGreaterEqual(logical, 1)
         #
-        with open("/proc/cpuinfo") as fd:
-            cpuinfo_data = fd.read()
-        if "physical id" not in cpuinfo_data:
-            raise unittest.SkipTest("cpuinfo doesn't include physical id")
+        if LINUX and os.path.exists("/proc/cpuinfo"):
+            with open("/proc/cpuinfo") as fd:
+                cpuinfo_data = fd.read()
+            if "physical id" not in cpuinfo_data:
+                raise unittest.SkipTest("cpuinfo doesn't include physical id")
         physical = psutil.cpu_count(logical=False)
         self.assertGreaterEqual(physical, 1)
         self.assertGreaterEqual(logical, physical)
