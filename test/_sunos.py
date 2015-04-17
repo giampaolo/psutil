@@ -7,6 +7,7 @@
 """Sun OS specific tests.  These are implicitly run by test_psutil.py."""
 
 import sys
+import os
 
 from test_psutil import sh, unittest
 import psutil
@@ -15,7 +16,7 @@ import psutil
 class SunOSSpecificTestCase(unittest.TestCase):
 
     def test_swap_memory(self):
-        out = sh('swap -l -k')
+        out = sh('env PATH=/usr/sbin:/sbin:%s swap -l -k' % os.environ['PATH'])
         lines = out.strip().split('\n')[1:]
         if not lines:
             raise ValueError('no swap device(s) configured')

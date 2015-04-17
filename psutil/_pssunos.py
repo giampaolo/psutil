@@ -96,7 +96,9 @@ def swap_memory():
     #     usr/src/cmd/swap/swap.c
     # ...nevertheless I can't manage to obtain the same numbers as 'swap'
     # cmdline utility, so let's parse its output (sigh!)
-    p = subprocess.Popen(['swap', '-l', '-k'], stdout=subprocess.PIPE)
+    p = subprocess.Popen(['/usr/bin/env', 'PATH=/usr/sbin:/sbin:%s' %
+                          os.environ['PATH'], 'swap', '-l', '-k'],
+                         stdout=subprocess.PIPE)
     stdout, stderr = p.communicate()
     if PY3:
         stdout = stdout.decode(sys.stdout.encoding)
