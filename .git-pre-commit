@@ -39,3 +39,5 @@ def main():
             sys.exit(ret)
 
 main()
+
+1 / 0
