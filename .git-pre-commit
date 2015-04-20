@@ -1,25 +1,41 @@
-#!/bin/bash
+#!/usr/bin/env python
 
-# This script gets executed on "git commit -am '...'".
-# You can install it with "make install-git-hooks".
+import os
+import subprocess
+import sys
 
-# pdb
-pdb=`git diff --cached --name-only | \
-         grep -E '\.py$' | \
-         xargs grep -n -H -E '(pdb\.set_trace\(\))'`
-if [ ! -z "$pdb" ] ; then
-    echo "commit aborted: you forgot a pdb in your python code"
-    echo $pdb
-    exit 1
-fi
 
-# flake8
-flake8=`git diff --cached --name-only | grep -E '\.py$'`
-if [ ! -z "$flake8" ] ; then
-    flake8=`echo "$flake8" | xargs flake8`
-    if [ ! -z "$flake8" ] ; then
-        echo "commit aborted: python code is not flake8-compliant"
-        echo $flake8
-        exit 1
-    fi
-fi
+def main():
+    out = subprocess.check_output("git diff --cached --name-only", shell=True)
+    files = [x for x in out.split('\n') if x.endswith('.py') and
+             os.path.exists(x)]
+
+    for path in files:
+        with open(path) as f:
+            data = f.read()
+
+        # pdb
+        if "pdb.set_trace" in data:
+            for lineno, line in enumerate(data.split('\n'), 1):
+                line = line.rstrip()
+                if "pdb.set_trace" in line:
+                    print("%s: %s" % (lineno, line))
+                    sys.exit(
+                        "commit aborted: you forgot a pdb in your python code")
+
+        # bare except clause
+        if "except:" in data:
+            for lineno, line in enumerate(data.split('\n'), 1):
+                line = line.rstrip()
+                if "except:" in line and not line.endswith("# NOQA"):
+                    print("%s: %s" % (lineno, line))
+                    sys.exit("commit aborted: bare except clause")
+
+    # flake8
+    for path in files:
+        ret = subprocess.call("flake8 %s" % path, shell=True)
+        if ret != 0:
+            print("commit aborted: python code is not flake8-compliant")
+            sys.exit(ret)
+
+main()
