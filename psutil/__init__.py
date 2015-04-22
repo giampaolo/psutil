@@ -190,6 +190,12 @@ class Error(Exception):
     from this one.
     """
 
+    def __init__(self, msg=""):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
 
 class NoSuchProcess(Error):
     """Exception raised when a process with a certain PID doesn't
@@ -197,7 +203,7 @@ class NoSuchProcess(Error):
     """
 
     def __init__(self, pid, name=None, msg=None):
-        Error.__init__(self)
+        Error.__init__(self, msg)
         self.pid = pid
         self.name = name
         self.msg = msg
@@ -207,9 +213,6 @@ class NoSuchProcess(Error):
             else:
                 details = "(pid=%s)" % self.pid
             self.msg = "process no longer exists " + details
-
-    def __str__(self):
-        return self.msg
 
 
 class ZombieProcess(NoSuchProcess):
@@ -221,7 +224,7 @@ class ZombieProcess(NoSuchProcess):
     """
 
     def __init__(self, pid, name=None, ppid=None, msg=None):
-        Error.__init__(self)
+        Error.__init__(self, msg)
         self.pid = pid
         self.ppid = ppid
         self.name = name
@@ -236,15 +239,12 @@ class ZombieProcess(NoSuchProcess):
                 details = "(pid=%s)" % self.pid
             self.msg = "process still exists but it's a zombie " + details
 
-    def __str__(self):
-        return self.msg
-
 
 class AccessDenied(Error):
     """Exception raised when permission to perform an action is denied."""
 
     def __init__(self, pid=None, name=None, msg=None):
-        Error.__init__(self)
+        Error.__init__(self, msg)
         self.pid = pid
         self.name = name
         self.msg = msg
@@ -256,9 +256,6 @@ class AccessDenied(Error):
             else:
                 self.msg = ""
 
-    def __str__(self):
-        return self.msg
-
 
 class TimeoutExpired(Error):
     """Raised on Process.wait(timeout) if timeout expires and process
@@ -266,18 +263,15 @@ class TimeoutExpired(Error):
     """
 
     def __init__(self, seconds, pid=None, name=None):
-        Error.__init__(self)
+        Error.__init__(self, "timeout after %s seconds" % seconds)
         self.seconds = seconds
         self.pid = pid
         self.name = name
-        self.msg = "timeout after %s seconds" % seconds
         if (pid is not None) and (name is not None):
             self.msg += " (pid=%s, name=%s)" % (pid, repr(name))
         elif (pid is not None):
             self.msg += " (pid=%s)" % self.pid
 
-    def __str__(self):
-        return self.msg
 
 # push exception classes into platform specific module namespace
 _psplatform.NoSuchProcess = NoSuchProcess
