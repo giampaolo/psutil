@@ -261,7 +261,7 @@ psutil_NtQueryObject()
         SuspendThread(g_hThread);
         TerminateThread(g_hThread, 1);
         // TerminateThread is async
-        WaitForSingleObject(g_hThread, INFINITE);
+        WaitForSingleObject(g_hThread, NTQO_TIMEOUT);
         
         // Cleanup Fiber
         if (g_fiber != NULL)
