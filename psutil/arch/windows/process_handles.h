@@ -16,6 +16,8 @@
 #include <windows.h>
 #include <strsafe.h>
 #include <winternl.h>
+#include <psapi.h>
+
 
 #ifndef NT_SUCCESS
 #define NT_SUCCESS(x) ((x) >= 0)
@@ -101,8 +103,10 @@ typedef struct _OBJECT_TYPE_INFORMATION {
 } OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
 
 PVOID GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName);
-VOID psutil_get_open_files_init(void);
+VOID psutil_get_open_files_init(BOOL threaded);
 PyObject* psutil_get_open_files(long pid, HANDLE processHandle);
+PyObject* psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess);
+PyObject* psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess);
 DWORD psutil_NtQueryObject(void);
 void psutil_NtQueryObjectThread(void);
 
