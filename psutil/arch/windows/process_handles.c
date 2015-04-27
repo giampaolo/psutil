@@ -454,11 +454,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess)
                    hHandle->HandleValue,
                    GetLastError());
             */
-            if (GetLastError() == ERROR_BAD_EXE_FORMAT || 
-                GetLastError() == ERROR_INVALID_HANDLE)
-            {
-                goto loop_cleanup;
-            }
+            goto loop_cleanup;
         }
 
         pMem = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 1);
