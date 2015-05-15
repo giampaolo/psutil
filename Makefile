@@ -61,16 +61,16 @@ test-memleaks-by-name: install
 
 # requires "pip install pep8"
 pep8:
-	@git ls-files | grep \\.py$ | xargs pep8
+	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m pep8
 
 # requires "pip install pyflakes"
 pyflakes:
 	@export PYFLAKES_NODOCTEST=1 && \
-		git ls-files | grep \\.py$ | xargs pyflakes
+		git ls-files | grep \\.py$ | xargs $(PYTHON) -m pyflakes
 
 # requires "pip install flake8"
 flake8:
-	@git ls-files | grep \\.py$ | xargs flake8
+	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
 
 
 # Upload source tarball on https://pypi.python.org/pypi/psutil.

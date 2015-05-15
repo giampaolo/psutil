@@ -284,6 +284,7 @@ _psplatform.TimeoutExpired = TimeoutExpired
 # --- Process class
 # =====================================================================
 
+
 def _assert_pid_not_reused(fun):
     """Decorator which raises NoSuchProcess in case a process is no
     longer running or its PID has been reused.
@@ -1099,6 +1100,7 @@ class Process(object):
 # --- Popen class
 # =====================================================================
 
+
 class Popen(Process):
     """A more convenient interface to stdlib subprocess module.
     It starts a sub process and deals with it exactly as when using
@@ -1165,6 +1167,7 @@ class Popen(Process):
 # =====================================================================
 # --- system processes related functions
 # =====================================================================
+
 
 def pids():
     """Return a list of current running PIDs."""
@@ -1331,6 +1334,7 @@ def wait_procs(procs, timeout=None, callback=None):
 # =====================================================================
 # --- CPU related functions
 # =====================================================================
+
 
 @memoize
 def cpu_count(logical=True):
@@ -1542,6 +1546,7 @@ def cpu_times_percent(interval=None, percpu=False):
 # --- system memory related functions
 # =====================================================================
 
+
 def virtual_memory():
     """Return statistics about system memory usage as a namedtuple
     including the following fields, expressed in bytes:
@@ -1622,6 +1627,7 @@ def swap_memory():
 # --- disks/paritions related functions
 # =====================================================================
 
+
 def disk_usage(path):
     """Return disk usage statistics about the given path as a namedtuple
     including total, used and free space expressed in bytes plus the
@@ -1675,6 +1681,7 @@ def disk_io_counters(perdisk=False):
 # =====================================================================
 # --- network related functions
 # =====================================================================
+
 
 def net_io_counters(pernic=False):
     """Return network I/O statistics as a namedtuple including
