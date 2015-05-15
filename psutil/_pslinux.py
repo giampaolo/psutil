@@ -40,10 +40,7 @@ __extra__all__ = [
     # connection status constants
     "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
-    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING",
-    # other
-    "phymem_buffers", "cached_phymem"]
-
+    "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", ]
 
 # --- constants
 
