@@ -22,6 +22,7 @@ import contextlib
 import datetime
 import errno
 import functools
+import imp
 import json
 import os
 import pickle
@@ -2634,6 +2635,12 @@ class TestMisc(unittest.TestCase):
         check(psutil.disk_partitions())
         check(psutil.disk_usage(os.getcwd()))
         check(psutil.users())
+
+    def test_setup_script(self):
+        here = os.path.abspath(os.path.dirname(__file__))
+        setup_py = os.path.realpath(os.path.join(here, '..', 'setup.py'))
+        module = imp.load_source('setup', setup_py)
+        self.assertRaises(SystemExit, module.setup)
 
 
 # ===================================================================
