@@ -72,7 +72,6 @@ pyflakes:
 flake8:
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
 
-
 # Upload source tarball on https://pypi.python.org/pypi/psutil.
 upload-src: clean
 	$(PYTHON) setup.py sdist upload

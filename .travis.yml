@@ -12,12 +12,13 @@ install:
     - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install ipaddress; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '3.3' ]]; then pip install ipaddress; fi
 script:
-    - pip install flake8
+    - pip install flake8 pep8
     - python setup.py build
     - python setup.py install
     - python test/test_psutil.py
     - python test/test_memory_leaks.py
-    - make flake8
+    - flake8
+    - pep8
 os:
     - linux
     - osx
