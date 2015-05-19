@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# This gets executed on 'git commit' and rejects the commit in case the
+# submitted code does not pass validation.
+# Install it with "make install-git-hooks"
+
 import os
 import subprocess
 import sys

@@ -1,6 +1,7 @@
 include .git-pre-commit
 include .gitignore
 include .travis.yml
+include .git-pre-commit
 include CREDITS
 include HISTORY.rst
 include INSTALL.rst
