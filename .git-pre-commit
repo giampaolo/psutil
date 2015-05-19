@@ -32,12 +32,12 @@ def main():
                     sys.exit("commit aborted: bare except clause")
 
     # flake8
+    failed = False
     for path in files:
         ret = subprocess.call("flake8 %s" % path, shell=True)
         if ret != 0:
-            print("commit aborted: python code is not flake8-compliant")
-            sys.exit(ret)
+            failed = True
+    if failed:
+        sys.exit("commit aborted: python code is not flake8-compliant")
 
 main()
-
-1 / 0

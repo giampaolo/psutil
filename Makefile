@@ -90,5 +90,6 @@ git-tag-release:
 
 # install GIT pre-commit hook
 install-git-hooks:
-	cp .git-pre-commit .git/hooks/pre-commit
+	rm -f .git/hooks/pre-commit
+	ln -s ../../.git-pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
