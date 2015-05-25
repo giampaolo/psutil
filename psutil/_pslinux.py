@@ -227,7 +227,7 @@ def _parse_cpuinfo():
         for line in f:
             line = line.strip().lower()
             if line:
-                line_info = line.split(':', 1)
+                line_info = line.split(b':', 1)
                 if len(line_info) == 2:
                     info_key = line_info[0].strip()
                     info_value = line_info[1].strip()
