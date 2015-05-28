@@ -568,7 +568,7 @@ Functions
     import psutil
 
     def on_terminate(proc):
-        print("process {} terminated".format(proc))
+        print("process {} terminated with exit code {}".format(proc, proc.returncode))
 
     procs = [...]  # a list of Process instances
     for p in procs:
