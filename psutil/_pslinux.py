@@ -214,6 +214,29 @@ def swap_memory():
 
 # --- CPUs
 
+def _parse_cpuinfo():
+    """Return a list of dicts, one per processor entry in /proc/cpuinfo.
+    Each dict represents the key/value pairs for a given processor.
+    """
+    current_info = {}
+    proc_infos = [current_info]
+    with open('/proc/cpuinfo', 'rb') as f:
+        for line in f:
+            line = line.strip().lower()
+            if line:
+                line_info = line.split(b':', 1)
+                if len(line_info) == 2:
+                    info_key = line_info[0].strip()
+                    info_value = line_info[1].strip()
+                    current_info[info_key] = info_value
+            else:
+                current_info = {}
+                proc_infos.append(current_info)
+    if proc_infos and not proc_infos[-1]:
+        proc_infos.pop()
+    return proc_infos
+
+
 def cpu_times():
     """Return a named tuple representing the following system-wide
     CPU times:
@@ -252,11 +275,8 @@ def cpu_count_logical():
         return os.sysconf("SC_NPROCESSORS_ONLN")
     except ValueError:
         # as a second fallback we try to parse /proc/cpuinfo
-        num = 0
-        with open('/proc/cpuinfo', 'rb') as f:
-            for line in f:
-                if line.lower().startswith(b'processor'):
-                    num += 1
+        proc_infos = _parse_cpuinfo()
+        num = len(proc_infos)
 
         # unknown format (e.g. amrel/sparc architectures), see:
         # https://github.com/giampaolo/psutil/issues/200
@@ -276,14 +296,19 @@ def cpu_count_logical():
 
 
 def cpu_count_physical():
-    """Return the number of physical CPUs in the system."""
-    with open('/proc/cpuinfo', 'rb') as f:
-        found = set()
-        for line in f:
-            if line.lower().startswith(b'physical id'):
-                found.add(line.strip())
-    # mimic os.cpu_count()
-    return len(found) if found else None
+    """Return the number of physical cores in the system."""
+    proc_infos = _parse_cpuinfo()
+    proc_core_counts = {}
+    for proc_info in proc_infos:
+        proc_id = proc_info.get(b'physical id')
+        if proc_id:
+            proc_core_counts[proc_id] = int(proc_info.get(b'cpu cores', 0))
+
+    if proc_core_counts:
+        return sum(proc_core_counts.values())
+    else:
+        # mimic os.cpu_count()
+        return None
 
 
 # --- other system functions
