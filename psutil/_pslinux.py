@@ -713,8 +713,9 @@ class Process(object):
         fname = "/proc/%s/stat" % self.pid
         kw = dict(encoding=DEFAULT_ENCODING) if PY3 else dict()
         with open(fname, "rt", **kw) as f:
-            # XXX - gets changed later and probably needs refactoring
-            return f.read().split(' ')[1].replace('(', '').replace(')', '')
+            data = f.read()
+        # XXX - gets changed later and probably needs refactoring
+        return data[data.find('(') + 1:data.rfind(')')]
 
     def exe(self):
         try:

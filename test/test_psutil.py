@@ -1543,6 +1543,26 @@ class TestProcess(unittest.TestCase):
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
+    @unittest.skipUnless(POSIX, "posix only")
+    # TODO: add support for other compilers
+    @unittest.skipUnless(which("gcc"), "gcc not available")
+    def test_prog_w_funky_name(self):
+        # Test that name(), exe() and cmdline() correctly handle programs
+        # with funky chars such as spaces and ")", see:
+        # https://github.com/giampaolo/psutil/issues/628
+        funky_name = "/tmp/foo bar )"
+        _, c_file = tempfile.mkstemp(prefix='psutil-', suffix='.c', dir="/tmp")
+        self.addCleanup(lambda: safe_remove(c_file))
+        with open(c_file, "w") as f:
+            f.write("void main() { pause(); }")
+        subprocess.check_call(["gcc", c_file, "-o", funky_name])
+        self.addCleanup(lambda: safe_remove(funky_name))
+        sproc = get_test_subprocess([funky_name, "arg1", "arg2"])
+        p = psutil.Process(sproc.pid)
+        self.assertEqual(p.name(), "foo bar )")
+        self.assertEqual(p.exe(), "/tmp/foo bar )")
+        self.assertEqual(p.cmdline(), ["/tmp/foo bar )", "arg1", "arg2"])
+
     @unittest.skipUnless(POSIX, 'posix only')
     def test_uids(self):
         p = psutil.Process()

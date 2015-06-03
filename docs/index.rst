@@ -769,6 +769,13 @@ Process class
         10
         >>>
 
+     Starting from `Python 3.3 <http://bugs.python.org/issue10784>`__ this
+     functionality is also available as
+     `os.getpriority() <http://docs.python.org/3/library/os.html#os.getpriority>`__
+     and
+     `os.setpriority() <http://docs.python.org/3/library/os.html#os.setpriority>`__
+     (UNIX only).
+
      On Windows this is available as well by using
      `GetPriorityClass <http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx>`__
      and `SetPriorityClass <http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx>`__
@@ -778,12 +785,6 @@ Process class
      Example which increases process priority on Windows:
 
         >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
-
-     Starting from `Python 3.3 <http://bugs.python.org/issue10784>`__ this
-     same functionality is available as
-     `os.getpriority() <http://docs.python.org/3/library/os.html#os.getpriority>`__
-     and
-     `os.setpriority() <http://docs.python.org/3/library/os.html#os.setpriority>`__.
 
   .. method:: ionice(ioclass=None, value=None)
 
@@ -1225,7 +1226,7 @@ Popen class
      :meth:`send_signal() <psutil.Process.send_signal()>`,
      :meth:`terminate() <psutil.Process.terminate()>` and
      :meth:`kill() <psutil.Process.kill()>`
-     so that you don't accidentally terminate another process, fixing
+     so that you can't accidentally terminate another process, fixing
      http://bugs.python.org/issue6973.
 
   >>> import psutil

@@ -38,6 +38,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #606: Process.parent() may swallow NoSuchProcess exceptions.
 - #611: [SunOS] net_io_counters has send and received swapped
 - #618: [SunOS] swap tests fail on Solaris when run as normal user
+- #628: [Linux] Process.name() truncates process name in case it contains
+  spaces or parentheses.
 
 
 2.2.1 - 2015-02-02
