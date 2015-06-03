@@ -276,14 +276,28 @@ def cpu_count_logical():
 
 
 def cpu_count_physical():
-    """Return the number of physical CPUs in the system."""
+    """Return the number of physical cores in the system."""
+    mapping = {}
+    current_info = {}
     with open('/proc/cpuinfo', 'rb') as f:
-        found = set()
         for line in f:
-            if line.lower().startswith(b'physical id'):
-                found.add(line.strip())
+            line = line.strip().lower()
+            if not line:
+                # new section
+                if (b'physical id' in current_info and
+                        b'cpu cores' in current_info):
+                    mapping[current_info[b'physical id']] = \
+                        current_info[b'cpu cores']
+                current_info = {}
+            else:
+                # ongoing section
+                if (line.startswith(b'physical id') or
+                        line.startswith(b'cpu cores')):
+                    key, value = line.split(b'\t:', 1)
+                    current_info[key] = int(value)
+
     # mimic os.cpu_count()
-    return len(found) if found else None
+    return sum(mapping.values()) or None
 
 
 # --- other system functions

@@ -1342,7 +1342,7 @@ def cpu_count(logical=True):
     os.cpu_count() in Python 3.4).
 
     If logical is False return the number of physical cores only
-    (hyper thread CPUs are excluded).
+    (e.g. hyper thread CPUs are excluded).
 
     Return None if undetermined.
 

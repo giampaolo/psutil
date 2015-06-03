@@ -37,6 +37,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #593: [FreeBSD] Process().memory_maps() segfaults.
 - #606: Process.parent() may swallow NoSuchProcess exceptions.
 - #611: [SunOS] net_io_counters has send and received swapped
+- #614: [Linux]: cpu_count(logical=False) return the number of physical CPUs
+  instead of physical cores.
 - #618: [SunOS] swap tests fail on Solaris when run as normal user
 - #628: [Linux] Process.name() truncates process name in case it contains
   spaces or parentheses.

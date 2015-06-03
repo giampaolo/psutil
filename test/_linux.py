@@ -204,6 +204,17 @@ class LinuxSpecificTestCase(unittest.TestCase):
         self.assertEqual(len(nics), found, msg="%s\n---\n%s" % (
             pprint.pformat(nics), out))
 
+    @unittest.skipUnless(which("nproc"), "nproc utility not available")
+    def test_cpu_count_logical_w_nproc(self):
+        num = int(sh("nproc --all"))
+        self.assertEqual(psutil.cpu_count(logical=True), num)
+
+    @unittest.skipUnless(which("lscpu"), "lscpu utility not available")
+    def test_cpu_count_logical_w_lscpu(self):
+        out = sh("lscpu -p")
+        num = len([x for x in out.split('\n') if not x.startswith('#')])
+        self.assertEqual(psutil.cpu_count(logical=True), num)
+
     # --- tests for specific kernel versions
 
     @unittest.skipUnless(
