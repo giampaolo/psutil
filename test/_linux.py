@@ -16,6 +16,12 @@ import socket
 import struct
 import sys
 import time
+import warnings
+
+try:
+    from unittest import mock  # py3
+except ImportError:
+    import mock  # requires "pip install mock"
 
 from test_psutil import POSIX, TOLERANCE, TRAVIS
 from test_psutil import (skip_on_not_implemented, sh, get_test_subprocess,
@@ -23,6 +29,7 @@ from test_psutil import (skip_on_not_implemented, sh, get_test_subprocess,
                          which)
 
 import psutil
+import psutil._pslinux
 from psutil._compat import PY3
 
 
@@ -214,6 +221,104 @@ class LinuxSpecificTestCase(unittest.TestCase):
         out = sh("lscpu -p")
         num = len([x for x in out.split('\n') if not x.startswith('#')])
         self.assertEqual(psutil.cpu_count(logical=True), num)
+
+    # --- mocked tests
+
+    def test_virtual_memory_mocked_warnings(self):
+        with mock.patch('psutil._pslinux.open', create=True) as m:
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                ret = psutil._pslinux.virtual_memory()
+                assert m.called
+                self.assertEqual(len(ws), 1)
+                w = ws[0]
+                self.assertTrue(w.filename.endswith('psutil/_pslinux.py'))
+                self.assertIn(
+                    "'cached', 'active' and 'inactive' memory stats couldn't "
+                    "be determined", str(w.message))
+                self.assertEqual(ret.cached, 0)
+                self.assertEqual(ret.active, 0)
+                self.assertEqual(ret.inactive, 0)
+
+    def test_swap_memory_mocked_warnings(self):
+        with mock.patch('psutil._pslinux.open', create=True) as m:
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                ret = psutil._pslinux.swap_memory()
+                assert m.called
+                self.assertEqual(len(ws), 1)
+                w = ws[0]
+                self.assertTrue(w.filename.endswith('psutil/_pslinux.py'))
+                self.assertIn(
+                    "'sin' and 'sout' swap memory stats couldn't "
+                    "be determined", str(w.message))
+                self.assertEqual(ret.sin, 0)
+                self.assertEqual(ret.sout, 0)
+
+    def test_cpu_count_logical_mocked(self):
+        import psutil._pslinux
+        original = psutil._pslinux.cpu_count_logical()
+        with mock.patch(
+                'psutil._pslinux.os.sysconf', side_effect=ValueError) as m:
+            # Here we want to mock os.sysconf("SC_NPROCESSORS_ONLN") in
+            # order to test /proc/cpuinfo parsing.
+            # We might also test /proc/stat parsing but mocking open()
+            # like that is too difficult.
+            self.assertEqual(psutil._pslinux.cpu_count_logical(), original)
+            assert m.called
+            # Have open() return emtpy data and make sure None is returned
+            # ('cause we want to mimick os.cpu_count())
+            with mock.patch('psutil._pslinux.open', create=True) as m:
+                self.assertIsNone(psutil._pslinux.cpu_count_logical())
+                assert m.called
+
+    def test_cpu_count_physical_mocked(self):
+        # Have open() return emtpy data and make sure None is returned
+        # ('cause we want to mimick os.cpu_count())
+        with mock.patch('psutil._pslinux.open', create=True) as m:
+            self.assertIsNone(psutil._pslinux.cpu_count_physical())
+            assert m.called
+
+    def test_proc_terminal_mocked(self):
+        with mock.patch('psutil._pslinux._psposix._get_terminal_map',
+                        return_value={}) as m:
+            self.assertIsNone(psutil._pslinux.Process(os.getpid()).terminal())
+            assert m.called
+
+    def test_proc_num_ctx_switches_mocked(self):
+        with mock.patch('psutil._pslinux.open', create=True) as m:
+            self.assertRaises(
+                NotImplementedError,
+                psutil._pslinux.Process(os.getpid()).num_ctx_switches)
+            assert m.called
+
+    def test_proc_num_threads_mocked(self):
+        with mock.patch('psutil._pslinux.open', create=True) as m:
+            self.assertRaises(
+                NotImplementedError,
+                psutil._pslinux.Process(os.getpid()).num_threads)
+            assert m.called
+
+    def test_proc_ppid_mocked(self):
+        with mock.patch('psutil._pslinux.open', create=True) as m:
+            self.assertRaises(
+                NotImplementedError,
+                psutil._pslinux.Process(os.getpid()).ppid)
+            assert m.called
+
+    def test_proc_uids_mocked(self):
+        with mock.patch('psutil._pslinux.open', create=True) as m:
+            self.assertRaises(
+                NotImplementedError,
+                psutil._pslinux.Process(os.getpid()).uids)
+            assert m.called
+
+    def test_proc_gids_mocked(self):
+        with mock.patch('psutil._pslinux.open', create=True) as m:
+            self.assertRaises(
+                NotImplementedError,
+                psutil._pslinux.Process(os.getpid()).gids)
+            assert m.called
 
     # --- tests for specific kernel versions
 
