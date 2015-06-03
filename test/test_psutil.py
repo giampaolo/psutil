@@ -1553,10 +1553,10 @@ class TestProcess(unittest.TestCase):
         funky_name = "/tmp/foo bar )"
         _, c_file = tempfile.mkstemp(prefix='psutil-', suffix='.c', dir="/tmp")
         self.addCleanup(lambda: safe_remove(c_file))
+        self.addCleanup(lambda: safe_remove(funky_name))
         with open(c_file, "w") as f:
             f.write("void main() { pause(); }")
         subprocess.check_call(["gcc", c_file, "-o", funky_name])
-        self.addCleanup(lambda: safe_remove(funky_name))
         sproc = get_test_subprocess([funky_name, "arg1", "arg2"])
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.name(), "foo bar )")
