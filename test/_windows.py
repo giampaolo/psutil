@@ -15,7 +15,7 @@ import sys
 import time
 import traceback
 
-from test_psutil import (get_test_subprocess, reap_children, unittest)
+from test_psutil import WINDOWS, get_test_subprocess, reap_children, unittest
 
 try:
     import wmi
@@ -28,9 +28,10 @@ except ImportError:
     win32api = win32con = None
 
 from psutil._compat import PY3, callable, long
-from psutil._pswindows import ACCESS_DENIED_SET
-import psutil._psutil_windows as _psutil_windows
 import psutil
+
+
+cext = psutil._psplatform.cext
 
 
 def wrap_exceptions(fun):
@@ -38,6 +39,7 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except OSError as err:
+            from psutil._pswindows import ACCESS_DENIED_SET
             if err.errno in ACCESS_DENIED_SET:
                 raise psutil.AccessDenied(None, None)
             if err.errno == errno.ESRCH:
@@ -46,6 +48,7 @@ def wrap_exceptions(fun):
     return wrapper
 
 
+@unittest.skipUnless(WINDOWS, "not a Windows system")
 class WindowsSpecificTestCase(unittest.TestCase):
 
     @classmethod
@@ -281,6 +284,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
             self.fail('\n' + '\n'.join(failures))
 
 
+@unittest.skipUnless(WINDOWS, "not a Windows system")
 class TestDualProcessImplementation(unittest.TestCase):
     fun_names = [
         # function name, tolerance
@@ -324,7 +328,7 @@ class TestDualProcessImplementation(unittest.TestCase):
         failures = []
         for p in psutil.process_iter():
             try:
-                nt = ntpinfo(*_psutil_windows.proc_info(p.pid))
+                nt = ntpinfo(*cext.proc_info(p.pid))
             except psutil.NoSuchProcess:
                 continue
             assert_ge_0(nt)
@@ -334,7 +338,7 @@ class TestDualProcessImplementation(unittest.TestCase):
                     continue
                 if name == 'proc_create_time' and p.pid in (0, 4):
                     continue
-                meth = wrap_exceptions(getattr(_psutil_windows, name))
+                meth = wrap_exceptions(getattr(cext, name))
                 try:
                     ret = meth(p.pid)
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
@@ -356,7 +360,7 @@ class TestDualProcessImplementation(unittest.TestCase):
                         compare_with_tolerance(ret[3], nt.io_wbytes, tolerance)
                     elif name == 'proc_memory_info':
                         try:
-                            rawtupl = _psutil_windows.proc_memory_info_2(p.pid)
+                            rawtupl = cext.proc_memory_info_2(p.pid)
                         except psutil.NoSuchProcess:
                             continue
                         compare_with_tolerance(ret, rawtupl, tolerance)
@@ -385,7 +389,7 @@ class TestDualProcessImplementation(unittest.TestCase):
         # process no longer exists
         ZOMBIE_PID = max(psutil.pids()) + 5000
         for name, _ in self.fun_names:
-            meth = wrap_exceptions(getattr(_psutil_windows, name))
+            meth = wrap_exceptions(getattr(cext, name))
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
 

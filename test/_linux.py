@@ -23,7 +23,7 @@ try:
 except ImportError:
     import mock  # requires "pip install mock"
 
-from test_psutil import POSIX, TOLERANCE, TRAVIS
+from test_psutil import POSIX, TOLERANCE, TRAVIS, LINUX
 from test_psutil import (skip_on_not_implemented, sh, get_test_subprocess,
                          retry_before_failing, get_kernel_version, unittest,
                          which)
@@ -67,6 +67,7 @@ def get_mac_address(ifname):
         return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 
 
+@unittest.skipUnless(LINUX, "not a Linux system")
 class LinuxSpecificTestCase(unittest.TestCase):
 
     @unittest.skipIf(
@@ -356,12 +357,12 @@ class LinuxSpecificTestCase(unittest.TestCase):
         self.assertTrue(hasattr(psutil, "RLIMIT_SIGPENDING"))
 
 
-def test_main():
+def main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(LinuxSpecificTestCase))
     result = unittest.TextTestRunner(verbosity=2).run(test_suite)
     return result.wasSuccessful()
 
 if __name__ == '__main__':
-    if not test_main():
+    if not main():
         sys.exit(1)

@@ -21,6 +21,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #599: [Windows] process name() can now be determined for all processes even
   when running as a limited user.
 - #602: pre-commit GIT hook.
+- #629: enhanced support for py.test and nose test discovery and tests run.
 
 **Bug fixes**
 

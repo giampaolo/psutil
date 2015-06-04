@@ -16,7 +16,7 @@ import time
 import psutil
 
 from psutil._compat import PY3
-from test_psutil import (TOLERANCE, sh, get_test_subprocess, which,
+from test_psutil import (TOLERANCE, BSD, sh, get_test_subprocess, which,
                          retry_before_failing, reap_children, unittest)
 
 
@@ -50,6 +50,7 @@ def muse(field):
     return int(line.split()[1])
 
 
+@unittest.skipUnless(BSD, "not a BSD system")
 class BSDSpecificTestCase(unittest.TestCase):
 
     @classmethod
@@ -236,12 +237,12 @@ class BSDSpecificTestCase(unittest.TestCase):
                                delta=TOLERANCE)
 
 
-def test_main():
+def main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(BSDSpecificTestCase))
     result = unittest.TextTestRunner(verbosity=2).run(test_suite)
     return result.wasSuccessful()
 
 if __name__ == '__main__':
-    if not test_main():
+    if not main():
         sys.exit(1)

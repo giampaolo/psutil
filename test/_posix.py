@@ -15,7 +15,7 @@ import time
 import psutil
 
 from psutil._compat import PY3, callable
-from test_psutil import LINUX, SUNOS, OSX, BSD, PYTHON
+from test_psutil import LINUX, SUNOS, OSX, BSD, PYTHON, POSIX
 from test_psutil import (get_test_subprocess, skip_on_access_denied,
                          retry_before_failing, reap_children, sh, unittest,
                          get_kernel_version, wait_for_pid)
@@ -42,6 +42,7 @@ def ps(cmd):
         return output
 
 
+@unittest.skipUnless(POSIX, "not a POSIX system")
 class PosixSpecificTestCase(unittest.TestCase):
     """Compare psutil results against 'ps' command line utility."""
 
@@ -243,12 +244,12 @@ class PosixSpecificTestCase(unittest.TestCase):
             self.fail('\n' + '\n'.join(failures))
 
 
-def test_main():
+def main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(PosixSpecificTestCase))
     result = unittest.TextTestRunner(verbosity=2).run(test_suite)
     return result.wasSuccessful()
 
 if __name__ == '__main__':
-    if not test_main():
+    if not main():
         sys.exit(1)

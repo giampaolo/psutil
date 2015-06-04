@@ -15,8 +15,8 @@ import time
 import psutil
 
 from psutil._compat import PY3
-from test_psutil import (TOLERANCE, sh, get_test_subprocess, reap_children,
-                         retry_before_failing, unittest)
+from test_psutil import (TOLERANCE, OSX, sh, get_test_subprocess,
+                         reap_children, retry_before_failing, unittest)
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
@@ -47,6 +47,7 @@ def vm_stat(field):
     return int(re.search('\d+', line).group(0)) * PAGESIZE
 
 
+@unittest.skipUnless(OSX, "not an OSX system")
 class OSXSpecificTestCase(unittest.TestCase):
 
     @classmethod
@@ -148,12 +149,12 @@ class OSXSpecificTestCase(unittest.TestCase):
         self.assertEqual(tot1, tot2)
 
 
-def test_main():
+def main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(OSXSpecificTestCase))
     result = unittest.TextTestRunner(verbosity=2).run(test_suite)
     return result.wasSuccessful()
 
 if __name__ == '__main__':
-    if not test_main():
+    if not main():
         sys.exit(1)

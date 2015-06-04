@@ -417,7 +417,7 @@ class TestModuleFunctionsLeaks(Base):
         self.execute('net_if_stats')
 
 
-def test_main():
+def main():
     test_suite = unittest.TestSuite()
     tests = [TestProcessObjectLeaksZombie,
              TestProcessObjectLeaks,
@@ -428,5 +428,5 @@ def test_main():
     return result.wasSuccessful()
 
 if __name__ == '__main__':
-    if not test_main():
+    if not main():
         sys.exit(1)
