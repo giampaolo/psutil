@@ -6,6 +6,9 @@
 PYTHON    = python
 TSCRIPT   = test/test_psutil.py
 
+# Private vars
+COVERAGE_OPTS = --include="*psutil*" --omit="test/*,*setup*"
+
 all: test
 
 clean:
@@ -19,10 +22,12 @@ clean:
 	rm -rf *.core
 	rm -rf *.egg-info
 	rm -rf *\$testfile*
+	rm -rf .coverage
 	rm -rf .tox
 	rm -rf build
 	rm -rf dist
 	rm -rf docs/_build
+	rm -rf htmlcov
 
 build: clean
 	$(PYTHON) setup.py build
@@ -30,6 +35,11 @@ build: clean
 	@# "import psutil" when using the interactive interpreter from within
 	@# this directory.
 	$(PYTHON) setup.py build_ext -i
+
+install-dev-deps:
+	$(PYTHON) -m pip install --user --upgrade pip
+	$(PYTHON) -m pip install --user --upgrade \
+		ipaddress unittest2 mock ipdb coverage nose
 
 install: build
 	$(PYTHON) setup.py install --user; \
@@ -58,6 +68,14 @@ test-by-name: install
 # same as above but for test_memory_leaks.py script
 test-memleaks-by-name: install
 	@$(PYTHON) -m nose test/test_memory_leaks.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
+
+coverage: install
+	rm -rf .coverage htmlcov
+	$(PYTHON) -m coverage run $(TSCRIPT) $(COVERAGE_OPTS)
+	$(PYTHON) -m coverage report $(COVERAGE_OPTS)
+	@echo "writing results to htmlcov/index.html"
+	$(PYTHON) -m coverage html $(COVERAGE_OPTS)
+	$(PYTHON) -m webbrowser -t htmlcov/index.html
 
 # requires "pip install pep8"
 pep8:
