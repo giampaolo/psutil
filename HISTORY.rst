@@ -22,6 +22,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   when running as a limited user.
 - #602: pre-commit GIT hook.
 - #629: enhanced support for py.test and nose test discovery and tests run.
+- #616: [Windows] Add inet_ntop function for Windows XP.
 
 **Bug fixes**
 
