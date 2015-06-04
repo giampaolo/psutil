@@ -2767,23 +2767,23 @@ def main():
     tests.append(LimitedUserTestCase)
 
     if POSIX:
-        from test_posix import PosixSpecificTestCase
+        from _posix import PosixSpecificTestCase
         tests.append(PosixSpecificTestCase)
 
     # import the specific platform test suite
     stc = None
     if LINUX:
-        from test_linux import LinuxSpecificTestCase as stc
+        from _linux import LinuxSpecificTestCase as stc
     elif WINDOWS:
-        from test_windows import WindowsSpecificTestCase as stc
-        from test_windows import TestDualProcessImplementation
+        from _windows import WindowsSpecificTestCase as stc
+        from _windows import TestDualProcessImplementation
         tests.append(TestDualProcessImplementation)
     elif OSX:
-        from test_osx import OSXSpecificTestCase as stc
+        from _osx import OSXSpecificTestCase as stc
     elif BSD:
-        from test_bsd import BSDSpecificTestCase as stc
+        from _bsd import BSDSpecificTestCase as stc
     elif SUNOS:
-        from test_sunos import SunOSSpecificTestCase as stc
+        from _sunos import SunOSSpecificTestCase as stc
     if stc is not None:
         tests.append(stc)
 
