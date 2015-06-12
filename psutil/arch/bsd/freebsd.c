@@ -25,8 +25,8 @@
 #include <libutil.h>  // process open files, shared libs (kinfo_getvmmap), cwd
 #include <sys/cpuset.h>
 
-
 #include "freebsd.h"
+#include "../../_psutil_common.h"
 
 
 #define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -67,7 +67,7 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
 }
 
 
-void
+int
 psutil_raise_ad_or_nsp(long pid) {
     // Set exception to AccessDenied if pid exists else NoSuchProcess.
     int ret;
@@ -76,19 +76,18 @@ psutil_raise_ad_or_nsp(long pid) {
         NoSuchProcess();
     else if (ret == 1)
         AccessDenied();
-    else
-        return NULL;
+    return ret;
 }
 
 
 // remove spaces from string
-void psutil_remove_spaces(char *str) {
+static void psutil_remove_spaces(char *str) {
     char *p1 = str;
     char *p2 = str;
     do
         while (*p2 == ' ')
             p2++;
-    while (*p1++ = *p2++);
+    while ((*p1++ = *p2++));
 }
 
 
@@ -194,7 +193,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
  *      -1 for failure (Exception raised);
  *      1 for insufficient privileges.
  */
-char
+static char
 *psutil_get_cmd_args(long pid, size_t *argsize) {
     int mib[4], argmax;
     size_t size = sizeof(argmax);

@@ -23,6 +23,7 @@
 #include <net/if_media.h>
 #include <libutil.h>
 
+#include "freebsd.h"
 #include "freebsd_socks.h"
 
 
