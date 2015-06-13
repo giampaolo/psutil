@@ -12,7 +12,7 @@
   ``_*.py`` scripts (which should be ignored).
 
 - ``test_memory_leaks.py`` looks for memory leaks into C extension modules and must
-  be run separately with ``make memtest``.
+  be run separately with ``make test-memleaks``.
 
 - To run tests on all supported Python version install tox (pip install tox)
   then run ``tox``.
