@@ -113,6 +113,7 @@ class OSXSpecificTestCase(unittest.TestCase):
 
     @retry_before_failing()
     def test_vmem_free(self):
+        print(os.system("vm_stat"))
         num = vm_stat("free")
         self.assertAlmostEqual(psutil.virtual_memory().free, num,
                                delta=MEMORY_TOLERANCE)
