@@ -187,6 +187,10 @@ class BSDSpecificTestCase(unittest.TestCase):
         self.assertAlmostEqual(psutil.virtual_memory().buffers, syst,
                                delta=TOLERANCE)
 
+    def test_cpu_count_logical(self):
+        syst = sysctl("hw.ncpu")
+        self.assertEqual(psutil.cpu_count(logical=True), syst)
+
     # --- virtual_memory(); tests against muse
 
     @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")

@@ -143,7 +143,11 @@ def cpu_count_physical():
         if index != -1:
             s = s[:index + 9]
             root = ET.fromstring(s)
-            ret = len(root.findall('group/children/group/cpu')) or None
+            try:
+                ret = len(root.findall('group/children/group/cpu')) or None
+            finally:
+                # needed otherwise it will memleak
+                root.clear()
     if not ret:
         # If logical CPUs are 1 it's obvious we'll have only 1
         # physical CPU.
