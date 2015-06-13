@@ -97,6 +97,14 @@ class OSXSpecificTestCase(unittest.TestCase):
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 self.fail("psutil=%s, df=%s" % usage.used, used)
 
+    def test_cpu_count_logical(self):
+        num = sysctl("sysctl hw.logicalcpu")
+        self.assertEqual(num, psutil.cpu_count(logical=True))
+
+    def test_cpu_count_physical(self):
+        num = sysctl("sysctl hw.physicalcpu")
+        self.assertEqual(num, psutil.cpu_count(logical=False))
+
     # --- virtual mem
 
     def test_vmem_total(self):
@@ -127,14 +135,6 @@ class OSXSpecificTestCase(unittest.TestCase):
         self.assertAlmostEqual(psutil.virtual_memory().wired, num,
                                delta=MEMORY_TOLERANCE)
 
-    def test_cpu_count_logical(self):
-        num = sysctl("sysctl hw.logicalcpu")
-        self.assertEqual(num, psutil.cpu_count(logical=True))
-
-    def test_cpu_count_physical(self):
-        num = sysctl("sysctl hw.physicalcpu")
-        self.assertEqual(num, psutil.cpu_count(logical=False))
-
     # --- swap mem
 
     def test_swapmem_sin(self):
@@ -151,9 +151,13 @@ class OSXSpecificTestCase(unittest.TestCase):
         # OSX uses multiple cache files:
         # http://en.wikipedia.org/wiki/Paging#OS_X
         for name in os.listdir("/var/vm/"):
-            file = os.path.join("/var/vm", name)
-            if os.path.isfile(file):
-                sys_total += os.path.getsize(file)
+            # In here we also have 'sleepimage' file which is the ram
+            # during hybernation:
+            # http://apple.stackexchange.com/a/50272
+            if name.startswith("swapfile"):
+                file = os.path.join("/var/vm", name)
+                if os.path.isfile(file):
+                    sys_total += os.path.getsize(file)
         self.assertEqual(psutil_total, sys_total)
 
 

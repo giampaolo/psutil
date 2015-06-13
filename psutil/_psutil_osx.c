@@ -547,6 +547,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     mib[0] = CTL_HW;
     mib[1] = HW_MEMSIZE;
 
+    // This is also available as sysctlbyname("hw.memsize").
     if (sysctl(mib, 2, &total, &len, NULL, 0)) {
         if (errno != 0)
             PyErr_SetFromErrno(PyExc_OSError);
