@@ -127,6 +127,14 @@ class OSXSpecificTestCase(unittest.TestCase):
         self.assertAlmostEqual(psutil.virtual_memory().wired, num,
                                delta=MEMORY_TOLERANCE)
 
+    def test_cpu_count_logical(self):
+        num = sysctl("sysctl hw.logicalcpu")
+        self.assertEqual(num, psutil.cpu_count(logical=True))
+
+    def test_cpu_count_physical(self):
+        num = sysctl("sysctl hw.physicalcpu")
+        self.assertEqual(num, psutil.cpu_count(logical=False))
+
     # --- swap mem
 
     def test_swapmem_sin(self):

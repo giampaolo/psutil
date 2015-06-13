@@ -396,6 +396,7 @@ error:
  */
 static PyObject *
 psutil_cpu_count_logical(PyObject *self, PyObject *args) {
+    /*
     int mib[2];
     int ncpu;
     size_t len;
@@ -407,6 +408,14 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
         Py_RETURN_NONE;  // mimic os.cpu_count()
     else
         return Py_BuildValue("i", ncpu);
+    */
+    int num;
+    size_t size = sizeof(int);
+
+    if (sysctlbyname("hw.logicalcpu", &num, &size, NULL, 2))
+        Py_RETURN_NONE;  // mimic os.cpu_count()
+    else
+        return Py_BuildValue("i", num);
 }
 
 
