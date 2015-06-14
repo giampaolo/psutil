@@ -35,9 +35,10 @@ build: clean
 
 # useful deps which are nice to have while developing / testing
 setup-dev-env: install-git-hooks
-	python -c "import urllib2; \
-			   r = urllib2.urlopen('https://bootstrap.pypa.io/get-pip.py'); \
-			   open('/tmp/get-pip.py', 'w').write(r.read());"
+    python -c "import urllib2, ssl; \
+               context = ssl._create_unverified_context(); \
+               r = urllib2.urlopen('https://bootstrap.pypa.io/get-pip.py', context=context); \
+               open('/tmp/get-pip.py', 'w').write(r.read());"
 	$(PYTHON) /tmp/get-pip.py --user
 	rm /tmp/get-pip.py
 	$(PYTHON) -m pip install --user --upgrade pip

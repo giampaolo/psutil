@@ -3090,7 +3090,7 @@ class TestUnicode(unittest.TestCase):
     def setUpClass(cls):
         with tempfile.NamedTemporaryFile() as f:
             tdir = os.path.dirname(f.name)
-        cls.uexe = os.path.join(tdir, "psutil-è.exe")
+        cls.uexe = os.path.realpath(os.path.join(tdir, "psutil-è.exe"))
         shutil.copyfile(sys.executable, cls.uexe)
         if POSIX:
             st = os.stat(cls.uexe)
@@ -3127,7 +3127,7 @@ class TestUnicode(unittest.TestCase):
         self.assertEqual(p.cmdline(), [self.uexe])
 
     def test_proc_cwd(self):
-        tdir = tempfile.mkdtemp(prefix="psutil-è-")
+        tdir = os.path.realpath(tempfile.mkdtemp(prefix="psutil-è-"))
         self.addCleanup(safe_rmdir, tdir)
         with chdir(tdir):
             p = psutil.Process()
@@ -3142,7 +3142,10 @@ class TestUnicode(unittest.TestCase):
             new = set(p.open_files())
         path = (new - start).pop().path
         self.assertIsInstance(path, str)
-        self.assertEqual(path.lower(), self.uexe.lower())
+        if WINDOWS:
+            self.assertEqual(path.lower(), self.uexe.lower())
+        else:
+            self.assertEqual(path, self.uexe)
 
 
 def main():
