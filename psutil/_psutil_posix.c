@@ -188,7 +188,6 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
         if (py_netmask == NULL)
             goto error;
 
-#if defined(__linux) || defined(__FreeBSD__) || defined(__APPLE__)
         if (ifa->ifa_flags & IFF_BROADCAST) {
             py_broadcast = psutil_convert_ipaddr(ifa->ifa_broadaddr, family);
             Py_INCREF(Py_None);
@@ -205,11 +204,6 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
             py_broadcast = Py_None;
             py_ptp = Py_None;
         }
-#else
-        py_broadcast = psutil_convert_ipaddr(ifa->ifa_broadaddr, family);
-        Py_INCREF(Py_None);
-        py_ptp = Py_None;
-#endif
 
         if ((py_broadcast == NULL) || (py_ptp == NULL))
             goto error;
