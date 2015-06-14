@@ -38,6 +38,10 @@ psutil_pid_exists(long pid) {
     if (ret == 0)
         return 1;
     else {
+        return 0;
+        /*
+        // This is how it is handled on other POSIX systems but it causes
+        // test_halfway_terminated test to fail with AccessDenied.
         if (ret == ESRCH)
             return 0;
         else if (ret == EPERM)
@@ -46,6 +50,7 @@ psutil_pid_exists(long pid) {
             PyErr_SetFromErrno(PyExc_OSError);
             return -1;
         }
+        */
     }
 }
 
