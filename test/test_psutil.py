@@ -1558,11 +1558,11 @@ class TestProcess(unittest.TestCase):
         with open(c_file, "w") as f:
             f.write("void main() { pause(); }")
         subprocess.check_call(["gcc", c_file, "-o", funky_name])
-        sproc = get_test_subprocess([funky_name, "arg1", "arg2"])
+        sproc = get_test_subprocess([funky_name, "arg1", "arg2", "", "arg3", ""])
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.name(), "foo bar )")
         self.assertEqual(p.exe(), "/tmp/foo bar )")
-        self.assertEqual(p.cmdline(), ["/tmp/foo bar )", "arg1", "arg2"])
+        self.assertEqual(p.cmdline(), ["/tmp/foo bar )", "arg1", "arg2", "", "arg3", ""])
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_uids(self):

@@ -765,7 +765,7 @@ class Process(object):
         fname = "/proc/%s/cmdline" % self.pid
         kw = dict(encoding=DEFAULT_ENCODING) if PY3 else dict()
         with open(fname, "rt", **kw) as f:
-            return [x for x in f.read().split('\x00') if x]
+            return [x for x in f.read()[:-1].split('\x00')]
 
     @wrap_exceptions
     def terminal(self):
