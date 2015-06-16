@@ -765,6 +765,9 @@ class Process(object):
         fname = "/proc/%s/cmdline" % self.pid
         kw = dict(encoding=DEFAULT_ENCODING) if PY3 else dict()
         with open(fname, "rt", **kw) as f:
+            # format is strings, followed by \x00, we remove the last one
+            # before splitting on the zero terminator.
+            line = f.read()[:-1]
             return [x for x in f.read().split('\x00') if x]
 
     @wrap_exceptions
