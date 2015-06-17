@@ -466,8 +466,13 @@ class Connections:
         with open(file, 'rt') as f:
             f.readline()  # skip the first line
             for line in f:
-                _, laddr, raddr, status, _, _, _, _, _, inode = \
-                    line.split()[:10]
+                try:
+                    _, laddr, raddr, status, _, _, _, _, _, inode = \
+                        line.split()[:10]
+                except ValueError:
+                    raise RuntimeError(
+                        "error while parsing %s; malformed line %r" % (
+                            file, line))
                 if inode in inodes:
                     # # We assume inet sockets are unique, so we error
                     # # out if there are multiple references to the
@@ -495,7 +500,12 @@ class Connections:
             f.readline()  # skip the first line
             for line in f:
                 tokens = line.split()
-                _, _, _, _, type_, _, inode = tokens[0:7]
+                try:
+                    _, _, _, _, type_, _, inode = tokens[0:7]
+                except ValueError:
+                    raise RuntimeError(
+                        "error while parsing %s; malformed line %r" % (
+                            file, line))
                 if inode in inodes:
                     # With UNIX sockets we can have a single inode
                     # referencing many file descriptors.

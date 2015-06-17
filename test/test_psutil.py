@@ -1560,6 +1560,8 @@ class TestProcess(unittest.TestCase):
         subprocess.check_call(["gcc", c_file, "-o", funky_name])
         sproc = get_test_subprocess([funky_name, "arg1", "arg2"])
         p = psutil.Process(sproc.pid)
+        # ...in order to try to prevent occasional failures on travis
+        wait_for_pid(p.pid)
         self.assertEqual(p.name(), "foo bar )")
         self.assertEqual(p.exe(), "/tmp/foo bar )")
         self.assertEqual(p.cmdline(), ["/tmp/foo bar )", "arg1", "arg2"])
