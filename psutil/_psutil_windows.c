@@ -2691,6 +2691,19 @@ psutil_proc_num_handles(PyObject *self, PyObject *args)
 }
 
 
+/*
+ * Get various process information by using NtQuerySystemInformation.
+ * We use this as a fallback when faster functions fail with access
+ * denied. This is slower because it iterates over all processes.
+ * Returned tuple includes the following process info:
+ *
+ * - num_threads
+ * - ctx_switches
+ * - num_handles (fallback)
+ * - user/kernel times (fallback)
+ * - create time (fallback)
+ * - io counters (fallback)
+ */
 static PyObject *
 psutil_proc_info(PyObject *self, PyObject *args)
 {

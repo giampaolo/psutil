@@ -357,7 +357,10 @@ const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
 
 /*
  * Given a process PID and a PSYSTEM_PROCESS_INFORMATION structure
- * fills the structure with process information.
+ * fills the structure with various process information by using
+ * NtQuerySystemInformation.
+ * We use this as a fallback when faster functions fail with access
+ * denied. This is slower because it iterates over all processes.
  * On success return 1, else 0 with Python exception already set.
  */
 int
