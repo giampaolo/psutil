@@ -39,7 +39,7 @@ build: clean
 install-dev-deps:
 	$(PYTHON) -m pip install --user --upgrade pip
 	$(PYTHON) -m pip install --user --upgrade \
-		ipaddress unittest2 mock ipdb coverage nose
+		ipaddress unittest2 mock ipdb coverage nose sphinx sphinx-pypi-upload
 
 install: build
 	$(PYTHON) setup.py install --user; \
