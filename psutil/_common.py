@@ -12,17 +12,19 @@ import functools
 import os
 import socket
 import stat
+import sys
+from collections import namedtuple
+from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
 try:
     import threading
 except ImportError:
     import dummy_threading as threading
-try:
-    import enum  # py >= 3.4
-except ImportError:
+
+if sys.version_info >= (3, 4):
+    import enum
+else:
     enum = None
 
-from collections import namedtuple
-from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
 
 # --- constants
 

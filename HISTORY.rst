@@ -6,6 +6,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 **Bug fixes**
 
 - #632: [Linux] better error message if cannot parse process UNIX connections.
+- #635: [UNIX] crash on module import if 'enum' package is installed on python
+  < 3.4.
 
 
 3.0.0 - 2015-06-13

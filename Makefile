@@ -52,6 +52,7 @@ install-dev-deps:
 		mock \
 		nose \
 		pep8 \
+		pyflakes \
 		sphinx \
 		sphinx-pypi-upload \
 		unittest2 \
@@ -80,7 +81,7 @@ test-memleaks: install
 test-by-name: install
 	@$(PYTHON) -m nose test/test_psutil.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
 
-# same as above but for test_memory_leaks.py script
+# Same as above but for test_memory_leaks.py script.
 test-memleaks-by-name: install
 	@$(PYTHON) -m nose test/test_memory_leaks.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
 
@@ -92,16 +93,13 @@ coverage: install
 	$(PYTHON) -m coverage html $(COVERAGE_OPTS)
 	$(PYTHON) -m webbrowser -t htmlcov/index.html
 
-# requires "pip install pep8"
 pep8:
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m pep8
 
-# requires "pip install pyflakes"
 pyflakes:
 	@export PYFLAKES_NODOCTEST=1 && \
 		git ls-files | grep \\.py$ | xargs $(PYTHON) -m pyflakes
 
-# requires "pip install flake8"
 flake8:
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
 
