@@ -46,8 +46,6 @@ if "%1" == "help" (
     :help
     echo Run `make ^<target^>` where ^<target^> is one of:
     echo   build         compile without installing
-    echo   build-exes    create exe installers in dist directory
-    echo   build-wheels  create wheel installers in dist directory
     echo   build-all     build exes + wheels
     echo   clean         clean build files
     echo   install       compile and install
@@ -57,8 +55,6 @@ if "%1" == "help" (
     echo   test-process  run process related tests
     echo   test-system   run system APIs related tests
     echo   uninstall     uninstall
-    echo   upload-exes   upload exe installers on pypi
-    echo   upload-wheels upload wheel installers on pypi
     echo   upload-all    upload exes + wheels
     goto :eof
 )
@@ -78,6 +74,7 @@ if "%1" == "clean" (
 
 if "%1" == "build" (
     :build
+    "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
     %PYTHON% setup.py build
     if %errorlevel% neq 0 goto :error
 	rem copies *.pyd files in ./psutil directory in order to allow
@@ -129,82 +126,28 @@ if "%1" == "test-memleaks" (
     goto :eof
 )
 
-if "%1" == "build-exes" (
-    :build-exes
-    rem 64 bit versions.
-    rem Python 2.7 64 bit + VS 2008 requires vcvars64.bat to be run first:
-    rem http://stackoverflow.com/questions/11072521/
-    rem Windows SDK and .NET Framework 3.5 SP1 also need to be installed (sigh)
+if "%1" == "build-all" (
+    :build-all
     "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
     for %%P in (%ALL_PYTHONS%) do (
         %%P setup.py build bdist_wininst || goto :error
-    )
-    echo OK
-    goto :eof
-)
-
-if "%1" == "build-wheels" (
-    :build-wheels
-    rem 64 bit versions.
-    rem Python 2.7 64 bit + VS 2008 requires vcvars64.bat to be run first:
-    rem http://stackoverflow.com/questions/11072521/
-    rem Windows SDK and .NET Framework 3.5 SP1 also need to be installed (sigh)
-    "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
-    for %%P in (%ALL_PYTHONS%) do (
         %%P setup.py build bdist_wheel || goto :error
     )
     echo OK
     goto :eof
 )
 
-if "%1" == "build-all" (
-    :build-all
-    rem for some reason this needs to be called twice (f**king windows...)
-    call :build-exes
-    call :build-exes
-    echo OK
-    goto :eof
-)
-
-if "%1" == "upload-exes" (
-    :upload-exes
-    rem "standard" 32 bit versions, using VS 2008 (2.6, 2.7) or VS 2010 (3.3+)
-    C:\Python26\python.exe setup.py bdist_wininst upload || goto :error
-    C:\Python27\python.exe setup.py bdist_wininst upload || goto :error
-    C:\Python33\python.exe setup.py bdist_wininst upload || goto :error
-    C:\Python34\python.exe setup.py bdist_wininst upload || goto :error
-    rem 64 bit versions
-    C:\Python27-64\python.exe setup.py build bdist_wininst upload || goto :error
-    C:\Python33-64\python.exe setup.py build bdist_wininst upload || goto :error
-    C:\Python34-64\python.exe setup.py build bdist_wininst upload || goto :error
-    echo OK
-    goto :eof
-)
-
-if "%1" == "upload-wheels" (
-    :build-wheels
-    C:\Python26\python.exe setup.py build bdist_wheel upload || goto :error
-    C:\Python27\python.exe setup.py build bdist_wheel upload || goto :error
-    C:\Python33\python.exe setup.py build bdist_wheel upload || goto :error
-    C:\Python34\python.exe setup.py build bdist_wheel upload || goto :error
-    rem 64 bit versions
-    rem Python 2.7 + VS 2008 requires vcvars64.bat to be run first:
-    rem http://stackoverflow.com/questions/11072521/
-    rem Windows SDK and .NET Framework 3.5 SP1 also need to be installed (sigh)
-    "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
-    C:\Python27-64\python.exe setup.py build bdist_wheel upload || goto :error
-    C:\Python33-64\python.exe setup.py build bdist_wheel upload || goto :error
-    C:\Python34-64\python.exe setup.py build bdist_wheel upload || goto :error
-    echo OK
-    goto :eof
-)
-
 if "%1" == "upload-all" (
-    call :upload-exes
-    call :upload-wheels
+    :upload-exes
+    "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
+    for %%P in (%ALL_PYTHONS%) do (
+        %%P setup.py build bdist_wininst upload || goto :error
+        %%P setup.py build bdist_wheel upload || goto :error
+    )
     echo OK
     goto :eof
 )
+
 
 if "%1" == "setup-env" (
     echo downloading pip installer
