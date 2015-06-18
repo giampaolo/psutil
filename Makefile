@@ -36,15 +36,25 @@ build: clean
 	@# this directory.
 	$(PYTHON) setup.py build_ext -i
 
+# useful deps which are nice to have while developing / testing
 install-dev-deps:
 	python -c "import urllib2; \
 			   r = urllib2.urlopen('https://bootstrap.pypa.io/get-pip.py'); \
 			   open('/tmp/get-pip.py', 'w').write(r.read());"
 	$(PYTHON) /tmp/get-pip.py --user
+	rm /tmp/get-pip.py
 	$(PYTHON) -m pip install --user --upgrade pip
 	$(PYTHON) -m pip install --user --upgrade \
-		ipaddress unittest2 mock ipdb coverage nose sphinx sphinx-pypi-upload
-	rm /tmp/get-pip.py
+		coverage \
+		flake8 \
+		ipaddress \
+		ipdb \
+		mock \
+		nose \
+		pep8 \
+		sphinx \
+		sphinx-pypi-upload \
+		unittest2 \
 
 install: build
 	$(PYTHON) setup.py install --user; \
