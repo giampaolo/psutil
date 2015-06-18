@@ -37,9 +37,14 @@ build: clean
 	$(PYTHON) setup.py build_ext -i
 
 install-dev-deps:
+	python -c "import urllib2; \
+			   r = urllib2.urlopen('https://bootstrap.pypa.io/get-pip.py'); \
+			   open('/tmp/get-pip.py', 'w').write(r.read());"
+	$(PYTHON) /tmp/get-pip.py --user
 	$(PYTHON) -m pip install --user --upgrade pip
 	$(PYTHON) -m pip install --user --upgrade \
 		ipaddress unittest2 mock ipdb coverage nose sphinx sphinx-pypi-upload
+	rm /tmp/get-pip.py
 
 install: build
 	$(PYTHON) setup.py install --user; \
