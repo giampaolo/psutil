@@ -48,6 +48,7 @@ if "%1" == "help" (
     echo   build         compile without installing
     echo   build-all     build exes + wheels
     echo   clean         clean build files
+    echo   flake8        run flake8
     echo   install       compile and install
     echo   setup-env     install pip, unittest2, wheels for all python versions
     echo   test          run tests
@@ -160,12 +161,12 @@ if "%1" == "upload-all" (
     goto :eof
 )
 
-
 if "%1" == "setup-env" (
+    :setup-env
     @echo ------------------------------------------------
     @echo downloading pip installer
     @echo ------------------------------------------------
-    C:\python27\python.exe -c "import urllib2; url = urllib2.urlopen('https://raw.github.com/pypa/pip/master/contrib/get-pip.py'); data = url.read(); f = open('get-pip.py', 'w'); f.write(data)"
+    C:\python27\python.exe -c "import urllib2; r = urllib2.urlopen('https://raw.github.com/pypa/pip/master/contrib/get-pip.py'); open('get-pip.py', 'wb').write(r.read())"
     for %%P in (%ALL_PYTHONS%) do (
         @echo ------------------------------------------------
         @echo installing pip for %%P
@@ -174,10 +175,19 @@ if "%1" == "setup-env" (
     )
     for %%P in (%ALL_PYTHONS%) do (
         @echo ------------------------------------------------
-        @echo building deps for %%P
+        @echo installing deps for %%P
         @echo ------------------------------------------------
-        %%P -m pip install unittest2 wheel ipaddress wmi --upgrade
+        rem mandatory / for unittests
+        %%P -m pip install unittest2 ipaddress mock wmi wheel --upgrade
+        rem nice to have
+        %%P -m pip install ipdb pep8 pyflakes flake8 --upgrade
     )
+    goto :eof
+)
+
+if "%1" == "flake8" (
+    :flake8
+    %PYTHON% -c "from flake8.main import main; main()"
     goto :eof
 )
 
