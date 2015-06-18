@@ -130,7 +130,13 @@ if "%1" == "build-all" (
     :build-all
     "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
     for %%P in (%ALL_PYTHONS%) do (
+        @echo ------------------------------------------------
+        @echo building exe for %%P
+        @echo ------------------------------------------------
         %%P setup.py build bdist_wininst || goto :error
+        @echo ------------------------------------------------
+        @echo building wheel for %%P
+        @echo ------------------------------------------------
         %%P setup.py build bdist_wheel || goto :error
     )
     echo OK
@@ -141,7 +147,13 @@ if "%1" == "upload-all" (
     :upload-exes
     "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
     for %%P in (%ALL_PYTHONS%) do (
+        @echo ------------------------------------------------
+        @echo uploading exe for %%P
+        @echo ------------------------------------------------
         %%P setup.py build bdist_wininst upload || goto :error
+        @echo ------------------------------------------------
+        @echo uploading wheel for %%P
+        @echo ------------------------------------------------
         %%P setup.py build bdist_wheel upload || goto :error
     )
     echo OK
@@ -150,27 +162,30 @@ if "%1" == "upload-all" (
 
 
 if "%1" == "setup-env" (
-    echo downloading pip installer
+    @echo ------------------------------------------------
+    @echo downloading pip installer
+    @echo ------------------------------------------------
     C:\python27\python.exe -c "import urllib2; url = urllib2.urlopen('https://raw.github.com/pypa/pip/master/contrib/get-pip.py'); data = url.read(); f = open('get-pip.py', 'w'); f.write(data)"
-    C:\python26\python.exe get-pip.py & C:\python26\scripts\pip install unittest2 wheel ipaddress --upgrade
-    C:\python27\python.exe get-pip.py & C:\python27\scripts\pip install wheel ipaddress --upgrade
-    C:\python33\python.exe get-pip.py & C:\python33\scripts\pip install wheel ipaddress --upgrade
-    C:\python34\scripts\easy_install.exe wheel
-    rem 64-bit versions
-    C:\python27-64\python.exe get-pip.py & C:\python27-64\scripts\pip install wheel ipaddress --upgrade
-    C:\python33-64\python.exe get-pip.py & C:\python33-64\scripts\pip install wheel ipaddress --upgrade
-    C:\python34-64\scripts\easy_install.exe wheel
-    rem install ipdb only for py 2.7 and 3.4
-    C:\python27\scripts\pip install ipdb --upgrade
-    C:\python34\scripts\easy_install.exe ipdb
+    for %%P in (%ALL_PYTHONS%) do (
+        @echo ------------------------------------------------
+        @echo installing pip for %%P
+        @echo ------------------------------------------------
+        %%P get-pip.py
+    )
+    for %%P in (%ALL_PYTHONS%) do (
+        @echo ------------------------------------------------
+        @echo building deps for %%P
+        @echo ------------------------------------------------
+        %%P -m pip install unittest2 wheel ipaddress wmi --upgrade
+    )
     goto :eof
 )
 
 goto :help
 
 :error
-    echo ------------------------------------------------
-    echo last command exited with error code %errorlevel%
-    echo ------------------------------------------------
-    exit /b %errorlevel%
+    @echo ------------------------------------------------
+    @echo last command exited with error code %errorlevel%
+    @echo ------------------------------------------------
+    @exit /b %errorlevel%
     goto :eof
