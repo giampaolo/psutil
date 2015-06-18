@@ -1060,9 +1060,9 @@ class Process(object):
                 value = 0
             else:
                 value = 0
-            if not 0 <= value <= 8:
+            if not 0 <= value <= 7:
                 raise ValueError(
-                    "value argument range expected is between 0 and 8")
+                    "value argument range expected is between 0 and 7")
             return cext.proc_ioprio_set(self.pid, ioclass, value)
 
     if HAS_PRLIMIT:
