@@ -45,17 +45,19 @@ install-dev-deps:
 	rm /tmp/get-pip.py
 	$(PYTHON) -m pip install --user --upgrade pip
 	$(PYTHON) -m pip install --user --upgrade \
+		# mandatory for unittests
+		ipaddress \
+		mock \
+		unittest2 \
+		# nice to have
 		coverage \
 		flake8 \
-		ipaddress \
 		ipdb \
-		mock \
 		nose \
 		pep8 \
 		pyflakes \
 		sphinx \
 		sphinx-pypi-upload \
-		unittest2 \
 
 install: build
 	$(PYTHON) setup.py install --user; \
