@@ -56,7 +56,7 @@ Installing on Linux
 ===================
 
 gcc is required and so the python headers. They can easily be installed by
-using the distro package manager. For example, on Debian amd Ubuntu::
+using the distro package manager. For example, on Debian and Ubuntu::
 
     $ sudo apt-get install gcc python-dev
 
