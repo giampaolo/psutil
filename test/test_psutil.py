@@ -46,6 +46,10 @@ try:
     import ipaddress  # python >= 3.3
 except ImportError:
     ipaddress = None
+try:
+    from unittest import mock  # py3
+except ImportError:
+    import mock  # requires "pip install mock"
 
 import psutil
 from psutil._compat import PY3, callable, long, unicode
@@ -2684,6 +2688,22 @@ class TestMisc(unittest.TestCase):
         setup_py = os.path.realpath(os.path.join(here, '..', 'setup.py'))
         module = imp.load_source('setup', setup_py)
         self.assertRaises(SystemExit, module.setup)
+
+    def test_ad_on_process_creation(self):
+        # We are supposed to be able to instantiate Process also in case
+        # of zombie processes or access denied.
+        with mock.patch.object(psutil.Process, 'create_time',
+                               side_effect=psutil.AccessDenied) as meth:
+            psutil.Process()
+        assert meth.called
+        with mock.patch.object(psutil.Process, 'create_time',
+                               side_effect=psutil.ZombieProcess(1)) as meth:
+            psutil.Process()
+        assert meth.called
+        with mock.patch.object(psutil.Process, 'create_time',
+                               side_effect=ValueError) as meth:
+            with self.assertRaises(ValueError):
+                psutil.Process()
 
 
 # ===================================================================
