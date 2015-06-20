@@ -2593,6 +2593,16 @@ class TestMisc(unittest.TestCase):
         p.wait()
         self.assertIn(str(sproc.pid), str(p))
         self.assertIn("terminated", str(p))
+        # test error conditions
+        with mock.patch.object(psutil.Process, 'name',
+                               side_effect=psutil.ZombieProcess(1)) as meth:
+            self.assertIn("zombie", str(p))
+            self.assertIn("pid", str(p))
+            assert meth.called
+        with mock.patch.object(psutil.Process, 'name',
+                               side_effect=psutil.AccessDenied) as meth:
+            self.assertIn("pid", str(p))
+            assert meth.called
 
     def test__eq__(self):
         p1 = psutil.Process()
@@ -2695,15 +2705,16 @@ class TestMisc(unittest.TestCase):
         with mock.patch.object(psutil.Process, 'create_time',
                                side_effect=psutil.AccessDenied) as meth:
             psutil.Process()
-        assert meth.called
+            assert meth.called
         with mock.patch.object(psutil.Process, 'create_time',
                                side_effect=psutil.ZombieProcess(1)) as meth:
             psutil.Process()
-        assert meth.called
+            assert meth.called
         with mock.patch.object(psutil.Process, 'create_time',
                                side_effect=ValueError) as meth:
             with self.assertRaises(ValueError):
                 psutil.Process()
+            assert meth.called
 
 
 # ===================================================================
