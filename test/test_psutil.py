@@ -584,6 +584,7 @@ class TestSystemAPIs(unittest.TestCase):
         sproc3 = get_test_subprocess()
         procs = [psutil.Process(x.pid) for x in (sproc1, sproc2, sproc3)]
         self.assertRaises(ValueError, psutil.wait_procs, procs, timeout=-1)
+        self.assertRaises(TypeError, psutil.wait_procs, procs, callback=1)
         t = time.time()
         gone, alive = psutil.wait_procs(procs, timeout=0.01, callback=callback)
 
@@ -1371,6 +1372,9 @@ class TestProcess(unittest.TestCase):
                 self.assertRaisesRegexp(
                     ValueError, "can't specify value with IOPRIO_CLASS_IDLE",
                     p.ionice, psutil.IOPRIO_CLASS_IDLE, 1)
+                self.assertRaisesRegexp(
+                    ValueError, "'ioclass' argument must be specified",
+                    p.ionice, value=1)
             finally:
                 p.ionice(IOPRIO_CLASS_NONE)
         else:
@@ -1661,6 +1665,11 @@ class TestProcess(unittest.TestCase):
         if POSIX:
             import pwd
             self.assertEqual(p.username(), pwd.getpwuid(os.getuid()).pw_name)
+            with mock.patch("psutil.pwd.getpwuid",
+                            side_effect=KeyError) as fun:
+                p.username() == str(p.uids().real)
+                assert fun.called
+
         elif WINDOWS and 'USERNAME' in os.environ:
             expected_username = os.environ['USERNAME']
             expected_domain = os.environ['USERDOMAIN']
@@ -2247,6 +2256,7 @@ class TestProcess(unittest.TestCase):
             proc.stdin
             self.assertTrue(hasattr(proc, 'name'))
             self.assertTrue(hasattr(proc, 'stdin'))
+            self.assertTrue(dir(proc))
             self.assertRaises(AttributeError, getattr, proc, 'foo')
         finally:
             proc.kill()
