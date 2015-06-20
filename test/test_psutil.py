@@ -1725,6 +1725,7 @@ class TestProcess(unittest.TestCase):
         files = p.open_files()
         self.assertFalse(TESTFN in files)
         with open(TESTFN, 'w'):
+            # give the kernel some time to see the new file
             call_until(p.open_files, "len(ret) != %i" % len(files))
             filenames = [x.path for x in p.open_files()]
             self.assertIn(TESTFN, filenames)
@@ -2603,6 +2604,9 @@ class TestMisc(unittest.TestCase):
                                side_effect=psutil.AccessDenied) as meth:
             self.assertIn("pid", str(p))
             assert meth.called
+
+    def test__repr__(self):
+        repr(psutil.Process())
 
     def test__eq__(self):
         p1 = psutil.Process()
