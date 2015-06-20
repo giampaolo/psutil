@@ -383,9 +383,17 @@ class Connections:
         for fd in os.listdir("/proc/%s/fd" % pid):
             try:
                 inode = os.readlink("/proc/%s/fd/%s" % (pid, fd))
-            except OSError:
-                # TODO: need comment here
-                continue
+            except OSError as err:
+                # ENOENT == file which is gone in the meantime;
+                # os.stat('/proc/%s' % self.pid) will be done later
+                # to force NSP (if it's the case)
+                if err.errno in (errno.ENOENT, errno.ESRCH):
+                    continue
+                elif err.errno == errno.EINVAL:
+                    # not a link
+                    continue
+                else:
+                    raise
             else:
                 if inode.startswith('socket:['):
                     # the process is using a socket
