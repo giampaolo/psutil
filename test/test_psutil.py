@@ -1411,6 +1411,12 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         p.rlimit(psutil.RLIMIT_NOFILE, (5, 5))
         self.assertEqual(p.rlimit(psutil.RLIMIT_NOFILE), (5, 5))
+        # If pid is 0 prlimit() applies to the calling process and
+        # we don't want that.
+        with self.assertRaises(ValueError):
+            psutil._psplatform.Process(0).rlimit(0)
+        with self.assertRaises(ValueError):
+            p.rlimit(psutil.RLIMIT_NOFILE, (5, 5, 5))
 
     def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact

@@ -1078,8 +1078,9 @@ class Process(object):
     if HAS_PRLIMIT:
         @wrap_exceptions
         def rlimit(self, resource, limits=None):
-            # if pid is 0 prlimit() applies to the calling process and
-            # we don't want that
+            # If pid is 0 prlimit() applies to the calling process and
+            # we don't want that. We should never get here though as
+            # PID 0 is not supported on Linux.
             if self.pid == 0:
                 raise ValueError("can't use prlimit() against PID 0 process")
             try:
@@ -1090,7 +1091,8 @@ class Process(object):
                     # set
                     if len(limits) != 2:
                         raise ValueError(
-                            "second argument must be a (soft, hard) tuple")
+                            "second argument must be a (soft, hard) tuple, "
+                            "got %s" % repr(limits))
                     soft, hard = limits
                     cext.linux_prlimit(self.pid, resource, soft, hard)
             except OSError as err:
