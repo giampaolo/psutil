@@ -2233,6 +2233,10 @@ class TestProcess(unittest.TestCase):
             except psutil.AccessDenied:
                 pass
 
+            self.assertRaisesRegexp(
+                ValueError, "preventing sending signal to process with PID 0",
+                p.send_signal(signal.SIGTERM))
+
         self.assertIn(p.ppid(), (0, 1))
         # self.assertEqual(p.exe(), "")
         p.cmdline()

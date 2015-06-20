@@ -1007,10 +1007,12 @@ class Process(object):
 
     if _POSIX:
         def _send_signal(self, sig):
-            # XXX: according to "man 2 kill" PID 0 has a special
-            # meaning as it refers to <<every process in the process
-            # group of the calling process>>, so should we prevent
-            # it here?
+            if self.pid == 0:
+                # see "man 2 kill"
+                raise ValueError(
+                    "preventing sending signal to process with PID 0 as it "
+                    "will affect every process in the process group of the "
+                    "calling process (os.getpid()) instead of PID 0")
             try:
                 os.kill(self.pid, sig)
             except OSError as err:
