@@ -675,6 +675,8 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertFalse(psutil.pid_exists(sproc.pid))
         self.assertFalse(psutil.pid_exists(-1))
         self.assertEqual(psutil.pid_exists(0), 0 in psutil.pids())
+        # pid 0
+        psutil.pid_exists(0) == 0 in psutil.pids()
 
     def test_pid_exists_2(self):
         reap_children()

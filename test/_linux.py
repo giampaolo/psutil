@@ -321,6 +321,20 @@ class LinuxSpecificTestCase(unittest.TestCase):
                 psutil._pslinux.Process(os.getpid()).gids)
             assert m.called
 
+    def test_proc_io_counters_mocked(self):
+        with mock.patch('psutil._pslinux.open', create=True) as m:
+            self.assertRaises(
+                NotImplementedError,
+                psutil._pslinux.Process(os.getpid()).io_counters)
+            assert m.called
+
+    def test_boot_time_mocked(self):
+        with mock.patch('psutil._pslinux.open', create=True) as m:
+            self.assertRaises(
+                RuntimeError,
+                psutil._pslinux.boot_time)
+            assert m.called
+
     # --- tests for specific kernel versions
 
     @unittest.skipUnless(

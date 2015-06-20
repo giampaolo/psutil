@@ -329,7 +329,7 @@ def boot_time():
                 ret = float(line.strip().split()[1])
                 BOOT_TIME = ret
                 return ret
-        raise RuntimeError("line 'btime' not found")
+        raise RuntimeError("line 'btime' not found in /proc/stat")
 
 
 # --- processes
@@ -1148,27 +1148,30 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        with open("/proc/%s/status" % self.pid, 'rb') as f:
+        fpath = "/proc/%s/status" % self.pid
+        with open(fpath, 'rb') as f:
             for line in f:
                 if line.startswith(b"PPid:"):
                     # PPid: nnnn
                     return int(line.split()[1])
-            raise NotImplementedError("line not found")
+            raise NotImplementedError("line 'PPid' not found in %s" % fpath)
 
     @wrap_exceptions
     def uids(self):
-        with open("/proc/%s/status" % self.pid, 'rb') as f:
+        fpath = "/proc/%s/status" % self.pid
+        with open(fpath, 'rb') as f:
             for line in f:
                 if line.startswith(b'Uid:'):
                     _, real, effective, saved, fs = line.split()
                     return _common.puids(int(real), int(effective), int(saved))
-            raise NotImplementedError("line not found")
+            raise NotImplementedError("line 'Uid' not found in %s" % fpath)
 
     @wrap_exceptions
     def gids(self):
-        with open("/proc/%s/status" % self.pid, 'rb') as f:
+        fpath = "/proc/%s/status" % self.pid
+        with open(fpath, 'rb') as f:
             for line in f:
                 if line.startswith(b'Gid:'):
                     _, real, effective, saved, fs = line.split()
                     return _common.pgids(int(real), int(effective), int(saved))
-            raise NotImplementedError("line not found")
+            raise NotImplementedError("line 'Gid' not found in %s" % fpath)
