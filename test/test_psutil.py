@@ -1136,13 +1136,30 @@ class TestProcess(unittest.TestCase):
     def test_send_signal(self):
         sig = signal.SIGKILL if POSIX else signal.SIGTERM
         sproc = get_test_subprocess()
-        test_pid = sproc.pid
-        p = psutil.Process(test_pid)
+        p = psutil.Process(sproc.pid)
         p.send_signal(sig)
         exit_sig = p.wait()
-        self.assertFalse(psutil.pid_exists(test_pid))
+        self.assertFalse(psutil.pid_exists(p.pid))
         if POSIX:
             self.assertEqual(exit_sig, sig)
+            #
+            sproc = get_test_subprocess()
+            p = psutil.Process(sproc.pid)
+            p.send_signal(sig)
+            with mock.patch('psutil.os.kill',
+                            side_effect=OSError(errno.ESRCH, "")) as fun:
+                with self.assertRaises(psutil.NoSuchProcess):
+                    p.send_signal(sig)
+                assert fun.called
+            #
+            sproc = get_test_subprocess()
+            p = psutil.Process(sproc.pid)
+            p.send_signal(sig)
+            with mock.patch('psutil.os.kill',
+                            side_effect=OSError(errno.EPERM, "")) as fun:
+                with self.assertRaises(psutil.AccessDenied):
+                    p.send_signal(sig)
+                assert fun.called
 
     def test_wait(self):
         # check exit code signal
