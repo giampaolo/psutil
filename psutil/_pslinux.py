@@ -752,7 +752,7 @@ class Process(object):
     def exe(self):
         try:
             exe = os.readlink("/proc/%s/exe" % self.pid)
-        except (OSError, IOError) as err:
+        except OSError as err:
             if err.errno in (errno.ENOENT, errno.ESRCH):
                 # no such file error; might be raised also if the
                 # path actually exists for system processes with
@@ -991,7 +991,7 @@ class Process(object):
             try:
                 with open(fname, 'rb') as f:
                     st = f.read().strip()
-            except EnvironmentError as err:
+            except IOError as err:
                 if err.errno == errno.ENOENT:
                     # no such file or directory; it means thread
                     # disappeared on us
