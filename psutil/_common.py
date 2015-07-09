@@ -257,6 +257,7 @@ class Core(dict):
     def thread_count(self):
         return len(self)
 
+
 class Pack(dict):
     """Class representing a physical pack in the CPU topology tree.
     """
@@ -266,6 +267,7 @@ class Pack(dict):
 
     def thread_count(self):
         return sum([core.thread_count() for core in self.values()])
+
 
 class Topology(dict):
     """Class representing the CPU topology as tree.
