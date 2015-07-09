@@ -10,6 +10,7 @@ functions many times and compare process memory usage before and
 after the calls.  It might produce false positives.
 """
 
+import functools
 import gc
 import os
 import socket
@@ -20,7 +21,7 @@ import time
 import psutil
 import psutil._common
 
-from psutil._compat import xrange
+from psutil._compat import xrange, callable
 from test_psutil import (WINDOWS, POSIX, OSX, LINUX, SUNOS, BSD, TESTFN,
                          RLIMIT_SUPPORT, TRAVIS)
 from test_psutil import (reap_children, supports_ipv6, safe_remove,
@@ -92,7 +93,7 @@ class Base(unittest.TestCase):
     def get_mem(self):
         return psutil.Process().memory_info()[0]
 
-    def call(self, *args, **kwargs):
+    def call(self, function, *args, **kwargs):
         raise NotImplementedError("must be implemented in subclass")
 
 
@@ -106,15 +107,25 @@ class TestProcessObjectLeaks(Base):
         reap_children()
 
     def call(self, function, *args, **kwargs):
-        meth = getattr(self.proc, function)
-        if '_exc' in kwargs:
-            exc = kwargs.pop('_exc')
-            self.assertRaises(exc, meth, *args, **kwargs)
+        if callable(function):
+            if '_exc' in kwargs:
+                exc = kwargs.pop('_exc')
+                self.assertRaises(exc, function, *args, **kwargs)
+            else:
+                try:
+                    function(*args, **kwargs)
+                except psutil.Error:
+                    pass
         else:
-            try:
-                meth(*args, **kwargs)
-            except psutil.Error:
-                pass
+            meth = getattr(self.proc, function)
+            if '_exc' in kwargs:
+                exc = kwargs.pop('_exc')
+                self.assertRaises(exc, meth, *args, **kwargs)
+            else:
+                try:
+                    meth(*args, **kwargs)
+                except psutil.Error:
+                    pass
 
     @skip_if_linux()
     def test_name(self):
@@ -165,8 +176,10 @@ class TestProcessObjectLeaks(Base):
             value = psutil.Process().ionice()
             self.execute('ionice', value)
         else:
+            from psutil._pslinux import cext
             self.execute('ionice', psutil.IOPRIO_CLASS_NONE)
-            self.execute_w_exc(OSError, 'ionice', -1)
+            fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
+            self.execute_w_exc(OSError, fun)
 
     @unittest.skipIf(OSX or SUNOS, "feature not supported on this platform")
     @skip_if_linux()
