@@ -45,25 +45,23 @@ install-dev-deps:
 	rm /tmp/get-pip.py
 	$(PYTHON) -m pip install --user --upgrade pip
 	$(PYTHON) -m pip install --user --upgrade \
-		# mandatory for unittests
-		ipaddress \
-		mock \
-		unittest2 \
-		# nice to have
-		coverage \
+		coverage  \
 		flake8 \
+		ipaddress \
 		ipdb \
+		mock \
 		nose \
 		pep8 \
 		pyflakes \
 		sphinx \
 		sphinx-pypi-upload \
+		unittest2 \
 
 install: build
-	$(PYTHON) setup.py install --user; \
+	$(PYTHON) setup.py install --user
 
 uninstall:
-	cd ..; $(PYTHON) -m pip uninstall -y -v psutil; \
+	cd ..; $(PYTHON) -m pip uninstall -y -v psutil
 
 test: install
 	$(PYTHON) $(TSCRIPT)
@@ -81,7 +79,7 @@ test-memleaks: install
 # all test methods containing "disk_" in their name.
 # Requires "pip install nose".
 test-by-name: install
-	@$(PYTHON) -m nose test/test_psutil.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
+	@$(PYTHON) -m nose test/test_psutil.py test/_* --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
 
 # Same as above but for test_memory_leaks.py script.
 test-memleaks-by-name: install

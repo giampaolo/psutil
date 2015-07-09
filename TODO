@@ -24,6 +24,8 @@ HIGHER PRIORITY
 
  * Asynchronous psutil.Popen (see http://bugs.python.org/issue1191964)
 
+ * (Windows) fall back on using WMIC for Process methods returning AccessDenied
+
 
 LOWER PRIORITY
 ==============
