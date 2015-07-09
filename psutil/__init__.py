@@ -1011,7 +1011,7 @@ class Process(object):
                 # see "man 2 kill"
                 raise ValueError(
                     "preventing sending signal to process with PID 0 as it "
-                    "will affect every process in the process group of the "
+                    "would affect every process in the process group of the "
                     "calling process (os.getpid()) instead of PID 0")
             try:
                 os.kill(self.pid, sig)

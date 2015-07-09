@@ -2250,7 +2250,6 @@ class TestProcess(unittest.TestCase):
         except psutil.AccessDenied:
             pass
 
-        # username property
         try:
             if POSIX:
                 self.assertEqual(p.username(), 'root')

@@ -1,5 +1,16 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+3.0.2 - XXXX-XX-XX
+==================
+
+**Bug fixes**
+
+- #636: [Linux] *connections functions may swallow errors and return an
+  incomplete list of connnections.
+- #637: [UNIX] raise exception if trying to send signal to Process PID 0 as it
+  will affect os.getpid()'s process group instead of PID 0.
+
+
 3.0.1 - 2015-06-18
 ==================
 
@@ -9,10 +20,6 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #634: [Linux] Proces.cmdline() does not include empty string arguments.
 - #635: [UNIX] crash on module import if 'enum' package is installed on python
   < 3.4.
-- #636: [Linux] *connections functions may swallow errors and return an
-  incomplete list of connnections.
-- #637: [UNIX] raise exception if trying to send signal to Process PID 0 as it
-  will affect os.getpid()'s process group instead of PID 0.
 
 
 3.0.0 - 2015-06-13
