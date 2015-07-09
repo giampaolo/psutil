@@ -3,9 +3,9 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-
 #if !defined(__NTEXTAPI_H__)
 #define __NTEXTAPI_H__
+#include <winternl.h>
 
 typedef enum _KTHREAD_STATE {
     Initialized,
@@ -66,23 +66,6 @@ typedef struct _CLIENT_ID {
     HANDLE UniqueThread;
 } CLIENT_ID, *PCLIENT_ID;
 
-
-typedef struct _UNICODE_STRING {
-    USHORT Length;
-    USHORT MaximumLength;
-    PWSTR Buffer;
-} UNICODE_STRING, *PUNICODE_STRING;
-
-typedef struct _SYSTEM_TIMEOFDAY_INFORMATION {
-    LARGE_INTEGER BootTime;
-    LARGE_INTEGER CurrentTime;
-    LARGE_INTEGER TimeZoneBias;
-    ULONG TimeZoneId;
-    ULONG Reserved;
-    ULONGLONG BootTimeBias;
-    ULONGLONG SleepTimeBias;
-} SYSTEM_TIMEOFDAY_INFORMATION, *PSYSTEM_TIMEOFDAY_INFORMATION;
-
 typedef struct _SYSTEM_THREAD_INFORMATION {
     LARGE_INTEGER KernelTime;
     LARGE_INTEGER UserTime;
@@ -111,7 +94,7 @@ typedef struct _SYSTEM_EXTENDED_THREAD_INFORMATION {
     ULONG_PTR Reserved4;
 } SYSTEM_EXTENDED_THREAD_INFORMATION, *PSYSTEM_EXTENDED_THREAD_INFORMATION;
 
-typedef struct _SYSTEM_PROCESS_INFORMATION {
+typedef struct _SYSTEM_PROCESS_INFORMATION2 {
     ULONG NextEntryOffset;
     ULONG NumberOfThreads;
     LARGE_INTEGER SpareLi1;
@@ -146,31 +129,10 @@ typedef struct _SYSTEM_PROCESS_INFORMATION {
     LARGE_INTEGER WriteTransferCount;
     LARGE_INTEGER OtherTransferCount;
     SYSTEM_THREAD_INFORMATION Threads[1];
-} SYSTEM_PROCESS_INFORMATION, *PSYSTEM_PROCESS_INFORMATION;
+} SYSTEM_PROCESS_INFORMATION2, *PSYSTEM_PROCESS_INFORMATION2;
 
-
-// structures and enums from winternl.h (not available under mingw)
-typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
-    LARGE_INTEGER IdleTime;
-    LARGE_INTEGER KernelTime;
-    LARGE_INTEGER UserTime;
-    LARGE_INTEGER Reserved1[2];
-    ULONG Reserved2;
-} SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION,
-    *PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
-
-
-typedef enum _SYSTEM_INFORMATION_CLASS {
-    SystemBasicInformation = 0,
-    SystemPerformanceInformation = 2,
-    SystemTimeOfDayInformation = 3,
-    SystemProcessInformation = 5,
-    SystemProcessorPerformanceInformation = 8,
-    SystemInterruptInformation = 23,
-    SystemExceptionInformation = 33,
-    SystemRegistryQuotaInformation = 37,
-    SystemLookasideInformation = 45
-} SYSTEM_INFORMATION_CLASS;
+#define SYSTEM_PROCESS_INFORMATION SYSTEM_PROCESS_INFORMATION2
+#define PSYSTEM_PROCESS_INFORMATION PSYSTEM_PROCESS_INFORMATION2
 
 
 // ================================================
@@ -189,31 +151,8 @@ typedef struct _WINSTATION_INFO {
     FILETIME CurrentTime;
 } WINSTATION_INFO, *PWINSTATION_INFO;
 
-typedef enum _WINSTATIONINFOCLASS {
-     WinStationInformation = 8
-} WINSTATIONINFOCLASS;
-
 typedef BOOLEAN (WINAPI * PWINSTATIONQUERYINFORMATIONW)
                  (HANDLE,ULONG,WINSTATIONINFOCLASS,PVOID,ULONG,PULONG);
-
-typedef struct _WINSTATIONINFORMATIONW {
-    BYTE Reserved2[70];
-    ULONG LogonId;
-    BYTE Reserved3[1140];
-} WINSTATIONINFORMATIONW, *PWINSTATIONINFORMATIONW;
-
-// mingw support:
-// http://www.koders.com/c/fid7C02CAE627C526914CDEB427405B51DF393A5EFA.aspx
-#ifndef _INC_WTSAPI
-typedef struct _WTS_CLIENT_ADDRESS {
-    DWORD AddressFamily;  // AF_INET, AF_IPX, AF_NETBIOS, AF_UNSPEC
-    BYTE  Address[20];    // client network address
-} WTS_CLIENT_ADDRESS, * PWTS_CLIENT_ADDRESS;
-
-HANDLE WINAPI WTSOpenServerA(IN LPSTR pServerName);
-
-VOID WINAPI WTSCloseServer(IN HANDLE hServer);
-#endif
 
 
 /*
@@ -238,16 +177,9 @@ typedef NTSTATUS (NTAPI *_NtSetInformationProcess)(
     DWORD ProcessInformationLength
 );
 
-typedef struct _PROCESS_BASIC_INFORMATION {
-    PVOID Reserved1;
-    PVOID PebBaseAddress;
-    PVOID Reserved2[2];
-    ULONG_PTR UniqueProcessId;
-    PVOID Reserved3;
-} PROCESS_BASIC_INFORMATION, *PPROCESS_BASIC_INFORMATION;
 
-typedef enum _PROCESSINFOCLASS {
-    ProcessBasicInformation,
+typedef enum _PROCESSINFOCLASS2 {
+    _ProcessBasicInformation,
     ProcessQuotaLimits,
     ProcessIoCounters,
     ProcessVmCounters,
@@ -273,7 +205,7 @@ typedef enum _PROCESSINFOCLASS {
     ProcessDeviceMap,
     ProcessSessionInformation,
     ProcessForegroundInformation,
-    ProcessWow64Information,
+    _ProcessWow64Information,
     /* added after XP+ */
     ProcessImageFileName,
     ProcessLUIDDeviceMapsEnabled,
@@ -287,6 +219,10 @@ typedef enum _PROCESSINFOCLASS {
     ProcessCookie,
     ProcessImageInformation,
     MaxProcessInfoClass
-} PROCESSINFOCLASS;
+} PROCESSINFOCLASS2;
+
+#define PROCESSINFOCLASS PROCESSINFOCLASS2
+#define ProcessBasicInformation _ProcessBasicInformation
+#define ProcessWow64Information _ProcessWow64Information
 
 #endif // __NTEXTAPI_H__

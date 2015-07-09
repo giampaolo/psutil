@@ -2500,14 +2500,6 @@ error:
     return NULL;
 }
 
-
-#ifdef UNICODE
-#define WTSOpenServer WTSOpenServerW
-#else
-#define WTSOpenServer WTSOpenServerA
-#endif
-
-
 /*
  * Return a Python dict of tuples for disk I/O information
  */

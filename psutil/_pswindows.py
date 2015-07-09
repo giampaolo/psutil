@@ -444,10 +444,10 @@ class Process(object):
         # Convert the first part in the corresponding drive letter
         # (e.g. "C:\") by using Windows's QueryDosDevice()
         raw_file_names = cext.proc_open_files(self.pid)
-        for file in raw_file_names:
-            file = _convert_raw_path(file)
-            if isfile_strict(file) and file not in retlist:
-                ntuple = _common.popenfile(file, -1)
+        for _file in raw_file_names:
+            _file = _convert_raw_path(_file)
+            if isfile_strict(_file) and _file not in retlist:
+                ntuple = _common.popenfile(_file, -1)
                 retlist.append(ntuple)
         return retlist
 
