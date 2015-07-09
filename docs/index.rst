@@ -1058,11 +1058,20 @@ Process class
      the absolute file name and the file descriptor number (on Windows this is
      always ``-1``). Example:
 
-      >>> import psutil
-      >>> f = open('file.ext', 'w')
-      >>> p = psutil.Process()
-      >>> p.open_files()
-      [popenfile(path='/home/giampaolo/svn/psutil/file.ext', fd=3)]
+     >>> import psutil
+     >>> f = open('file.ext', 'w')
+     >>> p = psutil.Process()
+     >>> p.open_files()
+     [popenfile(path='/home/giampaolo/svn/psutil/file.ext', fd=3)]
+
+     .. warning::
+       On Windows this is not fully reliable as the underlying implementation
+       may hang when retrieving certain file handles. In order to work around
+       that psutil on Windows Vista (and higher) spawns a thread and kills it
+       if it's not responding after 100ms.
+       That implies valid file handles may be skipped.
+
+     .. versionchanged:: 3.1.0 no longer hangs on Windows.
 
   .. method:: connections(kind="inet")
 
