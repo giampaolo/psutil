@@ -2635,8 +2635,79 @@ class TestMisc(unittest.TestCase):
             self.assertIn("pid", str(p))
             assert meth.called
 
-    def test__repr__(self):
-        repr(psutil.Process())
+    def test_process__repr__(self, func=repr):
+        p = psutil.Process()
+        r = func(p)
+        self.assertIn("psutil.Process", r)
+        self.assertIn("pid=%s" % p.pid, r)
+        self.assertIn("name='%s'" % p.name(), r)
+        with mock.patch.object(psutil.Process, "name",
+                               side_effect=psutil.ZombieProcess(os.getpid())):
+            p = psutil.Process()
+            r = func(p)
+            self.assertIn("pid=%s" % p.pid, r)
+            self.assertIn("zombie", r)
+        with mock.patch.object(psutil.Process, "name",
+                               side_effect=psutil.NoSuchProcess(os.getpid())):
+            p = psutil.Process()
+            r = func(p)
+            self.assertIn("pid=%s" % p.pid, r)
+            self.assertIn("terminated", r)
+
+    def test_process__str__(self):
+        self.test_process__repr__(func=str)
+
+    def test_no_such_process__repr__(self, func=repr):
+        self.assertEqual(
+            repr(psutil.NoSuchProcess(321)),
+            "psutil.NoSuchProcess process no longer exists (pid=321)")
+        self.assertEqual(
+            repr(psutil.NoSuchProcess(321, name='foo')),
+            "psutil.NoSuchProcess process no longer exists (pid=321, "
+            "name='foo')")
+        self.assertEqual(
+            repr(psutil.NoSuchProcess(321, msg='foo')),
+            "psutil.NoSuchProcess foo")
+
+    def test_zombie_process__repr__(self, func=repr):
+        self.assertEqual(
+            repr(psutil.ZombieProcess(321)),
+            "psutil.ZombieProcess process still exists but it's a zombie "
+            "(pid=321)")
+        self.assertEqual(
+            repr(psutil.ZombieProcess(321, name='foo')),
+            "psutil.ZombieProcess process still exists but it's a zombie "
+            "(pid=321, name='foo')")
+        self.assertEqual(
+            repr(psutil.ZombieProcess(321, name='foo', ppid=1)),
+            "psutil.ZombieProcess process still exists but it's a zombie "
+            "(pid=321, name='foo', ppid=1)")
+        self.assertEqual(
+            repr(psutil.ZombieProcess(321, msg='foo')),
+            "psutil.ZombieProcess foo")
+
+    def test_access_denied__repr__(self, func=repr):
+        self.assertEqual(
+            repr(psutil.AccessDenied(321)),
+            "psutil.AccessDenied (pid=321)")
+        self.assertEqual(
+            repr(psutil.AccessDenied(321, name='foo')),
+            "psutil.AccessDenied (pid=321, name='foo')")
+        self.assertEqual(
+            repr(psutil.AccessDenied(321, msg='foo')),
+            "psutil.AccessDenied foo")
+
+    def test_timeout_expired__repr__(self, func=repr):
+        self.assertEqual(
+            repr(psutil.TimeoutExpired(321)),
+            "psutil.TimeoutExpired timeout after 321 seconds")
+        self.assertEqual(
+            repr(psutil.TimeoutExpired(321, pid=111)),
+            "psutil.TimeoutExpired timeout after 321 seconds (pid=111)")
+        self.assertEqual(
+            repr(psutil.TimeoutExpired(321, pid=111, name='foo')),
+            "psutil.TimeoutExpired timeout after 321 seconds "
+            "(pid=111, name='foo')")
 
     def test__eq__(self):
         p1 = psutil.Process()

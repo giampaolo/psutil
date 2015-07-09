@@ -14,6 +14,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #639: [Linux] Process.cmdline() can be truncated.
 - #640: [Linux] *connections functions may swallow errors and return an
   incomplete list of connnections.
+- #642: repr() of exceptions is incorrect.
 
 
 3.0.1 - 2015-06-18

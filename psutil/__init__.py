@@ -193,8 +193,12 @@ class Error(Exception):
     def __init__(self, msg=""):
         self.msg = msg
 
-    def __str__(self):
-        return self.msg
+    def __repr__(self):
+        ret = "%s.%s %s" % (self.__class__.__module__,
+                            self.__class__.__name__, self.msg)
+        return ret.strip()
+
+    __str__ = __repr__
 
 
 class NoSuchProcess(Error):
