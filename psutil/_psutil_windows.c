@@ -3201,7 +3201,7 @@ PsutilMethods[] =
      "seconds since the epoch"},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
      "Return a tuple of process memory information"},
-    {"proc_memory_info_2", psutil_proc_memory_info, METH_VARARGS,
+    {"proc_memory_info_2", psutil_proc_memory_info_2, METH_VARARGS,
      "Alternate implementation"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory"},

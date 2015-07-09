@@ -5,11 +5,12 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
-- #636: [Linux] *connections functions may swallow errors and return an
-  incomplete list of connnections.
+- #636: [Windows] Process.memory_info() raise AccessDenied.
 - #637: [UNIX] raise exception if trying to send signal to Process PID 0 as it
   will affect os.getpid()'s process group instead of PID 0.
 - #639: [Linux] Process.cmdline() can be truncated.
+- #640: [Linux] *connections functions may swallow errors and return an
+  incomplete list of connnections.
 
 
 3.0.1 - 2015-06-18
