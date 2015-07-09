@@ -17,6 +17,7 @@ import traceback
 
 from test_psutil import WINDOWS, get_test_subprocess, reap_children, unittest
 
+import mock
 try:
     import wmi
 except ImportError:
@@ -283,9 +284,28 @@ class WindowsSpecificTestCase(unittest.TestCase):
         if failures:
             self.fail('\n' + '\n'.join(failures))
 
+    def test_name_always_available(self):
+        # On Windows name() is never supposed to raise AccessDenied,
+        # see https://github.com/giampaolo/psutil/issues/627
+        for p in psutil.process_iter():
+            try:
+                p.name()
+            except psutil.NoSuchProcess():
+                pass
+
 
 @unittest.skipUnless(WINDOWS, "not a Windows system")
 class TestDualProcessImplementation(unittest.TestCase):
+    """
+    Certain APIs on Windows have 2 internal implementations, one
+    based on documented Windows APIs, another one based
+    NtQuerySystemInformation() which gets called as fallback in
+    case the first fails because of limited permission error.
+    Here we test that the two methods return the exact same value,
+    see:
+    https://github.com/giampaolo/psutil/issues/304
+    """
+
     fun_names = [
         # function name, tolerance
         ('proc_cpu_times', 0.2),
@@ -296,13 +316,6 @@ class TestDualProcessImplementation(unittest.TestCase):
     ]
 
     def test_compare_values(self):
-        # Certain APIs on Windows have 2 internal implementations, one
-        # based on documented Windows APIs, another one based
-        # NtQuerySystemInformation() which gets called as fallback in
-        # case the first fails because of limited permission error.
-        # Here we test that the two methods return the exact same value,
-        # see:
-        # https://github.com/giampaolo/psutil/issues/304
         def assert_ge_0(obj):
             if isinstance(obj, tuple):
                 for value in obj:
@@ -374,6 +387,55 @@ class TestDualProcessImplementation(unittest.TestCase):
         if failures:
             self.fail('\n\n'.join(failures))
 
+    # ---
+    # same tests as above but mimicks the AccessDenied failure of
+    # the first (fast) method failing with AD.
+    # TODO: currently does not take tolerance into account.
+
+    def test_name(self):
+        name = psutil.Process().name()
+        with mock.patch("psutil._psplatform.cext.proc_exe",
+                        side_effect=psutil.AccessDenied(os.getpid())) as fun:
+            psutil.Process().name() == name
+            assert fun.called
+
+    def test_memory_info(self):
+        mem = psutil.Process().memory_info()
+        with mock.patch("psutil._psplatform.cext.proc_memory_info",
+                        side_effect=OSError(errno.EPERM, "msg")) as fun:
+            psutil.Process().memory_info() == mem
+            assert fun.called
+
+    def test_create_time(self):
+        ctime = psutil.Process().create_time()
+        with mock.patch("psutil._psplatform.cext.proc_create_time",
+                        side_effect=OSError(errno.EPERM, "msg")) as fun:
+            psutil.Process().create_time() == ctime
+            assert fun.called
+
+    def test_cpu_times(self):
+        cpu_times = psutil.Process().cpu_times()
+        with mock.patch("psutil._psplatform.cext.proc_cpu_times",
+                        side_effect=OSError(errno.EPERM, "msg")) as fun:
+            psutil.Process().cpu_times() == cpu_times
+            assert fun.called
+
+    def test_io_counters(self):
+        io_counters = psutil.Process().io_counters()
+        with mock.patch("psutil._psplatform.cext.proc_io_counters",
+                        side_effect=OSError(errno.EPERM, "msg")) as fun:
+            psutil.Process().io_counters() == io_counters
+            assert fun.called
+
+    def test_num_handles(self):
+        io_counters = psutil.Process().io_counters()
+        with mock.patch("psutil._psplatform.cext.proc_io_counters",
+                        side_effect=OSError(errno.EPERM, "msg")) as fun:
+            psutil.Process().io_counters() == io_counters
+            assert fun.called
+
+    # --- other tests
+
     def test_compare_name_exe(self):
         for p in psutil.process_iter():
             try:
@@ -391,15 +453,6 @@ class TestDualProcessImplementation(unittest.TestCase):
         for name, _ in self.fun_names:
             meth = wrap_exceptions(getattr(cext, name))
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
-
-    def test_name_always_available(self):
-        # On Windows name() is never supposed to raise AccessDenied,
-        # see https://github.com/giampaolo/psutil/issues/627
-        for p in psutil.process_iter():
-            try:
-                p.name()
-            except psutil.NoSuchProcess():
-                pass
 
 
 def main():
