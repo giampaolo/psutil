@@ -1065,11 +1065,14 @@ Process class
      [popenfile(path='/home/giampaolo/svn/psutil/file.ext', fd=3)]
 
      .. warning::
-       On Windows this is not fully reliable as the underlying implementation
-       may hang when retrieving certain file handles. In order to work around
-       that psutil on Windows Vista (and higher) spawns a thread and kills it
-       if it's not responding after 100ms.
-       That implies valid file handles may be skipped.
+       on Windows this is not fully reliable as due to some limitations of the
+       Windows API the underlying implementation may hang when retrieving
+       certain file handles.
+       In order to work around that psutil on Windows Vista (and higher) spawns
+       a thread and kills it if it's not responding after 100ms.
+       That implies that on Windows this method is not guaranteed to enumerate
+       all regular file handles (see full discusion
+       `here <https://github.com/giampaolo/psutil/pull/597>`__).
 
      .. versionchanged:: 3.1.0 no longer hangs on Windows.
 
