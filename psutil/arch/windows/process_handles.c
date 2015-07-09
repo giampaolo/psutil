@@ -54,15 +54,14 @@ psutil_get_open_files_init(BOOL threaded)
     __NtQuerySystemInformation =
         GetLibraryProcAddress("ntdll.dll", "NtQuerySystemInformation");
     __NtQueryObject = GetLibraryProcAddress("ntdll.dll", "NtQueryObject");
-    
+
     // Create events for signalling work between threads
-    if (threaded == TRUE)
-    {
+    if (threaded == TRUE) {
         g_hEvtStart = CreateEvent(NULL, FALSE, FALSE, NULL);
         g_hEvtFinish = CreateEvent(NULL, FALSE, FALSE, NULL);
         InitializeCriticalSection(&g_cs);
     }
-    
+
     g_initialized = TRUE;
 }
 
@@ -79,7 +78,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess)
     PyObject*                           pyListFiles = NULL;
     PyObject*                           pyFilePath = NULL;
     DWORD                               dwWait = 0;
-    
+
     if (g_initialized == FALSE)
         psutil_get_open_files_init(TRUE);
 
@@ -87,11 +86,11 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess)
     // to psutil_get_open_files() is running
     EnterCriticalSection(&g_cs);
 
-    if (__NtQuerySystemInformation == NULL || 
+    if (__NtQuerySystemInformation == NULL ||
         __NtQueryObject == NULL ||
         g_hEvtStart == NULL ||
         g_hEvtFinish == NULL)
-    
+
     {
         PyErr_SetFromWindowsErr(0);
         error = TRUE;
@@ -100,16 +99,13 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess)
 
     // Py_BuildValue raises an exception if NULL is returned
     pyListFiles = PyList_New(0);
-    if (pyListFiles == NULL)
-    {
+    if (pyListFiles == NULL) {
         error = TRUE;
         goto cleanup;
     }
 
-    do
-    {
-        if (pHandleInfo != NULL)
-        {
+    do {
+        if (pHandleInfo != NULL) {
             HeapFree(GetProcessHeap(), 0, pHandleInfo);
             pHandleInfo = NULL;
         }
@@ -121,8 +117,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess)
                                 HEAP_ZERO_MEMORY,
                                 dwInfoSize);
 
-        if (pHandleInfo == NULL)
-        {
+        if (pHandleInfo == NULL) {
             PyErr_NoMemory();
             error = TRUE;
             goto cleanup;
@@ -134,15 +129,13 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess)
                             &dwRet)) == STATUS_INFO_LENGTH_MISMATCH);
 
     // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH
-    if (!NT_SUCCESS(status))
-    {
+    if (!NT_SUCCESS(status)) {
         PyErr_SetFromWindowsErr(HRESULT_FROM_NT(status));
         error = TRUE;
         goto cleanup;
     }
 
-    for (i = 0; i < pHandleInfo->NumberOfHandles; i++)
-    {
+    for (i = 0; i < pHandleInfo->NumberOfHandles; i++) {
         hHandle = &pHandleInfo->Handles[i];
 
         // Check if this hHandle belongs to the PID the user specified.
@@ -170,11 +163,9 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess)
         // Guess buffer size is MAX_PATH + 1
         g_dwLength = (MAX_PATH+1) * sizeof(WCHAR);
 
-        do
-        {
+        do {
             // Release any previously allocated buffer
-            if (g_pNameBuffer != NULL)
-            {
+            if (g_pNameBuffer != NULL) {
                 HeapFree(GetProcessHeap(), 0, g_pNameBuffer);
                 g_pNameBuffer = NULL;
                 g_dwSize = 0;
@@ -186,10 +177,9 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess)
                 goto loop_cleanup;
 
             g_dwSize = g_dwLength;
-            if (g_dwSize > 0)
-            {
+            if (g_dwSize > 0) {
                 g_pNameBuffer = HeapAlloc(GetProcessHeap(),
-                                          HEAP_ZERO_MEMORY, 
+                                          HEAP_ZERO_MEMORY,
                                           g_dwSize);
 
                 if (g_pNameBuffer == NULL)
@@ -209,8 +199,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess)
             goto loop_cleanup;
 
         // Convert to PyUnicode and append it to the return list
-        if (g_pNameBuffer->Length > 0)
-        {
+        if (g_pNameBuffer->Length > 0) {
             /*
             printf("[%d] Filename (%#x) %#d bytes: %S\n",
                    dwPid,
@@ -221,8 +210,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess)
 
             pyFilePath = PyUnicode_FromWideChar(g_pNameBuffer->Buffer,
                                                 g_pNameBuffer->Length/2);
-            if (pyFilePath == NULL)
-            {
+            if (pyFilePath == NULL) {
                 /*
                 printf("[%d] PyUnicode_FromWideChar (%#x): %#x \n",
                        dwPid,
@@ -233,8 +221,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess)
                 goto loop_cleanup;
             }
 
-            if (PyList_Append(pyListFiles, pyFilePath))
-            {
+            if (PyList_Append(pyListFiles, pyFilePath)) {
                 /*
                 printf("[%d] PyList_Append (%#x): %#x \n",
                        dwPid,
@@ -276,8 +263,7 @@ cleanup:
         HeapFree(GetProcessHeap(), 0, pHandleInfo);
     pHandleInfo = NULL;
 
-    if (error)
-    {
+    if (error) {
         Py_XDECREF(pyListFiles);
         pyListFiles = NULL;
     }
@@ -307,10 +293,9 @@ psutil_NtQueryObject()
 
     // Wait for the worker thread to finish
     dwWait = WaitForSingleObject(g_hEvtFinish, NTQO_TIMEOUT);
-    
+
     // If the thread hangs, kill it and cleanup
-    if (dwWait == WAIT_TIMEOUT)
-    {
+    if (dwWait == WAIT_TIMEOUT) {
         SuspendThread(g_hThread);
         TerminateThread(g_hThread, 1);
         WaitForSingleObject(g_hThread, INFINITE);
@@ -320,7 +305,7 @@ psutil_NtQueryObject()
         if (g_fiber != NULL)
             DeleteFiber(g_fiber);
         g_fiber = NULL;
-        
+
         g_hThread = NULL;
     }
 
@@ -335,11 +320,10 @@ psutil_NtQueryObjectThread()
     g_fiber = ConvertThreadToFiber(NULL);
 
     // Loop infinitely waiting for work
-    while (TRUE)
-    {
+    while (TRUE) {
         WaitForSingleObject(g_hEvtStart, INFINITE);
 
-        g_status = __NtQueryObject(g_hFile, 
+        g_status = __NtQueryObject(g_hFile,
                                    ObjectNameInformation,
                                    g_pNameBuffer,
                                    g_dwSize,
@@ -365,12 +349,11 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess)
     ULONG                               dwSize = 0;
     LPVOID                              pMem = NULL;
     TCHAR                               pszFilename[MAX_PATH+1];
-    
+
     if (g_initialized == FALSE)
         psutil_get_open_files_init(FALSE);
 
-    if (__NtQuerySystemInformation == NULL || __NtQueryObject == NULL)
-    {
+    if (__NtQuerySystemInformation == NULL || __NtQueryObject == NULL) {
         PyErr_SetFromWindowsErr(0);
         error = TRUE;
         goto cleanup;
@@ -378,16 +361,13 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess)
 
     // Py_BuildValue raises an exception if NULL is returned
     pyListFiles = PyList_New(0);
-    if (pyListFiles == NULL)
-    {
+    if (pyListFiles == NULL) {
         error = TRUE;
         goto cleanup;
     }
 
-    do
-    {
-        if (pHandleInfo != NULL)
-        {
+    do {
+        if (pHandleInfo != NULL) {
             HeapFree(GetProcessHeap(), 0, pHandleInfo);
             pHandleInfo = NULL;
         }
@@ -399,8 +379,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess)
                                 HEAP_ZERO_MEMORY,
                                 dwInfoSize);
 
-        if (pHandleInfo == NULL)
-        {
+        if (pHandleInfo == NULL) {
             PyErr_NoMemory();
             error = TRUE;
             goto cleanup;
@@ -412,15 +391,13 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess)
                             &dwRet)) == STATUS_INFO_LENGTH_MISMATCH);
 
     // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH
-    if (!NT_SUCCESS(status))
-    {
+    if (!NT_SUCCESS(status)) {
         PyErr_SetFromWindowsErr(HRESULT_FROM_NT(status));
         error = TRUE;
         goto cleanup;
     }
 
-    for (i = 0; i < pHandleInfo->NumberOfHandles; i++)
-    {
+    for (i = 0; i < pHandleInfo->NumberOfHandles; i++) {
         hHandle = &pHandleInfo->Handles[i];
 
         // Check if this hHandle belongs to the PID the user specified.
@@ -446,8 +423,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess)
         }
 
         hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-        if (hMap == NULL)
-        {
+        if (hMap == NULL) {
             /*
             printf("[%d] CreateFileMapping (%#x): %#x \n",
                    dwPid,
@@ -459,8 +435,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess)
 
         pMem = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 1);
 
-        if (pMem == NULL)
-        {
+        if (pMem == NULL) {
             /*
             printf("[%d] MapViewOfFile (%#x): %#x \n",
                    dwPid,
@@ -471,8 +446,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess)
         }
 
         dwSize = GetMappedFileName(GetCurrentProcess(), pMem, pszFilename, MAX_PATH);
-        if (dwSize == 0)
-        {
+        if (dwSize == 0) {
             /*
             printf("[%d] GetMappedFileName (%#x): %#x \n",
                    dwPid,
@@ -492,8 +466,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess)
         */
 
         pyFilePath = PyUnicode_FromWideChar(pszFilename, dwSize);
-        if (pyFilePath == NULL)
-        {
+        if (pyFilePath == NULL) {
             /*
             printf("[%d] PyUnicode_FromStringAndSize (%#x): %#x \n",
                    dwPid,
@@ -504,8 +477,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess)
             goto loop_cleanup;
         }
 
-        if (PyList_Append(pyListFiles, pyFilePath))
-        {
+        if (PyList_Append(pyListFiles, pyFilePath)) {
             /*
             printf("[%d] PyList_Append (%#x): %#x \n",
                    dwPid,
@@ -515,7 +487,7 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess)
             error = TRUE;
             goto loop_cleanup;
         }
-        
+
 loop_cleanup:
         Py_XDECREF(pyFilePath);
         pyFilePath = NULL;
@@ -527,7 +499,7 @@ loop_cleanup:
         if (hMap != NULL)
             CloseHandle(hMap);
         hMap = NULL;
-        
+
         if (hFile != NULL)
             CloseHandle(hFile);
         hFile = NULL;
@@ -552,8 +524,7 @@ cleanup:
         HeapFree(GetProcessHeap(), 0, pHandleInfo);
     pHandleInfo = NULL;
 
-    if (error)
-    {
+    if (error) {
         Py_XDECREF(pyListFiles);
         pyListFiles = NULL;
     }

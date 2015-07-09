@@ -1,10 +1,13 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
-3.0.2 - XXXX-XX-XX
+3.1.0 - XXXX-XX-XX
 ==================
 
 **Bug fixes**
 
+- #340: [Windows] Process.open_files() no longer hangs. Instead it uses a
+  thred which times out and skips the file handle in case it's taking too long
+  to be retrieved.  (patch by Jeff Tang, PR #597)
 - #636: [Windows] Process.memory_info() raise AccessDenied.
 - #637: [UNIX] raise exception if trying to send signal to Process PID 0 as it
   will affect os.getpid()'s process group instead of PID 0.
