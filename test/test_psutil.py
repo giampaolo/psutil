@@ -2610,31 +2610,6 @@ class LimitedUserTestCase(TestProcess):
 class TestMisc(unittest.TestCase):
     """Misc / generic tests."""
 
-    def test__str__(self):
-        sproc = get_test_subprocess()
-        p = psutil.Process(sproc.pid)
-        self.assertIn(str(sproc.pid), str(p))
-        # python shows up as 'Python' in cmdline on OS X so
-        # test fails on OS X
-        if not OSX:
-            self.assertIn(os.path.basename(PYTHON), str(p))
-        sproc = get_test_subprocess()
-        p = psutil.Process(sproc.pid)
-        p.kill()
-        p.wait()
-        self.assertIn(str(sproc.pid), str(p))
-        self.assertIn("terminated", str(p))
-        # test error conditions
-        with mock.patch.object(psutil.Process, 'name',
-                               side_effect=psutil.ZombieProcess(1)) as meth:
-            self.assertIn("zombie", str(p))
-            self.assertIn("pid", str(p))
-            assert meth.called
-        with mock.patch.object(psutil.Process, 'name',
-                               side_effect=psutil.AccessDenied) as meth:
-            self.assertIn("pid", str(p))
-            assert meth.called
-
     def test_process__repr__(self, func=repr):
         p = psutil.Process()
         r = func(p)
@@ -2647,12 +2622,14 @@ class TestMisc(unittest.TestCase):
             r = func(p)
             self.assertIn("pid=%s" % p.pid, r)
             self.assertIn("zombie", r)
+            self.assertNotIn("name=", r)
         with mock.patch.object(psutil.Process, "name",
                                side_effect=psutil.NoSuchProcess(os.getpid())):
             p = psutil.Process()
             r = func(p)
             self.assertIn("pid=%s" % p.pid, r)
             self.assertIn("terminated", r)
+            self.assertNotIn("name=", r)
 
     def test_process__str__(self):
         self.test_process__repr__(func=str)
@@ -2709,7 +2686,7 @@ class TestMisc(unittest.TestCase):
             "psutil.TimeoutExpired timeout after 321 seconds "
             "(pid=111, name='foo')")
 
-    def test__eq__(self):
+    def test_process__eq__(self):
         p1 = psutil.Process()
         p2 = psutil.Process()
         self.assertEqual(p1, p2)
@@ -2717,7 +2694,7 @@ class TestMisc(unittest.TestCase):
         self.assertNotEqual(p1, p2)
         self.assertNotEqual(p1, 'foo')
 
-    def test__hash__(self):
+    def test_process__hash__(self):
         s = set([psutil.Process(), psutil.Process()])
         self.assertEqual(len(s), 1)
 
