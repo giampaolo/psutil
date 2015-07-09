@@ -8,6 +8,7 @@
 
 from __future__ import division
 import contextlib
+import errno
 import fcntl
 import os
 import pprint
@@ -15,6 +16,7 @@ import re
 import socket
 import struct
 import sys
+import tempfile
 import time
 import warnings
 
@@ -26,7 +28,7 @@ except ImportError:
 from test_psutil import POSIX, TOLERANCE, TRAVIS, LINUX
 from test_psutil import (skip_on_not_implemented, sh, get_test_subprocess,
                          retry_before_failing, get_kernel_version, unittest,
-                         which)
+                         which, call_until)
 
 import psutil
 import psutil._pslinux
@@ -280,6 +282,26 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertIsNone(psutil._pslinux.cpu_count_physical())
             assert m.called
 
+    def test_proc_open_files_file_gone(self):
+        # simulates a file which gets deleted during open_files()
+        # execution
+        p = psutil.Process()
+        files = p.open_files()
+        with tempfile.NamedTemporaryFile():
+            # give the kernel some time to see the new file
+            call_until(p.open_files, "len(ret) != %i" % len(files))
+            with mock.patch('psutil._pslinux.os.readlink',
+                            side_effect=OSError(errno.ENOENT, "")) as m:
+                files = p.open_files()
+                assert not files
+                assert m.called
+            # also simulate the case where os.readlink() returns EINVAL
+            # in which case psutil is supposed to 'continue'
+            with mock.patch('psutil._pslinux.os.readlink',
+                            side_effect=OSError(errno.EINVAL, "")) as m:
+                self.assertEqual(p.open_files(), [])
+                assert m.called
+
     def test_proc_terminal_mocked(self):
         with mock.patch('psutil._pslinux._psposix._get_terminal_map',
                         return_value={}) as m:
@@ -319,6 +341,20 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertRaises(
                 NotImplementedError,
                 psutil._pslinux.Process(os.getpid()).gids)
+            assert m.called
+
+    def test_proc_io_counters_mocked(self):
+        with mock.patch('psutil._pslinux.open', create=True) as m:
+            self.assertRaises(
+                NotImplementedError,
+                psutil._pslinux.Process(os.getpid()).io_counters)
+            assert m.called
+
+    def test_boot_time_mocked(self):
+        with mock.patch('psutil._pslinux.open', create=True) as m:
+            self.assertRaises(
+                RuntimeError,
+                psutil._pslinux.boot_time)
             assert m.called
 
     # --- tests for specific kernel versions

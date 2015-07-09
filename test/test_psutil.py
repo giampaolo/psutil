@@ -46,6 +46,10 @@ try:
     import ipaddress  # python >= 3.3
 except ImportError:
     ipaddress = None
+try:
+    from unittest import mock  # py3
+except ImportError:
+    import mock  # requires "pip install mock"
 
 import psutil
 from psutil._compat import PY3, callable, long, unicode
@@ -580,6 +584,7 @@ class TestSystemAPIs(unittest.TestCase):
         sproc3 = get_test_subprocess()
         procs = [psutil.Process(x.pid) for x in (sproc1, sproc2, sproc3)]
         self.assertRaises(ValueError, psutil.wait_procs, procs, timeout=-1)
+        self.assertRaises(TypeError, psutil.wait_procs, procs, callback=1)
         t = time.time()
         gone, alive = psutil.wait_procs(procs, timeout=0.01, callback=callback)
 
@@ -675,6 +680,8 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertFalse(psutil.pid_exists(sproc.pid))
         self.assertFalse(psutil.pid_exists(-1))
         self.assertEqual(psutil.pid_exists(0), 0 in psutil.pids())
+        # pid 0
+        psutil.pid_exists(0) == 0 in psutil.pids()
 
     def test_pid_exists_2(self):
         reap_children()
@@ -1129,13 +1136,30 @@ class TestProcess(unittest.TestCase):
     def test_send_signal(self):
         sig = signal.SIGKILL if POSIX else signal.SIGTERM
         sproc = get_test_subprocess()
-        test_pid = sproc.pid
-        p = psutil.Process(test_pid)
+        p = psutil.Process(sproc.pid)
         p.send_signal(sig)
         exit_sig = p.wait()
-        self.assertFalse(psutil.pid_exists(test_pid))
+        self.assertFalse(psutil.pid_exists(p.pid))
         if POSIX:
             self.assertEqual(exit_sig, sig)
+            #
+            sproc = get_test_subprocess()
+            p = psutil.Process(sproc.pid)
+            p.send_signal(sig)
+            with mock.patch('psutil.os.kill',
+                            side_effect=OSError(errno.ESRCH, "")) as fun:
+                with self.assertRaises(psutil.NoSuchProcess):
+                    p.send_signal(sig)
+                assert fun.called
+            #
+            sproc = get_test_subprocess()
+            p = psutil.Process(sproc.pid)
+            p.send_signal(sig)
+            with mock.patch('psutil.os.kill',
+                            side_effect=OSError(errno.EPERM, "")) as fun:
+                with self.assertRaises(psutil.AccessDenied):
+                    p.send_signal(sig)
+                assert fun.called
 
     def test_wait(self):
         # check exit code signal
@@ -1354,7 +1378,20 @@ class TestProcess(unittest.TestCase):
                 ioclass, value = p.ionice()
                 self.assertEqual(ioclass, 2)
                 self.assertEqual(value, 7)
+                #
                 self.assertRaises(ValueError, p.ionice, 2, 10)
+                self.assertRaises(ValueError, p.ionice, 2, -1)
+                self.assertRaises(ValueError, p.ionice, 4)
+                self.assertRaises(TypeError, p.ionice, 2, "foo")
+                self.assertRaisesRegexp(
+                    ValueError, "can't specify value with IOPRIO_CLASS_NONE",
+                    p.ionice, psutil.IOPRIO_CLASS_NONE, 1)
+                self.assertRaisesRegexp(
+                    ValueError, "can't specify value with IOPRIO_CLASS_IDLE",
+                    p.ionice, psutil.IOPRIO_CLASS_IDLE, 1)
+                self.assertRaisesRegexp(
+                    ValueError, "'ioclass' argument must be specified",
+                    p.ionice, value=1)
             finally:
                 p.ionice(IOPRIO_CLASS_NONE)
         else:
@@ -1399,6 +1436,12 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         p.rlimit(psutil.RLIMIT_NOFILE, (5, 5))
         self.assertEqual(p.rlimit(psutil.RLIMIT_NOFILE), (5, 5))
+        # If pid is 0 prlimit() applies to the calling process and
+        # we don't want that.
+        with self.assertRaises(ValueError):
+            psutil._psplatform.Process(0).rlimit(0)
+        with self.assertRaises(ValueError):
+            p.rlimit(psutil.RLIMIT_NOFILE, (5, 5, 5))
 
     def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact
@@ -1639,6 +1682,11 @@ class TestProcess(unittest.TestCase):
         if POSIX:
             import pwd
             self.assertEqual(p.username(), pwd.getpwuid(os.getuid()).pw_name)
+            with mock.patch("psutil.pwd.getpwuid",
+                            side_effect=KeyError) as fun:
+                p.username() == str(p.uids().real)
+                assert fun.called
+
         elif WINDOWS and 'USERNAME' in os.environ:
             expected_username = os.environ['USERNAME']
             expected_domain = os.environ['USERDOMAIN']
@@ -1703,6 +1751,7 @@ class TestProcess(unittest.TestCase):
         files = p.open_files()
         self.assertFalse(TESTFN in files)
         with open(TESTFN, 'w'):
+            # give the kernel some time to see the new file
             call_until(p.open_files, "len(ret) != %i" % len(files))
             filenames = [x.path for x in p.open_files()]
             self.assertIn(TESTFN, filenames)
@@ -2184,6 +2233,10 @@ class TestProcess(unittest.TestCase):
             except psutil.AccessDenied:
                 pass
 
+            self.assertRaisesRegexp(
+                ValueError, "preventing sending signal to process with PID 0",
+                p.send_signal(signal.SIGTERM))
+
         self.assertIn(p.ppid(), (0, 1))
         # self.assertEqual(p.exe(), "")
         p.cmdline()
@@ -2197,7 +2250,6 @@ class TestProcess(unittest.TestCase):
         except psutil.AccessDenied:
             pass
 
-        # username property
         try:
             if POSIX:
                 self.assertEqual(p.username(), 'root')
@@ -2224,6 +2276,7 @@ class TestProcess(unittest.TestCase):
             proc.stdin
             self.assertTrue(hasattr(proc, 'name'))
             self.assertTrue(hasattr(proc, 'stdin'))
+            self.assertTrue(dir(proc))
             self.assertRaises(AttributeError, getattr, proc, 'foo')
         finally:
             proc.kill()
@@ -2571,6 +2624,19 @@ class TestMisc(unittest.TestCase):
         p.wait()
         self.assertIn(str(sproc.pid), str(p))
         self.assertIn("terminated", str(p))
+        # test error conditions
+        with mock.patch.object(psutil.Process, 'name',
+                               side_effect=psutil.ZombieProcess(1)) as meth:
+            self.assertIn("zombie", str(p))
+            self.assertIn("pid", str(p))
+            assert meth.called
+        with mock.patch.object(psutil.Process, 'name',
+                               side_effect=psutil.AccessDenied) as meth:
+            self.assertIn("pid", str(p))
+            assert meth.called
+
+    def test__repr__(self):
+        repr(psutil.Process())
 
     def test__eq__(self):
         p1 = psutil.Process()
@@ -2666,6 +2732,23 @@ class TestMisc(unittest.TestCase):
         setup_py = os.path.realpath(os.path.join(here, '..', 'setup.py'))
         module = imp.load_source('setup', setup_py)
         self.assertRaises(SystemExit, module.setup)
+
+    def test_ad_on_process_creation(self):
+        # We are supposed to be able to instantiate Process also in case
+        # of zombie processes or access denied.
+        with mock.patch.object(psutil.Process, 'create_time',
+                               side_effect=psutil.AccessDenied) as meth:
+            psutil.Process()
+            assert meth.called
+        with mock.patch.object(psutil.Process, 'create_time',
+                               side_effect=psutil.ZombieProcess(1)) as meth:
+            psutil.Process()
+            assert meth.called
+        with mock.patch.object(psutil.Process, 'create_time',
+                               side_effect=ValueError) as meth:
+            with self.assertRaises(ValueError):
+                psutil.Process()
+            assert meth.called
 
 
 # ===================================================================

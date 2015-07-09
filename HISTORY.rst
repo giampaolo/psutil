@@ -1,5 +1,17 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+3.0.2 - XXXX-XX-XX
+==================
+
+**Bug fixes**
+
+- #636: [Linux] *connections functions may swallow errors and return an
+  incomplete list of connnections.
+- #637: [UNIX] raise exception if trying to send signal to Process PID 0 as it
+  will affect os.getpid()'s process group instead of PID 0.
+- #639: [Linux] Process.cmdline() can be truncated.
+
+
 3.0.1 - 2015-06-18
 ==================
 

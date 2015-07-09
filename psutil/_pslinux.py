@@ -25,7 +25,7 @@ from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
 from ._common import isfile_strict, usage_percent
 from ._common import NIC_DUPLEX_FULL, NIC_DUPLEX_HALF, NIC_DUPLEX_UNKNOWN
-from ._compat import PY3
+from ._compat import PY3, long
 
 if sys.version_info >= (3, 4):
     import enum
@@ -329,7 +329,7 @@ def boot_time():
                 ret = float(line.strip().split()[1])
                 BOOT_TIME = ret
                 return ret
-        raise RuntimeError("line 'btime' not found")
+        raise RuntimeError("line 'btime' not found in /proc/stat")
 
 
 # --- processes
@@ -383,9 +383,17 @@ class Connections:
         for fd in os.listdir("/proc/%s/fd" % pid):
             try:
                 inode = os.readlink("/proc/%s/fd/%s" % (pid, fd))
-            except OSError:
-                # TODO: need comment here
-                continue
+            except OSError as err:
+                # ENOENT == file which is gone in the meantime;
+                # os.stat('/proc/%s' % self.pid) will be done later
+                # to force NSP (if it's the case)
+                if err.errno in (errno.ENOENT, errno.ESRCH):
+                    continue
+                elif err.errno == errno.EINVAL:
+                    # not a link
+                    continue
+                else:
+                    raise
             else:
                 if inode.startswith('socket:['):
                     # the process is using a socket
@@ -744,7 +752,7 @@ class Process(object):
     def exe(self):
         try:
             exe = os.readlink("/proc/%s/exe" % self.pid)
-        except (OSError, IOError) as err:
+        except OSError as err:
             if err.errno in (errno.ENOENT, errno.ESRCH):
                 # no such file error; might be raised also if the
                 # path actually exists for system processes with
@@ -775,7 +783,10 @@ class Process(object):
         fname = "/proc/%s/cmdline" % self.pid
         kw = dict(encoding=DEFAULT_ENCODING) if PY3 else dict()
         with open(fname, "rt", **kw) as f:
-            return [x for x in f.read()[:-1].split('\x00')]
+            data = f.read()
+        if data.endswith('\x00'):
+            data = data[:-1]
+        return [x for x in data.split('\x00')]
 
     @wrap_exceptions
     def terminal(self):
@@ -983,7 +994,7 @@ class Process(object):
             try:
                 with open(fname, 'rb') as f:
                     st = f.read().strip()
-            except EnvironmentError as err:
+            except IOError as err:
                 if err.errno == errno.ENOENT:
                     # no such file or directory; it means thread
                     # disappeared on us
@@ -1044,32 +1055,43 @@ class Process(object):
 
         @wrap_exceptions
         def ionice_set(self, ioclass, value):
+            if value is not None:
+                if not PY3 and not isinstance(value, (int, long)):
+                    msg = "value argument is not an integer (gor %r)" % value
+                    raise TypeError(msg)
+                if not 0 <= value <= 8:
+                    raise ValueError(
+                        "value argument range expected is between 0 and 8")
+
             if ioclass in (IOPRIO_CLASS_NONE, None):
                 if value:
-                    msg = "can't specify value with IOPRIO_CLASS_NONE"
+                    msg = "can't specify value with IOPRIO_CLASS_NONE " \
+                          "(got %r)" % value
                     raise ValueError(msg)
                 ioclass = IOPRIO_CLASS_NONE
                 value = 0
-            if ioclass in (IOPRIO_CLASS_RT, IOPRIO_CLASS_BE):
-                if value is None:
-                    value = 4
             elif ioclass == IOPRIO_CLASS_IDLE:
                 if value:
-                    msg = "can't specify value with IOPRIO_CLASS_IDLE"
+                    msg = "can't specify value with IOPRIO_CLASS_IDLE " \
+                          "(got %r)" % value
                     raise ValueError(msg)
                 value = 0
+            elif ioclass in (IOPRIO_CLASS_RT, IOPRIO_CLASS_BE):
+                if value is None:
+                    # TODO: add comment explaining why this is 4 (?)
+                    value = 4
             else:
-                value = 0
-            if not 0 <= value <= 8:
-                raise ValueError(
-                    "value argument range expected is between 0 and 8")
+                # otherwise we would get OSError(EVINAL)
+                raise ValueError("invalid ioclass argument %r" % ioclass)
+
             return cext.proc_ioprio_set(self.pid, ioclass, value)
 
     if HAS_PRLIMIT:
         @wrap_exceptions
         def rlimit(self, resource, limits=None):
-            # if pid is 0 prlimit() applies to the calling process and
-            # we don't want that
+            # If pid is 0 prlimit() applies to the calling process and
+            # we don't want that. We should never get here though as
+            # PID 0 is not supported on Linux.
             if self.pid == 0:
                 raise ValueError("can't use prlimit() against PID 0 process")
             try:
@@ -1080,7 +1102,8 @@ class Process(object):
                     # set
                     if len(limits) != 2:
                         raise ValueError(
-                            "second argument must be a (soft, hard) tuple")
+                            "second argument must be a (soft, hard) tuple, "
+                            "got %s" % repr(limits))
                     soft, hard = limits
                     cext.linux_prlimit(self.pid, resource, soft, hard)
             except OSError as err:
@@ -1148,27 +1171,30 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        with open("/proc/%s/status" % self.pid, 'rb') as f:
+        fpath = "/proc/%s/status" % self.pid
+        with open(fpath, 'rb') as f:
             for line in f:
                 if line.startswith(b"PPid:"):
                     # PPid: nnnn
                     return int(line.split()[1])
-            raise NotImplementedError("line not found")
+            raise NotImplementedError("line 'PPid' not found in %s" % fpath)
 
     @wrap_exceptions
     def uids(self):
-        with open("/proc/%s/status" % self.pid, 'rb') as f:
+        fpath = "/proc/%s/status" % self.pid
+        with open(fpath, 'rb') as f:
             for line in f:
                 if line.startswith(b'Uid:'):
                     _, real, effective, saved, fs = line.split()
                     return _common.puids(int(real), int(effective), int(saved))
-            raise NotImplementedError("line not found")
+            raise NotImplementedError("line 'Uid' not found in %s" % fpath)
 
     @wrap_exceptions
     def gids(self):
-        with open("/proc/%s/status" % self.pid, 'rb') as f:
+        fpath = "/proc/%s/status" % self.pid
+        with open(fpath, 'rb') as f:
             for line in f:
                 if line.startswith(b'Gid:'):
                     _, real, effective, saved, fs = line.split()
                     return _common.pgids(int(real), int(effective), int(saved))
-            raise NotImplementedError("line not found")
+            raise NotImplementedError("line 'Gid' not found in %s" % fpath)

@@ -598,9 +598,8 @@ Exceptions
    method called the OS may be able to succeed in retrieving the process
    information or not.
    Note: this is a subclass of :class:`NoSuchProcess` so if you're not
-   interested in retrieving zombies while iterating over all processes (e.g.
-   via :func:`process_iter()`) you can ignore this exception and just catch
-   :class:`NoSuchProcess`.
+   interested in retrieving zombies (e.g. when using :func:`process_iter()`)
+   you can ignore this exception and just catch :class:`NoSuchProcess`.
 
    *New in 3.0.0*
 
