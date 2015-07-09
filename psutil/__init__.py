@@ -1363,6 +1363,20 @@ def cpu_count(logical=True):
         return _psplatform.cpu_count_physical()
 
 
+@memoize
+def cpu_tree():
+    """Return the topology of CPUs in the system in tree form.
+
+    Return None if undetermined.
+
+    The return value is cached after first call.
+    If desired cache can be cleared like this:
+
+    >>> psutil.cpu_tree.cache_clear()
+    """
+    return _psplatform.cpu_tree()
+
+
 def cpu_times(percpu=False):
     """Return system-wide CPU times as a namedtuple.
     Every CPU time represents the seconds the CPU has spent in the given mode.
