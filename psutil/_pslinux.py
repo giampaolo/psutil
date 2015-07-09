@@ -25,7 +25,7 @@ from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
 from ._common import isfile_strict, usage_percent
 from ._common import NIC_DUPLEX_FULL, NIC_DUPLEX_HALF, NIC_DUPLEX_UNKNOWN
-from ._compat import PY3
+from ._compat import PY3, long
 
 if sys.version_info >= (3, 4):
     import enum
