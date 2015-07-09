@@ -288,10 +288,8 @@ class Process(object):
                 # Note: this will fail with AD for most PIDs owned
                 # by another user but it's faster.
                 return os.path.basename(self.exe())
-            except OSError as err:
-                if err.errno in ACCESS_DENIED_SET:
-                    return cext.proc_name(self.pid)
-                raise
+            except AccessDenied:
+                return cext.proc_name(self.pid)
 
     @wrap_exceptions
     def exe(self):

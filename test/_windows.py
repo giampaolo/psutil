@@ -392,6 +392,15 @@ class TestDualProcessImplementation(unittest.TestCase):
             meth = wrap_exceptions(getattr(cext, name))
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
+    def test_name_always_available(self):
+        # On Windows name() is never supposed to raise AccessDenied,
+        # see https://github.com/giampaolo/psutil/issues/627
+        for p in psutil.process_iter():
+            try:
+                p.name()
+            except psutil.NoSuchProcess():
+                pass
+
 
 def main():
     test_suite = unittest.TestSuite()
