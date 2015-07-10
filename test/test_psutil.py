@@ -2753,6 +2753,23 @@ class TestMisc(unittest.TestCase):
         # docstring
         self.assertEqual(foo.__doc__, "foo docstring")
 
+    def test_isfile_strict(self):
+        from psutil._common import isfile_strict
+        this_file = os.path.abspath(__file__)
+        assert isfile_strict(this_file)
+        assert not isfile_strict(os.path.dirname(this_file))
+        with mock.patch('psutil._common.os.stat',
+                        side_effect=OSError(errno.EPERM, "foo")):
+            self.assertRaises(OSError, isfile_strict, this_file)
+        with mock.patch('psutil._common.os.stat',
+                        side_effect=OSError(errno.EACCES, "foo")):
+            self.assertRaises(OSError, isfile_strict, this_file)
+        with mock.patch('psutil._common.os.stat',
+                        side_effect=OSError(errno.EINVAL, "foo")):
+            assert not isfile_strict(this_file)
+        with mock.patch('psutil._common.stat.S_ISREG', return_value=False):
+            assert not isfile_strict(this_file)
+
     def test_serialization(self):
         def check(ret):
             if json is not None:
