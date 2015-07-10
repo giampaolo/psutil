@@ -26,6 +26,12 @@ HIGHER PRIORITY
 
  * (Windows) fall back on using WMIC for Process methods returning AccessDenied
 
+ * #613: thread names.
+
+ * #604: emulate os.getloadavg() on Windows
+
+ * #269: NIC rx/tx queue.
+
 
 LOWER PRIORITY
 ==============
