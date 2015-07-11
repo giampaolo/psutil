@@ -4,7 +4,7 @@ environment:
     # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
-    WITH_COMPILER: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_compiler.cmd"
+    WITH_COMPILER: "cmd /E:ON /V:ON /C .\\.appveyor\\run_with_compiler.cmd"
 
   matrix:
     # Pre-installed Python versions, which Appveyor may upgrade to
@@ -48,15 +48,13 @@ init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 
 install:
-  - Import-Module appveyor
-  - "powershell appveyor\\install.ps1"
+  - "powershell .appveyor\\install.ps1"
   # - ps: (new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:/get-pip.py')
   # - "%PYTHON%/python.exe C:/get-pip.py"
   # - "%PYTHON%/python.exe -m pip install -e ."
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build build_ext -i"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py install"
-  - "%WITH_COMPILER% %PYTHON%/python setup.py test"
 
 build: off
 
