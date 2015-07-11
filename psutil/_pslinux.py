@@ -668,11 +668,11 @@ def disk_io_counters():
 
 def disk_partitions(all=False):
     """Return mounted disk partitions as a list of namedtuples"""
-    phydevs = []
+    phydevs = set()
     with open("/proc/filesystems", "r") as f:
         for line in f:
             if not line.startswith("nodev"):
-                phydevs.append(line.strip())
+                phydevs.add(line.strip())
 
     retlist = []
     partitions = cext.disk_partitions()
