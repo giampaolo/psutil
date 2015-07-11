@@ -1,6 +1,6 @@
 .. image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://crate.io/packages/psutil/
-    :alt: Download this month
+    :alt: Downloads this month
 
 .. image:: https://img.shields.io/pypi/v/psutil.svg
     :target: https://pypi.python.org/pypi/psutil/
@@ -9,6 +9,10 @@
 .. image:: https://img.shields.io/pypi/l/psutil.svg
     :target: https://pypi.python.org/pypi/psutil/
     :alt: License
+
+.. image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
+    :target: https://github.com/giampaolo/psutil/
+    :alt: Github stars
 
 .. image:: https://api.travis-ci.org/giampaolo/psutil.png?branch=master
     :target: https://travis-ci.org/giampaolo/psutil
