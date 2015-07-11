@@ -1,18 +1,22 @@
-.. image:: https://pypip.in/d/psutil/badge.png
+.. image:: https://img.shields.io/pypi/dm/psutil.svg
     :target: https://crate.io/packages/psutil/
     :alt: Download this month
 
-.. image:: https://pypip.in/v/psutil/badge.png
+.. image:: https://img.shields.io/pypi/v/psutil.svg
     :target: https://pypi.python.org/pypi/psutil/
     :alt: Latest version
 
-.. image:: https://pypip.in/license/psutil/badge.png
+.. image:: https://img.shields.io/pypi/l/psutil.svg
     :target: https://pypi.python.org/pypi/psutil/
     :alt: License
 
 .. image:: https://api.travis-ci.org/giampaolo/psutil.png?branch=master
     :target: https://travis-ci.org/giampaolo/psutil
-    :alt: Travis
+    :alt: Travis (Linux)
+
+.. image:: https://ci.appveyor.com/api/projects/status/qdwvw7v1t915ywr5/branch/master?svg=true
+    :target: https://ci.appveyor.com/project/giampaolo/psutil
+    :alt: Appveyor (Windows)
 
 ===========
 Quick links
