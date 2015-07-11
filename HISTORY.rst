@@ -5,6 +5,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Enhancements**
 
+- #534: [Linux] disk_partitions() added support for ZFS filesystems.
 - #646: continuous tests integration for Windows with
   https://ci.appveyor.com/project/giampaolo/psutil.
 - #647: new dev guide:

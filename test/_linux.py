@@ -402,6 +402,30 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertEqual(psutil.users()[0].host, 'foo')
             assert m.called
 
+    def test_disk_partitions_mocked(self):
+        # Test that ZFS partitions are returned.
+        with open("/proc/filesystems", "r") as f:
+            data = f.read()
+        if 'zfs' in data:
+            for part in psutil.disk_partitions():
+                if part.fstype == 'zfs':
+                    break
+            else:
+                self.fail("couldn't find any ZFS partition")
+        else:
+            # No ZFS partitions on this system. Let's fake one.
+            fake_file = io.StringIO(u("nodev\tzfs\n"))
+            with mock.patch('psutil._pslinux.open',
+                            return_value=fake_file, create=True) as m1:
+                with mock.patch(
+                        'psutil._pslinux.cext.disk_partitions',
+                        return_value=[('/dev/sdb3', '/', 'zfs', 'rw')]) as m2:
+                    ret = psutil.disk_partitions()
+                    assert m1.called
+                    assert m2.called
+                    assert ret
+                    self.assertEqual(ret[0].fstype, 'zfs')
+
     # --- tests for specific kernel versions
 
     @unittest.skipUnless(

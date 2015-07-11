@@ -668,11 +668,17 @@ def disk_io_counters():
 
 def disk_partitions(all=False):
     """Return mounted disk partitions as a list of namedtuples"""
-    phydevs = set()
+    fstypes = set()
     with open("/proc/filesystems", "r") as f:
         for line in f:
+            line = line.strip()
             if not line.startswith("nodev"):
-                phydevs.add(line.strip())
+                fstypes.add(line.strip())
+            else:
+                # ignore all lines starting with "nodev" except "nodev zfs"
+                fstype = line.split("\t")[1]
+                if fstype == "zfs":
+                    fstypes.add("zfs")
 
     retlist = []
     partitions = cext.disk_partitions()
@@ -681,7 +687,7 @@ def disk_partitions(all=False):
         if device == 'none':
             device = ''
         if not all:
-            if device == '' or fstype not in phydevs:
+            if device == '' or fstype not in fstypes:
                 continue
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)

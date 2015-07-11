@@ -46,7 +46,7 @@ setup-dev-env:
 		flake8 \
 		ipaddress \
 		ipdb \
-		mock==1.0.1
+		mock==1.0.1 \
 		nose \
 		pep8 \
 		pyflakes \
