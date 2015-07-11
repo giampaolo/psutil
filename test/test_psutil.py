@@ -2096,8 +2096,9 @@ class TestProcess(unittest.TestCase):
         # Refers to Issue #15
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
-        p.kill()
+        p.terminate()
         p.wait()
+        self.assertFalse(p.is_running())
 
         excluded_names = ['pid', 'is_running', 'wait', 'create_time']
         if LINUX and not RLIMIT_SUPPORT:
@@ -2111,22 +2112,22 @@ class TestProcess(unittest.TestCase):
                 # get/set methods
                 if name == 'nice':
                     if POSIX:
-                        meth(1)
+                        ret = meth(1)
                     else:
-                        meth(psutil.NORMAL_PRIORITY_CLASS)
+                        ret = meth(psutil.NORMAL_PRIORITY_CLASS)
                 elif name == 'ionice':
-                    meth()
-                    meth(2)
+                    ret = meth()
+                    ret = meth(2)
                 elif name == 'rlimit':
-                    meth(psutil.RLIMIT_NOFILE)
-                    meth(psutil.RLIMIT_NOFILE, (5, 5))
+                    ret = meth(psutil.RLIMIT_NOFILE)
+                    ret = meth(psutil.RLIMIT_NOFILE, (5, 5))
                 elif name == 'cpu_affinity':
-                    meth()
-                    meth([0])
+                    ret = meth()
+                    ret = meth([0])
                 elif name == 'send_signal':
-                    meth(signal.SIGTERM)
+                    ret = meth(signal.SIGTERM)
                 else:
-                    meth()
+                    ret = meth()
             except psutil.ZombieProcess:
                 self.fail("ZombieProcess for %r was not supposed to happen" %
                           name)
@@ -2135,9 +2136,9 @@ class TestProcess(unittest.TestCase):
             except NotImplementedError:
                 pass
             else:
-                self.fail("NoSuchProcess exception not raised for %r" % name)
-
-        self.assertFalse(p.is_running())
+                self.fail(
+                    "NoSuchProcess exception not raised for %r, retval=%s" % (
+                        name, ret))
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_zombie_process(self):
