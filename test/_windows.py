@@ -15,7 +15,8 @@ import sys
 import time
 import traceback
 
-from test_psutil import WINDOWS, get_test_subprocess, reap_children, unittest
+from test_psutil import APPVEYOR, WINDOWS
+from test_psutil import get_test_subprocess, reap_children, unittest
 
 import mock
 try:
@@ -193,20 +194,16 @@ class WindowsSpecificTestCase(unittest.TestCase):
     #                                   time.localtime(p.create_time()))
     #
 
+    # Note: this test is not very reliable
     @unittest.skipIf(wmi is None, "wmi module is not installed")
+    @unittest.skipIf(APPVEYOR, "test not relieable on appveyor")
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
         w = wmi.WMI().Win32_Process()
-        wmi_pids = [x.ProcessId for x in w]
-        wmi_pids.sort()
-        psutil_pids = psutil.pids()
-        psutil_pids.sort()
-        if wmi_pids != psutil_pids:
-            difference = \
-                filter(lambda x: x not in wmi_pids, psutil_pids) + \
-                filter(lambda x: x not in psutil_pids, wmi_pids)
-            self.fail("difference: " + str(difference))
+        wmi_pids = set([x.ProcessId for x in w])
+        psutil_pids = set(psutil.pids())
+        self.assertEqual(wmi_pids, psutil_pids)
 
     @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_disks(self):

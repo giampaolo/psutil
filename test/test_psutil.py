@@ -109,6 +109,8 @@ APPVEYOR = bool(os.environ.get('APPVEYOR'))
 
 if TRAVIS or 'tox' in sys.argv[0]:
     import ipaddress
+if TRAVIS or APPVEYOR:
+    GLOBAL_TIMEOUT = GLOBAL_TIMEOUT * 4
 
 
 # ===================================================================
@@ -2034,7 +2036,7 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process()
         self.assertEqual(len(p.children(recursive=False)), 1)
         # give the grandchild some time to start
-        stop_at = time.time() + 1.5
+        stop_at = time.time() + GLOBAL_TIMEOUT
         while time.time() < stop_at:
             children = p.children(recursive=True)
             if len(children) > 1:
