@@ -21,6 +21,7 @@ Quick links
 * `Forum <http://groups.google.com/group/psutil/topics>`__
 * `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`__
 * `Installation <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
+* `Development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_
 * `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
 
 About
@@ -1386,3 +1387,10 @@ Constants
   To be used in conjunction with :func:`psutil.net_if_stats()`.
 
   *New in 3.0.0*
+
+Development guide
+=================
+
+If you plan on hacking on psutil (e.g. want to add a new feature or fix a bug)
+take a look at the
+`development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_.

@@ -7,6 +7,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 - #646: continuous tests integration for Windows with
   https://ci.appveyor.com/project/giampaolo/psutil.
+- #647: new dev guide:
+  https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst
 - #651: continuous code quality test integration with
   https://scrutinizer-ci.com/g/giampaolo/psutil/
 
