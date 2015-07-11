@@ -49,7 +49,7 @@ install-dev-deps:
 		flake8 \
 		ipaddress \
 		ipdb \
-		mock \
+		mock==1.0.1
 		nose \
 		pep8 \
 		pyflakes \

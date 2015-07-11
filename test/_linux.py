@@ -352,7 +352,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
                         return_value=fake_file, create=True) as m:
             p.cmdline() == ['foo', 'bar']
             assert m.called
-        fake_file = io.StringIO(u'foo\x00bar\x00\x00')
+        fake_file = io.StringIO(u('foo\x00bar\x00\x00'))
         with mock.patch('psutil._pslinux.open',
                         return_value=fake_file, create=True) as m:
             p.cmdline() == ['foo', 'bar', '']
