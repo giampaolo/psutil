@@ -73,6 +73,5 @@ artifacts:
 # on_success:
 #   - might want to upload the content of dist/*.whl to a public wheelhouse
 
-# Skipping commits with particular message or from user
 skip_commits:
-  - message: skip-ci
+  message: skip-ci
