@@ -2099,6 +2099,11 @@ class TestProcess(unittest.TestCase):
         p.terminate()
         p.wait()
         self.assertFalse(p.is_running())
+        self.assertFalse(p.pid in psutil.pids())
+        try:
+            print psutil.Process(p.pid).num_ctx_switches()
+        except psutil.NoSuchProcess:
+            print "NSP"
 
         excluded_names = ['pid', 'is_running', 'wait', 'create_time']
         if LINUX and not RLIMIT_SUPPORT:
