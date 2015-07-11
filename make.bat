@@ -50,7 +50,7 @@ if "%1" == "help" (
     echo   clean         clean build files
     echo   flake8        run flake8
     echo   install       compile and install
-    echo   setup-env     install pip, unittest2, wheels for all python versions
+    echo   setup-dev-env install pip, pywin32, wheels, etc. for all python versions
     echo   test          run tests
     echo   test-memleaks run memory leak tests
     echo   test-process  run process related tests
@@ -161,7 +161,7 @@ if "%1" == "upload-all" (
     goto :eof
 )
 
-if "%1" == "setup-env" (
+if "%1" == "setup-dev-env" (
     :setup-env
     @echo ------------------------------------------------
     @echo downloading pip installer
@@ -178,7 +178,7 @@ if "%1" == "setup-env" (
         @echo installing deps for %%P
         @echo ------------------------------------------------
         rem mandatory / for unittests
-        %%P -m pip install unittest2 ipaddress mock wmi wheel --upgrade
+        %%P -m pip install unittest2 ipaddress mock wmi wheel pypiwin32 --upgrade
         rem nice to have
         %%P -m pip install ipdb pep8 pyflakes flake8 --upgrade
     )

@@ -103,6 +103,9 @@ VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
 # whether we're running this test suite on Travis (https://travis-ci.org/)
 TRAVIS = bool(os.environ.get('TRAVIS'))
+# whether we're running this test suite on Appveyor for Windows
+# (http://www.appveyor.com/)
+APPVEYOR = bool(os.environ.get('APPVEYOR'))
 
 if TRAVIS or 'tox' in sys.argv[0]:
     import ipaddress
@@ -1054,6 +1057,8 @@ class TestSystemAPIs(unittest.TestCase):
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
+    @unittest.skipIf(APPVEYOR,
+                     "can't find any physical disk on Appveyor")
     def test_disk_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.read_count)
@@ -1086,7 +1091,8 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_users(self):
         users = psutil.users()
-        self.assertNotEqual(users, [])
+        if not APPVEYOR:
+            self.assertNotEqual(users, [])
         for user in users:
             assert user.name, user
             user.terminal
@@ -1745,6 +1751,8 @@ class TestProcess(unittest.TestCase):
 
     # TODO
     @unittest.skipIf(BSD, "broken on BSD, see #595")
+    @unittest.skipIf(APPVEYOR,
+                     "can't find any process file on Appveyor")
     def test_open_files(self):
         # current process
         p = psutil.Process()
@@ -1775,6 +1783,8 @@ class TestProcess(unittest.TestCase):
 
     # TODO
     @unittest.skipIf(BSD, "broken on BSD, see #595")
+    @unittest.skipIf(APPVEYOR,
+                     "can't find any process file on Appveyor")
     def test_open_files2(self):
         # test fd and path fields
         with open(TESTFN, 'w') as fileobj:
@@ -2086,8 +2096,12 @@ class TestProcess(unittest.TestCase):
         # Refers to Issue #15
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
-        p.kill()
+        p.terminate()
         p.wait()
+        if WINDOWS:
+            wait_for_pid(p.pid)
+        self.assertFalse(p.is_running())
+        self.assertFalse(p.pid in psutil.pids())
 
         excluded_names = ['pid', 'is_running', 'wait', 'create_time']
         if LINUX and not RLIMIT_SUPPORT:
@@ -2101,22 +2115,22 @@ class TestProcess(unittest.TestCase):
                 # get/set methods
                 if name == 'nice':
                     if POSIX:
-                        meth(1)
+                        ret = meth(1)
                     else:
-                        meth(psutil.NORMAL_PRIORITY_CLASS)
+                        ret = meth(psutil.NORMAL_PRIORITY_CLASS)
                 elif name == 'ionice':
-                    meth()
-                    meth(2)
+                    ret = meth()
+                    ret = meth(2)
                 elif name == 'rlimit':
-                    meth(psutil.RLIMIT_NOFILE)
-                    meth(psutil.RLIMIT_NOFILE, (5, 5))
+                    ret = meth(psutil.RLIMIT_NOFILE)
+                    ret = meth(psutil.RLIMIT_NOFILE, (5, 5))
                 elif name == 'cpu_affinity':
-                    meth()
-                    meth([0])
+                    ret = meth()
+                    ret = meth([0])
                 elif name == 'send_signal':
-                    meth(signal.SIGTERM)
+                    ret = meth(signal.SIGTERM)
                 else:
-                    meth()
+                    ret = meth()
             except psutil.ZombieProcess:
                 self.fail("ZombieProcess for %r was not supposed to happen" %
                           name)
@@ -2125,9 +2139,9 @@ class TestProcess(unittest.TestCase):
             except NotImplementedError:
                 pass
             else:
-                self.fail("NoSuchProcess exception not raised for %r" % name)
-
-        self.assertFalse(p.is_running())
+                self.fail(
+                    "NoSuchProcess exception not raised for %r, retval=%s" % (
+                        name, ret))
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_zombie_process(self):
@@ -2615,7 +2629,8 @@ class TestMisc(unittest.TestCase):
         r = func(p)
         self.assertIn("psutil.Process", r)
         self.assertIn("pid=%s" % p.pid, r)
-        self.assertIn("name='%s'" % p.name(), r)
+        self.assertIn("name=", r)
+        self.assertIn(p.name(), r)
         with mock.patch.object(psutil.Process, "name",
                                side_effect=psutil.ZombieProcess(os.getpid())):
             p = psutil.Process()
@@ -2787,7 +2802,8 @@ class TestMisc(unittest.TestCase):
         if LINUX and not os.path.exists('/proc/diskstats'):
             pass
         else:
-            check(psutil.disk_io_counters())
+            if not APPVEYOR:
+                check(psutil.disk_io_counters())
         check(psutil.disk_partitions())
         check(psutil.disk_usage(os.getcwd()))
         check(psutil.users())
@@ -2865,6 +2881,7 @@ class TestExampleScripts(unittest.TestCase):
     def test_process_detail(self):
         self.assert_stdout('process_detail.py')
 
+    @unittest.skipIf(APPVEYOR, "can't find users on Appveyor")
     def test_who(self):
         self.assert_stdout('who.py')
 
