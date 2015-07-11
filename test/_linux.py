@@ -262,19 +262,29 @@ class LinuxSpecificTestCase(unittest.TestCase):
     def test_cpu_count_logical_mocked(self):
         import psutil._pslinux
         original = psutil._pslinux.cpu_count_logical()
+        # Here we want to mock os.sysconf("SC_NPROCESSORS_ONLN") in
+        # order to cause the parsing of /proc/cpuinfo and /proc/stat.
         with mock.patch(
                 'psutil._pslinux.os.sysconf', side_effect=ValueError) as m:
-            # Here we want to mock os.sysconf("SC_NPROCESSORS_ONLN") in
-            # order to test /proc/cpuinfo parsing.
-            # We might also test /proc/stat parsing but mocking open()
-            # like that is too difficult.
             self.assertEqual(psutil._pslinux.cpu_count_logical(), original)
             assert m.called
-            # Have open() return emtpy data and make sure None is returned
-            # ('cause we want to mimick os.cpu_count())
+
+            # Let's have open() return emtpy data and make sure None is
+            # returned ('cause we mimick os.cpu_count()).
             with mock.patch('psutil._pslinux.open', create=True) as m:
                 self.assertIsNone(psutil._pslinux.cpu_count_logical())
-                assert m.called
+                self.assertEqual(m.call_count, 2)
+                # /proc/stat should be the last one
+                self.assertEqual(m.call_args[0][0], '/proc/stat')
+
+            # Let's push this a bit further and make sure /proc/cpuinfo
+            # parsing works as expected.
+            with open('/proc/cpuinfo', 'rb') as f:
+                cpuinfo_data = f.read()
+            fake_file = io.BytesIO(cpuinfo_data)
+            with mock.patch('psutil._pslinux.open',
+                            return_value=fake_file, create=True) as m:
+                self.assertEqual(psutil._pslinux.cpu_count_logical(), original)
 
     def test_cpu_count_physical_mocked(self):
         # Have open() return emtpy data and make sure None is returned

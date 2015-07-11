@@ -5,9 +5,9 @@ python:
     - 3.2
     - 3.3
     - 3.4
-    # - pypy
+    - pypy
 install:
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install -U ipaddress unittest2 mock; fi
+    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install -U ipaddress unittest2 mock==1.0.1; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install -U ipaddress mock; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install -U ipaddress mock; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '3.3' ]]; then pip install -U ipaddress; fi
