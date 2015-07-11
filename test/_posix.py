@@ -190,7 +190,9 @@ class PosixSpecificTestCase(unittest.TestCase):
                 if line.startswith(nic):
                     break
             else:
-                self.fail("couldn't find %s nic in 'ifconfig -a' output" % nic)
+                self.fail(
+                    "couldn't find %s nic in 'ifconfig -a' output\n%s" % (
+                        nic, output))
 
     @retry_before_failing()
     def test_users(self):
