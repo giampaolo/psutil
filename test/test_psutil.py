@@ -26,6 +26,7 @@ import imp
 import json
 import os
 import pickle
+import pprint
 import re
 import select
 import shutil
@@ -809,42 +810,50 @@ class TestSystemAPIs(unittest.TestCase):
                 return
         self.fail()
 
-    def _test_cpu_percent(self, percent):
-        self.assertIsInstance(percent, float)
-        self.assertGreaterEqual(percent, 0.0)
-        self.assertLessEqual(percent, 100.0 * psutil.cpu_count())
+    def _test_cpu_percent(self, percent, last_ret, new_ret):
+        try:
+            self.assertIsInstance(percent, float)
+            self.assertGreaterEqual(percent, 0.0)
+            self.assertLessEqual(percent, 100.0 * psutil.cpu_count())
+        except AssertionError as err:
+            self.fail("%s\nlast=%s\nnew=%s" % (
+                err, pprint.pformat(last_ret), pprint.pformat(new_ret)))
 
     def test_sys_cpu_percent(self):
-        psutil.cpu_percent(interval=0.001)
+        last = psutil.cpu_percent(interval=0.001)
         for x in range(100):
-            self._test_cpu_percent(psutil.cpu_percent(interval=None))
+            new = psutil.cpu_percent(interval=None)
+            self._test_cpu_percent(new, last, new)
+            last = new
 
     def test_sys_per_cpu_percent(self):
-        self.assertEqual(len(psutil.cpu_percent(interval=0.001, percpu=True)),
-                         psutil.cpu_count())
+        last = psutil.cpu_percent(interval=0.001, percpu=True)
+        self.assertEqual(len(last), psutil.cpu_count())
         for x in range(100):
-            percents = psutil.cpu_percent(interval=None, percpu=True)
-            for percent in percents:
-                self._test_cpu_percent(percent)
+            new = psutil.cpu_percent(interval=None, percpu=True)
+            for percent in new:
+                self._test_cpu_percent(percent, last, new)
+            last = new
 
     def test_sys_cpu_times_percent(self):
-        psutil.cpu_times_percent(interval=0.001)
+        last = psutil.cpu_times_percent(interval=0.001)
         for x in range(100):
-            cpu = psutil.cpu_times_percent(interval=None)
-            for percent in cpu:
-                self._test_cpu_percent(percent)
-            self._test_cpu_percent(sum(cpu))
+            new = psutil.cpu_times_percent(interval=None)
+            for percent in new:
+                self._test_cpu_percent(percent, last, new)
+            self._test_cpu_percent(sum(new), last, new)
+            last = new
 
     def test_sys_per_cpu_times_percent(self):
-        self.assertEqual(len(psutil.cpu_times_percent(interval=0.001,
-                                                      percpu=True)),
-                         psutil.cpu_count())
+        last = psutil.cpu_times_percent(interval=0.001, percpu=True)
+        self.assertEqual(len(last), psutil.cpu_count())
         for x in range(100):
-            cpus = psutil.cpu_times_percent(interval=None, percpu=True)
-            for cpu in cpus:
+            new = psutil.cpu_times_percent(interval=None, percpu=True)
+            for cpu in new:
                 for percent in cpu:
-                    self._test_cpu_percent(percent)
-                self._test_cpu_percent(sum(cpu))
+                    self._test_cpu_percent(percent, last, new)
+                self._test_cpu_percent(sum(cpu), last, new)
+            last = new
 
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
                      "os.statvfs() function not available on this platform")
