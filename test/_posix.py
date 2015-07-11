@@ -15,7 +15,7 @@ import time
 import psutil
 
 from psutil._compat import PY3, callable
-from test_psutil import LINUX, SUNOS, OSX, BSD, PYTHON, POSIX
+from test_psutil import LINUX, SUNOS, OSX, BSD, PYTHON, POSIX, TRAVIS
 from test_psutil import (get_test_subprocess, skip_on_access_denied,
                          retry_before_failing, reap_children, sh, unittest,
                          get_kernel_version, wait_for_pid)
@@ -177,9 +177,10 @@ class PosixSpecificTestCase(unittest.TestCase):
                          [x for x in pids_ps if x not in pids_psutil]
             self.fail("difference: " + str(difference))
 
-    # for some reason ifconfig -a does not report differente interfaces
-    # psutil does
+    # for some reason ifconfig -a does not report all interfaces
+    # returned by psutil
     @unittest.skipIf(SUNOS, "test not reliable on SUNOS")
+    @unittest.skipIf(TRAVIS, "test not reliable on Travis")
     def test_nic_names(self):
         p = subprocess.Popen("ifconfig -a", shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
