@@ -178,7 +178,7 @@ if "%1" == "setup-env" (
         @echo installing deps for %%P
         @echo ------------------------------------------------
         rem mandatory / for unittests
-        %%P -m pip install unittest2 ipaddress mock wmi wheel --upgrade
+        %%P -m pip install unittest2 ipaddress mock wmi wheel pypiwin32 --upgrade
         rem nice to have
         %%P -m pip install ipdb pep8 pyflakes flake8 --upgrade
     )

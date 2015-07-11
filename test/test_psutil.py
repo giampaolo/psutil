@@ -103,6 +103,9 @@ VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
 # whether we're running this test suite on Travis (https://travis-ci.org/)
 TRAVIS = bool(os.environ.get('TRAVIS'))
+# whether we're running this test suite on Appveyor for Windows
+# (http://www.appveyor.com/)
+APPVEYOR = bool(os.environ.get('APPVEYOR'))
 
 if TRAVIS or 'tox' in sys.argv[0]:
     import ipaddress
@@ -1054,6 +1057,8 @@ class TestSystemAPIs(unittest.TestCase):
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
+    @unittest.skipIf(APPVEYOR,
+                     "can't find any physical disk on Appveyor")
     def test_disk_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.read_count)
@@ -1086,7 +1091,8 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_users(self):
         users = psutil.users()
-        self.assertNotEqual(users, [])
+        if not APPVEYOR:
+            self.assertNotEqual(users, [])
         for user in users:
             assert user.name, user
             user.terminal
@@ -1745,6 +1751,8 @@ class TestProcess(unittest.TestCase):
 
     # TODO
     @unittest.skipIf(BSD, "broken on BSD, see #595")
+    @unittest.skipIf(APPVEYOR,
+                     "can't find any process file on Appveyor")
     def test_open_files(self):
         # current process
         p = psutil.Process()
@@ -1775,6 +1783,8 @@ class TestProcess(unittest.TestCase):
 
     # TODO
     @unittest.skipIf(BSD, "broken on BSD, see #595")
+    @unittest.skipIf(APPVEYOR,
+                     "can't find any process file on Appveyor")
     def test_open_files2(self):
         # test fd and path fields
         with open(TESTFN, 'w') as fileobj:
@@ -2615,7 +2625,8 @@ class TestMisc(unittest.TestCase):
         r = func(p)
         self.assertIn("psutil.Process", r)
         self.assertIn("pid=%s" % p.pid, r)
-        self.assertIn("name='%s'" % p.name(), r)
+        self.assertIn("name=", r)
+        self.assertIn(p.name(), r)
         with mock.patch.object(psutil.Process, "name",
                                side_effect=psutil.ZombieProcess(os.getpid())):
             p = psutil.Process()
@@ -2787,7 +2798,8 @@ class TestMisc(unittest.TestCase):
         if LINUX and not os.path.exists('/proc/diskstats'):
             pass
         else:
-            check(psutil.disk_io_counters())
+            if not APPVEYOR:
+                check(psutil.disk_io_counters())
         check(psutil.disk_partitions())
         check(psutil.disk_usage(os.getcwd()))
         check(psutil.users())
@@ -2865,6 +2877,7 @@ class TestExampleScripts(unittest.TestCase):
     def test_process_detail(self):
         self.assert_stdout('process_detail.py')
 
+    @unittest.skipIf(APPVEYOR, "can't find users on Appveyor")
     def test_who(self):
         self.assert_stdout('who.py')
 

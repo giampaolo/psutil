@@ -55,7 +55,7 @@ install:
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build build_ext -i"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py install"
-  - "%WITH_COMPILER% %PYTHON%/Scripts/pip.exe install unittest2 ipaddress wmi wheel --upgrade"
+  - "%WITH_COMPILER% %PYTHON%/Scripts/pip.exe install unittest2 ipaddress pypiwin32 wmi wheel --upgrade"
   # 1.0.1 is the latest release supporting python 2.6
   - "%WITH_COMPILER% %PYTHON%/Scripts/pip.exe install mock==1.0.1"
 
@@ -64,12 +64,11 @@ build: off
 test_script:
   - "%WITH_COMPILER% %PYTHON%/python test/test_psutil.py"
 
-
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"
 
 artifacts:
   - path: dist\*
 
-#on_success:
-#  - TODO: upload the content of dist/*.whl to a public wheelhouse
+# on_success:
+#   - might want to upload the content of dist/*.whl to a public wheelhouse
