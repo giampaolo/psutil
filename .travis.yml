@@ -1,11 +1,12 @@
 language: python
+sudo: false
 python:
     - 2.6
     - 2.7
     - 3.2
     - 3.3
     - 3.4
-    - pypy
+    # - pypy
 install:
     - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install -U ipaddress unittest2 mock==1.0.1; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install -U ipaddress mock; fi
