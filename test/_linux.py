@@ -10,6 +10,7 @@ from __future__ import division
 import contextlib
 import errno
 import fcntl
+import io
 import os
 import pprint
 import re
@@ -32,7 +33,7 @@ from test_psutil import (skip_on_not_implemented, sh, get_test_subprocess,
 
 import psutil
 import psutil._pslinux
-from psutil._compat import PY3
+from psutil._compat import PY3, u
 
 
 SIOCGIFADDR = 0x8915
@@ -341,6 +342,20 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertRaises(
                 NotImplementedError,
                 psutil._pslinux.Process(os.getpid()).gids)
+            assert m.called
+
+    def test_proc_cmdline_mocked(self):
+        # see: https://github.com/giampaolo/psutil/issues/639
+        p = psutil.Process()
+        fake_file = io.StringIO(u('foo\x00bar\x00'))
+        with mock.patch('psutil._pslinux.open',
+                        return_value=fake_file, create=True) as m:
+            p.cmdline() == ['foo', 'bar']
+            assert m.called
+        fake_file = io.StringIO(u'foo\x00bar\x00\x00')
+        with mock.patch('psutil._pslinux.open',
+                        return_value=fake_file, create=True) as m:
+            p.cmdline() == ['foo', 'bar', '']
             assert m.called
 
     def test_proc_io_counters_mocked(self):

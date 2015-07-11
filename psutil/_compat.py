@@ -18,10 +18,16 @@ if PY3:
     long = int
     xrange = range
     unicode = str
+
+    def u(s):
+        return s
 else:
     long = long
     xrange = xrange
     unicode = unicode
+
+    def u(s):
+        return unicode(s, "unicode_escape")
 
 
 # removed in 3.0, reintroduced in 3.2
