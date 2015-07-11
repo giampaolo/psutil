@@ -6,9 +6,6 @@
 PYTHON    = python
 TSCRIPT   = test/test_psutil.py
 
-# Private vars
-COVERAGE_OPTS = --include="*psutil*" --omit="test/*,*setup*"
-
 all: test
 
 clean:
@@ -86,11 +83,12 @@ test-memleaks-by-name: install
 	@$(PYTHON) -m nose test/test_memory_leaks.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
 
 coverage: install
+	# Note: coverage options are controlled by .coveragerc file
 	rm -rf .coverage htmlcov
-	$(PYTHON) -m coverage run $(TSCRIPT) $(COVERAGE_OPTS)
-	$(PYTHON) -m coverage report $(COVERAGE_OPTS)
+	$(PYTHON) -m coverage run $(TSCRIPT)
+	$(PYTHON) -m coverage report
 	@echo "writing results to htmlcov/index.html"
-	$(PYTHON) -m coverage html $(COVERAGE_OPTS)
+	$(PYTHON) -m coverage html
 	$(PYTHON) -m webbrowser -t htmlcov/index.html
 
 pep8:

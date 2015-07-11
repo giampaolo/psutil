@@ -16,11 +16,19 @@
 
 .. image:: https://api.travis-ci.org/giampaolo/psutil.png?branch=master
     :target: https://travis-ci.org/giampaolo/psutil
-    :alt: Travis (Linux)
+    :alt: Linux tests (Travis)
 
 .. image:: https://ci.appveyor.com/api/projects/status/qdwvw7v1t915ywr5/branch/master?svg=true
     :target: https://ci.appveyor.com/project/giampaolo/psutil
-    :alt: Appveyor (Windows)
+    :alt: Windows tests (Appveyor)
+
+.. image:: https://coveralls.io/repos/giampaolo/psutil/badge.svg?branch=master&service=github
+    :target: https://coveralls.io/github/giampaolo/psutil?branch=master
+    :alt: Test coverage (coverall.io)
+
+.. image:: https://img.shields.io/scrutinizer/g/giampaolo/psutil.svg
+    :target: https://scrutinizer-ci.com/g/giampaolo/psutil/
+    :alt: Code quality (scrutinizer-ci.com)
 
 ===========
 Quick links

@@ -1,0 +1,6 @@
+[report]
+include =
+    *psutil*
+omit =
+    test/*
+    *setup*

@@ -1,7 +1,8 @@
+include .coveragerc
+include .git-pre-commit
 include .git-pre-commit
 include .gitignore
 include .travis.yml
-include .git-pre-commit
 include CREDITS
 include HISTORY.rst
 include INSTALL.rst
@@ -13,8 +14,9 @@ include README.rst
 include setup.py
 include TODO
 include tox.ini
-recursive-include docs *
 recursive-exclude docs/_build *
+recursive-include .appveyor/*
+recursive-include docs *
 recursive-include examples *.py
 recursive-include psutil *.py *.c *.h
 recursive-include test *.py README*

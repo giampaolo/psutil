@@ -3,6 +3,13 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 3.1.0 - XXXX-XX-XX
 ==================
 
+**Enhancements**
+
+- #646: continuous tests integration for Windows with
+  https://ci.appveyor.com/project/giampaolo/psutil.
+- #651: continuous code quality test integration with
+  https://scrutinizer-ci.com/g/giampaolo/psutil/
+
 **Bug fixes**
 
 - #340: [Windows] Process.open_files() no longer hangs. Instead it uses a
