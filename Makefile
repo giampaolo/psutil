@@ -37,7 +37,7 @@ build: clean
 	$(PYTHON) setup.py build_ext -i
 
 # useful deps which are nice to have while developing / testing
-install-dev-deps:
+setup-dev-env:
 	python -c "import urllib2; \
 			   r = urllib2.urlopen('https://bootstrap.pypa.io/get-pip.py'); \
 			   open('/tmp/get-pip.py', 'w').write(r.read());"
