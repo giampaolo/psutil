@@ -828,7 +828,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertGreaterEqual(percent, 0.0)
             self.assertLessEqual(percent, 100.0 * psutil.cpu_count())
         except AssertionError as err:
-            self.fail("%s\nlast=%s\nnew=%s" % (
+            raise AssertionError("\n%s\nlast=%s\nnew=%s" % (
                 err, pprint.pformat(last_ret), pprint.pformat(new_ret)))
 
     def test_sys_cpu_percent(self):
