@@ -576,10 +576,6 @@ class TestSystemAPIs(unittest.TestCase):
         p.wait()
         self.assertNotIn(sproc.pid, [x.pid for x in psutil.process_iter()])
 
-    @retry_before_failing(50)
-    def test_process_iter_against_pids(self):
-        self.assertEqual(len(list(psutil.process_iter())), len(psutil.pids()))
-
     def test_wait_procs(self):
         def callback(p):
             l.append(p.pid)
