@@ -1,18 +1,6 @@
 .. image:: https://img.shields.io/pypi/dm/psutil.svg
-    :target: https://crate.io/packages/psutil/
+    :target: https://pypi.python.org/pypi/psutil#downloads
     :alt: Downloads this month
-
-.. image:: https://img.shields.io/pypi/v/psutil.svg
-    :target: https://pypi.python.org/pypi/psutil/
-    :alt: Latest version
-
-.. image:: https://img.shields.io/pypi/l/psutil.svg
-    :target: https://pypi.python.org/pypi/psutil/
-    :alt: License
-
-.. image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
-    :target: https://github.com/giampaolo/psutil/
-    :alt: Github stars
 
 .. image:: https://api.travis-ci.org/giampaolo/psutil.png?branch=master
     :target: https://travis-ci.org/giampaolo/psutil
@@ -26,9 +14,21 @@
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)
 
+.. image:: https://img.shields.io/pypi/v/psutil.svg
+    :target: https://pypi.python.org/pypi/psutil/
+    :alt: Latest version
+
+.. image:: https://img.shields.io/github/stars/giampaolo/psutil.svg
+    :target: https://github.com/giampaolo/psutil/
+    :alt: Github stars
+
 .. image:: https://img.shields.io/scrutinizer/g/giampaolo/psutil.svg
     :target: https://scrutinizer-ci.com/g/giampaolo/psutil/
     :alt: Code quality (scrutinizer-ci.com)
+
+.. image:: https://img.shields.io/pypi/l/psutil.svg
+    :target: https://pypi.python.org/pypi/psutil/
+    :alt: License
 
 ===========
 Quick links
