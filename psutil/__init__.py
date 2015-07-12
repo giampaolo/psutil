@@ -127,7 +127,7 @@ elif sys.platform.startswith("sunos"):
     from ._pssunos import (CONN_IDLE,  # NOQA
                            CONN_BOUND)
 
-else:
+else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
 
