@@ -601,10 +601,16 @@ class TestSystemAPIs(unittest.TestCase):
         for p in alive:
             self.assertFalse(hasattr(p, 'returncode'))
 
+        @retry_before_failing(30)
+        def test(procs, callback):
+            gone, alive = psutil.wait_procs(procs, timeout=0.03,
+                                            callback=callback)
+            self.assertEqual(len(gone), 1)
+            self.assertEqual(len(alive), 2)
+            return gone, alive
+
         sproc3.terminate()
-        gone, alive = psutil.wait_procs(procs, timeout=0.03, callback=callback)
-        self.assertEqual(len(gone), 1)
-        self.assertEqual(len(alive), 2)
+        gone, alive = test(procs, callback)
         self.assertIn(sproc3.pid, [x.pid for x in gone])
         if POSIX:
             self.assertEqual(gone.pop().returncode, signal.SIGTERM)
@@ -614,11 +620,17 @@ class TestSystemAPIs(unittest.TestCase):
         for p in alive:
             self.assertFalse(hasattr(p, 'returncode'))
 
+        @retry_before_failing(30)
+        def test(procs, callback):
+            gone, alive = psutil.wait_procs(procs, timeout=0.03,
+                                            callback=callback)
+            self.assertEqual(len(gone), 3)
+            self.assertEqual(len(alive), 0)
+            return gone, alive
+
         sproc1.terminate()
         sproc2.terminate()
-        gone, alive = psutil.wait_procs(procs, timeout=0.03, callback=callback)
-        self.assertEqual(len(gone), 3)
-        self.assertEqual(len(alive), 0)
+        gone, alive = test(procs, callback)
         self.assertEqual(set(l), set([sproc1.pid, sproc2.pid, sproc3.pid]))
         for p in gone:
             self.assertTrue(hasattr(p, 'returncode'))
