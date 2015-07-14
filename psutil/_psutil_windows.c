@@ -1327,7 +1327,7 @@ psutil_win32_QueryDosDevice(PyObject *self, PyObject *args)
         TCHAR szTarget[512] = {0};
         if (QueryDosDevice(szDeviceName, szTarget, 511) != 0) {
             if (_tcscmp(lpDevicePath, szTarget) == 0) {
-                _stprintf(szBuff, TEXT("%c:"), d);
+                _stprintf_s(szBuff, _countof(szBuff), TEXT("%c:"), d);
                 return Py_BuildValue("s", szBuff);
             }
         }
@@ -2248,7 +2248,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
         if (!py_nic_info)
             goto error;
 
-        sprintf(ifname, "%wS", pCurrAddresses->FriendlyName);
+        sprintf_s(ifname, MAX_PATH, "%wS", pCurrAddresses->FriendlyName);
         py_nic_name = PyUnicode_Decode(
             ifname, _tcslen(ifname), Py_FileSystemDefaultEncoding, "replace");
 
@@ -2302,7 +2302,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args)
     // in the alphabet (from A:\ to Z:\).
     for (devNum = 0; devNum <= 32; ++devNum) {
         py_disk_info = NULL;
-        sprintf(szDevice, "\\\\.\\PhysicalDrive%d", devNum);
+        sprintf_s(szDevice, MAX_PATH, "\\\\.\\PhysicalDrive%d", devNum);
         hDevice = CreateFile(szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
                              NULL, OPEN_EXISTING, 0, NULL);
 
@@ -2313,7 +2313,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args)
                             &diskPerformance, sizeof(diskPerformance),
                             &dwSize, NULL))
         {
-            sprintf(szDeviceDisplay, "PhysicalDrive%d", devNum);
+            sprintf_s(szDeviceDisplay, MAX_PATH, "PhysicalDrive%d", devNum);
             py_disk_info = Py_BuildValue(
                 "(IILLKK)",
                 diskPerformance.ReadCount,
@@ -2454,25 +2454,25 @@ psutil_disk_partitions(PyObject *self, PyObject *args)
             // which case the error is (21, "device not ready").
             // Let's pretend it didn't happen as we already have
             // the drive name and type ('removable').
-            strcat(opts, "");
+            strcat_s(opts, _countof(opts), "");
             SetLastError(0);
         }
         else {
             if (pflags & FILE_READ_ONLY_VOLUME) {
-                strcat(opts, "ro");
+                strcat_s(opts, _countof(opts), "ro");
             }
             else {
-                strcat(opts, "rw");
+                strcat_s(opts, _countof(opts), "rw");
             }
             if (pflags & FILE_VOLUME_IS_COMPRESSED) {
-                strcat(opts, ",compressed");
+                strcat_s(opts, _countof(opts), ",compressed");
             }
         }
 
         if (strlen(opts) > 0) {
-            strcat(opts, ",");
+            strcat_s(opts, _countof(opts), ",");
         }
-        strcat(opts, psutil_get_drive_type(type));
+        strcat_s(opts, _countof(opts), psutil_get_drive_type(type));
 
         py_tuple = Py_BuildValue(
             "(ssss)",
@@ -2583,12 +2583,13 @@ psutil_users(PyObject *self, PyObject *args)
 
         address = (PWTS_CLIENT_ADDRESS)buffer_addr;
         if (address->AddressFamily == 0) {  // AF_INET
-            sprintf(address_str,
-                    "%u.%u.%u.%u",
-                    address->Address[0],
-                    address->Address[1],
-                    address->Address[2],
-                    address->Address[3]);
+            sprintf_s(address_str,
+                      _countof(address_str),
+                      "%u.%u.%u.%u",
+                      address->Address[0],
+                      address->Address[1],
+                      address->Address[2],
+                      address->Address[3]);
             py_address = Py_BuildValue("s", address_str);
             if (!py_address)
                 goto error;
@@ -2938,7 +2939,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
 
     while (pCurrAddresses) {
         pUnicast = pCurrAddresses->FirstUnicastAddress;
-        sprintf(ifname, "%wS", pCurrAddresses->FriendlyName);
+        sprintf_s(ifname, MAX_PATH, "%wS", pCurrAddresses->FriendlyName);
 
         // MAC address
         if (pCurrAddresses->PhysicalAddressLength != 0) {
@@ -2946,11 +2947,11 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
             *ptr = '\0';
             for (i = 0; i < (int) pCurrAddresses->PhysicalAddressLength; i++) {
                 if (i == (pCurrAddresses->PhysicalAddressLength - 1)) {
-                    sprintf(ptr, "%.2X\n",
+                    sprintf_s(ptr, _countof(buff), "%.2X\n",
                             (int)pCurrAddresses->PhysicalAddress[i]);
                 }
                 else {
-                    sprintf(ptr, "%.2X-",
+                    sprintf_s(ptr, _countof(buff), "%.2X-",
                             (int)pCurrAddresses->PhysicalAddress[i]);
                 }
                 ptr += 3;
@@ -3116,9 +3117,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args)
         ifname_found = 0;
         pCurrAddresses = pAddresses;
         while (pCurrAddresses) {
-            sprintf(descr, "%wS", pCurrAddresses->Description);
+            sprintf_s(descr, MAX_PATH, "%wS", pCurrAddresses->Description);
             if (lstrcmp(descr, pIfRow->bDescr) == 0) {
-                sprintf(friendly_name, "%wS", pCurrAddresses->FriendlyName);
+                sprintf_s(friendly_name, MAX_PATH, "%wS", pCurrAddresses->FriendlyName);
                 ifname_found = 1;
                 break;
             }
