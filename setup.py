@@ -70,6 +70,7 @@ if sys.platform.startswith("win32"):
             'psutil/arch/windows/process_info.c',
             'psutil/arch/windows/process_handles.c',
             'psutil/arch/windows/security.c',
+            'psutil/arch/windows/inet_ntop.c',
         ],
         define_macros=[
             VERSION_MACRO,
