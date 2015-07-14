@@ -28,6 +28,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   incomplete list of connnections.
 - #642: repr() of exceptions is incorrect.
 - #653: [Windows] Add inet_ntop function for Windows XP to support IPv6.
+- #641: [Windows] Replace deprecated string functions with safe equivalents.
 
 
 3.0.1 - 2015-06-18
