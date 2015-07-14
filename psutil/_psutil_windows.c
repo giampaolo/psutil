@@ -31,6 +31,7 @@
 #include "arch/windows/process_info.h"
 #include "arch/windows/process_handles.h"
 #include "arch/windows/ntextapi.h"
+#include "arch/windows/inet_ntop.h"
 
 #ifdef __MINGW32__
 #include "arch/windows/glpi.h"
