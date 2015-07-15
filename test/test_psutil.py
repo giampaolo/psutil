@@ -2772,6 +2772,10 @@ class TestMisc(unittest.TestCase):
         for name in psutil.__all__:
             self.assertIn(name, dir_psutil)
 
+    def test_version(self):
+        self.assertEqual('.'.join([str(x) for x in psutil.version_info]),
+                         psutil.__version__)
+
     def test_memoize(self):
         from psutil._common import memoize
 
@@ -2854,6 +2858,7 @@ class TestMisc(unittest.TestCase):
         setup_py = os.path.realpath(os.path.join(here, '..', 'setup.py'))
         module = imp.load_source('setup', setup_py)
         self.assertRaises(SystemExit, module.setup)
+        self.assertEqual(module.get_version(), psutil.__version__)
 
     def test_ad_on_process_creation(self):
         # We are supposed to be able to instantiate Process also in case
