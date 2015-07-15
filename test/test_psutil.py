@@ -2752,6 +2752,9 @@ class TestMisc(unittest.TestCase):
                         if (fun.__doc__ is not None and
                                 'deprecated' not in fun.__doc__.lower()):
                             self.fail('%r not in psutil.__all__' % name)
+        # import 'start' will break if __all__ is inconsistent, see:
+        # https://github.com/giampaolo/psutil/issues/656
+        from psutil import *  # NOQA
 
     def test_memoize(self):
         from psutil._common import memoize

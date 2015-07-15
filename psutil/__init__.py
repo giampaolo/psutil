@@ -136,7 +136,7 @@ __all__ = [
     "Error", "NoSuchProcess", "ZombieProcess", "AccessDenied",
     "TimeoutExpired",
     # constants
-    "version_info", "__3n__",
+    "version_info", "__version__",
     "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
     "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
     "STATUS_WAKING", "STATUS_LOCKED", "STATUS_WAITING", "STATUS_LOCKED",
