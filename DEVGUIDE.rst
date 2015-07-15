@@ -140,6 +140,5 @@ These are note for myself (Giampaolo):
 - upload source tarball on PYPI with ``make upload-src``.
 - upload exe and wheel files for windows on PYPI with ``make upload-all``.
 - upload updated doc on http://pythonhosted.org/psutil with ``make upload-doc``.
-- GIT tag the new release with ``make git-tag-release`` and push it with
-  ``git push --follow-tags``.
+- GIT tag the new release with ``make git-tag-release``.
 - post on psutil and python-announce mailing lists, twitter, g+, blog.
