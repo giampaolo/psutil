@@ -807,7 +807,7 @@ class TestSystemAPIs(unittest.TestCase):
         #                 new_t, last_t, msg="%s %s" % (lastcpu, newcpu))
         #     last = new
 
-    def test_sys_per_cpu_times2(self):
+    def test_sys_per_cpu_times_2(self):
         tot1 = psutil.cpu_times(percpu=True)
         stop_at = time.time() + 0.1
         while True:
@@ -825,6 +825,7 @@ class TestSystemAPIs(unittest.TestCase):
         try:
             self.assertIsInstance(percent, float)
             self.assertGreaterEqual(percent, 0.0)
+            self.assertIsNot(percent, -0.0)
             self.assertLessEqual(percent, 100.0 * psutil.cpu_count())
         except AssertionError as err:
             raise AssertionError("\n%s\nlast=%s\nnew=%s" % (
@@ -865,6 +866,16 @@ class TestSystemAPIs(unittest.TestCase):
                     self._test_cpu_percent(percent, last, new)
                 self._test_cpu_percent(sum(cpu), last, new)
             last = new
+
+    def test_sys_per_cpu_times_percent_negative(self):
+        # see: https://github.com/giampaolo/psutil/issues/645
+        psutil.cpu_times_percent(percpu=True)
+        zero_times = [x._make([0 for x in range(len(x._fields))])
+                      for x in psutil.cpu_times(percpu=True)]
+        with mock.patch('psutil.cpu_times', return_value=zero_times):
+            for cpu in psutil.cpu_times_percent(percpu=True):
+                for percent in cpu:
+                    self._test_cpu_percent(percent, None, None)
 
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
                      "os.statvfs() function not available on this platform")
@@ -2752,7 +2763,7 @@ class TestMisc(unittest.TestCase):
                         if (fun.__doc__ is not None and
                                 'deprecated' not in fun.__doc__.lower()):
                             self.fail('%r not in psutil.__all__' % name)
-        # import 'start' will break if __all__ is inconsistent, see:
+        # import 'star' will break if __all__ is inconsistent, see:
         # https://github.com/giampaolo/psutil/issues/656
         from psutil import *  # NOQA
 

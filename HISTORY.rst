@@ -1,5 +1,14 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+3.1.1 - XXXX-XX-XX
+==================
+
+**Bug fixes**
+
+- #645: [Linux] psutil.cpu_times_percent() may produce negative results.
+- #656: 'from psutil import *' does not work.
+
+
 3.1.0 - 2015-07-15
 ==================
 

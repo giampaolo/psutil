@@ -1505,23 +1505,20 @@ def cpu_times_percent(interval=None, percpu=False):
             except ZeroDivisionError:
                 field_perc = 0.0
             field_perc = round(field_perc, 1)
-            if _WINDOWS:
-                # XXX
-                # Work around:
-                # https://github.com/giampaolo/psutil/issues/392
-                # CPU times are always supposed to increase over time
-                # or at least remain the same and that's because time
-                # cannot go backwards.
-                # Surprisingly sometimes this might not be the case on
-                # Windows where 'system' CPU time can be smaller
-                # compared to the previous call, resulting in corrupted
-                # percentages (< 0 or > 100).
-                # I really don't know what to do about that except
-                # forcing the value to 0 or 100.
-                if field_perc > 100.0:
-                    field_perc = 100.0
-                elif field_perc < 0.0:
-                    field_perc = 0.0
+            # CPU times are always supposed to increase over time
+            # or at least remain the same and that's because time
+            # cannot go backwards.
+            # Surprisingly sometimes this might not be the case (at
+            # least on Windows and Linux), see:
+            # https://github.com/giampaolo/psutil/issues/392
+            # https://github.com/giampaolo/psutil/issues/645
+            # I really don't know what to do about that except
+            # forcing the value to 0 or 100.
+            if field_perc > 100.0:
+                field_perc = 100.0
+            # `<=` because `-0.0 == 0.0` evaluates to True
+            elif field_perc <= 0.0:
+                field_perc = 0.0
             nums.append(field_perc)
         return _psplatform.scputimes(*nums)
 
