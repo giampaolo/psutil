@@ -2747,7 +2747,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(len(s), 1)
 
     def test__all__(self):
-        for name in dir(psutil):
+        dir_psutil = dir(psutil)
+        for name in dir_psutil:
             if name in ('callable', 'error', 'namedtuple',
                         'long', 'test', 'NUM_CPUS', 'BOOT_TIME',
                         'TOTAL_PHYMEM'):
@@ -2763,9 +2764,13 @@ class TestMisc(unittest.TestCase):
                         if (fun.__doc__ is not None and
                                 'deprecated' not in fun.__doc__.lower()):
                             self.fail('%r not in psutil.__all__' % name)
-        # import 'star' will break if __all__ is inconsistent, see:
+
+        # Import 'star' will break if __all__ is inconsistent, see:
         # https://github.com/giampaolo/psutil/issues/656
-        from psutil import *  # NOQA
+        # Can't do `from psutil import *` as it won't work on python 3
+        # so we simply iterate over __all__.
+        for name in psutil.__all__:
+            self.assertIn(name, dir_psutil)
 
     def test_memoize(self):
         from psutil._common import memoize
