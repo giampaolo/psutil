@@ -1073,7 +1073,11 @@ Process class
        a thread and kills it if it's not responding after 100ms.
        That implies that on Windows this method is not guaranteed to enumerate
        all regular file handles (see full discusion
-       `here <https://github.com/giampaolo/psutil/pull/597>`__).
+       `here <https://github.com/giampaolo/psutil/pull/597>`_).
+
+     .. warning::
+       on FreeBSD this method can return files with a 'null' path (see
+       `issue 595 <https://github.com/giampaolo/psutil/pull/595>`_).
 
      .. versionchanged:: 3.1.0 no longer hangs on Windows.
 

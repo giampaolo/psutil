@@ -142,4 +142,4 @@ These are note for myself (Giampaolo):
 - upload updated doc on http://pythonhosted.org/psutil with ``make upload-doc``.
 - GIT tag the new release with ``make git-tag-release`` and push it with
   ``git push --follow-tags``.
-- post on psutil and python-announce mailing lists.
+- post on psutil and python-announce mailing lists, twitter, g+, blog.
