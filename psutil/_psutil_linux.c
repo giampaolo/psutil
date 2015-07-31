@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <linux/sockios.h>
 #include <linux/if.h>
+#include <linux/types.h>
 #include <linux/ethtool.h>
 
 #include "_psutil_linux.h"
