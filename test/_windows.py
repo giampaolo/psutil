@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: UTF-8 -*
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -9,14 +10,18 @@
 import errno
 import os
 import platform
+import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 import traceback
 
+from psutil._compat import u
 from test_psutil import APPVEYOR, WINDOWS
 from test_psutil import get_test_subprocess, reap_children, unittest
+from test_psutil import safe_remove, safe_rmdir, chdir
 
 import mock
 try:
@@ -452,12 +457,62 @@ class TestDualProcessImplementation(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
 
+class TestUnicode(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        with tempfile.NamedTemporaryFile() as f:
+            tdir = os.path.dirname(f.name)
+        cls.uexe = os.path.join(tdir, "psutil-è.exe")
+
+    def setUp(self):
+        safe_remove(self.uexe)
+        reap_children()
+
+    tearDown = setUp
+
+    def test_proc_exe(self):
+        shutil.copyfile(sys.executable, self.uexe)
+        subp = get_test_subprocess(cmd=[self.uexe])
+        p = psutil.Process(subp.pid)
+        self.assertEqual(os.path.basename(p.name()), u("psutil-è.exe"))
+
+    def test_proc_name(self):
+        shutil.copyfile(sys.executable, self.uexe)
+        subp = get_test_subprocess(cmd=[self.uexe])
+        self.assertEqual(psutil._psplatform.cext.proc_name(subp.pid),
+                         u("psutil-è.exe"))
+
+    def test_proc_cmdline(self):
+        shutil.copyfile(sys.executable, self.uexe)
+        subp = get_test_subprocess(cmd=[self.uexe])
+        p = psutil.Process(subp.pid)
+        self.assertEqual(p.cmdline(), [self.uexe])
+
+    def test_proc_cwd(self):
+        tdir = tempfile.mkdtemp(prefix="psutil-è-")
+        self.addCleanup(safe_rmdir, tdir)
+        with chdir(tdir):
+            p = psutil.Process()
+            self.assertEqual(p.cwd(), tdir)
+
+    def test_proc_open_files(self):
+        p = psutil.Process()
+        start = set(p.open_files())
+        with open(self.uexe, 'w'):
+            new = set(p.open_files())
+        path = (new - start).pop().path
+        self.assertEqual(path, self.uexe)
+
+
 def main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(WindowsSpecificTestCase))
     test_suite.addTest(unittest.makeSuite(TestDualProcessImplementation))
+    test_suite.addTest(unittest.makeSuite(TestUnicode))
     result = unittest.TextTestRunner(verbosity=2).run(test_suite)
     return result.wasSuccessful()
+
 
 if __name__ == '__main__':
     if not main():
