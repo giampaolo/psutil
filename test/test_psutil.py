@@ -2678,6 +2678,12 @@ class TestMisc(unittest.TestCase):
             self.assertIn("pid=%s" % p.pid, r)
             self.assertIn("terminated", r)
             self.assertNotIn("name=", r)
+        with mock.patch.object(psutil.Process, "name",
+                               side_effect=psutil.AccessDenied(os.getpid())):
+            p = psutil.Process()
+            r = func(p)
+            self.assertIn("pid=%s" % p.pid, r)
+            self.assertNotIn("name=", r)
 
     def test_process__str__(self):
         self.test_process__repr__(func=str)
