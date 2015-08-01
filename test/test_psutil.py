@@ -2147,11 +2147,11 @@ class TestProcess(unittest.TestCase):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.terminate()
-        p.wait()
+        retcode = p.wait()
         # if WINDOWS:
         #     wait_for_pid(p.pid)
         self.assertFalse(p.is_running())
-        self.assertFalse(p.pid in psutil.pids())
+        self.assertFalse(p.pid in psutil.pids(), msg="retcode = %s" % retcode)
 
         excluded_names = ['pid', 'is_running', 'wait', 'create_time']
         if LINUX and not RLIMIT_SUPPORT:
