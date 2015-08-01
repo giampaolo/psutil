@@ -1023,7 +1023,7 @@ class Process(object):
                 if err.errno == errno.ESRCH:
                     self._gone = True
                     raise NoSuchProcess(self.pid, self._name)
-                if err.errno == errno.EPERM:
+                if err.errno in (errno.EPERM, errno.EACCES):
                     raise AccessDenied(self.pid, self._name)
                 raise
 
@@ -1826,7 +1826,7 @@ def users():
     return _psplatform.users()
 
 
-def test():
+def test():  # pragma: no cover
     """List info of all currently running processes emulating ps aux
     output.
     """
