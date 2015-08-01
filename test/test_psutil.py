@@ -2119,6 +2119,15 @@ class TestProcess(unittest.TestCase):
         if not isinstance(d['connections'], list):
             self.assertEqual(d['connections'], 'foo')
 
+        with mock.patch('psutil.getattr', create=True,
+                        side_effect=NotImplementedError):
+            # By default APIs raising NotImplementedError are
+            # supposed to be skipped.
+            self.assertEqual(p.as_dict(), {})
+            # ...unless the user explicitly asked for some attr.
+            with self.assertRaises(NotImplementedError):
+                p.as_dict(attrs=["name"])
+
     def test_halfway_terminated_process(self):
         # Test that NoSuchProcess exception gets raised in case the
         # process dies after we create the Process object.
