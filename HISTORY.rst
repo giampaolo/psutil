@@ -1,5 +1,13 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+3.1.2 - XXXX-XX-XX
+==================
+
+**Bug fixes**
+
+- #659: [Linux] compilation error on Suse 10.
+
+
 3.1.1 - 2015-07-15
 ==================
 

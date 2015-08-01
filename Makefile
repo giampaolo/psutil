@@ -34,7 +34,7 @@ build: clean
 	$(PYTHON) setup.py build_ext -i
 
 # useful deps which are nice to have while developing / testing
-setup-dev-env:
+setup-dev-env: install-git-hooks
 	python -c "import urllib2; \
 			   r = urllib2.urlopen('https://bootstrap.pypa.io/get-pip.py'); \
 			   open('/tmp/get-pip.py', 'w').write(r.read());"

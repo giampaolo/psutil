@@ -12,12 +12,11 @@ install:
     - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install -U ipaddress mock; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install -U ipaddress mock; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '3.3' ]]; then pip install -U ipaddress; fi
-    - pip install coverage coveralls
+    - pip install coverage coveralls flake8 pep8
 script:
-    - pip install flake8 pep8
     - python setup.py build
     - python setup.py install
-    - coverage run test/test_psutil.py --include="*psutil*" --omit="test/*,*setup*"
+    - coverage run test/test_psutil.py --include="psutil/*" --omit="test/*,*setup*"
     - python test/test_memory_leaks.py
     - flake8
     - pep8
