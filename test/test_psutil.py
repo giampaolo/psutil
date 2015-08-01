@@ -576,6 +576,14 @@ class TestSystemAPIs(unittest.TestCase):
         p.wait()
         self.assertNotIn(sproc.pid, [x.pid for x in psutil.process_iter()])
 
+        with mock.patch('psutil.Process',
+                        side_effect=psutil.NoSuchProcess(os.getpid())):
+            self.assertEqual(list(psutil.process_iter()), [])
+        with mock.patch('psutil.Process',
+                        side_effect=psutil.AccessDenied(os.getpid())):
+            with self.assertRaises(psutil.AccessDenied):
+                list(psutil.process_iter())
+
     def test_wait_procs(self):
         def callback(p):
             l.append(p.pid)

@@ -1248,7 +1248,10 @@ def process_iter():
             # Process creation time can't be determined hence there's
             # no way to tell whether the pid of the cached process
             # has been reused. Just return the cached version.
-            yield proc
+            if proc is None and pid in _pmap:
+                yield _pmap[pid]
+            else:
+                raise
 
 
 def wait_procs(procs, timeout=None, callback=None):
