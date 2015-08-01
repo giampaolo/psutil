@@ -2141,6 +2141,7 @@ class TestProcess(unittest.TestCase):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.terminate()
+        p.wait()
         if WINDOWS:
             wait_for_pid(p.pid)
         self.assertFalse(p.is_running())
