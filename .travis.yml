@@ -22,6 +22,6 @@ script:
     - pep8
 os:
     - linux
-    - osx  # currently not supported by travis
+    - osx
 after_success:
   - coveralls  # upload reports to coveralls.io
