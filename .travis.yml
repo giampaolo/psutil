@@ -1,4 +1,7 @@
 language: python
+os:
+    - osx
+    - linux
 sudo: false
 python:
     - 2.6
@@ -8,20 +11,19 @@ python:
     - 3.4
     # - pypy
 install:
+    - echo $TRAVIS_OS_NAME
     - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install -U ipaddress unittest2 mock==1.0.1; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then pip install -U ipaddress mock; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install -U ipaddress mock; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '3.3' ]]; then pip install -U ipaddress; fi
     - pip install coverage coveralls flake8 pep8
 script:
+    - echo $TRAVIS_OS_NAME
     - python setup.py build
     - python setup.py install
     - coverage run test/test_psutil.py --include="psutil/*" --omit="test/*,*setup*"
     - python test/test_memory_leaks.py
     - flake8
     - pep8
-os:
-    - linux
-    - osx
 after_success:
   - coveralls  # upload reports to coveralls.io
