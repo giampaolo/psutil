@@ -18,7 +18,6 @@ install:
     - if [[ $TRAVIS_PYTHON_VERSION == '3.3' ]]; then pip install -U ipaddress; fi
     - pip install coverage coveralls flake8 pep8
 script:
-    - echo $TRAVIS_OS_NAME
     - python setup.py build
     - python setup.py install
     - coverage run test/test_psutil.py --include="psutil/*" --omit="test/*,*setup*"
