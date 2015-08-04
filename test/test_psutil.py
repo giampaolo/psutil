@@ -72,7 +72,7 @@ else:
 # conf for retry_before_failing() decorator
 NO_RETRIES = 10
 # bytes tolerance for OS memory related tests
-TOLERANCE = 500 * 1024  # 500KB
+MEMORY_TOLERANCE = 500 * 1024  # 500KB
 # the timeout used in functions which have to wait
 GLOBAL_TIMEOUT = 3
 

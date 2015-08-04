@@ -15,7 +15,7 @@ import time
 import psutil
 
 from psutil._compat import PY3
-from test_psutil import (TOLERANCE, OSX, sh, get_test_subprocess,
+from test_psutil import (MEMORY_TOLERANCE, OSX, sh, get_test_subprocess,
                          reap_children, retry_before_failing, unittest)
 
 
@@ -107,25 +107,25 @@ class OSXSpecificTestCase(unittest.TestCase):
     def test_vmem_free(self):
         num = vm_stat("free")
         self.assertAlmostEqual(psutil.virtual_memory().free, num,
-                               delta=TOLERANCE)
+                               delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_active(self):
         num = vm_stat("active")
         self.assertAlmostEqual(psutil.virtual_memory().active, num,
-                               delta=TOLERANCE)
+                               delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_inactive(self):
         num = vm_stat("inactive")
         self.assertAlmostEqual(psutil.virtual_memory().inactive, num,
-                               delta=TOLERANCE)
+                               delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_wired(self):
         num = vm_stat("wired")
         self.assertAlmostEqual(psutil.virtual_memory().wired, num,
-                               delta=TOLERANCE)
+                               delta=MEMORY_TOLERANCE)
 
     # --- swap mem
 
