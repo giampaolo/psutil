@@ -1646,11 +1646,15 @@ class TestProcess(unittest.TestCase):
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
         # funky_path = os.path.join(tempfile.gettempdir(), "foo bar )")
+        if OSX:
+            tmpdir = "/private/tmp"
+        else:
+            tmpdir = "/tmp"
         fd, funky_path = tempfile.mkstemp(
-            prefix='psutil-', suffix='foo bar )', dir="/tmp")
+            prefix='psutil-', suffix='foo bar )', dir=tmpdir)
         os.close(fd)
         fd, c_file = tempfile.mkstemp(
-            prefix='psutil-', suffix='.c', dir="/tmp")
+            prefix='psutil-', suffix='.c', dir=tmpdir)
         os.close(fd)
         self.addCleanup(safe_remove, c_file)
         self.addCleanup(safe_remove, funky_path)
