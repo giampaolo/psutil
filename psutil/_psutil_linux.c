@@ -518,7 +518,7 @@ psutil_net_if_stats(PyObject* self, PyObject* args)
     // duplex and speed
     memset(&ethcmd, 0, sizeof ethcmd);
     ethcmd.cmd = ETHTOOL_GSET;
-    ifr.ifr_data = (caddr_t)&ethcmd;
+    ifr.ifr_data = (void *)&ethcmd;
     ret = ioctl(sock, SIOCETHTOOL, &ifr);
 
     if (ret != -1) {
