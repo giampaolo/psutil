@@ -3,6 +3,10 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 3.1.2 - XXXX-XX-XX
 ==================
 
+**Enhancements**
+
+- #648: CI test integration for OSX. (patch by Jeff Tang)
+
 **Bug fixes**
 
 - #659: [Linux] compilation error on Suse 10.

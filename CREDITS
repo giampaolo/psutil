@@ -29,6 +29,10 @@ E: jloden@gmail.com
 D: original co-author, initial design/bootstrap and occasional bug fixes
 W: http://www.jayloden.com
 
+N: Jeff Tang
+W: https://github.com/mrjefftang
+I: 340, 529, 616, 653, 654, 648
+
 N: Jeremy Whitlock
 E: jcscoobyrs@gmail.com
 D: great help with OSX C development.
@@ -252,10 +256,6 @@ I: 446
 N: msabramo
 E: msabramo@gmail.com
 I: 492
-
-N: Jeff Tang
-W: https://github.com/mrjefftang
-I: 340, 529, 616, 653, 654
 
 N: Yaolong Huang
 E: airekans@gmail.com

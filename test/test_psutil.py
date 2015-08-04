@@ -440,7 +440,9 @@ def retry_before_failing(ntimes=None):
     def decorator(fun):
         @functools.wraps(fun)
         def wrapper(*args, **kwargs):
-            for x in range(ntimes or NO_RETRIES):
+            times = ntimes or NO_RETRIES
+            assert times, times
+            for x in range(times):
                 try:
                     return fun(*args, **kwargs)
                 except AssertionError:
@@ -1641,20 +1643,20 @@ class TestProcess(unittest.TestCase):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
-        funky_name = "/tmp/foo bar )"
+        funky_path = os.path.join(tempfile.gettempdir(), "foo bar )")
         _, c_file = tempfile.mkstemp(prefix='psutil-', suffix='.c', dir="/tmp")
-        self.addCleanup(lambda: safe_remove(c_file))
-        self.addCleanup(lambda: safe_remove(funky_name))
+        self.addCleanup(safe_remove, c_file)
+        self.addCleanup(safe_remove, funky_path)
         with open(c_file, "w") as f:
             f.write("void main() { pause(); }")
-        subprocess.check_call(["gcc", c_file, "-o", funky_name])
+        subprocess.check_call(["gcc", c_file, "-o", funky_path])
         sproc = get_test_subprocess(
-            [funky_name, "arg1", "arg2", "", "arg3", ""])
+            [funky_path, "arg1", "arg2", "", "arg3", ""])
         p = psutil.Process(sproc.pid)
         # ...in order to try to prevent occasional failures on travis
         wait_for_pid(p.pid)
-        self.assertEqual(p.name(), "foo bar )")
-        self.assertEqual(p.exe(), "/tmp/foo bar )")
+        self.assertEqual(p.name(), os.path.basename(funky_path))
+        self.assertEqual(p.exe(), funky_path)
         self.assertEqual(
             p.cmdline(), ["/tmp/foo bar )", "arg1", "arg2", "", "arg3", ""])
 

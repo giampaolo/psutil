@@ -138,15 +138,15 @@ class OSXSpecificTestCase(unittest.TestCase):
         self.assertEqual(psutil.swap_memory().sout, num)
 
     def test_swapmem_total(self):
-        tot1 = psutil.swap_memory().total
-        tot2 = 0
+        psutil_total = psutil.swap_memory().total
+        sys_total = 0
         # OSX uses multiple cache files:
         # http://en.wikipedia.org/wiki/Paging#OS_X
         for name in os.listdir("/var/vm/"):
             file = os.path.join("/var/vm", name)
             if os.path.isfile(file):
-                tot2 += os.path.getsize(file)
-        self.assertEqual(tot1, tot2)
+                sys_total += os.path.getsize(file)
+        self.assertEqual(psutil_total, sys_total)
 
 
 def main():

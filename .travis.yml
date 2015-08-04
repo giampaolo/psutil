@@ -1,7 +1,5 @@
 sudo: false
-
 language: python
-
 matrix:
     include:
         - python: 2.6
@@ -24,10 +22,9 @@ matrix:
         - language: generic
           os: osx
           env: PYVER=py34
-
 install:
-    -  ./.travis/install.sh
+    - ./.ci/travis/install.sh
 script:
-    - ./.travis/run.sh
+    - ./.ci/travis/run.sh
 after_success:
   - coveralls  # upload reports to coveralls.io

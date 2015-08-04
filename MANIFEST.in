@@ -2,6 +2,7 @@ include .coveragerc
 include .git-pre-commit
 include .gitignore
 include .travis.yml
+include appveyor.yml
 include CREDITS
 include HISTORY.rst
 include INSTALL.rst
@@ -14,7 +15,7 @@ include setup.py
 include TODO
 include tox.ini
 recursive-exclude docs/_build *
-recursive-include .appveyor/*
+recursive-include .ci/*
 recursive-include docs *
 recursive-include examples *.py
 recursive-include psutil *.py *.c *.h

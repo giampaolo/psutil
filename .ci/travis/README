@@ -1,0 +1,2 @@
+This directory contains support files for Travis, a continuous integration
+service which runs tests on Linux and Windows on every push.
