@@ -967,6 +967,8 @@ class TestSystemAPIs(unittest.TestCase):
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
+                    if TRAVIS and OSX and err.errno == errno.EIO:
+                        continue
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
                     if err.errno not in (errno.EPERM, errno.EACCES):
@@ -1643,8 +1645,13 @@ class TestProcess(unittest.TestCase):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
-        funky_path = os.path.join(tempfile.gettempdir(), "foo bar )")
-        _, c_file = tempfile.mkstemp(prefix='psutil-', suffix='.c', dir="/tmp")
+        # funky_path = os.path.join(tempfile.gettempdir(), "foo bar )")
+        fd, funky_path = tempfile.mkstemp(
+            prefix='psutil-', suffix='foo bar )', dir="/tmp")
+        os.close(fd)
+        fd, c_file = tempfile.mkstemp(
+            prefix='psutil-', suffix='.c', dir="/tmp")
+        os.close(fd)
         self.addCleanup(safe_remove, c_file)
         self.addCleanup(safe_remove, funky_path)
         with open(c_file, "w") as f:
@@ -1658,7 +1665,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(p.name(), os.path.basename(funky_path))
         self.assertEqual(p.exe(), funky_path)
         self.assertEqual(
-            p.cmdline(), ["/tmp/foo bar )", "arg1", "arg2", "", "arg3", ""])
+            p.cmdline(), [funky_path, "arg1", "arg2", "", "arg3", ""])
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_uids(self):
