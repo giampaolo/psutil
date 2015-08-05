@@ -6,6 +6,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 **Enhancements**
 
 - #648: CI test integration for OSX. (patch by Jeff Tang)
+- #663: net_if_addrs() now returns point-to-point addresses (for VPNs).
 
 **Bug fixes**
 
