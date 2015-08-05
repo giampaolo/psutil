@@ -71,6 +71,8 @@ def main():
                 print("             broadcast : %s" % addr.broadcast)
             if addr.netmask:
                 print("             netmask   : %s" % addr.netmask)
+            if addr.ptp:
+                print("             p2p       : %s" % addr.ptp)
         print("")
 
 

@@ -17,6 +17,7 @@
 #ifdef __linux
 #include <netdb.h>
 #include <linux/if_packet.h>
+#include <linux/if.h>
 #endif  // end linux
 
 #if defined(__FreeBSD__) || defined(__APPLE__)
@@ -163,6 +164,7 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
     PyObject *py_address = NULL;
     PyObject *py_netmask = NULL;
     PyObject *py_broadcast = NULL;
+    PyObject *py_ptp = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -185,20 +187,41 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
         py_netmask = psutil_convert_ipaddr(ifa->ifa_netmask, family);
         if (py_netmask == NULL)
             goto error;
+
 #ifdef __linux
-        py_broadcast = psutil_convert_ipaddr(ifa->ifa_ifu.ifu_broadaddr, family);
+        if (ifa->ifa_flags & IFF_BROADCAST) {
+            py_broadcast = psutil_convert_ipaddr(ifa->ifa_broadaddr, family);
+            Py_INCREF(Py_None);
+            py_ptp = Py_None;
+        }
+        else if (ifa->ifa_flags & IFF_POINTOPOINT) {
+            py_ptp = psutil_convert_ipaddr(ifa->ifa_dstaddr, family);
+            Py_INCREF(Py_None);
+            py_broadcast = Py_None;
+        }
+        else {
+            Py_INCREF(Py_None);
+            Py_INCREF(Py_None);
+            py_broadcast = Py_None;
+            py_ptp = Py_None;
+        }
 #else
+        // TODO
         py_broadcast = psutil_convert_ipaddr(ifa->ifa_broadaddr, family);
+        Py_INCREF(Py_None);
+        py_ptp = Py_None;
 #endif
-        if (py_broadcast == NULL)
+
+        if ((py_broadcast == NULL) || (py_ptp == NULL))
             goto error;
         py_tuple = Py_BuildValue(
-            "(siOOO)",
+            "(siOOOO)",
             ifa->ifa_name,
             family,
             py_address,
             py_netmask,
-            py_broadcast
+            py_broadcast,
+            py_ptp
         );
 
         if (! py_tuple)
@@ -209,6 +232,7 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
         Py_DECREF(py_address);
         Py_DECREF(py_netmask);
         Py_DECREF(py_broadcast);
+        Py_DECREF(py_ptp);
     }
 
     freeifaddrs(ifaddr);
@@ -222,6 +246,7 @@ error:
     Py_XDECREF(py_address);
     Py_XDECREF(py_netmask);
     Py_XDECREF(py_broadcast);
+    Py_XDECREF(py_ptp);
     return NULL;
 }
 

@@ -215,7 +215,7 @@ suser = namedtuple('suser', ['name', 'terminal', 'host', 'started'])
 sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
                              'status', 'pid'])
 # psutil.net_if_addrs()
-snic = namedtuple('snic', ['family', 'address', 'netmask', 'broadcast'])
+snic = namedtuple('snic', ['family', 'address', 'netmask', 'broadcast', 'ptp'])
 # psutil.net_if_stats()
 snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
 

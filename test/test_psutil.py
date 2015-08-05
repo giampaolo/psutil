@@ -1069,13 +1069,19 @@ class TestSystemAPIs(unittest.TestCase):
                     s = socket.socket(af, socktype, proto)
                     with contextlib.closing(s):
                         s.bind(sa)
-                for ip in (addr.address, addr.netmask, addr.broadcast):
+                for ip in (addr.address, addr.netmask, addr.broadcast,
+                           addr.ptp):
                     if ip is not None:
                         # TODO: skip AF_INET6 for now because I get:
                         # AddressValueError: Only hex digits permitted in
                         # u'c6f3%lxcbr0' in u'fe80::c8e0:fff:fe54:c6f3%lxcbr0'
                         if addr.family != AF_INET6:
                             check_ip_address(ip, addr.family)
+                # broadcast and ptp addresses are mutually exclusive
+                if addr.broadcast:
+                    self.assertIsNone(addr.ptp)
+                elif addr.ptp:
+                    self.assertIsNone(addr.broadcast)
 
         if BSD or OSX or SUNOS:
             if hasattr(socket, "AF_LINK"):
