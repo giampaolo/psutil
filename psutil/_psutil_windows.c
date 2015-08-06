@@ -864,8 +864,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
                                        hNtDll, "NtQuerySystemInformation");
 
-        if (NtQuerySystemInformation != NULL)
-        {
+        if (NtQuerySystemInformation != NULL) {
             // retrives number of processors
             GetSystemInfo(&si);
 
@@ -874,8 +873,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
             sppi = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
                    malloc(si.dwNumberOfProcessors * \
                           sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
-            if (sppi != NULL)
-            {
+            if (sppi != NULL) {
                 // gets cpu time informations
                 if (0 == NtQuerySystemInformation(
                             SystemProcessorPerformanceInformation,
@@ -1667,8 +1665,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                         addressBufferLocal,
                         BYTESWAP_USHORT(tcp6Table->table[i].dwLocalPort));
                 }
-                else
-                {
+                else {
                     addressTupleLocal = PyTuple_New(0);
                 }
 
@@ -1691,8 +1688,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                         addressBufferRemote,
                         BYTESWAP_USHORT(tcp6Table->table[i].dwRemotePort));
                 }
-                else
-                {
+                else {
                     addressTupleRemote = PyTuple_New(0);
                 }
 
@@ -1814,8 +1810,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         {
             udp6Table = table;
 
-            for (i = 0; i < udp6Table->dwNumEntries; i++)
-            {
+            for (i = 0; i < udp6Table->dwNumEntries; i++) {
                 if (pid != -1) {
                     if (udp6Table->table[i].dwOwningPid != pid) {
                         continue;
@@ -1949,9 +1944,8 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid);
-    if (hProcess == NULL) {
+    if (hProcess == NULL)
         return NULL;
-    }
 
     NtQueryInformationProcess(
         hProcess,
@@ -1984,13 +1978,11 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    if (! PyArg_ParseTuple(args, "li", &pid, &prio)) {
+    if (! PyArg_ParseTuple(args, "li", &pid, &prio))
         return NULL;
-    }
     hProcess = psutil_handle_from_pid_waccess(pid, PROCESS_ALL_ACCESS);
-    if (hProcess == NULL) {
+    if (hProcess == NULL)
         return NULL;
-    }
 
     NtSetInformationProcess(
         hProcess,
@@ -2017,9 +2009,8 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid);
-    if (NULL == hProcess) {
+    if (NULL == hProcess)
         return NULL;
-    }
     if (! GetProcessIoCounters(hProcess, &IoCounters)) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
@@ -2083,9 +2074,8 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
         return NULL;
     }
     hProcess = psutil_handle_from_pid_waccess(pid, dwDesiredAccess);
-    if (hProcess == NULL) {
+    if (hProcess == NULL)
         return NULL;
-    }
 
     if (SetProcessAffinityMask(hProcess, mask) == 0) {
         CloseHandle(hProcess);
@@ -2258,9 +2248,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     int devNum;
     PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;
-    if (py_retdict == NULL) {
+    if (py_retdict == NULL)
         return NULL;
-    }
 
     // Apparently there's no way to figure out how many times we have
     // to iterate in order to find valid drives.
@@ -2272,9 +2261,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         hDevice = CreateFile(szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
                              NULL, OPEN_EXISTING, 0, NULL);
 
-        if (hDevice == INVALID_HANDLE_VALUE) {
+        if (hDevice == INVALID_HANDLE_VALUE)
             continue;
-        }
         if (DeviceIoControl(hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0,
                             &diskPerformance, sizeof(diskPerformance),
                             &dwSize, NULL))
@@ -2371,9 +2359,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
     // see https://github.com/giampaolo/psutil/issues/264
     SetErrorMode(SEM_FAILCRITICALERRORS);
 
-    if (! PyArg_ParseTuple(args, "O", &py_all)) {
+    if (! PyArg_ParseTuple(args, "O", &py_all))
         goto error;
-    }
     all = PyObject_IsTrue(py_all);
 
     Py_BEGIN_ALLOW_THREADS
@@ -2422,20 +2409,16 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             SetLastError(0);
         }
         else {
-            if (pflags & FILE_READ_ONLY_VOLUME) {
+            if (pflags & FILE_READ_ONLY_VOLUME)
                 strcat_s(opts, _countof(opts), "ro");
-            }
-            else {
+            else
                 strcat_s(opts, _countof(opts), "rw");
-            }
-            if (pflags & FILE_VOLUME_IS_COMPRESSED) {
+            if (pflags & FILE_VOLUME_IS_COMPRESSED)
                 strcat_s(opts, _countof(opts), ",compressed");
-            }
         }
 
-        if (strlen(opts) > 0) {
+        if (strlen(opts) > 0)
             strcat_s(opts, _countof(opts), ",");
-        }
         strcat_s(opts, _countof(opts), psutil_get_drive_type(type));
 
         py_tuple = Py_BuildValue(
@@ -2492,9 +2475,8 @@ psutil_users(PyObject *self, PyObject *args) {
     PyObject *py_address = NULL;
     PyObject *py_buffer_user_encoded = NULL;
 
-    if (py_retlist == NULL) {
+    if (py_retlist == NULL)
         return NULL;
-    }
 
     hInstWinSta = LoadLibraryA("winsta.dll");
     WinStationQueryInformationW = (PWINSTATIONQUERYINFORMATIONW) \
@@ -2515,12 +2497,10 @@ psutil_users(PyObject *self, PyObject *args) {
         py_address = NULL;
         py_tuple = NULL;
         sessionId = sessions[i].SessionId;
-        if (buffer_user != NULL) {
+        if (buffer_user != NULL)
             WTSFreeMemory(buffer_user);
-        }
-        if (buffer_addr != NULL) {
+        if (buffer_addr != NULL)
             WTSFreeMemory(buffer_addr);
-        }
 
         buffer_user = NULL;
         buffer_addr = NULL;
@@ -2532,9 +2512,8 @@ psutil_users(PyObject *self, PyObject *args) {
             PyErr_SetFromWindowsErr(0);
             goto error;
         }
-        if (bytes == 1) {
+        if (bytes == 1)
             continue;
-        }
 
         // address
         bytes = 0;
@@ -2604,21 +2583,16 @@ error:
     Py_XDECREF(py_address);
     Py_DECREF(py_retlist);
 
-    if (hInstWinSta != NULL) {
+    if (hInstWinSta != NULL)
         FreeLibrary(hInstWinSta);
-    }
-    if (hServer != NULL) {
+    if (hServer != NULL)
         WTSCloseServer(hServer);
-    }
-    if (sessions != NULL) {
+    if (sessions != NULL)
         WTSFreeMemory(sessions);
-    }
-    if (buffer_user != NULL) {
+    if (buffer_user != NULL)
         WTSFreeMemory(buffer_user);
-    }
-    if (buffer_addr != NULL) {
+    if (buffer_addr != NULL)
         WTSFreeMemory(buffer_addr);
-    }
     return NULL;
 }
 
@@ -2635,9 +2609,8 @@ psutil_proc_num_handles(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid);
-    if (NULL == hProcess) {
+    if (NULL == hProcess)
         return NULL;
-    }
     if (! GetProcessHandleCount(hProcess, &handleCount)) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
@@ -2762,16 +2735,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     PyObject *py_list = PyList_New(0);
     PyObject *py_tuple = NULL;
 
-    if (py_list == NULL) {
+    if (py_list == NULL)
         return NULL;
-    }
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
-    }
     hProcess = psutil_handle_from_pid(pid);
-    if (NULL == hProcess) {
+    if (NULL == hProcess)
         goto error;
-    }
 
     GetSystemInfo(&system_info);
     maxAddr = system_info.lpMaximumApplicationAddress;
@@ -2782,9 +2752,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                           sizeof(MEMORY_BASIC_INFORMATION)))
     {
         py_tuple = NULL;
-        if (baseAddress > maxAddr) {
+        if (baseAddress > maxAddr)
             break;
-        }
         if (GetMappedFileNameA(hProcess, baseAddress, mappedFileName,
                                sizeof(mappedFileName)))
         {
