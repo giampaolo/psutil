@@ -48,8 +48,7 @@ typedef NTSTATUS (NTAPI *_NtQueryObject)(
 // Undocumented FILE_INFORMATION_CLASS: FileNameInformation
 static const SYSTEM_INFORMATION_CLASS SystemExtendedHandleInformation = (SYSTEM_INFORMATION_CLASS)64;
 
-typedef struct _SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX
-{
+typedef struct _SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX {
     PVOID Object;
     HANDLE UniqueProcessId;
     HANDLE HandleValue;
@@ -60,8 +59,7 @@ typedef struct _SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX
     ULONG Reserved;
 } SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX, *PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX;
 
-typedef struct _SYSTEM_HANDLE_INFORMATION_EX
-{
+typedef struct _SYSTEM_HANDLE_INFORMATION_EX {
     ULONG_PTR NumberOfHandles;
     ULONG_PTR Reserved;
     SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX Handles[1];

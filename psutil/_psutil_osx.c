@@ -48,8 +48,7 @@
  * A wrapper around host_statistics() invoked with HOST_VM_INFO.
  */
 int
-psutil_sys_vminfo(vm_statistics_data_t *vmstat)
-{
+psutil_sys_vminfo(vm_statistics_data_t *vmstat) {
     kern_return_t ret;
     mach_msg_type_number_t count = sizeof(*vmstat) / sizeof(integer_t);
     mach_port_t mport = mach_host_self();
@@ -1618,8 +1617,8 @@ error:
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
-PsutilMethods[] =
-{
+PsutilMethods[] = {
+
     // --- per-process functions
 
     {"proc_name", psutil_proc_name, METH_VARARGS,

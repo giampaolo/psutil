@@ -59,14 +59,12 @@ enum {
 #endif
 
 static inline int
-ioprio_get(int which, int who)
-{
+ioprio_get(int which, int who) {
     return syscall(__NR_ioprio_get, which, who);
 }
 
 static inline int
-ioprio_set(int which, int who, int ioprio)
-{
+ioprio_set(int which, int who, int ioprio) {
     return syscall(__NR_ioprio_set, which, who, ioprio);
 }
 
@@ -469,8 +467,7 @@ error:
  * http://www.i-scream.org/libstatgrab/
  */
 static PyObject*
-psutil_net_if_stats(PyObject* self, PyObject* args)
-{
+psutil_net_if_stats(PyObject* self, PyObject* args) {
     char *nic_name;
     int sock = 0;
     int ret;
@@ -547,8 +544,8 @@ error:
  * Define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
-PsutilMethods[] =
-{
+PsutilMethods[] = {
+
     // --- per-process functions
 
 #if PSUTIL_HAVE_IOPRIO

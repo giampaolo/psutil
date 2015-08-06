@@ -69,8 +69,7 @@
  * Utility function which fills a kinfo_proc struct based on process pid
  */
 static int
-psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
-{
+psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
     int mib[4];
     size_t size;
     mib[0] = CTL_KERN;
@@ -843,8 +842,7 @@ error:
 
 // The tcplist fetching and walking is borrowed from netstat/inet.c.
 static char *
-psutil_fetch_tcplist(void)
-{
+psutil_fetch_tcplist(void) {
     char *buf;
     size_t len;
 
@@ -868,8 +866,7 @@ psutil_fetch_tcplist(void)
 }
 
 static int
-psutil_sockaddr_port(int family, struct sockaddr_storage *ss)
-{
+psutil_sockaddr_port(int family, struct sockaddr_storage *ss) {
     struct sockaddr_in6 *sin6;
     struct sockaddr_in *sin;
 
@@ -884,8 +881,7 @@ psutil_sockaddr_port(int family, struct sockaddr_storage *ss)
 }
 
 static void *
-psutil_sockaddr_addr(int family, struct sockaddr_storage *ss)
-{
+psutil_sockaddr_addr(int family, struct sockaddr_storage *ss) {
     struct sockaddr_in6 *sin6;
     struct sockaddr_in *sin;
 
@@ -900,8 +896,7 @@ psutil_sockaddr_addr(int family, struct sockaddr_storage *ss)
 }
 
 static socklen_t
-psutil_sockaddr_addrlen(int family)
-{
+psutil_sockaddr_addrlen(int family) {
     if (family == AF_INET)
         return (sizeof(struct in_addr));
     else
@@ -910,8 +905,7 @@ psutil_sockaddr_addrlen(int family)
 
 static int
 psutil_sockaddr_matches(int family, int port, void *pcb_addr,
-                        struct sockaddr_storage *ss)
-{
+                        struct sockaddr_storage *ss) {
     if (psutil_sockaddr_port(family, ss) != port)
         return (0);
     return (memcmp(psutil_sockaddr_addr(family, ss), pcb_addr,
@@ -919,8 +913,7 @@ psutil_sockaddr_matches(int family, int port, void *pcb_addr,
 }
 
 static struct tcpcb *
-psutil_search_tcplist(char *buf, struct kinfo_file *kif)
-{
+psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
     struct tcpcb *tp;
     struct inpcb *inp;
     struct xinpgen *xig, *oxig;
@@ -1671,8 +1664,7 @@ static struct xfile *psutil_xfiles;
 static int psutil_nxfiles;
 
 int
-psutil_populate_xfiles()
-{
+psutil_populate_xfiles() {
     size_t len;
 
     if ((psutil_xfiles = malloc(len = sizeof *psutil_xfiles)) == NULL) {
@@ -1699,8 +1691,7 @@ psutil_populate_xfiles()
 }
 
 int
-psutil_get_pid_from_sock(int sock_hash)
-{
+psutil_get_pid_from_sock(int sock_hash) {
     struct xfile *xf;
     int hash, n;
     for (xf = psutil_xfiles, n = 0; n < psutil_nxfiles; ++n, ++xf) {
@@ -1717,8 +1708,7 @@ psutil_get_pid_from_sock(int sock_hash)
 // Reference:
 // https://gitorious.org/freebsd/freebsd/source/
 //     f1d6f4778d2044502209708bc167c05f9aa48615:usr.bin/sockstat/sockstat.c
-int psutil_gather_inet(int proto, PyObject *py_retlist)
-{
+int psutil_gather_inet(int proto, PyObject *py_retlist) {
     struct xinpgen *xig, *exig;
     struct xinpcb *xip;
     struct xtcpcb *xtp;
@@ -1858,8 +1848,7 @@ error:
 }
 
 
-int psutil_gather_unix(int proto, PyObject *py_retlist)
-{
+int psutil_gather_unix(int proto, PyObject *py_retlist) {
     struct xunpgen *xug, *exug;
     struct xunpcb *xup;
     const char *varname = NULL;
@@ -1961,8 +1950,7 @@ error:
  * Return system-wide open connections.
  */
 static PyObject*
-psutil_net_connections(PyObject* self, PyObject* args)
-{
+psutil_net_connections(PyObject* self, PyObject* args) {
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -1993,8 +1981,7 @@ error:
  * Reference: http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
  */
 static PyObject*
-psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args)
-{
+psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args) {
     long pid;
     int ret;
     int i;
@@ -2092,8 +2079,8 @@ error:
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
-PsutilMethods[] =
-{
+PsutilMethods[] = {
+
     // --- per-process functions
 
     {"proc_name", psutil_proc_name, METH_VARARGS,

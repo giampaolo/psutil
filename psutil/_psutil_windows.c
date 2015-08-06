@@ -1068,8 +1068,7 @@ error:
  * Resume or suspends a process
  */
 int
-psutil_proc_suspend_or_resume(DWORD pid, int suspend)
-{
+psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
     // a huge thanks to http://www.codeproject.com/KB/threads/pausep.aspx
     HANDLE hThreadSnap = NULL;
     THREADENTRY32  te32 = {0};
@@ -2319,8 +2318,7 @@ error:
 }
 
 
-static char *psutil_get_drive_type(int type)
-{
+static char *psutil_get_drive_type(int type) {
     switch (type) {
         case DRIVE_FIXED:
             return "fixed";
@@ -2724,8 +2722,7 @@ psutil_proc_info(PyObject *self, PyObject *args) {
 }
 
 
-static char *get_region_protection_string(ULONG protection)
-{
+static char *get_region_protection_string(ULONG protection) {
     switch (protection & 0xff) {
         case PAGE_NOACCESS:
             return "";
@@ -3135,8 +3132,8 @@ error:
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
-PsutilMethods[] =
-{
+PsutilMethods[] = {
+
     // --- per-process functions
 
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,

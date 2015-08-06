@@ -51,8 +51,7 @@
  * Read a file content and fills a C structure with it.
  */
 int
-psutil_file_to_struct(char *path, void *fstruct, size_t size)
-{
+psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     int fd;
     size_t nbytes;
     fd = open(path, O_RDONLY);
@@ -193,8 +192,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
  *    ...they should be meaningless anyway.
  *
 static PyObject*
-proc_io_counters(PyObject* self, PyObject* args)
-{
+proc_io_counters(PyObject* self, PyObject* args) {
     int pid;
     char path[100];
     prusage_t info;
@@ -1134,8 +1132,7 @@ error:
  * http://www.i-scream.org/libstatgrab/
  */
 static PyObject*
-psutil_net_if_stats(PyObject* self, PyObject* args)
-{
+psutil_net_if_stats(PyObject* self, PyObject* args) {
     kstat_ctl_t *kc = NULL;
     kstat_t *ksp;
     kstat_named_t *knp;
@@ -1241,8 +1238,8 @@ error:
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
-PsutilMethods[] =
-{
+PsutilMethods[] = {
+
     // --- process-related functions
     {"proc_basic_info", psutil_proc_basic_info, METH_VARARGS,
      "Return process ppid, rss, vms, ctime, nice, nthreads, status and tty"},
@@ -1281,7 +1278,7 @@ PsutilMethods[] =
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
      "Return NIC stats (isup, duplex, speed, mtu)"},
 
-{NULL, NULL, 0, NULL}
+    {NULL, NULL, 0, NULL}
 };
 
 

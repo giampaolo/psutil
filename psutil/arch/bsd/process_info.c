@@ -33,8 +33,7 @@
  * On error, the function returns a BSD errno value.
  */
 int
-psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount)
-{
+psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     int err;
     struct kinfo_proc *result;
     int done;
@@ -113,8 +112,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 
 
 char
-*psutil_get_cmd_path(long pid, size_t *pathsize)
-{
+*psutil_get_cmd_path(long pid, size_t *pathsize) {
     int mib[4];
     char *path;
     size_t size = 0;
@@ -161,8 +159,7 @@ char
  *      1 for insufficient privileges.
  */
 char
-*psutil_get_cmd_args(long pid, size_t *argsize)
-{
+*psutil_get_cmd_args(long pid, size_t *argsize) {
     int mib[4], argmax;
     size_t size = sizeof(argmax);
     char *procargs = NULL;
@@ -204,8 +201,7 @@ char
 
 // returns the command line as a python list object
 PyObject *
-psutil_get_arg_list(long pid)
-{
+psutil_get_arg_list(long pid) {
     char *argstr = NULL;
     int pos = 0;
     size_t argsize = 0;
@@ -249,8 +245,7 @@ error:
  * Return 1 if PID exists in the current process list, else 0.
  */
 int
-psutil_pid_exists(long pid)
-{
+psutil_pid_exists(long pid) {
     int kill_ret;
 
     if (pid < 0)

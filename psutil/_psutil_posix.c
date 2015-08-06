@@ -74,8 +74,7 @@ psutil_posix_setpriority(PyObject *self, PyObject *args) {
  * Return None if address family is not AF_INET* or AF_PACKET.
  */
 static PyObject *
-psutil_convert_ipaddr(struct sockaddr *addr, int family)
-{
+psutil_convert_ipaddr(struct sockaddr *addr, int family) {
     char buf[NI_MAXHOST];
     int err;
     int addrlen;
@@ -152,8 +151,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family)
  * TODO: on Solaris we won't get any MAC address.
  */
 static PyObject*
-psutil_net_if_addrs(PyObject* self, PyObject* args)
-{
+psutil_net_if_addrs(PyObject* self, PyObject* args) {
     struct ifaddrs *ifaddr, *ifa;
     int family;
 
@@ -467,8 +465,7 @@ error:
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
-PsutilMethods[] =
-{
+PsutilMethods[] = {
     {"getpriority", psutil_posix_getpriority, METH_VARARGS,
      "Return process priority"},
     {"setpriority", psutil_posix_setpriority, METH_VARARGS,

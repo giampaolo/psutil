@@ -27,8 +27,7 @@
  * Return 1 if PID exists in the current process list, else 0.
  */
 int
-psutil_pid_exists(long pid)
-{
+psutil_pid_exists(long pid) {
     int kill_ret;
 
     // save some time if it's an invalid PID
@@ -53,8 +52,7 @@ psutil_pid_exists(long pid)
  * On error, the function returns a BSD errno value.
  */
 int
-psutil_get_proc_list(kinfo_proc **procList, size_t *procCount)
-{
+psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     // Declaring mib as const requires use of a cast since the
     // sysctl prototype doesn't include the const modifier.
     static const int mib3[3] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
@@ -116,8 +114,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount)
 
 // Read the maximum argument size for processes
 int
-psutil_get_argmax()
-{
+psutil_get_argmax() {
     int argmax;
     int mib[] = { CTL_KERN, KERN_ARGMAX };
     size_t size = sizeof(argmax);
@@ -130,8 +127,7 @@ psutil_get_argmax()
 
 // return process args as a python list
 PyObject *
-psutil_get_arg_list(long pid)
-{
+psutil_get_arg_list(long pid) {
     int mib[3];
     int nargs;
     int len;
@@ -226,8 +222,7 @@ error:
 
 
 int
-psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp)
-{
+psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
     int mib[4];
     size_t len;
     mib[0] = CTL_KERN;
@@ -258,8 +253,7 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp)
  * A thin wrapper around proc_pidinfo()
  */
 int
-psutil_proc_pidinfo(long pid, int flavor, void *pti, int size)
-{
+psutil_proc_pidinfo(long pid, int flavor, void *pti, int size) {
     int ret = proc_pidinfo((int)pid, flavor, 0, pti, size);
     if (ret == 0) {
         if (! psutil_pid_exists(pid)) {

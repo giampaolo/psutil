@@ -3,13 +3,10 @@
 // From: https://memset.wordpress.com/2010/10/09/inet_ntop-for-win32/
 PCSTR
 WSAAPI
-inet_ntop(
-    __in                                INT             Family,
-    __in                                PVOID           pAddr,
-    __out_ecount(StringBufSize)         PSTR            pStringBuf,
-    __in                                size_t          StringBufSize
-    )
-{
+inet_ntop(__in INT Family,
+          __in PVOID pAddr,
+          __out_ecount(StringBufSize) PSTR pStringBuf,
+          __in size_t StringBufSize) {
     DWORD dwAddressLength = 0;
     struct sockaddr_storage srcaddr;
     struct sockaddr_in *srcaddr4 = (struct sockaddr_in*) &srcaddr;
@@ -31,9 +28,9 @@ inet_ntop(
     }
 
     if (WSAAddressToString((LPSOCKADDR) &srcaddr,
-                           dwAddressLength,                           
-                           0, 
-                           pStringBuf, 
+                           dwAddressLength,
+                           0,
+                           pStringBuf,
                            (LPDWORD) &StringBufSize) != 0) {
         return NULL;
     }
