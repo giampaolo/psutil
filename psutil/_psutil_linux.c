@@ -82,8 +82,7 @@ ioprio_set(int which, int who, int ioprio)
  * Return a (ioclass, iodata) Python tuple representing process I/O priority.
  */
 static PyObject *
-psutil_proc_ioprio_get(PyObject *self, PyObject *args)
-{
+psutil_proc_ioprio_get(PyObject *self, PyObject *args) {
     long pid;
     int ioprio, ioclass, iodata;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -103,8 +102,7 @@ psutil_proc_ioprio_get(PyObject *self, PyObject *args)
  * or 0. iodata goes from 0 to 7 depending on ioclass specified.
  */
 static PyObject *
-psutil_proc_ioprio_set(PyObject *self, PyObject *args)
-{
+psutil_proc_ioprio_set(PyObject *self, PyObject *args) {
     long pid;
     int ioprio, ioclass, iodata;
     int retval;
@@ -127,8 +125,7 @@ psutil_proc_ioprio_set(PyObject *self, PyObject *args)
  * 'soft' and 'hard' args must be provided.
  */
 static PyObject *
-psutil_linux_prlimit(PyObject *self, PyObject *args)
-{
+psutil_linux_prlimit(PyObject *self, PyObject *args) {
     long pid;
     int ret, resource;
     struct rlimit old, new;
@@ -186,8 +183,7 @@ psutil_linux_prlimit(PyObject *self, PyObject *args)
  * mount point and filesystem type
  */
 static PyObject *
-psutil_disk_partitions(PyObject *self, PyObject *args)
-{
+psutil_disk_partitions(PyObject *self, PyObject *args) {
     FILE *file = NULL;
     struct mntent *entry;
     PyObject *py_retlist = PyList_New(0);
@@ -237,8 +233,7 @@ error:
  * A wrapper around sysinfo(), return system memory usage statistics.
  */
 static PyObject *
-psutil_linux_sysinfo(PyObject *self, PyObject *args)
-{
+psutil_linux_sysinfo(PyObject *self, PyObject *args) {
     struct sysinfo info;
 
     if (sysinfo(&info) != 0)
@@ -264,8 +259,7 @@ psutil_linux_sysinfo(PyObject *self, PyObject *args)
 #ifdef CPU_ALLOC
 
 static PyObject *
-psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
-{
+psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     int cpu, ncpus, count, cpucount_s;
     long pid;
     size_t setsize;
@@ -331,8 +325,7 @@ error:
  * Alternative implementation in case CPU_ALLOC is not defined.
  */
 static PyObject *
-psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
-{
+psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     cpu_set_t cpuset;
     unsigned int len = sizeof(cpu_set_t);
     long pid;
@@ -373,8 +366,7 @@ error:
  * Set process CPU affinity; expects a bitmask
  */
 static PyObject *
-psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
-{
+psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     cpu_set_t cpu_set;
     size_t len;
     long pid;
@@ -428,8 +420,7 @@ error:
  * Return currently connected users as a list of tuples.
  */
 static PyObject *
-psutil_users(PyObject *self, PyObject *args)
-{
+psutil_users(PyObject *self, PyObject *args) {
     PyObject *ret_list = PyList_New(0);
     PyObject *tuple = NULL;
     PyObject *user_proc = NULL;

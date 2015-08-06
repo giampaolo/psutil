@@ -69,8 +69,7 @@ psutil_sys_vminfo(vm_statistics_data_t *vmstat)
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject *
-psutil_pids(PyObject *self, PyObject *args)
-{
+psutil_pids(PyObject *self, PyObject *args) {
     kinfo_proc *proclist = NULL;
     kinfo_proc *orig_address = NULL;
     size_t num_processes;
@@ -116,8 +115,7 @@ error:
  * Return process name from kinfo_proc as a Python string.
  */
 static PyObject *
-psutil_proc_name(PyObject *self, PyObject *args)
-{
+psutil_proc_name(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -132,8 +130,7 @@ psutil_proc_name(PyObject *self, PyObject *args)
  * Return process current working directory.
  */
 static PyObject *
-psutil_proc_cwd(PyObject *self, PyObject *args)
-{
+psutil_proc_cwd(PyObject *self, PyObject *args) {
     long pid;
     struct proc_vnodepathinfo pathinfo;
 
@@ -153,8 +150,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args)
  * Return path of the process executable.
  */
 static PyObject *
-psutil_proc_exe(PyObject *self, PyObject *args)
-{
+psutil_proc_exe(PyObject *self, PyObject *args) {
     long pid;
     char buf[PATH_MAX];
     int ret;
@@ -176,8 +172,7 @@ psutil_proc_exe(PyObject *self, PyObject *args)
  * Return process cmdline as a Python list of cmdline arguments.
  */
 static PyObject *
-psutil_proc_cmdline(PyObject *self, PyObject *args)
-{
+psutil_proc_cmdline(PyObject *self, PyObject *args) {
     long pid;
     PyObject *arglist = NULL;
 
@@ -194,8 +189,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args)
  * Return process parent pid from kinfo_proc as a Python integer.
  */
 static PyObject *
-psutil_proc_ppid(PyObject *self, PyObject *args)
-{
+psutil_proc_ppid(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -210,8 +204,7 @@ psutil_proc_ppid(PyObject *self, PyObject *args)
  * Return process real uid from kinfo_proc as a Python integer.
  */
 static PyObject *
-psutil_proc_uids(PyObject *self, PyObject *args)
-{
+psutil_proc_uids(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -229,8 +222,7 @@ psutil_proc_uids(PyObject *self, PyObject *args)
  * Return process real group id from ki_comm as a Python integer.
  */
 static PyObject *
-psutil_proc_gids(PyObject *self, PyObject *args)
-{
+psutil_proc_gids(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -248,8 +240,7 @@ psutil_proc_gids(PyObject *self, PyObject *args)
  * Return process controlling terminal number as an integer.
  */
 static PyObject *
-psutil_proc_tty_nr(PyObject *self, PyObject *args)
-{
+psutil_proc_tty_nr(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -265,8 +256,7 @@ psutil_proc_tty_nr(PyObject *self, PyObject *args)
  * 'procstat' cmdline utility has been used as an example.
  */
 static PyObject *
-psutil_proc_memory_maps(PyObject *self, PyObject *args)
-{
+psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     char buf[PATH_MAX];
     char addr_str[34];
     char perms[8];
@@ -406,8 +396,7 @@ error:
  * XXX this could be shared with BSD.
  */
 static PyObject *
-psutil_cpu_count_logical(PyObject *self, PyObject *args)
-{
+psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     int mib[2];
     int ncpu;
     size_t len;
@@ -426,8 +415,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args)
  * Return the number of physical CPUs in the system.
  */
 static PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args)
-{
+psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     int num;
     size_t size = sizeof(int);
 
@@ -444,8 +432,7 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args)
  * Return a Python tuple (user_time, kernel_time)
  */
 static PyObject *
-psutil_proc_cpu_times(PyObject *self, PyObject *args)
-{
+psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     long pid;
     struct proc_taskinfo pti;
 
@@ -464,8 +451,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args)
  * seconds since the epoch.
  */
 static PyObject *
-psutil_proc_create_time(PyObject *self, PyObject *args)
-{
+psutil_proc_create_time(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -480,8 +466,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args)
  * Return extended memory info about a process.
  */
 static PyObject *
-psutil_proc_memory_info(PyObject *self, PyObject *args)
-{
+psutil_proc_memory_info(PyObject *self, PyObject *args) {
     long pid;
     struct proc_taskinfo pti;
 
@@ -508,8 +493,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args)
  * Return number of threads used by process as a Python integer.
  */
 static PyObject *
-psutil_proc_num_threads(PyObject *self, PyObject *args)
-{
+psutil_proc_num_threads(PyObject *self, PyObject *args) {
     long pid;
     struct proc_taskinfo pti;
 
@@ -525,8 +509,7 @@ psutil_proc_num_threads(PyObject *self, PyObject *args)
  * Return the number of context switches performed by process.
  */
 static PyObject *
-psutil_proc_num_ctx_switches(PyObject *self, PyObject *args)
-{
+psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     long pid;
     struct proc_taskinfo pti;
 
@@ -545,8 +528,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args)
  * Return system virtual memory stats
  */
 static PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args)
-{
+psutil_virtual_mem(PyObject *self, PyObject *args) {
 
     int      mib[2];
     uint64_t total;
@@ -584,8 +566,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args)
  * Return stats about swap memory.
  */
 static PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args)
-{
+psutil_swap_mem(PyObject *self, PyObject *args) {
     int mib[2];
     size_t size;
     struct xsw_usage totals;
@@ -619,8 +600,7 @@ psutil_swap_mem(PyObject *self, PyObject *args)
  * Return a Python tuple representing user, kernel and idle CPU times
  */
 static PyObject *
-psutil_cpu_times(PyObject *self, PyObject *args)
-{
+psutil_cpu_times(PyObject *self, PyObject *args) {
     mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
     kern_return_t error;
     host_cpu_load_info_data_t r_load;
@@ -648,8 +628,7 @@ psutil_cpu_times(PyObject *self, PyObject *args)
  * Return a Python list of tuple representing per-cpu times
  */
 static PyObject *
-psutil_per_cpu_times(PyObject *self, PyObject *args)
-{
+psutil_per_cpu_times(PyObject *self, PyObject *args) {
     natural_t cpu_count;
     processor_info_array_t info_array;
     mach_msg_type_number_t info_count;
@@ -713,8 +692,7 @@ error:
  * seconds since the epoch.
  */
 static PyObject *
-psutil_boot_time(PyObject *self, PyObject *args)
-{
+psutil_boot_time(PyObject *self, PyObject *args) {
     // fetch sysctl "kern.boottime"
     static int request[2] = { CTL_KERN, KERN_BOOTTIME };
     struct timeval result;
@@ -735,8 +713,7 @@ psutil_boot_time(PyObject *self, PyObject *args)
  * for all partitions mounted on the system.
  */
 static PyObject *
-psutil_disk_partitions(PyObject *self, PyObject *args)
-{
+psutil_disk_partitions(PyObject *self, PyObject *args) {
     int num;
     int i;
     long len;
@@ -857,8 +834,7 @@ error:
  * Return process status as a Python integer.
  */
 static PyObject *
-psutil_proc_status(PyObject *self, PyObject *args)
-{
+psutil_proc_status(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -873,8 +849,7 @@ psutil_proc_status(PyObject *self, PyObject *args)
  * Return process threads
  */
 static PyObject *
-psutil_proc_threads(PyObject *self, PyObject *args)
-{
+psutil_proc_threads(PyObject *self, PyObject *args) {
     long pid;
     int err, j, ret;
     kern_return_t kr;
@@ -984,8 +959,7 @@ error:
  * - /usr/include/sys/proc_info.h
  */
 static PyObject *
-psutil_proc_open_files(PyObject *self, PyObject *args)
-{
+psutil_proc_open_files(PyObject *self, PyObject *args) {
     long pid;
     int pidinfo_result;
     int iterations;
@@ -1101,8 +1075,7 @@ static int PSUTIL_CONN_NONE = 128;
  * - /usr/include/sys/proc_info.h
  */
 static PyObject *
-psutil_proc_connections(PyObject *self, PyObject *args)
-{
+psutil_proc_connections(PyObject *self, PyObject *args) {
     long pid;
     int pidinfo_result;
     int iterations;
@@ -1309,8 +1282,7 @@ error:
  * Return number of file descriptors opened by process.
  */
 static PyObject *
-psutil_proc_num_fds(PyObject *self, PyObject *args)
-{
+psutil_proc_num_fds(PyObject *self, PyObject *args) {
     long pid;
     int pidinfo_result;
     int num;
@@ -1343,8 +1315,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args)
  * Return a Python list of named tuples with overall network I/O information
  */
 static PyObject *
-psutil_net_io_counters(PyObject *self, PyObject *args)
-{
+psutil_net_io_counters(PyObject *self, PyObject *args) {
     char *buf = NULL, *lim, *next;
     struct if_msghdr *ifm;
     int mib[6];
@@ -1431,8 +1402,7 @@ error:
  * Return a Python dict of tuples for disk I/O information
  */
 static PyObject *
-psutil_disk_io_counters(PyObject *self, PyObject *args)
-{
+psutil_disk_io_counters(PyObject *self, PyObject *args) {
     CFDictionaryRef parent_dict;
     CFDictionaryRef props_dict;
     CFDictionaryRef stats_dict;
@@ -1606,8 +1576,7 @@ error:
  * Return currently connected users as a list of tuples.
  */
 static PyObject *
-psutil_users(PyObject *self, PyObject *args)
-{
+psutil_users(PyObject *self, PyObject *args) {
     struct utmpx *utx;
     PyObject *ret_list = PyList_New(0);
     PyObject *tuple = NULL;

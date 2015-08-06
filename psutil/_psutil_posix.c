@@ -37,8 +37,7 @@
  * Given a PID return process priority as a Python integer.
  */
 static PyObject *
-psutil_posix_getpriority(PyObject *self, PyObject *args)
-{
+psutil_posix_getpriority(PyObject *self, PyObject *args) {
     long pid;
     int priority;
     errno = 0;
@@ -56,8 +55,7 @@ psutil_posix_getpriority(PyObject *self, PyObject *args)
  * Given a PID and a value change process priority.
  */
 static PyObject *
-psutil_posix_setpriority(PyObject *self, PyObject *args)
-{
+psutil_posix_setpriority(PyObject *self, PyObject *args) {
     long pid;
     int priority;
     int retval;
@@ -396,8 +394,7 @@ int psutil_get_nic_speed(int ifm_active) {
  * http://www.i-scream.org/libstatgrab/
  */
 static PyObject *
-psutil_net_if_stats(PyObject *self, PyObject *args)
-{
+psutil_net_if_stats(PyObject *self, PyObject *args) {
     char *nic_name;
     int sock = 0;
     int ret;
