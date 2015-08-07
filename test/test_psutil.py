@@ -3007,6 +3007,7 @@ class TestExampleScripts(unittest.TestCase):
                     self.fail('no test defined for %r script'
                               % os.path.join(EXAMPLES_DIR, name))
 
+    @unittest.skipUnless(POSIX, "UNIX only")
     def test_executable(self):
         for name in os.listdir(EXAMPLES_DIR):
             if name.endswith('.py'):
