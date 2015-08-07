@@ -139,7 +139,7 @@ class OSXSpecificTestCase(unittest.TestCase):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
         self.assertEqual(sysctl_hwphymem, psutil.virtual_memory().total)
 
-    unittest.skipIf(TRAVIS, "")
+    @unittest.skipIf(TRAVIS, "")
     @retry_before_failing()
     def test_vmem_free(self):
         num = vm_stat("free")
@@ -189,6 +189,7 @@ def main():
     test_suite.addTest(unittest.makeSuite(OSXSpecificTestCase))
     result = unittest.TextTestRunner(verbosity=2).run(test_suite)
     return result.wasSuccessful()
+
 
 if __name__ == '__main__':
     if not main():
