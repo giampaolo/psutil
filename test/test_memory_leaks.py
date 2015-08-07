@@ -419,6 +419,7 @@ class TestModuleFunctionsLeaks(Base):
 
     @unittest.skipIf(LINUX,
                      "not worth being tested on Linux (pure python)")
+    @unittest.skipIf(OSX and os.getuid() != 0, "need root access")
     def test_net_connections(self):
         self.execute('net_connections')
 
