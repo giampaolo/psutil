@@ -1514,7 +1514,7 @@ class TestProcess(unittest.TestCase):
             with self.assertRaises(IOError) as exc:
                 with open(TESTFN, "wb") as f:
                     f.write(b"X" * 1025)
-            self.assertEqual(exc.exception.errno, errno.EFBIG)
+            self.assertEqual(exc.exception[0], errno.EFBIG)
         finally:
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             self.assertEqual(p.rlimit(psutil.RLIMIT_FSIZE), (soft, hard))
