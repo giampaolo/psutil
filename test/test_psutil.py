@@ -1500,6 +1500,23 @@ class TestProcess(unittest.TestCase):
         with self.assertRaises(ValueError):
             p.rlimit(psutil.RLIMIT_NOFILE, (5, 5, 5))
 
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
+                         "only available on Linux >= 2.6.36")
+    def test_rlimit(self):
+        p = psutil.Process()
+        soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
+        try:
+            p.rlimit(psutil.RLIMIT_FSIZE, (1024, hard))
+            with open(TESTFN, "wb") as f:
+                f.write(b"X" * 1024)
+            with self.assertRaises(IOError) as exc:
+                with open(TESTFN, "wb") as f:
+                    f.write(b"X" * 1025)
+            self.assertEqual(exc.exception.errno, errno.EFBIG)
+        finally:
+            p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
+            self.assertEqual(p.rlimit(psutil.RLIMIT_FSIZE), (soft, hard))
+
     def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
