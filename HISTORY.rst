@@ -20,6 +20,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
+- #603: [Linux] ionice_set value range is incorrect.  (patch by spacewander)
 - #645: [Linux] psutil.cpu_times_percent() may produce negative results.
 - #656: 'from psutil import *' does not work.
 
