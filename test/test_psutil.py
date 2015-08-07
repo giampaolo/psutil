@@ -3005,6 +3005,13 @@ class TestExampleScripts(unittest.TestCase):
                     self.fail('no test defined for %r script'
                               % os.path.join(EXAMPLES_DIR, name))
 
+    def test_executable(self):
+        for name in os.listdir(EXAMPLES_DIR):
+            if name.endswith('.py'):
+                path = os.path.join(EXAMPLES_DIR, name)
+                if not stat.S_IXUSR & os.stat(path)[stat.ST_MODE]:
+                    self.fail('%r is not executable' % path)
+
     def test_disk_usage(self):
         self.assert_stdout('disk_usage.py')
 
