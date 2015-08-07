@@ -638,7 +638,6 @@ void init_psutil_linux(void)
 
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 #if PSUTIL_HAVE_PRLIMIT
-    PyModule_AddIntConstant(module, "RLIM_INFINITY", RLIM_INFINITY);
     PyModule_AddIntConstant(module, "RLIMIT_AS", RLIMIT_AS);
     PyModule_AddIntConstant(module, "RLIMIT_CORE", RLIMIT_CORE);
     PyModule_AddIntConstant(module, "RLIMIT_CPU", RLIMIT_CPU);
@@ -650,6 +649,20 @@ void init_psutil_linux(void)
     PyModule_AddIntConstant(module, "RLIMIT_NPROC", RLIMIT_NPROC);
     PyModule_AddIntConstant(module, "RLIMIT_RSS", RLIMIT_RSS);
     PyModule_AddIntConstant(module, "RLIMIT_STACK", RLIMIT_STACK);
+
+    PyObject *v;
+#if defined(HAVE_LONG_LONG)
+    if (sizeof(RLIM_INFINITY) > sizeof(long)) {
+        v = PyLong_FromLongLong((PY_LONG_LONG) RLIM_INFINITY);
+    } else
+#endif
+    {
+        v = PyLong_FromLong((long) RLIM_INFINITY);
+    }
+    if (v) {
+        PyModule_AddObject(module, "RLIM_INFINITY", v);
+    }
+
 #ifdef RLIMIT_MSGQUEUE
     PyModule_AddIntConstant(module, "RLIMIT_MSGQUEUE", RLIMIT_MSGQUEUE);
 #endif

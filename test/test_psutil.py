@@ -1517,6 +1517,22 @@ class TestProcess(unittest.TestCase):
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             self.assertEqual(p.rlimit(psutil.RLIMIT_FSIZE), (soft, hard))
 
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
+                         "only available on Linux >= 2.6.36")
+    def test_rlimit_infinity(self):
+        # First set a limit, then re-set it by specifying INFINITY
+        # and assume we overridden the previous limit.
+        p = psutil.Process()
+        soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
+        try:
+            p.rlimit(psutil.RLIMIT_FSIZE, (1024, hard))
+            p.rlimit(psutil.RLIMIT_FSIZE, (psutil.RLIM_INFINITY, hard))
+            with open(TESTFN, "wb") as f:
+                f.write(b"X" * 2048)
+        finally:
+            p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
+            self.assertEqual(p.rlimit(psutil.RLIMIT_FSIZE), (soft, hard))
+
     def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
