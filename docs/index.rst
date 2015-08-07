@@ -427,6 +427,9 @@ Network
   *ptp* stands for "point to point" and references the destination address on a
   point to point interface (tipically a VPN).
   *broadcast* and *ptp* are mutually exclusive.
+  *netmask*, *broadcast* and *ptp* are not supported on Windows and are set to
+  ``None``.
+
   Example::
 
     >>> import psutil
@@ -448,6 +451,9 @@ Network
 
   .. note:: you can have more than one address of the same family associated
     with each interface (that's why dict values are lists).
+
+  .. note:: *netmask*, *broadcast* and *ptp* are not supported on Windows and
+    are set to ``None``.
 
   *New in 3.0.0*
 

@@ -2894,13 +2894,15 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 
             Py_INCREF(Py_None);
             Py_INCREF(Py_None);
+            Py_INCREF(Py_None);
             py_tuple = Py_BuildValue(
-                "(siOOO)",
+                "(siOOOO)",
                 ifname,
                 -1,  // this will be converted later to AF_LINK
                 py_mac_address,
-                Py_None,
-                Py_None
+                Py_None,  // netmask (not supported)
+                Py_None,  // broadcast (not supported)
+                Py_None  // ptp (not supported on Windows)
             );
             if (! py_tuple)
                 goto error;
@@ -2946,13 +2948,15 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 
                 Py_INCREF(Py_None);
                 Py_INCREF(Py_None);
+                Py_INCREF(Py_None);
                 py_tuple = Py_BuildValue(
-                    "(siOOO)",
+                    "(siOOOO)",
                     ifname,
                     family,
                     py_address,
-                    Py_None,
-                    Py_None
+                    Py_None,  // netmask (not supported)
+                    Py_None,  // broadcast (not supported)
+                    Py_None  // ptp (not supported on Windows)
                 );
 
                 if (! py_tuple)
