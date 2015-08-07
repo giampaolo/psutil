@@ -1509,6 +1509,8 @@ class TestProcess(unittest.TestCase):
             p.rlimit(psutil.RLIMIT_FSIZE, (1024, hard))
             with open(TESTFN, "wb") as f:
                 f.write(b"X" * 1024)
+            # write() or flush() doesn't always cause the exception
+            # but close() will.
             with self.assertRaises(IOError) as exc:
                 with open(TESTFN, "wb") as f:
                     f.write(b"X" * 1025)
@@ -1532,6 +1534,19 @@ class TestProcess(unittest.TestCase):
         finally:
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             self.assertEqual(p.rlimit(psutil.RLIMIT_FSIZE), (soft, hard))
+
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
+                         "only available on Linux >= 2.6.36")
+    def test_rlimit_infinity_value(self):
+        # RLIMIT_FSIZE should be RLIM_INFINITY, which will be a really
+        # big number on a platform with large file support.  On these
+        # platforms we need to test that the get/setrlimit functions
+        # properly convert the number to a C long long and that the
+        # conversion doesn't raise an error.
+        p = psutil.Process()
+        soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
+        self.assertEqual(psutil.RLIM_INFINITY, hard)
+        p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
 
     def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact
