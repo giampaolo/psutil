@@ -10,6 +10,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
+- #641: [Windows] fixed many compilation warnings.  (patch by Jeff Tang)
 - #659: [Linux] compilation error on Suse 10.
 - #664: [Linux] compilation error on Alpine Linux. (patch by Bart van Kleef)
 
