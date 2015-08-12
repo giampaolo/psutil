@@ -138,6 +138,16 @@ typedef struct _MIB_UDP6TABLE_OWNER_PID {
     MIB_UDP6ROW_OWNER_PID table[ANY_SIZE];
 } MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
 
+void wstr_to_str(char* pcstr, const wchar_t* pwstr, size_t len) {
+    int nlength = wcslen(pwstr);
+    int nbytes = WideCharToMultiByte(0, 0, pwstr, nlength, NULL, 0, NULL, NULL);
+    memset(pcstr, 0, len);
+    if (nbytes > len) {
+        nbytes = len;
+    }
+    WideCharToMultiByte(0, 0, pwstr, nlength, pcstr, nbytes, NULL, NULL);
+    return;
+}
 
 PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses() {
@@ -2205,7 +2215,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         if (!py_nic_info)
             goto error;
 
-        sprintf_s(ifname, MAX_PATH, "%wS", pCurrAddresses->FriendlyName);
+        wstr_to_str(ifname,pCurrAddresses->FriendlyName, MAX_PATH);
         py_nic_name = PyUnicode_Decode(
             ifname, _tcslen(ifname), Py_FileSystemDefaultEncoding, "replace");
 
@@ -2865,7 +2875,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 
     while (pCurrAddresses) {
         pUnicast = pCurrAddresses->FirstUnicastAddress;
-        sprintf_s(ifname, MAX_PATH, "%wS", pCurrAddresses->FriendlyName);
+        wstr_to_str(ifname,pCurrAddresses->FriendlyName, MAX_PATH);
 
         // MAC address
         if (pCurrAddresses->PhysicalAddressLength != 0) {
