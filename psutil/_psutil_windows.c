@@ -138,17 +138,6 @@ typedef struct _MIB_UDP6TABLE_OWNER_PID {
     MIB_UDP6ROW_OWNER_PID table[ANY_SIZE];
 } MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
 
-void wstr_to_str(char* pcstr, const wchar_t* pwstr, size_t len) {
-    int nlength = wcslen(pwstr);
-    int nbytes = WideCharToMultiByte(0, 0, pwstr, nlength, NULL, 0, NULL, NULL);
-    memset(pcstr, 0, len);
-    if (nbytes > len) {
-        nbytes = len;
-    }
-    WideCharToMultiByte(0, 0, pwstr, nlength, pcstr, nbytes, NULL, NULL);
-    return;
-}
-
 PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses() {
     // allocate a 15 KB buffer to start with
@@ -2169,7 +2158,6 @@ return_:
  */
 static PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {
-    char ifname[MAX_PATH];
     DWORD dwRetVal = 0;
     MIB_IFROW *pIfRow = NULL;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
@@ -2215,9 +2203,8 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         if (!py_nic_info)
             goto error;
 
-        wstr_to_str(ifname,pCurrAddresses->FriendlyName, MAX_PATH);
-        py_nic_name = PyUnicode_Decode(
-            ifname, _tcslen(ifname), Py_FileSystemDefaultEncoding, "replace");
+        py_nic_name = PyUnicode_FromWideChar(pCurrAddresses->FriendlyName, 
+		                                     wcslen(pCurrAddresses->FriendlyName));
 
         if (py_nic_name == NULL)
             goto error;
@@ -2854,7 +2841,6 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     PCTSTR intRet;
     char *ptr;
     char buff[100];
-    char ifname[MAX_PATH];
     DWORD bufflen = 100;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
@@ -2864,6 +2850,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_mac_address = NULL;
+	PyObject *py_nic_name = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -2875,7 +2862,12 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 
     while (pCurrAddresses) {
         pUnicast = pCurrAddresses->FirstUnicastAddress;
-        wstr_to_str(ifname,pCurrAddresses->FriendlyName, MAX_PATH);
+        
+		py_nic_name = NULL;
+		py_nic_name = PyUnicode_FromWideChar(pCurrAddresses->FriendlyName, 
+		                                     wcslen(pCurrAddresses->FriendlyName));
+		if (py_nic_name == NULL)
+			goto error;
 
         // MAC address
         if (pCurrAddresses->PhysicalAddressLength != 0) {
@@ -2906,8 +2898,8 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
             Py_INCREF(Py_None);
             Py_INCREF(Py_None);
             py_tuple = Py_BuildValue(
-                "(siOOOO)",
-                ifname,
+                "(OiOOOO)",
+                py_nic_name,
                 -1,  // this will be converted later to AF_LINK
                 py_mac_address,
                 Py_None,  // netmask (not supported)
@@ -2960,8 +2952,8 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 Py_INCREF(Py_None);
                 Py_INCREF(Py_None);
                 py_tuple = Py_BuildValue(
-                    "(siOOOO)",
-                    ifname,
+                    "(OiOOOO)",
+                    py_nic_name,
                     family,
                     py_address,
                     Py_None,  // netmask (not supported)
@@ -2979,7 +2971,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 pUnicast = pUnicast->Next;
             }
         }
-
+		Py_DECREF(py_nic_name);
         pCurrAddresses = pCurrAddresses->Next;
     }
 
@@ -2992,6 +2984,7 @@ error:
     Py_DECREF(py_retlist);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
+	Py_XDECREF(py_nic_name);
     return NULL;
 }
 
