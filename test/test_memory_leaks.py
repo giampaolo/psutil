@@ -34,7 +34,7 @@ else:
 
 
 LOOPS = 1000
-TOLERANCE = 4096
+MEMORY_TOLERANCE = 4096
 SKIP_PYTHON_IMPL = True
 
 
@@ -65,7 +65,7 @@ class Base(unittest.TestCase):
         rss2 = call_many_times()
 
         difference = rss2 - rss1
-        if difference > TOLERANCE:
+        if difference > MEMORY_TOLERANCE:
             # This doesn't necessarily mean we have a leak yet.
             # At this point we assume that after having called the
             # function so many times the memory usage is stabilized
@@ -419,6 +419,7 @@ class TestModuleFunctionsLeaks(Base):
 
     @unittest.skipIf(LINUX,
                      "not worth being tested on Linux (pure python)")
+    @unittest.skipIf(OSX and os.getuid() != 0, "need root access")
     def test_net_connections(self):
         self.execute('net_connections')
 

@@ -29,6 +29,10 @@ E: jloden@gmail.com
 D: original co-author, initial design/bootstrap and occasional bug fixes
 W: http://www.jayloden.com
 
+N: Jeff Tang
+W: https://github.com/mrjefftang
+I: 340, 529, 616, 653, 654, 648, 641
+
 N: Jeremy Whitlock
 E: jcscoobyrs@gmail.com
 D: great help with OSX C development.
@@ -253,10 +257,6 @@ N: msabramo
 E: msabramo@gmail.com
 I: 492
 
-N: Jeff Tang
-W: https://github.com/mrjefftang
-I: 340, 529, 616, 653, 654
-
 N: Yaolong Huang
 E: airekans@gmail.com
 W: http://airekans.github.io/
@@ -267,8 +267,9 @@ W: https://github.com/anders-chrigstrom
 I: 496
 
 N: spacewander
+W: https://github.com/spacewander
 E: spacewanderlzx@gmail.com
-I: 561
+I: 561, 603
 
 N: Sylvain Mouquet
 E: sylvain.mouquet@gmail.com
@@ -308,3 +309,11 @@ N: Árni Már Jónsson
 E: Reykjavik, Iceland
 E: https://github.com/arnimarj
 I: 634
+
+N: Bart van Kleef
+W: https://github.com/bkleef
+I: 664
+
+N: Steven Winfield
+W: https://github.com/stevenwinfield
+I: 672

@@ -23,14 +23,13 @@ PVOID g_fiber = NULL;
 
 
 PVOID
-GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName)
-{
+GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName) {
     return GetProcAddress(GetModuleHandleA(LibraryName), ProcName);
 }
 
+
 PyObject *
-psutil_get_open_files(long dwPid, HANDLE hProcess)
-{
+psutil_get_open_files(long dwPid, HANDLE hProcess) {
     OSVERSIONINFO osvi;
 
     ZeroMemory(&osvi, sizeof(OSVERSIONINFO));
@@ -44,9 +43,9 @@ psutil_get_open_files(long dwPid, HANDLE hProcess)
         return psutil_get_open_files_getmappedfilename(dwPid, hProcess);
 }
 
+
 VOID
-psutil_get_open_files_init(BOOL threaded)
-{
+psutil_get_open_files_init(BOOL threaded) {
     if (g_initialized == TRUE)
         return;
 
@@ -65,9 +64,9 @@ psutil_get_open_files_init(BOOL threaded)
     g_initialized = TRUE;
 }
 
+
 PyObject *
-psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess)
-{
+psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
     NTSTATUS                            status;
     PSYSTEM_HANDLE_INFORMATION_EX       pHandleInfo = NULL;
     DWORD                               dwInfoSize = 0x10000;
@@ -273,9 +272,9 @@ cleanup:
     return pyListFiles;
 }
 
+
 DWORD
-psutil_NtQueryObject()
-{
+psutil_NtQueryObject() {
     DWORD dwWait = 0;
 
     if (g_hThread == NULL)
@@ -312,9 +311,9 @@ psutil_NtQueryObject()
     return dwWait;
 }
 
+
 void
-psutil_NtQueryObjectThread()
-{
+psutil_NtQueryObjectThread() {
     // Prevent the thread stack from leaking when this
     // thread gets terminated due to NTQueryObject hanging
     g_fiber = ConvertThreadToFiber(NULL);
@@ -332,9 +331,9 @@ psutil_NtQueryObjectThread()
     }
 }
 
+
 PyObject *
-psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess)
-{
+psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
     NTSTATUS                            status;
     PSYSTEM_HANDLE_INFORMATION_EX       pHandleInfo = NULL;
     DWORD                               dwInfoSize = 0x10000;

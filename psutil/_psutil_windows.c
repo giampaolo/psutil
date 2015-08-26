@@ -138,7 +138,6 @@ typedef struct _MIB_UDP6TABLE_OWNER_PID {
     MIB_UDP6ROW_OWNER_PID table[ANY_SIZE];
 } MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
 
-
 PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses() {
     // allocate a 15 KB buffer to start with
@@ -188,8 +187,7 @@ psutil_get_nic_addresses() {
  * since the epoch.
  */
 static PyObject *
-psutil_boot_time(PyObject *self, PyObject *args)
-{
+psutil_boot_time(PyObject *self, PyObject *args) {
     double  uptime;
     time_t pt;
     FILETIME fileTime;
@@ -225,8 +223,7 @@ psutil_boot_time(PyObject *self, PyObject *args)
  * Return 1 if PID exists in the current process list, else 0.
  */
 static PyObject *
-psutil_pid_exists(PyObject *self, PyObject *args)
-{
+psutil_pid_exists(PyObject *self, PyObject *args) {
     long pid;
     int status;
 
@@ -244,8 +241,7 @@ psutil_pid_exists(PyObject *self, PyObject *args)
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject *
-psutil_pids(PyObject *self, PyObject *args)
-{
+psutil_pids(PyObject *self, PyObject *args) {
     DWORD *proclist = NULL;
     DWORD numberOfReturnedPIDs;
     DWORD i;
@@ -284,8 +280,7 @@ error:
  * Kill a process given its PID.
  */
 static PyObject *
-psutil_proc_kill(PyObject *self, PyObject *args)
-{
+psutil_proc_kill(PyObject *self, PyObject *args) {
     HANDLE hProcess;
     long pid;
 
@@ -322,8 +317,7 @@ psutil_proc_kill(PyObject *self, PyObject *args)
  * Wait for process to terminate and return its exit code.
  */
 static PyObject *
-psutil_proc_wait(PyObject *self, PyObject *args)
-{
+psutil_proc_wait(PyObject *self, PyObject *args) {
     HANDLE hProcess;
     DWORD ExitCode;
     DWORD retVal;
@@ -382,8 +376,7 @@ psutil_proc_wait(PyObject *self, PyObject *args)
  * Return a Python tuple (user_time, kernel_time)
  */
 static PyObject *
-psutil_proc_cpu_times(PyObject *self, PyObject *args)
-{
+psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     long        pid;
     HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
@@ -433,8 +426,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args)
  * seconds since the epoch.
  */
 static PyObject *
-psutil_proc_create_time(PyObject *self, PyObject *args)
-{
+psutil_proc_create_time(PyObject *self, PyObject *args) {
     long        pid;
     long long   unix_time;
     DWORD       exitCode;
@@ -502,8 +494,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args)
  * Return the number of logical CPUs.
  */
 static PyObject *
-psutil_cpu_count_logical(PyObject *self, PyObject *args)
-{
+psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     SYSTEM_INFO system_info;
     system_info.dwNumberOfProcessors = 0;
 
@@ -519,8 +510,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args)
  * Return the number of physical CPU cores.
  */
 static PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args)
-{
+psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     LPFN_GLPI glpi;
     DWORD rc;
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer = NULL;
@@ -683,8 +673,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
  * Return process memory information as a Python tuple.
  */
 static PyObject *
-psutil_proc_memory_info(PyObject *self, PyObject *args)
-{
+psutil_proc_memory_info(PyObject *self, PyObject *args) {
     HANDLE hProcess;
     DWORD pid;
 #if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
@@ -751,8 +740,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args)
  * Alternative implementation of the one above but bypasses ACCESS DENIED.
  */
 static PyObject *
-psutil_proc_memory_info_2(PyObject *self, PyObject *args)
-{
+psutil_proc_memory_info_2(PyObject *self, PyObject *args) {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
     PVOID buffer;
@@ -806,8 +794,7 @@ psutil_proc_memory_info_2(PyObject *self, PyObject *args)
  * in bytes.
  */
 static PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args)
-{
+psutil_virtual_mem(PyObject *self, PyObject *args) {
     MEMORYSTATUSEX memInfo;
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
 
@@ -829,8 +816,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args)
  * sum of the designated times across all processors.
  */
 static PyObject *
-psutil_cpu_times(PyObject *self, PyObject *args)
-{
+psutil_cpu_times(PyObject *self, PyObject *args) {
     float idle, kernel, user, system;
     FILETIME idle_time, kernel_time, user_time;
 
@@ -856,8 +842,7 @@ psutil_cpu_times(PyObject *self, PyObject *args)
  * Same as above but for all system CPUs.
  */
 static PyObject *
-psutil_per_cpu_times(PyObject *self, PyObject *args)
-{
+psutil_per_cpu_times(PyObject *self, PyObject *args) {
     float idle, kernel, user;
     typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
     NTQSI_PROC NtQuerySystemInformation;
@@ -878,8 +863,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args)
         NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
                                        hNtDll, "NtQuerySystemInformation");
 
-        if (NtQuerySystemInformation != NULL)
-        {
+        if (NtQuerySystemInformation != NULL) {
             // retrives number of processors
             GetSystemInfo(&si);
 
@@ -888,8 +872,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args)
             sppi = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
                    malloc(si.dwNumberOfProcessors * \
                           sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
-            if (sppi != NULL)
-            {
+            if (sppi != NULL) {
                 // gets cpu time informations
                 if (0 == NtQuerySystemInformation(
                             SystemProcessorPerformanceInformation,
@@ -950,8 +933,7 @@ error:
  */
 
 static PyObject *
-psutil_proc_cwd(PyObject *self, PyObject *args)
-{
+psutil_proc_cwd(PyObject *self, PyObject *args) {
     long pid;
     HANDLE processHandle = NULL;
     PVOID pebAddress;
@@ -1083,8 +1065,7 @@ error:
  * Resume or suspends a process
  */
 int
-psutil_proc_suspend_or_resume(DWORD pid, int suspend)
-{
+psutil_proc_suspend_or_resume(DWORD pid, int suspend) {
     // a huge thanks to http://www.codeproject.com/KB/threads/pausep.aspx
     HANDLE hThreadSnap = NULL;
     THREADENTRY32  te32 = {0};
@@ -1152,8 +1133,7 @@ psutil_proc_suspend_or_resume(DWORD pid, int suspend)
 
 
 static PyObject *
-psutil_proc_suspend(PyObject *self, PyObject *args)
-{
+psutil_proc_suspend(PyObject *self, PyObject *args) {
     long pid;
     int suspend = 1;
 
@@ -1166,8 +1146,7 @@ psutil_proc_suspend(PyObject *self, PyObject *args)
 
 
 static PyObject *
-psutil_proc_resume(PyObject *self, PyObject *args)
-{
+psutil_proc_resume(PyObject *self, PyObject *args) {
     long pid;
     int suspend = 0;
 
@@ -1180,8 +1159,7 @@ psutil_proc_resume(PyObject *self, PyObject *args)
 
 
 static PyObject *
-psutil_proc_threads(PyObject *self, PyObject *args)
-{
+psutil_proc_threads(PyObject *self, PyObject *args) {
     HANDLE hThread;
     THREADENTRY32 te32 = {0};
     long pid;
@@ -1286,8 +1264,7 @@ error:
 
 
 static PyObject *
-psutil_proc_open_files(PyObject *self, PyObject *args)
-{
+psutil_proc_open_files(PyObject *self, PyObject *args) {
     long       pid;
     HANDLE     processHandle;
     DWORD      access = PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION;
@@ -1313,8 +1290,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args)
  If no match is found return an empty string.
 */
 static PyObject *
-psutil_win32_QueryDosDevice(PyObject *self, PyObject *args)
-{
+psutil_win32_QueryDosDevice(PyObject *self, PyObject *args) {
     LPCTSTR   lpDevicePath;
     TCHAR d = TEXT('A');
     TCHAR     szBuff[5];
@@ -1341,8 +1317,7 @@ psutil_win32_QueryDosDevice(PyObject *self, PyObject *args)
  * Return process username as a "DOMAIN//USERNAME" string.
  */
 static PyObject *
-psutil_proc_username(PyObject *self, PyObject *args)
-{
+psutil_proc_username(PyObject *self, PyObject *args) {
     long pid;
     HANDLE processHandle;
     HANDLE tokenHandle;
@@ -1463,8 +1438,7 @@ psutil_proc_username(PyObject *self, PyObject *args)
  * Return a list of network connections opened by a process
  */
 static PyObject *
-psutil_net_connections(PyObject *self, PyObject *args)
-{
+psutil_net_connections(PyObject *self, PyObject *args) {
     static long null_address[4] = { 0, 0, 0, 0 };
 
     unsigned long pid;
@@ -1690,8 +1664,7 @@ psutil_net_connections(PyObject *self, PyObject *args)
                         addressBufferLocal,
                         BYTESWAP_USHORT(tcp6Table->table[i].dwLocalPort));
                 }
-                else
-                {
+                else {
                     addressTupleLocal = PyTuple_New(0);
                 }
 
@@ -1714,8 +1687,7 @@ psutil_net_connections(PyObject *self, PyObject *args)
                         addressBufferRemote,
                         BYTESWAP_USHORT(tcp6Table->table[i].dwRemotePort));
                 }
-                else
-                {
+                else {
                     addressTupleRemote = PyTuple_New(0);
                 }
 
@@ -1837,8 +1809,7 @@ psutil_net_connections(PyObject *self, PyObject *args)
         {
             udp6Table = table;
 
-            for (i = 0; i < udp6Table->dwNumEntries; i++)
-            {
+            for (i = 0; i < udp6Table->dwNumEntries; i++) {
                 if (pid != -1) {
                     if (udp6Table->table[i].dwOwningPid != pid) {
                         continue;
@@ -1903,8 +1874,7 @@ error:
  * Get process priority as a Python integer.
  */
 static PyObject *
-psutil_proc_priority_get(PyObject *self, PyObject *args)
-{
+psutil_proc_priority_get(PyObject *self, PyObject *args) {
     long pid;
     DWORD priority;
     HANDLE hProcess;
@@ -1930,8 +1900,7 @@ psutil_proc_priority_get(PyObject *self, PyObject *args)
  * Set process priority.
  */
 static PyObject *
-psutil_proc_priority_set(PyObject *self, PyObject *args)
-{
+psutil_proc_priority_set(PyObject *self, PyObject *args) {
     long pid;
     int priority;
     int retval;
@@ -1962,8 +1931,7 @@ psutil_proc_priority_set(PyObject *self, PyObject *args)
  * Get process IO priority as a Python integer.
  */
 static PyObject *
-psutil_proc_io_priority_get(PyObject *self, PyObject *args)
-{
+psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
     PULONG IoPriority;
@@ -1975,9 +1943,8 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid);
-    if (hProcess == NULL) {
+    if (hProcess == NULL)
         return NULL;
-    }
 
     NtQueryInformationProcess(
         hProcess,
@@ -1995,8 +1962,7 @@ psutil_proc_io_priority_get(PyObject *self, PyObject *args)
  * Set process IO priority.
  */
 static PyObject *
-psutil_proc_io_priority_set(PyObject *self, PyObject *args)
-{
+psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
     long pid;
     int prio;
     HANDLE hProcess;
@@ -2011,13 +1977,11 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (! PyArg_ParseTuple(args, "li", &pid, &prio)) {
+    if (! PyArg_ParseTuple(args, "li", &pid, &prio))
         return NULL;
-    }
     hProcess = psutil_handle_from_pid_waccess(pid, PROCESS_ALL_ACCESS);
-    if (hProcess == NULL) {
+    if (hProcess == NULL)
         return NULL;
-    }
 
     NtSetInformationProcess(
         hProcess,
@@ -2036,8 +2000,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args)
  * Return a Python tuple referencing process I/O counters.
  */
 static PyObject *
-psutil_proc_io_counters(PyObject *self, PyObject *args)
-{
+psutil_proc_io_counters(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess;
     IO_COUNTERS IoCounters;
@@ -2045,9 +2008,8 @@ psutil_proc_io_counters(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid);
-    if (NULL == hProcess) {
+    if (NULL == hProcess)
         return NULL;
-    }
     if (! GetProcessIoCounters(hProcess, &IoCounters)) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
@@ -2065,8 +2027,7 @@ psutil_proc_io_counters(PyObject *self, PyObject *args)
  * Return process CPU affinity as a bitmask
  */
 static PyObject *
-psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
-{
+psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess;
     DWORD_PTR proc_mask;
@@ -2096,8 +2057,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args)
  * Set process CPU affinity
  */
 static PyObject *
-psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
-{
+psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess;
     DWORD dwDesiredAccess = \
@@ -2113,9 +2073,8 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
         return NULL;
     }
     hProcess = psutil_handle_from_pid_waccess(pid, dwDesiredAccess);
-    if (hProcess == NULL) {
+    if (hProcess == NULL)
         return NULL;
-    }
 
     if (SetProcessAffinityMask(hProcess, mask) == 0) {
         CloseHandle(hProcess);
@@ -2132,8 +2091,7 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
  * suspended status.
  */
 static PyObject *
-psutil_proc_is_suspended(PyObject *self, PyObject *args)
-{
+psutil_proc_is_suspended(PyObject *self, PyObject *args) {
     DWORD pid;
     ULONG i;
     PSYSTEM_PROCESS_INFORMATION process;
@@ -2161,8 +2119,7 @@ psutil_proc_is_suspended(PyObject *self, PyObject *args)
  * Return path's disk total and free as a Python tuple.
  */
 static PyObject *
-psutil_disk_usage(PyObject *self, PyObject *args)
-{
+psutil_disk_usage(PyObject *self, PyObject *args) {
     BOOL retval;
     ULARGE_INTEGER _, total, free;
     char *path;
@@ -2200,9 +2157,7 @@ return_:
  * Return a Python list of named tuples with overall network I/O information
  */
 static PyObject *
-psutil_net_io_counters(PyObject *self, PyObject *args)
-{
-    char ifname[MAX_PATH];
+psutil_net_io_counters(PyObject *self, PyObject *args) {
     DWORD dwRetVal = 0;
     MIB_IFROW *pIfRow = NULL;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
@@ -2248,9 +2203,8 @@ psutil_net_io_counters(PyObject *self, PyObject *args)
         if (!py_nic_info)
             goto error;
 
-        sprintf_s(ifname, MAX_PATH, "%wS", pCurrAddresses->FriendlyName);
-        py_nic_name = PyUnicode_Decode(
-            ifname, _tcslen(ifname), Py_FileSystemDefaultEncoding, "replace");
+        py_nic_name = PyUnicode_FromWideChar(pCurrAddresses->FriendlyName, 
+		                                     wcslen(pCurrAddresses->FriendlyName));
 
         if (py_nic_name == NULL)
             goto error;
@@ -2282,8 +2236,7 @@ error:
  * Return a Python dict of tuples for disk I/O information
  */
 static PyObject *
-psutil_disk_io_counters(PyObject *self, PyObject *args)
-{
+psutil_disk_io_counters(PyObject *self, PyObject *args) {
     DISK_PERFORMANCE_WIN_2008 diskPerformance;
     DWORD dwSize;
     HANDLE hDevice = NULL;
@@ -2292,9 +2245,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args)
     int devNum;
     PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;
-    if (py_retdict == NULL) {
+    if (py_retdict == NULL)
         return NULL;
-    }
 
     // Apparently there's no way to figure out how many times we have
     // to iterate in order to find valid drives.
@@ -2306,9 +2258,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args)
         hDevice = CreateFile(szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
                              NULL, OPEN_EXISTING, 0, NULL);
 
-        if (hDevice == INVALID_HANDLE_VALUE) {
+        if (hDevice == INVALID_HANDLE_VALUE)
             continue;
-        }
         if (DeviceIoControl(hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0,
                             &diskPerformance, sizeof(diskPerformance),
                             &dwSize, NULL))
@@ -2352,8 +2303,7 @@ error:
 }
 
 
-static char *psutil_get_drive_type(int type)
-{
+static char *psutil_get_drive_type(int type) {
     switch (type) {
         case DRIVE_FIXED:
             return "fixed";
@@ -2384,8 +2334,7 @@ static char *psutil_get_drive_type(int type)
  * (drive_letter, drive_letter, type, "")
  */
 static PyObject *
-psutil_disk_partitions(PyObject *self, PyObject *args)
-{
+psutil_disk_partitions(PyObject *self, PyObject *args) {
     DWORD num_bytes;
     char drive_strings[255];
     char *drive_letter = drive_strings;
@@ -2407,9 +2356,8 @@ psutil_disk_partitions(PyObject *self, PyObject *args)
     // see https://github.com/giampaolo/psutil/issues/264
     SetErrorMode(SEM_FAILCRITICALERRORS);
 
-    if (! PyArg_ParseTuple(args, "O", &py_all)) {
+    if (! PyArg_ParseTuple(args, "O", &py_all))
         goto error;
-    }
     all = PyObject_IsTrue(py_all);
 
     Py_BEGIN_ALLOW_THREADS
@@ -2458,20 +2406,16 @@ psutil_disk_partitions(PyObject *self, PyObject *args)
             SetLastError(0);
         }
         else {
-            if (pflags & FILE_READ_ONLY_VOLUME) {
+            if (pflags & FILE_READ_ONLY_VOLUME)
                 strcat_s(opts, _countof(opts), "ro");
-            }
-            else {
+            else
                 strcat_s(opts, _countof(opts), "rw");
-            }
-            if (pflags & FILE_VOLUME_IS_COMPRESSED) {
+            if (pflags & FILE_VOLUME_IS_COMPRESSED)
                 strcat_s(opts, _countof(opts), ",compressed");
-            }
         }
 
-        if (strlen(opts) > 0) {
+        if (strlen(opts) > 0)
             strcat_s(opts, _countof(opts), ",");
-        }
         strcat_s(opts, _countof(opts), psutil_get_drive_type(type));
 
         py_tuple = Py_BuildValue(
@@ -2505,8 +2449,7 @@ error:
  * Return a Python dict of tuples for disk I/O information
  */
 static PyObject *
-psutil_users(PyObject *self, PyObject *args)
-{
+psutil_users(PyObject *self, PyObject *args) {
     HANDLE hServer = NULL;
     LPTSTR buffer_user = NULL;
     LPTSTR buffer_addr = NULL;
@@ -2529,9 +2472,8 @@ psutil_users(PyObject *self, PyObject *args)
     PyObject *py_address = NULL;
     PyObject *py_buffer_user_encoded = NULL;
 
-    if (py_retlist == NULL) {
+    if (py_retlist == NULL)
         return NULL;
-    }
 
     hInstWinSta = LoadLibraryA("winsta.dll");
     WinStationQueryInformationW = (PWINSTATIONQUERYINFORMATIONW) \
@@ -2552,12 +2494,10 @@ psutil_users(PyObject *self, PyObject *args)
         py_address = NULL;
         py_tuple = NULL;
         sessionId = sessions[i].SessionId;
-        if (buffer_user != NULL) {
+        if (buffer_user != NULL)
             WTSFreeMemory(buffer_user);
-        }
-        if (buffer_addr != NULL) {
+        if (buffer_addr != NULL)
             WTSFreeMemory(buffer_addr);
-        }
 
         buffer_user = NULL;
         buffer_addr = NULL;
@@ -2569,9 +2509,8 @@ psutil_users(PyObject *self, PyObject *args)
             PyErr_SetFromWindowsErr(0);
             goto error;
         }
-        if (bytes == 1) {
+        if (bytes == 1)
             continue;
-        }
 
         // address
         bytes = 0;
@@ -2641,21 +2580,16 @@ error:
     Py_XDECREF(py_address);
     Py_DECREF(py_retlist);
 
-    if (hInstWinSta != NULL) {
+    if (hInstWinSta != NULL)
         FreeLibrary(hInstWinSta);
-    }
-    if (hServer != NULL) {
+    if (hServer != NULL)
         WTSCloseServer(hServer);
-    }
-    if (sessions != NULL) {
+    if (sessions != NULL)
         WTSFreeMemory(sessions);
-    }
-    if (buffer_user != NULL) {
+    if (buffer_user != NULL)
         WTSFreeMemory(buffer_user);
-    }
-    if (buffer_addr != NULL) {
+    if (buffer_addr != NULL)
         WTSFreeMemory(buffer_addr);
-    }
     return NULL;
 }
 
@@ -2664,8 +2598,7 @@ error:
  * Return the number of handles opened by process.
  */
 static PyObject *
-psutil_proc_num_handles(PyObject *self, PyObject *args)
-{
+psutil_proc_num_handles(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess;
     DWORD handleCount;
@@ -2673,9 +2606,8 @@ psutil_proc_num_handles(PyObject *self, PyObject *args)
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     hProcess = psutil_handle_from_pid(pid);
-    if (NULL == hProcess) {
+    if (NULL == hProcess)
         return NULL;
-    }
     if (! GetProcessHandleCount(hProcess, &handleCount)) {
         CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
@@ -2699,8 +2631,7 @@ psutil_proc_num_handles(PyObject *self, PyObject *args)
  * - io counters (fallback)
  */
 static PyObject *
-psutil_proc_info(PyObject *self, PyObject *args)
-{
+psutil_proc_info(PyObject *self, PyObject *args) {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
     PVOID buffer;
@@ -2761,8 +2692,7 @@ psutil_proc_info(PyObject *self, PyObject *args)
 }
 
 
-static char *get_region_protection_string(ULONG protection)
-{
+static char *get_region_protection_string(ULONG protection) {
     switch (protection & 0xff) {
         case PAGE_NOACCESS:
             return "";
@@ -2790,8 +2720,7 @@ static char *get_region_protection_string(ULONG protection)
  * Return a list of process's memory mappings.
  */
 static PyObject *
-psutil_proc_memory_maps(PyObject *self, PyObject *args)
-{
+psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     DWORD pid;
     HANDLE hProcess = NULL;
     MEMORY_BASIC_INFORMATION basicInfo;
@@ -2803,16 +2732,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args)
     PyObject *py_list = PyList_New(0);
     PyObject *py_tuple = NULL;
 
-    if (py_list == NULL) {
+    if (py_list == NULL)
         return NULL;
-    }
-    if (! PyArg_ParseTuple(args, "l", &pid)) {
+    if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
-    }
     hProcess = psutil_handle_from_pid(pid);
-    if (NULL == hProcess) {
+    if (NULL == hProcess)
         goto error;
-    }
 
     GetSystemInfo(&system_info);
     maxAddr = system_info.lpMaximumApplicationAddress;
@@ -2823,9 +2749,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args)
                           sizeof(MEMORY_BASIC_INFORMATION)))
     {
         py_tuple = NULL;
-        if (baseAddress > maxAddr) {
+        if (baseAddress > maxAddr)
             break;
-        }
         if (GetMappedFileNameA(hProcess, baseAddress, mappedFileName,
                                sizeof(mappedFileName)))
         {
@@ -2861,8 +2786,7 @@ error:
  * Return a {pid:ppid, ...} dict for all running processes.
  */
 static PyObject *
-psutil_ppid_map(PyObject *self, PyObject *args)
-{
+psutil_ppid_map(PyObject *self, PyObject *args) {
     PyObject *pid = NULL;
     PyObject *ppid = NULL;
     PyObject *py_retdict = PyDict_New();
@@ -2911,14 +2835,12 @@ error:
  */
 
 static PyObject *
-psutil_net_if_addrs(PyObject *self, PyObject *args)
-{
+psutil_net_if_addrs(PyObject *self, PyObject *args) {
     unsigned int i = 0;
     ULONG family;
     PCTSTR intRet;
     char *ptr;
     char buff[100];
-    char ifname[MAX_PATH];
     DWORD bufflen = 100;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
@@ -2928,6 +2850,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_mac_address = NULL;
+	PyObject *py_nic_name = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -2939,7 +2862,12 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
 
     while (pCurrAddresses) {
         pUnicast = pCurrAddresses->FirstUnicastAddress;
-        sprintf_s(ifname, MAX_PATH, "%wS", pCurrAddresses->FriendlyName);
+        
+		py_nic_name = NULL;
+		py_nic_name = PyUnicode_FromWideChar(pCurrAddresses->FriendlyName, 
+		                                     wcslen(pCurrAddresses->FriendlyName));
+		if (py_nic_name == NULL)
+			goto error;
 
         // MAC address
         if (pCurrAddresses->PhysicalAddressLength != 0) {
@@ -2968,13 +2896,15 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
 
             Py_INCREF(Py_None);
             Py_INCREF(Py_None);
+            Py_INCREF(Py_None);
             py_tuple = Py_BuildValue(
-                "(siOOO)",
-                ifname,
+                "(OiOOOO)",
+                py_nic_name,
                 -1,  // this will be converted later to AF_LINK
                 py_mac_address,
-                Py_None,
-                Py_None
+                Py_None,  // netmask (not supported)
+                Py_None,  // broadcast (not supported)
+                Py_None  // ptp (not supported on Windows)
             );
             if (! py_tuple)
                 goto error;
@@ -3020,13 +2950,15 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
 
                 Py_INCREF(Py_None);
                 Py_INCREF(Py_None);
+                Py_INCREF(Py_None);
                 py_tuple = Py_BuildValue(
-                    "(siOOO)",
-                    ifname,
+                    "(OiOOOO)",
+                    py_nic_name,
                     family,
                     py_address,
-                    Py_None,
-                    Py_None
+                    Py_None,  // netmask (not supported)
+                    Py_None,  // broadcast (not supported)
+                    Py_None  // ptp (not supported on Windows)
                 );
 
                 if (! py_tuple)
@@ -3039,7 +2971,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args)
                 pUnicast = pUnicast->Next;
             }
         }
-
+		Py_DECREF(py_nic_name);
         pCurrAddresses = pCurrAddresses->Next;
     }
 
@@ -3052,6 +2984,7 @@ error:
     Py_DECREF(py_retlist);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
+	Py_XDECREF(py_nic_name);
     return NULL;
 }
 
@@ -3062,8 +2995,7 @@ error:
          'full duplex')
  */
 static PyObject *
-psutil_net_if_stats(PyObject *self, PyObject *args)
-{
+psutil_net_if_stats(PyObject *self, PyObject *args) {
     int i;
     DWORD dwSize = 0;
     DWORD dwRetVal = 0;
@@ -3176,8 +3108,8 @@ error:
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
-PsutilMethods[] =
-{
+PsutilMethods[] = {
+
     // --- per-process functions
 
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,

@@ -26,8 +26,7 @@
  * Return a process handle or NULL.
  */
 HANDLE
-psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess)
-{
+psutil_handle_from_pid_waccess(DWORD pid, DWORD dwDesiredAccess) {
     HANDLE hProcess;
     DWORD processExitCode = 0;
 
@@ -70,8 +69,7 @@ psutil_handle_from_pid(DWORD pid) {
 
 // fetch the PEB base address from NtQueryInformationProcess()
 PVOID
-psutil_get_peb_address(HANDLE ProcessHandle)
-{
+psutil_get_peb_address(HANDLE ProcessHandle) {
     _NtQueryInformationProcess NtQueryInformationProcess =
         (_NtQueryInformationProcess)GetProcAddress(
             GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
@@ -121,8 +119,7 @@ psutil_get_pids(DWORD *numberOfReturnedPIDs) {
 
 
 int
-psutil_pid_is_running(DWORD pid)
-{
+psutil_pid_is_running(DWORD pid) {
     HANDLE hProcess;
     DWORD exitCode;
 
@@ -171,8 +168,7 @@ psutil_pid_is_running(DWORD pid)
 
 
 int
-psutil_pid_in_proclist(DWORD pid)
-{
+psutil_pid_in_proclist(DWORD pid) {
     DWORD *proclist = NULL;
     DWORD numberOfReturnedPIDs;
     DWORD i;
@@ -195,8 +191,7 @@ psutil_pid_in_proclist(DWORD pid)
 // Check exit code from a process handle. Return FALSE on an error also
 // XXX - not used anymore
 int
-handlep_is_running(HANDLE hProcess)
-{
+handlep_is_running(HANDLE hProcess) {
     DWORD dwCode;
 
     if (NULL == hProcess)
@@ -214,8 +209,7 @@ handlep_is_running(HANDLE hProcess)
  * with given pid or NULL on error.
  */
 PyObject *
-psutil_get_arg_list(long pid)
-{
+psutil_get_arg_list(long pid) {
     int nArgs, i;
     LPWSTR *szArglist = NULL;
     HANDLE hProcess = NULL;
@@ -365,8 +359,7 @@ const int STATUS_BUFFER_TOO_SMALL = 0xC0000023L;
  */
 int
 psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
-                 PVOID *retBuffer)
-{
+                     PVOID *retBuffer) {
     static ULONG initialBufferSize = 0x4000;
     NTSTATUS status;
     PVOID buffer;

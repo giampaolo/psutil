@@ -158,7 +158,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "3.1.1"
+__version__ = "3.1.2"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
@@ -486,8 +486,8 @@ class Process(object):
         try:
             # Checking if PID is alive is not enough as the PID might
             # have been reused by another process: we also want to
-            # check process identity.
-            # Process identity / uniqueness over time is greanted by
+            # verify process identity.
+            # Process identity / uniqueness over time is guaranteed by
             # (PID + creation time) and that is verified in __eq__.
             return self == Process(self.pid)
         except NoSuchProcess:
@@ -1023,7 +1023,7 @@ class Process(object):
                 if err.errno == errno.ESRCH:
                     self._gone = True
                     raise NoSuchProcess(self.pid, self._name)
-                if err.errno == errno.EPERM:
+                if err.errno in (errno.EPERM, errno.EACCES):
                     raise AccessDenied(self.pid, self._name)
                 raise
 
@@ -1248,7 +1248,10 @@ def process_iter():
             # Process creation time can't be determined hence there's
             # no way to tell whether the pid of the cached process
             # has been reused. Just return the cached version.
-            yield proc
+            if proc is None and pid in _pmap:
+                yield _pmap[pid]
+            else:
+                raise
 
 
 def wait_procs(procs, timeout=None, callback=None):
@@ -1746,17 +1749,22 @@ def net_if_addrs():
     """Return the addresses associated to each NIC (network interface
     card) installed on the system as a dictionary whose keys are the
     NIC names and value is a list of namedtuples for each address
-    assigned to the NIC. Each namedtuple includes 4 fields:
+    assigned to the NIC. Each namedtuple includes 5 fields:
 
      - family
      - address
      - netmask
      - broadcast
+     - ptp
 
     'family' can be either socket.AF_INET, socket.AF_INET6 or
     psutil.AF_LINK, which refers to a MAC address.
-    'address' is the primary address, 'netmask' and 'broadcast'
-    may be None.
+    'address' is the primary address and it is always set.
+    'netmask' and 'broadcast' and 'ptp' may be None.
+    'ptp' stands for "point to point" and references the destination
+    address on a point to point interface (tipically a VPN).
+    'broadcast' and 'ptp' are mutually exclusive.
+
     Note: you can have more than one address of the same family
     associated with each interface.
     """
@@ -1766,7 +1774,7 @@ def net_if_addrs():
     rawlist = _psplatform.net_if_addrs()
     rawlist.sort(key=lambda x: x[1])  # sort by family
     ret = collections.defaultdict(list)
-    for name, fam, addr, mask, broadcast in rawlist:
+    for name, fam, addr, mask, broadcast, ptp in rawlist:
         if has_enums:
             try:
                 fam = socket.AddressFamily(fam)
@@ -1779,7 +1787,7 @@ def net_if_addrs():
                     # We re-set the family here so that repr(family)
                     # will show AF_LINK rather than AF_PACKET
                     fam = _psplatform.AF_LINK
-        ret[name].append(_common.snic(fam, addr, mask, broadcast))
+        ret[name].append(_common.snic(fam, addr, mask, broadcast, ptp))
     return dict(ret)
 
 
@@ -1823,7 +1831,7 @@ def users():
     return _psplatform.users()
 
 
-def test():
+def test():  # pragma: no cover
     """List info of all currently running processes emulating ps aux
     output.
     """

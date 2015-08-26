@@ -12,7 +12,9 @@
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <ifaddrs.h>
+#include <net/if.h>
 
 #ifdef __linux
 #include <netdb.h>
@@ -36,8 +38,7 @@
  * Given a PID return process priority as a Python integer.
  */
 static PyObject *
-psutil_posix_getpriority(PyObject *self, PyObject *args)
-{
+psutil_posix_getpriority(PyObject *self, PyObject *args) {
     long pid;
     int priority;
     errno = 0;
@@ -55,8 +56,7 @@ psutil_posix_getpriority(PyObject *self, PyObject *args)
  * Given a PID and a value change process priority.
  */
 static PyObject *
-psutil_posix_setpriority(PyObject *self, PyObject *args)
-{
+psutil_posix_setpriority(PyObject *self, PyObject *args) {
     long pid;
     int priority;
     int retval;
@@ -75,8 +75,7 @@ psutil_posix_setpriority(PyObject *self, PyObject *args)
  * Return None if address family is not AF_INET* or AF_PACKET.
  */
 static PyObject *
-psutil_convert_ipaddr(struct sockaddr *addr, int family)
-{
+psutil_convert_ipaddr(struct sockaddr *addr, int family) {
     char buf[NI_MAXHOST];
     int err;
     int addrlen;
@@ -153,8 +152,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family)
  * TODO: on Solaris we won't get any MAC address.
  */
 static PyObject*
-psutil_net_if_addrs(PyObject* self, PyObject* args)
-{
+psutil_net_if_addrs(PyObject* self, PyObject* args) {
     struct ifaddrs *ifaddr, *ifa;
     int family;
 
@@ -163,6 +161,7 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
     PyObject *py_address = NULL;
     PyObject *py_netmask = NULL;
     PyObject *py_broadcast = NULL;
+    PyObject *py_ptp = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -185,20 +184,34 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
         py_netmask = psutil_convert_ipaddr(ifa->ifa_netmask, family);
         if (py_netmask == NULL)
             goto error;
-#ifdef __linux
-        py_broadcast = psutil_convert_ipaddr(ifa->ifa_ifu.ifu_broadaddr, family);
-#else
-        py_broadcast = psutil_convert_ipaddr(ifa->ifa_broadaddr, family);
-#endif
-        if (py_broadcast == NULL)
+
+        if (ifa->ifa_flags & IFF_BROADCAST) {
+            py_broadcast = psutil_convert_ipaddr(ifa->ifa_broadaddr, family);
+            Py_INCREF(Py_None);
+            py_ptp = Py_None;
+        }
+        else if (ifa->ifa_flags & IFF_POINTOPOINT) {
+            py_ptp = psutil_convert_ipaddr(ifa->ifa_dstaddr, family);
+            Py_INCREF(Py_None);
+            py_broadcast = Py_None;
+        }
+        else {
+            Py_INCREF(Py_None);
+            Py_INCREF(Py_None);
+            py_broadcast = Py_None;
+            py_ptp = Py_None;
+        }
+
+        if ((py_broadcast == NULL) || (py_ptp == NULL))
             goto error;
         py_tuple = Py_BuildValue(
-            "(siOOO)",
+            "(siOOOO)",
             ifa->ifa_name,
             family,
             py_address,
             py_netmask,
-            py_broadcast
+            py_broadcast,
+            py_ptp
         );
 
         if (! py_tuple)
@@ -209,6 +222,7 @@ psutil_net_if_addrs(PyObject* self, PyObject* args)
         Py_DECREF(py_address);
         Py_DECREF(py_netmask);
         Py_DECREF(py_broadcast);
+        Py_DECREF(py_ptp);
     }
 
     freeifaddrs(ifaddr);
@@ -222,6 +236,7 @@ error:
     Py_XDECREF(py_address);
     Py_XDECREF(py_netmask);
     Py_XDECREF(py_broadcast);
+    Py_XDECREF(py_ptp);
     return NULL;
 }
 
@@ -378,8 +393,7 @@ int psutil_get_nic_speed(int ifm_active) {
  * http://www.i-scream.org/libstatgrab/
  */
 static PyObject *
-psutil_net_if_stats(PyObject *self, PyObject *args)
-{
+psutil_net_if_stats(PyObject *self, PyObject *args) {
     char *nic_name;
     int sock = 0;
     int ret;
@@ -452,8 +466,7 @@ error:
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
-PsutilMethods[] =
-{
+PsutilMethods[] = {
     {"getpriority", psutil_posix_getpriority, METH_VARARGS,
      "Return process priority"},
     {"setpriority", psutil_posix_setpriority, METH_VARARGS,

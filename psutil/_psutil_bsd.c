@@ -69,8 +69,7 @@
  * Utility function which fills a kinfo_proc struct based on process pid
  */
 static int
-psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc)
-{
+psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
     int mib[4];
     size_t size;
     mib[0] = CTL_KERN;
@@ -110,8 +109,7 @@ psutil_raise_ad_or_nsp(long pid) {
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject *
-psutil_pids(PyObject *self, PyObject *args)
-{
+psutil_pids(PyObject *self, PyObject *args) {
     kinfo_proc *proclist = NULL;
     kinfo_proc *orig_address = NULL;
     size_t num_processes;
@@ -157,8 +155,7 @@ error:
  * seconds since the epoch.
  */
 static PyObject *
-psutil_boot_time(PyObject *self, PyObject *args)
-{
+psutil_boot_time(PyObject *self, PyObject *args) {
     // fetch sysctl "kern.boottime"
     static int request[2] = { CTL_KERN, KERN_BOOTTIME };
     struct timeval boottime;
@@ -176,8 +173,7 @@ psutil_boot_time(PyObject *self, PyObject *args)
  * Return process name from kinfo_proc as a Python string.
  */
 static PyObject *
-psutil_proc_name(PyObject *self, PyObject *args)
-{
+psutil_proc_name(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -194,8 +190,7 @@ psutil_proc_name(PyObject *self, PyObject *args)
  * http://fxr.googlebit.com/source/usr.bin/procstat/procstat_bin.c?v=8-CURRENT
  */
 static PyObject *
-psutil_proc_exe(PyObject *self, PyObject *args)
-{
+psutil_proc_exe(PyObject *self, PyObject *args) {
     long pid;
     char pathname[PATH_MAX];
     int error;
@@ -230,8 +225,7 @@ psutil_proc_exe(PyObject *self, PyObject *args)
  * Return process cmdline as a Python list of cmdline arguments.
  */
 static PyObject *
-psutil_proc_cmdline(PyObject *self, PyObject *args)
-{
+psutil_proc_cmdline(PyObject *self, PyObject *args) {
     long pid;
     PyObject *arglist = NULL;
 
@@ -253,8 +247,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args)
  * Return process parent pid from kinfo_proc as a Python integer.
  */
 static PyObject *
-psutil_proc_ppid(PyObject *self, PyObject *args)
-{
+psutil_proc_ppid(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -269,8 +262,7 @@ psutil_proc_ppid(PyObject *self, PyObject *args)
  * Return process status as a Python integer.
  */
 static PyObject *
-psutil_proc_status(PyObject *self, PyObject *args)
-{
+psutil_proc_status(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -286,8 +278,7 @@ psutil_proc_status(PyObject *self, PyObject *args)
  * as a Python tuple.
  */
 static PyObject *
-psutil_proc_uids(PyObject *self, PyObject *args)
-{
+psutil_proc_uids(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -306,8 +297,7 @@ psutil_proc_uids(PyObject *self, PyObject *args)
  * as a Python tuple.
  */
 static PyObject *
-psutil_proc_gids(PyObject *self, PyObject *args)
-{
+psutil_proc_gids(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -326,8 +316,7 @@ psutil_proc_gids(PyObject *self, PyObject *args)
  * as a Python tuple.
  */
 static PyObject *
-psutil_proc_tty_nr(PyObject *self, PyObject *args)
-{
+psutil_proc_tty_nr(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -342,8 +331,7 @@ psutil_proc_tty_nr(PyObject *self, PyObject *args)
  * Return the number of context switches performed by process as a tuple.
  */
 static PyObject *
-psutil_proc_num_ctx_switches(PyObject *self, PyObject *args)
-{
+psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -360,8 +348,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args)
  * Return number of threads used by process as a Python integer.
  */
 static PyObject *
-psutil_proc_num_threads(PyObject *self, PyObject *args)
-{
+psutil_proc_num_threads(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -380,8 +367,7 @@ psutil_proc_num_threads(PyObject *self, PyObject *args)
  *     procstat_threads.c?v=8-CURRENT
  */
 static PyObject *
-psutil_proc_threads(PyObject *self, PyObject *args)
-{
+psutil_proc_threads(PyObject *self, PyObject *args) {
     long pid;
     int mib[4];
     struct kinfo_proc *kip = NULL;
@@ -458,8 +444,7 @@ error:
  * Return a Python tuple (user_time, kernel_time)
  */
 static PyObject *
-psutil_proc_cpu_times(PyObject *self, PyObject *args)
-{
+psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     long pid;
     double user_t, sys_t;
     struct kinfo_proc kp;
@@ -479,8 +464,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args)
  * XXX this could be shared with OSX
  */
 static PyObject *
-psutil_cpu_count_logical(PyObject *self, PyObject *args)
-{
+psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     int mib[2];
     int ncpu;
     size_t len;
@@ -501,8 +485,7 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args)
  * physical CPU cores in the system.
  */
 static PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args)
-{
+psutil_cpu_count_phys(PyObject *self, PyObject *args) {
     void *topology = NULL;
     size_t size = 0;
     PyObject *py_str;
@@ -535,8 +518,7 @@ error:
  * seconds since the epoch.
  */
 static PyObject *
-psutil_proc_create_time(PyObject *self, PyObject *args)
-{
+psutil_proc_create_time(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -552,8 +534,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args)
  * seconds since the epoch.
  */
 static PyObject *
-psutil_proc_io_counters(PyObject *self, PyObject *args)
-{
+psutil_proc_io_counters(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -573,8 +554,7 @@ psutil_proc_io_counters(PyObject *self, PyObject *args)
  * Return extended memory info for a process as a Python tuple.
  */
 static PyObject *
-psutil_proc_memory_info(PyObject *self, PyObject *args)
-{
+psutil_proc_memory_info(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -594,8 +574,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args)
  * Return virtual memory usage statistics.
  */
 static PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args)
-{
+psutil_virtual_mem(PyObject *self, PyObject *args) {
     unsigned int   total, active, inactive, wired, cached, free;
     size_t         size = sizeof(total);
     struct vmtotal vm;
@@ -653,8 +632,7 @@ error:
  * Return swap memory stats (see 'swapinfo' cmdline tool)
  */
 static PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args)
-{
+psutil_swap_mem(PyObject *self, PyObject *args) {
     kvm_t *kd;
     struct kvm_swap kvmsw[1];
     unsigned int swapin, swapout, nodein, nodeout;
@@ -700,8 +678,7 @@ sbn_error:
  * Return a Python tuple representing user, kernel and idle CPU times
  */
 static PyObject *
-psutil_cpu_times(PyObject *self, PyObject *args)
-{
+psutil_cpu_times(PyObject *self, PyObject *args) {
     long cpu_time[CPUSTATES];
     size_t size;
 
@@ -738,8 +715,7 @@ psutil_cpu_times(PyObject *self, PyObject *args)
  * https://github.com/giampaolo/psutil/issues/595
  */
 static PyObject *
-psutil_proc_open_files(PyObject *self, PyObject *args)
-{
+psutil_proc_open_files(PyObject *self, PyObject *args) {
     long pid;
     int i, cnt;
     struct kinfo_file *freep = NULL;
@@ -790,8 +766,7 @@ error:
  * Return files opened by process as a list of (path, fd) tuples
  */
 static PyObject *
-psutil_proc_num_fds(PyObject *self, PyObject *args)
-{
+psutil_proc_num_fds(PyObject *self, PyObject *args) {
     long pid;
     int cnt;
 
@@ -818,8 +793,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args)
  * Return process current working directory.
  */
 static PyObject *
-psutil_proc_cwd(PyObject *self, PyObject *args)
-{
+psutil_proc_cwd(PyObject *self, PyObject *args) {
     long pid;
     PyObject *path = NULL;
     struct kinfo_file *freep = NULL;
@@ -868,8 +842,7 @@ error:
 
 // The tcplist fetching and walking is borrowed from netstat/inet.c.
 static char *
-psutil_fetch_tcplist(void)
-{
+psutil_fetch_tcplist(void) {
     char *buf;
     size_t len;
 
@@ -893,8 +866,7 @@ psutil_fetch_tcplist(void)
 }
 
 static int
-psutil_sockaddr_port(int family, struct sockaddr_storage *ss)
-{
+psutil_sockaddr_port(int family, struct sockaddr_storage *ss) {
     struct sockaddr_in6 *sin6;
     struct sockaddr_in *sin;
 
@@ -909,8 +881,7 @@ psutil_sockaddr_port(int family, struct sockaddr_storage *ss)
 }
 
 static void *
-psutil_sockaddr_addr(int family, struct sockaddr_storage *ss)
-{
+psutil_sockaddr_addr(int family, struct sockaddr_storage *ss) {
     struct sockaddr_in6 *sin6;
     struct sockaddr_in *sin;
 
@@ -925,8 +896,7 @@ psutil_sockaddr_addr(int family, struct sockaddr_storage *ss)
 }
 
 static socklen_t
-psutil_sockaddr_addrlen(int family)
-{
+psutil_sockaddr_addrlen(int family) {
     if (family == AF_INET)
         return (sizeof(struct in_addr));
     else
@@ -935,8 +905,7 @@ psutil_sockaddr_addrlen(int family)
 
 static int
 psutil_sockaddr_matches(int family, int port, void *pcb_addr,
-                        struct sockaddr_storage *ss)
-{
+                        struct sockaddr_storage *ss) {
     if (psutil_sockaddr_port(family, ss) != port)
         return (0);
     return (memcmp(psutil_sockaddr_addr(family, ss), pcb_addr,
@@ -944,8 +913,7 @@ psutil_sockaddr_matches(int family, int port, void *pcb_addr,
 }
 
 static struct tcpcb *
-psutil_search_tcplist(char *buf, struct kinfo_file *kif)
-{
+psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
     struct tcpcb *tp;
     struct inpcb *inp;
     struct xinpgen *xig, *oxig;
@@ -997,8 +965,7 @@ static int PSUTIL_CONN_NONE = 128;
  * Return connections opened by process.
  */
 static PyObject *
-psutil_proc_connections(PyObject *self, PyObject *args)
-{
+psutil_proc_connections(PyObject *self, PyObject *args) {
     long pid;
     int i, cnt;
 
@@ -1158,8 +1125,7 @@ error:
  * Return a Python list of tuple representing per-cpu times
  */
 static PyObject *
-psutil_per_cpu_times(PyObject *self, PyObject *args)
-{
+psutil_per_cpu_times(PyObject *self, PyObject *args) {
     static int maxcpus;
     int mib[2];
     int ncpu;
@@ -1237,8 +1203,7 @@ void remove_spaces(char *str) {
  * 'procstat' cmdline utility has been used as an example.
  */
 static PyObject *
-psutil_proc_memory_maps(PyObject *self, PyObject *args)
-{
+psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     long pid;
     int ptrwidth;
     int i, cnt;
@@ -1349,8 +1314,7 @@ error:
  * for all partitions mounted on the system.
  */
 static PyObject *
-psutil_disk_partitions(PyObject *self, PyObject *args)
-{
+psutil_disk_partitions(PyObject *self, PyObject *args) {
     int num;
     int i;
     long len;
@@ -1456,8 +1420,7 @@ error:
  * Return a Python list of named tuples with overall network I/O information
  */
 static PyObject *
-psutil_net_io_counters(PyObject *self, PyObject *args)
-{
+psutil_net_io_counters(PyObject *self, PyObject *args) {
     char *buf = NULL, *lim, *next;
     struct if_msghdr *ifm;
     int mib[6];
@@ -1547,8 +1510,7 @@ error:
  * Return a Python dict of tuples for disk I/O information
  */
 static PyObject *
-psutil_disk_io_counters(PyObject *self, PyObject *args)
-{
+psutil_disk_io_counters(PyObject *self, PyObject *args) {
     int i;
     struct statinfo stats;
 
@@ -1618,8 +1580,7 @@ error:
  * Return currently connected users as a list of tuples.
  */
 static PyObject *
-psutil_users(PyObject *self, PyObject *args)
-{
+psutil_users(PyObject *self, PyObject *args) {
     PyObject *ret_list = PyList_New(0);
     PyObject *tuple = NULL;
 
@@ -1703,8 +1664,7 @@ static struct xfile *psutil_xfiles;
 static int psutil_nxfiles;
 
 int
-psutil_populate_xfiles()
-{
+psutil_populate_xfiles() {
     size_t len;
 
     if ((psutil_xfiles = malloc(len = sizeof *psutil_xfiles)) == NULL) {
@@ -1731,8 +1691,7 @@ psutil_populate_xfiles()
 }
 
 int
-psutil_get_pid_from_sock(int sock_hash)
-{
+psutil_get_pid_from_sock(int sock_hash) {
     struct xfile *xf;
     int hash, n;
     for (xf = psutil_xfiles, n = 0; n < psutil_nxfiles; ++n, ++xf) {
@@ -1749,8 +1708,7 @@ psutil_get_pid_from_sock(int sock_hash)
 // Reference:
 // https://gitorious.org/freebsd/freebsd/source/
 //     f1d6f4778d2044502209708bc167c05f9aa48615:usr.bin/sockstat/sockstat.c
-int psutil_gather_inet(int proto, PyObject *py_retlist)
-{
+int psutil_gather_inet(int proto, PyObject *py_retlist) {
     struct xinpgen *xig, *exig;
     struct xinpcb *xip;
     struct xtcpcb *xtp;
@@ -1890,8 +1848,7 @@ error:
 }
 
 
-int psutil_gather_unix(int proto, PyObject *py_retlist)
-{
+int psutil_gather_unix(int proto, PyObject *py_retlist) {
     struct xunpgen *xug, *exug;
     struct xunpcb *xup;
     const char *varname = NULL;
@@ -1993,8 +1950,7 @@ error:
  * Return system-wide open connections.
  */
 static PyObject*
-psutil_net_connections(PyObject* self, PyObject* args)
-{
+psutil_net_connections(PyObject* self, PyObject* args) {
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -2025,8 +1981,7 @@ error:
  * Reference: http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
  */
 static PyObject*
-psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args)
-{
+psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args) {
     long pid;
     int ret;
     int i;
@@ -2071,8 +2026,7 @@ error:
  * Reference: http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
  */
 static PyObject *
-psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args)
-{
+psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
     long pid;
     int i;
     int seq_len;
@@ -2125,8 +2079,8 @@ error:
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
-PsutilMethods[] =
-{
+PsutilMethods[] = {
+
     // --- per-process functions
 
     {"proc_name", psutil_proc_name, METH_VARARGS,

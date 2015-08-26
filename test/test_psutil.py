@@ -72,7 +72,7 @@ else:
 # conf for retry_before_failing() decorator
 NO_RETRIES = 10
 # bytes tolerance for OS memory related tests
-TOLERANCE = 500 * 1024  # 500KB
+MEMORY_TOLERANCE = 500 * 1024  # 500KB
 # the timeout used in functions which have to wait
 GLOBAL_TIMEOUT = 3
 
@@ -451,7 +451,9 @@ def retry_before_failing(ntimes=None):
     def decorator(fun):
         @functools.wraps(fun)
         def wrapper(*args, **kwargs):
-            for x in range(ntimes or NO_RETRIES):
+            times = ntimes or NO_RETRIES
+            assert times, times
+            for x in range(times):
                 try:
                     return fun(*args, **kwargs)
                 except AssertionError:
@@ -586,6 +588,14 @@ class TestSystemAPIs(unittest.TestCase):
         p.kill()
         p.wait()
         self.assertNotIn(sproc.pid, [x.pid for x in psutil.process_iter()])
+
+        with mock.patch('psutil.Process',
+                        side_effect=psutil.NoSuchProcess(os.getpid())):
+            self.assertEqual(list(psutil.process_iter()), [])
+        with mock.patch('psutil.Process',
+                        side_effect=psutil.AccessDenied(os.getpid())):
+            with self.assertRaises(psutil.AccessDenied):
+                list(psutil.process_iter())
 
     def test_wait_procs(self):
         def callback(p):
@@ -968,6 +978,8 @@ class TestSystemAPIs(unittest.TestCase):
                 try:
                     os.stat(disk.mountpoint)
                 except OSError as err:
+                    if TRAVIS and OSX and err.errno == errno.EIO:
+                        continue
                     # http://mail.python.org/pipermail/python-dev/
                     #     2012-June/120787.html
                     if err.errno not in (errno.EPERM, errno.EACCES):
@@ -1068,13 +1080,19 @@ class TestSystemAPIs(unittest.TestCase):
                     s = socket.socket(af, socktype, proto)
                     with contextlib.closing(s):
                         s.bind(sa)
-                for ip in (addr.address, addr.netmask, addr.broadcast):
+                for ip in (addr.address, addr.netmask, addr.broadcast,
+                           addr.ptp):
                     if ip is not None:
                         # TODO: skip AF_INET6 for now because I get:
                         # AddressValueError: Only hex digits permitted in
                         # u'c6f3%lxcbr0' in u'fe80::c8e0:fff:fe54:c6f3%lxcbr0'
                         if addr.family != AF_INET6:
                             check_ip_address(ip, addr.family)
+                # broadcast and ptp addresses are mutually exclusive
+                if addr.broadcast:
+                    self.assertIsNone(addr.ptp)
+                elif addr.ptp:
+                    self.assertIsNone(addr.broadcast)
 
         if BSD or OSX or SUNOS:
             if hasattr(socket, "AF_LINK"):
@@ -1493,6 +1511,55 @@ class TestProcess(unittest.TestCase):
         with self.assertRaises(ValueError):
             p.rlimit(psutil.RLIMIT_NOFILE, (5, 5, 5))
 
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
+                         "only available on Linux >= 2.6.36")
+    def test_rlimit(self):
+        p = psutil.Process()
+        soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
+        try:
+            p.rlimit(psutil.RLIMIT_FSIZE, (1024, hard))
+            with open(TESTFN, "wb") as f:
+                f.write(b"X" * 1024)
+            # write() or flush() doesn't always cause the exception
+            # but close() will.
+            with self.assertRaises(IOError) as exc:
+                with open(TESTFN, "wb") as f:
+                    f.write(b"X" * 1025)
+            self.assertEqual(exc.exception.errno if PY3 else exc.exception[0],
+                             errno.EFBIG)
+        finally:
+            p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
+            self.assertEqual(p.rlimit(psutil.RLIMIT_FSIZE), (soft, hard))
+
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
+                         "only available on Linux >= 2.6.36")
+    def test_rlimit_infinity(self):
+        # First set a limit, then re-set it by specifying INFINITY
+        # and assume we overridden the previous limit.
+        p = psutil.Process()
+        soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
+        try:
+            p.rlimit(psutil.RLIMIT_FSIZE, (1024, hard))
+            p.rlimit(psutil.RLIMIT_FSIZE, (psutil.RLIM_INFINITY, hard))
+            with open(TESTFN, "wb") as f:
+                f.write(b"X" * 2048)
+        finally:
+            p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
+            self.assertEqual(p.rlimit(psutil.RLIMIT_FSIZE), (soft, hard))
+
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
+                         "only available on Linux >= 2.6.36")
+    def test_rlimit_infinity_value(self):
+        # RLIMIT_FSIZE should be RLIM_INFINITY, which will be a really
+        # big number on a platform with large file support.  On these
+        # platforms we need to test that the get/setrlimit functions
+        # properly convert the number to a C long long and that the
+        # conversion doesn't raise an error.
+        p = psutil.Process()
+        soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
+        self.assertEqual(psutil.RLIM_INFINITY, hard)
+        p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
+
     def test_num_threads(self):
         # on certain platforms such as Linux we might test for exact
         # thread number, since we always have with 1 thread per process,
@@ -1644,22 +1711,31 @@ class TestProcess(unittest.TestCase):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
-        funky_name = "/tmp/foo bar )"
-        _, c_file = tempfile.mkstemp(prefix='psutil-', suffix='.c', dir="/tmp")
-        self.addCleanup(lambda: safe_remove(c_file))
-        self.addCleanup(lambda: safe_remove(funky_name))
+        # funky_path = os.path.join(tempfile.gettempdir(), "foo bar )")
+        if OSX:
+            tmpdir = "/private/tmp"
+        else:
+            tmpdir = "/tmp"
+        fd, funky_path = tempfile.mkstemp(
+            prefix='psutil-', suffix='foo bar )', dir=tmpdir)
+        os.close(fd)
+        fd, c_file = tempfile.mkstemp(
+            prefix='psutil-', suffix='.c', dir=tmpdir)
+        os.close(fd)
+        self.addCleanup(safe_remove, c_file)
+        self.addCleanup(safe_remove, funky_path)
         with open(c_file, "w") as f:
             f.write("void main() { pause(); }")
-        subprocess.check_call(["gcc", c_file, "-o", funky_name])
+        subprocess.check_call(["gcc", c_file, "-o", funky_path])
         sproc = get_test_subprocess(
-            [funky_name, "arg1", "arg2", "", "arg3", ""])
+            [funky_path, "arg1", "arg2", "", "arg3", ""])
         p = psutil.Process(sproc.pid)
         # ...in order to try to prevent occasional failures on travis
         wait_for_pid(p.pid)
-        self.assertEqual(p.name(), "foo bar )")
-        self.assertEqual(p.exe(), "/tmp/foo bar )")
+        self.assertEqual(p.name(), os.path.basename(funky_path))
+        self.assertEqual(p.exe(), funky_path)
         self.assertEqual(
-            p.cmdline(), ["/tmp/foo bar )", "arg1", "arg2", "", "arg3", ""])
+            p.cmdline(), [funky_path, "arg1", "arg2", "", "arg3", ""])
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_uids(self):
@@ -2130,6 +2206,15 @@ class TestProcess(unittest.TestCase):
         if not isinstance(d['connections'], list):
             self.assertEqual(d['connections'], 'foo')
 
+        with mock.patch('psutil.getattr', create=True,
+                        side_effect=NotImplementedError):
+            # By default APIs raising NotImplementedError are
+            # supposed to be skipped.
+            self.assertEqual(p.as_dict(), {})
+            # ...unless the user explicitly asked for some attr.
+            with self.assertRaises(NotImplementedError):
+                p.as_dict(attrs=["name"])
+
     def test_halfway_terminated_process(self):
         # Test that NoSuchProcess exception gets raised in case the
         # process dies after we create the Process object.
@@ -2145,7 +2230,8 @@ class TestProcess(unittest.TestCase):
         # if WINDOWS:
         #     wait_for_pid(p.pid)
         self.assertFalse(p.is_running())
-        self.assertFalse(p.pid in psutil.pids())
+        # self.assertFalse(p.pid in psutil.pids(), msg="retcode = %s" %
+        #   retcode)
 
         excluded_names = ['pid', 'is_running', 'wait', 'create_time']
         if LINUX and not RLIMIT_SUPPORT:
@@ -2689,6 +2775,12 @@ class TestMisc(unittest.TestCase):
             self.assertIn("pid=%s" % p.pid, r)
             self.assertIn("terminated", r)
             self.assertNotIn("name=", r)
+        with mock.patch.object(psutil.Process, "name",
+                               side_effect=psutil.AccessDenied(os.getpid())):
+            p = psutil.Process()
+            r = func(p)
+            self.assertIn("pid=%s" % p.pid, r)
+            self.assertNotIn("name=", r)
 
     def test_process__str__(self):
         self.test_process__repr__(func=str)
@@ -2925,6 +3017,14 @@ class TestExampleScripts(unittest.TestCase):
                     # self.assert_stdout(name)
                     self.fail('no test defined for %r script'
                               % os.path.join(EXAMPLES_DIR, name))
+
+    @unittest.skipUnless(POSIX, "UNIX only")
+    def test_executable(self):
+        for name in os.listdir(EXAMPLES_DIR):
+            if name.endswith('.py'):
+                path = os.path.join(EXAMPLES_DIR, name)
+                if not stat.S_IXUSR & os.stat(path)[stat.ST_MODE]:
+                    self.fail('%r is not executable' % path)
 
     def test_disk_usage(self):
         self.assert_stdout('disk_usage.py')

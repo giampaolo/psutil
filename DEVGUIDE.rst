@@ -74,15 +74,18 @@ All of the services listed below are automatically run on ``git push``.
 Tests
 -----
 
-Tests are automatically run on push on Linux and Windows by using:
+Tests are automatically run for every GIT push on **Linux**, **OSX** and
+**Windows** by using:
 
-- `Travis <https://travis-ci.org/giampaolo/psutil>`_ (Linux)
+- `Travis <https://travis-ci.org/giampaolo/psutil>`_ (Linux, OSX)
 - `Appveyor <https://ci.appveyor.com/project/giampaolo/psutil>`_ (Windows)
 
-Test files controlling these are `.travis.yml <https://github.com/giampaolo/psutil/blob/master/.travis.yml>`_
-and `appveyor.yml <https://github.com/giampaolo/psutil/blob/master/appveyor.yml>`_.
+Test files controlling these are
+`.travis.yml <https://github.com/giampaolo/psutil/blob/master/.travis.yml>`_
+and
+`appveyor.yml <https://github.com/giampaolo/psutil/blob/master/appveyor.yml>`_.
 Both services run psutil test suite against all supported python version
-(2.6 - 3.5).
+(2.6 - 3.4).
 Two icons in the home page (README) always show the build status:
 
 .. image:: https://api.travis-ci.org/giampaolo/psutil.png?branch=master

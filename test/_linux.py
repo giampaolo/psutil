@@ -26,7 +26,7 @@ try:
 except ImportError:
     import mock  # requires "pip install mock"
 
-from test_psutil import POSIX, TOLERANCE, TRAVIS, LINUX
+from test_psutil import POSIX, MEMORY_TOLERANCE, TRAVIS, LINUX
 from test_psutil import (skip_on_not_implemented, sh, get_test_subprocess,
                          retry_before_failing, get_kernel_version, unittest,
                          which, call_until)
@@ -131,28 +131,28 @@ class LinuxSpecificTestCase(unittest.TestCase):
         lines = sh('free').split('\n')[1:]
         used = int(lines[0].split()[2]) * 1024
         self.assertAlmostEqual(used, psutil.virtual_memory().used,
-                               delta=TOLERANCE)
+                               delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_free(self):
         lines = sh('free').split('\n')[1:]
         free = int(lines[0].split()[3]) * 1024
         self.assertAlmostEqual(free, psutil.virtual_memory().free,
-                               delta=TOLERANCE)
+                               delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_buffers(self):
         lines = sh('free').split('\n')[1:]
         buffers = int(lines[0].split()[5]) * 1024
         self.assertAlmostEqual(buffers, psutil.virtual_memory().buffers,
-                               delta=TOLERANCE)
+                               delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_cached(self):
         lines = sh('free').split('\n')[1:]
         cached = int(lines[0].split()[6]) * 1024
         self.assertAlmostEqual(cached, psutil.virtual_memory().cached,
-                               delta=TOLERANCE)
+                               delta=MEMORY_TOLERANCE)
 
     def test_swapmem_total(self):
         lines = sh('free').split('\n')[1:]
@@ -164,14 +164,14 @@ class LinuxSpecificTestCase(unittest.TestCase):
         lines = sh('free').split('\n')[1:]
         used = int(lines[2].split()[2]) * 1024
         self.assertAlmostEqual(used, psutil.swap_memory().used,
-                               delta=TOLERANCE)
+                               delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_swapmem_free(self):
         lines = sh('free').split('\n')[1:]
         free = int(lines[2].split()[3]) * 1024
         self.assertAlmostEqual(free, psutil.swap_memory().free,
-                               delta=TOLERANCE)
+                               delta=MEMORY_TOLERANCE)
 
     @unittest.skipIf(TRAVIS, "unknown failure on travis")
     def test_cpu_times(self):

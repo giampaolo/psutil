@@ -1065,9 +1065,9 @@ class Process(object):
                 if not PY3 and not isinstance(value, (int, long)):
                     msg = "value argument is not an integer (gor %r)" % value
                     raise TypeError(msg)
-                if not 0 <= value <= 8:
+                if not 0 <= value <= 7:
                     raise ValueError(
-                        "value argument range expected is between 0 and 8")
+                        "value argument range expected is between 0 and 7")
 
             if ioclass in (IOPRIO_CLASS_NONE, None):
                 if value:

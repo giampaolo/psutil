@@ -410,28 +410,36 @@ Network
   Return the addresses associated to each NIC (network interface card)
   installed on the system as a dictionary whose keys are the NIC names and
   value is a list of namedtuples for each address assigned to the NIC.
-  Each namedtuple includes 4 fields:
+  Each namedtuple includes 5 fields:
 
   - **family**
   - **address**
   - **netmask**
   - **broadcast**
+  - **ptp**
 
   *family* can be either
   `AF_INET <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
   `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
   or :const:`psutil.AF_LINK`, which refers to a MAC address.
-  *address* is the primary address, *netmask* and *broadcast* may be ``None``.
+  *address* is the primary address and it is always set.
+  *netmask*, *broadcast* and *ptp* may be ``None``.
+  *ptp* stands for "point to point" and references the destination address on a
+  point to point interface (tipically a VPN).
+  *broadcast* and *ptp* are mutually exclusive.
+  *netmask*, *broadcast* and *ptp* are not supported on Windows and are set to
+  ``None``.
+
   Example::
 
     >>> import psutil
     >>> psutil.net_if_addrs()
-    {'lo': [snic(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1'),
-            snic(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None),
-            snic(family=<AddressFamily.AF_LINK: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00')],
-     'wlan0': [snic(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255'),
-               snic(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None),
-               snic(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff')]}
+    {'lo': [snic(family=<AddressFamily.AF_INET: 2>, address='127.0.0.1', netmask='255.0.0.0', broadcast='127.0.0.1', ptp=None),
+            snic(family=<AddressFamily.AF_INET6: 10>, address='::1', netmask='ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', broadcast=None, ptp=None),
+            snic(family=<AddressFamily.AF_LINK: 17>, address='00:00:00:00:00:00', netmask=None, broadcast='00:00:00:00:00:00', ptp=None)],
+     'wlan0': [snic(family=<AddressFamily.AF_INET: 2>, address='192.168.1.3', netmask='255.255.255.0', broadcast='192.168.1.255', ptp=None),
+               snic(family=<AddressFamily.AF_INET6: 10>, address='fe80::c685:8ff:fe45:641%wlan0', netmask='ffff:ffff:ffff:ffff::', broadcast=None, ptp=None),
+               snic(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
     >>>
 
   See also `examples/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/examples/ifconfig.py>`__
@@ -444,7 +452,12 @@ Network
   .. note:: you can have more than one address of the same family associated
     with each interface (that's why dict values are lists).
 
+  .. note:: *netmask*, *broadcast* and *ptp* are not supported on Windows and
+    are set to ``None``.
+
   *New in 3.0.0*
+
+  *Changed in 3.1.2:* *ptp* field was added.
 
 .. function:: net_if_stats()
 
