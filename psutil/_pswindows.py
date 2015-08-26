@@ -315,7 +315,20 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        return cext.proc_cmdline(self.pid)
+        ret = cext.proc_cmdline(self.pid)
+        if PY3:
+            return ret
+        else:
+            # On Python 2, if one or more bits of the cmdline is unicode
+            # we return a list of unicode strings.
+            new = []
+            for x in ret:
+                x = py2_stringify(x)
+                if isinstance(x, unicode):
+                    return ret
+                else:
+                    new.append(x)
+            return new
 
     def ppid(self):
         try:

@@ -697,6 +697,10 @@ Process class
 
      The command line this process has been called with.
 
+     *Changed in 3.2.0:* (Windows, Python 2) in case one or more parts of the
+     cmdline contains non ASCII characters the returned type is a list of
+     unicode strings.
+
   .. method:: create_time()
 
      The process creation time as a floating point number expressed in seconds

@@ -491,8 +491,10 @@ class TestUnicode(unittest.TestCase):
         shutil.copyfile(sys.executable, self.uexe)
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
-        self.assertIsInstance("".join(p.cmdline()), unicode)
-        self.assertEqual(p.cmdline(), [self.uexe])
+        self.assertIsInstance(u("").join(p.cmdline()), unicode)
+        uexe = self.uexe if PY3 else \
+            unicode(self.uexe, sys.getfilesystemencoding())
+        self.assertEqual(p.cmdline(), [uexe])
 
     def test_proc_cwd(self):
         tdir = tempfile.mkdtemp(prefix=u("psutil-è-"))
