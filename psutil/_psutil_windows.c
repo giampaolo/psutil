@@ -3004,10 +3004,10 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     MIB_IFROW *pIfRow;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
-    char friendly_name[MAX_PATH];
     char descr[MAX_PATH];
     int ifname_found;
 
+    PyObject *py_nic_name = NULL;
     PyObject *py_retdict = PyDict_New();
     PyObject *py_ifc_info = NULL;
     PyObject *py_is_up = NULL;
@@ -3052,7 +3052,11 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         while (pCurrAddresses) {
             sprintf_s(descr, MAX_PATH, "%wS", pCurrAddresses->Description);
             if (lstrcmp(descr, pIfRow->bDescr) == 0) {
-                sprintf_s(friendly_name, MAX_PATH, "%wS", pCurrAddresses->FriendlyName);
+                py_nic_name = PyUnicode_FromWideChar(
+                    pCurrAddresses->FriendlyName,
+                    wcslen(pCurrAddresses->FriendlyName));
+                if (py_nic_name == NULL)
+                    goto error;
                 ifname_found = 1;
                 break;
             }
@@ -3085,8 +3089,9 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         );
         if (!py_ifc_info)
             goto error;
-        if (PyDict_SetItemString(py_retdict, friendly_name, py_ifc_info))
+        if (PyDict_SetItemString(py_retdict, py_nic_name, py_ifc_info))
             goto error;
+        Py_DECREF(py_nic_name);
         Py_DECREF(py_ifc_info);
     }
 
@@ -3097,6 +3102,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
 error:
     Py_XDECREF(py_is_up);
     Py_XDECREF(py_ifc_info);
+    Py_XDECREF(py_nic_name);
     Py_DECREF(py_retdict);
     if (pIfTable != NULL)
         free(pIfTable);
