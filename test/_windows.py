@@ -458,6 +458,7 @@ class TestDualProcessImplementation(unittest.TestCase):
 
 
 class TestUnicode(unittest.TestCase):
+    # See: https://github.com/giampaolo/psutil/issues/655
 
     @classmethod
     def setUpClass(cls):

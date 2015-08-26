@@ -3103,8 +3103,9 @@ def main():
         from _linux import LinuxSpecificTestCase as stc
     elif WINDOWS:
         from _windows import WindowsSpecificTestCase as stc
-        from _windows import TestDualProcessImplementation
+        from _windows import TestDualProcessImplementation, TestUnicode
         tests.append(TestDualProcessImplementation)
+        tests.append(TestUnicode)
     elif OSX:
         from _osx import OSXSpecificTestCase as stc
     elif BSD:
