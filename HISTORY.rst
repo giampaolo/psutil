@@ -17,6 +17,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
+- #670: [Windows] segfgault of net_if_addrs() in case of non-ASCII NIC names.
+  (patch by sk6249)
 - #672: [Windows] compilation fails if using Windows SDK v8.0. (patch by
   Steven Winfield)
 
