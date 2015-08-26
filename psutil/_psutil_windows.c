@@ -941,9 +941,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     PVOID rtlUserProcParamsAddress;
     UNICODE_STRING currentDirectory;
     WCHAR *currentDirectoryContent = NULL;
-    PyObject *returnPyObj = NULL;
-    PyObject *cwd_from_wchar = NULL;
-    PyObject *cwd = NULL;
+    PyObject *py_cwd = NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -1024,36 +1022,17 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     // currentDirectory.Length is in bytes
     currentDirectoryContent[(currentDirectory.Length / sizeof(WCHAR))] = '\0';
 
-    // convert wchar array to a Python unicode string, and then to UTF8
-    cwd_from_wchar = PyUnicode_FromWideChar(currentDirectoryContent,
-                                            wcslen(currentDirectoryContent));
-    if (cwd_from_wchar == NULL)
+    // convert wchar array to a Python unicode string
+    py_cwd = PyUnicode_FromWideChar(
+        currentDirectoryContent, wcslen(currentDirectoryContent));
+    if (py_cwd == NULL)
         goto error;
-
-#if PY_MAJOR_VERSION >= 3
-    cwd = PyUnicode_FromObject(cwd_from_wchar);
-#else
-    cwd = PyUnicode_AsUTF8String(cwd_from_wchar);
-#endif
-    if (cwd == NULL)
-        goto error;
-
-    // decrement the reference count on our temp unicode str to avoid
-    // mem leak
-    returnPyObj = Py_BuildValue("N", cwd);
-    if (!returnPyObj)
-        goto error;
-
-    Py_DECREF(cwd_from_wchar);
-
     CloseHandle(processHandle);
     free(currentDirectoryContent);
-    return returnPyObj;
+    return py_cwd;
 
 error:
-    Py_XDECREF(cwd_from_wchar);
-    Py_XDECREF(cwd);
-    Py_XDECREF(returnPyObj);
+    Py_XDECREF(py_cwd);
     if (currentDirectoryContent != NULL)
         free(currentDirectoryContent);
     if (processHandle != NULL)

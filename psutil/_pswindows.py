@@ -440,7 +440,7 @@ class Process(object):
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
         path = cext.proc_cwd(self.pid)
-        return os.path.normpath(path)
+        return py2_stringify(os.path.normpath(path))
 
     @wrap_exceptions
     def open_files(self):

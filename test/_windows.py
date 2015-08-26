@@ -495,7 +495,7 @@ class TestUnicode(unittest.TestCase):
         self.assertEqual(p.cmdline(), [self.uexe])
 
     def test_proc_cwd(self):
-        tdir = tempfile.mkdtemp(prefix="psutil-è-")
+        tdir = tempfile.mkdtemp(prefix=u("psutil-è-"))
         self.addCleanup(safe_rmdir, tdir)
         with chdir(tdir):
             p = psutil.Process()

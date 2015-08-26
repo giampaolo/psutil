@@ -744,6 +744,9 @@ Process class
 
      The process current working directory as an absolute path.
 
+     *Changed in 3.2.0:* (Windows, Python 2) in case of non ASCII path the
+     returned type is unicode instead of str.
+
   .. method:: username()
 
      The name of the user that owns the process. On UNIX this is calculated by
