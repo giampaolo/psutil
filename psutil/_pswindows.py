@@ -234,6 +234,16 @@ def users():
     return retlist
 
 
+def py2_stringify(s):
+    if PY3:
+        return s
+    else:
+        try:
+            return str(s)
+        except UnicodeEncodeError:
+            return s
+
+
 pids = cext.pids
 pid_exists = cext.pid_exists
 net_io_counters = cext.net_io_counters
@@ -287,9 +297,9 @@ class Process(object):
             try:
                 # Note: this will fail with AD for most PIDs owned
                 # by another user but it's faster.
-                return os.path.basename(self.exe())
+                return py2_stringify(os.path.basename(self.exe()))
             except AccessDenied:
-                return cext.proc_name(self.pid)
+                return py2_stringify(cext.proc_name(self.pid))
 
     @wrap_exceptions
     def exe(self):
@@ -301,7 +311,7 @@ class Process(object):
         # see https://github.com/giampaolo/psutil/issues/528
         if self.pid in (0, 4):
             raise AccessDenied(self.pid, self._name)
-        return _convert_raw_path(cext.proc_exe(self.pid))
+        return py2_stringify(_convert_raw_path(cext.proc_exe(self.pid)))
 
     @wrap_exceptions
     def cmdline(self):

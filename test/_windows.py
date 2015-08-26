@@ -292,7 +292,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
         for p in psutil.process_iter():
             try:
                 p.name()
-            except psutil.NoSuchProcess():
+            except psutil.NoSuchProcess:
                 pass
 
 

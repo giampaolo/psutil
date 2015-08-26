@@ -681,11 +681,17 @@ Process class
 
      The process name. The return value is cached after first call.
 
+     *Changed in 3.2.0:* (Windows, Python 2) in case of non ASCII name the
+     returned type is unicode instead of str.
+
   .. method:: exe()
 
      The process executable as an absolute path.
      On some systems this may also be an empty string.
      The return value is cached after first call.
+
+     *Changed in 3.2.0:* (Windows, Python 2) in case of non ASCII path the
+     returned type is unicode instead of str.
 
   .. method:: cmdline()
 
