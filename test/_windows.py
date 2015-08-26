@@ -34,7 +34,7 @@ try:
 except ImportError:
     win32api = win32con = None
 
-from psutil._compat import PY3, callable, long
+from psutil._compat import PY3, callable, long, unicode
 import psutil
 
 
@@ -476,11 +476,14 @@ class TestUnicode(unittest.TestCase):
         shutil.copyfile(sys.executable, self.uexe)
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
+        self.assertIsInstance(p.name(), unicode)
         self.assertEqual(os.path.basename(p.name()), u("psutil-è.exe"))
 
     def test_proc_name(self):
         shutil.copyfile(sys.executable, self.uexe)
         subp = get_test_subprocess(cmd=[self.uexe])
+        self.assertIsInstance(psutil._psplatform.cext.proc_name(subp.pid),
+                              unicode)
         self.assertEqual(psutil._psplatform.cext.proc_name(subp.pid),
                          u("psutil-è.exe"))
 
@@ -488,6 +491,7 @@ class TestUnicode(unittest.TestCase):
         shutil.copyfile(sys.executable, self.uexe)
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
+        self.assertIsInstance("".join(p.cmdline()), unicode)
         self.assertEqual(p.cmdline(), [self.uexe])
 
     def test_proc_cwd(self):
@@ -495,6 +499,7 @@ class TestUnicode(unittest.TestCase):
         self.addCleanup(safe_rmdir, tdir)
         with chdir(tdir):
             p = psutil.Process()
+            self.assertIsInstance(p.cwd(), unicode)
             self.assertEqual(p.cwd(), tdir)
 
     def test_proc_open_files(self):
@@ -503,6 +508,7 @@ class TestUnicode(unittest.TestCase):
         with open(self.uexe, 'w'):
             new = set(p.open_files())
         path = (new - start).pop().path
+        self.assertIsInstance(path, unicode)
         self.assertEqual(path, self.uexe)
 
 
