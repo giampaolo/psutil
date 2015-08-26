@@ -2203,8 +2203,9 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         if (!py_nic_info)
             goto error;
 
-        py_nic_name = PyUnicode_FromWideChar(pCurrAddresses->FriendlyName, 
-		                                     wcslen(pCurrAddresses->FriendlyName));
+        py_nic_name = PyUnicode_FromWideChar(
+            pCurrAddresses->FriendlyName,
+            wcslen(pCurrAddresses->FriendlyName));
 
         if (py_nic_name == NULL)
             goto error;
@@ -2850,7 +2851,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     PyObject *py_tuple = NULL;
     PyObject *py_address = NULL;
     PyObject *py_mac_address = NULL;
-	PyObject *py_nic_name = NULL;
+    PyObject *py_nic_name = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -2862,12 +2863,12 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
 
     while (pCurrAddresses) {
         pUnicast = pCurrAddresses->FirstUnicastAddress;
-        
-		py_nic_name = NULL;
-		py_nic_name = PyUnicode_FromWideChar(pCurrAddresses->FriendlyName, 
-		                                     wcslen(pCurrAddresses->FriendlyName));
-		if (py_nic_name == NULL)
-			goto error;
+
+        py_nic_name = NULL;
+        py_nic_name = PyUnicode_FromWideChar(pCurrAddresses->FriendlyName,
+                                             wcslen(pCurrAddresses->FriendlyName));
+        if (py_nic_name == NULL)
+            goto error;
 
         // MAC address
         if (pCurrAddresses->PhysicalAddressLength != 0) {
@@ -2971,7 +2972,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 pUnicast = pUnicast->Next;
             }
         }
-		Py_DECREF(py_nic_name);
+        Py_DECREF(py_nic_name);
         pCurrAddresses = pCurrAddresses->Next;
     }
 
@@ -2984,7 +2985,7 @@ error:
     Py_DECREF(py_retlist);
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
-	Py_XDECREF(py_nic_name);
+    Py_XDECREF(py_nic_name);
     return NULL;
 }
 
@@ -3065,14 +3066,14 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
         }
 
         // is up?
-		if((pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_CONNECTED ||
+        if((pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_CONNECTED ||
                 pIfRow->dwOperStatus == MIB_IF_OPER_STATUS_OPERATIONAL) &&
                 pIfRow->dwAdminStatus == 1 ) {
-			py_is_up = Py_True;
-		}
-		else {
-			py_is_up = Py_False;
-		}
+            py_is_up = Py_True;
+        }
+        else {
+            py_is_up = Py_False;
+        }
         Py_INCREF(py_is_up);
 
         py_ifc_info = Py_BuildValue(
