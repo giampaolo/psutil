@@ -12,11 +12,9 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 - #513: [Linux] fixed integer overflow for RLIM_INFINITY.
 - #641: [Windows] fixed many compilation warnings.  (patch by Jeff Tang)
+- #655: [Windows] net_if_stats unicode error in in case of non-ASCII NIC names.
 - #659: [Linux] compilation error on Suse 10.
 - #664: [Linux] compilation error on Alpine Linux. (patch by Bart van Kleef)
-
-**Bug fixes**
-
 - #670: [Windows] segfgault of net_if_addrs() in case of non-ASCII NIC names.
   (patch by sk6249)
 - #672: [Windows] compilation fails if using Windows SDK v8.0. (patch by
