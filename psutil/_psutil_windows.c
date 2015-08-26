@@ -638,7 +638,7 @@ static PyObject *
 psutil_proc_name(PyObject *self, PyObject *args) {
     long pid;
     int ok;
-    PROCESSENTRY32 pentry;
+    PROCESSENTRY32W pentry;
     HANDLE hSnapShot;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -648,8 +648,8 @@ psutil_proc_name(PyObject *self, PyObject *args) {
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
-    pentry.dwSize = sizeof(PROCESSENTRY32);
-    ok = Process32First(hSnapShot, &pentry);
+    pentry.dwSize = sizeof(PROCESSENTRY32W);
+    ok = Process32FirstW(hSnapShot, &pentry);
     if (! ok) {
         CloseHandle(hSnapShot);
         PyErr_SetFromWindowsErr(0);
@@ -658,9 +658,10 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     while (ok) {
         if (pentry.th32ProcessID == pid) {
             CloseHandle(hSnapShot);
-            return Py_BuildValue("s", pentry.szExeFile);
+            return PyUnicode_FromWideChar(
+                pentry.szExeFile, wcslen(pentry.szExeFile));
         }
-        ok = Process32Next(hSnapShot, &pentry);
+        ok = Process32NextW(hSnapShot, &pentry);
     }
 
     CloseHandle(hSnapShot);
