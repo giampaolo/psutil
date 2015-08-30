@@ -217,9 +217,8 @@ psutil_get_arg_list(long pid) {
     PVOID rtlUserProcParamsAddress;
     UNICODE_STRING commandLine;
     WCHAR *commandLineContents = NULL;
-    PyObject *arg = NULL;
-    PyObject *arg_from_wchar = NULL;
-    PyObject *argList = NULL;
+    PyObject *py_arg = NULL;
+    PyObject *py_retlist = NULL;
 
     hProcess = psutil_handle_from_pid(pid);
     if (hProcess == NULL)
@@ -274,48 +273,27 @@ psutil_get_arg_list(long pid) {
     // commandLine.Length is in bytes.
     commandLineContents[(commandLine.Length / sizeof(WCHAR))] = '\0';
 
-    // attempt tp parse the command line using Win32 API, fall back
+    // attempt to parse the command line using Win32 API, fall back
     // on string cmdline version otherwise
     szArglist = CommandLineToArgvW(commandLineContents, &nArgs);
-    if (NULL == szArglist) {
-        // failed to parse arglist
-        // encode as a UTF8 Python string object from WCHAR string
-        arg_from_wchar = PyUnicode_FromWideChar(commandLineContents,
-                                                commandLine.Length / 2);
-        if (arg_from_wchar == NULL)
-            goto error;
-#if PY_MAJOR_VERSION >= 3
-        argList = Py_BuildValue("N", PyUnicode_AsUTF8String(arg_from_wchar));
-#else
-        argList = Py_BuildValue("N", PyUnicode_FromObject(arg_from_wchar));
-#endif
-        if (!argList)
-            goto error;
+    if (szArglist == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
     }
     else {
         // arglist parsed as array of UNICODE_STRING, so convert each to
         // Python string object and add to arg list
-        argList = Py_BuildValue("[]");
-        if (argList == NULL)
+        py_retlist = Py_BuildValue("[]");
+        if (py_retlist == NULL)
             goto error;
         for (i = 0; i < nArgs; i++) {
-            arg_from_wchar = NULL;
-            arg = NULL;
-            arg_from_wchar = PyUnicode_FromWideChar(szArglist[i],
-                                                    wcslen(szArglist[i]));
-            if (arg_from_wchar == NULL)
+            py_arg = PyUnicode_FromWideChar(
+                szArglist[i], wcslen(szArglist[i]));
+            if (py_arg == NULL)
                 goto error;
-#if PY_MAJOR_VERSION >= 3
-            arg = PyUnicode_FromObject(arg_from_wchar);
-#else
-            arg = PyUnicode_AsUTF8String(arg_from_wchar);
-#endif
-            if (arg == NULL)
+            if (PyList_Append(py_retlist, py_arg))
                 goto error;
-            Py_XDECREF(arg_from_wchar);
-            if (PyList_Append(argList, arg))
-                goto error;
-            Py_XDECREF(arg);
+            Py_XDECREF(py_arg);
         }
     }
 
@@ -323,12 +301,11 @@ psutil_get_arg_list(long pid) {
         LocalFree(szArglist);
     free(commandLineContents);
     CloseHandle(hProcess);
-    return argList;
+    return py_retlist;
 
 error:
-    Py_XDECREF(arg);
-    Py_XDECREF(arg_from_wchar);
-    Py_XDECREF(argList);
+    Py_XDECREF(py_arg);
+    Py_XDECREF(py_retlist);
     if (hProcess != NULL)
         CloseHandle(hProcess);
     if (commandLineContents != NULL)

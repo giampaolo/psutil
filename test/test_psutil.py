@@ -420,6 +420,17 @@ def safe_rmdir(dir):
             raise
 
 
+@contextlib.contextmanager
+def chdir(dirname):
+    """Context manager which temporarily changes the current directory."""
+    curdir = os.getcwd()
+    try:
+        os.chdir(dirname)
+        yield
+    finally:
+        os.chdir(curdir)
+
+
 def call_until(fun, expr, timeout=GLOBAL_TIMEOUT):
     """Keep calling function for timeout secs and exit if eval()
     expression is True.
@@ -3092,8 +3103,9 @@ def main():
         from _linux import LinuxSpecificTestCase as stc
     elif WINDOWS:
         from _windows import WindowsSpecificTestCase as stc
-        from _windows import TestDualProcessImplementation
+        from _windows import TestDualProcessImplementation, TestUnicode
         tests.append(TestDualProcessImplementation)
+        tests.append(TestUnicode)
     elif OSX:
         from _osx import OSXSpecificTestCase as stc
     elif BSD:

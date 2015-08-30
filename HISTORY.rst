@@ -7,14 +7,16 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 - #648: CI test integration for OSX. (patch by Jeff Tang)
 - #663: net_if_addrs() now returns point-to-point addresses (for VPNs).
-- #655: [Windows] str/uniocde unification. Different methods returning a string
-  now return unicode on both Python 2 and 3:
-  - net_if_stats
-  - net_io_counters
-  - users
-  - Process.username
-  - Process.name
-  - Process.cmdline
+- #655: [Windows] different issues regarding unicode handling were fixed. On
+  Python 2 all APIs returning a string will now return an encoded version of it
+  by using sys.getfilesystemencoding() codec. The APIs involved are:
+  - psutil.net_if_stats
+  - psutil.net_if_addrs
+  - psutil.net_io_counters
+  - psutil.users
+  - psutil.Process.username
+  - psutil.Process.name
+  - psutil.Process.cmdline
 
 **Bug fixes**
 
