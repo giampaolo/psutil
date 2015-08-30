@@ -476,32 +476,30 @@ class TestUnicode(unittest.TestCase):
         shutil.copyfile(sys.executable, self.uexe)
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
-        self.assertIsInstance(p.name(), unicode)
-        self.assertEqual(os.path.basename(p.name()), u("psutil-è.exe"))
+        self.assertIsInstance(p.name(), str)
+        self.assertEqual(os.path.basename(p.name()), "psutil-è.exe")
 
     def test_proc_name(self):
+        from psutil._pswindows import py2_strencode
         shutil.copyfile(sys.executable, self.uexe)
         subp = get_test_subprocess(cmd=[self.uexe])
-        self.assertIsInstance(psutil._psplatform.cext.proc_name(subp.pid),
-                              unicode)
-        self.assertEqual(psutil._psplatform.cext.proc_name(subp.pid),
-                         u("psutil-è.exe"))
+        self.assertEqual(
+            py2_strencode(psutil._psplatform.cext.proc_name(subp.pid)),
+            "psutil-è.exe")
 
     def test_proc_cmdline(self):
         shutil.copyfile(sys.executable, self.uexe)
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
-        self.assertIsInstance(u("").join(p.cmdline()), unicode)
-        uexe = self.uexe if PY3 else \
-            unicode(self.uexe, sys.getfilesystemencoding())
-        self.assertEqual(p.cmdline(), [uexe])
+        self.assertIsInstance("".join(p.cmdline()), str)
+        self.assertEqual(p.cmdline(), [self.uexe])
 
     def test_proc_cwd(self):
-        tdir = tempfile.mkdtemp(prefix=u("psutil-è-"))
+        tdir = tempfile.mkdtemp(prefix="psutil-è-")
         self.addCleanup(safe_rmdir, tdir)
         with chdir(tdir):
             p = psutil.Process()
-            self.assertIsInstance(p.cwd(), unicode)
+            self.assertIsInstance(p.cwd(), str)
             self.assertEqual(p.cwd(), tdir)
 
     def test_proc_open_files(self):
@@ -510,8 +508,8 @@ class TestUnicode(unittest.TestCase):
         with open(self.uexe, 'w'):
             new = set(p.open_files())
         path = (new - start).pop().path
-        self.assertIsInstance(path, unicode)
-        self.assertEqual(path, self.uexe)
+        self.assertIsInstance(path, str)
+        self.assertEqual(path.lower(), self.uexe.lower())
 
 
 def main():

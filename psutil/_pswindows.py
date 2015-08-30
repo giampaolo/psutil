@@ -234,13 +234,15 @@ def users():
     return retlist
 
 
-def py2_stringify(s):
-    if PY3:
+def py2_strencode(s, encoding=sys.getfilesystemencoding()):
+    if PY3 or isinstance(s, str):
         return s
     else:
         try:
-            return str(s)
+            return s.encode(encoding)
         except UnicodeEncodeError:
+            # Filesystem codec failed, return the plain unicode
+            # string (this should never happen).
             return s
 
 
@@ -297,9 +299,9 @@ class Process(object):
             try:
                 # Note: this will fail with AD for most PIDs owned
                 # by another user but it's faster.
-                return py2_stringify(os.path.basename(self.exe()))
+                return py2_strencode(os.path.basename(self.exe()))
             except AccessDenied:
-                return py2_stringify(cext.proc_name(self.pid))
+                return py2_strencode(cext.proc_name(self.pid))
 
     @wrap_exceptions
     def exe(self):
@@ -311,7 +313,7 @@ class Process(object):
         # see https://github.com/giampaolo/psutil/issues/528
         if self.pid in (0, 4):
             raise AccessDenied(self.pid, self._name)
-        return py2_stringify(_convert_raw_path(cext.proc_exe(self.pid)))
+        return py2_strencode(_convert_raw_path(cext.proc_exe(self.pid)))
 
     @wrap_exceptions
     def cmdline(self):
@@ -319,16 +321,7 @@ class Process(object):
         if PY3:
             return ret
         else:
-            # On Python 2, if one or more bits of the cmdline is unicode
-            # we return a list of unicode strings.
-            new = []
-            for x in ret:
-                x = py2_stringify(x)
-                if isinstance(x, unicode):
-                    return ret
-                else:
-                    new.append(x)
-            return new
+            return [py2_strencode(s) for s in ret]
 
     def ppid(self):
         try:
@@ -453,13 +446,13 @@ class Process(object):
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
         path = cext.proc_cwd(self.pid)
-        return py2_stringify(os.path.normpath(path))
+        return py2_strencode(os.path.normpath(path))
 
     @wrap_exceptions
     def open_files(self):
         if self.pid in (0, 4):
             return []
-        retlist = []
+        ret = set()
         # Filenames come in in native format like:
         # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
         # Convert the first part in the corresponding drive letter
@@ -467,10 +460,12 @@ class Process(object):
         raw_file_names = cext.proc_open_files(self.pid)
         for _file in raw_file_names:
             _file = _convert_raw_path(_file)
-            if isfile_strict(_file) and _file not in retlist:
+            if isfile_strict(_file):
+                if not PY3:
+                    _file = py2_strencode(_file)
                 ntuple = _common.popenfile(_file, -1)
-                retlist.append(ntuple)
-        return retlist
+                ret.add(ntuple)
+        return list(ret)
 
     @wrap_exceptions
     def connections(self, kind='inet'):

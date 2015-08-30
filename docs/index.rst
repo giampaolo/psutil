@@ -681,25 +681,15 @@ Process class
 
      The process name. The return value is cached after first call.
 
-     *Changed in 3.2.0:* (Windows, Python 2) in case of non ASCII name the
-     returned type is unicode instead of str.
-
   .. method:: exe()
 
      The process executable as an absolute path.
      On some systems this may also be an empty string.
      The return value is cached after first call.
 
-     *Changed in 3.2.0:* (Windows, Python 2) in case of non ASCII path the
-     returned type is unicode instead of str.
-
   .. method:: cmdline()
 
      The command line this process has been called with.
-
-     *Changed in 3.2.0:* (Windows, Python 2) in case one or more parts of the
-     cmdline contains non ASCII characters the returned type is a list of
-     unicode strings.
 
   .. method:: create_time()
 
@@ -747,9 +737,6 @@ Process class
   .. method:: cwd()
 
      The process current working directory as an absolute path.
-
-     *Changed in 3.2.0:* (Windows, Python 2) in case of non ASCII path the
-     returned type is unicode instead of str.
 
   .. method:: username()
 
