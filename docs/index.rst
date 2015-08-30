@@ -457,7 +457,7 @@ Network
 
   *New in 3.0.0*
 
-  *Changed in 3.1.2:* *ptp* field was added.
+  *Changed in 3.2.0:* *ptp* field was added.
 
 .. function:: net_if_stats()
 
@@ -1183,9 +1183,13 @@ Process class
      Send a signal to process (see
      `signal module <http://docs.python.org//library/signal.html>`__
      constants) pre-emptively checking whether PID has been reused.
-     This is the same as ``os.kill(pid, sig)``.
-     On Windows only **SIGTERM** is valid and is treated as an alias for
+     On UNIX this is the same as ``os.kill(pid, sig)``.
+     On Windows only **SIGTERM**, **CTRL_C_EVENT ** and **CTRL_BREAK_EVENT**
+     signals are supported and **SIGTERM** is treated as an alias for
      :meth:`kill()`.
+
+     *Changed in 3.2.0:* support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals
+     was added.
 
   .. method:: suspend()
 

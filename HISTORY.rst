@@ -1,10 +1,12 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
-3.1.2 - XXXX-XX-XX
+3.2.0 - XXXX-XX-XX
 ==================
 
 **Enhancements**
 
+- #644: [Windows] added support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals
+  to use with Process.send_signal().
 - #648: CI test integration for OSX. (patch by Jeff Tang)
 - #663: net_if_addrs() now returns point-to-point addresses (for VPNs).
 - #655: [Windows] different issues regarding unicode handling were fixed. On

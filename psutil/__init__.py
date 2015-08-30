@@ -1039,8 +1039,14 @@ class Process(object):
         else:
             if sig == signal.SIGTERM:
                 self._proc.kill()
+            # py >= 2.7
+            elif sig in (getattr(signal, "CTRL_C_EVENT", object()),
+                         getattr(signal, "CTRL_BREAK_EVENT", object())):
+                self._proc.send_signal(sig)
             else:
-                raise ValueError("only SIGTERM is supported on Windows")
+                raise ValueError(
+                    "only SIGTERM, CTRL_C_EVENT and CTRL_BREAK_EVENT signals "
+                    "are supported on Windows")
 
     @_assert_pid_not_reused
     def suspend(self):
