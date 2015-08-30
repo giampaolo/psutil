@@ -113,6 +113,18 @@ def _convert_raw_path(s):
     return os.path.join(driveletter, s[len(rawdrive):])
 
 
+def py2_strencode(s, encoding=sys.getfilesystemencoding()):
+    if PY3 or isinstance(s, str):
+        return s
+    else:
+        try:
+            return s.encode(encoding)
+        except UnicodeEncodeError:
+            # Filesystem codec failed, return the plain unicode
+            # string (this should never happen).
+            return s
+
+
 # --- public functions
 
 
@@ -216,10 +228,25 @@ def net_connections(kind, _pid=-1):
 def net_if_stats():
     ret = cext.net_if_stats()
     for name, items in ret.items():
+        name = py2_strencode(name)
         isup, duplex, speed, mtu = items
         if hasattr(_common, 'NicDuplex'):
             duplex = _common.NicDuplex(duplex)
         ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+    return ret
+
+
+def net_io_counters():
+    ret = cext.net_io_counters()
+    return dict([(py2_strencode(k), v) for k, v in ret.items()])
+
+
+def net_if_addrs():
+    ret = []
+    for items in cext.net_if_addrs():
+        items = list(items)
+        items[0] = py2_strencode(items[0])
+        ret.append(items)
     return ret
 
 
@@ -229,29 +256,16 @@ def users():
     rawlist = cext.users()
     for item in rawlist:
         user, hostname, tstamp = item
+        user = py2_strencode(user)
         nt = _common.suser(user, None, hostname, tstamp)
         retlist.append(nt)
     return retlist
 
 
-def py2_strencode(s, encoding=sys.getfilesystemencoding()):
-    if PY3 or isinstance(s, str):
-        return s
-    else:
-        try:
-            return s.encode(encoding)
-        except UnicodeEncodeError:
-            # Filesystem codec failed, return the plain unicode
-            # string (this should never happen).
-            return s
-
-
 pids = cext.pids
 pid_exists = cext.pid_exists
-net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
 ppid_map = cext.ppid_map  # not meant to be public
-net_if_addrs = cext.net_if_addrs
 
 
 def wrap_exceptions(fun):
