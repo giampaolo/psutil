@@ -18,7 +18,6 @@ import tempfile
 import time
 import traceback
 
-from psutil._compat import u
 from test_psutil import APPVEYOR, WINDOWS
 from test_psutil import get_test_subprocess, reap_children, unittest
 from test_psutil import safe_remove, safe_rmdir, chdir
@@ -34,7 +33,7 @@ try:
 except ImportError:
     win32api = win32con = None
 
-from psutil._compat import PY3, callable, long, unicode
+from psutil._compat import PY3, callable, long
 import psutil
 
 
