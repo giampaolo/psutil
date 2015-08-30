@@ -8,25 +8,25 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #644: [Windows] added support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals
   to use with Process.send_signal().
 - #648: CI test integration for OSX. (patch by Jeff Tang)
-- #663: net_if_addrs() now returns point-to-point addresses (for VPNs).
+- #663: [UNIX] net_if_addrs() now returns point-to-point (VPNs) addresses.
 - #655: [Windows] different issues regarding unicode handling were fixed. On
   Python 2 all APIs returning a string will now return an encoded version of it
   by using sys.getfilesystemencoding() codec. The APIs involved are:
-  - psutil.net_if_stats
   - psutil.net_if_addrs
+  - psutil.net_if_stats
   - psutil.net_io_counters
-  - psutil.users
-  - psutil.Process.username
-  - psutil.Process.name
   - psutil.Process.cmdline
+  - psutil.Process.name
+  - psutil.Process.username
+  - psutil.users
 
 **Bug fixes**
 
 - #513: [Linux] fixed integer overflow for RLIM_INFINITY.
 - #641: [Windows] fixed many compilation warnings.  (patch by Jeff Tang)
-- #655: [Windows] net_if_stats UnicodeDecodeError in case of non-ASCII NIC 
+- #655: [Windows] net_if_stats UnicodeDecodeError in case of non-ASCII NIC
   names.
-- #659: [Linux] compilation error on Suse 10.
+- #659: [Linux] compilation error on Suse 10. (patch by maozguttman)
 - #664: [Linux] compilation error on Alpine Linux. (patch by Bart van Kleef)
 - #670: [Windows] segfgault of net_if_addrs() in case of non-ASCII NIC names.
   (patch by sk6249)

@@ -9,8 +9,10 @@ running processes and system utilization (CPU, memory, disks, network)
 in Python.
 """
 
+import atexit
 import os
 import sys
+import tempfile
 try:
     from setuptools import setup, Extension
 except ImportError:
@@ -120,10 +122,29 @@ elif sys.platform.startswith("freebsd"):
     ]
 # Linux
 elif sys.platform.startswith("linux"):
+    def get_ethtool_macro():
+        # see: https://github.com/giampaolo/psutil/issues/659
+        from distutils.unixccompiler import UnixCCompiler
+        from distutils.errors import CompileError
+        with tempfile.NamedTemporaryFile(suffix='.c', delete=False) as f:
+            f.write("#include <linux/ethtool.h>")
+        atexit.register(os.remove, f.name)
+        compiler = UnixCCompiler()
+        try:
+            compiler.compile([f.name])
+        except CompileError:
+            return ("PSUTIL_ETHTOOL_MISSING_TYPES", 1)
+        else:
+            return None
+
+    ETHTOOL_MACRO = get_ethtool_macro()
+    macros = [VERSION_MACRO]
+    if ETHTOOL_MACRO is not None:
+        macros.append(ETHTOOL_MACRO)
     extensions = [Extension(
         'psutil._psutil_linux',
         sources=['psutil/_psutil_linux.c'],
-        define_macros=[VERSION_MACRO]),
+        define_macros=macros),
         posix_extension,
     ]
 # Solaris

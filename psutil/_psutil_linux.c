@@ -23,7 +23,15 @@
 #include <sys/socket.h>
 #include <linux/sockios.h>
 #include <linux/if.h>
-#include <linux/types.h>
+
+// see: https://github.com/giampaolo/psutil/issues/659
+#ifdef PSUTIL_ETHTOOL_MISSING_TYPES
+    #include <linux/types.h>
+    typedef __u64 u64;
+    typedef __u32 u32;
+    typedef __u16 u16;
+    typedef __u8 u8;
+#endif
 #include <linux/ethtool.h>
 
 #include "_psutil_linux.h"
