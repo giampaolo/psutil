@@ -471,7 +471,8 @@ class Connections:
         if file.endswith('6') and not os.path.exists(file):
             # IPv6 not supported
             return
-        with open(file, 'rt') as f:
+        kw = dict(encoding=DEFAULT_ENCODING) if PY3 else dict()
+        with open(file, "rt", **kw) as f:
             f.readline()  # skip the first line
             for line in f:
                 try:
@@ -504,7 +505,8 @@ class Connections:
 
     def process_unix(self, file, family, inodes, filter_pid=None):
         """Parse /proc/net/unix files."""
-        with open(file, 'rt') as f:
+        kw = dict(encoding=DEFAULT_ENCODING) if PY3 else dict()
+        with open(file, "rt", **kw) as f:
             f.readline()  # skip the first line
             for line in f:
                 tokens = line.split()
