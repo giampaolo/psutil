@@ -294,6 +294,19 @@ class WindowsSpecificTestCase(unittest.TestCase):
             except psutil.NoSuchProcess:
                 pass
 
+    @unittest.skipUnless(sys.version_info >= (2, 7),
+                         "CTRL_* signals not supported")
+    def test_ctrl_signals(self):
+        p = psutil.Process(get_test_subprocess().pid)
+        p.send_signal(signal.CTRL_C_EVENT)
+        p.send_signal(signal.CTRL_BREAK_EVENT)
+        p.kill()
+        p.wait()
+        self.assertRaises(psutil.NoSuchProcess,
+                          p.send_signal, signal.CTRL_C_EVENT)
+        self.assertRaises(psutil.NoSuchProcess,
+                          p.send_signal, signal.CTRL_BREAK_EVENT)
+
 
 @unittest.skipUnless(WINDOWS, "not a Windows system")
 class TestDualProcessImplementation(unittest.TestCase):

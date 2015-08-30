@@ -388,6 +388,10 @@ class Process(object):
         return cext.proc_kill(self.pid)
 
     @wrap_exceptions
+    def send_signal(self, sig):
+        os.kill(self.pid, sig)
+
+    @wrap_exceptions
     def wait(self, timeout=None):
         if timeout is None:
             timeout = cext.INFINITE
