@@ -126,7 +126,8 @@ elif sys.platform.startswith("linux"):
         # see: https://github.com/giampaolo/psutil/issues/659
         from distutils.unixccompiler import UnixCCompiler
         from distutils.errors import CompileError
-        with tempfile.NamedTemporaryFile(suffix='.c', delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+                suffix='.c', delete=False, mode="wt") as f:
             f.write("#include <linux/ethtool.h>")
         atexit.register(os.remove, f.name)
         compiler = UnixCCompiler()
