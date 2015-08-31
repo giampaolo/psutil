@@ -515,7 +515,9 @@ class Connections:
 
     def process_unix(self, file, family, inodes, filter_pid=None):
         """Parse /proc/net/unix files."""
-        with open_text(file) as f:
+        # see: https://github.com/giampaolo/psutil/issues/675
+        kw = dict(encoding=FS_ENCODING, errors='replace') if PY3 else dict()
+        with open(file, 'rt', **kw) as f:
             f.readline()  # skip the first line
             for line in f:
                 tokens = line.split()
