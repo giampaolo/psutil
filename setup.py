@@ -10,6 +10,8 @@ in Python.
 """
 
 import atexit
+import contextlib
+import io
 import os
 import sys
 import tempfile
@@ -40,6 +42,16 @@ def get_description():
     README = os.path.join(HERE, 'README.rst')
     with open(README, 'r') as f:
         return f.read()
+
+
+@contextlib.contextmanager
+def captured_output(stream_name):
+    orig = getattr(sys, stream_name)
+    setattr(sys, stream_name, io.StringIO())
+    try:
+        yield getattr(sys, stream_name)
+    finally:
+        setattr(sys, stream_name, orig)
 
 
 VERSION = get_version()
@@ -132,7 +144,9 @@ elif sys.platform.startswith("linux"):
         atexit.register(os.remove, f.name)
         compiler = UnixCCompiler()
         try:
-            compiler.compile([f.name])
+            with captured_output('stderr'):
+                with captured_output('stdout'):
+                    compiler.compile([f.name])
         except CompileError:
             return ("PSUTIL_ETHTOOL_MISSING_TYPES", 1)
         else:
