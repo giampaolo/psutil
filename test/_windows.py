@@ -479,8 +479,8 @@ class TestUnicode(unittest.TestCase):
         cls.uexe = os.path.join(tdir, "psutil-è.exe")
 
     def setUp(self):
-        safe_remove(self.uexe)
         reap_children()
+        safe_remove(self.uexe)
 
     tearDown = setUp
 

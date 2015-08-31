@@ -12,19 +12,21 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #655: [Windows] different issues regarding unicode handling were fixed. On
   Python 2 all APIs returning a string will now return an encoded version of it
   by using sys.getfilesystemencoding() codec. The APIs involved are:
-  - psutil.net_if_addrs
-  - psutil.net_if_stats
-  - psutil.net_io_counters
-  - psutil.Process.cmdline
-  - psutil.Process.name
-  - psutil.Process.username
-  - psutil.users
+  - psutil.net_if_addrs()
+  - psutil.net_if_stats()
+  - psutil.net_io_counters()
+  - psutil.Process.cmdline()
+  - psutil.Process.name()
+  - psutil.Process.username()
+  - psutil.users()
 
 **Bug fixes**
 
 - #513: [Linux] fixed integer overflow for RLIM_INFINITY.
 - #641: [Windows] fixed many compilation warnings.  (patch by Jeff Tang)
-- #655: [Windows] net_if_stats UnicodeDecodeError in case of non-ASCII NIC
+- #652: [Windows] net_if_addrs() UnicodeDecodeError in case of non-ASCII NIC
+  names.
+- #655: [Windows] net_if_stats() UnicodeDecodeError in case of non-ASCII NIC
   names.
 - #659: [Linux] compilation error on Suse 10. (patch by maozguttman)
 - #664: [Linux] compilation error on Alpine Linux. (patch by Bart van Kleef)
