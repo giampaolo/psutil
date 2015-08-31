@@ -34,6 +34,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   (patch by sk6249)
 - #672: [Windows] compilation fails if using Windows SDK v8.0. (patch by
   Steven Winfield)
+- #675: [Linux] UnicodeDecodeError when listing UNIX sockets.
 
 
 3.1.1 - 2015-07-15

@@ -519,6 +519,8 @@ class TestUnicode(unittest.TestCase):
         p = psutil.Process()
         start = set(p.open_files())
         with open(self.uexe, 'rb'):
+            if APPVEYOR:
+                time.sleep(0.2)
             new = set(p.open_files())
         path = (new - start).pop().path
         self.assertIsInstance(path, str)
