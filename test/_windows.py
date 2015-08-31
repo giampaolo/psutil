@@ -10,17 +10,14 @@
 import errno
 import os
 import platform
-import shutil
 import signal
 import subprocess
 import sys
-import tempfile
 import time
 import traceback
 
 from test_psutil import APPVEYOR, WINDOWS
 from test_psutil import get_test_subprocess, reap_children, unittest
-from test_psutil import safe_remove, safe_rmdir, chdir
 
 import mock
 try:
@@ -469,68 +466,10 @@ class TestDualProcessImplementation(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
 
-class TestUnicode(unittest.TestCase):
-    # See: https://github.com/giampaolo/psutil/issues/655
-
-    @classmethod
-    def setUpClass(cls):
-        with tempfile.NamedTemporaryFile() as f:
-            tdir = os.path.dirname(f.name)
-        cls.uexe = os.path.join(tdir, "psutil-è.exe")
-        shutil.copyfile(sys.executable, cls.uexe)
-
-    @classmethod
-    def tearDownClass(cls):
-        safe_remove(cls.uexe)
-
-    def setUp(self):
-        reap_children()
-
-    tearDown = setUp
-
-    def test_proc_exe(self):
-        subp = get_test_subprocess(cmd=[self.uexe])
-        p = psutil.Process(subp.pid)
-        self.assertIsInstance(p.name(), str)
-        self.assertEqual(os.path.basename(p.name()), "psutil-è.exe")
-
-    def test_proc_name(self):
-        from psutil._pswindows import py2_strencode
-        subp = get_test_subprocess(cmd=[self.uexe])
-        self.assertEqual(
-            py2_strencode(psutil._psplatform.cext.proc_name(subp.pid)),
-            "psutil-è.exe")
-
-    def test_proc_cmdline(self):
-        subp = get_test_subprocess(cmd=[self.uexe])
-        p = psutil.Process(subp.pid)
-        self.assertIsInstance("".join(p.cmdline()), str)
-        self.assertEqual(p.cmdline(), [self.uexe])
-
-    def test_proc_cwd(self):
-        tdir = tempfile.mkdtemp(prefix="psutil-è-")
-        self.addCleanup(safe_rmdir, tdir)
-        with chdir(tdir):
-            p = psutil.Process()
-            self.assertIsInstance(p.cwd(), str)
-            self.assertEqual(p.cwd(), tdir)
-
-    @unittest.skipIf(APPVEYOR, "")
-    def test_proc_open_files(self):
-        p = psutil.Process()
-        start = set(p.open_files())
-        with open(self.uexe, 'rb'):
-            new = set(p.open_files())
-        path = (new - start).pop().path
-        self.assertIsInstance(path, str)
-        self.assertEqual(path.lower(), self.uexe.lower())
-
-
 def main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(WindowsSpecificTestCase))
     test_suite.addTest(unittest.makeSuite(TestDualProcessImplementation))
-    test_suite.addTest(unittest.makeSuite(TestUnicode))
     result = unittest.TextTestRunner(verbosity=2).run(test_suite)
     return result.wasSuccessful()
 

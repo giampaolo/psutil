@@ -3083,6 +3083,68 @@ class TestExampleScripts(unittest.TestCase):
         self.assertIn(str(os.getpid()), output)
 
 
+class TestUnicode(unittest.TestCase):
+    # See: https://github.com/giampaolo/psutil/issues/655
+
+    @classmethod
+    def setUpClass(cls):
+        with tempfile.NamedTemporaryFile() as f:
+            tdir = os.path.dirname(f.name)
+        cls.uexe = os.path.join(tdir, "psutil-è.exe")
+        shutil.copyfile(sys.executable, cls.uexe)
+        if POSIX:
+            st = os.stat(cls.uexe)
+            os.chmod(cls.uexe, st.st_mode | stat.S_IEXEC)
+
+    @classmethod
+    def tearDownClass(cls):
+        safe_remove(cls.uexe)
+
+    def setUp(self):
+        reap_children()
+
+    tearDown = setUp
+
+    def test_proc_exe(self):
+        subp = get_test_subprocess(cmd=[self.uexe])
+        p = psutil.Process(subp.pid)
+        self.assertIsInstance(p.name(), str)
+        self.assertEqual(os.path.basename(p.name()), "psutil-è.exe")
+
+    def test_proc_name(self):
+        subp = get_test_subprocess(cmd=[self.uexe])
+        if WINDOWS:
+            from psutil._pswindows import py2_strencode
+            name = py2_strencode(psutil._psplatform.cext.proc_name(subp.pid))
+        else:
+            name = psutil.Process(subp.pid).name()
+        self.assertEqual(name, "psutil-è.exe")
+
+    def test_proc_cmdline(self):
+        subp = get_test_subprocess(cmd=[self.uexe])
+        p = psutil.Process(subp.pid)
+        self.assertIsInstance("".join(p.cmdline()), str)
+        self.assertEqual(p.cmdline(), [self.uexe])
+
+    def test_proc_cwd(self):
+        tdir = tempfile.mkdtemp(prefix="psutil-è-")
+        self.addCleanup(safe_rmdir, tdir)
+        with chdir(tdir):
+            p = psutil.Process()
+            self.assertIsInstance(p.cwd(), str)
+            self.assertEqual(p.cwd(), tdir)
+
+    @unittest.skipIf(APPVEYOR, "")
+    def test_proc_open_files(self):
+        p = psutil.Process()
+        start = set(p.open_files())
+        with open(self.uexe, 'rb'):
+            new = set(p.open_files())
+        path = (new - start).pop().path
+        self.assertIsInstance(path, str)
+        self.assertEqual(path.lower(), self.uexe.lower())
+
+
 def main():
     tests = []
     test_suite = unittest.TestSuite()
@@ -3092,6 +3154,7 @@ def main():
     tests.append(TestMisc)
     tests.append(TestExampleScripts)
     tests.append(LimitedUserTestCase)
+    tests.append(TestUnicode)
 
     if POSIX:
         from _posix import PosixSpecificTestCase
@@ -3103,9 +3166,8 @@ def main():
         from _linux import LinuxSpecificTestCase as stc
     elif WINDOWS:
         from _windows import WindowsSpecificTestCase as stc
-        from _windows import TestDualProcessImplementation, TestUnicode
+        from _windows import TestDualProcessImplementation
         tests.append(TestDualProcessImplementation)
-        tests.append(TestUnicode)
     elif OSX:
         from _osx import OSXSpecificTestCase as stc
     elif BSD:
