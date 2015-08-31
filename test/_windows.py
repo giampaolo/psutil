@@ -477,15 +477,18 @@ class TestUnicode(unittest.TestCase):
         with tempfile.NamedTemporaryFile() as f:
             tdir = os.path.dirname(f.name)
         cls.uexe = os.path.join(tdir, "psutil-è.exe")
+        shutil.copyfile(sys.executable, cls.uexe)
+
+    @classmethod
+    def tearDownClass(cls):
+        safe_remove(cls.uexe)
 
     def setUp(self):
         reap_children()
-        safe_remove(self.uexe)
 
     tearDown = setUp
 
     def test_proc_exe(self):
-        shutil.copyfile(sys.executable, self.uexe)
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
         self.assertIsInstance(p.name(), str)
@@ -493,14 +496,12 @@ class TestUnicode(unittest.TestCase):
 
     def test_proc_name(self):
         from psutil._pswindows import py2_strencode
-        shutil.copyfile(sys.executable, self.uexe)
         subp = get_test_subprocess(cmd=[self.uexe])
         self.assertEqual(
             py2_strencode(psutil._psplatform.cext.proc_name(subp.pid)),
             "psutil-è.exe")
 
     def test_proc_cmdline(self):
-        shutil.copyfile(sys.executable, self.uexe)
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
         self.assertIsInstance("".join(p.cmdline()), str)
@@ -517,7 +518,7 @@ class TestUnicode(unittest.TestCase):
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
-        with open(self.uexe, 'w'):
+        with open(self.uexe, 'rb'):
             new = set(p.open_files())
         path = (new - start).pop().path
         self.assertIsInstance(path, str)
