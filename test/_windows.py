@@ -515,12 +515,11 @@ class TestUnicode(unittest.TestCase):
             self.assertIsInstance(p.cwd(), str)
             self.assertEqual(p.cwd(), tdir)
 
+    @unittest.skipIf(APPVEYOR, "")
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
         with open(self.uexe, 'rb'):
-            if APPVEYOR:
-                time.sleep(0.2)
             new = set(p.open_files())
         path = (new - start).pop().path
         self.assertIsInstance(path, str)
