@@ -30,11 +30,11 @@ Compiling on Windows using Visual Studio
 ========================================
 
 In order to compile psutil on Windows you'll need Visual Studio (Mingw32 is
-no longer supported). You must have the same version of Visual Studio used to compile
-your installation of Python, that is::
+no longer supported). You must have the same version of Visual Studio used to
+compile your installation of Python, that is::
 
-* Python 2.6:  VS 2008
-* Python 2.7:  VS 2008
+* Python 2.6:  VS 2008 (download it from `here <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`_)
+* Python 2.7:  VS 2008 (download it from `here <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`_)
 * Python 3.3, 3.4: VS 2010 (you can download it from `MS website <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`_)
 * Python 3.5: `VS 2015 UP <http://www.visualstudio.com/en-au/news/vs2015-preview-vs>`_
 

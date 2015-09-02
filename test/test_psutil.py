@@ -3098,7 +3098,8 @@ class TestUnicode(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        safe_remove(cls.uexe)
+        if not APPVEYOR:
+            safe_remove(cls.uexe)
 
     def setUp(self):
         reap_children()
