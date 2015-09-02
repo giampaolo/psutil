@@ -63,12 +63,10 @@ if os.name == 'posix':
     libraries = []
     if sys.platform.startswith("sunos"):
         libraries.append('socket')
-
     posix_extension = Extension(
         'psutil._psutil_posix',
         sources=['psutil/_psutil_posix.c'],
-        libraries=libraries,
-    )
+        libraries=libraries)
 # Windows
 if sys.platform.startswith("win32"):
 
@@ -76,7 +74,7 @@ if sys.platform.startswith("win32"):
         maj, min = sys.getwindowsversion()[0:2]
         return '0x0%s' % ((maj * 100) + min)
 
-    extensions = [Extension(
+    ext = Extension(
         'psutil._psutil_windows',
         sources=[
             'psutil/_psutil_windows.c',
@@ -97,15 +95,16 @@ if sys.platform.startswith("win32"):
             ('PSAPI_VERSION', 1),
         ],
         libraries=[
-            "psapi", "kernel32", "advapi32", "shell32", "netapi32", "iphlpapi",
-            "wtsapi32", "ws2_32",
+            "psapi", "kernel32", "advapi32", "shell32", "netapi32",
+            "iphlpapi", "wtsapi32", "ws2_32",
         ],
         # extra_compile_args=["/Z7"],
         # extra_link_args=["/DEBUG"]
-    )]
+    )
+    extensions = [ext]
 # OS X
 elif sys.platform.startswith("darwin"):
-    extensions = [Extension(
+    ext = Extension(
         'psutil._psutil_osx',
         sources=[
             'psutil/_psutil_osx.c',
@@ -115,23 +114,19 @@ elif sys.platform.startswith("darwin"):
         define_macros=[VERSION_MACRO],
         extra_link_args=[
             '-framework', 'CoreFoundation', '-framework', 'IOKit'
-        ],
-    ),
-        posix_extension,
-    ]
+        ])
+    extensions = [ext, posix_extension]
 # FreeBSD
 elif sys.platform.startswith("freebsd"):
-    extensions = [Extension(
+    ext = Extension(
         'psutil._psutil_bsd',
         sources=[
             'psutil/_psutil_bsd.c',
             'psutil/_psutil_common.c',
-            'psutil/arch/bsd/process_info.c'
-        ],
+            'psutil/arch/bsd/process_info.c'],
         define_macros=[VERSION_MACRO],
-        libraries=["devstat"]),
-        posix_extension,
-    ]
+        libraries=["devstat"])
+    extensions = [ext, posix_extension]
 # Linux
 elif sys.platform.startswith("linux"):
     def get_ethtool_macro():
@@ -156,21 +151,19 @@ elif sys.platform.startswith("linux"):
     macros = [VERSION_MACRO]
     if ETHTOOL_MACRO is not None:
         macros.append(ETHTOOL_MACRO)
-    extensions = [Extension(
+    ext = Extension(
         'psutil._psutil_linux',
         sources=['psutil/_psutil_linux.c'],
-        define_macros=macros),
-        posix_extension,
-    ]
+        define_macros=macros)
+    extensions = [ext, posix_extension]
 # Solaris
 elif sys.platform.lower().startswith('sunos'):
-    extensions = [Extension(
+    ext = Extension(
         'psutil._psutil_sunos',
         sources=['psutil/_psutil_sunos.c'],
         define_macros=[VERSION_MACRO],
-        libraries=['kstat', 'nsl', 'socket']),
-        posix_extension,
-    ]
+        libraries=['kstat', 'nsl', 'socket'])
+    extensions = [ext, posix_extension]
 else:
     sys.exit('platform %s is not supported' % sys.platform)
 
