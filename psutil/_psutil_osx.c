@@ -73,10 +73,10 @@ psutil_pids(PyObject *self, PyObject *args) {
     kinfo_proc *orig_address = NULL;
     size_t num_processes;
     size_t idx;
-    PyObject *pid = NULL;
-    PyObject *retlist = PyList_New(0);
+    PyObject *py_pid = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
-    if (retlist == NULL)
+    if (py_retlist == NULL)
         return NULL;
 
     if (psutil_get_proc_list(&proclist, &num_processes) != 0) {
@@ -89,21 +89,21 @@ psutil_pids(PyObject *self, PyObject *args) {
         // save the address of proclist so we can free it later
         orig_address = proclist;
         for (idx = 0; idx < num_processes; idx++) {
-            pid = Py_BuildValue("i", proclist->kp_proc.p_pid);
-            if (!pid)
+            py_pid = Py_BuildValue("i", proclist->kp_proc.p_pid);
+            if (! py_pid)
                 goto error;
-            if (PyList_Append(retlist, pid))
+            if (PyList_Append(py_retlist, py_pid))
                 goto error;
-            Py_DECREF(pid);
+            Py_DECREF(py_pid);
             proclist++;
         }
         free(orig_address);
     }
-    return retlist;
+    return py_retlist;
 
 error:
-    Py_XDECREF(pid);
-    Py_DECREF(retlist);
+    Py_XDECREF(py_pid);
+    Py_DECREF(py_retlist);
     if (orig_address != NULL)
         free(orig_address);
     return NULL;
@@ -173,14 +173,14 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     long pid;
-    PyObject *arglist = NULL;
+    PyObject *py_retlist = NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
     // get the commandline, defined in arch/osx/process_info.c
-    arglist = psutil_get_arg_list(pid);
-    return arglist;
+    py_retlist = psutil_get_cmdline(pid);
+    return py_retlist;
 }
 
 
@@ -870,10 +870,10 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     thread_basic_info_t basic_info_th;
     mach_msg_type_number_t thread_count, thread_info_count;
 
-    PyObject *retList = PyList_New(0);
-    PyObject *pyTuple = NULL;
+    PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
-    if (retList == NULL)
+    if (py_retlist == NULL)
         return NULL;
 
     // the argument passed should be a process id
@@ -913,7 +913,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     }
 
     for (j = 0; j < thread_count; j++) {
-        pyTuple = NULL;
+        py_tuple = NULL;
         thread_info_count = THREAD_INFO_MAX;
         kr = thread_info(thread_list[j], THREAD_BASIC_INFO,
                          (thread_info_t)thinfo_basic, &thread_info_count);
@@ -924,17 +924,17 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         }
 
         basic_info_th = (thread_basic_info_t)thinfo_basic;
-        pyTuple = Py_BuildValue(
+        py_tuple = Py_BuildValue(
             "Iff",
             j + 1,
             (float)basic_info_th->user_time.microseconds / 1000000.0,
             (float)basic_info_th->system_time.microseconds / 1000000.0
         );
-        if (!pyTuple)
+        if (!py_tuple)
             goto error;
-        if (PyList_Append(retList, pyTuple))
+        if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(pyTuple);
+        Py_DECREF(py_tuple);
     }
 
     ret = vm_deallocate(task, (vm_address_t)thread_list,
@@ -944,13 +944,13 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     mach_port_deallocate(mach_task_self(), task);
 
-    return retList;
+    return py_retlist;
 
 error:
     if (task != MACH_PORT_NULL)
         mach_port_deallocate(mach_task_self(), task);
-    Py_XDECREF(pyTuple);
-    Py_DECREF(retList);
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
     if (thread_list != NULL) {
         ret = vm_deallocate(task, (vm_address_t)thread_list,
                             thread_count * sizeof(int));
@@ -979,10 +979,10 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     struct proc_fdinfo *fdp_pointer;
     struct vnode_fdinfowithpath vi;
 
-    PyObject *retList = PyList_New(0);
-    PyObject *tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
 
-    if (retList == NULL)
+    if (py_retlist == NULL)
         return NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -1013,7 +1013,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
 
     for (i = 0; i < iterations; i++) {
-        tuple = NULL;
+        py_tuple = NULL;
         fdp_pointer = &fds_pointer[i];
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE)
@@ -1045,24 +1045,25 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
             // --- /errors checking
 
             // --- construct python list
-            tuple = Py_BuildValue("(si)",
-                                  vi.pvip.vip_path,
-                                  (int)fdp_pointer->proc_fd);
-            if (!tuple)
+            py_tuple = Py_BuildValue(
+                "(si)",
+                vi.pvip.vip_path,
+                (int)fdp_pointer->proc_fd);
+            if (!py_tuple)
                 goto error;
-            if (PyList_Append(retList, tuple))
+            if (PyList_Append(py_retlist, py_tuple))
                 goto error;
-            Py_DECREF(tuple);
+            Py_DECREF(py_tuple);
             // --- /construct python list
         }
     }
 
     free(fds_pointer);
-    return retList;
+    return py_retlist;
 
 error:
-    Py_XDECREF(tuple);
-    Py_DECREF(retList);
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
     if (fds_pointer != NULL)
         free(fds_pointer);
     if (errno != 0)
@@ -1095,26 +1096,26 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     struct proc_fdinfo *fdp_pointer;
     struct socket_fdinfo si;
 
-    PyObject *retList = PyList_New(0);
-    PyObject *tuple = NULL;
-    PyObject *laddr = NULL;
-    PyObject *raddr = NULL;
-    PyObject *af_filter = NULL;
-    PyObject *type_filter = NULL;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
+    PyObject *py_laddr = NULL;
+    PyObject *py_raddr = NULL;
+    PyObject *py_af_filter = NULL;
+    PyObject *py_type_filter = NULL;
 
-    if (retList == NULL)
+    if (py_retlist == NULL)
         return NULL;
 
-    if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter))
+    if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
         goto error;
 
-    if (!PySequence_Check(af_filter) || !PySequence_Check(type_filter)) {
+    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         goto error;
     }
 
     if (pid == 0)
-        return retList;
+        return py_retlist;
     pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
     if (pidinfo_result <= 0)
         goto error;
@@ -1132,9 +1133,9 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
 
     for (i = 0; i < iterations; i++) {
-        tuple = NULL;
-        laddr = NULL;
-        raddr = NULL;
+        py_tuple = NULL;
+        py_laddr = NULL;
+        py_raddr = NULL;
         errno = 0;
         fdp_pointer = &fds_pointer[i];
 
@@ -1169,22 +1170,22 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
             int fd, family, type, lport, rport, state;
             char lip[200], rip[200];
             int inseq;
-            PyObject *_family;
-            PyObject *_type;
+            PyObject *py_family;
+            PyObject *py_type;
 
             fd = (int)fdp_pointer->proc_fd;
             family = si.psi.soi_family;
             type = si.psi.soi_type;
 
             // apply filters
-            _family = PyLong_FromLong((long)family);
-            inseq = PySequence_Contains(af_filter, _family);
-            Py_DECREF(_family);
+            py_family = PyLong_FromLong((long)family);
+            inseq = PySequence_Contains(py_af_filter, py_family);
+            Py_DECREF(py_family);
             if (inseq == 0)
                 continue;
-            _type = PyLong_FromLong((long)type);
-            inseq = PySequence_Contains(type_filter, _type);
-            Py_DECREF(_type);
+            py_type = PyLong_FromLong((long)type);
+            inseq = PySequence_Contains(py_type_filter, py_type);
+            Py_DECREF(py_type);
             if (inseq == 0)
                 continue;
 
@@ -1230,50 +1231,50 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                 else
                     state = PSUTIL_CONN_NONE;
 
-                laddr = Py_BuildValue("(si)", lip, lport);
-                if (!laddr)
+                py_laddr = Py_BuildValue("(si)", lip, lport);
+                if (!py_laddr)
                     goto error;
                 if (rport != 0)
-                    raddr = Py_BuildValue("(si)", rip, rport);
+                    py_raddr = Py_BuildValue("(si)", rip, rport);
                 else
-                    raddr = Py_BuildValue("()");
-                if (!raddr)
+                    py_raddr = Py_BuildValue("()");
+                if (!py_raddr)
                     goto error;
 
                 // construct the python list
-                tuple = Py_BuildValue("(iiiNNi)", fd, family, type, laddr,
-                                      raddr, state);
-                if (!tuple)
+                py_tuple = Py_BuildValue(
+                    "(iiiNNi)", fd, family, type, py_laddr, py_raddr, state);
+                if (!py_tuple)
                     goto error;
-                if (PyList_Append(retList, tuple))
+                if (PyList_Append(py_retlist, py_tuple))
                     goto error;
-                Py_DECREF(tuple);
+                Py_DECREF(py_tuple);
             }
             else if (family == AF_UNIX) {
                 // construct the python list
-                tuple = Py_BuildValue(
+                py_tuple = Py_BuildValue(
                     "(iiissi)",
                     fd, family, type,
                     si.psi.soi_proto.pri_un.unsi_addr.ua_sun.sun_path,
                     si.psi.soi_proto.pri_un.unsi_caddr.ua_sun.sun_path,
                     PSUTIL_CONN_NONE);
-                if (!tuple)
+                if (!py_tuple)
                     goto error;
-                if (PyList_Append(retList, tuple))
+                if (PyList_Append(py_retlist, py_tuple))
                     goto error;
-                Py_DECREF(tuple);
+                Py_DECREF(py_tuple);
             }
         }
     }
 
     free(fds_pointer);
-    return retList;
+    return py_retlist;
 
 error:
-    Py_XDECREF(tuple);
-    Py_XDECREF(laddr);
-    Py_XDECREF(raddr);
-    Py_DECREF(retList);
+    Py_XDECREF(py_tuple);
+    Py_XDECREF(py_laddr);
+    Py_XDECREF(py_raddr);
+    Py_DECREF(py_retlist);
 
     if (fds_pointer != NULL)
         free(fds_pointer);
@@ -1587,38 +1588,38 @@ error:
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     struct utmpx *utx;
-    PyObject *ret_list = PyList_New(0);
-    PyObject *tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
 
-    if (ret_list == NULL)
+    if (py_retlist == NULL)
         return NULL;
     while ((utx = getutxent()) != NULL) {
         if (utx->ut_type != USER_PROCESS)
             continue;
-        tuple = Py_BuildValue(
+        py_tuple = Py_BuildValue(
             "(sssf)",
             utx->ut_user,             // username
             utx->ut_line,             // tty
             utx->ut_host,             // hostname
             (float)utx->ut_tv.tv_sec  // start time
         );
-        if (!tuple) {
+        if (!py_tuple) {
             endutxent();
             goto error;
         }
-        if (PyList_Append(ret_list, tuple)) {
+        if (PyList_Append(py_retlist, py_tuple)) {
             endutxent();
             goto error;
         }
-        Py_DECREF(tuple);
+        Py_DECREF(py_tuple);
     }
 
     endutxent();
-    return ret_list;
+    return py_retlist;
 
 error:
-    Py_XDECREF(tuple);
-    Py_DECREF(ret_list);
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
     return NULL;
 }
 

@@ -245,22 +245,22 @@ psutil_pids(PyObject *self, PyObject *args) {
     DWORD *proclist = NULL;
     DWORD numberOfReturnedPIDs;
     DWORD i;
-    PyObject *pid = NULL;
-    PyObject *retlist = PyList_New(0);
+    PyObject *py_pid = NULL;
+    PyObject *py_list = PyList_New(0);
 
-    if (retlist == NULL)
+    if (py_list == NULL)
         return NULL;
     proclist = psutil_get_pids(&numberOfReturnedPIDs);
     if (proclist == NULL)
         goto error;
 
     for (i = 0; i < numberOfReturnedPIDs; i++) {
-        pid = Py_BuildValue("I", proclist[i]);
+        py_pid = Py_BuildValue("I", proclist[i]);
         if (!pid)
             goto error;
-        if (PyList_Append(retlist, pid))
+        if (PyList_Append(py_list, py_pid))
             goto error;
-        Py_DECREF(pid);
+        Py_DECREF(py_pid);
     }
 
     // free C array allocated for PIDs
@@ -268,8 +268,8 @@ psutil_pids(PyObject *self, PyObject *args) {
     return retlist;
 
 error:
-    Py_XDECREF(pid);
-    Py_DECREF(retlist);
+    Py_XDECREF(py_pid);
+    Py_DECREF(py_list);
     if (proclist != NULL)
         free(proclist);
     return NULL;
@@ -575,7 +575,7 @@ static PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     long pid;
     int pid_return;
-    PyObject *arglist;
+    PyObject *py_list;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -593,14 +593,14 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     // May fail any of several ReadProcessMemory calls etc. and
     // not indicate a real problem so we ignore any errors and
     // just live without commandline.
-    arglist = psutil_get_arg_list(pid);
-    if ( NULL == arglist ) {
+    py_list = psutil_get_cmdline(pid);
+    if ( NULL == py_list ) {
         // carry on anyway, clear any exceptions too
         PyErr_Clear();
         return Py_BuildValue("[]");
     }
 
-    return arglist;
+    return py_list;
 }
 
 
@@ -612,9 +612,9 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     long pid;
     HANDLE hProcess;
     wchar_t exe[MAX_PATH];
+
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-
     hProcess = psutil_handle_from_pid_waccess(pid, PROCESS_QUERY_INFORMATION);
     if (NULL == hProcess)
         return NULL;
@@ -851,10 +851,10 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
     SYSTEM_INFO si;
     UINT i;
-    PyObject *arg = NULL;
-    PyObject *retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
+    PyObject *py_list = PyList_New(0);
 
-    if (retlist == NULL)
+    if (py_list == NULL)
         return NULL;
 
     // dynamic linking is mandatory to use NtQuerySystemInformation
@@ -887,7 +887,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
                     // processor value
                     idle = user = kernel = 0;
                     for (i = 0; i < si.dwNumberOfProcessors; i++) {
-                        arg = NULL;
+                        py_tuple = NULL;
                         user = (float)((HI_T * sppi[i].UserTime.HighPart) +
                                        (LO_T * sppi[i].UserTime.LowPart));
                         idle = (float)((HI_T * sppi[i].IdleTime.HighPart) +
@@ -897,19 +897,19 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
                         // kernel time includes idle time on windows
                         // we return only busy kernel time subtracting
                         // idle time from kernel time
-                        arg = Py_BuildValue("(ddd)",
+                        py_tuple = Py_BuildValue("(ddd)",
                                             user,
                                             kernel - idle,
                                             idle);
-                        if (!arg)
+                        if (!py_tuple)
                             goto error;
-                        if (PyList_Append(retlist, arg))
+                        if (PyList_Append(py_list, py_tuple))
                             goto error;
-                        Py_DECREF(arg);
+                        Py_DECREF(py_tuple);
                     }
                     free(sppi);
                     FreeLibrary(hNtDll);
-                    return retlist;
+                    return py_list;
 
                 }  // END NtQuerySystemInformation
             }  // END malloc SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
@@ -918,8 +918,8 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     goto error;
 
 error:
-    Py_XDECREF(arg);
-    Py_DECREF(retlist);
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_list);
     if (sppi)
         free(sppi);
     if (hNtDll)
@@ -941,7 +941,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     PVOID rtlUserProcParamsAddress;
     UNICODE_STRING currentDirectory;
     WCHAR *currentDirectoryContent = NULL;
-    PyObject *py_cwd = NULL;
+    PyObject *py_unicode = NULL;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -1023,16 +1023,16 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     currentDirectoryContent[(currentDirectory.Length / sizeof(WCHAR))] = '\0';
 
     // convert wchar array to a Python unicode string
-    py_cwd = PyUnicode_FromWideChar(
+    py_unicode = PyUnicode_FromWideChar(
         currentDirectoryContent, wcslen(currentDirectoryContent));
-    if (py_cwd == NULL)
+    if (py_unicode == NULL)
         goto error;
     CloseHandle(processHandle);
     free(currentDirectoryContent);
-    return py_cwd;
+    return py_unicode;
 
 error:
-    Py_XDECREF(py_cwd);
+    Py_XDECREF(py_unicode);
     if (currentDirectoryContent != NULL)
         free(currentDirectoryContent);
     if (processHandle != NULL)
@@ -1146,11 +1146,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     int pid_return;
     int rc;
     FILETIME ftDummy, ftKernel, ftUser;
-    PyObject *retList = PyList_New(0);
-    PyObject *pyTuple = NULL;
     HANDLE hThreadSnap = NULL;
+    PyObject *py_tuple = NULL;
+    PyObject *py_list = PyList_New(0);
 
-    if (retList == NULL)
+    if (py_list == NULL)
         return NULL;
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
@@ -1187,7 +1187,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     // If the thread belongs to the process, increase the counter.
     do {
         if (te32.th32OwnerProcessID == pid) {
-            pyTuple = NULL;
+            py_tuple = NULL;
             hThread = NULL;
             hThread = OpenThread(THREAD_QUERY_INFORMATION,
                                  FALSE, te32.th32ThreadID);
@@ -1212,29 +1212,29 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
              * process has executed in user/kernel mode I borrowed the code
              * below from Python's Modules/posixmodule.c
              */
-            pyTuple = Py_BuildValue(
+            py_tuple = Py_BuildValue(
                 "kdd",
                 te32.th32ThreadID,
                 (double)(ftUser.dwHighDateTime * 429.4967296 + \
                          ftUser.dwLowDateTime * 1e-7),
                 (double)(ftKernel.dwHighDateTime * 429.4967296 + \
                          ftKernel.dwLowDateTime * 1e-7));
-            if (!pyTuple)
+            if (!py_tuple)
                 goto error;
-            if (PyList_Append(retList, pyTuple))
+            if (PyList_Append(py_list, py_tuple))
                 goto error;
-            Py_DECREF(pyTuple);
+            Py_DECREF(py_tuple);
 
             CloseHandle(hThread);
         }
     } while (Thread32Next(hThreadSnap, &te32));
 
     CloseHandle(hThreadSnap);
-    return retList;
+    return py_list;
 
 error:
-    Py_XDECREF(pyTuple);
-    Py_DECREF(retList);
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_list);
     if (hThread != NULL)
         CloseHandle(hThread);
     if (hThreadSnap != NULL)
@@ -1248,7 +1248,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     long       pid;
     HANDLE     processHandle;
     DWORD      access = PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION;
-    PyObject  *filesList;
+    PyObject  *py_list;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -1256,11 +1256,11 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     processHandle = psutil_handle_from_pid_waccess(pid, access);
     if (processHandle == NULL)
         return NULL;
-    filesList = psutil_get_open_files(pid, processHandle);
+    py_list = psutil_get_open_files(pid, processHandle);
     CloseHandle(processHandle);
-    if (filesList == NULL)
+    if (py_list == NULL)
         return PyErr_SetFromWindowsErr(0);
-    return filesList;
+    return py_list;
 }
 
 
@@ -1309,7 +1309,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     ULONG domainNameSize;
     SID_NAME_USE nameUse;
     PTSTR fullName;
-    PyObject *returnObject;
+    PyObject *py_unicode;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -1402,7 +1402,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     memcpy(&fullName[domainNameSize + 1], name, nameSize);
     fullName[domainNameSize + 1 + nameSize] = '\0';
 
-    returnObject = PyUnicode_Decode(
+    py_unicode = PyUnicode_Decode(
         fullName, _tcslen(fullName), Py_FileSystemDefaultEncoding, "replace");
 
     free(fullName);
@@ -1410,7 +1410,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     free(domainName);
     free(user);
 
-    return returnObject;
+    return py_unicode;
 }
 
 
@@ -1420,18 +1420,7 @@ psutil_proc_username(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
     static long null_address[4] = { 0, 0, 0, 0 };
-
     unsigned long pid;
-    PyObject *connectionsList;
-    PyObject *connectionTuple = NULL;
-    PyObject *af_filter = NULL;
-    PyObject *type_filter = NULL;
-
-    PyObject *_AF_INET = PyLong_FromLong((long)AF_INET);
-    PyObject *_AF_INET6 = PyLong_FromLong((long)AF_INET6);
-    PyObject *_SOCK_STREAM = PyLong_FromLong((long)SOCK_STREAM);
-    PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
-
     typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(struct in_addr *, PSTR);
     _RtlIpv4AddressToStringA rtlIpv4AddressToStringA;
     typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
@@ -1450,16 +1439,34 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PMIB_UDP6TABLE_OWNER_PID udp6Table;
     ULONG i;
     CHAR addressBufferLocal[65];
-    PyObject *addressTupleLocal = NULL;
     CHAR addressBufferRemote[65];
-    PyObject *addressTupleRemote = NULL;
 
-    if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter)) {
+    PyObject *py_retlist;
+    PyObject *py_conn_tuple = NULL;
+    PyObject *py_af_filter = NULL;
+    PyObject *py_type_filter = NULL;
+    PyObject *py_addr_tuple_local = NULL;
+    PyObject *py_addr_tuple_remote = NULL;
+    PyObject *_AF_INET = PyLong_FromLong((long)AF_INET);
+    if (_AF_INET == NULL)
+        return NULL;
+    PyObject *_AF_INET6 = PyLong_FromLong((long)AF_INET6);
+    if (_AF_INET6 == NULL)
+        return NULL;
+    PyObject *_SOCK_STREAM = PyLong_FromLong((long)SOCK_STREAM);
+    if (_SOCK_STREAM == NULL)
+        return NULL;
+    PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
+    if (_SOCK_DGRAM == NULL)
+        return NULL;
+
+    if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
+    {
         _psutil_conn_decref_objs();
         return NULL;
     }
 
-    if (!PySequence_Check(af_filter) || !PySequence_Check(type_filter)) {
+    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
         _psutil_conn_decref_objs();
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         return NULL;
@@ -1500,21 +1507,21 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    connectionsList = PyList_New(0);
-    if (connectionsList == NULL) {
+    py_retlist = PyList_New(0);
+    if (py_retlist == NULL) {
         _psutil_conn_decref_objs();
         return NULL;
     }
 
     // TCP IPv4
 
-    if ((PySequence_Contains(af_filter, _AF_INET) == 1) &&
-            (PySequence_Contains(type_filter, _SOCK_STREAM) == 1))
+    if ((PySequence_Contains(py_af_filter, _AF_INET) == 1) &&
+            (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1))
     {
         table = NULL;
-        connectionTuple = NULL;
-        addressTupleLocal = NULL;
-        addressTupleRemote = NULL;
+        py_conn_tuple = NULL;
+        py_addr_tuple_local = NULL;
+        py_addr_tuple_remote = NULL;
         tableSize = 0;
         getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET,
                             TCP_TABLE_OWNER_PID_ALL, 0);
@@ -1545,16 +1552,16 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
                     addr.S_un.S_addr = tcp4Table->table[i].dwLocalAddr;
                     rtlIpv4AddressToStringA(&addr, addressBufferLocal);
-                    addressTupleLocal = Py_BuildValue(
+                    py_addr_tuple_local = Py_BuildValue(
                         "(si)",
                         addressBufferLocal,
                         BYTESWAP_USHORT(tcp4Table->table[i].dwLocalPort));
                 }
                 else {
-                    addressTupleLocal = PyTuple_New(0);
+                    py_addr_tuple_local = PyTuple_New(0);
                 }
 
-                if (addressTupleLocal == NULL)
+                if (py_addr_tuple_local == NULL)
                     goto error;
 
                 // On Windows <= XP, remote addr is filled even if socket
@@ -1567,33 +1574,33 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
                     addr.S_un.S_addr = tcp4Table->table[i].dwRemoteAddr;
                     rtlIpv4AddressToStringA(&addr, addressBufferRemote);
-                    addressTupleRemote = Py_BuildValue(
+                    py_addr_tuple_remote = Py_BuildValue(
                         "(si)",
                         addressBufferRemote,
                         BYTESWAP_USHORT(tcp4Table->table[i].dwRemotePort));
                 }
                 else
                 {
-                    addressTupleRemote = PyTuple_New(0);
+                    py_addr_tuple_remote = PyTuple_New(0);
                 }
 
-                if (addressTupleRemote == NULL)
+                if (py_addr_tuple_remote == NULL)
                     goto error;
 
-                connectionTuple = Py_BuildValue(
+                py_conn_tuple = Py_BuildValue(
                     "(iiiNNiI)",
                     -1,
                     AF_INET,
                     SOCK_STREAM,
-                    addressTupleLocal,
-                    addressTupleRemote,
+                    py_addr_tuple_local,
+                    py_addr_tuple_remote,
                     tcp4Table->table[i].dwState,
                     tcp4Table->table[i].dwOwningPid);
-                if (!connectionTuple)
+                if (!py_conn_tuple)
                     goto error;
-                if (PyList_Append(connectionsList, connectionTuple))
+                if (PyList_Append(py_retlist, py_conn_tuple))
                     goto error;
-                Py_DECREF(connectionTuple);
+                Py_DECREF(py_conn_tuple);
             }
         }
 
@@ -1602,13 +1609,13 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     // TCP IPv6
 
-    if ((PySequence_Contains(af_filter, _AF_INET6) == 1) &&
-            (PySequence_Contains(type_filter, _SOCK_STREAM) == 1))
+    if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1) &&
+            (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1))
     {
         table = NULL;
-        connectionTuple = NULL;
-        addressTupleLocal = NULL;
-        addressTupleRemote = NULL;
+        py_conn_tuple = NULL;
+        py_addr_tuple_local = NULL;
+        py_addr_tuple_remote = NULL;
         tableSize = 0;
         getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET6,
                             TCP_TABLE_OWNER_PID_ALL, 0);
@@ -1639,16 +1646,16 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
                     memcpy(&addr, tcp6Table->table[i].ucLocalAddr, 16);
                     rtlIpv6AddressToStringA(&addr, addressBufferLocal);
-                    addressTupleLocal = Py_BuildValue(
+                    py_addr_tuple_local = Py_BuildValue(
                         "(si)",
                         addressBufferLocal,
                         BYTESWAP_USHORT(tcp6Table->table[i].dwLocalPort));
                 }
                 else {
-                    addressTupleLocal = PyTuple_New(0);
+                    py_addr_tuple_local = PyTuple_New(0);
                 }
 
-                if (addressTupleLocal == NULL)
+                if (py_addr_tuple_local == NULL)
                     goto error;
 
                 // On Windows <= XP, remote addr is filled even if socket
@@ -1662,32 +1669,32 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
                     memcpy(&addr, tcp6Table->table[i].ucRemoteAddr, 16);
                     rtlIpv6AddressToStringA(&addr, addressBufferRemote);
-                    addressTupleRemote = Py_BuildValue(
+                    py_addr_tuple_remote = Py_BuildValue(
                         "(si)",
                         addressBufferRemote,
                         BYTESWAP_USHORT(tcp6Table->table[i].dwRemotePort));
                 }
                 else {
-                    addressTupleRemote = PyTuple_New(0);
+                    py_addr_tuple_remote = PyTuple_New(0);
                 }
 
-                if (addressTupleRemote == NULL)
+                if (py_addr_tuple_remote == NULL)
                     goto error;
 
-                connectionTuple = Py_BuildValue(
+                py_conn_tuple = Py_BuildValue(
                     "(iiiNNiI)",
                     -1,
                     AF_INET6,
                     SOCK_STREAM,
-                    addressTupleLocal,
-                    addressTupleRemote,
+                    py_addr_tuple_local,
+                    py_addr_tuple_remote,
                     tcp6Table->table[i].dwState,
                     tcp6Table->table[i].dwOwningPid);
-                if (!connectionTuple)
+                if (!py_conn_tuple)
                     goto error;
-                if (PyList_Append(connectionsList, connectionTuple))
+                if (PyList_Append(py_retlist, py_conn_tuple))
                     goto error;
-                Py_DECREF(connectionTuple);
+                Py_DECREF(py_conn_tuple);
             }
         }
 
@@ -1696,13 +1703,13 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     // UDP IPv4
 
-    if ((PySequence_Contains(af_filter, _AF_INET) == 1) &&
-            (PySequence_Contains(type_filter, _SOCK_DGRAM) == 1))
+    if ((PySequence_Contains(py_af_filter, _AF_INET) == 1) &&
+            (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1))
     {
         table = NULL;
-        connectionTuple = NULL;
-        addressTupleLocal = NULL;
-        addressTupleRemote = NULL;
+        py_conn_tuple = NULL;
+        py_addr_tuple_local = NULL;
+        py_addr_tuple_remote = NULL;
         tableSize = 0;
         getExtendedUdpTable(NULL, &tableSize, FALSE, AF_INET,
                             UDP_TABLE_OWNER_PID, 0);
@@ -1733,32 +1740,32 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
                     addr.S_un.S_addr = udp4Table->table[i].dwLocalAddr;
                     rtlIpv4AddressToStringA(&addr, addressBufferLocal);
-                    addressTupleLocal = Py_BuildValue(
+                    py_addr_tuple_local = Py_BuildValue(
                         "(si)",
                         addressBufferLocal,
                         BYTESWAP_USHORT(udp4Table->table[i].dwLocalPort));
                 }
                 else {
-                    addressTupleLocal = PyTuple_New(0);
+                    py_addr_tuple_local = PyTuple_New(0);
                 }
 
-                if (addressTupleLocal == NULL)
+                if (py_addr_tuple_local == NULL)
                     goto error;
 
-                connectionTuple = Py_BuildValue(
+                py_conn_tuple = Py_BuildValue(
                     "(iiiNNiI)",
                     -1,
                     AF_INET,
                     SOCK_DGRAM,
-                    addressTupleLocal,
+                    py_addr_tuple_local,
                     PyTuple_New(0),
                     PSUTIL_CONN_NONE,
                     udp4Table->table[i].dwOwningPid);
-                if (!connectionTuple)
+                if (!py_conn_tuple)
                     goto error;
-                if (PyList_Append(connectionsList, connectionTuple))
+                if (PyList_Append(py_retlist, py_conn_tuple))
                     goto error;
-                Py_DECREF(connectionTuple);
+                Py_DECREF(py_conn_tuple);
             }
         }
 
@@ -1767,13 +1774,13 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     // UDP IPv6
 
-    if ((PySequence_Contains(af_filter, _AF_INET6) == 1) &&
-            (PySequence_Contains(type_filter, _SOCK_DGRAM) == 1))
+    if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1) &&
+            (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1))
     {
         table = NULL;
-        connectionTuple = NULL;
-        addressTupleLocal = NULL;
-        addressTupleRemote = NULL;
+        py_conn_tuple = NULL;
+        py_addr_tuple_local = NULL;
+        py_addr_tuple_remote = NULL;
         tableSize = 0;
         getExtendedUdpTable(NULL, &tableSize, FALSE,
                             AF_INET6, UDP_TABLE_OWNER_PID, 0);
@@ -1803,32 +1810,32 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
                     memcpy(&addr, udp6Table->table[i].ucLocalAddr, 16);
                     rtlIpv6AddressToStringA(&addr, addressBufferLocal);
-                    addressTupleLocal = Py_BuildValue(
+                    py_addr_tuple_local = Py_BuildValue(
                         "(si)",
                         addressBufferLocal,
                         BYTESWAP_USHORT(udp6Table->table[i].dwLocalPort));
                 }
                 else {
-                    addressTupleLocal = PyTuple_New(0);
+                    py_addr_tuple_local = PyTuple_New(0);
                 }
 
-                if (addressTupleLocal == NULL)
+                if (py_addr_tuple_local == NULL)
                     goto error;
 
-                connectionTuple = Py_BuildValue(
+                py_conn_tuple = Py_BuildValue(
                     "(iiiNNiI)",
                     -1,
                     AF_INET6,
                     SOCK_DGRAM,
-                    addressTupleLocal,
+                    py_addr_tuple_local,
                     PyTuple_New(0),
                     PSUTIL_CONN_NONE,
                     udp6Table->table[i].dwOwningPid);
-                if (!connectionTuple)
+                if (!py_conn_tuple)
                     goto error;
-                if (PyList_Append(connectionsList, connectionTuple))
+                if (PyList_Append(py_retlist, py_conn_tuple))
                     goto error;
-                Py_DECREF(connectionTuple);
+                Py_DECREF(py_conn_tuple);
             }
         }
 
@@ -1836,14 +1843,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     }
 
     _psutil_conn_decref_objs();
-    return connectionsList;
+    return py_retlist;
 
 error:
     _psutil_conn_decref_objs();
-    Py_XDECREF(connectionTuple);
-    Py_XDECREF(addressTupleLocal);
-    Py_XDECREF(addressTupleRemote);
-    Py_DECREF(connectionsList);
+    Py_XDECREF(py_conn_tuple);
+    Py_XDECREF(py_addr_tuple_local);
+    Py_XDECREF(py_addr_tuple_remote);
+    Py_DECREF(py_retlist);
     if (table != NULL)
         free(table);
     return NULL;
@@ -1858,14 +1865,12 @@ psutil_proc_priority_get(PyObject *self, PyObject *args) {
     long pid;
     DWORD priority;
     HANDLE hProcess;
+
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-
     hProcess = psutil_handle_from_pid(pid);
-    if (hProcess == NULL) {
+    if (hProcess == NULL)
         return NULL;
-    }
-
     priority = GetPriorityClass(hProcess);
     CloseHandle(hProcess);
     if (priority == 0) {
@@ -1885,17 +1890,13 @@ psutil_proc_priority_set(PyObject *self, PyObject *args) {
     int priority;
     int retval;
     HANDLE hProcess;
-    DWORD dwDesiredAccess = \
-        PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
-    if (! PyArg_ParseTuple(args, "li", &pid, &priority)) {
-        return NULL;
-    }
+    DWORD access = PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
 
-    hProcess = psutil_handle_from_pid_waccess(pid, dwDesiredAccess);
-    if (hProcess == NULL) {
+    if (! PyArg_ParseTuple(args, "li", &pid, &priority))
         return NULL;
-    }
-
+    hProcess = psutil_handle_from_pid_waccess(pid, access);
+    if (hProcess == NULL)
+        return NULL;
     retval = SetPriorityClass(hProcess, priority);
     CloseHandle(hProcess);
     if (retval == 0) {
@@ -2142,7 +2143,6 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     MIB_IFROW *pIfRow = NULL;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
-
     PyObject *py_retdict = PyDict_New();
     PyObject *py_nic_info = NULL;
     PyObject *py_nic_name = NULL;
@@ -2225,16 +2225,16 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     char szDeviceDisplay[MAX_PATH];
     int devNum;
     PyObject *py_retdict = PyDict_New();
-    PyObject *py_disk_info = NULL;
+    PyObject *py_tuple = NULL;
+
     if (py_retdict == NULL)
         return NULL;
-
     // Apparently there's no way to figure out how many times we have
     // to iterate in order to find valid drives.
     // Let's assume 32, which is higher than 26, the number of letters
     // in the alphabet (from A:\ to Z:\).
     for (devNum = 0; devNum <= 32; ++devNum) {
-        py_disk_info = NULL;
+        py_tuple = NULL;
         sprintf_s(szDevice, MAX_PATH, "\\\\.\\PhysicalDrive%d", devNum);
         hDevice = CreateFile(szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
                              NULL, OPEN_EXISTING, 0, NULL);
@@ -2246,7 +2246,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                             &dwSize, NULL))
         {
             sprintf_s(szDeviceDisplay, MAX_PATH, "PhysicalDrive%d", devNum);
-            py_disk_info = Py_BuildValue(
+            py_tuple = Py_BuildValue(
                 "(IILLKK)",
                 diskPerformance.ReadCount,
                 diskPerformance.WriteCount,
@@ -2254,14 +2254,14 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                 diskPerformance.BytesWritten,
                 (unsigned long long)(diskPerformance.ReadTime.QuadPart * 10) / 1000,
                 (unsigned long long)(diskPerformance.WriteTime.QuadPart * 10) / 1000);
-            if (!py_disk_info)
+            if (!py_tuple)
                 goto error;
             if (PyDict_SetItemString(py_retdict, szDeviceDisplay,
-                                     py_disk_info))
+                                     py_tuple))
             {
                 goto error;
             }
-            Py_XDECREF(py_disk_info);
+            Py_XDECREF(py_tuple);
         }
         else {
             // XXX we might get here with ERROR_INSUFFICIENT_BUFFER when
@@ -2276,7 +2276,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     return py_retdict;
 
 error:
-    Py_XDECREF(py_disk_info);
+    Py_XDECREF(py_tuple);
     Py_DECREF(py_retdict);
     if (hDevice != NULL)
         CloseHandle(hDevice);
@@ -2768,12 +2768,12 @@ error:
  */
 static PyObject *
 psutil_ppid_map(PyObject *self, PyObject *args) {
-    PyObject *pid = NULL;
-    PyObject *ppid = NULL;
-    PyObject *py_retdict = PyDict_New();
     HANDLE handle = NULL;
     PROCESSENTRY32 pe = {0};
     pe.dwSize = sizeof(PROCESSENTRY32);
+    PyObject *py_pid = NULL;
+    PyObject *py_ppid = NULL;
+    PyObject *py_retdict = PyDict_New();
 
     if (py_retdict == NULL)
         return NULL;
@@ -2786,16 +2786,16 @@ psutil_ppid_map(PyObject *self, PyObject *args) {
 
     if (Process32First(handle, &pe)) {
         do {
-            pid = Py_BuildValue("I", pe.th32ProcessID);
-            if (pid == NULL)
+            py_pid = Py_BuildValue("I", pe.th32ProcessID);
+            if (py_pid == NULL)
                 goto error;
-            ppid = Py_BuildValue("I", pe.th32ParentProcessID);
-            if (ppid == NULL)
+            py_ppid = Py_BuildValue("I", pe.th32ParentProcessID);
+            if (py_ppid == NULL)
                 goto error;
-            if (PyDict_SetItem(py_retdict, pid, ppid))
+            if (PyDict_SetItem(py_retdict, py_pid, py_ppid))
                 goto error;
-            Py_DECREF(pid);
-            Py_DECREF(ppid);
+            Py_DECREF(py_pid);
+            Py_DECREF(py_ppid);
         } while (Process32Next(handle, &pe));
     }
 
@@ -2803,8 +2803,8 @@ psutil_ppid_map(PyObject *self, PyObject *args) {
     return py_retdict;
 
 error:
-    Py_XDECREF(pid);
-    Py_XDECREF(ppid);
+    Py_XDECREF(py_pid);
+    Py_XDECREF(py_ppid);
     Py_DECREF(py_retdict);
     CloseHandle(handle);
     return NULL;
@@ -2845,8 +2845,9 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
         pUnicast = pCurrAddresses->FirstUnicastAddress;
 
         py_nic_name = NULL;
-        py_nic_name = PyUnicode_FromWideChar(pCurrAddresses->FriendlyName,
-                                             wcslen(pCurrAddresses->FriendlyName));
+        py_nic_name = PyUnicode_FromWideChar(
+            pCurrAddresses->FriendlyName,
+            wcslen(pCurrAddresses->FriendlyName));
         if (py_nic_name == NULL)
             goto error;
 

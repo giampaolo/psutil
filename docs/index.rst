@@ -1184,7 +1184,7 @@ Process class
      `signal module <http://docs.python.org//library/signal.html>`__
      constants) pre-emptively checking whether PID has been reused.
      On UNIX this is the same as ``os.kill(pid, sig)``.
-     On Windows only **SIGTERM**, **CTRL_C_EVENT ** and **CTRL_BREAK_EVENT**
+     On Windows only **SIGTERM**, **CTRL_C_EVENT** and **CTRL_BREAK_EVENT**
      signals are supported and **SIGTERM** is treated as an alias for
      :meth:`kill()`.
 

@@ -209,7 +209,7 @@ handlep_is_running(HANDLE hProcess) {
  * with given pid or NULL on error.
  */
 PyObject *
-psutil_get_arg_list(long pid) {
+psutil_get_cmdline(long pid) {
     int nArgs, i;
     LPWSTR *szArglist = NULL;
     HANDLE hProcess = NULL;
@@ -217,7 +217,7 @@ psutil_get_arg_list(long pid) {
     PVOID rtlUserProcParamsAddress;
     UNICODE_STRING commandLine;
     WCHAR *commandLineContents = NULL;
-    PyObject *py_arg = NULL;
+    PyObject *py_unicode = NULL;
     PyObject *py_retlist = NULL;
 
     hProcess = psutil_handle_from_pid(pid);
@@ -287,13 +287,13 @@ psutil_get_arg_list(long pid) {
         if (py_retlist == NULL)
             goto error;
         for (i = 0; i < nArgs; i++) {
-            py_arg = PyUnicode_FromWideChar(
+            py_unicode = PyUnicode_FromWideChar(
                 szArglist[i], wcslen(szArglist[i]));
-            if (py_arg == NULL)
+            if (py_unicode == NULL)
                 goto error;
-            if (PyList_Append(py_retlist, py_arg))
+            if (PyList_Append(py_retlist, py_unicode))
                 goto error;
-            Py_XDECREF(py_arg);
+            Py_XDECREF(py_unicode);
         }
     }
 
@@ -304,7 +304,7 @@ psutil_get_arg_list(long pid) {
     return py_retlist;
 
 error:
-    Py_XDECREF(py_arg);
+    Py_XDECREF(py_unicode);
     Py_XDECREF(py_retlist);
     if (hProcess != NULL)
         CloseHandle(hProcess);

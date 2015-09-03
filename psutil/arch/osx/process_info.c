@@ -127,7 +127,7 @@ psutil_get_argmax() {
 
 // return process args as a python list
 PyObject *
-psutil_get_arg_list(long pid) {
+psutil_get_cmdline(long pid) {
     int mib[3];
     int nargs;
     int len;
@@ -136,8 +136,9 @@ psutil_get_arg_list(long pid) {
     char *arg_end;
     char *curr_arg;
     size_t argmax;
-    PyObject *arg = NULL;
-    PyObject *arglist = NULL;
+
+    PyObject *py_arg = NULL;
+    PyObject *py_retlist = NULL;
 
     // special case for PID 0 (kernel_task) where cmdline cannot be fetched
     if (pid == 0)
@@ -192,17 +193,17 @@ psutil_get_arg_list(long pid) {
 
     // iterate through arguments
     curr_arg = arg_ptr;
-    arglist = Py_BuildValue("[]");
-    if (!arglist)
+    py_retlist = Py_BuildValue("[]");
+    if (!py_retlist)
         goto error;
     while (arg_ptr < arg_end && nargs > 0) {
         if (*arg_ptr++ == '\0') {
-            arg = Py_BuildValue("s", curr_arg);
-            if (!arg)
+            py_arg = Py_BuildValue("s", curr_arg);
+            if (!py_arg)
                 goto error;
-            if (PyList_Append(arglist, arg))
+            if (PyList_Append(py_retlist, py_arg))
                 goto error;
-            Py_DECREF(arg);
+            Py_DECREF(py_arg);
             // iterate to next arg and decrement # of args
             curr_arg = arg_ptr;
             nargs--;
@@ -210,11 +211,11 @@ psutil_get_arg_list(long pid) {
     }
 
     free(procargs);
-    return arglist;
+    return py_retlist;
 
 error:
-    Py_XDECREF(arg);
-    Py_XDECREF(arglist);
+    Py_XDECREF(py_arg);
+    Py_XDECREF(py_retlist);
     if (procargs != NULL)
         free(procargs);
     return NULL;

@@ -136,14 +136,14 @@ psutil_linux_prlimit(PyObject *self, PyObject *args) {
     int ret, resource;
     struct rlimit old, new;
     struct rlimit *newp = NULL;
-    PyObject *soft = NULL;
-    PyObject *hard = NULL;
+    PyObject *py_soft = NULL;
+    PyObject *py_hard = NULL;
 
-    if (! PyArg_ParseTuple(args, "li|OO", &pid, &resource, &soft, &hard))
+    if (! PyArg_ParseTuple(args, "li|OO", &pid, &resource, &py_soft, &py_hard))
         return NULL;
 
     // get
-    if (soft == NULL && hard == NULL) {
+    if (py_soft == NULL && py_hard == NULL) {
         ret = prlimit(pid, resource, NULL, &old);
         if (ret == -1)
             return PyErr_SetFromErrno(PyExc_OSError);
@@ -160,17 +160,17 @@ psutil_linux_prlimit(PyObject *self, PyObject *args) {
     // set
     else {
 #if defined(PSUTIL_HAVE_LARGEFILE_SUPPORT)
-        new.rlim_cur = PyLong_AsLongLong(soft);
+        new.rlim_cur = PyLong_AsLongLong(py_soft);
         if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
             return NULL;
-        new.rlim_max = PyLong_AsLongLong(hard);
+        new.rlim_max = PyLong_AsLongLong(py_hard);
         if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
             return NULL;
 #else
-        new.rlim_cur = PyLong_AsLong(soft);
+        new.rlim_cur = PyLong_AsLong(py_soft);
         if (new.rlim_cur == (rlim_t) - 1 && PyErr_Occurred())
             return NULL;
-        new.rlim_max = PyLong_AsLong(hard);
+        new.rlim_max = PyLong_AsLong(py_hard);
         if (new.rlim_max == (rlim_t) - 1 && PyErr_Occurred())
             return NULL;
 #endif
@@ -270,7 +270,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     long pid;
     size_t setsize;
     cpu_set_t *mask = NULL;
-    PyObject *res = NULL;
+    PyObject *py_list = NULL;
 
     if (!PyArg_ParseTuple(args, "i", &pid))
         return NULL;
@@ -293,8 +293,8 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
         ncpus = ncpus * 2;
     }
 
-    res = PyList_New(0);
-    if (res == NULL)
+    py_list = PyList_New(0);
+    if (py_list == NULL)
         goto error;
 
     cpucount_s = CPU_COUNT_S(setsize, mask);
@@ -307,7 +307,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
 #endif
             if (cpu_num == NULL)
                 goto error;
-            if (PyList_Append(res, cpu_num)) {
+            if (PyList_Append(py_list, cpu_num)) {
                 Py_DECREF(cpu_num);
                 goto error;
             }
@@ -316,12 +316,12 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
         }
     }
     CPU_FREE(mask);
-    return res;
+    return py_list;
 
 error:
     if (mask)
         CPU_FREE(mask);
-    Py_XDECREF(res);
+    Py_XDECREF(py_list);
     return NULL;
 }
 #else
@@ -427,42 +427,42 @@ error:
  */
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
-    PyObject *ret_list = PyList_New(0);
-    PyObject *tuple = NULL;
-    PyObject *user_proc = NULL;
     struct utmp *ut;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
+    PyObject *py_user_proc = NULL;
 
-    if (ret_list == NULL)
+    if (py_retlist == NULL)
         return NULL;
     setutent();
     while (NULL != (ut = getutent())) {
-        tuple = NULL;
-        user_proc = NULL;
+        py_tuple = NULL;
+        py_user_proc = NULL;
         if (ut->ut_type == USER_PROCESS)
-            user_proc = Py_True;
+            py_user_proc = Py_True;
         else
-            user_proc = Py_False;
-        tuple = Py_BuildValue(
+            py_user_proc = Py_False;
+        py_tuple = Py_BuildValue(
             "(sssfO)",
             ut->ut_user,              // username
             ut->ut_line,              // tty
             ut->ut_host,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
-            user_proc                 // (bool) user process
+            py_user_proc              // (bool) user process
         );
-    if (! tuple)
+    if (! py_tuple)
             goto error;
-        if (PyList_Append(ret_list, tuple))
+        if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(tuple);
+        Py_DECREF(py_tuple);
     }
     endutent();
-    return ret_list;
+    return py_retlist;
 
 error:
-    Py_XDECREF(tuple);
-    Py_XDECREF(user_proc);
-    Py_DECREF(ret_list);
+    Py_XDECREF(py_tuple);
+    Py_XDECREF(py_user_proc);
+    Py_DECREF(py_retlist);
     endutent();
     return NULL;
 }
@@ -485,7 +485,7 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
     struct ifreq ifr;
     struct ethtool_cmd ethcmd;
     PyObject *py_is_up = NULL;
-    PyObject *py_ret = NULL;
+    PyObject *py_retlist = NULL;
 
     if (! PyArg_ParseTuple(args, "s", &nic_name))
         return NULL;
@@ -533,11 +533,11 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
     }
 
     close(sock);
-    py_ret = Py_BuildValue("[Oiii]", py_is_up, duplex, speed, mtu);
-    if (!py_ret)
+    py_retlist = Py_BuildValue("[Oiii]", py_is_up, duplex, speed, mtu);
+    if (!py_retlist)
         goto error;
     Py_DECREF(py_is_up);
-    return py_ret;
+    return py_retlist;
 
 error:
     Py_XDECREF(py_is_up);

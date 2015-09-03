@@ -201,15 +201,15 @@ char
 
 // returns the command line as a python list object
 PyObject *
-psutil_get_arg_list(long pid) {
+psutil_get_cmdline(long pid) {
     char *argstr = NULL;
     int pos = 0;
     size_t argsize = 0;
-    PyObject *retlist = Py_BuildValue("[]");
-    PyObject *item = NULL;
+    PyObject *py_retlist = Py_BuildValue("[]");
+    PyObject *py_arg = NULL;
 
     if (pid < 0)
-        return retlist;
+        return py_retlist;
     argstr = psutil_get_cmd_args(pid, &argsize);
     if (argstr == NULL)
         goto error;
@@ -219,22 +219,22 @@ psutil_get_arg_list(long pid) {
     // separator
     if (argsize > 0) {
         while (pos < argsize) {
-            item = Py_BuildValue("s", &argstr[pos]);
-            if (!item)
+            py_arg = Py_BuildValue("s", &argstr[pos]);
+            if (!py_arg)
                 goto error;
-            if (PyList_Append(retlist, item))
+            if (PyList_Append(py_retlist, py_arg))
                 goto error;
-            Py_DECREF(item);
+            Py_DECREF(py_arg);
             pos = pos + strlen(&argstr[pos]) + 1;
         }
     }
 
     free(argstr);
-    return retlist;
+    return py_retlist;
 
 error:
-    Py_XDECREF(item);
-    Py_DECREF(retlist);
+    Py_XDECREF(py_arg);
+    Py_DECREF(py_retlist);
     if (argstr != NULL)
         free(argstr);
     return NULL;
