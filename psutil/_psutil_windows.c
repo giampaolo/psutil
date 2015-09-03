@@ -246,9 +246,9 @@ psutil_pids(PyObject *self, PyObject *args) {
     DWORD numberOfReturnedPIDs;
     DWORD i;
     PyObject *py_pid = NULL;
-    PyObject *py_list = PyList_New(0);
+    PyObject *py_retlist = PyList_New(0);
 
-    if (py_list == NULL)
+    if (py_retlist == NULL)
         return NULL;
     proclist = psutil_get_pids(&numberOfReturnedPIDs);
     if (proclist == NULL)
@@ -256,20 +256,20 @@ psutil_pids(PyObject *self, PyObject *args) {
 
     for (i = 0; i < numberOfReturnedPIDs; i++) {
         py_pid = Py_BuildValue("I", proclist[i]);
-        if (!pid)
+        if (!py_pid)
             goto error;
-        if (PyList_Append(py_list, py_pid))
+        if (PyList_Append(py_retlist, py_pid))
             goto error;
         Py_DECREF(py_pid);
     }
 
     // free C array allocated for PIDs
     free(proclist);
-    return retlist;
+    return py_retlist;
 
 error:
     Py_XDECREF(py_pid);
-    Py_DECREF(py_list);
+    Py_DECREF(py_retlist);
     if (proclist != NULL)
         free(proclist);
     return NULL;
@@ -575,7 +575,7 @@ static PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     long pid;
     int pid_return;
-    PyObject *py_list;
+    PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -593,14 +593,14 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     // May fail any of several ReadProcessMemory calls etc. and
     // not indicate a real problem so we ignore any errors and
     // just live without commandline.
-    py_list = psutil_get_cmdline(pid);
-    if ( NULL == py_list ) {
+    py_retlist = psutil_get_cmdline(pid);
+    if ( NULL == py_retlist ) {
         // carry on anyway, clear any exceptions too
         PyErr_Clear();
         return Py_BuildValue("[]");
     }
 
-    return py_list;
+    return py_retlist;
 }
 
 
@@ -852,9 +852,9 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     SYSTEM_INFO si;
     UINT i;
     PyObject *py_tuple = NULL;
-    PyObject *py_list = PyList_New(0);
+    PyObject *py_retlist = PyList_New(0);
 
-    if (py_list == NULL)
+    if (py_retlist == NULL)
         return NULL;
 
     // dynamic linking is mandatory to use NtQuerySystemInformation
@@ -903,13 +903,13 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
                                             idle);
                         if (!py_tuple)
                             goto error;
-                        if (PyList_Append(py_list, py_tuple))
+                        if (PyList_Append(py_retlist, py_tuple))
                             goto error;
                         Py_DECREF(py_tuple);
                     }
                     free(sppi);
                     FreeLibrary(hNtDll);
-                    return py_list;
+                    return py_retlist;
 
                 }  // END NtQuerySystemInformation
             }  // END malloc SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
@@ -919,7 +919,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
 error:
     Py_XDECREF(py_tuple);
-    Py_DECREF(py_list);
+    Py_DECREF(py_retlist);
     if (sppi)
         free(sppi);
     if (hNtDll)
@@ -1148,9 +1148,9 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     FILETIME ftDummy, ftKernel, ftUser;
     HANDLE hThreadSnap = NULL;
     PyObject *py_tuple = NULL;
-    PyObject *py_list = PyList_New(0);
+    PyObject *py_retlist = PyList_New(0);
 
-    if (py_list == NULL)
+    if (py_retlist == NULL)
         return NULL;
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
@@ -1221,7 +1221,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
                          ftKernel.dwLowDateTime * 1e-7));
             if (!py_tuple)
                 goto error;
-            if (PyList_Append(py_list, py_tuple))
+            if (PyList_Append(py_retlist, py_tuple))
                 goto error;
             Py_DECREF(py_tuple);
 
@@ -1230,11 +1230,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     } while (Thread32Next(hThreadSnap, &te32));
 
     CloseHandle(hThreadSnap);
-    return py_list;
+    return py_retlist;
 
 error:
     Py_XDECREF(py_tuple);
-    Py_DECREF(py_list);
+    Py_DECREF(py_retlist);
     if (hThread != NULL)
         CloseHandle(hThread);
     if (hThreadSnap != NULL)
@@ -1248,7 +1248,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     long       pid;
     HANDLE     processHandle;
     DWORD      access = PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION;
-    PyObject  *py_list;
+    PyObject  *py_retlist;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -1256,11 +1256,11 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     processHandle = psutil_handle_from_pid_waccess(pid, access);
     if (processHandle == NULL)
         return NULL;
-    py_list = psutil_get_open_files(pid, processHandle);
+    py_retlist = psutil_get_open_files(pid, processHandle);
     CloseHandle(processHandle);
-    if (py_list == NULL)
+    if (py_retlist == NULL)
         return PyErr_SetFromWindowsErr(0);
-    return py_list;
+    return py_retlist;
 }
 
 
@@ -1448,17 +1448,9 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *py_addr_tuple_local = NULL;
     PyObject *py_addr_tuple_remote = NULL;
     PyObject *_AF_INET = PyLong_FromLong((long)AF_INET);
-    if (_AF_INET == NULL)
-        return NULL;
     PyObject *_AF_INET6 = PyLong_FromLong((long)AF_INET6);
-    if (_AF_INET6 == NULL)
-        return NULL;
     PyObject *_SOCK_STREAM = PyLong_FromLong((long)SOCK_STREAM);
-    if (_SOCK_STREAM == NULL)
-        return NULL;
     PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
-    if (_SOCK_DGRAM == NULL)
-        return NULL;
 
     if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
     {
@@ -2710,10 +2702,10 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     CHAR mappedFileName[MAX_PATH];
     SYSTEM_INFO system_info;
     LPVOID maxAddr;
-    PyObject *py_list = PyList_New(0);
+    PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
 
-    if (py_list == NULL)
+    if (py_retlist == NULL)
         return NULL;
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
@@ -2743,7 +2735,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                 basicInfo.RegionSize);
             if (!py_tuple)
                 goto error;
-            if (PyList_Append(py_list, py_tuple))
+            if (PyList_Append(py_retlist, py_tuple))
                 goto error;
             Py_DECREF(py_tuple);
         }
@@ -2752,11 +2744,11 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     }
 
     CloseHandle(hProcess);
-    return py_list;
+    return py_retlist;
 
 error:
     Py_XDECREF(py_tuple);
-    Py_DECREF(py_list);
+    Py_DECREF(py_retlist);
     if (hProcess != NULL)
         CloseHandle(hProcess);
     return NULL;
@@ -2768,12 +2760,12 @@ error:
  */
 static PyObject *
 psutil_ppid_map(PyObject *self, PyObject *args) {
-    HANDLE handle = NULL;
-    PROCESSENTRY32 pe = {0};
-    pe.dwSize = sizeof(PROCESSENTRY32);
     PyObject *py_pid = NULL;
     PyObject *py_ppid = NULL;
     PyObject *py_retdict = PyDict_New();
+    HANDLE handle = NULL;
+    PROCESSENTRY32 pe = {0};
+    pe.dwSize = sizeof(PROCESSENTRY32);
 
     if (py_retdict == NULL)
         return NULL;
