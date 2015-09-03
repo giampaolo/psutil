@@ -1,5 +1,13 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+3.2.1 - XXXX-XX-XX
+==================
+
+**Bug fixes**
+
+- #677: [Linux] can't install psutil due to bug in setup.py.
+
+
 3.2.0 - 2015-09-02
 ==================
 

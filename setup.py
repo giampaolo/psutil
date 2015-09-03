@@ -45,11 +45,15 @@ def get_description():
 
 
 @contextlib.contextmanager
-def captured_output(stream_name):
+def silenced_output(stream_name):
+    class DummyFile(io.BytesIO):
+        def write(self, s):
+            pass
+
     orig = getattr(sys, stream_name)
-    setattr(sys, stream_name, io.StringIO())
     try:
-        yield getattr(sys, stream_name)
+        setattr(sys, stream_name, DummyFile())
+        yield
     finally:
         setattr(sys, stream_name, orig)
 
@@ -133,14 +137,22 @@ elif sys.platform.startswith("linux"):
         # see: https://github.com/giampaolo/psutil/issues/659
         from distutils.unixccompiler import UnixCCompiler
         from distutils.errors import CompileError
+
         with tempfile.NamedTemporaryFile(
                 suffix='.c', delete=False, mode="wt") as f:
             f.write("#include <linux/ethtool.h>")
-        atexit.register(os.remove, f.name)
+
+        @atexit.register
+        def on_exit():
+            try:
+                os.remove(f.name)
+            except OSError:
+                pass
+
         compiler = UnixCCompiler()
         try:
-            with captured_output('stderr'):
-                with captured_output('stdout'):
+            with silenced_output('stderr'):
+                with silenced_output('stdout'):
                     compiler.compile([f.name])
         except CompileError:
             return ("PSUTIL_ETHTOOL_MISSING_TYPES", 1)
