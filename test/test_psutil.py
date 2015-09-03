@@ -774,19 +774,23 @@ class TestSystemAPIs(unittest.TestCase):
             total += cp_time
         self.assertEqual(total, sum(times))
         str(times)
-        if not WINDOWS:
-            # CPU times are always supposed to increase over time or
-            # remain the same but never go backwards, see:
-            # https://github.com/giampaolo/psutil/issues/392
-            last = psutil.cpu_times()
-            for x in range(100):
-                new = psutil.cpu_times()
-                for field in new._fields:
-                    new_t = getattr(new, field)
-                    last_t = getattr(last, field)
-                    self.assertGreaterEqual(new_t, last_t,
-                                            msg="%s %s" % (new_t, last_t))
-                last = new
+        # CPU times are always supposed to increase over time
+        # or at least remain the same and that's because time
+        # cannot go backwards.
+        # Surprisingly sometimes this might not be the case (at
+        # least on Windows and Linux), see:
+        # https://github.com/giampaolo/psutil/issues/392
+        # https://github.com/giampaolo/psutil/issues/645
+        # if not WINDOWS:
+        #     last = psutil.cpu_times()
+        #     for x in range(100):
+        #         new = psutil.cpu_times()
+        #         for field in new._fields:
+        #             new_t = getattr(new, field)
+        #             last_t = getattr(last, field)
+        #             self.assertGreaterEqual(new_t, last_t,
+        #                                     msg="%s %s" % (new_t, last_t))
+        #         last = new
 
     def test_sys_cpu_times2(self):
         t1 = sum(psutil.cpu_times())

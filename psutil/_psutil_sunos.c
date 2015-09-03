@@ -338,38 +338,38 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_users(PyObject *self, PyObject *args) {
     struct utmpx *ut;
-    PyObject *ret_list = PyList_New(0);
-    PyObject *tuple = NULL;
-    PyObject *user_proc = NULL;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
+    PyObject *py_user_proc = NULL;
 
-    if (ret_list == NULL)
+    if (py_retlist == NULL)
         return NULL;
 
     while (NULL != (ut = getutxent())) {
         if (ut->ut_type == USER_PROCESS)
-            user_proc = Py_True;
+            py_user_proc = Py_True;
         else
-            user_proc = Py_False;
-        tuple = Py_BuildValue(
+            py_user_proc = Py_False;
+        py_tuple = Py_BuildValue(
             "(sssfO)",
             ut->ut_user,              // username
             ut->ut_line,              // tty
             ut->ut_host,              // hostname
             (float)ut->ut_tv.tv_sec,  // tstamp
-            user_proc);               // (bool) user process
-        if (tuple == NULL)
+            py_user_proc);            // (bool) user process
+        if (py_tuple == NULL)
             goto error;
-        if (PyList_Append(ret_list, tuple))
+        if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(tuple);
+        Py_DECREF(py_tuple);
     }
     endutent();
 
-    return ret_list;
+    return py_retlist;
 
 error:
-    Py_XDECREF(tuple);
-    Py_DECREF(ret_list);
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
     if (ut != NULL)
         endutent();
     return NULL;
@@ -552,7 +552,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     uintptr_t pr_addr_sz;
     uintptr_t stk_base_sz, brk_base_sz;
 
-    PyObject *pytuple = NULL;
+    PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
@@ -633,19 +633,20 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             }
         }
 
-        pytuple = Py_BuildValue("iisslll",
-                                p->pr_vaddr,
-                                pr_addr_sz,
-                                perms,
-                                name,
-                                (long)p->pr_rss * p->pr_pagesize,
-                                (long)p->pr_anon * p->pr_pagesize,
-                                (long)p->pr_locked * p->pr_pagesize);
-        if (!pytuple)
+        py_tuple = Py_BuildValue(
+            "iisslll",
+            p->pr_vaddr,
+            pr_addr_sz,
+            perms,
+            name,
+            (long)p->pr_rss * p->pr_pagesize,
+            (long)p->pr_anon * p->pr_pagesize,
+            (long)p->pr_locked * p->pr_pagesize);
+        if (!py_tuple)
             goto error;
-        if (PyList_Append(py_retlist, pytuple))
+        if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_DECREF(pytuple);
+        Py_DECREF(py_tuple);
 
         // increment pointer
         p += 1;
@@ -658,7 +659,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 error:
     if (fd != -1)
         close(fd);
-    Py_XDECREF(pytuple);
+    Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (xmap != NULL)
         free(xmap);
@@ -806,14 +807,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
-    PyObject *af_filter = NULL;
-    PyObject *type_filter = NULL;
+    PyObject *py_af_filter = NULL;
+    PyObject *py_type_filter = NULL;
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "lOO", &pid, &af_filter, &type_filter))
+    if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
         goto error;
-    if (!PySequence_Check(af_filter) || !PySequence_Check(type_filter)) {
+    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         goto error;
     }

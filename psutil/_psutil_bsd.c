@@ -129,7 +129,7 @@ psutil_pids(PyObject *self, PyObject *args) {
         orig_address = proclist; // save so we can free it after we're done
         for (idx = 0; idx < num_processes; idx++) {
             py_pid = Py_BuildValue("i", proclist->ki_pid);
-            if (!pid)
+            if (!py_pid)
                 goto error;
             if (PyList_Append(py_retlist, py_pid))
                 goto error;
