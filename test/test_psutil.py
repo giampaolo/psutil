@@ -516,6 +516,31 @@ def supports_ipv6():
             sock.close()
 
 
+def create_temp_executable_file(suffix):
+    tmpdir = None
+    if TRAVIS and OSX:
+        tmpdir = "/private/tmp"
+    fd, path = tempfile.mkstemp(
+        prefix='psutil-', suffix=suffix, dir=tmpdir)
+    os.close(fd)
+
+    if which("gcc"):
+        fd, c_file = tempfile.mkstemp(
+            prefix='psutil-', suffix='.c', dir=tmpdir)
+        os.close(fd)
+        with open(c_file, "w") as f:
+            f.write("void main() { pause(); }")
+        subprocess.check_call(["gcc", c_file, "-o", path])
+        safe_remove(c_file)
+    else:
+        # fallback - use python's executable
+        shutil.copyfile(sys.executable, path)
+        if POSIX:
+            st = os.stat(path)
+            os.chmod(path, st.st_mode | stat.S_IEXEC)
+    return path
+
+
 if WINDOWS:
     def get_winver():
         wv = sys.getwindowsversion()
@@ -1710,29 +1735,12 @@ class TestProcess(unittest.TestCase):
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
-    @unittest.skipUnless(POSIX, "posix only")
-    # TODO: add support for other compilers
-    @unittest.skipUnless(which("gcc"), "gcc not available")
     def test_prog_w_funky_name(self):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
-        # funky_path = os.path.join(tempfile.gettempdir(), "foo bar )")
-        if OSX:
-            tmpdir = "/private/tmp"
-        else:
-            tmpdir = "/tmp"
-        fd, funky_path = tempfile.mkstemp(
-            prefix='psutil-', suffix='foo bar )', dir=tmpdir)
-        os.close(fd)
-        fd, c_file = tempfile.mkstemp(
-            prefix='psutil-', suffix='.c', dir=tmpdir)
-        os.close(fd)
-        self.addCleanup(safe_remove, c_file)
+        funky_path = create_temp_executable_file('foo bar )')
         self.addCleanup(safe_remove, funky_path)
-        with open(c_file, "w") as f:
-            f.write("void main() { pause(); }")
-        subprocess.check_call(["gcc", c_file, "-o", funky_path])
         sproc = get_test_subprocess(
             [funky_path, "arg1", "arg2", "", "arg3", ""])
         p = psutil.Process(sproc.pid)
@@ -3094,18 +3102,13 @@ class TestUnicode(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with tempfile.NamedTemporaryFile() as f:
-            tdir = os.path.dirname(f.name)
-        cls.uexe = os.path.realpath(os.path.join(tdir, "psutil-è.exe"))
-        shutil.copyfile(sys.executable, cls.uexe)
-        if POSIX:
-            st = os.stat(cls.uexe)
-            os.chmod(cls.uexe, st.st_mode | stat.S_IEXEC)
+        cls.uexe = create_temp_executable_file('è')
+        cls.ubasename = os.path.basename(cls.uexe)
+        assert 'è' in cls.ubasename
 
     @classmethod
     def tearDownClass(cls):
-        if not APPVEYOR:
-            safe_remove(cls.uexe)
+        safe_remove(cls.uexe)
 
     def setUp(self):
         reap_children()
@@ -3116,7 +3119,7 @@ class TestUnicode(unittest.TestCase):
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
         self.assertIsInstance(p.name(), str)
-        self.assertEqual(os.path.basename(p.name()), "psutil-è.exe")
+        self.assertEqual(os.path.basename(p.name()), self.ubasename)
 
     def test_proc_name(self):
         subp = get_test_subprocess(cmd=[self.uexe])
@@ -3125,7 +3128,7 @@ class TestUnicode(unittest.TestCase):
             name = py2_strencode(psutil._psplatform.cext.proc_name(subp.pid))
         else:
             name = psutil.Process(subp.pid).name()
-        self.assertEqual(name, "psutil-è.exe")
+        self.assertEqual(name, self.ubasename)
 
     def test_proc_cmdline(self):
         subp = get_test_subprocess(cmd=[self.uexe])
