@@ -13,8 +13,13 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <ifaddrs.h>
 #include <net/if.h>
+
+#ifdef PSUTIL_SUNOS10
+#include "arch/solaris10/ifaddrs.h"
+#else
+#include <ifaddrs.h>
+#endif
 
 #ifdef __linux
 #include <netdb.h>

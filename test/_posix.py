@@ -150,11 +150,12 @@ class PosixSpecificTestCase(unittest.TestCase):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
         if SUNOS:
-            cmd = ["ps", "ax"]
+            cmd = ["ps", "-A", "-o", "pid"]
         else:
             cmd = ["ps", "ax", "-o", "pid"]
         p = get_test_subprocess(cmd, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
+        assert p.poll() == 0
         if PY3:
             output = str(output, sys.stdout.encoding)
         pids_ps = []

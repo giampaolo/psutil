@@ -755,7 +755,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertEqual(logical, len(psutil.cpu_times(percpu=True)))
         self.assertGreaterEqual(logical, 1)
         #
-        if LINUX:
+        if os.path.exists("/proc/cpuinfo"):
             with open("/proc/cpuinfo") as fd:
                 cpuinfo_data = fd.read()
             if "physical id" not in cpuinfo_data:
@@ -1385,7 +1385,8 @@ class TestProcess(unittest.TestCase):
     def test_terminal(self):
         terminal = psutil.Process().terminal()
         if sys.stdin.isatty():
-            self.assertEqual(terminal, sh('tty'))
+            tty = os.path.realpath(sh('tty'))
+            self.assertEqual(terminal, tty)
         else:
             assert terminal, repr(terminal)
 
@@ -1645,7 +1646,8 @@ class TestProcess(unittest.TestCase):
             if not nt.path.startswith('['):
                 assert os.path.isabs(nt.path), nt.path
                 if POSIX:
-                    assert os.path.exists(nt.path), nt.path
+                    assert os.path.exists(nt.path) or \
+                        os.path.islink(nt.path), nt.path
                 else:
                     # XXX - On Windows we have this strange behavior with
                     # 64 bit dlls: they are visible via explorer but cannot

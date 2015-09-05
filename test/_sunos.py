@@ -17,7 +17,7 @@ import psutil
 class SunOSSpecificTestCase(unittest.TestCase):
 
     def test_swap_memory(self):
-        out = sh('env PATH=/usr/sbin:/sbin:%s swap -l -k' % os.environ['PATH'])
+        out = sh('env PATH=/usr/sbin:/sbin:%s swap -l' % os.environ['PATH'])
         lines = out.strip().split('\n')[1:]
         if not lines:
             raise ValueError('no swap device(s) configured')
@@ -25,10 +25,8 @@ class SunOSSpecificTestCase(unittest.TestCase):
         for line in lines:
             line = line.split()
             t, f = line[-2:]
-            t = t.replace('K', '')
-            f = f.replace('K', '')
-            total += int(int(t) * 1024)
-            free += int(int(f) * 1024)
+            total += int(int(t) * 512)
+            free += int(int(f) * 512)
         used = total - free
 
         psutil_swap = psutil.swap_memory()

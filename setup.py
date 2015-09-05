@@ -15,6 +15,7 @@ import io
 import os
 import sys
 import tempfile
+import platform
 try:
     from setuptools import setup, Extension
 except ImportError:
@@ -64,13 +65,15 @@ VERSION_MACRO = ('PSUTIL_VERSION', int(VERSION.replace('.', '')))
 
 # POSIX
 if os.name == 'posix':
-    libraries = []
-    if sys.platform.startswith("sunos"):
-        libraries.append('socket')
     posix_extension = Extension(
         'psutil._psutil_posix',
-        sources=['psutil/_psutil_posix.c'],
-        libraries=libraries)
+        sources=['psutil/_psutil_posix.c'])
+    if sys.platform.startswith("sunos"):
+        posix_extension.libraries.append('socket')
+        if platform.release() == '5.10':
+            posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
+            posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))
+
 # Windows
 if sys.platform.startswith("win32"):
 
