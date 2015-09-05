@@ -15,7 +15,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 
-#ifdef _SUNOS10
+#ifdef PSUTIL_SUNOS10
 #include "arch/solaris10/ifaddrs.h"
 #else
 #include <ifaddrs.h>

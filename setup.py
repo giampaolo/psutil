@@ -71,8 +71,8 @@ if os.name == 'posix':
     if sys.platform.startswith("sunos"):
         posix_extension.libraries.append('socket')
         if platform.release() == '5.10':
-            posix_extension.sources.append('psutil/arch/solaris10/ifaddrs.c')
-            posix_extension.define_macros.append(('_SUNOS10', 1))
+            posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
+            posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))
 
 # Windows
 if sys.platform.startswith("win32"):
