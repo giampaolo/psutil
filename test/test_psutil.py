@@ -1712,7 +1712,8 @@ class TestProcess(unittest.TestCase):
         except AssertionError:
             if WINDOWS and len(exe) == len(PYTHON):
                 # on Windows we don't care about case sensitivity
-                self.assertEqual(exe.lower(), PYTHON.lower())
+                normcase = os.path.normcase
+                self.assertEqual(normcase(exe), normcase(PYTHON))
             else:
                 # certain platforms such as BSD are more accurate returning:
                 # "/usr/local/bin/python2.7"
@@ -1746,8 +1747,9 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         # ...in order to try to prevent occasional failures on travis
         wait_for_pid(p.pid)
+        normcase = os.path.normcase
         self.assertEqual(p.name(), os.path.basename(funky_path))
-        self.assertEqual(p.exe(), funky_path)
+        self.assertEqual(normcase(p.exe()), normcase(funky_path))
         self.assertEqual(
             p.cmdline(), [funky_path, "arg1", "arg2", "", "arg3", ""])
 
@@ -3152,10 +3154,7 @@ class TestUnicode(unittest.TestCase):
             new = set(p.open_files())
         path = (new - start).pop().path
         self.assertIsInstance(path, str)
-        if WINDOWS:
-            self.assertEqual(path.lower(), self.uexe.lower())
-        else:
-            self.assertEqual(path, self.uexe)
+        self.assertEqual(os.path.normcase(path), os.path.normcase(self.uexe))
 
 
 def main():
