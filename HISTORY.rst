@@ -1,14 +1,22 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+3.2.2 - XXXX-XX-XX
+==================
+
+**Bug fixes**
+
+- #517: [SunOS] net_io_counters failed to detect network interfaces
+  correctly on Solaris 10
+- #610: [SunOS] fix build and tests on Solaris 10
+- #678: [Linux] can't install psutil due to bug in setup.py.
+
+
 3.2.1 - 2015-09-03
 ==================
 
 **Bug fixes**
 
 - #677: [Linux] can't install psutil due to bug in setup.py.
-- #610: [SunOS] fix build and tests on Solaris 10
-- #517: [SunOS] net_io_counters failed to detect network interfaces
-  correctly on Solaris 10
 
 
 3.2.0 - 2015-09-02

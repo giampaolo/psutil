@@ -48,6 +48,9 @@ def get_description():
 @contextlib.contextmanager
 def silenced_output(stream_name):
     class DummyFile(io.BytesIO):
+        # see: https://github.com/giampaolo/psutil/issues/678
+        errors = "ignore"
+
         def write(self, s):
             pass
 
