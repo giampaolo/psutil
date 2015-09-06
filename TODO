@@ -6,10 +6,24 @@ A collection of ideas and notes about stuff to implement in future versions.
 https://github.com/giampaolo/psutil/issues
 
 
+PLATFORMS
+=========
+
+ * #615 (PR): OpenBSD
+
+ * #355 (patch): Android
+
+ * #429 (patch): NetBSD
+
+ * #605 (branch): AIX
+
+ * #276: GNU/Hurd
+
+ * DragonFlyBSD
+
+
 HIGHER PRIORITY
 ===============
-
- * OpenBSD support.
 
  * #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
    lm-sensors lib).
@@ -35,16 +49,6 @@ HIGHER PRIORITY
 
 LOWER PRIORITY
 ==============
-
- * #355: Android support.
-
- * #276: GNU/Hurd support.
-
- * #429: NetBSD support.
-
- * DragonFlyBSD support?
-
- * AIX support?
 
  * examples/taskmgr-gui.py (using tk).
 

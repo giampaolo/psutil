@@ -38,7 +38,7 @@ def main():
     # flake8
     failed = False
     for path in files:
-        ret = subprocess.call("flake8 %s" % path, shell=True)
+        ret = subprocess.call("python -m flake8 %s" % path, shell=True)
         if ret != 0:
             failed = True
     if failed:
