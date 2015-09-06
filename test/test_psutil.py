@@ -98,7 +98,9 @@ if WINDOWS:
     WIN_VISTA = (6, 0, 0)
 LINUX = sys.platform.startswith("linux")
 OSX = sys.platform.startswith("darwin")
-BSD = sys.platform.startswith("freebsd") or sys.platform.startswith("openbsd")
+FREEBSD = sys.platform.startswith("freebsd")
+OPENBSD = sys.platform.startswith("openbsd")
+BSD = FREEBSD or OPENBSD
 SUNOS = sys.platform.startswith("sunos")
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
@@ -1849,7 +1851,7 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
 
-    @unittest.skipUnless(WINDOWS or LINUX or BSD,
+    @unittest.skipUnless(WINDOWS or LINUX or FREEBSD,
                          'not available on this platform')
     @unittest.skipIf(LINUX and TRAVIS, "unknown failure on travis")
     def test_cpu_affinity(self):
@@ -3183,8 +3185,8 @@ def main():
         tests.append(TestDualProcessImplementation)
     elif OSX:
         from _osx import OSXSpecificTestCase as stc
-    elif BSD:
-        from _bsd import BSDSpecificTestCase as stc
+    elif FREEBSD:
+        from _freebsd import FreeBSDSpecificTestCase as stc
     elif SUNOS:
         from _sunos import SunOSSpecificTestCase as stc
     if stc is not None:

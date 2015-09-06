@@ -4,6 +4,12 @@
  * found in the LICENSE file.
  *
  * OpenBSD platform-specific module methods for _psutil_bsd
+ * Missing compared to FreeBSD implementation:
+ *
+ * - psutil.net_connections()
+ * - psutil.Process.get/set_cpu_affinity()  (not supported natively)
+ * - psutil.Process.memory_maps()
+ * - psutil.Process.cwd()
  */
 
 
@@ -1033,6 +1039,7 @@ error:
     return NULL;
 }
 
+
 /*
  * Return a Python list of tuple representing per-cpu times
  */
@@ -1881,10 +1888,8 @@ PsutilMethods[] =
      "Return process threads"},
     {"proc_status", psutil_proc_status, METH_VARARGS,
      "Return process status as an integer"},
-/*
     {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
      "Return process IO counters"},
-*/
     {"proc_tty_nr", psutil_proc_tty_nr, METH_VARARGS,
      "Return process tty (terminal) number"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
