@@ -7,6 +7,7 @@
 import errno
 import functools
 import os
+import sys
 import xml.etree.ElementTree as ET
 from collections import namedtuple
 
@@ -82,6 +83,8 @@ def virtual_memory():
 
 def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
+    if sys.platform.startswith("openbsd"):
+        PAGESIZE = 1
     total, used, free, sin, sout = [x * PAGESIZE for x in cext.swap_mem()]
     percent = usage_percent(used, total, _round=1)
     return _common.sswap(total, used, free, percent, sin, sout)
@@ -133,6 +136,8 @@ def cpu_count_physical():
     # We may get None in case "sysctl kern.sched.topology_spec"
     # is not supported on this BSD version, in which case we'll mimic
     # os.cpu_count() and return None.
+    if sys.platform.startswith("openbsd"):
+        return cext.cpu_count_logical()
     ret = None
     s = cext.cpu_count_phys()
     if s is not None:

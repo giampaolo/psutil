@@ -98,7 +98,7 @@ if WINDOWS:
     WIN_VISTA = (6, 0, 0)
 LINUX = sys.platform.startswith("linux")
 OSX = sys.platform.startswith("darwin")
-BSD = sys.platform.startswith("freebsd")
+BSD = sys.platform.startswith("freebsd") or sys.platform.startswith("openbsd")
 SUNOS = sys.platform.startswith("sunos")
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
