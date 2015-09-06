@@ -53,7 +53,7 @@ except ImportError:
     import mock  # requires "pip install mock"
 
 import psutil
-from psutil._compat import PY3, callable, long, unicode
+from psutil._compat import PY3, callable, long, unicode, which
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
@@ -207,23 +207,6 @@ def sh(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     if PY3:
         stdout = str(stdout, sys.stdout.encoding)
     return stdout.strip()
-
-
-def which(program):
-    """Same as UNIX which command. Return None on command not found."""
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
-    return None
 
 
 if POSIX:

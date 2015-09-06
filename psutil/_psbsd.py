@@ -17,11 +17,15 @@ from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
 from ._common import conn_tmap, usage_percent, sockfam_to_enum
 from ._common import socktype_to_enum
+from ._compat import which
 
 
 __extra__all__ = []
 
 # --- constants
+
+FREEBSD = sys.platform.startswith("freebsd")
+OPENBSD = sys.platform.startswith("openbsd")
 
 PROC_STATUSES = {
     cext.SSTOP: _common.STATUS_STOPPED,
@@ -277,7 +281,17 @@ class Process(object):
 
     @wrap_exceptions
     def exe(self):
-        return cext.proc_exe(self.pid)
+        if FREEBSD:
+            return cext.proc_exe(self.pid)
+        else:
+            # exe cannot be determined on OpenBSD; references:
+            # https://chromium.googlesource.com/chromium/src/base/+/
+            #     master/base_paths_posix.cc
+            # We try our best guess by using which against the first
+            # cmdline arg (may return None).
+            cmdline = self.cmdline()
+            if cmdline:
+                return which(cmdline[0])
 
     @wrap_exceptions
     def cmdline(self):

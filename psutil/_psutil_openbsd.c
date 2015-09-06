@@ -1802,8 +1802,6 @@ PsutilMethods[] = {
      "Return process name"},
     {"proc_connections", psutil_proc_connections, METH_VARARGS,
      "Return connections opened by process"},
-    {"proc_exe", psutil_proc_name, METH_VARARGS,
-     "Return process name"},
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
      "Return process cmdline as a list of cmdline arguments"},
     {"proc_ppid", psutil_proc_ppid, METH_VARARGS,
