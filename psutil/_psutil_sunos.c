@@ -728,26 +728,32 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
             goto error;
         }
 
-#if defined(_INT64_TYPE)
-        py_ifc_info = Py_BuildValue("(KKKKkkii)",
-                                    wbytes->value.ui64,
-                                    rbytes->value.ui64,
-                                    wpkts->value.ui64,
-                                    rpkts->value.ui64,
-                                    ierrs->value.ui32,
-                                    oerrs->value.ui32,
-#else
-        py_ifc_info = Py_BuildValue("(kkkkkkii)",
-                                    wbytes->value.ui32,
-                                    rbytes->value.ui32,
-                                    wpkts->value.ui32,
-                                    rpkts->value.ui32,
-                                    ierrs->value.ui32,
-                                    oerrs->value.ui32,
-#endif
-                                    0,  // dropin not supported
-                                    0   // dropout not supported
-                                   );
+        if (rbytes->data_type == KSTAT_DATA_UINT64)
+        {
+            py_ifc_info = Py_BuildValue("(KKKKIIii)",
+                                        wbytes->value.ui64,
+                                        rbytes->value.ui64,
+                                        wpkts->value.ui64,
+                                        rpkts->value.ui64,
+                                        ierrs->value.ui32,
+                                        oerrs->value.ui32,
+                                        0,  // dropin not supported
+                                        0   // dropout not supported
+                                       );
+        }
+        else
+        {
+            py_ifc_info = Py_BuildValue("(IIIIIIii)",
+                                        wbytes->value.ui32,
+                                        rbytes->value.ui32,
+                                        wpkts->value.ui32,
+                                        rpkts->value.ui32,
+                                        ierrs->value.ui32,
+                                        oerrs->value.ui32,
+                                        0,  // dropin not supported
+                                        0   // dropout not supported
+                                       );
+        }
         if (!py_ifc_info)
             goto error;
         if (PyDict_SetItemString(py_retdict, ksp->ks_name, py_ifc_info))
