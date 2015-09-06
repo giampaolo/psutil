@@ -7,6 +7,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 - #677: [Linux] can't install psutil due to bug in setup.py.
 - #610: [SunOS] fix build and tests on Solaris 10
+- #517: [SunOS] fix net_io_counters on Solaris 10
 
 
 3.2.0 - 2015-09-02
