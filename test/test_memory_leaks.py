@@ -360,13 +360,11 @@ class TestModuleFunctionsLeaks(Base):
 
     @skip_if_linux()
     def test_cpu_count_logical(self):
-        psutil.cpu_count = psutil._psplatform.cpu_count_logical
-        self.execute('cpu_count')
+        self.execute('cpu_count', logical=True)
 
     @skip_if_linux()
     def test_cpu_count_physical(self):
-        psutil.cpu_count = psutil._psplatform.cpu_count_physical
-        self.execute('cpu_count')
+        self.execute('cpu_count', logical=False)
 
     @skip_if_linux()
     def test_boot_time(self):
