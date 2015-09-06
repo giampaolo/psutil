@@ -689,8 +689,10 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         goto error;
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock == -1)
+    if (sock == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
+    }
 
     ksp = kc->kc_chain;
     while (ksp != NULL) {
@@ -1170,8 +1172,10 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
     if (kc == NULL)
         goto error;
     sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock == -1)
+    if (sock == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
         goto error;
+    }
 
     for (ksp = kc->kc_chain; ksp; ksp = ksp->ks_next) {
         if (strcmp(ksp->ks_class, "net") == 0) {
