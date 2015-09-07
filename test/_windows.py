@@ -18,6 +18,7 @@ import traceback
 
 from test_psutil import APPVEYOR, WINDOWS
 from test_psutil import get_test_subprocess, reap_children, unittest
+from test_psutil import retry_before_failing
 
 import mock
 try:
@@ -207,6 +208,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
         self.assertEqual(wmi_pids, psutil_pids)
 
     @unittest.skipIf(wmi is None, "wmi module is not installed")
+    @retry_before_failing()
     def test_disks(self):
         ps_parts = psutil.disk_partitions(all=True)
         wmi_parts = wmi.WMI().Win32_LogicalDisk()
