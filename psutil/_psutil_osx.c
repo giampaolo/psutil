@@ -65,6 +65,22 @@ psutil_sys_vminfo(vm_statistics_data_t *vmstat) {
 
 
 /*
+ * Set exception to AccessDenied if pid exists else NoSuchProcess.
+ */
+void
+psutil_raise_ad_or_nsp(long pid) {
+    int ret;
+    ret = psutil_pid_exists(pid);
+    if (ret == 0)
+        NoSuchProcess();
+    else if (ret == 1)
+        AccessDenied();
+    else
+        return NULL;
+}
+
+
+/*
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject *
@@ -157,12 +173,8 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     ret = proc_pidpath(pid, &buf, sizeof(buf));
-    if (ret == 0) {
-        if (! psutil_pid_exists(pid))
-            return NoSuchProcess();
-        else
-            return AccessDenied();
-    }
+    if (ret == 0)
+        return psutil_raise_ad_or_nsp(pid);
     return Py_BuildValue("s", buf);
 }
 
@@ -279,14 +291,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     err = task_for_pid(mach_task_self(), pid, &task);
 
     if (err != KERN_SUCCESS) {
-        if (! psutil_pid_exists(pid)) {
-            NoSuchProcess();
-        }
-        else {
-            // pid exists, so return AccessDenied error since task_for_pid()
-            // failed
-            AccessDenied();
-        }
+        psutil_raise_ad_or_nsp(pid);
         goto error;
     }
 
@@ -883,10 +888,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     // task_for_pid() requires special privileges
     err = task_for_pid(mach_task_self(), pid, &task);
     if (err != KERN_SUCCESS) {
-        if (! psutil_pid_exists(pid))
-            NoSuchProcess();
-        else
-            AccessDenied();
+        psutil_raise_ad_or_nsp(pid);
         goto error;
     }
 
