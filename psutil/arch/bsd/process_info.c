@@ -111,40 +111,6 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
 }
 
 
-char
-*psutil_get_cmd_path(long pid, size_t *pathsize) {
-    int mib[4];
-    char *path;
-    size_t size = 0;
-
-    /*
-     * Make a sysctl() call to get the raw argument space of the process.
-     */
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PATHNAME;
-    mib[3] = pid;
-
-    // call with a null buffer first to determine if we need a buffer
-    if (sysctl(mib, 4, NULL, &size, NULL, 0) == -1)
-        return NULL;
-
-    path = malloc(size);
-    if (path == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    *pathsize = size;
-    if (sysctl(mib, 4, path, &size, NULL, 0) == -1) {
-        free(path);
-        return NULL;       // Insufficient privileges
-    }
-
-    return path;
-}
-
-
 /*
  * XXX no longer used; it probably makese sense to remove it.
  * Borrowed from psi Python System Information project
