@@ -25,13 +25,13 @@ __extra__all__ = []
 # --- constants
 
 PROC_STATUSES = {
-    cext.SSTOP: _common.STATUS_STOPPED,
-    cext.SSLEEP: _common.STATUS_SLEEPING,
-    cext.SRUN: _common.STATUS_RUNNING,
     cext.SIDL: _common.STATUS_IDLE,
+    cext.SRUN: _common.STATUS_RUNNING,
+    cext.SSLEEP: _common.STATUS_SLEEPING,
+    cext.SSTOP: _common.STATUS_STOPPED,
+    cext.SZOMB: _common.STATUS_ZOMBIE,
     cext.SWAIT: _common.STATUS_WAITING,
     cext.SLOCK: _common.STATUS_LOCKED,
-    cext.SZOMB: _common.STATUS_ZOMBIE,
 }
 
 TCP_STATUSES = {

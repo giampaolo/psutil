@@ -2233,13 +2233,14 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
 
     // process status constants
-    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
-    PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
-    PyModule_AddIntConstant(module, "SRUN", SRUN);
     PyModule_AddIntConstant(module, "SIDL", SIDL);
+    PyModule_AddIntConstant(module, "SRUN", SRUN);
+    PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
+    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
+    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
     PyModule_AddIntConstant(module, "SWAIT", SWAIT);
     PyModule_AddIntConstant(module, "SLOCK", SLOCK);
-    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
+
     // connection status constants
     PyModule_AddIntConstant(module, "TCPS_CLOSED", TCPS_CLOSED);
     PyModule_AddIntConstant(module, "TCPS_CLOSING", TCPS_CLOSING);
