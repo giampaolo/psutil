@@ -21,7 +21,7 @@ from . import _common
 from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
-from ._common import isfile_strict, usage_percent
+from ._common import isfile_strict, usage_percent, supports_ipv6
 from ._common import NIC_DUPLEX_FULL, NIC_DUPLEX_HALF, NIC_DUPLEX_UNKNOWN
 from ._compat import PY3, long
 
@@ -355,6 +355,10 @@ def pid_exists(pid):
 
 # --- network
 
+class _Ipv6UnsupportedError(Exception):
+    pass
+
+
 class Connections:
     """A wrapper on top of /proc/net/* files, retrieving per-process
     and system-wide open connections (TCP, UDP, UNIX) similarly to
@@ -464,15 +468,22 @@ class Connections:
             # return socket.inet_ntop(socket.AF_INET6,
             #          ''.join(ip[i:i+4][::-1] for i in xrange(0, 16, 4)))
             ip = base64.b16decode(ip)
-            # see: https://github.com/giampaolo/psutil/issues/201
-            if sys.byteorder == 'little':
-                ip = socket.inet_ntop(
-                    socket.AF_INET6,
-                    struct.pack('>4I', *struct.unpack('<4I', ip)))
-            else:
-                ip = socket.inet_ntop(
-                    socket.AF_INET6,
-                    struct.pack('<4I', *struct.unpack('<4I', ip)))
+            try:
+                # see: https://github.com/giampaolo/psutil/issues/201
+                if sys.byteorder == 'little':
+                    ip = socket.inet_ntop(
+                        socket.AF_INET6,
+                        struct.pack('>4I', *struct.unpack('<4I', ip)))
+                else:
+                    ip = socket.inet_ntop(
+                        socket.AF_INET6,
+                        struct.pack('<4I', *struct.unpack('<4I', ip)))
+            except ValueError:
+                # see: https://github.com/giampaolo/psutil/issues/623
+                if not supports_ipv6():
+                    raise _Ipv6UnsupportedError
+                else:
+                    raise
         return (ip, port)
 
     def process_inet(self, file, family, type_, inodes, filter_pid=None):
@@ -507,8 +518,11 @@ class Connections:
                         status = TCP_STATUSES[status]
                     else:
                         status = _common.CONN_NONE
-                    laddr = self.decode_address(laddr, family)
-                    raddr = self.decode_address(raddr, family)
+                    try:
+                        laddr = self.decode_address(laddr, family)
+                        raddr = self.decode_address(raddr, family)
+                    except _Ipv6UnsupportedError:
+                        continue
                     yield (fd, family, type_, laddr, raddr, status, pid)
 
     def process_unix(self, file, family, inodes, filter_pid=None):

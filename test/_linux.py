@@ -426,6 +426,18 @@ class LinuxSpecificTestCase(unittest.TestCase):
                     assert ret
                     self.assertEqual(ret[0].fstype, 'zfs')
 
+    @mock.patch('psutil._pslinux.socket.inet_ntop', side_effect=ValueError)
+    @mock.patch('psutil._pslinux.supports_ipv6', return_value=False)
+    def test_connections_ipv6_not_supported(self, supports_ipv6, inet_ntop):
+        # see: https://github.com/giampaolo/psutil/issues/623
+        try:
+            s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            self.addCleanup(s.close)
+            s.bind(("::1", 0))
+        except socket.error:
+            pass
+        psutil.net_connections(kind='inet6')
+
     # --- tests for specific kernel versions
 
     @unittest.skipUnless(

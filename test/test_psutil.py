@@ -53,6 +53,7 @@ except ImportError:
     import mock  # requires "pip install mock"
 
 import psutil
+from psutil._common import supports_ipv6
 from psutil._compat import PY3, callable, long, unicode
 
 if sys.version_info < (2, 7):
@@ -497,23 +498,6 @@ def skip_on_not_implemented(only_if=None):
                 raise unittest.SkipTest(msg)
         return wrapper
     return decorator
-
-
-def supports_ipv6():
-    """Return True if IPv6 is supported on this platform."""
-    if not socket.has_ipv6 or not hasattr(socket, "AF_INET6"):
-        return False
-    sock = None
-    try:
-        sock = socket.socket(AF_INET6, SOCK_STREAM)
-        sock.bind(("::1", 0))
-    except (socket.error, socket.gaierror):
-        return False
-    else:
-        return True
-    finally:
-        if sock is not None:
-            sock.close()
 
 
 def create_temp_executable_file(suffix):
@@ -2931,6 +2915,29 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(len(calls), 4)
         # docstring
         self.assertEqual(foo.__doc__, "foo docstring")
+
+    def test_supports_ipv6(self):
+        if supports_ipv6():
+            with mock.patch('psutil._common.socket') as s:
+                s.has_ipv6 = False
+                assert not supports_ipv6()
+            with mock.patch('psutil._common.socket.socket',
+                            side_effect=socket.error) as s:
+                assert not supports_ipv6()
+                assert s.called
+            with mock.patch('psutil._common.socket.socket',
+                            side_effect=socket.gaierror) as s:
+                assert not supports_ipv6()
+                assert s.called
+            with mock.patch('psutil._common.socket.socket.bind',
+                            side_effect=socket.gaierror) as s:
+                assert not supports_ipv6()
+                assert s.called
+        else:
+            if hasattr(socket, 'AF_INET6'):
+                with self.assertRaises(Exception):
+                    sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+                    sock.bind(("::1", 0))
 
     def test_isfile_strict(self):
         from psutil._common import isfile_strict

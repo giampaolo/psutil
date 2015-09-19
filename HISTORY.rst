@@ -8,6 +8,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #517: [SunOS] net_io_counters failed to detect network interfaces
   correctly on Solaris 10
 - #610: [SunOS] fix build and tests on Solaris 10
+- #623: [Linux] process or system connections raises ValueError if IPv6 is not
+  supported by the system.
 - #678: [Linux] can't install psutil due to bug in setup.py.
 
 
