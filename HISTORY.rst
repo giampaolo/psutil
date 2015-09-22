@@ -7,6 +7,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 - #517: [SunOS] net_io_counters failed to detect network interfaces
   correctly on Solaris 10
+- #541: [FreeBSD] disk_io_counters r/w times were expressed in seconds instead
+  of milliseconds.  (patch by dasumin)
 - #610: [SunOS] fix build and tests on Solaris 10
 - #623: [Linux] process or system connections raises ValueError if IPv6 is not
   supported by the system.
