@@ -177,7 +177,6 @@ typedef NTSTATUS (NTAPI *_NtSetInformationProcess)(
     DWORD ProcessInformationLength
 );
 
-
 typedef enum _PROCESSINFOCLASS2 {
     _ProcessBasicInformation,
     ProcessQuotaLimits,
@@ -209,8 +208,12 @@ typedef enum _PROCESSINFOCLASS2 {
     /* added after XP+ */
     _ProcessImageFileName,
     ProcessLUIDDeviceMapsEnabled,
+// MSVC 2015 starts forcing C++11 standard, which does not allow duplicate
+// unscoped enumerations.  It doesn't matter that this is C code, MSVC is a C++ compiler.
+#if _MSC_VER < 1900
     ProcessBreakOnTermination,
-    ProcessDebugObjectHandle,
+#endif
+    ProcessDebugObjectHandle=ProcessLUIDDeviceMapsEnabled+2,
     ProcessDebugFlags,
     ProcessHandleTracing,
     ProcessIoPriority,
