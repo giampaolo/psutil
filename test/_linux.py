@@ -35,6 +35,9 @@ import psutil
 import psutil._pslinux
 from psutil._compat import PY3, u
 
+# procps-ng 3.3.10 changed the output format of free
+# and removed the 'buffers/cache line'
+OLD_PROCPS_NG_VERSION = 'buffers/cache' in sh('free')
 
 SIOCGIFADDR = 0x8915
 SIOCGIFCONF = 0x8912
@@ -129,7 +132,9 @@ class LinuxSpecificTestCase(unittest.TestCase):
     @retry_before_failing()
     def test_vmem_used(self):
         lines = sh('free').split('\n')[1:]
-        used = int(lines[0].split()[2]) * 1024
+        total = int(lines[0].split()[1])
+        free = int(lines[0].split()[3])
+        used = (total - free) * 1024
         self.assertAlmostEqual(used, psutil.virtual_memory().used,
                                delta=MEMORY_TOLERANCE)
 
@@ -142,34 +147,32 @@ class LinuxSpecificTestCase(unittest.TestCase):
 
     @retry_before_failing()
     def test_vmem_buffers(self):
-        lines = sh('free').split('\n')[1:]
-        buffers = int(lines[0].split()[5]) * 1024
+        buffers = int(sh('vmstat').split('\n')[2].split()[4]) * 1024
         self.assertAlmostEqual(buffers, psutil.virtual_memory().buffers,
                                delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_cached(self):
-        lines = sh('free').split('\n')[1:]
-        cached = int(lines[0].split()[6]) * 1024
+        cached = int(sh('vmstat').split('\n')[2].split()[5]) * 1024
         self.assertAlmostEqual(cached, psutil.virtual_memory().cached,
                                delta=MEMORY_TOLERANCE)
 
     def test_swapmem_total(self):
         lines = sh('free').split('\n')[1:]
-        total = int(lines[2].split()[1]) * 1024
+        total = int(lines[2 if OLD_PROCPS_NG_VERSION else 1].split()[1]) * 1024
         self.assertEqual(total, psutil.swap_memory().total)
 
     @retry_before_failing()
     def test_swapmem_used(self):
         lines = sh('free').split('\n')[1:]
-        used = int(lines[2].split()[2]) * 1024
+        used = int(lines[2 if OLD_PROCPS_NG_VERSION else 1].split()[2]) * 1024
         self.assertAlmostEqual(used, psutil.swap_memory().used,
                                delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_swapmem_free(self):
         lines = sh('free').split('\n')[1:]
-        free = int(lines[2].split()[3]) * 1024
+        free = int(lines[2 if OLD_PROCPS_NG_VERSION else 1].split()[1]) * 1024
         self.assertAlmostEqual(free, psutil.swap_memory().free,
                                delta=MEMORY_TOLERANCE)
 
