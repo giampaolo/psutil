@@ -270,6 +270,8 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
+    PARGS_BINARY = '/usr/bin/pargs'
+
     __slots__ = ["pid", "_name", "_ppid"]
 
     def __init__(self, pid):
@@ -290,9 +292,32 @@ class Process(object):
         self.cmdline()
         return ""
 
+    @staticmethod
+    def _parse_pargs_output(out):
+        """Parse output as returned by pargs
+        :param out: pargs output
+        :return: a list of arguments
+
+        >>> out='''634:    /usr/sbin/ttymon -p solaris
+        ... argv[0]: /usr/sbin/ttymon
+        ... argv[1]: -p
+        ... argv[2]: solaris-vagrant console login:
+        ... '''
+        >>> Process._parse_pargs_output(out)
+        ['/usr/sbin/ttymon', '-p', 'solaris-vagrant console login:']
+        """
+        return [line.split(' ', 1)[1]
+                for line in out.splitlines()[1:]
+                if line.startswith('argv')]
+
     @wrap_exceptions
     def cmdline(self):
-        return cext.proc_name_and_args(self.pid)[1].split(' ')
+        cmd = [self.PARGS_BINARY, str(self.pid)]
+        try:
+            out = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+            return self._parse_pargs_output(out)
+        except (subprocess.CalledProcessError, EnvironmentError):
+            return cext.proc_name_and_args(self.pid)[1].split(' ')
 
     @wrap_exceptions
     def create_time(self):
