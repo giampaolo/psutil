@@ -13,6 +13,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #623: [Linux] process or system connections raises ValueError if IPv6 is not
   supported by the system.
 - #678: [Linux] can't install psutil due to bug in setup.py.
+- #689: Fallback to UTF-8 for stdout encoding if sys.stdout.encoding is None
 
 
 3.2.1 - 2015-09-03
