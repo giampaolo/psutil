@@ -310,13 +310,21 @@ def cpu_tree():
             line = line.strip().lower()
             if not line:
                 # new section
-                phys_id = int(current_info[b'physical id'])
+                try:
+                    phys_id = int(current_info[b'physical id'])
+                except KeyError:
+                    # single core under kvm has no physical id
+                    phys_id = 0
                 try:
                     pack = topology[phys_id]
                 except KeyError:
                     pack = Pack()
                     topology[phys_id] = pack
-                core_id = int(current_info[b'core id'])
+                try:
+                    core_id = int(current_info[b'core id'])
+                except KeyError:
+                    # single core under kvm has no core id
+                    core_id = 0
                 try:
                     core = pack[core_id]
                 except KeyError:
