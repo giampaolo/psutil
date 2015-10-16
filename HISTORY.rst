@@ -1,5 +1,13 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+3.2.3 - XXXX-XX-XX
+==================
+
+**Bug fixes**
+
+- #692: [UNIX] Process.name() is no longer cached as it may change.
+
+
 3.2.2 - 2015-10-04
 ==================
 

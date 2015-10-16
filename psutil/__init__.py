@@ -157,7 +157,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "3.2.2"
+__version__ = "3.2.3"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
@@ -519,25 +519,29 @@ class Process(object):
 
     def name(self):
         """The process name. The return value is cached after first call."""
-        if self._name is None:
-            name = self._proc.name()
-            if _POSIX and len(name) >= 15:
-                # On UNIX the name gets truncated to the first 15 characters.
-                # If it matches the first part of the cmdline we return that
-                # one instead because it's usually more explicative.
-                # Examples are "gnome-keyring-d" vs. "gnome-keyring-daemon".
-                try:
-                    cmdline = self.cmdline()
-                except AccessDenied:
-                    pass
-                else:
-                    if cmdline:
-                        extended_name = os.path.basename(cmdline[0])
-                        if extended_name.startswith(name):
-                            name = extended_name
-            self._proc._name = name
-            self._name = name
-        return self._name
+        # Process name is only cached on Windows as on POSIX it may
+        # change, see:
+        # https://github.com/giampaolo/psutil/issues/692
+        if _WINDOWS and self._name is not None:
+            return self._name
+        name = self._proc.name()
+        if _POSIX and len(name) >= 15:
+            # On UNIX the name gets truncated to the first 15 characters.
+            # If it matches the first part of the cmdline we return that
+            # one instead because it's usually more explicative.
+            # Examples are "gnome-keyring-d" vs. "gnome-keyring-daemon".
+            try:
+                cmdline = self.cmdline()
+            except AccessDenied:
+                pass
+            else:
+                if cmdline:
+                    extended_name = os.path.basename(cmdline[0])
+                    if extended_name.startswith(name):
+                        name = extended_name
+        self._name = name
+        self._proc._name = name
+        return name
 
     def exe(self):
         """The process executable as an absolute path.

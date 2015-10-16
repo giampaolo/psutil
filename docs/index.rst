@@ -679,7 +679,7 @@ Process class
 
   .. method:: name()
 
-     The process name. The return value is cached after first call.
+     The process name.
 
   .. method:: exe()
 
