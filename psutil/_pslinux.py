@@ -23,6 +23,7 @@ from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
 from ._common import isfile_strict, usage_percent, supports_ipv6
 from ._common import NIC_DUPLEX_FULL, NIC_DUPLEX_HALF, NIC_DUPLEX_UNKNOWN
+from ._common import Topology, Pack, Core
 from ._compat import PY3, long
 
 if sys.version_info >= (3, 4):
@@ -307,6 +308,45 @@ def cpu_count_physical():
 
     # mimic os.cpu_count()
     return sum(mapping.values()) or None
+
+
+def cpu_tree():
+    """Return the topology of the cores in the system as tree."""
+    topology = Topology()
+    current_info = {}
+    with open('/proc/cpuinfo', 'rb') as f:
+        for line in f:
+            line = line.strip().lower()
+            if not line:
+                # new section
+                try:
+                    phys_id = int(current_info[b'physical id'])
+                except KeyError:
+                    # single core under kvm has no physical id
+                    phys_id = 0
+                try:
+                    pack = topology[phys_id]
+                except KeyError:
+                    pack = Pack()
+                    topology[phys_id] = pack
+                try:
+                    core_id = int(current_info[b'core id'])
+                except KeyError:
+                    # single core under kvm has no core id
+                    core_id = 0
+                try:
+                    core = pack[core_id]
+                except KeyError:
+                    core = Core()
+                    pack[core_id] = core
+                processor = int(current_info[b'processor'])
+                core[processor] = current_info
+                current_info = {}
+            else:
+                # ongoing section
+                key, value = line.split(b':', 1)
+                current_info[key.strip()] = value.strip()
+    return topology
 
 
 # --- other system functions

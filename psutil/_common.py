@@ -258,3 +258,40 @@ pctxsw = namedtuple('pctxsw', ['voluntary', 'involuntary'])
 # psutil.Process.connections()
 pconn = namedtuple('pconn', ['fd', 'family', 'type', 'laddr', 'raddr',
                              'status'])
+
+# =====================================================================
+# --- CPU topology classes
+# =====================================================================
+
+
+class Core(dict):
+    """Class representing a core in the CPU topology tree.
+    """
+
+    def thread_count(self):
+        return len(self)
+
+
+class Pack(dict):
+    """Class representing a physical pack in the CPU topology tree.
+    """
+
+    def core_count(self):
+        return len(self)
+
+    def thread_count(self):
+        return sum([core.thread_count() for core in self.values()])
+
+
+class Topology(dict):
+    """Class representing the CPU topology as tree.
+    """
+
+    def pack_count(self):
+        return len(self)
+
+    def core_count(self):
+        return sum([pack.core_count() for pack in self.values()])
+
+    def thread_count(self):
+        return sum([pack.thread_count() for pack in self.values()])

@@ -150,6 +150,7 @@ __all__ = [
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
     "virtual_memory", "swap_memory",                                # memory
     "cpu_times", "cpu_percent", "cpu_times_percent", "cpu_count",   # cpu
+    "cpu_tree",
     "net_io_counters", "net_connections", "net_if_addrs",           # network
     "net_if_stats",
     "disk_io_counters", "disk_partitions", "disk_usage",            # disk
@@ -1373,6 +1374,20 @@ def cpu_count(logical=True):
         return _psplatform.cpu_count_logical()
     else:
         return _psplatform.cpu_count_physical()
+
+
+@memoize
+def cpu_tree():
+    """Return the topology of CPUs in the system in tree form.
+
+    Return None if undetermined.
+
+    The return value is cached after first call.
+    If desired cache can be cleared like this:
+
+    >>> psutil.cpu_tree.cache_clear()
+    """
+    return _psplatform.cpu_tree()
 
 
 def cpu_times(percpu=False):
