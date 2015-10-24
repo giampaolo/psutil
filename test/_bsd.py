@@ -14,10 +14,15 @@ import sys
 import time
 
 import psutil
-
 from psutil._compat import PY3
-from test_psutil import (MEMORY_TOLERANCE, BSD, sh, get_test_subprocess, which,
-                         retry_before_failing, reap_children, unittest)
+from test_psutil import BSD
+from test_psutil import get_test_subprocess
+from test_psutil import MEMORY_TOLERANCE
+from test_psutil import reap_children
+from test_psutil import retry_before_failing
+from test_psutil import sh
+from test_psutil import unittest
+from test_psutil import which
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")

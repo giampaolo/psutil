@@ -7,6 +7,7 @@
 """Common objects shared by all _ps* modules."""
 
 from __future__ import division
+
 import contextlib
 import errno
 import functools
@@ -15,7 +16,10 @@ import socket
 import stat
 import sys
 from collections import namedtuple
-from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
+from socket import AF_INET
+from socket import SOCK_DGRAM
+from socket import SOCK_STREAM
+
 try:
     import threading
 except ImportError:

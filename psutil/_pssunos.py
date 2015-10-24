@@ -15,7 +15,9 @@ from . import _common
 from . import _psposix
 from . import _psutil_posix as cext_posix
 from . import _psutil_sunos as cext
-from ._common import isfile_strict, socktype_to_enum, sockfam_to_enum
+from ._common import isfile_strict
+from ._common import sockfam_to_enum
+from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import PY3
 

@@ -7,6 +7,7 @@
 """Linux specific tests.  These are implicitly run by test_psutil.py."""
 
 from __future__ import division
+
 import contextlib
 import errno
 import fcntl
@@ -26,14 +27,23 @@ try:
 except ImportError:
     import mock  # requires "pip install mock"
 
-from test_psutil import POSIX, MEMORY_TOLERANCE, TRAVIS, LINUX
-from test_psutil import (skip_on_not_implemented, sh, get_test_subprocess,
-                         retry_before_failing, get_kernel_version, unittest,
-                         which, call_until)
-
 import psutil
 import psutil._pslinux
-from psutil._compat import PY3, u
+from psutil._compat import PY3
+from psutil._compat import u
+from test_psutil import call_until
+from test_psutil import get_kernel_version
+from test_psutil import get_test_subprocess
+from test_psutil import LINUX
+from test_psutil import MEMORY_TOLERANCE
+from test_psutil import POSIX
+from test_psutil import retry_before_failing
+from test_psutil import sh
+from test_psutil import skip_on_not_implemented
+from test_psutil import TRAVIS
+from test_psutil import unittest
+from test_psutil import which
+
 
 # procps-ng 3.3.10 changed the output format of free
 # and removed the 'buffers/cache line'

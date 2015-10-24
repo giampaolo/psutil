@@ -9,8 +9,10 @@
 import sys
 import os
 
-from test_psutil import SUNOS, sh, unittest
 import psutil
+from test_psutil import sh
+from test_psutil import SUNOS
+from test_psutil import unittest
 
 
 @unittest.skipUnless(SUNOS, "not a SunOS system")

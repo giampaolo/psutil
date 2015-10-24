@@ -15,15 +15,21 @@ import socket
 import struct
 import sys
 import warnings
-from collections import namedtuple, defaultdict
+from collections import defaultdict
+from collections import namedtuple
 
 from . import _common
 from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
-from ._common import isfile_strict, usage_percent, supports_ipv6
-from ._common import NIC_DUPLEX_FULL, NIC_DUPLEX_HALF, NIC_DUPLEX_UNKNOWN
-from ._compat import PY3, long
+from ._common import isfile_strict
+from ._common import NIC_DUPLEX_FULL
+from ._common import NIC_DUPLEX_HALF
+from ._common import NIC_DUPLEX_UNKNOWN
+from ._common import supports_ipv6
+from ._common import usage_percent
+from ._compat import long
+from ._compat import PY3
 
 if sys.version_info >= (3, 4):
     import enum

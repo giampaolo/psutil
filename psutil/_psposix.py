@@ -10,8 +10,11 @@ import os
 import sys
 import time
 
-from ._common import sdiskusage, usage_percent, memoize
-from ._compat import PY3, unicode
+from ._common import memoize
+from ._common import sdiskusage
+from ._common import usage_percent
+from ._compat import PY3
+from ._compat import unicode
 
 
 class TimeoutExpired(Exception):

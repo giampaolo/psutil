@@ -42,7 +42,9 @@ import time
 import traceback
 import types
 import warnings
-from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
+from socket import AF_INET
+from socket import SOCK_DGRAM
+from socket import SOCK_STREAM
 try:
     import ipaddress  # python >= 3.3
 except ImportError:
@@ -54,7 +56,10 @@ except ImportError:
 
 import psutil
 from psutil._common import supports_ipv6
-from psutil._compat import PY3, callable, long, unicode
+from psutil._compat import callable
+from psutil._compat import long
+from psutil._compat import PY3
+from psutil._compat import unicode
 
 if sys.version_info < (2, 7):
     import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2

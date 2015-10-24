@@ -16,11 +16,8 @@ import sys
 import time
 import traceback
 
-from test_psutil import APPVEYOR, WINDOWS
-from test_psutil import get_test_subprocess, reap_children, unittest
-from test_psutil import retry_before_failing
-
 import mock
+
 try:
     import wmi
 except ImportError:
@@ -31,8 +28,16 @@ try:
 except ImportError:
     win32api = win32con = None
 
-from psutil._compat import PY3, callable, long
 import psutil
+from psutil._compat import callable
+from psutil._compat import long
+from psutil._compat import PY3
+from test_psutil import APPVEYOR
+from test_psutil import get_test_subprocess
+from test_psutil import reap_children
+from test_psutil import retry_before_failing
+from test_psutil import unittest
+from test_psutil import WINDOWS
 
 
 cext = psutil._psplatform.cext
