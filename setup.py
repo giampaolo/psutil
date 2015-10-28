@@ -175,7 +175,8 @@ elif sys.platform.startswith("linux"):
         define_macros=macros)
     extensions = [ext, posix_extension]
 # Solaris
-elif sys.platform.lower().startswith('sunos') or sys.platform.lower().startswith('solaris'):
+elif sys.platform.lower().startswith('sunos') or \
+        sys.platform.lower().startswith('solaris'):
     ext = Extension(
         'psutil._psutil_sunos',
         sources=['psutil/_psutil_sunos.c'],
