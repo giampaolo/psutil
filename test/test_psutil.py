@@ -105,7 +105,7 @@ if WINDOWS:
 LINUX = sys.platform.startswith("linux")
 OSX = sys.platform.startswith("darwin")
 BSD = sys.platform.startswith("freebsd")
-SUNOS = sys.platform.startswith("sunos")
+SUNOS = sys.platform.startswith("sunos") or sys.platform.startswith("solaris")
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
 # whether we're running this test suite on Travis (https://travis-ci.org/)
