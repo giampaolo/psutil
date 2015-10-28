@@ -1,7 +1,5 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
-3.2.3 - 3015-10-28
-==================
 
 **Bug fixes**
 
