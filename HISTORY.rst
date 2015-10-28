@@ -1,5 +1,13 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+3.2.3 - 3015-10-28
+==================
+
+**Bug fixes**
+
+- #704: psutil does not compile/cannot be imported on solaris sparc
+
+
 3.2.3 - XXXX-XX-XX
 ==================
 
