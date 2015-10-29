@@ -1725,6 +1725,7 @@ class TestProcess(unittest.TestCase):
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
+    @unittest.skipIf(SUNOS, "doesn't work on Solaris")
     def test_prog_w_funky_name(self):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
