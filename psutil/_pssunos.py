@@ -288,8 +288,8 @@ class Process(object):
     def exe(self):
         try:
             return os.readlink("/proc/%s/path/a.out" % self.pid)
-        except OSError as err:
-            pass    # let the cmdline mechanism figure out the exe
+        except OSError:
+            pass    # continue and guess the exe name from the cmdline
         # Will be guessed later from cmdline but we want to explicitly
         # invoke cmdline here in order to get an AccessDenied
         # exception if the user has not enough privileges.
