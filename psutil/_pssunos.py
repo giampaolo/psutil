@@ -286,7 +286,11 @@ class Process(object):
 
     @wrap_exceptions
     def exe(self):
-        # Will be guess later from cmdline but we want to explicitly
+        try:
+            return os.readlink("/proc/%s/path/a.out" % self.pid)
+        except OSError as err:
+            pass    # let the cmdline mechanism figure out the exe
+        # Will be guessed later from cmdline but we want to explicitly
         # invoke cmdline here in order to get an AccessDenied
         # exception if the user has not enough privileges.
         self.cmdline()
