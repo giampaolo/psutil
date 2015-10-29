@@ -213,7 +213,7 @@ def net_connections(kind, _pid=-1):
         raise ValueError("invalid %r kind argument; choose between %s"
                          % (kind, ', '.join([repr(x) for x in cmap])))
     families, types = _common.conn_tmap[kind]
-    rawlist = cext.net_connections(_pid, families, types)
+    rawlist = cext.net_connections(_pid)
     ret = set()
     for item in rawlist:
         fd, fam, type_, laddr, raddr, status, pid = item
