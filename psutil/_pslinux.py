@@ -139,13 +139,14 @@ def get_procfs_path():
 
 # --- named tuples
 
-def _get_cputimes_fields():
+def set_scputimes_ntuple(procfs_path):
     """Return a namedtuple of variable fields depending on the
     CPU times available on this Linux kernel version which may be:
     (user, nice, system, idle, iowait, irq, softirq, [steal, [guest,
      [guest_nice]]])
     """
-    with open('/proc/stat', 'rb') as f:
+    global scputimes
+    with open('%s/stat' % procfs_path, 'rb') as f:
         values = f.readline().split()[1:]
     fields = ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq']
     vlen = len(values)
@@ -158,10 +159,11 @@ def _get_cputimes_fields():
     if vlen >= 10:
         # Linux >= 3.2.0
         fields.append('guest_nice')
-    return fields
+    scputimes = namedtuple('scputimes', fields)
+    return scputimes
 
 
-scputimes = namedtuple('scputimes', _get_cputimes_fields())
+scputimes = set_scputimes_ntuple('/proc')
 
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
@@ -243,7 +245,9 @@ def cpu_times():
      [guest_nice]]])
     Last 3 fields may not be available on all Linux kernel versions.
     """
-    with open('%s/stat' % get_procfs_path(), 'rb') as f:
+    procfs_path = get_procfs_path()
+    set_scputimes_ntuple(procfs_path)
+    with open('%s/stat' % procfs_path, 'rb') as f:
         values = f.readline().split()
     fields = values[1:len(scputimes._fields) + 1]
     fields = [float(x) / CLOCK_TICKS for x in fields]
@@ -254,8 +258,10 @@ def per_cpu_times():
     """Return a list of namedtuple representing the CPU times
     for every CPU available on the system.
     """
+    procfs_path = get_procfs_path()
+    set_scputimes_ntuple(procfs_path)
     cpus = []
-    with open('%s/stat' % get_procfs_path(), 'rb') as f:
+    with open('%s/stat' % procfs_path, 'rb') as f:
         # get rid of the first line which refers to system wide CPU stats
         f.readline()
         for line in f:
