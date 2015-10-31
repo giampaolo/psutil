@@ -827,17 +827,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
     PyObject *py_raddr = NULL;
-    PyObject *py_af_filter = NULL;
-    PyObject *py_type_filter = NULL;
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
+    if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
-        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
-        goto error;
-    }
 
     sd = open("/dev/arp", O_RDWR);
     if (sd == -1) {
