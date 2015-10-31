@@ -455,9 +455,9 @@ Network
   .. note:: *netmask*, *broadcast* and *ptp* are not supported on Windows and
     are set to ``None``.
 
-  *New in 3.0.0*
+  .. versionadded:: 3.0.0
 
-  *Changed in 3.2.0:* *ptp* field was added.
+  .. versionchanged:: 3.2.0 *ptp* field was added.
 
 .. function:: net_if_stats()
 
@@ -484,7 +484,7 @@ Network
     {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500),
      'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536)}
 
-  *New in 3.0.0*
+  .. versionadded:: 3.0.0
 
 
 Other system info
@@ -615,7 +615,7 @@ Exceptions
    interested in retrieving zombies (e.g. when using :func:`process_iter()`)
    you can ignore this exception and just catch :class:`NoSuchProcess`.
 
-   *New in 3.0.0*
+  .. versionadded:: 3.0.0
 
 .. class:: AccessDenied(pid=None, name=None, msg=None)
 
@@ -1188,8 +1188,8 @@ Process class
      signals are supported and **SIGTERM** is treated as an alias for
      :meth:`kill()`.
 
-     *Changed in 3.2.0:* support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals
-     was added.
+     .. versionchanged:: 3.2.0 support for CTRL_C_EVENT and CTRL_BREAK_EVENT
+     signals was added.
 
   .. method:: suspend()
 
@@ -1278,6 +1278,16 @@ Popen class
 
 Constants
 =========
+
+.. _const-pstatus:
+.. data:: PROCFS_PATH
+
+  The path of the /proc filesystem on Linux (defaults to "/proc"). You may want
+  to re-set this in case /proc is mounted elsewhere.
+
+  Availability: Linux
+
+  .. versionadded:: 3.2.3
 
 .. _const-pstatus:
 .. data:: STATUS_RUNNING
@@ -1394,7 +1404,7 @@ Constants
   Constant which identifies a MAC address associated with a network interface.
   To be used in conjunction with :func:`psutil.net_if_addrs()`.
 
-  *New in 3.0.0*
+  .. versionadded:: 3.0.0
 
 .. _const-duplex:
 .. data:: NIC_DUPLEX_FULL
@@ -1407,7 +1417,7 @@ Constants
   receive data at a time.
   To be used in conjunction with :func:`psutil.net_if_stats()`.
 
-  *New in 3.0.0*
+  .. versionadded:: 3.0.0
 
 Development guide
 =================

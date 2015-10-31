@@ -3,6 +3,11 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 3.2.3 - XXXX-XX-XX
 ==================
 
+**Enhancements**
+
+- #558: [Linux] exposed psutil.PROCFS_PATH constant to change the default
+  location of /proc filesystem.
+
 **Bug fixes**
 
 - #692: [UNIX] Process.name() is no longer cached as it may change.

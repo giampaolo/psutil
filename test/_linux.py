@@ -451,6 +451,26 @@ class LinuxSpecificTestCase(unittest.TestCase):
             pass
         psutil.net_connections(kind='inet6')
 
+    def test_procfs_path(self):
+        tdir = tempfile.mkdtemp()
+        try:
+            psutil.PROCFS_PATH = tdir
+            self.assertRaises(IOError, psutil.virtual_memory)
+            self.assertRaises(IOError, psutil.swap_memory)
+            self.assertRaises(IOError, psutil.cpu_times)
+            self.assertRaises(IOError, psutil.cpu_times, percpu=True)
+            self.assertRaises(IOError, psutil.boot_time)
+            # self.assertRaises(IOError, psutil.pids)
+            self.assertRaises(IOError, psutil.net_connections)
+            self.assertRaises(IOError, psutil.net_io_counters)
+            self.assertRaises(IOError, psutil.net_if_stats)
+            self.assertRaises(IOError, psutil.disk_io_counters)
+            self.assertRaises(IOError, psutil.disk_partitions)
+            self.assertRaises(psutil.NoSuchProcess, psutil.Process)
+        finally:
+            psutil.PROCFS_PATH = "/proc"
+            os.rmdir(tdir)
+
     # --- tests for specific kernel versions
 
     @unittest.skipUnless(

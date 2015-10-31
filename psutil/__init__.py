@@ -61,6 +61,10 @@ from ._common import (NIC_DUPLEX_FULL,  # NOQA
 if sys.platform.startswith("linux"):
     from . import _pslinux as _psplatform
 
+    # This is public API and it will be retrieved from _pslinux.py
+    # via sys.modules.
+    PROCFS_PATH = "/proc"
+
     from ._pslinux import (IOPRIO_CLASS_NONE,  # NOQA
                            IOPRIO_CLASS_RT,
                            IOPRIO_CLASS_BE,
