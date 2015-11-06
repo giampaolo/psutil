@@ -198,6 +198,20 @@ def users():
 
 
 def net_connections(kind):
+    if OPENBSD:
+        ret = []
+        for pid in pids():
+            try:
+                cons = Process(pid).connections()
+            except NoSuchProcess:
+                continue
+            else:
+                for conn in cons:
+                    conn = list(conn)
+                    conn.append(pid)
+                    ret.append(_common.sconn(*conn))
+        return ret
+
     if kind not in _common.conn_tmap:
         raise ValueError("invalid %r kind argument; choose between %s"
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
@@ -294,6 +308,8 @@ class Process(object):
             cmdline = self.cmdline()
             if cmdline:
                 return which(cmdline[0])
+            else:
+                return ""
 
     @wrap_exceptions
     def cmdline(self):
