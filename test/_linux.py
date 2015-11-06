@@ -7,6 +7,7 @@
 """Linux specific tests.  These are implicitly run by test_psutil.py."""
 
 from __future__ import division
+
 import contextlib
 import errno
 import fcntl
@@ -26,15 +27,27 @@ try:
 except ImportError:
     import mock  # requires "pip install mock"
 
-from test_psutil import POSIX, MEMORY_TOLERANCE, TRAVIS, LINUX
-from test_psutil import (skip_on_not_implemented, sh, get_test_subprocess,
-                         retry_before_failing, get_kernel_version, unittest,
-                         which, call_until)
-
 import psutil
 import psutil._pslinux
-from psutil._compat import PY3, u
+from psutil._compat import PY3
+from psutil._compat import u
+from test_psutil import call_until
+from test_psutil import get_kernel_version
+from test_psutil import get_test_subprocess
+from test_psutil import LINUX
+from test_psutil import MEMORY_TOLERANCE
+from test_psutil import POSIX
+from test_psutil import retry_before_failing
+from test_psutil import sh
+from test_psutil import skip_on_not_implemented
+from test_psutil import TRAVIS
+from test_psutil import unittest
+from test_psutil import which
 
+
+# procps-ng 3.3.10 changed the output format of free
+# and removed the 'buffers/cache line'
+OLD_PROCPS_NG_VERSION = 'buffers/cache' in sh('free')
 
 SIOCGIFADDR = 0x8915
 SIOCGIFCONF = 0x8912
@@ -129,7 +142,9 @@ class LinuxSpecificTestCase(unittest.TestCase):
     @retry_before_failing()
     def test_vmem_used(self):
         lines = sh('free').split('\n')[1:]
-        used = int(lines[0].split()[2]) * 1024
+        total = int(lines[0].split()[1])
+        free = int(lines[0].split()[3])
+        used = (total - free) * 1024
         self.assertAlmostEqual(used, psutil.virtual_memory().used,
                                delta=MEMORY_TOLERANCE)
 
@@ -142,34 +157,32 @@ class LinuxSpecificTestCase(unittest.TestCase):
 
     @retry_before_failing()
     def test_vmem_buffers(self):
-        lines = sh('free').split('\n')[1:]
-        buffers = int(lines[0].split()[5]) * 1024
+        buffers = int(sh('vmstat').split('\n')[2].split()[4]) * 1024
         self.assertAlmostEqual(buffers, psutil.virtual_memory().buffers,
                                delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_cached(self):
-        lines = sh('free').split('\n')[1:]
-        cached = int(lines[0].split()[6]) * 1024
+        cached = int(sh('vmstat').split('\n')[2].split()[5]) * 1024
         self.assertAlmostEqual(cached, psutil.virtual_memory().cached,
                                delta=MEMORY_TOLERANCE)
 
     def test_swapmem_total(self):
         lines = sh('free').split('\n')[1:]
-        total = int(lines[2].split()[1]) * 1024
+        total = int(lines[2 if OLD_PROCPS_NG_VERSION else 1].split()[1]) * 1024
         self.assertEqual(total, psutil.swap_memory().total)
 
     @retry_before_failing()
     def test_swapmem_used(self):
         lines = sh('free').split('\n')[1:]
-        used = int(lines[2].split()[2]) * 1024
+        used = int(lines[2 if OLD_PROCPS_NG_VERSION else 1].split()[2]) * 1024
         self.assertAlmostEqual(used, psutil.swap_memory().used,
                                delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_swapmem_free(self):
         lines = sh('free').split('\n')[1:]
-        free = int(lines[2].split()[3]) * 1024
+        free = int(lines[2 if OLD_PROCPS_NG_VERSION else 1].split()[1]) * 1024
         self.assertAlmostEqual(free, psutil.swap_memory().free,
                                delta=MEMORY_TOLERANCE)
 
@@ -425,6 +438,38 @@ class LinuxSpecificTestCase(unittest.TestCase):
                     assert m2.called
                     assert ret
                     self.assertEqual(ret[0].fstype, 'zfs')
+
+    @mock.patch('psutil._pslinux.socket.inet_ntop', side_effect=ValueError)
+    @mock.patch('psutil._pslinux.supports_ipv6', return_value=False)
+    def test_connections_ipv6_not_supported(self, supports_ipv6, inet_ntop):
+        # see: https://github.com/giampaolo/psutil/issues/623
+        try:
+            s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            self.addCleanup(s.close)
+            s.bind(("::1", 0))
+        except socket.error:
+            pass
+        psutil.net_connections(kind='inet6')
+
+    def test_procfs_path(self):
+        tdir = tempfile.mkdtemp()
+        try:
+            psutil.PROCFS_PATH = tdir
+            self.assertRaises(IOError, psutil.virtual_memory)
+            self.assertRaises(IOError, psutil.swap_memory)
+            self.assertRaises(IOError, psutil.cpu_times)
+            self.assertRaises(IOError, psutil.cpu_times, percpu=True)
+            self.assertRaises(IOError, psutil.boot_time)
+            # self.assertRaises(IOError, psutil.pids)
+            self.assertRaises(IOError, psutil.net_connections)
+            self.assertRaises(IOError, psutil.net_io_counters)
+            self.assertRaises(IOError, psutil.net_if_stats)
+            self.assertRaises(IOError, psutil.disk_io_counters)
+            self.assertRaises(IOError, psutil.disk_partitions)
+            self.assertRaises(psutil.NoSuchProcess, psutil.Process)
+        finally:
+            psutil.PROCFS_PATH = "/proc"
+            os.rmdir(tdir)
 
     # --- tests for specific kernel versions
 

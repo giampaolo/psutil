@@ -15,8 +15,10 @@ from . import _common
 from . import _psposix
 from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
-from ._common import conn_tmap, usage_percent, sockfam_to_enum
+from ._common import conn_tmap
+from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
+from ._common import usage_percent
 from ._compat import which
 
 

@@ -12,15 +12,21 @@ from collections import namedtuple
 
 from . import _common
 from . import _psutil_windows as cext
-from ._common import conn_tmap, usage_percent, isfile_strict
-from ._common import sockfam_to_enum, socktype_to_enum
-from ._compat import PY3, xrange, lru_cache, long
-from ._psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,
-                              BELOW_NORMAL_PRIORITY_CLASS,
-                              HIGH_PRIORITY_CLASS,
-                              IDLE_PRIORITY_CLASS,
-                              NORMAL_PRIORITY_CLASS,
-                              REALTIME_PRIORITY_CLASS)
+from ._common import conn_tmap
+from ._common import isfile_strict
+from ._common import sockfam_to_enum
+from ._common import socktype_to_enum
+from ._common import usage_percent
+from ._compat import long
+from ._compat import lru_cache
+from ._compat import PY3
+from ._compat import xrange
+from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS
+from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS
+from ._psutil_windows import HIGH_PRIORITY_CLASS
+from ._psutil_windows import IDLE_PRIORITY_CLASS
+from ._psutil_windows import NORMAL_PRIORITY_CLASS
+from ._psutil_windows import REALTIME_PRIORITY_CLASS
 
 if sys.version_info >= (3, 4):
     import enum

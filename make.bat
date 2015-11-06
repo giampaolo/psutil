@@ -30,12 +30,14 @@ set PYTHON26=C:\Python26\python.exe
 set PYTHON27=C:\Python27\python.exe
 set PYTHON33=C:\Python33\python.exe
 set PYTHON34=C:\Python34\python.exe
+set PYTHON35=C:\Python35\python.exe
 set PYTHON26-64=C:\Python26-64\python.exe
 set PYTHON27-64=C:\Python27-64\python.exe
 set PYTHON33-64=C:\Python33-64\python.exe
 set PYTHON34-64=C:\Python34-64\python.exe
+set PYTHON35-64=C:\Python35-64\python.exe
 
-set ALL_PYTHONS=%PYTHON26% %PYTHON27% %PYTHON33% %PYTHON34% %PYTHON26-64% %PYTHON27-64% %PYTHON33-64% %PYTHON34-64%
+set ALL_PYTHONS=%PYTHON26% %PYTHON27% %PYTHON33% %PYTHON34% %PYTHON35% %PYTHON26-64% %PYTHON27-64% %PYTHON33-64% %PYTHON34-64% %PYTHON35-64%
 
 rem Needed to locate the .pypirc file and upload exes on PYPI.
 set HOME=%USERPROFILE%
@@ -64,7 +66,6 @@ if "%1" == "clean" (
     for /r %%R in (__pycache__) do if exist %%R (rmdir /S /Q %%R)
     for /r %%R in (*.pyc) do if exist %%R (del /s %%R)
     for /r %%R in (*.pyd) do if exist %%R (del /s %%R)
-    for /r %%R in (*.obj) do if exist %%R (del /s %%R)
     for /r %%R in (*.orig) do if exist %%R (del /s %%R)
     for /r %%R in (*.bak) do if exist %%R (del /s %%R)
     for /r %%R in (*.rej) do if exist %%R (del /s %%R)

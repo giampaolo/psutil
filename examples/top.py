@@ -34,11 +34,12 @@ PID    USER       NI  VIRT   RES   CPU% MEM%     TIME+  NAME
 ...
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 import atexit
 import os
-import time
 import sys
+import time
 try:
     import curses
 except ImportError:

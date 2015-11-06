@@ -1,5 +1,3 @@
-# /usr/bin/env python
-
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -7,6 +5,8 @@
 """Common objects shared by all _ps* modules."""
 
 from __future__ import division
+
+import contextlib
 import errno
 import functools
 import os
@@ -14,7 +14,10 @@ import socket
 import stat
 import sys
 from collections import namedtuple
-from socket import AF_INET, SOCK_STREAM, SOCK_DGRAM
+from socket import AF_INET
+from socket import SOCK_DGRAM
+from socket import SOCK_STREAM
+
 try:
     import threading
 except ImportError:
@@ -138,6 +141,19 @@ def isfile_strict(path):
         return False
     else:
         return stat.S_ISREG(st.st_mode)
+
+
+def supports_ipv6():
+    """Return True if IPv6 is supported on this platform."""
+    if not socket.has_ipv6 or not hasattr(socket, "AF_INET6"):
+        return False
+    try:
+        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        with contextlib.closing(sock):
+            sock.bind(("::1", 0))
+        return True
+    except socket.error:
+        return False
 
 
 def sockfam_to_enum(num):

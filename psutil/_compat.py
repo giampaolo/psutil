@@ -20,6 +20,9 @@ if PY3:
 
     def u(s):
         return s
+
+    def b(s):
+        return s.encode("latin-1")
 else:
     long = long
     xrange = xrange
@@ -27,6 +30,9 @@ else:
 
     def u(s):
         return unicode(s, "unicode_escape")
+
+    def b(s):
+        return s
 
 
 # removed in 3.0, reintroduced in 3.2

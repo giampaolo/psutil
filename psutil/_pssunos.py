@@ -15,7 +15,9 @@ from . import _common
 from . import _psposix
 from . import _psutil_posix as cext_posix
 from . import _psutil_sunos as cext
-from ._common import isfile_strict, socktype_to_enum, sockfam_to_enum
+from ._common import isfile_strict
+from ._common import sockfam_to_enum
+from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import PY3
 
@@ -211,7 +213,7 @@ def net_connections(kind, _pid=-1):
         raise ValueError("invalid %r kind argument; choose between %s"
                          % (kind, ', '.join([repr(x) for x in cmap])))
     families, types = _common.conn_tmap[kind]
-    rawlist = cext.net_connections(_pid, families, types)
+    rawlist = cext.net_connections(_pid)
     ret = set()
     for item in rawlist:
         fd, fam, type_, laddr, raddr, status, pid = item
@@ -284,7 +286,11 @@ class Process(object):
 
     @wrap_exceptions
     def exe(self):
-        # Will be guess later from cmdline but we want to explicitly
+        try:
+            return os.readlink("/proc/%s/path/a.out" % self.pid)
+        except OSError:
+            pass    # continue and guess the exe name from the cmdline
+        # Will be guessed later from cmdline but we want to explicitly
         # invoke cmdline here in order to get an AccessDenied
         # exception if the user has not enough privileges.
         self.cmdline()
