@@ -155,6 +155,11 @@ class PosixSpecificTestCase(unittest.TestCase):
             psutil_cmdline = psutil_cmdline.split(" ")[0]
         self.assertEqual(ps_cmdline, psutil_cmdline)
 
+    def test_process_nice(self):
+        ps_nice = ps("ps --no-headers -o nice -p %s" % self.pid)
+        psutil_nice = psutil.Process().nice()
+        self.assertEqual(ps_nice, psutil_nice)
+
     @retry_before_failing()
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
