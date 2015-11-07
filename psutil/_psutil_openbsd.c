@@ -3,13 +3,16 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * OpenBSD platform-specific module methods for _psutil_bsd
+ * OpenBSD platform-specific module methods for openbsd.
+
+ * References:
+ * - OpenBSD source code: http://anoncvs.spacehopper.org/openbsd-src/
+ *
  * Missing compared to FreeBSD implementation:
  *
  * - psutil.net_connections()
  * - psutil.Process.get/set_cpu_affinity()  (not supported natively)
  * - psutil.Process.memory_maps()
- * - psutil.Process.cwd()
  */
 
 
@@ -496,12 +499,15 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    return Py_BuildValue("(lllll)",
-                         ptoa(kp.p_vm_rssize),    // rss
-                         (long)kp.p_vm_map_size,      // vms
-                         ptoa(kp.p_vm_tsize),     // text
-                         ptoa(kp.p_vm_dsize),     // data
-                         ptoa(kp.p_vm_ssize));    // stack
+    return Py_BuildValue(
+        "(lllll)",
+        ptoa(kp.p_vm_rssize),    // rss
+        // vms, this is how ps does it, see:
+        // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n461
+        ptoa(kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize),  // vms
+        ptoa(kp.p_vm_tsize),  // text
+        ptoa(kp.p_vm_dsize),  // data
+        ptoa(kp.p_vm_ssize));  // stack
 }
 
 
