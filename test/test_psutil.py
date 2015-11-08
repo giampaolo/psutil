@@ -1627,6 +1627,13 @@ class TestProcess(unittest.TestCase):
             if thread._running:
                 thread.stop()
 
+    def test_threads_2(self):
+        p = psutil.Process()
+        self.assertAlmostEqual(p.cpu_times().user,
+                               p.threads()[0].user_time, delta=0.1)
+        self.assertAlmostEqual(p.cpu_times().system,
+                               p.threads()[0].system_time, delta=0.1)
+
     def test_memory_info(self):
         p = psutil.Process()
 
