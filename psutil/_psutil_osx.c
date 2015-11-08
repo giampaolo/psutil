@@ -73,10 +73,8 @@ psutil_raise_ad_or_nsp(long pid) {
     ret = psutil_pid_exists(pid);
     if (ret == 0)
         NoSuchProcess();
-    else if (ret == 1)
-        AccessDenied();
     else
-        return NULL;
+        AccessDenied();
 }
 
 
