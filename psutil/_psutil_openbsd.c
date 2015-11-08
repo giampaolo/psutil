@@ -912,10 +912,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                 // fill status
                 state = PSUTIL_CONN_NONE;
                 if (kif->so_type == SOCK_STREAM) {
-                    /* need to read so_pcb
-                    state = kif->so_state;
-                    printf("state=%d\n",state);
- */
+                    state = kif->t_state;
                 }
 
                 // construct python tuple/list
