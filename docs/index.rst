@@ -960,7 +960,7 @@ Process class
       >>> p.cpu_affinity(all_cpus)
       >>>
 
-     Availability: Linux, Windows, BSD
+     Availability: Linux, Windows, FreeBSD
 
      .. versionchanged:: 2.2.0 added support for FreeBSD
 

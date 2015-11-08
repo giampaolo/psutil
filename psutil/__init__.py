@@ -715,7 +715,7 @@ class Process(object):
             else:
                 return self._proc.rlimit(resource, limits)
 
-    # Windows, Linux and BSD only
+    # Windows, Linux and FreeBSD only
     if hasattr(_psplatform.Process, "cpu_affinity_get"):
 
         def cpu_affinity(self, cpus=None):
