@@ -309,22 +309,6 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
 
 
 /*
- * Return number of threads used by process as a Python integer.
- */
-static PyObject *
-psutil_proc_num_threads(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-/* TODO: get all the procs with kvm_getprocs() and count those iwth the desired ki_pid */
-    return Py_BuildValue("l", (long)0);
-}
-
-
-/*
  * Retrieves all threads used by process returning a list of tuples
  * including thread id, user time and system time.
  * Thanks to Robert N. M. Watson (FreeBSD):
@@ -1834,8 +1818,6 @@ PsutilMethods[] = {
      "seconds since the epoch"},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
      "Return extended memory info for a process as a Python tuple."},
-    {"proc_num_threads", psutil_proc_num_threads, METH_VARARGS,
-     "Return number of threads used by process"},
     {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
      "Return the number of context switches performed by process"},
     {"proc_threads", psutil_proc_threads, METH_VARARGS,

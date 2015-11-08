@@ -358,7 +358,11 @@ class Process(object):
 
     @wrap_exceptions
     def num_threads(self):
-        return cext.proc_num_threads(self.pid)
+        if hasattr(cext, "proc_num_threads"):
+            # FreeBSD
+            return cext.proc_num_threads(self.pid)
+        else:
+            return len(self.threads())
 
     @wrap_exceptions
     def num_ctx_switches(self):

@@ -1571,7 +1571,13 @@ class TestProcess(unittest.TestCase):
         # thread number, since we always have with 1 thread per process,
         # but this does not apply across all platforms (OSX, Windows)
         p = psutil.Process()
-        step1 = p.num_threads()
+        if OPENBSD:
+            try:
+                step1 = p.num_threads()
+            except psutil.AccessDenied:
+                raise unittest.SkipTest("on OpenBSD this requires root access")
+        else:
+            step1 = p.num_threads()
 
         thread = ThreadTask()
         thread.start()
