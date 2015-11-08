@@ -754,6 +754,7 @@ class Process(object):
         """Return threads opened by process as a list of
         (id, user_time, system_time) namedtuples representing
         thread id and thread CPU times (user/system).
+        On OpenBSD this method requires root access.
         """
         return self._proc.threads()
 

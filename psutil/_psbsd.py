@@ -366,6 +366,7 @@ class Process(object):
 
     @wrap_exceptions
     def threads(self):
+        # Note: on OpenSBD this (/dev/mem) requires root access.
         rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:

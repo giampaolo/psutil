@@ -1591,7 +1591,13 @@ class TestProcess(unittest.TestCase):
 
     def test_threads(self):
         p = psutil.Process()
-        step1 = p.threads()
+        if OPENBSD:
+            try:
+                step1 = p.threads()
+            except psutil.AccessDenied:
+                raise unittest.SkipTest("on OpenBSD this requires root access")
+        else:
+            step1 = p.threads()
 
         thread = ThreadTask()
         thread.start()

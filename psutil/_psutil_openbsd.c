@@ -327,19 +327,20 @@ psutil_proc_num_threads(PyObject *self, PyObject *args) {
 /*
  * Retrieves all threads used by process returning a list of tuples
  * including thread id, user time and system time.
- * Thanks to Robert N. M. Watson:
+ * Thanks to Robert N. M. Watson (FreeBSD):
  * http://fxr.googlebit.com/source/usr.bin/procstat/
  *     procstat_threads.c?v=8-CURRENT
+ * OpenBSD reference:
+ * https://github.com/janmojzis/pstree/blob/master/proc_kvm.c
+ * Note: OpenBSD requires root access.
  */
 static PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     long pid;
-    int mib[4];
-    struct kinfo_proc *kip = NULL;
-    struct kinfo_proc *kipp = NULL;
-    int error;
-    unsigned int i;
-    size_t size;
+    kvm_t *kd = NULL;
+    int nentries, i;
+    char errbuf[4096];
+    struct kinfo_proc *kp;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
 
@@ -348,60 +349,51 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
-    // we need to re-query for thread information, so don't use *kipp
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID /* | KERN_PROC_INC_THREAD */;
-    mib[3] = pid;
-
-    size = 0;
-    error = sysctl(mib, 4, NULL, &size, NULL, 0);
-    if (error == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-    if (size == 0) {
-        NoSuchProcess();
+    kd = kvm_openfiles(0, 0, 0, O_RDONLY, errbuf);
+    if (! kd) {
+        if (strstr(errbuf, "Permission denied") != NULL)
+            AccessDenied();
+        else
+            PyErr_Format(PyExc_RuntimeError, "kvm_openfiles() failed");
         goto error;
     }
 
-    kip = malloc(size);
-    if (kip == NULL) {
-        PyErr_NoMemory();
+    kp = kvm_getprocs(
+        kd, KERN_PROC_PID | KERN_PROC_SHOW_THREADS | KERN_PROC_KTHREAD, pid,
+        sizeof(*kp), &nentries);
+    if (! kp) {
+        if (strstr(errbuf, "Permission denied") != NULL)
+            AccessDenied();
+        else
+            PyErr_Format(PyExc_RuntimeError, "kvm_getprocs() failed");
         goto error;
     }
 
-    error = sysctl(mib, 4, kip, &size, NULL, 0);
-    if (error == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-    if (size == 0) {
-        NoSuchProcess();
-        goto error;
+    for (i = 0; i < nentries; i++) {
+        if (kp[i].p_tid < 0)
+            continue;
+        if (kp[i].p_pid == pid) {
+            py_tuple = Py_BuildValue(
+                "Idd",
+                kp[i].p_tid,
+                KPT2DOUBLE(kp[i].p_uutime),
+                KPT2DOUBLE(kp[i].p_ustime));
+            if (py_tuple == NULL)
+                goto error;
+            if (PyList_Append(py_retlist, py_tuple))
+                goto error;
+            Py_DECREF(py_tuple);
+        }
     }
 
-    for (i = 0; i < size / sizeof(*kipp); i++) {
-        kipp = &kip[i];
-        py_tuple = Py_BuildValue("Idd",
-                                0, //thread id?
-                                kipp->p_uutime_sec,
-                                kipp->p_ustime_sec);
-        if (py_tuple == NULL)
-            goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_DECREF(py_tuple);
-    }
-    free(kip);
+    kvm_close(kd);
     return py_retlist;
 
 error:
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
-    if (kip != NULL) {
-        free(kip);
-    }
+    if (kd != NULL)
+        kvm_close(kd);
     return NULL;
 }
 

@@ -35,6 +35,8 @@ HIGHER PRIORITY
 
  * Process.threads(): thread names; patch for OSX available at:
    https://code.google.com/p/plcrashreporter/issues/detail?id=65
+   Sample code:
+   https://github.com/janmojzis/pstree/blob/master/proc_kvm.c
 
  * Asynchronous psutil.Popen (see http://bugs.python.org/issue1191964)
 
