@@ -99,10 +99,14 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
  */
 void
 psutil_raise_ad_or_nsp(long pid) {
-    if (psutil_pid_exists(pid) == 0)
+    int ret;
+    ret = psutil_pid_exists(pid);
+    if (ret == 0)
         NoSuchProcess();
-    else
+    else if (ret == 1)
         AccessDenied();
+    else
+        return NULL;
 }
 
 
@@ -196,6 +200,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     char pathname[PATH_MAX];
     int error;
     int mib[4];
+    int ret;
     size_t size;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -213,7 +218,10 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return NULL;
     }
     if (size == 0 || strlen(pathname) == 0) {
-        if (psutil_pid_exists(pid) == 0)
+        ret = psutil_pid_exists(pid);
+        if (ret == -1)
+            return NULL;
+        else if (ret == 0)
             return NoSuchProcess();
         else
             strcpy(pathname, "");

@@ -97,7 +97,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
         p = subprocess.Popen(['ipconfig', '/all'], stdout=subprocess.PIPE)
         out = p.communicate()[0]
         if PY3:
-            out = str(out, sys.stdout.encoding)
+            out = str(out, sys.stdout.encoding or sys.getfilesystemencoding())
         nics = psutil.net_io_counters(pernic=True).keys()
         for nic in nics:
             if "pseudo-interface" in nic.replace(' ', '-').lower():

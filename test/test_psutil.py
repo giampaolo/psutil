@@ -212,7 +212,8 @@ def sh(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     if stderr:
         warn(stderr)
     if PY3:
-        stdout = str(stdout, sys.stdout.encoding)
+        stdout = str(stdout, sys.stdout.encoding or
+                     sys.getfilesystemencoding())
     return stdout.strip()
 
 

@@ -111,40 +111,6 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
 }
 
 
-char
-*psutil_get_cmd_path(long pid, size_t *pathsize) {
-    int mib[4];
-    char *path;
-    size_t size = 0;
-
-    /*
-     * Make a sysctl() call to get the raw argument space of the process.
-     */
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PATHNAME;
-    mib[3] = pid;
-
-    // call with a null buffer first to determine if we need a buffer
-    if (sysctl(mib, 4, NULL, &size, NULL, 0) == -1)
-        return NULL;
-
-    path = malloc(size);
-    if (path == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    *pathsize = size;
-    if (sysctl(mib, 4, path, &size, NULL, 0) == -1) {
-        free(path);
-        return NULL;       // Insufficient privileges
-    }
-
-    return path;
-}
-
-
 /*
  * XXX no longer used; it probably makese sense to remove it.
  * Borrowed from psi Python System Information project
@@ -242,19 +208,27 @@ error:
 
 
 /*
- * Return 1 if PID exists in the current process list, else 0.
+ * Return 1 if PID exists in the current process list, else 0, -1
+ * on error.
+ * TODO: this should live in _psutil_posix.c but for some reason if I
+ * move it there I get a "include undefined symbol" error.
  */
 int
 psutil_pid_exists(long pid) {
-    int kill_ret;
-
+    int ret;
     if (pid < 0)
         return 0;
-    // if kill returns success of permission denied we know it's a valid PID
-    kill_ret = kill(pid , 0);
-    if ((0 == kill_ret) || (EPERM == errno))
+    ret = kill(pid , 0);
+    if (ret == 0)
         return 1;
-    // otherwise return 0 for PID not found
-    return 0;
+    else {
+        if (ret == ESRCH)
+            return 0;
+        else if (ret == EPERM)
+            return 1;
+        else {
+            PyErr_SetFromErrno(PyExc_OSError);
+            return -1;
+        }
+    }
 }
-
