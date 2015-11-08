@@ -1937,8 +1937,8 @@ class TestProcess(unittest.TestCase):
         for c in psutil.net_connections(kind='all'):
             if c.pid == pid:
                 sys_cons.append(pconn(*c[:-1]))
-        if BSD:
-            # on BSD all fds are set to -1
+        if FREEBSD:
+            # on FreeBSD all fds are set to -1
             proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
         self.assertEqual(sorted(proc_cons), sorted(sys_cons))
 

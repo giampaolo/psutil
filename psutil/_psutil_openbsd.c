@@ -701,24 +701,15 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 // see sys/kern/kern_sysctl.c lines 1100 and
 // usr.bin/fstat/fstat.c print_inet_details()
 char *
-psutil_addr_from_addru(int family, uint32_t addr[4]) {
+psutil_convert_ipv4(int family, uint32_t addr[4]) {
     struct in_addr a;
     memcpy(&a, addr, sizeof(a));
-    if (family == AF_INET) {
-        if (a.s_addr == INADDR_ANY)
-            return "*";
-        else
-            return inet_ntoa(a);
-    }
-    else {
-        /* XXX TODO */
-        return NULL;
-    }
+    return inet_ntoa(a);
 }
 
 
 const char *
-inet6_addrstr(struct in6_addr *p)
+psutil_inet6_addrstr(struct in6_addr *p)
 {
     struct sockaddr_in6 sin6;
     static char hbuf[NI_MAXHOST];
@@ -770,9 +761,8 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter)) {
+    if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
         goto error;
-    }
     if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         goto error;
@@ -789,7 +779,9 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
         int lport;
         int rport;
         char path[PATH_MAX];
+        char addrbuf[NI_MAXHOST + 2];
         int inseq;
+        struct in6_addr laddr6;
         py_tuple = NULL;
         py_laddr = NULL;
         py_raddr = NULL;
@@ -800,19 +792,16 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
             py_family = PyLong_FromLong((long)kif->so_family);
             inseq = PySequence_Contains(py_af_filter, py_family);
             Py_DECREF(py_family);
-            if (inseq == 0) {
+            if (inseq == 0)
                 continue;
-            }
             _type = PyLong_FromLong((long)kif->so_type);
             inseq = PySequence_Contains(py_type_filter, _type);
             Py_DECREF(_type);
-            if (inseq == 0) {
+            if (inseq == 0)
                 continue;
-            }
 
             // IPv4 / IPv6 socket
-            if ((kif->so_family == AF_INET) ||
-                    (kif->so_family == AF_INET6)) {
+            if ((kif->so_family == AF_INET) || (kif->so_family == AF_INET6)) {
                 // fill status
                 if (kif->so_type == SOCK_STREAM)
                     state = kif->t_state;
@@ -823,19 +812,45 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                 lport = ntohs(kif->inp_lport);
                 rport = ntohs(kif->inp_fport);
 
-                // construct python tuple/list
-                py_laddr = Py_BuildValue(
-                    "(si)",
-                    psutil_addr_from_addru(kif->so_family, kif->inp_laddru),
-                    lport);
-                if (!py_laddr)
-                    goto error;
+                // local address, IPv4
+                if (kif->so_family == AF_INET) {
+                    py_laddr = Py_BuildValue(
+                        "(si)",
+                        psutil_convert_ipv4(kif->so_family, kif->inp_laddru),
+                        lport);
+                    if (!py_laddr)
+                        goto error;
+                }
+                else {
+                    // local address, IPv6
+                    memcpy(&laddr6, kif->inp_laddru, sizeof(laddr6));
+                    (void *)(uintptr_t)kif->inp_ppcb;
+                    snprintf(addrbuf, sizeof(addrbuf), "%s",
+                             psutil_inet6_addrstr(&laddr6));
+                    py_laddr = Py_BuildValue("(si)", addrbuf, lport);
+                    if (!py_laddr)
+                        goto error;
+                }
 
                 if (rport != 0) {
-                    py_raddr = Py_BuildValue(
-                        "(si)",
-                        psutil_addr_from_addru(kif->so_family, kif->inp_faddru),
-                        ntohs(kif->inp_fport));
+                    // remote address, IPv4
+                    if (kif->so_family == AF_INET) {
+                        py_raddr = Py_BuildValue(
+                            "(si)",
+                            psutil_convert_ipv4(
+                                kif->so_family, kif->inp_faddru),
+                            rport);
+                    }
+                    else {
+                        // remote address, IPv6
+                        memcpy(&laddr6, kif->inp_faddru, sizeof(laddr6));
+                        (void *)(uintptr_t)kif->inp_ppcb;
+                        snprintf(addrbuf, sizeof(addrbuf), "%s",
+                                 psutil_inet6_addrstr(&laddr6));
+                        py_raddr = Py_BuildValue("(si)", addrbuf, rport);
+                        if (!py_raddr)
+                            goto error;
+                    }
                 }
                 else {
                     py_raddr = Py_BuildValue("()");
@@ -859,7 +874,6 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
             }
             // UNIX socket
             else if (kif->so_family == AF_UNIX) {
-
                 py_tuple = Py_BuildValue(
                     "(iiisOi)",
                     kif->fd_fd,

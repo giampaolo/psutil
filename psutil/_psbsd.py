@@ -202,7 +202,7 @@ def net_connections(kind):
         ret = []
         for pid in pids():
             try:
-                cons = Process(pid).connections()
+                cons = Process(pid).connections(kind)
             except NoSuchProcess:
                 continue
             else:
