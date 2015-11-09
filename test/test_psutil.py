@@ -2128,6 +2128,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(p.num_fds(), start)
 
     @skip_on_not_implemented(only_if=LINUX)
+    @unittest.skipIf(OPENBSD, "not reliable on OpenBSD")
     def test_num_ctx_switches(self):
         p = psutil.Process()
         before = sum(p.num_ctx_switches())
@@ -2515,7 +2516,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                         if ret not in (0, 0.0, [], None, ''):
                             assert ret, ret
                         meth = getattr(self, name)
-                        meth(ret)
+                        meth(ret, p)
                 except Exception as err:
                     s = '\n' + '=' * 70 + '\n'
                     s += "FAIL: test_%s (proc=%s" % (name, p)
@@ -2525,6 +2526,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                     s += '-' * 70
                     s += "\n%s" % traceback.format_exc()
                     s = "\n".join((" " * 4) + i for i in s.splitlines())
+                    s += '\n'
                     failures.append(s)
                     break
 
@@ -2535,10 +2537,10 @@ class TestFetchAllProcesses(unittest.TestCase):
         # special cases.
         self.assertTrue(valid_procs > 0)
 
-    def cmdline(self, ret):
+    def cmdline(self, ret, proc):
         pass
 
-    def exe(self, ret):
+    def exe(self, ret, proc):
         if not ret:
             self.assertEqual(ret, '')
         else:
@@ -2551,49 +2553,55 @@ class TestFetchAllProcesses(unittest.TestCase):
                     # XXX may fail on OSX
                     self.assertTrue(os.access(ret, os.X_OK))
 
-    def ppid(self, ret):
+    def ppid(self, ret, proc):
         self.assertTrue(ret >= 0)
 
-    def name(self, ret):
+    def name(self, ret, proc):
         self.assertIsInstance(ret, (str, unicode))
         self.assertTrue(ret)
 
-    def create_time(self, ret):
-        self.assertTrue(ret > 0)
+    def create_time(self, ret, proc):
+        try:
+            self.assertGreaterEqual(ret, 0)
+        except AssertionError:
+            if OPENBSD and proc.status == psutil.STATUS_ZOMBIE:
+                pass
+            else:
+                raise
         # this can't be taken for granted on all platforms
         # self.assertGreaterEqual(ret, psutil.boot_time())
         # make sure returned value can be pretty printed
         # with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(ret))
 
-    def uids(self, ret):
+    def uids(self, ret, proc):
         for uid in ret:
             self.assertTrue(uid >= 0)
             self.assertIn(uid, self._uids)
 
-    def gids(self, ret):
+    def gids(self, ret, proc):
         # note: testing all gids as above seems not to be reliable for
         # gid == 30 (nodoby); not sure why.
         for gid in ret:
             self.assertTrue(gid >= 0)
             # self.assertIn(uid, self.gids
 
-    def username(self, ret):
+    def username(self, ret, proc):
         self.assertTrue(ret)
         if POSIX:
             self.assertIn(ret, self._usernames)
 
-    def status(self, ret):
+    def status(self, ret, proc):
         self.assertTrue(ret != "")
         self.assertTrue(ret != '?')
         self.assertIn(ret, VALID_PROC_STATUSES)
 
-    def io_counters(self, ret):
+    def io_counters(self, ret, proc):
         for field in ret:
             if field != -1:
                 self.assertTrue(field >= 0)
 
-    def ionice(self, ret):
+    def ionice(self, ret, proc):
         if LINUX:
             self.assertTrue(ret.ioclass >= 0)
             self.assertTrue(ret.value >= 0)
@@ -2601,24 +2609,24 @@ class TestFetchAllProcesses(unittest.TestCase):
             self.assertTrue(ret >= 0)
             self.assertIn(ret, (0, 1, 2))
 
-    def num_threads(self, ret):
+    def num_threads(self, ret, proc):
         self.assertTrue(ret >= 1)
 
-    def threads(self, ret):
+    def threads(self, ret, proc):
         for t in ret:
             self.assertTrue(t.id >= 0)
             self.assertTrue(t.user_time >= 0)
             self.assertTrue(t.system_time >= 0)
 
-    def cpu_times(self, ret):
+    def cpu_times(self, ret, proc):
         self.assertTrue(ret.user >= 0)
         self.assertTrue(ret.system >= 0)
 
-    def memory_info(self, ret):
+    def memory_info(self, ret, proc):
         self.assertTrue(ret.rss >= 0)
         self.assertTrue(ret.vms >= 0)
 
-    def memory_info_ex(self, ret):
+    def memory_info_ex(self, ret, proc):
         for name in ret._fields:
             self.assertTrue(getattr(ret, name) >= 0)
         if POSIX and ret.vms != 0:
@@ -2633,7 +2641,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             assert ret.peak_nonpaged_pool >= ret.nonpaged_pool, ret
             assert ret.peak_pagefile >= ret.pagefile, ret
 
-    def open_files(self, ret):
+    def open_files(self, ret, proc):
         for f in ret:
             if WINDOWS:
                 assert f.fd == -1, f
@@ -2642,15 +2650,15 @@ class TestFetchAllProcesses(unittest.TestCase):
             assert os.path.isabs(f.path), f
             assert os.path.isfile(f.path), f
 
-    def num_fds(self, ret):
+    def num_fds(self, ret, proc):
         self.assertTrue(ret >= 0)
 
-    def connections(self, ret):
+    def connections(self, ret, proc):
         self.assertEqual(len(ret), len(set(ret)))
         for conn in ret:
             check_connection_ntuple(conn)
 
-    def cwd(self, ret):
+    def cwd(self, ret, proc):
         if ret is not None:  # BSD may return None
             assert os.path.isabs(ret), ret
             try:
@@ -2662,21 +2670,21 @@ class TestFetchAllProcesses(unittest.TestCase):
             else:
                 self.assertTrue(stat.S_ISDIR(st.st_mode))
 
-    def memory_percent(self, ret):
+    def memory_percent(self, ret, proc):
         assert 0 <= ret <= 100, ret
 
-    def is_running(self, ret):
+    def is_running(self, ret, proc):
         self.assertTrue(ret)
 
-    def cpu_affinity(self, ret):
+    def cpu_affinity(self, ret, proc):
         assert ret != [], ret
 
-    def terminal(self, ret):
+    def terminal(self, ret, proc):
         if ret is not None:
             assert os.path.isabs(ret), ret
             assert os.path.exists(ret), ret
 
-    def memory_maps(self, ret):
+    def memory_maps(self, ret, proc):
         for nt in ret:
             for fname in nt._fields:
                 value = getattr(nt, fname)
@@ -2692,13 +2700,13 @@ class TestFetchAllProcesses(unittest.TestCase):
                     self.assertIsInstance(value, (int, long))
                     assert value >= 0, value
 
-    def num_handles(self, ret):
+    def num_handles(self, ret, proc):
         if WINDOWS:
             self.assertGreaterEqual(ret, 0)
         else:
             self.assertGreaterEqual(ret, 0)
 
-    def nice(self, ret):
+    def nice(self, ret, proc):
         if POSIX:
             assert -20 <= ret <= 20, ret
         else:
@@ -2706,11 +2714,11 @@ class TestFetchAllProcesses(unittest.TestCase):
                           if x.endswith('_PRIORITY_CLASS')]
             self.assertIn(ret, priorities)
 
-    def num_ctx_switches(self, ret):
+    def num_ctx_switches(self, ret, proc):
         self.assertTrue(ret.voluntary >= 0)
         self.assertTrue(ret.involuntary >= 0)
 
-    def rlimit(self, ret):
+    def rlimit(self, ret, proc):
         self.assertEqual(len(ret), 2)
         self.assertGreaterEqual(ret[0], -1)
         self.assertGreaterEqual(ret[1], -1)
