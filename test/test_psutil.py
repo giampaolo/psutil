@@ -1627,6 +1627,12 @@ class TestProcess(unittest.TestCase):
 
     def test_threads_2(self):
         p = psutil.Process()
+        if OPENBSD:
+            try:
+                p.threads()
+            except psutil.AccessDenied:
+                raise unittest.SkipTest(
+                    "on OpenBSD this requires root access")
         self.assertAlmostEqual(p.cpu_times().user,
                                p.threads()[0].user_time, delta=0.1)
         self.assertAlmostEqual(p.cpu_times().system,

@@ -1850,14 +1850,25 @@ void init_psutil_bsd(void)
 #endif
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
     // process status constants
-    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
-    PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
-    PyModule_AddIntConstant(module, "SRUN", SRUN);
+
+#ifdef __FreeBSD__
     PyModule_AddIntConstant(module, "SIDL", SIDL);
-    PyModule_AddIntConstant(module, "SWAIT", -1);
-    PyModule_AddIntConstant(module, "SLOCK", -1);
+    PyModule_AddIntConstant(module, "SRUN", SRUN);
+    PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
+    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
     PyModule_AddIntConstant(module, "SZOMB", SZOMB);
-    PyModule_AddIntConstant(module, "SRUN", SONPROC);
+    PyModule_AddIntConstant(module, "SWAIT", SWAIT);
+    PyModule_AddIntConstant(module, "SLOCK", SLOCK);
+#elif  __OpenBSD__
+    PyModule_AddIntConstant(module, "SIDL", SIDL);
+    PyModule_AddIntConstant(module, "SRUN", SRUN);
+    PyModule_AddIntConstant(module, "SSLEEP", SSLEEP);
+    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
+    PyModule_AddIntConstant(module, "SZOMB", SZOMB);  // unused
+    PyModule_AddIntConstant(module, "SDEAD", SDEAD);
+    PyModule_AddIntConstant(module, "SONPROC", SONPROC);
+#endif
+
     // connection status constants
     PyModule_AddIntConstant(module, "TCPS_CLOSED", TCPS_CLOSED);
     PyModule_AddIntConstant(module, "TCPS_CLOSING", TCPS_CLOSING);

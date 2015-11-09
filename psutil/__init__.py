@@ -1029,8 +1029,14 @@ class Process(object):
                 os.kill(self.pid, sig)
             except OSError as err:
                 if err.errno == errno.ESRCH:
-                    self._gone = True
-                    raise NoSuchProcess(self.pid, self._name)
+                    if (sys.platform.startswith("openbsd") and \
+                            pid_exists(self.pid)):
+                        # We do this because os.kill() lies in case of
+                        # zombie processes.
+                        raise ZombieProcess(self.pid, self._name, self._ppid)
+                    else:
+                        self._gone = True
+                        raise NoSuchProcess(self.pid, self._name)
                 if err.errno in (errno.EPERM, errno.EACCES):
                     raise AccessDenied(self.pid, self._name)
                 raise

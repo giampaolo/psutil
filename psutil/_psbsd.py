@@ -29,15 +29,37 @@ __extra__all__ = []
 FREEBSD = sys.platform.startswith("freebsd")
 OPENBSD = sys.platform.startswith("openbsd")
 
-PROC_STATUSES = {
-    cext.SIDL: _common.STATUS_IDLE,
-    cext.SRUN: _common.STATUS_RUNNING,
-    cext.SSLEEP: _common.STATUS_SLEEPING,
-    cext.SSTOP: _common.STATUS_STOPPED,
-    cext.SZOMB: _common.STATUS_ZOMBIE,
-    cext.SWAIT: _common.STATUS_WAITING,
-    cext.SLOCK: _common.STATUS_LOCKED,
-}
+if FREEBSD:
+    PROC_STATUSES = {
+        cext.SIDL: _common.STATUS_IDLE,
+        cext.SRUN: _common.STATUS_RUNNING,
+        cext.SSLEEP: _common.STATUS_SLEEPING,
+        cext.SSTOP: _common.STATUS_STOPPED,
+        cext.SZOMB: _common.STATUS_ZOMBIE,
+        cext.SWAIT: _common.STATUS_WAITING,
+        cext.SLOCK: _common.STATUS_LOCKED,
+    }
+elif OPENBSD:
+    PROC_STATUSES = {
+        cext.SIDL: _common.STATUS_IDLE,
+        cext.SSLEEP: _common.STATUS_SLEEPING,
+        cext.SSTOP: _common.STATUS_STOPPED,
+        # According to /usr/include/sys/proc.h SZOMB is unused.
+        # test_zombie_process() shows that SDEAD is the right
+        # equivalent. Also it appears there's no equivalent of
+        # psutil.STATUS_DEAD. SDEAD really means STATUS_ZOMBIE.
+        # cext.SZOMB: _common.STATUS_ZOMBIE,
+        cext.SDEAD: _common.STATUS_ZOMBIE,
+        # From http://www.eecs.harvard.edu/~margo/cs161/videos/proc.h.txt
+        # OpenBSD has SRUN and SONPROC: SRUN indicates that a process
+        # is runnable but *not* yet running, i.e. is on a run queue.
+        # SONPROC indicates that the process is actually executing on
+        # a CPU, i.e. it is no longer on a run queue.
+        # As such we'll map SRUN to STATUS_WAKING and SONPROC to
+        # STATUS_RUNNING
+        cext.SRUN: _common.STATUS_WAKING,
+        cext.SONPROC: _common.STATUS_RUNNING,
+    }
 
 TCP_STATUSES = {
     cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
@@ -249,8 +271,20 @@ def net_if_stats():
     return ret
 
 
+if OPENBSD:
+    def pid_exists(pid):
+        exists = _psposix.pid_exists(pid)
+        if not exists:
+            # We do this because _psposix.pid_exists() lies in case of
+            # zombie processes.
+            return pid in pids()
+        else:
+            return True
+else:
+    pid_exists = _psposix.pid_exists
+
+
 pids = cext.pids
-pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage
 net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
@@ -271,7 +305,8 @@ def wrap_exceptions(fun):
                     ZombieProcess is None):
                 raise
             if err.errno == errno.ESRCH:
-                if not pid_exists(self.pid):
+                # if not pid_exists(self.pid):
+                if self.pid not in pids():
                     raise NoSuchProcess(self.pid, self._name)
                 else:
                     raise ZombieProcess(self.pid, self._name, self._ppid)
