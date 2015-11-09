@@ -171,8 +171,10 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     ret = proc_pidpath(pid, &buf, sizeof(buf));
-    if (ret == 0)
-        return psutil_raise_ad_or_nsp(pid);
+    if (ret == 0) {
+        psutil_raise_ad_or_nsp(pid);
+        return NULL;
+    }
     return Py_BuildValue("s", buf);
 }
 

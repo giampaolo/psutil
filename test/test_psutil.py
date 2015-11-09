@@ -1231,7 +1231,7 @@ class TestProcess(unittest.TestCase):
             with mock.patch('psutil.os.kill',
                             side_effect=OSError(errno.EPERM, "")) as fun:
                 with self.assertRaises(psutil.AccessDenied):
-                    p.send_signal(sig)
+                    psutil.Process().send_signal(sig)
                 assert fun.called
 
     def test_wait(self):
@@ -1624,6 +1624,13 @@ class TestProcess(unittest.TestCase):
         finally:
             if thread._running:
                 thread.stop()
+
+    def test_threads_2(self):
+        p = psutil.Process()
+        self.assertAlmostEqual(p.cpu_times().user,
+                               p.threads()[0].user_time, delta=0.1)
+        self.assertAlmostEqual(p.cpu_times().system,
+                               p.threads()[0].system_time, delta=0.1)
 
     def test_memory_info(self):
         p = psutil.Process()
