@@ -411,6 +411,11 @@ class Process(object):
         for thread_id, utime, stime in rawlist:
             ntuple = _common.pthread(thread_id, utime, stime)
             retlist.append(ntuple)
+        if OPENBSD:
+            # On OpenBSD the underlying C function does not raise NSP
+            # in case the process is gone (and the returned list may
+            # incomplete).
+            self.name()  # raise NSP if the process disappeared on us
         return retlist
 
     @wrap_exceptions

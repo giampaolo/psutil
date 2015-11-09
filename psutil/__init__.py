@@ -167,6 +167,7 @@ AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
 _POSIX = os.name == 'posix'
 _WINDOWS = os.name == 'nt'
+_OPENBSD = sys.platform.startswith("openbsd")
 _timer = getattr(time, 'monotonic', time.time)
 
 
@@ -962,32 +963,33 @@ class Process(object):
         except ZeroDivisionError:
             return 0.0
 
-    def memory_maps(self, grouped=True):
-        """Return process' mapped memory regions as a list of namedtuples
-        whose fields are variable depending on the platform.
+    if not _OPENBSD:
+        def memory_maps(self, grouped=True):
+            """Return process' mapped memory regions as a list of namedtuples
+            whose fields are variable depending on the platform.
 
-        If 'grouped' is True the mapped regions with the same 'path'
-        are grouped together and the different memory fields are summed.
+            If 'grouped' is True the mapped regions with the same 'path'
+            are grouped together and the different memory fields are summed.
 
-        If 'grouped' is False every mapped region is shown as a single
-        entity and the namedtuple will also include the mapped region's
-        address space ('addr') and permission set ('perms').
-        """
-        it = self._proc.memory_maps()
-        if grouped:
-            d = {}
-            for tupl in it:
-                path = tupl[2]
-                nums = tupl[3:]
-                try:
-                    d[path] = map(lambda x, y: x + y, d[path], nums)
-                except KeyError:
-                    d[path] = nums
-            nt = _psplatform.pmmap_grouped
-            return [nt(path, *d[path]) for path in d]  # NOQA
-        else:
-            nt = _psplatform.pmmap_ext
-            return [nt(*x) for x in it]
+            If 'grouped' is False every mapped region is shown as a single
+            entity and the namedtuple will also include the mapped region's
+            address space ('addr') and permission set ('perms').
+            """
+            it = self._proc.memory_maps()
+            if grouped:
+                d = {}
+                for tupl in it:
+                    path = tupl[2]
+                    nums = tupl[3:]
+                    try:
+                        d[path] = map(lambda x, y: x + y, d[path], nums)
+                    except KeyError:
+                        d[path] = nums
+                nt = _psplatform.pmmap_grouped
+                return [nt(path, *d[path]) for path in d]  # NOQA
+            else:
+                nt = _psplatform.pmmap_ext
+                return [nt(*x) for x in it]
 
     def open_files(self):
         """Return files opened by process as a list of
@@ -1029,8 +1031,7 @@ class Process(object):
                 os.kill(self.pid, sig)
             except OSError as err:
                 if err.errno == errno.ESRCH:
-                    if (sys.platform.startswith("openbsd") and \
-                            pid_exists(self.pid)):
+                    if _OPENBSD and pid_exists(self.pid):
                         # We do this because os.kill() lies in case of
                         # zombie processes.
                         raise ZombieProcess(self.pid, self._name, self._ppid)

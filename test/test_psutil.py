@@ -1661,6 +1661,7 @@ class TestProcess(unittest.TestCase):
     # def test_memory_info_ex(self):
     # # tested later in fetch all test suite
 
+    @unittest.skipIf(OPENBSD, "not available on OpenBSD")
     def test_memory_maps(self):
         p = psutil.Process()
         maps = p.memory_maps()
@@ -2284,6 +2285,11 @@ class TestProcess(unittest.TestCase):
                           name)
             except psutil.NoSuchProcess:
                 pass
+            except psutil.AccessDenied:
+                if OPENBSD and name in ('threads', 'num_threads'):
+                    pass
+                else:
+                    raise
             except NotImplementedError:
                 pass
             else:
@@ -3096,6 +3102,7 @@ class TestExampleScripts(unittest.TestCase):
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
+    @unittest.skipIf(OPENBSD, "OpenBSD does not support memory maps")
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 

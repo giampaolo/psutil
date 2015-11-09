@@ -1043,6 +1043,8 @@ Process class
        ...]
       >>>
 
+    Availability: All platforms except OpenBSD.
+
   .. method:: children(recursive=False)
 
      Return the children of this process as a list of :Class:`Process` objects,
