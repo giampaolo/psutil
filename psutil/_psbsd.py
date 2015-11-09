@@ -225,7 +225,7 @@ def net_connections(kind):
         for pid in pids():
             try:
                 cons = Process(pid).connections(kind)
-            except NoSuchProcess:
+            except (NoSuchProcess, ZombieProcess):
                 continue
             else:
                 for conn in cons:
@@ -428,6 +428,11 @@ class Process(object):
             status = TCP_STATUSES[status]
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
+        if OPENBSD:
+            # On OpenBSD the underlying C function does not raise NSP
+            # in case the process is gone (and the returned list may
+            # incomplete).
+            self.name()  # raise NSP if the process disappeared on us
         return ret
 
     @wrap_exceptions
