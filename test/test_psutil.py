@@ -2388,7 +2388,7 @@ class TestProcess(unittest.TestCase):
 
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
-        if 0 not in psutil.pids():
+        if 0 not in psutil.pids() and not OPENBSD:
             self.assertRaises(psutil.NoSuchProcess, psutil.Process, 0)
             return
 
@@ -2429,8 +2429,11 @@ class TestProcess(unittest.TestCase):
         except psutil.AccessDenied:
             pass
 
-        self.assertIn(0, psutil.pids())
-        self.assertTrue(psutil.pid_exists(0))
+        p.as_dict()
+
+        if not OPENBSD:
+            self.assertIn(0, psutil.pids())
+            self.assertTrue(psutil.pid_exists(0))
 
     def test_Popen(self):
         # Popen class test

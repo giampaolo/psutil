@@ -348,6 +348,8 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
+        if OPENBSD and self.pid == 0:
+            return None  # ...else it crashes
         return cext.proc_cmdline(self.pid)
 
     @wrap_exceptions
@@ -491,6 +493,8 @@ class Process(object):
             """Return process current working directory."""
             # sometimes we get an empty string, in which case we turn
             # it into None
+            if OPENBSD and self.pid == 0:
+                return None  # ...else raises EINVAL
             return cext.proc_cwd(self.pid) or None
 
         @wrap_exceptions
