@@ -1,15 +1,15 @@
 /*
- * Copyright (c) 2014, Landry Breuil. All rights reserved.
+ * Copyright (c) 2009, Giampaolo Rodola', Landry Breuil (OpenBSD).
+ * All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * OpenBSD platform-specific module methods for openbsd.
+ * Platform-specific module methods for FreeBSD and OpenBSD.
 
- * References:
+ * OpenBSD references:
  * - OpenBSD source code: http://anoncvs.spacehopper.org/openbsd-src/
  *
- * Missing compared to FreeBSD implementation:
- *
+ * OpenBSD: missing compared to FreeBSD implementation:
  * - psutil.net_connections()
  * - psutil.Process.get/set_cpu_affinity()  (not supported natively)
  * - psutil.Process.memory_maps()
@@ -28,17 +28,9 @@
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/user.h>
-#include <sys/disk.h> /* struct diskstats */
 #include <sys/proc.h>
 #include <sys/file.h>
-#include <sys/sched.h> /* for CPUSTATES & CP_* */
-#include <sys/swap.h>
-#include <kvm.h>
 #include <sys/socket.h>
-#include <sys/vnode.h> /* for VREG */
-#define _KERNEL /* for DTYPE_VNODE */
-#include <sys/file.h>
-#undef _KERNEL
 #include <net/route.h>
 
 #include <sys/socketvar.h>    // for struct xsocket
@@ -55,13 +47,11 @@
 #include <netinet/tcp_fsm.h>   // for TCP connection states
 #include <arpa/inet.h>         // for inet_ntop()
 
-#include <utmp.h>         // system users
 #include <sys/mount.h>
 
 #include <net/if.h>       // net io counters
 #include <net/if_dl.h>
 #include <net/route.h>
-#include <netdb.h>        // for NI_MAXHOST
 
 #include <netinet/in.h>   // process open files/connections
 #include <sys/un.h>
@@ -70,10 +60,45 @@
 #include "_psutil_common.h"
 #include "arch/bsd/process_info.h"
 
+#ifdef  __FreeBSD__
+    #include <sys/cpuset.h>
+    #include <net/if_media.h>
+    #include <devstat.h>  // get io counters
+    #include <sys/vmmeter.h>  // needed for vmtotal struct
+    #include <libutil.h>  // process open files, shared libs (kinfo_getvmmap)
 
-// convert a timeval struct to a double
+    #if __FreeBSD_version < 900000
+        #include <utmp.h>  // system users
+    #else
+        #include <utmpx.h>
+    #endif
+#endif
+
+#ifdef  __OpenBSD__
+    #include <utmp.h>
+    #include <netdb.h>  // for NI_MAXHOST
+    #include <sys/vnode.h>  // for VREG
+    #define _KERNEL  // for DTYPE_VNODE
+    #include <sys/file.h>
+    #undef _KERNEL
+    #include <sys/disk.h>  // struct diskstats
+    #include <sys/sched.h>  // for CPUSTATES & CP_*
+    #include <sys/swap.h>
+    #include <kvm.h>
+#endif
+
+
 #define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
-#define KPT2DOUBLE(t)   (t ## _sec + t ## _usec / 1000000.0)
+
+#ifdef __FreeBSD__
+    // convert a timeval struct to a double
+    // convert a bintime struct to milliseconds
+    #define BT2MSEC(bt)     (bt.sec * 1000 + ( ( (uint64_t) 1000000000 * (uint32_t) (bt.frac >> 32) ) >> 32 ) / 1000000)
+#endif
+
+#ifdef __OpenBSD__
+    #define KPT2DOUBLE(t)   (t ## _sec + t ## _usec / 1000000.0)
+#endif
 
 
 /*
@@ -81,19 +106,32 @@
  */
 static int
 psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
-    int mib[6];
-    size_t size;
+    int ret;
+    size_t size = sizeof(struct kinfo_proc);
+
+#ifdef __FreeBSD__
+    int mib[4];
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
 
-    size = sizeof(struct kinfo_proc);
+    ret = sysctl((int*)mib, 4, proc, &size, NULL, 0);
+#endif
 
+#ifdef __OpenBSD__
+    int mib[6];
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = pid;
     mib[4] = size;
     mib[5] = 1;
 
-    if (sysctl((int*)mib, 6, proc, &size, NULL, 0) == -1) {
+    ret = sysctl((int*)mib, 6, proc, &size, NULL, 0);
+#endif
+
+    if (ret == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         return -1;
     }
@@ -130,7 +168,11 @@ psutil_pids(PyObject *self, PyObject *args) {
     if (num_processes > 0) {
         orig_address = proclist; // save so we can free it after we're done
         for (idx = 0; idx < num_processes; idx++) {
+#ifdef __FreeBSD__
+            py_pid = Py_BuildValue("i", proclist->ki_pid);
+#elif __OpenBSD__
             py_pid = Py_BuildValue("i", proclist->p_pid);
+#endif
             if (!py_pid)
                 goto error;
             if (PyList_Append(py_retlist, py_pid))
@@ -182,8 +224,55 @@ psutil_proc_name(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
+#ifdef __FreeBSD__
+    return Py_BuildValue("s", kp.ki_comm);
+#elif __OpenBSD__
     return Py_BuildValue("s", kp.p_comm);
+#endif
 }
+
+
+#ifdef __FreeBSD__
+/*
+ * Return process pathname executable.
+ * Thanks to Robert N. M. Watson:
+ * http://fxr.googlebit.com/source/usr.bin/procstat/procstat_bin.c?v=8-CURRENT
+ */
+static PyObject *
+psutil_proc_exe(PyObject *self, PyObject *args) {
+    long pid;
+    char pathname[PATH_MAX];
+    int error;
+    int mib[4];
+    int ret;
+    size_t size;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PATHNAME;
+    mib[3] = pid;
+
+    size = sizeof(pathname);
+    error = sysctl(mib, 4, pathname, &size, NULL, 0);
+    if (error == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    if (size == 0 || strlen(pathname) == 0) {
+        ret = psutil_pid_exists(pid);
+        if (ret == -1)
+            return NULL;
+        else if (ret == 0)
+            return NoSuchProcess();
+        else
+            strcpy(pathname, "");
+    }
+    return Py_BuildValue("s", pathname);
+}
+#endif
 
 
 /*
@@ -198,7 +287,11 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
         return NULL;
 
     // get the commandline, defined in arch/bsd/process_info.c
+#ifdef __FreeBSD__
+    py_retlist = psutil_get_cmdline(pid);
+#elif __OpenBSD__
     py_retlist = psutil_get_arg_list(pid);
+#endif
 
     // psutil_get_arg_list() returns NULL only if psutil_cmd_args
     // failed with ESRCH (no process with that PID)
@@ -219,7 +312,11 @@ psutil_proc_ppid(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
+#ifdef __FreeBSD__
+    return Py_BuildValue("l", (long)kp.ki_ppid);
+#elif __OpenBSD__
     return Py_BuildValue("l", (long)kp.p_ppid);
+#endif
 }
 
 
@@ -234,7 +331,11 @@ psutil_proc_status(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
+#ifdef __FreeBSD__
+    return Py_BuildValue("i", (int)kp.ki_stat);
+#elif __OpenBSD__
     return Py_BuildValue("i", (int)kp.p_stat);
+#endif
 }
 
 
@@ -251,9 +352,15 @@ psutil_proc_uids(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
     return Py_BuildValue("lll",
+#ifdef __FreeBSD__
+                         (long)kp.ki_ruid,
+                         (long)kp.ki_uid,
+                         (long)kp.ki_svuid);
+#elif __OpenBSD__
                          (long)kp.p_ruid,
                          (long)kp.p_uid,
                          (long)kp.p_svuid);
+#endif
 }
 
 
@@ -270,9 +377,15 @@ psutil_proc_gids(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
     return Py_BuildValue("lll",
+#ifdef __FreeBSD__
+                         (long)kp.ki_rgid,
+                         (long)kp.ki_groups[0],
+                         (long)kp.ki_svuid);
+#elif __OpenBSD__
                          (long)kp.p_rgid,
                          (long)kp.p_groups[0],
                          (long)kp.p_svuid);
+#endif
 }
 
 
@@ -288,7 +401,11 @@ psutil_proc_tty_nr(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
+#ifdef __FreeBSD__
+    return Py_BuildValue("i", kp.ki_tdev);
+#elif __OpenBSD__
     return Py_BuildValue("i", kp.p_tdev);
+#endif
 }
 
 
@@ -304,9 +421,31 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
     return Py_BuildValue("(ll)",
+#ifdef __FreeBSD__
+                         kp.ki_rusage.ru_nvcsw,
+                         kp.ki_rusage.ru_nivcsw);
+#elif __OpenBSD__
                          kp.p_uru_nvcsw,
                          kp.p_uru_nivcsw);
+#endif
 }
+
+
+#ifdef __FreeBSD__
+/*
+ * Return number of threads used by process as a Python integer.
+ */
+static PyObject *
+psutil_proc_num_threads(PyObject *self, PyObject *args) {
+    long pid;
+    struct kinfo_proc kp;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (psutil_kinfo_proc(pid, &kp) == -1)
+        return NULL;
+    return Py_BuildValue("l", (long)kp.ki_numthreads);
+}
+#endif
 
 
 /*
@@ -319,6 +458,83 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
  * https://github.com/janmojzis/pstree/blob/master/proc_kvm.c
  * Note: OpenBSD requires root access.
  */
+
+#ifdef __FreeBSD__
+static PyObject *
+psutil_proc_threads(PyObject *self, PyObject *args) {
+    long pid;
+    int mib[4];
+    struct kinfo_proc *kip = NULL;
+    struct kinfo_proc *kipp = NULL;
+    int error;
+    unsigned int i;
+    size_t size;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        goto error;
+
+    // we need to re-query for thread information, so don't use *kipp
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID | KERN_PROC_INC_THREAD;
+    mib[3] = pid;
+
+    size = 0;
+    error = sysctl(mib, 4, NULL, &size, NULL, 0);
+    if (error == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+    if (size == 0) {
+        NoSuchProcess();
+        goto error;
+    }
+
+    kip = malloc(size);
+    if (kip == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    error = sysctl(mib, 4, kip, &size, NULL, 0);
+    if (error == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+    if (size == 0) {
+        NoSuchProcess();
+        goto error;
+    }
+
+    for (i = 0; i < size / sizeof(*kipp); i++) {
+        kipp = &kip[i];
+        py_tuple = Py_BuildValue("Idd",
+                                 kipp->ki_tid,
+                                 TV2DOUBLE(kipp->ki_rusage.ru_utime),
+                                 TV2DOUBLE(kipp->ki_rusage.ru_stime));
+        if (py_tuple == NULL)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
+        Py_DECREF(py_tuple);
+    }
+    free(kip);
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    if (kip != NULL)
+        free(kip);
+    return NULL;
+}
+#endif
+
+#ifdef __OpenBSD__
 static PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     long pid;
@@ -381,6 +597,42 @@ error:
         kvm_close(kd);
     return NULL;
 }
+#endif
+
+
+#ifdef __FreeBSD__
+/*
+ * Return an XML string from which we'll determine the number of
+ * physical CPU cores in the system.
+ */
+static PyObject *
+psutil_cpu_count_phys(PyObject *self, PyObject *args) {
+    void *topology = NULL;
+    size_t size = 0;
+    PyObject *py_str;
+
+    if (sysctlbyname("kern.sched.topology_spec", NULL, &size, NULL, 0))
+        goto error;
+
+    topology = malloc(size);
+    if (!topology) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    if (sysctlbyname("kern.sched.topology_spec", topology, &size, NULL, 0))
+        goto error;
+
+    py_str = Py_BuildValue("s", topology);
+    free(topology);
+    return py_str;
+
+error:
+    if (topology != NULL)
+        free(topology);
+    Py_RETURN_NONE;
+}
+#endif
 
 
 /*
@@ -396,8 +648,13 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
     // convert from microseconds to seconds
+#ifdef __FreeBSD__
+    user_t = TV2DOUBLE(kp.ki_rusage.ru_utime);
+    sys_t = TV2DOUBLE(kp.ki_rusage.ru_stime);
+#elif __OpenBSD__
     user_t = KPT2DOUBLE(kp.p_uutime);
     sys_t = KPT2DOUBLE(kp.p_ustime);
+#endif
     return Py_BuildValue("(dd)", user_t, sys_t);
 }
 
@@ -416,14 +673,10 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     mib[1] = HW_NCPU;
     len = sizeof(ncpu);
 
-    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
-        // mimic os.cpu_count()
-        Py_INCREF(Py_None);
-        return Py_None;
-    }
-    else {
+    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1)
+        Py_RETURN_NONE;  // mimic os.cpu_count()
+    else
         return Py_BuildValue("i", ncpu);
-    }
 }
 
 
@@ -439,7 +692,11 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
+#ifdef __FreeBSD__
+    return Py_BuildValue("d", TV2DOUBLE(kp.ki_start));
+#elif __OpenBSD__
     return Py_BuildValue("d", KPT2DOUBLE(kp.p_ustart));
+#endif
 }
 
 
@@ -457,8 +714,13 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
         return NULL;
     // there's apparently no way to determine bytes count, hence return -1.
     return Py_BuildValue("(llll)",
+#ifdef __FreeBSD__
+                         kp.ki_rusage.ru_inblock,
+                         kp.ki_rusage.ru_oublock,
+#elif __OpenBSD__
                          kp.p_uru_inblock,
                          kp.p_uru_oublock,
+#endif
                          -1,
                          -1);
 }
@@ -478,6 +740,13 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         return NULL;
     return Py_BuildValue(
         "(lllll)",
+#ifdef __FreeBSD__
+        ptoa(kp.ki_rssize),  // rss
+        (long)kp.ki_size,  // vms
+        ptoa(kp.ki_tsize),  // text
+        ptoa(kp.ki_dsize),  // data
+        ptoa(kp.ki_ssize));  // stack
+#elif __OpenBSD__
         ptoa(kp.p_vm_rssize),    // rss
         // vms, this is how ps does it, see:
         // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n461
@@ -485,6 +754,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         ptoa(kp.p_vm_tsize),  // text
         ptoa(kp.p_vm_dsize),  // data
         ptoa(kp.p_vm_ssize));  // stack
+#endif
 }
 
 
@@ -495,6 +765,54 @@ static PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     unsigned int   total, active, inactive, wired, cached, free;
     size_t         size = sizeof(total);
+
+#ifdef __FreeBSD__
+    struct vmtotal vm;
+    int            mib[] = {CTL_VM, VM_METER};
+    long           pagesize = getpagesize();
+#if __FreeBSD_version > 702101
+    long buffers;
+#else
+    int buffers;
+#endif
+    size_t buffers_size = sizeof(buffers);
+
+    if (sysctlbyname("vm.stats.vm.v_page_count", &total, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.vm.v_active_count", &active, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.vm.v_inactive_count",
+                     &inactive, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.vm.v_wire_count", &wired, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.vm.v_cache_count", &cached, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.vm.v_free_count", &free, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vfs.bufspace", &buffers, &buffers_size, NULL, 0))
+        goto error;
+
+    size = sizeof(vm);
+    if (sysctl(mib, 2, &vm, &size, NULL, 0) != 0)
+        goto error;
+
+    return Py_BuildValue("KKKKKKKK",
+        (unsigned long long) total    * pagesize,
+        (unsigned long long) free     * pagesize,
+        (unsigned long long) active   * pagesize,
+        (unsigned long long) inactive * pagesize,
+        (unsigned long long) wired    * pagesize,
+        (unsigned long long) cached   * pagesize,
+        (unsigned long long) buffers,
+        (unsigned long long) (vm.t_vmshr + vm.t_rmshr) * pagesize  // shared
+    );
+
+error:
+    PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+
+#elif __OpenBSD__
     struct uvmexp  uvmexp;
     int            mib[] = {CTL_VM, VM_UVMEXP};
     long           pagesize = getpagesize();
@@ -515,6 +833,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         (unsigned long long) 0,
         (unsigned long long) 0
     );
+#endif
 }
 
 
@@ -527,6 +846,47 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {
+#ifdef __FreeBSD__
+    kvm_t *kd;
+    struct kvm_swap kvmsw[1];
+    unsigned int swapin, swapout, nodein, nodeout;
+    size_t size = sizeof(unsigned int);
+
+    kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open failed");
+    if (kd == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "kvm_open failed");
+        return NULL;
+    }
+
+    if (kvm_getswapinfo(kd, kvmsw, 1, 0) < 0) {
+        kvm_close(kd);
+        PyErr_SetString(PyExc_RuntimeError, "kvm_getswapinfo failed");
+        return NULL;
+    }
+
+    kvm_close(kd);
+
+    if (sysctlbyname("vm.stats.vm.v_swapin", &swapin, &size, NULL, 0) == -1)
+        goto sbn_error;
+    if (sysctlbyname("vm.stats.vm.v_swapout", &swapout, &size, NULL, 0) == -1)
+        goto sbn_error;
+    if (sysctlbyname("vm.stats.vm.v_vnodein", &nodein, &size, NULL, 0) == -1)
+        goto sbn_error;
+    if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1)
+        goto sbn_error;
+
+    return Py_BuildValue("(iiiII)",
+                         kvmsw[0].ksw_total,                     // total
+                         kvmsw[0].ksw_used,                      // used
+                         kvmsw[0].ksw_total - kvmsw[0].ksw_used, // free
+                         swapin + swapout,                       // swap in
+                         nodein + nodeout);                      // swap out
+
+sbn_error:
+    PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+
+#elif __OpenBSD__
     uint64_t swap_total, swap_free;
     struct swapent *swdev;
     int nswap, i;
@@ -564,7 +924,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
                          swap_free * DEV_BSIZE,
                          0 /* XXX swap in */,
                          0 /* XXX swap out */);
-
+#endif
 }
 
 
@@ -574,12 +934,16 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_cpu_times(PyObject *self, PyObject *args) {
     long cpu_time[CPUSTATES];
-    size_t size;
-    int mib[] = {CTL_KERN, KERN_CPTIME};
+    size_t size = sizeof(cpu_time);
+    int ret;
 
-    size = sizeof(cpu_time);
-    if (sysctl(mib, 2, &cpu_time, &size, NULL, 0) < 0) {
-        warnx("failed to get kern.cptime");
+#ifdef __FreeBSD__
+    ret = sysctlbyname("kern.cp_time", &cpu_time, &size, NULL, 0);
+#elif __OpenBSD__
+    int mib[] = {CTL_KERN, KERN_CPTIME};
+    ret = sysctl(mib, 2, &cpu_time, &size, NULL, 0);
+#endif
+    if (ret == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
@@ -597,6 +961,141 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
 /*
  * Return files opened by process as a list of ("", fd) tuples
  */
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
+ /*
+ * Return files opened by process as a list of (path, fd) tuples.
+ * TODO: this is broken as it may report empty paths. 'procstat'
+ * utility has the same problem see:
+ * https://github.com/giampaolo/psutil/issues/595
+ */
+static PyObject *
+psutil_proc_open_files(PyObject *self, PyObject *args) {
+    long pid;
+    int i, cnt;
+    struct kinfo_file *freep = NULL;
+    struct kinfo_file *kif;
+    struct kinfo_proc kipp;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        goto error;
+    if (psutil_kinfo_proc(pid, &kipp) == -1)
+        goto error;
+
+    freep = kinfo_getfile(pid, &cnt);
+    if (freep == NULL) {
+        psutil_raise_ad_or_nsp(pid);
+        goto error;
+    }
+
+    for (i = 0; i < cnt; i++) {
+        kif = &freep[i];
+        if ((kif->kf_type == KF_TYPE_VNODE) &&
+                (kif->kf_vnode_type == KF_VTYPE_VREG))
+        {
+            py_tuple = Py_BuildValue("(si)", kif->kf_path, kif->kf_fd);
+            if (py_tuple == NULL)
+                goto error;
+            if (PyList_Append(py_retlist, py_tuple))
+                goto error;
+            Py_DECREF(py_tuple);
+        }
+    }
+    free(freep);
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    if (freep != NULL)
+        free(freep);
+    return NULL;
+}
+
+
+/*
+ * Return files opened by process as a list of (path, fd) tuples
+ */
+static PyObject *
+psutil_proc_num_fds(PyObject *self, PyObject *args) {
+    long pid;
+    int cnt;
+
+    struct kinfo_file *freep;
+    struct kinfo_proc kipp;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (psutil_kinfo_proc(pid, &kipp) == -1)
+        return NULL;
+
+    freep = kinfo_getfile(pid, &cnt);
+    if (freep == NULL) {
+        psutil_raise_ad_or_nsp(pid);
+        return NULL;
+    }
+    free(freep);
+
+    return Py_BuildValue("i", cnt);
+}
+
+
+/*
+ * Return process current working directory.
+ */
+static PyObject *
+psutil_proc_cwd(PyObject *self, PyObject *args) {
+    long pid;
+    struct kinfo_file *freep = NULL;
+    struct kinfo_file *kif;
+    struct kinfo_proc kipp;
+    PyObject *py_path = NULL;
+
+    int i, cnt;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        goto error;
+    if (psutil_kinfo_proc(pid, &kipp) == -1)
+        goto error;
+
+    freep = kinfo_getfile(pid, &cnt);
+    if (freep == NULL) {
+        psutil_raise_ad_or_nsp(pid);
+        goto error;
+    }
+
+    for (i = 0; i < cnt; i++) {
+        kif = &freep[i];
+        if (kif->kf_fd == KF_FD_TYPE_CWD) {
+            py_path = Py_BuildValue("s", kif->kf_path);
+            if (!py_path)
+                goto error;
+            break;
+        }
+    }
+    /*
+     * For lower pids it seems we can't retrieve any information
+     * (lsof can't do that it either).  Since this happens even
+     * as root we return an empty string instead of AccessDenied.
+     */
+    if (py_path == NULL)
+        py_path = Py_BuildValue("s", "");
+    free(freep);
+    return py_path;
+
+error:
+    Py_XDECREF(py_path);
+    if (freep != NULL)
+        free(freep);
+    return NULL;
+}
+#endif
+
+
+#ifdef  __OpenBSD__
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     long pid;
@@ -643,6 +1142,7 @@ error:
         free(freep);
     return NULL;
 }
+#endif
 
 
 /*
@@ -1753,12 +2253,26 @@ PsutilMethods[] = {
      "Return process current working directory."},
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
      "Return files opened by process as a list of (path, fd) tuples"},
-#if 0
-    {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
-     "Return a list of tuples for every process's memory map"},
-#endif
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS,
      "Return the number of file descriptors opened by this process"},
+#ifdef __FreeBSD__
+    {"proc_exe", psutil_proc_exe, METH_VARARGS,
+     "Return process pathname executable"},
+    {"proc_num_threads", psutil_proc_num_threads, METH_VARARGS,
+     "Return number of threads used by process"},
+    {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
+     "Return a list of tuples for every process's memory map"},
+    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
+     "Return process CPU affinity."},
+    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
+     "Set process CPU affinity."},
+    {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
+     "Return an XML string to determine the number physical CPUs."},
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
+    {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
+     "Return files opened by process as a list of (path, fd) tuples"},
+#endif
+#endif
 
     // --- system-related functions
 
@@ -1766,10 +2280,6 @@ PsutilMethods[] = {
      "Returns a list of PIDs currently running on the system"},
     {"cpu_count_logical", psutil_cpu_count_logical, METH_VARARGS,
      "Return number of logical CPUs on the system"},
-/*
-    {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
-     "Return an XML string to determine the number physical CPUs."},
-*/
     {"virtual_mem", psutil_virtual_mem, METH_VARARGS,
      "Return system virtual memory usage statistics"},
     {"swap_mem", psutil_swap_mem, METH_VARARGS,
