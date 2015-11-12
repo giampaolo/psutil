@@ -301,3 +301,30 @@ error:
         kvm_close(kd);
     return NULL;
 }
+
+
+PyObject *
+psutil_virtual_mem(PyObject *self, PyObject *args) {
+    unsigned int   total, active, inactive, wired, cached, free;
+    size_t         size = sizeof(total);
+    struct uvmexp  uvmexp;
+    int            mib[] = {CTL_VM, VM_UVMEXP};
+    long           pagesize = getpagesize();
+    size = sizeof(uvmexp);
+
+    if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+        warn("failed to get vm.uvmexp");
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    return Py_BuildValue("KKKKKKKK",
+        (unsigned long long) uvmexp.npages    * pagesize,
+        (unsigned long long) uvmexp.free     * pagesize,
+        (unsigned long long) uvmexp.active   * pagesize,
+        (unsigned long long) uvmexp.inactive * pagesize,
+        (unsigned long long) uvmexp.wired    * pagesize,
+        (unsigned long long) 0,
+        (unsigned long long) 0,
+        (unsigned long long) 0
+    );
+}
