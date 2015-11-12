@@ -7,7 +7,6 @@
  * Used by _psutil_bsd module methods.
  */
 
-
 #include <Python.h>
 #include <assert.h>
 #include <errno.h>
@@ -23,6 +22,7 @@
 #include <fcntl.h>
 #include <sys/vmmeter.h>  // needed for vmtotal struct
 #include <devstat.h>  // for swap mem
+#include <libutil.h>  // process open files, shared libs (kinfo_getvmmap), cwd
 
 #include "freebsd.h"
 
@@ -550,3 +550,53 @@ sbn_error:
     PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
+
+
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
+PyObject *
+psutil_proc_cwd(PyObject *self, PyObject *args) {
+    long pid;
+    struct kinfo_file *freep = NULL;
+    struct kinfo_file *kif;
+    struct kinfo_proc kipp;
+    PyObject *py_path = NULL;
+
+    int i, cnt;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        goto error;
+    if (psutil_kinfo_proc(pid, &kipp) == -1)
+        goto error;
+
+    freep = kinfo_getfile(pid, &cnt);
+    if (freep == NULL) {
+        psutil_raise_ad_or_nsp(pid);
+        goto error;
+    }
+
+    for (i = 0; i < cnt; i++) {
+        kif = &freep[i];
+        if (kif->kf_fd == KF_FD_TYPE_CWD) {
+            py_path = Py_BuildValue("s", kif->kf_path);
+            if (!py_path)
+                goto error;
+            break;
+        }
+    }
+    /*
+     * For lower pids it seems we can't retrieve any information
+     * (lsof can't do that it either).  Since this happens even
+     * as root we return an empty string instead of AccessDenied.
+     */
+    if (py_path == NULL)
+        py_path = Py_BuildValue("s", "");
+    free(freep);
+    return py_path;
+
+error:
+    Py_XDECREF(py_path);
+    if (freep != NULL)
+        free(freep);
+    return NULL;
+}
+#endif
