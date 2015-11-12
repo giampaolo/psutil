@@ -27,9 +27,6 @@ static PyObject* psutil_proc_cpu_affinity_set(PyObject* self, PyObject* args);
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 static PyObject* psutil_proc_open_files(PyObject* self, PyObject* args);
 #endif
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
-static PyObject* psutil_proc_num_fds(PyObject* self, PyObject* args);
-#endif
 #ifdef __FreeBSD__
 static PyObject* psutil_proc_connections(PyObject* self, PyObject* args);
 #endif
@@ -45,8 +42,4 @@ static PyObject* psutil_pids(PyObject* self, PyObject* args);
 static PyObject* psutil_users(PyObject* self, PyObject* args);
 #ifdef __FreeBSD__
 static PyObject* psutil_disk_io_counters(PyObject* self, PyObject* args);
-#endif
-
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
-static PyObject* psutil_per_cpu_times(PyObject* self, PyObject* args);
 #endif

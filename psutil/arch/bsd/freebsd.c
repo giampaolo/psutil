@@ -600,3 +600,95 @@ error:
     return NULL;
 }
 #endif
+
+
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
+/*
+ * Return files opened by process as a list of (path, fd) tuples
+ */
+PyObject *
+psutil_proc_num_fds(PyObject *self, PyObject *args) {
+    long pid;
+    int cnt;
+
+    struct kinfo_file *freep;
+    struct kinfo_proc kipp;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (psutil_kinfo_proc(pid, &kipp) == -1)
+        return NULL;
+
+    freep = kinfo_getfile(pid, &cnt);
+    if (freep == NULL) {
+        psutil_raise_ad_or_nsp(pid);
+        return NULL;
+    }
+    free(freep);
+
+    return Py_BuildValue("i", cnt);
+}
+#endif
+
+
+PyObject *
+psutil_per_cpu_times(PyObject *self, PyObject *args) {
+    static int maxcpus;
+    int mib[2];
+    int ncpu;
+    size_t len;
+    size_t size;
+    int i;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_cputime = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+
+    // retrieve maxcpus value
+    size = sizeof(maxcpus);
+    if (sysctlbyname("kern.smp.maxcpus", &maxcpus, &size, NULL, 0) < 0) {
+        Py_DECREF(py_retlist);
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    long cpu_time[maxcpus][CPUSTATES];
+
+    // retrieve the number of cpus
+    mib[0] = CTL_HW;
+    mib[1] = HW_NCPU;
+    len = sizeof(ncpu);
+    if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    // per-cpu info
+    size = sizeof(cpu_time);
+    if (sysctlbyname("kern.cp_times", &cpu_time, &size, NULL, 0) == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    for (i = 0; i < ncpu; i++) {
+        py_cputime = Py_BuildValue(
+            "(ddddd)",
+            (double)cpu_time[i][CP_USER] / CLOCKS_PER_SEC,
+            (double)cpu_time[i][CP_NICE] / CLOCKS_PER_SEC,
+            (double)cpu_time[i][CP_SYS] / CLOCKS_PER_SEC,
+            (double)cpu_time[i][CP_IDLE] / CLOCKS_PER_SEC,
+            (double)cpu_time[i][CP_INTR] / CLOCKS_PER_SEC);
+        if (!py_cputime)
+            goto error;
+        if (PyList_Append(py_retlist, py_cputime))
+            goto error;
+        Py_DECREF(py_cputime);
+    }
+
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_cputime);
+    Py_DECREF(py_retlist);
+    return NULL;
+}
