@@ -1309,7 +1309,7 @@ error:
 #endif
 
 
-#if 0
+#ifdef __FreeBSD__
 // remove spaces from string
 void remove_spaces(char *str) {
     char *p1 = str;
@@ -1370,36 +1370,36 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
         if (strlen(kve->kve_path) == 0) {
             switch (kve->kve_type) {
-            case KVME_TYPE_NONE:
-                path = "[none]";
-                break;
-            case KVME_TYPE_DEFAULT:
-                path = "[default]";
-                break;
-            case KVME_TYPE_VNODE:
-                path = "[vnode]";
-                break;
-            case KVME_TYPE_SWAP:
-                path = "[swap]";
-                break;
-            case KVME_TYPE_DEVICE:
-                path = "[device]";
-                break;
-            case KVME_TYPE_PHYS:
-                path = "[phys]";
-                break;
-            case KVME_TYPE_DEAD:
-                path = "[dead]";
-                break;
-            case KVME_TYPE_SG:
-                path = "[sg]";
-                break;
-            case KVME_TYPE_UNKNOWN:
-                path = "[unknown]";
-                break;
-            default:
-                path = "[?]";
-                break;
+                case KVME_TYPE_NONE:
+                    path = "[none]";
+                    break;
+                case KVME_TYPE_DEFAULT:
+                    path = "[default]";
+                    break;
+                case KVME_TYPE_VNODE:
+                    path = "[vnode]";
+                    break;
+                case KVME_TYPE_SWAP:
+                    path = "[swap]";
+                    break;
+                case KVME_TYPE_DEVICE:
+                    path = "[device]";
+                    break;
+                case KVME_TYPE_PHYS:
+                    path = "[phys]";
+                    break;
+                case KVME_TYPE_DEAD:
+                    path = "[dead]";
+                    break;
+                case KVME_TYPE_SG:
+                    path = "[sg]";
+                    break;
+                case KVME_TYPE_UNKNOWN:
+                    path = "[unknown]";
+                    break;
+                default:
+                    path = "[?]";
+                    break;
             }
         }
         else {
