@@ -30,7 +30,7 @@
  * and returns an array with cnt struct kinfo_file
  */
 struct kinfo_file *
-kinfo_getfile(long pid, int* cnt) {
+psutil_kinfo_getfile(long pid, int* cnt) {
     int mib[6];
     size_t len;
     struct kinfo_file* kf;

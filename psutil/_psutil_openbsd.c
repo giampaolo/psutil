@@ -990,7 +990,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         goto error;
 
-    freep = kinfo_getfile(pid, &cnt);
+    freep = psutil_kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
         psutil_raise_ad_or_nsp(pid);
         goto error;
@@ -1037,7 +1037,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         return NULL;
 
-    freep = kinfo_getfile(pid, &cnt);
+    freep = psutil_kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
         psutil_raise_ad_or_nsp(pid);
         return NULL;
@@ -1066,7 +1066,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         goto error;
 
-    freep = kinfo_getfile(pid, &cnt);
+    freep = psutil_kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
         psutil_raise_ad_or_nsp(pid);
         goto error;
@@ -1118,7 +1118,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         goto error;
 
-    freep = kinfo_getfile(pid, &cnt);
+    freep = psutil_kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
         psutil_raise_ad_or_nsp(pid);
         goto error;
@@ -1166,7 +1166,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         return NULL;
 
-    freep = kinfo_getfile(pid, &cnt);
+    freep = psutil_kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
         psutil_raise_ad_or_nsp(pid);
         return NULL;
@@ -1273,7 +1273,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    freep = kinfo_getfile(pid, &cnt);
+    freep = psutil_kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
         psutil_raise_ad_or_nsp(pid);
         goto error;
