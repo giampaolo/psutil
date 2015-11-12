@@ -81,7 +81,6 @@
 
 #ifdef  __OpenBSD__
     #include <utmp.h>
-    #include <netdb.h>  // for NI_MAXHOST
     #include <sys/vnode.h>  // for VREG
     #define _KERNEL  // for DTYPE_VNODE
     #include <sys/file.h>
@@ -958,39 +957,122 @@ error:
 #endif
 
 
-// see sys/kern/kern_sysctl.c lines 1100 and
-// usr.bin/fstat/fstat.c print_inet_details()
-char *
-psutil_convert_ipv4(int family, uint32_t addr[4]) {
-    struct in_addr a;
-    memcpy(&a, addr, sizeof(a));
-    return inet_ntoa(a);
+#ifdef __FreeBSD__
+// The tcplist fetching and walking is borrowed from netstat/inet.c.
+static char *
+psutil_fetch_tcplist(void) {
+    char *buf;
+    size_t len;
+
+    for (;;) {
+        if (sysctlbyname("net.inet.tcp.pcblist", NULL, &len, NULL, 0) < 0) {
+            PyErr_SetFromErrno(PyExc_OSError);
+            return NULL;
+        }
+        buf = malloc(len);
+        if (buf == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+        if (sysctlbyname("net.inet.tcp.pcblist", buf, &len, NULL, 0) < 0) {
+            free(buf);
+            PyErr_SetFromErrno(PyExc_OSError);
+            return NULL;
+        }
+        return buf;
+    }
 }
 
+static int
+psutil_sockaddr_port(int family, struct sockaddr_storage *ss) {
+    struct sockaddr_in6 *sin6;
+    struct sockaddr_in *sin;
 
-const char *
-psutil_inet6_addrstr(struct in6_addr *p)
-{
-    struct sockaddr_in6 sin6;
-    static char hbuf[NI_MAXHOST];
-    const int niflags = NI_NUMERICHOST;
-
-    memset(&sin6, 0, sizeof(sin6));
-    sin6.sin6_family = AF_INET6;
-    sin6.sin6_len = sizeof(struct sockaddr_in6);
-    sin6.sin6_addr = *p;
-    if (IN6_IS_ADDR_LINKLOCAL(p) &&
-        *(u_int16_t *)&sin6.sin6_addr.s6_addr[2] != 0) {
-        sin6.sin6_scope_id =
-            ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
-        sin6.sin6_addr.s6_addr[2] = sin6.sin6_addr.s6_addr[3] = 0;
+    if (family == AF_INET) {
+        sin = (struct sockaddr_in *)ss;
+        return (sin->sin_port);
     }
+    else {
+        sin6 = (struct sockaddr_in6 *)ss;
+        return (sin6->sin6_port);
+    }
+}
 
-    if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
-        hbuf, sizeof(hbuf), NULL, 0, niflags))
-        return "invalid";
+static void *
+psutil_sockaddr_addr(int family, struct sockaddr_storage *ss) {
+    struct sockaddr_in6 *sin6;
+    struct sockaddr_in *sin;
 
-    return hbuf;
+    if (family == AF_INET) {
+        sin = (struct sockaddr_in *)ss;
+        return (&sin->sin_addr);
+    }
+    else {
+        sin6 = (struct sockaddr_in6 *)ss;
+        return (&sin6->sin6_addr);
+    }
+}
+
+static socklen_t
+psutil_sockaddr_addrlen(int family) {
+    if (family == AF_INET)
+        return (sizeof(struct in_addr));
+    else
+        return (sizeof(struct in6_addr));
+}
+
+static int
+psutil_sockaddr_matches(int family, int port, void *pcb_addr,
+                        struct sockaddr_storage *ss) {
+    if (psutil_sockaddr_port(family, ss) != port)
+        return (0);
+    return (memcmp(psutil_sockaddr_addr(family, ss), pcb_addr,
+                   psutil_sockaddr_addrlen(family)) == 0);
+}
+
+static struct tcpcb *
+psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
+    struct tcpcb *tp;
+    struct inpcb *inp;
+    struct xinpgen *xig, *oxig;
+    struct xsocket *so;
+
+    oxig = xig = (struct xinpgen *)buf;
+    for (xig = (struct xinpgen *)((char *)xig + xig->xig_len);
+            xig->xig_len > sizeof(struct xinpgen);
+            xig = (struct xinpgen *)((char *)xig + xig->xig_len)) {
+        tp = &((struct xtcpcb *)xig)->xt_tp;
+        inp = &((struct xtcpcb *)xig)->xt_inp;
+        so = &((struct xtcpcb *)xig)->xt_socket;
+
+        if (so->so_type != kif->kf_sock_type ||
+                so->xso_family != kif->kf_sock_domain ||
+                so->xso_protocol != kif->kf_sock_protocol)
+            continue;
+
+        if (kif->kf_sock_domain == AF_INET) {
+            if (!psutil_sockaddr_matches(
+                    AF_INET, inp->inp_lport, &inp->inp_laddr,
+                    &kif->kf_sa_local))
+                continue;
+            if (!psutil_sockaddr_matches(
+                    AF_INET, inp->inp_fport, &inp->inp_faddr,
+                    &kif->kf_sa_peer))
+                continue;
+        } else {
+            if (!psutil_sockaddr_matches(
+                    AF_INET6, inp->inp_lport, &inp->in6p_laddr,
+                    &kif->kf_sa_local))
+                continue;
+            if (!psutil_sockaddr_matches(
+                    AF_INET6, inp->inp_fport, &inp->in6p_faddr,
+                    &kif->kf_sa_peer))
+                continue;
+        }
+
+        return (tp);
+    }
+    return NULL;
 }
 
 
@@ -1017,7 +1099,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     PyObject *py_af_filter = NULL;
     PyObject *py_type_filter = NULL;
     PyObject *py_family = NULL;
-    PyObject *_type = NULL;
+    PyObject *py_type = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -1034,98 +1116,82 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    tcplist = psutil_fetch_tcplist();
+    if (tcplist == NULL) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
     for (i = 0; i < cnt; i++) {
-        int state;
-        int lport;
-        int rport;
+        int lport, rport, state;
+        char lip[200], rip[200];
         char path[PATH_MAX];
-        char addrbuf[NI_MAXHOST + 2];
         int inseq;
-        struct in6_addr laddr6;
         py_tuple = NULL;
         py_laddr = NULL;
         py_raddr = NULL;
 
         kif = &freep[i];
-        if (kif->f_type == DTYPE_SOCKET) {
+        if (kif->kf_type == KF_TYPE_SOCKET) {
             // apply filters
-            py_family = PyLong_FromLong((long)kif->so_family);
+            py_family = PyLong_FromLong((long)kif->kf_sock_domain);
             inseq = PySequence_Contains(py_af_filter, py_family);
             Py_DECREF(py_family);
             if (inseq == 0)
                 continue;
-            _type = PyLong_FromLong((long)kif->so_type);
-            inseq = PySequence_Contains(py_type_filter, _type);
-            Py_DECREF(_type);
+            py_type = PyLong_FromLong((long)kif->kf_sock_type);
+            inseq = PySequence_Contains(py_type_filter, py_type);
+            Py_DECREF(py_type);
             if (inseq == 0)
                 continue;
-
             // IPv4 / IPv6 socket
-            if ((kif->so_family == AF_INET) || (kif->so_family == AF_INET6)) {
+            if ((kif->kf_sock_domain == AF_INET) ||
+                    (kif->kf_sock_domain == AF_INET6)) {
                 // fill status
-                if (kif->so_type == SOCK_STREAM)
-                    state = kif->t_state;
+                state = PSUTIL_CONN_NONE;
+                if (kif->kf_sock_type == SOCK_STREAM) {
+                    tcp = psutil_search_tcplist(tcplist, kif);
+                    if (tcp != NULL)
+                        state = (int)tcp->t_state;
+                }
+
+                // build addr and port
+                inet_ntop(
+                    kif->kf_sock_domain,
+                    psutil_sockaddr_addr(kif->kf_sock_domain,
+                                         &kif->kf_sa_local),
+                    lip,
+                    sizeof(lip));
+                inet_ntop(
+                    kif->kf_sock_domain,
+                    psutil_sockaddr_addr(kif->kf_sock_domain,
+                                         &kif->kf_sa_peer),
+                    rip,
+                    sizeof(rip));
+                lport = htons(psutil_sockaddr_port(kif->kf_sock_domain,
+                                                   &kif->kf_sa_local));
+                rport = htons(psutil_sockaddr_port(kif->kf_sock_domain,
+                                                   &kif->kf_sa_peer));
+
+                // construct python tuple/list
+                py_laddr = Py_BuildValue("(si)", lip, lport);
+                if (!py_laddr)
+                    goto error;
+                if (rport != 0)
+                    py_raddr = Py_BuildValue("(si)", rip, rport);
                 else
-                    state = PSUTIL_CONN_NONE;
-
-                // ports
-                lport = ntohs(kif->inp_lport);
-                rport = ntohs(kif->inp_fport);
-
-                // local address, IPv4
-                if (kif->so_family == AF_INET) {
-                    py_laddr = Py_BuildValue(
-                        "(si)",
-                        psutil_convert_ipv4(kif->so_family, kif->inp_laddru),
-                        lport);
-                    if (!py_laddr)
-                        goto error;
-                }
-                else {
-                    // local address, IPv6
-                    memcpy(&laddr6, kif->inp_laddru, sizeof(laddr6));
-                    (void *)(uintptr_t)kif->inp_ppcb;
-                    snprintf(addrbuf, sizeof(addrbuf), "%s",
-                             psutil_inet6_addrstr(&laddr6));
-                    py_laddr = Py_BuildValue("(si)", addrbuf, lport);
-                    if (!py_laddr)
-                        goto error;
-                }
-
-                if (rport != 0) {
-                    // remote address, IPv4
-                    if (kif->so_family == AF_INET) {
-                        py_raddr = Py_BuildValue(
-                            "(si)",
-                            psutil_convert_ipv4(
-                                kif->so_family, kif->inp_faddru),
-                            rport);
-                    }
-                    else {
-                        // remote address, IPv6
-                        memcpy(&laddr6, kif->inp_faddru, sizeof(laddr6));
-                        (void *)(uintptr_t)kif->inp_ppcb;
-                        snprintf(addrbuf, sizeof(addrbuf), "%s",
-                                 psutil_inet6_addrstr(&laddr6));
-                        py_raddr = Py_BuildValue("(si)", addrbuf, rport);
-                        if (!py_raddr)
-                            goto error;
-                    }
-                }
-                else {
                     py_raddr = Py_BuildValue("()");
-                }
-
                 if (!py_raddr)
                     goto error;
                 py_tuple = Py_BuildValue(
                     "(iiiNNi)",
-                    kif->fd_fd,
-                    kif->so_family,
-                    kif->so_type,
+                    kif->kf_fd,
+                    kif->kf_sock_domain,
+                    kif->kf_sock_type,
                     py_laddr,
                     py_raddr,
-                    state);
+                    state
+                );
                 if (!py_tuple)
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
@@ -1133,15 +1199,24 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_tuple);
             }
             // UNIX socket
-            else if (kif->so_family == AF_UNIX) {
+            else if (kif->kf_sock_domain == AF_UNIX) {
+                struct sockaddr_un *sun;
+
+                sun = (struct sockaddr_un *)&kif->kf_sa_local;
+                snprintf(
+                    path, sizeof(path), "%.*s",
+                    (int)(sun->sun_len - (sizeof(*sun) - sizeof(sun->sun_path))),
+                    sun->sun_path);
+
                 py_tuple = Py_BuildValue(
                     "(iiisOi)",
-                    kif->fd_fd,
-                    kif->so_family,
-                    kif->so_type,
-                    kif->unp_path,
+                    kif->kf_fd,
+                    kif->kf_sock_domain,
+                    kif->kf_sock_type,
+                    path,
                     Py_None,
-                    PSUTIL_CONN_NONE);
+                    PSUTIL_CONN_NONE
+                );
                 if (!py_tuple)
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
@@ -1166,6 +1241,7 @@ error:
         free(tcplist);
     return NULL;
 }
+#endif
 
 
 #ifdef __OpenBSD__
@@ -1661,8 +1737,7 @@ static struct xfile *psutil_xfiles;
 static int psutil_nxfiles;
 
 int
-psutil_populate_xfiles()
-{
+psutil_populate_xfiles() {
     size_t len;
 
     if ((psutil_xfiles = malloc(len = sizeof *psutil_xfiles)) == NULL) {
@@ -1689,8 +1764,7 @@ psutil_populate_xfiles()
 }
 
 int
-psutil_get_pid_from_sock(int sock_hash)
-{
+psutil_get_pid_from_sock(int sock_hash) {
     struct xfile *xf;
     int hash, n;
     for (xf = psutil_xfiles, n = 0; n < psutil_nxfiles; ++n, ++xf) {
@@ -1704,8 +1778,7 @@ psutil_get_pid_from_sock(int sock_hash)
     return -1;
 }
 
-int psutil_gather_inet(int proto, PyObject *py_retlist)
-{
+int psutil_gather_inet(int proto, PyObject *py_retlist) {
     struct xinpgen *xig, *exig;
     struct xinpcb *xip;
     struct xtcpcb *xtp;
@@ -1766,22 +1839,22 @@ int psutil_gather_inet(int proto, PyObject *py_retlist)
             break;
 
         switch (proto) {
-        case IPPROTO_TCP:
-            xtp = (struct xtcpcb *)xig;
-            if (xtp->xt_len != sizeof *xtp) {
-                PyErr_Format(PyExc_RuntimeError, "struct xtcpcb size mismatch");
-                goto error;
-            }
-            break;
-        case IPPROTO_UDP:
-            xip = (struct xinpcb *)xig;
-            if (xip->xi_len != sizeof *xip) {
-                PyErr_Format(PyExc_RuntimeError, "struct xinpcb size mismatch");
-                goto error;
-            }
-            inp = &xip->xi_inp;
-            so = &xip->xi_socket;
-            break;
+            case IPPROTO_TCP:
+                xtp = (struct xtcpcb *)xig;
+                if (xtp->xt_len != sizeof *xtp) {
+                    PyErr_Format(PyExc_RuntimeError, "struct xtcpcb size mismatch");
+                    goto error;
+                }
+                break;
+            case IPPROTO_UDP:
+                xip = (struct xinpcb *)xig;
+                if (xip->xi_len != sizeof *xip) {
+                    PyErr_Format(PyExc_RuntimeError, "struct xinpcb size mismatch");
+                    goto error;
+                }
+                inp = &xip->xi_inp;
+                so = &xip->xi_socket;
+                break;
         }
 
         inp = &xtp->xt_inp;
@@ -1841,8 +1914,10 @@ error:
 }
 
 
-int psutil_gather_unix(int proto, PyObject *py_retlist)
-{
+// Reference:
+// https://gitorious.org/freebsd/freebsd/source/
+//     f1d6f4778d2044502209708bc167c05f9aa48615:usr.bin/sockstat/sockstat.c
+int psutil_gather_unix(int proto, PyObject *py_retlist) {
     struct xunpgen *xug, *exug;
     struct xunpcb *xup;
     struct sock *sock;

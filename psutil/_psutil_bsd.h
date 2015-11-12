@@ -9,7 +9,6 @@
 // --- per-process functions
 
 static PyObject* psutil_proc_cmdline(PyObject* self, PyObject* args);
-static PyObject* psutil_proc_connections(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_cpu_times(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_create_time(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_exe(PyObject* self, PyObject* args);
@@ -38,6 +37,9 @@ static PyObject* psutil_proc_threads(PyObject* self, PyObject* args);
 #endif
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 static PyObject* psutil_proc_num_fds(PyObject* self, PyObject* args);
+#endif
+#ifdef __FreeBSD__
+static PyObject* psutil_proc_connections(PyObject* self, PyObject* args);
 #endif
 
 // --- system-related functions
