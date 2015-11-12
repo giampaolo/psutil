@@ -25,11 +25,16 @@
 #include "openbsd.h"
 
 
-/*
- * Utility function which fills a kinfo_proc struct based on process pid
- */
+#define KPT2DOUBLE(t)   (t ## _sec + t ## _usec / 1000000.0)
+
+
+// ============================================================================
+// Utility functions
+// ============================================================================
+
 int
 psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
+    // Fills a kinfo_proc struct based on process pid.
     int ret;
     int mib[6];
     size_t size = sizeof(struct kinfo_proc);
@@ -55,12 +60,10 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
 }
 
 
-/*
- * mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an int as arg
- * and returns an array with cnt struct kinfo_file
- */
 struct kinfo_file *
 psutil_kinfo_getfile(long pid, int* cnt) {
+    // Mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an
+    // int as arg and returns an array with cnt struct kinfo_file.
     int mib[6];
     size_t len;
     struct kinfo_file* kf;
@@ -91,16 +94,53 @@ psutil_kinfo_getfile(long pid, int* cnt) {
 }
 
 
-/*
- * Returns a list of all BSD processes on the system.  This routine
- * allocates the list and puts it in *procList and a count of the
- * number of entries in *procCount.  You are responsible for freeing
- * this list (use "free" from System framework).
- * On success, the function returns 0.
- * On error, the function returns a BSD errno value.
- */
+int
+psutil_pid_exists(long pid) {
+    // Return 1 if PID exists in the current process list, else 0, -1
+    // on error.
+    // TODO: this should live in _psutil_posix.c but for some reason if I
+    // move it there I get a "include undefined symbol" error.
+    int ret;
+    if (pid < 0)
+        return 0;
+    ret = kill(pid , 0);
+    if (ret == 0)
+        return 1;
+    else {
+        if (ret == ESRCH)
+            return 0;
+        else if (ret == EPERM)
+            return 1;
+        else {
+            PyErr_SetFromErrno(PyExc_OSError);
+            return -1;
+        }
+    }
+}
+
+
+int
+psutil_raise_ad_or_nsp(long pid) {
+    // Set exception to AccessDenied if pid exists else NoSuchProcess.
+    if (psutil_pid_exists(pid) == 0)
+        NoSuchProcess();
+    else
+        AccessDenied();
+}
+
+
+// ============================================================================
+// Process related APIS
+// ============================================================================
+
 int
 psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
+    // Returns a list of all BSD processes on the system.  This routine
+    // allocates the list and puts it in *procList and a count of the
+    // number of entries in *procCount.  You are responsible for freeing
+    // this list (use "free" from System framework).
+    // On success, the function returns 0.
+    // On error, the function returns a BSD errno value.
     struct kinfo_proc *result;
     int done;
     static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC, 0 };
@@ -196,39 +236,4 @@ error:
     Py_XDECREF(py_arg);
     Py_DECREF(py_retlist);
     return NULL;
-}
-
-
-/*
- * Return 1 if PID exists in the current process list, else 0.
- */
-int
-psutil_pid_exists(long pid) {
-    int kill_ret;
-    if (pid < 0) {
-        return 0;
-    }
-
-    // if kill returns success of permission denied we know it's a valid PID
-    kill_ret = kill(pid , 0);
-    if ((0 == kill_ret) || (EPERM == errno)) {
-        return 1;
-    }
-
-    // otherwise return 0 for PID not found
-    return 0;
-}
-
-
-/*
- * Set exception to AccessDenied if pid exists else NoSuchProcess.
- */
-int
-psutil_raise_ad_or_nsp(long pid) {
-    if (psutil_pid_exists(pid) == 0) {
-        NoSuchProcess();
-    }
-    else {
-        AccessDenied();
-    }
 }

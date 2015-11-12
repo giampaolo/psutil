@@ -16,3 +16,6 @@ char **_psutil_get_argv(long pid);
 PyObject * psutil_get_cmdline(long pid);
 int psutil_pid_exists(long pid);
 int psutil_raise_ad_or_nsp(long pid);
+
+//
+PyObject *psutil_proc_threads(PyObject *self, PyObject *args);
