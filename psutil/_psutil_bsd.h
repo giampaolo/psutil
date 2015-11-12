@@ -40,6 +40,3 @@ static PyObject* psutil_disk_partitions(PyObject* self, PyObject* args);
 static PyObject* psutil_net_io_counters(PyObject* self, PyObject* args);
 static PyObject* psutil_pids(PyObject* self, PyObject* args);
 static PyObject* psutil_users(PyObject* self, PyObject* args);
-#ifdef __FreeBSD__
-static PyObject* psutil_disk_io_counters(PyObject* self, PyObject* args);
-#endif

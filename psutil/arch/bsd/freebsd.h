@@ -24,3 +24,4 @@ PyObject* psutil_virtual_mem(PyObject* self, PyObject* args);
 PyObject* psutil_swap_mem(PyObject* self, PyObject* args);
 PyObject* psutil_proc_num_fds(PyObject* self, PyObject* args);
 PyObject* psutil_per_cpu_times(PyObject* self, PyObject* args);
+PyObject* psutil_disk_io_counters(PyObject* self, PyObject* args);
