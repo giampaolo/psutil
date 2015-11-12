@@ -7,6 +7,7 @@
 import errno
 import functools
 import os
+import sys
 import xml.etree.ElementTree as ET
 from collections import namedtuple
 
@@ -18,21 +19,47 @@ from ._common import conn_tmap
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
+from ._compat import which
 
 
 __extra__all__ = []
 
 # --- constants
 
-PROC_STATUSES = {
-    cext.SIDL: _common.STATUS_IDLE,
-    cext.SRUN: _common.STATUS_RUNNING,
-    cext.SSLEEP: _common.STATUS_SLEEPING,
-    cext.SSTOP: _common.STATUS_STOPPED,
-    cext.SZOMB: _common.STATUS_ZOMBIE,
-    cext.SWAIT: _common.STATUS_WAITING,
-    cext.SLOCK: _common.STATUS_LOCKED,
-}
+FREEBSD = sys.platform.startswith("freebsd")
+OPENBSD = sys.platform.startswith("openbsd")
+
+if FREEBSD:
+    PROC_STATUSES = {
+        cext.SIDL: _common.STATUS_IDLE,
+        cext.SRUN: _common.STATUS_RUNNING,
+        cext.SSLEEP: _common.STATUS_SLEEPING,
+        cext.SSTOP: _common.STATUS_STOPPED,
+        cext.SZOMB: _common.STATUS_ZOMBIE,
+        cext.SWAIT: _common.STATUS_WAITING,
+        cext.SLOCK: _common.STATUS_LOCKED,
+    }
+elif OPENBSD:
+    PROC_STATUSES = {
+        cext.SIDL: _common.STATUS_IDLE,
+        cext.SSLEEP: _common.STATUS_SLEEPING,
+        cext.SSTOP: _common.STATUS_STOPPED,
+        # According to /usr/include/sys/proc.h SZOMB is unused.
+        # test_zombie_process() shows that SDEAD is the right
+        # equivalent. Also it appears there's no equivalent of
+        # psutil.STATUS_DEAD. SDEAD really means STATUS_ZOMBIE.
+        # cext.SZOMB: _common.STATUS_ZOMBIE,
+        cext.SDEAD: _common.STATUS_ZOMBIE,
+        # From http://www.eecs.harvard.edu/~margo/cs161/videos/proc.h.txt
+        # OpenBSD has SRUN and SONPROC: SRUN indicates that a process
+        # is runnable but *not* yet running, i.e. is on a run queue.
+        # SONPROC indicates that the process is actually executing on
+        # a CPU, i.e. it is no longer on a run queue.
+        # As such we'll map SRUN to STATUS_WAKING and SONPROC to
+        # STATUS_RUNNING
+        cext.SRUN: _common.STATUS_WAKING,
+        cext.SONPROC: _common.STATUS_RUNNING,
+    }
 
 TCP_STATUSES = {
     cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
@@ -84,6 +111,8 @@ def virtual_memory():
 
 def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
+    if OPENBSD:
+        PAGESIZE = 1
     total, used, free, sin, sout = [x * PAGESIZE for x in cext.swap_mem()]
     percent = usage_percent(used, total, _round=1)
     return _common.sswap(total, used, free, percent, sin, sout)
@@ -135,6 +164,8 @@ def cpu_count_physical():
     # We may get None in case "sysctl kern.sched.topology_spec"
     # is not supported on this BSD version, in which case we'll mimic
     # os.cpu_count() and return None.
+    if sys.platform.startswith("openbsd"):
+        return cext.cpu_count_logical()
     ret = None
     s = cext.cpu_count_phys()
     if s is not None:
@@ -189,6 +220,20 @@ def users():
 
 
 def net_connections(kind):
+    if OPENBSD:
+        ret = []
+        for pid in pids():
+            try:
+                cons = Process(pid).connections(kind)
+            except (NoSuchProcess, ZombieProcess):
+                continue
+            else:
+                for conn in cons:
+                    conn = list(conn)
+                    conn.append(pid)
+                    ret.append(_common.sconn(*conn))
+        return ret
+
     if kind not in _common.conn_tmap:
         raise ValueError("invalid %r kind argument; choose between %s"
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
@@ -226,8 +271,20 @@ def net_if_stats():
     return ret
 
 
+if OPENBSD:
+    def pid_exists(pid):
+        exists = _psposix.pid_exists(pid)
+        if not exists:
+            # We do this because _psposix.pid_exists() lies in case of
+            # zombie processes.
+            return pid in pids()
+        else:
+            return True
+else:
+    pid_exists = _psposix.pid_exists
+
+
 pids = cext.pids
-pid_exists = _psposix.pid_exists
 disk_usage = _psposix.disk_usage
 net_io_counters = cext.net_io_counters
 disk_io_counters = cext.disk_io_counters
@@ -274,10 +331,24 @@ class Process(object):
 
     @wrap_exceptions
     def exe(self):
-        return cext.proc_exe(self.pid)
+        if FREEBSD:
+            return cext.proc_exe(self.pid)
+        else:
+            # exe cannot be determined on OpenBSD; references:
+            # https://chromium.googlesource.com/chromium/src/base/+/
+            #     master/base_paths_posix.cc
+            # We try our best guess by using which against the first
+            # cmdline arg (may return None).
+            cmdline = self.cmdline()
+            if cmdline:
+                return which(cmdline[0])
+            else:
+                return ""
 
     @wrap_exceptions
     def cmdline(self):
+        if OPENBSD and self.pid == 0:
+            return None  # ...else it crashes
         return cext.proc_cmdline(self.pid)
 
     @wrap_exceptions
@@ -323,7 +394,11 @@ class Process(object):
 
     @wrap_exceptions
     def num_threads(self):
-        return cext.proc_num_threads(self.pid)
+        if hasattr(cext, "proc_num_threads"):
+            # FreeBSD
+            return cext.proc_num_threads(self.pid)
+        else:
+            return len(self.threads())
 
     @wrap_exceptions
     def num_ctx_switches(self):
@@ -331,11 +406,17 @@ class Process(object):
 
     @wrap_exceptions
     def threads(self):
+        # Note: on OpenSBD this (/dev/mem) requires root access.
         rawlist = cext.proc_threads(self.pid)
         retlist = []
         for thread_id, utime, stime in rawlist:
             ntuple = _common.pthread(thread_id, utime, stime)
             retlist.append(ntuple)
+        if OPENBSD:
+            # On OpenBSD the underlying C function does not raise NSP
+            # in case the process is gone (and the returned list may
+            # incomplete).
+            self.name()  # raise NSP if the process disappeared on us
         return retlist
 
     @wrap_exceptions
@@ -353,6 +434,11 @@ class Process(object):
             status = TCP_STATUSES[status]
             nt = _common.pconn(fd, fam, type, laddr, raddr, status)
             ret.append(nt)
+        if OPENBSD:
+            # On OpenBSD the underlying C function does not raise NSP
+            # in case the process is gone (and the returned list may
+            # incomplete).
+            self.name()  # raise NSP if the process disappeared on us
         return ret
 
     @wrap_exceptions
@@ -406,6 +492,8 @@ class Process(object):
             """Return process current working directory."""
             # sometimes we get an empty string, in which case we turn
             # it into None
+            if OPENBSD and self.pid == 0:
+                return None  # ...else raises EINVAL
             return cext.proc_cwd(self.pid) or None
 
         @wrap_exceptions
@@ -426,30 +514,32 @@ class Process(object):
         memory_maps = _not_implemented
         num_fds = _not_implemented
 
-    @wrap_exceptions
-    def cpu_affinity_get(self):
-        return cext.proc_cpu_affinity_get(self.pid)
+    if FREEBSD:
+        @wrap_exceptions
+        def cpu_affinity_get(self):
+            return cext.proc_cpu_affinity_get(self.pid)
 
-    @wrap_exceptions
-    def cpu_affinity_set(self, cpus):
-        # Pre-emptively check if CPUs are valid because the C
-        # function has a weird behavior in case of invalid CPUs,
-        # see: https://github.com/giampaolo/psutil/issues/586
-        allcpus = tuple(range(len(per_cpu_times())))
-        for cpu in cpus:
-            if cpu not in allcpus:
-                raise ValueError("invalid CPU #%i (choose between %s)"
-                                 % (cpu, allcpus))
-        try:
-            cext.proc_cpu_affinity_set(self.pid, cpus)
-        except OSError as err:
-            # 'man cpuset_setaffinity' about EDEADLK:
-            # <<the call would leave a thread without a valid CPU to run
-            # on because the set does not overlap with the thread's
-            # anonymous mask>>
-            if err.errno in (errno.EINVAL, errno.EDEADLK):
-                for cpu in cpus:
-                    if cpu not in allcpus:
-                        raise ValueError("invalid CPU #%i (choose between %s)"
-                                         % (cpu, allcpus))
-            raise
+        @wrap_exceptions
+        def cpu_affinity_set(self, cpus):
+            # Pre-emptively check if CPUs are valid because the C
+            # function has a weird behavior in case of invalid CPUs,
+            # see: https://github.com/giampaolo/psutil/issues/586
+            allcpus = tuple(range(len(per_cpu_times())))
+            for cpu in cpus:
+                if cpu not in allcpus:
+                    raise ValueError("invalid CPU #%i (choose between %s)"
+                                     % (cpu, allcpus))
+            try:
+                cext.proc_cpu_affinity_set(self.pid, cpus)
+            except OSError as err:
+                # 'man cpuset_setaffinity' about EDEADLK:
+                # <<the call would leave a thread without a valid CPU to run
+                # on because the set does not overlap with the thread's
+                # anonymous mask>>
+                if err.errno in (errno.EINVAL, errno.EDEADLK):
+                    for cpu in cpus:
+                        if cpu not in allcpus:
+                            raise ValueError(
+                                "invalid CPU #%i (choose between %s)" % (
+                                    cpu, allcpus))
+                raise

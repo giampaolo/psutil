@@ -6,7 +6,7 @@
 
 # TODO: add test for comparing connections with 'sockstat' cmd
 
-"""BSD specific tests.  These are implicitly run by test_psutil.py."""
+"""FreeBSD specific tests.  These are implicitly run by test_psutil.py."""
 
 import os
 import subprocess
@@ -15,7 +15,7 @@ import time
 
 import psutil
 from psutil._compat import PY3
-from test_psutil import BSD
+from test_psutil import FREEBSD
 from test_psutil import get_test_subprocess
 from test_psutil import MEMORY_TOLERANCE
 from test_psutil import reap_children
@@ -55,8 +55,8 @@ def muse(field):
     return int(line.split()[1])
 
 
-@unittest.skipUnless(BSD, "not a BSD system")
-class BSDSpecificTestCase(unittest.TestCase):
+@unittest.skipUnless(FREEBSD, "not a FreeBSD system")
+class FreeBSDSpecificTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -248,7 +248,7 @@ class BSDSpecificTestCase(unittest.TestCase):
 
 def main():
     test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.makeSuite(BSDSpecificTestCase))
+    test_suite.addTest(unittest.makeSuite(FreeBSDSpecificTestCase))
     result = unittest.TextTestRunner(verbosity=2).run(test_suite)
     return result.wasSuccessful()
 

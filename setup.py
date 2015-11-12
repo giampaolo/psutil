@@ -137,6 +137,18 @@ elif sys.platform.startswith("freebsd"):
         define_macros=[VERSION_MACRO],
         libraries=["devstat"])
     extensions = [ext, posix_extension]
+# OpenBSD
+elif sys.platform.startswith("openbsd"):
+    ext = Extension(
+        'psutil._psutil_bsd',
+        sources=[
+            'psutil/_psutil_openbsd.c',
+            'psutil/_psutil_common.c',
+            'psutil/arch/bsd/openbsd.c'
+        ],
+        define_macros=[VERSION_MACRO],
+        libraries=["kvm"])
+    extensions = [ext, posix_extension]
 # Linux
 elif sys.platform.startswith("linux"):
     def get_ethtool_macro():
@@ -218,6 +230,7 @@ def main():
             'Operating System :: Microsoft',
             'Operating System :: OS Independent',
             'Operating System :: POSIX :: BSD :: FreeBSD',
+            'Operating System :: POSIX :: BSD :: OpenBSD',
             'Operating System :: POSIX :: Linux',
             'Operating System :: POSIX :: SunOS/Solaris',
             'Operating System :: POSIX',

@@ -892,7 +892,8 @@ Process class
   .. method:: threads()
 
      Return threads opened by process as a list of namedtuples including thread
-     id and thread CPU times (user/system).
+     id and thread CPU times (user/system). On OpenBSD this method requires
+     root access.
 
   .. method:: cpu_times()
 
@@ -959,7 +960,7 @@ Process class
       >>> p.cpu_affinity(all_cpus)
       >>>
 
-     Availability: Linux, Windows, BSD
+     Availability: Linux, Windows, FreeBSD
 
      .. versionchanged:: 2.2.0 added support for FreeBSD
 
@@ -1041,6 +1042,8 @@ Process class
        pmmap_grouped(path='[stack]', rss=1542, anonymous=166, swap=0),
        ...]
       >>>
+
+    Availability: All platforms except OpenBSD.
 
   .. method:: children(recursive=False)
 
