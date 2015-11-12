@@ -38,6 +38,11 @@ E: jcscoobyrs@gmail.com
 D: great help with OSX C development.
 I: 125, 150, 174, 206
 
+N: Landry Breuil
+W: https://github.com/landryb
+D: OpenBSD implementation.
+I: 615
+
 N: wj32
 E: wj32.64@gmail.com
 D: process username() and get_connections() on Windows

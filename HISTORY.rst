@@ -1,12 +1,13 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
-3.2.3 - XXXX-XX-XX
+3.3.0 - XXXX-XX-XX
 ==================
 
 **Enhancements**
 
 - #558: [Linux] exposed psutil.PROCFS_PATH constant to change the default
   location of /proc filesystem.
+- #615: [OpenBSD] added OpenBSD support.
 
 **Bug fixes**
 

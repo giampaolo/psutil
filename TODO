@@ -9,11 +9,9 @@ https://github.com/giampaolo/psutil/issues
 PLATFORMS
 =========
 
- * #615 (PR): OpenBSD
+ * #429 (patch): NetBSD
 
  * #355 (patch): Android
-
- * #429 (patch): NetBSD
 
  * #605 (branch): AIX
 
