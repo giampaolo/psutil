@@ -45,7 +45,13 @@
 #include "_psutil_sunos.h"
 
 
-#define TV2DOUBLE(t)   (((t).tv_nsec * 0.000000001) + (t).tv_sec)
+#define PSUTIL_TV2DOUBLE(t) (((t).tv_nsec * 0.000000001) + (t).tv_sec)
+#ifndef EXPER_IP_AND_ALL_IRES
+#define EXPER_IP_AND_ALL_IRES (1024+4)
+#endif
+// a signaler for connections without an actual status
+static int PSUTIL_CONN_NONE = 128;
+
 
 /*
  * Read a file content and fills a C structure with it.
@@ -94,7 +100,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
                          info.pr_ppid,              // parent pid
                          info.pr_rssize,            // rss
                          info.pr_size,              // vms
-                         TV2DOUBLE(info.pr_start),  // create time
+                         PSUTIL_TV2DOUBLE(info.pr_start),  // create time
                          info.pr_lwp.pr_nice,       // nice
                          info.pr_nlwp,              // no. of threads
                          info.pr_lwp.pr_state,      // status code
@@ -137,8 +143,8 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
         return NULL;
     // results are more precise than os.times()
     return Py_BuildValue("dd",
-                         TV2DOUBLE(info.pr_utime),
-                         TV2DOUBLE(info.pr_stime));
+                         PSUTIL_TV2DOUBLE(info.pr_utime),
+                         PSUTIL_TV2DOUBLE(info.pr_stime));
 }
 
 
@@ -232,8 +238,8 @@ psutil_proc_query_thread(PyObject *self, PyObject *args) {
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("dd",
-                         TV2DOUBLE(info.pr_utime),
-                         TV2DOUBLE(info.pr_stime));
+                         PSUTIL_TV2DOUBLE(info.pr_utime),
+                         PSUTIL_TV2DOUBLE(info.pr_stime));
 }
 
 
@@ -782,13 +788,6 @@ error:
     return NULL;
 }
 
-
-#ifndef EXPER_IP_AND_ALL_IRES
-#define EXPER_IP_AND_ALL_IRES   (1024+4)
-#endif
-
-// a signaler for connections without an actual status
-static int PSUTIL_CONN_NONE = 128;
 
 /*
  * Return TCP and UDP connections opened by process.

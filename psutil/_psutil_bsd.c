@@ -86,17 +86,17 @@
 #endif
 
 
-#define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
+// convert a timeval struct to a double
+#define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
 
 #ifdef __FreeBSD__
-    // convert a timeval struct to a double
     // convert a bintime struct to milliseconds
-    #define BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * (uint32_t) \
-        (bt.frac >> 32) ) >> 32 ) / 1000000)
+    #define PSUTIL_BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * \
+                           (uint32_t) (bt.frac >> 32) ) >> 32 ) / 1000000)
 #endif
 
 #ifdef __OpenBSD__
-    #define KPT2DOUBLE(t)   (t ## _sec + t ## _usec / 1000000.0)
+    #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
 #endif
 
 
@@ -351,11 +351,11 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
         return NULL;
     // convert from microseconds to seconds
 #ifdef __FreeBSD__
-    user_t = TV2DOUBLE(kp.ki_rusage.ru_utime);
-    sys_t = TV2DOUBLE(kp.ki_rusage.ru_stime);
+    user_t = PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_utime);
+    sys_t = PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_stime);
 #elif __OpenBSD__
-    user_t = KPT2DOUBLE(kp.p_uutime);
-    sys_t = KPT2DOUBLE(kp.p_ustime);
+    user_t = PSUTIL_KPT2DOUBLE(kp.p_uutime);
+    sys_t = PSUTIL_KPT2DOUBLE(kp.p_ustime);
 #endif
     return Py_BuildValue("(dd)", user_t, sys_t);
 }
@@ -395,9 +395,9 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
 #ifdef __FreeBSD__
-    return Py_BuildValue("d", TV2DOUBLE(kp.ki_start));
+    return Py_BuildValue("d", PSUTIL_TV2DOUBLE(kp.ki_start));
 #elif __OpenBSD__
-    return Py_BuildValue("d", KPT2DOUBLE(kp.p_ustart));
+    return Py_BuildValue("d", PSUTIL_KPT2DOUBLE(kp.p_ustart));
 #endif
 }
 

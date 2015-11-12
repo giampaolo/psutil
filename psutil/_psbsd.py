@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""FreeBSD platform implementation."""
+"""FreeBSD and OpenBSD platforms implementation."""
 
 import errno
 import functools
@@ -156,34 +156,37 @@ def cpu_count_logical():
     return cext.cpu_count_logical()
 
 
-def cpu_count_physical():
-    """Return the number of physical CPUs in the system."""
-    # From the C module we'll get an XML string similar to this:
-    # http://manpages.ubuntu.com/manpages/precise/man4/smp.4freebsd.html
-    # We may get None in case "sysctl kern.sched.topology_spec"
-    # is not supported on this BSD version, in which case we'll mimic
-    # os.cpu_count() and return None.
-    if sys.platform.startswith("openbsd"):
-        return cext.cpu_count_logical()
-    ret = None
-    s = cext.cpu_count_phys()
-    if s is not None:
-        # get rid of padding chars appended at the end of the string
-        index = s.rfind("</groups>")
-        if index != -1:
-            s = s[:index + 9]
-            root = ET.fromstring(s)
-            try:
-                ret = len(root.findall('group/children/group/cpu')) or None
-            finally:
-                # needed otherwise it will memleak
-                root.clear()
-    if not ret:
-        # If logical CPUs are 1 it's obvious we'll have only 1
-        # physical CPU.
-        if cpu_count_logical() == 1:
-            return 1
-    return ret
+if OPENBSD:
+    def cpu_count_physical():
+        # OpenBSD does not implement this.
+        return 1 if cpu_count_logical() == 1 else None
+else:
+    def cpu_count_physical():
+        """Return the number of physical CPUs in the system."""
+        # From the C module we'll get an XML string similar to this:
+        # http://manpages.ubuntu.com/manpages/precise/man4/smp.4freebsd.html
+        # We may get None in case "sysctl kern.sched.topology_spec"
+        # is not supported on this BSD version, in which case we'll mimic
+        # os.cpu_count() and return None.
+        ret = None
+        s = cext.cpu_count_phys()
+        if s is not None:
+            # get rid of padding chars appended at the end of the string
+            index = s.rfind("</groups>")
+            if index != -1:
+                s = s[:index + 9]
+                root = ET.fromstring(s)
+                try:
+                    ret = len(root.findall('group/children/group/cpu')) or None
+                finally:
+                    # needed otherwise it will memleak
+                    root.clear()
+        if not ret:
+            # If logical CPUs are 1 it's obvious we'll have only 1
+            # physical CPU.
+            if cpu_count_logical() == 1:
+                return 1
+        return ret
 
 
 def boot_time():

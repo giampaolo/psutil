@@ -29,8 +29,8 @@
 #include "../../_psutil_common.h"
 
 
-#define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
-#define BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * (uint32_t) \
+#define PSUTIL_TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
+#define PSUTIL_BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * (uint32_t) \
         (bt.frac >> 32) ) >> 32 ) / 1000000)
 #ifndef _PATH_DEVNULL
 #define _PATH_DEVNULL "/dev/null"
@@ -417,8 +417,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         kipp = &kip[i];
         py_tuple = Py_BuildValue("Idd",
                                  kipp->ki_tid,
-                                 TV2DOUBLE(kipp->ki_rusage.ru_utime),
-                                 TV2DOUBLE(kipp->ki_rusage.ru_stime));
+                                 PSUTIL_TV2DOUBLE(kipp->ki_rusage.ru_utime),
+                                 PSUTIL_TV2DOUBLE(kipp->ki_rusage.ru_stime));
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
@@ -747,8 +747,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             current.operations[DEVSTAT_WRITE],  // no writes
             current.bytes[DEVSTAT_READ],        // bytes read
             current.bytes[DEVSTAT_WRITE],       // bytes written
-            (long long) BT2MSEC(current.duration[DEVSTAT_READ]),  // r time
-            (long long) BT2MSEC(current.duration[DEVSTAT_WRITE])  // w time
+            (long long) PSUTIL_BT2MSEC(current.duration[DEVSTAT_READ]),  // r time
+            (long long) PSUTIL_BT2MSEC(current.duration[DEVSTAT_WRITE])  // w time
         );      // finished transactions
         if (!py_disk_info)
             goto error;

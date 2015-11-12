@@ -44,6 +44,9 @@
 #include "arch/osx/process_info.h"
 
 
+#define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
+
+
 /*
  * A wrapper around host_statistics() invoked with HOST_VM_INFO.
  */
@@ -439,8 +442,6 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
 }
 
 
-#define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
-
 /*
  * Return a Python tuple (user_time, kernel_time)
  */
@@ -471,7 +472,7 @@ psutil_proc_create_time(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
-    return Py_BuildValue("d", TV2DOUBLE(kp.kp_proc.p_starttime));
+    return Py_BuildValue("d", PSUTIL_TV2DOUBLE(kp.kp_proc.p_starttime));
 }
 
 

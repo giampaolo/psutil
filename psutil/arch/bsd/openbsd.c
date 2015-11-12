@@ -34,11 +34,10 @@
 
 #include "openbsd.h"
 
+#define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
+#define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
 // a signaler for connections without an actual status
 int PSUTIL_CONN_NONE = 128;
-
-#define KPT2DOUBLE(t)   (t ## _sec + t ## _usec / 1000000.0)
-#define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
 
 
 // ============================================================================
@@ -298,8 +297,8 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
             py_tuple = Py_BuildValue(
                 "Idd",
                 kp[i].p_tid,
-                KPT2DOUBLE(kp[i].p_uutime),
-                KPT2DOUBLE(kp[i].p_ustime));
+                PSUTIL_KPT2DOUBLE(kp[i].p_uutime),
+                PSUTIL_KPT2DOUBLE(kp[i].p_ustime));
             if (py_tuple == NULL)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
@@ -740,8 +739,10 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             stats[i].ds_wxfer,
             stats[i].ds_rbytes,
             stats[i].ds_wbytes,
-            (long long) TV2DOUBLE(stats[i].ds_time) / 2, /* assume half read - half writes.. */
-            (long long) TV2DOUBLE(stats[i].ds_time) / 2);
+            // assume half read - half writes.
+            // TODO: why?
+            (long long) PSUTIL_TV2DOUBLE(stats[i].ds_time) / 2,
+            (long long) PSUTIL_TV2DOUBLE(stats[i].ds_time) / 2);
         if (!py_disk_info)
             goto error;
         if (PyDict_SetItemString(py_retdict, stats[i].ds_name, py_disk_info))
