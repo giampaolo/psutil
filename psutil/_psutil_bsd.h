@@ -24,9 +24,6 @@ static PyObject* psutil_proc_uids(PyObject* self, PyObject* args);
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 static PyObject* psutil_proc_open_files(PyObject* self, PyObject* args);
 #endif
-#ifdef __FreeBSD__
-static PyObject* psutil_proc_connections(PyObject* self, PyObject* args);
-#endif
 
 // --- system-related functions
 

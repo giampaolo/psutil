@@ -134,6 +134,7 @@ elif sys.platform.startswith("freebsd"):
             'psutil/_psutil_bsd.c',
             'psutil/_psutil_common.c',
             'psutil/arch/bsd/freebsd.c',
+            'psutil/arch/bsd/freebsd_socks.c',
         ],
         define_macros=[VERSION_MACRO],
         libraries=["devstat"])
