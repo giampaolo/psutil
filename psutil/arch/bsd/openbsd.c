@@ -399,3 +399,26 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
     return Py_BuildValue("i", cnt);
 }
+
+
+PyObject *
+psutil_proc_cwd(PyObject *self, PyObject *args) {
+    // Reference:
+    // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n179
+    long pid;
+    struct kinfo_proc kp;
+    char path[MAXPATHLEN];
+    size_t pathlen = sizeof path;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (psutil_kinfo_proc(pid, &kp) == -1)
+        return NULL;
+
+    int name[] = { CTL_KERN, KERN_PROC_CWD, pid };
+    if (sysctl(name, 3, path, &pathlen, NULL, 0) != 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+    return Py_BuildValue("s", path);
+}
