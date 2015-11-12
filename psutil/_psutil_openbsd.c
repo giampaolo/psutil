@@ -738,12 +738,12 @@ error:
 #define _PATH_DEVNULL "/dev/null"
 #endif
 
+#ifdef __FreeBSD__
 /*
  * Return swap memory stats (see 'swapinfo' cmdline tool)
  */
 static PyObject *
 psutil_swap_mem(PyObject *self, PyObject *args) {
-#ifdef __FreeBSD__
     kvm_t *kd;
     struct kvm_swap kvmsw[1];
     unsigned int swapin, swapout, nodein, nodeout;
@@ -782,47 +782,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 sbn_error:
     PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
-
-#elif __OpenBSD__
-    uint64_t swap_total, swap_free;
-    struct swapent *swdev;
-    int nswap, i;
-
-    if ((nswap = swapctl(SWAP_NSWAP, 0, 0)) == 0) {
-        warn("failed to get swap device count");
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    if ((swdev = calloc(nswap, sizeof(*swdev))) == NULL) {
-        warn("failed to allocate memory for swdev structures");
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
-        free(swdev);
-        warn("failed to get swap stats");
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    /* Total things up */
-    swap_total = swap_free = 0;
-    for (i = 0; i < nswap; i++) {
-        if (swdev[i].se_flags & SWF_ENABLE) {
-            swap_free += (swdev[i].se_nblks - swdev[i].se_inuse);
-            swap_total += swdev[i].se_nblks;
-        }
-    }
-    return Py_BuildValue("(LLLII)",
-                         swap_total * DEV_BSIZE,
-                         (swap_total - swap_free) * DEV_BSIZE,
-                         swap_free * DEV_BSIZE,
-                         0 /* XXX swap in */,
-                         0 /* XXX swap out */);
-#endif
 }
+#endif
 
 
 /*
