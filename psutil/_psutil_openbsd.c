@@ -291,14 +291,8 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    // get the commandline, defined in arch/bsd/process_info.c
-#ifdef __FreeBSD__
     py_retlist = psutil_get_cmdline(pid);
-#elif __OpenBSD__
-    py_retlist = psutil_get_arg_list(pid);
-#endif
-
-    // psutil_get_arg_list() returns NULL only if psutil_cmd_args
+    // psutil_get_cmdline() returns NULL only if psutil_cmd_args
     // failed with ESRCH (no process with that PID)
     if (NULL == py_retlist)
         return PyErr_SetFromErrno(PyExc_OSError);

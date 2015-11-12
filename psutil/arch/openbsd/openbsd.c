@@ -116,7 +116,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
 
 
 char **
-get_argv(long pid) {
+_psutil_get_argv(long pid) {
     static char **argv;
     char **p;
     int argv_mib[] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_ARGV};
@@ -138,7 +138,7 @@ get_argv(long pid) {
 
 // returns the command line as a python list object
 PyObject *
-psutil_get_arg_list(long pid) {
+psutil_get_cmdline(long pid) {
     static char **argv;
     char **p;
     PyObject *py_arg = NULL;
@@ -149,7 +149,7 @@ psutil_get_arg_list(long pid) {
     if (pid < 0)
         return py_retlist;
 
-    if ((argv = get_argv(pid)) == NULL)
+    if ((argv = _psutil_get_argv(pid)) == NULL)
         goto error;
 
     for (p = argv; *p != NULL; p++) {
@@ -194,7 +194,7 @@ psutil_pid_exists(long pid) {
  * Set exception to AccessDenied if pid exists else NoSuchProcess.
  */
 int
-psutil_raise_ad_or_nsp(pid) {
+psutil_raise_ad_or_nsp(long pid) {
     if (psutil_pid_exists(pid) == 0) {
         NoSuchProcess();
     }
