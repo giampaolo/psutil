@@ -141,23 +141,31 @@ PyObject *
 psutil_get_arg_list(long pid) {
     static char **argv;
     char **p;
-    PyObject *retlist = Py_BuildValue("[]");
-    PyObject *item = NULL;
+    PyObject *py_arg = NULL;
+    PyObject *py_retlist = Py_BuildValue("[]");
 
-    if (pid < 0) {
-        return retlist;
-    }
+    if (!py_retlist)
+        return NULL;
+    if (pid < 0)
+        return py_retlist;
 
     if ((argv = get_argv(pid)) == NULL)
-        return NULL;
+        goto error;
 
     for (p = argv; *p != NULL; p++) {
-        item = Py_BuildValue("s", *p);
-        PyList_Append(retlist, item);
-        Py_DECREF(item);
+        py_arg = Py_BuildValue("s", *p);
+        if (!py_arg)
+            goto error;
+        if (PyList_Append(py_retlist, py_arg))
+            goto error;
+        Py_DECREF(py_arg);
     }
-    return retlist;
+    return py_retlist;
 
+error:
+    Py_XDECREF(py_arg);
+    Py_DECREF(py_retlist);
+    return NULL;
 }
 
 
