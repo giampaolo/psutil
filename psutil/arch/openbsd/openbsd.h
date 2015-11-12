@@ -10,7 +10,7 @@
 typedef struct kinfo_proc kinfo_proc;
 
 int psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc);
-struct kinfo_file * psutil_kinfo_getfile(long pid, int* cnt);
+struct kinfo_file * kinfo_getfile(long pid, int* cnt);
 int psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount);
 char **_psutil_get_argv(long pid);
 PyObject * psutil_get_cmdline(long pid);

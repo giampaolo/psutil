@@ -62,7 +62,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
 
 
 struct kinfo_file *
-psutil_kinfo_getfile(long pid, int* cnt) {
+kinfo_getfile(long pid, int* cnt) {
     // Mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an
     // int as arg and returns an array with cnt struct kinfo_file.
     int mib[6];
