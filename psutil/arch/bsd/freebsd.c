@@ -24,6 +24,45 @@
 #include "freebsd.h"
 
 
+int
+psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
+    // Fills a kinfo_proc struct based on process pid.
+    int mib[4];
+    size_t size;
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = pid;
+
+    size = sizeof(struct kinfo_proc);
+    if (sysctl((int *)mib, 4, proc, &size, NULL, 0) == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return -1;
+    }
+
+    // sysctl stores 0 in the size if we can't find the process information.
+    if (size == 0) {
+        NoSuchProcess();
+        return -1;
+    }
+    return 0;
+}
+
+
+void
+psutil_raise_ad_or_nsp(long pid) {
+    // Set exception to AccessDenied if pid exists else NoSuchProcess.
+    int ret;
+    ret = psutil_pid_exists(pid);
+    if (ret == 0)
+        NoSuchProcess();
+    else if (ret == 1)
+        AccessDenied();
+    else
+        return NULL;
+}
+
+
 /*
  * Returns a list of all BSD processes on the system.  This routine
  * allocates the list and puts it in *procList and a count of the

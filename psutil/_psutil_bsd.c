@@ -101,54 +101,6 @@
 #endif
 
 
-#ifdef __FreeBSD__
-/*
- * Utility function which fills a kinfo_proc struct based on process pid
- */
-static int
-psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
-    int mib[4];
-    size_t size;
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID;
-    mib[3] = pid;
-
-    size = sizeof(struct kinfo_proc);
-
-    if (sysctl((int *)mib, 4, proc, &size, NULL, 0) == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
-    }
-
-    // sysctl stores 0 in the size if we can't find the process information.
-    if (size == 0) {
-        NoSuchProcess();
-        return -1;
-    }
-    return 0;
-}
-#endif
-
-
-#ifdef __FreeBSD__
-/*
- * Set exception to AccessDenied if pid exists else NoSuchProcess.
- */
-void
-psutil_raise_ad_or_nsp(long pid) {
-    int ret;
-    ret = psutil_pid_exists(pid);
-    if (ret == 0)
-        NoSuchProcess();
-    else if (ret == 1)
-        AccessDenied();
-    else
-        return NULL;
-}
-#endif
-
-
 /*
  * Return a Python list of all the PIDs running on the system.
  */
