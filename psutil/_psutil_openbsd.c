@@ -85,7 +85,6 @@
     #define _KERNEL  // for DTYPE_VNODE
     #include <sys/file.h>
     #undef _KERNEL
-    #include <sys/disk.h>  // struct diskstats
     #include <sys/sched.h>  // for CPUSTATES & CP_*
     #include <sys/swap.h>
     #include <kvm.h>
@@ -1644,68 +1643,76 @@ error:
 }
 
 
+#ifdef __FreeBSD__
 /*
  * Return a Python dict of tuples for disk I/O information
  */
 static PyObject *
 psutil_disk_io_counters(PyObject *self, PyObject *args) {
-    int i, dk_ndrive, mib[3];
-    size_t len;
-    struct diskstats *stats;
+    int i;
+    struct statinfo stats;
 
     PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;
+
     if (py_retdict == NULL)
         return NULL;
-
-    mib[0] = CTL_HW;
-    mib[1] = HW_DISKSTATS;
-    len = 0;
-    if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0) {
-        warn("can't get hw.diskstats size");
-        PyErr_SetFromErrno(PyExc_OSError);
+    if (devstat_checkversion(NULL) < 0) {
+        PyErr_Format(PyExc_RuntimeError, "devstat_checkversion() failed");
         goto error;
     }
-    dk_ndrive = (int)(len / sizeof(struct diskstats));
 
-    stats = malloc(len);
-    if (stats == NULL) {
-        warn("can't malloc");
+    stats.dinfo = (struct devinfo *)malloc(sizeof(struct devinfo));
+    if (stats.dinfo == NULL) {
         PyErr_NoMemory();
         goto error;
     }
-    if (sysctl(mib, 2, stats, &len, NULL, 0) < 0 ) {
-        warn("could not read hw.diskstats");
-        PyErr_SetFromErrno(PyExc_OSError);
+    bzero(stats.dinfo, sizeof(struct devinfo));
+
+    if (devstat_getdevs(NULL, &stats) == -1) {
+        PyErr_Format(PyExc_RuntimeError, "devstat_getdevs() failed");
         goto error;
     }
 
-    for (i = 0; i < dk_ndrive; i++) {
+    for (i = 0; i < stats.dinfo->numdevs; i++) {
+        py_disk_info = NULL;
+        struct devstat current;
+        char disk_name[128];
+        current = stats.dinfo->devices[i];
+        snprintf(disk_name, sizeof(disk_name), "%s%d",
+                 current.device_name,
+                 current.unit_number);
+
         py_disk_info = Py_BuildValue(
             "(KKKKLL)",
-            stats[i].ds_rxfer,
-            stats[i].ds_wxfer,
-            stats[i].ds_rbytes,
-            stats[i].ds_wbytes,
-            (long long) TV2DOUBLE(stats[i].ds_time) / 2, /* assume half read - half writes.. */
-            (long long) TV2DOUBLE(stats[i].ds_time) / 2);
+            current.operations[DEVSTAT_READ],   // no reads
+            current.operations[DEVSTAT_WRITE],  // no writes
+            current.bytes[DEVSTAT_READ],        // bytes read
+            current.bytes[DEVSTAT_WRITE],       // bytes written
+            (long long) BT2MSEC(current.duration[DEVSTAT_READ]),  // r time
+            (long long) BT2MSEC(current.duration[DEVSTAT_WRITE])  // w time
+        );      // finished transactions
         if (!py_disk_info)
             goto error;
-        if (PyDict_SetItemString(py_retdict, stats[i].ds_name, py_disk_info))
+        if (PyDict_SetItemString(py_retdict, disk_name, py_disk_info))
             goto error;
         Py_DECREF(py_disk_info);
     }
 
-    free(stats);
+    if (stats.dinfo->mem_ptr)
+        free(stats.dinfo->mem_ptr);
+    free(stats.dinfo);
     return py_retdict;
 
 error:
     Py_XDECREF(py_disk_info);
     Py_DECREF(py_retdict);
-    if (stats != NULL)
-        free(stats);
+    if (stats.dinfo != NULL)
+        free(stats.dinfo);
     return NULL;
 }
+#endif
+
 
 /*
  * Return currently connected users as a list of tuples.

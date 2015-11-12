@@ -29,12 +29,16 @@
 #define _KERNEL  // for DTYPE_*
 #include <sys/file.h>
 #undef _KERNEL
+#include <sys/disk.h>  // struct diskstats
+
 
 #include "openbsd.h"
 
 // a signaler for connections without an actual status
 int PSUTIL_CONN_NONE = 128;
+
 #define KPT2DOUBLE(t)   (t ## _sec + t ## _usec / 1000000.0)
+#define TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
 
 
 // ============================================================================
@@ -692,5 +696,66 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 error:
     Py_XDECREF(py_cputime);
     Py_DECREF(py_retlist);
+    return NULL;
+}
+
+
+PyObject *
+psutil_disk_io_counters(PyObject *self, PyObject *args) {
+    int i, dk_ndrive, mib[3];
+    size_t len;
+    struct diskstats *stats;
+
+    PyObject *py_retdict = PyDict_New();
+    PyObject *py_disk_info = NULL;
+    if (py_retdict == NULL)
+        return NULL;
+
+    mib[0] = CTL_HW;
+    mib[1] = HW_DISKSTATS;
+    len = 0;
+    if (sysctl(mib, 2, NULL, &len, NULL, 0) < 0) {
+        warn("can't get hw.diskstats size");
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+    dk_ndrive = (int)(len / sizeof(struct diskstats));
+
+    stats = malloc(len);
+    if (stats == NULL) {
+        warn("can't malloc");
+        PyErr_NoMemory();
+        goto error;
+    }
+    if (sysctl(mib, 2, stats, &len, NULL, 0) < 0 ) {
+        warn("could not read hw.diskstats");
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    for (i = 0; i < dk_ndrive; i++) {
+        py_disk_info = Py_BuildValue(
+            "(KKKKLL)",
+            stats[i].ds_rxfer,
+            stats[i].ds_wxfer,
+            stats[i].ds_rbytes,
+            stats[i].ds_wbytes,
+            (long long) TV2DOUBLE(stats[i].ds_time) / 2, /* assume half read - half writes.. */
+            (long long) TV2DOUBLE(stats[i].ds_time) / 2);
+        if (!py_disk_info)
+            goto error;
+        if (PyDict_SetItemString(py_retdict, stats[i].ds_name, py_disk_info))
+            goto error;
+        Py_DECREF(py_disk_info);
+    }
+
+    free(stats);
+    return py_retdict;
+
+error:
+    Py_XDECREF(py_disk_info);
+    Py_DECREF(py_retdict);
+    if (stats != NULL)
+        free(stats);
     return NULL;
 }
