@@ -18,6 +18,8 @@ PyObject* psutil_cpu_count_phys(PyObject* self, PyObject* args);
 PyObject* psutil_disk_io_counters(PyObject* self, PyObject* args);
 PyObject* psutil_get_cmdline(long pid);
 PyObject* psutil_per_cpu_times(PyObject* self, PyObject* args);
+PyObject* psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args);
+PyObject* psutil_proc_cpu_affinity_set(PyObject* self, PyObject* args);
 PyObject* psutil_proc_cwd(PyObject* self, PyObject* args);
 PyObject* psutil_proc_exe(PyObject* self, PyObject* args);
 PyObject* psutil_proc_memory_maps(PyObject* self, PyObject* args);

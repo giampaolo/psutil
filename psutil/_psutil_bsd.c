@@ -65,7 +65,6 @@
 #endif
 
 #ifdef __FreeBSD__
-    #include <sys/cpuset.h>
     #include <net/if_media.h>
     #include <devstat.h>  // get io counters
     #include <libutil.h>  // process open files, shared libs (kinfo_getvmmap)
@@ -1449,105 +1448,6 @@ psutil_net_connections(PyObject* self, PyObject* args) {
 error:
     Py_DECREF(py_retlist);
     free(psutil_xfiles);
-    return NULL;
-}
-
-
-/*
- * Get process CPU affinity.
- * Reference: http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
- */
-static PyObject*
-psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args) {
-    long pid;
-    int ret;
-    int i;
-    cpuset_t mask;
-    PyObject* py_retlist;
-    PyObject* py_cpu_num;
-
-    if (!PyArg_ParseTuple(args, "i", &pid))
-        return NULL;
-    ret = cpuset_getaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, pid,
-                             sizeof(mask), &mask);
-    if (ret != 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
-    py_retlist = PyList_New(0);
-    if (py_retlist == NULL)
-        return NULL;
-
-    for (i = 0; i < CPU_SETSIZE; i++) {
-        if (CPU_ISSET(i, &mask)) {
-            py_cpu_num = Py_BuildValue("i", i);
-            if (py_cpu_num == NULL)
-                goto error;
-            if (PyList_Append(py_retlist, py_cpu_num))
-                goto error;
-        }
-    }
-
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_cpu_num);
-    Py_DECREF(py_retlist);
-    return NULL;
-}
-
-
-/*
- * Set process CPU affinity.
- * Reference: http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
- */
-static PyObject *
-psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
-    long pid;
-    int i;
-    int seq_len;
-    int ret;
-    cpuset_t cpu_set;
-    PyObject *py_cpu_set;
-    PyObject *py_cpu_seq = NULL;
-
-    if (!PyArg_ParseTuple(args, "lO", &pid, &py_cpu_set))
-        return NULL;
-
-    py_cpu_seq = PySequence_Fast(py_cpu_set, "expected a sequence or integer");
-    if (!py_cpu_seq)
-        return NULL;
-    seq_len = PySequence_Fast_GET_SIZE(py_cpu_seq);
-
-    // calculate the mask
-    CPU_ZERO(&cpu_set);
-    for (i = 0; i < seq_len; i++) {
-        PyObject *item = PySequence_Fast_GET_ITEM(py_cpu_seq, i);
-#if PY_MAJOR_VERSION >= 3
-        long value = PyLong_AsLong(item);
-#else
-        long value = PyInt_AsLong(item);
-#endif
-        if (value == -1 && PyErr_Occurred())
-            goto error;
-        CPU_SET(value, &cpu_set);
-    }
-
-    // set affinity
-    ret = cpuset_setaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, pid,
-                             sizeof(cpu_set), &cpu_set);
-    if (ret != 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-
-    Py_DECREF(py_cpu_seq);
-    Py_RETURN_NONE;
-
-error:
-    if (py_cpu_seq != NULL)
-        Py_DECREF(py_cpu_seq);
     return NULL;
 }
 #endif
