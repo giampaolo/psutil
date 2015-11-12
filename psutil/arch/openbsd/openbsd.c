@@ -26,6 +26,36 @@
 
 
 /*
+ * Utility function which fills a kinfo_proc struct based on process pid
+ */
+int
+psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
+    int ret;
+    int mib[6];
+    size_t size = sizeof(struct kinfo_proc);
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROC;
+    mib[2] = KERN_PROC_PID;
+    mib[3] = pid;
+    mib[4] = size;
+    mib[5] = 1;
+
+    ret = sysctl((int*)mib, 6, proc, &size, NULL, 0);
+    if (ret == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return -1;
+    }
+    // sysctl stores 0 in the size if we can't find the process information.
+    if (size == 0) {
+        NoSuchProcess();
+        return -1;
+    }
+    return 0;
+}
+
+
+/*
  * mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an int as arg
  * and returns an array with cnt struct kinfo_file
  */

@@ -106,37 +106,22 @@
 #endif
 
 
+#ifdef __FreeBSD__
 /*
  * Utility function which fills a kinfo_proc struct based on process pid
  */
 static int
 psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
-    int ret;
-    size_t size = sizeof(struct kinfo_proc);
-
-#ifdef __FreeBSD__
     int mib[4];
+    size_t size;
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
     mib[3] = pid;
 
-    ret = sysctl((int*)mib, 4, proc, &size, NULL, 0);
-#endif
+    size = sizeof(struct kinfo_proc);
 
-#ifdef __OpenBSD__
-    int mib[6];
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID;
-    mib[3] = pid;
-    mib[4] = size;
-    mib[5] = 1;
-
-    ret = sysctl((int*)mib, 6, proc, &size, NULL, 0);
-#endif
-
-    if (ret == -1) {
+    if (sysctl((int *)mib, 4, proc, &size, NULL, 0) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         return -1;
     }
@@ -148,6 +133,7 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
     }
     return 0;
 }
+#endif
 
 
 /*
