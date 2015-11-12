@@ -516,41 +516,6 @@ error:
 #endif
 
 
-#ifdef __FreeBSD__
-/*
- * Return an XML string from which we'll determine the number of
- * physical CPU cores in the system.
- */
-static PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args) {
-    void *topology = NULL;
-    size_t size = 0;
-    PyObject *py_str;
-
-    if (sysctlbyname("kern.sched.topology_spec", NULL, &size, NULL, 0))
-        goto error;
-
-    topology = malloc(size);
-    if (!topology) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    if (sysctlbyname("kern.sched.topology_spec", topology, &size, NULL, 0))
-        goto error;
-
-    py_str = Py_BuildValue("s", topology);
-    free(topology);
-    return py_str;
-
-error:
-    if (topology != NULL)
-        free(topology);
-    Py_RETURN_NONE;
-}
-#endif
-
-
 /*
  * Return a Python tuple (user_time, kernel_time)
  */
@@ -594,6 +559,41 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     else
         return Py_BuildValue("i", ncpu);
 }
+
+
+#ifdef __FreeBSD__
+/*
+ * Return an XML string from which we'll determine the number of
+ * physical CPU cores in the system.
+ */
+static PyObject *
+psutil_cpu_count_phys(PyObject *self, PyObject *args) {
+    void *topology = NULL;
+    size_t size = 0;
+    PyObject *py_str;
+
+    if (sysctlbyname("kern.sched.topology_spec", NULL, &size, NULL, 0))
+        goto error;
+
+    topology = malloc(size);
+    if (!topology) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    if (sysctlbyname("kern.sched.topology_spec", topology, &size, NULL, 0))
+        goto error;
+
+    py_str = Py_BuildValue("s", topology);
+    free(topology);
+    return py_str;
+
+error:
+    if (topology != NULL)
+        free(topology);
+    Py_RETURN_NONE;
+}
+#endif
 
 
 /*
@@ -1330,7 +1330,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     long pid;
     int ptrwidth;
     int i, cnt;
-    char addr[30];
+    char [1000];
     char perms[4];
     const char *path;
     struct kinfo_proc kp;
@@ -1338,9 +1338,9 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     struct kinfo_vmentry *kve;
     ptrwidth = 2 * sizeof(void *);
     PyObject *py_tuple = NULL;
-    PyObject *retlist = PyList_New(0);
+    PyObject *py_retlist = PyList_New(0);
 
-    if (retlist == NULL) {
+    if (py_retlist == NULL) {
         return NULL;
     }
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -1416,16 +1416,16 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             kve->kve_shadow_count);     // shadow count
         if (!py_tuple)
             goto error;
-        if (PyList_Append(retlist, py_tuple))
+        if (PyList_Append(py_retlist, py_tuple))
             goto error;
         Py_DECREF(py_tuple);
     }
     free(freep);
-    return retlist;
+    return py_retlist;
 
 error:
     Py_XDECREF(py_tuple);
-    Py_DECREF(retlist);
+    Py_DECREF(py_retlist);
     if (freep != NULL)
         free(freep);
     return NULL;
@@ -2229,7 +2229,8 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "TCPS_FIN_WAIT_2", TCPS_FIN_WAIT_2);
     PyModule_AddIntConstant(module, "TCPS_LAST_ACK", TCPS_LAST_ACK);
     PyModule_AddIntConstant(module, "TCPS_TIME_WAIT", TCPS_TIME_WAIT);
-    PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", 128); /*PSUTIL_CONN_NONE */
+    // PSUTIL_CONN_NONE
+    PyModule_AddIntConstant(module, "PSUTIL_CONN_NONE", 128);
 
     if (module == NULL)
         INITERROR;
