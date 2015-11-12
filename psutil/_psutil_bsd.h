@@ -23,7 +23,9 @@ static PyObject* psutil_proc_num_fds(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_num_threads(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_ppid(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_status(PyObject* self, PyObject* args);
+#ifdef __FreeBSD__
 static PyObject* psutil_proc_threads(PyObject* self, PyObject* args);
+#endif
 static PyObject* psutil_proc_tty_nr(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_uids(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args);

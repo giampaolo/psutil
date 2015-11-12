@@ -237,3 +237,67 @@ error:
     Py_DECREF(py_retlist);
     return NULL;
 }
+
+
+PyObject *
+psutil_proc_threads(PyObject *self, PyObject *args) {
+    long pid;
+    kvm_t *kd = NULL;
+    int nentries, i;
+    char errbuf[4096];
+    struct kinfo_proc *kp;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        goto error;
+
+    kd = kvm_openfiles(0, 0, 0, O_RDONLY, errbuf);
+    if (! kd) {
+        if (strstr(errbuf, "Permission denied") != NULL)
+            AccessDenied();
+        else
+            PyErr_Format(PyExc_RuntimeError, "kvm_openfiles() failed");
+        goto error;
+    }
+
+    kp = kvm_getprocs(
+        kd, KERN_PROC_PID | KERN_PROC_SHOW_THREADS | KERN_PROC_KTHREAD, pid,
+        sizeof(*kp), &nentries);
+    if (! kp) {
+        if (strstr(errbuf, "Permission denied") != NULL)
+            AccessDenied();
+        else
+            PyErr_Format(PyExc_RuntimeError, "kvm_getprocs() failed");
+        goto error;
+    }
+
+    for (i = 0; i < nentries; i++) {
+        if (kp[i].p_tid < 0)
+            continue;
+        if (kp[i].p_pid == pid) {
+            py_tuple = Py_BuildValue(
+                "Idd",
+                kp[i].p_tid,
+                KPT2DOUBLE(kp[i].p_uutime),
+                KPT2DOUBLE(kp[i].p_ustime));
+            if (py_tuple == NULL)
+                goto error;
+            if (PyList_Append(py_retlist, py_tuple))
+                goto error;
+            Py_DECREF(py_tuple);
+        }
+    }
+
+    kvm_close(kd);
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    if (kd != NULL)
+        kvm_close(kd);
+    return NULL;
+}
