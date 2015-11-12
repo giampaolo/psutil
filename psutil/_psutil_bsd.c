@@ -58,13 +58,13 @@
 #include "_psutil_bsd.h"
 #include "_psutil_common.h"
 
-#ifdef  __FreeBSD__
+#ifdef __FreeBSD__
     #include "arch/bsd/freebsd.h"
 #elif __OpenBSD__
     #include "arch/bsd/openbsd.h"
 #endif
 
-#ifdef  __FreeBSD__
+#ifdef __FreeBSD__
     #include <sys/cpuset.h>
     #include <net/if_media.h>
     #include <devstat.h>  // get io counters
@@ -77,7 +77,7 @@
     #endif
 #endif
 
-#ifdef  __OpenBSD__
+#ifdef __OpenBSD__
     #include <utmp.h>
     #include <sys/vnode.h>  // for VREG
     #define _KERNEL  // for DTYPE_VNODE
@@ -462,58 +462,6 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         ptoa(kp.p_vm_ssize));  // stack
 #endif
 }
-
-
-#ifndef _PATH_DEVNULL
-#define _PATH_DEVNULL "/dev/null"
-#endif
-
-#ifdef __FreeBSD__
-/*
- * Return swap memory stats (see 'swapinfo' cmdline tool)
- */
-static PyObject *
-psutil_swap_mem(PyObject *self, PyObject *args) {
-    kvm_t *kd;
-    struct kvm_swap kvmsw[1];
-    unsigned int swapin, swapout, nodein, nodeout;
-    size_t size = sizeof(unsigned int);
-
-    kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open failed");
-    if (kd == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "kvm_open failed");
-        return NULL;
-    }
-
-    if (kvm_getswapinfo(kd, kvmsw, 1, 0) < 0) {
-        kvm_close(kd);
-        PyErr_SetString(PyExc_RuntimeError, "kvm_getswapinfo failed");
-        return NULL;
-    }
-
-    kvm_close(kd);
-
-    if (sysctlbyname("vm.stats.vm.v_swapin", &swapin, &size, NULL, 0) == -1)
-        goto sbn_error;
-    if (sysctlbyname("vm.stats.vm.v_swapout", &swapout, &size, NULL, 0) == -1)
-        goto sbn_error;
-    if (sysctlbyname("vm.stats.vm.v_vnodein", &nodein, &size, NULL, 0) == -1)
-        goto sbn_error;
-    if (sysctlbyname("vm.stats.vm.v_vnodeout", &nodeout, &size, NULL, 0) == -1)
-        goto sbn_error;
-
-    return Py_BuildValue("(iiiII)",
-                         kvmsw[0].ksw_total,                     // total
-                         kvmsw[0].ksw_used,                      // used
-                         kvmsw[0].ksw_total - kvmsw[0].ksw_used, // free
-                         swapin + swapout,                       // swap in
-                         nodein + nodeout);                      // swap out
-
-sbn_error:
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
-}
-#endif
 
 
 /*
