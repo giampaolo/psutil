@@ -375,3 +375,27 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
                          0 /* XXX swap in */,
                          0 /* XXX swap out */);
 }
+
+
+PyObject *
+psutil_proc_num_fds(PyObject *self, PyObject *args) {
+    long pid;
+    int cnt;
+
+    struct kinfo_file *freep;
+    struct kinfo_proc kipp;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (psutil_kinfo_proc(pid, &kipp) == -1)
+        return NULL;
+
+    freep = kinfo_getfile(pid, &cnt);
+    if (freep == NULL) {
+        psutil_raise_ad_or_nsp(pid);
+        return NULL;
+    }
+    free(freep);
+
+    return Py_BuildValue("i", cnt);
+}
