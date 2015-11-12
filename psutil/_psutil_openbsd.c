@@ -32,7 +32,6 @@
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <net/route.h>
-
 #include <sys/socketvar.h>    // for struct xsocket
 #include <sys/un.h>
 #include <sys/unpcb.h>
@@ -86,8 +85,6 @@
     #include <sys/file.h>
     #undef _KERNEL
     #include <sys/sched.h>  // for CPUSTATES & CP_*
-    #include <sys/swap.h>
-    #include <kvm.h>
 #endif
 
 
@@ -130,6 +127,24 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
         return -1;
     }
     return 0;
+}
+#endif
+
+
+#ifdef __FreeBSD__
+/*
+ * Set exception to AccessDenied if pid exists else NoSuchProcess.
+ */
+void
+psutil_raise_ad_or_nsp(long pid) {
+    int ret;
+    ret = psutil_pid_exists(pid);
+    if (ret == 0)
+        NoSuchProcess();
+    else if (ret == 1)
+        AccessDenied();
+    else
+        return NULL;
 }
 #endif
 
@@ -641,10 +656,13 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
 }
 
 
+#ifdef __OpenBSD__
+#define ptoa(x)         ((paddr_t)(x) << PAGE_SHIFT)
+#endif
+
 /*
  * Return extended memory info for a process as a Python tuple.
  */
-#define ptoa(x)         ((paddr_t)(x) << PAGE_SHIFT)
 static PyObject *
 psutil_proc_memory_info(PyObject *self, PyObject *args) {
     long pid;
@@ -1724,6 +1742,7 @@ psutil_users(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
+#if __FreeBSD_version < 900000 || __OpenBSD__
     struct utmp ut;
     FILE *fp;
 
@@ -1754,7 +1773,33 @@ psutil_users(PyObject *self, PyObject *args) {
     }
 
     fclose(fp);
+#else
+    struct utmpx *utx;
 
+    while ((utx = getutxent()) != NULL) {
+        if (utx->ut_type != USER_PROCESS)
+            continue;
+        py_tuple = Py_BuildValue(
+            "(sssf)",
+            utx->ut_user,  // username
+            utx->ut_line,  // tty
+            utx->ut_host,  // hostname
+            (float)utx->ut_tv.tv_sec  // start time
+        );
+
+        if (!py_tuple) {
+            endutxent();
+            goto error;
+        }
+        if (PyList_Append(py_retlist, py_tuple)) {
+            endutxent();
+            goto error;
+        }
+        Py_DECREF(py_tuple);
+    }
+
+    endutxent();
+#endif
     return py_retlist;
 
 error:

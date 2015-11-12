@@ -111,7 +111,7 @@ def virtual_memory():
 
 def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
-    if sys.platform.startswith("openbsd"):
+    if OPENBSD:
         PAGESIZE = 1
     total, used, free, sin, sout = [x * PAGESIZE for x in cext.swap_mem()]
     percent = usage_percent(used, total, _round=1)
@@ -305,8 +305,7 @@ def wrap_exceptions(fun):
                     ZombieProcess is None):
                 raise
             if err.errno == errno.ESRCH:
-                # if not pid_exists(self.pid):
-                if self.pid not in pids():
+                if not pid_exists(self.pid):
                     raise NoSuchProcess(self.pid, self._name)
                 else:
                     raise ZombieProcess(self.pid, self._name, self._ppid)
