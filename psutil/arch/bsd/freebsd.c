@@ -79,6 +79,17 @@ psutil_raise_ad_or_nsp(long pid) {
 }
 
 
+// remove spaces from string
+void remove_spaces(char *str) {
+    char *p1 = str;
+    char *p2 = str;
+    do
+        while (*p2 == ' ')
+            p2++;
+    while (*p1++ = *p2++);
+}
+
+
 // ============================================================================
 // APIS
 // ============================================================================
@@ -605,9 +616,6 @@ error:
 
 
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
-/*
- * Return files opened by process as a list of (path, fd) tuples
- */
 PyObject *
 psutil_proc_num_fds(PyObject *self, PyObject *args) {
     long pid;
@@ -758,5 +766,113 @@ error:
     Py_DECREF(py_retdict);
     if (stats.dinfo != NULL)
         free(stats.dinfo);
+    return NULL;
+}
+
+
+PyObject *
+psutil_proc_memory_maps(PyObject *self, PyObject *args) {
+    // Return a list of tuples for every process memory maps.
+    //'procstat' cmdline utility has been used as an example.
+    long pid;
+    int ptrwidth;
+    int i, cnt;
+    char addr[1000];
+    char perms[4];
+    const char *path;
+    struct kinfo_proc kp;
+    struct kinfo_vmentry *freep = NULL;
+    struct kinfo_vmentry *kve;
+    ptrwidth = 2 * sizeof(void *);
+    PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        goto error;
+    if (psutil_kinfo_proc(pid, &kp) == -1)
+        goto error;
+
+    freep = kinfo_getvmmap(pid, &cnt);
+    if (freep == NULL) {
+        psutil_raise_ad_or_nsp(pid);
+        goto error;
+    }
+    for (i = 0; i < cnt; i++) {
+        py_tuple = NULL;
+        kve = &freep[i];
+        addr[0] = '\0';
+        perms[0] = '\0';
+        sprintf(addr, "%#*jx-%#*jx", ptrwidth, (uintmax_t)kve->kve_start,
+                ptrwidth, (uintmax_t)kve->kve_end);
+        remove_spaces(addr);
+        strlcat(perms, kve->kve_protection & KVME_PROT_READ ? "r" : "-",
+                sizeof(perms));
+        strlcat(perms, kve->kve_protection & KVME_PROT_WRITE ? "w" : "-",
+                sizeof(perms));
+        strlcat(perms, kve->kve_protection & KVME_PROT_EXEC ? "x" : "-",
+                sizeof(perms));
+
+        if (strlen(kve->kve_path) == 0) {
+            switch (kve->kve_type) {
+                case KVME_TYPE_NONE:
+                    path = "[none]";
+                    break;
+                case KVME_TYPE_DEFAULT:
+                    path = "[default]";
+                    break;
+                case KVME_TYPE_VNODE:
+                    path = "[vnode]";
+                    break;
+                case KVME_TYPE_SWAP:
+                    path = "[swap]";
+                    break;
+                case KVME_TYPE_DEVICE:
+                    path = "[device]";
+                    break;
+                case KVME_TYPE_PHYS:
+                    path = "[phys]";
+                    break;
+                case KVME_TYPE_DEAD:
+                    path = "[dead]";
+                    break;
+                case KVME_TYPE_SG:
+                    path = "[sg]";
+                    break;
+                case KVME_TYPE_UNKNOWN:
+                    path = "[unknown]";
+                    break;
+                default:
+                    path = "[?]";
+                    break;
+            }
+        }
+        else {
+            path = kve->kve_path;
+        }
+
+        py_tuple = Py_BuildValue("sssiiii",
+            addr,                       // "start-end" address
+            perms,                      // "rwx" permissions
+            path,                       // path
+            kve->kve_resident,          // rss
+            kve->kve_private_resident,  // private
+            kve->kve_ref_count,         // ref count
+            kve->kve_shadow_count);     // shadow count
+        if (!py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
+        Py_DECREF(py_tuple);
+    }
+    free(freep);
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    if (freep != NULL)
+        free(freep);
     return NULL;
 }

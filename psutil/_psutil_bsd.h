@@ -14,7 +14,6 @@ static PyObject* psutil_proc_create_time(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_gids(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_io_counters(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_memory_info(PyObject* self, PyObject* args);
-static PyObject* psutil_proc_memory_maps(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_name(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_num_ctx_switches(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_ppid(PyObject* self, PyObject* args);
