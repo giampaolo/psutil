@@ -58,7 +58,12 @@
 
 #include "_psutil_bsd.h"
 #include "_psutil_common.h"
-#include "arch/bsd/process_info.h"
+
+#ifdef  __FreeBSD__
+    #include "arch/bsd/process_info.h"
+#elif __OpenBSD__
+    #include "arch/openbsd/openbsd.h"
+#endif
 
 #ifdef  __FreeBSD__
     #include <sys/cpuset.h>
