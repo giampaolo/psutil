@@ -813,16 +813,13 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Return files opened by process as a list of ("", fd) tuples
- */
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
  /*
  * Return files opened by process as a list of (path, fd) tuples.
  * TODO: this is broken as it may report empty paths. 'procstat'
  * utility has the same problem see:
  * https://github.com/giampaolo/psutil/issues/595
  */
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 || __OpenBSD__
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     long pid;
@@ -848,10 +845,17 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 
     for (i = 0; i < cnt; i++) {
         kif = &freep[i];
+#ifdef __FreeBSD__
         if ((kif->kf_type == KF_TYPE_VNODE) &&
                 (kif->kf_vnode_type == KF_VTYPE_VREG))
         {
             py_tuple = Py_BuildValue("(si)", kif->kf_path, kif->kf_fd);
+#else
+        if ((kif->f_type == DTYPE_VNODE) &&
+                (kif->v_type == VREG))
+        {
+            py_tuple = Py_BuildValue("(si)", "", kif->fd_fd);
+#endif
             if (py_tuple == NULL)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
@@ -869,8 +873,10 @@ error:
         free(freep);
     return NULL;
 }
+#endif
 
 
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 /*
  * Return files opened by process as a list of (path, fd) tuples
  */
@@ -896,8 +902,10 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
     return Py_BuildValue("i", cnt);
 }
+#endif
 
 
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
 /*
  * Return process current working directory.
  */
@@ -943,56 +951,6 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 
 error:
     Py_XDECREF(py_path);
-    if (freep != NULL)
-        free(freep);
-    return NULL;
-}
-#endif
-
-
-#ifdef  __OpenBSD__
-static PyObject *
-psutil_proc_open_files(PyObject *self, PyObject *args) {
-    long pid;
-    int i, cnt;
-    struct kinfo_file *freep = NULL;
-    struct kinfo_file *kif;
-    struct kinfo_proc kipp;
-    PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
-
-    if (py_retlist == NULL)
-        return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        goto error;
-    if (psutil_kinfo_proc(pid, &kipp) == -1)
-        goto error;
-
-    freep = kinfo_getfile(pid, &cnt);
-    if (freep == NULL) {
-        psutil_raise_ad_or_nsp(pid);
-        goto error;
-    }
-
-    for (i = 0; i < cnt; i++) {
-        kif = &freep[i];
-        if ((kif->f_type == DTYPE_VNODE) &&
-                (kif->v_type == VREG))
-        {
-            py_tuple = Py_BuildValue("(si)", "", kif->fd_fd);
-            if (py_tuple == NULL)
-                goto error;
-            if (PyList_Append(py_retlist, py_tuple))
-                goto error;
-            Py_DECREF(py_tuple);
-        }
-    }
-    free(freep);
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
     if (freep != NULL)
         free(freep);
     return NULL;
@@ -2108,10 +2066,12 @@ PsutilMethods[] = {
      "Return process tty (terminal) number"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory."},
-    {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
-     "Return files opened by process as a list of (path, fd) tuples"},
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS,
      "Return the number of file descriptors opened by this process"},
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 || __OpenBSD__
+    {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
+     "Return files opened by process as a list of (path, fd) tuples"},
+#endif
 #ifdef __FreeBSD__
     {"proc_exe", psutil_proc_exe, METH_VARARGS,
      "Return process pathname executable"},
@@ -2125,10 +2085,6 @@ PsutilMethods[] = {
      "Set process CPU affinity."},
     {"cpu_count_phys", psutil_cpu_count_phys, METH_VARARGS,
      "Return an XML string to determine the number physical CPUs."},
-#if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
-    {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
-     "Return files opened by process as a list of (path, fd) tuples"},
-#endif
 #endif
 
     // --- system-related functions
