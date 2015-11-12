@@ -62,7 +62,7 @@
 #ifdef  __FreeBSD__
     #include "arch/bsd/process_info.h"
 #elif __OpenBSD__
-    #include "arch/openbsd/openbsd.h"
+    #include "arch/bsd/openbsd.h"
 #endif
 
 #ifdef  __FreeBSD__
@@ -439,9 +439,6 @@ psutil_proc_num_threads(PyObject *self, PyObject *args) {
  * Thanks to Robert N. M. Watson (FreeBSD):
  * http://fxr.googlebit.com/source/usr.bin/procstat/
  *     procstat_threads.c?v=8-CURRENT
- * OpenBSD reference:
- * https://github.com/janmojzis/pstree/blob/master/proc_kvm.c
- * Note: OpenBSD requires root access.
  */
 
 #ifdef __FreeBSD__

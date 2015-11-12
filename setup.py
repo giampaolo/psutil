@@ -144,7 +144,7 @@ elif sys.platform.startswith("openbsd"):
         sources=[
             'psutil/_psutil_openbsd.c',
             'psutil/_psutil_common.c',
-            'psutil/arch/openbsd/openbsd.c'
+            'psutil/arch/bsd/openbsd.c'
         ],
         define_macros=[VERSION_MACRO],
         libraries=["kvm"])

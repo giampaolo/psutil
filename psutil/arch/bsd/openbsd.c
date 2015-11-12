@@ -242,6 +242,10 @@ error:
 
 PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
+    // OpenBSD reference:
+    // https://github.com/janmojzis/pstree/blob/master/proc_kvm.c
+    // Note: this requires root access, else it will fail trying
+    // to access /dev/kmem.
     long pid;
     kvm_t *kd = NULL;
     int nentries, i;
