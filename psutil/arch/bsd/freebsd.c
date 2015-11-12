@@ -21,7 +21,7 @@
 #include <sys/proc.h>
 #include <signal.h>
 
-#include "process_info.h"
+#include "freebsd.h"
 
 
 /*

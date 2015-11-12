@@ -59,7 +59,7 @@
 #include "_psutil_common.h"
 
 #ifdef  __FreeBSD__
-    #include "arch/bsd/process_info.h"
+    #include "arch/bsd/freebsd.h"
 #elif __OpenBSD__
     #include "arch/bsd/openbsd.h"
 #endif

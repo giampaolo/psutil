@@ -133,7 +133,8 @@ elif sys.platform.startswith("freebsd"):
         sources=[
             'psutil/_psutil_bsd.c',
             'psutil/_psutil_common.c',
-            'psutil/arch/bsd/process_info.c'],
+            'psutil/arch/bsd/freebsd.c',
+        ],
         define_macros=[VERSION_MACRO],
         libraries=["devstat"])
     extensions = [ext, posix_extension]
@@ -144,7 +145,7 @@ elif sys.platform.startswith("openbsd"):
         sources=[
             'psutil/_psutil_openbsd.c',
             'psutil/_psutil_common.c',
-            'psutil/arch/bsd/openbsd.c'
+            'psutil/arch/bsd/openbsd.c',
         ],
         define_macros=[VERSION_MACRO],
         libraries=["kvm"])
