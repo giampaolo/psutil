@@ -85,96 +85,6 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount)
 }
 
 
-char
-*psutil_get_cmd_path(long pid, size_t *pathsize)
-{
-    int mib[4];
-    char *path;
-    size_t size = 0;
-
-    /*
-     * Make a sysctl() call to get the raw argument space of the process.
-     */
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_ARGS;
-    mib[3] = pid;
-
-    // call with a null buffer first to determine if we need a buffer
-    if (sysctl(mib, 4, NULL, &size, NULL, 0) == -1) {
-        return NULL;
-    }
-
-    path = malloc(size);
-    if (path == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    *pathsize = size;
-    if (sysctl(mib, 4, path, &size, NULL, 0) == -1) {
-        free(path);
-        return NULL;       // Insufficient privileges
-    }
-
-    return path;
-}
-
-
-/*
- * XXX no longer used; it probably makese sense to remove it.
- * Borrowed from psi Python System Information project
- *
- * Get command arguments and environment variables.
- *
- * Based on code from ps.
- *
- * Returns:
- *      0 for success;
- *      -1 for failure (Exception raised);
- *      1 for insufficient privileges.
- */
-char
-*psutil_get_cmd_args(long pid, size_t *argsize)
-{
-    int mib[4], argmax;
-    size_t size = sizeof(argmax);
-    char *procargs = NULL;
-
-    // Get the maximum process arguments size.
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_ARGMAX;
-
-    size = sizeof(argmax);
-    if (sysctl(mib, 2, &argmax, &size, NULL, 0) == -1)
-        return NULL;
-
-    // Allocate space for the arguments.
-    procargs = (char *)malloc(argmax);
-    if (procargs == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    /*
-     * Make a sysctl() call to get the raw argument space of the process.
-     */
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_ARGS;
-    mib[3] = pid;
-
-    size = argmax;
-    if (sysctl(mib, 4, procargs, &size, NULL, 0) == -1) {
-        free(procargs);
-        return NULL;       // Insufficient privileges
-    }
-
-    // return string and set the length of arguments
-    *argsize = size;
-    return procargs;
-}
-
 char **
 get_argv(long pid)
 {
@@ -258,6 +168,7 @@ psutil_raise_ad_or_nsp(pid) {
     }
 }
 
+
 /*
  * mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an int as arg
  * and returns an array with cnt struct kinfo_file
@@ -277,23 +188,19 @@ kinfo_getfile(long pid, int* cnt) {
 
     /* get the size of what would be returned */
     if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
-        warn("failed in first call to KERN_FILE_BYPID");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
     if ((kf = malloc(len)) == NULL) {
-        warn("failed malloc before second KERN_FILE_BYPID call");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
     mib[5] = (int)(len / sizeof(struct kinfo_file));
     if (sysctl(mib, 6, kf, &len, NULL, 0) < 0) {
-        warn("failed in second call to KERN_FILE_BYPID");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
     *cnt = (int)(len / sizeof(struct kinfo_file));
-/*    printf ("returning %d files for pid %d\n", *cnt,pid); */
     return kf;
 }

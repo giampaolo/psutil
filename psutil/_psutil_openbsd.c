@@ -1408,6 +1408,7 @@ error:
 }
 
 
+#ifdef __OpenBSD__
 /*
  * Return a Python list of tuple representing per-cpu times
  */
@@ -1469,6 +1470,7 @@ error:
     Py_DECREF(py_retlist);
     return NULL;
 }
+#endif
 
 
 #if 0
