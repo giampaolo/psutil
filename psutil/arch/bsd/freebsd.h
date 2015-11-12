@@ -13,4 +13,11 @@ char *psutil_get_cmd_args(long pid, size_t *argsize);
 char *psutil_get_cmd_path(long pid, size_t *pathsize);
 int psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount);
 int psutil_pid_exists(long pid);
+
+//
 PyObject* psutil_get_cmdline(long pid);
+PyObject* psutil_proc_exe(PyObject* self, PyObject* args);
+PyObject* psutil_proc_num_threads(PyObject* self, PyObject* args);
+PyObject* psutil_proc_threads(PyObject* self, PyObject* args);
+PyObject* psutil_cpu_count_phys(PyObject* self, PyObject* args);
+PyObject* psutil_virtual_mem(PyObject* self, PyObject* args);

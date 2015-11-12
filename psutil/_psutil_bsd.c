@@ -68,7 +68,6 @@
     #include <sys/cpuset.h>
     #include <net/if_media.h>
     #include <devstat.h>  // get io counters
-    #include <sys/vmmeter.h>  // needed for vmtotal struct
     #include <libutil.h>  // process open files, shared libs (kinfo_getvmmap)
 
     #if __FreeBSD_version < 900000
@@ -93,7 +92,8 @@
 #ifdef __FreeBSD__
     // convert a timeval struct to a double
     // convert a bintime struct to milliseconds
-    #define BT2MSEC(bt)     (bt.sec * 1000 + ( ( (uint64_t) 1000000000 * (uint32_t) (bt.frac >> 32) ) >> 32 ) / 1000000)
+    #define BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * (uint32_t) \
+        (bt.frac >> 32) ) >> 32 ) / 1000000)
 #endif
 
 #ifdef __OpenBSD__
@@ -186,49 +186,6 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     return Py_BuildValue("s", kp.p_comm);
 #endif
 }
-
-
-#ifdef __FreeBSD__
-/*
- * Return process pathname executable.
- * Thanks to Robert N. M. Watson:
- * http://fxr.googlebit.com/source/usr.bin/procstat/procstat_bin.c?v=8-CURRENT
- */
-static PyObject *
-psutil_proc_exe(PyObject *self, PyObject *args) {
-    long pid;
-    char pathname[PATH_MAX];
-    int error;
-    int mib[4];
-    int ret;
-    size_t size;
-
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PATHNAME;
-    mib[3] = pid;
-
-    size = sizeof(pathname);
-    error = sysctl(mib, 4, pathname, &size, NULL, 0);
-    if (error == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-    if (size == 0 || strlen(pathname) == 0) {
-        ret = psutil_pid_exists(pid);
-        if (ret == -1)
-            return NULL;
-        else if (ret == 0)
-            return NoSuchProcess();
-        else
-            strcpy(pathname, "");
-    }
-    return Py_BuildValue("s", pathname);
-}
-#endif
 
 
 /*
@@ -381,107 +338,6 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
 }
 
 
-#ifdef __FreeBSD__
-/*
- * Return number of threads used by process as a Python integer.
- */
-static PyObject *
-psutil_proc_num_threads(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("l", (long)kp.ki_numthreads);
-}
-#endif
-
-
-/*
- * Retrieves all threads used by process returning a list of tuples
- * including thread id, user time and system time.
- * Thanks to Robert N. M. Watson (FreeBSD):
- * http://fxr.googlebit.com/source/usr.bin/procstat/
- *     procstat_threads.c?v=8-CURRENT
- */
-
-#ifdef __FreeBSD__
-static PyObject *
-psutil_proc_threads(PyObject *self, PyObject *args) {
-    long pid;
-    int mib[4];
-    struct kinfo_proc *kip = NULL;
-    struct kinfo_proc *kipp = NULL;
-    int error;
-    unsigned int i;
-    size_t size;
-    PyObject *py_retlist = PyList_New(0);
-    PyObject *py_tuple = NULL;
-
-    if (py_retlist == NULL)
-        return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        goto error;
-
-    // we need to re-query for thread information, so don't use *kipp
-    mib[0] = CTL_KERN;
-    mib[1] = KERN_PROC;
-    mib[2] = KERN_PROC_PID | KERN_PROC_INC_THREAD;
-    mib[3] = pid;
-
-    size = 0;
-    error = sysctl(mib, 4, NULL, &size, NULL, 0);
-    if (error == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-    if (size == 0) {
-        NoSuchProcess();
-        goto error;
-    }
-
-    kip = malloc(size);
-    if (kip == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    error = sysctl(mib, 4, kip, &size, NULL, 0);
-    if (error == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        goto error;
-    }
-    if (size == 0) {
-        NoSuchProcess();
-        goto error;
-    }
-
-    for (i = 0; i < size / sizeof(*kipp); i++) {
-        kipp = &kip[i];
-        py_tuple = Py_BuildValue("Idd",
-                                 kipp->ki_tid,
-                                 TV2DOUBLE(kipp->ki_rusage.ru_utime),
-                                 TV2DOUBLE(kipp->ki_rusage.ru_stime));
-        if (py_tuple == NULL)
-            goto error;
-        if (PyList_Append(py_retlist, py_tuple))
-            goto error;
-        Py_DECREF(py_tuple);
-    }
-    free(kip);
-    return py_retlist;
-
-error:
-    Py_XDECREF(py_tuple);
-    Py_DECREF(py_retlist);
-    if (kip != NULL)
-        free(kip);
-    return NULL;
-}
-#endif
-
-
 /*
  * Return a Python tuple (user_time, kernel_time)
  */
@@ -525,41 +381,6 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
     else
         return Py_BuildValue("i", ncpu);
 }
-
-
-#ifdef __FreeBSD__
-/*
- * Return an XML string from which we'll determine the number of
- * physical CPU cores in the system.
- */
-static PyObject *
-psutil_cpu_count_phys(PyObject *self, PyObject *args) {
-    void *topology = NULL;
-    size_t size = 0;
-    PyObject *py_str;
-
-    if (sysctlbyname("kern.sched.topology_spec", NULL, &size, NULL, 0))
-        goto error;
-
-    topology = malloc(size);
-    if (!topology) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    if (sysctlbyname("kern.sched.topology_spec", topology, &size, NULL, 0))
-        goto error;
-
-    py_str = Py_BuildValue("s", topology);
-    free(topology);
-    return py_str;
-
-error:
-    if (topology != NULL)
-        free(topology);
-    Py_RETURN_NONE;
-}
-#endif
 
 
 /*
@@ -641,62 +462,6 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         ptoa(kp.p_vm_ssize));  // stack
 #endif
 }
-
-
-#ifdef __FreeBSD__
-/*
- * Return virtual memory usage statistics.
- */
-static PyObject *
-psutil_virtual_mem(PyObject *self, PyObject *args) {
-    unsigned int   total, active, inactive, wired, cached, free;
-    size_t         size = sizeof(total);
-    struct vmtotal vm;
-    int            mib[] = {CTL_VM, VM_METER};
-    long           pagesize = getpagesize();
-#if __FreeBSD_version > 702101
-    long buffers;
-#else
-    int buffers;
-#endif
-    size_t buffers_size = sizeof(buffers);
-
-    if (sysctlbyname("vm.stats.vm.v_page_count", &total, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_active_count", &active, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_inactive_count",
-                     &inactive, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_wire_count", &wired, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_cache_count", &cached, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vm.stats.vm.v_free_count", &free, &size, NULL, 0))
-        goto error;
-    if (sysctlbyname("vfs.bufspace", &buffers, &buffers_size, NULL, 0))
-        goto error;
-
-    size = sizeof(vm);
-    if (sysctl(mib, 2, &vm, &size, NULL, 0) != 0)
-        goto error;
-
-    return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) total    * pagesize,
-        (unsigned long long) free     * pagesize,
-        (unsigned long long) active   * pagesize,
-        (unsigned long long) inactive * pagesize,
-        (unsigned long long) wired    * pagesize,
-        (unsigned long long) cached   * pagesize,
-        (unsigned long long) buffers,
-        (unsigned long long) (vm.t_vmshr + vm.t_rmshr) * pagesize  // shared
-    );
-
-error:
-    PyErr_SetFromErrno(PyExc_OSError);
-    return NULL;
-}
-#endif
 
 
 #ifndef _PATH_DEVNULL
