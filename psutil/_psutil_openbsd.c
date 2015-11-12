@@ -1330,7 +1330,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     long pid;
     int ptrwidth;
     int i, cnt;
-    char [1000];
+    char addr[1000];
     char perms[4];
     const char *path;
     struct kinfo_proc kp;
@@ -1340,9 +1340,8 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
 
-    if (py_retlist == NULL) {
+    if (py_retlist == NULL)
         return NULL;
-    }
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
     if (psutil_kinfo_proc(pid, &kp) == -1)
@@ -1485,6 +1484,38 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, "ro", sizeof(opts));
         else
             strlcat(opts, "rw", sizeof(opts));
+#ifdef __FreeBSD__
+        if (flags & MNT_SYNCHRONOUS)
+            strlcat(opts, ",sync", sizeof(opts));
+        if (flags & MNT_NOEXEC)
+            strlcat(opts, ",noexec", sizeof(opts));
+        if (flags & MNT_NOSUID)
+            strlcat(opts, ",nosuid", sizeof(opts));
+        if (flags & MNT_UNION)
+            strlcat(opts, ",union", sizeof(opts));
+        if (flags & MNT_ASYNC)
+            strlcat(opts, ",async", sizeof(opts));
+        if (flags & MNT_SUIDDIR)
+            strlcat(opts, ",suiddir", sizeof(opts));
+        if (flags & MNT_SOFTDEP)
+            strlcat(opts, ",softdep", sizeof(opts));
+        if (flags & MNT_NOSYMFOLLOW)
+            strlcat(opts, ",nosymfollow", sizeof(opts));
+        if (flags & MNT_GJOURNAL)
+            strlcat(opts, ",gjournal", sizeof(opts));
+        if (flags & MNT_MULTILABEL)
+            strlcat(opts, ",multilabel", sizeof(opts));
+        if (flags & MNT_ACLS)
+            strlcat(opts, ",acls", sizeof(opts));
+        if (flags & MNT_NOATIME)
+            strlcat(opts, ",noatime", sizeof(opts));
+        if (flags & MNT_NOCLUSTERR)
+            strlcat(opts, ",noclusterr", sizeof(opts));
+        if (flags & MNT_NOCLUSTERW)
+            strlcat(opts, ",noclusterw", sizeof(opts));
+        if (flags & MNT_NFS4ACLS)
+            strlcat(opts, ",nfs4acls", sizeof(opts));
+#elif __OpenBSD__
         if (flags & MNT_SYNCHRONOUS)
             strlcat(opts, ",sync", sizeof(opts));
         if (flags & MNT_NOEXEC)
@@ -1497,7 +1528,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",softdep", sizeof(opts));
         if (flags & MNT_NOATIME)
             strlcat(opts, ",noatime", sizeof(opts));
-
+#endif
         py_tuple = Py_BuildValue("(ssss)",
                                  fs[i].f_mntfromname,  // device
                                  fs[i].f_mntonname,    // mount point
