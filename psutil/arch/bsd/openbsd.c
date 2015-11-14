@@ -558,7 +558,6 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                 else {
                     // local address, IPv6
                     memcpy(&laddr6, kif->inp_laddru, sizeof(laddr6));
-                    (void *)(uintptr_t)kif->inp_ppcb;
                     snprintf(addrbuf, sizeof(addrbuf), "%s",
                              psutil_inet6_addrstr(&laddr6));
                     py_laddr = Py_BuildValue("(si)", addrbuf, lport);
@@ -578,7 +577,6 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     else {
                         // remote address, IPv6
                         memcpy(&laddr6, kif->inp_faddru, sizeof(laddr6));
-                        (void *)(uintptr_t)kif->inp_ppcb;
                         snprintf(addrbuf, sizeof(addrbuf), "%s",
                                  psutil_inet6_addrstr(&laddr6));
                         py_raddr = Py_BuildValue("(si)", addrbuf, rport);
