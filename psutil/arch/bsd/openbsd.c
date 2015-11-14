@@ -31,6 +31,7 @@
 #undef _KERNEL
 #include <sys/disk.h>  // struct diskstats
 #include <arpa/inet.h> // for inet_ntoa()
+#include <err.h> // for warn() & err()
 
 
 #include "openbsd.h"
