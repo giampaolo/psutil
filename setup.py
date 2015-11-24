@@ -144,7 +144,7 @@ elif sys.platform.startswith("openbsd"):
     ext = Extension(
         'psutil._psutil_bsd',
         sources=[
-            'psutil/_psutil_openbsd.c',
+            'psutil/_psutil_bsd.c',
             'psutil/_psutil_common.c',
             'psutil/arch/bsd/openbsd.c',
         ],

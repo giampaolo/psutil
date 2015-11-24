@@ -30,9 +30,12 @@
 #include <sys/file.h>
 #undef _KERNEL
 #include <sys/disk.h>  // struct diskstats
+#include <arpa/inet.h> // for inet_ntoa()
+#include <err.h> // for warn() & err()
 
 
 #include "openbsd.h"
+#include "../../_psutil_common.h"
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -138,6 +141,7 @@ psutil_raise_ad_or_nsp(long pid) {
         NoSuchProcess();
     else
         AccessDenied();
+    return 0;
 }
 
 
@@ -154,13 +158,9 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     // On success, the function returns 0.
     // On error, the function returns a BSD errno value.
     struct kinfo_proc *result;
-    int done;
-    static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC, 0 };
     // Declaring name as const requires us to cast it when passing it to
     // sysctl because the prototype doesn't include the const modifier.
-    size_t              length;
     char errbuf[_POSIX2_LINE_MAX];
-    struct kinfo_proc *x;
     int cnt;
     kvm_t *kd;
 
@@ -200,7 +200,6 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
 char **
 _psutil_get_argv(long pid) {
     static char **argv;
-    char **p;
     int argv_mib[] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_ARGV};
     size_t argv_size = 128;
     /* Loop and reallocate until we have enough space to fit argv. */
@@ -321,7 +320,7 @@ error:
 
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    unsigned int   total, active, inactive, wired, cached, free;
+    unsigned int   total;
     size_t         size = sizeof(total);
     struct uvmexp  uvmexp;
     int            mib[] = {CTL_VM, VM_UVMEXP};
@@ -479,7 +478,6 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
     char *tcplist = NULL;
-    struct tcpcb *tcp;
 
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
@@ -509,7 +507,6 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
         int state;
         int lport;
         int rport;
-        char path[PATH_MAX];
         char addrbuf[NI_MAXHOST + 2];
         int inseq;
         struct in6_addr laddr6;
@@ -555,7 +552,6 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                 else {
                     // local address, IPv6
                     memcpy(&laddr6, kif->inp_laddru, sizeof(laddr6));
-                    (void *)(uintptr_t)kif->inp_ppcb;
                     snprintf(addrbuf, sizeof(addrbuf), "%s",
                              psutil_inet6_addrstr(&laddr6));
                     py_laddr = Py_BuildValue("(si)", addrbuf, lport);
@@ -575,7 +571,6 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     else {
                         // remote address, IPv6
                         memcpy(&laddr6, kif->inp_faddru, sizeof(laddr6));
-                        (void *)(uintptr_t)kif->inp_ppcb;
                         snprintf(addrbuf, sizeof(addrbuf), "%s",
                                  psutil_inet6_addrstr(&laddr6));
                         py_raddr = Py_BuildValue("(si)", addrbuf, rport);
@@ -641,7 +636,6 @@ error:
 
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
-    static int maxcpus;
     int mib[3];
     int ncpu;
     size_t len;
