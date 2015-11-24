@@ -164,7 +164,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     int cnt;
     kvm_t *kd;
 
-    assert( procList != NULL);
+    assert(procList != NULL);
     assert(*procList == NULL);
     assert(procCount != NULL);
 
@@ -216,6 +216,7 @@ _psutil_get_argv(long pid) {
             err(1, NULL);
     }
 }
+
 
 // returns the command line as a python list object
 PyObject *
@@ -352,25 +353,22 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     int nswap, i;
 
     if ((nswap = swapctl(SWAP_NSWAP, 0, 0)) == 0) {
-        warn("failed to get swap device count");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
     if ((swdev = calloc(nswap, sizeof(*swdev))) == NULL) {
-        warn("failed to allocate memory for swdev structures");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
     if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
         free(swdev);
-        warn("failed to get swap stats");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
-    /* Total things up */
+    // Total things up.
     swap_total = swap_free = 0;
     for (i = 0; i < nswap; i++) {
         if (swdev[i].se_flags & SWF_ENABLE) {
@@ -378,12 +376,14 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
             swap_total += swdev[i].se_nblks;
         }
     }
+
+    free(swdev);
     return Py_BuildValue("(LLLII)",
                          swap_total * DEV_BSIZE,
                          (swap_total - swap_free) * DEV_BSIZE,
                          swap_free * DEV_BSIZE,
-                         0 /* XXX swap in */,
-                         0 /* XXX swap out */);
+                         // TODO: swap in / swap out
+                         0, 0);
 }
 
 

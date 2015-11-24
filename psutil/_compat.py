@@ -208,8 +208,8 @@ except ImportError:
         path.
         """
         def _access_check(fn, mode):
-            return (os.path.exists(fn) and os.access(fn, mode)
-                    and not os.path.isdir(fn))
+            return (os.path.exists(fn) and os.access(fn, mode) and
+                    not os.path.isdir(fn))
 
         if os.path.dirname(cmd):
             if _access_check(cmd, mode):

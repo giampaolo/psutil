@@ -22,9 +22,10 @@ import psutil
 import psutil._common
 from psutil._compat import callable
 from psutil._compat import xrange
-from test_psutil import BSD
+from test_psutil import FREEBSD
 from test_psutil import get_test_subprocess
 from test_psutil import LINUX
+from test_psutil import OPENBSD
 from test_psutil import OSX
 from test_psutil import POSIX
 from test_psutil import reap_children
@@ -246,12 +247,12 @@ class TestProcessObjectLeaks(Base):
     def test_cwd(self):
         self.execute('cwd')
 
-    @unittest.skipUnless(WINDOWS or LINUX or BSD,
+    @unittest.skipUnless(WINDOWS or LINUX or FREEBSD,
                          "Windows or Linux or BSD only")
     def test_cpu_affinity_get(self):
         self.execute('cpu_affinity')
 
-    @unittest.skipUnless(WINDOWS or LINUX or BSD,
+    @unittest.skipUnless(WINDOWS or LINUX or FREEBSD,
                          "Windows or Linux or BSD only")
     def test_cpu_affinity_set(self):
         affinity = psutil.Process().cpu_affinity()
@@ -267,6 +268,7 @@ class TestProcessObjectLeaks(Base):
 
     # OSX implementation is unbelievably slow
     @unittest.skipIf(OSX, "OSX implementation is too slow")
+    @unittest.skipIf(OPENBSD, "not implemented on OpenBSD")
     @skip_if_linux()
     def test_memory_maps(self):
         self.execute('memory_maps')

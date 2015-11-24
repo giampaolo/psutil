@@ -22,10 +22,6 @@
     :target: https://github.com/giampaolo/psutil/
     :alt: Github stars
 
-.. image:: https://img.shields.io/scrutinizer/g/giampaolo/psutil.svg
-    :target: https://scrutinizer-ci.com/g/giampaolo/psutil/
-    :alt: Code quality (scrutinizer-ci.com)
-
 .. image:: https://img.shields.io/pypi/l/psutil.svg
     :target: https://pypi.python.org/pypi/psutil/
     :alt: License
