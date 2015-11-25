@@ -100,9 +100,9 @@ class OpenBSDSpecificTestCase(unittest.TestCase):
         self.assertEqual(smem.used, int(used) * 512)
         self.assertEqual(smem.free, int(free) * 512)
 
-    # def test_virtual_memory(self):
-    #     s = sysctl('hw.physmem')
-    #     self.assertEqual(s, psutil.virtual_memory().total)
+    def test_virtual_memory(self):
+        num = sysctl('hw.physmem')
+        self.assertEqual(num, psutil.virtual_memory().total)
 
 
 def main():

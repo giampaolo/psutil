@@ -322,12 +322,20 @@ error:
 
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
+    int64_t total_physmem;
     int uvmexp_mib[] = {CTL_VM, VM_UVMEXP};
     int bcstats_mib[] = {CTL_VFS, VFS_GENERIC, VFS_BCACHESTAT};
+    int physmem_mib[] = {CTL_HW, HW_PHYSMEM64};
     size_t size;
     struct uvmexp uvmexp;
     struct bcachestats bcstats;
     long pagesize = getpagesize();
+
+    size = sizeof(total_physmem);
+    if (sysctl(physmem_mib, 2, &total_physmem, &size, NULL, 0) < 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
 
     size = sizeof(uvmexp);
     if (sysctl(uvmexp_mib, 2, &uvmexp, &size, NULL, 0) < 0) {
@@ -343,7 +351,10 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     }
 
     return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) uvmexp.npages * pagesize,
+        // Note: many programs calculate total memory as
+        // "uvmexp.npages * pagesize" but this is incorrect and does not
+        // match "sysctl | grep hw.physmem".
+        (unsigned long long) total_physmem,
         (unsigned long long) uvmexp.free * pagesize,
         (unsigned long long) uvmexp.active * pagesize,
         (unsigned long long) uvmexp.inactive * pagesize,
