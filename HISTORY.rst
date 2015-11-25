@@ -1,5 +1,13 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+3.3.1 - XXXX-XX-XX
+==================
+
+**Bug fixes**
+
+- #714: [OpenBSD] virtual_memory().cached value was always set to 0.
+
+
 3.3.0 - 2015-11-25
 ==================
 

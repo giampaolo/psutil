@@ -19,6 +19,7 @@
 #include <sys/sysctl.h>
 #include <sys/user.h>
 #include <sys/proc.h>
+#include <sys/mount.h>  // for VFS_*
 #include <sys/swap.h>  // for swap_mem
 #include <signal.h>
 #include <kvm.h>
@@ -321,25 +322,33 @@ error:
 
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    unsigned int   total;
-    size_t         size = sizeof(total);
-    struct uvmexp  uvmexp;
-    int            mib[] = {CTL_VM, VM_UVMEXP};
-    long           pagesize = getpagesize();
-    size = sizeof(uvmexp);
+    int uvmexp_mib[] = {CTL_VM, VM_UVMEXP};
+    int bcstats_mib[] = {CTL_VFS, VFS_GENERIC, VFS_BCACHESTAT};
+    size_t size;
+    struct uvmexp uvmexp;
+    struct bcachestats bcstats;
+    long pagesize = getpagesize();
 
-    if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
-        warn("failed to get vm.uvmexp");
+    size = sizeof(uvmexp);
+    if (sysctl(uvmexp_mib, 2, &uvmexp, &size, NULL, 0) < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
+
+    // This is how "top" calculates cached memory.
+    size = sizeof(bcstats);
+    if (sysctl(bcstats_mib, 3, &bcstats, &size, NULL, 0) < 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
     return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) uvmexp.npages    * pagesize,
-        (unsigned long long) uvmexp.free     * pagesize,
-        (unsigned long long) uvmexp.active   * pagesize,
+        (unsigned long long) uvmexp.npages * pagesize,
+        (unsigned long long) uvmexp.free * pagesize,
+        (unsigned long long) uvmexp.active * pagesize,
         (unsigned long long) uvmexp.inactive * pagesize,
-        (unsigned long long) uvmexp.wired    * pagesize,
-        (unsigned long long) 0,  // cached
+        (unsigned long long) uvmexp.wired * pagesize,
+        (unsigned long long) bcstats.numbufpages * pagesize,  // cached
         (unsigned long long) 0,  // buffers
         (unsigned long long) 0   // shared
     );
