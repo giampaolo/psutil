@@ -1,6 +1,7 @@
 .. module:: psutil
    :synopsis: psutil module
 .. moduleauthor:: Giampaolo Rodola' <grodola@gmail.com>
+.. versionchanged:: 3.3.0 added support for OpenBSD
 
 .. warning::
 
