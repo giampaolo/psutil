@@ -21,6 +21,7 @@
 #include <sys/proc.h>
 #include <sys/mount.h>  // for VFS_*
 #include <sys/swap.h>  // for swap_mem
+#include <sys/vmmeter.h>  // for vmtotal struct
 #include <signal.h>
 #include <kvm.h>
 // connection stuff
@@ -326,9 +327,11 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     int uvmexp_mib[] = {CTL_VM, VM_UVMEXP};
     int bcstats_mib[] = {CTL_VFS, VFS_GENERIC, VFS_BCACHESTAT};
     int physmem_mib[] = {CTL_HW, HW_PHYSMEM64};
+    int vmmeter_mib[] = {CTL_VM, VM_METER};
     size_t size;
     struct uvmexp uvmexp;
     struct bcachestats bcstats;
+    struct vmtotal vmdata;
     long pagesize = getpagesize();
 
     size = sizeof(total_physmem);
@@ -343,9 +346,14 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    // This is how "top" calculates cached memory.
     size = sizeof(bcstats);
     if (sysctl(bcstats_mib, 3, &bcstats, &size, NULL, 0) < 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    size = sizeof(vmdata);
+    if (sysctl(vmmeter_mib, 2, &vmdata, &size, NULL, 0) < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
@@ -359,9 +367,10 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         (unsigned long long) uvmexp.active * pagesize,
         (unsigned long long) uvmexp.inactive * pagesize,
         (unsigned long long) uvmexp.wired * pagesize,
+        // this is how "top" determines it
         (unsigned long long) bcstats.numbufpages * pagesize,  // cached
         (unsigned long long) 0,  // buffers
-        (unsigned long long) 0   // shared
+        (unsigned long long) vmdata.t_vmshr + vmdata.t_rmshr  // shared
     );
 }
 
