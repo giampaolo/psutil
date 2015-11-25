@@ -339,9 +339,9 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         (unsigned long long) uvmexp.active   * pagesize,
         (unsigned long long) uvmexp.inactive * pagesize,
         (unsigned long long) uvmexp.wired    * pagesize,
-        (unsigned long long) 0,
-        (unsigned long long) 0,
-        (unsigned long long) 0
+        (unsigned long long) 0,  // cached
+        (unsigned long long) 0,  // buffers
+        (unsigned long long) 0   // shared
     );
 }
 

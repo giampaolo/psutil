@@ -92,6 +92,18 @@ class OpenBSDSpecificTestCase(unittest.TestCase):
         syst = sysctl("hw.ncpu")
         self.assertEqual(psutil.cpu_count(logical=True), syst)
 
+    def test_swap_memory(self):
+        out = sh("pstat -s")
+        _, total, used, free, _, _ = out.split('\n')[1].split()
+        smem = psutil.swap_memory()
+        self.assertEqual(smem.total, int(total) * 512)
+        self.assertEqual(smem.used, int(used) * 512)
+        self.assertEqual(smem.free, int(free) * 512)
+
+    # def test_virtual_memory(self):
+    #     s = sysctl('hw.physmem')
+    #     self.assertEqual(s, psutil.virtual_memory().total)
+
 
 def main():
     test_suite = unittest.TestSuite()
