@@ -3228,6 +3228,8 @@ def main():
         from _osx import OSXSpecificTestCase as stc
     elif FREEBSD:
         from _freebsd import FreeBSDSpecificTestCase as stc
+    elif OPENBSD:
+        from _openbsd import OpenBSDSpecificTestCase as stc
     elif SUNOS:
         from _sunos import SunOSSpecificTestCase as stc
     if stc is not None:
