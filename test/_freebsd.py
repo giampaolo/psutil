@@ -156,6 +156,10 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         syst = sysctl("sysctl vm.stats.vm.v_page_count") * PAGESIZE
         self.assertEqual(psutil.virtual_memory().total, syst)
 
+    def test_vmem_total_2(self):
+        num = sysctl('hw.physmem')
+        self.assertEqual(num, psutil.virtual_memory().total)
+
     @retry_before_failing()
     def test_vmem_active(self):
         syst = sysctl("vm.stats.vm.v_active_count") * PAGESIZE
