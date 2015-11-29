@@ -125,12 +125,17 @@ TimeoutExpired = None
 
 # --- utils
 
-def open_text(fname):
+def open_binary(fname, **kwargs):
+    return open(fname, "rb", **kwargs)
+
+
+def open_text(fname, **kwargs):
     """On Python 3 opens a file in text mode by using fs encoding.
     On Python 2 this is just an alias for open(name, 'rt').
     """
-    kw = dict(encoding=FS_ENCODING) if PY3 else dict()
-    return open(fname, "rt", **kw)
+    if PY3 and 'encoding' not in kwargs:
+        kwargs['encoding'] = FS_ENCODING
+    return open(fname, "rt", **kwargs)
 
 
 def get_procfs_path():
@@ -146,7 +151,7 @@ def set_scputimes_ntuple(procfs_path):
      [guest_nice]]])
     """
     global scputimes
-    with open('%s/stat' % procfs_path, 'rb') as f:
+    with open_binary('%s/stat' % procfs_path) as f:
         values = f.readline().split()[1:]
     fields = ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq']
     vlen = len(values)
@@ -185,7 +190,7 @@ pmmap_ext = namedtuple(
 def virtual_memory():
     total, free, buffers, shared, _, _ = cext.linux_sysinfo()
     cached = active = inactive = None
-    with open('%s/meminfo' % get_procfs_path(), 'rb') as f:
+    with open_binary('%s/meminfo' % get_procfs_path()) as f:
         for line in f:
             if line.startswith(b"Cached:"):
                 cached = int(line.split()[1]) * 1024
@@ -216,7 +221,7 @@ def swap_memory():
     used = total - free
     percent = usage_percent(used, total, _round=1)
     # get pgin/pgouts
-    with open("%s/vmstat" % get_procfs_path(), "rb") as f:
+    with open_binary("%s/vmstat" % get_procfs_path()) as f:
         sin = sout = None
         for line in f:
             # values are expressed in 4 kilo bytes, we want bytes instead
@@ -247,7 +252,7 @@ def cpu_times():
     """
     procfs_path = get_procfs_path()
     set_scputimes_ntuple(procfs_path)
-    with open('%s/stat' % procfs_path, 'rb') as f:
+    with open_binary('%s/stat' % procfs_path) as f:
         values = f.readline().split()
     fields = values[1:len(scputimes._fields) + 1]
     fields = [float(x) / CLOCK_TICKS for x in fields]
@@ -261,7 +266,7 @@ def per_cpu_times():
     procfs_path = get_procfs_path()
     set_scputimes_ntuple(procfs_path)
     cpus = []
-    with open('%s/stat' % procfs_path, 'rb') as f:
+    with open_binary('%s/stat' % procfs_path) as f:
         # get rid of the first line which refers to system wide CPU stats
         f.readline()
         for line in f:
@@ -281,7 +286,7 @@ def cpu_count_logical():
     except ValueError:
         # as a second fallback we try to parse /proc/cpuinfo
         num = 0
-        with open('%s/cpuinfo' % get_procfs_path(), 'rb') as f:
+        with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
             for line in f:
                 if line.lower().startswith(b'processor'):
                     num += 1
@@ -307,7 +312,7 @@ def cpu_count_physical():
     """Return the number of physical cores in the system."""
     mapping = {}
     current_info = {}
-    with open('%s/cpuinfo' % get_procfs_path(), 'rb') as f:
+    with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
         for line in f:
             line = line.strip().lower()
             if not line:
@@ -351,7 +356,7 @@ def users():
 def boot_time():
     """Return the system boot time expressed in seconds since the epoch."""
     global BOOT_TIME
-    with open('%s/stat' % get_procfs_path(), 'rb') as f:
+    with open_binary('%s/stat' % get_procfs_path()) as f:
         for line in f:
             if line.startswith(b'btime'):
                 ret = float(line.strip().split()[1])
@@ -550,8 +555,8 @@ class Connections:
     def process_unix(self, file, family, inodes, filter_pid=None):
         """Parse /proc/net/unix files."""
         # see: https://github.com/giampaolo/psutil/issues/675
-        kw = dict(encoding=FS_ENCODING, errors='replace') if PY3 else dict()
-        with open(file, 'rt', **kw) as f:
+        kw = dict(errors='replace') if PY3 else dict()
+        with open_text(file, **kw) as f:
             f.readline()  # skip the first line
             for line in f:
                 tokens = line.split()
@@ -844,7 +849,7 @@ class Process(object):
     @wrap_exceptions
     def terminal(self):
         tmap = _psposix._get_terminal_map()
-        with open("%s/%s/stat" % (self._procfs_path, self.pid), 'rb') as f:
+        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
             tty_nr = int(f.read().split(b' ')[6])
         try:
             return tmap[tty_nr]
@@ -855,7 +860,7 @@ class Process(object):
         @wrap_exceptions
         def io_counters(self):
             fname = "%s/%s/io" % (self._procfs_path, self.pid)
-            with open(fname, 'rb') as f:
+            with open_binary(fname) as f:
                 rcount = wcount = rbytes = wbytes = None
                 for line in f:
                     if rcount is None and line.startswith(b"syscr"):
@@ -878,7 +883,7 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        with open("%s/%s/stat" % (self._procfs_path, self.pid), 'rb') as f:
+        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
             st = f.read().strip()
         # ignore the first two values ("pid (exe)")
         st = st[st.find(b')') + 2:]
@@ -899,7 +904,7 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        with open("%s/%s/stat" % (self._procfs_path, self.pid), 'rb') as f:
+        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
             st = f.read().strip()
         # ignore the first two values ("pid (exe)")
         st = st[st.rfind(b')') + 2:]
@@ -914,7 +919,7 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        with open("%s/%s/statm" % (self._procfs_path, self.pid), 'rb') as f:
+        with open_binary("%s/%s/statm" % (self._procfs_path, self.pid)) as f:
             vms, rss = f.readline().split()[:2]
             return _common.pmem(int(rss) * PAGESIZE,
                                 int(vms) * PAGESIZE)
@@ -932,7 +937,7 @@ class Process(object):
         # | data   | data + stack                        | drs  | DATA |
         # | dirty  | dirty pages (unused in Linux 2.6)   | dt   |      |
         #  ============================================================
-        with open("%s/%s/statm" % (self._procfs_path, self.pid), "rb") as f:
+        with open_binary("%s/%s/statm" % (self._procfs_path, self.pid)) as f:
             vms, rss, shared, text, lib, data, dirty = \
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
         return pextmem(rss, vms, shared, text, lib, data, dirty)
@@ -1015,7 +1020,7 @@ class Process(object):
     @wrap_exceptions
     def num_ctx_switches(self):
         vol = unvol = None
-        with open("%s/%s/status" % (self._procfs_path, self.pid), "rb") as f:
+        with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
             for line in f:
                 if line.startswith(b"voluntary_ctxt_switches"):
                     vol = int(line.split()[1])
@@ -1030,7 +1035,7 @@ class Process(object):
 
     @wrap_exceptions
     def num_threads(self):
-        with open("%s/%s/status" % (self._procfs_path, self.pid), "rb") as f:
+        with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
             for line in f:
                 if line.startswith(b"Threads:"):
                     return int(line.split()[1])
@@ -1046,7 +1051,7 @@ class Process(object):
             fname = "%s/%s/task/%s/stat" % (
                 self._procfs_path, self.pid, thread_id)
             try:
-                with open(fname, 'rb') as f:
+                with open_binary(fname) as f:
                     st = f.read().strip()
             except IOError as err:
                 if err.errno == errno.ENOENT:
@@ -1170,7 +1175,7 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        with open("%s/%s/status" % (self._procfs_path, self.pid), 'rb') as f:
+        with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
             for line in f:
                 if line.startswith(b"State:"):
                     letter = line.split()[1]
@@ -1226,7 +1231,7 @@ class Process(object):
     @wrap_exceptions
     def ppid(self):
         fpath = "%s/%s/status" % (self._procfs_path, self.pid)
-        with open(fpath, 'rb') as f:
+        with open_binary(fpath) as f:
             for line in f:
                 if line.startswith(b"PPid:"):
                     # PPid: nnnn
@@ -1236,7 +1241,7 @@ class Process(object):
     @wrap_exceptions
     def uids(self):
         fpath = "%s/%s/status" % (self._procfs_path, self.pid)
-        with open(fpath, 'rb') as f:
+        with open_binary(fpath) as f:
             for line in f:
                 if line.startswith(b'Uid:'):
                     _, real, effective, saved, fs = line.split()
@@ -1246,7 +1251,7 @@ class Process(object):
     @wrap_exceptions
     def gids(self):
         fpath = "%s/%s/status" % (self._procfs_path, self.pid)
-        with open(fpath, 'rb') as f:
+        with open_binary(fpath) as f:
             for line in f:
                 if line.startswith(b'Gid:'):
                     _, real, effective, saved, fs = line.split()
