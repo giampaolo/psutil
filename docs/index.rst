@@ -1,15 +1,13 @@
 .. module:: psutil
    :synopsis: psutil module
 .. moduleauthor:: Giampaolo Rodola' <grodola@gmail.com>
-.. versionchanged:: 3.3.0 added support for OpenBSD
-
-.. warning::
-
-   This documentation refers to new 2.X version of psutil.
+.. note::
+   This documentation refers to new 3.X version of psutil.
    Instructions on how to port existing 1.2.1 code are
    `here <http://grodola.blogspot.com/2014/01/psutil-20-porting.html>`__.
    Old 1.2.1 documentation is still available
    `here <https://code.google.com/p/psutil/wiki/Documentation>`__.
+.. versionchanged:: 3.3.0 added support for OpenBSD
 
 psutil documentation
 ====================
@@ -41,7 +39,7 @@ From project's home page:
   ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap*.
   It currently supports **Linux, Windows, OSX, FreeBSD** and **Sun Solaris**,
   both **32-bit** and **64-bit** architectures, with Python versions from
-  **2.6 to 3.4** (users of Python 2.4 and 2.5 may use `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
+  **2.6 to 3.5** (users of Python 2.4 and 2.5 may use `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
   `PyPy <http://pypy.org/>`__ is also known to work.
 
 The psutil documentation you're reading is distributed as a single HTML page.
