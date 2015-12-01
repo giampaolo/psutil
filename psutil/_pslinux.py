@@ -64,6 +64,7 @@ CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 BOOT_TIME = None  # set later
 BIGGER_FILE_BUFFERING = 8192
+LITTLE_ENDIAN = sys.byteorder == 'little'
 if PY3:
     FS_ENCODING = sys.getfilesystemencoding()
 if enum is None:
@@ -486,7 +487,7 @@ class Connections:
             ip = ip.encode('ascii')
         if family == socket.AF_INET:
             # see: https://github.com/giampaolo/psutil/issues/201
-            if sys.byteorder == 'little':
+            if LITTLE_ENDIAN:
                 ip = socket.inet_ntop(family, base64.b16decode(ip)[::-1])
             else:
                 ip = socket.inet_ntop(family, base64.b16decode(ip))
@@ -498,7 +499,7 @@ class Connections:
             ip = base64.b16decode(ip)
             try:
                 # see: https://github.com/giampaolo/psutil/issues/201
-                if sys.byteorder == 'little':
+                if LITTLE_ENDIAN:
                     ip = socket.inet_ntop(
                         socket.AF_INET6,
                         struct.pack('>4I', *struct.unpack('<4I', ip)))
