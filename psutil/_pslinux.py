@@ -63,7 +63,10 @@ if HAS_PRLIMIT:
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 BOOT_TIME = None  # set later
-BIGGER_FILE_BUFFERING = 8192
+# Used when reading "big" files, namely /proc/{pid}/smaps and /proc/net/*.
+# On Python 2, using a buffer with open() for such files may result in a
+# speedup, see: https://github.com/giampaolo/psutil/issues/708
+BIGGER_FILE_BUFFERING = -1 if PY3 else 8192
 LITTLE_ENDIAN = sys.byteorder == 'little'
 if PY3:
     FS_ENCODING = sys.getfilesystemencoding()
@@ -71,7 +74,7 @@ if enum is None:
     AF_LINK = socket.AF_PACKET
 else:
     AddressFamily = enum.IntEnum('AddressFamily',
-                                 {'AF_LINK': socket.AF_PACKET})
+                                 {'AF_LINK': int(socket.AF_PACKET)})
     AF_LINK = AddressFamily.AF_LINK
 
 # ioprio_* constants http://linux.die.net/man/2/ioprio_get
