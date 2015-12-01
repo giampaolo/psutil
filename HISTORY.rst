@@ -7,6 +7,12 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 - #714: [OpenBSD] virtual_memory().cached value was always set to 0.
 
+**Enhancements**
+
+- 708: [Linux] psutil.net_connections() and Process.connections() can be up to
+  3x faster in case of many connections. Also psutil.Process.memory_maps()
+  is slightly faster.
+
 
 3.3.0 - 2015-11-25
 ==================

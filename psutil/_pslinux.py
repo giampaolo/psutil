@@ -63,6 +63,7 @@ if HAS_PRLIMIT:
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 BOOT_TIME = None  # set later
+BIGGER_FILE_BUFFERING = 8192
 if PY3:
     FS_ENCODING = sys.getfilesystemencoding()
 if enum is None:
@@ -518,7 +519,7 @@ class Connections:
         if file.endswith('6') and not os.path.exists(file):
             # IPv6 not supported
             return
-        with open_text(file) as f:
+        with open_text(file, buffering=BIGGER_FILE_BUFFERING) as f:
             f.readline()  # skip the first line
             for line in f:
                 try:
@@ -556,7 +557,7 @@ class Connections:
         """Parse /proc/net/unix files."""
         # see: https://github.com/giampaolo/psutil/issues/675
         kw = dict(errors='replace') if PY3 else dict()
-        with open_text(file, **kw) as f:
+        with open_text(file, buffering=BIGGER_FILE_BUFFERING, **kw) as f:
             f.readline()  # skip the first line
             for line in f:
                 tokens = line.split()
@@ -950,7 +951,8 @@ class Process(object):
             Fields are explained in 'man proc'; here is an updated (Apr 2012)
             version: http://goo.gl/fmebo
             """
-            with open_text("%s/%s/smaps" % (self._procfs_path, self.pid)) as f:
+            with open_text("%s/%s/smaps" % (self._procfs_path, self.pid),
+                           buffering=BIGGER_FILE_BUFFERING) as f:
                 first_line = f.readline()
                 current_block = [first_line]
 
