@@ -1411,9 +1411,13 @@ def cpu_times(percpu=False):
     else:
         return _psplatform.per_cpu_times()
 
-
-_last_cpu_times = cpu_times()
-_last_per_cpu_times = cpu_times(percpu=True)
+try:
+    _last_cpu_times = cpu_times()
+    _last_per_cpu_times = cpu_times(percpu=True)
+except IOError:
+    from collections import namedtuple
+    _last_cpu_times = namedtuple('emptycpu', 'idle')(0)
+    _last_per_cpu_times = []
 
 
 def cpu_percent(interval=None, percpu=False):
@@ -1521,8 +1525,8 @@ def cpu_times_percent(interval=None, percpu=False):
     def calculate(t1, t2):
         nums = []
         all_delta = sum(t2) - sum(t1)
-        for field in t1._fields:
-            field_delta = getattr(t2, field) - getattr(t1, field)
+        for field in t2._fields:
+            field_delta = getattr(t2, field) - getattr(t1, field, 0)
             try:
                 field_perc = (100 * field_delta) / all_delta
             except ZeroDivisionError:

@@ -156,10 +156,13 @@ def set_scputimes_ntuple(procfs_path):
      [guest_nice]]])
     """
     global scputimes
-    with open_binary('%s/stat' % procfs_path) as f:
-        values = f.readline().split()[1:]
+    try:
+        with open_binary('%s/stat' % procfs_path) as f:
+            values = f.readline().split()[1:]
+        vlen = len(values)
+    except IOError:
+        vlen = 7
     fields = ['user', 'nice', 'system', 'idle', 'iowait', 'irq', 'softirq']
-    vlen = len(values)
     if vlen >= 8:
         # Linux >= 2.6.11
         fields.append('steal')
@@ -171,7 +174,6 @@ def set_scputimes_ntuple(procfs_path):
         fields.append('guest_nice')
     scputimes = namedtuple('scputimes', fields)
     return scputimes
-
 
 scputimes = set_scputimes_ntuple('/proc')
 

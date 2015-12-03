@@ -15,6 +15,7 @@ import io
 import os
 import pprint
 import re
+import shutil
 import socket
 import struct
 import sys
@@ -46,6 +47,9 @@ from test_psutil import which
 
 if PY3:
     import importlib as imp
+    # python 3.3
+    if not hasattr(imp, 'reload'):
+        import imp
 else:
     import imp
 
@@ -477,6 +481,70 @@ class LinuxSpecificTestCase(unittest.TestCase):
 
     def test_psutil_is_reloadable(self):
         imp.reload(psutil)
+
+    def test_no_procfs_for_import(self):
+        my_procfs = tempfile.mkdtemp()
+
+        with open(os.path.join(my_procfs, 'stat'), 'w') as f:
+            f.write('cpu   0 0 0 0 0 0 0 0 0 0\n')
+            f.write('cpu0  0 0 0 0 0 0 0 0 0 0\n')
+            f.write('cpu1  0 0 0 0 0 0 0 0 0 0\n')
+
+        self.assertNotAlmostEqual(psutil.cpu_percent(), 0)
+        self.assertNotAlmostEqual(sum(psutil.cpu_times_percent()), 0)
+        try:
+            orig_open = open
+
+            def open_mock(name, *args):
+                if name.startswith('/proc'):
+                    # simulate an ENOENT
+                    raise IOError('rejecting access to /proc')
+                return orig_open(name, *args)
+            patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+            with mock.patch(patch_point, side_effect=open_mock):
+                imp.reload(psutil)
+
+                self.assertRaises(IOError, psutil.cpu_times)
+                self.assertRaises(IOError, psutil.cpu_times, percpu=True)
+                self.assertRaises(IOError, psutil.cpu_percent)
+                self.assertRaises(IOError, psutil.cpu_percent, percpu=True)
+                self.assertRaises(IOError, psutil.cpu_times_percent)
+                self.assertRaises(
+                    IOError, psutil.cpu_times_percent, percpu=True)
+
+                psutil.PROCFS_PATH = my_procfs
+
+                self.assertAlmostEqual(psutil.cpu_percent(), 0)
+                self.assertAlmostEqual(sum(psutil.cpu_times_percent()), 0)
+
+                # since we don't know the number of CPUs at import time,
+                # we awkwardly say there are none until the second call
+                per_cpu_percent = psutil.cpu_percent(percpu=True)
+                self.assertEqual(len(per_cpu_percent), 0)
+                self.assertAlmostEqual(sum(per_cpu_percent), 0)
+
+                # ditto awkward length
+                per_cpu_times_percent = psutil.cpu_times_percent(percpu=True)
+                self.assertEqual(len(per_cpu_times_percent), 0)
+                self.assertAlmostEqual(sum(map(sum, per_cpu_percent)), 0)
+
+                # much user, very busy
+                with open(os.path.join(my_procfs, 'stat'), 'w') as f:
+                    f.write('cpu   1 0 0 0 0 0 0 0 0 0\n')
+                    f.write('cpu0  1 0 0 0 0 0 0 0 0 0\n')
+                    f.write('cpu1  1 0 0 0 0 0 0 0 0 0\n')
+
+                self.assertNotAlmostEqual(psutil.cpu_percent(), 0)
+                self.assertNotAlmostEqual(
+                    sum(psutil.cpu_percent(percpu=True)), 0)
+                self.assertNotAlmostEqual(sum(psutil.cpu_times_percent()), 0)
+                self.assertNotAlmostEqual(
+                    sum(map(sum, psutil.cpu_times_percent(percpu=True))), 0)
+        finally:
+            shutil.rmtree(my_procfs)
+            imp.reload(psutil)
+
+        assert psutil.PROCFS_PATH == '/proc'
 
     # --- tests for specific kernel versions
 
