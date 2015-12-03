@@ -44,6 +44,10 @@ from test_psutil import TRAVIS
 from test_psutil import unittest
 from test_psutil import which
 
+if PY3:
+    import importlib as imp
+else:
+    import imp
 
 # procps-ng 3.3.10 changed the output format of free
 # and removed the 'buffers/cache line'
@@ -470,6 +474,9 @@ class LinuxSpecificTestCase(unittest.TestCase):
         finally:
             psutil.PROCFS_PATH = "/proc"
             os.rmdir(tdir)
+
+    def test_psutil_is_reloadable(self):
+        imp.reload(psutil)
 
     # --- tests for specific kernel versions
 
