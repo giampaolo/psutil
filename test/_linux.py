@@ -15,6 +15,7 @@ import io
 import os
 import pprint
 import re
+import shutil
 import socket
 import struct
 import sys
@@ -34,6 +35,7 @@ from psutil._compat import u
 from test_psutil import call_until
 from test_psutil import get_kernel_version
 from test_psutil import get_test_subprocess
+from test_psutil import importlib
 from test_psutil import LINUX
 from test_psutil import MEMORY_TOLERANCE
 from test_psutil import POSIX
@@ -43,7 +45,6 @@ from test_psutil import skip_on_not_implemented
 from test_psutil import TRAVIS
 from test_psutil import unittest
 from test_psutil import which
-
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 # procps-ng 3.3.10 changed the output format of free
@@ -471,6 +472,65 @@ class LinuxSpecificTestCase(unittest.TestCase):
         finally:
             psutil.PROCFS_PATH = "/proc"
             os.rmdir(tdir)
+
+    def test_no_procfs_for_import(self):
+        my_procfs = tempfile.mkdtemp()
+
+        with open(os.path.join(my_procfs, 'stat'), 'w') as f:
+            f.write('cpu   0 0 0 0 0 0 0 0 0 0\n')
+            f.write('cpu0  0 0 0 0 0 0 0 0 0 0\n')
+            f.write('cpu1  0 0 0 0 0 0 0 0 0 0\n')
+
+        try:
+            orig_open = open
+
+            def open_mock(name, *args):
+                if name.startswith('/proc'):
+                    raise IOError(errno.ENOENT, 'rejecting access for test')
+                return orig_open(name, *args)
+            patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+            with mock.patch(patch_point, side_effect=open_mock):
+                importlib.reload(psutil)
+
+                self.assertRaises(IOError, psutil.cpu_times)
+                self.assertRaises(IOError, psutil.cpu_times, percpu=True)
+                self.assertRaises(IOError, psutil.cpu_percent)
+                self.assertRaises(IOError, psutil.cpu_percent, percpu=True)
+                self.assertRaises(IOError, psutil.cpu_times_percent)
+                self.assertRaises(
+                    IOError, psutil.cpu_times_percent, percpu=True)
+
+                psutil.PROCFS_PATH = my_procfs
+
+                self.assertEqual(psutil.cpu_percent(), 0)
+                self.assertEqual(sum(psutil.cpu_times_percent()), 0)
+
+                # since we don't know the number of CPUs at import time,
+                # we awkwardly say there are none until the second call
+                per_cpu_percent = psutil.cpu_percent(percpu=True)
+                self.assertEqual(sum(per_cpu_percent), 0)
+
+                # ditto awkward length
+                per_cpu_times_percent = psutil.cpu_times_percent(percpu=True)
+                self.assertEqual(sum(map(sum, per_cpu_times_percent)), 0)
+
+                # much user, very busy
+                with open(os.path.join(my_procfs, 'stat'), 'w') as f:
+                    f.write('cpu   1 0 0 0 0 0 0 0 0 0\n')
+                    f.write('cpu0  1 0 0 0 0 0 0 0 0 0\n')
+                    f.write('cpu1  1 0 0 0 0 0 0 0 0 0\n')
+
+                self.assertNotEqual(psutil.cpu_percent(), 0)
+                self.assertNotEqual(
+                    sum(psutil.cpu_percent(percpu=True)), 0)
+                self.assertNotEqual(sum(psutil.cpu_times_percent()), 0)
+                self.assertNotEqual(
+                    sum(map(sum, psutil.cpu_times_percent(percpu=True))), 0)
+        finally:
+            shutil.rmtree(my_procfs)
+            importlib.reload(psutil)
+
+        self.assertEqual(psutil.PROCFS_PATH, '/proc')
 
     @unittest.skipUnless(
         get_kernel_version() >= (2, 6, 36),

@@ -22,8 +22,8 @@ import contextlib
 import datetime
 import errno
 import functools
-import imp
 import json
+import imp
 import os
 import pickle
 import pprint
@@ -70,6 +70,14 @@ if sys.version_info >= (3, 4):
     import enum
 else:
     enum = None
+
+if PY3:
+    import importlib
+    # python <=3.3
+    if not hasattr(importlib, 'reload'):
+        import imp as importlib
+else:
+    import imp as importlib
 
 
 # ===================================================================
@@ -3199,6 +3207,9 @@ class TestUnicode(unittest.TestCase):
         path = (new - start).pop().path
         self.assertIsInstance(path, str)
         self.assertEqual(os.path.normcase(path), os.path.normcase(self.uexe))
+
+    def test_psutil_is_reloadable(self):
+        importlib.reload(psutil)
 
 
 def main():
