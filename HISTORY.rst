@@ -8,6 +8,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #708: [Linux] psutil.net_connections() and Process.connections() on Python 2
   can be up to 3x faster in case of many connections.
   Also psutil.Process.memory_maps() is slightly faster.
+- #718: process_iter() is now thread safe.
 
 **Bug fixes**
 

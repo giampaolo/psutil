@@ -1270,7 +1270,12 @@ def process_iter():
             # no way to tell whether the pid of the cached process
             # has been reused. Just return the cached version.
             if proc is None and pid in _pmap:
-                yield _pmap[pid]
+                try:
+                    yield _pmap[pid]
+                except KeyError:
+                    # If we get here it is likely that 2 threads were
+                    # using process_iter().
+                    pass
             else:
                 raise
 
