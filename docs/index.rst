@@ -892,7 +892,7 @@ Process class
 
      Return threads opened by process as a list of namedtuples including thread
      id, thread CPU times (user/system) and name. "name" is only available on
-     Linux, on all other platforms this is an empty string.
+     Linux and BSD, on all other platforms this is an empty string.
      On OpenBSD this method requires root access.
 
      .. versionchanged:: 3.4.0 added thread name.
