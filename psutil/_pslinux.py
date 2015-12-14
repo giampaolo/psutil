@@ -14,6 +14,7 @@ import re
 import socket
 import struct
 import sys
+import traceback
 import warnings
 from collections import defaultdict
 from collections import namedtuple
@@ -23,6 +24,7 @@ from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
 from ._common import isfile_strict
+from ._common import memoize
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
@@ -149,6 +151,7 @@ def get_procfs_path():
 
 # --- named tuples
 
+@memoize
 def set_scputimes_ntuple(procfs_path):
     """Return a namedtuple of variable fields depending on the
     CPU times available on this Linux kernel version which may be:
@@ -173,7 +176,13 @@ def set_scputimes_ntuple(procfs_path):
     return scputimes
 
 
-scputimes = set_scputimes_ntuple('/proc')
+try:
+    scputimes = set_scputimes_ntuple("/proc")
+except Exception:
+    # Don't want to crash at import time.
+    traceback.print_exc()
+    scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
+
 
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',

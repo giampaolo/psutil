@@ -19,6 +19,7 @@ import signal
 import subprocess
 import sys
 import time
+import traceback
 try:
     import pwd
 except ImportError:
@@ -59,11 +60,11 @@ from ._common import (NIC_DUPLEX_FULL,  # NOQA
                       NIC_DUPLEX_UNKNOWN)
 
 if sys.platform.startswith("linux"):
-    from . import _pslinux as _psplatform
-
     # This is public API and it will be retrieved from _pslinux.py
     # via sys.modules.
     PROCFS_PATH = "/proc"
+
+    from . import _pslinux as _psplatform
 
     from ._pslinux import (IOPRIO_CLASS_NONE,  # NOQA
                            IOPRIO_CLASS_RT,
@@ -1422,8 +1423,21 @@ def cpu_times(percpu=False):
         return _psplatform.per_cpu_times()
 
 
-_last_cpu_times = cpu_times()
-_last_per_cpu_times = cpu_times(percpu=True)
+try:
+    _last_cpu_times = cpu_times()
+except Exception:
+    # Don't want to crash at import time.
+    from collections import namedtuple
+    traceback.print_exc()
+    _last_cpu_times = namedtuple('scputimes', ['user', 'system', 'idle'])(
+        0.0, 0.0, 0.0)
+
+try:
+    _last_per_cpu_times = cpu_times(percpu=True)
+except Exception:
+    # Don't want to crash at import time.
+    _last_per_cpu_times = []
+    traceback.print_exc()
 
 
 def cpu_percent(interval=None, percpu=False):
