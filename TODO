@@ -31,16 +31,9 @@ HIGHER PRIORITY
    Linux: yes
    Others: ?
 
- * Process.threads(): thread names; patch for OSX available at:
-   https://code.google.com/p/plcrashreporter/issues/detail?id=65
-   Sample code:
-   https://github.com/janmojzis/pstree/blob/master/proc_kvm.c
-
  * Asynchronous psutil.Popen (see http://bugs.python.org/issue1191964)
 
  * (Windows) fall back on using WMIC for Process methods returning AccessDenied
-
- * #613: thread names.
 
  * #604: emulate os.getloadavg() on Windows
 
