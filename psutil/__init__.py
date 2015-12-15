@@ -1427,16 +1427,14 @@ try:
     _last_cpu_times = cpu_times()
 except Exception:
     # Don't want to crash at import time.
-    from collections import namedtuple
+    _last_cpu_times = None
     traceback.print_exc()
-    _last_cpu_times = namedtuple('scputimes', ['user', 'system', 'idle'])(
-        0.0, 0.0, 0.0)
 
 try:
     _last_per_cpu_times = cpu_times(percpu=True)
 except Exception:
     # Don't want to crash at import time.
-    _last_per_cpu_times = []
+    _last_per_cpu_times = None
     traceback.print_exc()
 
 
@@ -1502,6 +1500,11 @@ def cpu_percent(interval=None, percpu=False):
             time.sleep(interval)
         else:
             t1 = _last_cpu_times
+            if t1 is None:
+                # Something bad happened at import time. We'll
+                # get a meaningful result on the next call. See:
+                # https://github.com/giampaolo/psutil/pull/715
+                t1 = cpu_times()
         _last_cpu_times = cpu_times()
         return calculate(t1, _last_cpu_times)
     # per-cpu usage
@@ -1512,6 +1515,11 @@ def cpu_percent(interval=None, percpu=False):
             time.sleep(interval)
         else:
             tot1 = _last_per_cpu_times
+            if tot1 is None:
+                # Something bad happened at import time. We'll
+                # get a meaningful result on the next call. See:
+                # https://github.com/giampaolo/psutil/pull/715
+                tot1 = cpu_times(percpu=True)
         _last_per_cpu_times = cpu_times(percpu=True)
         for t1, t2 in zip(tot1, _last_per_cpu_times):
             ret.append(calculate(t1, t2))
@@ -1576,6 +1584,11 @@ def cpu_times_percent(interval=None, percpu=False):
             time.sleep(interval)
         else:
             t1 = _last_cpu_times_2
+            if t1 is None:
+                # Something bad happened at import time. We'll
+                # get a meaningful result on the next call. See:
+                # https://github.com/giampaolo/psutil/pull/715
+                t1 = cpu_times()
         _last_cpu_times_2 = cpu_times()
         return calculate(t1, _last_cpu_times_2)
     # per-cpu usage
@@ -1586,6 +1599,11 @@ def cpu_times_percent(interval=None, percpu=False):
             time.sleep(interval)
         else:
             tot1 = _last_per_cpu_times_2
+            if tot1 is None:
+                # Something bad happened at import time. We'll
+                # get a meaningful result on the next call. See:
+                # https://github.com/giampaolo/psutil/pull/715
+                tot1 = cpu_times(percpu=True)
         _last_per_cpu_times_2 = cpu_times(percpu=True)
         for t1, t2 in zip(tot1, _last_per_cpu_times_2):
             ret.append(calculate(t1, t2))
