@@ -143,6 +143,21 @@ def isfile_strict(path):
         return stat.S_ISREG(st.st_mode)
 
 
+def path_exists_strict(path):
+    """Same as os.path.exists() but does not swallow EACCES / EPERM
+    exceptions, see:
+    http://mail.python.org/pipermail/python-dev/2012-June/120787.html
+    """
+    try:
+        os.stat(path)
+    except OSError as err:
+        if err.errno in (errno.EPERM, errno.EACCES):
+            raise
+        return False
+    else:
+        return True
+
+
 def supports_ipv6():
     """Return True if IPv6 is supported on this platform."""
     if not socket.has_ipv6 or not hasattr(socket, "AF_INET6"):

@@ -28,6 +28,7 @@ from ._common import memoize
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
+from ._common import path_exists_strict
 from ._common import supports_ipv6
 from ._common import usage_percent
 from ._compat import b
@@ -147,6 +148,21 @@ def open_text(fname, **kwargs):
 
 def get_procfs_path():
     return sys.modules['psutil'].PROCFS_PATH
+
+
+def readlink(path):
+    """Wrapper around os.readlink()."""
+    path = os.readlink(path)
+    # readlink() might return paths containing null bytes causing
+    # problems when used with other fs-related functions (os.*,
+    # open(), ...), see:
+    # https://github.com/giampaolo/psutil/issues/717
+    path = path.replace('\x00', '')
+    # Certain paths have ' (deleted)' appended. Usually this is
+    # bogus as the file actually exists.
+    if path.endswith(' (deleted)') and not path_exists_strict(path):
+        path = path[:-10]
+    return path
 
 
 # --- named tuples
@@ -435,8 +451,7 @@ class Connections:
         inodes = defaultdict(list)
         for fd in os.listdir("%s/%s/fd" % (self._procfs_path, pid)):
             try:
-                inode = os.readlink("%s/%s/fd/%s" % (
-                    self._procfs_path, pid, fd))
+                inode = readlink("%s/%s/fd/%s" % (self._procfs_path, pid, fd))
             except OSError as err:
                 # ENOENT == file which is gone in the meantime;
                 # os.stat('/proc/%s' % self.pid) will be done later
@@ -825,7 +840,7 @@ class Process(object):
 
     def exe(self):
         try:
-            exe = os.readlink("%s/%s/exe" % (self._procfs_path, self.pid))
+            return readlink("%s/%s/exe" % (self._procfs_path, self.pid))
         except OSError as err:
             if err.errno in (errno.ENOENT, errno.ESRCH):
                 # no such file error; might be raised also if the
@@ -841,16 +856,6 @@ class Process(object):
             if err.errno in (errno.EPERM, errno.EACCES):
                 raise AccessDenied(self.pid, self._name)
             raise
-
-        # readlink() might return paths containing null bytes ('\x00').
-        # Certain names have ' (deleted)' appended. Usually this is
-        # bogus as the file actually exists. Either way that's not
-        # important as we don't want to discriminate executables which
-        # have been deleted.
-        exe = exe.split('\x00')[0]
-        if exe.endswith(' (deleted)') and not os.path.exists(exe):
-            exe = exe[:-10]
-        return exe
 
     @wrap_exceptions
     def cmdline(self):
@@ -1026,11 +1031,7 @@ class Process(object):
 
     @wrap_exceptions_w_zombie
     def cwd(self):
-        # readlink() might return paths containing null bytes causing
-        # problems when used with other fs-related functions (os.*,
-        # open(), ...)
-        path = os.readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
-        return path.replace('\x00', '')
+        return readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
 
     @wrap_exceptions
     def num_ctx_switches(self):
@@ -1208,7 +1209,7 @@ class Process(object):
         for fd in files:
             file = "%s/%s/fd/%s" % (self._procfs_path, self.pid, fd)
             try:
-                file = os.readlink(file)
+                file = readlink(file)
             except OSError as err:
                 # ENOENT == file which is gone in the meantime
                 if err.errno in (errno.ENOENT, errno.ESRCH):

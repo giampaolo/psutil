@@ -14,6 +14,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 - #714: [OpenBSD] virtual_memory().cached value was always set to 0.
 - #715: don't crash at import time if cpu_times() fail for some reason.
+- #717: [Linux] Process.open_files fails if deleted files still visible.
 
 
 3.3.0 - 2015-11-25
