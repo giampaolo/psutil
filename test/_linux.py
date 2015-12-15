@@ -45,6 +45,7 @@ from test_psutil import unittest
 from test_psutil import which
 
 
+HERE = os.path.abspath(os.path.dirname(__file__))
 # procps-ng 3.3.10 changed the output format of free
 # and removed the 'buffers/cache line'
 OLD_PROCPS_NG_VERSION = 'buffers/cache' in sh('free')
@@ -217,14 +218,14 @@ class LinuxSpecificTestCase(unittest.TestCase):
     @unittest.skipIf(TRAVIS, "skipped on Travis")
     def test_net_if_names(self):
         out = sh("ip addr").strip()
-        nics = psutil.net_if_addrs()
+        nics = [x for x in psutil.net_if_addrs().keys() if ':' not in x]
         found = 0
         for line in out.split('\n'):
             line = line.strip()
             if re.search("^\d+:", line):
                 found += 1
                 name = line.split(':')[1].strip()
-                self.assertIn(name, nics.keys())
+                self.assertIn(name, nics)
         self.assertEqual(len(nics), found, msg="%s\n---\n%s" % (
             pprint.pformat(nics), out))
 
@@ -471,8 +472,6 @@ class LinuxSpecificTestCase(unittest.TestCase):
             psutil.PROCFS_PATH = "/proc"
             os.rmdir(tdir)
 
-    # --- tests for specific kernel versions
-
     @unittest.skipUnless(
         get_kernel_version() >= (2, 6, 36),
         "prlimit() not available on this Linux kernel version")
@@ -505,6 +504,12 @@ class LinuxSpecificTestCase(unittest.TestCase):
         self.assertTrue(hasattr(psutil, "RLIMIT_RTPRIO"))
         self.assertTrue(hasattr(psutil, "RLIMIT_RTTIME"))
         self.assertTrue(hasattr(psutil, "RLIMIT_SIGPENDING"))
+
+    def test_path_deleted(self):
+        with mock.patch('psutil._pslinux.os.readlink',
+                        return_value='/home/foo (deleted)'):
+            self.assertEqual(psutil.Process().exe(), "/home/foo")
+            self.assertEqual(psutil.Process().cwd(), "/home/foo")
 
 
 def main():
