@@ -17,6 +17,7 @@ if PY3:
     long = int
     xrange = range
     unicode = str
+    basestring = str
 
     def u(s):
         return s
@@ -27,6 +28,7 @@ else:
     long = long
     xrange = xrange
     unicode = unicode
+    basestring = basestring
 
     def u(s):
         return unicode(s, "unicode_escape")
