@@ -63,7 +63,7 @@ from psutil._compat import unicode
 from psutil._compat import which
 
 if sys.version_info < (2, 7):
-    import unittest2 as unittest  # https://pypi.python.org/pypi/unittest2
+    import unittest2 as unittest  # requires "pip install unittest2"
 else:
     import unittest
 if sys.version_info >= (3, 4):

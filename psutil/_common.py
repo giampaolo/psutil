@@ -104,14 +104,11 @@ def memoize(fun):
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
         key = (args, frozenset(sorted(kwargs.items())))
-        lock.acquire()
-        try:
+        with lock:
             try:
                 return cache[key]
             except KeyError:
                 ret = cache[key] = fun(*args, **kwargs)
-        finally:
-            lock.release()
         return ret
 
     def cache_clear():
