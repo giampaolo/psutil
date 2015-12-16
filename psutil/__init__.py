@@ -27,37 +27,38 @@ except ImportError:
 
 from . import _common
 from ._common import memoize
-from ._compat import callable, long
+from ._compat import callable
+from ._compat import long
 from ._compat import PY3 as _PY3
 
-from ._common import (STATUS_RUNNING,  # NOQA
-                      STATUS_SLEEPING,
-                      STATUS_DISK_SLEEP,
-                      STATUS_STOPPED,
-                      STATUS_TRACING_STOP,
-                      STATUS_ZOMBIE,
-                      STATUS_DEAD,
-                      STATUS_WAKING,
-                      STATUS_LOCKED,
-                      STATUS_IDLE,  # bsd
-                      STATUS_WAITING)  # bsd
+from ._common import STATUS_DEAD
+from ._common import STATUS_DISK_SLEEP
+from ._common import STATUS_IDLE  # bsd
+from ._common import STATUS_LOCKED
+from ._common import STATUS_RUNNING
+from ._common import STATUS_SLEEPING
+from ._common import STATUS_STOPPED
+from ._common import STATUS_TRACING_STOP
+from ._common import STATUS_WAITING  # bsd
+from ._common import STATUS_WAKING
+from ._common import STATUS_ZOMBIE
 
-from ._common import (CONN_ESTABLISHED,
-                      CONN_SYN_SENT,
-                      CONN_SYN_RECV,
-                      CONN_FIN_WAIT1,
-                      CONN_FIN_WAIT2,
-                      CONN_TIME_WAIT,
-                      CONN_CLOSE,
-                      CONN_CLOSE_WAIT,
-                      CONN_LAST_ACK,
-                      CONN_LISTEN,
-                      CONN_CLOSING,
-                      CONN_NONE)
+from ._common import CONN_CLOSE
+from ._common import CONN_CLOSE_WAIT
+from ._common import CONN_CLOSING
+from ._common import CONN_ESTABLISHED
+from ._common import CONN_FIN_WAIT1
+from ._common import CONN_FIN_WAIT2
+from ._common import CONN_LAST_ACK
+from ._common import CONN_LISTEN
+from ._common import CONN_NONE
+from ._common import CONN_SYN_RECV
+from ._common import CONN_SYN_SENT
+from ._common import CONN_TIME_WAIT
 
-from ._common import (NIC_DUPLEX_FULL,  # NOQA
-                      NIC_DUPLEX_HALF,
-                      NIC_DUPLEX_UNKNOWN)
+from ._common import NIC_DUPLEX_FULL
+from ._common import NIC_DUPLEX_HALF
+from ._common import NIC_DUPLEX_UNKNOWN
 
 if sys.platform.startswith("linux"):
     # This is public API and it will be retrieved from _pslinux.py
@@ -66,24 +67,24 @@ if sys.platform.startswith("linux"):
 
     from . import _pslinux as _psplatform
 
-    from ._pslinux import (IOPRIO_CLASS_NONE,  # NOQA
-                           IOPRIO_CLASS_RT,
-                           IOPRIO_CLASS_BE,
-                           IOPRIO_CLASS_IDLE)
+    from ._pslinux import IOPRIO_CLASS_BE  # NOQA
+    from ._pslinux import IOPRIO_CLASS_IDLE  # NOQA
+    from ._pslinux import IOPRIO_CLASS_NONE  # NOQA
+    from ._pslinux import IOPRIO_CLASS_RT  # NOQA
     # Linux >= 2.6.36
     if _psplatform.HAS_PRLIMIT:
-        from ._psutil_linux import (RLIM_INFINITY,  # NOQA
-                                    RLIMIT_AS,
-                                    RLIMIT_CORE,
-                                    RLIMIT_CPU,
-                                    RLIMIT_DATA,
-                                    RLIMIT_FSIZE,
-                                    RLIMIT_LOCKS,
-                                    RLIMIT_MEMLOCK,
-                                    RLIMIT_NOFILE,
-                                    RLIMIT_NPROC,
-                                    RLIMIT_RSS,
-                                    RLIMIT_STACK)
+        from ._psutil_linux import RLIM_INFINITY  # NOQA
+        from ._psutil_linux import RLIMIT_AS  # NOQA
+        from ._psutil_linux import RLIMIT_CORE  # NOQA
+        from ._psutil_linux import RLIMIT_CPU  # NOQA
+        from ._psutil_linux import RLIMIT_DATA  # NOQA
+        from ._psutil_linux import RLIMIT_FSIZE  # NOQA
+        from ._psutil_linux import RLIMIT_LOCKS  # NOQA
+        from ._psutil_linux import RLIMIT_MEMLOCK  # NOQA
+        from ._psutil_linux import RLIMIT_NOFILE  # NOQA
+        from ._psutil_linux import RLIMIT_NPROC  # NOQA
+        from ._psutil_linux import RLIMIT_RSS  # NOQA
+        from ._psutil_linux import RLIMIT_STACK  # NOQA
         # Kinda ugly but considerably faster than using hasattr() and
         # setattr() against the module object (we are at import time:
         # speed matters).
@@ -112,12 +113,12 @@ if sys.platform.startswith("linux"):
 
 elif sys.platform.startswith("win32"):
     from . import _pswindows as _psplatform
-    from ._psutil_windows import (ABOVE_NORMAL_PRIORITY_CLASS,  # NOQA
-                                  BELOW_NORMAL_PRIORITY_CLASS,
-                                  HIGH_PRIORITY_CLASS,
-                                  IDLE_PRIORITY_CLASS,
-                                  NORMAL_PRIORITY_CLASS,
-                                  REALTIME_PRIORITY_CLASS)
+    from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS  # NOQA
+    from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS  # NOQA
+    from ._psutil_windows import HIGH_PRIORITY_CLASS  # NOQA
+    from ._psutil_windows import IDLE_PRIORITY_CLASS  # NOQA
+    from ._psutil_windows import NORMAL_PRIORITY_CLASS  # NOQA
+    from ._psutil_windows import REALTIME_PRIORITY_CLASS  # NOQA
     from ._pswindows import CONN_DELETE_TCB  # NOQA
 
 elif sys.platform.startswith("darwin"):
@@ -128,8 +129,8 @@ elif sys.platform.startswith("freebsd") or sys.platform.startswith("openbsd"):
 
 elif sys.platform.startswith("sunos"):
     from . import _pssunos as _psplatform
-    from ._pssunos import (CONN_IDLE,  # NOQA
-                           CONN_BOUND)
+    from ._pssunos import CONN_BOUND  # NOQA
+    from ._pssunos import CONN_IDLE  # NOQA
 
 else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)
