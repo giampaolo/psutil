@@ -3237,12 +3237,17 @@ def main():
         tests.append(TestDualProcessImplementation)
     elif OSX:
         from _osx import OSXSpecificTestCase as stc
-    elif FREEBSD:
-        from _freebsd import FreeBSDSpecificTestCase as stc
-    elif OPENBSD:
-        from _openbsd import OpenBSDSpecificTestCase as stc
     elif SUNOS:
         from _sunos import SunOSSpecificTestCase as stc
+    elif BSD:
+        from _bsd import BSDSpecificTestCase as stc
+        if FREEBSD:
+            from _bsd import FreeBSDSpecificTestCase
+            tests.append(FreeBSDSpecificTestCase)
+        elif OPENBSD:
+            from _bsd import OpenBSDSpecificTestCase
+            tests.append(OpenBSDSpecificTestCase)
+
     if stc is not None:
         tests.append(stc)
 

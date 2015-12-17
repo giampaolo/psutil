@@ -4,10 +4,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# TODO: add test for comparing connections with 'sockstat' cmd
+# TODO: (FreeBSD) add test for comparing connections with 'sockstat' cmd.
 
-"""FreeBSD specific tests.  These are implicitly run by test_psutil.py."""
+"""Tests specific to all BSD platforms.  These are implicitly run by
+test_psutil.
+py."""
 
+import datetime
 import os
 import subprocess
 import sys
@@ -15,9 +18,11 @@ import time
 
 import psutil
 from psutil._compat import PY3
+from test_psutil import BSD
 from test_psutil import FREEBSD
 from test_psutil import get_test_subprocess
 from test_psutil import MEMORY_TOLERANCE
+from test_psutil import OPENBSD
 from test_psutil import reap_children
 from test_psutil import retry_before_failing
 from test_psutil import sh
@@ -37,7 +42,10 @@ def sysctl(cmdline):
     returning only the value of interest.
     """
     result = sh("sysctl " + cmdline)
-    result = result[result.find(": ") + 2:]
+    if FREEBSD:
+        result = result[result.find(": ") + 2:]
+    elif OPENBSD:
+        result = result[result.find("=") + 1:]
     try:
         return int(result)
     except ValueError:
@@ -55,8 +63,14 @@ def muse(field):
     return int(line.split()[1])
 
 
-@unittest.skipUnless(FREEBSD, "not a FreeBSD system")
-class FreeBSDSpecificTestCase(unittest.TestCase):
+# =====================================================================
+# --- All BSD*
+# =====================================================================
+
+
+@unittest.skipUnless(BSD, "not a BSD system")
+class BSDSpecificTestCase(unittest.TestCase):
+    """Generic tests common to all BSD variants."""
 
     @classmethod
     def setUpClass(cls):
@@ -65,13 +79,6 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         reap_children()
-
-    def test_boot_time(self):
-        s = sysctl('sysctl kern.boottime')
-        s = s[s.find(" sec = ") + 7:]
-        s = s[:s.find(',')]
-        btime = int(s)
-        self.assertEqual(btime, psutil.boot_time())
 
     def test_process_create_time(self):
         cmdline = "ps -o lstart -p %s" % self.pid
@@ -111,6 +118,38 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
                 self.fail("psutil=%s, df=%s" % (usage.free, free))
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 self.fail("psutil=%s, df=%s" % (usage.used, used))
+
+    def test_cpu_count_logical(self):
+        syst = sysctl("hw.ncpu")
+        self.assertEqual(psutil.cpu_count(logical=True), syst)
+
+    def test_virtual_memory_total(self):
+        num = sysctl('hw.physmem')
+        self.assertEqual(num, psutil.virtual_memory().total)
+
+
+# =====================================================================
+# --- FreeBSD
+# =====================================================================
+
+
+@unittest.skipUnless(FREEBSD, "not a FreeBSD system")
+class FreeBSDSpecificTestCase(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = get_test_subprocess().pid
+
+    @classmethod
+    def tearDownClass(cls):
+        reap_children()
+
+    def test_boot_time(self):
+        s = sysctl('sysctl kern.boottime')
+        s = s[s.find(" sec = ") + 7:]
+        s = s[:s.find(',')]
+        btime = int(s)
+        self.assertEqual(btime, psutil.boot_time())
 
     @retry_before_failing()
     def test_memory_maps(self):
@@ -152,14 +191,6 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
 
     # --- virtual_memory(); tests against sysctl
 
-    def test_vmem_total(self):
-        syst = sysctl("sysctl vm.stats.vm.v_page_count") * PAGESIZE
-        self.assertEqual(psutil.virtual_memory().total, syst)
-
-    def test_vmem_total_2(self):
-        num = sysctl('hw.physmem')
-        self.assertEqual(num, psutil.virtual_memory().total)
-
     @retry_before_failing()
     def test_vmem_active(self):
         syst = sysctl("vm.stats.vm.v_active_count") * PAGESIZE
@@ -196,63 +227,78 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         self.assertAlmostEqual(psutil.virtual_memory().buffers, syst,
                                delta=MEMORY_TOLERANCE)
 
-    def test_cpu_count_logical(self):
-        syst = sysctl("hw.ncpu")
-        self.assertEqual(psutil.cpu_count(logical=True), syst)
-
     # --- virtual_memory(); tests against muse
 
     @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
-    def test_total(self):
+    def test_muse_vmem_total(self):
         num = muse('Total')
         self.assertEqual(psutil.virtual_memory().total, num)
 
     @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
-    def test_active(self):
+    def test_muse_vmem_active(self):
         num = muse('Active')
         self.assertAlmostEqual(psutil.virtual_memory().active, num,
                                delta=MEMORY_TOLERANCE)
 
     @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
-    def test_inactive(self):
+    def test_muse_vmem_inactive(self):
         num = muse('Inactive')
         self.assertAlmostEqual(psutil.virtual_memory().inactive, num,
                                delta=MEMORY_TOLERANCE)
 
     @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
-    def test_wired(self):
+    def test_muse_vmem_wired(self):
         num = muse('Wired')
         self.assertAlmostEqual(psutil.virtual_memory().wired, num,
                                delta=MEMORY_TOLERANCE)
 
     @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
-    def test_cached(self):
+    def test_muse_vmem_cached(self):
         num = muse('Cache')
         self.assertAlmostEqual(psutil.virtual_memory().cached, num,
                                delta=MEMORY_TOLERANCE)
 
     @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
-    def test_free(self):
+    def test_muse_vmem_free(self):
         num = muse('Free')
         self.assertAlmostEqual(psutil.virtual_memory().free, num,
                                delta=MEMORY_TOLERANCE)
 
     @unittest.skipUnless(MUSE_AVAILABLE, "muse cmdline tool is not available")
     @retry_before_failing()
-    def test_buffers(self):
+    def test_muse_vmem_buffers(self):
         num = muse('Buffer')
         self.assertAlmostEqual(psutil.virtual_memory().buffers, num,
                                delta=MEMORY_TOLERANCE)
 
 
+# =====================================================================
+# --- OpenBSD
+# =====================================================================
+
+
+@unittest.skipUnless(OPENBSD, "not an OpenBSD system")
+class OpenBSDSpecificTestCase(unittest.TestCase):
+
+    def test_boot_time(self):
+        s = sysctl('kern.boottime')
+        sys_bt = datetime.datetime.strptime(s, "%a %b %d %H:%M:%S %Y")
+        psutil_bt = datetime.datetime.fromtimestamp(psutil.boot_time())
+        self.assertEqual(sys_bt, psutil_bt)
+
+
 def main():
     test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.makeSuite(FreeBSDSpecificTestCase))
+    test_suite.addTest(unittest.makeSuite(BSDSpecificTestCase))
+    if FREEBSD:
+        test_suite.addTest(unittest.makeSuite(FreeBSDSpecificTestCase))
+    elif OPENBSD:
+        test_suite.addTest(unittest.makeSuite(OpenBSDSpecificTestCase))
     result = unittest.TextTestRunner(verbosity=2).run(test_suite)
     return result.wasSuccessful()
 
