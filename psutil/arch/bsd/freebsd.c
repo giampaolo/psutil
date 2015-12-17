@@ -485,7 +485,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
 #endif
     size_t buffers_size = sizeof(buffers);
 
-    if (sysctlbyname("vm.stats.vm.v_page_count", &total, &size, NULL, 0))
+    if (sysctlbyname("hw.physmem", &total, &size, NULL, 0))
         goto error;
     if (sysctlbyname("vm.stats.vm.v_active_count", &active, &size, NULL, 0))
         goto error;
@@ -506,7 +506,7 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         goto error;
 
     return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) total    * pagesize,
+        (unsigned long long) total,
         (unsigned long long) free     * pagesize,
         (unsigned long long) active   * pagesize,
         (unsigned long long) inactive * pagesize,
