@@ -11,6 +11,8 @@
 #include <sys/socketvar.h>    // for struct xsocket
 #include <sys/un.h>
 #include <sys/unpcb.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
 #include <netinet/in.h>   // for xinpcb struct
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
