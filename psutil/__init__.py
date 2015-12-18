@@ -109,7 +109,6 @@ if sys.platform.startswith("linux"):
             RLIMIT_SIGPENDING = _psutil_linux.RLIMIT_SIGPENDING
         except AttributeError:
             pass
-        del _psutil_linux
 
 elif sys.platform.startswith("win32"):
     from . import _pswindows as _psplatform
