@@ -4,6 +4,7 @@ include .gitignore
 include .travis.yml
 include appveyor.yml
 include CREDITS
+include DEVNOTES.rst
 include HISTORY.rst
 include INSTALL.rst
 include LICENSE
