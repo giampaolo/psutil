@@ -489,6 +489,19 @@ Network
 Other system info
 -----------------
 
+.. function:: boot_time()
+
+  Return the system boot time expressed in seconds since the epoch.
+  Example:
+
+  .. code-block:: python
+
+     >>> import psutil, datetime
+     >>> psutil.boot_time()
+     1389563460.0
+     >>> datetime.datetime.fromtimestamp(psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
+     '2014-01-12 22:51:00'
+
 .. function:: users()
 
   Return users currently connected on the system as a list of namedtuples
@@ -507,19 +520,6 @@ Other system info
     >>> psutil.users()
     [suser(name='giampaolo', terminal='pts/2', host='localhost', started=1340737536.0),
      suser(name='giampaolo', terminal='pts/3', host='localhost', started=1340737792.0)]
-
-.. function:: boot_time()
-
-  Return the system boot time expressed in seconds since the epoch.
-  Example:
-
-  .. code-block:: python
-
-     >>> import psutil, datetime
-     >>> psutil.boot_time()
-     1389563460.0
-     >>> datetime.datetime.fromtimestamp(psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
-     '2014-01-12 22:51:00'
 
 Processes
 =========
@@ -636,7 +636,8 @@ Process class
   is used.
   Raise :class:`NoSuchProcess` if *pid* does not exist.
   When accessing methods of this class always be  prepared to catch
-  :class:`NoSuchProcess` and :class:`AccessDenied` exceptions.
+  :class:`NoSuchProcess`, :class:`ZombieProcess` and :class:`AccessDenied`
+  exceptions.
   `hash() <http://docs.python.org/2/library/functions.html#hash>`__ builtin can
   be used against instances of this class in order to identify a process
   univocally over time (the hash is determined by mixing process PID
@@ -645,10 +646,10 @@ Process class
 
   .. warning::
 
-    the way this class is bound to a process is uniquely via its **PID**.
+    the way this class is bound to a process is via its **PID**.
     That means that if the :class:`Process` instance is old enough and
-    the PID has been reused by another process in the meantime you might end up
-    interacting with another process.
+    the PID has been reused in the meantime you might end up interacting
+    with another process.
     The only exceptions for which process identity is pre-emptively checked
     (via PID + creation time) and guaranteed are for
     :meth:`nice` (set),
@@ -706,9 +707,9 @@ Process class
 
   .. method:: as_dict(attrs=None, ad_value=None)
 
-     Utility method returning process information as a hashable dictionary.
+     Utility method retrieving multiple process information as a dictionary.
      If *attrs* is specified it must be a list of strings reflecting available
-     :class:`Process` class's attribute names (e.g. ``['cpu_times', 'name']``)
+     :class:`Process` class's attribute names (e.g. ``['cpu_times', 'name']``),
      else all public (read only) attributes are assumed. *ad_value* is the
      value which gets assigned to a dict key in case :class:`AccessDenied`
      or :class:`ZombieProcess` exception is raised when retrieving that
@@ -747,7 +748,7 @@ Process class
      The **real**, **effective** and **saved** user ids of this process as a
      namedtuple. This is the same as
      `os.getresuid() <http://docs.python.org//library/os.html#os.getresuid>`__
-     but can be used for every process PID.
+     but can be used for any process PID.
 
      Availability: UNIX
 
@@ -756,14 +757,14 @@ Process class
      The **real**, **effective** and **saved** group ids of this process as a
      namedtuple. This is the same as
      `os.getresgid() <http://docs.python.org//library/os.html#os.getresgid>`__
-     but can be used for every process PID.
+     but can be used for any process PID.
 
      Availability: UNIX
 
   .. method:: terminal()
 
      The terminal associated with this process, if any, else ``None``. This is
-     similar to "tty" command but can be used for every process PID.
+     similar to "tty" command but can be used for any process PID.
 
      Availability: UNIX
 
@@ -787,13 +788,12 @@ Process class
      and
      `os.setpriority() <http://docs.python.org/3/library/os.html#os.setpriority>`__
      (UNIX only).
-
-     On Windows this is available as well by using
+     On Windows this is implemented via
      `GetPriorityClass <http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx>`__
      and `SetPriorityClass <http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx>`__
-     and *value* is one of the
+     Windows APIs and *value* is one of the
      :data:`psutil.*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
-     constants.
+     constants reflecting the MSDN documentation.
      Example which increases process priority on Windows:
 
         >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
@@ -834,7 +834,8 @@ Process class
      *limits* is a ``(soft, hard)`` tuple.
      This is the same as `resource.getrlimit() <http://docs.python.org/library/resource.html#resource.getrlimit>`__
      and `resource.setrlimit() <http://docs.python.org/library/resource.html#resource.setrlimit>`__
-     but can be used for every process PID and only on Linux.
+     but can be used for any process PID, not only
+     `os.getpid() <http://docs.python.org/library/os.html#os.getpid>`__.
      Example:
 
       >>> import psutil
@@ -886,7 +887,7 @@ Process class
 
   .. method:: num_threads()
 
-     The number of threads currently used by this process.
+     The number of threads used by this process.
 
   .. method:: threads()
 
@@ -902,7 +903,7 @@ Process class
      `user / system mode <http://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1>`__.
      This is similar to
      `os.times() <http://docs.python.org//library/os.html#os.times>`__
-     but can be used for every process PID.
+     but can be used for any process PID.
 
   .. method:: cpu_percent(interval=None)
 
@@ -941,8 +942,8 @@ Process class
      `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`__.
      CPU affinity consists in telling the OS to run a certain process on a
      limited set of CPUs only. The number of eligible CPUs can be obtained with
-     ``list(range(psutil.cpu_count()))``. On set raises ``ValueError`` in case
-     an invalid CPU number is specified.
+     ``list(range(psutil.cpu_count()))``. ``ValueError`` will be raise on set
+     in case an invalid CPU number is specified.
 
       >>> import psutil
       >>> psutil.cpu_count()
@@ -1017,19 +1018,19 @@ Process class
 
   .. method:: memory_maps(grouped=True)
 
-     Return process's mapped memory regions as a list of namedtuples whose
-     fields are variable depending on the platform. As such, portable
-     applications should rely on namedtuple's `path` and `rss` fields only.
-     This method is useful to obtain a detailed representation of process
-     memory usage as explained
-     `here <http://bmaurer.blogspot.it/2006/03/memory-usage-with-smaps.html>`__.
-     If *grouped* is ``True`` the mapped regions with the same *path* are
-     grouped together and the different memory fields are summed.  If *grouped*
-     is ``False`` every mapped region is shown as a single entity and the
-     namedtuple will also include the mapped region's address space (*addr*)
-     and permission set (*perms*).
-     See `examples/pmap.py <https://github.com/giampaolo/psutil/blob/master/examples/pmap.py>`__
-     for an example application.
+    Return process's mapped memory regions as a list of namedtuples whose
+    fields are variable depending on the platform. As such, portable
+    applications should rely on namedtuple's `path` and `rss` fields only.
+    This method is useful to obtain a detailed representation of process
+    memory usage as explained
+    `here <http://bmaurer.blogspot.it/2006/03/memory-usage-with-smaps.html>`__.
+    If *grouped* is ``True`` the mapped regions with the same *path* are
+    grouped together and the different memory fields are summed.  If *grouped*
+    is ``False`` every mapped region is shown as a single entity and the
+    namedtuple will also include the mapped region's address space (*addr*)
+    and permission set (*perms*).
+    See `examples/pmap.py <https://github.com/giampaolo/psutil/blob/master/examples/pmap.py>`__
+    for an example application.
 
       >>> import psutil
       >>> p = psutil.Process()
@@ -1191,8 +1192,7 @@ Process class
      signals are supported and **SIGTERM** is treated as an alias for
      :meth:`kill()`.
 
-     .. versionchanged:: 3.2.0 support for CTRL_C_EVENT and CTRL_BREAK_EVENT
-     signals was added.
+     .. versionchanged:: 3.2.0 support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals on Windows was added.
 
   .. method:: suspend()
 
