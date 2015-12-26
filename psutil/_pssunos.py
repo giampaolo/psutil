@@ -19,10 +19,11 @@ from ._common import isfile_strict
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
+from ._compat import b
 from ._compat import PY3
 
 
-__extra__all__ = ["CONN_IDLE", "CONN_BOUND"]
+__extra__all__ = ["CONN_IDLE", "CONN_BOUND", "PROCFS_PATH"]
 
 PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')
 AF_LINK = cext_posix.AF_LINK
@@ -69,6 +70,13 @@ NoSuchProcess = None
 ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
+
+
+# --- utils
+
+def get_procfs_path():
+    return sys.modules['psutil'].PROCFS_PATH
+
 
 # --- functions
 
@@ -122,7 +130,7 @@ def swap_memory():
 
 def pids():
     """Returns a list of PIDs currently running on the system."""
-    return [int(x) for x in os.listdir('/proc') if x.isdigit()]
+    return [int(x) for x in os.listdir(b(get_procfs_path())) if x.isdigit()]
 
 
 def pid_exists(pid):
@@ -287,7 +295,8 @@ class Process(object):
     @wrap_exceptions
     def exe(self):
         try:
-            return os.readlink("/proc/%s/path/a.out" % self.pid)
+            return os.readlink(
+                "%s/%s/path/a.out" % (get_procfs_path(), self.pid))
         except OSError:
             pass    # continue and guess the exe name from the cmdline
         # Will be guessed later from cmdline but we want to explicitly
@@ -358,13 +367,15 @@ class Process(object):
 
     @wrap_exceptions
     def terminal(self):
+        procfs_path = get_procfs_path()
         hit_enoent = False
         tty = wrap_exceptions(
             cext.proc_basic_info(self.pid)[0])
         if tty != cext.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
-                    return os.readlink('/proc/%d/path/%d' % (self.pid, x))
+                    return os.readlink(
+                        '%s/%d/path/%d' % (procfs_path, self.pid, x))
                 except OSError as err:
                     if err.errno == errno.ENOENT:
                         hit_enoent = True
@@ -372,7 +383,7 @@ class Process(object):
                     raise
         if hit_enoent:
             # raise NSP if the process disappeared on us
-            os.stat('/proc/%s' % self.pid)
+            os.stat('%s/%s' % (procfs_path, self.pid))
 
     @wrap_exceptions
     def cwd(self):
@@ -380,11 +391,12 @@ class Process(object):
         # it exists (ls shows it). If that's the case and the process
         # is still alive return None (we can return None also on BSD).
         # Reference: http://goo.gl/55XgO
+        procfs_path = get_procfs_path()
         try:
-            return os.readlink("/proc/%s/path/cwd" % self.pid)
+            return os.readlink("%s/%s/path/cwd" % (procfs_path, self.pid))
         except OSError as err:
             if err.errno == errno.ENOENT:
-                os.stat("/proc/%s" % self.pid)
+                os.stat("%s/%s" % (procfs_path, self.pid))
                 return None
             raise
 
@@ -405,8 +417,9 @@ class Process(object):
 
     @wrap_exceptions
     def threads(self):
+        procfs_path = get_procfs_path()
         ret = []
-        tids = os.listdir('/proc/%d/lwp' % self.pid)
+        tids = os.listdir('%s/%d/lwp' % (procfs_path, self.pid))
         hit_enoent = False
         for tid in tids:
             tid = int(tid)
@@ -424,15 +437,16 @@ class Process(object):
                 ret.append(nt)
         if hit_enoent:
             # raise NSP if the process disappeared on us
-            os.stat('/proc/%s' % self.pid)
+            os.stat('%s/%s' % (procfs_path, self.pid))
         return ret
 
     @wrap_exceptions
     def open_files(self):
         retlist = []
         hit_enoent = False
-        pathdir = '/proc/%d/path' % self.pid
-        for fd in os.listdir('/proc/%d/fd' % self.pid):
+        procfs_path = get_procfs_path()
+        pathdir = '%s/%d/path' % (procfs_path, self.pid)
+        for fd in os.listdir('%s/%d/fd' % (procfs_path, self.pid)):
             path = os.path.join(pathdir, fd)
             if os.path.islink(path):
                 try:
@@ -448,7 +462,7 @@ class Process(object):
                         retlist.append(_common.popenfile(file, int(fd)))
         if hit_enoent:
             # raise NSP if the process disappeared on us
-            os.stat('/proc/%s' % self.pid)
+            os.stat('%s/%s' % (procfs_path, self.pid))
         return retlist
 
     def _get_unix_sockets(self, pid):
@@ -492,7 +506,8 @@ class Process(object):
         # process is no longer active so we force NSP in case the PID
         # is no longer there.
         if not ret:
-            os.stat('/proc/%s' % self.pid)  # will raise NSP if process is gone
+            # will raise NSP if process is gone
+            os.stat('%s/%s' % (get_procfs_path(), self.pid))
 
         # UNIX sockets
         if kind in ('all', 'unix'):
@@ -509,6 +524,7 @@ class Process(object):
             return '%s-%s' % (hex(start)[2:].strip('L'),
                               hex(end)[2:].strip('L'))
 
+        procfs_path = get_procfs_path()
         retlist = []
         rawlist = cext.proc_memory_maps(self.pid)
         hit_enoent = False
@@ -517,7 +533,8 @@ class Process(object):
             addr = toaddr(addr, addrsize)
             if not name.startswith('['):
                 try:
-                    name = os.readlink('/proc/%s/path/%s' % (self.pid, name))
+                    name = os.readlink(
+                        '%s/%s/path/%s' % (procfs_path, self.pid, name))
                 except OSError as err:
                     if err.errno == errno.ENOENT:
                         # sometimes the link may not be resolved by
@@ -526,19 +543,19 @@ class Process(object):
                         # unresolved link path.
                         # This seems an incosistency with /proc similar
                         # to: http://goo.gl/55XgO
-                        name = '/proc/%s/path/%s' % (self.pid, name)
+                        name = '%s/%s/path/%s' % (procfs_path, self.pid, name)
                         hit_enoent = True
                     else:
                         raise
             retlist.append((addr, perm, name, rss, anon, locked))
         if hit_enoent:
             # raise NSP if the process disappeared on us
-            os.stat('/proc/%s' % self.pid)
+            os.stat('%s/%s' % (procfs_path, self.pid))
         return retlist
 
     @wrap_exceptions
     def num_fds(self):
-        return len(os.listdir("/proc/%s/fd" % self.pid))
+        return len(os.listdir("%s/%s/fd" % (get_procfs_path(), self.pid)))
 
     @wrap_exceptions
     def num_ctx_switches(self):
