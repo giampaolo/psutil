@@ -88,7 +88,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
 static PyObject *
 psutil_proc_basic_info(PyObject *self, PyObject *args) {
     int pid;
-    char path[100];
+    char path[1000];
     psinfo_t info;
     const char *procfs_path;
 
@@ -117,7 +117,7 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     int pid;
-    char path[100];
+    char path[1000];
     psinfo_t info;
     const char *procfs_path;
 
@@ -136,7 +136,7 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     int pid;
-    char path[100];
+    char path[1000];
     pstatus_t info;
     const char *procfs_path;
 
@@ -158,7 +158,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_cred(PyObject *self, PyObject *args) {
     int pid;
-    char path[100];
+    char path[1000];
     prcred_t info;
     const char *procfs_path;
 
@@ -179,7 +179,7 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     int pid;
-    char path[100];
+    char path[1000];
     prusage_t info;
     const char *procfs_path;
 
@@ -206,7 +206,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
 static PyObject*
 proc_io_counters(PyObject* self, PyObject* args) {
     int pid;
-    char path[100];
+    char path[1000];
     prusage_t info;
     const char *procfs_path;
 
@@ -236,7 +236,7 @@ proc_io_counters(PyObject* self, PyObject* args) {
 static PyObject *
 psutil_proc_query_thread(PyObject *self, PyObject *args) {
     int pid, tid;
-    char path[100];
+    char path[1000];
     lwpstatus_t info;
     const char *procfs_path;
 
@@ -553,7 +553,7 @@ static PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     int pid;
     int fd = -1;
-    char path[100];
+    char path[1000];
     char perms[10];
     char *name;
     struct stat st;
