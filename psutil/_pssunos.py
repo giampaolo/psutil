@@ -290,7 +290,7 @@ class Process(object):
     @wrap_exceptions
     def name(self):
         # note: max len == 15
-        return cext.proc_name_and_args(self.pid)[0]
+        return cext.proc_name_and_args(self.pid, get_procfs_path())[0]
 
     @wrap_exceptions
     def exe(self):
@@ -307,15 +307,16 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        return cext.proc_name_and_args(self.pid)[1].split(' ')
+        return cext.proc_name_and_args(
+            self.pid, get_procfs_path())[1].split(' ')
 
     @wrap_exceptions
     def create_time(self):
-        return cext.proc_basic_info(self.pid)[3]
+        return cext.proc_basic_info(self.pid, get_procfs_path())[3]
 
     @wrap_exceptions
     def num_threads(self):
-        return cext.proc_basic_info(self.pid)[5]
+        return cext.proc_basic_info(self.pid, get_procfs_path())[5]
 
     @wrap_exceptions
     def nice_get(self):
@@ -348,21 +349,23 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        return cext.proc_basic_info(self.pid)[0]
+        return cext.proc_basic_info(self.pid, get_procfs_path())[0]
 
     @wrap_exceptions
     def uids(self):
-        real, effective, saved, _, _, _ = cext.proc_cred(self.pid)
+        real, effective, saved, _, _, _ = \
+            cext.proc_cred(self.pid, get_procfs_path())
         return _common.puids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
-        _, _, _, real, effective, saved = cext.proc_cred(self.pid)
+        _, _, _, real, effective, saved = \
+            cext.proc_cred(self.pid, get_procfs_path())
         return _common.puids(real, effective, saved)
 
     @wrap_exceptions
     def cpu_times(self):
-        user, system = cext.proc_cpu_times(self.pid)
+        user, system = cext.proc_cpu_times(self.pid, get_procfs_path())
         return _common.pcputimes(user, system)
 
     @wrap_exceptions
@@ -370,7 +373,7 @@ class Process(object):
         procfs_path = get_procfs_path()
         hit_enoent = False
         tty = wrap_exceptions(
-            cext.proc_basic_info(self.pid)[0])
+            cext.proc_basic_info(self.pid, get_procfs_path())[0])
         if tty != cext.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
@@ -402,7 +405,7 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        ret = cext.proc_basic_info(self.pid)
+        ret = cext.proc_basic_info(self.pid, get_procfs_path())
         rss, vms = ret[1] * 1024, ret[2] * 1024
         return _common.pmem(rss, vms)
 
@@ -411,7 +414,7 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        code = cext.proc_basic_info(self.pid)[6]
+        code = cext.proc_basic_info(self.pid, get_procfs_path())[6]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
@@ -425,7 +428,7 @@ class Process(object):
             tid = int(tid)
             try:
                 utime, stime = cext.query_process_thread(
-                    self.pid, tid)
+                    self.pid, tid, procfs_path)
             except EnvironmentError as err:
                 # ENOENT == thread gone in meantime
                 if err.errno == errno.ENOENT:
@@ -526,7 +529,7 @@ class Process(object):
 
         procfs_path = get_procfs_path()
         retlist = []
-        rawlist = cext.proc_memory_maps(self.pid)
+        rawlist = cext.proc_memory_maps(self.pid, procfs_path)
         hit_enoent = False
         for item in rawlist:
             addr, addrsize, perm, name, rss, anon, locked = item
@@ -559,7 +562,8 @@ class Process(object):
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        return _common.pctxsw(*cext.proc_num_ctx_switches(self.pid))
+        return _common.pctxsw(
+            *cext.proc_num_ctx_switches(self.pid, get_procfs_path()))
 
     @wrap_exceptions
     def wait(self, timeout=None):

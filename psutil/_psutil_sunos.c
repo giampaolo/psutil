@@ -90,10 +90,12 @@ psutil_proc_basic_info(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     psinfo_t info;
+    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "i", &pid))
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "/proc/%i/psinfo", pid);
+
+    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("ikkdiiik",
@@ -117,10 +119,11 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     psinfo_t info;
+    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "i", &pid))
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "/proc/%i/psinfo", pid);
+    sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("ss", info.pr_fname, info.pr_psargs);
@@ -135,10 +138,11 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     pstatus_t info;
+    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "i", &pid))
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "/proc/%i/status", pid);
+    sprintf(path, "%s/%i/status", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     // results are more precise than os.times()
@@ -156,10 +160,11 @@ psutil_proc_cred(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     prcred_t info;
+    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "i", &pid))
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "/proc/%i/cred", pid);
+    sprintf(path, "%s/%i/cred", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("iiiiii",
@@ -176,10 +181,11 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
     int pid;
     char path[100];
     prusage_t info;
+    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "i", &pid))
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "/proc/%i/usage", pid);
+    sprintf(path, "%s/%i/usage", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("kk", info.pr_vctx, info.pr_ictx);
@@ -202,10 +208,11 @@ proc_io_counters(PyObject* self, PyObject* args) {
     int pid;
     char path[100];
     prusage_t info;
+    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "i", &pid))
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
-    sprintf(path, "/proc/%i/usage", pid);
+    sprintf(path, "%s/%i/usage", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
 
@@ -231,10 +238,11 @@ psutil_proc_query_thread(PyObject *self, PyObject *args) {
     int pid, tid;
     char path[100];
     lwpstatus_t info;
+    const char *procfs_path;
 
-    if (! PyArg_ParseTuple(args, "ii", &pid, &tid))
+    if (! PyArg_ParseTuple(args, "iis", &pid, &tid, &procfs_path))
         return NULL;
-    sprintf(path, "/proc/%i/lwp/%i/lwpstatus", pid, tid);
+    sprintf(path, "%s/%i/lwp/%i/lwpstatus", procfs_path, pid, tid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     return Py_BuildValue("dd",
@@ -557,20 +565,21 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     int nmap;
     uintptr_t pr_addr_sz;
     uintptr_t stk_base_sz, brk_base_sz;
+    const char *procfs_path;
 
     PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "i", &pid))
+    if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         goto error;
 
-    sprintf(path, "/proc/%i/status", pid);
+    sprintf(path, "%s/%i/status", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&status, sizeof(status)))
         goto error;
 
-    sprintf(path, "/proc/%i/xmap", pid);
+    sprintf(path, "%s/%i/xmap", procfs_path, pid);
     if (stat(path, &st) == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
