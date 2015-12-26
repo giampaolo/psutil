@@ -16,7 +16,7 @@ include setup.py
 include TODO
 include tox.ini
 recursive-exclude docs/_build *
-recursive-include .ci/ *
+recursive-include .ci *
 recursive-include docs *
 recursive-include examples *.py
 recursive-include psutil *.py *.c *.h

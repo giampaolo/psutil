@@ -1142,7 +1142,7 @@ class Process(object):
 
 
 class Popen(Process):
-    """A more convenient interface to stdlib subprocess module.
+    """A more convenient interface to stdlib subprocess.Popen class.
     It starts a sub process and deals with it exactly as when using
     subprocess.Popen class but in addition also provides all the
     properties and methods of psutil.Process class as a unified
