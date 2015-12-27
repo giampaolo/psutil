@@ -4,6 +4,11 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 3.4.2 - XXXX-XX-XX
 ==================
 
+**Enhancements**
+
+- #728: [Solaris] exposed psutil.PROCFS_PATH constant to change the default
+  location of /proc filesystem.
+
 **Bug fixes**
 
 - #730: [FreeBSD] psutil.virtual_memory() crashes.
@@ -1117,11 +1122,4 @@ DeprecationWarning.
 - #23: Special case for pid_exists(0)
 - #24: [Windows] Process(0).kill() now raises AccessDenied exception instead
   of WindowsError.
-- #30: psutil.get_pid_list() was returning two instances of PID 0 on OSX and
-  FreeBSD platforms.
-
-
-0.1.0 - 2009-01-27
-==================
-
-- Initial release.
+- #30: psutil.get_pid_list() was returning two ins

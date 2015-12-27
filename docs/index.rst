@@ -980,29 +980,29 @@ Process class
      representing extended memory information about the process.
      All numbers are expressed in bytes.
 
-     +--------+---------+-------+-------+--------------------+
-     | Linux  | OSX     | BSD   | SunOS | Windows            |
-     +========+=========+=======+=======+====================+
-     | rss    | rss     | rss   | rss   | num_page_faults    |
-     +--------+---------+-------+-------+--------------------+
-     | vms    | vms     | vms   | vms   | peak_wset          |
-     +--------+---------+-------+-------+--------------------+
-     | shared | pfaults | text  |       | wset               |
-     +--------+---------+-------+-------+--------------------+
-     | text   | pageins | data  |       | peak_paged_pool    |
-     +--------+---------+-------+-------+--------------------+
-     | lib    |         | stack |       | paged_pool         |
-     +--------+---------+-------+-------+--------------------+
-     | data   |         |       |       | peak_nonpaged_pool |
-     +--------+---------+-------+-------+--------------------+
-     | dirty  |         |       |       | nonpaged_pool      |
-     +--------+---------+-------+-------+--------------------+
-     |        |         |       |       | pagefile           |
-     +--------+---------+-------+-------+--------------------+
-     |        |         |       |       | peak_pagefile      |
-     +--------+---------+-------+-------+--------------------+
-     |        |         |       |       | private            |
-     +--------+---------+-------+-------+--------------------+
+     +--------+---------+-------+---------+--------------------+
+     | Linux  | OSX     | BSD   | Solaris | Windows            |
+     +========+=========+=======+=========+====================+
+     | rss    | rss     | rss   | rss     | num_page_faults    |
+     +--------+---------+-------+---------+--------------------+
+     | vms    | vms     | vms   | vms     | peak_wset          |
+     +--------+---------+-------+---------+--------------------+
+     | shared | pfaults | text  |         | wset               |
+     +--------+---------+-------+---------+--------------------+
+     | text   | pageins | data  |         | peak_paged_pool    |
+     +--------+---------+-------+---------+--------------------+
+     | lib    |         | stack |         | paged_pool         |
+     +--------+---------+-------+---------+--------------------+
+     | data   |         |       |         | peak_nonpaged_pool |
+     +--------+---------+-------+---------+--------------------+
+     | dirty  |         |       |         | nonpaged_pool      |
+     +--------+---------+-------+---------+--------------------+
+     |        |         |       |         | pagefile           |
+     +--------+---------+-------+---------+--------------------+
+     |        |         |       |         | peak_pagefile      |
+     +--------+---------+-------+---------+--------------------+
+     |        |         |       |         | private            |
+     +--------+---------+-------+---------+--------------------+
 
      Windows metrics are extracted from
      `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure.
@@ -1287,12 +1287,14 @@ Constants
 .. _const-pstatus:
 .. data:: PROCFS_PATH
 
-  The path of the /proc filesystem on Linux (defaults to "/proc"). You may want
-  to re-set this in case /proc is mounted elsewhere.
+  The path of the /proc filesystem on Linux and Solaris (defaults to "/proc").
+  You may want to re-set this constant right after importing psutil in case
+  your /proc filesystem is mounted elsewhere.
 
-  Availability: Linux
+  Availability: Linux, Solaris
 
   .. versionadded:: 3.2.3
+  .. versionchanged:: 3.4.2 also available on Solaris.
 
 .. _const-pstatus:
 .. data:: STATUS_RUNNING
