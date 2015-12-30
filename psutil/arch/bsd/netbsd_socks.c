@@ -138,9 +138,9 @@ get_files(void)
     struct kinfo_file *ki = (struct kinfo_file *)(buf + offset);
 
     for (j = 0; j < len; j++) {
-	struct kif *kif = malloc(sizeof(struct kif));
-	kif->kif = &ki[j];
-	SLIST_INSERT_HEAD(&kihead, kif, kifs);
+        struct kif *kif = malloc(sizeof(struct kif));
+        kif->kif = &ki[j];
+        SLIST_INSERT_HEAD(&kihead, kif, kifs);
     }
 
 #if 0
@@ -172,11 +172,11 @@ get_sockets(const char *name)
         return -1;
 
     if (sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0) == -1)
-	return -1;
+        return -1;
 
     if ((pcb = malloc(len)) == NULL) {
-	free(pcb);
-	return -1;
+        free(pcb);
+        return -1;
     }
     memset(pcb, 0, len);
 
@@ -184,7 +184,7 @@ get_sockets(const char *name)
     mib[7] = len / sizeof(*pcb);
 
     if (sysctl(mib, __arraycount(mib), pcb, &len, NULL, 0) == -1) {
-	return -1;
+        return -1;
     }
 
     len /= sizeof(struct kinfo_pcb);
@@ -362,29 +362,29 @@ get_info(int aff)
     get_files();
 
     switch (aff) {
-	case INET:
-	    get_sockets("net.inet.tcp.pcblist");
-	    get_sockets("net.inet.udp.pcblist");
-	    get_sockets("net.inet6.tcp6.pcblist");
-	    get_sockets("net.inet6.udp6.pcblist");
-	    break;
-	case INET4:
-	    get_sockets("net.inet.tcp.pcblist");
-	    get_sockets("net.inet.udp.pcblist");
-	    break;
-	case INET6:
-	    get_sockets("net.inet6.tcp6.pcblist");
-	    get_sockets("net.inet6.udp6.pcblist");
-	    break;
-	case TCP:
+        case INET:
+            get_sockets("net.inet.tcp.pcblist");
+            get_sockets("net.inet.udp.pcblist");
+            get_sockets("net.inet6.tcp6.pcblist");
+            get_sockets("net.inet6.udp6.pcblist");
+            break;
+        case INET4:
+            get_sockets("net.inet.tcp.pcblist");
+            get_sockets("net.inet.udp.pcblist");
+            break;
+        case INET6:
+            get_sockets("net.inet6.tcp6.pcblist");
+            get_sockets("net.inet6.udp6.pcblist");
+            break;
+        case TCP:
             get_sockets("net.inet.tcp.pcblist");
             get_sockets("net.inet6.tcp6.pcblist");
-	    break;
-	case TCP4:
+            break;
+        case TCP4:
             get_sockets("net.inet.tcp.pcblist");
             break;
-	case TCP6:
-	    get_sockets("net.inet6.tcp6.pcblist");
+        case TCP6:
+            get_sockets("net.inet6.tcp6.pcblist");
             break;
         case UDP:
             get_sockets("net.inet.udp.pcblist");
@@ -397,19 +397,19 @@ get_info(int aff)
             get_sockets("net.inet6.udp6.pcblist");
             break;
         case UNIX:
-	    get_sockets("net.local.stream.pcblist");
-	    get_sockets("net.local.seqpacket.pcblist");
-	    get_sockets("net.local.dgram.pcblist");
+            get_sockets("net.local.stream.pcblist");
+            get_sockets("net.local.seqpacket.pcblist");
+            get_sockets("net.local.dgram.pcblist");
             break;
-	case ALL:
-	    get_sockets("net.inet.tcp.pcblist");
-	    get_sockets("net.inet.udp.pcblist");
-	    get_sockets("net.inet6.tcp6.pcblist");
-	    get_sockets("net.inet6.udp6.pcblist");
-	    get_sockets("net.local.stream.pcblist");
-	    get_sockets("net.local.seqpacket.pcblist");
-	    get_sockets("net.local.dgram.pcblist");
-	    break;
+        case ALL:
+            get_sockets("net.inet.tcp.pcblist");
+            get_sockets("net.inet.udp.pcblist");
+            get_sockets("net.inet6.tcp6.pcblist");
+            get_sockets("net.inet6.udp6.pcblist");
+            get_sockets("net.local.stream.pcblist");
+            get_sockets("net.local.seqpacket.pcblist");
+            get_sockets("net.local.dgram.pcblist");
+            break;
     }
     return;
 }
@@ -437,96 +437,96 @@ psutil_net_connections(PyObject *self, PyObject *args)
         struct kpcb *kp;
         SLIST_FOREACH(kp, &kpcbhead, kpcbs) {
             if (k->kif->ki_fdata == kp->kpcb->ki_sockaddr) {
-		pid_t pid;
-		int32_t fd;
-		int32_t family;
-		int32_t type;
-		char laddr[PATH_MAX];
-		int32_t lport;
-		char raddr[PATH_MAX];
-		int32_t rport;
-		int32_t status;
+                pid_t pid;
+                int32_t fd;
+                int32_t family;
+                int32_t type;
+                char laddr[PATH_MAX];
+                int32_t lport;
+                char raddr[PATH_MAX];
+                int32_t rport;
+                int32_t status;
 
-		pid = k->kif->ki_pid;
-		fd = k->kif->ki_fd;
-		family = kp->kpcb->ki_family;
-		type = kp->kpcb->ki_type;
-		if (kp->kpcb->ki_family == AF_INET) {
-		    struct sockaddr_in *sin_src =
-			(struct sockaddr_in *)&kp->kpcb->ki_src;
-		    struct sockaddr_in *sin_dst =
-			(struct sockaddr_in *)&kp->kpcb->ki_dst;
-		    if (inet_ntop(AF_INET, &sin_src->sin_addr, laddr,
-			sizeof(laddr)) != NULL)
-		    lport = ntohs(sin_src->sin_port);
-		    py_laddr = Py_BuildValue("(si)", laddr, lport);
-		    if (inet_ntop(AF_INET, &sin_dst->sin_addr, raddr,
-			sizeof(raddr)) != NULL)
-		    rport = ntohs(sin_dst->sin_port);
-		    py_raddr = Py_BuildValue("(si)", raddr, rport);
-		    if (kp->kpcb->ki_type == SOCK_STREAM) {
-			status = kp->kpcb->ki_tstate;
-		    } else {
-			status = PSUTIL_CONN_NONE;
-		    }
+                pid = k->kif->ki_pid;
+                fd = k->kif->ki_fd;
+                family = kp->kpcb->ki_family;
+                type = kp->kpcb->ki_type;
+                if (kp->kpcb->ki_family == AF_INET) {
+                    struct sockaddr_in *sin_src =
+                        (struct sockaddr_in *)&kp->kpcb->ki_src;
+                    struct sockaddr_in *sin_dst =
+                        (struct sockaddr_in *)&kp->kpcb->ki_dst;
+                    if (inet_ntop(AF_INET, &sin_src->sin_addr, laddr,
+                        sizeof(laddr)) != NULL)
+                    lport = ntohs(sin_src->sin_port);
+                    py_laddr = Py_BuildValue("(si)", laddr, lport);
+                    if (inet_ntop(AF_INET, &sin_dst->sin_addr, raddr,
+                        sizeof(raddr)) != NULL)
+                    rport = ntohs(sin_dst->sin_port);
+                    py_raddr = Py_BuildValue("(si)", raddr, rport);
+                    if (kp->kpcb->ki_type == SOCK_STREAM) {
+                        status = kp->kpcb->ki_tstate;
+                    } else {
+                        status = PSUTIL_CONN_NONE;
+                    }
 
-		    py_tuple = Py_BuildValue("(iiiNNii)", fd, AF_INET,
-				type, py_laddr, py_raddr, status, pid);
-		    if (!py_tuple) {
-			printf("Empty tuple\n");
-			return 0;
-		    }
-		    if (PyList_Append(py_retlist, py_tuple))
-			return 0;
-		} else if (kp->kpcb->ki_family == AF_INET6) {
-		    struct sockaddr_in6 *sin6_src =
-			(struct sockaddr_in6 *)&kp->kpcb->ki_src;
-		    struct sockaddr_in6 *sin6_dst =
-			(struct sockaddr_in6 *)&kp->kpcb->ki_dst;
-		    if (inet_ntop(AF_INET6, &sin6_src->sin6_addr, laddr,
-			sizeof(laddr)) != NULL)
-		    lport = ntohs(sin6_src->sin6_port);
-		    py_laddr = Py_BuildValue("(si)", laddr, lport);
-		    if (inet_ntop(AF_INET6, &sin6_dst->sin6_addr, raddr,
-			sizeof(raddr)) != NULL)
-		    rport = ntohs(sin6_dst->sin6_port);
-		    py_raddr = Py_BuildValue("(si)", raddr, rport);
-		    if (kp->kpcb->ki_type == SOCK_STREAM) {
-			status = kp->kpcb->ki_tstate;
-		    } else {
-			status = PSUTIL_CONN_NONE;
-		    }
+                    py_tuple = Py_BuildValue("(iiiNNii)", fd, AF_INET,
+                                type, py_laddr, py_raddr, status, pid);
+                    if (!py_tuple) {
+                        printf("Empty tuple\n");
+                        return 0;
+                    }
+                    if (PyList_Append(py_retlist, py_tuple))
+                        return 0;
+                } else if (kp->kpcb->ki_family == AF_INET6) {
+                    struct sockaddr_in6 *sin6_src =
+                        (struct sockaddr_in6 *)&kp->kpcb->ki_src;
+                    struct sockaddr_in6 *sin6_dst =
+                        (struct sockaddr_in6 *)&kp->kpcb->ki_dst;
+                    if (inet_ntop(AF_INET6, &sin6_src->sin6_addr, laddr,
+                        sizeof(laddr)) != NULL)
+                    lport = ntohs(sin6_src->sin6_port);
+                    py_laddr = Py_BuildValue("(si)", laddr, lport);
+                    if (inet_ntop(AF_INET6, &sin6_dst->sin6_addr, raddr,
+                        sizeof(raddr)) != NULL)
+                    rport = ntohs(sin6_dst->sin6_port);
+                    py_raddr = Py_BuildValue("(si)", raddr, rport);
+                    if (kp->kpcb->ki_type == SOCK_STREAM) {
+                        status = kp->kpcb->ki_tstate;
+                    } else {
+                        status = PSUTIL_CONN_NONE;
+                    }
 
-		    py_tuple = Py_BuildValue("(iiiNNii)", fd, AF_INET6,
-				type, py_laddr, py_raddr, status, pid);
-		    if (!py_tuple) {
-			printf("Empty tuple\n");
-			return 0;
-		    }
-		    if (PyList_Append(py_retlist, py_tuple))
-			return 0;
-		} else if (kp->kpcb->ki_family == AF_UNIX) {
-		    struct sockaddr_un *sun_src =
-			(struct sockaddr_un *)&kp->kpcb->ki_src;
-		    struct sockaddr_un *sun_dst =
-			(struct sockaddr_un *)&kp->kpcb->ki_dst;
-		    strcpy(laddr, sun_src->sun_path);
-		    strcpy(raddr, sun_dst->sun_path);
-		    status = PSUTIL_CONN_NONE;
+                    py_tuple = Py_BuildValue("(iiiNNii)", fd, AF_INET6,
+                                type, py_laddr, py_raddr, status, pid);
+                    if (!py_tuple) {
+                        printf("Empty tuple\n");
+                        return 0;
+                    }
+                    if (PyList_Append(py_retlist, py_tuple))
+                        return 0;
+                } else if (kp->kpcb->ki_family == AF_UNIX) {
+                    struct sockaddr_un *sun_src =
+                        (struct sockaddr_un *)&kp->kpcb->ki_src;
+                    struct sockaddr_un *sun_dst =
+                        (struct sockaddr_un *)&kp->kpcb->ki_dst;
+                    strcpy(laddr, sun_src->sun_path);
+                    strcpy(raddr, sun_dst->sun_path);
+                    status = PSUTIL_CONN_NONE;
 
-		    py_tuple = Py_BuildValue("(iiissii)", fd, AF_UNIX,
-				type, laddr, raddr, status, pid);
-		    if (!py_tuple) {
-			printf("Empty tuple\n");
-			return 0;
-		    }
-		    if (PyList_Append(py_retlist, py_tuple))
-			return 0;
-		}
+                    py_tuple = Py_BuildValue("(iiissii)", fd, AF_UNIX,
+                                type, laddr, raddr, status, pid);
+                    if (!py_tuple) {
+                        printf("Empty tuple\n");
+                        return 0;
+                    }
+                    if (PyList_Append(py_retlist, py_tuple))
+                        return 0;
+                }
 
 
-	    }
-	}
+            }
+        }
     }
 
     kiflist_clear();
