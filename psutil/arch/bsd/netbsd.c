@@ -97,7 +97,7 @@ kinfo_getfile(pid_t pid, int* cnt) {
         return NULL;
     }
     if ((kf = malloc(len)) == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_NoMemory();
         return NULL;
     }
     mib[5] = (int)(len / sizeof(struct kinfo_file));
