@@ -176,7 +176,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     }
     return Py_BuildValue("s", pathname);
 #else
-    return NULL;
+    return Py_BuildValue("s", "");
 #endif
 }
 
