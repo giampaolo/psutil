@@ -378,8 +378,6 @@ psutil_get_cmdline(pid_t pid) {
     if (py_retlist == NULL)
         return NULL;
 
-    if (pid < 0)
-        return py_retlist;
     argstr = psutil_get_cmd_args(pid, &argsize);
     if (argstr == NULL)
         goto error;
