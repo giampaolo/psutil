@@ -43,7 +43,7 @@ struct kif {
     SLIST_ENTRY(kif) kifs;
     struct kinfo_file *kif;
 };
- 
+
 // kinfo_file results list
 SLIST_HEAD(kifhead, kif) kihead = SLIST_HEAD_INITIALIZER(kihead);
 
@@ -338,7 +338,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
 
 }
- 
+
 
 // Collect open file and connections
 static void
