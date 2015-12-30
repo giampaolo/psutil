@@ -102,7 +102,7 @@ kinfo_getfile(pid_t pid, int* cnt) {
     mib[4] = sizeof(struct kinfo_file);
     mib[5] = 0;
 
-    /* get the size of what would be returned */
+    // get the size of what would be returned
     if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
@@ -461,7 +461,7 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    /* Total things up */
+    // Total things up
     swap_total = swap_free = 0;
     for (i = 0; i < nswap; i++) {
         if (swdev[i].se_flags & SWF_ENABLE) {
@@ -473,8 +473,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
                          swap_total * DEV_BSIZE,
                          (swap_total - swap_free) * DEV_BSIZE,
                          swap_free * DEV_BSIZE,
-                         0 /* XXX swap in */,
-                         0 /* XXX swap out */);
+                         0, // XXX swap in
+                         0); // XXX swap out
 }
 
 
@@ -501,7 +501,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
-    /* Not implemented */
+    // Not implemented
     return NULL;
 }
 
