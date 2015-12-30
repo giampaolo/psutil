@@ -210,7 +210,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     int i, nlwps;
     ssize_t st;
     size_t size;
-    struct kinfo_lwp *kl;
+    struct kinfo_lwp *kl = NULL;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
 
