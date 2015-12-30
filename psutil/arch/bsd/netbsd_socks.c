@@ -23,7 +23,7 @@
 // a signaler for connections without an actual status
 int PSUTIL_CONN_NONE = 128;
 
-/* Address family filter */
+// Address family filter
 enum af_filter {
     INET,
     INET4,
@@ -38,23 +38,23 @@ enum af_filter {
     ALL,
 };
 
-/* kinfo_file results */
+// kinfo_file results
 struct kif {
     SLIST_ENTRY(kif) kifs;
     struct kinfo_file *kif;
 };
  
-/* kinfo_file results list */
+// kinfo_file results list
 SLIST_HEAD(kifhead, kif) kihead = SLIST_HEAD_INITIALIZER(kihead);
 
 
-/* kinfo_pcb results */
+// kinfo_pcb results
 struct kpcb {
     SLIST_ENTRY(kpcb) kpcbs;
     struct kinfo_pcb *kpcb;
 };
 
-/* kinfo_pcb results list */
+// kinfo_pcb results list
 SLIST_HEAD(kpcbhead, kpcb) kpcbhead = SLIST_HEAD_INITIALIZER(kpcbhead);
 
 static void kiflist_init(void);
@@ -65,7 +65,7 @@ static int get_files(void);
 static int get_sockets(const char *name);
 static void get_info(int aff);
 
-/* Initialize kinfo_file results list */
+// Initialize kinfo_file results list
 static void
 kiflist_init(void)
 {
@@ -73,7 +73,7 @@ kiflist_init(void)
     return;
 }
 
-/* Clear kinfo_file results list */
+// Clear kinfo_file results list
 static void
 kiflist_clear(void)
 {
@@ -84,7 +84,7 @@ kiflist_clear(void)
     return;
 }
 
-/* Initialize kinof_pcb result list */
+// Initialize kinof_pcb result list
 static void
 kpcblist_init(void)
 {
@@ -92,7 +92,7 @@ kpcblist_init(void)
     return;
 }
 
-/* Clear kinof_pcb result list */
+// Clear kinof_pcb result list
 static void
 kpcblist_clear(void)
 {
@@ -104,9 +104,7 @@ kpcblist_clear(void)
 }
 
 
-/*
- * Get all open files including socket
- */
+// Get all open files including socket
 static int
 get_files(void)
 {
@@ -144,7 +142,7 @@ get_files(void)
     }
 
 #if 0
-    /* debug */
+    // debug
     struct kif *k;
     SLIST_FOREACH(k, &kihead, kifs) {
             printf("%d\n", k->kif->ki_pid);
@@ -154,9 +152,7 @@ get_files(void)
     return 0;
 }
 
-/*
- * Get open sockets
- */
+// Get open sockets
 static int
 get_sockets(const char *name)
 {
@@ -197,7 +193,7 @@ get_sockets(const char *name)
     }
 
 #if 0
-    /* debug */
+    // debug
     struct kif *k;
     struct kpcb *k;
     SLIST_FOREACH(k, &kpcbhead, kpcbs) {
@@ -210,9 +206,7 @@ get_sockets(const char *name)
 }
 
 
-/*
- * Collect connections by PID
- */
+// Collect connections by PID
 PyObject *
 psutil_proc_connections(PyObject *self, PyObject *args)
 {
@@ -353,9 +347,7 @@ psutil_proc_connections(PyObject *self, PyObject *args)
 }
  
 
-/*
- * Collect open file and connections
- */
+// Collect open file and connections
 static void
 get_info(int aff)
 {
@@ -414,9 +406,7 @@ get_info(int aff)
     return;
 }
 
-/*
- * Collect system wide connections by address family filter
- */
+// Collect system wide connections by address family filter
 PyObject *
 psutil_net_connections(PyObject *self, PyObject *args)
 {
