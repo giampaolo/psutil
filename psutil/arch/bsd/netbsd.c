@@ -373,8 +373,10 @@ psutil_get_cmdline(pid_t pid) {
     char *argstr = NULL;
     int pos = 0;
     size_t argsize = 0;
-    PyObject *py_retlist = Py_BuildValue("[]");
     PyObject *py_arg = NULL;
+    PyObject *py_retlist = PyList_New(0);
+    if (py_retlist == NULL)
+        return NULL;
 
     if (pid < 0)
         return py_retlist;
