@@ -49,6 +49,17 @@
 // Utility functions
 // ============================================================================
 
+
+int
+psutil_raise_ad_or_nsp(long pid) {
+    // Set exception to AccessDenied if pid exists else NoSuchProcess.
+    if (psutil_pid_exists(pid) == 0)
+        NoSuchProcess();
+    else
+        AccessDenied();
+}
+
+
 int
 psutil_kinfo_proc(pid_t pid, kinfo_proc *proc) {
     // Fills a kinfo_proc struct based on process pid.
@@ -262,15 +273,6 @@ error:
     if (kl != NULL)
         free(kl);
     return NULL;
-}
-
-int
-psutil_raise_ad_or_nsp(long pid) {
-    // Set exception to AccessDenied if pid exists else NoSuchProcess.
-    if (psutil_pid_exists(pid) == 0)
-        NoSuchProcess();
-    else
-        AccessDenied();
 }
 
 
