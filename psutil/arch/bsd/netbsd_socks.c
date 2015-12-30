@@ -67,16 +67,14 @@ static void get_info(int aff);
 
 // Initialize kinfo_file results list
 static void
-kiflist_init(void)
-{
+kiflist_init(void) {
     SLIST_INIT(&kihead);
     return;
 }
 
 // Clear kinfo_file results list
 static void
-kiflist_clear(void)
-{
+kiflist_clear(void) {
      while (!SLIST_EMPTY(&kihead)) {
              SLIST_REMOVE_HEAD(&kihead, kifs);
      }
@@ -86,16 +84,14 @@ kiflist_clear(void)
 
 // Initialize kinof_pcb result list
 static void
-kpcblist_init(void)
-{
+kpcblist_init(void) {
     SLIST_INIT(&kpcbhead);
     return;
 }
 
 // Clear kinof_pcb result list
 static void
-kpcblist_clear(void)
-{
+kpcblist_clear(void) {
      while (!SLIST_EMPTY(&kpcbhead)) {
              SLIST_REMOVE_HEAD(&kpcbhead, kpcbs);
      }
@@ -106,8 +102,7 @@ kpcblist_clear(void)
 
 // Get all open files including socket
 static int
-get_files(void)
-{
+get_files(void) {
     size_t len;
     int mib[6];
     char *buf;
@@ -154,8 +149,7 @@ get_files(void)
 
 // Get open sockets
 static int
-get_sockets(const char *name)
-{
+get_sockets(const char *name) {
     size_t namelen;
     int mib[8];
     int ret, j;
@@ -208,8 +202,7 @@ get_sockets(const char *name)
 
 // Collect connections by PID
 PyObject *
-psutil_proc_connections(PyObject *self, PyObject *args)
-{
+psutil_proc_connections(PyObject *self, PyObject *args) {
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
@@ -349,8 +342,7 @@ psutil_proc_connections(PyObject *self, PyObject *args)
 
 // Collect open file and connections
 static void
-get_info(int aff)
-{
+get_info(int aff) {
     get_files();
 
     switch (aff) {
@@ -408,8 +400,7 @@ get_info(int aff)
 
 // Collect system wide connections by address family filter
 PyObject *
-psutil_net_connections(PyObject *self, PyObject *args)
-{
+psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
     PyObject *py_laddr = NULL;
