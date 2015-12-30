@@ -123,7 +123,7 @@ elif sys.platform.startswith("win32"):
 elif sys.platform.startswith("darwin"):
     from . import _psosx as _psplatform
 
-elif sys.platform.startswith("freebsd") or sys.platform.startswith("openbsd"):
+elif sys.platform.startswith("freebsd") or sys.platform.startswith("openbsd") or sys.platform.startswith("netbsd"):
     from . import _psbsd as _psplatform
 
 elif sys.platform.startswith("sunos"):
