@@ -348,11 +348,11 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
     size = sizeof(argmax);
     st = sysctl(mib, 2, &argmax, &size, NULL, 0);
     if (st == -1)
-	return NULL;
+        return NULL;
 
     procargs = (char *)malloc(argmax);
     if (procargs == NULL)
-	return NULL;
+        return NULL;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC_ARGS;
@@ -361,7 +361,7 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
 
     st = sysctl(mib, 4, procargs, &argmax, NULL, 0);
     if (st == -1)
-	return NULL;
+        return NULL;
 
     *argsize = argmax;
     return procargs;
