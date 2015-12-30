@@ -424,11 +424,11 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         return NULL;
     }
     return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) uvmexp.npages    * pagesize,
-        (unsigned long long) uvmexp.free     * pagesize,
-        (unsigned long long) uvmexp.active   * pagesize,
+        (unsigned long long) uvmexp.npages * pagesize,
+        (unsigned long long) uvmexp.free * pagesize,
+        (unsigned long long) uvmexp.active * pagesize,
         (unsigned long long) uvmexp.inactive * pagesize,
-        (unsigned long long) uvmexp.wired    * pagesize,
+        (unsigned long long) uvmexp.wired * pagesize,
         (unsigned long long) 0,
         (unsigned long long) 0,
         (unsigned long long) 0
