@@ -517,8 +517,7 @@ psutil_convert_ipv4(int family, uint32_t addr[4]) {
 
 
 static char *
-psutil_inet6_addrstr(struct in6_addr *p)
-{
+psutil_inet6_addrstr(struct in6_addr *p) {
     struct sockaddr_in6 sin6;
     static char hbuf[NI_MAXHOST];
     const int niflags = NI_NUMERICHOST;
