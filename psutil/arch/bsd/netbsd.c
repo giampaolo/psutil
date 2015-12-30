@@ -293,7 +293,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC, 0 };
     // Declaring name as const requires us to cast it when passing it to
     // sysctl because the prototype doesn't include the const modifier.
-    size_t              length;
+    size_t length;
     char errbuf[_POSIX2_LINE_MAX];
     kinfo_proc *x;
     int cnt;
@@ -411,11 +411,11 @@ error:
 
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    unsigned int   total, active, inactive, wired, cached, free;
-    size_t         size = sizeof(total);
+    unsigned int total, active, inactive, wired, cached, free;
+    size_t size = sizeof(total);
     struct uvmexp_sysctl uvmexp;
-    int            mib[] = {CTL_VM, VM_UVMEXP2};
-    long           pagesize = getpagesize();
+    int mib[] = {CTL_VM, VM_UVMEXP2};
+    long pagesize = getpagesize();
     size = sizeof(uvmexp);
 
     if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
