@@ -178,6 +178,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
 
     result = kvm_getprocs(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc), &cnt);
     if (result == NULL) {
+        kvm_close(kd);
         err(1, NULL);
         return errno;
     }
@@ -187,6 +188,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     size_t mlen = cnt * sizeof(struct kinfo_proc);
 
     if ((*procList = malloc(mlen)) == NULL) {
+        kvm_close(kd);
         err(1, NULL);
         return errno;
     }
