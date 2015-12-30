@@ -348,12 +348,17 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
 
     size = sizeof(argmax);
     st = sysctl(mib, 2, &argmax, &size, NULL, 0);
-    if (st == -1)
+    if (st == -1) {
+        warn("failed to get kern.argmax");
+        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
+    }
 
     procargs = (char *)malloc(argmax);
-    if (procargs == NULL)
+    if (procargs == NULL) {
+        PyErr_NoMemory();
         return NULL;
+    }
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC_ARGS;
@@ -361,8 +366,11 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
     mib[3] = KERN_PROC_ARGV;
 
     st = sysctl(mib, 4, procargs, &argmax, NULL, 0);
-    if (st == -1)
+    if (st == -1) {
+        warn("failed to get kern.procargs");
+        PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
+    }
 
     *argsize = argmax;
     return procargs;
