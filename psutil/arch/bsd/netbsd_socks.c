@@ -165,7 +165,6 @@ get_sockets(const char *name) {
         return -1;
 
     if ((pcb = malloc(len)) == NULL) {
-        free(pcb);
         return -1;
     }
     memset(pcb, 0, len);
@@ -174,6 +173,7 @@ get_sockets(const char *name) {
     mib[7] = len / sizeof(*pcb);
 
     if (sysctl(mib, __arraycount(mib), pcb, &len, NULL, 0) == -1) {
+        free(pcb);
         return -1;
     }
 
