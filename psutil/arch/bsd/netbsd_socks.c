@@ -308,23 +308,6 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     }
                     if (PyList_Append(py_retlist, py_tuple))
                         return 0;
-                } else if (kp->kpcb->ki_family == AF_UNIX) {
-                    struct sockaddr_un *sun_src =
-                        (struct sockaddr_un *)&kp->kpcb->ki_src;
-                    struct sockaddr_un *sun_dst =
-                        (struct sockaddr_un *)&kp->kpcb->ki_dst;
-                    strcpy(laddr, sun_src->sun_path);
-                    strcpy(raddr, sun_dst->sun_path);
-                    status = PSUTIL_CONN_NONE;
-
-                    py_tuple = Py_BuildValue("(iiissi)", fd, AF_UNIX,
-                                type, laddr, raddr, status);
-                    if (!py_tuple) {
-                        printf("Empty tuple\n");
-                        return 0;
-                    }
-                    if (PyList_Append(py_retlist, py_tuple))
-                        return 0;
                 }
 
 
