@@ -40,6 +40,7 @@
 
 #include "netbsd.h"
 #include "netbsd_socks.h"
+#include "../../_psutil_common.h"
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
 #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
@@ -339,7 +340,7 @@ char *
 psutil_get_cmd_args(pid_t pid, size_t *argsize) {
     int mib[4];
     ssize_t st;
-    int argmax;
+    size_t argmax;
     size_t size;
     char *procargs = NULL;
 
