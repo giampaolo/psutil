@@ -209,10 +209,10 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     PyObject *py_raddr = NULL;
     pid_t pid;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (py_retlist == NULL)
         return NULL;
 
-    if (py_retlist == NULL)
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
     kiflist_init();
