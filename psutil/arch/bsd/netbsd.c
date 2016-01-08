@@ -455,26 +455,24 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     struct swapent *swdev;
     int nswap, i;
 
-    if ((nswap = swapctl(SWAP_NSWAP, 0, 0)) == 0) {
-        warn("failed to get swap device count");
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+    nswap = swapctl(SWAP_NSWAP, 0, 0);
+    if (nswap == 0) {
+        // This means there's no swap partition.
+        return Py_BuildValue("(iiiii)", 0, 0, 0, 0, 0);
     }
 
     if ((swdev = calloc(nswap, sizeof(*swdev))) == NULL) {
-        warn("failed to allocate memory for swdev structures");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
     if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
         free(swdev);
-        warn("failed to get swap stats");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
-    // Total things up
+    // Total things up.
     swap_total = swap_free = 0;
     for (i = 0; i < nswap; i++) {
         if (swdev[i].se_flags & SWF_ENABLE) {

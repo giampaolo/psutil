@@ -461,7 +461,6 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
 
-
     return Py_BuildValue(
         "(lllll)",
 #ifdef __FreeBSD__
