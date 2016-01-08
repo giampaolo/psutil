@@ -467,6 +467,10 @@ class Process(object):
                     type = socktype_to_enum(type)
                     nt = _common.pconn(fd, fam, type, laddr, raddr, status)
                     ret.add(nt)
+            # On NetBSD the underlying C function does not raise NSP
+            # in case the process is gone (and the returned list may
+            # incomplete).
+            self.name()  # raise NSP if the process disappeared on us
             return list(ret)
 
         families, types = conn_tmap[kind]
