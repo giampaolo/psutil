@@ -936,8 +936,10 @@ PsutilMethods[] = {
      "Return process IO counters"},
     {"proc_tty_nr", psutil_proc_tty_nr, METH_VARARGS,
      "Return process tty (terminal) number"},
+#ifdef __FreeBSD__ || __OpenBSD__
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory."},
+#endif
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 || __OpenBSD__ || defined(__NetBSD__)
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS,
      "Return the number of file descriptors opened by this process"},

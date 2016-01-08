@@ -262,6 +262,12 @@ class PosixSpecificTestCase(unittest.TestCase):
         if failures:
             self.fail('\n' + '\n'.join(failures))
 
+    @unittest.skipUnless(os.path.islink("/proc/%s/cwd" % os.getpid()),
+                         "/proc fs not available")
+    def test_cwd_proc(self):
+        self.assertEqual(os.readlink("/proc/%s/cwd" % os.getpid()),
+                         psutil.Process().cwd())
+
 
 def main():
     test_suite = unittest.TestSuite()

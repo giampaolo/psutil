@@ -526,8 +526,21 @@ class Process(object):
             # sometimes we get an empty string, in which case we turn
             # it into None
             if OPENBSD and self.pid == 0:
-                return None  # ...else raises EINVAL
-            return cext.proc_cwd(self.pid) or None
+                return None  # ...else it would raise EINVAL
+            elif NETBSD:
+                try:
+                    return os.readlink("/proc/%s/cwd" % self.pid)
+                except OSError as err:
+                    if err.errno == errno.ENOENT:
+                        if not pid_exists(self.pid):
+                            raise NoSuchProcess(self.pid, self._name)
+                        else:
+                            raise ZombieProcess(
+                                self.pid, self._name, self._ppid)
+                    else:
+                        raise
+            else:
+                return cext.proc_cwd(self.pid) or None
 
         @wrap_exceptions
         def memory_maps(self):

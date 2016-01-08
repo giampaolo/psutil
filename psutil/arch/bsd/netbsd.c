@@ -513,13 +513,6 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 }
 
 
-PyObject *
-psutil_proc_cwd(PyObject *self, PyObject *args) {
-    // Not implemented
-    return NULL;
-}
-
-
 // see sys/kern/kern_sysctl.c lines 1100 and
 // usr.bin/fstat/fstat.c print_inet_details()
 static char *
