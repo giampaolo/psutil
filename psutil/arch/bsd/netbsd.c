@@ -426,7 +426,7 @@ PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
     unsigned int total, active, inactive, wired, cached, free;
     size_t size = sizeof(total);
-    struct uvmexp_sysctl uvmexp;
+    struct uvmexp_sysctl uv;
     int mib[] = {CTL_VM, VM_UVMEXP2};
     long pagesize = getpagesize();
     size = sizeof(uvmexp);
@@ -436,15 +436,19 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
+
     return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) uvmexp.npages * pagesize,
-        (unsigned long long) uvmexp.free * pagesize,
-        (unsigned long long) uvmexp.active * pagesize,
-        (unsigned long long) uvmexp.inactive * pagesize,
-        (unsigned long long) uvmexp.wired * pagesize,
-        (unsigned long long) 0,
-        (unsigned long long) 0,
-        (unsigned long long) 0
+        (unsigned long long) uv.npages * pagesize,  // total
+        (unsigned long long) uv.free * pagesize,  // free
+        (unsigned long long) uv.active * pagesize,  // active
+        (unsigned long long) uv.inactive * pagesize,  // inactive
+        (unsigned long long) uv.wired * pagesize,  // wired
+        // taken from:
+        // https://github.com/satterly/zabbix-stats/blob/master/src/libs/
+        //      zbxsysinfo/netbsd/memory.c
+        (unsigned long long) uv.filepages + uv.execpages * pagesize,  // cached
+        (unsigned long long) 0,  // buffers
+        (unsigned long long) 0  // shared
     );
 }
 
