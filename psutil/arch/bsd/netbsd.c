@@ -385,8 +385,11 @@ psutil_get_cmdline(pid_t pid) {
     size_t argsize = 0;
     PyObject *py_arg = NULL;
     PyObject *py_retlist = PyList_New(0);
+
     if (py_retlist == NULL)
         return NULL;
+    if (pid == 0)
+        return py_retlist;
 
     argstr = psutil_get_cmd_args(pid, &argsize);
     if (argstr == NULL)
