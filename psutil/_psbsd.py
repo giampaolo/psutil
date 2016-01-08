@@ -364,7 +364,19 @@ class Process(object):
     def cmdline(self):
         if OPENBSD and self.pid == 0:
             return None  # ...else it crashes
-        return cext.proc_cmdline(self.pid)
+        elif NETBSD:
+            try:
+                return cext.proc_cmdline(self.pid)
+            except OSError as err:
+                if err.errno == errno.EINVAL:
+                    if not pid_exists(self.pid):
+                        raise NoSuchProcess(self.pid, self._name)
+                    else:
+                        raise ZombieProcess(self.pid, self._name, self._ppid)
+                else:
+                    raise
+        else:
+            return cext.proc_cmdline(self.pid)
 
     @wrap_exceptions
     def terminal(self):
