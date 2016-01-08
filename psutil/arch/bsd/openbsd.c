@@ -389,14 +389,13 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     }
 
     if ((swdev = calloc(nswap, sizeof(*swdev))) == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_NoMemory();
         return NULL;
     }
 
     if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
-        free(swdev);
         PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        goto error;
     }
 
     // Total things up.
@@ -417,6 +416,10 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
                          // swapent struct does not provide any info
                          // about it.
                          0, 0);
+
+error:
+    free(swdev);
+    return NULL;
 }
 
 

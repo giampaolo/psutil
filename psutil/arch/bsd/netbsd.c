@@ -429,9 +429,9 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     struct uvmexp_sysctl uv;
     int mib[] = {CTL_VM, VM_UVMEXP2};
     long pagesize = getpagesize();
-    size = sizeof(uvmexp);
+    size = sizeof(uv);
 
-    if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+    if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
         warn("failed to get vm.uvmexp");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
