@@ -487,7 +487,11 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_cpu_times(PyObject *self, PyObject *args) {
+#if defined(__NetBSD__)
+    u_int64_t cpu_time[CPUSTATES];
+#else
     long cpu_time[CPUSTATES];
+#endif
     size_t size = sizeof(cpu_time);
     int ret;
 
