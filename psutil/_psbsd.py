@@ -560,7 +560,11 @@ class Process(object):
 
         @wrap_exceptions
         def memory_maps(self):
-            return cext.proc_memory_maps(self.pid)
+            if FREEBSD:
+                return cext.proc_memory_maps(self.pid)
+            else:
+                # TODO
+                raise NotImplementedError
 
         @wrap_exceptions
         def num_fds(self):

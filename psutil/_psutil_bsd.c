@@ -96,6 +96,7 @@
     #include <utmpx.h>
     #include <sys/vnode.h>  // for VREG
     #include <sys/sched.h>  // for CPUSTATES & CP_*
+    #include <machine/vmparam.h>  // for PAGE_SHIFT
 #define _KERNEL
     #include <uvm/uvm_extern.h>
 #undef _KERNEL
@@ -444,8 +445,8 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
 }
 
 
-#ifdef __OpenBSD__
-#define ptoa(x)         ((paddr_t)(x) << PAGE_SHIFT)
+#if defined(__OpenBSD__) || defined(__NetBSD__)
+    #define ptoa(x) ((paddr_t)(x) << PAGE_SHIFT)
 #endif
 
 /*
@@ -459,6 +460,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
+
     return Py_BuildValue(
         "(lllll)",
 #ifdef __FreeBSD__
@@ -466,19 +468,18 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         (long)kp.ki_size,  // vms
         ptoa(kp.ki_tsize),  // text
         ptoa(kp.ki_dsize),  // data
-        ptoa(kp.ki_ssize));  // stack
-#elif defined(__OpenBSD__)
+        ptoa(kp.ki_ssize)  // stack
+#else
         ptoa(kp.p_vm_rssize),    // rss
         // vms, this is how ps does it, see:
         // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n461
         ptoa(kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize),  // vms
         ptoa(kp.p_vm_tsize),  // text
         ptoa(kp.p_vm_dsize),  // data
-        ptoa(kp.p_vm_ssize));  // stack
-#else
-/* not implemented */
-	0, 0, 0, 0, 0);
+        ptoa(kp.p_vm_ssize)  // stack
+
 #endif
+    );
 }
 
 
@@ -936,7 +937,7 @@ PsutilMethods[] = {
      "Return process IO counters"},
     {"proc_tty_nr", psutil_proc_tty_nr, METH_VARARGS,
      "Return process tty (terminal) number"},
-#ifdef __FreeBSD__ || __OpenBSD__
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory."},
 #endif
