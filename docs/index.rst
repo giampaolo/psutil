@@ -1303,12 +1303,15 @@ Constants
           STATUS_DEAD
           STATUS_WAKE_KILL
           STATUS_WAKING
-          STATUS_IDLE
-          STATUS_LOCKED
-          STATUS_WAITING
+          STATUS_IDLE (OSX, FreeBSD)
+          STATUS_LOCKED (FreeBSD)
+          STATUS_WAITING (FreeBSD)
+          STATUS_SUSPENDED (NetBSD)
 
   A set of strings representing the status of a process.
   Returned by :meth:`psutil.Process.status()`.
+
+  .. versionadded:: 3.4.0: STATUS_SUSPENDED (NetBSD)
 
 .. _const-conn:
 .. data:: CONN_ESTABLISHED

@@ -1077,12 +1077,15 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "SDEAD", SDEAD);
     PyModule_AddIntConstant(module, "SONPROC", SONPROC);
 #elif  defined(__NetBSD__)
-    PyModule_AddIntConstant(module, "SIDL", SIDL);
-    PyModule_AddIntConstant(module, "SACTIVE", SACTIVE);
-    PyModule_AddIntConstant(module, "SDYING", SDYING);
-    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
-    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
-    PyModule_AddIntConstant(module, "SDEAD", SDEAD);
+    PyModule_AddIntConstant(module, "SIDL", LSIDL);
+    PyModule_AddIntConstant(module, "SRUN", LSRUN);
+    PyModule_AddIntConstant(module, "SSLEEP", LSSLEEP);
+    PyModule_AddIntConstant(module, "SSTOP", LSSTOP);
+    PyModule_AddIntConstant(module, "SZOMB", LSZOMB);
+    PyModule_AddIntConstant(module, "SDEAD", LSDEAD);
+    PyModule_AddIntConstant(module, "SONPROC", LSONPROC);
+    // unique to NetBSD
+    PyModule_AddIntConstant(module, "SSUSPENDED", LSSUSPENDED);
 #endif
 
     // connection status constants

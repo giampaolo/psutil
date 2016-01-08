@@ -40,7 +40,7 @@ if FREEBSD:
         cext.SWAIT: _common.STATUS_WAITING,
         cext.SLOCK: _common.STATUS_LOCKED,
     }
-elif OPENBSD:
+elif OPENBSD or NETBSD:
     PROC_STATUSES = {
         cext.SIDL: _common.STATUS_IDLE,
         cext.SSLEEP: _common.STATUS_SLEEPING,
@@ -51,6 +51,7 @@ elif OPENBSD:
         # psutil.STATUS_DEAD. SDEAD really means STATUS_ZOMBIE.
         # cext.SZOMB: _common.STATUS_ZOMBIE,
         cext.SDEAD: _common.STATUS_ZOMBIE,
+        cext.SZOMB: _common.STATUS_ZOMBIE,
         # From http://www.eecs.harvard.edu/~margo/cs161/videos/proc.h.txt
         # OpenBSD has SRUN and SONPROC: SRUN indicates that a process
         # is runnable but *not* yet running, i.e. is on a run queue.
@@ -61,15 +62,9 @@ elif OPENBSD:
         cext.SRUN: _common.STATUS_WAKING,
         cext.SONPROC: _common.STATUS_RUNNING,
     }
-elif NETBSD:
-    PROC_STATUSES = {
-        cext.SIDL: _common.STATUS_IDLE,
-        cext.SACTIVE: _common.STATUS_RUNNING,
-        cext.SDYING: _common.STATUS_ZOMBIE,
-        cext.SSTOP: _common.STATUS_STOPPED,
-        cext.SZOMB: _common.STATUS_ZOMBIE,
-        cext.SDEAD: _common.STATUS_DEAD,
-    }
+
+if NETBSD:
+    PROC_STATUSES[cext.SSUSPENDED] = _common.STATUS_SUSPENDED
 
 TCP_STATUSES = {
     cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
@@ -511,10 +506,8 @@ class Process(object):
     @wrap_exceptions
     def status(self):
         code = cext.proc_status(self.pid)
-        if code in PROC_STATUSES:
-            return PROC_STATUSES[code]
-        # XXX is this legit? will we even ever get here?
-        return "?"
+        # XXX is '?' legit? (we're not supposed to return it anyway)
+        return PROC_STATUSES.get(code, '?')
 
     @wrap_exceptions
     def io_counters(self):
@@ -574,7 +567,12 @@ class Process(object):
         @wrap_exceptions
         def num_fds(self):
             """Return the number of file descriptors opened by this process."""
-            return cext.proc_num_fds(self.pid)
+            ret = cext.proc_num_fds(self.pid)
+            if NETBSD:
+                # On NetBSD the underlying C function does not raise NSP
+                # in case the process is gone.
+                self.name()  # raise NSP if the process disappeared on us
+            return ret
     else:
         num_fds = _not_implemented
 

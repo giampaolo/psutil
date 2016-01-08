@@ -43,9 +43,10 @@ STATUS_ZOMBIE = "zombie"
 STATUS_DEAD = "dead"
 STATUS_WAKE_KILL = "wake-kill"
 STATUS_WAKING = "waking"
-STATUS_IDLE = "idle"  # BSD
-STATUS_LOCKED = "locked"  # BSD
-STATUS_WAITING = "waiting"  # BSD
+STATUS_IDLE = "idle"  # FreeBSD, OSX
+STATUS_LOCKED = "locked"  # FreeBSD
+STATUS_WAITING = "waiting"  # FreeBSD
+STATUS_SUSPENDED = "suspended"  # NetBSD
 
 CONN_ESTABLISHED = "ESTABLISHED"
 CONN_SYN_SENT = "SYN_SENT"
