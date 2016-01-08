@@ -461,23 +461,30 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
 
+
     return Py_BuildValue(
         "(lllll)",
 #ifdef __FreeBSD__
-        ptoa(kp.ki_rssize),  // rss
-        (long)kp.ki_size,  // vms
-        ptoa(kp.ki_tsize),  // text
-        ptoa(kp.ki_dsize),  // data
-        ptoa(kp.ki_ssize)  // stack
+        (long) ptoa(kp.ki_rssize),  // rss
+        (long) kp.ki_size,  // vms
+        (long) ptoa(kp.ki_tsize),  // text
+        (long) ptoa(kp.ki_dsize),  // data
+        (long) ptoa(kp.ki_ssize)  // stack
 #else
-        ptoa(kp.p_vm_rssize),    // rss
-        // vms, this is how ps does it, see:
+        (long) ptoa(kp.p_vm_rssize),    // rss
+    #ifdef __OpenBSD__
+        // VMS, this is how ps determines it on OpenBSD:
         // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n461
-        ptoa(kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize),  // vms
-        ptoa(kp.p_vm_tsize),  // text
-        ptoa(kp.p_vm_dsize),  // data
-        ptoa(kp.p_vm_ssize)  // stack
-
+        (long) ptoa(kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize),  // vms
+    #elif __NetBSD__
+        // VMS, this is how top determines it on NetBSD:
+        // ftp://ftp.iij.ad.jp/pub/NetBSD/NetBSD-release-6/src/external/bsd/
+        //     top/dist/machine/m_netbsd.c
+        (long) ptoa(kp.p_vm_msize),  // vms
+    #endif
+        (long) ptoa(kp.p_vm_tsize),  // text
+        (long) ptoa(kp.p_vm_dsize),  // data
+        (long) ptoa(kp.p_vm_ssize)  // stack
 #endif
     );
 }
