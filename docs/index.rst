@@ -207,7 +207,7 @@ Memory
   * **sout**: the number of bytes the system has swapped out from disk
     (cumulative)
 
-  **sin** and **sout** on Windows, OpenBSD and NetBSD are always set to ``0``.
+  **sin** and **sout** on Windows and OpenBSD are always set to ``0``.
   See `examples/meminfo.py <https://github.com/giampaolo/psutil/blob/master/examples/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 

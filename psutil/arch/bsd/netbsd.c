@@ -424,7 +424,7 @@ error:
 
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    unsigned int total, active, inactive, wired, cached, free;
+    unsigned int total;
     size_t size = sizeof(total);
     struct uvmexp_sysctl uv;
     int mib[] = {CTL_VM, VM_UVMEXP2};
@@ -432,7 +432,6 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     size = sizeof(uv);
 
     if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
-        warn("failed to get vm.uvmexp");
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
@@ -472,9 +471,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     }
 
     if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
-        free(swdev);
         PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        goto error;
     }
 
     // Total things up.
@@ -486,12 +484,28 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         }
     }
     free(swdev);
-    return Py_BuildValue("(LLLII)",
+
+    // Get swap in/out
+    unsigned int total;
+    size_t size = sizeof(total);
+    struct uvmexp_sysctl uv;
+    int mib[] = {CTL_VM, VM_UVMEXP2};
+    long pagesize = getpagesize();
+    size = sizeof(uv);
+    if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    return Py_BuildValue("(LLLll)",
                          swap_total * DEV_BSIZE,
                          (swap_total - swap_free) * DEV_BSIZE,
                          swap_free * DEV_BSIZE,
-                         0, // XXX swap in
-                         0); // XXX swap out
+                         (long) uv.pgswapin * pagesize,  // swap in
+                         (long) uv.pgswapout * pagesize);  // swap out
+
+error:
+    free(swdev);
 }
 
 
