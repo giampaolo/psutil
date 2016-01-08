@@ -521,66 +521,67 @@ class Process(object):
         rc, wc, rb, wb = cext.proc_io_counters(self.pid)
         return _common.pio(rc, wc, rb, wb)
 
+    @wrap_exceptions
+    def cwd(self):
+        """Return process current working directory."""
+        # sometimes we get an empty string, in which case we turn
+        # it into None
+        if OPENBSD and self.pid == 0:
+            return None  # ...else it would raise EINVAL
+        elif NETBSD:
+            try:
+                return os.readlink("/proc/%s/cwd" % self.pid)
+            except OSError as err:
+                if err.errno == errno.ENOENT:
+                    if not pid_exists(self.pid):
+                        raise NoSuchProcess(self.pid, self._name)
+                    else:
+                        raise ZombieProcess(
+                            self.pid, self._name, self._ppid)
+                else:
+                    raise
+        elif hasattr(cext, 'proc_open_files'):
+            # FreeBSD < 8 does not support functions based on
+            # kinfo_getfile() and kinfo_getvmmap()
+            return cext.proc_cwd(self.pid) or None
+        else:
+            raise NotImplementedError(
+                "supported only starting from FreeBSD 8" if
+                FREEBSD else "")
+
     nt_mmap_grouped = namedtuple(
         'mmap', 'path rss, private, ref_count, shadow_count')
     nt_mmap_ext = namedtuple(
         'mmap', 'addr, perms path rss, private, ref_count, shadow_count')
 
+    def _not_implemented(self):
+        raise NotImplementedError
+
     # FreeBSD < 8 does not support functions based on kinfo_getfile()
     # and kinfo_getvmmap()
     if hasattr(cext, 'proc_open_files'):
-
         @wrap_exceptions
         def open_files(self):
             """Return files opened by process as a list of namedtuples."""
             rawlist = cext.proc_open_files(self.pid)
             return [_common.popenfile(path, fd) for path, fd in rawlist]
+    else:
+        open_files = _not_implemented
 
-        @wrap_exceptions
-        def cwd(self):
-            """Return process current working directory."""
-            # sometimes we get an empty string, in which case we turn
-            # it into None
-            if OPENBSD and self.pid == 0:
-                return None  # ...else it would raise EINVAL
-            elif NETBSD:
-                try:
-                    return os.readlink("/proc/%s/cwd" % self.pid)
-                except OSError as err:
-                    if err.errno == errno.ENOENT:
-                        if not pid_exists(self.pid):
-                            raise NoSuchProcess(self.pid, self._name)
-                        else:
-                            raise ZombieProcess(
-                                self.pid, self._name, self._ppid)
-                    else:
-                        raise
-            else:
-                return cext.proc_cwd(self.pid) or None
-
-        @wrap_exceptions
-        def memory_maps(self):
-            if FREEBSD:
-                return cext.proc_memory_maps(self.pid)
-            else:
-                # TODO
-                raise NotImplementedError
-
+    # FreeBSD < 8 does not support functions based on kinfo_getfile()
+    # and kinfo_getvmmap()
+    if hasattr(cext, 'proc_num_fds'):
         @wrap_exceptions
         def num_fds(self):
             """Return the number of file descriptors opened by this process."""
             return cext.proc_num_fds(self.pid)
-
     else:
-        def _not_implemented(self):
-            raise NotImplementedError("supported only starting from FreeBSD 8")
-
-        open_files = _not_implemented
-        proc_cwd = _not_implemented
-        memory_maps = _not_implemented
         num_fds = _not_implemented
 
+    # --- FreeBSD only APIs
+
     if FREEBSD:
+
         @wrap_exceptions
         def cpu_affinity_get(self):
             return cext.proc_cpu_affinity_get(self.pid)
@@ -609,3 +610,6 @@ class Process(object):
                                 "invalid CPU #%i (choose between %s)" % (
                                     cpu, allcpus))
                 raise
+
+        def memory_maps(self):
+            return cext.proc_memory_maps(self.pid)

@@ -9,7 +9,7 @@
  * OpenBSD references:
  * - OpenBSD source code: http://anoncvs.spacehopper.org/openbsd-src/
  *
- * OpenBSD: missing compared to FreeBSD implementation:
+ * OpenBSD / NetBSD: missing APIs compared to FreeBSD implementation:
  * - psutil.net_connections()
  * - psutil.Process.get/set_cpu_affinity()  (not supported natively)
  * - psutil.Process.memory_maps()

@@ -123,8 +123,9 @@ elif sys.platform.startswith("win32"):
 elif sys.platform.startswith("darwin"):
     from . import _psosx as _psplatform
 
-elif sys.platform.startswith("freebsd") or sys.platform.startswith("openbsd") \
-	 or sys.platform.startswith("netbsd"):
+elif sys.platform.startswith("freebsd") or \
+        sys.platform.startswith("openbsd") or \
+        sys.platform.startswith("netbsd"):
     from . import _psbsd as _psplatform
 
 elif sys.platform.startswith("sunos"):
@@ -969,7 +970,9 @@ class Process(object):
         except ZeroDivisionError:
             return 0.0
 
-    if not _OPENBSD:
+    if hasattr(_psplatform.Process, "memory_maps"):
+        # Available everywhere except OpenBSD and NetBSD.
+
         def memory_maps(self, grouped=True):
             """Return process' mapped memory regions as a list of namedtuples
             whose fields are variable depending on the platform.

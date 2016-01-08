@@ -461,7 +461,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         return Py_BuildValue("(iiiii)", 0, 0, 0, 0, 0);
     }
 
-    if ((swdev = calloc(nswap, sizeof(*swdev))) == NULL) {
+    swdev = calloc(nswap, sizeof(*swdev));
+    if (swdev == NULL) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
@@ -511,40 +512,6 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 }
 
 
-// see sys/kern/kern_sysctl.c lines 1100 and
-// usr.bin/fstat/fstat.c print_inet_details()
-static char *
-psutil_convert_ipv4(int family, uint32_t addr[4]) {
-    struct in_addr a;
-    memcpy(&a, addr, sizeof(a));
-    return inet_ntoa(a);
-}
-
-
-static char *
-psutil_inet6_addrstr(struct in6_addr *p) {
-    struct sockaddr_in6 sin6;
-    static char hbuf[NI_MAXHOST];
-    const int niflags = NI_NUMERICHOST;
-
-    memset(&sin6, 0, sizeof(sin6));
-    sin6.sin6_family = AF_INET6;
-    sin6.sin6_len = sizeof(struct sockaddr_in6);
-    sin6.sin6_addr = *p;
-    if (IN6_IS_ADDR_LINKLOCAL(p) &&
-        *(u_int16_t *)&sin6.sin6_addr.s6_addr[2] != 0) {
-        sin6.sin6_scope_id =
-            ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
-        sin6.sin6_addr.s6_addr[2] = sin6.sin6_addr.s6_addr[3] = 0;
-    }
-
-    if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
-        hbuf, sizeof(hbuf), NULL, 0, niflags))
-        return "invalid";
-
-    return hbuf;
-}
-
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     static int maxcpus;
@@ -553,13 +520,11 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     size_t len;
     size_t size;
     int i;
-    PyObject *py_retlist = PyList_New(0);
     PyObject *py_cputime = NULL;
+    PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
-
-
     // retrieve the number of cpus
     mib[0] = CTL_HW;
     mib[1] = HW_NCPU;
@@ -610,12 +575,11 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     int i, dk_ndrive, mib[3];
     size_t len;
     struct io_sysctl *stats;
-
-    PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;
+    PyObject *py_retdict = PyDict_New();
+
     if (py_retdict == NULL)
         return NULL;
-
     mib[0] = CTL_HW;
     mib[1] = HW_IOSTATS;
     mib[2] = sizeof(struct io_sysctl);
@@ -629,12 +593,10 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
     stats = malloc(len);
     if (stats == NULL) {
-        warn("can't malloc");
         PyErr_NoMemory();
         goto error;
     }
     if (sysctl(mib, 2, stats, &len, NULL, 0) < 0 ) {
-        warn("could not read HW_IOSTATS");
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
@@ -667,4 +629,3 @@ error:
         free(stats);
     return NULL;
 }
-
