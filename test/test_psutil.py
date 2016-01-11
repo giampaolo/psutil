@@ -2659,6 +2659,9 @@ class TestFetchAllProcesses(unittest.TestCase):
                 assert f.fd == -1, f
             else:
                 self.assertIsInstance(f.fd, int)
+            if BSD and not f.path:
+                # XXX see: https://github.com/giampaolo/psutil/issues/595
+                continue
             assert os.path.isabs(f.path), f
             assert os.path.isfile(f.path), f
 
@@ -3206,6 +3209,10 @@ class TestUnicode(unittest.TestCase):
         with open(self.uexe, 'rb'):
             new = set(p.open_files())
         path = (new - start).pop().path
+        if BSD and not path:
+            # XXX
+            # see https://github.com/giampaolo/psutil/issues/595
+            self.skipTest("open_files on BSD is broken")
         self.assertIsInstance(path, str)
         self.assertEqual(os.path.normcase(path), os.path.normcase(self.uexe))
 

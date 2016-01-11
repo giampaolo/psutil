@@ -44,7 +44,7 @@ def sysctl(cmdline):
     result = sh("sysctl " + cmdline)
     if FREEBSD:
         result = result[result.find(": ") + 2:]
-    elif OPENBSD:
+    elif OPENBSD or NETBSD:
         result = result[result.find("=") + 1:]
     try:
         return int(result)

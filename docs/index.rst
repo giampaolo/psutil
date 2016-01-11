@@ -1093,8 +1093,8 @@ Process class
        `here <https://github.com/giampaolo/psutil/pull/597>`_).
 
      .. warning::
-       on FreeBSD and OpenBSD this method can return files with a 'null' path
-       due to a kernel bug (see
+       on FreeBSD, OpenBSD and NetBSD this method can return files with a 'null'
+       path due to a kernel bug (see
        `issue 595 <https://github.com/giampaolo/psutil/pull/595>`_).
 
      .. versionchanged:: 3.1.0 no longer hangs on Windows.
