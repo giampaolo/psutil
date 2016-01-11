@@ -147,6 +147,11 @@ psutil_pid_exists(pid_t pid) {
     }
 }
 
+
+// XXX: This is no longer used as per
+// https://github.com/giampaolo/psutil/pull/557#issuecomment-171912820
+// Current implementation uses /proc instead.
+// Left here just in case.
 PyObject *
 psutil_proc_exe(PyObject *self, PyObject *args) {
 #if __NetBSD_Version__ >= 799000000

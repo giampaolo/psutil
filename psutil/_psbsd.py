@@ -2,8 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""FreeBSD and OpenBSD platforms implementation."""
+"""FreeBSD, OpenBSD and NetBSD platforms implementation."""
 
+import contextlib
 import errno
 import functools
 import os
@@ -70,10 +71,8 @@ elif NETBSD:
         cext.SSTOP: _common.STATUS_STOPPED,
         cext.SZOMB: _common.STATUS_ZOMBIE,
         cext.SDEAD: _common.STATUS_DEAD,
+        cext.SSUSPENDED: _common.STATUS_SUSPENDED,  # unique to NetBSD
     }
-
-if NETBSD:
-    PROC_STATUSES[cext.SSUSPENDED] = _common.STATUS_SUSPENDED
 
 TCP_STATUSES = {
     cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
@@ -334,6 +333,27 @@ def wrap_exceptions(fun):
     return wrapper
 
 
+@contextlib.contextmanager
+def wrap_exceptions_procfs(inst):
+    try:
+        yield
+    except EnvironmentError as err:
+        # support for private module import
+        if NoSuchProcess is None or AccessDenied is None:
+            raise
+        # ENOENT (no such file or directory) gets raised on open().
+        # ESRCH (no such process) can get raised on read() if
+        # process is gone in meantime.
+        if err.errno in (errno.ENOENT, errno.ESRCH):
+            if not pid_exists(inst.pid):
+                raise NoSuchProcess(inst.pid, inst._name)
+            else:
+                raise ZombieProcess(inst.pid, inst._name, inst._ppid)
+        if err.errno in (errno.EPERM, errno.EACCES):
+            raise AccessDenied(inst.pid, inst._name)
+        raise
+
+
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
@@ -350,10 +370,16 @@ class Process(object):
 
     @wrap_exceptions
     def exe(self):
-        if FREEBSD or NETBSD:
+        if FREEBSD:
             return cext.proc_exe(self.pid)
+        elif NETBSD:
+            if self.pid == 0:
+                # /proc/0 dir exists but /proc/0/exe doesn't
+                return ""
+            with wrap_exceptions_procfs(self):
+                return os.readlink("/proc/%s/exe" % self.pid)
         else:
-            # exe cannot be determined on OpenBSD; references:
+            # OpenBSD: exe cannot be determined; references:
             # https://chromium.googlesource.com/chromium/src/base/+/
             #     master/base_paths_posix.cc
             # We try our best guess by using which against the first
@@ -366,13 +392,13 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        # XXX - most of the times the underlying sysctl() call on Net
-        # and Open BSD returns a truncated string.
-        # Also /proc/pid/cmdline behaves the same so it looks
-        # like this is a kernel bug.
         if OPENBSD and self.pid == 0:
             return None  # ...else it crashes
         elif NETBSD:
+            # XXX - most of the times the underlying sysctl() call on Net
+            # and Open BSD returns a truncated string.
+            # Also /proc/pid/cmdline behaves the same so it looks
+            # like this is a kernel bug.
             try:
                 return cext.proc_cmdline(self.pid)
             except OSError as err:
@@ -535,17 +561,8 @@ class Process(object):
         if OPENBSD and self.pid == 0:
             return None  # ...else it would raise EINVAL
         elif NETBSD:
-            try:
+            with wrap_exceptions_procfs(self):
                 return os.readlink("/proc/%s/cwd" % self.pid)
-            except OSError as err:
-                if err.errno == errno.ENOENT:
-                    if not pid_exists(self.pid):
-                        raise NoSuchProcess(self.pid, self._name)
-                    else:
-                        raise ZombieProcess(
-                            self.pid, self._name, self._ppid)
-                else:
-                    raise
         elif hasattr(cext, 'proc_open_files'):
             # FreeBSD < 8 does not support functions based on
             # kinfo_getfile() and kinfo_getvmmap()
