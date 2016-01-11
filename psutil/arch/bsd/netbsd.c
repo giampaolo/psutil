@@ -377,7 +377,10 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
     return procargs;
 }
 
-// returns the command line as a python list object
+// Return the command line as a python list object.
+// XXX - most of the times sysctl() returns a truncated string.
+// Also /proc/pid/cmdline behaves the same so it looks like this
+// is a kernel bug.
 PyObject *
 psutil_get_cmdline(pid_t pid) {
     char *argstr = NULL;

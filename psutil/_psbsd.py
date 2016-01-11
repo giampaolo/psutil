@@ -366,6 +366,10 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
+        # XXX - most of the times the underlying sysctl() call on Net
+        # and Open BSD returns a truncated string.
+        # Also /proc/pid/cmdline behaves the same so it looks
+        # like this is a kernel bug.
         if OPENBSD and self.pid == 0:
             return None  # ...else it crashes
         elif NETBSD:
