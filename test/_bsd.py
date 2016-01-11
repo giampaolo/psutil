@@ -22,6 +22,7 @@ from test_psutil import BSD
 from test_psutil import FREEBSD
 from test_psutil import get_test_subprocess
 from test_psutil import MEMORY_TOLERANCE
+from test_psutil import NETBSD
 from test_psutil import OPENBSD
 from test_psutil import reap_children
 from test_psutil import retry_before_failing

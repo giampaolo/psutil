@@ -2137,7 +2137,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(p.num_fds(), start)
 
     @skip_on_not_implemented(only_if=LINUX)
-    @unittest.skipIf(OPENBSD, "not reliable on OpenBSD")
+    @unittest.skipIf(OPENBSD or NETBSD, "not reliable on Open/NetBSD")
     def test_num_ctx_switches(self):
         p = psutil.Process()
         before = sum(p.num_ctx_switches())
@@ -2730,8 +2730,8 @@ class TestFetchAllProcesses(unittest.TestCase):
             self.assertIn(ret, priorities)
 
     def num_ctx_switches(self, ret, proc):
-        self.assertTrue(ret.voluntary >= 0)
-        self.assertTrue(ret.involuntary >= 0)
+        self.assertGreaterEqual(ret.voluntary, 0)
+        self.assertGreaterEqual(ret.involuntary, 0)
 
     def rlimit(self, ret, proc):
         self.assertEqual(len(ret), 2)
