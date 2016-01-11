@@ -28,6 +28,7 @@ __extra__all__ = []
 
 FREEBSD = sys.platform.startswith("freebsd")
 OPENBSD = sys.platform.startswith("openbsd")
+NETBSD = sys.platform.startswith("netbsd")
 
 if FREEBSD:
     PROC_STATUSES = {
@@ -39,7 +40,7 @@ if FREEBSD:
         cext.SWAIT: _common.STATUS_WAITING,
         cext.SLOCK: _common.STATUS_LOCKED,
     }
-elif OPENBSD:
+elif OPENBSD or NETBSD:
     PROC_STATUSES = {
         cext.SIDL: _common.STATUS_IDLE,
         cext.SSLEEP: _common.STATUS_SLEEPING,
@@ -50,6 +51,7 @@ elif OPENBSD:
         # psutil.STATUS_DEAD. SDEAD really means STATUS_ZOMBIE.
         # cext.SZOMB: _common.STATUS_ZOMBIE,
         cext.SDEAD: _common.STATUS_ZOMBIE,
+        cext.SZOMB: _common.STATUS_ZOMBIE,
         # From http://www.eecs.harvard.edu/~margo/cs161/videos/proc.h.txt
         # OpenBSD has SRUN and SONPROC: SRUN indicates that a process
         # is runnable but *not* yet running, i.e. is on a run queue.
@@ -60,6 +62,9 @@ elif OPENBSD:
         cext.SRUN: _common.STATUS_WAKING,
         cext.SONPROC: _common.STATUS_RUNNING,
     }
+
+if NETBSD:
+    PROC_STATUSES[cext.SSUSPENDED] = _common.STATUS_SUSPENDED
 
 TCP_STATUSES = {
     cext.TCPS_ESTABLISHED: _common.CONN_ESTABLISHED,
@@ -76,7 +81,10 @@ TCP_STATUSES = {
     cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
 
-PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+if NETBSD:
+    PAGESIZE = os.sysconf("SC_PAGESIZE")
+else:
+    PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 AF_LINK = cext_posix.AF_LINK
 
 # extend base mem ntuple with BSD-specific memory metrics
@@ -156,9 +164,9 @@ def cpu_count_logical():
     return cext.cpu_count_logical()
 
 
-if OPENBSD:
+if OPENBSD or NETBSD:
     def cpu_count_physical():
-        # OpenBSD does not implement this.
+        # OpenBSD and NetBSD do not implement this.
         return 1 if cpu_count_logical() == 1 else None
 else:
     def cpu_count_physical():
@@ -273,7 +281,7 @@ def net_if_stats():
     return ret
 
 
-if OPENBSD:
+if OPENBSD or NETBSD:
     def pid_exists(pid):
         exists = _psposix.pid_exists(pid)
         if not exists:
@@ -333,7 +341,7 @@ class Process(object):
 
     @wrap_exceptions
     def exe(self):
-        if FREEBSD:
+        if FREEBSD or NETBSD:
             return cext.proc_exe(self.pid)
         else:
             # exe cannot be determined on OpenBSD; references:
@@ -351,7 +359,19 @@ class Process(object):
     def cmdline(self):
         if OPENBSD and self.pid == 0:
             return None  # ...else it crashes
-        return cext.proc_cmdline(self.pid)
+        elif NETBSD:
+            try:
+                return cext.proc_cmdline(self.pid)
+            except OSError as err:
+                if err.errno == errno.EINVAL:
+                    if not pid_exists(self.pid):
+                        raise NoSuchProcess(self.pid, self._name)
+                    else:
+                        raise ZombieProcess(self.pid, self._name, self._ppid)
+                else:
+                    raise
+        else:
+            return cext.proc_cmdline(self.pid)
 
     @wrap_exceptions
     def terminal(self):
@@ -426,6 +446,28 @@ class Process(object):
         if kind not in conn_tmap:
             raise ValueError("invalid %r kind argument; choose between %s"
                              % (kind, ', '.join([repr(x) for x in conn_tmap])))
+
+        if NETBSD:
+            families, types = conn_tmap[kind]
+            ret = set()
+            rawlist = cext.proc_connections(self.pid)
+            for item in rawlist:
+                fd, fam, type, laddr, raddr, status = item
+                if fam in families and type in types:
+                    try:
+                        status = TCP_STATUSES[status]
+                    except KeyError:
+                        status = TCP_STATUSES[cext.PSUTIL_CONN_NONE]
+                    fam = sockfam_to_enum(fam)
+                    type = socktype_to_enum(type)
+                    nt = _common.pconn(fd, fam, type, laddr, raddr, status)
+                    ret.add(nt)
+            # On NetBSD the underlying C function does not raise NSP
+            # in case the process is gone (and the returned list may
+            # incomplete).
+            self.name()  # raise NSP if the process disappeared on us
+            return list(ret)
+
         families, types = conn_tmap[kind]
         rawlist = cext.proc_connections(self.pid, families, types)
         ret = []
@@ -464,59 +506,80 @@ class Process(object):
     @wrap_exceptions
     def status(self):
         code = cext.proc_status(self.pid)
-        if code in PROC_STATUSES:
-            return PROC_STATUSES[code]
-        # XXX is this legit? will we even ever get here?
-        return "?"
+        # XXX is '?' legit? (we're not supposed to return it anyway)
+        return PROC_STATUSES.get(code, '?')
 
     @wrap_exceptions
     def io_counters(self):
         rc, wc, rb, wb = cext.proc_io_counters(self.pid)
         return _common.pio(rc, wc, rb, wb)
 
+    @wrap_exceptions
+    def cwd(self):
+        """Return process current working directory."""
+        # sometimes we get an empty string, in which case we turn
+        # it into None
+        if OPENBSD and self.pid == 0:
+            return None  # ...else it would raise EINVAL
+        elif NETBSD:
+            try:
+                return os.readlink("/proc/%s/cwd" % self.pid)
+            except OSError as err:
+                if err.errno == errno.ENOENT:
+                    if not pid_exists(self.pid):
+                        raise NoSuchProcess(self.pid, self._name)
+                    else:
+                        raise ZombieProcess(
+                            self.pid, self._name, self._ppid)
+                else:
+                    raise
+        elif hasattr(cext, 'proc_open_files'):
+            # FreeBSD < 8 does not support functions based on
+            # kinfo_getfile() and kinfo_getvmmap()
+            return cext.proc_cwd(self.pid) or None
+        else:
+            raise NotImplementedError(
+                "supported only starting from FreeBSD 8" if
+                FREEBSD else "")
+
     nt_mmap_grouped = namedtuple(
         'mmap', 'path rss, private, ref_count, shadow_count')
     nt_mmap_ext = namedtuple(
         'mmap', 'addr, perms path rss, private, ref_count, shadow_count')
 
+    def _not_implemented(self):
+        raise NotImplementedError
+
     # FreeBSD < 8 does not support functions based on kinfo_getfile()
     # and kinfo_getvmmap()
     if hasattr(cext, 'proc_open_files'):
-
         @wrap_exceptions
         def open_files(self):
             """Return files opened by process as a list of namedtuples."""
             rawlist = cext.proc_open_files(self.pid)
             return [_common.popenfile(path, fd) for path, fd in rawlist]
+    else:
+        open_files = _not_implemented
 
-        @wrap_exceptions
-        def cwd(self):
-            """Return process current working directory."""
-            # sometimes we get an empty string, in which case we turn
-            # it into None
-            if OPENBSD and self.pid == 0:
-                return None  # ...else raises EINVAL
-            return cext.proc_cwd(self.pid) or None
-
-        @wrap_exceptions
-        def memory_maps(self):
-            return cext.proc_memory_maps(self.pid)
-
+    # FreeBSD < 8 does not support functions based on kinfo_getfile()
+    # and kinfo_getvmmap()
+    if hasattr(cext, 'proc_num_fds'):
         @wrap_exceptions
         def num_fds(self):
             """Return the number of file descriptors opened by this process."""
-            return cext.proc_num_fds(self.pid)
-
+            ret = cext.proc_num_fds(self.pid)
+            if NETBSD:
+                # On NetBSD the underlying C function does not raise NSP
+                # in case the process is gone.
+                self.name()  # raise NSP if the process disappeared on us
+            return ret
     else:
-        def _not_implemented(self):
-            raise NotImplementedError("supported only starting from FreeBSD 8")
-
-        open_files = _not_implemented
-        proc_cwd = _not_implemented
-        memory_maps = _not_implemented
         num_fds = _not_implemented
 
+    # --- FreeBSD only APIs
+
     if FREEBSD:
+
         @wrap_exceptions
         def cpu_affinity_get(self):
             return cext.proc_cpu_affinity_get(self.pid)
@@ -545,3 +608,6 @@ class Process(object):
                                 "invalid CPU #%i (choose between %s)" % (
                                     cpu, allcpus))
                 raise
+
+        def memory_maps(self):
+            return cext.proc_memory_maps(self.pid)

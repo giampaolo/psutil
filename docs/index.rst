@@ -8,6 +8,7 @@
    Old 1.2.1 documentation is still available
    `here <https://code.google.com/p/psutil/wiki/Documentation>`__.
 .. versionchanged:: 3.3.0 added support for OpenBSD
+.. versionchanged:: 3.4.0 added support for NetBSD
 
 psutil documentation
 ====================
@@ -206,7 +207,7 @@ Memory
   * **sout**: the number of bytes the system has swapped out from disk
     (cumulative)
 
-  **sin** and **sout** on Windows are meaningless and are always set to ``0``.
+  **sin** and **sout** on Windows and OpenBSD are always set to ``0``.
   See `examples/meminfo.py <https://github.com/giampaolo/psutil/blob/master/examples/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
@@ -1043,7 +1044,7 @@ Process class
        ...]
       >>>
 
-    Availability: All platforms except OpenBSD.
+    Availability: All platforms except OpenBSD and NetBSD.
 
   .. method:: children(recursive=False)
 
@@ -1302,12 +1303,15 @@ Constants
           STATUS_DEAD
           STATUS_WAKE_KILL
           STATUS_WAKING
-          STATUS_IDLE
-          STATUS_LOCKED
-          STATUS_WAITING
+          STATUS_IDLE (OSX, FreeBSD)
+          STATUS_LOCKED (FreeBSD)
+          STATUS_WAITING (FreeBSD)
+          STATUS_SUSPENDED (NetBSD)
 
   A set of strings representing the status of a process.
   Returned by :meth:`psutil.Process.status()`.
+
+  .. versionadded:: 3.4.0: STATUS_SUSPENDED (NetBSD)
 
 .. _const-conn:
 .. data:: CONN_ESTABLISHED
