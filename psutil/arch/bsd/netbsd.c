@@ -424,20 +424,27 @@ error:
 
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    unsigned int total;
-    size_t size = sizeof(total);
+    int64_t total_physmem;
+    size_t size;
     struct uvmexp_sysctl uv;
-    int mib[] = {CTL_VM, VM_UVMEXP2};
+    int physmem_mib[] = {CTL_HW, HW_PHYSMEM64};
+    int uvmexp_mib[] = {CTL_VM, VM_UVMEXP2};
     long pagesize = getpagesize();
-    size = sizeof(uv);
 
-    if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
+    size = sizeof(total_physmem);
+    if (sysctl(physmem_mib, 2, &total_physmem, &size, NULL, 0) < 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    size = sizeof(uv);
+    if (sysctl(uvmexp_mib, 2, &uv, &size, NULL, 0) < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
     return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) uv.npages * pagesize,  // total
+        (unsigned long long) total_physmem,  // total
         (unsigned long long) uv.free * pagesize,  // free
         (unsigned long long) uv.active * pagesize,  // active
         (unsigned long long) uv.inactive * pagesize,  // inactive

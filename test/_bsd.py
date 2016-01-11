@@ -22,6 +22,7 @@ from test_psutil import BSD
 from test_psutil import FREEBSD
 from test_psutil import get_test_subprocess
 from test_psutil import MEMORY_TOLERANCE
+from test_psutil import NETBSD
 from test_psutil import OPENBSD
 from test_psutil import reap_children
 from test_psutil import retry_before_failing
@@ -44,7 +45,7 @@ def sysctl(cmdline):
     result = sh("sysctl " + cmdline)
     if FREEBSD:
         result = result[result.find(": ") + 2:]
-    elif OPENBSD:
+    elif OPENBSD or NETBSD:
         result = result[result.find("=") + 1:]
     try:
         return int(result)
@@ -292,6 +293,16 @@ class OpenBSDSpecificTestCase(unittest.TestCase):
         self.assertEqual(sys_bt, psutil_bt)
 
 
+# =====================================================================
+# --- NetBSD
+# =====================================================================
+
+
+@unittest.skipUnless(NETBSD, "not an NetBSD system")
+class NetBSDSpecificTestCase(unittest.TestCase):
+    pass
+
+
 def main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(BSDSpecificTestCase))
@@ -299,6 +310,8 @@ def main():
         test_suite.addTest(unittest.makeSuite(FreeBSDSpecificTestCase))
     elif OPENBSD:
         test_suite.addTest(unittest.makeSuite(OpenBSDSpecificTestCase))
+    elif NETBSD:
+        test_suite.addTest(unittest.makeSuite(NetBSDSpecificTestCase))
     result = unittest.TextTestRunner(verbosity=2).run(test_suite)
     return result.wasSuccessful()
 

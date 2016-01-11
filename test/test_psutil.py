@@ -3248,6 +3248,9 @@ def main():
         elif OPENBSD:
             from _bsd import OpenBSDSpecificTestCase
             tests.append(OpenBSDSpecificTestCase)
+        elif NETBSD:
+            from _bsd import NetBSDSpecificTestCase
+            tests.append(NetBSDSpecificTestCase)
 
     if stc is not None:
         tests.append(stc)
