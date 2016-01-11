@@ -439,73 +439,79 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 family = kp->kpcb->ki_family;
                 type = kp->kpcb->ki_type;
                 if (kp->kpcb->ki_family == AF_INET) {
+                    // IPv4
                     struct sockaddr_in *sin_src =
                         (struct sockaddr_in *)&kp->kpcb->ki_src;
                     struct sockaddr_in *sin_dst =
                         (struct sockaddr_in *)&kp->kpcb->ki_dst;
+                    // local addr
                     if (inet_ntop(AF_INET, &sin_src->sin_addr, laddr,
-                        sizeof(laddr)) != NULL)
-                    lport = ntohs(sin_src->sin_port);
+                                  sizeof(laddr)) != NULL)
+                        lport = ntohs(sin_src->sin_port);
                     py_laddr = Py_BuildValue("(si)", laddr, lport);
                     if (!py_laddr)
                         goto error;
+                    // remote addr
                     if (inet_ntop(AF_INET, &sin_dst->sin_addr, raddr,
-                        sizeof(raddr)) != NULL)
-                    rport = ntohs(sin_dst->sin_port);
-
+                                  sizeof(raddr)) != NULL)
+                        rport = ntohs(sin_dst->sin_port);
                     if (rport != 0)
                         py_raddr = Py_BuildValue("(si)", raddr, rport);
                     else
                         py_raddr = Py_BuildValue("()");
                     if (!py_raddr)
                         goto error;
-
+                    // status
                     if (kp->kpcb->ki_type == SOCK_STREAM)
                         status = kp->kpcb->ki_tstate;
                     else
                         status = PSUTIL_CONN_NONE;
-
+                    // construct python tuple
                     py_tuple = Py_BuildValue("(iiiNNii)", fd, AF_INET,
                                 type, py_laddr, py_raddr, status, pid);
                     if (!py_tuple)
                         goto error;
                     if (PyList_Append(py_retlist, py_tuple))
                         goto error;
-                } else if (kp->kpcb->ki_family == AF_INET6) {
+                }
+                else if (kp->kpcb->ki_family == AF_INET6) {
+                    // IPv6
                     struct sockaddr_in6 *sin6_src =
                         (struct sockaddr_in6 *)&kp->kpcb->ki_src;
                     struct sockaddr_in6 *sin6_dst =
                         (struct sockaddr_in6 *)&kp->kpcb->ki_dst;
+                    // local addr
                     if (inet_ntop(AF_INET6, &sin6_src->sin6_addr, laddr,
-                        sizeof(laddr)) != NULL)
-                    lport = ntohs(sin6_src->sin6_port);
+                                  sizeof(laddr)) != NULL)
+                        lport = ntohs(sin6_src->sin6_port);
                     py_laddr = Py_BuildValue("(si)", laddr, lport);
                     if (!py_laddr)
                         goto error;
+                    // remote addr
                     if (inet_ntop(AF_INET6, &sin6_dst->sin6_addr, raddr,
-                        sizeof(raddr)) != NULL)
-                    rport = ntohs(sin6_dst->sin6_port);
-
+                                  sizeof(raddr)) != NULL)
+                        rport = ntohs(sin6_dst->sin6_port);
                     if (rport != 0)
                         py_raddr = Py_BuildValue("(si)", raddr, rport);
                     else
                         py_raddr = Py_BuildValue("()");
                     if (!py_raddr)
                         goto error;
-
-                    if (kp->kpcb->ki_type == SOCK_STREAM) {
+                    // status
+                    if (kp->kpcb->ki_type == SOCK_STREAM)
                         status = kp->kpcb->ki_tstate;
-                    } else {
+                    else
                         status = PSUTIL_CONN_NONE;
-                    }
-
+                    // construct python tuple
                     py_tuple = Py_BuildValue("(iiiNNii)", fd, AF_INET6,
                                 type, py_laddr, py_raddr, status, pid);
                     if (!py_tuple)
                         goto error;
                     if (PyList_Append(py_retlist, py_tuple))
                         goto error;
-                } else if (kp->kpcb->ki_family == AF_UNIX) {
+                }
+                else if (kp->kpcb->ki_family == AF_UNIX) {
+                    // UNIX sockets
                     struct sockaddr_un *sun_src =
                         (struct sockaddr_un *)&kp->kpcb->ki_src;
                     struct sockaddr_un *sun_dst =
@@ -513,7 +519,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     strcpy(laddr, sun_src->sun_path);
                     strcpy(raddr, sun_dst->sun_path);
                     status = PSUTIL_CONN_NONE;
-
                     py_tuple = Py_BuildValue("(iiissii)", fd, AF_UNIX,
                                 type, laddr, raddr, status, pid);
                     if (!py_tuple)
@@ -521,8 +526,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     if (PyList_Append(py_retlist, py_tuple))
                         goto error;
                 }
-
-
             }
         }
     }
