@@ -120,6 +120,18 @@ class BSDSpecificTestCase(unittest.TestCase):
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 self.fail("psutil=%s, df=%s" % (usage.used, used))
 
+    def test_swap_memory(self):
+        out = sh("pstat -s")
+        if "no swap devices configured" in out.lower():
+            smem = psutil.swap_memory()
+            self.assertEqual(sum(smem), 0, msg=smem)
+            return
+        _, total, used, free, _, _ = out.split('\n')[1].split()
+        smem = psutil.swap_memory()
+        self.assertEqual(smem.total, int(total) * 512)
+        self.assertEqual(smem.used, int(used) * 512)
+        self.assertEqual(smem.free, int(free) * 512)
+
     def test_cpu_count_logical(self):
         syst = sysctl("hw.ncpu")
         self.assertEqual(psutil.cpu_count(logical=True), syst)
@@ -287,7 +299,7 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
 class OpenBSDSpecificTestCase(unittest.TestCase):
 
     def test_boot_time(self):
-        s = sysctl('kern.boottime')
+        s = sysctl('kern.boottime').strip()
         sys_bt = datetime.datetime.strptime(s, "%a %b %d %H:%M:%S %Y")
         psutil_bt = datetime.datetime.fromtimestamp(psutil.boot_time())
         self.assertEqual(sys_bt, psutil_bt)
@@ -300,7 +312,12 @@ class OpenBSDSpecificTestCase(unittest.TestCase):
 
 @unittest.skipUnless(NETBSD, "not an NetBSD system")
 class NetBSDSpecificTestCase(unittest.TestCase):
-    pass
+
+    def test_boot_time(self):
+        s = sysctl('kern.boottime').strip()
+        sys_bt = datetime.datetime.strptime(s, "%a %b %d %H:%M:%S %Y")
+        psutil_bt = datetime.datetime.fromtimestamp(psutil.boot_time())
+        self.assertEqual(sys_bt, psutil_bt)
 
 
 def main():
