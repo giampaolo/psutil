@@ -9,7 +9,7 @@
  * OpenBSD references:
  * - OpenBSD source code: http://anoncvs.spacehopper.org/openbsd-src/
  *
- * OpenBSD: missing compared to FreeBSD implementation:
+ * OpenBSD / NetBSD: missing APIs compared to FreeBSD implementation:
  * - psutil.net_connections()
  * - psutil.Process.get/set_cpu_affinity()  (not supported natively)
  * - psutil.Process.memory_maps()
@@ -96,6 +96,7 @@
     #include <utmpx.h>
     #include <sys/vnode.h>  // for VREG
     #include <sys/sched.h>  // for CPUSTATES & CP_*
+    #include <machine/vmparam.h>  // for PAGE_SHIFT
 #define _KERNEL
     #include <uvm/uvm_extern.h>
 #undef _KERNEL
@@ -444,8 +445,8 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
 }
 
 
-#ifdef __OpenBSD__
-#define ptoa(x)         ((paddr_t)(x) << PAGE_SHIFT)
+#if defined(__OpenBSD__) || defined(__NetBSD__)
+    #define ptoa(x) ((paddr_t)(x) << PAGE_SHIFT)
 #endif
 
 /*
@@ -459,26 +460,32 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
+
     return Py_BuildValue(
         "(lllll)",
 #ifdef __FreeBSD__
-        ptoa(kp.ki_rssize),  // rss
-        (long)kp.ki_size,  // vms
-        ptoa(kp.ki_tsize),  // text
-        ptoa(kp.ki_dsize),  // data
-        ptoa(kp.ki_ssize));  // stack
-#elif defined(__OpenBSD__)
-        ptoa(kp.p_vm_rssize),    // rss
-        // vms, this is how ps does it, see:
-        // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n461
-        ptoa(kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize),  // vms
-        ptoa(kp.p_vm_tsize),  // text
-        ptoa(kp.p_vm_dsize),  // data
-        ptoa(kp.p_vm_ssize));  // stack
+        (long) ptoa(kp.ki_rssize),  // rss
+        (long) kp.ki_size,  // vms
+        (long) ptoa(kp.ki_tsize),  // text
+        (long) ptoa(kp.ki_dsize),  // data
+        (long) ptoa(kp.ki_ssize)  // stack
 #else
-/* not implemented */
-	0, 0, 0, 0, 0);
+        (long) ptoa(kp.p_vm_rssize),    // rss
+    #ifdef __OpenBSD__
+        // VMS, this is how ps determines it on OpenBSD:
+        // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n461
+        (long) ptoa(kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize),  // vms
+    #elif __NetBSD__
+        // VMS, this is how top determines it on NetBSD:
+        // ftp://ftp.iij.ad.jp/pub/NetBSD/NetBSD-release-6/src/external/bsd/
+        //     top/dist/machine/m_netbsd.c
+        (long) ptoa(kp.p_vm_msize),  // vms
+    #endif
+        (long) ptoa(kp.p_vm_tsize),  // text
+        (long) ptoa(kp.p_vm_dsize),  // data
+        (long) ptoa(kp.p_vm_ssize)  // stack
 #endif
+    );
 }
 
 
@@ -487,7 +494,11 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_cpu_times(PyObject *self, PyObject *args) {
+#if defined(__NetBSD__)
+    u_int64_t cpu_time[CPUSTATES];
+#else
     long cpu_time[CPUSTATES];
+#endif
     size_t size = sizeof(cpu_time);
     int ret;
 
@@ -932,8 +943,10 @@ PsutilMethods[] = {
      "Return process IO counters"},
     {"proc_tty_nr", psutil_proc_tty_nr, METH_VARARGS,
      "Return process tty (terminal) number"},
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory."},
+#endif
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 || __OpenBSD__ || defined(__NetBSD__)
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS,
      "Return the number of file descriptors opened by this process"},
@@ -1064,12 +1077,15 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "SDEAD", SDEAD);
     PyModule_AddIntConstant(module, "SONPROC", SONPROC);
 #elif  defined(__NetBSD__)
-    PyModule_AddIntConstant(module, "SIDL", SIDL);
-    PyModule_AddIntConstant(module, "SACTIVE", SACTIVE);
-    PyModule_AddIntConstant(module, "SDYING", SDYING);
-    PyModule_AddIntConstant(module, "SSTOP", SSTOP);
-    PyModule_AddIntConstant(module, "SZOMB", SZOMB);
-    PyModule_AddIntConstant(module, "SDEAD", SDEAD);
+    PyModule_AddIntConstant(module, "SIDL", LSIDL);
+    PyModule_AddIntConstant(module, "SRUN", LSRUN);
+    PyModule_AddIntConstant(module, "SSLEEP", LSSLEEP);
+    PyModule_AddIntConstant(module, "SSTOP", LSSTOP);
+    PyModule_AddIntConstant(module, "SZOMB", LSZOMB);
+    PyModule_AddIntConstant(module, "SDEAD", LSDEAD);
+    PyModule_AddIntConstant(module, "SONPROC", LSONPROC);
+    // unique to NetBSD
+    PyModule_AddIntConstant(module, "SSUSPENDED", LSSUSPENDED);
 #endif
 
     // connection status constants

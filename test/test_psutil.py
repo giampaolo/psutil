@@ -1670,7 +1670,7 @@ class TestProcess(unittest.TestCase):
     # def test_memory_info_ex(self):
     # # tested later in fetch all test suite
 
-    @unittest.skipIf(OPENBSD, "not available on OpenBSD")
+    @unittest.skipIf(OPENBSD or NETBSD, "not available on this platform")
     def test_memory_maps(self):
         p = psutil.Process()
         maps = p.memory_maps()
@@ -3122,7 +3122,7 @@ class TestExampleScripts(unittest.TestCase):
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
-    @unittest.skipIf(OPENBSD, "OpenBSD does not support memory maps")
+    @unittest.skipIf(OPENBSD or NETBSD, "memory maps not supported")
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 
