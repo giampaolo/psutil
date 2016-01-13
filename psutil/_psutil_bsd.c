@@ -192,14 +192,25 @@ static PyObject *
 psutil_proc_name(PyObject *self, PyObject *args) {
     long pid;
     kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    char str[1000];
+    const char *encoding_errs;
+
+    if (! PyArg_ParseTuple(args, "ls", &pid, &encoding_errs))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
+
 #ifdef __FreeBSD__
-    return Py_BuildValue("s", kp.ki_comm);
+    sprintf(str, "%s", kp.ki_comm);
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
-    return Py_BuildValue("s", kp.p_comm);
+    sprintf(str, "%s", kp.p_comm);
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+    return PyUnicode_Decode(
+        str, strlen(str), Py_FileSystemDefaultEncoding, encoding_errs);
+#else
+    return Py_BuildValue("s", str);
 #endif
 }
 

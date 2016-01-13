@@ -7,7 +7,6 @@
 import errno
 import functools
 import os
-import sys
 from collections import namedtuple
 
 from . import _common
@@ -15,6 +14,7 @@ from . import _psposix
 from . import _psutil_osx as cext
 from . import _psutil_posix as cext_posix
 from ._common import conn_tmap
+from ._common import get_encoding_errors_handler
 from ._common import isfile_strict
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
@@ -72,12 +72,6 @@ NoSuchProcess = None
 ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
-
-
-# --- utils
-
-def get_encoding_errors_handler():
-    return sys.modules['psutil'].ENCODING_ERRORS_HANDLER
 
 
 # --- functions

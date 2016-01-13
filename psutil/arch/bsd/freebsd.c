@@ -317,8 +317,9 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     int mib[4];
     int ret;
     size_t size;
+    const char *encoding_errs;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "ls", &pid, &encoding_errs))
         return NULL;
 
     mib[0] = CTL_KERN;
@@ -341,7 +342,15 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         else
             strcpy(pathname, "");
     }
+
+#if PY_MAJOR_VERSION >= 3
+    return PyUnicode_Decode(
+        pathname, strlen(pathname), Py_FileSystemDefaultEncoding,
+        encoding_errs);
+#else
     return Py_BuildValue("s", pathname);
+#endif
+
 }
 
 
@@ -574,11 +583,12 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     struct kinfo_file *freep = NULL;
     struct kinfo_file *kif;
     struct kinfo_proc kipp;
+    const char *encoding_errs;
     PyObject *py_path = NULL;
 
     int i, cnt;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "ls", &pid, &encoding_errs))
         goto error;
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         goto error;
@@ -592,7 +602,13 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     for (i = 0; i < cnt; i++) {
         kif = &freep[i];
         if (kif->kf_fd == KF_FD_TYPE_CWD) {
+#if PY_MAJOR_VERSION >= 3
+            py_path = PyUnicode_Decode(
+                kif->kf_path, strlen(kif->kf_path),
+                Py_FileSystemDefaultEncoding, encoding_errs);
+#else
             py_path = Py_BuildValue("s", kif->kf_path);
+#endif
             if (!py_path)
                 goto error;
             break;

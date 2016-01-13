@@ -193,6 +193,10 @@ def socktype_to_enum(num):
         return num
 
 
+def get_encoding_errors_handler():
+    return sys.modules['psutil'].ENCODING_ERRORS_HANDLER
+
+
 # --- Process.connections() 'kind' parameter mapping
 
 conn_tmap = {

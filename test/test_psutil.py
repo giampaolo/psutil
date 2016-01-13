@@ -3313,25 +3313,20 @@ class TestNonUnicode(unittest.TestCase):
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT)
         p = psutil.Process(subp.pid)
-        self.assertIsInstance(p.name(), str)
         self.assertEqual(encode_path(os.path.basename(p.name())), b"\xc0\x80")
         subp.communicate()
         self.assertEqual(subp.returncode, 0)
 
     def test_proc_cmdline(self):
-        funny_file = os.path.join(self.temp_directory, b"\xc0\x80")
-        open(funny_file, "wb").close()
-        self.addCleanup(safe_remove, funny_file)
-        cmd = [self.test_executable]
-        if WINDOWS:
-            cmd.extend(["/K", "type \xc0\x80"])
-        subp = get_test_subprocess(cmd=cmd,
+        funny_executable = os.path.join(self.temp_directory, b"\xc0\x80")
+        self.copy_file(self.test_executable, funny_executable)
+        self.addCleanup(safe_remove, funny_executable)
+        subp = get_test_subprocess(cmd=[decode_path(funny_executable)],
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT,
-                                   cwd=decode_path(self.temp_directory))
+                                   stderr=subprocess.STDOUT)
         p = psutil.Process(subp.pid)
-        self.assertEqual(p.cmdline()[1:], cmd[1:])
+        self.assertEqual(p.cmdline(), [decode_path(funny_executable)])
         subp.communicate()
         self.assertEqual(subp.returncode, 0)
 

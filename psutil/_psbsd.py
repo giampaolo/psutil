@@ -17,11 +17,11 @@ from . import _psposix
 from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
 from ._common import conn_tmap
+from ._common import get_encoding_errors_handler
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._compat import which
-
 
 __extra__all__ = []
 
@@ -357,21 +357,22 @@ def wrap_exceptions_procfs(inst):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid"]
+    __slots__ = ["pid", "_name", "_ppid", "_encoding_errs"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
         self._ppid = None
+        self._encoding_errs = get_encoding_errors_handler()
 
     @wrap_exceptions
     def name(self):
-        return cext.proc_name(self.pid)
+        return cext.proc_name(self.pid, self._encoding_errs)
 
     @wrap_exceptions
     def exe(self):
         if FREEBSD:
-            return cext.proc_exe(self.pid)
+            return cext.proc_exe(self.pid, self._encoding_errs)
         elif NETBSD:
             if self.pid == 0:
                 # /proc/0 dir exists but /proc/0/exe doesn't
@@ -566,7 +567,7 @@ class Process(object):
         elif hasattr(cext, 'proc_open_files'):
             # FreeBSD < 8 does not support functions based on
             # kinfo_getfile() and kinfo_getvmmap()
-            return cext.proc_cwd(self.pid) or None
+            return cext.proc_cwd(self.pid, self._encoding_errs) or None
         else:
             raise NotImplementedError(
                 "supported only starting from FreeBSD 8" if
