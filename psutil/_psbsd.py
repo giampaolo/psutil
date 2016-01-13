@@ -618,5 +618,6 @@ class Process(object):
                                     cpu, allcpus))
                 raise
 
+        @wrap_exceptions
         def memory_maps(self):
             return cext.proc_memory_maps(self.pid)
