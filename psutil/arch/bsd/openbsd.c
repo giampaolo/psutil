@@ -178,6 +178,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
 
     result = kvm_getprocs(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc), &cnt);
     if (result == NULL) {
+        kvm_close(kd);
         err(1, NULL);
         return errno;
     }
@@ -187,6 +188,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     size_t mlen = cnt * sizeof(struct kinfo_proc);
 
     if ((*procList = malloc(mlen)) == NULL) {
+        kvm_close(kd);
         err(1, NULL);
         return errno;
     }
@@ -387,14 +389,13 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     }
 
     if ((swdev = calloc(nswap, sizeof(*swdev))) == NULL) {
-        PyErr_SetFromErrno(PyExc_OSError);
+        PyErr_NoMemory();
         return NULL;
     }
 
     if (swapctl(SWAP_STATS, swdev, nswap) == -1) {
-        free(swdev);
         PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        goto error;
     }
 
     // Total things up.
@@ -415,6 +416,10 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
                          // swapent struct does not provide any info
                          // about it.
                          0, 0);
+
+error:
+    free(swdev);
+    return NULL;
 }
 
 
