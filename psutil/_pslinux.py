@@ -257,23 +257,34 @@ def swap_memory():
     used = total - free
     percent = usage_percent(used, total, _round=1)
     # get pgin/pgouts
-    with open_binary("%s/vmstat" % get_procfs_path()) as f:
-        sin = sout = None
-        for line in f:
-            # values are expressed in 4 kilo bytes, we want bytes instead
-            if line.startswith(b'pswpin'):
-                sin = int(line.split(b' ')[1]) * 4 * 1024
-            elif line.startswith(b'pswpout'):
-                sout = int(line.split(b' ')[1]) * 4 * 1024
-            if sin is not None and sout is not None:
-                break
-        else:
-            # we might get here when dealing with exotic Linux flavors, see:
-            # https://github.com/giampaolo/psutil/issues/313
-            msg = "'sin' and 'sout' swap memory stats couldn't " \
-                  "be determined and were set to 0"
-            warnings.warn(msg, RuntimeWarning)
-            sin = sout = 0
+    try:
+        f = open_binary("%s/vmstat" % get_procfs_path())
+    except IOError as err:
+        # see https://github.com/giampaolo/psutil/issues/722
+        msg = "'sin' and 'sout' swap memory stats couldn't " \
+              "be determined and were set to 0 (%s)" % str(err)
+        warnings.warn(msg, RuntimeWarning)
+        sin = sout = 0
+    else:
+        with f:
+            sin = sout = None
+            for line in f:
+                # values are expressed in 4 kilo bytes, we want
+                # bytes instead
+                if line.startswith(b'pswpin'):
+                    sin = int(line.split(b' ')[1]) * 4 * 1024
+                elif line.startswith(b'pswpout'):
+                    sout = int(line.split(b' ')[1]) * 4 * 1024
+                if sin is not None and sout is not None:
+                    break
+            else:
+                # we might get here when dealing with exotic Linux
+                # flavors, see:
+                # https://github.com/giampaolo/psutil/issues/313
+                msg = "'sin' and 'sout' swap memory stats couldn't " \
+                      "be determined and were set to 0"
+                warnings.warn(msg, RuntimeWarning)
+                sin = sout = 0
     return _common.sswap(total, used, free, percent, sin, sout)
 
 

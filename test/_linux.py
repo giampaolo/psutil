@@ -274,6 +274,24 @@ class LinuxSpecificTestCase(unittest.TestCase):
                 self.assertEqual(ret.sin, 0)
                 self.assertEqual(ret.sout, 0)
 
+    def test_swap_memory_mocked_no_vmstat(self):
+        # see https://github.com/giampaolo/psutil/issues/722
+        with mock.patch('psutil._pslinux.open', create=True,
+                        side_effect=IOError) as m:
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                ret = psutil.swap_memory()
+                assert m.called
+                self.assertEqual(len(ws), 1)
+                w = ws[0]
+                self.assertTrue(w.filename.endswith('psutil/_pslinux.py'))
+                self.assertIn(
+                    "'sin' and 'sout' swap memory stats couldn't "
+                    "be determined and were set to 0",
+                    str(w.message))
+                self.assertEqual(ret.sin, 0)
+                self.assertEqual(ret.sout, 0)
+
     def test_cpu_count_logical_mocked(self):
         import psutil._pslinux
         original = psutil._pslinux.cpu_count_logical()
@@ -458,7 +476,6 @@ class LinuxSpecificTestCase(unittest.TestCase):
         try:
             psutil.PROCFS_PATH = tdir
             self.assertRaises(IOError, psutil.virtual_memory)
-            self.assertRaises(IOError, psutil.swap_memory)
             self.assertRaises(IOError, psutil.cpu_times)
             self.assertRaises(IOError, psutil.cpu_times, percpu=True)
             self.assertRaises(IOError, psutil.boot_time)
@@ -488,6 +505,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
                 if name.startswith('/proc'):
                     raise IOError(errno.ENOENT, 'rejecting access for test')
                 return orig_open(name, *args)
+
             patch_point = 'builtins.open' if PY3 else '__builtin__.open'
             with mock.patch(patch_point, side_effect=open_mock):
                 importlib.reload(psutil)
