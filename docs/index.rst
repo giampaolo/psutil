@@ -38,9 +38,10 @@ From project's home page:
   It implements many functionalities offered by command line tools
   such as: *ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
   ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap*.
-  It currently supports **Linux, Windows, OSX, FreeBSD** and **Sun Solaris**,
-  both **32-bit** and **64-bit** architectures, with Python versions from
-  **2.6 to 3.5** (users of Python 2.4 and 2.5 may use `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
+  It currently supports **Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD**
+  and NetBSD, both **32-bit** and **64-bit** architectures, with Python
+  versions from **2.6 to 3.5** (users of Python 2.4 and 2.5 may use
+  `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
   `PyPy <http://pypy.org/>`__ is also known to work.
 
 The psutil documentation you're reading is distributed as a single HTML page.
@@ -62,7 +63,7 @@ CPU
   - **idle**
   - **nice** *(UNIX)*
   - **iowait** *(Linux)*
-  - **irq** *(Linux, FreeBSD)*
+  - **irq** *(Linux, BSD)*
   - **softirq** *(Linux)*
   - **steal** *(Linux 2.6.11+)*
   - **guest** *(Linux 2.6.24+)*
@@ -207,7 +208,7 @@ Memory
   * **sout**: the number of bytes the system has swapped out from disk
     (cumulative)
 
-  **sin** and **sout** on Windows and OpenBSD are always set to ``0``.
+  **sin** and **sout** on Windows are always set to ``0``.
   See `examples/meminfo.py <https://github.com/giampaolo/psutil/blob/master/examples/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
@@ -232,7 +233,7 @@ Disks
   On Windows it is determined via
   `GetDriveType <http://msdn.microsoft.com/en-us/library/aa364939(v=vs.85).aspx>`__
   and can be either ``"removable"``, ``"fixed"``, ``"remote"``, ``"cdrom"``,
-  ``"unmounted"`` or ``"ramdisk"``. On OSX and FreeBSD it is retrieved via
+  ``"unmounted"`` or ``"ramdisk"``. On OSX and BSD it is retrieved via
   `getfsstat(2) <http://www.manpagez.com/man/2/getfsstat/>`__. See
   `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/examples/disk_usage.py>`__
   script providing an example usage.
@@ -1093,9 +1094,8 @@ Process class
        `here <https://github.com/giampaolo/psutil/pull/597>`_).
 
      .. warning::
-       on FreeBSD, OpenBSD and NetBSD this method can return files with a 'null'
-       path due to a kernel bug (see
-       `issue 595 <https://github.com/giampaolo/psutil/pull/595>`_).
+       on BSD this method can return files with a 'null' path due to a kernel
+       bug (see `issue 595 <https://github.com/giampaolo/psutil/pull/595>`_).
 
      .. versionchanged:: 3.1.0 no longer hangs on Windows.
 
