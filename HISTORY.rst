@@ -3,18 +3,12 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 3.5.0 - XXXX-XX-XX
 ==================
 
-**Enhancements**
-
-- #733: exposed a new ENCODING_ERRORS_HANDLER constant for dealing with
-  encoding errors on Python 3.
-
-
 **Bug fixes**
 
-- #734: [Linux] non unicode data not correctly handled in Python 3 for process
-  name() and exe().
-- #734: [OSX] non unicode data not correctly handled in Python 3 for process
-  name(), cwd(), exe(), open_files().
+- #734: on Python 3 invalid UTF-8 data is not correctly handled for process
+  name(), cwd(), exe(), cmdline() and open_files() methods resulting in
+  UnicodeDecodeError exceptions. 'surrogateescape' error handler is now
+  used as a workaround for replacing the corrupted data.
 
 
 3.4.2 - 2016-01-20

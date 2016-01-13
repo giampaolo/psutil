@@ -193,9 +193,8 @@ psutil_proc_name(PyObject *self, PyObject *args) {
     long pid;
     kinfo_proc kp;
     char str[1000];
-    const char *encoding_errs;
 
-    if (! PyArg_ParseTuple(args, "ls", &pid, &encoding_errs))
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -207,8 +206,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
 #endif
 
 #if PY_MAJOR_VERSION >= 3
-    return PyUnicode_Decode(
-        str, strlen(str), Py_FileSystemDefaultEncoding, encoding_errs);
+    return PyUnicode_DecodeFSDefault(str);
 #else
     return Py_BuildValue("s", str);
 #endif

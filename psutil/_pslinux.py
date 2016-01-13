@@ -74,6 +74,7 @@ BIGGER_FILE_BUFFERING = -1 if PY3 else 8192
 LITTLE_ENDIAN = sys.byteorder == 'little'
 if PY3:
     FS_ENCODING = sys.getfilesystemencoding()
+    ENCODING_ERRORS_HANDLER = 'surrogateescape'
 if enum is None:
     AF_LINK = socket.AF_PACKET
 else:
@@ -148,16 +149,12 @@ def open_text(fname, **kwargs):
         # https://github.com/giampaolo/psutil/issues/675
         # https://github.com/giampaolo/psutil/pull/733
         kwargs.setdefault('encoding', FS_ENCODING)
-        kwargs.setdefault('errors', get_encoding_errors_handler())
+        kwargs.setdefault('errors', ENCODING_ERRORS_HANDLER)
     return open(fname, "rt", **kwargs)
 
 
 def get_procfs_path():
     return sys.modules['psutil'].PROCFS_PATH
-
-
-def get_encoding_errors_handler():
-    return sys.modules['psutil'].ENCODING_ERRORS_HANDLER
 
 
 def readlink(path):

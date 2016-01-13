@@ -14,7 +14,6 @@ from . import _psposix
 from . import _psutil_osx as cext
 from . import _psutil_posix as cext_posix
 from ._common import conn_tmap
-from ._common import get_encoding_errors_handler
 from ._common import isfile_strict
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
@@ -217,17 +216,16 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_encoding_errors_handler"]
+    __slots__ = ["pid", "_name", "_ppid"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
         self._ppid = None
-        self._encoding_errors_handler = get_encoding_errors_handler()
 
     @wrap_exceptions
     def name(self):
-        return cext.proc_name(self.pid, self._encoding_errors_handler)
+        return cext.proc_name(self.pid)
 
     @wrap_exceptions
     def exe(self):
