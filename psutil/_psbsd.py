@@ -103,10 +103,15 @@ pmmap_grouped = namedtuple(
     'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr, perms path rss, private, ref_count, shadow_count')
-sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
-                                 'read_bytes', 'write_bytes',
-                                 'read_time', 'write_time',
-                                 'busy_time'])
+if FREEBSD:
+    sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
+                                     'read_bytes', 'write_bytes',
+                                     'read_time', 'write_time',
+                                     'busy_time'])
+else:
+    sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
+                                     'read_bytes', 'write_bytes',
+                                     'busy_time'])
 
 # set later from __init__.py
 NoSuchProcess = None

@@ -25,7 +25,6 @@ clean:
 	rm -rf dist
 	rm -rf docs/_build
 	rm -rf htmlcov
-	find . -type d -empty -delete  # remove empty dirs
 
 build: clean
 	$(PYTHON) setup.py build

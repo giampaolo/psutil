@@ -772,15 +772,12 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
     for (i = 0; i < dk_ndrive; i++) {
         py_disk_info = Py_BuildValue(
-            "(KKKKLL)",
-            stats[i].ds_rxfer,
-            stats[i].ds_wxfer,
-            stats[i].ds_rbytes,
-            stats[i].ds_wbytes,
-            // assume half read - half writes.
-            // TODO: why?
-            (long long) PSUTIL_TV2DOUBLE(stats[i].ds_time) / 2,
-            (long long) PSUTIL_TV2DOUBLE(stats[i].ds_time) / 2);
+            "(KKKKL)",
+            stats[i].ds_rxfer,  // num reads
+            stats[i].ds_wxfer,  // num writes
+            stats[i].ds_rbytes,  // read bytes
+            stats[i].ds_wbytes,  // written bytes
+            (long long) PSUTIL_TV2DOUBLE(stats[i].ds_time));  // busy time
         if (!py_disk_info)
             goto error;
         if (PyDict_SetItemString(py_retdict, stats[i].ds_name, py_disk_info))

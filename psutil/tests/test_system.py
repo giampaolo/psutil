@@ -20,7 +20,9 @@ import time
 
 import psutil
 from psutil import BSD
+from psutil import FREEBSD
 from psutil import LINUX
+from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
@@ -610,19 +612,17 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(nt[1], nt.write_count)
             self.assertEqual(nt[2], nt.read_bytes)
             self.assertEqual(nt[3], nt.write_bytes)
-            self.assertEqual(nt[4], nt.read_time)
-            self.assertEqual(nt[5], nt.write_time)
-            if LINUX:
-                self.assertEqual(nt[6], nt.read_merged_count)
-                self.assertEqual(nt[7], nt.write_merged_count)
-                self.assertEqual(nt[8], nt.busy_time)
-                assert nt.read_merged_count >= 0, nt
-                assert nt.write_merged_count >= 0, nt
-                assert nt.busy_time >= 0, nt
-            elif BSD:
-                self.assertEqual(nt[6], nt.busy_time)
-                assert nt.busy_time >= 0, nt
-
+            if (OPENBSD or NETBSD):
+                self.assertEqual(nt[4], nt.busy_time)
+            else:
+                self.assertEqual(nt[4], nt.read_time)
+                self.assertEqual(nt[5], nt.write_time)
+                if LINUX:
+                    self.assertEqual(nt[6], nt.read_merged_count)
+                    self.assertEqual(nt[7], nt.write_merged_count)
+                    self.assertEqual(nt[8], nt.busy_time)
+                elif FREEBSD:
+                    self.assertEqual(nt[6], nt.busy_time)
             for name in nt._fields:
                 assert getattr(nt, name) >= 0, nt
 
