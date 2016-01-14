@@ -262,7 +262,7 @@ def swap_memory():
     except IOError as err:
         # see https://github.com/giampaolo/psutil/issues/722
         try:
-            f = open("%s/stat", "rb")
+            f = open_binary("%s/stat" % get_procfs_path())
         except IOError as err:
             msg = "'sin' and 'sout' swap memory stats couldn't " \
                   "be determined and were set to 0 (%s)" % str(err)
@@ -270,7 +270,7 @@ def swap_memory():
             sin = sout = 0
         else:
             with f:
-            sin = sout = None
+                sin = sout = None
                 for line in f:
                     # values are expressed in 4 kilo bytes, we want bytes instead
                     if line.startswith(b('swap')):
