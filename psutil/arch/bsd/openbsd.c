@@ -40,7 +40,8 @@
 #include "../../_psutil_common.h"
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
-#define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
+// #define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
+
 // a signaler for connections without an actual status
 int PSUTIL_CONN_NONE = 128;
 
@@ -772,12 +773,12 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
     for (i = 0; i < dk_ndrive; i++) {
         py_disk_info = Py_BuildValue(
-            "(KKKKL)",
+            "(KKKK)",
             stats[i].ds_rxfer,  // num reads
             stats[i].ds_wxfer,  // num writes
             stats[i].ds_rbytes,  // read bytes
-            stats[i].ds_wbytes,  // written bytes
-            (long long) PSUTIL_TV2DOUBLE(stats[i].ds_time));  // busy time
+            stats[i].ds_wbytes  // write bytes
+        );
         if (!py_disk_info)
             goto error;
         if (PyDict_SetItemString(py_retdict, stats[i].ds_name, py_disk_info))

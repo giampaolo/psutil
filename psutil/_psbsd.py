@@ -110,8 +110,7 @@ if FREEBSD:
                                      'busy_time'])
 else:
     sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
-                                     'read_bytes', 'write_bytes',
-                                     ])
+                                     'read_bytes', 'write_bytes'])
 
 # set later from __init__.py
 NoSuchProcess = None
