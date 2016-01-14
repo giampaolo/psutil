@@ -106,6 +106,9 @@ pmmap_grouped = namedtuple(
     'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr, perms path rss, private, ref_count, shadow_count')
+scpustats = namedtuple(
+    'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls',
+                  'traps'])
 if FREEBSD:
     sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                      'read_bytes', 'write_bytes',
@@ -114,10 +117,6 @@ if FREEBSD:
 else:
     sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                      'read_bytes', 'write_bytes'])
-if FREEBSD or NETBSD:
-    scpustats = namedtuple(
-        'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts',
-                      'syscalls', 'traps'])
 
 
 # set later from __init__.py
@@ -229,28 +228,29 @@ else:
 
 def cpu_stats():
     if FREEBSD:
-        ctx_switches, interrupts, soft_interrupts, syscalls, traps = \
-            cext.cpu_stats()
-        return scpustats(
-            ctx_switches, interrupts, soft_interrupts, syscalls, traps)
+        ctxsw, intrs, soft_intrs, syscalls, traps = cext.cpu_stats()
     elif NETBSD:
         # XXX
-        # Note about interrupts: the C extension returns 0. interrupts
+        # Note about intrs: the C extension returns 0. intrs
         # can be determined via /proc/stat; it has the same value as
-        # soft_interrupts thought so the kernel is faking it (?).
+        # soft_intrs thought so the kernel is faking it (?).
         #
         # Note about syscalls: the C extension always sets it to 0 (?).
         #
         # Note: the C ext is returning two metrics we are not returning:
         # faults and forks.
-        (ctx_switches, interrupts, soft_interrupts, syscalls, traps, faults,
-         forks) = cext.cpu_stats()
+        ctxsw, intrs, soft_intrs, syscalls, traps, faults, forks = \
+            cext.cpu_stats()
         with open('/proc/stat', 'rb') as f:
             for line in f:
                 if line.startswith(b'intr'):
-                    interrupts = int(line.split()[1])
-        return scpustats(
-            ctx_switches, interrupts, soft_interrupts, syscalls, traps)
+                    intrs = int(line.split()[1])
+    elif OPENBSD:
+        # Note: the C ext is returning two metrics we are not returning:
+        # faults and forks.
+        ctxsw, intrs, soft_intrs, syscalls, traps, faults, forks = \
+            cext.cpu_stats()
+    return scpustats(ctxsw, intrs, soft_intrs, syscalls, traps)
 
 
 def boot_time():
