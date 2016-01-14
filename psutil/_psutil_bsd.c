@@ -383,6 +383,10 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
     user_t = PSUTIL_KPT2DOUBLE(kp.p_uutime);
     sys_t = PSUTIL_KPT2DOUBLE(kp.p_ustime);
+    // OpenBSD and NetBSD provide children user + system times summed
+    // together (no distinction).
+    children_user_t = kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0;
+    children_sys_t = children_user_t;
 #endif
     return Py_BuildValue("(dddd)",
                          user_t, sys_t, children_user_t, children_sys_t);
