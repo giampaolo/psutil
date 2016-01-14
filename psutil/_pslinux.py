@@ -272,14 +272,16 @@ def swap_memory():
             with f:
                 sin = sout = None
                 for line in f:
-                    # values are expressed in 4 kilo bytes, we want bytes instead
+                    # values are expressed in 4 kilo bytes, we want bytes
+                    # instead
                     if line.startswith(b('swap')):
                         sin = int(line.split(b(' '))[1]) * 4 * 1024
                         sout = int(line.split(b(' '))[2]) * 4 * 1024
                     if sin is not None and sout is not None:
                         break
                 else:
-                    # we might get here when dealing with exotic Linux flavors, see:
+                    # we might get here when dealing with exotic Linux 
+                    # flavors, see:
                     # http://code.google.com/p/psutil/issues/detail?id=313
                     msg = "'sin' and 'sout' swap memory stats couldn't " \
                           "be determined and were set to 0"
