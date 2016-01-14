@@ -280,7 +280,7 @@ def swap_memory():
                     if sin is not None and sout is not None:
                         break
                 else:
-                    # we might get here when dealing with exotic Linux 
+                    # we might get here when dealing with exotic Linux
                     # flavors, see:
                     # http://code.google.com/p/psutil/issues/detail?id=313
                     msg = "'sin' and 'sout' swap memory stats couldn't " \
