@@ -159,6 +159,10 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
+    if (pid == 0) {
+        // else returns ENOENT
+        return Py_BuildValue("s", "");
+    }
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC_ARGS;
