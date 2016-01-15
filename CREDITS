@@ -65,6 +65,14 @@ W: http://daviddaeschler.com
 D: some contributions to initial design/bootstrap plus occasional bug fixing
 I: 522, 536
 
+N: Thomas Klausner
+W: https://github.com/0-wiz-0
+I: #557
+
+N: Ryo Onodera
+W: https://github.com/ryoon
+I: #557
+
 N: cjgohlke
 E: cjgohlke@gmail.com
 D: Windows 64 bit support

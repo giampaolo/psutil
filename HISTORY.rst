@@ -1,11 +1,12 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
-3.4.0 - XXXX-XX-XX
+3.4.0 - 2016-01-15
 ==================
 
 **Enhancements**
 
-- #557: [NetBSD] added NetBSD support.
+- #557: [NetBSD] added NetBSD support.  (contributed by Ryo Onodera and
+  Thomas Klausner)
 - #708: [Linux] psutil.net_connections() and Process.connections() on Python 2
   can be up to 3x faster in case of many connections.
   Also psutil.Process.memory_maps() is slightly faster.
