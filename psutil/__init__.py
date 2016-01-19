@@ -133,6 +133,10 @@ elif sys.platform.startswith("sunos"):
     from ._pssunos import CONN_BOUND  # NOQA
     from ._pssunos import CONN_IDLE  # NOQA
 
+    # This is public API and it will be retrieved from _pssunos.py
+    # via sys.modules.
+    PROCFS_PATH = "/proc"
+
 else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
