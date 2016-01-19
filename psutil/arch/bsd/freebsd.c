@@ -473,7 +473,8 @@ error:
  */
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    unsigned int   total, active, inactive, wired, cached, free;
+    unsigned long  total;
+    unsigned int   active, inactive, wired, cached, free;
     size_t         size = sizeof(total);
     struct vmtotal vm;
     int            mib[] = {CTL_VM, VM_METER};
