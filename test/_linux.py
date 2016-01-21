@@ -490,7 +490,8 @@ class LinuxSpecificTestCase(unittest.TestCase):
             psutil.PROCFS_PATH = "/proc"
             os.rmdir(tdir)
 
-    def test_no_procfs_for_import(self):
+    @mock.patch('psutil.traceback.print_exc')
+    def test_no_procfs_for_import(self, tb):
         my_procfs = tempfile.mkdtemp()
 
         with open(os.path.join(my_procfs, 'stat'), 'w') as f:
@@ -509,6 +510,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
             patch_point = 'builtins.open' if PY3 else '__builtin__.open'
             with mock.patch(patch_point, side_effect=open_mock):
                 importlib.reload(psutil)
+                assert tb.called
 
                 self.assertRaises(IOError, psutil.cpu_times)
                 self.assertRaises(IOError, psutil.cpu_times, percpu=True)

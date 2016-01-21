@@ -3061,6 +3061,9 @@ class TestMisc(unittest.TestCase):
                 psutil.Process()
             assert meth.called
 
+    def test_psutil_is_reloadable(self):
+        importlib.reload(psutil)
+
 
 # ===================================================================
 # --- Example script tests
@@ -3226,9 +3229,6 @@ class TestUnicode(unittest.TestCase):
             self.skipTest("open_files on BSD is broken")
         self.assertIsInstance(path, str)
         self.assertEqual(os.path.normcase(path), os.path.normcase(self.uexe))
-
-    def test_psutil_is_reloadable(self):
-        importlib.reload(psutil)
 
 
 def main():

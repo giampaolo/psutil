@@ -11,6 +11,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
+- #724: [FreeBSD] psutil.virtual_memory().total is incorrect.
 - #730: [FreeBSD] psutil.virtual_memory() crashes.
 
 
