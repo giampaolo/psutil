@@ -286,17 +286,18 @@ class Process(object):
         self.pid = pid
         self._name = None
         self._ppid = None
+        self._procfs_path = get_procfs_path()
 
     @wrap_exceptions
     def name(self):
         # note: max len == 15
-        return cext.proc_name_and_args(self.pid, get_procfs_path())[0]
+        return cext.proc_name_and_args(self.pid, self._procfs_path)[0]
 
     @wrap_exceptions
     def exe(self):
         try:
             return os.readlink(
-                "%s/%s/path/a.out" % (get_procfs_path(), self.pid))
+                "%s/%s/path/a.out" % (self._procfs_path, self.pid))
         except OSError:
             pass    # continue and guess the exe name from the cmdline
         # Will be guessed later from cmdline but we want to explicitly
@@ -308,15 +309,15 @@ class Process(object):
     @wrap_exceptions
     def cmdline(self):
         return cext.proc_name_and_args(
-            self.pid, get_procfs_path())[1].split(' ')
+            self.pid, self._procfs_path)[1].split(' ')
 
     @wrap_exceptions
     def create_time(self):
-        return cext.proc_basic_info(self.pid, get_procfs_path())[3]
+        return cext.proc_basic_info(self.pid, self._procfs_path)[3]
 
     @wrap_exceptions
     def num_threads(self):
-        return cext.proc_basic_info(self.pid, get_procfs_path())[5]
+        return cext.proc_basic_info(self.pid, self._procfs_path)[5]
 
     @wrap_exceptions
     def nice_get(self):
@@ -349,31 +350,31 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        return cext.proc_basic_info(self.pid, get_procfs_path())[0]
+        return cext.proc_basic_info(self.pid, self._procfs_path)[0]
 
     @wrap_exceptions
     def uids(self):
         real, effective, saved, _, _, _ = \
-            cext.proc_cred(self.pid, get_procfs_path())
+            cext.proc_cred(self.pid, self._procfs_path)
         return _common.puids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
         _, _, _, real, effective, saved = \
-            cext.proc_cred(self.pid, get_procfs_path())
+            cext.proc_cred(self.pid, self._procfs_path)
         return _common.puids(real, effective, saved)
 
     @wrap_exceptions
     def cpu_times(self):
-        user, system = cext.proc_cpu_times(self.pid, get_procfs_path())
+        user, system = cext.proc_cpu_times(self.pid, self._procfs_path)
         return _common.pcputimes(user, system)
 
     @wrap_exceptions
     def terminal(self):
-        procfs_path = get_procfs_path()
+        procfs_path = self._procfs_path
         hit_enoent = False
         tty = wrap_exceptions(
-            cext.proc_basic_info(self.pid, get_procfs_path())[0])
+            cext.proc_basic_info(self.pid, self._procfs_path)[0])
         if tty != cext.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
@@ -394,7 +395,7 @@ class Process(object):
         # it exists (ls shows it). If that's the case and the process
         # is still alive return None (we can return None also on BSD).
         # Reference: http://goo.gl/55XgO
-        procfs_path = get_procfs_path()
+        procfs_path = self._procfs_path
         try:
             return os.readlink("%s/%s/path/cwd" % (procfs_path, self.pid))
         except OSError as err:
@@ -405,7 +406,7 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        ret = cext.proc_basic_info(self.pid, get_procfs_path())
+        ret = cext.proc_basic_info(self.pid, self._procfs_path)
         rss, vms = ret[1] * 1024, ret[2] * 1024
         return _common.pmem(rss, vms)
 
@@ -414,13 +415,13 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        code = cext.proc_basic_info(self.pid, get_procfs_path())[6]
+        code = cext.proc_basic_info(self.pid, self._procfs_path)[6]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
     @wrap_exceptions
     def threads(self):
-        procfs_path = get_procfs_path()
+        procfs_path = self._procfs_path
         ret = []
         tids = os.listdir('%s/%d/lwp' % (procfs_path, self.pid))
         hit_enoent = False
@@ -447,7 +448,7 @@ class Process(object):
     def open_files(self):
         retlist = []
         hit_enoent = False
-        procfs_path = get_procfs_path()
+        procfs_path = self._procfs_path
         pathdir = '%s/%d/path' % (procfs_path, self.pid)
         for fd in os.listdir('%s/%d/fd' % (procfs_path, self.pid)):
             path = os.path.join(pathdir, fd)
@@ -510,7 +511,7 @@ class Process(object):
         # is no longer there.
         if not ret:
             # will raise NSP if process is gone
-            os.stat('%s/%s' % (get_procfs_path(), self.pid))
+            os.stat('%s/%s' % (self._procfs_path, self.pid))
 
         # UNIX sockets
         if kind in ('all', 'unix'):
@@ -527,7 +528,7 @@ class Process(object):
             return '%s-%s' % (hex(start)[2:].strip('L'),
                               hex(end)[2:].strip('L'))
 
-        procfs_path = get_procfs_path()
+        procfs_path = self._procfs_path
         retlist = []
         rawlist = cext.proc_memory_maps(self.pid, procfs_path)
         hit_enoent = False
@@ -558,12 +559,12 @@ class Process(object):
 
     @wrap_exceptions
     def num_fds(self):
-        return len(os.listdir("%s/%s/fd" % (get_procfs_path(), self.pid)))
+        return len(os.listdir("%s/%s/fd" % (self._procfs_path, self.pid)))
 
     @wrap_exceptions
     def num_ctx_switches(self):
         return _common.pctxsw(
-            *cext.proc_num_ctx_switches(self.pid, get_procfs_path()))
+            *cext.proc_num_ctx_switches(self.pid, self._procfs_path))
 
     @wrap_exceptions
     def wait(self, timeout=None):
