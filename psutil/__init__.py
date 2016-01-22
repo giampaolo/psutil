@@ -141,6 +141,12 @@ else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
 
+# Dictates how to handle encoding and decoding errors (with open())
+# on Python 3. This is public API and it will be retrieved from _ps*.py
+# modules via sys.modules.
+ENCODING_ERRORS_HANDLER = 'surrogateescape'
+
+
 __all__ = [
     # exceptions
     "Error", "NoSuchProcess", "ZombieProcess", "AccessDenied",
@@ -155,6 +161,7 @@ __all__ = [
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
     "AF_LINK",
     "NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN",
+    "ENCODING_ERRORS_HANDLER",
     # classes
     "Process", "Popen",
     # functions
@@ -168,7 +175,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "3.4.2"
+__version__ = "3.5.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None

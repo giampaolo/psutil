@@ -139,16 +139,25 @@ def open_binary(fname, **kwargs):
 
 
 def open_text(fname, **kwargs):
-    """On Python 3 opens a file in text mode by using fs encoding.
+    """On Python 3 opens a file in text mode by using fs encoding and
+    a proper en/decoding errors handler.
     On Python 2 this is just an alias for open(name, 'rt').
     """
-    if PY3 and 'encoding' not in kwargs:
-        kwargs['encoding'] = FS_ENCODING
+    if PY3:
+        # See:
+        # https://github.com/giampaolo/psutil/issues/675
+        # https://github.com/giampaolo/psutil/pull/733
+        kwargs.setdefault('encoding', FS_ENCODING)
+        kwargs.setdefault('errors', get_encoding_errors_handler())
     return open(fname, "rt", **kwargs)
 
 
 def get_procfs_path():
     return sys.modules['psutil'].PROCFS_PATH
+
+
+def get_encoding_errors_handler():
+    return sys.modules['psutil'].ENCODING_ERRORS_HANDLER
 
 
 def readlink(path):
@@ -600,9 +609,7 @@ class Connections:
 
     def process_unix(self, file, family, inodes, filter_pid=None):
         """Parse /proc/net/unix files."""
-        # see: https://github.com/giampaolo/psutil/issues/675
-        kw = dict(errors='replace') if PY3 else dict()
-        with open_text(file, buffering=BIGGER_FILE_BUFFERING, **kw) as f:
+        with open_text(file, buffering=BIGGER_FILE_BUFFERING) as f:
             f.readline()  # skip the first line
             for line in f:
                 tokens = line.split()

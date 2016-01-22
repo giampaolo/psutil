@@ -1284,7 +1284,7 @@ Popen class
 Constants
 =========
 
-.. _const-pstatus:
+.. _const-procfs_path:
 .. data:: PROCFS_PATH
 
   The path of the /proc filesystem on Linux and Solaris (defaults to "/proc").
@@ -1295,6 +1295,18 @@ Constants
 
   .. versionadded:: 3.2.3
   .. versionchanged:: 3.4.2 also available on Solaris.
+
+.. _const-encoding_errors_handler:
+.. data:: ENCODING_ERRORS_HANDLER
+
+  Dictates how to handle encoding and decoding errors (for instance when
+  reading files in /proc via `open <https://docs.python.org/3/library/functions.html#open>`__).
+  This is only used in Python 3 (Python 2 ignores this constant).
+  By default this is set to `'surrogateescape'`. See
+  `here <https://docs.python.org/3/library/codecs.html#error-handlers>`__ for
+  a complete list of available error handlers.
+
+  .. versionadded:: 3.5.0
 
 .. _const-pstatus:
 .. data:: STATUS_RUNNING

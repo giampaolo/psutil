@@ -1,5 +1,19 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+3.5.0 - XXXX-XX-XX
+==================
+
+**Enhancements**
+
+- #733: exposed a new ENCODING_ERRORS_HANDLER constant for dealing with
+  encoding errors on Python 3.
+
+
+**Bug fixes**
+
+- #733: [Linux] process name() and exe() can fail on Python 3 if string
+  contains non-UTF8 charaters.  (patch by Frank Benkstein)
+
 
 3.4.2 - 2016-01-20
 ==================
