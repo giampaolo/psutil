@@ -20,7 +20,6 @@ import atexit
 import collections
 import contextlib
 import datetime
-import distutils.spawn
 import errno
 import functools
 import json
@@ -543,8 +542,8 @@ if WINDOWS:
         return (wv[0], wv[1], sp)
 
 
-# In Python 3 paths are unicode objects by default.  Surrogate escapes are used
-# to handle non-character data.
+# In Python 3 paths are unicode objects by default.  Surrogate escapes
+# are used to handle non-character data.
 def encode_path(path):
     if PY3:
         return path.encode(sys.getfilesystemencoding(),
@@ -3253,18 +3252,21 @@ class TestUnicode(unittest.TestCase):
 
 
 class TestNonUnicode(unittest.TestCase):
-    "Test handling of non-utf8 data."
+    """Test handling of non-utf8 data."""
 
     @classmethod
     def setUpClass(cls):
-        cls.temp_directory = tempfile.mkdtemp(suffix=b"")
-
-        # Return an executable that runs until we close its stdin
-        if WINDOWS:
-            cls.test_executable = distutils.spawn.find_executable("cmd.exe")
+        if PY3:
+            # Fix around https://bugs.python.org/issue24230
+            cls.temp_directory = tempfile.mkdtemp().encode('utf8')
         else:
-            assert POSIX
-            cls.test_executable = "/bin/cat"
+            cls.temp_directory = tempfile.mkdtemp(suffix=b"")
+
+        # Return an executable that runs until we close its stdin.
+        if WINDOWS:
+            cls.test_executable = which("cmd.exe")
+        else:
+            cls.test_executable = which("cat")
 
     @classmethod
     def tearDownClass(cls):
@@ -3310,8 +3312,6 @@ class TestNonUnicode(unittest.TestCase):
         cmd = [self.test_executable]
         if WINDOWS:
             cmd.extend(["/K", "type \xc0\x80"])
-        else:
-            cmd.extend([b"\xc0\x80", b"-"])
         subp = get_test_subprocess(cmd=cmd,
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
@@ -3342,10 +3342,10 @@ class TestNonUnicode(unittest.TestCase):
         test_script = os.path.join(self.temp_directory, b"test.py")
         with open(test_script, "wt") as f:
             f.write(textwrap.dedent(r"""
-            import sys, os
-            with open(%r, "wb") as f1, open(__file__, "rb") as f2:
-                sys.stdin.read()
-            """ % funny_file))
+                import sys
+                with open(%r, "wb") as f1, open(__file__, "rb") as f2:
+                    sys.stdin.read()
+                """ % funny_file))
         self.addCleanup(safe_remove, test_script)
         subp = get_test_subprocess(cmd=[PYTHON, decode_path(test_script)],
                                    stdin=subprocess.PIPE,
