@@ -138,7 +138,13 @@ psutil_proc_name(PyObject *self, PyObject *args) {
         return NULL;
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
+#if PY_MAJOR_VERSION >= 3
+    // TODO: have python pass ENCODING_ERRORS_HANDLER as an arg
+    return PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
+#else
     return Py_BuildValue("s", kp.kp_proc.p_comm);
+#endif
+
 }
 
 
