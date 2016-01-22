@@ -11,8 +11,10 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
-- #734: [Linux] process name() and exe() can fail on Python 3 if string
-  contains non-UTF8 charaters.  (patch by Frank Benkstein)
+- #734: [Linux] non unicode data not correctly handled in Python 3 for process
+  name() and exe().
+- #734: [OSX] non unicode data not correctly handled in Python 3 for process
+  cwd(), exe(), open_files().
 
 
 3.4.2 - 2016-01-20
