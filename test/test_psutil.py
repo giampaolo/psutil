@@ -460,12 +460,13 @@ def retry_before_failing(ntimes=None):
         def wrapper(*args, **kwargs):
             times = ntimes or NO_RETRIES
             assert times, times
+            exc = None
             for x in range(times):
                 try:
                     return fun(*args, **kwargs)
-                except AssertionError:
-                    pass
-            raise
+                except AssertionError as _:
+                    exc = _
+            raise exc
         return wrapper
     return decorator
 
