@@ -1789,18 +1789,16 @@ class TestProcess(unittest.TestCase):
         # https://github.com/giampaolo/psutil/issues/628
         funky_path = create_temp_executable_file('foo bar )')
         self.addCleanup(safe_remove, funky_path)
-        sproc = get_test_subprocess(
-            [funky_path, "arg1", "arg2", "", "arg3", ""])
+        cmdline = [funky_path, "arg1", "arg2", "", "arg3", "", "-c",
+                   "import time; [time.sleep(0.01) for x in range(3000)];"]
+        sproc = get_test_subprocess(cmdline)
         p = psutil.Process(sproc.pid)
         # ...in order to try to prevent occasional failures on travis
         wait_for_pid(p.pid)
-        # sync trick in order to keep the subprocess alive
-        p.suspend()
         normcase = os.path.normcase
         self.assertEqual(p.name(), os.path.basename(funky_path))
         self.assertEqual(normcase(p.exe()), normcase(funky_path))
-        self.assertEqual(
-            p.cmdline(), [funky_path, "arg1", "arg2", "", "arg3", ""])
+        self.assertEqual(p.cmdline(), cmdline)
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_uids(self):
