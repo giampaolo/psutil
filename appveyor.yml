@@ -10,6 +10,8 @@ environment:
     # Pre-installed Python versions, which Appveyor may upgrade to
     # a later point release.
 
+    # 32 bits
+
     - PYTHON: "C:\\Python27"
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "32"
@@ -26,6 +28,8 @@ environment:
       PYTHON_VERSION: "3.5.x"
       PYTHON_ARCH: "32"
 
+    # 64 bits
+
     - PYTHON: "C:\\Python27-x64"
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "64"
@@ -39,7 +43,7 @@ environment:
       PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python35-x64"
-      PYTHON_VERSION: "3.4.x"
+      PYTHON_VERSION: "3.5.x"
       PYTHON_ARCH: "64"
 
     # Also build on a Python version not pre-installed by Appveyor.

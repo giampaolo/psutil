@@ -160,6 +160,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     }
 
 #if PY_MAJOR_VERSION >= 3
+    // TODO: have python pass ENCODING_ERRORS_HANDLER as an arg
     return PyUnicode_DecodeFSDefault(pathinfo.pvi_cdir.vip_path);
 #else
     return Py_BuildValue("s", pathinfo.pvi_cdir.vip_path);
@@ -183,7 +184,12 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         psutil_raise_ad_or_nsp(pid);
         return NULL;
     }
+#if PY_MAJOR_VERSION >= 3
+    // TODO: have python pass ENCODING_ERRORS_HANDLER as an arg
+    return PyUnicode_DecodeFSDefault(buf);
+#else
     return Py_BuildValue("s", buf);
+#endif
 }
 
 
@@ -989,6 +995,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
+    PyObject *py_path = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -1053,15 +1060,24 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
             // --- /errors checking
 
             // --- construct python list
+#if PY_MAJOR_VERSION >= 3
+            // TODO: have python pass ENCODING_ERRORS_HANDLER as an arg
+            py_path = PyUnicode_DecodeFSDefault(vi.pvip.vip_path);
+#else
+            py_path = Py_BuildValue("s", vi.pvip.vip_path);
+#endif
+            if (! py_path)
+                goto error;
             py_tuple = Py_BuildValue(
-                "(si)",
-                vi.pvip.vip_path,
+                "(Oi)",
+                py_path,
                 (int)fdp_pointer->proc_fd);
             if (!py_tuple)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))
                 goto error;
             Py_DECREF(py_tuple);
+            Py_DECREF(py_path);
             // --- /construct python list
         }
     }
@@ -1071,6 +1087,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 
 error:
     Py_XDECREF(py_tuple);
+    Py_XDECREF(py_path);
     Py_DECREF(py_retlist);
     if (fds_pointer != NULL)
         free(fds_pointer);
