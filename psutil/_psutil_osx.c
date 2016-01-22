@@ -160,11 +160,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     }
 
 #if PY_MAJOR_VERSION >= 3
-    return PyUnicode_Decode(
-        pathinfo.pvi_cdir.vip_path,
-        sizeof(pathinfo.pvi_cdir.vip_path),
-        Py_FileSystemDefaultEncoding,
-        "surrogateescape");
+    return PyUnicode_DecodeFSDefault(pathinfo.pvi_cdir.vip_path);
 #else
     return Py_BuildValue("s", pathinfo.pvi_cdir.vip_path);
 #endif
