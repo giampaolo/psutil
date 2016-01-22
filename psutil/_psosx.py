@@ -7,6 +7,7 @@
 import errno
 import functools
 import os
+import sys
 from collections import namedtuple
 
 from . import _common
@@ -71,6 +72,12 @@ NoSuchProcess = None
 ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
+
+
+# --- utils
+
+def get_encoding_errors_handler():
+    return sys.modules['psutil'].ENCODING_ERRORS_HANDLER
 
 
 # --- functions
@@ -222,10 +229,11 @@ class Process(object):
         self.pid = pid
         self._name = None
         self._ppid = None
+        self._encoding_errors_handler = get_encoding_errors_handler()
 
     @wrap_exceptions
     def name(self):
-        return cext.proc_name(self.pid)
+        return cext.proc_name(self.pid, self._encoding_errors_handler)
 
     @wrap_exceptions
     def exe(self):
