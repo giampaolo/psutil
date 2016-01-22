@@ -3323,7 +3323,8 @@ class TestNonUnicode(unittest.TestCase):
         self.assertEqual(subp.returncode, 0)
 
     def test_proc_cwd(self):
-        funny_directory = os.path.join(self.temp_directory, b"\xc0\x80")
+        funny_directory = os.path.realpath(
+            os.path.join(self.temp_directory, b"\xc0\x80"))
         os.mkdir(funny_directory)
         self.addCleanup(safe_rmdir, funny_directory)
         with chdir(funny_directory):

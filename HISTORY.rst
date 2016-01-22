@@ -11,7 +11,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
-- #733: [Linux] process name() and exe() can fail on Python 3 if string
+- #734: [Linux] process name() and exe() can fail on Python 3 if string
   contains non-UTF8 charaters.  (patch by Frank Benkstein)
 
 
