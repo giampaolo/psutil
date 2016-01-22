@@ -3284,7 +3284,11 @@ class TestNonUnicode(unittest.TestCase):
 
     def test_proc_exe(self):
         funny_executable = os.path.join(self.temp_directory, b"\xc0\x80")
-        shutil.copy(self.test_executable, funny_executable)
+        # This is broken on py 3.3, hence the manual copy
+        # shutil.copy(self.test_executable, funny_executable)
+        with open(self.test_executable, 'rb') as input:
+            with open(funny_executable, 'wb') as output:
+                output.write(input.read())
         self.addCleanup(safe_remove, funny_executable)
         subp = get_test_subprocess(cmd=[decode_path(funny_executable)],
                                    stdin=subprocess.PIPE,
@@ -3298,7 +3302,11 @@ class TestNonUnicode(unittest.TestCase):
 
     def test_proc_name(self):
         funny_executable = os.path.join(self.temp_directory, b"\xc0\x80")
-        shutil.copy(self.test_executable, funny_executable)
+        # This is broken on py 3.3, hence the manual copy
+        # shutil.copy(self.test_executable, funny_executable)
+        with open(self.test_executable, 'rb') as input:
+            with open(funny_executable, 'wb') as output:
+                output.write(input.read())
         self.addCleanup(safe_remove, funny_executable)
         subp = get_test_subprocess(cmd=[decode_path(funny_executable)],
                                    stdin=subprocess.PIPE,
