@@ -164,7 +164,10 @@ def get_test_subprocess(cmd=None, wait=False, **kwds):
         pyline = ""
         if wait:
             pyline += "open(r'%s', 'w'); " % TESTFN
-        pyline += "import time; time.sleep(60);"
+        # A process living for 30 secs. We sleep N times (as opposed to
+        # once) in order to be nicer towards Windows which doesn't handle
+        # interrupt signals properly.
+        pyline += "import time; [time.sleep(0.01) for x in range(3000)];"
         cmd_ = [PYTHON, "-c", pyline]
     else:
         cmd_ = cmd
@@ -2287,8 +2290,8 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         p.terminate()
         p.wait()
-        # if WINDOWS:
-        #     wait_for_pid(p.pid)
+        if WINDOWS:
+            call_until(psutil.pids, "%s not in ret" % p.pid)
         self.assertFalse(p.is_running())
         # self.assertFalse(p.pid in psutil.pids(), msg="retcode = %s" %
         #   retcode)
