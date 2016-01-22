@@ -3270,7 +3270,7 @@ class TestNonUnicode(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        safe_rmdir(cls.temp_directory)
+        shutil.rmtree(cls.temp_directory)
 
     def setUp(self):
         reap_children()
@@ -3326,40 +3326,25 @@ class TestNonUnicode(unittest.TestCase):
         funny_directory = os.path.join(self.temp_directory, b"\xc0\x80")
         os.mkdir(funny_directory)
         self.addCleanup(safe_rmdir, funny_directory)
-        subp = get_test_subprocess(cmd=[self.test_executable],
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT,
-                                   cwd=decode_path(funny_directory))
-        p = psutil.Process(subp.pid)
-        self.assertEqual(encode_path(p.cwd()), funny_directory)
-        subp.communicate()
-        self.assertEqual(subp.returncode, 0)
+        with chdir(funny_directory):
+            p = psutil.Process()
+            self.assertIsInstance(p.cwd(), str)
+            self.assertEqual(encode_path(p.cwd()), funny_directory)
 
     @unittest.skipIf(WINDOWS, "does not work on windows")
     def test_proc_open_files(self):
         funny_file = os.path.join(self.temp_directory, b"\xc0\x80")
-        test_script = os.path.join(self.temp_directory, b"test.py")
-        with open(test_script, "wt") as f:
-            f.write(textwrap.dedent(r"""
-                import sys
-                with open(%r, "wb") as f1, open(__file__, "rb") as f2:
-                    sys.stdin.read()
-                """ % funny_file))
-        self.addCleanup(safe_remove, test_script)
-        subp = get_test_subprocess(cmd=[PYTHON, decode_path(test_script)],
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT)
-        self.addCleanup(safe_remove, funny_file)
-        p = psutil.Process(subp.pid)
-        # wait for the file to appear
-        while len(os.listdir(self.temp_directory)) == 1:
-            time.sleep(0.01)
-        self.assertIn(funny_file,
-                      [encode_path(of.path) for of in p.open_files()])
-        subp.communicate()
-        self.assertEqual(subp.returncode, 0)
+        p = psutil.Process()
+        start = set(p.open_files())
+        with open(funny_file, 'wb'):
+            new = set(p.open_files())
+        path = (new - start).pop().path
+        if BSD and not path:
+            # XXX
+            # see https://github.com/giampaolo/psutil/issues/595
+            self.skipTest("open_files on BSD is broken")
+        self.assertIsInstance(path, str)
+        self.assertIn(funny_file, encode_path(path))
 
 
 def main():
