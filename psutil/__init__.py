@@ -155,7 +155,6 @@ __all__ = [
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
     "AF_LINK",
     "NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN",
-    "ENCODING_ERRORS_HANDLER",
     # classes
     "Process", "Popen",
     # functions

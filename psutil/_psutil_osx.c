@@ -166,7 +166,6 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     }
 
 #if PY_MAJOR_VERSION >= 3
-    // TODO: have python pass ENCODING_ERRORS_HANDLER as an arg
     return PyUnicode_DecodeFSDefault(pathinfo.pvi_cdir.vip_path);
 #else
     return Py_BuildValue("s", pathinfo.pvi_cdir.vip_path);
@@ -191,7 +190,6 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         return NULL;
     }
 #if PY_MAJOR_VERSION >= 3
-    // TODO: have python pass ENCODING_ERRORS_HANDLER as an arg
     return PyUnicode_DecodeFSDefault(buf);
 #else
     return Py_BuildValue("s", buf);
@@ -1067,7 +1065,6 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 
             // --- construct python list
 #if PY_MAJOR_VERSION >= 3
-            // TODO: have python pass ENCODING_ERRORS_HANDLER as an arg
             py_path = PyUnicode_DecodeFSDefault(vi.pvip.vip_path);
 #else
             py_path = Py_BuildValue("s", vi.pvip.vip_path);
