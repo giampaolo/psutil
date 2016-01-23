@@ -1789,8 +1789,9 @@ class TestProcess(unittest.TestCase):
         # https://github.com/giampaolo/psutil/issues/628
         funky_path = create_temp_executable_file('foo bar )')
         self.addCleanup(safe_remove, funky_path)
-        cmdline = [funky_path, "arg1", "arg2", "", "arg3", "", "-c",
-                   "import time; [time.sleep(0.01) for x in range(3000)];"]
+        cmdline = [funky_path, "-c",
+                   "import time; [time.sleep(0.01) for x in range(3000)];"
+                   "arg1", "arg2", "", "arg3", ""]
         sproc = get_test_subprocess(cmdline)
         p = psutil.Process(sproc.pid)
         # ...in order to try to prevent occasional failures on travis
