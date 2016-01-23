@@ -223,7 +223,7 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid"]
+    __slots__ = ["pid", "_name", "_ppid", "_encoding_errors_handler"]
 
     def __init__(self, pid):
         self.pid = pid
