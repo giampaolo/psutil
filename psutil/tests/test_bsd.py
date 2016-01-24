@@ -310,6 +310,16 @@ class NetBSDSpecificTestCase(unittest.TestCase):
                     return int(line.split()[1]) * 1024
         raise ValueError("can't find %s" % look_for)
 
+    # XXX - failing tests
+
+    # def test_vmem_total(self):
+    #     self.assertEqual(
+    #         psutil.virtual_memory().total, self.parse_meminfo("MemTotal:"))
+
+    # def test_vmem_free(self):
+    #     self.assertEqual(
+    #         psutil.virtual_memory().buffers, self.parse_meminfo("MemFree:"))
+
     def test_vmem_buffers(self):
         self.assertEqual(
             psutil.virtual_memory().buffers, self.parse_meminfo("Buffers:"))
@@ -318,6 +328,13 @@ class NetBSDSpecificTestCase(unittest.TestCase):
         self.assertEqual(
             psutil.virtual_memory().shared, self.parse_meminfo("MemShared:"))
 
+    def test_swapmem_total(self):
+        self.assertEqual(
+            psutil.swap_memory().total, self.parse_meminfo("SwapTotal:"))
+
+    def test_swapmem_free(self):
+        self.assertEqual(
+            psutil.swap_memory().free, self.parse_meminfo("SwapFree:"))
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)
