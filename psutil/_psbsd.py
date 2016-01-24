@@ -114,7 +114,7 @@ if FREEBSD:
 else:
     sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                      'read_bytes', 'write_bytes'])
-if FREEBSD:
+if FREEBSD or NETBSD:
     scpustats = namedtuple(
         'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts',
                       'syscalls', 'traps'])
@@ -231,6 +231,14 @@ def cpu_stats():
     if FREEBSD:
         ctx_switches, interrupts, soft_interrupts, syscalls, traps = \
             cext.cpu_stats()
+        return scpustats(
+            ctx_switches, interrupts, soft_interrupts, syscalls, traps)
+    elif NETBSD:
+        # Note: the C ext is returning two metrics we are not returning:
+        # faults and forks.
+        # XXX - syscalls and intrs are always 0 (?).
+        (ctx_switches, interrupts, soft_interrupts, syscalls, traps, faults,
+         forks) = cext.cpu_stats()
         return scpustats(
             ctx_switches, interrupts, soft_interrupts, syscalls, traps)
 

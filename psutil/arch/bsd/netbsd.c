@@ -673,3 +673,28 @@ error:
         free(stats);
     return NULL;
 }
+
+
+PyObject *
+psutil_cpu_stats(PyObject *self, PyObject *args) {
+    size_t size;
+    struct uvmexp_sysctl uv;
+    int uvmexp_mib[] = {CTL_VM, VM_UVMEXP2};
+
+    size = sizeof(uv);
+    if (sysctl(uvmexp_mib, 2, &uv, &size, NULL, 0) < 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return NULL;
+    }
+
+    return Py_BuildValue(
+        "IIIIIII",
+        uv.swtch,  // ctx switches
+        uv.intrs,  // interrupts - XXX always 0
+        uv.softs,  // soft interrupts
+        uv.syscalls,  // syscalls - XXX always 0
+        uv.traps,  // traps
+        uv.faults,  // faults
+        uv.forks  // forks
+    );
+}
