@@ -195,7 +195,13 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
         else
             strcpy(pathname, "");
     }
+
+#if PY_MAJOR_VERSION >= 3
+    return PyUnicode_DecodeFSDefault(pathname);
+#else
     return Py_BuildValue("s", pathname);
+#endif
+
 #else
     return Py_BuildValue("s", "");
 #endif
@@ -412,7 +418,11 @@ psutil_get_cmdline(pid_t pid) {
     // separator
     if (argsize > 0) {
         while (pos < argsize) {
+#if PY_MAJOR_VERSION >= 3
+            py_arg = PyUnicode_DecodeFSDefault(&argstr[pos]);
+#else
             py_arg = Py_BuildValue("s", &argstr[pos]);
+#endif
             if (!py_arg)
                 goto error;
             if (PyList_Append(py_retlist, py_arg))
