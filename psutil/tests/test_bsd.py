@@ -286,7 +286,6 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
 # --- OpenBSD
 # =====================================================================
 
-
 @unittest.skipUnless(OPENBSD, "not an OpenBSD system")
 class OpenBSDSpecificTestCase(unittest.TestCase):
 
@@ -295,6 +294,29 @@ class OpenBSDSpecificTestCase(unittest.TestCase):
         sys_bt = datetime.datetime.strptime(s, "%a %b %d %H:%M:%S %Y")
         psutil_bt = datetime.datetime.fromtimestamp(psutil.boot_time())
         self.assertEqual(sys_bt, psutil_bt)
+
+
+# =====================================================================
+# --- NetBSD
+# =====================================================================
+
+@unittest.skipUnless(NETBSD, "not a NetBSD system")
+class NetBSDSpecificTestCase(unittest.TestCase):
+
+    def parse_meminfo(self, look_for):
+        with open('/proc/meminfo', 'rb') as f:
+            for line in f:
+                if line.startswith(look_for):
+                    return int(line.split()[1]) * 1024
+        raise ValueError("can't find %s" % look_for)
+
+    def test_vmem_buffers(self):
+        self.assertEqual(
+            psutil.virtual_memory().buffers, self.parse_meminfo("Buffers:"))
+
+    def test_vmem_shared(self):
+        self.assertEqual(
+            psutil.virtual_memory().shared, self.parse_meminfo("MemShared:"))
 
 
 if __name__ == '__main__':

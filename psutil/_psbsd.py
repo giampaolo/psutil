@@ -126,6 +126,15 @@ def virtual_memory():
     """System virtual memory as a namedtuple."""
     mem = cext.virtual_mem()
     total, free, active, inactive, wired, cached, buffers, shared = mem
+    if NETBSD:
+        # On NetBSD buffers and shared mem is determined via /proc.
+        # The C ext set them to 0.
+        with open('/proc/meminfo', 'rb') as f:
+            for line in f:
+                if line.startswith("Buffers:"):
+                    buffers = int(line.split()[1]) * 1024
+                elif line.startswith("MemShared:"):
+                    shared = int(line.split()[1]) * 1024
     avail = inactive + cached + free
     used = active + wired + cached
     percent = usage_percent((total - avail), total, _round=1)
