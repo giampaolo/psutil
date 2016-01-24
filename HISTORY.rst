@@ -36,6 +36,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #764: [NetBSD] fix compilation on NetBSD-6.x.
 - #767: [Linux] disk_io_counters() may raise ValueError on 2.6 kernels and it's
   broken on 2.4 kernels.
+- #770: [NetBSD] disk_io_counters() metrics didn't update.
 
 
 3.4.2 - 2016-01-20

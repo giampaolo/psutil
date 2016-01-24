@@ -643,22 +643,19 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         PyErr_NoMemory();
         goto error;
     }
-    if (sysctl(mib, 2, stats, &len, NULL, 0) < 0 ) {
+    if (sysctl(mib, 3, stats, &len, NULL, 0) < 0 ) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
 
     for (i = 0; i < dk_ndrive; i++) {
         py_disk_info = Py_BuildValue(
-            "(KKKKLL)",
+            "(KKKK)",
             stats[i].rxfer,
             stats[i].wxfer,
             stats[i].rbytes,
-            stats[i].wbytes,
-            // assume half read - half writes.
-            // TODO: why?
-            (long long) PSUTIL_KPT2DOUBLE(stats[i].time) / 2,
-            (long long) PSUTIL_KPT2DOUBLE(stats[i].time) / 2);
+            stats[i].wbytes
+        );
         if (!py_disk_info)
             goto error;
         if (PyDict_SetItemString(py_retdict, stats[i].name, py_disk_info))
