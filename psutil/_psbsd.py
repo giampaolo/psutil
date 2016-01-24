@@ -234,11 +234,21 @@ def cpu_stats():
         return scpustats(
             ctx_switches, interrupts, soft_interrupts, syscalls, traps)
     elif NETBSD:
+        # XXX
+        # Note about interrupts: the C extension returns 0. interrupts
+        # can be determined via /proc/stat; it has the same value as
+        # soft_interrupts thought so the kernel is faking it (?).
+        #
+        # Note about syscalls: the C extension always sets it to 0 (?).
+        #
         # Note: the C ext is returning two metrics we are not returning:
         # faults and forks.
-        # XXX - syscalls and intrs are always 0 (?).
         (ctx_switches, interrupts, soft_interrupts, syscalls, traps, faults,
          forks) = cext.cpu_stats()
+        with open('/proc/stat', 'rb') as f:
+            for line in f:
+                if line.startswith(b'intr'):
+                    interrupts = int(line.split()[1])
         return scpustats(
             ctx_switches, interrupts, soft_interrupts, syscalls, traps)
 

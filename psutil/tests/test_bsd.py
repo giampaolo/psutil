@@ -356,5 +356,28 @@ class NetBSDSpecificTestCase(unittest.TestCase):
         self.assertEqual(
             psutil.swap_memory().free, self.parse_meminfo("SwapFree:"))
 
+    def test_cpu_stats_interrupts(self):
+        with open('/proc/stat', 'rb') as f:
+            for line in f:
+                if line.startswith(b'intr'):
+                    interrupts = int(line.split()[1])
+                    break
+            else:
+                raise ValueError("couldn't find line")
+        self.assertAlmostEqual(
+            psutil.cpu_stats().interrupts, interrupts, delta=1000)
+
+    def test_cpu_stats_ctx_switches(self):
+        with open('/proc/stat', 'rb') as f:
+            for line in f:
+                if line.startswith(b'ctxt'):
+                    ctx_switches = int(line.split()[1])
+                    break
+            else:
+                raise ValueError("couldn't find line")
+        self.assertAlmostEqual(
+            psutil.cpu_stats().ctx_switches, ctx_switches, delta=1000)
+
+
 if __name__ == '__main__':
     run_test_module_by_name(__file__)

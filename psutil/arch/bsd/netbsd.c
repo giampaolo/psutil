@@ -690,7 +690,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     return Py_BuildValue(
         "IIIIIII",
         uv.swtch,  // ctx switches
-        uv.intrs,  // interrupts - XXX always 0
+        uv.intrs,  // interrupts - XXX always 0, will be determined via /proc
         uv.softs,  // soft interrupts
         uv.syscalls,  // syscalls - XXX always 0
         uv.traps,  // traps
