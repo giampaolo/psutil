@@ -12,6 +12,7 @@ static PyObject* psutil_proc_connections(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_cpu_times(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_create_time(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_cwd(PyObject* self, PyObject* args);
+static PyObject* psutil_proc_environ(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_exe(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_gids(PyObject* self, PyObject* args);
 static PyObject* psutil_proc_memory_info(PyObject* self, PyObject* args);

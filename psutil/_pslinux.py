@@ -25,6 +25,7 @@ from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
 from ._common import isfile_strict
 from ._common import memoize
+from ._common import parse_environ_block
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
@@ -885,6 +886,12 @@ class Process(object):
         if data.endswith('\x00'):
             data = data[:-1]
         return [x for x in data.split('\x00')]
+
+    @wrap_exceptions
+    def environ(self):
+        with open_text("%s/%s/environ" % (self._procfs_path, self.pid)) as f:
+            data = f.read()
+        return parse_environ_block(data)
 
     @wrap_exceptions
     def terminal(self):

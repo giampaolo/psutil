@@ -693,6 +693,15 @@ Process class
 
      The command line this process has been called with.
 
+  .. method:: environ()
+
+     The environment variables of the process as a dict.  Note: this might not
+     reflect changes made after the process started.
+
+     Availability: Linux, OSX
+
+     .. versionchanged: 3.4.3: added
+
   .. method:: create_time()
 
      The process creation time as a floating point number expressed in seconds
