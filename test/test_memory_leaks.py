@@ -322,6 +322,11 @@ class TestProcessObjectLeaks(Base):
             for s in socks:
                 s.close()
 
+    @unittest.skipUnless(hasattr(psutil.Process, 'environ'),
+                         "Linux only")
+    def test_environ(self):
+        self.execute("environ")
+
 
 p = get_test_subprocess()
 DEAD_PROC = psutil.Process(p.pid)

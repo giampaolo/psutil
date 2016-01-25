@@ -507,7 +507,7 @@ def skip_on_not_implemented(only_if=None):
     return decorator
 
 
-def create_temp_executable_file(suffix):
+def create_temp_executable_file(suffix, code="void main() { pause(); }"):
     tmpdir = None
     if TRAVIS and OSX:
         tmpdir = "/private/tmp"
@@ -520,7 +520,7 @@ def create_temp_executable_file(suffix):
             prefix='psu', suffix='.c', dir=tmpdir)
         os.close(fd)
         with open(c_file, "w") as f:
-            f.write("void main() { pause(); }")
+            f.write(code)
         subprocess.check_call(["gcc", c_file, "-o", path])
         safe_remove(c_file)
     else:
@@ -2500,6 +2500,45 @@ class TestProcess(unittest.TestCase):
             proc.wait()
             self.assertIsNotNone(proc.returncode)
 
+    @unittest.skipUnless(hasattr(psutil.Process, "environ"),
+                         "environ not available")
+    def test_environ(self):
+        self.maxDiff = None
+        p = psutil.Process()
+        self.assertEqual(p.environ(), os.environ)
+
+    @unittest.skipUnless(hasattr(psutil.Process, "environ"),
+                         "environ not available")
+    @unittest.skipUnless(POSIX, "posix only")
+    def test_weird_environ(self):
+        # environment variables can contain values without an equals sign
+        code = textwrap.dedent("""
+        #include <unistd.h>
+        #include <fcntl.h>
+        char * const argv[] = {"cat", 0};
+        char * const envp[] = {"A=1", "X", "C=3", 0};
+        int main(void) {
+            /* Close stderr on exec so parent can wait for the execve to
+             * finish. */
+            if (fcntl(2, F_SETFD, FD_CLOEXEC) != 0)
+                return 0;
+            return execve("/bin/cat", argv, envp);
+        }
+        """)
+        path = create_temp_executable_file("x", code=code)
+        self.addCleanup(safe_remove, path)
+        sproc = get_test_subprocess([path],
+                                    stdin=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+        p = psutil.Process(sproc.pid)
+        wait_for_pid(p.pid)
+        self.assertTrue(p.is_running())
+        # Wait for process to exec or exit.
+        self.assertEqual(sproc.stderr.read(), b"")
+        self.assertEqual(p.environ(), {"A": "1", "C": "3"})
+        sproc.communicate()
+        self.assertEqual(sproc.returncode, 0)
+
 
 # ===================================================================
 # --- Featch all processes test
@@ -2561,7 +2600,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                         self.assertTrue(str(err))
                         self.assertTrue(err.msg)
                     else:
-                        if ret not in (0, 0.0, [], None, ''):
+                        if ret not in (0, 0.0, [], None, '', {}):
                             assert ret, ret
                         meth = getattr(self, name)
                         meth(ret, p)
@@ -2773,6 +2812,9 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertEqual(len(ret), 2)
         self.assertGreaterEqual(ret[0], -1)
         self.assertGreaterEqual(ret[1], -1)
+
+    def environ(self, ret, proc):
+        self.assertIsInstance(ret, dict)
 
 
 # ===================================================================
@@ -2998,6 +3040,27 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(len(calls), 4)
         # docstring
         self.assertEqual(foo.__doc__, "foo docstring")
+
+    def test_parse_environ_block(self):
+        from psutil._common import parse_environ_block
+
+        def k(s):
+            return s.upper() if WINDOWS else s
+
+        self.assertEqual(parse_environ_block("a=1\0"),
+                         {k("a"): "1"})
+        self.assertEqual(parse_environ_block("a=1\0b=2\0\0"),
+                         {k("a"): "1", k("b"): "2"})
+        self.assertEqual(parse_environ_block("a=1\0b=\0\0"),
+                         {k("a"): "1", k("b"): ""})
+        # ignore everything after \0\0
+        self.assertEqual(parse_environ_block("a=1\0b=2\0\0c=3\0"),
+                         {k("a"): "1", k("b"): "2"})
+        # ignore everything that is not an assignment
+        self.assertEqual(parse_environ_block("xxx\0a=1\0"), {k("a"): "1"})
+        self.assertEqual(parse_environ_block("a=1\0=b=2\0"), {k("a"): "1"})
+        # do not fail if the block is incomplete
+        self.assertEqual(parse_environ_block("a=1\0b=2"), {k("a"): "1"})
 
     def test_supports_ipv6(self):
         if supports_ipv6():
