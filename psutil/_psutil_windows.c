@@ -575,7 +575,6 @@ static PyObject *
 psutil_proc_cmdline(PyObject *self, PyObject *args) {
     long pid;
     int pid_return;
-    PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -588,19 +587,7 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
     if (pid_return == -1)
         return NULL;
 
-    // XXX the assumptio below probably needs to go away
-
-    // May fail any of several ReadProcessMemory calls etc. and
-    // not indicate a real problem so we ignore any errors and
-    // just live without commandline.
-    py_retlist = psutil_get_cmdline(pid);
-    if ( NULL == py_retlist ) {
-        // carry on anyway, clear any exceptions too
-        PyErr_Clear();
-        return Py_BuildValue("[]");
-    }
-
-    return py_retlist;
+    return psutil_get_cmdline(pid);
 }
 
 

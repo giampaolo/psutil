@@ -8,6 +8,7 @@
 """Windows specific tests.  These are implicitly run by test_psutil.py."""
 
 import errno
+import glob
 import os
 import platform
 import signal
@@ -41,6 +42,9 @@ from test_psutil import WINDOWS
 
 
 cext = psutil._psplatform.cext
+
+# are we a 64 bit process
+IS_64_BIT = sys.maxsize > 2**32
 
 
 def wrap_exceptions(fun):
@@ -484,10 +488,80 @@ class TestDualProcessImplementation(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
 
+class RemoteProcessTestCase(unittest.TestCase):
+    """Certain functions require calling ReadProcessMemory.  This trivially
+    works when called on the current process.  Check that this works on other
+    processes, especially when they have a different bitness."""
+
+    @staticmethod
+    def find_other_interpreter():
+        # find a python interpreter that is of the opposite bitness from us
+        code = "import sys; sys.stdout.write(str(sys.maxsize > 2**32))"
+
+        # XXX: a different and probably more stable approach might be to access
+        # the registry but accessing 64 bit paths from a 32 bit process
+        for filename in glob.glob(r"C:\Python*\python.exe"):
+            proc = subprocess.Popen(args=[filename, "-c", code],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT)
+            output, _ = proc.communicate()
+            if output == str(not IS_64_BIT):
+                return filename
+
+    @classmethod
+    def setUpClass(cls):
+        other_python = cls.find_other_interpreter()
+
+        if other_python is None:
+            raise unittest.SkipTest(
+                    "could not find interpreter with opposite bitness")
+
+        if IS_64_BIT:
+            cls.python64 = sys.executable
+            cls.python32 = other_python
+        else:
+            cls.python64 = other_python
+            cls.python32 = sys.executable
+
+    test_args = ["-c", "import sys; sys.stdin.read()"]
+
+    def setUp(self):
+        self.proc32 = get_test_subprocess([self.python32] + self.test_args)
+        self.proc64 = get_test_subprocess([self.python64] + self.test_args)
+
+    def tearDown(self):
+        self.proc32.communicate()
+        self.proc64.communicate()
+        reap_children()
+
+    @classmethod
+    def tearDownClass(cls):
+        reap_children()
+
+    def test_cmdline_32(self):
+        p = psutil.Process(self.proc32.pid)
+        self.assertEqual(len(p.cmdline()), 3)
+        self.assertEqual(p.cmdline()[1:], self.test_args)
+
+    def test_cmdline_64(self):
+        p = psutil.Process(self.proc64.pid)
+        self.assertEqual(len(p.cmdline()), 3)
+        self.assertEqual(p.cmdline()[1:], self.test_args)
+
+    def test_cwd_32(self):
+        p = psutil.Process(self.proc32.pid)
+        self.assertEqual(p.cwd(), os.getcwd())
+
+    def test_cwd_64(self):
+        p = psutil.Process(self.proc64.pid)
+        self.assertEqual(p.cwd(), os.getcwd())
+
+
 def main():
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(WindowsSpecificTestCase))
     test_suite.addTest(unittest.makeSuite(TestDualProcessImplementation))
+    test_suite.addTest(unittest.makeSuite(RemoteProcessTestCase))
     result = unittest.TextTestRunner(verbosity=2).run(test_suite)
     return result.wasSuccessful()
 
