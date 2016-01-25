@@ -3,6 +3,10 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 3.5.0 - XXXX-XX-XX
 ==================
 
+**Enhancements**
+
+- #732: Process.environ()  (patch by Frank Benkstein)
+
 **Bug fixes**
 
 - #734: on Python 3 invalid UTF-8 data is not correctly handled for process
