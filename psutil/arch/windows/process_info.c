@@ -203,13 +203,10 @@ handlep_is_running(HANDLE hProcess) {
     return 0;
 }
 
-
-/*
- * returns a Python list representing the arguments for the process
- * with given pid or NULL on error.
- */
-PyObject *
-psutil_get_cmdline(long pid) {
+/* Get the cmdline as a Python list of the process with the given pid.  On
+   success 0 is returned.  On error the given output parameters are not
+   touched, -1 is returned, and an appropriate Python exception is set. */
+static int psutil_get_parameters(long pid, PyObject **pcmdline) {
     int nArgs, i;
     LPWSTR *szArglist = NULL;
     HANDLE hProcess = NULL;
@@ -222,7 +219,7 @@ psutil_get_cmdline(long pid) {
 
     hProcess = psutil_handle_from_pid(pid);
     if (hProcess == NULL)
-        return NULL;
+        return -1;
     pebAddress = psutil_get_peb_address(hProcess);
 
     // get the address of ProcessParameters
@@ -239,69 +236,80 @@ psutil_get_cmdline(long pid) {
         goto error;
     }
 
-    // read the CommandLine UNICODE_STRING structure
+    if (pcmdline != NULL) {
+        // read the CommandLine UNICODE_STRING structure
 #ifdef _WIN64
-    if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 112,
-                           &commandLine, sizeof(commandLine), NULL))
+        if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 112,
+                               &commandLine, sizeof(commandLine), NULL))
 #else
-    if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 0x40,
-                           &commandLine, sizeof(commandLine), NULL))
+        if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 0x40,
+                               &commandLine, sizeof(commandLine), NULL))
 #endif
-    {
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
-
-
-    // allocate memory to hold the command line
-    commandLineContents = (WCHAR *)malloc(commandLine.Length + 1);
-    if (commandLineContents == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    // read the command line
-    if (!ReadProcessMemory(hProcess, commandLine.Buffer,
-                           commandLineContents, commandLine.Length, NULL))
-    {
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
-
-    // Null-terminate the string to prevent wcslen from returning
-    // incorrect length the length specifier is in characters, but
-    // commandLine.Length is in bytes.
-    commandLineContents[(commandLine.Length / sizeof(WCHAR))] = '\0';
-
-    // attempt to parse the command line using Win32 API, fall back
-    // on string cmdline version otherwise
-    szArglist = CommandLineToArgvW(commandLineContents, &nArgs);
-    if (szArglist == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
-    else {
-        // arglist parsed as array of UNICODE_STRING, so convert each to
-        // Python string object and add to arg list
-        py_retlist = Py_BuildValue("[]");
-        if (py_retlist == NULL)
+        {
+            if (GetLastError() == ERROR_PARTIAL_COPY) {
+                // this occurs quite often with system processes
+                AccessDenied();
+            }
+            else {
+                PyErr_SetFromWindowsErr(0);
+            }
             goto error;
-        for (i = 0; i < nArgs; i++) {
-            py_unicode = PyUnicode_FromWideChar(
-                szArglist[i], wcslen(szArglist[i]));
-            if (py_unicode == NULL)
-                goto error;
-            if (PyList_Append(py_retlist, py_unicode))
-                goto error;
-            Py_XDECREF(py_unicode);
         }
+
+        // allocate memory to hold the command line
+        commandLineContents = (WCHAR *)malloc(commandLine.Length + 1);
+        if (commandLineContents == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
+
+        // read the command line
+        if (!ReadProcessMemory(hProcess, commandLine.Buffer,
+                               commandLineContents, commandLine.Length, NULL))
+        {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+
+        // Null-terminate the string to prevent wcslen from returning
+        // incorrect length the length specifier is in characters, but
+        // commandLine.Length is in bytes.
+        commandLineContents[(commandLine.Length / sizeof(WCHAR))] = '\0';
+
+        // attempt to parse the command line using Win32 API, fall back
+        // on string cmdline version otherwise
+        szArglist = CommandLineToArgvW(commandLineContents, &nArgs);
+        if (szArglist == NULL) {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+        else {
+            // arglist parsed as array of UNICODE_STRING, so convert each to
+            // Python string object and add to arg list
+            py_retlist = Py_BuildValue("[]");
+            if (py_retlist == NULL)
+                goto error;
+            for (i = 0; i < nArgs; i++) {
+                py_unicode = PyUnicode_FromWideChar(
+                    szArglist[i], wcslen(szArglist[i]));
+                if (py_unicode == NULL)
+                    goto error;
+                if (PyList_Append(py_retlist, py_unicode))
+                    goto error;
+                Py_XDECREF(py_unicode);
+            }
+        }
+
+        if (szArglist != NULL)
+            LocalFree(szArglist);
+        free(commandLineContents);
+
+        *pcmdline = py_retlist;
     }
 
-    if (szArglist != NULL)
-        LocalFree(szArglist);
-    free(commandLineContents);
     CloseHandle(hProcess);
-    return py_retlist;
+
+    return 0;
 
 error:
     Py_XDECREF(py_unicode);
@@ -312,9 +320,19 @@ error:
         free(commandLineContents);
     if (szArglist != NULL)
         LocalFree(szArglist);
-    return NULL;
+    return -1;
 }
 
+/*
+ * returns a Python list representing the arguments for the process
+ * with given pid or NULL on error.
+ */
+PyObject *
+psutil_get_cmdline(long pid) {
+    PyObject *ret = NULL;
+    psutil_get_parameters(pid, &ret);
+    return ret;
+}
 
 PyObject *psutil_get_cwd(long pid) {
     HANDLE processHandle = NULL;
