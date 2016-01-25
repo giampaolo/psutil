@@ -936,108 +936,18 @@ error:
 static PyObject *
 psutil_proc_cwd(PyObject *self, PyObject *args) {
     long pid;
-    HANDLE processHandle = NULL;
-    PVOID pebAddress;
-    PVOID rtlUserProcParamsAddress;
-    UNICODE_STRING currentDirectory;
-    WCHAR *currentDirectoryContent = NULL;
-    PyObject *py_unicode = NULL;
+    int pid_return;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    processHandle = psutil_handle_from_pid(pid);
-    if (processHandle == NULL)
+    pid_return = psutil_pid_is_running(pid);
+    if (pid_return == 0)
+        return NoSuchProcess();
+    if (pid_return == -1)
         return NULL;
 
-    pebAddress = psutil_get_peb_address(processHandle);
-
-    // get the address of ProcessParameters
-#ifdef _WIN64
-    if (!ReadProcessMemory(processHandle, (PCHAR)pebAddress + 32,
-                           &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
-#else
-    if (!ReadProcessMemory(processHandle, (PCHAR)pebAddress + 0x10,
-                           &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
-#endif
-    {
-        CloseHandle(processHandle);
-        if (GetLastError() == ERROR_PARTIAL_COPY) {
-            // this occurs quite often with system processes
-            return AccessDenied();
-        }
-        else {
-            return PyErr_SetFromWindowsErr(0);
-        }
-    }
-
-    // Read the currentDirectory UNICODE_STRING structure.
-    // 0x24 refers to "CurrentDirectoryPath" of RTL_USER_PROCESS_PARAMETERS
-    // structure, see:
-    // http://wj32.wordpress.com/2009/01/24/
-    //     howto-get-the-command-line-of-processes/
-#ifdef _WIN64
-    if (!ReadProcessMemory(processHandle, (PCHAR)rtlUserProcParamsAddress + 56,
-                           &currentDirectory, sizeof(currentDirectory), NULL))
-#else
-    if (!ReadProcessMemory(processHandle,
-                           (PCHAR)rtlUserProcParamsAddress + 0x24,
-                           &currentDirectory, sizeof(currentDirectory), NULL))
-#endif
-    {
-        CloseHandle(processHandle);
-        if (GetLastError() == ERROR_PARTIAL_COPY) {
-            // this occurs quite often with system processes
-            return AccessDenied();
-        }
-        else {
-            return PyErr_SetFromWindowsErr(0);
-        }
-    }
-
-    // allocate memory to hold cwd
-    currentDirectoryContent = (WCHAR *)malloc(currentDirectory.Length + 1);
-    if (currentDirectoryContent == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    // read cwd
-    if (!ReadProcessMemory(processHandle, currentDirectory.Buffer,
-                           currentDirectoryContent, currentDirectory.Length,
-                           NULL))
-    {
-        if (GetLastError() == ERROR_PARTIAL_COPY) {
-            // this occurs quite often with system processes
-            AccessDenied();
-        }
-        else {
-            PyErr_SetFromWindowsErr(0);
-        }
-        goto error;
-    }
-
-    // null-terminate the string to prevent wcslen from returning
-    // incorrect length the length specifier is in characters, but
-    // currentDirectory.Length is in bytes
-    currentDirectoryContent[(currentDirectory.Length / sizeof(WCHAR))] = '\0';
-
-    // convert wchar array to a Python unicode string
-    py_unicode = PyUnicode_FromWideChar(
-        currentDirectoryContent, wcslen(currentDirectoryContent));
-    if (py_unicode == NULL)
-        goto error;
-    CloseHandle(processHandle);
-    free(currentDirectoryContent);
-    return py_unicode;
-
-error:
-    Py_XDECREF(py_unicode);
-    if (currentDirectoryContent != NULL)
-        free(currentDirectoryContent);
-    if (processHandle != NULL)
-        CloseHandle(processHandle);
-    return NULL;
+    return psutil_get_cwd(pid);
 }
 
 
