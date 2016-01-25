@@ -217,7 +217,7 @@ svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
               'active', 'inactive', 'buffers', 'cached'])
 
-pextmem = namedtuple('pextmem', 'rss vms shared text lib data dirty')
+pextmem = namedtuple('pextmem', 'rss vms shared text lib data dirty uss')
 
 pmmap_grouped = namedtuple(
     'pmmap_grouped', ['path', 'rss', 'size', 'pss', 'shared_clean',
@@ -987,9 +987,19 @@ class Process(object):
         with open_binary("%s/%s/statm" % (self._procfs_path, self.pid)) as f:
             vms, rss, shared, text, lib, data, dirty = \
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
-        return pextmem(rss, vms, shared, text, lib, data, dirty)
+        uss = self.calc_uss()
+        return pextmem(rss, vms, shared, text, lib, data, dirty, uss)
 
     if os.path.exists('/proc/%s/smaps' % os.getpid()):
+
+        def calc_uss(self):
+            """Calculates the USS of the process by inspecting the mapped
+            memory regions.
+            """
+            with open_text("%s/%s/smaps" % (self._procfs_path, self.pid),
+                           buffering=BIGGER_FILE_BUFFERING) as f:
+                private = [x.split()[1] for x in f if x.startswith('Private')]
+                return sum(map(int, private)) * 1024
 
         @wrap_exceptions
         def memory_maps(self):
@@ -1051,6 +1061,9 @@ class Process(object):
             return ls
 
     else:
+        def calc_uss(self):
+            return 0
+
         def memory_maps(self):
             msg = "couldn't find /proc/%s/smaps; kernel < 2.6.14 or "  \
                   "CONFIG_MMU kernel configuration option is not enabled" \
