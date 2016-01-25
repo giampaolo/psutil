@@ -238,6 +238,124 @@ error:
 }
 
 
+// return process environment as a python string
+PyObject *
+psutil_get_environ(long pid) {
+    int mib[3];
+    int nargs;
+    char *procargs = NULL;
+    char *procenv = NULL;
+    char *arg_ptr;
+    char *arg_end;
+    char *env_start;
+    size_t argmax;
+    PyObject *py_ret = NULL;
+
+    // special case for PID 0 (kernel_task) where cmdline cannot be fetched
+    if (pid == 0)
+        goto empty;
+
+    // read argmax and allocate memory for argument space.
+    argmax = psutil_get_argmax();
+    if (! argmax) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    procargs = (char *)malloc(argmax);
+    if (NULL == procargs) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    // read argument space
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_PROCARGS2;
+    mib[2] = pid;
+    if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
+        if (EINVAL == errno) {
+            // EINVAL == access denied OR nonexistent PID
+            if (psutil_pid_exists(pid))
+                AccessDenied();
+            else
+                NoSuchProcess();
+        }
+        goto error;
+    }
+
+    arg_end = &procargs[argmax];
+    // copy the number of arguments to nargs
+    memcpy(&nargs, procargs, sizeof(nargs));
+
+    // skip executable path
+    arg_ptr = procargs + sizeof(nargs);
+    arg_ptr = memchr(arg_ptr, '\0', arg_end - arg_ptr);
+
+    if (arg_ptr == NULL || arg_ptr == arg_end)
+        goto empty;
+
+    // skip ahead to the first argument
+    for (; arg_ptr < arg_end; arg_ptr++) {
+        if (*arg_ptr != '\0')
+            break;
+    }
+
+    // iterate through arguments
+    while (arg_ptr < arg_end && nargs > 0) {
+        if (*arg_ptr++ == '\0')
+            nargs--;
+    }
+
+    // build an environment variable block
+    env_start = arg_ptr;
+
+    procenv = calloc(1, arg_end - arg_ptr);
+
+    if (procenv == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    while (*arg_ptr != '\0' && arg_ptr < arg_end) {
+        char *s = memchr(arg_ptr + 1, '\0', arg_end - arg_ptr);
+
+        if (s == NULL)
+            break;
+
+        memcpy(procenv + (arg_ptr - env_start), arg_ptr, s - arg_ptr);
+
+        arg_ptr = s + 1;
+    }
+
+#if PY_MAJOR_VERSION >= 3
+    py_ret = PyUnicode_FromStringAndSize(procenv, arg_ptr - env_start + 1);
+#else
+    py_ret = PyString_FromStringAndSize(procenv, arg_ptr - env_start + 1);
+#endif
+
+    if (!py_ret)
+        goto error;
+
+    free(procargs);
+    free(procenv);
+
+    return py_ret;
+
+empty:
+    if (procargs != NULL)
+        free(procargs);
+    return Py_BuildValue("s", "");
+
+error:
+    Py_XDECREF(py_ret);
+    if (procargs != NULL)
+        free(procargs);
+    if (procenv != NULL)
+        free(procargs);
+    return NULL;
+}
+
+
 int
 psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
     int mib[4];

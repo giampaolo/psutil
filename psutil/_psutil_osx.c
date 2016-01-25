@@ -215,6 +215,23 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
 
 /*
+ * Return process environment as a Python string.
+ */
+static PyObject *
+psutil_proc_environ(PyObject *self, PyObject *args) {
+    long pid;
+    PyObject *py_retdict = NULL;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+    // get the environment block, defined in arch/osx/process_info.c
+    py_retdict = psutil_get_environ(pid);
+    return py_retdict;
+}
+
+
+/*
  * Return process parent pid from kinfo_proc as a Python integer.
  */
 static PyObject *
@@ -1664,6 +1681,8 @@ PsutilMethods[] = {
      "Return process name"},
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
      "Return process cmdline as a list of cmdline arguments"},
+    {"proc_environ", psutil_proc_environ, METH_VARARGS,
+     "Return process environment data"},
     {"proc_exe", psutil_proc_exe, METH_VARARGS,
      "Return path of the process executable"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,

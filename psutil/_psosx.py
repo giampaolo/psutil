@@ -15,6 +15,7 @@ from . import _psutil_osx as cext
 from . import _psutil_posix as cext_posix
 from ._common import conn_tmap
 from ._common import isfile_strict
+from ._common import parse_environ_block
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
@@ -236,6 +237,12 @@ class Process(object):
         if not pid_exists(self.pid):
             raise NoSuchProcess(self.pid, self._name)
         return cext.proc_cmdline(self.pid)
+
+    @wrap_exceptions
+    def environ(self):
+        if not pid_exists(self.pid):
+            raise NoSuchProcess(self.pid, self._name)
+        return parse_environ_block(cext.proc_environ(self.pid))
 
     @wrap_exceptions
     def ppid(self):

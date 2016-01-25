@@ -2505,7 +2505,19 @@ class TestProcess(unittest.TestCase):
     def test_environ(self):
         self.maxDiff = None
         p = psutil.Process()
-        self.assertEqual(p.environ(), os.environ)
+        d = p.environ()
+        d2 = os.environ.copy()
+
+        if OSX:
+            for key in (
+                "__CF_USER_TEXT_ENCODING",
+                "VERSIONER_PYTHON_PREFER_32_BIT",
+                "VERSIONER_PYTHON_VERSION",
+            ):
+                d.pop(key, None)
+                d2.pop(key, None)
+
+        self.assertEqual(d, d2)
 
     @unittest.skipUnless(hasattr(psutil.Process, "environ"),
                          "environ not available")
