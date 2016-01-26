@@ -96,10 +96,6 @@
     #include <utmpx.h>
     #include <sys/vnode.h>  // for VREG
     #include <sys/sched.h>  // for CPUSTATES & CP_*
-    #include <machine/vmparam.h>  // for PAGE_SHIFT
-#define _KERNEL
-    #include <uvm/uvm_extern.h>
-#undef _KERNEL
 #endif
 
 
@@ -454,15 +450,12 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
 }
 
 
-#if defined(__OpenBSD__) || defined(__NetBSD__)
-    #define ptoa(x) ((paddr_t)(x) << PAGE_SHIFT)
-#endif
-
 /*
  * Return extended memory info for a process as a Python tuple.
  */
 static PyObject *
 psutil_proc_memory_info(PyObject *self, PyObject *args) {
+    long pagesize = sysconf(_SC_PAGESIZE);
     long pid;
     kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -473,26 +466,27 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
     return Py_BuildValue(
         "(lllll)",
 #ifdef __FreeBSD__
-        (long) ptoa(kp.ki_rssize),  // rss
+        (long) kp.ki_rssize * pagesize,  // rss
         (long) kp.ki_size,  // vms
-        (long) ptoa(kp.ki_tsize),  // text
-        (long) ptoa(kp.ki_dsize),  // data
-        (long) ptoa(kp.ki_ssize)  // stack
+        (long) kp.ki_tsize * pagesize,  // text
+        (long) kp.ki_dsize * pagesize,  // data
+        (long) kp.ki_ssize * pagesize  // stack
 #else
-        (long) ptoa(kp.p_vm_rssize),    // rss
+        (long) kp.p_vm_rssize * pagesize,    // rss
     #ifdef __OpenBSD__
         // VMS, this is how ps determines it on OpenBSD:
         // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n461
-        (long) ptoa(kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize),  // vms
+        // vms
+        (long) (kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize) * pagesize,
     #elif __NetBSD__
         // VMS, this is how top determines it on NetBSD:
         // ftp://ftp.iij.ad.jp/pub/NetBSD/NetBSD-release-6/src/external/bsd/
         //     top/dist/machine/m_netbsd.c
-        (long) ptoa(kp.p_vm_msize),  // vms
+        (long) kp.p_vm_msize * pagesize,  // vms
     #endif
-        (long) ptoa(kp.p_vm_tsize),  // text
-        (long) ptoa(kp.p_vm_dsize),  // data
-        (long) ptoa(kp.p_vm_ssize)  // stack
+        (long) kp.p_vm_tsize * pagesize,  // text
+        (long) kp.p_vm_dsize * pagesize,  // data
+        (long) kp.p_vm_ssize * pagesize  // stack
 #endif
     );
 }
