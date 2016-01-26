@@ -203,13 +203,14 @@ handlep_is_running(HANDLE hProcess) {
     return 0;
 }
 
+/* Get one or more parameters of the process with the given pid:
 
-/*
- * returns a Python list representing the arguments for the process
- * with given pid or NULL on error.
- */
-PyObject *
-psutil_get_cmdline(long pid) {
+   pcmdline: the command line as a Python list
+   pcwd: the current working directory as a Python string
+
+   On success 0 is returned.  On error the given output parameters are not
+   touched, -1 is returned, and an appropriate Python exception is set. */
+static int psutil_get_parameters(long pid, PyObject **pcmdline, PyObject **pcwd) {
     int nArgs, i;
     LPWSTR *szArglist = NULL;
     HANDLE hProcess = NULL;
@@ -217,12 +218,14 @@ psutil_get_cmdline(long pid) {
     PVOID rtlUserProcParamsAddress;
     UNICODE_STRING commandLine;
     WCHAR *commandLineContents = NULL;
+    UNICODE_STRING currentDirectory;
+    WCHAR *currentDirectoryContent = NULL;
     PyObject *py_unicode = NULL;
     PyObject *py_retlist = NULL;
 
     hProcess = psutil_handle_from_pid(pid);
     if (hProcess == NULL)
-        return NULL;
+        return -1;
     pebAddress = psutil_get_peb_address(hProcess);
 
     // get the address of ProcessParameters
@@ -234,74 +237,154 @@ psutil_get_cmdline(long pid) {
                            &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
 #endif
     {
-        ////printf("Could not read the address of ProcessParameters!\n");
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
-
-    // read the CommandLine UNICODE_STRING structure
-#ifdef _WIN64
-    if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 112,
-                           &commandLine, sizeof(commandLine), NULL))
-#else
-    if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 0x40,
-                           &commandLine, sizeof(commandLine), NULL))
-#endif
-    {
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
-
-
-    // allocate memory to hold the command line
-    commandLineContents = (WCHAR *)malloc(commandLine.Length + 1);
-    if (commandLineContents == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
-
-    // read the command line
-    if (!ReadProcessMemory(hProcess, commandLine.Buffer,
-                           commandLineContents, commandLine.Length, NULL))
-    {
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
-
-    // Null-terminate the string to prevent wcslen from returning
-    // incorrect length the length specifier is in characters, but
-    // commandLine.Length is in bytes.
-    commandLineContents[(commandLine.Length / sizeof(WCHAR))] = '\0';
-
-    // attempt to parse the command line using Win32 API, fall back
-    // on string cmdline version otherwise
-    szArglist = CommandLineToArgvW(commandLineContents, &nArgs);
-    if (szArglist == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        goto error;
-    }
-    else {
-        // arglist parsed as array of UNICODE_STRING, so convert each to
-        // Python string object and add to arg list
-        py_retlist = Py_BuildValue("[]");
-        if (py_retlist == NULL)
-            goto error;
-        for (i = 0; i < nArgs; i++) {
-            py_unicode = PyUnicode_FromWideChar(
-                szArglist[i], wcslen(szArglist[i]));
-            if (py_unicode == NULL)
-                goto error;
-            if (PyList_Append(py_retlist, py_unicode))
-                goto error;
-            Py_XDECREF(py_unicode);
+        if (GetLastError() == ERROR_PARTIAL_COPY) {
+            // this occurs quite often with system processes
+            AccessDenied();
         }
+        else {
+            PyErr_SetFromWindowsErr(0);
+        }
+        goto error;
     }
 
-    if (szArglist != NULL)
-        LocalFree(szArglist);
-    free(commandLineContents);
+    if (pcmdline != NULL) {
+        // read the CommandLine UNICODE_STRING structure
+#ifdef _WIN64
+        if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 112,
+                               &commandLine, sizeof(commandLine), NULL))
+#else
+        if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 0x40,
+                               &commandLine, sizeof(commandLine), NULL))
+#endif
+        {
+            if (GetLastError() == ERROR_PARTIAL_COPY) {
+                // this occurs quite often with system processes
+                AccessDenied();
+            }
+            else {
+                PyErr_SetFromWindowsErr(0);
+            }
+            goto error;
+        }
+
+        // allocate memory to hold the command line
+        commandLineContents = (WCHAR *)malloc(commandLine.Length + 1);
+        if (commandLineContents == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
+
+        // read the command line
+        if (!ReadProcessMemory(hProcess, commandLine.Buffer,
+                               commandLineContents, commandLine.Length, NULL))
+        {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+
+        // Null-terminate the string to prevent wcslen from returning
+        // incorrect length the length specifier is in characters, but
+        // commandLine.Length is in bytes.
+        commandLineContents[(commandLine.Length / sizeof(WCHAR))] = '\0';
+
+        // attempt to parse the command line using Win32 API, fall back
+        // on string cmdline version otherwise
+        szArglist = CommandLineToArgvW(commandLineContents, &nArgs);
+        if (szArglist == NULL) {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+        else {
+            // arglist parsed as array of UNICODE_STRING, so convert each to
+            // Python string object and add to arg list
+            py_retlist = Py_BuildValue("[]");
+            if (py_retlist == NULL)
+                goto error;
+            for (i = 0; i < nArgs; i++) {
+                py_unicode = PyUnicode_FromWideChar(
+                    szArglist[i], wcslen(szArglist[i]));
+                if (py_unicode == NULL)
+                    goto error;
+                if (PyList_Append(py_retlist, py_unicode))
+                    goto error;
+                Py_CLEAR(py_unicode);
+            }
+        }
+
+        if (szArglist != NULL)
+            LocalFree(szArglist);
+        free(commandLineContents);
+
+        *pcmdline = py_retlist;
+        py_retlist = NULL;
+    }
+
+    if (pcwd != NULL) {
+        // Read the currentDirectory UNICODE_STRING structure.
+        // 0x24 refers to "CurrentDirectoryPath" of RTL_USER_PROCESS_PARAMETERS
+        // structure, see:
+        // http://wj32.wordpress.com/2009/01/24/
+        //     howto-get-the-command-line-of-processes/
+#ifdef _WIN64
+        if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 56,
+                               &currentDirectory, sizeof(currentDirectory), NULL))
+#else
+        if (!ReadProcessMemory(hProcess,
+                               (PCHAR)rtlUserProcParamsAddress + 0x24,
+                               &currentDirectory, sizeof(currentDirectory), NULL))
+#endif
+        {
+            if (GetLastError() == ERROR_PARTIAL_COPY) {
+                // this occurs quite often with system processes
+                AccessDenied();
+            }
+            else {
+                PyErr_SetFromWindowsErr(0);
+            }
+            goto error;
+        }
+
+        // allocate memory to hold cwd
+        currentDirectoryContent = (WCHAR *)malloc(currentDirectory.Length + 1);
+        if (currentDirectoryContent == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
+
+        // read cwd
+        if (!ReadProcessMemory(hProcess, currentDirectory.Buffer,
+                               currentDirectoryContent, currentDirectory.Length,
+                               NULL))
+        {
+            if (GetLastError() == ERROR_PARTIAL_COPY) {
+                // this occurs quite often with system processes
+                AccessDenied();
+            }
+            else {
+                PyErr_SetFromWindowsErr(0);
+            }
+            goto error;
+        }
+
+        // null-terminate the string to prevent wcslen from returning
+        // incorrect length the length specifier is in characters, but
+        // currentDirectory.Length is in bytes
+        currentDirectoryContent[(currentDirectory.Length / sizeof(WCHAR))] = '\0';
+
+        // convert wchar array to a Python unicode string
+        py_unicode = PyUnicode_FromWideChar(
+            currentDirectoryContent, wcslen(currentDirectoryContent));
+        if (py_unicode == NULL)
+            goto error;
+        CloseHandle(hProcess);
+        free(currentDirectoryContent);
+        *pcwd = py_unicode;
+        py_unicode = NULL;
+    }
+
     CloseHandle(hProcess);
-    return py_retlist;
+
+    return 0;
 
 error:
     Py_XDECREF(py_unicode);
@@ -312,7 +395,26 @@ error:
         free(commandLineContents);
     if (szArglist != NULL)
         LocalFree(szArglist);
-    return NULL;
+    if (currentDirectoryContent != NULL)
+        free(currentDirectoryContent);
+    return -1;
+}
+
+/*
+ * returns a Python list representing the arguments for the process
+ * with given pid or NULL on error.
+ */
+PyObject *
+psutil_get_cmdline(long pid) {
+    PyObject *ret = NULL;
+    psutil_get_parameters(pid, &ret, NULL);
+    return ret;
+}
+
+PyObject *psutil_get_cwd(long pid) {
+    PyObject *ret = NULL;
+    psutil_get_parameters(pid, NULL, &ret);
+    return ret;
 }
 
 
