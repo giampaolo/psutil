@@ -311,6 +311,17 @@ class WindowsSpecificTestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess,
                           p.send_signal, signal.CTRL_BREAK_EVENT)
 
+    @unittest.skipIf(wmi is None, "wmi module is not installed")
+    def test_net_if_stats(self):
+        ps_names = set(cext.net_if_stats())
+        wmi_adapters = wmi.WMI().Win32_NetworkAdapter()
+        wmi_names = set()
+        for wmi_adapter in wmi_adapters:
+            wmi_names.add(wmi_adapter.Name)
+            wmi_names.add(wmi_adapter.NetConnectionID)
+        self.assertTrue(ps_names & wmi_names,
+                        "no common entries in %s, %s" % (ps_names, wmi_names))
+
 
 @unittest.skipUnless(WINDOWS, "not a Windows system")
 class TestDualProcessImplementation(unittest.TestCase):
