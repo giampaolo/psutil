@@ -13,6 +13,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   name(), cwd(), exe(), cmdline() and open_files() methods resulting in
   UnicodeDecodeError exceptions. 'surrogateescape' error handler is now
   used as a workaround for replacing the corrupted data.
+- #741: [OpenBSD] fix compilation on mips64.
 
 
 3.4.2 - 2016-01-20
