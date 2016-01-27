@@ -32,25 +32,26 @@
 int
 psutil_pid_exists(long pid) {
     int ret;
+
     if (pid < 0)
         return 0;
-    ret = kill(pid , 0);
+    ret = kill(pid, 0);
     if (ret == 0)
         return 1;
     else {
         return 0;
         /*
-        // This is how it is handled on other POSIX systems but it causes
-        // test_halfway_terminated test to fail with AccessDenied.
-        if (ret == ESRCH)
+           // This is how it is handled on other POSIX systems but it causes
+           // test_halfway_terminated test to fail with AccessDenied.
+           if (ret == ESRCH)
             return 0;
-        else if (ret == EPERM)
+           else if (ret == EPERM)
             return 1;
-        else {
+           else {
             PyErr_SetFromErrno(PyExc_OSError);
             return -1;
-        }
-        */
+           }
+         */
     }
 }
 
@@ -67,12 +68,12 @@ int
 psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     // Declaring mib as const requires use of a cast since the
     // sysctl prototype doesn't include the const modifier.
-    static const int mib3[3] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
-    size_t           size, size2;
-    void            *ptr;
-    int              err, lim = 8;  // some limit
+    static const int mib3[3] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL};
+    size_t size, size2;
+    void *ptr;
+    int err, lim = 8;  // some limit
 
-    assert( procList != NULL);
+    assert(procList != NULL);
     assert(*procList == NULL);
     assert(procCount != NULL);
 
@@ -128,7 +129,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
 int
 psutil_get_argmax() {
     int argmax;
-    int mib[] = { CTL_KERN, KERN_ARGMAX };
+    int mib[] = {CTL_KERN, KERN_ARGMAX};
     size_t size = sizeof(argmax);
 
     if (sysctl(mib, 2, &argmax, &size, NULL, 0) == 0)
@@ -158,7 +159,7 @@ psutil_get_cmdline(long pid) {
 
     // read argmax and allocate memory for argument space.
     argmax = psutil_get_argmax();
-    if (! argmax) {
+    if (!argmax) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
@@ -257,7 +258,7 @@ psutil_get_environ(long pid) {
 
     // read argmax and allocate memory for argument space.
     argmax = psutil_get_argmax();
-    if (! argmax) {
+    if (!argmax) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
@@ -360,6 +361,7 @@ int
 psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
     int mib[4];
     size_t len;
+
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
@@ -390,8 +392,9 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 int
 psutil_proc_pidinfo(long pid, int flavor, void *pti, int size) {
     int ret = proc_pidinfo((int)pid, flavor, 0, pti, size);
+
     if (ret == 0) {
-        if (! psutil_pid_exists(pid)) {
+        if (!psutil_pid_exists(pid)) {
             NoSuchProcess();
             return 0;
         }

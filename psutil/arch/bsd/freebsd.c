@@ -29,11 +29,12 @@
 #include "../../_psutil_common.h"
 
 
-#define PSUTIL_TV2DOUBLE(t)    ((t).tv_sec + (t).tv_usec / 1000000.0)
-#define PSUTIL_BT2MSEC(bt) (bt.sec * 1000 + (((uint64_t) 1000000000 * (uint32_t) \
-        (bt.frac >> 32) ) >> 32 ) / 1000000)
+#define PSUTIL_TV2DOUBLE(t) ((t).tv_sec + (t).tv_usec / 1000000.0)
+#define PSUTIL_BT2MSEC(bt)                               \
+    (bt.sec * 1000 + (((uint64_t)1000000000 * (uint32_t) \
+                       (bt.frac >> 32)) >> 32) / 1000000)
 #ifndef _PATH_DEVNULL
-#define _PATH_DEVNULL "/dev/null"
+    #define _PATH_DEVNULL "/dev/null"
 #endif
 
 
@@ -47,6 +48,7 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
     // Fills a kinfo_proc struct based on process pid.
     int mib[4];
     size_t size;
+
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
@@ -71,6 +73,7 @@ int
 psutil_raise_ad_or_nsp(long pid) {
     // Set exception to AccessDenied if pid exists else NoSuchProcess.
     int ret;
+
     ret = psutil_pid_exists(pid);
     if (ret == 0)
         NoSuchProcess();
@@ -81,9 +84,11 @@ psutil_raise_ad_or_nsp(long pid) {
 
 
 // remove spaces from string
-static void psutil_remove_spaces(char *str) {
+static void
+psutil_remove_spaces(char *str) {
     char *p1 = str;
     char *p2 = str;
+
     do
         while (*p2 == ' ')
             p2++;
@@ -106,12 +111,12 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
     int err;
     struct kinfo_proc *result;
     int done;
-    static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0 };
+    static const int name[] = {CTL_KERN, KERN_PROC, KERN_PROC_PROC, 0};
     // Declaring name as const requires us to cast it when passing it to
     // sysctl because the prototype doesn't include the const modifier.
-    size_t              length;
+    size_t length;
 
-    assert( procList != NULL);
+    assert(procList != NULL);
     assert(*procList == NULL);
     assert(procCount != NULL);
 
@@ -150,7 +155,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
         // Call sysctl again with the new buffer.  If we get an ENOMEM
         // error, toss away our buffer and start again.
         if (err == 0) {
-            err = sysctl((int *) name, (sizeof(name) / sizeof(*name)) - 1,
+            err = sysctl((int *)name, (sizeof(name) / sizeof(*name)) - 1,
                          result, &length, NULL, 0);
             if (err == -1)
                 err = errno;
@@ -164,7 +169,7 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
                 err = 0;
             }
         }
-    } while (err == 0 && ! done);
+    } while (err == 0 && !done);
 
     // Clean up and establish post conditions.
     if (err != 0 && result != NULL) {
@@ -194,7 +199,8 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
  *      1 for insufficient privileges.
  */
 static char
-*psutil_get_cmd_args(long pid, size_t *argsize) {
+*
+psutil_get_cmd_args(long pid, size_t *argsize) {
     int mib[4], argmax;
     size_t size = sizeof(argmax);
     char *procargs = NULL;
@@ -225,7 +231,7 @@ static char
     size = argmax;
     if (sysctl(mib, 4, procargs, &size, NULL, 0) == -1) {
         free(procargs);
-        return NULL;       // Insufficient privileges
+        return NULL;  // Insufficient privileges
     }
 
     // return string and set the length of arguments
@@ -289,9 +295,10 @@ error:
 int
 psutil_pid_exists(long pid) {
     int ret;
+
     if (pid < 0)
         return 0;
-    ret = kill(pid , 0);
+    ret = kill(pid, 0);
     if (ret == 0)
         return 1;
     else {
@@ -305,7 +312,6 @@ psutil_pid_exists(long pid) {
         }
     }
 }
-
 
 
 /*
@@ -323,7 +329,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     size_t size;
     const char *encoding_errs;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
     mib[0] = CTL_KERN;
@@ -352,7 +358,6 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 #else
     return Py_BuildValue("s", pathname);
 #endif
-
 }
 
 
@@ -361,7 +366,8 @@ psutil_proc_num_threads(PyObject *self, PyObject *args) {
     // Return number of threads used by process as a Python integer.
     long pid;
     struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+
+    if (!PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
@@ -388,7 +394,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
     // we need to re-query for thread information, so don't use *kipp
@@ -484,12 +490,13 @@ error:
  */
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    unsigned long  total;
-    unsigned int   active, inactive, wired, cached, free;
-    size_t         size = sizeof(total);
+    unsigned long total;
+    unsigned int active, inactive, wired, cached, free;
+    size_t size = sizeof(total);
     struct vmtotal vm;
-    int            mib[] = {CTL_VM, VM_METER};
-    long           pagesize = getpagesize();
+    int mib[] = {CTL_VM, VM_METER};
+    long pagesize = getpagesize();
+
 #if __FreeBSD_version > 702101
     long buffers;
 #else
@@ -517,16 +524,18 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     if (sysctl(mib, 2, &vm, &size, NULL, 0) != 0)
         goto error;
 
-    return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) total,
-        (unsigned long long) free     * pagesize,
-        (unsigned long long) active   * pagesize,
-        (unsigned long long) inactive * pagesize,
-        (unsigned long long) wired    * pagesize,
-        (unsigned long long) cached   * pagesize,
-        (unsigned long long) buffers,
-        (unsigned long long) (vm.t_vmshr + vm.t_rmshr) * pagesize  // shared
-    );
+    return Py_BuildValue(
+               "KKKKKKKK",
+               (unsigned long long)total,
+               (unsigned long long)free * pagesize,
+               (unsigned long long)active * pagesize,
+               (unsigned long long)inactive * pagesize,
+               (unsigned long long)wired * pagesize,
+               (unsigned long long)cached * pagesize,
+               (unsigned long long)buffers,
+               (unsigned long long)(vm.t_vmshr +
+                                    vm.t_rmshr) * pagesize         // shared
+               );
 
 error:
     PyErr_SetFromErrno(PyExc_OSError);
@@ -566,11 +575,11 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         goto sbn_error;
 
     return Py_BuildValue("(iiiII)",
-                         kvmsw[0].ksw_total,                     // total
-                         kvmsw[0].ksw_used,                      // used
-                         kvmsw[0].ksw_total - kvmsw[0].ksw_used, // free
-                         swapin + swapout,                       // swap in
-                         nodein + nodeout);                      // swap out
+                         kvmsw[0].ksw_total,  // total
+                         kvmsw[0].ksw_used,  // used
+                         kvmsw[0].ksw_total - kvmsw[0].ksw_used,  // free
+                         swapin + swapout,  // swap in
+                         nodein + nodeout);  // swap out
 
 sbn_error:
     PyErr_SetFromErrno(PyExc_OSError);
@@ -590,7 +599,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 
     int i, cnt;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         goto error;
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         goto error;
@@ -604,11 +613,11 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     for (i = 0; i < cnt; i++) {
         kif = &freep[i];
         if (kif->kf_fd == KF_FD_TYPE_CWD) {
-#if PY_MAJOR_VERSION >= 3
+    #if PY_MAJOR_VERSION >= 3
             py_path = PyUnicode_DecodeFSDefault(kif->kf_path);
-#else
+    #else
             py_path = Py_BuildValue("s", kif->kf_path);
-#endif
+    #endif
             if (!py_path)
                 goto error;
             break;
@@ -630,7 +639,9 @@ error:
         free(freep);
     return NULL;
 }
-#endif
+
+
+#endif /* if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 */
 
 
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 800000
@@ -642,7 +653,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     struct kinfo_file *freep;
     struct kinfo_proc kipp;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         return NULL;
@@ -656,7 +667,9 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
     return Py_BuildValue("i", cnt);
 }
-#endif
+
+
+#endif /* if defined(__FreeBSD_version) && __FreeBSD_version >= 800000 */
 
 
 PyObject *
@@ -760,13 +773,15 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
         py_disk_info = Py_BuildValue(
             "(KKKKLL)",
-            current.operations[DEVSTAT_READ],   // no reads
+            current.operations[DEVSTAT_READ],  // no reads
             current.operations[DEVSTAT_WRITE],  // no writes
-            current.bytes[DEVSTAT_READ],        // bytes read
-            current.bytes[DEVSTAT_WRITE],       // bytes written
-            (long long) PSUTIL_BT2MSEC(current.duration[DEVSTAT_READ]),  // r time
-            (long long) PSUTIL_BT2MSEC(current.duration[DEVSTAT_WRITE])  // w time
-        );      // finished transactions
+            current.bytes[DEVSTAT_READ],  // bytes read
+            current.bytes[DEVSTAT_WRITE],  // bytes written
+            (long long)PSUTIL_BT2MSEC(current.duration[DEVSTAT_READ]),  // r
+                                                                        // time
+            (long long)PSUTIL_BT2MSEC(current.duration[DEVSTAT_WRITE])  // w
+                                                                        // time
+            );  // finished transactions
         if (!py_disk_info)
             goto error;
         if (PyDict_SetItemString(py_retdict, disk_name, py_disk_info))
@@ -801,13 +816,14 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     struct kinfo_proc kp;
     struct kinfo_vmentry *freep = NULL;
     struct kinfo_vmentry *kve;
+
     ptrwidth = 2 * sizeof(void *);
     PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         goto error;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         goto error;
@@ -871,13 +887,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         }
 
         py_tuple = Py_BuildValue("sssiiii",
-            addr,                       // "start-end" address
-            perms,                      // "rwx" permissions
-            path,                       // path
-            kve->kve_resident,          // rss
-            kve->kve_private_resident,  // private
-            kve->kve_ref_count,         // ref count
-            kve->kve_shadow_count);     // shadow count
+                                 addr,  // "start-end" address
+                                 perms, // "rwx" permissions
+                                 path,  // path
+                                 kve->kve_resident, // rss
+                                 kve->kve_private_resident, // private
+                                 kve->kve_ref_count, // ref count
+                                 kve->kve_shadow_count); // shadow count
         if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
@@ -896,8 +912,8 @@ error:
 }
 
 
-PyObject*
-psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args) {
+PyObject *
+psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     // Get process CPU affinity.
     // Reference:
     // http://sources.freebsd.org/RELENG_9/src/usr.bin/cpuset/cpuset.c
@@ -905,8 +921,8 @@ psutil_proc_cpu_affinity_get(PyObject* self, PyObject* args) {
     int ret;
     int i;
     cpuset_t mask;
-    PyObject* py_retlist;
-    PyObject* py_cpu_num;
+    PyObject *py_retlist;
+    PyObject *py_cpu_num;
 
     if (!PyArg_ParseTuple(args, "i", &pid))
         return NULL;

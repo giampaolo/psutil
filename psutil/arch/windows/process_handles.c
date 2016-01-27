@@ -67,16 +67,16 @@ psutil_get_open_files_init(BOOL threaded) {
 
 PyObject *
 psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
-    NTSTATUS                            status;
-    PSYSTEM_HANDLE_INFORMATION_EX       pHandleInfo = NULL;
-    DWORD                               dwInfoSize = 0x10000;
-    DWORD                               dwRet = 0;
-    PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX  hHandle = NULL;
-    DWORD                               i = 0;
-    BOOLEAN                             error = FALSE;
-    DWORD                               dwWait = 0;
-    PyObject*                           py_retlist = NULL;
-    PyObject*                           py_path = NULL;
+    NTSTATUS status;
+    PSYSTEM_HANDLE_INFORMATION_EX pHandleInfo = NULL;
+    DWORD dwInfoSize = 0x10000;
+    DWORD dwRet = 0;
+    PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX hHandle = NULL;
+    DWORD i = 0;
+    BOOLEAN error = FALSE;
+    DWORD dwWait = 0;
+    PyObject *py_retlist = NULL;
+    PyObject *py_path = NULL;
 
     if (g_initialized == FALSE)
         psutil_get_open_files_init(TRUE);
@@ -88,9 +88,7 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
     if (__NtQuerySystemInformation == NULL ||
         __NtQueryObject == NULL ||
         g_hEvtStart == NULL ||
-        g_hEvtFinish == NULL)
-
-    {
+        g_hEvtFinish == NULL) {
         PyErr_SetFromWindowsErr(0);
         error = TRUE;
         goto cleanup;
@@ -122,10 +120,10 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
             goto cleanup;
         }
     } while ((status = __NtQuerySystemInformation(
-                            SystemExtendedHandleInformation,
-                            pHandleInfo,
-                            dwInfoSize,
-                            &dwRet)) == STATUS_INFO_LENGTH_MISMATCH);
+                  SystemExtendedHandleInformation,
+                  pHandleInfo,
+                  dwInfoSize,
+                  &dwRet)) == STATUS_INFO_LENGTH_MISMATCH);
 
     // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH
     if (!NT_SUCCESS(status)) {
@@ -148,19 +146,18 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
                              &g_hFile,
                              0,
                              TRUE,
-                             DUPLICATE_SAME_ACCESS))
-        {
+                             DUPLICATE_SAME_ACCESS)) {
             /*
-            printf("[%d] DuplicateHandle (%#x): %#x \n",
+               printf("[%d] DuplicateHandle (%#x): %#x \n",
                    dwPid,
                    hHandle->HandleValue,
                    GetLastError());
-            */
+             */
             goto loop_cleanup;
         }
 
         // Guess buffer size is MAX_PATH + 1
-        g_dwLength = (MAX_PATH+1) * sizeof(WCHAR);
+        g_dwLength = (MAX_PATH + 1) * sizeof(WCHAR);
 
         do {
             // Release any previously allocated buffer
@@ -190,7 +187,6 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
             // If the call does not return, skip this handle
             if (dwWait != WAIT_OBJECT_0)
                 goto loop_cleanup;
-
         } while (g_status == STATUS_INFO_LENGTH_MISMATCH);
 
         // NtQueryObject stopped returning STATUS_INFO_LENGTH_MISMATCH
@@ -200,33 +196,33 @@ psutil_get_open_files_ntqueryobject(long dwPid, HANDLE hProcess) {
         // Convert to PyUnicode and append it to the return list
         if (g_pNameBuffer->Length > 0) {
             /*
-            printf("[%d] Filename (%#x) %#d bytes: %S\n",
+               printf("[%d] Filename (%#x) %#d bytes: %S\n",
                    dwPid,
                    hHandle->HandleValue,
                    g_pNameBuffer->Length,
                    g_pNameBuffer->Buffer);
-            */
+             */
 
             py_path = PyUnicode_FromWideChar(g_pNameBuffer->Buffer,
-                                                g_pNameBuffer->Length/2);
+                                             g_pNameBuffer->Length / 2);
             if (py_path == NULL) {
                 /*
-                printf("[%d] PyUnicode_FromWideChar (%#x): %#x \n",
+                   printf("[%d] PyUnicode_FromWideChar (%#x): %#x \n",
                        dwPid,
                        hHandle->HandleValue,
                        GetLastError());
-                */
+                 */
                 error = TRUE;
                 goto loop_cleanup;
             }
 
             if (PyList_Append(py_retlist, py_path)) {
                 /*
-                printf("[%d] PyList_Append (%#x): %#x \n",
+                   printf("[%d] PyList_Append (%#x): %#x \n",
                        dwPid,
                        hHandle->HandleValue,
                        GetLastError());
-                */
+                 */
                 error = TRUE;
                 goto loop_cleanup;
             }
@@ -335,20 +331,20 @@ psutil_NtQueryObjectThread() {
 
 PyObject *
 psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
-    NTSTATUS                            status;
-    PSYSTEM_HANDLE_INFORMATION_EX       pHandleInfo = NULL;
-    DWORD                               dwInfoSize = 0x10000;
-    DWORD                               dwRet = 0;
-    PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX  hHandle = NULL;
-    HANDLE                              hFile = NULL;
-    HANDLE                              hMap = NULL;
-    DWORD                               i = 0;
-    BOOLEAN                             error = FALSE;
-    PyObject*                           py_retlist = NULL;
-    PyObject*                           py_path = NULL;
-    ULONG                               dwSize = 0;
-    LPVOID                              pMem = NULL;
-    TCHAR                               pszFilename[MAX_PATH+1];
+    NTSTATUS status;
+    PSYSTEM_HANDLE_INFORMATION_EX pHandleInfo = NULL;
+    DWORD dwInfoSize = 0x10000;
+    DWORD dwRet = 0;
+    PSYSTEM_HANDLE_TABLE_ENTRY_INFO_EX hHandle = NULL;
+    HANDLE hFile = NULL;
+    HANDLE hMap = NULL;
+    DWORD i = 0;
+    BOOLEAN error = FALSE;
+    PyObject *py_retlist = NULL;
+    PyObject *py_path = NULL;
+    ULONG dwSize = 0;
+    LPVOID pMem = NULL;
+    TCHAR pszFilename[MAX_PATH + 1];
 
     if (g_initialized == FALSE)
         psutil_get_open_files_init(FALSE);
@@ -385,10 +381,10 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
             goto cleanup;
         }
     } while ((status = __NtQuerySystemInformation(
-                            SystemExtendedHandleInformation,
-                            pHandleInfo,
-                            dwInfoSize,
-                            &dwRet)) == STATUS_INFO_LENGTH_MISMATCH);
+                  SystemExtendedHandleInformation,
+                  pHandleInfo,
+                  dwInfoSize,
+                  &dwRet)) == STATUS_INFO_LENGTH_MISMATCH);
 
     // NtQuerySystemInformation stopped giving us STATUS_INFO_LENGTH_MISMATCH
     if (!NT_SUCCESS(status)) {
@@ -411,25 +407,24 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
                              &hFile,
                              0,
                              TRUE,
-                             DUPLICATE_SAME_ACCESS))
-        {
+                             DUPLICATE_SAME_ACCESS)) {
             /*
-            printf("[%d] DuplicateHandle (%#x): %#x \n",
+               printf("[%d] DuplicateHandle (%#x): %#x \n",
                    dwPid,
                    hHandle->HandleValue,
                    GetLastError());
-            */
+             */
             goto loop_cleanup;
         }
 
         hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
         if (hMap == NULL) {
             /*
-            printf("[%d] CreateFileMapping (%#x): %#x \n",
+               printf("[%d] CreateFileMapping (%#x): %#x \n",
                    dwPid,
                    hHandle->HandleValue,
                    GetLastError());
-            */
+             */
             goto loop_cleanup;
         }
 
@@ -437,11 +432,11 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
 
         if (pMem == NULL) {
             /*
-            printf("[%d] MapViewOfFile (%#x): %#x \n",
+               printf("[%d] MapViewOfFile (%#x): %#x \n",
                    dwPid,
                    hHandle->HandleValue,
                    GetLastError());
-            */
+             */
             goto loop_cleanup;
         }
 
@@ -449,42 +444,42 @@ psutil_get_open_files_getmappedfilename(long dwPid, HANDLE hProcess) {
             GetCurrentProcess(), pMem, pszFilename, MAX_PATH);
         if (dwSize == 0) {
             /*
-            printf("[%d] GetMappedFileName (%#x): %#x \n",
+               printf("[%d] GetMappedFileName (%#x): %#x \n",
                    dwPid,
                    hHandle->HandleValue,
                    GetLastError());
-            */
+             */
             goto loop_cleanup;
         }
 
         pszFilename[dwSize] = '\0';
         /*
-        printf("[%d] Filename (%#x) %#d bytes: %S\n",
+           printf("[%d] Filename (%#x) %#d bytes: %S\n",
                dwPid,
                hHandle->HandleValue,
                dwSize,
                pszFilename);
-        */
+         */
 
         py_path = PyUnicode_FromWideChar(pszFilename, dwSize);
         if (py_path == NULL) {
             /*
-            printf("[%d] PyUnicode_FromStringAndSize (%#x): %#x \n",
+               printf("[%d] PyUnicode_FromStringAndSize (%#x): %#x \n",
                    dwPid,
                    hHandle->HandleValue,
                    GetLastError());
-            */
+             */
             error = TRUE;
             goto loop_cleanup;
         }
 
         if (PyList_Append(py_retlist, py_path)) {
             /*
-            printf("[%d] PyList_Append (%#x): %#x \n",
+               printf("[%d] PyList_Append (%#x): %#x \n",
                    dwPid,
                    hHandle->HandleValue,
                    GetLastError());
-            */
+             */
             error = TRUE;
             goto loop_cleanup;
         }
