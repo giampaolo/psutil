@@ -40,6 +40,7 @@
 #include <IOKit/IOBSD.h>
 
 #include "_psutil_osx.h"
+#include "_psutil_osx_uss.h"
 #include "_psutil_common.h"
 #include "arch/osx/process_info.h"
 
@@ -515,6 +516,9 @@ static PyObject *
 psutil_proc_memory_info(PyObject *self, PyObject *args) {
     long pid;
     struct proc_taskinfo pti;
+    int err;
+    mach_port_t task = MACH_PORT_NULL;
+    int64_t uss = 0;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -525,13 +529,31 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
     // I just give up...
     // struct proc_regioninfo pri;
     // psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, &pri, sizeof(pri))
+
+    err = task_for_pid(mach_task_self(), pid, &task);
+    if (err != KERN_SUCCESS) {
+        psutil_raise_ad_or_nsp(pid);
+        goto error;
+    }
+
+    calc_uss(task, &uss);
+
+    if (task != MACH_PORT_NULL)
+        mach_port_deallocate(mach_task_self(), task);
+
     return Py_BuildValue(
-        "(KKkk)",
+        "(KKkkK)",
         pti.pti_resident_size,  // resident memory size (rss)
         pti.pti_virtual_size,   // virtual memory size (vms)
         pti.pti_faults,         // number of page faults (pages)
-        pti.pti_pageins         // number of actual pageins (pages)
+        pti.pti_pageins,        // number of actual pageins (pages)
+        (long long)uss          // unique memory size (uss)
     );
+
+error:
+    if (task != MACH_PORT_NULL)
+        mach_port_deallocate(mach_task_self(), task);
+    return NULL;
 }
 
 
