@@ -5,6 +5,7 @@
 # You can set these variables from the command line.
 PYTHON    = python
 TSCRIPT   = test/test_psutil.py
+UNCRUSTIFY = uncrustify
 
 all: test
 
@@ -18,7 +19,7 @@ clean:
 	rm -rf `find . -type d -name __pycache__`
 	rm -rf *.core
 	rm -rf *.egg-info
-	rm -rf *\$testfile*
+	rm -rf *\$$testfile*
 	rm -rf .coverage
 	rm -rf .tox
 	rm -rf build
@@ -94,14 +95,18 @@ coverage: install
 	$(PYTHON) -m webbrowser -t htmlcov/index.html
 
 pep8:
-	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m pep8
+	@git ls-files | grep \\.py$$ | xargs $(PYTHON) -m pep8
 
 pyflakes:
 	@export PYFLAKES_NODOCTEST=1 && \
-		git ls-files | grep \\.py$ | xargs $(PYTHON) -m pyflakes
+		git ls-files | grep \\.py$$ | xargs $(PYTHON) -m pyflakes
 
 flake8:
-	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
+	@git ls-files | grep \\.py$$ | xargs $(PYTHON) -m flake8
+
+# reformat C files
+uncrustify:
+	git ls-files | grep \\.c$$ | xargs uncrustify -c .uncrustify.cfg --replace --no-backup
 
 # Upload source tarball on https://pypi.python.org/pypi/psutil.
 upload-src: clean

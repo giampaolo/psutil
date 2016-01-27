@@ -16,24 +16,25 @@
 #include <net/if.h>
 
 #ifdef PSUTIL_SUNOS10
-#include "arch/solaris10/ifaddrs.h"
+    #include "arch/solaris10/ifaddrs.h"
 #else
-#include <ifaddrs.h>
+    #include <ifaddrs.h>
 #endif
 
 #ifdef __linux
-#include <netdb.h>
-#include <linux/if_packet.h>
+    #include <netdb.h>
+    #include <linux/if_packet.h>
 #endif  // end linux
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
-#include <netdb.h>
-#include <netinet/in.h>
-#include <net/if_dl.h>
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || \
+    defined(__NetBSD__)
+    #include <netdb.h>
+    #include <netinet/in.h>
+    #include <net/if_dl.h>
 #endif
 
 #if defined(__sun)
-#include <netdb.h>
+    #include <netdb.h>
 #endif
 
 #include "_psutil_posix.h"
@@ -46,9 +47,10 @@ static PyObject *
 psutil_posix_getpriority(PyObject *self, PyObject *args) {
     long pid;
     int priority;
+
     errno = 0;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     priority = getpriority(PRIO_PROCESS, pid);
     if (errno != 0)
@@ -66,7 +68,7 @@ psutil_posix_setpriority(PyObject *self, PyObject *args) {
     int priority;
     int retval;
 
-    if (! PyArg_ParseTuple(args, "li", &pid, &priority))
+    if (!PyArg_ParseTuple(args, "li", &pid, &priority))
         return NULL;
     retval = setpriority(PRIO_PROCESS, pid, priority);
     if (retval == -1)
@@ -120,7 +122,8 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
         data = (const char *)lladdr->sll_addr;
     }
 #endif
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || \
+    defined(__NetBSD__)
     else if (addr->sa_family == AF_LINK) {
         // Note: prior to Python 3.4 socket module does not expose
         // AF_LINK so we'll do.
@@ -156,8 +159,8 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
  * Return NICs information a-la ifconfig as a list of tuples.
  * TODO: on Solaris we won't get any MAC address.
  */
-static PyObject*
-psutil_net_if_addrs(PyObject* self, PyObject* args) {
+static PyObject *
+psutil_net_if_addrs(PyObject *self, PyObject *args) {
     struct ifaddrs *ifaddr, *ifa;
     int family;
 
@@ -217,9 +220,9 @@ psutil_net_if_addrs(PyObject* self, PyObject* args) {
             py_netmask,
             py_broadcast,
             py_ptp
-        );
+            );
 
-        if (! py_tuple)
+        if (!py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
@@ -250,124 +253,128 @@ error:
  * net_if_stats() implementation. This is here because it is common
  * to both OSX and FreeBSD and I didn't know where else to put it.
  */
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || \
+    defined(__NetBSD__)
 
-#include <sys/sockio.h>
-#include <net/if_media.h>
-#include <net/if.h>
+    #include <sys/sockio.h>
+    #include <net/if_media.h>
+    #include <net/if.h>
 
-int psutil_get_nic_speed(int ifm_active) {
+int
+psutil_get_nic_speed(int ifm_active) {
     // Determine NIC speed. Taken from:
     // http://www.i-scream.org/libstatgrab/
     // Assuming only ETHER devices
-    switch(IFM_TYPE(ifm_active)) {
+    switch (IFM_TYPE(ifm_active)) {
         case IFM_ETHER:
-            switch(IFM_SUBTYPE(ifm_active)) {
-#if defined(IFM_HPNA_1) && ((!defined(IFM_10G_LR)) \
-    || (IFM_10G_LR != IFM_HPNA_1))
+            switch (IFM_SUBTYPE(ifm_active)) {
+    #if defined(IFM_HPNA_1) && ((!defined(IFM_10G_LR)) \
+                || (IFM_10G_LR != IFM_HPNA_1))
                 // HomePNA 1.0 (1Mb/s)
-                case(IFM_HPNA_1):
+                case (IFM_HPNA_1):
                     return 1;
-#endif
+    #endif
                 // 10 Mbit
-                case(IFM_10_T):  // 10BaseT - RJ45
-                case(IFM_10_2):  // 10Base2 - Thinnet
-                case(IFM_10_5):  // 10Base5 - AUI
-                case(IFM_10_STP):  // 10BaseT over shielded TP
-                case(IFM_10_FL):  // 10baseFL - Fiber
+                case (IFM_10_T):  // 10BaseT - RJ45
+                case (IFM_10_2):  // 10Base2 - Thinnet
+                case (IFM_10_5):  // 10Base5 - AUI
+                case (IFM_10_STP):  // 10BaseT over shielded TP
+                case (IFM_10_FL):  // 10baseFL - Fiber
                     return 10;
                 // 100 Mbit
-                case(IFM_100_TX):  // 100BaseTX - RJ45
-                case(IFM_100_FX):  // 100BaseFX - Fiber
-                case(IFM_100_T4):  // 100BaseT4 - 4 pair cat 3
-                case(IFM_100_VG):  // 100VG-AnyLAN
-                case(IFM_100_T2):  // 100BaseT2
+                case (IFM_100_TX):  // 100BaseTX - RJ45
+                case (IFM_100_FX):  // 100BaseFX - Fiber
+                case (IFM_100_T4):  // 100BaseT4 - 4 pair cat 3
+                case (IFM_100_VG):  // 100VG-AnyLAN
+                case (IFM_100_T2):  // 100BaseT2
                     return 100;
                 // 1000 Mbit
-                case(IFM_1000_SX):  // 1000BaseSX - multi-mode fiber
-                case(IFM_1000_LX):  // 1000baseLX - single-mode fiber
-                case(IFM_1000_CX):  // 1000baseCX - 150ohm STP
-#if defined(IFM_1000_TX) && !defined(__OpenBSD__)
-                // FreeBSD 4 and others (but NOT OpenBSD) -> #define IFM_1000_T in net/if_media.h
-                case(IFM_1000_TX):
-#endif
-#ifdef IFM_1000_FX
-                case(IFM_1000_FX):
-#endif
-#ifdef IFM_1000_T
-                case(IFM_1000_T):
-#endif
+                case (IFM_1000_SX):  // 1000BaseSX - multi-mode fiber
+                case (IFM_1000_LX):  // 1000baseLX - single-mode fiber
+                case (IFM_1000_CX):  // 1000baseCX - 150ohm STP
+    #if defined(IFM_1000_TX) && !defined(__OpenBSD__)
+                // FreeBSD 4 and others (but NOT OpenBSD) -> #define IFM_1000_T
+                // in net/if_media.h
+                case (IFM_1000_TX):
+    #endif
+    #ifdef IFM_1000_FX
+                case (IFM_1000_FX):
+    #endif
+    #ifdef IFM_1000_T
+                case (IFM_1000_T):
+    #endif
                     return 1000;
-#if defined(IFM_10G_SR) || defined(IFM_10G_LR) || defined(IFM_10G_CX4) \
-         || defined(IFM_10G_T)
-#ifdef IFM_10G_SR
-                case(IFM_10G_SR):
-#endif
-#ifdef IFM_10G_LR
-                case(IFM_10G_LR):
-#endif
-#ifdef IFM_10G_CX4
-                case(IFM_10G_CX4):
-#endif
-#ifdef IFM_10G_TWINAX
-                case(IFM_10G_TWINAX):
-#endif
-#ifdef IFM_10G_TWINAX_LONG
-                case(IFM_10G_TWINAX_LONG):
-#endif
-#ifdef IFM_10G_T
-                case(IFM_10G_T):
-#endif
+    #if defined(IFM_10G_SR) || defined(IFM_10G_LR) || defined(IFM_10G_CX4) \
+                    || defined(IFM_10G_T)
+        #ifdef IFM_10G_SR
+                case (IFM_10G_SR):
+        #endif
+        #ifdef IFM_10G_LR
+                case (IFM_10G_LR):
+        #endif
+        #ifdef IFM_10G_CX4
+                case (IFM_10G_CX4):
+        #endif
+        #ifdef IFM_10G_TWINAX
+                case (IFM_10G_TWINAX):
+        #endif
+        #ifdef IFM_10G_TWINAX_LONG
+                case (IFM_10G_TWINAX_LONG):
+        #endif
+        #ifdef IFM_10G_T
+                case (IFM_10G_T):
+        #endif
                     return 10000;
-#endif
-#if defined(IFM_2500_SX)
-#ifdef IFM_2500_SX
-                case(IFM_2500_SX):
-#endif
+    #endif /* if defined(IFM_10G_SR) || defined(IFM_10G_LR) ||
+             defined(IFM_10G_CX4) || defined(IFM_10G_T) */
+    #if defined(IFM_2500_SX)
+        #ifdef IFM_2500_SX
+                case (IFM_2500_SX):
+        #endif
                     return 2500;
-#endif // any 2.5GBit stuff...
+    #endif  // any 2.5GBit stuff...
                 // We don't know what it is
                 default:
                     return 0;
             }
             break;
 
-#ifdef IFM_TOKEN
+    #ifdef IFM_TOKEN
         case IFM_TOKEN:
-            switch(IFM_SUBTYPE(ifm_active)) {
+            switch (IFM_SUBTYPE(ifm_active)) {
                 case IFM_TOK_STP4:  // Shielded twisted pair 4m - DB9
                 case IFM_TOK_UTP4:  // Unshielded twisted pair 4m - RJ45
                     return 4;
                 case IFM_TOK_STP16:  // Shielded twisted pair 16m - DB9
                 case IFM_TOK_UTP16:  // Unshielded twisted pair 16m - RJ45
                     return 16;
-#if defined(IFM_TOK_STP100) || defined(IFM_TOK_UTP100)
-#ifdef IFM_TOK_STP100
+        #if defined(IFM_TOK_STP100) || defined(IFM_TOK_UTP100)
+            #ifdef IFM_TOK_STP100
                 case IFM_TOK_STP100:  // Shielded twisted pair 100m - DB9
-#endif
-#ifdef IFM_TOK_UTP100
+            #endif
+            #ifdef IFM_TOK_UTP100
                 case IFM_TOK_UTP100:  // Unshielded twisted pair 100m - RJ45
-#endif
+            #endif
                     return 100;
-#endif
+        #endif
                 // We don't know what it is
                 default:
                     return 0;
             }
             break;
-#endif
+    #endif /* ifdef IFM_TOKEN */
 
-#ifdef IFM_FDDI
+    #ifdef IFM_FDDI
         case IFM_FDDI:
-            switch(IFM_SUBTYPE(ifm_active)) {
+            switch (IFM_SUBTYPE(ifm_active)) {
                 // We don't know what it is
                 default:
                     return 0;
             }
             break;
-#endif
+    #endif
         case IFM_IEEE80211:
-            switch(IFM_SUBTYPE(ifm_active)) {
+            switch (IFM_SUBTYPE(ifm_active)) {
                 case IFM_IEEE80211_FH1:  // Frequency Hopping 1Mbps
                 case IFM_IEEE80211_DS1:  // Direct Sequence 1Mbps
                     return 1;
@@ -410,7 +417,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
 
     PyObject *py_is_up = NULL;
 
-    if (! PyArg_ParseTuple(args, "s", &nic_name))
+    if (!PyArg_ParseTuple(args, "s", &nic_name))
         return NULL;
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -464,6 +471,8 @@ error:
     PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
+
+
 #endif  // net_if_stats() implementation
 
 
@@ -471,14 +480,15 @@ error:
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
-PsutilMethods[] = {
+    PsutilMethods[] = {
     {"getpriority", psutil_posix_getpriority, METH_VARARGS,
      "Return process priority"},
     {"setpriority", psutil_posix_setpriority, METH_VARARGS,
      "Set process priority"},
     {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS,
      "Retrieve NICs information"},
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || \
+    defined(__NetBSD__)
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
      "Return NIC stats."},
 #endif
@@ -490,9 +500,9 @@ struct module_state {
 };
 
 #if PY_MAJOR_VERSION >= 3
-#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+    #define GETSTATE(m) ((struct module_state *)PyModule_GetState(m))
 #else
-#define GETSTATE(m) (&_state)
+    #define GETSTATE(m) (&_state)
 #endif
 
 #if PY_MAJOR_VERSION >= 3
@@ -503,11 +513,13 @@ psutil_posix_traverse(PyObject *m, visitproc visit, void *arg) {
     return 0;
 }
 
+
 static int
 psutil_posix_clear(PyObject *m) {
     Py_CLEAR(GETSTATE(m)->error);
     return 0;
 }
+
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
@@ -521,15 +533,17 @@ static struct PyModuleDef moduledef = {
     NULL
 };
 
-#define INITERROR return NULL
+    #define INITERROR return NULL
 
-PyMODINIT_FUNC PyInit__psutil_posix(void)
+PyMODINIT_FUNC
+PyInit__psutil_posix(void)
 
-#else
-#define INITERROR return
+#else /* if PY_MAJOR_VERSION >= 3 */
+    #define INITERROR return
 
-void init_psutil_posix(void)
-#endif
+void
+init_psutil_posix(void)
+#endif /* if PY_MAJOR_VERSION >= 3 */
 {
 #if PY_MAJOR_VERSION >= 3
     PyObject *module = PyModule_Create(&moduledef);
@@ -537,7 +551,8 @@ void init_psutil_posix(void)
     PyObject *module = Py_InitModule("_psutil_posix", PsutilMethods);
 #endif
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__sun) || defined(__NetBSD__)
+#if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || \
+    defined(__sun) || defined(__NetBSD__)
     PyModule_AddIntConstant(module, "AF_LINK", AF_LINK);
 #endif
 

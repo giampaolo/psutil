@@ -8,7 +8,7 @@
  */
 
 #if defined(__NetBSD__)
-#define _KMEMUSER
+    #define _KMEMUSER
 #endif
 
 #include <Python.h>
@@ -30,7 +30,7 @@
 #include <netdb.h>  // for NI_MAXHOST
 #include <sys/socket.h>
 #include <sys/sched.h>  // for CPUSTATES & CP_*
-#define _KERNEL  // for DTYPE_*
+#define _KERNEL // for DTYPE_*
 #include <sys/file.h>
 #undef _KERNEL
 #include <sys/disk.h>  // struct diskstats
@@ -75,7 +75,7 @@ psutil_kinfo_proc(pid_t pid, kinfo_proc *proc) {
     mib[4] = size;
     mib[5] = 1;
 
-    ret = sysctl((int*)mib, 6, proc, &size, NULL, 0);
+    ret = sysctl((int *)mib, 6, proc, &size, NULL, 0);
     if (ret == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         return -1;
@@ -90,16 +90,17 @@ psutil_kinfo_proc(pid_t pid, kinfo_proc *proc) {
 
 
 struct kinfo_file *
-kinfo_getfile(pid_t pid, int* cnt) {
+kinfo_getfile(pid_t pid, int *cnt) {
     // Mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an
     // int as arg and returns an array with cnt struct kinfo_file.
     int mib[6];
     size_t len;
-    struct kinfo_file* kf;
+    struct kinfo_file *kf;
+
     mib[0] = CTL_KERN;
     mib[1] = KERN_FILE2;
     mib[2] = KERN_FILE_BYPID;
-    mib[3] = (int) pid;
+    mib[3] = (int)pid;
     mib[4] = sizeof(struct kinfo_file);
     mib[5] = 0;
 
@@ -130,9 +131,10 @@ psutil_pid_exists(pid_t pid) {
     // TODO: this should live in _psutil_posix.c but for some reason if I
     // move it there I get a "include undefined symbol" error.
     int ret;
+
     if (pid < 0)
         return 0;
-    ret = kill(pid , 0);
+    ret = kill(pid, 0);
     if (ret == 0)
         return 1;
     else {
@@ -162,7 +164,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     int ret;
     size_t size;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (pid == 0) {
         // else returns ENOENT
@@ -196,28 +198,31 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
             strcpy(pathname, "");
     }
 
-#if PY_MAJOR_VERSION >= 3
+    #if PY_MAJOR_VERSION >= 3
     return PyUnicode_DecodeFSDefault(pathname);
-#else
+    #else
     return Py_BuildValue("s", pathname);
-#endif
+    #endif
 
-#else
+#else /* if __NetBSD_Version__ >= 799000000 */
     return Py_BuildValue("s", "");
-#endif
+#endif /* if __NetBSD_Version__ >= 799000000 */
 }
+
 
 PyObject *
 psutil_proc_num_threads(PyObject *self, PyObject *args) {
     // Return number of threads used by process as a Python integer.
     long pid;
     kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+
+    if (!PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
     return Py_BuildValue("l", (long)kp.p_nlwps);
 }
+
 
 PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
@@ -232,7 +237,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
     mib[0] = CTL_KERN;
@@ -306,7 +311,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     // On error, the function returns a BSD errno value.
     kinfo_proc *result;
     int done;
-    static const int name[] = { CTL_KERN, KERN_PROC, KERN_PROC, 0 };
+    static const int name[] = {CTL_KERN, KERN_PROC, KERN_PROC, 0};
     // Declaring name as const requires us to cast it when passing it to
     // sysctl because the prototype doesn't include the const modifier.
     size_t length;
@@ -315,7 +320,7 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     int cnt;
     kvm_t *kd;
 
-    assert( procList != NULL);
+    assert(procList != NULL);
     assert(*procList == NULL);
     assert(procCount != NULL);
 
@@ -392,6 +397,7 @@ psutil_get_cmd_args(pid_t pid, size_t *argsize) {
     return procargs;
 }
 
+
 // Return the command line as a python list object.
 // XXX - most of the times sysctl() returns a truncated string.
 // Also /proc/pid/cmdline behaves the same so it looks like this
@@ -465,19 +471,22 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) total_physmem,  // total
-        (unsigned long long) uv.free * pagesize,  // free
-        (unsigned long long) uv.active * pagesize,  // active
-        (unsigned long long) uv.inactive * pagesize,  // inactive
-        (unsigned long long) uv.wired * pagesize,  // wired
-        // taken from:
-        // https://github.com/satterly/zabbix-stats/blob/master/src/libs/
-        //      zbxsysinfo/netbsd/memory.c
-        (unsigned long long) uv.filepages + uv.execpages * pagesize,  // cached
-        (unsigned long long) 0,  // buffers
-        (unsigned long long) 0  // shared
-    );
+    return Py_BuildValue(
+               "KKKKKKKK",
+               (unsigned long long)total_physmem, // total
+               (unsigned long long)uv.free * pagesize, // free
+               (unsigned long long)uv.active * pagesize, // active
+               (unsigned long long)uv.inactive * pagesize, // inactive
+               (unsigned long long)uv.wired * pagesize, // wired
+               // taken from:
+               //
+               // https://github.com/satterly/zabbix-stats/blob/master/src/libs/
+               //      zbxsysinfo/netbsd/memory.c
+               (unsigned long long)uv.filepages + uv.execpages *
+               pagesize,                                              // cached
+               (unsigned long long)0, // buffers
+               (unsigned long long)0 // shared
+               );
 }
 
 
@@ -530,8 +539,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
                          swap_total * DEV_BSIZE,
                          (swap_total - swap_free) * DEV_BSIZE,
                          swap_free * DEV_BSIZE,
-                         (long) uv.pgswapin * pagesize,  // swap in
-                         (long) uv.pgswapout * pagesize);  // swap out
+                         (long)uv.pgswapin * pagesize,  // swap in
+                         (long)uv.pgswapout * pagesize);  // swap out
 
 error:
     free(swdev);
@@ -545,7 +554,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
     struct kinfo_file *freep;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
     freep = kinfo_getfile(pid, &cnt);
@@ -643,7 +652,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         PyErr_NoMemory();
         goto error;
     }
-    if (sysctl(mib, 2, stats, &len, NULL, 0) < 0 ) {
+    if (sysctl(mib, 2, stats, &len, NULL, 0) < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
     }
@@ -657,8 +666,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             stats[i].wbytes,
             // assume half read - half writes.
             // TODO: why?
-            (long long) PSUTIL_KPT2DOUBLE(stats[i].time) / 2,
-            (long long) PSUTIL_KPT2DOUBLE(stats[i].time) / 2);
+            (long long)PSUTIL_KPT2DOUBLE(stats[i].time) / 2,
+            (long long)PSUTIL_KPT2DOUBLE(stats[i].time) / 2);
         if (!py_disk_info)
             goto error;
         if (PyDict_SetItemString(py_retdict, stats[i].name, py_disk_info))

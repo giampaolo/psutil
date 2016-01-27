@@ -8,20 +8,20 @@
 #include <Python.h>
 #include <sys/user.h>
 #include <sys/file.h>
-#include <sys/socketvar.h>    // for struct xsocket
+#include <sys/socketvar.h>  // for struct xsocket
 #include <sys/un.h>
 #include <sys/unpcb.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
-#include <netinet/in.h>   // for xinpcb struct
+#include <netinet/in.h>  // for xinpcb struct
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_timer.h>
-#include <netinet/tcp_var.h>   // for struct xtcpcb
-#include <netinet/tcp_fsm.h>   // for TCP connection states
-#include <arpa/inet.h>         // for inet_ntop()
+#include <netinet/tcp_var.h>  // for struct xtcpcb
+#include <netinet/tcp_fsm.h>  // for TCP connection states
+#include <arpa/inet.h>  // for inet_ntop()
 #include <net/if_media.h>
 #include <libutil.h>
 
@@ -69,11 +69,11 @@ psutil_sockaddr_port(int family, struct sockaddr_storage *ss) {
 
     if (family == AF_INET) {
         sin = (struct sockaddr_in *)ss;
-        return (sin->sin_port);
+        return sin->sin_port;
     }
     else {
         sin6 = (struct sockaddr_in6 *)ss;
-        return (sin6->sin6_port);
+        return sin6->sin6_port;
     }
 }
 
@@ -85,11 +85,11 @@ psutil_sockaddr_addr(int family, struct sockaddr_storage *ss) {
 
     if (family == AF_INET) {
         sin = (struct sockaddr_in *)ss;
-        return (&sin->sin_addr);
+        return &sin->sin_addr;
     }
     else {
         sin6 = (struct sockaddr_in6 *)ss;
-        return (&sin6->sin6_addr);
+        return &sin6->sin6_addr;
     }
 }
 
@@ -97,9 +97,9 @@ psutil_sockaddr_addr(int family, struct sockaddr_storage *ss) {
 static socklen_t
 psutil_sockaddr_addrlen(int family) {
     if (family == AF_INET)
-        return (sizeof(struct in_addr));
+        return sizeof(struct in_addr);
     else
-        return (sizeof(struct in6_addr));
+        return sizeof(struct in6_addr);
 }
 
 
@@ -107,9 +107,9 @@ static int
 psutil_sockaddr_matches(int family, int port, void *pcb_addr,
                         struct sockaddr_storage *ss) {
     if (psutil_sockaddr_port(family, ss) != port)
-        return (0);
-    return (memcmp(psutil_sockaddr_addr(family, ss), pcb_addr,
-                   psutil_sockaddr_addrlen(family)) == 0);
+        return 0;
+    return memcmp(psutil_sockaddr_addr(family, ss), pcb_addr,
+                  psutil_sockaddr_addrlen(family)) == 0;
 }
 
 
@@ -122,15 +122,15 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
 
     oxig = xig = (struct xinpgen *)buf;
     for (xig = (struct xinpgen *)((char *)xig + xig->xig_len);
-            xig->xig_len > sizeof(struct xinpgen);
-            xig = (struct xinpgen *)((char *)xig + xig->xig_len)) {
+         xig->xig_len > sizeof(struct xinpgen);
+         xig = (struct xinpgen *)((char *)xig + xig->xig_len)) {
         tp = &((struct xtcpcb *)xig)->xt_tp;
         inp = &((struct xtcpcb *)xig)->xt_inp;
         so = &((struct xtcpcb *)xig)->xt_socket;
 
         if (so->so_type != kif->kf_sock_type ||
-                so->xso_family != kif->kf_sock_domain ||
-                so->xso_protocol != kif->kf_sock_protocol)
+            so->xso_family != kif->kf_sock_domain ||
+            so->xso_protocol != kif->kf_sock_protocol)
             continue;
 
         if (kif->kf_sock_domain == AF_INET) {
@@ -142,7 +142,8 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
                     AF_INET, inp->inp_fport, &inp->inp_faddr,
                     &kif->kf_sa_peer))
                 continue;
-        } else {
+        }
+        else {
             if (!psutil_sockaddr_matches(
                     AF_INET6, inp->inp_lport, &inp->in6p_laddr,
                     &kif->kf_sa_local))
@@ -153,7 +154,7 @@ psutil_search_tcplist(char *buf, struct kinfo_file *kif) {
                 continue;
         }
 
-        return (tp);
+        return tp;
     }
     return NULL;
 }
@@ -191,6 +192,7 @@ int
 psutil_get_pid_from_sock(int sock_hash) {
     struct xfile *xf;
     int hash, n;
+
     for (xf = psutil_xfiles, n = 0; n < psutil_nxfiles; ++n, ++xf) {
         if (xf->xf_data == NULL)
             continue;
@@ -205,7 +207,8 @@ psutil_get_pid_from_sock(int sock_hash) {
 // Reference:
 // https://gitorious.org/freebsd/freebsd/source/
 //     f1d6f4778d2044502209708bc167c05f9aa48615:usr.bin/sockstat/sockstat.c
-int psutil_gather_inet(int proto, PyObject *py_retlist) {
+int
+psutil_gather_inet(int proto, PyObject *py_retlist) {
     struct xinpgen *xig, *exig;
     struct xinpcb *xip;
     struct xtcpcb *xtp;
@@ -344,7 +347,8 @@ error:
 }
 
 
-int psutil_gather_unix(int proto, PyObject *py_retlist) {
+int
+psutil_gather_unix(int proto, PyObject *py_retlist) {
     struct xunpgen *xug, *exug;
     struct xunpcb *xup;
     const char *varname = NULL;
@@ -395,7 +399,7 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
         }
         xug = (struct xunpgen *)buf;
         exug = (struct xunpgen *)(void *)
-            ((char *)buf + len - sizeof *exug);
+               ((char *)buf + len - sizeof *exug);
         if (xug->xug_len != sizeof *xug || exug->xug_len != sizeof *exug) {
             PyErr_Format(PyExc_RuntimeError, "struct xinpgen size mismatch");
             goto error;
@@ -410,7 +414,7 @@ int psutil_gather_unix(int proto, PyObject *py_retlist) {
         if (xup->xu_len != sizeof *xup)
             goto error;
 
-        hash = (int)((uintptr_t) xup->xu_socket.xso_so % HASHSIZE);
+        hash = (int)((uintptr_t)xup->xu_socket.xso_so % HASHSIZE);
         pid = psutil_get_pid_from_sock(hash);
         if (pid < 0)
             continue;
@@ -442,8 +446,8 @@ error:
 }
 
 
-PyObject*
-psutil_net_connections(PyObject* self, PyObject* args) {
+PyObject *
+psutil_net_connections(PyObject *self, PyObject *args) {
     // Return system-wide open connections.
     PyObject *py_retlist = PyList_New(0);
 
@@ -456,7 +460,7 @@ psutil_net_connections(PyObject* self, PyObject* args) {
     if (psutil_gather_inet(IPPROTO_UDP, py_retlist) == 0)
         goto error;
     if (psutil_gather_unix(SOCK_STREAM, py_retlist) == 0)
-       goto error;
+        goto error;
     if (psutil_gather_unix(SOCK_DGRAM, py_retlist) == 0)
         goto error;
 
@@ -491,9 +495,10 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
+    if (!PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
         goto error;
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
+    if (!PySequence_Check(py_af_filter) ||
+        !PySequence_Check(py_type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         goto error;
     }
@@ -534,7 +539,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                 continue;
             // IPv4 / IPv6 socket
             if ((kif->kf_sock_domain == AF_INET) ||
-                    (kif->kf_sock_domain == AF_INET6)) {
+                (kif->kf_sock_domain == AF_INET6)) {
                 // fill status
                 state = PSUTIL_CONN_NONE;
                 if (kif->kf_sock_type == SOCK_STREAM) {
@@ -579,7 +584,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     py_laddr,
                     py_raddr,
                     state
-                );
+                    );
                 if (!py_tuple)
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
@@ -604,7 +609,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                     path,
                     Py_None,
                     PSUTIL_CONN_NONE
-                );
+                    );
                 if (!py_tuple)
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))

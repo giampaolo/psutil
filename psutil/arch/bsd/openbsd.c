@@ -28,12 +28,12 @@
 #include <netdb.h>  // for NI_MAXHOST
 #include <sys/socket.h>
 #include <sys/sched.h>  // for CPUSTATES & CP_*
-#define _KERNEL  // for DTYPE_*
+#define _KERNEL // for DTYPE_*
 #include <sys/file.h>
 #undef _KERNEL
 #include <sys/disk.h>  // struct diskstats
-#include <arpa/inet.h> // for inet_ntoa()
-#include <err.h> // for warn() & err()
+#include <arpa/inet.h>  // for inet_ntoa()
+#include <err.h>  // for warn() & err()
 
 
 #include "openbsd.h"
@@ -63,7 +63,7 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
     mib[4] = size;
     mib[5] = 1;
 
-    ret = sysctl((int*)mib, 6, proc, &size, NULL, 0);
+    ret = sysctl((int *)mib, 6, proc, &size, NULL, 0);
     if (ret == -1) {
         PyErr_SetFromErrno(PyExc_OSError);
         return -1;
@@ -78,16 +78,17 @@ psutil_kinfo_proc(pid_t pid, struct kinfo_proc *proc) {
 
 
 struct kinfo_file *
-kinfo_getfile(long pid, int* cnt) {
+kinfo_getfile(long pid, int *cnt) {
     // Mimic's FreeBSD kinfo_file call, taking a pid and a ptr to an
     // int as arg and returns an array with cnt struct kinfo_file.
     int mib[6];
     size_t len;
-    struct kinfo_file* kf;
+    struct kinfo_file *kf;
+
     mib[0] = CTL_KERN;
     mib[1] = KERN_FILE;
     mib[2] = KERN_FILE_BYPID;
-    mib[3] = (int) pid;
+    mib[3] = (int)pid;
     mib[4] = sizeof(struct kinfo_file);
     mib[5] = 0;
 
@@ -118,9 +119,10 @@ psutil_pid_exists(long pid) {
     // TODO: this should live in _psutil_posix.c but for some reason if I
     // move it there I get a "include undefined symbol" error.
     int ret;
+
     if (pid < 0)
         return 0;
-    ret = kill(pid , 0);
+    ret = kill(pid, 0);
     if (ret == 0)
         return 1;
     else {
@@ -176,7 +178,8 @@ psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount) {
         return errno;
     }
 
-    result = kvm_getprocs(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc), &cnt);
+    result = kvm_getprocs(kd, KERN_PROC_ALL, 0, sizeof(struct kinfo_proc),
+                          &cnt);
     if (result == NULL) {
         kvm_close(kd);
         err(1, NULL);
@@ -206,6 +209,7 @@ _psutil_get_argv(long pid) {
     static char **argv;
     int argv_mib[] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_ARGV};
     size_t argv_size = 128;
+
     /* Loop and reallocate until we have enough space to fit argv. */
     for (;; argv_size *= 2) {
         if ((argv = realloc(argv, argv_size)) == NULL)
@@ -275,11 +279,11 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
     kd = kvm_openfiles(0, 0, 0, O_RDONLY, errbuf);
-    if (! kd) {
+    if (!kd) {
         if (strstr(errbuf, "Permission denied") != NULL)
             AccessDenied();
         else
@@ -290,7 +294,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     kp = kvm_getprocs(
         kd, KERN_PROC_PID | KERN_PROC_SHOW_THREADS | KERN_PROC_KTHREAD, pid,
         sizeof(*kp), &nentries);
-    if (! kp) {
+    if (!kp) {
         if (strstr(errbuf, "Permission denied") != NULL)
             AccessDenied();
         else
@@ -365,19 +369,22 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
     }
 
     return Py_BuildValue("KKKKKKKK",
-        // Note: many programs calculate total memory as
-        // "uvmexp.npages * pagesize" but this is incorrect and does not
-        // match "sysctl | grep hw.physmem".
-        (unsigned long long) total_physmem,
-        (unsigned long long) uvmexp.free * pagesize,
-        (unsigned long long) uvmexp.active * pagesize,
-        (unsigned long long) uvmexp.inactive * pagesize,
-        (unsigned long long) uvmexp.wired * pagesize,
-        // this is how "top" determines it
-        (unsigned long long) bcstats.numbufpages * pagesize,  // cached
-        (unsigned long long) 0,  // buffers
-        (unsigned long long) vmdata.t_vmshr + vmdata.t_rmshr  // shared
-    );
+                         // Note: many programs calculate total memory as
+                         // "uvmexp.npages * pagesize" but this is incorrect
+                         // and does not
+                         // match "sysctl | grep hw.physmem".
+                         (unsigned long long)total_physmem,
+                         (unsigned long long)uvmexp.free * pagesize,
+                         (unsigned long long)uvmexp.active * pagesize,
+                         (unsigned long long)uvmexp.inactive * pagesize,
+                         (unsigned long long)uvmexp.wired * pagesize,
+                         // this is how "top" determines it
+                         (unsigned long long)bcstats.numbufpages * pagesize, //
+                                                                             // cached
+                         (unsigned long long)0, // buffers
+                         (unsigned long long)vmdata.t_vmshr + vmdata.t_rmshr //
+                                                                             // shared
+                         );
 }
 
 
@@ -435,7 +442,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     struct kinfo_file *freep;
     struct kinfo_proc kipp;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         return NULL;
@@ -460,12 +467,12 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     char path[MAXPATHLEN];
     size_t pathlen = sizeof path;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
 
-    int name[] = { CTL_KERN, KERN_PROC_CWD, pid };
+    int name[] = {CTL_KERN, KERN_PROC_CWD, pid};
     if (sysctl(name, 3, path, &pathlen, NULL, 0) != 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
@@ -483,14 +490,14 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
 static char *
 psutil_convert_ipv4(int family, uint32_t addr[4]) {
     struct in_addr a;
+
     memcpy(&a, addr, sizeof(a));
     return inet_ntoa(a);
 }
 
 
 static char *
-psutil_inet6_addrstr(struct in6_addr *p)
-{
+psutil_inet6_addrstr(struct in6_addr *p) {
     struct sockaddr_in6 sin6;
     static char hbuf[NI_MAXHOST];
     const int niflags = NI_NUMERICHOST;
@@ -507,7 +514,7 @@ psutil_inet6_addrstr(struct in6_addr *p)
     }
 
     if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
-        hbuf, sizeof(hbuf), NULL, 0, niflags))
+                    hbuf, sizeof(hbuf), NULL, 0, niflags))
         return "invalid";
 
     return hbuf;
@@ -534,9 +541,10 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
+    if (!PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
         goto error;
-    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
+    if (!PySequence_Check(py_af_filter) ||
+        !PySequence_Check(py_type_filter)) {
         PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
         goto error;
     }
@@ -745,6 +753,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
 
     PyObject *py_retdict = PyDict_New();
     PyObject *py_disk_info = NULL;
+
     if (py_retdict == NULL)
         return NULL;
 
@@ -764,7 +773,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
         PyErr_NoMemory();
         goto error;
     }
-    if (sysctl(mib, 2, stats, &len, NULL, 0) < 0 ) {
+    if (sysctl(mib, 2, stats, &len, NULL, 0) < 0) {
         warn("could not read hw.diskstats");
         PyErr_SetFromErrno(PyExc_OSError);
         goto error;
@@ -779,8 +788,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
             stats[i].ds_wbytes,
             // assume half read - half writes.
             // TODO: why?
-            (long long) PSUTIL_TV2DOUBLE(stats[i].ds_time) / 2,
-            (long long) PSUTIL_TV2DOUBLE(stats[i].ds_time) / 2);
+            (long long)PSUTIL_TV2DOUBLE(stats[i].ds_time) / 2,
+            (long long)PSUTIL_TV2DOUBLE(stats[i].ds_time) / 2);
         if (!py_disk_info)
             goto error;
         if (PyDict_SetItemString(py_retdict, stats[i].ds_name, py_disk_info))
@@ -798,4 +807,3 @@ error:
         free(stats);
     return NULL;
 }
-
