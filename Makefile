@@ -5,6 +5,7 @@
 # You can set these variables from the command line.
 PYTHON    = python
 TSCRIPT   = test/test_psutil.py
+UNCRUSTIFY = uncrustify
 
 all: test
 
@@ -102,6 +103,10 @@ pyflakes:
 
 flake8:
 	@git ls-files | grep \\.py$$ | xargs $(PYTHON) -m flake8
+
+# reformat C files
+uncrustify:
+	git ls-files | grep \\.c$$ | xargs uncrustify -c .uncrustify.cfg --replace --no-backup
 
 # Upload source tarball on https://pypi.python.org/pypi/psutil.
 upload-src: clean

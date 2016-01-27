@@ -36,6 +36,7 @@ Some useful make commands:
 - ``make test-memleaks``
 - ``make coverage``
 - ``make flake8``
+- ``make uncrustify``
 
 ====================
 Adding a new feature
