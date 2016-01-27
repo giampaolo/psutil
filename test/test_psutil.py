@@ -3454,7 +3454,9 @@ def main():
     elif WINDOWS:
         from _windows import WindowsSpecificTestCase as stc
         from _windows import TestDualProcessImplementation
+        from _windows import RemoteProcessTestCase
         tests.append(TestDualProcessImplementation)
+        tests.append(RemoteProcessTestCase)
     elif OSX:
         from _osx import OSXSpecificTestCase as stc
     elif SUNOS:

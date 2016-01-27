@@ -67,19 +67,6 @@ psutil_handle_from_pid(DWORD pid) {
 }
 
 
-// fetch the PEB base address from NtQueryInformationProcess()
-PVOID
-psutil_get_peb_address(HANDLE ProcessHandle) {
-    _NtQueryInformationProcess NtQueryInformationProcess =
-        (_NtQueryInformationProcess)GetProcAddress(
-            GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
-    PROCESS_BASIC_INFORMATION pbi;
-
-    NtQueryInformationProcess(ProcessHandle, 0, &pbi, sizeof(pbi), NULL);
-    return pbi.PebBaseAddress;
-}
-
-
 DWORD *
 psutil_get_pids(DWORD *numberOfReturnedPIDs) {
     // Win32 SDK says the only way to know if our process array
@@ -203,6 +190,124 @@ handlep_is_running(HANDLE hProcess) {
     return 0;
 }
 
+// Helper structures to access the memory correctly.  Some of these might also
+// be defined in the winternl.h header file but unfortunately not in a usable
+// way.
+
+// see http://msdn2.microsoft.com/en-us/library/aa489609.aspx
+#ifndef NT_SUCCESS
+#define NT_SUCCESS(Status) ((NTSTATUS)(Status) >= 0)
+#endif
+
+// http://msdn.microsoft.com/en-us/library/aa813741(VS.85).aspx
+typedef struct {
+    BYTE Reserved1[16];
+    PVOID Reserved2[5];
+    UNICODE_STRING CurrentDirectoryPath;
+    PVOID CurrentDirectoryHandle;
+    UNICODE_STRING DllPath;
+    UNICODE_STRING ImagePathName;
+    UNICODE_STRING CommandLine;
+    LPCWSTR env;
+} RTL_USER_PROCESS_PARAMETERS_, *PRTL_USER_PROCESS_PARAMETERS_;
+
+// https://msdn.microsoft.com/en-us/library/aa813706(v=vs.85).aspx
+#ifdef _WIN64
+typedef struct {
+    BYTE Reserved1[2];
+    BYTE BeingDebugged;
+    BYTE Reserved2[21];
+    PVOID LoaderData;
+    PRTL_USER_PROCESS_PARAMETERS_ ProcessParameters;
+    /* More fields ...  */
+} PEB_;
+#else
+typedef struct {
+    BYTE Reserved1[2];
+    BYTE BeingDebugged;
+    BYTE Reserved2[1];
+    PVOID Reserved3[2];
+    PVOID Ldr;
+    PRTL_USER_PROCESS_PARAMETERS_ ProcessParameters;
+    /* More fields ...  */
+} PEB_;
+#endif
+
+#ifdef _WIN64
+/* When we are a 64 bit process accessing a 32 bit (WoW64) process we need to
+   use the 32 bit structure layout. */
+typedef struct {
+    USHORT Length;
+    USHORT MaxLength;
+    DWORD Buffer;
+} UNICODE_STRING32;
+
+typedef struct {
+    BYTE Reserved1[16];
+    DWORD Reserved2[5];
+    UNICODE_STRING32 CurrentDirectoryPath;
+    DWORD CurrentDirectoryHandle;
+    UNICODE_STRING32 DllPath;
+    UNICODE_STRING32 ImagePathName;
+    UNICODE_STRING32 CommandLine;
+    DWORD env;
+} RTL_USER_PROCESS_PARAMETERS32;
+
+typedef struct {
+    BYTE Reserved1[2];
+    BYTE BeingDebugged;
+    BYTE Reserved2[1];
+    DWORD Reserved3[2];
+    DWORD Ldr;
+    DWORD ProcessParameters;
+    /* More fields ...  */
+} PEB32;
+#else
+/* When we are a 32 bit (WoW64) process accessing a 64 bit process we need to
+   use the 64 bit structure layout and a special function to read its memory.
+   */
+typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
+        IN HANDLE ProcessHandle,
+        IN PVOID64 BaseAddress,
+        OUT PVOID Buffer,
+        IN ULONG64 Size,
+        OUT PULONG64 NumberOfBytesRead);
+
+typedef struct {
+    PVOID Reserved1[2];
+    PVOID64 PebBaseAddress;
+    PVOID Reserved2[4];
+    PVOID UniqueProcessId[2];
+    PVOID Reserved3[2];
+} PROCESS_BASIC_INFORMATION64;
+
+typedef struct {
+    USHORT Length;
+    USHORT MaxLength;
+    PVOID64 Buffer;
+} UNICODE_STRING64;
+
+typedef struct {
+    BYTE Reserved1[16];
+    PVOID64 Reserved2[5];
+    UNICODE_STRING64 CurrentDirectoryPath;
+    PVOID64 CurrentDirectoryHandle;
+    UNICODE_STRING64 DllPath;
+    UNICODE_STRING64 ImagePathName;
+    UNICODE_STRING64 CommandLine;
+    PVOID64 env;
+} RTL_USER_PROCESS_PARAMETERS64;
+
+typedef struct {
+    BYTE Reserved1[2];
+    BYTE BeingDebugged;
+    BYTE Reserved2[21];
+    PVOID64 LoaderData;
+    PVOID64 ProcessParameters;
+    /* More fields ...  */
+} PEB64;
+#endif
+
 /* Get one or more parameters of the process with the given pid:
 
    pcmdline: the command line as a Python list
@@ -210,85 +315,311 @@ handlep_is_running(HANDLE hProcess) {
 
    On success 0 is returned.  On error the given output parameters are not
    touched, -1 is returned, and an appropriate Python exception is set. */
-static int psutil_get_parameters(long pid, PyObject **pcmdline, PyObject **pcwd) {
+static int psutil_get_parameters(long pid, PyObject **pcmdline,
+                                 PyObject **pcwd) {
+    /* This function is quite complex because there are several cases to be
+       considered:
+
+       Two cases are really simple:  we (i.e. the python interpreter) and the
+       target process are both 32 bit or both 64 bit.  In that case the memory
+       layout of the structures matches up and all is well.
+
+       When we are 64 bit and the target process is 32 bit we need to use
+       custom 32 bit versions of the structures.
+
+       When we are 32 bit and the target process is 64 bit we need to use
+       custom 64 bit version of the structures.  Also we need to use separate
+       Wow64 functions to get the information.
+
+       A few helper structs are defined above so that the compiler can handle
+       calculating the correct offsets.
+
+       Additional help also came from the following sources:
+
+         https://github.com/kohsuke/winp and
+         http://wj32.org/wp/2009/01/24/howto-get-the-command-line-of-processes/
+         http://stackoverflow.com/a/14012919
+         http://www.drdobbs.com/embracing-64-bit-windows/184401966
+     */
+    static _NtQueryInformationProcess NtQueryInformationProcess = NULL;
+#ifndef _WIN64
+    static _NtQueryInformationProcess NtWow64QueryInformationProcess64 = NULL;
+    static _NtWow64ReadVirtualMemory64 NtWow64ReadVirtualMemory64 = NULL;
+#endif
     int nArgs, i;
     LPWSTR *szArglist = NULL;
     HANDLE hProcess = NULL;
-    PVOID pebAddress;
-    PVOID rtlUserProcParamsAddress;
-    UNICODE_STRING commandLine;
     WCHAR *commandLineContents = NULL;
-    UNICODE_STRING currentDirectory;
     WCHAR *currentDirectoryContent = NULL;
+#ifdef _WIN64
+    LPVOID ppeb32 = NULL;
+#else
+    BOOL weAreWow64;
+    BOOL theyAreWow64;
+#endif
     PyObject *py_unicode = NULL;
     PyObject *py_retlist = NULL;
 
     hProcess = psutil_handle_from_pid(pid);
     if (hProcess == NULL)
         return -1;
-    pebAddress = psutil_get_peb_address(hProcess);
 
-    // get the address of ProcessParameters
+    if (NtQueryInformationProcess == NULL) {
+        NtQueryInformationProcess = (_NtQueryInformationProcess)GetProcAddress(
+                GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
+    }
+
 #ifdef _WIN64
-    if (!ReadProcessMemory(hProcess, (PCHAR)pebAddress + 32,
-                           &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
-#else
-    if (!ReadProcessMemory(hProcess, (PCHAR)pebAddress + 0x10,
-                           &rtlUserProcParamsAddress, sizeof(PVOID), NULL))
-#endif
-    {
-        if (GetLastError() == ERROR_PARTIAL_COPY) {
-            // this occurs quite often with system processes
-            AccessDenied();
-        }
-        else {
-            PyErr_SetFromWindowsErr(0);
-        }
+    /* 64 bit case.  Check if the target is a 32 bit process running in WoW64
+     * mode. */
+    if (!NT_SUCCESS(NtQueryInformationProcess(hProcess,
+                                              ProcessWow64Information,
+                                              &ppeb32,
+                                              sizeof(LPVOID),
+                                              NULL))) {
+        PyErr_SetFromWindowsErr(0);
         goto error;
+    }
+#else
+    /* 32 bit case.  Check if the target is also 32 bit. */
+    if (!IsWow64Process(GetCurrentProcess(), &weAreWow64) ||
+        !IsWow64Process(hProcess, &theyAreWow64)) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+#endif
+
+#ifdef _WIN64
+    if (ppeb32 != NULL) {
+        /* We are 64 bit.  Target process is 32 bit running in WoW64 mode. */
+        PEB32 peb32;
+        RTL_USER_PROCESS_PARAMETERS32 procParameters32;
+
+        // read PEB
+        if(!ReadProcessMemory(hProcess, ppeb32, &peb32, sizeof(peb32), NULL)) {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+
+        // read process parameters
+        if(!ReadProcessMemory(hProcess,
+                              UlongToPtr(peb32.ProcessParameters),
+                              &procParameters32,
+                              sizeof(procParameters32),
+                              NULL)) {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+
+        if (pcmdline != NULL) {
+            // read command line aguments
+            commandLineContents = 
+                calloc(procParameters32.CommandLine.Length + 2, 1);
+            if (commandLineContents == NULL) {
+                PyErr_NoMemory();
+                goto error;
+            }
+
+            if(!ReadProcessMemory(
+                        hProcess,
+                        UlongToPtr(procParameters32.CommandLine.Buffer),
+                        commandLineContents,
+                        procParameters32.CommandLine.Length,
+                        NULL)) {
+                PyErr_SetFromWindowsErr(0);
+                goto error;
+            }
+        }
+
+        if (pcwd != NULL) {
+            // read cwd
+            currentDirectoryContent =
+                calloc(procParameters32.CurrentDirectoryPath.Length + 2, 1);
+            if (currentDirectoryContent == NULL) {
+                PyErr_NoMemory();
+                goto error;
+            }
+
+            if (!ReadProcessMemory(
+                    hProcess,
+                    UlongToPtr(procParameters32.CurrentDirectoryPath.Buffer),
+                    currentDirectoryContent,
+                    procParameters32.CurrentDirectoryPath.Length,
+                    NULL)) {
+                PyErr_SetFromWindowsErr(0);
+                goto error;
+            }
+        }
+    } else
+#else
+    if (weAreWow64 && !theyAreWow64) {
+        /* We are 32 bit running in WoW64 mode.  Target process is 64 bit. */
+        PROCESS_BASIC_INFORMATION64 pbi64;
+        PEB64 peb64;
+        RTL_USER_PROCESS_PARAMETERS64 procParameters64;
+
+        if (NtWow64QueryInformationProcess64 == NULL) {
+            NtWow64QueryInformationProcess64 =
+                (_NtQueryInformationProcess)GetProcAddress(
+                    GetModuleHandleA("ntdll.dll"),
+                    "NtWow64QueryInformationProcess64");
+        }
+
+        if (!NT_SUCCESS(NtWow64QueryInformationProcess64(
+                        hProcess,
+                        ProcessBasicInformation,
+                        &pbi64,
+                        sizeof(pbi64),
+                        NULL))) {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+
+        // read peb
+        if (NtWow64ReadVirtualMemory64 == NULL) {
+            NtWow64ReadVirtualMemory64 =
+                (_NtWow64ReadVirtualMemory64)GetProcAddress(
+                        GetModuleHandleA("ntdll.dll"),
+                        "NtWow64ReadVirtualMemory64");
+        }
+
+        if (!NT_SUCCESS(NtWow64ReadVirtualMemory64(hProcess,
+                                                   pbi64.PebBaseAddress,
+                                                   &peb64,
+                                                   sizeof(peb64),
+                                                   NULL))) {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+
+        // read process parameters
+        if (!NT_SUCCESS(NtWow64ReadVirtualMemory64(hProcess,
+                                                   peb64.ProcessParameters,
+                                                   &procParameters64,
+                                                   sizeof(procParameters64),
+                                                   NULL))) {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+
+        if (pcmdline != NULL) {
+            // read command line aguments
+            commandLineContents =
+                calloc(procParameters64.CommandLine.Length + 2, 1);
+            if(!commandLineContents) {
+                PyErr_NoMemory();
+                goto error;
+            }
+
+            if (!NT_SUCCESS(NtWow64ReadVirtualMemory64(
+                            hProcess,
+                            procParameters64.CommandLine.Buffer,
+                            commandLineContents,
+                            procParameters64.CommandLine.Length,
+                            NULL))) {
+                PyErr_SetFromWindowsErr(0);
+                goto error;
+            }
+        }
+
+        if (pcwd != NULL) {
+            // read cwd
+            currentDirectoryContent =
+                calloc(procParameters64.CurrentDirectoryPath.Length + 2, 1);
+            if (!currentDirectoryContent) {
+                PyErr_NoMemory();
+                goto error;
+            }
+
+            if (!NT_SUCCESS(NtWow64ReadVirtualMemory64(
+                            hProcess,
+                            procParameters64.CurrentDirectoryPath.Buffer,
+                            currentDirectoryContent,
+                            procParameters64.CurrentDirectoryPath.Length,
+                            NULL))) {
+                PyErr_SetFromWindowsErr(0);
+                goto error;
+            }
+        }
+    } else
+#endif
+
+    /* Target process is of the same bitness as us. */
+    {
+        PROCESS_BASIC_INFORMATION pbi;
+        PEB_ peb;
+        RTL_USER_PROCESS_PARAMETERS_ procParameters;
+
+        if (!NT_SUCCESS(NtQueryInformationProcess(hProcess,
+                                                  ProcessBasicInformation,
+                                                  &pbi,
+                                                  sizeof(pbi),
+                                                  NULL))) {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+
+        // read peb
+        if(!ReadProcessMemory(hProcess,
+                              pbi.PebBaseAddress,
+                              &peb,
+                              sizeof(peb),
+                              NULL)) {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+
+        // read process parameters
+        if(!ReadProcessMemory(hProcess,
+                              peb.ProcessParameters,
+                              &procParameters,
+                              sizeof(procParameters),
+                              NULL)) {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+
+        if (pcmdline != NULL) {
+            // read command line aguments
+            commandLineContents =
+                calloc(procParameters.CommandLine.Length + 2, 1);
+            if(!commandLineContents) {
+                PyErr_NoMemory();
+                goto error;
+            }
+
+            if(!ReadProcessMemory(hProcess,
+                                  procParameters.CommandLine.Buffer,
+                                  commandLineContents,
+                                  procParameters.CommandLine.Length,
+                                  NULL)) {
+                PyErr_SetFromWindowsErr(0);
+                goto error;
+            }
+        }
+
+        if (pcwd != NULL) {
+            // read cwd
+            currentDirectoryContent =
+                calloc(procParameters.CurrentDirectoryPath.Length + 2, 1);
+            if (!currentDirectoryContent) {
+                PyErr_NoMemory();
+                goto error;
+            }
+
+            if (!ReadProcessMemory(hProcess,
+                                   procParameters.CurrentDirectoryPath.Buffer,
+                                   currentDirectoryContent,
+                                   procParameters.CurrentDirectoryPath.Length,
+                                   NULL)) {
+                PyErr_SetFromWindowsErr(0);
+                goto error;
+            }
+        }
     }
 
     if (pcmdline != NULL) {
-        // read the CommandLine UNICODE_STRING structure
-#ifdef _WIN64
-        if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 112,
-                               &commandLine, sizeof(commandLine), NULL))
-#else
-        if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 0x40,
-                               &commandLine, sizeof(commandLine), NULL))
-#endif
-        {
-            if (GetLastError() == ERROR_PARTIAL_COPY) {
-                // this occurs quite often with system processes
-                AccessDenied();
-            }
-            else {
-                PyErr_SetFromWindowsErr(0);
-            }
-            goto error;
-        }
-
-        // allocate memory to hold the command line
-        commandLineContents = (WCHAR *)malloc(commandLine.Length + 1);
-        if (commandLineContents == NULL) {
-            PyErr_NoMemory();
-            goto error;
-        }
-
-        // read the command line
-        if (!ReadProcessMemory(hProcess, commandLine.Buffer,
-                               commandLineContents, commandLine.Length, NULL))
-        {
-            PyErr_SetFromWindowsErr(0);
-            goto error;
-        }
-
-        // Null-terminate the string to prevent wcslen from returning
-        // incorrect length the length specifier is in characters, but
-        // commandLine.Length is in bytes.
-        commandLineContents[(commandLine.Length / sizeof(WCHAR))] = '\0';
-
-        // attempt to parse the command line using Win32 API, fall back
-        // on string cmdline version otherwise
+        // attempt to parse the command line using Win32 API
         szArglist = CommandLineToArgvW(commandLineContents, &nArgs);
         if (szArglist == NULL) {
             PyErr_SetFromWindowsErr(0);
@@ -320,60 +651,9 @@ static int psutil_get_parameters(long pid, PyObject **pcmdline, PyObject **pcwd)
     }
 
     if (pcwd != NULL) {
-        // Read the currentDirectory UNICODE_STRING structure.
-        // 0x24 refers to "CurrentDirectoryPath" of RTL_USER_PROCESS_PARAMETERS
-        // structure, see:
-        // http://wj32.wordpress.com/2009/01/24/
-        //     howto-get-the-command-line-of-processes/
-#ifdef _WIN64
-        if (!ReadProcessMemory(hProcess, (PCHAR)rtlUserProcParamsAddress + 56,
-                               &currentDirectory, sizeof(currentDirectory), NULL))
-#else
-        if (!ReadProcessMemory(hProcess,
-                               (PCHAR)rtlUserProcParamsAddress + 0x24,
-                               &currentDirectory, sizeof(currentDirectory), NULL))
-#endif
-        {
-            if (GetLastError() == ERROR_PARTIAL_COPY) {
-                // this occurs quite often with system processes
-                AccessDenied();
-            }
-            else {
-                PyErr_SetFromWindowsErr(0);
-            }
-            goto error;
-        }
-
-        // allocate memory to hold cwd
-        currentDirectoryContent = (WCHAR *)malloc(currentDirectory.Length + 1);
-        if (currentDirectoryContent == NULL) {
-            PyErr_NoMemory();
-            goto error;
-        }
-
-        // read cwd
-        if (!ReadProcessMemory(hProcess, currentDirectory.Buffer,
-                               currentDirectoryContent, currentDirectory.Length,
-                               NULL))
-        {
-            if (GetLastError() == ERROR_PARTIAL_COPY) {
-                // this occurs quite often with system processes
-                AccessDenied();
-            }
-            else {
-                PyErr_SetFromWindowsErr(0);
-            }
-            goto error;
-        }
-
-        // null-terminate the string to prevent wcslen from returning
-        // incorrect length the length specifier is in characters, but
-        // currentDirectory.Length is in bytes
-        currentDirectoryContent[(currentDirectory.Length / sizeof(WCHAR))] = '\0';
-
         // convert wchar array to a Python unicode string
-        py_unicode = PyUnicode_FromWideChar(
-            currentDirectoryContent, wcslen(currentDirectoryContent));
+        py_unicode = PyUnicode_FromWideChar(currentDirectoryContent,
+                                            wcslen(currentDirectoryContent));
         if (py_unicode == NULL)
             goto error;
         CloseHandle(hProcess);
