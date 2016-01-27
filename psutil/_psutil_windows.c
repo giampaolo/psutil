@@ -56,10 +56,12 @@ static int PSUTIL_CONN_NONE = 128;
 #define AF_INET6 23
 #endif
 #define _psutil_conn_decref_objs() \
-    Py_DECREF(_AF_INET); \
-    Py_DECREF(_AF_INET6);\
-    Py_DECREF(_SOCK_STREAM);\
-    Py_DECREF(_SOCK_DGRAM);
+    do { \
+        Py_DECREF(_AF_INET); \
+        Py_DECREF(_AF_INET6);\
+        Py_DECREF(_SOCK_STREAM);\
+        Py_DECREF(_SOCK_DGRAM);\
+    while (0)
 
 typedef BOOL (WINAPI *LPFN_GLPI)
     (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,  PDWORD);
