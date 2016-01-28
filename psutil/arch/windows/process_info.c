@@ -273,6 +273,18 @@ typedef NTSTATUS (NTAPI *_NtWow64ReadVirtualMemory64)(
         IN ULONG64 Size,
         OUT PULONG64 NumberOfBytesRead);
 
+typedef enum {
+    MemoryInformationBasic
+} MEMORY_INFORMATION_CLASS;
+
+typedef NTSTATUS (NTAPI *_NtWow64QueryVirtualMemory64)(
+    IN HANDLE ProcessHandle,
+    IN PVOID64 BaseAddress,
+    IN MEMORY_INFORMATION_CLASS MemoryInformationClass,
+    OUT PMEMORY_BASIC_INFORMATION64 MemoryInformation,
+    IN ULONG64 Size,
+    OUT PULONG64 ReturnLength OPTIONAL);
+
 typedef struct {
     PVOID Reserved1[2];
     PVOID64 PebBaseAddress;
@@ -308,9 +320,66 @@ typedef struct {
 } PEB64;
 #endif
 
+/* Given a pointer into a process's memory, figure out how much data can be
+ * read from it. */
+static int psutil_get_process_region_size(HANDLE hProcess,
+                                          LPCVOID src,
+                                          SIZE_T *psize) {
+    MEMORY_BASIC_INFORMATION info;
+
+    if (!VirtualQueryEx(hProcess, src, &info, sizeof(info))) {
+        PyErr_SetFromWindowsErr(0);
+        return -1;
+    }
+
+    *psize = info.RegionSize - ((char*)src - (char*)info.BaseAddress);
+    return 0;
+}
+
+
+#ifndef _WIN64
+/* Given a pointer into a process's memory, figure out how much data can be
+ * read from it. */
+static int psutil_get_process_region_size64(HANDLE hProcess,
+                                           const PVOID64 src64,
+                                           PULONG64 psize) {
+    static _NtWow64QueryVirtualMemory64 NtWow64QueryVirtualMemory64 = NULL;
+    MEMORY_BASIC_INFORMATION64 info64;
+
+    if (NtWow64QueryVirtualMemory64 == NULL) {
+        NtWow64QueryVirtualMemory64 =
+            (_NtWow64QueryVirtualMemory64)GetProcAddress(
+                    GetModuleHandleA("ntdll.dll"),
+                    "NtWow64QueryVirtualMemory64");
+
+        if (NtWow64QueryVirtualMemory64 == NULL) {
+            PyErr_SetString(PyExc_NotImplementedError,
+                    "NtWow64QueryVirtualMemory64 missing");
+            return -1;
+        }
+    }
+
+    if (!NT_SUCCESS(NtWow64QueryVirtualMemory64(
+                    hProcess,
+                    src64,
+                    0,
+                    &info64,
+                    sizeof(info64),
+                    NULL))) {
+        PyErr_SetFromWindowsErr(0);
+        return -1;
+    }
+
+    *psize = info64.RegionSize - ((char*)src64 - (char*)info64.BaseAddress);
+    return 0;
+}
+#endif
+
+
 enum psutil_process_data_kind {
     KIND_CMDLINE,
     KIND_CWD,
+    KIND_ENVIRON,
 };
 
 /* Get data from the process with the given pid.  The data is returned in the
@@ -321,7 +390,8 @@ enum psutil_process_data_kind {
    is returned, and an appropriate Python exception is set. */
 static int psutil_get_process_data(long pid,
                                    enum psutil_process_data_kind kind,
-                                   WCHAR **pdata) {
+                                   WCHAR **pdata,
+                                   SIZE_T *psize) {
     /* This function is quite complex because there are several cases to be
        considered:
 
@@ -414,6 +484,9 @@ static int psutil_get_process_data(long pid,
                 src = UlongToPtr(procParameters32.CurrentDirectoryPath.Buffer);
                 size = procParameters32.CurrentDirectoryPath.Length;
                 break;
+            case KIND_ENVIRON:
+                src = UlongToPtr(procParameters32.env);
+                break;
         }
     } else
 #else
@@ -433,8 +506,14 @@ static int psutil_get_process_data(long pid,
         if (NtWow64QueryInformationProcess64 == NULL) {
             NtWow64QueryInformationProcess64 =
                 (_NtQueryInformationProcess)GetProcAddress(
-                    GetModuleHandleA("ntdll.dll"),
-                    "NtWow64QueryInformationProcess64");
+                        GetModuleHandleA("ntdll.dll"),
+                        "NtWow64QueryInformationProcess64");
+
+            if (NtWow64QueryInformationProcess64 == NULL) {
+                PyErr_SetString(PyExc_NotImplementedError,
+                                "NtWow64QueryInformationProcess64 missing");
+                goto error;
+            }
         }
 
         if (!NT_SUCCESS(NtWow64QueryInformationProcess64(
@@ -453,6 +532,12 @@ static int psutil_get_process_data(long pid,
                 (_NtWow64ReadVirtualMemory64)GetProcAddress(
                         GetModuleHandleA("ntdll.dll"),
                         "NtWow64ReadVirtualMemory64");
+
+            if (NtWow64ReadVirtualMemory64 == NULL) {
+                PyErr_SetString(PyExc_NotImplementedError,
+                                "NtWow64ReadVirtualMemory64 missing");
+                goto error;
+            }
         }
 
         if (!NT_SUCCESS(NtWow64ReadVirtualMemory64(hProcess,
@@ -482,6 +567,9 @@ static int psutil_get_process_data(long pid,
             case KIND_CWD:
                 src64 = procParameters64.CurrentDirectoryPath.Buffer,
                 size = procParameters64.CurrentDirectoryPath.Length;
+                break;
+            case KIND_ENVIRON:
+                src64 = procParameters64.env;
                 break;
         }
     } else
@@ -531,7 +619,26 @@ static int psutil_get_process_data(long pid,
                 src = procParameters.CurrentDirectoryPath.Buffer;
                 size = procParameters.CurrentDirectoryPath.Length;
                 break;
+            case KIND_ENVIRON:
+                src = procParameters.env;
+                break;
         }
+    }
+
+    if (kind == KIND_ENVIRON) {
+#ifndef _WIN64
+        if (weAreWow64 && !theyAreWow64) {
+            ULONG64 size64;
+
+            if (psutil_get_process_region_size64(hProcess, src64, &size64) != 0)
+                goto error;
+
+            size = (SIZE_T)size64;
+        }
+        else
+#endif
+        if (psutil_get_process_region_size(hProcess, src, &size) != 0)
+            goto error;
     }
 
     buffer = calloc(size + 2, 1);
@@ -559,6 +666,7 @@ static int psutil_get_process_data(long pid,
     }
 
     *pdata = buffer;
+    *psize = size;
 
     return 0;
 
@@ -578,12 +686,13 @@ PyObject *
 psutil_get_cmdline(long pid) {
     PyObject *ret = NULL;
     WCHAR *data = NULL;
+    SIZE_T size;
     PyObject *py_retlist = NULL;
     PyObject *py_unicode = NULL;
     LPWSTR *szArglist = NULL;
     int nArgs, i;
 
-    if (psutil_get_process_data(pid, KIND_CMDLINE, &data) != 0)
+    if (psutil_get_process_data(pid, KIND_CMDLINE, &data, &size) != 0)
         goto out;
 
     // attempt to parse the command line using Win32 API
@@ -622,8 +731,9 @@ out:
 PyObject *psutil_get_cwd(long pid) {
     PyObject *ret = NULL;
     WCHAR *data = NULL;
+    SIZE_T size;
 
-    if (psutil_get_process_data(pid, KIND_CWD, &data) != 0)
+    if (psutil_get_process_data(pid, KIND_CWD, &data, &size) != 0)
         goto out;
 
     // convert wchar array to a Python unicode string
@@ -635,6 +745,26 @@ out:
     return ret;
 }
 
+/*
+ * returns a Python string containing the environment variable data for the
+ * process with given pid or NULL on error.
+ */
+PyObject *psutil_get_environ(long pid) {
+    PyObject *ret = NULL;
+    WCHAR *data = NULL;
+    SIZE_T size;
+
+    if (psutil_get_process_data(pid, KIND_ENVIRON, &data, &size) != 0)
+        goto out;
+
+    // convert wchar array to a Python unicode string
+    ret = PyUnicode_FromWideChar(data, size / 2);
+
+out:
+    free(data);
+
+    return ret;
+}
 
 #define PH_FIRST_PROCESS(Processes) ((PSYSTEM_PROCESS_INFORMATION)(Processes))
 #define PH_NEXT_PROCESS(Process) ( \
