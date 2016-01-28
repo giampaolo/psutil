@@ -526,8 +526,12 @@ class RemoteProcessTestCase(unittest.TestCase):
     test_args = ["-c", "import sys; sys.stdin.read()"]
 
     def setUp(self):
-        self.proc32 = get_test_subprocess([self.python32] + self.test_args)
-        self.proc64 = get_test_subprocess([self.python64] + self.test_args)
+        self.proc32 = get_test_subprocess([self.python32] + self.test_args,
+                                          env=env,
+                                          stdin=subprocess.PIPE)
+        self.proc64 = get_test_subprocess([self.python64] + self.test_args,
+                                          env=env,
+                                          stdin=subprocess.PIPE)
 
     def tearDown(self):
         self.proc32.communicate()
