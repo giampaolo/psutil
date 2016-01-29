@@ -288,6 +288,11 @@ def wrap_exceptions(fun):
                 raise AccessDenied(self.pid, self._name)
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._name)
+            if getattr(err, "winerror", 0) == cext.ERROR_PARTIAL_COPY:
+                if pid_exists(self.pid):
+                    raise AccessDenied(self.pid, self._name)
+                else:
+                    raise NoSuchProcess(self.pid, self._name)
             raise
     return wrapper
 
