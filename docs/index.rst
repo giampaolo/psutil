@@ -1012,6 +1012,8 @@ Process class
      +--------+---------+-------+---------+--------------------+
      |        |         |       |         | private            |
      +--------+---------+-------+---------+--------------------+
+     |        |         |       |         | uss                |
+     +--------+---------+-------+---------+--------------------+
 
      Windows metrics are extracted from
      `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure.

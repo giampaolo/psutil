@@ -26,6 +26,7 @@
 #pragma comment(lib, "IPHLPAPI.lib")
 
 #include "_psutil_windows.h"
+#include "_psutil_windows_uss.h"
 #include "_psutil_common.h"
 #include "arch/windows/security.h"
 #include "arch/windows/process_info.h"
@@ -670,6 +671,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
     PROCESS_MEMORY_COUNTERS cnt;
 #endif
     SIZE_T private = 0;
+    int64_t uss = 0;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -690,13 +692,15 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 
     CloseHandle(hProcess);
 
+    calc_uss(pid, &uss);
+
     // PROCESS_MEMORY_COUNTERS values are defined as SIZE_T which on 64bits
     // is an (unsigned long long) and on 32bits is an (unsigned int).
     // "_WIN64" is defined if we're running a 64bit Python interpreter not
     // exclusively if the *system* is 64bit.
 #if defined(_WIN64)
     return Py_BuildValue(
-        "(kKKKKKKKKK)",
+        "(kKKKKKKKKKK)",
         cnt.PageFaultCount,  // unsigned long
         (unsigned long long)cnt.PeakWorkingSetSize,
         (unsigned long long)cnt.WorkingSetSize,
@@ -706,10 +710,11 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         (unsigned long long)cnt.QuotaNonPagedPoolUsage,
         (unsigned long long)cnt.PagefileUsage,
         (unsigned long long)cnt.PeakPagefileUsage,
-        (unsigned long long)private);
+        (unsigned long long)private,
+        (unsigned long long)uss);
 #else
     return Py_BuildValue(
-        "(kIIIIIIIII)",
+        "(kIIIIIIIIIK)",
         cnt.PageFaultCount,    // unsigned long
         (unsigned int)cnt.PeakWorkingSetSize,
         (unsigned int)cnt.WorkingSetSize,
@@ -719,7 +724,8 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         (unsigned int)cnt.QuotaNonPagedPoolUsage,
         (unsigned int)cnt.PagefileUsage,
         (unsigned int)cnt.PeakPagefileUsage,
-        (unsigned int)private);
+        (unsigned int)private,
+        (unsigned long long)uss);
 #endif
 }
 
