@@ -7,9 +7,8 @@
 #ifndef _psutil_windows_uss_h
 #define _psutil_windows_uss_h
 
-#include <stdint.h>
 #include <windows.h>
 
-BOOL calc_uss(DWORD target, int64_t* aN);
+BOOL calc_uss(DWORD target, long long* aN);
 
 #endif

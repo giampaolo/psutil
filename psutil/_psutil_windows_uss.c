@@ -8,7 +8,7 @@
 #include <psapi.h>
 
 BOOL
-calc_uss(DWORD target, int64_t* aN)
+calc_uss(DWORD target, unsigned long long* aN)
 {
   BOOL result = FALSE;
   HANDLE proc;

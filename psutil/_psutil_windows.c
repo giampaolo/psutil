@@ -671,7 +671,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
     PROCESS_MEMORY_COUNTERS cnt;
 #endif
     SIZE_T private = 0;
-    int64_t uss = 0;
+    unsigned long long uss = 0;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -740,6 +740,7 @@ psutil_proc_memory_info_2(PyObject *self, PyObject *args) {
     PVOID buffer;
     SIZE_T private;
     unsigned long pfault_count;
+    unsigned long long uss = 0;
 
 #if defined(_WIN64)
     unsigned long long m1, m2, m3, m4, m5, m6, m7, m8;
@@ -770,16 +771,18 @@ psutil_proc_memory_info_2(PyObject *self, PyObject *args) {
 
     free(buffer);
 
+    calc_uss(pid, &uss);
+
     // SYSTEM_PROCESS_INFORMATION values are defined as SIZE_T which on 64
     // bits is an (unsigned long long) and on 32bits is an (unsigned int).
     // "_WIN64" is defined if we're running a 64bit Python interpreter not
     // exclusively if the *system* is 64bit.
 #if defined(_WIN64)
-    return Py_BuildValue("(kKKKKKKKKK)",
+    return Py_BuildValue("(kKKKKKKKKKK)",
 #else
-    return Py_BuildValue("(kIIIIIIIII)",
+    return Py_BuildValue("(kIIIIIIIIIK)",
 #endif
-        pfault_count, m1, m2, m3, m4, m5, m6, m7, m8, private);
+        pfault_count, m1, m2, m3, m4, m5, m6, m7, m8, private, uss);
 }
 
 
