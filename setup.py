@@ -71,7 +71,7 @@ if os.name == 'posix':
     posix_extension = Extension(
         'psutil._psutil_posix',
         sources=['psutil/_psutil_posix.c'])
-    if sys.platform.startswith("sunos"):
+    if sys.platform.startswith("sunos") or sys.platform.startswith("solaris"):
         posix_extension.libraries.append('socket')
         if platform.release() == '5.10':
             posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
@@ -202,7 +202,8 @@ elif sys.platform.startswith("linux"):
         define_macros=macros)
     extensions = [ext, posix_extension]
 # Solaris
-elif sys.platform.lower().startswith('sunos'):
+elif sys.platform.lower().startswith('sunos') or \
+        sys.platform.lower().startswith('solaris'):
     ext = Extension(
         'psutil._psutil_sunos',
         sources=['psutil/_psutil_sunos.c'],

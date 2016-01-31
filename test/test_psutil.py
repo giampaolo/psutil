@@ -117,7 +117,7 @@ FREEBSD = sys.platform.startswith("freebsd")
 OPENBSD = sys.platform.startswith("openbsd")
 NETBSD = sys.platform.startswith("netbsd")
 BSD = FREEBSD or OPENBSD or NETBSD
-SUNOS = sys.platform.startswith("sunos")
+SUNOS = sys.platform.startswith("sunos") or sys.platform.startswith("solaris")
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
 # whether we're running this test suite on Travis (https://travis-ci.org/)
