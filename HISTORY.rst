@@ -5,19 +5,19 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Enhancements**
 
-- #732: Process.environ()  (patch by Frank Benkstein)
+- #732: Process.environ().  (patch by Frank Benkstein)
 
 **Bug fixes**
 
+- #704: psutil does not compile on Solaris sparc.
 - #734: on Python 3 invalid UTF-8 data is not correctly handled for process
   name(), cwd(), exe(), cmdline() and open_files() methods resulting in
   UnicodeDecodeError exceptions. 'surrogateescape' error handler is now
   used as a workaround for replacing the corrupted data.
-- #741: [OpenBSD] fix compilation on mips64.
 - #737: [Windows] when the bitness of psutil and the target process was
   different cmdline() and cwd() could return a wrong result or incorrectly
   report an AccessDenied error.
-- #704: psutil does not compile/cannot be imported on solaris sparc
+- #741: [OpenBSD] psutil does not compile on mips64.
 
 
 3.4.2 - 2016-01-20
