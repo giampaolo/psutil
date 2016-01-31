@@ -1795,11 +1795,12 @@ class TestProcess(unittest.TestCase):
         sproc = get_test_subprocess(cmdline)
         p = psutil.Process(sproc.pid)
         # ...in order to try to prevent occasional failures on travis
-        wait_for_pid(p.pid)
-        normcase = os.path.normcase
-        self.assertEqual(p.name(), os.path.basename(funky_path))
-        self.assertEqual(normcase(p.exe()), normcase(funky_path))
+        if TRAVIS:
+            wait_for_pid(p.pid)
         self.assertEqual(p.cmdline(), cmdline)
+        self.assertEqual(p.name(), os.path.basename(funky_path))
+        self.assertEqual(os.path.normcase(p.exe()),
+                         os.path.normcase(funky_path))
 
     @unittest.skipUnless(POSIX, 'posix only')
     def test_uids(self):

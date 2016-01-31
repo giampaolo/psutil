@@ -245,13 +245,12 @@ class ZombieProcess(NoSuchProcess):
         self.name = name
         self.msg = msg
         if msg is None:
-            if name and ppid:
-                details = "(pid=%s, name=%s, ppid=%s)" % (
-                    self.pid, repr(self.name), self.ppid)
-            elif name:
-                details = "(pid=%s, name=%s)" % (self.pid, repr(self.name))
-            else:
-                details = "(pid=%s)" % self.pid
+            args = ["pid=%s" % pid]
+            if name:
+                args.append("name=%s" % repr(self.name))
+            if ppid:
+                args.append("ppid=%s" % self.ppid)
+            details = "(%s)" % ", ".join(args)
             self.msg = "process still exists but it's a zombie " + details
 
 
