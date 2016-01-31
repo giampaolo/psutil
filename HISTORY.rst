@@ -17,6 +17,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #737: [Windows] when the bitness of psutil and the target process was
   different cmdline() and cwd() could return a wrong result or incorrectly
   report an AccessDenied error.
+- #704: psutil does not compile/cannot be imported on solaris sparc
 
 
 3.4.2 - 2016-01-20

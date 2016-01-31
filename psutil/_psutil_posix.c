@@ -16,7 +16,7 @@
 #include <net/if.h>
 
 #ifdef PSUTIL_SUNOS10
-#include "arch/solaris10/ifaddrs.h"
+#include "arch/solaris/v10/ifaddrs.h"
 #else
 #include <ifaddrs.h>
 #endif
