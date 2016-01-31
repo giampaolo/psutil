@@ -120,13 +120,26 @@ psutil_proc_name_and_args(PyObject *self, PyObject *args) {
     char path[1000];
     psinfo_t info;
     const char *procfs_path;
+    PyObject *py_name;
+    PyObject *py_args;
 
     if (! PyArg_ParseTuple(args, "is", &pid, &procfs_path))
         return NULL;
     sprintf(path, "%s/%i/psinfo", procfs_path, pid);
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
+
+#if PY_MAJOR_VERSION >= 3
+    py_name = PyUnicode_DecodeFSDefault(info.pr_fname);
+    if (!py_name)
+        return NULL;
+    py_args = PyUnicode_DecodeFSDefault(info.pr_psargs);
+    if (!py_args)
+        return NULL;
+    return Py_BuildValue("OO", py_name, py_args);
+#else
     return Py_BuildValue("ss", info.pr_fname, info.pr_psargs);
+#endif
 }
 
 
