@@ -405,7 +405,7 @@ class Process(object):
     def memory_info(self):
         ret = cext.proc_basic_info(self.pid, self._procfs_path)
         rss, vms = ret[1] * 1024, ret[2] * 1024
-        return _common.pmem(rss, vms)
+        return pmem(rss, vms)
 
     memory_full_info = memory_info
 
