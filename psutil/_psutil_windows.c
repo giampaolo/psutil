@@ -592,6 +592,29 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
 
 /*
+ * Return process cmdline as a Python list of cmdline arguments.
+ */
+static PyObject *
+psutil_proc_environ(PyObject *self, PyObject *args) {
+    long pid;
+    int pid_return;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if ((pid == 0) || (pid == 4))
+        return Py_BuildValue("s", "");
+
+    pid_return = psutil_pid_is_running(pid);
+    if (pid_return == 0)
+        return NoSuchProcess();
+    if (pid_return == -1)
+        return NULL;
+
+    return psutil_get_environ(pid);
+}
+
+
+/*
  * Return process executable path.
  */
 static PyObject *
@@ -2991,6 +3014,8 @@ PsutilMethods[] = {
 
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
      "Return process cmdline as a list of cmdline arguments"},
+    {"proc_environ", psutil_proc_environ, METH_VARARGS,
+     "Return process environment data"},
     {"proc_exe", psutil_proc_exe, METH_VARARGS,
      "Return path of the process executable"},
     {"proc_name", psutil_proc_name, METH_VARARGS,
@@ -3204,6 +3229,8 @@ void init_psutil_windows(void)
         module, "INFINITE", INFINITE);
     PyModule_AddIntConstant(
         module, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED);
+    PyModule_AddIntConstant(
+        module, "ERROR_PARTIAL_COPY", ERROR_PARTIAL_COPY);
 
     // set SeDebug for the current process
     psutil_set_se_debug();

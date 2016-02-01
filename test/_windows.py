@@ -526,8 +526,14 @@ class RemoteProcessTestCase(unittest.TestCase):
     test_args = ["-c", "import sys; sys.stdin.read()"]
 
     def setUp(self):
-        self.proc32 = get_test_subprocess([self.python32] + self.test_args)
-        self.proc64 = get_test_subprocess([self.python64] + self.test_args)
+        env = os.environ.copy()
+        env["THINK_OF_A_NUMBER"] = str(os.getpid())
+        self.proc32 = get_test_subprocess([self.python32] + self.test_args,
+                                          env=env,
+                                          stdin=subprocess.PIPE)
+        self.proc64 = get_test_subprocess([self.python64] + self.test_args,
+                                          env=env,
+                                          stdin=subprocess.PIPE)
 
     def tearDown(self):
         self.proc32.communicate()
@@ -555,6 +561,18 @@ class RemoteProcessTestCase(unittest.TestCase):
     def test_cwd_64(self):
         p = psutil.Process(self.proc64.pid)
         self.assertEqual(p.cwd(), os.getcwd())
+
+    def test_environ_32(self):
+        p = psutil.Process(self.proc32.pid)
+        e = p.environ()
+        self.assertIn("THINK_OF_A_NUMBER", e)
+        self.assertEquals(e["THINK_OF_A_NUMBER"], str(os.getpid()))
+
+    def test_environ_64(self):
+        p = psutil.Process(self.proc64.pid)
+        e = p.environ()
+        self.assertIn("THINK_OF_A_NUMBER", e)
+        self.assertEquals(e["THINK_OF_A_NUMBER"], str(os.getpid()))
 
 
 def main():

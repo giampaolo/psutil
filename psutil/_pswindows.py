@@ -14,6 +14,7 @@ from . import _common
 from . import _psutil_windows as cext
 from ._common import conn_tmap
 from ._common import isfile_strict
+from ._common import parse_environ_block
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
@@ -288,6 +289,11 @@ def wrap_exceptions(fun):
                 raise AccessDenied(self.pid, self._name)
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._name)
+            if getattr(err, "winerror", 0) == cext.ERROR_PARTIAL_COPY:
+                if pid_exists(self.pid):
+                    raise AccessDenied(self.pid, self._name)
+                else:
+                    raise NoSuchProcess(self.pid, self._name)
             raise
     return wrapper
 
@@ -340,6 +346,10 @@ class Process(object):
             return ret
         else:
             return [py2_strencode(s) for s in ret]
+
+    @wrap_exceptions
+    def environ(self):
+        return parse_environ_block(cext.proc_environ(self.pid))
 
     def ppid(self):
         try:

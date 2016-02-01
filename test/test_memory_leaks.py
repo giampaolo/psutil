@@ -323,7 +323,7 @@ class TestProcessObjectLeaks(Base):
                 s.close()
 
     @unittest.skipUnless(hasattr(psutil.Process, 'environ'),
-                         "Linux and OSX")
+                         "Linux, OSX and Windows")
     def test_environ(self):
         self.execute("environ")
 

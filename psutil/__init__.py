@@ -743,7 +743,7 @@ class Process(object):
             else:
                 self._proc.cpu_affinity_set(list(set(cpus)))
 
-    # Linux and OSX only
+    # Linux, OSX and Windows only
     if hasattr(_psplatform.Process, "environ"):
         def environ(self):
             """The environment variables of the process as a dict.  Note: this

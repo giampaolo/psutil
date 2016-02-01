@@ -20,6 +20,7 @@ int psutil_pid_in_proclist(DWORD pid);
 int psutil_pid_is_running(DWORD pid);
 PyObject* psutil_get_cmdline(long pid);
 PyObject* psutil_get_cwd(long pid);
+PyObject* psutil_get_environ(long pid);
 int psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
                          PVOID *retBuffer);
 
