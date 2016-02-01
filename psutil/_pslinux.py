@@ -998,8 +998,8 @@ class Process(object):
             """
             with open_text("%s/%s/smaps" % (self._procfs_path, self.pid),
                            buffering=BIGGER_FILE_BUFFERING) as f:
-                private = [x.split()[1] for x in f if x.startswith('Private')]
-                return sum(map(int, private)) * 1024
+                p = re.compile(r"Private.*:\s+(\d+)")
+                return sum(map(int, p.findall(f.read()))) * 1024
 
         @wrap_exceptions
         def memory_maps(self):
