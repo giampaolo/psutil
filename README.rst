@@ -285,6 +285,10 @@ Process management
     >>> p.rlimit(psutil.RLIMIT_NOFILE)
     (5, 5)
     >>>
+    >>> p.environ()
+    {'LC_PAPER': 'it_IT.UTF-8', 'SHELL': '/bin/bash', 'GREP_OPTIONS': '--color=auto',
+    'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/usr/share/upstart/xdg:/etc/xdg', 'COLORTERM': 'gnome-terminal', ...}
+    >>>
     >>> p.suspend()
     >>> p.resume()
     >>>

@@ -698,9 +698,9 @@ Process class
      The environment variables of the process as a dict.  Note: this might not
      reflect changes made after the process started.
 
-     Availability: Linux, OSX
+     Availability: Linux, OSX, Windows
 
-     .. versionchanged: 3.4.3: added
+     .. versionadded:: 3.5.0
 
   .. method:: create_time()
 
