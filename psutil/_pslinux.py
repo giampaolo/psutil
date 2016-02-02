@@ -180,13 +180,13 @@ def readlink(path):
 
 
 def file_flags_to_mode(flags):
-    md = {os.O_RDONLY: 'r', os.O_WRONLY: 'w', os.O_RDWR: 'w+'}
-    m = md[flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)]
+    modes_map = {os.O_RDONLY: 'r', os.O_WRONLY: 'w', os.O_RDWR: 'w+'}
+    mode = modes_map[flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)]
     if flags & os.O_APPEND:
-        m = m.replace('w', 'a', 1)
-    m = m.replace('w+', 'r+')
+        mode = mode.replace('w', 'a', 1)
+    mode = mode.replace('w+', 'r+')
     # possible values: r, w, a, r+, a+
-    return m
+    return mode
 
 
 def get_sector_size():
@@ -251,7 +251,6 @@ popenfile = namedtuple('popenfile',
                        ['path', 'fd', 'position', 'mode', 'flags'])
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
-
 pmmap_grouped = namedtuple(
     'pmmap_grouped', ['path', 'rss', 'size', 'pss', 'shared_clean',
                       'shared_dirty', 'private_clean', 'private_dirty',
@@ -989,7 +988,9 @@ class Process(object):
         values = st.split(b' ')
         utime = float(values[11]) / CLOCK_TICKS
         stime = float(values[12]) / CLOCK_TICKS
-        return _common.pcputimes(utime, stime)
+        children_utime = float(values[13]) / CLOCK_TICKS
+        children_stime = float(values[14]) / CLOCK_TICKS
+        return _common.pcputimes(utime, stime, children_utime, children_stime)
 
     @wrap_exceptions
     def wait(self, timeout=None):

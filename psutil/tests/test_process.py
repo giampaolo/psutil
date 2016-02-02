@@ -65,6 +65,7 @@ from psutil.tests import get_test_subprocess
 from psutil.tests import get_winver
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import pyrun
+from psutil.tests import PYPY
 from psutil.tests import PYTHON
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
@@ -267,9 +268,11 @@ class TestProcess(unittest.TestCase):
     def test_cpu_times(self):
         times = psutil.Process().cpu_times()
         assert (times.user > 0.0) or (times.system > 0.0), times
+        assert (times.children_user >= 0.0), times
+        assert (times.children_system >= 0.0), times
         # make sure returned values can be pretty printed with strftime
-        time.strftime("%H:%M:%S", time.localtime(times.user))
-        time.strftime("%H:%M:%S", time.localtime(times.system))
+        for name in times._fields:
+            time.strftime("%H:%M:%S", time.localtime(getattr(times, name)))
 
     # Test Process.cpu_times() against os.times()
     # os.times() is broken on Python 2.6
@@ -279,8 +282,8 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipUnless(sys.version_info > (2, 6, 1) and not OSX,
                          'os.times() is not reliable on this Python version')
-    def test_cpu_times2(self):
-        user_time, kernel_time = psutil.Process().cpu_times()
+    def test_cpu_times_2(self):
+        user_time, kernel_time = psutil.Process().cpu_times()[:2]
         utime, ktime = os.times()[:2]
 
         # Use os.times()[:2] as base values to compare our results
@@ -423,6 +426,11 @@ class TestProcess(unittest.TestCase):
             self.assertGreaterEqual(value, 0)
             if name in dir(resource):
                 self.assertEqual(value, getattr(resource, name))
+                # XXX - On PyPy RLIMIT_INFINITY returned by
+                # resource.getrlimit() is reported as a very big long
+                # number instead of -1. It looks like a bug with PyPy.
+                if PYPY:
+                    continue
                 self.assertEqual(p.rlimit(value), resource.getrlimit(value))
             else:
                 ret = p.rlimit(value)

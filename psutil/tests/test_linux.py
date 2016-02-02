@@ -33,6 +33,7 @@ from psutil.tests import call_until
 from psutil.tests import get_kernel_version
 from psutil.tests import importlib
 from psutil.tests import MEMORY_TOLERANCE
+from psutil.tests import PYPY
 from psutil.tests import pyrun
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
@@ -331,6 +332,53 @@ class TestSystemNetwork(unittest.TestCase):
                 elif addr.family == socket.AF_INET:
                     self.assertEqual(addr.address, get_ipv4_address(name))
                 # TODO: test for AF_INET6 family
+
+    def test_net_if_stats(self):
+        for name, stats in psutil.net_if_stats().items():
+            try:
+                out = sh("ifconfig %s" % name)
+            except RuntimeError:
+                pass
+            else:
+                self.assertEqual(stats.isup, 'RUNNING' in out)
+                self.assertEqual(stats.mtu,
+                                 int(re.findall('MTU:(\d+)', out)[0]))
+
+    def test_net_io_counters(self):
+        def ifconfig(nic):
+            ret = {}
+            out = sh("ifconfig %s" % name)
+            ret['packets_recv'] = int(re.findall('RX packets:(\d+)', out)[0])
+            ret['packets_sent'] = int(re.findall('TX packets:(\d+)', out)[0])
+            ret['errin'] = int(re.findall('errors:(\d+)', out)[0])
+            ret['errout'] = int(re.findall('errors:(\d+)', out)[1])
+            ret['dropin'] = int(re.findall('dropped:(\d+)', out)[0])
+            ret['dropout'] = int(re.findall('dropped:(\d+)', out)[1])
+            ret['bytes_recv'] = int(re.findall('RX bytes:(\d+)', out)[0])
+            ret['bytes_sent'] = int(re.findall('TX bytes:(\d+)', out)[0])
+            return ret
+
+        for name, stats in psutil.net_io_counters(pernic=True).items():
+            try:
+                ifconfig_ret = ifconfig(name)
+            except RuntimeError:
+                continue
+            self.assertAlmostEqual(
+                stats.bytes_recv, ifconfig_ret['bytes_recv'], delta=1024)
+            self.assertAlmostEqual(
+                stats.bytes_sent, ifconfig_ret['bytes_sent'], delta=1024)
+            self.assertAlmostEqual(
+                stats.packets_recv, ifconfig_ret['packets_recv'], delta=512)
+            self.assertAlmostEqual(
+                stats.packets_sent, ifconfig_ret['packets_sent'], delta=512)
+            self.assertAlmostEqual(
+                stats.errin, ifconfig_ret['errin'], delta=10)
+            self.assertAlmostEqual(
+                stats.errout, ifconfig_ret['errout'], delta=10)
+            self.assertAlmostEqual(
+                stats.dropin, ifconfig_ret['dropin'], delta=10)
+            self.assertAlmostEqual(
+                stats.dropout, ifconfig_ret['dropout'], delta=10)
 
     @unittest.skipUnless(which('ip'), "'ip' utility not available")
     @unittest.skipIf(TRAVIS, "skipped on Travis")
@@ -764,13 +812,16 @@ class TestProcess(unittest.TestCase):
         time.sleep(.1)
         mem = p.memory_full_info()
         maps = p.memory_maps(grouped=False)
-        self.assertEqual(
-            mem.uss, sum([x.private_dirty + x.private_clean for x in maps]))
-        self.assertEqual(
-            mem.pss, sum([x.pss for x in maps]))
-        self.assertEqual(
-            mem.swap, sum([x.swap for x in maps]))
+        self.assertAlmostEqual(
+            mem.uss, sum([x.private_dirty + x.private_clean for x in maps]),
+            delta=4096)
+        self.assertAlmostEqual(
+            mem.pss, sum([x.pss for x in maps]), delta=4096)
+        self.assertAlmostEqual(
+            mem.swap, sum([x.swap for x in maps]), delta=4096)
 
+    # On PYPY file descriptors are not closed fast enough.
+    @unittest.skipIf(PYPY, "skipped on PYPY")
     def test_open_files_mode(self):
         def get_test_file():
             p = psutil.Process()

@@ -100,6 +100,8 @@ scputimes = namedtuple(
     'scputimes', ['user', 'nice', 'system', 'idle', 'irq'])
 pmem = namedtuple('pmem', ['rss', 'vms', 'text', 'data', 'stack'])
 pfullmem = pmem
+pcputimes = namedtuple('pcputimes',
+                       ['user', 'system', 'children_user', 'children_system'])
 pmmap_grouped = namedtuple(
     'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
 pmmap_ext = namedtuple(
@@ -124,6 +126,15 @@ def virtual_memory():
     """System virtual memory as a namedtuple."""
     mem = cext.virtual_mem()
     total, free, active, inactive, wired, cached, buffers, shared = mem
+    if NETBSD:
+        # On NetBSD buffers and shared mem is determined via /proc.
+        # The C ext set them to 0.
+        with open('/proc/meminfo', 'rb') as f:
+            for line in f:
+                if line.startswith("Buffers:"):
+                    buffers = int(line.split()[1]) * 1024
+                elif line.startswith("MemShared:"):
+                    shared = int(line.split()[1]) * 1024
     avail = inactive + cached + free
     used = active + wired + cached
     percent = usage_percent((total - avail), total, _round=1)
@@ -436,8 +447,7 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        user, system = cext.proc_cpu_times(self.pid)
-        return _common.pcputimes(user, system)
+        return _common.pcputimes(*cext.proc_cpu_times(self.pid))
 
     @wrap_exceptions
     def memory_info(self):

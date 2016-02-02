@@ -31,7 +31,7 @@ from psutil import WINDOWS
 from psutil._compat import long
 from psutil.tests import AF_INET6
 from psutil.tests import APPVEYOR
-from psutil.tests import check_ip_address
+from psutil.tests import check_net_address
 from psutil.tests import DEVNULL
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
@@ -568,7 +568,7 @@ class TestSystemAPIs(unittest.TestCase):
                         # AddressValueError: Only hex digits permitted in
                         # u'c6f3%lxcbr0' in u'fe80::c8e0:fff:fe54:c6f3%lxcbr0'
                         if addr.family != AF_INET6:
-                            check_ip_address(ip, addr.family)
+                            check_net_address(ip, addr.family)
                 # broadcast and ptp addresses are mutually exclusive
                 if addr.broadcast:
                     self.assertIsNone(addr.ptp)
@@ -582,6 +582,23 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(psutil.AF_LINK, socket.AF_PACKET)
         elif WINDOWS:
             self.assertEqual(psutil.AF_LINK, -1)
+
+    def test_net_if_addrs_mac_null_bytes(self):
+        # Simulate that the underlying C function returns an incomplete
+        # MAC address. psutil is supposed to fill it with null bytes.
+        # https://github.com/giampaolo/psutil/issues/786
+        if POSIX:
+            ret = [('em1', psutil.AF_LINK, '06:3d:29', None, None, None)]
+        else:
+            ret = [('em1', -1, '06-3d-29', None, None, None)]
+        with mock.patch('psutil._psplatform.net_if_addrs',
+                        return_value=ret) as m:
+            addr = psutil.net_if_addrs()['em1'][0]
+            assert m.called
+            if POSIX:
+                self.assertEqual(addr.address, '06:3d:29:00:00:00')
+            else:
+                self.assertEqual(addr.address, '06-3d-29-00-00-00')
 
     @unittest.skipIf(TRAVIS, "EPERM on travis")
     def test_net_if_stats(self):

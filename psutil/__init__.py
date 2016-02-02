@@ -960,9 +960,12 @@ class Process(object):
             return round(overall_percent, 1)
 
     def cpu_times(self):
-        """Return a (user, system) namedtuple representing  the
-        accumulated process time, in seconds.
-        This is the same as os.times() but per-process.
+        """Return a (user, system, children_user, children_system)
+        namedtuple representing the accumulated process time, in
+        seconds.
+        This is similar to os.times() but per-process.
+        On OSX and Windows children_user and children_system are
+        always set to 0.
         """
         return self._proc.cpu_times()
 
@@ -1911,6 +1914,13 @@ def net_if_addrs():
                     # We re-set the family here so that repr(family)
                     # will show AF_LINK rather than AF_PACKET
                     fam = _psplatform.AF_LINK
+        if fam == _psplatform.AF_LINK:
+            # The underlying C function may return an incomplete MAC
+            # address in which case we fill it with null bytes, see:
+            # https://github.com/giampaolo/psutil/issues/786
+            separator = ":" if POSIX else "-"
+            while addr.count(separator) < 5:
+                addr += "%s00" % separator
         ret[name].append(_common.snic(fam, addr, mask, broadcast, ptp))
     return dict(ret)
 

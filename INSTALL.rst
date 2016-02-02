@@ -69,13 +69,16 @@ Once done, you can build/install psutil with::
     $ python setup.py install
 
 
-==================
-Installing on OS X
-==================
+=================
+Installing on OSX
+=================
 
-OS X installation from source will require gcc which you can obtain as part of
-the 'XcodeTools' installer from Apple. Then you can run the standard distutils
-commands.
+OSX installation from source will require gcc which you can obtain as part of
+the 'XcodeTools' installer from Apple:
+
+https://developer.apple.com/downloads/?name=Xcode
+
+Once you have installed XCode you can run the standard distutils commands.
 To build only::
 
     $ python setup.py build
