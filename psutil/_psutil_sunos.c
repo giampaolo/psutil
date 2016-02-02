@@ -159,9 +159,13 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     if (! psutil_file_to_struct(path, (void *)&info, sizeof(info)))
         return NULL;
     // results are more precise than os.times()
-    return Py_BuildValue("dd",
-                         PSUTIL_TV2DOUBLE(info.pr_utime),
-                         PSUTIL_TV2DOUBLE(info.pr_stime));
+    return Py_BuildValue(
+        "(dddd)",
+         PSUTIL_TV2DOUBLE(info.pr_utime),
+         PSUTIL_TV2DOUBLE(info.pr_stime),
+         PSUTIL_TV2DOUBLE(info.pr_cutime),
+         PSUTIL_TV2DOUBLE(info.pr_cstime)
+    );
 }
 
 

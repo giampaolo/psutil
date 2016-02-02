@@ -267,7 +267,7 @@ class TestProcess(unittest.TestCase):
     def test_cpu_times(self):
         times = psutil.Process().cpu_times()
         assert (times.user > 0.0) or (times.system > 0.0), times
-        if LINUX:
+        if LINUX or BSD or SUNOS:
             assert (times.children_user >= 0.0), times
             assert (times.children_system >= 0.0), times
         # make sure returned values can be pretty printed with strftime
