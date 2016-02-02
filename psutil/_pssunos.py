@@ -61,6 +61,7 @@ TCP_STATUSES = {
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 pmem = namedtuple('pmem', ['rss', 'vms'])
+pfullmem = pmem
 pmmap_grouped = namedtuple('pmmap_grouped',
                            ['path', 'rss', 'anonymous', 'locked'])
 pmmap_ext = namedtuple(
