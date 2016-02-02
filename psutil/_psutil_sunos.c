@@ -1277,6 +1277,50 @@ error:
 
 
 /*
+ * Return CPU statistics.
+ */
+static PyObject *
+psutil_cpu_stats(PyObject *self, PyObject *args) {
+    kstat_ctl_t *kc;
+    kstat_t *ksp;
+    cpu_stat_t cs;
+    unsigned int ctx_switches = 0;
+    unsigned int interrupts = 0;
+    unsigned int traps = 0;
+    unsigned int syscalls = 0;
+
+    kc = kstat_open();
+    if (kc == NULL) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        goto error;
+    }
+
+    for (ksp = kc->kc_chain; ksp != NULL; ksp = ksp->ks_next) {
+        if (strcmp(ksp->ks_module, "cpu_stat") == 0) {
+            if (kstat_read(kc, ksp, &cs) == -1) {
+                PyErr_SetFromErrno(PyExc_OSError);
+                goto error;
+            }
+            // voluntary + involuntary
+            ctx_switches += cs.cpu_sysinfo.pswitch + cs.cpu_sysinfo.inv_swtch;
+            interrupts += cs.cpu_sysinfo.intr;
+            traps += cs.cpu_sysinfo.trap;
+            syscalls += cs.cpu_sysinfo.syscall;
+        }
+    }
+
+    kstat_close(kc);
+    return Py_BuildValue(
+        "IIII", ctx_switches, interrupts, syscalls, traps);
+
+error:
+    if (kc != NULL)
+        kstat_close(kc);
+    return NULL;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -1319,6 +1363,8 @@ PsutilMethods[] = {
      "Return TCP and UDP syste-wide open connections."},
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
      "Return NIC stats (isup, duplex, speed, mtu)"},
+    {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
+     "Return CPU statistics"},
 
     {NULL, NULL, 0, NULL}
 };

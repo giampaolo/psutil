@@ -160,13 +160,13 @@ CPU
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
      | Linux           |  OSX            | Windows      | FreeBSD         | OpenBSD         | NetBSD          | SunOS        |
      +=================+=================+==============+=================+=================+=================+==============+
-     | ctx_switches    | ctx_switches    |              | ctx_switches    | ctx_switches    | ctx_switches    |              |
+     | ctx_switches    | ctx_switches    |              | ctx_switches    | ctx_switches    | ctx_switches    | ctx_switches |
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     | interrupts      | interrupts      |              | interrupts      | interrupts      | interrupts      |              |
+     | interrupts      | interrupts      |              | interrupts      | interrupts      | interrupts      | interrupts   |
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     | soft_interrupts | soft_interrupts |              | soft_interrupts | soft_interrupts | soft_interrupts |              |
+     | soft_interrupts | soft_interrupts |              | soft_interrupts | soft_interrupts | soft_interrupts | syscalls     |
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     | procs_running   | syscalls        |              | syscalls        | syscalls        | syscalls        |              |
+     | procs_running   | syscalls        |              | syscalls        | syscalls        | syscalls        | traps        |
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
      | procs_blocked   | traps           |              | traps           | traps           | traps           |              |
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
