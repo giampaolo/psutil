@@ -21,8 +21,9 @@ try:
 except ImportError:
     from distutils.core import setup, Extension
 
-
 HERE = os.path.abspath(os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(HERE, "psutil"))
+import _common  # NOQA
 
 
 def get_version():
@@ -67,7 +68,7 @@ VERSION_MACRO = ('PSUTIL_VERSION', int(VERSION.replace('.', '')))
 
 
 # POSIX
-if os.name == 'posix':
+if _common.POSIX:
     posix_extension = Extension(
         'psutil._psutil_posix',
         sources=['psutil/_psutil_posix.c'])
@@ -76,10 +77,8 @@ if os.name == 'posix':
         if platform.release() == '5.10':
             posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
             posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))
-
 # Windows
-if sys.platform.startswith("win32"):
-
+if _common.WINDOWS:
     def get_winver():
         maj, min = sys.getwindowsversion()[0:2]
         return '0x0%s' % ((maj * 100) + min)
@@ -113,7 +112,7 @@ if sys.platform.startswith("win32"):
     )
     extensions = [ext]
 # OS X
-elif sys.platform.startswith("darwin"):
+elif _common.OSX:
     ext = Extension(
         'psutil._psutil_osx',
         sources=[
@@ -127,7 +126,7 @@ elif sys.platform.startswith("darwin"):
         ])
     extensions = [ext, posix_extension]
 # FreeBSD
-elif sys.platform.startswith("freebsd"):
+elif _common.FREEBSD:
     ext = Extension(
         'psutil._psutil_bsd',
         sources=[
@@ -140,7 +139,7 @@ elif sys.platform.startswith("freebsd"):
         libraries=["devstat"])
     extensions = [ext, posix_extension]
 # OpenBSD
-elif sys.platform.startswith("openbsd"):
+elif _common.OPENBSD:
     ext = Extension(
         'psutil._psutil_bsd',
         sources=[
@@ -152,7 +151,7 @@ elif sys.platform.startswith("openbsd"):
         libraries=["kvm"])
     extensions = [ext, posix_extension]
 # NetBSD
-elif sys.platform.startswith("netbsd"):
+elif _common.NETBSD:
     ext = Extension(
         'psutil._psutil_bsd',
         sources=[
@@ -165,7 +164,7 @@ elif sys.platform.startswith("netbsd"):
         libraries=["kvm"])
     extensions = [ext, posix_extension]
 # Linux
-elif sys.platform.startswith("linux"):
+elif _common.LINUX:
     def get_ethtool_macro():
         # see: https://github.com/giampaolo/psutil/issues/659
         from distutils.unixccompiler import UnixCCompiler
@@ -202,8 +201,7 @@ elif sys.platform.startswith("linux"):
         define_macros=macros)
     extensions = [ext, posix_extension]
 # Solaris
-elif sys.platform.lower().startswith('sunos') or \
-        sys.platform.lower().startswith('solaris'):
+elif _common.SUNOS:
     ext = Extension(
         'psutil._psutil_sunos',
         sources=['psutil/_psutil_sunos.c'],
