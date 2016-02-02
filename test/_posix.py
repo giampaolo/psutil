@@ -13,19 +13,20 @@ import sys
 import time
 
 import psutil
-from psutil._compat import PY3, callable
-from test_psutil import BSD
+from psutil._common import BSD
+from psutil._common import LINUX
+from psutil._common import OSX
+from psutil._common import POSIX
+from psutil._common import SUNOS
+from psutil._compat import callable
+from psutil._compat import PY3
 from test_psutil import get_kernel_version
 from test_psutil import get_test_subprocess
-from test_psutil import LINUX
-from test_psutil import OSX
-from test_psutil import POSIX
 from test_psutil import PYTHON
 from test_psutil import reap_children
 from test_psutil import retry_before_failing
 from test_psutil import sh
 from test_psutil import skip_on_access_denied
-from test_psutil import SUNOS
 from test_psutil import TRAVIS
 from test_psutil import unittest
 from test_psutil import wait_for_pid

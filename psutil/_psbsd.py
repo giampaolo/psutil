@@ -8,7 +8,6 @@ import contextlib
 import errno
 import functools
 import os
-import sys
 import xml.etree.ElementTree as ET
 from collections import namedtuple
 
@@ -17,6 +16,9 @@ from . import _psposix
 from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
 from ._common import conn_tmap
+from ._common import FREEBSD
+from ._common import NETBSD
+from ._common import OPENBSD
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
@@ -25,10 +27,6 @@ from ._compat import which
 __extra__all__ = []
 
 # --- constants
-
-FREEBSD = sys.platform.startswith("freebsd")
-OPENBSD = sys.platform.startswith("openbsd")
-NETBSD = sys.platform.startswith("netbsd")
 
 if FREEBSD:
     PROC_STATUSES = {

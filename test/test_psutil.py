@@ -55,7 +55,16 @@ except ImportError:
     import mock  # requires "pip install mock"
 
 import psutil
+from psutil._common import BSD
+from psutil._common import FREEBSD
+from psutil._common import LINUX
+from psutil._common import NETBSD
+from psutil._common import OPENBSD
+from psutil._common import OSX
+from psutil._common import POSIX
+from psutil._common import SUNOS
 from psutil._common import supports_ipv6
+from psutil._common import WINDOWS
 from psutil._compat import callable
 from psutil._compat import long
 from psutil._compat import PY3
@@ -107,17 +116,8 @@ if not PY3:
 EXAMPLES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                '..', 'examples'))
 
-POSIX = os.name == 'posix'
-WINDOWS = os.name == 'nt'
 if WINDOWS:
     WIN_VISTA = (6, 0, 0)
-LINUX = sys.platform.startswith("linux")
-OSX = sys.platform.startswith("darwin")
-FREEBSD = sys.platform.startswith("freebsd")
-OPENBSD = sys.platform.startswith("openbsd")
-NETBSD = sys.platform.startswith("netbsd")
-BSD = FREEBSD or OPENBSD or NETBSD
-SUNOS = sys.platform.startswith("sunos") or sys.platform.startswith("solaris")
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)
                        if x.startswith('STATUS_')]
 # whether we're running this test suite on Travis (https://travis-ci.org/)

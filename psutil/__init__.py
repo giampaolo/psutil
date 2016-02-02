@@ -55,12 +55,20 @@ from ._common import CONN_NONE
 from ._common import CONN_SYN_RECV
 from ._common import CONN_SYN_SENT
 from ._common import CONN_TIME_WAIT
-
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
 
-if sys.platform.startswith("linux"):
+from ._common import BSD as _BSD
+from ._common import LINUX as _LINUX
+from ._common import OPENBSD as _OPENBSD
+from ._common import OSX as _OSX
+from ._common import POSIX as _POSIX
+from ._common import SUNOS as _SUNOS
+from ._common import WINDOWS as _WINDOWS
+
+
+if _LINUX:
     # This is public API and it will be retrieved from _pslinux.py
     # via sys.modules.
     PROCFS_PATH = "/proc"
@@ -110,7 +118,7 @@ if sys.platform.startswith("linux"):
         except AttributeError:
             pass
 
-elif sys.platform.startswith("win32"):
+elif _WINDOWS:
     from . import _pswindows as _psplatform
     from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS  # NOQA
     from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS  # NOQA
@@ -120,15 +128,13 @@ elif sys.platform.startswith("win32"):
     from ._psutil_windows import REALTIME_PRIORITY_CLASS  # NOQA
     from ._pswindows import CONN_DELETE_TCB  # NOQA
 
-elif sys.platform.startswith("darwin"):
+elif _OSX:
     from . import _psosx as _psplatform
 
-elif sys.platform.startswith("freebsd") or \
-        sys.platform.startswith("openbsd") or \
-        sys.platform.startswith("netbsd"):
+elif _BSD:
     from . import _psbsd as _psplatform
 
-elif sys.platform.startswith("sunos") or sys.platform.startswith("solaris"):
+elif _SUNOS:
     from . import _pssunos as _psplatform
     from ._pssunos import CONN_BOUND  # NOQA
     from ._pssunos import CONN_IDLE  # NOQA
@@ -172,9 +178,6 @@ __version__ = "3.5.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
-_POSIX = os.name == 'posix'
-_WINDOWS = os.name == 'nt'
-_OPENBSD = sys.platform.startswith("openbsd")
 _timer = getattr(time, 'monotonic', time.time)
 
 
@@ -1855,7 +1858,7 @@ def net_if_addrs():
             try:
                 fam = socket.AddressFamily(fam)
             except ValueError:
-                if os.name == 'nt' and fam == -1:
+                if _WINDOWS and fam == -1:
                     fam = _psplatform.AF_LINK
                 elif (hasattr(_psplatform, "AF_LINK") and
                         _psplatform.AF_LINK == fam):

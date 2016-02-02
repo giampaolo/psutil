@@ -30,15 +30,14 @@ except ImportError:
 
 import psutil
 import psutil._pslinux
+from psutil._common import LINUX
 from psutil._compat import PY3
 from psutil._compat import u
 from test_psutil import call_until
 from test_psutil import get_kernel_version
 from test_psutil import get_test_subprocess
 from test_psutil import importlib
-from test_psutil import LINUX
 from test_psutil import MEMORY_TOLERANCE
-from test_psutil import POSIX
 from test_psutil import retry_before_failing
 from test_psutil import sh
 from test_psutil import skip_on_not_implemented
@@ -88,9 +87,8 @@ def get_mac_address(ifname):
 @unittest.skipUnless(LINUX, "not a Linux system")
 class LinuxSpecificTestCase(unittest.TestCase):
 
-    @unittest.skipIf(
-        POSIX and not hasattr(os, 'statvfs'),
-        reason="os.statvfs() function not available on this platform")
+    @unittest.skipUnless(
+        hasattr(os, 'statvfs'), "os.statvfs() function not available")
     @skip_on_not_implemented()
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()

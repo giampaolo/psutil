@@ -31,6 +31,16 @@ else:
 
 # --- constants
 
+POSIX = os.name == "posix"
+WINDOWS = os.name == "nt"
+LINUX = sys.platform.startswith("linux")
+OSX = sys.platform.startswith("darwin")
+FREEBSD = sys.platform.startswith("freebsd")
+OPENBSD = sys.platform.startswith("openbsd")
+NETBSD = sys.platform.startswith("netbsd")
+BSD = FREEBSD or OPENBSD or NETBSD
+SUNOS = sys.platform.startswith("sunos") or sys.platform.startswith("solaris")
+
 AF_INET6 = getattr(socket, 'AF_INET6', None)
 AF_UNIX = getattr(socket, 'AF_UNIX', None)
 
