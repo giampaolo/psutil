@@ -61,7 +61,8 @@ TCP_STATUSES = {
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 pextmem = namedtuple('pextmem', ['rss', 'vms'])
-pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss', 'anon', 'locked'])
+pmmap_grouped = namedtuple('pmmap_grouped',
+                           ['path', 'rss', 'anonymous', 'locked'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 

@@ -1030,11 +1030,11 @@ Process class
   .. method:: memory_maps(grouped=True)
 
     Return process's mapped memory regions as a list of namedtuples whose
-    fields are variable depending on the platform. As such, portable
-    applications should rely on namedtuple's `path` and `rss` fields only.
+    fields are variable depending on the platform.
     This method is useful to obtain a detailed representation of process
     memory usage as explained
-    `here <http://bmaurer.blogspot.it/2006/03/memory-usage-with-smaps.html>`__.
+    `here <http://bmaurer.blogspot.it/2006/03/memory-usage-with-smaps.html>`__
+    (the most important value is "private" memory).
     If *grouped* is ``True`` the mapped regions with the same *path* are
     grouped together and the different memory fields are summed.  If *grouped*
     is ``False`` every mapped region is shown as a single entity and the
@@ -1042,6 +1042,30 @@ Process class
     and permission set (*perms*).
     See `examples/pmap.py <https://github.com/giampaolo/psutil/blob/master/examples/pmap.py>`__
     for an example application.
+
+    +---------------+--------------+---------+-----------+--------------+
+    | Linux         |  OSX         | Windows | Solaris   | FreeBSD      |
+    +===============+==============+=========+===========+==============+
+    | rss           | rss          | rss     | rss       | rss          |
+    +---------------+--------------+---------+-----------+--------------+
+    | size          | private      |         | anonymous | private      |
+    +---------------+--------------+---------+-----------+--------------+
+    | pss           | swapped      |         | locked    | ref_count    |
+    +---------------+--------------+---------+-----------+--------------+
+    | shared_clean  | dirtied      |         |           | shadow_count |
+    +---------------+--------------+---------+-----------+--------------+
+    | shared_dirty  | ref_count    |         |           |              |
+    +---------------+--------------+---------+-----------+--------------+
+    | private_clean | shadow_depth |         |           |              |
+    +---------------+--------------+---------+-----------+--------------+
+    | private_dirty |              |         |           |              |
+    +---------------+--------------+---------+-----------+--------------+
+    | referenced    |              |         |           |              |
+    +---------------+--------------+---------+-----------+--------------+
+    | anonymous     |              |         |           |              |
+    +---------------+--------------+---------+-----------+--------------+
+    | swap          |              |         |           |              |
+    +---------------+--------------+---------+-----------+--------------+
 
       >>> import psutil
       >>> p = psutil.Process()
