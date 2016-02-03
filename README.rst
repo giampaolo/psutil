@@ -247,6 +247,7 @@ Process management
      pmmap_grouped(path='[heap]',  rss=32768, size=139264, pss=32768, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=32768, referenced=32768, anonymous=32768, swap=0),
      pmmap_grouped(path='[stack]', rss=2465792, size=2494464, pss=2465792, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=2465792, referenced=2277376, anonymous=2465792, swap=0),
      ...]
+    >>>
     >>> p.io_counters()
     pio(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632)
     >>>

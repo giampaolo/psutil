@@ -118,7 +118,7 @@ elif _common.OSX:
         sources=[
             'psutil/_psutil_osx.c',
             'psutil/_psutil_common.c',
-            'psutil/arch/osx/process_info.c'
+            'psutil/arch/osx/process_info.c',
         ],
         define_macros=[VERSION_MACRO],
         extra_link_args=[
