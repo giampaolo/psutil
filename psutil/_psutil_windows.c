@@ -786,11 +786,13 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
     HANDLE proc;
     PSAPI_WORKING_SET_INFORMATION tmp;
     DWORD tmp_size = sizeof(tmp);
-    size_t entries, private_pages, i;
+    size_t entries;
+    size_t private_pages;
+    size_t i;
     DWORD info_array_size;
     PSAPI_WORKING_SET_INFORMATION* info_array;
     SYSTEM_INFO system_info;
-    PyObject* result = NULL;
+    PyObject* py_result = NULL;
     unsigned long long total = 0;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
@@ -804,7 +806,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
     memset(&tmp, 0, tmp_size);
     if (!QueryWorkingSet(proc, &tmp, tmp_size)) {
         // NB: QueryWorkingSet is expected to fail here due to the
-        //     buffer being too small.
+        // buffer being too small.
         if (tmp.NumberOfEntries == 0) {
             PyErr_SetFromWindowsErr(0);
             goto done;
@@ -843,7 +845,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
     // GetSystemInfo has no return value.
     GetSystemInfo(&system_info);
     total = private_pages * system_info.dwPageSize;
-    result = Py_BuildValue("K", total);
+    py_result = Py_BuildValue("K", total);
 
 done:
     if (proc) {
@@ -854,7 +856,7 @@ done:
         free(info_array);
     }
 
-    return result;
+    return py_result;
 }
 
 
