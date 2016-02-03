@@ -599,6 +599,24 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertEqual(psutil.Process().exe(), "/home/foo")
             self.assertEqual(psutil.Process().cwd(), "/home/foo")
 
+    def test_uss_pss_mem_against_mem_maps(self):
+        src = textwrap.dedent("""
+            import time
+            with open("%s", "w") as f:
+                time.sleep(10)
+            """ % TESTFN)
+        sproc = pyrun(src)
+        self.addCleanup(reap_children)
+        call_until(lambda: os.listdir('.'), "'%s' not in ret" % TESTFN)
+        p = psutil.Process(sproc.pid)
+        time.sleep(.1)
+        memex = p.memory_info_ex()
+        maps = p.memory_maps(grouped=False)
+        self.assertEqual(
+            memex.uss, sum([x.private_dirty + x.private_clean for x in maps]))
+        self.assertEqual(
+            memex.pss, sum([x.shared_dirty + x.shared_clean for x in maps]))
+
 
 def main():
     test_suite = unittest.TestSuite()

@@ -56,6 +56,7 @@ __extra__all__ = [
 
 # --- constants
 
+HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
 
 # RLIMIT_* constants, not guaranteed to be present on all kernels
@@ -217,7 +218,7 @@ svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
               'active', 'inactive', 'buffers', 'cached'])
 
-pextmem = namedtuple('pextmem', 'rss vms shared text lib data dirty')
+pextmem = namedtuple('pextmem', 'rss vms shared text lib data dirty uss pss')
 
 pmmap_grouped = namedtuple(
     'pmmap_grouped', ['path', 'rss', 'size', 'pss', 'shared_clean',
@@ -972,7 +973,9 @@ class Process(object):
                                 int(vms) * PAGESIZE)
 
     @wrap_exceptions
-    def memory_info_ex(self):
+    def memory_info_ex(self,
+                       _private_re=re.compile(b"Private.*:\s+(\d+)"),
+                       _shared_re=re.compile(b"Shared.*:\s+(\d+)")):
         #  ============================================================
         # | FIELD  | DESCRIPTION                         | AKA  | TOP  |
         #  ============================================================
@@ -983,13 +986,30 @@ class Process(object):
         # | lib    | library (unused in Linux 2.6)       | lrs  |      |
         # | data   | data + stack                        | drs  | DATA |
         # | dirty  | dirty pages (unused in Linux 2.6)   | dt   |      |
+        # | -----------------------------------------------------------
+        # | uss    | unique set size ("real memory")     |      |      |
+        # | pss    | proportional set size               |      |      |
         #  ============================================================
         with open_binary("%s/%s/statm" % (self._procfs_path, self.pid)) as f:
             vms, rss, shared, text, lib, data, dirty = \
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
-        return pextmem(rss, vms, shared, text, lib, data, dirty)
+        if HAS_SMAPS:
+            # Note: using two regexes is faster than reading the file
+            # line by line.
+            # XXX: on Python 3 the 2 regexes are 30% slower than on
+            # Python 2 though. Figure out why.
+            with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
+                             buffering=BIGGER_FILE_BUFFERING) as f:
+                smaps_data = f.read()
+            uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
+            pss = sum(map(int, _shared_re.findall(smaps_data))) * 1024
+        else:
+            # usually means we're on kernel < 2.6.14 or CONFIG_MMU kernel
+            # configuration option is not enabled.
+            uss = pss = 0
+        return pextmem(rss, vms, shared, text, lib, data, dirty, uss, pss)
 
-    if os.path.exists('/proc/%s/smaps' % os.getpid()):
+    if HAS_SMAPS:
 
         @wrap_exceptions
         def memory_maps(self):

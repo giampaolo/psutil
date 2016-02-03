@@ -1006,9 +1006,9 @@ Process class
      +--------+---------+-------+---------+--------------------+
      | dirty  |         |       |         | nonpaged_pool      |
      +--------+---------+-------+---------+--------------------+
-     |        |         |       |         | pagefile           |
+     | uss    |         |       |         | pagefile           |
      +--------+---------+-------+---------+--------------------+
-     |        |         |       |         | peak_pagefile      |
+     | pss    |         |       |         | peak_pagefile      |
      +--------+---------+-------+---------+--------------------+
      |        |         |       |         | private            |
      +--------+---------+-------+---------+--------------------+
@@ -1021,6 +1021,8 @@ Process class
      >>> p = psutil.Process()
      >>> p.memory_info_ex()
      pextmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0)
+
+     .. versionchanged:: 3.5.0 added `uss` and `pss` fields on Linux.
 
   .. method:: memory_percent()
 

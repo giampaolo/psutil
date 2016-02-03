@@ -6,6 +6,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 **Enhancements**
 
 - #732: Process.environ().  (patch by Frank Benkstein)
+- #753: [Linux] Process memory USS and PSS.
 
 **Bug fixes**
 
