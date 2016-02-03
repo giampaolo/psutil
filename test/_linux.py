@@ -20,6 +20,7 @@ import socket
 import struct
 import sys
 import tempfile
+import textwrap
 import time
 import warnings
 
@@ -35,12 +36,14 @@ from psutil._compat import PY3
 from psutil._compat import u
 from test_psutil import call_until
 from test_psutil import get_kernel_version
-from test_psutil import get_test_subprocess
 from test_psutil import importlib
 from test_psutil import MEMORY_TOLERANCE
+from test_psutil import pyrun
+from test_psutil import reap_children
 from test_psutil import retry_before_failing
 from test_psutil import sh
 from test_psutil import skip_on_not_implemented
+from test_psutil import TESTFN
 from test_psutil import TRAVIS
 from test_psutil import unittest
 from test_psutil import which
@@ -116,9 +119,16 @@ class LinuxSpecificTestCase(unittest.TestCase):
                 self.fail("psutil=%s, df=%s" % (usage.used, used))
 
     def test_memory_maps(self):
-        sproc = get_test_subprocess()
-        time.sleep(1)
+        src = textwrap.dedent("""
+            import time
+            with open("%s", "w") as f:
+                time.sleep(10)
+            """ % TESTFN)
+        sproc = pyrun(src)
+        self.addCleanup(reap_children)
+        call_until(lambda: os.listdir('.'), "'%s' not in ret" % TESTFN)
         p = psutil.Process(sproc.pid)
+        time.sleep(.1)
         maps = p.memory_maps(grouped=False)
         pmap = sh('pmap -x %s' % p.pid).split('\n')
         # get rid of header
