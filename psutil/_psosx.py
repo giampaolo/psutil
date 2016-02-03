@@ -278,7 +278,8 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info_ex(self):
-        rss, vms, pfaults, pageins, uss = cext.proc_memory_info(self.pid)
+        rss, vms, pfaults, pageins = cext.proc_memory_info(self.pid)
+        uss = cext.proc_memory_uss(self.pid)
         return pextmem(rss, vms, pfaults * PAGESIZE, pageins * PAGESIZE, uss)
 
     @wrap_exceptions

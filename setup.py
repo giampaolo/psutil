@@ -119,8 +119,7 @@ elif sys.platform.startswith("darwin"):
         sources=[
             'psutil/_psutil_osx.c',
             'psutil/_psutil_common.c',
-            'psutil/arch/osx/process_info.c',
-            'psutil/_psutil_osx_uss.c'
+            'psutil/arch/osx/process_info.c'
         ],
         define_macros=[VERSION_MACRO],
         extra_link_args=[
