@@ -832,7 +832,6 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
 
     entries = (size_t)info_array->NumberOfEntries;
     private_pages = 0;
-    printf("Number of entries = %d\n", (int)entries);
     for (i = 0; i < entries; i++) {
         // Count shared pages that only one process is using as private.
         if (!info_array->WorkingSetInfo[i].Shared ||
@@ -843,7 +842,6 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
 
     // GetSystemInfo has no return value.
     GetSystemInfo(&system_info);
-    printf("page size = %d\n", (int)system_info.dwPageSize);
     total = private_pages * system_info.dwPageSize;
     result = Py_BuildValue("K", total);
 
