@@ -364,7 +364,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
 
 error:
     Py_XDECREF(py_cpu_num);
-    Py_DECREF(py_retlist);
+    Py_XDECREF(py_retlist);
     return NULL;
 }
 #endif
