@@ -534,13 +534,13 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
     );
 }
 
-/**
+
+/*
  * Indicates if the given virtual address on the given architecture is in the
  * shared VM region.
  */
 bool
-in_shared_region(mach_vm_address_t addr, cpu_type_t type)
-{
+psutil_in_shared_region(mach_vm_address_t addr, cpu_type_t type) {
     mach_vm_address_t base;
     mach_vm_address_t size;
 
@@ -565,25 +565,34 @@ in_shared_region(mach_vm_address_t addr, cpu_type_t type)
 }
 
 
-/**
- * Returns the USS (unique set size) of the process.
+/*
+ * Returns the USS (unique set size) of the process. Reference:
+ * https://dxr.mozilla.org/mozilla-central/source/xpcom/base/
+ *     nsMemoryReporterManager.cpp
  */
 static PyObject *
-psutil_proc_memory_uss(PyObject *self, PyObject *args)
-{
+psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     long pid;
+    int err;
+    size_t len;
+    cpu_type_t cpu_type;
+    size_t private_pages = 0;
+    mach_vm_size_t size = 0;
+    mach_msg_type_number_t info_count = VM_REGION_TOP_INFO_COUNT;
+    kern_return_t kr;
+    vm_size_t page_size;
+
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
     mach_port_t task = MACH_PORT_NULL;
-    int err = task_for_pid(mach_task_self(), pid, &task);
+    err = task_for_pid(mach_task_self(), pid, &task);
     if (err != KERN_SUCCESS) {
         psutil_raise_ad_or_nsp(pid);
         return NULL;
     }
 
-    cpu_type_t cpu_type;
-    size_t len = sizeof(cpu_type);
+    len = sizeof(cpu_type);
     if (sysctlbyname("sysctl.proc_cputype", &cpu_type, &len, NULL, 0) != 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
@@ -591,17 +600,13 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
 
     // Roughly based on libtop_update_vm_regions in
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
-    size_t private_pages = 0;
-    mach_vm_size_t size = 0;
     for (mach_vm_address_t addr = MACH_VM_MIN_ADDRESS; ; addr += size) {
         vm_region_top_info_data_t info;
-        mach_msg_type_number_t info_count = VM_REGION_TOP_INFO_COUNT;
         mach_port_t object_name;
 
-        kern_return_t kr =
-            mach_vm_region(task, &addr, &size, VM_REGION_TOP_INFO,
-                    (vm_region_info_t)&info,
-                    &info_count, &object_name);
+        kr = mach_vm_region(
+            task, &addr, &size, VM_REGION_TOP_INFO, (vm_region_info_t)&info,
+            &info_count, &object_name);
         if (kr == KERN_INVALID_ADDRESS) {
             // Done iterating VM regions.
             break;
@@ -610,7 +615,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
             return false;
         }
 
-        if (in_shared_region(addr, cpu_type) && info.share_mode != SM_PRIVATE) {
+        if (psutil_in_shared_region(addr, cpu_type) &&
+                info.share_mode != SM_PRIVATE) {
             continue;
         }
 
@@ -624,7 +630,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
             case SM_COW:
                 private_pages += info.private_pages_resident;
                 if (info.ref_count == 1) {
-                    // Treat copy-on-write pages as private if they only have one reference.
+                    // Treat copy-on-write pages as private if they only
+                    // have one reference.
                     private_pages += info.shared_pages_resident;
                 }
                 break;
@@ -636,10 +643,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args)
 
     mach_port_deallocate(mach_task_self(), task);
 
-    vm_size_t page_size;
-    if (host_page_size(mach_host_self(), &page_size) != KERN_SUCCESS) {
+    if (host_page_size(mach_host_self(), &page_size) != KERN_SUCCESS)
         page_size = PAGE_SIZE;
-    }
 
     return Py_BuildValue("K", private_pages * page_size);
 }
@@ -685,7 +690,6 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-
     int      mib[2];
     uint64_t total;
     size_t   len = sizeof(total);
@@ -1811,7 +1815,7 @@ PsutilMethods[] = {
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
      "Return memory information about a process"},
     {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS,
-     "Return USS a process"},
+     "Return process USS memory"},
     {"proc_num_threads", psutil_proc_num_threads, METH_VARARGS,
      "Return number of threads used by process"},
     {"proc_status", psutil_proc_status, METH_VARARGS,
