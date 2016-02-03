@@ -26,7 +26,6 @@
 #pragma comment(lib, "IPHLPAPI.lib")
 
 #include "_psutil_windows.h"
-#include "_psutil_windows_uss.h"
 #include "_psutil_common.h"
 #include "arch/windows/security.h"
 #include "arch/windows/process_info.h"
@@ -671,7 +670,6 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
     PROCESS_MEMORY_COUNTERS cnt;
 #endif
     SIZE_T private = 0;
-    unsigned long long uss = 0;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -692,15 +690,13 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 
     CloseHandle(hProcess);
 
-    calc_uss(pid, &uss);
-
     // PROCESS_MEMORY_COUNTERS values are defined as SIZE_T which on 64bits
     // is an (unsigned long long) and on 32bits is an (unsigned int).
     // "_WIN64" is defined if we're running a 64bit Python interpreter not
     // exclusively if the *system* is 64bit.
 #if defined(_WIN64)
     return Py_BuildValue(
-        "(kKKKKKKKKKK)",
+        "(kKKKKKKKKK)",
         cnt.PageFaultCount,  // unsigned long
         (unsigned long long)cnt.PeakWorkingSetSize,
         (unsigned long long)cnt.WorkingSetSize,
@@ -710,11 +706,10 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         (unsigned long long)cnt.QuotaNonPagedPoolUsage,
         (unsigned long long)cnt.PagefileUsage,
         (unsigned long long)cnt.PeakPagefileUsage,
-        (unsigned long long)private,
-        (unsigned long long)uss);
+        (unsigned long long)private);
 #else
     return Py_BuildValue(
-        "(kIIIIIIIIIK)",
+        "(kIIIIIIIII)",
         cnt.PageFaultCount,    // unsigned long
         (unsigned int)cnt.PeakWorkingSetSize,
         (unsigned int)cnt.WorkingSetSize,
@@ -724,8 +719,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
         (unsigned int)cnt.QuotaNonPagedPoolUsage,
         (unsigned int)cnt.PagefileUsage,
         (unsigned int)cnt.PeakPagefileUsage,
-        (unsigned int)private,
-        (unsigned long long)uss);
+        (unsigned int)private);
 #endif
 }
 
@@ -740,7 +734,6 @@ psutil_proc_memory_info_2(PyObject *self, PyObject *args) {
     PVOID buffer;
     SIZE_T private;
     unsigned long pfault_count;
-    unsigned long long uss = 0;
 
 #if defined(_WIN64)
     unsigned long long m1, m2, m3, m4, m5, m6, m7, m8;
@@ -771,18 +764,99 @@ psutil_proc_memory_info_2(PyObject *self, PyObject *args) {
 
     free(buffer);
 
-    calc_uss(pid, &uss);
-
     // SYSTEM_PROCESS_INFORMATION values are defined as SIZE_T which on 64
     // bits is an (unsigned long long) and on 32bits is an (unsigned int).
     // "_WIN64" is defined if we're running a 64bit Python interpreter not
     // exclusively if the *system* is 64bit.
 #if defined(_WIN64)
-    return Py_BuildValue("(kKKKKKKKKKK)",
+    return Py_BuildValue("(kKKKKKKKKK)",
 #else
-    return Py_BuildValue("(kIIIIIIIIIK)",
+    return Py_BuildValue("(kIIIIIIIII)",
 #endif
-        pfault_count, m1, m2, m3, m4, m5, m6, m7, m8, private, uss);
+        pfault_count, m1, m2, m3, m4, m5, m6, m7, m8, private);
+}
+
+/**
+ * Returns the USS of the process.
+ */
+static PyObject *
+psutil_proc_memory_uss(PyObject *self, PyObject *args)
+{
+    DWORD pid;
+    HANDLE proc;
+    PSAPI_WORKING_SET_INFORMATION tmp;
+    DWORD tmp_size = sizeof(tmp);
+    size_t entries, private_pages, i;
+    DWORD info_array_size;
+    PSAPI_WORKING_SET_INFORMATION* info_array;
+    SYSTEM_INFO system_info;
+    PyObject* result = NULL;
+    unsigned long long total = 0;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+    proc = psutil_handle_from_pid(pid);
+    if (proc == NULL)
+        return NULL;
+
+    // Determine how many entries we need.
+    memset(&tmp, 0, tmp_size);
+    if (!QueryWorkingSet(proc, &tmp, tmp_size)) {
+        // NB: QueryWorkingSet is expected to fail here due to the
+        //     buffer being too small.
+        if (tmp.NumberOfEntries == 0) {
+            PyErr_SetFromWindowsErr(0);
+            goto done;
+        }
+    }
+
+    // Fudge the size in case new entries are added between calls.
+    entries = tmp.NumberOfEntries * 2;
+
+    if (!entries) {
+        goto done;
+    }
+
+    info_array_size = tmp_size + (entries * sizeof(PSAPI_WORKING_SET_BLOCK));
+    info_array = (PSAPI_WORKING_SET_INFORMATION*)malloc(info_array_size);
+    if (!info_array) {
+        PyErr_NoMemory();
+        goto done;
+    }
+
+    if (!QueryWorkingSet(proc, info_array, info_array_size)) {
+        PyErr_SetFromWindowsErr(0);
+        goto done;
+    }
+
+    entries = (size_t)info_array->NumberOfEntries;
+    private_pages = 0;
+    printf("Number of entries = %d\n", (int)entries);
+    for (i = 0; i < entries; i++) {
+        // Count shared pages that only one process is using as private.
+        if (!info_array->WorkingSetInfo[i].Shared ||
+                info_array->WorkingSetInfo[i].ShareCount <= 1) {
+            private_pages++;
+        }
+    }
+
+    // GetSystemInfo has no return value.
+    GetSystemInfo(&system_info);
+    printf("page size = %d\n", (int)system_info.dwPageSize);
+    total = private_pages * system_info.dwPageSize;
+    result = Py_BuildValue("K", total);
+
+done:
+    if (proc) {
+        CloseHandle(proc);
+    }
+
+    if (info_array) {
+        free(info_array);
+    }
+
+    return result;
 }
 
 
@@ -3015,6 +3089,8 @@ PsutilMethods[] = {
      "Return a tuple of process memory information"},
     {"proc_memory_info_2", psutil_proc_memory_info_2, METH_VARARGS,
      "Alternate implementation"},
+    {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS,
+     "Return the USS of the process"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory"},
     {"proc_suspend", psutil_proc_suspend, METH_VARARGS,
