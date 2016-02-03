@@ -1006,7 +1006,7 @@ Process class
      +--------+---------+-------+---------+--------------------+
      | dirty  |         |       |         | nonpaged_pool      |
      +--------+---------+-------+---------+--------------------+
-     |        |         |       |         | pagefile           |
+     | uss    |         |       |         | pagefile           |
      +--------+---------+-------+---------+--------------------+
      |        |         |       |         | peak_pagefile      |
      +--------+---------+-------+---------+--------------------+
@@ -1020,7 +1020,7 @@ Process class
      >>> import psutil
      >>> p = psutil.Process()
      >>> p.memory_info_ex()
-     pextmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0)
+     pextmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0, uss=7380992)
 
   .. method:: memory_percent()
 
