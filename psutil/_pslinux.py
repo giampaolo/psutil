@@ -976,20 +976,28 @@ class Process(object):
         with open_binary("%s/%s/statm" % (self._procfs_path, self.pid)) as f:
             vms, rss, shared, text, lib, data, dirty = \
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
+
+        uss = pss = 0
         if HAS_SMAPS:
             # Note: using two regexes is faster than reading the file
             # line by line.
             # XXX: on Python 3 the 2 regexes are 30% slower than on
             # Python 2 though. Figure out why.
-            with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
-                             buffering=BIGGER_FILE_BUFFERING) as f:
-                smaps_data = f.read()
-            uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
-            pss = sum(map(int, _shared_re.findall(smaps_data))) * 1024
+            try:
+                with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
+                                 buffering=BIGGER_FILE_BUFFERING) as f:
+                    smaps_data = f.read()
+            except EnvironmentError as err:
+                if err.errno not in (errno.EPERM, errno.EACCES):
+                    raise
+            else:
+                uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
+                pss = sum(map(int, _shared_re.findall(smaps_data))) * 1024
         else:
             # usually means we're on kernel < 2.6.14 or CONFIG_MMU kernel
             # configuration option is not enabled.
-            uss = pss = 0
+            pass
+
         return pextmem(rss, vms, shared, text, lib, data, dirty, uss, pss)
 
     if HAS_SMAPS:

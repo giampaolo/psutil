@@ -275,7 +275,12 @@ class Process(object):
     @wrap_exceptions
     def memory_info_ex(self):
         rss, vms, pfaults, pageins = cext.proc_memory_info(self.pid)
-        uss = cext.proc_memory_uss(self.pid)
+        uss = 0
+        try:
+            uss = cext.proc_memory_uss(self.pid)
+        except OSError as err:
+            if err.errno not in (errno.EPERM, errno.EACCES):
+                raise
         return pextmem(rss, vms, pfaults * PAGESIZE, pageins * PAGESIZE, uss)
 
     @wrap_exceptions
