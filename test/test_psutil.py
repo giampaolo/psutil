@@ -1695,6 +1695,9 @@ class TestProcess(unittest.TestCase):
         memex = psutil.Process().memory_info_ex()
         if LINUX or OSX or WINDOWS:
             self.assertGreater(memex.uss, 0)
+            if LINUX:
+                self.assertGreater(memex.pss, 0)
+                self.assertGreater(memex.pss, memex.uss)
 
     @unittest.skipIf(OPENBSD or NETBSD, "not available on this platform")
     def test_memory_maps(self):
