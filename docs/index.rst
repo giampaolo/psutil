@@ -979,7 +979,8 @@ Process class
 
      Return a tuple representing RSS (Resident Set Size) and VMS (Virtual
      Memory Size) in bytes. On UNIX *rss* and *vms* are the same values shown
-     by ps. On Windows *rss* and *vms* refer to "Mem Usage" and "VM Size"
+     by `ps` or by RES and VIRT column of `top`.
+     On Windows *rss* and *vms* refer to "Mem Usage" and "VM Size"
      columns of taskmgr.exe. For more detailed memory stats use
      :meth:`memory_info_ex`.
 
@@ -989,42 +990,100 @@ Process class
      representing extended memory information about the process.
      All numbers are expressed in bytes.
 
-     +--------+---------+-------+---------+--------------------+
-     | Linux  | OSX     | BSD   | Solaris | Windows            |
-     +========+=========+=======+=========+====================+
-     | rss    | rss     | rss   | rss     | num_page_faults    |
-     +--------+---------+-------+---------+--------------------+
-     | vms    | vms     | vms   | vms     | peak_wset          |
-     +--------+---------+-------+---------+--------------------+
-     | shared | pfaults | text  |         | wset               |
-     +--------+---------+-------+---------+--------------------+
-     | text   | pageins | data  |         | peak_paged_pool    |
-     +--------+---------+-------+---------+--------------------+
-     | lib    | uss     | stack |         | paged_pool         |
-     +--------+---------+-------+---------+--------------------+
-     | data   |         |       |         | peak_nonpaged_pool |
-     +--------+---------+-------+---------+--------------------+
-     | dirty  |         |       |         | nonpaged_pool      |
-     +--------+---------+-------+---------+--------------------+
-     | uss    |         |       |         | pagefile           |
-     +--------+---------+-------+---------+--------------------+
-     | pss    |         |       |         | peak_pagefile      |
-     +--------+---------+-------+---------+--------------------+
-     |        |         |       |         | private            |
-     +--------+---------+-------+---------+--------------------+
-     |        |         |       |         | uss                |
-     +--------+---------+-------+---------+--------------------+
+     +---------+---------+-------+---------+--------------------+
+     | Linux   | OSX     | BSD   | Solaris | Windows            |
+     +=========+=========+=======+=========+====================+
+     | rss     | rss     | rss   | rss     | num_page_faults    |
+     +---------+---------+-------+---------+--------------------+
+     | vms     | vms     | vms   | vms     | peak_wset          |
+     +---------+---------+-------+---------+--------------------+
+     | shared  | pfaults | text  |         | wset               |
+     +---------+---------+-------+---------+--------------------+
+     | text    | pageins | data  |         | peak_paged_pool    |
+     +---------+---------+-------+---------+--------------------+
+     | lib     | **uss** | stack |         | paged_pool         |
+     +---------+---------+-------+---------+--------------------+
+     | data    |         |       |         | peak_nonpaged_pool |
+     +---------+---------+-------+---------+--------------------+
+     | dirty   |         |       |         | nonpaged_pool      |
+     +---------+---------+-------+---------+--------------------+
+     | **uss** |         |       |         | pagefile           |
+     +---------+---------+-------+---------+--------------------+
+     | **pss** |         |       |         | peak_pagefile      |
+     +---------+---------+-------+---------+--------------------+
+     |         |         |       |         | private            |
+     +---------+---------+-------+---------+--------------------+
+     |         |         |       |         | **uss**            |
+     +---------+---------+-------+---------+--------------------+
 
-     Windows metrics are extracted from
-     `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure.
+     .. note::
+       the most representative value for determining how much memory is
+       used by a process on Linux, OSX and Windows is probably *uss*, which
+       is the amount of memory that would be freed if the process was
+       terminated right now.
+       Also *pss* on Linux is useful (read later).
+       :meth:`memory_info_ex` method calculates these two values separately, by
+       inspecting all virtual memory regions of the process (which is quite
+       expensive BTW).
+       If this cannot be done due to lack of permissions `uss` and `pss` will
+       be set to `0` (instead of raising :class:`psutil.AccessDenied`).
+
+     **Linux, OSX, Windows**
+
+     - **uss**: aka "unique set size" this is the set of
+       pages that are unique to a process. This is the amount of memory that
+       would be freed if the process was terminated right now.
+       It will be set to `0` if it cannot be determined due to permission
+       issues.
+
+     **Linux**
+
+     - **pss**: aka "proportional set size", is the amount of memory shared
+       with other processes, accounted in a way that the amount is divided
+       evenly between the processes that share it.
+       i.e. if three processes all use a shared library that uses 30 MBs, that library will only contribute 10 MBs to the "pss" that is reported for
+       each of the three processes.
+       "pss" value can be set to `0` if it cannot be determined due to
+       permission issues.
+
+     **UNIX**
+
+     - **rss**: aka resident-set-size, this is the non-swapped physical memory
+       a process has used.
+       It matches "top"'s RES column
+       (see `doc <http://linux.die.net/man/1/top>`__).
+     - **vms**: aka virtual-memory-size, this is the total amount of virtual
+       memory used by the process. This matches "top"'s VIRT column
+       (see `doc <http://linux.die.net/man/1/top>`__).
+     - **shared**: (Linux)
+       memory that could be potentially shared with other processes.
+       This matches "top"'s SHR column
+       (see `doc <http://linux.die.net/man/1/top>`__).
+     - **text**: (Linux, BSD)
+       aka TRS (text resident set) the amount of memory devoted to
+       executable code. This matches "top"'s CODE column
+       (see `doc <http://linux.die.net/man/1/top>`__).
+     - **data**: (Linux, BSD)
+       aka DRS (data resident set) the amount of physical memory devoted to
+       other than executable code. It matches "top"'s DATA column
+       (see `doc <http://linux.die.net/man/1/top>`__).
+     - **lib**: (Linux) the memory used by shared libraries.
+     - **dirty**: (Linux) the number of dirty pages.
+
+     **Windows**
+
+       For Windows fields rely on
+       `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure doc.
+
      Example on Linux:
 
      >>> import psutil
      >>> p = psutil.Process()
      >>> p.memory_info_ex()
-     pextmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0)
+     pextmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0, uss=7168000, pss=3653632)
 
-     .. versionchanged:: 3.5.0 added `uss` and `pss` fields on Linux.
+     .. versionchanged:: 3.5.0 added `uss` field on Linux, OSX and Windows.
+     .. versionchanged:: 3.5.0 added `pss` field on Linux.
 
   .. method:: memory_percent()
 
