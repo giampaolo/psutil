@@ -2348,7 +2348,7 @@ class TestProcess(unittest.TestCase):
     def test_zombie_process(self):
         def succeed_or_zombie_p_exc(fun, *args, **kwargs):
             try:
-                fun(*args, **kwargs)
+                return fun(*args, **kwargs)
             except (psutil.ZombieProcess, psutil.AccessDenied):
                 pass
 
@@ -2392,6 +2392,11 @@ class TestProcess(unittest.TestCase):
                 self.assertTrue(zproc.is_running())
                 # ...and as_dict() shouldn't crash
                 zproc.as_dict()
+                # if cmdline succeeds it should be an empty list
+                ret = succeed_or_zombie_p_exc(zproc.suspend)
+                if ret is not None:
+                    self.assertEqual(ret, [])
+
                 if hasattr(zproc, "rlimit"):
                     succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE)
                     succeed_or_zombie_p_exc(zproc.rlimit, psutil.RLIMIT_NOFILE,

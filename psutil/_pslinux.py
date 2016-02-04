@@ -884,6 +884,9 @@ class Process(object):
     def cmdline(self):
         with open_text("%s/%s/cmdline" % (self._procfs_path, self.pid)) as f:
             data = f.read()
+        if not data:
+            # may happen in case of zombie process
+            return []
         if data.endswith('\x00'):
             data = data[:-1]
         return [x for x in data.split('\x00')]

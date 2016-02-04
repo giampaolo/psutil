@@ -21,6 +21,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   report an AccessDenied error.
 - #741: [OpenBSD] psutil does not compile on mips64.
 - #751: [Linux] fixed call to Py_DECREF on possible Null object.
+- #754: [Linux] cmdline() can be wrong in case of zombie process.
 
 
 3.4.2 - 2016-01-20
