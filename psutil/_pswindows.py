@@ -356,16 +356,20 @@ class Process(object):
 
     def _get_raw_meminfo(self):
         try:
-            info = cext.proc_memory_info(self.pid)
-            uss = cext.proc_memory_uss(self.pid)
-            return info + (uss,)
+            return cext.proc_memory_info(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 # TODO: the C ext can probably be refactored in order
                 # to get this from cext.proc_info()
-                info = cext.proc_memory_info_2(self.pid)
-                uss = cext.proc_memory_uss(self.pid)
-                return info + (uss,)
+                return cext.proc_memory_info_2(self.pid)
+            raise
+
+    def _get_uss_mem(self):
+        try:
+            return cext.proc_memory_uss(self.pid)
+        except OSError as err:
+            if err.errno in ACCESS_DENIED_SET:
+                return 0
             raise
 
     @wrap_exceptions
@@ -379,7 +383,9 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info_ex(self):
-        return pextmem(*self._get_raw_meminfo())
+        info = self._get_raw_meminfo()
+        uss = self._get_uss_mem()
+        return pextmem(*info + (uss, ))
 
     def memory_maps(self):
         try:
