@@ -978,10 +978,9 @@ Process class
   .. method:: memory_info()
 
      Return a namedtuple with variable fields depending on the platform
-     representing extended memory information about the process.
+     representing memory information about the process.
      The "portable" fields available on all plaforms are `rss` and `vms`.
      All numbers are expressed in bytes.
-     For more detailed memory stats use :meth:`memory_info_ex`.
 
      +---------+---------+-------+---------+------------------------------+
      | Linux   | OSX     | BSD   | Solaris | Windows                      |
@@ -1058,8 +1057,16 @@ Process class
 
   .. method:: memory_info_ex()
 
-     This returns the same fields as :meth:`memory_info` plus some extra
-     fields on Linux, OSX and Windows.
+     Same as :meth:`memory_info` (deprecated).
+
+     .. warning:: depcreated in version 3.5.0; use :meth:`memory_info` instead.
+
+  .. method:: memory_info_addrspace()
+
+     This method passes through the whole process address space in order to
+     determine highly reliable memory metrics about "real" process memory
+     consumption. It usually requires higher privileges and is considerably
+     slower than :meth:`memory_info`.
 
      - **uss**: (Linux, Windows, OSX) aka "Unique Set Size", this is the memory
        which is unique to a process and which would be freed if the process was terminated right now.
@@ -1076,26 +1083,9 @@ Process class
        It represents the amount of memory that would be freed if the process
        was terminated right now.
 
-     .. warning::
-       :meth:`memory_info_ex` introduces a big slowdown over
-       :meth:`memory_info` because it passes through the whole process address
-       space.
-       Also, starting from version 3.5.0, :meth:`memory_info_ex` has more
-       chances to raise :class:`AccessDenied` exceptions than before.
-       As such, use it only if you need `uss` or `pss` metrics and rely on
-       :meth:`memory_info` if not.
+     .. versionadded:: 3.5.0
 
-     Example on Linux:
-
-     >>> import psutil
-     >>> p = psutil.Process()
-     >>> p.memory_info_ex()
-     pextmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0, uss=7168000, pss=3653632)
-
-     .. versionchanged:: 3.5.0 added `uss` field on Linux, OSX and Windows.
-     .. versionchanged:: 3.5.0 added `pss` field on Linux.
-     .. versionchanged:: 3.5.0 this method has more chances to throw
-        :class:`AccessDenied` exceptions than in previous psutil versions.
+     Availability: Linux, OSX, Windows
 
   .. method:: memory_percent(memtype="rss")
 
@@ -1104,7 +1094,7 @@ Process class
      *memtype* argument is a string that dictates what type of process memory
      you want to compare against (defaults to *"rss"*).
      The list of available strings can be obtained like this:
-     ``psutil.Process().memory_info_ex()._fields``.
+     ``psutil.Process().memory_info()._fields``.
 
      .. versionchanged:: 3.5.0 added `memtype` parameter.
 

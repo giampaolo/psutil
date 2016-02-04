@@ -972,6 +972,9 @@ class Process(object):
         """
         return self._proc.memory_info_ex()
 
+    def memory_info_addrspace(self):
+        pass
+
     def memory_percent(self, memtype="rss"):
         """Compare process memory to total physical system memory and
         calculate process memory utilization as a percentage.
