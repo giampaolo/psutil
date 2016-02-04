@@ -1691,8 +1691,10 @@ class TestProcess(unittest.TestCase):
         self.assertGreater(percent2, percent1)
         del memarr
 
-    # def test_memory_info_ex(self):
-    # # tested later in fetch all test suite
+    def test_memory_info_ex(self):
+        memex = psutil.Process().memory_info_ex()
+        if LINUX or OSX or WINDOWS:
+            self.assertGreater(memex.uss, 0)
 
     @unittest.skipIf(OPENBSD or NETBSD, "not available on this platform")
     def test_memory_maps(self):

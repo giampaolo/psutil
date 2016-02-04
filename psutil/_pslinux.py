@@ -961,7 +961,7 @@ class Process(object):
     @wrap_exceptions
     def memory_info_ex(self,
                        _private_re=re.compile(b"Private.*:\s+(\d+)"),
-                       _shared_re=re.compile(b"Shared.*:\s+(\d+)")):
+                       _pss_re=re.compile(b"Pss.*:\s+(\d+)")):
         #  ============================================================
         # | FIELD  | DESCRIPTION                         | AKA  | TOP  |
         #  ============================================================
@@ -995,7 +995,7 @@ class Process(object):
                     raise
             else:
                 uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
-                pss = sum(map(int, _shared_re.findall(smaps_data))) * 1024
+                pss = sum(map(int, _pss_re.findall(smaps_data))) * 1024
         else:
             # usually means we're on kernel < 2.6.14 or CONFIG_MMU kernel
             # configuration option is not enabled.
