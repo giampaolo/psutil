@@ -748,6 +748,7 @@ class Process(object):
 
     # Linux, OSX and Windows only
     if hasattr(_psplatform.Process, "environ"):
+
         def environ(self):
             """The environment variables of the process as a dict.  Note: this
             might not reflect changes made after the process started.  """

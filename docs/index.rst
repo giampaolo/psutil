@@ -1023,14 +1023,13 @@ Process class
        terminated right now.
        Also *pss* on Linux is useful (read later).
        :meth:`memory_info_ex` method calculates these two values separately, by
-       inspecting all virtual memory regions of the process (which is quite
-       expensive BTW).
+       passing through process address space (which is quite expensive BTW).
        If this cannot be done due to lack of permissions `uss` and `pss` will
        be set to `0` (instead of raising :class:`psutil.AccessDenied`).
 
      **Linux, OSX, Windows**
 
-     - **uss**: aka "unique set size" this is the set of
+     - **uss**: aka "Unique Set Size" this is the set of
        pages that are unique to a process. This is the amount of memory that
        would be freed if the process was terminated right now.
        It will be set to `0` if it cannot be determined due to permission
@@ -1038,21 +1037,21 @@ Process class
 
      **Linux**
 
-     - **pss**: aka "proportional set size", is the amount of memory shared
+     - **pss**: aka "Proportional Set Size", is the amount of memory shared
        with other processes, accounted in a way that the amount is divided
        evenly between the processes that share it.
-       i.e. if three processes all use a shared library that uses 30 MBs, that library will only contribute 10 MBs to the "pss" that is reported for
-       each of the three processes.
+       I.e. if a process has 10 MBs all to itself, and 10 MBs shared with
+       another process, its PSS will be 15 MBs.
        "pss" value can be set to `0` if it cannot be determined due to
        permission issues.
 
      **UNIX**
 
-     - **rss**: aka resident-set-size, this is the non-swapped physical memory
-       a process has used.
+     - **rss**: aka "Resident Set Size", this is the non-swapped physical
+       memory a process has used.
        It matches "top"'s RES column
        (see `doc <http://linux.die.net/man/1/top>`__).
-     - **vms**: aka virtual-memory-size, this is the total amount of virtual
+     - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
        memory used by the process. This matches "top"'s VIRT column
        (see `doc <http://linux.die.net/man/1/top>`__).
      - **shared**: (Linux)
