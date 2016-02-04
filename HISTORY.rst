@@ -5,6 +5,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Enhancements**
 
+- #660: [Windows] make.bat is smarter in finding alternative VS install
+  locations.
 - #732: Process.environ().  (patch by Frank Benkstein)
 - #753: [Linux, OSX] Process USS and PSS (Linux) "real" memory stats.
   (patch by Eric Rahm)
