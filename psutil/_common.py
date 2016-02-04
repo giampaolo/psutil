@@ -287,8 +287,6 @@ snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
 
 # --- namedtuples for psutil.Process methods
 
-# psutil.Process.memory_info()
-pmem = namedtuple('pmem', ['rss', 'vms'])
 # psutil.Process.cpu_times()
 pcputimes = namedtuple('pcputimes', ['user', 'system'])
 # psutil.Process.open_files()

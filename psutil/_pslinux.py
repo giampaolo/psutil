@@ -218,6 +218,7 @@ svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
               'active', 'inactive', 'buffers', 'cached'])
 
+pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
 pextmem = namedtuple('pextmem', 'rss vms shared text lib data dirty uss pss')
 
 pmmap_grouped = namedtuple(
@@ -953,15 +954,6 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        with open_binary("%s/%s/statm" % (self._procfs_path, self.pid)) as f:
-            vms, rss = f.readline().split()[:2]
-            return _common.pmem(int(rss) * PAGESIZE,
-                                int(vms) * PAGESIZE)
-
-    @wrap_exceptions
-    def memory_info_ex(self,
-                       _private_re=re.compile(b"Private.*:\s+(\d+)"),
-                       _pss_re=re.compile(b"Pss.*:\s+(\d+)")):
         #  ============================================================
         # | FIELD  | DESCRIPTION                         | AKA  | TOP  |
         #  ============================================================
@@ -972,14 +964,17 @@ class Process(object):
         # | lib    | library (unused in Linux 2.6)       | lrs  |      |
         # | data   | data + stack                        | drs  | DATA |
         # | dirty  | dirty pages (unused in Linux 2.6)   | dt   |      |
-        # | -----------------------------------------------------------
-        # | uss    | unique set size ("real memory")     |      |      |
-        # | pss    | proportional set size               |      |      |
         #  ============================================================
         with open_binary("%s/%s/statm" % (self._procfs_path, self.pid)) as f:
             vms, rss, shared, text, lib, data, dirty = \
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
+            return pmem(rss, vms, shared, text, lib, data, dirty)
 
+    @wrap_exceptions
+    def memory_info_ex(self,
+                       _private_re=re.compile(b"Private.*:\s+(\d+)"),
+                       _pss_re=re.compile(b"Pss.*:\s+(\d+)")):
+        base_mem = self.memory_info()
         uss = pss = 0
         if HAS_SMAPS:
             # Note: using two regexes is faster than reading the file
@@ -1001,7 +996,7 @@ class Process(object):
             # configuration option is not enabled.
             pass
 
-        return pextmem(rss, vms, shared, text, lib, data, dirty, uss, pss)
+        return pextmem(*base_mem + (uss, pss))
 
     if HAS_SMAPS:
 

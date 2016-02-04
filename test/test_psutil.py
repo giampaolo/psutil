@@ -1675,7 +1675,7 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process()
 
         # step 1 - get a base value to compare our results
-        rss1, vms1 = p.memory_info()
+        rss1, vms1 = p.memory_info()[:2]
         percent1 = p.memory_percent()
         self.assertGreater(rss1, 0)
         self.assertGreater(vms1, 0)
@@ -1683,7 +1683,7 @@ class TestProcess(unittest.TestCase):
         # step 2 - allocate some memory
         memarr = [None] * 1500000
 
-        rss2, vms2 = p.memory_info()
+        rss2, vms2 = p.memory_info()[:2]
         percent2 = p.memory_percent()
         # make sure that the memory usage bumped up
         self.assertGreater(rss2, rss1)
