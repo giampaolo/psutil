@@ -1734,8 +1734,17 @@ class TestProcess(unittest.TestCase):
         memtype = psutil._psplatform.pextmem._fields[-1]
         ret = p.memory_percent(memtype=memtype)
         assert 0 <= ret <= 100, ret
-        with self.assertRaises(ValueError):
-            p.memory_percent(memtype="?!?")
+        self.assertRaises(ValueError, p.memory_percent, memtype="?!?")
+
+    @unittest.skipUnless(LINUX or OSX or WINDOWS,
+                         "uss not available on this plaftorm")
+    def test_memory_percent_uss_ad(self):
+        ret = collections.namedtuple("pextm", "rss vms uss")(1, 1, 0)
+        with mock.patch("psutil._psplatform.Process.memory_info_ex",
+                        return_value=ret):
+            p = psutil.Process()
+            self.assertRaises(
+                psutil.AccessDenied, p.memory_percent, memtype="uss")
 
     def test_is_running(self):
         sproc = get_test_subprocess(wait=True)
