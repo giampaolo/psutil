@@ -58,6 +58,7 @@ svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
               'active', 'inactive', 'wired'])
 
+pmem = namedtuple('pextmem', ['rss', 'vms', 'pfaults', 'pageins'])
 pextmem = namedtuple('pextmem', ['rss', 'vms', 'pfaults', 'pageins', 'uss'])
 
 pmmap_grouped = namedtuple(
@@ -269,19 +270,19 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        rss, vms = cext.proc_memory_info(self.pid)[:2]
-        return _common.pmem(rss, vms)
+        rss, vms, pfaults, pageins = cext.proc_memory_info(self.pid)
+        return pmem(rss, vms, pfaults, pageins)
 
     @wrap_exceptions
     def memory_info_ex(self):
-        rss, vms, pfaults, pageins = cext.proc_memory_info(self.pid)
+        base_mem = self.memory_info()
         uss = 0
         try:
             uss = cext.proc_memory_uss(self.pid)
         except OSError as err:
             if err.errno not in (errno.EPERM, errno.EACCES):
                 raise
-        return pextmem(rss, vms, pfaults * PAGESIZE, pageins * PAGESIZE, uss)
+        return pextmem(*base_mem + (uss, ))
 
     @wrap_exceptions
     def cpu_times(self):
