@@ -956,13 +956,12 @@ class Process(object):
         return self._proc.cpu_times()
 
     def memory_info(self):
-        """Return a tuple representing RSS (Resident Set Size) and VMS
-        (Virtual Memory Size) in bytes.
+        """Return a namedtuple with variable fields depending on the
+        platform, representing memory information about the process.
 
-        On UNIX RSS and VMS are the same values shown by 'ps'.
+        The "portable" fields available on all plaforms are `rss` and `vms`.
 
-        On Windows RSS and VMS refer to "Mem Usage" and "VM Size"
-        columns of taskmgr.exe.
+        All numbers are expressed in bytes.
         """
         return self._proc.memory_info()
 
@@ -973,6 +972,13 @@ class Process(object):
     if hasattr(_psplatform.Process, "memory_addrspace_info"):
 
         def memory_addrspace_info(self):
+            """This method passes through the whole process address space
+            in order to calculate highly reliable metrics about "real"
+            process memory consumption (USS and PSS).
+
+            It usually requires higher privileges and is considerably
+            slower than memory_info().
+            """
             return self._proc.memory_addrspace_info()
 
     def memory_percent(self, memtype="rss"):

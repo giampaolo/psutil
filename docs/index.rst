@@ -1061,11 +1061,11 @@ Process class
 
      .. warning:: depcreated in version 3.5.0; use :meth:`memory_info` instead.
 
-  .. method:: memory_info_addrspace()
+  .. method:: memory_addrspace_info()
 
      This method passes through the whole process address space in order to
-     determine highly reliable memory metrics about "real" process memory
-     consumption. It usually requires higher privileges and is considerably
+     calculate highly reliable metrics about "real" process memory consumption.
+     It usually requires higher privileges and is considerably
      slower than :meth:`memory_info`.
 
      - **uss**: (Linux, Windows, OSX) aka "Unique Set Size", this is the memory
@@ -1083,6 +1083,14 @@ Process class
        It represents the amount of memory that would be freed if the process
        was terminated right now.
 
+     Example on Linux:
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> p.memory_addrspace_info()
+       paddrspmem(uss=7421952, pss=7681024)
+       >>>
+
      .. versionadded:: 3.5.0
 
      Availability: Linux, OSX, Windows
@@ -1092,9 +1100,9 @@ Process class
      Compare process memory to total physical system memory and calculate
      process memory utilization as a percentage.
      *memtype* argument is a string that dictates what type of process memory
-     you want to compare against (defaults to *"rss"*).
-     The list of available strings can be obtained like this:
-     ``psutil.Process().memory_info()._fields``.
+     you want to compare against. You can choose between the namedtuple field
+     names returned by :meth:`memory_info` and :meth:`memory_addrspace_info`
+     (defaults to *"rss"*).
 
      .. versionchanged:: 3.5.0 added `memtype` parameter.
 
@@ -1108,7 +1116,7 @@ Process class
     (the most important value is "private" memory).
     If *grouped* is ``True`` the mapped regions with the same *path* are
     grouped together and the different memory fields are summed.  If *grouped*
-    is ``False`` every mapped region is shown as a single entity and the
+    is ``False`` each mapped region is shown as a single entity and the
     namedtuple will also include the mapped region's address space (*addr*)
     and permission set (*perms*).
     See `examples/pmap.py <https://github.com/giampaolo/psutil/blob/master/examples/pmap.py>`__

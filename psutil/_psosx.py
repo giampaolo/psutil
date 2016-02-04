@@ -58,7 +58,7 @@ svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
               'active', 'inactive', 'wired'])
 
-pmem = namedtuple('pextmem', ['rss', 'vms', 'pfaults', 'pageins'])
+pmem = namedtuple('pmem', ['rss', 'vms', 'pfaults', 'pageins'])
 paddrspmem = namedtuple('paddrspmem', ['uss'])
 
 pmmap_grouped = namedtuple(
