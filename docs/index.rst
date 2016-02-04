@@ -977,121 +977,134 @@ Process class
 
   .. method:: memory_info()
 
-     Return a tuple representing RSS (Resident Set Size) and VMS (Virtual
-     Memory Size) in bytes. On UNIX *rss* and *vms* are the same values shown
-     by `ps` or by RES and VIRT column of `top`.
-     On Windows *rss* and *vms* refer to "Mem Usage" and "VM Size"
-     columns of taskmgr.exe. For more detailed memory stats use
-     :meth:`memory_info_ex`.
-
-  .. method:: memory_info_ex()
-
      Return a namedtuple with variable fields depending on the platform
-     representing extended memory information about the process.
+     representing memory information about the process.
+     The "portable" fields available on all plaforms are `rss` and `vms`.
      All numbers are expressed in bytes.
 
-     +---------+---------+-------+---------+--------------------+
-     | Linux   | OSX     | BSD   | Solaris | Windows            |
-     +=========+=========+=======+=========+====================+
-     | rss     | rss     | rss   | rss     | num_page_faults    |
-     +---------+---------+-------+---------+--------------------+
-     | vms     | vms     | vms   | vms     | peak_wset          |
-     +---------+---------+-------+---------+--------------------+
-     | shared  | pfaults | text  |         | wset               |
-     +---------+---------+-------+---------+--------------------+
-     | text    | pageins | data  |         | peak_paged_pool    |
-     +---------+---------+-------+---------+--------------------+
-     | lib     | **uss** | stack |         | paged_pool         |
-     +---------+---------+-------+---------+--------------------+
-     | data    |         |       |         | peak_nonpaged_pool |
-     +---------+---------+-------+---------+--------------------+
-     | dirty   |         |       |         | nonpaged_pool      |
-     +---------+---------+-------+---------+--------------------+
-     | **uss** |         |       |         | pagefile           |
-     +---------+---------+-------+---------+--------------------+
-     | **pss** |         |       |         | peak_pagefile      |
-     +---------+---------+-------+---------+--------------------+
-     |         |         |       |         | private            |
-     +---------+---------+-------+---------+--------------------+
-     |         |         |       |         | **uss**            |
-     +---------+---------+-------+---------+--------------------+
-
-     .. note::
-       the most representative value for determining how much memory is
-       used by a process on Linux, OSX and Windows is probably *uss*, which
-       is the amount of memory that would be freed if the process was
-       terminated right now.
-       Also *pss* on Linux is useful (read later).
-       :meth:`memory_info_ex` method calculates these two values separately, by
-       passing through process address space (which is quite expensive BTW).
-       If this cannot be done due to lack of permissions `uss` and `pss` will
-       be set to `0` (instead of raising :class:`psutil.AccessDenied`).
-
-     **Linux, OSX, Windows**
-
-     - **uss**: aka "Unique Set Size" this is the set of
-       pages that are unique to a process. This is the amount of memory that
-       would be freed if the process was terminated right now.
-       It will be set to `0` if it cannot be determined due to permission
-       issues.
-
-     **Linux**
-
-     - **pss**: aka "Proportional Set Size", is the amount of memory shared
-       with other processes, accounted in a way that the amount is divided
-       evenly between the processes that share it.
-       I.e. if a process has 10 MBs all to itself, and 10 MBs shared with
-       another process, its PSS will be 15 MBs.
-       "pss" value can be set to `0` if it cannot be determined due to
-       permission issues.
-
-     **UNIX**
+     +---------+---------+-------+---------+------------------------------+
+     | Linux   | OSX     | BSD   | Solaris | Windows                      |
+     +=========+=========+=======+=========+==============================+
+     | rss     | rss     | rss   | rss     | rss (alias for ``wset``)     |
+     +---------+---------+-------+---------+------------------------------+
+     | vms     | vms     | vms   | vms     | vms (alias for ``pagefile``) |
+     +---------+---------+-------+---------+------------------------------+
+     | shared  | pfaults | text  |         | num_page_faults              |
+     +---------+---------+-------+---------+------------------------------+
+     | text    | pageins | data  |         | peak_wset                    |
+     +---------+---------+-------+---------+------------------------------+
+     | lib     |         | stack |         | wset                         |
+     +---------+---------+-------+---------+------------------------------+
+     | data    |         |       |         | peak_paged_pool              |
+     +---------+---------+-------+---------+------------------------------+
+     | dirty   |         |       |         | paged_pool                   |
+     +---------+---------+-------+---------+------------------------------+
+     |         |         |       |         | peak_nonpaged_pool           |
+     +---------+---------+-------+---------+------------------------------+
+     |         |         |       |         | nonpaged_pool                |
+     +---------+---------+-------+---------+------------------------------+
+     |         |         |       |         | pagefile                     |
+     +---------+---------+-------+---------+------------------------------+
+     |         |         |       |         | peak_pagefile                |
+     +---------+---------+-------+---------+------------------------------+
+     |         |         |       |         | private                      |
+     +---------+---------+-------+---------+------------------------------+
 
      - **rss**: aka "Resident Set Size", this is the non-swapped physical
        memory a process has used.
-       It matches "top"'s RES column
+       On UNIX it matches "top"'s RES column
        (see `doc <http://linux.die.net/man/1/top>`__).
+       On Windows this is an alias for `wset` field and it matches "Mem Usage"
+       column of taskmgr.exe.
+
      - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
-       memory used by the process. This matches "top"'s VIRT column
+       memory used by the process.
+       On UNIX it matches "top"'s VIRT column
        (see `doc <http://linux.die.net/man/1/top>`__).
+       On Windows this is an alias for `pagefile` field and it matches
+       "Mem Usage" "VM Size" column of taskmgr.exe.
+
      - **shared**: (Linux)
        memory that could be potentially shared with other processes.
        This matches "top"'s SHR column
        (see `doc <http://linux.die.net/man/1/top>`__).
+
      - **text**: (Linux, BSD)
        aka TRS (text resident set) the amount of memory devoted to
        executable code. This matches "top"'s CODE column
        (see `doc <http://linux.die.net/man/1/top>`__).
+
      - **data**: (Linux, BSD)
        aka DRS (data resident set) the amount of physical memory devoted to
        other than executable code. It matches "top"'s DATA column
        (see `doc <http://linux.die.net/man/1/top>`__).
+
      - **lib**: (Linux) the memory used by shared libraries.
+
      - **dirty**: (Linux) the number of dirty pages.
 
-     **Windows**
-
-       For Windows fields rely on
-       `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure doc.
-
+     For Windows fields rely on
+     `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure doc.
      Example on Linux:
 
      >>> import psutil
      >>> p = psutil.Process()
-     >>> p.memory_info_ex()
-     pextmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0, uss=7168000, pss=3653632)
+     >>> p.memory_info()
+     pmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0)
 
-     .. versionchanged:: 3.5.0 added `uss` field on Linux, OSX and Windows.
-     .. versionchanged:: 3.5.0 added `pss` field on Linux.
+     .. versionchanged:: 3.5.0 mutiple fields are returned, not only `rss` and
+        `vms`.
+
+  .. method:: memory_info_ex()
+
+     Same as :meth:`memory_info` (deprecated).
+
+     .. warning:: depcreated in version 3.5.0; use :meth:`memory_info` instead.
+
+  .. method:: memory_addrspace_info()
+
+     This method passes through the whole process address space in order to
+     calculate highly reliable metrics about "real" process memory consumption.
+     It usually requires higher privileges and is considerably slower than
+     :meth:`memory_info`.
+
+     - **uss**: (Linux, Windows, OSX) aka "Unique Set Size", this is the memory
+       which is unique to a process and which would be freed if the process was terminated right now.
+
+     - **pss**: (Linux) aka "Proportional Set Size", is the amount of memory
+       shared with other processes, accounted in a way that the amount is
+       divided evenly between the processes that share it.
+       I.e. if a process has 10 MBs all to itself, and 10 MBs shared with
+       another process, its PSS will be 15 MBs.
+
+      - **swap**: (Linux) amount memory that has been swapped out to disk.
+
+     .. note::
+       `uss` is probably the most representative metric for determining how
+       much memory is being used by a process.
+       It represents the amount of memory that would be freed if the process
+       was terminated right now.
+
+     Example on Linux:
+
+       >>> import psutil
+       >>> p = psutil.Process()
+       >>> p.memory_addrspace_info()
+       paddrspmem(uss=7421952, pss=7681024, swap=0)
+       >>>
+
+     .. versionadded:: 3.5.0
+
+     Availability: Linux, OSX, Windows
 
   .. method:: memory_percent(memtype="rss")
 
      Compare process memory to total physical system memory and calculate
      process memory utilization as a percentage.
      *memtype* argument is a string that dictates what type of process memory
-     you want to compare against (defaults to *"rss"*).
-     The list of available strings can be obtained like this:
-     ``psutil.Process().memory_info_ex()._fields``.
+     you want to compare against. You can choose between the namedtuple field
+     names returned by :meth:`memory_info` and :meth:`memory_addrspace_info`
+     (defaults to *"rss"*).
 
      .. versionchanged:: 3.5.0 added `memtype` parameter.
 
@@ -1105,7 +1118,7 @@ Process class
     (the most important value is "private" memory).
     If *grouped* is ``True`` the mapped regions with the same *path* are
     grouped together and the different memory fields are summed.  If *grouped*
-    is ``False`` every mapped region is shown as a single entity and the
+    is ``False`` each mapped region is shown as a single entity and the
     namedtuple will also include the mapped region's address space (*addr*)
     and permission set (*perms*).
     See `examples/pmap.py <https://github.com/giampaolo/psutil/blob/master/examples/pmap.py>`__

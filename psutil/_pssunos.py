@@ -60,7 +60,7 @@ TCP_STATUSES = {
 
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
-pextmem = namedtuple('pextmem', ['rss', 'vms'])
+pmem = namedtuple('pmem', ['rss', 'vms'])
 pmmap_grouped = namedtuple('pmmap_grouped',
                            ['path', 'rss', 'anonymous', 'locked'])
 pmmap_ext = namedtuple(
@@ -406,9 +406,6 @@ class Process(object):
         ret = cext.proc_basic_info(self.pid, self._procfs_path)
         rss, vms = ret[1] * 1024, ret[2] * 1024
         return _common.pmem(rss, vms)
-
-    # it seems Solaris uses rss and vms only
-    memory_info_ex = memory_info
 
     @wrap_exceptions
     def status(self):

@@ -229,9 +229,11 @@ class TestProcessObjectLeaks(Base):
     def test_memory_info(self):
         self.execute('memory_info')
 
-    @skip_if_linux()
-    def test_memory_info_ex(self):
-        self.execute('memory_info_ex')
+    # also available on Linux but it's pure python
+    @unittest.skipUnless(OSX or WINDOWS,
+                         "not available on this platform")
+    def test_memory_addrspace_info(self):
+        self.execute('memory_addrspace_info')
 
     @unittest.skipUnless(POSIX, "POSIX only")
     @skip_if_linux()

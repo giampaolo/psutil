@@ -218,7 +218,8 @@ svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
               'active', 'inactive', 'buffers', 'cached'])
 
-pextmem = namedtuple('pextmem', 'rss vms shared text lib data dirty uss pss')
+pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
+paddrspmem = namedtuple('paddrspmem', ['uss', 'pss', 'swap'])
 
 pmmap_grouped = namedtuple(
     'pmmap_grouped', ['path', 'rss', 'size', 'pss', 'shared_clean',
@@ -953,15 +954,6 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        with open_binary("%s/%s/statm" % (self._procfs_path, self.pid)) as f:
-            vms, rss = f.readline().split()[:2]
-            return _common.pmem(int(rss) * PAGESIZE,
-                                int(vms) * PAGESIZE)
-
-    @wrap_exceptions
-    def memory_info_ex(self,
-                       _private_re=re.compile(b"Private.*:\s+(\d+)"),
-                       _pss_re=re.compile(b"Pss.*:\s+(\d+)")):
         #  ============================================================
         # | FIELD  | DESCRIPTION                         | AKA  | TOP  |
         #  ============================================================
@@ -972,38 +964,31 @@ class Process(object):
         # | lib    | library (unused in Linux 2.6)       | lrs  |      |
         # | data   | data + stack                        | drs  | DATA |
         # | dirty  | dirty pages (unused in Linux 2.6)   | dt   |      |
-        # | -----------------------------------------------------------
-        # | uss    | unique set size ("real memory")     |      |      |
-        # | pss    | proportional set size               |      |      |
         #  ============================================================
         with open_binary("%s/%s/statm" % (self._procfs_path, self.pid)) as f:
             vms, rss, shared, text, lib, data, dirty = \
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
+            return pmem(rss, vms, shared, text, lib, data, dirty)
 
-        uss = pss = 0
-        if HAS_SMAPS:
+    if HAS_SMAPS:
+
+        @wrap_exceptions
+        def memory_addrspace_info(
+                self,
+                _private_re=re.compile(b"Private.*:\s+(\d+)"),
+                _pss_re=re.compile(b"Pss.*:\s+(\d+)"),
+                _swap_re=re.compile(b"Swap.*:\s+(\d+)")):
             # Note: using two regexes is faster than reading the file
             # line by line.
             # XXX: on Python 3 the 2 regexes are 30% slower than on
             # Python 2 though. Figure out why.
-            try:
-                with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
-                                 buffering=BIGGER_FILE_BUFFERING) as f:
-                    smaps_data = f.read()
-            except EnvironmentError as err:
-                if err.errno not in (errno.EPERM, errno.EACCES):
-                    raise
-            else:
-                uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
-                pss = sum(map(int, _pss_re.findall(smaps_data))) * 1024
-        else:
-            # usually means we're on kernel < 2.6.14 or CONFIG_MMU kernel
-            # configuration option is not enabled.
-            pass
-
-        return pextmem(rss, vms, shared, text, lib, data, dirty, uss, pss)
-
-    if HAS_SMAPS:
+            with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
+                             buffering=BIGGER_FILE_BUFFERING) as f:
+                smaps_data = f.read()
+            uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
+            pss = sum(map(int, _pss_re.findall(smaps_data))) * 1024
+            swap = sum(map(int, _swap_re.findall(smaps_data))) * 1024
+            return paddrspmem(uss, pss, swap)
 
         @wrap_exceptions
         def memory_maps(self):

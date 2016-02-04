@@ -222,7 +222,7 @@ def main():
             'ps', 'top', 'kill', 'free', 'lsof', 'netstat', 'nice', 'tty',
             'ionice', 'uptime', 'taskmgr', 'process', 'df', 'iotop', 'iostat',
             'ifconfig', 'taskset', 'who', 'pidof', 'pmap', 'smem', 'pstree',
-            'monitoring', 'ulimit', 'prlimit',
+            'monitoring', 'ulimit', 'prlimit', 'smem',
         ],
         author='Giampaolo Rodola',
         author_email='g.rodola <at> gmail <dot> com',

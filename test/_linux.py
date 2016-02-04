@@ -599,7 +599,7 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertEqual(psutil.Process().exe(), "/home/foo")
             self.assertEqual(psutil.Process().cwd(), "/home/foo")
 
-    def test_uss_pss_mem_against_mem_maps(self):
+    def test_memory_addrspace_info(self):
         src = textwrap.dedent("""
             import time
             with open("%s", "w") as f:
@@ -610,12 +610,14 @@ class LinuxSpecificTestCase(unittest.TestCase):
         call_until(lambda: os.listdir('.'), "'%s' not in ret" % TESTFN)
         p = psutil.Process(sproc.pid)
         time.sleep(.1)
-        memex = p.memory_info_ex()
+        mem = p.memory_addrspace_info()
         maps = p.memory_maps(grouped=False)
         self.assertEqual(
-            memex.uss, sum([x.private_dirty + x.private_clean for x in maps]))
+            mem.uss, sum([x.private_dirty + x.private_clean for x in maps]))
         self.assertEqual(
-            memex.pss, sum([x.shared_dirty + x.shared_clean for x in maps]))
+            mem.pss, sum([x.pss for x in maps]))
+        self.assertEqual(
+            mem.swap, sum([x.swap for x in maps]))
 
 
 def main():

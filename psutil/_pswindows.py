@@ -84,10 +84,11 @@ if enum is not None:
 
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
-pextmem = namedtuple(
-    'pextmem', ['num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
-                'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
-                'pagefile', 'peak_pagefile', 'private', 'uss'])
+pmem = namedtuple(
+    'pmem', ['num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
+             'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
+             'pagefile', 'peak_pagefile', 'private'])
+paddrspmem = namedtuple('paddrspmem', 'uss')
 pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
@@ -359,14 +360,6 @@ class Process(object):
                 return cext.proc_memory_info_2(self.pid)
             raise
 
-    def _get_uss_mem(self):
-        try:
-            return cext.proc_memory_uss(self.pid)
-        except OSError as err:
-            if err.errno in ACCESS_DENIED_SET:
-                return 0
-            raise
-
     @wrap_exceptions
     def memory_info(self):
         # on Windows RSS == WorkingSetSize and VSM == PagefileUsage
@@ -377,10 +370,9 @@ class Process(object):
         return _common.pmem(t[2], t[7])
 
     @wrap_exceptions
-    def memory_info_ex(self):
-        info = self._get_raw_meminfo()
-        uss = self._get_uss_mem()
-        return pextmem(*info + (uss, ))
+    def memory_addrspace_info(self):
+        uss = cext.proc_memory_uss(self.pid)
+        return paddrspmem(uss)
 
     def memory_maps(self):
         try:
