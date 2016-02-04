@@ -1065,8 +1065,8 @@ Process class
 
      This method passes through the whole process address space in order to
      calculate highly reliable metrics about "real" process memory consumption.
-     It usually requires higher privileges and is considerably
-     slower than :meth:`memory_info`.
+     It usually requires higher privileges and is considerably slower than
+     :meth:`memory_info`.
 
      - **uss**: (Linux, Windows, OSX) aka "Unique Set Size", this is the memory
        which is unique to a process and which would be freed if the process was terminated right now.
@@ -1076,6 +1076,8 @@ Process class
        divided evenly between the processes that share it.
        I.e. if a process has 10 MBs all to itself, and 10 MBs shared with
        another process, its PSS will be 15 MBs.
+
+      - **swap**: (Linux) memory that has been swapped out to disk.
 
      .. note::
        `uss` is probably the most representative metric for determining how
@@ -1088,7 +1090,7 @@ Process class
        >>> import psutil
        >>> p = psutil.Process()
        >>> p.memory_addrspace_info()
-       paddrspmem(uss=7421952, pss=7681024)
+       paddrspmem(uss=7421952, pss=7681024, swap=0)
        >>>
 
      .. versionadded:: 3.5.0

@@ -616,6 +616,8 @@ class LinuxSpecificTestCase(unittest.TestCase):
             mem.uss, sum([x.private_dirty + x.private_clean for x in maps]))
         self.assertEqual(
             mem.pss, sum([x.pss for x in maps]))
+        self.assertEqual(
+            mem.swap, sum([x.swap for x in maps]))
 
 
 def main():

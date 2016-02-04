@@ -219,7 +219,7 @@ svmem = namedtuple(
               'active', 'inactive', 'buffers', 'cached'])
 
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
-paddrspmem = namedtuple('paddrspmem', ['uss',  'pss'])
+paddrspmem = namedtuple('paddrspmem', ['uss', 'pss', 'swap'])
 
 pmmap_grouped = namedtuple(
     'pmmap_grouped', ['path', 'rss', 'size', 'pss', 'shared_clean',
@@ -976,7 +976,8 @@ class Process(object):
         def memory_addrspace_info(
                 self,
                 _private_re=re.compile(b"Private.*:\s+(\d+)"),
-                _pss_re=re.compile(b"Pss.*:\s+(\d+)")):
+                _pss_re=re.compile(b"Pss.*:\s+(\d+)"),
+                _swap_re=re.compile(b"Swap.*:\s+(\d+)")):
             # Note: using two regexes is faster than reading the file
             # line by line.
             # XXX: on Python 3 the 2 regexes are 30% slower than on
@@ -986,7 +987,8 @@ class Process(object):
                 smaps_data = f.read()
             uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
             pss = sum(map(int, _pss_re.findall(smaps_data))) * 1024
-            return paddrspmem(uss, pss)
+            swap = sum(map(int, _swap_re.findall(smaps_data))) * 1024
+            return paddrspmem(uss, pss, swap)
 
         @wrap_exceptions
         def memory_maps(self):
