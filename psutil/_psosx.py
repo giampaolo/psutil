@@ -199,10 +199,6 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except OSError as err:
-            # support for private module import
-            if (NoSuchProcess is None or AccessDenied is None or
-                    ZombieProcess is None):
-                raise
             if err.errno == errno.ESRCH:
                 if not pid_exists(self.pid):
                     raise NoSuchProcess(self.pid, self._name)
@@ -339,9 +335,6 @@ class Process(object):
         try:
             return _psposix.wait_pid(self.pid, timeout)
         except _psposix.TimeoutExpired:
-            # support for private module import
-            if TimeoutExpired is None:
-                raise
             raise TimeoutExpired(timeout, self.pid, self._name)
 
     @wrap_exceptions

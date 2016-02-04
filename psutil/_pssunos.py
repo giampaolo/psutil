@@ -260,10 +260,6 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except EnvironmentError as err:
-            # support for private module import
-            if (NoSuchProcess is None or AccessDenied is None or
-                    ZombieProcess is None):
-                raise
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if
             # process is gone in meantime.
@@ -572,7 +568,4 @@ class Process(object):
         try:
             return _psposix.wait_pid(self.pid, timeout)
         except _psposix.TimeoutExpired:
-            # support for private module import
-            if TimeoutExpired is None:
-                raise
             raise TimeoutExpired(timeout, self.pid, self._name)
