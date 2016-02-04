@@ -87,7 +87,7 @@ svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 pextmem = namedtuple(
     'pextmem', ['num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
                 'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
-                'pagefile', 'peak_pagefile', 'private'])
+                'pagefile', 'peak_pagefile', 'private', 'uss'])
 pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
@@ -359,12 +359,16 @@ class Process(object):
 
     def _get_raw_meminfo(self):
         try:
-            return cext.proc_memory_info(self.pid)
+            info = cext.proc_memory_info(self.pid)
+            uss = cext.proc_memory_uss(self.pid)
+            return info + (uss,)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 # TODO: the C ext can probably be refactored in order
                 # to get this from cext.proc_info()
-                return cext.proc_memory_info_2(self.pid)
+                info = cext.proc_memory_info_2(self.pid)
+                uss = cext.proc_memory_uss(self.pid)
+                return info + (uss,)
             raise
 
     @wrap_exceptions

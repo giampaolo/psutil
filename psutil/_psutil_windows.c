@@ -799,6 +799,89 @@ psutil_proc_memory_info_2(PyObject *self, PyObject *args) {
         pfault_count, m1, m2, m3, m4, m5, m6, m7, m8, private);
 }
 
+/**
+ * Returns the USS of the process.
+ */
+static PyObject *
+psutil_proc_memory_uss(PyObject *self, PyObject *args)
+{
+    DWORD pid;
+    HANDLE proc;
+    PSAPI_WORKING_SET_INFORMATION tmp;
+    DWORD tmp_size = sizeof(tmp);
+    size_t entries;
+    size_t private_pages;
+    size_t i;
+    DWORD info_array_size;
+    PSAPI_WORKING_SET_INFORMATION* info_array;
+    SYSTEM_INFO system_info;
+    PyObject* py_result = NULL;
+    unsigned long long total = 0;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+    proc = psutil_handle_from_pid(pid);
+    if (proc == NULL)
+        return NULL;
+
+    // Determine how many entries we need.
+    memset(&tmp, 0, tmp_size);
+    if (!QueryWorkingSet(proc, &tmp, tmp_size)) {
+        // NB: QueryWorkingSet is expected to fail here due to the
+        // buffer being too small.
+        if (tmp.NumberOfEntries == 0) {
+            PyErr_SetFromWindowsErr(0);
+            goto done;
+        }
+    }
+
+    // Fudge the size in case new entries are added between calls.
+    entries = tmp.NumberOfEntries * 2;
+
+    if (!entries) {
+        goto done;
+    }
+
+    info_array_size = tmp_size + (entries * sizeof(PSAPI_WORKING_SET_BLOCK));
+    info_array = (PSAPI_WORKING_SET_INFORMATION*)malloc(info_array_size);
+    if (!info_array) {
+        PyErr_NoMemory();
+        goto done;
+    }
+
+    if (!QueryWorkingSet(proc, info_array, info_array_size)) {
+        PyErr_SetFromWindowsErr(0);
+        goto done;
+    }
+
+    entries = (size_t)info_array->NumberOfEntries;
+    private_pages = 0;
+    for (i = 0; i < entries; i++) {
+        // Count shared pages that only one process is using as private.
+        if (!info_array->WorkingSetInfo[i].Shared ||
+                info_array->WorkingSetInfo[i].ShareCount <= 1) {
+            private_pages++;
+        }
+    }
+
+    // GetSystemInfo has no return value.
+    GetSystemInfo(&system_info);
+    total = private_pages * system_info.dwPageSize;
+    py_result = Py_BuildValue("K", total);
+
+done:
+    if (proc) {
+        CloseHandle(proc);
+    }
+
+    if (info_array) {
+        free(info_array);
+    }
+
+    return py_result;
+}
+
 
 /*
  * Return a Python integer indicating the total amount of physical memory
@@ -3031,6 +3114,8 @@ PsutilMethods[] = {
      "Return a tuple of process memory information"},
     {"proc_memory_info_2", psutil_proc_memory_info_2, METH_VARARGS,
      "Alternate implementation"},
+    {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS,
+     "Return the USS of the process"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory"},
     {"proc_suspend", psutil_proc_suspend, METH_VARARGS,
