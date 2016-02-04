@@ -98,6 +98,7 @@ svmem = namedtuple(
               'active', 'inactive', 'buffers', 'cached', 'shared', 'wired'])
 scputimes = namedtuple(
     'scputimes', ['user', 'nice', 'system', 'idle', 'irq'])
+pmem = namedtuple('pmem', ['rss', 'vms', 'text', 'data', 'stack'])
 pextmem = namedtuple('pextmem', ['rss', 'vms', 'text', 'data', 'stack'])
 pmmap_grouped = namedtuple(
     'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
@@ -432,8 +433,7 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        rss, vms = cext.proc_memory_info(self.pid)[:2]
-        return _common.pmem(rss, vms)
+        return pmem(*cext.proc_memory_info(self.pid))
 
     @wrap_exceptions
     def memory_info_ex(self):
