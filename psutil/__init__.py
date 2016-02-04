@@ -991,7 +991,7 @@ class Process(object):
         >>> psutil.Process().memory_info()._fields
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
-        if memtype in ('uss', 'pss'):
+        if memtype in ('uss', 'pss', 'swap'):
             if not hasattr(self, "memory_addrspace_info"):
                 fields = _psplatform.pmem._fields
                 raise ValueError(
@@ -999,7 +999,6 @@ class Process(object):
                         memtype, fields))
             fun = self.memory_addrspace_info
             fields = _psplatform.paddrspmem._fields
-
         else:
             fields = _psplatform.pmem._fields
             fun = self.memory_info

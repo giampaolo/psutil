@@ -1077,7 +1077,7 @@ Process class
        I.e. if a process has 10 MBs all to itself, and 10 MBs shared with
        another process, its PSS will be 15 MBs.
 
-      - **swap**: (Linux) memory that has been swapped out to disk.
+      - **swap**: (Linux) amount memory that has been swapped out to disk.
 
      .. note::
        `uss` is probably the most representative metric for determining how

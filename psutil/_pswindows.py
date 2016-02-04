@@ -88,7 +88,7 @@ pmem = namedtuple(
     'pmem', ['num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
              'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
              'pagefile', 'peak_pagefile', 'private'])
-paddrspmem = namedtuple('paddrspmem', ['uss'])
+paddrspmem = namedtuple('paddrspmem', 'uss')
 pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
