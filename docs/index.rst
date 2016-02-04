@@ -1017,25 +1017,31 @@ Process class
        (see `doc <http://linux.die.net/man/1/top>`__).
        On Windows this is an alias for `wset` field and it matches "Mem Usage"
        column of taskmgr.exe.
+
      - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
        memory used by the process.
        On UNIX it matches "top"'s VIRT column
        (see `doc <http://linux.die.net/man/1/top>`__).
        On Windows this is an alias for `pagefile` field and it matches
        "Mem Usage" "VM Size" column of taskmgr.exe.
+
      - **shared**: (Linux)
        memory that could be potentially shared with other processes.
        This matches "top"'s SHR column
        (see `doc <http://linux.die.net/man/1/top>`__).
+
      - **text**: (Linux, BSD)
        aka TRS (text resident set) the amount of memory devoted to
        executable code. This matches "top"'s CODE column
        (see `doc <http://linux.die.net/man/1/top>`__).
+
      - **data**: (Linux, BSD)
        aka DRS (data resident set) the amount of physical memory devoted to
        other than executable code. It matches "top"'s DATA column
        (see `doc <http://linux.die.net/man/1/top>`__).
+
      - **lib**: (Linux) the memory used by shared libraries.
+
      - **dirty**: (Linux) the number of dirty pages.
 
      For Windows fields rely on
@@ -1044,8 +1050,8 @@ Process class
 
      >>> import psutil
      >>> p = psutil.Process()
-     >>> p.memory_info_ex()
-     pextmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0)
+     >>> p.memory_info()
+     pmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0)
 
      .. versionchanged:: 3.5.0 mutiple fields are returned, not only `rss` and
         `vms`.
@@ -1057,20 +1063,16 @@ Process class
 
      - **uss**: (Linux, Windows, OSX) aka "Unique Set Size", this is the memory
        which is unique to a process and which would be freed if the process was terminated right now.
-       It will be set to `0` if it cannot be determined due to permission
-       issues.
 
      - **pss**: (Linux) aka "Proportional Set Size", is the amount of memory
        shared with other processes, accounted in a way that the amount is
        divided evenly between the processes that share it.
        I.e. if a process has 10 MBs all to itself, and 10 MBs shared with
        another process, its PSS will be 15 MBs.
-       "pss" value can be set to `0` if it cannot be determined due to
-       permission issues.
 
      .. note::
-       `uss` is probably the most representative value for determining how much
-       memory is being used by a process.
+       `uss` is probably the most representative metric for determining how
+       much memory is being used by a process.
        It represents the amount of memory that would be freed if the process
        was terminated right now.
 
@@ -1078,7 +1080,10 @@ Process class
        :meth:`memory_info_ex` introduces a big slowdown over
        :meth:`memory_info` because it passes through the whole process address
        space.
-       As such, use it only if you need `uss` or `pss` fields.
+       Also, starting from version 3.5.0, :meth:`memory_info_ex` has more
+       chances to raise :class:`AccessDenied` exceptions than before.
+       As such, use it only if you need `uss` or `pss` metrics and rely on
+       :meth:`memory_info` if not.
 
      Example on Linux:
 
@@ -1089,6 +1094,8 @@ Process class
 
      .. versionchanged:: 3.5.0 added `uss` field on Linux, OSX and Windows.
      .. versionchanged:: 3.5.0 added `pss` field on Linux.
+     .. versionchanged:: 3.5.0 this method has more chances to throw
+        :class:`AccessDenied` exceptions than in previous psutil versions.
 
   .. method:: memory_percent(memtype="rss")
 
