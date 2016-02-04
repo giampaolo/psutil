@@ -732,24 +732,27 @@ def disk_io_counters():
     SECTOR_SIZE = 512
 
     # determine partitions we want to look for
-    partitions = []
-    with open_text("%s/partitions" % get_procfs_path()) as f:
-        lines = f.readlines()[2:]
-    for line in reversed(lines):
-        _, _, _, name = line.split()
-        if name[-1].isdigit():
-            # we're dealing with a partition (e.g. 'sda1'); 'sda' will
-            # also be around but we want to omit it
-            partitions.append(name)
-        else:
-            if not partitions or not partitions[-1].startswith(name):
-                # we're dealing with a disk entity for which no
-                # partitions have been defined (e.g. 'sda' but
-                # 'sda1' was not around), see:
-                # https://github.com/giampaolo/psutil/issues/338
+    def get_partitions():
+        partitions = []
+        with open_text("%s/partitions" % get_procfs_path()) as f:
+            lines = f.readlines()[2:]
+        for line in reversed(lines):
+            _, _, _, name = line.split()
+            if name[-1].isdigit():
+                # we're dealing with a partition (e.g. 'sda1'); 'sda' will
+                # also be around but we want to omit it
                 partitions.append(name)
-    #
+            else:
+                if not partitions or not partitions[-1].startswith(name):
+                    # we're dealing with a disk entity for which no
+                    # partitions have been defined (e.g. 'sda' but
+                    # 'sda1' was not around), see:
+                    # https://github.com/giampaolo/psutil/issues/338
+                    partitions.append(name)
+        return partitions
+
     retdict = {}
+    partitions = get_partitions()
     with open_text("%s/diskstats" % get_procfs_path()) as f:
         lines = f.readlines()
     for line in lines:
