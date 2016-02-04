@@ -26,6 +26,7 @@ except ImportError:
     pwd = None
 
 from . import _common
+from ._common import deprecated_method
 from ._common import memoize
 from ._compat import callable
 from ._compat import long
@@ -965,15 +966,14 @@ class Process(object):
         """
         return self._proc.memory_info()
 
+    @deprecated_method(replacement="memory_info")
     def memory_info_ex(self):
-        """Return a namedtuple with variable fields depending on the
-        platform representing extended memory information about
-        this process. All numbers are expressed in bytes.
-        """
-        return self._proc.memory_info_ex()
+        return self.memory_info()
 
-    def memory_info_addrspace(self):
-        pass
+    if hasattr(_psplatform.Process, "memory_addrspace_info"):
+
+        def memory_addrspace_info(self):
+            return self._proc.memory_addrspace_info()
 
     def memory_percent(self, memtype="rss"):
         """Compare process memory to total physical system memory and
@@ -982,20 +982,27 @@ class Process(object):
         process memory you want to compare against (defaults to "rss").
         The list of available strings can be obtained like this:
 
-        >>> psutil.Process().memory_info_ex()._fields
+        >>> psutil.Process().memory_info()._fields
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
-        if memtype in ("rss", "vsz"):
-            value = getattr(self.memory_info(), memtype)
+        if memtype in ('uss', 'pss'):
+            if not hasattr(self, "memory_addrspace_info"):
+                fields = _psplatform.pmem._fields
+                raise ValueError(
+                    "invalid memtype %r; valid types are %r" % (
+                        memtype, fields))
+            fun = self.memory_addrspace_info
+            fields = _psplatform.paddrspmem._fields
+
         else:
-            memex = self.memory_info_ex()
-            if memtype not in memex._fields:
-                raise ValueError("invalid memtype %r; valid types are %r" % (
-                    memtype, memex._fields))
-            value = getattr(memex, memtype)
-            if value == 0 and memtype in ('uss', 'pss'):
-                raise AccessDenied(self.pid, self._name,
-                                   msg="can't retrieve %s memory" % memtype)
+            fields = _psplatform.pmem._fields
+            fun = self.memory_info
+
+        if memtype not in fields:
+            raise ValueError("invalid memtype %r; valid types are %r" % (
+                memtype, fields))
+        metrics = fun()
+        value = getattr(metrics, memtype)
 
         # use cached value if available
         total_phymem = _TOTAL_PHYMEM or virtual_memory().total
@@ -1987,7 +1994,7 @@ def test():  # pragma: no cover
                 pinfo['name'].strip() or '?'))
 
 
-del memoize, division
+del memoize, division, deprecated_method
 if sys.version_info < (3, 0):
     del num
 

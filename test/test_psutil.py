@@ -1685,22 +1685,21 @@ class TestProcess(unittest.TestCase):
 
         rss2, vms2 = p.memory_info()[:2]
         percent2 = p.memory_percent()
-        # make sure that the memory usage bumped up
+
+        # step 3 - make sure that the memory usage bumped up
         self.assertGreater(rss2, rss1)
         self.assertGreaterEqual(vms2, vms1)  # vms might be equal
         self.assertGreater(percent2, percent1)
         del memarr
 
-    def test_memory_info_ex(self):
-        memex = psutil.Process().memory_info_ex()
-        if LINUX or OSX or WINDOWS:
-            self.assertGreater(memex.uss, 0)
-            if LINUX:
-                self.assertGreater(memex.pss, 0)
-                self.assertGreater(memex.pss, memex.uss)
-        base_mem = psutil.Process().memory_info()
-        self.assertEqual(memex.rss, base_mem.rss)
-        self.assertEqual(memex.vms, base_mem.vms)
+    @unittest.skipUnless(LINUX or OSX or WINDOWS,
+                         "not available on this platform")
+    def test_memory_addrspace_info(self):
+        mem = psutil.Process().memory_addrspace_info()
+        self.assertGreater(mem.uss, 0)
+        if LINUX:
+            self.assertGreater(mem.pss, 0)
+            self.assertGreater(mem.pss, mem.uss)
 
     @unittest.skipIf(OPENBSD or NETBSD, "not available on this platform")
     def test_memory_maps(self):
@@ -1739,20 +1738,12 @@ class TestProcess(unittest.TestCase):
         assert 0 <= ret <= 100, ret
         ret = p.memory_percent(memtype='vms')
         assert 0 <= ret <= 100, ret
-        memtype = psutil._psplatform.pextmem._fields[-1]
-        ret = p.memory_percent(memtype=memtype)
         assert 0 <= ret <= 100, ret
         self.assertRaises(ValueError, p.memory_percent, memtype="?!?")
-
-    @unittest.skipUnless(LINUX or OSX or WINDOWS,
-                         "uss not available on this plaftorm")
-    def test_memory_percent_uss_ad(self):
-        ret = collections.namedtuple("pextm", "rss vms uss")(1, 1, 0)
-        with mock.patch("psutil._psplatform.Process.memory_info_ex",
-                        return_value=ret):
-            p = psutil.Process()
-            self.assertRaises(
-                psutil.AccessDenied, p.memory_percent, memtype="uss")
+        if LINUX or OSX or WINDOWS:
+            ret = p.memory_percent(memtype='uss')
+            assert 0 <= ret <= 100, ret
+            assert 0 <= ret <= 100, ret
 
     def test_is_running(self):
         sproc = get_test_subprocess(wait=True)
@@ -2603,7 +2594,9 @@ class TestFetchAllProcesses(unittest.TestCase):
         valid_procs = 0
         excluded_names = set([
             'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-            'as_dict', 'cpu_percent', 'parent', 'children', 'pid'])
+            'as_dict', 'cpu_percent', 'parent', 'children', 'pid',
+            'memory_info_ex',
+        ])
         if LINUX and not RLIMIT_SUPPORT:
             excluded_names.add('rlimit')
         attrs = []
@@ -2753,12 +2746,8 @@ class TestFetchAllProcesses(unittest.TestCase):
         self.assertTrue(ret.system >= 0)
 
     def memory_info(self, ret, proc):
-        self.assertTrue(ret.rss >= 0)
-        self.assertTrue(ret.vms >= 0)
-
-    def memory_info_ex(self, ret, proc):
         for name in ret._fields:
-            self.assertTrue(getattr(ret, name) >= 0)
+            self.assertGreaterEqual(getattr(ret, name), 0)
         if POSIX and ret.vms != 0:
             # VMS is always supposed to be the highest
             for name in ret._fields:
@@ -2770,6 +2759,12 @@ class TestFetchAllProcesses(unittest.TestCase):
             assert ret.peak_paged_pool >= ret.paged_pool, ret
             assert ret.peak_nonpaged_pool >= ret.nonpaged_pool, ret
             assert ret.peak_pagefile >= ret.pagefile, ret
+
+    def memory_addrspace_info(self, ret, proc):
+        for name in ret._fields:
+            self.assertGreaterEqual(getattr(ret, name), 0)
+        if LINUX:
+            self.assertGreaterEqual(ret.pss, ret.uss)
 
     def open_files(self, ret, proc):
         for f in ret:

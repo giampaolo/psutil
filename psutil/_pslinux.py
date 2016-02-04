@@ -219,7 +219,7 @@ svmem = namedtuple(
               'active', 'inactive', 'buffers', 'cached'])
 
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
-pextmem = namedtuple('pextmem', 'rss vms shared text lib data dirty uss pss')
+paddrspmem = namedtuple('paddrspmem', ['uss',  'pss'])
 
 pmmap_grouped = namedtuple(
     'pmmap_grouped', ['path', 'rss', 'size', 'pss', 'shared_clean',
@@ -970,35 +970,23 @@ class Process(object):
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
             return pmem(rss, vms, shared, text, lib, data, dirty)
 
-    @wrap_exceptions
-    def memory_info_ex(self,
-                       _private_re=re.compile(b"Private.*:\s+(\d+)"),
-                       _pss_re=re.compile(b"Pss.*:\s+(\d+)")):
-        base_mem = self.memory_info()
-        uss = pss = 0
-        if HAS_SMAPS:
+    if HAS_SMAPS:
+
+        @wrap_exceptions
+        def memory_addrspace_info(
+                self,
+                _private_re=re.compile(b"Private.*:\s+(\d+)"),
+                _pss_re=re.compile(b"Pss.*:\s+(\d+)")):
             # Note: using two regexes is faster than reading the file
             # line by line.
             # XXX: on Python 3 the 2 regexes are 30% slower than on
             # Python 2 though. Figure out why.
-            try:
-                with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
-                                 buffering=BIGGER_FILE_BUFFERING) as f:
-                    smaps_data = f.read()
-            except EnvironmentError as err:
-                if err.errno not in (errno.EPERM, errno.EACCES):
-                    raise
-            else:
-                uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
-                pss = sum(map(int, _pss_re.findall(smaps_data))) * 1024
-        else:
-            # usually means we're on kernel < 2.6.14 or CONFIG_MMU kernel
-            # configuration option is not enabled.
-            pass
-
-        return pextmem(*base_mem + (uss, pss))
-
-    if HAS_SMAPS:
+            with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
+                             buffering=BIGGER_FILE_BUFFERING) as f:
+                smaps_data = f.read()
+            uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
+            pss = sum(map(int, _pss_re.findall(smaps_data))) * 1024
+            return paddrspmem(uss, pss)
 
         @wrap_exceptions
         def memory_maps(self):

@@ -13,6 +13,7 @@ import os
 import socket
 import stat
 import sys
+import warnings
 from collections import namedtuple
 from socket import AF_INET
 from socket import SOCK_DGRAM
@@ -227,6 +228,24 @@ def socktype_to_enum(num):
         return socket.AddressType(num)
     except (ValueError, AttributeError):
         return num
+
+
+def deprecated_method(replacement):
+    """A decorator which can be used to mark a method as deprecated
+    'replcement' is the method name which will be called instead.
+    """
+    def outer(fun):
+        msg = "%s() is deprecated; use %s() instead" % (
+            fun.__name__, replacement)
+        if fun.__doc__ is None:
+            fun.__doc__ = msg
+
+        @functools.wraps(fun)
+        def inner(self, *args, **kwargs):
+            warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+            return getattr(self, replacement)(*args, **kwargs)
+        return inner
+    return outer
 
 
 # --- Process.connections() 'kind' parameter mapping
