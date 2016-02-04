@@ -983,42 +983,46 @@ Process class
      All numbers are expressed in bytes.
      For more detailed memory stats use :meth:`memory_info_ex`.
 
-     +---------+---------+-------+---------+--------------------+
-     | Linux   | OSX     | BSD   | Solaris | Windows            |
-     +=========+=========+=======+=========+====================+
-     | rss     | rss     | rss   | rss     | rss                |
-     +---------+---------+-------+---------+--------------------+
-     | vms     | vms     | vms   | vms     | vms                |
-     +---------+---------+-------+---------+--------------------+
-     | shared  | pfaults | text  |         | num_page_faults    |
-     +---------+---------+-------+---------+--------------------+
-     | text    | pageins | data  |         | peak_wset          |
-     +---------+---------+-------+---------+--------------------+
-     | lib     |         | stack |         | wset               |
-     +---------+---------+-------+---------+--------------------+
-     | data    |         |       |         | peak_paged_pool    |
-     +---------+---------+-------+---------+--------------------+
-     | dirty   |         |       |         | paged_pool         |
-     +---------+---------+-------+---------+--------------------+
-     |         |         |       |         | peak_nonpaged_pool |
-     +---------+---------+-------+---------+--------------------+
-     |         |         |       |         | nonpaged_pool      |
-     +---------+---------+-------+---------+--------------------+
-     |         |         |       |         | pagefile           |
-     +---------+---------+-------+---------+--------------------+
-     |         |         |       |         | peak_pagefile      |
-     +---------+---------+-------+---------+--------------------+
+     +---------+---------+-------+---------+------------------------------+
+     | Linux   | OSX     | BSD   | Solaris | Windows                      |
+     +=========+=========+=======+=========+==============================+
+     | rss     | rss     | rss   | rss     | rss (alias for ``wset``)     |
+     +---------+---------+-------+---------+------------------------------+
+     | vms     | vms     | vms   | vms     | vms (alias for ``pagefile``) |
+     +---------+---------+-------+---------+------------------------------+
+     | shared  | pfaults | text  |         | num_page_faults              |
+     +---------+---------+-------+---------+------------------------------+
+     | text    | pageins | data  |         | peak_wset                    |
+     +---------+---------+-------+---------+------------------------------+
+     | lib     |         | stack |         | wset                         |
+     +---------+---------+-------+---------+------------------------------+
+     | data    |         |       |         | peak_paged_pool              |
+     +---------+---------+-------+---------+------------------------------+
+     | dirty   |         |       |         | paged_pool                   |
+     +---------+---------+-------+---------+------------------------------+
+     |         |         |       |         | peak_nonpaged_pool           |
+     +---------+---------+-------+---------+------------------------------+
+     |         |         |       |         | nonpaged_pool                |
+     +---------+---------+-------+---------+------------------------------+
+     |         |         |       |         | pagefile                     |
+     +---------+---------+-------+---------+------------------------------+
+     |         |         |       |         | peak_pagefile                |
+     +---------+---------+-------+---------+------------------------------+
+     |         |         |       |         | private                      |
+     +---------+---------+-------+---------+------------------------------+
 
      - **rss**: aka "Resident Set Size", this is the non-swapped physical
        memory a process has used.
        On UNIX it matches "top"'s RES column
        (see `doc <http://linux.die.net/man/1/top>`__).
-       On Windows it matches "Mem Usage" column of taskmgr.exe.
+       On Windows this is an alias for `wset` field and it matches "Mem Usage"
+       column of taskmgr.exe.
      - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
        memory used by the process.
        On UNIX it matches "top"'s VIRT column
        (see `doc <http://linux.die.net/man/1/top>`__).
-       On Windows it matches "Mem Usage" "VM Size" column of taskmgr.exe.
+       On Windows this is an alias for `pagefile` field and it matches
+       "Mem Usage" "VM Size" column of taskmgr.exe.
      - **shared**: (Linux)
        memory that could be potentially shared with other processes.
        This matches "top"'s SHR column
@@ -1036,7 +1040,6 @@ Process class
 
      For Windows fields rely on
      `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure doc.
-
      Example on Linux:
 
      >>> import psutil
@@ -1049,12 +1052,11 @@ Process class
 
   .. method:: memory_info_ex()
 
-     This returns the same fields as :meth:`memory_info_` plus some extra
-     fields on Linux (`uss`, `pss`), OSX (`uss`) and Windows (`uss`).
+     This returns the same fields as :meth:`memory_info` plus some extra
+     fields on Linux, OSX and Windows.
 
-     - **uss**: (Linux, Windows, OSX) aka "Unique Set Size", this is the set of
-       pages that are unique to a process. This is the amount of memory that
-       would be freed if the process was terminated right now.
+     - **uss**: (Linux, Windows, OSX) aka "Unique Set Size", this is the memory
+       which is unique to a process and which would be freed if the process was terminated right now.
        It will be set to `0` if it cannot be determined due to permission
        issues.
 
@@ -1071,6 +1073,12 @@ Process class
        memory is being used by a process.
        It represents the amount of memory that would be freed if the process
        was terminated right now.
+
+     .. warning::
+       :meth:`memory_info_ex` introduces a big slowdown over
+       :meth:`memory_info` because it passes through the whole process address
+       space.
+       As such, use it only if you need `uss` or `pss` fields.
 
      Example on Linux:
 
