@@ -1727,7 +1727,15 @@ class TestProcess(unittest.TestCase):
 
     def test_memory_percent(self):
         p = psutil.Process()
-        self.assertGreater(p.memory_percent(), 0.0)
+        ret = p.memory_percent()
+        assert 0 <= ret <= 100, ret
+        ret = p.memory_percent(memtype='vms')
+        assert 0 <= ret <= 100, ret
+        memtype = psutil._psplatform.pextmem._fields[-1]
+        ret = p.memory_percent(memtype=memtype)
+        assert 0 <= ret <= 100, ret
+        with self.assertRaises(ValueError):
+            p.memory_percent(memtype="?!?")
 
     def test_is_running(self):
         sproc = get_test_subprocess(wait=True)

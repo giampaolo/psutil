@@ -971,15 +971,32 @@ class Process(object):
         """
         return self._proc.memory_info_ex()
 
-    def memory_percent(self):
-        """Compare physical system memory to process resident memory
-        (RSS) and calculate process memory utilization as a percentage.
+    def memory_percent(self, memtype="rss"):
+        """Compare process memory to total physical system memory and
+        calculate process memory utilization as a percentage.
+        'memtype' argument is a string that dictates what type of
+        process memory you want to compare against (defaults to "rss").
+        The list of available strings can be obtained like this:
+
+        >>> psutil.Process().memory_info_ex()._fields
+        ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
-        rss = self._proc.memory_info()[0]
+        if memtype in ("rss", "vsz"):
+            value = getattr(self.memory_info(), memtype)
+        else:
+            memex = self.memory_info_ex()
+            if memtype not in memex._fields:
+                raise ValueError("invalid memtype %r; valid types are %r" % (
+                    memtype, memex._fields))
+            value = getattr(memex, memtype)
+            if value == 0 and memtype in ('uss', 'pss'):
+                raise AccessDenied(self.pid, self._name,
+                                   msg="can't retrieve %s memory" % memtype)
+
         # use cached value if available
         total_phymem = _TOTAL_PHYMEM or virtual_memory().total
         try:
-            return (rss / float(total_phymem)) * 100
+            return (value / float(total_phymem)) * 100
         except ZeroDivisionError:
             return 0.0
 

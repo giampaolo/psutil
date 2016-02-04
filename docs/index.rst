@@ -1085,10 +1085,16 @@ Process class
      .. versionchanged:: 3.5.0 added `uss` field on Linux, OSX and Windows.
      .. versionchanged:: 3.5.0 added `pss` field on Linux.
 
-  .. method:: memory_percent()
+  .. method:: memory_percent(memtype="rss")
 
-     Compare physical system memory to process resident memory (RSS) and
-     calculate process memory utilization as a percentage.
+     Compare process memory to total physical system memory and calculate
+     process memory utilization as a percentage.
+     *memtype* argument is a string that dictates what type of process memory
+     you want to compare against (defaults to *"rss"*).
+     The list of available strings can be obtained like this:
+     ``psutil.Process().memory_info_ex()._fields``.
+
+     .. versionchanged:: 3.5.0 added `memtype` parameter.
 
   .. method:: memory_maps(grouped=True)
 

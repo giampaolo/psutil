@@ -10,6 +10,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #732: Process.environ().  (patch by Frank Benkstein)
 - #753: [Linux, OSX, Windows] Process USS and PSS (Linux) "real" memory stats.
   (patch by Eric Rahm)
+- #755: Process.memory_percent() "memtype" parameter.
 
 **Bug fixes**
 
