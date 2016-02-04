@@ -829,20 +829,6 @@ def wrap_exceptions(fun):
     return wrapper
 
 
-def wrap_exceptions_w_zombie(fun):
-    """Same as above but also handles zombies."""
-    @functools.wraps(fun)
-    def wrapper(self, *args, **kwargs):
-        try:
-            return wrap_exceptions(fun)(self)
-        except NoSuchProcess:
-            if not pid_exists(self.pid):
-                raise
-            else:
-                raise ZombieProcess(self.pid, self._name, self._ppid)
-    return wrapper
-
-
 class Process(object):
     """Linux process implementation."""
 
@@ -1080,7 +1066,7 @@ class Process(object):
                   % self.pid
             raise NotImplementedError(msg)
 
-    @wrap_exceptions_w_zombie
+    @wrap_exceptions
     def cwd(self):
         return readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
 
