@@ -408,9 +408,6 @@ class Process(object):
         rss, vms = ret[1] * 1024, ret[2] * 1024
         return _common.pmem(rss, vms)
 
-    # it seems Solaris uses rss and vms only
-    memory_info_ex = memory_info
-
     @wrap_exceptions
     def status(self):
         code = cext.proc_basic_info(self.pid, self._procfs_path)[6]
