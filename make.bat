@@ -26,6 +26,8 @@ if "%TSCRIPT%" == "" (
     set TSCRIPT=test\test_psutil.py
 )
 
+set VSINSTALLDIR=%VS90COMNTOOLS%..\..
+
 set PYTHON26=C:\Python26\python.exe
 set PYTHON27=C:\Python27\python.exe
 set PYTHON33=C:\Python33\python.exe
@@ -77,7 +79,7 @@ if "%1" == "clean" (
 
 if "%1" == "build" (
     :build
-    "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
+    "%VSINSTALLDIR%\VC\bin\vcvars64.bat"
     %PYTHON% setup.py build
     if %errorlevel% neq 0 goto :error
 	rem copies *.pyd files in ./psutil directory in order to allow
@@ -131,7 +133,7 @@ if "%1" == "test-memleaks" (
 
 if "%1" == "build-all" (
     :build-all
-    "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
+    "%VSINSTALLDIR%\VC\bin\vcvars64.bat"
     for %%P in (%ALL_PYTHONS%) do (
         @echo ------------------------------------------------
         @echo building exe for %%P
@@ -148,7 +150,7 @@ if "%1" == "build-all" (
 
 if "%1" == "upload-all" (
     :upload-exes
-    "C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\bin\vcvars64.bat"
+    "%VSINSTALLDIR%\VC\bin\vcvars64.bat"
     for %%P in (%ALL_PYTHONS%) do (
         @echo ------------------------------------------------
         @echo uploading exe for %%P
