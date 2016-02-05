@@ -85,7 +85,8 @@ if enum is not None:
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 pmem = namedtuple(
-    'pmem', ['num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
+    'pmem', ['rss', 'vms'
+             'num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
              'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
              'pagefile', 'peak_pagefile', 'private'])
 paddrspmem = namedtuple('paddrspmem', 'uss')
@@ -362,12 +363,13 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        # on Windows RSS == WorkingSetSize and VSM == PagefileUsage
-        # fields of PROCESS_MEMORY_COUNTERS struct:
-        # http://msdn.microsoft.com/en-us/library/windows/desktop/
-        #     ms684877(v=vs.85).aspx
+        # on Windows RSS == WorkingSetSize and VSM == PagefileUsage.
+        # Underlying C function returns fields of PROCESS_MEMORY_COUNTERS
+        # struct.
         t = self._get_raw_meminfo()
-        return _common.pmem(t[2], t[7])
+        rss = t[2]  # wset
+        vms = t[7]  # pagefile
+        return _common.pmem((rss, vms, ) + t)
 
     @wrap_exceptions
     def memory_addrspace_info(self):
