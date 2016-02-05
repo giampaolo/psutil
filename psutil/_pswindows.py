@@ -85,7 +85,7 @@ if enum is not None:
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 pmem = namedtuple(
-    'pmem', ['rss', 'vms'
+    'pmem', ['rss', 'vms',
              'num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
              'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
              'pagefile', 'peak_pagefile', 'private'])
@@ -369,7 +369,7 @@ class Process(object):
         t = self._get_raw_meminfo()
         rss = t[2]  # wset
         vms = t[7]  # pagefile
-        return pmem((rss, vms, ) + t)
+        return pmem(*(rss, vms, ) + t)
 
     @wrap_exceptions
     def memory_addrspace_info(self):
