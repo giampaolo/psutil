@@ -369,7 +369,7 @@ class Process(object):
         t = self._get_raw_meminfo()
         rss = t[2]  # wset
         vms = t[7]  # pagefile
-        return _common.pmem((rss, vms, ) + t)
+        return pmem((rss, vms, ) + t)
 
     @wrap_exceptions
     def memory_addrspace_info(self):
