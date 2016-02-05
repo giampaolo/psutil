@@ -970,6 +970,8 @@ class Process(object):
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
             return pmem(rss, vms, shared, text, lib, data, dirty)
 
+    # /proc/pid/smaps does not exist on kernels < 2.6.14 or if
+    # CONFIG_MMU kernel configuration option is not enabled.
     if HAS_SMAPS:
 
         @wrap_exceptions
@@ -1048,13 +1050,6 @@ class Process(object):
                             data.get('Swap:', 0)
                         ))
             return ls
-
-    else:
-        def memory_maps(self):
-            msg = "couldn't find /proc/%s/smaps; kernel < 2.6.14 or "  \
-                  "CONFIG_MMU kernel configuration option is not enabled" \
-                  % self.pid
-            raise NotImplementedError(msg)
 
     @wrap_exceptions
     def cwd(self):

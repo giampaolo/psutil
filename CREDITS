@@ -375,3 +375,6 @@ I: 751
 N: mpderbec
 W: https://github.com/mpderbec
 I: 660
+
+N: Mozilla Foundation
+D: sample code for process USS memory.

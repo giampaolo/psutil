@@ -801,6 +801,9 @@ psutil_proc_memory_info_2(PyObject *self, PyObject *args) {
 
 /**
  * Returns the USS of the process.
+ * Reference:
+ * https://dxr.mozilla.org/mozilla-central/source/xpcom/base/
+ *     nsMemoryReporterManager.cpp
  */
 static PyObject *
 psutil_proc_memory_uss(PyObject *self, PyObject *args)
