@@ -978,7 +978,7 @@ class Process(object):
                 _private_re=re.compile(b"Private.*:\s+(\d+)"),
                 _pss_re=re.compile(b"Pss.*:\s+(\d+)"),
                 _swap_re=re.compile(b"Swap.*:\s+(\d+)")):
-            # Note: using two regexes is faster than reading the file
+            # Note: using 3 regexes is faster than reading the file
             # line by line.
             # XXX: on Python 3 the 2 regexes are 30% slower than on
             # Python 2 though. Figure out why.

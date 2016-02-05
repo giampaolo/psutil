@@ -1064,18 +1064,20 @@ Process class
   .. method:: memory_addrspace_info()
 
      This method passes through the whole process address space in order to
-     calculate highly reliable metrics about "real" process memory consumption.
+     calculate highly reliable metrics about "effective" process memory
+     consumption.
      It usually requires higher privileges and is considerably slower than
      :meth:`memory_info`.
 
      - **uss**: (Linux, Windows, OSX) aka "Unique Set Size", this is the memory
-       which is unique to a process and which would be freed if the process was terminated right now.
+       which is unique to a process and which would be freed if the process was
+       terminated right now.
 
      - **pss**: (Linux) aka "Proportional Set Size", is the amount of memory
        shared with other processes, accounted in a way that the amount is
        divided evenly between the processes that share it.
-       I.e. if a process has 10 MBs all to itself, and 10 MBs shared with
-       another process, its PSS will be 15 MBs.
+       I.e. if a process has 10 MBs all to itself and 10 MBs shared with
+       another process its PSS will be 15 MBs.
 
       - **swap**: (Linux) amount memory that has been swapped out to disk.
 
@@ -1104,7 +1106,7 @@ Process class
      *memtype* argument is a string that dictates what type of process memory
      you want to compare against. You can choose between the namedtuple field
      names returned by :meth:`memory_info` and :meth:`memory_addrspace_info`
-     (defaults to *"rss"*).
+     (defaults to ``"rss"``).
 
      .. versionchanged:: 3.5.0 added `memtype` parameter.
 

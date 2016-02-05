@@ -973,7 +973,7 @@ class Process(object):
 
         def memory_addrspace_info(self):
             """This method passes through the whole process address space
-            in order to calculate highly reliable metrics about "real"
+            in order to calculate highly reliable metrics about "effective"
             process memory consumption (USS and PSS).
 
             It usually requires higher privileges and is considerably
