@@ -13,11 +13,11 @@ import sys
 import time
 
 import psutil
-from psutil._common import BSD
-from psutil._common import LINUX
-from psutil._common import OSX
-from psutil._common import POSIX
-from psutil._common import SUNOS
+from psutil import BSD
+from psutil import LINUX
+from psutil import OSX
+from psutil import POSIX
+from psutil import SUNOS
 from psutil._compat import callable
 from psutil._compat import PY3
 from test_psutil import get_kernel_version

@@ -17,10 +17,10 @@ import sys
 import time
 
 import psutil
-from psutil._common import BSD
-from psutil._common import FREEBSD
-from psutil._common import NETBSD
-from psutil._common import OPENBSD
+from psutil import BSD
+from psutil import FREEBSD
+from psutil import NETBSD
+from psutil import OPENBSD
 from psutil._compat import PY3
 from test_psutil import get_test_subprocess
 from test_psutil import MEMORY_TOLERANCE

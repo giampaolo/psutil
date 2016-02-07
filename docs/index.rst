@@ -1400,6 +1400,22 @@ Popen class
 Constants
 =========
 
+.. _const-oses:
+.. data:: POSIX
+          WINDOWS
+          LINUX
+          OSX
+          FREEBSD
+          NETBSD
+          OPENBSD
+          BSD
+          SUNOS
+
+  ``bool`` constants which define what platform you're on. E.g. if on Windows,
+  *WINDOWS* constant will be ``True``, all athers will be ``False``.
+
+  .. versionadded:: 3.5.0
+
 .. _const-procfs_path:
 .. data:: PROCFS_PATH
 

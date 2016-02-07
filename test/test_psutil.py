@@ -55,16 +55,16 @@ except ImportError:
     import mock  # requires "pip install mock"
 
 import psutil
-from psutil._common import BSD
-from psutil._common import FREEBSD
-from psutil._common import LINUX
-from psutil._common import NETBSD
-from psutil._common import OPENBSD
-from psutil._common import OSX
-from psutil._common import POSIX
-from psutil._common import SUNOS
+from psutil import BSD
+from psutil import FREEBSD
+from psutil import LINUX
+from psutil import NETBSD
+from psutil import OPENBSD
+from psutil import OSX
+from psutil import POSIX
+from psutil import SUNOS
+from psutil import WINDOWS
 from psutil._common import supports_ipv6
-from psutil._common import WINDOWS
 from psutil._compat import callable
 from psutil._compat import long
 from psutil._compat import PY3

@@ -31,7 +31,7 @@ except ImportError:
 
 import psutil
 import psutil._pslinux
-from psutil._common import LINUX
+from psutil import LINUX
 from psutil._compat import PY3
 from psutil._compat import u
 from test_psutil import call_until

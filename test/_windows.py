@@ -30,7 +30,7 @@ except ImportError:
     win32api = win32con = None
 
 import psutil
-from psutil._common import WINDOWS
+from psutil import WINDOWS
 from psutil._compat import callable
 from psutil._compat import long
 from psutil._compat import PY3

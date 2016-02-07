@@ -60,16 +60,17 @@ from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
 from ._common import NIC_DUPLEX_UNKNOWN
 
-from ._common import BSD as _BSD
-from ._common import LINUX as _LINUX
-from ._common import OPENBSD as _OPENBSD
-from ._common import OSX as _OSX
-from ._common import POSIX as _POSIX
-from ._common import SUNOS as _SUNOS
-from ._common import WINDOWS as _WINDOWS
+from ._common import BSD
+from ._common import FREEBSD  # NOQA
+from ._common import LINUX
+from ._common import NETBSD  # NOQA
+from ._common import OPENBSD  # NOQA
+from ._common import OSX
+from ._common import POSIX  # NOQA
+from ._common import SUNOS
+from ._common import WINDOWS
 
-
-if _LINUX:
+if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
     # via sys.modules.
     PROCFS_PATH = "/proc"
@@ -119,7 +120,7 @@ if _LINUX:
         except AttributeError:
             pass
 
-elif _WINDOWS:
+elif WINDOWS:
     from . import _pswindows as _psplatform
     from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS  # NOQA
     from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS  # NOQA
@@ -129,13 +130,13 @@ elif _WINDOWS:
     from ._psutil_windows import REALTIME_PRIORITY_CLASS  # NOQA
     from ._pswindows import CONN_DELETE_TCB  # NOQA
 
-elif _OSX:
+elif OSX:
     from . import _psosx as _psplatform
 
-elif _BSD:
+elif BSD:
     from . import _psbsd as _psplatform
 
-elif _SUNOS:
+elif SUNOS:
     from . import _pssunos as _psplatform
     from ._pssunos import CONN_BOUND  # NOQA
     from ._pssunos import CONN_IDLE  # NOQA
@@ -152,18 +153,28 @@ __all__ = [
     # exceptions
     "Error", "NoSuchProcess", "ZombieProcess", "AccessDenied",
     "TimeoutExpired",
+
     # constants
     "version_info", "__version__",
+
     "STATUS_RUNNING", "STATUS_IDLE", "STATUS_SLEEPING", "STATUS_DISK_SLEEP",
     "STATUS_STOPPED", "STATUS_TRACING_STOP", "STATUS_ZOMBIE", "STATUS_DEAD",
     "STATUS_WAKING", "STATUS_LOCKED", "STATUS_WAITING", "STATUS_LOCKED",
+
     "CONN_ESTABLISHED", "CONN_SYN_SENT", "CONN_SYN_RECV", "CONN_FIN_WAIT1",
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", "CONN_NONE",
+
     "AF_LINK",
+
     "NIC_DUPLEX_FULL", "NIC_DUPLEX_HALF", "NIC_DUPLEX_UNKNOWN",
+
+    "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "OSX", "POSIX", "SUNOS",
+    "WINDOWS",
+
     # classes
     "Process", "Popen",
+
     # functions
     "pid_exists", "pids", "process_iter", "wait_procs",             # proc
     "virtual_memory", "swap_memory",                                # memory
@@ -530,7 +541,7 @@ class Process(object):
 
         # XXX should we check creation time here rather than in
         # Process.parent()?
-        if _POSIX:
+        if POSIX:
             return self._proc.ppid()
         else:
             self._ppid = self._ppid or self._proc.ppid()
@@ -541,10 +552,10 @@ class Process(object):
         # Process name is only cached on Windows as on POSIX it may
         # change, see:
         # https://github.com/giampaolo/psutil/issues/692
-        if _WINDOWS and self._name is not None:
+        if WINDOWS and self._name is not None:
             return self._name
         name = self._proc.name()
-        if _POSIX and len(name) >= 15:
+        if POSIX and len(name) >= 15:
             # On UNIX the name gets truncated to the first 15 characters.
             # If it matches the first part of the cmdline we return that
             # one instead because it's usually more explicative.
@@ -616,7 +627,7 @@ class Process(object):
         """The name of the user that owns the process.
         On UNIX this is calculated by using *real* process uid.
         """
-        if _POSIX:
+        if POSIX:
             if pwd is None:
                 # might happen if python was installed from sources
                 raise ImportError(
@@ -652,7 +663,7 @@ class Process(object):
                 raise NoSuchProcess(self.pid, self._name)
             self._proc.nice_set(value)
 
-    if _POSIX:
+    if POSIX:
 
         def uids(self):
             """Return process UIDs as a (real, effective, saved)
@@ -755,7 +766,7 @@ class Process(object):
             might not reflect changes made after the process started.  """
             return self._proc.environ()
 
-    if _WINDOWS:
+    if WINDOWS:
 
         def num_handles(self):
             """Return the number of handles opened by this process
@@ -906,7 +917,7 @@ class Process(object):
         """
         blocking = interval is not None and interval > 0.0
         num_cpus = cpu_count()
-        if _POSIX:
+        if POSIX:
             def timer():
                 return _timer() * num_cpus
         else:
@@ -1074,7 +1085,7 @@ class Process(object):
         """
         return self._proc.connections(kind)
 
-    if _POSIX:
+    if POSIX:
         def _send_signal(self, sig):
             if self.pid == 0:
                 # see "man 2 kill"
@@ -1086,7 +1097,7 @@ class Process(object):
                 os.kill(self.pid, sig)
             except OSError as err:
                 if err.errno == errno.ESRCH:
-                    if _OPENBSD and pid_exists(self.pid):
+                    if OPENBSD and pid_exists(self.pid):
                         # We do this because os.kill() lies in case of
                         # zombie processes.
                         raise ZombieProcess(self.pid, self._name, self._ppid)
@@ -1104,7 +1115,7 @@ class Process(object):
         On Windows only SIGTERM is valid and is treated as an alias
         for kill().
         """
-        if _POSIX:
+        if POSIX:
             self._send_signal(sig)
         else:
             if sig == signal.SIGTERM:
@@ -1124,7 +1135,7 @@ class Process(object):
         whether PID has been reused.
         On Windows this has the effect ot suspending all process threads.
         """
-        if _POSIX:
+        if POSIX:
             self._send_signal(signal.SIGSTOP)
         else:
             self._proc.suspend()
@@ -1135,7 +1146,7 @@ class Process(object):
         whether PID has been reused.
         On Windows this has the effect of resuming all process threads.
         """
-        if _POSIX:
+        if POSIX:
             self._send_signal(signal.SIGCONT)
         else:
             self._proc.resume()
@@ -1146,7 +1157,7 @@ class Process(object):
         whether PID has been reused.
         On Windows this is an alias for kill().
         """
-        if _POSIX:
+        if POSIX:
             self._send_signal(signal.SIGTERM)
         else:
             self._proc.kill()
@@ -1156,7 +1167,7 @@ class Process(object):
         """Kill the current process with SIGKILL pre-emptively checking
         whether PID has been reused.
         """
-        if _POSIX:
+        if POSIX:
             self._send_signal(signal.SIGKILL)
         else:
             self._proc.kill()
@@ -1263,7 +1274,7 @@ def pid_exists(pid):
     """
     if pid < 0:
         return False
-    elif pid == 0 and _POSIX:
+    elif pid == 0 and POSIX:
         # On POSIX we use os.kill() to determine PID existence.
         # According to "man 2 kill" PID 0 has a special meaning
         # though: it refers to <<every process in the process
@@ -1891,7 +1902,7 @@ def net_if_addrs():
             try:
                 fam = socket.AddressFamily(fam)
             except ValueError:
-                if _WINDOWS and fam == -1:
+                if WINDOWS and fam == -1:
                     fam = _psplatform.AF_LINK
                 elif (hasattr(_psplatform, "AF_LINK") and
                         _psplatform.AF_LINK == fam):
@@ -1953,7 +1964,7 @@ def test():  # pragma: no cover
     templ = "%-10s %5s %4s %4s %7s %7s %-13s %5s %7s  %s"
     attrs = ['pid', 'cpu_percent', 'memory_percent', 'name', 'cpu_times',
              'create_time', 'memory_info']
-    if _POSIX:
+    if POSIX:
         attrs.append('uids')
         attrs.append('terminal')
     print(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY",
@@ -1978,7 +1989,7 @@ def test():  # pragma: no cover
                 user = p.username()
             except Error:
                 user = ''
-            if _WINDOWS and '\\' in user:
+            if WINDOWS and '\\' in user:
                 user = user.split('\\')[1]
             vms = pinfo['memory_info'] and \
                 int(pinfo['memory_info'].vms / 1024) or '?'

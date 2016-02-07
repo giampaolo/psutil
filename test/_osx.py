@@ -13,7 +13,7 @@ import sys
 import time
 
 import psutil
-from psutil._common import OSX
+from psutil import OSX
 from psutil._compat import PY3
 from test_psutil import get_test_subprocess
 from test_psutil import MEMORY_TOLERANCE

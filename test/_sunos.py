@@ -10,7 +10,7 @@ import sys
 import os
 
 import psutil
-from psutil._common import SUNOS
+from psutil import SUNOS
 from test_psutil import sh
 from test_psutil import unittest
 
