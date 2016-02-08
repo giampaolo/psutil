@@ -1438,7 +1438,7 @@ class TestProcess(unittest.TestCase):
                 "__CF_USER_TEXT_ENCODING",
                 "VERSIONER_PYTHON_PREFER_32_BIT",
                 "VERSIONER_PYTHON_VERSION"])
-        if LINUX:
+        if LINUX or OSX:
             removes.extend(['PLAT'])
         if TOX:
             removes.extend(['HOME'])
