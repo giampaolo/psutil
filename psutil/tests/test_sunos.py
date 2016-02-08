@@ -4,15 +4,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Sun OS specific tests.  These are implicitly run by test_psutil.py."""
+"""Sun OS specific tests."""
 
-import sys
 import os
 
 import psutil
 from psutil import SUNOS
-from test_psutil import sh
-from test_psutil import unittest
+from psutil.tests import sh
+from psutil.tests import test_module_by_name
+from psutil.tests import unittest
 
 
 @unittest.skipUnless(SUNOS, "not a SunOS system")
@@ -37,12 +37,5 @@ class SunOSSpecificTestCase(unittest.TestCase):
         self.assertEqual(psutil_swap.free, free)
 
 
-def main():
-    test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.makeSuite(SunOSSpecificTestCase))
-    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
-    return result.wasSuccessful()
-
 if __name__ == '__main__':
-    if not main():
-        sys.exit(1)
+    test_module_by_name(__file__)

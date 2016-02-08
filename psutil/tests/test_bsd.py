@@ -6,9 +6,9 @@
 
 # TODO: (FreeBSD) add test for comparing connections with 'sockstat' cmd.
 
-"""Tests specific to all BSD platforms.  These are implicitly run by
-test_psutil.
-py."""
+
+"""Tests specific to all BSD platforms."""
+
 
 import datetime
 import os
@@ -22,13 +22,14 @@ from psutil import FREEBSD
 from psutil import NETBSD
 from psutil import OPENBSD
 from psutil._compat import PY3
-from test_psutil import get_test_subprocess
-from test_psutil import MEMORY_TOLERANCE
-from test_psutil import reap_children
-from test_psutil import retry_before_failing
-from test_psutil import sh
-from test_psutil import unittest
-from test_psutil import which
+from psutil.tests import get_test_subprocess
+from psutil.tests import MEMORY_TOLERANCE
+from psutil.tests import reap_children
+from psutil.tests import retry_before_failing
+from psutil.tests import sh
+from psutil.tests import test_module_by_name
+from psutil.tests import unittest
+from psutil.tests import which
 
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
@@ -293,16 +294,5 @@ class OpenBSDSpecificTestCase(unittest.TestCase):
         self.assertEqual(sys_bt, psutil_bt)
 
 
-def main():
-    test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.makeSuite(BSDSpecificTestCase))
-    if FREEBSD:
-        test_suite.addTest(unittest.makeSuite(FreeBSDSpecificTestCase))
-    elif OPENBSD:
-        test_suite.addTest(unittest.makeSuite(OpenBSDSpecificTestCase))
-    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
-    return result.wasSuccessful()
-
 if __name__ == '__main__':
-    if not main():
-        sys.exit(1)
+    test_module_by_name(__file__)

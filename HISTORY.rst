@@ -11,6 +11,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #753: [Linux, OSX, Windows] Process USS and PSS (Linux) "real" memory stats.
   (patch by Eric Rahm)
 - #755: Process.memory_percent() "memtype" parameter.
+- #758: tests now live in psutil namespace.
+- #760: expose OS constants (LINUX, OSX, etc.)
 
 **Bug fixes**
 

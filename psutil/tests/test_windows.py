@@ -5,7 +5,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Windows specific tests.  These are implicitly run by test_psutil.py."""
+"""Windows specific tests."""
 
 import errno
 import glob
@@ -16,8 +16,6 @@ import subprocess
 import sys
 import time
 import traceback
-
-import mock
 
 try:
     import wmi
@@ -34,11 +32,13 @@ from psutil import WINDOWS
 from psutil._compat import callable
 from psutil._compat import long
 from psutil._compat import PY3
-from test_psutil import APPVEYOR
-from test_psutil import get_test_subprocess
-from test_psutil import reap_children
-from test_psutil import retry_before_failing
-from test_psutil import unittest
+from psutil.tests import APPVEYOR
+from psutil.tests import get_test_subprocess
+from psutil.tests import reap_children
+from psutil.tests import retry_before_failing
+from psutil.tests import test_module_by_name
+from psutil.tests import unittest
+from psutil.tests import mock
 
 
 cext = psutil._psplatform.cext
@@ -488,6 +488,7 @@ class TestDualProcessImplementation(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
 
+@unittest.skipUnless(WINDOWS, "not a Windows system")
 class RemoteProcessTestCase(unittest.TestCase):
     """Certain functions require calling ReadProcessMemory.  This trivially
     works when called on the current process.  Check that this works on other
@@ -575,15 +576,5 @@ class RemoteProcessTestCase(unittest.TestCase):
         self.assertEquals(e["THINK_OF_A_NUMBER"], str(os.getpid()))
 
 
-def main():
-    test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.makeSuite(WindowsSpecificTestCase))
-    test_suite.addTest(unittest.makeSuite(TestDualProcessImplementation))
-    test_suite.addTest(unittest.makeSuite(RemoteProcessTestCase))
-    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
-    return result.wasSuccessful()
-
-
 if __name__ == '__main__':
-    if not main():
-        sys.exit(1)
+    test_module_by_name(__file__)

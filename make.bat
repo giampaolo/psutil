@@ -23,7 +23,7 @@ if "%PYTHON%" == "" (
     set PYTHON=C:\Python27\python.exe
 )
 if "%TSCRIPT%" == "" (
-    set TSCRIPT=test\test_psutil.py
+    set TSCRIPT=psutil\tests\runner.py
 )
 
 set VSINSTALLDIR=%VS90COMNTOOLS%..\..

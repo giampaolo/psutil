@@ -229,7 +229,7 @@ def main():
         url='https://github.com/giampaolo/psutil',
         platforms='Platform Independent',
         license='BSD',
-        packages=['psutil'],
+        packages=['psutil', 'psutil.tests'],
         # see: python setup.py register --list-classifiers
         classifiers=[
             'Development Status :: 5 - Production/Stable',

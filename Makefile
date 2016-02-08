@@ -4,14 +4,14 @@
 
 # You can set these variables from the command line.
 PYTHON    = python
-TSCRIPT   = test/test_psutil.py
+TSCRIPT   = psutil/tests/runner.py
 
 all: test
 
 clean:
 	rm -f `find . -type f -name \*.py[co]`
 	rm -f `find . -type f -name \*.so`
-	rm -f `find . -type f -name .\*~`
+	rm -f `find . -type f -name \*.~`
 	rm -f `find . -type f -name \*.orig`
 	rm -f `find . -type f -name \*.bak`
 	rm -f `find . -type f -name \*.rej`
@@ -57,7 +57,7 @@ setup-dev-env: install-git-hooks
 		unittest2 \
 
 install: build
-	$(PYTHON) setup.py install --user
+	$(PYTHON) setup.py develop --user
 
 uninstall:
 	cd ..; $(PYTHON) -m pip uninstall -y -v psutil

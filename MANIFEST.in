@@ -19,5 +19,4 @@ recursive-exclude docs/_build *
 recursive-include .ci *
 recursive-include docs *
 recursive-include examples *.py
-recursive-include psutil *.py *.c *.h
-recursive-include test *.py README*
+recursive-include psutil *.py *.c *.h README*

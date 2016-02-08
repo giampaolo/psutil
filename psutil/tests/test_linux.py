@@ -4,9 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Linux specific tests.  These are implicitly run by test_psutil.py."""
-
-from __future__ import division
+"""Linux specific tests."""
 
 import contextlib
 import errno
@@ -18,7 +16,6 @@ import re
 import shutil
 import socket
 import struct
-import sys
 import tempfile
 import textwrap
 import time
@@ -34,19 +31,21 @@ import psutil._pslinux
 from psutil import LINUX
 from psutil._compat import PY3
 from psutil._compat import u
-from test_psutil import call_until
-from test_psutil import get_kernel_version
-from test_psutil import importlib
-from test_psutil import MEMORY_TOLERANCE
-from test_psutil import pyrun
-from test_psutil import reap_children
-from test_psutil import retry_before_failing
-from test_psutil import sh
-from test_psutil import skip_on_not_implemented
-from test_psutil import TESTFN
-from test_psutil import TRAVIS
-from test_psutil import unittest
-from test_psutil import which
+from psutil.tests import call_until
+from psutil.tests import get_kernel_version
+from psutil.tests import importlib
+from psutil.tests import MEMORY_TOLERANCE
+from psutil.tests import pyrun
+from psutil.tests import reap_children
+from psutil.tests import retry_before_failing
+from psutil.tests import sh
+from psutil.tests import skip_on_not_implemented
+from psutil.tests import TESTFN
+from psutil.tests import TRAVIS
+from psutil.tests import unittest
+from psutil.tests import which
+from psutil.tests import test_module_by_name
+
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 # procps-ng 3.3.10 changed the output format of free
@@ -620,12 +619,5 @@ class LinuxSpecificTestCase(unittest.TestCase):
             mem.swap, sum([x.swap for x in maps]))
 
 
-def main():
-    test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.makeSuite(LinuxSpecificTestCase))
-    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
-    return result.wasSuccessful()
-
 if __name__ == '__main__':
-    if not main():
-        sys.exit(1)
+    test_module_by_name(__file__)

@@ -4,7 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""POSIX specific tests.  These are implicitly run by test_psutil.py."""
+"""POSIX specific tests."""
 
 import datetime
 import os
@@ -20,16 +20,17 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil._compat import callable
 from psutil._compat import PY3
-from test_psutil import get_kernel_version
-from test_psutil import get_test_subprocess
-from test_psutil import PYTHON
-from test_psutil import reap_children
-from test_psutil import retry_before_failing
-from test_psutil import sh
-from test_psutil import skip_on_access_denied
-from test_psutil import TRAVIS
-from test_psutil import unittest
-from test_psutil import wait_for_pid
+from psutil.tests import get_kernel_version
+from psutil.tests import get_test_subprocess
+from psutil.tests import PYTHON
+from psutil.tests import reap_children
+from psutil.tests import retry_before_failing
+from psutil.tests import sh
+from psutil.tests import skip_on_access_denied
+from psutil.tests import test_module_by_name
+from psutil.tests import TRAVIS
+from psutil.tests import unittest
+from psutil.tests import wait_for_pid
 
 
 def ps(cmd):
@@ -270,12 +271,5 @@ class PosixSpecificTestCase(unittest.TestCase):
                          psutil.Process().cwd())
 
 
-def main():
-    test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.makeSuite(PosixSpecificTestCase))
-    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
-    return result.wasSuccessful()
-
 if __name__ == '__main__':
-    if not main():
-        sys.exit(1)
+    test_module_by_name(__file__)
