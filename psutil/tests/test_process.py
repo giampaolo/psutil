@@ -604,8 +604,18 @@ class TestProcess(unittest.TestCase):
             if not nt.path.startswith('['):
                 assert os.path.isabs(nt.path), nt.path
                 if POSIX:
-                    assert os.path.exists(nt.path) or \
-                        os.path.islink(nt.path), nt.path
+                    try:
+                        assert os.path.exists(nt.path) or \
+                            os.path.islink(nt.path), nt.path
+                    except AssertionError:
+                        if not LINUX:
+                            raise
+                        else:
+                            # https://github.com/giampaolo/psutil/issues/759
+                            with open('/proc/self/smaps') as f:
+                                data = f.read()
+                            if "%s (deleted)" % nt.path not in data:
+                                raise
                 else:
                     # XXX - On Windows we have this strange behavior with
                     # 64 bit dlls: they are visible via explorer but cannot

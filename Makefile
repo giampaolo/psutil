@@ -78,7 +78,7 @@ test-memleaks: install
 # all test methods containing "disk_" in their name.
 # Requires "pip install nose".
 test-by-name: install
-	@$(PYTHON) -m nose test/test_psutil.py test/_* --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
+	@$(PYTHON) -m nose psutil/tests/*.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
 
 # Same as above but for test_memory_leaks.py script.
 test-memleaks-by-name: install

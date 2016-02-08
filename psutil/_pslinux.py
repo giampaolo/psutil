@@ -1036,6 +1036,9 @@ class Process(object):
                             path = '[anon]'
                         else:
                             path = path.strip()
+                            if (path.endswith(' (deleted)') and not
+                                    path_exists_strict(path)):
+                                path = path[:-10]
                         ls.append((
                             addr, perms, path,
                             data['Rss:'],

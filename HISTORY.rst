@@ -27,6 +27,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #741: [OpenBSD] psutil does not compile on mips64.
 - #751: [Linux] fixed call to Py_DECREF on possible Null object.
 - #754: [Linux] cmdline() can be wrong in case of zombie process.
+- #759: [Linux] Process.memory_maps() may return paths ending with " (deleted)"
 
 
 3.4.2 - 2016-01-20
