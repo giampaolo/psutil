@@ -73,7 +73,7 @@ install:
 build: off
 
 test_script:
-  - "%WITH_COMPILER% %PYTHON%/python test/test_psutil.py"
+  - "%WITH_COMPILER% %PYTHON%/python psutil/tests/runner.py"
 
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"

@@ -12,7 +12,7 @@ fi
 
 python setup.py build
 python setup.py install
-coverage run test/test_psutil.py --include="psutil/*" --omit="test/*,*setup*"
-python test/test_memory_leaks.py
+coverage run psutil/tests/runner.py --include="psutil/*" --omit="test/*,*setup*"
+python psutil/tests/test_memory_leaks.py
 flake8
 pep8

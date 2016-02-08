@@ -14,7 +14,6 @@ import functools
 import gc
 import os
 import socket
-import sys
 import threading
 import time
 
@@ -35,10 +34,10 @@ from psutil.tests import get_test_subprocess
 from psutil.tests import reap_children
 from psutil.tests import RLIMIT_SUPPORT
 from psutil.tests import safe_remove
+from psutil.tests import test_module_by_name
 from psutil.tests import TESTFN
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
-
 
 LOOPS = 1000
 MEMORY_TOLERANCE = 4096
@@ -444,16 +443,5 @@ class TestModuleFunctionsLeaks(Base):
         self.execute('net_if_stats')
 
 
-def main():
-    test_suite = unittest.TestSuite()
-    tests = [TestProcessObjectLeaksZombie,
-             TestProcessObjectLeaks,
-             TestModuleFunctionsLeaks]
-    for test in tests:
-        test_suite.addTest(unittest.makeSuite(test))
-    result = unittest.TextTestRunner(verbosity=2).run(test_suite)
-    return result.wasSuccessful()
-
 if __name__ == '__main__':
-    if not main():
-        sys.exit(1)
+    test_module_by_name(__file__)

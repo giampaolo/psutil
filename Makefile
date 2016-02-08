@@ -66,13 +66,13 @@ test: install
 	$(PYTHON) $(TSCRIPT)
 
 test-process: install
-	$(PYTHON) -m unittest -v test.test_psutil.TestProcess
+	$(PYTHON) -m unittest -v psutil.tests.test_process
 
 test-system: install
-	$(PYTHON) -m unittest -v test.test_psutil.TestSystemAPIs
+	$(PYTHON) -m unittest -v psutil.tests.test_system
 
 test-memleaks: install
-	$(PYTHON) test/test_memory_leaks.py
+	$(PYTHON) psutil/tests/test_memory_leaks.py
 
 # Run a specific test by name; e.g. "make test-by-name disk_" will run
 # all test methods containing "disk_" in their name.

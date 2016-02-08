@@ -115,13 +115,13 @@ if "%1" == "test" (
 
 if "%1" == "test-process" (
     call :install
-    %PYTHON% -m unittest -v test.test_psutil.TestProcess
+    %PYTHON% -m unittest -v psutil.tests.test_process
     goto :eof
 )
 
 if "%1" == "test-system" (
     call :install
-    %PYTHON% -m unittest -v test.test_psutil.TestSystem
+    %PYTHON% -m unittest -v psutil.tests.test_system
     goto :eof
 )
 
