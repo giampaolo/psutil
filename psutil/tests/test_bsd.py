@@ -32,9 +32,12 @@ from psutil.tests import unittest
 from psutil.tests import which
 
 
-PAGESIZE = os.sysconf("SC_PAGE_SIZE")
-if os.getuid() == 0:  # muse requires root privileges
-    MUSE_AVAILABLE = which('muse')
+if BSD:
+    PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+    if os.getuid() == 0:  # muse requires root privileges
+        MUSE_AVAILABLE = which('muse')
+    else:
+        MUSE_AVAILABLE = False
 else:
     MUSE_AVAILABLE = False
 

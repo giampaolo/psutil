@@ -18,11 +18,11 @@ import time
 import traceback
 
 try:
-    import wmi
+    import wmi  # requires "pip install wmi"
 except ImportError:
     wmi = None
 try:
-    import win32api
+    import win32api  # requires "pip install pypiwin32"
     import win32con
 except ImportError:
     win32api = win32con = None

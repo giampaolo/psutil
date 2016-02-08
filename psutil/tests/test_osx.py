@@ -25,7 +25,7 @@ from psutil.tests import TRAVIS
 from psutil.tests import unittest
 
 
-PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+PAGESIZE = os.sysconf("SC_PAGE_SIZE") if OSX else None
 
 
 def sysctl(cmdline):

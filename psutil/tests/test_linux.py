@@ -49,7 +49,7 @@ from psutil.tests import which
 HERE = os.path.abspath(os.path.dirname(__file__))
 # procps-ng 3.3.10 changed the output format of free
 # and removed the 'buffers/cache line'
-OLD_PROCPS_NG_VERSION = 'buffers/cache' in sh('free')
+OLD_PROCPS_NG_VERSION = 'buffers/cache' in sh('free') if LINUX else False
 
 SIOCGIFADDR = 0x8915
 SIOCGIFCONF = 0x8912
