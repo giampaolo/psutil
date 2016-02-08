@@ -9,8 +9,8 @@
 import os
 import sys
 
-from pyftpdlib.test import unittest
-from pyftpdlib.test import VERBOSITY
+from psutil.tests import unittest
+from psutil.tests import VERBOSITY
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
