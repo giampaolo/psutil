@@ -578,6 +578,11 @@ class TestProcess(unittest.TestCase):
         self.assertGreater(percent2, percent1)
         del memarr
 
+        if WINDOWS:
+            mem = p.memory_info()
+            self.assertEqual(mem.rss, mem.wset)
+            self.assertEqual(mem.vms, mem.pagefile)
+
     @unittest.skipUnless(LINUX or OSX or WINDOWS,
                          "not available on this platform")
     def test_memory_addrspace_info(self):
