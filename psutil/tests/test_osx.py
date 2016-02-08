@@ -19,8 +19,8 @@ from psutil.tests import get_test_subprocess
 from psutil.tests import MEMORY_TOLERANCE
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
+from psutil.tests import run_test_module_by_name
 from psutil.tests import sh
-from psutil.tests import test_module_by_name
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 
@@ -190,4 +190,4 @@ class OSXSpecificTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    test_module_by_name(__file__)
+    run_test_module_by_name(__file__)

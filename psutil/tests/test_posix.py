@@ -25,9 +25,9 @@ from psutil.tests import get_test_subprocess
 from psutil.tests import PYTHON
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
+from psutil.tests import run_test_module_by_name
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
-from psutil.tests import test_module_by_name
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_pid
@@ -272,4 +272,4 @@ class PosixSpecificTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    test_module_by_name(__file__)
+    run_test_module_by_name(__file__)

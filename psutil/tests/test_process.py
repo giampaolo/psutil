@@ -68,15 +68,16 @@ from psutil.tests import pyrun
 from psutil.tests import PYTHON
 from psutil.tests import reap_children
 from psutil.tests import RLIMIT_SUPPORT
+from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_remove
 from psutil.tests import safe_rmdir
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
-from psutil.tests import test_module_by_name
 from psutil.tests import TESTFILE_PREFIX
 from psutil.tests import TESTFN
 from psutil.tests import ThreadTask
+from psutil.tests import TOX
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import VALID_PROC_STATUSES
@@ -1431,18 +1432,19 @@ class TestProcess(unittest.TestCase):
         d = p.environ()
         d2 = os.environ.copy()
 
+        removes = []
         if OSX:
-            for key in (
+            removes.extend([
                 "__CF_USER_TEXT_ENCODING",
                 "VERSIONER_PYTHON_PREFER_32_BIT",
-                "VERSIONER_PYTHON_VERSION",
-            ):
-                d.pop(key, None)
-                d2.pop(key, None)
+                "VERSIONER_PYTHON_VERSION"])
         if LINUX:
-            for key in ('PLAT', ):
-                d.pop(key, None)
-                d2.pop(key, None)
+            removes.extend(['PLAT'])
+        if TOX:
+            removes.extend(['HOME'])
+        for key in removes:
+            d.pop(key, None)
+            d2.pop(key, None)
 
         self.assertEqual(d, d2)
 
@@ -1983,4 +1985,4 @@ class TestNonUnicode(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    test_module_by_name(__file__)
+    run_test_module_by_name(__file__)

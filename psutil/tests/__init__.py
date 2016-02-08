@@ -81,6 +81,7 @@ DEVNULL = open(os.devnull, 'r+')
 TESTFN = os.path.join(os.getcwd(), "$testfile")
 TESTFN_UNICODE = TESTFN + "ƒőő"
 TESTFILE_PREFIX = 'psutil-test-suite-'
+TOX = os.getenv('TOX') or '' in ('1', 'true')
 if not PY3:
     try:
         TESTFN_UNICODE = unicode(TESTFN_UNICODE, sys.getfilesystemencoding())
@@ -583,7 +584,7 @@ def decode_path(path):
         return path
 
 
-def test_module_by_name(name):
+def run_test_module_by_name(name):
     # testmodules = [os.path.splitext(x)[0] for x in os.listdir(HERE)
     #                if x.endswith('.py') and x.startswith('test_')]
     name = os.path.splitext(os.path.basename(name))[0]

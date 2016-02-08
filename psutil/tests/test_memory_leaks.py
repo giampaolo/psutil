@@ -33,8 +33,8 @@ from psutil._compat import xrange
 from psutil.tests import get_test_subprocess
 from psutil.tests import reap_children
 from psutil.tests import RLIMIT_SUPPORT
+from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_remove
-from psutil.tests import test_module_by_name
 from psutil.tests import TESTFN
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -444,4 +444,4 @@ class TestModuleFunctionsLeaks(Base):
 
 
 if __name__ == '__main__':
-    test_module_by_name(__file__)
+    run_test_module_by_name(__file__)

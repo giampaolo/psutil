@@ -10,8 +10,8 @@ import os
 
 import psutil
 from psutil import SUNOS
+from psutil.tests import run_test_module_by_name
 from psutil.tests import sh
-from psutil.tests import test_module_by_name
 from psutil.tests import unittest
 
 
@@ -38,4 +38,4 @@ class SunOSSpecificTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    test_module_by_name(__file__)
+    run_test_module_by_name(__file__)

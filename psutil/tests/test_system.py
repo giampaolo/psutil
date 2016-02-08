@@ -25,6 +25,7 @@ from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil._compat import long
 from psutil.tests import AF_INET6
 from psutil.tests import APPVEYOR
 from psutil.tests import check_ip_address
@@ -34,10 +35,10 @@ from psutil.tests import get_test_subprocess
 from psutil.tests import mock
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
+from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_remove
 from psutil.tests import safe_rmdir
 from psutil.tests import skip_on_access_denied
-from psutil.tests import test_module_by_name
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
 from psutil.tests import TRAVIS
@@ -646,4 +647,4 @@ class TestSystemAPIs(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    test_module_by_name(__file__)
+    run_test_module_by_name(__file__)

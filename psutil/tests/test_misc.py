@@ -26,8 +26,9 @@ from psutil.tests import EXAMPLES_DIR
 from psutil.tests import importlib
 from psutil.tests import mock
 from psutil.tests import ROOT_DIR
+from psutil.tests import run_test_module_by_name
 from psutil.tests import sh
-from psutil.tests import test_module_by_name
+from psutil.tests import TOX
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
 
@@ -316,6 +317,7 @@ class TestMisc(unittest.TestCase):
 # --- Example script tests
 # ===================================================================
 
+@unittest.skipIf(TOX, "can't test on tox")
 class TestExampleScripts(unittest.TestCase):
     """Tests for scripts in the examples directory."""
 
@@ -416,4 +418,4 @@ class TestExampleScripts(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    test_module_by_name(__file__)
+    run_test_module_by_name(__file__)
