@@ -279,7 +279,6 @@ class TestSystemCPU(unittest.TestCase):
             # Finally, let's make /proc/cpuinfo return meaningless data;
             # this way we'll fall back on relying on /proc/stat
             def open_mock(name, *args, **kwargs):
-                print name
                 if name.startswith('/proc/cpuinfo'):
                     return io.BytesIO("")
                 else:
@@ -722,7 +721,6 @@ class TestProcess(unittest.TestCase):
                 raise IOError(errno.ENOENT, "")
             else:
                 return orig_open(name, *args, **kwargs)
-            return orig_open(name, *args)
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
@@ -730,6 +728,34 @@ class TestProcess(unittest.TestCase):
             ret = psutil.Process().threads()
             assert m.called
             self.assertEqual(ret, [])
+
+        # ...but if it bumps into something != ENOENT we want an
+        # exception.
+        def open_mock(name, *args, **kwargs):
+            if name.startswith('/proc/%s/task' % os.getpid()):
+                raise IOError(errno.EPERM, "")
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        with mock.patch(patch_point, side_effect=open_mock):
+            self.assertRaises(psutil.AccessDenied, psutil.Process().threads)
+
+    def test_exe_mocked(self):
+        with mock.patch('psutil._pslinux.os.readlink',
+                        side_effect=OSError(errno.ENOENT, "")) as m:
+            # No such file error; might be raised also if /proc/pid/exe
+            # path actually exists for system processes with low pids
+            # (about 0-20). In this case psutil is supposed to return
+            # an empty string.
+            ret = psutil.Process().exe()
+            assert m.called
+            self.assertEqual(ret, "")
+
+            # ...but if /proc/pid no longer exist we're supposed to treat
+            # it as an alias for zombie process
+            with mock.patch('psutil._pslinux.os.path.lexists',
+                            return_value=False):
+                self.assertRaises(psutil.ZombieProcess, psutil.Process().exe)
 
 
 if __name__ == '__main__':
