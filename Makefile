@@ -81,6 +81,10 @@ test-memleaks: install
 test-by-name: install
 	@$(PYTHON) -m nose psutil/tests/*.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
 
+# Run specific platform tests only.
+test-platform: install
+	$(PYTHON) psutil/tests/test_`python -c 'import psutil; print([x.lower() for x in ("FREEBSD", "LINUX", "NETBSD", "OPENBSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
+
 # Same as above but for test_memory_leaks.py script.
 test-memleaks-by-name: install
 	@$(PYTHON) -m nose test/test_memory_leaks.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
