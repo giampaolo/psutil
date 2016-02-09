@@ -8,7 +8,6 @@
 
 import contextlib
 import errno
-import fcntl
 import io
 import os
 import pprint
@@ -57,6 +56,7 @@ SIOCGIFHWADDR = 0x8927
 
 
 def get_ipv4_address(ifname):
+    import fcntl
     ifname = ifname[:15]
     if PY3:
         ifname = bytes(ifname, 'ascii')
@@ -69,6 +69,7 @@ def get_ipv4_address(ifname):
 
 
 def get_mac_address(ifname):
+    import fcntl
     ifname = ifname[:15]
     if PY3:
         ifname = bytes(ifname, 'ascii')
