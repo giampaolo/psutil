@@ -652,7 +652,7 @@ Process class
     That means that if the :class:`Process` instance is old enough and
     the PID has been reused in the meantime you might end up interacting
     with another process.
-    The only exceptions for which process identity is pre-emptively checked
+    The only exceptions for which process identity is preemptively checked
     (via PID + creation time) and guaranteed are for
     :meth:`nice` (set),
     :meth:`ionice`  (set),
@@ -737,7 +737,7 @@ Process class
   .. method:: parent()
 
      Utility method which returns the parent process as a :class:`Process`
-     object pre-emptively checking whether PID has been reused. If no parent
+     object preemptively checking whether PID has been reused. If no parent
      PID is known return ``None``.
 
   .. method:: status()
@@ -1059,7 +1059,7 @@ Process class
 
      Same as :meth:`memory_info` (deprecated).
 
-     .. warning:: depcreated in version 4.0.0; use :meth:`memory_info` instead.
+     .. warning:: deprecated in version 4.0.0; use :meth:`memory_info` instead.
 
   .. method:: memory_addrspace_info()
 
@@ -1069,9 +1069,9 @@ Process class
      It usually requires higher privileges and is considerably slower than
      :meth:`memory_info`.
 
-     - **uss**: (Linux, Windows, OSX) aka "Unique Set Size", this is the memory
-       which is unique to a process and which would be freed if the process was
-       terminated right now.
+     - **uss**: aka "Unique Set Size", this is the memory which is unique to a
+       process and which would be freed if the process was terminated right
+       now.
 
      - **pss**: (Linux) aka "Proportional Set Size", is the amount of memory
        shared with other processes, accounted in a way that the amount is
@@ -1079,16 +1079,13 @@ Process class
        I.e. if a process has 10 MBs all to itself and 10 MBs shared with
        another process its PSS will be 15 MBs.
 
-      - **swap**: (Linux) amount memory that has been swapped out to disk.
+     - **swap**: (Linux) amount of memory that has been swapped out to disk.
 
      .. note::
        `uss` is probably the most representative metric for determining how
        much memory is actually being used by a process.
        It represents the amount of memory that would be freed if the process
        was terminated right now.
-
-     .. note:: see also `scripts/procsmem.py <https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py>`__
-        for an example application.
 
      Example on Linux:
 
@@ -1097,6 +1094,9 @@ Process class
        >>> p.memory_addrspace_info()
        paddrspmem(uss=7421952, pss=7681024, swap=0)
        >>>
+
+     See also `scripts/procsmem.py <https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py>`__
+     for an example application.
 
      .. versionadded:: 4.0.0
 
@@ -1169,7 +1169,7 @@ Process class
   .. method:: children(recursive=False)
 
      Return the children of this process as a list of :Class:`Process` objects,
-     pre-emptively checking whether PID has been reused. If recursive is `True`
+     preemptively checking whether PID has been reused. If recursive is `True`
      return all the parent descendants.
      Example assuming *A == this process*:
      ::
@@ -1307,7 +1307,7 @@ Process class
 
      Send a signal to process (see
      `signal module <http://docs.python.org//library/signal.html>`__
-     constants) pre-emptively checking whether PID has been reused.
+     constants) preemptively checking whether PID has been reused.
      On UNIX this is the same as ``os.kill(pid, sig)``.
      On Windows only **SIGTERM**, **CTRL_C_EVENT** and **CTRL_BREAK_EVENT**
      signals are supported and **SIGTERM** is treated as an alias for
@@ -1317,28 +1317,28 @@ Process class
 
   .. method:: suspend()
 
-     Suspend process execution with **SIGSTOP** signal pre-emptively checking
+     Suspend process execution with **SIGSTOP** signal preemptively checking
      whether PID has been reused.
      On UNIX this is the same as ``os.kill(pid, signal.SIGSTOP)``.
      On Windows this is done by suspending all process threads execution.
 
   .. method:: resume()
 
-     Resume process execution with **SIGCONT** signal pre-emptively checking
+     Resume process execution with **SIGCONT** signal preemptively checking
      whether PID has been reused.
      On UNIX this is the same as ``os.kill(pid, signal.SIGCONT)``.
      On Windows this is done by resuming all process threads execution.
 
   .. method:: terminate()
 
-     Terminate the process with **SIGTERM** signal pre-emptively checking
+     Terminate the process with **SIGTERM** signal preemptively checking
      whether PID has been reused.
      On UNIX this is the same as ``os.kill(pid, signal.SIGTERM)``.
      On Windows this is an alias for :meth:`kill`.
 
   .. method:: kill()
 
-     Kill the current process by using **SIGKILL** signal pre-emptively
+     Kill the current process by using **SIGKILL** signal preemptively
      checking whether PID has been reused.
      On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
      On Windows this is done by using
@@ -1379,7 +1379,7 @@ Popen class
   .. note::
 
      Unlike `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__
-     this class pre-emptively checks wheter PID has been reused on
+     this class preemptively checks wheter PID has been reused on
      :meth:`send_signal() <psutil.Process.send_signal()>`,
      :meth:`terminate() <psutil.Process.terminate()>` and
      :meth:`kill() <psutil.Process.kill()>`
@@ -1415,7 +1415,7 @@ Constants
           SUNOS
 
   ``bool`` constants which define what platform you're on. E.g. if on Windows,
-  *WINDOWS* constant will be ``True``, all athers will be ``False``.
+  *WINDOWS* constant will be ``True``, all others will be ``False``.
 
   .. versionadded:: 4.0.0
 
@@ -1539,7 +1539,7 @@ Constants
 
   Constants used for getting and setting process resource limits to be used in
   conjunction with :meth:`psutil.Process.rlimit()`. See
-  `man prlimit <http://linux.die.net/man/2/prlimit>`__ for futher information.
+  `man prlimit <http://linux.die.net/man/2/prlimit>`__ for further information.
 
   Availability: Linux
 
