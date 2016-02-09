@@ -269,6 +269,9 @@ if POSIX:
         if len(nums) >= 3:
             micro = int(nums[2])
         return (major, minor, micro)
+else:
+    def get_kernel_version():
+        return ()
 
 
 if LINUX:
