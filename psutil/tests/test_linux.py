@@ -276,6 +276,20 @@ class TestSystemCPU(unittest.TestCase):
                             return_value=fake_file, create=True) as m:
                 self.assertEqual(psutil._pslinux.cpu_count_logical(), original)
 
+            # Finally, let's make /proc/cpuinfo return meaningless data;
+            # this way we'll fall back on relying on /proc/stat
+            def open_mock(name, *args, **kwargs):
+                print name
+                if name.startswith('/proc/cpuinfo'):
+                    return io.BytesIO("")
+                else:
+                    return orig_open(name, *args, **kwargs)
+
+            orig_open = open
+            patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+            with mock.patch(patch_point, side_effect=open_mock, create=True):
+                self.assertEqual(psutil._pslinux.cpu_count_logical(), original)
+
     def test_cpu_count_physical_mocked(self):
         # Have open() return emtpy data and make sure None is returned
         # ('cause we want to mimick os.cpu_count())
@@ -390,9 +404,9 @@ class TestSystemDisks(unittest.TestCase):
         # From kernel 2.6.0 to 2.6.25 /proc/diskstats has less fields;
         # we test psutil handles this case by setting read_time and
         # write_time to 0.
-        def open_mock(name, *args):
+        def open_mock(name, *args, **kwargs):
             if name == ('/proc/partitions'):
-                return orig_open(name, *args)
+                return orig_open(name, *args, **kwargs)
             else:
                 return io.StringIO(u("8       1 sda1 2 2 2 2\n"))
             return orig_open(name, *args)
@@ -425,10 +439,10 @@ class TestMisc(unittest.TestCase):
         try:
             orig_open = open
 
-            def open_mock(name, *args):
+            def open_mock(name, *args, **kwargs):
                 if name.startswith('/proc'):
                     raise IOError(errno.ENOENT, 'rejecting access for test')
-                return orig_open(name, *args)
+                return orig_open(name, *args, **kwargs)
 
             patch_point = 'builtins.open' if PY3 else '__builtin__.open'
             with mock.patch(patch_point, side_effect=open_mock):
@@ -703,11 +717,11 @@ class TestProcess(unittest.TestCase):
         # which no longer exists by the time we open() it (race
         # condition). threads() is supposed to ignore that instead
         # of raising NSP.
-        def open_mock(name, *args):
+        def open_mock(name, *args, **kwargs):
             if name.startswith('/proc/%s/task' % os.getpid()):
-                raise OSError(errno.ENOENT, "")
+                raise IOError(errno.ENOENT, "")
             else:
-                return orig_open(name, *args)
+                return orig_open(name, *args, **kwargs)
             return orig_open(name, *args)
 
         orig_open = open
