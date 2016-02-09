@@ -58,9 +58,7 @@ def print_(a, b):
         fmt = '\x1b[1;32m%-17s\x1b[0m %s' % (a, b)
     else:
         fmt = '%-15s %s' % (a, b)
-    # python 2/3 compatibility layer
-    sys.stdout.write(fmt + '\n')
-    sys.stdout.flush()
+    print(fmt)
 
 
 def run(pid):
@@ -125,12 +123,12 @@ def run(pid):
         for child in children:
             print_('', 'pid=%s name=%s' % (child.pid, child.name()))
 
-    if pinfo['open_files'] != ACCESS_DENIED:
+    if pinfo['open_files'] != ACCESS_DENIED and pinfo['open_files']:
         print_('open files', '')
         for file in pinfo['open_files']:
             print_('', 'fd=%s %s ' % (file.fd, file.path))
 
-    if pinfo['threads']:
+    if pinfo['threads'] and len(pinfo['threads']) > 1:
         print_('running threads', '')
         for thread in pinfo['threads']:
             print_('', 'id=%s, user-time=%s, sys-time=%s' % (

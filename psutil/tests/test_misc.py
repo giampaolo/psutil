@@ -392,6 +392,11 @@ class TestScripts(unittest.TestCase):
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 
+    @unittest.skipUnless(hasattr(psutil.Process, "memory_addrspace_info"),
+                         "memory_addrspace_info() not supported")
+    def test_procsmem(self):
+        self.assert_stdout('procsmem.py')
+
     @unittest.skipIf(ast is None,
                      'ast module not available on this python version')
     def test_killall(self):

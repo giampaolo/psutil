@@ -13,6 +13,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #755: Process.memory_percent() "memtype" parameter.
 - #758: tests now live in psutil namespace.
 - #760: expose OS constants (LINUX, OSX, etc.)
+- #762: new sripts/procsmem.py script.
 
 **Bug fixes**
 
