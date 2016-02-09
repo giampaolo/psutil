@@ -93,7 +93,7 @@ if "%1" == "build" (
 if "%1" == "install" (
     :install
     call :build
-    %PYTHON% setup.py install
+    %PYTHON% setup.py develop
     goto :eof
 )
 

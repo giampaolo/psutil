@@ -188,7 +188,11 @@ psutil_get_nic_addresses() {
  */
 static PyObject *
 psutil_boot_time(PyObject *self, PyObject *args) {
-    double  uptime;
+#if (_WIN32_WINNT >= 0x0600)  // Windows Vista
+    ULONGLONG uptime;
+#else
+    double uptime;
+#endif
     time_t pt;
     FILETIME fileTime;
     long long ll;
@@ -212,10 +216,15 @@ psutil_boot_time(PyObject *self, PyObject *args) {
         + fileTime.dwLowDateTime;
     pt = (time_t)((ll - 116444736000000000ull) / 10000000ull);
 
-    // XXX - By using GetTickCount() time will wrap around to zero if the
+#if (_WIN32_WINNT >= 0x0600)  // Windows Vista
+    uptime = GetTickCount64() / (ULONGLONG)1000.00f;
+#else
+    // GetTickCount() time will wrap around to zero if the
     // system is run continuously for 49.7 days.
     uptime = GetTickCount() / 1000.00f;
-    return Py_BuildValue("d", (double)pt - uptime);
+#endif
+
+    return Py_BuildValue("d", (double)pt - (double)uptime);
 }
 
 
