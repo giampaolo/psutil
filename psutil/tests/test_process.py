@@ -1883,6 +1883,16 @@ class TestUnicode(unittest.TestCase):
         self.assertIsInstance(path, str)
         self.assertEqual(os.path.normcase(path), os.path.normcase(self.uexe))
 
+    def test_proc_environ(self):
+        env = os.environ.copy()
+        env['FUNNY_ARG'] = self.uexe
+        sproc = get_test_subprocess(env=env)
+        p = psutil.Process(sproc.pid)
+        self.assertEqual(p.environ()['FUNNY_ARG'], self.uexe)
+
+    def test_disk_usage(self):
+        psutil.disk_usage(self.uexe)
+
 
 class TestNonUnicode(unittest.TestCase):
     """Test handling of non-utf8 data."""
@@ -1982,6 +1992,21 @@ class TestNonUnicode(unittest.TestCase):
             self.skipTest("open_files on BSD is broken")
         self.assertIsInstance(path, str)
         self.assertIn(funny_file, encode_path(path))
+
+    def test_proc_environ(self):
+        env = os.environ.copy()
+        env['FUNNY_ARG'] = self.temp_directory
+        sproc = get_test_subprocess(env=env)
+        p = psutil.Process(sproc.pid)
+        self.assertEqual(
+            encode_path(p.environ()['FUNNY_ARG']), self.temp_directory)
+
+    def test_disk_usage(self):
+        funny_directory = os.path.realpath(
+            os.path.join(self.temp_directory, b"\xc0\x80"))
+        os.mkdir(funny_directory)
+        self.addCleanup(safe_rmdir, funny_directory)
+        psutil.disk_usage(funny_directory)
 
 
 if __name__ == '__main__':

@@ -105,7 +105,7 @@ if TRAVIS or 'tox' in sys.argv[0]:
     import ipaddress
 if TRAVIS or APPVEYOR:
     GLOBAL_TIMEOUT = GLOBAL_TIMEOUT * 4
-VERBOSITY = 1 if os.getenv('SILENT') else 2
+VERBOSITY = 1 if os.getenv('SILENT') or TOX else 2
 
 
 # ===================================================================
