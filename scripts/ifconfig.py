@@ -7,7 +7,7 @@
 """
 A clone of 'ifconfig' on UNIX.
 
-$ python examples/ifconfig.py
+$ python scripts/ifconfig.py
 lo (speed=0MB, duplex=?, mtu=65536, up=yes):
     IPv4     address   : 127.0.0.1
              broadcast : 127.0.0.1

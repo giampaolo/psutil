@@ -9,7 +9,7 @@ A clone of top / htop.
 
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
-$ python examples/top.py
+$ python scripts/top.py
  CPU0  [|                                       ]   4.9%
  CPU1  [|||                                     ]   7.8%
  CPU2  [                                        ]   2.0%

@@ -14,7 +14,7 @@ It doesn't work on Windows as curses module is required.
 
 Example output:
 
-$ python examples/iotop.py
+$ python scripts/iotop.py
 Total DISK READ: 0.00 B/s | Total DISK WRITE: 472.00 K/s
 PID   USER      DISK READ  DISK WRITE  COMMAND
 13155 giampao    0.00 B/s  428.00 K/s  /usr/bin/google-chrome-beta

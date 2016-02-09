@@ -1,6 +1,6 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
-3.5.0 - XXXX-XX-XX
+4.0.0 - XXXX-XX-XX
 ==================
 
 **Enhancements**
@@ -28,6 +28,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #751: [Linux] fixed call to Py_DECREF on possible Null object.
 - #754: [Linux] cmdline() can be wrong in case of zombie process.
 - #759: [Linux] Process.memory_maps() may return paths ending with " (deleted)"
+- #761: [Windows] psutil.boot_time() wraps to 0 after 49 days.
 
 
 3.4.2 - 2016-01-20

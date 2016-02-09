@@ -179,7 +179,7 @@ Memory
 
   The sum of **used** and **available** does not necessarily equal **total**.
   On Windows **available** and **free** are the same.
-  See `examples/meminfo.py <https://github.com/giampaolo/psutil/blob/master/examples/meminfo.py>`__
+  See `scripts/meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
     >>> import psutil
@@ -209,7 +209,7 @@ Memory
     (cumulative)
 
   **sin** and **sout** on Windows are always set to ``0``.
-  See `examples/meminfo.py <https://github.com/giampaolo/psutil/blob/master/examples/meminfo.py>`__
+  See `scripts/meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
     >>> import psutil
@@ -235,7 +235,7 @@ Disks
   and can be either ``"removable"``, ``"fixed"``, ``"remote"``, ``"cdrom"``,
   ``"unmounted"`` or ``"ramdisk"``. On OSX and BSD it is retrieved via
   `getfsstat(2) <http://www.manpagez.com/man/2/getfsstat/>`__. See
-  `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/examples/disk_usage.py>`__
+  `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py>`__
   script providing an example usage.
 
     >>> import psutil
@@ -250,13 +250,13 @@ Disks
   **percentage** usage.
   `OSError <http://docs.python.org/3/library/exceptions.html#OSError>`__ is
   raised if *path* does not exist. See
-  `examples/disk_usage.py <https://github.com/giampaolo/psutil/blob/master/examples/disk_usage.py>`__
+  `scripts/disk_usage.py <https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py>`__
   script providing an example usage. Starting from
   `Python 3.3 <http://bugs.python.org/issue12442>`__  this is also
   available as
   `shutil.disk_usage() <http://docs.python.org/3/library/shutil.html#shutil.disk_usage>`__.
   See
-  `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/examples/disk_usage.py>`__
+  `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py>`__
   script providing an example usage.
 
     >>> import psutil
@@ -278,7 +278,7 @@ Disks
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
   the namedtuple described above as the values.
-  See `examples/iotop.py <https://github.com/giampaolo/psutil/blob/master/examples/iotop.py>`__
+  See `scripts/iotop.py <https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py>`__
   for an example application.
 
     >>> import psutil
@@ -311,7 +311,7 @@ Network
   If *pernic* is ``True`` return the same information for every network
   interface installed on the system as a dictionary with network interface
   names as the keys and the namedtuple described above as the values.
-  See `examples/nettop.py <https://github.com/giampaolo/psutil/blob/master/examples/nettop.py>`__
+  See `scripts/nettop.py <https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py>`__
   for an example application.
 
     >>> import psutil
@@ -389,7 +389,7 @@ Network
   On OSX this function requires root privileges.
   To get per-process connections use :meth:`Process.connections`.
   Also, see
-  `netstat.py sample script <https://github.com/giampaolo/psutil/blob/master/examples/netstat.py>`__.
+  `netstat.py sample script <https://github.com/giampaolo/psutil/blob/master/scripts/netstat.py>`__.
   Example:
 
     >>> import psutil
@@ -443,7 +443,7 @@ Network
                snic(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
     >>>
 
-  See also `examples/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/examples/ifconfig.py>`__
+  See also `scripts/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
   for an example application.
 
   .. note:: if you're interested in others families (e.g. AF_BLUETOOTH) you can
@@ -476,7 +476,7 @@ Network
   :const:`NIC_DUPLEX_UNKNOWN`, *speed* is the NIC speed expressed in mega bits
   (MB), if it can't be determined (e.g. 'localhost') it will be set to ``0``,
   *mtu* is the maximum transmission unit expressed in bytes.
-  See also `examples/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/examples/ifconfig.py>`__
+  See also `scripts/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
   for an example application.
   Example:
 
@@ -700,7 +700,7 @@ Process class
 
      Availability: Linux, OSX, Windows
 
-     .. versionadded:: 3.5.0
+     .. versionadded:: 4.0.0
 
   .. method:: create_time()
 
@@ -756,7 +756,7 @@ Process class
 
   .. method:: uids()
 
-     The **real**, **effective** and **saved** user ids of this process as a
+     The real, effective and saved user ids of this process as a
      namedtuple. This is the same as
      `os.getresuid() <http://docs.python.org//library/os.html#os.getresuid>`__
      but can be used for any process PID.
@@ -765,7 +765,7 @@ Process class
 
   .. method:: gids()
 
-     The **real**, **effective** and **saved** group ids of this process as a
+     The real, effective and saved group ids of this process as a
      namedtuple. This is the same as
      `os.getresgid() <http://docs.python.org//library/os.html#os.getresgid>`__
      but can be used for any process PID.
@@ -1052,14 +1052,14 @@ Process class
      >>> p.memory_info()
      pmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0)
 
-     .. versionchanged:: 3.5.0 mutiple fields are returned, not only `rss` and
+     .. versionchanged:: 4.0.0 mutiple fields are returned, not only `rss` and
         `vms`.
 
   .. method:: memory_info_ex()
 
      Same as :meth:`memory_info` (deprecated).
 
-     .. warning:: depcreated in version 3.5.0; use :meth:`memory_info` instead.
+     .. warning:: depcreated in version 4.0.0; use :meth:`memory_info` instead.
 
   .. method:: memory_addrspace_info()
 
@@ -1095,7 +1095,7 @@ Process class
        paddrspmem(uss=7421952, pss=7681024, swap=0)
        >>>
 
-     .. versionadded:: 3.5.0
+     .. versionadded:: 4.0.0
 
      Availability: Linux, OSX, Windows
 
@@ -1108,7 +1108,7 @@ Process class
      names returned by :meth:`memory_info` and :meth:`memory_addrspace_info`
      (defaults to ``"rss"``).
 
-     .. versionchanged:: 3.5.0 added `memtype` parameter.
+     .. versionchanged:: 4.0.0 added `memtype` parameter.
 
   .. method:: memory_maps(grouped=True)
 
@@ -1123,7 +1123,7 @@ Process class
     is ``False`` each mapped region is shown as a single entity and the
     namedtuple will also include the mapped region's address space (*addr*)
     and permission set (*perms*).
-    See `examples/pmap.py <https://github.com/giampaolo/psutil/blob/master/examples/pmap.py>`__
+    See `scripts/pmap.py <https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py>`__
     for an example application.
 
     +---------------+--------------+---------+-----------+--------------+
@@ -1414,7 +1414,7 @@ Constants
   ``bool`` constants which define what platform you're on. E.g. if on Windows,
   *WINDOWS* constant will be ``True``, all athers will be ``False``.
 
-  .. versionadded:: 3.5.0
+  .. versionadded:: 4.0.0
 
 .. _const-procfs_path:
 .. data:: PROCFS_PATH

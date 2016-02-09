@@ -50,7 +50,7 @@ HIGHER PRIORITY
 LOWER PRIORITY
 ==============
 
- * examples/taskmgr-gui.py (using tk).
+ * scripts/taskmgr-gui.py (using tk).
 
  * system-wide number of open file descriptors:
     * https://jira.hyperic.com/browse/SIGAR-30
@@ -78,7 +78,7 @@ DEBATABLE
    Process.children() and exposed as a first class function.
    PROS: on Windows we can take advantage of _psutil_windows.ppid_map()
    which is faster than iterating over all pids and calling ppid().
-   CONS: examples/pstree.py shows this can be easily done in the user code
+   CONS: scripts/pstree.py shows this can be easily done in the user code
    so maybe it's not worth the addition.
 
  * advanced cmdline interface exposing the whole API and providing different

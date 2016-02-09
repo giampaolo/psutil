@@ -22,7 +22,7 @@ from psutil import POSIX
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil.tests import APPVEYOR
-from psutil.tests import EXAMPLES_DIR
+from psutil.tests import SCRIPTS_DIR
 from psutil.tests import importlib
 from psutil.tests import mock
 from psutil.tests import ROOT_DIR
@@ -318,11 +318,11 @@ class TestMisc(unittest.TestCase):
 # ===================================================================
 
 @unittest.skipIf(TOX, "can't test on tox")
-class TestExampleScripts(unittest.TestCase):
-    """Tests for scripts in the examples directory."""
+class TestScripts(unittest.TestCase):
+    """Tests for scripts in the "scripts" directory."""
 
     def assert_stdout(self, exe, args=None):
-        exe = os.path.join(EXAMPLES_DIR, exe)
+        exe = os.path.join(SCRIPTS_DIR, exe)
         if args:
             exe = exe + ' ' + args
         try:
@@ -336,7 +336,7 @@ class TestExampleScripts(unittest.TestCase):
         return out
 
     def assert_syntax(self, exe, args=None):
-        exe = os.path.join(EXAMPLES_DIR, exe)
+        exe = os.path.join(SCRIPTS_DIR, exe)
         with open(exe, 'r') as f:
             src = f.read()
         ast.parse(src)
@@ -344,18 +344,18 @@ class TestExampleScripts(unittest.TestCase):
     def test_check_presence(self):
         # make sure all example scripts have a test method defined
         meths = dir(self)
-        for name in os.listdir(EXAMPLES_DIR):
+        for name in os.listdir(SCRIPTS_DIR):
             if name.endswith('.py'):
                 if 'test_' + os.path.splitext(name)[0] not in meths:
                     # self.assert_stdout(name)
                     self.fail('no test defined for %r script'
-                              % os.path.join(EXAMPLES_DIR, name))
+                              % os.path.join(SCRIPTS_DIR, name))
 
     @unittest.skipUnless(POSIX, "UNIX only")
     def test_executable(self):
-        for name in os.listdir(EXAMPLES_DIR):
+        for name in os.listdir(SCRIPTS_DIR):
             if name.endswith('.py'):
-                path = os.path.join(EXAMPLES_DIR, name)
+                path = os.path.join(SCRIPTS_DIR, name)
                 if not stat.S_IXUSR & os.stat(path)[stat.ST_MODE]:
                     self.fail('%r is not executable' % path)
 

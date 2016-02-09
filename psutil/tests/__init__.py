@@ -90,7 +90,7 @@ if not PY3:
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
                            '..', '..'))
-EXAMPLES_DIR = os.path.join(ROOT_DIR, 'examples')
+SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 
 WIN_VISTA = (6, 0, 0) if WINDOWS else None
 VALID_PROC_STATUSES = [getattr(psutil, x) for x in dir(psutil)

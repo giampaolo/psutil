@@ -11,7 +11,7 @@ Shows real-time network statistics.
 
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
-$ python examples/nettop.py
+$ python scripts/nettop.py
 -----------------------------------------------------------
 total bytes:           sent: 1.49 G       received: 4.82 G
 total packets:         sent: 7338724      received: 8082712

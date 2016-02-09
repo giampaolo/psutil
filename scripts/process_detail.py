@@ -8,12 +8,12 @@
 Print detailed information about a process.
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
-$ python examples/process_detail.py
+$ python scripts/process_detail.py
 pid               820
 name              python
 exe               /usr/bin/python2.7
 parent            29613 (bash)
-cmdline           python examples/process_detail.py
+cmdline           python scripts/process_detail.py
 started           2014-41-27 03:41
 user              giampaolo
 uids              real=1000, effective=1000, saved=1000

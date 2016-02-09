@@ -7,7 +7,7 @@
 """
 A clone of 'ps -aux' on UNIX.
 
-$ python examples/ps.py
+$ python scripts/ps.py
 ...
 """
 
