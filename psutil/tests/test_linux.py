@@ -86,6 +86,29 @@ def get_mac_address(ifname):
         return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 
 
+def free_swap():
+    """Parse 'free' cmd and return swap memory's s total, used and free
+    values.
+    """
+    lines = sh('free').split('\n')
+    for line in lines:
+        if line.startswith('Swap'):
+            _, total, used, free = line.split()
+    return (int(total) * 1024, int(used) * 1024, int(free) * 1024)
+
+
+def free_physmem():
+    """Parse 'free' cmd and return physical memory's total, used
+    and free values.
+    """
+    lines = sh('free').split('\n')
+    for line in lines:
+        if line.startswith('Mem'):
+            total, used, free, shared, buffers, cached = \
+                [int(x) * 1024 for x in line.split()[1:]]
+    return (total, used, free, shared, buffers, cached)
+
+
 @unittest.skipUnless(LINUX, "not a Linux system")
 class LinuxSpecificTestCase(unittest.TestCase):
 
@@ -143,23 +166,18 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertEqual(mode[:3], this.perms[:3])
 
     def test_vmem_total(self):
-        lines = sh('free').split('\n')[1:]
-        total = int(lines[0].split()[1]) * 1024
+        total, used, free, shared, buffers, cached = free_physmem()
         self.assertEqual(total, psutil.virtual_memory().total)
 
     @retry_before_failing()
     def test_vmem_used(self):
-        lines = sh('free').split('\n')[1:]
-        total = int(lines[0].split()[1])
-        free = int(lines[0].split()[3])
-        used = (total - free) * 1024
+        total, used, free, shared, buffers, cached = free_physmem()
         self.assertAlmostEqual(used, psutil.virtual_memory().used,
                                delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_free(self):
-        lines = sh('free').split('\n')[1:]
-        free = int(lines[0].split()[3]) * 1024
+        total, used, free, shared, buffers, cached = free_physmem()
         self.assertAlmostEqual(free, psutil.virtual_memory().free,
                                delta=MEMORY_TOLERANCE)
 
@@ -176,23 +194,21 @@ class LinuxSpecificTestCase(unittest.TestCase):
                                delta=MEMORY_TOLERANCE)
 
     def test_swapmem_total(self):
-        lines = sh('free').split('\n')[1:]
-        total = int(lines[2 if OLD_PROCPS_NG_VERSION else 1].split()[1]) * 1024
-        self.assertEqual(total, psutil.swap_memory().total)
+        total, used, free = free_swap()
+        return self.assertAlmostEqual(total, psutil.swap_memory().total,
+                                      delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_swapmem_used(self):
-        lines = sh('free').split('\n')[1:]
-        used = int(lines[2 if OLD_PROCPS_NG_VERSION else 1].split()[2]) * 1024
-        self.assertAlmostEqual(used, psutil.swap_memory().used,
-                               delta=MEMORY_TOLERANCE)
+        total, used, free = free_swap()
+        return self.assertAlmostEqual(used, psutil.swap_memory().used,
+                                      delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_swapmem_free(self):
-        lines = sh('free').split('\n')[1:]
-        free = int(lines[2 if OLD_PROCPS_NG_VERSION else 1].split()[1]) * 1024
-        self.assertAlmostEqual(free, psutil.swap_memory().free,
-                               delta=MEMORY_TOLERANCE)
+        total, used, free = free_swap()
+        return self.assertAlmostEqual(free, psutil.swap_memory().free,
+                                      delta=MEMORY_TOLERANCE)
 
     @unittest.skipIf(TRAVIS, "unknown failure on travis")
     def test_cpu_times(self):
