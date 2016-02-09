@@ -1083,9 +1083,12 @@ Process class
 
      .. note::
        `uss` is probably the most representative metric for determining how
-       much memory is being used by a process.
+       much memory is actually being used by a process.
        It represents the amount of memory that would be freed if the process
        was terminated right now.
+
+     .. note:: see also `scripts/procsmem.py <https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py>`__
+        for an example application.
 
      Example on Linux:
 
