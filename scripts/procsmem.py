@@ -87,8 +87,8 @@ def main():
             p._info["username"][:7],
             " ".join(p._info["cmdline"])[:30],
             convert_bytes(p._uss),
-            convert_bytes(p._pss),
-            convert_bytes(p._swap),
+            convert_bytes(p._pss) if p._pss != "" else "",
+            convert_bytes(p._swap) if p._swap != "" else "",
             convert_bytes(p._info['memory_info'].rss),
         )
         print(line)
