@@ -241,6 +241,9 @@ def sh(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     if p.returncode != 0:
         raise RuntimeError(stderr)
     if stderr:
+        if PY3:
+            stderr = str(stderr, sys.stderr.encoding or
+                         sys.getfilesystemencoding())
         warn(stderr)
     if PY3:
         stdout = str(stdout, sys.stdout.encoding or
