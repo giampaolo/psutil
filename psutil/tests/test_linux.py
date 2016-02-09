@@ -46,10 +46,6 @@ from psutil.tests import which
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-# procps-ng 3.3.10 changed the output format of free
-# and removed the 'buffers/cache line'
-OLD_PROCPS_NG_VERSION = 'buffers/cache' in sh('free') if LINUX else False
-
 SIOCGIFADDR = 0x8915
 SIOCGIFCONF = 0x8912
 SIOCGIFHWADDR = 0x8927
@@ -109,6 +105,59 @@ def free_physmem():
     return (total, used, free, shared, buffers, cached)
 
 
+# =====================================================================
+# system memory
+# =====================================================================
+
+@unittest.skipUnless(LINUX, "not a Linux system")
+class TestSystemMemory(unittest.TestCase):
+
+    def test_vmem_total(self):
+        total, used, free, shared, buffers, cached = free_physmem()
+        self.assertEqual(total, psutil.virtual_memory().total)
+
+    @retry_before_failing()
+    def test_vmem_used(self):
+        total, used, free, shared, buffers, cached = free_physmem()
+        self.assertAlmostEqual(used, psutil.virtual_memory().used,
+                               delta=MEMORY_TOLERANCE)
+
+    @retry_before_failing()
+    def test_vmem_free(self):
+        total, used, free, shared, buffers, cached = free_physmem()
+        self.assertAlmostEqual(free, psutil.virtual_memory().free,
+                               delta=MEMORY_TOLERANCE)
+
+    @retry_before_failing()
+    def test_vmem_buffers(self):
+        buffers = int(sh('vmstat').split('\n')[2].split()[4]) * 1024
+        self.assertAlmostEqual(buffers, psutil.virtual_memory().buffers,
+                               delta=MEMORY_TOLERANCE)
+
+    @retry_before_failing()
+    def test_vmem_cached(self):
+        cached = int(sh('vmstat').split('\n')[2].split()[5]) * 1024
+        self.assertAlmostEqual(cached, psutil.virtual_memory().cached,
+                               delta=MEMORY_TOLERANCE)
+
+    def test_swapmem_total(self):
+        total, used, free = free_swap()
+        return self.assertAlmostEqual(total, psutil.swap_memory().total,
+                                      delta=MEMORY_TOLERANCE)
+
+    @retry_before_failing()
+    def test_swapmem_used(self):
+        total, used, free = free_swap()
+        return self.assertAlmostEqual(used, psutil.swap_memory().used,
+                                      delta=MEMORY_TOLERANCE)
+
+    @retry_before_failing()
+    def test_swapmem_free(self):
+        total, used, free = free_swap()
+        return self.assertAlmostEqual(free, psutil.swap_memory().free,
+                                      delta=MEMORY_TOLERANCE)
+
+
 @unittest.skipUnless(LINUX, "not a Linux system")
 class LinuxSpecificTestCase(unittest.TestCase):
 
@@ -164,51 +213,6 @@ class LinuxSpecificTestCase(unittest.TestCase):
             self.assertEqual(int(rss) * 1024, this.rss)
             # test only rwx chars, ignore 's' and 'p'
             self.assertEqual(mode[:3], this.perms[:3])
-
-    def test_vmem_total(self):
-        total, used, free, shared, buffers, cached = free_physmem()
-        self.assertEqual(total, psutil.virtual_memory().total)
-
-    @retry_before_failing()
-    def test_vmem_used(self):
-        total, used, free, shared, buffers, cached = free_physmem()
-        self.assertAlmostEqual(used, psutil.virtual_memory().used,
-                               delta=MEMORY_TOLERANCE)
-
-    @retry_before_failing()
-    def test_vmem_free(self):
-        total, used, free, shared, buffers, cached = free_physmem()
-        self.assertAlmostEqual(free, psutil.virtual_memory().free,
-                               delta=MEMORY_TOLERANCE)
-
-    @retry_before_failing()
-    def test_vmem_buffers(self):
-        buffers = int(sh('vmstat').split('\n')[2].split()[4]) * 1024
-        self.assertAlmostEqual(buffers, psutil.virtual_memory().buffers,
-                               delta=MEMORY_TOLERANCE)
-
-    @retry_before_failing()
-    def test_vmem_cached(self):
-        cached = int(sh('vmstat').split('\n')[2].split()[5]) * 1024
-        self.assertAlmostEqual(cached, psutil.virtual_memory().cached,
-                               delta=MEMORY_TOLERANCE)
-
-    def test_swapmem_total(self):
-        total, used, free = free_swap()
-        return self.assertAlmostEqual(total, psutil.swap_memory().total,
-                                      delta=MEMORY_TOLERANCE)
-
-    @retry_before_failing()
-    def test_swapmem_used(self):
-        total, used, free = free_swap()
-        return self.assertAlmostEqual(used, psutil.swap_memory().used,
-                                      delta=MEMORY_TOLERANCE)
-
-    @retry_before_failing()
-    def test_swapmem_free(self):
-        total, used, free = free_swap()
-        return self.assertAlmostEqual(free, psutil.swap_memory().free,
-                                      delta=MEMORY_TOLERANCE)
 
     @unittest.skipIf(TRAVIS, "unknown failure on travis")
     def test_cpu_times(self):
