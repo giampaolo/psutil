@@ -386,6 +386,25 @@ class TestSystemDisks(unittest.TestCase):
                     assert ret
                     self.assertEqual(ret[0].fstype, 'zfs')
 
+    def test_disk_io_counters_mocked(self):
+        # From kernel 2.6.0 to 2.6.25 /proc/diskstats has less fields;
+        # we test psutil handles this case by setting read_time and
+        # write_time to 0.
+        def open_mock(name, *args):
+            if name == ('/proc/partitions'):
+                return orig_open(name, *args)
+            else:
+                return io.StringIO(u("8       1 sda1 2 2 2 2\n"))
+            return orig_open(name, *args)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            ret = psutil.disk_io_counters()
+            assert m.called
+            self.assertEqual(ret.read_time, 0)
+            self.assertEqual(ret.write_time, 0)
+
 
 # =====================================================================
 # misc
