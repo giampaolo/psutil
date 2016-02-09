@@ -698,6 +698,25 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(psutil.Process().exe(), "/home/foo")
             self.assertEqual(psutil.Process().cwd(), "/home/foo")
 
+    def test_threads_mocked(self):
+        # Test the case where os.listdir() returns a file (thread)
+        # which no longer exists by the time we open() it (race
+        # condition). threads() is supposed to ignore that instead
+        # of raising NSP.
+        def open_mock(name, *args):
+            if name.startswith('/proc/%s/task' % os.getpid()):
+                raise OSError(errno.ENOENT, "")
+            else:
+                return orig_open(name, *args)
+            return orig_open(name, *args)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            ret = psutil.Process().threads()
+            assert m.called
+            self.assertEqual(ret, [])
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)
