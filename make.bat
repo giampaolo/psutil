@@ -125,6 +125,12 @@ if "%1" == "test-system" (
     goto :eof
 )
 
+if "%1" == "test-by-name" (
+    call :install
+    %PYTHON% -m nose psutil\tests\test_process.py psutil\tests\test_system.py psutil\tests\test_windows.py psutil\tests\test_misc.py --nocapture -v -m %2
+    goto :eof
+)
+
 if "%1" == "test-memleaks" (
     call :install
     %PYTHON% test\test_memory_leaks.py
@@ -171,6 +177,26 @@ if "%1" == "setup-dev-env" (
     @echo downloading pip installer
     @echo ------------------------------------------------
     C:\python27\python.exe -c "import urllib2; r = urllib2.urlopen('https://raw.github.com/pypa/pip/master/contrib/get-pip.py'); open('get-pip.py', 'wb').write(r.read())"
+    @echo ------------------------------------------------
+    @echo installing pip
+    @echo ------------------------------------------------
+    %PYTHON% get-pip.py
+    @echo ------------------------------------------------
+    @echo installing deps
+    @echo ------------------------------------------------
+    rem mandatory / for unittests
+    %PYTHON% -m pip install unittest2 ipaddress mock wmi wheel pypiwin32 --upgrade
+    rem nice to have
+    %PYTHON% -m pip install ipdb nose --upgrade
+    goto :eof
+)
+
+if "%1" == "setup-dev-env-all" (
+    :setup-env
+    @echo ------------------------------------------------
+    @echo downloading pip installer
+    @echo ------------------------------------------------
+    C:\python27\python.exe -c "import urllib2; r = urllib2.urlopen('https://raw.github.com/pypa/pip/master/contrib/get-pip.py'); open('get-pip.py', 'wb').write(r.read())"
     for %%P in (%ALL_PYTHONS%) do (
         @echo ------------------------------------------------
         @echo installing pip for %%P
@@ -184,10 +210,11 @@ if "%1" == "setup-dev-env" (
         rem mandatory / for unittests
         %%P -m pip install unittest2 ipaddress mock wmi wheel pypiwin32 --upgrade
         rem nice to have
-        %%P -m pip install ipdb pep8 pyflakes flake8 --upgrade
+        %%P -m pip install ipdb nose --upgrade
     )
     goto :eof
 )
+
 
 if "%1" == "flake8" (
     :flake8
