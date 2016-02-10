@@ -1888,10 +1888,15 @@ class TestUnicode(unittest.TestCase):
         env['FUNNY_ARG'] = self.uexe
         sproc = get_test_subprocess(env=env)
         p = psutil.Process(sproc.pid)
-        self.assertEqual(p.environ()['FUNNY_ARG'], self.uexe)
+        if PY3:
+            self.assertEqual(p.environ()['FUNNY_ARG'], self.uexe)
+        else:
+            self.assertEqual(p.environ()['FUNNY_ARG'],
+                             self.uexe.decode(sys.getfilesystemencoding()))
 
     def test_disk_usage(self):
-        psutil.disk_usage(self.uexe)
+        path = tempfile.mkdtemp(prefix='psutil', suffix='è')
+        psutil.disk_usage(path)
 
 
 class TestNonUnicode(unittest.TestCase):
@@ -1995,17 +2000,26 @@ class TestNonUnicode(unittest.TestCase):
 
     def test_proc_environ(self):
         env = os.environ.copy()
-        env['FUNNY_ARG'] = self.temp_directory
+        funny_path = self.temp_directory
+        # ...otherwise subprocess.Popen fails with TypeError (it
+        # wants a string)
+        env['FUNNY_ARG'] = \
+            decode_path(funny_path) if WINDOWS and PY3 else funny_path
         sproc = get_test_subprocess(env=env)
         p = psutil.Process(sproc.pid)
         self.assertEqual(
-            encode_path(p.environ()['FUNNY_ARG']), self.temp_directory)
+            encode_path(p.environ()['FUNNY_ARG']), funny_path)
 
     def test_disk_usage(self):
         funny_directory = os.path.realpath(
             os.path.join(self.temp_directory, b"\xc0\x80"))
         os.mkdir(funny_directory)
         self.addCleanup(safe_rmdir, funny_directory)
+        if WINDOWS and PY3:
+            # Python 3 on Windows is moving towards accepting unicode
+            # paths only:
+            # http://bugs.python.org/issue26330
+            funny_directory = decode_path(funny_directory)
         psutil.disk_usage(funny_directory)
 
 
