@@ -108,17 +108,6 @@ An icon in the home page (README) always shows the last coverage percentage:
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)
 
-Code quality
-------------
-
-Code quality is controlled by `scrutinizer-ci <https://scrutinizer-ci.com/g/giampaolo/psutil/>`_
-which provides a report signaling duplicated code and other amenities. It is
-controlled by `.scrutinizer.yml <https://github.com/giampaolo/psutil/blob/master/.scrutinizer.yml>`_.
-An icon in the home page always shows a code quality score:
-
-.. image:: https://img.shields.io/scrutinizer/g/giampaolo/psutil.svg
-    :target: https://scrutinizer-ci.com/g/giampaolo/psutil/
-    :alt: Code quality (scrutinizer-ci.com)
 
 =============
 Documentation

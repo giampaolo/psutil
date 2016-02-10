@@ -280,7 +280,7 @@ class TestSystemCPU(unittest.TestCase):
             # this way we'll fall back on relying on /proc/stat
             def open_mock(name, *args, **kwargs):
                 if name.startswith('/proc/cpuinfo'):
-                    return io.BytesIO("")
+                    return io.BytesIO(b"")
                 else:
                     return orig_open(name, *args, **kwargs)
 
