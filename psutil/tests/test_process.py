@@ -1888,11 +1888,11 @@ class TestUnicode(unittest.TestCase):
         env['FUNNY_ARG'] = self.uexe
         sproc = get_test_subprocess(env=env)
         p = psutil.Process(sproc.pid)
-        if PY3:
-            self.assertEqual(p.environ()['FUNNY_ARG'], self.uexe)
-        else:
+        if PY3 and WINDOWS:
             self.assertEqual(p.environ()['FUNNY_ARG'],
                              self.uexe.decode(sys.getfilesystemencoding()))
+        else:
+            self.assertEqual(p.environ()['FUNNY_ARG'], self.uexe)
 
     def test_disk_usage(self):
         path = tempfile.mkdtemp(prefix='psutil', suffix='è')
