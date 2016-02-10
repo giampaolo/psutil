@@ -706,8 +706,10 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
             strlcat(opts, ",relatime", sizeof(opts));
         if (flags & MNT_IGNORE)
             strlcat(opts, ",ignore", sizeof(opts));
+#if defined(MNT_DISCARD)
         if (flags & MNT_DISCARD)
             strlcat(opts, ",discard", sizeof(opts));
+#endif
         if (flags & MNT_EXTATTR)
             strlcat(opts, ",extattr", sizeof(opts));
         if (flags & MNT_LOG)
