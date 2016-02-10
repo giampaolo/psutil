@@ -96,6 +96,9 @@
     #include <utmpx.h>
     #include <sys/vnode.h>  // for VREG
     #include <sys/sched.h>  // for CPUSTATES & CP_*
+    #ifndef DTYPE_VNODE
+    #define DTYPE_VNODE 1
+    #endif
 #endif
 
 
