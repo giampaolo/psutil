@@ -1027,6 +1027,14 @@ class Process(object):
         except ZeroDivisionError:
             return 0.0
 
+    if LINUX:
+        # Currently only available on linux
+
+        def cgroups(self):
+            """Return process' cgroups as a dict where key is controller
+            name and value is the cgroup"""
+            return self._proc.cgroups()
+
     if hasattr(_psplatform.Process, "memory_maps"):
         # Available everywhere except OpenBSD and NetBSD.
 
