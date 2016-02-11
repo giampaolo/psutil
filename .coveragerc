@@ -4,9 +4,9 @@ include =
     *psutil*
 
 omit =
-    test/*
-    *setup*
-    *_compat.py*
+    psutil/tests/*
+    setup.py
+    psutil/_compat.py
 
 exclude_lines =
     pragma: no cover
