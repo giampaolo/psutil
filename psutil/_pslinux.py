@@ -217,6 +217,10 @@ except Exception:
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
               'active', 'inactive', 'buffers', 'cached'])
+sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
+                                 'read_bytes', 'write_bytes',
+                                 'read_time', 'write_time',
+                                 'read_merged_count', 'write_merged_count'])
 
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
 paddrspmem = namedtuple('paddrspmem', ['uss', 'pss', 'swap'])
@@ -575,14 +579,14 @@ class Connections:
             return
         with open_text(file, buffering=BIGGER_FILE_BUFFERING) as f:
             f.readline()  # skip the first line
-            for line in f:
+            for lineno, line in enumerate(f, 1):
                 try:
                     _, laddr, raddr, status, _, _, _, _, _, inode = \
                         line.split()[:10]
                 except ValueError:
                     raise RuntimeError(
-                        "error while parsing %s; malformed line %r" % (
-                            file, line))
+                        "error while parsing %s; malformed line %s %r" % (
+                            file, lineno, line))
                 if inode in inodes:
                     # # We assume inet sockets are unique, so we error
                     # # out if there are multiple references to the
@@ -757,23 +761,44 @@ def disk_io_counters():
     with open_text("%s/diskstats" % get_procfs_path()) as f:
         lines = f.readlines()
     for line in lines:
-        # http://www.mjmwired.net/kernel/Documentation/iostats.txt
+        # OK, this is a bit confusing. The format of /proc/diskstats can
+        # have 3 variations.
+        # On Linux 2.4 each line has always 15 fields, e.g.:
+        # "3     0   8 hda 8 8 8 8 8 8 8 8 8 8 8"
+        # On Linux 2.6+ each line *usually* has 14 fields, and the disk
+        # name is in another position, like this:
+        # "3    0   hda 8 8 8 8 8 8 8 8 8 8 8"
+        # ...unless (Linux 2.6) the line refers to a partition instead
+        # of a disk, in which case the line has less fields (7):
+        # "3    1   hda1 8 8 8 8"
+        # See:
+        # https://www.kernel.org/doc/Documentation/iostats.txt
         fields = line.split()
-        if len(fields) > 7:
-            _, _, name, reads, _, rbytes, rtime, writes, _, wbytes, wtime = \
-                fields[:11]
+        fields_len = len(fields)
+        if fields_len == 15:
+            # Linux 2.4
+            name = fields[3]
+            reads = int(fields[2])
+            (reads_merged, rbytes, rtime, writes, writes_merged,
+                wbytes, wtime) = map(int, fields[4:11])
+        elif fields_len == 14:
+            # Linux 2.6+, line referring to a disk
+            name = fields[2]
+            (reads, reads_merged, rbytes, rtime, writes, writes_merged,
+                wbytes, wtime) = map(int, fields[3:11])
+        elif fields_len == 7:
+            # Linux 2.6+, line referring to a partition
+            name = fields[2]
+            reads, rbytes, writes, wbytes = map(int, fields[3:])
+            rtime = wtime = reads_merged = writes_merged = 0
         else:
-            # from kernel 2.6.0 to 2.6.25
-            _, _, name, reads, rbytes, writes, wbytes = fields
-            rtime, wtime = 0, 0
+            raise ValueError("not sure how to interpret line %r" % line)
+
         if name in partitions:
-            rbytes = int(rbytes) * SECTOR_SIZE
-            wbytes = int(wbytes) * SECTOR_SIZE
-            reads = int(reads)
-            writes = int(writes)
-            rtime = int(rtime)
-            wtime = int(wtime)
-            retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime)
+            rbytes = rbytes * SECTOR_SIZE
+            wbytes = wbytes * SECTOR_SIZE
+            retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
+                             reads_merged, writes_merged)
     return retdict
 
 

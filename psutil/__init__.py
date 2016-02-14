@@ -1799,7 +1799,7 @@ def disk_io_counters(perdisk=False):
     rawdict = _psplatform.disk_io_counters()
     if not rawdict:
         raise RuntimeError("couldn't find any physical disk")
-    nt = getattr(_psplatform, 'sdiskio', _common.sdiskio)
+    nt = getattr(_psplatform, "sdiskio", _common.sdiskio)
     if perdisk:
         for disk, fields in rawdict.items():
             rawdict[disk] = nt(*fields)

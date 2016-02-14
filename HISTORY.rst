@@ -13,6 +13,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #755: Process.memory_percent() "memtype" parameter.
 - #758: tests now live in psutil namespace.
 - #760: expose OS constants (LINUX, OSX, etc.)
+- #756: [Linux] disk_io_counters() return 2 new fields: read_merged_count and
+  write_merged_count.
 - #762: new sripts/procsmem.py script.
 
 **Bug fixes**
@@ -31,6 +33,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #759: [Linux] Process.memory_maps() may return paths ending with " (deleted)"
 - #761: [Windows] psutil.boot_time() wraps to 0 after 49 days.
 - #764: [NetBSD] fix compilation on NetBSD-6.x.
+- #767: [Linux] disk_io_counters() may raise ValueError on 2.6 kernels and it's
+  broken on 2.4 kernels.
 
 
 3.4.2 - 2016-01-20

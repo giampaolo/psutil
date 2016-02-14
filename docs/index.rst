@@ -275,6 +275,11 @@ Disks
   - **read_time**: time spent reading from disk (in milliseconds)
   - **write_time**: time spent writing to disk (in milliseconds)
 
+  On Linux we get the following extra fields:
+
+  - **read_merged_count** (Linux): number of merged reads (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__).
+  - **write_merged_count** (Linux): number of merged writes (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__).
+
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
   the namedtuple described above as the values.
@@ -289,6 +294,9 @@ Disks
     {'sda1': sdiskio(read_count=920, write_count=1, read_bytes=2933248, write_bytes=512, read_time=6016, write_time=4),
      'sda2': sdiskio(read_count=18707, write_count=8830, read_bytes=6060, write_bytes=3443, read_time=24585, write_time=1572),
      'sdb1': sdiskio(read_count=161, write_count=0, read_bytes=786432, write_bytes=0, read_time=44, write_time=0)}
+
+  .. versionchanged:: 4.0.0 *read_merged_count* and *write_merged_count* were
+     addded on Linux.
 
 Network
 -------
