@@ -217,6 +217,10 @@ except Exception:
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
               'active', 'inactive', 'buffers', 'cached'])
+sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
+                                 'read_bytes', 'write_bytes',
+                                 'read_time', 'write_time',
+                                 'read_merged_count', 'write_merged_count'])
 
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
 paddrspmem = namedtuple('paddrspmem', ['uss', 'pss', 'swap'])
@@ -758,22 +762,21 @@ def disk_io_counters():
         lines = f.readlines()
     for line in lines:
         # http://www.mjmwired.net/kernel/Documentation/iostats.txt
+        # https://www.kernel.org/doc/Documentation/iostats.txt
         fields = line.split()
+        name = fields[2]
         if len(fields) > 7:
-            _, _, name, reads, _, rbytes, rtime, writes, _, wbytes, wtime = \
-                fields[:11]
+            (reads, reads_merged, rbytes, rtime, writes, writes_merged,
+                wbytes, wtime) = map(int, fields[3:11])
         else:
             # from kernel 2.6.0 to 2.6.25
-            _, _, name, reads, rbytes, writes, wbytes = fields
-            rtime, wtime = 0, 0
+            reads, rbytes, writes, wbytes = map(int, fields[3:11])
+            rtime, wtime, reads_merged, writes_merged = 0, 0, 0, 0
         if name in partitions:
-            rbytes = int(rbytes) * SECTOR_SIZE
-            wbytes = int(wbytes) * SECTOR_SIZE
-            reads = int(reads)
-            writes = int(writes)
-            rtime = int(rtime)
-            wtime = int(wtime)
-            retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime)
+            rbytes = rbytes * SECTOR_SIZE
+            wbytes = wbytes * SECTOR_SIZE
+            retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
+                             reads_merged, writes_merged)
     return retdict
 
 

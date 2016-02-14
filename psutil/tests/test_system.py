@@ -612,6 +612,11 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(nt[3], nt.write_bytes)
             self.assertEqual(nt[4], nt.read_time)
             self.assertEqual(nt[5], nt.write_time)
+            if LINUX:
+                self.assertEqual(nt[6], nt.read_merged_count)
+                self.assertEqual(nt[7], nt.write_merged_count)
+                assert nt.read_merged_count >= 0, nt
+                assert nt.write_merged_count >= 0, nt
             assert nt.read_count >= 0, nt
             assert nt.write_count >= 0, nt
             assert nt.read_bytes >= 0, nt

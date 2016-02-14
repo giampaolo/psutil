@@ -13,6 +13,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #755: Process.memory_percent() "memtype" parameter.
 - #758: tests now live in psutil namespace.
 - #760: expose OS constants (LINUX, OSX, etc.)
+- #756: [Linux] disk_io_counters() return 2 new fields: read_merged_count and
+  write_merged_count.
 - #762: new sripts/procsmem.py script.
 
 **Bug fixes**
