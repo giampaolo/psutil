@@ -579,14 +579,14 @@ class Connections:
             return
         with open_text(file, buffering=BIGGER_FILE_BUFFERING) as f:
             f.readline()  # skip the first line
-            for line in f:
+            for lineno, line in enumerate(f, 1):
                 try:
                     _, laddr, raddr, status, _, _, _, _, _, inode = \
                         line.split()[:10]
                 except ValueError:
                     raise RuntimeError(
-                        "error while parsing %s; malformed line %r" % (
-                            file, line))
+                        "error while parsing %s; malformed line %s %r" % (
+                            file, lineno, line))
                 if inode in inodes:
                     # # We assume inet sockets are unique, so we error
                     # # out if there are multiple references to the
