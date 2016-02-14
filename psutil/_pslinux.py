@@ -764,14 +764,23 @@ def disk_io_counters():
         # http://www.mjmwired.net/kernel/Documentation/iostats.txt
         # https://www.kernel.org/doc/Documentation/iostats.txt
         fields = line.split()
-        name = fields[2]
-        if len(fields) > 7:
+        fields_len = len(fields)
+        if fields_len == 14:
+            # Linux 2.6+
+            name = fields[2]
             (reads, reads_merged, rbytes, rtime, writes, writes_merged,
                 wbytes, wtime) = map(int, fields[3:11])
         else:
-            # from kernel 2.6.0 to 2.6.25
-            reads, rbytes, writes, wbytes = map(int, fields[3:11])
-            rtime, wtime, reads_merged, writes_merged = 0, 0, 0, 0
+            # Linux 2.4
+            if fields_len != 15:
+                raise RuntimeError(
+                    "not sure how to interpret line %r; expected numer of "
+                    "space-separated values is 15, I found %s"
+                    % (line, fields_len))
+            reads = int(fields[2])
+            name = fields[3]
+            (reads_merged, rbytes, rtime, writes, writes_merged,
+                wbytes, wtime) = map(int, fields[4:11])
         if name in partitions:
             rbytes = rbytes * SECTOR_SIZE
             wbytes = wbytes * SECTOR_SIZE

@@ -399,18 +399,22 @@ class TestSystemDisks(unittest.TestCase):
                     assert ret
                     self.assertEqual(ret[0].fstype, 'zfs')
 
-    # not sure why (doesn't fail locally)
-    # https://travis-ci.org/giampaolo/psutil/jobs/108629915
-    @unittest.skipIf(TRAVIS, "fails on travis")
-    def test_disk_io_counters_mocked(self):
-        # From kernel 2.6.0 to 2.6.25 /proc/diskstats has less fields;
-        # we test psutil handles this case by setting read_time and
-        # write_time to 0.
+    def test_disk_io_counters_kernel_2_4_mocked(self):
+        # This tests /proc/diskstats format which is different on 2.4
+        # kernels. The spec is here:
+        # https://www.kernel.org/doc/Documentation/iostats.txt
         def open_mock(name, *args, **kwargs):
-            if name == ('/proc/partitions'):
-                return orig_open(name, *args, **kwargs)
+            if name == '/proc/partitions':
+                return io.StringIO(textwrap.dedent(u"""\
+                    major minor  #blocks  name
+
+                       8        0  488386584 sda
+                    """))
+            elif name == '/proc/diskstats':
+                return io.StringIO(
+                    u("   3     0   1 sda 2 3 4 5 6 7 8 9 10 11 12"))
             else:
-                return io.StringIO(u("8       1 sda1 2 2 2 2\n"))
+                return orig_open(name, *args, **kwargs)
             return orig_open(name, *args)
 
         orig_open = open
@@ -418,8 +422,30 @@ class TestSystemDisks(unittest.TestCase):
         with mock.patch(patch_point, side_effect=open_mock) as m:
             ret = psutil.disk_io_counters()
             assert m.called
-            self.assertEqual(ret.read_time, 0)
-            self.assertEqual(ret.write_time, 0)
+            self.assertEqual(ret.read_count, 1)
+            self.assertEqual(ret.read_merged_count, 2)
+            self.assertEqual(ret.read_bytes, 3 * 512)
+            self.assertEqual(ret.read_time, 4)
+            self.assertEqual(ret.write_count, 5)
+            self.assertEqual(ret.write_merged_count, 6)
+            self.assertEqual(ret.write_bytes, 7 * 512)
+            self.assertEqual(ret.write_time, 8)
+
+    def test_disk_io_counters_malformed_mocked(self):
+        # Simulate a malformed /proc/diskstats file having a line with
+        # too many fields.
+        def open_mock(name, *args, **kwargs):
+            if name == '/proc/diskstats':
+                return io.StringIO(
+                    u("   3     0   1 sda 2 3 4 5 6 7 8 9 10 11 12 13 14"))
+            else:
+                return orig_open(name, *args, **kwargs)
+            return orig_open(name, *args)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock):
+            self.assertRaises(RuntimeError, psutil.disk_io_counters)
 
 
 # =====================================================================
