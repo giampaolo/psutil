@@ -179,6 +179,20 @@ def readlink(path):
     return path
 
 
+def get_sector_size():
+    try:
+        with open(b"/sys/block/sda/queue/hw_sector_size") as f:
+            return int(f.read())
+    except (IOError, ValueError):
+        # man iostat states that sectors are equivalent with blocks and
+        # have a size of 512 bytes since 2.4 kernels. This value is
+        # needed to calculate the amount of disk I/O in bytes.
+        return 512
+
+
+SECTOR_SIZE = get_sector_size()
+
+
 # --- named tuples
 
 @memoize
@@ -731,11 +745,6 @@ def disk_io_counters():
     """Return disk I/O statistics for every disk installed on the
     system as a dict of raw tuples.
     """
-    # man iostat states that sectors are equivalent with blocks and
-    # have a size of 512 bytes since 2.4 kernels. This value is
-    # needed to calculate the amount of disk I/O in bytes.
-    SECTOR_SIZE = 512
-
     # determine partitions we want to look for
     def get_partitions():
         partitions = []
