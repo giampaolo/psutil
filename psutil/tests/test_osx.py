@@ -81,7 +81,7 @@ def human2bytes(s):
 
 
 @unittest.skipUnless(OSX, "not an OSX system")
-class OSXSpecificTestCase(unittest.TestCase):
+class TestProcess(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -102,6 +102,10 @@ class OSXSpecificTestCase(unittest.TestCase):
         start_psutil = time.strftime("%a %b %e %H:%M:%S %Y",
                                      time.localtime(start_psutil))
         self.assertEqual(start_ps, start_psutil)
+
+
+@unittest.skipUnless(OSX, "not an OSX system")
+class TestSystemAPIs(unittest.TestCase):
 
     def test_disks(self):
         # test psutil.disk_usage() and psutil.disk_partitions()
@@ -171,10 +175,12 @@ class OSXSpecificTestCase(unittest.TestCase):
 
     # --- swap mem
 
+    @retry_before_failing()
     def test_swapmem_sin(self):
         num = vm_stat("Pageins")
         self.assertEqual(psutil.swap_memory().sin, num)
 
+    @retry_before_failing()
     def test_swapmem_sout(self):
         num = vm_stat("Pageouts")
         self.assertEqual(psutil.swap_memory().sout, num)
