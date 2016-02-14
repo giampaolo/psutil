@@ -1883,6 +1883,8 @@ class TestUnicode(unittest.TestCase):
         self.assertIsInstance(path, str)
         self.assertEqual(os.path.normcase(path), os.path.normcase(self.uexe))
 
+    @unittest.skipUnless(hasattr(psutil.Process, "environ"),
+                         "environ not available")
     def test_proc_environ(self):
         env = os.environ.copy()
         env['FUNNY_ARG'] = self.uexe
@@ -1998,6 +2000,8 @@ class TestNonUnicode(unittest.TestCase):
         self.assertIsInstance(path, str)
         self.assertIn(funny_file, encode_path(path))
 
+    @unittest.skipUnless(hasattr(psutil.Process, "environ"),
+                         "environ not available")
     def test_proc_environ(self):
         env = os.environ.copy()
         funny_path = self.temp_directory

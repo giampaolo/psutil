@@ -619,6 +619,9 @@ class TestSystemAPIs(unittest.TestCase):
                 assert nt.read_merged_count >= 0, nt
                 assert nt.write_merged_count >= 0, nt
                 assert nt.busy_time >= 0, nt
+            elif BSD:
+                self.assertEqual(nt[6], nt.busy_time)
+                assert nt.busy_time >= 0, nt
             assert nt.read_count >= 0, nt
             assert nt.write_count >= 0, nt
             assert nt.read_bytes >= 0, nt

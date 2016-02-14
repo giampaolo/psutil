@@ -759,13 +759,14 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
                  current.unit_number);
 
         py_disk_info = Py_BuildValue(
-            "(KKKKLL)",
+            "(KKKKLLL)",
             current.operations[DEVSTAT_READ],   // no reads
             current.operations[DEVSTAT_WRITE],  // no writes
             current.bytes[DEVSTAT_READ],        // bytes read
             current.bytes[DEVSTAT_WRITE],       // bytes written
             (long long) PSUTIL_BT2MSEC(current.duration[DEVSTAT_READ]),  // r time
-            (long long) PSUTIL_BT2MSEC(current.duration[DEVSTAT_WRITE])  // w time
+            (long long) PSUTIL_BT2MSEC(current.duration[DEVSTAT_WRITE]),  // w time
+            (long long) PSUTIL_BT2MSEC(current.busy_time)  // busy time
         );      // finished transactions
         if (!py_disk_info)
             goto error;
