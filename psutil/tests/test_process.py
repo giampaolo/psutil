@@ -586,11 +586,16 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(mem.rss, mem.wset)
             self.assertEqual(mem.vms, mem.pagefile)
 
-    @unittest.skipUnless(LINUX or OSX or WINDOWS,
-                         "not available on this platform")
+        mem = p.memory_info()
+        for name in mem._fields:
+            self.assertGreaterEqual(getattr(mem, name), 0)
+
     def test_memory_full_info(self):
         mem = psutil.Process().memory_full_info()
-        self.assertGreater(mem.uss, 0)
+        for name in mem._fields:
+            self.assertGreaterEqual(getattr(mem, name), 0)
+        if LINUX or WINDOWS or OSX:
+            self.assertGreater(mem.uss, 0)
         if LINUX:
             self.assertGreater(mem.pss, 0)
             self.assertGreater(mem.pss, mem.uss)

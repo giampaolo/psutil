@@ -442,6 +442,8 @@ class Process(object):
     def memory_info(self):
         return pmem(*cext.proc_memory_info(self.pid))
 
+    memory_full_info = memory_info
+
     @wrap_exceptions
     def create_time(self):
         return cext.proc_create_time(self.pid)
