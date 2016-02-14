@@ -431,6 +431,7 @@ class TestSystemDisks(unittest.TestCase):
             self.assertEqual(ret.write_merged_count, 6)
             self.assertEqual(ret.write_bytes, 7 * SECTOR_SIZE)
             self.assertEqual(ret.write_time, 8)
+            self.assertEqual(ret.busy_time, 10)
 
     def test_disk_io_counters_kernel_2_6_full_mocked(self):
         # Tests /proc/diskstats parsing format for 2.6 kernels,
@@ -463,6 +464,7 @@ class TestSystemDisks(unittest.TestCase):
             self.assertEqual(ret.write_merged_count, 6)
             self.assertEqual(ret.write_bytes, 7 * SECTOR_SIZE)
             self.assertEqual(ret.write_time, 8)
+            self.assertEqual(ret.busy_time, 10)
 
     def test_disk_io_counters_kernel_2_6_limited_mocked(self):
         # Tests /proc/diskstats parsing format for 2.6 kernels,
@@ -498,6 +500,7 @@ class TestSystemDisks(unittest.TestCase):
             self.assertEqual(ret.read_time, 0)
             self.assertEqual(ret.write_merged_count, 0)
             self.assertEqual(ret.write_time, 0)
+            self.assertEqual(ret.busy_time, 0)
 
 
 # =====================================================================
