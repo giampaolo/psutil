@@ -266,7 +266,29 @@ Disks
 .. function:: disk_io_counters(perdisk=False)
 
   Return system-wide disk I/O statistics as a namedtuple including the
-  following fields:
+  following fields.
+
+  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
+  | Linux              | OSX         | Solaris     | Windows     | FreeBSD     | OpenBSD     | NetBSD      |
+  +====================+=============+=============+=============+=============+=============+=============+
+  | read_count         | read_count  | read_count  | read_count  | read_count  | read_count  | read_count  |
+  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
+  | write_count        | write_count | write_count | write_count | write_count | write_count | write_count |
+  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
+  | read_bytes         | read_bytes  | read_bytes  | read_bytes  | read_bytes  | read_bytes  | read_bytes  |
+  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
+  | write_bytes        | write_bytes | write_bytes | write_bytes | write_bytes | write_bytes | write_bytes |
+  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
+  | read_time          | read_time   | read_time   | read_time   | read_time   | read_time   |             |
+  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
+  | write_time         | write_time  | write_time  | write_time  | write_time  | write_time  |             |
+  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
+  | read_merged_count  |             |             |             |             |             |             |
+  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
+  | write_merged_count |             |             |             |             |             |             |
+  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
+  | busy_time          |             |             |             |             |             |             |
+  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
 
   - **read_count**: number of reads
   - **write_count**: number of writes
@@ -274,9 +296,7 @@ Disks
   - **write_bytes**: number of bytes written
   - **read_time**: time spent reading from disk (in milliseconds)
   - **write_time**: time spent writing to disk (in milliseconds)
-
-  On Linux we get the following extra fields:
-
+  - **busy_time**: (Linux) time spent doing actual I/Os (in milliseconds)
   - **read_merged_count** (Linux): number of merged reads (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__).
   - **write_merged_count** (Linux): number of merged writes (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__).
 
@@ -295,8 +315,8 @@ Disks
      'sda2': sdiskio(read_count=18707, write_count=8830, read_bytes=6060, write_bytes=3443, read_time=24585, write_time=1572),
      'sdb1': sdiskio(read_count=161, write_count=0, read_bytes=786432, write_bytes=0, read_time=44, write_time=0)}
 
-  .. versionchanged:: 4.0.0 *read_merged_count* and *write_merged_count* were
-     addded on Linux.
+  .. versionchanged:: 4.0.0 *busy_time*, *read_merged_count* and
+     *write_merged_count* were addded on Linux.
 
 Network
 -------

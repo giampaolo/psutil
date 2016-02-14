@@ -179,6 +179,20 @@ def readlink(path):
     return path
 
 
+def get_sector_size():
+    try:
+        with open(b"/sys/block/sda/queue/hw_sector_size") as f:
+            return int(f.read())
+    except (IOError, ValueError):
+        # man iostat states that sectors are equivalent with blocks and
+        # have a size of 512 bytes since 2.4 kernels. This value is
+        # needed to calculate the amount of disk I/O in bytes.
+        return 512
+
+
+SECTOR_SIZE = get_sector_size()
+
+
 # --- named tuples
 
 @memoize
@@ -220,7 +234,8 @@ svmem = namedtuple(
 sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'read_bytes', 'write_bytes',
                                  'read_time', 'write_time',
-                                 'read_merged_count', 'write_merged_count'])
+                                 'read_merged_count', 'write_merged_count',
+                                 'busy_time'])
 
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
 paddrspmem = namedtuple('paddrspmem', ['uss', 'pss', 'swap'])
@@ -731,11 +746,6 @@ def disk_io_counters():
     """Return disk I/O statistics for every disk installed on the
     system as a dict of raw tuples.
     """
-    # man iostat states that sectors are equivalent with blocks and
-    # have a size of 512 bytes since 2.4 kernels. This value is
-    # needed to calculate the amount of disk I/O in bytes.
-    SECTOR_SIZE = 512
-
     # determine partitions we want to look for
     def get_partitions():
         partitions = []
@@ -773,6 +783,7 @@ def disk_io_counters():
         # "3    1   hda1 8 8 8 8"
         # See:
         # https://www.kernel.org/doc/Documentation/iostats.txt
+        # https://www.kernel.org/doc/Documentation/ABI/testing/procfs-diskstats
         fields = line.split()
         fields_len = len(fields)
         if fields_len == 15:
@@ -780,17 +791,17 @@ def disk_io_counters():
             name = fields[3]
             reads = int(fields[2])
             (reads_merged, rbytes, rtime, writes, writes_merged,
-                wbytes, wtime) = map(int, fields[4:11])
+                wbytes, wtime, _, busy_time, _) = map(int, fields[4:14])
         elif fields_len == 14:
             # Linux 2.6+, line referring to a disk
             name = fields[2]
             (reads, reads_merged, rbytes, rtime, writes, writes_merged,
-                wbytes, wtime) = map(int, fields[3:11])
+                wbytes, wtime, _, busy_time, _) = map(int, fields[3:14])
         elif fields_len == 7:
             # Linux 2.6+, line referring to a partition
             name = fields[2]
             reads, rbytes, writes, wbytes = map(int, fields[3:])
-            rtime = wtime = reads_merged = writes_merged = 0
+            rtime = wtime = reads_merged = writes_merged = busy_time = 0
         else:
             raise ValueError("not sure how to interpret line %r" % line)
 
@@ -798,7 +809,7 @@ def disk_io_counters():
             rbytes = rbytes * SECTOR_SIZE
             wbytes = wbytes * SECTOR_SIZE
             retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
-                             reads_merged, writes_merged)
+                             reads_merged, writes_merged, busy_time)
     return retdict
 
 

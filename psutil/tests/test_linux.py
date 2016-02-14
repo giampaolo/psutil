@@ -49,6 +49,8 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 SIOCGIFADDR = 0x8915
 SIOCGIFCONF = 0x8912
 SIOCGIFHWADDR = 0x8927
+if LINUX:
+    SECTOR_SIZE = psutil._psplatform.SECTOR_SIZE
 
 
 # =====================================================================
@@ -423,12 +425,13 @@ class TestSystemDisks(unittest.TestCase):
             assert m.called
             self.assertEqual(ret.read_count, 1)
             self.assertEqual(ret.read_merged_count, 2)
-            self.assertEqual(ret.read_bytes, 3 * 512)
+            self.assertEqual(ret.read_bytes, 3 * SECTOR_SIZE)
             self.assertEqual(ret.read_time, 4)
             self.assertEqual(ret.write_count, 5)
             self.assertEqual(ret.write_merged_count, 6)
-            self.assertEqual(ret.write_bytes, 7 * 512)
+            self.assertEqual(ret.write_bytes, 7 * SECTOR_SIZE)
             self.assertEqual(ret.write_time, 8)
+            self.assertEqual(ret.busy_time, 10)
 
     def test_disk_io_counters_kernel_2_6_full_mocked(self):
         # Tests /proc/diskstats parsing format for 2.6 kernels,
@@ -455,12 +458,13 @@ class TestSystemDisks(unittest.TestCase):
             assert m.called
             self.assertEqual(ret.read_count, 1)
             self.assertEqual(ret.read_merged_count, 2)
-            self.assertEqual(ret.read_bytes, 3 * 512)
+            self.assertEqual(ret.read_bytes, 3 * SECTOR_SIZE)
             self.assertEqual(ret.read_time, 4)
             self.assertEqual(ret.write_count, 5)
             self.assertEqual(ret.write_merged_count, 6)
-            self.assertEqual(ret.write_bytes, 7 * 512)
+            self.assertEqual(ret.write_bytes, 7 * SECTOR_SIZE)
             self.assertEqual(ret.write_time, 8)
+            self.assertEqual(ret.busy_time, 10)
 
     def test_disk_io_counters_kernel_2_6_limited_mocked(self):
         # Tests /proc/diskstats parsing format for 2.6 kernels,
@@ -488,14 +492,15 @@ class TestSystemDisks(unittest.TestCase):
             ret = psutil.disk_io_counters()
             assert m.called
             self.assertEqual(ret.read_count, 1)
-            self.assertEqual(ret.read_bytes, 2 * 512)
+            self.assertEqual(ret.read_bytes, 2 * SECTOR_SIZE)
             self.assertEqual(ret.write_count, 3)
-            self.assertEqual(ret.write_bytes, 4 * 512)
+            self.assertEqual(ret.write_bytes, 4 * SECTOR_SIZE)
 
             self.assertEqual(ret.read_merged_count, 0)
             self.assertEqual(ret.read_time, 0)
             self.assertEqual(ret.write_merged_count, 0)
             self.assertEqual(ret.write_time, 0)
+            self.assertEqual(ret.busy_time, 0)
 
 
 # =====================================================================

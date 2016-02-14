@@ -615,8 +615,10 @@ class TestSystemAPIs(unittest.TestCase):
             if LINUX:
                 self.assertEqual(nt[6], nt.read_merged_count)
                 self.assertEqual(nt[7], nt.write_merged_count)
+                self.assertEqual(nt[8], nt.busy_time)
                 assert nt.read_merged_count >= 0, nt
                 assert nt.write_merged_count >= 0, nt
+                assert nt.busy_time >= 0, nt
             elif BSD:
                 self.assertEqual(nt[6], nt.busy_time)
                 assert nt.busy_time >= 0, nt
