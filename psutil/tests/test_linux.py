@@ -96,7 +96,9 @@ def free_swap():
     for line in lines:
         if line.startswith('Swap'):
             _, total, used, free = line.split()
-    return (int(total) * 1024, int(used) * 1024, int(free) * 1024)
+            return (int(total) * 1024, int(used) * 1024, int(free) * 1024)
+    raise ValueError(
+        "can't find 'Swap' in 'free' output:\n%s" % '\n'.join(lines))
 
 
 def free_physmem():
@@ -108,7 +110,9 @@ def free_physmem():
         if line.startswith('Mem'):
             total, used, free, shared, buffers, cached = \
                 [int(x) * 1024 for x in line.split()[1:]]
-    return (total, used, free, shared, buffers, cached)
+            return (total, used, free, shared, buffers, cached)
+    raise ValueError(
+        "can't find 'Mem' in 'free' output:\n%s" % '\n'.join(lines))
 
 
 # =====================================================================
