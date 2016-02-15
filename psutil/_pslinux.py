@@ -256,7 +256,9 @@ def virtual_memory():
     total *= unit_multiplier
     free *= unit_multiplier
     buffers *= unit_multiplier
-    shared *= unit_multiplier
+    # XXX: tis is currently not used (neither returned) because it's
+    # always 0. It would be nice to have though ('free' provides it).
+    # shared *= unit_multiplier
 
     cached = active = inactive = None
     with open_binary('%s/meminfo' % get_procfs_path()) as f:
