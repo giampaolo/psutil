@@ -812,7 +812,12 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                                         if2m->ifm_data.ifi_ierrors,
                                         if2m->ifm_data.ifi_oerrors,
                                         if2m->ifm_data.ifi_iqdrops,
-                                        0);  // dropout not supported
+#ifdef _IFI_OQDROPS
+                                        if2m->ifm_data.ifi_oqdrops
+#else
+                                        0
+#endif
+                                        );
             if (!py_ifc_info)
                 goto error;
             if (PyDict_SetItemString(py_retdict, ifc_name, py_ifc_info))
