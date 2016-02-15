@@ -5,7 +5,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Enhancements**
 
-- #523: [Linux, BSD] disk_io_counters() return a new "busy_time" field.
+- #523: [Linux, FreeBSD] disk_io_counters() return a new "busy_time" field.
 - #660: [Windows] make.bat is smarter in finding alternative VS install
   locations.  (patch by mpderbec)
 - #732: Process.environ().  (patch by Frank Benkstein)

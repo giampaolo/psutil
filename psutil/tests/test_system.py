@@ -22,6 +22,7 @@ import psutil
 from psutil import BSD
 from psutil import FREEBSD
 from psutil import LINUX
+from psutil import NETBSD
 from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
@@ -612,9 +613,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertEqual(nt[1], nt.write_count)
             self.assertEqual(nt[2], nt.read_bytes)
             self.assertEqual(nt[3], nt.write_bytes)
-            if (OPENBSD or NETBSD):
-                self.assertEqual(nt[4], nt.busy_time)
-            else:
+            if not (OPENBSD or NETBSD):
                 self.assertEqual(nt[4], nt.read_time)
                 self.assertEqual(nt[5], nt.write_time)
                 if LINUX:

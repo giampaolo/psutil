@@ -283,7 +283,7 @@ Disks
   +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
   | write_time         | write_time  | write_time  | write_time  | write_time  | write_time  |             |
   +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
-  | read_merged_count  |             |             |             |             |             |             |
+  | read_merged_count  |             |             |             | busy_time   |             |             |
   +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
   | write_merged_count |             |             |             |             |             |             |
   +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
@@ -296,9 +296,9 @@ Disks
   - **write_bytes**: number of bytes written
   - **read_time**: time spent reading from disk (in milliseconds)
   - **write_time**: time spent writing to disk (in milliseconds)
-  - **busy_time**: (Linux) time spent doing actual I/Os (in milliseconds)
-  - **read_merged_count** (Linux): number of merged reads (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__).
-  - **write_merged_count** (Linux): number of merged writes (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__).
+  - **busy_time**: (Linux, FreeBSD) time spent doing actual I/Os (in milliseconds)
+  - **read_merged_count** (Linux): number of merged reads (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
+  - **write_merged_count** (Linux): number of merged writes (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
 
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
@@ -315,8 +315,10 @@ Disks
      'sda2': sdiskio(read_count=18707, write_count=8830, read_bytes=6060, write_bytes=3443, read_time=24585, write_time=1572),
      'sdb1': sdiskio(read_count=161, write_count=0, read_bytes=786432, write_bytes=0, read_time=44, write_time=0)}
 
-  .. versionchanged:: 4.0.0 *busy_time*, *read_merged_count* and
-     *write_merged_count* were addded on Linux.
+  .. versionchanged:: 4.0.0 added *busy_time* (Linux, FreeBSD),
+     *read_merged_count* and *write_merged_count* (Linux) fields.
+  .. versionchanged:: 4.0.0 NetBSD no longer has *read_time* and *write_time*
+     fields.
 
 Network
 -------
