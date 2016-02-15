@@ -368,7 +368,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     long pid;
-    double user_t, sys_t;
+    double user_t, sys_t, children_user_t, children_sys_t;
     kinfo_proc kp;
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -378,11 +378,14 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 #ifdef __FreeBSD__
     user_t = PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_utime);
     sys_t = PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_stime);
+    children_user_t = PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_utime);
+    children_sys_t = PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime);
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
     user_t = PSUTIL_KPT2DOUBLE(kp.p_uutime);
     sys_t = PSUTIL_KPT2DOUBLE(kp.p_ustime);
 #endif
-    return Py_BuildValue("(dd)", user_t, sys_t);
+    return Py_BuildValue("(dddd)",
+                         user_t, sys_t, children_user_t, children_sys_t);
 }
 
 
