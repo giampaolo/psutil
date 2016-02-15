@@ -114,6 +114,11 @@ if FREEBSD:
 else:
     sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                      'read_bytes', 'write_bytes'])
+if FREEBSD:
+    scpustats = namedtuple(
+        'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts',
+                      'syscalls', 'traps'])
+
 
 # set later from __init__.py
 NoSuchProcess = None
@@ -220,6 +225,14 @@ else:
             if cpu_count_logical() == 1:
                 return 1
         return ret
+
+
+def cpu_stats():
+    if FREEBSD:
+        ctx_switches, interrupts, soft_interrupts, syscalls, traps = \
+            cext.cpu_stats()
+        return scpustats(
+            ctx_switches, interrupts, soft_interrupts, syscalls, traps)
 
 
 def boot_time():

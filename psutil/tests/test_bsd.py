@@ -281,6 +281,26 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         self.assertAlmostEqual(psutil.virtual_memory().buffers, num,
                                delta=MEMORY_TOLERANCE)
 
+    def test_cpu_stats_ctx_switches(self):
+        self.assertAlmostEqual(psutil.cpu_stats().ctx_switches,
+                               sysctl('vm.stats.sys.v_swtch'), delta=1000)
+
+    def test_cpu_stats_interrupts(self):
+        self.assertAlmostEqual(psutil.cpu_stats().interrupts,
+                               sysctl('vm.stats.sys.v_intr'), delta=1000)
+
+    def test_cpu_stats_soft_interrupts(self):
+        self.assertAlmostEqual(psutil.cpu_stats().soft_interrupts,
+                               sysctl('vm.stats.sys.v_soft'), delta=1000)
+
+    def test_cpu_stats_syscalls(self):
+        self.assertAlmostEqual(psutil.cpu_stats().syscalls,
+                               sysctl('vm.stats.sys.v_syscall'), delta=1000)
+
+    def test_cpu_stats_traps(self):
+        self.assertAlmostEqual(psutil.cpu_stats().traps,
+                               sysctl('vm.stats.sys.v_trap'), delta=1000)
+
 
 # =====================================================================
 # --- OpenBSD

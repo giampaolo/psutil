@@ -1018,6 +1018,8 @@ PsutilMethods[] = {
      "Return a Python dict of tuples for disk I/O information"},
     {"users", psutil_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},
+    {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
+     "Return CPU statistics"},
 #if defined(__FreeBSD__) || defined(__NetBSD__)
     {"net_connections", psutil_net_connections, METH_VARARGS,
      "Return system-wide open connections."},

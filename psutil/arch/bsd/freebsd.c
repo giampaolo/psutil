@@ -992,3 +992,38 @@ error:
         Py_DECREF(py_cpu_seq);
     return NULL;
 }
+
+
+PyObject *
+psutil_cpu_stats(PyObject *self, PyObject *args) {
+    unsigned int v_soft;
+    unsigned int v_intr;
+    unsigned int v_syscall;
+    unsigned int v_trap;
+    unsigned int v_swtch;
+    size_t size = sizeof(v_soft);
+
+    if (sysctlbyname("vm.stats.sys.v_soft", &v_soft, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.sys.v_intr", &v_intr, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.sys.v_syscall", &v_syscall, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.sys.v_trap", &v_trap, &size, NULL, 0))
+        goto error;
+    if (sysctlbyname("vm.stats.sys.v_swtch", &v_swtch, &size, NULL, 0))
+        goto error;
+
+    return Py_BuildValue(
+        "IIIII",
+        v_swtch,  // ctx switches
+        v_intr,  // interrupts
+        v_soft,  // software interrupts
+        v_syscall,  // syscalls
+        v_trap  // traps
+    );
+
+error:
+    PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+}

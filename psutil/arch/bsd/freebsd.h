@@ -28,3 +28,4 @@ PyObject* psutil_proc_num_threads(PyObject* self, PyObject* args);
 PyObject* psutil_proc_threads(PyObject* self, PyObject* args);
 PyObject* psutil_swap_mem(PyObject* self, PyObject* args);
 PyObject* psutil_virtual_mem(PyObject* self, PyObject* args);
+PyObject* psutil_cpu_stats(PyObject* self, PyObject* args);
