@@ -112,60 +112,43 @@ def free_physmem():
 
 
 # =====================================================================
-# system memory
+# system virtual memory
 # =====================================================================
 
 @unittest.skipUnless(LINUX, "not a Linux system")
-class TestSystemMemory(unittest.TestCase):
+class TestSystemVirtualMemory(unittest.TestCase):
 
-    def test_vmem_total(self):
+    def test_total(self):
         total, used, free, shared, buffers, cached = free_physmem()
         self.assertEqual(total, psutil.virtual_memory().total)
 
     @retry_before_failing()
-    def test_vmem_used(self):
+    def test_used(self):
         total, used, free, shared, buffers, cached = free_physmem()
         self.assertAlmostEqual(used, psutil.virtual_memory().used,
                                delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
-    def test_vmem_free(self):
+    def test_free(self):
         total, used, free, shared, buffers, cached = free_physmem()
         self.assertAlmostEqual(free, psutil.virtual_memory().free,
                                delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
-    def test_vmem_buffers(self):
+    def test_buffers(self):
         buffers = int(sh('vmstat').split('\n')[2].split()[4]) * 1024
         self.assertAlmostEqual(buffers, psutil.virtual_memory().buffers,
                                delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
-    def test_vmem_cached(self):
+    def test_cached(self):
         cached = int(sh('vmstat').split('\n')[2].split()[5]) * 1024
         self.assertAlmostEqual(cached, psutil.virtual_memory().cached,
                                delta=MEMORY_TOLERANCE)
 
-    def test_swapmem_total(self):
-        total, used, free = free_swap()
-        return self.assertAlmostEqual(total, psutil.swap_memory().total,
-                                      delta=MEMORY_TOLERANCE)
-
-    @retry_before_failing()
-    def test_swapmem_used(self):
-        total, used, free = free_swap()
-        return self.assertAlmostEqual(used, psutil.swap_memory().used,
-                                      delta=MEMORY_TOLERANCE)
-
-    @retry_before_failing()
-    def test_swapmem_free(self):
-        total, used, free = free_swap()
-        return self.assertAlmostEqual(free, psutil.swap_memory().free,
-                                      delta=MEMORY_TOLERANCE)
-
     # --- mocked tests
 
-    def test_virtual_memory_mocked_warnings(self):
+    def test_warnings_mocked(self):
         with mock.patch('psutil._pslinux.open', create=True) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
@@ -181,7 +164,32 @@ class TestSystemMemory(unittest.TestCase):
                 self.assertEqual(ret.active, 0)
                 self.assertEqual(ret.inactive, 0)
 
-    def test_swap_memory_mocked_warnings(self):
+
+# =====================================================================
+# system swap memory
+# =====================================================================
+
+@unittest.skipUnless(LINUX, "not a Linux system")
+class TestSystemSwapMemory(unittest.TestCase):
+
+    def test_total(self):
+        total, used, free = free_swap()
+        return self.assertAlmostEqual(total, psutil.swap_memory().total,
+                                      delta=MEMORY_TOLERANCE)
+
+    @retry_before_failing()
+    def test_used(self):
+        total, used, free = free_swap()
+        return self.assertAlmostEqual(used, psutil.swap_memory().used,
+                                      delta=MEMORY_TOLERANCE)
+
+    @retry_before_failing()
+    def test_free(self):
+        total, used, free = free_swap()
+        return self.assertAlmostEqual(free, psutil.swap_memory().free,
+                                      delta=MEMORY_TOLERANCE)
+
+    def test_warnings_mocked(self):
         with mock.patch('psutil._pslinux.open', create=True) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
@@ -196,7 +204,7 @@ class TestSystemMemory(unittest.TestCase):
                 self.assertEqual(ret.sin, 0)
                 self.assertEqual(ret.sout, 0)
 
-    def test_swap_memory_mocked_no_vmstat(self):
+    def test_no_vmstat_mocked(self):
         # see https://github.com/giampaolo/psutil/issues/722
         with mock.patch('psutil._pslinux.open', create=True,
                         side_effect=IOError) as m:
