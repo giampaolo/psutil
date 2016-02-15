@@ -10,6 +10,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
+- #774: [FreeBSD] net_io_counters() dropout is no longer set to 0 if the kernel
+  provides it.
 - #776: [Linux] Process.cpu_affinity() may erroneously raise NoSuchProcess.
   (patch by wxwright)
 
