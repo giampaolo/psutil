@@ -342,6 +342,25 @@ class TestSystemNetwork(unittest.TestCase):
             pass
         psutil.net_connections(kind='inet6')
 
+    def test_net_connections_mocked(self):
+        def open_mock(name, *args, **kwargs):
+            if name == '/proc/net/unix':
+                return io.StringIO(textwrap.dedent(u"""\
+                    0: 00000003 000 000 0001 03 462170 @/tmp/dbus-Qw2hMPIU3n
+                    0: 00000003 000 000 0001 03 35010 @/tmp/dbus-tB2X8h69BQ
+                    0: 00000003 000 000 0001 03 34424 @/tmp/dbus-cHy80Y8O
+                    000000000000000000000000000000000000000000000000000000
+                    """))
+            else:
+                return orig_open(name, *args, **kwargs)
+            return orig_open(name, *args)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, side_effect=open_mock) as m:
+            psutil.net_connections(kind='unix')
+            assert m.called
+
 
 # =====================================================================
 # system disk

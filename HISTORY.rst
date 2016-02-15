@@ -34,6 +34,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #759: [Linux] Process.memory_maps() may return paths ending with " (deleted)"
 - #761: [Windows] psutil.boot_time() wraps to 0 after 49 days.
 - #764: [NetBSD] fix compilation on NetBSD-6.x.
+- #766: [Linux] net_connections() can't handle malformed /proc/net/unix file.
 - #767: [Linux] disk_io_counters() may raise ValueError on 2.6 kernels and it's
   broken on 2.4 kernels.
 - #770: [NetBSD] disk_io_counters() metrics didn't update.

@@ -82,7 +82,7 @@ test-by-name: install
 
 # Run specific platform tests only.
 test-platform: install
-	$(PYTHON) psutil/tests/test_`python -c 'import psutil; print([x.lower() for x in ("FREEBSD", "LINUX", "NETBSD", "OPENBSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
+	$(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("FREEBSD", "LINUX", "NETBSD", "OPENBSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
 
 # Same as above but for test_memory_leaks.py script.
 test-memleaks-by-name: install

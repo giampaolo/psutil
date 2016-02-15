@@ -635,6 +635,9 @@ class Connections:
                 try:
                     _, _, _, _, type_, _, inode = tokens[0:7]
                 except ValueError:
+                    if ' ' not in line:
+                        # see: https://github.com/giampaolo/psutil/issues/766
+                        continue
                     raise RuntimeError(
                         "error while parsing %s; malformed line %r" % (
                             file, line))
