@@ -252,7 +252,12 @@ pmmap_ext = namedtuple(
 # --- system memory
 
 def virtual_memory():
-    total, free, buffers, shared, _, _ = cext.linux_sysinfo()
+    total, free, buffers, shared, _, _, unit_multiplier = cext.linux_sysinfo()
+    total *= unit_multiplier
+    free *= unit_multiplier
+    buffers *= unit_multiplier
+    shared *= unit_multiplier
+
     cached = active = inactive = None
     with open_binary('%s/meminfo' % get_procfs_path()) as f:
         for line in f:
@@ -273,6 +278,7 @@ def virtual_memory():
                   "be determined and were set to 0"
             warnings.warn(msg, RuntimeWarning)
             cached = active = inactive = 0
+
     avail = free + buffers + cached
     used = total - free
     percent = usage_percent((total - avail), total, _round=1)
@@ -281,7 +287,9 @@ def virtual_memory():
 
 
 def swap_memory():
-    _, _, _, _, total, free = cext.linux_sysinfo()
+    _, _, _, _, total, free, unit_multiplier = cext.linux_sysinfo()
+    total *= unit_multiplier
+    free *= unit_multiplier
     used = total - free
     percent = usage_percent(used, total, _round=1)
     # get pgin/pgouts

@@ -247,13 +247,15 @@ psutil_linux_sysinfo(PyObject *self, PyObject *args) {
         return PyErr_SetFromErrno(PyExc_OSError);
     // note: boot time might also be determined from here
     return Py_BuildValue(
-        "(KKKKKK)",
-        (unsigned long long)info.totalram  * info.mem_unit,   // total
-        (unsigned long long)info.freeram   * info.mem_unit,   // free
-        (unsigned long long)info.bufferram * info.mem_unit,   // buffer
-        (unsigned long long)info.sharedram * info.mem_unit,   // shared
-        (unsigned long long)info.totalswap * info.mem_unit,   // swap tot
-        (unsigned long long)info.freeswap  * info.mem_unit);  // swap free
+        "(kkkkkkI)",
+        info.totalram,  // total
+        info.freeram,  // free
+        info.bufferram, // buffer
+        info.sharedram, // shared
+        info.totalswap, // swap tot
+        info.freeswap,  // swap free
+        info.mem_unit  // multiplier
+    );
 }
 
 
