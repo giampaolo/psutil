@@ -105,12 +105,16 @@ def free_physmem():
     """Parse 'free' cmd and return physical memory's total, used
     and free values.
     """
+    # Note: free can have 2 different formats, invalidating 'shared'
+    # and 'cached' memory which may have different positions so we
+    # do not return them.
+    # https://github.com/giampaolo/psutil/issues/538#issuecomment-57059946
     lines = sh('free').split('\n')
     for line in lines:
         if line.startswith('Mem'):
-            total, used, free, shared, buffers, cached = \
-                [int(x) * 1024 for x in line.split()[1:]]
-            return (total, used, free, shared, buffers, cached)
+            total, used, free, shared = \
+                [int(x) * 1024 for x in line.split()[1:5]]
+            return (total, used, free, shared)
     raise ValueError(
         "can't find 'Mem' in 'free' output:\n%s" % '\n'.join(lines))
 
@@ -123,18 +127,18 @@ def free_physmem():
 class TestSystemVirtualMemory(unittest.TestCase):
 
     def test_total(self):
-        total, used, free, shared, buffers, cached = free_physmem()
+        total, used, free, shared = free_physmem()
         self.assertEqual(total, psutil.virtual_memory().total)
 
     @retry_before_failing()
     def test_used(self):
-        total, used, free, shared, buffers, cached = free_physmem()
+        total, used, free, shared = free_physmem()
         self.assertAlmostEqual(used, psutil.virtual_memory().used,
                                delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_free(self):
-        total, used, free, shared, buffers, cached = free_physmem()
+        total, used, free, shared = free_physmem()
         self.assertAlmostEqual(free, psutil.virtual_memory().free,
                                delta=MEMORY_TOLERANCE)
 
