@@ -143,7 +143,7 @@ Disks
     sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
     >>>
     >>> psutil.disk_io_counters(perdisk=False)
-    sdiskio(read_count=719566, write_count=1082197, read_bytes=18626220032, write_bytes=24081764352, read_time=5023392, write_time=63199568)
+    sdiskio(read_count=719566, write_count=1082197, read_bytes=18626220032, write_bytes=24081764352, read_time=5023392, write_time=63199568, read_merged_count=619166, write_merged_count=812396, busy_time=4523412)
     >>>
 
 Network
@@ -353,6 +353,7 @@ http://groups.google.com/group/psutil/
 Timeline
 ========
 
+- 2016-02-17: `psutil-4.0.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-4.0.0.tar.gz>`_
 - 2016-01-20: `psutil-3.4.2.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-3.4.2.tar.gz>`_
 - 2016-01-15: `psutil-3.4.1.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-3.4.1.tar.gz>`_
 - 2015-11-25: `psutil-3.3.0.tar.gz <https://pypi.python.org/packages/source/p/psutil/psutil-3.3.0.tar.gz>`_

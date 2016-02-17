@@ -546,7 +546,7 @@ class TestProcess(unittest.TestCase):
             if thread._running:
                 thread.stop()
 
-    @retry_before_failing
+    @retry_before_failing()
     def test_threads_2(self):
         p = psutil.Process()
         if OPENBSD:
