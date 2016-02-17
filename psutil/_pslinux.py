@@ -1029,6 +1029,14 @@ class Process(object):
                 _private_re=re.compile(b"Private.*:\s+(\d+)"),
                 _pss_re=re.compile(b"Pss.*:\s+(\d+)"),
                 _swap_re=re.compile(b"Swap.*:\s+(\d+)")):
+            # You might be tempted to calculate USS by subtracting
+            # the "shared" value from the "resident" value in
+            # /proc/<pid>/statm. But at least on Linux, statm's "shared"
+            # value actually counts pages backed by files, which has
+            # little to do with whether the pages are actually shared.
+            # /proc/self/smaps on the other hand appears to give us the
+            # correct information.
+
             # Note: using 3 regexes is faster than reading the file
             # line by line.
             # XXX: on Python 3 the 2 regexes are 30% slower than on
