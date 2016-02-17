@@ -1101,6 +1101,8 @@ Process class
      It does so by passing through the whole process address.
      As such it usually requires higher user privileges than
      :meth:`memory_info` and is considerably slower.
+     On platforms where extra fields are not implented this simply returns the
+     same metrics as :meth:`memory_info`.
 
      - **uss**: (Linux, OSX, Windows) aka "Unique Set Size", this is the memory
        which is unique to a process and which would be freed if the process was terminated right now.
