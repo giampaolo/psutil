@@ -720,7 +720,7 @@ class TestProcess(unittest.TestCase):
             # test only rwx chars, ignore 's' and 'p'
             self.assertEqual(mode[:3], this.perms[:3])
 
-    def test_memory_addrspace_info(self):
+    def test_memory_full_info(self):
         src = textwrap.dedent("""
             import time
             with open("%s", "w") as f:
@@ -731,7 +731,7 @@ class TestProcess(unittest.TestCase):
         call_until(lambda: os.listdir('.'), "'%s' not in ret" % TESTFN)
         p = psutil.Process(sproc.pid)
         time.sleep(.1)
-        mem = p.memory_addrspace_info()
+        mem = p.memory_full_info()
         maps = p.memory_maps(grouped=False)
         self.assertEqual(
             mem.uss, sum([x.private_dirty + x.private_clean for x in maps]))

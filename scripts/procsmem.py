@@ -41,7 +41,7 @@ import sys
 import psutil
 
 
-if not hasattr(psutil.Process, "memory_addrspace_info"):
+if not psutil.LINUX or psutil.OSX or psutil.WINDOWS:
     sys.exit("platform not supported")
 
 
@@ -62,18 +62,19 @@ def main():
     procs = []
     for p in psutil.process_iter():
         try:
-            mem_addrspace = p.memory_addrspace_info()
-            info = p.as_dict(attrs=["cmdline", "username", "memory_info"])
+            mem = p.memory_full_info()
+            info = p.as_dict(attrs=["cmdline", "username"])
         except psutil.AccessDenied:
             ad_pids.append(p.pid)
         except psutil.NoSuchProcess:
             pass
         else:
-            p._uss = mem_addrspace.uss
+            p._uss = mem.uss
+            p._rss = mem.rss
             if not p._uss:
                 continue
-            p._pss = getattr(mem_addrspace, "pss", "")
-            p._swap = getattr(mem_addrspace, "swap", "")
+            p._pss = getattr(mem, "pss", "")
+            p._swap = getattr(mem, "swap", "")
             p._info = info
             procs.append(p)
 
@@ -89,7 +90,7 @@ def main():
             convert_bytes(p._uss),
             convert_bytes(p._pss) if p._pss != "" else "",
             convert_bytes(p._swap) if p._swap != "" else "",
-            convert_bytes(p._info['memory_info'].rss),
+            convert_bytes(p._rss),
         )
         print(line)
     if ad_pids:

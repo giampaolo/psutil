@@ -1091,17 +1091,19 @@ Process class
 
      .. warning:: deprecated in version 4.0.0; use :meth:`memory_info` instead.
 
-  .. method:: memory_addrspace_info()
+  .. method:: memory_full_info()
 
-     This method passes through the whole process address space in order to
-     calculate highly reliable metrics about "effective" process memory
-     consumption.
-     It usually requires higher privileges and is considerably slower than
-     :meth:`memory_info`.
+     This method returns the same information as :meth:`memory_info`, plus, on
+     some platform (Linux, OSX, Windows), also provides additional metrics
+     (USS, PSS and swap).
+     The additional metrics provide a better representation of "effective"
+     process memory consumption (in case of USS).
+     It does so by passing through the whole process address.
+     As such it usually requires higher user privileges than
+     :meth:`memory_info` and is considerably slower.
 
-     - **uss**: aka "Unique Set Size", this is the memory which is unique to a
-       process and which would be freed if the process was terminated right
-       now.
+     - **uss**: (Linux, OSX, Windows) aka "Unique Set Size", this is the memory
+       which is unique to a process and which would be freed if the process was terminated right now.
 
      - **pss**: (Linux) aka "Proportional Set Size", is the amount of memory
        shared with other processes, accounted in a way that the amount is
@@ -1121,8 +1123,8 @@ Process class
 
        >>> import psutil
        >>> p = psutil.Process()
-       >>> p.memory_addrspace_info()
-       paddrspmem(uss=7421952, pss=7681024, swap=0)
+       >>> p.memory_full_info()
+       pfullmem(rss=10199040, vms=52133888, shared=3887104, text=2867200, lib=0, data=5967872, dirty=0, uss=6545408, pss=6872064, swap=0)
        >>>
 
      See also `scripts/procsmem.py <https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py>`__
@@ -1130,15 +1132,13 @@ Process class
 
      .. versionadded:: 4.0.0
 
-     Availability: Linux, OSX, Windows
-
   .. method:: memory_percent(memtype="rss")
 
      Compare process memory to total physical system memory and calculate
      process memory utilization as a percentage.
      *memtype* argument is a string that dictates what type of process memory
      you want to compare against. You can choose between the namedtuple field
-     names returned by :meth:`memory_info` and :meth:`memory_addrspace_info`
+     names returned by :meth:`memory_info` and :meth:`memory_full_info`
      (defaults to ``"rss"``).
 
      .. versionchanged:: 4.0.0 added `memtype` parameter.

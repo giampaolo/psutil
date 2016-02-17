@@ -980,17 +980,21 @@ class Process(object):
     def memory_info_ex(self):
         return self.memory_info()
 
-    if hasattr(_psplatform.Process, "memory_addrspace_info"):
+    def memory_full_info(self):
+        """This method returns the same information as memory_info(),
+        plus, on some platform (Linux, OSX, Windows), also provides
+        additional metrics (USS, PSS and swap).
+        The additional metrics provide a better representation of actual
+        process memory usage.
 
-        def memory_addrspace_info(self):
-            """This method passes through the whole process address space
-            in order to calculate highly reliable metrics about "effective"
-            process memory consumption (USS and PSS).
+        Namely USS is the memory which is unique to a process and which
+        would be freed if the process was terminated right now.
 
-            It usually requires higher privileges and is considerably
-            slower than memory_info().
-            """
-            return self._proc.memory_addrspace_info()
+        It does so by passing through the whole process address.
+        As such it usually requires higher user privileges than
+        memory_info() and is considerably slower.
+        """
+        return self._proc.memory_full_info()
 
     def memory_percent(self, memtype="rss"):
         """Compare process memory to total physical system memory and
@@ -1003,13 +1007,13 @@ class Process(object):
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
         if memtype in ('uss', 'pss', 'swap'):
-            if not hasattr(self, "memory_addrspace_info"):
+            if not hasattr(self, "memory_full_info"):
                 fields = _psplatform.pmem._fields
                 raise ValueError(
                     "invalid memtype %r; valid types are %r" % (
                         memtype, fields))
-            fun = self.memory_addrspace_info
-            fields = _psplatform.paddrspmem._fields
+            fun = self.memory_full_info
+            fields = _psplatform.pfullmem._fields
         else:
             fields = _psplatform.pmem._fields
             fun = self.memory_info

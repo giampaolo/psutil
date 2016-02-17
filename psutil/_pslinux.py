@@ -238,7 +238,7 @@ sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'busy_time'])
 
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
-paddrspmem = namedtuple('paddrspmem', ['uss', 'pss', 'swap'])
+pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
 
 pmmap_grouped = namedtuple(
     'pmmap_grouped', ['path', 'rss', 'size', 'pss', 'shared_clean',
@@ -1024,19 +1024,12 @@ class Process(object):
     if HAS_SMAPS:
 
         @wrap_exceptions
-        def memory_addrspace_info(
+        def memory_full_info(
                 self,
                 _private_re=re.compile(b"Private.*:\s+(\d+)"),
                 _pss_re=re.compile(b"Pss.*:\s+(\d+)"),
                 _swap_re=re.compile(b"Swap.*:\s+(\d+)")):
-            # You might be tempted to calculate USS by subtracting
-            # the "shared" value from the "resident" value in
-            # /proc/<pid>/statm. But at least on Linux, statm's "shared"
-            # value actually counts pages backed by files, which has
-            # little to do with whether the pages are actually shared.
-            # /proc/self/smaps on the other hand appears to give us the
-            # correct information.
-
+            basic_mem = self.memory_info()
             # Note: using 3 regexes is faster than reading the file
             # line by line.
             # XXX: on Python 3 the 2 regexes are 30% slower than on
@@ -1044,10 +1037,22 @@ class Process(object):
             with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
                              buffering=BIGGER_FILE_BUFFERING) as f:
                 smaps_data = f.read()
+            # You might be tempted to calculate USS by subtracting
+            # the "shared" value from the "resident" value in
+            # /proc/<pid>/statm. But at least on Linux, statm's "shared"
+            # value actually counts pages backed by files, which has
+            # little to do with whether the pages are actually shared.
+            # /proc/self/smaps on the other hand appears to give us the
+            # correct information.
             uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
             pss = sum(map(int, _pss_re.findall(smaps_data))) * 1024
             swap = sum(map(int, _swap_re.findall(smaps_data))) * 1024
-            return paddrspmem(uss, pss, swap)
+            return pfullmem(*basic_mem + (uss, pss, swap))
+
+    else:
+        memory_full_info = memory_info
+
+    if HAS_SMAPS:
 
         @wrap_exceptions
         def memory_maps(self):

@@ -392,8 +392,8 @@ class TestScripts(unittest.TestCase):
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 
-    @unittest.skipUnless(hasattr(psutil.Process, "memory_addrspace_info"),
-                         "memory_addrspace_info() not supported")
+    @unittest.skipUnless(hasattr(psutil.Process, "memory_full_info"),
+                         "memory_full_info() not supported")
     def test_procsmem(self):
         self.assert_stdout('procsmem.py')
 

@@ -89,7 +89,7 @@ pmem = namedtuple(
              'num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
              'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
              'pagefile', 'peak_pagefile', 'private'])
-paddrspmem = namedtuple('paddrspmem', 'uss')
+pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
 pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
@@ -372,9 +372,10 @@ class Process(object):
         return pmem(*(rss, vms, ) + t)
 
     @wrap_exceptions
-    def memory_addrspace_info(self):
+    def memory_full_info(self):
+        basic_mem = self.memory_info()
         uss = cext.proc_memory_uss(self.pid)
-        return paddrspmem(uss)
+        return pfullmem(*basic_mem + (uss, ))
 
     def memory_maps(self):
         try:

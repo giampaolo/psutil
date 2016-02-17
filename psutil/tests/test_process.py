@@ -588,8 +588,8 @@ class TestProcess(unittest.TestCase):
 
     @unittest.skipUnless(LINUX or OSX or WINDOWS,
                          "not available on this platform")
-    def test_memory_addrspace_info(self):
-        mem = psutil.Process().memory_addrspace_info()
+    def test_memory_full_info(self):
+        mem = psutil.Process().memory_full_info()
         self.assertGreater(mem.uss, 0)
         if LINUX:
             self.assertGreater(mem.pss, 0)
@@ -1669,7 +1669,7 @@ class TestFetchAllProcesses(unittest.TestCase):
             assert ret.peak_nonpaged_pool >= ret.nonpaged_pool, ret
             assert ret.peak_pagefile >= ret.pagefile, ret
 
-    def memory_addrspace_info(self, ret, proc):
+    def memory_full_info(self, ret, proc):
         for name in ret._fields:
             self.assertGreaterEqual(getattr(ret, name), 0)
         if LINUX:

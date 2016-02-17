@@ -407,6 +407,8 @@ class Process(object):
         rss, vms = ret[1] * 1024, ret[2] * 1024
         return _common.pmem(rss, vms)
 
+    memory_full_info = memory_info
+
     @wrap_exceptions
     def status(self):
         code = cext.proc_basic_info(self.pid, self._procfs_path)[6]

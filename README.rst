@@ -239,8 +239,8 @@ Process management
     >>> p.memory_info()
     pmem(rss=10915840, vms=67608576, shared=3313664, text=2310144, lib=0, data=7262208, dirty=0)
     >>>
-    >>> p.memory_addrspace_info()  # "real" memory usage (Linux, OSX, Win only)
-    paddrspmem(uss=9830400, pss=1216512, swap=0)
+    >>> p.memory_full_info()  # "real" USS memory usage (Linux, OSX, Win only)
+    pfullmem(rss=10199040, vms=52133888, shared=3887104, text=2867200, lib=0, data=5967872, dirty=0, uss=6545408, pss=6872064, swap=0)
     >>>
     >>> p.memory_maps()
     [pmmap_grouped(path='/lib/x8664-linux-gnu/libutil-2.15.so', rss=32768, size=2125824, pss=32768, shared_clean=0, shared_dirty=0, private_clean=20480, private_dirty=12288, referenced=32768, anonymous=12288, swap=0),
