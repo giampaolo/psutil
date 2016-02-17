@@ -18,6 +18,7 @@ import sys
 from psutil import LINUX
 from psutil import NETBSD
 from psutil import OPENBSD
+from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
@@ -392,8 +393,7 @@ class TestScripts(unittest.TestCase):
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 
-    @unittest.skipUnless(hasattr(psutil.Process, "memory_full_info"),
-                         "memory_full_info() not supported")
+    @unittest.skipUnless(OSX or WINDOWS or LINUX, "uss not available")
     def test_procsmem(self):
         self.assert_stdout('procsmem.py')
 
