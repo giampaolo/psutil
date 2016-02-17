@@ -67,6 +67,7 @@ from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import pyrun
 from psutil.tests import PYTHON
 from psutil.tests import reap_children
+from psutil.tests import retry_before_failing
 from psutil.tests import RLIMIT_SUPPORT
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_remove
@@ -545,6 +546,7 @@ class TestProcess(unittest.TestCase):
             if thread._running:
                 thread.stop()
 
+    @retry_before_failing
     def test_threads_2(self):
         p = psutil.Process()
         if OPENBSD:
@@ -1112,7 +1114,7 @@ class TestProcess(unittest.TestCase):
         for p in psutil.process_iter():
             if p.pid == sproc.pid:
                 continue
-            self.assertTrue(p.ppid() != this_parent)
+            self.assertNotEqual(p.ppid(), this_parent)
 
     def test_children(self):
         p = psutil.Process()
