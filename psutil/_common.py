@@ -92,7 +92,7 @@ def usage_percent(used, total, _round=None):
     try:
         ret = (used / total) * 100
     except ZeroDivisionError:
-        ret = 0
+        ret = 0.0 if isinstance(used, float) or isinstance(total, float) else 0
     if _round is not None:
         return round(ret, _round)
     else:
