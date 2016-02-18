@@ -313,6 +313,27 @@ class TestMisc(unittest.TestCase):
     def test_psutil_is_reloadable(self):
         importlib.reload(psutil)
 
+    def test_sanity_version_check(self):
+        # see: https://github.com/giampaolo/psutil/issues/564
+        try:
+            with mock.patch(
+                    "psutil._psplatform.cext.version", return_value="0.0.0"):
+                with self.assertRaises(ImportError) as cm:
+                    importlib.reload(psutil)
+                self.assertIn("version conflict", cm.exception.message.lower())
+        finally:
+            importlib.reload(psutil)
+
+    def test_memory_percent_0_division(self):
+        import collections
+        try:
+            retval = collections.namedtuple("mem", "total")(0)
+            with mock.patch(
+                    "psutil._psplatform.virtual_memory", return_value=retval):
+                self.assertRaises(ValueError, psutil.Process().memory_percent)
+        finally:
+            importlib.reload(psutil)
+
 
 # ===================================================================
 # --- Example script tests

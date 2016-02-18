@@ -10,6 +10,7 @@ omit =
 
 exclude_lines =
     pragma: no cover
+    if PY3:
     if __name__ == .__main__.:
     if sys.platform.startswith
     if _WINDOWS:
@@ -17,5 +18,16 @@ exclude_lines =
     if enum is not None:
     if enum is None:
     if has_enums:
+    if LITTLE_ENDIAN:
     enum.IntEnum
     except ImportError:
+    raise NotImplementedError
+    if WINDOWS
+    if OSX
+    if BSD
+    if FREEBSD
+    if OPENBSD
+    if NETBSD
+    if SUNOS
+    if LINUX
+    if ppid_map is None:
