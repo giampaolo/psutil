@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 # Copyright (c) 2009, Giampaolo Rodola'. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -274,7 +275,6 @@ class TestSystemAPIs(unittest.TestCase):
         for u in psutil.users():
             self.assertTrue(u.name in users, u.name)
             self.assertTrue(u.terminal in terminals, u.terminal)
-
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)

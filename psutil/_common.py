@@ -187,6 +187,8 @@ def parse_environ_block(data):
     ret = {}
     pos = 0
 
+    # localize global variable to speed up access.
+    WINDOWS_ = WINDOWS
     while True:
         next_pos = data.find("\0", pos)
         # nul byte at the beginning or double nul byte means finish
@@ -198,7 +200,7 @@ def parse_environ_block(data):
             key = data[pos:equal_pos]
             value = data[equal_pos+1:next_pos]
             # Windows expects environment variables to be uppercase only
-            if os.name == "nt":
+            if WINDOWS_:
                 key = key.upper()
             ret[key] = value
         pos = next_pos + 1
@@ -212,10 +214,11 @@ def sockfam_to_enum(num):
     """
     if enum is None:
         return num
-    try:
-        return socket.AddressFamily(num)
-    except (ValueError, AttributeError):
-        return num
+    else:
+        try:
+            return socket.AddressFamily(num)
+        except (ValueError, AttributeError):
+            return num
 
 
 def socktype_to_enum(num):
@@ -224,10 +227,11 @@ def socktype_to_enum(num):
     """
     if enum is None:
         return num
-    try:
-        return socket.AddressType(num)
-    except (ValueError, AttributeError):
-        return num
+    else:
+        try:
+            return socket.AddressType(num)
+        except (ValueError, AttributeError):
+            return num
 
 
 def deprecated_method(replacement):

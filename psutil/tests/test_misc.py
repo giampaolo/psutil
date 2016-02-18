@@ -320,7 +320,7 @@ class TestMisc(unittest.TestCase):
                     "psutil._psplatform.cext.version", return_value="0.0.0"):
                 with self.assertRaises(ImportError) as cm:
                     importlib.reload(psutil)
-                self.assertIn("version conflict", cm.exception.message.lower())
+                self.assertIn("version conflict", str(cm.exception).lower())
         finally:
             importlib.reload(psutil)
 

@@ -419,15 +419,10 @@ class TestSystemAPIs(unittest.TestCase):
                      "os.statvfs() function not available on this platform")
     def test_disk_usage_unicode(self):
         # see: https://github.com/giampaolo/psutil/issues/416
-        # XXX this test is not really reliable as it always fails on
-        # Python 3.X (2.X is fine)
-        try:
-            safe_rmdir(TESTFN_UNICODE)
-            os.mkdir(TESTFN_UNICODE)
-            psutil.disk_usage(TESTFN_UNICODE)
-            safe_rmdir(TESTFN_UNICODE)
-        except UnicodeEncodeError:
-            pass
+        safe_rmdir(TESTFN_UNICODE)
+        self.addCleanup(safe_rmdir, TESTFN_UNICODE)
+        os.mkdir(TESTFN_UNICODE)
+        psutil.disk_usage(TESTFN_UNICODE)
 
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
                      "os.statvfs() function not available on this platform")

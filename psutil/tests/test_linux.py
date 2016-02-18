@@ -690,7 +690,9 @@ class TestMisc(unittest.TestCase):
         # Test SECTOR_SIZE fallback in case 'hw_sector_size' file
         # does not exist.
         def open_mock(name, *args, **kwargs):
-            if name.startswith(b"/sys/block/sda/queue/hw_sector_size"):
+            if PY3 and isinstance(name, bytes):
+                name = name.decode()
+            if name.startswith("/sys/block/sda/queue/hw_sector_size"):
                 flag.append(None)
                 raise IOError(errno.ENOENT, '')
             else:
