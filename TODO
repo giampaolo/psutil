@@ -9,8 +9,6 @@ https://github.com/giampaolo/psutil/issues
 PLATFORMS
 =========
 
- * #429 (patch): NetBSD
-
  * #355 (patch): Android
 
  * #605 (branch): AIX
@@ -19,6 +17,8 @@ PLATFORMS
 
  * DragonFlyBSD
 
+ * HP-UX
+
 
 HIGHER PRIORITY
 ===============
@@ -26,8 +26,8 @@ HIGHER PRIORITY
  * #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
    lm-sensors lib).
 
- * #269: expose network ifaces RX/TW queues. This should probably go into
-   net_if_stats(). Figure out on what platforms this is supported:
+ * #269: NIC rx/tx queue. This should probably go into net_if_stats().
+   Figure out on what platforms this is supported:
    Linux: yes
    Others: ?
 
@@ -43,8 +43,6 @@ HIGHER PRIORITY
  * #613: thread names.
 
  * #604: emulate os.getloadavg() on Windows
-
- * #269: NIC rx/tx queue.
 
 
 LOWER PRIORITY
@@ -88,8 +86,6 @@ DEBATABLE
    similar to prlimit() in terms of functionality but uglier (they should allow
    limiting per-process network IO resources though, which is great). Needs
    further reading.
-
- * Should we expose OS constants (psutil.WINDOWS, psutil.OSX etc.)?
 
  * Python 3.3. exposed different sched.h functions:
    http://docs.python.org/dev/whatsnew/3.3.html#os
@@ -150,19 +146,6 @@ DEBATABLE
   * #550: number of threads per core.
 
   * Have psutil.Process().cpu_affinity([]) be an alias for "all CPUs"?
-
-
-COMPATIBILITY BREAKAGE
-======================
-
-Removals (will likely happen in 2.2):
-
- * (S) psutil.Process.nice  (deprecated in 0.5.0)
- * (S) get_process_list  (deprecated in 0.5.0)
- * (S) psutil.*mem* functions  (deprecated in 0.3.0 and 0.6.0)
- * (M) psutil.network_io_counters  (deprecated in 1.0.0)
- * (M) local_address and remote_address Process.connection() namedtuple fields
-       (deprecated in 1.0.0)
 
 
 REJECTED IDEAS

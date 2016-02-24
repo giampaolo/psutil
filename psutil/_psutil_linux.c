@@ -275,7 +275,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     cpu_set_t *mask = NULL;
     PyObject *py_list = NULL;
 
-    if (!PyArg_ParseTuple(args, "i", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     ncpus = NCPUS_START;
     while (1) {
@@ -342,7 +342,7 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     PyObject* py_retlist = NULL;
     PyObject *py_cpu_num = NULL;
 
-    if (!PyArg_ParseTuple(args, "i", &pid))
+    if (!PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 	CPU_ZERO(&cpuset);
     if (sched_getaffinity(pid, len, &cpuset) < 0)
