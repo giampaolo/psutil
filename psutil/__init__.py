@@ -839,7 +839,7 @@ class Process(object):
                                 ret.append(p)
                     except (NoSuchProcess, ZombieProcess):
                         pass
-            else:
+            else:  # pragma: no cover
                 # Windows only (faster)
                 for pid, ppid in ppid_map.items():
                     if ppid == self.pid:
@@ -861,7 +861,7 @@ class Process(object):
                         table[p.ppid()].append(p)
                     except (NoSuchProcess, ZombieProcess):
                         pass
-            else:
+            else:  # pragma: no cover
                 for pid, ppid in ppid_map.items():
                     try:
                         p = Process(pid)
@@ -1006,30 +1006,26 @@ class Process(object):
         >>> psutil.Process().memory_info()._fields
         ('rss', 'vms', 'shared', 'text', 'lib', 'data', 'dirty', 'uss', 'pss')
         """
-        if memtype in ('uss', 'pss', 'swap'):
-            if not hasattr(self, "memory_full_info"):
-                fields = _psplatform.pmem._fields
-                raise ValueError(
-                    "invalid memtype %r; valid types are %r" % (
-                        memtype, fields))
-            fun = self.memory_full_info
-            fields = _psplatform.pfullmem._fields
-        else:
-            fields = _psplatform.pmem._fields
-            fun = self.memory_info
-
-        if memtype not in fields:
+        valid_types = list(_psplatform.pfullmem._fields)
+        if hasattr(_psplatform, "pfullmem"):
+            valid_types.extend(list(_psplatform.pfullmem._fields))
+        if memtype not in valid_types:
             raise ValueError("invalid memtype %r; valid types are %r" % (
-                memtype, fields))
+                memtype, tuple(valid_types)))
+        fun = self.memory_full_info if memtype in ('uss', 'pss', 'swap') else \
+            self.memory_info
         metrics = fun()
         value = getattr(metrics, memtype)
 
         # use cached value if available
         total_phymem = _TOTAL_PHYMEM or virtual_memory().total
-        try:
-            return (value / float(total_phymem)) * 100
-        except ZeroDivisionError:
-            return 0.0
+        if not total_phymem > 0:
+            # we should never get here
+            raise ValueError(
+                "can't calculate process memory percent because "
+                "total physical system memory is not positive (%r)"
+                % total_phymem)
+        return (value / float(total_phymem)) * 100
 
     if hasattr(_psplatform.Process, "memory_maps"):
         # Available everywhere except OpenBSD and NetBSD.
@@ -1121,7 +1117,7 @@ class Process(object):
         """
         if POSIX:
             self._send_signal(sig)
-        else:
+        else:  # pragma: no cover
             if sig == signal.SIGTERM:
                 self._proc.kill()
             # py >= 2.7
@@ -1141,7 +1137,7 @@ class Process(object):
         """
         if POSIX:
             self._send_signal(signal.SIGSTOP)
-        else:
+        else:  # pragma: no cover
             self._proc.suspend()
 
     @_assert_pid_not_reused
@@ -1152,7 +1148,7 @@ class Process(object):
         """
         if POSIX:
             self._send_signal(signal.SIGCONT)
-        else:
+        else:  # pragma: no cover
             self._proc.resume()
 
     @_assert_pid_not_reused
@@ -1163,7 +1159,7 @@ class Process(object):
         """
         if POSIX:
             self._send_signal(signal.SIGTERM)
-        else:
+        else:  # pragma: no cover
             self._proc.kill()
 
     @_assert_pid_not_reused
@@ -1173,7 +1169,7 @@ class Process(object):
         """
         if POSIX:
             self._send_signal(signal.SIGKILL)
-        else:
+        else:  # pragma: no cover
             self._proc.kill()
 
     def wait(self, timeout=None):

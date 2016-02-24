@@ -1,5 +1,14 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+4.1.0 - XXXX-XX-XX
+==================
+
+**Bug fixes**
+
+- #776: [Linux] Process.cpu_affinity() may erroneously raise NoSuchProcess.
+  (patch by wxwright)
+
+
 4.0.0 - 2016-02-17
 ==================
 

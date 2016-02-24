@@ -267,38 +267,15 @@ Disks
 
   Return system-wide disk I/O statistics as a namedtuple including the
   following fields.
-
-  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
-  | Linux              | OSX         | Solaris     | Windows     | FreeBSD     | OpenBSD     | NetBSD      |
-  +====================+=============+=============+=============+=============+=============+=============+
-  | read_count         | read_count  | read_count  | read_count  | read_count  | read_count  | read_count  |
-  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
-  | write_count        | write_count | write_count | write_count | write_count | write_count | write_count |
-  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
-  | read_bytes         | read_bytes  | read_bytes  | read_bytes  | read_bytes  | read_bytes  | read_bytes  |
-  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
-  | write_bytes        | write_bytes | write_bytes | write_bytes | write_bytes | write_bytes | write_bytes |
-  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
-  | read_time          | read_time   | read_time   | read_time   | read_time   | read_time   |             |
-  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
-  | write_time         | write_time  | write_time  | write_time  | write_time  | write_time  |             |
-  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
-  | read_merged_count  |             |             |             | busy_time   |             |             |
-  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
-  | write_merged_count |             |             |             |             |             |             |
-  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
-  | busy_time          |             |             |             |             |             |             |
-  +--------------------+-------------+-------------+-------------+-------------+-------------+-------------+
-
   - **read_count**: number of reads
   - **write_count**: number of writes
   - **read_bytes**: number of bytes read
   - **write_bytes**: number of bytes written
-  - **read_time**: time spent reading from disk (in milliseconds)
-  - **write_time**: time spent writing to disk (in milliseconds)
+  - **read_time**: (all except NetBSD and OpenBSD) time spent reading from disk (in milliseconds)
+  - **write_time**: (all except NetBSD and OpenBSD) time spent writing to disk (in milliseconds)
   - **busy_time**: (Linux, FreeBSD) time spent doing actual I/Os (in milliseconds)
   - **read_merged_count** (Linux): number of merged reads (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
-  - **write_merged_count** (Linux): number of merged writes (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
+  - **write_merged_count** (Linux): number of merged writes (see `iostats doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
 
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
@@ -1101,6 +1078,8 @@ Process class
      It does so by passing through the whole process address.
      As such it usually requires higher user privileges than
      :meth:`memory_info` and is considerably slower.
+     On platforms where extra fields are not implented this simply returns the
+     same metrics as :meth:`memory_info`.
 
      - **uss**: (Linux, OSX, Windows) aka "Unique Set Size", this is the memory
        which is unique to a process and which would be freed if the process was terminated right now.

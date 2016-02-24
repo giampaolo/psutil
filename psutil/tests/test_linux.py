@@ -686,6 +686,31 @@ class TestMisc(unittest.TestCase):
             psutil.PROCFS_PATH = "/proc"
             os.rmdir(tdir)
 
+    def test_sector_size_mock(self):
+        # Test SECTOR_SIZE fallback in case 'hw_sector_size' file
+        # does not exist.
+        def open_mock(name, *args, **kwargs):
+            if PY3 and isinstance(name, bytes):
+                name = name.decode()
+            if name.startswith("/sys/block/sda/queue/hw_sector_size"):
+                flag.append(None)
+                raise IOError(errno.ENOENT, '')
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        flag = []
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        try:
+            with mock.patch(patch_point, side_effect=open_mock):
+                importlib.reload(psutil._pslinux)
+                importlib.reload(psutil)
+                self.assertEqual(flag, [None])
+                self.assertEqual(psutil._pslinux.SECTOR_SIZE, 512)
+        finally:
+            importlib.reload(psutil._pslinux)
+            importlib.reload(psutil)
+
 
 # =====================================================================
 # test process

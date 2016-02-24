@@ -154,6 +154,12 @@ class TestProcess(unittest.TestCase):
                 with self.assertRaises(psutil.AccessDenied):
                     psutil.Process().send_signal(sig)
                 assert fun.called
+            # Sending a signal to process with PID 0 is not allowed as
+            # it would affect every process in the process group of
+            # the calling process (os.getpid()) instead of PID 0").
+            if 0 in psutil.pids():
+                p = psutil.Process(0)
+                self.assertRaises(ValueError, p.send_signal, signal.SIGTERM)
 
     def test_wait(self):
         # check exit code signal

@@ -113,7 +113,7 @@ def wait_pid(pid, timeout=None):
                 return os.WEXITSTATUS(status)
             else:
                 # should never happen
-                raise RuntimeError("unknown process exit status")
+                raise ValueError("unknown process exit status %r" % status)
 
 
 def disk_usage(path):
