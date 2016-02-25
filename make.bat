@@ -54,7 +54,8 @@ if "%1" == "help" (
     echo   clean         clean build files
     echo   flake8        run flake8
     echo   install       compile and install
-    echo   setup-dev-env install pip, pywin32, wheels, etc. for all python versions
+    echo   setup-dev-env install/upgrade pip, pywin32, wheels, etc.
+    echo   setup-dev-env-all same as above, for all python versions
     echo   test          run tests
     echo   test-memleaks run memory leak tests
     echo   test-process  run process related tests
@@ -173,44 +174,50 @@ if "%1" == "upload-all" (
 
 if "%1" == "setup-dev-env" (
     :setup-env
+    if not exist get-pip.py (
+        @echo ------------------------------------------------
+        @echo downloading pip installer
+        @echo ------------------------------------------------
+        C:\python27\python.exe -c "import urllib2; r = urllib2.urlopen('https://bootstrap.pypa.io/get-pip.py'); open('get-pip.py', 'wb').write(r.read())"
+    )
     @echo ------------------------------------------------
-    @echo downloading pip installer
-    @echo ------------------------------------------------
-    C:\python27\python.exe -c "import urllib2; r = urllib2.urlopen('https://raw.github.com/pypa/pip/master/contrib/get-pip.py'); open('get-pip.py', 'wb').write(r.read())"
-    @echo ------------------------------------------------
-    @echo installing pip
+    @echo installing pip for %PYTHON%
     @echo ------------------------------------------------
     %PYTHON% get-pip.py
+    @echo ------------------------------------------------
+    @echo upgrade pip for %PYTHON%
+    @echo ------------------------------------------------
+    %PYTHON% -m pip install pip --upgrade
     @echo ------------------------------------------------
     @echo installing deps
     @echo ------------------------------------------------
     rem mandatory / for unittests
     %PYTHON% -m pip install unittest2 ipaddress mock wmi wheel pypiwin32 --upgrade
     rem nice to have
-    %PYTHON% -m pip install ipdb nose --upgrade
+    rem %PYTHON% -m pip install ipdb nose --upgrade
     goto :eof
 )
 
 if "%1" == "setup-dev-env-all" (
     :setup-env
-    @echo ------------------------------------------------
-    @echo downloading pip installer
-    @echo ------------------------------------------------
-    C:\python27\python.exe -c "import urllib2; r = urllib2.urlopen('https://raw.github.com/pypa/pip/master/contrib/get-pip.py'); open('get-pip.py', 'wb').write(r.read())"
+    if not exist get-pip.py (
+        @echo ------------------------------------------------
+        @echo downloading pip installer
+        @echo ------------------------------------------------
+        C:\python27\python.exe -c "import urllib2; r = urllib2.urlopen('https://bootstrap.pypa.io/get-pip.py'); open('get-pip.py', 'wb').write(r.read())"
+    )
     for %%P in (%ALL_PYTHONS%) do (
         @echo ------------------------------------------------
         @echo installing pip for %%P
         @echo ------------------------------------------------
         %%P get-pip.py
-    )
-    for %%P in (%ALL_PYTHONS%) do (
         @echo ------------------------------------------------
         @echo installing deps for %%P
         @echo ------------------------------------------------
         rem mandatory / for unittests
         %%P -m pip install unittest2 ipaddress mock wmi wheel pypiwin32 --upgrade
         rem nice to have
-        %%P -m pip install ipdb nose --upgrade
+        rem %%P -m pip install ipdb nose --upgrade
     )
     goto :eof
 )
