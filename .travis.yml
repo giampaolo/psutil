@@ -19,7 +19,7 @@ matrix:
         - language: generic
           os: osx
           env: PYVER=py34
-        # Not supported yet.
+        # XXX - not supported yet
         # - language: generic
         #   os: osx
         #   env: PYVER=py35
@@ -28,4 +28,4 @@ install:
 script:
     - ./.ci/travis/run.sh
 after_success:
-  - coveralls  # upload reports to coveralls.io
+    - coveralls  # upload reports to coveralls.io
