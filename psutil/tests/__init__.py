@@ -486,9 +486,9 @@ def retry_before_failing(ntimes=None):
             for x in range(times):
                 try:
                     return fun(*args, **kwargs)
-                except AssertionError:
-                    pass
-            raise
+                except AssertionError as _:
+                    err = _
+            raise err
         return wrapper
     return decorator
 

@@ -553,6 +553,8 @@ class TestProcess(unittest.TestCase):
                 thread.stop()
 
     @retry_before_failing()
+    # see: https://travis-ci.org/giampaolo/psutil/jobs/111842553
+    @unittest.skipIf(OSX and TRAVIS, "")
     def test_threads_2(self):
         p = psutil.Process()
         if OPENBSD:
