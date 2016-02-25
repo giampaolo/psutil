@@ -18,8 +18,12 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
             pyenv virtualenv 2.6.9 psutil
             ;;
         py27)
-            pyenv install 2.7
+            pyenv install 2.7.10
             pyenv virtualenv 2.7.10 psutil
+            ;;
+        py32)
+            pyenv install 3.2.6
+            pyenv virtualenv 3.2.6 psutil
             ;;
         py33)
             pyenv install 3.3.6
@@ -27,7 +31,7 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
             ;;
         py34)
             pyenv install 3.4.3
-            pyenv virtualenv 3.4 psutil
+            pyenv virtualenv 3.4.3 psutil
             ;;
     esac
     pyenv rehash
