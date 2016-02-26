@@ -3,6 +3,9 @@
 set -e
 set -x
 
+uname -a
+python -c "import sys; print(sys.version)"
+
 if [[ "$(uname -s)" == 'Darwin' ]]; then
     brew update || brew update
     brew outdated pyenv || brew upgrade pyenv
