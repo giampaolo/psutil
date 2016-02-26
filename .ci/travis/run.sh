@@ -10,6 +10,9 @@ if [[ "$(uname -s)" == 'Darwin' ]]; then
     pyenv activate psutil
 fi
 
+uname -a
+python -c "import sys; print(sys.version)"
+
 python setup.py build
 python setup.py develop
 coverage run psutil/tests/runner.py --include="psutil/*" --omit="test/*,*setup*"

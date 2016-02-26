@@ -1,8 +1,6 @@
 sudo: false
 language: python
-os:
-    - linux
-    - osx
+cache: pip
 matrix:
     include:
         - python: 2.6
