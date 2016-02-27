@@ -31,4 +31,8 @@ install:
 script:
     - ./.ci/travis/run.sh
 after_success:
-    - coveralls  # upload reports to coveralls.io
+    # upload reports to coveralls.io
+    - |
+        if [ "$(uname -s)" != 'Darwin' ]; then
+            coveralls
+        fi
