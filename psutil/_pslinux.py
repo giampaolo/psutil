@@ -1325,17 +1325,14 @@ class Process(object):
                 # A regular file is always supposed to be have an
                 # absolute path though.
                 if path.startswith('/') and isfile_strict(path):
-                    # Get file position.
+                    # Get file position and flags.
                     file = "%s/%s/fdinfo/%s" % (
                         self._procfs_path, self.pid, fd)
                     with open_binary(file) as f:
-                        pos = f.readline().split()[1]
-                        flags = f.readline().split()[1]
-                    # flags is an octal number
-                    flags_oct = int(flags, 8)
-                    mode = file_flags_to_mode(flags_oct)
-                    ntuple = popenfile(
-                        path, int(fd), int(pos), mode, flags_oct)
+                        pos = int(f.readline().split()[1])
+                        flags = int(f.readline().split()[1], 8)
+                    mode = file_flags_to_mode(flags)
+                    ntuple = popenfile(path, int(fd), int(pos), mode, flags)
                     retlist.append(ntuple)
         if hit_enoent:
             # raise NSP if the process disappeared on us
