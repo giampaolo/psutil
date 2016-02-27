@@ -5,139 +5,139 @@ A collection of ideas and notes about stuff to implement in future versions.
 "#NNN" occurrences refer to bug tracker issues at:
 https://github.com/giampaolo/psutil/issues
 
-
 PLATFORMS
 =========
 
- * #355 (patch): Android
-
- * #605 (branch): AIX
-
- * #276: GNU/Hurd
-
- * DragonFlyBSD
-
- * HP-UX
-
+- #355 (patch): Android
+- #605 (branch): AIX
+- #276: GNU/Hurd
+- DragonFlyBSD
+- HP-UX
 
 FEATURES
 ========
 
- * #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
-   lm-sensors lib).
+- (UNIX) process root (different from xwd)
 
- * #269: NIC rx/tx queue. This should probably go into net_if_stats().
-   Figure out on what platforms this is supported:
-   Linux: yes
-   Others: ?
+- (Linux) locked files via /proc/locks:
+  https://www.centos.org/docs/5/html/5.2/Deployment_Guide/s2-proc-locks.html
 
- * Process.threads(): thread names; patch for OSX available at:
-   https://code.google.com/p/plcrashreporter/issues/detail?id=65
-   Sample code:
-   https://github.com/janmojzis/pstree/blob/master/proc_kvm.c
+- #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
+  lm-sensors lib).
 
- * Asynchronous psutil.Popen (see http://bugs.python.org/issue1191964)
+- #269: NIC rx/tx queue. This should probably go into net_if_stats().
+  Figure out on what platforms this is supported:
+  Linux: yes
+  Others: ?
 
- * (Windows) fall back on using WMIC for Process methods returning AccessDenied
+- Process.threads(): thread names; patch for OSX available at:
+  https://code.google.com/p/plcrashreporter/issues/detail?id=65
+  Sample code:
+  https://github.com/janmojzis/pstree/blob/master/proc_kvm.c
 
- * #613: thread names.
+- Asynchronous psutil.Popen (see http://bugs.python.org/issue1191964)
 
- * #604: emulate os.getloadavg() on Windows
+- (Windows) fall back on using WMIC for Process methods returning AccessDenied
 
- * (Linux) extend Process.open_files() in order to read from /proc/pid/fdinfo
-   and return file position and flags/mode.
+- #613: thread names.
 
- * scripts/taskmgr-gui.py (using tk).
+- #604: emulate os.getloadavg() on Windows
 
- * system-wide number of open file descriptors:
-    * https://jira.hyperic.com/browse/SIGAR-30
-    * http://www.netadmintools.com/part295.html
+- (Linux) extend Process.open_files() in order to read from /proc/pid/fdinfo
+  and return file position and flags/mode.
 
- * Number of system threads.
-    * Windows: http://msdn.microsoft.com/en-us/library/windows/desktop/ms684824(v=vs.85).aspx
+- scripts/taskmgr-gui.py (using tk).
 
- * #357: what CPU a process is on.
+- system-wide number of open file descriptors:
+  - https://jira.hyperic.com/browse/SIGAR-30
+  - http://www.netadmintools.com/part295.html
 
-  * Doc / wiki which compares similarities between UNIX cli tools and psutil.
-   Example:
-   df -a  ->  psutil.disk_partitions
-   lsof   ->  psutil.Process.open_files() and psutil.Process.open_connections()
-   killall->  (actual script)
-   tty    ->  psutil.Process.terminal()
-   who    ->  psutil.users()
+- Number of system threads.
+  - Windows: http://msdn.microsoft.com/en-us/library/windows/desktop/ms684824(v=vs.85).aspx
 
- * psutil.proc_tree() something which obtains a {pid:ppid, ...} dict for
-   all running processes in one shot. This can be factored out from
-   Process.children() and exposed as a first class function.
-   PROS: on Windows we can take advantage of _psutil_windows.ppid_map()
-   which is faster than iterating over all pids and calling ppid().
-   CONS: scripts/pstree.py shows this can be easily done in the user code
-   so maybe it's not worth the addition.
+- #357: what CPU a process is on.
 
- * advanced cmdline interface exposing the whole API and providing different
-   kind of outputs (e.g. pprinted, colorized, json).
+- Doc / wiki which compares similarities between UNIX cli tools and psutil.
+  Example:
+  ```
+  df -a  ->  psutil.disk_partitions
+  lsof  ->  psutil.Process.open_files() and psutil.Process.open_connections()
+  killall->  (actual script)
+  tty  ->  psutil.Process.terminal()
+  who  ->  psutil.users()
+  ```
 
- * [Linux]: process cgroups (http://en.wikipedia.org/wiki/Cgroups). They look
-   similar to prlimit() in terms of functionality but uglier (they should allow
-   limiting per-process network IO resources though, which is great). Needs
-   further reading.
+- psutil.proc_tree() something which obtains a {pid:ppid, ...} dict for
+  all running processes in one shot. This can be factored out from
+  Process.children() and exposed as a first class function.
+  PROS: on Windows we can take advantage of _psutil_windows.ppid_map()
+  which is faster than iterating over all pids and calling ppid().
+  CONS: scripts/pstree.py shows this can be easily done in the user code
+  so maybe it's not worth the addition.
 
- * Python 3.3. exposed different sched.h functions:
-   http://docs.python.org/dev/whatsnew/3.3.html#os
-   http://bugs.python.org/issue12655
-   http://docs.python.org/dev/library/os.html#interface-to-the-scheduler
-   It might be worth to take a look and figure out whether we can include some
-   of those in psutil.
-   Also, we can probably reimplement wait_pid() on POSIX which is currently
-   implemented as a busy-loop.
+- advanced cmdline interface exposing the whole API and providing different
+  kind of outputs (e.g. pprinted, colorized, json).
 
- * Certain systems provide CPU times about process children. On those systems
-   Process.cpu_times() might return a (user, system, user_children,
-   system_children) ntuple.
-   * Linux: /proc/{PID}/stat
-   * Solaris: pr_cutime and pr_cstime
-   * FreeBSD: none
-   * OSX: none
-   * Windows: none
+- [Linux]: process cgroups (http://en.wikipedia.org/wiki/Cgroups). They look
+  similar to prlimit() in terms of functionality but uglier (they should allow
+  limiting per-process network IO resources though, which is great). Needs
+  further reading.
 
- * ...also, os.times() provides 'elapsed' times as well.
+- Python 3.3. exposed different sched.h functions:
+  http://docs.python.org/dev/whatsnew/3.3.html#os
+  http://bugs.python.org/issue12655
+  http://docs.python.org/dev/library/os.html#interface-to-the-scheduler
+  It might be worth to take a look and figure out whether we can include some
+  of those in psutil.
+  Also, we can probably reimplement wait_pid() on POSIX which is currently
+  implemented as a busy-loop.
 
- * ...also Linux provides guest_time and cguest_time.
+- Certain systems provide CPU times about process children. On those systems
+  Process.cpu_times() might return a (user, system, user_children,
+  system_children) ntuple.
+  - Linux: /proc/{PID}/stat
+  - Solaris: pr_cutime and pr_cstime
+  - FreeBSD: none
+  - OSX: none
+  - Windows: none
 
- * Enrich exception classes hierarchy on Python >= 3.3 / post PEP-3151 so that:
+- ...also, os.times() provides 'elapsed' times as well.
+
+- ...also Linux provides guest_time and cguest_time.
+
+- Enrich exception classes hierarchy on Python >= 3.3 / post PEP-3151 so that:
    - NoSuchProcess inherits from ProcessLookupError
    - AccessDenied inherits from PermissionError
    - TimeoutExpired inherits from TimeoutError (debatable)
    See: http://docs.python.org/3/library/exceptions.html#os-exceptions
 
- * Process.threads() might grow an extra "id" parameter so that it can be
+- Process.threads() might grow an extra "id" parameter so that it can be
    used as such:
+  ```
+  >>> p = psutil.Process(os.getpid())
+  >>> p.threads(id=psutil.current_thread_id())
+  thread(id=2539, user_time=0.03, system_time=0.02)
+  >>>
+  ```
+  Note: this leads to questions such as "should we have a custom NoSuchThread
+  exception? Also see issue #418.
+  Note #2: this would work with os.getpid() only.
+  psutil.current_thread_id() might be desirable as per issue #418 though.
 
-    >>> p = psutil.Process(os.getpid())
-    >>> p.threads(id=psutil.current_thread_id())
-    thread(id=2539, user_time=0.03, system_time=0.02)
-    >>>
+- should psutil.TimeoutExpired exception have a 'msg' kwarg similar to
+  NoSuchProcess and AccessDenied? Not that we need it, but currently we
+  cannot raise a TimeoutExpired exception with a specific error string.
 
-   Note: this leads to questions such as "should we have a custom NoSuchThread
-   exception? Also see issue #418.
+- process_iter() might grow an "attrs" parameter similar to Process.as_dict()
+  invoke the necessary methods and include the results into a "cache"
+  attribute attached to the returned Process instances so that one can avoid
+  catching NSP and AccessDenied:
+  for p in process_iter(attrs=['cpu_percent']):
+  print(p.cache['cpu_percent'])
+  This also leads questions as whether we should introduce a sorting order.
 
-   Note #2: this would work with os.getpid() only.
-   psutil.current_thread_id() might be desirable as per issue #418 though.
+- round Process.memory_percent() result?
 
-  * should psutil.TimeoutExpired exception have a 'msg' kwarg similar to
-    NoSuchProcess and AccessDenied? Not that we need it, but currently we
-    cannot raise a TimeoutExpired exception with a specific error string.
+- #550: number of threads per core.
 
-  * process_iter() might grow an "attrs" parameter similar to Process.as_dict()
-    invoke the necessary methods and include the results into a "cache"
-    attribute attached to the returned Process instances so that one can avoid
-    catching NSP and AccessDenied:
-        for p in process_iter(attrs=['cpu_percent']):
-            print(p.cache['cpu_percent'])
-    This also leads questions as whether we should introduce a sorting order.
-
-  * round Process.memory_percent() result?
-
-  * #550: number of threads per core.
-
-  * Have psutil.Process().cpu_affinity([]) be an alias for "all CPUs"?
+- Have psutil.Process().cpu_affinity([]) be an alias for "all CPUs"?

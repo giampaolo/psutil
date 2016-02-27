@@ -12,7 +12,13 @@ fi
 
 python setup.py build
 python setup.py develop
-coverage run psutil/tests/runner.py --include="psutil/*" --omit="test/*,*setup*"
+
+if [[ "$(uname -s)" != 'Darwin' ]]; then
+    coverage run psutil/tests/runner.py --include="psutil/*" --omit="test/*,*setup*"
+else
+    python psutil/tests/runner.py
+fi
+
 python psutil/tests/test_memory_leaks.py
 flake8
 pep8
