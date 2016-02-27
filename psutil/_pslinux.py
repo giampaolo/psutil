@@ -179,6 +179,16 @@ def readlink(path):
     return path
 
 
+def file_flags_to_mode(flags):
+    md = {os.O_RDONLY: 'r', os.O_WRONLY: 'w', os.O_RDWR: 'w+'}
+    m = md[flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)]
+    if flags & os.O_APPEND:
+        m = m.replace('w', 'a', 1)
+    m = m.replace('w+', 'r+')
+    # possible values: r, w, a, r+, a+
+    return m
+
+
 def get_sector_size():
     try:
         with open(b"/sys/block/sda/queue/hw_sector_size") as f:
@@ -237,7 +247,7 @@ sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'read_merged_count', 'write_merged_count',
                                  'busy_time'])
 
-popenfile = namedtuple('popenfile', ['path', 'fd', 'position'])
+popenfile = namedtuple('popenfile', ['path', 'fd', 'position', 'mode'])
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
 
@@ -1318,8 +1328,12 @@ class Process(object):
                     file = "%s/%s/fdinfo/%s" % (
                         self._procfs_path, self.pid, fd)
                     with open_binary(file) as f:
-                        pos = int(f.readline().split()[1])
-                    ntuple = popenfile(path, int(fd), pos)
+                        pos = f.readline().split()[1]
+                        flags = f.readline().split()[1]
+                    # flags is an octal number
+                    flags_oct = int(flags, 8)
+                    mode = file_flags_to_mode(flags_oct)
+                    ntuple = popenfile(path, int(fd), int(pos), mode)
                     retlist.append(ntuple)
         if hit_enoent:
             # raise NSP if the process disappeared on us

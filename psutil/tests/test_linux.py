@@ -37,6 +37,7 @@ from psutil.tests import pyrun
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
+from psutil.tests import safe_remove
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
 from psutil.tests import TESTFN
@@ -719,6 +720,11 @@ class TestMisc(unittest.TestCase):
 @unittest.skipUnless(LINUX, "not a Linux system")
 class TestProcess(unittest.TestCase):
 
+    def setUp(self):
+        safe_remove(TESTFN)
+
+    tearDown = setUp
+
     def test_memory_maps(self):
         src = textwrap.dedent("""
             import time
@@ -764,6 +770,41 @@ class TestProcess(unittest.TestCase):
             mem.pss, sum([x.pss for x in maps]))
         self.assertEqual(
             mem.swap, sum([x.swap for x in maps]))
+
+    def test_open_files_mode(self):
+        def get_test_file():
+            p = psutil.Process()
+            giveup_at = time.time() + 2
+            while True:
+                for file in p.open_files():
+                    if file.path == os.path.abspath(TESTFN):
+                        return file
+                    elif time.time() > giveup_at:
+                        break
+            raise RuntimeError("timeout looking for test file")
+
+        #
+        with open(TESTFN, "w"):
+            self.assertEqual(get_test_file().mode, "w")
+        with open(TESTFN, "r"):
+            self.assertEqual(get_test_file().mode, "r")
+        with open(TESTFN, "a"):
+            self.assertEqual(get_test_file().mode, "a")
+        #
+        with open(TESTFN, "r+"):
+            self.assertEqual(get_test_file().mode, "r+")
+        with open(TESTFN, "w+"):
+            self.assertEqual(get_test_file().mode, "r+")
+        with open(TESTFN, "a+"):
+            self.assertEqual(get_test_file().mode, "a+")
+        # note: "x" bit is not supported
+        if PY3:
+            safe_remove(TESTFN)
+            with open(TESTFN, "x"):
+                self.assertEqual(get_test_file().mode, "w")
+            safe_remove(TESTFN)
+            with open(TESTFN, "x+"):
+                self.assertEqual(get_test_file().mode, "r+")
 
     def test_open_files_file_gone(self):
         # simulates a file which gets deleted during open_files()
