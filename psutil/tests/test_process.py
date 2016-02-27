@@ -1705,6 +1705,7 @@ class TestFetchAllProcesses(unittest.TestCase):
                 self.assertIsInstance(f.position, int)
                 self.assertGreaterEqual(f.position, 0)
                 self.assertIn(f.mode, ('r', 'w', 'a', 'r+', 'a+'))
+                self.assertGreater(f.flags, 0)
             if BSD and not f.path:
                 # XXX see: https://github.com/giampaolo/psutil/issues/595
                 continue

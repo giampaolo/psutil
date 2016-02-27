@@ -247,7 +247,8 @@ sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'read_merged_count', 'write_merged_count',
                                  'busy_time'])
 
-popenfile = namedtuple('popenfile', ['path', 'fd', 'position', 'mode'])
+popenfile = namedtuple('popenfile',
+                       ['path', 'fd', 'position', 'mode', 'flags'])
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
 
@@ -1333,7 +1334,8 @@ class Process(object):
                     # flags is an octal number
                     flags_oct = int(flags, 8)
                     mode = file_flags_to_mode(flags_oct)
-                    ntuple = popenfile(path, int(fd), int(pos), mode)
+                    ntuple = popenfile(
+                        path, int(fd), int(pos), mode, flags_oct)
                     retlist.append(ntuple)
         if hit_enoent:
             # raise NSP if the process disappeared on us
