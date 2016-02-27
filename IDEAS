@@ -20,8 +20,8 @@ PLATFORMS
  * HP-UX
 
 
-HIGHER PRIORITY
-===============
+FEATURES
+========
 
  * #371: CPU temperature (apparently OSX and Linux only; on Linux it requires
    lm-sensors lib).
@@ -44,9 +44,8 @@ HIGHER PRIORITY
 
  * #604: emulate os.getloadavg() on Windows
 
-
-LOWER PRIORITY
-==============
+ * (Linux) extend Process.open_files() in order to read from /proc/pid/fdinfo
+   and return file position and flags/mode.
 
  * scripts/taskmgr-gui.py (using tk).
 
@@ -66,10 +65,6 @@ LOWER PRIORITY
    killall->  (actual script)
    tty    ->  psutil.Process.terminal()
    who    ->  psutil.users()
-
-
-DEBATABLE
-=========
 
  * psutil.proc_tree() something which obtains a {pid:ppid, ...} dict for
    all running processes in one shot. This can be factored out from
@@ -146,9 +141,3 @@ DEBATABLE
   * #550: number of threads per core.
 
   * Have psutil.Process().cpu_affinity([]) be an alias for "all CPUs"?
-
-
-REJECTED IDEAS
-==============
-
-STUB

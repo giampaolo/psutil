@@ -1935,7 +1935,7 @@ class TestNonUnicode(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(cls.temp_directory)
+        shutil.rmtree(cls.temp_directory, ignore_errors=True)
 
     def setUp(self):
         reap_children()
