@@ -8,6 +8,7 @@
 """POSIX specific tests."""
 
 import datetime
+import errno
 import os
 import subprocess
 import sys
@@ -23,6 +24,7 @@ from psutil._compat import callable
 from psutil._compat import PY3
 from psutil.tests import get_kernel_version
 from psutil.tests import get_test_subprocess
+from psutil.tests import mock
 from psutil.tests import PYTHON
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
@@ -275,6 +277,41 @@ class TestSystemAPIs(unittest.TestCase):
         for u in psutil.users():
             self.assertTrue(u.name in users, u.name)
             self.assertTrue(u.terminal in terminals, u.terminal)
+
+    def test_pid_exists_let_raise(self):
+        # According to "man 2 kill" possible error values for kill
+        # are (EINVAL, EPERM, ESRCH). Test that any other errno
+        # results in an exception.
+        with mock.patch("psutil._psposix.os.kill",
+                        side_effect=OSError(errno.EBADF, "")) as m:
+            self.assertRaises(OSError, psutil._psposix.pid_exists, os.getpid())
+            assert m.called
+
+    def test_os_waitpid_let_raise(self):
+        # os.waitpid() is supposed to catch EINTR and ECHILD only.
+        # Test that any other errno results in an exception.
+        with mock.patch("psutil._psposix.os.waitpid",
+                        side_effect=OSError(errno.EBADF, "")) as m:
+            self.assertRaises(OSError, psutil._psposix.wait_pid, os.getpid())
+            assert m.called
+
+    def test_os_waitpid_eintr(self):
+        # os.waitpid() is supposed to "retry" on EINTR.
+        with mock.patch("psutil._psposix.os.waitpid",
+                        side_effect=OSError(errno.EINTR, "")) as m:
+            self.assertRaises(
+                psutil._psposix.TimeoutExpired,
+                psutil._psposix.wait_pid, os.getpid(), timeout=0.01)
+            assert m.called
+
+    def test_os_waitpid_bad_ret_status(self):
+        # Simulate os.waitpid() returning a bad status.
+        with mock.patch("psutil._psposix.os.waitpid",
+                        return_value=(1, -1)) as m:
+            self.assertRaises(ValueError,
+                              psutil._psposix.wait_pid, os.getpid())
+            assert m.called
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)
