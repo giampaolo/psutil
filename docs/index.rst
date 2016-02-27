@@ -1202,8 +1202,22 @@ Process class
   .. method:: open_files()
 
      Return regular files opened by process as a list of namedtuples including
-     the absolute file name and the file descriptor number (on Windows this is
-     always ``-1``). Example:
+     the following fields:
+
+     - **path**: the absolute file name.
+     - **fd**: the file descriptor number; on Windows this is always ``-1``.
+     - **position** (Linux): the file (offset) position.
+     - **mode** (Linux): a string indicating how the file was opened, similarly
+       `open <https://docs.python.org/3/library/functions.html#open>`__'s
+       ``mode`` argument. Possible values are ``'r'``, ``'w'``, ``'a'``,
+       ``'r+'`` and ``'a+'``. There's no distinction between files opened in
+       bynary or text mode (``"b"`` or ``"t"``).
+     - **flags** (Linux): the flags which were passed to the underlying
+       `os.open <https://docs.python.org/2/library/os.html#os.open>`__ C call
+       when the file was opened (e.g.
+       `os.O_RDONLY <https://docs.python.org/3/library/os.html#os.O_RDONLY>`__,
+       `os.O_TRUNC <https://docs.python.org/3/library/os.html#os.O_TRUNC>`__,
+       etc).
 
      >>> import psutil
      >>> f = open('file.ext', 'w')
@@ -1227,6 +1241,9 @@ Process class
        (see `issue 595 <https://github.com/giampaolo/psutil/pull/595>`_).
 
      .. versionchanged:: 3.1.0 no longer hangs on Windows.
+
+     .. versionchanged:: 4.1.0 new *position*, *mode* and *flags* fields on
+        Linux.
 
   .. method:: connections(kind="inet")
 
