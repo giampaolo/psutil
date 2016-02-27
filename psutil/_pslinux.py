@@ -179,6 +179,16 @@ def readlink(path):
     return path
 
 
+def file_flags_to_mode(flags):
+    md = {os.O_RDONLY: 'r', os.O_WRONLY: 'w', os.O_RDWR: 'w+'}
+    m = md[flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)]
+    if flags & os.O_APPEND:
+        m = m.replace('w', 'a', 1)
+    m = m.replace('w+', 'r+')
+    # possible values: r, w, a, r+, a+
+    return m
+
+
 def get_sector_size():
     try:
         with open(b"/sys/block/sda/queue/hw_sector_size") as f:
@@ -237,6 +247,8 @@ sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'read_merged_count', 'write_merged_count',
                                  'busy_time'])
 
+popenfile = namedtuple('popenfile',
+                       ['path', 'fd', 'position', 'mode', 'flags'])
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
 
@@ -1296,7 +1308,7 @@ class Process(object):
         for fd in files:
             file = "%s/%s/fd/%s" % (self._procfs_path, self.pid, fd)
             try:
-                file = readlink(file)
+                path = readlink(file)
             except OSError as err:
                 # ENOENT == file which is gone in the meantime
                 if err.errno in (errno.ENOENT, errno.ESRCH):
@@ -1308,12 +1320,19 @@ class Process(object):
                 else:
                     raise
             else:
-                # If file is not an absolute path there's no way
-                # to tell whether it's a regular file or not,
-                # so we skip it. A regular file is always supposed
-                # to be absolutized though.
-                if file.startswith('/') and isfile_strict(file):
-                    ntuple = _common.popenfile(file, int(fd))
+                # If path is not an absolute there's no way to tell
+                # whether it's a regular file or not, so we skip it.
+                # A regular file is always supposed to be have an
+                # absolute path though.
+                if path.startswith('/') and isfile_strict(path):
+                    # Get file position and flags.
+                    file = "%s/%s/fdinfo/%s" % (
+                        self._procfs_path, self.pid, fd)
+                    with open_binary(file) as f:
+                        pos = int(f.readline().split()[1])
+                        flags = int(f.readline().split()[1], 8)
+                    mode = file_flags_to_mode(flags)
+                    ntuple = popenfile(path, int(fd), int(pos), mode, flags)
                     retlist.append(ntuple)
         if hit_enoent:
             # raise NSP if the process disappeared on us

@@ -3,6 +3,11 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 4.1.0 - XXXX-XX-XX
 ==================
 
+**Enhancements**
+
+- #777: [Linux] Process.open_files() on Linux return 3 new fields: position,
+  mode and flags.
+
 **Bug fixes**
 
 - #776: [Linux] Process.cpu_affinity() may erroneously raise NoSuchProcess.
