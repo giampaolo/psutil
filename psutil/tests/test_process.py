@@ -876,13 +876,20 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process()
         files = p.open_files()
         self.assertFalse(TESTFN in files)
-        with open(TESTFN, 'w'):
+        with open(TESTFN, 'wb') as f:
+            f.write(b'x' * 1024)
+            f.flush()
             # give the kernel some time to see the new file
-            call_until(p.open_files, "len(ret) != %i" % len(files))
-            filenames = [x.path for x in p.open_files()]
-            self.assertIn(TESTFN, filenames)
-        for file in filenames:
-            assert os.path.isfile(file), file
+            files = call_until(p.open_files, "len(ret) != %i" % len(files))
+            for file in files:
+                if file.path == TESTFN:
+                    if LINUX:
+                        self.assertEqual(file.position, 1024)
+                    break
+            else:
+                self.fail("no file found; files=%s" % repr(files))
+        for file in files:
+            assert os.path.isfile(file.path), file
 
         # another process
         cmdline = "import time; f = open(r'%s', 'r'); time.sleep(60);" % TESTFN
@@ -903,20 +910,20 @@ class TestProcess(unittest.TestCase):
     @unittest.skipIf(BSD, "broken on BSD, see #595")
     @unittest.skipIf(APPVEYOR,
                      "can't find any process file on Appveyor")
-    def test_open_files2(self):
+    def test_open_files_2(self):
         # test fd and path fields
         with open(TESTFN, 'w') as fileobj:
             p = psutil.Process()
-            for path, fd in p.open_files():
-                if path == fileobj.name or fd == fileobj.fileno():
+            for file in p.open_files():
+                if file.path == fileobj.name or file.fd == fileobj.fileno():
                     break
             else:
                 self.fail("no file found; files=%s" % repr(p.open_files()))
-            self.assertEqual(path, fileobj.name)
+            self.assertEqual(file.path, fileobj.name)
             if WINDOWS:
-                self.assertEqual(fd, -1)
+                self.assertEqual(file.fd, -1)
             else:
-                self.assertEqual(fd, fileobj.fileno())
+                self.assertEqual(file.fd, fileobj.fileno())
             # test positions
             ntuple = p.open_files()[0]
             self.assertEqual(ntuple[0], ntuple.path)
@@ -1694,6 +1701,9 @@ class TestFetchAllProcesses(unittest.TestCase):
                 assert f.fd == -1, f
             else:
                 self.assertIsInstance(f.fd, int)
+            if LINUX:
+                self.assertIsInstance(f.position, int)
+                self.assertGreaterEqual(f.position, 0)
             if BSD and not f.path:
                 # XXX see: https://github.com/giampaolo/psutil/issues/595
                 continue

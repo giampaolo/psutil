@@ -141,3 +141,9 @@ FEATURES
 - #550: number of threads per core.
 
 - Have psutil.Process().cpu_affinity([]) be an alias for "all CPUs"?
+
+SIMILAR PROJECTS
+================
+
+- https://github.com/hyperic/sigar (Java)
+- zabbix source code: https://zabbix.org/wiki/Get_Zabbix

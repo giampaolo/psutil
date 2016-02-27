@@ -237,6 +237,7 @@ sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'read_merged_count', 'write_merged_count',
                                  'busy_time'])
 
+popenfile = namedtuple('popenfile', ['path', 'fd', 'position'])
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
 
@@ -1296,7 +1297,7 @@ class Process(object):
         for fd in files:
             file = "%s/%s/fd/%s" % (self._procfs_path, self.pid, fd)
             try:
-                file = readlink(file)
+                path = readlink(file)
             except OSError as err:
                 # ENOENT == file which is gone in the meantime
                 if err.errno in (errno.ENOENT, errno.ESRCH):
@@ -1308,12 +1309,17 @@ class Process(object):
                 else:
                     raise
             else:
-                # If file is not an absolute path there's no way
-                # to tell whether it's a regular file or not,
-                # so we skip it. A regular file is always supposed
-                # to be absolutized though.
-                if file.startswith('/') and isfile_strict(file):
-                    ntuple = _common.popenfile(file, int(fd))
+                # If path is not an absolute there's no way to tell
+                # whether it's a regular file or not, so we skip it.
+                # A regular file is always supposed to be have an
+                # absolute path though.
+                if path.startswith('/') and isfile_strict(path):
+                    # Get file position.
+                    file = "%s/%s/fdinfo/%s" % (
+                        self._procfs_path, self.pid, fd)
+                    with open_binary(file) as f:
+                        pos = int(f.readline().split()[1])
+                    ntuple = popenfile(path, int(fd), pos)
                     retlist.append(ntuple)
         if hit_enoent:
             # raise NSP if the process disappeared on us
