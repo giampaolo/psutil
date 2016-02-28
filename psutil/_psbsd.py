@@ -99,6 +99,7 @@ svmem = namedtuple(
 scputimes = namedtuple(
     'scputimes', ['user', 'nice', 'system', 'idle', 'irq'])
 pmem = namedtuple('pmem', ['rss', 'vms', 'text', 'data', 'stack'])
+pfullmem = pmem
 pmmap_grouped = namedtuple(
     'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
 pmmap_ext = namedtuple(
