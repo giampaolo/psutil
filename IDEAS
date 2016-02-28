@@ -17,6 +17,8 @@ PLATFORMS
 FEATURES
 ========
 
+- #782: (UNIX) process num of signals received.
+
 - (UNIX) process root (different from xwd)
 
 - (Linux) locked files via /proc/locks:
