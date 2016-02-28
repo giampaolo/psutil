@@ -43,9 +43,6 @@ FEATURES
 
 - #604: emulate os.getloadavg() on Windows
 
-- (Linux) extend Process.open_files() in order to read from /proc/pid/fdinfo
-  and return file position and flags/mode.
-
 - scripts/taskmgr-gui.py (using tk).
 
 - system-wide number of open file descriptors:

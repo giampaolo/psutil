@@ -1223,7 +1223,8 @@ Process class
      >>> f = open('file.ext', 'w')
      >>> p = psutil.Process()
      >>> p.open_files()
-     [popenfile(path='/home/giampaolo/svn/psutil/file.ext', fd=3)]
+     [popenfile(path='/home/giampaolo/svn/psutil/setup.py', fd=3, position=0, mode='r', flags=32768),
+      popenfile(path='/var/log/monitd', fd=4, position=235542, mode='a', flags=33793)]
 
      .. warning::
        on Windows this is not fully reliable as due to some limitations of the

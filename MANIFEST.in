@@ -6,6 +6,7 @@ include appveyor.yml
 include CREDITS
 include DEVGUIDE.rst
 include HISTORY.rst
+include IDEAS
 include INSTALL.rst
 include LICENSE
 include make.bat
@@ -13,10 +14,9 @@ include Makefile
 include MANIFEST.in
 include README.rst
 include setup.py
-include TODO
 include tox.ini
 recursive-exclude docs/_build *
 recursive-include .ci *
 recursive-include docs *
-recursive-include scripts *.py *.rst *README
 recursive-include psutil *.py *.c *.h README*
+recursive-include scripts *.py

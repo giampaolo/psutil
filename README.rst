@@ -254,7 +254,8 @@ Process management
     pio(read_count=478001, write_count=59371, read_bytes=700416, write_bytes=69632)
     >>>
     >>> p.open_files()
-    [popenfile(path='/home/giampaolo/svn/psutil/somefile', fd=3)]
+    [popenfile(path='/home/giampaolo/svn/psutil/setup.py', fd=3, position=0, mode='r', flags=32768),
+     popenfile(path='/var/log/monitd', fd=4, position=235542, mode='a', flags=33793)]
     >>>
     >>> p.connections()
     [pconn(fd=115, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 48776), raddr=('93.186.135.91', 80), status='ESTABLISHED'),
