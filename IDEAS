@@ -17,7 +17,7 @@ PLATFORMS
 FEATURES
 ========
 
-- (UNIX) process root (different from xwd)
+- (UNIX) process root (different from cwd)
 
 - (Linux) locked files via /proc/locks:
   https://www.centos.org/docs/5/html/5.2/Deployment_Guide/s2-proc-locks.html
