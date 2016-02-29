@@ -581,7 +581,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     mach_msg_type_number_t info_count = VM_REGION_TOP_INFO_COUNT;
     kern_return_t kr;
     vm_size_t page_size;
-    mach_vm_address_t addr = MACH_VM_MIN_ADDRESS
+    mach_vm_address_t addr = MACH_VM_MIN_ADDRESS;
     mach_port_t task = MACH_PORT_NULL;
     vm_region_top_info_data_t info;
     mach_port_t object_name;

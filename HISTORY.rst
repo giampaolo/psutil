@@ -14,6 +14,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   provides it.
 - #776: [Linux] Process.cpu_affinity() may erroneously raise NoSuchProcess.
   (patch by wxwright)
+- #780: [OSX] psutil does not compile with some gcc versions.
 
 
 4.0.0 - 2016-02-17
