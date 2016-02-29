@@ -919,9 +919,14 @@ Process class
      times which means the amount of time expressed in seconds that a process
      has spent in
      `user / system mode <http://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1>`__.
+     On Linux, BSD and SunOS it also return two extra fields: **children_user**
+     and **children_system**.
      This is similar to
      `os.times() <http://docs.python.org//library/os.html#os.times>`__
      but can be used for any process PID.
+
+     .. versionchanged:: 4.1.0 return two extra fields on Linux, BSD and SunOS:
+        *children_user* and *children_system*.
 
   .. method:: cpu_percent(interval=None)
 
