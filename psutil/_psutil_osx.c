@@ -581,11 +581,14 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     mach_msg_type_number_t info_count = VM_REGION_TOP_INFO_COUNT;
     kern_return_t kr;
     vm_size_t page_size;
+    mach_vm_address_t addr = MACH_VM_MIN_ADDRESS
+    mach_port_t task = MACH_PORT_NULL;
+    vm_region_top_info_data_t info;
+    mach_port_t object_name;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    mach_port_t task = MACH_PORT_NULL;
     err = task_for_pid(mach_task_self(), pid, &task);
     if (err != KERN_SUCCESS) {
         psutil_raise_ad_or_nsp(pid);
@@ -600,10 +603,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 
     // Roughly based on libtop_update_vm_regions in
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
-    for (mach_vm_address_t addr = MACH_VM_MIN_ADDRESS; ; addr += size) {
-        vm_region_top_info_data_t info;
-        mach_port_t object_name;
-
+    for (addr; ; addr += size) {
         kr = mach_vm_region(
             task, &addr, &size, VM_REGION_TOP_INFO, (vm_region_info_t)&info,
             &info_count, &object_name);
@@ -612,7 +612,8 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
             break;
         }
         else if (kr != KERN_SUCCESS) {
-            return false;
+            PyErr_Format(PyExc_RuntimeError, "mach_vm_region() failed");
+            return NULL;
         }
 
         if (psutil_in_shared_region(addr, cpu_type) &&
