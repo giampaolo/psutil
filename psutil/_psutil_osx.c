@@ -603,7 +603,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 
     // Roughly based on libtop_update_vm_regions in
     // http://www.opensource.apple.com/source/top/top-100.1.2/libtop.c
-    for (addr; ; addr += size) {
+    for (addr = 0; ; addr += size) {
         kr = mach_vm_region(
             task, &addr, &size, VM_REGION_TOP_INFO, (vm_region_info_t)&info,
             &info_count, &object_name);
