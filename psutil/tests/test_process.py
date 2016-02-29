@@ -65,6 +65,7 @@ from psutil.tests import get_test_subprocess
 from psutil.tests import get_winver
 from psutil.tests import GLOBAL_TIMEOUT
 from psutil.tests import pyrun
+from psutil.tests import PYPY
 from psutil.tests import PYTHON
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
@@ -423,6 +424,11 @@ class TestProcess(unittest.TestCase):
             self.assertGreaterEqual(value, 0)
             if name in dir(resource):
                 self.assertEqual(value, getattr(resource, name))
+                # XXX - On PyPy RLIMIT_INFINITY returned by
+                # resource.getrlimit() is reported as a very big long
+                # number instead of -1. It looks like a bug with PyPy.
+                if PYPY:
+                    continue
                 self.assertEqual(p.rlimit(value), resource.getrlimit(value))
             else:
                 ret = p.rlimit(value)

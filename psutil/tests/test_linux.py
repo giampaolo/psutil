@@ -33,6 +33,7 @@ from psutil.tests import call_until
 from psutil.tests import get_kernel_version
 from psutil.tests import importlib
 from psutil.tests import MEMORY_TOLERANCE
+from psutil.tests import PYPY
 from psutil.tests import pyrun
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
@@ -764,13 +765,16 @@ class TestProcess(unittest.TestCase):
         time.sleep(.1)
         mem = p.memory_full_info()
         maps = p.memory_maps(grouped=False)
-        self.assertEqual(
-            mem.uss, sum([x.private_dirty + x.private_clean for x in maps]))
-        self.assertEqual(
-            mem.pss, sum([x.pss for x in maps]))
-        self.assertEqual(
-            mem.swap, sum([x.swap for x in maps]))
+        self.assertAlmostEqual(
+            mem.uss, sum([x.private_dirty + x.private_clean for x in maps]),
+            delta=4096)
+        self.assertAlmostEqual(
+            mem.pss, sum([x.pss for x in maps]), delta=4096)
+        self.assertAlmostEqual(
+            mem.swap, sum([x.swap for x in maps]), delta=4096)
 
+    # On PYPY file descriptors are not closed fast enough.
+    @unittest.skipIf(PYPY, "skipped on PYPY")
     def test_open_files_mode(self):
         def get_test_file():
             p = psutil.Process()

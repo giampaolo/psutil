@@ -37,6 +37,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
+- #685: [Linux] virtual_memory() provides wrong results on systems with a lot
+  of physical memory.
 - #704: [Solaris] psutil does not compile on Solaris sparc.
 - #734: on Python 3 invalid UTF-8 data is not correctly handled for process
   name(), cwd(), exe(), cmdline() and open_files() methods resulting in
