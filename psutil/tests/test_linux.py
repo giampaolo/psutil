@@ -344,6 +344,42 @@ class TestSystemNetwork(unittest.TestCase):
                 self.assertEqual(stats.mtu,
                                  int(re.findall('MTU:(\d+)', out)[0]))
 
+    def test_net_io_counters(self):
+        def ifconfig(nic):
+            ret = {}
+            out = sh("ifconfig %s" % name)
+            ret['packets_recv'] = int(re.findall('RX packets:(\d+)', out)[0])
+            ret['packets_sent'] = int(re.findall('TX packets:(\d+)', out)[0])
+            ret['errin'] = int(re.findall('errors:(\d+)', out)[0])
+            ret['errout'] = int(re.findall('errors:(\d+)', out)[1])
+            ret['dropin'] = int(re.findall('dropped:(\d+)', out)[0])
+            ret['dropout'] = int(re.findall('dropped:(\d+)', out)[1])
+            ret['bytes_recv'] = int(re.findall('RX bytes:(\d+)', out)[0])
+            ret['bytes_sent'] = int(re.findall('TX bytes:(\d+)', out)[0])
+            return ret
+
+        for name, stats in psutil.net_io_counters(pernic=True).items():
+            try:
+                ifconfig_ret = ifconfig(name)
+            except RuntimeError:
+                continue
+            self.assertAlmostEqual(
+                stats.bytes_recv, ifconfig_ret['bytes_recv'], delta=1024)
+            self.assertAlmostEqual(
+                stats.bytes_sent, ifconfig_ret['bytes_sent'], delta=1024)
+            self.assertAlmostEqual(
+                stats.packets_recv, ifconfig_ret['packets_recv'], delta=512)
+            self.assertAlmostEqual(
+                stats.packets_sent, ifconfig_ret['packets_sent'], delta=512)
+            self.assertAlmostEqual(
+                stats.errin, ifconfig_ret['errin'], delta=10)
+            self.assertAlmostEqual(
+                stats.errout, ifconfig_ret['errout'], delta=10)
+            self.assertAlmostEqual(
+                stats.dropin, ifconfig_ret['dropin'], delta=10)
+            self.assertAlmostEqual(
+                stats.dropout, ifconfig_ret['dropout'], delta=10)
+
     @unittest.skipUnless(which('ip'), "'ip' utility not available")
     @unittest.skipIf(TRAVIS, "skipped on Travis")
     def test_net_if_names(self):
