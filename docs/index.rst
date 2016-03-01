@@ -915,17 +915,17 @@ Process class
 
   .. method:: cpu_times()
 
-     Return a (user, system) namedtuple representing the accumulated process
-     time, in seconds (see
+     Return a `(user, system, children_user, children_system)` namedtuple
+     representing the accumulated process time, in seconds (see
      `explanation <http://stackoverflow.com/questions/556405/>`__).
-     On Linux, BSD and SunOS the namedtuple also includes `children_user` times
-     and `children_system` times.
+     On Windows and OSX only *user* and *system* are filled, the others are
+     set to ``0``.
      This is similar to
      `os.times() <http://docs.python.org//library/os.html#os.times>`__
      but can be used for any process PID.
 
-     .. versionchanged:: 4.1.0 return two extra fields on Linux, BSD and SunOS:
-        *children_user* and *children_system*.
+     .. versionchanged:: 4.1.0 return two extra fields: *children_user* and
+        *children_system*.
 
   .. method:: cpu_percent(interval=None)
 

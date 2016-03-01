@@ -448,14 +448,15 @@ class Process(object):
     @wrap_exceptions
     def cpu_times(self):
         try:
-            ret = cext.proc_cpu_times(self.pid)
+            user, system = cext.proc_cpu_times(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 nt = ntpinfo(*cext.proc_info(self.pid))
-                ret = (nt.user_time, nt.kernel_time)
+                user, system = (nt.user_time, nt.kernel_time)
             else:
                 raise
-        return _common.pcputimes(*ret)
+        # Children user/system times are not retrievable (set to 0).
+        return _common.pcputimes(user, system, 0, 0)
 
     @wrap_exceptions
     def suspend(self):

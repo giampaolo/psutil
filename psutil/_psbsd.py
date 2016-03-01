@@ -438,7 +438,7 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        return pcputimes(*cext.proc_cpu_times(self.pid))
+        return _common.pcputimes(*cext.proc_cpu_times(self.pid))
 
     @wrap_exceptions
     def memory_info(self):

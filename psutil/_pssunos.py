@@ -365,7 +365,8 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        return pcputimes(*cext.proc_cpu_times(self.pid, self._procfs_path))
+        times = cext.proc_cpu_times(self.pid, self._procfs_path)
+        return _common.pcputimes(*times)
 
     @wrap_exceptions
     def terminal(self):
