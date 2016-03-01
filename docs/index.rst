@@ -915,12 +915,11 @@ Process class
 
   .. method:: cpu_times()
 
-     Return a tuple whose values are process CPU **user** and **system**
-     times which means the amount of time expressed in seconds that a process
-     has spent in
-     `user / system mode <http://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1>`__.
-     On Linux, BSD and SunOS it also return two extra fields: **children_user**
-     and **children_system**.
+     Return a (user, system) namedtuple representing the accumulated process
+     time, in seconds (see
+     `explanation <http://stackoverflow.com/questions/556405/>`__).
+     On Linux, BSD and SunOS the namedtuple also includes `children_user` times
+     and `children_system` times.
      This is similar to
      `os.times() <http://docs.python.org//library/os.html#os.times>`__
      but can be used for any process PID.
