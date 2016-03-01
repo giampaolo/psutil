@@ -82,6 +82,7 @@ TESTFN = os.path.join(os.getcwd(), "$testfile")
 TESTFN_UNICODE = TESTFN + "ƒőő"
 TESTFILE_PREFIX = 'psutil-test-suite-'
 TOX = os.getenv('TOX') or '' in ('1', 'true')
+PYPY = '__pypy__' in sys.builtin_module_names
 if not PY3:
     try:
         TESTFN_UNICODE = unicode(TESTFN_UNICODE, sys.getfilesystemencoding())

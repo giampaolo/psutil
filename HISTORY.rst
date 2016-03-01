@@ -7,8 +7,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 - #777: [Linux] Process.open_files() on Linux return 3 new fields: position,
   mode and flags.
-- #779: [Linux, BSD, SunOS]: Process.cpu_times() returns two new fields:
-  'children_user' and 'children_system'.
+- #779: Process.cpu_times() returns two new fields, 'children_user' and
+  'children_system' (always set to 0 on OSX and Windows).
 
 **Bug fixes**
 
@@ -16,6 +16,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   provides it.
 - #776: [Linux] Process.cpu_affinity() may erroneously raise NoSuchProcess.
   (patch by wxwright)
+- #780: [OSX] psutil does not compile with some gcc versions.
 
 
 4.0.0 - 2016-02-17
@@ -38,6 +39,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
+- #685: [Linux] virtual_memory() provides wrong results on systems with a lot
+  of physical memory.
 - #704: [Solaris] psutil does not compile on Solaris sparc.
 - #734: on Python 3 invalid UTF-8 data is not correctly handled for process
   name(), cwd(), exe(), cmdline() and open_files() methods resulting in

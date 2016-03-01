@@ -180,13 +180,13 @@ def readlink(path):
 
 
 def file_flags_to_mode(flags):
-    md = {os.O_RDONLY: 'r', os.O_WRONLY: 'w', os.O_RDWR: 'w+'}
-    m = md[flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)]
+    modes_map = {os.O_RDONLY: 'r', os.O_WRONLY: 'w', os.O_RDWR: 'w+'}
+    mode = modes_map[flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)]
     if flags & os.O_APPEND:
-        m = m.replace('w', 'a', 1)
-    m = m.replace('w+', 'r+')
+        mode = mode.replace('w', 'a', 1)
+    mode = mode.replace('w+', 'r+')
     # possible values: r, w, a, r+, a+
-    return m
+    return mode
 
 
 def get_sector_size():
