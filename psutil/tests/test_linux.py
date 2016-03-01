@@ -333,6 +333,17 @@ class TestSystemNetwork(unittest.TestCase):
                     self.assertEqual(addr.address, get_ipv4_address(name))
                 # TODO: test for AF_INET6 family
 
+    def test_net_if_stats(self):
+        for name, stats in psutil.net_if_stats().items():
+            try:
+                out = sh("ifconfig %s" % name)
+            except RuntimeError:
+                pass
+            else:
+                self.assertEqual(stats.isup, 'RUNNING' in out)
+                self.assertEqual(stats.mtu,
+                                 int(re.findall('MTU:(\d+)', out)[0]))
+
     @unittest.skipUnless(which('ip'), "'ip' utility not available")
     @unittest.skipIf(TRAVIS, "skipped on Travis")
     def test_net_if_names(self):
