@@ -266,16 +266,22 @@ Disks
 .. function:: disk_io_counters(perdisk=False)
 
   Return system-wide disk I/O statistics as a namedtuple including the
-  following fields.
+  following fields:
+
   - **read_count**: number of reads
   - **write_count**: number of writes
   - **read_bytes**: number of bytes read
   - **write_bytes**: number of bytes written
-  - **read_time**: (all except NetBSD and OpenBSD) time spent reading from disk (in milliseconds)
-  - **write_time**: (all except NetBSD and OpenBSD) time spent writing to disk (in milliseconds)
-  - **busy_time**: (Linux, FreeBSD) time spent doing actual I/Os (in milliseconds)
-  - **read_merged_count** (Linux): number of merged reads (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
-  - **write_merged_count** (Linux): number of merged writes (see `iostats doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
+  - **read_time**: (all except NetBSD and OpenBSD) time spent reading from
+    disk (in milliseconds)
+  - **write_time**: (all except NetBSD and OpenBSD) time spent writing to disk
+    (in milliseconds)
+  - **busy_time**: (Linux, FreeBSD) time spent doing actual I/Os (in
+    milliseconds)
+  - **read_merged_count** (Linux): number of merged reads
+    (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
+  - **write_merged_count** (Linux): number of merged writes
+    (see `iostats doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
 
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
