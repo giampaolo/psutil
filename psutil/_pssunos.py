@@ -59,6 +59,8 @@ TCP_STATUSES = {
 }
 
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle', 'iowait'])
+pcputimes = namedtuple('pcputimes',
+                       ['user', 'system', 'children_user', 'children_system'])
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 pmem = namedtuple('pmem', ['rss', 'vms'])
 pmmap_grouped = namedtuple('pmmap_grouped',
@@ -363,8 +365,8 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        user, system = cext.proc_cpu_times(self.pid, self._procfs_path)
-        return _common.pcputimes(user, system)
+        times = cext.proc_cpu_times(self.pid, self._procfs_path)
+        return _common.pcputimes(*times)
 
     @wrap_exceptions
     def terminal(self):

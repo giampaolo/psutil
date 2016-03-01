@@ -282,7 +282,8 @@ class Process(object):
     @wrap_exceptions
     def cpu_times(self):
         user, system = cext.proc_cpu_times(self.pid)
-        return _common.pcputimes(user, system)
+        # Children user/system times are not retrievable (set to 0).
+        return _common.pcputimes(user, system, 0, 0)
 
     @wrap_exceptions
     def create_time(self):

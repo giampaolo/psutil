@@ -7,6 +7,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 - #777: [Linux] Process.open_files() on Linux return 3 new fields: position,
   mode and flags.
+- #779: Process.cpu_times() returns two new fields, 'children_user' and
+  'children_system' (always set to 0 on OSX and Windows).
 
 **Bug fixes**
 

@@ -17,9 +17,9 @@ PLATFORMS
 FEATURES
 ========
 
-- #782: (UNIX) process num of signals received.
+- (UNIX) process root (different from cwd)
 
-- (UNIX) process root (different from xwd)
+- #782: (UNIX) process num of signals received.
 
 - (Linux) locked files via /proc/locks:
   https://www.centos.org/docs/5/html/5.2/Deployment_Guide/s2-proc-locks.html

@@ -100,6 +100,8 @@ scputimes = namedtuple(
     'scputimes', ['user', 'nice', 'system', 'idle', 'irq'])
 pmem = namedtuple('pmem', ['rss', 'vms', 'text', 'data', 'stack'])
 pfullmem = pmem
+pcputimes = namedtuple('pcputimes',
+                       ['user', 'system', 'children_user', 'children_system'])
 pmmap_grouped = namedtuple(
     'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
 pmmap_ext = namedtuple(
@@ -436,8 +438,7 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        user, system = cext.proc_cpu_times(self.pid)
-        return _common.pcputimes(user, system)
+        return _common.pcputimes(*cext.proc_cpu_times(self.pid))
 
     @wrap_exceptions
     def memory_info(self):

@@ -251,7 +251,6 @@ popenfile = namedtuple('popenfile',
                        ['path', 'fd', 'position', 'mode', 'flags'])
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
-
 pmmap_grouped = namedtuple(
     'pmmap_grouped', ['path', 'rss', 'size', 'pss', 'shared_clean',
                       'shared_dirty', 'private_clean', 'private_dirty',
@@ -989,7 +988,9 @@ class Process(object):
         values = st.split(b' ')
         utime = float(values[11]) / CLOCK_TICKS
         stime = float(values[12]) / CLOCK_TICKS
-        return _common.pcputimes(utime, stime)
+        children_utime = float(values[13]) / CLOCK_TICKS
+        children_stime = float(values[14]) / CLOCK_TICKS
+        return _common.pcputimes(utime, stime, children_utime, children_stime)
 
     @wrap_exceptions
     def wait(self, timeout=None):

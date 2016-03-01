@@ -266,16 +266,22 @@ Disks
 .. function:: disk_io_counters(perdisk=False)
 
   Return system-wide disk I/O statistics as a namedtuple including the
-  following fields.
+  following fields:
+
   - **read_count**: number of reads
   - **write_count**: number of writes
   - **read_bytes**: number of bytes read
   - **write_bytes**: number of bytes written
-  - **read_time**: (all except NetBSD and OpenBSD) time spent reading from disk (in milliseconds)
-  - **write_time**: (all except NetBSD and OpenBSD) time spent writing to disk (in milliseconds)
-  - **busy_time**: (Linux, FreeBSD) time spent doing actual I/Os (in milliseconds)
-  - **read_merged_count** (Linux): number of merged reads (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
-  - **write_merged_count** (Linux): number of merged writes (see `iostats doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
+  - **read_time**: (all except NetBSD and OpenBSD) time spent reading from
+    disk (in milliseconds)
+  - **write_time**: (all except NetBSD and OpenBSD) time spent writing to disk
+    (in milliseconds)
+  - **busy_time**: (Linux, FreeBSD) time spent doing actual I/Os (in
+    milliseconds)
+  - **read_merged_count** (Linux): number of merged reads
+    (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
+  - **write_merged_count** (Linux): number of merged writes
+    (see `iostats doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
 
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
@@ -915,13 +921,17 @@ Process class
 
   .. method:: cpu_times()
 
-     Return a tuple whose values are process CPU **user** and **system**
-     times which means the amount of time expressed in seconds that a process
-     has spent in
-     `user / system mode <http://stackoverflow.com/questions/556405/what-do-real-user-and-sys-mean-in-the-output-of-time1>`__.
+     Return a `(user, system, children_user, children_system)` namedtuple
+     representing the accumulated process time, in seconds (see
+     `explanation <http://stackoverflow.com/questions/556405/>`__).
+     On Windows and OSX only *user* and *system* are filled, the others are
+     set to ``0``.
      This is similar to
      `os.times() <http://docs.python.org//library/os.html#os.times>`__
      but can be used for any process PID.
+
+     .. versionchanged:: 4.1.0 return two extra fields: *children_user* and
+        *children_system*.
 
   .. method:: cpu_percent(interval=None)
 

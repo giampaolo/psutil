@@ -960,9 +960,12 @@ class Process(object):
             return round(overall_percent, 1)
 
     def cpu_times(self):
-        """Return a (user, system) namedtuple representing  the
-        accumulated process time, in seconds.
-        This is the same as os.times() but per-process.
+        """Return a (user, system, children_user, children_system)
+        namedtuple representing the accumulated process time, in
+        seconds.
+        This is similar to os.times() but per-process.
+        On OSX and Windows children_user and children_system are
+        always set to 0.
         """
         return self._proc.cpu_times()
 
