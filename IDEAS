@@ -144,5 +144,6 @@ FEATURES
 SIMILAR PROJECTS
 ================
 
-- https://github.com/hyperic/sigar (Java)
+- sigar: https://github.com/hyperic/sigar (Java)
 - zabbix source code: https://zabbix.org/wiki/Get_Zabbix
+- libstatgrab: http://www.i-scream.org/libstatgrab/

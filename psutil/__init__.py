@@ -1914,6 +1914,13 @@ def net_if_addrs():
                     # We re-set the family here so that repr(family)
                     # will show AF_LINK rather than AF_PACKET
                     fam = _psplatform.AF_LINK
+        if fam == _psplatform.AF_LINK:
+            # The underlying C function may return an incomplete MAC
+            # address in which case we fill it with null bytes, see:
+            # https://github.com/giampaolo/psutil/issues/786
+            separator = ":" if POSIX else "-"
+            while addr.count(separator) < 5:
+                addr += "%s00" % separator
         ret[name].append(_common.snic(fam, addr, mask, broadcast, ptp))
     return dict(ret)
 

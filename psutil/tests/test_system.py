@@ -583,6 +583,23 @@ class TestSystemAPIs(unittest.TestCase):
         elif WINDOWS:
             self.assertEqual(psutil.AF_LINK, -1)
 
+    def test_net_if_addrs_mac_null_bytes(self):
+        # Simulate that the underlying C function returns an incomplete
+        # MAC address. psutil is supposed to fill it with null bytes.
+        # https://github.com/giampaolo/psutil/issues/786
+        if POSIX:
+            ret = [('em1', psutil.AF_LINK, '06:3d:29', None, None, None)]
+        else:
+            ret = [('em1', -1, '06-3d-29', None, None, None)]
+        with mock.patch('psutil._psplatform.net_if_addrs',
+                        return_value=ret) as m:
+            addr = psutil.net_if_addrs()['em1'][0]
+            assert m.called
+            if POSIX:
+                self.assertEqual(addr.address, '06:3d:29:00:00:00')
+            else:
+                self.assertEqual(addr.address, '06-3d-29-00-00-00')
+
     @unittest.skipIf(TRAVIS, "EPERM on travis")
     def test_net_if_stats(self):
         nics = psutil.net_if_stats()
