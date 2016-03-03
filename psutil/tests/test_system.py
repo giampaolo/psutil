@@ -31,7 +31,7 @@ from psutil import WINDOWS
 from psutil._compat import long
 from psutil.tests import AF_INET6
 from psutil.tests import APPVEYOR
-from psutil.tests import check_ip_address
+from psutil.tests import check_net_address
 from psutil.tests import DEVNULL
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
@@ -568,7 +568,7 @@ class TestSystemAPIs(unittest.TestCase):
                         # AddressValueError: Only hex digits permitted in
                         # u'c6f3%lxcbr0' in u'fe80::c8e0:fff:fe54:c6f3%lxcbr0'
                         if addr.family != AF_INET6:
-                            check_ip_address(ip, addr.family)
+                            check_net_address(ip, addr.family)
                 # broadcast and ptp addresses are mutually exclusive
                 if addr.broadcast:
                     self.assertIsNone(addr.ptp)

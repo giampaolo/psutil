@@ -345,8 +345,10 @@ def reap_children(search_all=False):
     _subprocesses_started = set(alive)
 
 
-def check_ip_address(addr, family):
-    """Attempts to check IP address's validity."""
+def check_net_address(addr, family):
+    """Check a net address validity. Supported families are IPv4,
+    IPv6 and MAC addresses.
+    """
     if enum and PY3:
         assert isinstance(family, enum.IntEnum), family
     if family == AF_INET:
@@ -393,7 +395,7 @@ def check_connection_ntuple(conn):
             ip, port = addr
             assert isinstance(port, int), port
             assert 0 <= port <= 65535, port
-            check_ip_address(ip, conn.family)
+            check_net_address(ip, conn.family)
         elif conn.family == AF_UNIX:
             assert isinstance(addr, (str, None)), addr
         else:
