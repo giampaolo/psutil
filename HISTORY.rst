@@ -19,6 +19,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #780: [OSX] psutil does not compile with some gcc versions.
 - #786: net_if_addrs() may report incomplete MAC addresses.
 - #788: [NetBSD] virtual_memory()'s buffers and shared values were set to 0.
+- #790: [OSX] psutil won't compile on OSX 10.4.
 
 
 4.0.0 - 2016-02-17
