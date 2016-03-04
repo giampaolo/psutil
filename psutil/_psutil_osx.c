@@ -366,9 +366,11 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
 
             if (strlen(buf) == 0) {
                 switch (info.share_mode) {
+// #ifdef SM_LARGE_PAGE
                     // case SM_LARGE_PAGE:
                         // Treat SM_LARGE_PAGE the same as SM_PRIVATE
                         // since they are not shareable and are wired.
+// #endif
                     case SM_COW:
                         strcpy(buf, "[cow]");
                         break;
@@ -622,8 +624,10 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
         }
 
         switch (info.share_mode) {
+#ifdef SM_LARGE_PAGE
             case SM_LARGE_PAGE:
                 // NB: Large pages are not shareable and always resident.
+#endif
             case SM_PRIVATE:
                 private_pages += info.private_pages_resident;
                 private_pages += info.shared_pages_resident;
