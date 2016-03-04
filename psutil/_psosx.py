@@ -60,6 +60,9 @@ svmem = namedtuple(
 
 pmem = namedtuple('pmem', ['rss', 'vms', 'pfaults', 'pageins'])
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
+scpustats = namedtuple(
+    'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts',
+                  'syscalls', 'traps'])
 
 pmmap_grouped = namedtuple(
     'pmmap_grouped',
@@ -118,6 +121,13 @@ def cpu_count_logical():
 def cpu_count_physical():
     """Return the number of physical CPUs in the system."""
     return cext.cpu_count_phys()
+
+
+def cpu_stats():
+    ctx_switches, interrupts, soft_interrupts, syscalls, traps = \
+        cext.cpu_stats()
+    return scpustats(
+        ctx_switches, interrupts, soft_interrupts, syscalls, traps)
 
 
 def boot_time():
