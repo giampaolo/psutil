@@ -246,7 +246,8 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertGreaterEqual(physical, 1)
         self.assertGreaterEqual(logical, physical)
 
-    def test_sys_cpu_times(self):
+    def test_cpu_times(self):
+        # Check type, value >= 0, str().
         total = 0
         times = psutil.cpu_times()
         sum(times)
@@ -274,7 +275,8 @@ class TestSystemAPIs(unittest.TestCase):
         #                                     msg="%s %s" % (new_t, last_t))
         #         last = new
 
-    def test_sys_cpu_times2(self):
+    def test_cpu_times_time_increases(self):
+        # Make sure time increases between calls.
         t1 = sum(psutil.cpu_times())
         time.sleep(0.1)
         t2 = sum(psutil.cpu_times())
@@ -282,7 +284,8 @@ class TestSystemAPIs(unittest.TestCase):
         if not difference >= 0.05:
             self.fail("difference %s" % difference)
 
-    def test_sys_per_cpu_times(self):
+    def test_per_cpu_times(self):
+        # Check type, value >= 0, str().
         for times in psutil.cpu_times(percpu=True):
             total = 0
             sum(times)
@@ -314,7 +317,9 @@ class TestSystemAPIs(unittest.TestCase):
         #                 new_t, last_t, msg="%s %s" % (lastcpu, newcpu))
         #     last = new
 
-    def test_sys_per_cpu_times_2(self):
+    def test_per_cpu_times_2(self):
+        # Simulate some work load then make sure time have increased
+        # between calls.
         tot1 = psutil.cpu_times(percpu=True)
         stop_at = time.time() + 0.1
         while True:
@@ -328,6 +333,16 @@ class TestSystemAPIs(unittest.TestCase):
                 return
         self.fail()
 
+    def test_cpu_times_comparison(self):
+        # Make sure the sum of all per cpu times is almost equal to
+        # base "one cpu" times.
+        base = psutil.cpu_times()
+        per_cpu = psutil.cpu_times(percpu=True)
+        summed_values = base._make([sum(num) for num in zip(*per_cpu)])
+        for field in base._fields:
+            self.assertAlmostEqual(
+                getattr(base, field), getattr(summed_values, field), delta=0.1)
+
     def _test_cpu_percent(self, percent, last_ret, new_ret):
         try:
             self.assertIsInstance(percent, float)
@@ -338,14 +353,14 @@ class TestSystemAPIs(unittest.TestCase):
             raise AssertionError("\n%s\nlast=%s\nnew=%s" % (
                 err, pprint.pformat(last_ret), pprint.pformat(new_ret)))
 
-    def test_sys_cpu_percent(self):
+    def test_cpu_percent(self):
         last = psutil.cpu_percent(interval=0.001)
         for x in range(100):
             new = psutil.cpu_percent(interval=None)
             self._test_cpu_percent(new, last, new)
             last = new
 
-    def test_sys_per_cpu_percent(self):
+    def test_per_cpu_percent(self):
         last = psutil.cpu_percent(interval=0.001, percpu=True)
         self.assertEqual(len(last), psutil.cpu_count())
         for x in range(100):
@@ -354,7 +369,7 @@ class TestSystemAPIs(unittest.TestCase):
                 self._test_cpu_percent(percent, last, new)
             last = new
 
-    def test_sys_cpu_times_percent(self):
+    def test_cpu_times_percent(self):
         last = psutil.cpu_times_percent(interval=0.001)
         for x in range(100):
             new = psutil.cpu_times_percent(interval=None)
@@ -363,7 +378,7 @@ class TestSystemAPIs(unittest.TestCase):
             self._test_cpu_percent(sum(new), last, new)
             last = new
 
-    def test_sys_per_cpu_times_percent(self):
+    def test_per_cpu_times_percent(self):
         last = psutil.cpu_times_percent(interval=0.001, percpu=True)
         self.assertEqual(len(last), psutil.cpu_count())
         for x in range(100):
@@ -374,7 +389,7 @@ class TestSystemAPIs(unittest.TestCase):
                 self._test_cpu_percent(sum(cpu), last, new)
             last = new
 
-    def test_sys_per_cpu_times_percent_negative(self):
+    def test_per_cpu_times_percent_negative(self):
         # see: https://github.com/giampaolo/psutil/issues/645
         psutil.cpu_times_percent(percpu=True)
         zero_times = [x._make([0 for x in range(len(x._fields))])
