@@ -963,13 +963,17 @@ Process class
         multiple threads running on different CPU cores.
 
      .. note::
-        the returned value is not split evenly between all CPUs cores.
+        the returned value is explcitly **not** split evenly between all CPUs
+        cores (differently from :func:`psutil.cpu_percent()`).
         This means that a busy loop process running on a system with 2 CPU
         cores will be reported as having 100% CPU utilization instead of 50%.
-        This was done in order to be consistent with UNIX's "top" utility.
-        taskmgr.exe on Windows, instead, will show 50%.
+        This was done in order to be consistent with UNIX's "top" utility
+        and also to make it easier to identify processes hogging CPU resources
+        (independently from the number of CPU cores).
+        It must be noted that in the example above taskmgr.exe on Windows will
+        report 50% usage instead.
         To emulate Windows's taskmgr.exe behavior you can do:
-        ``p.cpu_percent() / psutil.cpu_count())``.
+        ``p.cpu_percent() / psutil.cpu_count()``.
 
      .. warning::
         the first time this method is called with interval = ``0.0`` or
