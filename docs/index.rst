@@ -68,6 +68,8 @@ CPU
   - **steal** *(Linux 2.6.11+)*
   - **guest** *(Linux 2.6.24+)*
   - **guest_nice** *(Linux 3.2.0+)*
+  - **interrupt** *(Windows)*
+  - **dpc** *(Windows)*
 
   When *percpu* is ``True`` return a list of namedtuples for each logical CPU
   on the system.
@@ -79,6 +81,8 @@ CPU
     >>> import psutil
     >>> psutil.cpu_times()
     scputimes(user=17411.7, nice=77.99, system=3797.02, idle=51266.57, iowait=732.58, irq=0.01, softirq=142.43, steal=0.0, guest=0.0, guest_nice=0.0)
+
+  .. versionchanged:: 4.1.0 added *interrupt* and *dpc* fields on Windows.
 
 .. function:: cpu_percent(interval=None, percpu=False)
 
@@ -127,6 +131,9 @@ CPU
     the first time this function is called with *interval* = ``0.0`` or
     ``None`` it will return a meaningless ``0.0`` value which you are supposed
     to ignore.
+
+  .. versionchanged:: 4.1.0 two new *interrupt* and *dpc* fields are returned
+     on Windows.
 
 .. function:: cpu_count(logical=True)
 

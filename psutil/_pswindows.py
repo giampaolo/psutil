@@ -82,7 +82,8 @@ if enum is not None:
 
     globals().update(Priority.__members__)
 
-scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
+scputimes = namedtuple('scputimes',
+                       ['user', 'system', 'idle', 'interrupt', 'dpc'])
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 pmem = namedtuple(
     'pmem', ['rss', 'vms',
@@ -181,15 +182,19 @@ def disk_partitions(all):
 def cpu_times():
     """Return system CPU times as a named tuple."""
     user, system, idle = cext.cpu_times()
-    return scputimes(user, system, idle)
+    # Internally, GetSystemTimes() is used, and it doesn't return
+    # interrupt and dpc times. cext.per_cpu_times() does, so we
+    # rely on it to get those only.
+    percpu_summed = scputimes(*[sum(n) for n in zip(*cext.per_cpu_times())])
+    return scputimes(user, system, idle,
+                     percpu_summed.interrupt, percpu_summed.dpc)
 
 
 def per_cpu_times():
     """Return system per-CPU times as a list of named tuples."""
     ret = []
-    for cpu_t in cext.per_cpu_times():
-        user, system, idle = cpu_t
-        item = scputimes(user, system, idle)
+    for user, system, idle, interrupt, dpc in cext.per_cpu_times():
+        item = scputimes(user, system, idle, interrupt, dpc)
         ret.append(item)
     return ret
 

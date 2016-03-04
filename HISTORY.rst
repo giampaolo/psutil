@@ -9,6 +9,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   mode and flags.
 - #779: Process.cpu_times() returns two new fields, 'children_user' and
   'children_system' (always set to 0 on OSX and Windows).
+- #789: [Windows] psutil.cpu_times() return two new fields: "interrupt" and
+  "dpc". Same for psutil.cpu_times_percent().
 
 **Bug fixes**
 

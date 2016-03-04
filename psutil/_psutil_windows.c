@@ -954,9 +954,9 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     NTQSI_PROC NtQuerySystemInformation;
     HINSTANCE hNtDll;
 
-    float idle, kernel, user;
+    float idle, kernel, systemt, user, interrupt, dpc;
     NTSTATUS status;
-    SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
+    _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
     SYSTEM_INFO si;
     UINT i;
     PyObject *py_tuple = NULL;
@@ -981,11 +981,11 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     // retrives number of processors
     GetSystemInfo(&si);
 
-    // allocates an array of SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
+    // allocates an array of _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
     // structures, one per processor
-    sppi = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
+    sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
            malloc(si.dwNumberOfProcessors * \
-                  sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+                  sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
     if (sppi == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -996,7 +996,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
         SystemProcessorPerformanceInformation,
         sppi,
         si.dwNumberOfProcessors * sizeof
-            (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+            (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
         NULL);
     if (status != 0) {
         PyErr_SetFromWindowsErr(0);
@@ -1005,7 +1005,7 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
 
     // computes system global times summing each
     // processor value
-    idle = user = kernel = 0;
+    idle = user = kernel = interrupt = dpc = 0;
     for (i = 0; i < si.dwNumberOfProcessors; i++) {
         py_tuple = NULL;
         user = (float)((HI_T * sppi[i].UserTime.HighPart) +
@@ -1014,14 +1014,22 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
                        (LO_T * sppi[i].IdleTime.LowPart));
         kernel = (float)((HI_T * sppi[i].KernelTime.HighPart) +
                          (LO_T * sppi[i].KernelTime.LowPart));
+        interrupt = (float)((HI_T * sppi[i].InterruptTime.HighPart) +
+                            (LO_T * sppi[i].InterruptTime.LowPart));
+        dpc = (float)((HI_T * sppi[i].DpcTime.HighPart) +
+                      (LO_T * sppi[i].DpcTime.LowPart));
+
         // kernel time includes idle time on windows
         // we return only busy kernel time subtracting
         // idle time from kernel time
+        systemt = kernel - idle;
         py_tuple = Py_BuildValue(
-            "(ddd)",
+            "(ddddd)",
             user,
-            kernel - idle,
-            idle
+            systemt,
+            idle,
+            interrupt,
+            dpc
         );
         if (!py_tuple)
             goto error;
