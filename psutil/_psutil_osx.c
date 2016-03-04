@@ -1807,7 +1807,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
     mach_port_deallocate(mach_task_self(), mport);
 
     return Py_BuildValue(
-        "IIIii",
+        "IIIII",
         vmstat.v_swtch,  // ctx switches
         vmstat.v_intr,  // interrupts
         vmstat.v_soft,  // software interrupts
