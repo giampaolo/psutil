@@ -63,6 +63,7 @@ pcputimes = namedtuple('pcputimes',
                        ['user', 'system', 'children_user', 'children_system'])
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 pmem = namedtuple('pmem', ['rss', 'vms'])
+pfullmem = pmem
 pmmap_grouped = namedtuple('pmmap_grouped',
                            ['path', 'rss', 'anonymous', 'locked'])
 pmmap_ext = namedtuple(

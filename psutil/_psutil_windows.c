@@ -949,10 +949,13 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
-    float idle, kernel, user;
+    // NtQuerySystemInformation stuff
     typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
     NTQSI_PROC NtQuerySystemInformation;
     HINSTANCE hNtDll;
+
+    float idle, kernel, user;
+    NTSTATUS status;
     SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
     SYSTEM_INFO si;
     UINT i;
@@ -962,65 +965,74 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     if (py_retlist == NULL)
         return NULL;
 
-    // dynamic linking is mandatory to use NtQuerySystemInformation
+    // obtain NtQuerySystemInformation
     hNtDll = LoadLibrary(TEXT("ntdll.dll"));
-    if (hNtDll != NULL) {
-        // gets NtQuerySystemInformation address
-        NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
-                                       hNtDll, "NtQuerySystemInformation");
+    if (hNtDll == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+    NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
+        hNtDll, "NtQuerySystemInformation");
+    if (NtQuerySystemInformation == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
 
-        if (NtQuerySystemInformation != NULL) {
-            // retrives number of processors
-            GetSystemInfo(&si);
+    // retrives number of processors
+    GetSystemInfo(&si);
 
-            // allocates an array of SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
-            // structures, one per processor
-            sppi = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
-                   malloc(si.dwNumberOfProcessors * \
-                          sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
-            if (sppi != NULL) {
-                // gets cpu time informations
-                if (0 == NtQuerySystemInformation(
-                            SystemProcessorPerformanceInformation,
-                            sppi,
-                            si.dwNumberOfProcessors * sizeof
-                            (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
-                            NULL)
-                   )
-                {
-                    // computes system global times summing each
-                    // processor value
-                    idle = user = kernel = 0;
-                    for (i = 0; i < si.dwNumberOfProcessors; i++) {
-                        py_tuple = NULL;
-                        user = (float)((HI_T * sppi[i].UserTime.HighPart) +
-                                       (LO_T * sppi[i].UserTime.LowPart));
-                        idle = (float)((HI_T * sppi[i].IdleTime.HighPart) +
-                                       (LO_T * sppi[i].IdleTime.LowPart));
-                        kernel = (float)((HI_T * sppi[i].KernelTime.HighPart) +
-                                         (LO_T * sppi[i].KernelTime.LowPart));
-                        // kernel time includes idle time on windows
-                        // we return only busy kernel time subtracting
-                        // idle time from kernel time
-                        py_tuple = Py_BuildValue("(ddd)",
-                                            user,
-                                            kernel - idle,
-                                            idle);
-                        if (!py_tuple)
-                            goto error;
-                        if (PyList_Append(py_retlist, py_tuple))
-                            goto error;
-                        Py_DECREF(py_tuple);
-                    }
-                    free(sppi);
-                    FreeLibrary(hNtDll);
-                    return py_retlist;
+    // allocates an array of SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
+    // structures, one per processor
+    sppi = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
+           malloc(si.dwNumberOfProcessors * \
+                  sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+    if (sppi == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
 
-                }  // END NtQuerySystemInformation
-            }  // END malloc SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION
-        }  // END GetProcAddress
-    }  // END LoadLibrary
-    goto error;
+    // gets cpu time informations
+    status = NtQuerySystemInformation(
+        SystemProcessorPerformanceInformation,
+        sppi,
+        si.dwNumberOfProcessors * sizeof
+            (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+        NULL);
+    if (status != 0) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    // computes system global times summing each
+    // processor value
+    idle = user = kernel = 0;
+    for (i = 0; i < si.dwNumberOfProcessors; i++) {
+        py_tuple = NULL;
+        user = (float)((HI_T * sppi[i].UserTime.HighPart) +
+                       (LO_T * sppi[i].UserTime.LowPart));
+        idle = (float)((HI_T * sppi[i].IdleTime.HighPart) +
+                       (LO_T * sppi[i].IdleTime.LowPart));
+        kernel = (float)((HI_T * sppi[i].KernelTime.HighPart) +
+                         (LO_T * sppi[i].KernelTime.LowPart));
+        // kernel time includes idle time on windows
+        // we return only busy kernel time subtracting
+        // idle time from kernel time
+        py_tuple = Py_BuildValue(
+            "(ddd)",
+            user,
+            kernel - idle,
+            idle
+        );
+        if (!py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
+        Py_DECREF(py_tuple);
+    }
+
+    free(sppi);
+    FreeLibrary(hNtDll);
+    return py_retlist;
 
 error:
     Py_XDECREF(py_tuple);
@@ -1029,7 +1041,6 @@ error:
         free(sppi);
     if (hNtDll)
         FreeLibrary(hNtDll);
-    PyErr_SetFromWindowsErr(0);
     return NULL;
 }
 

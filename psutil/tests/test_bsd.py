@@ -286,7 +286,6 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
 # --- OpenBSD
 # =====================================================================
 
-
 @unittest.skipUnless(OPENBSD, "not an OpenBSD system")
 class OpenBSDSpecificTestCase(unittest.TestCase):
 
@@ -296,6 +295,46 @@ class OpenBSDSpecificTestCase(unittest.TestCase):
         psutil_bt = datetime.datetime.fromtimestamp(psutil.boot_time())
         self.assertEqual(sys_bt, psutil_bt)
 
+
+# =====================================================================
+# --- NetBSD
+# =====================================================================
+
+@unittest.skipUnless(NETBSD, "not a NetBSD system")
+class NetBSDSpecificTestCase(unittest.TestCase):
+
+    def parse_meminfo(self, look_for):
+        with open('/proc/meminfo', 'rb') as f:
+            for line in f:
+                if line.startswith(look_for):
+                    return int(line.split()[1]) * 1024
+        raise ValueError("can't find %s" % look_for)
+
+    # XXX - failing tests
+
+    # def test_vmem_total(self):
+    #     self.assertEqual(
+    #         psutil.virtual_memory().total, self.parse_meminfo("MemTotal:"))
+
+    # def test_vmem_free(self):
+    #     self.assertEqual(
+    #         psutil.virtual_memory().buffers, self.parse_meminfo("MemFree:"))
+
+    def test_vmem_buffers(self):
+        self.assertEqual(
+            psutil.virtual_memory().buffers, self.parse_meminfo("Buffers:"))
+
+    def test_vmem_shared(self):
+        self.assertEqual(
+            psutil.virtual_memory().shared, self.parse_meminfo("MemShared:"))
+
+    def test_swapmem_total(self):
+        self.assertEqual(
+            psutil.swap_memory().total, self.parse_meminfo("SwapTotal:"))
+
+    def test_swapmem_free(self):
+        self.assertEqual(
+            psutil.swap_memory().free, self.parse_meminfo("SwapFree:"))
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)
