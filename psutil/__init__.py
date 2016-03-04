@@ -916,7 +916,7 @@ class Process(object):
           >>>
         """
         blocking = interval is not None and interval > 0.0
-        num_cpus = cpu_count()
+        num_cpus = cpu_count() or 1
         if POSIX:
             def timer():
                 return _timer() * num_cpus
@@ -946,18 +946,31 @@ class Process(object):
         self._last_proc_cpu_times = pt2
 
         try:
-            # The utilization split between all CPUs.
-            # Note: a percentage > 100 is legitimate as it can result
-            # from a process with multiple threads running on different
-            # CPU cores, see:
-            # http://stackoverflow.com/questions/1032357
-            # https://github.com/giampaolo/psutil/issues/474
-            overall_percent = ((delta_proc / delta_time) * 100) * num_cpus
+            # This is the utilization split evenly between all CPUs.
+            # E.g. a busy loop process on a 2-CPU-cores system at this
+            # point is reported as 50% instead of 100%.
+            overall_cpus_percent = ((delta_proc / delta_time) * 100)
         except ZeroDivisionError:
             # interval was too low
             return 0.0
         else:
-            return round(overall_percent, 1)
+            # Note 1.
+            # in order to emulate "top" we multiply the value for the num
+            # of CPU cores. This way the busy process will be reported as
+            # having 100% (or more) usage.
+            #
+            # Note 2:
+            # taskmgr.exe on Windows differs in that it will show 50%
+            # instead.
+            #
+            # Note #3:
+            # a percentage > 100 is legitimate as it can result from a
+            # process with multiple threads running on different CPU
+            # cores (top does the same), see:
+            # http://stackoverflow.com/questions/1032357
+            # https://github.com/giampaolo/psutil/issues/474
+            single_cpu_percent = overall_cpus_percent * num_cpus
+            return round(single_cpu_percent, 1)
 
     def cpu_times(self):
         """Return a (user, system, children_user, children_system)

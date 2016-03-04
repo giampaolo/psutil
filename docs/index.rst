@@ -936,13 +936,16 @@ Process class
   .. method:: cpu_percent(interval=None)
 
      Return a float representing the process CPU utilization as a percentage.
+     The returned value refers to the utilization of a single CPU, i.e. it is
+     not evenly split between the number of available CPU cores.
      When *interval* is > ``0.0`` compares process times to system CPU times
      elapsed before and after the interval (blocking). When interval is ``0.0``
      or ``None`` compares process times to system CPU times elapsed since last
      call, returning immediately. That means the first time this is called it
      will return a meaningless ``0.0`` value which you are supposed to ignore.
      In this case is recommended for accuracy that this function be called a
-     second time with at least ``0.1`` seconds between calls. Example:
+     second time with at least ``0.1`` seconds between calls.
+     Example:
 
       >>> import psutil
       >>> p = psutil.Process()
@@ -958,6 +961,15 @@ Process class
      .. note::
         a percentage > 100 is legitimate as it can result from a process with
         multiple threads running on different CPU cores.
+
+     .. note::
+        the returned value is not split evenly between all CPUs cores.
+        This means that a busy loop process running on a system with 2 CPU
+        cores will be reported as having 100% CPU utilization instead of 50%.
+        This was done in order to be consistent with UNIX's "top" utility.
+        taskmgr.exe on Windows, instead, will show 50%.
+        To emulate Windows's taskmgr.exe behavior you can do:
+        ``p.cpu_percent() / psutil.cpu_count())``.
 
      .. warning::
         the first time this method is called with interval = ``0.0`` or
