@@ -174,14 +174,14 @@ Memory
 
   Platform-specific fields:
 
-  - **active**: (UNIX): memory currently in use or very recently used, and so
+  - **active** *(UNIX)*: memory currently in use or very recently used, and so
     it is in RAM.
-  - **inactive**: (UNIX): memory that is marked as not used.
-  - **buffers**: (Linux, BSD): cache for things like file system metadata.
-  - **cached**: (Linux, BSD): cache for various things.
-  - **wired**: (BSD, OSX): memory that is marked to always stay in RAM. It is
+  - **inactive** *(UNIX)*: memory that is marked as not used.
+  - **buffers** *(Linux, BSD)*: cache for things like file system metadata.
+  - **cached** *(Linux, BSD)*: cache for various things.
+  - **wired** *(BSD, OSX)*: memory that is marked to always stay in RAM. It is
     never moved to disk.
-  - **shared**: (BSD): memory that may be simultaneously accessed by multiple
+  - **shared** *(BSD)*: memory that may be simultaneously accessed by multiple
     processes.
 
   The sum of **used** and **available** does not necessarily equal **total**.
@@ -279,15 +279,15 @@ Disks
   - **write_count**: number of writes
   - **read_bytes**: number of bytes read
   - **write_bytes**: number of bytes written
-  - **read_time**: (all except NetBSD and OpenBSD) time spent reading from
+  - **read_time**: (all except *NetBSD* and *OpenBSD*) time spent reading from
     disk (in milliseconds)
-  - **write_time**: (all except NetBSD and OpenBSD) time spent writing to disk
+  - **write_time**: (all except *NetBSD* and *OpenBSD*) time spent writing to disk
     (in milliseconds)
-  - **busy_time**: (Linux, FreeBSD) time spent doing actual I/Os (in
+  - **busy_time**: (*Linux*, *FreeBSD*) time spent doing actual I/Os (in
     milliseconds)
-  - **read_merged_count** (Linux): number of merged reads
+  - **read_merged_count** (*Linux*): number of merged reads
     (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
-  - **write_merged_count** (Linux): number of merged writes
+  - **write_merged_count** (*Linux*): number of merged writes
     (see `iostats doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
 
   If *perdisk* is ``True`` return the same information for every physical disk
@@ -1064,24 +1064,24 @@ Process class
        On Windows this is an alias for `pagefile` field and it matches
        "Mem Usage" "VM Size" column of taskmgr.exe.
 
-     - **shared**: (Linux)
+     - **shared**: *(Linux)*
        memory that could be potentially shared with other processes.
        This matches "top"'s SHR column
        (see `doc <http://linux.die.net/man/1/top>`__).
 
-     - **text**: (Linux, BSD)
+     - **text** *(Linux, BSD)*:
        aka TRS (text resident set) the amount of memory devoted to
        executable code. This matches "top"'s CODE column
        (see `doc <http://linux.die.net/man/1/top>`__).
 
-     - **data**: (Linux, BSD)
+     - **data** *(Linux, BSD)*:
        aka DRS (data resident set) the amount of physical memory devoted to
        other than executable code. It matches "top"'s DATA column
        (see `doc <http://linux.die.net/man/1/top>`__).
 
-     - **lib**: (Linux) the memory used by shared libraries.
+     - **lib** *(Linux)*: the memory used by shared libraries.
 
-     - **dirty**: (Linux) the number of dirty pages.
+     - **dirty** *(Linux)*: the number of dirty pages.
 
      For Windows fields rely on
      `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure doc.
@@ -1114,16 +1114,17 @@ Process class
      On platforms where extra fields are not implented this simply returns the
      same metrics as :meth:`memory_info`.
 
-     - **uss**: (Linux, OSX, Windows) aka "Unique Set Size", this is the memory
-       which is unique to a process and which would be freed if the process was terminated right now.
+     - **uss** *(Linux, OSX, Windows)*:
+       aka "Unique Set Size", this is the memory which is unique to a process
+       and which would be freed if the process was terminated right now.
 
-     - **pss**: (Linux) aka "Proportional Set Size", is the amount of memory
+     - **pss** *(Linux)*: aka "Proportional Set Size", is the amount of memory
        shared with other processes, accounted in a way that the amount is
        divided evenly between the processes that share it.
        I.e. if a process has 10 MBs all to itself and 10 MBs shared with
        another process its PSS will be 15 MBs.
 
-     - **swap**: (Linux) amount of memory that has been swapped out to disk.
+     - **swap** *(Linux)*: amount of memory that has been swapped out to disk.
 
      .. note::
        `uss` is probably the most representative metric for determining how
@@ -1239,13 +1240,13 @@ Process class
 
      - **path**: the absolute file name.
      - **fd**: the file descriptor number; on Windows this is always ``-1``.
-     - **position** (Linux): the file (offset) position.
-     - **mode** (Linux): a string indicating how the file was opened, similarly
+     - **position** (*Linux*): the file (offset) position.
+     - **mode** (*Linux*): a string indicating how the file was opened, similarly
        `open <https://docs.python.org/3/library/functions.html#open>`__'s
        ``mode`` argument. Possible values are ``'r'``, ``'w'``, ``'a'``,
        ``'r+'`` and ``'a+'``. There's no distinction between files opened in
        bynary or text mode (``"b"`` or ``"t"``).
-     - **flags** (Linux): the flags which were passed to the underlying
+     - **flags** (*Linux*): the flags which were passed to the underlying
        `os.open <https://docs.python.org/2/library/os.html#os.open>`__ C call
        when the file was opened (e.g.
        `os.O_RDONLY <https://docs.python.org/3/library/os.html#os.O_RDONLY>`__,
@@ -1524,9 +1525,9 @@ Constants
           CONN_LISTEN
           CONN_CLOSING
           CONN_NONE
-          CONN_DELETE_TCB (Windows)
-          CONN_IDLE (Solaris)
-          CONN_BOUND (Solaris)
+          CONN_DELETE_TCB *(Windows)*
+          CONN_IDLE *(Solaris)*
+          CONN_BOUND *(Solaris)*
 
   A set of strings representing the status of a TCP connection.
   Returned by :meth:`psutil.Process.connections()` (`status` field).
