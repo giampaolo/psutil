@@ -536,16 +536,14 @@ Network
   system as a dictionary whose keys are the NIC names and value is a namedtuple
   with the following fields:
 
-  - **isup**
-  - **duplex**
-  - **speed**
-  - **mtu**
+  - **isup**: a bool indicating whether the NIC is up and running.
+  - **duplex**: the duplex communication type;
+    it can be either :const:`NIC_DUPLEX_FULL`, :const:`NIC_DUPLEX_HALF` or
+    :const:`NIC_DUPLEX_UNKNOWN`.
+  - **speed**: the NIC speed expressed in mega bits (MB), if it can't be
+    determined (e.g. 'localhost') it will be set to ``0``.
+  - **mtu**: NIC's maximum transmission unit expressed in bytes.
 
-  *isup* is a boolean indicating whether the NIC is up and running, *duplex*
-  can be either :const:`NIC_DUPLEX_FULL`, :const:`NIC_DUPLEX_HALF` or
-  :const:`NIC_DUPLEX_UNKNOWN`, *speed* is the NIC speed expressed in mega bits
-  (MB), if it can't be determined (e.g. 'localhost') it will be set to ``0``,
-  *mtu* is the maximum transmission unit expressed in bytes.
   See also `scripts/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
   for an example application.
   Example:

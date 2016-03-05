@@ -29,27 +29,30 @@ Since wheels installers are also available you may also use pip.
 Compiling on Windows using Visual Studio
 ========================================
 
-In order to compile psutil on Windows you'll need Visual Studio (Mingw32 is
-no longer supported). You must have the same version of Visual Studio used to
-compile your installation of Python, that is::
+In order to compile psutil on Windows you'll need **Visual Studio** (**Mingw32
+is no longer supported**). Depending on the Python version you'll also need a
+specific VS version.
+The links reported down here used to work at the time this was written
+(Sep 2015):
 
-* Python 2.6:  VS 2008 (download it from `here <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`_)
-* Python 2.7:  VS 2008 (download it from `here <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`_)
-* Python 3.3, 3.4: VS 2010 (you can download it from `MS website <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`_)
-* Python 3.5: `VS 2015 UP <http://www.visualstudio.com/en-au/news/vs2015-preview-vs>`_
+* Python 2.6:  VS 2008 (download it from `here <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`__).
+* Python 2.7:  VS 2008 (download it from `here <http://www.microsoft.com/en-us/download/details.aspx?id=44266>`__).
+* Python 3.3: VS 2010 (download it from `here <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`__).
+* Python 3.4: VS 2010 (download it from `here <http://www.visualstudio.com/downloads/download-visual-studio-vs#d-2010-express>`__).
+* Python 3.5+: VS 2015 (download it from `here <http://www.visualstudio.com/en-au/news/vs2015-preview-vs>`__).
 
-...then run::
+To build:
 
     setup.py build
 
-...or::
+To install:
 
-    make.bat build
+    setup.py install
 
 Compiling 64 bit versions of Python 2.6 and 2.7 with VS 2008 requires
 Windows SDK and .NET Framework 3.5 SP1 to be installed first.
-Once you have those run vcvars64.bat, then compile:
-http://stackoverflow.com/questions/11072521/
+Once you have those run vcvars64.bat, then compile (see
+`here <http://stackoverflow.com/questions/11072521/>`__).
 
 ===================
 Installing on Linux
@@ -74,10 +77,8 @@ Installing on OSX
 =================
 
 OSX installation from source will require gcc which you can obtain as part of
-the 'XcodeTools' installer from Apple:
-
-https://developer.apple.com/downloads/?name=Xcode
-
+the `XcodeTools <https://developer.apple.com/downloads/?name=Xcode>`__
+installer from Apple.
 Once you have installed XCode you can run the standard distutils commands.
 To build only::
 
@@ -111,9 +112,10 @@ Makefile
 
 A makefile is available for both UNIX and Windows (make.bat).  It provides
 some automations for the tasks described above and might be preferred over
-using setup.py. With it you can::
+using setup.py. Some useful commands:
 
-    $ make install    # just install (in --user mode)
-    $ make uninstall  # uninstall (needs pip)
-    $ make test       # run tests
-    $ make clean      # remove installation files
+    $ make install       # just install (in --user mode)
+    $ make uninstall     # uninstall (needs pip)
+    $ make setup-dev-env # install all dev deps for running tests, building doc, etc
+    $ make test          # run tests
+    $ make clean         # remove installation files
