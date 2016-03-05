@@ -3119,6 +3119,129 @@ error:
 }
 
 
+/*
+ * Return CPU statistics.
+ */
+static PyObject *
+psutil_cpu_stats(PyObject *self, PyObject *args) {
+    // NtQuerySystemInformation stuff
+    typedef DWORD (_stdcall * NTQSI_PROC) (int, PVOID, ULONG, PULONG);
+    NTQSI_PROC NtQuerySystemInformation;
+    HINSTANCE hNtDll;
+
+    NTSTATUS status;
+    _SYSTEM_PERFORMANCE_INFORMATION *spi = NULL;
+    _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
+    _SYSTEM_INTERRUPT_INFORMATION *InterruptInformation = NULL;
+    SYSTEM_INFO si;
+    UINT i;
+    ULONG64 dpcs = 0;
+    ULONG interrupts = 0;
+
+    // obtain NtQuerySystemInformation
+    hNtDll = LoadLibrary(TEXT("ntdll.dll"));
+    if (hNtDll == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+    NtQuerySystemInformation = (NTQSI_PROC)GetProcAddress(
+        hNtDll, "NtQuerySystemInformation");
+    if (NtQuerySystemInformation == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    // retrives number of processors
+    GetSystemInfo(&si);
+
+    // get syscalls / ctx switches
+    spi = (_SYSTEM_PERFORMANCE_INFORMATION *) \
+           malloc(si.dwNumberOfProcessors * \
+                  sizeof(_SYSTEM_PERFORMANCE_INFORMATION));
+    if (spi == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+    status = NtQuerySystemInformation(
+        SystemPerformanceInformation,
+        spi,
+        si.dwNumberOfProcessors * sizeof(_SYSTEM_PERFORMANCE_INFORMATION),
+        NULL);
+    if (status != 0) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    // get DPCs
+    InterruptInformation = \
+        malloc(sizeof(_SYSTEM_INTERRUPT_INFORMATION) *
+               si.dwNumberOfProcessors);
+    if (InterruptInformation == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+    status = NtQuerySystemInformation(
+        SystemInterruptInformation,
+        InterruptInformation,
+        si.dwNumberOfProcessors * sizeof(SYSTEM_INTERRUPT_INFORMATION),
+        NULL);
+    if (status != 0) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+    for (i = 0; i < si.dwNumberOfProcessors; i++) {
+        dpcs += InterruptInformation[i].DpcCount;
+    }
+
+    // get interrupts
+    sppi = (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *) \
+        malloc(si.dwNumberOfProcessors * \
+               sizeof(_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION));
+    if (sppi == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    status = NtQuerySystemInformation(
+        SystemProcessorPerformanceInformation,
+        sppi,
+        si.dwNumberOfProcessors * sizeof
+            (_SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION),
+        NULL);
+    if (status != 0) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    for (i = 0; i < si.dwNumberOfProcessors; i++) {
+        interrupts += sppi[i].InterruptCount;
+    }
+
+
+    // done
+    free(spi);
+    free(InterruptInformation);
+    FreeLibrary(hNtDll);
+    return Py_BuildValue(
+        "kkkk",
+        spi->ContextSwitches,
+        interrupts,
+        (unsigned long)dpcs,
+        spi->SystemCalls
+    );
+
+error:
+    if (spi)
+        free(spi);
+    if (InterruptInformation)
+        free(InterruptInformation);
+    if (hNtDll)
+        FreeLibrary(hNtDll);
+    return NULL;
+}
+
+
+
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -3222,6 +3345,8 @@ PsutilMethods[] = {
     {"net_if_addrs", psutil_net_if_addrs, METH_VARARGS,
      "Return NICs addresses."},
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
+     "Return NICs stats."},
+    {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return NICs stats."},
 
     // --- windows API bindings

@@ -155,27 +155,39 @@ CPU
   Return various CPU statistics as a namedtuple whose fields change depending
   on the platform.
 
-  ctx_switches, interrupts, soft_interrupts, syscalls, traps
+  +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
+  | Linux           |  OSX            | Windows      | FreeBSD         | OpenBSD         | NetBSD          | SunOS        |
+  +=================+=================+==============+=================+=================+=================+==============+
+  | ctx_switches    | ctx_switches    | ctx_switches | ctx_switches    | ctx_switches    | ctx_switches    | ctx_switches |
+  +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
+  | interrupts      | interrupts      | interrupts   | interrupts      | interrupts      | interrupts      | interrupts   |
+  +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
+  | soft_interrupts | soft_interrupts | dpcs         | soft_interrupts | soft_interrupts | soft_interrupts | syscalls     |
+  +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
+  |                 | syscalls        | syscalls     | syscalls        | syscalls        | syscalls        | traps        |
+  +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
+  |                 | traps           |              | traps           | traps           | traps           |              |
+  +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
+  |                 |                 |              |                 |                 |                 |              |
+  +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
+  |                 |                 |              |                 |                 |                 |              |
+  +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
+  |                 |                 |              |                 |                 |                 |              |
+  +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
 
-     +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     | Linux           |  OSX            | Windows      | FreeBSD         | OpenBSD         | NetBSD          | SunOS        |
-     +=================+=================+==============+=================+=================+=================+==============+
-     | ctx_switches    | ctx_switches    |              | ctx_switches    | ctx_switches    | ctx_switches    | ctx_switches |
-     +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     | interrupts      | interrupts      |              | interrupts      | interrupts      | interrupts      | interrupts   |
-     +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     | soft_interrupts | soft_interrupts |              | soft_interrupts | soft_interrupts | soft_interrupts | syscalls     |
-     +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     | procs_running   | syscalls        |              | syscalls        | syscalls        | syscalls        | traps        |
-     +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     | procs_blocked   | traps           |              | traps           | traps           | traps           |              |
-     +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     |                 |                 |              |                 |                 |                 |              |
-     +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     |                 |                 |              |                 |                 |                 |              |
-     +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     |                 |                 |              |                 |                 |                 |              |
-     +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
+  - **ctx_switches**:
+    number of context switches (voluntary + involuntary) since boot.
+  - **interrupts**:
+    number of interrupts since boot.
+  - **soft_interrupts**:
+    number of software interrupts since boot.
+  - **syscalls**: number of system calls since boot.
+  - **traps**: number of kernel traps since boot.
+  - **dpcs** *(Windows)*: number of
+    `delayed procedure calls <https://technet.microsoft.com/en-us/library/cc938646.aspx>`__
+    since boot.
+  - **procs_running** *(Linux)*: current number of actively running processes.
+  - **procs_blocked** *(Linux)*: current number of processes waiting for I/O.
 
   Example (Linux):
 
@@ -183,7 +195,7 @@ CPU
 
      >>> import psutil
      >>> psutil.cpu_stats()
-     scpustats(ctx_switches=20455687, interrupts=6598984, soft_interrupts=2134212, procs_running=1, procs_blocked=0)
+     scpustats(ctx_switches=20455687, interrupts=6598984, soft_interrupts=2134212)
 
   .. versionadded:: 4.1.0
 

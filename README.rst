@@ -118,6 +118,8 @@ CPU
     >>> psutil.cpu_count(logical=False)
     2
     >>>
+    >>> psutil.cpu_stats()
+    scpustats(ctx_switches=20455687, interrupts=6598984, soft_interrupts=2134212)
 
 Memory
 ======

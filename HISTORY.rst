@@ -11,6 +11,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   'children_system' (always set to 0 on OSX and Windows).
 - #789: [Windows] psutil.cpu_times() return two new fields: "interrupt" and
   "dpc". Same for psutil.cpu_times_percent().
+- #792: new psutil.cpu_stats() function.
 
 **Bug fixes**
 
