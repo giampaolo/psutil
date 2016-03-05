@@ -246,8 +246,9 @@ sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'read_time', 'write_time',
                                  'read_merged_count', 'write_merged_count',
                                  'busy_time'])
-scpustats = namedtuple('scpustats', ['ctx_switches', 'interrupts',
-                                     'procs_running', 'procs_blocked'])
+scpustats = namedtuple('scpustats',
+                       ['ctx_switches', 'interrupts', 'soft_interrupts',
+                        'procs_running', 'procs_blocked'])
 popenfile = namedtuple('popenfile',
                        ['path', 'fd', 'position', 'mode', 'flags'])
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
@@ -436,6 +437,7 @@ def cpu_stats():
         procs_running = None
         procs_blocked = None
         interrupts = None
+        soft_interrupts = None
         for line in f:
             if line.startswith(b'ctxt'):
                 ctx_switches = int(line.split()[1])
@@ -445,10 +447,14 @@ def cpu_stats():
                 procs_blocked = int(line.split()[1])
             elif line.startswith(b'intr'):
                 interrupts = int(line.split()[1])
+            elif line.startswith(b'softirq'):
+                soft_interrupts = int(line.split()[1])
             if ctx_switches is not None and procs_running is not None and \
-                    procs_blocked is not None and interrupts is not None:
+                    soft_interrupts is not None and procs_blocked is not None \
+                    and interrupts is not None:
                 break
-    return scpustats(ctx_switches, interrupts, procs_running, procs_blocked)
+    return scpustats(ctx_switches, interrupts, soft_interrupts, procs_running,
+                     procs_blocked)
 
 
 # --- other system functions
