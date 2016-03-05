@@ -246,7 +246,8 @@ sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'read_time', 'write_time',
                                  'read_merged_count', 'write_merged_count',
                                  'busy_time'])
-
+scpustats = namedtuple('scpustats', ['ctx_switches', 'interrupts',
+                                     'procs_running', 'procs_blocked'])
 popenfile = namedtuple('popenfile',
                        ['path', 'fd', 'position', 'mode', 'flags'])
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
@@ -427,6 +428,27 @@ def cpu_count_physical():
 
     # mimic os.cpu_count()
     return sum(mapping.values()) or None
+
+
+def cpu_stats():
+    with open_binary('%s/stat' % get_procfs_path()) as f:
+        ctx_switches = None
+        procs_running = None
+        procs_blocked = None
+        interrupts = None
+        for line in f:
+            if line.startswith(b'ctxt'):
+                ctx_switches = int(line.split()[1])
+            elif line.startswith(b'procs_running'):
+                procs_running = int(line.split()[1])
+            elif line.startswith(b'procs_blocked'):
+                procs_blocked = int(line.split()[1])
+            elif line.startswith(b'intr'):
+                interrupts = int(line.split()[1])
+            if ctx_switches is not None and procs_running is not None and \
+                    procs_blocked is not None and interrupts is not None:
+                break
+    return scpustats(ctx_switches, interrupts, procs_running, procs_blocked)
 
 
 # --- other system functions

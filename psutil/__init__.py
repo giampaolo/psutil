@@ -1687,6 +1687,11 @@ def cpu_times_percent(interval=None, percpu=False):
         return ret
 
 
+def cpu_stats():
+    """Return CPU statistics."""
+    return _psplatform.cpu_stats()
+
+
 # =====================================================================
 # --- system memory related functions
 # =====================================================================
