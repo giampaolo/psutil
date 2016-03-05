@@ -98,6 +98,9 @@ ntpinfo = namedtuple(
     'ntpinfo', ['num_handles', 'ctx_switches', 'user_time', 'kernel_time',
                 'create_time', 'num_threads', 'io_rcount', 'io_wcount',
                 'io_rbytes', 'io_wbytes'])
+ssysinfo = namedtuple(
+    'ssysinfo', ['ctx_switches', 'interrupts', 'dpcs', 'syscalls'])
+
 
 # set later from __init__.py
 NoSuchProcess = None
@@ -207,6 +210,12 @@ def cpu_count_logical():
 def cpu_count_physical():
     """Return the number of physical CPUs in the system."""
     return cext.cpu_count_phys()
+
+
+def cpu_stats():
+    """Return CPU statistics."""
+    ctx_switches, interrupts, dpcs, syscalls = cext.cpu_stats()
+    return ssysinfo(ctx_switches, interrupts, dpcs, syscalls)
 
 
 def boot_time():

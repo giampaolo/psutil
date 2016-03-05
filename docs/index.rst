@@ -155,18 +155,16 @@ CPU
   Return various CPU statistics as a namedtuple whose fields change depending
   on the platform.
 
-  ctx_switches, interrupts, soft_interrupts, syscalls, traps
-
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
      | Linux           |  OSX            | Windows      | FreeBSD         | OpenBSD         | NetBSD          | SunOS        |
      +=================+=================+==============+=================+=================+=================+==============+
-     | ctx_switches    | ctx_switches    |              | ctx_switches    | ctx_switches    | ctx_switches    | ctx_switches |
+     | ctx_switches    | ctx_switches    | ctx_switches | ctx_switches    | ctx_switches    | ctx_switches    | ctx_switches |
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     | interrupts      | interrupts      |              | interrupts      | interrupts      | interrupts      | interrupts   |
+     | interrupts      | interrupts      | interrupts   | interrupts      | interrupts      | interrupts      | interrupts   |
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     | soft_interrupts | soft_interrupts |              | soft_interrupts | soft_interrupts | soft_interrupts | syscalls     |
+     | soft_interrupts | soft_interrupts | dpcs         | soft_interrupts | soft_interrupts | soft_interrupts | syscalls     |
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
-     | procs_running   | syscalls        |              | syscalls        | syscalls        | syscalls        | traps        |
+     | procs_running   | syscalls        | syscalls     | syscalls        | syscalls        | syscalls        | traps        |
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
      | procs_blocked   | traps           |              | traps           | traps           | traps           |              |
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
@@ -176,6 +174,20 @@ CPU
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
      |                 |                 |              |                 |                 |                 |              |
      +-----------------+-----------------+--------------+-----------------+-----------------+-----------------+--------------+
+
+  - **ctx_switches**:
+    number of context switches (voluntary + involuntary) since boot.
+  - **interrupts**:
+    number of interrupts since boot.
+  - **interrupts**:
+    number of software interrupts since boot.
+  - **syscalls**: number of system calls since boot.
+  - **traps**: number of kernel traps since boot.
+  - **dpcs** *(Windows)*: number of
+    `delayed procedure calls <https://technet.microsoft.com/en-us/library/cc938646.aspx>`__
+    since boot.
+  - **procs_running** *(Linux)*: current number of actively running processes.
+  - **procs_blocked** *(Linux)*: current number of processes waiting for I/O.
 
   Example (Linux):
 
