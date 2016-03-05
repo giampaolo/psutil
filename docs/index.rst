@@ -1575,9 +1575,9 @@ Constants
           CONN_LISTEN
           CONN_CLOSING
           CONN_NONE
-          CONN_DELETE_TCB *(Windows)*
-          CONN_IDLE *(Solaris)*
-          CONN_BOUND *(Solaris)*
+          CONN_DELETE_TCB (Windows)
+          CONN_IDLE (Solaris)
+          CONN_BOUND (Solaris)
 
   A set of strings representing the status of a TCP connection.
   Returned by :meth:`psutil.Process.connections()` (`status` field).
