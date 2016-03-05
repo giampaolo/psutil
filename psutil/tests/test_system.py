@@ -341,7 +341,7 @@ class TestSystemAPIs(unittest.TestCase):
         summed_values = base._make([sum(num) for num in zip(*per_cpu)])
         for field in base._fields:
             self.assertAlmostEqual(
-                getattr(base, field), getattr(summed_values, field), delta=0.1)
+                getattr(base, field), getattr(summed_values, field), delta=1)
 
     def _test_cpu_percent(self, percent, last_ret, new_ret):
         try:
