@@ -17,10 +17,10 @@ Quick links
 -----------
 
 * `Home page <https://github.com/giampaolo/psutil>`__
+* `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 * `Blog <http://grodola.blogspot.com/search/label/psutil>`__
 * `Forum <http://groups.google.com/group/psutil/topics>`__
 * `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`__
-* `Installation <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 * `Development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_
 * `What's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__
 

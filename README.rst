@@ -31,8 +31,8 @@ Quick links
 ===========
 
 - `Home page <https://github.com/giampaolo/psutil>`_
+- `Install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 - `Documentation <http://pythonhosted.org/psutil/>`_
-- `Installation <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
 - `Download <https://pypi.python.org/pypi?:action=display&name=psutil#downloads>`_
 - `Forum <http://groups.google.com/group/psutil/topics>`_
 - `Blog <http://grodola.blogspot.com/search/label/psutil>`_
