@@ -595,6 +595,7 @@ class TestServices(unittest.TestCase):
             self.assertIn(serv.status, statuses)
             if serv.pid is not None:
                 psutil.Process(serv.pid)
+            serv.binpath
 
 
 if __name__ == '__main__':

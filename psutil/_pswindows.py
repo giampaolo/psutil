@@ -324,13 +324,14 @@ ppid_map = cext.ppid_map  # not meant to be public
 class WindowsService(object):
     """Represents an installed Windows service."""
 
-    def __init__(self, name, display_name, status, pid):
+    def __init__(self, name, display_name, status, pid, binpath):
         self._name = name
         self._display_name = display_name
         self._status = status
         if pid == 0:
             pid = None
         self._pid = pid
+        self._binpath = binpath
 
     def __str__(self):
         details = "(name=%s, status=%s, pid=%s)" % (
@@ -356,11 +357,25 @@ class WindowsService(object):
     def status(self):
         return SERVICE_STATUSES.get(self._status, self._status)
 
+    @property
+    def binpath(self):
+        return self._binpath
+
+    def as_dict(self):
+        return dict(
+            pid=self.pid,
+            name=self.name,
+            display_name=self.display_name,
+            status=self.status,
+            binpath=self.binpath,
+        )
+
 
 def win_service_iter():
     """Return a list of WindowsService instances."""
-    for name, display_name, status, pid in cext.winservice_enumerate():
-        yield WindowsService(name, display_name, status, pid)
+    ret = cext.winservice_enumerate()
+    for name, display_name, status, pid, binpath in ret:
+        yield WindowsService(name, display_name, status, pid, binpath)
 
 
 # --- decorators

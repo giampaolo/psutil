@@ -24,6 +24,8 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     DWORD resumeHandle = 0;
     DWORD dwBytes = 0;
     DWORD i;
+    SC_HANDLE hService = NULL;
+    QUERY_SERVICE_CONFIG *qsc = NULL;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
 
@@ -40,7 +42,7 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
         ok = EnumServicesStatusEx(
             sc,
             SC_ENUM_PROCESS_INFO,
-            SERVICE_WIN32,
+            SERVICE_WIN32,  // XXX - extend this to include drivers etc.?
             SERVICE_STATE_ALL,
             (LPBYTE)lpService,
             dwBytes,
@@ -57,18 +59,48 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     }
 
     for (i = 0; i < srvCount; i++) {
+        // Get service handler.
+        hService = OpenService(sc, lpService[i].lpServiceName,
+                               SERVICE_QUERY_CONFIG);
+        if (hService == NULL) {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+
+        // Query service config to get the binary path. First call to
+        // QueryServiceConfig() is necessary to get the right size.
+        bytesNeeded = 0;
+        QueryServiceConfig(hService, NULL, 0, &bytesNeeded);
+        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+        qsc = (QUERY_SERVICE_CONFIG *)malloc(bytesNeeded);
+        ok = QueryServiceConfig(hService, qsc, bytesNeeded, &bytesNeeded);
+        if (ok == 0) {
+            PyErr_SetFromWindowsErr(0);
+            goto error;
+        }
+
+        // Construct the result.
         py_tuple = Py_BuildValue(
-            "(ssik)",
+            "(ssiks)",
             lpService[i].lpServiceName,  // name
-            lpService[i].lpDisplayName,  // display name
+            lpService[i].lpDisplayName,  // display_name
             lpService[i].ServiceStatusProcess.dwCurrentState,  // status
-            lpService[i].ServiceStatusProcess.dwProcessId  // pid
+            lpService[i].ServiceStatusProcess.dwProcessId,  // pid
+            // TODO: handle encoding errs
+            qsc->lpBinaryPathName  // binpath
         );
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
         Py_DECREF(py_tuple);
+
+        // free stuff
+        CloseServiceHandle(hService);
+        free(qsc);
     }
 
     CloseServiceHandle(sc);
@@ -78,6 +110,10 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
 error:
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
+    if (hService != NULL)
+        CloseServiceHandle(hService);
+    if (qsc != NULL)
+        free(qsc);
     if (sc != NULL)
         CloseServiceHandle(sc);
     if (lpService != NULL)
