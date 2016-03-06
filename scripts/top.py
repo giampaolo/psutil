@@ -16,7 +16,7 @@ $ python scripts/top.py
  CPU3  [|||||                                   ]  13.9%
  Mem   [|||||||||||||||||||                     ]  49.8%  4920M/9888M
  Swap  [                                        ]   0.0%     0M/0M
- Processes: 287 (running=1 sleeping=286)
+ Processes: 287 (running=1, sleeping=286, zombie=1)
  Load average: 0.34 0.54 0.46  Uptime: 3 days, 10:16:37
 
 PID    USER       NI  VIRT   RES   CPU% MEM%     TIME+  NAME
@@ -164,7 +164,7 @@ def print_header(procs_status, num_procs):
         if y:
             st.append("%s=%s" % (x, y))
     st.sort(key=lambda x: x[:3] in ('run', 'sle'), reverse=1)
-    print_line(" Processes: %s (%s)" % (num_procs, ' '.join(st)))
+    print_line(" Processes: %s (%s)" % (num_procs, ', '.join(st)))
     # load average, uptime
     uptime = datetime.now() - datetime.fromtimestamp(psutil.boot_time())
     av1, av2, av3 = os.getloadavg()

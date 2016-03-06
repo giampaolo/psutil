@@ -112,7 +112,7 @@ Test coverage
 
 Test coverage is provided by `coveralls.io <https://coveralls.io/github/giampaolo/psutil>`_,
 it is controlled via `.travis.yml <https://github.com/giampaolo/psutil/blob/master/.travis.yml>`_
-and it is update on every git push.
+and it is updated on every git push.
 An icon in the home page (README) always shows the last coverage percentage:
 
 .. image:: https://coveralls.io/repos/giampaolo/psutil/badge.svg?branch=master&service=github

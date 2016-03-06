@@ -105,7 +105,6 @@ CPU
     [7.0, 8.5, 2.4, 2.1]
     [1.2, 9.0, 9.9, 7.2]
     >>>
-    >>>
     >>> for x in range(3):
     ...     psutil.cpu_times_percent(interval=1, percpu=False)
     ...
@@ -292,7 +291,8 @@ Process management
     >>>
     >>> p.environ()
     {'LC_PAPER': 'it_IT.UTF-8', 'SHELL': '/bin/bash', 'GREP_OPTIONS': '--color=auto',
-    'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/usr/share/upstart/xdg:/etc/xdg', 'COLORTERM': 'gnome-terminal', ...}
+    'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/usr/share/upstart/xdg:/etc/xdg', 'COLORTERM': 'gnome-terminal',
+     ...}
     >>>
     >>> p.suspend()
     >>> p.resume()
@@ -329,7 +329,7 @@ Further process APIs
     ...     print("process {} terminated".format(proc))
     ...
     >>> # waits for multiple processes to terminate
-    >>> gone, alive = psutil.wait_procs(procs_list, 3, callback=on_terminate)
+    >>> gone, alive = psutil.wait_procs(procs_list, timeout=3, callback=on_terminate)
     >>>
 
 ======
