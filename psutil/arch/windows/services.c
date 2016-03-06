@@ -16,7 +16,7 @@
  */
 PyObject *
 psutil_winservice_enumerate(PyObject *self, PyObject *args) {
-    ENUM_SERVICE_STATUS *lpService = NULL;
+    ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
     SC_HANDLE sc = NULL;
     BOOL ok;
     DWORD bytesNeeded = 0;
@@ -37,23 +37,32 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     }
 
     for (;;) {
-        ok = EnumServicesStatus(
-            sc, SERVICE_WIN32, SERVICE_STATE_ALL, lpService, dwBytes,
-            &bytesNeeded, &srvCount, &resumeHandle);
+        ok = EnumServicesStatusEx(
+            sc,
+            SC_ENUM_PROCESS_INFO,
+            SERVICE_WIN32,
+            SERVICE_STATE_ALL,
+            (LPBYTE)lpService,
+            dwBytes,
+            &bytesNeeded,
+            &srvCount,
+            &resumeHandle,
+            NULL);
         if (ok || (GetLastError() != ERROR_MORE_DATA))
             break;
         if (lpService)
             free(lpService);
         dwBytes = bytesNeeded;
-        lpService = (ENUM_SERVICE_STATUS*)malloc(dwBytes);
+        lpService = (ENUM_SERVICE_STATUS_PROCESS*)malloc(dwBytes);
     }
 
     for (i = 0; i < srvCount; i++) {
         py_tuple = Py_BuildValue(
-            "(ssi)",
+            "(ssik)",
             lpService[i].lpServiceName,  // name
             lpService[i].lpDisplayName,  // display name
-            lpService[i].ServiceStatus.dwCurrentState  // status
+            lpService[i].ServiceStatusProcess.dwCurrentState,  // status
+            lpService[i].ServiceStatusProcess.dwProcessId  // pid
         );
         if (py_tuple == NULL)
             goto error;

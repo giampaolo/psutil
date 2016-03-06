@@ -593,6 +593,8 @@ class TestServices(unittest.TestCase):
             self.assertTrue(serv.name)
             self.assertTrue(serv.display_name)
             self.assertIn(serv.status, statuses)
+            if serv.pid is not None:
+                psutil.Process(serv.pid)
 
 
 if __name__ == '__main__':
