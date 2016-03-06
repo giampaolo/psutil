@@ -36,12 +36,22 @@ else:
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
-__extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
-                  "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
-                  "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
-                  "CONN_DELETE_TCB",
-                  "AF_LINK",
-                  ]
+__extra__all__ = [
+    "win_service_iter",
+    "ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
+    "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
+    "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
+    "CONN_DELETE_TCB",
+    "AF_LINK",
+    # service statuses
+    "WINSERVICE_STATUS_CONTINUE_PENDING",
+    "WINSERVICE_STATUS_PAUSE_PENDING",
+    "WINSERVICE_STATUS_PAUSED",
+    "WINSERVICE_STATUS_RUNNING",
+    "WINSERVICE_STATUS_START_PENDING",
+    "WINSERVICE_STATUS_STOP_PENDING",
+    "WINSERVICE_STATUS_STOPPED",
+    ]
 
 # --- module level constants (gets pushed up to psutil module)
 
@@ -49,6 +59,15 @@ CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
                                cext.ERROR_ACCESS_DENIED])
+
+WINSERVICE_STATUS_CONTINUE_PENDING = "continue-pending"
+WINSERVICE_STATUS_PAUSE_PENDING = "pause-pending"
+WINSERVICE_STATUS_PAUSED = "paused"
+WINSERVICE_STATUS_RUNNING = "running"
+WINSERVICE_STATUS_START_PENDING = "start-pending"
+WINSERVICE_STATUS_STOP_PENDING = "stop-pending"
+WINSERVICE_STATUS_STOPPED = "stopped"
+
 if enum is None:
     AF_LINK = -1
 else:
@@ -69,6 +88,16 @@ TCP_STATUSES = {
     cext.MIB_TCP_STATE_CLOSING: _common.CONN_CLOSING,
     cext.MIB_TCP_STATE_DELETE_TCB: CONN_DELETE_TCB,
     cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
+}
+
+SERVICE_STATUSES = {
+    cext.SERVICE_CONTINUE_PENDING: WINSERVICE_STATUS_CONTINUE_PENDING,
+    cext.SERVICE_PAUSE_PENDING: WINSERVICE_STATUS_PAUSE_PENDING,
+    cext.SERVICE_PAUSED: WINSERVICE_STATUS_PAUSED,
+    cext.SERVICE_RUNNING: WINSERVICE_STATUS_RUNNING,
+    cext.SERVICE_START_PENDING: WINSERVICE_STATUS_START_PENDING,
+    cext.SERVICE_STOP_PENDING: WINSERVICE_STATUS_STOP_PENDING,
+    cext.SERVICE_STOPPED: WINSERVICE_STATUS_STOPPED,
 }
 
 if enum is not None:
@@ -288,6 +317,45 @@ pid_exists = cext.pid_exists
 disk_io_counters = cext.disk_io_counters
 ppid_map = cext.ppid_map  # not meant to be public
 
+
+# --- Windows services
+
+
+class WindowsService(object):
+    """Represents an installed Windows service."""
+
+    def __init__(self, name, display_name, status):
+        self._name = name
+        self._display_name = display_name
+        self._status = status
+
+    def __str__(self):
+        details = "(name=%s, status=%s)" % (self.name, self.status)
+        return "%s%s" % (self.__class__.__name__, details)
+
+    def __repr__(self):
+        return "<%s at %s>" % (self.__str__(), id(self))
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def display_name(self):
+        return self._display_name
+
+    @property
+    def status(self):
+        return SERVICE_STATUSES.get(self._status, self._status)
+
+
+def win_service_iter():
+    """Return a list of WindowsService instances."""
+    for name, display_name, status in cext.winservice_enumerate():
+        yield WindowsService(name, display_name, status)
+
+
+# --- decorators
 
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError and WindowsError

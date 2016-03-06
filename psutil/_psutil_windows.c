@@ -21,6 +21,7 @@
 #include <iphlpapi.h>
 #include <wtsapi32.h>
 #include <ws2tcpip.h>
+#include <Winsvc.h>
 
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
@@ -32,6 +33,7 @@
 #include "arch/windows/process_handles.h"
 #include "arch/windows/ntextapi.h"
 #include "arch/windows/inet_ntop.h"
+#include "arch/windows/services.h"
 
 #ifdef __MINGW32__
 #include "arch/windows/glpi.h"
@@ -3241,7 +3243,6 @@ error:
 }
 
 
-
 // ------------------------ Python init ---------------------------
 
 static PyMethodDef
@@ -3349,6 +3350,10 @@ PsutilMethods[] = {
     {"cpu_stats", psutil_cpu_stats, METH_VARARGS,
      "Return NICs stats."},
 
+    // --- windows services
+    {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS,
+     "List all services"},
+
     // --- windows API bindings
     {"win32_QueryDosDevice", psutil_win32_QueryDosDevice, METH_VARARGS,
      "QueryDosDevice binding"},
@@ -3435,6 +3440,7 @@ void init_psutil_windows(void)
         module, "NORMAL_PRIORITY_CLASS", NORMAL_PRIORITY_CLASS);
     PyModule_AddIntConstant(
         module, "REALTIME_PRIORITY_CLASS", REALTIME_PRIORITY_CLASS);
+
     // connection status constants
     // http://msdn.microsoft.com/en-us/library/cc669305.aspx
     PyModule_AddIntConstant(
@@ -3465,6 +3471,23 @@ void init_psutil_windows(void)
         module, "MIB_TCP_STATE_DELETE_TCB", MIB_TCP_STATE_DELETE_TCB);
     PyModule_AddIntConstant(
         module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+
+    // service status constants
+    PyModule_AddIntConstant(
+        module, "SERVICE_CONTINUE_PENDING", SERVICE_CONTINUE_PENDING);
+    PyModule_AddIntConstant(
+        module, "SERVICE_PAUSE_PENDING", SERVICE_PAUSE_PENDING);
+    PyModule_AddIntConstant(
+        module, "SERVICE_PAUSED", SERVICE_PAUSED);
+    PyModule_AddIntConstant(
+        module, "SERVICE_RUNNING", SERVICE_RUNNING);
+    PyModule_AddIntConstant(
+        module, "SERVICE_START_PENDING", SERVICE_START_PENDING);
+    PyModule_AddIntConstant(
+        module, "SERVICE_STOP_PENDING", SERVICE_STOP_PENDING);
+    PyModule_AddIntConstant(
+        module, "SERVICE_STOPPED", SERVICE_STOPPED);
+
     // ...for internal use in _psutil_windows.py
     PyModule_AddIntConstant(
         module, "INFINITE", INFINITE);

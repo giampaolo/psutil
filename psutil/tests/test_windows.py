@@ -576,5 +576,24 @@ class RemoteProcessTestCase(unittest.TestCase):
         self.assertEquals(e["THINK_OF_A_NUMBER"], str(os.getpid()))
 
 
+@unittest.skipUnless(WINDOWS, "not a Windows system")
+class TestServices(unittest.TestCase):
+
+    def test_win_service_iter(self):
+        statuses = [
+            psutil.WINSERVICE_STATUS_CONTINUE_PENDING,
+            psutil.WINSERVICE_STATUS_PAUSE_PENDING,
+            psutil.WINSERVICE_STATUS_PAUSED,
+            psutil.WINSERVICE_STATUS_RUNNING,
+            psutil.WINSERVICE_STATUS_START_PENDING,
+            psutil.WINSERVICE_STATUS_STOP_PENDING,
+            psutil.WINSERVICE_STATUS_STOPPED,
+        ]
+        for serv in psutil.win_service_iter():
+            self.assertTrue(serv.name)
+            self.assertTrue(serv.display_name)
+            self.assertIn(serv.status, statuses)
+
+
 if __name__ == '__main__':
     run_test_module_by_name(__file__)
