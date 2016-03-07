@@ -11,6 +11,33 @@
 #include "services.h"
 
 
+// ==================================================================
+// utils
+// ==================================================================
+
+SC_HANDLE
+psutil_get_service_handler(char *service_name) {
+    ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
+    SC_HANDLE sc = NULL;
+    SC_HANDLE hService = NULL;
+    SERVICE_DESCRIPTION *scd = NULL;
+
+    sc = OpenSCManager(NULL, NULL, SC_MANAGER_ENUMERATE_SERVICE);
+    if (sc == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+    hService = OpenService(sc, service_name, SERVICE_QUERY_CONFIG);
+    if (hService == NULL) {
+        CloseServiceHandle(sc);
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+    CloseServiceHandle(sc);
+    return hService;
+}
+
+
 // XXX - expose these as constants?
 static const char *
 get_startup_string(DWORD startup) {  // startup
@@ -33,6 +60,10 @@ get_startup_string(DWORD startup) {  // startup
     }
 }
 
+
+// ==================================================================
+// APIs
+// ==================================================================
 
 /*
  * Enumerate all services.
@@ -153,7 +184,6 @@ error:
 PyObject *
 psutil_winservice_get_srv_descr(PyObject *self, PyObject *args) {
     ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
-    SC_HANDLE sc = NULL;
     BOOL ok;
     DWORD bytesNeeded = 0;
     DWORD resumeHandle = 0;
@@ -163,20 +193,12 @@ psutil_winservice_get_srv_descr(PyObject *self, PyObject *args) {
     char *service_name;
     PyObject *py_retstr = NULL;
 
+
     if (!PyArg_ParseTuple(args, "s", &service_name))
         return NULL;
-
-    sc = OpenSCManager(NULL, NULL, SC_MANAGER_ENUMERATE_SERVICE);
-    if (sc == NULL) {
-        PyErr_SetFromWindowsErr(0);
-        return NULL;
-    }
-
-    hService = OpenService(sc, service_name, SERVICE_QUERY_CONFIG);
-    if (hService == NULL) {
-        PyErr_SetFromWindowsErr(0);
+    hService = psutil_get_service_handler(service_name);
+    if (hService == NULL)
         goto error;
-    }
 
     // This first call to QueryServiceConfig2() is necessary in order
     // to get the right size.
@@ -201,15 +223,12 @@ psutil_winservice_get_srv_descr(PyObject *self, PyObject *args) {
     if (!py_retstr)
         goto error;
 
-    CloseServiceHandle(sc);
     free(scd);
     return py_retstr;
 
 error:
     if (hService != NULL)
         CloseServiceHandle(hService);
-    if (sc != NULL)
-        CloseServiceHandle(sc);
     if (lpService != NULL)
         free(lpService);
     return NULL;

@@ -5,6 +5,8 @@
  */
 
 #include <Python.h>
+#include <Winsvc.h>
 
+SC_HANDLE psutil_get_service_handle(char service_name);
 PyObject *psutil_winservice_enumerate();
 PyObject *psutil_winservice_get_srv_descr();
