@@ -359,6 +359,9 @@ class WindowsService(object):
     def start_type(self):
         return self._info['startup']
 
+    def description(self):
+        return cext.winservice_get_srv_descr(self.name())
+
     def as_dict(self):
         return self._info
 

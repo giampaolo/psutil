@@ -7,3 +7,4 @@
 #include <Python.h>
 
 PyObject *psutil_winservice_enumerate();
+PyObject *psutil_winservice_get_srv_descr();

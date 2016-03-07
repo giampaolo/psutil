@@ -3353,6 +3353,8 @@ PsutilMethods[] = {
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS,
      "List all services"},
+    {"winservice_get_srv_descr", psutil_winservice_get_srv_descr, METH_VARARGS,
+     "Return the description of a service"},
 
     // --- windows API bindings
     {"win32_QueryDosDevice", psutil_win32_QueryDosDevice, METH_VARARGS,

@@ -115,7 +115,7 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
             // TODO: handle encoding errs
             qsc->lpBinaryPathName,  // binpath
             qsc->lpServiceStartName,  // username
-            get_startup_string(qsc->dwStartType),  // startup
+            get_startup_string(qsc->dwStartType)  // startup
         );
         if (py_tuple == NULL)
             goto error;
@@ -139,6 +139,75 @@ error:
         CloseServiceHandle(hService);
     if (qsc != NULL)
         free(qsc);
+    if (sc != NULL)
+        CloseServiceHandle(sc);
+    if (lpService != NULL)
+        free(lpService);
+    return NULL;
+}
+
+
+/*
+ * Get service description.
+ */
+PyObject *
+psutil_winservice_get_srv_descr(PyObject *self, PyObject *args) {
+    ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
+    SC_HANDLE sc = NULL;
+    BOOL ok;
+    DWORD bytesNeeded = 0;
+    DWORD resumeHandle = 0;
+    DWORD dwBytes = 0;
+    SC_HANDLE hService = NULL;
+    SERVICE_DESCRIPTION *scd = NULL;
+    char *service_name;
+    PyObject *py_retstr = NULL;
+
+    if (!PyArg_ParseTuple(args, "s", &service_name))
+        return NULL;
+
+    sc = OpenSCManager(NULL, NULL, SC_MANAGER_ENUMERATE_SERVICE);
+    if (sc == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        return NULL;
+    }
+
+    hService = OpenService(sc, service_name, SERVICE_QUERY_CONFIG);
+    if (hService == NULL) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    // This first call to QueryServiceConfig2() is necessary in order
+    // to get the right size.
+    bytesNeeded = 0;
+    QueryServiceConfig2(hService, SERVICE_CONFIG_DESCRIPTION, NULL, 0,
+                        &bytesNeeded);
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    scd = (SERVICE_DESCRIPTION *)malloc(bytesNeeded);
+    ok = QueryServiceConfig2(hService, SERVICE_CONFIG_DESCRIPTION,
+                             (LPBYTE)scd, bytesNeeded, &bytesNeeded);
+    if (ok == 0) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    // TODO: handle encoding errors.
+    py_retstr = Py_BuildValue("s", scd->lpDescription);
+    if (!py_retstr)
+        goto error;
+
+    CloseServiceHandle(sc);
+    free(scd);
+    return py_retstr;
+
+error:
+    if (hService != NULL)
+        CloseServiceHandle(hService);
     if (sc != NULL)
         CloseServiceHandle(sc);
     if (lpService != NULL)
