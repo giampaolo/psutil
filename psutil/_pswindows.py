@@ -356,13 +356,17 @@ class WindowsService(object):
     def username(self):
         return self._info['username']
 
+    def start_type(self):
+        return self._info['startup']
+
     def as_dict(self):
         return self._info
 
 
 def win_service_iter():
     """Return a list of WindowsService instances."""
-    keys = ['name', 'display_name', 'status', 'pid', 'binpath', 'username']
+    keys = ['name', 'display_name', 'status', 'pid', 'binpath', 'username',
+            'start_type']
     for row in cext.winservice_enumerate():
         yield WindowsService(dict(zip(keys, row)))
 

@@ -600,6 +600,9 @@ class TestServices(unittest.TestCase):
                 psutil.Process(serv.pid())
             self.assertIsInstance(serv.binpath(), basestring)
             self.assertIsInstance(serv.username(), basestring)
+            self.assertIsInstance(serv.start_type(), basestring)
+            self.assertIn(serv.start_type(),
+                          ("automatic", "manual", "disabled"))
 
 
 if __name__ == '__main__':

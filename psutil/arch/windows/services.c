@@ -11,6 +11,29 @@
 #include "services.h"
 
 
+// XXX - expose these as constants?
+static const char *
+get_startup_string(DWORD startup) {  // startup
+    switch (startup) {
+        case SERVICE_AUTO_START:
+            return "automatic";
+        case SERVICE_DEMAND_START:
+            return "manual";
+        case SERVICE_DISABLED:
+            return "disabled";
+/*
+        // drivers only
+        case SERVICE_BOOT_START:
+            return "boot-start";
+        case SERVICE_SYSTEM_START:
+            return "system-start";
+*/
+        default:
+            return "unknown";
+    }
+}
+
+
 /*
  * Enumerate all services.
  */
@@ -84,14 +107,15 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
 
         // Construct the result.
         py_tuple = Py_BuildValue(
-            "(ssikss)",
+            "(ssiksss)",
             lpService[i].lpServiceName,  // name
             lpService[i].lpDisplayName,  // display_name
             lpService[i].ServiceStatusProcess.dwCurrentState,  // status
             lpService[i].ServiceStatusProcess.dwProcessId,  // pid
             // TODO: handle encoding errs
             qsc->lpBinaryPathName,  // binpath
-            qsc->lpServiceStartName  // username
+            qsc->lpServiceStartName,  // username
+            get_startup_string(qsc->dwStartType),  // startup
         );
         if (py_tuple == NULL)
             goto error;
