@@ -581,21 +581,21 @@ class RemoteProcessTestCase(unittest.TestCase):
 class TestServices(unittest.TestCase):
 
     def test_win_service_iter(self):
-        statuses = [
-            psutil.WINSERVICE_STATUS_CONTINUE_PENDING,
-            psutil.WINSERVICE_STATUS_PAUSE_PENDING,
-            psutil.WINSERVICE_STATUS_PAUSED,
-            psutil.WINSERVICE_STATUS_RUNNING,
-            psutil.WINSERVICE_STATUS_START_PENDING,
-            psutil.WINSERVICE_STATUS_STOP_PENDING,
-            psutil.WINSERVICE_STATUS_STOPPED,
-        ]
+        valid_statuses = set([
+            "running",
+            "paused",
+            "start",
+            "pause",
+            "continue",
+            "stop",
+            "stopped",
+        ])
         for serv in psutil.win_service_iter():
             self.assertIsInstance(serv.name(), basestring)
             self.assertNotEqual(serv.name().strip(), "")
             self.assertIsInstance(serv.display_name(), basestring)
             self.assertIsInstance(serv.username(), basestring)
-            self.assertIn(serv.status(), statuses)
+            self.assertIn(serv.status(), valid_statuses)
             if serv.pid() is not None:
                 psutil.Process(serv.pid())
             self.assertIsInstance(serv.binpath(), basestring)

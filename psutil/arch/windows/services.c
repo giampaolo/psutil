@@ -16,7 +16,7 @@
 // ==================================================================
 
 SC_HANDLE
-psutil_get_service_handler(char *service_name) {
+psutil_get_service_handler(char *service_name, DWORD access) {
     ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
     SC_HANDLE sc = NULL;
     SC_HANDLE hService = NULL;
@@ -27,7 +27,7 @@ psutil_get_service_handler(char *service_name) {
         PyErr_SetFromWindowsErr(0);
         return NULL;
     }
-    hService = OpenService(sc, service_name, SERVICE_QUERY_CONFIG);
+    hService = OpenService(sc, service_name, access);
     if (hService == NULL) {
         CloseServiceHandle(sc);
         PyErr_SetFromWindowsErr(0);
@@ -40,7 +40,7 @@ psutil_get_service_handler(char *service_name) {
 
 // XXX - expose these as constants?
 static const char *
-get_startup_string(DWORD startup) {  // startup
+get_startup_string(DWORD startup) {
     switch (startup) {
         case SERVICE_AUTO_START:
             return "automatic";
@@ -61,6 +61,31 @@ get_startup_string(DWORD startup) {  // startup
 }
 
 
+// XXX - expose these as constants?
+static const char *
+get_state_string(DWORD state) {
+    switch (state) {
+        case SERVICE_RUNNING:
+            return "running";
+        case SERVICE_PAUSED:
+            return "paused";
+        case SERVICE_START_PENDING:
+            return "start pending";
+        case SERVICE_PAUSE_PENDING:
+            return "pause pending";
+        case SERVICE_CONTINUE_PENDING:
+            return "continue pending";
+        case SERVICE_STOP_PENDING:
+            return "stop pending";
+        case SERVICE_STOPPED:
+            return "stopped";
+        default:
+            return "unknown";
+    }
+}
+
+
+
 // ==================================================================
 // APIs
 // ==================================================================
@@ -71,15 +96,13 @@ get_startup_string(DWORD startup) {  // startup
 PyObject *
 psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
-    SC_HANDLE sc = NULL;
     BOOL ok;
+    SC_HANDLE sc = NULL;
     DWORD bytesNeeded = 0;
     DWORD srvCount;
     DWORD resumeHandle = 0;
     DWORD dwBytes = 0;
     DWORD i;
-    SC_HANDLE hService = NULL;
-    QUERY_SERVICE_CONFIG *qsc = NULL;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
 
@@ -113,50 +136,17 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     }
 
     for (i = 0; i < srvCount; i++) {
-        // Get service handler.
-        hService = OpenService(sc, lpService[i].lpServiceName,
-                               SERVICE_QUERY_CONFIG);
-        if (hService == NULL) {
-            PyErr_SetFromWindowsErr(0);
-            goto error;
-        }
-
-        // Query service config to get the binary path. First call to
-        // QueryServiceConfig() is necessary to get the right size.
-        bytesNeeded = 0;
-        QueryServiceConfig(hService, NULL, 0, &bytesNeeded);
-        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-            PyErr_SetFromWindowsErr(0);
-            goto error;
-        }
-        qsc = (QUERY_SERVICE_CONFIG *)malloc(bytesNeeded);
-        ok = QueryServiceConfig(hService, qsc, bytesNeeded, &bytesNeeded);
-        if (ok == 0) {
-            PyErr_SetFromWindowsErr(0);
-            goto error;
-        }
-
         // Construct the result.
         py_tuple = Py_BuildValue(
-            "(ssiksss)",
+            "(ss)",
             lpService[i].lpServiceName,  // name
-            lpService[i].lpDisplayName,  // display_name
-            lpService[i].ServiceStatusProcess.dwCurrentState,  // status
-            lpService[i].ServiceStatusProcess.dwProcessId,  // pid
-            // TODO: handle encoding errs
-            qsc->lpBinaryPathName,  // binpath
-            qsc->lpServiceStartName,  // username
-            get_startup_string(qsc->dwStartType)  // startup
+            lpService[i].lpDisplayName  // display_name
         );
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
         Py_DECREF(py_tuple);
-
-        // free stuff
-        CloseServiceHandle(hService);
-        free(qsc);
     }
 
     CloseServiceHandle(sc);
@@ -166,10 +156,6 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
 error:
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
-    if (hService != NULL)
-        CloseServiceHandle(hService);
-    if (qsc != NULL)
-        free(qsc);
     if (sc != NULL)
         CloseServiceHandle(sc);
     if (lpService != NULL)
@@ -179,10 +165,140 @@ error:
 
 
 /*
+ * Get service config information. Returns:
+ * - display_name
+ * - binpath
+ * - username
+ * - startup_type
+ */
+PyObject *
+psutil_winservice_query_config(PyObject *self, PyObject *args) {
+    char *service_name;
+    SC_HANDLE hService = NULL;
+    BOOL ok;
+    DWORD bytesNeeded = 0;
+    DWORD resumeHandle = 0;
+    DWORD dwBytes = 0;
+    QUERY_SERVICE_CONFIG *qsc = NULL;
+    PyObject *py_tuple = NULL;
+
+    if (!PyArg_ParseTuple(args, "s", &service_name))
+        return NULL;
+    hService = psutil_get_service_handler(service_name, SERVICE_QUERY_CONFIG);
+    if (hService == NULL)
+        goto error;
+
+    // First call to QueryServiceConfig() is necessary to get the
+    // right size.
+    bytesNeeded = 0;
+    QueryServiceConfig(hService, NULL, 0, &bytesNeeded);
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+    qsc = (QUERY_SERVICE_CONFIG *)malloc(bytesNeeded);
+    ok = QueryServiceConfig(hService, qsc, bytesNeeded, &bytesNeeded);
+    if (ok == 0) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    py_tuple = Py_BuildValue(
+        "(ssss)",
+        qsc->lpDisplayName,  // display name
+        qsc->lpBinaryPathName,  // binpath
+        qsc->lpServiceStartName,  // username
+        get_startup_string(qsc->dwStartType)  // startup
+    );
+    if (py_tuple == NULL)
+        goto error;
+
+    free(qsc);
+    CloseServiceHandle(hService);
+    return py_tuple;
+
+error:
+    Py_XDECREF(py_tuple);
+    if (hService != NULL)
+        CloseServiceHandle(hService);
+    if (qsc != NULL)
+        free(qsc);
+    return NULL;
+}
+
+
+/*
+ * Get service status information. Returns:
+ * - status
+ * - pid
+ */
+PyObject *
+psutil_winservice_query_status(PyObject *self, PyObject *args) {
+    char *service_name;
+    SC_HANDLE hService = NULL;
+    BOOL ok;
+    DWORD bytesNeeded = 0;
+    DWORD resumeHandle = 0;
+    DWORD dwBytes = 0;
+    SERVICE_STATUS_PROCESS  *ssp = NULL;
+    PyObject *py_tuple = NULL;
+
+    if (!PyArg_ParseTuple(args, "s", &service_name))
+        return NULL;
+    hService = psutil_get_service_handler(service_name, SERVICE_QUERY_STATUS);
+    if (hService == NULL)
+        goto error;
+
+    // First call to QueryServiceStatusEx() is necessary to get the
+    // right size.
+    QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, NULL, 0,
+                         &bytesNeeded);
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+    ssp = (SERVICE_STATUS_PROCESS *)HeapAlloc(
+        GetProcessHeap(), 0, bytesNeeded);
+    if (ssp == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+
+    // Actual call.
+    ok = QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, (LPBYTE)ssp,
+                              bytesNeeded, &bytesNeeded);
+    if (ok == 0) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    py_tuple = Py_BuildValue(
+        "(sk)",
+        get_state_string(ssp->dwCurrentState),
+        ssp->dwProcessId
+    );
+    if (py_tuple == NULL)
+        goto error;
+
+    CloseServiceHandle(hService);
+    HeapFree(GetProcessHeap(), 0, ssp);
+    return py_tuple;
+
+error:
+    Py_XDECREF(py_tuple);
+    if (hService != NULL)
+        CloseServiceHandle(hService);
+    if (ssp != NULL)
+        HeapFree(GetProcessHeap(), 0, ssp);
+    return NULL;
+}
+
+
+/*
  * Get service description.
  */
 PyObject *
-psutil_winservice_get_srv_descr(PyObject *self, PyObject *args) {
+psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
     BOOL ok;
     DWORD bytesNeeded = 0;
@@ -196,7 +312,7 @@ psutil_winservice_get_srv_descr(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "s", &service_name))
         return NULL;
-    hService = psutil_get_service_handler(service_name);
+    hService = psutil_get_service_handler(service_name, SERVICE_QUERY_CONFIG);
     if (hService == NULL)
         goto error;
 

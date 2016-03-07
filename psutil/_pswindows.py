@@ -43,14 +43,6 @@ __extra__all__ = [
     "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
     "CONN_DELETE_TCB",
     "AF_LINK",
-    # service statuses
-    "WINSERVICE_STATUS_CONTINUE_PENDING",
-    "WINSERVICE_STATUS_PAUSE_PENDING",
-    "WINSERVICE_STATUS_PAUSED",
-    "WINSERVICE_STATUS_RUNNING",
-    "WINSERVICE_STATUS_START_PENDING",
-    "WINSERVICE_STATUS_STOP_PENDING",
-    "WINSERVICE_STATUS_STOPPED",
     ]
 
 # --- module level constants (gets pushed up to psutil module)
@@ -60,13 +52,6 @@ WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
                                cext.ERROR_ACCESS_DENIED])
 
-WINSERVICE_STATUS_CONTINUE_PENDING = "continue-pending"
-WINSERVICE_STATUS_PAUSE_PENDING = "pause-pending"
-WINSERVICE_STATUS_PAUSED = "paused"
-WINSERVICE_STATUS_RUNNING = "running"
-WINSERVICE_STATUS_START_PENDING = "start-pending"
-WINSERVICE_STATUS_STOP_PENDING = "stop-pending"
-WINSERVICE_STATUS_STOPPED = "stopped"
 
 if enum is None:
     AF_LINK = -1
@@ -88,16 +73,6 @@ TCP_STATUSES = {
     cext.MIB_TCP_STATE_CLOSING: _common.CONN_CLOSING,
     cext.MIB_TCP_STATE_DELETE_TCB: CONN_DELETE_TCB,
     cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
-}
-
-SERVICE_STATUSES = {
-    cext.SERVICE_CONTINUE_PENDING: WINSERVICE_STATUS_CONTINUE_PENDING,
-    cext.SERVICE_PAUSE_PENDING: WINSERVICE_STATUS_PAUSE_PENDING,
-    cext.SERVICE_PAUSED: WINSERVICE_STATUS_PAUSED,
-    cext.SERVICE_RUNNING: WINSERVICE_STATUS_RUNNING,
-    cext.SERVICE_START_PENDING: WINSERVICE_STATUS_START_PENDING,
-    cext.SERVICE_STOP_PENDING: WINSERVICE_STATUS_STOP_PENDING,
-    cext.SERVICE_STOPPED: WINSERVICE_STATUS_STOPPED,
 }
 
 if enum is not None:
@@ -324,54 +299,77 @@ ppid_map = cext.ppid_map  # not meant to be public
 class WindowsService(object):
     """Represents an installed Windows service."""
 
-    def __init__(self, info):
-        if info['pid'] == 0:
-            info['pid'] = None
-        info['status'] = SERVICE_STATUSES.get(info['status'], info['status'])
-        self._info = info
+    def __init__(self, name, display_name):
+        self._name = name
+        self._display_name = display_name
 
     def __str__(self):
-        details = "(name=%s, status=%s, pid=%s)" % (
-            self.name, self.status, self.pid)
+        details = "(name=%s, display_name=%s)" % (
+            self._name, self._display_name)
         return "%s%s" % (self.__class__.__name__, details)
 
     def __repr__(self):
         return "<%s at %s>" % (self.__str__(), id(self))
 
-    def pid(self):
-        return self._info['pid']
+    def _query_config(self):
+        display_name, binpath, username, startup_type = \
+            cext.winservice_query_config(self._name)
+        return dict(
+            display_name=display_name,
+            binpath=binpath,
+            username=username,
+            startup_type=startup_type)
+
+    def _query_status(self):
+        status, pid = cext.winservice_query_status(self._name)
+        if pid == 0:
+            pid = None
+        return dict(status=status, pid=pid)
+
+    # config query
 
     def name(self):
-        return self._info['name']
+        return self._name
 
     def display_name(self):
-        return self._info['display_name']
-
-    def status(self):
-        return self._info['status']
+        return self._display_name
 
     def binpath(self):
-        return self._info['binpath']
+        return self._query_config()['binpath']
 
     def username(self):
-        return self._info['username']
+        return self._query_config()['username']
 
     def start_type(self):
-        return self._info['startup']
+        return self._query_config()['startup_type']
+
+    # status query
+
+    def pid(self):
+        return self._query_status()['pid']
+
+    def status(self):
+        return self._query_status()['status']
 
     def description(self):
-        return cext.winservice_get_srv_descr(self.name())
+        return cext.winservice_query_descr(self.name())
+
+    # utils
 
     def as_dict(self):
-        return self._info
+        ret = {}
+        excluded_names = set(['as_dict', 'description'])
+        for name in dir(self):
+            if not name.startswith('_') and name not in excluded_names:
+                value = getattr(self, name)()
+                ret[name] = value
+        return ret
 
 
 def win_service_iter():
     """Return a list of WindowsService instances."""
-    keys = ['name', 'display_name', 'status', 'pid', 'binpath', 'username',
-            'start_type']
-    for row in cext.winservice_enumerate():
-        yield WindowsService(dict(zip(keys, row)))
+    for name, display_name in cext.winservice_enumerate():
+        yield WindowsService(name, display_name)
 
 
 # --- decorators

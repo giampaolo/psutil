@@ -129,13 +129,6 @@ elif WINDOWS:
     from ._psutil_windows import NORMAL_PRIORITY_CLASS  # NOQA
     from ._psutil_windows import REALTIME_PRIORITY_CLASS  # NOQA
     from ._pswindows import CONN_DELETE_TCB  # NOQA
-    from ._pswindows import WINSERVICE_STATUS_CONTINUE_PENDING  # NOQA
-    from ._pswindows import WINSERVICE_STATUS_PAUSE_PENDING  # NOQA
-    from ._pswindows import WINSERVICE_STATUS_PAUSED  # NOQA
-    from ._pswindows import WINSERVICE_STATUS_RUNNING  # NOQA
-    from ._pswindows import WINSERVICE_STATUS_START_PENDING  # NOQA
-    from ._pswindows import WINSERVICE_STATUS_STOP_PENDING  # NOQA
-    from ._pswindows import WINSERVICE_STATUS_STOPPED  # NOQA
 
 elif OSX:
     from . import _psosx as _psplatform

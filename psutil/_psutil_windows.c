@@ -3353,7 +3353,11 @@ PsutilMethods[] = {
     // --- windows services
     {"winservice_enumerate", psutil_winservice_enumerate, METH_VARARGS,
      "List all services"},
-    {"winservice_get_srv_descr", psutil_winservice_get_srv_descr, METH_VARARGS,
+    {"winservice_query_config", psutil_winservice_query_config, METH_VARARGS,
+     "Return service config"},
+    {"winservice_query_status", psutil_winservice_query_status, METH_VARARGS,
+     "Return service config"},
+    {"winservice_query_descr", psutil_winservice_query_descr, METH_VARARGS,
      "Return the description of a service"},
 
     // --- windows API bindings
@@ -3475,6 +3479,7 @@ void init_psutil_windows(void)
         module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
     // service status constants
+    /*
     PyModule_AddIntConstant(
         module, "SERVICE_CONTINUE_PENDING", SERVICE_CONTINUE_PENDING);
     PyModule_AddIntConstant(
@@ -3489,6 +3494,7 @@ void init_psutil_windows(void)
         module, "SERVICE_STOP_PENDING", SERVICE_STOP_PENDING);
     PyModule_AddIntConstant(
         module, "SERVICE_STOPPED", SERVICE_STOPPED);
+    */
 
     // ...for internal use in _psutil_windows.py
     PyModule_AddIntConstant(
