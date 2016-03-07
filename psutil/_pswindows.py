@@ -338,27 +338,21 @@ class WindowsService(object):
     def __repr__(self):
         return "<%s at %s>" % (self.__str__(), id(self))
 
-    @property
     def pid(self):
         return self._info['pid']
 
-    @property
     def name(self):
         return self._info['name']
 
-    @property
     def display_name(self):
         return self._info['display_name']
 
-    @property
     def status(self):
         return self._info['status']
 
-    @property
     def binpath(self):
         return self._info['binpath']
 
-    @property
     def username(self):
         return self._info['username']
 
