@@ -29,6 +29,7 @@ except ImportError:
 
 import psutil
 from psutil import WINDOWS
+from psutil._compat import basestring
 from psutil._compat import callable
 from psutil._compat import long
 from psutil._compat import PY3
@@ -590,12 +591,15 @@ class TestServices(unittest.TestCase):
             psutil.WINSERVICE_STATUS_STOPPED,
         ]
         for serv in psutil.win_service_iter():
-            self.assertTrue(serv.name)
-            self.assertTrue(serv.display_name)
+            self.assertIsInstance(serv.name, basestring)
+            self.assertNotEqual(serv.name.strip(), "")
+            self.assertIsInstance(serv.display_name, basestring)
+            self.assertIsInstance(serv.username, basestring)
             self.assertIn(serv.status, statuses)
             if serv.pid is not None:
                 psutil.Process(serv.pid)
-            serv.binpath
+            self.assertIsInstance(serv.binpath, basestring)
+            self.assertIsInstance(serv.username, basestring)
 
 
 if __name__ == '__main__':

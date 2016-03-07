@@ -358,13 +358,17 @@ class WindowsService(object):
     def binpath(self):
         return self._info['binpath']
 
+    @property
+    def username(self):
+        return self._info['username']
+
     def as_dict(self):
         return self._info
 
 
 def win_service_iter():
     """Return a list of WindowsService instances."""
-    keys = ['name', 'display_name', 'status', 'pid', 'binpath']
+    keys = ['name', 'display_name', 'status', 'pid', 'binpath', 'username']
     for row in cext.winservice_enumerate():
         yield WindowsService(dict(zip(keys, row)))
 

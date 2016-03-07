@@ -84,13 +84,14 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
 
         // Construct the result.
         py_tuple = Py_BuildValue(
-            "(ssiks)",
+            "(ssikss)",
             lpService[i].lpServiceName,  // name
             lpService[i].lpDisplayName,  // display_name
             lpService[i].ServiceStatusProcess.dwCurrentState,  // status
             lpService[i].ServiceStatusProcess.dwProcessId,  // pid
             // TODO: handle encoding errs
-            qsc->lpBinaryPathName  // binpath
+            qsc->lpBinaryPathName,  // binpath
+            qsc->lpServiceStartName  // username
         );
         if (py_tuple == NULL)
             goto error;
