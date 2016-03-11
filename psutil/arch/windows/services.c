@@ -16,13 +16,14 @@
 // ==================================================================
 
 SC_HANDLE
-psutil_get_service_handler(char *service_name, DWORD access) {
+psutil_get_service_handler(char *service_name, DWORD scm_access, DWORD access)
+{
     ENUM_SERVICE_STATUS_PROCESS *lpService = NULL;
     SC_HANDLE sc = NULL;
     SC_HANDLE hService = NULL;
     SERVICE_DESCRIPTION *scd = NULL;
 
-    sc = OpenSCManager(NULL, NULL, SC_MANAGER_ENUMERATE_SERVICE);
+    sc = OpenSCManager(NULL, NULL, scm_access);
     if (sc == NULL) {
         PyErr_SetFromWindowsErr(0);
         return NULL;
@@ -49,7 +50,8 @@ get_startup_string(DWORD startup) {
         case SERVICE_DISABLED:
             return "disabled";
 /*
-        // drivers only
+        // drivers only (since we use EnumServicesStatusEx() with
+        // SERVICE_WIN32)
         case SERVICE_BOOT_START:
             return "boot-start";
         case SERVICE_SYSTEM_START:
@@ -83,7 +85,6 @@ get_state_string(DWORD state) {
             return "unknown";
     }
 }
-
 
 
 // ==================================================================
@@ -184,7 +185,8 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "s", &service_name))
         return NULL;
-    hService = psutil_get_service_handler(service_name, SERVICE_QUERY_CONFIG);
+    hService = psutil_get_service_handler(
+        service_name, SC_MANAGER_ENUMERATE_SERVICE, SERVICE_QUERY_CONFIG);
     if (hService == NULL)
         goto error;
 
@@ -245,7 +247,8 @@ psutil_winservice_query_status(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "s", &service_name))
         return NULL;
-    hService = psutil_get_service_handler(service_name, SERVICE_QUERY_STATUS);
+    hService = psutil_get_service_handler(
+        service_name, SC_MANAGER_ENUMERATE_SERVICE, SERVICE_QUERY_STATUS);
     if (hService == NULL)
         goto error;
 
@@ -309,10 +312,10 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     char *service_name;
     PyObject *py_retstr = NULL;
 
-
     if (!PyArg_ParseTuple(args, "s", &service_name))
         return NULL;
-    hService = psutil_get_service_handler(service_name, SERVICE_QUERY_CONFIG);
+    hService = psutil_get_service_handler(
+        service_name, SC_MANAGER_ENUMERATE_SERVICE, SERVICE_QUERY_CONFIG);
     if (hService == NULL)
         goto error;
 
@@ -347,5 +350,72 @@ error:
         CloseServiceHandle(hService);
     if (lpService != NULL)
         free(lpService);
+    return NULL;
+}
+
+
+/*
+ * Start service.
+ */
+PyObject *
+psutil_winservice_start(PyObject *self, PyObject *args) {
+    char *service_name;
+    BOOL ok;
+    SC_HANDLE hService = NULL;
+
+    if (!PyArg_ParseTuple(args, "s", &service_name))
+        return NULL;
+    hService = psutil_get_service_handler(
+        service_name, SC_MANAGER_ALL_ACCESS, SERVICE_START);
+    if (hService == NULL) {
+        goto error;
+    }
+    ok = StartService(hService, 0, NULL);
+    if (ok == 0) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    Py_RETURN_NONE;
+
+error:
+    if (hService != NULL)
+        CloseServiceHandle(hService);
+    return NULL;
+}
+
+
+/*
+ * Stop service.
+ */
+PyObject *
+psutil_winservice_stop(PyObject *self, PyObject *args) {
+    char *service_name;
+    BOOL ok;
+    SC_HANDLE hService = NULL;
+    SERVICE_STATUS ssp;
+
+    if (!PyArg_ParseTuple(args, "s", &service_name))
+        return NULL;
+    hService = psutil_get_service_handler(
+        service_name, SC_MANAGER_ALL_ACCESS, SERVICE_STOP);
+    if (hService == NULL)
+        goto error;
+
+    // Note: this can hang for 30 secs.
+    Py_BEGIN_ALLOW_THREADS
+    ok = ControlService(hService, SERVICE_CONTROL_STOP, &ssp);
+    Py_END_ALLOW_THREADS
+    if (ok == 0) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    CloseServiceHandle(hService);
+    Py_RETURN_NONE;
+
+error:
+    if (hService != NULL)
+        CloseServiceHandle(hService);
     return NULL;
 }

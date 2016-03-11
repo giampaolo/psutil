@@ -3359,6 +3359,10 @@ PsutilMethods[] = {
      "Return service config"},
     {"winservice_query_descr", psutil_winservice_query_descr, METH_VARARGS,
      "Return the description of a service"},
+    {"winservice_start", psutil_winservice_start, METH_VARARGS,
+     "Start a service"},
+    {"winservice_stop", psutil_winservice_stop, METH_VARARGS,
+     "Stop a service"},
 
     // --- windows API bindings
     {"win32_QueryDosDevice", psutil_win32_QueryDosDevice, METH_VARARGS,

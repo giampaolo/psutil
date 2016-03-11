@@ -4,10 +4,12 @@
 
 """Windows platform implementation."""
 
+import contextlib
 import errno
 import functools
 import os
 import sys
+import time
 from collections import namedtuple
 
 from . import _common
@@ -326,6 +328,17 @@ class WindowsService(object):
             pid = None
         return dict(status=status, pid=pid)
 
+    @contextlib.contextmanager
+    def _wrap_exceptions(self):
+        try:
+            yield
+        except WindowsError as err:
+            if err.errno in ACCESS_DENIED_SET:
+                raise AccessDenied(msg="service %r is not querable (not "
+                                       "enough privileges)" % self.name())
+            else:
+                raise
+
     # config query
 
     def name(self):
@@ -365,11 +378,41 @@ class WindowsService(object):
                 ret[name] = value
         return ret
 
+    # actions
+
+    def start(self, timeout=None):
+        with self._wrap_exceptions():
+            cext.winservice_start(self.name())
+            if timeout:
+                giveup_at = time.time() + timeout
+                while True:
+                    if self.status() == "running":
+                        return
+                    else:
+                        if time.time() > giveup_at:
+                            raise TimeoutExpired(timeout)
+                        else:
+                            time.sleep(.1)
+
+    def stop(self):
+        # Note: timeout is not implemented because it's just not
+        # possible, see:
+        # http://stackoverflow.com/questions/11973228/
+        with self._wrap_exceptions():
+            return cext.winservice_stop(self.name())
+
 
 def win_service_iter():
     """Return a list of WindowsService instances."""
     for name, display_name in cext.winservice_enumerate():
         yield WindowsService(name, display_name)
+
+
+def win_service_get(name):
+    """Open a Windows service and return it as a WindowsService instance."""
+    display_name, binpath, username, startup_type = \
+        cext.winservice_query_config(name)
+    return WindowsService(name, display_name)
 
 
 # --- decorators

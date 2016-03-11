@@ -2051,6 +2051,10 @@ if WINDOWS:
         """
         return _psplatform.win_service_iter()
 
+    def win_service_get(name):
+        """Get a Windows service by name."""
+        return _psplatform.win_service_get(name)
+
 
 del memoize, division, deprecated_method
 if sys.version_info < (3, 0):
