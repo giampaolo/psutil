@@ -161,7 +161,7 @@ CPU
   - **soft_interrupts**:
     number of software interrupts since boot. Always set to ``0`` on Windows
     and SunOS.
-  - **syscalls***: number of system calls since boot. Always set to ``0`` on
+  - **syscalls**: number of system calls since boot. Always set to ``0`` on
     Linux.
 
   Example (Linux):
@@ -1130,7 +1130,8 @@ Process class
      some platform (Linux, OSX, Windows), also provides additional metrics
      (USS, PSS and swap).
      The additional metrics provide a better representation of "effective"
-     process memory consumption (in case of USS).
+     process memory consumption (in case of USS) as explained in detail
+     `here <http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html>`__.
      It does so by passing through the whole process address.
      As such it usually requires higher user privileges than
      :meth:`memory_info` and is considerably slower.
