@@ -1,14 +1,6 @@
 .. module:: psutil
    :synopsis: psutil module
 .. moduleauthor:: Giampaolo Rodola' <grodola@gmail.com>
-.. note::
-   This documentation refers to new 3.X version of psutil.
-   Instructions on how to port existing 1.2.1 code are
-   `here <http://grodola.blogspot.com/2014/01/psutil-20-porting.html>`__.
-   Old 1.2.1 documentation is still available
-   `here <https://code.google.com/p/psutil/wiki/Documentation>`__.
-.. versionchanged:: 3.3.0 added support for OpenBSD
-.. versionchanged:: 3.4.1 added support for NetBSD
 
 psutil documentation
 ====================
@@ -27,22 +19,20 @@ Quick links
 About
 -----
 
-From project's home page:
-
-  psutil (python system and process utilities) is a cross-platform library for
-  retrieving information on running
-  **processes** and **system utilization** (CPU, memory, disks, network) in
-  **Python**.
-  It is useful mainly for **system monitoring**, **profiling** and **limiting
-  process resources** and **management of running processes**.
-  It implements many functionalities offered by command line tools
-  such as: *ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
-  ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap*.
-  It currently supports **Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD**
-  and **NetBSD**, both **32-bit** and **64-bit** architectures, with Python
-  versions from **2.6 to 3.5** (users of Python 2.4 and 2.5 may use
-  `2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
-  `PyPy <http://pypy.org/>`__ is also known to work.
+psutil (python system and process utilities) is a cross-platform library for
+retrieving information on running
+**processes** and **system utilization** (CPU, memory, disks, network) in
+**Python**.
+It is useful mainly for **system monitoring**, **profiling** and **limiting
+process resources** and **management of running processes**.
+It implements many functionalities offered by command line tools
+such as: *ps, top, lsof, netstat, ifconfig, who, df, kill, free, nice,
+ionice, iostat, iotop, uptime, pidof, tty, taskset, pmap*.
+It currently supports **Linux, Windows, OSX, Sun Solaris, FreeBSD, OpenBSD**
+and **NetBSD**, both **32-bit** and **64-bit** architectures, with Python
+versions from **2.6 to 3.5** (users of Python 2.4 and 2.5 may use
+`2.1.3 <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ version).
+`PyPy <http://pypy.org/>`__ is also known to work.
 
 The psutil documentation you're reading is distributed as a single HTML page.
 
@@ -61,6 +51,9 @@ CPU
   - **user**
   - **system**
   - **idle**
+
+  Platform-specific fields:
+
   - **nice** *(UNIX)*
   - **iowait** *(Linux)*
   - **irq** *(Linux, BSD)*
@@ -304,6 +297,9 @@ Disks
   - **write_count**: number of writes
   - **read_bytes**: number of bytes read
   - **write_bytes**: number of bytes written
+
+  Platform-specific fields:
+
   - **read_time**: (all except *NetBSD* and *OpenBSD*) time spent reading from
     disk (in milliseconds)
   - **write_time**: (all except *NetBSD* and *OpenBSD*) time spent writing to disk
@@ -1291,8 +1287,8 @@ Process class
        In order to work around that psutil on Windows Vista (and higher) spawns
        a thread and kills it if it's not responding after 100ms.
        That implies that on Windows this method is not guaranteed to enumerate
-       all regular file handles (see full discusion
-       `here <https://github.com/giampaolo/psutil/pull/597>`_).
+       all regular file handles (see full
+       `discussion <https://github.com/giampaolo/psutil/pull/597>`_).
 
      .. warning::
        on BSD this method can return files with a 'null' path due to a kernel
