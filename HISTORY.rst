@@ -1,6 +1,6 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
-4.1.0 - XXXX-XX-XX
+4.1.0 - 2016-03-12
 ==================
 
 **Enhancements**
@@ -11,7 +11,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   'children_system' (always set to 0 on OSX and Windows).
 - #789: [Windows] psutil.cpu_times() return two new fields: "interrupt" and
   "dpc". Same for psutil.cpu_times_percent().
-- #792: new psutil.cpu_stats() function.
+- #792: new psutil.cpu_stats() function returning number of CPU ctx switches
+  interrupts, soft interrupts and syscalls.
 
 **Bug fixes**
 

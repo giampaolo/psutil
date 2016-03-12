@@ -68,8 +68,6 @@ pmmap_grouped = namedtuple('pmmap_grouped',
                            ['path', 'rss', 'anonymous', 'locked'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
-scpustats = namedtuple(
-    'scpustats', ['ctx_switches', 'interrupts', 'syscalls', 'traps'])
 
 
 # set later from __init__.py
@@ -173,7 +171,9 @@ def cpu_count_physical():
 
 def cpu_stats():
     ctx_switches, interrupts, syscalls, traps = cext.cpu_stats()
-    return scpustats(ctx_switches, interrupts, syscalls, traps)
+    soft_interrupts = 0
+    return _common.scpustats(ctx_switches, interrupts, soft_interrupts,
+                             syscalls)
 
 
 def boot_time():

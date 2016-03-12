@@ -684,7 +684,7 @@ class TestSystemAPIs(unittest.TestCase):
         for name in infos._fields:
             value = getattr(infos, name)
             self.assertGreaterEqual(value, 0)
-            if name in ('ctx_switches', 'interrupts', 'syscalls'):
+            if name in ('ctx_switches', 'interrupts'):
                 self.assertGreater(value, 0)
 
 

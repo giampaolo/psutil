@@ -106,9 +106,6 @@ pmmap_grouped = namedtuple(
     'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr, perms path rss, private, ref_count, shadow_count')
-scpustats = namedtuple(
-    'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls',
-                  'traps'])
 if FREEBSD:
     sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                      'read_bytes', 'write_bytes',
@@ -228,6 +225,8 @@ else:
 
 def cpu_stats():
     if FREEBSD:
+        # Note: the C ext is returning some metrics we are not exposing:
+        # traps.
         ctxsw, intrs, soft_intrs, syscalls, traps = cext.cpu_stats()
     elif NETBSD:
         # XXX
@@ -237,8 +236,8 @@ def cpu_stats():
         #
         # Note about syscalls: the C extension always sets it to 0 (?).
         #
-        # Note: the C ext is returning two metrics we are not returning:
-        # faults and forks.
+        # Note: the C ext is returning some metrics we are not exposing:
+        # traps, faults and forks.
         ctxsw, intrs, soft_intrs, syscalls, traps, faults, forks = \
             cext.cpu_stats()
         with open('/proc/stat', 'rb') as f:
@@ -246,11 +245,11 @@ def cpu_stats():
                 if line.startswith(b'intr'):
                     intrs = int(line.split()[1])
     elif OPENBSD:
-        # Note: the C ext is returning two metrics we are not returning:
-        # faults and forks.
+        # Note: the C ext is returning some metrics we are not exposing:
+        # traps, faults and forks.
         ctxsw, intrs, soft_intrs, syscalls, traps, faults, forks = \
             cext.cpu_stats()
-    return scpustats(ctxsw, intrs, soft_intrs, syscalls, traps)
+    return _common.scpustats(ctxsw, intrs, soft_intrs, syscalls)
 
 
 def boot_time():

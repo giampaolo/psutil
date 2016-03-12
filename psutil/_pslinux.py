@@ -246,8 +246,6 @@ sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'read_time', 'write_time',
                                  'read_merged_count', 'write_merged_count',
                                  'busy_time'])
-scpustats = namedtuple('scpustats',
-                       ['ctx_switches', 'interrupts', 'soft_interrupts'])
 popenfile = namedtuple('popenfile',
                        ['path', 'fd', 'position', 'mode', 'flags'])
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
@@ -445,7 +443,9 @@ def cpu_stats():
             if ctx_switches is not None and soft_interrupts is not None \
                     and interrupts is not None:
                 break
-    return scpustats(ctx_switches, interrupts, soft_interrupts)
+    syscalls = 0
+    return _common.scpustats(
+        ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
 # --- other system functions
