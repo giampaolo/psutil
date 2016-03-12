@@ -225,6 +225,8 @@ else:
 
 def cpu_stats():
     if FREEBSD:
+        # Note: the C ext is returning some metrics we are not exposing:
+        # traps.
         ctxsw, intrs, soft_intrs, syscalls, traps = cext.cpu_stats()
     elif NETBSD:
         # XXX
@@ -234,8 +236,8 @@ def cpu_stats():
         #
         # Note about syscalls: the C extension always sets it to 0 (?).
         #
-        # Note: the C ext is returning two metrics we are not returning:
-        # faults and forks.
+        # Note: the C ext is returning some metrics we are not exposing:
+        # traps, faults and forks.
         ctxsw, intrs, soft_intrs, syscalls, traps, faults, forks = \
             cext.cpu_stats()
         with open('/proc/stat', 'rb') as f:
@@ -243,8 +245,8 @@ def cpu_stats():
                 if line.startswith(b'intr'):
                     intrs = int(line.split()[1])
     elif OPENBSD:
-        # Note: the C ext is returning two metrics we are not returning:
-        # faults and forks.
+        # Note: the C ext is returning some metrics we are not exposing:
+        # traps, faults and forks.
         ctxsw, intrs, soft_intrs, syscalls, traps, faults, forks = \
             cext.cpu_stats()
     return _common.scpustats(ctxsw, intrs, soft_intrs, syscalls)
