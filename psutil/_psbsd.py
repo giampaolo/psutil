@@ -106,9 +106,6 @@ pmmap_grouped = namedtuple(
     'pmmap_grouped', 'path rss, private, ref_count, shadow_count')
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr, perms path rss, private, ref_count, shadow_count')
-scpustats = namedtuple(
-    'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls',
-                  'traps'])
 if FREEBSD:
     sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                      'read_bytes', 'write_bytes',
@@ -250,7 +247,7 @@ def cpu_stats():
         # faults and forks.
         ctxsw, intrs, soft_intrs, syscalls, traps, faults, forks = \
             cext.cpu_stats()
-    return scpustats(ctxsw, intrs, soft_intrs, syscalls, traps)
+    return _common.scpustats(ctxsw, intrs, soft_intrs, syscalls)
 
 
 def boot_time():

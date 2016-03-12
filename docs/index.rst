@@ -152,20 +152,17 @@ CPU
 
 .. function:: cpu_stats()
 
-  Return various CPU statistics as a namedtuple whose fields change depending
-  on the platform:
+  Return various CPU statistics as a namedtuple:
 
   - **ctx_switches**:
     number of context switches (voluntary + involuntary) since boot.
   - **interrupts**:
     number of interrupts since boot.
-  - **soft_interrupts** *(POSIX)*:
-    number of software interrupts since boot.
-  - **syscalls** *(all platforms except Linux)*: number of system calls since boot.
-  - **traps** *(BSD, OSX, SunOS)*: number of kernel traps since boot.
-  - **dpcs** *(Windows)*: number of
-    `delayed procedure calls <https://technet.microsoft.com/en-us/library/cc938646.aspx>`__
-    since boot.
+  - **soft_interrupts**:
+    number of software interrupts since boot. Always set to ``0`` on Windows
+    and SunOS.
+  - **syscalls***: number of system calls since boot. Always set to ``0`` on
+    Linux.
 
   Example (Linux):
 
@@ -173,7 +170,7 @@ CPU
 
      >>> import psutil
      >>> psutil.cpu_stats()
-     scpustats(ctx_switches=20455687, interrupts=6598984, soft_interrupts=2134212)
+     scpustats(ctx_switches=20455687, interrupts=6598984, soft_interrupts=2134212, syscalls=0)
 
   .. versionadded:: 4.1.0
 
