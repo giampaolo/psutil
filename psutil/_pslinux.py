@@ -245,7 +245,7 @@ sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'read_bytes', 'write_bytes',
                                  'read_time', 'write_time',
                                  'read_merged_count', 'write_merged_count',
-                                 'busy_time'])
+                                 'busy_time', 'in_flight', 'time_in_queue'])
 popenfile = namedtuple('popenfile',
                        ['path', 'fd', 'position', 'mode', 'flags'])
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
@@ -785,6 +785,20 @@ net_if_addrs = cext_posix.net_if_addrs
 
 # --- disks
 
+def disk_block_stats(device):
+    """Returns a tuple of (ios_in_flight, time_in_queue_ms) for a disk."""
+    try:
+        with open_text("/sys/block/%s/stat" % device) as f:
+            line = f.readlines()[0]
+        fields = line.split()
+        (reads, read_merges, read_sectors, read_ticks,
+         writes, write_merges, write_sectors, write_ticks,
+         in_flight, io_ticks, time_in_queue) = map(int, fields[:11])
+        return (in_flight, time_in_queue)
+    except IOError:
+        return (0, 0)
+
+
 def disk_io_counters():
     """Return disk I/O statistics for every disk installed on the
     system as a dict of raw tuples.
@@ -851,8 +865,10 @@ def disk_io_counters():
         if name in partitions:
             rbytes = rbytes * SECTOR_SIZE
             wbytes = wbytes * SECTOR_SIZE
+            (in_flight_ios, time_in_queue) = disk_block_stats(name)
             retdict[name] = (reads, writes, rbytes, wbytes, rtime, wtime,
-                             reads_merged, writes_merged, busy_time)
+                             reads_merged, writes_merged, busy_time,
+                             in_flight_ios, time_in_queue)
     return retdict
 
 

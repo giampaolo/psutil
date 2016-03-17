@@ -306,6 +306,9 @@ Disks
     (in milliseconds)
   - **busy_time**: (*Linux*, *FreeBSD*) time spent doing actual I/Os (in
     milliseconds)
+  - **time_in_queue**: (*Linux*) total wait time for all requests (in
+    milliseconds)
+  - **in_flight**: (*Linux*) number of I/Os currently in flight
   - **read_merged_count** (*Linux*): number of merged reads
     (see `iostat doc <https://www.kernel.org/doc/Documentation/iostats.txt>`__)
   - **write_merged_count** (*Linux*): number of merged writes
