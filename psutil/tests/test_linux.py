@@ -156,6 +156,12 @@ class TestSystemVirtualMemory(unittest.TestCase):
         self.assertAlmostEqual(cached, psutil.virtual_memory().cached,
                                delta=MEMORY_TOLERANCE)
 
+    @retry_before_failing()
+    def test_shared(self):
+        total, used, free, shared = free_physmem()
+        self.assertAlmostEqual(shared, psutil.virtual_memory().shared,
+                               delta=MEMORY_TOLERANCE)
+
     # --- mocked tests
 
     def test_warnings_mocked(self):
@@ -168,8 +174,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 w = ws[0]
                 self.assertTrue(w.filename.endswith('psutil/_pslinux.py'))
                 self.assertIn(
-                    "'cached', 'active' and 'inactive' memory stats couldn't "
-                    "be determined", str(w.message))
+                    "memory stats couldn't be determined", str(w.message))
                 self.assertEqual(ret.cached, 0)
                 self.assertEqual(ret.active, 0)
                 self.assertEqual(ret.inactive, 0)

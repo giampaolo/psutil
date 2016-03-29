@@ -240,7 +240,7 @@ except Exception:
 
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
-              'active', 'inactive', 'buffers', 'cached'])
+              'active', 'inactive', 'buffers', 'cached', 'shared'])
 sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
                                  'read_bytes', 'write_bytes',
                                  'read_time', 'write_time',
@@ -266,36 +266,59 @@ def virtual_memory():
     total *= unit_multiplier
     free *= unit_multiplier
     buffers *= unit_multiplier
-    # XXX: tis is currently not used (neither returned) because it's
-    # always 0. It would be nice to have though ('free' provides it).
-    # shared *= unit_multiplier
+    # Note: this (on my Ubuntu 14.04, kernel 3.13 at least) may be 0.
+    # If so, it will be determined from /proc/meminfo.
+    shared *= unit_multiplier or None
+    if shared == 0:
+        shared = None
 
     cached = active = inactive = None
     with open_binary('%s/meminfo' % get_procfs_path()) as f:
         for line in f:
-            if line.startswith(b"Cached:"):
+            if cached is None and line.startswith(b"Cached:"):
                 cached = int(line.split()[1]) * 1024
-            elif line.startswith(b"Active:"):
+            elif active is None and line.startswith(b"Active:"):
                 active = int(line.split()[1]) * 1024
-            elif line.startswith(b"Inactive:"):
+            elif inactive is None and line.startswith(b"Inactive:"):
                 inactive = int(line.split()[1]) * 1024
-            if (cached is not None and
-                    active is not None and
-                    inactive is not None):
-                break
-        else:
-            # we might get here when dealing with exotic Linux flavors, see:
-            # https://github.com/giampaolo/psutil/issues/313
-            msg = "'cached', 'active' and 'inactive' memory stats couldn't " \
-                  "be determined and were set to 0"
-            warnings.warn(msg, RuntimeWarning)
-            cached = active = inactive = 0
+            # From "man free":
+            # The shared memory column represents either the MemShared
+            # value (2.4 kernels) or the Shmem value (2.6+ kernels) taken
+            # from the /proc/meminfo file. The value is zero if none of
+            # the entries is exported by the kernel.
+            elif shared is None and \
+                    line.startswith(b"MemShared:") or \
+                    line.startswith(b"Shmem:"):
+                shared = int(line.split()[1]) * 1024
 
+    missing = []
+    if cached is None:
+        missing.append('cached')
+        cached = 0
+    if active is None:
+        missing.append('active')
+        active = 0
+    if inactive is None:
+        missing.append('inactive')
+        inactive = 0
+    if shared is None:
+        missing.append('shared')
+        shared = 0
+    if missing:
+        msg = "%s memory stats couldn't be determined and %s set to 0" % (
+            ", ".join(missing),
+            "was" if len(missing) == 1 else "were")
+        warnings.warn(msg, RuntimeWarning)
+
+    # Note: this value matches "htop" perfectly.
     avail = free + buffers + cached
+    # Note: this value matches "free", but not all the time, see:
+    # https://github.com/giampaolo/psutil/issues/685#issuecomment-202914057
     used = total - free
+    # Note: this value matches "htop" perfectly.
     percent = usage_percent((total - avail), total, _round=1)
     return svmem(total, avail, percent, used, free,
-                 active, inactive, buffers, cached)
+                 active, inactive, buffers, cached, shared)
 
 
 def swap_memory():

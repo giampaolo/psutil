@@ -1,5 +1,13 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+4.2.0 - XXXX-XX-XX
+==================
+
+**Enhancements**
+
+- #800: [Linux] psutil.virtual_memory() returns a new "shared" memory field.
+
+
 4.1.0 - 2016-03-12
 ==================
 
