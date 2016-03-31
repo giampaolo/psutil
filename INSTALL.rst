@@ -8,12 +8,12 @@ Linux
 
 Ubuntu / Debian::
 
-    $ sudo apt-get install gcc python-dev
+    $ sudo apt-get install gcc python-dev libpcap-dev
     $ pip install psutil
 
 RedHat::
 
-    $ sudo yum install gcc python-devel
+    $ sudo yum install gcc python-devel libpcap-devel
     $ pip install psutil
 
 OSX
