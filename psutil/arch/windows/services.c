@@ -356,6 +356,7 @@ error:
 
 /*
  * Start service.
+ * XXX - note: this is exposed but not used.
  */
 PyObject *
 psutil_winservice_start(PyObject *self, PyObject *args) {
@@ -387,6 +388,7 @@ error:
 
 /*
  * Stop service.
+ * XXX - note: this is exposed but not used.
  */
 PyObject *
 psutil_winservice_stop(PyObject *self, PyObject *args) {

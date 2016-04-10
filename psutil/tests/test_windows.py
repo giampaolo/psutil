@@ -638,25 +638,31 @@ class TestServices(unittest.TestCase):
         self.assertEqual(cm.exception.name, name + '???')
 
         # test NoSuchProcess
-        s = psutil.win_service_get(name)
+        service = psutil.win_service_get(name)
         exc = WindowsError(
             psutil._psplatform.cext.ERROR_SERVICE_DOES_NOT_EXIST, "")
         with mock.patch("psutil._psplatform.cext.winservice_query_status",
                         side_effect=exc):
-            self.assertRaises(psutil.NoSuchProcess, s.status)
+            self.assertRaises(psutil.NoSuchProcess, service.status)
         with mock.patch("psutil._psplatform.cext.winservice_query_config",
                         side_effect=exc):
-            self.assertRaises(psutil.NoSuchProcess, s.username)
+            self.assertRaises(psutil.NoSuchProcess, service.username)
 
         # test AccessDenied
         exc = WindowsError(
             psutil._psplatform.cext.ERROR_ACCESS_DENIED, "")
         with mock.patch("psutil._psplatform.cext.winservice_query_status",
                         side_effect=exc):
-            self.assertRaises(psutil.AccessDenied, s.status)
+            self.assertRaises(psutil.AccessDenied, service.status)
         with mock.patch("psutil._psplatform.cext.winservice_query_config",
                         side_effect=exc):
-            self.assertRaises(psutil.AccessDenied, s.username)
+            self.assertRaises(psutil.AccessDenied, service.username)
+
+        # test __str__ and __repr__
+        self.assertIn(service.name(), str(service))
+        self.assertIn(service.display_name(), str(service))
+        self.assertIn(service.name(), repr(service))
+        self.assertIn(service.display_name(), repr(service))
 
 
 if __name__ == '__main__':

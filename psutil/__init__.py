@@ -1984,6 +1984,29 @@ def users():
     return _psplatform.users()
 
 
+# =====================================================================
+# --- Windows services
+# =====================================================================
+
+
+if WINDOWS:
+
+    def win_service_iter():
+        """Return a generator yielding a WindowsService instance for all
+        Windows services installed.
+        """
+        return _psplatform.win_service_iter()
+
+    def win_service_get(name):
+        """Get a Windows service by name.
+        Raise NoSuchProcess if no service with such name exists.
+        """
+        return _psplatform.win_service_get(name)
+
+
+# =====================================================================
+
+
 def test():  # pragma: no cover
     """List info of all currently running processes emulating ps aux
     output.
@@ -2038,22 +2061,6 @@ def test():  # pragma: no cover
                 ctime,
                 cputime,
                 pinfo['name'].strip() or '?'))
-
-
-# =====================================================================
-# --- Windows services
-# =====================================================================
-
-if WINDOWS:
-    def win_service_iter():
-        """Return a generator yielding a WindowsService instance for all
-        installed Windows services.
-        """
-        return _psplatform.win_service_iter()
-
-    def win_service_get(name):
-        """Get a Windows service by name."""
-        return _psplatform.win_service_get(name)
 
 
 del memoize, division, deprecated_method

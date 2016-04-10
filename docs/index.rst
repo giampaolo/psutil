@@ -1489,7 +1489,7 @@ Windows services
 .. function:: win_service_iter()
 
   Return an iterator yielding a :class:`WindowsService` class instance for all
-  installed Windows services.
+  Windows services installed.
 
   .. versionadded:: 4.2.0
   Availability: Windows

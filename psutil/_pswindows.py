@@ -39,7 +39,7 @@ else:
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
 __extra__all__ = [
-    "win_service_iter",
+    "win_service_iter", "win_service_get",
     "ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
     "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
     "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
@@ -397,27 +397,43 @@ class WindowsService(object):
         return d
 
     # actions
+    # XXX: the necessary C bindings for start() and stop() are implemented
+    # but for now I prefer not to expose them.
+    # I may change my mind in the future. Reasons:
+    # - they require Administrator privileges
+    # - can't implement a timeout for stop() (unless by using a thread,
+    #   which sucks)
+    # - would require adding ServiceAlreadyStarted and
+    #   ServiceAlreadyStopped exceptions, adding two new APIs.
+    # - we might also want to have modify(), which would basically mean
+    #   rewriting win32serviceutil.ChangeServiceConfig, which involves a
+    #   lot of stuff (and API constants which would pollute the API), see:
+    #   http://pyxr.sourceforge.net/PyXR/c/python24/lib/site-packages/
+    #       win32/lib/win32serviceutil.py.html#0175
+    # - psutil is tipically about "read only" monitoring stuff;
+    #   win_service_* APIs should only be used to retrieve a service and
+    #   check whether it's running
 
-    def start(self, timeout=None):
-        with self._wrap_exceptions():
-            cext.winservice_start(self.name())
-            if timeout:
-                giveup_at = time.time() + timeout
-                while True:
-                    if self.status() == "running":
-                        return
-                    else:
-                        if time.time() > giveup_at:
-                            raise TimeoutExpired(timeout)
-                        else:
-                            time.sleep(.1)
+    # def start(self, timeout=None):
+    #     with self._wrap_exceptions():
+    #         cext.winservice_start(self.name())
+    #         if timeout:
+    #             giveup_at = time.time() + timeout
+    #             while True:
+    #                 if self.status() == "running":
+    #                     return
+    #                 else:
+    #                     if time.time() > giveup_at:
+    #                         raise TimeoutExpired(timeout)
+    #                     else:
+    #                         time.sleep(.1)
 
-    def stop(self):
-        # Note: timeout is not implemented because it's just not
-        # possible, see:
-        # http://stackoverflow.com/questions/11973228/
-        with self._wrap_exceptions():
-            return cext.winservice_stop(self.name())
+    # def stop(self):
+    #     # Note: timeout is not implemented because it's just not
+    #     # possible, see:
+    #     # http://stackoverflow.com/questions/11973228/
+    #     with self._wrap_exceptions():
+    #         return cext.winservice_stop(self.name())
 
 
 def win_service_iter():
