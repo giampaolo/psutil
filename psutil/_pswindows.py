@@ -9,7 +9,6 @@ import errno
 import functools
 import os
 import sys
-import time
 from collections import namedtuple
 
 from . import _common
@@ -342,6 +341,9 @@ class WindowsService(object):
 
     @contextlib.contextmanager
     def _wrap_exceptions(self):
+        """Ctx manager which translates bare OSError and WindowsError
+        exceptions into NoSuchProcess and AccessDenied.
+        """
         try:
             yield
         except WindowsError as err:
@@ -361,34 +363,57 @@ class WindowsService(object):
     # config query
 
     def name(self):
+        """The service name. This string is how a service is referenced
+        and can be passed to win_service_get() to get a new
+        WindowsService instance. The return value is cached on
+        instantiation.
+        """
         return self._name
 
     def display_name(self):
+        """The service display name. The return value is cached on
+        instantiation.
+        """
         return self._display_name
 
     def binpath(self):
+        """The fully qualified path to the service binary/exe file as
+        a string, including command line arguments.
+        """
         return self._query_config()['binpath']
 
     def username(self):
+        """The name of the user that owns the service."""
         return self._query_config()['username']
 
     def start_type(self):
+        """A string which can either be "automatic", "manual" or
+        "disabled".
+        """
         return self._query_config()['start_type']
 
     # status query
 
     def pid(self):
+        """The process PID, if any, else `None`. This can be passed
+        to Process class to control the service's process.
+        """
         return self._query_status()['pid']
 
     def status(self):
+        """Service status as a string."""
         return self._query_status()['status']
 
     def description(self):
+        """Service long description."""
         return cext.winservice_query_descr(self.name())
 
     # utils
 
     def as_dict(self):
+        """Utility method retrieving all the information above as a
+        dictionary.
+        """
         d = self._query_config()
         d.update(self._query_status())
         d['name'] = self.name()
@@ -445,8 +470,7 @@ def win_service_iter():
 def win_service_get(name):
     """Open a Windows service and return it as a WindowsService instance."""
     service = WindowsService(name, None)
-    display_name, _, _, _ = service._query_config()
-    service._display_name = display_name
+    service._display_name = service._query_config()['display_name']
     return service
 
 

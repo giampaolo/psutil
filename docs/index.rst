@@ -1485,8 +1485,6 @@ Popen class
 Windows services
 ================
 
-.. note:: These APIs are Windows only.
-
 .. function:: win_service_iter()
 
   Return an iterator yielding a :class:`WindowsService` class instance for all
@@ -1511,16 +1509,18 @@ Windows services
 
   .. method:: name()
 
-     The service name. The value is cached on instantiation.
+     The service name. This string is how a service is referenced and can be
+     passed to :func:`win_service_get` to get a new :class:`WindowsService`
+     instance. The return value is cached on instantiation.
 
   .. method:: display_name()
 
-     The service display name. The value is cached on instantiation.
+     The service display name. The return value is cached on instantiation.
 
   .. method:: binpath()
 
-     The fully qualified path to the service binary/exe file including
-     arguments.
+     The fully qualified path to the service binary/exe file as a string,
+     including command line arguments.
 
   .. method:: username()
 
@@ -1532,7 +1532,8 @@ Windows services
 
   .. method:: pid()
 
-     The process PID, if any, else `None`.
+     The process PID, if any, else `None`. This can be passed to
+     :class:`Process` class to control the service's process.
 
   .. method:: status()
 
