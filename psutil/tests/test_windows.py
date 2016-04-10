@@ -630,6 +630,34 @@ class TestServices(unittest.TestCase):
             # test __eq__
             self.assertEqual(serv, s)
 
+    def test_win_service_get(self):
+        name = next(psutil.win_service_iter()).name()
+
+        with self.assertRaises(psutil.NoSuchProcess) as cm:
+            psutil.win_service_get(name + '???')
+        self.assertEqual(cm.exception.name, name + '???')
+
+        # test NoSuchProcess
+        s = psutil.win_service_get(name)
+        exc = WindowsError(
+            psutil._psplatform.cext.ERROR_SERVICE_DOES_NOT_EXIST, "")
+        with mock.patch("psutil._psplatform.cext.winservice_query_status",
+                        side_effect=exc):
+            self.assertRaises(psutil.NoSuchProcess, s.status)
+        with mock.patch("psutil._psplatform.cext.winservice_query_config",
+                        side_effect=exc):
+            self.assertRaises(psutil.NoSuchProcess, s.username)
+
+        # test AccessDenied
+        exc = WindowsError(
+            psutil._psplatform.cext.ERROR_ACCESS_DENIED, "")
+        with mock.patch("psutil._psplatform.cext.winservice_query_status",
+                        side_effect=exc):
+            self.assertRaises(psutil.AccessDenied, s.status)
+        with mock.patch("psutil._psplatform.cext.winservice_query_config",
+                        side_effect=exc):
+            self.assertRaises(psutil.AccessDenied, s.username)
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)

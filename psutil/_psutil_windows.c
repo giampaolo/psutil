@@ -3505,6 +3505,10 @@ void init_psutil_windows(void)
         module, "INFINITE", INFINITE);
     PyModule_AddIntConstant(
         module, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED);
+    PyModule_AddIntConstant(
+        module, "ERROR_INVALID_NAME", ERROR_INVALID_NAME);
+    PyModule_AddIntConstant(
+        module, "ERROR_SERVICE_DOES_NOT_EXIST", ERROR_SERVICE_DOES_NOT_EXIST);
 
     // set SeDebug for the current process
     psutil_set_se_debug();

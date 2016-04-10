@@ -324,8 +324,9 @@ class WindowsService(object):
         return not self == other
 
     def _query_config(self):
-        display_name, binpath, username, start_type = \
-            cext.winservice_query_config(self._name)
+        with self._wrap_exceptions():
+            display_name, binpath, username, start_type = \
+                cext.winservice_query_config(self._name)
         return dict(
             display_name=display_name,
             binpath=binpath,
@@ -333,7 +334,8 @@ class WindowsService(object):
             start_type=start_type)
 
     def _query_status(self):
-        status, pid = cext.winservice_query_status(self._name)
+        with self._wrap_exceptions():
+            status, pid = cext.winservice_query_status(self._name)
         if pid == 0:
             pid = None
         return dict(status=status, pid=pid)
@@ -344,8 +346,15 @@ class WindowsService(object):
             yield
         except WindowsError as err:
             if err.errno in ACCESS_DENIED_SET:
-                raise AccessDenied(msg="service %r is not querable (not "
-                                       "enough privileges)" % self._name)
+                raise AccessDenied(
+                    pid=None, name=self._name,
+                    msg="service %r is not querable (not enough privileges)" %
+                        self._name)
+            elif err.winerror in (cext.ERROR_INVALID_NAME,
+                                  cext.ERROR_SERVICE_DOES_NOT_EXIST):
+                raise NoSuchProcess(
+                    pid=None, name=self._name,
+                    msg="service %r does not exist)" % self._name)
             else:
                 raise
 
@@ -419,9 +428,10 @@ def win_service_iter():
 
 def win_service_get(name):
     """Open a Windows service and return it as a WindowsService instance."""
-    display_name, binpath, username, start_type = \
-        cext.winservice_query_config(name)
-    return WindowsService(name, display_name)
+    service = WindowsService(name, None)
+    display_name, _, _, _ = service._query_config()
+    service._display_name = display_name
+    return service
 
 
 # --- decorators

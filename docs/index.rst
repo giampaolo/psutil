@@ -1497,6 +1497,7 @@ Windows services
 .. function:: win_service_get(name)
 
   Get a Windows service by name, returning a :class:`WindowsService` instance.
+  Raise :class:`psutil.NoSuchProcess` if no service with such name exists.
 
   .. versionadded:: 4.2.0
   Availability: Windows
