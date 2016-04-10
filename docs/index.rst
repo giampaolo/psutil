@@ -197,10 +197,10 @@ Memory
   - **inactive** *(UNIX)*: memory that is marked as not used.
   - **buffers** *(Linux, BSD)*: cache for things like file system metadata.
   - **cached** *(Linux, BSD)*: cache for various things.
+  - **shared** *(Linux, BSD)*: memory that may be simultaneously accessed by
+    multiple processes.
   - **wired** *(BSD, OSX)*: memory that is marked to always stay in RAM. It is
     never moved to disk.
-  - **shared** *(BSD)*: memory that may be simultaneously accessed by multiple
-    processes.
 
   The sum of **used** and **available** does not necessarily equal **total**.
   On Windows **available** and **free** are the same.
@@ -210,7 +210,7 @@ Memory
     >>> import psutil
     >>> mem = psutil.virtual_memory()
     >>> mem
-    svmem(total=8374149120L, available=1247768576L, percent=85.1, used=8246628352L, free=127520768L, active=3208777728, inactive=1133408256, buffers=342413312L, cached=777834496)
+    svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
     >>>
     >>> THRESHOLD = 100 * 1024 * 1024  # 100MB
     >>> if mem.available <= THRESHOLD:
@@ -218,6 +218,7 @@ Memory
     ...
     >>>
 
+  .. versionchanged:: 4.2.0 added *shared* metrics on Linux.
 
 .. function:: swap_memory()
 

@@ -525,8 +525,11 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
         speed = ethcmd.speed;
     }
     else {
-        if (errno == EOPNOTSUPP) {
-            // we typically get here in case of wi-fi cards
+        if ((errno == EOPNOTSUPP) || (errno == EINVAL)) {
+            // EOPNOTSUPP may occur in case of wi-fi cards.
+            // For EINVAL see:
+            // https://github.com/giampaolo/psutil/issues/797
+            //     #issuecomment-202999532
             duplex = DUPLEX_UNKNOWN;
             speed = 0;
         }

@@ -91,18 +91,9 @@ FEATURES
   Also, we can probably reimplement wait_pid() on POSIX which is currently
   implemented as a busy-loop.
 
-- Certain systems provide CPU times about process children. On those systems
-  Process.cpu_times() might return a (user, system, user_children,
-  system_children) ntuple.
-  - Linux: /proc/{PID}/stat
-  - Solaris: pr_cutime and pr_cstime
-  - FreeBSD: none
-  - OSX: none
-  - Windows: none
+- os.times() provides 'elapsed' times (cpu_times() might).
 
-- ...also, os.times() provides 'elapsed' times as well.
-
-- ...also Linux provides guest_time and cguest_time.
+- ...also guest_time and cguest_time on Linux.
 
 - Enrich exception classes hierarchy on Python >= 3.3 / post PEP-3151 so that:
    - NoSuchProcess inherits from ProcessLookupError

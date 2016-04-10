@@ -43,7 +43,7 @@ Quick links
 Summary
 =======
 
-psutil (python system and process utilities) is a cross-platform library for
+psutil (process and system utilities) is a cross-platform library for
 retrieving information on **running processes** and **system utilization**
 (CPU, memory, disks, network) in Python. It is useful mainly for **system
 monitoring**, **profiling and limiting process resources** and **management of
@@ -126,7 +126,7 @@ Memory
 .. code-block:: python
 
     >>> psutil.virtual_memory()
-    svmem(total=8374149120, available=2081050624, percent=75.1, used=8074080256, free=300068864, active=3294920704, inactive=1361616896, buffers=529895424, cached=1251086336)
+    svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
     >>> psutil.swap_memory()
     sswap(total=2097147904, used=296128512, free=1801019392, percent=14.1, sin=304193536, sout=677842944)
     >>>
