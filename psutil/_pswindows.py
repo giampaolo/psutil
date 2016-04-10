@@ -335,7 +335,7 @@ class WindowsService(object):
         except WindowsError as err:
             if err.errno in ACCESS_DENIED_SET:
                 raise AccessDenied(msg="service %r is not querable (not "
-                                       "enough privileges)" % self.name())
+                                       "enough privileges)" % self._name)
             else:
                 raise
 
