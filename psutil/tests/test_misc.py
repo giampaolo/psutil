@@ -432,6 +432,10 @@ class TestScripts(unittest.TestCase):
         output = self.assert_stdout('pidof.py %s' % psutil.Process().name())
         self.assertIn(str(os.getpid()), output)
 
+    @unittest.skipUnless(WINDOWS, "Windows only")
+    def test_winservices(self):
+        self.assert_stdout('winservices.py')
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)
