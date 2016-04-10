@@ -72,13 +72,13 @@ get_state_string(DWORD state) {
         case SERVICE_PAUSED:
             return "paused";
         case SERVICE_START_PENDING:
-            return "start pending";
+            return "start_pending";
         case SERVICE_PAUSE_PENDING:
-            return "pause pending";
+            return "pause_pending";
         case SERVICE_CONTINUE_PENDING:
-            return "continue pending";
+            return "continue_pending";
         case SERVICE_STOP_PENDING:
-            return "stop pending";
+            return "stop_pending";
         case SERVICE_STOPPED:
             return "stopped";
         default:

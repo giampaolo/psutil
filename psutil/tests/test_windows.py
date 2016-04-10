@@ -590,19 +590,45 @@ class TestServices(unittest.TestCase):
             "stop",
             "stopped",
         ])
+        valid_start_types = set([
+            "automatic",
+            "manual",
+            "disabled",
+        ])
+        valid_statuses = set([
+            "running",
+            "paused",
+            "start_pending",
+            "pause_pending",
+            "continue_pending",
+            "stop_pending",
+            "stopped"
+        ])
         for serv in psutil.win_service_iter():
-            self.assertIsInstance(serv.name(), basestring)
-            self.assertNotEqual(serv.name().strip(), "")
-            self.assertIsInstance(serv.display_name(), basestring)
-            self.assertIsInstance(serv.username(), basestring)
-            self.assertIn(serv.status(), valid_statuses)
-            if serv.pid() is not None:
-                psutil.Process(serv.pid())
-            self.assertIsInstance(serv.binpath(), basestring)
-            self.assertIsInstance(serv.username(), basestring)
-            self.assertIsInstance(serv.start_type(), basestring)
-            self.assertIn(serv.start_type(),
-                          ("automatic", "manual", "disabled"))
+            data = serv.as_dict()
+            self.assertIsInstance(data['name'], basestring)
+            self.assertNotEqual(data['name'].strip(), "")
+            self.assertIsInstance(data['display_name'], basestring)
+            self.assertIsInstance(data['username'], basestring)
+            self.assertIn(data['status'], valid_statuses)
+            if data['pid'] is not None:
+                psutil.Process(data['pid'])
+            self.assertIsInstance(data['binpath'], basestring)
+            self.assertIsInstance(data['username'], basestring)
+            self.assertIsInstance(data['start_type'], basestring)
+            self.assertIn(data['start_type'], valid_start_types)
+            self.assertIn(data['status'], valid_statuses)
+            if data['description'] is not None:
+                self.assertIsInstance(data['description'], basestring)
+                self.assertNotEqual(data['description'].strip(), "")
+            pid = serv.pid()
+            if pid is not None:
+                p = psutil.Process(pid)
+                self.assertTrue(p.is_running())
+            # win_service_get
+            s = psutil.win_service_get(serv.name())
+            # test __eq__
+            self.assertEqual(serv, s)
 
 
 if __name__ == '__main__':

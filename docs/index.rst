@@ -1524,7 +1524,7 @@ Windows services
 
      The name of the user that owns the service.
 
-  .. method:: startup_type()
+  .. method:: start_type()
 
      A string which can either be `"automatic"`, `"manual"` or `"disabled"`.
 

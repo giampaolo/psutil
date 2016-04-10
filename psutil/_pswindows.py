@@ -313,14 +313,24 @@ class WindowsService(object):
     def __repr__(self):
         return "<%s at %s>" % (self.__str__(), id(self))
 
+    def __eq__(self, other):
+        # Test for equality with another WindosService object based
+        # on name.
+        if not isinstance(other, WindowsService):
+            return NotImplemented
+        return self._name == other._name
+
+    def __ne__(self, other):
+        return not self == other
+
     def _query_config(self):
-        display_name, binpath, username, startup_type = \
+        display_name, binpath, username, start_type = \
             cext.winservice_query_config(self._name)
         return dict(
             display_name=display_name,
             binpath=binpath,
             username=username,
-            startup_type=startup_type)
+            start_type=start_type)
 
     def _query_status(self):
         status, pid = cext.winservice_query_status(self._name)
@@ -354,7 +364,7 @@ class WindowsService(object):
         return self._query_config()['username']
 
     def start_type(self):
-        return self._query_config()['startup_type']
+        return self._query_config()['start_type']
 
     # status query
 
@@ -370,13 +380,12 @@ class WindowsService(object):
     # utils
 
     def as_dict(self):
-        ret = {}
-        excluded_names = set(['as_dict', 'description'])
-        for name in dir(self):
-            if not name.startswith('_') and name not in excluded_names:
-                value = getattr(self, name)()
-                ret[name] = value
-        return ret
+        d = self._query_config()
+        d.update(self._query_status())
+        d['name'] = self.name()
+        d['display_name'] = self.display_name()
+        d['description'] = self.description()
+        return d
 
     # actions
 
@@ -410,7 +419,7 @@ def win_service_iter():
 
 def win_service_get(name):
     """Open a Windows service and return it as a WindowsService instance."""
-    display_name, binpath, username, startup_type = \
+    display_name, binpath, username, start_type = \
         cext.winservice_query_config(name)
     return WindowsService(name, display_name)
 
