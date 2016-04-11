@@ -338,12 +338,11 @@ Windows services
 .. code-block:: python
 
     >>> list(psutil.win_service_iter())
-    [<WindowsService(name=AeLookupSvc, display_name=Application Experience) at 38850096>,
-     <WindowsService(name=ALG, display_name=Application Layer Gateway Service) at 38850128>,
-     <WindowsService(name=APNMCP, display_name=Ask Update Service) at 38850160>,
-     <WindowsService(name=AppIDSvc, display_name=Application Identity) at 38850192>,
-     ...
-    ]
+    [<WindowsService(name='AeLookupSvc', display_name='Application Experience') at 38850096>,
+     <WindowsService(name='ALG', display_name='Application Layer Gateway Service') at 38850128>,
+     <WindowsService(name='APNMCP', display_name='Ask Update Service') at 38850160>,
+     <WindowsService(name='AppIDSvc', display_name='Application Identity') at 38850192>,
+     ...]
     >>> s = psutil.win_service_get('alg')
     >>> s.as_dict()
     {'binpath': 'C:\\Windows\\System32\\alg.exe',

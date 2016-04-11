@@ -305,7 +305,7 @@ class WindowsService(object):
         self._display_name = display_name
 
     def __str__(self):
-        details = "(name=%s, display_name=%s)" % (
+        details = "(name=%r, display_name=%r)" % (
             self._name, self._display_name)
         return "%s%s" % (self.__class__.__name__, details)
 
@@ -326,6 +326,7 @@ class WindowsService(object):
         with self._wrap_exceptions():
             display_name, binpath, username, start_type = \
                 cext.winservice_query_config(self._name)
+        # XXX - update _self.display_name?
         return dict(
             display_name=display_name,
             binpath=binpath,
@@ -365,14 +366,13 @@ class WindowsService(object):
     def name(self):
         """The service name. This string is how a service is referenced
         and can be passed to win_service_get() to get a new
-        WindowsService instance. The return value is cached on
-        instantiation.
+        WindowsService instance.
         """
         return self._name
 
     def display_name(self):
-        """The service display name. The return value is cached on
-        instantiation.
+        """The service display name. The value is cached when this class
+        is instantiated.
         """
         return self._display_name
 
@@ -383,7 +383,7 @@ class WindowsService(object):
         return self._query_config()['binpath']
 
     def username(self):
-        """The name of the user that owns the service."""
+        """The name of the user that owns this service."""
         return self._query_config()['username']
 
     def start_type(self):
@@ -395,7 +395,7 @@ class WindowsService(object):
     # status query
 
     def pid(self):
-        """The process PID, if any, else `None`. This can be passed
+        """The process PID, if any, else None. This can be passed
         to Process class to control the service's process.
         """
         return self._query_status()['pid']

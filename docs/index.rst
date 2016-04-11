@@ -1511,11 +1511,12 @@ Windows services
 
      The service name. This string is how a service is referenced and can be
      passed to :func:`win_service_get` to get a new :class:`WindowsService`
-     instance. The return value is cached on instantiation.
+     instance.
 
   .. method:: display_name()
 
-     The service display name. The return value is cached on instantiation.
+     The service display name. The value is cached when this class is
+     instantiated.
 
   .. method:: binpath()
 
@@ -1524,7 +1525,7 @@ Windows services
 
   .. method:: username()
 
-     The name of the user that owns the service.
+     The name of the user that owns this service.
 
   .. method:: start_type()
 
