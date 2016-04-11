@@ -348,13 +348,15 @@ class WindowsService(object):
         try:
             yield
         except WindowsError as err:
+            NO_SUCH_SERVICE_SET = (cext.ERROR_INVALID_NAME,
+                                   cext.ERROR_SERVICE_DOES_NOT_EXIST)
             if err.errno in ACCESS_DENIED_SET:
                 raise AccessDenied(
                     pid=None, name=self._name,
                     msg="service %r is not querable (not enough privileges)" %
                         self._name)
-            elif err.winerror in (cext.ERROR_INVALID_NAME,
-                                  cext.ERROR_SERVICE_DOES_NOT_EXIST):
+            elif err.winerror in NO_SUCH_SERVICE_SET or \
+                    err.errno in NO_SUCH_SERVICE_SET:
                 raise NoSuchProcess(
                     pid=None, name=self._name,
                     msg="service %r does not exist)" % self._name)

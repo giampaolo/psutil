@@ -342,7 +342,10 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         py_retstr = Py_BuildValue("s", "");
     }
     else {
-        py_retstr = Py_BuildValue("s", scd->lpDescription);
+        // py_retstr = Py_BuildValue("s", scd->lpDescription);
+        py_retstr = PyUnicode_Decode(
+            scd->lpDescription, _tcslen(scd->lpDescription),
+            Py_FileSystemDefaultEncoding, "replace");
     }
     if (!py_retstr)
         goto error;
