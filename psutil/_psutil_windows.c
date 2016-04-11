@@ -2565,6 +2565,8 @@ psutil_users(PyObject *self, PyObject *args) {
         py_buffer_user_encoded = PyUnicode_Decode(
             buffer_user, _tcslen(buffer_user), Py_FileSystemDefaultEncoding,
             "replace");
+        if (py_buffer_user_encoded == NULL)
+            goto error;
         py_tuple = Py_BuildValue("OOd", py_buffer_user_encoded, py_address,
                                  (double)unix_time);
         if (!py_tuple)
