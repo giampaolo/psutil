@@ -338,7 +338,12 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
     }
 
     // TODO: handle encoding errors.
-    py_retstr = Py_BuildValue("s", scd->lpDescription);
+    if (scd->lpDescription == NULL) {
+        py_retstr = Py_BuildValue("s", "");
+    }
+    else {
+        py_retstr = Py_BuildValue("s", scd->lpDescription);
+    }
     if (!py_retstr)
         goto error;
 

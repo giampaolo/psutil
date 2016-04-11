@@ -618,9 +618,7 @@ class TestServices(unittest.TestCase):
             self.assertIsInstance(data['start_type'], basestring)
             self.assertIn(data['start_type'], valid_start_types)
             self.assertIn(data['status'], valid_statuses)
-            if data['description'] is not None:
-                self.assertIsInstance(data['description'], basestring)
-                self.assertNotEqual(data['description'].strip(), "")
+            self.assertIsInstance(data['description'], basestring)
             pid = serv.pid()
             if pid is not None:
                 p = psutil.Process(pid)
