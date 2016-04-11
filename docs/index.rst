@@ -1501,7 +1501,7 @@ Windows services
   .. versionadded:: 4.2.0
   Availability: Windows
 
-.. class:: WindowsService(name, display_name)
+.. class:: WindowsService
 
   Represents a Windows service with the given *name*. This class is returned
   by :func:`win_service_iter` and :func:`win_service_get` functions and it is
