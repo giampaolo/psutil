@@ -50,8 +50,6 @@ __extra__all__ = [
 
 CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
-ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
-                               cext.ERROR_ACCESS_DENIED])
 
 
 if enum is None:
@@ -350,13 +348,14 @@ class WindowsService(object):
         except WindowsError as err:
             NO_SUCH_SERVICE_SET = (cext.ERROR_INVALID_NAME,
                                    cext.ERROR_SERVICE_DOES_NOT_EXIST)
-            if err.errno in ACCESS_DENIED_SET:
+            if err.errno in (errno.EPERM, errno.EACCES) or \
+                    getattr(err, "winerror", -1) == cext.ERROR_ACCESS_DENIED:
                 raise AccessDenied(
                     pid=None, name=self._name,
                     msg="service %r is not querable (not enough privileges)" %
                         self._name)
-            elif err.winerror in NO_SUCH_SERVICE_SET or \
-                    err.errno in NO_SUCH_SERVICE_SET:
+            elif err.errno in NO_SUCH_SERVICE_SET or \
+                    getattr(err, "winerror", -1) in NO_SUCH_SERVICE_SET:
                 raise NoSuchProcess(
                     pid=None, name=self._name,
                     msg="service %r does not exist)" % self._name)
@@ -487,7 +486,8 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except OSError as err:
-            if err.errno in ACCESS_DENIED_SET:
+            if err.errno in (errno.EPERM, errno.EACCES) or \
+                    getattr(err, "winerror", -1) == cext.ERROR_ACCESS_DENIED:
                 raise AccessDenied(self.pid, self._name)
             if err.errno == errno.ESRCH:
                 raise NoSuchProcess(self.pid, self._name)
