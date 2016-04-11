@@ -60,6 +60,7 @@ if "%1" == "help" (
     echo   test-memleaks run memory leak tests
     echo   test-process  run process related tests
     echo   test-system   run system APIs related tests
+    echo   test-platform platform-specific Windows tests
     echo   uninstall     uninstall
     echo   upload-all    upload exes + wheels
     goto :eof
@@ -123,6 +124,12 @@ if "%1" == "test-process" (
 if "%1" == "test-system" (
     call :install
     %PYTHON% -m unittest -v psutil.tests.test_system
+    goto :eof
+)
+
+f "%1" == "test-platform" (
+    call :install
+    %PYTHON% psutil\tests\test_windows.py
     goto :eof
 )
 

@@ -43,7 +43,7 @@ Quick links
 Summary
 =======
 
-psutil (python system and process utilities) is a cross-platform library for
+psutil (process and system utilities) is a cross-platform library for
 retrieving information on **running processes** and **system utilization**
 (CPU, memory, disks, network) in Python. It is useful mainly for **system
 monitoring**, **profiling and limiting process resources** and **management of
@@ -331,6 +331,29 @@ Further process APIs
     >>> # waits for multiple processes to terminate
     >>> gone, alive = psutil.wait_procs(procs_list, timeout=3, callback=on_terminate)
     >>>
+
+Windows services
+================
+
+.. code-block:: python
+
+    >>> list(psutil.win_service_iter())
+    [<WindowsService(name=AeLookupSvc, display_name=Application Experience) at 38850096>,
+     <WindowsService(name=ALG, display_name=Application Layer Gateway Service) at 38850128>,
+     <WindowsService(name=APNMCP, display_name=Ask Update Service) at 38850160>,
+     <WindowsService(name=AppIDSvc, display_name=Application Identity) at 38850192>,
+     ...
+    ]
+    >>> s = psutil.win_service_get('alg')
+    >>> s.as_dict()
+    {'binpath': 'C:\\Windows\\System32\\alg.exe',
+     'description': 'Provides support for 3rd party protocol plug-ins for Internet Connection Sharing',
+     'display_name': 'Application Layer Gateway Service',
+     'name': 'alg',
+     'pid': None,
+     'start_type': 'manual',
+     'status': 'stopped',
+     'username': 'NT AUTHORITY\\LocalService'}
 
 ======
 Donate

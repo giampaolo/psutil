@@ -29,6 +29,7 @@ except ImportError:
 
 import psutil
 from psutil import WINDOWS
+from psutil._compat import basestring
 from psutil._compat import callable
 from psutil._compat import long
 from psutil._compat import PY3
@@ -574,6 +575,94 @@ class RemoteProcessTestCase(unittest.TestCase):
         e = p.environ()
         self.assertIn("THINK_OF_A_NUMBER", e)
         self.assertEquals(e["THINK_OF_A_NUMBER"], str(os.getpid()))
+
+
+@unittest.skipUnless(WINDOWS, "not a Windows system")
+class TestServices(unittest.TestCase):
+
+    def test_win_service_iter(self):
+        valid_statuses = set([
+            "running",
+            "paused",
+            "start",
+            "pause",
+            "continue",
+            "stop",
+            "stopped",
+        ])
+        valid_start_types = set([
+            "automatic",
+            "manual",
+            "disabled",
+        ])
+        valid_statuses = set([
+            "running",
+            "paused",
+            "start_pending",
+            "pause_pending",
+            "continue_pending",
+            "stop_pending",
+            "stopped"
+        ])
+        for serv in psutil.win_service_iter():
+            data = serv.as_dict()
+            self.assertIsInstance(data['name'], basestring)
+            self.assertNotEqual(data['name'].strip(), "")
+            self.assertIsInstance(data['display_name'], basestring)
+            self.assertIsInstance(data['username'], basestring)
+            self.assertIn(data['status'], valid_statuses)
+            if data['pid'] is not None:
+                psutil.Process(data['pid'])
+            self.assertIsInstance(data['binpath'], basestring)
+            self.assertIsInstance(data['username'], basestring)
+            self.assertIsInstance(data['start_type'], basestring)
+            self.assertIn(data['start_type'], valid_start_types)
+            self.assertIn(data['status'], valid_statuses)
+            if data['description'] is not None:
+                self.assertIsInstance(data['description'], basestring)
+                self.assertNotEqual(data['description'].strip(), "")
+            pid = serv.pid()
+            if pid is not None:
+                p = psutil.Process(pid)
+                self.assertTrue(p.is_running())
+            # win_service_get
+            s = psutil.win_service_get(serv.name())
+            # test __eq__
+            self.assertEqual(serv, s)
+
+    def test_win_service_get(self):
+        name = next(psutil.win_service_iter()).name()
+
+        with self.assertRaises(psutil.NoSuchProcess) as cm:
+            psutil.win_service_get(name + '???')
+        self.assertEqual(cm.exception.name, name + '???')
+
+        # test NoSuchProcess
+        service = psutil.win_service_get(name)
+        exc = WindowsError(
+            psutil._psplatform.cext.ERROR_SERVICE_DOES_NOT_EXIST, "")
+        with mock.patch("psutil._psplatform.cext.winservice_query_status",
+                        side_effect=exc):
+            self.assertRaises(psutil.NoSuchProcess, service.status)
+        with mock.patch("psutil._psplatform.cext.winservice_query_config",
+                        side_effect=exc):
+            self.assertRaises(psutil.NoSuchProcess, service.username)
+
+        # test AccessDenied
+        exc = WindowsError(
+            psutil._psplatform.cext.ERROR_ACCESS_DENIED, "")
+        with mock.patch("psutil._psplatform.cext.winservice_query_status",
+                        side_effect=exc):
+            self.assertRaises(psutil.AccessDenied, service.status)
+        with mock.patch("psutil._psplatform.cext.winservice_query_config",
+                        side_effect=exc):
+            self.assertRaises(psutil.AccessDenied, service.username)
+
+        # test __str__ and __repr__
+        self.assertIn(service.name(), str(service))
+        self.assertIn(service.display_name(), str(service))
+        self.assertIn(service.name(), repr(service))
+        self.assertIn(service.display_name(), repr(service))
 
 
 if __name__ == '__main__':

@@ -1482,6 +1482,77 @@ Popen class
   0
   >>>
 
+Windows services
+================
+
+.. function:: win_service_iter()
+
+  Return an iterator yielding a :class:`WindowsService` class instance for all
+  Windows services installed.
+
+  .. versionadded:: 4.2.0
+  Availability: Windows
+
+.. function:: win_service_get(name)
+
+  Get a Windows service by name, returning a :class:`WindowsService` instance.
+  Raise :class:`psutil.NoSuchProcess` if no service with such name exists.
+
+  .. versionadded:: 4.2.0
+  Availability: Windows
+
+.. class:: WindowsService
+
+  Represents a Windows service with the given *name*. This class is returned
+  by :func:`win_service_iter` and :func:`win_service_get` functions and it is
+  not supposed to be instantiated directly.
+
+  .. method:: name()
+
+     The service name. This string is how a service is referenced and can be
+     passed to :func:`win_service_get` to get a new :class:`WindowsService`
+     instance. The return value is cached on instantiation.
+
+  .. method:: display_name()
+
+     The service display name. The return value is cached on instantiation.
+
+  .. method:: binpath()
+
+     The fully qualified path to the service binary/exe file as a string,
+     including command line arguments.
+
+  .. method:: username()
+
+     The name of the user that owns the service.
+
+  .. method:: start_type()
+
+     A string which can either be `"automatic"`, `"manual"` or `"disabled"`.
+
+  .. method:: pid()
+
+     The process PID, if any, else `None`. This can be passed to
+     :class:`Process` class to control the service's process.
+
+  .. method:: status()
+
+     Service status as a string, which may be either `"running"`, `"paused"`,
+     `"start_pending"`, `"pause_pending"`, `"continue_pending"`,
+     `"stop_pending"` or `"stopped"`.
+
+  .. method:: description()
+
+     Service long description.
+
+  .. method:: as_dict()
+
+     Utility method retrieving all the information above as a dictionary.
+
+  .. versionadded:: 4.2.0
+  Availability: Windows
+
+
 Constants
 =========
 

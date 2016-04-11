@@ -5,6 +5,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Enhancements**
 
+- #795: [Windows] new APIs to deal with Windows services: win_service_iter()
+  and win_service_get().
 - #800: [Linux] psutil.virtual_memory() returns a new "shared" memory field.
 
 **Bug fixes**

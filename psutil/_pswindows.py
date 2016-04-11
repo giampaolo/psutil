@@ -4,6 +4,7 @@
 
 """Windows platform implementation."""
 
+import contextlib
 import errno
 import functools
 import os
@@ -36,12 +37,14 @@ else:
 
 # process priority constants, import from __init__.py:
 # http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx
-__extra__all__ = ["ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
-                  "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
-                  "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
-                  "CONN_DELETE_TCB",
-                  "AF_LINK",
-                  ]
+__extra__all__ = [
+    "win_service_iter", "win_service_get",
+    "ABOVE_NORMAL_PRIORITY_CLASS", "BELOW_NORMAL_PRIORITY_CLASS",
+    "HIGH_PRIORITY_CLASS", "IDLE_PRIORITY_CLASS",
+    "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
+    "CONN_DELETE_TCB",
+    "AF_LINK",
+    ]
 
 # --- module level constants (gets pushed up to psutil module)
 
@@ -49,6 +52,8 @@ CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
                                cext.ERROR_ACCESS_DENIED])
+
+
 if enum is None:
     AF_LINK = -1
 else:
@@ -288,6 +293,188 @@ pid_exists = cext.pid_exists
 disk_io_counters = cext.disk_io_counters
 ppid_map = cext.ppid_map  # not meant to be public
 
+
+# --- Windows services
+
+
+class WindowsService(object):
+    """Represents an installed Windows service."""
+
+    def __init__(self, name, display_name):
+        self._name = name
+        self._display_name = display_name
+
+    def __str__(self):
+        details = "(name=%s, display_name=%s)" % (
+            self._name, self._display_name)
+        return "%s%s" % (self.__class__.__name__, details)
+
+    def __repr__(self):
+        return "<%s at %s>" % (self.__str__(), id(self))
+
+    def __eq__(self, other):
+        # Test for equality with another WindosService object based
+        # on name.
+        if not isinstance(other, WindowsService):
+            return NotImplemented
+        return self._name == other._name
+
+    def __ne__(self, other):
+        return not self == other
+
+    def _query_config(self):
+        with self._wrap_exceptions():
+            display_name, binpath, username, start_type = \
+                cext.winservice_query_config(self._name)
+        return dict(
+            display_name=display_name,
+            binpath=binpath,
+            username=username,
+            start_type=start_type)
+
+    def _query_status(self):
+        with self._wrap_exceptions():
+            status, pid = cext.winservice_query_status(self._name)
+        if pid == 0:
+            pid = None
+        return dict(status=status, pid=pid)
+
+    @contextlib.contextmanager
+    def _wrap_exceptions(self):
+        """Ctx manager which translates bare OSError and WindowsError
+        exceptions into NoSuchProcess and AccessDenied.
+        """
+        try:
+            yield
+        except WindowsError as err:
+            if err.errno in ACCESS_DENIED_SET:
+                raise AccessDenied(
+                    pid=None, name=self._name,
+                    msg="service %r is not querable (not enough privileges)" %
+                        self._name)
+            elif err.winerror in (cext.ERROR_INVALID_NAME,
+                                  cext.ERROR_SERVICE_DOES_NOT_EXIST):
+                raise NoSuchProcess(
+                    pid=None, name=self._name,
+                    msg="service %r does not exist)" % self._name)
+            else:
+                raise
+
+    # config query
+
+    def name(self):
+        """The service name. This string is how a service is referenced
+        and can be passed to win_service_get() to get a new
+        WindowsService instance. The return value is cached on
+        instantiation.
+        """
+        return self._name
+
+    def display_name(self):
+        """The service display name. The return value is cached on
+        instantiation.
+        """
+        return self._display_name
+
+    def binpath(self):
+        """The fully qualified path to the service binary/exe file as
+        a string, including command line arguments.
+        """
+        return self._query_config()['binpath']
+
+    def username(self):
+        """The name of the user that owns the service."""
+        return self._query_config()['username']
+
+    def start_type(self):
+        """A string which can either be "automatic", "manual" or
+        "disabled".
+        """
+        return self._query_config()['start_type']
+
+    # status query
+
+    def pid(self):
+        """The process PID, if any, else `None`. This can be passed
+        to Process class to control the service's process.
+        """
+        return self._query_status()['pid']
+
+    def status(self):
+        """Service status as a string."""
+        return self._query_status()['status']
+
+    def description(self):
+        """Service long description."""
+        return cext.winservice_query_descr(self.name())
+
+    # utils
+
+    def as_dict(self):
+        """Utility method retrieving all the information above as a
+        dictionary.
+        """
+        d = self._query_config()
+        d.update(self._query_status())
+        d['name'] = self.name()
+        d['display_name'] = self.display_name()
+        d['description'] = self.description()
+        return d
+
+    # actions
+    # XXX: the necessary C bindings for start() and stop() are implemented
+    # but for now I prefer not to expose them.
+    # I may change my mind in the future. Reasons:
+    # - they require Administrator privileges
+    # - can't implement a timeout for stop() (unless by using a thread,
+    #   which sucks)
+    # - would require adding ServiceAlreadyStarted and
+    #   ServiceAlreadyStopped exceptions, adding two new APIs.
+    # - we might also want to have modify(), which would basically mean
+    #   rewriting win32serviceutil.ChangeServiceConfig, which involves a
+    #   lot of stuff (and API constants which would pollute the API), see:
+    #   http://pyxr.sourceforge.net/PyXR/c/python24/lib/site-packages/
+    #       win32/lib/win32serviceutil.py.html#0175
+    # - psutil is tipically about "read only" monitoring stuff;
+    #   win_service_* APIs should only be used to retrieve a service and
+    #   check whether it's running
+
+    # def start(self, timeout=None):
+    #     with self._wrap_exceptions():
+    #         cext.winservice_start(self.name())
+    #         if timeout:
+    #             giveup_at = time.time() + timeout
+    #             while True:
+    #                 if self.status() == "running":
+    #                     return
+    #                 else:
+    #                     if time.time() > giveup_at:
+    #                         raise TimeoutExpired(timeout)
+    #                     else:
+    #                         time.sleep(.1)
+
+    # def stop(self):
+    #     # Note: timeout is not implemented because it's just not
+    #     # possible, see:
+    #     # http://stackoverflow.com/questions/11973228/
+    #     with self._wrap_exceptions():
+    #         return cext.winservice_stop(self.name())
+
+
+def win_service_iter():
+    """Return a list of WindowsService instances."""
+    for name, display_name in cext.winservice_enumerate():
+        yield WindowsService(name, display_name)
+
+
+def win_service_get(name):
+    """Open a Windows service and return it as a WindowsService instance."""
+    service = WindowsService(name, None)
+    service._display_name = service._query_config()['display_name']
+    return service
+
+
+# --- decorators
 
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError and WindowsError
