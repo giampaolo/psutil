@@ -369,7 +369,7 @@ class TestModuleFunctionsLeaks(Base):
         gc.collect()
 
     def call(self, function, *args, **kwargs):
-        fun = getattr(psutil, function)
+        fun = function if callable(function) else getattr(psutil, function)
         fun(*args, **kwargs)
 
     @skip_if_linux()
@@ -444,6 +444,27 @@ class TestModuleFunctionsLeaks(Base):
 
     def test_cpu_stats(self):
         self.execute('cpu_stats')
+
+    if WINDOWS:
+
+        def test_win_service_iter(self):
+            fun = psutil._psplatform.cext.winservice_enumerate
+            self.execute(fun)
+
+        def test_win_service_get_config(self):
+            name = next(psutil.win_service_iter()).name()
+            fun = psutil._psplatform.cext.winservice_query_config
+            self.execute(fun, name)
+
+        def test_win_service_get_status(self):
+            name = next(psutil.win_service_iter()).name()
+            fun = psutil._psplatform.cext.winservice_query_status
+            self.execute(fun, name)
+
+        def test_win_service_get_description(self):
+            name = next(psutil.win_service_iter()).name()
+            fun = psutil._psplatform.cext.winservice_query_descr
+            self.execute(fun, name)
 
 
 if __name__ == '__main__':
