@@ -17,6 +17,8 @@ PLATFORMS
 FEATURES
 ========
 
+- #809: (Linux) per-process resource limits.
+
 - (UNIX) process root (different from cwd)
 
 - #782: (UNIX) process num of signals received.
