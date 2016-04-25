@@ -1422,3 +1422,13 @@ class Process(object):
                     _, real, effective, saved, fs = line.split()
                     return _common.pgids(int(real), int(effective), int(saved))
             raise NotImplementedError("line 'Gid' not found in %s" % fpath)
+
+    @wrap_exceptions
+    def cgroups(self):
+        fpath = "%s/%s/cgroup" % (self._procfs_path, self.pid)
+        with open_binary(fpath) as f:
+            cgroups = {}
+            for line in f:
+                (_, controller, name) = line.split(':', 2)
+                cgroups[controller] = name.strip()
+            return cgroups
