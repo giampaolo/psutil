@@ -12,6 +12,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 **Bug fixes**
 
 - #797: [Linux] net_if_stats() may raise OSError for certain NIC cards.
+- #812: [NetBSD] fix compilation on NetBSD-5.x.
 
 
 4.1.0 - 2016-03-12
