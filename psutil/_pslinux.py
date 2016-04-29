@@ -978,12 +978,40 @@ class Process(object):
             num_threads=num_threads,
             status=status)
 
-    @wrap_exceptions
-    def name(self):
+    def _parse_stat(self):
         with open_text("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
             data = f.read()
-        # XXX - gets changed later and probably needs refactoring
-        return data[data.find('(') + 1:data.rfind(')')]
+        # Get process name.
+        closepar = data.rfind(')')
+        name = data[data.find('(') + 1:closepar]
+        # Ignore the first two values ("pid (exe)").
+        data = data[closepar + 2:]
+        values = data.split(' ')
+        # Get CPU times.
+        utime = float(values[11]) / CLOCK_TICKS
+        stime = float(values[12]) / CLOCK_TICKS
+        children_utime = float(values[13]) / CLOCK_TICKS
+        children_stime = float(values[14]) / CLOCK_TICKS
+        cpu_times = _common.pcputimes(
+            utime, stime, children_utime, children_stime)
+        # Terminal
+        tty_nr = int(values[4])
+        # Create time. According to documentation, starttime is in position
+        # #21 and the value is expressed in jiffies (clock ticks).
+        # We first divide it for clock ticks and then add uptime returning
+        # seconds since the epoch, in UTC.
+        # Also use cached value if available.
+        bt = BOOT_TIME or boot_time()
+        create_time = (float(values[19]) / CLOCK_TICKS) + bt
+        return dict(
+            name=name,
+            cpu_times=cpu_times,
+            tty_nr=tty_nr,
+            create_time=create_time)
+
+    @wrap_exceptions
+    def name(self):
+        return self._parse_stat()['name']
 
     def exe(self):
         try:
@@ -1024,8 +1052,7 @@ class Process(object):
     @wrap_exceptions
     def terminal(self):
         tmap = _psposix._get_terminal_map()
-        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            tty_nr = int(f.read().split(b' ')[6])
+        tty_nr = self._parse_stat()['tty_nr']
         try:
             return tmap[tty_nr]
         except KeyError:
@@ -1058,16 +1085,7 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            st = f.read().strip()
-        # ignore the first two values ("pid (exe)")
-        st = st[st.find(b')') + 2:]
-        values = st.split(b' ')
-        utime = float(values[11]) / CLOCK_TICKS
-        stime = float(values[12]) / CLOCK_TICKS
-        children_utime = float(values[13]) / CLOCK_TICKS
-        children_stime = float(values[14]) / CLOCK_TICKS
-        return _common.pcputimes(utime, stime, children_utime, children_stime)
+        return self._parse_stat()['cpu_times']
 
     @wrap_exceptions
     def wait(self, timeout=None):
@@ -1078,18 +1096,7 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            st = f.read().strip()
-        # ignore the first two values ("pid (exe)")
-        st = st[st.rfind(b')') + 2:]
-        values = st.split(b' ')
-        # According to documentation, starttime is in field 21 and the
-        # unit is jiffies (clock ticks).
-        # We first divide it for clock ticks and then add uptime returning
-        # seconds since the epoch, in UTC.
-        # Also use cached value if available.
-        bt = BOOT_TIME or boot_time()
-        return (float(values[19]) / CLOCK_TICKS) + bt
+        return self._parse_stat()['create_time']
 
     @wrap_exceptions
     def memory_info(self):

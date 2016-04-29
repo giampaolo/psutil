@@ -312,7 +312,7 @@ class TestProcess(unittest.TestCase):
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
 
-    @unittest.skipIf(WINDOWS, 'Windows only')
+    @unittest.skipIf(WINDOWS, 'UNIX only')
     def test_terminal(self):
         terminal = psutil.Process().terminal()
         if sys.stdin.isatty():
