@@ -198,7 +198,7 @@ def parse_environ_block(data):
         equal_pos = data.find("=", pos, next_pos)
         if equal_pos > pos:
             key = data[pos:equal_pos]
-            value = data[equal_pos+1:next_pos]
+            value = data[equal_pos + 1:next_pos]
             # Windows expects environment variables to be uppercase only
             if WINDOWS_:
                 key = key.upper()

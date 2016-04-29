@@ -267,6 +267,7 @@ def wrap_exceptions(fun):
     """Call callable into a try/except clause and translate ENOENT,
     EACCES and EPERM in NoSuchProcess or AccessDenied exceptions.
     """
+
     def wrapper(self, *args, **kwargs):
         try:
             return fun(self, *args, **kwargs)

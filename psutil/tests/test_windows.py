@@ -516,7 +516,7 @@ class RemoteProcessTestCase(unittest.TestCase):
 
         if other_python is None:
             raise unittest.SkipTest(
-                    "could not find interpreter with opposite bitness")
+                "could not find interpreter with opposite bitness")
 
         if IS_64_BIT:
             cls.python64 = sys.executable

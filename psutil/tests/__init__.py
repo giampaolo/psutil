@@ -90,7 +90,7 @@ if not PY3:
         TESTFN_UNICODE = TESTFN + "???"
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                           '..', '..'))
+                                        '..', '..'))
 SCRIPTS_DIR = os.path.join(ROOT_DIR, 'scripts')
 
 WIN_VISTA = (6, 0, 0) if WINDOWS else None

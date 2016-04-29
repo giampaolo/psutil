@@ -44,7 +44,7 @@ __extra__all__ = [
     "NORMAL_PRIORITY_CLASS", "REALTIME_PRIORITY_CLASS",
     "CONN_DELETE_TCB",
     "AF_LINK",
-    ]
+]
 
 # --- module level constants (gets pushed up to psutil module)
 
