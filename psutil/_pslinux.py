@@ -1369,15 +1369,11 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
-            for line in f:
-                if line.startswith(b"State:"):
-                    letter = line.split()[1]
-                    if PY3:
-                        letter = letter.decode()
-                    # XXX is '?' legit? (we're not supposed to return
-                    # it anyway)
-                    return PROC_STATUSES.get(letter, '?')
+        ret = self._parse_status()
+        if ret['status'] is None:
+            raise NotImplementedError("line 'Status' not found in %s" % (
+                "%s/%s/status" % (self._procfs_path, self.pid)))
+        return ret['status']
 
     @wrap_exceptions
     def open_files(self):
