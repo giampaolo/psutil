@@ -943,6 +943,41 @@ class Process(object):
         self._ppid = None
         self._procfs_path = get_procfs_path()
 
+    def _parse_status(self):
+        fpath = "%s/%s/status" % (self._procfs_path, self.pid)
+        ppid = uids = gids = volctx = unvolctx = num_threads = status = None
+        with open_binary(fpath) as f:
+            for line in f:
+                if ppid is None and line.startswith(b"PPid:"):
+                    ppid = int(line.split()[1])
+                elif uids is None and line.startswith(b"Uid:"):
+                    uids = line
+                elif gids is None and line.startswith(b"Gid:"):
+                    gids = line
+                elif volctx is None \
+                        and line.startswith(b"voluntary_ctxt_switches"):
+                    volctx = int(line.split()[1])
+                elif unvolctx is None \
+                        and line.startswith(b"nonvoluntary_ctxt_switches"):
+                    unvolctx = int(line.split()[1])
+                elif num_threads is None and line.startswith(b"Threads:"):
+                    num_threads = int(line.split()[1])
+                elif status is None and line.startswith(b"State:"):
+                    letter = line.split()[1]
+                    if PY3:
+                        letter = letter.decode()
+                    # XXX is '?' legit? (we're not supposed to return
+                    # it anyway)
+                    status = PROC_STATUSES.get(letter, '?')
+        return dict(
+            ppid=ppid,
+            uids=uids,
+            gids=gids,
+            volctx=volctx,
+            unvolctx=unvolctx,
+            num_threads=num_threads,
+            status=status)
+
     @wrap_exceptions
     def name(self):
         with open_text("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
@@ -1177,27 +1212,21 @@ class Process(object):
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        vol = unvol = None
-        with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
-            for line in f:
-                if line.startswith(b"voluntary_ctxt_switches"):
-                    vol = int(line.split()[1])
-                elif line.startswith(b"nonvoluntary_ctxt_switches"):
-                    unvol = int(line.split()[1])
-                if vol is not None and unvol is not None:
-                    return _common.pctxsw(vol, unvol)
+        ret = self._parse_status()
+        if ret['volctx'] is None or ret['unvolctx'] is None:
             raise NotImplementedError(
                 "'voluntary_ctxt_switches' and 'nonvoluntary_ctxt_switches'"
                 "fields were not found in /proc/%s/status; the kernel is "
                 "probably older than 2.6.23" % self.pid)
+        return _common.pctxsw(ret['volctx'], ret['unvolctx'])
 
     @wrap_exceptions
     def num_threads(self):
-        with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
-            for line in f:
-                if line.startswith(b"Threads:"):
-                    return int(line.split()[1])
-            raise NotImplementedError("line not found")
+        ret = self._parse_status()
+        if ret['num_threads'] is None:
+            raise NotImplementedError("line 'Threads' not found in %s" % (
+                "%s/%s/status" % (self._procfs_path, self.pid)))
+        return ret['num_threads']
 
     @wrap_exceptions
     def threads(self):
@@ -1395,30 +1424,28 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        fpath = "%s/%s/status" % (self._procfs_path, self.pid)
-        with open_binary(fpath) as f:
-            for line in f:
-                if line.startswith(b"PPid:"):
-                    # PPid: nnnn
-                    return int(line.split()[1])
-            raise NotImplementedError("line 'PPid' not found in %s" % fpath)
+        ret = self._parse_status()
+        if ret['ppid'] is None:
+            raise NotImplementedError("line 'PPid' not found in %s" % (
+                "%s/%s/status" % (self._procfs_path, self.pid)))
+        return ret['ppid']
 
     @wrap_exceptions
     def uids(self):
-        fpath = "%s/%s/status" % (self._procfs_path, self.pid)
-        with open_binary(fpath) as f:
-            for line in f:
-                if line.startswith(b'Uid:'):
-                    _, real, effective, saved, fs = line.split()
-                    return _common.puids(int(real), int(effective), int(saved))
-            raise NotImplementedError("line 'Uid' not found in %s" % fpath)
+        ret = self._parse_status()
+        if ret['uids'] is None:
+            raise NotImplementedError("line 'Uid' not found in %s" % (
+                "%s/%s/status" % (self._procfs_path, self.pid)))
+        line = ret['uids']
+        _, real, effective, saved, fs = line.split()
+        return _common.puids(int(real), int(effective), int(saved))
 
     @wrap_exceptions
     def gids(self):
-        fpath = "%s/%s/status" % (self._procfs_path, self.pid)
-        with open_binary(fpath) as f:
-            for line in f:
-                if line.startswith(b'Gid:'):
-                    _, real, effective, saved, fs = line.split()
-                    return _common.pgids(int(real), int(effective), int(saved))
-            raise NotImplementedError("line 'Gid' not found in %s" % fpath)
+        ret = self._parse_status()
+        if ret['gids'] is None:
+            raise NotImplementedError("line 'Gid' not found in %s" % (
+                "%s/%s/status" % (self._procfs_path, self.pid)))
+        line = ret['gids']
+        _, real, effective, saved, fs = line.split()
+        return _common.pgids(int(real), int(effective), int(saved))
