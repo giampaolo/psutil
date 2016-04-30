@@ -1455,7 +1455,8 @@ class Process(object):
         if ret['ppid'] is None:
             raise NotImplementedError("line 'PPid' not found in %s" % (
                 "%s/%s/status" % (self._procfs_path, self.pid)))
-        return ret['ppid']
+        self._ppid = ret['ppid']
+        return self._ppid
 
     @wrap_exceptions
     def uids(self):
