@@ -228,6 +228,12 @@ class Process(object):
         self._name = None
         self._ppid = None
 
+    def oneshot_enter(self):
+        pass
+
+    def oneshot_exit(self):
+        pass
+
     @wrap_exceptions
     def name(self):
         return cext.proc_name(self.pid)

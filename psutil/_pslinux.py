@@ -25,6 +25,7 @@ from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
 from ._common import isfile_strict
 from ._common import memoize
+from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
@@ -943,6 +944,15 @@ class Process(object):
         self._ppid = None
         self._procfs_path = get_procfs_path()
 
+    def oneshot_enter(self):
+        self._parse_stat.cache_activate()
+        self._parse_status.cache_activate()
+
+    def oneshot_exit(self):
+        self._parse_stat.cache_deactivate()
+        self._parse_status.cache_deactivate()
+
+    @memoize_when_activated
     def _parse_status(self):
         fpath = "%s/%s/status" % (self._procfs_path, self.pid)
         ppid = uids = gids = volctx = unvolctx = num_threads = status = None
@@ -978,6 +988,7 @@ class Process(object):
             num_threads=num_threads,
             status=status)
 
+    @memoize_when_activated
     def _parse_stat(self):
         with open_text("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
             data = f.read()

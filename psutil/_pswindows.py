@@ -505,6 +505,12 @@ class Process(object):
         self._name = None
         self._ppid = None
 
+    def oneshot_enter(self):
+        pass
+
+    def oneshot_exit(self):
+        pass
+
     @wrap_exceptions
     def name(self):
         """Return process name, which on Windows is always the final

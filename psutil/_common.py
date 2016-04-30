@@ -125,14 +125,69 @@ def memoize(fun):
 
     def cache_clear():
         """Clear cache."""
-        lock.acquire()
-        try:
+        with lock:
             cache.clear()
-        finally:
-            lock.release()
 
     lock = threading.RLock()
     cache = {}
+    wrapper.cache_clear = cache_clear
+    return wrapper
+
+
+def memoize_when_activated(fun):
+    """A memoize decorator which is disabled by default. It can be
+    activated and deactivated on request.
+
+    >>> @memoize
+    ... def foo()
+    ...     print(1)
+    ...
+    >>> # deactivated (default)
+    >>> foo()
+    1
+    >>> foo()
+    1
+    >>>
+    >>> # activated
+    >>> foo.cache_activate()
+    >>> foo()
+    1
+    >>> foo()
+    >>> foo()
+    >>>
+    """
+    @functools.wraps(fun)
+    def wrapper(*args, **kwargs):
+        if not wrapper.cache_activated:
+            return fun(*args, **kwargs)
+        else:
+            key = (args, frozenset(sorted(kwargs.items())))
+            with lock:
+                try:
+                    return cache[key]
+                except KeyError:
+                    ret = cache[key] = fun(*args, **kwargs)
+            return ret
+
+    def cache_clear():
+        """Clear cache."""
+        with lock:
+            cache.clear()
+
+    def cache_activate():
+        """Activate cache."""
+        wrapper.cache_activated = True
+
+    def cache_deactivate():
+        """Deactivate and clear cache."""
+        wrapper.cache_activated = False
+        cache_clear()
+
+    lock = threading.RLock()
+    cache = {}
+    wrapper.cache_activated = False
+    wrapper.cache_activate = cache_activate
+    wrapper.cache_deactivate = cache_deactivate
     wrapper.cache_clear = cache_clear
     return wrapper
 

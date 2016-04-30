@@ -12,6 +12,7 @@ in Python.
 from __future__ import division
 
 import collections
+import contextlib
 import errno
 import functools
 import os
@@ -378,6 +379,7 @@ class Process(object):
         self._create_time = None
         self._gone = False
         self._hash = None
+        self._oneshot_inctx = False
         # used for caching on Windows only (on POSIX ppid may change)
         self._ppid = None
         # platform-specific modules define an _psplatform.Process
@@ -445,6 +447,51 @@ class Process(object):
 
     # --- utility methods
 
+    @contextlib.contextmanager
+    def oneshot(self):
+        """Utility context manager which considerably speeds up the
+        retrieval of multiple process information at the same time.
+
+        Internally different process info (e.g. name, ppid, uids,
+        gids, ...) may be fetched by using the same routine, but
+        only one information is returned and the others are discarded.
+        When using this context manager the internal routine is
+        executed once (in the example below on name()) and the
+        other info are cached.
+
+        The cache is cleared when exiting the context manager block.
+        The advice is to use this every time you retrieve more than
+        one information about the process. If you're lucky, you'll
+        get a hell of a speedup.
+
+        >>> p = Process()
+        >>> with p.oneshot():
+        ...     p.name()  # execute internal routine
+        ...     p.ppid()  # use cached value
+        ...     p.uids()  # use cached value
+        ...     p.gids()  # use cached value
+        ...
+        """
+        if self._oneshot_inctx:
+            # NOOP: this covers the use case where the user enters the
+            # context twice. Since as_dict() internally uses oneshot()
+            # I expect that the code below will be a pretty common
+            # "mistake" that the user will make, so let's guard
+            # against that:
+            #
+            # >>> with p.oneshot():
+            # ...    p.as_dict()
+            # ...
+            yield
+        else:
+            self._oneshot_inctx = True
+            try:
+                self._proc.oneshot_enter()
+                yield
+            finally:
+                self._oneshot_inctx = False
+                self._proc.oneshot_exit()
+
     def as_dict(self, attrs=None, ad_value=None):
         """Utility method returning process information as a
         hashable dictionary.
@@ -460,7 +507,8 @@ class Process(object):
         """
         excluded_names = set(
             ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-             'is_running', 'as_dict', 'parent', 'children', 'rlimit'])
+             'is_running', 'as_dict', 'parent', 'children', 'rlimit',
+             'oneshot'])
         retdict = dict()
         ls = set(attrs or [x for x in dir(self)])
         for name in ls:
