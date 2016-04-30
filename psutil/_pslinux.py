@@ -1400,7 +1400,9 @@ class Process(object):
             for line in f:
                 if line.startswith(b"PPid:"):
                     # PPid: nnnn
-                    return int(line.split()[1])
+                    ppid = int(line.split()[1])
+                    self._ppid = ppid
+                    return ppid
             raise NotImplementedError("line 'PPid' not found in %s" % fpath)
 
     @wrap_exceptions
