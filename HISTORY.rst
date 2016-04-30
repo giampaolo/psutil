@@ -12,6 +12,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 **Bug fixes**
 
 - #797: [Linux] net_if_stats() may raise OSError for certain NIC cards.
+- #813: Process.as_dict() should ignore extraneous attribute names which gets
+  attached to the Process instance.
 
 
 4.1.0 - 2016-03-12
