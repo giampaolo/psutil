@@ -966,13 +966,11 @@ class Process(object):
                     if info == 'ppid':
                         return dict(ppid=ppid)
                 elif uids is None and line.startswith(b"Uid:"):
-                    _, real, effective, saved, fs = line.split()
-                    uids = _common.puids(int(real), int(effective), int(saved))
+                    uids = line
                     if info == 'uids':
                         return dict(uids=uids)
                 elif gids is None and line.startswith(b"Gid:"):
-                    _, real, effective, saved, fs = line.split()
-                    gids = _common.pgids(int(real), int(effective), int(saved))
+                    gids = line
                     if info == 'gids':
                         return dict(gids=gids)
                 elif volctx is None \
@@ -1465,7 +1463,8 @@ class Process(object):
         if ret['uids'] is None:
             raise NotImplementedError("line 'Uid' not found in %s" % (
                 "%s/%s/status" % (self._procfs_path, self.pid)))
-        return ret['uids']
+        _, real, effective, saved, fs = ret['uids']
+        return _common.puids(int(real), int(effective), int(saved))
 
     @wrap_exceptions
     def gids(self):
@@ -1473,4 +1472,5 @@ class Process(object):
         if ret['gids'] is None:
             raise NotImplementedError("line 'Gid' not found in %s" % (
                 "%s/%s/status" % (self._procfs_path, self.pid)))
-        return ret['gids']
+        _, real, effective, saved, fs = ret['gids'].split()
+        return _common.pgids(int(real), int(effective), int(saved))
