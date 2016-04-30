@@ -509,12 +509,11 @@ class Process(object):
             ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
              'is_running', 'as_dict', 'parent', 'children', 'rlimit',
              'oneshot'])
+        valid_names = _process_attrnames - excluded_names
         retdict = dict()
-        ls = set(attrs or [x for x in dir(self)])
+        ls = set(attrs) if attrs else _process_attrnames
         for name in ls:
-            if name.startswith('_'):
-                continue
-            if name in excluded_names:
+            if name not in valid_names:
                 continue
             try:
                 attr = getattr(self, name)
@@ -1320,6 +1319,9 @@ class Popen(Process):
         ret = super(Popen, self).wait(timeout)
         self.__subproc.returncode = ret
         return ret
+
+
+_process_attrnames = set([x for x in dir(Process) if not x.startswith('_')])
 
 
 # =====================================================================
