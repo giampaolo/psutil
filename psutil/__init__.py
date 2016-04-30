@@ -512,26 +512,27 @@ class Process(object):
         valid_names = _process_attrnames - excluded_names
         retdict = dict()
         ls = set(attrs) if attrs else _process_attrnames
-        for name in ls:
-            if name not in valid_names:
-                continue
-            try:
-                attr = getattr(self, name)
-                if callable(attr):
-                    ret = attr()
-                else:
-                    ret = attr
-            except (AccessDenied, ZombieProcess):
-                ret = ad_value
-            except NotImplementedError:
-                # in case of not implemented functionality (may happen
-                # on old or exotic systems) we want to crash only if
-                # the user explicitly asked for that particular attr
-                if attrs:
-                    raise
-                continue
-            retdict[name] = ret
-        return retdict
+        with self.oneshot():
+            for name in ls:
+                if name not in valid_names:
+                    continue
+                try:
+                    attr = getattr(self, name)
+                    if callable(attr):
+                        ret = attr()
+                    else:
+                        ret = attr
+                except (AccessDenied, ZombieProcess):
+                    ret = ad_value
+                except NotImplementedError:
+                    # in case of not implemented functionality (may happen
+                    # on old or exotic systems) we want to crash only if
+                    # the user explicitly asked for that particular attr
+                    if attrs:
+                        raise
+                    continue
+                retdict[name] = ret
+            return retdict
 
     def parent(self):
         """Return the parent process as a Process object pre-emptively
