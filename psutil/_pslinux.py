@@ -936,34 +936,45 @@ def wrap_exceptions(fun):
 class Process(object):
     """Linux process implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_procfs_path"]
+    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_oneshot"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
         self._ppid = None
         self._procfs_path = get_procfs_path()
+        self._oneshot = False
 
     def oneshot_enter(self):
         self._parse_stat.cache_activate()
         self._parse_status.cache_activate()
+        self._oneshot = True
 
     def oneshot_exit(self):
         self._parse_stat.cache_deactivate()
         self._parse_status.cache_deactivate()
+        self._oneshot = False
 
     @memoize_when_activated
-    def _parse_status(self):
+    def _parse_status(self, info=None):
         fpath = "%s/%s/status" % (self._procfs_path, self.pid)
         ppid = uids = gids = volctx = unvolctx = num_threads = status = None
         with open_binary(fpath) as f:
             for line in f:
                 if ppid is None and line.startswith(b"PPid:"):
                     ppid = int(line.split()[1])
+                    if info == 'ppid':
+                        return dict(ppid=ppid)
                 elif uids is None and line.startswith(b"Uid:"):
-                    uids = line
+                    _, real, effective, saved, fs = line.split()
+                    uids = _common.puids(int(real), int(effective), int(saved))
+                    if info == 'uids':
+                        return dict(uids=uids)
                 elif gids is None and line.startswith(b"Gid:"):
-                    gids = line
+                    _, real, effective, saved, fs = line.split()
+                    gids = _common.pgids(int(real), int(effective), int(saved))
+                    if info == 'gids':
+                        return dict(gids=gids)
                 elif volctx is None \
                         and line.startswith(b"voluntary_ctxt_switches"):
                     volctx = int(line.split()[1])
@@ -972,6 +983,8 @@ class Process(object):
                     unvolctx = int(line.split()[1])
                 elif num_threads is None and line.startswith(b"Threads:"):
                     num_threads = int(line.split()[1])
+                    if info == 'num_threads':
+                        return dict(num_threads=num_threads)
                 elif status is None and line.startswith(b"State:"):
                     letter = line.split()[1]
                     if PY3:
@@ -979,6 +992,8 @@ class Process(object):
                     # XXX is '?' legit? (we're not supposed to return
                     # it anyway)
                     status = PROC_STATUSES.get(letter, '?')
+                    if info == 'status':
+                        return dict(status=status)
         return dict(
             ppid=ppid,
             uids=uids,
@@ -1240,7 +1255,7 @@ class Process(object):
 
     @wrap_exceptions
     def num_threads(self):
-        ret = self._parse_status()
+        ret = self._parse_status('num_threads' if not self._oneshot else None)
         if ret['num_threads'] is None:
             raise NotImplementedError("line 'Threads' not found in %s" % (
                 "%s/%s/status" % (self._procfs_path, self.pid)))
@@ -1380,7 +1395,7 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        ret = self._parse_status()
+        ret = self._parse_status('status' if not self._oneshot else None)
         if ret['status'] is None:
             raise NotImplementedError("line 'Status' not found in %s" % (
                 "%s/%s/status" % (self._procfs_path, self.pid)))
@@ -1438,7 +1453,7 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        ret = self._parse_status()
+        ret = self._parse_status('ppid' if not self._oneshot else None)
         if ret['ppid'] is None:
             raise NotImplementedError("line 'PPid' not found in %s" % (
                 "%s/%s/status" % (self._procfs_path, self.pid)))
@@ -1446,20 +1461,16 @@ class Process(object):
 
     @wrap_exceptions
     def uids(self):
-        ret = self._parse_status()
+        ret = self._parse_status('uids' if not self._oneshot else None)
         if ret['uids'] is None:
             raise NotImplementedError("line 'Uid' not found in %s" % (
                 "%s/%s/status" % (self._procfs_path, self.pid)))
-        line = ret['uids']
-        _, real, effective, saved, fs = line.split()
-        return _common.puids(int(real), int(effective), int(saved))
+        return ret['uids']
 
     @wrap_exceptions
     def gids(self):
-        ret = self._parse_status()
+        ret = self._parse_status('gids' if not self._oneshot else None)
         if ret['gids'] is None:
             raise NotImplementedError("line 'Gid' not found in %s" % (
                 "%s/%s/status" % (self._procfs_path, self.pid)))
-        line = ret['gids']
-        _, real, effective, saved, fs = line.split()
-        return _common.pgids(int(real), int(effective), int(saved))
+        return ret['gids']
