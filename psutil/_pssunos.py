@@ -359,7 +359,8 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        return cext.proc_basic_info(self.pid, self._procfs_path)[0]
+        self._ppid = cext.proc_basic_info(self.pid, self._procfs_path)[0]
+        return self._ppid
 
     @wrap_exceptions
     def uids(self):
