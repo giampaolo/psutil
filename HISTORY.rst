@@ -8,6 +8,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #795: [Windows] new APIs to deal with Windows services: win_service_iter()
   and win_service_get().
 - #800: [Linux] psutil.virtual_memory() returns a new "shared" memory field.
+- XXX: [Linux] speedup /proc parsing:
+  - Process.ppid() is 20% faster
 
 **Bug fixes**
 

@@ -1395,15 +1395,11 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        fpath = "%s/%s/status" % (self._procfs_path, self.pid)
-        with open_binary(fpath) as f:
-            for line in f:
-                if line.startswith(b"PPid:"):
-                    # PPid: nnnn
-                    ppid = int(line.split()[1])
-                    self._ppid = ppid
-                    return ppid
-            raise NotImplementedError("line 'PPid' not found in %s" % fpath)
+        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
+            data = f.read()
+        # ignore the first two values ("pid (exe)")
+        data = data[data.rfind(b')') + 2:]
+        return int(data.split(b' ')[1])
 
     @wrap_exceptions
     def uids(self):
