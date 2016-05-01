@@ -10,6 +10,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #800: [Linux] psutil.virtual_memory() returns a new "shared" memory field.
 - XXX: [Linux] speedup /proc parsing:
   - Process.ppid() is 20% faster
+  - Process.status() is 28% faster
 
 **Bug fixes**
 
