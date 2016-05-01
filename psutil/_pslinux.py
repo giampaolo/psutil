@@ -1196,20 +1196,16 @@ class Process(object):
         return readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
 
     @wrap_exceptions
-    def num_ctx_switches(self):
-        vol = unvol = None
-        with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
-            for line in f:
-                if line.startswith(b"voluntary_ctxt_switches"):
-                    vol = int(line.split()[1])
-                elif line.startswith(b"nonvoluntary_ctxt_switches"):
-                    unvol = int(line.split()[1])
-                if vol is not None and unvol is not None:
-                    return _common.pctxsw(vol, unvol)
+    def num_ctx_switches(self, _ctxsw_re=re.compile(b'ctxt_switches:\t(\d+)')):
+        data = self._read_status_file()
+        ctxsw = _ctxsw_re.findall(data)
+        if not ctxsw:
             raise NotImplementedError(
                 "'voluntary_ctxt_switches' and 'nonvoluntary_ctxt_switches'"
-                "fields were not found in /proc/%s/status; the kernel is "
+                "lines were not found in /proc/%s/status; the kernel is "
                 "probably older than 2.6.23" % self.pid)
+        else:
+            return _common.pctxsw(int(ctxsw[0]), int(ctxsw[1]))
 
     @wrap_exceptions
     def num_threads(self, _num_threads_re=re.compile(b'Threads:\t(\d+)')):
