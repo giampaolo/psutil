@@ -12,6 +12,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   - Process.ppid() is 20% faster
   - Process.status() is 28% faster
   - Process.name() is 25% faster
+  - Process.num_threads is 20% faster on Python 3
 
 **Bug fixes**
 

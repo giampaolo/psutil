@@ -804,6 +804,12 @@ class TestProcess(unittest.TestCase):
                         elif line.startswith('PPid:'):
                             ppid = int(line.split()[1])
                             self.assertEqual(p.ppid(), ppid)
+                        elif line.startswith('Threads:'):
+                            # num_threads() is determined via 'status' file
+                            # but we use a re internally, so let's check it
+                            # also.
+                            num_threads = int(line.split()[1])
+                            self.assertEqual(p.num_threads(), num_threads)
 
     def test_memory_maps(self):
         src = textwrap.dedent("""
@@ -922,13 +928,6 @@ class TestProcess(unittest.TestCase):
             self.assertRaises(
                 NotImplementedError,
                 psutil._pslinux.Process(os.getpid()).num_ctx_switches)
-            assert m.called
-
-    def test_num_threads_mocked(self):
-        with mock.patch('psutil._pslinux.open', create=True) as m:
-            self.assertRaises(
-                NotImplementedError,
-                psutil._pslinux.Process(os.getpid()).num_threads)
             assert m.called
 
     def test_uids_mocked(self):

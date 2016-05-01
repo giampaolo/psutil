@@ -967,6 +967,10 @@ class Process(object):
         fields_after_name = data[rpar + 2:].split()
         return [name] + fields_after_name
 
+    def _read_status_file(self):
+        with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
+            return f.read()
+
     @wrap_exceptions
     def name(self):
         name = self._parse_stat_file()[0]
@@ -1208,12 +1212,12 @@ class Process(object):
                 "probably older than 2.6.23" % self.pid)
 
     @wrap_exceptions
-    def num_threads(self):
-        with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
-            for line in f:
-                if line.startswith(b"Threads:"):
-                    return int(line.split()[1])
-            raise NotImplementedError("line not found")
+    def num_threads(self, _num_threads_re=re.compile(b'Threads:\t(\d+)')):
+        # Note: on Python 3 using a re is faster than iterating over file
+        # line by line. On Python 2 is the exact opposite, and iterating
+        # over a file on Python 3 is slower than on Python 2.
+        data = self._read_status_file()
+        return int(_num_threads_re.findall(data)[0])
 
     @wrap_exceptions
     def threads(self):
