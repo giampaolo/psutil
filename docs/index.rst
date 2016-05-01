@@ -685,6 +685,9 @@ Process class
   univocally over time (the hash is determined by mixing process PID
   and creation time). As such it can also be used with
   `set()s <http://docs.python.org/2/library/stdtypes.html#types-set>`__.
+  If you want to query more than one information about the process at the same
+  time make sure to use either :meth:`oneshot()` context manager or
+  :meth:`as_dict()` method to speed up access.
 
   .. warning::
 
@@ -713,6 +716,31 @@ Process class
   .. attribute:: pid
 
      The process PID.
+
+  .. method:: oneshot()
+
+    Utility context manager which considerably speeds up the retrieval of
+    multiple process information at the same time.
+    Internally different process info (e.g. :meth:`name`, :meth:`ppid`,
+    :meth:`uids`, :meth:`gids`, ...) may be fetched by using the same routine,
+    but only one information is returned and the others are discarded.
+    When using this context manager the internal routine is executed once (in
+    the example below on :meth:`name()`) and the other info are cached.
+    The cache is cleared when exiting the context manager block.
+    The advice is to use this every time you retrieve more than one information
+    about the process. If you're lucky, you'll get a hell of a speedup.
+
+        >>> import psutil
+        >>> p = psutil.Process()
+        >>> with p.oneshot():
+        ...     p.name()  # execute internal routine
+        ...     p.ppid()  # use cached value
+        ...     p.uids()  # use cached value
+        ...     p.create_time()  # use cached value
+        ...
+        >>>
+
+     .. versionadded:: 4.3.0
 
   .. method:: ppid()
 
@@ -765,6 +793,8 @@ Process class
      value which gets assigned to a dict key in case :class:`AccessDenied`
      or :class:`ZombieProcess` exception is raised when retrieving that
      particular process information.
+     Internally, :meth:`as_dict` uses :meth:`oneshot` context manager so
+     there's no need you use it also.
 
         >>> import psutil
         >>> p = psutil.Process()
@@ -773,6 +803,9 @@ Process class
 
      .. versionchanged:: 3.0.0 *ad_value* is used also when incurring into
         :class:`ZombieProcess` exception, not only :class:`AccessDenied`
+
+     .. versionchanged:: 4.3.0 :meth:`as_dict` is considerably faster thanks
+        to :meth:`oneshot` context manager.
 
   .. method:: parent()
 
