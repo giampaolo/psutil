@@ -958,6 +958,9 @@ class Process(object):
         Using "man proc" as a reference: where "man proc" refers to
         position N, always subscract 2 (e.g starttime pos 22 in
         'man proc' == pos 20 in the list returned here).
+
+        The return value is cached in case oneshot() ctx manager is
+        in use.
         """
         with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
             data = f.read()
@@ -971,6 +974,11 @@ class Process(object):
 
     @memoize_when_activated
     def _read_status_file(self):
+        """Read /proc/{pid}/stat file and return its content.
+
+        The return value is cached in case oneshot() ctx manager is
+        in use.
+        """
         with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
             return f.read()
 
