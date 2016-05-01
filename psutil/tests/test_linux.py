@@ -779,6 +779,25 @@ class TestProcess(unittest.TestCase):
 
     tearDown = setUp
 
+    def test_compare_stat_and_status_files(self):
+        # /proc/pid/stat and /proc/pid/status have many values in common.
+        # Whenever possible, psutil uses /proc/pid/stat (it's faster).
+        # For all those cases we check that the value found in
+        # /proc/pid/stat (by psutil) matches the one found in
+        # /proc/pid/status.
+        for p in psutil.process_iter():
+            try:
+                f = psutil._psplatform.open_text('/proc/%s/status' % p.pid)
+            except IOError:
+                pass
+            else:
+                with f:
+                    for line in f:
+                        if line.startswith('Name:'):
+                            name = line.split()[1]
+                            # Name is truncated to 15 chars
+                            self.assertEqual(p.name()[:15], name[:15])
+
     def test_memory_maps(self):
         src = textwrap.dedent("""
             import time

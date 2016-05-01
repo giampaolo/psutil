@@ -11,6 +11,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - XXX: [Linux] speedup /proc parsing:
   - Process.ppid() is 20% faster
   - Process.status() is 28% faster
+  - Process.name() is 25% faster
 
 **Bug fixes**
 

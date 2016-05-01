@@ -155,6 +155,13 @@ def open_text(fname, **kwargs):
     return open(fname, "rt", **kwargs)
 
 
+def decode(s):
+    if PY3:
+        return s.decode(encoding=FS_ENCODING, errors=ENCODING_ERRORS_HANDLER)
+    else:
+        return s
+
+
 def get_procfs_path():
     return sys.modules['psutil'].PROCFS_PATH
 
@@ -943,12 +950,27 @@ class Process(object):
         self._ppid = None
         self._procfs_path = get_procfs_path()
 
+    def _parse_stat_file(self):
+        """Parse /proc/{pid}/stat file. Returns a list of fields where
+        process name is in position 0.
+        """
+        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
+            data = f.read()
+        # Process name is between parentheses. It can contain spaces and
+        # other parentheses. This is taken into account by looking for
+        # the first occurrence of "(" and the last occurence of ")".
+        rpar = data.rfind(b')')
+        name = data[data.find(b'(') + 1:rpar]
+        fields_after_name = data[rpar + 2:].split()
+        return [name] + fields_after_name
+
     @wrap_exceptions
     def name(self):
-        with open_text("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            data = f.read()
+        name = self._parse_stat_file()[0]
+        if PY3:
+            name = decode(name)
         # XXX - gets changed later and probably needs refactoring
-        return data[data.find('(') + 1:data.rfind(')')]
+        return name
 
     def exe(self):
         try:
@@ -1024,7 +1046,7 @@ class Process(object):
     @wrap_exceptions
     def cpu_times(self):
         with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            st = f.read().strip()
+            st = f.read()
         # ignore the first two values ("pid (exe)")
         st = st[st.find(b')') + 2:]
         values = st.split(b' ')
