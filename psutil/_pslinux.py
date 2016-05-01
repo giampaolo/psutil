@@ -958,7 +958,7 @@ class Process(object):
     @memoize_when_activated
     def _parse_status(self, info=None):
         fpath = "%s/%s/status" % (self._procfs_path, self.pid)
-        ppid = uids = gids = volctx = unvolctx = num_threads = status = None
+        ppid = uids = gids = volctx = unvolctx = num_threads = None
         with open_binary(fpath) as f:
             for line in f:
                 if ppid is None and line.startswith(b"PPid:"):
@@ -983,23 +983,13 @@ class Process(object):
                     num_threads = int(line.split()[1])
                     if info == 'num_threads':
                         return dict(num_threads=num_threads)
-                elif status is None and line.startswith(b"State:"):
-                    letter = line.split()[1]
-                    if PY3:
-                        letter = letter.decode()
-                    # XXX is '?' legit? (we're not supposed to return
-                    # it anyway)
-                    status = PROC_STATUSES.get(letter, '?')
-                    if info == 'status':
-                        return dict(status=status)
         return dict(
             ppid=ppid,
             uids=uids,
             gids=gids,
             volctx=volctx,
             unvolctx=unvolctx,
-            num_threads=num_threads,
-            status=status)
+            num_threads=num_threads)
 
     @memoize_when_activated
     def _parse_stat(self):
@@ -1011,6 +1001,8 @@ class Process(object):
         # Ignore the first two values ("pid (exe)").
         data = data[closepar + 2:]
         values = data.split(' ')
+        # Get status
+        status = values[0]
         # Get CPU times.
         utime = float(values[11]) / CLOCK_TICKS
         stime = float(values[12]) / CLOCK_TICKS
@@ -1029,6 +1021,7 @@ class Process(object):
         create_time = (float(values[19]) / CLOCK_TICKS) + bt
         return dict(
             name=name,
+            status=status,
             cpu_times=cpu_times,
             tty_nr=tty_nr,
             create_time=create_time)
@@ -1393,11 +1386,11 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        ret = self._parse_status('status' if not self._oneshot else None)
-        if ret['status'] is None:
-            raise NotImplementedError("line 'Status' not found in %s" % (
-                "%s/%s/status" % (self._procfs_path, self.pid)))
-        return ret['status']
+        letter = self._parse_stat()['status']
+        # XXX is '?' legit? (we're not supposed to return
+        # it anyway)
+        return PROC_STATUSES[letter]
+        return PROC_STATUSES.get(letter, '?')
 
     @wrap_exceptions
     def open_files(self):
@@ -1464,7 +1457,7 @@ class Process(object):
         if ret['uids'] is None:
             raise NotImplementedError("line 'Uid' not found in %s" % (
                 "%s/%s/status" % (self._procfs_path, self.pid)))
-        _, real, effective, saved, fs = ret['uids']
+        _, real, effective, saved, _ = ret['uids'].split()
         return _common.puids(int(real), int(effective), int(saved))
 
     @wrap_exceptions
@@ -1473,5 +1466,5 @@ class Process(object):
         if ret['gids'] is None:
             raise NotImplementedError("line 'Gid' not found in %s" % (
                 "%s/%s/status" % (self._procfs_path, self.pid)))
-        _, real, effective, saved, fs = ret['gids'].split()
+        _, real, effective, saved, _ = ret['gids'].split()
         return _common.pgids(int(real), int(effective), int(saved))
