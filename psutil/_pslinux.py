@@ -951,8 +951,11 @@ class Process(object):
         self._procfs_path = get_procfs_path()
 
     def _parse_stat_file(self):
-        """Parse /proc/{pid}/stat file. Returns a list of fields where
+        """Parse /proc/{pid}/stat file. Return a list of fields where
         process name is in position 0.
+        Using "man proc" as a reference: where "man proc" refers to
+        position N, always subscract 2 (e.g starttime pos 22 in
+        'man proc' == pos 20 in the list returned here).
         """
         with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
             data = f.read()
@@ -1010,9 +1013,8 @@ class Process(object):
 
     @wrap_exceptions
     def terminal(self):
+        tty_nr = int(self._parse_stat_file()[5])
         tmap = _psposix._get_terminal_map()
-        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            tty_nr = int(f.read().split(b' ')[6])
         try:
             return tmap[tty_nr]
         except KeyError:
@@ -1045,15 +1047,11 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            st = f.read()
-        # ignore the first two values ("pid (exe)")
-        st = st[st.find(b')') + 2:]
-        values = st.split(b' ')
-        utime = float(values[11]) / CLOCK_TICKS
-        stime = float(values[12]) / CLOCK_TICKS
-        children_utime = float(values[13]) / CLOCK_TICKS
-        children_stime = float(values[14]) / CLOCK_TICKS
+        values = self._parse_stat_file()
+        utime = float(values[12]) / CLOCK_TICKS
+        stime = float(values[13]) / CLOCK_TICKS
+        children_utime = float(values[14]) / CLOCK_TICKS
+        children_stime = float(values[15]) / CLOCK_TICKS
         return _common.pcputimes(utime, stime, children_utime, children_stime)
 
     @wrap_exceptions
@@ -1065,18 +1063,14 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            st = f.read().strip()
-        # ignore the first two values ("pid (exe)")
-        st = st[st.rfind(b')') + 2:]
-        values = st.split(b' ')
+        values = self._parse_stat_file()
         # According to documentation, starttime is in field 21 and the
         # unit is jiffies (clock ticks).
         # We first divide it for clock ticks and then add uptime returning
         # seconds since the epoch, in UTC.
         # Also use cached value if available.
         bt = BOOT_TIME or boot_time()
-        return (float(values[19]) / CLOCK_TICKS) + bt
+        return (float(values[20]) / CLOCK_TICKS) + bt
 
     @wrap_exceptions
     def memory_info(self):
@@ -1355,9 +1349,7 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            data = f.read()
-        letter = data[data.rfind(b')') + 2:][0:1]
+        letter = self._parse_stat_file()[1]
         if PY3:
             letter = letter.decode()
         # XXX is '?' legit? (we're not supposed to return it anyway)
@@ -1415,11 +1407,7 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            data = f.read()
-        # ignore the first two values ("pid (exe)")
-        data = data[data.rfind(b')') + 2:]
-        return int(data.split(b' ')[1])
+        return int(self._parse_stat_file()[2])
 
     @wrap_exceptions
     def uids(self):

@@ -793,10 +793,17 @@ class TestProcess(unittest.TestCase):
             else:
                 with f:
                     for line in f:
+                        line = line.strip()
                         if line.startswith('Name:'):
                             name = line.split()[1]
                             # Name is truncated to 15 chars
                             self.assertEqual(p.name()[:15], name[:15])
+                        elif line.startswith('State:'):
+                            status = line[line.find('(') + 1:line.rfind(')')]
+                            self.assertEqual(p.status(), status)
+                        elif line.startswith('PPid:'):
+                            ppid = int(line.split()[1])
+                            self.assertEqual(p.ppid(), ppid)
 
     def test_memory_maps(self):
         src = textwrap.dedent("""

@@ -17,6 +17,9 @@ PLATFORMS
 FEATURES
 ========
 
+- (Linux): from /proc/pid/stat we can also retrieve process and children guest
+  times (time spent running a virtual CPU for a guest OS).
+
 - #809: (Linux) per-process resource limits.
 
 - (UNIX) process root (different from cwd)
