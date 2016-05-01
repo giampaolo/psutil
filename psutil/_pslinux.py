@@ -1414,21 +1414,13 @@ class Process(object):
         return int(self._parse_stat_file()[2])
 
     @wrap_exceptions
-    def uids(self):
-        fpath = "%s/%s/status" % (self._procfs_path, self.pid)
-        with open_binary(fpath) as f:
-            for line in f:
-                if line.startswith(b'Uid:'):
-                    _, real, effective, saved, fs = line.split()
-                    return _common.puids(int(real), int(effective), int(saved))
-            raise NotImplementedError("line 'Uid' not found in %s" % fpath)
+    def uids(self, _uids_re=re.compile(b'Uid:\t(\d+)\t(\d+)\t(\d+)')):
+        data = self._read_status_file()
+        real, effective, saved = _uids_re.findall(data)[0]
+        return _common.puids(int(real), int(effective), int(saved))
 
     @wrap_exceptions
-    def gids(self):
-        fpath = "%s/%s/status" % (self._procfs_path, self.pid)
-        with open_binary(fpath) as f:
-            for line in f:
-                if line.startswith(b'Gid:'):
-                    _, real, effective, saved, fs = line.split()
-                    return _common.pgids(int(real), int(effective), int(saved))
-            raise NotImplementedError("line 'Gid' not found in %s" % fpath)
+    def gids(self, _gids_re=re.compile(b'Gid:\t(\d+)\t(\d+)\t(\d+)')):
+        data = self._read_status_file()
+        real, effective, saved = _gids_re.findall(data)[0]
+        return _common.pgids(int(real), int(effective), int(saved))
