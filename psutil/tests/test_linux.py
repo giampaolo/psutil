@@ -905,13 +905,6 @@ class TestProcess(unittest.TestCase):
                 psutil._pslinux.Process(os.getpid()).num_threads)
             assert m.called
 
-    def test_ppid_mocked(self):
-        with mock.patch('psutil._pslinux.open', create=True) as m:
-            self.assertRaises(
-                NotImplementedError,
-                psutil._pslinux.Process(os.getpid()).ppid)
-            assert m.called
-
     def test_uids_mocked(self):
         with mock.patch('psutil._pslinux.open', create=True) as m:
             self.assertRaises(
