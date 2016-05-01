@@ -156,6 +156,13 @@ def open_text(fname, **kwargs):
     return open(fname, "rt", **kwargs)
 
 
+def decode(s):
+    if PY3:
+        return s.decode(encoding=FS_ENCODING, errors=ENCODING_ERRORS_HANDLER)
+    else:
+        return s
+
+
 def get_procfs_path():
     return sys.modules['psutil'].PROCFS_PATH
 
@@ -936,99 +943,52 @@ def wrap_exceptions(fun):
 class Process(object):
     """Linux process implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_oneshot"]
+    __slots__ = ["pid", "_name", "_ppid", "_procfs_path"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
         self._ppid = None
         self._procfs_path = get_procfs_path()
-        self._oneshot = False
+
+    @memoize_when_activated
+    def _parse_stat_file(self):
+        """Parse /proc/{pid}/stat file. Return a list of fields where
+        process name is in position 0.
+        Using "man proc" as a reference: where "man proc" refers to
+        position N, always subscract 2 (e.g starttime pos 22 in
+        'man proc' == pos 20 in the list returned here).
+        """
+        with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
+            data = f.read()
+        # Process name is between parentheses. It can contain spaces and
+        # other parentheses. This is taken into account by looking for
+        # the first occurrence of "(" and the last occurence of ")".
+        rpar = data.rfind(b')')
+        name = data[data.find(b'(') + 1:rpar]
+        fields_after_name = data[rpar + 2:].split()
+        return [name] + fields_after_name
+
+    @memoize_when_activated
+    def _read_status_file(self):
+        with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
+            return f.read()
 
     def oneshot_enter(self):
-        self._parse_stat.cache_activate()
-        self._parse_status.cache_activate()
-        self._oneshot = True
+        self._parse_stat_file.cache_activate()
+        self._read_status_file.cache_activate()
 
     def oneshot_exit(self):
-        self._parse_stat.cache_deactivate()
-        self._parse_status.cache_deactivate()
-        self._oneshot = False
-
-    @memoize_when_activated
-    def _parse_status(self, info=None):
-        fpath = "%s/%s/status" % (self._procfs_path, self.pid)
-        ppid = uids = gids = volctx = unvolctx = num_threads = None
-        with open_binary(fpath) as f:
-            for line in f:
-                if ppid is None and line.startswith(b"PPid:"):
-                    ppid = int(line.split()[1])
-                    if info == 'ppid':
-                        return dict(ppid=ppid)
-                elif uids is None and line.startswith(b"Uid:"):
-                    uids = line
-                    if info == 'uids':
-                        return dict(uids=uids)
-                elif gids is None and line.startswith(b"Gid:"):
-                    gids = line
-                    if info == 'gids':
-                        return dict(gids=gids)
-                elif volctx is None \
-                        and line.startswith(b"voluntary_ctxt_switches"):
-                    volctx = int(line.split()[1])
-                elif unvolctx is None \
-                        and line.startswith(b"nonvoluntary_ctxt_switches"):
-                    unvolctx = int(line.split()[1])
-                elif num_threads is None and line.startswith(b"Threads:"):
-                    num_threads = int(line.split()[1])
-                    if info == 'num_threads':
-                        return dict(num_threads=num_threads)
-        return dict(
-            ppid=ppid,
-            uids=uids,
-            gids=gids,
-            volctx=volctx,
-            unvolctx=unvolctx,
-            num_threads=num_threads)
-
-    @memoize_when_activated
-    def _parse_stat(self):
-        with open_text("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
-            data = f.read()
-        # Get process name.
-        closepar = data.rfind(')')
-        name = data[data.find('(') + 1:closepar]
-        # Ignore the first two values ("pid (exe)").
-        data = data[closepar + 2:]
-        values = data.split(' ')
-        # Get status
-        status = values[0]
-        # Get CPU times.
-        utime = float(values[11]) / CLOCK_TICKS
-        stime = float(values[12]) / CLOCK_TICKS
-        children_utime = float(values[13]) / CLOCK_TICKS
-        children_stime = float(values[14]) / CLOCK_TICKS
-        cpu_times = _common.pcputimes(
-            utime, stime, children_utime, children_stime)
-        # Terminal
-        tty_nr = int(values[4])
-        # Create time. According to documentation, starttime is in position
-        # #21 and the value is expressed in jiffies (clock ticks).
-        # We first divide it for clock ticks and then add uptime returning
-        # seconds since the epoch, in UTC.
-        # Also use cached value if available.
-        bt = BOOT_TIME or boot_time()
-        create_time = (float(values[19]) / CLOCK_TICKS) + bt
-        return dict(
-            name=name,
-            status=status,
-            cpu_times=cpu_times,
-            tty_nr=tty_nr,
-            create_time=create_time)
+        self._parse_stat_file.cache_deactivate()
+        self._read_status_file.cache_deactivate()
 
     @wrap_exceptions
     def name(self):
-        return self._parse_stat()['name']
+        name = self._parse_stat_file()[0]
+        if PY3:
+            name = decode(name)
+        # XXX - gets changed later and probably needs refactoring
+        return name
 
     def exe(self):
         try:
@@ -1068,8 +1028,8 @@ class Process(object):
 
     @wrap_exceptions
     def terminal(self):
+        tty_nr = int(self._parse_stat_file()[5])
         tmap = _psposix._get_terminal_map()
-        tty_nr = self._parse_stat()['tty_nr']
         try:
             return tmap[tty_nr]
         except KeyError:
@@ -1102,7 +1062,12 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        return self._parse_stat()['cpu_times']
+        values = self._parse_stat_file()
+        utime = float(values[12]) / CLOCK_TICKS
+        stime = float(values[13]) / CLOCK_TICKS
+        children_utime = float(values[14]) / CLOCK_TICKS
+        children_stime = float(values[15]) / CLOCK_TICKS
+        return _common.pcputimes(utime, stime, children_utime, children_stime)
 
     @wrap_exceptions
     def wait(self, timeout=None):
@@ -1113,7 +1078,14 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        return self._parse_stat()['create_time']
+        values = self._parse_stat_file()
+        # According to documentation, starttime is in field 21 and the
+        # unit is jiffies (clock ticks).
+        # We first divide it for clock ticks and then add uptime returning
+        # seconds since the epoch, in UTC.
+        # Also use cached value if available.
+        bt = BOOT_TIME or boot_time()
+        return (float(values[20]) / CLOCK_TICKS) + bt
 
     @wrap_exceptions
     def memory_info(self):
@@ -1235,22 +1207,24 @@ class Process(object):
         return readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
 
     @wrap_exceptions
-    def num_ctx_switches(self):
-        ret = self._parse_status()
-        if ret['volctx'] is None or ret['unvolctx'] is None:
+    def num_ctx_switches(self, _ctxsw_re=re.compile(b'ctxt_switches:\t(\d+)')):
+        data = self._read_status_file()
+        ctxsw = _ctxsw_re.findall(data)
+        if not ctxsw:
             raise NotImplementedError(
                 "'voluntary_ctxt_switches' and 'nonvoluntary_ctxt_switches'"
-                "fields were not found in /proc/%s/status; the kernel is "
+                "lines were not found in /proc/%s/status; the kernel is "
                 "probably older than 2.6.23" % self.pid)
-        return _common.pctxsw(ret['volctx'], ret['unvolctx'])
+        else:
+            return _common.pctxsw(int(ctxsw[0]), int(ctxsw[1]))
 
     @wrap_exceptions
-    def num_threads(self):
-        ret = self._parse_status('num_threads' if not self._oneshot else None)
-        if ret['num_threads'] is None:
-            raise NotImplementedError("line 'Threads' not found in %s" % (
-                "%s/%s/status" % (self._procfs_path, self.pid)))
-        return ret['num_threads']
+    def num_threads(self, _num_threads_re=re.compile(b'Threads:\t(\d+)')):
+        # Note: on Python 3 using a re is faster than iterating over file
+        # line by line. On Python 2 is the exact opposite, and iterating
+        # over a file on Python 3 is slower than on Python 2.
+        data = self._read_status_file()
+        return int(_num_threads_re.findall(data)[0])
 
     @wrap_exceptions
     def threads(self):
@@ -1386,10 +1360,10 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        letter = self._parse_stat()['status']
-        # XXX is '?' legit? (we're not supposed to return
-        # it anyway)
-        return PROC_STATUSES[letter]
+        letter = self._parse_stat_file()[1]
+        if PY3:
+            letter = letter.decode()
+        # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(letter, '?')
 
     @wrap_exceptions
@@ -1444,27 +1418,16 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        ret = self._parse_status('ppid' if not self._oneshot else None)
-        if ret['ppid'] is None:
-            raise NotImplementedError("line 'PPid' not found in %s" % (
-                "%s/%s/status" % (self._procfs_path, self.pid)))
-        self._ppid = ret['ppid']
-        return self._ppid
+        return int(self._parse_stat_file()[2])
 
     @wrap_exceptions
-    def uids(self):
-        ret = self._parse_status('uids' if not self._oneshot else None)
-        if ret['uids'] is None:
-            raise NotImplementedError("line 'Uid' not found in %s" % (
-                "%s/%s/status" % (self._procfs_path, self.pid)))
-        _, real, effective, saved, _ = ret['uids'].split()
+    def uids(self, _uids_re=re.compile(b'Uid:\t(\d+)\t(\d+)\t(\d+)')):
+        data = self._read_status_file()
+        real, effective, saved = _uids_re.findall(data)[0]
         return _common.puids(int(real), int(effective), int(saved))
 
     @wrap_exceptions
-    def gids(self):
-        ret = self._parse_status('gids' if not self._oneshot else None)
-        if ret['gids'] is None:
-            raise NotImplementedError("line 'Gid' not found in %s" % (
-                "%s/%s/status" % (self._procfs_path, self.pid)))
-        _, real, effective, saved, _ = ret['gids'].split()
+    def gids(self, _gids_re=re.compile(b'Gid:\t(\d+)\t(\d+)\t(\d+)')):
+        data = self._read_status_file()
+        real, effective, saved = _gids_re.findall(data)[0]
         return _common.pgids(int(real), int(effective), int(saved))
