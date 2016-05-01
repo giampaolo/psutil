@@ -1338,8 +1338,7 @@ class Process(object):
         letter = data[data.rfind(b')') + 2:][0:1]
         if PY3:
             letter = letter.decode()
-        # XXX is '?' legit? (we're not supposed to return
-        # it anyway)
+        # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(letter, '?')
 
     @wrap_exceptions
