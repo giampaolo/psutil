@@ -685,9 +685,12 @@ Process class
   univocally over time (the hash is determined by mixing process PID
   and creation time). As such it can also be used with
   `set()s <http://docs.python.org/2/library/stdtypes.html#types-set>`__.
-  If you want to query more than one information about the process at the same
-  time make sure to use either :meth:`oneshot()` context manager or
-  :meth:`as_dict()` method to speed up access.
+
+  .. note::
+
+    In order to efficiently fetch more than one information about the process
+    at the same time, make sure to use either :meth:`as_dict` or
+    :meth:`oneshot` context manager.
 
   .. warning::
 
@@ -722,13 +725,13 @@ Process class
     Utility context manager which considerably speeds up the retrieval of
     multiple process information at the same time.
     Internally different process info (e.g. :meth:`name`, :meth:`ppid`,
-    :meth:`uids`, :meth:`gids`, ...) may be fetched by using the same routine,
-    but only one information is returned and the others are discarded.
+    :meth:`uids`, :meth:`create_time`, ...) may be fetched by using the same
+    routine, but only one information is returned and the others are discarded.
     When using this context manager the internal routine is executed once (in
     the example below on :meth:`name()`) and the other info are cached.
     The cache is cleared when exiting the context manager block.
     The advice is to use this every time you retrieve more than one information
-    about the process. If you're lucky, you'll get a hell of a speedup.
+    about the process. If you're lucky, you'll get a hell of a speed up.
 
         >>> import psutil
         >>> p = psutil.Process()
