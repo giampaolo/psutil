@@ -2067,7 +2067,7 @@ def test():  # pragma: no cover
 
 del memoize, division, deprecated_method
 if sys.version_info < (3, 0):
-    del num
+    del num, x
 
 if __name__ == "__main__":
     test()

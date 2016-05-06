@@ -142,3 +142,15 @@ These are note for myself (Giampaolo):
 - upload updated doc on http://pythonhosted.org/psutil with ``make upload-doc``.
 - GIT tag the new release with ``make git-tag-release``.
 - post on psutil and python-announce mailing lists, twitter, g+, blog.
+
+=============
+FreeBSD notes
+=============
+
+- setup:
+
+.. code-block:: bash
+  $ pkg install python python3 gcc git vim screen bash
+  $ chsh -s /usr/local/bin/bash user  # set bash as default shell
+
+- `/usr/src` contains the source codes for all installed CLI tools (grep in it).
