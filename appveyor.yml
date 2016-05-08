@@ -73,10 +73,12 @@ install:
 build: off
 
 test_script:
-  - "%WITH_COMPILER% %PYTHON%/python psutil/tests/runner.py"
+#  - "%WITH_COMPILER% %PYTHON%/python psutil/tests/runner.py"
+  - "%WITH_COMPILER% %PYTHON%/python -V"
 
-# after_test:
-#   - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"
+after_test:
+  - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"
+  - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wininst"
 
 artifacts:
   - path: dist\*
