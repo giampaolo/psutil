@@ -10,37 +10,48 @@ environment:
     # Pre-installed Python versions, which Appveyor may upgrade to
     # a later point release.
 
+    - PYTHON: "C:\\Python27"
+    - PYTHON: "C:\\Python33"
+    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python27-x64"
+    - PYTHON: "C:\\Python33-x64"
+      DISTUTILS_USE_SDK: "1"
+    - PYTHON: "C:\\Python34-x64"
+      DISTUTILS_USE_SDK: "1"
+    - PYTHON: "C:\\Python35-x64"
+
     # 32 bits
 
-    - PYTHON: "C:\\Python27"
-      PYTHON_VERSION: "2.7.x"
-      PYTHON_ARCH: "32"
+    # - PYTHON: "C:\\Python27"
+    #   PYTHON_VERSION: "2.7.x"
+    #   PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python33"
-      PYTHON_VERSION: "3.3.x"
-      PYTHON_ARCH: "32"
+    # - PYTHON: "C:\\Python33"
+    #   PYTHON_VERSION: "3.3.x"
+    #   PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python34"
-      PYTHON_VERSION: "3.4.x"
-      PYTHON_ARCH: "32"
+    # - PYTHON: "C:\\Python34"
+    #   PYTHON_VERSION: "3.4.x"
+    #   PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python35"
-      PYTHON_VERSION: "3.5.x"
-      PYTHON_ARCH: "32"
+    # - PYTHON: "C:\\Python35"
+    #   PYTHON_VERSION: "3.5.x"
+    #   PYTHON_ARCH: "32"
 
-    # 64 bits
+    # # 64 bits
 
-    - PYTHON: "C:\\Python27-x64"
-      PYTHON_VERSION: "2.7.x"
-      PYTHON_ARCH: "64"
+    # - PYTHON: "C:\\Python27-x64"
+    #   PYTHON_VERSION: "2.7.x"
+    #   PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python33-x64"
-      PYTHON_VERSION: "3.3.x"
-      PYTHON_ARCH: "64"
+    # - PYTHON: "C:\\Python33-x64"
+    #   PYTHON_VERSION: "3.3.x"
+    #   PYTHON_ARCH: "64"
 
-    - PYTHON: "C:\\Python34-x64"
-      PYTHON_VERSION: "3.4.x"
-      PYTHON_ARCH: "64"
+    # - PYTHON: "C:\\Python34-x64"
+    #   PYTHON_VERSION: "3.4.x"
+    #   PYTHON_ARCH: "64"
 
     # XXX - not sure how to fix this:
     # https://ci.appveyor.com/project/giampaolo/psutil/build/354/job/uqf3rms55mrv90ju
