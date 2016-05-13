@@ -45,7 +45,7 @@ environment:
     - PYTHON: "C:\\Python35-x64"
       PYTHON_VERSION: "3.5.x"
       PYTHON_ARCH: "64"
-      # WINDOWS_SDK_VERSION: "v7.1"
+      WINDOWS_SDK_VERSION: "v7.1"
 
     # XXX - not sure how to fix this:
     # https://ci.appveyor.com/project/giampaolo/psutil/build/354/job/uqf3rms55mrv90ju
@@ -65,7 +65,6 @@ init:
 
 install:
   - "powershell .ci\\appveyor\\install.ps1"
-  - "%VSINSTALLDIR%\VC\bin\vcvars64.bat"
   # - ps: (new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:/get-pip.py')
   # - "%PYTHON%/python.exe C:/get-pip.py"
   # - "%PYTHON%/python.exe -m pip install ..."
