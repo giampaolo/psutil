@@ -70,9 +70,10 @@ init:
 install:
   - "powershell .ci\\appveyor\\install.ps1"
   # - ps: (new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:/get-pip.py')
-  - "%WITH_COMPILER% %PYTHON%/Scripts/pip.exe --version"
-  - "%WITH_COMPILER% %PYTHON%/Scripts/pip.exe install --upgrade unittest2 ipaddress pypiwin32 wmi wheel"
-  - "%WITH_COMPILER% %PYTHON%/Scripts/pip.exe freeze"
+  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install --upgrade --user setuptools pip"
+  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip --version"
+  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install --upgrade --user unittest2 ipaddress pypiwin32 wmi wheel"
+  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip freeze"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build build_ext -i"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py develop"
