@@ -131,3 +131,7 @@ install-git-hooks:
 # download exes/wheels hosted on appveyor
 win-download-exes:
 	$(PYTHON) .ci/appveyor/download_exes.py --user giampaolo --project psutil
+
+# upload exes/wheels in dist/* directory to PYPI
+win-upload-exes:
+	$(PYTHON) -m twine upload dist/*
