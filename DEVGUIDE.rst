@@ -158,4 +158,4 @@ FreeBSD notes
   $ pkg install python python3 gcc git vim screen bash
   $ chsh -s /usr/local/bin/bash user  # set bash as default shell
 
-- `/usr/src` contains the source codes for all installed CLI tools (grep in it).
+- ``/usr/src`` contains the source codes for all installed CLI tools (grep in it).
