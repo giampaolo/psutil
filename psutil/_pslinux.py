@@ -1135,34 +1135,34 @@ class Process(object):
             Fields are explained in 'man proc'; here is an updated (Apr 2012)
             version: http://goo.gl/fmebo
             """
+            def get_blocks(file, current_block):
+                data = {}
+                for line in file:
+                    fields = line.split(None, 5)
+                    if not fields[0].endswith(':'):
+                        # new block section
+                        yield (current_block.pop(), data)
+                        current_block.append(line)
+                    else:
+                        try:
+                            data[fields[0]] = int(fields[1]) * 1024
+                        except ValueError:
+                            if fields[0].startswith('VmFlags:'):
+                                # see issue #369
+                                continue
+                            else:
+                                raise ValueError("don't know how to inte"
+                                                 "rpret line %r" % line)
+                yield (current_block.pop(), data)
+
+            ls = []
             with open_text("%s/%s/smaps" % (self._procfs_path, self.pid),
                            buffering=BIGGER_FILE_BUFFERING) as f:
                 first_line = f.readline()
                 current_block = [first_line]
 
-                def get_blocks():
-                    data = {}
-                    for line in f:
-                        fields = line.split(None, 5)
-                        if not fields[0].endswith(':'):
-                            # new block section
-                            yield (current_block.pop(), data)
-                            current_block.append(line)
-                        else:
-                            try:
-                                data[fields[0]] = int(fields[1]) * 1024
-                            except ValueError:
-                                if fields[0].startswith('VmFlags:'):
-                                    # see issue #369
-                                    continue
-                                else:
-                                    raise ValueError("don't know how to inte"
-                                                     "rpret line %r" % line)
-                    yield (current_block.pop(), data)
-
-                ls = []
                 if first_line:  # smaps file can be empty
-                    for header, data in get_blocks():
+                    for header, data in get_blocks(f, current_block):
                         hfields = header.split(None, 5)
                         try:
                             addr, perms, offset, dev, inode, path = hfields
@@ -1190,6 +1190,13 @@ class Process(object):
                             data.get('Swap:', 0)
                         ))
             return ls
+
+    else:
+        def memory_maps(self):
+            raise NotImplementedError(
+                "/proc/%s/smaps does not exist on kernels < 2.6.14 or "
+                "if CONFIG_MMU kernel configuration option is not "
+                "enabled." % self.pid)
 
     @wrap_exceptions
     def cwd(self):
