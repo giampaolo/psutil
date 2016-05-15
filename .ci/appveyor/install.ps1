@@ -68,6 +68,7 @@ function InstallPip ($python_home) {
         Start-Process -FilePath "$python_path" -ArgumentList "$GET_PIP_PATH" -Wait -Passthru
     } else {
         Write-Host "pip already installed."
+        $pip_path install --upgrade pip
     }
 }
 
