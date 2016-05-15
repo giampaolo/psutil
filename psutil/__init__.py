@@ -1991,19 +1991,19 @@ def users():
 # =====================================================================
 
 
-# if WINDOWS:
+if WINDOWS:
 
-#     def win_service_iter():
-#         """Return a generator yielding a WindowsService instance for all
-#         Windows services installed.
-#         """
-#         return _psplatform.win_service_iter()
+    def win_service_iter():
+        """Return a generator yielding a WindowsService instance for all
+        Windows services installed.
+        """
+        return _psplatform.win_service_iter()
 
-#     def win_service_get(name):
-#         """Get a Windows service by name.
-#         Raise NoSuchProcess if no service with such name exists.
-#         """
-#         return _psplatform.win_service_get(name)
+    def win_service_get(name):
+        """Get a Windows service by name.
+        Raise NoSuchProcess if no service with such name exists.
+        """
+        return _psplatform.win_service_get(name)
 
 
 # =====================================================================
