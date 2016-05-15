@@ -67,8 +67,10 @@ Typical process occurring when adding a new functionality (API):
   ``psutil/_psutil_{platform}.c`` (e.g. ``psutil/_psutil_linux.c``).
 - write a generic test in ``psutil/tests/test_system.py`` or
   ``psutil/tests/test_process.py``.
-- if possible, write a cross platform test in
+- if possible, write a platform specific test in
   ``psutil/tests/test_{platform}.py`` (e.g. ``test_linux.py``).
+  This usually means testing the return value of the new feature against
+  a system CLI tool.
 - update doc in ``doc/index.py``.
 - update ``HISTORY.rst``.
 - update ``README.rst`` (if necessary).
@@ -127,7 +129,7 @@ Documentation
 - it uses `RsT syntax <http://docutils.sourceforge.net/docs/user/rst/quickref.html>`_
   and it's built with `sphinx <http://sphinx-doc.org/>`_.
 - doc can be built with ``make setup-dev-env; cd docs; make html``.
-- public is hosted on http://pythonhosted.org/psutil/.
+- public doc is hosted on http://pythonhosted.org/psutil/.
 - it is uploaded on every new release with ``make upload-doc``.
 
 =======================
@@ -139,6 +141,8 @@ These are note for myself (Giampaolo):
 - make sure all tests pass and all builds are green.
 - upload source tarball on PYPI with ``make upload-src``.
 - upload exe and wheel files for windows on PYPI with ``make upload-all``.
+  - ...or by using atrifacts hosted on AppVeyor with ``make win-download-exes``
+    and ``make win-upload-exes``,
 - upload updated doc on http://pythonhosted.org/psutil with ``make upload-doc``.
 - GIT tag the new release with ``make git-tag-release``.
 - post on psutil and python-announce mailing lists, twitter, g+, blog.
@@ -150,6 +154,7 @@ FreeBSD notes
 - setup:
 
 .. code-block:: bash
+
   $ pkg install python python3 gcc git vim screen bash
   $ chsh -s /usr/local/bin/bash user  # set bash as default shell
 
