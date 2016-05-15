@@ -18,44 +18,38 @@ environment:
       PYTHON_VERSION: "2.7.x"
       PYTHON_ARCH: "32"
 
-    # - PYTHON: "C:\\Python33"
-    #   PYTHON_VERSION: "3.3.x"
-    #   PYTHON_ARCH: "32"
+    - PYTHON: "C:\\Python33"
+      PYTHON_VERSION: "3.3.x"
+      PYTHON_ARCH: "32"
 
-    # - PYTHON: "C:\\Python34"
-    #   PYTHON_VERSION: "3.4.x"
-    #   PYTHON_ARCH: "32"
+    - PYTHON: "C:\\Python34"
+      PYTHON_VERSION: "3.4.x"
+      PYTHON_ARCH: "32"
 
-    # - PYTHON: "C:\\Python35"
-    #   PYTHON_VERSION: "3.5.x"
-    #   PYTHON_ARCH: "32"
+    - PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5.x"
+      PYTHON_ARCH: "32"
 
-    # # 64 bits
+    # 64 bits
 
-    # - PYTHON: "C:\\Python27-x64"
-    #   PYTHON_VERSION: "2.7.x"
-    #   PYTHON_ARCH: "64"
+    - PYTHON: "C:\\Python27-x64"
+      PYTHON_VERSION: "2.7.x"
+      PYTHON_ARCH: "64"
 
-    # - PYTHON: "C:\\Python33-x64"
-    #   PYTHON_VERSION: "3.3.x"
-    #   PYTHON_ARCH: "64"
+    - PYTHON: "C:\\Python33-x64"
+      PYTHON_VERSION: "3.3.x"
+      PYTHON_ARCH: "64"
 
-    # - PYTHON: "C:\\Python34-x64"
-    #   PYTHON_VERSION: "3.4.x"
-    #   PYTHON_ARCH: "64"
+    - PYTHON: "C:\\Python34-x64"
+      PYTHON_VERSION: "3.4.x"
+      PYTHON_ARCH: "64"
 
-    # - PYTHON: "C:\\Python35-x64"
-    #   PYTHON_VERSION: "3.5.x"
-    #   PYTHON_ARCH: "64"
-    #   ARCH: x86_64
-    #   VS_VER: "2015"
-    #   INSTANCENAME: "SQL2012SP1"
-
-    # XXX - not sure how to fix this:
-    # https://ci.appveyor.com/project/giampaolo/psutil/build/354/job/uqf3rms55mrv90ju
-    # - PYTHON: "C:\\Python35-x64"
-    #   PYTHON_VERSION: "3.5.x"
-    #   PYTHON_ARCH: "64"
+    - PYTHON: "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5.x"
+      PYTHON_ARCH: "64"
+      ARCH: x86_64
+      VS_VER: "2015"
+      INSTANCENAME: "SQL2012SP1"
 
     # Also build on a Python version not pre-installed by Appveyor.
     # See: https://github.com/ogrisel/python-appveyor-demo/issues/10
@@ -83,8 +77,8 @@ install:
 build: off
 
 test_script:
-#  - "%WITH_COMPILER% %PYTHON%/python psutil/tests/runner.py"
   - "%WITH_COMPILER% %PYTHON%/python -V"
+  - "%WITH_COMPILER% %PYTHON%/python psutil/tests/runner.py"
 
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"

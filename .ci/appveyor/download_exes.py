@@ -29,7 +29,7 @@ BASE_URL = 'https://ci.appveyor.com/api'
 def safe_makedirs(path):
     try:
         os.makedirs(path)
-    except OSError, err:
+    except OSError as err:
         if err.errno == errno.EEXIST:
             if not os.path.isdir(path):
                 raise
