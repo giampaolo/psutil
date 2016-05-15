@@ -1,6 +1,6 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
-4.2.0 - XXXX-XX-XX
+4.2.0 - 2016-05-14
 ==================
 
 **Enhancements**
@@ -8,7 +8,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #795: [Windows] new APIs to deal with Windows services: win_service_iter()
   and win_service_get().
 - #800: [Linux] psutil.virtual_memory() returns a new "shared" memory field.
-- XXX: [Linux] speedup /proc parsing:
+- #819: [Linux] speedup /proc parsing:
   - Process.ppid() is 20% faster
   - Process.status() is 28% faster
   - Process.name() is 25% faster
