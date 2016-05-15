@@ -64,13 +64,16 @@ def get_file_urls(options):
         BASE_URL + '/projects/' + options.user + '/' + options.project)
     data = data.json()
 
+    urls = []
     for job in (job['jobId'] for job in data['build']['jobs']):
         job_url = BASE_URL + '/buildjobs/' + job + '/artifacts'
         data = session.get(job_url)
         data = data.json()
         for item in data:
             file_url = job_url + '/' + item['fileName']
-            yield file_url
+            urls.append(file_url)
+    for url in sorted(urls, key=lambda x: os.path.basename(x)):
+        yield url
 
 
 def main(options):
