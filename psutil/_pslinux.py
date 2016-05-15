@@ -1123,6 +1123,8 @@ class Process(object):
             # /proc/self/smaps on the other hand appears to give us the
             # correct information.
             smaps_data = self._read_smaps_file()
+            # Note: smaps file can be empty for certain processes.
+            # The code below will not crash though and will result to 0.
             uss = sum(map(int, _private_re.findall(smaps_data))) * 1024
             pss = sum(map(int, _pss_re.findall(smaps_data))) * 1024
             swap = sum(map(int, _swap_re.findall(smaps_data))) * 1024
@@ -1160,10 +1162,10 @@ class Process(object):
                 yield (current_block.pop(), data)
 
             data = self._read_smaps_file()
-            lines = data.split('\n')
-            # smaps file can be empty
-            if not lines:
+            # Note: smaps file can be empty for certain processes.
+            if not data:
                 return []
+            lines = data.split('\n')
             ls = []
             first_line = lines.pop(0)
             current_block = [first_line]
