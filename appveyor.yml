@@ -1,3 +1,5 @@
+os: Visual Studio 2015
+
 environment:
 
   global:
@@ -12,46 +14,42 @@ environment:
 
     # 32 bits
 
-    # - PYTHON: "C:\\Python27"
-    #   PYTHON_VERSION: "2.7.x"
-    #   PYTHON_ARCH: "32"
+    - PYTHON: "C:\\Python27"
+      PYTHON_VERSION: "2.7.x"
+      PYTHON_ARCH: "32"
 
-    # - PYTHON: "C:\\Python33"
-    #   PYTHON_VERSION: "3.3.x"
-    #   PYTHON_ARCH: "32"
+    - PYTHON: "C:\\Python33"
+      PYTHON_VERSION: "3.3.x"
+      PYTHON_ARCH: "32"
 
-    # - PYTHON: "C:\\Python34"
-    #   PYTHON_VERSION: "3.4.x"
-    #   PYTHON_ARCH: "32"
+    - PYTHON: "C:\\Python34"
+      PYTHON_VERSION: "3.4.x"
+      PYTHON_ARCH: "32"
 
-    # - PYTHON: "C:\\Python35"
-    #   PYTHON_VERSION: "3.5.x"
-    #   PYTHON_ARCH: "32"
+    - PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5.x"
+      PYTHON_ARCH: "32"
 
-    # # 64 bits
+    # 64 bits
 
-    # - PYTHON: "C:\\Python27-x64"
-    #   PYTHON_VERSION: "2.7.x"
-    #   PYTHON_ARCH: "64"
+    - PYTHON: "C:\\Python27-x64"
+      PYTHON_VERSION: "2.7.x"
+      PYTHON_ARCH: "64"
 
-    # - PYTHON: "C:\\Python33-x64"
-    #   PYTHON_VERSION: "3.3.x"
-    #   PYTHON_ARCH: "64"
+    - PYTHON: "C:\\Python33-x64"
+      PYTHON_VERSION: "3.3.x"
+      PYTHON_ARCH: "64"
 
-    # - PYTHON: "C:\\Python34-x64"
-    #   PYTHON_VERSION: "3.4.x"
-    #   PYTHON_ARCH: "64"
+    - PYTHON: "C:\\Python34-x64"
+      PYTHON_VERSION: "3.4.x"
+      PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python35-x64"
       PYTHON_VERSION: "3.5.x"
       PYTHON_ARCH: "64"
-      WINDOWS_SDK_VERSION: "v7.1"
-
-    # XXX - not sure how to fix this:
-    # https://ci.appveyor.com/project/giampaolo/psutil/build/354/job/uqf3rms55mrv90ju
-    # - PYTHON: "C:\\Python35-x64"
-    #   PYTHON_VERSION: "3.5.x"
-    #   PYTHON_ARCH: "64"
+      ARCH: x86_64
+      VS_VER: "2015"
+      INSTANCENAME: "SQL2012SP1"
 
     # Also build on a Python version not pre-installed by Appveyor.
     # See: https://github.com/ogrisel/python-appveyor-demo/issues/10
@@ -66,9 +64,10 @@ init:
 install:
   - "powershell .ci\\appveyor\\install.ps1"
   # - ps: (new-object net.webclient).DownloadFile('https://raw.github.com/pypa/pip/master/contrib/get-pip.py', 'C:/get-pip.py')
-  # - "%PYTHON%/python.exe C:/get-pip.py"
-  # - "%PYTHON%/python.exe -m pip install ..."
-  - "%WITH_COMPILER% %PYTHON%/Scripts/pip.exe install unittest2 ipaddress pypiwin32 wmi wheel setuptools --upgrade"
+  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install --upgrade --user setuptools pip"
+  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip --version"
+  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip install --upgrade --user unittest2 ipaddress pypiwin32 wmi wheel"
+  - "%WITH_COMPILER% %PYTHON%/python.exe -m pip freeze"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py build build_ext -i"
   - "%WITH_COMPILER% %PYTHON%/python.exe setup.py develop"
@@ -78,8 +77,8 @@ install:
 build: off
 
 test_script:
-#  - "%WITH_COMPILER% %PYTHON%/python psutil/tests/runner.py"
   - "%WITH_COMPILER% %PYTHON%/python -V"
+  - "%WITH_COMPILER% %PYTHON%/python psutil/tests/runner.py"
 
 after_test:
   - "%WITH_COMPILER% %PYTHON%/python setup.py bdist_wheel"

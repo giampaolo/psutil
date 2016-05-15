@@ -52,6 +52,7 @@ setup-dev-env: install-git-hooks
 		nose \
 		pep8 \
 		pyflakes \
+		requests \
 		sphinx \
 		sphinx-pypi-upload \
 		unittest2 \
@@ -126,3 +127,11 @@ git-tag-release:
 install-git-hooks:
 	ln -sf ../../.git-pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
+
+# download exes/wheels hosted on appveyor
+win-download-exes:
+	$(PYTHON) .ci/appveyor/download_exes.py --user giampaolo --project psutil
+
+# upload exes/wheels in dist/* directory to PYPI
+win-upload-exes:
+	$(PYTHON) -m twine upload dist/*

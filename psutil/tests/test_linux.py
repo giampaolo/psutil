@@ -818,12 +818,13 @@ class TestProcess(unittest.TestCase):
                             self.assertEqual(tuple(p.gids()), gids)
                         elif line.startswith('voluntary_ctxt_switches:'):
                             vol = int(line.split()[1])
-                            self.assertEqual(p.num_ctx_switches().voluntary,
-                                             vol)
+                            self.assertAlmostEqual(
+                                p.num_ctx_switches().voluntary, vol, delta=2)
                         elif line.startswith('nonvoluntary_ctxt_switches:'):
-                            unvol = int(line.split()[1])
-                            self.assertEqual(p.num_ctx_switches().involuntary,
-                                             unvol)
+                            invol = int(line.split()[1])
+                            self.assertAlmostEqual(
+                                p.num_ctx_switches().involuntary, invol,
+                                delta=2)
 
     def test_memory_maps(self):
         src = textwrap.dedent("""
