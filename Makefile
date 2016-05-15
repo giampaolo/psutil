@@ -128,7 +128,6 @@ install-git-hooks:
 	ln -sf ../../.git-pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
 
-
 # download exes/wheels hosted on appveyor
 win-download-exes:
 	$(PYTHON) .ci/appveyor/download_exes.py --user giampaolo --project psutil

@@ -187,7 +187,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "4.2.0"
+__version__ = "4.1.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
@@ -1991,19 +1991,19 @@ def users():
 # =====================================================================
 
 
-if WINDOWS:
+# if WINDOWS:
 
-    def win_service_iter():
-        """Return a generator yielding a WindowsService instance for all
-        Windows services installed.
-        """
-        return _psplatform.win_service_iter()
+#     def win_service_iter():
+#         """Return a generator yielding a WindowsService instance for all
+#         Windows services installed.
+#         """
+#         return _psplatform.win_service_iter()
 
-    def win_service_get(name):
-        """Get a Windows service by name.
-        Raise NoSuchProcess if no service with such name exists.
-        """
-        return _psplatform.win_service_get(name)
+#     def win_service_get(name):
+#         """Get a Windows service by name.
+#         Raise NoSuchProcess if no service with such name exists.
+#         """
+#         return _psplatform.win_service_get(name)
 
 
 # =====================================================================
