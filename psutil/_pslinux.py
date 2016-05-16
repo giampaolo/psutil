@@ -155,10 +155,11 @@ def open_text(fname, **kwargs):
     return open(fname, "rt", **kwargs)
 
 
-def decode(s):
-    if PY3:
+if PY3:
+    def decode(s):
         return s.decode(encoding=FS_ENCODING, errors=ENCODING_ERRORS_HANDLER)
-    else:
+else:
+    def decode(s):
         return s
 
 
@@ -972,8 +973,8 @@ class Process(object):
             return f.read()
 
     def _read_smaps_file(self):
-        with open_text("%s/%s/smaps" % (self._procfs_path, self.pid),
-                       buffering=BIGGER_FILE_BUFFERING) as f:
+        with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
+                         buffering=BIGGER_FILE_BUFFERING) as f:
             return f.read().strip()
 
     @wrap_exceptions
@@ -1145,7 +1146,7 @@ class Process(object):
                 data = {}
                 for line in lines:
                     fields = line.split(None, 5)
-                    if not fields[0].endswith(':'):
+                    if not fields[0].endswith(b':'):
                         # new block section
                         yield (current_block.pop(), data)
                         current_block.append(line)
@@ -1153,7 +1154,7 @@ class Process(object):
                         try:
                             data[fields[0]] = int(fields[1]) * 1024
                         except ValueError:
-                            if fields[0].startswith('VmFlags:'):
+                            if fields[0].startswith(b'VmFlags:'):
                                 # see issue #369
                                 continue
                             else:
@@ -1165,7 +1166,7 @@ class Process(object):
             # Note: smaps file can be empty for certain processes.
             if not data:
                 return []
-            lines = data.split('\n')
+            lines = data.split(b'\n')
             ls = []
             first_line = lines.pop(0)
             current_block = [first_line]
@@ -1179,22 +1180,24 @@ class Process(object):
                 if not path:
                     path = '[anon]'
                 else:
+                    if PY3:
+                        path = decode(path)
                     path = path.strip()
                     if (path.endswith(' (deleted)') and not
                             path_exists_strict(path)):
                         path = path[:-10]
                 ls.append((
-                    addr, perms, path,
-                    data['Rss:'],
-                    data.get('Size:', 0),
-                    data.get('Pss:', 0),
-                    data.get('Shared_Clean:', 0),
-                    data.get('Shared_Dirty:', 0),
-                    data.get('Private_Clean:', 0),
-                    data.get('Private_Dirty:', 0),
-                    data.get('Referenced:', 0),
-                    data.get('Anonymous:', 0),
-                    data.get('Swap:', 0)
+                    decode(addr), decode(perms), path,
+                    data[b'Rss:'],
+                    data.get(b'Size:', 0),
+                    data.get(b'Pss:', 0),
+                    data.get(b'Shared_Clean:', 0),
+                    data.get(b'Shared_Dirty:', 0),
+                    data.get(b'Private_Clean:', 0),
+                    data.get(b'Private_Dirty:', 0),
+                    data.get(b'Referenced:', 0),
+                    data.get(b'Anonymous:', 0),
+                    data.get(b'Swap:', 0)
                 ))
             return ls
 
