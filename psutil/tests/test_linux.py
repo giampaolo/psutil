@@ -800,6 +800,7 @@ class TestProcess(unittest.TestCase):
                             self.assertEqual(p.name()[:15], name[:15])
                         elif line.startswith('State:'):
                             status = line[line.find('(') + 1:line.rfind(')')]
+                            status = status.replace(' ', '-')
                             self.assertEqual(p.status(), status)
                         elif line.startswith('PPid:'):
                             ppid = int(line.split()[1])
