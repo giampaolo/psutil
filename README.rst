@@ -77,6 +77,7 @@ See also:
  * https://github.com/nicolargo/glances
  * https://github.com/google/grr
  * https://github.com/Jahaja/psdash
+ * https://github.com/giampaolo/psutil/tree/master/scripts
 
 ==============
 Example usages
