@@ -207,6 +207,9 @@ Memory
   See `scripts/meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
+  .. note:: if you just want to know how much physical memory is left in a
+    cross platform fashion simply rely on the **available** field.
+
     >>> import psutil
     >>> mem = psutil.virtual_memory()
     >>> mem

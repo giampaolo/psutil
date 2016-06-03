@@ -26,7 +26,11 @@ from ._compat import which
 
 __extra__all__ = []
 
+
+# =====================================================================
 # --- constants
+# =====================================================================
+
 
 if FREEBSD:
     PROC_STATUSES = {
@@ -92,6 +96,12 @@ else:
     PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 AF_LINK = cext_posix.AF_LINK
 
+
+# =====================================================================
+# --- named tuples
+# =====================================================================
+
+
 # extend base mem ntuple with BSD-specific memory metrics
 svmem = namedtuple(
     'svmem', ['total', 'available', 'percent', 'used', 'free',
@@ -116,11 +126,21 @@ else:
                                      'read_bytes', 'write_bytes'])
 
 
-# set later from __init__.py
+# =====================================================================
+# --- exceptions
+# =====================================================================
+
+
+# these get overwritten on "import psutil" from the __init__.py file
 NoSuchProcess = None
 ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
+
+
+# =====================================================================
+# --- memory
+# =====================================================================
 
 
 def virtual_memory():
@@ -149,6 +169,11 @@ def swap_memory():
     total, used, free, sin, sout = [x * pagesize for x in cext.swap_mem()]
     percent = usage_percent(used, total, _round=1)
     return _common.sswap(total, used, free, percent, sin, sout)
+
+
+# =====================================================================
+# --- CPU
+# =====================================================================
 
 
 def cpu_times():
@@ -252,9 +277,9 @@ def cpu_stats():
     return _common.scpustats(ctxsw, intrs, soft_intrs, syscalls)
 
 
-def boot_time():
-    """The system boot time expressed in seconds since the epoch."""
-    return cext.boot_time()
+# =====================================================================
+# --- disks
+# =====================================================================
 
 
 def disk_partitions(all=False):
@@ -269,18 +294,6 @@ def disk_partitions(all=False):
                 continue
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
-    return retlist
-
-
-def users():
-    retlist = []
-    rawlist = cext.users()
-    for item in rawlist:
-        user, tty, hostname, tstamp = item
-        if tty == '~':
-            continue  # reboot or shutdown
-        nt = _common.suser(user, tty or None, hostname, tstamp)
-        retlist.append(nt)
     return retlist
 
 
@@ -324,6 +337,15 @@ def net_connections(kind):
     return list(ret)
 
 
+disk_usage = _psposix.disk_usage
+disk_io_counters = cext.disk_io_counters
+
+
+# =====================================================================
+# --- network
+# =====================================================================
+
+
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
     names = net_io_counters().keys()
@@ -336,6 +358,39 @@ def net_if_stats():
     return ret
 
 
+net_io_counters = cext.net_io_counters
+net_if_addrs = cext_posix.net_if_addrs
+
+
+# =====================================================================
+#  --- other system functions
+# =====================================================================
+
+
+def boot_time():
+    """The system boot time expressed in seconds since the epoch."""
+    return cext.boot_time()
+
+
+def users():
+    retlist = []
+    rawlist = cext.users()
+    for item in rawlist:
+        user, tty, hostname, tstamp = item
+        if tty == '~':
+            continue  # reboot or shutdown
+        nt = _common.suser(user, tty or None, hostname, tstamp)
+        retlist.append(nt)
+    return retlist
+
+
+# =====================================================================
+# --- processes
+# =====================================================================
+
+
+pids = cext.pids
+
 if OPENBSD or NETBSD:
     def pid_exists(pid):
         exists = _psposix.pid_exists(pid)
@@ -347,13 +402,6 @@ if OPENBSD or NETBSD:
             return True
 else:
     pid_exists = _psposix.pid_exists
-
-
-pids = cext.pids
-disk_usage = _psposix.disk_usage
-net_io_counters = cext.net_io_counters
-disk_io_counters = cext.disk_io_counters
-net_if_addrs = cext_posix.net_if_addrs
 
 
 def wrap_exceptions(fun):

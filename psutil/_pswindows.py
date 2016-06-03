@@ -46,13 +46,16 @@ __extra__all__ = [
     "AF_LINK",
 ]
 
-# --- module level constants (gets pushed up to psutil module)
+
+# =====================================================================
+# --- constants
+# =====================================================================
+
 
 CONN_DELETE_TCB = "DELETE_TCB"
 WAIT_TIMEOUT = 0x00000102  # 258 in decimal
 ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
                                cext.ERROR_ACCESS_DENIED])
-
 
 if enum is None:
     AF_LINK = -1
@@ -87,6 +90,12 @@ if enum is not None:
 
     globals().update(Priority.__members__)
 
+
+# =====================================================================
+# --- named tuples
+# =====================================================================
+
+
 scputimes = namedtuple('scputimes',
                        ['user', 'system', 'idle', 'interrupt', 'dpc'])
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
@@ -105,10 +114,20 @@ ntpinfo = namedtuple(
                 'io_rbytes', 'io_wbytes'])
 
 
-# set later from __init__.py
+# =====================================================================
+# --- exceptions
+# =====================================================================
+
+
+# these get overwritten on "import psutil" from the __init__.py file
 NoSuchProcess = None
 AccessDenied = None
 TimeoutExpired = None
+
+
+# =====================================================================
+# --- utils
+# =====================================================================
 
 
 @lru_cache(maxsize=512)
@@ -116,7 +135,7 @@ def _win32_QueryDosDevice(s):
     return cext.win32_QueryDosDevice(s)
 
 
-def _convert_raw_path(s):
+def convert_dos_path(s):
     # convert paths using native DOS format like:
     # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
     # into: "C:\Windows\systemew\file.txt"
@@ -139,7 +158,9 @@ def py2_strencode(s, encoding=sys.getfilesystemencoding()):
             return s
 
 
-# --- public functions
+# =====================================================================
+# --- memory
+# =====================================================================
 
 
 def virtual_memory():
@@ -165,6 +186,11 @@ def swap_memory():
     return _common.sswap(total, used, free, percent, 0, 0)
 
 
+# =====================================================================
+# --- disk
+# =====================================================================
+
+
 def disk_usage(path):
     """Return disk usage associated with path."""
     try:
@@ -183,6 +209,14 @@ def disk_partitions(all):
     """Return disk partitions."""
     rawlist = cext.disk_partitions(all)
     return [_common.sdiskpart(*x) for x in rawlist]
+
+
+disk_io_counters = cext.disk_io_counters
+
+
+# =====================================================================
+# --- CPU
+# =====================================================================
 
 
 def cpu_times():
@@ -223,9 +257,9 @@ def cpu_stats():
                              syscalls)
 
 
-def boot_time():
-    """The system boot time expressed in seconds since the epoch."""
-    return cext.boot_time()
+# =====================================================================
+# --- network
+# =====================================================================
 
 
 def net_connections(kind, _pid=-1):
@@ -276,6 +310,16 @@ def net_if_addrs():
     return ret
 
 
+# =====================================================================
+# --- other system functions
+# =====================================================================
+
+
+def boot_time():
+    """The system boot time expressed in seconds since the epoch."""
+    return cext.boot_time()
+
+
 def users():
     """Return currently connected users as a list of namedtuples."""
     retlist = []
@@ -288,13 +332,22 @@ def users():
     return retlist
 
 
-pids = cext.pids
-pid_exists = cext.pid_exists
-disk_io_counters = cext.disk_io_counters
-ppid_map = cext.ppid_map  # not meant to be public
-
-
+# =====================================================================
 # --- Windows services
+# =====================================================================
+
+
+def win_service_iter():
+    """Return a list of WindowsService instances."""
+    for name, display_name in cext.winservice_enumerate():
+        yield WindowsService(name, display_name)
+
+
+def win_service_get(name):
+    """Open a Windows service and return it as a WindowsService instance."""
+    service = WindowsService(name, None)
+    service._display_name = service._query_config()['display_name']
+    return service
 
 
 class WindowsService(object):
@@ -463,20 +516,15 @@ class WindowsService(object):
     #         return cext.winservice_stop(self.name())
 
 
-def win_service_iter():
-    """Return a list of WindowsService instances."""
-    for name, display_name in cext.winservice_enumerate():
-        yield WindowsService(name, display_name)
+# =====================================================================
+# --- processes
+# =====================================================================
 
 
-def win_service_get(name):
-    """Open a Windows service and return it as a WindowsService instance."""
-    service = WindowsService(name, None)
-    service._display_name = service._query_config()['display_name']
-    return service
+pids = cext.pids
+pid_exists = cext.pid_exists
+ppid_map = cext.ppid_map  # not meant to be public
 
-
-# --- decorators
 
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError and WindowsError
@@ -534,7 +582,7 @@ class Process(object):
         # see https://github.com/giampaolo/psutil/issues/528
         if self.pid in (0, 4):
             raise AccessDenied(self.pid, self._name)
-        return py2_strencode(_convert_raw_path(cext.proc_exe(self.pid)))
+        return py2_strencode(convert_dos_path(cext.proc_exe(self.pid)))
 
     @wrap_exceptions
     def cmdline(self):
@@ -593,7 +641,7 @@ class Process(object):
             raise
         else:
             for addr, perm, path, rss in raw:
-                path = _convert_raw_path(path)
+                path = convert_dos_path(path)
                 addr = hex(addr)
                 yield (addr, perm, path, rss)
 
@@ -689,7 +737,7 @@ class Process(object):
         # (e.g. "C:\") by using Windows's QueryDosDevice()
         raw_file_names = cext.proc_open_files(self.pid)
         for _file in raw_file_names:
-            _file = _convert_raw_path(_file)
+            _file = convert_dos_path(_file)
             if isfile_strict(_file):
                 if not PY3:
                     _file = py2_strencode(_file)

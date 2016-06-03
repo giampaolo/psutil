@@ -54,7 +54,11 @@ __extra__all__ = [
     "CONN_FIN_WAIT2", "CONN_TIME_WAIT", "CONN_CLOSE", "CONN_CLOSE_WAIT",
     "CONN_LAST_ACK", "CONN_LISTEN", "CONN_CLOSING", ]
 
+
+# =====================================================================
 # --- constants
+# =====================================================================
+
 
 HAS_SMAPS = os.path.exists('/proc/%s/smaps' % os.getpid())
 HAS_PRLIMIT = hasattr(cext, "linux_prlimit")
@@ -128,14 +132,49 @@ TCP_STATUSES = {
     "0B": _common.CONN_CLOSING
 }
 
-# set later from __init__.py
+
+# =====================================================================
+# -- exceptions
+# =====================================================================
+
+
+# these get overwritten on "import psutil" from the __init__.py file
 NoSuchProcess = None
 ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
 
 
+# =====================================================================
+# --- named tuples
+# =====================================================================
+
+
+svmem = namedtuple(
+    'svmem', ['total', 'available', 'percent', 'used', 'free',
+              'active', 'inactive', 'buffers', 'cached', 'shared'])
+sdiskio = namedtuple(
+    'sdiskio', ['read_count', 'write_count',
+                'read_bytes', 'write_bytes',
+                'read_time', 'write_time',
+                'read_merged_count', 'write_merged_count',
+                'busy_time'])
+popenfile = namedtuple(
+    'popenfile', ['path', 'fd', 'position', 'mode', 'flags'])
+pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
+pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
+pmmap_grouped = namedtuple(
+    'pmmap_grouped',
+    ['path', 'rss', 'size', 'pss', 'shared_clean', 'shared_dirty',
+     'private_clean', 'private_dirty', 'referenced', 'anonymous', 'swap'])
+pmmap_ext = namedtuple(
+    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
+
+
+# =====================================================================
 # --- utils
+# =====================================================================
+
 
 def open_binary(fname, **kwargs):
     return open(fname, "rb", **kwargs)
@@ -211,8 +250,6 @@ def get_sector_size():
 SECTOR_SIZE = get_sector_size()
 
 
-# --- named tuples
-
 @memoize
 def set_scputimes_ntuple(procfs_path):
     """Return a namedtuple of variable fields depending on the
@@ -246,28 +283,10 @@ except Exception:
     scputimes = namedtuple('scputimes', 'user system idle')(0.0, 0.0, 0.0)
 
 
-svmem = namedtuple(
-    'svmem', ['total', 'available', 'percent', 'used', 'free',
-              'active', 'inactive', 'buffers', 'cached', 'shared'])
-sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
-                                 'read_bytes', 'write_bytes',
-                                 'read_time', 'write_time',
-                                 'read_merged_count', 'write_merged_count',
-                                 'busy_time'])
-popenfile = namedtuple('popenfile',
-                       ['path', 'fd', 'position', 'mode', 'flags'])
-pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
-pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
-pmmap_grouped = namedtuple(
-    'pmmap_grouped', ['path', 'rss', 'size', 'pss', 'shared_clean',
-                      'shared_dirty', 'private_clean', 'private_dirty',
-                      'referenced', 'anonymous', 'swap'])
-
-pmmap_ext = namedtuple(
-    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
-
-
+# =====================================================================
 # --- system memory
+# =====================================================================
+
 
 def virtual_memory():
     total, free, buffers, shared, _, _, unit_multiplier = cext.linux_sysinfo()
@@ -367,7 +386,10 @@ def swap_memory():
     return _common.sswap(total, used, free, percent, sin, sout)
 
 
+# =====================================================================
 # --- CPUs
+# =====================================================================
+
 
 def cpu_times():
     """Return a named tuple representing the following system-wide
@@ -479,52 +501,10 @@ def cpu_stats():
         ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
-# --- other system functions
-
-def users():
-    """Return currently connected users as a list of namedtuples."""
-    retlist = []
-    rawlist = cext.users()
-    for item in rawlist:
-        user, tty, hostname, tstamp, user_process = item
-        # note: the underlying C function includes entries about
-        # system boot, run level and others.  We might want
-        # to use them in the future.
-        if not user_process:
-            continue
-        if hostname == ':0.0' or hostname == ':0':
-            hostname = 'localhost'
-        nt = _common.suser(user, tty or None, hostname, tstamp)
-        retlist.append(nt)
-    return retlist
-
-
-def boot_time():
-    """Return the system boot time expressed in seconds since the epoch."""
-    global BOOT_TIME
-    with open_binary('%s/stat' % get_procfs_path()) as f:
-        for line in f:
-            if line.startswith(b'btime'):
-                ret = float(line.strip().split()[1])
-                BOOT_TIME = ret
-                return ret
-        raise RuntimeError(
-            "line 'btime' not found in %s/stat" % get_procfs_path())
-
-
-# --- processes
-
-def pids():
-    """Returns a list of PIDs currently running on the system."""
-    return [int(x) for x in os.listdir(b(get_procfs_path())) if x.isdigit()]
-
-
-def pid_exists(pid):
-    """Check For the existence of a unix pid."""
-    return _psposix.pid_exists(pid)
-
-
+# =====================================================================
 # --- network
+# =====================================================================
+
 
 class _Ipv6UnsupportedError(Exception):
     pass
@@ -814,7 +794,10 @@ def net_if_stats():
 net_if_addrs = cext_posix.net_if_addrs
 
 
+# =====================================================================
 # --- disks
+# =====================================================================
+
 
 def disk_io_counters():
     """Return disk I/O statistics for every disk installed on the
@@ -918,7 +901,56 @@ def disk_partitions(all=False):
 disk_usage = _psposix.disk_usage
 
 
-# --- decorators
+# =====================================================================
+# --- other system functions
+# =====================================================================
+
+
+def users():
+    """Return currently connected users as a list of namedtuples."""
+    retlist = []
+    rawlist = cext.users()
+    for item in rawlist:
+        user, tty, hostname, tstamp, user_process = item
+        # note: the underlying C function includes entries about
+        # system boot, run level and others.  We might want
+        # to use them in the future.
+        if not user_process:
+            continue
+        if hostname == ':0.0' or hostname == ':0':
+            hostname = 'localhost'
+        nt = _common.suser(user, tty or None, hostname, tstamp)
+        retlist.append(nt)
+    return retlist
+
+
+def boot_time():
+    """Return the system boot time expressed in seconds since the epoch."""
+    global BOOT_TIME
+    with open_binary('%s/stat' % get_procfs_path()) as f:
+        for line in f:
+            if line.startswith(b'btime'):
+                ret = float(line.strip().split()[1])
+                BOOT_TIME = ret
+                return ret
+        raise RuntimeError(
+            "line 'btime' not found in %s/stat" % get_procfs_path())
+
+
+# =====================================================================
+# --- processes
+# =====================================================================
+
+
+def pids():
+    """Returns a list of PIDs currently running on the system."""
+    return [int(x) for x in os.listdir(b(get_procfs_path())) if x.isdigit()]
+
+
+def pid_exists(pid):
+    """Check For the existence of a unix pid."""
+    return _psposix.pid_exists(pid)
+
 
 def wrap_exceptions(fun):
     """Decorator which translates bare OSError and IOError exceptions

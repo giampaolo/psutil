@@ -23,7 +23,11 @@ from ._common import usage_percent
 
 __extra__all__ = []
 
+
+# =====================================================================
 # --- constants
+# =====================================================================
+
 
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 AF_LINK = cext_posix.AF_LINK
@@ -68,14 +72,17 @@ pmmap_grouped = namedtuple(
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
-# set later from __init__.py
+# these get overwritten on "import psutil" from the __init__.py file
 NoSuchProcess = None
 ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
 
 
-# --- functions
+# =====================================================================
+# --- memory
+# =====================================================================
+
 
 def virtual_memory():
     """System virtual memory as a namedtuple."""
@@ -92,6 +99,11 @@ def swap_memory():
     total, used, free, sin, sout = cext.swap_mem()
     percent = usage_percent(used, total, _round=1)
     return _common.sswap(total, used, free, percent, sin, sout)
+
+
+# =====================================================================
+# --- CPU
+# =====================================================================
 
 
 def cpu_times():
@@ -127,9 +139,9 @@ def cpu_stats():
         ctx_switches, interrupts, soft_interrupts, syscalls)
 
 
-def boot_time():
-    """The system boot time expressed in seconds since the epoch."""
-    return cext.boot_time()
+# =====================================================================
+# --- disks
+# =====================================================================
 
 
 def disk_partitions(all=False):
@@ -147,18 +159,13 @@ def disk_partitions(all=False):
     return retlist
 
 
-def users():
-    retlist = []
-    rawlist = cext.users()
-    for item in rawlist:
-        user, tty, hostname, tstamp = item
-        if tty == '~':
-            continue  # reboot or shutdown
-        if not tstamp:
-            continue
-        nt = _common.suser(user, tty or None, hostname or None, tstamp)
-        retlist.append(nt)
-    return retlist
+disk_usage = _psposix.disk_usage
+disk_io_counters = cext.disk_io_counters
+
+
+# =====================================================================
+# --- network
+# =====================================================================
 
 
 def net_connections(kind='inet'):
@@ -190,12 +197,41 @@ def net_if_stats():
     return ret
 
 
+net_io_counters = cext.net_io_counters
+net_if_addrs = cext_posix.net_if_addrs
+
+
+# =====================================================================
+# --- other system functions
+# =====================================================================
+
+
+def boot_time():
+    """The system boot time expressed in seconds since the epoch."""
+    return cext.boot_time()
+
+
+def users():
+    retlist = []
+    rawlist = cext.users()
+    for item in rawlist:
+        user, tty, hostname, tstamp = item
+        if tty == '~':
+            continue  # reboot or shutdown
+        if not tstamp:
+            continue
+        nt = _common.suser(user, tty or None, hostname or None, tstamp)
+        retlist.append(nt)
+    return retlist
+
+
+# =====================================================================
+# --- processes
+# =====================================================================
+
+
 pids = cext.pids
 pid_exists = _psposix.pid_exists
-disk_usage = _psposix.disk_usage
-net_io_counters = cext.net_io_counters
-disk_io_counters = cext.disk_io_counters
-net_if_addrs = cext_posix.net_if_addrs
 
 
 def wrap_exceptions(fun):
