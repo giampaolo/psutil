@@ -297,6 +297,27 @@ def disk_partitions(all=False):
     return retlist
 
 
+disk_usage = _psposix.disk_usage
+disk_io_counters = cext.disk_io_counters
+
+
+# =====================================================================
+# --- network
+# =====================================================================
+
+
+def net_if_stats():
+    """Get NIC stats (isup, duplex, speed, mtu)."""
+    names = net_io_counters().keys()
+    ret = {}
+    for name in names:
+        isup, duplex, speed, mtu = cext_posix.net_if_stats(name)
+        if hasattr(_common, 'NicDuplex'):
+            duplex = _common.NicDuplex(duplex)
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+    return ret
+
+
 def net_connections(kind):
     if OPENBSD:
         ret = []
@@ -335,27 +356,6 @@ def net_connections(kind):
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
             ret.add(nt)
     return list(ret)
-
-
-disk_usage = _psposix.disk_usage
-disk_io_counters = cext.disk_io_counters
-
-
-# =====================================================================
-# --- network
-# =====================================================================
-
-
-def net_if_stats():
-    """Get NIC stats (isup, duplex, speed, mtu)."""
-    names = net_io_counters().keys()
-    ret = {}
-    for name in names:
-        isup, duplex, speed, mtu = cext_posix.net_if_stats(name)
-        if hasattr(_common, 'NicDuplex'):
-            duplex = _common.NicDuplex(duplex)
-        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
-    return ret
 
 
 net_io_counters = cext.net_io_counters
