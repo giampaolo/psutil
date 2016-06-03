@@ -19,6 +19,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   - Process.status() is 28% faster
   - Process.name() is 25% faster
   - Process.num_threads is 20% faster on Python 3
+- #823: [NetBSD] psutil.virtual_memory() should do binary string matching on
+  NetBSD. 
 
 **Bug fixes**
 
