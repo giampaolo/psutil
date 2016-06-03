@@ -152,9 +152,9 @@ def virtual_memory():
         # The C ext set them to 0.
         with open('/proc/meminfo', 'rb') as f:
             for line in f:
-                if line.startswith("Buffers:"):
+                if line.startswith(b'Buffers:'):
                     buffers = int(line.split()[1]) * 1024
-                elif line.startswith("MemShared:"):
+                elif line.startswith(b'MemShared:'):
                     shared = int(line.split()[1]) * 1024
     avail = inactive + cached + free
     used = active + wired + cached
