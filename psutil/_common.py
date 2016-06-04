@@ -121,15 +121,12 @@ def memoize(fun):
                 return cache[key]
             except KeyError:
                 ret = cache[key] = fun(*args, **kwargs)
-        return ret
+                return ret
 
     def cache_clear():
         """Clear cache."""
-        lock.acquire()
-        try:
+        with lock:
             cache.clear()
-        finally:
-            lock.release()
 
     lock = threading.RLock()
     cache = {}
