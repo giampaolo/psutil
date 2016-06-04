@@ -62,6 +62,30 @@ if PY3:
 else:
     import imp as importlib
 
+__all__ = [
+    # constants
+    'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
+    'PYPY', 'PYTHON', 'RLIMIT_SUPPORT', 'ROOT_DIR', 'SCRIPTS_DIR',
+    'TESTFILE_PREFIX', 'TESTFN', 'TESTFN_UNICODE', 'TOX', 'TRAVIS',
+    'VALID_PROC_STATUSES', 'VERBOSITY',
+    # classes
+    'ThreadTask'
+    # test utils
+    'check_connection_ntuple', 'check_net_address', 'unittest', 'cleanup',
+    'skip_on_access_denied', 'skip_on_not_implemented', 'retry_before_failing',
+    'run_test_module_by_name',
+    # fs utils
+    'chdir', 'safe_remove', 'safe_rmdir', 'create_temp_executable_file',
+    # subprocesses
+    'pyrun', 'reap_children', 'get_test_subprocess',
+    # os
+    'get_winver', 'get_kernel_version',
+    # sync primitives
+    'call_until', 'wait_for_pid', 'wait_for_file',
+    # others
+    'warn', 'decode_path', 'encode_path',
+]
+
 
 # ===================================================================
 # --- Constants

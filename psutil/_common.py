@@ -18,7 +18,6 @@ from collections import namedtuple
 from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
-
 try:
     import threading
 except ImportError:
@@ -28,7 +27,6 @@ if sys.version_info >= (3, 4):
     import enum
 else:
     enum = None
-
 
 # --- constants
 

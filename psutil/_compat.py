@@ -9,7 +9,8 @@ import functools
 import os
 import sys
 
-__all__ = ["PY3", "long", "xrange", "unicode", "callable", "lru_cache"]
+__all__ = ["PY3", "long", "xrange", "unicode", "basestring", "u", "b",
+           "callable", "lru_cache", "which"]
 
 PY3 = sys.version_info[0] == 3
 
