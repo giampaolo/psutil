@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Common objects shared by all _ps* modules."""
+"""Common objects shared by __init__.py and _ps*.py modules."""
 
 from __future__ import division
 
@@ -18,6 +18,14 @@ from collections import namedtuple
 from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
+try:
+    from socket import AF_INET6
+except ImportError:
+    AF_INET6 = None
+try:
+    from socket import AF_UNIX
+except ImportError:
+    AF_UNIX = None
 try:
     import threading
 except ImportError:
@@ -43,18 +51,21 @@ __all__ = [
     'STATUS_RUNNING', 'STATUS_SLEEPING', 'STATUS_STOPPED', 'STATUS_SUSPENDED',
     'STATUS_TRACING_STOP', 'STATUS_WAITING', 'STATUS_WAKE_KILL',
     'STATUS_WAKING', 'STATUS_ZOMBIE',
-    # utility functions
-    'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
-    'parse_environ_block', 'path_exists_strict', 'usage_percent',
-    'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum',
     # named tuples
     'pconn', 'pcputimes', 'pctxsw', 'pgids', 'pio', 'pionice', 'popenfile',
     'pthread', 'puids', 'sconn', 'scpustats', 'sdiskio', 'sdiskpart',
     'sdiskusage', 'snetio', 'snic', 'snicstats', 'sswap', 'suser',
+    # utility functions
+    'conn_tmap', 'deprecated_method', 'isfile_strict', 'memoize',
+    'parse_environ_block', 'path_exists_strict', 'usage_percent',
+    'supports_ipv6', 'sockfam_to_enum', 'socktype_to_enum',
 ]
 
 
-# --- constants
+# ===================================================================
+# --- OS constants
+# ===================================================================
+
 
 POSIX = os.name == "posix"
 WINDOWS = os.name == "nt"
@@ -66,9 +77,13 @@ NETBSD = sys.platform.startswith("netbsd")
 BSD = FREEBSD or OPENBSD or NETBSD
 SUNOS = sys.platform.startswith("sunos") or sys.platform.startswith("solaris")
 
-AF_INET6 = getattr(socket, 'AF_INET6', None)
-AF_UNIX = getattr(socket, 'AF_UNIX', None)
 
+# ===================================================================
+# --- API constants
+# ===================================================================
+
+
+# Process.status()
 STATUS_RUNNING = "running"
 STATUS_SLEEPING = "sleeping"
 STATUS_DISK_SLEEP = "disk-sleep"
@@ -83,6 +98,7 @@ STATUS_LOCKED = "locked"  # FreeBSD
 STATUS_WAITING = "waiting"  # FreeBSD
 STATUS_SUSPENDED = "suspended"  # NetBSD
 
+# Process.connections() and psutil.net_connections()
 CONN_ESTABLISHED = "ESTABLISHED"
 CONN_SYN_SENT = "SYN_SENT"
 CONN_SYN_RECV = "SYN_RECV"
@@ -96,6 +112,7 @@ CONN_LISTEN = "LISTEN"
 CONN_CLOSING = "CLOSING"
 CONN_NONE = "NONE"
 
+# net_if_stats()
 if enum is None:
     NIC_DUPLEX_FULL = 2
     NIC_DUPLEX_HALF = 1
@@ -109,7 +126,100 @@ else:
     globals().update(NicDuplex.__members__)
 
 
-# --- functions
+# ===================================================================
+# --- namedtuples
+# ===================================================================
+
+# --- for system functions
+
+# psutil.swap_memory()
+sswap = namedtuple('sswap', ['total', 'used', 'free', 'percent', 'sin',
+                             'sout'])
+# psutil.disk_usage()
+sdiskusage = namedtuple('sdiskusage', ['total', 'used', 'free', 'percent'])
+# psutil.disk_io_counters()
+sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
+                                 'read_bytes', 'write_bytes',
+                                 'read_time', 'write_time'])
+# psutil.disk_partitions()
+sdiskpart = namedtuple('sdiskpart', ['device', 'mountpoint', 'fstype', 'opts'])
+# psutil.net_io_counters()
+snetio = namedtuple('snetio', ['bytes_sent', 'bytes_recv',
+                               'packets_sent', 'packets_recv',
+                               'errin', 'errout',
+                               'dropin', 'dropout'])
+# psutil.users()
+suser = namedtuple('suser', ['name', 'terminal', 'host', 'started'])
+# psutil.net_connections()
+sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
+                             'status', 'pid'])
+# psutil.net_if_addrs()
+snic = namedtuple('snic', ['family', 'address', 'netmask', 'broadcast', 'ptp'])
+# psutil.net_if_stats()
+snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
+# psutil.cpu_stats()
+scpustats = namedtuple(
+    'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'])
+
+# --- for Process methods
+
+# psutil.Process.cpu_times()
+pcputimes = namedtuple('pcputimes',
+                       ['user', 'system', 'children_user', 'children_system'])
+# psutil.Process.open_files()
+popenfile = namedtuple('popenfile', ['path', 'fd'])
+# psutil.Process.threads()
+pthread = namedtuple('pthread', ['id', 'user_time', 'system_time'])
+# psutil.Process.uids()
+puids = namedtuple('puids', ['real', 'effective', 'saved'])
+# psutil.Process.gids()
+pgids = namedtuple('pgids', ['real', 'effective', 'saved'])
+# psutil.Process.io_counters()
+pio = namedtuple('pio', ['read_count', 'write_count',
+                         'read_bytes', 'write_bytes'])
+# psutil.Process.ionice()
+pionice = namedtuple('pionice', ['ioclass', 'value'])
+# psutil.Process.ctx_switches()
+pctxsw = namedtuple('pctxsw', ['voluntary', 'involuntary'])
+# psutil.Process.connections()
+pconn = namedtuple('pconn', ['fd', 'family', 'type', 'laddr', 'raddr',
+                             'status'])
+
+
+# ===================================================================
+# --- Process.connections() 'kind' parameter mapping
+# ===================================================================
+
+
+conn_tmap = {
+    "all": ([AF_INET, AF_INET6, AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
+    "tcp": ([AF_INET, AF_INET6], [SOCK_STREAM]),
+    "tcp4": ([AF_INET], [SOCK_STREAM]),
+    "udp": ([AF_INET, AF_INET6], [SOCK_DGRAM]),
+    "udp4": ([AF_INET], [SOCK_DGRAM]),
+    "inet": ([AF_INET, AF_INET6], [SOCK_STREAM, SOCK_DGRAM]),
+    "inet4": ([AF_INET], [SOCK_STREAM, SOCK_DGRAM]),
+    "inet6": ([AF_INET6], [SOCK_STREAM, SOCK_DGRAM]),
+}
+
+if AF_INET6 is not None:
+    conn_tmap.update({
+        "tcp6": ([AF_INET6], [SOCK_STREAM]),
+        "udp6": ([AF_INET6], [SOCK_DGRAM]),
+    })
+
+if AF_UNIX is not None:
+    conn_tmap.update({
+        "unix": ([AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
+    })
+
+del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
+
+
+# ===================================================================
+# --- utils
+# ===================================================================
+
 
 def usage_percent(used, total, _round=None):
     """Calculate percentage usage of 'used' against 'total'."""
@@ -131,7 +241,7 @@ def memoize(fun):
     >>> @memoize
     ... def foo()
     ...     return 1
-    ...
+        ...
     >>> foo()
     1
     >>> foo.cache_clear()
@@ -271,87 +381,3 @@ def deprecated_method(replacement):
             return getattr(self, replacement)(*args, **kwargs)
         return inner
     return outer
-
-
-# --- Process.connections() 'kind' parameter mapping
-
-conn_tmap = {
-    "all": ([AF_INET, AF_INET6, AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
-    "tcp": ([AF_INET, AF_INET6], [SOCK_STREAM]),
-    "tcp4": ([AF_INET], [SOCK_STREAM]),
-    "udp": ([AF_INET, AF_INET6], [SOCK_DGRAM]),
-    "udp4": ([AF_INET], [SOCK_DGRAM]),
-    "inet": ([AF_INET, AF_INET6], [SOCK_STREAM, SOCK_DGRAM]),
-    "inet4": ([AF_INET], [SOCK_STREAM, SOCK_DGRAM]),
-    "inet6": ([AF_INET6], [SOCK_STREAM, SOCK_DGRAM]),
-}
-
-if AF_INET6 is not None:
-    conn_tmap.update({
-        "tcp6": ([AF_INET6], [SOCK_STREAM]),
-        "udp6": ([AF_INET6], [SOCK_DGRAM]),
-    })
-
-if AF_UNIX is not None:
-    conn_tmap.update({
-        "unix": ([AF_UNIX], [SOCK_STREAM, SOCK_DGRAM]),
-    })
-
-del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
-
-
-# --- namedtuples for psutil.* system-related functions
-
-# psutil.swap_memory()
-sswap = namedtuple('sswap', ['total', 'used', 'free', 'percent', 'sin',
-                             'sout'])
-# psutil.disk_usage()
-sdiskusage = namedtuple('sdiskusage', ['total', 'used', 'free', 'percent'])
-# psutil.disk_io_counters()
-sdiskio = namedtuple('sdiskio', ['read_count', 'write_count',
-                                 'read_bytes', 'write_bytes',
-                                 'read_time', 'write_time'])
-# psutil.disk_partitions()
-sdiskpart = namedtuple('sdiskpart', ['device', 'mountpoint', 'fstype', 'opts'])
-# psutil.net_io_counters()
-snetio = namedtuple('snetio', ['bytes_sent', 'bytes_recv',
-                               'packets_sent', 'packets_recv',
-                               'errin', 'errout',
-                               'dropin', 'dropout'])
-# psutil.users()
-suser = namedtuple('suser', ['name', 'terminal', 'host', 'started'])
-# psutil.net_connections()
-sconn = namedtuple('sconn', ['fd', 'family', 'type', 'laddr', 'raddr',
-                             'status', 'pid'])
-# psutil.net_if_addrs()
-snic = namedtuple('snic', ['family', 'address', 'netmask', 'broadcast', 'ptp'])
-# psutil.net_if_stats()
-snicstats = namedtuple('snicstats', ['isup', 'duplex', 'speed', 'mtu'])
-# psutil.cpu_stats()
-scpustats = namedtuple(
-    'scpustats', ['ctx_switches', 'interrupts', 'soft_interrupts', 'syscalls'])
-
-
-# --- namedtuples for psutil.Process methods
-
-# psutil.Process.cpu_times()
-pcputimes = namedtuple('pcputimes',
-                       ['user', 'system', 'children_user', 'children_system'])
-# psutil.Process.open_files()
-popenfile = namedtuple('popenfile', ['path', 'fd'])
-# psutil.Process.threads()
-pthread = namedtuple('pthread', ['id', 'user_time', 'system_time'])
-# psutil.Process.uids()
-puids = namedtuple('puids', ['real', 'effective', 'saved'])
-# psutil.Process.gids()
-pgids = namedtuple('pgids', ['real', 'effective', 'saved'])
-# psutil.Process.io_counters()
-pio = namedtuple('pio', ['read_count', 'write_count',
-                         'read_bytes', 'write_bytes'])
-# psutil.Process.ionice()
-pionice = namedtuple('pionice', ['ioclass', 'value'])
-# psutil.Process.ctx_switches()
-pctxsw = namedtuple('pctxsw', ['voluntary', 'involuntary'])
-# psutil.Process.connections()
-pconn = namedtuple('pconn', ['fd', 'family', 'type', 'laddr', 'raddr',
-                             'status'])
