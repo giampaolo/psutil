@@ -17,6 +17,10 @@ from ._compat import PY3
 from ._compat import unicode
 
 
+__all__ = ['TimeoutExpired', 'pid_exists', 'wait_pid', 'disk_usage',
+           '_get_terminal_map']
+
+
 class TimeoutExpired(Exception):
     pass
 

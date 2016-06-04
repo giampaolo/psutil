@@ -506,6 +506,9 @@ def cpu_stats():
 # =====================================================================
 
 
+net_if_addrs = cext_posix.net_if_addrs
+
+
 class _Ipv6UnsupportedError(Exception):
     pass
 
@@ -791,12 +794,12 @@ def net_if_stats():
     return ret
 
 
-net_if_addrs = cext_posix.net_if_addrs
-
-
 # =====================================================================
 # --- disks
 # =====================================================================
+
+
+disk_usage = _psposix.disk_usage
 
 
 def disk_io_counters():
@@ -896,9 +899,6 @@ def disk_partitions(all=False):
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
-
-
-disk_usage = _psposix.disk_usage
 
 
 # =====================================================================

@@ -193,6 +193,10 @@ def cpu_stats():
 # =====================================================================
 
 
+disk_io_counters = cext.disk_io_counters
+disk_usage = _psposix.disk_usage
+
+
 def disk_partitions(all=False):
     """Return system disk partitions."""
     # TODO - the filtering logic should be better checked so that
@@ -214,13 +218,13 @@ def disk_partitions(all=False):
     return retlist
 
 
-disk_io_counters = cext.disk_io_counters
-disk_usage = _psposix.disk_usage
-
-
 # =====================================================================
 # --- network
 # =====================================================================
+
+
+net_io_counters = cext.net_io_counters
+net_if_addrs = cext_posix.net_if_addrs
 
 
 def net_connections(kind, _pid=-1):
@@ -263,10 +267,6 @@ def net_if_stats():
             duplex = _common.NicDuplex(duplex)
         ret[name] = _common.snicstats(isup, duplex, speed, mtu)
     return ret
-
-
-net_io_counters = cext.net_io_counters
-net_if_addrs = cext_posix.net_if_addrs
 
 
 # =====================================================================

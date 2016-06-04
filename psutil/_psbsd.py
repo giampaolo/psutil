@@ -306,6 +306,10 @@ disk_io_counters = cext.disk_io_counters
 # =====================================================================
 
 
+net_io_counters = cext.net_io_counters
+net_if_addrs = cext_posix.net_if_addrs
+
+
 def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
     names = net_io_counters().keys()
@@ -356,10 +360,6 @@ def net_connections(kind):
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
             ret.add(nt)
     return list(ret)
-
-
-net_io_counters = cext.net_io_counters
-net_if_addrs = cext_posix.net_if_addrs
 
 
 # =====================================================================

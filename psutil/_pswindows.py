@@ -191,6 +191,9 @@ def swap_memory():
 # =====================================================================
 
 
+disk_io_counters = cext.disk_io_counters
+
+
 def disk_usage(path):
     """Return disk usage associated with path."""
     try:
@@ -209,9 +212,6 @@ def disk_partitions(all):
     """Return disk partitions."""
     rawlist = cext.disk_partitions(all)
     return [_common.sdiskpart(*x) for x in rawlist]
-
-
-disk_io_counters = cext.disk_io_counters
 
 
 # =====================================================================
@@ -523,7 +523,7 @@ class WindowsService(object):
 
 pids = cext.pids
 pid_exists = cext.pid_exists
-ppid_map = cext.ppid_map  # not meant to be public
+ppid_map = cext.ppid_map  # used internally by Process.children()
 
 
 def wrap_exceptions(fun):
