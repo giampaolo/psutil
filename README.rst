@@ -2,11 +2,11 @@
     :target: https://pypi.python.org/pypi/psutil#downloads
     :alt: Downloads this month
 
-.. image:: https://api.travis-ci.org/giampaolo/psutil.png?branch=master
+.. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20OSX
     :target: https://travis-ci.org/giampaolo/psutil
     :alt: Linux tests (Travis)
 
-.. image:: https://ci.appveyor.com/api/projects/status/qdwvw7v1t915ywr5/branch/master?svg=true
+.. image:: https://img.shields.io/appveyor/ci/giampaolo/psutil/master.svg?maxAge=3600&label=Windows
     :target: https://ci.appveyor.com/project/giampaolo/psutil
     :alt: Windows tests (Appveyor)
 
@@ -14,7 +14,7 @@
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)
 
-.. image:: https://img.shields.io/pypi/v/psutil.svg
+.. image:: https://img.shields.io/pypi/v/psutil.svg?label=version
     :target: https://pypi.python.org/pypi/psutil/
     :alt: Latest version
 
