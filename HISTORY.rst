@@ -4,6 +4,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 ==================
 
 - #812: [NetBSD] fix compilation on NetBSD-5.x.
+- #823: [NetBSD] virtual_memory() raises TypeError on Python 3.
 
 
 4.2.0 - 2016-05-14
