@@ -34,9 +34,8 @@ PID    USER       NI  VIRT   RES   CPU% MEM%     TIME+  NAME
 ...
 """
 
-from datetime import datetime
-from datetime import timedelta
 import atexit
+import datetime
 import os
 import sys
 import time
@@ -166,7 +165,8 @@ def print_header(procs_status, num_procs):
     st.sort(key=lambda x: x[:3] in ('run', 'sle'), reverse=1)
     print_line(" Processes: %s (%s)" % (num_procs, ', '.join(st)))
     # load average, uptime
-    uptime = datetime.now() - datetime.fromtimestamp(psutil.boot_time())
+    uptime = datetime.datetime.now() - \
+        datetime.datetime.fromtimestamp(psutil.boot_time())
     av1, av2, av3 = os.getloadavg()
     line = " Load average: %.2f %.2f %.2f  Uptime: %s" \
         % (av1, av2, av3, str(uptime).split('.')[0])
@@ -187,7 +187,7 @@ def refresh_window(procs, procs_status):
         # TIME+ column shows process CPU cumulative time and it
         # is expressed as: "mm:ss.ms"
         if p.dict['cpu_times'] is not None:
-            ctime = timedelta(seconds=sum(p.dict['cpu_times']))
+            ctime = datetime.timedelta(seconds=sum(p.dict['cpu_times']))
             ctime = "%s:%s.%s" % (ctime.seconds // 60 % 60,
                                   str((ctime.seconds % 60)).zfill(2),
                                   str(ctime.microseconds)[:2])
