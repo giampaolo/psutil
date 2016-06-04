@@ -143,7 +143,7 @@ def disk_usage(path):
     percent = usage_percent(used, total, _round=1)
     # NB: the percentage is -5% than what shown by df due to
     # reserved blocks that we are currently not considering:
-    # http://goo.gl/sWGbH
+    # https://github.com/giampaolo/psutil/issues/829#issuecomment-223750462
     return sdiskusage(total, used, free, percent)
 
 
