@@ -934,7 +934,7 @@ class TestProcess(unittest.TestCase):
     # --- mocked tests
 
     def test_terminal_mocked(self):
-        with mock.patch('psutil._pslinux._psposix._get_terminal_map',
+        with mock.patch('psutil._pslinux._psposix.get_terminal_map',
                         return_value={}) as m:
             self.assertIsNone(psutil._pslinux.Process(os.getpid()).terminal())
             assert m.called

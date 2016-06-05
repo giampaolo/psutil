@@ -1056,7 +1056,7 @@ class Process(object):
     @wrap_exceptions
     def terminal(self):
         tty_nr = int(self._parse_stat_file()[5])
-        tmap = _psposix._get_terminal_map()
+        tmap = _psposix.get_terminal_map()
         try:
             return tmap[tty_nr]
         except KeyError:

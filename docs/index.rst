@@ -106,7 +106,6 @@ CPU
     >>>
 
   .. warning::
-
     the first time this function is called with *interval* = ``0.0`` or ``None``
     it will return a meaningless ``0.0`` value which you are supposed to
     ignore.
@@ -120,28 +119,27 @@ CPU
   *percpu* arguments have the same meaning as in :func:`cpu_percent()`.
 
   .. warning::
-
     the first time this function is called with *interval* = ``0.0`` or
     ``None`` it will return a meaningless ``0.0`` value which you are supposed
     to ignore.
 
-  .. versionchanged:: 4.1.0 two new *interrupt* and *dpc* fields are returned
-     on Windows.
+  .. versionchanged::
+    4.1.0 two new *interrupt* and *dpc* fields are returned on Windows.
 
 .. function:: cpu_count(logical=True)
 
-    Return the number of logical CPUs in the system (same as
-    `os.cpu_count() <http://docs.python.org/3/library/os.html#os.cpu_count>`__
-    in Python 3.4).
-    If *logical* is ``False`` return the number of physical cores only (hyper
-    thread CPUs are excluded). Return ``None`` if undetermined.
+  Return the number of logical CPUs in the system (same as
+  `os.cpu_count() <http://docs.python.org/3/library/os.html#os.cpu_count>`__
+  in Python 3.4).
+  If *logical* is ``False`` return the number of physical cores only (hyper
+  thread CPUs are excluded). Return ``None`` if undetermined.
 
-      >>> import psutil
-      >>> psutil.cpu_count()
-      4
-      >>> psutil.cpu_count(logical=False)
-      2
-      >>>
+    >>> import psutil
+    >>> psutil.cpu_count()
+    4
+    >>> psutil.cpu_count(logical=False)
+    2
+    >>>
 
 .. function:: cpu_stats()
 
@@ -210,16 +208,16 @@ Memory
   .. note:: if you just want to know how much physical memory is left in a
     cross platform fashion simply rely on the **available** field.
 
-    >>> import psutil
-    >>> mem = psutil.virtual_memory()
-    >>> mem
-    svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
-    >>>
-    >>> THRESHOLD = 100 * 1024 * 1024  # 100MB
-    >>> if mem.available <= THRESHOLD:
-    ...     print("warning")
-    ...
-    >>>
+  >>> import psutil
+  >>> mem = psutil.virtual_memory()
+  >>> mem
+  svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
+  >>>
+  >>> THRESHOLD = 100 * 1024 * 1024  # 100MB
+  >>> if mem.available <= THRESHOLD:
+  ...     print("warning")
+  ...
+  >>>
 
   .. versionchanged:: 4.2.0 added *shared* metrics on Linux.
 
@@ -292,7 +290,8 @@ Disks
     UNIX usually reserves 5% of the total disk space for the root user.
     *total* and *used* fields on UNIX refer to the overall total and used
     space, whereas *free* represents the space available for the **user** and
-    *percent* represents the **user** utilization.
+    *percent* represents the **user** utilization (see
+    `source code <https://github.com/giampaolo/psutil/blob/3dea30d583b8c1275057edb1b3b720813b4d0f60/psutil/_psposix.py#L123>`__).
     That is why *percent* value may look 5% bigger than what you would expect
     it to be.
     Also note that both 4 values match "df" cmdline utility.
@@ -338,10 +337,12 @@ Disks
      'sda2': sdiskio(read_count=18707, write_count=8830, read_bytes=6060, write_bytes=3443, read_time=24585, write_time=1572),
      'sdb1': sdiskio(read_count=161, write_count=0, read_bytes=786432, write_bytes=0, read_time=44, write_time=0)}
 
-  .. versionchanged:: 4.0.0 added *busy_time* (Linux, FreeBSD),
-     *read_merged_count* and *write_merged_count* (Linux) fields.
-  .. versionchanged:: 4.0.0 NetBSD no longer has *read_time* and *write_time*
-     fields.
+  .. versionchanged::
+     4.0.0 added *busy_time* (Linux, FreeBSD), *read_merged_count* and
+     *write_merged_count* (Linux) fields.
+
+  .. versionchanged::
+     4.0.0 NetBSD no longer has *read_time* and *write_time* fields.
 
 Network
 -------
@@ -453,9 +454,12 @@ Network
      pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT', pid=None)
      ...]
 
-  .. note:: (OSX) :class:`psutil.AccessDenied` is always raised unless running
-     as root (lsof does the same).
-  .. note:: (Solaris) UNIX sockets are not supported.
+  .. note::
+    (OSX) :class:`psutil.AccessDenied` is always raised unless running as root
+    (lsof does the same).
+
+  .. note::
+    (Solaris) UNIX sockets are not supported.
 
   .. versionadded:: 2.1.0
 
@@ -499,15 +503,18 @@ Network
   See also `scripts/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
   for an example application.
 
-  .. note:: if you're interested in others families (e.g. AF_BLUETOOTH) you can
-    use the more powerful `netifaces <https://pypi.python.org/pypi/netifaces/>`__
+  .. note::
+    if you're interested in others families (e.g. AF_BLUETOOTH) you can use
+    the more powerful `netifaces <https://pypi.python.org/pypi/netifaces/>`__
     extension.
 
-  .. note:: you can have more than one address of the same family associated
-    with each interface (that's why dict values are lists).
+  .. note::
+    you can have more than one address of the same family associated with each
+    interface (that's why dict values are lists).
 
-  .. note:: *netmask*, *broadcast* and *ptp* are not supported on Windows and
-    are set to ``None``.
+  .. note::
+    *netmask*, *broadcast* and *ptp* are not supported on Windows and are set
+    to ``None``.
 
   .. versionadded:: 3.0.0
 
@@ -652,32 +659,32 @@ Exceptions
 
 .. class:: NoSuchProcess(pid, name=None, msg=None)
 
-   Raised by :class:`Process` class methods when no process with the given
-   *pid* is found in the current process list or when a process no longer
-   exists. "name" is the name the process had before disappearing
-   and gets set only if :meth:`Process.name()` was previosly called.
+  Raised by :class:`Process` class methods when no process with the given
+  pid* is found in the current process list or when a process no longer
+  exists. "name" is the name the process had before disappearing
+  and gets set only if :meth:`Process.name()` was previosly called.
 
 .. class:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
-   This may be raised by :class:`Process` class methods when querying a zombie
-   process on UNIX (Windows doesn't have zombie processes). Depending on the
-   method called the OS may be able to succeed in retrieving the process
-   information or not.
-   Note: this is a subclass of :class:`NoSuchProcess` so if you're not
-   interested in retrieving zombies (e.g. when using :func:`process_iter()`)
-   you can ignore this exception and just catch :class:`NoSuchProcess`.
+  This may be raised by :class:`Process` class methods when querying a zombie
+  process on UNIX (Windows doesn't have zombie processes). Depending on the
+  method called the OS may be able to succeed in retrieving the process
+  information or not.
+  Note: this is a subclass of :class:`NoSuchProcess` so if you're not
+  interested in retrieving zombies (e.g. when using :func:`process_iter()`)
+  you can ignore this exception and just catch :class:`NoSuchProcess`.
 
   .. versionadded:: 3.0.0
 
 .. class:: AccessDenied(pid=None, name=None, msg=None)
 
-    Raised by :class:`Process` class methods when permission to perform an
-    action is denied. "name" is the name of the process (may be ``None``).
+  Raised by :class:`Process` class methods when permission to perform an
+  action is denied. "name" is the name of the process (may be ``None``).
 
 .. class:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
 
-    Raised by :meth:`Process.wait` if timeout expires and process is still
-    alive.
+  Raised by :meth:`Process.wait` if timeout expires and process is still
+  alive.
 
 Process class
 -------------
@@ -884,15 +891,16 @@ Process class
 
      Availability: Linux and Windows > Vista
 
-     .. versionchanged:: 3.0.0 on >= Python 3.4 the returned ``ioclass``
-        constant is an `enum <https://docs.python.org/3/library/enum.html#module-enum>`__
+     .. versionchanged::
+        3.0.0 on Python >= 3.4 the returned ``ioclass`` constant is an
+        `enum <https://docs.python.org/3/library/enum.html#module-enum>`__
         instead of a plain integer.
 
   .. method:: rlimit(resource, limits=None)
 
      Get or set process resource limits (see
-     `man prlimit <http://linux.die.net/man/2/prlimit>`__). *resource* is one of
-     the :data:`psutil.RLIMIT_* <psutil.RLIMIT_INFINITY>` constants.
+     `man prlimit <http://linux.die.net/man/2/prlimit>`__). *resource* is one
+     of the :data:`psutil.RLIMIT_* <psutil.RLIMIT_INFINITY>` constants.
      *limits* is a ``(soft, hard)`` tuple.
      This is the same as `resource.getrlimit() <http://docs.python.org/library/resource.html#resource.getrlimit>`__
      and `resource.setrlimit() <http://docs.python.org/library/resource.html#resource.setrlimit>`__
@@ -1123,14 +1131,15 @@ Process class
      >>> p.memory_info()
      pmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0)
 
-     .. versionchanged:: 4.0.0 mutiple fields are returned, not only `rss` and
-        `vms`.
+     .. versionchanged::
+       4.0.0 mutiple fields are returned, not only `rss` and `vms`.
 
   .. method:: memory_info_ex()
 
      Same as :meth:`memory_info` (deprecated).
 
-     .. warning:: deprecated in version 4.0.0; use :meth:`memory_info` instead.
+     .. warning::
+       deprecated in version 4.0.0; use :meth:`memory_info` instead.
 
   .. method:: memory_full_info()
 
@@ -1502,6 +1511,7 @@ Windows services
   Windows services installed.
 
   .. versionadded:: 4.2.0
+
   Availability: Windows
 
 .. function:: win_service_get(name)
@@ -1510,6 +1520,7 @@ Windows services
   Raise :class:`psutil.NoSuchProcess` if no service with such name exists.
 
   .. versionadded:: 4.2.0
+
   Availability: Windows
 
 .. class:: WindowsService
@@ -1562,6 +1573,7 @@ Windows services
      Utility method retrieving all the information above as a dictionary.
 
   .. versionadded:: 4.2.0
+
   Availability: Windows
 
 

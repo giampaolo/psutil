@@ -18,7 +18,7 @@ from ._compat import unicode
 
 
 __all__ = ['TimeoutExpired', 'pid_exists', 'wait_pid', 'disk_usage',
-           '_get_terminal_map']
+           'get_terminal_map']
 
 
 class TimeoutExpired(Exception):
@@ -168,11 +168,11 @@ def disk_usage(path):
 
 
 @memoize
-def _get_terminal_map():
+def get_terminal_map():
     ret = {}
     ls = glob.glob('/dev/tty*') + glob.glob('/dev/pts/*')
     for name in ls:
-        assert name not in ret
+        assert name not in ret, name
         try:
             ret[os.stat(name).st_rdev] = name
         except OSError as err:

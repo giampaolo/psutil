@@ -503,7 +503,7 @@ class Process(object):
     @wrap_exceptions
     def terminal(self):
         tty_nr = cext.proc_tty_nr(self.pid)
-        tmap = _psposix._get_terminal_map()
+        tmap = _psposix.get_terminal_map()
         try:
             return tmap[tty_nr]
         except KeyError:

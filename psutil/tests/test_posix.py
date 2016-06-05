@@ -325,8 +325,8 @@ class TestSystemAPIs(unittest.TestCase):
 
         tolerance = 4 * 1024 * 1024  # 4MB
         for part in psutil.disk_partitions(all=False):
-            total, used, free, percent = df(part.device)
             usage = psutil.disk_usage(part.mountpoint)
+            total, used, free, percent = df(part.device)
             self.assertAlmostEqual(usage.total, total, delta=tolerance)
             self.assertAlmostEqual(usage.used, used, delta=tolerance)
             self.assertAlmostEqual(usage.free, free, delta=tolerance)
