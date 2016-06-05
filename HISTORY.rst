@@ -3,8 +3,12 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 4.3.0 - XXXX-XX-XX
 ==================
 
+**Bug fixes**
+
 - #812: [NetBSD] fix compilation on NetBSD-5.x.
 - #823: [NetBSD] virtual_memory() raises TypeError on Python 3.
+- #829: [UNIX] psutil.disk_usage() percent field takes root reserved space
+  into account.
 
 
 4.2.0 - 2016-05-14

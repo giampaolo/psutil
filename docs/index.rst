@@ -278,19 +278,27 @@ Disks
   **total**, **used** and **free** space expressed in bytes, plus the
   **percentage** usage.
   `OSError <http://docs.python.org/3/library/exceptions.html#OSError>`__ is
-  raised if *path* does not exist. See
-  `scripts/disk_usage.py <https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py>`__
-  script providing an example usage. Starting from
-  `Python 3.3 <http://bugs.python.org/issue12442>`__  this is also
-  available as
+  raised if *path* does not exist.
+  Starting from `Python 3.3 <http://bugs.python.org/issue12442>`__  this is
+  also available as
   `shutil.disk_usage() <http://docs.python.org/3/library/shutil.html#shutil.disk_usage>`__.
-  See
-  `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py>`__
-  script providing an example usage.
+  See `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py>`__ script providing an example usage.
 
     >>> import psutil
     >>> psutil.disk_usage('/')
     sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
+
+  .. note::
+    UNIX usually reserves 5% of the total disk space for the root user.
+    *total* and *used* fields on UNIX refer to the overall total and used
+    space, whereas *free* represents the space available for the **user** and
+    *percent* represents the **user** utilization.
+    That is why *percent* value may look 5% bigger than what you would expect
+    it to be.
+    Also note that both 4 values match "df" cmdline utility.
+
+  .. versionchanged::
+    4.3.0 *percent* value takes root reserved space into account.
 
 .. function:: disk_io_counters(perdisk=False)
 
