@@ -18,9 +18,9 @@
 #include <tchar.h>
 #include <tlhelp32.h>
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <wtsapi32.h>
-#include <ws2tcpip.h>
 #include <Winsvc.h>
 
 // Link with Iphlpapi.lib
@@ -84,24 +84,6 @@ typedef struct _DISK_PERFORMANCE_WIN_2008 {
 } DISK_PERFORMANCE_WIN_2008;
 
 // --- network connections mingw32 support
-#ifndef _IPRTRMIB_H
-typedef struct _MIB_TCP6ROW_OWNER_PID {
-    UCHAR ucLocalAddr[16];
-    DWORD dwLocalScopeId;
-    DWORD dwLocalPort;
-    UCHAR ucRemoteAddr[16];
-    DWORD dwRemoteScopeId;
-    DWORD dwRemotePort;
-    DWORD dwState;
-    DWORD dwOwningPid;
-} MIB_TCP6ROW_OWNER_PID, *PMIB_TCP6ROW_OWNER_PID;
-
-typedef struct _MIB_TCP6TABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_TCP6ROW_OWNER_PID table[ANY_SIZE];
-} MIB_TCP6TABLE_OWNER_PID, *PMIB_TCP6TABLE_OWNER_PID;
-#endif
-
 #ifndef __IPHLPAPI_H__
 typedef struct in6_addr {
     union {
@@ -127,18 +109,6 @@ typedef struct _MIB_UDPTABLE_OWNER_PID {
     MIB_UDPROW_OWNER_PID table[ANY_SIZE];
 } MIB_UDPTABLE_OWNER_PID, *PMIB_UDPTABLE_OWNER_PID;
 #endif
-
-typedef struct _MIB_UDP6ROW_OWNER_PID {
-    UCHAR ucLocalAddr[16];
-    DWORD dwLocalScopeId;
-    DWORD dwLocalPort;
-    DWORD dwOwningPid;
-} MIB_UDP6ROW_OWNER_PID, *PMIB_UDP6ROW_OWNER_PID;
-
-typedef struct _MIB_UDP6TABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_UDP6ROW_OWNER_PID table[ANY_SIZE];
-} MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
 
 PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses() {
@@ -2168,7 +2138,7 @@ return_:
 static PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {
     DWORD dwRetVal = 0;
-    MIB_IFROW *pIfRow = NULL;
+    MIB_IF_ROW2 *pIfRow = NULL;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
     PyObject *py_retdict = PyDict_New();
@@ -2185,29 +2155,30 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     while (pCurrAddresses) {
         py_nic_name = NULL;
         py_nic_info = NULL;
-        pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
+        pIfRow = (MIB_IF_ROW2 *) malloc(sizeof(MIB_IF_ROW2));
 
         if (pIfRow == NULL) {
             PyErr_NoMemory();
             goto error;
         }
+        SecureZeroMemory((PVOID)pIfRow, sizeof(MIB_IF_ROW2));
 
-        pIfRow->dwIndex = pCurrAddresses->IfIndex;
-        dwRetVal = GetIfEntry(pIfRow);
+        pIfRow->InterfaceIndex = pCurrAddresses->IfIndex;
+        dwRetVal = GetIfEntry2(pIfRow);
         if (dwRetVal != NO_ERROR) {
             PyErr_SetString(PyExc_RuntimeError, "GetIfEntry() failed.");
             goto error;
         }
 
-        py_nic_info = Py_BuildValue("(kkkkkkkk)",
-                                    pIfRow->dwOutOctets,
-                                    pIfRow->dwInOctets,
-                                    pIfRow->dwOutUcastPkts,
-                                    pIfRow->dwInUcastPkts,
-                                    pIfRow->dwInErrors,
-                                    pIfRow->dwOutErrors,
-                                    pIfRow->dwInDiscards,
-                                    pIfRow->dwOutDiscards);
+        py_nic_info = Py_BuildValue("(KKKKKKKK)",
+                                    pIfRow->OutOctets,
+                                    pIfRow->InOctets,
+                                    pIfRow->OutUcastPkts,
+                                    pIfRow->InUcastPkts,
+                                    pIfRow->InErrors,
+                                    pIfRow->OutErrors,
+                                    pIfRow->InDiscards,
+                                    pIfRow->OutDiscards);
         if (!py_nic_info)
             goto error;
 
