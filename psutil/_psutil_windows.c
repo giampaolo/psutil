@@ -18,7 +18,9 @@
 #include <tchar.h>
 #include <tlhelp32.h>
 #include <winsock2.h>
+#if (_WIN32_WINNT >= 0x0600)
 #include <ws2tcpip.h>
+#endif
 #include <iphlpapi.h>
 #include <wtsapi32.h>
 #include <Winsvc.h>
@@ -84,6 +86,24 @@ typedef struct _DISK_PERFORMANCE_WIN_2008 {
 } DISK_PERFORMANCE_WIN_2008;
 
 // --- network connections mingw32 support
+#ifndef _IPRTRMIB_H
+typedef struct _MIB_TCP6ROW_OWNER_PID {
+    UCHAR ucLocalAddr[16];
+    DWORD dwLocalScopeId;
+    DWORD dwLocalPort;
+    UCHAR ucRemoteAddr[16];
+    DWORD dwRemoteScopeId;
+    DWORD dwRemotePort;
+    DWORD dwState;
+    DWORD dwOwningPid;
+} MIB_TCP6ROW_OWNER_PID, *PMIB_TCP6ROW_OWNER_PID;
+
+typedef struct _MIB_TCP6TABLE_OWNER_PID {
+    DWORD dwNumEntries;
+    MIB_TCP6ROW_OWNER_PID table[ANY_SIZE];
+} MIB_TCP6TABLE_OWNER_PID, *PMIB_TCP6TABLE_OWNER_PID;
+#endif
+
 #ifndef __IPHLPAPI_H__
 typedef struct in6_addr {
     union {
@@ -108,6 +128,20 @@ typedef struct _MIB_UDPTABLE_OWNER_PID {
     DWORD dwNumEntries;
     MIB_UDPROW_OWNER_PID table[ANY_SIZE];
 } MIB_UDPTABLE_OWNER_PID, *PMIB_UDPTABLE_OWNER_PID;
+#endif
+
+#if (_WIN32_WINNT < 0x0600)
+typedef struct _MIB_UDP6ROW_OWNER_PID {
+    UCHAR ucLocalAddr[16];
+    DWORD dwLocalScopeId;
+    DWORD dwLocalPort;
+    DWORD dwOwningPid;
+} MIB_UDP6ROW_OWNER_PID, *PMIB_UDP6ROW_OWNER_PID;
+
+typedef struct _MIB_UDP6TABLE_OWNER_PID {
+    DWORD dwNumEntries;
+    MIB_UDP6ROW_OWNER_PID table[ANY_SIZE];
+} MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
 #endif
 
 PIP_ADAPTER_ADDRESSES
@@ -1606,7 +1640,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     }
 
     // TCP IPv6
-
     if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1) &&
             (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1))
     {
@@ -2138,7 +2171,12 @@ return_:
 static PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {
     DWORD dwRetVal = 0;
+#if (_WIN32_WINNT >= 0x0600)
     MIB_IF_ROW2 *pIfRow = NULL;
+#endif
+#if (_WIN32_WINNT < 0x0600)
+    MIB_IFROW *pIfRow = NULL;
+#endif
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
     PyObject *py_retdict = PyDict_New();
@@ -2155,21 +2193,35 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     while (pCurrAddresses) {
         py_nic_name = NULL;
         py_nic_info = NULL;
+#if (_WIN32_WINNT >= 0x0600)
         pIfRow = (MIB_IF_ROW2 *) malloc(sizeof(MIB_IF_ROW2));
+#endif
+#if (_WIN32_WINNT < 0x0600)
+		pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
+#endif
 
         if (pIfRow == NULL) {
             PyErr_NoMemory();
             goto error;
         }
+#if (_WIN32_WINNT >= 0x0600)
         SecureZeroMemory((PVOID)pIfRow, sizeof(MIB_IF_ROW2));
+#endif
 
+#if (_WIN32_WINNT >= 0x0600)
         pIfRow->InterfaceIndex = pCurrAddresses->IfIndex;
         dwRetVal = GetIfEntry2(pIfRow);
+#endif
+#if (_WIN32_WINNT < 0x0600)
+        pIfRow->dwIndex = pCurrAddresses->IfIndex;
+		dwRetVal = GetIfEntry(pIfRow);
+#endif
         if (dwRetVal != NO_ERROR) {
-            PyErr_SetString(PyExc_RuntimeError, "GetIfEntry() failed.");
+            PyErr_SetString(PyExc_RuntimeError, "GetIfEntry() or GetIfEntry2() failed.");
             goto error;
         }
 
+#if (_WIN32_WINNT >= 0x0600)
         py_nic_info = Py_BuildValue("(KKKKKKKK)",
                                     pIfRow->OutOctets,
                                     pIfRow->InOctets,
@@ -2179,6 +2231,19 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                                     pIfRow->OutErrors,
                                     pIfRow->InDiscards,
                                     pIfRow->OutDiscards);
+#endif
+#if (_WIN32_WINNT < 0x0600)
+		py_nic_info = Py_BuildValue("(kkkkkkkk)",
+                                    pIfRow->dwOutOctets,
+                                    pIfRow->dwInOctets,
+                                    pIfRow->dwOutUcastPkts,
+                                    pIfRow->dwInUcastPkts,
+                                    pIfRow->dwInErrors,
+                                    pIfRow->dwOutErrors,
+                                    pIfRow->dwInDiscards,
+                                    pIfRow->dwOutDiscards);
+#endif
+
         if (!py_nic_info)
             goto error;
 
