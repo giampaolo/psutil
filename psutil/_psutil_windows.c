@@ -18,12 +18,12 @@
 #include <tchar.h>
 #include <tlhelp32.h>
 #include <winsock2.h>
-#if (_WIN32_WINNT >= 0x0600)
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista, 7, 8, 8.1, 10
 #include <ws2tcpip.h>
 #endif
 #include <iphlpapi.h>
 #include <wtsapi32.h>
-#if (_WIN32_WINNT < 0x0600)
+#if (_WIN32_WINNT < 0x0600) // Windows XP / 2000
 #include <ws2tcpip.h>
 #endif
 #include <Winsvc.h>
@@ -90,7 +90,7 @@ typedef struct _DISK_PERFORMANCE_WIN_2008 {
 
 // --- network connections mingw32 support
 #ifndef _IPRTRMIB_H
-#if (_WIN32_WINNT < 0x0600)
+#if (_WIN32_WINNT < 0x0600) // Windows XP / 2000
 typedef struct _MIB_TCP6ROW_OWNER_PID {
     UCHAR ucLocalAddr[16];
     DWORD dwLocalScopeId;
@@ -135,7 +135,7 @@ typedef struct _MIB_UDPTABLE_OWNER_PID {
 } MIB_UDPTABLE_OWNER_PID, *PMIB_UDPTABLE_OWNER_PID;
 #endif
 
-#if (_WIN32_WINNT < 0x0600)
+#if (_WIN32_WINNT < 0x0600) // Windows XP / 2000
 typedef struct _MIB_UDP6ROW_OWNER_PID {
     UCHAR ucLocalAddr[16];
     DWORD dwLocalScopeId;
@@ -2176,10 +2176,10 @@ return_:
 static PyObject *
 psutil_net_io_counters(PyObject *self, PyObject *args) {
     DWORD dwRetVal = 0;
-#if (_WIN32_WINNT >= 0x0600)
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista, 7, 8, 8.1, 10
     MIB_IF_ROW2 *pIfRow = NULL;
 #endif
-#if (_WIN32_WINNT < 0x0600)
+#if (_WIN32_WINNT < 0x0600) // Windows 2000 / XP
     MIB_IFROW *pIfRow = NULL;
 #endif
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
@@ -2198,10 +2198,10 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
     while (pCurrAddresses) {
         py_nic_name = NULL;
         py_nic_info = NULL;
-#if (_WIN32_WINNT >= 0x0600)
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista, 7, 8, 8.1, 10
         pIfRow = (MIB_IF_ROW2 *) malloc(sizeof(MIB_IF_ROW2));
 #endif
-#if (_WIN32_WINNT < 0x0600)
+#if (_WIN32_WINNT < 0x0600) // Windows 2000 / XP
 		pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
 #endif
 
@@ -2209,15 +2209,12 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
             PyErr_NoMemory();
             goto error;
         }
-#if (_WIN32_WINNT >= 0x0600)
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista, 7, 8, 8.1, 10
         SecureZeroMemory((PVOID)pIfRow, sizeof(MIB_IF_ROW2));
-#endif
-
-#if (_WIN32_WINNT >= 0x0600)
         pIfRow->InterfaceIndex = pCurrAddresses->IfIndex;
         dwRetVal = GetIfEntry2(pIfRow);
 #endif
-#if (_WIN32_WINNT < 0x0600)
+#if (_WIN32_WINNT < 0x0600) // Windows 2000 / XP
         pIfRow->dwIndex = pCurrAddresses->IfIndex;
 		dwRetVal = GetIfEntry(pIfRow);
 #endif
@@ -2226,7 +2223,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
             goto error;
         }
 
-#if (_WIN32_WINNT >= 0x0600)
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista, 7, 8, 8.1, 10
         py_nic_info = Py_BuildValue("(KKKKKKKK)",
                                     pIfRow->OutOctets,
                                     pIfRow->InOctets,
@@ -2237,7 +2234,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                                     pIfRow->InDiscards,
                                     pIfRow->OutDiscards);
 #endif
-#if (_WIN32_WINNT < 0x0600)
+#if (_WIN32_WINNT < 0x0600) // Windows 2000 / XP
 		py_nic_info = Py_BuildValue("(kkkkkkkk)",
                                     pIfRow->dwOutOctets,
                                     pIfRow->dwInOctets,
