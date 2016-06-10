@@ -23,7 +23,7 @@
 #endif
 #include <iphlpapi.h>
 #include <wtsapi32.h>
- #if (_WIN32_WINNT < 0x0600)
+#if (_WIN32_WINNT < 0x0600)
 #include <ws2tcpip.h>
 #endif
 #include <Winsvc.h>
