@@ -2202,7 +2202,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
         pIfRow = (MIB_IF_ROW2 *) malloc(sizeof(MIB_IF_ROW2));
 #endif
 #if (_WIN32_WINNT < 0x0600) // Windows 2000 / XP
-		pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
+        pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
 #endif
 
         if (pIfRow == NULL) {
@@ -2216,7 +2216,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 #endif
 #if (_WIN32_WINNT < 0x0600) // Windows 2000 / XP
         pIfRow->dwIndex = pCurrAddresses->IfIndex;
-		dwRetVal = GetIfEntry(pIfRow);
+        dwRetVal = GetIfEntry(pIfRow);
 #endif
         if (dwRetVal != NO_ERROR) {
             PyErr_SetString(PyExc_RuntimeError, "GetIfEntry() or GetIfEntry2() failed.");
@@ -2235,7 +2235,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
                                     pIfRow->OutDiscards);
 #endif
 #if (_WIN32_WINNT < 0x0600) // Windows 2000 / XP
-		py_nic_info = Py_BuildValue("(kkkkkkkk)",
+        py_nic_info = Py_BuildValue("(kkkkkkkk)",
                                     pIfRow->dwOutOctets,
                                     pIfRow->dwInOctets,
                                     pIfRow->dwOutUcastPkts,
