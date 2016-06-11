@@ -331,7 +331,7 @@ class TestSystemAPIs(unittest.TestCase):
                 total, used, free, percent = df(part.device)
             except RuntimeError:
                 # Issue with OS X not being able to read certain partitions
-                # Issue with Linux systems not able to read Docker mapped locations
+                # Issue with Linux systems not able to read Docker mappings
                 continue
             self.assertAlmostEqual(usage.total, total, delta=tolerance)
             self.assertAlmostEqual(usage.used, used, delta=tolerance)
