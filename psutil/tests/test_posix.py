@@ -333,7 +333,6 @@ class TestSystemAPIs(unittest.TestCase):
                 # Issue with OS X not being able to read certain partitions
                 # Issue with Linux systems not able to read Docker mapped locations
                 continue
-            except  
             self.assertAlmostEqual(usage.total, total, delta=tolerance)
             self.assertAlmostEqual(usage.used, used, delta=tolerance)
             self.assertAlmostEqual(usage.free, free, delta=tolerance)
