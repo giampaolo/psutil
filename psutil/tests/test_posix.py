@@ -327,13 +327,19 @@ class TestSystemAPIs(unittest.TestCase):
         tolerance = 4 * 1024 * 1024  # 4MB
         for part in psutil.disk_partitions(all=False):
             usage = psutil.disk_usage(part.mountpoint)
-            total, used, free, percent = df(part.device)
+            try:
+                total, used, free, percent = df(part.device)
+            except RuntimeError:
+                # Issue with OS X not being able to read certain partitions
+                # Issue with Linux systems not able to read Docker mapped locations
+                continue
+            except  
             self.assertAlmostEqual(usage.total, total, delta=tolerance)
             self.assertAlmostEqual(usage.used, used, delta=tolerance)
             self.assertAlmostEqual(usage.free, free, delta=tolerance)
             # XXX - fails as per:
             # https://github.com/giampaolo/psutil/issues/829
-            # self.assertAlmostEqual(usage.percent, percent)s
+            # self.assertAlmostEqual(usage.percent, percent)
 
 
 if __name__ == '__main__':
