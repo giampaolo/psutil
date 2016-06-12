@@ -315,7 +315,7 @@ class TestSystemAPIs(unittest.TestCase):
     def test_disk_usage(self):
         def df(device):
             # Use 1 kB block sizes since OS X doesn't have -B flag
-            out = sh("df -k 1 %s" % device).strip()
+            out = sh("df -k %s" % device).strip()
             line = out.split('\n')[1]
             fields = line.split()
             total = int(fields[1]) * 1024
