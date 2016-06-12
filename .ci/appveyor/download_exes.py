@@ -19,6 +19,7 @@ import multiprocessing
 import os
 import requests
 import shutil
+import sys
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -71,7 +72,10 @@ def get_file_urls(options):
         data = data.json()
         for item in data:
             file_url = job_url + '/' + item['fileName']
+            print(file_url)
             urls.append(file_url)
+    if not urls:
+        sys.exit("no artifacts found")
     for url in sorted(urls, key=lambda x: os.path.basename(x)):
         yield url
 

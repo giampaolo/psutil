@@ -19,10 +19,10 @@ DEPS = coverage \
 	sphinx \
 	sphinx-pypi-upload
 ifeq ($(PYVER), 2.6)
-	DEPS += unittest2 ipaddress mock==1.0.1
+	DEPS += unittest2 ipaddress futures mock==1.0.1
 endif
 ifeq ($(PYVER), 2.7)
-	DEPS += unittest2 ipaddress mock
+	DEPS += unittest2 ipaddress futures mock
 endif
 
 ifeq ($(PY3), True)
