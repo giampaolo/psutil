@@ -1,17 +1,18 @@
 # Shortcuts for various tasks (UNIX only).
-# To use a specific Python version run:
-# $ make install PYTHON=python3.3
+# To use a specific Python version run: "make install PYTHON=python3.3"
 
 # You can set these variables from the command line.
 PYTHON    = python
 TSCRIPT   = psutil/tests/runner.py
-PYVERSION := $(shell $(PYTHON) -c "import sys; print(sys.version_info[0])")
 
-ifeq ($(PYVERSION), 2)
-	SETUP_DEV_IMPORTS := from urllib2 import urlopen, ssl
+# For internal use.
+PY_MAJ_VERSION := $(shell $(PYTHON) -c "import sys; print(sys.version_info[0])")
+ifeq ($(PY_MAJ_VERSION), 2)
+	URLLIB_IMPORTS := from urllib2 import urlopen, ssl
 else
-	SETUP_DEV_IMPORTS := from urllib.request import urlopen, ssl
+	URLLIB_IMPORTS := from urllib.request import urlopen, ssl
 endif
+
 
 all: test
 
@@ -40,18 +41,24 @@ build: clean
 	@# this directory.
 	$(PYTHON) setup.py build_ext -i
 
+install: build
+	$(PYTHON) setup.py develop --user
+
+uninstall:
+	cd ..; $(PYTHON) -m pip uninstall -y -v psutil
+
 # useful deps which are nice to have while developing / testing
 setup-dev-env: install-git-hooks
-	python -c  "$(SETUP_DEV_IMPORTS); \
+	python -c "$(URLLIB_IMPORTS); \
 				context = ssl._create_unverified_context() if hasattr(ssl, '_create_unverified_context') else None; \
 				kw = dict(context=context) if context else {}; \
 				r = urlopen('https://bootstrap.pypa.io/get-pip.py', **kw); \
 				open('/tmp/get-pip.py', 'w').write(str(r.read()));"
-	$(PYTHON) /tmp/get-pip.py --user 
+	$(PYTHON) /tmp/get-pip.py --user
 	rm /tmp/get-pip.py
 	$(PYTHON) -m pip install --user --upgrade pip
 	$(PYTHON) -m pip install --user --upgrade \
-		coverage  \
+		coverage \
 		flake8 \
 		ipaddress \
 		ipdb \
@@ -63,12 +70,6 @@ setup-dev-env: install-git-hooks
 		sphinx \
 		sphinx-pypi-upload \
 		unittest2 \
-
-install: build
-	$(PYTHON) setup.py develop --user
-
-uninstall:
-	cd ..; $(PYTHON) -m pip uninstall -y -v psutil
 
 test: install
 	$(PYTHON) $(TSCRIPT)
