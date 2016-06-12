@@ -332,8 +332,8 @@ class TestSystemAPIs(unittest.TestCase):
             except RuntimeError as err:
                 # Issue on Mac OS X and Linux not being able to read certain
                 # locations such as /dev/mapper/docker* so skip them
-                if ('/dev/mapper/docker' in err and
-                    'No such file or directory' in err):
+                if ('/dev/mapper/docker' in str(err) and
+                    'No such file or directory' in str(err)):
                     continue
             self.assertAlmostEqual(usage.total, total, delta=tolerance)
             self.assertAlmostEqual(usage.used, used, delta=tolerance)
