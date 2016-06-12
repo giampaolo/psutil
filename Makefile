@@ -6,11 +6,11 @@ PYTHON    = python
 TSCRIPT   = psutil/tests/runner.py
 
 # For internal use.
-PY_MAJ_VERSION := $(shell $(PYTHON) -c "import sys; print(sys.version_info[0])")
-ifeq ($(PY_MAJ_VERSION), 2)
-	URLLIB_IMPORTS := from urllib2 import urlopen, ssl
-else
+PY3 := $(shell $(PYTHON) -c "import sys; print(sys.version_info[0] == 3)")
+ifeq ($(PY3), True)
 	URLLIB_IMPORTS := from urllib.request import urlopen, ssl
+else
+	URLLIB_IMPORTS := from urllib2 import urlopen, ssl
 endif
 
 
@@ -49,7 +49,7 @@ uninstall:
 
 # useful deps which are nice to have while developing / testing
 setup-dev-env: install-git-hooks
-	python -c "$(URLLIB_IMPORTS); \
+	$(PYTHON) -c "$(URLLIB_IMPORTS); \
 				context = ssl._create_unverified_context() if hasattr(ssl, '_create_unverified_context') else None; \
 				kw = dict(context=context) if context else {}; \
 				r = urlopen('https://bootstrap.pypa.io/get-pip.py', **kw); \
