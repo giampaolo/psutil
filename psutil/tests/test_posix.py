@@ -328,7 +328,7 @@ class TestSystemAPIs(unittest.TestCase):
         for part in psutil.disk_partitions(all=False):
             # Issue on Mac OS X and Linux not being able to read certain
             # locations such as /dev/mapper/docker* so skip them
-            if '/dev/mapper/docker' in part.mountpoint:
+            if '/dev/mapper/docker' in part.device:
                 continue
             usage = psutil.disk_usage(part.mountpoint)
             total, used, free, percent = df(part.device)
