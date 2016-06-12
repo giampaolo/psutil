@@ -5,6 +5,13 @@
 # You can set these variables from the command line.
 PYTHON    = python
 TSCRIPT   = psutil/tests/runner.py
+PYVERSION := $(shell $(PYTHON) -c "import sys; print(sys.version_info[0])")
+
+ifeq ($(PYVERSION), 2)
+	SETUP_DEV_IMPORTS := from urllib2 import urlopen, ssl
+else
+	SETUP_DEV_IMPORTS := from urllib.request import urlopen, ssl
+endif
 
 all: test
 
@@ -35,12 +42,12 @@ build: clean
 
 # useful deps which are nice to have while developing / testing
 setup-dev-env: install-git-hooks
-	python -c  "import urllib2, ssl; \
+	python -c  "$(SETUP_DEV_IMPORTS); \
 				context = ssl._create_unverified_context() if hasattr(ssl, '_create_unverified_context') else None; \
 				kw = dict(context=context) if context else {}; \
-				r = urllib2.urlopen('https://bootstrap.pypa.io/get-pip.py', **kw); \
-				open('/tmp/get-pip.py', 'w').write(r.read());"
-	$(PYTHON) /tmp/get-pip.py --user
+				r = urlopen('https://bootstrap.pypa.io/get-pip.py', **kw); \
+				open('/tmp/get-pip.py', 'w').write(str(r.read()));"
+	$(PYTHON) /tmp/get-pip.py --user 
 	rm /tmp/get-pip.py
 	$(PYTHON) -m pip install --user --upgrade pip
 	$(PYTHON) -m pip install --user --upgrade \
