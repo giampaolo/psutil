@@ -17,7 +17,6 @@ import socket
 import threading
 import time
 
-
 import psutil
 import psutil._common
 from psutil import FREEBSD
@@ -38,6 +37,7 @@ from psutil.tests import safe_remove
 from psutil.tests import TESTFN
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
+
 
 LOOPS = 1000
 MEMORY_TOLERANCE = 4096

@@ -7,6 +7,24 @@ TSCRIPT   = psutil/tests/runner.py
 
 # For internal use.
 PY3 := $(shell $(PYTHON) -c "import sys; print(sys.version_info[0] == 3)")
+PYVER := $(shell $(PYTHON) -c "import sys; print('.'.join(map(str, sys.version_info[:2])))")
+
+DEPS = coverage \
+	flake8 \
+	ipdb \
+	nose \
+	pep8 \
+	pyflakes \
+	requests \
+	sphinx \
+	sphinx-pypi-upload
+ifeq ($(PYVER), 2.6)
+	DEPS += unittest2 ipaddress mock==1.0.1
+endif
+ifeq ($(PYVER), 2.7)
+	DEPS += unittest2 ipaddress mock
+endif
+
 ifeq ($(PY3), True)
 	URLLIB_IMPORTS := from urllib.request import urlopen, ssl
 else
@@ -57,19 +75,7 @@ setup-dev-env: install-git-hooks
 	$(PYTHON) /tmp/get-pip.py --user
 	rm /tmp/get-pip.py
 	$(PYTHON) -m pip install --user --upgrade pip
-	$(PYTHON) -m pip install --user --upgrade \
-		coverage \
-		flake8 \
-		ipaddress \
-		ipdb \
-		mock==1.0.1 \
-		nose \
-		pep8 \
-		pyflakes \
-		requests \
-		sphinx \
-		sphinx-pypi-upload \
-		unittest2 \
+	$(PYTHON) -m pip install --user --upgrade $(DEPS)
 
 test: install
 	$(PYTHON) $(TSCRIPT)

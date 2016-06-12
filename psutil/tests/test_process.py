@@ -30,10 +30,6 @@ try:
     import ipaddress  # python >= 3.3
 except ImportError:
     ipaddress = None
-try:
-    from unittest import mock  # py3
-except ImportError:
-    import mock  # requires "pip install mock"
 
 import psutil
 
@@ -64,8 +60,9 @@ from psutil.tests import enum
 from psutil.tests import get_test_subprocess
 from psutil.tests import get_winver
 from psutil.tests import GLOBAL_TIMEOUT
-from psutil.tests import pyrun
+from psutil.tests import mock
 from psutil.tests import PYPY
+from psutil.tests import pyrun
 from psutil.tests import PYTHON
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing

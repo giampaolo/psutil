@@ -20,11 +20,6 @@ import textwrap
 import time
 import warnings
 
-try:
-    from unittest import mock  # py3
-except ImportError:
-    import mock  # requires "pip install mock"
-
 import psutil
 from psutil import LINUX
 from psutil._compat import PY3
@@ -33,6 +28,7 @@ from psutil.tests import call_until
 from psutil.tests import get_kernel_version
 from psutil.tests import importlib
 from psutil.tests import MEMORY_TOLERANCE
+from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import pyrun
 from psutil.tests import reap_children
