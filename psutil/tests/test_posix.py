@@ -314,17 +314,22 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_disk_usage(self):
         def df(device):
-            out = sh("df -B 1 %s" % device).strip()
+            # Use 1 kB block sizes since OS X doesn't have -B flag
+            out = sh("df -k %s" % device).strip()
             line = out.split('\n')[1]
             fields = line.split()
-            total = int(fields[1])
-            used = int(fields[2])
-            free = int(fields[3])
+            total = int(fields[1]) * 1024
+            used = int(fields[2]) * 1024
+            free = int(fields[3]) * 1024
             percent = float(fields[4].replace('%', ''))
             return (total, used, free, percent)
 
         tolerance = 4 * 1024 * 1024  # 4MB
         for part in psutil.disk_partitions(all=False):
+            # Issue on Mac OS X and Linux not being able to read certain
+            # locations such as /dev/mapper/docker* so skip them
+            if '/dev/mapper/docker' in part.device:
+                continue
             usage = psutil.disk_usage(part.mountpoint)
             total, used, free, percent = df(part.device)
             self.assertAlmostEqual(usage.total, total, delta=tolerance)
