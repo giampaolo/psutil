@@ -9,6 +9,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #823: [NetBSD] virtual_memory() raises TypeError on Python 3.
 - #829: [UNIX] psutil.disk_usage() percent field takes root reserved space
   into account.
+- #816: [Windows] fixed net_io_counter() values wrapping after 4.3GB in
+  Windows Vista (NT 6.0) and above using 64bit values from newer win APIs.
 
 
 4.2.0 - 2016-05-14
