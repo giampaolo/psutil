@@ -326,15 +326,12 @@ class TestSystemAPIs(unittest.TestCase):
 
         tolerance = 4 * 1024 * 1024  # 4MB
         for part in psutil.disk_partitions(all=False):
+            # Issue on Mac OS X and Linux not being able to read certain
+            # locations such as /dev/mapper/docker* so skip them
+            if '/dev/mapper/docker' in part.mountpoint:
+                continue
             usage = psutil.disk_usage(part.mountpoint)
-            try:
-                total, used, free, percent = df(part.device)
-            except RuntimeError as err:
-                # Issue on Mac OS X and Linux not being able to read certain
-                # locations such as /dev/mapper/docker* so skip them
-                if ('/dev/mapper/docker' in str(err) and
-                    'No such file or directory' in str(err)):
-                    continue
+            total, used, free, percent = df(part.device)
             self.assertAlmostEqual(usage.total, total, delta=tolerance)
             self.assertAlmostEqual(usage.used, used, delta=tolerance)
             self.assertAlmostEqual(usage.free, free, delta=tolerance)
