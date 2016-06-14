@@ -538,17 +538,16 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
         }
     }
 
-    close(sock);
     py_retlist = Py_BuildValue("[Oiii]", py_is_up, duplex, speed, mtu);
     if (!py_retlist)
-        goto error_after_close;
+        goto error;
+    close(sock);
     Py_DECREF(py_is_up);
     return py_retlist;
 
 error:
     if (sock != -1)
         close(sock);
-error_after_close:
     Py_XDECREF(py_is_up);
     PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
