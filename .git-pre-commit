@@ -10,9 +10,8 @@ import sys
 
 
 def main():
-    out = subprocess.check_output("git diff --cached --name-only", shell=True,
-                                                      universal_newlines=True)
-    files = [x for x in out.split('\n') if x.endswith('.py') and
+    out = subprocess.check_output("git diff --cached --name-only", shell=True)
+    files = [x for x in out.split(b'\n') if x.endswith(b'.py') and
              os.path.exists(x)]
 
     for path in files:
