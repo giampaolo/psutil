@@ -17,17 +17,37 @@ import time
 
 import psutil
 
+PROC_STATUSES_RAW = {
+    psutil.STATUS_RUNNING: "R",
+    psutil.STATUS_SLEEPING: "S",
+    psutil.STATUS_DISK_SLEEP: "D",
+    psutil.STATUS_STOPPED: "T",
+    psutil.STATUS_TRACING_STOP: "t",
+    psutil.STATUS_ZOMBIE: "Z",
+    psutil.STATUS_DEAD: "X",
+    psutil.STATUS_WAKING: "WA",
+    psutil.STATUS_IDLE: "I",
+    psutil.STATUS_LOCKED: "L",
+    psutil.STATUS_WAITING: "W",
+}
+
+if hasattr(psutil, 'STATUS_WAKE_KILL'):
+    PROC_STATUSES_RAW[psutil.STATUS_WAKE_KILL] = "WK"
+
+if hasattr(psutil, 'STATUS_SUSPENDED'):
+    PROC_STATUSES_RAW[psutil.STATUS_SUSPENDED] = "V"
+
 
 def main():
     today_day = datetime.date.today()
-    templ = "%-10s %5s %4s %4s %7s %7s %-13s %5s %7s  %s"
+    templ = "%-10s %5s %4s %4s %7s %7s %-13s %-5s %5s %7s  %s"
     attrs = ['pid', 'cpu_percent', 'memory_percent', 'name', 'cpu_times',
-             'create_time', 'memory_info']
+             'create_time', 'memory_info', 'status']
     if os.name == 'posix':
         attrs.append('uids')
         attrs.append('terminal')
     print(templ % ("USER", "PID", "%CPU", "%MEM", "VSZ", "RSS", "TTY",
-                   "START", "TIME", "COMMAND"))
+                   "STAT", "START", "TIME", "COMMAND"))
     for p in psutil.process_iter():
         try:
             pinfo = p.as_dict(attrs, ad_value='')
@@ -64,6 +84,7 @@ def main():
                 int(pinfo['memory_info'].rss / 1024) or '?'
             memp = pinfo['memory_percent'] and \
                 round(pinfo['memory_percent'], 1) or '?'
+            status = PROC_STATUSES_RAW.get(pinfo['status'], pinfo['status'])
             print(templ % (
                 user[:10],
                 pinfo['pid'],
@@ -72,6 +93,7 @@ def main():
                 vms,
                 rss,
                 pinfo.get('terminal', '') or '?',
+                status,
                 ctime,
                 cputime,
                 pinfo['name'].strip() or '?'))
