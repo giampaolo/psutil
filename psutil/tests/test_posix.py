@@ -330,7 +330,7 @@ class TestSystemAPIs(unittest.TestCase):
                 total, used, free, percent = df(part.device)
             except RuntimeError as err:
                 # see: https://travis-ci.org/giampaolo/psutil/jobs/138338464
-                if "no such file or direcotry" in str(err).lower():
+                if "no such file or directory" in str(err).lower():
                     continue
                 else:
                     raise
