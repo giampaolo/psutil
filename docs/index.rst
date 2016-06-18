@@ -337,12 +337,18 @@ Disks
      'sda2': sdiskio(read_count=18707, write_count=8830, read_bytes=6060, write_bytes=3443, read_time=24585, write_time=1572),
      'sdb1': sdiskio(read_count=161, write_count=0, read_bytes=786432, write_bytes=0, read_time=44, write_time=0)}
 
-  .. versionchanged::
-     4.0.0 added *busy_time* (Linux, FreeBSD), *read_merged_count* and
-     *write_merged_count* (Linux) fields.
+  .. warning::
+    on some systems such as Linux, on a very busy or long-lived system these
+    numbers may wrap (restart from zero), see
+    `issues #802 <https://github.com/giampaolo/psutil/issues/802>`__.
+    Applications should be prepared to deal with that.
 
   .. versionchanged::
-     4.0.0 NetBSD no longer has *read_time* and *write_time* fields.
+    4.0.0 added *busy_time* (Linux, FreeBSD), *read_merged_count* and
+    *write_merged_count* (Linux) fields.
+
+  .. versionchanged::
+    4.0.0 NetBSD no longer has *read_time* and *write_time* fields.
 
 Network
 -------
