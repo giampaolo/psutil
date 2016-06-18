@@ -3,6 +3,14 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 4.3.0 - XXXX-XX-XX
 ==================
 
+**Enhancements**
+
+- #819: [Linux] different speedup improvements:
+  Process.ppid() is 20% faster
+  Process.status() is 28% faster
+  Process.name() is 25% faster
+  Process.num_threads is 20% faster on Python 3
+
 **Bug fixes**
 
 - #812: [NetBSD] fix compilation on NetBSD-5.x.
