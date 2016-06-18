@@ -111,6 +111,18 @@ def get_file_urls(options):
         yield url
 
 
+def rename_27_wheels():
+    # See: https://github.com/giampaolo/psutil/issues/810
+    src = 'dist/psutil-4.3.0-cp27-cp27m-win32.whl'
+    dst = 'dist/psutil-4.3.0-cp27-none-win32.whl'
+    print("rename: %s\n        %s" % (src, dst))
+    os.rename(src, dst)
+    src = 'dist/psutil-4.3.0-cp27-cp27m-win_amd64.whl'
+    dst = 'dist/psutil-4.3.0-cp27-none-win_amd64.whl'
+    print("rename: %s\n        %s" % (src, dst))
+    os.rename(src, dst)
+
+
 def main(options):
     files = []
     safe_rmtree('dist')
@@ -124,6 +136,7 @@ def main(options):
     if expected != got:
         print(hilite("expected %s files, got %s" % (expected, got), ok=False),
               file=sys.stderr)
+    rename_27_wheels()
 
 
 if __name__ == '__main__':

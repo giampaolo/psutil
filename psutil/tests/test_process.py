@@ -1136,6 +1136,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(p.ppid(), this_parent)
         self.assertEqual(p.parent().pid, this_parent)
         # no other process is supposed to have us as parent
+        reap_children(search_all=True)
         for p in psutil.process_iter():
             if p.pid == sproc.pid:
                 continue

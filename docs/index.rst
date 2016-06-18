@@ -382,6 +382,12 @@ Network
     {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
     'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
 
+  .. warning::
+    on some systems such as Linux, on a very busy or long-lived system these
+    numbers may wrap (restart from zero), see
+    `issues #802 <https://github.com/giampaolo/psutil/issues/802>`__.
+    Applications should be prepared to deal with that.
+
 .. function:: net_connections(kind='inet')
 
   Return system-wide socket connections as a list of namedtuples.
