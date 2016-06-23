@@ -75,6 +75,7 @@ typedef enum _POOL_TYPE {
     NonPagedPoolCacheAlignedMustS
 } POOL_TYPE, *PPOOL_TYPE;
 
+#if !defined(__MINGW32__)
 typedef struct _OBJECT_TYPE_INFORMATION {
     UNICODE_STRING Name;
     ULONG TotalNumberOfObjects;
@@ -99,6 +100,7 @@ typedef struct _OBJECT_TYPE_INFORMATION {
     ULONG PagedPoolUsage;
     ULONG NonPagedPoolUsage;
 } OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
+#endif // __MINGW32__
 
 PVOID GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName);
 VOID psutil_get_open_files_init(BOOL threaded);

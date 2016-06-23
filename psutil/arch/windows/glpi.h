@@ -1,5 +1,5 @@
-// mingw headers are missing this
-
+#if !defined(__GLPI_H__) && !defined(USING_MSYS)
+#define __GLPI_H__
 typedef enum _LOGICAL_PROCESSOR_RELATIONSHIP {
     RelationProcessorCore,
     RelationNumaNode,
@@ -39,3 +39,4 @@ typedef struct _SYSTEM_LOGICAL_PROCESSOR_INFORMATION {
 WINBASEAPI WINBOOL WINAPI
 GetLogicalProcessorInformation(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION Buffer,
                                PDWORD ReturnedLength);
+#endif // __GLPI_H__

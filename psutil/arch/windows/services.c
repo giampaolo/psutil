@@ -10,6 +10,18 @@
 
 #include "services.h"
 
+#ifdef __MINGW32__
+#if !defined(_UNICODE) && !defined(_MBCS)
+#define _tcslen(x) strlen(x)
+#elif defined(_UNICODE)
+#define _tclsen(x) wcslen(x)
+#elif defined(_MBCS)
+#define _tclsen(x) strlen(x)
+#else
+#error "Invalid value"
+#endif
+#endif //__MINGW32__
+
 
 // ==================================================================
 // utils

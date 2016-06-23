@@ -21,6 +21,10 @@
 #if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
 #include <ws2tcpip.h>
 #endif
+#if defined(__MINGW32__)
+#include <Wincrypt.h>
+#endif
+#include <winternl.h>
 #include <iphlpapi.h>
 #include <wtsapi32.h>
 #include <Winsvc.h>
@@ -33,14 +37,14 @@
 #include "arch/windows/security.h"
 #include "arch/windows/process_info.h"
 #include "arch/windows/process_handles.h"
+#ifndef __MINGW32__
 #include "arch/windows/ntextapi.h"
 #include "arch/windows/inet_ntop.h"
-#include "arch/windows/services.h"
-
-#ifdef __MINGW32__
-#include "arch/windows/glpi.h"
+#else
+#include <winternl.h>
+#include <ws2tcpip.h>
 #endif
-
+#include "arch/windows/services.h"
 
 /*
  * ============================================================================
@@ -85,54 +89,8 @@ typedef struct _DISK_PERFORMANCE_WIN_2008 {
     WCHAR         StorageManagerName[8];
 } DISK_PERFORMANCE_WIN_2008;
 
-// --- network connections mingw32 support
-#ifndef _IPRTRMIB_H
 #if (_WIN32_WINNT < 0x0600) // Windows XP
-typedef struct _MIB_TCP6ROW_OWNER_PID {
-    UCHAR ucLocalAddr[16];
-    DWORD dwLocalScopeId;
-    DWORD dwLocalPort;
-    UCHAR ucRemoteAddr[16];
-    DWORD dwRemoteScopeId;
-    DWORD dwRemotePort;
-    DWORD dwState;
-    DWORD dwOwningPid;
-} MIB_TCP6ROW_OWNER_PID, *PMIB_TCP6ROW_OWNER_PID;
-
-typedef struct _MIB_TCP6TABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_TCP6ROW_OWNER_PID table[ANY_SIZE];
-} MIB_TCP6TABLE_OWNER_PID, *PMIB_TCP6TABLE_OWNER_PID;
-#endif
-#endif
-
-#ifndef __IPHLPAPI_H__
-typedef struct in6_addr {
-    union {
-        UCHAR Byte[16];
-        USHORT Word[8];
-    } u;
-} IN6_ADDR, *PIN6_ADDR, FAR *LPIN6_ADDR;
-
-typedef enum _UDP_TABLE_CLASS {
-    UDP_TABLE_BASIC,
-    UDP_TABLE_OWNER_PID,
-    UDP_TABLE_OWNER_MODULE
-} UDP_TABLE_CLASS, *PUDP_TABLE_CLASS;
-
-typedef struct _MIB_UDPROW_OWNER_PID {
-    DWORD dwLocalAddr;
-    DWORD dwLocalPort;
-    DWORD dwOwningPid;
-} MIB_UDPROW_OWNER_PID, *PMIB_UDPROW_OWNER_PID;
-
-typedef struct _MIB_UDPTABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_UDPROW_OWNER_PID table[ANY_SIZE];
-} MIB_UDPTABLE_OWNER_PID, *PMIB_UDPTABLE_OWNER_PID;
-#endif
-
-#if (_WIN32_WINNT < 0x0600) // Windows XP
+#if (!defined(__MINGW32__))
 typedef struct _MIB_UDP6ROW_OWNER_PID {
     UCHAR ucLocalAddr[16];
     DWORD dwLocalScopeId;
@@ -145,11 +103,12 @@ typedef struct _MIB_UDP6TABLE_OWNER_PID {
     MIB_UDP6ROW_OWNER_PID table[ANY_SIZE];
 } MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
 #endif
+#endif
 
 PIP_ADAPTER_ADDRESSES
 psutil_get_nic_addresses() {
     // allocate a 15 KB buffer to start with
-    int outBufLen = 15000;
+    ULONG outBufLen = 15000;
     DWORD dwRetVal = 0;
     ULONG attempts = 0;
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
