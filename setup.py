@@ -78,32 +78,37 @@ if _common.POSIX:
             posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
             posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))
 # Windows
-if _common.WINDOWS:
+if _common.WINDOWS or _common.MSYS:
     def get_winver():
         maj, min = sys.getwindowsversion()[0:2]
         return '0x0%s' % ((maj * 100) + min)
+    sources=[
+        'psutil/_psutil_windows.c',
+        'psutil/_psutil_common.c',
+        'psutil/arch/windows/process_info.c',
+        'psutil/arch/windows/process_handles.c',
+        'psutil/arch/windows/security.c',
+        'psutil/arch/windows/services.c',
+    ]
+
+    if not _common.MSYS:
+        sources.append('psutil/arch/windows/inet_ntop.c')
+
+    define_macros=[
+        VERSION_MACRO,
+        # be nice to mingw, see:
+        # http://www.mingw.org/wiki/Use_more_recent_defined_functions
+        ('_WIN32_WINNT', get_winver()),
+        ('_AVAIL_WINVER_', get_winver()),
+        ('_CRT_SECURE_NO_WARNINGS', None),
+        # see: https://github.com/giampaolo/psutil/issues/348
+        ('PSAPI_VERSION', 1),
+    ]
 
     ext = Extension(
         'psutil._psutil_windows',
-        sources=[
-            'psutil/_psutil_windows.c',
-            'psutil/_psutil_common.c',
-            'psutil/arch/windows/process_info.c',
-            'psutil/arch/windows/process_handles.c',
-            'psutil/arch/windows/security.c',
-            'psutil/arch/windows/inet_ntop.c',
-            'psutil/arch/windows/services.c',
-        ],
-        define_macros=[
-            VERSION_MACRO,
-            # be nice to mingw, see:
-            # http://www.mingw.org/wiki/Use_more_recent_defined_functions
-            ('_WIN32_WINNT', get_winver()),
-            ('_AVAIL_WINVER_', get_winver()),
-            ('_CRT_SECURE_NO_WARNINGS', None),
-            # see: https://github.com/giampaolo/psutil/issues/348
-            ('PSAPI_VERSION', 1),
-        ],
+        sources = sources,
+        define_macros = define_macros,
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32",
             "iphlpapi", "wtsapi32", "ws2_32",

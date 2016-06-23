@@ -39,7 +39,7 @@ else:
 __all__ = [
     # OS constants
     'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'OSX', 'POSIX', 'SUNOS',
-    'WINDOWS',
+    'WINDOWS', 'MSYS',
     # connection constants
     'CONN_CLOSE', 'CONN_CLOSE_WAIT', 'CONN_CLOSING', 'CONN_ESTABLISHED',
     'CONN_FIN_WAIT1', 'CONN_FIN_WAIT2', 'CONN_LAST_ACK', 'CONN_LISTEN',
@@ -69,6 +69,7 @@ __all__ = [
 
 POSIX = os.name == "posix"
 WINDOWS = os.name == "nt"
+MSYS = "MSYSTEM" in os.environ
 LINUX = sys.platform.startswith("linux")
 OSX = sys.platform.startswith("darwin")
 FREEBSD = sys.platform.startswith("freebsd")
