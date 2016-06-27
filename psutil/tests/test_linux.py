@@ -20,11 +20,6 @@ import textwrap
 import time
 import warnings
 
-try:
-    from unittest import mock  # py3
-except ImportError:
-    import mock  # requires "pip install mock"
-
 import psutil
 from psutil import LINUX
 from psutil._compat import PY3
@@ -33,6 +28,7 @@ from psutil.tests import call_until
 from psutil.tests import get_kernel_version
 from psutil.tests import importlib
 from psutil.tests import MEMORY_TOLERANCE
+from psutil.tests import mock
 from psutil.tests import PYPY
 from psutil.tests import pyrun
 from psutil.tests import reap_children
@@ -800,6 +796,7 @@ class TestProcess(unittest.TestCase):
                             self.assertEqual(p.name()[:15], name[:15])
                         elif line.startswith('State:'):
                             status = line[line.find('(') + 1:line.rfind(')')]
+                            status = status.replace(' ', '-')
                             self.assertEqual(p.status(), status)
                         elif line.startswith('PPid:'):
                             ppid = int(line.split()[1])
@@ -819,12 +816,11 @@ class TestProcess(unittest.TestCase):
                         elif line.startswith('voluntary_ctxt_switches:'):
                             vol = int(line.split()[1])
                             self.assertAlmostEqual(
-                                p.num_ctx_switches().voluntary, vol,
-                                delta=2)
+                                p.num_ctx_switches().voluntary, vol, delta=2)
                         elif line.startswith('nonvoluntary_ctxt_switches:'):
-                            unvol = int(line.split()[1])
+                            invol = int(line.split()[1])
                             self.assertAlmostEqual(
-                                p.num_ctx_switches().involuntary, unvol,
+                                p.num_ctx_switches().involuntary, invol,
                                 delta=2)
 
     def test_memory_maps(self):
@@ -934,7 +930,7 @@ class TestProcess(unittest.TestCase):
     # --- mocked tests
 
     def test_terminal_mocked(self):
-        with mock.patch('psutil._pslinux._psposix._get_terminal_map',
+        with mock.patch('psutil._pslinux._psposix.get_terminal_map',
                         return_value={}) as m:
             self.assertIsNone(psutil._pslinux.Process(os.getpid()).terminal())
             assert m.called

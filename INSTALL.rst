@@ -6,12 +6,12 @@ older Python version* `install pip <https://pip.pypa.io/en/latest/installing/>`_
 Linux
 =====
 
-Ubuntu / Debian::
+Ubuntu / Debian (use `python3-dev` for python 3)::
 
     $ sudo apt-get install gcc python-dev
     $ pip install psutil
 
-RedHat::
+RedHat (use `python3-devel` for python 3)::
 
     $ sudo yum install gcc python-devel
     $ pip install psutil

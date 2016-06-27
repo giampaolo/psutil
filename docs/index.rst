@@ -106,7 +106,6 @@ CPU
     >>>
 
   .. warning::
-
     the first time this function is called with *interval* = ``0.0`` or ``None``
     it will return a meaningless ``0.0`` value which you are supposed to
     ignore.
@@ -120,28 +119,27 @@ CPU
   *percpu* arguments have the same meaning as in :func:`cpu_percent()`.
 
   .. warning::
-
     the first time this function is called with *interval* = ``0.0`` or
     ``None`` it will return a meaningless ``0.0`` value which you are supposed
     to ignore.
 
-  .. versionchanged:: 4.1.0 two new *interrupt* and *dpc* fields are returned
-     on Windows.
+  .. versionchanged::
+    4.1.0 two new *interrupt* and *dpc* fields are returned on Windows.
 
 .. function:: cpu_count(logical=True)
 
-    Return the number of logical CPUs in the system (same as
-    `os.cpu_count() <http://docs.python.org/3/library/os.html#os.cpu_count>`__
-    in Python 3.4).
-    If *logical* is ``False`` return the number of physical cores only (hyper
-    thread CPUs are excluded). Return ``None`` if undetermined.
+  Return the number of logical CPUs in the system (same as
+  `os.cpu_count() <http://docs.python.org/3/library/os.html#os.cpu_count>`__
+  in Python 3.4).
+  If *logical* is ``False`` return the number of physical cores only (hyper
+  thread CPUs are excluded). Return ``None`` if undetermined.
 
-      >>> import psutil
-      >>> psutil.cpu_count()
-      4
-      >>> psutil.cpu_count(logical=False)
-      2
-      >>>
+    >>> import psutil
+    >>> psutil.cpu_count()
+    4
+    >>> psutil.cpu_count(logical=False)
+    2
+    >>>
 
 .. function:: cpu_stats()
 
@@ -207,16 +205,19 @@ Memory
   See `scripts/meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
-    >>> import psutil
-    >>> mem = psutil.virtual_memory()
-    >>> mem
-    svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
-    >>>
-    >>> THRESHOLD = 100 * 1024 * 1024  # 100MB
-    >>> if mem.available <= THRESHOLD:
-    ...     print("warning")
-    ...
-    >>>
+  .. note:: if you just want to know how much physical memory is left in a
+    cross platform fashion simply rely on the **available** field.
+
+  >>> import psutil
+  >>> mem = psutil.virtual_memory()
+  >>> mem
+  svmem(total=10367352832, available=6472179712, percent=37.6, used=8186245120, free=2181107712, active=4748992512, inactive=2758115328, buffers=790724608, cached=3500347392, shared=787554304)
+  >>>
+  >>> THRESHOLD = 100 * 1024 * 1024  # 100MB
+  >>> if mem.available <= THRESHOLD:
+  ...     print("warning")
+  ...
+  >>>
 
   .. versionchanged:: 4.2.0 added *shared* metrics on Linux.
 
@@ -275,19 +276,28 @@ Disks
   **total**, **used** and **free** space expressed in bytes, plus the
   **percentage** usage.
   `OSError <http://docs.python.org/3/library/exceptions.html#OSError>`__ is
-  raised if *path* does not exist. See
-  `scripts/disk_usage.py <https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py>`__
-  script providing an example usage. Starting from
-  `Python 3.3 <http://bugs.python.org/issue12442>`__  this is also
-  available as
+  raised if *path* does not exist.
+  Starting from `Python 3.3 <http://bugs.python.org/issue12442>`__  this is
+  also available as
   `shutil.disk_usage() <http://docs.python.org/3/library/shutil.html#shutil.disk_usage>`__.
-  See
-  `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py>`__
-  script providing an example usage.
+  See `disk_usage.py <https://github.com/giampaolo/psutil/blob/master/scripts/disk_usage.py>`__ script providing an example usage.
 
     >>> import psutil
     >>> psutil.disk_usage('/')
     sdiskusage(total=21378641920, used=4809781248, free=15482871808, percent=22.5)
+
+  .. note::
+    UNIX usually reserves 5% of the total disk space for the root user.
+    *total* and *used* fields on UNIX refer to the overall total and used
+    space, whereas *free* represents the space available for the **user** and
+    *percent* represents the **user** utilization (see
+    `source code <https://github.com/giampaolo/psutil/blob/3dea30d583b8c1275057edb1b3b720813b4d0f60/psutil/_psposix.py#L123>`__).
+    That is why *percent* value may look 5% bigger than what you would expect
+    it to be.
+    Also note that both 4 values match "df" cmdline utility.
+
+  .. versionchanged::
+    4.3.0 *percent* value takes root reserved space into account.
 
 .. function:: disk_io_counters(perdisk=False)
 
@@ -327,10 +337,18 @@ Disks
      'sda2': sdiskio(read_count=18707, write_count=8830, read_bytes=6060, write_bytes=3443, read_time=24585, write_time=1572),
      'sdb1': sdiskio(read_count=161, write_count=0, read_bytes=786432, write_bytes=0, read_time=44, write_time=0)}
 
-  .. versionchanged:: 4.0.0 added *busy_time* (Linux, FreeBSD),
-     *read_merged_count* and *write_merged_count* (Linux) fields.
-  .. versionchanged:: 4.0.0 NetBSD no longer has *read_time* and *write_time*
-     fields.
+  .. warning::
+    on some systems such as Linux, on a very busy or long-lived system these
+    numbers may wrap (restart from zero), see
+    `issues #802 <https://github.com/giampaolo/psutil/issues/802>`__.
+    Applications should be prepared to deal with that.
+
+  .. versionchanged::
+    4.0.0 added *busy_time* (Linux, FreeBSD), *read_merged_count* and
+    *write_merged_count* (Linux) fields.
+
+  .. versionchanged::
+    4.0.0 NetBSD no longer has *read_time* and *write_time* fields.
 
 Network
 -------
@@ -363,6 +381,12 @@ Network
     >>> psutil.net_io_counters(pernic=True)
     {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
     'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
+
+  .. warning::
+    on some systems such as Linux, on a very busy or long-lived system these
+    numbers may wrap (restart from zero), see
+    `issues #802 <https://github.com/giampaolo/psutil/issues/802>`__.
+    Applications should be prepared to deal with that.
 
 .. function:: net_connections(kind='inet')
 
@@ -442,9 +466,12 @@ Network
      pconn(fd=-1, family=<AddressFamily.AF_INET: 2>, type=<SocketType.SOCK_STREAM: 1>, laddr=('10.0.0.1', 51314), raddr=('72.14.234.83', 443), status='SYN_SENT', pid=None)
      ...]
 
-  .. note:: (OSX) :class:`psutil.AccessDenied` is always raised unless running
-     as root (lsof does the same).
-  .. note:: (Solaris) UNIX sockets are not supported.
+  .. note::
+    (OSX) :class:`psutil.AccessDenied` is always raised unless running as root
+    (lsof does the same).
+
+  .. note::
+    (Solaris) UNIX sockets are not supported.
 
   .. versionadded:: 2.1.0
 
@@ -488,15 +515,18 @@ Network
   See also `scripts/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
   for an example application.
 
-  .. note:: if you're interested in others families (e.g. AF_BLUETOOTH) you can
-    use the more powerful `netifaces <https://pypi.python.org/pypi/netifaces/>`__
+  .. note::
+    if you're interested in others families (e.g. AF_BLUETOOTH) you can use
+    the more powerful `netifaces <https://pypi.python.org/pypi/netifaces/>`__
     extension.
 
-  .. note:: you can have more than one address of the same family associated
-    with each interface (that's why dict values are lists).
+  .. note::
+    you can have more than one address of the same family associated with each
+    interface (that's why dict values are lists).
 
-  .. note:: *netmask*, *broadcast* and *ptp* are not supported on Windows and
-    are set to ``None``.
+  .. note::
+    *netmask*, *broadcast* and *ptp* are not supported on Windows and are set
+    to ``None``.
 
   .. versionadded:: 3.0.0
 
@@ -641,32 +671,32 @@ Exceptions
 
 .. class:: NoSuchProcess(pid, name=None, msg=None)
 
-   Raised by :class:`Process` class methods when no process with the given
-   *pid* is found in the current process list or when a process no longer
-   exists. "name" is the name the process had before disappearing
-   and gets set only if :meth:`Process.name()` was previosly called.
+  Raised by :class:`Process` class methods when no process with the given
+  pid* is found in the current process list or when a process no longer
+  exists. "name" is the name the process had before disappearing
+  and gets set only if :meth:`Process.name()` was previosly called.
 
 .. class:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
-   This may be raised by :class:`Process` class methods when querying a zombie
-   process on UNIX (Windows doesn't have zombie processes). Depending on the
-   method called the OS may be able to succeed in retrieving the process
-   information or not.
-   Note: this is a subclass of :class:`NoSuchProcess` so if you're not
-   interested in retrieving zombies (e.g. when using :func:`process_iter()`)
-   you can ignore this exception and just catch :class:`NoSuchProcess`.
+  This may be raised by :class:`Process` class methods when querying a zombie
+  process on UNIX (Windows doesn't have zombie processes). Depending on the
+  method called the OS may be able to succeed in retrieving the process
+  information or not.
+  Note: this is a subclass of :class:`NoSuchProcess` so if you're not
+  interested in retrieving zombies (e.g. when using :func:`process_iter()`)
+  you can ignore this exception and just catch :class:`NoSuchProcess`.
 
   .. versionadded:: 3.0.0
 
 .. class:: AccessDenied(pid=None, name=None, msg=None)
 
-    Raised by :class:`Process` class methods when permission to perform an
-    action is denied. "name" is the name of the process (may be ``None``).
+  Raised by :class:`Process` class methods when permission to perform an
+  action is denied. "name" is the name of the process (may be ``None``).
 
 .. class:: TimeoutExpired(seconds, pid=None, name=None, msg=None)
 
-    Raised by :meth:`Process.wait` if timeout expires and process is still
-    alive.
+  Raised by :meth:`Process.wait` if timeout expires and process is still
+  alive.
 
 Process class
 -------------
@@ -718,7 +748,7 @@ Process class
 
   .. attribute:: pid
 
-     The process PID.
+    The process PID.
 
   .. method:: oneshot()
 
@@ -747,155 +777,156 @@ Process class
 
   .. method:: ppid()
 
-     The process parent pid.  On Windows the return value is cached after first
-     call.
+    The process parent pid.  On Windows the return value is cached after first
+    call.
 
   .. method:: name()
 
-     The process name.
+    The process name.
 
   .. method:: exe()
 
-     The process executable as an absolute path.
-     On some systems this may also be an empty string.
-     The return value is cached after first call.
+    The process executable as an absolute path.
+    On some systems this may also be an empty string.
+    The return value is cached after first call.
 
   .. method:: cmdline()
 
-     The command line this process has been called with.
+    The command line this process has been called with.
 
   .. method:: environ()
 
-     The environment variables of the process as a dict.  Note: this might not
-     reflect changes made after the process started.
+    The environment variables of the process as a dict.  Note: this might not
+    reflect changes made after the process started.
 
-     Availability: Linux, OSX, Windows
+    Availability: Linux, OSX, Windows
 
-     .. versionadded:: 4.0.0
+    .. versionadded:: 4.0.0
 
   .. method:: create_time()
 
-     The process creation time as a floating point number expressed in seconds
-     since the epoch, in
-     `UTC <http://en.wikipedia.org/wiki/Coordinated_universal_time>`__.
-     The return value is cached after first call.
+    The process creation time as a floating point number expressed in seconds
+    since the epoch, in
+    `UTC <http://en.wikipedia.org/wiki/Coordinated_universal_time>`__.
+    The return value is cached after first call.
 
-        >>> import psutil, datetime
-        >>> p = psutil.Process()
-        >>> p.create_time()
-        1307289803.47
-        >>> datetime.datetime.fromtimestamp(p.create_time()).strftime("%Y-%m-%d %H:%M:%S")
-        '2011-03-05 18:03:52'
+      >>> import psutil, datetime
+      >>> p = psutil.Process()
+      >>> p.create_time()
+      1307289803.47
+      >>> datetime.datetime.fromtimestamp(p.create_time()).strftime("%Y-%m-%d %H:%M:%S")
+      '2011-03-05 18:03:52'
 
   .. method:: as_dict(attrs=None, ad_value=None)
 
-     Utility method retrieving multiple process information as a dictionary.
-     If *attrs* is specified it must be a list of strings reflecting available
-     :class:`Process` class's attribute names (e.g. ``['cpu_times', 'name']``),
-     else all public (read only) attributes are assumed. *ad_value* is the
-     value which gets assigned to a dict key in case :class:`AccessDenied`
-     or :class:`ZombieProcess` exception is raised when retrieving that
-     particular process information.
-     Internally, :meth:`as_dict` uses :meth:`oneshot` context manager so
-     there's no need you use it also.
+    Utility method retrieving multiple process information as a dictionary.
+    If *attrs* is specified it must be a list of strings reflecting available
+    :class:`Process` class's attribute names (e.g. ``['cpu_times', 'name']``),
+    else all public (read only) attributes are assumed. *ad_value* is the
+    value which gets assigned to a dict key in case :class:`AccessDenied`
+    or :class:`ZombieProcess` exception is raised when retrieving that
+    particular process information.
+    Internally, :meth:`as_dict` uses :meth:`oneshot` context manager so
+    there's no need you use it also.
 
-        >>> import psutil
-        >>> p = psutil.Process()
-        >>> p.as_dict(attrs=['pid', 'name', 'username'])
-        {'username': 'giampaolo', 'pid': 12366, 'name': 'python'}
+      >>> import psutil
+      >>> p = psutil.Process()
+      >>> p.as_dict(attrs=['pid', 'name', 'username'])
+      {'username': 'giampaolo', 'pid': 12366, 'name': 'python'}
 
-     .. versionchanged:: 3.0.0 *ad_value* is used also when incurring into
-        :class:`ZombieProcess` exception, not only :class:`AccessDenied`
+    .. versionchanged::
+      3.0.0 *ad_value* is used also when incurring into
+      :class:`ZombieProcess` exception, not only :class:`AccessDenied`
 
      .. versionchanged:: 4.3.0 :meth:`as_dict` is considerably faster thanks
         to :meth:`oneshot` context manager.
 
   .. method:: parent()
 
-     Utility method which returns the parent process as a :class:`Process`
-     object preemptively checking whether PID has been reused. If no parent
-     PID is known return ``None``.
+    Utility method which returns the parent process as a :class:`Process`
+    object preemptively checking whether PID has been reused. If no parent
+    PID is known return ``None``.
 
   .. method:: status()
 
-     The current process status as a string. The returned string is one of the
-     :data:`psutil.STATUS_*<psutil.STATUS_RUNNING>` constants.
+    The current process status as a string. The returned string is one of the
+    :data:`psutil.STATUS_*<psutil.STATUS_RUNNING>` constants.
 
   .. method:: cwd()
 
-     The process current working directory as an absolute path.
+    The process current working directory as an absolute path.
 
   .. method:: username()
 
-     The name of the user that owns the process. On UNIX this is calculated by
-     using real process uid.
+    The name of the user that owns the process. On UNIX this is calculated by
+    using real process uid.
 
   .. method:: uids()
 
-     The real, effective and saved user ids of this process as a
-     namedtuple. This is the same as
-     `os.getresuid() <http://docs.python.org//library/os.html#os.getresuid>`__
-     but can be used for any process PID.
+    The real, effective and saved user ids of this process as a
+    namedtuple. This is the same as
+    `os.getresuid() <http://docs.python.org//library/os.html#os.getresuid>`__
+    but can be used for any process PID.
 
-     Availability: UNIX
+    Availability: UNIX
 
   .. method:: gids()
 
-     The real, effective and saved group ids of this process as a
-     namedtuple. This is the same as
-     `os.getresgid() <http://docs.python.org//library/os.html#os.getresgid>`__
-     but can be used for any process PID.
+    The real, effective and saved group ids of this process as a
+    namedtuple. This is the same as
+    `os.getresgid() <http://docs.python.org//library/os.html#os.getresgid>`__
+    but can be used for any process PID.
 
-     Availability: UNIX
+    Availability: UNIX
 
   .. method:: terminal()
 
-     The terminal associated with this process, if any, else ``None``. This is
-     similar to "tty" command but can be used for any process PID.
+    The terminal associated with this process, if any, else ``None``. This is
+    similar to "tty" command but can be used for any process PID.
 
-     Availability: UNIX
+    Availability: UNIX
 
   .. method:: nice(value=None)
 
-     Get or set process
-     `niceness <blogs.techrepublic.com.com/opensource/?p=140>`__ (priority).
-     On UNIX this is a number which usually goes from ``-20`` to ``20``.
-     The higher the nice value, the lower the priority of the process.
+    Get or set process
+    `niceness <blogs.techrepublic.com.com/opensource/?p=140>`__ (priority).
+    On UNIX this is a number which usually goes from ``-20`` to ``20``.
+    The higher the nice value, the lower the priority of the process.
 
-        >>> import psutil
-        >>> p = psutil.Process()
-        >>> p.nice(10)  # set
-        >>> p.nice()  # get
-        10
-        >>>
+      >>> import psutil
+      >>> p = psutil.Process()
+      >>> p.nice(10)  # set
+      >>> p.nice()  # get
+      10
+      >>>
 
-     Starting from `Python 3.3 <http://bugs.python.org/issue10784>`__ this
-     functionality is also available as
-     `os.getpriority() <http://docs.python.org/3/library/os.html#os.getpriority>`__
-     and
-     `os.setpriority() <http://docs.python.org/3/library/os.html#os.setpriority>`__
-     (UNIX only).
-     On Windows this is implemented via
-     `GetPriorityClass <http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx>`__
-     and `SetPriorityClass <http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx>`__
-     Windows APIs and *value* is one of the
-     :data:`psutil.*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
-     constants reflecting the MSDN documentation.
-     Example which increases process priority on Windows:
+    Starting from `Python 3.3 <http://bugs.python.org/issue10784>`__ this
+    functionality is also available as
+    `os.getpriority() <http://docs.python.org/3/library/os.html#os.getpriority>`__
+    and
+    `os.setpriority() <http://docs.python.org/3/library/os.html#os.setpriority>`__
+    (UNIX only).
+    On Windows this is implemented via
+    `GetPriorityClass <http://msdn.microsoft.com/en-us/library/ms683211(v=vs.85).aspx>`__
+    and `SetPriorityClass <http://msdn.microsoft.com/en-us/library/ms686219(v=vs.85).aspx>`__
+    Windows APIs and *value* is one of the
+    :data:`psutil.*_PRIORITY_CLASS <psutil.ABOVE_NORMAL_PRIORITY_CLASS>`
+    constants reflecting the MSDN documentation.
+    Example which increases process priority on Windows:
 
-        >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
+      >>> p.nice(psutil.HIGH_PRIORITY_CLASS)
 
   .. method:: ionice(ioclass=None, value=None)
 
-     Get or set
-     `process I/O niceness <http://friedcpu.wordpress.com/2007/07/17/why-arent-you-using-ionice-yet/>`__ (priority).
-     On Linux *ioclass* is one of the
-     :data:`psutil.IOPRIO_CLASS_*<psutil.IOPRIO_CLASS_NONE>` constants.
-     *value* is a number which goes from  ``0`` to ``7``. The higher the value,
-     the lower the I/O priority of the process. On Windows only *ioclass* is
-     used and it can be set to ``2`` (normal), ``1`` (low) or ``0`` (very low).
-     The example below sets IDLE priority class for the current process,
-     meaning it will only get I/O time when no other process needs the disk:
+    Get or set
+    `process I/O niceness <http://friedcpu.wordpress.com/2007/07/17/why-arent-you-using-ionice-yet/>`__ (priority).
+    On Linux *ioclass* is one of the
+    :data:`psutil.IOPRIO_CLASS_*<psutil.IOPRIO_CLASS_NONE>` constants.
+    *value* is a number which goes from  ``0`` to ``7``. The higher the value,
+    the lower the I/O priority of the process. On Windows only *ioclass* is
+    used and it can be set to ``2`` (normal), ``1`` (low) or ``0`` (very low).
+    The example below sets IDLE priority class for the current process,
+    meaning it will only get I/O time when no other process needs the disk:
 
       >>> import psutil
       >>> p = psutil.Process()
@@ -904,26 +935,27 @@ Process class
       pionice(ioclass=<IOPriority.IOPRIO_CLASS_IDLE: 3>, value=0)
       >>>
 
-     On Windows only *ioclass* is used and it can be set to ``2`` (normal),
-     ``1`` (low) or ``0`` (very low).
+    On Windows only *ioclass* is used and it can be set to ``2`` (normal),
+    ``1`` (low) or ``0`` (very low).
 
-     Availability: Linux and Windows > Vista
+    Availability: Linux and Windows > Vista
 
-     .. versionchanged:: 3.0.0 on >= Python 3.4 the returned ``ioclass``
-        constant is an `enum <https://docs.python.org/3/library/enum.html#module-enum>`__
-        instead of a plain integer.
+    .. versionchanged::
+      3.0.0 on Python >= 3.4 the returned ``ioclass`` constant is an
+      `enum <https://docs.python.org/3/library/enum.html#module-enum>`__
+      instead of a plain integer.
 
   .. method:: rlimit(resource, limits=None)
 
-     Get or set process resource limits (see
-     `man prlimit <http://linux.die.net/man/2/prlimit>`__). *resource* is one of
-     the :data:`psutil.RLIMIT_* <psutil.RLIMIT_INFINITY>` constants.
-     *limits* is a ``(soft, hard)`` tuple.
-     This is the same as `resource.getrlimit() <http://docs.python.org/library/resource.html#resource.getrlimit>`__
-     and `resource.setrlimit() <http://docs.python.org/library/resource.html#resource.setrlimit>`__
-     but can be used for any process PID, not only
-     `os.getpid() <http://docs.python.org/library/os.html#os.getpid>`__.
-     Example:
+    Get or set process resource limits (see
+    `man prlimit <http://linux.die.net/man/2/prlimit>`__). *resource* is one
+    of the :data:`psutil.RLIMIT_* <psutil.RLIMIT_INFINITY>` constants.
+    *limits* is a ``(soft, hard)`` tuple.
+    This is the same as `resource.getrlimit() <http://docs.python.org/library/resource.html#resource.getrlimit>`__
+    and `resource.setrlimit() <http://docs.python.org/library/resource.html#resource.setrlimit>`__
+    but can be used for any process PID, not only
+    `os.getpid() <http://docs.python.org/library/os.html#os.getpid>`__.
+    Example:
 
       >>> import psutil
       >>> p = psutil.Process()
@@ -936,79 +968,79 @@ Process class
       (1024, 1024)
       >>>
 
-     Availability: Linux
+    Availability: Linux
 
   .. method:: io_counters()
 
-     Return process I/O statistics as a namedtuple including the number of read
-     and write operations performed by the process and the amount of bytes read
-     and written. For Linux refer to
-     `/proc filesysem documentation <https://www.kernel.org/doc/Documentation/filesystems/proc.txt>`__.
-     On BSD there's apparently no way to retrieve bytes counters, hence ``-1``
-     is returned for **read_bytes** and **write_bytes** fields. OSX is not
-     supported.
+    Return process I/O statistics as a namedtuple including the number of read
+    and write operations performed by the process and the amount of bytes read
+    and written. For Linux refer to
+    `/proc filesysem documentation <https://www.kernel.org/doc/Documentation/filesystems/proc.txt>`__.
+    On BSD there's apparently no way to retrieve bytes counters, hence ``-1``
+    is returned for **read_bytes** and **write_bytes** fields. OSX is not
+    supported.
 
       >>> import psutil
       >>> p = psutil.Process()
       >>> p.io_counters()
       pio(read_count=454556, write_count=3456, read_bytes=110592, write_bytes=0)
 
-     Availability: all platforms except OSX and Solaris
+    Availability: all platforms except OSX and Solaris
 
   .. method:: num_ctx_switches()
 
-     The number voluntary and involuntary context switches performed by
-     this process.
+    The number voluntary and involuntary context switches performed by
+    this process.
 
   .. method:: num_fds()
 
-     The number of file descriptors used by this process.
+    The number of file descriptors used by this process.
 
-     Availability: UNIX
+    Availability: UNIX
 
   .. method:: num_handles()
 
-     The number of handles used by this process.
+    The number of handles used by this process.
 
-     Availability: Windows
+    Availability: Windows
 
   .. method:: num_threads()
 
-     The number of threads used by this process.
+    The number of threads used by this process.
 
   .. method:: threads()
 
-     Return threads opened by process as a list of namedtuples including thread
-     id and thread CPU times (user/system). On OpenBSD this method requires
-     root access.
+    Return threads opened by process as a list of namedtuples including thread
+    id and thread CPU times (user/system). On OpenBSD this method requires
+    root access.
 
   .. method:: cpu_times()
 
-     Return a `(user, system, children_user, children_system)` namedtuple
-     representing the accumulated process time, in seconds (see
-     `explanation <http://stackoverflow.com/questions/556405/>`__).
-     On Windows and OSX only *user* and *system* are filled, the others are
-     set to ``0``.
-     This is similar to
-     `os.times() <http://docs.python.org//library/os.html#os.times>`__
-     but can be used for any process PID.
+    Return a `(user, system, children_user, children_system)` namedtuple
+    representing the accumulated process time, in seconds (see
+    `explanation <http://stackoverflow.com/questions/556405/>`__).
+    On Windows and OSX only *user* and *system* are filled, the others are
+    set to ``0``.
+    This is similar to
+    `os.times() <http://docs.python.org//library/os.html#os.times>`__
+    but can be used for any process PID.
 
-     .. versionchanged:: 4.1.0 return two extra fields: *children_user* and
-        *children_system*.
+    .. versionchanged::
+      4.1.0 return two extra fields: *children_user* and *children_system*.
 
   .. method:: cpu_percent(interval=None)
 
-     Return a float representing the process CPU utilization as a percentage.
-     The returned value refers to the utilization of a single CPU, i.e. it is
-     not evenly split between the number of available CPU cores.
-     When *interval* is > ``0.0`` compares process times to system CPU times
-     elapsed before and after the interval (blocking). When interval is ``0.0``
-     or ``None`` compares process times to system CPU times elapsed since last
-     call, returning immediately. That means the first time this is called it
-     will return a meaningless ``0.0`` value which you are supposed to ignore.
-     In this case is recommended for accuracy that this function be called a
-     second time with at least ``0.1`` seconds between calls.
-     Example:
+    Return a float representing the process CPU utilization as a percentage.
+    The returned value refers to the utilization of a single CPU, i.e. it is
+    not evenly split between the number of available CPU cores.
+    When *interval* is > ``0.0`` compares process times to system CPU times
+    elapsed before and after the interval (blocking). When interval is ``0.0``
+    or ``None`` compares process times to system CPU times elapsed since last
+    call, returning immediately. That means the first time this is called it
+    will return a meaningless ``0.0`` value which you are supposed to ignore.
+    In this case is recommended for accuracy that this function be called a
+    second time with at least ``0.1`` seconds between calls.
+    Example:
 
       >>> import psutil
       >>> p = psutil.Process()
@@ -1021,36 +1053,36 @@ Process class
       2.9
       >>>
 
-     .. note::
-        a percentage > 100 is legitimate as it can result from a process with
-        multiple threads running on different CPU cores.
+    .. note::
+      a percentage > 100 is legitimate as it can result from a process with
+      multiple threads running on different CPU cores.
 
-     .. note::
-        the returned value is explcitly **not** split evenly between all CPUs
-        cores (differently from :func:`psutil.cpu_percent()`).
-        This means that a busy loop process running on a system with 2 CPU
-        cores will be reported as having 100% CPU utilization instead of 50%.
-        This was done in order to be consistent with UNIX's "top" utility
-        and also to make it easier to identify processes hogging CPU resources
-        (independently from the number of CPU cores).
-        It must be noted that in the example above taskmgr.exe on Windows will
-        report 50% usage instead.
-        To emulate Windows's taskmgr.exe behavior you can do:
-        ``p.cpu_percent() / psutil.cpu_count()``.
+    .. note::
+      the returned value is explcitly **not** split evenly between all CPUs
+      cores (differently from :func:`psutil.cpu_percent()`).
+      This means that a busy loop process running on a system with 2 CPU
+      cores will be reported as having 100% CPU utilization instead of 50%.
+      This was done in order to be consistent with UNIX's "top" utility
+      and also to make it easier to identify processes hogging CPU resources
+      (independently from the number of CPU cores).
+      It must be noted that in the example above taskmgr.exe on Windows will
+      report 50% usage instead.
+      To emulate Windows's taskmgr.exe behavior you can do:
+      ``p.cpu_percent() / psutil.cpu_count()``.
 
-     .. warning::
-        the first time this method is called with interval = ``0.0`` or
-        ``None`` it will return a meaningless ``0.0`` value which you are
-        supposed to ignore.
+    .. warning::
+      the first time this method is called with interval = ``0.0`` or
+      ``None`` it will return a meaningless ``0.0`` value which you are
+      supposed to ignore.
 
   .. method:: cpu_affinity(cpus=None)
 
-     Get or set process current
-     `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`__.
-     CPU affinity consists in telling the OS to run a certain process on a
-     limited set of CPUs only. The number of eligible CPUs can be obtained with
-     ``list(range(psutil.cpu_count()))``. ``ValueError`` will be raise on set
-     in case an invalid CPU number is specified.
+    Get or set process current
+    `CPU affinity <http://www.linuxjournal.com/article/6799?page=0,0>`__.
+    CPU affinity consists in telling the OS to run a certain process on a
+    limited set of CPUs only. The number of eligible CPUs can be obtained with
+    ``list(range(psutil.cpu_count()))``. ``ValueError`` will be raise on set
+    in case an invalid CPU number is specified.
 
       >>> import psutil
       >>> psutil.cpu_count()
@@ -1067,151 +1099,152 @@ Process class
       >>> p.cpu_affinity(all_cpus)
       >>>
 
-     Availability: Linux, Windows, FreeBSD
+    Availability: Linux, Windows, FreeBSD
 
-     .. versionchanged:: 2.2.0 added support for FreeBSD
+    .. versionchanged:: 2.2.0 added support for FreeBSD
 
   .. method:: memory_info()
 
-     Return a namedtuple with variable fields depending on the platform
-     representing memory information about the process.
-     The "portable" fields available on all plaforms are `rss` and `vms`.
-     All numbers are expressed in bytes.
+    Return a namedtuple with variable fields depending on the platform
+    representing memory information about the process.
+    The "portable" fields available on all plaforms are `rss` and `vms`.
+    All numbers are expressed in bytes.
 
-     +---------+---------+-------+---------+------------------------------+
-     | Linux   | OSX     | BSD   | Solaris | Windows                      |
-     +=========+=========+=======+=========+==============================+
-     | rss     | rss     | rss   | rss     | rss (alias for ``wset``)     |
-     +---------+---------+-------+---------+------------------------------+
-     | vms     | vms     | vms   | vms     | vms (alias for ``pagefile``) |
-     +---------+---------+-------+---------+------------------------------+
-     | shared  | pfaults | text  |         | num_page_faults              |
-     +---------+---------+-------+---------+------------------------------+
-     | text    | pageins | data  |         | peak_wset                    |
-     +---------+---------+-------+---------+------------------------------+
-     | lib     |         | stack |         | wset                         |
-     +---------+---------+-------+---------+------------------------------+
-     | data    |         |       |         | peak_paged_pool              |
-     +---------+---------+-------+---------+------------------------------+
-     | dirty   |         |       |         | paged_pool                   |
-     +---------+---------+-------+---------+------------------------------+
-     |         |         |       |         | peak_nonpaged_pool           |
-     +---------+---------+-------+---------+------------------------------+
-     |         |         |       |         | nonpaged_pool                |
-     +---------+---------+-------+---------+------------------------------+
-     |         |         |       |         | pagefile                     |
-     +---------+---------+-------+---------+------------------------------+
-     |         |         |       |         | peak_pagefile                |
-     +---------+---------+-------+---------+------------------------------+
-     |         |         |       |         | private                      |
-     +---------+---------+-------+---------+------------------------------+
+    +---------+---------+-------+---------+------------------------------+
+    | Linux   | OSX     | BSD   | Solaris | Windows                      |
+    +=========+=========+=======+=========+==============================+
+    | rss     | rss     | rss   | rss     | rss (alias for ``wset``)     |
+    +---------+---------+-------+---------+------------------------------+
+    | vms     | vms     | vms   | vms     | vms (alias for ``pagefile``) |
+    +---------+---------+-------+---------+------------------------------+
+    | shared  | pfaults | text  |         | num_page_faults              |
+    +---------+---------+-------+---------+------------------------------+
+    | text    | pageins | data  |         | peak_wset                    |
+    +---------+---------+-------+---------+------------------------------+
+    | lib     |         | stack |         | wset                         |
+    +---------+---------+-------+---------+------------------------------+
+    | data    |         |       |         | peak_paged_pool              |
+    +---------+---------+-------+---------+------------------------------+
+    | dirty   |         |       |         | paged_pool                   |
+    +---------+---------+-------+---------+------------------------------+
+    |         |         |       |         | peak_nonpaged_pool           |
+    +---------+---------+-------+---------+------------------------------+
+    |         |         |       |         | nonpaged_pool                |
+    +---------+---------+-------+---------+------------------------------+
+    |         |         |       |         | pagefile                     |
+    +---------+---------+-------+---------+------------------------------+
+    |         |         |       |         | peak_pagefile                |
+    +---------+---------+-------+---------+------------------------------+
+    |         |         |       |         | private                      |
+    +---------+---------+-------+---------+------------------------------+
 
-     - **rss**: aka "Resident Set Size", this is the non-swapped physical
-       memory a process has used.
-       On UNIX it matches "top"'s RES column
-       (see `doc <http://linux.die.net/man/1/top>`__).
-       On Windows this is an alias for `wset` field and it matches "Mem Usage"
-       column of taskmgr.exe.
+    - **rss**: aka "Resident Set Size", this is the non-swapped physical
+      memory a process has used.
+      On UNIX it matches "top"'s RES column
+      (see `doc <http://linux.die.net/man/1/top>`__).
+      On Windows this is an alias for `wset` field and it matches "Mem Usage"
+      column of taskmgr.exe.
 
-     - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
-       memory used by the process.
-       On UNIX it matches "top"'s VIRT column
-       (see `doc <http://linux.die.net/man/1/top>`__).
-       On Windows this is an alias for `pagefile` field and it matches
-       "Mem Usage" "VM Size" column of taskmgr.exe.
+    - **vms**: aka "Virtual Memory Size", this is the total amount of virtual
+      memory used by the process.
+      On UNIX it matches "top"'s VIRT column
+      (see `doc <http://linux.die.net/man/1/top>`__).
+      On Windows this is an alias for `pagefile` field and it matches
+      "Mem Usage" "VM Size" column of taskmgr.exe.
 
-     - **shared**: *(Linux)*
-       memory that could be potentially shared with other processes.
-       This matches "top"'s SHR column
-       (see `doc <http://linux.die.net/man/1/top>`__).
+    - **shared**: *(Linux)*
+      memory that could be potentially shared with other processes.
+      This matches "top"'s SHR column
+      (see `doc <http://linux.die.net/man/1/top>`__).
 
-     - **text** *(Linux, BSD)*:
-       aka TRS (text resident set) the amount of memory devoted to
-       executable code. This matches "top"'s CODE column
-       (see `doc <http://linux.die.net/man/1/top>`__).
+    - **text** *(Linux, BSD)*:
+      aka TRS (text resident set) the amount of memory devoted to
+      executable code. This matches "top"'s CODE column
+      (see `doc <http://linux.die.net/man/1/top>`__).
 
-     - **data** *(Linux, BSD)*:
-       aka DRS (data resident set) the amount of physical memory devoted to
-       other than executable code. It matches "top"'s DATA column
-       (see `doc <http://linux.die.net/man/1/top>`__).
+    - **data** *(Linux, BSD)*:
+      aka DRS (data resident set) the amount of physical memory devoted to
+      other than executable code. It matches "top"'s DATA column
+      (see `doc <http://linux.die.net/man/1/top>`__).
 
-     - **lib** *(Linux)*: the memory used by shared libraries.
+    - **lib** *(Linux)*: the memory used by shared libraries.
 
-     - **dirty** *(Linux)*: the number of dirty pages.
+    - **dirty** *(Linux)*: the number of dirty pages.
 
-     For Windows fields rely on
-     `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure doc.
-     Example on Linux:
+    For Windows fields rely on
+    `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure doc.
+    Example on Linux:
 
-     >>> import psutil
-     >>> p = psutil.Process()
-     >>> p.memory_info()
-     pmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0)
+      >>> import psutil
+      >>> p = psutil.Process()
+      >>> p.memory_info()
+      pmem(rss=15491072, vms=84025344, shared=5206016, text=2555904, lib=0, data=9891840, dirty=0)
 
-     .. versionchanged:: 4.0.0 mutiple fields are returned, not only `rss` and
-        `vms`.
+    .. versionchanged::
+      4.0.0 mutiple fields are returned, not only `rss` and `vms`.
 
   .. method:: memory_info_ex()
 
-     Same as :meth:`memory_info` (deprecated).
+    Same as :meth:`memory_info` (deprecated).
 
-     .. warning:: deprecated in version 4.0.0; use :meth:`memory_info` instead.
+    .. warning::
+      deprecated in version 4.0.0; use :meth:`memory_info` instead.
 
   .. method:: memory_full_info()
 
-     This method returns the same information as :meth:`memory_info`, plus, on
-     some platform (Linux, OSX, Windows), also provides additional metrics
-     (USS, PSS and swap).
-     The additional metrics provide a better representation of "effective"
-     process memory consumption (in case of USS) as explained in detail
-     `here <http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html>`__.
-     It does so by passing through the whole process address.
-     As such it usually requires higher user privileges than
-     :meth:`memory_info` and is considerably slower.
-     On platforms where extra fields are not implented this simply returns the
-     same metrics as :meth:`memory_info`.
+    This method returns the same information as :meth:`memory_info`, plus, on
+    some platform (Linux, OSX, Windows), also provides additional metrics
+    (USS, PSS and swap).
+    The additional metrics provide a better representation of "effective"
+    process memory consumption (in case of USS) as explained in detail
+    `here <http://grodola.blogspot.com/2016/02/psutil-4-real-process-memory-and-environ.html>`__.
+    It does so by passing through the whole process address.
+    As such it usually requires higher user privileges than
+    :meth:`memory_info` and is considerably slower.
+    On platforms where extra fields are not implented this simply returns the
+    same metrics as :meth:`memory_info`.
 
-     - **uss** *(Linux, OSX, Windows)*:
-       aka "Unique Set Size", this is the memory which is unique to a process
-       and which would be freed if the process was terminated right now.
+    - **uss** *(Linux, OSX, Windows)*:
+      aka "Unique Set Size", this is the memory which is unique to a process
+      and which would be freed if the process was terminated right now.
 
-     - **pss** *(Linux)*: aka "Proportional Set Size", is the amount of memory
-       shared with other processes, accounted in a way that the amount is
-       divided evenly between the processes that share it.
-       I.e. if a process has 10 MBs all to itself and 10 MBs shared with
-       another process its PSS will be 15 MBs.
+    - **pss** *(Linux)*: aka "Proportional Set Size", is the amount of memory
+      shared with other processes, accounted in a way that the amount is
+      divided evenly between the processes that share it.
+      I.e. if a process has 10 MBs all to itself and 10 MBs shared with
+      another process its PSS will be 15 MBs.
 
-     - **swap** *(Linux)*: amount of memory that has been swapped out to disk.
+    - **swap** *(Linux)*: amount of memory that has been swapped out to disk.
 
-     .. note::
-       `uss` is probably the most representative metric for determining how
-       much memory is actually being used by a process.
-       It represents the amount of memory that would be freed if the process
-       was terminated right now.
+    .. note::
+      `uss` is probably the most representative metric for determining how
+      much memory is actually being used by a process.
+      It represents the amount of memory that would be freed if the process
+      was terminated right now.
 
-     Example on Linux:
+    Example on Linux:
 
-       >>> import psutil
-       >>> p = psutil.Process()
-       >>> p.memory_full_info()
-       pfullmem(rss=10199040, vms=52133888, shared=3887104, text=2867200, lib=0, data=5967872, dirty=0, uss=6545408, pss=6872064, swap=0)
-       >>>
+      >>> import psutil
+      >>> p = psutil.Process()
+      >>> p.memory_full_info()
+      pfullmem(rss=10199040, vms=52133888, shared=3887104, text=2867200, lib=0, data=5967872, dirty=0, uss=6545408, pss=6872064, swap=0)
+      >>>
 
-     See also `scripts/procsmem.py <https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py>`__
-     for an example application.
+    See also `scripts/procsmem.py <https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py>`__
+    for an example application.
 
-     .. versionadded:: 4.0.0
+    .. versionadded:: 4.0.0
 
   .. method:: memory_percent(memtype="rss")
 
-     Compare process memory to total physical system memory and calculate
-     process memory utilization as a percentage.
-     *memtype* argument is a string that dictates what type of process memory
-     you want to compare against. You can choose between the namedtuple field
-     names returned by :meth:`memory_info` and :meth:`memory_full_info`
-     (defaults to ``"rss"``).
+    Compare process memory to total physical system memory and calculate
+    process memory utilization as a percentage.
+    *memtype* argument is a string that dictates what type of process memory
+    you want to compare against. You can choose between the namedtuple field
+    names returned by :meth:`memory_info` and :meth:`memory_full_info`
+    (defaults to ``"rss"``).
 
-     .. versionchanged:: 4.0.0 added `memtype` parameter.
+    .. versionchanged:: 4.0.0 added `memtype` parameter.
 
   .. method:: memory_maps(grouped=True)
 
@@ -1268,74 +1301,75 @@ Process class
 
   .. method:: children(recursive=False)
 
-     Return the children of this process as a list of :Class:`Process` objects,
-     preemptively checking whether PID has been reused. If recursive is `True`
-     return all the parent descendants.
-     Example assuming *A == this process*:
-     ::
+    Return the children of this process as a list of :Class:`Process` objects,
+    preemptively checking whether PID has been reused. If recursive is `True`
+    return all the parent descendants.
+    Example assuming *A == this process*:
+    ::
 
-          A ─┐
-             │
-             ├─ B (child) ─┐
-             │             └─ X (grandchild) ─┐
-             │                                └─ Y (great grandchild)
-             ├─ C (child)
-             └─ D (child)
+      A ─┐
+         │
+         ├─ B (child) ─┐
+         │             └─ X (grandchild) ─┐
+         │                                └─ Y (great grandchild)
+         ├─ C (child)
+         └─ D (child)
 
-          >>> p.children()
-          B, C, D
-          >>> p.children(recursive=True)
-          B, X, Y, C, D
+      >>> p.children()
+      B, C, D
+      >>> p.children(recursive=True)
+      B, X, Y, C, D
 
-     Note that in the example above if process X disappears process Y won't be
-     returned either as the reference to process A is lost.
+    Note that in the example above if process X disappears process Y won't be
+    returned either as the reference to process A is lost.
 
   .. method:: open_files()
 
-     Return regular files opened by process as a list of namedtuples including
-     the following fields:
+    Return regular files opened by process as a list of namedtuples including
+    the following fields:
 
-     - **path**: the absolute file name.
-     - **fd**: the file descriptor number; on Windows this is always ``-1``.
-     - **position** (*Linux*): the file (offset) position.
-     - **mode** (*Linux*): a string indicating how the file was opened, similarly
-       `open <https://docs.python.org/3/library/functions.html#open>`__'s
-       ``mode`` argument. Possible values are ``'r'``, ``'w'``, ``'a'``,
-       ``'r+'`` and ``'a+'``. There's no distinction between files opened in
-       bynary or text mode (``"b"`` or ``"t"``).
-     - **flags** (*Linux*): the flags which were passed to the underlying
-       `os.open <https://docs.python.org/2/library/os.html#os.open>`__ C call
-       when the file was opened (e.g.
-       `os.O_RDONLY <https://docs.python.org/3/library/os.html#os.O_RDONLY>`__,
-       `os.O_TRUNC <https://docs.python.org/3/library/os.html#os.O_TRUNC>`__,
-       etc).
+    - **path**: the absolute file name.
+    - **fd**: the file descriptor number; on Windows this is always ``-1``.
+    - **position** (*Linux*): the file (offset) position.
+    - **mode** (*Linux*): a string indicating how the file was opened, similarly
+      `open <https://docs.python.org/3/library/functions.html#open>`__'s
+      ``mode`` argument. Possible values are ``'r'``, ``'w'``, ``'a'``,
+      ``'r+'`` and ``'a+'``. There's no distinction between files opened in
+      bynary or text mode (``"b"`` or ``"t"``).
+    - **flags** (*Linux*): the flags which were passed to the underlying
+      `os.open <https://docs.python.org/2/library/os.html#os.open>`__ C call
+      when the file was opened (e.g.
+      `os.O_RDONLY <https://docs.python.org/3/library/os.html#os.O_RDONLY>`__,
+      `os.O_TRUNC <https://docs.python.org/3/library/os.html#os.O_TRUNC>`__,
+      etc).
 
-     >>> import psutil
-     >>> f = open('file.ext', 'w')
-     >>> p = psutil.Process()
-     >>> p.open_files()
-     [popenfile(path='/home/giampaolo/svn/psutil/setup.py', fd=3, position=0, mode='r', flags=32768),
-      popenfile(path='/var/log/monitd', fd=4, position=235542, mode='a', flags=33793)]
+    >>> import psutil
+    >>> f = open('file.ext', 'w')
+    >>> p = psutil.Process()
+    >>> p.open_files()
+    [popenfile(path='/home/giampaolo/svn/psutil/setup.py', fd=3, position=0, mode='r', flags=32768),
+    popenfile(path='/var/log/monitd', fd=4, position=235542, mode='a', flags=33793)]
 
-     .. warning::
-       on Windows this is not fully reliable as due to some limitations of the
-       Windows API the underlying implementation may hang when retrieving
-       certain file handles.
-       In order to work around that psutil on Windows Vista (and higher) spawns
-       a thread and kills it if it's not responding after 100ms.
-       That implies that on Windows this method is not guaranteed to enumerate
-       all regular file handles (see full
-       `discussion <https://github.com/giampaolo/psutil/pull/597>`_).
+    .. warning::
+      on Windows this is not fully reliable as due to some limitations of the
+      Windows API the underlying implementation may hang when retrieving
+      certain file handles.
+      In order to work around that psutil on Windows Vista (and higher) spawns
+      a thread and kills it if it's not responding after 100ms.
+      That implies that on Windows this method is not guaranteed to enumerate
+      all regular file handles (see full
+      `discussion <https://github.com/giampaolo/psutil/pull/597>`_).
 
-     .. warning::
-       on BSD this method can return files with a 'null' path due to a kernel
-       bug hence it's not reliable
-       (see `issue 595 <https://github.com/giampaolo/psutil/pull/595>`_).
+    .. warning::
+      on BSD this method can return files with a 'null' path due to a kernel
+      bug hence it's not reliable
+      (see `issue 595 <https://github.com/giampaolo/psutil/pull/595>`_).
 
-     .. versionchanged:: 3.1.0 no longer hangs on Windows.
+    .. versionchanged::
+      3.1.0 no longer hangs on Windows.
 
-     .. versionchanged:: 4.1.0 new *position*, *mode* and *flags* fields on
-        Linux.
+    .. versionchanged::
+      4.1.0 new *position*, *mode* and *flags* fields on Linux.
 
   .. method:: connections(kind="inet")
 
@@ -1370,33 +1404,31 @@ Process class
     The *kind* parameter is a string which filters for connections that fit the
     following criteria:
 
-    .. table::
-
-     +----------------+-----------------------------------------------------+
-     | **Kind value** | **Connections using**                               |
-     +================+=====================================================+
-     | "inet"         | IPv4 and IPv6                                       |
-     +----------------+-----------------------------------------------------+
-     | "inet4"        | IPv4                                                |
-     +----------------+-----------------------------------------------------+
-     | "inet6"        | IPv6                                                |
-     +----------------+-----------------------------------------------------+
-     | "tcp"          | TCP                                                 |
-     +----------------+-----------------------------------------------------+
-     | "tcp4"         | TCP over IPv4                                       |
-     +----------------+-----------------------------------------------------+
-     | "tcp6"         | TCP over IPv6                                       |
-     +----------------+-----------------------------------------------------+
-     | "udp"          | UDP                                                 |
-     +----------------+-----------------------------------------------------+
-     | "udp4"         | UDP over IPv4                                       |
-     +----------------+-----------------------------------------------------+
-     | "udp6"         | UDP over IPv6                                       |
-     +----------------+-----------------------------------------------------+
-     | "unix"         | UNIX socket (both UDP and TCP protocols)            |
-     +----------------+-----------------------------------------------------+
-     | "all"          | the sum of all the possible families and protocols  |
-     +----------------+-----------------------------------------------------+
+    +----------------+-----------------------------------------------------+
+    | **Kind value** | **Connections using**                               |
+    +================+=====================================================+
+    | "inet"         | IPv4 and IPv6                                       |
+    +----------------+-----------------------------------------------------+
+    | "inet4"        | IPv4                                                |
+    +----------------+-----------------------------------------------------+
+    | "inet6"        | IPv6                                                |
+    +----------------+-----------------------------------------------------+
+    | "tcp"          | TCP                                                 |
+    +----------------+-----------------------------------------------------+
+    | "tcp4"         | TCP over IPv4                                       |
+    +----------------+-----------------------------------------------------+
+    | "tcp6"         | TCP over IPv6                                       |
+    +----------------+-----------------------------------------------------+
+    | "udp"          | UDP                                                 |
+    +----------------+-----------------------------------------------------+
+    | "udp4"         | UDP over IPv4                                       |
+    +----------------+-----------------------------------------------------+
+    | "udp6"         | UDP over IPv6                                       |
+    +----------------+-----------------------------------------------------+
+    | "unix"         | UNIX socket (both UDP and TCP protocols)            |
+    +----------------+-----------------------------------------------------+
+    | "all"          | the sum of all the possible families and protocols  |
+    +----------------+-----------------------------------------------------+
 
     Example:
 
@@ -1412,47 +1444,49 @@ Process class
 
   .. method:: is_running()
 
-     Return whether the current process is running in the current process list.
-     This is reliable also in case the process is gone and its PID reused by
-     another process, therefore it must be preferred over doing
-     ``psutil.pid_exists(p.pid)``.
+    Return whether the current process is running in the current process list.
+    This is reliable also in case the process is gone and its PID reused by
+    another process, therefore it must be preferred over doing
+    ``psutil.pid_exists(p.pid)``.
 
-     .. note::
+    .. note::
       this will return ``True`` also if the process is a zombie
       (``p.status() == psutil.STATUS_ZOMBIE``).
 
   .. method:: send_signal(signal)
 
-     Send a signal to process (see
-     `signal module <http://docs.python.org//library/signal.html>`__
-     constants) preemptively checking whether PID has been reused.
-     On UNIX this is the same as ``os.kill(pid, sig)``.
-     On Windows only **SIGTERM**, **CTRL_C_EVENT** and **CTRL_BREAK_EVENT**
-     signals are supported and **SIGTERM** is treated as an alias for
-     :meth:`kill()`.
+    Send a signal to process (see
+    `signal module <http://docs.python.org//library/signal.html>`__
+    constants) preemptively checking whether PID has been reused.
+    On UNIX this is the same as ``os.kill(pid, sig)``.
+    On Windows only **SIGTERM**, **CTRL_C_EVENT** and **CTRL_BREAK_EVENT**
+    signals are supported and **SIGTERM** is treated as an alias for
+    :meth:`kill()`.
 
-     .. versionchanged:: 3.2.0 support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals on Windows was added.
+    .. versionchanged::
+      3.2.0 support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals on Windows
+      was added.
 
   .. method:: suspend()
 
-     Suspend process execution with **SIGSTOP** signal preemptively checking
-     whether PID has been reused.
-     On UNIX this is the same as ``os.kill(pid, signal.SIGSTOP)``.
-     On Windows this is done by suspending all process threads execution.
+    Suspend process execution with **SIGSTOP** signal preemptively checking
+    whether PID has been reused.
+    On UNIX this is the same as ``os.kill(pid, signal.SIGSTOP)``.
+    On Windows this is done by suspending all process threads execution.
 
   .. method:: resume()
 
-     Resume process execution with **SIGCONT** signal preemptively checking
-     whether PID has been reused.
-     On UNIX this is the same as ``os.kill(pid, signal.SIGCONT)``.
-     On Windows this is done by resuming all process threads execution.
+    Resume process execution with **SIGCONT** signal preemptively checking
+    whether PID has been reused.
+    On UNIX this is the same as ``os.kill(pid, signal.SIGCONT)``.
+    On Windows this is done by resuming all process threads execution.
 
   .. method:: terminate()
 
-     Terminate the process with **SIGTERM** signal preemptively checking
-     whether PID has been reused.
-     On UNIX this is the same as ``os.kill(pid, signal.SIGTERM)``.
-     On Windows this is an alias for :meth:`kill`.
+    Terminate the process with **SIGTERM** signal preemptively checking
+    whether PID has been reused.
+    On UNIX this is the same as ``os.kill(pid, signal.SIGTERM)``.
+    On Windows this is an alias for :meth:`kill`.
 
   .. method:: kill()
 
@@ -1464,15 +1498,15 @@ Process class
 
   .. method:: wait(timeout=None)
 
-     Wait for process termination and if the process is a children of the
-     current one also return the exit code, else ``None``. On Windows there's
-     no such limitation (exit code is always returned). If the process is
-     already terminated immediately return ``None`` instead of raising
-     :class:`NoSuchProcess`. If *timeout* is specified and process is still
-     alive raise :class:`TimeoutExpired` exception. It can also be used in a
-     non-blocking fashion by specifying ``timeout=0`` in which case it will
-     either return immediately or raise :class:`TimeoutExpired`.
-     To wait for multiple processes use :func:`psutil.wait_procs()`.
+    Wait for process termination and if the process is a children of the
+    current one also return the exit code, else ``None``. On Windows there's
+    no such limitation (exit code is always returned). If the process is
+    already terminated immediately return ``None`` instead of raising
+    :class:`NoSuchProcess`. If *timeout* is specified and process is still
+    alive raise :class:`TimeoutExpired` exception. It can also be used in a
+    non-blocking fashion by specifying ``timeout=0`` in which case it will
+    either return immediately or raise :class:`TimeoutExpired`.
+    To wait for multiple processes use :func:`psutil.wait_procs()`.
 
 
 Popen class
@@ -1496,13 +1530,13 @@ Popen class
 
   .. note::
 
-     Unlike `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__
-     this class preemptively checks wheter PID has been reused on
-     :meth:`send_signal() <psutil.Process.send_signal()>`,
-     :meth:`terminate() <psutil.Process.terminate()>` and
-     :meth:`kill() <psutil.Process.kill()>`
-     so that you can't accidentally terminate another process, fixing
-     http://bugs.python.org/issue6973.
+    Unlike `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__
+    this class preemptively checks wheter PID has been reused on
+    :meth:`send_signal() <psutil.Process.send_signal()>`,
+    :meth:`terminate() <psutil.Process.terminate()>` and
+    :meth:`kill() <psutil.Process.kill()>`
+    so that you can't accidentally terminate another process, fixing
+    http://bugs.python.org/issue6973.
 
   >>> import psutil
   >>> from subprocess import PIPE
@@ -1527,6 +1561,7 @@ Windows services
   Windows services installed.
 
   .. versionadded:: 4.2.0
+
   Availability: Windows
 
 .. function:: win_service_get(name)
@@ -1535,6 +1570,7 @@ Windows services
   Raise :class:`psutil.NoSuchProcess` if no service with such name exists.
 
   .. versionadded:: 4.2.0
+
   Availability: Windows
 
 .. class:: WindowsService
@@ -1545,50 +1581,70 @@ Windows services
 
   .. method:: name()
 
-     The service name. This string is how a service is referenced and can be
-     passed to :func:`win_service_get` to get a new :class:`WindowsService`
-     instance.
+    The service name. This string is how a service is referenced and can be
+    passed to :func:`win_service_get` to get a new :class:`WindowsService`
+    instance.
 
   .. method:: display_name()
 
-     The service display name. The value is cached when this class is
-     instantiated.
+    The service display name. The value is cached when this class is
+    instantiated.
 
   .. method:: binpath()
 
-     The fully qualified path to the service binary/exe file as a string,
-     including command line arguments.
+    The fully qualified path to the service binary/exe file as a string,
+    including command line arguments.
 
   .. method:: username()
 
-     The name of the user that owns this service.
+    The name of the user that owns this service.
 
   .. method:: start_type()
 
-     A string which can either be `"automatic"`, `"manual"` or `"disabled"`.
+    A string which can either be `"automatic"`, `"manual"` or `"disabled"`.
 
   .. method:: pid()
 
-     The process PID, if any, else `None`. This can be passed to
-     :class:`Process` class to control the service's process.
+    The process PID, if any, else `None`. This can be passed to
+    :class:`Process` class to control the service's process.
 
   .. method:: status()
 
-     Service status as a string, which may be either `"running"`, `"paused"`,
-     `"start_pending"`, `"pause_pending"`, `"continue_pending"`,
-     `"stop_pending"` or `"stopped"`.
+    Service status as a string, which may be either `"running"`, `"paused"`,
+    `"start_pending"`, `"pause_pending"`, `"continue_pending"`,
+    `"stop_pending"` or `"stopped"`.
 
   .. method:: description()
 
-     Service long description.
+    Service long description.
 
   .. method:: as_dict()
 
-     Utility method retrieving all the information above as a dictionary.
+    Utility method retrieving all the information above as a dictionary.
 
   .. versionadded:: 4.2.0
+
   Availability: Windows
 
+Example code:
+
+  >>> import psutil
+  >>> list(psutil.win_service_iter())
+  [<WindowsService(name='AeLookupSvc', display_name='Application Experience') at 38850096>,
+   <WindowsService(name='ALG', display_name='Application Layer Gateway Service') at 38850128>,
+   <WindowsService(name='APNMCP', display_name='Ask Update Service') at 38850160>,
+   <WindowsService(name='AppIDSvc', display_name='Application Identity') at 38850192>,
+   ...]
+  >>> s = psutil.win_service_get('alg')
+  >>> s.as_dict()
+  {'binpath': 'C:\\Windows\\System32\\alg.exe',
+   'description': 'Provides support for 3rd party protocol plug-ins for Internet Connection Sharing',
+   'display_name': 'Application Layer Gateway Service',
+   'name': 'alg',
+   'pid': None,
+   'start_type': 'manual',
+   'status': 'stopped',
+   'username': 'NT AUTHORITY\\LocalService'}
 
 Constants
 =========
@@ -1676,7 +1732,8 @@ Constants
 
   Availability: Windows
 
-  .. versionchanged:: 3.0.0 on Python >= 3.4 these constants are
+  .. versionchanged::
+    3.0.0 on Python >= 3.4 these constants are
     `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
     instead of a plain integer.
 
@@ -1703,7 +1760,8 @@ Constants
 
   Availability: Linux
 
-  .. versionchanged:: 3.0.0 on Python >= 3.4 thse constants are
+  .. versionchanged::
+    3.0.0 on Python >= 3.4 thse constants are
     `enums <https://docs.python.org/3/library/enum.html#module-enum>`__
     instead of a plain integer.
 

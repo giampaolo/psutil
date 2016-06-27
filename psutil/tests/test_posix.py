@@ -312,6 +312,37 @@ class TestSystemAPIs(unittest.TestCase):
                               psutil._psposix.wait_pid, os.getpid())
             assert m.called
 
+    def test_disk_usage(self):
+        def df(device):
+            out = sh("df -k %s" % device).strip()
+            line = out.split('\n')[1]
+            fields = line.split()
+            total = int(fields[1]) * 1024
+            used = int(fields[2]) * 1024
+            free = int(fields[3]) * 1024
+            percent = float(fields[4].replace('%', ''))
+            return (total, used, free, percent)
+
+        tolerance = 4 * 1024 * 1024  # 4MB
+        for part in psutil.disk_partitions(all=False):
+            usage = psutil.disk_usage(part.mountpoint)
+            try:
+                total, used, free, percent = df(part.device)
+            except RuntimeError as err:
+                # see:
+                # https://travis-ci.org/giampaolo/psutil/jobs/138338464
+                # https://travis-ci.org/giampaolo/psutil/jobs/138343361
+                if "no such file or directory" in str(err).lower() or \
+                        "raw devices not supported" in str(err).lower():
+                    continue
+                else:
+                    raise
+            else:
+                self.assertAlmostEqual(usage.total, total, delta=tolerance)
+                self.assertAlmostEqual(usage.used, used, delta=tolerance)
+                self.assertAlmostEqual(usage.free, free, delta=tolerance)
+                self.assertAlmostEqual(usage.percent, percent, delta=1)
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)

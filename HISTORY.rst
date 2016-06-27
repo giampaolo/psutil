@@ -1,6 +1,28 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
-4.2.0 - XXXX-XX-XX
+4.3.0 - 2016-06-18
+==================
+
+**Enhancements**
+
+- #819: [Linux] different speedup improvements:
+  Process.ppid() is 20% faster
+  Process.status() is 28% faster
+  Process.name() is 25% faster
+  Process.num_threads is 20% faster on Python 3
+
+**Bug fixes**
+
+- #810: [Windows] Windows wheels are incompatible with pip 7.1.2.
+- #812: [NetBSD] fix compilation on NetBSD-5.x.
+- #823: [NetBSD] virtual_memory() raises TypeError on Python 3.
+- #829: [UNIX] psutil.disk_usage() percent field takes root reserved space
+  into account.
+- #816: [Windows] fixed net_io_counter() values wrapping after 4.3GB in
+  Windows Vista (NT 6.0) and above using 64bit values from newer win APIs.
+
+
+4.2.0 - 2016-05-14
 ==================
 
 **Enhancements**
@@ -8,7 +30,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #795: [Windows] new APIs to deal with Windows services: win_service_iter()
   and win_service_get().
 - #800: [Linux] psutil.virtual_memory() returns a new "shared" memory field.
-- XXX: [Linux] speedup /proc parsing:
+- #819: [Linux] speedup /proc parsing:
   - Process.ppid() is 20% faster
   - Process.status() is 28% faster
   - Process.name() is 25% faster

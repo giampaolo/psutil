@@ -1,10 +1,36 @@
 # Shortcuts for various tasks (UNIX only).
-# To use a specific Python version run:
-# $ make install PYTHON=python3.3
+# To use a specific Python version run: "make install PYTHON=python3.3"
 
 # You can set these variables from the command line.
 PYTHON    = python
 TSCRIPT   = psutil/tests/runner.py
+
+# For internal use.
+PY3 := $(shell $(PYTHON) -c "import sys; print(sys.version_info[0] == 3)")
+PYVER := $(shell $(PYTHON) -c "import sys; print('.'.join(map(str, sys.version_info[:2])))")
+
+DEPS = coverage \
+	flake8 \
+	ipdb \
+	nose \
+	pep8 \
+	pyflakes \
+	requests \
+	sphinx \
+	sphinx-pypi-upload
+ifeq ($(PYVER), 2.6)
+	DEPS += unittest2 ipaddress futures mock==1.0.1
+endif
+ifeq ($(PYVER), 2.7)
+	DEPS += unittest2 ipaddress futures mock
+endif
+
+ifeq ($(PY3), True)
+	URLLIB_IMPORTS := from urllib.request import urlopen, ssl
+else
+	URLLIB_IMPORTS := from urllib2 import urlopen, ssl
+endif
+
 
 all: test
 
@@ -33,34 +59,23 @@ build: clean
 	@# this directory.
 	$(PYTHON) setup.py build_ext -i
 
-# useful deps which are nice to have while developing / testing
-setup-dev-env: install-git-hooks
-	python -c  "import urllib2, ssl; \
-				context = ssl._create_unverified_context() if hasattr(ssl, '_create_unverified_context') else None; \
-				kw = dict(context=context) if context else {}; \
-				r = urllib2.urlopen('https://bootstrap.pypa.io/get-pip.py', **kw); \
-				open('/tmp/get-pip.py', 'w').write(r.read());"
-	$(PYTHON) /tmp/get-pip.py --user
-	rm /tmp/get-pip.py
-	$(PYTHON) -m pip install --user --upgrade pip
-	$(PYTHON) -m pip install --user --upgrade \
-		coverage  \
-		flake8 \
-		ipaddress \
-		ipdb \
-		mock==1.0.1 \
-		nose \
-		pep8 \
-		pyflakes \
-		sphinx \
-		sphinx-pypi-upload \
-		unittest2 \
-
 install: build
 	$(PYTHON) setup.py develop --user
 
 uninstall:
 	cd ..; $(PYTHON) -m pip uninstall -y -v psutil
+
+# useful deps which are nice to have while developing / testing
+setup-dev-env: install-git-hooks
+	$(PYTHON) -c "$(URLLIB_IMPORTS); \
+				context = ssl._create_unverified_context() if hasattr(ssl, '_create_unverified_context') else None; \
+				kw = dict(context=context) if context else {}; \
+				r = urlopen('https://bootstrap.pypa.io/get-pip.py', **kw); \
+				open('/tmp/get-pip.py', 'w').write(str(r.read()));"
+	$(PYTHON) /tmp/get-pip.py --user
+	rm /tmp/get-pip.py
+	$(PYTHON) -m pip install --user --upgrade pip
+	$(PYTHON) -m pip install --user --upgrade $(DEPS)
 
 test: install
 	$(PYTHON) $(TSCRIPT)
@@ -126,3 +141,11 @@ git-tag-release:
 install-git-hooks:
 	ln -sf ../../.git-pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
+
+# download exes/wheels hosted on appveyor
+win-download-exes:
+	$(PYTHON) .ci/appveyor/download_exes.py --user giampaolo --project psutil
+
+# upload exes/wheels in dist/* directory to PYPI
+win-upload-exes:
+	$(PYTHON) -m twine upload dist/*

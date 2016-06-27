@@ -188,7 +188,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "4.2.0"
+__version__ = "4.3.0"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
@@ -2115,8 +2115,8 @@ def test():  # pragma: no cover
 
 
 del memoize, division, deprecated_method
-if sys.version_info < (3, 0):
-    del num
+if sys.version_info[0] < 3:
+    del num, x
 
 if __name__ == "__main__":
     test()
