@@ -1236,7 +1236,7 @@ class Popen(Process):
     For method names common to both classes such as kill(), terminate()
     and wait(), psutil.Process implementation takes precedence.
 
-    Unlike subprocess.Popen this class pre-emptively checks wheter PID
+    Unlike subprocess.Popen this class pre-emptively checks whether PID
     has been reused on send_signal(), terminate() and kill() so that
     you don't accidentally terminate another process, fixing
     http://bugs.python.org/issue6973.
@@ -1910,7 +1910,7 @@ def net_if_addrs():
     'address' is the primary address and it is always set.
     'netmask' and 'broadcast' and 'ptp' may be None.
     'ptp' stands for "point to point" and references the destination
-    address on a point to point interface (tipically a VPN).
+    address on a point to point interface (typically a VPN).
     'broadcast' and 'ptp' are mutually exclusive.
 
     Note: you can have more than one address of the same family

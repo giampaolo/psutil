@@ -495,7 +495,7 @@ Network
   *address* is the primary address and it is always set.
   *netmask*, *broadcast* and *ptp* may be ``None``.
   *ptp* stands for "point to point" and references the destination address on a
-  point to point interface (tipically a VPN).
+  point to point interface (typically a VPN).
   *broadcast* and *ptp* are mutually exclusive.
   *netmask*, *broadcast* and *ptp* are not supported on Windows and are set to
   ``None``.
@@ -641,7 +641,7 @@ Functions
   *returncode* attribute indicating process exit status (it may be ``None``).
   ``callback`` is a function which gets called every time a process terminates
   (a :class:`Process` instance is passed as callback argument). Function will
-  return as soon as all processes terminate or when timeout occurs. Tipical use
+  return as soon as all processes terminate or when timeout occurs. Typical use
   case is:
 
   - send SIGTERM to a list of processes
@@ -674,7 +674,7 @@ Exceptions
   Raised by :class:`Process` class methods when no process with the given
   pid* is found in the current process list or when a process no longer
   exists. "name" is the name the process had before disappearing
-  and gets set only if :meth:`Process.name()` was previosly called.
+  and gets set only if :meth:`Process.name()` was previously called.
 
 .. class:: ZombieProcess(pid, name=None, ppid=None, msg=None)
 
@@ -1495,7 +1495,7 @@ Popen class
   .. note::
 
     Unlike `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__
-    this class preemptively checks wheter PID has been reused on
+    this class preemptively checks whether PID has been reused on
     :meth:`send_signal() <psutil.Process.send_signal()>`,
     :meth:`terminate() <psutil.Process.terminate()>` and
     :meth:`kill() <psutil.Process.kill()>`
