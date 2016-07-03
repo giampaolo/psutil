@@ -34,8 +34,6 @@
 #endif
 #include <linux/ethtool.h>
 
-#include "_psutil_linux.h"
-
 /* The minimum number of CPUs allocated in a cpu_set_t */
 static const int NCPUS_START = sizeof(unsigned long) * CHAR_BIT;
 

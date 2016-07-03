@@ -39,7 +39,6 @@
 #include <IOKit/storage/IOMedia.h>
 #include <IOKit/IOBSD.h>
 
-#include "_psutil_osx.h"
 #include "_psutil_common.h"
 #include "arch/osx/process_info.h"
 

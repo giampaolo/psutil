@@ -490,7 +490,7 @@ class WindowsService(object):
     #   lot of stuff (and API constants which would pollute the API), see:
     #   http://pyxr.sourceforge.net/PyXR/c/python24/lib/site-packages/
     #       win32/lib/win32serviceutil.py.html#0175
-    # - psutil is tipically about "read only" monitoring stuff;
+    # - psutil is typically about "read only" monitoring stuff;
     #   win_service_* APIs should only be used to retrieve a service and
     #   check whether it's running
 

@@ -28,7 +28,6 @@
 // Link with Iphlpapi.lib
 #pragma comment(lib, "IPHLPAPI.lib")
 
-#include "_psutil_windows.h"
 #include "_psutil_common.h"
 #include "arch/windows/security.h"
 #include "arch/windows/process_info.h"
