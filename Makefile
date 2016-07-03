@@ -54,15 +54,22 @@ uninstall:
 
 # Install useful deps which are nice to have while developing / testing.
 setup-dev-env: install-git-hooks
-	$(PYTHON) -c "import sys, ssl; \
-				imp = 'from urllib.request import urlopen' if sys.version_info[0] == 3 else 'from urllib2 import urlopen'; \
-				exec(imp); \
+	# Install PIP (only if necessary).
+	$(PYTHON) -c "import sys, ssl, os, pkgutil, tempfile, atexit; \
+				sys.exit(0) if pkgutil.find_loader('pip') else None; \
+				pyexc = 'from urllib.request import urlopen' if sys.version_info[0] == 3 else 'from urllib2 import urlopen'; \
+				exec(pyexc); \
 				context = ssl._create_unverified_context() if hasattr(ssl, '_create_unverified_context') else None; \
 				kw = dict(context=context) if context else {}; \
-				r = urlopen('https://bootstrap.pypa.io/get-pip.py', **kw); \
-				open('/tmp/get-pip.py', 'w').write(str(r.read()));"
-	$(PYTHON) /tmp/get-pip.py --user
-	rm /tmp/get-pip.py
+				req = urlopen('https://bootstrap.pypa.io/get-pip.py', **kw); \
+				data = req.read(); \
+				f = tempfile.NamedTemporaryFile(suffix='.py'); \
+				atexit.register(f.close); \
+				f.write(data); \
+				f.flush(); \
+				print('downloaded %s' % f.name); \
+				code = os.system('%s %s --user' % (sys.executable, f.name)); \
+				sys.exit(code);"
 	$(PYTHON) -m pip install --user --upgrade pip
 	$(PYTHON) -m pip install --user --upgrade $(DEPS)
 
