@@ -2,35 +2,22 @@
 # To use a specific Python version run: "make install PYTHON=python3.3"
 
 # You can set these variables from the command line.
-PYTHON    = python
-TSCRIPT   = psutil/tests/runner.py
+PYTHON = python
+TSCRIPT = psutil/tests/runner.py
 
 # For internal use.
-PY3 := $(shell $(PYTHON) -c "import sys; print(sys.version_info[0] == 3)")
-PYVER := $(shell $(PYTHON) -c "import sys; print('.'.join(map(str, sys.version_info[:2])))")
-
 DEPS = coverage \
 	flake8 \
+	futures \
 	ipdb \
+	mock==1.0.1 \
 	nose \
 	pep8 \
 	pyflakes \
 	requests \
 	sphinx \
-	sphinx-pypi-upload
-ifeq ($(PYVER), 2.6)
-	DEPS += unittest2 ipaddress futures mock==1.0.1
-endif
-ifeq ($(PYVER), 2.7)
-	DEPS += unittest2 ipaddress futures mock
-endif
-
-ifeq ($(PY3), True)
-	URLLIB_IMPORTS := from urllib.request import urlopen, ssl
-else
-	URLLIB_IMPORTS := from urllib2 import urlopen, ssl
-endif
-
+	sphinx-pypi-upload \
+	unittest2
 
 all: test
 
@@ -65,9 +52,11 @@ install: build
 uninstall:
 	cd ..; $(PYTHON) -m pip uninstall -y -v psutil
 
-# useful deps which are nice to have while developing / testing
+# Install useful deps which are nice to have while developing / testing.
 setup-dev-env: install-git-hooks
-	$(PYTHON) -c "$(URLLIB_IMPORTS); \
+	$(PYTHON) -c "import sys, ssl; \
+				imp = 'from urllib.request import urlopen' if sys.version_info[0] == 3 else 'from urllib2 import urlopen'; \
+				exec(imp); \
 				context = ssl._create_unverified_context() if hasattr(ssl, '_create_unverified_context') else None; \
 				kw = dict(context=context) if context else {}; \
 				r = urlopen('https://bootstrap.pypa.io/get-pip.py', **kw); \
