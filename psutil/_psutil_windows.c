@@ -189,6 +189,8 @@ psutil_get_nic_addresses() {
  */
 
 
+static ULONGLONG (*psutil_GetTickCount64)(void) = NULL;
+
 /*
  * Return a Python float representing the system uptime expressed in seconds
  * since the epoch.
@@ -203,6 +205,8 @@ psutil_boot_time(PyObject *self, PyObject *args) {
     time_t pt;
     FILETIME fileTime;
     long long ll;
+    HINSTANCE hKernel32;
+    psutil_GetTickCount64 = NULL;
 
     GetSystemTimeAsFileTime(&fileTime);
 
@@ -223,13 +227,23 @@ psutil_boot_time(PyObject *self, PyObject *args) {
         + fileTime.dwLowDateTime;
     pt = (time_t)((ll - 116444736000000000ull) / 10000000ull);
 
-#if (_WIN32_WINNT >= 0x0600)  // Windows Vista
-    uptime = GetTickCount64() / (ULONGLONG)1000.00f;
-#else
-    // GetTickCount() time will wrap around to zero if the
-    // system is run continuously for 49.7 days.
-    uptime = GetTickCount() / 1000.00f;
-#endif
+    // GetTickCount64() is Windows Vista+ only. Dinamically load
+    // GetTickCount64() at runtime. We may have used
+    // "#if (_WIN32_WINNT >= 0x0600)" pre-processor but that way
+    // the produced exe/wheels cannot be used on Windows XP, see:
+    // https://github.com/giampaolo/psutil/issues/811#issuecomment-230639178
+    hKernel32 = GetModuleHandleW(L"KERNEL32");
+    psutil_GetTickCount64 = (void*)GetProcAddress(hKernel32, "GetTickCount64");
+    if (psutil_GetTickCount64 != NULL) {
+        // Windows >= Vista
+        uptime = psutil_GetTickCount64() / (ULONGLONG)1000.00f;
+    }
+    else {
+        // Windows XP.
+        // GetTickCount() time will wrap around to zero if the
+        // system is run continuously for 49.7 days.
+        uptime = GetTickCount() / 1000.00f;
+    }
 
     return Py_BuildValue("d", (double)pt - (double)uptime);
 }
