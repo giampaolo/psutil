@@ -34,24 +34,14 @@ psutil_pid_exists(long pid) {
     int ret;
     if (pid < 0)
         return 0;
+
+    // Permission/access errors only indicate that we cannot send signals
+    // to that  process, but it does exist.
     ret = kill(pid , 0);
-    if (ret == 0)
+    if (ret == 0 || errno == EPERM || errno == EACCES)
         return 1;
-    else {
-        return 0;
-        /*
-        // This is how it is handled on other POSIX systems but it causes
-        // test_halfway_terminated test to fail with AccessDenied.
-        if (ret == ESRCH)
-            return 0;
-        else if (ret == EPERM)
-            return 1;
-        else {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return -1;
-        }
-        */
-    }
+
+    return 0;
 }
 
 
