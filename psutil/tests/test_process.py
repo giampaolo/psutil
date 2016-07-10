@@ -1807,55 +1807,53 @@ class TestFetchAllProcesses(unittest.TestCase):
 # --- Limited user tests
 # ===================================================================
 
-@unittest.skipUnless(POSIX, "UNIX only")
-@unittest.skipUnless(hasattr(os, 'getuid') and os.getuid() == 0,
-                     "super user privileges are required")
-class LimitedUserTestCase(TestProcess):
-    """Repeat the previous tests by using a limited user.
-    Executed only on UNIX and only if the user who run the test script
-    is root.
-    """
-    # the uid/gid the test suite runs under
-    if hasattr(os, 'getuid'):
-        PROCESS_UID = os.getuid()
-        PROCESS_GID = os.getgid()
+if POSIX and os.getuid() == 0:
+    class LimitedUserTestCase(TestProcess):
+        """Repeat the previous tests by using a limited user.
+        Executed only on UNIX and only if the user who run the test script
+        is root.
+        """
+        # the uid/gid the test suite runs under
+        if hasattr(os, 'getuid'):
+            PROCESS_UID = os.getuid()
+            PROCESS_GID = os.getgid()
 
-    def __init__(self, *args, **kwargs):
-        TestProcess.__init__(self, *args, **kwargs)
-        # re-define all existent test methods in order to
-        # ignore AccessDenied exceptions
-        for attr in [x for x in dir(self) if x.startswith('test')]:
-            meth = getattr(self, attr)
+        def __init__(self, *args, **kwargs):
+            TestProcess.__init__(self, *args, **kwargs)
+            # re-define all existent test methods in order to
+            # ignore AccessDenied exceptions
+            for attr in [x for x in dir(self) if x.startswith('test')]:
+                meth = getattr(self, attr)
 
-            def test_(self):
-                try:
-                    meth()
-                except psutil.AccessDenied:
-                    pass
-            setattr(self, attr, types.MethodType(test_, self))
+                def test_(self):
+                    try:
+                        meth()
+                    except psutil.AccessDenied:
+                        pass
+                setattr(self, attr, types.MethodType(test_, self))
 
-    def setUp(self):
-        safe_remove(TESTFN)
-        TestProcess.setUp(self)
-        os.setegid(1000)
-        os.seteuid(1000)
+        def setUp(self):
+            safe_remove(TESTFN)
+            TestProcess.setUp(self)
+            os.setegid(1000)
+            os.seteuid(1000)
 
-    def tearDown(self):
-        os.setegid(self.PROCESS_UID)
-        os.seteuid(self.PROCESS_GID)
-        TestProcess.tearDown(self)
+        def tearDown(self):
+            os.setegid(self.PROCESS_UID)
+            os.seteuid(self.PROCESS_GID)
+            TestProcess.tearDown(self)
 
-    def test_nice(self):
-        try:
-            psutil.Process().nice(-1)
-        except psutil.AccessDenied:
+        def test_nice(self):
+            try:
+                psutil.Process().nice(-1)
+            except psutil.AccessDenied:
+                pass
+            else:
+                self.fail("exception not raised")
+
+        def test_zombie_process(self):
+            # causes problems if test test suite is run as root
             pass
-        else:
-            self.fail("exception not raised")
-
-    def test_zombie_process(self):
-        # causes problems if test test suite is run as root
-        pass
 
 
 # ===================================================================
