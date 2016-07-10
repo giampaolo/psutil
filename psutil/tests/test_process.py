@@ -1334,6 +1334,7 @@ class TestProcess(unittest.TestCase):
                 sock.listen(1)
                 pyrun(src)
                 conn, _ = sock.accept()
+                self.addCleanup(conn.close)
                 select.select([conn.fileno()], [], [], GLOBAL_TIMEOUT)
                 zpid = int(conn.recv(1024))
                 zproc = psutil.Process(zpid)
