@@ -595,7 +595,7 @@ def create_temp_executable_file(suffix, c_code=None):
     if TRAVIS and OSX:
         tmpdir = "/private/tmp"
     fd, path = tempfile.mkstemp(
-        prefix='psutil', suffix=suffix, dir=tmpdir)
+        prefix='psu', suffix=suffix, dir=tmpdir)
     os.close(fd)
 
     if which("gcc"):
@@ -608,7 +608,7 @@ def create_temp_executable_file(suffix, c_code=None):
                 }
                 """)
         fd, c_file = tempfile.mkstemp(
-            prefix='psutil', suffix='.c', dir=tmpdir)
+            prefix='psu', suffix='.c', dir=tmpdir)
         os.close(fd)
         with open(c_file, "w") as f:
             f.write(c_code)
