@@ -34,10 +34,11 @@ clean:
 	rm -rf *\$testfile*
 	rm -rf .coverage
 	rm -rf .tox
-	rm -rf build
-	rm -rf dist
-	rm -rf docs/_build
-	rm -rf htmlcov
+	rm -rf build/
+	rm -rf dist/
+	rm -rf docs/_build/
+	rm -rf htmlcov/
+	rm -rf tmp/
 
 build: clean
 	$(PYTHON) setup.py build
@@ -45,9 +46,11 @@ build: clean
 	@# "import psutil" when using the interactive interpreter from within
 	@# this directory.
 	$(PYTHON) setup.py build_ext -i
+	rm -rf tmp
 
 install: build
 	$(PYTHON) setup.py develop --user
+	rm -rf tmp
 
 uninstall:
 	cd ..; $(PYTHON) -m pip uninstall -y -v psutil
