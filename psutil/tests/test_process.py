@@ -384,13 +384,13 @@ class TestProcess(unittest.TestCase):
                 self.assertRaises(ValueError, p.ionice, 2, -1)
                 self.assertRaises(ValueError, p.ionice, 4)
                 self.assertRaises(TypeError, p.ionice, 2, "foo")
-                self.assertRaisesRegexp(
+                self.assertRaisesRegex(
                     ValueError, "can't specify value with IOPRIO_CLASS_NONE",
                     p.ionice, psutil.IOPRIO_CLASS_NONE, 1)
-                self.assertRaisesRegexp(
+                self.assertRaisesRegex(
                     ValueError, "can't specify value with IOPRIO_CLASS_IDLE",
                     p.ionice, psutil.IOPRIO_CLASS_IDLE, 1)
-                self.assertRaisesRegexp(
+                self.assertRaisesRegex(
                     ValueError, "'ioclass' argument must be specified",
                     p.ionice, value=1)
             finally:
@@ -1408,7 +1408,7 @@ class TestProcess(unittest.TestCase):
             except psutil.AccessDenied:
                 pass
 
-            self.assertRaisesRegexp(
+            self.assertRaisesRegex(
                 ValueError, "preventing sending signal to process with PID 0",
                 p.send_signal, signal.SIGTERM)
 

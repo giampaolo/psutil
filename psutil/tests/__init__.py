@@ -134,6 +134,11 @@ if TRAVIS or APPVEYOR:
     GLOBAL_TIMEOUT = GLOBAL_TIMEOUT * 4
 VERBOSITY = 1 if os.getenv('SILENT') or TOX else 2
 
+# assertRaisesRegexp renamed to assertRaisesRegex in 3.3; add support
+# for the new name
+if hasattr(unittest.TestCase, 'assertRaisesRegex'):
+    unittest.TestCase.assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
+
 
 # ===================================================================
 # --- classes
