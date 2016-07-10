@@ -1130,7 +1130,7 @@ class Process(object):
         with open_binary("%s/%s/statm" % (self._procfs_path, self.pid)) as f:
             vms, rss, shared, text, lib, data, dirty = \
                 [int(x) * PAGESIZE for x in f.readline().split()[:7]]
-            return pmem(rss, vms, shared, text, lib, data, dirty)
+        return pmem(rss, vms, shared, text, lib, data, dirty)
 
     # /proc/pid/smaps does not exist on kernels < 2.6.14 or if
     # CONFIG_MMU kernel configuration option is not enabled.
