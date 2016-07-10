@@ -458,10 +458,7 @@ class Process(object):
         AccessDenied or ZombieProcess exception is raised when
         retrieving that particular process information.
         """
-        excluded_names = set(
-            ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-             'is_running', 'as_dict', 'parent', 'children', 'rlimit'])
-        valid_names = _process_attrnames - excluded_names
+        valid_names = _as_dict_attrnames
         if attrs is not None:
             if not isinstance(attrs, (list, tuple, set, frozenset)):
                 raise TypeError("invalid attrs type %s" % type(attrs))
@@ -1281,7 +1278,11 @@ class Popen(Process):
         return ret
 
 
-_process_attrnames = set([x for x in dir(Process) if not x.startswith('_')])
+# The valid attr names which can be processed by Process.as_dict().
+_as_dict_attrnames = set(
+    [x for x in dir(Process) if not x.startswith('_') and x not in
+     ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
+      'is_running', 'as_dict', 'parent', 'children', 'rlimit']])
 
 
 # =====================================================================
