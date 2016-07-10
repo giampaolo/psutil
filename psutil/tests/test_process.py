@@ -1253,7 +1253,8 @@ class TestProcess(unittest.TestCase):
         # self.assertFalse(p.pid in psutil.pids(), msg="retcode = %s" %
         #   retcode)
 
-        excluded_names = ['pid', 'is_running', 'wait', 'create_time']
+        excluded_names = ['pid', 'is_running', 'wait', 'create_time',
+                          'memory_info_ex']
         if LINUX and not RLIMIT_SUPPORT:
             excluded_names.append('rlimit')
         for name in dir(p):
