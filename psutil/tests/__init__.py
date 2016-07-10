@@ -223,7 +223,7 @@ def get_test_subprocess(cmd=None, wait=False, **kwds):
                 warn("couldn't make sure test file was actually created")
         else:
             wait_for_pid(sproc.pid)
-    _subprocesses_started.add(psutil.Process(sproc.pid))
+    _subprocesses_started.add(sproc)
     return sproc
 
 
@@ -271,28 +271,33 @@ def reap_children(search_all=False):
     no zombies stick around to hog resources and create problems when
     looking for refleaks.
     """
-    global _subprocesses_started
-    procs = _subprocesses_started.copy()
+    subprocs = _subprocesses_started.copy()
+    _subprocesses_started.clear()
+    for subp in subprocs:
+        try:
+            subp.terminate()
+        except OSError as err:
+            if err.errno != errno.ESRCH:
+                raise
+        subp.wait()
+
     if search_all:
-        this_process = psutil.Process()
-        for p in this_process.children(recursive=True):
-            procs.add(p)
-    for p in procs:
-        try:
-            p.terminate()
-        except psutil.NoSuchProcess:
-            pass
-    gone, alive = psutil.wait_procs(procs, timeout=GLOBAL_TIMEOUT)
-    for p in alive:
-        warn("couldn't terminate process %s" % p)
-        try:
-            p.kill()
-        except psutil.NoSuchProcess:
-            pass
-    _, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
-    if alive:
-        warn("couldn't not kill processes %s" % str(alive))
-    _subprocesses_started = set(alive)
+        children = psutil.Process().children(recursive=True)
+        for p in children:
+            try:
+                p.terminate()
+            except psutil.NoSuchProcess:
+                pass
+        gone, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
+        for p in alive:
+            warn("couldn't terminate process %s" % p)
+            try:
+                p.kill()
+            except psutil.NoSuchProcess:
+                pass
+            _, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
+            if alive:
+                warn("couldn't not kill processes %s" % str(alive))
 
 
 # ===================================================================
