@@ -21,6 +21,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import textwrap
 import threading
 import time
 import warnings
@@ -589,20 +590,28 @@ def check_connection_ntuple(conn):
                     assert dupsock.type == conn.type
 
 
-def create_temp_executable_file(suffix, code="void main() { pause(); }"):
+def create_temp_executable_file(suffix, c_code=None):
     tmpdir = None
     if TRAVIS and OSX:
         tmpdir = "/private/tmp"
     fd, path = tempfile.mkstemp(
-        prefix='psu', suffix=suffix, dir=tmpdir)
+        prefix='psutil', suffix=suffix, dir=tmpdir)
     os.close(fd)
 
     if which("gcc"):
+        if c_code is None:
+            c_code = textwrap.dedent(
+                """
+                #include <unistd.h>
+                void main() {
+                    pause();
+                }
+                """)
         fd, c_file = tempfile.mkstemp(
-            prefix='psu', suffix='.c', dir=tmpdir)
+            prefix='psutil', suffix='.c', dir=tmpdir)
         os.close(fd)
         with open(c_file, "w") as f:
-            f.write(code)
+            f.write(c_code)
         subprocess.check_call(["gcc", c_file, "-o", path])
         safe_remove(c_file)
     else:

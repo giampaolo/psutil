@@ -1228,14 +1228,12 @@ class TestProcess(unittest.TestCase):
             with self.assertRaises(NotImplementedError):
                 p.as_dict(attrs=["name"])
         # errors
-        with self.assertRaises(TypeError) as cm:
+        with self.assertRaises(TypeError):
             p.as_dict('name')
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(ValueError):
             p.as_dict(['foo'])
-        self.assertEqual(str(cm.exception), "invalid attr name 'foo'")
-        with self.assertRaises(ValueError) as cm:
+        with self.assertRaises(ValueError):
             p.as_dict(['foo', 'bar'])
-        self.assertEqual(str(cm.exception), "invalid attr names 'foo', 'bar'")
 
     def test_halfway_terminated_process(self):
         # Test that NoSuchProcess exception gets raised in case the
@@ -1504,7 +1502,7 @@ class TestProcess(unittest.TestCase):
             return execve("/bin/cat", argv, envp);
         }
         """)
-        path = create_temp_executable_file("x", code=code)
+        path = create_temp_executable_file("x", c_code=code)
         self.addCleanup(safe_remove, path)
         sproc = get_test_subprocess([path],
                                     stdin=subprocess.PIPE,
