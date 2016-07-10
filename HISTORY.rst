@@ -1,5 +1,13 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+4.3.1 - XXXX-XX-XX
+==================
+
+**Bug fixes**
+
+- #854: Process.as_dict() raises ValueError if passed an erroneous attrs name.
+
+
 4.3.0 - 2016-06-18
 ==================
 

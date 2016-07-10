@@ -1218,14 +1218,24 @@ class TestProcess(unittest.TestCase):
         if not isinstance(d['connections'], list):
             self.assertEqual(d['connections'], 'foo')
 
-        with mock.patch('psutil.getattr', create=True,
+        with mock.patch('psutil.Process.name', create=True,
                         side_effect=NotImplementedError):
             # By default APIs raising NotImplementedError are
             # supposed to be skipped.
-            self.assertEqual(p.as_dict(), {})
+            d = p.as_dict()
+            self.assertNotIn('name', list(d.keys()))
             # ...unless the user explicitly asked for some attr.
             with self.assertRaises(NotImplementedError):
                 p.as_dict(attrs=["name"])
+        # errors
+        with self.assertRaises(TypeError) as cm:
+            p.as_dict('name')
+        with self.assertRaises(ValueError) as cm:
+            p.as_dict(['foo'])
+        self.assertEqual(str(cm.exception), "invalid attr name 'foo'")
+        with self.assertRaises(ValueError) as cm:
+            p.as_dict(['foo', 'bar'])
+        self.assertEqual(str(cm.exception), "invalid attr names 'foo', 'bar'")
 
     def test_halfway_terminated_process(self):
         # Test that NoSuchProcess exception gets raised in case the

@@ -187,7 +187,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "4.3.0"
+__version__ = "4.3.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
@@ -462,17 +462,25 @@ class Process(object):
             ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
              'is_running', 'as_dict', 'parent', 'children', 'rlimit'])
         valid_names = _process_attrnames - excluded_names
+        if attrs is not None:
+            if not isinstance(attrs, (list, tuple, set, frozenset)):
+                raise TypeError("invalid attrs type %s" % type(attrs))
+            attrs = set(attrs)
+            invalid_names = attrs - valid_names
+            if invalid_names:
+                raise ValueError("invalid attr name%s %s" % (
+                    "s" if len(invalid_names) > 1 else "",
+                    ", ".join(map(repr, invalid_names))))
+
         retdict = dict()
-        ls = set(attrs) if attrs else _process_attrnames
+        ls = attrs or valid_names
         for name in ls:
-            if name not in valid_names:
-                continue
             try:
-                attr = getattr(self, name)
-                if callable(attr):
-                    ret = attr()
+                if name == 'pid':
+                    ret = self.pid
                 else:
-                    ret = attr
+                    meth = getattr(self, name)
+                    ret = meth()
             except (AccessDenied, ZombieProcess):
                 ret = ad_value
             except NotImplementedError:
