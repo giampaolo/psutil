@@ -6,6 +6,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 **Bug fixes**
 
 - #854: Process.as_dict() raises ValueError if passed an erroneous attrs name.
+- #858: Process.as_dict() should not return memory_info_ex() because it's
+  deprecated.
 
 
 4.3.0 - 2016-06-18
