@@ -159,8 +159,16 @@ sdiskio = namedtuple(
                 'read_time', 'write_time',
                 'read_merged_count', 'write_merged_count',
                 'busy_time'])
-popenfile = namedtuple(
-    'popenfile', ['path', 'fd', 'position', 'mode', 'flags'])
+# mnt_id? check version or just add it for 'popenfile'?
+# use 'popenfile' and combine with additional attributes for other anon_inodes?
+# instead of creating numerous namedtuples with shared fields.
+popenfile = namedtuple('popenfile', ['path', 'fd', 'position', 'mode', 
+    'flags', 'mnt_id', 'anon_fields'])
+
+ppoll_tfd = namedtuple('ppoll_tfd', ['events', 'data'])
+pinotify = namedtuple('pinotify_attrs', ['ino', 'sdev', 'mask', 'ignored_mask', 
+     'fhandle_bytes', 'fhandle_type', 'f_handle'])
+
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
 pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', 'pss', 'swap'))
 pmmap_grouped = namedtuple(
@@ -1428,20 +1436,44 @@ class Process(object):
                 # whether it's a regular file or not, so we skip it.
                 # A regular file is always supposed to be have an
                 # absolute path though.
-                if path.startswith('/') and isfile_strict(path):
+                if (path.startswith('/') and isfile_strict(path) or
+                    path.startswith('anon_inode')):
                     # Get file position and flags.
                     file = "%s/%s/fdinfo/%s" % (
                         self._procfs_path, self.pid, fd)
-                    with open_binary(file) as f:
-                        pos = int(f.readline().split()[1])
-                        flags = int(f.readline().split()[1], 8)
-                    mode = file_flags_to_mode(flags)
-                    ntuple = popenfile(path, int(fd), int(pos), mode, flags)
+                    ntuple = parse_fdinfo(path, file, fd)
                     retlist.append(ntuple)
         if hit_enoent:
             # raise NSP if the process disappeared on us
             os.stat('%s/%s' % (self._procfs_path, self.pid))
         return retlist
+
+def parse_fdinfo(path, file, fd):
+    with open_binary(file) as f:
+        pos = int(f.readline().split()[1])
+        flags = int(f.readline().split()[1], 8)
+        mnt = int(f.readline().split()[1])
+        anon_fields = f.readlines()
+    mode = file_flags_to_mode(flags)
+    ntuple = popenfile(path, int(fd), int(pos), mode, flags, mnt, {})
+    if not path.startswith('/') and anon_fields:
+        anon_fields = [list(map(bytes.decode, anon_field.split()))
+                        for anon_field in anon_fields]
+        anon_type = anon_fields[0][0]
+        if anon_type.startswith('event'):
+            ntuple.anon_fields['events'] = int(anon_fields[0][1], 16)
+        elif anon_type.startswith('sigmask'):
+            ntuple.anon_fields['sigmask'] = int(anon_fields[0][1], 16)
+        elif anon_type.startswith('inotify'):
+            for field in anon_fields:
+                wd = int(field[1].split(':')[1])
+                field = [int(f.split(':')[1], 16) for f in field[2:]]
+                ntuple.anon_fields[wd] = pinotify(*field)
+        else:
+            for field in anon_fields:
+                ntuple.anon_fields[int(field[1])] = ppoll_tfd(int(field[3], 16),
+                                                              int(field[5], 16))
+    return ntuple
 
     @wrap_exceptions
     def connections(self, kind='inet'):
