@@ -271,6 +271,12 @@ def reap_children(recursive=False):
     no zombies stick around to hog resources and create problems when
     looking for refleaks.
     """
+    # Get the children here, before terminating the sub processes
+    # as we don't want to lose the intermediate reference in case
+    # of grand children.
+    if recursive:
+        children = psutil.Process().children(recursive=True)
+
     subprocs = _subprocesses_started.copy()
     _subprocesses_started.clear()
     for subp in subprocs:
@@ -281,8 +287,7 @@ def reap_children(recursive=False):
                 raise
         subp.wait()
 
-    if recursive:
-        children = psutil.Process().children(recursive=True)
+    if recursive and children:
         for p in children:
             try:
                 p.terminate()
