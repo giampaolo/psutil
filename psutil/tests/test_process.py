@@ -225,9 +225,7 @@ class TestProcess(unittest.TestCase):
             ret = grandson_proc.wait()
             self.assertEqual(ret, None)
         finally:
-            if grandson_proc.is_running():
-                grandson_proc.kill()
-                grandson_proc.wait()
+            reap_children(recursive=True)
 
     def test_wait_timeout_0(self):
         sproc = get_test_subprocess()
@@ -1136,7 +1134,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(p.ppid(), this_parent)
         self.assertEqual(p.parent().pid, this_parent)
         # no other process is supposed to have us as parent
-        reap_children(search_all=True)
+        reap_children(recursive=True)
         for p in psutil.process_iter():
             if p.pid == sproc.pid:
                 continue
@@ -1391,7 +1389,7 @@ class TestProcess(unittest.TestCase):
                 psutil._pmap = {}
                 self.assertIn(zpid, [x.pid for x in psutil.process_iter()])
             finally:
-                reap_children(search_all=True)
+                reap_children(recursive=True)
 
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux

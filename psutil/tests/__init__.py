@@ -266,7 +266,7 @@ def sh(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     return stdout.strip()
 
 
-def reap_children(search_all=False):
+def reap_children(recursive=False):
     """Kill any subprocess started by this test suite and ensure that
     no zombies stick around to hog resources and create problems when
     looking for refleaks.
@@ -281,7 +281,7 @@ def reap_children(search_all=False):
                 raise
         subp.wait()
 
-    if search_all:
+    if recursive:
         children = psutil.Process().children(recursive=True)
         for p in children:
             try:
@@ -634,7 +634,7 @@ def create_temp_executable_file(suffix, c_code=None):
 
 
 def cleanup():
-    reap_children(search_all=True)
+    reap_children(recursive=True)
     safe_remove(TESTFN)
     try:
         safe_rmdir(TESTFN_UNICODE)
