@@ -159,9 +159,7 @@ sdiskio = namedtuple(
                 'read_time', 'write_time',
                 'read_merged_count', 'write_merged_count',
                 'busy_time'])
-# mnt_id? check version or just add it for 'popenfile'?
-# use 'popenfile' and combine with additional attributes for other anon_inodes?
-# instead of creating numerous namedtuples with shared fields.
+
 popenfile = namedtuple('popenfile', ['path', 'fd', 'position', 'mode', 
     'flags', 'mnt_id', 'anon_fields'])
 
