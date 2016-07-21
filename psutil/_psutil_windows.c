@@ -2694,9 +2694,13 @@ static char *get_region_protection_string(ULONG protection) {
  */
 static PyObject *
 psutil_proc_memory_maps(PyObject *self, PyObject *args) {
+#ifdef _WIN64
+	MEMORY_BASIC_INFORMATION64 basicInfo;
+#else
+	MEMORY_BASIC_INFORMATION basicInfo;
+#endif
     DWORD pid;
-    HANDLE hProcess = NULL;
-    MEMORY_BASIC_INFORMATION basicInfo;
+    HANDLE hProcess = NULL; 
     PVOID baseAddress;
     PVOID previousAllocationBase;
     CHAR mappedFileName[MAX_PATH];
@@ -2727,12 +2731,20 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         if (GetMappedFileNameA(hProcess, baseAddress, mappedFileName,
                                sizeof(mappedFileName)))
         {
-            py_tuple = Py_BuildValue(
-                "(kssI)",
-                (unsigned long)baseAddress,
-                get_region_protection_string(basicInfo.Protect),
-                mappedFileName,
-                basicInfo.RegionSize);
+#ifdef _WIN64
+		   py_tuple = Py_BuildValue(
+			  "(KssI)",
+
+#else
+		   py_tuple = Py_BuildValue(
+			  "(kssI)",
+			  (unsigned long)baseAddress,
+#endif
+			  (unsigned long long)baseAddress,
+			  get_region_protection_string(basicInfo.Protect),
+			  mappedFileName,
+			  basicInfo.RegionSize);
+           
             if (!py_tuple)
                 goto error;
             if (PyList_Append(py_retlist, py_tuple))

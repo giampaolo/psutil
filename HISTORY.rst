@@ -17,6 +17,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #715: don't crash at import time if cpu_times() fail for some reason.
 - #717: [Linux] Process.open_files fails if deleted files still visible.
 - #724: [FreeBSD] virtual_memory().total is slightly incorrect.
+- #863: [Windows] memory_map truncates addresses above 32 bits
 
 
 3.3.0 - 2015-11-25
