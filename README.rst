@@ -56,10 +56,10 @@ to 3.5** (users of Python 2.4 and 2.5 may use
 Example applications
 ====================
 
- * https://github.com/nicolargo/glances
- * https://github.com/google/grr
- * https://github.com/Jahaja/psdash
- * https://github.com/giampaolo/psutil/tree/master/scripts
+- https://github.com/nicolargo/glances
+- https://github.com/google/grr
+- https://github.com/Jahaja/psdash
+- https://github.com/giampaolo/psutil/tree/master/scripts
 
 ==============
 Example usages
