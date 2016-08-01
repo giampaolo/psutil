@@ -139,6 +139,7 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
 
     for (i = 0; i < srvCount; i++) {
         // Get unicode display name.
+        py_unicode_display_name = NULL;
         py_unicode_display_name = PyUnicode_Decode(
             lpService[i].lpDisplayName,
             _tcslen(lpService[i].lpDisplayName),
@@ -157,7 +158,7 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
-        Py_XDECREF(py_unicode_display_name);
+        Py_DECREF(py_unicode_display_name);
         Py_DECREF(py_tuple);
     }
 
@@ -195,9 +196,9 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     DWORD dwBytes = 0;
     QUERY_SERVICE_CONFIG *qsc = NULL;
     PyObject *py_tuple = NULL;
-    PyObject *py_unicode_display_name;
-    PyObject *py_unicode_binpath;
-    PyObject *py_unicode_username;
+    PyObject *py_unicode_display_name = NULL;
+    PyObject *py_unicode_binpath = NULL;
+    PyObject *py_unicode_username = NULL;
 
     if (!PyArg_ParseTuple(args, "s", &service_name))
         return NULL;
@@ -260,9 +261,9 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
         goto error;
 
     // Free resources.
-    Py_XDECREF(py_unicode_display_name);
-    Py_XDECREF(py_unicode_binpath);
-    Py_XDECREF(py_unicode_username);
+    Py_DECREF(py_unicode_display_name);
+    Py_DECREF(py_unicode_binpath);
+    Py_DECREF(py_unicode_username);
     free(qsc);
     CloseServiceHandle(hService);
     return py_tuple;
