@@ -1,7 +1,3 @@
-.. image:: https://img.shields.io/pypi/dm/psutil.svg
-    :target: https://pypi.python.org/pypi/psutil#downloads
-    :alt: Downloads this month
-
 .. image:: https://img.shields.io/travis/giampaolo/psutil/master.svg?maxAge=3600&label=Linux%20/%20OSX
     :target: https://travis-ci.org/giampaolo/psutil
     :alt: Linux tests (Travis)
@@ -10,7 +6,7 @@
     :target: https://ci.appveyor.com/project/giampaolo/psutil
     :alt: Windows tests (Appveyor)
 
-.. image:: https://coveralls.io/repos/giampaolo/psutil/badge.svg?branch=master&service=github
+.. image:: https://coveralls.io/repos/github/giampaolo/psutil/badge.svg?branch=master
     :target: https://coveralls.io/github/giampaolo/psutil?branch=master
     :alt: Test coverage (coverall.io)
 
@@ -60,24 +56,10 @@ to 3.5** (users of Python 2.4 and 2.5 may use
 Example applications
 ====================
 
-.. image:: http://psutil.googlecode.com/svn/wiki/images/top-thumb.png
-    :target: http://psutil.googlecode.com/svn/wiki/images/top.png
-    :alt: top
-
-.. image:: http://psutil.googlecode.com/svn/wiki/images/nettop-thumb.png
-    :target: http://psutil.googlecode.com/svn/wiki/images/nettop.png
-    :alt: nettop
-
-.. image:: http://psutil.googlecode.com/svn/wiki/images/iotop-thumb.png
-    :target: http://psutil.googlecode.com/svn/wiki/images/iotop.png
-    :alt: iotop
-
-See also:
-
- * https://github.com/nicolargo/glances
- * https://github.com/google/grr
- * https://github.com/Jahaja/psdash
- * https://github.com/giampaolo/psutil/tree/master/scripts
+- https://github.com/nicolargo/glances
+- https://github.com/google/grr
+- https://github.com/Jahaja/psdash
+- https://github.com/giampaolo/psutil/tree/master/scripts
 
 ==============
 Example usages

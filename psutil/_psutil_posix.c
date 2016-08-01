@@ -84,7 +84,7 @@ psutil_convert_ipaddr(struct sockaddr *addr, int family) {
     char buf[NI_MAXHOST];
     int err;
     int addrlen;
-    int n;
+    size_t n;
     size_t len;
     const char *data;
     char *ptr;

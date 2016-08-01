@@ -188,7 +188,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "4.3.0"
+__version__ = "4.3.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
@@ -495,33 +495,35 @@ class Process(object):
     def as_dict(self, attrs=None, ad_value=None):
         """Utility method returning process information as a
         hashable dictionary.
-
         If 'attrs' is specified it must be a list of strings
         reflecting available Process class' attribute names
         (e.g. ['cpu_times', 'name']) else all public (read
         only) attributes are assumed.
-
         'ad_value' is the value which gets assigned in case
         AccessDenied or ZombieProcess exception is raised when
         retrieving that particular process information.
         """
-        excluded_names = set(
-            ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
-             'is_running', 'as_dict', 'parent', 'children', 'rlimit',
-             'oneshot'])
-        valid_names = _process_attrnames - excluded_names
+        valid_names = _as_dict_attrnames
+        if attrs is not None:
+            if not isinstance(attrs, (list, tuple, set, frozenset)):
+                raise TypeError("invalid attrs type %s" % type(attrs))
+            attrs = set(attrs)
+            invalid_names = attrs - valid_names
+            if invalid_names:
+                raise ValueError("invalid attr name%s %s" % (
+                    "s" if len(invalid_names) > 1 else "",
+                    ", ".join(map(repr, invalid_names))))
+
         retdict = dict()
-        ls = set(attrs) if attrs else _process_attrnames
+        ls = attrs or valid_names
         with self.oneshot():
             for name in ls:
-                if name not in valid_names:
-                    continue
                 try:
-                    attr = getattr(self, name)
-                    if callable(attr):
-                        ret = attr()
+                    if name == 'pid':
+                        ret = self.pid
                     else:
-                        ret = attr
+                        meth = getattr(self, name)
+                        ret = meth()
                 except (AccessDenied, ZombieProcess):
                     ret = ad_value
                 except NotImplementedError:
@@ -532,7 +534,7 @@ class Process(object):
                         raise
                     continue
                 retdict[name] = ret
-            return retdict
+        return retdict
 
     def parent(self):
         """Return the parent process as a Process object pre-emptively
@@ -1322,7 +1324,12 @@ class Popen(Process):
         return ret
 
 
-_process_attrnames = set([x for x in dir(Process) if not x.startswith('_')])
+# The valid attr names which can be processed by Process.as_dict().
+_as_dict_attrnames = set(
+    [x for x in dir(Process) if not x.startswith('_') and x not in
+     ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
+      'is_running', 'as_dict', 'parent', 'children', 'rlimit',
+      'memory_info_ex', 'oneshot']])
 
 
 # =====================================================================

@@ -21,6 +21,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import textwrap
 import threading
 import time
 import warnings
@@ -133,6 +134,11 @@ if TRAVIS or APPVEYOR:
     GLOBAL_TIMEOUT = GLOBAL_TIMEOUT * 4
 VERBOSITY = 1 if os.getenv('SILENT') or TOX else 2
 
+# assertRaisesRegexp renamed to assertRaisesRegex in 3.3; add support
+# for the new name
+if not hasattr(unittest.TestCase, 'assertRaisesRegex'):
+    unittest.TestCase.assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
+
 
 # ===================================================================
 # --- classes
@@ -217,7 +223,7 @@ def get_test_subprocess(cmd=None, wait=False, **kwds):
                 warn("couldn't make sure test file was actually created")
         else:
             wait_for_pid(sproc.pid)
-    _subprocesses_started.add(psutil.Process(sproc.pid))
+    _subprocesses_started.add(sproc)
     return sproc
 
 
@@ -260,33 +266,43 @@ def sh(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
     return stdout.strip()
 
 
-def reap_children(search_all=False):
+def reap_children(recursive=False):
     """Kill any subprocess started by this test suite and ensure that
     no zombies stick around to hog resources and create problems when
     looking for refleaks.
     """
-    global _subprocesses_started
-    procs = _subprocesses_started.copy()
-    if search_all:
-        this_process = psutil.Process()
-        for p in this_process.children(recursive=True):
-            procs.add(p)
-    for p in procs:
+    # Get the children here, before terminating the sub processes
+    # as we don't want to lose the intermediate reference in case
+    # of grand children.
+    if recursive:
+        children = psutil.Process().children(recursive=True)
+
+    subprocs = _subprocesses_started.copy()
+    _subprocesses_started.clear()
+    for subp in subprocs:
         try:
-            p.terminate()
-        except psutil.NoSuchProcess:
-            pass
-    gone, alive = psutil.wait_procs(procs, timeout=GLOBAL_TIMEOUT)
-    for p in alive:
-        warn("couldn't terminate process %s" % p)
-        try:
-            p.kill()
-        except psutil.NoSuchProcess:
-            pass
-    _, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
-    if alive:
-        warn("couldn't not kill processes %s" % str(alive))
-    _subprocesses_started = set(alive)
+            subp.terminate()
+        except OSError as err:
+            if err.errno != errno.ESRCH:
+                raise
+        subp.wait()
+
+    if recursive and children:
+        for p in children:
+            try:
+                p.terminate()
+            except psutil.NoSuchProcess:
+                pass
+        gone, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
+        for p in alive:
+            warn("couldn't terminate process %s" % p)
+            try:
+                p.kill()
+            except psutil.NoSuchProcess:
+                pass
+            _, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
+            if alive:
+                warn("couldn't not kill processes %s" % str(alive))
 
 
 # ===================================================================
@@ -589,7 +605,7 @@ def check_connection_ntuple(conn):
                     assert dupsock.type == conn.type
 
 
-def create_temp_executable_file(suffix, code="void main() { pause(); }"):
+def create_temp_executable_file(suffix, c_code=None):
     tmpdir = None
     if TRAVIS and OSX:
         tmpdir = "/private/tmp"
@@ -598,11 +614,19 @@ def create_temp_executable_file(suffix, code="void main() { pause(); }"):
     os.close(fd)
 
     if which("gcc"):
+        if c_code is None:
+            c_code = textwrap.dedent(
+                """
+                #include <unistd.h>
+                void main() {
+                    pause();
+                }
+                """)
         fd, c_file = tempfile.mkstemp(
             prefix='psu', suffix='.c', dir=tmpdir)
         os.close(fd)
         with open(c_file, "w") as f:
-            f.write(code)
+            f.write(c_code)
         subprocess.check_call(["gcc", c_file, "-o", path])
         safe_remove(c_file)
     else:
@@ -615,7 +639,7 @@ def create_temp_executable_file(suffix, code="void main() { pause(); }"):
 
 
 def cleanup():
-    reap_children(search_all=True)
+    reap_children(recursive=True)
     safe_remove(TESTFN)
     try:
         safe_rmdir(TESTFN_UNICODE)
