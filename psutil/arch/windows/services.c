@@ -106,6 +106,7 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     DWORD i;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
+    PyObject *py_unicode_display_name = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -137,24 +138,36 @@ psutil_winservice_enumerate(PyObject *self, PyObject *args) {
     }
 
     for (i = 0; i < srvCount; i++) {
+        // Get unicode display name.
+        py_unicode_display_name = PyUnicode_Decode(
+            lpService[i].lpDisplayName,
+            _tcslen(lpService[i].lpDisplayName),
+            Py_FileSystemDefaultEncoding,
+            "replace");
+        if (py_unicode_display_name == NULL)
+            goto error;
+
         // Construct the result.
         py_tuple = Py_BuildValue(
-            "(ss)",
+            "(sO)",
             lpService[i].lpServiceName,  // name
-            lpService[i].lpDisplayName  // display_name
+            py_unicode_display_name  // display_name
         );
         if (py_tuple == NULL)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;
+        Py_XDECREF(py_unicode_display_name);
         Py_DECREF(py_tuple);
     }
 
+    // Free resources.
     CloseServiceHandle(sc);
     free(lpService);
     return py_retlist;
 
 error:
+    Py_XDECREF(py_unicode_display_name);
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
     if (sc != NULL)
@@ -182,6 +195,9 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
     DWORD dwBytes = 0;
     QUERY_SERVICE_CONFIG *qsc = NULL;
     PyObject *py_tuple = NULL;
+    PyObject *py_unicode_display_name;
+    PyObject *py_unicode_binpath;
+    PyObject *py_unicode_username;
 
     if (!PyArg_ParseTuple(args, "s", &service_name))
         return NULL;
@@ -205,21 +221,56 @@ psutil_winservice_query_config(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    // Get unicode display name.
+    py_unicode_display_name = PyUnicode_Decode(
+        qsc->lpDisplayName,
+        _tcslen(qsc->lpDisplayName),
+        Py_FileSystemDefaultEncoding,
+        "replace");
+    if (py_unicode_display_name == NULL)
+        goto error;
+
+    // Get unicode bin path.
+    py_unicode_binpath = PyUnicode_Decode(
+        qsc->lpBinaryPathName,
+        _tcslen(qsc->lpBinaryPathName),
+        Py_FileSystemDefaultEncoding,
+        "replace");
+    if (py_unicode_binpath == NULL)
+        goto error;
+
+    // Get unicode username.
+    py_unicode_username = PyUnicode_Decode(
+        qsc->lpServiceStartName,
+        _tcslen(qsc->lpServiceStartName),
+        Py_FileSystemDefaultEncoding,
+        "replace");
+    if (py_unicode_username == NULL)
+        goto error;
+
+    // Construct result tuple.
     py_tuple = Py_BuildValue(
-        "(ssss)",
-        qsc->lpDisplayName,  // display name
-        qsc->lpBinaryPathName,  // binpath
-        qsc->lpServiceStartName,  // username
+        "(OOOs)",
+        py_unicode_display_name,
+        py_unicode_binpath,
+        py_unicode_username,
         get_startup_string(qsc->dwStartType)  // startup
     );
     if (py_tuple == NULL)
         goto error;
 
+    // Free resources.
+    Py_XDECREF(py_unicode_display_name);
+    Py_XDECREF(py_unicode_binpath);
+    Py_XDECREF(py_unicode_username);
     free(qsc);
     CloseServiceHandle(hService);
     return py_tuple;
 
 error:
+    Py_XDECREF(py_unicode_display_name);
+    Py_XDECREF(py_unicode_binpath);
+    Py_XDECREF(py_unicode_username);
     Py_XDECREF(py_tuple);
     if (hService != NULL)
         CloseServiceHandle(hService);
@@ -337,15 +388,15 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         goto error;
     }
 
-    // TODO: handle encoding errors.
     if (scd->lpDescription == NULL) {
         py_retstr = Py_BuildValue("s", "");
     }
     else {
-        // py_retstr = Py_BuildValue("s", scd->lpDescription);
         py_retstr = PyUnicode_Decode(
-            scd->lpDescription, _tcslen(scd->lpDescription),
-            Py_FileSystemDefaultEncoding, "replace");
+            scd->lpDescription,
+            _tcslen(scd->lpDescription),
+            Py_FileSystemDefaultEncoding,
+            "replace");
     }
     if (!py_retstr)
         goto error;

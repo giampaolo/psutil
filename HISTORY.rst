@@ -9,6 +9,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #858: Process.as_dict() should not return memory_info_ex() because it's
   deprecated.
 - #863: [Windows] memory_map truncates addresses above 32 bits
+- #866: [Windows] win_service_iter() and services in general are not able to
+  handle unicode service names / descriptions.
 
 
 4.3.0 - 2016-06-18
