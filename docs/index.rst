@@ -762,18 +762,51 @@ Process class
     The cache is cleared when exiting the context manager block.
     The advice is to use this every time you retrieve more than one information
     about the process. If you're lucky, you'll get a hell of a speed up.
+    Here's a list of methods which can take advantage of the speedup depending
+    on what platform you're on. Emtpy rows indicate the separation between
+    different groups.
 
-        >>> import psutil
-        >>> p = psutil.Process()
-        >>> with p.oneshot():
-        ...     p.name()  # execute internal routine
-        ...     p.ppid()  # use cached value
-        ...     p.uids()  # use cached value
-        ...     p.create_time()  # use cached value
-        ...
-        >>>
+    +------------------+-------------+-------+---------+
+    | Linux            | Windows     | OSX   | FreeBSD |
+    +==================+=============+=======+=========+
+    | name             |             |       |         |
+    +------------------+-------------+-------+---------+
+    | terminal         |             |       |         |
+    +------------------+-------------+-------+---------+
+    | cpu_times        |             |       |         |
+    +------------------+-------------+-------+---------+
+    | cpu_percent      |             |       |         |
+    +------------------+-------------+-------+---------+
+    | create_time      |             |       |         |
+    +------------------+-------------+-------+---------+
+    | status           |             |       |         |
+    +------------------+-------------+-------+---------+
+    | ppid             |             |       |         |
+    +------------------+-------------+-------+---------+
+    |                  |             |       |         |
+    +------------------+-------------+-------+---------+
+    | num_ctx_switches |             |       |         |
+    +------------------+-------------+-------+---------+
+    | num_threads      |             |       |         |
+    +------------------+-------------+-------+---------+
+    | uids             |             |       |         |
+    +------------------+-------------+-------+---------+
+    | gids             |             |       |         |
+    +------------------+-------------+-------+---------+
 
-     .. versionadded:: 4.3.0
+    Example:
+
+    >>> import psutil
+    >>> p = psutil.Process()
+    >>> with p.oneshot():
+    ...     p.name()  # execute internal routine
+    ...     p.ppid()  # use cached value
+    ...     p.uids()  # use cached value
+    ...     p.create_time()  # use cached value
+    ...
+    >>>
+
+    .. versionadded:: 5.0.0
 
   .. method:: ppid()
 
