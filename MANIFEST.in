@@ -20,3 +20,5 @@ recursive-include .ci *
 recursive-include docs *
 recursive-include psutil *.py *.c *.h README*
 recursive-include scripts *.py
+recursive-include scripts/internal *.py
+recursive-include scripts/internal/README*
