@@ -26,10 +26,6 @@ try:
     from socket import AF_UNIX
 except ImportError:
     AF_UNIX = None
-try:
-    import threading
-except ImportError:
-    import dummy_threading as threading
 
 if sys.version_info >= (3, 4):
     import enum
@@ -250,19 +246,16 @@ def memoize(fun):
     @functools.wraps(fun)
     def wrapper(*args, **kwargs):
         key = (args, frozenset(sorted(kwargs.items())))
-        with lock:
-            try:
-                return cache[key]
-            except KeyError:
-                ret = cache[key] = fun(*args, **kwargs)
-                return ret
+        try:
+            return cache[key]
+        except KeyError:
+            ret = cache[key] = fun(*args, **kwargs)
+            return ret
 
     def cache_clear():
         """Clear cache."""
-        with lock:
-            cache.clear()
+        cache.clear()
 
-    lock = threading.RLock()
     cache = {}
     wrapper.cache_clear = cache_clear
     return wrapper
