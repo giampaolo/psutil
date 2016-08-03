@@ -22,13 +22,35 @@ ITERATIONS = 1000
 # The list of Process methods which gets collected in one shot and
 # as such get advantage of the speedup.
 if psutil.LINUX:
-    names = ["name", "terminal", "cpu_times", "cpu_percent", "create_time",
-             "status", "ppid", "num_ctx_switches", "num_threads", "uids",
-             "gids"]
+    names = (
+        'cpu_percent',
+        'cpu_times',
+        'create_time',
+        'gids',
+        'name',
+        'num_ctx_switches',
+        'num_threads',
+        'ppid',
+        'status',
+        'terminal',
+        'uids',
+    )
 elif psutil.BSD:
-    names = ["ppid", "status", "uids", "gids", "terminal", "cpu_times",
-             "cpu_percent", "create_time", "num_ctx_switches", "io_counters",
-             "memory_info", "memory_percent", "memory_full_info"]
+    names = (
+        'cpu_percent',
+        'cpu_times',
+        'create_time',
+        'gids',
+        'io_counters',
+        'memory_full_info',
+        'memory_info',
+        'memory_percent',
+        'num_ctx_switches',
+        'ppid',
+        'status',
+        'terminal',
+        'uids',
+    )
 else:
     raise RuntimeError("platform %r not supported" % sys.platform)
 
