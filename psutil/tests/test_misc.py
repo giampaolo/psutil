@@ -21,6 +21,8 @@ from psutil import OPENBSD
 from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
+from psutil._common import memoize
+from psutil._common import memoize_when_activated
 from psutil._common import supports_ipv6
 from psutil.tests import APPVEYOR
 from psutil.tests import SCRIPTS_DIR
@@ -173,8 +175,6 @@ class TestMisc(unittest.TestCase):
         self.assertNotIn('foo', p.as_dict())
 
     def test_memoize(self):
-        from psutil._common import memoize
-
         @memoize
         def foo(*args, **kwargs):
             "foo docstring"
@@ -208,6 +208,32 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(len(calls), 4)
         # docstring
         self.assertEqual(foo.__doc__, "foo docstring")
+
+    def test_memoize_when_activated(self):
+        class Foo:
+            @memoize_when_activated
+            def foo(self):
+                calls.append(None)
+
+        f = Foo()
+        calls = []
+        f.foo()
+        f.foo()
+        self.assertEqual(len(calls), 2)
+
+        # activate
+        calls = []
+        f.foo.cache_activate()
+        f.foo()
+        f.foo()
+        self.assertEqual(len(calls), 1)
+
+        # deactivate
+        calls = []
+        f.foo.cache_deactivate()
+        f.foo()
+        f.foo()
+        self.assertEqual(len(calls), 2)
 
     def test_parse_environ_block(self):
         from psutil._common import parse_environ_block

@@ -268,6 +268,60 @@ def memoize(fun):
     return wrapper
 
 
+def memoize_when_activated(fun):
+    """A memoize decorator which is disabled by default. It can be
+    activated and deactivated on request.
+
+    >>> @memoize
+    ... def foo()
+    ...     print(1)
+    ...
+    >>> # deactivated (default)
+    >>> foo()
+    1
+    >>> foo()
+    1
+    >>>
+    >>> # activated
+    >>> foo.cache_activate()
+    >>> foo()
+    1
+    >>> foo()
+    >>> foo()
+    >>>
+    """
+    @functools.wraps(fun)
+    def wrapper(self):
+        if not wrapper.cache_activated:
+            return fun(self)
+        else:
+            try:
+                ret = cache[fun]
+            except KeyError:
+                ret = cache[fun] = fun(self)
+            return ret
+
+    def cache_clear():
+        """Clear cache."""
+        cache.clear()
+
+    def cache_activate():
+        """Activate cache."""
+        wrapper.cache_activated = True
+
+    def cache_deactivate():
+        """Deactivate and clear cache."""
+        wrapper.cache_activated = False
+        cache_clear()
+
+    cache = {}
+    wrapper.cache_activated = False
+    wrapper.cache_activate = cache_activate
+    wrapper.cache_deactivate = cache_deactivate
+    wrapper.cache_clear = cache_clear
+    return wrapper
+
+
 def isfile_strict(path):
     """Same as os.path.isfile() but does not swallow EACCES / EPERM
     exceptions, see:

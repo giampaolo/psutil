@@ -307,7 +307,7 @@ class TestProcess(unittest.TestCase):
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
 
-    @unittest.skipIf(WINDOWS, 'Windows only')
+    @unittest.skipIf(WINDOWS, 'UNIX only')
     def test_terminal(self):
         terminal = psutil.Process().terminal()
         if sys.stdin.isatty():
@@ -1252,7 +1252,7 @@ class TestProcess(unittest.TestCase):
         #   retcode)
 
         excluded_names = ['pid', 'is_running', 'wait', 'create_time',
-                          'memory_info_ex']
+                          'oneshot', 'memory_info_ex']
         if LINUX and not RLIMIT_SUPPORT:
             excluded_names.append('rlimit')
         for name in dir(p):
@@ -1538,7 +1538,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         excluded_names = set([
             'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
             'as_dict', 'cpu_percent', 'parent', 'children', 'pid',
-            'memory_info_ex',
+            'memory_info_ex', 'oneshot',
         ])
         if LINUX and not RLIMIT_SUPPORT:
             excluded_names.add('rlimit')

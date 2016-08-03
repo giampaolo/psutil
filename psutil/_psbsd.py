@@ -17,6 +17,7 @@ from . import _psutil_bsd as cext
 from . import _psutil_posix as cext_posix
 from ._common import conn_tmap
 from ._common import FREEBSD
+from ._common import memoize_when_activated
 from ._common import NETBSD
 from ._common import OPENBSD
 from ._common import sockfam_to_enum
@@ -95,6 +96,32 @@ if NETBSD:
 else:
     PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 AF_LINK = cext_posix.AF_LINK
+
+kinfo_proc_map = dict(
+    ppid=0,
+    status=1,
+    real_uid=2,
+    effective_uid=3,
+    saved_uid=4,
+    real_gid=5,
+    effective_gid=6,
+    saved_gid=7,
+    ttynr=8,
+    create_time=9,
+    ctx_switches_vol=10,
+    ctx_switches_unvol=11,
+    read_io_count=12,
+    write_io_count=13,
+    user_time=14,
+    sys_time=15,
+    ch_user_time=16,
+    ch_sys_time=17,
+    rss=18,
+    vms=19,
+    memtext=20,
+    memdata=21,
+    memstack=22,
+)
 
 
 # =====================================================================
@@ -452,6 +479,19 @@ class Process(object):
         self._name = None
         self._ppid = None
 
+    @memoize_when_activated
+    def oneshot(self):
+        """Retrieves multiple process info in one shot as a raw tuple."""
+        ret = cext.proc_oneshot_info(self.pid)
+        assert len(ret) == len(kinfo_proc_map)
+        return ret
+
+    def oneshot_enter(self):
+        self.oneshot.cache_activate()
+
+    def oneshot_exit(self):
+        self.oneshot.cache_deactivate()
+
     @wrap_exceptions
     def name(self):
         return cext.proc_name(self.pid)
@@ -502,7 +542,7 @@ class Process(object):
 
     @wrap_exceptions
     def terminal(self):
-        tty_nr = cext.proc_tty_nr(self.pid)
+        tty_nr = self.oneshot()[kinfo_proc_map['ttynr']]
         tmap = _psposix.get_terminal_map()
         try:
             return tmap[tty_nr]
@@ -511,32 +551,49 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        self._ppid = cext.proc_ppid(self.pid)
+        self._ppid = self.oneshot()[kinfo_proc_map['ppid']]
         return self._ppid
 
     @wrap_exceptions
     def uids(self):
-        real, effective, saved = cext.proc_uids(self.pid)
-        return _common.puids(real, effective, saved)
+        rawtuple = self.oneshot()
+        return _common.puids(
+            rawtuple[kinfo_proc_map['real_uid']],
+            rawtuple[kinfo_proc_map['effective_uid']],
+            rawtuple[kinfo_proc_map['saved_uid']])
 
     @wrap_exceptions
     def gids(self):
-        real, effective, saved = cext.proc_gids(self.pid)
-        return _common.pgids(real, effective, saved)
+        rawtuple = self.oneshot()
+        return _common.pgids(
+            rawtuple[kinfo_proc_map['real_gid']],
+            rawtuple[kinfo_proc_map['effective_gid']],
+            rawtuple[kinfo_proc_map['saved_gid']])
 
     @wrap_exceptions
     def cpu_times(self):
-        return _common.pcputimes(*cext.proc_cpu_times(self.pid))
+        rawtuple = self.oneshot()
+        return _common.pcputimes(
+            rawtuple[kinfo_proc_map['user_time']],
+            rawtuple[kinfo_proc_map['sys_time']],
+            rawtuple[kinfo_proc_map['ch_user_time']],
+            rawtuple[kinfo_proc_map['ch_sys_time']])
 
     @wrap_exceptions
     def memory_info(self):
-        return pmem(*cext.proc_memory_info(self.pid))
+        rawtuple = self.oneshot()
+        return pmem(
+            rawtuple[kinfo_proc_map['rss']],
+            rawtuple[kinfo_proc_map['vms']],
+            rawtuple[kinfo_proc_map['memtext']],
+            rawtuple[kinfo_proc_map['memdata']],
+            rawtuple[kinfo_proc_map['memstack']])
 
     memory_full_info = memory_info
 
     @wrap_exceptions
     def create_time(self):
-        return cext.proc_create_time(self.pid)
+        return self.oneshot()[kinfo_proc_map['create_time']]
 
     @wrap_exceptions
     def num_threads(self):
@@ -548,7 +605,10 @@ class Process(object):
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        return _common.pctxsw(*cext.proc_num_ctx_switches(self.pid))
+        rawtuple = self.oneshot()
+        return _common.pctxsw(
+            rawtuple[kinfo_proc_map['ctx_switches_vol']],
+            rawtuple[kinfo_proc_map['ctx_switches_unvol']])
 
     @wrap_exceptions
     def threads(self):
@@ -626,14 +686,18 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        code = cext.proc_status(self.pid)
+        code = self.oneshot()[kinfo_proc_map['status']]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
     @wrap_exceptions
     def io_counters(self):
-        rc, wc, rb, wb = cext.proc_io_counters(self.pid)
-        return _common.pio(rc, wc, rb, wb)
+        rawtuple = self.oneshot()
+        return _common.pio(
+            rawtuple[kinfo_proc_map['read_io_count']],
+            rawtuple[kinfo_proc_map['write_io_count']],
+            -1,
+            -1)
 
     @wrap_exceptions
     def cwd(self):

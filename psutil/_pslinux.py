@@ -25,6 +25,7 @@ from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
 from ._common import isfile_strict
 from ._common import memoize
+from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
@@ -983,12 +984,16 @@ class Process(object):
         self._ppid = None
         self._procfs_path = get_procfs_path()
 
+    @memoize_when_activated
     def _parse_stat_file(self):
         """Parse /proc/{pid}/stat file. Return a list of fields where
         process name is in position 0.
         Using "man proc" as a reference: where "man proc" refers to
-        position N, always subscract 2 (e.g starttime pos 22 in
+        position N, always substract 2 (e.g starttime pos 22 in
         'man proc' == pos 20 in the list returned here).
+
+        The return value is cached in case oneshot() ctx manager is
+        in use.
         """
         with open_binary("%s/%s/stat" % (self._procfs_path, self.pid)) as f:
             data = f.read()
@@ -1000,7 +1005,13 @@ class Process(object):
         fields_after_name = data[rpar + 2:].split()
         return [name] + fields_after_name
 
+    @memoize_when_activated
     def _read_status_file(self):
+        """Read /proc/{pid}/stat file and return its content.
+
+        The return value is cached in case oneshot() ctx manager is
+        in use.
+        """
         with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
             return f.read()
 
@@ -1008,6 +1019,14 @@ class Process(object):
         with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
                          buffering=BIGGER_FILE_BUFFERING) as f:
             return f.read().strip()
+
+    def oneshot_enter(self):
+        self._parse_stat_file.cache_activate()
+        self._read_status_file.cache_activate()
+
+    def oneshot_exit(self):
+        self._parse_stat_file.cache_deactivate()
+        self._read_status_file.cache_deactivate()
 
     @wrap_exceptions
     def name(self):

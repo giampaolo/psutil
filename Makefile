@@ -49,6 +49,8 @@ build: clean
 	rm -rf tmp
 
 install: build
+	# make sure setuptools is installed (needed for 'develop' / edit mode)
+	$(PYTHON) -c "import setuptools"
 	$(PYTHON) setup.py develop --user
 	rm -rf tmp
 
@@ -140,6 +142,10 @@ git-tag-release:
 install-git-hooks:
 	ln -sf ../../.git-pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
+
+# run script which benchmarks oneshot() ctx manager (see #799)
+bench-oneshot: install
+	$(PYTHON) scripts/internal/bench_oneshot.py
 
 # download exes/wheels hosted on appveyor
 win-download-exes:

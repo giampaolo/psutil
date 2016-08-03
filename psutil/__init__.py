@@ -12,6 +12,7 @@ in Python.
 from __future__ import division
 
 import collections
+import contextlib
 import errno
 import functools
 import os
@@ -378,6 +379,7 @@ class Process(object):
         self._create_time = None
         self._gone = False
         self._hash = None
+        self._oneshot_inctx = False
         # used for caching on Windows only (on POSIX ppid may change)
         self._ppid = None
         # platform-specific modules define an _psplatform.Process
@@ -445,15 +447,58 @@ class Process(object):
 
     # --- utility methods
 
+    @contextlib.contextmanager
+    def oneshot(self):
+        """Utility context manager which considerably speeds up the
+        retrieval of multiple process information at the same time.
+
+        Internally different process info (e.g. name, ppid, uids,
+        gids, ...) may be fetched by using the same routine, but
+        only one information is returned and the others are discarded.
+        When using this context manager the internal routine is
+        executed once (in the example below on name()) and the
+        other info are cached.
+
+        The cache is cleared when exiting the context manager block.
+        The advice is to use this every time you retrieve more than
+        one information about the process. If you're lucky, you'll
+        get a hell of a speedup.
+
+        >>> p = Process()
+        >>> with p.oneshot():
+        ...     p.name()  # execute internal routine
+        ...     p.ppid()  # use cached value
+        ...     p.uids()  # use cached value
+        ...     p.gids()  # use cached value
+        ...
+        """
+        if self._oneshot_inctx:
+            # NOOP: this covers the use case where the user enters the
+            # context twice. Since as_dict() internally uses oneshot()
+            # I expect that the code below will be a pretty common
+            # "mistake" that the user will make, so let's guard
+            # against that:
+            #
+            # >>> with p.oneshot():
+            # ...    p.as_dict()
+            # ...
+            yield
+        else:
+            self._oneshot_inctx = True
+            try:
+                self._proc.oneshot_enter()
+                yield
+            finally:
+                self._oneshot_inctx = False
+                self._proc.oneshot_exit()
+
     def as_dict(self, attrs=None, ad_value=None):
         """Utility method returning process information as a
         hashable dictionary.
-
         If 'attrs' is specified it must be a list of strings
         reflecting available Process class' attribute names
         (e.g. ['cpu_times', 'name']) else all public (read
         only) attributes are assumed.
-
         'ad_value' is the value which gets assigned in case
         AccessDenied or ZombieProcess exception is raised when
         retrieving that particular process information.
@@ -471,23 +516,24 @@ class Process(object):
 
         retdict = dict()
         ls = attrs or valid_names
-        for name in ls:
-            try:
-                if name == 'pid':
-                    ret = self.pid
-                else:
-                    meth = getattr(self, name)
-                    ret = meth()
-            except (AccessDenied, ZombieProcess):
-                ret = ad_value
-            except NotImplementedError:
-                # in case of not implemented functionality (may happen
-                # on old or exotic systems) we want to crash only if
-                # the user explicitly asked for that particular attr
-                if attrs:
-                    raise
-                continue
-            retdict[name] = ret
+        with self.oneshot():
+            for name in ls:
+                try:
+                    if name == 'pid':
+                        ret = self.pid
+                    else:
+                        meth = getattr(self, name)
+                        ret = meth()
+                except (AccessDenied, ZombieProcess):
+                    ret = ad_value
+                except NotImplementedError:
+                    # in case of not implemented functionality (may happen
+                    # on old or exotic systems) we want to crash only if
+                    # the user explicitly asked for that particular attr
+                    if attrs:
+                        raise
+                    continue
+                retdict[name] = ret
         return retdict
 
     def parent(self):
@@ -1283,7 +1329,7 @@ _as_dict_attrnames = set(
     [x for x in dir(Process) if not x.startswith('_') and x not in
      ['send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
       'is_running', 'as_dict', 'parent', 'children', 'rlimit',
-      'memory_info_ex']])
+      'memory_info_ex', 'oneshot']])
 
 
 # =====================================================================

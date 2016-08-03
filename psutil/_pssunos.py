@@ -347,6 +347,12 @@ class Process(object):
         self._ppid = None
         self._procfs_path = get_procfs_path()
 
+    def oneshot_enter(self):
+        pass
+
+    def oneshot_exit(self):
+        pass
+
     @wrap_exceptions
     def name(self):
         # note: max len == 15
