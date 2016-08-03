@@ -762,8 +762,6 @@ Process class
     The cache is cleared when exiting the context manager block.
     The advice is to use this every time you retrieve more than one information
     about the process. If you're lucky, you'll get a hell of a speed up.
-    Here's a list of methods which can take advantage of the speedup depending
-    on what platform you're on.
     Example:
 
     >>> import psutil
@@ -776,39 +774,40 @@ Process class
     ...
     >>>
 
-    In the table below emtpy rows indicate what process methods can be
-    efficiently grouped together internally.
-    Horizontal empty rows indicate separation between different groups.
+    Here's a list of methods which can take advantage of the speedup depending
+    on what platform you're on.
+    In the table below horizontal emtpy rows indicate what process methods can
+    be efficiently grouped together internally.
 
-    +------------------+-------------+-------+------------------+
-    | Linux            | Windows     | OSX   | BSD              |
-    +==================+=============+=======+==================+
-    | cpu_percent      |             |       | cpu_percent      |
-    +------------------+-------------+-------+------------------+
-    | cpu_times        |             |       | cpu_times        |
-    +------------------+-------------+-------+------------------+
-    | create_time      |             |       | create_time      |
-    +------------------+-------------+-------+------------------+
-    | name             |             |       | gids             |
-    +------------------+-------------+-------+------------------+
-    | ppid             |             |       | io_counters      |
-    +------------------+-------------+-------+------------------+
-    | status           |             |       | memory_full_info |
-    +------------------+-------------+-------+------------------+
-    | terminal         |             |       | memory_info      |
-    +------------------+-------------+-------+------------------+
-    |                  |             |       | memory_percent   |
-    +------------------+-------------+-------+------------------+
-    | gids             |             |       | num_ctx_switches |
-    +------------------+-------------+-------+------------------+
-    | num_ctx_switches |             |       | ppid             |
-    +------------------+-------------+-------+------------------+
-    | num_threads      |             |       | status           |
-    +------------------+-------------+-------+------------------+
-    | uids             |             |       | terminal         |
-    +------------------+-------------+-------+------------------+
-    |                  |             |       | uids             |
-    +------------------+-------------+-------+------------------+
+    +------------------------------+-------------+-------+------------------------------+
+    | Linux                        | Windows     | OSX   | BSD                          |
+    +==============================+=============+=======+==============================+
+    | :meth:`~Process.cpu_percent` |             |       | :meth:`~Process.cpu_percent` |
+    +------------------------------+-------------+-------+------------------------------+
+    | :meth:`~Process.cpu_times`   |             |       | :meth:`~Process.cpu_times`   |
+    +------------------------------+-------------+-------+------------------------------+
+    | :meth:`create_time`          |             |       | :meth:`create_time`          |
+    +------------------------------+-------------+-------+------------------------------+
+    | :meth:`name`                 |             |       | :meth:`gids`                 |
+    +------------------------------+-------------+-------+------------------------------+
+    | :meth:`ppid`                 |             |       | :meth:`io_counters`          |
+    +------------------------------+-------------+-------+------------------------------+
+    | :meth:`status`               |             |       | :meth:`memory_full_info`     |
+    +------------------------------+-------------+-------+------------------------------+
+    | :meth:`terminal`             |             |       | :meth:`memory_info`          |
+    +------------------------------+-------------+-------+------------------------------+
+    |                              |             |       | :meth:`memory_percent`       |
+    +------------------------------+-------------+-------+------------------------------+
+    | :meth:`gids`                 |             |       | :meth:`num_ctx_switches`     |
+    +------------------------------+-------------+-------+------------------------------+
+    | :meth:`num_ctx_switches`     |             |       | :meth:`ppid`                 |
+    +------------------------------+-------------+-------+------------------------------+
+    | :meth:`num_threads`          |             |       | :meth:`status`               |
+    +------------------------------+-------------+-------+------------------------------+
+    | :meth:`uids`                 |             |       | :meth:`terminal`             |
+    +------------------------------+-------------+-------+------------------------------+
+    |                              |             |       | :meth:`uids`                 |
+    +------------------------------+-------------+-------+------------------------------+
 
     .. versionadded:: 5.0.0
 
