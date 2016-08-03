@@ -210,27 +210,29 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(foo.__doc__, "foo docstring")
 
     def test_memoize_when_activated(self):
-        @memoize_when_activated
-        def foo():
-            calls.append(None)
+        class Foo:
+            @memoize_when_activated
+            def foo(self):
+                calls.append(None)
 
+        f = Foo()
         calls = []
-        foo()
-        foo()
+        f.foo()
+        f.foo()
         self.assertEqual(len(calls), 2)
 
         # activate
         calls = []
-        foo.cache_activate()
-        foo()
-        foo()
+        f.foo.cache_activate()
+        f.foo()
+        f.foo()
         self.assertEqual(len(calls), 1)
 
         # deactivate
         calls = []
-        foo.cache_deactivate()
-        foo()
-        foo()
+        f.foo.cache_deactivate()
+        f.foo()
+        f.foo()
         self.assertEqual(len(calls), 2)
 
     def test_parse_environ_block(self):
