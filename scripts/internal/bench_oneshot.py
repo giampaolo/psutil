@@ -40,7 +40,10 @@ def call(funs):
 def main():
     p = psutil.Process()
     funs = collect(p)
-    print("%s methods involved on platform %r" % (len(names), sys.platform))
+    print("%s methods involved on platform %r (%s iterations):" % (
+        len(names), sys.platform, ITERATIONS))
+    for name in sorted(names):
+        print "    " + name
 
     # first "normal" run
     t = time.time()
@@ -53,7 +56,6 @@ def main():
     t = time.time()
     for x in range(ITERATIONS):
         with p.oneshot():
-            time.sleep(.0001)
             call(funs)
     elapsed2 = time.time() - t
     print("oneshot: %.3f secs" % elapsed2)
