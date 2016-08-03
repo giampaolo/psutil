@@ -746,10 +746,6 @@ Process class
     :meth:`is_running()` before querying the process or use
     :func:`process_iter()` in case you're iterating over all processes.
 
-  .. attribute:: pid
-
-    The process PID.
-
   .. method:: oneshot()
 
     Utility context manager which considerably speeds up the retrieval of
@@ -758,7 +754,8 @@ Process class
     :meth:`uids`, :meth:`create_time`, ...) may be fetched by using the same
     routine, but only one information is returned and the others are discarded.
     When using this context manager the internal routine is executed once (in
-    the example below on :meth:`name()`) and the other info are cached.
+    the example below on :meth:`name()`) and the other info are cached and
+    returned in the sub-sequent calls sharing the same internal routine.
     The cache is cleared when exiting the context manager block.
     The advice is to use this every time you retrieve more than one information
     about the process. If you're lucky, you'll get a hell of a speed up.
@@ -767,10 +764,10 @@ Process class
     >>> import psutil
     >>> p = psutil.Process()
     >>> with p.oneshot():
-    ...     p.name()  # execute internal routine
-    ...     p.ppid()  # use cached value
-    ...     p.uids()  # use cached value
-    ...     p.create_time()  # use cached value
+    ...     p.name()  # execute internal routine collecting multiple info once
+    ...     p.cpu_times()  # return cached value
+    ...     p.cpu_percent()  # return cached value
+    ...     p.create_time()  # return cached value
     ...
     >>>
 
@@ -778,6 +775,8 @@ Process class
     on what platform you're on.
     In the table below horizontal emtpy rows indicate what process methods can
     be efficiently grouped together internally.
+    The last column (speedup) shows an approximation of the speedup you can get
+    if you collect all this methods together (best case scenario).
 
     +------------------------------+-------------+-------+------------------------------+
     | Linux                        | Windows     | OSX   | BSD                          |
@@ -808,8 +807,15 @@ Process class
     +------------------------------+-------------+-------+------------------------------+
     |                              |             |       | :meth:`uids`                 |
     +------------------------------+-------------+-------+------------------------------+
+    +------------------------------+-------------+-------+------------------------------+
+    | *speedup: +2.5x*             |             |       | *speedup: +2x*               |
+    +------------------------------+-------------+-------+------------------------------+
 
     .. versionadded:: 5.0.0
+
+  .. attribute:: pid
+
+    The process PID. This is the only (read-only) attribute of the class.
 
   .. method:: ppid()
 
