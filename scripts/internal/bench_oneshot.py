@@ -10,6 +10,7 @@ Process.oneshot() ctx manager.
 See: https://github.com/giampaolo/psutil/issues/799
 """
 
+from __future__ import print_function
 import sys
 import time
 
@@ -26,7 +27,8 @@ if psutil.LINUX:
              "gids"]
 elif psutil.BSD:
     names = ["ppid", "status", "uids", "gids", "terminal", "cpu_times",
-             "cpu_percent", "create_time", "num_ctx_switches", "io_counters"]
+             "cpu_percent", "create_time", "num_ctx_switches", "io_counters",
+             "memory_info", "memory_percent", "memory_full_info"]
 else:
     raise RuntimeError("platform %r not supported" % sys.platform)
 
@@ -46,7 +48,7 @@ def main():
     print("%s methods involved on platform %r (%s iterations):" % (
         len(names), sys.platform, ITERATIONS))
     for name in sorted(names):
-        print "    " + name
+        print("    " + name)
 
     # first "normal" run
     t = time.time()

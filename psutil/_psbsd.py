@@ -116,6 +116,11 @@ kinfo_proc_map = dict(
     sys_time=15,
     ch_user_time=16,
     ch_sys_time=17,
+    rss=18,
+    vms=19,
+    memtext=20,
+    memdata=21,
+    memstack=22,
 )
 
 
@@ -477,7 +482,9 @@ class Process(object):
     @memoize_when_activated
     def oneshot(self):
         """Retrieves multiple process info in one shot as a raw tuple."""
-        return cext.proc_oneshot_info(self.pid)
+        ret = cext.proc_oneshot_info(self.pid)
+        assert len(ret) == len(kinfo_proc_map)
+        return ret
 
     def oneshot_enter(self):
         self.oneshot.cache_activate()
@@ -574,7 +581,13 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        return pmem(*cext.proc_memory_info(self.pid))
+        rawtuple = self.oneshot()
+        return pmem(
+            rawtuple[kinfo_proc_map['rss']],
+            rawtuple[kinfo_proc_map['vms']],
+            rawtuple[kinfo_proc_map['memtext']],
+            rawtuple[kinfo_proc_map['memdata']],
+            rawtuple[kinfo_proc_map['memstack']])
 
     memory_full_info = memory_info
 

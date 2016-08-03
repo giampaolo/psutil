@@ -183,51 +183,105 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 }
 
 
+/*
+ * Collect different info about a process in one shot and return
+ * them as a big Python tuple.
+ */
 static PyObject *
 psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long pid;
+    long rss;
+    long vms;
+    long memtext;
+    long memdata;
+    long memstack;
     kinfo_proc kp;
+    long pagesize = sysconf(_SC_PAGESIZE);
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
 
-    return Py_BuildValue(
-        "(lillllllidlllldddd)",
+    // Calculate memory.
 #ifdef __FreeBSD__
+    rss = (long)kp.ki_rssize * pagesize;
+    vms = (long)kp.ki_size;
+    memtext = (long)kp.ki_tsize * pagesize;
+    memdata = (long)kp.ki_dsize * pagesize;
+    memstack = (long)kp.ki_ssize * pagesize;
+#else
+    rss = (long)kp.p_vm_rssize * pagesize;
+    #ifdef __OpenBSD__
+        // VMS, this is how ps determines it on OpenBSD:
+        // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n461
+        // vms
+        vms = (long)(kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize) * pagesize;
+    #elif __NetBSD__
+        // VMS, this is how top determines it on NetBSD:
+        // ftp://ftp.iij.ad.jp/pub/NetBSD/NetBSD-release-6/src/external/bsd/
+        //     top/dist/machine/m_netbsd.c
+        vms = (long)kp.p_vm_msize * pagesize;
+    #endif
+        memtext = (long)kp.p_vm_tsize * pagesize;
+        memdata = (long)kp.p_vm_dsize * pagesize;
+        memstack = (long)kp.p_vm_ssize * pagesize;
+#endif
+
+    // Return a single big tuple with all process info.
+    return Py_BuildValue(
+        "(lillllllidllllddddlllll)",
+#ifdef __FreeBSD__
+        //
         (long)kp.ki_ppid,                // (long) ppid
         (int)kp.ki_stat,                 // (int) status
+        // UIDs
         (long)kp.ki_ruid,                // (long) real uid
         (long)kp.ki_uid,                 // (long) effective uid
         (long)kp.ki_svuid,               // (long) saved uid
+        // GIDs
         (long)kp.ki_rgid,                // (long) real gid
         (long)kp.ki_groups[0],           // (long) effective gid
         (long)kp.ki_svuid,               // (long) saved gid
+        //
         kp.ki_tdev,                      // (int) tty nr
         PSUTIL_TV2DOUBLE(kp.ki_start),   // (double) create time
+        // ctx switches
         kp.ki_rusage.ru_nvcsw,           // (long) ctx switches (voluntary)
         kp.ki_rusage.ru_nivcsw,          // (long) ctx switches (unvoluntary)
+        // IO count
         kp.ki_rusage.ru_inblock,         // (long) read io count
         kp.ki_rusage.ru_oublock,         // (long) write io count
         // CPU times: convert from micro seconds to seconds.
         PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_utime),     // (double) user time
         PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_stime),     // (double) sys time
         PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_utime),  // (double) children utime
-        PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime)   // (double) children stime
+        PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime),  // (double) children stime
+        // memory
+        rss,                              // (long) rss
+        vms,                              // (long) vms
+        memtext,                          // (long) mem text
+        memdata,                          // (long) mem data
+        memstack                          // (long) mem stack
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
+        //
         (long)kp.p_ppid,                 // (long) ppid
         (int)kp.p_stat,                  // (int) status
+        // UIDs
         (long)kp.p_ruid,                 // (long) real uid
         (long)kp.p_uid,                  // (long) effective uid
         (long)kp.p_svuid                 // (long) saved uid
+        // GIDs
         (long)kp.p_rgid,                 // (long) real gid
         (long)kp.p_groups[0],            // (long) effective gid
         (long)kp.p_svuid,                // (long) saved gid
+        //
         kp.p_tdev,                       // (int) tty nr
         PSUTIL_KPT2DOUBLE(kp.p_ustart),  // (double) create time
+        // ctx switches
         kp.p_uru_nvcsw,                  // (long) ctx switches (voluntary)
         kp.p_uru_nivcsw,                 // (long) ctx switches (unvoluntary)
+        // IO count
         kp.p_uru_inblock,                // (long) read io count
         kp.p_uru_oublock,                // (long) write io count
         // CPU times: convert from micro seconds to seconds.
@@ -236,7 +290,13 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         // OpenBSD and NetBSD provide children user + system times summed
         // together (no distinction).
         kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0,  // (double) ch utime
-        kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0   // (double) ch stime
+        kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0,  // (double) ch stime
+        // memory
+        rss,                              // (long) rss
+        vms,                              // (long) vms
+        memtext,                          // (long) mem text
+        memdata,                          // (long) mem data
+        memstack                          // (long) mem stack
 #endif
     );
 }
@@ -308,49 +368,6 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
         Py_RETURN_NONE;  // mimic os.cpu_count()
     else
         return Py_BuildValue("i", ncpu);
-}
-
-
-
-/*
- * Return extended memory info for a process as a Python tuple.
- */
-static PyObject *
-psutil_proc_memory_info(PyObject *self, PyObject *args) {
-    long pagesize = sysconf(_SC_PAGESIZE);
-    long pid;
-    kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-
-    return Py_BuildValue(
-        "(lllll)",
-#ifdef __FreeBSD__
-        (long) kp.ki_rssize * pagesize,  // rss
-        (long) kp.ki_size,  // vms
-        (long) kp.ki_tsize * pagesize,  // text
-        (long) kp.ki_dsize * pagesize,  // data
-        (long) kp.ki_ssize * pagesize  // stack
-#else
-        (long) kp.p_vm_rssize * pagesize,    // rss
-    #ifdef __OpenBSD__
-        // VMS, this is how ps determines it on OpenBSD:
-        // http://anoncvs.spacehopper.org/openbsd-src/tree/bin/ps/print.c#n461
-        // vms
-        (long) (kp.p_vm_dsize + kp.p_vm_ssize + kp.p_vm_tsize) * pagesize,
-    #elif __NetBSD__
-        // VMS, this is how top determines it on NetBSD:
-        // ftp://ftp.iij.ad.jp/pub/NetBSD/NetBSD-release-6/src/external/bsd/
-        //     top/dist/machine/m_netbsd.c
-        (long) kp.p_vm_msize * pagesize,  // vms
-    #endif
-        (long) kp.p_vm_tsize * pagesize,  // text
-        (long) kp.p_vm_dsize * pagesize,  // data
-        (long) kp.p_vm_ssize * pagesize  // stack
-#endif
-    );
 }
 
 
@@ -788,6 +805,7 @@ error:
  */
 static PyMethodDef
 PsutilMethods[] = {
+
     // --- per-process functions
 
     {"proc_oneshot_info", psutil_proc_oneshot_info, METH_VARARGS,
@@ -798,8 +816,6 @@ PsutilMethods[] = {
      "Return connections opened by process"},
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
      "Return process cmdline as a list of cmdline arguments"},
-    {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
-     "Return extended memory info for a process as a Python tuple."},
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads"},
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
