@@ -183,6 +183,65 @@ psutil_boot_time(PyObject *self, PyObject *args) {
 }
 
 
+static PyObject *
+psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
+    long pid;
+    kinfo_proc kp;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (psutil_kinfo_proc(pid, &kp) == -1)
+        return NULL;
+
+    return Py_BuildValue(
+        "(lillllllidlllldddd)",
+#ifdef __FreeBSD__
+        (long)kp.ki_ppid,                // (long) ppid
+        (int)kp.ki_stat,                 // (int) status
+        (long)kp.ki_ruid,                // (long) real uid
+        (long)kp.ki_uid,                 // (long) effective uid
+        (long)kp.ki_svuid,               // (long) saved uid
+        (long)kp.ki_rgid,                // (long) real gid
+        (long)kp.ki_groups[0],           // (long) effective gid
+        (long)kp.ki_svuid,               // (long) saved gid
+        kp.ki_tdev,                      // (int) tty nr
+        PSUTIL_TV2DOUBLE(kp.ki_start),   // (double) create time
+        kp.ki_rusage.ru_nvcsw,           // (long) ctx switches (voluntary)
+        kp.ki_rusage.ru_nivcsw,          // (long) ctx switches (unvoluntary)
+        kp.ki_rusage.ru_inblock,         // (long) read io count
+        kp.ki_rusage.ru_oublock,         // (long) write io count
+        // CPU times: convert from micro seconds to seconds.
+        PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_utime),     // (double) user time
+        PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_stime),     // (double) sys time
+        PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_utime),  // (double) children utime
+        PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime)   // (double) children stime
+#elif defined(__OpenBSD__) || defined(__NetBSD__)
+        (long)kp.p_ppid,                 // (long) ppid
+        (int)kp.p_stat,                  // (int) status
+        (long)kp.p_ruid,                 // (long) real uid
+        (long)kp.p_uid,                  // (long) effective uid
+        (long)kp.p_svuid                 // (long) saved uid
+        (long)kp.p_rgid,                 // (long) real gid
+        (long)kp.p_groups[0],            // (long) effective gid
+        (long)kp.p_svuid,                // (long) saved gid
+        kp.p_tdev,                       // (int) tty nr
+        PSUTIL_KPT2DOUBLE(kp.p_ustart),  // (double) create time
+        kp.p_uru_nvcsw,                  // (long) ctx switches (voluntary)
+        kp.p_uru_nivcsw,                 // (long) ctx switches (unvoluntary)
+        kp.p_uru_inblock,                // (long) read io count
+        kp.p_uru_oublock,                // (long) write io count
+        // CPU times: convert from micro seconds to seconds.
+        PSUTIL_KPT2DOUBLE(kp.p_uutime),  // (double) user time
+        PSUTIL_KPT2DOUBLE(kp.p_ustime),  // (double) sys time
+        // OpenBSD and NetBSD provide children user + system times summed
+        // together (no distinction).
+        kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0,  // (double) ch utime
+        kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0   // (double) ch stime
+#endif
+    );
+}
+
+
 /*
  * Return process name from kinfo_proc as a Python string.
  */
@@ -232,167 +291,6 @@ psutil_proc_cmdline(PyObject *self, PyObject *args) {
 
 
 /*
- * Return process parent pid from kinfo_proc as a Python integer.
- */
-static PyObject *
-psutil_proc_ppid(PyObject *self, PyObject *args) {
-    long pid;
-    kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-#ifdef __FreeBSD__
-    return Py_BuildValue("l", (long)kp.ki_ppid);
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
-    return Py_BuildValue("l", (long)kp.p_ppid);
-#endif
-}
-
-
-/*
- * Return process status as a Python integer.
- */
-static PyObject *
-psutil_proc_status(PyObject *self, PyObject *args) {
-    long pid;
-    kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-#ifdef __FreeBSD__
-    return Py_BuildValue("i", (int)kp.ki_stat);
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
-    return Py_BuildValue("i", (int)kp.p_stat);
-#endif
-}
-
-
-/*
- * Return process real, effective and saved user ids from kinfo_proc
- * as a Python tuple.
- */
-static PyObject *
-psutil_proc_uids(PyObject *self, PyObject *args) {
-    long pid;
-    kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("lll",
-#ifdef __FreeBSD__
-                         (long)kp.ki_ruid,
-                         (long)kp.ki_uid,
-                         (long)kp.ki_svuid);
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
-                         (long)kp.p_ruid,
-                         (long)kp.p_uid,
-                         (long)kp.p_svuid);
-#endif
-}
-
-
-/*
- * Return process real, effective and saved group ids from kinfo_proc
- * as a Python tuple.
- */
-static PyObject *
-psutil_proc_gids(PyObject *self, PyObject *args) {
-    long pid;
-    kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("lll",
-#ifdef __FreeBSD__
-                         (long)kp.ki_rgid,
-                         (long)kp.ki_groups[0],
-                         (long)kp.ki_svuid);
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
-                         (long)kp.p_rgid,
-                         (long)kp.p_groups[0],
-                         (long)kp.p_svuid);
-#endif
-}
-
-
-/*
- * Return process real, effective and saved group ids from kinfo_proc
- * as a Python tuple.
- */
-static PyObject *
-psutil_proc_tty_nr(PyObject *self, PyObject *args) {
-    long pid;
-    kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-#ifdef __FreeBSD__
-    return Py_BuildValue("i", kp.ki_tdev);
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
-    return Py_BuildValue("i", kp.p_tdev);
-#endif
-}
-
-
-/*
- * Return the number of context switches performed by process as a tuple.
- */
-static PyObject *
-psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
-    long pid;
-    kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("(ll)",
-#ifdef __FreeBSD__
-                         kp.ki_rusage.ru_nvcsw,
-                         kp.ki_rusage.ru_nivcsw);
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
-                         kp.p_uru_nvcsw,
-                         kp.p_uru_nivcsw);
-#endif
-}
-
-
-/*
- * Return a Python tuple (user_time, kernel_time)
- */
-static PyObject *
-psutil_proc_cpu_times(PyObject *self, PyObject *args) {
-    long pid;
-    double user_t, sys_t, children_user_t, children_sys_t;
-    kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    // convert from microseconds to seconds
-#ifdef __FreeBSD__
-    user_t = PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_utime);
-    sys_t = PSUTIL_TV2DOUBLE(kp.ki_rusage.ru_stime);
-    children_user_t = PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_utime);
-    children_sys_t = PSUTIL_TV2DOUBLE(kp.ki_rusage_ch.ru_stime);
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
-    user_t = PSUTIL_KPT2DOUBLE(kp.p_uutime);
-    sys_t = PSUTIL_KPT2DOUBLE(kp.p_ustime);
-    // OpenBSD and NetBSD provide children user + system times summed
-    // together (no distinction).
-    children_user_t = kp.p_uctime_sec + kp.p_uctime_usec / 1000000.0;
-    children_sys_t = children_user_t;
-#endif
-    return Py_BuildValue("(dddd)",
-                         user_t, sys_t, children_user_t, children_sys_t);
-}
-
-
-/*
  * Return the number of logical CPUs in the system.
  * XXX this could be shared with OSX
  */
@@ -412,51 +310,6 @@ psutil_cpu_count_logical(PyObject *self, PyObject *args) {
         return Py_BuildValue("i", ncpu);
 }
 
-
-/*
- * Return a Python float indicating the process create time expressed in
- * seconds since the epoch.
- */
-static PyObject *
-psutil_proc_create_time(PyObject *self, PyObject *args) {
-    long pid;
-    kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-#ifdef __FreeBSD__
-    return Py_BuildValue("d", PSUTIL_TV2DOUBLE(kp.ki_start));
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
-    return Py_BuildValue("d", PSUTIL_KPT2DOUBLE(kp.p_ustart));
-#endif
-}
-
-
-/*
- * Return a Python float indicating the process create time expressed in
- * seconds since the epoch.
- */
-static PyObject *
-psutil_proc_io_counters(PyObject *self, PyObject *args) {
-    long pid;
-    kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    // there's apparently no way to determine bytes count, hence return -1.
-    return Py_BuildValue("(llll)",
-#ifdef __FreeBSD__
-                         kp.ki_rusage.ru_inblock,
-                         kp.ki_rusage.ru_oublock,
-#elif defined(__OpenBSD__) || defined(__NetBSD__)
-                         kp.p_uru_inblock,
-                         kp.p_uru_oublock,
-#endif
-                         -1,
-                         -1);
-}
 
 
 /*
@@ -937,35 +790,18 @@ static PyMethodDef
 PsutilMethods[] = {
     // --- per-process functions
 
+    {"proc_oneshot_info", psutil_proc_oneshot_info, METH_VARARGS,
+     "Return multiple info about a process"},
     {"proc_name", psutil_proc_name, METH_VARARGS,
      "Return process name"},
     {"proc_connections", psutil_proc_connections, METH_VARARGS,
      "Return connections opened by process"},
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
      "Return process cmdline as a list of cmdline arguments"},
-    {"proc_ppid", psutil_proc_ppid, METH_VARARGS,
-     "Return process ppid as an integer"},
-    {"proc_uids", psutil_proc_uids, METH_VARARGS,
-     "Return process real effective and saved user ids as a Python tuple"},
-    {"proc_gids", psutil_proc_gids, METH_VARARGS,
-     "Return process real effective and saved group ids as a Python tuple"},
-    {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,
-     "Return tuple of user/kern time for the given PID"},
-    {"proc_create_time", psutil_proc_create_time, METH_VARARGS,
-     "Return a float indicating the process create time expressed in "
-     "seconds since the epoch"},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
      "Return extended memory info for a process as a Python tuple."},
-    {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
-     "Return the number of context switches performed by process"},
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads"},
-    {"proc_status", psutil_proc_status, METH_VARARGS,
-     "Return process status as an integer"},
-    {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
-     "Return process IO counters"},
-    {"proc_tty_nr", psutil_proc_tty_nr, METH_VARARGS,
-     "Return process tty (terminal) number"},
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory."},

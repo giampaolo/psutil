@@ -24,6 +24,9 @@ if psutil.LINUX:
     names = ["name", "terminal", "cpu_times", "cpu_percent", "create_time",
              "status", "ppid", "num_ctx_switches", "num_threads", "uids",
              "gids"]
+elif psutil.BSD:
+    names = ["ppid", "status", "uids", "gids", "terminal", "cpu_times",
+             "cpu_percent", "create_time", "num_ctx_switches", "io_counters"]
 else:
     raise RuntimeError("platform %r not supported" % sys.platform)
 
