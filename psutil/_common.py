@@ -291,22 +291,19 @@ def memoize_when_activated(fun):
     >>>
     """
     @functools.wraps(fun)
-    def wrapper(*args, **kwargs):
+    def wrapper(self):
         if not wrapper.cache_activated:
-            return fun(*args, **kwargs)
+            return fun(self)
         else:
-            key = (args, frozenset(sorted(kwargs.items())))
-            with lock:
-                try:
-                    return cache[key]
-                except KeyError:
-                    ret = cache[key] = fun(*args, **kwargs)
+            try:
+                ret = cache[fun]
+            except KeyError:
+                ret = cache[fun] = fun(self)
             return ret
 
     def cache_clear():
         """Clear cache."""
-        with lock:
-            cache.clear()
+        cache.clear()
 
     def cache_activate():
         """Activate cache."""
@@ -317,7 +314,6 @@ def memoize_when_activated(fun):
         wrapper.cache_activated = False
         cache_clear()
 
-    lock = threading.RLock()
     cache = {}
     wrapper.cache_activated = False
     wrapper.cache_activate = cache_activate
