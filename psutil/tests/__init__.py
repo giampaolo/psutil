@@ -9,6 +9,7 @@
 Test utilities.
 """
 
+from __future__ import print_function
 import atexit
 import contextlib
 import errno
@@ -466,6 +467,7 @@ def retry_before_failing(ntimes=None):
                     return fun(*args, **kwargs)
                 except AssertionError as _:
                     err = _
+                    print("retry (%s)" % err, file=sys.stderr)
             if PY3:
                 raise err
             else:

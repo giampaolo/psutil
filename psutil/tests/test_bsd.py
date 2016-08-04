@@ -187,6 +187,21 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         self.assertEqual(gids.effective, int(egid))
         self.assertEqual(gids.saved, int(sgid))
 
+    @retry_before_failing()
+    def test_proc_ctx_switches(self):
+        out = sh('procstat -r %s' % self.pid)
+        p = psutil.Process(self.pid)
+        for line in out.split('\n'):
+            line = line.lower().strip()
+            if ' voluntary context' in line:
+                pstat_value = int(line.split()[-1])
+                psutil_value = p.num_ctx_switches().voluntary
+                self.assertEqual(pstat_value, psutil_value)
+            elif ' involuntary context' in line:
+                pstat_value = int(line.split()[-1])
+                psutil_value = p.num_ctx_switches().voluntary
+                self.assertEqual(pstat_value, psutil_value)
+
     # --- virtual_memory(); tests against sysctl
 
     @retry_before_failing()
