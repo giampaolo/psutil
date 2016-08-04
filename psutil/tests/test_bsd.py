@@ -189,6 +189,7 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
 
     @retry_before_failing()
     def test_proc_ctx_switches(self):
+        tested = []
         out = sh('procstat -r %s' % self.pid)
         p = psutil.Process(self.pid)
         for line in out.split('\n'):
@@ -197,10 +198,14 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
                 pstat_value = int(line.split()[-1])
                 psutil_value = p.num_ctx_switches().voluntary
                 self.assertEqual(pstat_value, psutil_value)
+                tested.append(None)
             elif ' involuntary context' in line:
                 pstat_value = int(line.split()[-1])
                 psutil_value = p.num_ctx_switches().voluntary
                 self.assertEqual(pstat_value, psutil_value)
+                tested.append(None)
+        if len(tested) != 2:
+            raise RuntimeError("couldn't find lines match in procstat out")
 
     # --- virtual_memory(); tests against sysctl
 
