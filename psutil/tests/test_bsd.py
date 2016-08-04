@@ -201,7 +201,27 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
                 tested.append(None)
             elif ' involuntary context' in line:
                 pstat_value = int(line.split()[-1])
-                psutil_value = p.num_ctx_switches().voluntary
+                psutil_value = p.num_ctx_switches().involuntary
+                self.assertEqual(pstat_value, psutil_value)
+                tested.append(None)
+        if len(tested) != 2:
+            raise RuntimeError("couldn't find lines match in procstat out")
+
+    @retry_before_failing()
+    def test_proc_cpu_times(self):
+        tested = []
+        out = sh('procstat -r %s' % self.pid)
+        p = psutil.Process(self.pid)
+        for line in out.split('\n'):
+            line = line.lower().strip()
+            if 'user time' in line:
+                pstat_value = float('0.' + line.split()[-1].split('.')[-1])
+                psutil_value = p.cpu_times().user
+                self.assertEqual(pstat_value, psutil_value)
+                tested.append(None)
+            elif 'system time' in line:
+                pstat_value = float('0.' + line.split()[-1].split('.')[-1])
+                psutil_value = p.cpu_times().system
                 self.assertEqual(pstat_value, psutil_value)
                 tested.append(None)
         if len(tested) != 2:

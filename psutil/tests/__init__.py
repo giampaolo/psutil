@@ -200,7 +200,7 @@ def get_test_subprocess(cmd=None, **kwds):
     if cmd is None:
         pyline = "from time import sleep;"
         pyline += "open(r'%s', 'w').close();" % TESTFN
-        pyline += "sleep(10)"
+        pyline += "sleep(60)"
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
         stop_at = time.time() + 3
