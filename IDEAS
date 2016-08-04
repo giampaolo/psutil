@@ -17,6 +17,8 @@ PLATFORMS
 FEATURES
 ========
 
+- #893: (BSD) process environ
+
 - #809: (BSD) per-process resource limits (rlimit()).
 
 - (UNIX) process root (different from cwd)

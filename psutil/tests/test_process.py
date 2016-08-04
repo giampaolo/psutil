@@ -760,7 +760,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(real, os.getgid())
         # os.geteuid() refers to "effective" uid
         self.assertEqual(effective, os.getegid())
-        # no such thing as os.getsuid() ("saved" uid), but starting
+        # no such thing as os.getsgid() ("saved" gid), but starting
         # from python 2.7 we have os.getresgid()[2]
         if hasattr(os, "getresuid"):
             self.assertEqual(saved, os.getresgid()[2])
