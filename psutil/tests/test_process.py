@@ -102,7 +102,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(psutil.Process(sproc.pid).pid, sproc.pid)
 
     def test_kill(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
         p.kill()
@@ -112,7 +112,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(sig, signal.SIGKILL)
 
     def test_terminate(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
         p.terminate()
@@ -289,7 +289,7 @@ class TestProcess(unittest.TestCase):
             self.fail("expected: %s, found: %s" % (ktime, kernel_time))
 
     def test_create_time(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         now = time.time()
         p = psutil.Process(sproc.pid)
         create_time = p.create_time()
@@ -557,7 +557,7 @@ class TestProcess(unittest.TestCase):
     # see: https://travis-ci.org/giampaolo/psutil/jobs/111842553
     @unittest.skipIf(OSX and TRAVIS, "")
     def test_threads_2(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         if OPENBSD:
             try:
@@ -667,7 +667,7 @@ class TestProcess(unittest.TestCase):
             assert 0 <= ret <= 100, ret
 
     def test_is_running(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         assert p.is_running()
         assert p.is_running()
@@ -677,7 +677,7 @@ class TestProcess(unittest.TestCase):
         assert not p.is_running()
 
     def test_exe(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         exe = psutil.Process(sproc.pid).exe()
         try:
             self.assertEqual(exe, PYTHON)
@@ -698,7 +698,7 @@ class TestProcess(unittest.TestCase):
 
     def test_cmdline(self):
         cmdline = [PYTHON, "-c", "import time; time.sleep(60)"]
-        sproc = get_test_subprocess(cmdline, wait=True)
+        sproc = get_test_subprocess(cmdline)
         try:
             self.assertEqual(' '.join(psutil.Process(sproc.pid).cmdline()),
                              ' '.join(cmdline))
@@ -714,7 +714,7 @@ class TestProcess(unittest.TestCase):
                 raise
 
     def test_name(self):
-        sproc = get_test_subprocess(PYTHON, wait=True)
+        sproc = get_test_subprocess(PYTHON)
         name = psutil.Process(sproc.pid).name().lower()
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
@@ -825,13 +825,13 @@ class TestProcess(unittest.TestCase):
             p.username()
 
     def test_cwd(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.cwd(), os.getcwd())
 
     def test_cwd_2(self):
         cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(60)"]
-        sproc = get_test_subprocess(cmd, wait=True)
+        sproc = get_test_subprocess(cmd)
         p = psutil.Process(sproc.pid)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
 
@@ -898,7 +898,7 @@ class TestProcess(unittest.TestCase):
 
         # another process
         cmdline = "import time; f = open(r'%s', 'r'); time.sleep(60);" % TESTFN
-        sproc = get_test_subprocess([PYTHON, "-c", cmdline], wait=True)
+        sproc = get_test_subprocess([PYTHON, "-c", cmdline])
         p = psutil.Process(sproc.pid)
 
         for x in range(100):
@@ -1194,7 +1194,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(len(c), len(set(c)))
 
     def test_suspend_resume(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.suspend()
         for x in range(100):

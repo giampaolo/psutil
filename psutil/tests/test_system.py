@@ -189,7 +189,7 @@ class TestSystemAPIs(unittest.TestCase):
         assert mem.sout >= 0, mem
 
     def test_pid_exists(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         self.assertTrue(psutil.pid_exists(sproc.pid))
         p = psutil.Process(sproc.pid)
         p.kill()

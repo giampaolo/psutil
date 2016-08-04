@@ -186,39 +186,34 @@ class ThreadTask(threading.Thread):
 _subprocesses_started = set()
 
 
-def get_test_subprocess(cmd=None, wait=False, **kwds):
+def get_test_subprocess(cmd=None, **kwds):
     """Return a subprocess.Popen object to use in tests.
     By default stdout and stderr are redirected to /dev/null and the
     python interpreter is used as test process.
-    If 'wait' is True attemps to make sure the process is in a
-    reasonably initialized state.
+    It also attemps to make sure the process is in a reasonably
+    initialized state.
     """
-    if cmd is None:
-        pyline = ""
-        if wait:
-            pyline += "open(r'%s', 'w'); " % TESTFN
-        # A process living for 30 secs. We sleep N times (as opposed to
-        # once) in order to be nicer towards Windows which doesn't handle
-        # interrupt signals properly.
-        pyline += "import time; [time.sleep(0.01) for x in range(3000)];"
-        cmd_ = [PYTHON, "-c", pyline]
-    else:
-        cmd_ = cmd
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
     kwds.setdefault("stderr", DEVNULL)
-    sproc = subprocess.Popen(cmd_, **kwds)
-    if wait:
-        if cmd is None:
-            stop_at = time.time() + 3
-            while stop_at > time.time():
-                if os.path.exists(TESTFN):
-                    break
+    if cmd is None:
+        pyline = "from time import sleep;"
+        pyline += "open(r'%s', 'w').close();" % TESTFN
+        pyline += "sleep(10)"
+        cmd = [PYTHON, "-c", pyline]
+        sproc = subprocess.Popen(cmd, **kwds)
+        stop_at = time.time() + 3
+        while stop_at > time.time():
+            if os.path.exists(TESTFN):
+                os.remove(TESTFN)
                 time.sleep(0.001)
-            else:
-                warn("couldn't make sure test file was actually created")
+                break
+            time.sleep(0.001)
         else:
-            wait_for_pid(sproc.pid)
+            warn("couldn't make sure test file was actually created")
+    else:
+        sproc = subprocess.Popen(cmd, **kwds)
+        wait_for_pid(sproc.pid)
     _subprocesses_started.add(sproc)
     return sproc
 
@@ -372,17 +367,20 @@ def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
     """
     raise_at = time.time() + timeout
     while True:
-        if pid in psutil.pids():
-            # give it one more iteration to allow full initialization
+        try:
+            psutil.Process(pid)
+        except psutil.NoSuchProcess:
+            time.sleep(0.001)
+            if time.time() >= raise_at:
+                raise RuntimeError("Timed out")
+        else:
+            # give it some more time to allow better initialization
             time.sleep(0.01)
             return
-        time.sleep(0.0001)
-        if time.time() >= raise_at:
-            raise RuntimeError("Timed out")
 
 
 def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True):
-    """Wait for a file to be written on disk."""
+    """Wait for a file to be written on disk with some content."""
     stop_at = time.time() + timeout
     while time.time() < stop_at:
         try:
