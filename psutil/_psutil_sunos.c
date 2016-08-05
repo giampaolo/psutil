@@ -64,7 +64,7 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
         return 0;
     }
     nbytes = read(fd, fstruct, size);
-    if (nbytes <= 0) {
+    if (nbytes == -1) {
         close(fd);
         PyErr_SetFromErrno(PyExc_OSError);
         return 0;
