@@ -285,7 +285,11 @@ def reap_children(recursive=False):
         except OSError as err:
             if err.errno != errno.ESRCH:
                 raise
-        subp.wait()
+        try:
+            subp.wait()
+        except OSError as err:
+            if err.errno != errno.ECHILD:
+                raise
 
     if recursive and children:
         for p in children:
