@@ -658,7 +658,7 @@ Functions
     procs = [...]  # a list of Process instances
     for p in procs:
         p.terminate()
-    gone, alive = wait_procs(procs, timeout=3, callback=on_terminate)
+    gone, alive = psutil.wait_procs(procs, timeout=3, callback=on_terminate)
     for p in alive:
         p.kill()
 
