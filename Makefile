@@ -21,6 +21,10 @@ DEPS = coverage \
 
 all: test
 
+# ===================================================================
+# Install
+# ===================================================================
+
 clean:
 	rm -f `find . -type f -name \*.py[co]`
 	rm -f `find . -type f -name \*.so`
@@ -78,27 +82,35 @@ setup-dev-env: install-git-hooks
 	$(PYTHON) -m pip install --user --upgrade pip
 	$(PYTHON) -m pip install --user --upgrade $(DEPS)
 
+# ===================================================================
+# Tests
+# ===================================================================
+
+# Run all tests.
 test: install
 	$(PYTHON) $(TSCRIPT)
 
+# Test psutil process-related APIs.
 test-process: install
 	$(PYTHON) -m unittest -v psutil.tests.test_process
 
+# Test psutil system-related APIs.
 test-system: install
 	$(PYTHON) -m unittest -v psutil.tests.test_system
 
+# Test memory leaks.
 test-memleaks: install
 	$(PYTHON) psutil/tests/test_memory_leaks.py
+
+# Run specific platform tests only.
+test-platform: install
+	$(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
 
 # Run a specific test by name; e.g. "make test-by-name disk_" will run
 # all test methods containing "disk_" in their name.
 # Requires "pip install nose".
 test-by-name: install
 	@$(PYTHON) -m nose psutil/tests/*.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
-
-# Run specific platform tests only.
-test-platform: install
-	$(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
 
 # Same as above but for test_memory_leaks.py script.
 test-memleaks-by-name: install
@@ -113,6 +125,10 @@ coverage: install
 	$(PYTHON) -m coverage html
 	$(PYTHON) -m webbrowser -t htmlcov/index.html
 
+# ===================================================================
+# Linters
+# ===================================================================
+
 pep8:
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m pep8
 
@@ -123,15 +139,9 @@ pyflakes:
 flake8:
 	@git ls-files | grep \\.py$ | xargs $(PYTHON) -m flake8
 
-# Upload source tarball on https://pypi.python.org/pypi/psutil.
-upload-src: clean
-	$(PYTHON) setup.py sdist upload
-
-# Build and upload doc on https://pythonhosted.org/psutil/.
-# Requires "pip install sphinx-pypi-upload".
-upload-doc:
-	cd docs; make html
-	$(PYTHON) setup.py upload_sphinx --upload-dir=docs/_build/html
+# ===================================================================
+# GIT
+# ===================================================================
 
 # git-tag a new release
 git-tag-release:
@@ -143,9 +153,19 @@ install-git-hooks:
 	ln -sf ../../.git-pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
 
-# run script which benchmarks oneshot() ctx manager (see #799)
-bench-oneshot: install
-	$(PYTHON) scripts/internal/bench_oneshot.py
+# ===================================================================
+# Distribution
+# ===================================================================
+
+# Upload source tarball on https://pypi.python.org/pypi/psutil.
+upload-src: clean
+	$(PYTHON) setup.py sdist upload
+
+# Build and upload doc on https://pythonhosted.org/psutil/.
+# Requires "pip install sphinx-pypi-upload".
+upload-doc:
+	cd docs; make html
+	$(PYTHON) setup.py upload_sphinx --upload-dir=docs/_build/html
 
 # download exes/wheels hosted on appveyor
 win-download-exes:
@@ -154,3 +174,11 @@ win-download-exes:
 # upload exes/wheels in dist/* directory to PYPI
 win-upload-exes:
 	$(PYTHON) -m twine upload dist/*
+
+# ===================================================================
+# Others
+# ===================================================================
+
+# run script which benchmarks oneshot() ctx manager (see #799)
+bench-oneshot: install
+	$(PYTHON) scripts/internal/bench_oneshot.py
