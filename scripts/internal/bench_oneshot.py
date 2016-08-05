@@ -51,6 +51,21 @@ elif psutil.BSD:
         'terminal',
         'uids',
     )
+elif psutil.SUNOS:
+    names = (
+        'cmdline',
+        'create_time',
+        'gids',
+        'memory_full_info',
+        'memory_info',
+        'memory_percent',
+        'name',
+        'num_threads',
+        'ppid',
+        'status',
+        'terminal',
+        'uids',
+    )
 else:
     raise RuntimeError("platform %r not supported" % sys.platform)
 
