@@ -3,18 +3,36 @@ It is shipped by default with Python 2.7.9+ and 3.4+. If you're using an
 older Python version* `install pip <https://pip.pypa.io/en/latest/installing/>`__
 *first.*
 
+Permission issues
+=================
+
+Except for Linux, the commands below assume you're running as root.
+If you're not and you bump into permission errors you can either:
+
+* prepend ``sudo``, e.g.:
+
+::
+
+    sudo pip install psutil
+
+* install psutil for your user only (not at system level):
+
+::
+
+    pip install --user psutil
+
 Linux
 =====
 
-Ubuntu / Debian (use `python3-dev` and `python3-pip` for python 3)::
+Ubuntu / Debian (use ``python3-dev`` and ``python3-pip`` for python 3)::
 
-    $ sudo apt-get install gcc python-dev python-pip
-    $ pip install psutil
+    sudo apt-get install gcc python-dev python-pip
+    pip install psutil
 
-RedHat (use `python3-devel` and `python3-pip` for python 3)::
+RedHat (use ``python3-devel`` and ``python3-pip`` for python 3)::
 
-    $ sudo yum install gcc python-devel python-pip
-    $ pip install psutil
+    sudo yum install gcc python-devel python-pip
+    pip install psutil
 
 OSX
 ===
@@ -24,7 +42,7 @@ first, then:
 
 ::
 
-    $ pip install psutil
+    pip install psutil
 
 Windows
 =======
@@ -33,7 +51,7 @@ The easiest way to install psutil on Windows is to just use the pre-compiled
 exe/wheel installers on
 `PYPI <https://pypi.python.org/pypi/psutil/#downloads>`__ via pip::
 
-    $ C:\Python27\python.exe -m pip install psutil
+    C:\Python27\python.exe -m pip install psutil
 
 If you want to compile psutil from sources you'll need **Visual Studio**
 (Mingw32 is no longer supported):
@@ -48,40 +66,51 @@ Once installed run vcvars64.bat, then you can finally compile (see
 `here <http://stackoverflow.com/questions/11072521/>`__).
 To compile / install psutil from sources on Windows run::
 
-    $ make.bat build
-    $ make.bat install
+    make.bat build
+    make.bat install
 
 FreeBSD
 =======
 
 ::
 
-    $ pkg install python gcc
-    $ python -m pip install psutil
+    pkg install python gcc
+    python -m pip install psutil
 
 OpenBSD
 =======
 
 ::
 
-    $ export PKG_PATH=http://ftp.usa.openbsd.org/pub/OpenBSD/`uname -r`/packages/`arch -s`
-    $ pkg_add -v python gcc
-    $ python -m pip install psutil
+    export PKG_PATH=http://ftp.usa.openbsd.org/pub/OpenBSD/`uname -r`/packages/`arch -s`
+    pkg_add -v python gcc
+    python -m pip install psutil
 
 NetBSD
 ======
 
 ::
 
-    $ export PKG_PATH="ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/`uname -m`/`uname -r`/All"
-    $ pkg_add -v pkgin
-    $ pkgin install python gcc
-    $ python -m pip install psutil
+    export PKG_PATH="ftp.netbsd.org/pub/pkgsrc/packages/NetBSD/`uname -m`/`uname -r`/All"
+    pkg_add -v pkgin
+    pkgin install python gcc
+    python -m pip install psutil
 
 Solaris
 =======
 
-XXX
+If ``cc`` compiler is not installed create a symlink to ``gcc``:
+
+::
+
+    sudo ln -s /usr/bin/gcc /usr/local/bin/cc
+
+Install:
+
+::
+
+    pkg install gcc
+    python -m pip install psutil
 
 Dev Guide
 =========
