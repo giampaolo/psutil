@@ -6,9 +6,9 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 **Bug fixes**
 
 - #854: Process.as_dict() raises ValueError if passed an erroneous attrs name.
-- #857: [SunOS] Process.cpu_times() may raise RuntimeError if attempting to
-  query a 64bit process with a 32bit python. 0.0 times are returned as a
-  fallback.
+- #857: [SunOS] Process cpu_times(), cpu_percent(), threads() amd memory_maps()
+  may raise RuntimeError if attempting to query a 64bit process with a 32bit
+  python. "Null" values are returned as a fallback.
 - #858: Process.as_dict() should not return memory_info_ex() because it's
   deprecated.
 - #863: [Windows] memory_map truncates addresses above 32 bits
