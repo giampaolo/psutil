@@ -426,7 +426,21 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        times = cext.proc_cpu_times(self.pid, self._procfs_path)
+        try:
+            times = cext.proc_cpu_times(self.pid, self._procfs_path)
+        except OSError as err:
+            is_64bit = sys.maxsize > 2**32
+            if err.errno == errno.EOVERFLOW and not is_64bit:
+                # We may get here if we attempt to query a 64bit process
+                # with a 32bit python.
+                # Error originates from read() and also tools like "cat"
+                # fail in the same way (!).
+                # Since there simply is no way to determine CPU times we
+                # return 0.0 as a fallback. See:
+                # https://github.com/giampaolo/psutil/issues/857
+                times = (0.0, 0.0, 0.0, 0.0)
+            else:
+                raise
         return _common.pcputimes(*times)
 
     @wrap_exceptions
