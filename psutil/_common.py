@@ -264,11 +264,15 @@ def memoize(fun):
 def memoize_when_activated(fun):
     """A memoize decorator which is disabled by default. It can be
     activated and deactivated on request.
+    For efficiency reasons it can be used only against class methods
+    accepting no arguments.
 
-    >>> @memoize
-    ... def foo()
-    ...     print(1)
+    >>> class Foo:
+    ...     @memoize
+    ...     def foo()
+    ...         print(1)
     ...
+    >>> f = Foo()
     >>> # deactivated (default)
     >>> foo()
     1
