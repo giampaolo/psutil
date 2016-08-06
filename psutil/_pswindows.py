@@ -640,7 +640,8 @@ class Process(object):
 
     def _get_raw_meminfo(self):
         try:
-            return cext.proc_memory_info(self.pid)
+            with self.handle_ctx() as handle:
+                return cext.proc_memory_info(self.pid, handle)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 # TODO: the C ext can probably be refactored in order

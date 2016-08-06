@@ -11,6 +11,7 @@ See: https://github.com/giampaolo/psutil/issues/799
 """
 
 from __future__ import print_function
+import os
 import sys
 import time
 
@@ -18,6 +19,12 @@ import psutil
 
 
 ITERATIONS = 1000
+if hasattr(time, 'perf_counter'):
+    timer = time.perf_counter
+elif os.name == 'nt':
+    timer = time.clock
+else:
+    timer = time.time
 
 # The list of Process methods which gets collected in one shot and
 # as such get advantage of the speedup.
@@ -66,6 +73,14 @@ elif psutil.SUNOS:
         'terminal',
         'uids',
     )
+elif psutil.WINDOWS:
+    names = (
+        'cpu_percent',
+        'cpu_times',
+        'num_handles',
+        'memory_info',
+        'memory_percent',
+    )
 else:
     raise RuntimeError("platform %r not supported" % sys.platform)
 
@@ -88,18 +103,18 @@ def main():
         print("    " + name)
 
     # first "normal" run
-    t = time.time()
+    t = timer()
     for x in range(ITERATIONS):
         call(funs)
-    elapsed1 = time.time() - t
+    elapsed1 = timer() - t
     print("normal:  %.3f secs" % elapsed1)
 
     # "one shot" run
-    t = time.time()
+    t = timer()
     for x in range(ITERATIONS):
         with p.oneshot():
             call(funs)
-    elapsed2 = time.time() - t
+    elapsed2 = timer() - t
     print("oneshot: %.3f secs" % elapsed2)
 
     # done

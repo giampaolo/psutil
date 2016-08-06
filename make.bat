@@ -127,7 +127,7 @@ if "%1" == "test-system" (
     goto :eof
 )
 
-f "%1" == "test-platform" (
+if "%1" == "test-platform" (
     call :install
     %PYTHON% psutil\tests\test_windows.py
     goto :eof
@@ -229,10 +229,15 @@ if "%1" == "setup-dev-env-all" (
     goto :eof
 )
 
-
 if "%1" == "flake8" (
     :flake8
     %PYTHON% -c "from flake8.main import main; main()"
+    goto :eof
+)
+
+if "%1" == "bench-oneshot" (
+    call :install
+    %PYTHON% scripts\internal\bench_oneshot.py
     goto :eof
 )
 

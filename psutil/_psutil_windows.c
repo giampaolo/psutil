@@ -416,7 +416,6 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 
     if (! GetProcessTimes(
             (HANDLE)handle, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
-        CloseHandle(hProcess);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
@@ -711,7 +710,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_memory_info(PyObject *self, PyObject *args) {
-    HANDLE hProcess;
+    unsigned long handle;
     DWORD pid;
 #if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
     PROCESS_MEMORY_COUNTERS_EX cnt;
@@ -720,24 +719,17 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 #endif
     SIZE_T private = 0;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
         return NULL;
 
-    hProcess = psutil_handle_from_pid(pid);
-    if (NULL == hProcess)
-        return NULL;
-
-    if (! GetProcessMemoryInfo(hProcess, (PPROCESS_MEMORY_COUNTERS)&cnt,
-                               sizeof(cnt))) {
-        CloseHandle(hProcess);
+    if (! GetProcessMemoryInfo(
+            (HANDLE)handle, (PPROCESS_MEMORY_COUNTERS)&cnt, sizeof(cnt))) {
         return PyErr_SetFromWindowsErr(0);
     }
 
 #if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
     private = cnt.PrivateUsage;
 #endif
-
-    CloseHandle(hProcess);
 
     // PROCESS_MEMORY_COUNTERS values are defined as SIZE_T which on 64bits
     // is an (unsigned long long) and on 32bits is an (unsigned int).
