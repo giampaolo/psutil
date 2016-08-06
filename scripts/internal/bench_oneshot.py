@@ -110,7 +110,7 @@ def main():
     if elapsed2 < elapsed1:
         print("speedup: +%.2fx" % (elapsed1 / elapsed2))
     elif elapsed2 > elapsed1:
-        print("slowdown: -%.2fx" % (elapsed1 / elapsed2))
+        print("slowdown: -%.2fx" % (elapsed2 / elapsed1))
     else:
         print("same speed")
 
