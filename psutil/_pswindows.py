@@ -570,8 +570,8 @@ class Process(object):
         cached handle.
         """
         if self._inctx:
-            handle = self._handle or cext.win32_OpenProcess(self.pid)
-            return handle
+            self._handle = self._handle or cext.win32_OpenProcess(self.pid)
+            return self._handle
         else:
             return cext.win32_OpenProcess(self.pid)
 
