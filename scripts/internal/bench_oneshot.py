@@ -77,10 +77,11 @@ elif psutil.WINDOWS:
     names = (
         'cpu_percent',
         'cpu_times',
-        'num_handles',
+        'ionice',
         'memory_info',
         'memory_percent',
         'nice',
+        'num_handles',
     )
 else:
     raise RuntimeError("platform %r not supported" % sys.platform)

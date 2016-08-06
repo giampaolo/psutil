@@ -803,7 +803,8 @@ class Process(object):
     if hasattr(cext, "proc_io_priority_get"):
         @wrap_exceptions
         def ionice_get(self):
-            return cext.proc_io_priority_get(self.pid)
+            with self.handle_ctx() as handle:
+                return cext.proc_io_priority_get(self.pid, handle)
 
         @wrap_exceptions
         def ionice_set(self, value, _):

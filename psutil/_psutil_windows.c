@@ -1944,27 +1944,23 @@ psutil_proc_priority_set(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     long pid;
-    HANDLE hProcess;
+    unsigned long handle;
     PULONG IoPriority;
 
     _NtQueryInformationProcess NtQueryInformationProcess =
         (_NtQueryInformationProcess)GetProcAddress(
             GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    hProcess = psutil_handle_from_pid(pid);
-    if (hProcess == NULL)
+    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
         return NULL;
 
     NtQueryInformationProcess(
-        hProcess,
+        (HANDLE)handle,
         ProcessIoPriority,
         &IoPriority,
         sizeof(ULONG),
         NULL
     );
-    CloseHandle(hProcess);
     return Py_BuildValue("i", IoPriority);
 }
 
