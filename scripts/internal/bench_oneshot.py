@@ -12,7 +12,8 @@ See: https://github.com/giampaolo/psutil/issues/799
 
 from __future__ import print_function
 import sys
-import time
+import timeit
+import textwrap
 
 import psutil
 
@@ -70,37 +71,40 @@ else:
     raise RuntimeError("platform %r not supported" % sys.platform)
 
 
-def collect(p):
-    return [getattr(p, n) for n in names]
+setup = textwrap.dedent("""
+    from __main__ import names
+    import psutil
+
+    def collect(p):
+        return [getattr(p, n) for n in names]
 
 
-def call(funs):
-    for fun in funs:
-        fun()
+    def call(funs):
+        for fun in funs:
+            fun()
+
+    p = psutil.Process()
+    funs = collect(p)
+    """)
 
 
 def main():
-    p = psutil.Process()
-    funs = collect(p)
     print("%s methods involved on platform %r (%s iterations):" % (
         len(names), sys.platform, ITERATIONS))
     for name in sorted(names):
         print("    " + name)
 
     # first "normal" run
-    t = time.time()
-    for x in range(ITERATIONS):
-        call(funs)
-    elapsed1 = time.time() - t
+    elapsed1 = timeit.timeit("call(funs)", setup=setup, number=ITERATIONS)
     print("normal:  %.3f secs" % elapsed1)
 
     # "one shot" run
-    t = time.time()
-    for x in range(ITERATIONS):
+    stmt = textwrap.dedent("""
         with p.oneshot():
             call(funs)
-    elapsed2 = time.time() - t
-    print("oneshot: %.3f secs" % elapsed2)
+        """)
+    elapsed2 = timeit.timeit(stmt, setup=setup, number=ITERATIONS)
+    print("onshot:  %.3f secs" % elapsed2)
 
     # done
     if elapsed2 < elapsed1:
