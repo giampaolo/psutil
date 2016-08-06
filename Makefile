@@ -59,8 +59,7 @@ install: build
 uninstall:
 	cd ..; $(PYTHON) -m pip uninstall -y -v psutil
 
-# Install useful deps which are nice to have while developing / testing.
-setup-dev-env: install-git-hooks
+install-pip:
 	# Install PIP (only if necessary).
 	$(PYTHON) -c "import sys, ssl, os, pkgutil, tempfile, atexit; \
 				sys.exit(0) if pkgutil.find_loader('pip') else None; \
@@ -77,6 +76,9 @@ setup-dev-env: install-git-hooks
 				print('downloaded %s' % f.name); \
 				code = os.system('%s %s --user' % (sys.executable, f.name)); \
 				sys.exit(code);"
+
+# Install useful deps which are nice to have while developing / testing.
+setup-dev-env: install-git-hooks install-pip
 	$(PYTHON) -m pip install --user --upgrade pip
 	$(PYTHON) -m pip install --user --upgrade $(DEPS)
 
