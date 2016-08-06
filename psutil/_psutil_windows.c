@@ -2661,19 +2661,14 @@ error:
 static PyObject *
 psutil_proc_num_handles(PyObject *self, PyObject *args) {
     DWORD pid;
-    HANDLE hProcess;
+    unsigned long handle;
     DWORD handleCount;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
         return NULL;
-    hProcess = psutil_handle_from_pid(pid);
-    if (NULL == hProcess)
-        return NULL;
-    if (! GetProcessHandleCount(hProcess, &handleCount)) {
-        CloseHandle(hProcess);
+    if (! GetProcessHandleCount((HANDLE)handle, &handleCount)) {
         return PyErr_SetFromWindowsErr(0);
     }
-    CloseHandle(hProcess);
     return Py_BuildValue("k", handleCount);
 }
 
@@ -3430,6 +3425,10 @@ PsutilMethods[] = {
     // --- windows API bindings
     {"win32_QueryDosDevice", psutil_win32_QueryDosDevice, METH_VARARGS,
      "QueryDosDevice binding"},
+    {"win32_OpenProcess", psutil_win32_OpenProcess, METH_VARARGS,
+     "Given a PID return a Python int which points to a process handle."},
+    {"win32_CloseHandle", psutil_win32_CloseHandle, METH_VARARGS,
+     "Given a Python int referencing a process handle it close the handle."},
 
     {NULL, NULL, 0, NULL}
 };

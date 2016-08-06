@@ -67,6 +67,38 @@ psutil_handle_from_pid(DWORD pid) {
 }
 
 
+/*
+ * Given a PID return a Python int which points to its process handle.
+ */
+PyObject *
+psutil_win32_OpenProcess(PyObject *self, PyObject *args) {
+    HANDLE handle;
+    long pid;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    handle = psutil_handle_from_pid(pid);
+    if (handle == NULL)
+        return NULL;
+    return HANDLE_TO_PYNUM(handle);
+}
+
+
+/*
+ * Given a Python int referencing a process handle close the process handle.
+ */
+PyObject *
+psutil_win32_CloseHandle(PyObject *self, PyObject *args) {
+    unsigned long handle;
+
+    if (! PyArg_ParseTuple(args, "k", &handle))
+        return NULL;
+    // TODO: may want to check return value;
+    CloseHandle((HANDLE)handle);
+    Py_RETURN_NONE;
+}
+
+
 DWORD *
 psutil_get_pids(DWORD *numberOfReturnedPIDs) {
     // Win32 SDK says the only way to know if our process array
@@ -615,7 +647,7 @@ static int psutil_get_process_data(long pid,
                 src = procParameters.CommandLine.Buffer;
                 size = procParameters.CommandLine.Length;
                 break;
-            case KIND_CWD: 
+            case KIND_CWD:
                 src = procParameters.CurrentDirectoryPath.Buffer;
                 size = procParameters.CurrentDirectoryPath.Length;
                 break;

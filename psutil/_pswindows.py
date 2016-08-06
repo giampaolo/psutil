@@ -546,18 +546,48 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid"]
+    __slots__ = ["pid", "_name", "_ppid", "_inctx", "_handle"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
         self._ppid = None
+        self._inctx = False
+        self._handle = None
 
     def oneshot_enter(self):
-        pass
+        self._inctx = True
 
     def oneshot_exit(self):
-        pass
+        self._inctx = False
+        if self._handle:
+            cext.win32_CloseHandle(self._handle)
+            self._handle = None
+
+    def get_handle(self):
+        """Get a handle to this process.
+        If we're in oneshot() ctx manager tries to return the
+        cached handle.
+        """
+        if self._inctx:
+            handle = self._handle or cext.win32_OpenProcess(self.pid)
+            return handle
+        else:
+            return cext.win32_OpenProcess(self.pid)
+
+    @contextlib.contextmanager
+    def handle_ctx(self):
+        """Get a handle to this process.
+        If we're not in oneshot() ctx close the handle on exit
+        else tries to return the cached handle and avoid to close
+        the handle (will be close on oneshot() exit).
+        """
+        handle = self.get_handle()
+        try:
+            yield handle
+        finally:
+            if not self._inctx:
+                cext.win32_CloseHandle(handle)
 
     @wrap_exceptions
     def name(self):
@@ -837,7 +867,8 @@ class Process(object):
     @wrap_exceptions
     def num_handles(self):
         try:
-            return cext.proc_num_handles(self.pid)
+            with self.handle_ctx() as handle:
+                return cext.proc_num_handles(self.pid, handle)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 return ntpinfo(*cext.proc_info(self.pid)).num_handles
