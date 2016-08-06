@@ -735,7 +735,8 @@ class Process(object):
     @wrap_exceptions
     def cpu_times(self):
         try:
-            user, system = cext.proc_cpu_times(self.pid)
+            with self.handle_ctx() as handle:
+                user, system = cext.proc_cpu_times(self.pid, handle)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 nt = ntpinfo(*cext.proc_info(self.pid))

@@ -408,16 +408,14 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     long        pid;
-    HANDLE      hProcess;
+    unsigned long handle;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
         return NULL;
 
-    hProcess = psutil_handle_from_pid(pid);
-    if (hProcess == NULL)
-        return NULL;
-    if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
+    if (! GetProcessTimes(
+            (HANDLE)handle, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
         CloseHandle(hProcess);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
@@ -429,8 +427,6 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
             return NULL;
         }
     }
-
-    CloseHandle(hProcess);
 
     /*
      * User and kernel times are represented as a FILETIME structure
