@@ -80,6 +80,7 @@ elif psutil.WINDOWS:
         'num_handles',
         'memory_info',
         'memory_percent',
+        'nice',
     )
 else:
     raise RuntimeError("platform %r not supported" % sys.platform)

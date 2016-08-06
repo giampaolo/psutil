@@ -1898,15 +1898,11 @@ static PyObject *
 psutil_proc_priority_get(PyObject *self, PyObject *args) {
     long pid;
     DWORD priority;
-    HANDLE hProcess;
+    unsigned long handle;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
         return NULL;
-    hProcess = psutil_handle_from_pid(pid);
-    if (hProcess == NULL)
-        return NULL;
-    priority = GetPriorityClass(hProcess);
-    CloseHandle(hProcess);
+    priority = GetPriorityClass((HANDLE)handle);
     if (priority == 0) {
         PyErr_SetFromWindowsErr(0);
         return NULL;

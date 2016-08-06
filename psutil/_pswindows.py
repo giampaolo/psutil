@@ -789,7 +789,8 @@ class Process(object):
 
     @wrap_exceptions
     def nice_get(self):
-        value = cext.proc_priority_get(self.pid)
+        with self.handle_ctx() as handle:
+            value = cext.proc_priority_get(self.pid, handle)
         if enum is not None:
             value = Priority(value)
         return value
