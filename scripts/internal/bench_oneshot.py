@@ -18,7 +18,7 @@ import textwrap
 import psutil
 
 
-ITERATIONS = 1000
+ITERATIONS = 10000
 
 # The list of Process methods which gets collected in one shot and
 # as such get advantage of the speedup.
