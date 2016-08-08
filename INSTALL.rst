@@ -1,7 +1,8 @@
 *Note: pip is the easiest way to install psutil.
 It is shipped by default with Python 2.7.9+ and 3.4+. If you're using an
 older Python version* `install pip <https://pip.pypa.io/en/latest/installing/>`__
-*first.*
+*first.* If you cloned psutil source code you can also install it with
+``make install-pip``.
 
 Permission issues
 =================
