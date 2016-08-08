@@ -10,21 +10,15 @@ Process.oneshot() ctx manager.
 See: https://github.com/giampaolo/psutil/issues/799
 """
 
-from __future__ import print_function
-import os
+from __future__ import print_function, division
 import sys
-import time
+import timeit
+import textwrap
 
 import psutil
 
 
 ITERATIONS = 1000
-if hasattr(time, 'perf_counter'):
-    timer = time.perf_counter
-elif os.name == 'nt':
-    timer = time.clock
-else:
-    timer = time.time
 
 # The list of Process methods which gets collected in one shot and
 # as such get advantage of the speedup.
@@ -41,6 +35,18 @@ if psutil.LINUX:
         'status',
         'terminal',
         'uids',
+    )
+elif psutil.WINDOWS:
+    names = (
+        'cpu_affinity',
+        'cpu_percent',
+        'cpu_times',
+        'io_counters',
+        'ionice',
+        'memory_info',
+        'memory_percent',
+        'nice',
+        'num_handles',
     )
 elif psutil.BSD:
     names = (
@@ -73,59 +79,49 @@ elif psutil.SUNOS:
         'terminal',
         'uids',
     )
-elif psutil.WINDOWS:
-    names = (
-        'cpu_affinity',
-        'cpu_percent',
-        'cpu_times',
-        'io_counters',
-        'ionice',
-        'memory_info',
-        'memory_percent',
-        'nice',
-        'num_handles',
-    )
 else:
     raise RuntimeError("platform %r not supported" % sys.platform)
 
 
-def collect(p):
-    return [getattr(p, n) for n in names]
+setup = textwrap.dedent("""
+    from __main__ import names
+    import psutil
 
+    def call_normal(funs):
+        for fun in funs:
+            fun()
 
-def call(funs):
-    for fun in funs:
-        fun()
+    def call_oneshot(funs):
+        with p.oneshot():
+            for fun in funs:
+                fun()
+
+    p = psutil.Process()
+    funs = [getattr(p, n) for n in names]
+    """)
 
 
 def main():
-    p = psutil.Process()
-    funs = collect(p)
     print("%s methods involved on platform %r (%s iterations):" % (
         len(names), sys.platform, ITERATIONS))
     for name in sorted(names):
         print("    " + name)
 
-    # first "normal" run
-    t = timer()
-    for x in range(ITERATIONS):
-        call(funs)
-    elapsed1 = timer() - t
+    # "normal" run
+    elapsed1 = timeit.timeit(
+        "call_normal(funs)", setup=setup, number=ITERATIONS)
     print("normal:  %.3f secs" % elapsed1)
 
     # "one shot" run
-    t = timer()
-    for x in range(ITERATIONS):
-        with p.oneshot():
-            call(funs)
-    elapsed2 = timer() - t
-    print("oneshot: %.3f secs" % elapsed2)
+    elapsed2 = timeit.timeit(
+        "call_oneshot(funs)", setup=setup, number=ITERATIONS)
+    print("onshot:  %.3f secs" % elapsed2)
 
     # done
     if elapsed2 < elapsed1:
         print("speedup: +%.2fx" % (elapsed1 / elapsed2))
     elif elapsed2 > elapsed1:
-        print("slowdown: -%.2fx" % (elapsed1 / elapsed2))
+        print("slowdown: -%.2fx" % (elapsed2 / elapsed1))
     else:
         print("same speed")
 
