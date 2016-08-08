@@ -75,16 +75,17 @@ setup = textwrap.dedent("""
     from __main__ import names
     import psutil
 
-    def collect(p):
-        return [getattr(p, n) for n in names]
-
-
-    def call(funs):
+    def call_normal(funs):
         for fun in funs:
             fun()
 
+    def call_oneshot(funs):
+        with p.oneshot():
+            for fun in funs:
+                fun()
+
     p = psutil.Process()
-    funs = collect(p)
+    funs = [getattr(p, n) for n in names]
     """)
 
 
@@ -94,16 +95,14 @@ def main():
     for name in sorted(names):
         print("    " + name)
 
-    # first "normal" run
-    elapsed1 = timeit.timeit("call(funs)", setup=setup, number=ITERATIONS)
+    # "normal" run
+    elapsed1 = timeit.timeit(
+        "call_normal(funs)", setup=setup, number=ITERATIONS)
     print("normal:  %.3f secs" % elapsed1)
 
     # "one shot" run
-    stmt = textwrap.dedent("""
-        with p.oneshot():
-            call(funs)
-        """)
-    elapsed2 = timeit.timeit(stmt, setup=setup, number=ITERATIONS)
+    elapsed2 = timeit.timeit(
+        "call_oneshot(funs)", setup=setup, number=ITERATIONS)
     print("onshot:  %.3f secs" % elapsed2)
 
     # done
