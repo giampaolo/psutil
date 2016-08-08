@@ -98,6 +98,10 @@ test-process: install
 test-system: install
 	$(PYTHON) -m unittest -v psutil.tests.test_system
 
+# Test misc.
+test-misc: install
+	$(PYTHON) psutil/tests/test_misc.py
+
 # Test memory leaks.
 test-memleaks: install
 	$(PYTHON) psutil/tests/test_memory_leaks.py
