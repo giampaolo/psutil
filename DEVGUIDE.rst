@@ -16,9 +16,13 @@ If you plan on hacking on psutil this is what you're supposed to do first:
   $ make setup-dev-env
 
 - bear in mind that ``make`` (see `Makefile <https://github.com/giampaolo/psutil/blob/master/Makefile>`_)
-  is the designated tool to run tests, build etc. and that it is also available
-  on Windows (see `make.bat <https://github.com/giampaolo/psutil/blob/master/make.bat>`_).
-- (UNIX only) run ``make install-git-hooks``: this will reject your commit
+  is the designated tool to run tests, build, install etc. and that it is also
+  available on Windows
+  (see `make.bat <https://github.com/giampaolo/psutil/blob/master/make.bat>`_).
+- bear in mind that both psutil (``make install``) and any other lib
+  (``make setup-dev-env``) is installed as a limited user
+  (``pip install --user ...``), so develop as such (don't use root).
+- (UNIX only) run ``make install-git-hooks``: this will reject your commits
   if python code is not PEP8 compliant.
 - run ``make test`` to run tests.
 
@@ -38,6 +42,7 @@ Makefile
 Some useful make commands::
 
   $ make install        # install
+  $ make setup-dev-env  # install useful dev libs (pyflakes, unittest2, etc.)
   $ make test           # run all tests
   $ make test-memleaks  # run memory leak tests
   $ make coverage       # run test coverage

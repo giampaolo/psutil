@@ -276,6 +276,8 @@ def reap_children(recursive=False):
     # of grand children.
     if recursive:
         children = psutil.Process().children(recursive=True)
+    else:
+        children = []
 
     subprocs = _subprocesses_started.copy()
     _subprocesses_started.clear()
@@ -285,9 +287,13 @@ def reap_children(recursive=False):
         except OSError as err:
             if err.errno != errno.ESRCH:
                 raise
-        subp.wait()
+        try:
+            subp.wait()
+        except OSError as err:
+            if err.errno != errno.ECHILD:
+                raise
 
-    if recursive and children:
+    if children:
         for p in children:
             try:
                 p.terminate()
