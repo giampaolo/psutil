@@ -75,8 +75,10 @@ elif psutil.SUNOS:
     )
 elif psutil.WINDOWS:
     names = (
+        'cpu_affinity',
         'cpu_percent',
         'cpu_times',
+        'io_counters',
         'ionice',
         'memory_info',
         'memory_percent',

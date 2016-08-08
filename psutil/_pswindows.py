@@ -819,7 +819,8 @@ class Process(object):
     @wrap_exceptions
     def io_counters(self):
         try:
-            ret = cext.proc_io_counters(self.pid)
+            with self.handle_ctx() as handle:
+                ret = cext.proc_io_counters(self.pid, handle)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 nt = ntpinfo(*cext.proc_info(self.pid))
@@ -840,7 +841,8 @@ class Process(object):
     def cpu_affinity_get(self):
         def from_bitmask(x):
             return [i for i in xrange(64) if (1 << i) & x]
-        bitmask = cext.proc_cpu_affinity_get(self.pid)
+        with self.handle_ctx() as handle:
+            bitmask = cext.proc_cpu_affinity_get(self.pid, handle)
         return from_bitmask(bitmask)
 
     @wrap_exceptions

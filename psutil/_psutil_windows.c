@@ -2009,19 +2009,13 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_io_counters(PyObject *self, PyObject *args) {
     DWORD pid;
-    HANDLE hProcess;
+    unsigned long handle;
     IO_COUNTERS IoCounters;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
         return NULL;
-    hProcess = psutil_handle_from_pid(pid);
-    if (NULL == hProcess)
-        return NULL;
-    if (! GetProcessIoCounters(hProcess, &IoCounters)) {
-        CloseHandle(hProcess);
+    if (! GetProcessIoCounters((HANDLE)handle, &IoCounters))
         return PyErr_SetFromWindowsErr(0);
-    }
-    CloseHandle(hProcess);
     return Py_BuildValue("(KKKK)",
                          IoCounters.ReadOperationCount,
                          IoCounters.WriteOperationCount,
@@ -2036,22 +2030,17 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     DWORD pid;
-    HANDLE hProcess;
+    unsigned long handle;
     DWORD_PTR proc_mask;
     DWORD_PTR system_mask;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
         return NULL;
-    hProcess = psutil_handle_from_pid(pid);
-    if (hProcess == NULL) {
-        return NULL;
-    }
-    if (GetProcessAffinityMask(hProcess, &proc_mask, &system_mask) == 0) {
-        CloseHandle(hProcess);
+    if (GetProcessAffinityMask(
+            (HANDLE)handle, &proc_mask, &system_mask) == 0) {
         return PyErr_SetFromWindowsErr(0);
     }
 
-    CloseHandle(hProcess);
 #ifdef _WIN64
     return Py_BuildValue("K", (unsigned long long)proc_mask);
 #else
