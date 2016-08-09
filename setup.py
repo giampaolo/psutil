@@ -20,6 +20,7 @@ try:
     from setuptools import setup, Extension
 except ImportError:
     from distutils.core import setup, Extension
+import glob
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(HERE, "psutil"))
@@ -232,6 +233,7 @@ def main():
         license='BSD',
         packages=['psutil', 'psutil.tests'],
         # see: python setup.py register --list-classifiers
+        scripts=glob.glob('scripts/*.py'),
         classifiers=[
             'Development Status :: 5 - Production/Stable',
             'Environment :: Console',
