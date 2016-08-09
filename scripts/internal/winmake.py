@@ -46,16 +46,11 @@ DEPS = [
 # ===================================================================
 
 
-def sh(cmd, decode=False):
+def sh(cmd):
     print("cmd: " + cmd)
-    try:
-        out = subprocess.check_output(cmd, shell=True)
-    except subprocess.CalledProcessError as err:
-        sys.exit(err)
-    else:
-        if decode and PY3:
-            out = out.decode()
-        return out
+    code = os.system(cmd)
+    if code:
+        sys.exit(code)
 
 
 _cmds = {}
@@ -157,7 +152,9 @@ def setup_dev_env():
 @cmd
 def flake8():
     """Run flake8 against all py files"""
-    py_files = sh("git ls-files", decode=True)
+    py_files = subprocess.check_output("git ls-files")
+    if PY3:
+        py_files = py_files.decode()
     py_files = [x for x in py_files.split() if x.endswith('.py')]
     py_files = ' '.join(py_files)
     sh("%s -m flake8 %s" % (PYTHON, py_files))
