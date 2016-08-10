@@ -14,6 +14,9 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #863: [Windows] memory_map truncates addresses above 32 bits
 - #866: [Windows] win_service_iter() and services in general are not able to
   handle unicode service names / descriptions.
+- #869: [Windows] Process.wait() may raise TimeoutExpired with wrong timeout
+  unit (ms instead of sec).
+- #870: [Windows] Handle leak inside psutil_get_process_data.
 
 
 4.3.0 - 2016-06-18
