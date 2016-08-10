@@ -665,6 +665,8 @@ static int psutil_get_process_data(long pid,
         goto error;
     }
 
+    CloseHandle(hProcess);
+
     *pdata = buffer;
     *psize = size;
 
