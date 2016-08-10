@@ -65,41 +65,52 @@ def gather_info():
     return entries
 
 def print_table(entries):
-    host_max_width = 0
-    user_max_width = 0
+    host_max_width = 5
+    user_max_width = 5
 
     for entry in entries:
         if len(entry['host']) > host_max_width:
             host_max_width = len(entry['host'])
-        if len(entry['username']) > user_max_width:
+        if 'username' in entry and len(entry['username']) > user_max_width:
             user_max_width = len(entry['username'])
 
-    print('{:>5} {:>{host_max_width}} {:>5} {:>{user_max_width}} {:>5} {:>5} '
-          # '{:>5} {:>5} '
+    print('{:>5} {:>{host_width}} {:>5} {:>{user_width}} {:>5} {:>5} '
           '{:>3} {:>5} {:>5} {:>5}  {:>19} {}'.format(
               'PROTO', 'HOST', 'PORT', 'USER', 'PID', 'PPID',
               # 'PGID', 'SID',
               'NIC', '%CPU', '%MEM', '#TH', 'STARTED', 'COMMAND',
-              host_max_width=host_max_width, user_max_width=user_max_width))
+              host_width=host_max_width, user_width=user_max_width))
 
     for entry in sorted(entries, key=lambda e: (e['port'], e['proto'])):
-        print('{:>5} {:>{host_max_width}} {:>5} {:>{user_max_width}} {:>5} {:>5} '
-              # '{:>5} {:>5} '
+        print('{:>5} {:>{host_width}} {:>5} {:>{user_width}} {:>5} {:>5} '
               '{:>3} {: 5.1f} {: 5.1f} {:>5}  {:%Y-%m-%d %H:%M:%S} '
               '{}'.format(
-                  entry['proto'], entry['host'], entry['port'], entry['username'],
-                  entry['pid'], entry['ppid'],
-                  # entry['pgid'], entry['sid'],
-                  entry['nice'], entry['cpu_percent'], entry['memory_percent'],
-                  entry['num_threads'], entry['started'], entry['cmdline'],
-                  host_max_width=host_max_width, user_max_width=user_max_width))
+                  entry['proto'],
+                  entry['host'],
+                  entry['port'],
+                  entry.get('username', '?'),
+                  entry.get('pid') or '?',
+                  entry.get('ppid', '?'),
+                  entry.get('nice', '?'),
+                  entry.get('cpu_percent', float('nan')),
+                  entry.get('memory_percent', float('nan')),
+                  entry.get('num_threads', '?'),
+                  entry.get('started', datetime.datetime(1000, 1, 1)),
+                  entry.get('cmdline', '?'), host_width=host_max_width,
+                  user_width=user_max_width))
 
 def main():
     arg_parser = argparse.ArgumentParser(
             prog=os.path.basename(sys.argv[0]),
             description='list processes listening on tcp/udp sockets')
+
+    other_group = arg_parser.add_argument_group(title='filter by address')
+    other_group.add_argument(
+            '-P', '--public', dest='public', action='store_true',
+            help='do not list sockets listening on localhost')
+
     proto_group = arg_parser.add_argument_group(
-            title='protocol', description=(
+            title='filter by protocol', description=(
             'the following options limit the listing by listening '
             'protocol (by default, all are listening processes are listed)'))
     proto_group.add_argument(
@@ -115,16 +126,21 @@ def main():
             '--udp6', dest='protos', action='append_const', const='UDP6',
             help='list processes listening on IPv6 UDP')
 
-    arg_parser.add_argument(
-            '-P', '--public', dest='public', action='store_true',
-            help='do not list sockets listening on localhost')
     args = arg_parser.parse_args(args=sys.argv[1:])
 
-    all_entries = gather_info()
-    entries = [entry for entry in all_entries
-               if (not args.protos or entry['proto'] in args.protos)
-               and (not args.public or not entry['host'] in ('127.0.0.1', '::1'))]
-    print_table(entries)
+    try:
+        all_entries = gather_info()
+        entries = [entry for entry in all_entries
+                   if (not args.protos or entry['proto'] in args.protos)
+                   and (not args.public or not entry['host'] in (
+                       '127.0.0.1', '::1'))]
+        print_table(entries)
+    finally:
+        if os.getuid() != 0:
+            print()
+            print('*** warning: you must run %s as root to see all available '
+                  'information ***' % os.path.basename(sys.argv[0]))
+            print()
 
 if __name__ == '__main__':
     main()
