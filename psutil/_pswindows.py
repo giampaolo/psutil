@@ -656,11 +656,11 @@ class Process(object):
     @wrap_exceptions
     def wait(self, timeout=None):
         if timeout is None:
-            timeout = cext.INFINITE
+            cext_timeout = cext.INFINITE
         else:
             # WaitForSingleObject() expects time in milliseconds
-            timeout = int(timeout * 1000)
-        ret = cext.proc_wait(self.pid, timeout)
+            cext_timeout = int(timeout * 1000)
+        ret = cext.proc_wait(self.pid, cext_timeout)
         if ret == WAIT_TIMEOUT:
             raise TimeoutExpired(timeout, self.pid, self._name)
         return ret
