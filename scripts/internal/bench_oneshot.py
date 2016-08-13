@@ -29,6 +29,8 @@ names = [
     'memory_percent',
     'ppid',
     'parent',
+    'uids',
+    'username',
 ]
 
 if psutil.LINUX:

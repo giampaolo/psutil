@@ -493,6 +493,9 @@ class Process(object):
                 self.memory_info.cache_activate()
                 # cached in case parent() is used
                 self.ppid.cache_activate()
+                # cached in case username() is used
+                if POSIX:
+                    self.uids.cache_activate()
                 # specific implementation cache
                 self._proc.oneshot_enter()
                 yield
@@ -500,6 +503,8 @@ class Process(object):
                 self.cpu_times.cache_activate()
                 self.memory_info.cache_activate()
                 self.ppid.cache_activate()
+                if POSIX:
+                    self.uids.cache_deactivate()
                 self._proc.oneshot_exit()
                 self._oneshot_inctx = False
 
@@ -728,6 +733,7 @@ class Process(object):
 
     if POSIX:
 
+        @memoize_when_activated
         def uids(self):
             """Return process UIDs as a (real, effective, saved)
             namedtuple.
