@@ -22,11 +22,18 @@ ITERATIONS = 1000
 
 # The list of Process methods which gets collected in one shot and
 # as such get advantage of the speedup.
+names = [
+    'cpu_times',
+    'cpu_percent',
+    'memory_info',
+    'memory_percent',
+    'ppid',
+    'parent',
+]
+
 if psutil.LINUX:
-    names = (
-        'cpu_percent',
+    names += [
         'cpu_times',
-        'create_time',
         'gids',
         'name',
         'num_ctx_switches',
@@ -35,41 +42,35 @@ if psutil.LINUX:
         'status',
         'terminal',
         'uids',
-    )
+    ]
 elif psutil.BSD:
-    names = (
-        'cpu_percent',
+    names = [
         'cpu_times',
-        'create_time',
         'gids',
         'io_counters',
         'memory_full_info',
         'memory_info',
-        'memory_percent',
         'num_ctx_switches',
         'ppid',
         'status',
         'terminal',
         'uids',
-    )
+    ]
 elif psutil.SUNOS:
-    names = (
+    names += [
         'cmdline',
-        'create_time',
         'gids',
         'memory_full_info',
         'memory_info',
-        'memory_percent',
         'name',
         'num_threads',
         'ppid',
         'status',
         'terminal',
         'uids',
-    )
-else:
-    raise RuntimeError("platform %r not supported" % sys.platform)
+    ]
 
+names = sorted(set(names))
 
 setup = textwrap.dedent("""
     from __main__ import names

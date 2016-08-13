@@ -29,6 +29,7 @@ except ImportError:
 from . import _common
 from ._common import deprecated_method
 from ._common import memoize
+from ._common import memoize_when_activated
 from ._compat import callable
 from ._compat import long
 from ._compat import PY3 as _PY3
@@ -486,11 +487,21 @@ class Process(object):
         else:
             self._oneshot_inctx = True
             try:
+                # cached in case cpu_percent() is used
+                self.cpu_times.cache_activate()
+                # cached in case memory_percent() is used
+                self.memory_info.cache_activate()
+                # cached in case parent() is used
+                self.ppid.cache_activate()
+                # specific implementation cache
                 self._proc.oneshot_enter()
                 yield
             finally:
-                self._oneshot_inctx = False
+                self.cpu_times.cache_activate()
+                self.memory_info.cache_activate()
+                self.ppid.cache_activate()
                 self._proc.oneshot_exit()
+                self._oneshot_inctx = False
 
     def as_dict(self, attrs=None, ad_value=None):
         """Utility method returning process information as a
@@ -581,6 +592,7 @@ class Process(object):
         """The process PID."""
         return self._pid
 
+    @memoize_when_activated
     def ppid(self):
         """The process parent PID.
         On Windows the return value is cached after first call.
@@ -1023,6 +1035,7 @@ class Process(object):
             single_cpu_percent = overall_cpus_percent * num_cpus
             return round(single_cpu_percent, 1)
 
+    @memoize_when_activated
     def cpu_times(self):
         """Return a (user, system, children_user, children_system)
         namedtuple representing the accumulated process time, in
@@ -1033,6 +1046,7 @@ class Process(object):
         """
         return self._proc.cpu_times()
 
+    @memoize_when_activated
     def memory_info(self):
         """Return a namedtuple with variable fields depending on the
         platform, representing memory information about the process.
@@ -2121,7 +2135,7 @@ def test():  # pragma: no cover
                 pinfo['name'].strip() or '?'))
 
 
-del memoize, division, deprecated_method
+del memoize, memoize_when_activated, division, deprecated_method
 if sys.version_info[0] < 3:
     del num, x
 
