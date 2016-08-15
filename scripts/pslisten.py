@@ -7,6 +7,7 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 '''
 
+from __future__ import print_function
 import psutil
 import socket
 import operator
@@ -15,6 +16,16 @@ import datetime
 import argparse
 import sys
 import os
+
+try:
+    from socket import AddressFamily
+except:
+    AddressFamily = socket
+
+try:
+    from socket import SocketKind
+except:
+    SocketKind = socket
 
 def gather_info():
     '''
@@ -31,17 +42,17 @@ def gather_info():
                 'pid': netcon.pid,
             }
 
-            if netcon.family == socket.AddressFamily.AF_INET:
-                if netcon.type == socket.SocketKind.SOCK_DGRAM:
+            if netcon.family == AddressFamily.AF_INET:
+                if netcon.type == SocketKind.SOCK_DGRAM:
                     entry['proto'] = 'UDP4'
-                elif netcon.type == socket.SocketKind.SOCK_STREAM:
+                elif netcon.type == SocketKind.SOCK_STREAM:
                     entry['proto'] = 'TCP4'
                 else:
                     next # log something?
-            elif netcon.family == socket.AddressFamily.AF_INET6:
-                if netcon.type == socket.SocketKind.SOCK_DGRAM:
+            elif netcon.family == AddressFamily.AF_INET6:
+                if netcon.type == SocketKind.SOCK_DGRAM:
                     entry['proto'] = 'UDP6'
-                elif netcon.type == socket.SocketKind.SOCK_STREAM:
+                elif netcon.type == SocketKind.SOCK_STREAM:
                     entry['proto'] = 'TCP6'
                 else:
                     next # log something?
@@ -95,7 +106,7 @@ def print_table(entries):
                   entry.get('cpu_percent', float('nan')),
                   entry.get('memory_percent', float('nan')),
                   entry.get('num_threads', '?'),
-                  entry.get('started', datetime.datetime(1000, 1, 1)),
+                  entry.get('started', datetime.datetime(1900, 1, 1)),
                   entry.get('cmdline', '?'), host_width=host_max_width,
                   user_width=user_max_width))
 
