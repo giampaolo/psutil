@@ -465,13 +465,15 @@ class Process(object):
         one information about the process. If you're lucky, you'll
         get a hell of a speedup.
 
-        >>> p = Process()
+        >>> import psutil
+        >>> p = psutil.Process()
         >>> with p.oneshot():
-        ...     p.name()  # execute internal routine
-        ...     p.ppid()  # use cached value
-        ...     p.uids()  # use cached value
-        ...     p.gids()  # use cached value
+        ...     p.name()  # collect multiple info
+        ...     p.cpu_times()  # return cached value
+        ...     p.cpu_percent()  # return cached value
+        ...     p.create_time()  # return cached value
         ...
+        >>>
         """
         if self._oneshot_inctx:
             # NOOP: this covers the use case where the user enters the
@@ -500,9 +502,9 @@ class Process(object):
                 self._proc.oneshot_enter()
                 yield
             finally:
-                self.cpu_times.cache_activate()
-                self.memory_info.cache_activate()
-                self.ppid.cache_activate()
+                self.cpu_times.cache_deactivate()
+                self.memory_info.cache_deactivate()
+                self.ppid.cache_deactivate()
                 if POSIX:
                     self.uids.cache_deactivate()
                 self._proc.oneshot_exit()
