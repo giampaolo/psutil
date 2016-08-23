@@ -2911,9 +2911,18 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     unsigned int i = 0;
     ULONG family;
     PCTSTR intRet;
+    PCTSTR netmaskIntRet;
     char *ptr;
     char buff[100];
     DWORD bufflen = 100;
+    char netmask_buff[100];
+    DWORD netmask_bufflen = 100;
+    DWORD dwRetVal = 0;
+#if (_WIN32_WINNT >= 0x0601)  // Windows 7
+    ULONG converted_netmask;
+    UINT netmask_bits;
+    struct in_addr in_netmask;
+#endif
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
     PIP_ADAPTER_UNICAST_ADDRESS pUnicast = NULL;
@@ -2923,6 +2932,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     PyObject *py_address = NULL;
     PyObject *py_mac_address = NULL;
     PyObject *py_nic_name = NULL;
+    PyObject *py_netmask = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -2935,6 +2945,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     while (pCurrAddresses) {
         pUnicast = pCurrAddresses->FirstUnicastAddress;
 
+        netmaskIntRet = NULL;
         py_nic_name = NULL;
         py_nic_name = PyUnicode_FromWideChar(
             pCurrAddresses->FriendlyName,
@@ -2996,6 +3007,15 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                         pUnicast->Address.lpSockaddr;
                     intRet = inet_ntop(AF_INET, &(sa_in->sin_addr), buff,
                                        bufflen);
+#if (_WIN32_WINNT >= 0x0601)  // Windows 7
+                    netmask_bits = pUnicast->OnLinkPrefixLength;
+                    dwRetVal = ConvertLengthToIpv4Mask(netmask_bits, &converted_netmask);
+                    if (dwRetVal == NO_ERROR) {
+                        in_netmask.s_addr = converted_netmask;
+                        netmaskIntRet = inet_ntop(AF_INET, &in_netmask, netmask_buff,
+                                                  netmask_bufflen);
+                    }
+#endif
                 }
                 else if (family == AF_INET6) {
                     struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)
@@ -3021,7 +3041,17 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 if (py_address == NULL)
                     goto error;
 
-                Py_INCREF(Py_None);
+                if (netmaskIntRet != NULL) {
+#if PY_MAJOR_VERSION >= 3
+                    py_netmask = PyUnicode_FromString(netmask_buff);
+#else
+                    py_netmask = PyString_FromString(netmask_buff);
+#endif
+                } else {
+                    Py_INCREF(Py_None);
+                    py_netmask = Py_None;
+                }
+
                 Py_INCREF(Py_None);
                 Py_INCREF(Py_None);
                 py_tuple = Py_BuildValue(
@@ -3029,7 +3059,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     py_nic_name,
                     family,
                     py_address,
-                    Py_None,  // netmask (not supported)
+                    py_netmask,
                     Py_None,  // broadcast (not supported)
                     Py_None  // ptp (not supported on Windows)
                 );
@@ -3040,6 +3070,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     goto error;
                 Py_DECREF(py_tuple);
                 Py_DECREF(py_address);
+                Py_DECREF(py_netmask);
 
                 pUnicast = pUnicast->Next;
             }
@@ -3058,6 +3089,7 @@ error:
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
     Py_XDECREF(py_nic_name);
+    Py_XDECREF(py_netmask);
     return NULL;
 }
 
