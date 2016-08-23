@@ -117,4 +117,5 @@ def main():
         print("same speed")
 
 
-main()
+if __name__ == '__main__':
+    main()
