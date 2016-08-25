@@ -2918,7 +2918,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     char netmask_buff[100];
     DWORD netmask_bufflen = 100;
     DWORD dwRetVal = 0;
-#if (_WIN32_WINNT >= 0x0601)  // Windows 7
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
     ULONG converted_netmask;
     UINT netmask_bits;
     struct in_addr in_netmask;
@@ -3007,7 +3007,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                         pUnicast->Address.lpSockaddr;
                     intRet = inet_ntop(AF_INET, &(sa_in->sin_addr), buff,
                                        bufflen);
-#if (_WIN32_WINNT >= 0x0601)  // Windows 7
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
                     netmask_bits = pUnicast->OnLinkPrefixLength;
                     dwRetVal = ConvertLengthToIpv4Mask(netmask_bits, &converted_netmask);
                     if (dwRetVal == NO_ERROR) {
