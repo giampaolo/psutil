@@ -212,5 +212,5 @@ pre-release:
 release:
 	${MAKE} pre-release
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz, exes, wheels on PYPI
-	${MAKE} upload-doc
 	${MAKE} git-tag-release
+	${MAKE} upload-doc
