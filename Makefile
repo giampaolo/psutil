@@ -202,8 +202,15 @@ win-upload-exes:
 # All the necessary steps before making a release.
 pre-release:
 	${MAKE} clean
-	${MAKE} setup-dev-env  # mainly to update sphinx and install twine
 	${MAKE} install  # to import psutil from download_exes.py
+	$(PYTHON) -c \
+		"from psutil import __version__ as VER; \
+		readme = open('README.rst').read(); \
+		history = open('README.rst').read(); \
+		assert VER in readme, 'version not in README.rst'; \
+		assert VER in history, 'version not in HISTORY.rst'; \
+		"
+	${MAKE} setup-dev-env  # mainly to update sphinx and install twine
 	${MAKE} win-download-exes
 	$(PYTHON) setup.py sdist
 
