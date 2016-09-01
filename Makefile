@@ -172,7 +172,7 @@ git-tag-release:
 	git tag -a release-`python -c "import setup; print(setup.get_version())"` -m `git rev-list HEAD --count`:`git rev-parse --short HEAD`
 	git push --follow-tags
 
-# install GIT pre-commit hook
+# Install GIT pre-commit hook.
 install-git-hooks:
 	ln -sf ../../.git-pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
@@ -191,27 +191,25 @@ upload-doc:
 	cd docs && make html
 	$(PYTHON) setup.py upload_sphinx --upload-dir=docs/_build/html
 
-# download exes/wheels hosted on appveyor
+# Download exes/wheels hosted on appveyor.
 win-download-exes:
 	$(PYTHON) .ci/appveyor/download_exes.py --user giampaolo --project psutil
 
-# upload exes/wheels in dist/* directory to PYPI
+# Upload exes/wheels in dist/* directory to PYPI.
 win-upload-exes:
 	$(PYTHON) -m twine upload dist/*
 
-# all the necessary steps before making a release
+# All the necessary steps before making a release.
 pre-release:
 	${MAKE} clean
 	${MAKE} setup-dev-env  # mainly to update sphinx and install twine
-	${MAKE} install  # to import psutil form download_exes.py
-	cd docs && ${MAKE} html && cd -  # to make sure doc builds
-	# ${MAKE} win-download-exes
-	$(PYTHON) setup.py sdist  # to make sure tar.gz can be created
+	${MAKE} install  # to import psutil from download_exes.py
+	${MAKE} win-download-exes
 
-#
+# Create a release: creates tar.gz and exes/wheels, uploads them, upload doc,
+# git tag release.
 release:
 	${MAKE} pre-release
-	${MAKE} win-upload-exes
-	${MAKE} upload-src
+	$(PYTHON) setup.py sdist upload
 	${MAKE} upload-doc
 	${MAKE} git-tag-release
