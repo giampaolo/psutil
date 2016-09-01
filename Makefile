@@ -1,11 +1,12 @@
 # Shortcuts for various tasks (UNIX only).
 # To use a specific Python version run: "make install PYTHON=python3.3"
 
-# You can set these variables from the command line.
+# You can set the following variables from the command line.
 PYTHON = python
 TSCRIPT = psutil/tests/runner.py
+INSTALL_OPTS =
 
-# For internal use.
+# List of nice-to-have dev libs.
 DEPS = coverage \
 	flake8 \
 	futures \
@@ -19,12 +20,19 @@ DEPS = coverage \
 	sphinx-pypi-upload \
 	unittest2
 
+# In case of venv, omit --user options during install.
+_IS_VENV = $(shell $(PYTHON) -c "import sys; print(1 if hasattr(sys, 'real_prefix') else 0)")
+ifeq ($(_IS_VENV), 0)
+	INSTALL_OPTS += "--user"
+endif
+
 all: test
 
 # ===================================================================
 # Install
 # ===================================================================
 
+# Remove all build files.
 clean:
 	rm -f `find . -type f -name \*.py[co]`
 	rm -f `find . -type f -name \*.so`
@@ -44,6 +52,7 @@ clean:
 	rm -rf htmlcov/
 	rm -rf tmp/
 
+# Compile without installing.
 build: clean
 	$(PYTHON) setup.py build
 	@# copies *.so files in ./psutil directory in order to allow
@@ -52,15 +61,19 @@ build: clean
 	$(PYTHON) setup.py build_ext -i
 	rm -rf tmp
 
+# Install this package. Install is done:
+# - as the current user, in order to avoid permission issues
+# - in development / edit mode, so that source can be modified on the fly
 install: build
-	$(PYTHON) setup.py develop --user
+	$(PYTHON) setup.py develop $(INSTALL_OPTS)
 	rm -rf tmp
 
+# Uninstall this package via pip.
 uninstall:
 	cd ..; $(PYTHON) -m pip uninstall -y -v psutil
 
+# Install PIP (only if necessary).
 install-pip:
-	# Install PIP (only if necessary).
 	$(PYTHON) -c "import sys, ssl, os, pkgutil, tempfile, atexit; \
 				sys.exit(0) if pkgutil.find_loader('pip') else None; \
 				pyexc = 'from urllib.request import urlopen' if sys.version_info[0] == 3 else 'from urllib2 import urlopen'; \
@@ -77,10 +90,14 @@ install-pip:
 				code = os.system('%s %s --user' % (sys.executable, f.name)); \
 				sys.exit(code);"
 
-# Install useful deps which are nice to have while developing / testing.
+# Install:
+# - GIT hooks
+# - pip (if necessary)
+# - useful deps which are nice to have while developing / testing;
+#   deps these are also upgraded
 setup-dev-env: install-git-hooks install-pip
-	$(PYTHON) -m pip install --user --upgrade pip
-	$(PYTHON) -m pip install --user --upgrade $(DEPS)
+	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade pip
+	$(PYTHON) -m pip install $(INSTALL_OPTS) --upgrade $(DEPS)
 
 # ===================================================================
 # Tests

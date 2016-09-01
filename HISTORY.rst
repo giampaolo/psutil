@@ -3,6 +3,10 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 4.3.1 - XXXX-XX-XX
 ==================
 
+**Enhancements**
+
+- #881: "make install" now works also when using a virtual env.
+
 **Bug fixes**
 
 - #854: Process.as_dict() raises ValueError if passed an erroneous attrs name.
