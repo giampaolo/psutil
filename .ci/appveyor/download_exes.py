@@ -23,6 +23,8 @@ import sys
 
 from concurrent.futures import ThreadPoolExecutor
 
+from psutil import __version__ as PSUTIL_VERSION
+
 
 BASE_URL = 'https://ci.appveyor.com/api'
 PY_VERSIONS = ['2.7', '3.3', '3.4', '3.5']
@@ -113,12 +115,12 @@ def get_file_urls(options):
 
 def rename_27_wheels():
     # See: https://github.com/giampaolo/psutil/issues/810
-    src = 'dist/psutil-4.3.0-cp27-cp27m-win32.whl'
-    dst = 'dist/psutil-4.3.0-cp27-none-win32.whl'
+    src = 'dist/psutil-%s-cp27-cp27m-win32.whl' % PSUTIL_VERSION
+    dst = 'dist/psutil-%s-cp27-none-win32.whl' % PSUTIL_VERSION
     print("rename: %s\n        %s" % (src, dst))
     os.rename(src, dst)
-    src = 'dist/psutil-4.3.0-cp27-cp27m-win_amd64.whl'
-    dst = 'dist/psutil-4.3.0-cp27-none-win_amd64.whl'
+    src = 'dist/psutil-%s-cp27-cp27m-win_amd64.whl' % PSUTIL_VERSION
+    dst = 'dist/psutil-%s-cp27-none-win_amd64.whl' % PSUTIL_VERSION
     print("rename: %s\n        %s" % (src, dst))
     os.rename(src, dst)
 
