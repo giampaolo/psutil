@@ -74,21 +74,23 @@ uninstall:
 
 # Install PIP (only if necessary).
 install-pip:
-	$(PYTHON) -c "import sys, ssl, os, pkgutil, tempfile, atexit; \
-				sys.exit(0) if pkgutil.find_loader('pip') else None; \
-				pyexc = 'from urllib.request import urlopen' if sys.version_info[0] == 3 else 'from urllib2 import urlopen'; \
-				exec(pyexc); \
-				context = ssl._create_unverified_context() if hasattr(ssl, '_create_unverified_context') else None; \
-				kw = dict(context=context) if context else {}; \
-				req = urlopen('https://bootstrap.pypa.io/get-pip.py', **kw); \
-				data = req.read(); \
-				f = tempfile.NamedTemporaryFile(suffix='.py'); \
-				atexit.register(f.close); \
-				f.write(data); \
-				f.flush(); \
-				print('downloaded %s' % f.name); \
-				code = os.system('%s %s --user' % (sys.executable, f.name)); \
-				sys.exit(code);"
+	$(PYTHON) -c \
+		"import sys, ssl, os, pkgutil, tempfile, atexit; \
+		sys.exit(0) if pkgutil.find_loader('pip') else None; \
+		pyexc = 'from urllib.request import urlopen' if sys.version_info[0] == 3 else 'from urllib2 import urlopen'; \
+		exec(pyexc); \
+		ctx = ssl._create_unverified_context() if hasattr(ssl, '_create_unverified_context') else None; \
+		kw = dict(context=ctx) if ctx else {}; \
+		req = urlopen('https://bootstrap.pypa.io/get-pip.py', **kw); \
+		data = req.read(); \
+		f = tempfile.NamedTemporaryFile(suffix='.py'); \
+		atexit.register(f.close); \
+		f.write(data); \
+		f.flush(); \
+		print('downloaded %s' % f.name); \
+		code = os.system('%s %s --user' % (sys.executable, f.name)); \
+		f.close(); \
+		sys.exit(code);"
 
 # Install:
 # - GIT hooks
