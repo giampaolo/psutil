@@ -206,7 +206,7 @@ pre-release:
 	$(PYTHON) -c \
 		"from psutil import __version__ as VER; \
 		readme = open('README.rst').read(); \
-		history = open('README.rst').read(); \
+		history = open('HISTORY.rst').read(); \
 		assert VER in readme, 'version not in README.rst'; \
 		assert VER in history, 'version not in HISTORY.rst'; \
 		"

@@ -30,6 +30,11 @@ BASE_URL = 'https://ci.appveyor.com/api'
 PY_VERSIONS = ['2.7', '3.3', '3.4', '3.5']
 
 
+def exit(msg):
+    print(hilite(msg, ok=False), file=sys.stderr)
+    sys.exit(1)
+
+
 def term_supports_colors(file=sys.stdout):
     try:
         import curses
@@ -108,7 +113,7 @@ def get_file_urls(options):
             file_url = job_url + '/' + item['fileName']
             urls.append(file_url)
     if not urls:
-        sys.exit("no artifacts found")
+        exit("no artifacts found")
     for url in sorted(urls, key=lambda x: os.path.basename(x)):
         yield url
 
@@ -136,8 +141,7 @@ def main(options):
     expected = len(PY_VERSIONS) * 4
     got = len(files)
     if expected != got:
-        print(hilite("expected %s files, got %s" % (expected, got), ok=False),
-              file=sys.stderr)
+        return exit("expected %s files, got %s" % (expected, got))
     rename_27_wheels()
 
 
