@@ -207,8 +207,8 @@ pre-release:
 		"from psutil import __version__ as ver; \
 		readme = open('README.rst').read(); \
 		history = open('HISTORY.rst').read(); \
-		assert ver in readme, 'version not in README.rst'; \
-		assert ver in history, 'version not in HISTORY.rst'; \
+		assert ver in readme, '%r not in README.rst' % ver; \
+		assert ver in history, '%r not in HISTORY.rst' % ver; \
 		assert 'XXXX' not in history, 'XXXX in HISTORY.rst'; \
 		"
 	${MAKE} setup-dev-env  # mainly to update sphinx and install twine
