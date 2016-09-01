@@ -205,11 +205,12 @@ pre-release:
 	${MAKE} setup-dev-env  # mainly to update sphinx and install twine
 	${MAKE} install  # to import psutil from download_exes.py
 	${MAKE} win-download-exes
+	$(PYTHON) setup.py sdist
 
 # Create a release: creates tar.gz and exes/wheels, uploads them, upload doc,
 # git tag release.
 release:
 	${MAKE} pre-release
-	$(PYTHON) setup.py sdist upload
+	$(PYTHON) -m twine upload dist/*  # upload tar.gz, exes, wheels on PYPI
 	${MAKE} upload-doc
 	${MAKE} git-tag-release
