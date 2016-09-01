@@ -18,6 +18,7 @@ DEPS = coverage \
 	requests \
 	sphinx \
 	sphinx-pypi-upload \
+	twine \
 	unittest2
 
 # In case of venv, omit --user options during install.
@@ -187,7 +188,7 @@ upload-src: clean
 # Build and upload doc on https://pythonhosted.org/psutil/.
 # Requires "pip install sphinx-pypi-upload".
 upload-doc:
-	cd docs; make html
+	cd docs && make html
 	$(PYTHON) setup.py upload_sphinx --upload-dir=docs/_build/html
 
 # download exes/wheels hosted on appveyor
@@ -197,3 +198,20 @@ win-download-exes:
 # upload exes/wheels in dist/* directory to PYPI
 win-upload-exes:
 	$(PYTHON) -m twine upload dist/*
+
+# all the necessary steps before making a release
+pre-release:
+	${MAKE} clean
+	${MAKE} setup-dev-env  # mainly to update sphinx and install twine
+	${MAKE} install  # to import psutil form download_exes.py
+	cd docs && ${MAKE} html && cd -  # to make sure doc builds
+	# ${MAKE} win-download-exes
+	$(PYTHON) setup.py sdist  # to make sure tar.gz can be created
+
+#
+release:
+	${MAKE} pre-release
+	${MAKE} win-upload-exes
+	${MAKE} upload-src
+	${MAKE} upload-doc
+	${MAKE} git-tag-release
