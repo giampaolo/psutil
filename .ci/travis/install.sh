@@ -51,4 +51,4 @@ elif [[ $TRAVIS_PYTHON_VERSION == '3.3' ]] || [[ $PYVER == 'py33' ]]; then
     pip install -U ipaddress
 fi
 
-pip install coverage coveralls flake8 pep8 setuptools
+pip install -U coverage coveralls flake8 pep8 setuptools
