@@ -141,16 +141,11 @@ Documentation
 Releasing a new version
 =======================
 
-These are note for myself (Giampaolo):
+These are notes for myself (Giampaolo):
 
-- make sure all tests pass and all builds are green.
-- upload source tarball on PYPI with ``make upload-src``.
-- upload exe and wheel files for windows on PYPI with ``make upload-all``.
-  - ...or by using atrifacts hosted on AppVeyor with ``make win-download-exes``
-    and ``make win-upload-exes``,
-- upload updated doc on http://pythonhosted.org/psutil with ``make upload-doc``.
-- GIT tag the new release with ``make git-tag-release``.
-- post on psutil and python-announce mailing lists, twitter, g+, blog.
+- ``make release``
+- post announce (``make print-announce``) on psutil and python-announce mailing
+  lists, twitter, g+, blog.
 
 =============
 FreeBSD notes
