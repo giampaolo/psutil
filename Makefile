@@ -222,3 +222,6 @@ release:
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz, exes, wheels on PYPI
 	${MAKE} git-tag-release
 	${MAKE} upload-doc
+
+print-announce:
+	@$(PYTHON) scripts/internal/print_announce.py
