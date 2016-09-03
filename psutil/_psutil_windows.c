@@ -1482,9 +1482,13 @@ static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
     // that the size of the table increases between the moment where we
     // query the size and the moment where we query the data.  Therefore, it's
     // important to call this in a loop to retry if that happens.
+    //
+    // Also, since we may loop a theoretically unbounded number of times here,
+    // release the GIL while we're doing this.
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
     *size = 0;
     *data = NULL;
+    Py_BEGIN_ALLOW_THREADS;
     error = call(NULL, size, FALSE, address_family,
                  TCP_TABLE_OWNER_PID_ALL, 0);
     while (error == ERROR_INSUFFICIENT_BUFFER)
@@ -1501,6 +1505,7 @@ static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
             *data = NULL;
         }
     }
+    Py_END_ALLOW_THREADS;
     return error;
 }
 
@@ -1518,9 +1523,13 @@ static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
     // that the size of the table increases between the moment where we
     // query the size and the moment where we query the data.  Therefore, it's
     // important to call this in a loop to retry if that happens.
+    //
+    // Also, since we may loop a theoretically unbounded number of times here,
+    // release the GIL while we're doing this.
     DWORD error = ERROR_INSUFFICIENT_BUFFER;
     *size = 0;
     *data = NULL;
+    Py_BEGIN_ALLOW_THREADS;
     error = call(NULL, size, FALSE, address_family,
                  UDP_TABLE_OWNER_PID, 0);
     while (error == ERROR_INSUFFICIENT_BUFFER)
@@ -1537,6 +1546,7 @@ static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
             *data = NULL;
         }
     }
+    Py_END_ALLOW_THREADS;
     return error;
 }
 
