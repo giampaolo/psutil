@@ -16,6 +16,7 @@ DEPS = coverage \
 	pep8 \
 	pyflakes \
 	requests \
+	setuptools \
 	sphinx \
 	sphinx-pypi-upload \
 	twine \
