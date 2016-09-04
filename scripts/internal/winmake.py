@@ -72,7 +72,7 @@ def rm(pattern, directory=False):
     def safe_remove(path):
         try:
             os.remove(path)
-        except OSError, err:
+        except OSError as err:
             if err.errno != errno.ENOENT:
                 raise
         else:

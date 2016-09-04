@@ -568,8 +568,9 @@ class TestProcess(unittest.TestCase):
                     "on OpenBSD this requires root access")
         self.assertAlmostEqual(p.cpu_times().user,
                                p.threads()[0].user_time, delta=0.1)
-        self.assertAlmostEqual(p.cpu_times().system,
-                               p.threads()[0].system_time, delta=0.1)
+        self.assertAlmostEqual(
+            p.cpu_times().system,
+            sum([x.system_time for x in p.threads()]), delta=0.1)
 
     def test_memory_info(self):
         p = psutil.Process()
