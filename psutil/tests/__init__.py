@@ -13,6 +13,7 @@ import atexit
 import contextlib
 import errno
 import functools
+import ipaddress  # python >= 3.3 / requires "pip install ipaddress"
 import os
 import re
 import shutil
@@ -28,10 +29,7 @@ import warnings
 from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
-try:
-    import ipaddress  # python >= 3.3
-except ImportError:
-    ipaddress = None
+
 try:
     from unittest import mock  # py3
 except ImportError:
@@ -128,8 +126,6 @@ TRAVIS = bool(os.environ.get('TRAVIS'))
 # (http://www.appveyor.com/)
 APPVEYOR = bool(os.environ.get('APPVEYOR'))
 
-if TRAVIS or 'tox' in sys.argv[0]:
-    import ipaddress
 if TRAVIS or APPVEYOR:
     GLOBAL_TIMEOUT = GLOBAL_TIMEOUT * 4
 VERBOSITY = 1 if os.getenv('SILENT') or TOX else 2
@@ -535,16 +531,14 @@ def check_net_address(addr, family):
         assert len(octs) == 4, addr
         for num in octs:
             assert 0 <= num <= 255, addr
-        if ipaddress:
-            if not PY3:
-                addr = unicode(addr)
-            ipaddress.IPv4Address(addr)
+        if not PY3:
+            addr = unicode(addr)
+        ipaddress.IPv4Address(addr)
     elif family == AF_INET6:
         assert isinstance(addr, str), addr
-        if ipaddress:
-            if not PY3:
-                addr = unicode(addr)
-            ipaddress.IPv6Address(addr)
+        if not PY3:
+            addr = unicode(addr)
+        ipaddress.IPv6Address(addr)
     elif family == psutil.AF_LINK:
         assert re.match('([a-fA-F0-9]{2}[:|\-]?){6}', addr) is not None, addr
     else:

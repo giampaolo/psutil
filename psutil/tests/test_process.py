@@ -26,10 +26,6 @@ import types
 from socket import AF_INET
 from socket import SOCK_DGRAM
 from socket import SOCK_STREAM
-try:
-    import ipaddress  # python >= 3.3
-except ImportError:
-    ipaddress = None
 
 import psutil
 

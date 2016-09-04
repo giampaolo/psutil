@@ -66,7 +66,7 @@ build: clean
 # Install this package + GIT hooks. Install is done:
 # - as the current user, in order to avoid permission issues
 # - in development / edit mode, so that source can be modified on the fly
-install: install_git_hooks build
+install: build
 	$(PYTHON) setup.py develop $(INSTALL_OPTS)
 	rm -rf tmp
 
