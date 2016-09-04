@@ -559,15 +559,17 @@ class TestProcess(unittest.TestCase):
     # see: https://travis-ci.org/giampaolo/psutil/jobs/111842553
     @unittest.skipIf(OSX and TRAVIS, "")
     def test_threads_2(self):
-        p = psutil.Process()
+        sproc = get_test_subprocess(wait=True)
+        p = psutil.Process(sproc.pid)
         if OPENBSD:
             try:
                 p.threads()
             except psutil.AccessDenied:
                 raise unittest.SkipTest(
                     "on OpenBSD this requires root access")
-        self.assertAlmostEqual(p.cpu_times().user,
-                               p.threads()[0].user_time, delta=0.1)
+        self.assertAlmostEqual(
+            p.cpu_times().user,
+            sum([x.user_time for x in p.threads()]), delta=0.1)
         self.assertAlmostEqual(
             p.cpu_times().system,
             sum([x.system_time for x in p.threads()]), delta=0.1)
