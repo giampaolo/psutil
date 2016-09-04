@@ -22,9 +22,11 @@ import textwrap
 HERE = os.path.abspath(os.path.dirname(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '../..'))
 PYTHON = sys.executable
+TSCRIPT = os.environ['TSCRIPT']
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
 PY3 = sys.version_info[0] == 3
 DEPS = [
+    "coverage",
     "flake8",
     "ipaddress",
     "mock",
@@ -44,16 +46,11 @@ DEPS = [
 # ===================================================================
 
 
-def sh(cmd, decode=False):
+def sh(cmd):
     print("cmd: " + cmd)
-    try:
-        out = subprocess.check_output(cmd, shell=True)
-    except subprocess.CalledProcessError as err:
-        sys.exit(err)
-    else:
-        if decode and PY3:
-            out = out.decode()
-        return out
+    code = os.system(cmd)
+    if code:
+        sys.exit(code)
 
 
 _cmds = {}
@@ -155,7 +152,9 @@ def setup_dev_env():
 @cmd
 def flake8():
     """Run flake8 against all py files"""
-    py_files = sh("git ls-files", decode=True)
+    py_files = subprocess.check_output("git ls-files")
+    if PY3:
+        py_files = py_files.decode()
     py_files = [x for x in py_files.split() if x.endswith('.py')]
     py_files = ' '.join(py_files)
     sh("%s -m flake8 %s" % (PYTHON, py_files))
@@ -164,9 +163,19 @@ def flake8():
 @cmd
 def test():
     """Run tests"""
-    TSCRIPT = os.environ['TSCRIPT']
     install()
     sh("%s %s" % (PYTHON, TSCRIPT))
+
+
+@cmd
+def coverage():
+    """Run coverage tests."""
+    # Note: coverage options are controlled by .coveragerc file
+    install()
+    sh("%s -m coverage run %s" % (PYTHON, TSCRIPT))
+    sh("%s -m coverage report" % PYTHON)
+    sh("%s -m coverage html" % PYTHON)
+    sh("%s -m webbrowser -t htmlcov/index.html" % PYTHON)
 
 
 @cmd

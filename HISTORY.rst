@@ -1,5 +1,14 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
+
+4.3.2 - XXXX-XX-XX
+==================
+
+**Bug fixes**
+
+798: [Windows] Process.open_files() returns and empty list on Windows 10.
+
+
 4.3.1 - 2016-09-01
 ==================
 
