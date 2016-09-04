@@ -56,16 +56,16 @@ clean:
 # Compile without installing.
 build: clean
 	$(PYTHON) setup.py build
-	@# copies *.so files in ./psutil directory in order to allow
+	@# copies compiled *.so files in ./psutil directory in order to allow
 	@# "import psutil" when using the interactive interpreter from within
 	@# this directory.
 	$(PYTHON) setup.py build_ext -i
 	rm -rf tmp
 
-# Install this package. Install is done:
+# Install this package + GIT hooks. Install is done:
 # - as the current user, in order to avoid permission issues
 # - in development / edit mode, so that source can be modified on the fly
-install: build
+install: install_git_hooks build
 	$(PYTHON) setup.py develop $(INSTALL_OPTS)
 	rm -rf tmp
 

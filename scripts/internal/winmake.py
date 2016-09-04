@@ -19,6 +19,7 @@ import shutil
 import ssl
 import subprocess
 import sys
+import tempfile
 import textwrap
 
 
@@ -113,31 +114,29 @@ def rm(pattern, directory=False):
 def install_pip():
     try:
         import pip  # NOQA
-        return
     except ImportError:
-        pass
+        if PY3:
+            from urllib.request import urlopen
+        else:
+            from urllib2 import urlopen
 
-    if PY3:
-        from urllib.request import urlopen
-    else:
-        from urllib2 import urlopen
+        if hasattr(ssl, '_create_unverified_context'):
+            ctx = ssl._create_unverified_context()
+        else:
+            ctx = None
+        kw = dict(context=ctx) if ctx else {}
+        print("downloading %s" % GET_PIP_URL)
+        req = urlopen(GET_PIP_URL, **kw)
+        data = req.read()
 
-    if hasattr(ssl, '_create_unverified_context'):
-        ctx = ssl._create_unverified_context()
-    else:
-        ctx = None
-    kw = dict(context=ctx) if ctx else {}
-    print("downloading %s" % GET_PIP_URL)
-    req = urlopen(GET_PIP_URL, **kw)
-    data = req.read()
+        tfile = os.path.join(tempfile.gettempdir(), 'get-pip.py')
+        with open(tfile, 'wb') as f:
+            f.write(data)
 
-    with open('get-pip.py', 'wb') as f:
-        f.write(data)
-
-    try:
-        sh('%s %s --user' % (PYTHON, f.name))
-    finally:
-        os.remove(f.name)
+        try:
+            sh('%s %s --user' % (PYTHON, tfile))
+        finally:
+            os.remove(tfile)
 
 
 # ===================================================================
@@ -157,12 +156,16 @@ def help():
 def build():
     """Build / compile"""
     sh("%s setup.py build" % PYTHON)
+    # copies compiled *.pyd files in ./psutil directory in order to
+    # allow "import psutil" when using the interactive interpreter
+    # from within this directory.
     sh("%s setup.py build_ext -i" % PYTHON)
 
 
 @cmd
 def install():
     """Install in develop / edit mode"""
+    install_git_hooks()
     build()
     sh("%s setup.py develop" % PYTHON)
 
