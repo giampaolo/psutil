@@ -38,7 +38,7 @@ def main():
     # flake8
     if files:
         try:
-            import flake8a  # NOQA
+            import flake8  # NOQA
         except ImportError:
             sys.exit("commit aborted: flake8 is not installed; "
                      "run 'make setup-dev-env'")
