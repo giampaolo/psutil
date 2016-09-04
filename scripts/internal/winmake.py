@@ -11,8 +11,11 @@ This was originally written as a bat file but they suck so much
 that they should be deemed illegal!
 """
 
+import errno
+import fnmatch
 import functools
 import os
+import shutil
 import ssl
 import subprocess
 import sys
@@ -62,6 +65,50 @@ def cmd(fun):
 
     _cmds[fun.__name__] = fun.__doc__
     return wrapper
+
+
+def rm(pattern, directory=False):
+    """Recursively remove a file or dir by pattern."""
+    def safe_remove(path):
+        try:
+            os.remove(path)
+        except OSError, err:
+            if err.errno != errno.ENOENT:
+                raise
+        else:
+            print("rm %s" % path)
+
+    def safe_rmtree(path):
+        def onerror(fun, path, excinfo):
+            exc = excinfo[1]
+            if exc.errno != errno.ENOENT:
+                raise
+
+        existed = os.path.isdir(path)
+        shutil.rmtree(path, onerror=onerror)
+        if existed:
+            print("rmdir -f %s" % path)
+
+    if "*" not in pattern:
+        if directory:
+            safe_rmtree(pattern)
+        else:
+            safe_remove(pattern)
+        return
+
+    for root, subdirs, subfiles in os.walk('.'):
+        root = os.path.normpath(root)
+        if root.startswith('.git/'):
+            continue
+        found = fnmatch.filter(subdirs if directory else subfiles, pattern)
+        for name in found:
+            path = os.path.join(root, name)
+            if directory:
+                print("rmdir -f %s" % path)
+                safe_rmtree(path)
+            else:
+                print("rm %s" % path)
+                safe_remove(path)
 
 
 def install_pip():
@@ -131,15 +178,23 @@ def uninstall():
 @cmd
 def clean():
     """Deletes dev files"""
-    sh("for /r %%R in (__pycache__) do if exist %%R (rmdir /S /Q %%R)")
-    sh("for /r %%R in (*.pyc) do if exist %%R (del /s %%R)")
-    sh("for /r %%R in (*.pyd) do if exist %%R (del /s %%R)")
-    sh("for /r %%R in (*.orig) do if exist %%R (del /s %%R)")
-    sh("for /r %%R in (*.bak) do if exist %%R (del /s %%R)")
-    sh("for /r %%R in (*.rej) do if exist %%R (del /s %%R)")
-    sh("if exist psutil.egg-info (rmdir /S /Q psutil.egg-info)")
-    sh("if exist build (rmdir /S /Q build)")
-    sh("if exist dist (rmdir /S /Q dist)")
+    rm("*.egg-info", directory=True)
+    rm("*__pycache__", directory=True)
+    rm("build", directory=True)
+    rm("dist", directory=True)
+    rm("htmlcov", directory=True)
+    rm("tmp", directory=True)
+
+    rm("*.bak")
+    rm("*.core")
+    rm("*.orig")
+    rm("*.pyc")
+    rm("*.pyo")
+    rm("*.rej")
+    rm("*.so")
+    rm("*.~")
+    rm(".coverage")
+    rm(".tox")
 
 
 @cmd
