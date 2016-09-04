@@ -11,10 +11,10 @@ import sys
 
 def main():
     out = subprocess.check_output("git diff --cached --name-only", shell=True)
-    files = [x for x in out.split(b'\n') if x.endswith(b'.py') and
-             os.path.exists(x)]
+    py_files = [x for x in out.split(b'\n') if x.endswith(b'.py') and
+                os.path.exists(x)]
 
-    for path in files:
+    for path in py_files:
         with open(path) as f:
             data = f.read()
 
@@ -36,7 +36,7 @@ def main():
                     sys.exit("commit aborted: bare except clause")
 
     # flake8
-    if files:
+    if py_files:
         try:
             import flake8  # NOQA
         except ImportError:
@@ -44,7 +44,8 @@ def main():
                      "run 'make setup-dev-env'")
 
         ret = subprocess.call(
-            "%s -m flake8 %s" % (sys.executable, " ".join(files)), shell=True)
+            "%s -m flake8 %s" % (sys.executable, " ".join(py_files)),
+            shell=True)
         if ret != 0:
             sys.exit("commit aborted: python code is not flake8-compliant")
 
