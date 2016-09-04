@@ -36,8 +36,13 @@ def main():
                     sys.exit("commit aborted: bare except clause")
 
     # flake8
-    print 4
     if files:
+        try:
+            import flake8a  # NOQA
+        except ImportError:
+            sys.exit("commit aborted: flake8 is not installed; "
+                     "run 'make setup-dev-env'")
+
         ret = subprocess.call(
             "%s -m flake8 %s" % (sys.executable, " ".join(files)), shell=True)
         if ret != 0:
