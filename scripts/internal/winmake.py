@@ -42,6 +42,7 @@ DEPS = [
     "wheel",
     "wmi",
 ]
+_cmds = {}
 
 
 # ===================================================================
@@ -53,10 +54,8 @@ def sh(cmd):
     print("cmd: " + cmd)
     code = os.system(cmd)
     if code:
-        sys.exit(code)
+        raise SystemExit
 
-
-_cmds = {}
 
 def cmd(fun):
     @functools.wraps(fun)
@@ -201,6 +200,7 @@ def clean():
 def setup_dev_env():
     """Install useful deps"""
     install_pip()
+    install_git_hooks()
     sh("%s -m pip install -U %s" % (PYTHON, " ".join(DEPS)))
 
 
@@ -276,6 +276,11 @@ def test_memleaks():
     """Run memory leaks tests"""
     install()
     sh("%s test\test_memory_leaks.py" % PYTHON)
+
+
+@cmd
+def install_git_hooks():
+    shutil.copy(".git-pre-commit", ".git/hooks/pre-commit")
 
 
 def main():
