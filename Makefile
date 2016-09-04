@@ -198,7 +198,8 @@ win-download-exes:
 
 # Upload exes/wheels in dist/* directory to PYPI.
 win-upload-exes:
-	$(PYTHON) -m twine upload dist/*
+	$(PYTHON) -m twine upload dist/*.exe
+	$(PYTHON) -m twine upload dist/*.wheel
 
 # All the necessary steps before making a release.
 pre-release:
@@ -216,13 +217,14 @@ pre-release:
 	${MAKE} win-download-exes
 	$(PYTHON) setup.py sdist
 
-# Create a release: creates tar.gz and exes/wheels, uploads them, upload doc,
-# git tag release.
+# Create a release: creates tar.gz and exes/wheels, uploads them,
+# upload doc, git tag release.
 release:
 	${MAKE} pre-release
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz, exes, wheels on PYPI
 	${MAKE} git-tag-release
 	${MAKE} upload-doc
 
+# Print announce of new release.
 print-announce:
 	@$(PYTHON) scripts/internal/print_announce.py

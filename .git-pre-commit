@@ -36,9 +36,11 @@ def main():
                     sys.exit("commit aborted: bare except clause")
 
     # flake8
-    ret = subprocess.call(
-        "%s -m flake8 %s" % (sys.executable, " ".join(files)), shell=True)
-    if ret != 0:
-        sys.exit("commit aborted: python code is not flake8-compliant")
+    print 4
+    if files:
+        ret = subprocess.call(
+            "%s -m flake8 %s" % (sys.executable, " ".join(files)), shell=True)
+        if ret != 0:
+            sys.exit("commit aborted: python code is not flake8-compliant")
 
 main()
