@@ -228,3 +228,10 @@ release:
 # Print announce of new release.
 print-announce:
 	@$(PYTHON) scripts/internal/print_announce.py
+
+# ===================================================================
+# Misc
+# ===================================================================
+
+grep-todos:
+	git grep -EIn "TODO|FIXME|XXX"
