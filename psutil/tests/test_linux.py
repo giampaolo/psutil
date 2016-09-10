@@ -91,12 +91,12 @@ def free_swap():
     """Parse 'free' cmd and return swap memory's s total, used and free
     values.
     """
-    out = sh('free')
+    out = sh('free -b')
     lines = out.split('\n')
     for line in lines:
         if line.startswith('Swap'):
             _, total, used, free = line.split()
-            return (int(total) * 1024, int(used) * 1024, int(free) * 1024)
+            return (int(total), int(used), int(free))
     raise ValueError(
         "can't find 'Swap' in 'free' output:\n%s" % '\n'.join(lines))
 
@@ -109,12 +109,12 @@ def free_physmem():
     # and 'cached' memory which may have different positions so we
     # do not return them.
     # https://github.com/giampaolo/psutil/issues/538#issuecomment-57059946
-    out = sh('free')
+    out = sh('free -b')
     lines = out.split('\n')
     for line in lines:
         if line.startswith('Mem'):
             total, used, free, shared = \
-                [int(x) * 1024 for x in line.split()[1:5]]
+                [int(x) for x in line.split()[1:5]]
             return (total, used, free, shared)
     raise ValueError(
         "can't find 'Mem' in 'free' output:\n%s" % '\n'.join(lines))
