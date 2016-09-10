@@ -138,47 +138,47 @@ def vmstat(stat):
 class TestSystemVirtualMemory(unittest.TestCase):
 
     def test_total(self):
-        free_total, used, free, shared = free_physmem()
-        psutil_total = psutil.virtual_memory().total
-        self.assertEqual(free_total, psutil_total)
+        free_value, _, _, _ = free_physmem()
+        psutil_value = psutil.virtual_memory().total
+        self.assertEqual(free_value, psutil_value)
 
     @retry_before_failing()
     def test_used(self):
-        total, free_used, free, shared = free_physmem()
-        psutil_used = psutil.virtual_memory().used
+        _, free_value, _, _ = free_physmem()
+        psutil_value = psutil.virtual_memory().used
         self.assertAlmostEqual(
-            free_used, psutil_used, delta=MEMORY_TOLERANCE)
+            free_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_free(self):
-        total, used, free_free, shared = free_physmem()
-        psutil_free = psutil.virtual_memory().free
+        _, _, free_value, _ = free_physmem()
+        psutil_value = psutil.virtual_memory().free
         self.assertAlmostEqual(
-            free_free, psutil_free, delta=MEMORY_TOLERANCE)
+            free_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_buffers(self):
-        vmstat_buffers = int(sh('vmstat').split('\n')[2].split()[4]) * 1024
-        psutil_buffers = psutil.virtual_memory().buffers
+        vmstat_value = int(sh('vmstat').split('\n')[2].split()[4]) * 1024
+        psutil_value = psutil.virtual_memory().buffers
         self.assertAlmostEqual(
-            vmstat_buffers, psutil_buffers, delta=MEMORY_TOLERANCE)
+            vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_cached(self):
-        vmstat_cached = int(sh('vmstat').split('\n')[2].split()[5]) * 1024
-        psutil_cached = psutil.virtual_memory().cached
+        vmstat_value = int(sh('vmstat').split('\n')[2].split()[5]) * 1024
+        psutil_value = psutil.virtual_memory().cached
         self.assertAlmostEqual(
-            vmstat_cached, psutil_cached, delta=MEMORY_TOLERANCE)
+            vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     @unittest.skipIf(TRAVIS, "fails on travis")
     def test_shared(self):
-        total, used, free, free_shared = free_physmem()
-        if free_shared == 0:
+        _, _, _, free_value = free_physmem()
+        if free_value == 0:
             raise unittest.SkipTest("free does not support 'shared' column")
-        psutil_shared = psutil.virtual_memory().shared
+        psutil_value = psutil.virtual_memory().shared
         self.assertAlmostEqual(
-            free_shared, psutil_shared, delta=MEMORY_TOLERANCE)
+            free_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     # --- mocked tests
 
