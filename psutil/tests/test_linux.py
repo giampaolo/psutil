@@ -55,6 +55,7 @@ if LINUX:
 # utils
 # =====================================================================
 
+
 def get_ipv4_address(ifname):
     import fcntl
     ifname = ifname[:15]
@@ -90,7 +91,8 @@ def free_swap():
     """Parse 'free' cmd and return swap memory's s total, used and free
     values.
     """
-    lines = sh('free').split('\n')
+    out = sh('free')
+    lines = out.split('\n')
     for line in lines:
         if line.startswith('Swap'):
             _, total, used, free = line.split()
@@ -107,7 +109,8 @@ def free_physmem():
     # and 'cached' memory which may have different positions so we
     # do not return them.
     # https://github.com/giampaolo/psutil/issues/538#issuecomment-57059946
-    lines = sh('free').split('\n')
+    out = sh('free')
+    lines = out.split('\n')
     for line in lines:
         if line.startswith('Mem'):
             total, used, free, shared = \
@@ -120,6 +123,7 @@ def free_physmem():
 # =====================================================================
 # system virtual memory
 # =====================================================================
+
 
 @unittest.skipUnless(LINUX, "not a Linux system")
 class TestSystemVirtualMemory(unittest.TestCase):
@@ -187,6 +191,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
 # system swap memory
 # =====================================================================
 
+
 @unittest.skipUnless(LINUX, "not a Linux system")
 class TestSystemSwapMemory(unittest.TestCase):
 
@@ -247,6 +252,7 @@ class TestSystemSwapMemory(unittest.TestCase):
 # =====================================================================
 # system CPU
 # =====================================================================
+
 
 @unittest.skipUnless(LINUX, "not a Linux system")
 class TestSystemCPU(unittest.TestCase):
@@ -331,6 +337,7 @@ class TestSystemCPU(unittest.TestCase):
 # =====================================================================
 # system network
 # =====================================================================
+
 
 @unittest.skipUnless(LINUX, "not a Linux system")
 class TestSystemNetwork(unittest.TestCase):
@@ -441,6 +448,7 @@ class TestSystemNetwork(unittest.TestCase):
 # =====================================================================
 # system disk
 # =====================================================================
+
 
 @unittest.skipUnless(LINUX, "not a Linux system")
 class TestSystemDisks(unittest.TestCase):
@@ -601,6 +609,7 @@ class TestSystemDisks(unittest.TestCase):
 # =====================================================================
 # misc
 # =====================================================================
+
 
 @unittest.skipUnless(LINUX, "not a Linux system")
 class TestMisc(unittest.TestCase):
@@ -775,6 +784,7 @@ class TestMisc(unittest.TestCase):
 # =====================================================================
 # test process
 # =====================================================================
+
 
 @unittest.skipUnless(LINUX, "not a Linux system")
 class TestProcess(unittest.TestCase):
