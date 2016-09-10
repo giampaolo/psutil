@@ -120,6 +120,15 @@ def free_physmem():
         "can't find 'Mem' in 'free' output:\n%s" % '\n'.join(lines))
 
 
+def vmstat(stat):
+    out = sh("vmstat -s")
+    for line in out.split("\n"):
+        line = line.strip()
+        if stat in line:
+            return int(line.split(' ')[0])
+    raise ValueError("can't find %r in 'vmstat' output" % stat)
+
+
 # =====================================================================
 # system virtual memory
 # =====================================================================
@@ -334,6 +343,25 @@ class TestSystemCPU(unittest.TestCase):
         with mock.patch('psutil._pslinux.open', create=True) as m:
             self.assertIsNone(psutil._pslinux.cpu_count_physical())
             assert m.called
+
+
+# =====================================================================
+# system CPU stats
+# =====================================================================
+
+
+@unittest.skipUnless(LINUX, "not a Linux system")
+class TestSystemCPUStats(unittest.TestCase):
+
+    def test_ctx_switches(self):
+        vmstat_value = vmstat("context switches")
+        psutil_value = psutil.cpu_stats().ctx_switches
+        self.assertAlmostEqual(vmstat_value, psutil_value, delta=50)
+
+    def test_interrupts(self):
+        vmstat_value = vmstat("interrupts")
+        psutil_value = psutil.cpu_stats().interrupts
+        self.assertAlmostEqual(vmstat_value, psutil_value, delta=20)
 
 
 # =====================================================================
