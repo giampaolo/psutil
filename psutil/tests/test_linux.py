@@ -138,9 +138,12 @@ def vmstat(stat):
 class TestSystemVirtualMemory(unittest.TestCase):
 
     def test_total(self):
-        free_value, _, _, _ = free_physmem()
+        # free_value, _, _, _ = free_physmem()
+        # psutil_value = psutil.virtual_memory().total
+        # self.assertEqual(free_value, psutil_value)
+        vmstat_value = vmstat('total memory') * 1024
         psutil_value = psutil.virtual_memory().total
-        self.assertEqual(free_value, psutil_value)
+        self.assertAlmostEqual(vmstat_value, psutil_value)
 
     @retry_before_failing()
     def test_used(self):
@@ -151,10 +154,14 @@ class TestSystemVirtualMemory(unittest.TestCase):
 
     @retry_before_failing()
     def test_free(self):
-        _, _, free_value, _ = free_physmem()
+        # _, _, free_value, _ = free_physmem()
+        # psutil_value = psutil.virtual_memory().free
+        # self.assertAlmostEqual(
+        #     free_value, psutil_value, delta=MEMORY_TOLERANCE)
+        vmstat_value = vmstat('free memory') * 1024
         psutil_value = psutil.virtual_memory().free
         self.assertAlmostEqual(
-            free_value, psutil_value, delta=MEMORY_TOLERANCE)
+            vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_buffers(self):
