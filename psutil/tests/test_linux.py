@@ -165,6 +165,8 @@ class TestSystemVirtualMemory(unittest.TestCase):
     @unittest.skipIf(TRAVIS, "fails on travis")
     def test_shared(self):
         total, used, free, free_shared = free_physmem()
+        if free_shared == 0:
+            raise unittest.SkipTest("free does not support 'shared' column")
         psutil_shared = psutil.virtual_memory().shared
         self.assertAlmostEqual(
             free_shared, psutil_shared, delta=MEMORY_TOLERANCE)
