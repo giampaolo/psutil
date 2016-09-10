@@ -158,7 +158,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
 
     @retry_before_failing()
     def test_buffers(self):
-        vmstat_value = int(sh('vmstat').split('\n')[2].split()[4]) * 1024
+        vmstat_value = vmstat('buffer memory') * 1024
         psutil_value = psutil.virtual_memory().buffers
         self.assertAlmostEqual(
             vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
