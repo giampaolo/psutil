@@ -164,9 +164,16 @@ class TestSystemVirtualMemory(unittest.TestCase):
             vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
-    def test_cached(self):
-        vmstat_value = int(sh('vmstat').split('\n')[2].split()[5]) * 1024
-        psutil_value = psutil.virtual_memory().cached
+    def test_active(self):
+        vmstat_value = vmstat('active memory') * 1024
+        psutil_value = psutil.virtual_memory().active
+        self.assertAlmostEqual(
+            vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
+
+    @retry_before_failing()
+    def test_inactive(self):
+        vmstat_value = vmstat('inactive memory') * 1024
+        psutil_value = psutil.virtual_memory().inactive
         self.assertAlmostEqual(
             vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
 
@@ -356,12 +363,12 @@ class TestSystemCPUStats(unittest.TestCase):
     def test_ctx_switches(self):
         vmstat_value = vmstat("context switches")
         psutil_value = psutil.cpu_stats().ctx_switches
-        self.assertAlmostEqual(vmstat_value, psutil_value, delta=50)
+        self.assertAlmostEqual(vmstat_value, psutil_value, delta=500)
 
     def test_interrupts(self):
         vmstat_value = vmstat("interrupts")
         psutil_value = psutil.cpu_stats().interrupts
-        self.assertAlmostEqual(vmstat_value, psutil_value, delta=20)
+        self.assertAlmostEqual(vmstat_value, psutil_value, delta=500)
 
 
 # =====================================================================
