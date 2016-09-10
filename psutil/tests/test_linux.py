@@ -125,39 +125,45 @@ def free_physmem():
 class TestSystemVirtualMemory(unittest.TestCase):
 
     def test_total(self):
-        total, used, free, shared = free_physmem()
-        self.assertEqual(total, psutil.virtual_memory().total)
+        free_total, used, free, shared = free_physmem()
+        psutil_total = psutil.virtual_memory().total
+        self.assertEqual(free_total, psutil_total)
 
     @retry_before_failing()
     def test_used(self):
-        total, used, free, shared = free_physmem()
-        self.assertAlmostEqual(used, psutil.virtual_memory().used,
-                               delta=MEMORY_TOLERANCE)
+        total, free_used, free, shared = free_physmem()
+        psutil_used = psutil.virtual_memory().used
+        self.assertAlmostEqual(
+            free_used, psutil_used, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_free(self):
-        total, used, free, shared = free_physmem()
-        self.assertAlmostEqual(free, psutil.virtual_memory().free,
-                               delta=MEMORY_TOLERANCE)
+        total, used, free_free, shared = free_physmem()
+        psutil_free = psutil.virtual_memory().free
+        self.assertAlmostEqual(
+            free_free, psutil_free, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_buffers(self):
-        buffers = int(sh('vmstat').split('\n')[2].split()[4]) * 1024
-        self.assertAlmostEqual(buffers, psutil.virtual_memory().buffers,
-                               delta=MEMORY_TOLERANCE)
+        vmstat_buffers = int(sh('vmstat').split('\n')[2].split()[4]) * 1024
+        psutil_buffers = psutil.virtual_memory().buffers
+        self.assertAlmostEqual(
+            vmstat_buffers, psutil_buffers, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_cached(self):
-        cached = int(sh('vmstat').split('\n')[2].split()[5]) * 1024
-        self.assertAlmostEqual(cached, psutil.virtual_memory().cached,
-                               delta=MEMORY_TOLERANCE)
+        vmstat_cached = int(sh('vmstat').split('\n')[2].split()[5]) * 1024
+        psutil_cached = psutil.virtual_memory().cached
+        self.assertAlmostEqual(
+            vmstat_cached, psutil_cached, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     @unittest.skipIf(TRAVIS, "fails on travis")
     def test_shared(self):
-        total, used, free, shared = free_physmem()
-        self.assertAlmostEqual(shared, psutil.virtual_memory().shared,
-                               delta=MEMORY_TOLERANCE)
+        total, used, free, free_shared = free_physmem()
+        psutil_shared = psutil.virtual_memory().shared
+        self.assertAlmostEqual(
+            free_shared, psutil_shared, delta=MEMORY_TOLERANCE)
 
     # --- mocked tests
 
@@ -185,21 +191,24 @@ class TestSystemVirtualMemory(unittest.TestCase):
 class TestSystemSwapMemory(unittest.TestCase):
 
     def test_total(self):
-        total, used, free = free_swap()
-        return self.assertAlmostEqual(total, psutil.swap_memory().total,
-                                      delta=MEMORY_TOLERANCE)
+        free_total, used, free = free_swap()
+        psutil_total = psutil.swap_memory().total
+        return self.assertAlmostEqual(
+            free_total, psutil_total, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_used(self):
-        total, used, free = free_swap()
-        return self.assertAlmostEqual(used, psutil.swap_memory().used,
-                                      delta=MEMORY_TOLERANCE)
+        total, free_used, free = free_swap()
+        psutil_used = psutil.swap_memory().used
+        return self.assertAlmostEqual(
+            free_used, psutil_used, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_free(self):
-        total, used, free = free_swap()
-        return self.assertAlmostEqual(free, psutil.swap_memory().free,
-                                      delta=MEMORY_TOLERANCE)
+        total, used, free_free = free_swap()
+        psutil_free = psutil.swap_memory().free
+        return self.assertAlmostEqual(
+            free_free, psutil_free, delta=MEMORY_TOLERANCE)
 
     def test_warnings_mocked(self):
         with mock.patch('psutil._pslinux.open', create=True) as m:
