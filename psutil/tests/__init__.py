@@ -468,7 +468,10 @@ def retry_before_failing(ntimes=None):
                     return fun(*args, **kwargs)
                 except AssertionError as _:
                     err = _
-            raise err
+            if PY3:
+                raise err
+            else:
+                raise
         return wrapper
     return decorator
 
