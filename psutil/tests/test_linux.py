@@ -661,6 +661,11 @@ class TestSystemDisks(unittest.TestCase):
 @unittest.skipUnless(LINUX, "not a Linux system")
 class TestMisc(unittest.TestCase):
 
+    def test_boot_time(self):
+        vmstat_value = vmstat('boot time')
+        psutil_value = psutil.boot_time()
+        self.assertEqual(int(vmstat_value), int(psutil_value))
+
     @mock.patch('psutil.traceback.print_exc')
     def test_no_procfs_on_import(self, tb):
         my_procfs = tempfile.mkdtemp()
