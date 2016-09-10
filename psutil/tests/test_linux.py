@@ -6,6 +6,7 @@
 
 """Linux specific tests."""
 
+import collections
 import contextlib
 import errno
 import io
@@ -96,7 +97,8 @@ def free_swap():
     for line in lines:
         if line.startswith('Swap'):
             _, total, used, free = line.split()
-            return (int(total), int(used), int(free))
+            nt = collections.namedtuple('free', 'total used free')
+            return nt(int(total), int(used), int(free))
     raise ValueError(
         "can't find 'Swap' in 'free' output:\n%s" % '\n'.join(lines))
 
@@ -115,7 +117,8 @@ def free_physmem():
         if line.startswith('Mem'):
             total, used, free, shared = \
                 [int(x) for x in line.split()[1:5]]
-            return (total, used, free, shared)
+            nt = collections.namedtuple('free', 'total used free shared')
+            return nt(total, used, free, shared)
     raise ValueError(
         "can't find 'Mem' in 'free' output:\n%s" % '\n'.join(lines))
 
@@ -138,7 +141,7 @@ def vmstat(stat):
 class TestSystemVirtualMemory(unittest.TestCase):
 
     def test_total(self):
-        # free_value, _, _, _ = free_physmem()
+        # free_value = free_physmem().total
         # psutil_value = psutil.virtual_memory().total
         # self.assertEqual(free_value, psutil_value)
         vmstat_value = vmstat('total memory') * 1024
@@ -147,7 +150,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
 
     @retry_before_failing()
     def test_used(self):
-        _, free_value, _, _ = free_physmem()
+        free_value = free_physmem().used
         psutil_value = psutil.virtual_memory().used
         self.assertAlmostEqual(
             free_value, psutil_value, delta=MEMORY_TOLERANCE)
@@ -187,7 +190,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
     @retry_before_failing()
     @unittest.skipIf(TRAVIS, "fails on travis")
     def test_shared(self):
-        _, _, _, free_value = free_physmem()
+        free_value = free_physmem().shared
         if free_value == 0:
             raise unittest.SkipTest("free does not support 'shared' column")
         psutil_value = psutil.virtual_memory().shared
@@ -221,24 +224,24 @@ class TestSystemVirtualMemory(unittest.TestCase):
 class TestSystemSwapMemory(unittest.TestCase):
 
     def test_total(self):
-        free_total, used, free = free_swap()
-        psutil_total = psutil.swap_memory().total
+        free_value = free_swap().total
+        psutil_value = psutil.swap_memory().total
         return self.assertAlmostEqual(
-            free_total, psutil_total, delta=MEMORY_TOLERANCE)
+            free_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_used(self):
-        total, free_used, free = free_swap()
-        psutil_used = psutil.swap_memory().used
+        free_value = free_swap().used
+        psutil_value = psutil.swap_memory().used
         return self.assertAlmostEqual(
-            free_used, psutil_used, delta=MEMORY_TOLERANCE)
+            free_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_free(self):
-        total, used, free_free = free_swap()
-        psutil_free = psutil.swap_memory().free
+        free_value = free_swap().free
+        psutil_value = psutil.swap_memory().free
         return self.assertAlmostEqual(
-            free_free, psutil_free, delta=MEMORY_TOLERANCE)
+            free_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     def test_warnings_mocked(self):
         with mock.patch('psutil._pslinux.open', create=True) as m:
