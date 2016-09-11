@@ -6,7 +6,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
-798: [Windows] Process.open_files() returns and empty list on Windows 10.
+- #798: [Windows] Process.open_files() returns and empty list on Windows 10.
+- #880: [Windows] Handle race condition inside psutil_net_connections.
 
 
 4.3.1 - 2016-09-01
@@ -30,7 +31,6 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #869: [Windows] Process.wait() may raise TimeoutExpired with wrong timeout
   unit (ms instead of sec).
 - #870: [Windows] Handle leak inside psutil_get_process_data.
-- #880: [Windows] Handle race condition inside psutil_net_connections.
 
 
 4.3.0 - 2016-06-18
