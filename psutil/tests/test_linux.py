@@ -894,32 +894,6 @@ class TestProcess(unittest.TestCase):
                                 p.num_ctx_switches().involuntary, invol,
                                 delta=2)
 
-    def test_memory_maps(self):
-        src = textwrap.dedent("""
-            import time
-            with open("%s", "w") as f:
-                time.sleep(10)
-            """ % TESTFN)
-        sproc = pyrun(src)
-        self.addCleanup(reap_children)
-        call_until(lambda: os.listdir('.'), "'%s' not in ret" % TESTFN)
-        p = psutil.Process(sproc.pid)
-        time.sleep(.1)
-        maps = p.memory_maps(grouped=False)
-        pmap = sh('pmap -x %s' % p.pid).split('\n')
-        # get rid of header
-        del pmap[0]
-        del pmap[0]
-        while maps and pmap:
-            this = maps.pop(0)
-            other = pmap.pop(0)
-            addr, _, rss, dirty, mode, path = other.split(None, 5)
-            if not path.startswith('[') and not path.endswith(']'):
-                self.assertEqual(path, os.path.basename(this.path))
-            self.assertEqual(int(rss) * 1024, this.rss)
-            # test only rwx chars, ignore 's' and 'p'
-            self.assertEqual(mode[:3], this.perms[:3])
-
     def test_memory_full_info(self):
         src = textwrap.dedent("""
             import time
