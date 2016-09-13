@@ -921,13 +921,17 @@ class Process(object):
           >>>
         """
         blocking = interval is not None and interval > 0.0
+        if interval is not None and interval < 0:
+            raise ValueError("interval is not positive (got %r)" % interval)
         num_cpus = cpu_count() or 1
+
         if POSIX:
             def timer():
                 return _timer() * num_cpus
         else:
             def timer():
                 return sum(cpu_times())
+
         if blocking:
             st1 = timer()
             pt1 = self._proc.cpu_times()
@@ -1566,6 +1570,8 @@ def cpu_percent(interval=None, percpu=False):
     global _last_cpu_times
     global _last_per_cpu_times
     blocking = interval is not None and interval > 0.0
+    if interval is not None and interval < 0:
+        raise ValueError("interval is not positive (got %r)" % interval)
 
     def calculate(t1, t2):
         t1_all = sum(t1)
@@ -1639,6 +1645,8 @@ def cpu_times_percent(interval=None, percpu=False):
     global _last_cpu_times_2
     global _last_per_cpu_times_2
     blocking = interval is not None and interval > 0.0
+    if interval is not None and interval < 0:
+        raise ValueError("interval is not positive (got %r)" % interval)
 
     def calculate(t1, t2):
         nums = []

@@ -255,6 +255,8 @@ class TestProcess(unittest.TestCase):
                 self.assertLessEqual(percent, 100.0)
             else:
                 self.assertGreaterEqual(percent, 0.0)
+        with self.assertRaises(ValueError):
+            p.cpu_percent(interval=-1)
 
     def test_cpu_times(self):
         times = psutil.Process().cpu_times()

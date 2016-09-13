@@ -8,6 +8,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 - #798: [Windows] Process.open_files() returns and empty list on Windows 10.
 - #880: [Windows] Handle race condition inside psutil_net_connections.
+- #885: ValueError is raised if a negative integer is passed to cpu_percent()
+  functions.
 
 
 4.3.1 - 2016-09-01
