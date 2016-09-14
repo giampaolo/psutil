@@ -10,9 +10,43 @@ submitted code does not pass validation.
 Install it with "make install-git-hooks".
 """
 
+from __future__ import print_function
 import os
 import subprocess
 import sys
+
+
+def term_supports_colors():
+    try:
+        import curses
+        assert sys.stderr.isatty()
+        curses.setupterm()
+        assert curses.tigetnum("colors") > 0
+    except Exception:
+        return False
+    else:
+        return True
+
+
+def hilite(s, ok=True, bold=False):
+    """Return an highlighted version of 'string'."""
+    attr = []
+    if ok is None:  # no color
+        pass
+    elif ok:   # green
+        attr.append('32')
+    else:   # red
+        attr.append('31')
+    if bold:
+        attr.append('1')
+    return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), s)
+
+
+def exit(msg):
+    if term_supports_colors():
+        msg = hilite(msg, ok=False)
+    print(msg, file=sys.stderr)
+    sys.exit(1)
 
 
 def main():
@@ -29,8 +63,8 @@ def main():
             for lineno, line in enumerate(data.split('\n'), 1):
                 line = line.rstrip()
                 if "pdb.set_trace" in line:
-                    print("%s: %s" % (lineno, line))
-                    sys.exit(
+                    print("%s:%s %s" % (path, lineno, line))
+                    return exit(
                         "commit aborted: you forgot a pdb in your python code")
 
         # bare except clause
@@ -38,21 +72,23 @@ def main():
             for lineno, line in enumerate(data.split('\n'), 1):
                 line = line.rstrip()
                 if "except:" in line and not line.endswith("# NOQA"):
-                    print("%s: %s" % (lineno, line))
-                    sys.exit("commit aborted: bare except clause")
+                    print("%s:%s %s" % (path, lineno, line))
+                    return exit("commit aborted: bare except clause")
 
     # flake8
     if py_files:
         try:
             import flake8  # NOQA
         except ImportError:
-            sys.exit("commit aborted: flake8 is not installed; "
-                     "run 'make setup-dev-env'")
+            return exit("commit aborted: flake8 is not installed; "
+                        "run 'make setup-dev-env'")
 
+        # XXX: we should scape spaces and possibly other amenities here
         ret = subprocess.call(
             "%s -m flake8 %s" % (sys.executable, " ".join(py_files)),
             shell=True)
         if ret != 0:
-            sys.exit("commit aborted: python code is not flake8-compliant")
+            return exit("commit aborted: python code is not flake8 compliant")
+
 
 main()
