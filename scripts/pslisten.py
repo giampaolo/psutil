@@ -99,9 +99,9 @@ def print_table(entries):
                   entry.get('cmdline', '?'), host_width=host_max_width,
                   user_width=user_max_width))
 
-def main():
+def main(argv=sys.argv):
     arg_parser = argparse.ArgumentParser(
-            prog=os.path.basename(sys.argv[0]),
+            prog=os.path.basename(argv[0]),
             description='list processes listening on tcp/udp sockets')
 
     other_group = arg_parser.add_argument_group(title='filter by address')
@@ -126,7 +126,7 @@ def main():
             '--udp6', dest='protos', action='append_const', const='UDP6',
             help='list processes listening on IPv6 UDP')
 
-    args = arg_parser.parse_args(args=sys.argv[1:])
+    args = arg_parser.parse_args(args=argv[1:])
 
     try:
         all_entries = gather_info()
@@ -139,7 +139,7 @@ def main():
         if os.getuid() != 0:
             print()
             print('*** warning: you must run %s as root to see all available '
-                  'information ***' % os.path.basename(sys.argv[0]))
+                  'information ***' % os.path.basename(argv[0]))
             print()
 
 if __name__ == '__main__':
