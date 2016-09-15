@@ -22,8 +22,15 @@ def gather_info():
     'nice', 'cpu_percent', 'memory_percent', 'num_threads', 'started'.
     '''
     entries = []
+    uniques = set()
     for netcon in psutil.net_connections():
         if not netcon.raddr and netcon.laddr[1] > 0:
+            # avoid duplicate listing of the same pid+address which happens
+            # sometimes if a file descriptor has been dupped or something
+            if (netcon.pid, netcon.laddr) in uniques:
+                continue
+            uniques.add((netcon.pid, netcon.laddr))
+
             entry = {
                 'netcon': netcon,
                 'host': netcon.laddr[0],
