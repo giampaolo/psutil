@@ -55,16 +55,16 @@ def gather_info():
                 elif netcon.type == SocketKind.SOCK_STREAM:
                     entry['proto'] = 'TCP4'
                 else:
-                    next # log something?
+                    continue # log something?
             elif netcon.family == AddressFamily.AF_INET6:
                 if netcon.type == SocketKind.SOCK_DGRAM:
                     entry['proto'] = 'UDP6'
                 elif netcon.type == SocketKind.SOCK_STREAM:
                     entry['proto'] = 'TCP6'
                 else:
-                    next # log something?
+                    continue # log something?
             else:
-                next # log something?
+                continue # log something?
 
             if entry['pid']:
                 proc = psutil.Process(entry['pid'])
