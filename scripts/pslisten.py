@@ -10,7 +10,6 @@ found in the LICENSE file.
 from __future__ import print_function
 import psutil
 import socket
-import operator
 import subprocess
 import datetime
 import argparse
@@ -19,12 +18,12 @@ import os
 
 try:
     from socket import AddressFamily
-except:
+except ImportError:
     AddressFamily = socket
 
 try:
     from socket import SocketKind
-except:
+except ImportError:
     SocketKind = socket
 
 def gather_info():
@@ -36,11 +35,12 @@ def gather_info():
     uniques = set()
     for netcon in psutil.net_connections():
         if not netcon.raddr and netcon.laddr[1] > 0:
-            # avoid duplicate listing of the same pid+address which happens
-            # sometimes if a file descriptor has been dupped or something
-            if (netcon.pid, netcon.laddr) in uniques:
+            # avoid duplicate listing of the same pid+proto+address which
+            # can happen if a file descriptor has been dupped or something
+            tuple_id = netcon.pid, netcon.family, netcon.type, netcon.laddr
+            if tuple_id in uniques:
                 continue
-            uniques.add((netcon.pid, netcon.laddr))
+            uniques.add(tuple_id)
 
             entry = {
                 'netcon': netcon,
