@@ -202,22 +202,18 @@ class TestSystemVirtualMemory(unittest.TestCase):
             free_value, psutil_value, delta=MEMORY_TOLERANCE,
             msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
-    # --- mocked tests
-
-    def test_warnings_mocked(self):
-        with mock.patch('psutil._pslinux.open', create=True) as m:
-            with warnings.catch_warnings(record=True) as ws:
-                warnings.simplefilter("always")
-                ret = psutil._pslinux.virtual_memory()
-                assert m.called
-                self.assertEqual(len(ws), 1)
-                w = ws[0]
-                self.assertTrue(w.filename.endswith('psutil/_pslinux.py'))
-                self.assertIn(
-                    "memory stats couldn't be determined", str(w.message))
-                self.assertEqual(ret.cached, 0)
-                self.assertEqual(ret.active, 0)
-                self.assertEqual(ret.inactive, 0)
+    def test_available(self):
+        # "free" output format has changed at some point:
+        # https://github.com/giampaolo/psutil/issues/538#issuecomment-147192098
+        out = sh("free -b")
+        lines = out.split('\n')
+        if 'available' in lines[0]:
+            raise unittest.SkipTest("free does not support 'available' column")
+        free_value = int(lines[1].split()[-1])
+        psutil_value = psutil.virtual_memory().available
+        self.assertAlmostEqual(
+            free_value, psutil_value, delta=MEMORY_TOLERANCE,
+            msg='%s %s \n%s' % (free_value, psutil_value, out))
 
 
 # =====================================================================
