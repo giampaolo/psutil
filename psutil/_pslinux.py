@@ -300,20 +300,16 @@ def virtual_memory():
     16.04 and which should report the same numbers.
     """
     missing_fields = []
-    total, free, buffers, shared, _, _, unit_multiplier = cext.linux_sysinfo()
-    total *= unit_multiplier
-    free *= unit_multiplier
-    buffers *= unit_multiplier
-    # Note: this (on my Ubuntu 14.04, kernel 3.13 at least) may be 0.
-    # If so, it will be determined from /proc/meminfo.
-    shared *= unit_multiplier
-
     mems = {}
     with open_binary('%s/meminfo' % get_procfs_path()) as f:
         for line in f:
             fields = line.split()
             mems[fields[0]] = int(fields[1]) * 1024
 
+    # Note: these info are available also as cext.linux_sysinfo().
+    total = mems[b'MemTotal:']
+    buffers = mems[b'Buffers:']
+    free = mems[b'MemFree:']
     cached = mems[b"Cached:"]
     # "free" cmdline utility sums cached + reclamaible:
     # https://gitlab.com/procps-ng/procps/
@@ -324,17 +320,16 @@ def virtual_memory():
     #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
     cached += mems.get(b"SReclaimable:", 0)  # kernel 2.6.19
 
-    if shared == 0:
-        # Note: if 0 (e.g. Ubuntu 14.04, kernel 3.13) this can be
-        # determined from /proc/meminfo.
+    # Note: if 0 (e.g. Ubuntu 14.04, kernel 3.13) this can be
+    # determined from /proc/meminfo.
+    try:
+        shared = mems[b'Shmem:']  # since kernel 2.6.32
+    except KeyError:
         try:
-            shared = mems['Shmem:']  # since kernel 2.6.32
+            shared = mems[b'MemShared:']  # kernels 2.4
         except KeyError:
-            try:
-                shared = mems['MemShared:']  # kernels 2.4
-            except KeyError:
-                shared = 0
-                missing_fields.append('shared')
+            shared = 0
+            missing_fields.append('shared')
 
     try:
         active = mems[b"Active:"]
