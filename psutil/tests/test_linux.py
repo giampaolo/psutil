@@ -159,7 +159,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
     # https://gitlab.com/procps-ng/procps/commit/
     #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
     @unittest.skipUnless(
-        get_free_version_info() >= (3, 3, 12), "old free version")
+        LINUX and get_free_version_info() >= (3, 3, 12), "old free version")
     @retry_before_failing()
     def test_used(self):
         free = free_physmem()
