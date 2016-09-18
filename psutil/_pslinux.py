@@ -289,109 +289,61 @@ except Exception:
 
 
 def virtual_memory():
-    """Report memory stats trying to match "free" and "vmstat -s" cmdline
-    utility values as much as possible.
+    total, free, buffers, shared, _, _, unit_multiplier = cext.linux_sysinfo()
+    total *= unit_multiplier
+    free *= unit_multiplier
+    buffers *= unit_multiplier
+    # Note: this (on my Ubuntu 14.04, kernel 3.13 at least) may be 0.
+    # If so, it will be determined from /proc/meminfo.
+    shared *= unit_multiplier or None
+    if shared == 0:
+        shared = None
 
-    This implementation uses procps-ng-3.3.12 as a reference (2016-09-18):
-    https://gitlab.com/procps-ng/procps/blob/
-        24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c
-
-    For reference, procps-ng-3.3.10 is the version available on Ubuntu
-    16.04.
-    """
-    missing_fields = []
-    mems = {}
+    cached = active = inactive = None
     with open_binary('%s/meminfo' % get_procfs_path()) as f:
         for line in f:
-            fields = line.split()
-            mems[fields[0]] = int(fields[1]) * 1024
+            if cached is None and line.startswith(b"Cached:"):
+                cached = int(line.split()[1]) * 1024
+            elif active is None and line.startswith(b"Active:"):
+                active = int(line.split()[1]) * 1024
+            elif inactive is None and line.startswith(b"Inactive:"):
+                inactive = int(line.split()[1]) * 1024
+            # From "man free":
+            # The shared memory column represents either the MemShared
+            # value (2.4 kernels) or the Shmem value (2.6+ kernels) taken
+            # from the /proc/meminfo file. The value is zero if none of
+            # the entries is exported by the kernel.
+            elif shared is None and \
+                    line.startswith(b"MemShared:") or \
+                    line.startswith(b"Shmem:"):
+                shared = int(line.split()[1]) * 1024
 
-    # Note: these info are available also as cext.linux_sysinfo().
-    total = mems[b'MemTotal:']
-    free = mems[b'MemFree:']
-    buffers = mems[b'Buffers:']
-    cached = mems[b"Cached:"]
-    # "free" cmdline utility sums cached + reclamaible (available
-    # since kernel 2.6.19):
-    # https://gitlab.com/procps-ng/procps/
-    #     blob/195565746136d09333ded280cf3ba93853e855b8/proc/sysinfo.c#L761
-    # Older versions of procps added slab memory instead.
-    # This got changed in:
-    # https://gitlab.com/procps-ng/procps/commit/
-    #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
-    cached += mems.get(b"SReclaimable:", 0)
-
-    try:
-        shared = mems[b'Shmem:']  # since kernel 2.6.32
-    except KeyError:
-        try:
-            shared = mems[b'MemShared:']  # kernels 2.4
-        except KeyError:
-            shared = 0
-            missing_fields.append('shared')
-
-    try:
-        active = mems[b"Active:"]
-    except KeyError:
+    missing = []
+    if cached is None:
+        missing.append('cached')
+        cached = 0
+    if active is None:
+        missing.append('active')
         active = 0
-        missing_fields.append('active')
-
-    try:
-        inactive = mems[b"Inactive:"]
-    except KeyError:
-        # https://gitlab.com/procps-ng/procps/blob/
-        #   195565746136d09333ded280cf3ba93853e855b8/proc/sysinfo.c#L758
-        try:
-            inactive = \
-                mems[b"Inact_dirty:"] + \
-                mems[b"Inact_clean:"] + \
-                mems[b"Inact_laundry:"]
-        except KeyError:
-            inactive = 0
-            missing_fields.append('inactive')
-
-    # https://gitlab.com/procps-ng/procps/blob/
-    #     24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L769
-    used = total - free - cached - buffers
-    if used < 0:
-        # May be symptomatic of running within a LCX container where such
-        # values will be dramatically distorted over those of the host.
-        used = total - free
-
-    # Note: starting from 4.4.0 we match "free" "available" column.
-    # Before 4.4.0 we calculated it as:
-    # >>> avail = free + buffers + cached
-    # ...which matched htop.
-    # free and htop available memory differs as per:
-    # http://askubuntu.com/a/369589
-    # http://unix.stackexchange.com/a/65852/168884
-    try:
-        avail = mems[b'MemAvailable:']
-    except KeyError:
-        # Column is not there; it's likely this is an older kernel.
-        # In this case "free" won't show an "available" column.
-        # Also, procps does some hacky things:
-        # https://gitlab.com/procps-ng/procps/blob/
-        #     /24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L774
-        # We won't. Like this we'll match "htop".
-        avail = free + buffers + cached
-    # If avail is greater than total or our calculation overflows,
-    # that's symptomatic of running within a LCX container where such
-    # values will be dramatically distorted over those of the host.
-    # https://gitlab.com/procps-ng/procps/blob/
-    #     24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L764
-    if avail > total:
-        avail = free
-
-    percent = usage_percent((total - avail), total, _round=1)
-
-    # Warn about missing metrics which are set to 0.
-    if missing_fields:
+    if inactive is None:
+        missing.append('inactive')
+        inactive = 0
+    if shared is None:
+        missing.append('shared')
+        shared = 0
+    if missing:
         msg = "%s memory stats couldn't be determined and %s set to 0" % (
-            ", ".join(missing_fields),
-            "was" if len(missing_fields) == 1 else "were")
+            ", ".join(missing),
+            "was" if len(missing) == 1 else "were")
         warnings.warn(msg, RuntimeWarning)
 
+    # Note: this value matches "htop" perfectly.
+    avail = free + buffers + cached
+    # Note: this value matches "free", but not all the time, see:
+    # https://github.com/giampaolo/psutil/issues/685#issuecomment-202914057
+    used = total - free
+    # Note: this value matches "htop" perfectly.
+    percent = usage_percent((total - avail), total, _round=1)
     return svmem(total, avail, percent, used, free,
                  active, inactive, buffers, cached, shared)
 

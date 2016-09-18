@@ -1,7 +1,7 @@
 Bug tracker at https://github.com/giampaolo/psutil/issues
 
 
-4.4.0 - XXXX-XX-XX
+4.3.2 - XXXX-XX-XX
 ==================
 
 **Bug fixes**
@@ -10,9 +10,6 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #880: [Windows] Handle race condition inside psutil_net_connections.
 - #885: ValueError is raised if a negative integer is passed to cpu_percent()
   functions.
-- #887: [Linux] free, available and used fields are more precise and match
-  "free" cmdline utility. It also takes into account LCX containers preventing
-  "avail" to overflow "total".
 
 
 4.3.1 - 2016-09-01
