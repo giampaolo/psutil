@@ -388,7 +388,6 @@ def virtual_memory():
     if used < 0:
         used = total - free
 
-    # Note: this value matches "htop" perfectly.
     percent = usage_percent((total - avail), total, _round=1)
 
     # Warn about missing metrics which are set to 0.

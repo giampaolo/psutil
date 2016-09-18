@@ -133,6 +133,11 @@ def vmstat(stat):
     raise ValueError("can't find %r in 'vmstat' output" % stat)
 
 
+def get_free_version_info():
+    out = sh("free -V").strip()
+    return tuple(map(int, out.split()[-1].split('.')))
+
+
 # =====================================================================
 # system virtual memory
 # =====================================================================
@@ -149,6 +154,12 @@ class TestSystemVirtualMemory(unittest.TestCase):
         psutil_value = psutil.virtual_memory().total
         self.assertAlmostEqual(vmstat_value, psutil_value)
 
+    # Older versions of procps used slab memory to calculate used memory.
+    # This got changed in:
+    # https://gitlab.com/procps-ng/procps/commit/
+    #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+    @unittest.skipUnless(
+        get_free_version_info() >= (3, 3, 12), "old free version")
     @retry_before_failing()
     def test_used(self):
         free = free_physmem()
