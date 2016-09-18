@@ -311,14 +311,15 @@ def virtual_memory():
     free = mems[b'MemFree:']
     buffers = mems[b'Buffers:']
     cached = mems[b"Cached:"]
-    # "free" cmdline utility sums cached + reclamaible:
+    # "free" cmdline utility sums cached + reclamaible (available
+    # since kernel 2.6.19):
     # https://gitlab.com/procps-ng/procps/
     #     blob/195565746136d09333ded280cf3ba93853e855b8/proc/sysinfo.c#L761
     # Older versions of procps added slab memory instead.
     # This got changed in:
     # https://gitlab.com/procps-ng/procps/commit/
     #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
-    cached += mems.get(b"SReclaimable:", 0)  # kernel 2.6.19
+    cached += mems.get(b"SReclaimable:", 0)
 
     try:
         shared = mems[b'Shmem:']  # since kernel 2.6.32
@@ -335,11 +336,11 @@ def virtual_memory():
         active = 0
         missing_fields.append('active')
 
-    # https://gitlab.com/procps-ng/procps/
-    #   blob/195565746136d09333ded280cf3ba93853e855b8/proc/sysinfo.c#L758
     try:
         inactive = mems[b"Inactive:"]
     except KeyError:
+        # https://gitlab.com/procps-ng/procps/blob/
+        #   195565746136d09333ded280cf3ba93853e855b8/proc/sysinfo.c#L758
         try:
             inactive = \
                 mems[b"Inact_dirty:"] + \
@@ -353,6 +354,8 @@ def virtual_memory():
     #     24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L769
     used = total - free - cached - buffers
     if used < 0:
+        # May be symptomatic of running within a LCX container where such
+        # values will be dramatically distorted over those of the host.
         used = total - free
 
     # Note: starting from 4.4.0 we match "free" "available" column.
