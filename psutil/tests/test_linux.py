@@ -117,8 +117,9 @@ def free_physmem():
         if line.startswith('Mem'):
             total, used, free, shared = \
                 [int(x) for x in line.split()[1:5]]
-            nt = collections.namedtuple('free', 'total used free shared')
-            return nt(total, used, free, shared)
+            nt = collections.namedtuple(
+                'free', 'total used free shared output')
+            return nt(total, used, free, shared, out)
     raise ValueError(
         "can't find 'Mem' in 'free' output:\n%s" % '\n'.join(lines))
 
@@ -150,10 +151,12 @@ class TestSystemVirtualMemory(unittest.TestCase):
 
     @retry_before_failing()
     def test_used(self):
-        free_value = free_physmem().used
+        free = free_physmem()
+        free_value = free.used
         psutil_value = psutil.virtual_memory().used
         self.assertAlmostEqual(
-            free_value, psutil_value, delta=MEMORY_TOLERANCE)
+            free_value, psutil_value, delta=MEMORY_TOLERANCE,
+            msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
     @retry_before_failing()
     def test_free(self):
@@ -190,12 +193,14 @@ class TestSystemVirtualMemory(unittest.TestCase):
     @retry_before_failing()
     @unittest.skipIf(TRAVIS, "fails on travis")
     def test_shared(self):
-        free_value = free_physmem().shared
+        free = free_physmem()
+        free_value = free.shared
         if free_value == 0:
             raise unittest.SkipTest("free does not support 'shared' column")
         psutil_value = psutil.virtual_memory().shared
         self.assertAlmostEqual(
-            free_value, psutil_value, delta=MEMORY_TOLERANCE)
+            free_value, psutil_value, delta=MEMORY_TOLERANCE,
+            msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
     # --- mocked tests
 
