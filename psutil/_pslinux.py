@@ -344,7 +344,7 @@ def virtual_memory():
 
     # active
     try:
-        active = mems["Active:"]
+        active = mems[b"Active:"]
     except KeyError:
         active = 0
         missing_fields.append('active')
