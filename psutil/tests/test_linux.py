@@ -191,7 +191,6 @@ class TestSystemVirtualMemory(unittest.TestCase):
             vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
-    @unittest.skipIf(TRAVIS, "fails on travis")
     def test_shared(self):
         free = free_physmem()
         free_value = free.shared
@@ -202,6 +201,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
             free_value, psutil_value, delta=MEMORY_TOLERANCE,
             msg='%s %s \n%s' % (free_value, psutil_value, free.output))
 
+    @retry_before_failing()
     def test_available(self):
         # "free" output format has changed at some point:
         # https://github.com/giampaolo/psutil/issues/538#issuecomment-147192098

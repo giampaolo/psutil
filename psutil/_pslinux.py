@@ -289,6 +289,16 @@ except Exception:
 
 
 def virtual_memory():
+    """Report memory stats trying to match "free" and "vmstat -s" cmdline
+    utility values as much as possible.
+
+    This implementation uses procps-ng-3.3.12 as a reference (2016-09-18):
+    https://gitlab.com/procps-ng/procps/blob/
+        24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c
+
+    ...or "free" / procps-ng-3.3.10 version which is available in Ubuntu
+    16.04 and which should report the same numbers.
+    """
     total, free, buffers, shared, _, _, unit_multiplier = cext.linux_sysinfo()
     total *= unit_multiplier
     free *= unit_multiplier
@@ -329,7 +339,16 @@ def virtual_memory():
     # free and htop available memory differs as per:
     # http://askubuntu.com/a/369589
     # http://unix.stackexchange.com/a/65852/168884
-    avail = mems['MemAvailable:']
+    try:
+        avail = mems['MemAvailable:']
+    except KeyError:
+        # Column is not there; it's likely this is an older kernel.
+        # In this case "free" won't show an "available" column.
+        # Also, procps does some hacky things:
+        # https://gitlab.com/procps-ng/procps/blob/
+        #     /24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L774
+        # We won't. Like this we'll match "htop".
+        avail = free + buffers + cached
 
     # XXX: this value matches "free", but not all the time, see:
     # https://github.com/giampaolo/psutil/issues/685#issuecomment-202914057
