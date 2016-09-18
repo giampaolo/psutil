@@ -299,47 +299,39 @@ def virtual_memory():
     if shared == 0:
         shared = None
 
-    cached = active = inactive = None
+    mems = {}
     with open_binary('%s/meminfo' % get_procfs_path()) as f:
         for line in f:
-            if cached is None and line.startswith(b"Cached:"):
-                cached = int(line.split()[1]) * 1024
-            elif active is None and line.startswith(b"Active:"):
-                active = int(line.split()[1]) * 1024
-            elif inactive is None and line.startswith(b"Inactive:"):
-                inactive = int(line.split()[1]) * 1024
-            # From "man free":
-            # The shared memory column represents either the MemShared
-            # value (2.4 kernels) or the Shmem value (2.6+ kernels) taken
-            # from the /proc/meminfo file. The value is zero if none of
-            # the entries is exported by the kernel.
-            elif shared is None and \
-                    line.startswith(b"MemShared:") or \
-                    line.startswith(b"Shmem:"):
-                shared = int(line.split()[1]) * 1024
+            fields = line.split()
+            mems[fields[0]] = int(fields[1]) * 1024
 
-    missing = []
-    if cached is None:
-        missing.append('cached')
-        cached = 0
-    if active is None:
-        missing.append('active')
-        active = 0
-    if inactive is None:
-        missing.append('inactive')
-        inactive = 0
-    if shared is None:
-        missing.append('shared')
-        shared = 0
-    if missing:
-        msg = "%s memory stats couldn't be determined and %s set to 0" % (
-            ", ".join(missing),
-            "was" if len(missing) == 1 else "were")
-        warnings.warn(msg, RuntimeWarning)
+    # Match "free" cmdline utility:
+    # https://gitlab.com/procps-ng/procps/
+    #     blob/195565746136d09333ded280cf3ba93853e855b8/proc/sysinfo.c#L761
+    cached = mems.get(b"Cached:", 0) + mems.get(b"SReclaimable:", 0)
 
-    # Note: this value matches "htop" perfectly.
-    avail = free + buffers + cached
-    # Note: this value matches "free", but not all the time, see:
+    active = mems.get(b"Active:", 0)
+
+    # Match "free" cmdline utility in case "Inactive:" is not there:
+    # https://gitlab.com/procps-ng/procps/
+    #   blob/195565746136d09333ded280cf3ba93853e855b8/proc/sysinfo.c#L758
+    inactive = mems.get(b"Inactive:", 0)
+    if inactive == 0:
+        inactive = \
+            mems.get(b"Inact_dirty:", 0) + \
+            mems.get(b"Inact_clean:", 0) + \
+            mems.get(b"Inact_laundry:", 0)
+
+    # Note: starting from 4.4.0 we match "free" "available" column.
+    # Before 4.4.0 we calculated it as:
+    # >>> avail = free + buffers + cached
+    # ...which matched htop.
+    # free and htop available memory differs as per:
+    # http://askubuntu.com/a/369589
+    # http://unix.stackexchange.com/a/65852/168884
+    avail = mems['MemAvailable:']
+
+    # XXX: this value matches "free", but not all the time, see:
     # https://github.com/giampaolo/psutil/issues/685#issuecomment-202914057
     used = total - free
     # Note: this value matches "htop" perfectly.
