@@ -306,15 +306,26 @@ def virtual_memory():
     buffers *= unit_multiplier
     # Note: this (on my Ubuntu 14.04, kernel 3.13 at least) may be 0.
     # If so, it will be determined from /proc/meminfo.
-    shared *= unit_multiplier or None
-    if shared == 0:
-        shared = None
+    shared *= unit_multiplier
 
     mems = {}
     with open_binary('%s/meminfo' % get_procfs_path()) as f:
         for line in f:
             fields = line.split()
             mems[fields[0]] = int(fields[1]) * 1024
+
+    # shared
+    if shared == 0:
+        # Note: if 0 (e.g. my Ubuntu 14.04, kernel 3.13 at least)
+        # this can be determined from /proc/meminfo.
+        try:
+            shared = mems['Shmem:']  # kernel 2.6.32
+        except KeyError:
+            try:
+                shared = mems['MemShared:']  # kernels 2.4
+            except KeyError:
+                shared = 0
+                missing_fields.append('shared')
 
     # "free" cmdline utility sums cached + reclamaible:
     # https://gitlab.com/procps-ng/procps/
