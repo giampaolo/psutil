@@ -299,6 +299,7 @@ def virtual_memory():
     ...or "free" / procps-ng-3.3.10 version which is available in Ubuntu
     16.04 and which should report the same numbers.
     """
+    missing_fields = []
     total, free, buffers, shared, _, _, unit_multiplier = cext.linux_sysinfo()
     total *= unit_multiplier
     free *= unit_multiplier
@@ -315,22 +316,38 @@ def virtual_memory():
             fields = line.split()
             mems[fields[0]] = int(fields[1]) * 1024
 
-    # Match "free" cmdline utility:
+    # "free" cmdline utility sums cached + reclamaible:
     # https://gitlab.com/procps-ng/procps/
     #     blob/195565746136d09333ded280cf3ba93853e855b8/proc/sysinfo.c#L761
-    cached = mems.get(b"Cached:", 0) + mems.get(b"SReclaimable:", 0)
+    try:
+        cached = mems[b"Cached:"]
+    except KeyError:
+        cached = 0
+        missing_fields.append('cached')
+    else:
+        cached += mems.get(b"SReclaimable:", 0)
 
-    active = mems.get(b"Active:", 0)
+    # active
+    try:
+        active = mems["Active:"]
+    except KeyError:
+        active = 0
+        missing_fields.append('active')
 
-    # Match "free" cmdline utility in case "Inactive:" is not there:
+    # inactive
     # https://gitlab.com/procps-ng/procps/
     #   blob/195565746136d09333ded280cf3ba93853e855b8/proc/sysinfo.c#L758
-    inactive = mems.get(b"Inactive:", 0)
-    if inactive == 0:
-        inactive = \
-            mems.get(b"Inact_dirty:", 0) + \
-            mems.get(b"Inact_clean:", 0) + \
-            mems.get(b"Inact_laundry:", 0)
+    try:
+        inactive = mems[b"Inactive:"]
+    except KeyError:
+        try:
+            inactive = \
+                mems[b"Inact_dirty:"] + \
+                mems[b"Inact_clean:"] + \
+                mems[b"Inact_laundry:"]
+        except KeyError:
+            inactive = 0
+            missing_fields.append('inactive')
 
     # Note: starting from 4.4.0 we match "free" "available" column.
     # Before 4.4.0 we calculated it as:
@@ -355,6 +372,14 @@ def virtual_memory():
     used = total - free
     # Note: this value matches "htop" perfectly.
     percent = usage_percent((total - avail), total, _round=1)
+
+    # Warn about missing metrics which are set to 0.
+    if missing_fields:
+        msg = "%s memory stats couldn't be determined and %s set to 0" % (
+            ", ".join(missing_fields),
+            "was" if len(missing_fields) == 1 else "were")
+        warnings.warn(msg, RuntimeWarning)
+
     return svmem(total, avail, percent, used, free,
                  active, inactive, buffers, cached, shared)
 
