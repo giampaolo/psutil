@@ -330,6 +330,10 @@ def virtual_memory():
     # "free" cmdline utility sums cached + reclamaible:
     # https://gitlab.com/procps-ng/procps/
     #     blob/195565746136d09333ded280cf3ba93853e855b8/proc/sysinfo.c#L761
+    # Older versions of procps added slab memory instead.
+    # This got changed in:
+    # https://gitlab.com/procps-ng/procps/commit/
+    #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
     try:
         cached = mems[b"Cached:"]
     except KeyError:
@@ -378,9 +382,12 @@ def virtual_memory():
         # We won't. Like this we'll match "htop".
         avail = free + buffers + cached
 
-    # XXX: this value matches "free", but not all the time, see:
-    # https://github.com/giampaolo/psutil/issues/685#issuecomment-202914057
-    used = total - free
+    # https://gitlab.com/procps-ng/procps/blob/
+    #     24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L769
+    used = total - free - cached - buffers
+    if used < 0:
+        used = total - free
+
     # Note: this value matches "htop" perfectly.
     percent = usage_percent((total - avail), total, _round=1)
 

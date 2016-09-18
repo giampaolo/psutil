@@ -207,13 +207,14 @@ class TestSystemVirtualMemory(unittest.TestCase):
         # https://github.com/giampaolo/psutil/issues/538#issuecomment-147192098
         out = sh("free -b")
         lines = out.split('\n')
-        if 'available' in lines[0]:
+        if 'available' not in lines[0]:
             raise unittest.SkipTest("free does not support 'available' column")
-        free_value = int(lines[1].split()[-1])
-        psutil_value = psutil.virtual_memory().available
-        self.assertAlmostEqual(
-            free_value, psutil_value, delta=MEMORY_TOLERANCE,
-            msg='%s %s \n%s' % (free_value, psutil_value, out))
+        else:
+            free_value = int(lines[1].split()[-1])
+            psutil_value = psutil.virtual_memory().available
+            self.assertAlmostEqual(
+                free_value, psutil_value, delta=MEMORY_TOLERANCE,
+                msg='%s %s \n%s' % (free_value, psutil_value, out))
 
 
 # =====================================================================
