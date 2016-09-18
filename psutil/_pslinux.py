@@ -314,19 +314,7 @@ def virtual_memory():
             fields = line.split()
             mems[fields[0]] = int(fields[1]) * 1024
 
-    # shared
-    if shared == 0:
-        # Note: if 0 (e.g. Ubuntu 14.04, kernel 3.13) this can be
-        # determined from /proc/meminfo.
-        try:
-            shared = mems['Shmem:']  # kernel 2.6.32
-        except KeyError:
-            try:
-                shared = mems['MemShared:']  # kernels 2.4
-            except KeyError:
-                shared = 0
-                missing_fields.append('shared')
-
+    cached = mems[b"Cached:"]
     # "free" cmdline utility sums cached + reclamaible:
     # https://gitlab.com/procps-ng/procps/
     #     blob/195565746136d09333ded280cf3ba93853e855b8/proc/sysinfo.c#L761
@@ -334,22 +322,26 @@ def virtual_memory():
     # This got changed in:
     # https://gitlab.com/procps-ng/procps/commit/
     #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
-    try:
-        cached = mems[b"Cached:"]
-    except KeyError:
-        cached = 0
-        missing_fields.append('cached')
-    else:
-        cached += mems.get(b"SReclaimable:", 0)
+    cached += mems.get(b"SReclaimable:", 0)  # kernel 2.6.19
 
-    # active
+    if shared == 0:
+        # Note: if 0 (e.g. Ubuntu 14.04, kernel 3.13) this can be
+        # determined from /proc/meminfo.
+        try:
+            shared = mems['Shmem:']  # since kernel 2.6.32
+        except KeyError:
+            try:
+                shared = mems['MemShared:']  # kernels 2.4
+            except KeyError:
+                shared = 0
+                missing_fields.append('shared')
+
     try:
         active = mems[b"Active:"]
     except KeyError:
         active = 0
         missing_fields.append('active')
 
-    # inactive
     # https://gitlab.com/procps-ng/procps/
     #   blob/195565746136d09333ded280cf3ba93853e855b8/proc/sysinfo.c#L758
     try:
