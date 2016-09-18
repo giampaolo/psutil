@@ -316,8 +316,8 @@ def virtual_memory():
 
     # shared
     if shared == 0:
-        # Note: if 0 (e.g. my Ubuntu 14.04, kernel 3.13 at least)
-        # this can be determined from /proc/meminfo.
+        # Note: if 0 (e.g. Ubuntu 14.04, kernel 3.13) this can be
+        # determined from /proc/meminfo.
         try:
             shared = mems['Shmem:']  # kernel 2.6.32
         except KeyError:
@@ -372,7 +372,7 @@ def virtual_memory():
     # http://askubuntu.com/a/369589
     # http://unix.stackexchange.com/a/65852/168884
     try:
-        avail = mems['MemAvailable:']
+        avail = mems[b'MemAvailable:']
     except KeyError:
         # Column is not there; it's likely this is an older kernel.
         # In this case "free" won't show an "available" column.
