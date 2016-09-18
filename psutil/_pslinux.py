@@ -296,8 +296,8 @@ def virtual_memory():
     https://gitlab.com/procps-ng/procps/blob/
         24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c
 
-    ...or "free" / procps-ng-3.3.10 version which is available in Ubuntu
-    16.04 and which should report the same numbers.
+    For reference, procps-ng-3.3.10 is the version available on Ubuntu
+    16.04.
     """
     missing_fields = []
     mems = {}
@@ -308,8 +308,8 @@ def virtual_memory():
 
     # Note: these info are available also as cext.linux_sysinfo().
     total = mems[b'MemTotal:']
-    buffers = mems[b'Buffers:']
     free = mems[b'MemFree:']
+    buffers = mems[b'Buffers:']
     cached = mems[b"Cached:"]
     # "free" cmdline utility sums cached + reclamaible:
     # https://gitlab.com/procps-ng/procps/
@@ -320,8 +320,6 @@ def virtual_memory():
     #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
     cached += mems.get(b"SReclaimable:", 0)  # kernel 2.6.19
 
-    # Note: if 0 (e.g. Ubuntu 14.04, kernel 3.13) this can be
-    # determined from /proc/meminfo.
     try:
         shared = mems[b'Shmem:']  # since kernel 2.6.32
     except KeyError:
@@ -351,6 +349,12 @@ def virtual_memory():
             inactive = 0
             missing_fields.append('inactive')
 
+    # https://gitlab.com/procps-ng/procps/blob/
+    #     24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L769
+    used = total - free - cached - buffers
+    if used < 0:
+        used = total - free
+
     # Note: starting from 4.4.0 we match "free" "available" column.
     # Before 4.4.0 we calculated it as:
     # >>> avail = free + buffers + cached
@@ -368,12 +372,13 @@ def virtual_memory():
         #     /24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L774
         # We won't. Like this we'll match "htop".
         avail = free + buffers + cached
-
+    # If avail is greater than total or our calculation overflows,
+    # that's symptomatic of running within a LCX container where such
+    # values will be dramatically distorted over those of the host.
     # https://gitlab.com/procps-ng/procps/blob/
-    #     24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L769
-    used = total - free - cached - buffers
-    if used < 0:
-        used = total - free
+    #     24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L764
+    if avail > total:
+        avail = free
 
     percent = usage_percent((total - avail), total, _round=1)
 
