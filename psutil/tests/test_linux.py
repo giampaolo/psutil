@@ -117,9 +117,8 @@ def free_physmem():
         if line.startswith('Mem'):
             total, used, free, shared = \
                 [int(x) for x in line.split()[1:5]]
-            nt = collections.namedtuple(
-                'free', 'total used free shared output')
-            return nt(total, used, free, shared, out)
+            nt = collections.namedtuple('free', 'total used free shared')
+            return nt(total, used, free, shared)
     raise ValueError(
         "can't find 'Mem' in 'free' output:\n%s" % '\n'.join(lines))
 
@@ -131,11 +130,6 @@ def vmstat(stat):
         if stat in line:
             return int(line.split(' ')[0])
     raise ValueError("can't find %r in 'vmstat' output" % stat)
-
-
-def get_free_version_info():
-    out = sh("free -V").strip()
-    return tuple(map(int, out.split()[-1].split('.')))
 
 
 # =====================================================================
@@ -154,20 +148,12 @@ class TestSystemVirtualMemory(unittest.TestCase):
         psutil_value = psutil.virtual_memory().total
         self.assertAlmostEqual(vmstat_value, psutil_value)
 
-    # Older versions of procps used slab memory to calculate used memory.
-    # This got changed in:
-    # https://gitlab.com/procps-ng/procps/commit/
-    #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
-    @unittest.skipUnless(
-        LINUX and get_free_version_info() >= (3, 3, 12), "old free version")
     @retry_before_failing()
     def test_used(self):
-        free = free_physmem()
-        free_value = free.used
+        free_value = free_physmem().used
         psutil_value = psutil.virtual_memory().used
         self.assertAlmostEqual(
-            free_value, psutil_value, delta=MEMORY_TOLERANCE,
-            msg='%s %s \n%s' % (free_value, psutil_value, free.output))
+            free_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_free(self):
@@ -202,30 +188,31 @@ class TestSystemVirtualMemory(unittest.TestCase):
             vmstat_value, psutil_value, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
+    @unittest.skipIf(TRAVIS, "fails on travis")
     def test_shared(self):
-        free = free_physmem()
-        free_value = free.shared
+        free_value = free_physmem().shared
         if free_value == 0:
             raise unittest.SkipTest("free does not support 'shared' column")
         psutil_value = psutil.virtual_memory().shared
         self.assertAlmostEqual(
-            free_value, psutil_value, delta=MEMORY_TOLERANCE,
-            msg='%s %s \n%s' % (free_value, psutil_value, free.output))
+            free_value, psutil_value, delta=MEMORY_TOLERANCE)
 
-    @retry_before_failing()
-    def test_available(self):
-        # "free" output format has changed at some point:
-        # https://github.com/giampaolo/psutil/issues/538#issuecomment-147192098
-        out = sh("free -b")
-        lines = out.split('\n')
-        if 'available' not in lines[0]:
-            raise unittest.SkipTest("free does not support 'available' column")
-        else:
-            free_value = int(lines[1].split()[-1])
-            psutil_value = psutil.virtual_memory().available
-            self.assertAlmostEqual(
-                free_value, psutil_value, delta=MEMORY_TOLERANCE,
-                msg='%s %s \n%s' % (free_value, psutil_value, out))
+    # --- mocked tests
+
+    def test_warnings_mocked(self):
+        with mock.patch('psutil._pslinux.open', create=True) as m:
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                ret = psutil._pslinux.virtual_memory()
+                assert m.called
+                self.assertEqual(len(ws), 1)
+                w = ws[0]
+                self.assertTrue(w.filename.endswith('psutil/_pslinux.py'))
+                self.assertIn(
+                    "memory stats couldn't be determined", str(w.message))
+                self.assertEqual(ret.cached, 0)
+                self.assertEqual(ret.active, 0)
+                self.assertEqual(ret.inactive, 0)
 
 
 # =====================================================================
@@ -383,7 +370,6 @@ class TestSystemCPU(unittest.TestCase):
 @unittest.skipUnless(LINUX, "not a Linux system")
 class TestSystemCPUStats(unittest.TestCase):
 
-    @unittest.skipIf(TRAVIS, "fails on Travis")
     def test_ctx_switches(self):
         vmstat_value = vmstat("context switches")
         psutil_value = psutil.cpu_stats().ctx_switches
