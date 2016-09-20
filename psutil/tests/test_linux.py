@@ -246,7 +246,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
                         side_effect=open_mock) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
-                ret = psutil._pslinux.virtual_memory()
+                ret = psutil.virtual_memory()
                 assert m.called
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
@@ -257,7 +257,9 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 self.assertEqual(ret.active, 0)
                 self.assertEqual(ret.inactive, 0)
 
-    def test_calculate_avail(self):
+    def test_calculate_avail_old_kernels(self):
+        # Make sure that our calculation of avail mem for old kernels
+        # is off by max 2%.
         from psutil._pslinux import calculate_avail_vmem
         from psutil._pslinux import open_binary
 
@@ -272,6 +274,32 @@ class TestSystemVirtualMemory(unittest.TestCase):
             b = mems[b'MemAvailable:']
             diff_percent = abs(a - b) / a * 100
             self.assertLess(diff_percent, 2)
+
+    def test_avail_comes_from_kernel(self):
+        # Make sure "MemAvailable:" coluimn is used instead of relying
+        # on our internal algorithm to calculate avail mem.
+        def open_mock(*args, **kwargs):
+            return io.BytesIO(textwrap.dedent("""\
+                Active:          9444728 kB
+                Active(anon):    6145416 kB
+                Active(file):    2950064 kB
+                Buffers:          287952 kB
+                Cached:          4818144 kB
+                Inactive(file):  1578132 kB
+                Inactive(anon):   574764 kB
+                Inactive(file):  1567648 kB
+                MemAvailable:    6574984 kB
+                MemFree:         2057400 kB
+                MemTotal:       16325648 kB
+                Shmem:            577588 kB
+                SReclaimable:     346648 kB
+                """).encode())
+
+        with mock.patch('psutil._pslinux.open', create=True,
+                        side_effect=open_mock) as m:
+            ret = psutil.virtual_memory()
+            assert m.called
+            self.assertEqual(ret.available, 6574984 * 1024)
 
 
 # =====================================================================
@@ -306,7 +334,7 @@ class TestSystemSwapMemory(unittest.TestCase):
         with mock.patch('psutil._pslinux.open', create=True) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
-                ret = psutil._pslinux.swap_memory()
+                ret = psutil.swap_memory()
                 assert m.called
                 self.assertEqual(len(ws), 1)
                 w = ws[0]
