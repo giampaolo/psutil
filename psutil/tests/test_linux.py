@@ -227,6 +227,36 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 free_value, psutil_value, delta=MEMORY_TOLERANCE,
                 msg='%s %s \n%s' % (free_value, psutil_value, out))
 
+    def test_warnings_mocked(self):
+        def open_mock(*args, **kwargs):
+            return io.BytesIO(textwrap.dedent("""\
+                Active(anon):    6145416 kB
+                Active(file):    2950064 kB
+                Buffers:          287952 kB
+                Inactive(anon):   574764 kB
+                Inactive(file):  1567648 kB
+                MemAvailable:    6574984 kB
+                MemFree:         2057400 kB
+                MemTotal:       16325648 kB
+                Shmem:            577588 kB
+                SReclaimable:     346648 kB
+                """).encode())
+
+        with mock.patch('psutil._pslinux.open', create=True,
+                        side_effect=open_mock) as m:
+            with warnings.catch_warnings(record=True) as ws:
+                warnings.simplefilter("always")
+                ret = psutil._pslinux.virtual_memory()
+                assert m.called
+                self.assertEqual(len(ws), 1)
+                w = ws[0]
+                self.assertTrue(w.filename.endswith('psutil/_pslinux.py'))
+                self.assertIn(
+                    "memory stats couldn't be determined", str(w.message))
+                self.assertEqual(ret.cached, 0)
+                self.assertEqual(ret.active, 0)
+                self.assertEqual(ret.inactive, 0)
+
 
 # =====================================================================
 # system swap memory
