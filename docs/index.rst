@@ -172,8 +172,7 @@ Memory
 .. function:: virtual_memory()
 
   Return statistics about system memory usage as a namedtuple including the
-  following fields, expressed in bytes.
-  Main metrics:
+  following fields, expressed in bytes. Main metrics:
 
   - **total**: total physical memory.
   - **available**: the memory that can be given instantly to processes without
@@ -181,8 +180,6 @@ Memory
     This is calculated by summing different memory values depending on the
     platform and it is supposed to be used to monitor actual memory usage in a
     cross platform fashion.
-  - **percent**: the percentage usage calculated as
-    ``(total - available) / total * 100``.
 
   Other metrics:
 
@@ -223,9 +220,6 @@ Memory
   >>>
 
   .. versionchanged:: 4.2.0 added *shared* metrics on Linux.
-
-  .. versionchanged:: 4.4.0 on Linux, *free*, *available* and *used* fields
-    are more precise and match "free" cmdline utility.
 
 .. function:: swap_memory()
 
