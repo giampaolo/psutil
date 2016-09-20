@@ -257,6 +257,22 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 self.assertEqual(ret.active, 0)
                 self.assertEqual(ret.inactive, 0)
 
+    def test_calculate_avail(self):
+        from psutil._pslinux import calculate_avail_vmem
+        from psutil._pslinux import open_binary
+
+        mems = {}
+        with open_binary('/proc/meminfo') as f:
+            for line in f:
+                fields = line.split()
+                mems[fields[0]] = int(fields[1]) * 1024
+
+        a = calculate_avail_vmem(mems)
+        if b'MemAvailable:' in mems:
+            b = mems[b'MemAvailable:']
+            diff_percent = abs(a - b) / a * 100
+            self.assertLess(diff_percent, 2)
+
 
 # =====================================================================
 # system swap memory
