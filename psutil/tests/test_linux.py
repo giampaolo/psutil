@@ -6,6 +6,7 @@
 
 """Linux specific tests."""
 
+from __future__ import division
 import collections
 import contextlib
 import errno
@@ -228,22 +229,26 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 msg='%s %s \n%s' % (free_value, psutil_value, out))
 
     def test_warnings_mocked(self):
-        def open_mock(*args, **kwargs):
-            return io.BytesIO(textwrap.dedent("""\
-                Active(anon):    6145416 kB
-                Active(file):    2950064 kB
-                Buffers:          287952 kB
-                Inactive(anon):   574764 kB
-                Inactive(file):  1567648 kB
-                MemAvailable:    6574984 kB
-                MemFree:         2057400 kB
-                MemTotal:       16325648 kB
-                Shmem:            577588 kB
-                SReclaimable:     346648 kB
-                """).encode())
+        def open_mock(name, *args, **kwargs):
+            if name == '/proc/meminfo':
+                return io.BytesIO(textwrap.dedent("""\
+                    Active(anon):    6145416 kB
+                    Active(file):    2950064 kB
+                    Buffers:          287952 kB
+                    Inactive(anon):   574764 kB
+                    Inactive(file):  1567648 kB
+                    MemAvailable:    6574984 kB
+                    MemFree:         2057400 kB
+                    MemTotal:       16325648 kB
+                    Shmem:            577588 kB
+                    SReclaimable:     346648 kB
+                    """).encode())
+            else:
+                return orig_open(name, *args, **kwargs)
 
-        with mock.patch('psutil._pslinux.open', create=True,
-                        side_effect=open_mock) as m:
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
             with warnings.catch_warnings(record=True) as ws:
                 warnings.simplefilter("always")
                 ret = psutil.virtual_memory()
@@ -278,25 +283,29 @@ class TestSystemVirtualMemory(unittest.TestCase):
     def test_avail_old_comes_from_kernel(self):
         # Make sure "MemAvailable:" coluimn is used instead of relying
         # on our internal algorithm to calculate avail mem.
-        def open_mock(*args, **kwargs):
-            return io.BytesIO(textwrap.dedent("""\
-                Active:          9444728 kB
-                Active(anon):    6145416 kB
-                Active(file):    2950064 kB
-                Buffers:          287952 kB
-                Cached:          4818144 kB
-                Inactive(file):  1578132 kB
-                Inactive(anon):   574764 kB
-                Inactive(file):  1567648 kB
-                MemAvailable:    6574984 kB
-                MemFree:         2057400 kB
-                MemTotal:       16325648 kB
-                Shmem:            577588 kB
-                SReclaimable:     346648 kB
-                """).encode())
+        def open_mock(name, *args, **kwargs):
+            if name == "/proc/meminfo":
+                return io.BytesIO(textwrap.dedent("""\
+                    Active:          9444728 kB
+                    Active(anon):    6145416 kB
+                    Active(file):    2950064 kB
+                    Buffers:          287952 kB
+                    Cached:          4818144 kB
+                    Inactive(file):  1578132 kB
+                    Inactive(anon):   574764 kB
+                    Inactive(file):  1567648 kB
+                    MemAvailable:    6574984 kB
+                    MemFree:         2057400 kB
+                    MemTotal:       16325648 kB
+                    Shmem:            577588 kB
+                    SReclaimable:     346648 kB
+                    """).encode())
+            else:
+                return orig_open(name, *args, **kwargs)
 
-        with mock.patch('psutil._pslinux.open', create=True,
-                        side_effect=open_mock) as m:
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
             ret = psutil.virtual_memory()
             assert m.called
             self.assertEqual(ret.available, 6574984 * 1024)
@@ -571,7 +580,6 @@ class TestSystemNetwork(unittest.TestCase):
                     """))
             else:
                 return orig_open(name, *args, **kwargs)
-            return orig_open(name, *args)
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
@@ -654,7 +662,6 @@ class TestSystemDisks(unittest.TestCase):
                     u("   3     0   1 hda 2 3 4 5 6 7 8 9 10 11 12"))
             else:
                 return orig_open(name, *args, **kwargs)
-            return orig_open(name, *args)
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
@@ -687,7 +694,6 @@ class TestSystemDisks(unittest.TestCase):
                     u("   3    0   hda 1 2 3 4 5 6 7 8 9 10 11"))
             else:
                 return orig_open(name, *args, **kwargs)
-            return orig_open(name, *args)
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
@@ -722,7 +728,6 @@ class TestSystemDisks(unittest.TestCase):
                     u("   3    1   hda 1 2 3 4"))
             else:
                 return orig_open(name, *args, **kwargs)
-            return orig_open(name, *args)
 
         orig_open = open
         patch_point = 'builtins.open' if PY3 else '__builtin__.open'
