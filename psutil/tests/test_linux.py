@@ -257,7 +257,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
                 self.assertEqual(ret.active, 0)
                 self.assertEqual(ret.inactive, 0)
 
-    def test_calculate_avail_old_kernels(self):
+    def test_avail_old_percent(self):
         # Make sure that our calculation of avail mem for old kernels
         # is off by max 2%.
         from psutil._pslinux import calculate_avail_vmem
@@ -275,7 +275,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
             diff_percent = abs(a - b) / a * 100
             self.assertLess(diff_percent, 2)
 
-    def test_avail_comes_from_kernel(self):
+    def test_avail_old_comes_from_kernel(self):
         # Make sure "MemAvailable:" coluimn is used instead of relying
         # on our internal algorithm to calculate avail mem.
         def open_mock(*args, **kwargs):
