@@ -350,7 +350,7 @@ def virtual_memory():
     For reference, procps-ng-3.3.10 is the version available on Ubuntu
     16.04.
 
-    Note about "available" memory. Up until psutil 4.3 it was
+    Note about "available" memory: up until psutil 4.3 it was
     calculated as "avail = (free + buffers + cached)". Now
     "MemAvailable:" column (kernel 3.14) from /proc/meminfo is used as
     it's more accurate.

@@ -184,12 +184,12 @@ Memory
   Other metrics:
 
   - **used**: memory used, calculated differently depending on the platform and
-    designed for informational purposes only. ``total - used`` does not
-    necessarily match ``available``.
+    designed for informational purposes only. **total - free** does not
+    necessarily match **used**.
   - **free**: memory not being used at all (zeroed) that is readily available;
     note that this doesn't reflect the actual memory available (use
-    ``available`` instead). ``total - free`` does not necessarily match
-    ``used``.
+    **available** instead). **total - used** does not necessarily match
+    **free**.
   - **active** *(UNIX)*: memory currently in use or very recently used, and so
     it is in RAM.
   - **inactive** *(UNIX)*: memory that is marked as not used.
