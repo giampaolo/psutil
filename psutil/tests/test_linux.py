@@ -310,6 +310,64 @@ class TestSystemVirtualMemory(unittest.TestCase):
             assert m.called
             self.assertEqual(ret.available, 6574984 * 1024)
 
+    def test_avail_old_missing_fields(self):
+        # Remove Active(file), Inactive(file) and SReclaimable
+        # from /proc/meminfo and make sure the fallback is used
+        # (free + cached),
+        def open_mock(name, *args, **kwargs):
+            if name == "/proc/meminfo":
+                return io.BytesIO(textwrap.dedent("""\
+                    Active:          9444728 kB
+                    Active(anon):    6145416 kB
+                    Buffers:          287952 kB
+                    Cached:          4818144 kB
+                    Inactive(file):  1578132 kB
+                    Inactive(anon):   574764 kB
+                    MemFree:         2057400 kB
+                    MemTotal:       16325648 kB
+                    Shmem:            577588 kB
+                    """).encode())
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+            ret = psutil.virtual_memory()
+            assert m.called
+            self.assertEqual(ret.available, 2057400 * 1024 + 4818144 * 1024)
+
+    def test_avail_old_missing_zoneinfo(self):
+        # Remove /proc/zoneinfo file. Make sure fallback is used
+        # (free + cached).
+        def open_mock(name, *args, **kwargs):
+            if name == "/proc/meminfo":
+                return io.BytesIO(textwrap.dedent("""\
+                    Active:          9444728 kB
+                    Active(anon):    6145416 kB
+                    Active(file):    2950064 kB
+                    Buffers:          287952 kB
+                    Cached:          4818144 kB
+                    Inactive(file):  1578132 kB
+                    Inactive(anon):   574764 kB
+                    Inactive(file):  1567648 kB
+                    MemFree:         2057400 kB
+                    MemTotal:       16325648 kB
+                    Shmem:            577588 kB
+                    SReclaimable:     346648 kB
+                    """).encode())
+            elif name == "/proc/zoneinfo":
+                raise IOError(errno.ENOENT, 'no such file or directory')
+            else:
+                return orig_open(name, *args, **kwargs)
+
+        orig_open = open
+        patch_point = 'builtins.open' if PY3 else '__builtin__.open'
+        with mock.patch(patch_point, create=True, side_effect=open_mock) as m:
+            ret = psutil.virtual_memory()
+            assert m.called
+            self.assertEqual(ret.available, 2057400 * 1024 + 4818144 * 1024)
+
 
 # =====================================================================
 # system swap memory
