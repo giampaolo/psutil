@@ -295,8 +295,10 @@ def calculate_avail_vmem(mems):
     https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/
         commit/?id=34e431b0ae398fc54ea69ff85ec700722c9da773
 
-    XXX: on my machine (Ubuntu 16.04, kernel 4.4.0.36, 16B ram) this
-    calculation differs by 1% than "MemAvailable:".
+    XXX: on recent kernels this calculation differs by ~1% than
+    "MemAvailable:" as it's calculated slightly differently, see:
+    https://gitlab.com/procps-ng/procps/issues/42
+    https://github.com/famzah/linux-memavailable-procfs/issues/2
     It is still way more realistic than doing (free + cached) though.
     """
     # Fallback for very old distros. According to

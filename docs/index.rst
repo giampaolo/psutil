@@ -185,7 +185,7 @@ Memory
 
   - **used**: memory used, calculated differently depending on the platform and
     designed for informational purposes only. ``total - used`` does not
-    necessarily matches ``available``.
+    necessarily match ``available``.
   - **free**: memory not being used at all (zeroed) that is readily available;
     note that this doesn't reflect the actual memory available (use
     ``available`` instead). ``total - free`` does not necessarily match
@@ -220,6 +220,10 @@ Memory
   >>>
 
   .. versionchanged:: 4.2.0 added *shared* metrics on Linux.
+
+  .. versionchanged:: 4.4.0 *available* and *used* values on Linux are more
+    precise and match "free" cmdline utility.
+
 
 .. function:: swap_memory()
 
