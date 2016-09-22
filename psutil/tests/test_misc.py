@@ -387,7 +387,7 @@ class TestScripts(unittest.TestCase):
         self.assert_stdout('meminfo.py')
 
     def test_procinfo(self):
-        self.assert_stdout('procinfo.py')
+        self.assert_stdout('procinfo.py %s' % os.getpid())
 
     @unittest.skipIf(APPVEYOR, "can't find users on Appveyor")
     def test_who(self):
