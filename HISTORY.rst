@@ -4,6 +4,10 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 4.4.0 - XXXX-XX-XX
 ==================
 
+**Enhancements**
+
+#891: procinfo.py script has been updated and provides a lot more info.
+
 **Bug fixes**
 
 - #798: [Windows] Process.open_files() returns and empty list on Windows 10.

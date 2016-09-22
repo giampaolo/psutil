@@ -917,12 +917,14 @@ Process class
 
     Get or set process resource limits (see
     `man prlimit <http://linux.die.net/man/2/prlimit>`__). *resource* is one
-    of the :data:`psutil.RLIMIT_* <psutil.RLIMIT_INFINITY>` constants.
+    of the :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>` constants.
     *limits* is a ``(soft, hard)`` tuple.
     This is the same as `resource.getrlimit() <http://docs.python.org/library/resource.html#resource.getrlimit>`__
     and `resource.setrlimit() <http://docs.python.org/library/resource.html#resource.setrlimit>`__
     but can be used for any process PID, not only
     `os.getpid() <http://docs.python.org/library/os.html#os.getpid>`__.
+    For get, return value is a ``(soft, hard)`` tuple. Each value may be either
+    and integer or :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>`.
     Example:
 
       >>> import psutil
@@ -1734,7 +1736,7 @@ Constants
     instead of a plain integer.
 
 .. _const-rlimit:
-.. data:: RLIMIT_INFINITY
+.. data:: RLIM_INFINITY
           RLIMIT_AS
           RLIMIT_CORE
           RLIMIT_CPU
@@ -1749,7 +1751,6 @@ Constants
           RLIMIT_RSS
           RLIMIT_RTPRIO
           RLIMIT_RTTIME
-          RLIMIT_RTPRIO
           RLIMIT_SIGPENDING
           RLIMIT_STACK
 
