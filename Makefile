@@ -11,7 +11,8 @@ PYTHON != python -c \
 TSCRIPT = psutil/tests/runner.py
 
 # List of nice-to-have dev libs.
-DEPS = coverage \
+DEPS = argparse \
+	coverage \
 	flake8 \
 	futures \
 	ipdb \
