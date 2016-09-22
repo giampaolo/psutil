@@ -402,10 +402,14 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 #else
         long value = PyInt_AsLong(item);
 #endif
-        if (value == -1 || PyErr_Occurred())
+        if ((value == -1) || PyErr_Occurred()) {
+            if (!PyErr_Occurred())
+                PyErr_SetString(PyExc_ValueError, "invalid CPU value");
             goto error;
+        }
         CPU_SET(value, &cpu_set);
     }
+
 
     len = sizeof(cpu_set);
     if (sched_setaffinity(pid, len, &cpu_set)) {

@@ -19,6 +19,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #880: [Windows] Handle race condition inside psutil_net_connections.
 - #885: ValueError is raised if a negative integer is passed to cpu_percent()
   functions.
+- #892: [Linux] Process.cpu_affinity([-1]) raise SystemError with no error
+  set; now ValueError is raised.
 
 
 4.3.1 - 2016-09-01

@@ -255,8 +255,7 @@ class TestProcessObjectLeaks(Base):
     def test_cpu_affinity_set(self):
         affinity = psutil.Process().cpu_affinity()
         self.execute('cpu_affinity', affinity)
-        if not TRAVIS:
-            self.execute_w_exc(ValueError, 'cpu_affinity', [-1])
+        self.execute_w_exc(ValueError, 'cpu_affinity', [-1])
 
     @skip_if_linux()
     def test_open_files(self):

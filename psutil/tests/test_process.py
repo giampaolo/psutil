@@ -870,6 +870,7 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(ValueError, p.cpu_affinity, invalid_cpu)
         self.assertRaises(ValueError, p.cpu_affinity, range(10000, 11000))
         self.assertRaises(TypeError, p.cpu_affinity, [0, "1"])
+        self.assertRaises(ValueError, p.cpu_affinity, [0, -1])
 
     # TODO
     @unittest.skipIf(BSD, "broken on BSD, see #595")
