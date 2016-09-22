@@ -6,7 +6,10 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Enhancements**
 
-#891: procinfo.py script has been updated and provides a lot more info.
+- #887: [Linux] virtual_memory()'s 'available' and 'used' values are more
+  precise and match "free" cmdline utility.  "available" also takes into
+  account LCX containers preventing "available" to overflow "total".
+- #891: procinfo.py script has been updated and provides a lot more info.
 
 **Bug fixes**
 
@@ -16,9 +19,6 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #880: [Windows] Handle race condition inside psutil_net_connections.
 - #885: ValueError is raised if a negative integer is passed to cpu_percent()
   functions.
-- #887: [Linux] virtual_memory()'s 'available' and 'used' values are more
-  precise and match "free" cmdline utility.  "available" also takes into
-  account LCX containers preventing "available" to overflow "total".
 
 
 4.3.1 - 2016-09-01
