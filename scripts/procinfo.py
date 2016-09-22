@@ -8,63 +8,84 @@
 Print detailed information about a process.
 Author: Giampaolo Rodola' <g.rodola@gmail.com>
 
-pid               11592
-name              python3
-parent            23412 (bash)
-exe               /usr/local/bin/python3.6
-cwd               /home/giampaolo/svn/psutil
-cmdline           python3 scripts/procinfo.py
-started           2016-09-22 05:10
-cpu tot time      0:00.70
-cpu times         user=0.07, system=0.0, children_user=0.0, children_system=0.0
-cpu affinity      [0, 1, 2, 3, 4, 5, 6, 7]
-memory            rss=12.1M, vms=64.7M, shared=5.5M, text=2.3M, lib=0B,
-                  data=6.4M, dirty=0B
-memory %          0.08
-user              giampaolo
-uids              real=1000, effective=1000, saved=1000
-uids              real=1000, effective=1000, saved=1000
-terminal          /dev/pts/22
-status            running
-niceness          0
-ionice            class=IOPriority.IOPRIO_CLASS_NONE, value=4
-num threads       1
-num fds           38
-I/O               read_count=26B, write_count=0B, read_bytes=0B, write_bytes=0B
-ctx switches      voluntary=0, involuntary=1
-resource limits   RLIMIT                     SOFT       HARD
-                  virtualmem             infinity   infinity
-                  coredumpsize                  0   infinity
-                  cputime                infinity   infinity
-                  datasize               infinity   infinity
-                  filesize               infinity   infinity
-                  locks                  infinity   infinity
-                  memlock                   65536      65536
-                  msgqueue                 819200     819200
-                  nice                          0          0
-                  openfiles                  1024      65536
-                  maxprocesses              63304      63304
-                  rss                    infinity   infinity
-                  realtimeprio                  0          0
-                  rtimesched             infinity   infinity
-                  sigspending               63304      63304
-                  stack                   8388608   infinity
-environ
-                  CLUTTER_IM_MODULE         xim
-                  COMPIZ_CONFIG_PROFILE     ubuntu
-                  DBUS_SESSION_BUS_ADDRESS  unix:abstract=/tmp/dbus-X7DTWzVAZj
-                  DEFAULTS_PATH             /usr/share/ubuntu.default.path
-                  [...]
-memory maps
-                  /lib/x86_64-linux-gnu/libnsl-2.23.so
-                  [vvar]
-                  /lib/x86_64-linux-gnu/ld-2.23.so
-                  [anon]
-                  [...]
+pid           4600
+name          chrome
+parent        4554 (bash)
+exe           /opt/google/chrome/chrome
+cwd           /home/giampaolo
+cmdline       /opt/google/chrome/chrome
+started       2016-09-19 11:12
+cpu-tspent    27:27.68
+cpu-times     user=8914.32, system=3530.59,
+              children_user=1.46, children_system=1.31
+cpu-affinity  [0, 1, 2, 3, 4, 5, 6, 7]
+memory        rss=520.5M, vms=1.9G, shared=132.6M, text=95.0M, lib=0B,
+              data=816.5M, dirty=0B
+memory %      3.26
+user          giampaolo
+uids          real=1000, effective=1000, saved=1000
+uids          real=1000, effective=1000, saved=1000
+terminal      /dev/pts/2
+status        sleeping
+nice          0
+ionice        class=IOPriority.IOPRIO_CLASS_NONE, value=0
+num-threads   47
+num-fds       379
+I/O           read_count=96.6M, write_count=80.7M,
+              read_bytes=293.2M, write_bytes=24.5G
+ctx-switches  voluntary=30426463, involuntary=460108
+children      PID    NAME
+              4605   cat
+              4606   cat
+              4609   chrome
+              4669   chrome
+open-files    PATH
+              /opt/google/chrome/icudtl.dat
+              /opt/google/chrome/snapshot_blob.bin
+              /opt/google/chrome/natives_blob.bin
+              /opt/google/chrome/chrome_100_percent.pak
+              [...]
+connections   PROTO LOCAL ADDR            REMOTE ADDR               STATUS
+              UDP   10.0.0.3:3693         *:*                       NONE
+              TCP   10.0.0.3:55102        172.217.22.14:443         ESTABLISHED
+              UDP   10.0.0.3:35172        *:*                       NONE
+              TCP   10.0.0.3:32922        172.217.16.163:443        ESTABLISHED
+              UDP   :::5353               *:*                       NONE
+              UDP   10.0.0.3:59925        *:*                       NONE
+threads       TID              USER          SYSTEM
+              11795             0.7            1.35
+              11796            0.68            1.37
+              15887            0.74            0.03
+              19055            0.77            0.01
+              [...]
+              total=47
+res-limits    RLIMIT                     SOFT       HARD
+              virtualmem             infinity   infinity
+              coredumpsize                  0   infinity
+              cputime                infinity   infinity
+              datasize               infinity   infinity
+              filesize               infinity   infinity
+              locks                  infinity   infinity
+              memlock                   65536      65536
+              msgqueue                 819200     819200
+              nice                          0          0
+              openfiles                  8192      65536
+              maxprocesses              63304      63304
+              rss                    infinity   infinity
+              realtimeprio                  0          0
+              rtimesched             infinity   infinity
+              sigspending               63304      63304
+              stack                   8388608   infinity
+mem-maps      RSS      PATH
+              381.4M   [anon]
+              62.8M    /opt/google/chrome/chrome
+              15.8M    /home/giampaolo/.config/google-chrome/Default/History
+              6.6M     /home/giampaolo/.config/google-chrome/Default/Favicons
+              [...]
 """
 
+import argparse
 import datetime
-import os
 import socket
 import sys
 
@@ -72,6 +93,7 @@ import psutil
 
 
 ACCESS_DENIED = ''
+NON_VERBOSE_ITERATIONS = 4
 RLIMITS_MAP = {
     "RLIMIT_AS": "virtualmem",
     "RLIMIT_CORE": "coredumpsize",
@@ -122,7 +144,7 @@ def str_ntuple(nt, bytes2human=False):
                           for x in nt._fields])
 
 
-def run(pid):
+def run(pid, verbose=False):
     try:
         proc = psutil.Process(pid)
         pinfo = proc.as_dict(ad_value=ACCESS_DENIED)
@@ -157,10 +179,10 @@ def run(pid):
         cpu_tot_time.seconds // 60 % 60,
         str((cpu_tot_time.seconds % 60)).zfill(2),
         str(cpu_tot_time.microseconds)[:2])
-    print_('cpu tspent', cpu_tot_time)
-    print_('cpu times', str_ntuple(pinfo['cpu_times']))
+    print_('cpu-tspent', cpu_tot_time)
+    print_('cpu-times', str_ntuple(pinfo['cpu_times']))
     if hasattr(proc, "cpu_affinity"):
-        print_("cpu affinity", pinfo["cpu_affinity"])
+        print_("cpu-affinity", pinfo["cpu_affinity"])
 
     print_('memory', str_ntuple(pinfo['memory_info'], bytes2human=True))
     print_('memory %', round(pinfo['memory_percent'], 2))
@@ -173,37 +195,40 @@ def run(pid):
         print_('terminal', pinfo['terminal'] or '')
 
     print_('status', pinfo['status'])
-    print_('niceness', pinfo['nice'])
+    print_('nice', pinfo['nice'])
     if hasattr(proc, "ionice"):
         ionice = proc.ionice()
         print_("ionice", "class=%s, value=%s" % (
             str(ionice.ioclass), ionice.value))
 
-    print_('num threads', pinfo['num_threads'])
-    print_('num fds', pinfo['num_fds'])
+    print_('num-threads', pinfo['num_threads'])
+    print_('num-fds', pinfo['num_fds'])
 
     if psutil.WINDOWS:
-        print_('num handles', pinfo['num_handles'])
+        print_('num-handles', pinfo['num_handles'])
 
     print_('I/O', str_ntuple(pinfo['io_counters'], bytes2human=True))
-    print_("ctx switches", str_ntuple(pinfo['num_ctx_switches']))
+    print_("ctx-switches", str_ntuple(pinfo['num_ctx_switches']))
     if children:
         template = "%-6s %s"
         print_("children", template % ("PID", "NAME"))
         for child in children:
-            print_('', 'pid=%s name=%s' % (child.pid, child.name()))
+            try:
+                print_('', template % (child.pid, child.name()))
+            except psutil.AccessDenied:
+                print_('', template % (child.pid, ""))
+            except psutil.NoSuchProcess:
+                pass
 
     if pinfo['open_files']:
-        print_('open files', 'PATH')
-        for file in pinfo['open_files']:
+        print_('open-files', 'PATH')
+        for i, file in enumerate(pinfo['open_files']):
+            if not verbose and i >= NON_VERBOSE_ITERATIONS:
+                print_("", "[...]")
+                break
             print_('', file.path)
-
-    if pinfo['threads']:
-        template = "%-5s %15s %15s"
-        print_('threads', template % ("TID", "USER", "SYSTEM"))
-        for thread in pinfo['threads']:
-            print_('', template % thread)
-        print_('', "total=%s" % len(pinfo['threads']))
+    else:
+        print_('open-files', '')
 
     if pinfo['connections']:
         template = '%-5s %-25s %-25s %s'
@@ -226,6 +251,20 @@ def run(pid):
                 "%s:%s" % (lip, lport),
                 "%s:%s" % (rip, rport),
                 conn.status))
+    else:
+        print_('connections', '')
+
+    if pinfo['threads'] and len(pinfo['threads']) > 1:
+        template = "%-5s %15s %15s"
+        print_('threads', template % ("TID", "USER", "SYSTEM"))
+        for i, thread in enumerate(pinfo['threads']):
+            if not verbose and i >= NON_VERBOSE_ITERATIONS:
+                print_("", "[...]")
+                break
+            print_('', template % thread)
+        print_('', "total=%s" % len(pinfo['threads']))
+    else:
+        print_('threads', '')
 
     if hasattr(proc, "rlimit"):
         res_names = [x for x in dir(psutil) if x.startswith("RLIMIT")]
@@ -238,7 +277,7 @@ def run(pid):
             else:
                 resources.append((res_name, soft, hard))
         if resources:
-            print_("res limits",
+            print_("res-limits",
                    "RLIMIT                     SOFT       HARD")
             for res_name, soft, hard in resources:
                 if soft == psutil.RLIM_INFINITY:
@@ -249,34 +288,33 @@ def run(pid):
                     RLIMITS_MAP.get(res_name, res_name), soft, hard))
 
     if hasattr(proc, "environ") and pinfo['environ']:
-        print_("environ", "")
+        template = "%-25s %s"
+        print_("environ", template % ("NAME", "VALUE"))
         for i, k in enumerate(sorted(pinfo['environ'])):
-            print_("", "%-25s %s" % (k, pinfo['environ'][k]))
-            if i >= 3:
+            if not verbose and i >= NON_VERBOSE_ITERATIONS:
                 print_("", "[...]")
                 break
+            print_("", template % (k, pinfo['environ'][k]))
 
     if pinfo['memory_maps']:
-        print_("mem maps", "")
-        for i, region in enumerate(pinfo['memory_maps']):
-            print_("", region.path)
-            if i >= 3:
+        template = "%-8s %s"
+        print_("mem-maps", template % ("RSS", "PATH"))
+        maps = sorted(pinfo['memory_maps'], key=lambda x: x.rss, reverse=True)
+        for i, region in enumerate(maps):
+            if not verbose and i >= NON_VERBOSE_ITERATIONS:
                 print_("", "[...]")
                 break
+            print_("", template % (convert_bytes(region.rss), region.path))
 
 
 def main(argv=None):
-    help = 'usage: %s [PID]' % __file__
-    if argv is None:
-        argv = sys.argv
-    if len(argv) == 1:
-        sys.exit(run(os.getpid()))
-    elif len(argv) == 2:
-        if argv[1] in ('-h', '--help'):
-            sys.exit(help)
-        sys.exit(run(int(argv[1])))
-    else:
-        sys.exit(help)
+    parser = argparse.ArgumentParser(
+        description="print information about a process")
+    parser.add_argument("pid", type=int, help="process pid")
+    parser.add_argument('--verbose', '-v', action='store_true',
+                        help="print more info")
+    args = parser.parse_args()
+    run(args.pid, args.verbose)
 
 
 if __name__ == '__main__':
