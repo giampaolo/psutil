@@ -1,10 +1,14 @@
 # Shortcuts for various tasks (UNIX only).
 # To use a specific Python version run: "make install PYTHON=python3.3"
+# You can set the variables below from the command line.
 
-# You can set the following variables from the command line.
-PYTHON = python
+# Prefer Python 3 if installed.
+PYTHON != python -c \
+	"from subprocess import call, PIPE; \
+	code = call(['python3 -V'], shell=True, stdout=PIPE, stderr=PIPE); \
+	print('python3' if code == 0 else 'python')"
+
 TSCRIPT = psutil/tests/runner.py
-INSTALL_OPTS =
 
 # List of nice-to-have dev libs.
 DEPS = coverage \
@@ -22,11 +26,10 @@ DEPS = coverage \
 	twine \
 	unittest2
 
-# In case of venv, omit --user options during install.
-_IS_VENV = $(shell $(PYTHON) -c "import sys; print(1 if hasattr(sys, 'real_prefix') else 0)")
-ifeq ($(_IS_VENV), 0)
-	INSTALL_OPTS += "--user"
-endif
+# In not in a virtualenv, add --user options for install commands.
+INSTALL_OPTS != $(PYTHON) -c \
+	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"
+
 
 all: test
 
