@@ -199,8 +199,11 @@ def run(pid, verbose=False):
     print_('nice', pinfo['nice'])
     if hasattr(proc, "ionice"):
         ionice = proc.ionice()
-        print_("ionice", "class=%s, value=%s" % (
-            str(ionice.ioclass), ionice.value))
+        if psutil.WINDOWS:
+            print_("ionice", ionice)
+        else:
+            print_("ionice", "class=%s, value=%s" % (
+                str(ionice.ioclass), ionice.value))
 
     print_('num-threads', pinfo['num_threads'])
     print_('num-fds', pinfo['num_fds'])
