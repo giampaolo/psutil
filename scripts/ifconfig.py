@@ -48,23 +48,23 @@ duplex_map = {
 
 def main():
     stats = psutil.net_if_stats()
-    io = psutil.net_io_counters(pernic=True)
+    io_counters = psutil.net_io_counters(pernic=True)
     for nic, addrs in psutil.net_if_addrs().items():
         print("%s:" % (nic))
         if nic in stats:
-            print(
-                "    stats           : speed=%sMB, duplex=%s, mtu=%s, up=%s" %
-                (stats[nic].speed, duplex_map[stats[nic].duplex],
-                 stats[nic].mtu, "yes" if stats[nic].isup else "no"))
-        if nic in io:
-            print(
-                "    incoming:       : bytes=%s, pkts=%s, errs=%s, drops=%s" %
-                (io[nic].bytes_recv, io[nic].packets_recv,
-                 io[nic].errin, io[nic].dropin))
-            print(
-                "    outgoing:       : bytes=%s, pkts=%s, errs=%s, drops=%s" %
-                (io[nic].bytes_sent, io[nic].packets_sent,
-                 io[nic].errout, io[nic].dropout))
+            st = stats[nic]
+            print("    stats           : ", end='')
+            print("speed=%sMB, duplex=%s, mtu=%s, up=%s" % (
+                st.speed, duplex_map[st.duplex], st.mtu,
+                "yes" if st.isup else "no"))
+        if nic in io_counters:
+            io = io_counters[nic]
+            print("    incoming        : ", end='')
+            print("bytes=%s, pkts=%s, errs=%s, drops=%s" % (
+                io.bytes_recv, io.packets_recv, io.errin, io.dropin))
+            print("    outgoing        : ", end='')
+            print("bytes=%s, pkts=%s, errs=%s, drops=%s" % (
+                io.bytes_sent, io.packets_sent, io.errout, io.dropout))
         for addr in addrs:
             print("    %-5s" % af_map.get(addr.family, addr.family), end="")
             print(" address   : %s" % addr.address)
