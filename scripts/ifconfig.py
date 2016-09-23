@@ -17,15 +17,6 @@ lo (speed=0MB, duplex=?, mtu=65536, up=yes):
     MAC      address   : 00:00:00:00:00:00
              broadcast : 00:00:00:00:00:00
 
-wlan0 (speed=0MB, duplex=?, mtu=1500, up=yes):
-    IPv4     address   : 10.0.3.1
-             broadcast : 10.0.3.255
-             netmask   : 255.255.255.0
-    IPv6     address   : fe80::3005:adff:fe31:8698
-             netmask   : ffff:ffff:ffff:ffff::
-    MAC      address   : 32:05:ad:31:86:98
-             broadcast : ff:ff:ff:ff:ff:ff
-
 eth0 (speed=100MB, duplex=full, mtu=1500, up=yes):
     IPv4     address   : 192.168.1.2
              broadcast : 192.168.1.255
@@ -57,22 +48,32 @@ duplex_map = {
 
 def main():
     stats = psutil.net_if_stats()
+    io = psutil.net_io_counters(pernic=True)
     for nic, addrs in psutil.net_if_addrs().items():
+        print("%s:" % (nic))
         if nic in stats:
-            print("%s (speed=%sMB, duplex=%s, mtu=%s, up=%s):" % (
-                nic, stats[nic].speed, duplex_map[stats[nic].duplex],
-                stats[nic].mtu, "yes" if stats[nic].isup else "no"))
-        else:
-            print("%s:" % (nic))
+            print(
+                "    stats           : speed=%sMB, duplex=%s, mtu=%s, up=%s" %
+                (stats[nic].speed, duplex_map[stats[nic].duplex],
+                 stats[nic].mtu, "yes" if stats[nic].isup else "no"))
+        if nic in io:
+            print(
+                "    incoming:       : bytes=%s, pkts=%s, errs=%s, drops=%s" %
+                (io[nic].bytes_recv, io[nic].packets_recv,
+                 io[nic].errin, io[nic].dropin))
+            print(
+                "    outgoing:       : bytes=%s, pkts=%s, errs=%s, drops=%s" %
+                (io[nic].bytes_sent, io[nic].packets_sent,
+                 io[nic].errout, io[nic].dropout))
         for addr in addrs:
-            print("    %-8s" % af_map.get(addr.family, addr.family), end="")
+            print("    %-5s" % af_map.get(addr.family, addr.family), end="")
             print(" address   : %s" % addr.address)
             if addr.broadcast:
-                print("             broadcast : %s" % addr.broadcast)
+                print("          broadcast : %s" % addr.broadcast)
             if addr.netmask:
-                print("             netmask   : %s" % addr.netmask)
+                print("          netmask   : %s" % addr.netmask)
             if addr.ptp:
-                print("             p2p       : %s" % addr.ptp)
+                print("       p2p       : %s" % addr.ptp)
         print("")
 
 
