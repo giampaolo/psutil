@@ -149,15 +149,8 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
     def tearDownClass(cls):
         reap_children()
 
-    def test_boot_time(self):
-        s = sysctl('sysctl kern.boottime')
-        s = s[s.find(" sec = ") + 7:]
-        s = s[:s.find(',')]
-        btime = int(s)
-        self.assertEqual(btime, psutil.boot_time())
-
     @retry_before_failing()
-    def test_memory_maps(self):
+    def test_proc_memory_maps(self):
         out = sh('procstat -v %s' % self.pid)
         maps = psutil.Process(self.pid).memory_maps(grouped=False)
         lines = out.split('\n')[1:]
@@ -171,17 +164,17 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
             if not map.path.startswith('['):
                 self.assertEqual(fields[10], map.path)
 
-    def test_exe(self):
+    def test_proc_exe(self):
         out = sh('procstat -b %s' % self.pid)
         self.assertEqual(psutil.Process(self.pid).exe(),
                          out.split('\n')[1].split()[-1])
 
-    def test_cmdline(self):
+    def test_proc_cmdline(self):
         out = sh('procstat -c %s' % self.pid)
         self.assertEqual(' '.join(psutil.Process(self.pid).cmdline()),
                          ' '.join(out.split('\n')[1].split()[2:]))
 
-    def test_uids_gids(self):
+    def test_proc_uids_gids(self):
         out = sh('procstat -s %s' % self.pid)
         euid, ruid, suid, egid, rgid, sgid = out.split('\n')[1].split()[2:8]
         p = psutil.Process(self.pid)
@@ -193,6 +186,46 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
         self.assertEqual(gids.real, int(rgid))
         self.assertEqual(gids.effective, int(egid))
         self.assertEqual(gids.saved, int(sgid))
+
+    @retry_before_failing()
+    def test_proc_ctx_switches(self):
+        tested = []
+        out = sh('procstat -r %s' % self.pid)
+        p = psutil.Process(self.pid)
+        for line in out.split('\n'):
+            line = line.lower().strip()
+            if ' voluntary context' in line:
+                pstat_value = int(line.split()[-1])
+                psutil_value = p.num_ctx_switches().voluntary
+                self.assertEqual(pstat_value, psutil_value)
+                tested.append(None)
+            elif ' involuntary context' in line:
+                pstat_value = int(line.split()[-1])
+                psutil_value = p.num_ctx_switches().involuntary
+                self.assertEqual(pstat_value, psutil_value)
+                tested.append(None)
+        if len(tested) != 2:
+            raise RuntimeError("couldn't find lines match in procstat out")
+
+    @retry_before_failing()
+    def test_proc_cpu_times(self):
+        tested = []
+        out = sh('procstat -r %s' % self.pid)
+        p = psutil.Process(self.pid)
+        for line in out.split('\n'):
+            line = line.lower().strip()
+            if 'user time' in line:
+                pstat_value = float('0.' + line.split()[-1].split('.')[-1])
+                psutil_value = p.cpu_times().user
+                self.assertEqual(pstat_value, psutil_value)
+                tested.append(None)
+            elif 'system time' in line:
+                pstat_value = float('0.' + line.split()[-1].split('.')[-1])
+                psutil_value = p.cpu_times().system
+                self.assertEqual(pstat_value, psutil_value)
+                tested.append(None)
+        if len(tested) != 2:
+            raise RuntimeError("couldn't find lines match in procstat out")
 
     # --- virtual_memory(); tests against sysctl
 
@@ -300,6 +333,15 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
     # def test_cpu_stats_traps(self):
     #    self.assertAlmostEqual(psutil.cpu_stats().traps,
     #                           sysctl('vm.stats.sys.v_trap'), delta=1000)
+
+    # --- others
+
+    def test_boot_time(self):
+        s = sysctl('sysctl kern.boottime')
+        s = s[s.find(" sec = ") + 7:]
+        s = s[:s.find(',')]
+        btime = int(s)
+        self.assertEqual(btime, psutil.boot_time())
 
 
 # =====================================================================

@@ -9,6 +9,7 @@
 Test utilities.
 """
 
+from __future__ import print_function
 import atexit
 import contextlib
 import errno
@@ -199,7 +200,7 @@ def get_test_subprocess(cmd=None, **kwds):
     if cmd is None:
         pyline = "from time import sleep;"
         pyline += "open(r'%s', 'w').close();" % TESTFN
-        pyline += "sleep(10)"
+        pyline += "sleep(60)"
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
         stop_at = time.time() + 3
@@ -466,6 +467,7 @@ def retry_before_failing(ntimes=None):
                     return fun(*args, **kwargs)
                 except AssertionError as _:
                     err = _
+                    print("retry (%s)" % err, file=sys.stderr)
             if PY3:
                 raise err
             else:
