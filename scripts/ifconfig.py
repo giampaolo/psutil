@@ -9,38 +9,38 @@ A clone of 'ifconfig' on UNIX.
 
 $ python scripts/ifconfig.py
 lo:
-    stats           : speed=0MB, duplex=?, mtu=65536, up=yes
-    incoming        : bytes=6874907, pkts=83869, errs=0, drops=0
-    outgoing        : bytes=6874907, pkts=83869, errs=0, drops=0
-    IPv4  address   : 127.0.0.1
-          netmask   : 255.0.0.0
-    IPv6  address   : ::1
-          netmask   : ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-    MAC   address   : 00:00:00:00:00:00
+    stats          : speed=0MB, duplex=?, mtu=65536, up=yes
+    incoming       : bytes=6889336, pkts=84032, errs=0, drops=0
+    outgoing       : bytes=6889336, pkts=84032, errs=0, drops=0
+    IPv4 address   : 127.0.0.1
+         netmask   : 255.0.0.0
+    IPv6 address   : ::1
+         netmask   : ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+    MAC  address   : 00:00:00:00:00:00
 
 vboxnet0:
-    stats           : speed=10MB, duplex=full, mtu=1500, up=yes
-    incoming        : bytes=0, pkts=0, errs=0, drops=0
-    outgoing        : bytes=1617630, pkts=9078, errs=0, drops=0
-    IPv4  address   : 192.168.33.1
-          broadcast : 192.168.33.255
-          netmask   : 255.255.255.0
-    IPv6  address   : fe80::800:27ff:fe00:0%vboxnet0
-          netmask   : ffff:ffff:ffff:ffff::
-    MAC   address   : 0a:00:27:00:00:00
-          broadcast : ff:ff:ff:ff:ff:ff
+    stats          : speed=10MB, duplex=full, mtu=1500, up=yes
+    incoming       : bytes=0, pkts=0, errs=0, drops=0
+    outgoing       : bytes=1622766, pkts=9102, errs=0, drops=0
+    IPv4 address   : 192.168.33.1
+         broadcast : 192.168.33.255
+         netmask   : 255.255.255.0
+    IPv6 address   : fe80::800:27ff:fe00:0%vboxnet0
+         netmask   : ffff:ffff:ffff:ffff::
+    MAC  address   : 0a:00:27:00:00:00
+         broadcast : ff:ff:ff:ff:ff:ff
 
 eth0:
-    stats           : speed=0MB, duplex=?, mtu=1500, up=yes
-    incoming        : bytes=18903492448, pkts=15165269, errs=0, drops=21
-    outgoing        : bytes=1903956853, pkts=9528495, errs=0, drops=0
-    IPv4  address   : 10.0.0.3
-          broadcast : 10.255.255.255
-          netmask   : 255.0.0.0
-    IPv6  address   : fe80::7592:1dcf:bcb7:98d6%wlp3s0
-          netmask   : ffff:ffff:ffff:ffff::
-    MAC   address   : 48:45:20:59:a4:0c
-          broadcast : ff:ff:ff:ff:ff:ff
+    stats          : speed=0MB, duplex=?, mtu=1500, up=yes
+    incoming       : bytes=18905596301, pkts=15178374, errs=0, drops=21
+    outgoing       : bytes=1913720087, pkts=9543981, errs=0, drops=0
+    IPv4 address   : 10.0.0.3
+         broadcast : 10.255.255.255
+         netmask   : 255.0.0.0
+    IPv6 address   : fe80::7592:1dcf:bcb7:98d6%wlp3s0
+         netmask   : ffff:ffff:ffff:ffff::
+    MAC  address   : 48:45:20:59:a4:0c
+         broadcast : ff:ff:ff:ff:ff:ff
 """
 
 from __future__ import print_function
@@ -69,27 +69,27 @@ def main():
         print("%s:" % (nic))
         if nic in stats:
             st = stats[nic]
-            print("    stats           : ", end='')
+            print("    stats          : ", end='')
             print("speed=%sMB, duplex=%s, mtu=%s, up=%s" % (
                 st.speed, duplex_map[st.duplex], st.mtu,
                 "yes" if st.isup else "no"))
         if nic in io_counters:
             io = io_counters[nic]
-            print("    incoming        : ", end='')
+            print("    incoming       : ", end='')
             print("bytes=%s, pkts=%s, errs=%s, drops=%s" % (
                 io.bytes_recv, io.packets_recv, io.errin, io.dropin))
-            print("    outgoing        : ", end='')
+            print("    outgoing       : ", end='')
             print("bytes=%s, pkts=%s, errs=%s, drops=%s" % (
                 io.bytes_sent, io.packets_sent, io.errout, io.dropout))
         for addr in addrs:
-            print("    %-5s" % af_map.get(addr.family, addr.family), end="")
+            print("    %-4s" % af_map.get(addr.family, addr.family), end="")
             print(" address   : %s" % addr.address)
             if addr.broadcast:
-                print("          broadcast : %s" % addr.broadcast)
+                print("         broadcast : %s" % addr.broadcast)
             if addr.netmask:
-                print("          netmask   : %s" % addr.netmask)
+                print("         netmask   : %s" % addr.netmask)
             if addr.ptp:
-                print("       p2p       : %s" % addr.ptp)
+                print("      p2p       : %s" % addr.ptp)
         print("")
 
 
