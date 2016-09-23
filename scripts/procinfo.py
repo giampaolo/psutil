@@ -211,7 +211,8 @@ def run(pid, verbose=False):
     if psutil.WINDOWS:
         print_('num-handles', pinfo['num_handles'])
 
-    print_('I/O', str_ntuple(pinfo['io_counters'], bytes2human=True))
+    if 'io_counters' in pinfo:
+        print_('I/O', str_ntuple(pinfo['io_counters'], bytes2human=True))
     print_("ctx-switches", str_ntuple(pinfo['num_ctx_switches']))
     if children:
         template = "%-6s %s"

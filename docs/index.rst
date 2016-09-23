@@ -1429,9 +1429,8 @@ Process class
     `signal module <http://docs.python.org//library/signal.html>`__
     constants) preemptively checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, sig)``.
-    On Windows only **SIGTERM**, **CTRL_C_EVENT** and **CTRL_BREAK_EVENT**
-    signals are supported and **SIGTERM** is treated as an alias for
-    :meth:`kill()`.
+    On Windows only *SIGTERM*, *CTRL_C_EVENT* and *CTRL_BREAK_EVENT* signals
+    are supported and *SIGTERM* is treated as an alias for :meth:`kill()`.
 
     .. versionchanged::
       3.2.0 support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals on Windows
@@ -1439,28 +1438,28 @@ Process class
 
   .. method:: suspend()
 
-    Suspend process execution with **SIGSTOP** signal preemptively checking
+    Suspend process execution with *SIGSTOP* signal preemptively checking
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGSTOP)``.
     On Windows this is done by suspending all process threads execution.
 
   .. method:: resume()
 
-    Resume process execution with **SIGCONT** signal preemptively checking
+    Resume process execution with *SIGCONT* signal preemptively checking
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGCONT)``.
     On Windows this is done by resuming all process threads execution.
 
   .. method:: terminate()
 
-    Terminate the process with **SIGTERM** signal preemptively checking
+    Terminate the process with *SIGTERM* signal preemptively checking
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGTERM)``.
     On Windows this is an alias for :meth:`kill`.
 
   .. method:: kill()
 
-     Kill the current process by using **SIGKILL** signal preemptively
+     Kill the current process by using *SIGKILL* signal preemptively
      checking whether PID has been reused.
      On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
      On Windows this is done by using
