@@ -6,6 +6,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Enhancements**
 
+- #874: [Windows] net_if_addrs() returns also the netmask.
 - #887: [Linux] virtual_memory()'s 'available' and 'used' values are more
   precise and match "free" cmdline utility.  "available" also takes into
   account LCX containers preventing "available" to overflow "total".

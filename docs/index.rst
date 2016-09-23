@@ -536,6 +536,8 @@ Network
 
   .. versionchanged:: 3.2.0 *ptp* field was added.
 
+  .. versionchanged:: 4.4.0 *netmask* field on Windows is no longer ``None``.
+
 .. function:: net_if_stats()
 
   Return information about each NIC (network interface card) installed on the
