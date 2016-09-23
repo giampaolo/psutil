@@ -8,23 +8,39 @@
 A clone of 'ifconfig' on UNIX.
 
 $ python scripts/ifconfig.py
-lo (speed=0MB, duplex=?, mtu=65536, up=yes):
-    IPv4     address   : 127.0.0.1
-             broadcast : 127.0.0.1
-             netmask   : 255.0.0.0
-    IPv6     address   : ::1
-             netmask   : ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-    MAC      address   : 00:00:00:00:00:00
-             broadcast : 00:00:00:00:00:00
+lo:
+    stats           : speed=0MB, duplex=?, mtu=65536, up=yes
+    incoming        : bytes=6874907, pkts=83869, errs=0, drops=0
+    outgoing        : bytes=6874907, pkts=83869, errs=0, drops=0
+    IPv4  address   : 127.0.0.1
+          netmask   : 255.0.0.0
+    IPv6  address   : ::1
+          netmask   : ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+    MAC   address   : 00:00:00:00:00:00
 
-eth0 (speed=100MB, duplex=full, mtu=1500, up=yes):
-    IPv4     address   : 192.168.1.2
-             broadcast : 192.168.1.255
-             netmask   : 255.255.255.0
-    IPv6     address   : fe80::c685:8ff:fe45:641
-             netmask   : ffff:ffff:ffff:ffff::
-    MAC      address   : c4:85:08:45:06:41
-             broadcast : ff:ff:ff:ff:ff:ff
+vboxnet0:
+    stats           : speed=10MB, duplex=full, mtu=1500, up=yes
+    incoming        : bytes=0, pkts=0, errs=0, drops=0
+    outgoing        : bytes=1617630, pkts=9078, errs=0, drops=0
+    IPv4  address   : 192.168.33.1
+          broadcast : 192.168.33.255
+          netmask   : 255.255.255.0
+    IPv6  address   : fe80::800:27ff:fe00:0%vboxnet0
+          netmask   : ffff:ffff:ffff:ffff::
+    MAC   address   : 0a:00:27:00:00:00
+          broadcast : ff:ff:ff:ff:ff:ff
+
+eth0:
+    stats           : speed=0MB, duplex=?, mtu=1500, up=yes
+    incoming        : bytes=18903492448, pkts=15165269, errs=0, drops=21
+    outgoing        : bytes=1903956853, pkts=9528495, errs=0, drops=0
+    IPv4  address   : 10.0.0.3
+          broadcast : 10.255.255.255
+          netmask   : 255.0.0.0
+    IPv6  address   : fe80::7592:1dcf:bcb7:98d6%wlp3s0
+          netmask   : ffff:ffff:ffff:ffff::
+    MAC   address   : 48:45:20:59:a4:0c
+          broadcast : ff:ff:ff:ff:ff:ff
 """
 
 from __future__ import print_function

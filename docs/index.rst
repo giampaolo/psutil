@@ -202,7 +202,7 @@ Memory
 
   The sum of **used** and **available** does not necessarily equal **total**.
   On Windows **available** and **free** are the same.
-  See `scripts/meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
+  See `meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
   .. note:: if you just want to know how much physical memory is left in a
@@ -240,7 +240,7 @@ Memory
     (cumulative)
 
   **sin** and **sout** on Windows are always set to ``0``.
-  See `scripts/meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
+  See `meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
     >>> import psutil
@@ -329,7 +329,7 @@ Disks
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
   the namedtuple described above as the values.
-  See `scripts/iotop.py <https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py>`__
+  See `iotop.py <https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py>`__
   for an example application.
 
     >>> import psutil
@@ -375,8 +375,6 @@ Network
   If *pernic* is ``True`` return the same information for every network
   interface installed on the system as a dictionary with network interface
   names as the keys and the namedtuple described above as the values.
-  See `scripts/nettop.py <https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py>`__
-  for an example application.
 
     >>> import psutil
     >>> psutil.net_io_counters()
@@ -385,6 +383,10 @@ Network
     >>> psutil.net_io_counters(pernic=True)
     {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
     'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
+
+  Also see `nettop.py <https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py>`__
+  and `ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
+  for an example application.
 
   .. warning::
     on some systems such as Linux, on a very busy or long-lived system these
@@ -516,7 +518,8 @@ Network
                snic(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
     >>>
 
-  See also `scripts/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
+  See also `nettop.py <https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py>`__
+  and `ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
   for an example application.
 
   .. note::
@@ -552,14 +555,16 @@ Network
     determined (e.g. 'localhost') it will be set to ``0``.
   - **mtu**: NIC's maximum transmission unit expressed in bytes.
 
-  See also `scripts/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
-  for an example application.
   Example:
 
     >>> import psutil
     >>> psutil.net_if_stats()
     {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500),
      'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536)}
+
+  Also see `nettop.py <https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py>`__
+  and `ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
+  for an example application.
 
   .. versionadded:: 3.0.0
 
@@ -1202,7 +1207,7 @@ Process class
       pfullmem(rss=10199040, vms=52133888, shared=3887104, text=2867200, lib=0, data=5967872, dirty=0, uss=6545408, pss=6872064, swap=0)
       >>>
 
-    See also `scripts/procsmem.py <https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py>`__
+    See also `procsmem.py <https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py>`__
     for an example application.
 
     .. versionadded:: 4.0.0
@@ -1231,7 +1236,7 @@ Process class
     is ``False`` each mapped region is shown as a single entity and the
     namedtuple will also include the mapped region's address space (*addr*)
     and permission set (*perms*).
-    See `scripts/pmap.py <https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py>`__
+    See `pmap.py <https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py>`__
     for an example application.
 
     +---------------+--------------+---------+-----------+--------------+
