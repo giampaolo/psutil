@@ -563,7 +563,7 @@ class TestSystemAPIs(unittest.TestCase):
             for addr in addrs:
                 self.assertIsInstance(addr.family, int)
                 self.assertIsInstance(addr.address, str)
-                self.assertIsInstance(addr.netmask, str)
+                self.assertIsInstance(addr.netmask, (str, type(None)))
                 self.assertIsInstance(addr.broadcast, (str, type(None)))
                 self.assertIn(addr.family, families)
                 if sys.version_info >= (3, 4):
