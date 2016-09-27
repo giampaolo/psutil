@@ -203,14 +203,9 @@ def get_test_subprocess(cmd=None, **kwds):
         pyline += "sleep(60)"
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
-        stop_at = time.time() + 3
-        while stop_at > time.time():
-            if os.path.exists(TESTFN):
-                os.remove(TESTFN)
-                time.sleep(0.001)
-                break
-            time.sleep(0.001)
-        else:
+        try:
+            wait_for_file(TESTFN)
+        except RuntimeError:
             warn("couldn't make sure test file was actually created")
     else:
         sproc = subprocess.Popen(cmd, **kwds)
@@ -392,7 +387,7 @@ def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True):
             if delete_file:
                 os.remove(fname)
             return data
-        except IOError:
+        except OSError:
             time.sleep(0.001)
     raise RuntimeError(
         "timed out after %s secs (couldn't read file)" % timeout)
