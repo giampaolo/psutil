@@ -12,6 +12,7 @@ syntax: glob
 *.so
 *.swp
 .failed-tests.txt
+*.dll
 .cache/
 .idea/
 .tox/
