@@ -1726,12 +1726,11 @@ def virtual_memory():
        total physical memory available.
 
      - available:
-       the actual amount of available memory that can be given
-       instantly to processes that request more memory in bytes; this
-       is calculated by summing different memory values depending on
-       the platform (e.g. free + buffers + cached on Linux) and it is
-       supposed to be used to monitor actual memory usage in a cross
-       platform fashion.
+       the memory that can be given instantly to processes without the
+       system going into swap.
+       This is calculated by summing different memory values depending
+       on the platform and it is supposed to be used to monitor actual
+       memory usage in a cross platform fashion.
 
      - percent:
        the percentage usage calculated as (total - available) / total * 100

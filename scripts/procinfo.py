@@ -206,8 +206,8 @@ def run(pid, verbose=False):
                 str(ionice.ioclass), ionice.value))
 
     print_('num-threads', pinfo['num_threads'])
-    print_('num-fds', pinfo['num_fds'])
-
+    if psutil.POSIX:
+        print_('num-fds', pinfo['num_fds'])
     if psutil.WINDOWS:
         print_('num-handles', pinfo['num_handles'])
 
