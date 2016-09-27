@@ -34,6 +34,9 @@
 #elif defined(PSUTIL_SUNOS)
     #include <netdb.h>
     #include <sys/sockio.h>
+#elif defined(PSUTIL_CYGWIN)
+    #include <netdb.h>
+    #include <netinet/in.h>
 #endif
 
 

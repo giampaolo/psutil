@@ -15,6 +15,7 @@ from . import _common
 from . import _psposix
 from . import _psutil_posix as cext_posix
 from . import _psutil_sunos as cext
+from ._common import get_procfs_path
 from ._common import isfile_strict
 from ._common import memoize_when_activated
 from ._common import sockfam_to_enum
@@ -97,13 +98,15 @@ pmmap_ext = namedtuple(
 
 
 # =====================================================================
-# --- utils
+# --- exceptions
 # =====================================================================
 
 
-def get_procfs_path():
-    """Return updated psutil.PROCFS_PATH constant."""
-    return sys.modules['psutil'].PROCFS_PATH
+# these get overwritten on "import psutil" from the __init__.py file
+NoSuchProcess = None
+ZombieProcess = None
+AccessDenied = None
+TimeoutExpired = None
 
 
 # =====================================================================

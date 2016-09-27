@@ -71,6 +71,7 @@ from ._common import OSX
 from ._common import POSIX  # NOQA
 from ._common import SUNOS
 from ._common import WINDOWS
+from ._common import CYGWIN
 
 if LINUX:
     # This is public API and it will be retrieved from _pslinux.py
@@ -147,6 +148,10 @@ elif SUNOS:
     # _pssunos.py via sys.modules.
     PROCFS_PATH = "/proc"
 
+elif CYGWIN:
+    PROCFS_PATH = "/proc"
+    from . import _pscygwin as _psplatform
+
 else:  # pragma: no cover
     raise NotImplementedError('platform %s is not supported' % sys.platform)
 
@@ -174,7 +179,7 @@ __all__ = [
     "POWER_TIME_UNKNOWN", "POWER_TIME_UNLIMITED",
 
     "BSD", "FREEBSD", "LINUX", "NETBSD", "OPENBSD", "OSX", "POSIX", "SUNOS",
-    "WINDOWS",
+    "WINDOWS", "CYGWIN",
 
     # classes
     "Process", "Popen",
@@ -325,6 +330,13 @@ _psplatform.NoSuchProcess = NoSuchProcess
 _psplatform.ZombieProcess = ZombieProcess
 _psplatform.AccessDenied = AccessDenied
 _psplatform.TimeoutExpired = TimeoutExpired
+
+# TODO: probably having these both is superfulous, and platform
+# specific modules can import these exceptions from _common
+_common.NoSuchProcess = NoSuchProcess
+_common.ZombieProcess = ZombieProcess
+_common.AccessDenied = AccessDenied
+_common.TimeoutExpired = TimeoutExpired
 
 
 # =====================================================================

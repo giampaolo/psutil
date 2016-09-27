@@ -32,10 +32,14 @@ if sys.version_info >= (3, 4):
 else:
     enum = None
 
+
+PY3 = sys.version_info[0] == 3
+
+
 __all__ = [
     # OS constants
     'FREEBSD', 'BSD', 'LINUX', 'NETBSD', 'OPENBSD', 'OSX', 'POSIX', 'SUNOS',
-    'WINDOWS',
+    'WINDOWS', 'CYGWIN',
     # connection constants
     'CONN_CLOSE', 'CONN_CLOSE_WAIT', 'CONN_CLOSING', 'CONN_ESTABLISHED',
     'CONN_FIN_WAIT1', 'CONN_FIN_WAIT2', 'CONN_LAST_ACK', 'CONN_LISTEN',
@@ -72,6 +76,7 @@ OPENBSD = sys.platform.startswith("openbsd")
 NETBSD = sys.platform.startswith("netbsd")
 BSD = FREEBSD or OPENBSD or NETBSD
 SUNOS = sys.platform.startswith("sunos") or sys.platform.startswith("solaris")
+CYGWIN = sys.platform.startswith("cygwin")
 
 
 # ===================================================================
@@ -232,6 +237,18 @@ if AF_UNIX is not None:
 del AF_INET, AF_INET6, AF_UNIX, SOCK_STREAM, SOCK_DGRAM
 
 
+# =====================================================================
+# -- exceptions
+# =====================================================================
+
+
+# these get overwritten on "import psutil" from the __init__.py file
+NoSuchProcess = None
+ZombieProcess = None
+AccessDenied = None
+TimeoutExpired = None
+
+
 # ===================================================================
 # --- utils
 # ===================================================================
@@ -334,6 +351,10 @@ def memoize_when_activated(fun):
     return wrapper
 
 
+def get_procfs_path():
+    return sys.modules['psutil'].PROCFS_PATH
+
+
 def isfile_strict(path):
     """Same as os.path.isfile() but does not swallow EACCES / EPERM
     exceptions, see:
@@ -347,6 +368,37 @@ def isfile_strict(path):
         return False
     else:
         return stat.S_ISREG(st.st_mode)
+
+
+def open_binary(fname, **kwargs):
+    return open(fname, "rb", **kwargs)
+
+
+if PY3:
+    _FS_ENCODING = sys.getfilesystemencoding()
+    _ENCODING_ERRORS_HANDLER = 'surrogateescape'
+
+
+def open_text(fname, **kwargs):
+    """On Python 3 opens a file in text mode by using fs encoding and
+    a proper en/decoding errors handler.
+    On Python 2 this is just an alias for open(name, 'rt').
+    """
+    if PY3:
+        # See:
+        # https://github.com/giampaolo/psutil/issues/675
+        # https://github.com/giampaolo/psutil/pull/733
+        kwargs.setdefault('encoding', _FS_ENCODING)
+        kwargs.setdefault('errors', _ENCODING_ERRORS_HANDLER)
+    return open(fname, "rt", **kwargs)
+
+
+if PY3:
+    def decode(s):
+        return s.decode(encoding=_FS_ENCODING, errors=_ENCODING_ERRORS_HANDLER)
+else:
+    def decode(s):
+        return s
 
 
 def path_exists_strict(path):
@@ -447,3 +499,23 @@ def deprecated_method(replacement):
             return getattr(self, replacement)(*args, **kwargs)
         return inner
     return outer
+
+
+def wrap_exceptions(fun):
+    """Decorator which translates bare OSError and IOError exceptions
+    into NoSuchProcess and AccessDenied.
+    """
+    @functools.wraps(fun)
+    def wrapper(self, *args, **kwargs):
+        try:
+            return fun(self, *args, **kwargs)
+        except EnvironmentError as err:
+            # ENOENT (no such file or directory) gets raised on open().
+            # ESRCH (no such process) can get raised on read() if
+            # process is gone in meantime.
+            if err.errno in (errno.ENOENT, errno.ESRCH):
+                raise NoSuchProcess(self.pid, self._name)
+            if err.errno in (errno.EPERM, errno.EACCES):
+                raise AccessDenied(self.pid, self._name)
+            raise
+    return wrapper

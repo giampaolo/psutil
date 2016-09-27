@@ -9,7 +9,6 @@ from __future__ import division
 import base64
 import collections
 import errno
-import functools
 import glob
 import os
 import re
@@ -25,9 +24,13 @@ from . import _common
 from . import _psposix
 from . import _psutil_linux as cext
 from . import _psutil_posix as cext_posix
+from ._common import decode
+from ._common import get_procfs_path
 from ._common import isfile_strict
 from ._common import memoize
 from ._common import memoize_when_activated
+from ._common import open_binary
+from ._common import open_text
 from ._common import parse_environ_block
 from ._common import NIC_DUPLEX_FULL
 from ._common import NIC_DUPLEX_HALF
@@ -35,6 +38,7 @@ from ._common import NIC_DUPLEX_UNKNOWN
 from ._common import path_exists_strict
 from ._common import supports_ipv6
 from ._common import usage_percent
+from ._common import wrap_exceptions
 from ._compat import b
 from ._compat import basestring
 from ._compat import long
@@ -83,9 +87,7 @@ BOOT_TIME = None  # set later
 # speedup, see: https://github.com/giampaolo/psutil/issues/708
 BIGGER_FILE_BUFFERING = -1 if PY3 else 8192
 LITTLE_ENDIAN = sys.byteorder == 'little'
-if PY3:
-    FS_ENCODING = sys.getfilesystemencoding()
-    ENCODING_ERRORS_HANDLER = 'surrogateescape'
+
 if enum is None:
     AF_LINK = socket.AF_PACKET
 else:
@@ -184,37 +186,6 @@ pio = namedtuple('pio', ['read_count', 'write_count',
 # =====================================================================
 # --- utils
 # =====================================================================
-
-
-def open_binary(fname, **kwargs):
-    return open(fname, "rb", **kwargs)
-
-
-def open_text(fname, **kwargs):
-    """On Python 3 opens a file in text mode by using fs encoding and
-    a proper en/decoding errors handler.
-    On Python 2 this is just an alias for open(name, 'rt').
-    """
-    if PY3:
-        # See:
-        # https://github.com/giampaolo/psutil/issues/675
-        # https://github.com/giampaolo/psutil/pull/733
-        kwargs.setdefault('encoding', FS_ENCODING)
-        kwargs.setdefault('errors', ENCODING_ERRORS_HANDLER)
-    return open(fname, "rt", **kwargs)
-
-
-if PY3:
-    def decode(s):
-        return s.decode(encoding=FS_ENCODING, errors=ENCODING_ERRORS_HANDLER)
-else:
-    def decode(s):
-        return s
-
-
-def get_procfs_path():
-    """Return updated psutil.PROCFS_PATH constant."""
-    return sys.modules['psutil'].PROCFS_PATH
 
 
 def readlink(path):
@@ -1302,26 +1273,6 @@ def pid_exists(pid):
                 raise ValueError("'Tgid' line not found")
         except (EnvironmentError, ValueError):
             return pid in pids()
-
-
-def wrap_exceptions(fun):
-    """Decorator which translates bare OSError and IOError exceptions
-    into NoSuchProcess and AccessDenied.
-    """
-    @functools.wraps(fun)
-    def wrapper(self, *args, **kwargs):
-        try:
-            return fun(self, *args, **kwargs)
-        except EnvironmentError as err:
-            # ENOENT (no such file or directory) gets raised on open().
-            # ESRCH (no such process) can get raised on read() if
-            # process is gone in meantime.
-            if err.errno in (errno.ENOENT, errno.ESRCH):
-                raise NoSuchProcess(self.pid, self._name)
-            if err.errno in (errno.EPERM, errno.EACCES):
-                raise AccessDenied(self.pid, self._name)
-            raise
-    return wrapper
 
 
 class Process(object):
