@@ -204,7 +204,7 @@ def get_test_subprocess(cmd=None, **kwds):
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
         try:
-            wait_for_file(TESTFN)
+            wait_for_file(TESTFN, empty=True)
         except RuntimeError:
             warn("couldn't make sure test file was actually created")
     else:
@@ -375,15 +375,19 @@ def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
             return
 
 
-def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True):
-    """Wait for a file to be written on disk with some content."""
+def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, empty=False,
+                  delete_file=True):
+    """Wait for a file to be written on disk with some content, or until
+    the file exists if empty=True."""
     stop_at = time.time() + timeout
     sleep_for = 0.001
     while time.time() < stop_at:
         try:
             with open(fname, "r") as f:
                 data = f.read()
-            if not data:
+            if not empty and not data:
+                time.sleep(sleep_for)
+                sleep_for *= 2
                 continue
             if delete_file:
                 os.remove(fname)
