@@ -387,7 +387,7 @@ def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True):
             if delete_file:
                 os.remove(fname)
             return data
-        except OSError:
+        except (IOError, OSError):
             time.sleep(0.001)
     raise RuntimeError(
         "timed out after %s secs (couldn't read file)" % timeout)
