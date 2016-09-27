@@ -378,6 +378,7 @@ def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
 def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True):
     """Wait for a file to be written on disk with some content."""
     stop_at = time.time() + timeout
+    sleep_for = 0.001
     while time.time() < stop_at:
         try:
             with open(fname, "r") as f:
@@ -388,7 +389,8 @@ def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True):
                 os.remove(fname)
             return data
         except (IOError, OSError):
-            time.sleep(0.001)
+            time.sleep(sleep_for)
+            sleep_for *= 2
     raise RuntimeError(
         "timed out after %s secs (couldn't read file)" % timeout)
 
