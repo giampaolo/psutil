@@ -192,6 +192,85 @@ def per_cpu_times():
         return cpus
 
 
+def cpu_count_logical():
+    """Return the number of logical CPUs in the system."""
+    try:
+        return os.sysconf("SC_NPROCESSORS_ONLN")
+    except ValueError:
+        # as a second fallback we try to parse /proc/cpuinfo
+        num = 0
+        with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
+            for line in f:
+                if line.lower().startswith(b'processor'):
+                    num += 1
+
+        # unknown format (e.g. amrel/sparc architectures), see:
+        # https://github.com/giampaolo/psutil/issues/200
+        # try to parse /proc/stat as a last resort
+        if num == 0:
+            search = re.compile('cpu\d')
+            with open_text('%s/stat' % get_procfs_path()) as f:
+                for line in f:
+                    line = line.split(' ')[0]
+                    if search.match(line):
+                        num += 1
+
+        if num == 0:
+            # mimic os.cpu_count()
+            return None
+        return num
+
+
+def cpu_count_physical():
+    """Return the number of physical cores in the system."""
+    mapping = {}
+    current_info = {}
+    with open_binary('%s/cpuinfo' % get_procfs_path()) as f:
+        for line in f:
+            line = line.strip().lower()
+            if not line:
+                # new section
+                if (b'physical id' in current_info and
+                        b'cpu cores' in current_info):
+                    mapping[current_info[b'physical id']] = \
+                        current_info[b'cpu cores']
+                current_info = {}
+            else:
+                # ongoing section
+                if (line.startswith(b'physical id') or
+                        line.startswith(b'cpu cores')):
+                    key, value = line.split(b'\t:', 1)
+                    current_info[key] = int(value)
+
+    # mimic os.cpu_count()
+    return sum(mapping.values()) or None
+
+
+# TODO: Works mostly the same as on Linux, but softirq is not available;
+# meanwhile the Windows module supports number of system calls, but this
+# implementation does not.  There's also a question of whether we want it
+# to count Cygwin "system" calls, actual Windows system calls, or what...
+# It's a somewhat ill-defined field on Cygwin; may have to come back to it
+# TODO: Depending on what we decide to do about syscalls, this implementation
+# could be shared with the Linux implementation with some minor tweaks to the
+# latter
+def cpu_stats():
+    with open_binary('%s/stat' % get_procfs_path()) as f:
+        ctx_switches = None
+        interrupts = None
+        for line in f:
+            if line.startswith(b'ctxt'):
+                ctx_switches = int(line.split()[1])
+            elif line.startswith(b'intr'):
+                interrupts = int(line.split()[1])
+            if ctx_switches is not None and interrupts is not None:
+                break
+    syscalls = 0
+    soft_interrupts = 0
+    return _common.scpustats(
+        ctx_switches, interrupts, soft_interrupts, syscalls)
+
+
 # =====================================================================
 # --- other system functions
 # =====================================================================
@@ -468,7 +547,7 @@ class Process(object):
         # More or less the same as on Linux, but the fields are separated by
         # spaces instead of tabs; and anyways there is no difference on Cygwin
         # between real, effective, and saved uids.
-        # We could use the same regexp on both Linux and Cygwin by just
+        # TODO: We could use the same regexp on both Linux and Cygwin by just
         # changing the Linux regexp to treat whitespace more flexibly
         data = self._read_status_file()
         real = _uids_re.findall(data)[0]
