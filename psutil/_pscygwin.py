@@ -86,7 +86,11 @@ TimeoutExpired = None
 
 
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
-pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
+pmem = namedtuple('pmem', ['rss', 'vms', 'shared', 'text', 'lib', 'data',
+                           'dirty'])
+# TODO: Come back to seeing what additional memory info we can provide on
+# Cygwin
+pfullmem = namedtuple('pfullmem', pmem._fields)
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 
 
