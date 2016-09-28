@@ -21,6 +21,7 @@ from ._common import isfile_strict
 from ._common import open_binary
 from ._common import open_text
 from ._common import popenfile
+from ._common import usage_percent
 from ._common import wrap_exceptions
 from ._compat import PY3
 from ._compat import b
@@ -86,6 +87,66 @@ TimeoutExpired = None
 
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
 pmem = namedtuple('pmem', 'rss vms shared text lib data dirty')
+svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
+
+
+# =====================================================================
+# --- system memory
+# =====================================================================
+
+
+def _get_meminfo():
+    mems = {}
+    with open_binary('%s/meminfo' % get_procfs_path()) as f:
+        for line in f:
+            fields = line.split()
+            mems[fields[0].rstrip(b':')] = int(fields[1]) * 1024
+
+    return mems
+
+
+def virtual_memory():
+    """Report virtual memory stats.
+    This implementation matches "free" and "vmstat -s" cmdline
+    utility values and procps-ng-3.3.12 source was used as a reference
+    (2016-09-18):
+    https://gitlab.com/procps-ng/procps/blob/
+        24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c
+    For reference, procps-ng-3.3.10 is the version available on Ubuntu
+    16.04.
+
+    Note about "available" memory: up until psutil 4.3 it was
+    calculated as "avail = (free + buffers + cached)". Now
+    "MemAvailable:" column (kernel 3.14) from /proc/meminfo is used as
+    it's more accurate.
+    That matches "available" column in newer versions of "free".
+    """
+    mems = _get_meminfo()
+
+    # /proc doc states that the available fields in /proc/meminfo vary
+    # by architecture and compile options, but these 3 values are also
+    # returned by sysinfo(2); as such we assume they are always there.
+    total = mems[b'MemTotal']
+    free = mems[b'MemFree']
+
+    used = total - free
+
+    # On Windows we are treating avail and free as the same
+    # TODO: Are they really though?
+    avail = free
+
+    percent = usage_percent((total - avail), total, _round=1)
+
+    return svmem(total, avail, percent, used, free)
+
+
+def swap_memory():
+    mems = _get_meminfo()
+    total = mems[b'SwapTotal']
+    free = mems[b'SwapFree']
+    used = total - free
+    percent = usage_percent(used, total, _round=1)
+    return _common.sswap(total, used, free, percent, 0, 0)
 
 
 # =====================================================================
