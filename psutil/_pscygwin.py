@@ -23,6 +23,7 @@ from ._common import open_text
 from ._common import popenfile
 from ._common import wrap_exceptions
 from ._compat import PY3
+from ._compat import b
 
 if sys.version_info >= (3, 4):
     import enum
@@ -147,6 +148,16 @@ def boot_time():
 # =====================================================================
 # --- processes
 # =====================================================================
+
+
+def pids():
+    """Returns a list of PIDs currently running on the system."""
+    return [int(x) for x in os.listdir(b(get_procfs_path())) if x.isdigit()]
+
+
+def pid_exists(pid):
+    """Check For the existence of a unix pid."""
+    return _psposix.pid_exists(pid)
 
 
 class Process(object):
