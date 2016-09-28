@@ -464,13 +464,19 @@ class Process(object):
         return int(self._parse_stat_file()[2])
 
     @wrap_exceptions
-    def uids(self, _uids_re=re.compile(b'Uid:\t(\d+)\t(\d+)\t(\d+)')):
+    def uids(self, _uids_re=re.compile(b'Uid:\t(\d+)')):
+        # More or less the same as on Linux, but the fields are separated by
+        # spaces instead of tabs; and anyways there is no difference on Cygwin
+        # between real, effective, and saved uids.
+        # We could use the same regexp on both Linux and Cygwin by just
+        # changing the Linux regexp to treat whitespace more flexibly
         data = self._read_status_file()
-        real, effective, saved = _uids_re.findall(data)[0]
-        return _common.puids(int(real), int(effective), int(saved))
+        real = _uids_re.findall(data)[0]
+        return _common.puids(int(real), int(real), int(real))
 
     @wrap_exceptions
-    def gids(self, _gids_re=re.compile(b'Gid:\t(\d+)\t(\d+)\t(\d+)')):
+    def gids(self, _gids_re=re.compile(b'Gid:\t(\d+)')):
+        # See note in uids
         data = self._read_status_file()
-        real, effective, saved = _gids_re.findall(data)[0]
-        return _common.pgids(int(real), int(effective), int(saved))
+        real = _gids_re.findall(data)[0]
+        return _common.pgids(int(real), int(real), int(real))
