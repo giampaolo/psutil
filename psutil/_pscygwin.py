@@ -47,6 +47,7 @@ else:
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
 PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+BOOT_TIME = None  # set later
 
 
 # TODO: Update me to properly reflect Cygwin-recognized process statuses
@@ -123,6 +124,24 @@ def per_cpu_times():
                 entry = scputimes(*fields)
                 cpus.append(entry)
         return cpus
+
+
+# =====================================================================
+# --- other system functions
+# =====================================================================
+
+
+def boot_time():
+    """Return the system boot time expressed in seconds since the epoch."""
+    global BOOT_TIME
+    with open_binary('%s/stat' % get_procfs_path()) as f:
+        for line in f:
+            if line.startswith(b'btime'):
+                ret = float(line.strip().split()[1])
+                BOOT_TIME = ret
+                return ret
+        raise RuntimeError(
+            "line 'btime' not found in %s/stat" % get_procfs_path())
 
 
 # =====================================================================
@@ -235,8 +254,14 @@ class Process(object):
 
     @wrap_exceptions
     def create_time(self):
-        raise NotImplementedError("create_time not implemented on Cygwin "
-                                  "(yet)")
+        values = self._parse_stat_file()
+        # According to source, starttime is in field 22 and the
+        # unit is jiffies (clock ticks).
+        # We first divide it for clock ticks and then add uptime returning
+        # seconds since the epoch, in UTC.
+        # Also use cached value if available.
+        bt = BOOT_TIME or boot_time()
+        return (float(values[21]) / CLOCK_TICKS) + bt
 
     @wrap_exceptions
     def memory_info(self):
