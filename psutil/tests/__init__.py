@@ -62,6 +62,10 @@ if PY3:
 else:
     import imp as importlib
 
+if sys.platform.startswith('win'):
+    from winerror import ERROR_SHARING_VIOLATION
+
+
 __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
@@ -392,7 +396,14 @@ def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, empty=False,
             if delete_file:
                 os.remove(fname)
             return data
-        except (IOError, OSError):
+        except OSError as exc:
+            if not ((sys.platform.startswith('win') and
+                    exc.winerror == ERROR_SHARING_VIOLATION) or
+                    exc.errno == errno.ENOENT):
+                # In Windows deleting the temporary file can fail if some
+                # process is still holding it open, so retry in that case
+                raise
+
             time.sleep(sleep_for)
             sleep_for = min(sleep_for * 2, 0.01)
     raise RuntimeError(
