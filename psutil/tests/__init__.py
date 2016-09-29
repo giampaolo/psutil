@@ -389,12 +389,6 @@ class retry(object):
         if self.interval is not None:
             time.sleep(self.interval)
 
-    def raise_(self, exc):
-        if PY3:
-            raise exc
-        else:
-            raise
-
     def __call__(self, fun):
         @functools.wraps(fun)
         def wrapper(*args, **kwargs):
@@ -407,8 +401,11 @@ class retry(object):
                     if self.logfun is not None:
                         self.logfun(exc)
                     self.sleep()
-
-            raise self.raise_(exc)
+            else:
+                if PY3:
+                    raise exc
+                else:
+                    raise
 
         return wrapper
 
@@ -436,17 +433,14 @@ def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True,
     return data
 
 
+@retry(exception=AssertionError, logfun=None)
 def call_until(fun, expr, timeout=GLOBAL_TIMEOUT):
     """Keep calling function for timeout secs and exit if eval()
     expression is True.
     """
-    stop_at = time.time() + timeout
-    while time.time() < stop_at:
-        ret = fun()
-        if eval(expr):
-            return ret
-        time.sleep(0.001)
-    raise RuntimeError('timed out after %s secs (ret=%r)' % (timeout, ret))
+    ret = fun()
+    assert eval(expr)
+    return ret
 
 
 # ===================================================================
