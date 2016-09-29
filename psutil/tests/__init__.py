@@ -62,6 +62,10 @@ if PY3:
 else:
     import imp as importlib
 
+if sys.platform.startswith('win'):
+    from winerror import ERROR_SHARING_VIOLATION
+
+
 __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
@@ -203,14 +207,9 @@ def get_test_subprocess(cmd=None, **kwds):
         pyline += "sleep(60)"
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
-        stop_at = time.time() + 3
-        while stop_at > time.time():
-            if os.path.exists(TESTFN):
-                os.remove(TESTFN)
-                time.sleep(0.001)
-                break
-            time.sleep(0.001)
-        else:
+        try:
+            wait_for_file(TESTFN, empty=True)
+        except RuntimeError:
             warn("couldn't make sure test file was actually created")
     else:
         sproc = subprocess.Popen(cmd, **kwds)
@@ -380,20 +379,36 @@ def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
             return
 
 
-def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True):
-    """Wait for a file to be written on disk with some content."""
+def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, empty=False,
+                  delete_file=True):
+    """Wait for a file to be written on disk with some content, or until
+    the file exists if empty=True."""
     stop_at = time.time() + timeout
+    sleep_for = 0.001
     while time.time() < stop_at:
         try:
             with open(fname, "r") as f:
                 data = f.read()
-            if not data:
+            if not empty and not data:
+                time.sleep(sleep_for)
+                sleep_for = min(sleep_for * 2, 0.01)
                 continue
             if delete_file:
                 os.remove(fname)
             return data
-        except IOError:
-            time.sleep(0.001)
+        except EnvironmentError as exc:
+            posix_errno = exc.errno
+            win_errno = getattr(exc, 'winerror', None)
+
+            if (posix_errno in (errno.ENOENT, errno.ENXIO, errno.EOPNOTSUPP) or
+                    win_errno == ERROR_SHARING_VIOLATION):
+                # In Windows deleting the temporary file can fail if some
+                # process is still holding it open, so retry in that case
+                time.sleep(sleep_for)
+                sleep_for = min(sleep_for * 2, 0.01)
+            else:
+                raise
+
     raise RuntimeError(
         "timed out after %s secs (couldn't read file)" % timeout)
 
