@@ -396,7 +396,7 @@ def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, empty=False,
             if delete_file:
                 os.remove(fname)
             return data
-        except OSError as exc:
+        except (IOError, OSError) as exc:
             if not ((sys.platform.startswith('win') and
                     exc.winerror == ERROR_SHARING_VIOLATION) or
                     exc.errno == errno.ENOENT):
