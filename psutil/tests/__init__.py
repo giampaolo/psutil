@@ -396,16 +396,19 @@ def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, empty=False,
             if delete_file:
                 os.remove(fname)
             return data
-        except (IOError, OSError) as exc:
-            if not ((sys.platform.startswith('win') and
-                    exc.winerror == ERROR_SHARING_VIOLATION) or
-                    exc.errno == errno.ENOENT):
+        except EnvironmentError as exc:
+            posix_errno = exc.errno
+            win_errno = getattr(exc, 'winerror', None)
+
+            if (posix_errno in (errno.ENOENT, errno.ENXIO, errno.EOPNOTSUPP) or
+                    win_errno == ERROR_SHARING_VIOLATION):
                 # In Windows deleting the temporary file can fail if some
                 # process is still holding it open, so retry in that case
+                time.sleep(sleep_for)
+                sleep_for = min(sleep_for * 2, 0.01)
+            else:
                 raise
 
-            time.sleep(sleep_for)
-            sleep_for = min(sleep_for * 2, 0.01)
     raise RuntimeError(
         "timed out after %s secs (couldn't read file)" % timeout)
 
