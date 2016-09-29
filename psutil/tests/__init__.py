@@ -62,9 +62,6 @@ if PY3:
 else:
     import imp as importlib
 
-if sys.platform.startswith('win'):
-    from winerror import ERROR_SHARING_VIOLATION
-
 
 __all__ = [
     # constants
@@ -200,17 +197,15 @@ def get_test_subprocess(cmd=None, **kwds):
     """
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
-    kwds.setdefault("stderr", DEVNULL)
     if cmd is None:
+        safe_remove(TESTFN)
+        assert not os.path.exists(TESTFN)
         pyline = "from time import sleep;"
         pyline += "open(r'%s', 'w').close();" % TESTFN
         pyline += "sleep(60)"
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
-        try:
-            wait_for_file(TESTFN, empty=True)
-        except RuntimeError:
-            warn("couldn't make sure test file was actually created")
+        wait_for_file(TESTFN, empty=True)
     else:
         sproc = subprocess.Popen(cmd, **kwds)
         wait_for_pid(sproc.pid)
@@ -361,56 +356,84 @@ else:
 # ===================================================================
 
 
+class retry(object):
+    """A retry decorator."""
+
+    def __init__(self,
+                 exception=Exception,
+                 timeout=GLOBAL_TIMEOUT,
+                 retries=None,
+                 interval=0.001,
+                 logfun=lambda s: print(s, file=sys.stderr),
+                 ):
+        assert not (timeout and retries), "mutually exclusive"
+        self.exception = exception
+        self.timeout = timeout
+        self.retries = retries
+        self.interval = interval
+        self.logfun = logfun
+
+    def __iter__(self):
+        if self.timeout:
+            stop_at = time.time() + self.timeout
+            while time.time() < stop_at:
+                yield
+        elif self.retries:
+            for _ in range(self.retries):
+                yield
+        else:
+            while True:
+                yield
+
+    def sleep(self):
+        if self.interval is not None:
+            time.sleep(self.interval)
+
+    def raise_(self, exc):
+        if PY3:
+            raise exc
+        else:
+            raise
+
+    def __call__(self, fun):
+        @functools.wraps(fun)
+        def wrapper(*args, **kwargs):
+            exc = None
+            for _ in self:
+                try:
+                    return fun(*args, **kwargs)
+                except self.exception as _:
+                    exc = _
+                    if self.logfun is not None:
+                        self.logfun(exc)
+                    self.sleep()
+
+            raise self.raise_(exc)
+
+        return wrapper
+
+
+@retry(exception=psutil.NoSuchProcess, logfun=None)
 def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
     """
-    raise_at = time.time() + timeout
-    while True:
-        try:
-            psutil.Process(pid)
-        except psutil.NoSuchProcess:
-            time.sleep(0.001)
-            if time.time() >= raise_at:
-                raise RuntimeError("Timed out")
-        else:
-            # give it some more time to allow better initialization
-            time.sleep(0.01)
-            return
+    psutil.Process(pid)
+    # give it some more time to allow better initialization
+    time.sleep(0.01)
 
 
-def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, empty=False,
-                  delete_file=True):
-    """Wait for a file to be written on disk with some content, or until
-    the file exists if empty=True."""
-    stop_at = time.time() + timeout
-    sleep_for = 0.001
-    while time.time() < stop_at:
-        try:
-            with open(fname, "r") as f:
-                data = f.read()
-            if not empty and not data:
-                time.sleep(sleep_for)
-                sleep_for = min(sleep_for * 2, 0.01)
-                continue
-            if delete_file:
-                os.remove(fname)
-            return data
-        except EnvironmentError as exc:
-            posix_errno = exc.errno
-            win_errno = getattr(exc, 'winerror', None)
-
-            if (posix_errno in (errno.ENOENT, errno.ENXIO, errno.EOPNOTSUPP) or
-                    win_errno == ERROR_SHARING_VIOLATION):
-                # In Windows deleting the temporary file can fail if some
-                # process is still holding it open, so retry in that case
-                time.sleep(sleep_for)
-                sleep_for = min(sleep_for * 2, 0.01)
-            else:
-                raise
-
-    raise RuntimeError(
-        "timed out after %s secs (couldn't read file)" % timeout)
+@retry(exception=(AssertionError, EnvironmentError), logfun=None)
+def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True,
+                  empty=False):
+    """Wait for a file to be written on disk with some content."""
+    with open(fname, "rb") as f:
+        data = f.read()
+    if not empty:
+        assert data
+    if delete_file:
+        os.remove(fname)
+    return data
 
 
 def call_until(fun, expr, timeout=GLOBAL_TIMEOUT):
@@ -665,6 +688,7 @@ def cleanup():
         pass
     for path in _testfiles:
         safe_remove(path)
+
 
 atexit.register(cleanup)
 atexit.register(lambda: DEVNULL.close())
