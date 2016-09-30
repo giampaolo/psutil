@@ -1,4 +1,71 @@
 #include <Python.h>
+#include <windows.h>
+
+
+/* Copied verbatim from the Windows module
+   TODO: Refactor this later
+ */
+/*
+ * Return process CPU affinity as a bitmask
+ */
+static PyObject *
+psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
+    DWORD pid;
+    HANDLE hProcess;
+    DWORD_PTR proc_mask;
+    DWORD_PTR system_mask;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    hProcess = psutil_handle_from_pid(pid);
+    if (hProcess == NULL)
+        return NULL;
+
+    if (GetProcessAffinityMask(hProcess, &proc_mask, &system_mask) == 0) {
+        CloseHandle(hProcess);
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    CloseHandle(hProcess);
+#ifdef _WIN64
+    return Py_BuildValue("K", (unsigned long long)proc_mask);
+#else
+    return Py_BuildValue("k", (unsigned long)proc_mask);
+#endif
+}
+
+
+/*
+ * Set process CPU affinity
+ */
+static PyObject *
+psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
+    DWORD pid;
+    HANDLE hProcess;
+    DWORD dwDesiredAccess = \
+        PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION;
+    DWORD_PTR mask;
+
+#ifdef _WIN64
+    if (! PyArg_ParseTuple(args, "lK", &pid, &mask))
+#else
+    if (! PyArg_ParseTuple(args, "lk", &pid, &mask))
+#endif
+    {
+        return NULL;
+    }
+    hProcess = psutil_handle_from_pid_waccess(pid, dwDesiredAccess);
+    if (hProcess == NULL)
+        return NULL;
+
+    if (SetProcessAffinityMask(hProcess, mask) == 0) {
+        CloseHandle(hProcess);
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+    CloseHandle(hProcess);
+    Py_RETURN_NONE;
+}
 
 
 /*
@@ -6,6 +73,10 @@
  */
 static PyMethodDef
 PsutilMethods[] = {
+    {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
+     "Return process CPU affinity as a bitmask."},
+    {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
+     "Set process CPU affinity."},
     {NULL, NULL, 0, NULL}
 };
 
