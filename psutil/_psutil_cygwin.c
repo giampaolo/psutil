@@ -1,6 +1,9 @@
 #include <Python.h>
+
 #include <windows.h>
 #include <mntent.h>
+
+#include "arch/windows/process_info.h"
 
 /* TODO: Copied verbatim from the Linux module; refactor */
 /*
