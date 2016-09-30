@@ -1,5 +1,57 @@
 #include <Python.h>
 #include <windows.h>
+#include <mntent.h>
+
+/* TODO: Copied verbatim from the Linux module; refactor */
+/*
+ * Return disk mounted partitions as a list of tuples including device,
+ * mount point and filesystem type
+ */
+static PyObject *
+psutil_disk_partitions(PyObject *self, PyObject *args) {
+    FILE *file = NULL;
+    struct mntent *entry;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+
+    // MOUNTED constant comes from mntent.h and it's == '/etc/mtab'
+    Py_BEGIN_ALLOW_THREADS
+    file = setmntent(MOUNTED, "r");
+    Py_END_ALLOW_THREADS
+    if ((file == 0) || (file == NULL)) {
+        PyErr_SetFromErrnoWithFilename(PyExc_OSError, MOUNTED);
+        goto error;
+    }
+
+    while ((entry = getmntent(file))) {
+        if (entry == NULL) {
+            PyErr_Format(PyExc_RuntimeError, "getmntent() failed");
+            goto error;
+        }
+        py_tuple = Py_BuildValue("(ssss)",
+                                 entry->mnt_fsname,  // device
+                                 entry->mnt_dir,     // mount point
+                                 entry->mnt_type,    // fs type
+                                 entry->mnt_opts);   // options
+        if (! py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
+        Py_DECREF(py_tuple);
+    }
+    endmntent(file);
+    return py_retlist;
+
+error:
+    if (file != NULL)
+        endmntent(file);
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    return NULL;
+}
 
 
 /* Copied verbatim from the Windows module
@@ -73,6 +125,9 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
  */
 static PyMethodDef
 PsutilMethods[] = {
+    {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
+     "Return disk mounted partitions as a list of tuples including "
+     "device, mount point and filesystem type"},
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
      "Return process CPU affinity as a bitmask."},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,

@@ -272,6 +272,39 @@ def cpu_stats():
 
 
 # =====================================================================
+# --- disks
+# =====================================================================
+
+# TODO: Copied verbatim from the Linux module; refactor
+def disk_partitions(all=False):
+    """Return mounted disk partitions as a list of namedtuples"""
+    fstypes = set()
+    with open_text("%s/filesystems" % get_procfs_path()) as f:
+        for line in f:
+            line = line.strip()
+            if not line.startswith("nodev"):
+                fstypes.add(line.strip())
+            else:
+                # ignore all lines starting with "nodev" except "nodev zfs"
+                fstype = line.split("\t")[1]
+                if fstype == "zfs":
+                    fstypes.add("zfs")
+
+    retlist = []
+    partitions = cext.disk_partitions()
+    for partition in partitions:
+        device, mountpoint, fstype, opts = partition
+        if device == 'none':
+            device = ''
+        if not all:
+            if device == '' or fstype not in fstypes:
+                continue
+        ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
+        retlist.append(ntuple)
+    return retlist
+
+
+# =====================================================================
 # --- other system functions
 # =====================================================================
 
