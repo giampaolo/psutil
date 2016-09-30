@@ -552,6 +552,8 @@ class TestSystemAPIs(unittest.TestCase):
         nics = psutil.net_if_addrs()
         assert nics, nics
 
+        nic_stats = psutil.net_if_stats()
+
         # Not reliable on all platforms (net_if_addrs() reports more
         # interfaces).
         # self.assertEqual(sorted(nics.keys()),
@@ -568,18 +570,21 @@ class TestSystemAPIs(unittest.TestCase):
                 self.assertIn(addr.family, families)
                 if sys.version_info >= (3, 4):
                     self.assertIsInstance(addr.family, enum.IntEnum)
-                if addr.family == socket.AF_INET:
-                    s = socket.socket(addr.family)
-                    with contextlib.closing(s):
-                        s.bind((addr.address, 0))
-                elif addr.family == socket.AF_INET6:
-                    info = socket.getaddrinfo(
-                        addr.address, 0, socket.AF_INET6, socket.SOCK_STREAM,
-                        0, socket.AI_PASSIVE)[0]
-                    af, socktype, proto, canonname, sa = info
-                    s = socket.socket(af, socktype, proto)
-                    with contextlib.closing(s):
-                        s.bind(sa)
+                if nic_stats[nic].isup:
+                    # Do not test binding to addresses of interfaces
+                    # that are down
+                    if addr.family == socket.AF_INET:
+                        s = socket.socket(addr.family)
+                        with contextlib.closing(s):
+                            s.bind((addr.address, 0))
+                    elif addr.family == socket.AF_INET6:
+                        info = socket.getaddrinfo(
+                            addr.address, 0, socket.AF_INET6,
+                            socket.SOCK_STREAM, 0, socket.AI_PASSIVE)[0]
+                        af, socktype, proto, canonname, sa = info
+                        s = socket.socket(af, socktype, proto)
+                        with contextlib.closing(s):
+                            s.bind(sa)
                 for ip in (addr.address, addr.netmask, addr.broadcast,
                            addr.ptp):
                     if ip is not None:
