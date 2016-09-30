@@ -275,6 +275,10 @@ def cpu_stats():
 # --- disks
 # =====================================================================
 
+
+disk_usage = _psposix.disk_usage
+
+
 # TODO: Copied verbatim from the Linux module; refactor
 def disk_partitions(all=False):
     """Return mounted disk partitions as a list of namedtuples"""
