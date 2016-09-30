@@ -1,7 +1,9 @@
 #include <Python.h>
 #include <windows.h>
 
-
+/* TODO: This does not actually work as intended per the comment further down
+   that the OSError constructor performs the Windows error to POSIX error
+   translation, and that logic probably does not exist in Cygwin's Python */
 PyObject *PyErr_SetFromWindowsErr(int ierr)
 {
     int len;
