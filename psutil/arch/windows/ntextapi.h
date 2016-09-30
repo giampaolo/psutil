@@ -121,6 +121,7 @@ typedef enum _KTHREAD_STATE {
 } KTHREAD_STATE, *PKTHREAD_STATE;
 
 
+#ifndef __CYGWIN__
 typedef enum _KWAIT_REASON {
     Executive = 0,
     FreePage = 1,
@@ -167,6 +168,8 @@ typedef struct _CLIENT_ID {
     HANDLE UniqueProcess;
     HANDLE UniqueThread;
 } CLIENT_ID, *PCLIENT_ID;
+
+#endif
 
 
 typedef struct _SYSTEM_THREAD_INFORMATION {
@@ -287,6 +290,7 @@ typedef NTSTATUS (NTAPI *_NtSetInformationProcess)(
 );
 
 
+#ifndef __CYGWIN__
 typedef enum _PROCESSINFOCLASS2 {
     _ProcessBasicInformation,
     ProcessQuotaLimits,
@@ -337,5 +341,7 @@ typedef enum _PROCESSINFOCLASS2 {
 #define ProcessDebugPort _ProcessDebugPort
 #define ProcessImageFileName _ProcessImageFileName
 #define ProcessBreakOnTermination _ProcessBreakOnTermination
+
+#endif
 
 #endif // __NTEXTAPI_H__

@@ -232,11 +232,18 @@ elif SUNOS:
         define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'])
 elif CYGWIN:
-    macros.append(("PSUTIL_CYGWIN", 1))
+    macros.extend([
+        ("PSUTIL_CYGWIN", 1),
+        ("PSAPI_VERSION", 1)
+    ])
     ext = Extension(
         'psutil._psutil_cygwin',
-        sources=['psutil/_psutil_cygwin.c'],
-        define_macros=macros)
+        sources=['psutil/_psutil_cygwin.c',
+                 'psutil/_psutil_common.c',
+                 'psutil/arch/windows/py_error.c',
+                 'psutil/arch/windows/process_info.c'],
+        define_macros=macros,
+        libraries=["psapi"])
 else:
     sys.exit('platform %s is not supported' % sys.platform)
 
