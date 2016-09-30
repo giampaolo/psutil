@@ -340,7 +340,7 @@ class TestScripts(unittest.TestCase):
     """Tests for scripts in the "scripts" directory."""
 
     def assert_stdout(self, exe, args=None):
-        exe = os.path.join(SCRIPTS_DIR, exe)
+        exe = '"%s"' % os.path.join(SCRIPTS_DIR, exe)
         if args:
             exe = exe + ' ' + args
         try:
@@ -387,7 +387,7 @@ class TestScripts(unittest.TestCase):
         self.assert_stdout('meminfo.py')
 
     def test_procinfo(self):
-        self.assert_stdout('procinfo.py %s' % os.getpid())
+        self.assert_stdout('procinfo.py', args=str(os.getpid()))
 
     @unittest.skipIf(APPVEYOR, "can't find users on Appveyor")
     def test_who(self):
@@ -435,7 +435,7 @@ class TestScripts(unittest.TestCase):
         self.assert_syntax('iotop.py')
 
     def test_pidof(self):
-        output = self.assert_stdout('pidof.py %s' % psutil.Process().name())
+        output = self.assert_stdout('pidof.py', args=psutil.Process().name())
         self.assertIn(str(os.getpid()), output)
 
     @unittest.skipUnless(WINDOWS, "Windows only")
