@@ -420,7 +420,7 @@ def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
     time.sleep(0.01)
 
 
-@retry(exception=(AssertionError, EnvironmentError), logfun=None)
+@retry(exception=(EnvironmentError, AssertionError), logfun=None)
 def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True,
                   empty=False):
     """Wait for a file to be written on disk with some content."""
@@ -485,27 +485,11 @@ def chdir(dirname):
 # ===================================================================
 
 
-def retry_before_failing(ntimes=None):
+def retry_before_failing(retries=NO_RETRIES):
     """Decorator which runs a test function and retries N times before
     actually failing.
     """
-    def decorator(fun):
-        @functools.wraps(fun)
-        def wrapper(*args, **kwargs):
-            times = ntimes or NO_RETRIES
-            assert times, times
-            for x in range(times):
-                try:
-                    return fun(*args, **kwargs)
-                except AssertionError as _:
-                    err = _
-                    print("retry (%s)" % err, file=sys.stderr)
-            if PY3:
-                raise err
-            else:
-                raise
-        return wrapper
-    return decorator
+    return retry(exception=AssertionError, timeout=None, retries=retries)
 
 
 def run_test_module_by_name(name):
