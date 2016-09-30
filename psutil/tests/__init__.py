@@ -361,12 +361,13 @@ class retry(object):
 
     def __init__(self,
                  exception=Exception,
-                 timeout=GLOBAL_TIMEOUT,
+                 timeout=None,
                  retries=None,
                  interval=0.001,
                  logfun=lambda s: print(s, file=sys.stderr),
                  ):
-        assert not (timeout and retries), "mutually exclusive"
+        if timeout and retries:
+            raise ValueError("timeout and retries args are mutually exclusive")
         self.exception = exception
         self.timeout = timeout
         self.retries = retries
@@ -410,7 +411,7 @@ class retry(object):
         return wrapper
 
 
-@retry(exception=psutil.NoSuchProcess, logfun=None)
+@retry(exception=psutil.NoSuchProcess, logfun=None, interval=0.001)
 def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
@@ -420,7 +421,8 @@ def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
     time.sleep(0.01)
 
 
-@retry(exception=(EnvironmentError, AssertionError), logfun=None)
+@retry(exception=(EnvironmentError, AssertionError), logfun=None,
+       interval=0.001)
 def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True,
                   empty=False):
     """Wait for a file to be written on disk with some content."""
@@ -433,7 +435,7 @@ def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True,
     return data
 
 
-@retry(exception=AssertionError, logfun=None)
+@retry(exception=AssertionError, logfun=None, interval=0.001)
 def call_until(fun, expr, timeout=GLOBAL_TIMEOUT):
     """Keep calling function for timeout secs and exit if eval()
     expression is True.
