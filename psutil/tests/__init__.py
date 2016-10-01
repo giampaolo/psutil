@@ -217,7 +217,7 @@ _testfiles = []
 
 
 def pyrun(src):
-    """Run python code 'src' in a separate interpreter.
+    """Run python 'src' code in a separate interpreter.
     Return interpreter subprocess.
     """
     if PY3:

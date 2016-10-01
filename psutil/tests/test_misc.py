@@ -24,8 +24,10 @@ from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil.tests import APPVEYOR
 from psutil.tests import chdir
+from psutil.tests import get_test_subprocess
 from psutil.tests import importlib
 from psutil.tests import mock
+from psutil.tests import reap_children
 from psutil.tests import retry
 from psutil.tests import ROOT_DIR
 from psutil.tests import run_test_module_by_name
@@ -38,7 +40,6 @@ from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid
-
 
 # ===================================================================
 # --- Misc tests
@@ -554,10 +555,7 @@ class TestSyncTestUtils(unittest.TestCase):
 class TestFSTestUtils(unittest.TestCase):
 
     def setUp(self):
-        if os.path.isfile(TESTFN):
-            safe_rmpath(TESTFN)
-        elif os.path.isdir(TESTFN):
-            safe_rmpath(TESTFN)
+        safe_rmpath(TESTFN)
 
     tearDown = setUp
 
@@ -592,6 +590,16 @@ class TestFSTestUtils(unittest.TestCase):
         with chdir(TESTFN):
             self.assertEqual(os.getcwd(), os.path.join(base, TESTFN))
         self.assertEqual(os.getcwd(), base)
+
+
+class TestTestUtils(unittest.TestCase):
+
+    def test_reap_children(self):
+        subp = get_test_subprocess()
+        p = psutil.Process(subp.pid)
+        assert p.is_running()
+        reap_children()
+        assert not p.is_running()
 
 
 if __name__ == '__main__':
