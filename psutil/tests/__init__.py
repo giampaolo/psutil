@@ -106,7 +106,7 @@ PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 TESTFN = os.path.join(os.getcwd(), "$testfile")
 TESTFN_UNICODE = TESTFN + "ƒőő"
-TESTFILE_PREFIX = 'psutil-test-suite-'
+TESTFILE_PREFIX = 'psutil-unittest-'
 TOX = os.getenv('TOX') or '' in ('1', 'true')
 PYPY = '__pypy__' in sys.builtin_module_names
 if not PY3:
@@ -475,7 +475,7 @@ def safe_rmpath(path):
 
 @contextlib.contextmanager
 def chdir(dirname):
-    """Context manager which temporarily changes the current directory."""
+    "Context manager which temporarily changes the current directory."
     curdir = os.getcwd()
     try:
         os.chdir(dirname)
@@ -489,7 +489,7 @@ def create_temp_executable_file(suffix, c_code=None):
     if TRAVIS and OSX:
         tmpdir = "/private/tmp"
     fd, path = tempfile.mkstemp(
-        prefix='psu', suffix=suffix, dir=tmpdir)
+        prefix=TESTFILE_PREFIX, suffix=suffix, dir=tmpdir)
     os.close(fd)
 
     if which("gcc"):
@@ -502,7 +502,7 @@ def create_temp_executable_file(suffix, c_code=None):
                 }
                 """)
         fd, c_file = tempfile.mkstemp(
-            prefix='psu', suffix='.c', dir=tmpdir)
+            prefix=TESTFILE_PREFIX, suffix='.c', dir=tmpdir)
         os.close(fd)
         with open(c_file, "w") as f:
             f.write(c_code)
