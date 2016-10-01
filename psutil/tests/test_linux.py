@@ -36,7 +36,7 @@ from psutil.tests import pyrun
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
-from psutil.tests import safe_remove
+from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
 from psutil.tests import TESTFN
@@ -997,7 +997,7 @@ class TestMisc(unittest.TestCase):
 class TestProcess(unittest.TestCase):
 
     def setUp(self):
-        safe_remove(TESTFN)
+        safe_rmpath(TESTFN)
 
     tearDown = setUp
 
@@ -1095,10 +1095,10 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(get_test_file().mode, "a+")
         # note: "x" bit is not supported
         if PY3:
-            safe_remove(TESTFN)
+            safe_rmpath(TESTFN)
             with open(TESTFN, "x"):
                 self.assertEqual(get_test_file().mode, "w")
-            safe_remove(TESTFN)
+            safe_rmpath(TESTFN)
             with open(TESTFN, "x+"):
                 self.assertEqual(get_test_file().mode, "r+")
 

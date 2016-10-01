@@ -64,8 +64,7 @@ from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import RLIMIT_SUPPORT
 from psutil.tests import run_test_module_by_name
-from psutil.tests import safe_remove
-from psutil.tests import safe_rmdir
+from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
@@ -91,7 +90,7 @@ class TestProcess(unittest.TestCase):
     """Tests for psutil.Process class."""
 
     def setUp(self):
-        safe_remove(TESTFN)
+        safe_rmpath(TESTFN)
 
     def tearDown(self):
         reap_children()
@@ -725,7 +724,7 @@ class TestProcess(unittest.TestCase):
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
         funky_path = create_temp_executable_file('foo bar )')
-        self.addCleanup(safe_remove, funky_path)
+        self.addCleanup(safe_rmpath, funky_path)
         cmdline = [funky_path, "-c",
                    "import time; [time.sleep(0.01) for x in range(3000)];"
                    "arg1", "arg2", "", "arg3", ""]
@@ -1047,7 +1046,7 @@ class TestProcess(unittest.TestCase):
     @skip_on_access_denied(only_if=OSX)
     def test_connections_unix(self):
         def check(type):
-            safe_remove(TESTFN)
+            safe_rmpath(TESTFN)
             sock = socket.socket(AF_UNIX, type)
             with contextlib.closing(sock):
                 sock.bind(TESTFN)
@@ -1505,7 +1504,7 @@ class TestProcess(unittest.TestCase):
         }
         """)
         path = create_temp_executable_file("x", c_code=code)
-        self.addCleanup(safe_remove, path)
+        self.addCleanup(safe_rmpath, path)
         sproc = get_test_subprocess([path],
                                     stdin=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
@@ -1836,7 +1835,7 @@ if POSIX and os.getuid() == 0:
                 setattr(self, attr, types.MethodType(test_, self))
 
         def setUp(self):
-            safe_remove(TESTFN)
+            safe_rmpath(TESTFN)
             TestProcess.setUp(self)
             os.setegid(1000)
             os.seteuid(1000)
@@ -1876,7 +1875,7 @@ class TestUnicode(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if not APPVEYOR:
-            safe_remove(cls.uexe)
+            safe_rmpath(cls.uexe)
 
     def setUp(self):
         reap_children()
@@ -1906,7 +1905,7 @@ class TestUnicode(unittest.TestCase):
 
     def test_proc_cwd(self):
         tdir = os.path.realpath(tempfile.mkdtemp(prefix="psutil-è-"))
-        self.addCleanup(safe_rmdir, tdir)
+        self.addCleanup(safe_rmpath, tdir)
         with chdir(tdir):
             p = psutil.Process()
             self.assertIsInstance(p.cwd(), str)
@@ -1981,7 +1980,7 @@ class TestNonUnicode(unittest.TestCase):
     def test_proc_exe(self):
         funny_executable = os.path.join(self.temp_directory, b"\xc0\x80")
         self.copy_file(self.test_executable, funny_executable)
-        self.addCleanup(safe_remove, funny_executable)
+        self.addCleanup(safe_rmpath, funny_executable)
         subp = get_test_subprocess(cmd=[decode_path(funny_executable)],
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
@@ -1995,7 +1994,7 @@ class TestNonUnicode(unittest.TestCase):
     def test_proc_name(self):
         funny_executable = os.path.join(self.temp_directory, b"\xc0\x80")
         self.copy_file(self.test_executable, funny_executable)
-        self.addCleanup(safe_remove, funny_executable)
+        self.addCleanup(safe_rmpath, funny_executable)
         subp = get_test_subprocess(cmd=[decode_path(funny_executable)],
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
@@ -2008,7 +2007,7 @@ class TestNonUnicode(unittest.TestCase):
     def test_proc_cmdline(self):
         funny_executable = os.path.join(self.temp_directory, b"\xc0\x80")
         self.copy_file(self.test_executable, funny_executable)
-        self.addCleanup(safe_remove, funny_executable)
+        self.addCleanup(safe_rmpath, funny_executable)
         subp = get_test_subprocess(cmd=[decode_path(funny_executable)],
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
@@ -2022,7 +2021,7 @@ class TestNonUnicode(unittest.TestCase):
         funny_directory = os.path.realpath(
             os.path.join(self.temp_directory, b"\xc0\x80"))
         os.mkdir(funny_directory)
-        self.addCleanup(safe_rmdir, funny_directory)
+        self.addCleanup(safe_rmpath, funny_directory)
         with chdir(funny_directory):
             p = psutil.Process()
             self.assertIsInstance(p.cwd(), str)
@@ -2061,7 +2060,7 @@ class TestNonUnicode(unittest.TestCase):
         funny_directory = os.path.realpath(
             os.path.join(self.temp_directory, b"\xc0\x80"))
         os.mkdir(funny_directory)
-        self.addCleanup(safe_rmdir, funny_directory)
+        self.addCleanup(safe_rmpath, funny_directory)
         if WINDOWS and PY3:
             # Python 3 on Windows is moving towards accepting unicode
             # paths only:

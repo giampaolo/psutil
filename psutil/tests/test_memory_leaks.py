@@ -33,7 +33,7 @@ from psutil.tests import get_test_subprocess
 from psutil.tests import reap_children
 from psutil.tests import RLIMIT_SUPPORT
 from psutil.tests import run_test_module_by_name
-from psutil.tests import safe_remove
+from psutil.tests import safe_rmpath
 from psutil.tests import TESTFN
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
@@ -260,7 +260,7 @@ class TestProcessObjectLeaks(Base):
 
     @skip_if_linux()
     def test_open_files(self):
-        safe_remove(TESTFN)  # needed after UNIX socket test has run
+        safe_rmpath(TESTFN)  # needed after UNIX socket test has run
         with open(TESTFN, 'w'):
             self.execute('open_files')
 
@@ -303,7 +303,7 @@ class TestProcessObjectLeaks(Base):
             socks.append(create_socket(socket.AF_INET6, socket.SOCK_STREAM))
             socks.append(create_socket(socket.AF_INET6, socket.SOCK_DGRAM))
         if hasattr(socket, 'AF_UNIX'):
-            safe_remove(TESTFN)
+            safe_rmpath(TESTFN)
             s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             s.bind(TESTFN)
             s.listen(1)

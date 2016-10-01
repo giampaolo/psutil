@@ -76,8 +76,7 @@ __all__ = [
     'skip_on_access_denied', 'skip_on_not_implemented', 'retry_before_failing',
     'run_test_module_by_name',
     # fs utils
-    'chdir', 'safe_remove', 'safe_rmdir', 'safe_rmpath',
-    'create_temp_executable_file',
+    'chdir', 'safe_rmpath', 'create_temp_executable_file',
     # subprocesses
     'pyrun', 'reap_children', 'get_test_subprocess',
     # os
@@ -199,7 +198,7 @@ def get_test_subprocess(cmd=None, **kwds):
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
     if cmd is None:
-        safe_remove(TESTFN)
+        safe_rmpath(TESTFN)
         assert not os.path.exists(TESTFN)
         pyline = "from time import sleep;"
         pyline += "open(r'%s', 'w').close();" % TESTFN
@@ -456,36 +455,20 @@ def call_until(fun, expr):
 # ===================================================================
 
 
-def safe_remove(file):
-    "Convenience function for removing temporary test files"
-    try:
-        os.remove(file)
-    except OSError as err:
-        if err.errno != errno.ENOENT:
-            # # file is being used by another process
-            # if WINDOWS and isinstance(err, WindowsError) and err.errno == 13:
-            #     return
-            raise
-
-
-def safe_rmdir(dir):
-    "Convenience function for removing temporary test directories"
-    try:
-        os.rmdir(dir)
-    except OSError as err:
-        if err.errno != errno.ENOENT:
-            raise
-
-
 def safe_rmpath(path):
-    """Removes a path either if it's a file or a directory.
-    If neither exist just do nothing.
-    """
+    "Convenience function for removing temporary test files or dirs"
     try:
-        safe_remove(TESTFN)
+        os.remove(path)
     except OSError as err:
-        if err.errno == errno.EISDIR:
-            safe_rmdir(path)
+        if err.errno == errno.ENOENT:
+            # no such file or dir
+            pass
+        elif err.errno == errno.EISDIR:
+            try:
+                os.rmdir(path)
+            except OSError as err:
+                if err.errno != errno.ENOENT:
+                    raise
         else:
             raise
 
@@ -524,7 +507,7 @@ def create_temp_executable_file(suffix, c_code=None):
         with open(c_file, "w") as f:
             f.write(c_code)
         subprocess.check_call(["gcc", c_file, "-o", path])
-        safe_remove(c_file)
+        safe_rmpath(c_file)
     else:
         # fallback - use python's executable
         shutil.copyfile(sys.executable, path)
