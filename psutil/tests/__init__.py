@@ -76,7 +76,8 @@ __all__ = [
     'skip_on_access_denied', 'skip_on_not_implemented', 'retry_before_failing',
     'run_test_module_by_name',
     # fs utils
-    'chdir', 'safe_remove', 'safe_rmdir', 'create_temp_executable_file',
+    'chdir', 'safe_remove', 'safe_rmdir', 'safe_rmpath',
+    'create_temp_executable_file',
     # subprocesses
     'pyrun', 'reap_children', 'get_test_subprocess',
     # os
@@ -500,6 +501,39 @@ def chdir(dirname):
         os.chdir(curdir)
 
 
+def create_temp_executable_file(suffix, c_code=None):
+    tmpdir = None
+    if TRAVIS and OSX:
+        tmpdir = "/private/tmp"
+    fd, path = tempfile.mkstemp(
+        prefix='psu', suffix=suffix, dir=tmpdir)
+    os.close(fd)
+
+    if which("gcc"):
+        if c_code is None:
+            c_code = textwrap.dedent(
+                """
+                #include <unistd.h>
+                void main() {
+                    pause();
+                }
+                """)
+        fd, c_file = tempfile.mkstemp(
+            prefix='psu', suffix='.c', dir=tmpdir)
+        os.close(fd)
+        with open(c_file, "w") as f:
+            f.write(c_code)
+        subprocess.check_call(["gcc", c_file, "-o", path])
+        safe_remove(c_file)
+    else:
+        # fallback - use python's executable
+        shutil.copyfile(sys.executable, path)
+        if POSIX:
+            st = os.stat(path)
+            os.chmod(path, st.st_mode | stat.S_IEXEC)
+    return path
+
+
 # ===================================================================
 # --- testing
 # ===================================================================
@@ -644,48 +678,15 @@ def check_connection_ntuple(conn):
                     assert dupsock.type == conn.type
 
 
-def create_temp_executable_file(suffix, c_code=None):
-    tmpdir = None
-    if TRAVIS and OSX:
-        tmpdir = "/private/tmp"
-    fd, path = tempfile.mkstemp(
-        prefix='psu', suffix=suffix, dir=tmpdir)
-    os.close(fd)
-
-    if which("gcc"):
-        if c_code is None:
-            c_code = textwrap.dedent(
-                """
-                #include <unistd.h>
-                void main() {
-                    pause();
-                }
-                """)
-        fd, c_file = tempfile.mkstemp(
-            prefix='psu', suffix='.c', dir=tmpdir)
-        os.close(fd)
-        with open(c_file, "w") as f:
-            f.write(c_code)
-        subprocess.check_call(["gcc", c_file, "-o", path])
-        safe_remove(c_file)
-    else:
-        # fallback - use python's executable
-        shutil.copyfile(sys.executable, path)
-        if POSIX:
-            st = os.stat(path)
-            os.chmod(path, st.st_mode | stat.S_IEXEC)
-    return path
-
-
 def cleanup():
     reap_children(recursive=True)
-    safe_remove(TESTFN)
+    safe_rmpath(TESTFN)
     try:
-        safe_rmdir(TESTFN_UNICODE)
+        safe_rmpath(TESTFN_UNICODE)
     except UnicodeEncodeError:
         pass
     for path in _testfiles:
-        safe_remove(path)
+        safe_rmpath(path)
 
 
 atexit.register(cleanup)
