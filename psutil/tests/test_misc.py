@@ -23,16 +23,20 @@ from psutil import POSIX
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil.tests import APPVEYOR
-from psutil.tests import SCRIPTS_DIR
 from psutil.tests import importlib
 from psutil.tests import mock
 from psutil.tests import retry
 from psutil.tests import ROOT_DIR
 from psutil.tests import run_test_module_by_name
+from psutil.tests import safe_remove
+from psutil.tests import SCRIPTS_DIR
 from psutil.tests import sh
+from psutil.tests import TESTFN
 from psutil.tests import TOX
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
+from psutil.tests import wait_for_file
+from psutil.tests import wait_for_pid
 
 
 # ===================================================================
@@ -318,19 +322,13 @@ class TestMisc(unittest.TestCase):
                 psutil.Process()
             assert meth.called
 
-    def test_psutil_is_reloadable(self):
-        importlib.reload(psutil)
-
     def test_sanity_version_check(self):
         # see: https://github.com/giampaolo/psutil/issues/564
-        try:
-            with mock.patch(
-                    "psutil._psplatform.cext.version", return_value="0.0.0"):
-                with self.assertRaises(ImportError) as cm:
-                    importlib.reload(psutil)
-                self.assertIn("version conflict", str(cm.exception).lower())
-        finally:
-            importlib.reload(psutil)
+        with mock.patch(
+                "psutil._psplatform.cext.version", return_value="0.0.0"):
+            with self.assertRaises(ImportError) as cm:
+                importlib.reload(psutil)
+            self.assertIn("version conflict", str(cm.exception).lower())
 
 
 # ===================================================================
@@ -516,6 +514,40 @@ class TestRetryDecorator(unittest.TestCase):
     @mock.patch('time.sleep')
     def test_retries_and_timeout_args(self, sleep):
         self.assertRaises(ValueError, retry, retries=5, timeout=1)
+
+
+class TestSyncTestUtils(unittest.TestCase):
+
+    def tearDown(self):
+        safe_remove(TESTFN)
+
+    def test_wait_for_pid(self):
+        wait_for_pid(os.getpid())
+        nopid = max(psutil.pids()) + 99999
+        with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
+            self.assertRaises(psutil.NoSuchProcess, wait_for_pid, nopid)
+
+    def test_wait_for_file(self):
+        with open(TESTFN, 'w') as f:
+            f.write('foo')
+        wait_for_file(TESTFN)
+        assert not os.path.exists(TESTFN)
+
+    def test_wait_for_file_empty(self):
+        with open(TESTFN, 'w'):
+            pass
+        wait_for_file(TESTFN, empty=True)
+        assert not os.path.exists(TESTFN)
+
+    def test_wait_for_file_no_file(self):
+        with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
+            self.assertRaises(IOError, wait_for_file, TESTFN)
+
+    def test_wait_for_file_no_delete(self):
+        with open(TESTFN, 'w') as f:
+            f.write('foo')
+        wait_for_file(TESTFN, delete_file=False)
+        assert os.path.exists(TESTFN)
 
 
 if __name__ == '__main__':

@@ -411,20 +411,21 @@ class retry(object):
         return wrapper
 
 
-@retry(exception=psutil.NoSuchProcess, logfun=None, interval=0.001)
-def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
+@retry(exception=psutil.NoSuchProcess, logfun=None, timeout=GLOBAL_TIMEOUT,
+       interval=0.001)
+def wait_for_pid(pid):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
     """
     psutil.Process(pid)
-    # give it some more time to allow better initialization
-    time.sleep(0.01)
+    if WINDOWS:
+        # give it some more time to allow better initialization
+        time.sleep(0.01)
 
 
 @retry(exception=(EnvironmentError, AssertionError), logfun=None,
-       interval=0.001)
-def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True,
-                  empty=False):
+       timeout=GLOBAL_TIMEOUT, interval=0.001)
+def wait_for_file(fname, delete_file=True, empty=False):
     """Wait for a file to be written on disk with some content."""
     with open(fname, "rb") as f:
         data = f.read()
