@@ -408,6 +408,9 @@ class retry(object):
                 else:
                     raise
 
+        # This way the user of the decorated function can change config
+        # parameters.
+        wrapper.decorator = self
         return wrapper
 
 
