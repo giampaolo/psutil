@@ -476,6 +476,19 @@ def safe_rmdir(dir):
             raise
 
 
+def safe_rmpath(path):
+    """Removes a path either if it's a file or a directory.
+    If neither exist just do nothing.
+    """
+    try:
+        safe_remove(TESTFN)
+    except OSError as err:
+        if err.errno == errno.EISDIR:
+            safe_rmdir(path)
+        else:
+            raise
+
+
 @contextlib.contextmanager
 def chdir(dirname):
     """Context manager which temporarily changes the current directory."""

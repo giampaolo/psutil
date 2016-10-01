@@ -23,12 +23,15 @@ from psutil import POSIX
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
 from psutil.tests import APPVEYOR
+from psutil.tests import chdir
 from psutil.tests import importlib
 from psutil.tests import mock
 from psutil.tests import retry
 from psutil.tests import ROOT_DIR
 from psutil.tests import run_test_module_by_name
 from psutil.tests import safe_remove
+from psutil.tests import safe_rmdir
+from psutil.tests import safe_rmpath
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import sh
 from psutil.tests import TESTFN
@@ -548,6 +551,77 @@ class TestSyncTestUtils(unittest.TestCase):
             f.write('foo')
         wait_for_file(TESTFN, delete_file=False)
         assert os.path.exists(TESTFN)
+
+
+class TestFSTestUtils(unittest.TestCase):
+
+    def setUp(self):
+        safe_rmpath(TESTFN)
+
+    tearDown = setUp
+
+    def test_safe_remove(self):
+        # test file is removed
+        open(TESTFN, 'w').close()
+        safe_remove(TESTFN)
+        assert not os.path.exists(TESTFN)
+        # test no exception if file does not exist
+        safe_remove(TESTFN)
+        # test we get an exc if path is a directory
+        os.mkdir(TESTFN)
+        with self.assertRaises(OSError) as cm:
+            safe_remove(TESTFN)
+        self.assertEqual(cm.exception.errno, errno.EISDIR)
+        # ...or any other error
+        with mock.patch('psutil.tests.os.remove',
+                        side_effect=OSError(errno.EINVAL, "")) as m:
+            with self.assertRaises(OSError) as cm:
+                safe_remove(TESTFN)
+            assert m.called
+
+    def test_safe_rmdir(self):
+        # test dir is removed
+        os.mkdir(TESTFN)
+        safe_rmdir(TESTFN)
+        assert not os.path.exists(TESTFN)
+        # test no exception if dir does not exist
+        safe_remove(TESTFN)
+        # test we get an exc if path is a file
+        open(TESTFN, 'w').close()
+        with self.assertRaises(OSError) as cm:
+            safe_rmdir(TESTFN)
+        self.assertEqual(cm.exception.errno, errno.ENOTDIR)
+        # ...or any other error
+        with mock.patch('psutil.tests.os.rmdir',
+                        side_effect=OSError(errno.EINVAL, "")) as m:
+            with self.assertRaises(OSError) as cm:
+                safe_rmdir(TESTFN)
+            assert m.called
+
+    def test_safe_rmpath(self):
+        safe_rmpath(TESTFN)
+        assert not os.path.exists(TESTFN)
+        # path is file
+        open(TESTFN, 'w').close()
+        safe_rmpath(TESTFN)
+        assert not os.path.exists(TESTFN)
+        # path is dir
+        os.mkdir(TESTFN)
+        safe_rmpath(TESTFN)
+        assert not os.path.exists(TESTFN)
+        # path is something else which raises an exc
+        with mock.patch('psutil.tests.os.remove',
+                        side_effect=OSError(errno.EINVAL, "")) as m:
+            with self.assertRaises(OSError):
+                safe_rmpath(TESTFN)
+            assert m.called
+
+    def test_chdir(self):
+        base = os.getcwd()
+        os.mkdir(TESTFN)
+        with chdir(TESTFN):
+            self.assertEqual(os.getcwd(), os.path.join(base, TESTFN))
+        self.assertEqual(os.getcwd(), base)
 
 
 if __name__ == '__main__':
