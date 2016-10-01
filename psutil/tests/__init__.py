@@ -436,8 +436,9 @@ def wait_for_file(fname, delete_file=True, empty=False):
     return data
 
 
-@retry(exception=AssertionError, logfun=None, interval=0.001)
-def call_until(fun, expr, timeout=GLOBAL_TIMEOUT):
+@retry(exception=AssertionError, logfun=None, timeout=GLOBAL_TIMEOUT,
+       interval=0.001)
+def call_until(fun, expr):
     """Keep calling function for timeout secs and exit if eval()
     expression is True.
     """

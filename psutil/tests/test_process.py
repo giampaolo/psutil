@@ -1809,6 +1809,7 @@ class TestFetchAllProcesses(unittest.TestCase):
 # --- Limited user tests
 # ===================================================================
 
+
 if POSIX and os.getuid() == 0:
     class LimitedUserTestCase(TestProcess):
         """Repeat the previous tests by using a limited user.
@@ -1861,6 +1862,7 @@ if POSIX and os.getuid() == 0:
 # ===================================================================
 # --- Unicode tests
 # ===================================================================
+
 
 class TestUnicode(unittest.TestCase):
     # See: https://github.com/giampaolo/psutil/issues/655
