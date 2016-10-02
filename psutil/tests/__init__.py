@@ -459,14 +459,13 @@ def safe_rmpath(path):
     "Convenience function for removing temporary test files or dirs"
     try:
         st = os.stat(path)
-    except OSError as err:
-        if err.errno != errno.ENOENT:
-            raise
-    else:
         if stat.S_ISDIR(st.st_mode):
             os.rmdir(path)
         else:
             os.remove(path)
+    except OSError as err:
+        if err.errno != errno.ENOENT:
+            raise
 
 
 @contextlib.contextmanager
