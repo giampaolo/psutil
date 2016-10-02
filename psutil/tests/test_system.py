@@ -39,8 +39,7 @@ from psutil.tests import mock
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
-from psutil.tests import safe_remove
-from psutil.tests import safe_rmdir
+from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
@@ -57,7 +56,7 @@ class TestSystemAPIs(unittest.TestCase):
     """Tests for system-related APIs."""
 
     def setUp(self):
-        safe_remove(TESTFN)
+        safe_rmpath(TESTFN)
 
     def tearDown(self):
         reap_children()
@@ -438,8 +437,8 @@ class TestSystemAPIs(unittest.TestCase):
                      "os.statvfs() function not available on this platform")
     def test_disk_usage_unicode(self):
         # see: https://github.com/giampaolo/psutil/issues/416
-        safe_rmdir(TESTFN_UNICODE)
-        self.addCleanup(safe_rmdir, TESTFN_UNICODE)
+        safe_rmpath(TESTFN_UNICODE)
+        self.addCleanup(safe_rmpath, TESTFN_UNICODE)
         os.mkdir(TESTFN_UNICODE)
         psutil.disk_usage(TESTFN_UNICODE)
 
