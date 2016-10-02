@@ -258,6 +258,13 @@ def test_platform():
 
 
 @cmd
+def test_misc():
+    """Run misc tests"""
+    install()
+    sh("%s -m unittest -v psutil.tests.test_misc" % PYTHON)
+
+
+@cmd
 def test_by_name():
     """Run test by name"""
     try:

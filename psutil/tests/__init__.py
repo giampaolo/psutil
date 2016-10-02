@@ -458,19 +458,15 @@ def call_until(fun, expr):
 def safe_rmpath(path):
     "Convenience function for removing temporary test files or dirs"
     try:
-        os.remove(path)
+        st = os.stat(path)
     except OSError as err:
-        if err.errno == errno.ENOENT:
-            # no such file or dir
-            pass
-        elif err.errno == errno.EISDIR:
-            try:
-                os.rmdir(path)
-            except OSError as err:
-                if err.errno != errno.ENOENT:
-                    raise
-        else:
+        if err.errno != errno.ENOENT:
             raise
+    else:
+        if stat.S_ISDIR(st.st_mode):
+            os.rmdir(path)
+        else:
+            os.remove(path)
 
 
 @contextlib.contextmanager

@@ -571,14 +571,7 @@ class TestFSTestUtils(unittest.TestCase):
         safe_rmpath(TESTFN)
         assert not os.path.exists(TESTFN)
         # test other exceptions are raised
-        with mock.patch('psutil.tests.os.remove',
-                        side_effect=OSError(errno.EINVAL, "")) as m:
-            with self.assertRaises(OSError):
-                safe_rmpath(TESTFN)
-            assert m.called
-
-        os.mkdir(TESTFN)
-        with mock.patch('psutil.tests.os.rmdir',
+        with mock.patch('psutil.tests.os.stat',
                         side_effect=OSError(errno.EINVAL, "")) as m:
             with self.assertRaises(OSError):
                 safe_rmpath(TESTFN)
