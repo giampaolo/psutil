@@ -53,5 +53,6 @@ def main():
     print("-" * 33)
     print(templ % ("Total", str(total_rss / 1024) + 'K', '', ''))
 
+
 if __name__ == '__main__':
     main()

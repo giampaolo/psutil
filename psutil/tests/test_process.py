@@ -64,8 +64,7 @@ from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import RLIMIT_SUPPORT
 from psutil.tests import run_test_module_by_name
-from psutil.tests import safe_remove
-from psutil.tests import safe_rmdir
+from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_access_denied
 from psutil.tests import skip_on_not_implemented
@@ -91,7 +90,7 @@ class TestProcess(unittest.TestCase):
     """Tests for psutil.Process class."""
 
     def setUp(self):
-        safe_remove(TESTFN)
+        safe_rmpath(TESTFN)
 
     def tearDown(self):
         reap_children()
@@ -102,7 +101,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(psutil.Process(sproc.pid).pid, sproc.pid)
 
     def test_kill(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
         p.kill()
@@ -112,7 +111,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(sig, signal.SIGKILL)
 
     def test_terminate(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         test_pid = sproc.pid
         p = psutil.Process(test_pid)
         p.terminate()
@@ -289,7 +288,7 @@ class TestProcess(unittest.TestCase):
             self.fail("expected: %s, found: %s" % (ktime, kernel_time))
 
     def test_create_time(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         now = time.time()
         p = psutil.Process(sproc.pid)
         create_time = p.create_time()
@@ -557,7 +556,7 @@ class TestProcess(unittest.TestCase):
     # see: https://travis-ci.org/giampaolo/psutil/jobs/111842553
     @unittest.skipIf(OSX and TRAVIS, "")
     def test_threads_2(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         if OPENBSD:
             try:
@@ -667,7 +666,7 @@ class TestProcess(unittest.TestCase):
             assert 0 <= ret <= 100, ret
 
     def test_is_running(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         assert p.is_running()
         assert p.is_running()
@@ -677,7 +676,7 @@ class TestProcess(unittest.TestCase):
         assert not p.is_running()
 
     def test_exe(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         exe = psutil.Process(sproc.pid).exe()
         try:
             self.assertEqual(exe, PYTHON)
@@ -698,7 +697,7 @@ class TestProcess(unittest.TestCase):
 
     def test_cmdline(self):
         cmdline = [PYTHON, "-c", "import time; time.sleep(60)"]
-        sproc = get_test_subprocess(cmdline, wait=True)
+        sproc = get_test_subprocess(cmdline)
         try:
             self.assertEqual(' '.join(psutil.Process(sproc.pid).cmdline()),
                              ' '.join(cmdline))
@@ -714,7 +713,7 @@ class TestProcess(unittest.TestCase):
                 raise
 
     def test_name(self):
-        sproc = get_test_subprocess(PYTHON, wait=True)
+        sproc = get_test_subprocess(PYTHON)
         name = psutil.Process(sproc.pid).name().lower()
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
@@ -725,7 +724,7 @@ class TestProcess(unittest.TestCase):
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
         funky_path = create_temp_executable_file('foo bar )')
-        self.addCleanup(safe_remove, funky_path)
+        self.addCleanup(safe_rmpath, funky_path)
         cmdline = [funky_path, "-c",
                    "import time; [time.sleep(0.01) for x in range(3000)];"
                    "arg1", "arg2", "", "arg3", ""]
@@ -760,7 +759,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(real, os.getgid())
         # os.geteuid() refers to "effective" uid
         self.assertEqual(effective, os.getegid())
-        # no such thing as os.getsuid() ("saved" uid), but starting
+        # no such thing as os.getsgid() ("saved" gid), but starting
         # from python 2.7 we have os.getresgid()[2]
         if hasattr(os, "getresuid"):
             self.assertEqual(saved, os.getresgid()[2])
@@ -825,13 +824,13 @@ class TestProcess(unittest.TestCase):
             p.username()
 
     def test_cwd(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         self.assertEqual(p.cwd(), os.getcwd())
 
     def test_cwd_2(self):
         cmd = [PYTHON, "-c", "import os, time; os.chdir('..'); time.sleep(60)"]
-        sproc = get_test_subprocess(cmd, wait=True)
+        sproc = get_test_subprocess(cmd)
         p = psutil.Process(sproc.pid)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
 
@@ -870,6 +869,7 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(ValueError, p.cpu_affinity, invalid_cpu)
         self.assertRaises(ValueError, p.cpu_affinity, range(10000, 11000))
         self.assertRaises(TypeError, p.cpu_affinity, [0, "1"])
+        self.assertRaises(ValueError, p.cpu_affinity, [0, -1])
 
     # TODO
     @unittest.skipIf(BSD, "broken on BSD, see #595")
@@ -897,7 +897,7 @@ class TestProcess(unittest.TestCase):
 
         # another process
         cmdline = "import time; f = open(r'%s', 'r'); time.sleep(60);" % TESTFN
-        sproc = get_test_subprocess([PYTHON, "-c", cmdline], wait=True)
+        sproc = get_test_subprocess([PYTHON, "-c", cmdline])
         p = psutil.Process(sproc.pid)
 
         for x in range(100):
@@ -1046,7 +1046,7 @@ class TestProcess(unittest.TestCase):
     @skip_on_access_denied(only_if=OSX)
     def test_connections_unix(self):
         def check(type):
-            safe_remove(TESTFN)
+            safe_rmpath(TESTFN)
             sock = socket.socket(AF_UNIX, type)
             with contextlib.closing(sock):
                 sock.bind(TESTFN)
@@ -1193,7 +1193,7 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(len(c), len(set(c)))
 
     def test_suspend_resume(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
         p.suspend()
         for x in range(100):
@@ -1504,7 +1504,7 @@ class TestProcess(unittest.TestCase):
         }
         """)
         path = create_temp_executable_file("x", c_code=code)
-        self.addCleanup(safe_remove, path)
+        self.addCleanup(safe_rmpath, path)
         sproc = get_test_subprocess([path],
                                     stdin=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
@@ -1808,6 +1808,7 @@ class TestFetchAllProcesses(unittest.TestCase):
 # --- Limited user tests
 # ===================================================================
 
+
 if POSIX and os.getuid() == 0:
     class LimitedUserTestCase(TestProcess):
         """Repeat the previous tests by using a limited user.
@@ -1834,7 +1835,7 @@ if POSIX and os.getuid() == 0:
                 setattr(self, attr, types.MethodType(test_, self))
 
         def setUp(self):
-            safe_remove(TESTFN)
+            safe_rmpath(TESTFN)
             TestProcess.setUp(self)
             os.setegid(1000)
             os.seteuid(1000)
@@ -1861,6 +1862,7 @@ if POSIX and os.getuid() == 0:
 # --- Unicode tests
 # ===================================================================
 
+
 class TestUnicode(unittest.TestCase):
     # See: https://github.com/giampaolo/psutil/issues/655
 
@@ -1873,7 +1875,7 @@ class TestUnicode(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         if not APPVEYOR:
-            safe_remove(cls.uexe)
+            safe_rmpath(cls.uexe)
 
     def setUp(self):
         reap_children()
@@ -1903,7 +1905,7 @@ class TestUnicode(unittest.TestCase):
 
     def test_proc_cwd(self):
         tdir = os.path.realpath(tempfile.mkdtemp(prefix="psutil-è-"))
-        self.addCleanup(safe_rmdir, tdir)
+        self.addCleanup(safe_rmpath, tdir)
         with chdir(tdir):
             p = psutil.Process()
             self.assertIsInstance(p.cwd(), str)
@@ -1978,7 +1980,7 @@ class TestNonUnicode(unittest.TestCase):
     def test_proc_exe(self):
         funny_executable = os.path.join(self.temp_directory, b"\xc0\x80")
         self.copy_file(self.test_executable, funny_executable)
-        self.addCleanup(safe_remove, funny_executable)
+        self.addCleanup(safe_rmpath, funny_executable)
         subp = get_test_subprocess(cmd=[decode_path(funny_executable)],
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
@@ -1992,7 +1994,7 @@ class TestNonUnicode(unittest.TestCase):
     def test_proc_name(self):
         funny_executable = os.path.join(self.temp_directory, b"\xc0\x80")
         self.copy_file(self.test_executable, funny_executable)
-        self.addCleanup(safe_remove, funny_executable)
+        self.addCleanup(safe_rmpath, funny_executable)
         subp = get_test_subprocess(cmd=[decode_path(funny_executable)],
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
@@ -2005,7 +2007,7 @@ class TestNonUnicode(unittest.TestCase):
     def test_proc_cmdline(self):
         funny_executable = os.path.join(self.temp_directory, b"\xc0\x80")
         self.copy_file(self.test_executable, funny_executable)
-        self.addCleanup(safe_remove, funny_executable)
+        self.addCleanup(safe_rmpath, funny_executable)
         subp = get_test_subprocess(cmd=[decode_path(funny_executable)],
                                    stdin=subprocess.PIPE,
                                    stdout=subprocess.PIPE,
@@ -2019,7 +2021,7 @@ class TestNonUnicode(unittest.TestCase):
         funny_directory = os.path.realpath(
             os.path.join(self.temp_directory, b"\xc0\x80"))
         os.mkdir(funny_directory)
-        self.addCleanup(safe_rmdir, funny_directory)
+        self.addCleanup(safe_rmpath, funny_directory)
         with chdir(funny_directory):
             p = psutil.Process()
             self.assertIsInstance(p.cwd(), str)
@@ -2058,7 +2060,7 @@ class TestNonUnicode(unittest.TestCase):
         funny_directory = os.path.realpath(
             os.path.join(self.temp_directory, b"\xc0\x80"))
         os.mkdir(funny_directory)
-        self.addCleanup(safe_rmdir, funny_directory)
+        self.addCleanup(safe_rmpath, funny_directory)
         if WINDOWS and PY3:
             # Python 3 on Windows is moving towards accepting unicode
             # paths only:

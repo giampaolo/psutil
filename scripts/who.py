@@ -29,5 +29,6 @@ def main():
             datetime.fromtimestamp(user.started).strftime("%Y-%m-%d %H:%M"),
             user.host))
 
+
 if __name__ == '__main__':
     main()

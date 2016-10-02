@@ -39,8 +39,7 @@ from psutil.tests import mock
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
-from psutil.tests import safe_remove
-from psutil.tests import safe_rmdir
+from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
@@ -57,7 +56,7 @@ class TestSystemAPIs(unittest.TestCase):
     """Tests for system-related APIs."""
 
     def setUp(self):
-        safe_remove(TESTFN)
+        safe_rmpath(TESTFN)
 
     def tearDown(self):
         reap_children()
@@ -189,7 +188,7 @@ class TestSystemAPIs(unittest.TestCase):
         assert mem.sout >= 0, mem
 
     def test_pid_exists(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         self.assertTrue(psutil.pid_exists(sproc.pid))
         p = psutil.Process(sproc.pid)
         p.kill()
@@ -438,8 +437,8 @@ class TestSystemAPIs(unittest.TestCase):
                      "os.statvfs() function not available on this platform")
     def test_disk_usage_unicode(self):
         # see: https://github.com/giampaolo/psutil/issues/416
-        safe_rmdir(TESTFN_UNICODE)
-        self.addCleanup(safe_rmdir, TESTFN_UNICODE)
+        safe_rmpath(TESTFN_UNICODE)
+        self.addCleanup(safe_rmpath, TESTFN_UNICODE)
         os.mkdir(TESTFN_UNICODE)
         psutil.disk_usage(TESTFN_UNICODE)
 
@@ -552,6 +551,8 @@ class TestSystemAPIs(unittest.TestCase):
         nics = psutil.net_if_addrs()
         assert nics, nics
 
+        nic_stats = psutil.net_if_stats()
+
         # Not reliable on all platforms (net_if_addrs() reports more
         # interfaces).
         # self.assertEqual(sorted(nics.keys()),
@@ -568,18 +569,21 @@ class TestSystemAPIs(unittest.TestCase):
                 self.assertIn(addr.family, families)
                 if sys.version_info >= (3, 4):
                     self.assertIsInstance(addr.family, enum.IntEnum)
-                if addr.family == socket.AF_INET:
-                    s = socket.socket(addr.family)
-                    with contextlib.closing(s):
-                        s.bind((addr.address, 0))
-                elif addr.family == socket.AF_INET6:
-                    info = socket.getaddrinfo(
-                        addr.address, 0, socket.AF_INET6, socket.SOCK_STREAM,
-                        0, socket.AI_PASSIVE)[0]
-                    af, socktype, proto, canonname, sa = info
-                    s = socket.socket(af, socktype, proto)
-                    with contextlib.closing(s):
-                        s.bind(sa)
+                if nic_stats[nic].isup:
+                    # Do not test binding to addresses of interfaces
+                    # that are down
+                    if addr.family == socket.AF_INET:
+                        s = socket.socket(addr.family)
+                        with contextlib.closing(s):
+                            s.bind((addr.address, 0))
+                    elif addr.family == socket.AF_INET6:
+                        info = socket.getaddrinfo(
+                            addr.address, 0, socket.AF_INET6,
+                            socket.SOCK_STREAM, 0, socket.AI_PASSIVE)[0]
+                        af, socktype, proto, canonname, sa = info
+                        s = socket.socket(af, socktype, proto)
+                        with contextlib.closing(s):
+                            s.bind(sa)
                 for ip in (addr.address, addr.netmask, addr.broadcast,
                            addr.ptp):
                     if ip is not None:

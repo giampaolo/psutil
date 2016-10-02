@@ -9,6 +9,7 @@
 Test utilities.
 """
 
+from __future__ import print_function
 import atexit
 import contextlib
 import errno
@@ -61,6 +62,7 @@ if PY3:
 else:
     import imp as importlib
 
+
 __all__ = [
     # constants
     'APPVEYOR', 'DEVNULL', 'GLOBAL_TIMEOUT', 'MEMORY_TOLERANCE', 'NO_RETRIES',
@@ -74,7 +76,7 @@ __all__ = [
     'skip_on_access_denied', 'skip_on_not_implemented', 'retry_before_failing',
     'run_test_module_by_name',
     # fs utils
-    'chdir', 'safe_remove', 'safe_rmdir', 'create_temp_executable_file',
+    'chdir', 'safe_rmpath', 'create_temp_executable_file',
     # subprocesses
     'pyrun', 'reap_children', 'get_test_subprocess',
     # os
@@ -104,7 +106,7 @@ PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 TESTFN = os.path.join(os.getcwd(), "$testfile")
 TESTFN_UNICODE = TESTFN + "ƒőő"
-TESTFILE_PREFIX = 'psutil-test-suite-'
+TESTFILE_PREFIX = 'psutil-unittest-'
 TOX = os.getenv('TOX') or '' in ('1', 'true')
 PYPY = '__pypy__' in sys.builtin_module_names
 if not PY3:
@@ -186,39 +188,27 @@ class ThreadTask(threading.Thread):
 _subprocesses_started = set()
 
 
-def get_test_subprocess(cmd=None, wait=False, **kwds):
+def get_test_subprocess(cmd=None, **kwds):
     """Return a subprocess.Popen object to use in tests.
     By default stdout and stderr are redirected to /dev/null and the
     python interpreter is used as test process.
-    If 'wait' is True attemps to make sure the process is in a
-    reasonably initialized state.
+    It also attemps to make sure the process is in a reasonably
+    initialized state.
     """
-    if cmd is None:
-        pyline = ""
-        if wait:
-            pyline += "open(r'%s', 'w'); " % TESTFN
-        # A process living for 30 secs. We sleep N times (as opposed to
-        # once) in order to be nicer towards Windows which doesn't handle
-        # interrupt signals properly.
-        pyline += "import time; [time.sleep(0.01) for x in range(3000)];"
-        cmd_ = [PYTHON, "-c", pyline]
-    else:
-        cmd_ = cmd
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
-    kwds.setdefault("stderr", DEVNULL)
-    sproc = subprocess.Popen(cmd_, **kwds)
-    if wait:
-        if cmd is None:
-            stop_at = time.time() + 3
-            while stop_at > time.time():
-                if os.path.exists(TESTFN):
-                    break
-                time.sleep(0.001)
-            else:
-                warn("couldn't make sure test file was actually created")
-        else:
-            wait_for_pid(sproc.pid)
+    if cmd is None:
+        safe_rmpath(TESTFN)
+        assert not os.path.exists(TESTFN)
+        pyline = "from time import sleep;"
+        pyline += "open(r'%s', 'w').close();" % TESTFN
+        pyline += "sleep(60)"
+        cmd = [PYTHON, "-c", pyline]
+        sproc = subprocess.Popen(cmd, **kwds)
+        wait_for_file(TESTFN, empty=True)
+    else:
+        sproc = subprocess.Popen(cmd, **kwds)
+        wait_for_pid(sproc.pid)
     _subprocesses_started.add(sproc)
     return sproc
 
@@ -227,7 +217,7 @@ _testfiles = []
 
 
 def pyrun(src):
-    """Run python code 'src' in a separate interpreter.
+    """Run python 'src' code in a separate interpreter.
     Return interpreter subprocess.
     """
     if PY3:
@@ -366,50 +356,98 @@ else:
 # ===================================================================
 
 
-def wait_for_pid(pid, timeout=GLOBAL_TIMEOUT):
+class retry(object):
+    """A retry decorator."""
+
+    def __init__(self,
+                 exception=Exception,
+                 timeout=None,
+                 retries=None,
+                 interval=0.001,
+                 logfun=lambda s: print(s, file=sys.stderr),
+                 ):
+        if timeout and retries:
+            raise ValueError("timeout and retries args are mutually exclusive")
+        self.exception = exception
+        self.timeout = timeout
+        self.retries = retries
+        self.interval = interval
+        self.logfun = logfun
+
+    def __iter__(self):
+        if self.timeout:
+            stop_at = time.time() + self.timeout
+            while time.time() < stop_at:
+                yield
+        elif self.retries:
+            for _ in range(self.retries):
+                yield
+        else:
+            while True:
+                yield
+
+    def sleep(self):
+        if self.interval is not None:
+            time.sleep(self.interval)
+
+    def __call__(self, fun):
+        @functools.wraps(fun)
+        def wrapper(*args, **kwargs):
+            exc = None
+            for _ in self:
+                try:
+                    return fun(*args, **kwargs)
+                except self.exception as _:
+                    exc = _
+                    if self.logfun is not None:
+                        self.logfun(exc)
+                    self.sleep()
+            else:
+                if PY3:
+                    raise exc
+                else:
+                    raise
+
+        # This way the user of the decorated function can change config
+        # parameters.
+        wrapper.decorator = self
+        return wrapper
+
+
+@retry(exception=psutil.NoSuchProcess, logfun=None, timeout=GLOBAL_TIMEOUT,
+       interval=0.001)
+def wait_for_pid(pid):
     """Wait for pid to show up in the process list then return.
     Used in the test suite to give time the sub process to initialize.
     """
-    raise_at = time.time() + timeout
-    while True:
-        if pid in psutil.pids():
-            # give it one more iteration to allow full initialization
-            time.sleep(0.01)
-            return
-        time.sleep(0.0001)
-        if time.time() >= raise_at:
-            raise RuntimeError("Timed out")
+    psutil.Process(pid)
+    if WINDOWS:
+        # give it some more time to allow better initialization
+        time.sleep(0.01)
 
 
-def wait_for_file(fname, timeout=GLOBAL_TIMEOUT, delete_file=True):
-    """Wait for a file to be written on disk."""
-    stop_at = time.time() + timeout
-    while time.time() < stop_at:
-        try:
-            with open(fname, "r") as f:
-                data = f.read()
-            if not data:
-                continue
-            if delete_file:
-                os.remove(fname)
-            return data
-        except IOError:
-            time.sleep(0.001)
-    raise RuntimeError(
-        "timed out after %s secs (couldn't read file)" % timeout)
+@retry(exception=(EnvironmentError, AssertionError), logfun=None,
+       timeout=GLOBAL_TIMEOUT, interval=0.001)
+def wait_for_file(fname, delete_file=True, empty=False):
+    """Wait for a file to be written on disk with some content."""
+    with open(fname, "rb") as f:
+        data = f.read()
+    if not empty:
+        assert data
+    if delete_file:
+        os.remove(fname)
+    return data
 
 
-def call_until(fun, expr, timeout=GLOBAL_TIMEOUT):
+@retry(exception=AssertionError, logfun=None, timeout=GLOBAL_TIMEOUT,
+       interval=0.001)
+def call_until(fun, expr):
     """Keep calling function for timeout secs and exit if eval()
     expression is True.
     """
-    stop_at = time.time() + timeout
-    while time.time() < stop_at:
-        ret = fun()
-        if eval(expr):
-            return ret
-        time.sleep(0.001)
-    raise RuntimeError('timed out after %s secs (ret=%r)' % (timeout, ret))
+    ret = fun()
+    assert eval(expr)
+    return ret
 
 
 # ===================================================================
@@ -417,22 +455,14 @@ def call_until(fun, expr, timeout=GLOBAL_TIMEOUT):
 # ===================================================================
 
 
-def safe_remove(file):
-    "Convenience function for removing temporary test files"
+def safe_rmpath(path):
+    "Convenience function for removing temporary test files or dirs"
     try:
-        os.remove(file)
-    except OSError as err:
-        if err.errno != errno.ENOENT:
-            # # file is being used by another process
-            # if WINDOWS and isinstance(err, WindowsError) and err.errno == 13:
-            #     return
-            raise
-
-
-def safe_rmdir(dir):
-    "Convenience function for removing temporary test directories"
-    try:
-        os.rmdir(dir)
+        st = os.stat(path)
+        if stat.S_ISDIR(st.st_mode):
+            os.rmdir(path)
+        else:
+            os.remove(path)
     except OSError as err:
         if err.errno != errno.ENOENT:
             raise
@@ -440,7 +470,7 @@ def safe_rmdir(dir):
 
 @contextlib.contextmanager
 def chdir(dirname):
-    """Context manager which temporarily changes the current directory."""
+    "Context manager which temporarily changes the current directory."
     curdir = os.getcwd()
     try:
         os.chdir(dirname)
@@ -449,31 +479,50 @@ def chdir(dirname):
         os.chdir(curdir)
 
 
+def create_temp_executable_file(suffix, c_code=None):
+    def create_temp_file(suffix=None):
+        tmpdir = None
+        if TRAVIS and OSX:
+            tmpdir = "/private/tmp"
+        fd, path = tempfile.mkstemp(
+            prefix=TESTFILE_PREFIX, suffix=suffix, dir=tmpdir)
+        os.close(fd)
+        return path
+
+    exe_file = create_temp_file(suffix=suffix)
+    if which("gcc"):
+        if c_code is None:
+            c_code = textwrap.dedent(
+                """
+                #include <unistd.h>
+                void main() {
+                    pause();
+                }
+                """)
+        c_file = create_temp_file(suffix=".c")
+        with open(c_file, "w") as f:
+            f.write(c_code)
+        subprocess.check_call(["gcc", c_file, "-o", exe_file])
+        safe_rmpath(c_file)
+    else:
+        # fallback - use python's executable
+        shutil.copyfile(sys.executable, exe_file)
+        if POSIX:
+            st = os.stat(exe_file)
+            os.chmod(exe_file, st.st_mode | stat.S_IEXEC)
+    return exe_file
+
+
 # ===================================================================
 # --- testing
 # ===================================================================
 
 
-def retry_before_failing(ntimes=None):
+def retry_before_failing(retries=NO_RETRIES):
     """Decorator which runs a test function and retries N times before
     actually failing.
     """
-    def decorator(fun):
-        @functools.wraps(fun)
-        def wrapper(*args, **kwargs):
-            times = ntimes or NO_RETRIES
-            assert times, times
-            for x in range(times):
-                try:
-                    return fun(*args, **kwargs)
-                except AssertionError as _:
-                    err = _
-            if PY3:
-                raise err
-            else:
-                raise
-        return wrapper
-    return decorator
+    return retry(exception=AssertionError, timeout=None, retries=retries)
 
 
 def run_test_module_by_name(name):
@@ -608,48 +657,16 @@ def check_connection_ntuple(conn):
                     assert dupsock.type == conn.type
 
 
-def create_temp_executable_file(suffix, c_code=None):
-    tmpdir = None
-    if TRAVIS and OSX:
-        tmpdir = "/private/tmp"
-    fd, path = tempfile.mkstemp(
-        prefix='psu', suffix=suffix, dir=tmpdir)
-    os.close(fd)
-
-    if which("gcc"):
-        if c_code is None:
-            c_code = textwrap.dedent(
-                """
-                #include <unistd.h>
-                void main() {
-                    pause();
-                }
-                """)
-        fd, c_file = tempfile.mkstemp(
-            prefix='psu', suffix='.c', dir=tmpdir)
-        os.close(fd)
-        with open(c_file, "w") as f:
-            f.write(c_code)
-        subprocess.check_call(["gcc", c_file, "-o", path])
-        safe_remove(c_file)
-    else:
-        # fallback - use python's executable
-        shutil.copyfile(sys.executable, path)
-        if POSIX:
-            st = os.stat(path)
-            os.chmod(path, st.st_mode | stat.S_IEXEC)
-    return path
-
-
 def cleanup():
     reap_children(recursive=True)
-    safe_remove(TESTFN)
+    safe_rmpath(TESTFN)
     try:
-        safe_rmdir(TESTFN_UNICODE)
+        safe_rmpath(TESTFN_UNICODE)
     except UnicodeEncodeError:
         pass
     for path in _testfiles:
-        safe_remove(path)
+        safe_rmpath(path)
+
 
 atexit.register(cleanup)
 atexit.register(lambda: DEVNULL.close())

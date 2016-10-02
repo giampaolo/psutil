@@ -36,7 +36,7 @@ from psutil.tests import pyrun
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
-from psutil.tests import safe_remove
+from psutil.tests import safe_rmpath
 from psutil.tests import sh
 from psutil.tests import skip_on_not_implemented
 from psutil.tests import TESTFN
@@ -268,7 +268,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
 
     def test_avail_old_percent(self):
         # Make sure that our calculation of avail mem for old kernels
-        # is off by max 2%.
+        # is off by max 5%.
         from psutil._pslinux import calculate_avail_vmem
         from psutil._pslinux import open_binary
 
@@ -282,7 +282,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
         if b'MemAvailable:' in mems:
             b = mems[b'MemAvailable:']
             diff_percent = abs(a - b) / a * 100
-            self.assertLess(diff_percent, 2)
+            self.assertLess(diff_percent, 5)
 
     def test_avail_old_comes_from_kernel(self):
         # Make sure "MemAvailable:" coluimn is used instead of relying
@@ -997,7 +997,7 @@ class TestMisc(unittest.TestCase):
 class TestProcess(unittest.TestCase):
 
     def setUp(self):
-        safe_remove(TESTFN)
+        safe_rmpath(TESTFN)
 
     tearDown = setUp
 
@@ -1007,47 +1007,42 @@ class TestProcess(unittest.TestCase):
         # For all those cases we check that the value found in
         # /proc/pid/stat (by psutil) matches the one found in
         # /proc/pid/status.
-        for p in psutil.process_iter():
-            try:
-                f = psutil._psplatform.open_text('/proc/%s/status' % p.pid)
-            except IOError:
-                pass
-            else:
-                with f:
-                    for line in f:
-                        line = line.strip()
-                        if line.startswith('Name:'):
-                            name = line.split()[1]
-                            # Name is truncated to 15 chars
-                            self.assertEqual(p.name()[:15], name[:15])
-                        elif line.startswith('State:'):
-                            status = line[line.find('(') + 1:line.rfind(')')]
-                            status = status.replace(' ', '-')
-                            self.assertEqual(p.status(), status)
-                        elif line.startswith('PPid:'):
-                            ppid = int(line.split()[1])
-                            self.assertEqual(p.ppid(), ppid)
-                        # The ones below internally are determined by reading
-                        # 'status' file but we use a re to extract the info
-                        # so it makes sense to check them.
-                        elif line.startswith('Threads:'):
-                            num_threads = int(line.split()[1])
-                            self.assertEqual(p.num_threads(), num_threads)
-                        elif line.startswith('Uid:'):
-                            uids = tuple(map(int, line.split()[1:4]))
-                            self.assertEqual(tuple(p.uids()), uids)
-                        elif line.startswith('Gid:'):
-                            gids = tuple(map(int, line.split()[1:4]))
-                            self.assertEqual(tuple(p.gids()), gids)
-                        elif line.startswith('voluntary_ctxt_switches:'):
-                            vol = int(line.split()[1])
-                            self.assertAlmostEqual(
-                                p.num_ctx_switches().voluntary, vol, delta=2)
-                        elif line.startswith('nonvoluntary_ctxt_switches:'):
-                            invol = int(line.split()[1])
-                            self.assertAlmostEqual(
-                                p.num_ctx_switches().involuntary, invol,
-                                delta=2)
+        p = psutil.Process()
+        with psutil._psplatform.open_text('/proc/%s/status' % p.pid) as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('Name:'):
+                    name = line.split()[1]
+                    # Name is truncated to 15 chars
+                    self.assertEqual(p.name()[:15], name[:15])
+                elif line.startswith('State:'):
+                    status = line[line.find('(') + 1:line.rfind(')')]
+                    status = status.replace(' ', '-')
+                    self.assertEqual(p.status(), status)
+                elif line.startswith('PPid:'):
+                    ppid = int(line.split()[1])
+                    self.assertEqual(p.ppid(), ppid)
+                # The ones below internally are determined by reading
+                # 'status' file but we use a re to extract the info
+                # so it makes sense to check them.
+                elif line.startswith('Threads:'):
+                    num_threads = int(line.split()[1])
+                    self.assertEqual(p.num_threads(), num_threads)
+                elif line.startswith('Uid:'):
+                    uids = tuple(map(int, line.split()[1:4]))
+                    self.assertEqual(tuple(p.uids()), uids)
+                elif line.startswith('Gid:'):
+                    gids = tuple(map(int, line.split()[1:4]))
+                    self.assertEqual(tuple(p.gids()), gids)
+                elif line.startswith('voluntary_ctxt_switches:'):
+                    vol = int(line.split()[1])
+                    self.assertAlmostEqual(
+                        p.num_ctx_switches().voluntary, vol, delta=2)
+                elif line.startswith('nonvoluntary_ctxt_switches:'):
+                    invol = int(line.split()[1])
+                    self.assertAlmostEqual(
+                        p.num_ctx_switches().involuntary, invol,
+                        delta=2)
 
     def test_memory_full_info(self):
         src = textwrap.dedent("""
@@ -1100,10 +1095,10 @@ class TestProcess(unittest.TestCase):
             self.assertEqual(get_test_file().mode, "a+")
         # note: "x" bit is not supported
         if PY3:
-            safe_remove(TESTFN)
+            safe_rmpath(TESTFN)
             with open(TESTFN, "x"):
                 self.assertEqual(get_test_file().mode, "w")
-            safe_remove(TESTFN)
+            safe_rmpath(TESTFN)
             with open(TESTFN, "x+"):
                 self.assertEqual(get_test_file().mode, "r+")
 

@@ -4,15 +4,24 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 4.4.0 - XXXX-XX-XX
 ==================
 
-**Bug fixes**
+**Enhancements**
 
-- #798: [Windows] Process.open_files() returns and empty list on Windows 10.
-- #880: [Windows] Handle race condition inside psutil_net_connections.
-- #885: ValueError is raised if a negative integer is passed to cpu_percent()
-  functions.
+- #874: [Windows] net_if_addrs() returns also the netmask.
 - #887: [Linux] virtual_memory()'s 'available' and 'used' values are more
   precise and match "free" cmdline utility.  "available" also takes into
   account LCX containers preventing "available" to overflow "total".
+- #891: procinfo.py script has been updated and provides a lot more info.
+
+**Bug fixes**
+
+- #798: [Windows] Process.open_files() returns and empty list on Windows 10.
+- #825: [Linux] cpu_affinity; fix possible double close and use of unopened
+  socket.
+- #880: [Windows] Handle race condition inside psutil_net_connections.
+- #885: ValueError is raised if a negative integer is passed to cpu_percent()
+  functions.
+- #892: [Linux] Process.cpu_affinity([-1]) raise SystemError with no error
+  set; now ValueError is raised.
 
 
 4.3.1 - 2016-09-01
