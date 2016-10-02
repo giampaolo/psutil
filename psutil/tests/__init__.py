@@ -480,13 +480,16 @@ def chdir(dirname):
 
 
 def create_temp_executable_file(suffix, c_code=None):
-    tmpdir = None
-    if TRAVIS and OSX:
-        tmpdir = "/private/tmp"
-    fd, path = tempfile.mkstemp(
-        prefix=TESTFILE_PREFIX, suffix=suffix, dir=tmpdir)
-    os.close(fd)
+    def create_temp_file(suffix=None):
+        tmpdir = None
+        if TRAVIS and OSX:
+            tmpdir = "/private/tmp"
+        fd, path = tempfile.mkstemp(
+            prefix=TESTFILE_PREFIX, suffix=suffix, dir=tmpdir)
+        os.close(fd)
+        return path
 
+    exe_file = create_temp_file(suffix=suffix)
     if which("gcc"):
         if c_code is None:
             c_code = textwrap.dedent(
@@ -496,20 +499,18 @@ def create_temp_executable_file(suffix, c_code=None):
                     pause();
                 }
                 """)
-        fd, c_file = tempfile.mkstemp(
-            prefix=TESTFILE_PREFIX, suffix='.c', dir=tmpdir)
-        os.close(fd)
+        c_file = create_temp_file(suffix=".c")
         with open(c_file, "w") as f:
             f.write(c_code)
-        subprocess.check_call(["gcc", c_file, "-o", path])
+        subprocess.check_call(["gcc", c_file, "-o", exe_file])
         safe_rmpath(c_file)
     else:
         # fallback - use python's executable
-        shutil.copyfile(sys.executable, path)
+        shutil.copyfile(sys.executable, exe_file)
         if POSIX:
-            st = os.stat(path)
-            os.chmod(path, st.st_mode | stat.S_IEXEC)
-    return path
+            st = os.stat(exe_file)
+            os.chmod(exe_file, st.st_mode | stat.S_IEXEC)
+    return exe_file
 
 
 # ===================================================================
