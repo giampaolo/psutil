@@ -95,6 +95,39 @@ psutil_winpath_to_cygpath(PyObject *self, PyObject *args) {
 }
 
 
+/* TODO: Copied almost verbatim (_tcscmp -> wcscmp, _stprintf_s -> snprintf,
+ * _countof -> sizeof) so consider moving this into arch/windows or something
+ */
+/*
+ Accept a filename's drive in native  format like "\Device\HarddiskVolume1\"
+ and return the corresponding drive letter (e.g. "C:\\").
+ If no match is found return an empty string.
+*/
+static PyObject *
+psutil_win32_QueryDosDevice(PyObject *self, PyObject *args) {
+    LPCTSTR   lpDevicePath;
+    TCHAR d = TEXT('A');
+    TCHAR     szBuff[5];
+
+    if (!PyArg_ParseTuple(args, "s", &lpDevicePath))
+        return NULL;
+
+    while (d <= TEXT('Z')) {
+        TCHAR szDeviceName[3] = {d, TEXT(':'), TEXT('\0')};
+        TCHAR szTarget[512] = {0};
+        if (QueryDosDevice(szDeviceName, szTarget, 511) != 0) {
+            if (wcscmp(lpDevicePath, szTarget) == 0) {
+                snprintf(szBuff, sizeof(szBuff), TEXT("%c:"), d);
+                return Py_BuildValue("s", szBuff);
+            }
+        }
+        d++;
+    }
+    return Py_BuildValue("s", "");
+}
+
+
+
 /* TODO: Copied verbatim from the Linux module; refactor */
 /*
  * Return disk mounted partitions as a list of tuples including device,
@@ -1144,6 +1177,12 @@ PsutilMethods[] = {
      "Return process CPU affinity as a bitmask."},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
      "Set process CPU affinity."},
+    {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
+     "Return a list of process's memory mappings"},
+
+    // --- windows API bindings
+    {"win32_QueryDosDevice", psutil_win32_QueryDosDevice, METH_VARARGS,
+     "QueryDosDevice binding"},
     {NULL, NULL, 0, NULL}
 };
 
@@ -1234,6 +1273,11 @@ void init_psutil_cygwin(void)
         module, "MIB_TCP_STATE_DELETE_TCB", MIB_TCP_STATE_DELETE_TCB);
     PyModule_AddIntConstant(
         module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
+
+    /* TODO: More Windows constants that are defined as module constants
+     * Used both in the cygwin module (for now) and the windows module */
+    PyModule_AddIntConstant(
+        module, "ERROR_ACCESS_DENIED", ERROR_ACCESS_DENIED);
 
     if (module == NULL)
         INITERROR;

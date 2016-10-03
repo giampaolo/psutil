@@ -29,6 +29,7 @@ from ._common import usage_percent
 from ._common import wrap_exceptions
 from ._compat import PY3
 from ._compat import b
+from ._compat import lru_cache
 
 if sys.version_info >= (3, 4):
     import enum
@@ -122,6 +123,24 @@ def cygpid_to_winpid(pid):
         return int(f.readline().strip())
 
 
+@lru_cache(maxsize=512)
+def _win32_QueryDosDevice(s):
+    return cext.win32_QueryDosDevice(s)
+
+
+# TODO: Copied almost verbatim from the windows module, except don't
+# us os.path.join since that uses posix sep
+def convert_dos_path(s):
+    # convert paths using native DOS format like:
+    # "\Device\HarddiskVolume1\Windows\systemew\file.txt"
+    # into: "C:\Windows\systemew\file.txt"
+    if PY3 and not isinstance(s, str):
+        s = s.decode('utf8')
+    rawdrive = '\\'.join(s.split('\\')[:3])
+    driveletter = _win32_QueryDosDevice(rawdrive)
+    return '%s\\%s' % (driveletter, s[len(rawdrive):])
+
+
 # =====================================================================
 # --- named tuples
 # =====================================================================
@@ -134,6 +153,7 @@ pmem = namedtuple('pmem', ['rss', 'vms', 'shared', 'text', 'lib', 'data',
 # Cygwin
 pfullmem = namedtuple('pfullmem', pmem._fields)
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
+pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
 
 
 # =====================================================================
@@ -572,8 +592,21 @@ class Process(object):
     memory_full_info = memory_info
 
     def memory_maps(self):
-        raise NotImplementedError("memory_maps not implemented on Cygwin "
-                                  "(yet)")
+        try:
+            raw = cext.proc_memory_maps(self._winpid)
+        except OSError as err:
+            # XXX - can't use wrap_exceptions decorator as we're
+            # returning a generator; probably needs refactoring.
+            if err.errno in ACCESS_DENIED_SET:
+                raise AccessDenied(self.pid, self._name)
+            if err.errno == errno.ESRCH:
+                raise NoSuchProcess(self.pid, self._name)
+            raise
+        else:
+            for addr, perm, path, rss in raw:
+                path = cext.winpath_to_cygpath(convert_dos_path(path))
+                addr = hex(addr)
+                yield (addr, perm, path, rss)
 
     @wrap_exceptions
     def cwd(self):
