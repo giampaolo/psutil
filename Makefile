@@ -204,7 +204,7 @@ upload-doc:
 
 # Download exes/wheels hosted on appveyor.
 win-download-exes:
-	$(PYTHON) .ci/appveyor/download_exes.py --user giampaolo --project psutil
+	$(PYTHON) scripts/internal/download_exes.py --user giampaolo --project psutil
 
 # Upload exes/wheels in dist/* directory to PYPI.
 win-upload-exes:
@@ -245,6 +245,3 @@ print-announce:
 
 grep-todos:
 	git grep -EIn "TODO|FIXME|XXX"
-
-find-broken-links:
-	git ls-files | xargs $(PYTHON) scripts/internal/find_broken_links.py
