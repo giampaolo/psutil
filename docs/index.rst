@@ -1148,7 +1148,11 @@ Process class
 
     - **dirty** *(Linux)*: the number of dirty pages.
 
-    For Windows fields rely on
+    - **pfaults** *(OSX)*: number of page faults.
+
+    - **pageins** *(OSX)*: number of actual pageins.
+
+    For on explanation of Windows fields rely on
     `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure doc.
     Example on Linux:
 
