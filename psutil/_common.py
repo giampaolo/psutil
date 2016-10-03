@@ -374,10 +374,12 @@ def open_binary(fname, **kwargs):
     return open(fname, "rb", **kwargs)
 
 
-if PY3:
-    _FS_ENCODING = sys.getfilesystemencoding()
-    _ENCODING_ERRORS_HANDLER = 'surrogateescape'
+_FS_ENCODING = sys.getfilesystemencoding()
+_ENCODING_ERRORS_HANDLER = 'surrogateescape'
 
+
+# TODO: Move some of these functions to ._compat since they're more for py2/3
+# compatibility than anything else
 
 def open_text(fname, **kwargs):
     """On Python 3 opens a file in text mode by using fs encoding and
@@ -399,6 +401,22 @@ if PY3:
 else:
     def decode(s):
         return s
+
+
+if PY3:
+    def encode(s, encoding=_FS_ENCODING):
+        return s
+else:
+    def encode(s, encoding=_FS_ENCODING):
+        if isinstance(s, str):
+            return s
+
+        try:
+            return s.encode(encoding)
+        except UnicodeEncodeError:
+            # Filesystem codec failed, return the plain unicode
+            # string (this should never happen).
+            return s
 
 
 def path_exists_strict(path):

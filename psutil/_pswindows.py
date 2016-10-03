@@ -32,6 +32,7 @@ except ImportError as err:
         raise
 
 from ._common import conn_tmap
+from ._common import encode
 from ._common import isfile_strict
 from ._common import parse_environ_block
 from ._common import sockfam_to_enum
@@ -188,21 +189,6 @@ def convert_dos_path(s):
     return os.path.join(driveletter, s[len(rawdrive):])
 
 
-def py2_strencode(s, encoding=sys.getfilesystemencoding()):
-    """Encode a string in the given encoding. Falls back on returning
-    the string as is if it can't be encoded.
-    """
-    if PY3 or isinstance(s, str):
-        return s
-    else:
-        try:
-            return s.encode(encoding)
-        except UnicodeEncodeError:
-            # Filesystem codec failed, return the plain unicode
-            # string (this should never happen).
-            return s
-
-
 # =====================================================================
 # --- memory
 # =====================================================================
@@ -343,7 +329,7 @@ def net_if_stats():
     """Get NIC stats (isup, duplex, speed, mtu)."""
     ret = cext.net_if_stats()
     for name, items in ret.items():
-        name = py2_strencode(name)
+        name = encode(name)
         isup, duplex, speed, mtu = items
         if hasattr(_common, 'NicDuplex'):
             duplex = _common.NicDuplex(duplex)
@@ -356,7 +342,7 @@ def net_io_counters():
     installed on the system as a dict of raw tuples.
     """
     ret = cext.net_io_counters()
-    return dict([(py2_strencode(k), v) for k, v in ret.items()])
+    return dict([(encode(k), v) for k, v in ret.items()])
 
 
 def net_if_addrs():
@@ -364,7 +350,7 @@ def net_if_addrs():
     ret = []
     for items in cext.net_if_addrs():
         items = list(items)
-        items[0] = py2_strencode(items[0])
+        items[0] = encode(items[0])
         ret.append(items)
     return ret
 
@@ -410,7 +396,7 @@ def users():
     rawlist = cext.users()
     for item in rawlist:
         user, hostname, tstamp = item
-        user = py2_strencode(user)
+        user = encode(user)
         nt = _common.suser(user, None, hostname, tstamp)
         retlist.append(nt)
     return retlist
@@ -669,9 +655,9 @@ class Process(object):
             try:
                 # Note: this will fail with AD for most PIDs owned
                 # by another user but it's faster.
-                return py2_strencode(os.path.basename(self.exe()))
+                return encode(os.path.basename(self.exe()))
             except AccessDenied:
-                return py2_strencode(cext.proc_name(self.pid))
+                return encode(cext.proc_name(self.pid))
 
     @wrap_exceptions
     def exe(self):
@@ -683,7 +669,7 @@ class Process(object):
         # see https://github.com/giampaolo/psutil/issues/528
         if self.pid in (0, 4):
             raise AccessDenied(self.pid, self._name)
-        return py2_strencode(convert_dos_path(cext.proc_exe(self.pid)))
+        return encode(convert_dos_path(cext.proc_exe(self.pid)))
 
     @wrap_exceptions
     def cmdline(self):
@@ -691,7 +677,7 @@ class Process(object):
         if PY3:
             return ret
         else:
-            return [py2_strencode(s) for s in ret]
+            return [encode(s) for s in ret]
 
     @wrap_exceptions
     def environ(self):
@@ -838,7 +824,7 @@ class Process(object):
         # return a normalized pathname since the native C function appends
         # "\\" at the and of the path
         path = cext.proc_cwd(self.pid)
-        return py2_strencode(os.path.normpath(path))
+        return encode(os.path.normpath(path))
 
     @wrap_exceptions
     def open_files(self):
@@ -854,7 +840,7 @@ class Process(object):
             _file = convert_dos_path(_file)
             if isfile_strict(_file):
                 if not PY3:
-                    _file = py2_strencode(_file)
+                    _file = encode(_file)
                 ntuple = _common.popenfile(_file, -1)
                 ret.add(ntuple)
         return list(ret)

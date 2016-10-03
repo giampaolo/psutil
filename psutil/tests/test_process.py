@@ -37,6 +37,7 @@ from psutil import OSX
 from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
+from psutil._common import encode
 from psutil._common import supports_ipv6
 from psutil._compat import callable
 from psutil._compat import long
@@ -2025,9 +2026,7 @@ class TestUnicode(unittest.TestCase):
     def test_proc_name(self):
         subp = get_test_subprocess(cmd=[self.uexe])
         if WINDOWS:
-            # XXX: why is this like this?
-            from psutil._pswindows import py2_strencode
-            name = py2_strencode(psutil._psplatform.cext.proc_name(subp.pid))
+            name = encode(psutil._psplatform.cext.proc_name(subp.pid))
         else:
             name = psutil.Process(subp.pid).name()
         if not OSX and TRAVIS:
