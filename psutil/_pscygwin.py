@@ -15,6 +15,7 @@ from . import _common
 from . import _psposix
 from . import _psutil_cygwin as cext
 from . import _psutil_posix as cext_posix
+from ._common import conn_tmap
 from ._common import decode
 from ._common import encode
 from ._common import get_procfs_path
@@ -22,6 +23,8 @@ from ._common import isfile_strict
 from ._common import open_binary
 from ._common import open_text
 from ._common import popenfile
+from ._common import sockfam_to_enum
+from ._common import socktype_to_enum
 from ._common import usage_percent
 from ._common import wrap_exceptions
 from ._compat import PY3
@@ -66,6 +69,24 @@ PROC_STATUSES = {
     "x": _common.STATUS_DEAD,
     "K": _common.STATUS_WAKE_KILL,
     "W": _common.STATUS_WAKING
+}
+
+CONN_DELETE_TCB = "DELETE_TCB"
+
+TCP_STATUSES = {
+    cext.MIB_TCP_STATE_ESTAB: _common.CONN_ESTABLISHED,
+    cext.MIB_TCP_STATE_SYN_SENT: _common.CONN_SYN_SENT,
+    cext.MIB_TCP_STATE_SYN_RCVD: _common.CONN_SYN_RECV,
+    cext.MIB_TCP_STATE_FIN_WAIT1: _common.CONN_FIN_WAIT1,
+    cext.MIB_TCP_STATE_FIN_WAIT2: _common.CONN_FIN_WAIT2,
+    cext.MIB_TCP_STATE_TIME_WAIT: _common.CONN_TIME_WAIT,
+    cext.MIB_TCP_STATE_CLOSED: _common.CONN_CLOSE,
+    cext.MIB_TCP_STATE_CLOSE_WAIT: _common.CONN_CLOSE_WAIT,
+    cext.MIB_TCP_STATE_LAST_ACK: _common.CONN_LAST_ACK,
+    cext.MIB_TCP_STATE_LISTEN: _common.CONN_LISTEN,
+    cext.MIB_TCP_STATE_CLOSING: _common.CONN_CLOSING,
+    cext.MIB_TCP_STATE_DELETE_TCB: CONN_DELETE_TCB,
+    cext.PSUTIL_CONN_NONE: _common.CONN_NONE,
 }
 
 
@@ -280,6 +301,29 @@ def cpu_stats():
 # TODO: This might merit a little further work to get the "friendly"
 # interface names instead of interface UUIDs
 net_if_addrs = cext_posix.net_if_addrs
+
+
+def net_connections(kind, _pid=-1):
+    """Return socket connections.  If pid == -1 return system-wide
+    connections (as opposed to connections opened by one process only).
+    """
+    if kind not in conn_tmap:
+        raise ValueError("invalid %r kind argument; choose between %s"
+                         % (kind, ', '.join([repr(x) for x in conn_tmap])))
+    families, types = conn_tmap[kind]
+    rawlist = cext.net_connections(_pid, families, types)
+    ret = set()
+    for item in rawlist:
+        fd, fam, type, laddr, raddr, status, pid = item
+        status = TCP_STATUSES[status]
+        fam = sockfam_to_enum(fam)
+        type = socktype_to_enum(type)
+        if _pid == -1:
+            nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
+        else:
+            nt = _common.pconn(fd, fam, type, laddr, raddr, status)
+        ret.add(nt)
+    return list(ret)
 
 
 def net_if_stats():

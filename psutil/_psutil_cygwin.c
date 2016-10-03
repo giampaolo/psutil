@@ -23,6 +23,23 @@
 #include <mntent.h>
 
 #include "arch/windows/process_info.h"
+#include "_psutil_common.h"
+
+
+/*
+ * ============================================================================
+ * Utilities
+ * ============================================================================
+ */
+
+ // a flag for connections without an actual status
+static int PSUTIL_CONN_NONE = 128;
+#define BYTESWAP_USHORT(x) ((((USHORT)(x) << 8) | ((USHORT)(x) >> 8)) & 0xffff)
+#define _psutil_conn_decref_objs() \
+    Py_DECREF(_AF_INET); \
+    Py_DECREF(_AF_INET6);\
+    Py_DECREF(_SOCK_STREAM);\
+    Py_DECREF(_SOCK_DGRAM);
 
 /* TODO: Copied verbatim from the Linux module; refactor */
 /*
@@ -416,6 +433,537 @@ error:
 }
 
 
+// TODO: _GetExtended(Tcp|Udp)Table are copied straight out of the windows
+// module, and really ought to live somewhere in arch/windows
+
+
+typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
+                                              TCP_TABLE_CLASS, ULONG);
+
+
+// https://msdn.microsoft.com/library/aa365928.aspx
+static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
+                                   ULONG address_family,
+                                   PVOID * data, DWORD * size)
+{
+    // Due to other processes being active on the machine, it's possible
+    // that the size of the table increases between the moment where we
+    // query the size and the moment where we query the data.  Therefore, it's
+    // important to call this in a loop to retry if that happens.
+    //
+    // Also, since we may loop a theoretically unbounded number of times here,
+    // release the GIL while we're doing this.
+    DWORD error = ERROR_INSUFFICIENT_BUFFER;
+    *size = 0;
+    *data = NULL;
+    Py_BEGIN_ALLOW_THREADS;
+    error = call(NULL, size, FALSE, address_family,
+                 TCP_TABLE_OWNER_PID_ALL, 0);
+    while (error == ERROR_INSUFFICIENT_BUFFER)
+    {
+        *data = malloc(*size);
+        if (*data == NULL) {
+            error = ERROR_NOT_ENOUGH_MEMORY;
+            continue;
+        }
+        error = call(*data, size, FALSE, address_family,
+                     TCP_TABLE_OWNER_PID_ALL, 0);
+        if (error != NO_ERROR) {
+            free(*data);
+            *data = NULL;
+        }
+    }
+    Py_END_ALLOW_THREADS;
+    return error;
+}
+
+
+typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
+                                              UDP_TABLE_CLASS, ULONG);
+
+
+// https://msdn.microsoft.com/library/aa365930.aspx
+static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
+                                   ULONG address_family,
+                                   PVOID * data, DWORD * size)
+{
+    // Due to other processes being active on the machine, it's possible
+    // that the size of the table increases between the moment where we
+    // query the size and the moment where we query the data.  Therefore, it's
+    // important to call this in a loop to retry if that happens.
+    //
+    // Also, since we may loop a theoretically unbounded number of times here,
+    // release the GIL while we're doing this.
+    DWORD error = ERROR_INSUFFICIENT_BUFFER;
+    *size = 0;
+    *data = NULL;
+    Py_BEGIN_ALLOW_THREADS;
+    error = call(NULL, size, FALSE, address_family,
+                 UDP_TABLE_OWNER_PID, 0);
+    while (error == ERROR_INSUFFICIENT_BUFFER)
+    {
+        *data = malloc(*size);
+        if (*data == NULL) {
+            error = ERROR_NOT_ENOUGH_MEMORY;
+            continue;
+        }
+        error = call(*data, size, FALSE, address_family,
+                     UDP_TABLE_OWNER_PID, 0);
+        if (error != NO_ERROR) {
+            free(*data);
+            *data = NULL;
+        }
+    }
+    Py_END_ALLOW_THREADS;
+    return error;
+}
+
+
+/*
+ * Return a list of network connections opened by a process
+ */
+static PyObject *
+psutil_net_connections(PyObject *self, PyObject *args) {
+    static long null_address[4] = { 0, 0, 0, 0 };
+    unsigned long pid;
+    typedef PSTR (NTAPI * _RtlIpv4AddressToStringA)(struct in_addr *, PSTR);
+    _RtlIpv4AddressToStringA rtlIpv4AddressToStringA;
+    typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
+    _RtlIpv6AddressToStringA rtlIpv6AddressToStringA;
+    _GetExtendedTcpTable getExtendedTcpTable;
+    _GetExtendedUdpTable getExtendedUdpTable;
+    PVOID table = NULL;
+    DWORD tableSize;
+    DWORD error;
+    PMIB_TCPTABLE_OWNER_PID tcp4Table;
+    PMIB_UDPTABLE_OWNER_PID udp4Table;
+    PMIB_TCP6TABLE_OWNER_PID tcp6Table;
+    PMIB_UDP6TABLE_OWNER_PID udp6Table;
+    ULONG i;
+    CHAR addressBufferLocal[65];
+    CHAR addressBufferRemote[65];
+
+    PyObject *py_retlist;
+    PyObject *py_conn_tuple = NULL;
+    PyObject *py_af_filter = NULL;
+    PyObject *py_type_filter = NULL;
+    PyObject *py_addr_tuple_local = NULL;
+    PyObject *py_addr_tuple_remote = NULL;
+    PyObject *_AF_INET = PyLong_FromLong((long)AF_INET);
+    PyObject *_AF_INET6 = PyLong_FromLong((long)AF_INET6);
+    PyObject *_SOCK_STREAM = PyLong_FromLong((long)SOCK_STREAM);
+    PyObject *_SOCK_DGRAM = PyLong_FromLong((long)SOCK_DGRAM);
+
+    if (! PyArg_ParseTuple(args, "lOO", &pid, &py_af_filter, &py_type_filter))
+    {
+        _psutil_conn_decref_objs();
+        return NULL;
+    }
+
+    if (!PySequence_Check(py_af_filter) || !PySequence_Check(py_type_filter)) {
+        _psutil_conn_decref_objs();
+        PyErr_SetString(PyExc_TypeError, "arg 2 or 3 is not a sequence");
+        return NULL;
+    }
+
+    if (pid != -1) {
+        if (psutil_pid_is_running(pid) == 0) {
+            _psutil_conn_decref_objs();
+            return NoSuchProcess();
+        }
+    }
+
+    // Import some functions.
+    {
+        HMODULE ntdll;
+        HMODULE iphlpapi;
+
+        ntdll = LoadLibrary(TEXT("ntdll.dll"));
+        rtlIpv4AddressToStringA = (_RtlIpv4AddressToStringA)GetProcAddress(
+                                   ntdll, "RtlIpv4AddressToStringA");
+        rtlIpv6AddressToStringA = (_RtlIpv6AddressToStringA)GetProcAddress(
+                                   ntdll, "RtlIpv6AddressToStringA");
+        /* TODO: Check these two function pointers */
+
+        iphlpapi = LoadLibrary(TEXT("iphlpapi.dll"));
+        getExtendedTcpTable = (_GetExtendedTcpTable)GetProcAddress(iphlpapi,
+                              "GetExtendedTcpTable");
+        getExtendedUdpTable = (_GetExtendedUdpTable)GetProcAddress(iphlpapi,
+                              "GetExtendedUdpTable");
+        FreeLibrary(ntdll);
+        FreeLibrary(iphlpapi);
+    }
+
+    if ((getExtendedTcpTable == NULL) || (getExtendedUdpTable == NULL)) {
+        PyErr_SetString(PyExc_NotImplementedError,
+                        "feature not supported on this Windows version");
+        _psutil_conn_decref_objs();
+        return NULL;
+    }
+
+    py_retlist = PyList_New(0);
+    if (py_retlist == NULL) {
+        _psutil_conn_decref_objs();
+        return NULL;
+    }
+
+    // TCP IPv4
+
+    if ((PySequence_Contains(py_af_filter, _AF_INET) == 1) &&
+            (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1))
+    {
+        table = NULL;
+        py_conn_tuple = NULL;
+        py_addr_tuple_local = NULL;
+        py_addr_tuple_remote = NULL;
+        tableSize = 0;
+
+        error = __GetExtendedTcpTable(getExtendedTcpTable,
+                                      AF_INET, &table, &tableSize);
+        if (error == ERROR_NOT_ENOUGH_MEMORY) {
+            PyErr_NoMemory();
+            goto error;
+        }
+
+        if (error == NO_ERROR)
+        {
+            tcp4Table = table;
+
+            for (i = 0; i < tcp4Table->dwNumEntries; i++)
+            {
+                if (pid != -1) {
+                    if (tcp4Table->table[i].dwOwningPid != pid) {
+                        continue;
+                    }
+                }
+
+                if (tcp4Table->table[i].dwLocalAddr != 0 ||
+                        tcp4Table->table[i].dwLocalPort != 0)
+                {
+                    struct in_addr addr;
+
+                    addr.S_un.S_addr = tcp4Table->table[i].dwLocalAddr;
+                    rtlIpv4AddressToStringA(&addr, addressBufferLocal);
+                    py_addr_tuple_local = Py_BuildValue(
+                        "(si)",
+                        addressBufferLocal,
+                        BYTESWAP_USHORT(tcp4Table->table[i].dwLocalPort));
+                }
+                else {
+                    py_addr_tuple_local = PyTuple_New(0);
+                }
+
+                if (py_addr_tuple_local == NULL)
+                    goto error;
+
+                // On Windows <= XP, remote addr is filled even if socket
+                // is in LISTEN mode in which case we just ignore it.
+                if ((tcp4Table->table[i].dwRemoteAddr != 0 ||
+                        tcp4Table->table[i].dwRemotePort != 0) &&
+                        (tcp4Table->table[i].dwState != MIB_TCP_STATE_LISTEN))
+                {
+                    struct in_addr addr;
+
+                    addr.S_un.S_addr = tcp4Table->table[i].dwRemoteAddr;
+                    rtlIpv4AddressToStringA(&addr, addressBufferRemote);
+                    py_addr_tuple_remote = Py_BuildValue(
+                        "(si)",
+                        addressBufferRemote,
+                        BYTESWAP_USHORT(tcp4Table->table[i].dwRemotePort));
+                }
+                else
+                {
+                    py_addr_tuple_remote = PyTuple_New(0);
+                }
+
+                if (py_addr_tuple_remote == NULL)
+                    goto error;
+
+                py_conn_tuple = Py_BuildValue(
+                    "(iiiNNiI)",
+                    -1,
+                    AF_INET,
+                    SOCK_STREAM,
+                    py_addr_tuple_local,
+                    py_addr_tuple_remote,
+                    tcp4Table->table[i].dwState,
+                    tcp4Table->table[i].dwOwningPid);
+                if (!py_conn_tuple)
+                    goto error;
+                if (PyList_Append(py_retlist, py_conn_tuple))
+                    goto error;
+                Py_DECREF(py_conn_tuple);
+            }
+        }
+        else {
+            PyErr_SetFromWindowsErr(error);
+            goto error;
+        }
+
+        free(table);
+        table = NULL;
+        tableSize = 0;
+    }
+
+    // TCP IPv6
+    if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1) &&
+            (PySequence_Contains(py_type_filter, _SOCK_STREAM) == 1))
+    {
+        table = NULL;
+        py_conn_tuple = NULL;
+        py_addr_tuple_local = NULL;
+        py_addr_tuple_remote = NULL;
+        tableSize = 0;
+
+        error = __GetExtendedTcpTable(getExtendedTcpTable,
+                                      AF_INET6, &table, &tableSize);
+        if (error == ERROR_NOT_ENOUGH_MEMORY) {
+            PyErr_NoMemory();
+            goto error;
+        }
+
+        if (error == NO_ERROR)
+        {
+            tcp6Table = table;
+
+            for (i = 0; i < tcp6Table->dwNumEntries; i++)
+            {
+                if (pid != -1) {
+                    if (tcp6Table->table[i].dwOwningPid != pid) {
+                        continue;
+                    }
+                }
+
+                if (memcmp(tcp6Table->table[i].ucLocalAddr, null_address, 16)
+                        != 0 || tcp6Table->table[i].dwLocalPort != 0)
+                {
+                    struct in6_addr addr;
+
+                    memcpy(&addr, tcp6Table->table[i].ucLocalAddr, 16);
+                    rtlIpv6AddressToStringA(&addr, addressBufferLocal);
+                    py_addr_tuple_local = Py_BuildValue(
+                        "(si)",
+                        addressBufferLocal,
+                        BYTESWAP_USHORT(tcp6Table->table[i].dwLocalPort));
+                }
+                else {
+                    py_addr_tuple_local = PyTuple_New(0);
+                }
+
+                if (py_addr_tuple_local == NULL)
+                    goto error;
+
+                // On Windows <= XP, remote addr is filled even if socket
+                // is in LISTEN mode in which case we just ignore it.
+                if ((memcmp(tcp6Table->table[i].ucRemoteAddr, null_address, 16)
+                        != 0 ||
+                        tcp6Table->table[i].dwRemotePort != 0) &&
+                        (tcp6Table->table[i].dwState != MIB_TCP_STATE_LISTEN))
+                {
+                    struct in6_addr addr;
+
+                    memcpy(&addr, tcp6Table->table[i].ucRemoteAddr, 16);
+                    rtlIpv6AddressToStringA(&addr, addressBufferRemote);
+                    py_addr_tuple_remote = Py_BuildValue(
+                        "(si)",
+                        addressBufferRemote,
+                        BYTESWAP_USHORT(tcp6Table->table[i].dwRemotePort));
+                }
+                else {
+                    py_addr_tuple_remote = PyTuple_New(0);
+                }
+
+                if (py_addr_tuple_remote == NULL)
+                    goto error;
+
+                py_conn_tuple = Py_BuildValue(
+                    "(iiiNNiI)",
+                    -1,
+                    AF_INET6,
+                    SOCK_STREAM,
+                    py_addr_tuple_local,
+                    py_addr_tuple_remote,
+                    tcp6Table->table[i].dwState,
+                    tcp6Table->table[i].dwOwningPid);
+                if (!py_conn_tuple)
+                    goto error;
+                if (PyList_Append(py_retlist, py_conn_tuple))
+                    goto error;
+                Py_DECREF(py_conn_tuple);
+            }
+        }
+        else {
+            PyErr_SetFromWindowsErr(error);
+            goto error;
+        }
+
+        free(table);
+        table = NULL;
+        tableSize = 0;
+    }
+
+    // UDP IPv4
+
+    if ((PySequence_Contains(py_af_filter, _AF_INET) == 1) &&
+            (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1))
+    {
+        table = NULL;
+        py_conn_tuple = NULL;
+        py_addr_tuple_local = NULL;
+        py_addr_tuple_remote = NULL;
+        tableSize = 0;
+        error = __GetExtendedUdpTable(getExtendedUdpTable,
+                                      AF_INET, &table, &tableSize);
+        if (error == ERROR_NOT_ENOUGH_MEMORY) {
+            PyErr_NoMemory();
+            goto error;
+        }
+
+        if (error == NO_ERROR)
+        {
+            udp4Table = table;
+
+            for (i = 0; i < udp4Table->dwNumEntries; i++)
+            {
+                if (pid != -1) {
+                    if (udp4Table->table[i].dwOwningPid != pid) {
+                        continue;
+                    }
+                }
+
+                if (udp4Table->table[i].dwLocalAddr != 0 ||
+                    udp4Table->table[i].dwLocalPort != 0)
+                {
+                    struct in_addr addr;
+
+                    addr.S_un.S_addr = udp4Table->table[i].dwLocalAddr;
+                    rtlIpv4AddressToStringA(&addr, addressBufferLocal);
+                    py_addr_tuple_local = Py_BuildValue(
+                        "(si)",
+                        addressBufferLocal,
+                        BYTESWAP_USHORT(udp4Table->table[i].dwLocalPort));
+                }
+                else {
+                    py_addr_tuple_local = PyTuple_New(0);
+                }
+
+                if (py_addr_tuple_local == NULL)
+                    goto error;
+
+                py_conn_tuple = Py_BuildValue(
+                    "(iiiNNiI)",
+                    -1,
+                    AF_INET,
+                    SOCK_DGRAM,
+                    py_addr_tuple_local,
+                    PyTuple_New(0),
+                    PSUTIL_CONN_NONE,
+                    udp4Table->table[i].dwOwningPid);
+                if (!py_conn_tuple)
+                    goto error;
+                if (PyList_Append(py_retlist, py_conn_tuple))
+                    goto error;
+                Py_DECREF(py_conn_tuple);
+            }
+        }
+        else {
+            PyErr_SetFromWindowsErr(error);
+            goto error;
+        }
+
+        free(table);
+        table = NULL;
+        tableSize = 0;
+    }
+
+    // UDP IPv6
+
+    if ((PySequence_Contains(py_af_filter, _AF_INET6) == 1) &&
+            (PySequence_Contains(py_type_filter, _SOCK_DGRAM) == 1))
+    {
+        table = NULL;
+        py_conn_tuple = NULL;
+        py_addr_tuple_local = NULL;
+        py_addr_tuple_remote = NULL;
+        tableSize = 0;
+        error = __GetExtendedUdpTable(getExtendedUdpTable,
+                                      AF_INET6, &table, &tableSize);
+        if (error == ERROR_NOT_ENOUGH_MEMORY) {
+            PyErr_NoMemory();
+            goto error;
+        }
+
+        if (error == NO_ERROR)
+        {
+            udp6Table = table;
+
+            for (i = 0; i < udp6Table->dwNumEntries; i++) {
+                if (pid != -1) {
+                    if (udp6Table->table[i].dwOwningPid != pid) {
+                        continue;
+                    }
+                }
+
+                if (memcmp(udp6Table->table[i].ucLocalAddr, null_address, 16)
+                        != 0 || udp6Table->table[i].dwLocalPort != 0)
+                {
+                    struct in6_addr addr;
+
+                    memcpy(&addr, udp6Table->table[i].ucLocalAddr, 16);
+                    rtlIpv6AddressToStringA(&addr, addressBufferLocal);
+                    py_addr_tuple_local = Py_BuildValue(
+                        "(si)",
+                        addressBufferLocal,
+                        BYTESWAP_USHORT(udp6Table->table[i].dwLocalPort));
+                }
+                else {
+                    py_addr_tuple_local = PyTuple_New(0);
+                }
+
+                if (py_addr_tuple_local == NULL)
+                    goto error;
+
+                py_conn_tuple = Py_BuildValue(
+                    "(iiiNNiI)",
+                    -1,
+                    AF_INET6,
+                    SOCK_DGRAM,
+                    py_addr_tuple_local,
+                    PyTuple_New(0),
+                    PSUTIL_CONN_NONE,
+                    udp6Table->table[i].dwOwningPid);
+                if (!py_conn_tuple)
+                    goto error;
+                if (PyList_Append(py_retlist, py_conn_tuple))
+                    goto error;
+                Py_DECREF(py_conn_tuple);
+            }
+        }
+        else {
+            PyErr_SetFromWindowsErr(error);
+            goto error;
+        }
+
+        free(table);
+        table = NULL;
+        tableSize = 0;
+    }
+
+    _psutil_conn_decref_objs();
+    return py_retlist;
+
+error:
+    _psutil_conn_decref_objs();
+    Py_XDECREF(py_conn_tuple);
+    Py_XDECREF(py_addr_tuple_local);
+    Py_XDECREF(py_addr_tuple_remote);
+    Py_DECREF(py_retlist);
+    if (table != NULL)
+        free(table);
+    return NULL;
+}
+
+
 /*
  * define the psutil C module methods and initialize the module.
  */
@@ -424,6 +972,8 @@ PsutilMethods[] = {
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk mounted partitions as a list of tuples including "
      "device, mount point and filesystem type"},
+    {"net_connections", psutil_net_connections, METH_VARARGS,
+     "Return system-wide connections"},
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
      "Return NICs stats."},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
@@ -488,6 +1038,40 @@ void init_psutil_cygwin(void)
 #endif
 
     PyModule_AddIntConstant(module, "version", PSUTIL_VERSION);
+
+    // TODO: Copied verbatim from the Windows module; there ought to be a
+    // a function implementing these constants that can be shared between
+    // the two modules...
+    // connection status constants
+    // http://msdn.microsoft.com/en-us/library/cc669305.aspx
+    PyModule_AddIntConstant(
+        module, "MIB_TCP_STATE_CLOSED", MIB_TCP_STATE_CLOSED);
+    PyModule_AddIntConstant(
+        module, "MIB_TCP_STATE_CLOSING", MIB_TCP_STATE_CLOSING);
+    PyModule_AddIntConstant(
+        module, "MIB_TCP_STATE_CLOSE_WAIT", MIB_TCP_STATE_CLOSE_WAIT);
+    PyModule_AddIntConstant(
+        module, "MIB_TCP_STATE_LISTEN", MIB_TCP_STATE_LISTEN);
+    PyModule_AddIntConstant(
+        module, "MIB_TCP_STATE_ESTAB", MIB_TCP_STATE_ESTAB);
+    PyModule_AddIntConstant(
+        module, "MIB_TCP_STATE_SYN_SENT", MIB_TCP_STATE_SYN_SENT);
+    PyModule_AddIntConstant(
+        module, "MIB_TCP_STATE_SYN_RCVD", MIB_TCP_STATE_SYN_RCVD);
+    PyModule_AddIntConstant(
+        module, "MIB_TCP_STATE_FIN_WAIT1", MIB_TCP_STATE_FIN_WAIT1);
+    PyModule_AddIntConstant(
+        module, "MIB_TCP_STATE_FIN_WAIT2", MIB_TCP_STATE_FIN_WAIT2);
+    PyModule_AddIntConstant(
+        module, "MIB_TCP_STATE_LAST_ACK", MIB_TCP_STATE_LAST_ACK);
+    PyModule_AddIntConstant(
+        module, "MIB_TCP_STATE_TIME_WAIT", MIB_TCP_STATE_TIME_WAIT);
+    PyModule_AddIntConstant(
+        module, "MIB_TCP_STATE_TIME_WAIT", MIB_TCP_STATE_TIME_WAIT);
+    PyModule_AddIntConstant(
+        module, "MIB_TCP_STATE_DELETE_TCB", MIB_TCP_STATE_DELETE_TCB);
+    PyModule_AddIntConstant(
+        module, "PSUTIL_CONN_NONE", PSUTIL_CONN_NONE);
 
     if (module == NULL)
         INITERROR;
