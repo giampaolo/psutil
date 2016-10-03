@@ -2,6 +2,20 @@
 
 #include <windows.h>
 #include <winsock2.h>
+
+/* On Cygwin, mprapi.h is missing a necessary include of wincrypt.h
+ * which is needed to define some types, so we include it here since
+ * iphlpapi.h includes iprtrmib.h which in turn includes mprapi.h
+ */
+#include <wincrypt.h>
+
+/* TODO: There are some structs defined in netioapi.h that are only defined in
+ * ws2ipdef.h has been included; however, for reasons unknown to me currently,
+ * the headers included with Cygwin deliberately do not include ws2ipdef.h
+ * when compiling for Cygwin.  For now I include it manually which seems to work
+ * but it would be good to track down why this was in the first place.
+ */
+#include <ws2ipdef.h>
 #include <iphlpapi.h>
 
 #include <Python.h>
@@ -292,6 +306,117 @@ error:
 
 
 /*
+ * Return a Python list of named tuples with overall network I/O information
+ */
+static PyObject *
+psutil_net_io_counters(PyObject *self, PyObject *args) {
+    DWORD dwRetVal = 0;
+
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
+    MIB_IF_ROW2 *pIfRow = NULL;
+#else // Windows XP
+    MIB_IFROW *pIfRow = NULL;
+#endif
+
+    PIP_ADAPTER_ADDRESSES pAddresses = NULL;
+    PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
+    PyObject *py_retdict = PyDict_New();
+    PyObject *py_nic_info = NULL;
+    PyObject *py_nic_name = NULL;
+
+    if (py_retdict == NULL)
+        return NULL;
+    pAddresses = psutil_get_nic_addresses();
+    if (pAddresses == NULL)
+        goto error;
+    pCurrAddresses = pAddresses;
+
+    while (pCurrAddresses) {
+        py_nic_name = NULL;
+        py_nic_info = NULL;
+
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
+        pIfRow = (MIB_IF_ROW2 *) malloc(sizeof(MIB_IF_ROW2));
+#else // Windows XP
+        pIfRow = (MIB_IFROW *) malloc(sizeof(MIB_IFROW));
+#endif
+
+        if (pIfRow == NULL) {
+            PyErr_NoMemory();
+            goto error;
+        }
+
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
+        SecureZeroMemory((PVOID)pIfRow, sizeof(MIB_IF_ROW2));
+        pIfRow->InterfaceIndex = pCurrAddresses->IfIndex;
+        dwRetVal = GetIfEntry2(pIfRow);
+#else // Windows XP
+        pIfRow->dwIndex = pCurrAddresses->IfIndex;
+        dwRetVal = GetIfEntry(pIfRow);
+#endif
+
+        if (dwRetVal != NO_ERROR) {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "GetIfEntry() or GetIfEntry2() failed.");
+            goto error;
+        }
+
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
+        py_nic_info = Py_BuildValue("(KKKKKKKK)",
+                                    pIfRow->OutOctets,
+                                    pIfRow->InOctets,
+                                    pIfRow->OutUcastPkts,
+                                    pIfRow->InUcastPkts,
+                                    pIfRow->InErrors,
+                                    pIfRow->OutErrors,
+                                    pIfRow->InDiscards,
+                                    pIfRow->OutDiscards);
+#else // Windows XP
+        py_nic_info = Py_BuildValue("(kkkkkkkk)",
+                                    pIfRow->dwOutOctets,
+                                    pIfRow->dwInOctets,
+                                    pIfRow->dwOutUcastPkts,
+                                    pIfRow->dwInUcastPkts,
+                                    pIfRow->dwInErrors,
+                                    pIfRow->dwOutErrors,
+                                    pIfRow->dwInDiscards,
+                                    pIfRow->dwOutDiscards);
+#endif
+
+        if (!py_nic_info)
+            goto error;
+
+        py_nic_name = PyUnicode_FromWideChar(
+            pCurrAddresses->FriendlyName,
+            wcslen(pCurrAddresses->FriendlyName));
+
+        if (py_nic_name == NULL)
+            goto error;
+        if (PyDict_SetItem(py_retdict, py_nic_name, py_nic_info))
+            goto error;
+        Py_XDECREF(py_nic_name);
+        Py_XDECREF(py_nic_info);
+
+        free(pIfRow);
+        pCurrAddresses = pCurrAddresses->Next;
+    }
+
+    free(pAddresses);
+    return py_retdict;
+
+error:
+    Py_XDECREF(py_nic_name);
+    Py_XDECREF(py_nic_info);
+    Py_DECREF(py_retdict);
+    if (pAddresses != NULL)
+        free(pAddresses);
+    if (pIfRow != NULL)
+        free(pIfRow);
+    return NULL;
+}
+
+
+/*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
@@ -299,12 +424,14 @@ PsutilMethods[] = {
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk mounted partitions as a list of tuples including "
      "device, mount point and filesystem type"},
+    {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
+     "Return NICs stats."},
+    {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
+     "Return dict of tuples of networks I/O information."},
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
      "Return process CPU affinity as a bitmask."},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
      "Set process CPU affinity."},
-    {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
-     "Return NICs stats."},
     {NULL, NULL, 0, NULL}
 };
 

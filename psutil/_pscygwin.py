@@ -293,6 +293,11 @@ def net_if_stats():
     return ret
 
 
+def net_io_counters():
+    ret = cext.net_io_counters()
+    return dict([(encode(k), v) for k, v in ret.items()])
+
+
 # =====================================================================
 # --- disks
 # =====================================================================

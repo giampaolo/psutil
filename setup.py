@@ -236,6 +236,22 @@ elif CYGWIN:
         ("PSUTIL_CYGWIN", 1),
         ("PSAPI_VERSION", 1)
     ])
+
+    # sys.getwindowsversion() is not available in Cygwin's Python
+    import re
+    import subprocess
+    winver_re = re.compile(br'\[Version (?P<major>\d+)\.(?P<minor>\d+)\.'
+                           br'(?P<build>\d+)\]')
+
+    def get_winver():
+        verstr = subprocess.check_output(['cmd', '/c', 'ver'])
+        m = winver_re.search(verstr)
+        maj = int(m.group('major'))
+        min = int(m.group('minor'))
+        return '0x0%s' % ((maj * 100) + min)
+
+    macros.append(("_WIN32_WINNT", get_winver()))
+
     ext = Extension(
         'psutil._psutil_cygwin',
         sources=['psutil/_psutil_cygwin.c',
