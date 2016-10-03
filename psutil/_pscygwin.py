@@ -637,21 +637,35 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_affinity_get(self):
-        return cext.proc_cpu_affinity_get(self._winpid)
+        def from_bitmask(x):
+            return [i for i in xrange(64) if (1 << i) & x]
+        bitmask = cext.proc_cpu_affinity_get(self._winpid)
+        return from_bitmask(bitmask)
 
     @wrap_exceptions
-    def cpu_affinity_set(self, cpus):
-        try:
-            cext.proc_cpu_affinity_set(self._winpid, cpus)
-        except (OSError, ValueError) as err:
-            if isinstance(err, ValueError) or err.errno == errno.EINVAL:
-                allcpus = tuple(range(len(per_cpu_times())))
-                for cpu in cpus:
-                    if cpu not in allcpus:
-                        raise ValueError(
-                            "invalid CPU number %r; choose between %s" % (
-                                cpu, allcpus))
-            raise
+    def cpu_affinity_set(self, value):
+        def to_bitmask(l):
+            if not l:
+                raise ValueError("invalid argument %r" % l)
+            out = 0
+            for bit in l:
+                out |= 2 ** bit
+            return out
+
+        # SetProcessAffinityMask() states that ERROR_INVALID_PARAMETER
+        # is returned for an invalid CPU but this seems not to be true,
+        # therefore we check CPUs validy beforehand.
+        allcpus = list(range(len(per_cpu_times())))
+        for cpu in value:
+            if cpu not in allcpus:
+                if not isinstance(cpu, (int, long)):
+                    raise TypeError(
+                        "invalid CPU %r; an integer is required" % cpu)
+                else:
+                    raise ValueError("invalid CPU %r" % cpu)
+
+        bitmask = to_bitmask(value)
+        cext.proc_cpu_affinity_set(self._winpid, bitmask)
 
     @wrap_exceptions
     def status(self):
