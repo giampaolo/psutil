@@ -77,6 +77,8 @@ if _common.POSIX:
         if platform.release() == '5.10':
             posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
             posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))
+    if 'ANDROID_ROOT' in os.environ:
+        posix_extension.sources.append('psutil/arch/android/ifaddrs.c')
 # Windows
 if _common.WINDOWS:
     def get_winver():

@@ -17,6 +17,9 @@
 
 #ifdef PSUTIL_SUNOS10
 #include "arch/solaris/v10/ifaddrs.h"
+#elif defined(__BIONIC__)
+#include "arch/android/ifaddrs.h"
+#include <netinet/in.h>
 #else
 #include <ifaddrs.h>
 #endif
