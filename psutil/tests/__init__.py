@@ -486,7 +486,7 @@ def create_temp_executable_file(suffix, c_code=None):
         fd, path = tempfile.mkstemp(
             prefix=TESTFILE_PREFIX, suffix=suffix, dir=tmpdir)
         os.close(fd)
-        return path
+        return os.path.realpath(path)
 
     exe_file = create_temp_file(suffix=suffix)
     if which("gcc"):

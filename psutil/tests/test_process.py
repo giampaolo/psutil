@@ -1531,9 +1531,12 @@ class TestFetchAllProcesses(unittest.TestCase):
     def setUp(self):
         if POSIX:
             import pwd
-            pall = pwd.getpwall()
-            self._uids = set([x.pw_uid for x in pall])
-            self._usernames = set([x.pw_name for x in pall])
+            import grp
+            users = pwd.getpwall()
+            groups = grp.getgrall()
+            self.all_uids = set([x.pw_uid for x in users])
+            self.all_usernames = set([x.pw_name for x in users])
+            self.all_gids = set([x.gr_gid for x in groups])
 
     def test_fetch_all(self):
         valid_procs = 0
@@ -1644,20 +1647,21 @@ class TestFetchAllProcesses(unittest.TestCase):
 
     def uids(self, ret, proc):
         for uid in ret:
-            self.assertTrue(uid >= 0)
-            self.assertIn(uid, self._uids)
+            self.assertGreaterEqual(uid, 0)
+            self.assertIn(uid, self.all_uids)
 
     def gids(self, ret, proc):
         # note: testing all gids as above seems not to be reliable for
         # gid == 30 (nodoby); not sure why.
         for gid in ret:
-            self.assertTrue(gid >= 0)
-            # self.assertIn(uid, self.gids
+            if not OSX:
+                self.assertGreaterEqual(gid, 0)
+                self.assertIn(gid, self.all_gids)
 
     def username(self, ret, proc):
         self.assertTrue(ret)
         if POSIX:
-            self.assertIn(ret, self._usernames)
+            self.assertIn(ret, self.all_usernames)
 
     def status(self, ret, proc):
         self.assertTrue(ret != "")
