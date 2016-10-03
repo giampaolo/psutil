@@ -15,6 +15,7 @@ DEPS = argparse \
 	coverage \
 	flake8 \
 	futures \
+	ipaddress \
 	ipdb \
 	mock==1.0.1 \
 	nose \
