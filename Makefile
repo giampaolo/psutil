@@ -7,6 +7,11 @@ PYTHON != python -c \
 	"from subprocess import call, PIPE; \
 	code = call(['python3 -V'], shell=True, stdout=PIPE, stderr=PIPE); \
 	print('python3' if code == 0 else 'python')"
+# On certain UNIXses (e.g. OSX, the construct above won't work so
+# we fall back on using python 2
+ifeq ($(PYTHON), )
+	PYTHON = python
+endif
 
 TSCRIPT = psutil/tests/runner.py
 

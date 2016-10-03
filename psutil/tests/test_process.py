@@ -555,6 +555,7 @@ class TestProcess(unittest.TestCase):
     @retry_before_failing()
     # see: https://travis-ci.org/giampaolo/psutil/jobs/111842553
     @unittest.skipIf(OSX and TRAVIS, "")
+    @skip_on_access_denied(only_if=OSX)
     def test_threads_2(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
