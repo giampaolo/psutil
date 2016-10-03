@@ -245,3 +245,6 @@ print-announce:
 
 grep-todos:
 	git grep -EIn "TODO|FIXME|XXX"
+
+find-broken-links:
+	git ls-files | xargs $(PYTHON) scripts/internal/find_broken_links.py
