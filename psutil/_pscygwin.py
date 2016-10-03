@@ -16,6 +16,7 @@ from . import _psposix
 from . import _psutil_cygwin as cext
 from . import _psutil_posix as cext_posix
 from ._common import decode
+from ._common import encode
 from ._common import get_procfs_path
 from ._common import isfile_strict
 from ._common import open_binary
@@ -279,6 +280,17 @@ def cpu_stats():
 # TODO: This might merit a little further work to get the "friendly"
 # interface names instead of interface UUIDs
 net_if_addrs = cext_posix.net_if_addrs
+
+
+def net_if_stats():
+    ret = cext.net_if_stats()
+    for name, items in ret.items():
+        name = encode(name)
+        isup, duplex, speed, mtu = items
+        if hasattr(_common, 'NicDuplex'):
+            duplex = _common.NicDuplex(duplex)
+        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+    return ret
 
 
 # =====================================================================

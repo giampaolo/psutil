@@ -243,7 +243,7 @@ elif CYGWIN:
                  'psutil/arch/windows/py_error.c',
                  'psutil/arch/windows/process_info.c'],
         define_macros=macros,
-        libraries=["psapi"])
+        libraries=["psapi", "iphlpapi"])
 else:
     sys.exit('platform %s is not supported' % sys.platform)
 
