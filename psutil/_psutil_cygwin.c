@@ -18,6 +18,8 @@
 #include <ws2ipdef.h>
 #include <iphlpapi.h>
 
+#include <sys/cygwin.h>
+
 #include <Python.h>
 
 #include <mntent.h>
@@ -40,6 +42,58 @@ static int PSUTIL_CONN_NONE = 128;
     Py_DECREF(_AF_INET6);\
     Py_DECREF(_SOCK_STREAM);\
     Py_DECREF(_SOCK_DGRAM);
+
+
+/* Python wrappers for Cygwin's cygwin_conv_path API--accepts and returns
+ * Python unicode strings.  Always returns absolute paths.
+ */
+static PyObject *
+psutil_cygwin_conv_path(PyObject *self, PyObject *args,
+                        cygwin_conv_path_t what) {
+    char *from;
+    char *to;
+    ssize_t size;
+
+    if (!PyArg_ParseTuple(args, "s", &from)) {
+        return NULL;
+    }
+
+    size = cygwin_conv_path(what, from, NULL, 0);
+
+    if (size < 0) {
+        /* TODO: Better error handling */
+        return size;
+    }
+
+    to = malloc(size);
+    if (to == NULL) {
+        return NULL;
+    }
+
+    if (cygwin_conv_path(what, from, to, size)) {
+        return NULL;
+    }
+
+    /* size includes the terminal null byte */
+#if PY_MAJOR_VERSION >= 3
+    return PyUnicode_FromStringAndSize(to, size - 1);
+#else
+    return PyString_FromStringAndSize(to, size - 1);
+#endif
+}
+
+
+static PyObject *
+psutil_cygpath_to_winpath(PyObject *self, PyObject *args) {
+    return psutil_cygwin_conv_path(self, args, CCP_POSIX_TO_WIN_A);
+}
+
+
+static PyObject *
+psutil_winpath_to_cygpath(PyObject *self, PyObject *args) {
+    return psutil_cygwin_conv_path(self, args, CCP_WIN_A_TO_POSIX);
+}
+
 
 /* TODO: Copied verbatim from the Linux module; refactor */
 /*
@@ -964,11 +1018,119 @@ error:
 }
 
 
+static char *get_region_protection_string(ULONG protection) {
+    switch (protection & 0xff) {
+        case PAGE_NOACCESS:
+            return "";
+        case PAGE_READONLY:
+            return "r";
+        case PAGE_READWRITE:
+            return "rw";
+        case PAGE_WRITECOPY:
+            return "wc";
+        case PAGE_EXECUTE:
+            return "x";
+        case PAGE_EXECUTE_READ:
+            return "xr";
+        case PAGE_EXECUTE_READWRITE:
+            return "xrw";
+        case PAGE_EXECUTE_WRITECOPY:
+            return "xwc";
+        default:
+            return "?";
+    }
+}
+
+
+/* TODO: Copied verbatim from the windows module; this should be refactored
+ * as well
+ */
+/*
+ * Return a list of process's memory mappings.
+ */
+static PyObject *
+psutil_proc_memory_maps(PyObject *self, PyObject *args) {
+#ifdef _WIN64
+    MEMORY_BASIC_INFORMATION64 basicInfo;
+#else
+    MEMORY_BASIC_INFORMATION basicInfo;
+#endif
+    DWORD pid;
+    HANDLE hProcess = NULL;
+    PVOID baseAddress;
+    PVOID previousAllocationBase;
+    CHAR mappedFileName[MAX_PATH];
+    SYSTEM_INFO system_info;
+    LPVOID maxAddr;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        goto error;
+    hProcess = psutil_handle_from_pid(pid);
+    if (NULL == hProcess)
+        goto error;
+
+    GetSystemInfo(&system_info);
+    maxAddr = system_info.lpMaximumApplicationAddress;
+    baseAddress = NULL;
+    previousAllocationBase = NULL;
+
+    while (VirtualQueryEx(hProcess, baseAddress, &basicInfo,
+                          sizeof(MEMORY_BASIC_INFORMATION)))
+    {
+        py_tuple = NULL;
+        if (baseAddress > maxAddr)
+            break;
+        if (GetMappedFileNameA(hProcess, baseAddress, mappedFileName,
+                               sizeof(mappedFileName)))
+        {
+#ifdef _WIN64
+           py_tuple = Py_BuildValue(
+              "(KssI)",
+              (unsigned long long)baseAddress,
+#else
+           py_tuple = Py_BuildValue(
+              "(kssI)",
+              (unsigned long)baseAddress,
+#endif
+              get_region_protection_string(basicInfo.Protect),
+              mappedFileName,
+              basicInfo.RegionSize);
+
+            if (!py_tuple)
+                goto error;
+            if (PyList_Append(py_retlist, py_tuple))
+                goto error;
+            Py_DECREF(py_tuple);
+        }
+        previousAllocationBase = basicInfo.AllocationBase;
+        baseAddress = (PCHAR)baseAddress + basicInfo.RegionSize;
+    }
+
+    CloseHandle(hProcess);
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    if (hProcess != NULL)
+        CloseHandle(hProcess);
+    return NULL;
+}
+
+
 /*
  * define the psutil C module methods and initialize the module.
  */
 static PyMethodDef
 PsutilMethods[] = {
+    {"cygpath_to_winpath", psutil_cygpath_to_winpath, METH_VARARGS,
+     "Convert a Cygwin path to a Windows path"},
+    {"winpath_to_cygpath", psutil_winpath_to_cygpath, METH_VARARGS,
+     "Convert a Windows path to a Cygwin path"},
     {"disk_partitions", psutil_disk_partitions, METH_VARARGS,
      "Return disk mounted partitions as a list of tuples including "
      "device, mount point and filesystem type"},
