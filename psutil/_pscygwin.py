@@ -90,6 +90,9 @@ TCP_STATUSES = {
 }
 
 
+ACCESS_DENIED_SET = frozenset([errno.EPERM, errno.EACCES,
+                               cext.ERROR_ACCESS_DENIED])
+
 # =====================================================================
 # -- exceptions
 # =====================================================================
@@ -100,6 +103,23 @@ NoSuchProcess = None
 ZombieProcess = None
 AccessDenied = None
 TimeoutExpired = None
+
+
+# =====================================================================
+# --- utils
+# =====================================================================
+
+
+# TODO: Alternatively use Cygwin's API to get this, maybe?
+def cygpid_to_winpid(pid):
+    """
+    Converts Cygwin's internal PID (the one exposed by all POSIX interfaces)
+    to the associated Windows PID.
+    """
+
+    procfs_path = get_procfs_path()
+    with open_binary('%s/%s/winpid' % (procfs_path, pid)) as f:
+        return int(f.readline().strip())
 
 
 # =====================================================================
@@ -311,6 +331,9 @@ def net_connections(kind, _pid=-1):
         raise ValueError("invalid %r kind argument; choose between %s"
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
     families, types = conn_tmap[kind]
+    if _pid > 0:
+        _pid = cygpid_to_winpid(_pid)
+
     rawlist = cext.net_connections(_pid, families, types)
     ret = set()
     for item in rawlist:
@@ -318,6 +341,7 @@ def net_connections(kind, _pid=-1):
         status = TCP_STATUSES[status]
         fam = sockfam_to_enum(fam)
         type = socktype_to_enum(type)
+        # TODO: This should probably return the cygwin pid, not the Windows pid
         if _pid == -1:
             nt = _common.sconn(fd, fam, type, laddr, raddr, status, pid)
         else:
@@ -415,13 +439,14 @@ def pid_exists(pid):
 class Process(object):
     """Cygwin process implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_procfs_path"]
+    __slots__ = ["pid", "_name", "_ppid", "_procfs_path", "_winpid"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
         self._ppid = None
         self._procfs_path = get_procfs_path()
+        self._winpid = cygpid_to_winpid(pid)
 
     def _parse_stat_file(self):
         """Parse /proc/{pid}/stat file. Return a list of fields where
@@ -579,12 +604,12 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_affinity_get(self):
-        return cext.proc_cpu_affinity_get(self.pid)
+        return cext.proc_cpu_affinity_get(self._winpid)
 
     @wrap_exceptions
     def cpu_affinity_set(self, cpus):
         try:
-            cext.proc_cpu_affinity_set(self.pid, cpus)
+            cext.proc_cpu_affinity_set(self._winpid, cpus)
         except (OSError, ValueError) as err:
             if isinstance(err, ValueError) or err.errno == errno.EINVAL:
                 allcpus = tuple(range(len(per_cpu_times())))
