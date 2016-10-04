@@ -55,7 +55,6 @@ FEATURES
 
 - system-wide number of open file descriptors:
   - https://jira.hyperic.com/browse/SIGAR-30
-  - http://www.netadmintools.com/part295.html
 
 - Number of system threads.
   - Windows: http://msdn.microsoft.com/en-us/library/windows/desktop/ms684824(v=vs.85).aspx
