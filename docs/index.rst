@@ -254,9 +254,12 @@ Disks
 
   Return all mounted disk partitions as a list of namedtuples including device,
   mount point and filesystem type, similarly to "df" command on UNIX. If *all*
-  parameter is ``False`` return physical devices only (e.g. hard disks, cd-rom
-  drives, USB keys) and ignore all others (e.g. memory partitions such as
+  parameter is ``False`` it tries to distinguish and return physical devices
+  only (e.g. hard disks, cd-rom drives, USB keys) and ignore all others
+  (e.g. memory partitions such as
   `/dev/shm <http://www.cyberciti.biz/tips/what-is-devshm-and-its-practical-usage.html>`__).
+  Note that this may not be fully reliable on all systems (e.g. on BSD this
+  parameter is ignored).
   Namedtuple's **fstype** field is a string which varies depending on the
   platform.
   On Linux it can be one of the values found in /proc/filesystems (e.g.

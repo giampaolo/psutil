@@ -22,6 +22,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   functions.
 - #892: [Linux] Process.cpu_affinity([-1]) raise SystemError with no error
   set; now ValueError is raised.
+- #906: [BSD] disk_partitions(all=False) returned an empty list. Now the
+  argument is ignored and all partitions are always returned.
 
 
 4.3.1 - 2016-09-01

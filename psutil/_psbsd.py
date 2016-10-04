@@ -283,15 +283,14 @@ def cpu_stats():
 
 
 def disk_partitions(all=False):
+    """Return mounted disk partitions as a list of namedtuples.
+    'all' argument is ignored, see:
+    https://github.com/giampaolo/psutil/issues/906
+    """
     retlist = []
     partitions = cext.disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
-        if device == 'none':
-            device = ''
-        if not all:
-            if not os.path.isabs(device) or not os.path.exists(device):
-                continue
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
