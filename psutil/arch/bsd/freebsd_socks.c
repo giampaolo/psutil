@@ -26,7 +26,6 @@
 #include <libutil.h>
 
 #include "freebsd.h"
-#include "freebsd_socks.h"
 
 
 #define HASHSIZE 1009

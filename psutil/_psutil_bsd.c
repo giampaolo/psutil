@@ -59,8 +59,6 @@
 #include <netinet/in.h>   // process open files/connections
 #include <sys/un.h>
 
-#include "_psutil_common.h"
-
 #ifdef __FreeBSD__
     #include "arch/bsd/freebsd.h"
     #include "arch/bsd/freebsd_socks.h"

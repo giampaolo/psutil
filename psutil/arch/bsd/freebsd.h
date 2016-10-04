@@ -8,7 +8,6 @@
 
 typedef struct kinfo_proc kinfo_proc;
 
-static char *psutil_get_cmd_args(long pid, size_t *argsize);
 int psutil_get_proc_list(struct kinfo_proc **procList, size_t *procCount);
 int psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc);
 int psutil_pid_exists(long pid);

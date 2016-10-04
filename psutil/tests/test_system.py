@@ -712,6 +712,7 @@ class TestSystemAPIs(unittest.TestCase):
                 assert psutil.BSD
                 self.assertEqual([psutil.FREEBSD, psutil.OPENBSD,
                                   psutil.NETBSD].count(True), 1)
+                names.remove("BSD")
                 names.remove("FREEBSD")
                 names.remove("OPENBSD")
                 names.remove("NETBSD")
