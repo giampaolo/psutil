@@ -292,8 +292,14 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     size = sizeof(pathname);
     error = sysctl(mib, 4, pathname, &size, NULL, 0);
     if (error == -1) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
+        if (errno == ENOENT) {
+            // see: https://github.com/giampaolo/psutil/issues/907
+            return Py_BuildValue("s", "");
+        }
+        else {
+            PyErr_SetFromErrno(PyExc_OSError);
+            return NULL;
+        }
     }
     if (size == 0 || strlen(pathname) == 0) {
         ret = psutil_pid_exists(pid);
