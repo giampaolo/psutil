@@ -88,15 +88,27 @@ psutil_pid_exists(long pid) {
 }
 
 
+/*
+ * Utility used for those syscalls which do not return a meaningful
+ * error that we can translate into an exception which makes sense.
+ * As such, we'll have to guess.
+ * On UNIX, if errno is set, we return that one (OSError).
+ * Else, if PID does not exist we assume the syscall failed because
+ * of that so we raise NoSuchProcess.
+ * If none of this is true we giveup and raise RuntimeError(msg).
+ * This will always set a Python exception and return NULL.
+ */
 int
-psutil_raise_ad_or_nsp(long pid) {
+psutil_raise_for_pid(long pid, char *msg) {
     // Set exception to AccessDenied if pid exists else NoSuchProcess.
-    int ret;
-    ret = psutil_pid_exists(pid);
-    if (ret == 0)
+    if (errno != 0) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return 0;
+    }
+    if (psutil_pid_exists(pid) == 0)
         NoSuchProcess();
-    else if (ret == 1)
-        AccessDenied();
-    return ret;
+    else
+        PyErr_SetString(PyExc_RuntimeError, msg);
+    return 0;
 }
 #endif
