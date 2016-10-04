@@ -67,20 +67,6 @@ psutil_sys_vminfo(vm_statistics_data_t *vmstat) {
 
 
 /*
- * Set exception to AccessDenied if pid exists else NoSuchProcess.
- */
-void
-psutil_raise_ad_or_nsp(long pid) {
-    int ret;
-    ret = psutil_pid_exists(pid);
-    if (ret == 0)
-        NoSuchProcess();
-    else
-        AccessDenied();
-}
-
-
-/*
  * Return a Python list of all the PIDs running on the system.
  */
 static PyObject *

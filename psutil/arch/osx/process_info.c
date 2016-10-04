@@ -24,38 +24,6 @@
 
 
 /*
- * Return 1 if PID exists in the current process list, else 0, -1
- * on error.
- * TODO: this should live in _psutil_posix.c but for some reason if I
- * move it there I get a "include undefined symbol" error.
- */
-int
-psutil_pid_exists(long pid) {
-    int ret;
-    if (pid < 0)
-        return 0;
-    ret = kill(pid , 0);
-    if (ret == 0)
-        return 1;
-    else {
-        return 0;
-        /*
-        // This is how it is handled on other POSIX systems but it causes
-        // test_halfway_terminated test to fail with AccessDenied.
-        if (ret == ESRCH)
-            return 0;
-        else if (ret == EPERM)
-            return 1;
-        else {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return -1;
-        }
-        */
-    }
-}
-
-
-/*
  * Returns a list of all BSD processes on the system.  This routine
  * allocates the list and puts it in *procList and a count of the
  * number of entries in *procCount.  You are responsible for freeing
