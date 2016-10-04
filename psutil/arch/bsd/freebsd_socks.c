@@ -25,7 +25,7 @@
 #include <net/if_media.h>
 #include <libutil.h>
 
-#include "freebsd.h"
+#include "../../_psutil_common.h"
 
 
 #define HASHSIZE 1009

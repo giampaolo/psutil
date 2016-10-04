@@ -66,51 +66,6 @@ psutil_kinfo_proc(const pid_t pid, struct kinfo_proc *proc) {
 }
 
 
-/*
- * Return 1 if PID exists in the current process list, else 0, -1
- * on error.
- * TODO: this should live in _psutil_posix.c but for some reason if I
- * move it there I get a "include undefined symbol" error.
- */
-int
-psutil_pid_exists(long pid) {
-    int ret;
-
-    if (pid < 0)
-        return 0;
-    if (pid == 0)
-        return 1;
-
-    ret = kill(pid , 0);
-    if (ret == 0)
-        return 1;
-    else {
-        if (errno == ESRCH)
-            return 0;
-        else if (errno == EPERM)
-            return 1;
-        else {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return -1;
-        }
-    }
-}
-
-
-
-int
-psutil_raise_ad_or_nsp(long pid) {
-    // Set exception to AccessDenied if pid exists else NoSuchProcess.
-    int ret;
-    ret = psutil_pid_exists(pid);
-    if (ret == 0)
-        NoSuchProcess();
-    else if (ret == 1)
-        AccessDenied();
-    return ret;
-}
-
-
 // remove spaces from string
 static void psutil_remove_spaces(char *str) {
     char *p1 = str;

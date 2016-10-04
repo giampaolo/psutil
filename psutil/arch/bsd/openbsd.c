@@ -36,7 +36,6 @@
 #include <err.h> // for warn() & err()
 
 
-#include "openbsd.h"
 #include "../../_psutil_common.h"
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
@@ -109,42 +108,6 @@ kinfo_getfile(long pid, int* cnt) {
 
     *cnt = (int)(len / sizeof(struct kinfo_file));
     return kf;
-}
-
-
-int
-psutil_pid_exists(long pid) {
-    // Return 1 if PID exists in the current process list, else 0, -1
-    // on error.
-    // TODO: this should live in _psutil_posix.c but for some reason if I
-    // move it there I get a "include undefined symbol" error.
-    int ret;
-    if (pid < 0)
-        return 0;
-    ret = kill(pid , 0);
-    if (ret == 0)
-        return 1;
-    else {
-        if (ret == ESRCH)
-            return 0;
-        else if (ret == EPERM)
-            return 1;
-        else {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return -1;
-        }
-    }
-}
-
-
-int
-psutil_raise_ad_or_nsp(long pid) {
-    // Set exception to AccessDenied if pid exists else NoSuchProcess.
-    if (psutil_pid_exists(pid) == 0)
-        NoSuchProcess();
-    else
-        AccessDenied();
-    return 0;
 }
 
 
