@@ -34,6 +34,15 @@ from _common import SUNOS  # NOQA
 from _common import WINDOWS  # NOQA
 
 
+macros = []
+if POSIX:
+    macros.append(("PSUTIL_POSIX", 1))
+if WINDOWS:
+    macros.append(("PSUTIL_WINDOWS", 1))
+if BSD:
+    macros.append(("PSUTIL_BSD", 1))
+
+
 def get_version():
     INIT = os.path.join(HERE, 'psutil/__init__.py')
     with open(INIT, 'r') as f:
@@ -72,17 +81,8 @@ def silenced_output(stream_name):
 
 
 VERSION = get_version()
+macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 
-# Macros
-macros = [
-    ('PSUTIL_VERSION', int(VERSION.replace('.', ''))),
-]
-if POSIX:
-    macros.append(("PSUTIL_POSIX", 1))
-if WINDOWS:
-    macros.append(("PSUTIL_WINDOWS", 1))
-if BSD:
-    macros.append(("PSUTIL_BSD", 1))
 
 # POSIX
 if POSIX:
