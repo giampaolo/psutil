@@ -25,7 +25,6 @@
 #include <libutil.h>  // process open files, shared libs (kinfo_getvmmap), cwd
 #include <sys/cpuset.h>
 
-#include "freebsd.h"
 #include "../../_psutil_common.h"
 
 
