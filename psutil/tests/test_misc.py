@@ -4,6 +4,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""
+Miscellaneous tests.
+"""
+
 import ast
 import errno
 import imp
@@ -40,10 +44,6 @@ from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid
-
-# ===================================================================
-# --- Misc tests
-# ===================================================================
 
 
 class TestMisc(unittest.TestCase):

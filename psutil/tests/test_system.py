@@ -695,6 +695,42 @@ class TestSystemAPIs(unittest.TestCase):
             if name in ('ctx_switches', 'interrupts'):
                 self.assertGreater(value, 0)
 
+    def test_os_constants(self):
+        names = ["POSIX", "WINDOWS", "LINUX", "OSX", "FREEBSD", "OPENBSD",
+                 "NETBSD", "BSD", "SUNOS"]
+        for name in names:
+            self.assertIsInstance(getattr(psutil, name), bool, msg=name)
+
+        if os.name == 'posix':
+            assert psutil.POSIX
+            assert not psutil.WINDOWS
+            names.remove("POSIX")
+            if "linux" in sys.platform.lower():
+                assert psutil.LINUX
+                names.remove("LINUX")
+            elif "bsd" in sys.platform.lower():
+                assert psutil.BSD
+                self.assertEqual([psutil.FREEBSD, psutil.OPENBSD,
+                                  psutil.NETBSD].count(True), 1)
+                names.remove("FREEBSD")
+                names.remove("OPENBSD")
+                names.remove("NETBSD")
+            elif "sunos" in sys.platform.lower() or \
+                    "solaris" in sys.platform.lower():
+                assert psutil.SUNOS
+                names.remove("SUNOS")
+            elif "darwin" in sys.platform.lower():
+                assert psutil.OSX
+                names.remove("OSX")
+        else:
+            assert psutil.WINDOWS
+            assert not psutil.POSIX
+            names.remove("WINDOWS")
+
+        # assert all other constants are set to False
+        for name in names:
+            self.assertIs(getattr(psutil, name), False, msg=name)
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)

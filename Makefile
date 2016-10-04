@@ -2,17 +2,7 @@
 # To use a specific Python version run: "make install PYTHON=python3.3"
 # You can set the variables below from the command line.
 
-# Prefer Python 3 if installed.
-PYTHON != python -c \
-	"from subprocess import call, PIPE; \
-	code = call(['python3 -V'], shell=True, stdout=PIPE, stderr=PIPE); \
-	print('python3' if code == 0 else 'python')"
-# On certain UNIXses (e.g. OSX, the construct above won't work so
-# we fall back on using python 2
-ifeq ($(PYTHON), )
-	PYTHON = python
-endif
-
+PYTHON = python
 TSCRIPT = psutil/tests/runner.py
 
 # List of nice-to-have dev libs.

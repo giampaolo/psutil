@@ -48,6 +48,7 @@ def tear_down():
     curses.echo()
     curses.endwin()
 
+
 win = curses.initscr()
 atexit.register(tear_down)
 curses.endwin()
