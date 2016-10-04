@@ -24,6 +24,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   set; now ValueError is raised.
 - #906: [BSD] disk_partitions(all=False) returned an empty list. Now the
   argument is ignored and all partitions are always returned.
+- #907: [FreeBSD] Process.exe() may fail with OSError(ENOENT).
 
 
 4.3.1 - 2016-09-01
