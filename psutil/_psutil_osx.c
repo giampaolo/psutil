@@ -1137,27 +1137,19 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
-    if (pidinfo_result <= 0) {
-        // may be be ignored later if errno != 0
-        PyErr_Format(PyExc_RuntimeError,
-                     "proc_pidinfo(PROC_PIDLISTFDS) failed");
+    pidinfo_result = psutil_proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+    if (pidinfo_result == 0)
         goto error;
-    }
 
     fds_pointer = malloc(pidinfo_result);
     if (fds_pointer == NULL) {
         PyErr_NoMemory();
         goto error;
     }
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
-                                  pidinfo_result);
-    if (pidinfo_result <= 0) {
-        // may be be ignored later if errno != 0
-        PyErr_Format(PyExc_RuntimeError,
-                     "proc_pidinfo(PROC_PIDLISTFDS) failed");
+    pidinfo_result = psutil_proc_pidinfo(
+        pid, PROC_PIDLISTFDS, 0, fds_pointer, pidinfo_result);
+    if (pidinfo_result == 0)
         goto error;
-    }
 
     iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
 
@@ -1174,22 +1166,16 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
                                 sizeof(vi));
 
             // --- errors checking
-            if (nb <= 0) {
+            if ((nb <= 0) || nb < sizeof(vi)) {
                 if ((errno == ENOENT) || (errno == EBADF)) {
                     // no such file or directory or bad file descriptor;
                     // let's assume the file has been closed or removed
                     continue;
                 }
-                // may be be ignored later if errno != 0
-                PyErr_Format(PyExc_RuntimeError,
-                             "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
-                goto error;
-            }
-            if (nb < sizeof(vi)) {
-                PyErr_Format(PyExc_RuntimeError,
-                             "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed "
-                             "(buffer mismatch)");
-                goto error;
+                else {
+                    psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
+                    goto error;
+                }
             }
             // --- /errors checking
 
@@ -1224,12 +1210,7 @@ error:
     Py_DECREF(py_retlist);
     if (fds_pointer != NULL)
         free(fds_pointer);
-    if (errno != 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
-    else if (psutil_pid_exists(pid) == 0)
-        return NoSuchProcess();
-    else
-        return NULL;  // exception has already been set earlier
+    return NULL;  // exception has already been set earlier
 }
 
 

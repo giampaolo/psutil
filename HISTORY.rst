@@ -30,6 +30,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #908: [OSX, BSD] different process methods could errounesuly mask the real
   error for high-privileged PIDs and raise NoSuchProcess and AccessDenied
   instead of OSError and RuntimeError.
+- #XXX: [OSX] Process open_files() may raise OSError with no exception set if
+  process is gone.
 
 
 4.3.1 - 2016-09-01
