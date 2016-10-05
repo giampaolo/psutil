@@ -62,12 +62,10 @@ psutil_pid_exists(long pid) {
     // every  process in the process group of the calling process.
     // Not what we want.
     if (pid == 0) {
-#if defined(PSUTIL_LINUX) || defined(BSD)
-        // PID 0 does not exist at leas on Linux and all BSDs.
+#if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
+        // PID 0 does not exist on these platforms.
         return 0;
 #else
-        // On OSX it does.
-        // TODO: check Solaris.
         return 1;
 #endif
     }
