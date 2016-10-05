@@ -14,6 +14,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
+- #783: [OSX] Process.status() may erroneously return "running" for zombie
+  processes.
 - #798: [Windows] Process.open_files() returns and empty list on Windows 10.
 - #825: [Linux] cpu_affinity; fix possible double close and use of unopened
   socket.
@@ -25,6 +27,9 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #906: [BSD] disk_partitions(all=False) returned an empty list. Now the
   argument is ignored and all partitions are always returned.
 - #907: [FreeBSD] Process.exe() may fail with OSError(ENOENT).
+- #908: [OSX, BSD] different process methods could errounesuly mask the real
+  error for high-privileged PIDs and raise NoSuchProcess and AccessDenied
+  instead of OSError and RuntimeError.
 
 
 4.3.1 - 2016-09-01
