@@ -144,8 +144,8 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    if (psutil_proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, 0, &pathinfo,
-                            sizeof(pathinfo)) == 0)
+    if (psutil_proc_pidinfo(
+            pid, PROC_PIDVNODEPATHINFO, 0, &pathinfo, sizeof(pathinfo)) <= 0)
     {
         return NULL;
     }
@@ -474,7 +474,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) == 0)
+    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
         return NULL;
     return Py_BuildValue("(dd)",
                          (float)pti.pti_total_user / 1000000000.0,
@@ -508,7 +508,7 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) == 0)
+    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
         return NULL;
     // Note: determining other memory stats on OSX is a mess:
     // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
@@ -656,7 +656,7 @@ psutil_proc_num_threads(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) == 0)
+    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
         return NULL;
     return Py_BuildValue("k", pti.pti_threadnum);
 }
@@ -672,7 +672,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) == 0)
+    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
         return NULL;
     // unvoluntary value seems not to be available;
     // pti.pti_csw probably refers to the sum of the two (getrusage()
@@ -1138,7 +1138,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
         goto error;
 
     pidinfo_result = psutil_proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
-    if (pidinfo_result == 0)
+    if (pidinfo_result <= 0)
         goto error;
 
     fds_pointer = malloc(pidinfo_result);
@@ -1148,7 +1148,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     }
     pidinfo_result = psutil_proc_pidinfo(
         pid, PROC_PIDLISTFDS, 0, fds_pointer, pidinfo_result);
-    if (pidinfo_result == 0)
+    if (pidinfo_result <= 0)
         goto error;
 
     iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
