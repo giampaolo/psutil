@@ -208,7 +208,7 @@ psutil_disk_partitions(PyObject *self, PyObject *args) {
 
     while ((entry = getmntent(file))) {
         if (entry == NULL) {
-            PyErr_Format(PyExc_RuntimeError, "getmntent() failed");
+            PyErr_Format(PyExc_RuntimeError, "getmntent() syscall failed");
             goto error;
         }
         py_tuple = Py_BuildValue("(ssss)",

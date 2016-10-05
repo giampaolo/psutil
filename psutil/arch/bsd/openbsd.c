@@ -247,7 +247,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (strstr(errbuf, "Permission denied") != NULL)
             AccessDenied();
         else
-            PyErr_Format(PyExc_RuntimeError, "kvm_openfiles() failed");
+            PyErr_Format(PyExc_RuntimeError, "kvm_openfiles() syscall failed");
         goto error;
     }
 
@@ -258,7 +258,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (strstr(errbuf, "Permission denied") != NULL)
             AccessDenied();
         else
-            PyErr_Format(PyExc_RuntimeError, "kvm_getprocs() failed");
+            PyErr_Format(PyExc_RuntimeError, "kvm_getprocs() syscall failed");
         goto error;
     }
 

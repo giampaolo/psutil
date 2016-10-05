@@ -615,7 +615,7 @@ static int psutil_get_process_data(long pid,
                 src = procParameters.CommandLine.Buffer;
                 size = procParameters.CommandLine.Length;
                 break;
-            case KIND_CWD: 
+            case KIND_CWD:
                 src = procParameters.CurrentDirectoryPath.Buffer;
                 size = procParameters.CurrentDirectoryPath.Length;
                 break;
@@ -830,7 +830,8 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
     }
 
     if (status != 0) {
-        PyErr_Format(PyExc_RuntimeError, "NtQuerySystemInformation() failed");
+        PyErr_Format(
+            PyExc_RuntimeError, "NtQuerySystemInformation() syscall failed");
         goto error;
     }
 

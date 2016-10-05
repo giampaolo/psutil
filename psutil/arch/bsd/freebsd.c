@@ -508,13 +508,14 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
 
     kd = kvm_open(NULL, _PATH_DEVNULL, NULL, O_RDONLY, "kvm_open failed");
     if (kd == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "kvm_open failed");
+        PyErr_SetString(PyExc_RuntimeError, "kvm_open() syscall failed");
         return NULL;
     }
 
     if (kvm_getswapinfo(kd, kvmsw, 1, 0) < 0) {
         kvm_close(kd);
-        PyErr_SetString(PyExc_RuntimeError, "kvm_getswapinfo failed");
+        PyErr_SetString(PyExc_RuntimeError,
+                        "kvm_getswapinfo() syscall failed");
         return NULL;
     }
 
@@ -699,7 +700,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     if (py_retdict == NULL)
         return NULL;
     if (devstat_checkversion(NULL) < 0) {
-        PyErr_Format(PyExc_RuntimeError, "devstat_checkversion() failed");
+        PyErr_Format(PyExc_RuntimeError,
+                     "devstat_checkversion() syscall failed");
         goto error;
     }
 
@@ -711,7 +713,7 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     bzero(stats.dinfo, sizeof(struct devinfo));
 
     if (devstat_getdevs(NULL, &stats) == -1) {
-        PyErr_Format(PyExc_RuntimeError, "devstat_getdevs() failed");
+        PyErr_Format(PyExc_RuntimeError, "devstat_getdevs() syscall failed");
         goto error;
     }
 

@@ -57,8 +57,10 @@ psutil_sys_vminfo(vm_statistics_data_t *vmstat) {
 
     ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)vmstat, &count);
     if (ret != KERN_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError,
-                     "host_statistics() failed: %s", mach_error_string(ret));
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "host_statistics(HOST_VM_INFO) syscall failed: %s",
+            mach_error_string(ret));
         return 0;
     }
     mach_port_deallocate(mach_task_self(), mport);
@@ -614,7 +616,9 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
             break;
         }
         else if (kr != KERN_SUCCESS) {
-            PyErr_Format(PyExc_RuntimeError, "mach_vm_region() failed");
+            PyErr_Format(
+                PyExc_RuntimeError,
+                "mach_vm_region(VM_REGION_TOP_INFO) syscall failed");
             return NULL;
         }
 
@@ -709,7 +713,8 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         if (errno != 0)
             PyErr_SetFromErrno(PyExc_OSError);
         else
-            PyErr_Format(PyExc_RuntimeError, "sysctl(HW_MEMSIZE) failed");
+            PyErr_Format(
+                PyExc_RuntimeError, "sysctl(HW_MEMSIZE) syscall failed");
         return NULL;
     }
 
@@ -746,7 +751,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         if (errno != 0)
             PyErr_SetFromErrno(PyExc_OSError);
         else
-            PyErr_Format(PyExc_RuntimeError, "sysctl(VM_SWAPUSAGE) failed");
+            PyErr_Format(
+                PyExc_RuntimeError, "sysctl(VM_SWAPUSAGE) syscall failed");
         return NULL;
     }
     if (!psutil_sys_vminfo(&vmstat))
@@ -774,10 +780,12 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     mach_port_t host_port = mach_host_self();
     error = host_statistics(host_port, HOST_CPU_LOAD_INFO,
                             (host_info_t)&r_load, &count);
-    if (error != KERN_SUCCESS)
-        return PyErr_Format(PyExc_RuntimeError,
-                            "Error in host_statistics(): %s",
-                            mach_error_string(error));
+    if (error != KERN_SUCCESS) {
+        return PyErr_Format(
+            PyExc_RuntimeError,
+            "host_statistics(HOST_CPU_LOAD_INFO) syscall failed: %s",
+            mach_error_string(error));
+    }
     mach_port_deallocate(mach_task_self(), host_port);
 
     return Py_BuildValue(
@@ -811,8 +819,10 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     error = host_processor_info(host_port, PROCESSOR_CPU_LOAD_INFO,
                                 &cpu_count, &info_array, &info_count);
     if (error != KERN_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "Error in host_processor_info(): %s",
-                     mach_error_string(error));
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "host_processor_info(PROCESSOR_CPU_LOAD_INFO) syscall failed: %s",
+             mach_error_string(error));
         goto error;
     }
     mach_port_deallocate(mach_task_self(), host_port);
@@ -1058,14 +1068,14 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         else {
             // otherwise throw a runtime error with appropriate error code
             PyErr_Format(PyExc_RuntimeError,
-                         "task_info(TASK_BASIC_INFO) failed");
+                         "task_info(TASK_BASIC_INFO) syscall failed");
         }
         goto error;
     }
 
     err = task_threads(task, &thread_list, &thread_count);
     if (err != KERN_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "task_threads() failed");
+        PyErr_Format(PyExc_RuntimeError, "task_threads() syscall failed");
         goto error;
     }
 
@@ -1076,7 +1086,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
                          (thread_info_t)thinfo_basic, &thread_info_count);
         if (kr != KERN_SUCCESS) {
             PyErr_Format(PyExc_RuntimeError,
-                         "thread_info() with flag THREAD_BASIC_INFO failed");
+                         "thread_info(THREAD_BASIC_INFO) syscall failed");
             goto error;
         }
 
@@ -1560,8 +1570,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     if (IOServiceGetMatchingServices(kIOMasterPortDefault,
                                      IOServiceMatching(kIOMediaClass),
                                      &disk_list) != kIOReturnSuccess) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "unable to get the list of disks.");
+        PyErr_SetString(
+            PyExc_RuntimeError, "unable to get the list of disks.");
         goto error;
     }
 
@@ -1767,8 +1777,10 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 
     ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vmstat, &count);
     if (ret != KERN_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError,
-                     "host_statistics() failed: %s", mach_error_string(ret));
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "host_statistics(HOST_VM_INFO) failed: %s",
+            mach_error_string(ret));
         return NULL;
     }
     mach_port_deallocate(mach_task_self(), mport);

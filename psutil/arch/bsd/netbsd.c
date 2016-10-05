@@ -287,13 +287,14 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
 
     if (kd == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "kvm_openfiles() failed: %s", errbuf);
+        PyErr_Format(
+            PyExc_RuntimeError, "kvm_openfiles() syscall failed: %s", errbuf);
         return errno;
     }
 
     result = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(kinfo_proc), &cnt);
     if (result == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "kvm_getproc2() failed");
+        PyErr_Format(PyExc_RuntimeError, "kvm_getproc2() syscall failed");
         kvm_close(kd);
         return errno;
     }
