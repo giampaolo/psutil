@@ -58,12 +58,12 @@ psutil_pid_exists(long pid) {
     if (pid < 0)
         return 0;
 
-    // As per "man 2 kill" PID 0 is an alias for sending the seignal to
-    // every  process in the process group of the calling process.
-    // Not what we want.
+    // As per "man 2 kill" PID 0 is an alias for sending the signal to
+    // every process in the process group of the calling process.
+    // Not what we want. Some platforms have PID 0, some do not.
+    // We decide that at runtime.
     if (pid == 0) {
 #if defined(PSUTIL_LINUX) || defined(PSUTIL_FREEBSD)
-        // PID 0 does not exist on these platforms.
         return 0;
 #else
         return 1;
@@ -74,11 +74,20 @@ psutil_pid_exists(long pid) {
     if (ret == 0)
         return 1;
     else {
-        if (errno == ESRCH)
+        if (errno == ESRCH) {
+            // ESRCH == No such process
             return 0;
-        else if (errno == EPERM)
+        }
+        else if (errno == EPERM) {
+            // EPERM clearly indicates there's a process to deny
+            // access to.
             return 1;
+        }
         else {
+            // According to "man 2 kill" possible error values are
+            // (EINVAL, EPERM, ESRCH) therefore we should never get
+            // here. If we do let's be explicit in considering this
+            // an error.
             PyErr_SetFromErrno(PyExc_OSError);
             return -1;
         }
