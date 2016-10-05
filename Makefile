@@ -24,8 +24,7 @@ DEPS = argparse \
 	unittest2
 
 # In not in a virtualenv, add --user options for install commands.
-INSTALL_OPTS != $(PYTHON) -c \
-	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"
+INSTALL_OPTS = `$(PYTHON) -c "import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
 
 
 all: test
