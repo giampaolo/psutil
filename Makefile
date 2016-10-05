@@ -13,7 +13,6 @@ DEPS = argparse \
 	ipaddress \
 	ipdb \
 	mock==1.0.1 \
-	nose \
 	pep8 \
 	pyflakes \
 	requests \
@@ -130,15 +129,10 @@ test-memleaks: install
 test-platform: install
 	$(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
 
-# Run a specific test by name; e.g. "make test-by-name disk_" will run
-# all test methods containing "disk_" in their name.
-# Requires "pip install nose".
+# Run a specific test by name, e.g.
+# make test-by-name psutil.tests.test_system.TestSystemAPIs.test_cpu_times
 test-by-name: install
-	@$(PYTHON) -m nose psutil/tests/*.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
-
-# Same as above but for test_memory_leaks.py script.
-test-memleaks-by-name: install
-	@$(PYTHON) -m nose test/test_memory_leaks.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
+	@$(PYTHON) -m unittest -v $(filter-out $@,$(MAKECMDGOALS))
 
 coverage: install
 	# Note: coverage options are controlled by .coveragerc file

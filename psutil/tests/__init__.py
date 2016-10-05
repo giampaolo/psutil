@@ -517,6 +517,19 @@ def create_temp_executable_file(suffix, c_code=None):
 # ===================================================================
 
 
+class TestCase(unittest.TestCase):
+
+    def __str__(self):
+        return "%s.%s.%s" % (
+            self.__class__.__module__, self.__class__.__name__,
+            self._testMethodName)
+
+
+# Hack that overrides default unittest.TestCase in order to print
+# a full path representation of the single unit tests being run.
+unittest.TestCase = TestCase
+
+
 def retry_before_failing(retries=NO_RETRIES):
     """Decorator which runs a test function and retries N times before
     actually failing.

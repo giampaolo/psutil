@@ -19,6 +19,8 @@ testmodules = [os.path.splitext(x)[0] for x in os.listdir(HERE)
                x.startswith('test_memory_leaks')]
 suite = unittest.TestSuite()
 for tm in testmodules:
+    # ...so that "make test" will print the full test paths
+    tm = "psutil.tests.%s" % tm
     suite.addTest(unittest.defaultTestLoader.loadTestsFromName(tm))
 result = unittest.TextTestRunner(verbosity=VERBOSITY).run(suite)
 success = result.wasSuccessful()
