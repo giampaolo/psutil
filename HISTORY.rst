@@ -14,6 +14,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 
 **Bug fixes**
 
+- #514: [OSX] possibly fix Process.memory_maps() segfault (critical!).
 - #783: [OSX] Process.status() may erroneously return "running" for zombie
   processes.
 - #798: [Windows] Process.open_files() returns and empty list on Windows 10.
@@ -30,7 +31,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #908: [OSX, BSD] different process methods could errounesuly mask the real
   error for high-privileged PIDs and raise NoSuchProcess and AccessDenied
   instead of OSError and RuntimeError.
-- #XXX: [OSX] Process open_files() and connections() methods may raise
+- #909: [OSX] Process open_files() and connections() methods may raise
   OSError with no exception set if process is gone.
 
 

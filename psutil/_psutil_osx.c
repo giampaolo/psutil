@@ -346,6 +346,11 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                     (info.max_protection & VM_PROT_EXECUTE) ? 'x' : '-');
 
             err = proc_regionfilename(pid, address, buf, sizeof(buf));
+            if (err == 0) {
+                psutil_raise_for_pid(
+                    pid, "proc_regionfilename() syscall failed");
+                goto error;
+            }
 
             if (info.share_mode == SM_COW && info.ref_count == 1) {
                 // Treat single reference SM_COW as SM_PRIVATE
