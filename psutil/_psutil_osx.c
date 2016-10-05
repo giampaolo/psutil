@@ -144,7 +144,7 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    if (! psutil_proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, &pathinfo,
+    if (! psutil_proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, 0, &pathinfo,
                               sizeof(pathinfo)))
     {
         return NULL;
@@ -474,7 +474,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti)))
+    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)))
         return NULL;
     return Py_BuildValue("(dd)",
                          (float)pti.pti_total_user / 1000000000.0,
@@ -508,13 +508,13 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti)))
+    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)))
         return NULL;
     // Note: determining other memory stats on OSX is a mess:
     // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
     // I just give up...
     // struct proc_regioninfo pri;
-    // psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, &pri, sizeof(pri))
+    // psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, 0, &pri, sizeof(pri))
     return Py_BuildValue(
         "(KKkk)",
         pti.pti_resident_size,  // resident memory size (rss)
@@ -656,7 +656,7 @@ psutil_proc_num_threads(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti)))
+    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)))
         return NULL;
     return Py_BuildValue("k", pti.pti_threadnum);
 }
@@ -672,7 +672,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti)))
+    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)))
         return NULL;
     // unvoluntary value seems not to be available;
     // pti.pti_csw probably refers to the sum of the two (getrusage()

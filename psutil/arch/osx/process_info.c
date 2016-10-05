@@ -356,8 +356,8 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
  * A thin wrapper around proc_pidinfo()
  */
 int
-psutil_proc_pidinfo(long pid, int flavor, void *pti, int size) {
-    int ret = proc_pidinfo((int)pid, flavor, 0, pti, size);
+psutil_proc_pidinfo(long pid, int flavor, uint64_t arg, void *pti, int size) {
+    int ret = proc_pidinfo((int)pid, flavor, arg, pti, size);
     if (ret == 0) {
         if (! psutil_pid_exists(pid)) {
             NoSuchProcess();
