@@ -1,5 +1,16 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+4.4.2
+=====
+
+*2016-10-26*
+
+Bug fixes
+---------
+
+- 931_: psutil no longer compiles on Solaris.
+
+
 4.4.1
 =====
 

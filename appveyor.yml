@@ -113,3 +113,4 @@ only_commits:
     psutil/tests/test_windows.py
     scripts/*
     setup.py
+
