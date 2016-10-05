@@ -1157,8 +1157,8 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
         py_tuple = NULL;
         fdp_pointer = &fds_pointer[i];
 
-        if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE)
-        {
+        if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE) {
+            errno = 0;
             nb = proc_pidfdinfo(pid,
                                 fdp_pointer->proc_fd,
                                 PROC_PIDFDVNODEPATHINFO,
@@ -1255,7 +1255,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
     if (pid == 0)
         return py_retlist;
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+    pidinfo_result = psutil_proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
     if (pidinfo_result <= 0)
         goto error;
 
@@ -1264,44 +1264,34 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
         PyErr_NoMemory();
         goto error;
     }
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
-                                  pidinfo_result);
 
+    pidinfo_result = psutil_proc_pidinfo(
+        pid, PROC_PIDLISTFDS, 0, fds_pointer, pidinfo_result);
     if (pidinfo_result <= 0)
         goto error;
-    iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
 
+    iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
     for (i = 0; i < iterations; i++) {
         py_tuple = NULL;
         py_laddr = NULL;
         py_raddr = NULL;
-        errno = 0;
         fdp_pointer = &fds_pointer[i];
 
-        if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET)
-        {
+        if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET) {
+            errno = 0;
             nb = proc_pidfdinfo(pid, fdp_pointer->proc_fd,
                                 PROC_PIDFDSOCKETINFO, &si, sizeof(si));
 
             // --- errors checking
-            if (nb <= 0) {
+            if ((nb <= 0) || (nb < sizeof(si))) {
                 if (errno == EBADF) {
                     // let's assume socket has been closed
                     continue;
                 }
-                if (errno != 0)
-                    PyErr_SetFromErrno(PyExc_OSError);
-                else
-                    PyErr_Format(
-                        PyExc_RuntimeError,
-                        "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
-                goto error;
-            }
-            if (nb < sizeof(si)) {
-                PyErr_Format(PyExc_RuntimeError,
-                             "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed "
-                             "(buffer mismatch)");
-                goto error;
+                else {
+                    psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
+                    goto error;
+                }
             }
             // --- /errors checking
 
@@ -1414,16 +1404,9 @@ error:
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
     Py_DECREF(py_retlist);
-
     if (fds_pointer != NULL)
         free(fds_pointer);
-    if (errno != 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
-    else if (! psutil_pid_exists(pid))
-        return NoSuchProcess();
-    else
-        return PyErr_Format(PyExc_RuntimeError,
-                            "proc_pidinfo(PROC_PIDLISTFDS) failed");
+    return NULL;
 }
 
 
