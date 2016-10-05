@@ -474,7 +474,7 @@ class Process(object):
             return os.readlink("%s/%s/path/cwd" % (procfs_path, self.pid))
         except OSError as err:
             if err.errno == errno.ENOENT:
-                os.stat("%s/%s" % (procfs_path, self.pid))
+                os.stat("%s/%s" % (procfs_path, self.pid))  # raise NSP or AD
                 return None
             raise
 
