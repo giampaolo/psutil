@@ -1226,7 +1226,7 @@ error:
         free(fds_pointer);
     if (errno != 0)
         return PyErr_SetFromErrno(PyExc_OSError);
-    else if (! psutil_pid_exists(pid))
+    else if (psutil_pid_exists(pid) == 0)
         return NoSuchProcess();
     else
         return NULL;  // exception has already been set earlier
