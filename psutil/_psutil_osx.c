@@ -169,9 +169,10 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
+    errno = 0;
     ret = proc_pidpath(pid, &buf, sizeof(buf));
     if (ret == 0) {
-        psutil_raise_ad_or_nsp(pid);
+        psutil_raise_for_pid(pid, "proc_pidpath() syscall failed");
         return NULL;
     }
 #if PY_MAJOR_VERSION >= 3
@@ -309,9 +310,11 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         goto error;
 
     err = task_for_pid(mach_task_self(), pid, &task);
-
     if (err != KERN_SUCCESS) {
-        psutil_raise_ad_or_nsp(pid);
+        if (psutil_pid_exists(pid) == 0)
+            NoSuchProcess();
+        else
+            AccessDenied();
         goto error;
     }
 
@@ -578,7 +581,10 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 
     err = task_for_pid(mach_task_self(), pid, &task);
     if (err != KERN_SUCCESS) {
-        psutil_raise_ad_or_nsp(pid);
+        if (psutil_pid_exists(pid) == 0)
+            NoSuchProcess();
+        else
+            AccessDenied();
         return NULL;
     }
 
@@ -1025,7 +1031,10 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     // task_for_pid() requires special privileges
     err = task_for_pid(mach_task_self(), pid, &task);
     if (err != KERN_SUCCESS) {
-        psutil_raise_ad_or_nsp(pid);
+        if (psutil_pid_exists(pid) == 0)
+            NoSuchProcess();
+        else
+            AccessDenied();
         goto error;
     }
 
