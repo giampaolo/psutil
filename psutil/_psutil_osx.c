@@ -345,8 +345,12 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                     (info.max_protection & VM_PROT_WRITE) ? 'w' : '-',
                     (info.max_protection & VM_PROT_EXECUTE) ? 'x' : '-');
 
-            err = proc_regionfilename(pid, address, buf, sizeof(buf));
-            if (err == 0) {
+            // proc_regionfilename() return value seems meaningless
+            // so we do what we can in order to not continue in case
+            // of error.
+            errno = 0;
+            proc_regionfilename(pid, address, buf, sizeof(buf));
+            if ((errno != 0) || ((sizeof(buf)) <= 0)) {
                 psutil_raise_for_pid(
                     pid, "proc_regionfilename() syscall failed");
                 goto error;
