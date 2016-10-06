@@ -511,7 +511,7 @@ class TestProcess(unittest.TestCase):
             if thread._running:
                 thread.stop()
 
-    @unittest.skipUnless(WINDOWS, 'WIN only')
+    @unittest.skipUnless(WINDOWS, 'WINDOWS only')
     def test_num_handles(self):
         # a better test is done later into test/_windows.py
         p = psutil.Process()

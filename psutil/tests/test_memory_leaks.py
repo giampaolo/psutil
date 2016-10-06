@@ -204,7 +204,7 @@ class TestProcessObjectLeaks(Base):
     def test_num_threads(self):
         self.execute('num_threads')
 
-    @unittest.skipUnless(WINDOWS, "WIN only")
+    @unittest.skipUnless(WINDOWS, "WINDOWS only")
     def test_num_handles(self):
         self.execute('num_handles')
 
