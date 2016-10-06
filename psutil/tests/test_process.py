@@ -603,13 +603,16 @@ class TestProcess(unittest.TestCase):
             self.assertGreaterEqual(getattr(mem, name), 0)
 
     def test_memory_full_info(self):
+        total = psutil.virtual_memory().total
         mem = psutil.Process().memory_full_info()
         for name in mem._fields:
-            self.assertGreaterEqual(getattr(mem, name), 0)
+            value = getattr(mem, name)
+            self.assertGreaterEqual(value, 0, msg=(name, value))
+            self.assertLessEqual(value, total, msg=(name, value, total))
         if LINUX or WINDOWS or OSX:
-            self.assertGreater(mem.uss, 0)
+            mem.uss
         if LINUX:
-            self.assertGreater(mem.pss, 0)
+            mem.pss
             self.assertGreater(mem.pss, mem.uss)
 
     @unittest.skipIf(OPENBSD or NETBSD, "not available on this platform")
@@ -1710,8 +1713,12 @@ class TestFetchAllProcesses(unittest.TestCase):
             assert ret.peak_pagefile >= ret.pagefile, ret
 
     def memory_full_info(self, ret, proc):
+        total = psutil.virtual_memory().total
         for name in ret._fields:
-            self.assertGreaterEqual(getattr(ret, name), 0)
+            value = getattr(ret, name)
+            self.assertGreaterEqual(value, 0, msg=(name, value))
+            self.assertLessEqual(value, total, msg=(name, value, total))
+
         if LINUX:
             self.assertGreaterEqual(ret.pss, ret.uss)
 
