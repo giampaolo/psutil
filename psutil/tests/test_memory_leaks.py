@@ -46,7 +46,7 @@ SKIP_PYTHON_IMPL = True
 
 def skip_if_linux():
     return unittest.skipIf(LINUX and SKIP_PYTHON_IMPL,
-                           "not worth being tested on LINUX (pure python)")
+                           "worthless on LINUX (pure python)")
 
 
 class Base(unittest.TestCase):
@@ -171,12 +171,12 @@ class TestProcessObjectLeaks(Base):
         self.execute('nice', niceness)
 
     @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
-                         "Linux and Windows Vista only")
+                         "platform not supported")
     def test_ionice_get(self):
         self.execute('ionice')
 
     @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
-                         "Linux and Windows Vista only")
+                         "platform not supported")
     def test_ionice_set(self):
         if WINDOWS:
             value = psutil.Process().ionice()
@@ -187,12 +187,12 @@ class TestProcessObjectLeaks(Base):
             fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
             self.execute_w_exc(OSError, fun)
 
-    @unittest.skipIf(OSX or SUNOS, "feature not supported on this platform")
+    @unittest.skipIf(OSX or SUNOS, "platform not supported")
     @skip_if_linux()
     def test_io_counters(self):
         self.execute('io_counters')
 
-    @unittest.skipUnless(WINDOWS, "not worth being tested on posix")
+    @unittest.skipIf(POSIX, "worthless on POSIX")
     def test_username(self):
         self.execute('username')
 
@@ -204,7 +204,7 @@ class TestProcessObjectLeaks(Base):
     def test_num_threads(self):
         self.execute('num_threads')
 
-    @unittest.skipUnless(WINDOWS, "Windows only")
+    @unittest.skipUnless(WINDOWS, "WIN only")
     def test_num_handles(self):
         self.execute('num_handles')
 
@@ -227,7 +227,7 @@ class TestProcessObjectLeaks(Base):
 
     # also available on Linux but it's pure python
     @unittest.skipUnless(OSX or WINDOWS,
-                         "not available on this platform")
+                         "platform not supported")
     def test_memory_full_info(self):
         self.execute('memory_full_info')
 
@@ -237,7 +237,7 @@ class TestProcessObjectLeaks(Base):
         self.execute('terminal')
 
     @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
-                     "not worth being tested on POSIX (pure python)")
+                     "worthless on POSIX (pure python)")
     def test_resume(self):
         self.execute('resume')
 
@@ -246,12 +246,12 @@ class TestProcessObjectLeaks(Base):
         self.execute('cwd')
 
     @unittest.skipUnless(WINDOWS or LINUX or FREEBSD,
-                         "Windows or Linux or BSD only")
+                         "platform not supported")
     def test_cpu_affinity_get(self):
         self.execute('cpu_affinity')
 
     @unittest.skipUnless(WINDOWS or LINUX or FREEBSD,
-                         "Windows or Linux or BSD only")
+                         "platform not supported")
     def test_cpu_affinity_set(self):
         affinity = psutil.Process().cpu_affinity()
         self.execute('cpu_affinity', affinity)
@@ -265,29 +265,28 @@ class TestProcessObjectLeaks(Base):
             self.execute('open_files')
 
     # OSX implementation is unbelievably slow
-    @unittest.skipIf(OSX, "OSX implementation is too slow")
-    @unittest.skipIf(OPENBSD, "not implemented on OpenBSD")
+    @unittest.skipIf(OSX, "too slow on OSX")
+    @unittest.skipIf(OPENBSD, "platform not supported")
     @skip_if_linux()
     def test_memory_maps(self):
         self.execute('memory_maps')
 
-    @unittest.skipUnless(LINUX, "Linux only")
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
-                         "only available on Linux >= 2.6.36")
+    @unittest.skipUnless(LINUX, "LINUX only")
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_get(self):
         self.execute('rlimit', psutil.RLIMIT_NOFILE)
 
-    @unittest.skipUnless(LINUX, "Linux only")
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
-                         "only available on Linux >= 2.6.36")
+    @unittest.skipUnless(LINUX, "LINUX only")
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_set(self):
         limit = psutil.Process().rlimit(psutil.RLIMIT_NOFILE)
         self.execute('rlimit', psutil.RLIMIT_NOFILE, limit)
         self.execute_w_exc(OSError, 'rlimit', -1)
 
     @skip_if_linux()
-    # Windows implementation is based on a single system-wide function
-    @unittest.skipIf(WINDOWS, "tested later")
+    # Windows implementation is based on a single system-wide
+    # function (tested later).
+    @unittest.skipIf(WINDOWS, "worthless on WINDOWS")
     def test_connections(self):
         def create_socket(family, type):
             sock = socket.socket(family, type)
@@ -321,7 +320,7 @@ class TestProcessObjectLeaks(Base):
                 s.close()
 
     @unittest.skipUnless(hasattr(psutil.Process, 'environ'),
-                         "Linux, OSX and Windows")
+                         "platform not supported")
     def test_environ(self):
         self.execute("environ")
 

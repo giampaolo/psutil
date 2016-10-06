@@ -273,7 +273,7 @@ class TestProcess(unittest.TestCase):
     # try this with Python 2.7 and re-enable the test.
 
     @unittest.skipUnless(sys.version_info > (2, 6, 1) and not OSX,
-                         'os.times() is not reliable on this Python version')
+                         'os.times() broken on OSX + PY2.6.1')
     def test_cpu_times_2(self):
         user_time, kernel_time = psutil.Process().cpu_times()[:2]
         utime, ktime = os.times()[:2]
@@ -304,7 +304,7 @@ class TestProcess(unittest.TestCase):
         # make sure returned value can be pretty printed with strftime
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
 
-    @unittest.skipIf(WINDOWS, 'Windows only')
+    @unittest.skipUnless(POSIX, 'POSIX only')
     def test_terminal(self):
         terminal = psutil.Process().terminal()
         if sys.stdin.isatty():
@@ -314,7 +314,7 @@ class TestProcess(unittest.TestCase):
             assert terminal, repr(terminal)
 
     @unittest.skipUnless(LINUX or BSD or WINDOWS,
-                         'not available on this platform')
+                         'platform not supported')
     @skip_on_not_implemented(only_if=LINUX)
     def test_io_counters(self):
         p = psutil.Process()
@@ -342,7 +342,7 @@ class TestProcess(unittest.TestCase):
         assert io2.read_bytes >= io1.read_bytes, (io1, io2)
 
     @unittest.skipUnless(LINUX or (WINDOWS and get_winver() >= WIN_VISTA),
-                         'Linux and Windows Vista only')
+                         'platform not supported')
     @unittest.skipIf(LINUX and TRAVIS, "unknown failure on travis")
     def test_ionice(self):
         if LINUX:
@@ -406,8 +406,7 @@ class TestProcess(unittest.TestCase):
             self.assertRaises(ValueError, p.ionice, 3)
             self.assertRaises(TypeError, p.ionice, 2, 1)
 
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
-                         "only available on Linux >= 2.6.36")
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_get(self):
         import resource
         p = psutil.Process(os.getpid())
@@ -430,8 +429,7 @@ class TestProcess(unittest.TestCase):
                 self.assertGreaterEqual(ret[0], -1)
                 self.assertGreaterEqual(ret[1], -1)
 
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
-                         "only available on Linux >= 2.6.36")
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_set(self):
         sproc = get_test_subprocess()
         p = psutil.Process(sproc.pid)
@@ -444,8 +442,7 @@ class TestProcess(unittest.TestCase):
         with self.assertRaises(ValueError):
             p.rlimit(psutil.RLIMIT_NOFILE, (5, 5, 5))
 
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
-                         "only available on Linux >= 2.6.36")
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit(self):
         p = psutil.Process()
         soft, hard = p.rlimit(psutil.RLIMIT_FSIZE)
@@ -464,8 +461,7 @@ class TestProcess(unittest.TestCase):
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             self.assertEqual(p.rlimit(psutil.RLIMIT_FSIZE), (soft, hard))
 
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
-                         "only available on Linux >= 2.6.36")
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_infinity(self):
         # First set a limit, then re-set it by specifying INFINITY
         # and assume we overridden the previous limit.
@@ -480,8 +476,7 @@ class TestProcess(unittest.TestCase):
             p.rlimit(psutil.RLIMIT_FSIZE, (soft, hard))
             self.assertEqual(p.rlimit(psutil.RLIMIT_FSIZE), (soft, hard))
 
-    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT,
-                         "only available on Linux >= 2.6.36")
+    @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_infinity_value(self):
         # RLIMIT_FSIZE should be RLIM_INFINITY, which will be a really
         # big number on a platform with large file support.  On these
@@ -516,7 +511,7 @@ class TestProcess(unittest.TestCase):
             if thread._running:
                 thread.stop()
 
-    @unittest.skipUnless(WINDOWS, 'Windows only')
+    @unittest.skipUnless(WINDOWS, 'WIN only')
     def test_num_handles(self):
         # a better test is done later into test/_windows.py
         p = psutil.Process()
@@ -554,7 +549,7 @@ class TestProcess(unittest.TestCase):
 
     @retry_before_failing()
     # see: https://travis-ci.org/giampaolo/psutil/jobs/111842553
-    @unittest.skipIf(OSX and TRAVIS, "")
+    @unittest.skipIf(OSX and TRAVIS, "fails on TRAVIS + OSX")
     @skip_on_access_denied(only_if=OSX)
     def test_threads_2(self):
         sproc = get_test_subprocess()
@@ -615,7 +610,7 @@ class TestProcess(unittest.TestCase):
             mem.pss
             self.assertGreater(mem.pss, mem.uss)
 
-    @unittest.skipIf(OPENBSD or NETBSD, "not available on this platform")
+    @unittest.skipIf(OPENBSD or NETBSD, "platfform not supported")
     def test_memory_maps(self):
         p = psutil.Process()
         maps = p.memory_maps()
@@ -722,7 +717,8 @@ class TestProcess(unittest.TestCase):
         pyexe = os.path.basename(os.path.realpath(sys.executable)).lower()
         assert pyexe.startswith(name), (pyexe, name)
 
-    @unittest.skipIf(SUNOS, "doesn't work on Solaris")
+    # XXX
+    @unittest.skipIf(SUNOS, "broken on SUNOS")
     def test_prog_w_funky_name(self):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
@@ -742,7 +738,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(os.path.normcase(p.exe()),
                          os.path.normcase(funky_path))
 
-    @unittest.skipUnless(POSIX, 'posix only')
+    @unittest.skipUnless(POSIX, 'POSIX only')
     def test_uids(self):
         p = psutil.Process()
         real, effective, saved = p.uids()
@@ -755,7 +751,7 @@ class TestProcess(unittest.TestCase):
         if hasattr(os, "getresuid"):
             self.assertEqual(saved, os.getresuid()[2])
 
-    @unittest.skipUnless(POSIX, 'posix only')
+    @unittest.skipUnless(POSIX, 'POSIX only')
     def test_gids(self):
         p = psutil.Process()
         real, effective, saved = p.gids()
@@ -838,9 +834,8 @@ class TestProcess(unittest.TestCase):
         p = psutil.Process(sproc.pid)
         call_until(p.cwd, "ret == os.path.dirname(os.getcwd())")
 
-    @unittest.skipUnless(WINDOWS or LINUX or FREEBSD,
-                         'not available on this platform')
-    @unittest.skipIf(LINUX and TRAVIS, "unknown failure on travis")
+    @unittest.skipUnless(WINDOWS or LINUX or FREEBSD, 'platform not supported')
+    @unittest.skipIf(LINUX and TRAVIS, "unreliable on TRAVIS")
     def test_cpu_affinity(self):
         p = psutil.Process()
         initial = p.cpu_affinity()
@@ -875,10 +870,10 @@ class TestProcess(unittest.TestCase):
         self.assertRaises(TypeError, p.cpu_affinity, [0, "1"])
         self.assertRaises(ValueError, p.cpu_affinity, [0, -1])
 
-    # TODO
-    @unittest.skipIf(BSD, "broken on BSD, see #595")
-    @unittest.skipIf(APPVEYOR,
-                     "can't find any process file on Appveyor")
+    # TODO: #595
+    @unittest.skipIf(BSD, "broken on BSD")
+    # can't find any process file on Appveyor
+    @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_open_files(self):
         # current process
         p = psutil.Process()
@@ -914,10 +909,10 @@ class TestProcess(unittest.TestCase):
         for file in filenames:
             assert os.path.isfile(file), file
 
-    # TODO
-    @unittest.skipIf(BSD, "broken on BSD, see #595")
-    @unittest.skipIf(APPVEYOR,
-                     "can't find any process file on Appveyor")
+    # TODO: #595
+    @unittest.skipIf(BSD, "broken on BSD")
+    # can't find any process file on Appveyor
+    @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_open_files_2(self):
         # test fd and path fields
         with open(TESTFN, 'w') as fileobj:
@@ -1045,8 +1040,7 @@ class TestProcess(unittest.TestCase):
                                psutil.CONN_NONE,
                                ("all", "inet", "inet6", "udp", "udp6"))
 
-    @unittest.skipUnless(hasattr(socket, 'AF_UNIX'),
-                         'AF_UNIX is not supported')
+    @unittest.skipUnless(hasattr(socket, 'AF_UNIX'), 'AF_UNIX not supported')
     @skip_on_access_denied(only_if=OSX)
     def test_connections_unix(self):
         def check(type):
@@ -1071,7 +1065,7 @@ class TestProcess(unittest.TestCase):
         check(SOCK_DGRAM)
 
     @unittest.skipUnless(hasattr(socket, "fromfd"),
-                         'socket.fromfd() is not availble')
+                         'socket.fromfd() not supported')
     @unittest.skipIf(WINDOWS or SUNOS,
                      'connection fd not available on this platform')
     def test_connection_fromfd(self):
@@ -1107,7 +1101,7 @@ class TestProcess(unittest.TestCase):
         if WINDOWS:
             psutil.CONN_DELETE_TCB
 
-    @unittest.skipUnless(POSIX, 'posix only')
+    @unittest.skipUnless(POSIX, 'POSIX only')
     def test_num_fds(self):
         p = psutil.Process()
         start = p.num_fds()
@@ -1122,7 +1116,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(p.num_fds(), start)
 
     @skip_on_not_implemented(only_if=LINUX)
-    @unittest.skipIf(OPENBSD or NETBSD, "not reliable on Open/NetBSD")
+    @unittest.skipIf(OPENBSD or NETBSD, "not reliable on OPENBSD & NETBSD")
     def test_num_ctx_switches(self):
         p = psutil.Process()
         before = sum(p.num_ctx_switches())
@@ -1302,7 +1296,7 @@ class TestProcess(unittest.TestCase):
                     "NoSuchProcess exception not raised for %r, retval=%s" % (
                         name, ret))
 
-    @unittest.skipUnless(POSIX, 'posix only')
+    @unittest.skipUnless(POSIX, 'POSIX only')
     def test_zombie_process(self):
         def succeed_or_zombie_p_exc(fun, *args, **kwargs):
             try:
@@ -1466,7 +1460,7 @@ class TestProcess(unittest.TestCase):
             self.assertIsNotNone(proc.returncode)
 
     @unittest.skipUnless(hasattr(psutil.Process, "environ"),
-                         "environ not available")
+                         "platform not supported")
     def test_environ(self):
         self.maxDiff = None
         p = psutil.Process()
@@ -1490,7 +1484,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(d, d2)
 
     @unittest.skipUnless(hasattr(psutil.Process, "environ"),
-                         "environ not available")
+                         "platform not supported")
     @unittest.skipUnless(POSIX, "posix only")
     def test_weird_environ(self):
         # environment variables can contain values without an equals sign
@@ -1923,7 +1917,7 @@ class TestUnicode(unittest.TestCase):
             self.assertIsInstance(p.cwd(), str)
             self.assertEqual(p.cwd(), tdir)
 
-    @unittest.skipIf(APPVEYOR, "")
+    @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
@@ -1938,7 +1932,7 @@ class TestUnicode(unittest.TestCase):
         self.assertEqual(os.path.normcase(path), os.path.normcase(self.uexe))
 
     @unittest.skipUnless(hasattr(psutil.Process, "environ"),
-                         "environ not available")
+                         "platform not supported")
     def test_proc_environ(self):
         env = os.environ.copy()
         env['FUNNY_ARG'] = self.uexe
@@ -2039,7 +2033,8 @@ class TestNonUnicode(unittest.TestCase):
             self.assertIsInstance(p.cwd(), str)
             self.assertEqual(encode_path(p.cwd()), funny_directory)
 
-    @unittest.skipIf(WINDOWS, "does not work on windows")
+    # XXX
+    @unittest.skipIf(WINDOWS, "broken on WINDOWS")
     def test_proc_open_files(self):
         funny_file = os.path.join(self.temp_directory, b"\xc0\x80")
         p = psutil.Process()
@@ -2055,7 +2050,7 @@ class TestNonUnicode(unittest.TestCase):
         self.assertIn(funny_file, encode_path(path))
 
     @unittest.skipUnless(hasattr(psutil.Process, "environ"),
-                         "environ not available")
+                         "platform not supported")
     def test_proc_environ(self):
         env = os.environ.copy()
         funny_path = self.temp_directory

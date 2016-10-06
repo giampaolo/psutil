@@ -144,7 +144,7 @@ def get_free_version_info():
 # =====================================================================
 
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestSystemVirtualMemory(unittest.TestCase):
 
     def test_total(self):
@@ -378,7 +378,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
 # =====================================================================
 
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestSystemSwapMemory(unittest.TestCase):
 
     def test_total(self):
@@ -440,7 +440,7 @@ class TestSystemSwapMemory(unittest.TestCase):
 # =====================================================================
 
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestSystemCPU(unittest.TestCase):
 
     @unittest.skipIf(TRAVIS, "unknown failure on travis")
@@ -525,7 +525,7 @@ class TestSystemCPU(unittest.TestCase):
 # =====================================================================
 
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestSystemCPUStats(unittest.TestCase):
 
     @unittest.skipIf(TRAVIS, "fails on Travis")
@@ -545,7 +545,7 @@ class TestSystemCPUStats(unittest.TestCase):
 # =====================================================================
 
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestSystemNetwork(unittest.TestCase):
 
     def test_net_if_addrs_ips(self):
@@ -655,7 +655,7 @@ class TestSystemNetwork(unittest.TestCase):
 # =====================================================================
 
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestSystemDisks(unittest.TestCase):
 
     @unittest.skipUnless(
@@ -813,7 +813,7 @@ class TestSystemDisks(unittest.TestCase):
 # =====================================================================
 
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestMisc(unittest.TestCase):
 
     def test_boot_time(self):
@@ -993,7 +993,7 @@ class TestMisc(unittest.TestCase):
 # =====================================================================
 
 
-@unittest.skipUnless(LINUX, "not a Linux system")
+@unittest.skipUnless(LINUX, "LINUX only")
 class TestProcess(unittest.TestCase):
 
     def setUp(self):
@@ -1066,7 +1066,7 @@ class TestProcess(unittest.TestCase):
             mem.swap, sum([x.swap for x in maps]), delta=4096)
 
     # On PYPY file descriptors are not closed fast enough.
-    @unittest.skipIf(PYPY, "skipped on PYPY")
+    @unittest.skipIf(PYPY, "unreliable on PYPY")
     def test_open_files_mode(self):
         def get_test_file():
             p = psutil.Process()
@@ -1196,7 +1196,7 @@ class TestProcess(unittest.TestCase):
 
     # not sure why (doesn't fail locally)
     # https://travis-ci.org/giampaolo/psutil/jobs/108629915
-    @unittest.skipIf(TRAVIS, "fails on travis")
+    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_exe_mocked(self):
         with mock.patch('psutil._pslinux.os.readlink',
                         side_effect=OSError(errno.ENOENT, "")) as m:

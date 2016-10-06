@@ -60,7 +60,7 @@ def wrap_exceptions(fun):
     return wrapper
 
 
-@unittest.skipUnless(WINDOWS, "not a Windows system")
+@unittest.skipUnless(WINDOWS, "WINDOWS only")
 class WindowsSpecificTestCase(unittest.TestCase):
 
     @classmethod
@@ -313,7 +313,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
                         "no common entries in %s, %s" % (ps_names, wmi_names))
 
 
-@unittest.skipUnless(WINDOWS, "not a Windows system")
+@unittest.skipUnless(WINDOWS, "WINDOWS only")
 class TestDualProcessImplementation(unittest.TestCase):
     """
     Certain APIs on Windows have 2 internal implementations, one
@@ -474,7 +474,7 @@ class TestDualProcessImplementation(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
 
-@unittest.skipUnless(WINDOWS, "not a Windows system")
+@unittest.skipUnless(WINDOWS, "WINDOWS only")
 class RemoteProcessTestCase(unittest.TestCase):
     """Certain functions require calling ReadProcessMemory.  This trivially
     works when called on the current process.  Check that this works on other
@@ -562,7 +562,7 @@ class RemoteProcessTestCase(unittest.TestCase):
         self.assertEquals(e["THINK_OF_A_NUMBER"], str(os.getpid()))
 
 
-@unittest.skipUnless(WINDOWS, "not a Windows system")
+@unittest.skipUnless(WINDOWS, "WINDOWS only")
 class TestServices(unittest.TestCase):
 
     def test_win_service_iter(self):

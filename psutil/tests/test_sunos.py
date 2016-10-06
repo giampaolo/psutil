@@ -15,7 +15,7 @@ from psutil.tests import sh
 from psutil.tests import unittest
 
 
-@unittest.skipUnless(SUNOS, "not a SunOS system")
+@unittest.skipUnless(SUNOS, "SUNOS only")
 class SunOSSpecificTestCase(unittest.TestCase):
 
     def test_swap_memory(self):
