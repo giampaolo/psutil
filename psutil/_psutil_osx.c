@@ -115,6 +115,37 @@ error:
 
 
 /*
+ * Return multiple process info as a Python tuple in one shot by
+ * using sysctl() and filling up a kinfo_proc struct.
+ * It should be possible to do this for all processes without
+ * getting incurring into permission (EPERM) issues.
+ */
+static PyObject *
+psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
+    long pid;
+    struct kinfo_proc kp;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (psutil_get_kinfo_proc(pid, &kp) == -1)
+        return NULL;
+
+    return Py_BuildValue(
+        "lllllllidi",
+        (long)kp.kp_eproc.e_ppid,                  // (long) ppid
+        (long)kp.kp_eproc.e_pcred.p_ruid,          // (long) real uid
+        (long)kp.kp_eproc.e_ucred.cr_uid,          // (long) effective uid
+        (long)kp.kp_eproc.e_pcred.p_svuid,         // (long) saved uid
+        (long)kp.kp_eproc.e_pcred.p_rgid,          // (long) real gid
+        (long)kp.kp_eproc.e_ucred.cr_groups[0],    // (long) effective gid
+        (long)kp.kp_eproc.e_pcred.p_svgid,         // (long) saved gid
+        kp.kp_eproc.e_tdev,                        // (int) tty nr
+        PSUTIL_TV2DOUBLE(kp.kp_proc.p_starttime),  // (double) create time
+        (int)kp.kp_proc.p_stat                     // (int) status
+    );
+}
+
+/*
  * Return process name from kinfo_proc as a Python string.
  */
 static PyObject *
@@ -131,7 +162,6 @@ psutil_proc_name(PyObject *self, PyObject *args) {
 #else
     return Py_BuildValue("s", kp.kp_proc.p_comm);
 #endif
-
 }
 
 
@@ -216,72 +246,6 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     // get the environment block, defined in arch/osx/process_info.c
     py_retdict = psutil_get_environ(pid);
     return py_retdict;
-}
-
-
-/*
- * Return process parent pid from kinfo_proc as a Python integer.
- */
-static PyObject *
-psutil_proc_ppid(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("l", (long)kp.kp_eproc.e_ppid);
-}
-
-
-/*
- * Return process real uid from kinfo_proc as a Python integer.
- */
-static PyObject *
-psutil_proc_uids(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("lll",
-                         (long)kp.kp_eproc.e_pcred.p_ruid,
-                         (long)kp.kp_eproc.e_ucred.cr_uid,
-                         (long)kp.kp_eproc.e_pcred.p_svuid);
-}
-
-
-/*
- * Return process real group id from ki_comm as a Python integer.
- */
-static PyObject *
-psutil_proc_gids(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("lll",
-                         (long)kp.kp_eproc.e_pcred.p_rgid,
-                         (long)kp.kp_eproc.e_ucred.cr_groups[0],
-                         (long)kp.kp_eproc.e_pcred.p_svgid);
-}
-
-
-/*
- * Return process controlling terminal number as an integer.
- */
-static PyObject *
-psutil_proc_tty_nr(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("i", kp.kp_eproc.e_tdev);
 }
 
 
@@ -493,22 +457,6 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     return Py_BuildValue("(dd)",
                          (float)pti.pti_total_user / 1000000000.0,
                          (float)pti.pti_total_system / 1000000000.0);
-}
-
-
-/*
- * Return a Python float indicating the process create time expressed in
- * seconds since the epoch.
- */
-static PyObject *
-psutil_proc_create_time(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("d", PSUTIL_TV2DOUBLE(kp.kp_proc.p_starttime));
 }
 
 
@@ -1006,21 +954,6 @@ error:
     if (fs != NULL)
         free(fs);
     return NULL;
-}
-
-
-/*
- * Return process status as a Python integer.
- */
-static PyObject *
-psutil_proc_status(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("i", (int)kp.kp_proc.p_stat);
 }
 
 
@@ -1808,6 +1741,8 @@ PsutilMethods[] = {
 
     // --- per-process functions
 
+    {"proc_kinfo_oneshot", psutil_proc_kinfo_oneshot, METH_VARARGS,
+     "Return multiple process info."},
     {"proc_name", psutil_proc_name, METH_VARARGS,
      "Return process name"},
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
@@ -1818,25 +1753,14 @@ PsutilMethods[] = {
      "Return path of the process executable"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory."},
-    {"proc_ppid", psutil_proc_ppid, METH_VARARGS,
-     "Return process ppid as an integer"},
-    {"proc_uids", psutil_proc_uids, METH_VARARGS,
-     "Return process real user id as an integer"},
-    {"proc_gids", psutil_proc_gids, METH_VARARGS,
-     "Return process real group id as an integer"},
     {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,
      "Return tuple of user/kern time for the given PID"},
-    {"proc_create_time", psutil_proc_create_time, METH_VARARGS,
-     "Return a float indicating the process create time expressed in "
-     "seconds since the epoch"},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
      "Return memory information about a process"},
     {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS,
      "Return process USS memory"},
     {"proc_num_threads", psutil_proc_num_threads, METH_VARARGS,
      "Return number of threads used by process"},
-    {"proc_status", psutil_proc_status, METH_VARARGS,
-     "Return process status as an integer"},
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads as a list of tuples"},
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
@@ -1847,8 +1771,6 @@ PsutilMethods[] = {
      "Return the number of context switches performed by process"},
     {"proc_connections", psutil_proc_connections, METH_VARARGS,
      "Get process TCP and UDP connections as a list of tuples"},
-    {"proc_tty_nr", psutil_proc_tty_nr, METH_VARARGS,
-     "Return process tty number as an integer"},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
      "Return a list of tuples for every process's memory map"},
 

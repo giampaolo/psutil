@@ -71,6 +71,14 @@ elif psutil.SUNOS:
         'terminal',
         'uids',
     ]
+elif psutil.OSX:
+    names += [
+        'uids',
+        'gids',
+        'terminal',
+        'ppid',
+        'create_time',
+    ]
 
 names = sorted(set(names))
 
