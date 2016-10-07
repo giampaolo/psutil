@@ -70,6 +70,17 @@ kinfo_proc_map = dict(
     status=9,
 )
 
+pidtaskinfo_map = dict(
+    cpuutime=0,
+    cpustime=1,
+    rss=2,
+    vms=3,
+    pfaults=4,
+    pageins=5,
+    numthreads=6,
+    volctxsw=7,
+)
+
 scputimes = namedtuple('scputimes', ['user', 'nice', 'system', 'idle'])
 
 svmem = namedtuple(
@@ -280,15 +291,25 @@ class Process(object):
 
     @memoize_when_activated
     def _get_kinfo_proc(self):
+        # Note: should work with all PIDs without permission issues.
         ret = cext.proc_kinfo_oneshot(self.pid)
         assert len(ret) == len(kinfo_proc_map)
         return ret
 
+    @memoize_when_activated
+    def _get_pidtaskinfo(self):
+        # Note: should work for PIDs owned by user only.
+        ret = cext.proc_pidtaskinfo_oneshot(self.pid)
+        assert len(ret) == len(pidtaskinfo_map)
+        return ret
+
     def oneshot_enter(self):
         self._get_kinfo_proc.cache_activate()
+        self._get_pidtaskinfo.cache_activate()
 
     def oneshot_exit(self):
         self._get_kinfo_proc.cache_deactivate()
+        self._get_pidtaskinfo.cache_deactivate()
 
     @wrap_exceptions
     def name(self):
@@ -346,8 +367,13 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        rss, vms, pfaults, pageins = cext.proc_memory_info(self.pid)
-        return pmem(rss, vms, pfaults, pageins)
+        rawtuple = self._get_pidtaskinfo()
+        return pmem(
+            rawtuple[pidtaskinfo_map['rss']],
+            rawtuple[pidtaskinfo_map['vms']],
+            rawtuple[pidtaskinfo_map['pfaults']],
+            rawtuple[pidtaskinfo_map['pageins']],
+        )
 
     @wrap_exceptions
     def memory_full_info(self):
@@ -357,9 +383,12 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        user, system = cext.proc_cpu_times(self.pid)
-        # Children user/system times are not retrievable (set to 0).
-        return _common.pcputimes(user, system, 0, 0)
+        rawtuple = self._get_pidtaskinfo()
+        return _common.pcputimes(
+            rawtuple[pidtaskinfo_map['cpuutime']],
+            rawtuple[pidtaskinfo_map['cpustime']],
+            # children user / system times are not retrievable (set to 0)
+            0, 0)
 
     @wrap_exceptions
     def create_time(self):
@@ -367,11 +396,15 @@ class Process(object):
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        return _common.pctxsw(*cext.proc_num_ctx_switches(self.pid))
+        # Unvoluntary value seems not to be available;
+        # getrusage() numbers seems to confirm this theory.
+        # We set it to 0.
+        vol = self._get_pidtaskinfo()[pidtaskinfo_map['volctxsw']]
+        return _common.pctxsw(vol, 0)
 
     @wrap_exceptions
     def num_threads(self):
-        return cext.proc_num_threads(self.pid)
+        return self._get_pidtaskinfo()[pidtaskinfo_map['numthreads']]
 
     @wrap_exceptions
     def open_files(self):

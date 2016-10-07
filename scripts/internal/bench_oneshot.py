@@ -73,11 +73,15 @@ elif psutil.SUNOS:
     ]
 elif psutil.OSX:
     names += [
-        'uids',
-        'gids',
-        'terminal',
-        'ppid',
+        'cpu_times',
         'create_time',
+        'gids',
+        'memory_info',
+        'num_ctx_switches',
+        'num_threads',
+        'ppid',
+        'terminal',
+        'uids',
     ]
 
 names = sorted(set(names))
