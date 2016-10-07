@@ -36,7 +36,6 @@
 #include <err.h> // for warn() & err()
 
 
-#include "openbsd.h"
 #include "../../_psutil_common.h"
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)
@@ -109,42 +108,6 @@ kinfo_getfile(long pid, int* cnt) {
 
     *cnt = (int)(len / sizeof(struct kinfo_file));
     return kf;
-}
-
-
-int
-psutil_pid_exists(long pid) {
-    // Return 1 if PID exists in the current process list, else 0, -1
-    // on error.
-    // TODO: this should live in _psutil_posix.c but for some reason if I
-    // move it there I get a "include undefined symbol" error.
-    int ret;
-    if (pid < 0)
-        return 0;
-    ret = kill(pid , 0);
-    if (ret == 0)
-        return 1;
-    else {
-        if (ret == ESRCH)
-            return 0;
-        else if (ret == EPERM)
-            return 1;
-        else {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return -1;
-        }
-    }
-}
-
-
-int
-psutil_raise_ad_or_nsp(long pid) {
-    // Set exception to AccessDenied if pid exists else NoSuchProcess.
-    if (psutil_pid_exists(pid) == 0)
-        NoSuchProcess();
-    else
-        AccessDenied();
-    return 0;
 }
 
 
@@ -284,7 +247,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (strstr(errbuf, "Permission denied") != NULL)
             AccessDenied();
         else
-            PyErr_Format(PyExc_RuntimeError, "kvm_openfiles() failed");
+            PyErr_Format(PyExc_RuntimeError, "kvm_openfiles() syscall failed");
         goto error;
     }
 
@@ -295,7 +258,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         if (strstr(errbuf, "Permission denied") != NULL)
             AccessDenied();
         else
-            PyErr_Format(PyExc_RuntimeError, "kvm_getprocs() failed");
+            PyErr_Format(PyExc_RuntimeError, "kvm_getprocs() syscall failed");
         goto error;
     }
 
@@ -441,9 +404,10 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         return NULL;
 
+    errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp(pid);
+        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
         return NULL;
     }
     free(freep);
@@ -542,9 +506,10 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
         goto error;
     }
 
+    errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp(pid);
+        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
         goto error;
     }
 

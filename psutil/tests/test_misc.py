@@ -4,6 +4,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""
+Miscellaneous tests.
+"""
+
 import ast
 import errno
 import imp
@@ -42,10 +46,6 @@ from psutil.tests import TRAVIS
 from psutil.tests import unittest
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid
-
-# ===================================================================
-# --- Misc tests
-# ===================================================================
 
 
 class TestMisc(unittest.TestCase):
@@ -364,7 +364,7 @@ class TestMisc(unittest.TestCase):
 # ===================================================================
 
 
-@unittest.skipIf(TOX, "can't test on tox")
+@unittest.skipIf(TOX, "can't test on TOX")
 class TestScripts(unittest.TestCase):
     """Tests for scripts in the "scripts" directory."""
 
@@ -398,7 +398,7 @@ class TestScripts(unittest.TestCase):
                     self.fail('no test defined for %r script'
                               % os.path.join(SCRIPTS_DIR, name))
 
-    @unittest.skipUnless(POSIX, "UNIX only")
+    @unittest.skipUnless(POSIX, "POSIX only")
     def test_executable(self):
         for name in os.listdir(SCRIPTS_DIR):
             if name.endswith('.py'):
@@ -418,7 +418,8 @@ class TestScripts(unittest.TestCase):
     def test_procinfo(self):
         self.assert_stdout('procinfo.py', args=str(os.getpid()))
 
-    @unittest.skipIf(APPVEYOR, "can't find users on Appveyor")
+    # can't find users on APPVEYOR
+    @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_who(self):
         self.assert_stdout('who.py')
 
@@ -431,35 +432,28 @@ class TestScripts(unittest.TestCase):
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
-    @unittest.skipIf(TRAVIS, "permission denied on travis")
+    # permission denied on travis
+    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
-    @unittest.skipIf(OPENBSD or NETBSD, "memory maps not supported")
+    @unittest.skipIf(OPENBSD or NETBSD, "platform not supported")
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 
-    @unittest.skipUnless(OSX or WINDOWS or LINUX, "uss not available")
+    @unittest.skipUnless(OSX or WINDOWS or LINUX, "platform not supported")
     def test_procsmem(self):
         self.assert_stdout('procsmem.py')
 
-    @unittest.skipIf(ast is None,
-                     'ast module not available on this python version')
     def test_killall(self):
         self.assert_syntax('killall.py')
 
-    @unittest.skipIf(ast is None,
-                     'ast module not available on this python version')
     def test_nettop(self):
         self.assert_syntax('nettop.py')
 
-    @unittest.skipIf(ast is None,
-                     'ast module not available on this python version')
     def test_top(self):
         self.assert_syntax('top.py')
 
-    @unittest.skipIf(ast is None,
-                     'ast module not available on this python version')
     def test_iotop(self):
         self.assert_syntax('iotop.py')
 
@@ -467,7 +461,7 @@ class TestScripts(unittest.TestCase):
         output = self.assert_stdout('pidof.py', args=psutil.Process().name())
         self.assertIn(str(os.getpid()), output)
 
-    @unittest.skipUnless(WINDOWS, "Windows only")
+    @unittest.skipUnless(WINDOWS, "WINDOWS only")
     def test_winservices(self):
         self.assert_stdout('winservices.py')
 

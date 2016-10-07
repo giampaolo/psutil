@@ -129,9 +129,12 @@ psutil_pids(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
+
+    // TODO: RuntimeError is inappropriate here; we could return the
+    // original error instead.
     if (psutil_get_proc_list(&proclist, &num_processes) != 0) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "failed to retrieve process list.");
+                        "failed to retrieve process list");
         goto error;
     }
 
@@ -429,9 +432,10 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         goto error;
 
+    errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp(pid);
+        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
         goto error;
     }
 

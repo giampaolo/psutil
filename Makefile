@@ -2,12 +2,7 @@
 # To use a specific Python version run: "make install PYTHON=python3.3"
 # You can set the variables below from the command line.
 
-# Prefer Python 3 if installed.
-PYTHON != python -c \
-	"from subprocess import call, PIPE; \
-	code = call(['python3 -V'], shell=True, stdout=PIPE, stderr=PIPE); \
-	print('python3' if code == 0 else 'python')"
-
+PYTHON = python
 TSCRIPT = psutil/tests/runner.py
 
 # List of nice-to-have dev libs.
@@ -15,9 +10,9 @@ DEPS = argparse \
 	coverage \
 	flake8 \
 	futures \
+	ipaddress \
 	ipdb \
 	mock==1.0.1 \
-	nose \
 	pep8 \
 	pyflakes \
 	requests \
@@ -28,8 +23,7 @@ DEPS = argparse \
 	unittest2
 
 # In not in a virtualenv, add --user options for install commands.
-INSTALL_OPTS != $(PYTHON) -c \
-	"import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"
+INSTALL_OPTS = `$(PYTHON) -c "import sys; print('' if hasattr(sys, 'real_prefix') else '--user')"`
 
 
 all: test
@@ -137,15 +131,10 @@ test-memleaks: install
 test-platform: install
 	$(PYTHON) psutil/tests/test_`$(PYTHON) -c 'import psutil; print([x.lower() for x in ("LINUX", "BSD", "OSX", "SUNOS", "WINDOWS") if getattr(psutil, x)][0])'`.py
 
-# Run a specific test by name; e.g. "make test-by-name disk_" will run
-# all test methods containing "disk_" in their name.
-# Requires "pip install nose".
+# Run a specific test by name, e.g.
+# make test-by-name psutil.tests.test_system.TestSystemAPIs.test_cpu_times
 test-by-name: install
-	@$(PYTHON) -m nose psutil/tests/*.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
-
-# Same as above but for test_memory_leaks.py script.
-test-memleaks-by-name: install
-	@$(PYTHON) -m nose test/test_memory_leaks.py --nocapture -v -m $(filter-out $@,$(MAKECMDGOALS))
+	@$(PYTHON) -m unittest -v $(filter-out $@,$(MAKECMDGOALS))
 
 coverage: install
 	# Note: coverage options are controlled by .coveragerc file
@@ -200,7 +189,7 @@ upload-doc:
 
 # Download exes/wheels hosted on appveyor.
 win-download-exes:
-	$(PYTHON) .ci/appveyor/download_exes.py --user giampaolo --project psutil
+	$(PYTHON) scripts/internal/download_exes.py --user giampaolo --project psutil
 
 # Upload exes/wheels in dist/* directory to PYPI.
 win-upload-exes:

@@ -57,26 +57,14 @@ psutil_sys_vminfo(vm_statistics_data_t *vmstat) {
 
     ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)vmstat, &count);
     if (ret != KERN_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError,
-                     "host_statistics() failed: %s", mach_error_string(ret));
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "host_statistics(HOST_VM_INFO) syscall failed: %s",
+            mach_error_string(ret));
         return 0;
     }
     mach_port_deallocate(mach_task_self(), mport);
     return 1;
-}
-
-
-/*
- * Set exception to AccessDenied if pid exists else NoSuchProcess.
- */
-void
-psutil_raise_ad_or_nsp(long pid) {
-    int ret;
-    ret = psutil_pid_exists(pid);
-    if (ret == 0)
-        NoSuchProcess();
-    else
-        AccessDenied();
 }
 
 
@@ -158,8 +146,8 @@ psutil_proc_cwd(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    if (! psutil_proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, &pathinfo,
-                              sizeof(pathinfo)))
+    if (psutil_proc_pidinfo(
+            pid, PROC_PIDVNODEPATHINFO, 0, &pathinfo, sizeof(pathinfo)) <= 0)
     {
         return NULL;
     }
@@ -183,9 +171,10 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
+    errno = 0;
     ret = proc_pidpath(pid, &buf, sizeof(buf));
     if (ret == 0) {
-        psutil_raise_ad_or_nsp(pid);
+        psutil_raise_for_pid(pid, "proc_pidpath() syscall failed");
         return NULL;
     }
 #if PY_MAJOR_VERSION >= 3
@@ -323,9 +312,11 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         goto error;
 
     err = task_for_pid(mach_task_self(), pid, &task);
-
     if (err != KERN_SUCCESS) {
-        psutil_raise_ad_or_nsp(pid);
+        if (psutil_pid_exists(pid) == 0)
+            NoSuchProcess();
+        else
+            AccessDenied();
         goto error;
     }
 
@@ -347,7 +338,10 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             memset(addr_str, 0, sizeof(addr_str));
             memset(perms, 0, sizeof(perms));
 
-            sprintf(addr_str, "%016lx-%016lx", address, address + size);
+            sprintf(addr_str,
+                    "%016lx-%016lx",
+                    (long unsigned int)address,
+                    (long unsigned int)address + size);
             sprintf(perms, "%c%c%c/%c%c%c",
                     (info.protection & VM_PROT_READ) ? 'r' : '-',
                     (info.protection & VM_PROT_WRITE) ? 'w' : '-',
@@ -356,7 +350,16 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
                     (info.max_protection & VM_PROT_WRITE) ? 'w' : '-',
                     (info.max_protection & VM_PROT_EXECUTE) ? 'x' : '-');
 
-            err = proc_regionfilename(pid, address, buf, sizeof(buf));
+            // proc_regionfilename() return value seems meaningless
+            // so we do what we can in order to not continue in case
+            // of error.
+            errno = 0;
+            proc_regionfilename(pid, address, buf, sizeof(buf));
+            if ((errno != 0) || ((sizeof(buf)) <= 0)) {
+                psutil_raise_for_pid(
+                    pid, "proc_regionfilename() syscall failed");
+                goto error;
+            }
 
             if (info.share_mode == SM_COW && info.ref_count == 1) {
                 // Treat single reference SM_COW as SM_PRIVATE
@@ -485,7 +488,7 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti)))
+    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
         return NULL;
     return Py_BuildValue("(dd)",
                          (float)pti.pti_total_user / 1000000000.0,
@@ -519,13 +522,13 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti)))
+    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
         return NULL;
     // Note: determining other memory stats on OSX is a mess:
     // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
     // I just give up...
     // struct proc_regioninfo pri;
-    // psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, &pri, sizeof(pri))
+    // psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, 0, &pri, sizeof(pri))
     return Py_BuildValue(
         "(KKkk)",
         pti.pti_resident_size,  // resident memory size (rss)
@@ -592,7 +595,10 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 
     err = task_for_pid(mach_task_self(), pid, &task);
     if (err != KERN_SUCCESS) {
-        psutil_raise_ad_or_nsp(pid);
+        if (psutil_pid_exists(pid) == 0)
+            NoSuchProcess();
+        else
+            AccessDenied();
         return NULL;
     }
 
@@ -613,7 +619,9 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
             break;
         }
         else if (kr != KERN_SUCCESS) {
-            PyErr_Format(PyExc_RuntimeError, "mach_vm_region() failed");
+            PyErr_Format(
+                PyExc_RuntimeError,
+                "mach_vm_region(VM_REGION_TOP_INFO) syscall failed");
             return NULL;
         }
 
@@ -664,7 +672,7 @@ psutil_proc_num_threads(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti)))
+    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
         return NULL;
     return Py_BuildValue("k", pti.pti_threadnum);
 }
@@ -680,7 +688,7 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (! psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, &pti, sizeof(pti)))
+    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
         return NULL;
     // unvoluntary value seems not to be available;
     // pti.pti_csw probably refers to the sum of the two (getrusage()
@@ -708,7 +716,8 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         if (errno != 0)
             PyErr_SetFromErrno(PyExc_OSError);
         else
-            PyErr_Format(PyExc_RuntimeError, "sysctl(HW_MEMSIZE) failed");
+            PyErr_Format(
+                PyExc_RuntimeError, "sysctl(HW_MEMSIZE) syscall failed");
         return NULL;
     }
 
@@ -745,7 +754,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
         if (errno != 0)
             PyErr_SetFromErrno(PyExc_OSError);
         else
-            PyErr_Format(PyExc_RuntimeError, "sysctl(VM_SWAPUSAGE) failed");
+            PyErr_Format(
+                PyExc_RuntimeError, "sysctl(VM_SWAPUSAGE) syscall failed");
         return NULL;
     }
     if (!psutil_sys_vminfo(&vmstat))
@@ -773,10 +783,12 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
     mach_port_t host_port = mach_host_self();
     error = host_statistics(host_port, HOST_CPU_LOAD_INFO,
                             (host_info_t)&r_load, &count);
-    if (error != KERN_SUCCESS)
-        return PyErr_Format(PyExc_RuntimeError,
-                            "Error in host_statistics(): %s",
-                            mach_error_string(error));
+    if (error != KERN_SUCCESS) {
+        return PyErr_Format(
+            PyExc_RuntimeError,
+            "host_statistics(HOST_CPU_LOAD_INFO) syscall failed: %s",
+            mach_error_string(error));
+    }
     mach_port_deallocate(mach_task_self(), host_port);
 
     return Py_BuildValue(
@@ -810,8 +822,10 @@ psutil_per_cpu_times(PyObject *self, PyObject *args) {
     error = host_processor_info(host_port, PROCESSOR_CPU_LOAD_INFO,
                                 &cpu_count, &info_array, &info_count);
     if (error != KERN_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "Error in host_processor_info(): %s",
-                     mach_error_string(error));
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "host_processor_info(PROCESSOR_CPU_LOAD_INFO) syscall failed: %s",
+             mach_error_string(error));
         goto error;
     }
     mach_port_deallocate(mach_task_self(), host_port);
@@ -1039,7 +1053,10 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     // task_for_pid() requires special privileges
     err = task_for_pid(mach_task_self(), pid, &task);
     if (err != KERN_SUCCESS) {
-        psutil_raise_ad_or_nsp(pid);
+        if (psutil_pid_exists(pid) == 0)
+            NoSuchProcess();
+        else
+            AccessDenied();
         goto error;
     }
 
@@ -1054,14 +1071,14 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         else {
             // otherwise throw a runtime error with appropriate error code
             PyErr_Format(PyExc_RuntimeError,
-                         "task_info(TASK_BASIC_INFO) failed");
+                         "task_info(TASK_BASIC_INFO) syscall failed");
         }
         goto error;
     }
 
     err = task_threads(task, &thread_list, &thread_count);
     if (err != KERN_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError, "task_threads() failed");
+        PyErr_Format(PyExc_RuntimeError, "task_threads() syscall failed");
         goto error;
     }
 
@@ -1072,7 +1089,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
                          (thread_info_t)thinfo_basic, &thread_info_count);
         if (kr != KERN_SUCCESS) {
             PyErr_Format(PyExc_RuntimeError,
-                         "thread_info() with flag THREAD_BASIC_INFO failed");
+                         "thread_info(THREAD_BASIC_INFO) syscall failed");
             goto error;
         }
 
@@ -1142,27 +1159,19 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
-    if (pidinfo_result <= 0) {
-        // may be be ignored later if errno != 0
-        PyErr_Format(PyExc_RuntimeError,
-                     "proc_pidinfo(PROC_PIDLISTFDS) failed");
+    pidinfo_result = psutil_proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+    if (pidinfo_result <= 0)
         goto error;
-    }
 
     fds_pointer = malloc(pidinfo_result);
     if (fds_pointer == NULL) {
         PyErr_NoMemory();
         goto error;
     }
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
-                                  pidinfo_result);
-    if (pidinfo_result <= 0) {
-        // may be be ignored later if errno != 0
-        PyErr_Format(PyExc_RuntimeError,
-                     "proc_pidinfo(PROC_PIDLISTFDS) failed");
+    pidinfo_result = psutil_proc_pidinfo(
+        pid, PROC_PIDLISTFDS, 0, fds_pointer, pidinfo_result);
+    if (pidinfo_result <= 0)
         goto error;
-    }
 
     iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
 
@@ -1170,8 +1179,8 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
         py_tuple = NULL;
         fdp_pointer = &fds_pointer[i];
 
-        if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE)
-        {
+        if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE) {
+            errno = 0;
             nb = proc_pidfdinfo(pid,
                                 fdp_pointer->proc_fd,
                                 PROC_PIDFDVNODEPATHINFO,
@@ -1179,22 +1188,16 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
                                 sizeof(vi));
 
             // --- errors checking
-            if (nb <= 0) {
+            if ((nb <= 0) || nb < sizeof(vi)) {
                 if ((errno == ENOENT) || (errno == EBADF)) {
                     // no such file or directory or bad file descriptor;
                     // let's assume the file has been closed or removed
                     continue;
                 }
-                // may be be ignored later if errno != 0
-                PyErr_Format(PyExc_RuntimeError,
-                             "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
-                goto error;
-            }
-            if (nb < sizeof(vi)) {
-                PyErr_Format(PyExc_RuntimeError,
-                             "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed "
-                             "(buffer mismatch)");
-                goto error;
+                else {
+                    psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
+                    goto error;
+                }
             }
             // --- /errors checking
 
@@ -1229,12 +1232,7 @@ error:
     Py_DECREF(py_retlist);
     if (fds_pointer != NULL)
         free(fds_pointer);
-    if (errno != 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
-    else if (! psutil_pid_exists(pid))
-        return NoSuchProcess();
-    else
-        return NULL;  // exception has already been set earlier
+    return NULL;  // exception has already been set earlier
 }
 
 
@@ -1279,7 +1277,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
     if (pid == 0)
         return py_retlist;
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+    pidinfo_result = psutil_proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
     if (pidinfo_result <= 0)
         goto error;
 
@@ -1288,44 +1286,34 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
         PyErr_NoMemory();
         goto error;
     }
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
-                                  pidinfo_result);
 
+    pidinfo_result = psutil_proc_pidinfo(
+        pid, PROC_PIDLISTFDS, 0, fds_pointer, pidinfo_result);
     if (pidinfo_result <= 0)
         goto error;
-    iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
 
+    iterations = (pidinfo_result / PROC_PIDLISTFD_SIZE);
     for (i = 0; i < iterations; i++) {
         py_tuple = NULL;
         py_laddr = NULL;
         py_raddr = NULL;
-        errno = 0;
         fdp_pointer = &fds_pointer[i];
 
-        if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET)
-        {
+        if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET) {
+            errno = 0;
             nb = proc_pidfdinfo(pid, fdp_pointer->proc_fd,
                                 PROC_PIDFDSOCKETINFO, &si, sizeof(si));
 
             // --- errors checking
-            if (nb <= 0) {
+            if ((nb <= 0) || (nb < sizeof(si))) {
                 if (errno == EBADF) {
                     // let's assume socket has been closed
                     continue;
                 }
-                if (errno != 0)
-                    PyErr_SetFromErrno(PyExc_OSError);
-                else
-                    PyErr_Format(
-                        PyExc_RuntimeError,
-                        "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed");
-                goto error;
-            }
-            if (nb < sizeof(si)) {
-                PyErr_Format(PyExc_RuntimeError,
-                             "proc_pidinfo(PROC_PIDFDVNODEPATHINFO) failed "
-                             "(buffer mismatch)");
-                goto error;
+                else {
+                    psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
+                    goto error;
+                }
             }
             // --- /errors checking
 
@@ -1438,16 +1426,9 @@ error:
     Py_XDECREF(py_laddr);
     Py_XDECREF(py_raddr);
     Py_DECREF(py_retlist);
-
     if (fds_pointer != NULL)
         free(fds_pointer);
-    if (errno != 0)
-        return PyErr_SetFromErrno(PyExc_OSError);
-    else if (! psutil_pid_exists(pid))
-        return NoSuchProcess();
-    else
-        return PyErr_Format(PyExc_RuntimeError,
-                            "proc_pidinfo(PROC_PIDLISTFDS) failed");
+    return NULL;
 }
 
 
@@ -1592,8 +1573,8 @@ psutil_disk_io_counters(PyObject *self, PyObject *args) {
     if (IOServiceGetMatchingServices(kIOMasterPortDefault,
                                      IOServiceMatching(kIOMediaClass),
                                      &disk_list) != kIOReturnSuccess) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "unable to get the list of disks.");
+        PyErr_SetString(
+            PyExc_RuntimeError, "unable to get the list of disks.");
         goto error;
     }
 
@@ -1799,8 +1780,10 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
 
     ret = host_statistics(mport, HOST_VM_INFO, (host_info_t)&vmstat, &count);
     if (ret != KERN_SUCCESS) {
-        PyErr_Format(PyExc_RuntimeError,
-                     "host_statistics() failed: %s", mach_error_string(ret));
+        PyErr_Format(
+            PyExc_RuntimeError,
+            "host_statistics(HOST_VM_INFO) failed: %s",
+            mach_error_string(ret));
         return NULL;
     }
     mach_port_deallocate(mach_task_self(), mport);

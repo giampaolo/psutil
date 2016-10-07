@@ -174,7 +174,8 @@ psutil_get_nic_addresses() {
     } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (attempts < 3));
 
     if (dwRetVal != NO_ERROR) {
-        PyErr_SetString(PyExc_RuntimeError, "GetAdaptersAddresses() failed.");
+        PyErr_SetString(
+            PyExc_RuntimeError, "GetAdaptersAddresses() syscall failed.");
         return NULL;
     }
 
@@ -2093,7 +2094,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
 
     if (NtSetInformationProcess == NULL) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "couldn't get NtSetInformationProcess");
+                        "couldn't get NtSetInformationProcess syscall");
         return NULL;
     }
 
@@ -2325,7 +2326,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
         if (dwRetVal != NO_ERROR) {
             PyErr_SetString(PyExc_RuntimeError,
-                            "GetIfEntry() or GetIfEntry2() failed.");
+                            "GetIfEntry() or GetIfEntry2() syscalls failed.");
             goto error;
         }
 
@@ -3233,7 +3234,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     // Make a second call to GetIfTable to get the actual
     // data we want.
     if ((dwRetVal = GetIfTable(pIfTable, &dwSize, FALSE)) != NO_ERROR) {
-        PyErr_SetString(PyExc_RuntimeError, "GetIfTable() failed");
+        PyErr_SetString(PyExc_RuntimeError, "GetIfTable() syscall failed");
         goto error;
     }
 

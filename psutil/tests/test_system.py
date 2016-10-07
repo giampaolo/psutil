@@ -148,7 +148,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertGreater(bt, 0)
         self.assertLess(bt, time.time())
 
-    @unittest.skipUnless(POSIX, 'posix only')
+    @unittest.skipUnless(POSIX, 'POSIX only')
     def test_PAGESIZE(self):
         # pagesize is used internally to perform different calculations
         # and it's determined by using SC_PAGE_SIZE; make sure
@@ -403,7 +403,7 @@ class TestSystemAPIs(unittest.TestCase):
                     self._test_cpu_percent(percent, None, None)
 
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
-                     "os.statvfs() function not available on this platform")
+                     "os.statvfs() not available")
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
         assert usage.total > 0, usage
@@ -434,7 +434,7 @@ class TestSystemAPIs(unittest.TestCase):
             self.fail("OSError not raised")
 
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
-                     "os.statvfs() function not available on this platform")
+                     "os.statvfs() not available")
     def test_disk_usage_unicode(self):
         # see: https://github.com/giampaolo/psutil/issues/416
         safe_rmpath(TESTFN_UNICODE)
@@ -443,7 +443,7 @@ class TestSystemAPIs(unittest.TestCase):
         psutil.disk_usage(TESTFN_UNICODE)
 
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
-                     "os.statvfs() function not available on this platform")
+                     "os.statvfs() not available")
     @unittest.skipIf(LINUX and TRAVIS, "unknown failure on travis")
     def test_disk_partitions(self):
         # all = False
@@ -623,7 +623,7 @@ class TestSystemAPIs(unittest.TestCase):
             else:
                 self.assertEqual(addr.address, '06-3d-29-00-00-00')
 
-    @unittest.skipIf(TRAVIS, "EPERM on travis")
+    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")  # raises EPERM
     def test_net_if_stats(self):
         nics = psutil.net_if_stats()
         assert nics, nics
@@ -640,8 +640,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
-    @unittest.skipIf(APPVEYOR,
-                     "can't find any physical disk on Appveyor")
+    @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")  # no visible disks
     def test_disk_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.read_count)
@@ -694,6 +693,43 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertGreaterEqual(value, 0)
             if name in ('ctx_switches', 'interrupts'):
                 self.assertGreater(value, 0)
+
+    def test_os_constants(self):
+        names = ["POSIX", "WINDOWS", "LINUX", "OSX", "FREEBSD", "OPENBSD",
+                 "NETBSD", "BSD", "SUNOS"]
+        for name in names:
+            self.assertIsInstance(getattr(psutil, name), bool, msg=name)
+
+        if os.name == 'posix':
+            assert psutil.POSIX
+            assert not psutil.WINDOWS
+            names.remove("POSIX")
+            if "linux" in sys.platform.lower():
+                assert psutil.LINUX
+                names.remove("LINUX")
+            elif "bsd" in sys.platform.lower():
+                assert psutil.BSD
+                self.assertEqual([psutil.FREEBSD, psutil.OPENBSD,
+                                  psutil.NETBSD].count(True), 1)
+                names.remove("BSD")
+                names.remove("FREEBSD")
+                names.remove("OPENBSD")
+                names.remove("NETBSD")
+            elif "sunos" in sys.platform.lower() or \
+                    "solaris" in sys.platform.lower():
+                assert psutil.SUNOS
+                names.remove("SUNOS")
+            elif "darwin" in sys.platform.lower():
+                assert psutil.OSX
+                names.remove("OSX")
+        else:
+            assert psutil.WINDOWS
+            assert not psutil.POSIX
+            names.remove("WINDOWS")
+
+        # assert all other constants are set to False
+        for name in names:
+            self.assertIs(getattr(psutil, name), False, msg=name)
 
 
 if __name__ == '__main__':

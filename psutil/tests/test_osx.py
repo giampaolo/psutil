@@ -80,7 +80,7 @@ def human2bytes(s):
     return int(num * prefix[letter])
 
 
-@unittest.skipUnless(OSX, "not an OSX system")
+@unittest.skipUnless(OSX, "OSX only")
 class TestProcess(unittest.TestCase):
 
     @classmethod
@@ -104,7 +104,7 @@ class TestProcess(unittest.TestCase):
         self.assertEqual(start_ps, start_psutil)
 
 
-@unittest.skipUnless(OSX, "not an OSX system")
+@unittest.skipUnless(OSX, "OSX only")
 class TestSystemAPIs(unittest.TestCase):
 
     def test_disks(self):

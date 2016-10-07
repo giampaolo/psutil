@@ -24,38 +24,6 @@
 
 
 /*
- * Return 1 if PID exists in the current process list, else 0, -1
- * on error.
- * TODO: this should live in _psutil_posix.c but for some reason if I
- * move it there I get a "include undefined symbol" error.
- */
-int
-psutil_pid_exists(long pid) {
-    int ret;
-    if (pid < 0)
-        return 0;
-    ret = kill(pid , 0);
-    if (ret == 0)
-        return 1;
-    else {
-        return 0;
-        /*
-        // This is how it is handled on other POSIX systems but it causes
-        // test_halfway_terminated test to fail with AccessDenied.
-        if (ret == ESRCH)
-            return 0;
-        else if (ret == EPERM)
-            return 1;
-        else {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return -1;
-        }
-        */
-    }
-}
-
-
-/*
  * Returns a list of all BSD processes on the system.  This routine
  * allocates the list and puts it in *procList and a count of the
  * number of entries in *procCount.  You are responsible for freeing
@@ -385,26 +353,16 @@ psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
 
 
 /*
- * A thin wrapper around proc_pidinfo()
+ * A wrapper around proc_pidinfo().
+ * Returns 0 on failure (and Python exception gets already set).
  */
 int
-psutil_proc_pidinfo(long pid, int flavor, void *pti, int size) {
-    int ret = proc_pidinfo((int)pid, flavor, 0, pti, size);
-    if (ret == 0) {
-        if (! psutil_pid_exists(pid)) {
-            NoSuchProcess();
-            return 0;
-        }
-        else {
-            AccessDenied();
-            return 0;
-        }
-    }
-    else if (ret != size) {
-        AccessDenied();
+psutil_proc_pidinfo(long pid, int flavor, uint64_t arg, void *pti, int size) {
+    errno = 0;
+    int ret = proc_pidinfo((int)pid, flavor, arg, pti, size);
+    if ((ret <= 0) || (ret < sizeof(pti))) {
+        psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
         return 0;
     }
-    else {
-        return 1;
-    }
+    return ret;
 }

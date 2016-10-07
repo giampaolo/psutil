@@ -39,7 +39,6 @@
 #include <arpa/inet.h>
 
 
-#include "netbsd.h"
 #include "netbsd_socks.h"
 #include "../../_psutil_common.h"
 
@@ -50,16 +49,6 @@
 // ============================================================================
 // Utility functions
 // ============================================================================
-
-
-int
-psutil_raise_ad_or_nsp(long pid) {
-    // Set exception to AccessDenied if pid exists else NoSuchProcess.
-    if (psutil_pid_exists(pid) == 0)
-        NoSuchProcess();
-    else
-        AccessDenied();
-}
 
 
 int
@@ -121,31 +110,6 @@ kinfo_getfile(pid_t pid, int* cnt) {
 
     *cnt = (int)(len / sizeof(struct kinfo_file));
     return kf;
-}
-
-
-int
-psutil_pid_exists(pid_t pid) {
-    // Return 1 if PID exists in the current process list, else 0, -1
-    // on error.
-    // TODO: this should live in _psutil_posix.c but for some reason if I
-    // move it there I get a "include undefined symbol" error.
-    int ret;
-    if (pid < 0)
-        return 0;
-    ret = kill(pid , 0);
-    if (ret == 0)
-        return 1;
-    else {
-        if (ret == ESRCH)
-            return 0;
-        else if (ret == EPERM)
-            return 1;
-        else {
-            PyErr_SetFromErrno(PyExc_OSError);
-            return -1;
-        }
-    }
 }
 
 
@@ -323,13 +287,14 @@ psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
     kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, errbuf);
 
     if (kd == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "kvm_openfiles() failed: %s", errbuf);
+        PyErr_Format(
+            PyExc_RuntimeError, "kvm_openfiles() syscall failed: %s", errbuf);
         return errno;
     }
 
     result = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(kinfo_proc), &cnt);
     if (result == NULL) {
-        PyErr_Format(PyExc_RuntimeError, "kvm_getproc2() failed");
+        PyErr_Format(PyExc_RuntimeError, "kvm_getproc2() syscall failed");
         kvm_close(kd);
         return errno;
     }
@@ -549,9 +514,10 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
+    errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp(pid);
+        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
         return NULL;
     }
     free(freep);

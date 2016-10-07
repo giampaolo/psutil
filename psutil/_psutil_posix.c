@@ -36,8 +36,6 @@
 #include <netdb.h>
 #endif
 
-#include "_psutil_posix.h"
-
 
 /*
  * Given a PID return process priority as a Python integer.
