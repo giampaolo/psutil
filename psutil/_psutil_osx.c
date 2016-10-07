@@ -124,14 +124,27 @@ static PyObject *
 psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
+    PyObject *py_name;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (psutil_get_kinfo_proc(pid, &kp) == -1)
         return NULL;
 
+#if PY_MAJOR_VERSION >= 3
+    py_name = PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
+#else
+    py_name = Py_BuildValue("s", kp.kp_proc.p_comm);
+#endif
+    if (! py_name) {
+        // Likely a decoding error. We don't want to fail the whole
+        // operation. The python module may retry with proc_name().
+        PyErr_Clear();
+        py_name = Py_None;
+    }
+
     return Py_BuildValue(
-        "lllllllidi",
+        "lllllllidiO",
         (long)kp.kp_eproc.e_ppid,                  // (long) ppid
         (long)kp.kp_eproc.e_pcred.p_ruid,          // (long) real uid
         (long)kp.kp_eproc.e_ucred.cr_uid,          // (long) effective uid
@@ -141,7 +154,8 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
         (long)kp.kp_eproc.e_pcred.p_svgid,         // (long) saved gid
         kp.kp_eproc.e_tdev,                        // (int) tty nr
         PSUTIL_TV2DOUBLE(kp.kp_proc.p_starttime),  // (double) create time
-        (int)kp.kp_proc.p_stat                     // (int) status
+        (int)kp.kp_proc.p_stat,                    // (int) status
+        py_name                                    // (pystr) name
     );
 }
 

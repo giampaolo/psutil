@@ -68,6 +68,7 @@ kinfo_proc_map = dict(
     ttynr=7,
     ctime=8,
     status=9,
+    name=10,
 )
 
 pidtaskinfo_map = dict(
@@ -313,7 +314,8 @@ class Process(object):
 
     @wrap_exceptions
     def name(self):
-        return cext.proc_name(self.pid)
+        name = self._get_kinfo_proc()[kinfo_proc_map['name']]
+        return name if name is not None else cext.proc_name(self.pid)
 
     @wrap_exceptions
     def exe(self):

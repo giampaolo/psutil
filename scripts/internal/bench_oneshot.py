@@ -77,6 +77,7 @@ elif psutil.OSX:
         'create_time',
         'gids',
         'memory_info',
+        'name',
         'num_ctx_switches',
         'num_threads',
         'ppid',
