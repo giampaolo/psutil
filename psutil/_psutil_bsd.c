@@ -200,11 +200,31 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long memstack;
     kinfo_proc kp;
     long pagesize = sysconf(_SC_PAGESIZE);
+    char str[1000];
+    PyObject *py_name;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
+
+    // Process
+#ifdef __FreeBSD__
+    sprintf(str, "%s", kp.ki_comm);
+#elif defined(__OpenBSD__) || defined(__NetBSD__)
+    sprintf(str, "%s", kp.p_comm);
+#endif
+#if PY_MAJOR_VERSION >= 3
+    py_name = PyUnicode_DecodeFSDefault(str);
+#else
+    py_name = Py_BuildValue("s", str);
+#endif
+    if (! py_name) {
+        // Likely a decoding error. We don't want to fail the whole
+        // operation. The python module may retry with proc_name().
+        PyErr_Clear();
+        py_name = Py_None;
+    }
 
     // Calculate memory.
 #ifdef __FreeBSD__
@@ -233,7 +253,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
 
     // Return a single big tuple with all process info.
     return Py_BuildValue(
-        "(lillllllidllllddddlllll)",
+        "(lillllllidllllddddlllllO)",
 #ifdef __FreeBSD__
         //
         (long)kp.ki_ppid,                // (long) ppid
@@ -265,7 +285,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         vms,                              // (long) vms
         memtext,                          // (long) mem text
         memdata,                          // (long) mem data
-        memstack                          // (long) mem stack
+        memstack,                         // (long) mem stack
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
         //
         (long)kp.p_ppid,                 // (long) ppid
@@ -299,8 +319,9 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         vms,                              // (long) vms
         memtext,                          // (long) mem text
         memdata,                          // (long) mem data
-        memstack                          // (long) mem stack
+        memstack,                         // (long) mem stack
 #endif
+        py_name                           // (pystr) name
     );
 }
 

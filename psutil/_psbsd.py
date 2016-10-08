@@ -121,6 +121,7 @@ kinfo_proc_map = dict(
     memtext=20,
     memdata=21,
     memstack=22,
+    name=23,
 )
 
 
@@ -493,7 +494,8 @@ class Process(object):
 
     @wrap_exceptions
     def name(self):
-        return cext.proc_name(self.pid)
+        name = self.oneshot()[kinfo_proc_map['name']]
+        return name if name is not None else cext.proc_name(self.pid)
 
     @wrap_exceptions
     def exe(self):

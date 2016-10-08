@@ -52,6 +52,7 @@ elif psutil.BSD:
         'io_counters',
         'memory_full_info',
         'memory_info',
+        'name',
         'num_ctx_switches',
         'ppid',
         'status',
