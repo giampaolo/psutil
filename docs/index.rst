@@ -790,10 +790,10 @@ Process class
 
     Here's a list of methods which can take advantage of the speedup depending
     on what platform you're on.
-    In the table below horizontal emtpy rows indicate what process methods can
-    be efficiently grouped together internally.
+    In the table below horizontal emtpy rows delimitate what process methods
+    can be efficiently grouped together internally.
     The last column (speedup) shows an approximation of the speedup you can get
-    if you collect all this methods together (best case scenario).
+    if you call all the methods together (best case scenario).
 
     +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
     | Linux                        | Windows     | OSX                          | BSD                          | SunOS                    |
