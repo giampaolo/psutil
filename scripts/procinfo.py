@@ -260,7 +260,7 @@ def run(pid, verbose=False):
         print_('connections', '')
 
     if pinfo['threads'] and len(pinfo['threads']) > 1:
-        template = "%-5s %15s %15s"
+        template = "%-5s %12s %12s"
         print_('threads', template % ("TID", "USER", "SYSTEM"))
         for i, thread in enumerate(pinfo['threads']):
             if not verbose and i >= NON_VERBOSE_ITERATIONS:
@@ -282,14 +282,14 @@ def run(pid, verbose=False):
             else:
                 resources.append((res_name, soft, hard))
         if resources:
-            print_("res-limits",
-                   "RLIMIT                     SOFT       HARD")
+            template = "%-12s %15s %15s"
+            print_("res-limits", template % ("RLIMIT", "SOFT", "HARD"))
             for res_name, soft, hard in resources:
                 if soft == psutil.RLIM_INFINITY:
                     soft = "infinity"
                 if hard == psutil.RLIM_INFINITY:
                     hard = "infinity"
-                print_('', "%-20s %10s %10s" % (
+                print_('', template % (
                     RLIMITS_MAP.get(res_name, res_name), soft, hard))
 
     if hasattr(proc, "environ") and pinfo['environ']:
