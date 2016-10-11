@@ -52,8 +52,11 @@ clean:
 	rm -rf htmlcov/
 	rm -rf tmp/
 
+_:
+
+
 # Compile without installing.
-build: clean
+build: _
 	$(PYTHON) setup.py build
 	@# copies compiled *.so files in ./psutil directory in order to allow
 	@# "import psutil" when using the interactive interpreter from within
