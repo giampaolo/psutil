@@ -301,7 +301,7 @@ def run(pid, verbose=False):
                 break
             print_("", template % (k, pinfo['environ'][k]))
 
-    if pinfo['memory_maps']:
+    if pinfo.get('memory_maps', None):
         template = "%-8s %s"
         print_("mem-maps", template % ("RSS", "PATH"))
         maps = sorted(pinfo['memory_maps'], key=lambda x: x.rss, reverse=True)
