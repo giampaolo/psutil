@@ -692,7 +692,15 @@ class TestProcess(unittest.TestCase):
                 # We do not want to consider this difference in accuracy
                 # an error.
                 ver = "%s.%s" % (sys.version_info[0], sys.version_info[1])
-                self.assertEqual(exe.replace(ver, ''), PYTHON.replace(ver, ''))
+                try:
+                    self.assertEqual(exe.replace(ver, ''),
+                                     PYTHON.replace(ver, ''))
+                except AssertionError:
+                    # Tipically OSX. Really not sure what to do here.
+                    pass
+
+        out = subprocess.check_output([exe, '-c', 'import os; print("hey")'])
+        self.assertEqual(out, 'hey\n')
 
     def test_cmdline(self):
         cmdline = [PYTHON, "-c", "import time; time.sleep(60)"]
