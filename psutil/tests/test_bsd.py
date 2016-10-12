@@ -124,10 +124,12 @@ class BSDSpecificTestCase(unittest.TestCase):
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 self.fail("psutil=%s, df=%s" % (usage.used, used))
 
+    @unittest.skipIf(not which('sysctl'), "sysctl cmd not available")
     def test_cpu_count_logical(self):
         syst = sysctl("hw.ncpu")
         self.assertEqual(psutil.cpu_count(logical=True), syst)
 
+    @unittest.skipIf(not which('sysctl'), "sysctl cmd not available")
     def test_virtual_memory_total(self):
         num = sysctl('hw.physmem')
         self.assertEqual(num, psutil.virtual_memory().total)
