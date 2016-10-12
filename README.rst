@@ -61,6 +61,14 @@ Example applications
 - https://github.com/Jahaja/psdash
 - https://github.com/giampaolo/psutil/tree/master/scripts
 
++------------------------------------------------+---------------------------------------------+
+| .. image:: docs/_static/procinfo-small.png     | .. image:: docs/_static/top-small.png       |
+|    :target: docs/_static/procinfo.png          |     :target: docs/_static/top.png           |
++------------------------------------------------+---------------------------------------------+
+| .. image:: docs/_static/procsmem-small.png     | .. image:: docs/_static/pmap-small.png      |
+|     :target: docs/_static/procsmem.png         |     :target: docs/_static/pmap.png          |
++------------------------------------------------+---------------------------------------------+
+
 ==============
 Example usages
 ==============

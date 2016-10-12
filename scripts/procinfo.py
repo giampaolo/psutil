@@ -152,21 +152,27 @@ def run(pid, verbose=False):
     except psutil.NoSuchProcess as err:
         sys.exit(str(err))
 
-    try:
-        parent = proc.parent()
-        if parent:
-            parent = '(%s)' % parent.name()
-        else:
+    # collect other proc info
+    with proc.oneshot():
+        try:
+            parent = proc.parent()
+            if parent:
+                parent = '(%s)' % parent.name()
+            else:
+                parent = ''
+        except psutil.Error:
             parent = ''
-    except psutil.Error:
-        parent = ''
-    if pinfo['create_time']:
-        started = datetime.datetime.fromtimestamp(
-            pinfo['create_time']).strftime('%Y-%m-%d %H:%M')
-    else:
-        started = ACCESS_DENIED
-    children = proc.children()
+        try:
+            pinfo['children'] = proc.children()
+        except psutil.Error:
+            pinfo['children'] = []
+        if pinfo['create_time']:
+            started = datetime.datetime.fromtimestamp(
+                pinfo['create_time']).strftime('%Y-%m-%d %H:%M')
+        else:
+            started = ACCESS_DENIED
 
+    # here we go
     print_('pid', pinfo['pid'])
     print_('name', pinfo['name'])
     print_('parent', '%s %s' % (pinfo['ppid'], parent))
@@ -198,12 +204,16 @@ def run(pid, verbose=False):
     print_('status', pinfo['status'])
     print_('nice', pinfo['nice'])
     if hasattr(proc, "ionice"):
-        ionice = proc.ionice()
-        if psutil.WINDOWS:
-            print_("ionice", ionice)
+        try:
+            ionice = proc.ionice()
+        except psutil.Error:
+            pass
         else:
-            print_("ionice", "class=%s, value=%s" % (
-                str(ionice.ioclass), ionice.value))
+            if psutil.WINDOWS:
+                print_("ionice", ionice)
+            else:
+                print_("ionice", "class=%s, value=%s" % (
+                    str(ionice.ioclass), ionice.value))
 
     print_('num-threads', pinfo['num_threads'])
     if psutil.POSIX:
@@ -214,10 +224,10 @@ def run(pid, verbose=False):
     if 'io_counters' in pinfo:
         print_('I/O', str_ntuple(pinfo['io_counters'], bytes2human=True))
     print_("ctx-switches", str_ntuple(pinfo['num_ctx_switches']))
-    if children:
+    if pinfo['children']:
         template = "%-6s %s"
         print_("children", template % ("PID", "NAME"))
-        for child in children:
+        for child in pinfo['children']:
             try:
                 print_('', template % (child.pid, child.name()))
             except psutil.AccessDenied:
@@ -260,7 +270,7 @@ def run(pid, verbose=False):
         print_('connections', '')
 
     if pinfo['threads'] and len(pinfo['threads']) > 1:
-        template = "%-5s %15s %15s"
+        template = "%-5s %12s %12s"
         print_('threads', template % ("TID", "USER", "SYSTEM"))
         for i, thread in enumerate(pinfo['threads']):
             if not verbose and i >= NON_VERBOSE_ITERATIONS:
@@ -282,14 +292,14 @@ def run(pid, verbose=False):
             else:
                 resources.append((res_name, soft, hard))
         if resources:
-            print_("res-limits",
-                   "RLIMIT                     SOFT       HARD")
+            template = "%-12s %15s %15s"
+            print_("res-limits", template % ("RLIMIT", "SOFT", "HARD"))
             for res_name, soft, hard in resources:
                 if soft == psutil.RLIM_INFINITY:
                     soft = "infinity"
                 if hard == psutil.RLIM_INFINITY:
                     hard = "infinity"
-                print_('', "%-20s %10s %10s" % (
+                print_('', template % (
                     RLIMITS_MAP.get(res_name, res_name), soft, hard))
 
     if hasattr(proc, "environ") and pinfo['environ']:
@@ -301,7 +311,7 @@ def run(pid, verbose=False):
                 break
             print_("", template % (k, pinfo['environ'][k]))
 
-    if pinfo['memory_maps']:
+    if pinfo.get('memory_maps', None):
         template = "%-8s %s"
         print_("mem-maps", template % ("RSS", "PATH"))
         maps = sorted(pinfo['memory_maps'], key=lambda x: x.rss, reverse=True)

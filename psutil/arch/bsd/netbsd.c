@@ -40,6 +40,7 @@
 
 
 #include "netbsd_socks.h"
+#include "netbsd.h"
 #include "../../_psutil_common.h"
 
 #define PSUTIL_KPT2DOUBLE(t) (t ## _sec + t ## _usec / 1000000.0)

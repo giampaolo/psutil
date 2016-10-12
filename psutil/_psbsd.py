@@ -522,7 +522,7 @@ class Process(object):
     @wrap_exceptions
     def cmdline(self):
         if OPENBSD and self.pid == 0:
-            return None  # ...else it crashes
+            return []  # ...else it crashes
         elif NETBSD:
             # XXX - most of the times the underlying sysctl() call on Net
             # and Open BSD returns a truncated string.

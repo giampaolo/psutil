@@ -494,8 +494,9 @@ def create_temp_executable_file(suffix, c_code=None):
             c_code = textwrap.dedent(
                 """
                 #include <unistd.h>
-                void main() {
+                int main() {
                     pause();
+                    return 1;
                 }
                 """)
         c_file = create_temp_file(suffix=".c")

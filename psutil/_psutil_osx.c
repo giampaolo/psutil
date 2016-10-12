@@ -256,7 +256,7 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     errno = 0;
-    ret = proc_pidpath(pid, &buf, sizeof(buf));
+    ret = proc_pidpath((pid_t)pid, &buf, sizeof(buf));
     if (ret == 0) {
         psutil_raise_for_pid(pid, "proc_pidpath() syscall failed");
         return NULL;
@@ -329,7 +329,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         goto error;
 
-    err = task_for_pid(mach_task_self(), pid, &task);
+    err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0)
             NoSuchProcess();
@@ -372,7 +372,7 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
             // so we do what we can in order to not continue in case
             // of error.
             errno = 0;
-            proc_regionfilename(pid, address, buf, sizeof(buf));
+            proc_regionfilename((pid_t)pid, address, buf, sizeof(buf));
             if ((errno != 0) || ((sizeof(buf)) <= 0)) {
                 psutil_raise_for_pid(
                     pid, "proc_regionfilename() syscall failed");
@@ -550,7 +550,7 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    err = task_for_pid(mach_task_self(), pid, &task);
+    err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0)
             NoSuchProcess();
@@ -817,7 +817,7 @@ static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     int num;
     int i;
-    long len;
+    int len;
     uint64_t flags;
     char opts[400];
     struct statfs *fs = NULL;
@@ -958,7 +958,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
         goto error;
 
     // task_for_pid() requires special privileges
-    err = task_for_pid(mach_task_self(), pid, &task);
+    err = task_for_pid(mach_task_self(), (pid_t)pid, &task);
     if (err != KERN_SUCCESS) {
         if (psutil_pid_exists(pid) == 0)
             NoSuchProcess();
@@ -1088,7 +1088,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_VNODE) {
             errno = 0;
-            nb = proc_pidfdinfo(pid,
+            nb = proc_pidfdinfo((pid_t)pid,
                                 fdp_pointer->proc_fd,
                                 PROC_PIDFDVNODEPATHINFO,
                                 &vi,
@@ -1208,7 +1208,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
 
         if (fdp_pointer->proc_fdtype == PROX_FDTYPE_SOCKET) {
             errno = 0;
-            nb = proc_pidfdinfo(pid, fdp_pointer->proc_fd,
+            nb = proc_pidfdinfo((pid_t)pid, fdp_pointer->proc_fd,
                                 PROC_PIDFDSOCKETINFO, &si, sizeof(si));
 
             // --- errors checking
@@ -1352,14 +1352,14 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, NULL, 0);
+    pidinfo_result = proc_pidinfo((pid_t)pid, PROC_PIDLISTFDS, 0, NULL, 0);
     if (pidinfo_result <= 0)
         return PyErr_SetFromErrno(PyExc_OSError);
 
     fds_pointer = malloc(pidinfo_result);
     if (fds_pointer == NULL)
         return PyErr_NoMemory();
-    pidinfo_result = proc_pidinfo(pid, PROC_PIDLISTFDS, 0, fds_pointer,
+    pidinfo_result = proc_pidinfo((pid_t)pid, PROC_PIDLISTFDS, 0, fds_pointer,
                                   pidinfo_result);
     if (pidinfo_result <= 0) {
         free(fds_pointer);

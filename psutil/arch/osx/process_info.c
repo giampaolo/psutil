@@ -110,7 +110,7 @@ PyObject *
 psutil_get_cmdline(long pid) {
     int mib[3];
     int nargs;
-    int len;
+    size_t len;
     char *procargs = NULL;
     char *arg_ptr;
     char *arg_end;
@@ -140,7 +140,7 @@ psutil_get_cmdline(long pid) {
     // read argument space
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROCARGS2;
-    mib[2] = pid;
+    mib[2] = (pid_t)pid;
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
         if (EINVAL == errno) {
             // EINVAL == access denied OR nonexistent PID
@@ -239,7 +239,7 @@ psutil_get_environ(long pid) {
     // read argument space
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROCARGS2;
-    mib[2] = pid;
+    mib[2] = (pid_t)pid;
     if (sysctl(mib, 3, procargs, &argmax, NULL, 0) < 0) {
         if (EINVAL == errno) {
             // EINVAL == access denied OR nonexistent PID
@@ -325,13 +325,13 @@ error:
 
 
 int
-psutil_get_kinfo_proc(pid_t pid, struct kinfo_proc *kp) {
+psutil_get_kinfo_proc(long pid, struct kinfo_proc *kp) {
     int mib[4];
     size_t len;
     mib[0] = CTL_KERN;
     mib[1] = KERN_PROC;
     mib[2] = KERN_PROC_PID;
-    mib[3] = pid;
+    mib[3] = (pid_t)pid;
 
     // fetch the info with sysctl()
     len = sizeof(struct kinfo_proc);
