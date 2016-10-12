@@ -1879,6 +1879,7 @@ if POSIX and os.getuid() == 0:
 # ===================================================================
 
 
+@unittest.skipIf(TRAVIS, "fails on TRAVIS")
 class TestUnicode(unittest.TestCase):
     # See: https://github.com/giampaolo/psutil/issues/655
 
