@@ -1044,6 +1044,7 @@ class TestProcess(unittest.TestCase):
     @skip_on_access_denied(only_if=OSX)
     def test_connections_unix(self):
         def check(type):
+            safe_rmpath(TESTFN)
             tfile = tempfile.mktemp(prefix=TESTFILE_PREFIX) if OSX else TESTFN
             sock = socket.socket(AF_UNIX, type)
             with contextlib.closing(sock):
