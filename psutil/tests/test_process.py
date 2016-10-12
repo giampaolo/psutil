@@ -311,7 +311,7 @@ class TestProcess(unittest.TestCase):
             tty = os.path.realpath(sh('tty'))
             self.assertEqual(terminal, tty)
         else:
-            assert terminal, repr(terminal)
+            self.assertIsNone(terminal)
 
     @unittest.skipUnless(LINUX or BSD or WINDOWS,
                          'platform not supported')
@@ -700,7 +700,7 @@ class TestProcess(unittest.TestCase):
                     pass
 
         out = subprocess.check_output([exe, '-c', 'import os; print("hey")'])
-        self.assertEqual(out, 'hey\n')
+        self.assertEqual(out, b'hey\n')
 
     def test_cmdline(self):
         cmdline = [PYTHON, "-c", "import time; time.sleep(60)"]
