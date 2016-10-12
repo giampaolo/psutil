@@ -131,7 +131,6 @@ psutil_proc_name(PyObject *self, PyObject *args) {
 #else
     return Py_BuildValue("s", kp.kp_proc.p_comm);
 #endif
-
 }
 
 
@@ -895,7 +894,7 @@ static PyObject *
 psutil_disk_partitions(PyObject *self, PyObject *args) {
     int num;
     int i;
-    long len;
+    int len;
     uint64_t flags;
     char opts[400];
     struct statfs *fs = NULL;

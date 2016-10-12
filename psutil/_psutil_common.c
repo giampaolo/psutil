@@ -70,7 +70,12 @@ psutil_pid_exists(long pid) {
 #endif
     }
 
+#if defined(PSUTIL_OSX)
+    ret = kill((pid_t)pid , 0);
+#else
     ret = kill(pid , 0);
+#endif
+
     if (ret == 0)
         return 1;
     else {

@@ -110,7 +110,7 @@ PyObject *
 psutil_get_cmdline(long pid) {
     int mib[3];
     int nargs;
-    int len;
+    size_t len;
     char *procargs = NULL;
     char *arg_ptr;
     char *arg_end;
