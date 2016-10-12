@@ -152,6 +152,7 @@ def run(pid, verbose=False):
     except psutil.NoSuchProcess as err:
         sys.exit(str(err))
 
+    # collect other proc info
     try:
         parent = proc.parent()
         if parent:
@@ -160,13 +161,17 @@ def run(pid, verbose=False):
             parent = ''
     except psutil.Error:
         parent = ''
+    try:
+        pinfo['children'] = proc.children()
+    except psutil.Error:
+        pinfo['children'] = []
     if pinfo['create_time']:
         started = datetime.datetime.fromtimestamp(
             pinfo['create_time']).strftime('%Y-%m-%d %H:%M')
     else:
         started = ACCESS_DENIED
-    children = proc.children()
 
+    # here we go
     print_('pid', pinfo['pid'])
     print_('name', pinfo['name'])
     print_('parent', '%s %s' % (pinfo['ppid'], parent))
@@ -198,12 +203,16 @@ def run(pid, verbose=False):
     print_('status', pinfo['status'])
     print_('nice', pinfo['nice'])
     if hasattr(proc, "ionice"):
-        ionice = proc.ionice()
-        if psutil.WINDOWS:
-            print_("ionice", ionice)
+        try:
+            ionice = proc.ionice()
+        except psutil.Error:
+            pass
         else:
-            print_("ionice", "class=%s, value=%s" % (
-                str(ionice.ioclass), ionice.value))
+            if psutil.WINDOWS:
+                print_("ionice", ionice)
+            else:
+                print_("ionice", "class=%s, value=%s" % (
+                    str(ionice.ioclass), ionice.value))
 
     print_('num-threads', pinfo['num_threads'])
     if psutil.POSIX:
@@ -214,10 +223,10 @@ def run(pid, verbose=False):
     if 'io_counters' in pinfo:
         print_('I/O', str_ntuple(pinfo['io_counters'], bytes2human=True))
     print_("ctx-switches", str_ntuple(pinfo['num_ctx_switches']))
-    if children:
+    if pinfo['children']:
         template = "%-6s %s"
         print_("children", template % ("PID", "NAME"))
-        for child in children:
+        for child in pinfo['children']:
             try:
                 print_('', template % (child.pid, child.name()))
             except psutil.AccessDenied:
