@@ -699,7 +699,9 @@ class TestProcess(unittest.TestCase):
                     # Tipically OSX. Really not sure what to do here.
                     pass
 
-        out = subprocess.check_output([exe, '-c', 'import os; print("hey")'])
+        subp = subprocess.Popen([exe, '-c', 'import os; print("hey")'],
+                                stdout=subprocess.PIPE)
+        out, _ = subp.communicate()
         self.assertEqual(out, b'hey\n')
 
     def test_cmdline(self):
