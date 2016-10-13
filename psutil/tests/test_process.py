@@ -1879,7 +1879,6 @@ if POSIX and os.getuid() == 0:
 # ===================================================================
 
 
-@unittest.skipIf(TRAVIS, "fails on TRAVIS")
 class TestUnicode(unittest.TestCase):
     # See: https://github.com/giampaolo/psutil/issues/655
 
@@ -1960,6 +1959,7 @@ class TestUnicode(unittest.TestCase):
         psutil.disk_usage(path)
 
 
+@unittest.skipIf(TRAVIS, "fails on TRAVIS")
 class TestNonUnicode(unittest.TestCase):
     """Test handling of non-utf8 data."""
 
