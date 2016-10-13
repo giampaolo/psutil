@@ -1661,7 +1661,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         # note: testing all gids as above seems not to be reliable for
         # gid == 30 (nodoby); not sure why.
         for gid in ret:
-            if not OSX:
+            if not OSX and not NETBSD:
                 self.assertGreaterEqual(gid, 0)
                 self.assertIn(gid, self.all_gids)
 
