@@ -411,37 +411,32 @@ error:
 }
 
 
+/*
+ * Virtual memory stats, taken from:
+ * https://github.com/satterly/zabbix-stats/blob/master/src/libs/zbxsysinfo/
+ *     netbsd/memory.c
+ */
 PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
-    int64_t total_physmem;
     size_t size;
     struct uvmexp_sysctl uv;
-    int physmem_mib[] = {CTL_HW, HW_PHYSMEM64};
-    int uvmexp_mib[] = {CTL_VM, VM_UVMEXP2};
+    int mib[] = {CTL_VM, VM_UVMEXP2};
     long pagesize = getpagesize();
 
-    size = sizeof(total_physmem);
-    if (sysctl(physmem_mib, 2, &total_physmem, &size, NULL, 0) < 0) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return NULL;
-    }
-
     size = sizeof(uv);
-    if (sysctl(uvmexp_mib, 2, &uv, &size, NULL, 0) < 0) {
+    if (sysctl(mib, 2, &uv, &size, NULL, 0) < 0) {
         PyErr_SetFromErrno(PyExc_OSError);
         return NULL;
     }
 
     return Py_BuildValue("KKKKKKKK",
-        (unsigned long long) total_physmem,  // total
-        (unsigned long long) uv.free * pagesize,  // free
-        (unsigned long long) uv.active * pagesize,  // active
-        (unsigned long long) uv.inactive * pagesize,  // inactive
-        (unsigned long long) uv.wired * pagesize,  // wired
-        // taken from:
-        // https://github.com/satterly/zabbix-stats/blob/master/src/libs/
-        //      zbxsysinfo/netbsd/memory.c
+        (unsigned long long) uv.npages << uv.pageshift,  // total
+        (unsigned long long) uv.free << uv.pageshift,  // free
+        (unsigned long long) uv.active << uv.pageshift,  // active
+        (unsigned long long) uv.inactive << uv.pageshift,  // inactive
+        (unsigned long long) uv.wired << uv.pageshift,  // wired
         (unsigned long long) uv.filepages + uv.execpages * pagesize,  // cached
+        // These are determined from /proc/meminfo in Python.
         (unsigned long long) 0,  // buffers
         (unsigned long long) 0  // shared
     );

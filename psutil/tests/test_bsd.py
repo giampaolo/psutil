@@ -374,31 +374,32 @@ class NetBSDSpecificTestCase(unittest.TestCase):
                     return int(line.split()[1]) * 1024
         raise ValueError("can't find %s" % look_for)
 
-    # XXX - failing tests
+    def test_vmem_total(self):
+        self.assertEqual(
+            psutil.virtual_memory().total, self.parse_meminfo("MemTotal:"))
 
-    # def test_vmem_total(self):
-    #     self.assertEqual(
-    #         psutil.virtual_memory().total, self.parse_meminfo("MemTotal:"))
-
-    # def test_vmem_free(self):
-    #     self.assertEqual(
-    #         psutil.virtual_memory().buffers, self.parse_meminfo("MemFree:"))
+    def test_vmem_free(self):
+        self.assertAlmostEqual(
+            psutil.virtual_memory().free, self.parse_meminfo("MemFree:"),
+            delta=MEMORY_TOLERANCE)
 
     def test_vmem_buffers(self):
-        self.assertEqual(
-            psutil.virtual_memory().buffers, self.parse_meminfo("Buffers:"))
+        self.assertAlmostEqual(
+            psutil.virtual_memory().buffers, self.parse_meminfo("Buffers:"),
+            delta=MEMORY_TOLERANCE)
 
     def test_vmem_shared(self):
-        self.assertEqual(
-            psutil.virtual_memory().shared, self.parse_meminfo("MemShared:"))
+        self.assertAlmostEqual(
+            psutil.virtual_memory().shared, self.parse_meminfo("MemShared:"),
+            delta=MEMORY_TOLERANCE)
 
-    def test_swapmem_total(self):
-        self.assertEqual(
-            psutil.swap_memory().total, self.parse_meminfo("SwapTotal:"))
+    # def test_swapmem_total(self):
+    #     self.assertEqual(
+    #         psutil.swap_memory().total, self.parse_meminfo("SwapTotal:"))
 
-    def test_swapmem_free(self):
-        self.assertEqual(
-            psutil.swap_memory().free, self.parse_meminfo("SwapFree:"))
+    # def test_swapmem_free(self):
+    #     self.assertEqual(
+    #         psutil.swap_memory().free, self.parse_meminfo("SwapFree:"))
 
     def test_cpu_stats_interrupts(self):
         with open('/proc/stat', 'rb') as f:

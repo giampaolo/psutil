@@ -34,6 +34,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
 - #909: [OSX] Process open_files() and connections() methods may raise
   OSError with no exception set if process is gone.
 - #916: [OSX] fix many compilation warnings.
+- #918: [NetBSD] all memory metrics were wrong.
 
 
 4.3.1 - 2016-09-01
