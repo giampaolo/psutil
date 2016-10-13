@@ -700,7 +700,7 @@ class TestProcess(unittest.TestCase):
         subp = subprocess.Popen([exe, '-c', 'import os; print("hey")'],
                                 stdout=subprocess.PIPE)
         out, _ = subp.communicate()
-        self.assertEqual(out, b'hey\n')
+        self.assertEqual(out.strip(), b'hey')
 
     def test_cmdline(self):
         cmdline = [PYTHON, "-c", "import time; time.sleep(60)"]
