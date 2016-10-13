@@ -255,6 +255,8 @@ class TestSystemAPIs(unittest.TestCase):
     def test_nic_names(self):
         p = subprocess.Popen("ifconfig -a", shell=1, stdout=subprocess.PIPE)
         output = p.communicate()[0].strip()
+        if p.returncode != 0:
+            raise unittest.SkipTest('ifconfig returned no output')
         if PY3:
             output = str(output, sys.stdout.encoding)
         for nic in psutil.net_io_counters(pernic=True).keys():

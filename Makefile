@@ -124,6 +124,10 @@ test-system: install
 test-misc: install
 	$(PYTHON) psutil/tests/test_misc.py
 
+# Test POSIX.
+test-posix: install
+	$(PYTHON) psutil/tests/test_posix.py
+
 # Test memory leaks.
 test-memleaks: install
 	$(PYTHON) psutil/tests/test_memory_leaks.py
