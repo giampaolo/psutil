@@ -350,6 +350,7 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
 # --- OpenBSD
 # =====================================================================
 
+
 @unittest.skipUnless(OPENBSD, "OPENBSD only")
 class OpenBSDSpecificTestCase(unittest.TestCase):
 
@@ -363,6 +364,7 @@ class OpenBSDSpecificTestCase(unittest.TestCase):
 # =====================================================================
 # --- NetBSD
 # =====================================================================
+
 
 @unittest.skipUnless(NETBSD, "NETBSD only")
 class NetBSDSpecificTestCase(unittest.TestCase):
@@ -402,6 +404,10 @@ class NetBSDSpecificTestCase(unittest.TestCase):
         self.assertAlmostEqual(
             psutil.swap_memory().free, self.parse_meminfo("SwapFree:"),
             delta=MEMORY_TOLERANCE)
+
+    def test_swapmem_used(self):
+        smem = psutil.swap_memory()
+        self.assertEqual(smem.used, smem.total - smem.free)
 
     def test_cpu_stats_interrupts(self):
         with open('/proc/stat', 'rb') as f:
