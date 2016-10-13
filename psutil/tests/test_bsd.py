@@ -393,13 +393,15 @@ class NetBSDSpecificTestCase(unittest.TestCase):
             psutil.virtual_memory().shared, self.parse_meminfo("MemShared:"),
             delta=MEMORY_TOLERANCE)
 
-    # def test_swapmem_total(self):
-    #     self.assertEqual(
-    #         psutil.swap_memory().total, self.parse_meminfo("SwapTotal:"))
+    def test_swapmem_total(self):
+        self.assertAlmostEqual(
+            psutil.swap_memory().total, self.parse_meminfo("SwapTotal:"),
+            delta=MEMORY_TOLERANCE)
 
-    # def test_swapmem_free(self):
-    #     self.assertEqual(
-    #         psutil.swap_memory().free, self.parse_meminfo("SwapFree:"))
+    def test_swapmem_free(self):
+        self.assertAlmostEqual(
+            psutil.swap_memory().free, self.parse_meminfo("SwapFree:"),
+            delta=MEMORY_TOLERANCE)
 
     def test_cpu_stats_interrupts(self):
         with open('/proc/stat', 'rb') as f:

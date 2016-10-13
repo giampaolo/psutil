@@ -470,8 +470,8 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     swap_total = swap_free = 0;
     for (i = 0; i < nswap; i++) {
         if (swdev[i].se_flags & SWF_ENABLE) {
-            swap_free += (swdev[i].se_nblks - swdev[i].se_inuse);
-            swap_total += swdev[i].se_nblks;
+            swap_total += swdev[i].se_nblks * DEV_BSIZE;
+            swap_free += (swdev[i].se_nblks - swdev[i].se_inuse) * DEV_BSIZE;
         }
     }
     free(swdev);
@@ -489,9 +489,9 @@ psutil_swap_mem(PyObject *self, PyObject *args) {
     }
 
     return Py_BuildValue("(LLLll)",
-                         swap_total * DEV_BSIZE,
-                         (swap_total - swap_free) * DEV_BSIZE,
-                         swap_free * DEV_BSIZE,
+                         swap_total,
+                         (swap_total - swap_free),
+                         swap_free,
                          (long) uv.pgswapin * pagesize,  // swap in
                          (long) uv.pgswapout * pagesize);  // swap out
 
