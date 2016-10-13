@@ -134,19 +134,17 @@ class TestProcess(unittest.TestCase):
             p = psutil.Process(sproc.pid)
             p.send_signal(sig)
             with mock.patch('psutil.os.kill',
-                            side_effect=OSError(errno.ESRCH, "")) as fun:
+                            side_effect=OSError(errno.ESRCH, "")):
                 with self.assertRaises(psutil.NoSuchProcess):
                     p.send_signal(sig)
-                assert fun.called
             #
             sproc = get_test_subprocess()
             p = psutil.Process(sproc.pid)
             p.send_signal(sig)
             with mock.patch('psutil.os.kill',
-                            side_effect=OSError(errno.EPERM, "")) as fun:
+                            side_effect=OSError(errno.EPERM, "")):
                 with self.assertRaises(psutil.AccessDenied):
                     psutil.Process().send_signal(sig)
-                assert fun.called
             # Sending a signal to process with PID 0 is not allowed as
             # it would affect every process in the process group of
             # the calling process (os.getpid()) instead of PID 0").
