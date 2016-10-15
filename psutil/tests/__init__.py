@@ -252,13 +252,16 @@ def sh(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
 
 
 def reap_children(recursive=False):
-    """Kill any subprocess started by this test suite and ensure that
-    no zombies stick around to hog resources and create problems when
-    looking for refleaks.
+    """Terminate and wait() any subprocess started by this test suite
+    and ensure that no zombies stick around to hog resources and
+    create problems  when looking for refleaks.
+
+    If resursive is True it also tries to terminate and wait()
+    all grandchildren started by this process.
     """
-    # Get the children here, before terminating the sub processes
-    # as we don't want to lose the intermediate reference in case
-    # of grand children.
+    # Get the children here, before terminating the children sub
+    # processes as we don't want to lose the intermediate reference
+    # in case of grandchildren.
     if recursive:
         children = psutil.Process().children(recursive=True)
     else:
@@ -290,6 +293,7 @@ def reap_children(recursive=False):
                 if err.errno != errno.ECHILD:
                     raise
 
+    # Terminates grandchildren.
     if children:
         for p in children:
             try:
@@ -298,14 +302,15 @@ def reap_children(recursive=False):
                 pass
         gone, alive = psutil.wait_procs(children, timeout=GLOBAL_TIMEOUT)
         for p in alive:
-            warn("couldn't terminate process %s" % p)
+            warn("couldn't terminate process %r; attempting kill()" % p)
             try:
                 p.kill()
             except psutil.NoSuchProcess:
                 pass
-            _, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
-            if alive:
-                warn("couldn't not kill processes %s" % str(alive))
+        _, alive = psutil.wait_procs(alive, timeout=GLOBAL_TIMEOUT)
+        if alive:
+            for p in alive:
+                warn("process %r survived kill()" % p)
 
 
 # ===================================================================
