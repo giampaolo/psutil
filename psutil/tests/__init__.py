@@ -264,6 +264,8 @@ def reap_children(recursive=False):
     else:
         children = []
 
+    # Terminate subprocess.Popen instances "cleanly" by closing their
+    # fds and wiat()ing for them in order to avoid zombies.
     subprocs = _subprocesses_started.copy()
     _subprocesses_started.clear()
     for subp in subprocs:
@@ -272,11 +274,21 @@ def reap_children(recursive=False):
         except OSError as err:
             if err.errno != errno.ESRCH:
                 raise
+        if subp.stdout:
+            subp.stdout.close()
+        if subp.stderr:
+            subp.stderr.close()
         try:
-            subp.wait()
-        except OSError as err:
-            if err.errno != errno.ECHILD:
-                raise
+            # Flushing a BufferedWriter may raise an error.
+            if subp.stdin:
+                subp.stdin.close()
+        finally:
+            # Wait for the process to terminate, to avoid zombies.
+            try:
+                subp.wait()
+            except OSError as err:
+                if err.errno != errno.ECHILD:
+                    raise
 
     if children:
         for p in children:

@@ -1277,7 +1277,8 @@ class Popen(Process):
                 self.stdout.close()
             if self.stderr:
                 self.stderr.close()
-            try:  # Flushing a BufferedWriter may raise an error
+            try:
+                # Flushing a BufferedWriter may raise an error.
                 if self.stdin:
                     self.stdin.close()
             finally:
