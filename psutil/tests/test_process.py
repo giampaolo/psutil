@@ -1450,7 +1450,7 @@ class TestProcess(unittest.TestCase):
             self.assertTrue(psutil.pid_exists(0))
 
     def test_Popen(self):
-        with psutil.Popen([PYTHON, "V"], stdout=subprocess.PIPE,
+        with psutil.Popen([PYTHON, "-V"], stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE) as proc:
             proc.name()
             proc.stdin
@@ -1869,6 +1869,7 @@ if POSIX and os.getuid() == 0:
 # ===================================================================
 
 
+@unittest.skipIf(OSX and TRAVIS, "fails on OSX + TRAVIS")
 class TestUnicode(unittest.TestCase):
     # See: https://github.com/giampaolo/psutil/issues/655
 
@@ -1949,7 +1950,7 @@ class TestUnicode(unittest.TestCase):
         psutil.disk_usage(path)
 
 
-@unittest.skipIf(TRAVIS, "fails on TRAVIS")
+@unittest.skipIf(OSX and TRAVIS, "fails on OSX + TRAVIS")
 class TestNonUnicode(unittest.TestCase):
     """Test handling of non-utf8 data."""
 
