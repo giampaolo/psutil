@@ -1264,26 +1264,6 @@ class Popen(Process):
     def __dir__(self):
         return sorted(set(dir(Popen) + dir(subprocess.Popen)))
 
-    def __enter__(self):
-        if hasattr(self.__subproc, '__enter__'):
-            self.__subproc.__enter__()
-        return self
-
-    def __exit__(self, *args, **kwargs):
-        if hasattr(self.__subproc, '__exit__'):
-            return self.__subproc.__exit__(*args, **kwargs)
-        else:
-            if self.stdout:
-                self.stdout.close()
-            if self.stderr:
-                self.stderr.close()
-            try:  # Flushing a BufferedWriter may raise an error
-                if self.stdin:
-                    self.stdin.close()
-            finally:
-                # Wait for the process to terminate, to avoid zombies.
-                self.wait()
-
     def __getattribute__(self, name):
         try:
             return object.__getattribute__(self, name)
@@ -1293,6 +1273,14 @@ class Popen(Process):
             except AttributeError:
                 raise AttributeError("%s instance has no attribute '%s'"
                                      % (self.__class__.__name__, name))
+
+    if sys.version_info[:2] >= (3, 2):
+        def __enter__(self):
+            self.__subproc.__enter__()
+            return self
+
+        def __exit__(self, type, value, traceback):
+            return self.__subproc.__exit__(type, value, traceback)
 
     def wait(self, timeout=None):
         if self.__subproc.returncode is not None:
