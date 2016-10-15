@@ -1264,6 +1264,10 @@ class Popen(Process):
     def __dir__(self):
         return sorted(set(dir(Popen) + dir(subprocess.Popen)))
 
+    def __del__(self, *args, **kwargs):
+        self.__subproc.__del__(*args, **kwargs)
+        self.__subproc = None
+
     def __enter__(self):
         if hasattr(self.__subproc, '__enter__'):
             self.__subproc.__enter__()

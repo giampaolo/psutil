@@ -37,6 +37,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   OSError with no exception set if process is gone.
 - #916: [OSX] fix many compilation warnings.
 - #918: [NetBSD] all memory metrics were wrong.
+- #921: psutil.Popen now defines a __del__ special method which calls the
+  original one, hopefully helping the gc to free resources.
 
 
 4.3.1 - 2016-09-01

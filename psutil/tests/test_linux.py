@@ -564,7 +564,7 @@ class TestSystemNetwork(unittest.TestCase):
             except RuntimeError:
                 pass
             else:
-                self.assertEqual(stats.isup, 'RUNNING' in out)
+                self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
                 self.assertEqual(stats.mtu,
                                  int(re.findall('MTU:(\d+)', out)[0]))
 
