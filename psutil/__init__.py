@@ -1265,6 +1265,8 @@ class Popen(Process):
         return sorted(set(dir(Popen) + dir(subprocess.Popen)))
 
     def __enter__(self):
+        if hasattr(self.__subproc, '__enter__'):
+            self.__subproc.__enter__()
         return self
 
     def __exit__(self, *args, **kwargs):

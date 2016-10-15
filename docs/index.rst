@@ -1499,10 +1499,10 @@ Popen class
 
   A more convenient interface to stdlib
   `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__.
-  It starts a sub process and deals with it exactly as when using
+  It starts a sub process and you deal with it exactly as when using
   `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__
-  but in addition it also provides all the methods of
-  :class:`psutil.Process` class in a single interface.
+  but in addition it also provides all the methods of :class:`psutil.Process`
+  class.
   For method names common to both classes such as
   :meth:`send_signal() <psutil.Process.send_signal()>`,
   :meth:`terminate() <psutil.Process.terminate()>` and
@@ -1534,6 +1534,17 @@ Popen class
   >>> p.wait(timeout=2)
   0
   >>>
+
+  :class:`psutil.Popen` objects are supported as context managers via the with
+  statement: on exit, standard file descriptors are closed, and the process
+  is waited for. This is supported on all Python versions.
+
+  >>> import psutil, subprocess
+  >>> with psutil.Popen(["ifconfig"], stdout=subprocess.PIPE) as proc:
+  >>>     log.write(proc.stdout.read())
+
+
+  .. versionchanged:: 4.4.0 added context manager support
 
 Windows services
 ================
