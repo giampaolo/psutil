@@ -1450,14 +1450,44 @@ class TestProcess(unittest.TestCase):
             self.assertTrue(psutil.pid_exists(0))
 
     def test_Popen(self):
-        with psutil.Popen([PYTHON, "V"], stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE) as proc:
+        # Popen class test
+        # XXX this test causes a ResourceWarning on Python 3 because
+        # psutil.__subproc instance doesn't get propertly freed.
+        # Not sure what to do though.
+        cmd = [PYTHON, "-c", "import time; time.sleep(60);"]
+        proc = psutil.Popen(cmd, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+        try:
             proc.name()
             proc.stdin
             self.assertTrue(hasattr(proc, 'name'))
             self.assertTrue(hasattr(proc, 'stdin'))
             self.assertTrue(dir(proc))
             self.assertRaises(AttributeError, getattr, proc, 'foo')
+        finally:
+            proc.kill()
+            proc.wait()
+            self.assertIsNotNone(proc.returncode)
+
+    if sys.version_info[:2] >= (3, 2):
+        def test_Popen_context_manager(self):
+            # Popen context manager class test
+            cmd = [PYTHON, "-c", "import time; time.sleep(60);"]
+            with psutil.Popen(cmd, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE) as proc:
+                try:
+                    proc.name()
+                    proc.stdin
+                    self.assertTrue(hasattr(proc, 'name'))
+                    self.assertTrue(hasattr(proc, 'stdin'))
+                    self.assertTrue(dir(proc))
+                    self.assertRaises(AttributeError, getattr, proc, 'foo')
+                finally:
+                    proc.kill()
+                    proc.wait()
+                    self.assertIsNotNone(proc.returncode)
+            self.assertTrue(proc.stdout.closed)
+            self.assertTrue(proc.stderr.closed)
 
     @unittest.skipUnless(hasattr(psutil.Process, "environ"),
                          "platform not supported")
