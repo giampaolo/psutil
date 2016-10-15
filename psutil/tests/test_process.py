@@ -1453,11 +1453,11 @@ class TestProcess(unittest.TestCase):
         with psutil.Popen([PYTHON, "-V"], stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE) as proc:
             proc.name()
+            proc.cpu_times()
             proc.stdin
-            self.assertTrue(hasattr(proc, 'name'))
-            self.assertTrue(hasattr(proc, 'stdin'))
             self.assertTrue(dir(proc))
             self.assertRaises(AttributeError, getattr, proc, 'foo')
+        proc.wait()
 
     @unittest.skipUnless(hasattr(psutil.Process, "environ"),
                          "platform not supported")
