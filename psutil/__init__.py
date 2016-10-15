@@ -1264,6 +1264,24 @@ class Popen(Process):
     def __dir__(self):
         return sorted(set(dir(Popen) + dir(subprocess.Popen)))
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        if hasattr(self.__subproc, '__exit__'):
+            return self.__subproc.__exit__(*args, **kwargs)
+        else:
+            if self.stdout:
+                self.stdout.close()
+            if self.stderr:
+                self.stderr.close()
+            try:  # Flushing a BufferedWriter may raise an error
+                if self.stdin:
+                    self.stdin.close()
+            finally:
+                # Wait for the process to terminate, to avoid zombies.
+                self.wait()
+
     def __getattribute__(self, name):
         try:
             return object.__getattribute__(self, name)

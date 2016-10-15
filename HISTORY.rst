@@ -11,6 +11,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   precise and match "free" cmdline utility.  "available" also takes into
   account LCX containers preventing "available" to overflow "total".
 - #891: procinfo.py script has been updated and provides a lot more info.
+- #919: psutil.Popen() now supports the ctx manager protocol and can be used
+  with the "with" statement.
 
 **Bug fixes**
 
