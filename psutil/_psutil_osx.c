@@ -1147,7 +1147,7 @@ error:
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     long pid;
-    unsigned long pidinfo_result;
+    int pidinfo_result;
     int iterations;
     int i;
     unsigned long nb;

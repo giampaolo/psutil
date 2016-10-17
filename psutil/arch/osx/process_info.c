@@ -356,10 +356,10 @@ psutil_get_kinfo_proc(long pid, struct kinfo_proc *kp) {
  * A wrapper around proc_pidinfo().
  * Returns 0 on failure (and Python exception gets already set).
  */
-unsigned long
+int
 psutil_proc_pidinfo(long pid, int flavor, uint64_t arg, void *pti, int size) {
     errno = 0;
-    unsigned long ret = proc_pidinfo((int)pid, flavor, arg, pti, size);
+    int ret = proc_pidinfo((int)pid, flavor, arg, pti, size);
     if ((ret <= 0) || (ret < sizeof(pti))) {
         psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
         return 0;
