@@ -1861,13 +1861,15 @@ if POSIX and os.getuid() == 0:
 
 @unittest.skipIf(OSX and TRAVIS, "fails on OSX + TRAVIS")
 class TestUnicode(unittest.TestCase):
-    # See: https://github.com/giampaolo/psutil/issues/655
+    """
+    Make sure that APIs returning a string are able to handle unicode,
+    see: https://github.com/giampaolo/psutil/issues/655
+    """
 
     @classmethod
     def setUpClass(cls):
         cls.uexe = create_temp_executable_file('è')
-        cls.ubasename = os.path.basename(cls.uexe)
-        assert 'è' in cls.ubasename
+        assert 'è' in os.path.basename(cls.uexe)
 
     @classmethod
     def tearDownClass(cls):
@@ -1883,7 +1885,8 @@ class TestUnicode(unittest.TestCase):
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
         self.assertIsInstance(p.name(), str)
-        self.assertEqual(os.path.basename(p.name()), self.ubasename)
+        self.assertEqual(os.path.basename(p.name()),
+                         os.path.basename(self.uexe))
 
     def test_proc_name(self):
         subp = get_test_subprocess(cmd=[self.uexe])
@@ -1892,7 +1895,7 @@ class TestUnicode(unittest.TestCase):
             name = py2_strencode(psutil._psplatform.cext.proc_name(subp.pid))
         else:
             name = psutil.Process(subp.pid).name()
-        self.assertEqual(name, self.ubasename)
+        self.assertEqual(name, os.path.basename(self.uexe))
 
     def test_proc_cmdline(self):
         subp = get_test_subprocess(cmd=[self.uexe])
