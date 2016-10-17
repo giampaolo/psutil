@@ -1402,46 +1402,30 @@ class TestProcess(unittest.TestCase):
 
     def test_pid_0(self):
         # Process(0) is supposed to work on all platforms except Linux
-        if 0 not in psutil.pids() and not OPENBSD:
+        if 0 not in psutil.pids():
             self.assertRaises(psutil.NoSuchProcess, psutil.Process, 0)
             return
 
+        # test all methods
         p = psutil.Process(0)
-        self.assertTrue(p.name())
-
-        if POSIX:
+        for name in psutil._as_dict_attrnames:
+            if name == 'pid':
+                continue
+            meth = getattr(p, name)
             try:
-                self.assertEqual(p.uids().real, 0)
-                self.assertEqual(p.gids().real, 0)
+                ret = meth()
             except psutil.AccessDenied:
                 pass
-
-            self.assertRaisesRegex(
-                ValueError, "preventing sending signal to process with PID 0",
-                p.send_signal, signal.SIGTERM)
-
-        self.assertIn(p.ppid(), (0, 1))
-        # self.assertEqual(p.exe(), "")
-        p.cmdline()
-        try:
-            p.num_threads()
-        except psutil.AccessDenied:
-            pass
-
-        try:
-            p.memory_info()
-        except psutil.AccessDenied:
-            pass
-
-        try:
-            if POSIX:
-                self.assertEqual(p.username(), 'root')
-            elif WINDOWS:
-                self.assertEqual(p.username(), 'NT AUTHORITY\\SYSTEM')
             else:
-                p.username()
-        except psutil.AccessDenied:
-            pass
+                if name in ("uids", "gids"):
+                    self.assertEqual(ret.real, 0)
+                elif name == "username":
+                    if POSIX:
+                        self.assertEqual(p.username(), 'root')
+                    elif WINDOWS:
+                        self.assertEqual(p.username(), 'NT AUTHORITY\\SYSTEM')
+                elif name == "name":
+                    assert name, name
 
         p.as_dict()
 

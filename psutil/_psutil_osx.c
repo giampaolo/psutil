@@ -173,7 +173,10 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     errno = 0;
     ret = proc_pidpath((pid_t)pid, &buf, sizeof(buf));
     if (ret == 0) {
-        psutil_raise_for_pid(pid, "proc_pidpath() syscall failed");
+        if (pid == 0)
+            AccessDenied();
+        else
+            psutil_raise_for_pid(pid, "proc_pidpath() syscall failed");
         return NULL;
     }
 #if PY_MAJOR_VERSION >= 3
