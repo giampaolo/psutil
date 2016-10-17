@@ -153,42 +153,45 @@ class TestSystemAPIs(unittest.TestCase):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
         self.assertEqual(sysctl_hwphymem, psutil.virtual_memory().total)
 
+    # XXX
     @unittest.skipIf(TRAVIS, "")
     @retry_before_failing()
     def test_vmem_free(self):
-        num = vm_stat("free")
-        self.assertAlmostEqual(psutil.virtual_memory().free, num,
-                               delta=MEMORY_TOLERANCE)
+        vmstat_val = vm_stat("free")
+        psutil_val = psutil.virtual_memory().free
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_active(self):
-        num = vm_stat("active")
-        self.assertAlmostEqual(psutil.virtual_memory().active, num,
-                               delta=MEMORY_TOLERANCE)
+        vmstat_val = vm_stat("active")
+        psutil_val = psutil.virtual_memory().active
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_inactive(self):
-        num = vm_stat("inactive")
-        self.assertAlmostEqual(psutil.virtual_memory().inactive, num,
-                               delta=MEMORY_TOLERANCE)
+        vmstat_val = vm_stat("inactive")
+        psutil_val = psutil.virtual_memory().inactive
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=MEMORY_TOLERANCE)
 
     @retry_before_failing()
     def test_vmem_wired(self):
-        num = vm_stat("wired")
-        self.assertAlmostEqual(psutil.virtual_memory().wired, num,
-                               delta=MEMORY_TOLERANCE)
+        vmstat_val = vm_stat("wired")
+        psutil_val = psutil.virtual_memory().wired
+        self.assertAlmostEqual(psutil_val, vmstat_val, delta=MEMORY_TOLERANCE)
 
     # --- swap mem
 
     @retry_before_failing()
     def test_swapmem_sin(self):
-        num = vm_stat("Pageins")
-        self.assertEqual(psutil.swap_memory().sin, num)
+        vmstat_val = vm_stat("Pageins")
+        psutil_val = psutil.swap_memory().sin
+        self.assertEqual(psutil_val, vmstat_val)
 
     @retry_before_failing()
     def test_swapmem_sout(self):
-        num = vm_stat("Pageouts")
-        self.assertEqual(psutil.swap_memory().sout, num)
+        vmstat_val = vm_stat("Pageout")
+        psutil_val = psutil.swap_memory().sout
+        self.assertEqual(psutil_val, vmstat_val)
 
     # Not very reliable.
     # def test_swapmem_total(self):
