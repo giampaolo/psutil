@@ -1427,6 +1427,12 @@ class TestProcess(unittest.TestCase):
                 elif name == "name":
                     assert name, name
 
+        if hasattr(p, 'rlimit'):
+            try:
+                p.rlimit(psutil.RLIMIT_FSIZE)
+            except psutil.AccessDenied:
+                pass
+
         p.as_dict()
 
         if not OPENBSD:

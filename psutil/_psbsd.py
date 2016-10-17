@@ -411,6 +411,11 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except OSError as err:
+            if self.pid == 0:
+                if 0 in pids():
+                    raise AccessDenied(self.pid, self._name)
+                else:
+                    raise
             if err.errno == errno.ESRCH:
                 if not pid_exists(self.pid):
                     raise NoSuchProcess(self.pid, self._name)

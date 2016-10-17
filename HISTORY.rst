@@ -41,6 +41,7 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   original one, hopefully helping the gc to free resources.
 - #923: [OSX] free memory is wrong (does not match vm_stat command).
 - #924: [OSX] Process.exe() for PID 0 erroneously raise ZombieProcess.
+- #925: [OSX/BSD/SUNOS] ZombieProcess may be erroneously raised for PID 0.
 
 
 4.3.1 - 2016-09-01
