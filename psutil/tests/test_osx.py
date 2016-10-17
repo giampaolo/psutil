@@ -21,7 +21,6 @@ from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
 from psutil.tests import sh
-from psutil.tests import TRAVIS
 from psutil.tests import unittest
 
 
@@ -153,8 +152,6 @@ class TestSystemAPIs(unittest.TestCase):
         sysctl_hwphymem = sysctl('sysctl hw.memsize')
         self.assertEqual(sysctl_hwphymem, psutil.virtual_memory().total)
 
-    # XXX
-    @unittest.skipIf(TRAVIS, "")
     @retry_before_failing()
     def test_vmem_free(self):
         vmstat_val = vm_stat("free")

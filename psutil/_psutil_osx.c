@@ -697,7 +697,10 @@ psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
 
 
 /*
- * Return system virtual memory stats
+ * Return system virtual memory stats.
+ * See:
+ * http://opensource.apple.com/source/system_cmds/system_cmds-498.2/
+ *     vm_stat.tproj/vm_stat.c
  */
 static PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
@@ -730,7 +733,8 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         (unsigned long long) vm.active_count * pagesize,
         (unsigned long long) vm.inactive_count * pagesize,
         (unsigned long long) vm.wire_count * pagesize,
-        (unsigned long long) vm.free_count * pagesize
+        // this is how vm_stat cmd does it
+        (unsigned long long) (vm.free_count - vm.speculative_count) * pagesize
     );
 }
 
