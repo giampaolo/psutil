@@ -17,6 +17,10 @@ PLATFORMS
 FEATURES
 ========
 
+- #922: extended net_io_stats() info.
+
+- #914: extended platform specific process info.
+
 - #898: wifi stats
 
 - #893: (BSD) process environ
