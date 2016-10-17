@@ -4,6 +4,7 @@
 
 PYTHON = python
 TSCRIPT = psutil/tests/runner.py
+ARGS =
 
 # List of nice-to-have dev libs.
 DEPS = argparse \
@@ -139,7 +140,7 @@ test-platform: install
 # Run a specific test by name, e.g.
 # make test-by-name psutil.tests.test_system.TestSystemAPIs.test_cpu_times
 test-by-name: install
-	@$(PYTHON) -m unittest -v $(filter-out $@,$(MAKECMDGOALS))
+	@$(PYTHON) -m unittest -v $(ARGS)
 
 coverage: install
 	# Note: coverage options are controlled by .coveragerc file

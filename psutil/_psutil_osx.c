@@ -813,11 +813,12 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     natural_t cpu_count;
+    natural_t i;
     processor_info_array_t info_array;
     mach_msg_type_number_t info_count;
     kern_return_t error;
     processor_cpu_load_info_data_t *cpu_load_info = NULL;
-    int i, ret;
+    int ret;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_cputime = NULL;
 
@@ -1036,7 +1037,7 @@ psutil_proc_status(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     long pid;
-    int err, j, ret;
+    int err, ret;
     kern_return_t kr;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
     mach_port_t task = MACH_PORT_NULL;
@@ -1044,7 +1045,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     thread_act_port_array_t thread_list = NULL;
     thread_info_data_t thinfo_basic;
     thread_basic_info_t basic_info_th;
-    mach_msg_type_number_t thread_count, thread_info_count;
+    mach_msg_type_number_t thread_count, thread_info_count, j;
 
     PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -1146,10 +1147,10 @@ error:
 static PyObject *
 psutil_proc_open_files(PyObject *self, PyObject *args) {
     long pid;
-    int pidinfo_result;
+    unsigned long pidinfo_result;
     int iterations;
     int i;
-    int nb;
+    unsigned long nb;
 
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
@@ -1257,7 +1258,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     int pidinfo_result;
     int iterations;
     int i;
-    int nb;
+    unsigned long nb;
 
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
