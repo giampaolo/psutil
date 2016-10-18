@@ -29,9 +29,11 @@ names = [
     'memory_percent',
     'ppid',
     'parent',
-    'uids',
-    'username',
 ]
+
+if psutil.POSIX:
+    names.append('uids')
+    names.append('username')
 
 if psutil.LINUX:
     names += [
