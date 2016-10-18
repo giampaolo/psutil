@@ -278,7 +278,6 @@ psutil_get_environ(long pid) {
     env_start = arg_ptr;
 
     procenv = calloc(1, arg_end - arg_ptr);
-
     if (procenv == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -296,13 +295,19 @@ psutil_get_environ(long pid) {
     }
 
 #if PY_MAJOR_VERSION >= 3
-    py_ret = PyUnicode_FromStringAndSize(procenv, arg_ptr - env_start + 1);
+    py_ret = PyUnicode_DecodeFSDefaultAndSize(
+        procenv, arg_ptr - env_start + 1);
 #else
     py_ret = PyString_FromStringAndSize(procenv, arg_ptr - env_start + 1);
 #endif
 
-    if (!py_ret)
+    if (!py_ret) {
+        // XXX: don't want to free() this as per:
+        // https://github.com/giampaolo/psutil/issues/926
+        // It sucks but not sure what else to do.
+        procargs = NULL;
         goto error;
+    }
 
     free(procargs);
     free(procenv);

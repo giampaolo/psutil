@@ -1913,7 +1913,6 @@ class TestUnicode(unittest.TestCase):
     def test_proc_cwd(self):
         with chdir(self.udir):
             p = psutil.Process()
-            print(repr(p.cwd()))
             self.assertIsInstance(p.cwd(), str)
             self.assertEqual(p.cwd(), self.decode_path(self.udir))
 
