@@ -37,7 +37,6 @@ except ImportError:
 
 import psutil
 from psutil import LINUX
-from psutil import OSX
 from psutil import POSIX
 from psutil import WINDOWS
 from psutil._compat import PY3
@@ -75,7 +74,7 @@ __all__ = [
     'skip_on_access_denied', 'skip_on_not_implemented', 'retry_before_failing',
     'run_test_module_by_name',
     # fs utils
-    'chdir', 'safe_rmpath', 'create_temp_executable_file',
+    'chdir', 'safe_rmpath', 'create_exe',
     # subprocesses
     'pyrun', 'reap_children', 'get_test_subprocess',
     # os
@@ -103,16 +102,19 @@ AF_INET6 = getattr(socket, "AF_INET6")
 AF_UNIX = getattr(socket, "AF_UNIX", None)
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
-TESTFN = os.path.join(os.getcwd(), "$testfile")
-TESTFN_UNICODE = TESTFN + "ƒőő"
+
 TESTFILE_PREFIX = 'psutil-unittest-'
-TOX = os.getenv('TOX') or '' in ('1', 'true')
-PYPY = '__pypy__' in sys.builtin_module_names
+TESTFN = os.path.join(os.path.realpath(os.getcwd()), "psutil-testfn")
+_TESTFN = TESTFN + '-internal'
+TESTFN_UNICODE = TESTFN + "-ƒőő"
 if not PY3:
     try:
-        TESTFN_UNICODE = unicode(TESTFN_UNICODE, sys.getfilesystemencoding())
+        TESTFN_UNICODE = unicode(TESTFN, sys.getfilesystemencoding())
     except UnicodeDecodeError:
-        TESTFN_UNICODE = TESTFN + "???"
+        TESTFN_UNICODE = TESTFN + "-???"
+
+TOX = os.getenv('TOX') or '' in ('1', 'true')
+PYPY = '__pypy__' in sys.builtin_module_names
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                         '..', '..'))
@@ -197,14 +199,13 @@ def get_test_subprocess(cmd=None, **kwds):
     kwds.setdefault("stdin", DEVNULL)
     kwds.setdefault("stdout", DEVNULL)
     if cmd is None:
-        safe_rmpath(TESTFN)
-        assert not os.path.exists(TESTFN)
+        assert not os.path.exists(_TESTFN)
         pyline = "from time import sleep;"
-        pyline += "open(r'%s', 'w').close();" % TESTFN
+        pyline += "open(r'%s', 'w').close();" % _TESTFN
         pyline += "sleep(60)"
         cmd = [PYTHON, "-c", pyline]
         sproc = subprocess.Popen(cmd, **kwds)
-        wait_for_file(TESTFN, delete_file=True, empty=True)
+        wait_for_file(_TESTFN, delete_file=True, empty=True)
     else:
         sproc = subprocess.Popen(cmd, **kwds)
         wait_for_pid(sproc.pid)
@@ -495,17 +496,8 @@ def chdir(dirname):
         os.chdir(curdir)
 
 
-def create_temp_executable_file(suffix, c_code=None):
-    def create_temp_file(suffix=None):
-        tmpdir = None
-        if TRAVIS and OSX:
-            tmpdir = "/private/tmp"
-        fd, path = tempfile.mkstemp(
-            prefix=TESTFILE_PREFIX, suffix=suffix, dir=tmpdir)
-        os.close(fd)
-        return os.path.realpath(path)
-
-    exe_file = create_temp_file(suffix=suffix)
+def create_exe(outpath, c_code=None):
+    assert not os.path.exists(outpath), outpath
     if which("gcc"):
         if c_code is None:
             c_code = textwrap.dedent(
@@ -516,18 +508,18 @@ def create_temp_executable_file(suffix, c_code=None):
                     return 1;
                 }
                 """)
-        c_file = create_temp_file(suffix=".c")
-        with open(c_file, "w") as f:
+        with tempfile.NamedTemporaryFile(suffix='.c', delete=False) as f:
             f.write(c_code)
-        subprocess.check_call(["gcc", c_file, "-o", exe_file])
-        safe_rmpath(c_file)
+        try:
+            subprocess.check_call(["gcc", f.name, "-o", outpath])
+        finally:
+            safe_rmpath(f.name)
     else:
         # fallback - use python's executable
-        shutil.copyfile(sys.executable, exe_file)
+        shutil.copyfile(sys.executable, outpath)
         if POSIX:
-            st = os.stat(exe_file)
-            os.chmod(exe_file, st.st_mode | stat.S_IEXEC)
-    return exe_file
+            st = os.stat(outpath)
+            os.chmod(outpath, st.st_mode | stat.S_IEXEC)
 
 
 # ===================================================================
@@ -688,12 +680,12 @@ def check_connection_ntuple(conn):
 
 
 def cleanup():
-    reap_children(recursive=True)
-    safe_rmpath(TESTFN)
-    try:
-        safe_rmpath(TESTFN_UNICODE)
-    except UnicodeEncodeError:
-        pass
+    for name in os.listdir('.'):
+        if name.startswith(TESTFILE_PREFIX):
+            try:
+                safe_rmpath(name)
+            except UnicodeEncodeError as exc:
+                warn(exc)
     for path in _testfiles:
         safe_rmpath(path)
 

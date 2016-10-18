@@ -49,7 +49,7 @@ from psutil.tests import APPVEYOR
 from psutil.tests import call_until
 from psutil.tests import chdir
 from psutil.tests import check_connection_ntuple
-from psutil.tests import create_temp_executable_file
+from psutil.tests import create_exe
 from psutil.tests import decode_path
 from psutil.tests import encode_path
 from psutil.tests import enum
@@ -731,7 +731,8 @@ class TestProcess(unittest.TestCase):
         # Test that name(), exe() and cmdline() correctly handle programs
         # with funky chars such as spaces and ")", see:
         # https://github.com/giampaolo/psutil/issues/628
-        funky_path = create_temp_executable_file('foo bar )')
+        funky_path = TESTFN + 'foo bar )'
+        create_exe(funky_path)
         self.addCleanup(safe_rmpath, funky_path)
         cmdline = [funky_path, "-c",
                    "import time; [time.sleep(0.01) for x in range(3000)];"
@@ -1491,7 +1492,8 @@ class TestProcess(unittest.TestCase):
             return execve("/bin/cat", argv, envp);
         }
         """)
-        path = create_temp_executable_file("x", c_code=code)
+        path = TESTFN
+        create_exe(path, c_code=code)
         self.addCleanup(safe_rmpath, path)
         sproc = get_test_subprocess([path],
                                     stdin=subprocess.PIPE,
@@ -1868,8 +1870,12 @@ class TestUnicode(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.uexe = create_temp_executable_file('è')
-        cls.udir = os.path.realpath(tempfile.mkdtemp(prefix="psutil-è-"))
+        cls.uexe = TESTFN + 'èfile'
+        cls.udir = TESTFN + 'èdir'
+        safe_rmpath(cls.uexe)
+        safe_rmpath(cls.udir)
+        create_exe(cls.uexe)
+        os.mkdir(cls.udir)
         assert 'è' in os.path.basename(cls.uexe)
         assert 'è' in os.path.basename(cls.udir)
 
