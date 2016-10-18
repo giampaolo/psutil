@@ -1869,12 +1869,15 @@ class TestUnicode(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.uexe = create_temp_executable_file('è')
+        cls.udir = os.path.realpath(tempfile.mkdtemp(prefix="psutil-è-"))
         assert 'è' in os.path.basename(cls.uexe)
+        assert 'è' in os.path.basename(cls.udir)
 
     @classmethod
     def tearDownClass(cls):
         if not APPVEYOR:
             safe_rmpath(cls.uexe)
+            safe_rmpath(cls.udir)
 
     def setUp(self):
         reap_children()
@@ -1904,12 +1907,10 @@ class TestUnicode(unittest.TestCase):
         self.assertEqual(p.cmdline(), [self.uexe])
 
     def test_proc_cwd(self):
-        tdir = os.path.realpath(tempfile.mkdtemp(prefix="psutil-è-"))
-        self.addCleanup(safe_rmpath, tdir)
-        with chdir(tdir):
+        with chdir(self.udir):
             p = psutil.Process()
             self.assertIsInstance(p.cwd(), str)
-            self.assertEqual(p.cwd(), tdir)
+            self.assertEqual(p.cwd(), self.udir)
 
     @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_proc_open_files(self):
@@ -1939,8 +1940,7 @@ class TestUnicode(unittest.TestCase):
         self.assertEqual(p.environ()['FUNNY_ARG'], uexe)
 
     def test_disk_usage(self):
-        path = tempfile.mkdtemp(prefix='psutil', suffix='è')
-        psutil.disk_usage(path)
+        psutil.disk_usage(self.udir)
 
 
 @unittest.skipIf(OSX and TRAVIS, "fails on OSX + TRAVIS")
