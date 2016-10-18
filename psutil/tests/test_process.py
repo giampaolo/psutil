@@ -12,7 +12,6 @@ import contextlib
 import errno
 import os
 import select
-import shutil
 import signal
 import socket
 import stat
@@ -51,7 +50,6 @@ from psutil.tests import chdir
 from psutil.tests import check_connection_ntuple
 from psutil.tests import create_exe
 from psutil.tests import decode_path
-from psutil.tests import encode_path
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
 from psutil.tests import get_winver
@@ -78,7 +76,6 @@ from psutil.tests import VALID_PROC_STATUSES
 from psutil.tests import wait_for_file
 from psutil.tests import wait_for_pid
 from psutil.tests import warn
-from psutil.tests import which
 from psutil.tests import WIN_VISTA
 
 
@@ -1861,23 +1858,20 @@ if POSIX and os.getuid() == 0:
 # ===================================================================
 
 
-@unittest.skipIf(OSX and TRAVIS, "fails on OSX + TRAVIS")
 class TestUnicode(unittest.TestCase):
     """
     Make sure that APIs returning a string are able to handle unicode,
     see: https://github.com/giampaolo/psutil/issues/655
     """
+    uexe = TESTFN + 'èfile'
+    udir = TESTFN + 'èdir'
 
     @classmethod
     def setUpClass(cls):
-        cls.uexe = TESTFN + 'èfile'
-        cls.udir = TESTFN + 'èdir'
         safe_rmpath(cls.uexe)
         safe_rmpath(cls.udir)
         create_exe(cls.uexe)
         os.mkdir(cls.udir)
-        assert 'è' in os.path.basename(cls.uexe)
-        assert 'è' in os.path.basename(cls.udir)
 
     @classmethod
     def tearDownClass(cls):
@@ -1890,11 +1884,15 @@ class TestUnicode(unittest.TestCase):
 
     tearDown = setUp
 
+    @staticmethod
+    def decode_path(path):
+        return path
+
     def test_proc_exe(self):
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
         self.assertIsInstance(p.name(), str)
-        self.assertEqual(p.exe(), self.uexe)
+        self.assertEqual(p.exe(), self.decode_path(self.uexe))
 
     def test_proc_name(self):
         subp = get_test_subprocess(cmd=[self.uexe])
@@ -1904,21 +1902,22 @@ class TestUnicode(unittest.TestCase):
             name = py2_strencode(psutil._psplatform.cext.proc_name(subp.pid))
         else:
             name = psutil.Process(subp.pid).name()
-        self.assertEqual(name, os.path.basename(self.uexe))
+        self.assertEqual(name, self.decode_path(os.path.basename(self.uexe)))
 
     def test_proc_cmdline(self):
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
         self.assertIsInstance("".join(p.cmdline()), str)
-        self.assertEqual(p.cmdline(), [self.uexe])
+        self.assertEqual(p.cmdline(), [self.decode_path(self.uexe)])
 
     def test_proc_cwd(self):
         with chdir(self.udir):
             p = psutil.Process()
+            print(repr(p.cwd()))
             self.assertIsInstance(p.cwd(), str)
-            self.assertEqual(p.cwd(), self.udir)
+            self.assertEqual(p.cwd(), self.decode_path(self.udir))
 
-    @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
+    # @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_proc_open_files(self):
         p = psutil.Process()
         start = set(p.open_files())
@@ -1930,7 +1929,8 @@ class TestUnicode(unittest.TestCase):
             # see https://github.com/giampaolo/psutil/issues/595
             self.skipTest("open_files on BSD is broken")
         self.assertIsInstance(path, str)
-        self.assertEqual(os.path.normcase(path), os.path.normcase(self.uexe))
+        self.assertEqual(os.path.normcase(path),
+                         self.decode_path(os.path.normcase(self.uexe)))
 
     @unittest.skipUnless(hasattr(psutil.Process, "environ"),
                          "platform not supported")
@@ -1942,139 +1942,28 @@ class TestUnicode(unittest.TestCase):
         if WINDOWS and not PY3:
             uexe = self.uexe.decode(sys.getfilesystemencoding())
         else:
-            uexe = self.uexe
+            uexe = self.decode_path(self.uexe)
         self.assertEqual(p.environ()['FUNNY_ARG'], uexe)
 
     def test_disk_usage(self):
         psutil.disk_usage(self.udir)
 
 
-@unittest.skipIf(OSX and TRAVIS, "fails on OSX + TRAVIS")
-class TestNonUnicode(unittest.TestCase):
-    """Test handling of non-utf8 data."""
+class TestInvalidUnicode(TestUnicode):
+    """Test handling of invalid utf8 data.
+    The path names below will raise UnicodeDecodeError on decode() but
+    psutil is designed to
+    """
+    if PY3:
+        uexe = TESTFN.encode('utf8') + b"f\xc0\x80"
+        udir = TESTFN.encode('utf8') + b"d\xc0\x80"
+    else:
+        uexe = TESTFN + b"f\xc0\x80"
+        udir = TESTFN + b"d\xc0\x80"
 
-    @classmethod
-    def setUpClass(cls):
-        if PY3:
-            # Fix around https://bugs.python.org/issue24230
-            cls.temp_directory = tempfile.mkdtemp().encode('utf8')
-        else:
-            cls.temp_directory = tempfile.mkdtemp(suffix=b"")
-
-        # Return an executable that runs until we close its stdin.
-        if WINDOWS:
-            cls.test_executable = which("cmd.exe")
-        else:
-            cls.test_executable = which("cat")
-
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls.temp_directory, ignore_errors=True)
-
-    def setUp(self):
-        reap_children()
-
-    tearDown = setUp
-
-    def copy_file(self, src, dst):
-        # A wrapper around shutil.copy() which is broken on py < 3.4
-        # when passed bytes paths.
-        with open(src, 'rb') as input_:
-            with open(dst, 'wb') as output:
-                output.write(input_.read())
-        shutil.copymode(src, dst)
-
-    def test_proc_exe(self):
-        funny_executable = os.path.join(self.temp_directory, b"\xc0\x80")
-        self.copy_file(self.test_executable, funny_executable)
-        self.addCleanup(safe_rmpath, funny_executable)
-        subp = get_test_subprocess(cmd=[decode_path(funny_executable)],
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT)
-        p = psutil.Process(subp.pid)
-        self.assertIsInstance(p.exe(), str)
-        self.assertEqual(encode_path(os.path.basename(p.exe())), b"\xc0\x80")
-        subp.communicate()
-        self.assertEqual(subp.returncode, 0)
-
-    def test_proc_name(self):
-        funny_executable = os.path.join(self.temp_directory, b"\xc0\x80")
-        self.copy_file(self.test_executable, funny_executable)
-        self.addCleanup(safe_rmpath, funny_executable)
-        subp = get_test_subprocess(cmd=[decode_path(funny_executable)],
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT)
-        p = psutil.Process(subp.pid)
-        self.assertEqual(encode_path(os.path.basename(p.name())), b"\xc0\x80")
-        subp.communicate()
-        self.assertEqual(subp.returncode, 0)
-
-    def test_proc_cmdline(self):
-        funny_executable = os.path.join(self.temp_directory, b"\xc0\x80")
-        self.copy_file(self.test_executable, funny_executable)
-        self.addCleanup(safe_rmpath, funny_executable)
-        subp = get_test_subprocess(cmd=[decode_path(funny_executable)],
-                                   stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT)
-        p = psutil.Process(subp.pid)
-        self.assertEqual(p.cmdline(), [decode_path(funny_executable)])
-        subp.communicate()
-        self.assertEqual(subp.returncode, 0)
-
-    def test_proc_cwd(self):
-        funny_directory = os.path.realpath(
-            os.path.join(self.temp_directory, b"\xc0\x80"))
-        os.mkdir(funny_directory)
-        self.addCleanup(safe_rmpath, funny_directory)
-        with chdir(funny_directory):
-            p = psutil.Process()
-            self.assertIsInstance(p.cwd(), str)
-            self.assertEqual(encode_path(p.cwd()), funny_directory)
-
-    # XXX
-    @unittest.skipIf(WINDOWS, "broken on WINDOWS")
-    def test_proc_open_files(self):
-        funny_file = os.path.join(self.temp_directory, b"\xc0\x80")
-        p = psutil.Process()
-        start = set(p.open_files())
-        with open(funny_file, 'wb'):
-            new = set(p.open_files())
-        path = (new - start).pop().path
-        if BSD and not path:
-            # XXX
-            # see https://github.com/giampaolo/psutil/issues/595
-            self.skipTest("open_files on BSD is broken")
-        self.assertIsInstance(path, str)
-        self.assertIn(funny_file, encode_path(path))
-
-    @unittest.skipUnless(hasattr(psutil.Process, "environ"),
-                         "platform not supported")
-    def test_proc_environ(self):
-        env = os.environ.copy()
-        funny_path = self.temp_directory
-        # ...otherwise subprocess.Popen fails with TypeError (it
-        # wants a string)
-        env['FUNNY_ARG'] = \
-            decode_path(funny_path) if WINDOWS and PY3 else funny_path
-        sproc = get_test_subprocess(env=env)
-        p = psutil.Process(sproc.pid)
-        self.assertEqual(
-            encode_path(p.environ()['FUNNY_ARG']), funny_path)
-
-    def test_disk_usage(self):
-        funny_directory = os.path.realpath(
-            os.path.join(self.temp_directory, b"\xc0\x80"))
-        os.mkdir(funny_directory)
-        self.addCleanup(safe_rmpath, funny_directory)
-        if WINDOWS and PY3:
-            # Python 3 on Windows is moving towards accepting unicode
-            # paths only:
-            # http://bugs.python.org/issue26330
-            funny_directory = decode_path(funny_directory)
-        psutil.disk_usage(funny_directory)
+    @staticmethod
+    def decode_path(path):
+        return decode_path(path)
 
 
 if __name__ == '__main__':
