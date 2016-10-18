@@ -49,7 +49,6 @@ from psutil.tests import call_until
 from psutil.tests import chdir
 from psutil.tests import check_connection_ntuple
 from psutil.tests import create_exe
-from psutil.tests import decode_path
 from psutil.tests import enum
 from psutil.tests import get_test_subprocess
 from psutil.tests import get_winver
@@ -1882,15 +1881,11 @@ class TestUnicode(unittest.TestCase):
 
     tearDown = setUp
 
-    @staticmethod
-    def decode_path(path):
-        return path
-
     def test_proc_exe(self):
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
         self.assertIsInstance(p.name(), str)
-        self.assertEqual(p.exe(), self.decode_path(self.uexe))
+        self.assertEqual(p.exe(), self.uexe)
 
     def test_proc_name(self):
         subp = get_test_subprocess(cmd=[self.uexe])
@@ -1900,19 +1895,19 @@ class TestUnicode(unittest.TestCase):
             name = py2_strencode(psutil._psplatform.cext.proc_name(subp.pid))
         else:
             name = psutil.Process(subp.pid).name()
-        self.assertEqual(name, self.decode_path(os.path.basename(self.uexe)))
+        self.assertEqual(name, os.path.basename(self.uexe))
 
     def test_proc_cmdline(self):
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
         self.assertIsInstance("".join(p.cmdline()), str)
-        self.assertEqual(p.cmdline(), [self.decode_path(self.uexe)])
+        self.assertEqual(p.cmdline(), [self.uexe])
 
     def test_proc_cwd(self):
         with chdir(self.udir):
             p = psutil.Process()
             self.assertIsInstance(p.cwd(), str)
-            self.assertEqual(p.cwd(), self.decode_path(self.udir))
+            self.assertEqual(p.cwd(), self.udir)
 
     # @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_proc_open_files(self):
@@ -1927,7 +1922,7 @@ class TestUnicode(unittest.TestCase):
             self.skipTest("open_files on BSD is broken")
         self.assertIsInstance(path, str)
         self.assertEqual(os.path.normcase(path),
-                         self.decode_path(os.path.normcase(self.uexe)))
+                         os.path.normcase(self.uexe))
 
     @unittest.skipUnless(hasattr(psutil.Process, "environ"),
                          "platform not supported")
@@ -1939,7 +1934,7 @@ class TestUnicode(unittest.TestCase):
         if WINDOWS and not PY3:
             uexe = self.uexe.decode(sys.getfilesystemencoding())
         else:
-            uexe = self.decode_path(self.uexe)
+            uexe = self.uexe
         self.assertEqual(p.environ()['FUNNY_ARG'], uexe)
 
     def test_disk_usage(self):
@@ -1947,20 +1942,15 @@ class TestUnicode(unittest.TestCase):
 
 
 class TestInvalidUnicode(TestUnicode):
-    """Test handling of invalid utf8 data.
-    The path names below will raise UnicodeDecodeError on decode() but
-    psutil is designed to
-    """
+    """Test handling of invalid utf8 data."""
     if PY3:
-        uexe = TESTFN.encode('utf8') + b"f\xc0\x80"
-        udir = TESTFN.encode('utf8') + b"d\xc0\x80"
+        uexe = (TESTFN.encode('utf8') + b"f\xc0\x80").decode(
+            'utf8', 'surrogateescape')
+        udir = (TESTFN.encode('utf8') + b"d\xc0\x80").decode(
+            'utf8', 'surrogateescape')
     else:
         uexe = TESTFN + b"f\xc0\x80"
         udir = TESTFN + b"d\xc0\x80"
-
-    @staticmethod
-    def decode_path(path):
-        return decode_path(path)
 
 
 if __name__ == '__main__':
