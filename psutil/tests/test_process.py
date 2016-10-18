@@ -942,10 +942,8 @@ class TestProcess(unittest.TestCase):
 
     def compare_proc_sys_cons(self, pid, proc_cons):
         from psutil._common import pconn
-        sys_cons = []
-        for c in psutil.net_connections(kind='all'):
-            if c.pid == pid:
-                sys_cons.append(pconn(*c[:-1]))
+        sys_cons = [c[:-1] for c in psutil.net_connections(kind='all')
+                    if c.pid == pid]
         if FREEBSD:
             # on FreeBSD all fds are set to -1
             proc_cons = [pconn(*[-1] + list(x[1:])) for x in proc_cons]
