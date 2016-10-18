@@ -103,8 +103,8 @@ AF_UNIX = getattr(socket, "AF_UNIX", None)
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 
-TESTFILE_PREFIX = 'psutil-unittest-'
-TESTFN = os.path.join(os.path.realpath(os.getcwd()), "psutil-testfn")
+TESTFILE_PREFIX = '$psutil'
+TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFILE_PREFIX)
 _TESTFN = TESTFN + '-internal'
 TESTFN_UNICODE = TESTFN + "-ƒőő"
 if not PY3:
@@ -508,7 +508,8 @@ def create_exe(outpath, c_code=None):
                     return 1;
                 }
                 """)
-        with tempfile.NamedTemporaryFile(suffix='.c', delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+                suffix='.c', delete=False, mode='wt') as f:
             f.write(c_code)
         try:
             subprocess.check_call(["gcc", f.name, "-o", outpath])

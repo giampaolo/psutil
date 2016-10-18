@@ -1894,12 +1894,12 @@ class TestUnicode(unittest.TestCase):
         subp = get_test_subprocess(cmd=[self.uexe])
         p = psutil.Process(subp.pid)
         self.assertIsInstance(p.name(), str)
-        self.assertEqual(os.path.basename(p.name()),
-                         os.path.basename(self.uexe))
+        self.assertEqual(p.exe(), self.uexe)
 
     def test_proc_name(self):
         subp = get_test_subprocess(cmd=[self.uexe])
         if WINDOWS:
+            # XXX: why is this like this?
             from psutil._pswindows import py2_strencode
             name = py2_strencode(psutil._psplatform.cext.proc_name(subp.pid))
         else:
