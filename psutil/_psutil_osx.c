@@ -84,8 +84,13 @@ psutil_pids(PyObject *self, PyObject *args) {
         return NULL;
 
     if (psutil_get_proc_list(&proclist, &num_processes) != 0) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "failed to retrieve process list.");
+        if (errno != 0) {
+            PyErr_SetFromErrno(PyExc_OSError);
+        }
+        else {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "failed to retrieve process list");
+        }
         goto error;
     }
 

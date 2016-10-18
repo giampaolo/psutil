@@ -35,6 +35,8 @@ Bug tracker at https://github.com/giampaolo/psutil/issues
   instead of OSError and RuntimeError.
 - #909: [OSX] Process open_files() and connections() methods may raise
   OSError with no exception set if process is gone.
+- #910: [OSX / BSD] in case of error, psutil.pids() raised RuntimeError instead
+  of the original OSError exception.
 - #916: [OSX] fix many compilation warnings.
 - #918: [NetBSD] all memory metrics were wrong.
 - #921: psutil.Popen now defines a __del__ special method which calls the

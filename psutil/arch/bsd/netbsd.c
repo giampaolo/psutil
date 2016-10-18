@@ -524,6 +524,7 @@ psutil_proc_num_fds(PyObject *self, PyObject *args) {
 
 PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
+    // XXX: why static?
     static int maxcpus;
     int mib[3];
     int ncpu;
