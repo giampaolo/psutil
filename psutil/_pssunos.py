@@ -324,6 +324,11 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except EnvironmentError as err:
+            if self.pid == 0:
+                if 0 in pids():
+                    raise AccessDenied(self.pid, self._name)
+                else:
+                    raise
             # ENOENT (no such file or directory) gets raised on open().
             # ESRCH (no such process) can get raised on read() if
             # process is gone in meantime.
@@ -494,7 +499,7 @@ class Process(object):
             return os.readlink("%s/%s/path/cwd" % (procfs_path, self.pid))
         except OSError as err:
             if err.errno == errno.ENOENT:
-                os.stat("%s/%s" % (procfs_path, self.pid))
+                os.stat("%s/%s" % (procfs_path, self.pid))  # raise NSP or AD
                 return None
             raise
 

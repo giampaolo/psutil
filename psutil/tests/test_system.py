@@ -39,8 +39,7 @@ from psutil.tests import mock
 from psutil.tests import reap_children
 from psutil.tests import retry_before_failing
 from psutil.tests import run_test_module_by_name
-from psutil.tests import safe_remove
-from psutil.tests import safe_rmdir
+from psutil.tests import safe_rmpath
 from psutil.tests import skip_on_access_denied
 from psutil.tests import TESTFN
 from psutil.tests import TESTFN_UNICODE
@@ -57,7 +56,7 @@ class TestSystemAPIs(unittest.TestCase):
     """Tests for system-related APIs."""
 
     def setUp(self):
-        safe_remove(TESTFN)
+        safe_rmpath(TESTFN)
 
     def tearDown(self):
         reap_children()
@@ -149,7 +148,7 @@ class TestSystemAPIs(unittest.TestCase):
         self.assertGreater(bt, 0)
         self.assertLess(bt, time.time())
 
-    @unittest.skipUnless(POSIX, 'posix only')
+    @unittest.skipUnless(POSIX, 'POSIX only')
     def test_PAGESIZE(self):
         # pagesize is used internally to perform different calculations
         # and it's determined by using SC_PAGE_SIZE; make sure
@@ -189,7 +188,7 @@ class TestSystemAPIs(unittest.TestCase):
         assert mem.sout >= 0, mem
 
     def test_pid_exists(self):
-        sproc = get_test_subprocess(wait=True)
+        sproc = get_test_subprocess()
         self.assertTrue(psutil.pid_exists(sproc.pid))
         p = psutil.Process(sproc.pid)
         p.kill()
@@ -359,6 +358,8 @@ class TestSystemAPIs(unittest.TestCase):
             new = psutil.cpu_percent(interval=None)
             self._test_cpu_percent(new, last, new)
             last = new
+        with self.assertRaises(ValueError):
+            psutil.cpu_percent(interval=-1)
 
     def test_per_cpu_percent(self):
         last = psutil.cpu_percent(interval=0.001, percpu=True)
@@ -368,6 +369,8 @@ class TestSystemAPIs(unittest.TestCase):
             for percent in new:
                 self._test_cpu_percent(percent, last, new)
             last = new
+        with self.assertRaises(ValueError):
+            psutil.cpu_percent(interval=-1, percpu=True)
 
     def test_cpu_times_percent(self):
         last = psutil.cpu_times_percent(interval=0.001)
@@ -400,7 +403,7 @@ class TestSystemAPIs(unittest.TestCase):
                     self._test_cpu_percent(percent, None, None)
 
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
-                     "os.statvfs() function not available on this platform")
+                     "os.statvfs() not available")
     def test_disk_usage(self):
         usage = psutil.disk_usage(os.getcwd())
         assert usage.total > 0, usage
@@ -431,16 +434,16 @@ class TestSystemAPIs(unittest.TestCase):
             self.fail("OSError not raised")
 
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
-                     "os.statvfs() function not available on this platform")
+                     "os.statvfs() not available")
     def test_disk_usage_unicode(self):
         # see: https://github.com/giampaolo/psutil/issues/416
-        safe_rmdir(TESTFN_UNICODE)
-        self.addCleanup(safe_rmdir, TESTFN_UNICODE)
+        safe_rmpath(TESTFN_UNICODE)
+        self.addCleanup(safe_rmpath, TESTFN_UNICODE)
         os.mkdir(TESTFN_UNICODE)
         psutil.disk_usage(TESTFN_UNICODE)
 
     @unittest.skipIf(POSIX and not hasattr(os, 'statvfs'),
-                     "os.statvfs() function not available on this platform")
+                     "os.statvfs() not available")
     @unittest.skipIf(LINUX and TRAVIS, "unknown failure on travis")
     def test_disk_partitions(self):
         # all = False
@@ -493,10 +496,11 @@ class TestSystemAPIs(unittest.TestCase):
             path = os.path.abspath(path)
             while not os.path.ismount(path):
                 path = os.path.dirname(path)
-            return path
+            return path.lower()
 
         mount = find_mount_point(__file__)
-        mounts = [x.mountpoint for x in psutil.disk_partitions(all=True)]
+        mounts = [x.mountpoint.lower() for x in
+                  psutil.disk_partitions(all=True)]
         self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
 
@@ -548,6 +552,8 @@ class TestSystemAPIs(unittest.TestCase):
         nics = psutil.net_if_addrs()
         assert nics, nics
 
+        nic_stats = psutil.net_if_stats()
+
         # Not reliable on all platforms (net_if_addrs() reports more
         # interfaces).
         # self.assertEqual(sorted(nics.keys()),
@@ -564,18 +570,21 @@ class TestSystemAPIs(unittest.TestCase):
                 self.assertIn(addr.family, families)
                 if sys.version_info >= (3, 4):
                     self.assertIsInstance(addr.family, enum.IntEnum)
-                if addr.family == socket.AF_INET:
-                    s = socket.socket(addr.family)
-                    with contextlib.closing(s):
-                        s.bind((addr.address, 0))
-                elif addr.family == socket.AF_INET6:
-                    info = socket.getaddrinfo(
-                        addr.address, 0, socket.AF_INET6, socket.SOCK_STREAM,
-                        0, socket.AI_PASSIVE)[0]
-                    af, socktype, proto, canonname, sa = info
-                    s = socket.socket(af, socktype, proto)
-                    with contextlib.closing(s):
-                        s.bind(sa)
+                if nic_stats[nic].isup:
+                    # Do not test binding to addresses of interfaces
+                    # that are down
+                    if addr.family == socket.AF_INET:
+                        s = socket.socket(addr.family)
+                        with contextlib.closing(s):
+                            s.bind((addr.address, 0))
+                    elif addr.family == socket.AF_INET6:
+                        info = socket.getaddrinfo(
+                            addr.address, 0, socket.AF_INET6,
+                            socket.SOCK_STREAM, 0, socket.AI_PASSIVE)[0]
+                        af, socktype, proto, canonname, sa = info
+                        s = socket.socket(af, socktype, proto)
+                        with contextlib.closing(s):
+                            s.bind(sa)
                 for ip in (addr.address, addr.netmask, addr.broadcast,
                            addr.ptp):
                     if ip is not None:
@@ -615,7 +624,7 @@ class TestSystemAPIs(unittest.TestCase):
             else:
                 self.assertEqual(addr.address, '06-3d-29-00-00-00')
 
-    @unittest.skipIf(TRAVIS, "EPERM on travis")
+    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")  # raises EPERM
     def test_net_if_stats(self):
         nics = psutil.net_if_stats()
         assert nics, nics
@@ -632,8 +641,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this linux version')
-    @unittest.skipIf(APPVEYOR,
-                     "can't find any physical disk on Appveyor")
+    @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")  # no visible disks
     def test_disk_io_counters(self):
         def check_ntuple(nt):
             self.assertEqual(nt[0], nt.read_count)
@@ -686,6 +694,43 @@ class TestSystemAPIs(unittest.TestCase):
             self.assertGreaterEqual(value, 0)
             if name in ('ctx_switches', 'interrupts'):
                 self.assertGreater(value, 0)
+
+    def test_os_constants(self):
+        names = ["POSIX", "WINDOWS", "LINUX", "OSX", "FREEBSD", "OPENBSD",
+                 "NETBSD", "BSD", "SUNOS"]
+        for name in names:
+            self.assertIsInstance(getattr(psutil, name), bool, msg=name)
+
+        if os.name == 'posix':
+            assert psutil.POSIX
+            assert not psutil.WINDOWS
+            names.remove("POSIX")
+            if "linux" in sys.platform.lower():
+                assert psutil.LINUX
+                names.remove("LINUX")
+            elif "bsd" in sys.platform.lower():
+                assert psutil.BSD
+                self.assertEqual([psutil.FREEBSD, psutil.OPENBSD,
+                                  psutil.NETBSD].count(True), 1)
+                names.remove("BSD")
+                names.remove("FREEBSD")
+                names.remove("OPENBSD")
+                names.remove("NETBSD")
+            elif "sunos" in sys.platform.lower() or \
+                    "solaris" in sys.platform.lower():
+                assert psutil.SUNOS
+                names.remove("SUNOS")
+            elif "darwin" in sys.platform.lower():
+                assert psutil.OSX
+                names.remove("OSX")
+        else:
+            assert psutil.WINDOWS
+            assert not psutil.POSIX
+            names.remove("WINDOWS")
+
+        # assert all other constants are set to False
+        for name in names:
+            self.assertIs(getattr(psutil, name), False, msg=name)
 
 
 if __name__ == '__main__':

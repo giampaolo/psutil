@@ -697,6 +697,8 @@ static int psutil_get_process_data(long pid,
         goto error;
     }
 
+    CloseHandle(hProcess);
+
     *pdata = buffer;
     *psize = size;
 
@@ -860,7 +862,8 @@ psutil_get_proc_info(DWORD pid, PSYSTEM_PROCESS_INFORMATION *retProcess,
     }
 
     if (status != 0) {
-        PyErr_Format(PyExc_RuntimeError, "NtQuerySystemInformation() failed");
+        PyErr_Format(
+            PyExc_RuntimeError, "NtQuerySystemInformation() syscall failed");
         goto error;
     }
 

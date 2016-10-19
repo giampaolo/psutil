@@ -29,6 +29,7 @@ except ImportError:
 from . import _common
 from ._common import deprecated_method
 from ._common import memoize
+from ._common import memoize_when_activated
 from ._compat import callable
 from ._compat import long
 from ._compat import PY3 as _PY3
@@ -188,7 +189,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "4.3.1"
+__version__ = "4.4.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
@@ -391,14 +392,13 @@ class Process(object):
         try:
             self.create_time()
         except AccessDenied:
-            # we should never get here as AFAIK we're able to get
+            # We should never get here as AFAIK we're able to get
             # process creation time on all platforms even as a
-            # limited user
+            # limited user.
             pass
         except ZombieProcess:
-            # Let's consider a zombie process as legitimate as
-            # tehcnically it's still alive (it can be queried,
-            # although not always, and it's returned by pids()).
+            # Zombies can still be queried by this class (although
+            # not always) and pids() return them so just go on.
             pass
         except NoSuchProcess:
             if not _ignore_nsp:
@@ -464,13 +464,15 @@ class Process(object):
         one information about the process. If you're lucky, you'll
         get a hell of a speedup.
 
-        >>> p = Process()
+        >>> import psutil
+        >>> p = psutil.Process()
         >>> with p.oneshot():
-        ...     p.name()  # execute internal routine
-        ...     p.ppid()  # use cached value
-        ...     p.uids()  # use cached value
-        ...     p.gids()  # use cached value
+        ...     p.name()  # collect multiple info
+        ...     p.cpu_times()  # return cached value
+        ...     p.cpu_percent()  # return cached value
+        ...     p.create_time()  # return cached value
         ...
+        >>>
         """
         if self._oneshot_inctx:
             # NOOP: this covers the use case where the user enters the
@@ -486,11 +488,26 @@ class Process(object):
         else:
             self._oneshot_inctx = True
             try:
+                # cached in case cpu_percent() is used
+                self.cpu_times.cache_activate()
+                # cached in case memory_percent() is used
+                self.memory_info.cache_activate()
+                # cached in case parent() is used
+                self.ppid.cache_activate()
+                # cached in case username() is used
+                if POSIX:
+                    self.uids.cache_activate()
+                # specific implementation cache
                 self._proc.oneshot_enter()
                 yield
             finally:
-                self._oneshot_inctx = False
+                self.cpu_times.cache_deactivate()
+                self.memory_info.cache_deactivate()
+                self.ppid.cache_deactivate()
+                if POSIX:
+                    self.uids.cache_deactivate()
                 self._proc.oneshot_exit()
+                self._oneshot_inctx = False
 
     def as_dict(self, attrs=None, ad_value=None):
         """Utility method returning process information as a
@@ -581,6 +598,7 @@ class Process(object):
         """The process PID."""
         return self._pid
 
+    @memoize_when_activated
     def ppid(self):
         """The process parent PID.
         On Windows the return value is cached after first call.
@@ -716,6 +734,7 @@ class Process(object):
 
     if POSIX:
 
+        @memoize_when_activated
         def uids(self):
             """Return process UIDs as a (real, effective, saved)
             namedtuple.
@@ -967,13 +986,17 @@ class Process(object):
           >>>
         """
         blocking = interval is not None and interval > 0.0
+        if interval is not None and interval < 0:
+            raise ValueError("interval is not positive (got %r)" % interval)
         num_cpus = cpu_count() or 1
+
         if POSIX:
             def timer():
                 return _timer() * num_cpus
         else:
             def timer():
                 return sum(cpu_times())
+
         if blocking:
             st1 = timer()
             pt1 = self._proc.cpu_times()
@@ -1023,6 +1046,7 @@ class Process(object):
             single_cpu_percent = overall_cpus_percent * num_cpus
             return round(single_cpu_percent, 1)
 
+    @memoize_when_activated
     def cpu_times(self):
         """Return a (user, system, children_user, children_system)
         namedtuple representing the accumulated process time, in
@@ -1033,6 +1057,7 @@ class Process(object):
         """
         return self._proc.cpu_times()
 
+    @memoize_when_activated
     def memory_info(self):
         """Return a namedtuple with variable fields depending on the
         platform, representing memory information about the process.
@@ -1154,6 +1179,7 @@ class Process(object):
 
     if POSIX:
         def _send_signal(self, sig):
+            assert not self.pid < 0, self.pid
             if self.pid == 0:
                 # see "man 2 kill"
                 raise ValueError(
@@ -1305,6 +1331,27 @@ class Popen(Process):
 
     def __dir__(self):
         return sorted(set(dir(Popen) + dir(subprocess.Popen)))
+
+    def __enter__(self):
+        if hasattr(self.__subproc, '__enter__'):
+            self.__subproc.__enter__()
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        if hasattr(self.__subproc, '__exit__'):
+            return self.__subproc.__exit__(*args, **kwargs)
+        else:
+            if self.stdout:
+                self.stdout.close()
+            if self.stderr:
+                self.stderr.close()
+            try:
+                # Flushing a BufferedWriter may raise an error.
+                if self.stdin:
+                    self.stdin.close()
+            finally:
+                # Wait for the process to terminate, to avoid zombies.
+                self.wait()
 
     def __getattribute__(self, name):
         try:
@@ -1612,6 +1659,8 @@ def cpu_percent(interval=None, percpu=False):
     global _last_cpu_times
     global _last_per_cpu_times
     blocking = interval is not None and interval > 0.0
+    if interval is not None and interval < 0:
+        raise ValueError("interval is not positive (got %r)" % interval)
 
     def calculate(t1, t2):
         t1_all = sum(t1)
@@ -1685,6 +1734,8 @@ def cpu_times_percent(interval=None, percpu=False):
     global _last_cpu_times_2
     global _last_per_cpu_times_2
     blocking = interval is not None and interval > 0.0
+    if interval is not None and interval < 0:
+        raise ValueError("interval is not positive (got %r)" % interval)
 
     def calculate(t1, t2):
         nums = []
@@ -1764,12 +1815,11 @@ def virtual_memory():
        total physical memory available.
 
      - available:
-       the actual amount of available memory that can be given
-       instantly to processes that request more memory in bytes; this
-       is calculated by summing different memory values depending on
-       the platform (e.g. free + buffers + cached on Linux) and it is
-       supposed to be used to monitor actual memory usage in a cross
-       platform fashion.
+       the memory that can be given instantly to processes without the
+       system going into swap.
+       This is calculated by summing different memory values depending
+       on the platform and it is supposed to be used to monitor actual
+       memory usage in a cross platform fashion.
 
      - percent:
        the percentage usage calculated as (total - available) / total * 100
@@ -2121,7 +2171,7 @@ def test():  # pragma: no cover
                 pinfo['name'].strip() or '?'))
 
 
-del memoize, division, deprecated_method
+del memoize, memoize_when_activated, division, deprecated_method
 if sys.version_info[0] < 3:
     del num, x
 

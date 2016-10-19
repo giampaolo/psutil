@@ -36,6 +36,19 @@ versions from **2.6 to 3.5** (users of Python 2.4 and 2.5 may use
 
 The psutil documentation you're reading is distributed as a single HTML page.
 
+Install
+-------
+
+On Windows, or on UNIX if you have a C compiler installed, the easiest way to
+install psutil is via ``pip``::
+
+    pip install psutil
+
+Alternatively, see more detailed
+`install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
+instructions.
+
+
 System related functions
 ========================
 
@@ -172,24 +185,24 @@ Memory
 .. function:: virtual_memory()
 
   Return statistics about system memory usage as a namedtuple including the
-  following fields, expressed in bytes:
+  following fields, expressed in bytes. Main metrics:
 
-  - **total**: total physical memory available.
-  - **available**: the actual amount of available memory that can be given
-    instantly to processes that request more memory in bytes; this is
-    calculated by summing different memory values depending on the platform
-    (e.g. free + buffers + cached on Linux) and it is supposed to be used to
-    monitor actual memory usage in a cross platform fashion.
-  - **percent**: the percentage usage calculated as
-    ``(total - available) / total * 100``.
+  - **total**: total physical memory.
+  - **available**: the memory that can be given instantly to processes without
+    the system going into swap.
+    This is calculated by summing different memory values depending on the
+    platform and it is supposed to be used to monitor actual memory usage in a
+    cross platform fashion.
+
+  Other metrics:
+
   - **used**: memory used, calculated differently depending on the platform and
-    designed for informational purposes only.
+    designed for informational purposes only. **total - free** does not
+    necessarily match **used**.
   - **free**: memory not being used at all (zeroed) that is readily available;
-    note that this doesn't reflect the actual memory available (use 'available'
-    instead).
-
-  Platform-specific fields:
-
+    note that this doesn't reflect the actual memory available (use
+    **available** instead). **total - used** does not necessarily match
+    **free**.
   - **active** *(UNIX)*: memory currently in use or very recently used, and so
     it is in RAM.
   - **inactive** *(UNIX)*: memory that is marked as not used.
@@ -202,7 +215,7 @@ Memory
 
   The sum of **used** and **available** does not necessarily equal **total**.
   On Windows **available** and **free** are the same.
-  See `scripts/meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
+  See `meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
   .. note:: if you just want to know how much physical memory is left in a
@@ -221,6 +234,10 @@ Memory
 
   .. versionchanged:: 4.2.0 added *shared* metrics on Linux.
 
+  .. versionchanged:: 4.4.0 *available* and *used* values on Linux are more
+    precise and match "free" cmdline utility.
+
+
 .. function:: swap_memory()
 
   Return system swap memory statistics as a namedtuple including the following
@@ -236,7 +253,7 @@ Memory
     (cumulative)
 
   **sin** and **sout** on Windows are always set to ``0``.
-  See `scripts/meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
+  See `meminfo.py <https://github.com/giampaolo/psutil/blob/master/scripts/meminfo.py>`__
   script providing an example on how to convert bytes in a human readable form.
 
     >>> import psutil
@@ -250,9 +267,12 @@ Disks
 
   Return all mounted disk partitions as a list of namedtuples including device,
   mount point and filesystem type, similarly to "df" command on UNIX. If *all*
-  parameter is ``False`` return physical devices only (e.g. hard disks, cd-rom
-  drives, USB keys) and ignore all others (e.g. memory partitions such as
+  parameter is ``False`` it tries to distinguish and return physical devices
+  only (e.g. hard disks, cd-rom drives, USB keys) and ignore all others
+  (e.g. memory partitions such as
   `/dev/shm <http://www.cyberciti.biz/tips/what-is-devshm-and-its-practical-usage.html>`__).
+  Note that this may not be fully reliable on all systems (e.g. on BSD this
+  parameter is ignored).
   Namedtuple's **fstype** field is a string which varies depending on the
   platform.
   On Linux it can be one of the values found in /proc/filesystems (e.g.
@@ -325,7 +345,7 @@ Disks
   If *perdisk* is ``True`` return the same information for every physical disk
   installed on the system as a dictionary with partition names as the keys and
   the namedtuple described above as the values.
-  See `scripts/iotop.py <https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py>`__
+  See `iotop.py <https://github.com/giampaolo/psutil/blob/master/scripts/iotop.py>`__
   for an example application.
 
     >>> import psutil
@@ -371,8 +391,6 @@ Network
   If *pernic* is ``True`` return the same information for every network
   interface installed on the system as a dictionary with network interface
   names as the keys and the namedtuple described above as the values.
-  See `scripts/nettop.py <https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py>`__
-  for an example application.
 
     >>> import psutil
     >>> psutil.net_io_counters()
@@ -381,6 +399,10 @@ Network
     >>> psutil.net_io_counters(pernic=True)
     {'lo': snetio(bytes_sent=547971, bytes_recv=547971, packets_sent=5075, packets_recv=5075, errin=0, errout=0, dropin=0, dropout=0),
     'wlan0': snetio(bytes_sent=13921765, bytes_recv=62162574, packets_sent=79097, packets_recv=89648, errin=0, errout=0, dropin=0, dropout=0)}
+
+  Also see `nettop.py <https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py>`__
+  and `ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
+  for an example application.
 
   .. warning::
     on some systems such as Linux, on a very busy or long-lived system these
@@ -512,7 +534,8 @@ Network
                snic(family=<AddressFamily.AF_LINK: 17>, address='c4:85:08:45:06:41', netmask=None, broadcast='ff:ff:ff:ff:ff:ff', ptp=None)]}
     >>>
 
-  See also `scripts/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
+  See also `nettop.py <https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py>`__
+  and `ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
   for an example application.
 
   .. note::
@@ -532,6 +555,8 @@ Network
 
   .. versionchanged:: 3.2.0 *ptp* field was added.
 
+  .. versionchanged:: 4.4.0 *netmask* field on Windows is no longer ``None``.
+
 .. function:: net_if_stats()
 
   Return information about each NIC (network interface card) installed on the
@@ -546,14 +571,16 @@ Network
     determined (e.g. 'localhost') it will be set to ``0``.
   - **mtu**: NIC's maximum transmission unit expressed in bytes.
 
-  See also `scripts/ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
-  for an example application.
   Example:
 
     >>> import psutil
     >>> psutil.net_if_stats()
     {'eth0': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_FULL: 2>, speed=100, mtu=1500),
      'lo': snicstats(isup=True, duplex=<NicDuplex.NIC_DUPLEX_UNKNOWN: 0>, speed=0, mtu=65536)}
+
+  Also see `nettop.py <https://github.com/giampaolo/psutil/blob/master/scripts/nettop.py>`__
+  and `ifconfig.py <https://github.com/giampaolo/psutil/blob/master/scripts/ifconfig.py>`__
+  for an example application.
 
   .. versionadded:: 3.0.0
 
@@ -754,8 +781,9 @@ Process class
     :meth:`uids`, :meth:`create_time`, ...) may be fetched by using the same
     routine, but only one information is returned and the others are discarded.
     When using this context manager the internal routine is executed once (in
-    the example below on :meth:`name()`) and the other info are cached and
-    returned in the sub-sequent calls sharing the same internal routine.
+    the example below on :meth:`name()`) and the other info are cached.
+    The subsequent calls sharing the same internal routine will return the
+    cached value.
     The cache is cleared when exiting the context manager block.
     The advice is to use this every time you retrieve more than one information
     about the process. If you're lucky, you'll get a hell of a speedup.
@@ -768,53 +796,55 @@ Process class
     ...     p.cpu_times()  # return cached value
     ...     p.cpu_percent()  # return cached value
     ...     p.create_time()  # return cached value
+    ...     p.ppid()  # return cached value
+    ...     p.status()  # return cached value
     ...
     >>>
 
     Here's a list of methods which can take advantage of the speedup depending
     on what platform you're on.
-    In the table below horizontal emtpy rows indicate what process methods can
-    be efficiently grouped together internally.
+    In the table below horizontal emtpy rows delimitate what process methods
+    can be efficiently grouped together internally.
     The last column (speedup) shows an approximation of the speedup you can get
-    if you collect all this methods together (best case scenario).
+    if you call all the methods together (best case scenario).
 
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    | Linux                        | Windows                      | OSX   | BSD                          | SunOS                    |
-    +==============================+==============================+=======+==============================+==========================+
-    | :meth:`~Process.cpu_percent` | :meth:`cpu_affinity`         |       | :meth:`~Process.cpu_percent` | :meth:`name`             |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    | :meth:`~Process.cpu_times`   | :meth:`~Process.cpu_percent` |       | :meth:`~Process.cpu_times`   | :meth:`cmdline`          |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    | :meth:`create_time`          | :meth:`~Process.cpu_times`   |       | :meth:`create_time`          |                          |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    | :meth:`name`                 | :meth:`io_counters`          |       | :meth:`gids`                 | :meth:`create_time`      |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    | :meth:`ppid`                 | :meth:`ionice`               |       | :meth:`io_counters`          | :meth:`memory_full_info` |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    | :meth:`status`               | :meth:`memory_info`          |       | :meth:`memory_full_info`     | :meth:`memory_info`      |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    | :meth:`terminal`             | :meth:`memory_percent`       |       | :meth:`memory_info`          | :meth:`memory_percent`   |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    |                              | :meth:`nice`                 |       | :meth:`memory_percent`       | :meth:`nice`             |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    | :meth:`gids`                 | :meth:`num_handles`          |       | :meth:`num_ctx_switches`     | :meth:`num_threads`      |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    | :meth:`num_ctx_switches`     |                              |       | :meth:`ppid`                 | :meth:`ppid`             |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    | :meth:`num_threads`          |                              |       | :meth:`status`               | :meth:`status`           |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    | :meth:`uids`                 |                              |       | :meth:`terminal`             | :meth:`terminal`         |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    |                              |                              |       | :meth:`uids`                 |                          |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    |                              |                              |       |                              | :meth:`gids`             |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    |                              |                              |       |                              | :meth:`uids`             |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    |                              |                              |       |                              |                          |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
-    | *speedup: +2.5x*             |                              |       | *speedup: +2x*               |                          |
-    +------------------------------+------------------------------+-------+------------------------------+--------------------------+
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    | Linux                        | Windows     | OSX                          | BSD                          | SunOS                    |
+    +==============================+=============+==============================+==============================+==========================+
+    | :meth:`~Process.cpu_percent` |             | :meth:`~Process.cpu_percent` | :meth:`~Process.cpu_percent` | :meth:`name`             |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    | :meth:`~Process.cpu_times`   |             | :meth:`~Process.cpu_times`   | :meth:`~Process.cpu_times`   | :meth:`cmdline`          |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    | :meth:`create_time`          |             | :meth:`memory_info`          | :meth:`create_time`          | :meth:`create_time`      |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    | :meth:`name`                 |             | :meth:`memory_percent`       | :meth:`gids`                 |                          |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    | :meth:`ppid`                 |             | :meth:`num_ctx_switches`     | :meth:`io_counters`          | :meth:`memory_info`      |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    | :meth:`status`               |             | :meth:`num_threads`          | :meth:`name`                 | :meth:`memory_percent`   |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    | :meth:`terminal`             |             |                              | :meth:`memory_info`          | :meth:`nice`             |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    |                              |             | :meth:`create_time`          | :meth:`memory_percent`       | :meth:`num_threads`      |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    | :meth:`gids`                 |             | :meth:`gids`                 | :meth:`num_ctx_switches`     | :meth:`ppid`             |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    | :meth:`num_ctx_switches`     |             | :meth:`name`                 | :meth:`ppid`                 | :meth:`status`           |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    | :meth:`num_threads`          |             | :meth:`ppid`                 | :meth:`status`               | :meth:`terminal`         |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    | :meth:`uids`                 |             | :meth:`status`               | :meth:`terminal`             |                          |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    | :meth:`username`             |             | :meth:`terminal`             | :meth:`uids`                 | :meth:`gids`             |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    |                              |             | :meth:`uids`                 | :meth:`username`             | :meth:`uids`             |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    |                              |             | :meth:`username`             |                              | :meth:`username`         |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    |                              |             |                              |                              |                          |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
+    | *speedup: +2.5x*             |             | *speedup: +1.9x*             | *speedup: +2x*               |                          |
+    +------------------------------+-------------+------------------------------+------------------------------+--------------------------+
 
     .. versionadded:: 5.0.0
 
@@ -885,7 +915,7 @@ Process class
       3.0.0 *ad_value* is used also when incurring into
       :class:`ZombieProcess` exception, not only :class:`AccessDenied`
 
-     .. versionchanged:: 4.3.0 :meth:`as_dict` is considerably faster thanks
+     .. versionchanged:: 5.0.0 :meth:`as_dict` is considerably faster thanks
         to :meth:`oneshot` context manager.
 
   .. method:: parent()
@@ -996,12 +1026,14 @@ Process class
 
     Get or set process resource limits (see
     `man prlimit <http://linux.die.net/man/2/prlimit>`__). *resource* is one
-    of the :data:`psutil.RLIMIT_* <psutil.RLIMIT_INFINITY>` constants.
+    of the :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>` constants.
     *limits* is a ``(soft, hard)`` tuple.
     This is the same as `resource.getrlimit() <http://docs.python.org/library/resource.html#resource.getrlimit>`__
     and `resource.setrlimit() <http://docs.python.org/library/resource.html#resource.setrlimit>`__
     but can be used for any process PID, not only
     `os.getpid() <http://docs.python.org/library/os.html#os.getpid>`__.
+    For get, return value is a ``(soft, hard)`` tuple. Each value may be either
+    and integer or :data:`psutil.RLIMIT_* <psutil.RLIM_INFINITY>`.
     Example:
 
       >>> import psutil
@@ -1218,7 +1250,11 @@ Process class
 
     - **dirty** *(Linux)*: the number of dirty pages.
 
-    For Windows fields rely on
+    - **pfaults** *(OSX)*: number of page faults.
+
+    - **pageins** *(OSX)*: number of actual pageins.
+
+    For on explanation of Windows fields rely on
     `PROCESS_MEMORY_COUNTERS_EX <http://msdn.microsoft.com/en-us/library/windows/desktop/ms684874(v=vs.85).aspx>`__ structure doc.
     Example on Linux:
 
@@ -1277,7 +1313,7 @@ Process class
       pfullmem(rss=10199040, vms=52133888, shared=3887104, text=2867200, lib=0, data=5967872, dirty=0, uss=6545408, pss=6872064, swap=0)
       >>>
 
-    See also `scripts/procsmem.py <https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py>`__
+    See also `procsmem.py <https://github.com/giampaolo/psutil/blob/master/scripts/procsmem.py>`__
     for an example application.
 
     .. versionadded:: 4.0.0
@@ -1306,7 +1342,7 @@ Process class
     is ``False`` each mapped region is shown as a single entity and the
     namedtuple will also include the mapped region's address space (*addr*)
     and permission set (*perms*).
-    See `scripts/pmap.py <https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py>`__
+    See `pmap.py <https://github.com/giampaolo/psutil/blob/master/scripts/pmap.py>`__
     for an example application.
 
     +---------------+--------------+---------+-----------+--------------+
@@ -1506,9 +1542,8 @@ Process class
     `signal module <http://docs.python.org//library/signal.html>`__
     constants) preemptively checking whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, sig)``.
-    On Windows only **SIGTERM**, **CTRL_C_EVENT** and **CTRL_BREAK_EVENT**
-    signals are supported and **SIGTERM** is treated as an alias for
-    :meth:`kill()`.
+    On Windows only *SIGTERM*, *CTRL_C_EVENT* and *CTRL_BREAK_EVENT* signals
+    are supported and *SIGTERM* is treated as an alias for :meth:`kill()`.
 
     .. versionchanged::
       3.2.0 support for CTRL_C_EVENT and CTRL_BREAK_EVENT signals on Windows
@@ -1516,28 +1551,28 @@ Process class
 
   .. method:: suspend()
 
-    Suspend process execution with **SIGSTOP** signal preemptively checking
+    Suspend process execution with *SIGSTOP* signal preemptively checking
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGSTOP)``.
     On Windows this is done by suspending all process threads execution.
 
   .. method:: resume()
 
-    Resume process execution with **SIGCONT** signal preemptively checking
+    Resume process execution with *SIGCONT* signal preemptively checking
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGCONT)``.
     On Windows this is done by resuming all process threads execution.
 
   .. method:: terminate()
 
-    Terminate the process with **SIGTERM** signal preemptively checking
+    Terminate the process with *SIGTERM* signal preemptively checking
     whether PID has been reused.
     On UNIX this is the same as ``os.kill(pid, signal.SIGTERM)``.
     On Windows this is an alias for :meth:`kill`.
 
   .. method:: kill()
 
-     Kill the current process by using **SIGKILL** signal preemptively
+     Kill the current process by using *SIGKILL* signal preemptively
      checking whether PID has been reused.
      On UNIX this is the same as ``os.kill(pid, signal.SIGKILL)``.
      On Windows this is done by using
@@ -1563,10 +1598,10 @@ Popen class
 
   A more convenient interface to stdlib
   `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__.
-  It starts a sub process and deals with it exactly as when using
+  It starts a sub process and you deal with it exactly as when using
   `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__
-  but in addition it also provides all the methods of
-  :class:`psutil.Process` class in a single interface.
+  but in addition it also provides all the methods of :class:`psutil.Process`
+  class.
   For method names common to both classes such as
   :meth:`send_signal() <psutil.Process.send_signal()>`,
   :meth:`terminate() <psutil.Process.terminate()>` and
@@ -1598,6 +1633,17 @@ Popen class
   >>> p.wait(timeout=2)
   0
   >>>
+
+  :class:`psutil.Popen` objects are supported as context managers via the with
+  statement: on exit, standard file descriptors are closed, and the process
+  is waited for. This is supported on all Python versions.
+
+  >>> import psutil, subprocess
+  >>> with psutil.Popen(["ifconfig"], stdout=subprocess.PIPE) as proc:
+  >>>     log.write(proc.stdout.read())
+
+
+  .. versionchanged:: 4.4.0 added context manager support
 
 Windows services
 ================
@@ -1813,7 +1859,7 @@ Constants
     instead of a plain integer.
 
 .. _const-rlimit:
-.. data:: RLIMIT_INFINITY
+.. data:: RLIM_INFINITY
           RLIMIT_AS
           RLIMIT_CORE
           RLIMIT_CPU
@@ -1828,7 +1874,6 @@ Constants
           RLIMIT_RSS
           RLIMIT_RTPRIO
           RLIMIT_RTTIME
-          RLIMIT_RTPRIO
           RLIMIT_SIGPENDING
           RLIMIT_STACK
 
@@ -1865,3 +1910,55 @@ Development guide
 If you plan on hacking on psutil (e.g. want to add a new feature or fix a bug)
 take a look at the
 `development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_.
+
+
+Timeline
+========
+
+- 2016-10-23: `psutil-4.4.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.4.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#441>`__
+- 2016-10-23: `psutil-4.4.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.4.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#440>`__
+- 2016-09-01: `psutil-4.3.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.3.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#431>`__
+- 2016-06-18: `psutil-4.3.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.3.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#430>`__
+- 2016-05-15: `psutil-4.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#420>`__
+- 2016-03-12: `psutil-4.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#410>`__
+- 2016-02-17: `psutil-4.0.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#400>`__
+- 2016-01-20: `psutil-3.4.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.4.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#342>`__
+- 2016-01-15: `psutil-3.4.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.4.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#341>`__
+- 2015-11-25: `psutil-3.3.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.3.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#330>`__
+- 2015-10-04: `psutil-3.2.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.2.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#322>`__
+- 2015-09-03: `psutil-3.2.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#321>`__
+- 2015-09-02: `psutil-3.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#320>`__
+- 2015-07-15: `psutil-3.1.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.1.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#311>`__
+- 2015-07-15: `psutil-3.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#310>`__
+- 2015-06-18: `psutil-3.0.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.0.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#301>`__
+- 2015-06-13: `psutil-3.0.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#300>`__
+- 2015-02-02: `psutil-2.2.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#221>`__
+- 2015-01-06: `psutil-2.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#220>`__
+- 2014-09-26: `psutil-2.1.3.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#213>`__
+- 2014-09-21: `psutil-2.1.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.1.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#212>`__
+- 2014-04-30: `psutil-2.1.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.1.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#211>`__
+- 2014-04-08: `psutil-2.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#210>`__
+- 2014-03-10: `psutil-2.0.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#200>`__
+- 2013-11-25: `psutil-1.2.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#121>`__
+- 2013-11-20: `psutil-1.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#120>`__
+- 2013-11-07: `psutil-1.1.3.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.1.3&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#113>`__
+- 2013-10-22: `psutil-1.1.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.1.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#112>`__
+- 2013-10-08: `psutil-1.1.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.1.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#111>`__
+- 2013-09-28: `psutil-1.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#110>`__
+- 2013-07-12: `psutil-1.0.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.0.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#101>`__
+- 2013-07-10: `psutil-1.0.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#100>`__
+- 2013-05-03: `psutil-0.7.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.7.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#071>`__
+- 2013-04-12: `psutil-0.7.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.7.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#070>`__
+- 2012-08-16: `psutil-0.6.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.6.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#061>`__
+- 2012-08-13: `psutil-0.6.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.6.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#060>`__
+- 2012-06-29: `psutil-0.5.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.5.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#051>`__
+- 2012-06-27: `psutil-0.5.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.5.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#050>`__
+- 2011-12-14: `psutil-0.4.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.4.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#041>`__
+- 2011-10-29: `psutil-0.4.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.4.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#040>`__
+- 2011-07-08: `psutil-0.3.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.3.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#030>`__
+- 2011-03-20: `psutil-0.2.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#021>`__
+- 2010-11-13: `psutil-0.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#020>`__
+- 2010-03-02: `psutil-0.1.3.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.1.3&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#013>`__
+- 2009-05-06: `psutil-0.1.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.1.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#012>`__
+- 2009-03-06: `psutil-0.1.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.1.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#011>`__
+- 2009-01-27: `psutil-0.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#010>`__

@@ -17,10 +17,19 @@ PLATFORMS
 FEATURES
 ========
 
-- (Linux): from /proc/pid/stat we can also retrieve process and children guest
-  times (time spent running a virtual CPU for a guest OS).
+- #772: extended net_io_counters() metrics.
 
-- #809: (Linux) per-process resource limits.
+- #900: wheels for OSX and Linux.
+
+- #922: extended net_io_stats() info.
+
+- #914: extended platform specific process info.
+
+- #898: wifi stats
+
+- #893: (BSD) process environ
+
+- #809: (BSD) per-process resource limits (rlimit()).
 
 - (UNIX) process root (different from cwd)
 
@@ -54,7 +63,6 @@ FEATURES
 
 - system-wide number of open file descriptors:
   - https://jira.hyperic.com/browse/SIGAR-30
-  - http://www.netadmintools.com/part295.html
 
 - Number of system threads.
   - Windows: http://msdn.microsoft.com/en-us/library/windows/desktop/ms684824(v=vs.85).aspx

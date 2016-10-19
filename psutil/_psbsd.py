@@ -121,6 +121,7 @@ kinfo_proc_map = dict(
     memtext=20,
     memdata=21,
     memstack=22,
+    name=23,
 )
 
 
@@ -192,8 +193,7 @@ def virtual_memory():
 
 def swap_memory():
     """System swap memory as (total, used, free, sin, sout) namedtuple."""
-    pagesize = 1 if OPENBSD else PAGESIZE
-    total, used, free, sin, sout = [x * pagesize for x in cext.swap_mem()]
+    total, used, free, sin, sout = cext.swap_mem()
     percent = usage_percent(used, total, _round=1)
     return _common.sswap(total, used, free, percent, sin, sout)
 
@@ -310,15 +310,14 @@ def cpu_stats():
 
 
 def disk_partitions(all=False):
+    """Return mounted disk partitions as a list of namedtuples.
+    'all' argument is ignored, see:
+    https://github.com/giampaolo/psutil/issues/906
+    """
     retlist = []
     partitions = cext.disk_partitions()
     for partition in partitions:
         device, mountpoint, fstype, opts = partition
-        if device == 'none':
-            device = ''
-        if not all:
-            if not os.path.isabs(device) or not os.path.exists(device):
-                continue
         ntuple = _common.sdiskpart(device, mountpoint, fstype, opts)
         retlist.append(ntuple)
     return retlist
@@ -342,7 +341,9 @@ def net_if_stats():
     names = net_io_counters().keys()
     ret = {}
     for name in names:
-        isup, duplex, speed, mtu = cext_posix.net_if_stats(name)
+        mtu = cext_posix.net_if_mtu(name)
+        isup = cext_posix.net_if_flags(name)
+        duplex, speed = cext_posix.net_if_duplex_speed(name)
         if hasattr(_common, 'NicDuplex'):
             duplex = _common.NicDuplex(duplex)
         ret[name] = _common.snicstats(isup, duplex, speed, mtu)
@@ -440,6 +441,11 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except OSError as err:
+            if self.pid == 0:
+                if 0 in pids():
+                    raise AccessDenied(self.pid, self._name)
+                else:
+                    raise
             if err.errno == errno.ESRCH:
                 if not pid_exists(self.pid):
                     raise NoSuchProcess(self.pid, self._name)
@@ -494,7 +500,8 @@ class Process(object):
 
     @wrap_exceptions
     def name(self):
-        return cext.proc_name(self.pid)
+        name = self.oneshot()[kinfo_proc_map['name']]
+        return name if name is not None else cext.proc_name(self.pid)
 
     @wrap_exceptions
     def exe(self):
@@ -521,7 +528,7 @@ class Process(object):
     @wrap_exceptions
     def cmdline(self):
         if OPENBSD and self.pid == 0:
-            return None  # ...else it crashes
+            return []  # ...else it crashes
         elif NETBSD:
             # XXX - most of the times the underlying sysctl() call on Net
             # and Open BSD returns a truncated string.

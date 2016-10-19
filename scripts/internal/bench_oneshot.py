@@ -18,15 +18,26 @@ import textwrap
 import psutil
 
 
-ITERATIONS = 10000
+ITERATIONS = 1000
 
 # The list of Process methods which gets collected in one shot and
 # as such get advantage of the speedup.
+names = [
+    'cpu_times',
+    'cpu_percent',
+    'memory_info',
+    'memory_percent',
+    'ppid',
+    'parent',
+]
+
+if psutil.POSIX:
+    names.append('uids')
+    names.append('username')
+
 if psutil.LINUX:
-    names = (
-        'cpu_percent',
+    names += [
         'cpu_times',
-        'create_time',
         'gids',
         'name',
         'num_ctx_switches',
@@ -35,7 +46,47 @@ if psutil.LINUX:
         'status',
         'terminal',
         'uids',
-    )
+    ]
+elif psutil.BSD:
+    names = [
+        'cpu_times',
+        'gids',
+        'io_counters',
+        'memory_full_info',
+        'memory_info',
+        'name',
+        'num_ctx_switches',
+        'ppid',
+        'status',
+        'terminal',
+        'uids',
+    ]
+elif psutil.SUNOS:
+    names += [
+        'cmdline',
+        'gids',
+        'memory_full_info',
+        'memory_info',
+        'name',
+        'num_threads',
+        'ppid',
+        'status',
+        'terminal',
+        'uids',
+    ]
+elif psutil.OSX:
+    names += [
+        'cpu_times',
+        'create_time',
+        'gids',
+        'memory_info',
+        'name',
+        'num_ctx_switches',
+        'num_threads',
+        'ppid',
+        'terminal',
+        'uids',
+    ]
 elif psutil.WINDOWS:
     names = (
         'cpu_affinity',
@@ -48,40 +99,8 @@ elif psutil.WINDOWS:
         'nice',
         'num_handles',
     )
-elif psutil.BSD:
-    names = (
-        'cpu_percent',
-        'cpu_times',
-        'create_time',
-        'gids',
-        'io_counters',
-        'memory_full_info',
-        'memory_info',
-        'memory_percent',
-        'num_ctx_switches',
-        'ppid',
-        'status',
-        'terminal',
-        'uids',
-    )
-elif psutil.SUNOS:
-    names = (
-        'cmdline',
-        'create_time',
-        'gids',
-        'memory_full_info',
-        'memory_info',
-        'memory_percent',
-        'name',
-        'num_threads',
-        'ppid',
-        'status',
-        'terminal',
-        'uids',
-    )
-else:
-    raise RuntimeError("platform %r not supported" % sys.platform)
 
+names = sorted(set(names))
 
 setup = textwrap.dedent("""
     from __main__ import names
@@ -126,4 +145,5 @@ def main():
         print("same speed")
 
 
-main()
+if __name__ == '__main__':
+    main()

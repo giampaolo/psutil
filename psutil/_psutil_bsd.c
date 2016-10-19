@@ -129,9 +129,17 @@ psutil_pids(PyObject *self, PyObject *args) {
 
     if (py_retlist == NULL)
         return NULL;
+
+    // TODO: RuntimeError is inappropriate here; we could return the
+    // original error instead.
     if (psutil_get_proc_list(&proclist, &num_processes) != 0) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "failed to retrieve process list.");
+        if (errno != 0) {
+            PyErr_SetFromErrno(PyExc_OSError);
+        }
+        else {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "failed to retrieve process list");
+        }
         goto error;
     }
 
@@ -197,11 +205,32 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long memstack;
     kinfo_proc kp;
     long pagesize = sysconf(_SC_PAGESIZE);
+    char str[1000];
+    PyObject *py_name;
+    PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (psutil_kinfo_proc(pid, &kp) == -1)
         return NULL;
+
+    // Process
+#ifdef __FreeBSD__
+    sprintf(str, "%s", kp.ki_comm);
+#elif defined(__OpenBSD__) || defined(__NetBSD__)
+    sprintf(str, "%s", kp.p_comm);
+#endif
+#if PY_MAJOR_VERSION >= 3
+    py_name = PyUnicode_DecodeFSDefault(str);
+#else
+    py_name = Py_BuildValue("s", str);
+#endif
+    if (! py_name) {
+        // Likely a decoding error. We don't want to fail the whole
+        // operation. The python module may retry with proc_name().
+        PyErr_Clear();
+        py_name = Py_None;
+    }
 
     // Calculate memory.
 #ifdef __FreeBSD__
@@ -229,8 +258,8 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
 #endif
 
     // Return a single big tuple with all process info.
-    return Py_BuildValue(
-        "(lillllllidllllddddlllll)",
+    py_retlist = Py_BuildValue(
+        "(lillllllidllllddddlllllO)",
 #ifdef __FreeBSD__
         //
         (long)kp.ki_ppid,                // (long) ppid
@@ -262,7 +291,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         vms,                              // (long) vms
         memtext,                          // (long) mem text
         memdata,                          // (long) mem data
-        memstack                          // (long) mem stack
+        memstack,                         // (long) mem stack
 #elif defined(__OpenBSD__) || defined(__NetBSD__)
         //
         (long)kp.p_ppid,                 // (long) ppid
@@ -270,7 +299,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         // UIDs
         (long)kp.p_ruid,                 // (long) real uid
         (long)kp.p_uid,                  // (long) effective uid
-        (long)kp.p_svuid                 // (long) saved uid
+        (long)kp.p_svuid,                // (long) saved uid
         // GIDs
         (long)kp.p_rgid,                 // (long) real gid
         (long)kp.p_groups[0],            // (long) effective gid
@@ -296,9 +325,16 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         vms,                              // (long) vms
         memtext,                          // (long) mem text
         memdata,                          // (long) mem data
-        memstack                          // (long) mem stack
+        memstack,                         // (long) mem stack
 #endif
+        py_name                           // (pystr) name
     );
+
+    if (py_retlist != NULL) {
+        // XXX shall we decref() also in case of Py_BuildValue() error?
+        Py_DECREF(py_name);
+    }
+    return py_retlist;
 }
 
 
@@ -429,9 +465,10 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     if (psutil_kinfo_proc(pid, &kipp) == -1)
         goto error;
 
+    errno = 0;
     freep = kinfo_getfile(pid, &cnt);
     if (freep == NULL) {
-        psutil_raise_ad_or_nsp(pid);
+        psutil_raise_for_pid(pid, "kinfo_getfile() failed");
         goto error;
     }
 

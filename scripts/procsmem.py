@@ -79,24 +79,25 @@ def main():
                 p._info = info
                 procs.append(p)
 
-        procs.sort(key=lambda p: p._uss)
-        templ = "%-7s %-7s %-30s %7s %7s %7s %7s"
-        print(templ % ("PID", "User", "Cmdline", "USS", "PSS", "Swap", "RSS"))
-        print("=" * 78)
-        for p in procs:
-            line = templ % (
-                p.pid,
-                p._info["username"][:7],
-                " ".join(p._info["cmdline"])[:30],
-                convert_bytes(p._uss),
-                convert_bytes(p._pss) if p._pss != "" else "",
-                convert_bytes(p._swap) if p._swap != "" else "",
-                convert_bytes(p._rss),
-            )
-            print(line)
-        if ad_pids:
-            print("warning: access denied for %s pids" % (len(ad_pids)),
-                  file=sys.stderr)
+    procs.sort(key=lambda p: p._uss)
+    templ = "%-7s %-7s %-30s %7s %7s %7s %7s"
+    print(templ % ("PID", "User", "Cmdline", "USS", "PSS", "Swap", "RSS"))
+    print("=" * 78)
+    for p in procs[86:]:
+        line = templ % (
+            p.pid,
+            p._info["username"][:7],
+            " ".join(p._info["cmdline"])[:30],
+            convert_bytes(p._uss),
+            convert_bytes(p._pss) if p._pss != "" else "",
+            convert_bytes(p._swap) if p._swap != "" else "",
+            convert_bytes(p._rss),
+        )
+        print(line)
+    if ad_pids:
+        print("warning: access denied for %s pids" % (len(ad_pids)),
+              file=sys.stderr)
+
 
 if __name__ == '__main__':
     sys.exit(main())

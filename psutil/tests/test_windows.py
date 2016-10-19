@@ -18,14 +18,12 @@ import time
 import traceback
 
 try:
-    import wmi  # requires "pip install wmi"
-except ImportError:
-    wmi = None
-try:
-    import win32api  # requires "pip install pypiwin32"
+    import win32api  # requires "pip install pypiwin32" / "make setup-dev-env"
     import win32con
+    import wmi  # requires "pip install wmi" / "make setup-dev-env"
 except ImportError:
-    win32api = win32con = None
+    if os.name == 'nt':
+        raise
 
 import psutil
 from psutil import WINDOWS
@@ -62,7 +60,7 @@ def wrap_exceptions(fun):
     return wrapper
 
 
-@unittest.skipUnless(WINDOWS, "not a Windows system")
+@unittest.skipUnless(WINDOWS, "WINDOWS only")
 class WindowsSpecificTestCase(unittest.TestCase):
 
     @classmethod
@@ -120,13 +118,11 @@ class WindowsSpecificTestCase(unittest.TestCase):
 
     # --- Process class tests
 
-    @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_process_name(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
         self.assertEqual(p.name(), w.Caption)
 
-    @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_process_exe(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
@@ -134,14 +130,12 @@ class WindowsSpecificTestCase(unittest.TestCase):
         # Being Windows paths case-insensitive we ignore that.
         self.assertEqual(p.exe().lower(), w.ExecutablePath.lower())
 
-    @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_process_cmdline(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
         self.assertEqual(' '.join(p.cmdline()),
                          w.CommandLine.replace('"', ''))
 
-    @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_process_username(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
@@ -149,7 +143,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
         username = "%s\\%s" % (domain, username)
         self.assertEqual(p.username(), username)
 
-    @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_process_rss_memory(self):
         time.sleep(0.1)
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
@@ -157,7 +150,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
         rss = p.memory_info().rss
         self.assertEqual(rss, int(w.WorkingSetSize))
 
-    @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_process_vms_memory(self):
         time.sleep(0.1)
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
@@ -171,7 +163,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
         if (vms != wmi_usage) and (vms != wmi_usage * 1024):
             self.fail("wmi=%s, psutil=%s" % (wmi_usage, vms))
 
-    @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_process_create_time(self):
         w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
         p = psutil.Process(self.pid)
@@ -188,7 +179,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
         num_cpus = int(os.environ['NUMBER_OF_PROCESSORS'])
         self.assertEqual(num_cpus, psutil.cpu_count())
 
-    @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_total_phymem(self):
         w = wmi.WMI().Win32_ComputerSystem()[0]
         self.assertEqual(int(w.TotalPhysicalMemory),
@@ -207,7 +197,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
     #
 
     # Note: this test is not very reliable
-    @unittest.skipIf(wmi is None, "wmi module is not installed")
     @unittest.skipIf(APPVEYOR, "test not relieable on appveyor")
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
@@ -217,7 +206,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
         psutil_pids = set(psutil.pids())
         self.assertEqual(wmi_pids, psutil_pids)
 
-    @unittest.skipIf(wmi is None, "wmi module is not installed")
     @retry_before_failing()
     def test_disks(self):
         ps_parts = psutil.disk_partitions(all=True)
@@ -247,7 +235,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
             else:
                 self.fail("can't find partition %s" % repr(ps_part))
 
-    @unittest.skipIf(win32api is None, "pywin32 module is not installed")
     def test_num_handles(self):
         p = psutil.Process(os.getpid())
         before = p.num_handles()
@@ -258,7 +245,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
         win32api.CloseHandle(handle)
         self.assertEqual(p.num_handles(), before)
 
-    @unittest.skipIf(win32api is None, "pywin32 module is not installed")
     def test_num_handles_2(self):
         # Note: this fails from time to time; I'm keen on thinking
         # it doesn't mean something is broken
@@ -316,7 +302,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess,
                           p.send_signal, signal.CTRL_BREAK_EVENT)
 
-    @unittest.skipIf(wmi is None, "wmi module is not installed")
     def test_net_if_stats(self):
         ps_names = set(cext.net_if_stats())
         wmi_adapters = wmi.WMI().Win32_NetworkAdapter()
@@ -328,7 +313,7 @@ class WindowsSpecificTestCase(unittest.TestCase):
                         "no common entries in %s, %s" % (ps_names, wmi_names))
 
 
-@unittest.skipUnless(WINDOWS, "not a Windows system")
+@unittest.skipUnless(WINDOWS, "WINDOWS only")
 class TestDualProcessImplementation(unittest.TestCase):
     """
     Certain APIs on Windows have 2 internal implementations, one
@@ -489,7 +474,7 @@ class TestDualProcessImplementation(unittest.TestCase):
             self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
 
-@unittest.skipUnless(WINDOWS, "not a Windows system")
+@unittest.skipUnless(WINDOWS, "WINDOWS only")
 class RemoteProcessTestCase(unittest.TestCase):
     """Certain functions require calling ReadProcessMemory.  This trivially
     works when called on the current process.  Check that this works on other
@@ -577,7 +562,7 @@ class RemoteProcessTestCase(unittest.TestCase):
         self.assertEquals(e["THINK_OF_A_NUMBER"], str(os.getpid()))
 
 
-@unittest.skipUnless(WINDOWS, "not a Windows system")
+@unittest.skipUnless(WINDOWS, "WINDOWS only")
 class TestServices(unittest.TestCase):
 
     def test_win_service_iter(self):

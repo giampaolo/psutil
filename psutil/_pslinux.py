@@ -289,62 +289,167 @@ except Exception:
 # =====================================================================
 
 
-def virtual_memory():
-    total, free, buffers, shared, _, _, unit_multiplier = cext.linux_sysinfo()
-    total *= unit_multiplier
-    free *= unit_multiplier
-    buffers *= unit_multiplier
-    # Note: this (on my Ubuntu 14.04, kernel 3.13 at least) may be 0.
-    # If so, it will be determined from /proc/meminfo.
-    shared *= unit_multiplier or None
-    if shared == 0:
-        shared = None
+def calculate_avail_vmem(mems):
+    """Fallback for kernels < 3.14 where /proc/meminfo does not provide
+    "MemAvailable:" column (see: https://blog.famzah.net/2014/09/24/).
+    This code reimplements the algorithm outlined here:
+    https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/
+        commit/?id=34e431b0ae398fc54ea69ff85ec700722c9da773
 
-    cached = active = inactive = None
+    XXX: on recent kernels this calculation differs by ~1.5% than
+    "MemAvailable:" as it's calculated slightly differently, see:
+    https://gitlab.com/procps-ng/procps/issues/42
+    https://github.com/famzah/linux-memavailable-procfs/issues/2
+    It is still way more realistic than doing (free + cached) though.
+    """
+    # Fallback for very old distros. According to
+    # https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/
+    #     commit/?id=34e431b0ae398fc54ea69ff85ec700722c9da773
+    # ...long ago "avail" was calculated as (free + cached).
+    # We might fallback in such cases:
+    # "Active(file)" not available: 2.6.28 / Dec 2008
+    # "Inactive(file)" not available: 2.6.28 / Dec 2008
+    # "SReclaimable:" not available: 2.6.19 / Nov 2006
+    # /proc/zoneinfo not available: 2.6.13 / Aug 2005
+    free = mems[b'MemFree:']
+    fallback = free + mems.get(b"Cached:", 0)
+    try:
+        lru_active_file = mems[b'Active(file):']
+        lru_inactive_file = mems[b'Inactive(file):']
+        slab_reclaimable = mems[b'SReclaimable:']
+    except KeyError:
+        return fallback
+    try:
+        f = open_binary('%s/zoneinfo' % get_procfs_path())
+    except IOError:
+        return fallback  # kernel 2.6.13
+
+    watermark_low = 0
+    with f:
+        for line in f:
+            line = line.strip()
+            if line.startswith(b'low'):
+                watermark_low += int(line.split()[1])
+    watermark_low *= PAGESIZE
+    watermark_low = watermark_low
+
+    avail = free - watermark_low
+    pagecache = lru_active_file + lru_inactive_file
+    pagecache -= min(pagecache / 2, watermark_low)
+    avail += pagecache
+    avail += slab_reclaimable - min(slab_reclaimable / 2.0, watermark_low)
+    return int(avail)
+
+
+def virtual_memory():
+    """Report virtual memory stats.
+    This implementation matches "free" and "vmstat -s" cmdline
+    utility values and procps-ng-3.3.12 source was used as a reference
+    (2016-09-18):
+    https://gitlab.com/procps-ng/procps/blob/
+        24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c
+    For reference, procps-ng-3.3.10 is the version available on Ubuntu
+    16.04.
+
+    Note about "available" memory: up until psutil 4.3 it was
+    calculated as "avail = (free + buffers + cached)". Now
+    "MemAvailable:" column (kernel 3.14) from /proc/meminfo is used as
+    it's more accurate.
+    That matches "available" column in newer versions of "free".
+    """
+    missing_fields = []
+    mems = {}
     with open_binary('%s/meminfo' % get_procfs_path()) as f:
         for line in f:
-            if cached is None and line.startswith(b"Cached:"):
-                cached = int(line.split()[1]) * 1024
-            elif active is None and line.startswith(b"Active:"):
-                active = int(line.split()[1]) * 1024
-            elif inactive is None and line.startswith(b"Inactive:"):
-                inactive = int(line.split()[1]) * 1024
-            # From "man free":
-            # The shared memory column represents either the MemShared
-            # value (2.4 kernels) or the Shmem value (2.6+ kernels) taken
-            # from the /proc/meminfo file. The value is zero if none of
-            # the entries is exported by the kernel.
-            elif shared is None and \
-                    line.startswith(b"MemShared:") or \
-                    line.startswith(b"Shmem:"):
-                shared = int(line.split()[1]) * 1024
+            fields = line.split()
+            mems[fields[0]] = int(fields[1]) * 1024
 
-    missing = []
-    if cached is None:
-        missing.append('cached')
+    # /proc doc states that the available fields in /proc/meminfo vary
+    # by architecture and compile options, but these 3 values are also
+    # returned by sysinfo(2); as such we assume they are always there.
+    total = mems[b'MemTotal:']
+    free = mems[b'MemFree:']
+    buffers = mems[b'Buffers:']
+
+    try:
+        cached = mems[b"Cached:"]
+    except KeyError:
         cached = 0
-    if active is None:
-        missing.append('active')
+        missing_fields.append('cached')
+    else:
+        # "free" cmdline utility sums reclaimable to cached.
+        # Older versions of procps used to add slab memory instead.
+        # This got changed in:
+        # https://gitlab.com/procps-ng/procps/commit/
+        #     05d751c4f076a2f0118b914c5e51cfbb4762ad8e
+        cached += mems.get(b"SReclaimable:", 0)  # since kernel 2.6.19
+
+    try:
+        shared = mems[b'Shmem:']  # since kernel 2.6.32
+    except KeyError:
+        try:
+            shared = mems[b'MemShared:']  # kernels 2.4
+        except KeyError:
+            shared = 0
+            missing_fields.append('shared')
+
+    try:
+        active = mems[b"Active:"]
+    except KeyError:
         active = 0
-    if inactive is None:
-        missing.append('inactive')
-        inactive = 0
-    if shared is None:
-        missing.append('shared')
-        shared = 0
-    if missing:
+        missing_fields.append('active')
+
+    try:
+        inactive = mems[b"Inactive:"]
+    except KeyError:
+        try:
+            inactive = \
+                mems[b"Inact_dirty:"] + \
+                mems[b"Inact_clean:"] + \
+                mems[b"Inact_laundry:"]
+        except KeyError:
+            inactive = 0
+            missing_fields.append('inactive')
+
+    used = total - free - cached - buffers
+    if used < 0:
+        # May be symptomatic of running within a LCX container where such
+        # values will be dramatically distorted over those of the host.
+        used = total - free
+
+    # - starting from 4.4.0 we match free's "available" column.
+    #   Before 4.4.0 we calculated it as (free + buffers + cached)
+    #   which matched htop.
+    # - free and htop available memory differs as per:
+    #   http://askubuntu.com/a/369589
+    #   http://unix.stackexchange.com/a/65852/168884
+    # - MemAvailable has been introduced in kernel 3.14
+    try:
+        avail = mems[b'MemAvailable:']
+    except KeyError:
+        avail = calculate_avail_vmem(mems)
+
+    if avail < 0:
+        avail = 0
+        missing_fields.append('available')
+
+    # If avail is greater than total or our calculation overflows,
+    # that's symptomatic of running within a LCX container where such
+    # values will be dramatically distorted over those of the host.
+    # https://gitlab.com/procps-ng/procps/blob/
+    #     24fd2605c51fccc375ab0287cec33aa767f06718/proc/sysinfo.c#L764
+    if avail > total:
+        avail = free
+
+    percent = usage_percent((total - avail), total, _round=1)
+
+    # Warn about missing metrics which are set to 0.
+    if missing_fields:
         msg = "%s memory stats couldn't be determined and %s set to 0" % (
-            ", ".join(missing),
-            "was" if len(missing) == 1 else "were")
+            ", ".join(missing_fields),
+            "was" if len(missing_fields) == 1 else "were")
         warnings.warn(msg, RuntimeWarning)
 
-    # Note: this value matches "htop" perfectly.
-    avail = free + buffers + cached
-    # Note: this value matches "free", but not all the time, see:
-    # https://github.com/giampaolo/psutil/issues/685#issuecomment-202914057
-    used = total - free
-    # Note: this value matches "htop" perfectly.
-    percent = usage_percent((total - avail), total, _round=1)
     return svmem(total, avail, percent, used, free,
                  active, inactive, buffers, cached, shared)
 
@@ -588,7 +693,8 @@ class Connections:
                     raise
         return inodes
 
-    def decode_address(self, addr, family):
+    @staticmethod
+    def decode_address(addr, family):
         """Accept an "ip:port" address as displayed in /proc/net/*
         and convert it into a human readable form, like:
 
@@ -642,7 +748,8 @@ class Connections:
                     raise
         return (ip, port)
 
-    def process_inet(self, file, family, type_, inodes, filter_pid=None):
+    @staticmethod
+    def process_inet(file, family, type_, inodes, filter_pid=None):
         """Parse /proc/net/tcp* and /proc/net/udp* files."""
         if file.endswith('6') and not os.path.exists(file):
             # IPv6 not supported
@@ -675,13 +782,14 @@ class Connections:
                     else:
                         status = _common.CONN_NONE
                     try:
-                        laddr = self.decode_address(laddr, family)
-                        raddr = self.decode_address(raddr, family)
+                        laddr = Connections.decode_address(laddr, family)
+                        raddr = Connections.decode_address(raddr, family)
                     except _Ipv6UnsupportedError:
                         continue
                     yield (fd, family, type_, laddr, raddr, status, pid)
 
-    def process_unix(self, file, family, inodes, filter_pid=None):
+    @staticmethod
+    def process_unix(file, family, inodes, filter_pid=None):
         """Parse /proc/net/unix files."""
         with open_text(file, buffering=BIGGER_FILE_BUFFERING) as f:
             f.readline()  # skip the first line
@@ -768,14 +876,26 @@ def net_io_counters():
         assert colon > 0, repr(line)
         name = line[:colon].strip()
         fields = line[colon + 1:].strip().split()
-        bytes_recv = int(fields[0])
-        packets_recv = int(fields[1])
-        errin = int(fields[2])
-        dropin = int(fields[3])
-        bytes_sent = int(fields[8])
-        packets_sent = int(fields[9])
-        errout = int(fields[10])
-        dropout = int(fields[11])
+
+        # in
+        (bytes_recv,
+         packets_recv,
+         errin,
+         dropin,
+         fifoin,  # unused
+         framein,  # unused
+         compressedin,  # unused
+         multicastin,  # unused
+         # out
+         bytes_sent,
+         packets_sent,
+         errout,
+         dropout,
+         fifoout,  # unused
+         collisionsout,  # unused
+         carrierout,  # unused
+         compressedout) = map(int, fields)
+
         retdict[name] = (bytes_sent, bytes_recv, packets_sent, packets_recv,
                          errin, errout, dropin, dropout)
     return retdict
@@ -789,9 +909,10 @@ def net_if_stats():
     names = net_io_counters().keys()
     ret = {}
     for name in names:
-        isup, duplex, speed, mtu = cext.net_if_stats(name)
-        duplex = duplex_map[duplex]
-        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+        mtu = cext_posix.net_if_mtu(name)
+        isup = cext_posix.net_if_flags(name)
+        duplex, speed = cext.net_if_duplex_speed(name)
+        ret[name] = _common.snicstats(isup, duplex_map[duplex], speed, mtu)
     return ret
 
 
@@ -1335,13 +1456,14 @@ class Process(object):
     def cpu_affinity_set(self, cpus):
         try:
             cext.proc_cpu_affinity_set(self.pid, cpus)
-        except OSError as err:
-            if err.errno == errno.EINVAL:
+        except (OSError, ValueError) as err:
+            if isinstance(err, ValueError) or err.errno == errno.EINVAL:
                 allcpus = tuple(range(len(per_cpu_times())))
                 for cpu in cpus:
                     if cpu not in allcpus:
-                        raise ValueError("invalid CPU #%i (choose between %s)"
-                                         % (cpu, allcpus))
+                        raise ValueError(
+                            "invalid CPU number %r; choose between %s" % (
+                                cpu, allcpus))
             raise
 
     # only starting from kernel 2.6.13

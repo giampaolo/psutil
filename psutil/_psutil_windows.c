@@ -174,7 +174,8 @@ psutil_get_nic_addresses() {
     } while ((dwRetVal == ERROR_BUFFER_OVERFLOW) && (attempts < 3));
 
     if (dwRetVal != NO_ERROR) {
-        PyErr_SetString(PyExc_RuntimeError, "GetAdaptersAddresses() failed.");
+        PyErr_SetString(
+            PyExc_RuntimeError, "GetAdaptersAddresses() syscall failed.");
         return NULL;
     }
 
@@ -1457,6 +1458,88 @@ psutil_proc_username(PyObject *self, PyObject *args) {
 }
 
 
+typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
+                                              TCP_TABLE_CLASS, ULONG);
+
+
+// https://msdn.microsoft.com/library/aa365928.aspx
+static DWORD __GetExtendedTcpTable(_GetExtendedTcpTable call,
+                                   ULONG address_family,
+                                   PVOID * data, DWORD * size)
+{
+    // Due to other processes being active on the machine, it's possible
+    // that the size of the table increases between the moment where we
+    // query the size and the moment where we query the data.  Therefore, it's
+    // important to call this in a loop to retry if that happens.
+    //
+    // Also, since we may loop a theoretically unbounded number of times here,
+    // release the GIL while we're doing this.
+    DWORD error = ERROR_INSUFFICIENT_BUFFER;
+    *size = 0;
+    *data = NULL;
+    Py_BEGIN_ALLOW_THREADS;
+    error = call(NULL, size, FALSE, address_family,
+                 TCP_TABLE_OWNER_PID_ALL, 0);
+    while (error == ERROR_INSUFFICIENT_BUFFER)
+    {
+        *data = malloc(*size);
+        if (*data == NULL) {
+            error = ERROR_NOT_ENOUGH_MEMORY;
+            continue;
+        }
+        error = call(*data, size, FALSE, address_family,
+                     TCP_TABLE_OWNER_PID_ALL, 0);
+        if (error != NO_ERROR) {
+            free(*data);
+            *data = NULL;
+        }
+    }
+    Py_END_ALLOW_THREADS;
+    return error;
+}
+
+
+typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
+                                              UDP_TABLE_CLASS, ULONG);
+
+
+// https://msdn.microsoft.com/library/aa365930.aspx
+static DWORD __GetExtendedUdpTable(_GetExtendedUdpTable call,
+                                   ULONG address_family,
+                                   PVOID * data, DWORD * size)
+{
+    // Due to other processes being active on the machine, it's possible
+    // that the size of the table increases between the moment where we
+    // query the size and the moment where we query the data.  Therefore, it's
+    // important to call this in a loop to retry if that happens.
+    //
+    // Also, since we may loop a theoretically unbounded number of times here,
+    // release the GIL while we're doing this.
+    DWORD error = ERROR_INSUFFICIENT_BUFFER;
+    *size = 0;
+    *data = NULL;
+    Py_BEGIN_ALLOW_THREADS;
+    error = call(NULL, size, FALSE, address_family,
+                 UDP_TABLE_OWNER_PID, 0);
+    while (error == ERROR_INSUFFICIENT_BUFFER)
+    {
+        *data = malloc(*size);
+        if (*data == NULL) {
+            error = ERROR_NOT_ENOUGH_MEMORY;
+            continue;
+        }
+        error = call(*data, size, FALSE, address_family,
+                     UDP_TABLE_OWNER_PID, 0);
+        if (error != NO_ERROR) {
+            free(*data);
+            *data = NULL;
+        }
+    }
+    Py_END_ALLOW_THREADS;
+    return error;
+}
+
+
 /*
  * Return a list of network connections opened by a process
  */
@@ -1468,14 +1551,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
     _RtlIpv4AddressToStringA rtlIpv4AddressToStringA;
     typedef PSTR (NTAPI * _RtlIpv6AddressToStringA)(struct in6_addr *, PSTR);
     _RtlIpv6AddressToStringA rtlIpv6AddressToStringA;
-    typedef DWORD (WINAPI * _GetExtendedTcpTable)(PVOID, PDWORD, BOOL, ULONG,
-                                                  TCP_TABLE_CLASS, ULONG);
     _GetExtendedTcpTable getExtendedTcpTable;
-    typedef DWORD (WINAPI * _GetExtendedUdpTable)(PVOID, PDWORD, BOOL, ULONG,
-                                                  UDP_TABLE_CLASS, ULONG);
     _GetExtendedUdpTable getExtendedUdpTable;
     PVOID table = NULL;
     DWORD tableSize;
+    DWORD error;
     PMIB_TCPTABLE_OWNER_PID tcp4Table;
     PMIB_UDPTABLE_OWNER_PID udp4Table;
     PMIB_TCP6TABLE_OWNER_PID tcp6Table;
@@ -1558,17 +1638,15 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET,
-                            TCP_TABLE_OWNER_PID_ALL, 0);
 
-        table = malloc(tableSize);
-        if (table == NULL) {
+        error = __GetExtendedTcpTable(getExtendedTcpTable,
+                                      AF_INET, &table, &tableSize);
+        if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
             goto error;
         }
 
-        if (getExtendedTcpTable(table, &tableSize, FALSE, AF_INET,
-                                TCP_TABLE_OWNER_PID_ALL, 0) == 0)
+        if (error == NO_ERROR)
         {
             tcp4Table = table;
 
@@ -1638,8 +1716,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_conn_tuple);
             }
         }
+        else {
+            PyErr_SetFromWindowsErr(error);
+            goto error;
+        }
 
         free(table);
+        table = NULL;
+        tableSize = 0;
     }
 
     // TCP IPv6
@@ -1651,17 +1735,15 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        getExtendedTcpTable(NULL, &tableSize, FALSE, AF_INET6,
-                            TCP_TABLE_OWNER_PID_ALL, 0);
 
-        table = malloc(tableSize);
-        if (table == NULL) {
+        error = __GetExtendedTcpTable(getExtendedTcpTable,
+                                      AF_INET6, &table, &tableSize);
+        if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
             goto error;
         }
 
-        if (getExtendedTcpTable(table, &tableSize, FALSE, AF_INET6,
-                                TCP_TABLE_OWNER_PID_ALL, 0) == 0)
+        if (error == NO_ERROR)
         {
             tcp6Table = table;
 
@@ -1731,8 +1813,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_conn_tuple);
             }
         }
+        else {
+            PyErr_SetFromWindowsErr(error);
+            goto error;
+        }
 
         free(table);
+        table = NULL;
+        tableSize = 0;
     }
 
     // UDP IPv4
@@ -1745,17 +1833,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        getExtendedUdpTable(NULL, &tableSize, FALSE, AF_INET,
-                            UDP_TABLE_OWNER_PID, 0);
-
-        table = malloc(tableSize);
-        if (table == NULL) {
+        error = __GetExtendedUdpTable(getExtendedUdpTable,
+                                      AF_INET, &table, &tableSize);
+        if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
             goto error;
         }
 
-        if (getExtendedUdpTable(table, &tableSize, FALSE, AF_INET,
-                                UDP_TABLE_OWNER_PID, 0) == 0)
+        if (error == NO_ERROR)
         {
             udp4Table = table;
 
@@ -1802,8 +1887,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_conn_tuple);
             }
         }
+        else {
+            PyErr_SetFromWindowsErr(error);
+            goto error;
+        }
 
         free(table);
+        table = NULL;
+        tableSize = 0;
     }
 
     // UDP IPv6
@@ -1816,17 +1907,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         py_addr_tuple_local = NULL;
         py_addr_tuple_remote = NULL;
         tableSize = 0;
-        getExtendedUdpTable(NULL, &tableSize, FALSE,
-                            AF_INET6, UDP_TABLE_OWNER_PID, 0);
-
-        table = malloc(tableSize);
-        if (table == NULL) {
+        error = __GetExtendedUdpTable(getExtendedUdpTable,
+                                      AF_INET6, &table, &tableSize);
+        if (error == ERROR_NOT_ENOUGH_MEMORY) {
             PyErr_NoMemory();
             goto error;
         }
 
-        if (getExtendedUdpTable(table, &tableSize, FALSE, AF_INET6,
-                                UDP_TABLE_OWNER_PID, 0) == 0)
+        if (error == NO_ERROR)
         {
             udp6Table = table;
 
@@ -1872,8 +1960,14 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 Py_DECREF(py_conn_tuple);
             }
         }
+        else {
+            PyErr_SetFromWindowsErr(error);
+            goto error;
+        }
 
         free(table);
+        table = NULL;
+        tableSize = 0;
     }
 
     _psutil_conn_decref_objs();
@@ -1980,7 +2074,7 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
 
     if (NtSetInformationProcess == NULL) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "couldn't get NtSetInformationProcess");
+                        "couldn't get NtSetInformationProcess syscall");
         return NULL;
     }
 
@@ -2201,7 +2295,7 @@ psutil_net_io_counters(PyObject *self, PyObject *args) {
 
         if (dwRetVal != NO_ERROR) {
             PyErr_SetString(PyExc_RuntimeError,
-                            "GetIfEntry() or GetIfEntry2() failed.");
+                            "GetIfEntry() or GetIfEntry2() syscalls failed.");
             goto error;
         }
 
@@ -2875,9 +2969,18 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     unsigned int i = 0;
     ULONG family;
     PCTSTR intRet;
+    PCTSTR netmaskIntRet;
     char *ptr;
     char buff[100];
     DWORD bufflen = 100;
+    char netmask_buff[100];
+    DWORD netmask_bufflen = 100;
+    DWORD dwRetVal = 0;
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
+    ULONG converted_netmask;
+    UINT netmask_bits;
+    struct in_addr in_netmask;
+#endif
     PIP_ADAPTER_ADDRESSES pAddresses = NULL;
     PIP_ADAPTER_ADDRESSES pCurrAddresses = NULL;
     PIP_ADAPTER_UNICAST_ADDRESS pUnicast = NULL;
@@ -2887,6 +2990,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     PyObject *py_address = NULL;
     PyObject *py_mac_address = NULL;
     PyObject *py_nic_name = NULL;
+    PyObject *py_netmask = NULL;
 
     if (py_retlist == NULL)
         return NULL;
@@ -2899,6 +3003,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
     while (pCurrAddresses) {
         pUnicast = pCurrAddresses->FirstUnicastAddress;
 
+        netmaskIntRet = NULL;
         py_nic_name = NULL;
         py_nic_name = PyUnicode_FromWideChar(
             pCurrAddresses->FriendlyName,
@@ -2960,6 +3065,15 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                         pUnicast->Address.lpSockaddr;
                     intRet = inet_ntop(AF_INET, &(sa_in->sin_addr), buff,
                                        bufflen);
+#if (_WIN32_WINNT >= 0x0600) // Windows Vista and above
+                    netmask_bits = pUnicast->OnLinkPrefixLength;
+                    dwRetVal = ConvertLengthToIpv4Mask(netmask_bits, &converted_netmask);
+                    if (dwRetVal == NO_ERROR) {
+                        in_netmask.s_addr = converted_netmask;
+                        netmaskIntRet = inet_ntop(AF_INET, &in_netmask, netmask_buff,
+                                                  netmask_bufflen);
+                    }
+#endif
                 }
                 else if (family == AF_INET6) {
                     struct sockaddr_in6 *sa_in6 = (struct sockaddr_in6 *)
@@ -2985,7 +3099,17 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                 if (py_address == NULL)
                     goto error;
 
-                Py_INCREF(Py_None);
+                if (netmaskIntRet != NULL) {
+#if PY_MAJOR_VERSION >= 3
+                    py_netmask = PyUnicode_FromString(netmask_buff);
+#else
+                    py_netmask = PyString_FromString(netmask_buff);
+#endif
+                } else {
+                    Py_INCREF(Py_None);
+                    py_netmask = Py_None;
+                }
+
                 Py_INCREF(Py_None);
                 Py_INCREF(Py_None);
                 py_tuple = Py_BuildValue(
@@ -2993,7 +3117,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     py_nic_name,
                     family,
                     py_address,
-                    Py_None,  // netmask (not supported)
+                    py_netmask,
                     Py_None,  // broadcast (not supported)
                     Py_None  // ptp (not supported on Windows)
                 );
@@ -3004,6 +3128,7 @@ psutil_net_if_addrs(PyObject *self, PyObject *args) {
                     goto error;
                 Py_DECREF(py_tuple);
                 Py_DECREF(py_address);
+                Py_DECREF(py_netmask);
 
                 pUnicast = pUnicast->Next;
             }
@@ -3022,6 +3147,7 @@ error:
     Py_XDECREF(py_tuple);
     Py_XDECREF(py_address);
     Py_XDECREF(py_nic_name);
+    Py_XDECREF(py_netmask);
     return NULL;
 }
 
@@ -3072,7 +3198,7 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     // Make a second call to GetIfTable to get the actual
     // data we want.
     if ((dwRetVal = GetIfTable(pIfTable, &dwSize, FALSE)) != NO_ERROR) {
-        PyErr_SetString(PyExc_RuntimeError, "GetIfTable() failed");
+        PyErr_SetString(PyExc_RuntimeError, "GetIfTable() syscall failed");
         goto error;
     }
 

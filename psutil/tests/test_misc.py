@@ -4,6 +4,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""
+Miscellaneous tests.
+"""
+
 import ast
 import errno
 import imp
@@ -25,20 +29,24 @@ from psutil._common import memoize
 from psutil._common import memoize_when_activated
 from psutil._common import supports_ipv6
 from psutil.tests import APPVEYOR
-from psutil.tests import SCRIPTS_DIR
+from psutil.tests import chdir
+from psutil.tests import get_test_subprocess
 from psutil.tests import importlib
 from psutil.tests import mock
+from psutil.tests import reap_children
+from psutil.tests import retry
 from psutil.tests import ROOT_DIR
 from psutil.tests import run_test_module_by_name
+from psutil.tests import safe_rmpath
+from psutil.tests import SCRIPTS_DIR
 from psutil.tests import sh
+from psutil.tests import TESTFN
 from psutil.tests import TOX
 from psutil.tests import TRAVIS
 from psutil.tests import unittest
+from psutil.tests import wait_for_file
+from psutil.tests import wait_for_pid
 
-
-# ===================================================================
-# --- Misc tests
-# ===================================================================
 
 class TestMisc(unittest.TestCase):
     """Misc / generic tests."""
@@ -342,31 +350,26 @@ class TestMisc(unittest.TestCase):
                 psutil.Process()
             assert meth.called
 
-    def test_psutil_is_reloadable(self):
-        importlib.reload(psutil)
-
     def test_sanity_version_check(self):
         # see: https://github.com/giampaolo/psutil/issues/564
-        try:
-            with mock.patch(
-                    "psutil._psplatform.cext.version", return_value="0.0.0"):
-                with self.assertRaises(ImportError) as cm:
-                    importlib.reload(psutil)
-                self.assertIn("version conflict", str(cm.exception).lower())
-        finally:
-            importlib.reload(psutil)
+        with mock.patch(
+                "psutil._psplatform.cext.version", return_value="0.0.0"):
+            with self.assertRaises(ImportError) as cm:
+                importlib.reload(psutil)
+            self.assertIn("version conflict", str(cm.exception).lower())
 
 
 # ===================================================================
 # --- Example script tests
 # ===================================================================
 
-@unittest.skipIf(TOX, "can't test on tox")
+
+@unittest.skipIf(TOX, "can't test on TOX")
 class TestScripts(unittest.TestCase):
     """Tests for scripts in the "scripts" directory."""
 
     def assert_stdout(self, exe, args=None):
-        exe = os.path.join(SCRIPTS_DIR, exe)
+        exe = '"%s"' % os.path.join(SCRIPTS_DIR, exe)
         if args:
             exe = exe + ' ' + args
         try:
@@ -395,7 +398,7 @@ class TestScripts(unittest.TestCase):
                     self.fail('no test defined for %r script'
                               % os.path.join(SCRIPTS_DIR, name))
 
-    @unittest.skipUnless(POSIX, "UNIX only")
+    @unittest.skipUnless(POSIX, "POSIX only")
     def test_executable(self):
         for name in os.listdir(SCRIPTS_DIR):
             if name.endswith('.py'):
@@ -413,9 +416,10 @@ class TestScripts(unittest.TestCase):
         self.assert_stdout('meminfo.py')
 
     def test_procinfo(self):
-        self.assert_stdout('procinfo.py')
+        self.assert_stdout('procinfo.py', args=str(os.getpid()))
 
-    @unittest.skipIf(APPVEYOR, "can't find users on Appveyor")
+    # can't find users on APPVEYOR
+    @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
     def test_who(self):
         self.assert_stdout('who.py')
 
@@ -428,45 +432,187 @@ class TestScripts(unittest.TestCase):
     def test_netstat(self):
         self.assert_stdout('netstat.py')
 
-    @unittest.skipIf(TRAVIS, "permission denied on travis")
+    # permission denied on travis
+    @unittest.skipIf(TRAVIS, "unreliable on TRAVIS")
     def test_ifconfig(self):
         self.assert_stdout('ifconfig.py')
 
-    @unittest.skipIf(OPENBSD or NETBSD, "memory maps not supported")
+    @unittest.skipIf(OPENBSD or NETBSD, "platform not supported")
     def test_pmap(self):
         self.assert_stdout('pmap.py', args=str(os.getpid()))
 
-    @unittest.skipUnless(OSX or WINDOWS or LINUX, "uss not available")
+    @unittest.skipUnless(OSX or WINDOWS or LINUX, "platform not supported")
     def test_procsmem(self):
         self.assert_stdout('procsmem.py')
 
-    @unittest.skipIf(ast is None,
-                     'ast module not available on this python version')
     def test_killall(self):
         self.assert_syntax('killall.py')
 
-    @unittest.skipIf(ast is None,
-                     'ast module not available on this python version')
     def test_nettop(self):
         self.assert_syntax('nettop.py')
 
-    @unittest.skipIf(ast is None,
-                     'ast module not available on this python version')
     def test_top(self):
         self.assert_syntax('top.py')
 
-    @unittest.skipIf(ast is None,
-                     'ast module not available on this python version')
     def test_iotop(self):
         self.assert_syntax('iotop.py')
 
     def test_pidof(self):
-        output = self.assert_stdout('pidof.py %s' % psutil.Process().name())
+        output = self.assert_stdout('pidof.py', args=psutil.Process().name())
         self.assertIn(str(os.getpid()), output)
 
-    @unittest.skipUnless(WINDOWS, "Windows only")
+    @unittest.skipUnless(WINDOWS, "WINDOWS only")
     def test_winservices(self):
         self.assert_stdout('winservices.py')
+
+
+# ===================================================================
+# --- Unit tests for test utilities.
+# ===================================================================
+
+
+class TestRetryDecorator(unittest.TestCase):
+
+    @mock.patch('time.sleep')
+    def test_retry_success(self, sleep):
+        # Fail 3 times out of 5; make sure the decorated fun returns.
+
+        @retry(retries=5, interval=1, logfun=None)
+        def foo():
+            while queue:
+                queue.pop()
+                1 / 0
+            return 1
+
+        queue = list(range(3))
+        self.assertEqual(foo(), 1)
+        self.assertEqual(sleep.call_count, 3)
+
+    @mock.patch('time.sleep')
+    def test_retry_failure(self, sleep):
+        # Fail 6 times out of 5; th function is supposed to raise exc.
+
+        @retry(retries=5, interval=1, logfun=None)
+        def foo():
+            while queue:
+                queue.pop()
+                1 / 0
+            return 1
+
+        queue = list(range(6))
+        self.assertRaises(ZeroDivisionError, foo)
+        self.assertEqual(sleep.call_count, 5)
+
+    @mock.patch('time.sleep')
+    def test_exception_arg(self, sleep):
+        @retry(exception=ValueError, interval=1)
+        def foo():
+            raise TypeError
+
+        self.assertRaises(TypeError, foo)
+        self.assertEqual(sleep.call_count, 0)
+
+    @mock.patch('time.sleep')
+    def test_no_interval_arg(self, sleep):
+        # if interval is not specified sleep is not supposed to be called
+
+        @retry(retries=5, interval=None, logfun=None)
+        def foo():
+            1 / 0
+
+        self.assertRaises(ZeroDivisionError, foo)
+        self.assertEqual(sleep.call_count, 0)
+
+    @mock.patch('time.sleep')
+    def test_retries_arg(self, sleep):
+
+        @retry(retries=5, interval=1, logfun=None)
+        def foo():
+            1 / 0
+
+        self.assertRaises(ZeroDivisionError, foo)
+        self.assertEqual(sleep.call_count, 5)
+
+    @mock.patch('time.sleep')
+    def test_retries_and_timeout_args(self, sleep):
+        self.assertRaises(ValueError, retry, retries=5, timeout=1)
+
+
+class TestSyncTestUtils(unittest.TestCase):
+
+    def tearDown(self):
+        safe_rmpath(TESTFN)
+
+    def test_wait_for_pid(self):
+        wait_for_pid(os.getpid())
+        nopid = max(psutil.pids()) + 99999
+        with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
+            self.assertRaises(psutil.NoSuchProcess, wait_for_pid, nopid)
+
+    def test_wait_for_file(self):
+        with open(TESTFN, 'w') as f:
+            f.write('foo')
+        wait_for_file(TESTFN)
+        assert not os.path.exists(TESTFN)
+
+    def test_wait_for_file_empty(self):
+        with open(TESTFN, 'w'):
+            pass
+        wait_for_file(TESTFN, empty=True)
+        assert not os.path.exists(TESTFN)
+
+    def test_wait_for_file_no_file(self):
+        with mock.patch('psutil.tests.retry.__iter__', return_value=iter([0])):
+            self.assertRaises(IOError, wait_for_file, TESTFN)
+
+    def test_wait_for_file_no_delete(self):
+        with open(TESTFN, 'w') as f:
+            f.write('foo')
+        wait_for_file(TESTFN, delete_file=False)
+        assert os.path.exists(TESTFN)
+
+
+class TestFSTestUtils(unittest.TestCase):
+
+    def setUp(self):
+        safe_rmpath(TESTFN)
+
+    tearDown = setUp
+
+    def test_safe_rmpath(self):
+        # test file is removed
+        open(TESTFN, 'w').close()
+        safe_rmpath(TESTFN)
+        assert not os.path.exists(TESTFN)
+        # test no exception if path does not exist
+        safe_rmpath(TESTFN)
+        # test dir is removed
+        os.mkdir(TESTFN)
+        safe_rmpath(TESTFN)
+        assert not os.path.exists(TESTFN)
+        # test other exceptions are raised
+        with mock.patch('psutil.tests.os.stat',
+                        side_effect=OSError(errno.EINVAL, "")) as m:
+            with self.assertRaises(OSError):
+                safe_rmpath(TESTFN)
+            assert m.called
+
+    def test_chdir(self):
+        base = os.getcwd()
+        os.mkdir(TESTFN)
+        with chdir(TESTFN):
+            self.assertEqual(os.getcwd(), os.path.join(base, TESTFN))
+        self.assertEqual(os.getcwd(), base)
+
+
+class TestTestUtils(unittest.TestCase):
+
+    def test_reap_children(self):
+        subp = get_test_subprocess()
+        p = psutil.Process(subp.pid)
+        assert p.is_running()
+        reap_children()
+        assert not p.is_running()
 
 
 if __name__ == '__main__':

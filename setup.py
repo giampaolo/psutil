@@ -23,7 +23,24 @@ except ImportError:
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(HERE, "psutil"))
-import _common  # NOQA
+from _common import BSD  # NOQA
+from _common import FREEBSD  # NOQA
+from _common import LINUX  # NOQA
+from _common import NETBSD  # NOQA
+from _common import OPENBSD  # NOQA
+from _common import OSX  # NOQA
+from _common import POSIX  # NOQA
+from _common import SUNOS  # NOQA
+from _common import WINDOWS  # NOQA
+
+
+macros = []
+if POSIX:
+    macros.append(("PSUTIL_POSIX", 1))
+if WINDOWS:
+    macros.append(("PSUTIL_WINDOWS", 1))
+if BSD:
+    macros.append(("PSUTIL_BSD", 1))
 
 
 def get_version():
@@ -64,24 +81,35 @@ def silenced_output(stream_name):
 
 
 VERSION = get_version()
-VERSION_MACRO = ('PSUTIL_VERSION', int(VERSION.replace('.', '')))
+macros.append(('PSUTIL_VERSION', int(VERSION.replace('.', ''))))
 
 
 # POSIX
-if _common.POSIX:
+if POSIX:
     posix_extension = Extension(
         'psutil._psutil_posix',
         sources=['psutil/_psutil_posix.c'])
-    if sys.platform.startswith("sunos") or sys.platform.startswith("solaris"):
+    if SUNOS:
         posix_extension.libraries.append('socket')
         if platform.release() == '5.10':
             posix_extension.sources.append('psutil/arch/solaris/v10/ifaddrs.c')
             posix_extension.define_macros.append(('PSUTIL_SUNOS10', 1))
+
 # Windows
-if _common.WINDOWS:
+if WINDOWS:
     def get_winver():
         maj, min = sys.getwindowsversion()[0:2]
         return '0x0%s' % ((maj * 100) + min)
+
+    macros.extend([
+        # be nice to mingw, see:
+        # http://www.mingw.org/wiki/Use_more_recent_defined_functions
+        ('_WIN32_WINNT', get_winver()),
+        ('_AVAIL_WINVER_', get_winver()),
+        ('_CRT_SECURE_NO_WARNINGS', None),
+        # see: https://github.com/giampaolo/psutil/issues/348
+        ('PSAPI_VERSION', 1),
+    ])
 
     ext = Extension(
         'psutil._psutil_windows',
@@ -94,16 +122,7 @@ if _common.WINDOWS:
             'psutil/arch/windows/inet_ntop.c',
             'psutil/arch/windows/services.c',
         ],
-        define_macros=[
-            VERSION_MACRO,
-            # be nice to mingw, see:
-            # http://www.mingw.org/wiki/Use_more_recent_defined_functions
-            ('_WIN32_WINNT', get_winver()),
-            ('_AVAIL_WINVER_', get_winver()),
-            ('_CRT_SECURE_NO_WARNINGS', None),
-            # see: https://github.com/giampaolo/psutil/issues/348
-            ('PSAPI_VERSION', 1),
-        ],
+        define_macros=macros,
         libraries=[
             "psapi", "kernel32", "advapi32", "shell32", "netapi32",
             "iphlpapi", "wtsapi32", "ws2_32",
@@ -112,8 +131,10 @@ if _common.WINDOWS:
         # extra_link_args=["/DEBUG"]
     )
     extensions = [ext]
+
 # OS X
-elif _common.OSX:
+elif OSX:
+    macros.append(("PSUTIL_OSX", 1))
     ext = Extension(
         'psutil._psutil_osx',
         sources=[
@@ -121,13 +142,15 @@ elif _common.OSX:
             'psutil/_psutil_common.c',
             'psutil/arch/osx/process_info.c',
         ],
-        define_macros=[VERSION_MACRO],
+        define_macros=macros,
         extra_link_args=[
             '-framework', 'CoreFoundation', '-framework', 'IOKit'
         ])
     extensions = [ext, posix_extension]
+
 # FreeBSD
-elif _common.FREEBSD:
+elif FREEBSD:
+    macros.append(("PSUTIL_FREEBSD", 1))
     ext = Extension(
         'psutil._psutil_bsd',
         sources=[
@@ -136,11 +159,13 @@ elif _common.FREEBSD:
             'psutil/arch/bsd/freebsd.c',
             'psutil/arch/bsd/freebsd_socks.c',
         ],
-        define_macros=[VERSION_MACRO],
+        define_macros=macros,
         libraries=["devstat"])
     extensions = [ext, posix_extension]
+
 # OpenBSD
-elif _common.OPENBSD:
+elif OPENBSD:
+    macros.append(("PSUTIL_OPENBSD", 1))
     ext = Extension(
         'psutil._psutil_bsd',
         sources=[
@@ -148,11 +173,13 @@ elif _common.OPENBSD:
             'psutil/_psutil_common.c',
             'psutil/arch/bsd/openbsd.c',
         ],
-        define_macros=[VERSION_MACRO],
+        define_macros=macros,
         libraries=["kvm"])
     extensions = [ext, posix_extension]
+
 # NetBSD
-elif _common.NETBSD:
+elif NETBSD:
+    macros.append(("PSUTIL_NETBSD", 1))
     ext = Extension(
         'psutil._psutil_bsd',
         sources=[
@@ -161,11 +188,12 @@ elif _common.NETBSD:
             'psutil/arch/bsd/netbsd.c',
             'psutil/arch/bsd/netbsd_socks.c',
         ],
-        define_macros=[VERSION_MACRO],
+        define_macros=macros,
         libraries=["kvm"])
     extensions = [ext, posix_extension]
+
 # Linux
-elif _common.LINUX:
+elif LINUX:
     def get_ethtool_macro():
         # see: https://github.com/giampaolo/psutil/issues/659
         from distutils.unixccompiler import UnixCCompiler
@@ -192,8 +220,8 @@ elif _common.LINUX:
         else:
             return None
 
+    macros.append(("PSUTIL_LINUX", 1))
     ETHTOOL_MACRO = get_ethtool_macro()
-    macros = [VERSION_MACRO]
     if ETHTOOL_MACRO is not None:
         macros.append(ETHTOOL_MACRO)
     ext = Extension(
@@ -201,14 +229,17 @@ elif _common.LINUX:
         sources=['psutil/_psutil_linux.c'],
         define_macros=macros)
     extensions = [ext, posix_extension]
+
 # Solaris
-elif _common.SUNOS:
+elif SUNOS:
+    macros.append(("PSUTIL_SUNOS", 1))
     ext = Extension(
         'psutil._psutil_sunos',
         sources=['psutil/_psutil_sunos.c'],
-        define_macros=[VERSION_MACRO],
+        define_macros=macros,
         libraries=['kstat', 'nsl', 'socket'])
     extensions = [ext, posix_extension]
+
 else:
     sys.exit('platform %s is not supported' % sys.platform)
 
@@ -226,7 +257,7 @@ def main():
             'monitoring', 'ulimit', 'prlimit', 'smem',
         ],
         author='Giampaolo Rodola',
-        author_email='g.rodola <at> gmail <dot> com',
+        author_email='g.rodola@gmail.com',
         url='https://github.com/giampaolo/psutil',
         platforms='Platform Independent',
         license='BSD',
@@ -280,6 +311,7 @@ def main():
     if extensions is not None:
         setup_args["ext_modules"] = extensions
     setup(**setup_args)
+
 
 if __name__ == '__main__':
     main()

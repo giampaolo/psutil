@@ -71,7 +71,8 @@ psutil_file_to_struct(char *path, void *fstruct, size_t size) {
     }
     if (nbytes != size) {
         close(fd);
-        PyErr_SetString(PyExc_RuntimeError, "structure size mismatch");
+        PyErr_SetString(
+            PyExc_RuntimeError, "read() file structure size mismatch");
         return 0;
     }
     close(fd);
