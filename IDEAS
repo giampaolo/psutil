@@ -17,6 +17,8 @@ PLATFORMS
 FEATURES
 ========
 
+- 900: wheels for OSX and Linux.
+
 - #922: extended net_io_stats() info.
 
 - #914: extended platform specific process info.
