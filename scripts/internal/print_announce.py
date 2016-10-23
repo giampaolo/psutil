@@ -4,8 +4,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import os
+"""
+Prints release announce based on HISTORY.rst file content.
+"""
 
+import os
+import re
 
 from psutil import __version__ as PRJ_VERSION
 
@@ -78,6 +82,11 @@ def get_changes():
     for i, line in enumerate(lines):
         line = lines.pop(0)
         line = line.rstrip()
+        if re.match("^- \d+_: ", line):
+            num, _, rest = line.partition(': ')
+            num = ''.join([x for x in num if x.isdigit()])
+            line = "- #%s: %s" % (num, rest)
+
         if line.startswith('===='):
             break
         block.append(line)
