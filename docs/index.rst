@@ -36,6 +36,19 @@ versions from **2.6 to 3.5** (users of Python 2.4 and 2.5 may use
 
 The psutil documentation you're reading is distributed as a single HTML page.
 
+Install
+-------
+
+On Windows, or on UNIX if you have a C compiler installed, the easiest way to
+install psutil is via ``pip``::
+
+    pip install psutil
+
+Alternatively, see more detailed
+`install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
+instructions.
+
+
 System related functions
 ========================
 
