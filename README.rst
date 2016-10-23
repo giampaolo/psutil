@@ -369,6 +369,7 @@ http://groups.google.com/group/psutil/
 Timeline
 ========
 
+- 2016-10-23: `psutil-4.4.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.4.0&:action=files>`_
 - 2016-09-01: `psutil-4.3.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.3.1&:action=files>`_
 - 2016-06-18: `psutil-4.3.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.3.0&:action=files>`_
 - 2016-05-15: `psutil-4.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.2.0&:action=files>`_
