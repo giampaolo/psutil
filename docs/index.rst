@@ -1824,3 +1824,56 @@ Development guide
 If you plan on hacking on psutil (e.g. want to add a new feature or fix a bug)
 take a look at the
 `development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_.
+
+
+Timeline
+========
+
+Also see `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst>`__.
+
+- 2016-10-23: `psutil-4.4.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.4.0&:action=files>`__
+- 2016-09-01: `psutil-4.3.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.3.1&:action=files>`__
+- 2016-06-18: `psutil-4.3.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.3.0&:action=files>`__
+- 2016-05-15: `psutil-4.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.2.0&:action=files>`__
+- 2016-03-12: `psutil-4.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.1.0&:action=files>`__
+- 2016-02-17: `psutil-4.0.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.0.0&:action=files>`__
+- 2016-01-20: `psutil-3.4.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.4.2&:action=files>`__
+- 2016-01-15: `psutil-3.4.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.4.1&:action=files>`__
+- 2015-11-25: `psutil-3.3.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.3.0&:action=files>`__
+- 2015-10-04: `psutil-3.2.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.2.2&:action=files>`__
+- 2015-09-03: `psutil-3.2.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.2.1&:action=files>`__
+- 2015-09-02: `psutil-3.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.2.0&:action=files>`__
+- 2015-07-15: `psutil-3.1.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.1.1&:action=files>`__
+- 2015-07-15: `psutil-3.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.1.0&:action=files>`__
+- 2015-06-18: `psutil-3.0.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.0.1&:action=files>`__
+- 2015-06-13: `psutil-3.0.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.0.0&:action=files>`__
+- 2015-02-02: `psutil-2.2.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.2.1&:action=files>`__
+- 2015-01-06: `psutil-2.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.2.0&:action=files>`__
+- 2014-09-26: `psutil-2.1.3.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__
+- 2014-09-21: `psutil-2.1.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.1.2&:action=files>`__
+- 2014-04-30: `psutil-2.1.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.1.1&:action=files>`__
+- 2014-04-08: `psutil-2.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.1.0&:action=files>`__
+- 2014-03-10: `psutil-2.0.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.0.0&:action=files>`__
+- 2013-11-25: `psutil-1.2.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.2.1&:action=files>`__
+- 2013-11-20: `psutil-1.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.2.0&:action=files>`__
+- 2013-11-07: `psutil-1.1.3.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.1.3&:action=files>`__
+- 2013-10-22: `psutil-1.1.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.1.2&:action=files>`__
+- 2013-10-08: `psutil-1.1.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.1.1&:action=files>`__
+- 2013-09-28: `psutil-1.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.1.0&:action=files>`__
+- 2013-07-12: `psutil-1.0.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.0.1&:action=files>`__
+- 2013-07-10: `psutil-1.0.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.0.0&:action=files>`__
+- 2013-05-03: `psutil-0.7.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.7.1&:action=files>`__
+- 2013-04-12: `psutil-0.7.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.7.0&:action=files>`__
+- 2012-08-16: `psutil-0.6.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.6.1&:action=files>`__
+- 2012-08-13: `psutil-0.6.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.6.0&:action=files>`__
+- 2012-06-29: `psutil-0.5.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.5.1&:action=files>`__
+- 2012-06-27: `psutil-0.5.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.5.0&:action=files>`__
+- 2011-12-14: `psutil-0.4.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.4.1&:action=files>`__
+- 2011-10-29: `psutil-0.4.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.4.0&:action=files>`__
+- 2011-07-08: `psutil-0.3.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.3.0&:action=files>`__
+- 2011-03-20: `psutil-0.2.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.2.1&:action=files>`__
+- 2010-11-13: `psutil-0.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.2.0&:action=files>`__
+- 2010-03-02: `psutil-0.1.3.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.1.3&:action=files>`__
+- 2009-05-06: `psutil-0.1.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.1.2&:action=files>`__
+- 2009-03-06: `psutil-0.1.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.1.1&:action=files>`__
+- 2009-01-27: `psutil-0.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.1.0&:action=files>`__

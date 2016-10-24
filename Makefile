@@ -208,11 +208,11 @@ pre-release:
 	${MAKE} install  # to import psutil from download_exes.py
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
-		readme = open('README.rst').read(); \
+		doc = open('docs/index.rst').read(); \
 		history = open('HISTORY.rst').read(); \
-		assert ver in readme, '%r not in README.rst' % ver; \
+		assert ver in doc, '%r not in docs/index.rst' % ver; \
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
-		assert 'XXXX' not in history, 'XXXX in HISTORY.rst'; \
+		assert 'XXXX' not in history; \
 		"
 	${MAKE} setup-dev-env  # mainly to update sphinx and install twine
 	${MAKE} win-download-exes
