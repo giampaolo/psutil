@@ -12,6 +12,7 @@
 
 import datetime
 import os
+import re
 import subprocess
 import sys
 import time
@@ -133,6 +134,17 @@ class BSDSpecificTestCase(unittest.TestCase):
     def test_virtual_memory_total(self):
         num = sysctl('hw.physmem')
         self.assertEqual(num, psutil.virtual_memory().total)
+
+    def test_net_if_stats(self):
+        for name, stats in psutil.net_if_stats().items():
+            try:
+                out = sh("ifconfig %s" % name)
+            except RuntimeError:
+                pass
+            else:
+                self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
+                self.assertEqual(stats.mtu,
+                                 int(re.findall('mtu (\d+)', out)[0]))
 
 
 # =====================================================================

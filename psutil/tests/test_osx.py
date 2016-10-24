@@ -206,6 +206,17 @@ class TestSystemAPIs(unittest.TestCase):
     #     self.assertEqual(psutil_smem.used, human2bytes(used))
     #     self.assertEqual(psutil_smem.free, human2bytes(free))
 
+    def test_net_if_stats(self):
+        for name, stats in psutil.net_if_stats().items():
+            try:
+                out = sh("ifconfig %s" % name)
+            except RuntimeError:
+                pass
+            else:
+                self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
+                self.assertEqual(stats.mtu,
+                                 int(re.findall('mtu (\d+)', out)[0]))
+
 
 if __name__ == '__main__':
     run_test_module_by_name(__file__)
