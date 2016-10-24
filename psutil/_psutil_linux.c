@@ -486,7 +486,6 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
     int ret;
     int duplex;
     int speed;
-    int mtu;
     struct ifreq ifr;
     struct ethtool_cmd ethcmd;
     PyObject *py_is_up = NULL;
@@ -509,12 +508,6 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
     else
         py_is_up = Py_False;
     Py_INCREF(py_is_up);
-
-    // MTU
-    ret = ioctl(sock, SIOCGIFMTU, &ifr);
-    if (ret == -1)
-        goto error;
-    mtu = ifr.ifr_mtu;
 
     // duplex and speed
     memset(&ethcmd, 0, sizeof ethcmd);
@@ -540,7 +533,7 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
         }
     }
 
-    py_retlist = Py_BuildValue("[Oiii]", py_is_up, duplex, speed, mtu);
+    py_retlist = Py_BuildValue("[Oii]", py_is_up, duplex, speed);
     if (!py_retlist)
         goto error;
     close(sock);
@@ -583,7 +576,7 @@ PsutilMethods[] = {
     {"users", psutil_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
-     "Return NIC stats (isup, duplex, speed, mtu)"},
+     "Return NIC stats (isup, duplex, speed)"},
 
     // --- linux specific
 
