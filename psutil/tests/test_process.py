@@ -1435,14 +1435,31 @@ class TestProcess(unittest.TestCase):
             self.assertTrue(psutil.pid_exists(0))
 
     def test_Popen(self):
-        with psutil.Popen([PYTHON, "-V"], stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE) as proc:
+        # XXX this test causes a ResourceWarning on Python 3 because
+        # psutil.__subproc instance doesn't get propertly freed.
+        # Not sure what to do though.
+        cmd = [PYTHON, "-c", "import time; time.sleep(60);"]
+        proc = psutil.Popen(cmd, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+        try:
             proc.name()
             proc.cpu_times()
             proc.stdin
             self.assertTrue(dir(proc))
             self.assertRaises(AttributeError, getattr, proc, 'foo')
-        proc.wait()
+        finally:
+            proc.kill()
+            proc.wait()
+
+    def test_Popen_ctx_manager(self):
+        with psutil.Popen([PYTHON, "-V"],
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE,
+                          stdin=subprocess.PIPE) as proc:
+            pass
+        assert proc.stdout.closed
+        assert proc.stderr.closed
+        assert proc.stdin.closed
 
     @unittest.skipUnless(hasattr(psutil.Process, "environ"),
                          "platform not supported")
