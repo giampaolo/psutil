@@ -17,7 +17,9 @@ PLATFORMS
 FEATURES
 ========
 
-- 900: wheels for OSX and Linux.
+- #772: extended net_io_counters() metrics.
+
+- #900: wheels for OSX and Linux.
 
 - #922: extended net_io_stats() info.
 
