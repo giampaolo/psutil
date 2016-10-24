@@ -12,7 +12,6 @@ DEPS = argparse \
 	flake8 \
 	futures \
 	ipaddress \
-	ipdb \
 	mock==1.0.1 \
 	pep8 \
 	pyflakes \
@@ -69,6 +68,8 @@ build: _
 # - as the current user, in order to avoid permission issues
 # - in development / edit mode, so that source can be modified on the fly
 install: build
+	# make sure setuptools is installed (needed for 'develop' / edit mode)
+	$(PYTHON) -c "import setuptools"
 	$(PYTHON) setup.py develop $(INSTALL_OPTS)
 	rm -rf tmp
 

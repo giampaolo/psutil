@@ -480,7 +480,7 @@ error:
  * http://www.i-scream.org/libstatgrab/
  */
 static PyObject*
-psutil_net_if_stats(PyObject* self, PyObject* args) {
+psutil_net_if_duplex_speed(PyObject* self, PyObject* args) {
     char *nic_name;
     int sock = 0;
     int ret;
@@ -488,7 +488,6 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
     int speed;
     struct ifreq ifr;
     struct ethtool_cmd ethcmd;
-    PyObject *py_is_up = NULL;
     PyObject *py_retlist = NULL;
 
     if (! PyArg_ParseTuple(args, "s", &nic_name))
@@ -498,16 +497,6 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
     if (sock == -1)
         goto error;
     strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
-
-    // is up?
-    ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
-    if (ret == -1)
-        goto error;
-    if ((ifr.ifr_flags & IFF_UP) != 0)
-        py_is_up = Py_True;
-    else
-        py_is_up = Py_False;
-    Py_INCREF(py_is_up);
 
     // duplex and speed
     memset(&ethcmd, 0, sizeof ethcmd);
@@ -533,17 +522,15 @@ psutil_net_if_stats(PyObject* self, PyObject* args) {
         }
     }
 
-    py_retlist = Py_BuildValue("[Oii]", py_is_up, duplex, speed);
+    close(sock);
+    py_retlist = Py_BuildValue("[ii]", duplex, speed);
     if (!py_retlist)
         goto error;
-    close(sock);
-    Py_DECREF(py_is_up);
     return py_retlist;
 
 error:
     if (sock != -1)
         close(sock);
-    Py_XDECREF(py_is_up);
     PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
@@ -575,8 +562,8 @@ PsutilMethods[] = {
      "device, mount point and filesystem type"},
     {"users", psutil_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},
-    {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
-     "Return NIC stats (isup, duplex, speed)"},
+    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
+     "Return duplex and speed info about a NIC"},
 
     // --- linux specific
 

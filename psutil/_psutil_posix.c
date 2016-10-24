@@ -267,9 +267,48 @@ psutil_net_if_mtu(PyObject *self, PyObject *args) {
     ret = ioctl(sock, SIOCGIFMTU, &ifr);
     if (ret == -1)
         goto error;
+    close(sock);
     mtu = ifr.ifr_mtu;
 
     return Py_BuildValue("i", mtu);
+
+error:
+    if (sock != 0)
+        close(sock);
+    PyErr_SetFromErrno(PyExc_OSError);
+    return NULL;
+}
+
+
+/*
+ * Inspect NIC flags, returns a bool indicating whether the NIC is
+ * running. References:
+ * http://www.i-scream.org/libstatgrab/
+ */
+static PyObject *
+psutil_net_if_flags(PyObject *self, PyObject *args) {
+    char *nic_name;
+    int sock = 0;
+    int ret;
+    struct ifreq ifr;
+
+    if (! PyArg_ParseTuple(args, "s", &nic_name))
+        return NULL;
+
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock == -1)
+        goto error;
+
+    strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
+    ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
+    if (ret == -1)
+        goto error;
+
+    close(sock);
+    if ((ifr.ifr_flags & IFF_UP) != 0)
+        return Py_BuildValue("O", Py_True);
+    else
+        return Py_BuildValue("O", Py_False);
 
 error:
     if (sock != 0)
@@ -506,6 +545,8 @@ PsutilMethods[] = {
      "Retrieve NICs information"},
     {"net_if_mtu", psutil_net_if_mtu, METH_VARARGS,
      "Retrieve NIC MTU"},
+    {"net_if_flags", psutil_net_if_flags, METH_VARARGS,
+     "Retrieve NIC flags"},
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
     {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
      "Return NIC stats."},

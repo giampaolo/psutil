@@ -894,9 +894,9 @@ def net_if_stats():
     ret = {}
     for name in names:
         mtu = cext_posix.net_if_mtu(name)
-        isup, duplex, speed = cext.net_if_stats(name)
-        duplex = duplex_map[duplex]
-        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+        isup = cext_posix.net_if_flags(name)
+        duplex, speed = cext.net_if_duplex_speed(name)
+        ret[name] = _common.snicstats(isup, duplex_map[duplex], speed, mtu)
     return ret
 
 
