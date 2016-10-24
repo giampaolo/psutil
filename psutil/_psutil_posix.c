@@ -319,8 +319,7 @@ error:
 
 
 /*
- * net_if_stats() implementation. This is here because it is common
- * to both OSX and FreeBSD and I didn't know where else to put it.
+ * net_if_stats() OSX/BSD implementation.
  */
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
 
@@ -470,7 +469,7 @@ int psutil_get_nic_speed(int ifm_active) {
  * http://www.i-scream.org/libstatgrab/
  */
 static PyObject *
-psutil_net_if_stats(PyObject *self, PyObject *args) {
+psutil_net_if_duplex_speed(PyObject *self, PyObject *args) {
     char *nic_name;
     int sock = 0;
     int ret;
@@ -479,8 +478,6 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     struct ifreq ifr;
     struct ifmediareq ifmed;
 
-    PyObject *py_is_up = NULL;
-
     if (! PyArg_ParseTuple(args, "s", &nic_name))
         return NULL;
 
@@ -488,16 +485,6 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     if (sock == -1)
         goto error;
     strncpy(ifr.ifr_name, nic_name, sizeof(ifr.ifr_name));
-
-    // is up?
-    ret = ioctl(sock, SIOCGIFFLAGS, &ifr);
-    if (ret == -1)
-        goto error;
-    if ((ifr.ifr_flags & IFF_UP) != 0)
-        py_is_up = Py_True;
-    else
-        py_is_up = Py_False;
-    Py_INCREF(py_is_up);
 
     // speed / duplex
     memset(&ifmed, 0, sizeof(struct ifmediareq));
@@ -518,18 +505,15 @@ psutil_net_if_stats(PyObject *self, PyObject *args) {
     }
 
     close(sock);
-    Py_DECREF(py_is_up);
-
-    return Py_BuildValue("[Oii]", py_is_up, duplex, speed);
+    return Py_BuildValue("[ii]", duplex, speed);
 
 error:
-    Py_XDECREF(py_is_up);
     if (sock != 0)
         close(sock);
     PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
 }
-#endif  // net_if_stats() implementation
+#endif  // net_if_stats() OSX/BSD implementation
 
 
 /*
@@ -548,7 +532,7 @@ PsutilMethods[] = {
     {"net_if_flags", psutil_net_if_flags, METH_VARARGS,
      "Retrieve NIC flags"},
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__APPLE__) || defined(__NetBSD__)
-    {"net_if_stats", psutil_net_if_stats, METH_VARARGS,
+    {"net_if_duplex_speed", psutil_net_if_duplex_speed, METH_VARARGS,
      "Return NIC stats."},
 #endif
     {NULL, NULL, 0, NULL}
