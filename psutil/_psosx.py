@@ -195,7 +195,8 @@ def net_if_stats():
     ret = {}
     for name in names:
         mtu = cext_posix.net_if_mtu(name)
-        isup, duplex, speed, = cext_posix.net_if_stats(name)
+        isup = cext_posix.net_if_flags(name)
+        duplex, speed = cext_posix.net_if_duplex_speed(name)
         if hasattr(_common, 'NicDuplex'):
             duplex = _common.NicDuplex(duplex)
         ret[name] = _common.snicstats(isup, duplex, speed, mtu)
