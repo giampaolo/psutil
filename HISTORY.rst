@@ -1,8 +1,9 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+4.4.1
+=====
 
-4.4.1 - XXXX-XX-XX
-==================
+*XXXX-XX-XX*
 
 Bug fixes
 ---------
@@ -10,8 +11,10 @@ Bug fixes
 - 927_: ``Popen.__del__`` may cause maximum recursion depth error.
 
 
-4.4.0 - 2016-10-23
-==================
+4.4.0
+=====
+
+*2016-10-23*
 
 Enhancements
 ------------
@@ -47,8 +50,10 @@ Bug fixes
 - 916_: [OSX] fix many compilation warnings.
 
 
-4.3.1 - 2016-09-01
-==================
+4.3.1
+=====
+
+*2016-09-01*
 
 Enhancements
 ------------
@@ -72,8 +77,10 @@ Bug fixes
 - 870_: [Windows] Handle leak inside psutil_get_process_data.
 
 
-4.3.0 - 2016-06-18
-==================
+4.3.0
+=====
+
+*2016-06-18*
 
 Enhancements
 ------------
@@ -96,8 +103,10 @@ Bug fixes
   Windows Vista (NT 6.0) and above using 64bit values from newer win APIs.
 
 
-4.2.0 - 2016-05-14
-==================
+4.2.0
+=====
+
+*2016-05-14*
 
 Enhancements
 ------------
@@ -119,8 +128,10 @@ Bug fixes
   attached to the Process instance.
 
 
-4.1.0 - 2016-03-12
-==================
+4.1.0
+=====
+
+*2016-03-12*
 
 Enhancements
 ------------
@@ -147,8 +158,10 @@ Bug fixes
 - 790_: [OSX] psutil won't compile on OSX 10.4.
 
 
-4.0.0 - 2016-02-17
-==================
+4.0.0
+=====
+
+*2016-02-17*
 
 Enhancements
 ------------
@@ -191,8 +204,10 @@ Bug fixes
 - 770_: [NetBSD] disk_io_counters() metrics didn't update.
 
 
-3.4.2 - 2016-01-20
-==================
+3.4.2
+=====
+
+*2016-01-20*
 
 Enhancements
 ------------
@@ -207,8 +222,10 @@ Bug fixes
 - 730_: [FreeBSD] psutil.virtual_memory() crashes.
 
 
-3.4.1 - 2016-01-15
-==================
+3.4.1
+=====
+
+*2016-01-15*
 
 Enhancements
 ------------
@@ -231,8 +248,10 @@ Bug fixes
 - 724_: [FreeBSD] virtual_memory().total is slightly incorrect.
 
 
-3.3.0 - 2015-11-25
-==================
+3.3.0
+=====
+
+*2015-11-25*
 
 Enhancements
 ------------
@@ -247,8 +266,10 @@ Bug fixes
 - 692_: [UNIX] Process.name() is no longer cached as it may change.
 
 
-3.2.2 - 2015-10-04
-==================
+3.2.2
+=====
+
+*2015-10-04*
 
 Bug fixes
 ---------
@@ -265,8 +286,10 @@ Bug fixes
   Mike Sarahan)
 
 
-3.2.1 - 2015-09-03
-==================
+3.2.1
+=====
+
+*2015-09-03*
 
 Bug fixes
 ---------
@@ -274,8 +297,10 @@ Bug fixes
 - 677_: [Linux] can't install psutil due to bug in setup.py.
 
 
-3.2.0 - 2015-09-02
-==================
+3.2.0
+=====
+
+*2015-09-02*
 
 Enhancements
 ------------
@@ -314,8 +339,10 @@ Bug fixes
   UNIX sockets.
 
 
-3.1.1 - 2015-07-15
-==================
+3.1.1
+=====
+
+*2015-07-15*
 
 Bug fixes
 ---------
@@ -325,8 +352,10 @@ Bug fixes
 - 656_: 'from psutil import *' does not work.
 
 
-3.1.0 - 2015-07-15
-==================
+3.1.0
+=====
+
+*2015-07-15*
 
 Enhancements
 ------------
@@ -358,8 +387,10 @@ Bug fixes
 - 641_: [Windows] Replace deprecated string functions with safe equivalents.
 
 
-3.0.1 - 2015-06-18
-==================
+3.0.1
+=====
+
+*2015-06-18*
 
 Bug fixes
 ---------
@@ -370,8 +401,10 @@ Bug fixes
   < 3.4.
 
 
-3.0.0 - 2015-06-13
-==================
+3.0.0
+=====
+
+*2015-06-13*
 
 Enhancements
 ------------
@@ -418,8 +451,10 @@ Bug fixes
   spaces or parentheses.
 
 
-2.2.1 - 2015-02-02
-==================
+2.2.1
+=====
+
+*2015-02-02*
 
 Bug fixes
 ---------
@@ -428,8 +463,10 @@ Bug fixes
   (patch by Bruno Binet)
 
 
-2.2.0 - 2015-01-06
-==================
+2.2.0
+=====
+
+*2015-01-06*
 
 Enhancements
 ------------
@@ -459,14 +496,18 @@ Bug fixes
   return an incomplete list of open files.
 
 
-2.1.3 - 2014-09-26
-==================
+2.1.3
+=====
+
+*2014-09-26*
 
 - 536_: [Linux]: fix "undefined symbol: CPU_ALLOC" compilation error.
 
 
-2.1.2 - 2014-09-21
-==================
+2.1.2
+=====
+
+*2014-09-21*
 
 Enhancements
 ------------
@@ -496,8 +537,10 @@ Bug fixes
 - 533_: [Linux] Process.memory_maps() may raise TypeError on old Linux distros.
 
 
-2.1.1 - 2014-04-30
-==================
+2.1.1
+=====
+
+*2014-04-30*
 
 Bug fixes
 ---------
@@ -508,8 +551,10 @@ Bug fixes
 - 491_: [Linux] psutil.net_connections() exceptions. (patch by Alexander Grothe)
 
 
-2.1.0 - 2014-04-08
-==================
+2.1.0
+=====
+
+*2014-04-08*
 
 Enhancements
 ------------
@@ -524,8 +569,10 @@ Bug fixes
 - 489_: [Linux] psutil.disk_partitions() return an empty list.
 
 
-2.0.0 - 2014-03-10
-==================
+2.0.0
+=====
+
+*2014-03-10*
 
 Enhancements
 ------------
@@ -694,8 +741,10 @@ DeprecationWarning.
   been renamed to "returncode" for consistency with subprocess.Popen.
 
 
-1.2.1 - 2013-11-25
-==================
+1.2.1
+=====
+
+*2013-11-25*
 
 Bug fixes
 ---------
@@ -706,8 +755,10 @@ Bug fixes
 - 443_: [Linux] can't set CPU affinity on systems with more than 64 cores.
 
 
-1.2.0 - 2013-11-20
-==================
+1.2.0
+=====
+
+*2013-11-20*
 
 Enhancements
 ------------
@@ -724,8 +775,10 @@ Bug fixes
   module import.
 
 
-1.1.3 - 2013-11-07
-==================
+1.1.3
+=====
+
+*2013-11-07*
 
 Bug fixes
 ---------
@@ -734,8 +787,10 @@ Bug fixes
   missing prlimit(2) syscall.
 
 
-1.1.2 - 2013-10-22
-==================
+1.1.2
+=====
+
+*2013-10-22*
 
 Bug fixes
 ---------
@@ -744,8 +799,10 @@ Bug fixes
   prlimit(2) syscall.
 
 
-1.1.1 - 2013-10-08
-==================
+1.1.1
+=====
+
+*2013-10-08*
 
 Bug fixes
 ---------
@@ -754,8 +811,10 @@ Bug fixes
   prlimit(2) syscall.
 
 
-1.1.0 - 2013-09-28
-==================
+1.1.0
+=====
+
+*2013-09-28*
 
 Enhancements
 ------------
@@ -786,8 +845,10 @@ API changes
 - 408_: turn STATUS_* and CONN_* constants into plain Python strings.
 
 
-1.0.1 - 2013-07-12
-==================
+1.0.1
+=====
+
+*2013-07-12*
 
 Bug fixes
 ---------
@@ -795,8 +856,10 @@ Bug fixes
 - 405_: network_io_counters(pernic=True) no longer works as intended in 1.0.0.
 
 
-1.0.0 - 2013-07-10
-==================
+1.0.0
+=====
+
+*2013-07-10*
 
 Enhancements
 ------------
@@ -826,8 +889,10 @@ API changes
 - psutil.network_io_counters() renamed to psutil.net_io_counters().
 
 
-0.7.1 - 2013-05-03
-==================
+0.7.1
+=====
+
+*2013-05-03*
 
 Bug fixes
 ---------
@@ -839,8 +904,10 @@ Bug fixes
   AccessDenied.
 
 
-0.7.0 - 2013-04-12
-==================
+0.7.0
+=====
+
+*2013-04-12*
 
 Enhancements
 ------------
@@ -904,8 +971,10 @@ API changes
 - psutil.error module is deprecated and scheduled for removal.
 
 
-0.6.1 - 2012-08-16
-==================
+0.6.1
+=====
+
+*2012-08-16*
 
 Enhancements
 ------------
@@ -926,8 +995,10 @@ API changes
 - process exe is no longer resolved in case it's a symlink.
 
 
-0.6.0 - 2012-08-13
-==================
+0.6.0
+=====
+
+*2012-08-13*
 
 Enhancements
 ------------
@@ -1017,8 +1088,10 @@ API changes
   memory instead of virtual memory.
 
 
-0.5.1 - 2012-06-29
-==================
+0.5.1
+=====
+
+*2012-06-29*
 
 Enhancements
 ------------
@@ -1033,8 +1106,10 @@ Bugfixes
 - 294_: [Windows] Process CPU affinity is only able to set CPU #0.
 
 
-0.5.0 - 2012-06-27
-==================
+0.5.0
+=====
+
+*2012-06-27*
 
 Enhancements
 ------------
@@ -1105,8 +1180,10 @@ API changes
   representation.
 
 
-0.4.1 - 2011-12-14
-==================
+0.4.1
+=====
+
+*2011-12-14*
 
 Bugfixes
 --------
@@ -1119,8 +1196,10 @@ Bugfixes
   suspend() and resume() methods.
 
 
-0.4.0 - 2011-10-29
-==================
+0.4.0
+=====
+
+*2011-10-29*
 
 Enhancements
 ------------
@@ -1160,8 +1239,10 @@ Bugfixes
 - 226_: [FreeBSD] crash at import time on FreeBSD 7 and minor.
 
 
-0.3.0 - 2011-07-08
-==================
+0.3.0
+=====
+
+*2011-07-08*
 
 Enhancements
 ------------
@@ -1190,8 +1271,10 @@ Bugfixes
   raise NoSuchProcess exception while process still exists.
 
 
-0.2.1 - 2011-03-20
-==================
+0.2.1
+=====
+
+*2011-03-20*
 
 Enhancements
 ------------
@@ -1234,8 +1317,10 @@ API changes
   "gids" properties.
 
 
-0.2.0 - 2010-11-13
-==================
+0.2.0
+=====
+
+*2010-11-13*
 
 Enhancements
 ------------
@@ -1297,8 +1382,10 @@ API changes
   immediately by default (see issue 123).
 
 
-0.1.3 - 2010-03-02
-==================
+0.1.3
+=====
+
+*2010-03-02*
 
 Enhancements
 ------------
@@ -1328,8 +1415,10 @@ Bugfixes
   used first.
 
 
-0.1.2 - 2009-05-06
-==================
+0.1.2
+=====
+
+*2009-05-06*
 
 Enhancements
 ------------
@@ -1352,8 +1441,10 @@ Bugfixes
 - 42_: [Windows] get_memory_percent() raises AccessDenied.
 
 
-0.1.1 - 2009-03-06
-==================
+0.1.1
+=====
+
+*2009-03-06*
 
 Enhancements
 ------------
