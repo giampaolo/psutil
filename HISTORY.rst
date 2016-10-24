@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+
+4.4.1 - XXXX-XX-XX
+==================
+
+Bug fixes
+---------
+
+- 927_: ``Popen.__del__`` may cause maximum recursion depth error.
+
+
 4.4.0 - 2016-10-23
 ==================
 
