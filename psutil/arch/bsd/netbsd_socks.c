@@ -246,30 +246,29 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                         (struct sockaddr_in *)&kp->kpcb->ki_src;
                     struct sockaddr_in *sin_dst =
                         (struct sockaddr_in *)&kp->kpcb->ki_dst;
-                    // source addr
-                    if (inet_ntop(AF_INET, &sin_src->sin_addr, laddr,
-                        sizeof(laddr)) != NULL)
+                    // source addr and port
+                    inet_ntop(AF_INET, &sin_src->sin_addr, laddr,
+                              sizeof(laddr));
                     lport = ntohs(sin_src->sin_port);
                     py_laddr = Py_BuildValue("(si)", laddr, lport);
                     if (!py_laddr)
                         goto error;
-                    // remote addr
-                    if (inet_ntop(AF_INET, &sin_dst->sin_addr, raddr,
-                                  sizeof(raddr)) != NULL)
-                        rport = ntohs(sin_dst->sin_port);
-
+                    // remote addr and port
+                    inet_ntop(AF_INET, &sin_dst->sin_addr, raddr,
+                              sizeof(raddr));
+                    rport = ntohs(sin_dst->sin_port);
+                    // status
+                    if (kp->kpcb->ki_type == SOCK_STREAM)
+                        status = kp->kpcb->ki_tstate;
+                    else
+                        status = PSUTIL_CONN_NONE;
+                    // build tuple, append it to list
                     if (rport != 0)
                         py_raddr = Py_BuildValue("(si)", raddr, rport);
                     else
                         py_raddr = Py_BuildValue("()");
                     if (!py_raddr)
                         goto error;
-                    // status
-                    if (kp->kpcb->ki_type == SOCK_STREAM)
-                        status = kp->kpcb->ki_tstate;
-                    else
-                        status = PSUTIL_CONN_NONE;
-                    // construct python tuple
                     py_tuple = Py_BuildValue("(iiiNNi)", fd, AF_INET,
                                 type, py_laddr, py_raddr, status);
                     if (!py_tuple)
@@ -283,29 +282,29 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                         (struct sockaddr_in6 *)&kp->kpcb->ki_src;
                     struct sockaddr_in6 *sin6_dst =
                         (struct sockaddr_in6 *)&kp->kpcb->ki_dst;
-                    // local addr
-                    if (inet_ntop(AF_INET6, &sin6_src->sin6_addr, laddr,
-                                  sizeof(laddr)) != NULL)
-                        lport = ntohs(sin6_src->sin6_port);
+                    // local addr and port
+                    inet_ntop(AF_INET6, &sin6_src->sin6_addr, laddr,
+                              sizeof(laddr));
+                    lport = ntohs(sin6_src->sin6_port);
+                    // remote addr and port
+                    inet_ntop(AF_INET6, &sin6_dst->sin6_addr, raddr,
+                              sizeof(raddr));
+                    rport = ntohs(sin6_dst->sin6_port);
+                    // status
+                    if (kp->kpcb->ki_type == SOCK_STREAM)
+                        status = kp->kpcb->ki_tstate;
+                    else
+                        status = PSUTIL_CONN_NONE;
+                    // build tuple, append it to list
                     py_laddr = Py_BuildValue("(si)", laddr, lport);
                     if (!py_laddr)
                         goto error;
-                    // remote addr
-                    if (inet_ntop(AF_INET6, &sin6_dst->sin6_addr, raddr,
-                        sizeof(raddr)) != NULL)
-                    rport = ntohs(sin6_dst->sin6_port);
                     if (rport != 0)
                         py_raddr = Py_BuildValue("(si)", raddr, rport);
                     else
                         py_raddr = Py_BuildValue("()");
                     if (!py_raddr)
                         goto error;
-                    // status
-                    if (kp->kpcb->ki_type == SOCK_STREAM)
-                        status = kp->kpcb->ki_tstate;
-                    else
-                        status = PSUTIL_CONN_NONE;
-                    // construct python tuple
                     py_tuple = Py_BuildValue("(iiiNNi)", fd, AF_INET6,
                                 type, py_laddr, py_raddr, status);
                     if (!py_tuple)
