@@ -872,14 +872,26 @@ def net_io_counters():
         assert colon > 0, repr(line)
         name = line[:colon].strip()
         fields = line[colon + 1:].strip().split()
-        bytes_recv = int(fields[0])
-        packets_recv = int(fields[1])
-        errin = int(fields[2])
-        dropin = int(fields[3])
-        bytes_sent = int(fields[8])
-        packets_sent = int(fields[9])
-        errout = int(fields[10])
-        dropout = int(fields[11])
+
+        # in
+        (bytes_recv,
+         packets_recv,
+         errin,
+         dropin,
+         fifoin,  # unused
+         framein,  # unused
+         compressedin,  # unused
+         multicastin,  # unused
+         # out
+         bytes_sent,
+         packets_sent,
+         errout,
+         dropout,
+         fifoout,  # unused
+         collisionsout,  # unused
+         carrierout,  # unused
+         compressedout) = map(int, fields)
+
         retdict[name] = (bytes_sent, bytes_recv, packets_sent, packets_recv,
                          errin, errout, dropin, dropout)
     return retdict

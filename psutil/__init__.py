@@ -389,14 +389,13 @@ class Process(object):
         try:
             self.create_time()
         except AccessDenied:
-            # we should never get here as AFAIK we're able to get
+            # We should never get here as AFAIK we're able to get
             # process creation time on all platforms even as a
-            # limited user
+            # limited user.
             pass
         except ZombieProcess:
-            # Let's consider a zombie process as legitimate as
-            # tehcnically it's still alive (it can be queried,
-            # although not always, and it's returned by pids()).
+            # Zombies can still be queried by this class (although
+            # not always) and pids() return them so just go on.
             pass
         except NoSuchProcess:
             if not _ignore_nsp:
@@ -1112,6 +1111,7 @@ class Process(object):
 
     if POSIX:
         def _send_signal(self, sig):
+            assert not self.pid < 0, self.pid
             if self.pid == 0:
                 # see "man 2 kill"
                 raise ValueError(
