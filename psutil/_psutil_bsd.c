@@ -299,7 +299,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
         // UIDs
         (long)kp.p_ruid,                 // (long) real uid
         (long)kp.p_uid,                  // (long) effective uid
-        (long)kp.p_svuid                 // (long) saved uid
+        (long)kp.p_svuid,                // (long) saved uid
         // GIDs
         (long)kp.p_rgid,                 // (long) real gid
         (long)kp.p_groups[0],            // (long) effective gid
