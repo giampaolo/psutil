@@ -123,13 +123,14 @@ error:
  * Return multiple process info as a Python tuple in one shot by
  * using sysctl() and filling up a kinfo_proc struct.
  * It should be possible to do this for all processes without
- * getting incurring into permission (EPERM) issues.
+ * incurring into permission (EPERM) errors.
  */
 static PyObject *
 psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
     long pid;
     struct kinfo_proc kp;
     PyObject *py_name;
+    PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -148,7 +149,7 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
         py_name = Py_None;
     }
 
-    return Py_BuildValue(
+    py_retlist = Py_BuildValue(
         "lllllllidiO",
         (long)kp.kp_eproc.e_ppid,                  // (long) ppid
         (long)kp.kp_eproc.e_pcred.p_ruid,          // (long) real uid
@@ -162,6 +163,12 @@ psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
         (int)kp.kp_proc.p_stat,                    // (int) status
         py_name                                    // (pystr) name
     );
+
+    if (py_retlist != NULL) {
+        // XXX shall we decref() also in case of Py_BuildValue() error?
+        Py_DECREF(py_name);
+    }
+    return py_retlist;
 }
 
 
