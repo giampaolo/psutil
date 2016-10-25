@@ -301,6 +301,8 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                         goto error;
                     if (PyList_Append(py_retlist, py_tuple))
                         goto error;
+                    Py_DECREF(py_tuple);
+
                 }
                 else if (kp->kpcb->ki_family == AF_UNIX) {
                     // UNIX sockets
@@ -318,6 +320,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
                         goto error;
                     if (PyList_Append(py_retlist, py_tuple))
                         goto error;
+                    Py_DECREF(py_tuple);
                 }
             }
         }}
