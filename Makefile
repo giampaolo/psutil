@@ -225,7 +225,6 @@ release:
 	${MAKE} pre-release
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz, exes, wheels on PYPI
 	${MAKE} git-tag-release
-	${MAKE} upload-doc
 
 # Print announce of new release.
 print-announce:

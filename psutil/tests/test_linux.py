@@ -268,7 +268,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
 
     def test_avail_old_percent(self):
         # Make sure that our calculation of avail mem for old kernels
-        # is off by max 5%.
+        # is off by max 10%.
         from psutil._pslinux import calculate_avail_vmem
         from psutil._pslinux import open_binary
 
@@ -282,7 +282,7 @@ class TestSystemVirtualMemory(unittest.TestCase):
         if b'MemAvailable:' in mems:
             b = mems[b'MemAvailable:']
             diff_percent = abs(a - b) / a * 100
-            self.assertLess(diff_percent, 5)
+            self.assertLess(diff_percent, 10)
 
     def test_avail_old_comes_from_kernel(self):
         # Make sure "MemAvailable:" coluimn is used instead of relying
@@ -568,6 +568,7 @@ class TestSystemNetwork(unittest.TestCase):
                 self.assertEqual(stats.mtu,
                                  int(re.findall('MTU:(\d+)', out)[0]))
 
+    @retry_before_failing()
     def test_net_io_counters(self):
         def ifconfig(nic):
             ret = {}
@@ -588,13 +589,13 @@ class TestSystemNetwork(unittest.TestCase):
             except RuntimeError:
                 continue
             self.assertAlmostEqual(
-                stats.bytes_recv, ifconfig_ret['bytes_recv'], delta=1024)
+                stats.bytes_recv, ifconfig_ret['bytes_recv'], delta=1024 * 5)
             self.assertAlmostEqual(
-                stats.bytes_sent, ifconfig_ret['bytes_sent'], delta=1024)
+                stats.bytes_sent, ifconfig_ret['bytes_sent'], delta=1024 * 5)
             self.assertAlmostEqual(
-                stats.packets_recv, ifconfig_ret['packets_recv'], delta=512)
+                stats.packets_recv, ifconfig_ret['packets_recv'], delta=1024)
             self.assertAlmostEqual(
-                stats.packets_sent, ifconfig_ret['packets_sent'], delta=512)
+                stats.packets_sent, ifconfig_ret['packets_sent'], delta=1024)
             self.assertAlmostEqual(
                 stats.errin, ifconfig_ret['errin'], delta=10)
             self.assertAlmostEqual(

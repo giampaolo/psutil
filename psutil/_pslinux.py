@@ -692,7 +692,8 @@ class Connections:
                     raise
         return inodes
 
-    def decode_address(self, addr, family):
+    @staticmethod
+    def decode_address(addr, family):
         """Accept an "ip:port" address as displayed in /proc/net/*
         and convert it into a human readable form, like:
 
@@ -746,7 +747,8 @@ class Connections:
                     raise
         return (ip, port)
 
-    def process_inet(self, file, family, type_, inodes, filter_pid=None):
+    @staticmethod
+    def process_inet(file, family, type_, inodes, filter_pid=None):
         """Parse /proc/net/tcp* and /proc/net/udp* files."""
         if file.endswith('6') and not os.path.exists(file):
             # IPv6 not supported
@@ -779,13 +781,14 @@ class Connections:
                     else:
                         status = _common.CONN_NONE
                     try:
-                        laddr = self.decode_address(laddr, family)
-                        raddr = self.decode_address(raddr, family)
+                        laddr = Connections.decode_address(laddr, family)
+                        raddr = Connections.decode_address(raddr, family)
                     except _Ipv6UnsupportedError:
                         continue
                     yield (fd, family, type_, laddr, raddr, status, pid)
 
-    def process_unix(self, file, family, inodes, filter_pid=None):
+    @staticmethod
+    def process_unix(file, family, inodes, filter_pid=None):
         """Parse /proc/net/unix files."""
         with open_text(file, buffering=BIGGER_FILE_BUFFERING) as f:
             f.readline()  # skip the first line
