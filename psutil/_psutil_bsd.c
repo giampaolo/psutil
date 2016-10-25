@@ -207,6 +207,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
     long pagesize = sysconf(_SC_PAGESIZE);
     char str[1000];
     PyObject *py_name;
+    PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
@@ -257,7 +258,7 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
 #endif
 
     // Return a single big tuple with all process info.
-    return Py_BuildValue(
+    py_retlist = Py_BuildValue(
         "(lillllllidllllddddlllllO)",
 #ifdef __FreeBSD__
         //
@@ -328,6 +329,12 @@ psutil_proc_oneshot_info(PyObject *self, PyObject *args) {
 #endif
         py_name                           // (pystr) name
     );
+
+    if (py_retlist != NULL) {
+        // XXX shall we decref() also in case of Py_BuildValue() error?
+        Py_DECREF(py_name);
+    }
+    return py_retlist;
 }
 
 
