@@ -12,6 +12,7 @@
 
 import datetime
 import os
+import re
 import subprocess
 import sys
 import time
@@ -124,13 +125,26 @@ class BSDSpecificTestCase(unittest.TestCase):
             if abs(usage.used - used) > 10 * 1024 * 1024:
                 self.fail("psutil=%s, df=%s" % (usage.used, used))
 
+    @unittest.skipIf(not which('sysctl'), "sysctl cmd not available")
     def test_cpu_count_logical(self):
         syst = sysctl("hw.ncpu")
         self.assertEqual(psutil.cpu_count(logical=True), syst)
 
+    @unittest.skipIf(not which('sysctl'), "sysctl cmd not available")
     def test_virtual_memory_total(self):
         num = sysctl('hw.physmem')
         self.assertEqual(num, psutil.virtual_memory().total)
+
+    def test_net_if_stats(self):
+        for name, stats in psutil.net_if_stats().items():
+            try:
+                out = sh("ifconfig %s" % name)
+            except RuntimeError:
+                pass
+            else:
+                self.assertEqual(stats.isup, 'RUNNING' in out, msg=out)
+                self.assertEqual(stats.mtu,
+                                 int(re.findall('mtu (\d+)', out)[0]))
 
 
 # =====================================================================
@@ -348,6 +362,7 @@ class FreeBSDSpecificTestCase(unittest.TestCase):
 # --- OpenBSD
 # =====================================================================
 
+
 @unittest.skipUnless(OPENBSD, "OPENBSD only")
 class OpenBSDSpecificTestCase(unittest.TestCase):
 
@@ -362,6 +377,7 @@ class OpenBSDSpecificTestCase(unittest.TestCase):
 # --- NetBSD
 # =====================================================================
 
+
 @unittest.skipUnless(NETBSD, "NETBSD only")
 class NetBSDSpecificTestCase(unittest.TestCase):
 
@@ -372,31 +388,38 @@ class NetBSDSpecificTestCase(unittest.TestCase):
                     return int(line.split()[1]) * 1024
         raise ValueError("can't find %s" % look_for)
 
-    # XXX - failing tests
+    def test_vmem_total(self):
+        self.assertEqual(
+            psutil.virtual_memory().total, self.parse_meminfo("MemTotal:"))
 
-    # def test_vmem_total(self):
-    #     self.assertEqual(
-    #         psutil.virtual_memory().total, self.parse_meminfo("MemTotal:"))
-
-    # def test_vmem_free(self):
-    #     self.assertEqual(
-    #         psutil.virtual_memory().buffers, self.parse_meminfo("MemFree:"))
+    def test_vmem_free(self):
+        self.assertAlmostEqual(
+            psutil.virtual_memory().free, self.parse_meminfo("MemFree:"),
+            delta=MEMORY_TOLERANCE)
 
     def test_vmem_buffers(self):
-        self.assertEqual(
-            psutil.virtual_memory().buffers, self.parse_meminfo("Buffers:"))
+        self.assertAlmostEqual(
+            psutil.virtual_memory().buffers, self.parse_meminfo("Buffers:"),
+            delta=MEMORY_TOLERANCE)
 
     def test_vmem_shared(self):
-        self.assertEqual(
-            psutil.virtual_memory().shared, self.parse_meminfo("MemShared:"))
+        self.assertAlmostEqual(
+            psutil.virtual_memory().shared, self.parse_meminfo("MemShared:"),
+            delta=MEMORY_TOLERANCE)
 
     def test_swapmem_total(self):
-        self.assertEqual(
-            psutil.swap_memory().total, self.parse_meminfo("SwapTotal:"))
+        self.assertAlmostEqual(
+            psutil.swap_memory().total, self.parse_meminfo("SwapTotal:"),
+            delta=MEMORY_TOLERANCE)
 
     def test_swapmem_free(self):
-        self.assertEqual(
-            psutil.swap_memory().free, self.parse_meminfo("SwapFree:"))
+        self.assertAlmostEqual(
+            psutil.swap_memory().free, self.parse_meminfo("SwapFree:"),
+            delta=MEMORY_TOLERANCE)
+
+    def test_swapmem_used(self):
+        smem = psutil.swap_memory()
+        self.assertEqual(smem.used, smem.total - smem.free)
 
     def test_cpu_stats_interrupts(self):
         with open('/proc/stat', 'rb') as f:

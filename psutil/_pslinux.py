@@ -693,7 +693,8 @@ class Connections:
                     raise
         return inodes
 
-    def decode_address(self, addr, family):
+    @staticmethod
+    def decode_address(addr, family):
         """Accept an "ip:port" address as displayed in /proc/net/*
         and convert it into a human readable form, like:
 
@@ -747,7 +748,8 @@ class Connections:
                     raise
         return (ip, port)
 
-    def process_inet(self, file, family, type_, inodes, filter_pid=None):
+    @staticmethod
+    def process_inet(file, family, type_, inodes, filter_pid=None):
         """Parse /proc/net/tcp* and /proc/net/udp* files."""
         if file.endswith('6') and not os.path.exists(file):
             # IPv6 not supported
@@ -780,13 +782,14 @@ class Connections:
                     else:
                         status = _common.CONN_NONE
                     try:
-                        laddr = self.decode_address(laddr, family)
-                        raddr = self.decode_address(raddr, family)
+                        laddr = Connections.decode_address(laddr, family)
+                        raddr = Connections.decode_address(raddr, family)
                     except _Ipv6UnsupportedError:
                         continue
                     yield (fd, family, type_, laddr, raddr, status, pid)
 
-    def process_unix(self, file, family, inodes, filter_pid=None):
+    @staticmethod
+    def process_unix(file, family, inodes, filter_pid=None):
         """Parse /proc/net/unix files."""
         with open_text(file, buffering=BIGGER_FILE_BUFFERING) as f:
             f.readline()  # skip the first line
@@ -873,14 +876,26 @@ def net_io_counters():
         assert colon > 0, repr(line)
         name = line[:colon].strip()
         fields = line[colon + 1:].strip().split()
-        bytes_recv = int(fields[0])
-        packets_recv = int(fields[1])
-        errin = int(fields[2])
-        dropin = int(fields[3])
-        bytes_sent = int(fields[8])
-        packets_sent = int(fields[9])
-        errout = int(fields[10])
-        dropout = int(fields[11])
+
+        # in
+        (bytes_recv,
+         packets_recv,
+         errin,
+         dropin,
+         fifoin,  # unused
+         framein,  # unused
+         compressedin,  # unused
+         multicastin,  # unused
+         # out
+         bytes_sent,
+         packets_sent,
+         errout,
+         dropout,
+         fifoout,  # unused
+         collisionsout,  # unused
+         carrierout,  # unused
+         compressedout) = map(int, fields)
+
         retdict[name] = (bytes_sent, bytes_recv, packets_sent, packets_recv,
                          errin, errout, dropin, dropout)
     return retdict
@@ -894,9 +909,10 @@ def net_if_stats():
     names = net_io_counters().keys()
     ret = {}
     for name in names:
-        isup, duplex, speed, mtu = cext.net_if_stats(name)
-        duplex = duplex_map[duplex]
-        ret[name] = _common.snicstats(isup, duplex, speed, mtu)
+        mtu = cext_posix.net_if_mtu(name)
+        isup = cext_posix.net_if_flags(name)
+        duplex, speed = cext.net_if_duplex_speed(name)
+        ret[name] = _common.snicstats(isup, duplex_map[duplex], speed, mtu)
     return ret
 
 

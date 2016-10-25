@@ -220,7 +220,9 @@ def net_if_stats():
     names = net_io_counters().keys()
     ret = {}
     for name in names:
-        isup, duplex, speed, mtu = cext_posix.net_if_stats(name)
+        mtu = cext_posix.net_if_mtu(name)
+        isup = cext_posix.net_if_flags(name)
+        duplex, speed = cext_posix.net_if_duplex_speed(name)
         if hasattr(_common, 'NicDuplex'):
             duplex = _common.NicDuplex(duplex)
         ret[name] = _common.snicstats(isup, duplex, speed, mtu)
@@ -269,6 +271,11 @@ def wrap_exceptions(fun):
         try:
             return fun(self, *args, **kwargs)
         except OSError as err:
+            if self.pid == 0:
+                if 0 in pids():
+                    raise AccessDenied(self.pid, self._name)
+                else:
+                    raise
             if err.errno == errno.ESRCH:
                 if not pid_exists(self.pid):
                     raise NoSuchProcess(self.pid, self._name)

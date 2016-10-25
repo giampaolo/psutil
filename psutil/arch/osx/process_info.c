@@ -33,12 +33,11 @@
  */
 int
 psutil_get_proc_list(kinfo_proc **procList, size_t *procCount) {
-    // Declaring mib as const requires use of a cast since the
-    // sysctl prototype doesn't include the const modifier.
-    static const int mib3[3] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
-    size_t           size, size2;
-    void            *ptr;
-    int              err, lim = 8;  // some limit
+    int mib3[3] = { CTL_KERN, KERN_PROC, KERN_PROC_ALL };
+    size_t size, size2;
+    void *ptr;
+    int err;
+    int lim = 8;  // some limit
 
     assert( procList != NULL);
     assert(*procList == NULL);
@@ -278,7 +277,6 @@ psutil_get_environ(long pid) {
     env_start = arg_ptr;
 
     procenv = calloc(1, arg_end - arg_ptr);
-
     if (procenv == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -296,13 +294,19 @@ psutil_get_environ(long pid) {
     }
 
 #if PY_MAJOR_VERSION >= 3
-    py_ret = PyUnicode_FromStringAndSize(procenv, arg_ptr - env_start + 1);
+    py_ret = PyUnicode_DecodeFSDefaultAndSize(
+        procenv, arg_ptr - env_start + 1);
 #else
     py_ret = PyString_FromStringAndSize(procenv, arg_ptr - env_start + 1);
 #endif
 
-    if (!py_ret)
+    if (!py_ret) {
+        // XXX: don't want to free() this as per:
+        // https://github.com/giampaolo/psutil/issues/926
+        // It sucks but not sure what else to do.
+        procargs = NULL;
         goto error;
+    }
 
     free(procargs);
     free(procenv);
@@ -360,7 +364,7 @@ int
 psutil_proc_pidinfo(long pid, int flavor, uint64_t arg, void *pti, int size) {
     errno = 0;
     int ret = proc_pidinfo((int)pid, flavor, arg, pti, size);
-    if ((ret <= 0) || (ret < sizeof(pti))) {
+    if ((ret <= 0) || ((unsigned long)ret < sizeof(pti))) {
         psutil_raise_for_pid(pid, "proc_pidinfo() syscall failed");
         return 0;
     }

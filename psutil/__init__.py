@@ -189,7 +189,7 @@ __all__ = [
 ]
 __all__.extend(_psplatform.__extra__all__)
 __author__ = "Giampaolo Rodola'"
-__version__ = "4.4.0"
+__version__ = "4.4.1"
 version_info = tuple([int(num) for num in __version__.split('.')])
 AF_LINK = _psplatform.AF_LINK
 _TOTAL_PHYMEM = None
@@ -392,14 +392,13 @@ class Process(object):
         try:
             self.create_time()
         except AccessDenied:
-            # we should never get here as AFAIK we're able to get
+            # We should never get here as AFAIK we're able to get
             # process creation time on all platforms even as a
-            # limited user
+            # limited user.
             pass
         except ZombieProcess:
-            # Let's consider a zombie process as legitimate as
-            # tehcnically it's still alive (it can be queried,
-            # although not always, and it's returned by pids()).
+            # Zombies can still be queried by this class (although
+            # not always) and pids() return them so just go on.
             pass
         except NoSuchProcess:
             if not _ignore_nsp:
@@ -1180,6 +1179,7 @@ class Process(object):
 
     if POSIX:
         def _send_signal(self, sig):
+            assert not self.pid < 0, self.pid
             if self.pid == 0:
                 # see "man 2 kill"
                 raise ValueError(
@@ -1331,6 +1331,27 @@ class Popen(Process):
 
     def __dir__(self):
         return sorted(set(dir(Popen) + dir(subprocess.Popen)))
+
+    def __enter__(self):
+        if hasattr(self.__subproc, '__enter__'):
+            self.__subproc.__enter__()
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        if hasattr(self.__subproc, '__exit__'):
+            return self.__subproc.__exit__(*args, **kwargs)
+        else:
+            if self.stdout:
+                self.stdout.close()
+            if self.stderr:
+                self.stderr.close()
+            try:
+                # Flushing a BufferedWriter may raise an error.
+                if self.stdin:
+                    self.stdin.close()
+            finally:
+                # Wait for the process to terminate, to avoid zombies.
+                self.wait()
 
     def __getattribute__(self, name):
         try:

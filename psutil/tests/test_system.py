@@ -496,10 +496,11 @@ class TestSystemAPIs(unittest.TestCase):
             path = os.path.abspath(path)
             while not os.path.ismount(path):
                 path = os.path.dirname(path)
-            return path
+            return path.lower()
 
         mount = find_mount_point(__file__)
-        mounts = [x.mountpoint for x in psutil.disk_partitions(all=True)]
+        mounts = [x.mountpoint.lower() for x in
+                  psutil.disk_partitions(all=True)]
         self.assertIn(mount, mounts)
         psutil.disk_usage(mount)
 

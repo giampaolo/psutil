@@ -84,8 +84,13 @@ psutil_pids(PyObject *self, PyObject *args) {
         return NULL;
 
     if (psutil_get_proc_list(&proclist, &num_processes) != 0) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "failed to retrieve process list.");
+        if (errno != 0) {
+            PyErr_SetFromErrno(PyExc_OSError);
+        }
+        else {
+            PyErr_SetString(PyExc_RuntimeError,
+                            "failed to retrieve process list");
+        }
         goto error;
     }
 
@@ -258,7 +263,10 @@ psutil_proc_exe(PyObject *self, PyObject *args) {
     errno = 0;
     ret = proc_pidpath((pid_t)pid, &buf, sizeof(buf));
     if (ret == 0) {
-        psutil_raise_for_pid(pid, "proc_pidpath() syscall failed");
+        if (pid == 0)
+            AccessDenied();
+        else
+            psutil_raise_for_pid(pid, "proc_pidpath() syscall failed");
         return NULL;
     }
 #if PY_MAJOR_VERSION >= 3
@@ -620,7 +628,10 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
 
 
 /*
- * Return system virtual memory stats
+ * Return system virtual memory stats.
+ * See:
+ * http://opensource.apple.com/source/system_cmds/system_cmds-498.2/
+ *     vm_stat.tproj/vm_stat.c
  */
 static PyObject *
 psutil_virtual_mem(PyObject *self, PyObject *args) {
@@ -653,7 +664,8 @@ psutil_virtual_mem(PyObject *self, PyObject *args) {
         (unsigned long long) vm.active_count * pagesize,
         (unsigned long long) vm.inactive_count * pagesize,
         (unsigned long long) vm.wire_count * pagesize,
-        (unsigned long long) vm.free_count * pagesize
+        // this is how vm_stat cmd does it
+        (unsigned long long) (vm.free_count - vm.speculative_count) * pagesize
     );
 }
 
@@ -729,11 +741,12 @@ psutil_cpu_times(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_per_cpu_times(PyObject *self, PyObject *args) {
     natural_t cpu_count;
+    natural_t i;
     processor_info_array_t info_array;
     mach_msg_type_number_t info_count;
     kern_return_t error;
     processor_cpu_load_info_data_t *cpu_load_info = NULL;
-    int i, ret;
+    int ret;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_cputime = NULL;
 
@@ -937,7 +950,7 @@ error:
 static PyObject *
 psutil_proc_threads(PyObject *self, PyObject *args) {
     long pid;
-    int err, j, ret;
+    int err, ret;
     kern_return_t kr;
     unsigned int info_count = TASK_BASIC_INFO_COUNT;
     mach_port_t task = MACH_PORT_NULL;
@@ -945,7 +958,7 @@ psutil_proc_threads(PyObject *self, PyObject *args) {
     thread_act_port_array_t thread_list = NULL;
     thread_info_data_t thinfo_basic;
     thread_basic_info_t basic_info_th;
-    mach_msg_type_number_t thread_count, thread_info_count;
+    mach_msg_type_number_t thread_count, thread_info_count, j;
 
     PyObject *py_tuple = NULL;
     PyObject *py_retlist = PyList_New(0);
@@ -1050,7 +1063,7 @@ psutil_proc_open_files(PyObject *self, PyObject *args) {
     int pidinfo_result;
     int iterations;
     int i;
-    int nb;
+    unsigned long nb;
 
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;
@@ -1158,7 +1171,7 @@ psutil_proc_connections(PyObject *self, PyObject *args) {
     int pidinfo_result;
     int iterations;
     int i;
-    int nb;
+    unsigned long nb;
 
     struct proc_fdinfo *fds_pointer = NULL;
     struct proc_fdinfo *fdp_pointer;

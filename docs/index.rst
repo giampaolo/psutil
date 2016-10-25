@@ -36,6 +36,19 @@ versions from **2.6 to 3.5** (users of Python 2.4 and 2.5 may use
 
 The psutil documentation you're reading is distributed as a single HTML page.
 
+Install
+-------
+
+On Windows, or on UNIX if you have a C compiler installed, the easiest way to
+install psutil is via ``pip``::
+
+    pip install psutil
+
+Alternatively, see more detailed
+`install <https://github.com/giampaolo/psutil/blob/master/INSTALL.rst>`_
+instructions.
+
+
 System related functions
 ========================
 
@@ -1585,10 +1598,10 @@ Popen class
 
   A more convenient interface to stdlib
   `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__.
-  It starts a sub process and deals with it exactly as when using
+  It starts a sub process and you deal with it exactly as when using
   `subprocess.Popen <http://docs.python.org/library/subprocess.html#subprocess.Popen>`__
-  but in addition it also provides all the methods of
-  :class:`psutil.Process` class in a single interface.
+  but in addition it also provides all the methods of :class:`psutil.Process`
+  class.
   For method names common to both classes such as
   :meth:`send_signal() <psutil.Process.send_signal()>`,
   :meth:`terminate() <psutil.Process.terminate()>` and
@@ -1620,6 +1633,17 @@ Popen class
   >>> p.wait(timeout=2)
   0
   >>>
+
+  :class:`psutil.Popen` objects are supported as context managers via the with
+  statement: on exit, standard file descriptors are closed, and the process
+  is waited for. This is supported on all Python versions.
+
+  >>> import psutil, subprocess
+  >>> with psutil.Popen(["ifconfig"], stdout=subprocess.PIPE) as proc:
+  >>>     log.write(proc.stdout.read())
+
+
+  .. versionchanged:: 4.4.0 added context manager support
 
 Windows services
 ================
@@ -1886,3 +1910,55 @@ Development guide
 If you plan on hacking on psutil (e.g. want to add a new feature or fix a bug)
 take a look at the
 `development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_.
+
+
+Timeline
+========
+
+- 2016-10-23: `psutil-4.4.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.4.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#441>`__
+- 2016-10-23: `psutil-4.4.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.4.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#440>`__
+- 2016-09-01: `psutil-4.3.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.3.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#431>`__
+- 2016-06-18: `psutil-4.3.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.3.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#430>`__
+- 2016-05-15: `psutil-4.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#420>`__
+- 2016-03-12: `psutil-4.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#410>`__
+- 2016-02-17: `psutil-4.0.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#400>`__
+- 2016-01-20: `psutil-3.4.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.4.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#342>`__
+- 2016-01-15: `psutil-3.4.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.4.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#341>`__
+- 2015-11-25: `psutil-3.3.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.3.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#330>`__
+- 2015-10-04: `psutil-3.2.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.2.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#322>`__
+- 2015-09-03: `psutil-3.2.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#321>`__
+- 2015-09-02: `psutil-3.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#320>`__
+- 2015-07-15: `psutil-3.1.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.1.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#311>`__
+- 2015-07-15: `psutil-3.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#310>`__
+- 2015-06-18: `psutil-3.0.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.0.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#301>`__
+- 2015-06-13: `psutil-3.0.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=3.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#300>`__
+- 2015-02-02: `psutil-2.2.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#221>`__
+- 2015-01-06: `psutil-2.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#220>`__
+- 2014-09-26: `psutil-2.1.3.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.1.3&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#213>`__
+- 2014-09-21: `psutil-2.1.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.1.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#212>`__
+- 2014-04-30: `psutil-2.1.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.1.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#211>`__
+- 2014-04-08: `psutil-2.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#210>`__
+- 2014-03-10: `psutil-2.0.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=2.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#200>`__
+- 2013-11-25: `psutil-1.2.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#121>`__
+- 2013-11-20: `psutil-1.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#120>`__
+- 2013-11-07: `psutil-1.1.3.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.1.3&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#113>`__
+- 2013-10-22: `psutil-1.1.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.1.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#112>`__
+- 2013-10-08: `psutil-1.1.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.1.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#111>`__
+- 2013-09-28: `psutil-1.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#110>`__
+- 2013-07-12: `psutil-1.0.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.0.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#101>`__
+- 2013-07-10: `psutil-1.0.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=1.0.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#100>`__
+- 2013-05-03: `psutil-0.7.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.7.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#071>`__
+- 2013-04-12: `psutil-0.7.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.7.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#070>`__
+- 2012-08-16: `psutil-0.6.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.6.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#061>`__
+- 2012-08-13: `psutil-0.6.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.6.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#060>`__
+- 2012-06-29: `psutil-0.5.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.5.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#051>`__
+- 2012-06-27: `psutil-0.5.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.5.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#050>`__
+- 2011-12-14: `psutil-0.4.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.4.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#041>`__
+- 2011-10-29: `psutil-0.4.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.4.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#040>`__
+- 2011-07-08: `psutil-0.3.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.3.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#030>`__
+- 2011-03-20: `psutil-0.2.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.2.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#021>`__
+- 2010-11-13: `psutil-0.2.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.2.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#020>`__
+- 2010-03-02: `psutil-0.1.3.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.1.3&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#013>`__
+- 2009-05-06: `psutil-0.1.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.1.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#012>`__
+- 2009-03-06: `psutil-0.1.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.1.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#011>`__
+- 2009-01-27: `psutil-0.1.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=0.1.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#010>`__

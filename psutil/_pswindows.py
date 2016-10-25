@@ -477,8 +477,8 @@ class WindowsService(object):
         return d
 
     # actions
-    # XXX: the necessary C bindings for start() and stop() are implemented
-    # but for now I prefer not to expose them.
+    # XXX: the necessary C bindings for start() and stop() are
+    # implemented but for now I prefer not to expose them.
     # I may change my mind in the future. Reasons:
     # - they require Administrator privileges
     # - can't implement a timeout for stop() (unless by using a thread,

@@ -4,6 +4,7 @@
 
 PYTHON = python
 TSCRIPT = psutil/tests/runner.py
+ARGS =
 
 # List of nice-to-have dev libs.
 DEPS = argparse \
@@ -11,7 +12,6 @@ DEPS = argparse \
 	flake8 \
 	futures \
 	ipaddress \
-	ipdb \
 	mock==1.0.1 \
 	pep8 \
 	pyflakes \
@@ -126,6 +126,10 @@ test-system: install
 test-misc: install
 	$(PYTHON) psutil/tests/test_misc.py
 
+# Test POSIX.
+test-posix: install
+	$(PYTHON) psutil/tests/test_posix.py
+
 # Test memory leaks.
 test-memleaks: install
 	$(PYTHON) psutil/tests/test_memory_leaks.py
@@ -137,7 +141,7 @@ test-platform: install
 # Run a specific test by name, e.g.
 # make test-by-name psutil.tests.test_system.TestSystemAPIs.test_cpu_times
 test-by-name: install
-	@$(PYTHON) -m unittest -v $(filter-out $@,$(MAKECMDGOALS))
+	@$(PYTHON) -m unittest -v $(ARGS)
 
 coverage: install
 	# Note: coverage options are controlled by .coveragerc file
@@ -205,11 +209,11 @@ pre-release:
 	${MAKE} install  # to import psutil from download_exes.py
 	$(PYTHON) -c \
 		"from psutil import __version__ as ver; \
-		readme = open('README.rst').read(); \
+		doc = open('docs/index.rst').read(); \
 		history = open('HISTORY.rst').read(); \
-		assert ver in readme, '%r not in README.rst' % ver; \
+		assert ver in doc, '%r not in docs/index.rst' % ver; \
 		assert ver in history, '%r not in HISTORY.rst' % ver; \
-		assert 'XXXX' not in history, 'XXXX in HISTORY.rst'; \
+		assert 'XXXX' not in history; \
 		"
 	${MAKE} setup-dev-env  # mainly to update sphinx and install twine
 	${MAKE} win-download-exes
@@ -221,7 +225,6 @@ release:
 	${MAKE} pre-release
 	$(PYTHON) -m twine upload dist/*  # upload tar.gz, exes, wheels on PYPI
 	${MAKE} git-tag-release
-	${MAKE} upload-doc
 
 # Print announce of new release.
 print-announce:
