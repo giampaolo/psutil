@@ -442,56 +442,6 @@ class TestScripts(unittest.TestCase):
 
 
 # ===================================================================
-# --- Makefile tests
-# ===================================================================
-
-
-@unittest.skipIf(not POSIX, "POSIX only")
-class TestMakefile(unittest.TestCase):
-
-    def setUp(self):
-        self.paths = set()
-
-    def tearDown(self):
-        for path in self.paths:
-            safe_rmpath(path)
-
-    def touch(self, path):
-        with open(path, 'w'):
-            pass
-        self.paths.add(path)
-
-    def mkdir(self, path):
-        safe_mkdir(path)
-        self.paths.add(path)
-
-    def test_clean(self):
-        with chdir(ROOT_DIR):
-            self.touch("foo.pyc")
-            self.touch("foo.pyo")
-            self.touch("psutil/wow.so")
-            self.touch("psutil/arch/hello.~")
-            self.touch("psutil/arch/apple.orig")
-            self.touch("psutil/arch/apple.bak")
-            self.touch("psutil/arch/apple.rej")
-            self.mkdir("__pycache__")
-            sh("make clean")
-            for path in self.paths:
-                assert not os.path.exists(path), path
-
-    def test_clean_files_from_dir(self):
-        # make sure a dir with .pyc in its name is not deleted
-        with chdir(ROOT_DIR):
-            safe_mkdir('foo.pyd')
-            safe_mkdir('foo.bak')
-            self.addCleanup(safe_rmpath, 'foo.pyd')
-            self.addCleanup(safe_rmpath, 'foo.bak')
-            sh("make clean")
-            assert os.path.exists('foo.pyd')
-            assert os.path.exists('foo.bak')
-
-
-# ===================================================================
 # --- Unit tests for test utilities.
 # ===================================================================
 
