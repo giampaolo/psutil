@@ -49,9 +49,9 @@ def main():
             print("    " + name)
 
     if args.benchmark == 'normal':
-        runner.bench_func(call_normal, funs)
+        runner.bench_func("normal", call_normal, funs)
     else:
-        runner.bench_func(call_oneshot, funs)
+        runner.bench_func("oneshot", call_oneshot, funs)
 
 
 main()
