@@ -1,5 +1,17 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+4.4.3
+=====
+
+*XXXX-XX-XX*
+
+Bug fixes
+---------
+
+- 932_: [NetBSD] net_connections() and Process.connections() may fail without
+  raising an exception.
+
+
 4.4.2
 =====
 

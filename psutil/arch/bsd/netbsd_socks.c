@@ -64,7 +64,7 @@ static void psutil_kpcblist_init(void);
 static void psutil_kpcblist_clear(void);
 static int psutil_get_files(void);
 static int psutil_get_sockets(const char *name);
-static void psutil_get_info(int aff);
+static int psutil_get_info(int aff);
 
 
 // Initialize kinfo_file results list.
@@ -121,14 +121,22 @@ psutil_get_files(void) {
     mib[4] = sizeof(struct kinfo_file);
     mib[5] = 0;
 
-    if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
+    if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
         return -1;
+    }
+
     offset = len % sizeof(off_t);
     mib[5] = len / sizeof(struct kinfo_file);
-    if ((buf = malloc(len + offset)) == NULL)
+
+    if ((buf = malloc(len + offset)) == NULL) {
+        PyErr_NoMemory();
         return -1;
+    }
+
     if (sysctl(mib, 6, buf + offset, &len, NULL, 0) == -1) {
         free(buf);
+        PyErr_SetFromErrno(PyExc_OSError);
         return -1;
     }
 
@@ -164,13 +172,18 @@ psutil_get_sockets(const char *name) {
 
     memset(mib, 0, sizeof(mib));
 
-    if (sysctlnametomib(name, mib, &namelen) == -1)
+    if (sysctlnametomib(name, mib, &namelen) == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
         return -1;
+    }
 
-    if (sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0) == -1)
+    if (sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0) == -1) {
+        PyErr_SetFromErrno(PyExc_OSError);
         return -1;
+    }
 
     if ((pcb = malloc(len)) == NULL) {
+        PyErr_NoMemory();
         return -1;
     }
     memset(pcb, 0, len);
@@ -180,6 +193,7 @@ psutil_get_sockets(const char *name) {
 
     if (sysctl(mib, __arraycount(mib), pcb, &len, NULL, 0) == -1) {
         free(pcb);
+        PyErr_SetFromErrno(PyExc_OSError);
         return -1;
     }
 
@@ -207,61 +221,86 @@ psutil_get_sockets(const char *name) {
 
 
 // Collect open file and connections.
-static void
+static int
 psutil_get_info(int aff) {
-    psutil_get_files();
-
     switch (aff) {
         case INET:
-            psutil_get_sockets("net.inet.tcp.pcblist");
-            psutil_get_sockets("net.inet.udp.pcblist");
-            psutil_get_sockets("net.inet6.tcp6.pcblist");
-            psutil_get_sockets("net.inet6.udp6.pcblist");
+            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+                return -1;
             break;
         case INET4:
-            psutil_get_sockets("net.inet.tcp.pcblist");
-            psutil_get_sockets("net.inet.udp.pcblist");
+            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+                return -1;
             break;
         case INET6:
-            psutil_get_sockets("net.inet6.tcp6.pcblist");
-            psutil_get_sockets("net.inet6.udp6.pcblist");
+            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+                return -1;
             break;
         case TCP:
-            psutil_get_sockets("net.inet.tcp.pcblist");
-            psutil_get_sockets("net.inet6.tcp6.pcblist");
+            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+                return -1;
             break;
         case TCP4:
-            psutil_get_sockets("net.inet.tcp.pcblist");
+            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+                return -1;
             break;
         case TCP6:
-            psutil_get_sockets("net.inet6.tcp6.pcblist");
+            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+                return -1;
             break;
         case UDP:
-            psutil_get_sockets("net.inet.udp.pcblist");
-            psutil_get_sockets("net.inet6.udp6.pcblist");
+            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+                return -1;
             break;
         case UDP4:
-            psutil_get_sockets("net.inet.udp.pcblist");
+            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+                return -1;
             break;
         case UDP6:
-            psutil_get_sockets("net.inet6.udp6.pcblist");
+            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+                return -1;
             break;
         case UNIX:
-            psutil_get_sockets("net.local.stream.pcblist");
-            psutil_get_sockets("net.local.seqpacket.pcblist");
-            psutil_get_sockets("net.local.dgram.pcblist");
+            if (psutil_get_sockets("net.local.stream.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.local.seqpacket.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.local.dgram.pcblist") != 0)
+                return -1;
             break;
         case ALL:
-            psutil_get_sockets("net.inet.tcp.pcblist");
-            psutil_get_sockets("net.inet.udp.pcblist");
-            psutil_get_sockets("net.inet6.tcp6.pcblist");
-            psutil_get_sockets("net.inet6.udp6.pcblist");
-            psutil_get_sockets("net.local.stream.pcblist");
-            psutil_get_sockets("net.local.seqpacket.pcblist");
-            psutil_get_sockets("net.local.dgram.pcblist");
+            if (psutil_get_sockets("net.inet.tcp.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.inet.udp.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.inet6.tcp6.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.inet6.udp6.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.local.stream.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.local.seqpacket.pcblist") != 0)
+                return -1;
+            if (psutil_get_sockets("net.local.dgram.pcblist") != 0)
+                return -1;
             break;
     }
-    return;
+
+    return 0;
 }
 
 
@@ -284,7 +323,10 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     psutil_kiflist_init();
     psutil_kpcblist_init();
-    psutil_get_info(ALL);
+    if (psutil_get_files() != 0)
+        goto error;
+    if (psutil_get_info(ALL) != 0)
+        goto error;
 
     struct kif *k;
     SLIST_FOREACH(k, &kihead, kifs) {
