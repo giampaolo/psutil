@@ -342,7 +342,10 @@ def net_connections(kind):
                          % (kind, ', '.join([repr(x) for x in conn_tmap])))
     families, types = conn_tmap[kind]
     ret = set()
-    rawlist = cext.net_connections()
+    if NETBSD:
+        rawlist = cext.net_connections(-1)
+    else:
+        rawlist = cext.net_connections()
     for item in rawlist:
         fd, fam, type, laddr, raddr, status, pid = item
         # TODO: apply filter at C level
@@ -579,9 +582,10 @@ class Process(object):
         if NETBSD:
             families, types = conn_tmap[kind]
             ret = set()
-            rawlist = cext.proc_connections(self.pid)
+            rawlist = cext.net_connections(self.pid)
             for item in rawlist:
-                fd, fam, type, laddr, raddr, status = item
+                fd, fam, type, laddr, raddr, status, pid = item
+                assert pid == self.pid
                 if fam in families and type in types:
                     try:
                         status = TCP_STATUSES[status]
