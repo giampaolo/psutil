@@ -14,6 +14,7 @@ DEPS = argparse \
 	ipaddress \
 	mock==1.0.1 \
 	pep8 \
+	perf \
 	pyflakes \
 	requests \
 	setuptools \
