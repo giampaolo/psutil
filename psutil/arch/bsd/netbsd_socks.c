@@ -5,6 +5,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+
 #include <Python.h>
 #include <errno.h>
 #include <stdio.h>
@@ -23,7 +24,7 @@
 // a signaler for connections without an actual status
 int PSUTIL_CONN_NONE = 128;
 
-// Address family filter
+// address family filter
 enum af_filter {
     INET,
     INET4,
@@ -63,16 +64,18 @@ static void psutil_kpcblist_init(void);
 static void psutil_kpcblist_clear(void);
 static int psutil_get_files(void);
 static int psutil_get_sockets(const char *name);
-static void get_info(int aff);
+static void psutil_get_info(int aff);
 
-// Initialize kinfo_file results list
+
+// Initialize kinfo_file results list.
 static void
 psutil_kiflist_init(void) {
     SLIST_INIT(&kihead);
     return;
 }
 
-// Clear kinfo_file results list
+
+// Clear kinfo_file results list.
 static void
 psutil_kiflist_clear(void) {
      while (!SLIST_EMPTY(&kihead)) {
@@ -82,14 +85,16 @@ psutil_kiflist_clear(void) {
     return;
 }
 
-// Initialize kinof_pcb result list
+
+// Initialize kinof_pcb result list.
 static void
 psutil_kpcblist_init(void) {
     SLIST_INIT(&kpcbhead);
     return;
 }
 
-// Clear kinof_pcb result list
+
+// Clear kinof_pcb result list.
 static void
 psutil_kpcblist_clear(void) {
      while (!SLIST_EMPTY(&kpcbhead)) {
@@ -100,7 +105,7 @@ psutil_kpcblist_clear(void) {
 }
 
 
-// Get all open files including socket
+// Get all open files including socket.
 static int
 psutil_get_files(void) {
     size_t len;
@@ -136,18 +141,19 @@ psutil_get_files(void) {
         SLIST_INSERT_HEAD(&kihead, kif, kifs);
     }
 
-#if 0
+    /*
     // debug
     struct kif *k;
     SLIST_FOREACH(k, &kihead, kifs) {
             printf("%d\n", k->kif->ki_pid);
     }
-#endif
+    */
 
     return 0;
 }
 
-// Get open sockets
+
+// Get open sockets.
 static int
 psutil_get_sockets(const char *name) {
     size_t namelen;
@@ -186,7 +192,7 @@ psutil_get_sockets(const char *name) {
         SLIST_INSERT_HEAD(&kpcbhead, kpcb, kpcbs);
     }
 
-#if 0
+    /*
     // debug
     struct kif *k;
     struct kpcb *k;
@@ -194,15 +200,15 @@ psutil_get_sockets(const char *name) {
             printf("ki_type: %d\n", k->kpcb->ki_type);
             printf("ki_family: %d\n", k->kpcb->ki_family);
     }
-#endif
+    */
 
     return 0;
 }
 
 
-// Collect open file and connections
+// Collect open file and connections.
 static void
-get_info(int aff) {
+psutil_get_info(int aff) {
     psutil_get_files();
 
     switch (aff) {
@@ -259,7 +265,9 @@ get_info(int aff) {
 }
 
 
-// Collect connections by PID
+/*
+ * Return system-wide connections (unless a pid != -1 is passed).
+ */
 PyObject *
 psutil_net_connections(PyObject *self, PyObject *args) {
     PyObject *py_retlist = PyList_New(0);
@@ -276,7 +284,7 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
     psutil_kiflist_init();
     psutil_kpcblist_init();
-    get_info(ALL);
+    psutil_get_info(ALL);
 
     struct kif *k;
     SLIST_FOREACH(k, &kihead, kifs) {
@@ -343,23 +351,6 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                     py_raddr = Py_BuildValue("()");
                 if (! py_raddr)
                     goto error;
-
-                // append tuple to list
-                py_tuple = Py_BuildValue(
-                    "(iiiNNii)",
-                    k->kif->ki_fd,
-                    kp->kpcb->ki_family,
-                    kp->kpcb->ki_type,
-                    py_laddr,
-                    py_raddr,
-                    status,
-                    k->kif->ki_pid);
-                if (! py_tuple)
-                    goto error;
-                if (PyList_Append(py_retlist, py_tuple))
-                    goto error;
-                Py_DECREF(py_tuple);
-
             }
             else if (kp->kpcb->ki_family == AF_UNIX) {
                 // UNIX sockets
@@ -370,22 +361,31 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 strcpy(laddr, sun_src->sun_path);
                 strcpy(raddr, sun_dst->sun_path);
                 status = PSUTIL_CONN_NONE;
-
-                py_tuple = Py_BuildValue(
-                    "(iiissii)",
-                    k->kif->ki_fd,
-                    AF_UNIX,
-                    kp->kpcb->ki_type,
-                    laddr,
-                    raddr,
-                    status,
-                    k->kif->ki_pid);
-                if (! py_tuple)
+                // TODO: handle unicode
+                py_laddr = Py_BuildValue("s", laddr);
+                if (! py_laddr)
                     goto error;
-                if (PyList_Append(py_retlist, py_tuple))
+                // TODO: handle unicode
+                py_raddr = Py_BuildValue("s", raddr);
+                if (! py_raddr)
                     goto error;
-                Py_DECREF(py_tuple);
             }
+
+            // append tuple to list
+            py_tuple = Py_BuildValue(
+                "(iiiNNii)",
+                k->kif->ki_fd,
+                kp->kpcb->ki_family,
+                kp->kpcb->ki_type,
+                py_laddr,
+                py_raddr,
+                status,
+                k->kif->ki_pid);
+            if (! py_tuple)
+                goto error;
+            if (PyList_Append(py_retlist, py_tuple))
+                goto error;
+            Py_DECREF(py_tuple);
         }
     }
 
