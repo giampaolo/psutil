@@ -446,6 +446,7 @@ class TestScripts(unittest.TestCase):
 # ===================================================================
 
 
+@unittest.skipIf(not POSIX, "POSIX only")
 class TestMakefile(unittest.TestCase):
 
     def setUp(self):
@@ -475,18 +476,19 @@ class TestMakefile(unittest.TestCase):
             self.touch("psutil/arch/apple.rej")
             self.mkdir("__pycache__")
             sh("make clean")
-        for path in self.paths:
-            assert not os.path.exists(path), path
+            for path in self.paths:
+                assert not os.path.exists(path), path
 
     def test_clean_files_from_dir(self):
         # make sure a dir with .pyc in its name is not deleted
-        safe_mkdir('foo.pyd')
-        safe_mkdir('foo.bak')
-        self.addCleanup(safe_rmpath, 'foo.pyd')
-        self.addCleanup(safe_rmpath, 'foo.bak')
-        sh("make clean")
-        assert os.path.exists('foo.pyd')
-        assert os.path.exists('foo.bak')
+        with chdir(ROOT_DIR):
+            safe_mkdir('foo.pyd')
+            safe_mkdir('foo.bak')
+            self.addCleanup(safe_rmpath, 'foo.pyd')
+            self.addCleanup(safe_rmpath, 'foo.bak')
+            sh("make clean")
+            assert os.path.exists('foo.pyd')
+            assert os.path.exists('foo.bak')
 
 
 # ===================================================================
