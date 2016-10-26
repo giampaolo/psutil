@@ -286,20 +286,11 @@ psutil_net_connections(PyObject *self, PyObject *args) {
         SLIST_FOREACH(kp, &kpcbhead, kpcbs) {
             if (k->kif->ki_fdata != kp->kpcb->ki_sockaddr)
                 continue;
-            pid_t pid;
-            int32_t fd;
-            int32_t family;
-            int32_t type;
             char laddr[PATH_MAX];
-            int32_t lport;
             char raddr[PATH_MAX];
+            int32_t lport;
             int32_t rport;
             int32_t status;
-
-            pid = k->kif->ki_pid;
-            fd = k->kif->ki_fd;
-            family = kp->kpcb->ki_family;
-            type = kp->kpcb->ki_type;
 
             // IPv4 or IPv6
             if ((kp->kpcb->ki_family == AF_INET) ||
@@ -356,8 +347,13 @@ psutil_net_connections(PyObject *self, PyObject *args) {
                 // append tuple to list
                 py_tuple = Py_BuildValue(
                     "(iiiNNii)",
-                    fd, kp->kpcb->ki_family, type, py_laddr, py_raddr,
-                    status, k->kif->ki_pid);
+                    k->kif->ki_fd,
+                    kp->kpcb->ki_family,
+                    kp->kpcb->ki_type,
+                    py_laddr,
+                    py_raddr,
+                    status,
+                    k->kif->ki_pid);
                 if (! py_tuple)
                     goto error;
                 if (PyList_Append(py_retlist, py_tuple))
@@ -377,7 +373,12 @@ psutil_net_connections(PyObject *self, PyObject *args) {
 
                 py_tuple = Py_BuildValue(
                     "(iiissii)",
-                    fd, AF_UNIX, type, laddr, raddr, status,
+                    k->kif->ki_fd,
+                    AF_UNIX,
+                    kp->kpcb->ki_type,
+                    laddr,
+                    raddr,
+                    status,
                     k->kif->ki_pid);
                 if (! py_tuple)
                     goto error;
