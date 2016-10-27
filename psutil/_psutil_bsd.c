@@ -849,8 +849,10 @@ PsutilMethods[] = {
      "Return multiple info about a process"},
     {"proc_name", psutil_proc_name, METH_VARARGS,
      "Return process name"},
+#if !defined(__NetBSD__)
     {"proc_connections", psutil_proc_connections, METH_VARARGS,
      "Return connections opened by process"},
+#endif
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
      "Return process cmdline as a list of cmdline arguments"},
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
@@ -990,7 +992,7 @@ void init_psutil_bsd(void)
     PyModule_AddIntConstant(module, "SZOMB", SZOMB);  // unused
     PyModule_AddIntConstant(module, "SDEAD", SDEAD);
     PyModule_AddIntConstant(module, "SONPROC", SONPROC);
-#elif  defined(__NetBSD__)
+#elif defined(__NetBSD__)
     PyModule_AddIntConstant(module, "SIDL", LSIDL);
     PyModule_AddIntConstant(module, "SRUN", LSRUN);
     PyModule_AddIntConstant(module, "SSLEEP", LSSLEEP);

@@ -37,6 +37,7 @@ from psutil.tests import reap_children
 from psutil.tests import retry
 from psutil.tests import ROOT_DIR
 from psutil.tests import run_test_module_by_name
+from psutil.tests import safe_mkdir
 from psutil.tests import safe_rmpath
 from psutil.tests import SCRIPTS_DIR
 from psutil.tests import sh
