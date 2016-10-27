@@ -15,6 +15,7 @@ from . import _common
 from . import _psutil_windows as cext
 from ._common import conn_tmap
 from ._common import isfile_strict
+from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
@@ -578,19 +579,24 @@ class Process(object):
         self._inctx = False
         self._handle = None
 
+    # --- oneshot() stuff
+
     def oneshot_enter(self):
         self._inctx = True
+        self.oneshot_info.cache_activate()
 
     def oneshot_exit(self):
         self._inctx = False
-        if self._handle:
-            cext.win32_CloseHandle(self._handle)
-            self._handle = None
+        self.oneshot_info.cache_deactivate()
+        if self._handle is not None:
+            try:
+                cext.win32_CloseHandle(self._handle)
+            finally:
+                self._handle = None
 
     def get_handle(self):
         """Get a handle to this process.
-        If we're in oneshot() ctx manager tries to return the
-        cached handle.
+        If we're in oneshot() context returns the cached handle.
         """
         if self._inctx:
             self._handle = self._handle or cext.win32_OpenProcess(self.pid)
@@ -600,10 +606,11 @@ class Process(object):
 
     @contextlib.contextmanager
     def handle_ctx(self):
-        """Get a handle to this process.
-        If we're not in oneshot() ctx close the handle on exit
-        else tries to return the cached handle and avoid to close
-        the handle (will be close on oneshot() exit).
+        """Get a handle to this process as a context manager.
+        If we're not in a oneshot() context close the handle
+        when exiting the "with" statement, else try return the
+        cached handle (if available) and don't close it when
+        exiting the "with" statement.
         """
         handle = self.get_handle()
         try:
@@ -612,6 +619,7 @@ class Process(object):
             if not self._inctx:
                 cext.win32_CloseHandle(handle)
 
+    @memoize_when_activated
     def oneshot_info(self):
         """Return multiple information about this process as a
         raw tuple.
@@ -619,6 +627,8 @@ class Process(object):
         ret = cext.proc_info(self.pid)
         assert len(ret) == len(pinfo_map)
         return ret
+
+    # --- implementation
 
     @wrap_exceptions
     def name(self):

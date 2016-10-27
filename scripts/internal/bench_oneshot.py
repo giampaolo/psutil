@@ -95,7 +95,9 @@ elif psutil.WINDOWS:
         'ionice',
         'memory_info',
         'nice',
+        'num_ctx_switches',
         'num_handles',
+        'num_threads',
     ]
 
 names = sorted(set(names))
