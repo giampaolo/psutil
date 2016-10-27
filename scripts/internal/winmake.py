@@ -23,8 +23,6 @@ import tempfile
 import textwrap
 
 
-HERE = os.path.abspath(os.path.dirname(__file__))
-ROOT = os.path.abspath(os.path.join(HERE, '../..'))
 PYTHON = sys.executable
 TSCRIPT = os.environ['TSCRIPT']
 GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py"
@@ -111,7 +109,32 @@ def rm(pattern, directory=False):
                 safe_remove(path)
 
 
+# ===================================================================
+# commands
+# ===================================================================
+
+
+@cmd
+def help():
+    """Print this help"""
+    print('Run "make <target>" where <target> is one of:')
+    for name in sorted(_cmds):
+        print("    %-20s %s" % (name.replace('_', '-'), _cmds[name] or ''))
+
+
+@cmd
+def build():
+    """Build / compile"""
+    sh("%s setup.py build" % PYTHON)
+    # copies compiled *.pyd files in ./psutil directory in order to
+    # allow "import psutil" when using the interactive interpreter
+    # from within this directory.
+    sh("%s setup.py build_ext -i" % PYTHON)
+
+
+@cmd
 def install_pip():
+    """Install pip"""
     try:
         import pip  # NOQA
     except ImportError:
@@ -139,29 +162,6 @@ def install_pip():
             os.remove(tfile)
 
 
-# ===================================================================
-# commands
-# ===================================================================
-
-
-@cmd
-def help():
-    """Print this help"""
-    print('Run "make <target>" where <target> is one of:')
-    for name in sorted(_cmds):
-        print("    %-20s %s" % (name.replace('_', '-'), _cmds[name] or ''))
-
-
-@cmd
-def build():
-    """Build / compile"""
-    sh("%s setup.py build" % PYTHON)
-    # copies compiled *.pyd files in ./psutil directory in order to
-    # allow "import psutil" when using the interactive interpreter
-    # from within this directory.
-    sh("%s setup.py build_ext -i" % PYTHON)
-
-
 @cmd
 def install():
     """Install in develop / edit mode"""
@@ -173,8 +173,28 @@ def install():
 @cmd
 def uninstall():
     """Uninstall psutil"""
+    clean()
+    try:
+        import psutil
+    except ImportError:
+        return
     install_pip()
     sh("%s -m pip uninstall -y psutil" % PYTHON)
+
+    # Uninstalling psutil on Windows seems to be tricky as we may have
+    # different versions installed. Also we don't want to be in main
+    # psutil source dir as "import psutil" will always succeed.
+    here = os.getcwd()
+    try:
+        os.chdir('C:\\')
+        while True:
+            try:
+                import psutil  # NOQA
+            except ImportError:
+                return
+            sh("%s -m pip uninstall -y psutil" % PYTHON)
+    finally:
+        os.chdir(here)
 
 
 @cmd
@@ -191,6 +211,7 @@ def clean():
     rm("*.core")
     rm("*.orig")
     rm("*.pyc")
+    rm("*.pyd")
     rm("*.pyo")
     rm("*.rej")
     rm("*.so")
@@ -294,7 +315,6 @@ def install_git_hooks():
 
 
 def main():
-    os.chdir(ROOT)
     try:
         cmd = sys.argv[1].replace('-', '_')
     except IndexError:

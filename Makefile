@@ -36,6 +36,7 @@ all: test
 clean:
 	rm -rf `find . \
 		-type f -name \*.pyc \
+		-o -type f -name \*.pyd \
 		-o -type f -name \*.pyo \
 		-o -type f -name \*.so \
 		-o -type f -name \*.~ \
