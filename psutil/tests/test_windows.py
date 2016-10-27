@@ -312,6 +312,16 @@ class WindowsSpecificTestCase(unittest.TestCase):
         self.assertTrue(ps_names & wmi_names,
                         "no common entries in %s, %s" % (ps_names, wmi_names))
 
+    def test_compare_name_exe(self):
+        for p in psutil.process_iter():
+            try:
+                a = os.path.basename(p.exe())
+                b = p.name()
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+            else:
+                self.assertEqual(a, b)
+
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
 class TestDualProcessImplementation(unittest.TestCase):
@@ -333,6 +343,14 @@ class TestDualProcessImplementation(unittest.TestCase):
         ('proc_memory_info', 1024),  # KB
         ('proc_io_counters', 0),
     ]
+
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = get_test_subprocess().pid
+
+    @classmethod
+    def tearDownClass(cls):
+        reap_children()
 
     def test_compare_values(self):
         from psutil._pswindows import pinfo_map
@@ -448,61 +466,66 @@ class TestDualProcessImplementation(unittest.TestCase):
     # ---
     # same tests as above but mimicks the AccessDenied failure of
     # the first (fast) method failing with AD.
-    # TODO: currently does not take tolerance into account.
 
     def test_name(self):
-        name = psutil.Process().name()
+        name = psutil.Process(self.pid).name()
         with mock.patch("psutil._psplatform.cext.proc_exe",
                         side_effect=psutil.AccessDenied(os.getpid())) as fun:
-            psutil.Process().name() == name
+            self.assertEqual(psutil.Process(self.pid).name(), name)
             assert fun.called
 
     def test_memory_info(self):
-        mem = psutil.Process().memory_info()
+        mem_1 = psutil.Process(self.pid).memory_info()
         with mock.patch("psutil._psplatform.cext.proc_memory_info",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
-            psutil.Process().memory_info() == mem
+            mem_2 = psutil.Process(self.pid).memory_info()
+            self.assertEqual(len(mem_1), len(mem_2))
+            for i in range(len(mem_1)):
+                self.assertGreaterEqual(mem_1[i], 0)
+                self.assertGreaterEqual(mem_2[i], 0)
+                self.assertAlmostEqual(mem_1[i], mem_2[i], delta=512)
             assert fun.called
 
     def test_create_time(self):
-        ctime = psutil.Process().create_time()
+        ctime = psutil.Process(self.pid).create_time()
         with mock.patch("psutil._psplatform.cext.proc_create_time",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
-            psutil.Process().create_time() == ctime
+            self.assertEqual(psutil.Process(self.pid).create_time(), ctime)
             assert fun.called
 
     def test_cpu_times(self):
-        cpu_times = psutil.Process().cpu_times()
+        cpu_times_1 = psutil.Process(self.pid).cpu_times()
         with mock.patch("psutil._psplatform.cext.proc_cpu_times",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
-            psutil.Process().cpu_times() == cpu_times
+            cpu_times_2 = psutil.Process(self.pid).cpu_times()
             assert fun.called
+            self.assertAlmostEqual(
+                cpu_times_1.user, cpu_times_2.user, delta=0.01)
+            self.assertAlmostEqual(
+                cpu_times_1.system, cpu_times_2.system, delta=0.01)
 
     def test_io_counters(self):
-        io_counters = psutil.Process().io_counters()
+        io_counters_1 = psutil.Process(self.pid).io_counters()
+        print("")
+        print(io_counters_1)
         with mock.patch("psutil._psplatform.cext.proc_io_counters",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
-            psutil.Process().io_counters() == io_counters
+            io_counters_2 = psutil.Process(self.pid).io_counters()
+            for i in range(len(io_counters_1)):
+                self.assertGreaterEqual(io_counters_1[i], 0)
+                self.assertGreaterEqual(io_counters_2[i], 0)
+                self.assertAlmostEqual(
+                    io_counters_1[i], io_counters_2[i], delta=5)
             assert fun.called
 
     def test_num_handles(self):
-        io_counters = psutil.Process().io_counters()
-        with mock.patch("psutil._psplatform.cext.proc_io_counters",
+        num_handles = psutil.Process(self.pid).num_handles()
+        with mock.patch("psutil._psplatform.cext.proc_num_handles",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
-            psutil.Process().io_counters() == io_counters
+            psutil.Process(self.pid).num_handles() == num_handles
             assert fun.called
 
     # --- other tests
-
-    def test_compare_name_exe(self):
-        for p in psutil.process_iter():
-            try:
-                a = os.path.basename(p.exe())
-                b = p.name()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
-            else:
-                self.assertEqual(a, b)
 
     def test_zombies(self):
         # test that NPS is raised by the 2nd implementation in case a
