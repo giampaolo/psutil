@@ -485,6 +485,15 @@ def safe_rmpath(path):
             raise
 
 
+def safe_mkdir(dir):
+    "Convenience function for creating a directory"
+    try:
+        os.mkdir(dir)
+    except OSError as err:
+        if err.errno != errno.EEXIST:
+            raise
+
+
 @contextlib.contextmanager
 def chdir(dirname):
     "Context manager which temporarily changes the current directory."

@@ -1915,7 +1915,8 @@ take a look at the
 Timeline
 ========
 
-- 2016-10-23: `psutil-4.4.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.4.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#441>`__
+- 2016-10-26: `psutil-4.4.2.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.4.2&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#442>`__
+- 2016-10-25: `psutil-4.4.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.4.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#441>`__
 - 2016-10-23: `psutil-4.4.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.4.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#440>`__
 - 2016-09-01: `psutil-4.3.1.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.3.1&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#431>`__
 - 2016-06-18: `psutil-4.3.0.tar.gz <https://pypi.python.org/pypi?name=psutil&version=4.3.0&:action=files>`__ - `what's new <https://github.com/giampaolo/psutil/blob/master/HISTORY.rst#430>`__

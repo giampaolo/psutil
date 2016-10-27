@@ -34,6 +34,7 @@
 
 #if defined(__sun)
 #include <netdb.h>
+#include <sys/sockio.h>
 #endif
 
 

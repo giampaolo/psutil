@@ -49,6 +49,25 @@ def skip_if_linux():
                            "worthless on LINUX (pure python)")
 
 
+def bytes2human(n):
+    """
+    http://code.activestate.com/recipes/578019
+    >>> bytes2human(10000)
+    '9.8K'
+    >>> bytes2human(100001221)
+    '95.4M'
+    """
+    symbols = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
+    prefix = {}
+    for i, s in enumerate(symbols):
+        prefix[s] = 1 << (i + 1) * 10
+    for s in reversed(symbols):
+        if n >= prefix[s]:
+            value = float(n) / prefix[s]
+            return '%.1f%s' % (value, s)
+    return "%sB" % n
+
+
 class Base(unittest.TestCase):
     proc = psutil.Process()
 
@@ -87,10 +106,10 @@ class Base(unittest.TestCase):
             del stop_at
             gc.collect()
             rss3 = self.get_mem()
-            difference = rss3 - rss2
+            diff = rss3 - rss2
             if rss3 > rss2:
-                self.fail("rss2=%s, rss3=%s, difference=%s"
-                          % (rss2, rss3, difference))
+                self.fail("rss2=%s, rss3=%s, diff=%s (%s)"
+                          % (rss2, rss3, diff, bytes2human(diff)))
 
     def execute_w_exc(self, exc, function, *args, **kwargs):
         kwargs['_exc'] = exc
