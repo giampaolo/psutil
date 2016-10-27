@@ -110,6 +110,44 @@ def rm(pattern, directory=False):
                 safe_remove(path)
 
 
+def safe_remove(path):
+    try:
+        os.remove(path)
+    except OSError as err:
+        if err.errno != errno.ENOENT:
+            raise
+    else:
+        print("rm %s" % path)
+
+
+def safe_rmtree(path):
+    def onerror(fun, path, excinfo):
+        exc = excinfo[1]
+        if exc.errno != errno.ENOENT:
+            raise
+
+    existed = os.path.isdir(path)
+    shutil.rmtree(path, onerror=onerror)
+    if existed:
+        print("rmdir -f %s" % path)
+
+
+def recursive_rm(*patterns):
+    """Recursively remove a file or dir by pattern."""
+    for root, subdirs, subfiles in os.walk('.'):
+        root = os.path.normpath(root)
+        if root.startswith('.git/'):
+            continue
+        for file in subfiles:
+            for pattern in patterns:
+                if fnmatch.fnmatch(file, pattern):
+                    safe_remove(os.path.join(root, file))
+        for dir in subdirs:
+            for pattern in patterns:
+                if fnmatch.fnmatch(dir, pattern):
+                    safe_rmtree(os.path.join(root, dir))
+
+
 # ===================================================================
 # commands
 # ===================================================================
@@ -201,24 +239,28 @@ def uninstall():
 @cmd
 def clean():
     """Deletes dev files"""
-    rm("*.egg-info", directory=True)
-    rm("*__pycache__", directory=True)
-    rm("build", directory=True)
-    rm("dist", directory=True)
-    rm("htmlcov", directory=True)
-    rm("tmp", directory=True)
-
-    rm("*.bak")
-    rm("*.core")
-    rm("*.orig")
-    rm("*.pyc")
-    rm("*.pyd")
-    rm("*.pyo")
-    rm("*.rej")
-    rm("*.so")
-    rm("*.~")
-    rm(".coverage")
-    rm(".tox")
+    recursive_rm(
+        "$testfn*",
+        "*.bak",
+        "*.core",
+        "*.egg-info",
+        "*.orig",
+        "*.pyc",
+        "*.pyd",
+        "*.pyo",
+        "*.rej",
+        "*.so",
+        "*.~",
+        "*__pycache__",
+        ".coverage",
+        ".tox",
+    )
+    safe_rmtree("build")
+    safe_rmtree(".coverage")
+    safe_rmtree("dist")
+    safe_rmtree("docs/_build")
+    safe_rmtree("htmlcov")
+    safe_rmtree("tmp")
 
 
 @cmd
@@ -317,11 +359,13 @@ def install_git_hooks():
 
 @cmd
 def bench_oneshot():
+    install()
     sh("%s scripts\\internal\\bench_oneshot.py" % PYTHON)
 
 
 @cmd
 def bench_oneshot_2():
+    install()
     sh("%s scripts\\internal\\bench_oneshot_2.py" % PYTHON)
 
 
