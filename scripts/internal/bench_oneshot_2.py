@@ -11,7 +11,7 @@ supposed to be more precise.
 
 import sys
 
-import perf.text_runner
+import perf  # requires "pip install perf"
 
 import psutil
 from bench_oneshot import names
@@ -21,25 +21,23 @@ p = psutil.Process()
 funs = [getattr(p, n) for n in names]
 
 
-def call_normal(funs):
+def call_normal():
     for fun in funs:
         fun()
 
 
-def call_oneshot(funs):
+def call_oneshot():
     with p.oneshot():
         for fun in funs:
             fun()
 
 
-def prepare_cmd(runner, cmd):
-    cmd.append(runner.args.benchmark)
+def add_cmdline_args(cmd, args):
+    cmd.append(args.benchmark)
 
 
 def main():
-    runner = perf.text_runner.TextRunner(name='psutil')
-    runner.argparser.add_argument('benchmark', choices=('normal', 'oneshot'))
-    runner.prepare_subprocess_args = prepare_cmd
+    runner = perf.Runner()
 
     args = runner.parse_args()
     if not args.worker:
@@ -48,9 +46,8 @@ def main():
         for name in sorted(names):
             print("    " + name)
 
-    if args.benchmark == 'normal':
-        runner.bench_func(call_normal, funs)
-    else:
-        runner.bench_func(call_oneshot, funs)
+    runner.bench_func("normal", call_normal)
+    runner.bench_func("oneshot", call_oneshot)
+
 
 main()
