@@ -2796,16 +2796,13 @@ psutil_proc_info(PyObject *self, PyObject *args) {
     double user_time;
     double kernel_time;
     long long create_time;
-    int num_threads;
-    LONGLONG io_rcount, io_wcount, io_rbytes, io_wbytes;
-
+    PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (! psutil_get_proc_info(pid, &process, &buffer))
         return NULL;
 
-    num_handles = process->HandleCount;
     for (i = 0; i < process->NumberOfThreads; i++)
         ctx_switches += process->Threads[i].ContextSwitches;
     user_time = (double)process->UserTime.HighPart * 429.4967296 + \
@@ -2824,26 +2821,23 @@ psutil_proc_info(PyObject *self, PyObject *args) {
         create_time += process->CreateTime.LowPart - 116444736000000000LL;
         create_time /= 10000000;
     }
-    num_threads = (int)process->NumberOfThreads;
-    io_rcount = process->ReadOperationCount.QuadPart;
-    io_wcount = process->WriteOperationCount.QuadPart;
-    io_rbytes = process->ReadTransferCount.QuadPart;
-    io_wbytes = process->WriteTransferCount.QuadPart;
-    free(buffer);
 
-    return Py_BuildValue(
+    py_retlist = Py_BuildValue(
         "kkdddiKKKK",
-        num_handles,
-        ctx_switches,
-        user_time,
-        kernel_time,
-        (double)create_time,
-        num_threads,
-        io_rcount,
-        io_wcount,
-        io_rbytes,
-        io_wbytes
+        process->HandleCount,                   // num handles
+        ctx_switches,                           // num ctx switches
+        user_time,                              // cpu user time
+        kernel_time,                            // cpu kernel time
+        (double)create_time,                    // create time
+        (int)process->NumberOfThreads,          // num threads
+        process->ReadOperationCount.QuadPart,   // io rcount
+        process->WriteOperationCount.QuadPart,  // io wcount
+        process->ReadTransferCount.QuadPart,    // io rbytes
+        process->WriteTransferCount.QuadPart    // io wbytes
     );
+
+    free(buffer);
+    return py_retlist;
 }
 
 
