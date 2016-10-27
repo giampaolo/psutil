@@ -244,7 +244,4 @@ bench-oneshot: install
 
 # same as above but using perf module (supposed to be more precise)
 bench-oneshot-2: install
-	rm -f normal.json oneshot.json
-	$(PYTHON) scripts/internal/bench_oneshot_2.py normal -o normal.json
-	$(PYTHON) scripts/internal/bench_oneshot_2.py oneshot -o oneshot.json
-	$(PYTHON) -m perf compare_to normal.json oneshot.json
+	$(PYTHON) scripts/internal/bench_oneshot_2.py
