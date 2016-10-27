@@ -359,11 +359,13 @@ def install_git_hooks():
 
 @cmd
 def bench_oneshot():
+    install()
     sh("%s scripts\\internal\\bench_oneshot.py" % PYTHON)
 
 
 @cmd
 def bench_oneshot_2():
+    install()
     sh("%s scripts\\internal\\bench_oneshot_2.py" % PYTHON)
 
 
