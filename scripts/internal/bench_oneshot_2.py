@@ -41,8 +41,8 @@ def main():
 
     args = runner.parse_args()
     if not args.worker:
-        print("%s methods involved on platform %r:" % (
-            len(names), sys.platform))
+        print("%s methods involved on platform %r (psutil %s):" % (
+            len(names), sys.platform, psutil.__version__))
         for name in sorted(names):
             print("    " + name)
 

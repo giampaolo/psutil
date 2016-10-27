@@ -121,8 +121,8 @@ setup = textwrap.dedent("""
 
 
 def main():
-    print("%s methods involved on platform %r (%s iterations):" % (
-        len(names), sys.platform, ITERATIONS))
+    print("%s methods involved on platform %r (%s iterations, psutil %s):" % (
+        len(names), sys.platform, ITERATIONS, psutil.__version__))
     for name in sorted(names):
         print("    " + name)
 
