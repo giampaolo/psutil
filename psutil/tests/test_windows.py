@@ -335,8 +335,10 @@ class TestDualProcessImplementation(unittest.TestCase):
     ]
 
     def test_compare_values(self):
+        from psutil._pswindows import pinfo_map
+
         def assert_ge_0(obj):
-            if isinstance(obj, tuple):
+            if isinstance(obj, (tuple, list)):
                 for value in obj:
                     self.assertGreaterEqual(value, 0, msg=obj)
             elif isinstance(obj, (int, long, float)):
@@ -356,14 +358,13 @@ class TestDualProcessImplementation(unittest.TestCase):
                         diff = abs(a - b)
                         self.assertLessEqual(diff, tolerance)
 
-        from psutil._pswindows import ntpinfo
         failures = []
         for p in psutil.process_iter():
             try:
-                nt = ntpinfo(*cext.proc_info(p.pid))
+                raw_info = cext.proc_info(p.pid)
             except psutil.NoSuchProcess:
                 continue
-            assert_ge_0(nt)
+            assert_ge_0(raw_info)
 
             for name, tolerance in self.fun_names:
                 if name == 'proc_memory_info' and p.pid == os.getpid():
@@ -378,28 +379,66 @@ class TestDualProcessImplementation(unittest.TestCase):
                 # compare values
                 try:
                     if name == 'proc_cpu_times':
-                        compare_with_tolerance(ret[0], nt.user_time, tolerance)
-                        compare_with_tolerance(ret[1],
-                                               nt.kernel_time, tolerance)
+                        compare_with_tolerance(
+                            ret[0], raw_info[pinfo_map['user_time']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[1], raw_info[pinfo_map['kernel_time']],
+                            tolerance)
                     elif name == 'proc_create_time':
-                        compare_with_tolerance(ret, nt.create_time, tolerance)
+                        compare_with_tolerance(
+                            ret, raw_info[pinfo_map['create_time']], tolerance)
                     elif name == 'proc_num_handles':
-                        compare_with_tolerance(ret, nt.num_handles, tolerance)
+                        compare_with_tolerance(
+                            ret, raw_info[pinfo_map['num_handles']], tolerance)
                     elif name == 'proc_io_counters':
-                        compare_with_tolerance(ret[0], nt.io_rcount, tolerance)
-                        compare_with_tolerance(ret[1], nt.io_wcount, tolerance)
-                        compare_with_tolerance(ret[2], nt.io_rbytes, tolerance)
-                        compare_with_tolerance(ret[3], nt.io_wbytes, tolerance)
+                        compare_with_tolerance(
+                            ret[0], raw_info[pinfo_map['io_rcount']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[1], raw_info[pinfo_map['io_wcount']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[2], raw_info[pinfo_map['io_rbytes']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[3], raw_info[pinfo_map['io_wbytes']],
+                            tolerance)
                     elif name == 'proc_memory_info':
-                        try:
-                            rawtupl = cext.proc_memory_info_2(p.pid)
-                        except psutil.NoSuchProcess:
-                            continue
-                        compare_with_tolerance(ret, rawtupl, tolerance)
+                        compare_with_tolerance(
+                            ret[0], raw_info[pinfo_map['num_page_faults']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[1], raw_info[pinfo_map['peak_wset']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[2], raw_info[pinfo_map['wset']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[3], raw_info[pinfo_map['peak_paged_pool']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[4], raw_info[pinfo_map['paged_pool']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[5], raw_info[pinfo_map['peak_non_paged_pool']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[6], raw_info[pinfo_map['non_paged_pool']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[7], raw_info[pinfo_map['pagefile']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[8], raw_info[pinfo_map['peak_pagefile']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[9], raw_info[pinfo_map['mem_private']],
+                            tolerance)
                 except AssertionError:
                     trace = traceback.format_exc()
                     msg = '%s\npid=%s, method=%r, ret_1=%r, ret_2=%r' % (
-                        trace, p.pid, name, ret, nt)
+                        trace, p.pid, name, ret, raw_info)
                     failures.append(msg)
                     break
 
