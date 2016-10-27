@@ -34,16 +34,16 @@ all: test
 
 # Remove all build files.
 clean:
-	rm -rf `find . \
-		-type f -name \*.pyc \
+	rm -rf `find . -type d -name __pycache__
+		-o -type f -name \*.bak \
+		-o -type f -name \*.orig \
+		-o -type f -name \*.pyc \
 		-o -type f -name \*.pyd \
 		-o -type f -name \*.pyo \
-		-o -type f -name \*.so \
-		-o -type f -name \*.~ \
-		-o -type f -name \*.orig \
-		-o -type f -name \*.bak \
 		-o -type f -name \*.rej \
-		-o -type d -name __pycache__`
+		-o -type f -name \*.so \
+		-o -type f -name \*.~
+		-o -type f -name \*\$testfn`
 	rm -rf \
 		*.core \
 		*.egg-info \

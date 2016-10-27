@@ -103,7 +103,7 @@ AF_UNIX = getattr(socket, "AF_UNIX", None)
 PYTHON = os.path.realpath(sys.executable)
 DEVNULL = open(os.devnull, 'r+')
 
-TESTFILE_PREFIX = '$psutil'
+TESTFILE_PREFIX = '$testfn'
 TESTFN = os.path.join(os.path.realpath(os.getcwd()), TESTFILE_PREFIX)
 _TESTFN = TESTFN + '-internal'
 TESTFN_UNICODE = TESTFN + "-ƒőő"
