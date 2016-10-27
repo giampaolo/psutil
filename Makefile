@@ -14,6 +14,7 @@ DEPS = argparse \
 	ipaddress \
 	mock==1.0.1 \
 	pep8 \
+	perf \
 	pyflakes \
 	requests \
 	setuptools \
@@ -34,23 +35,26 @@ all: test
 
 # Remove all build files.
 clean:
-	rm -f `find . -type f -name \*.py[co]`
-	rm -f `find . -type f -name \*.so`
-	rm -f `find . -type f -name \*.~`
-	rm -f `find . -type f -name \*.orig`
-	rm -f `find . -type f -name \*.bak`
-	rm -f `find . -type f -name \*.rej`
-	rm -rf `find . -type d -name __pycache__`
-	rm -rf *.core
-	rm -rf *.egg-info
-	rm -rf *\$testfile*
-	rm -rf .coverage
-	rm -rf .tox
-	rm -rf build/
-	rm -rf dist/
-	rm -rf docs/_build/
-	rm -rf htmlcov/
-	rm -rf tmp/
+	rm -rf `find . \
+		-type f -name \*.pyc \
+		-o -type f -name \*.pyo \
+		-o -type f -name \*.so \
+		-o -type f -name \*.~ \
+		-o -type f -name \*.orig \
+		-o -type f -name \*.bak \
+		-o -type f -name \*.rej \
+		-o -type d -name __pycache__`
+	rm -rf \
+		*.core \
+		*.egg-info \
+		*\$testfile* \
+		.coverage \
+		.tox \
+		build/ \
+		dist/ \
+		docs/_build/ \
+		htmlcov/ \
+		tmp/
 
 _:
 
@@ -243,7 +247,4 @@ bench-oneshot: install
 
 # same as above but using perf module (supposed to be more precise)
 bench-oneshot-2: install
-	rm -f normal.json oneshot.json
-	$(PYTHON) scripts/internal/bench_oneshot_2.py normal -o normal.json
-	$(PYTHON) scripts/internal/bench_oneshot_2.py oneshot -o oneshot.json
-	$(PYTHON) -m perf compare_to normal.json oneshot.json
+	$(PYTHON) scripts/internal/bench_oneshot_2.py
