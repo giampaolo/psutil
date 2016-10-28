@@ -778,57 +778,6 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 }
 
 
-/*
- * Alternative implementation of the one above but bypasses ACCESS DENIED.
- */
-static PyObject *
-psutil_proc_memory_info_2(PyObject *self, PyObject *args) {
-    DWORD pid;
-    PSYSTEM_PROCESS_INFORMATION process;
-    PVOID buffer;
-    SIZE_T private;
-    unsigned long pfault_count;
-
-#if defined(_WIN64)
-    unsigned long long m1, m2, m3, m4, m5, m6, m7, m8;
-#else
-    unsigned int m1, m2, m3, m4, m5, m6, m7, m8;
-#endif
-
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (! psutil_get_proc_info(pid, &process, &buffer))
-        return NULL;
-
-#if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
-    private = process->PrivatePageCount;
-#else
-    private = 0;
-#endif
-    pfault_count = process->PageFaultCount;
-
-    m1 = process->PeakWorkingSetSize;
-    m2 = process->WorkingSetSize;
-    m3 = process->QuotaPeakPagedPoolUsage;
-    m4 = process->QuotaPagedPoolUsage;
-    m5 = process->QuotaPeakNonPagedPoolUsage;
-    m6 = process->QuotaNonPagedPoolUsage;
-    m7 = process->PagefileUsage;
-    m8 = process->PeakPagefileUsage;
-
-    free(buffer);
-
-    // SYSTEM_PROCESS_INFORMATION values are defined as SIZE_T which on 64
-    // bits is an (unsigned long long) and on 32bits is an (unsigned int).
-    // "_WIN64" is defined if we're running a 64bit Python interpreter not
-    // exclusively if the *system* is 64bit.
-#if defined(_WIN64)
-    return Py_BuildValue("(kKKKKKKKKK)",
-#else
-    return Py_BuildValue("(kIIIIIIIII)",
-#endif
-        pfault_count, m1, m2, m3, m4, m5, m6, m7, m8, private);
-}
 
 /**
  * Returns the USS of the process.
@@ -2778,34 +2727,32 @@ psutil_proc_num_handles(PyObject *self, PyObject *args) {
  * denied. This is slower because it iterates over all processes.
  * Returned tuple includes the following process info:
  *
- * - num_threads
- * - ctx_switches
- * - num_handles (fallback)
- * - user/kernel times (fallback)
- * - create time (fallback)
- * - io counters (fallback)
+ * - num_threads()
+ * - ctx_switches()
+ * - num_handles() (fallback)
+ * - cpu_times() (fallback)
+ * - create_time() (fallback)
+ * - io_counters() (fallback)
+ * - memory_info() (fallback)
  */
 static PyObject *
 psutil_proc_info(PyObject *self, PyObject *args) {
     DWORD pid;
     PSYSTEM_PROCESS_INFORMATION process;
     PVOID buffer;
-    ULONG num_handles;
     ULONG i;
     ULONG ctx_switches = 0;
     double user_time;
     double kernel_time;
     long long create_time;
-    int num_threads;
-    LONGLONG io_rcount, io_wcount, io_rbytes, io_wbytes;
-
+    SIZE_T mem_private;
+    PyObject *py_retlist;
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
     if (! psutil_get_proc_info(pid, &process, &buffer))
         return NULL;
 
-    num_handles = process->HandleCount;
     for (i = 0; i < process->NumberOfThreads; i++)
         ctx_switches += process->Threads[i].ContextSwitches;
     user_time = (double)process->UserTime.HighPart * 429.4967296 + \
@@ -2824,26 +2771,44 @@ psutil_proc_info(PyObject *self, PyObject *args) {
         create_time += process->CreateTime.LowPart - 116444736000000000LL;
         create_time /= 10000000;
     }
-    num_threads = (int)process->NumberOfThreads;
-    io_rcount = process->ReadOperationCount.QuadPart;
-    io_wcount = process->WriteOperationCount.QuadPart;
-    io_rbytes = process->ReadTransferCount.QuadPart;
-    io_wbytes = process->WriteTransferCount.QuadPart;
-    free(buffer);
 
-    return Py_BuildValue(
-        "kkdddiKKKK",
-        num_handles,
-        ctx_switches,
-        user_time,
-        kernel_time,
-        (double)create_time,
-        num_threads,
-        io_rcount,
-        io_wcount,
-        io_rbytes,
-        io_wbytes
+#if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
+    mem_private = process->PrivatePageCount;
+#else
+    mem_private = 0;
+#endif
+
+    py_retlist = Py_BuildValue(
+#if defined(_WIN64)
+        "kkdddiKKKK" "kKKKKKKKKK",
+#else
+        "kkdddiKKKK" "kIIIIIIIII",
+#endif
+        process->HandleCount,                   // num handles
+        ctx_switches,                           // num ctx switches
+        user_time,                              // cpu user time
+        kernel_time,                            // cpu kernel time
+        (double)create_time,                    // create time
+        (int)process->NumberOfThreads,          // num threads
+        process->ReadOperationCount.QuadPart,   // io rcount
+        process->WriteOperationCount.QuadPart,  // io wcount
+        process->ReadTransferCount.QuadPart,    // io rbytes
+        process->WriteTransferCount.QuadPart,   // io wbytes
+        // memory
+        process->PageFaultCount,                // num page faults
+        process->PeakWorkingSetSize,            // peak wset
+        process->WorkingSetSize,                // wset
+        process->QuotaPeakPagedPoolUsage,       // peak paged pool
+        process->QuotaPagedPoolUsage,           // paged pool
+        process->QuotaPeakNonPagedPoolUsage,    // peak non paged pool
+        process->QuotaNonPagedPoolUsage,        // non paged pool
+        process->PagefileUsage,                 // pagefile
+        process->PeakPagefileUsage,             // peak pagefile
+        mem_private                             // private
     );
+
+    free(buffer);
+    return py_retlist;
 }
 
 
@@ -3456,8 +3421,6 @@ PsutilMethods[] = {
      "seconds since the epoch"},
     {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
      "Return a tuple of process memory information"},
-    {"proc_memory_info_2", psutil_proc_memory_info_2, METH_VARARGS,
-     "Alternate implementation"},
     {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS,
      "Return the USS of the process"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
