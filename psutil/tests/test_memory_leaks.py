@@ -5,9 +5,10 @@
 # found in the LICENSE file.
 
 """
-A test script which attempts to detect memory leaks by calling C
-functions many times and compare process memory usage before and
-after the calls.  It might produce false positives.
+Tests for detecting memory leaks for psutil functions which are
+implemented in C. It does so by calling a function many times and
+checking whether process memory usage keeps increasing between
+calls and/or over time.
 """
 
 import functools
@@ -77,15 +78,14 @@ def bytes2human(n):
 class Base(unittest.TestCase):
     """Base framework class which calls a function many times and
     produces a failure if process memory usage keeps increasing
-    over time.
+    between calls and / or over time.
     """
-
-    proc = thisproc
 
     def setUp(self):
         gc.collect()
 
     def execute(self, fun, *args, **kwargs):
+        """Test a callable."""
         def call_many_times():
             for x in xrange(LOOPS - 1):
                 self._call(fun, *args, **kwargs)
@@ -96,7 +96,8 @@ class Base(unittest.TestCase):
         self.assertEqual(gc.garbage, [])
         self.assertEqual(threading.active_count(), 1)
 
-        # USS or RSS comparison.
+        # Get 2 distinct memory samples, before and after having
+        # called fun repeadetly.
         # step 1
         call_many_times()
         mem1 = self._get_mem()
@@ -113,7 +114,7 @@ class Base(unittest.TestCase):
             # more.
             # Let's keep calling fun for 3 more seconds and fail if
             # we notice any difference.
-            ncalls = LOOPS * 2
+            ncalls = 0
             stop_at = time.time() + 3
             while True:
                 self._call(fun, *args, **kwargs)
@@ -127,12 +128,15 @@ class Base(unittest.TestCase):
             if mem3 > mem2:
                 self.fail("+%s after %s calls, +%s after another %s calls" % (
                     bytes2human(diff1),
-                    LOOPS,
+                    LOOPS * 2,
                     bytes2human(diff2),
                     ncalls
                 ))
 
     def execute_w_exc(self, exc, fun, *args, **kwargs):
+        """Convenience function which tests a callable raising
+        an exception.
+        """
         def call():
             self.assertRaises(exc, fun, *args, **kwargs)
 
@@ -140,7 +144,7 @@ class Base(unittest.TestCase):
 
     @staticmethod
     def _get_mem():
-        # By using USS memory  it seems it's less likely to bump
+        # By using USS memory it seems it's less likely to bump
         # into false positives.
         if LINUX or WINDOWS or OSX:
             return thisproc.memory_full_info().uss
@@ -159,6 +163,8 @@ class Base(unittest.TestCase):
 
 class TestProcessObjectLeaks(Base):
     """Test leaks of Process class methods."""
+
+    proc = thisproc
 
     @skip_if_linux()
     def test_name(self):
