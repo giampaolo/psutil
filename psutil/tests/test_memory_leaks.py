@@ -339,40 +339,46 @@ class TestProcessObjectLeaks(Base):
         self.execute(cext.proc_info, os.getpid())
 
 
-p = get_test_subprocess()
-DEAD_PROC = psutil.Process(p.pid)
-DEAD_PROC.kill()
-DEAD_PROC.wait()
-del p
-
-
 class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
-    """Same as above but looks for leaks occurring when dealing with
-    zombie processes raising NoSuchProcess exception.
+    """Repeat the tests above looking for leaks occurring when dealing
+    with terminated processes raising NoSuchProcess exception.
+    The C functions are still invoked but will follow different code
+    paths. We'll check those code paths.
     """
-    proc = DEAD_PROC
 
-    def call(self, *args, **kwargs):
+    @classmethod
+    def setUpClass(cls):
+        p = get_test_subprocess()
+        cls.proc = psutil.Process(p.pid)
+        cls.proc.kill()
+        cls.proc.wait()
+
+    @classmethod
+    def tearDownClass(cls):
+        reap_children()
+
+    def call(self, fun, *args, **kwargs):
         try:
-            TestProcessObjectLeaks.call(self, *args, **kwargs)
+            fun(*args, **kwargs)
         except psutil.NoSuchProcess:
             pass
 
-    if not POSIX:
+    if WINDOWS:
+
         def test_kill(self):
-            self.execute('kill')
+            self.execute(self.proc.kill)
 
         def test_terminate(self):
-            self.execute('terminate')
+            self.execute(self.proc.terminate)
 
         def test_suspend(self):
-            self.execute('suspend')
+            self.execute(self.proc.suspend)
 
         def test_resume(self):
-            self.execute('resume')
+            self.execute(self.proc.resume)
 
         def test_wait(self):
-            self.execute('wait')
+            self.execute(self.proc.wait)
 
 
 # ===================================================================
