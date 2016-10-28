@@ -425,6 +425,8 @@ class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
 class TestModuleFunctionsLeaks(TestMemLeak):
     """Test leaks of psutil module functions."""
 
+    # --- cpu
+
     @skip_if_linux()
     def test_cpu_count_logical(self):
         self.execute(psutil.cpu_count, logical=True)
@@ -434,13 +436,17 @@ class TestModuleFunctionsLeaks(TestMemLeak):
         self.execute(psutil.cpu_count, logical=False)
 
     @skip_if_linux()
-    def test_boot_time(self):
-        self.execute(psutil.boot_time)
+    def test_cpu_times(self):
+        self.execute(psutil.cpu_times)
 
-    @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
-                     "worthless on POSIX (pure python)")
-    def test_pid_exists(self):
-        self.execute(psutil.pid_exists, os.getpid())
+    @skip_if_linux()
+    def test_per_cpu_times(self):
+        self.execute(psutil.cpu_times, percpu=True)
+
+    def test_cpu_stats(self):
+        self.execute(psutil.cpu_stats)
+
+    # --- mem
 
     def test_virtual_memory(self):
         self.execute(psutil.virtual_memory)
@@ -451,13 +457,12 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     def test_swap_memory(self):
         self.execute(psutil.swap_memory)
 
-    @skip_if_linux()
-    def test_cpu_times(self):
-        self.execute(psutil.cpu_times)
+    @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
+                     "worthless on POSIX (pure python)")
+    def test_pid_exists(self):
+        self.execute(psutil.pid_exists, os.getpid())
 
-    @skip_if_linux()
-    def test_per_cpu_times(self):
-        self.execute(psutil.cpu_times, percpu=True)
+    # --- disk
 
     @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
                      "worthless on POSIX (pure python)")
@@ -467,20 +472,17 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     def test_disk_partitions(self):
         self.execute(psutil.disk_partitions)
 
-    @skip_if_linux()
-    def test_net_io_counters(self):
-        self.execute(psutil.net_io_counters)
-
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this Linux version')
     @skip_if_linux()
     def test_disk_io_counters(self):
         self.execute(psutil.disk_io_counters)
 
-    # XXX - on Windows this produces a false positive
-    @unittest.skipIf(WINDOWS, "XXX produces a false positive on Windows")
-    def test_users(self):
-        self.execute(psutil.users)
+    # --- net
+
+    @skip_if_linux()
+    def test_net_io_counters(self):
+        self.execute(psutil.net_io_counters)
 
     @unittest.skipIf(LINUX,
                      "worthless on Linux (pure python)")
@@ -497,8 +499,16 @@ class TestModuleFunctionsLeaks(TestMemLeak):
     def test_net_if_stats(self):
         self.execute(psutil.net_if_stats)
 
-    def test_cpu_stats(self):
-        self.execute(psutil.cpu_stats)
+    # --- others
+
+    @skip_if_linux()
+    def test_boot_time(self):
+        self.execute(psutil.boot_time)
+
+    # XXX - on Windows this produces a false positive
+    @unittest.skipIf(WINDOWS, "XXX produces a false positive on Windows")
+    def test_users(self):
+        self.execute(psutil.users)
 
     if WINDOWS:
 
