@@ -41,7 +41,7 @@ from psutil.tests import unittest
 
 LOOPS = 1000
 MEMORY_TOLERANCE = 4096
-SKIP_PYTHON_IMPL = True
+SKIP_PYTHON_IMPL = False
 cext = psutil._psplatform.cext
 
 
@@ -150,16 +150,6 @@ class TestProcessObjectLeaks(Base):
             else:
                 try:
                     function(*args, **kwargs)
-                except psutil.Error:
-                    pass
-        else:
-            meth = getattr(self.proc, function)
-            if '_exc' in kwargs:
-                exc = kwargs.pop('_exc')
-                self.assertRaises(exc, meth, *args, **kwargs)
-            else:
-                try:
-                    meth(*args, **kwargs)
                 except psutil.Error:
                     pass
 
