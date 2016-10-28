@@ -455,7 +455,7 @@ psutil_users(PyObject *self, PyObject *args) {
             (float)ut->ut_tv.tv_sec,  // tstamp
             py_user_proc              // (bool) user process
         );
-    if (! py_tuple)
+        if (! py_tuple)
             goto error;
         if (PyList_Append(py_retlist, py_tuple))
             goto error;

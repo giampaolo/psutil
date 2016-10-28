@@ -403,6 +403,7 @@ psutil_winservice_query_descr(PyObject *self, PyObject *args) {
         goto error;
 
     free(scd);
+    CloseServiceHandle(hService);
     return py_retstr;
 
 error:

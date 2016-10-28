@@ -3287,6 +3287,7 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         PyErr_NoMemory();
         goto error;
     }
+
     status = NtQuerySystemInformation(
         SystemInterruptInformation,
         InterruptInformation,
@@ -3324,10 +3325,10 @@ psutil_cpu_stats(PyObject *self, PyObject *args) {
         interrupts += sppi[i].InterruptCount;
     }
 
-
     // done
     free(spi);
     free(InterruptInformation);
+    free(sppi);
     FreeLibrary(hNtDll);
     return Py_BuildValue(
         "kkkk",
@@ -3342,6 +3343,8 @@ error:
         free(spi);
     if (InterruptInformation)
         free(InterruptInformation);
+    if (sppi)
+        free(sppi);
     if (hNtDll)
         FreeLibrary(hNtDll);
     return NULL;
