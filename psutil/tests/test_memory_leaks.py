@@ -143,164 +143,163 @@ class TestProcessObjectLeaks(Base):
     """Test leaks of Process class methods."""
 
     def call(self, function, *args, **kwargs):
-        if callable(function):
-            if '_exc' in kwargs:
-                exc = kwargs.pop('_exc')
-                self.assertRaises(exc, function, *args, **kwargs)
-            else:
-                try:
-                    function(*args, **kwargs)
-                except psutil.Error:
-                    pass
+        if '_exc' in kwargs:
+            exc = kwargs.pop('_exc')
+            self.assertRaises(exc, function, *args, **kwargs)
+        else:
+            try:
+                function(*args, **kwargs)
+            except psutil.Error:
+                pass
 
     @skip_if_linux()
     def test_name(self):
-        self.execute('name')
+        self.execute(self.proc.name)
 
     @skip_if_linux()
     def test_cmdline(self):
-        self.execute('cmdline')
+        self.execute(self.proc.cmdline)
 
     @skip_if_linux()
     def test_exe(self):
-        self.execute('exe')
+        self.execute(self.proc.exe)
 
     @skip_if_linux()
     def test_ppid(self):
-        self.execute('ppid')
+        self.execute(self.proc.ppid)
 
     @unittest.skipUnless(POSIX, "POSIX only")
     @skip_if_linux()
     def test_uids(self):
-        self.execute('uids')
+        self.execute(self.proc.uids)
 
     @unittest.skipUnless(POSIX, "POSIX only")
     @skip_if_linux()
     def test_gids(self):
-        self.execute('gids')
+        self.execute(self.proc.gids)
 
     @skip_if_linux()
     def test_status(self):
-        self.execute('status')
+        self.execute(self.proc.status)
 
     def test_nice_get(self):
-        self.execute('nice')
+        self.execute(self.proc.nice)
 
     def test_nice_set(self):
         niceness = psutil.Process().nice()
-        self.execute('nice', niceness)
+        self.execute(self.proc.nice, niceness)
 
     @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
                          "platform not supported")
     def test_ionice_get(self):
-        self.execute('ionice')
+        self.execute(self.proc.ionice)
 
     @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
                          "platform not supported")
     def test_ionice_set(self):
         if WINDOWS:
             value = psutil.Process().ionice()
-            self.execute('ionice', value)
+            self.execute(self.proc.ionice, value)
         else:
-            self.execute('ionice', psutil.IOPRIO_CLASS_NONE)
+            self.execute(self.proc.ionice, psutil.IOPRIO_CLASS_NONE)
             fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
             self.execute_w_exc(OSError, fun)
 
     @unittest.skipIf(OSX or SUNOS, "platform not supported")
     @skip_if_linux()
     def test_io_counters(self):
-        self.execute('io_counters')
+        self.execute(self.proc.io_counters)
 
     @unittest.skipIf(POSIX, "worthless on POSIX")
     def test_username(self):
-        self.execute('username')
+        self.execute(self.proc.username)
 
     @skip_if_linux()
     def test_create_time(self):
-        self.execute('create_time')
+        self.execute(self.proc.create_time)
 
     @skip_if_linux()
     def test_num_threads(self):
-        self.execute('num_threads')
+        self.execute(self.proc.num_threads)
 
     @unittest.skipUnless(WINDOWS, "WINDOWS only")
     def test_num_handles(self):
-        self.execute('num_handles')
+        self.execute(self.proc.num_handles)
 
     @unittest.skipUnless(POSIX, "POSIX only")
     @skip_if_linux()
     def test_num_fds(self):
-        self.execute('num_fds')
+        self.execute(self.proc.num_fds)
 
     @skip_if_linux()
     def test_threads(self):
-        self.execute('threads')
+        self.execute(self.proc.threads)
 
     @skip_if_linux()
     def test_cpu_times(self):
-        self.execute('cpu_times')
+        self.execute(self.proc.cpu_times)
 
     @skip_if_linux()
     def test_memory_info(self):
-        self.execute('memory_info')
+        self.execute(self.proc.memory_info)
 
     # also available on Linux but it's pure python
     @unittest.skipUnless(OSX or WINDOWS,
                          "platform not supported")
     def test_memory_full_info(self):
-        self.execute('memory_full_info')
+        self.execute(self.proc.memory_full_info)
 
     @unittest.skipUnless(POSIX, "POSIX only")
     @skip_if_linux()
     def test_terminal(self):
-        self.execute('terminal')
+        self.execute(self.proc.terminal)
 
     @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
                      "worthless on POSIX (pure python)")
     def test_resume(self):
-        self.execute('resume')
+        self.execute(self.proc.resume)
 
     @skip_if_linux()
     def test_cwd(self):
-        self.execute('cwd')
+        self.execute(self.proc.cwd)
 
     @unittest.skipUnless(WINDOWS or LINUX or FREEBSD,
                          "platform not supported")
     def test_cpu_affinity_get(self):
-        self.execute('cpu_affinity')
+        self.execute(self.proc.cpu_affinity)
 
     @unittest.skipUnless(WINDOWS or LINUX or FREEBSD,
                          "platform not supported")
     def test_cpu_affinity_set(self):
         affinity = psutil.Process().cpu_affinity()
-        self.execute('cpu_affinity', affinity)
+        self.execute(self.proc.cpu_affinity, affinity)
         if not TRAVIS:
-            self.execute_w_exc(ValueError, 'cpu_affinity', [-1])
+            self.execute_w_exc(ValueError, self.proc.cpu_affinity, [-1])
 
     @skip_if_linux()
     def test_open_files(self):
         safe_rmpath(TESTFN)  # needed after UNIX socket test has run
         with open(TESTFN, 'w'):
-            self.execute('open_files')
+            self.execute(self.proc.open_files)
 
     # OSX implementation is unbelievably slow
     @unittest.skipIf(OSX, "too slow on OSX")
     @unittest.skipIf(OPENBSD, "platform not supported")
     @skip_if_linux()
     def test_memory_maps(self):
-        self.execute('memory_maps')
+        self.execute(self.proc.memory_maps)
 
     @unittest.skipUnless(LINUX, "LINUX only")
     @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_get(self):
-        self.execute('rlimit', psutil.RLIMIT_NOFILE)
+        self.execute(self.proc.rlimit, psutil.RLIMIT_NOFILE)
 
     @unittest.skipUnless(LINUX, "LINUX only")
     @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_set(self):
         limit = psutil.Process().rlimit(psutil.RLIMIT_NOFILE)
-        self.execute('rlimit', psutil.RLIMIT_NOFILE, limit)
-        self.execute_w_exc(OSError, 'rlimit', -1)
+        self.execute(self.proc.rlimit, psutil.RLIMIT_NOFILE, limit)
+        self.execute_w_exc(OSError, self.proc.rlimit, -1)
 
     @skip_if_linux()
     # Windows implementation is based on a single system-wide
@@ -333,7 +332,7 @@ class TestProcessObjectLeaks(Base):
         if SUNOS:
             kind = 'inet'
         try:
-            self.execute('connections', kind=kind)
+            self.execute(self.proc.connections, kind=kind)
         finally:
             for s in socks:
                 s.close()
@@ -341,12 +340,11 @@ class TestProcessObjectLeaks(Base):
     @unittest.skipUnless(hasattr(psutil.Process, 'environ'),
                          "platform not supported")
     def test_environ(self):
-        self.execute("environ")
+        self.execute(self.proc.environ)
 
     @unittest.skipUnless(WINDOWS, "WINDOWS only")
     def test_proc_info(self):
-        fun = functools.partial(cext.proc_info, os.getpid())
-        self.execute(fun)
+        self.execute(cext.proc_info, os.getpid())
 
 
 p = get_test_subprocess()
