@@ -123,14 +123,17 @@ class Base(unittest.TestCase):
                           % (rss2, rss3, diff, bytes2human(diff)))
 
     def execute_w_exc(self, exc, function, *args, **kwargs):
-        kwargs['_exc'] = exc
-        self.execute(function, *args, **kwargs)
+        def call():
+            self.assertRaises(exc, function, *args, **kwargs)
+
+        self.execute(call)
 
     def get_mem(self):
+        # TODO: shall we use USS?
         return psutil.Process().memory_info()[0]
 
     def call(self, function, *args, **kwargs):
-        raise NotImplementedError("must be implemented in subclass")
+        function(*args, **kwargs)
 
 
 # ===================================================================
@@ -140,16 +143,6 @@ class Base(unittest.TestCase):
 
 class TestProcessObjectLeaks(Base):
     """Test leaks of Process class methods."""
-
-    def call(self, function, *args, **kwargs):
-        if '_exc' in kwargs:
-            exc = kwargs.pop('_exc')
-            self.assertRaises(exc, function, *args, **kwargs)
-        else:
-            try:
-                function(*args, **kwargs)
-            except psutil.Error:
-                pass
 
     @skip_if_linux()
     def test_name(self):
@@ -389,9 +382,6 @@ class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
 
 class TestModuleFunctionsLeaks(Base):
     """Test leaks of psutil module functions."""
-
-    def call(self, fun, *args, **kwargs):
-        fun(*args, **kwargs)
 
     @skip_if_linux()
     def test_cpu_count_logical(self):
