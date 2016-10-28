@@ -42,6 +42,12 @@ from psutil.tests import unittest
 LOOPS = 1000
 MEMORY_TOLERANCE = 4096
 SKIP_PYTHON_IMPL = True
+cext = psutil._psplatform.cext
+
+
+# ===================================================================
+# utils
+# ===================================================================
 
 
 def skip_if_linux():
@@ -70,6 +76,12 @@ def bytes2human(n):
 
 class Base(unittest.TestCase):
     proc = psutil.Process()
+
+    def setUp(self):
+        gc.collect()
+
+    def tearDown(self):
+        reap_children()
 
     def execute(self, function, *args, **kwargs):
         def call_many_times():
@@ -122,14 +134,13 @@ class Base(unittest.TestCase):
         raise NotImplementedError("must be implemented in subclass")
 
 
+# ===================================================================
+# Process class
+# ===================================================================
+
+
 class TestProcessObjectLeaks(Base):
-    """Test leaks of Process class methods and properties"""
-
-    def setUp(self):
-        gc.collect()
-
-    def tearDown(self):
-        reap_children()
+    """Test leaks of Process class methods."""
 
     def call(self, function, *args, **kwargs):
         if callable(function):
@@ -201,7 +212,6 @@ class TestProcessObjectLeaks(Base):
             value = psutil.Process().ionice()
             self.execute('ionice', value)
         else:
-            from psutil._pslinux import cext
             self.execute('ionice', psutil.IOPRIO_CLASS_NONE)
             fun = functools.partial(cext.proc_ioprio_set, os.getpid(), -1, 0)
             self.execute_w_exc(OSError, fun)
@@ -343,6 +353,11 @@ class TestProcessObjectLeaks(Base):
     def test_environ(self):
         self.execute("environ")
 
+    @unittest.skipUnless(WINDOWS, "WINDOWS only")
+    def test_proc_info(self):
+        fun = functools.partial(cext.proc_info, os.getpid())
+        self.execute(fun)
+
 
 p = get_test_subprocess()
 DEAD_PROC = psutil.Process(p.pid)
@@ -380,11 +395,13 @@ class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
             self.execute('wait')
 
 
+# ===================================================================
+# system APIs
+# ===================================================================
+
+
 class TestModuleFunctionsLeaks(Base):
     """Test leaks of psutil module functions."""
-
-    def setUp(self):
-        gc.collect()
 
     def call(self, function, *args, **kwargs):
         fun = function if callable(function) else getattr(psutil, function)
@@ -466,23 +483,19 @@ class TestModuleFunctionsLeaks(Base):
     if WINDOWS:
 
         def test_win_service_iter(self):
-            fun = psutil._psplatform.cext.winservice_enumerate
-            self.execute(fun)
+            self.execute(cext.winservice_enumerate)
 
         def test_win_service_get_config(self):
             name = next(psutil.win_service_iter()).name()
-            fun = psutil._psplatform.cext.winservice_query_config
-            self.execute(fun, name)
+            self.execute(cext.winservice_query_config, name)
 
         def test_win_service_get_status(self):
             name = next(psutil.win_service_iter()).name()
-            fun = psutil._psplatform.cext.winservice_query_status
-            self.execute(fun, name)
+            self.execute(cext.winservice_query_status, name)
 
         def test_win_service_get_description(self):
             name = next(psutil.win_service_iter()).name()
-            fun = psutil._psplatform.cext.winservice_query_descr
-            self.execute(fun, name)
+            self.execute(cext.winservice_query_descr, name)
 
 
 if __name__ == '__main__':

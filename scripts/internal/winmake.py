@@ -348,7 +348,7 @@ def test_by_name():
 def test_memleaks():
     """Run memory leaks tests"""
     install()
-    sh("%s test\test_memory_leaks.py" % PYTHON)
+    sh("%s psutil\\tests\\test_memory_leaks.py" % PYTHON)
 
 
 @cmd
