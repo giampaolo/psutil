@@ -9,6 +9,7 @@
 
 - 932_: [NetBSD] net_connections() and Process.connections() may fail without
   raising an exception.
+- 933_: [Windows] fixed cpu_stats() memory leak.
 
 
 4.4.2
