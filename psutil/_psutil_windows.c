@@ -409,14 +409,17 @@ psutil_proc_wait(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_cpu_times(PyObject *self, PyObject *args) {
     long        pid;
-    unsigned long handle;
+    HANDLE      hProcess;
     FILETIME    ftCreate, ftExit, ftKernel, ftUser;
 
-    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    if (! GetProcessTimes(
-            (HANDLE)handle, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
+    hProcess = psutil_handle_from_pid(pid);
+    if (hProcess == NULL)
+        return NULL;
+    if (! GetProcessTimes(hProcess, &ftCreate, &ftExit, &ftKernel, &ftUser)) {
+        CloseHandle(hProcess);
         if (GetLastError() == ERROR_ACCESS_DENIED) {
             // usually means the process has died so we throw a NoSuchProcess
             // here
@@ -427,6 +430,8 @@ psutil_proc_cpu_times(PyObject *self, PyObject *args) {
             return NULL;
         }
     }
+
+    CloseHandle(hProcess);
 
     /*
      * User and kernel times are represented as a FILETIME structure
@@ -711,7 +716,7 @@ psutil_proc_name(PyObject *self, PyObject *args) {
  */
 static PyObject *
 psutil_proc_memory_info(PyObject *self, PyObject *args) {
-    unsigned long handle;
+    HANDLE hProcess;
     DWORD pid;
 #if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
     PROCESS_MEMORY_COUNTERS_EX cnt;
@@ -720,17 +725,24 @@ psutil_proc_memory_info(PyObject *self, PyObject *args) {
 #endif
     SIZE_T private = 0;
 
-    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    if (! GetProcessMemoryInfo(
-            (HANDLE)handle, (PPROCESS_MEMORY_COUNTERS)&cnt, sizeof(cnt))) {
+    hProcess = psutil_handle_from_pid(pid);
+    if (NULL == hProcess)
+        return NULL;
+
+    if (! GetProcessMemoryInfo(hProcess, (PPROCESS_MEMORY_COUNTERS)&cnt,
+                               sizeof(cnt))) {
+        CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
     }
 
 #if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
     private = cnt.PrivateUsage;
 #endif
+
+    CloseHandle(hProcess);
 
     // PROCESS_MEMORY_COUNTERS values are defined as SIZE_T which on 64bits
     // is an (unsigned long long) and on 32bits is an (unsigned int).
@@ -1302,14 +1314,22 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     ULONG domainNameSize;
     SID_NAME_USE nameUse;
     PTSTR fullName;
-    unsigned long handle;
     PyObject *py_unicode;
 
-    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
 
-    if (!OpenProcessToken((HANDLE)handle, TOKEN_QUERY, &tokenHandle))
+    processHandle = psutil_handle_from_pid_waccess(
+        pid, PROCESS_QUERY_INFORMATION);
+    if (processHandle == NULL)
+        return NULL;
+
+    if (!OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)) {
+        CloseHandle(processHandle);
         return PyErr_SetFromWindowsErr(0);
+    }
+
+    CloseHandle(processHandle);
 
     // Get the user SID.
 
@@ -1933,11 +1953,15 @@ static PyObject *
 psutil_proc_priority_get(PyObject *self, PyObject *args) {
     long pid;
     DWORD priority;
-    unsigned long handle;
+    HANDLE hProcess;
 
-    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    priority = GetPriorityClass((HANDLE)handle);
+    hProcess = psutil_handle_from_pid(pid);
+    if (hProcess == NULL)
+        return NULL;
+    priority = GetPriorityClass(hProcess);
+    CloseHandle(hProcess);
     if (priority == 0) {
         PyErr_SetFromWindowsErr(0);
         return NULL;
@@ -1979,23 +2003,27 @@ psutil_proc_priority_set(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_io_priority_get(PyObject *self, PyObject *args) {
     long pid;
-    unsigned long handle;
+    HANDLE hProcess;
     PULONG IoPriority;
 
     _NtQueryInformationProcess NtQueryInformationProcess =
         (_NtQueryInformationProcess)GetProcAddress(
             GetModuleHandleA("ntdll.dll"), "NtQueryInformationProcess");
 
-    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    hProcess = psutil_handle_from_pid(pid);
+    if (hProcess == NULL)
         return NULL;
 
     NtQueryInformationProcess(
-        (HANDLE)handle,
+        hProcess,
         ProcessIoPriority,
         &IoPriority,
         sizeof(ULONG),
         NULL
     );
+    CloseHandle(hProcess);
     return Py_BuildValue("i", IoPriority);
 }
 
@@ -2044,13 +2072,19 @@ psutil_proc_io_priority_set(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_io_counters(PyObject *self, PyObject *args) {
     DWORD pid;
-    unsigned long handle;
+    HANDLE hProcess;
     IO_COUNTERS IoCounters;
 
-    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (! GetProcessIoCounters((HANDLE)handle, &IoCounters))
+    hProcess = psutil_handle_from_pid(pid);
+    if (NULL == hProcess)
+        return NULL;
+    if (! GetProcessIoCounters(hProcess, &IoCounters)) {
+        CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
+    }
+    CloseHandle(hProcess);
     return Py_BuildValue("(KKKK)",
                          IoCounters.ReadOperationCount,
                          IoCounters.WriteOperationCount,
@@ -2065,17 +2099,22 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
 static PyObject *
 psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
     DWORD pid;
-    unsigned long handle;
+    HANDLE hProcess;
     DWORD_PTR proc_mask;
     DWORD_PTR system_mask;
 
-    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (GetProcessAffinityMask(
-            (HANDLE)handle, &proc_mask, &system_mask) == 0) {
+    hProcess = psutil_handle_from_pid(pid);
+    if (hProcess == NULL) {
+        return NULL;
+    }
+    if (GetProcessAffinityMask(hProcess, &proc_mask, &system_mask) == 0) {
+        CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
     }
 
+    CloseHandle(hProcess);
 #ifdef _WIN64
     return Py_BuildValue("K", (unsigned long long)proc_mask);
 #else
@@ -2665,14 +2704,19 @@ error:
 static PyObject *
 psutil_proc_num_handles(PyObject *self, PyObject *args) {
     DWORD pid;
-    unsigned long handle;
+    HANDLE hProcess;
     DWORD handleCount;
 
-    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
+    if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
-    if (! GetProcessHandleCount((HANDLE)handle, &handleCount)) {
+    hProcess = psutil_handle_from_pid(pid);
+    if (NULL == hProcess)
+        return NULL;
+    if (! GetProcessHandleCount(hProcess, &handleCount)) {
+        CloseHandle(hProcess);
         return PyErr_SetFromWindowsErr(0);
     }
+    CloseHandle(hProcess);
     return Py_BuildValue("k", handleCount);
 }
 
@@ -2809,13 +2853,15 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     CHAR mappedFileName[MAX_PATH];
     SYSTEM_INFO system_info;
     LPVOID maxAddr;
-    unsigned long handle;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        goto error;
+    hProcess = psutil_handle_from_pid(pid);
+    if (NULL == hProcess)
         goto error;
 
     GetSystemInfo(&system_info);
@@ -2823,13 +2869,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     baseAddress = NULL;
     previousAllocationBase = NULL;
 
-    while (VirtualQueryEx((HANDLE)handle, baseAddress, &basicInfo,
+    while (VirtualQueryEx(hProcess, baseAddress, &basicInfo,
                           sizeof(MEMORY_BASIC_INFORMATION)))
     {
         py_tuple = NULL;
         if (baseAddress > maxAddr)
             break;
-        if (GetMappedFileNameA((HANDLE)handle, baseAddress, mappedFileName,
+        if (GetMappedFileNameA(hProcess, baseAddress, mappedFileName,
                                sizeof(mappedFileName)))
         {
 #ifdef _WIN64
@@ -2855,11 +2901,14 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         baseAddress = (PCHAR)baseAddress + basicInfo.RegionSize;
     }
 
+    CloseHandle(hProcess);
     return py_retlist;
 
 error:
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
+    if (hProcess != NULL)
+        CloseHandle(hProcess);
     return NULL;
 }
 
@@ -3473,10 +3522,6 @@ PsutilMethods[] = {
     // --- windows API bindings
     {"win32_QueryDosDevice", psutil_win32_QueryDosDevice, METH_VARARGS,
      "QueryDosDevice binding"},
-    {"win32_OpenProcess", psutil_win32_OpenProcess, METH_VARARGS,
-     "Given a PID return a Python int which points to a process handle."},
-    {"win32_CloseHandle", psutil_win32_CloseHandle, METH_VARARGS,
-     "Given a Python int referencing a process handle it close the handle."},
 
     {NULL, NULL, 0, NULL}
 };

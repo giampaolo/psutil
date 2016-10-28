@@ -68,23 +68,6 @@ psutil_handle_from_pid(DWORD pid) {
 
 
 /*
- * Given a PID return a Python int which points to its process handle.
- */
-PyObject *
-psutil_win32_OpenProcess(PyObject *self, PyObject *args) {
-    HANDLE handle;
-    long pid;
-
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    handle = psutil_handle_from_pid(pid);
-    if (handle == NULL)
-        return NULL;
-    return HANDLE_TO_PYNUM(handle);
-}
-
-
-/*
  * Given a Python int referencing a process handle close the process handle.
  */
 PyObject *

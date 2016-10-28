@@ -89,17 +89,15 @@ elif psutil.OSX:
     ]
 elif psutil.WINDOWS:
     names += [
-        'cpu_affinity',
-        'cpu_times',
-        'io_counters',
-        'ionice',
-        'memory_info',
-        # 'memory_maps',  # just makes things too slow
-        'nice',
         'num_ctx_switches',
-        'num_handles',
         'num_threads',
-        'username',
+        # dual implementation, called in case of AccessDenied
+        'num_handles',
+        'cpu_times',
+        'create_time',
+        'num_threads',
+        'io_counters',
+        'memory_info',
     ]
 
 names = sorted(set(names))

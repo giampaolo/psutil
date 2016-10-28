@@ -15,11 +15,11 @@ from . import _common
 from . import _psutil_windows as cext
 from ._common import conn_tmap
 from ._common import isfile_strict
-from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
+from ._common import memoize_when_activated
 from ._compat import long
 from ._compat import lru_cache
 from ._compat import PY3
@@ -570,54 +570,20 @@ def wrap_exceptions(fun):
 class Process(object):
     """Wrapper class around underlying C implementation."""
 
-    __slots__ = ["pid", "_name", "_ppid", "_inctx", "_handle"]
+    __slots__ = ["pid", "_name", "_ppid"]
 
     def __init__(self, pid):
         self.pid = pid
         self._name = None
         self._ppid = None
-        self._inctx = False
-        self._handle = None
 
     # --- oneshot() stuff
 
     def oneshot_enter(self):
-        self._inctx = True
         self.oneshot_info.cache_activate()
 
     def oneshot_exit(self):
-        self._inctx = False
         self.oneshot_info.cache_deactivate()
-        if self._handle is not None:
-            try:
-                cext.win32_CloseHandle(self._handle)
-            finally:
-                self._handle = None
-
-    def get_handle(self):
-        """Get a handle to this process.
-        If we're in oneshot() context returns the cached handle.
-        """
-        if self._inctx:
-            self._handle = self._handle or cext.win32_OpenProcess(self.pid)
-            return self._handle
-        else:
-            return cext.win32_OpenProcess(self.pid)
-
-    @contextlib.contextmanager
-    def handle_ctx(self):
-        """Get a handle to this process as a context manager.
-        If we're not in a oneshot() context close the handle
-        when exiting the "with" statement, else try return the
-        cached handle (if available) and don't close it when
-        exiting the "with" statement.
-        """
-        handle = self.get_handle()
-        try:
-            yield handle
-        finally:
-            if not self._inctx:
-                cext.win32_CloseHandle(handle)
 
     @memoize_when_activated
     def oneshot_info(self):
@@ -627,8 +593,6 @@ class Process(object):
         ret = cext.proc_info(self.pid)
         assert len(ret) == len(pinfo_map)
         return ret
-
-    # --- implementation
 
     @wrap_exceptions
     def name(self):
@@ -681,8 +645,7 @@ class Process(object):
 
     def _get_raw_meminfo(self):
         try:
-            with self.handle_ctx() as handle:
-                return cext.proc_memory_info(self.pid, handle)
+            return cext.proc_memory_info(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 # TODO: the C ext can probably be refactored in order
@@ -720,8 +683,7 @@ class Process(object):
 
     def memory_maps(self):
         try:
-            with self.handle_ctx() as handle:
-                raw = cext.proc_memory_maps(self.pid, handle)
+            raw = cext.proc_memory_maps(self.pid)
         except OSError as err:
             # XXX - can't use wrap_exceptions decorator as we're
             # returning a generator; probably needs refactoring.
@@ -760,8 +722,7 @@ class Process(object):
     def username(self):
         if self.pid in (0, 4):
             return 'NT AUTHORITY\\SYSTEM'
-        with self.handle_ctx() as handle:
-            return cext.proc_username(self.pid, handle)
+        return cext.proc_username(self.pid)
 
     @wrap_exceptions
     def create_time(self):
@@ -791,8 +752,7 @@ class Process(object):
     @wrap_exceptions
     def cpu_times(self):
         try:
-            with self.handle_ctx() as handle:
-                user, system = cext.proc_cpu_times(self.pid, handle)
+            user, system = cext.proc_cpu_times(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 info = self.oneshot_info()
@@ -845,8 +805,7 @@ class Process(object):
 
     @wrap_exceptions
     def nice_get(self):
-        with self.handle_ctx() as handle:
-            value = cext.proc_priority_get(self.pid, handle)
+        value = cext.proc_priority_get(self.pid)
         if enum is not None:
             value = Priority(value)
         return value
@@ -859,8 +818,7 @@ class Process(object):
     if hasattr(cext, "proc_io_priority_get"):
         @wrap_exceptions
         def ionice_get(self):
-            with self.handle_ctx() as handle:
-                return cext.proc_io_priority_get(self.pid, handle)
+            return cext.proc_io_priority_get(self.pid)
 
         @wrap_exceptions
         def ionice_set(self, value, _):
@@ -875,8 +833,7 @@ class Process(object):
     @wrap_exceptions
     def io_counters(self):
         try:
-            with self.handle_ctx() as handle:
-                ret = cext.proc_io_counters(self.pid, handle)
+            ret = cext.proc_io_counters(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 info = self.oneshot_info()
@@ -902,8 +859,7 @@ class Process(object):
     def cpu_affinity_get(self):
         def from_bitmask(x):
             return [i for i in xrange(64) if (1 << i) & x]
-        with self.handle_ctx() as handle:
-            bitmask = cext.proc_cpu_affinity_get(self.pid, handle)
+        bitmask = cext.proc_cpu_affinity_get(self.pid)
         return from_bitmask(bitmask)
 
     @wrap_exceptions
@@ -934,8 +890,7 @@ class Process(object):
     @wrap_exceptions
     def num_handles(self):
         try:
-            with self.handle_ctx() as handle:
-                return cext.proc_num_handles(self.pid, handle)
+            return cext.proc_num_handles(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
                 return self.oneshot_info()[pinfo_map['num_handles']]
