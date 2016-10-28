@@ -27,7 +27,6 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil import WINDOWS
 from psutil._common import supports_ipv6
-from psutil._compat import callable
 from psutil._compat import xrange
 from psutil.tests import get_test_subprocess
 from psutil.tests import reap_children
@@ -391,82 +390,81 @@ class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
 class TestModuleFunctionsLeaks(Base):
     """Test leaks of psutil module functions."""
 
-    def call(self, function, *args, **kwargs):
-        fun = function if callable(function) else getattr(psutil, function)
+    def call(self, fun, *args, **kwargs):
         fun(*args, **kwargs)
 
     @skip_if_linux()
     def test_cpu_count_logical(self):
-        self.execute('cpu_count', logical=True)
+        self.execute(psutil.cpu_count, logical=True)
 
     @skip_if_linux()
     def test_cpu_count_physical(self):
-        self.execute('cpu_count', logical=False)
+        self.execute(psutil.cpu_count, logical=False)
 
     @skip_if_linux()
     def test_boot_time(self):
-        self.execute('boot_time')
+        self.execute(psutil.boot_time)
 
     @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
                      "not worth being tested on POSIX (pure python)")
     def test_pid_exists(self):
-        self.execute('pid_exists', os.getpid())
+        self.execute(psutil.pid_exists, os.getpid())
 
     def test_virtual_memory(self):
-        self.execute('virtual_memory')
+        self.execute(psutil.virtual_memory)
 
     # TODO: remove this skip when this gets fixed
     @unittest.skipIf(SUNOS,
                      "not worth being tested on SUNOS (uses a subprocess)")
     def test_swap_memory(self):
-        self.execute('swap_memory')
+        self.execute(psutil.swap_memory)
 
     @skip_if_linux()
     def test_cpu_times(self):
-        self.execute('cpu_times')
+        self.execute(psutil.cpu_times)
 
     @skip_if_linux()
     def test_per_cpu_times(self):
-        self.execute('cpu_times', percpu=True)
+        self.execute(psutil.cpu_times, percpu=True)
 
     @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
                      "not worth being tested on POSIX (pure python)")
     def test_disk_usage(self):
-        self.execute('disk_usage', '.')
+        self.execute(psutil.disk_usage, '.')
 
     def test_disk_partitions(self):
-        self.execute('disk_partitions')
+        self.execute(psutil.disk_partitions)
 
     @skip_if_linux()
     def test_net_io_counters(self):
-        self.execute('net_io_counters')
+        self.execute(psutil.net_io_counters)
 
     @unittest.skipIf(LINUX and not os.path.exists('/proc/diskstats'),
                      '/proc/diskstats not available on this Linux version')
     @skip_if_linux()
     def test_disk_io_counters(self):
-        self.execute('disk_io_counters')
+        self.execute(psutil.disk_io_counters)
 
     # XXX - on Windows this produces a false positive
     @unittest.skipIf(WINDOWS, "XXX produces a false positive on Windows")
     def test_users(self):
-        self.execute('users')
+        self.execute(psutil.users)
 
     @unittest.skipIf(LINUX,
                      "not worth being tested on Linux (pure python)")
     @unittest.skipIf(OSX and os.getuid() != 0, "need root access")
     def test_net_connections(self):
-        self.execute('net_connections')
+        self.execute(psutil.net_connections)
 
     def test_net_if_addrs(self):
-        self.execute('net_if_addrs')
+        self.execute(psutil.net_if_addrs)
 
     @unittest.skipIf(TRAVIS, "EPERM on travis")
     def test_net_if_stats(self):
-        self.execute('net_if_stats')
+        self.execute(psutil.net_if_stats)
 
     def test_cpu_stats(self):
-        self.execute('cpu_stats')
+        self.execute(psutil.cpu_stats)
 
     if WINDOWS:
 
