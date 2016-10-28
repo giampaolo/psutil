@@ -13,6 +13,7 @@ Note that this may produce false positives (especially on Windows
 for some reason).
 """
 
+import errno
 import functools
 import gc
 import os
@@ -373,7 +374,7 @@ class TestProcessObjectLeaks(TestMemLeak):
         self.execute(cext.proc_info, os.getpid())
 
 
-class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
+class TestTerminatedProcessLeaks(TestProcessObjectLeaks):
     """Repeat the tests above looking for leaks occurring when dealing
     with terminated processes raising NoSuchProcess exception.
     The C functions are still invoked but will follow different code
@@ -382,7 +383,7 @@ class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
 
     @classmethod
     def setUpClass(cls):
-        super(TestProcessObjectLeaksZombie, cls).setUpClass()
+        super(TestTerminatedProcessLeaks, cls).setUpClass()
         p = get_test_subprocess()
         cls.proc = psutil.Process(p.pid)
         cls.proc.kill()
@@ -390,7 +391,7 @@ class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
 
     @classmethod
     def tearDownClass(cls):
-        super(TestProcessObjectLeaksZombie, cls).tearDownClass()
+        super(TestTerminatedProcessLeaks, cls).tearDownClass()
         reap_children()
 
     def _call(self, fun, *args, **kwargs):
@@ -415,6 +416,17 @@ class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
 
         def test_wait(self):
             self.execute(self.proc.wait)
+
+        def test_proc_info(self):
+            # test dual implementation
+            def call():
+                try:
+                    return cext.proc_info(self.proc.pid)
+                except OSError as err:
+                    if err.errno != errno.ESRCH:
+                        raise
+
+            self.execute(call)
 
 
 # ===================================================================
@@ -511,6 +523,8 @@ class TestModuleFunctionsLeaks(TestMemLeak):
         self.execute(psutil.users)
 
     if WINDOWS:
+
+        # --- win services
 
         def test_win_service_iter(self):
             self.execute(cext.winservice_enumerate)
