@@ -720,7 +720,8 @@ class Process(object):
 
     def memory_maps(self):
         try:
-            raw = cext.proc_memory_maps(self.pid)
+            with self.handle_ctx() as handle:
+                raw = cext.proc_memory_maps(self.pid, handle)
         except OSError as err:
             # XXX - can't use wrap_exceptions decorator as we're
             # returning a generator; probably needs refactoring.
@@ -759,7 +760,8 @@ class Process(object):
     def username(self):
         if self.pid in (0, 4):
             return 'NT AUTHORITY\\SYSTEM'
-        return cext.proc_username(self.pid)
+        with self.handle_ctx() as handle:
+            return cext.proc_username(self.pid, handle)
 
     @wrap_exceptions
     def create_time(self):

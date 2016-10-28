@@ -15,7 +15,6 @@ import signal
 import subprocess
 import sys
 import time
-import traceback
 
 try:
     import win32api  # requires "pip install pypiwin32" / "make setup-dev-env"
@@ -29,7 +28,6 @@ import psutil
 from psutil import WINDOWS
 from psutil._compat import basestring
 from psutil._compat import callable
-from psutil._compat import long
 from psutil._compat import PY3
 from psutil.tests import APPVEYOR
 from psutil.tests import get_test_subprocess
@@ -359,15 +357,6 @@ class TestDualProcessImplementation(unittest.TestCase):
     https://github.com/giampaolo/psutil/issues/304
     """
 
-    fun_names = [
-        # function name, tolerance
-        ('proc_cpu_times', 0.2),
-        ('proc_create_time', 0.5),
-        ('proc_num_handles', 1),  # 1 because impl #1 opens a handle
-        ('proc_memory_info', 1024),  # KB
-        ('proc_io_counters', 0),
-    ]
-
     @classmethod
     def setUpClass(cls):
         cls.pid = get_test_subprocess().pid
@@ -375,118 +364,6 @@ class TestDualProcessImplementation(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         reap_children()
-
-    def test_all_procs(self):
-        from psutil._pswindows import pinfo_map
-
-        def assert_ge_0(obj):
-            if isinstance(obj, (tuple, list)):
-                for value in obj:
-                    self.assertGreaterEqual(value, 0, msg=obj)
-            elif isinstance(obj, (int, long, float)):
-                self.assertGreaterEqual(obj, 0)
-            else:
-                assert 0  # case not handled which needs to be fixed
-
-        def compare_with_tolerance(ret1, ret2, tolerance):
-            if ret1 == ret2:
-                return
-            else:
-                if isinstance(ret2, (int, long, float)):
-                    diff = abs(ret1 - ret2)
-                    self.assertLessEqual(diff, tolerance)
-                elif isinstance(ret2, tuple):
-                    for a, b in zip(ret1, ret2):
-                        diff = abs(a - b)
-                        self.assertLessEqual(diff, tolerance)
-
-        failures = []
-        for p in psutil.process_iter():
-            try:
-                raw_info = cext.proc_info(p.pid)
-            except psutil.NoSuchProcess:
-                continue
-            assert_ge_0(raw_info)
-
-            for name, tolerance in self.fun_names:
-                if name == 'proc_memory_info' and p.pid == os.getpid():
-                    continue
-                if name == 'proc_create_time' and p.pid in (0, 4):
-                    continue
-                meth = wrap_exceptions(getattr(cext, name))
-                try:
-                    ret = meth(p.pid)
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
-                # compare values
-                try:
-                    if name == 'proc_cpu_times':
-                        compare_with_tolerance(
-                            ret[0], raw_info[pinfo_map['user_time']],
-                            tolerance)
-                        compare_with_tolerance(
-                            ret[1], raw_info[pinfo_map['kernel_time']],
-                            tolerance)
-                    elif name == 'proc_create_time':
-                        compare_with_tolerance(
-                            ret, raw_info[pinfo_map['create_time']], tolerance)
-                    elif name == 'proc_num_handles':
-                        compare_with_tolerance(
-                            ret, raw_info[pinfo_map['num_handles']], tolerance)
-                    elif name == 'proc_io_counters':
-                        compare_with_tolerance(
-                            ret[0], raw_info[pinfo_map['io_rcount']],
-                            tolerance)
-                        compare_with_tolerance(
-                            ret[1], raw_info[pinfo_map['io_wcount']],
-                            tolerance)
-                        compare_with_tolerance(
-                            ret[2], raw_info[pinfo_map['io_rbytes']],
-                            tolerance)
-                        compare_with_tolerance(
-                            ret[3], raw_info[pinfo_map['io_wbytes']],
-                            tolerance)
-                    elif name == 'proc_memory_info':
-                        compare_with_tolerance(
-                            ret[0], raw_info[pinfo_map['num_page_faults']],
-                            tolerance)
-                        compare_with_tolerance(
-                            ret[1], raw_info[pinfo_map['peak_wset']],
-                            tolerance)
-                        compare_with_tolerance(
-                            ret[2], raw_info[pinfo_map['wset']],
-                            tolerance)
-                        compare_with_tolerance(
-                            ret[3], raw_info[pinfo_map['peak_paged_pool']],
-                            tolerance)
-                        compare_with_tolerance(
-                            ret[4], raw_info[pinfo_map['paged_pool']],
-                            tolerance)
-                        compare_with_tolerance(
-                            ret[5], raw_info[pinfo_map['peak_non_paged_pool']],
-                            tolerance)
-                        compare_with_tolerance(
-                            ret[6], raw_info[pinfo_map['non_paged_pool']],
-                            tolerance)
-                        compare_with_tolerance(
-                            ret[7], raw_info[pinfo_map['pagefile']],
-                            tolerance)
-                        compare_with_tolerance(
-                            ret[8], raw_info[pinfo_map['peak_pagefile']],
-                            tolerance)
-                        compare_with_tolerance(
-                            ret[9], raw_info[pinfo_map['mem_private']],
-                            tolerance)
-                except AssertionError:
-                    trace = traceback.format_exc()
-                    msg = '%s\npid=%s, method=%r, ret_1=%r, ret_2=%r' % (
-                        trace, p.pid, name, ret, raw_info)
-                    failures.append(msg)
-                    break
-
-        if failures:
-            self.fail('\n\n'.join(failures))
-
     # ---
     # same tests as above but mimicks the AccessDenied failure of
     # the first (fast) method failing with AD.
@@ -548,14 +425,6 @@ class TestDualProcessImplementation(unittest.TestCase):
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
             psutil.Process(self.pid).num_handles() == num_handles
             assert fun.called
-
-    def test_zombies(self):
-        # test that NPS is raised by the 2nd implementation in case a
-        # process no longer exists
-        ZOMBIE_PID = max(psutil.pids()) + 5000
-        for name, _ in self.fun_names:
-            meth = wrap_exceptions(getattr(cext, name))
-            self.assertRaises(psutil.NoSuchProcess, meth, ZOMBIE_PID)
 
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")

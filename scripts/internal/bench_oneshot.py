@@ -94,10 +94,12 @@ elif psutil.WINDOWS:
         'io_counters',
         'ionice',
         'memory_info',
+        # 'memory_maps',  # just makes things too slow
         'nice',
         'num_ctx_switches',
         'num_handles',
         'num_threads',
+        'username',
     ]
 
 names = sorted(set(names))

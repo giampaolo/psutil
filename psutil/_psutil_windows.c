@@ -1302,22 +1302,14 @@ psutil_proc_username(PyObject *self, PyObject *args) {
     ULONG domainNameSize;
     SID_NAME_USE nameUse;
     PTSTR fullName;
+    unsigned long handle;
     PyObject *py_unicode;
 
-    if (! PyArg_ParseTuple(args, "l", &pid))
+    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
         return NULL;
 
-    processHandle = psutil_handle_from_pid_waccess(
-        pid, PROCESS_QUERY_INFORMATION);
-    if (processHandle == NULL)
-        return NULL;
-
-    if (!OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)) {
-        CloseHandle(processHandle);
+    if (!OpenProcessToken((HANDLE)handle, TOKEN_QUERY, &tokenHandle))
         return PyErr_SetFromWindowsErr(0);
-    }
-
-    CloseHandle(processHandle);
 
     // Get the user SID.
 
@@ -2817,15 +2809,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     CHAR mappedFileName[MAX_PATH];
     SYSTEM_INFO system_info;
     LPVOID maxAddr;
+    unsigned long handle;
     PyObject *py_retlist = PyList_New(0);
     PyObject *py_tuple = NULL;
 
     if (py_retlist == NULL)
         return NULL;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        goto error;
-    hProcess = psutil_handle_from_pid(pid);
-    if (NULL == hProcess)
+    if (! PyArg_ParseTuple(args, "lk", &pid, &handle))
         goto error;
 
     GetSystemInfo(&system_info);
@@ -2833,13 +2823,13 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
     baseAddress = NULL;
     previousAllocationBase = NULL;
 
-    while (VirtualQueryEx(hProcess, baseAddress, &basicInfo,
+    while (VirtualQueryEx((HANDLE)handle, baseAddress, &basicInfo,
                           sizeof(MEMORY_BASIC_INFORMATION)))
     {
         py_tuple = NULL;
         if (baseAddress > maxAddr)
             break;
-        if (GetMappedFileNameA(hProcess, baseAddress, mappedFileName,
+        if (GetMappedFileNameA((HANDLE)handle, baseAddress, mappedFileName,
                                sizeof(mappedFileName)))
         {
 #ifdef _WIN64
@@ -2865,14 +2855,11 @@ psutil_proc_memory_maps(PyObject *self, PyObject *args) {
         baseAddress = (PCHAR)baseAddress + basicInfo.RegionSize;
     }
 
-    CloseHandle(hProcess);
     return py_retlist;
 
 error:
     Py_XDECREF(py_tuple);
     Py_DECREF(py_retlist);
-    if (hProcess != NULL)
-        CloseHandle(hProcess);
     return NULL;
 }
 
