@@ -60,41 +60,13 @@ def wrap_exceptions(fun):
     return wrapper
 
 
+# ===================================================================
+# System APIs
+# ===================================================================
+
+
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
-class WindowsSpecificTestCase(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.pid = get_test_subprocess().pid
-
-    @classmethod
-    def tearDownClass(cls):
-        reap_children()
-
-    def test_issue_24(self):
-        p = psutil.Process(0)
-        self.assertRaises(psutil.AccessDenied, p.kill)
-
-    def test_special_pid(self):
-        p = psutil.Process(4)
-        self.assertEqual(p.name(), 'System')
-        # use __str__ to access all common Process properties to check
-        # that nothing strange happens
-        str(p)
-        p.username()
-        self.assertTrue(p.create_time() >= 0.0)
-        try:
-            rss, vms = p.memory_info()[:2]
-        except psutil.AccessDenied:
-            # expected on Windows Vista and Windows 7
-            if not platform.uname()[1] in ('vista', 'win-7', 'win7'):
-                raise
-        else:
-            self.assertTrue(rss > 0)
-
-    def test_send_signal(self):
-        p = psutil.Process(self.pid)
-        self.assertRaises(ValueError, p.send_signal, signal.SIGINT)
+class TestSystemAPIs(unittest.TestCase):
 
     def test_nic_names(self):
         p = subprocess.Popen(['ipconfig', '/all'], stdout=subprocess.PIPE)
@@ -108,70 +80,6 @@ class WindowsSpecificTestCase(unittest.TestCase):
             if nic not in out:
                 self.fail(
                     "%r nic wasn't found in 'ipconfig /all' output" % nic)
-
-    def test_exe(self):
-        for p in psutil.process_iter():
-            try:
-                self.assertEqual(os.path.basename(p.exe()), p.name())
-            except psutil.Error:
-                pass
-
-    # --- Process class tests
-
-    def test_process_name(self):
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-        p = psutil.Process(self.pid)
-        self.assertEqual(p.name(), w.Caption)
-
-    def test_process_exe(self):
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-        p = psutil.Process(self.pid)
-        # Note: wmi reports the exe as a lower case string.
-        # Being Windows paths case-insensitive we ignore that.
-        self.assertEqual(p.exe().lower(), w.ExecutablePath.lower())
-
-    def test_process_cmdline(self):
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-        p = psutil.Process(self.pid)
-        self.assertEqual(' '.join(p.cmdline()),
-                         w.CommandLine.replace('"', ''))
-
-    def test_process_username(self):
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-        p = psutil.Process(self.pid)
-        domain, _, username = w.GetOwner()
-        username = "%s\\%s" % (domain, username)
-        self.assertEqual(p.username(), username)
-
-    def test_process_rss_memory(self):
-        time.sleep(0.1)
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-        p = psutil.Process(self.pid)
-        rss = p.memory_info().rss
-        self.assertEqual(rss, int(w.WorkingSetSize))
-
-    def test_process_vms_memory(self):
-        time.sleep(0.1)
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-        p = psutil.Process(self.pid)
-        vms = p.memory_info().vms
-        # http://msdn.microsoft.com/en-us/library/aa394372(VS.85).aspx
-        # ...claims that PageFileUsage is represented in Kilo
-        # bytes but funnily enough on certain platforms bytes are
-        # returned instead.
-        wmi_usage = int(w.PageFileUsage)
-        if (vms != wmi_usage) and (vms != wmi_usage * 1024):
-            self.fail("wmi=%s, psutil=%s" % (wmi_usage, vms))
-
-    def test_process_create_time(self):
-        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
-        p = psutil.Process(self.pid)
-        wmic_create = str(w.CreationDate.split('.')[0])
-        psutil_create = time.strftime("%Y%m%d%H%M%S",
-                                      time.localtime(p.create_time()))
-        self.assertEqual(wmic_create, psutil_create)
-
-    # --- psutil namespace functions and constants tests
 
     @unittest.skipUnless('NUMBER_OF_PROCESSORS' in os.environ,
                          'NUMBER_OF_PROCESSORS env var is not available')
@@ -194,10 +102,10 @@ class WindowsSpecificTestCase(unittest.TestCase):
     #     wmic_create = str(w.CreationDate.split('.')[0])
     #     psutil_create = time.strftime("%Y%m%d%H%M%S",
     #                                   time.localtime(p.create_time()))
-    #
 
     # Note: this test is not very reliable
     @unittest.skipIf(APPVEYOR, "test not relieable on appveyor")
+    @retry_before_failing()
     def test_pids(self):
         # Note: this test might fail if the OS is starting/killing
         # other processes in the meantime
@@ -235,6 +143,65 @@ class WindowsSpecificTestCase(unittest.TestCase):
             else:
                 self.fail("can't find partition %s" % repr(ps_part))
 
+    def test_net_if_stats(self):
+        ps_names = set(cext.net_if_stats())
+        wmi_adapters = wmi.WMI().Win32_NetworkAdapter()
+        wmi_names = set()
+        for wmi_adapter in wmi_adapters:
+            wmi_names.add(wmi_adapter.Name)
+            wmi_names.add(wmi_adapter.NetConnectionID)
+        self.assertTrue(ps_names & wmi_names,
+                        "no common entries in %s, %s" % (ps_names, wmi_names))
+
+
+# ===================================================================
+# Process APIs
+# ===================================================================
+
+
+@unittest.skipUnless(WINDOWS, "WINDOWS only")
+class TestProcess(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = get_test_subprocess().pid
+
+    @classmethod
+    def tearDownClass(cls):
+        reap_children()
+
+    def test_issue_24(self):
+        p = psutil.Process(0)
+        self.assertRaises(psutil.AccessDenied, p.kill)
+
+    def test_special_pid(self):
+        p = psutil.Process(4)
+        self.assertEqual(p.name(), 'System')
+        # use __str__ to access all common Process properties to check
+        # that nothing strange happens
+        str(p)
+        p.username()
+        self.assertTrue(p.create_time() >= 0.0)
+        try:
+            rss, vms = p.memory_info()[:2]
+        except psutil.AccessDenied:
+            # expected on Windows Vista and Windows 7
+            if not platform.uname()[1] in ('vista', 'win-7', 'win7'):
+                raise
+        else:
+            self.assertTrue(rss > 0)
+
+    def test_send_signal(self):
+        p = psutil.Process(self.pid)
+        self.assertRaises(ValueError, p.send_signal, signal.SIGINT)
+
+    def test_exe(self):
+        for p in psutil.process_iter():
+            try:
+                self.assertEqual(os.path.basename(p.exe()), p.name())
+            except psutil.Error:
+                pass
+
     def test_num_handles(self):
         p = psutil.Process(os.getpid())
         before = p.num_handles()
@@ -245,9 +212,10 @@ class WindowsSpecificTestCase(unittest.TestCase):
         win32api.CloseHandle(handle)
         self.assertEqual(p.num_handles(), before)
 
-    def test_num_handles_2(self):
-        # Note: this fails from time to time; I'm keen on thinking
-        # it doesn't mean something is broken
+    def test_handles_leak(self):
+        # Call all Process methods and make sure no handles are left
+        # open. This is here mainly to make sure functions using
+        # OpenProcess() always call CloseHandle().
         def call(p, attr):
             attr = getattr(p, name, None)
             if attr is not None and callable(attr):
@@ -259,9 +227,9 @@ class WindowsSpecificTestCase(unittest.TestCase):
         failures = []
         for name in dir(psutil.Process):
             if name.startswith('_') \
-                or name in ('terminate', 'kill', 'suspend', 'resume',
-                            'nice', 'send_signal', 'wait', 'children',
-                            'as_dict'):
+                    or name in ('terminate', 'kill', 'suspend', 'resume',
+                                'nice', 'send_signal', 'wait', 'children',
+                                'as_dict'):
                 continue
             else:
                 try:
@@ -302,15 +270,81 @@ class WindowsSpecificTestCase(unittest.TestCase):
         self.assertRaises(psutil.NoSuchProcess,
                           p.send_signal, signal.CTRL_BREAK_EVENT)
 
-    def test_net_if_stats(self):
-        ps_names = set(cext.net_if_stats())
-        wmi_adapters = wmi.WMI().Win32_NetworkAdapter()
-        wmi_names = set()
-        for wmi_adapter in wmi_adapters:
-            wmi_names.add(wmi_adapter.Name)
-            wmi_names.add(wmi_adapter.NetConnectionID)
-        self.assertTrue(ps_names & wmi_names,
-                        "no common entries in %s, %s" % (ps_names, wmi_names))
+    def test_compare_name_exe(self):
+        for p in psutil.process_iter():
+            try:
+                a = os.path.basename(p.exe())
+                b = p.name()
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+            else:
+                self.assertEqual(a, b)
+
+
+@unittest.skipUnless(WINDOWS, "WINDOWS only")
+class TestProcessWMI(unittest.TestCase):
+    """Compare Process API results with WMI."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = get_test_subprocess().pid
+
+    @classmethod
+    def tearDownClass(cls):
+        reap_children()
+
+    def test_name(self):
+        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        p = psutil.Process(self.pid)
+        self.assertEqual(p.name(), w.Caption)
+
+    def test_exe(self):
+        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        p = psutil.Process(self.pid)
+        # Note: wmi reports the exe as a lower case string.
+        # Being Windows paths case-insensitive we ignore that.
+        self.assertEqual(p.exe().lower(), w.ExecutablePath.lower())
+
+    def test_cmdline(self):
+        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        p = psutil.Process(self.pid)
+        self.assertEqual(' '.join(p.cmdline()),
+                         w.CommandLine.replace('"', ''))
+
+    def test_username(self):
+        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        p = psutil.Process(self.pid)
+        domain, _, username = w.GetOwner()
+        username = "%s\\%s" % (domain, username)
+        self.assertEqual(p.username(), username)
+
+    def test_memory_rss(self):
+        time.sleep(0.1)
+        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        p = psutil.Process(self.pid)
+        rss = p.memory_info().rss
+        self.assertEqual(rss, int(w.WorkingSetSize))
+
+    def test_memory_vms(self):
+        time.sleep(0.1)
+        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        p = psutil.Process(self.pid)
+        vms = p.memory_info().vms
+        # http://msdn.microsoft.com/en-us/library/aa394372(VS.85).aspx
+        # ...claims that PageFileUsage is represented in Kilo
+        # bytes but funnily enough on certain platforms bytes are
+        # returned instead.
+        wmi_usage = int(w.PageFileUsage)
+        if (vms != wmi_usage) and (vms != wmi_usage * 1024):
+            self.fail("wmi=%s, psutil=%s" % (wmi_usage, vms))
+
+    def test_create_time(self):
+        w = wmi.WMI().Win32_Process(ProcessId=self.pid)[0]
+        p = psutil.Process(self.pid)
+        wmic_create = str(w.CreationDate.split('.')[0])
+        psutil_create = time.strftime("%Y%m%d%H%M%S",
+                                      time.localtime(p.create_time()))
+        self.assertEqual(wmic_create, psutil_create)
 
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
@@ -334,9 +368,19 @@ class TestDualProcessImplementation(unittest.TestCase):
         ('proc_io_counters', 0),
     ]
 
-    def test_compare_values(self):
+    @classmethod
+    def setUpClass(cls):
+        cls.pid = get_test_subprocess().pid
+
+    @classmethod
+    def tearDownClass(cls):
+        reap_children()
+
+    def test_all_procs(self):
+        from psutil._pswindows import pinfo_map
+
         def assert_ge_0(obj):
-            if isinstance(obj, tuple):
+            if isinstance(obj, (tuple, list)):
                 for value in obj:
                     self.assertGreaterEqual(value, 0, msg=obj)
             elif isinstance(obj, (int, long, float)):
@@ -356,14 +400,13 @@ class TestDualProcessImplementation(unittest.TestCase):
                         diff = abs(a - b)
                         self.assertLessEqual(diff, tolerance)
 
-        from psutil._pswindows import ntpinfo
         failures = []
         for p in psutil.process_iter():
             try:
-                nt = ntpinfo(*cext.proc_info(p.pid))
+                raw_info = cext.proc_info(p.pid)
             except psutil.NoSuchProcess:
                 continue
-            assert_ge_0(nt)
+            assert_ge_0(raw_info)
 
             for name, tolerance in self.fun_names:
                 if name == 'proc_memory_info' and p.pid == os.getpid():
@@ -378,28 +421,66 @@ class TestDualProcessImplementation(unittest.TestCase):
                 # compare values
                 try:
                     if name == 'proc_cpu_times':
-                        compare_with_tolerance(ret[0], nt.user_time, tolerance)
-                        compare_with_tolerance(ret[1],
-                                               nt.kernel_time, tolerance)
+                        compare_with_tolerance(
+                            ret[0], raw_info[pinfo_map['user_time']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[1], raw_info[pinfo_map['kernel_time']],
+                            tolerance)
                     elif name == 'proc_create_time':
-                        compare_with_tolerance(ret, nt.create_time, tolerance)
+                        compare_with_tolerance(
+                            ret, raw_info[pinfo_map['create_time']], tolerance)
                     elif name == 'proc_num_handles':
-                        compare_with_tolerance(ret, nt.num_handles, tolerance)
+                        compare_with_tolerance(
+                            ret, raw_info[pinfo_map['num_handles']], tolerance)
                     elif name == 'proc_io_counters':
-                        compare_with_tolerance(ret[0], nt.io_rcount, tolerance)
-                        compare_with_tolerance(ret[1], nt.io_wcount, tolerance)
-                        compare_with_tolerance(ret[2], nt.io_rbytes, tolerance)
-                        compare_with_tolerance(ret[3], nt.io_wbytes, tolerance)
+                        compare_with_tolerance(
+                            ret[0], raw_info[pinfo_map['io_rcount']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[1], raw_info[pinfo_map['io_wcount']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[2], raw_info[pinfo_map['io_rbytes']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[3], raw_info[pinfo_map['io_wbytes']],
+                            tolerance)
                     elif name == 'proc_memory_info':
-                        try:
-                            rawtupl = cext.proc_memory_info_2(p.pid)
-                        except psutil.NoSuchProcess:
-                            continue
-                        compare_with_tolerance(ret, rawtupl, tolerance)
+                        compare_with_tolerance(
+                            ret[0], raw_info[pinfo_map['num_page_faults']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[1], raw_info[pinfo_map['peak_wset']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[2], raw_info[pinfo_map['wset']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[3], raw_info[pinfo_map['peak_paged_pool']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[4], raw_info[pinfo_map['paged_pool']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[5], raw_info[pinfo_map['peak_non_paged_pool']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[6], raw_info[pinfo_map['non_paged_pool']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[7], raw_info[pinfo_map['pagefile']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[8], raw_info[pinfo_map['peak_pagefile']],
+                            tolerance)
+                        compare_with_tolerance(
+                            ret[9], raw_info[pinfo_map['mem_private']],
+                            tolerance)
                 except AssertionError:
                     trace = traceback.format_exc()
                     msg = '%s\npid=%s, method=%r, ret_1=%r, ret_2=%r' % (
-                        trace, p.pid, name, ret, nt)
+                        trace, p.pid, name, ret, raw_info)
                     failures.append(msg)
                     break
 
@@ -409,61 +490,64 @@ class TestDualProcessImplementation(unittest.TestCase):
     # ---
     # same tests as above but mimicks the AccessDenied failure of
     # the first (fast) method failing with AD.
-    # TODO: currently does not take tolerance into account.
 
     def test_name(self):
-        name = psutil.Process().name()
+        name = psutil.Process(self.pid).name()
         with mock.patch("psutil._psplatform.cext.proc_exe",
                         side_effect=psutil.AccessDenied(os.getpid())) as fun:
-            psutil.Process().name() == name
+            self.assertEqual(psutil.Process(self.pid).name(), name)
             assert fun.called
 
     def test_memory_info(self):
-        mem = psutil.Process().memory_info()
+        mem_1 = psutil.Process(self.pid).memory_info()
         with mock.patch("psutil._psplatform.cext.proc_memory_info",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
-            psutil.Process().memory_info() == mem
+            mem_2 = psutil.Process(self.pid).memory_info()
+            self.assertEqual(len(mem_1), len(mem_2))
+            for i in range(len(mem_1)):
+                self.assertGreaterEqual(mem_1[i], 0)
+                self.assertGreaterEqual(mem_2[i], 0)
+                self.assertAlmostEqual(mem_1[i], mem_2[i], delta=512)
             assert fun.called
 
     def test_create_time(self):
-        ctime = psutil.Process().create_time()
+        ctime = psutil.Process(self.pid).create_time()
         with mock.patch("psutil._psplatform.cext.proc_create_time",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
-            psutil.Process().create_time() == ctime
+            self.assertEqual(psutil.Process(self.pid).create_time(), ctime)
             assert fun.called
 
     def test_cpu_times(self):
-        cpu_times = psutil.Process().cpu_times()
+        cpu_times_1 = psutil.Process(self.pid).cpu_times()
         with mock.patch("psutil._psplatform.cext.proc_cpu_times",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
-            psutil.Process().cpu_times() == cpu_times
+            cpu_times_2 = psutil.Process(self.pid).cpu_times()
             assert fun.called
+            self.assertAlmostEqual(
+                cpu_times_1.user, cpu_times_2.user, delta=0.01)
+            self.assertAlmostEqual(
+                cpu_times_1.system, cpu_times_2.system, delta=0.01)
 
     def test_io_counters(self):
-        io_counters = psutil.Process().io_counters()
+        io_counters_1 = psutil.Process(self.pid).io_counters()
+        print("")
+        print(io_counters_1)
         with mock.patch("psutil._psplatform.cext.proc_io_counters",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
-            psutil.Process().io_counters() == io_counters
+            io_counters_2 = psutil.Process(self.pid).io_counters()
+            for i in range(len(io_counters_1)):
+                self.assertGreaterEqual(io_counters_1[i], 0)
+                self.assertGreaterEqual(io_counters_2[i], 0)
+                self.assertAlmostEqual(
+                    io_counters_1[i], io_counters_2[i], delta=5)
             assert fun.called
 
     def test_num_handles(self):
-        io_counters = psutil.Process().io_counters()
-        with mock.patch("psutil._psplatform.cext.proc_io_counters",
+        num_handles = psutil.Process(self.pid).num_handles()
+        with mock.patch("psutil._psplatform.cext.proc_num_handles",
                         side_effect=OSError(errno.EPERM, "msg")) as fun:
-            psutil.Process().io_counters() == io_counters
+            psutil.Process(self.pid).num_handles() == num_handles
             assert fun.called
-
-    # --- other tests
-
-    def test_compare_name_exe(self):
-        for p in psutil.process_iter():
-            try:
-                a = os.path.basename(p.exe())
-                b = p.name()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
-            else:
-                self.assertEqual(a, b)
 
     def test_zombies(self):
         # test that NPS is raised by the 2nd implementation in case a
@@ -476,9 +560,11 @@ class TestDualProcessImplementation(unittest.TestCase):
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")
 class RemoteProcessTestCase(unittest.TestCase):
-    """Certain functions require calling ReadProcessMemory.  This trivially
-    works when called on the current process.  Check that this works on other
-    processes, especially when they have a different bitness."""
+    """Certain functions require calling ReadProcessMemory.
+    This trivially works when called on the current process.
+    Check that this works on other processes, especially when they
+    have a different bitness.
+    """
 
     @staticmethod
     def find_other_interpreter():
@@ -560,6 +646,11 @@ class RemoteProcessTestCase(unittest.TestCase):
         e = p.environ()
         self.assertIn("THINK_OF_A_NUMBER", e)
         self.assertEquals(e["THINK_OF_A_NUMBER"], str(os.getpid()))
+
+
+# ===================================================================
+# Windows services
+# ===================================================================
 
 
 @unittest.skipUnless(WINDOWS, "WINDOWS only")

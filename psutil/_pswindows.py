@@ -90,6 +90,29 @@ if enum is not None:
 
     globals().update(Priority.__members__)
 
+pinfo_map = dict(
+    num_handles=0,
+    ctx_switches=1,
+    user_time=2,
+    kernel_time=3,
+    create_time=4,
+    num_threads=5,
+    io_rcount=6,
+    io_wcount=7,
+    io_rbytes=8,
+    io_wbytes=9,
+    num_page_faults=10,
+    peak_wset=11,
+    wset=12,
+    peak_paged_pool=13,
+    paged_pool=14,
+    peak_non_paged_pool=15,
+    non_paged_pool=16,
+    pagefile=17,
+    peak_pagefile=18,
+    mem_private=19,
+)
+
 
 # =====================================================================
 # --- named tuples
@@ -589,6 +612,14 @@ class Process(object):
             if not self._inctx:
                 cext.win32_CloseHandle(handle)
 
+    def oneshot_info(self):
+        """Return multiple information about this process as a
+        raw tuple.
+        """
+        ret = cext.proc_info(self.pid)
+        assert len(ret) == len(pinfo_map)
+        return ret
+
     @wrap_exceptions
     def name(self):
         """Return process name, which on Windows is always the final
@@ -646,7 +677,19 @@ class Process(object):
             if err.errno in ACCESS_DENIED_SET:
                 # TODO: the C ext can probably be refactored in order
                 # to get this from cext.proc_info()
-                return cext.proc_memory_info_2(self.pid)
+                info = self.oneshot_info()
+                return (
+                    info[pinfo_map['num_page_faults']],
+                    info[pinfo_map['peak_wset']],
+                    info[pinfo_map['wset']],
+                    info[pinfo_map['peak_paged_pool']],
+                    info[pinfo_map['paged_pool']],
+                    info[pinfo_map['peak_non_paged_pool']],
+                    info[pinfo_map['non_paged_pool']],
+                    info[pinfo_map['pagefile']],
+                    info[pinfo_map['peak_pagefile']],
+                    info[pinfo_map['mem_private']],
+                )
             raise
 
     @wrap_exceptions
@@ -717,12 +760,12 @@ class Process(object):
             return cext.proc_create_time(self.pid)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                return ntpinfo(*cext.proc_info(self.pid)).create_time
+                return self.oneshot_info()[pinfo_map['create_time']]
             raise
 
     @wrap_exceptions
     def num_threads(self):
-        return ntpinfo(*cext.proc_info(self.pid)).num_threads
+        return self.oneshot_info()[pinfo_map['num_threads']]
 
     @wrap_exceptions
     def threads(self):
@@ -740,8 +783,9 @@ class Process(object):
                 user, system = cext.proc_cpu_times(self.pid, handle)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                nt = ntpinfo(*cext.proc_info(self.pid))
-                user, system = (nt.user_time, nt.kernel_time)
+                info = self.oneshot_info()
+                user = info[pinfo_map['user_time']]
+                system = info[pinfo_map['kernel_time']]
             else:
                 raise
         # Children user/system times are not retrievable (set to 0).
@@ -823,8 +867,13 @@ class Process(object):
                 ret = cext.proc_io_counters(self.pid, handle)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                nt = ntpinfo(*cext.proc_info(self.pid))
-                ret = (nt.io_rcount, nt.io_wcount, nt.io_rbytes, nt.io_wbytes)
+                info = self.oneshot_info()
+                ret = (
+                    info[pinfo_map['io_rcount']],
+                    info[pinfo_map['io_wcount']],
+                    info[pinfo_map['io_rbytes']],
+                    info[pinfo_map['io_wbytes']],
+                )
             else:
                 raise
         return _common.pio(*ret)
@@ -877,11 +926,11 @@ class Process(object):
                 return cext.proc_num_handles(self.pid, handle)
         except OSError as err:
             if err.errno in ACCESS_DENIED_SET:
-                return ntpinfo(*cext.proc_info(self.pid)).num_handles
+                return self.oneshot_info()[pinfo_map['num_handles']]
             raise
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        ctx_switches = ntpinfo(*cext.proc_info(self.pid)).ctx_switches
+        ctx_switches = self.oneshot_info()[pinfo_map['ctx_switches']]
         # only voluntary ctx switches are supported
         return _common.pctxsw(ctx_switches, 0)
