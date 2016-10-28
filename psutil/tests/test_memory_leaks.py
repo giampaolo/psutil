@@ -42,6 +42,7 @@ LOOPS = 1000
 MEMORY_TOLERANCE = 4096
 SKIP_PYTHON_IMPL = False
 cext = psutil._psplatform.cext
+thisproc = psutil.Process()
 
 
 # ===================================================================
@@ -69,39 +70,42 @@ def bytes2human(n):
     for s in reversed(symbols):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
-            return '%.1f%s' % (value, s)
+            return '%.2f%s' % (value, s)
     return "%sB" % n
 
 
 class Base(unittest.TestCase):
-    proc = psutil.Process()
+    """Base framework class which calls a function many times and
+    produces a failure if process memory usage keeps increasing
+    over time.
+    """
+
+    proc = thisproc
 
     def setUp(self):
         gc.collect()
 
-    def tearDown(self):
-        reap_children()
-
-    def execute(self, function, *args, **kwargs):
+    def execute(self, fun, *args, **kwargs):
         def call_many_times():
             for x in xrange(LOOPS - 1):
-                self.call(function, *args, **kwargs)
+                self._call(fun, *args, **kwargs)
             del x
             gc.collect()
-            return self.get_mem()
 
-        self.call(function, *args, **kwargs)
+        self._call(fun, *args, **kwargs)
         self.assertEqual(gc.garbage, [])
         self.assertEqual(threading.active_count(), 1)
 
-        # RSS comparison
+        # USS or RSS comparison.
         # step 1
-        rss1 = call_many_times()
+        call_many_times()
+        mem1 = self._get_mem()
         # step 2
-        rss2 = call_many_times()
+        call_many_times()
+        mem2 = self._get_mem()
 
-        difference = rss2 - rss1
-        if difference > MEMORY_TOLERANCE:
+        diff1 = mem2 - mem1
+        if diff1 > MEMORY_TOLERANCE:
             # This doesn't necessarily mean we have a leak yet.
             # At this point we assume that after having called the
             # function so many times the memory usage is stabilized
@@ -109,31 +113,43 @@ class Base(unittest.TestCase):
             # more.
             # Let's keep calling fun for 3 more seconds and fail if
             # we notice any difference.
+            ncalls = LOOPS * 2
             stop_at = time.time() + 3
             while True:
-                self.call(function, *args, **kwargs)
+                self._call(fun, *args, **kwargs)
+                ncalls += 1
                 if time.time() >= stop_at:
                     break
             del stop_at
             gc.collect()
-            rss3 = self.get_mem()
-            diff = rss3 - rss2
-            if rss3 > rss2:
-                self.fail("rss2=%s, rss3=%s, diff=%s (%s)"
-                          % (rss2, rss3, diff, bytes2human(diff)))
+            mem3 = self._get_mem()
+            diff2 = mem3 - mem2
+            if mem3 > mem2:
+                self.fail("+%s after %s calls, +%s after another %s calls" % (
+                    bytes2human(diff1),
+                    LOOPS,
+                    bytes2human(diff2),
+                    ncalls
+                ))
 
-    def execute_w_exc(self, exc, function, *args, **kwargs):
+    def execute_w_exc(self, exc, fun, *args, **kwargs):
         def call():
-            self.assertRaises(exc, function, *args, **kwargs)
+            self.assertRaises(exc, fun, *args, **kwargs)
 
         self.execute(call)
 
-    def get_mem(self):
-        # TODO: shall we use USS?
-        return psutil.Process().memory_info()[0]
+    @staticmethod
+    def _get_mem():
+        # By using USS memory  it seems it's less likely to bump
+        # into false positives.
+        if LINUX or WINDOWS or OSX:
+            return thisproc.memory_full_info().uss
+        else:
+            return thisproc.memory_info().rss
 
-    def call(self, function, *args, **kwargs):
-        function(*args, **kwargs)
+    @staticmethod
+    def _call(fun, *args, **kwargs):
+        fun(*args, **kwargs)
 
 
 # ===================================================================
@@ -178,7 +194,7 @@ class TestProcessObjectLeaks(Base):
         self.execute(self.proc.nice)
 
     def test_nice_set(self):
-        niceness = psutil.Process().nice()
+        niceness = thisproc.nice()
         self.execute(self.proc.nice, niceness)
 
     @unittest.skipUnless(hasattr(psutil.Process, 'ionice'),
@@ -190,7 +206,7 @@ class TestProcessObjectLeaks(Base):
                          "platform not supported")
     def test_ionice_set(self):
         if WINDOWS:
-            value = psutil.Process().ionice()
+            value = thisproc.ionice()
             self.execute(self.proc.ionice, value)
         else:
             self.execute(self.proc.ionice, psutil.IOPRIO_CLASS_NONE)
@@ -263,7 +279,7 @@ class TestProcessObjectLeaks(Base):
     @unittest.skipUnless(WINDOWS or LINUX or FREEBSD,
                          "platform not supported")
     def test_cpu_affinity_set(self):
-        affinity = psutil.Process().cpu_affinity()
+        affinity = thisproc.cpu_affinity()
         self.execute(self.proc.cpu_affinity, affinity)
         if not TRAVIS:
             self.execute_w_exc(ValueError, self.proc.cpu_affinity, [-1])
@@ -289,7 +305,7 @@ class TestProcessObjectLeaks(Base):
     @unittest.skipUnless(LINUX, "LINUX only")
     @unittest.skipUnless(LINUX and RLIMIT_SUPPORT, "LINUX >= 2.6.36 only")
     def test_rlimit_set(self):
-        limit = psutil.Process().rlimit(psutil.RLIMIT_NOFILE)
+        limit = thisproc.rlimit(psutil.RLIMIT_NOFILE)
         self.execute(self.proc.rlimit, psutil.RLIMIT_NOFILE, limit)
         self.execute_w_exc(OSError, self.proc.rlimit, -1)
 
@@ -348,6 +364,7 @@ class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
 
     @classmethod
     def setUpClass(cls):
+        super(TestProcessObjectLeaksZombie, cls).setUpClass()
         p = get_test_subprocess()
         cls.proc = psutil.Process(p.pid)
         cls.proc.kill()
@@ -355,9 +372,10 @@ class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
 
     @classmethod
     def tearDownClass(cls):
+        super(TestProcessObjectLeaksZombie, cls).tearDownClass()
         reap_children()
 
-    def call(self, fun, *args, **kwargs):
+    def _call(self, fun, *args, **kwargs):
         try:
             fun(*args, **kwargs)
         except psutil.NoSuchProcess:
