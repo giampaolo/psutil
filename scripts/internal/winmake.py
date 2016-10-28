@@ -20,7 +20,6 @@ import ssl
 import subprocess
 import sys
 import tempfile
-import textwrap
 
 
 PYTHON = sys.executable
@@ -132,7 +131,7 @@ def safe_rmtree(path):
 
 
 def recursive_rm(*patterns):
-    """Recursively remove a file or dir by pattern."""
+    """Recursively remove a file or matching a list of patterns."""
     for root, subdirs, subfiles in os.walk('.'):
         root = os.path.normpath(root)
         if root.startswith('.git/'):
@@ -220,8 +219,9 @@ def uninstall():
     sh("%s -m pip uninstall -y psutil" % PYTHON)
 
     # Uninstalling psutil on Windows seems to be tricky as we may have
-    # different versions installed. Also we don't want to be in main
-    # psutil source dir as "import psutil" will always succeed.
+    # different versions os psutil installed. Also we don't want to be
+    # in the main psutil source dir as "import psutil" will always
+    # succeed so this really removes files from site-packages dir.
     here = os.getcwd()
     try:
         os.chdir('C:\\')
@@ -336,12 +336,7 @@ def test_by_name():
     except IndexError:
         sys.exit('second arg missing')
     install()
-    sh(textwrap.dedent("""\
-        %s -m nose \
-        psutil\\tests\\test_process.py \
-        psutil\\tests\\test_system.py \
-        psutil\\tests\\test_windows.py \
-        psutil\\tests\\test_misc.py --nocapture -v -m %s""" % (PYTHON, name)))
+    sh("%s -m unittest -v %s" % (PYTHON, name))
 
 
 @cmd

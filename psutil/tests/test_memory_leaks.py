@@ -5,10 +5,12 @@
 # found in the LICENSE file.
 
 """
-Tests for detecting memory leaks for psutil functions which are
-implemented in C. It does so by calling a function many times and
+Tests for detecting function memory leaks (typically the ones
+implemented in C). It does so by calling a function many times and
 checking whether process memory usage keeps increasing between
-calls and/or over time.
+calls or over time.
+Note that this may produce false positives (especially on Windows
+for some reason).
 """
 
 import functools
@@ -41,7 +43,7 @@ from psutil.tests import unittest
 
 LOOPS = 1000
 MEMORY_TOLERANCE = 4096
-SKIP_PYTHON_IMPL = False
+SKIP_PYTHON_IMPL = True if TRAVIS else False
 cext = psutil._psplatform.cext
 thisproc = psutil.Process()
 
@@ -75,10 +77,10 @@ def bytes2human(n):
     return "%sB" % n
 
 
-class Base(unittest.TestCase):
+class TestMemLeak(unittest.TestCase):
     """Base framework class which calls a function many times and
     produces a failure if process memory usage keeps increasing
-    between calls and / or over time.
+    between calls or over time.
     """
 
     def setUp(self):
@@ -87,7 +89,7 @@ class Base(unittest.TestCase):
     def execute(self, fun, *args, **kwargs):
         """Test a callable."""
         def call_many_times():
-            for x in xrange(LOOPS - 1):
+            for x in xrange(LOOPS):
                 self._call(fun, *args, **kwargs)
             del x
             gc.collect()
@@ -110,25 +112,26 @@ class Base(unittest.TestCase):
             # This doesn't necessarily mean we have a leak yet.
             # At this point we assume that after having called the
             # function so many times the memory usage is stabilized
-            # and if there are no leaks it should not increase any
-            # more.
+            # and if there are no leaks it should not increase
+            # anymore.
             # Let's keep calling fun for 3 more seconds and fail if
             # we notice any difference.
             ncalls = 0
             stop_at = time.time() + 3
-            while True:
+            while time.time() <= stop_at:
                 self._call(fun, *args, **kwargs)
                 ncalls += 1
-                if time.time() >= stop_at:
-                    break
+
             del stop_at
             gc.collect()
             mem3 = self._get_mem()
             diff2 = mem3 - mem2
+
             if mem3 > mem2:
+                # failure
                 self.fail("+%s after %s calls, +%s after another %s calls" % (
                     bytes2human(diff1),
-                    LOOPS * 2,
+                    LOOPS,
                     bytes2human(diff2),
                     ncalls
                 ))
@@ -161,7 +164,7 @@ class Base(unittest.TestCase):
 # ===================================================================
 
 
-class TestProcessObjectLeaks(Base):
+class TestProcessObjectLeaks(TestMemLeak):
     """Test leaks of Process class methods."""
 
     proc = thisproc
@@ -410,7 +413,7 @@ class TestProcessObjectLeaksZombie(TestProcessObjectLeaks):
 # ===================================================================
 
 
-class TestModuleFunctionsLeaks(Base):
+class TestModuleFunctionsLeaks(TestMemLeak):
     """Test leaks of psutil module functions."""
 
     @skip_if_linux()
@@ -426,7 +429,7 @@ class TestModuleFunctionsLeaks(Base):
         self.execute(psutil.boot_time)
 
     @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
-                     "not worth being tested on POSIX (pure python)")
+                     "worthless on POSIX (pure python)")
     def test_pid_exists(self):
         self.execute(psutil.pid_exists, os.getpid())
 
@@ -435,7 +438,7 @@ class TestModuleFunctionsLeaks(Base):
 
     # TODO: remove this skip when this gets fixed
     @unittest.skipIf(SUNOS,
-                     "not worth being tested on SUNOS (uses a subprocess)")
+                     "worthless on SUNOS (uses a subprocess)")
     def test_swap_memory(self):
         self.execute(psutil.swap_memory)
 
@@ -448,7 +451,7 @@ class TestModuleFunctionsLeaks(Base):
         self.execute(psutil.cpu_times, percpu=True)
 
     @unittest.skipIf(POSIX and SKIP_PYTHON_IMPL,
-                     "not worth being tested on POSIX (pure python)")
+                     "worthless on POSIX (pure python)")
     def test_disk_usage(self):
         self.execute(psutil.disk_usage, '.')
 
@@ -471,7 +474,7 @@ class TestModuleFunctionsLeaks(Base):
         self.execute(psutil.users)
 
     @unittest.skipIf(LINUX,
-                     "not worth being tested on Linux (pure python)")
+                     "worthless on Linux (pure python)")
     @unittest.skipIf(OSX and os.getuid() != 0, "need root access")
     def test_net_connections(self):
         self.execute(psutil.net_connections)
