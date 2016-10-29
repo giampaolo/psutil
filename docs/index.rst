@@ -504,23 +504,16 @@ Network
   value is a list of namedtuples for each address assigned to the NIC.
   Each namedtuple includes 5 fields:
 
-  - **family**
-  - **address**
-  - **netmask**
-  - **broadcast**
-  - **ptp**
-
-  *family* can be either
-  `AF_INET <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
-  `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
-  or :const:`psutil.AF_LINK`, which refers to a MAC address.
-  *address* is the primary address and it is always set.
-  *netmask*, *broadcast* and *ptp* may be ``None``.
-  *ptp* stands for "point to point" and references the destination address on a
-  point to point interface (typically a VPN).
-  *broadcast* and *ptp* are mutually exclusive.
-  *netmask*, *broadcast* and *ptp* are not supported on Windows and are set to
-  ``None``.
+  - **family**: the address family, either
+    `AF_INET <http://docs.python.org//library/socket.html#socket.AF_INET>`__,
+    `AF_INET6 <http://docs.python.org//library/socket.html#socket.AF_INET6>`__
+    or :const:`psutil.AF_LINK`, which refers to a MAC address.
+  - **address**: the primary NIC address (always set).
+  - **netmask**: the netmask address (may be ``None``).
+  - **broadcast**: the broadcast address (may be ``None``).
+  - **ptp**: stands for "point to point"; it's the destination address on a
+    point to point interface (typically a VPN). *broadcast* and *ptp* are
+    mutually exclusive. May be ``None``.
 
   Example::
 
@@ -548,14 +541,14 @@ Network
     interface (that's why dict values are lists).
 
   .. note::
-    *netmask*, *broadcast* and *ptp* are not supported on Windows and are set
-    to ``None``.
+    *broadcast* and *ptp* are not supported on Windows and are always ``None``.
 
   .. versionadded:: 3.0.0
 
   .. versionchanged:: 3.2.0 *ptp* field was added.
 
-  .. versionchanged:: 4.4.0 *netmask* field on Windows is no longer ``None``.
+  .. versionchanged:: 4.4.0 added support for *netmask* field on Windows which
+    is no longer ``None``.
 
 .. function:: net_if_stats()
 
@@ -1903,6 +1896,16 @@ Constants
   To be used in conjunction with :func:`psutil.net_if_stats()`.
 
   .. versionadded:: 3.0.0
+
+.. _const-version-info:
+.. data:: version_info
+
+  A tuple to check psutil installed version. Example:
+
+      >>> import psutil
+      >>> if psutil.version_info >= (4, 5):
+      ...    pass
+
 
 Development guide
 =================
