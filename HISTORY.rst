@@ -5,6 +5,10 @@
 
 *XXXX-XX-XX*
 
+**Enhncements**
+
+- 943_: better error message in case of version conflict on import.
+
 **Bug fixes**
 
 - 932_: [NetBSD] net_connections() and Process.connections() may fail without
