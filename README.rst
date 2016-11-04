@@ -60,6 +60,7 @@ Example applications
 - https://github.com/google/grr
 - https://github.com/Jahaja/psdash
 - https://github.com/giampaolo/psutil/tree/master/scripts
+- https://github.com/vesche/histstat
 
 +------------------------------------------------+---------------------------------------------+
 | .. image:: docs/_static/procinfo-small.png     | .. image:: docs/_static/top-small.png       |
