@@ -205,8 +205,16 @@ _timer = getattr(time, 'monotonic', time.time)
 if (int(__version__.replace('.', '')) !=
         getattr(_psplatform.cext, 'version', None)):
     msg = "version conflict: %r C extension module was built for another " \
-          "version of psutil (different than %s)" % (_psplatform.cext.__file__,
-                                                     __version__)
+          "version of psutil" % getattr(_psplatform.cext, "__file__")
+    if hasattr(_psplatform.cext, 'version'):
+        msg += " (%s instead of %s)" % (
+            '.'.join([x for x in str(_psplatform.cext.version)]), __version__)
+    else:
+        msg += " (different than %s)" % __version__
+    msg += "; you may try to 'pip uninstall psutil', manually remove %s" % (
+        getattr(_psplatform.cext, "__file__",
+                "the existing psutil install directory"))
+    msg += " or clean the virtual env somehow, then reinstall"
     raise ImportError(msg)
 
 
