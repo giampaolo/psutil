@@ -1,12 +1,14 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
-4.4.3
+5.0.0
 =====
 
 *XXXX-XX-XX*
 
 **Enhncements**
 
+- 799_: new Process.oneshot() context manager making Process methods around
+  +2x faster in general and from +2x to +6x faster on Windows.
 - 943_: better error message in case of version conflict on import.
 
 **Bug fixes**

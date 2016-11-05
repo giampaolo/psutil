@@ -1394,8 +1394,9 @@ class Process(object):
         if not ctxsw:
             raise NotImplementedError(
                 "'voluntary_ctxt_switches' and 'nonvoluntary_ctxt_switches'"
-                "lines were not found in /proc/%s/status; the kernel is "
-                "probably older than 2.6.23" % self.pid)
+                "lines were not found in %s/%s/status; the kernel is "
+                "probably older than 2.6.23" % (
+                    self._procfs_path, self.self.pid))
         else:
             return _common.pctxsw(int(ctxsw[0]), int(ctxsw[1]))
 
