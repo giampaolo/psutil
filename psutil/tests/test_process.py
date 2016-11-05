@@ -1249,6 +1249,26 @@ class TestProcess(unittest.TestCase):
             p.cpu_times()
         self.assertEqual(m.call_count, 2)
 
+    def test_oneshot_twice(self):
+        # Test the case where the ctx manager is __enter__ed twice.
+        # The second __enter__ is supposed to resut in a NOOP.
+        with mock.patch("psutil._psplatform.Process.cpu_times") as m1:
+            with mock.patch("psutil._psplatform.Process.oneshot_enter") as m2:
+                p = psutil.Process()
+                with p.oneshot():
+                    p.cpu_times()
+                    p.cpu_times()
+                    with p.oneshot():
+                        p.cpu_times()
+                        p.cpu_times()
+                self.assertEqual(m1.call_count, 1)
+                self.assertEqual(m2.call_count, 1)
+
+        with mock.patch("psutil._psplatform.Process.cpu_times") as m:
+            p.cpu_times()
+            p.cpu_times()
+        self.assertEqual(m.call_count, 2)
+
     def test_halfway_terminated_process(self):
         # Test that NoSuchProcess exception gets raised in case the
         # process dies after we create the Process object.
