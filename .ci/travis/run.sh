@@ -24,11 +24,11 @@ else
     python psutil/tests/runner.py
 fi
 
-# run mem leaks test
-python psutil/tests/test_memory_leaks.py
-
-# run linters
-if [ "$PYVER" != "2.6" ]; then
-    flake8
-    pep8
+if [ "$PYVER" == "2.7" ] || [ "$PYVER" == "3.5" ]; then
+    # run mem leaks test
+    python psutil/tests/test_memory_leaks.py
+    # run linter (on Linux only)
+    if [[ "$(uname -s)" != 'Darwin' ]]; then
+        python -m flake8
+    fi
 fi
