@@ -1236,6 +1236,19 @@ class TestProcess(unittest.TestCase):
         with self.assertRaises(ValueError):
             p.as_dict(['foo', 'bar'])
 
+    def test_oneshot(self):
+        with mock.patch("psutil._psplatform.Process.cpu_times") as m:
+            p = psutil.Process()
+            with p.oneshot():
+                p.cpu_times()
+                p.cpu_times()
+            self.assertEqual(m.call_count, 1)
+
+        with mock.patch("psutil._psplatform.Process.cpu_times") as m:
+            p.cpu_times()
+            p.cpu_times()
+        self.assertEqual(m.call_count, 2)
+
     def test_halfway_terminated_process(self):
         # Test that NoSuchProcess exception gets raised in case the
         # process dies after we create the Process object.
