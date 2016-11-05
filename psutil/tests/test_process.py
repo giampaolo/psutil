@@ -1557,10 +1557,10 @@ class TestFetchAllProcesses(unittest.TestCase):
 
         default = object()
         failures = []
-        for name in attrs:
-            for p in psutil.process_iter():
-                ret = default
-                try:
+        for p in psutil.process_iter():
+            with p.oneshot():
+                for name in attrs:
+                    ret = default
                     try:
                         args = ()
                         attr = getattr(p, name, None)
@@ -1583,23 +1583,23 @@ class TestFetchAllProcesses(unittest.TestCase):
                             self.assertEqual(err.name, p.name())
                         self.assertTrue(str(err))
                         self.assertTrue(err.msg)
+                    except Exception as err:
+                        s = '\n' + '=' * 70 + '\n'
+                        s += "FAIL: test_%s (proc=%s" % (name, p)
+                        if ret != default:
+                            s += ", ret=%s)" % repr(ret)
+                        s += ')\n'
+                        s += '-' * 70
+                        s += "\n%s" % traceback.format_exc()
+                        s = "\n".join((" " * 4) + i for i in s.splitlines())
+                        s += '\n'
+                        failures.append(s)
+                        break
                     else:
                         if ret not in (0, 0.0, [], None, '', {}):
                             assert ret, ret
                         meth = getattr(self, name)
                         meth(ret, p)
-                except Exception as err:
-                    s = '\n' + '=' * 70 + '\n'
-                    s += "FAIL: test_%s (proc=%s" % (name, p)
-                    if ret != default:
-                        s += ", ret=%s)" % repr(ret)
-                    s += ')\n'
-                    s += '-' * 70
-                    s += "\n%s" % traceback.format_exc()
-                    s = "\n".join((" " * 4) + i for i in s.splitlines())
-                    s += '\n'
-                    failures.append(s)
-                    break
 
         if failures:
             self.fail(''.join(failures))
