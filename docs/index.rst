@@ -908,7 +908,7 @@ Process class
       3.0.0 *ad_value* is used also when incurring into
       :class:`ZombieProcess` exception, not only :class:`AccessDenied`
 
-     .. versionchanged:: 5.0.0 :meth:`as_dict` is considerably faster thanks
+     .. versionchanged:: 4.5.0 :meth:`as_dict` is considerably faster thanks
         to :meth:`oneshot` context manager.
 
   .. method:: parent()
