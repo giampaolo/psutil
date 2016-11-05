@@ -61,22 +61,23 @@ def main():
     ad_pids = []
     procs = []
     for p in psutil.process_iter():
-        try:
-            mem = p.memory_full_info()
-            info = p.as_dict(attrs=["cmdline", "username"])
-        except psutil.AccessDenied:
-            ad_pids.append(p.pid)
-        except psutil.NoSuchProcess:
-            pass
-        else:
-            p._uss = mem.uss
-            p._rss = mem.rss
-            if not p._uss:
-                continue
-            p._pss = getattr(mem, "pss", "")
-            p._swap = getattr(mem, "swap", "")
-            p._info = info
-            procs.append(p)
+        with p.oneshot():
+            try:
+                mem = p.memory_full_info()
+                info = p.as_dict(attrs=["cmdline", "username"])
+            except psutil.AccessDenied:
+                ad_pids.append(p.pid)
+            except psutil.NoSuchProcess:
+                pass
+            else:
+                p._uss = mem.uss
+                p._rss = mem.rss
+                if not p._uss:
+                    continue
+                p._pss = getattr(mem, "pss", "")
+                p._swap = getattr(mem, "swap", "")
+                p._info = info
+                procs.append(p)
 
     procs.sort(key=lambda p: p._uss)
     templ = "%-7s %-7s %-30s %7s %7s %7s %7s"

@@ -16,6 +16,7 @@ from . import _psposix
 from . import _psutil_posix as cext_posix
 from . import _psutil_sunos as cext
 from ._common import isfile_strict
+from ._common import memoize_when_activated
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
@@ -353,10 +354,32 @@ class Process(object):
         self._ppid = None
         self._procfs_path = get_procfs_path()
 
+    def oneshot_enter(self):
+        self._proc_name_and_args.cache_activate()
+        self._proc_basic_info.cache_activate()
+        self._proc_cred.cache_activate()
+
+    def oneshot_exit(self):
+        self._proc_name_and_args.cache_deactivate()
+        self._proc_basic_info.cache_deactivate()
+        self._proc_cred.cache_deactivate()
+
+    @memoize_when_activated
+    def _proc_name_and_args(self):
+        return cext.proc_name_and_args(self.pid, self._procfs_path)
+
+    @memoize_when_activated
+    def _proc_basic_info(self):
+        return cext.proc_basic_info(self.pid, self._procfs_path)
+
+    @memoize_when_activated
+    def _proc_cred(self):
+        return cext.proc_cred(self.pid, self._procfs_path)
+
     @wrap_exceptions
     def name(self):
         # note: max len == 15
-        return cext.proc_name_and_args(self.pid, self._procfs_path)[0]
+        return self._proc_name_and_args()[0]
 
     @wrap_exceptions
     def exe(self):
@@ -373,16 +396,15 @@ class Process(object):
 
     @wrap_exceptions
     def cmdline(self):
-        return cext.proc_name_and_args(
-            self.pid, self._procfs_path)[1].split(' ')
+        return self._proc_name_and_args()[1].split(' ')
 
     @wrap_exceptions
     def create_time(self):
-        return cext.proc_basic_info(self.pid, self._procfs_path)[3]
+        return self._proc_basic_info()[3]
 
     @wrap_exceptions
     def num_threads(self):
-        return cext.proc_basic_info(self.pid, self._procfs_path)[5]
+        return self._proc_basic_info()[5]
 
     @wrap_exceptions
     def nice_get(self):
@@ -415,19 +437,17 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        self._ppid = cext.proc_basic_info(self.pid, self._procfs_path)[0]
+        self._ppid = self._proc_basic_info()[0]
         return self._ppid
 
     @wrap_exceptions
     def uids(self):
-        real, effective, saved, _, _, _ = \
-            cext.proc_cred(self.pid, self._procfs_path)
+        real, effective, saved, _, _, _ = self._proc_cred()
         return _common.puids(real, effective, saved)
 
     @wrap_exceptions
     def gids(self):
-        _, _, _, real, effective, saved = \
-            cext.proc_cred(self.pid, self._procfs_path)
+        _, _, _, real, effective, saved = self._proc_cred()
         return _common.puids(real, effective, saved)
 
     @wrap_exceptions
@@ -453,7 +473,7 @@ class Process(object):
         procfs_path = self._procfs_path
         hit_enoent = False
         tty = wrap_exceptions(
-            cext.proc_basic_info(self.pid, self._procfs_path)[0])
+            self._proc_basic_info()[0])
         if tty != cext.PRNODEV:
             for x in (0, 1, 2, 255):
                 try:
@@ -485,7 +505,7 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        ret = cext.proc_basic_info(self.pid, self._procfs_path)
+        ret = self._proc_basic_info()
         rss, vms = ret[1] * 1024, ret[2] * 1024
         return pmem(rss, vms)
 
@@ -493,7 +513,7 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        code = cext.proc_basic_info(self.pid, self._procfs_path)[6]
+        code = self._proc_basic_info()[6]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 

@@ -33,6 +33,7 @@ DEPS = [
     "mock",
     "nose",
     "pdbpp",
+    "perf",
     "pip",
     "pypiwin32",
     "setuptools",
@@ -349,6 +350,18 @@ def test_memleaks():
 @cmd
 def install_git_hooks():
     shutil.copy(".git-pre-commit", ".git/hooks/pre-commit")
+
+
+@cmd
+def bench_oneshot():
+    install()
+    sh("%s scripts\\internal\\bench_oneshot.py" % PYTHON)
+
+
+@cmd
+def bench_oneshot_2():
+    install()
+    sh("%s scripts\\internal\\bench_oneshot_2.py" % PYTHON)
 
 
 def main():

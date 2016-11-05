@@ -19,6 +19,7 @@ from ._common import parse_environ_block
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
 from ._common import usage_percent
+from ._common import memoize_when_activated
 from ._compat import long
 from ._compat import lru_cache
 from ._compat import PY3
@@ -576,6 +577,15 @@ class Process(object):
         self._name = None
         self._ppid = None
 
+    # --- oneshot() stuff
+
+    def oneshot_enter(self):
+        self.oneshot_info.cache_activate()
+
+    def oneshot_exit(self):
+        self.oneshot_info.cache_deactivate()
+
+    @memoize_when_activated
     def oneshot_info(self):
         """Return multiple information about this process as a
         raw tuple.

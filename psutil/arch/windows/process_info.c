@@ -67,6 +67,21 @@ psutil_handle_from_pid(DWORD pid) {
 }
 
 
+/*
+ * Given a Python int referencing a process handle close the process handle.
+ */
+PyObject *
+psutil_win32_CloseHandle(PyObject *self, PyObject *args) {
+    unsigned long handle;
+
+    if (! PyArg_ParseTuple(args, "k", &handle))
+        return NULL;
+    // TODO: may want to check return value;
+    CloseHandle((HANDLE)handle);
+    Py_RETURN_NONE;
+}
+
+
 DWORD *
 psutil_get_pids(DWORD *numberOfReturnedPIDs) {
     // Win32 SDK says the only way to know if our process array

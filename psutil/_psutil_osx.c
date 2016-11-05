@@ -120,6 +120,98 @@ error:
 
 
 /*
+ * Return multiple process info as a Python tuple in one shot by
+ * using sysctl() and filling up a kinfo_proc struct.
+ * It should be possible to do this for all processes without
+ * incurring into permission (EPERM) errors.
+ */
+static PyObject *
+psutil_proc_kinfo_oneshot(PyObject *self, PyObject *args) {
+    long pid;
+    struct kinfo_proc kp;
+    PyObject *py_name;
+    PyObject *py_retlist;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (psutil_get_kinfo_proc(pid, &kp) == -1)
+        return NULL;
+
+#if PY_MAJOR_VERSION >= 3
+    py_name = PyUnicode_DecodeFSDefault(kp.kp_proc.p_comm);
+#else
+    py_name = Py_BuildValue("s", kp.kp_proc.p_comm);
+#endif
+    if (! py_name) {
+        // Likely a decoding error. We don't want to fail the whole
+        // operation. The python module may retry with proc_name().
+        PyErr_Clear();
+        py_name = Py_None;
+    }
+
+    py_retlist = Py_BuildValue(
+        "lllllllidiO",
+        (long)kp.kp_eproc.e_ppid,                  // (long) ppid
+        (long)kp.kp_eproc.e_pcred.p_ruid,          // (long) real uid
+        (long)kp.kp_eproc.e_ucred.cr_uid,          // (long) effective uid
+        (long)kp.kp_eproc.e_pcred.p_svuid,         // (long) saved uid
+        (long)kp.kp_eproc.e_pcred.p_rgid,          // (long) real gid
+        (long)kp.kp_eproc.e_ucred.cr_groups[0],    // (long) effective gid
+        (long)kp.kp_eproc.e_pcred.p_svgid,         // (long) saved gid
+        kp.kp_eproc.e_tdev,                        // (int) tty nr
+        PSUTIL_TV2DOUBLE(kp.kp_proc.p_starttime),  // (double) create time
+        (int)kp.kp_proc.p_stat,                    // (int) status
+        py_name                                    // (pystr) name
+    );
+
+    if (py_retlist != NULL) {
+        // XXX shall we decref() also in case of Py_BuildValue() error?
+        Py_DECREF(py_name);
+    }
+    return py_retlist;
+}
+
+
+/*
+ * Return multiple process info as a Python tuple in one shot by
+ * using proc_pidinfo(PROC_PIDTASKINFO) and filling a proc_taskinfo
+ * struct.
+ * Contrarily from proc_kinfo above this function will return EACCES
+ * for PIDs owned by another user.
+ */
+static PyObject *
+psutil_proc_pidtaskinfo_oneshot(PyObject *self, PyObject *args) {
+    long pid;
+    struct proc_taskinfo pti;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
+        return NULL;
+
+    return Py_BuildValue(
+        "(ddKKkkkk)",
+        (float)pti.pti_total_user / 1000000000.0,     // (float) cpu user time
+        (float)pti.pti_total_system / 1000000000.0,   // (float) cpu sys time
+        // Note about memory: determining other mem stats on OSX is a mess:
+        // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
+        // I just give up.
+        // struct proc_regioninfo pri;
+        // psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, 0, &pri, sizeof(pri))
+        pti.pti_resident_size,  // (uns long long) rss
+        pti.pti_virtual_size,   // (uns long long) vms
+        pti.pti_faults,         // (uns long) number of page faults (pages)
+        pti.pti_pageins,        // (uns long) number of actual pageins (pages)
+        pti.pti_threadnum,      // (uns long) num threads
+        // Unvoluntary value seems not to be available;
+        // pti.pti_csw probably refers to the sum of the two;
+        // getrusage() numbers seems to confirm this theory.
+        pti.pti_csw             // (uns long) voluntary ctx switches
+    );
+}
+
+
+/*
  * Return process name from kinfo_proc as a Python string.
  */
 static PyObject *
@@ -223,72 +315,6 @@ psutil_proc_environ(PyObject *self, PyObject *args) {
     // get the environment block, defined in arch/osx/process_info.c
     py_retdict = psutil_get_environ(pid);
     return py_retdict;
-}
-
-
-/*
- * Return process parent pid from kinfo_proc as a Python integer.
- */
-static PyObject *
-psutil_proc_ppid(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("l", (long)kp.kp_eproc.e_ppid);
-}
-
-
-/*
- * Return process real uid from kinfo_proc as a Python integer.
- */
-static PyObject *
-psutil_proc_uids(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("lll",
-                         (long)kp.kp_eproc.e_pcred.p_ruid,
-                         (long)kp.kp_eproc.e_ucred.cr_uid,
-                         (long)kp.kp_eproc.e_pcred.p_svuid);
-}
-
-
-/*
- * Return process real group id from ki_comm as a Python integer.
- */
-static PyObject *
-psutil_proc_gids(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("lll",
-                         (long)kp.kp_eproc.e_pcred.p_rgid,
-                         (long)kp.kp_eproc.e_ucred.cr_groups[0],
-                         (long)kp.kp_eproc.e_pcred.p_svgid);
-}
-
-
-/*
- * Return process controlling terminal number as an integer.
- */
-static PyObject *
-psutil_proc_tty_nr(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("i", kp.kp_eproc.e_tdev);
 }
 
 
@@ -486,67 +512,6 @@ psutil_cpu_count_phys(PyObject *self, PyObject *args) {
 
 
 /*
- * Return a Python tuple (user_time, kernel_time)
- */
-static PyObject *
-psutil_proc_cpu_times(PyObject *self, PyObject *args) {
-    long pid;
-    struct proc_taskinfo pti;
-
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
-        return NULL;
-    return Py_BuildValue("(dd)",
-                         (float)pti.pti_total_user / 1000000000.0,
-                         (float)pti.pti_total_system / 1000000000.0);
-}
-
-
-/*
- * Return a Python float indicating the process create time expressed in
- * seconds since the epoch.
- */
-static PyObject *
-psutil_proc_create_time(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("d", PSUTIL_TV2DOUBLE(kp.kp_proc.p_starttime));
-}
-
-
-/*
- * Return extended memory info about a process.
- */
-static PyObject *
-psutil_proc_memory_info(PyObject *self, PyObject *args) {
-    long pid;
-    struct proc_taskinfo pti;
-
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
-        return NULL;
-    // Note: determining other memory stats on OSX is a mess:
-    // http://www.opensource.apple.com/source/top/top-67/libtop.c?txt
-    // I just give up...
-    // struct proc_regioninfo pri;
-    // psutil_proc_pidinfo(pid, PROC_PIDREGIONINFO, 0, &pri, sizeof(pri))
-    return Py_BuildValue(
-        "(KKkk)",
-        pti.pti_resident_size,  // resident memory size (rss)
-        pti.pti_virtual_size,   // virtual memory size (vms)
-        pti.pti_faults,         // number of page faults (pages)
-        pti.pti_pageins         // number of actual pageins (pages)
-    );
-}
-
-
-/*
  * Indicates if the given virtual address on the given architecture is in the
  * shared VM region.
  */
@@ -666,41 +631,6 @@ psutil_proc_memory_uss(PyObject *self, PyObject *args) {
         page_size = PAGE_SIZE;
 
     return Py_BuildValue("K", private_pages * page_size);
-}
-
-
-/*
- * Return number of threads used by process as a Python integer.
- */
-static PyObject *
-psutil_proc_num_threads(PyObject *self, PyObject *args) {
-    long pid;
-    struct proc_taskinfo pti;
-
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
-        return NULL;
-    return Py_BuildValue("k", pti.pti_threadnum);
-}
-
-
-/*
- * Return the number of context switches performed by process.
- */
-static PyObject *
-psutil_proc_num_ctx_switches(PyObject *self, PyObject *args) {
-    long pid;
-    struct proc_taskinfo pti;
-
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &pti, sizeof(pti)) <= 0)
-        return NULL;
-    // unvoluntary value seems not to be available;
-    // pti.pti_csw probably refers to the sum of the two (getrusage()
-    // numbers seems to confirm this theory).
-    return Py_BuildValue("ki", pti.pti_csw, 0);
 }
 
 
@@ -1018,21 +948,6 @@ error:
     if (fs != NULL)
         free(fs);
     return NULL;
-}
-
-
-/*
- * Return process status as a Python integer.
- */
-static PyObject *
-psutil_proc_status(PyObject *self, PyObject *args) {
-    long pid;
-    struct kinfo_proc kp;
-    if (! PyArg_ParseTuple(args, "l", &pid))
-        return NULL;
-    if (psutil_get_kinfo_proc(pid, &kp) == -1)
-        return NULL;
-    return Py_BuildValue("i", (int)kp.kp_proc.p_stat);
 }
 
 
@@ -1820,6 +1735,10 @@ PsutilMethods[] = {
 
     // --- per-process functions
 
+    {"proc_kinfo_oneshot", psutil_proc_kinfo_oneshot, METH_VARARGS,
+     "Return multiple process info."},
+    {"proc_pidtaskinfo_oneshot", psutil_proc_pidtaskinfo_oneshot, METH_VARARGS,
+     "Return multiple process info."},
     {"proc_name", psutil_proc_name, METH_VARARGS,
      "Return process name"},
     {"proc_cmdline", psutil_proc_cmdline, METH_VARARGS,
@@ -1830,37 +1749,16 @@ PsutilMethods[] = {
      "Return path of the process executable"},
     {"proc_cwd", psutil_proc_cwd, METH_VARARGS,
      "Return process current working directory."},
-    {"proc_ppid", psutil_proc_ppid, METH_VARARGS,
-     "Return process ppid as an integer"},
-    {"proc_uids", psutil_proc_uids, METH_VARARGS,
-     "Return process real user id as an integer"},
-    {"proc_gids", psutil_proc_gids, METH_VARARGS,
-     "Return process real group id as an integer"},
-    {"proc_cpu_times", psutil_proc_cpu_times, METH_VARARGS,
-     "Return tuple of user/kern time for the given PID"},
-    {"proc_create_time", psutil_proc_create_time, METH_VARARGS,
-     "Return a float indicating the process create time expressed in "
-     "seconds since the epoch"},
-    {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
-     "Return memory information about a process"},
     {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS,
      "Return process USS memory"},
-    {"proc_num_threads", psutil_proc_num_threads, METH_VARARGS,
-     "Return number of threads used by process"},
-    {"proc_status", psutil_proc_status, METH_VARARGS,
-     "Return process status as an integer"},
     {"proc_threads", psutil_proc_threads, METH_VARARGS,
      "Return process threads as a list of tuples"},
     {"proc_open_files", psutil_proc_open_files, METH_VARARGS,
      "Return files opened by process as a list of tuples"},
     {"proc_num_fds", psutil_proc_num_fds, METH_VARARGS,
      "Return the number of fds opened by process."},
-    {"proc_num_ctx_switches", psutil_proc_num_ctx_switches, METH_VARARGS,
-     "Return the number of context switches performed by process"},
     {"proc_connections", psutil_proc_connections, METH_VARARGS,
      "Get process TCP and UDP connections as a list of tuples"},
-    {"proc_tty_nr", psutil_proc_tty_nr, METH_VARARGS,
-     "Return process tty number as an integer"},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
      "Return a list of tuples for every process's memory map"},
 

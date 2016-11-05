@@ -112,14 +112,15 @@ def poll(interval):
 
     # then retrieve the same info again
     for p in procs[:]:
-        try:
-            p._after = p.io_counters()
-            p._cmdline = ' '.join(p.cmdline())
-            if not p._cmdline:
-                p._cmdline = p.name()
-            p._username = p.username()
-        except (psutil.NoSuchProcess, psutil.ZombieProcess):
-            procs.remove(p)
+        with p.oneshot():
+            try:
+                p._after = p.io_counters()
+                p._cmdline = ' '.join(p.cmdline())
+                if not p._cmdline:
+                    p._cmdline = p.name()
+                p._username = p.username()
+            except (psutil.NoSuchProcess, psutil.ZombieProcess):
+                procs.remove(p)
     disks_after = psutil.disk_io_counters()
 
     # finally calculate results by comparing data before and

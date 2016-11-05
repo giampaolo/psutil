@@ -153,23 +153,24 @@ def run(pid, verbose=False):
         sys.exit(str(err))
 
     # collect other proc info
-    try:
-        parent = proc.parent()
-        if parent:
-            parent = '(%s)' % parent.name()
-        else:
+    with proc.oneshot():
+        try:
+            parent = proc.parent()
+            if parent:
+                parent = '(%s)' % parent.name()
+            else:
+                parent = ''
+        except psutil.Error:
             parent = ''
-    except psutil.Error:
-        parent = ''
-    try:
-        pinfo['children'] = proc.children()
-    except psutil.Error:
-        pinfo['children'] = []
-    if pinfo['create_time']:
-        started = datetime.datetime.fromtimestamp(
-            pinfo['create_time']).strftime('%Y-%m-%d %H:%M')
-    else:
-        started = ACCESS_DENIED
+        try:
+            pinfo['children'] = proc.children()
+        except psutil.Error:
+            pinfo['children'] = []
+        if pinfo['create_time']:
+            started = datetime.datetime.fromtimestamp(
+                pinfo['create_time']).strftime('%Y-%m-%d %H:%M')
+        else:
+            started = ACCESS_DENIED
 
     # here we go
     print_('pid', pinfo['pid'])

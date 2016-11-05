@@ -1236,6 +1236,39 @@ class TestProcess(unittest.TestCase):
         with self.assertRaises(ValueError):
             p.as_dict(['foo', 'bar'])
 
+    def test_oneshot(self):
+        with mock.patch("psutil._psplatform.Process.cpu_times") as m:
+            p = psutil.Process()
+            with p.oneshot():
+                p.cpu_times()
+                p.cpu_times()
+            self.assertEqual(m.call_count, 1)
+
+        with mock.patch("psutil._psplatform.Process.cpu_times") as m:
+            p.cpu_times()
+            p.cpu_times()
+        self.assertEqual(m.call_count, 2)
+
+    def test_oneshot_twice(self):
+        # Test the case where the ctx manager is __enter__ed twice.
+        # The second __enter__ is supposed to resut in a NOOP.
+        with mock.patch("psutil._psplatform.Process.cpu_times") as m1:
+            with mock.patch("psutil._psplatform.Process.oneshot_enter") as m2:
+                p = psutil.Process()
+                with p.oneshot():
+                    p.cpu_times()
+                    p.cpu_times()
+                    with p.oneshot():
+                        p.cpu_times()
+                        p.cpu_times()
+                self.assertEqual(m1.call_count, 1)
+                self.assertEqual(m2.call_count, 1)
+
+        with mock.patch("psutil._psplatform.Process.cpu_times") as m:
+            p.cpu_times()
+            p.cpu_times()
+        self.assertEqual(m.call_count, 2)
+
     def test_halfway_terminated_process(self):
         # Test that NoSuchProcess exception gets raised in case the
         # process dies after we create the Process object.
@@ -1255,7 +1288,7 @@ class TestProcess(unittest.TestCase):
         #   retcode)
 
         excluded_names = ['pid', 'is_running', 'wait', 'create_time',
-                          'memory_info_ex']
+                          'oneshot', 'memory_info_ex']
         if LINUX and not RLIMIT_SUPPORT:
             excluded_names.append('rlimit')
         for name in dir(p):
@@ -1543,7 +1576,7 @@ class TestFetchAllProcesses(unittest.TestCase):
         excluded_names = set([
             'send_signal', 'suspend', 'resume', 'terminate', 'kill', 'wait',
             'as_dict', 'cpu_percent', 'parent', 'children', 'pid',
-            'memory_info_ex',
+            'memory_info_ex', 'oneshot',
         ])
         if LINUX and not RLIMIT_SUPPORT:
             excluded_names.add('rlimit')
@@ -1557,10 +1590,10 @@ class TestFetchAllProcesses(unittest.TestCase):
 
         default = object()
         failures = []
-        for name in attrs:
-            for p in psutil.process_iter():
-                ret = default
-                try:
+        for p in psutil.process_iter():
+            with p.oneshot():
+                for name in attrs:
+                    ret = default
                     try:
                         args = ()
                         attr = getattr(p, name, None)
@@ -1583,23 +1616,23 @@ class TestFetchAllProcesses(unittest.TestCase):
                             self.assertEqual(err.name, p.name())
                         self.assertTrue(str(err))
                         self.assertTrue(err.msg)
+                    except Exception as err:
+                        s = '\n' + '=' * 70 + '\n'
+                        s += "FAIL: test_%s (proc=%s" % (name, p)
+                        if ret != default:
+                            s += ", ret=%s)" % repr(ret)
+                        s += ')\n'
+                        s += '-' * 70
+                        s += "\n%s" % traceback.format_exc()
+                        s = "\n".join((" " * 4) + i for i in s.splitlines())
+                        s += '\n'
+                        failures.append(s)
+                        break
                     else:
                         if ret not in (0, 0.0, [], None, '', {}):
                             assert ret, ret
                         meth = getattr(self, name)
                         meth(ret, p)
-                except Exception as err:
-                    s = '\n' + '=' * 70 + '\n'
-                    s += "FAIL: test_%s (proc=%s" % (name, p)
-                    if ret != default:
-                        s += ", ret=%s)" % repr(ret)
-                    s += ')\n'
-                    s += '-' * 70
-                    s += "\n%s" % traceback.format_exc()
-                    s = "\n".join((" " * 4) + i for i in s.splitlines())
-                    s += '\n'
-                    failures.append(s)
-                    break
 
         if failures:
             self.fail(''.join(failures))

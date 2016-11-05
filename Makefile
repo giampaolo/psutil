@@ -14,6 +14,7 @@ DEPS = argparse \
 	ipaddress \
 	mock==1.0.1 \
 	pep8 \
+	perf \
 	pyflakes \
 	requests \
 	setuptools \
@@ -240,3 +241,11 @@ print-announce:
 
 grep-todos:
 	git grep -EIn "TODO|FIXME|XXX"
+
+# run script which benchmarks oneshot() ctx manager (see #799)
+bench-oneshot: install
+	$(PYTHON) scripts/internal/bench_oneshot.py
+
+# same as above but using perf module (supposed to be more precise)
+bench-oneshot-2: install
+	$(PYTHON) scripts/internal/bench_oneshot_2.py

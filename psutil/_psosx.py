@@ -15,6 +15,7 @@ from . import _psutil_osx as cext
 from . import _psutil_posix as cext_posix
 from ._common import conn_tmap
 from ._common import isfile_strict
+from ._common import memoize_when_activated
 from ._common import parse_environ_block
 from ._common import sockfam_to_enum
 from ._common import socktype_to_enum
@@ -55,6 +56,31 @@ PROC_STATUSES = {
     cext.SSTOP: _common.STATUS_STOPPED,
     cext.SZOMB: _common.STATUS_ZOMBIE,
 }
+
+kinfo_proc_map = dict(
+    ppid=0,
+    ruid=1,
+    euid=2,
+    suid=3,
+    rgid=4,
+    egid=5,
+    sgid=6,
+    ttynr=7,
+    ctime=8,
+    status=9,
+    name=10,
+)
+
+pidtaskinfo_map = dict(
+    cpuutime=0,
+    cpustime=1,
+    rss=2,
+    vms=3,
+    pfaults=4,
+    pageins=5,
+    numthreads=6,
+    volctxsw=7,
+)
 
 scputimes = namedtuple('scputimes', ['user', 'nice', 'system', 'idle'])
 
@@ -271,9 +297,32 @@ class Process(object):
         self._name = None
         self._ppid = None
 
+    @memoize_when_activated
+    def _get_kinfo_proc(self):
+        # Note: should work with all PIDs without permission issues.
+        ret = cext.proc_kinfo_oneshot(self.pid)
+        assert len(ret) == len(kinfo_proc_map)
+        return ret
+
+    @memoize_when_activated
+    def _get_pidtaskinfo(self):
+        # Note: should work for PIDs owned by user only.
+        ret = cext.proc_pidtaskinfo_oneshot(self.pid)
+        assert len(ret) == len(pidtaskinfo_map)
+        return ret
+
+    def oneshot_enter(self):
+        self._get_kinfo_proc.cache_activate()
+        self._get_pidtaskinfo.cache_activate()
+
+    def oneshot_exit(self):
+        self._get_kinfo_proc.cache_deactivate()
+        self._get_pidtaskinfo.cache_deactivate()
+
     @wrap_exceptions
     def name(self):
-        return cext.proc_name(self.pid)
+        name = self._get_kinfo_proc()[kinfo_proc_map['name']]
+        return name if name is not None else cext.proc_name(self.pid)
 
     @wrap_exceptions
     def exe(self):
@@ -293,7 +342,7 @@ class Process(object):
 
     @wrap_exceptions
     def ppid(self):
-        self._ppid = cext.proc_ppid(self.pid)
+        self._ppid = self._get_kinfo_proc()[kinfo_proc_map['ppid']]
         return self._ppid
 
     @wrap_exceptions
@@ -302,17 +351,23 @@ class Process(object):
 
     @wrap_exceptions
     def uids(self):
-        real, effective, saved = cext.proc_uids(self.pid)
-        return _common.puids(real, effective, saved)
+        rawtuple = self._get_kinfo_proc()
+        return _common.puids(
+            rawtuple[kinfo_proc_map['ruid']],
+            rawtuple[kinfo_proc_map['euid']],
+            rawtuple[kinfo_proc_map['suid']])
 
     @wrap_exceptions
     def gids(self):
-        real, effective, saved = cext.proc_gids(self.pid)
-        return _common.pgids(real, effective, saved)
+        rawtuple = self._get_kinfo_proc()
+        return _common.puids(
+            rawtuple[kinfo_proc_map['rgid']],
+            rawtuple[kinfo_proc_map['egid']],
+            rawtuple[kinfo_proc_map['sgid']])
 
     @wrap_exceptions
     def terminal(self):
-        tty_nr = cext.proc_tty_nr(self.pid)
+        tty_nr = self._get_kinfo_proc()[kinfo_proc_map['ttynr']]
         tmap = _psposix.get_terminal_map()
         try:
             return tmap[tty_nr]
@@ -321,8 +376,13 @@ class Process(object):
 
     @wrap_exceptions
     def memory_info(self):
-        rss, vms, pfaults, pageins = cext.proc_memory_info(self.pid)
-        return pmem(rss, vms, pfaults, pageins)
+        rawtuple = self._get_pidtaskinfo()
+        return pmem(
+            rawtuple[pidtaskinfo_map['rss']],
+            rawtuple[pidtaskinfo_map['vms']],
+            rawtuple[pidtaskinfo_map['pfaults']],
+            rawtuple[pidtaskinfo_map['pageins']],
+        )
 
     @wrap_exceptions
     def memory_full_info(self):
@@ -332,21 +392,28 @@ class Process(object):
 
     @wrap_exceptions
     def cpu_times(self):
-        user, system = cext.proc_cpu_times(self.pid)
-        # Children user/system times are not retrievable (set to 0).
-        return _common.pcputimes(user, system, 0, 0)
+        rawtuple = self._get_pidtaskinfo()
+        return _common.pcputimes(
+            rawtuple[pidtaskinfo_map['cpuutime']],
+            rawtuple[pidtaskinfo_map['cpustime']],
+            # children user / system times are not retrievable (set to 0)
+            0, 0)
 
     @wrap_exceptions
     def create_time(self):
-        return cext.proc_create_time(self.pid)
+        return self._get_kinfo_proc()[kinfo_proc_map['ctime']]
 
     @wrap_exceptions
     def num_ctx_switches(self):
-        return _common.pctxsw(*cext.proc_num_ctx_switches(self.pid))
+        # Unvoluntary value seems not to be available;
+        # getrusage() numbers seems to confirm this theory.
+        # We set it to 0.
+        vol = self._get_pidtaskinfo()[pidtaskinfo_map['volctxsw']]
+        return _common.pctxsw(vol, 0)
 
     @wrap_exceptions
     def num_threads(self):
-        return cext.proc_num_threads(self.pid)
+        return self._get_pidtaskinfo()[pidtaskinfo_map['numthreads']]
 
     @wrap_exceptions
     def open_files(self):
@@ -400,7 +467,7 @@ class Process(object):
 
     @wrap_exceptions
     def status(self):
-        code = cext.proc_status(self.pid)
+        code = self._get_kinfo_proc()[kinfo_proc_map['status']]
         # XXX is '?' legit? (we're not supposed to return it anyway)
         return PROC_STATUSES.get(code, '?')
 
