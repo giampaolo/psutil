@@ -1136,6 +1136,7 @@ class Process(object):
         with open_binary("%s/%s/status" % (self._procfs_path, self.pid)) as f:
             return f.read()
 
+    @memoize_when_activated
     def _read_smaps_file(self):
         with open_binary("%s/%s/smaps" % (self._procfs_path, self.pid),
                          buffering=BIGGER_FILE_BUFFERING) as f:
@@ -1144,10 +1145,12 @@ class Process(object):
     def oneshot_enter(self):
         self._parse_stat_file.cache_activate()
         self._read_status_file.cache_activate()
+        self._read_smaps_file.cache_activate()
 
     def oneshot_exit(self):
         self._parse_stat_file.cache_deactivate()
         self._read_status_file.cache_deactivate()
+        self._read_smaps_file.cache_deactivate()
 
     @wrap_exceptions
     def name(self):

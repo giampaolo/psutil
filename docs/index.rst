@@ -772,7 +772,7 @@ Process class
     multiple process information at the same time.
     Internally different process info (e.g. :meth:`name`, :meth:`ppid`,
     :meth:`uids`, :meth:`create_time`, ...) may be fetched by using the same
-    routine, but only one information is returned and the others are discarded.
+    routine, but only one data is returned and the others are discarded.
     When using this context manager the internal routine is executed once (in
     the example below on :meth:`name()`) and the other info are cached.
     The subsequent calls sharing the same internal routine will return the
@@ -796,8 +796,8 @@ Process class
 
     Here's a list of methods which can take advantage of the speedup depending
     on what platform you're on.
-    In the table below horizontal emtpy rows delimitate what process methods
-    can be efficiently grouped together internally.
+    In the table below horizontal emtpy rows indicate what process methods can
+    be efficiently grouped together internally.
     The last column (speedup) shows an approximation of the speedup you can get
     if you call all the methods together (best case scenario).
 
@@ -832,9 +832,9 @@ Process class
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
     |                              |                               | :meth:`uids`                 | :meth:`username`             | :meth:`uids`             |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    |                              |                               | :meth:`username`             |                              | :meth:`username`         |
+    | :meth:`memory_full_info`     |                               | :meth:`username`             |                              | :meth:`username`         |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
-    |                              |                               |                              |                              |                          |
+    | :meth:`memory_maps`          |                               |                              |                              |                          |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
     | *speedup: +2.5x*             | *speedup: +1.8x / +6.5x*      | *speedup: +1.9x*             | *speedup: +2.0x*             | *speedup: +1.3x*         |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+

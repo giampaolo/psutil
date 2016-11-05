@@ -39,6 +39,8 @@ if psutil.LINUX:
     names += [
         'cpu_times',
         'gids',
+        # 'memory_full_info',
+        # 'memory_maps',
         'name',
         'num_ctx_switches',
         'num_threads',

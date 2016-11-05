@@ -298,10 +298,6 @@ def memoize_when_activated(fun):
                 ret = cache[fun] = fun(self)
             return ret
 
-    def cache_clear():
-        """Clear cache."""
-        cache.clear()
-
     def cache_activate():
         """Activate cache."""
         wrapper.cache_activated = True
@@ -309,13 +305,12 @@ def memoize_when_activated(fun):
     def cache_deactivate():
         """Deactivate and clear cache."""
         wrapper.cache_activated = False
-        cache_clear()
+        cache.clear()
 
     cache = {}
     wrapper.cache_activated = False
     wrapper.cache_activate = cache_activate
     wrapper.cache_deactivate = cache_deactivate
-    wrapper.cache_clear = cache_clear
     return wrapper
 
 
