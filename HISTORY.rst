@@ -1,5 +1,15 @@
 *Bug tracker at https://github.com/giampaolo/psutil/issues*
 
+5.0.1
+=====
+
+*XXXX-XX-XX*
+
+**Enhancements**
+
+- 939_: tar.gz distribution went from 1.8M to 258K.
+
+
 5.0.0
 =====
 

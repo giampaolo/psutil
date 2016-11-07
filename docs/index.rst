@@ -772,9 +772,10 @@ Process class
     multiple process information at the same time.
     Internally different process info (e.g. :meth:`name`, :meth:`ppid`,
     :meth:`uids`, :meth:`create_time`, ...) may be fetched by using the same
-    routine, but only one data is returned and the others are discarded.
+    routine, but only one value is returned and the others are discarded.
     When using this context manager the internal routine is executed once (in
-    the example below on :meth:`name()`) and the other info are cached.
+    the example below on :meth:`name()`) the value of interest is returned and
+    the others are cached.
     The subsequent calls sharing the same internal routine will return the
     cached value.
     The cache is cleared when exiting the context manager block.
@@ -839,7 +840,7 @@ Process class
     | *speedup: +2.5x*             | *speedup: +1.8x / +6.5x*      | *speedup: +1.9x*             | *speedup: +2.0x*             | *speedup: +1.3x*         |
     +------------------------------+-------------------------------+------------------------------+------------------------------+--------------------------+
 
-     .. versionadded:: 5.0.0
+    .. versionadded:: 5.0.0
 
   .. attribute:: pid
 
