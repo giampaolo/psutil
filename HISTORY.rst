@@ -8,6 +8,8 @@
 **Enhancements**
 
 - 939_: tar.gz distribution went from 1.8M to 258K.
+- 811_: [Windows] provide a more meaningful error message if trying to use
+  psutil on unsupported Windows XP.
 
 
 5.0.0

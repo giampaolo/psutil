@@ -123,6 +123,10 @@ if LINUX:
             pass
 
 elif WINDOWS:
+    from ._common import assert_supported_winver
+    assert_supported_winver()
+    del assert_supported_winver
+
     from . import _pswindows as _psplatform
     from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS  # NOQA
     from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS  # NOQA

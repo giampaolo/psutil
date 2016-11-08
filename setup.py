@@ -23,6 +23,8 @@ except ImportError:
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(HERE, "psutil"))
+
+from _common import assert_supported_winver  # NOQA
 from _common import BSD  # NOQA
 from _common import FREEBSD  # NOQA
 from _common import LINUX  # NOQA
@@ -97,6 +99,8 @@ if POSIX:
 
 # Windows
 if WINDOWS:
+    assert_supported_winver()
+
     def get_winver():
         maj, min = sys.getwindowsversion()[0:2]
         return '0x0%s' % ((maj * 100) + min)
