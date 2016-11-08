@@ -427,12 +427,3 @@ def deprecated_method(replacement):
             return getattr(self, replacement)(*args, **kwargs)
         return inner
     return outer
-
-
-def assert_supported_winver():
-    """Raise an error if this Windows version is not supported."""
-    if WINDOWS and sys.getwindowsversion()[0] < 6:
-        msg = "this Windows version is too old (< Windows Vista); "
-        msg += "psutil 3.4.2 is the latest version which supports Windows "
-        msg += "2000, XP and 2003 server"
-        raise RuntimeError(msg)

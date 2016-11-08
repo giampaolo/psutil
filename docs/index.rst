@@ -1924,8 +1924,12 @@ Q&A
 ===
 
 * Q: What Windows versions are supported?
-* A: From Windows Vista onwards. Latest release supporting Windows 2000, XP and
-  2003 server is psutil `3.4.2 <https://pypi.python.org/pypi?name=psutil&version=3.4.2&:action=files>`__.
+* A: From Windows **Vista** onwards. Latest binary (wheel / exe) release
+  supporting Windows **2000**, **XP** and **2003 server** which can installed
+  via pip without a compiler being installed is
+  `psutil 3.4.2 <https://pypi.python.org/pypi?name=psutil&version=3.4.2&:action=files>`__.
+  More recent psutil versions may still be compiled from sources and work
+  (more or less) but they are no longer being tested or maintained.
 
 
 Timeline

@@ -13,9 +13,10 @@ import atexit
 import contextlib
 import io
 import os
+import platform
 import sys
 import tempfile
-import platform
+import warnings
 try:
     from setuptools import setup, Extension
 except ImportError:
@@ -24,7 +25,6 @@ except ImportError:
 HERE = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(HERE, "psutil"))
 
-from _common import assert_supported_winver  # NOQA
 from _common import BSD  # NOQA
 from _common import FREEBSD  # NOQA
 from _common import LINUX  # NOQA
@@ -99,11 +99,16 @@ if POSIX:
 
 # Windows
 if WINDOWS:
-    assert_supported_winver()
-
     def get_winver():
         maj, min = sys.getwindowsversion()[0:2]
         return '0x0%s' % ((maj * 100) + min)
+
+    if sys.getwindowsversion()[0] < 6:
+        msg = "Windows versions < Vista are no longer supported or maintained;"
+        msg = " latest supported version is psutil 3.4.2; "
+        msg += "psutil may still be installed from sources if you have "
+        msg += "Visual Studio and may also (kind of) work though"
+        warnings.warn(msg, UserWarning)
 
     macros.extend([
         # be nice to mingw, see:
