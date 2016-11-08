@@ -350,7 +350,7 @@ def test_memleaks():
 @cmd
 def install_git_hooks():
     if os.path.isdir('.git'):
-        shutil.copy(".git-pre-commit", ".git/hooks/pre-commit")
+        shutil.copy(".git-pre-commit", ".git\\hooks\\pre-commit")
 
 
 @cmd
