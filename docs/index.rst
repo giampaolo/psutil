@@ -849,11 +849,15 @@ Process class
   .. method:: ppid()
 
     The process parent pid.  On Windows the return value is cached after first
-    call.
+    call. Not on POSIX because
+    `ppid may change <https://github.com/giampaolo/psutil/issues/321>`__
+    if process becomes a zombie.
 
   .. method:: name()
 
-    The process name.
+    The process name.  On Windows the return value is cached after first
+    call. Not on POSIX because the process
+    `name may change <https://github.com/giampaolo/psutil/issues/692>`__.
 
   .. method:: exe()
 
