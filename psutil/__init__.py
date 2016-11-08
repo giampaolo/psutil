@@ -123,24 +123,7 @@ if LINUX:
             pass
 
 elif WINDOWS:
-    try:
-        from . import _pswindows as _psplatform
-    except ImportError as err:
-        if sys.getwindowsversion()[0] < 6:
-            # We may get here if:
-            # 1) we are on an old Windows version
-            # 2) psutil was installed via pip + wheel
-            # See: https://github.com/giampaolo/psutil/issues/811
-            # It must be noted that psutil can still (kind of) work
-            # on outdated systems if compiled / installed from sources,
-            # but if we get here it means this this was a wheel (or exe).
-            msg = "this Windows version is too old (< Windows Vista); "
-            msg += "psutil 3.4.2 is the latest version which supports Windows "
-            msg += "2000, XP and 2003 server"
-            raise RuntimeError(msg)
-        else:
-            raise
-
+    from . import _pswindows as _psplatform
     from ._psutil_windows import ABOVE_NORMAL_PRIORITY_CLASS  # NOQA
     from ._psutil_windows import BELOW_NORMAL_PRIORITY_CLASS  # NOQA
     from ._psutil_windows import HIGH_PRIORITY_CLASS  # NOQA
