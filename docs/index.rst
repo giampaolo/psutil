@@ -1920,6 +1920,14 @@ take a look at the
 `development guide <https://github.com/giampaolo/psutil/blob/master/DEVGUIDE.rst>`_.
 
 
+Q&A
+===
+
+* Q: What Windows versions are supported?
+* A: From Windows Vista onwards. Latest release supporting Windows 2000, XP and
+  2003 server is psutil `3.4.2 <https://pypi.python.org/pypi?name=psutil&version=3.4.2&:action=files>`__.
+
+
 Timeline
 ========
 
