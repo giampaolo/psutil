@@ -318,12 +318,8 @@ typedef enum _PROCESSINFOCLASS2 {
     /* added after XP+ */
     _ProcessImageFileName,
     ProcessLUIDDeviceMapsEnabled,
-// MSVC 2015 starts forcing C++11 standard, which does not allow duplicate
-// unscoped enumerations.  It doesn't matter that this is C code, MSVC is a C++ compiler.
-#if _MSC_VER < 1900
-    ProcessBreakOnTermination,
-#endif
-    ProcessDebugObjectHandle=ProcessLUIDDeviceMapsEnabled+2,
+    _ProcessBreakOnTermination,
+    ProcessDebugObjectHandle,
     ProcessDebugFlags,
     ProcessHandleTracing,
     ProcessIoPriority,
@@ -340,5 +336,6 @@ typedef enum _PROCESSINFOCLASS2 {
 #define ProcessWow64Information _ProcessWow64Information
 #define ProcessDebugPort _ProcessDebugPort
 #define ProcessImageFileName _ProcessImageFileName
+#define ProcessBreakOnTermination _ProcessBreakOnTermination
 
 #endif // __NTEXTAPI_H__
