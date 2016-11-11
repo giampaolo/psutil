@@ -11,6 +11,10 @@
 - 811_: [Windows] provide a more meaningful error message if trying to use
   psutil on unsupported Windows XP.
 
+**Bug fixes**
+
+- 936_: [Windows] fix compilation error on VS 2013 (patch by Max Bélanger).
+
 
 5.0.0
 =====
