@@ -14,8 +14,18 @@ PLATFORMS
 - DragonFlyBSD
 - HP-UX
 
+
+APIS
+====
+
+- cpu_info() (#550)
+
+
 FEATURES
 ========
+
+- #550: CPU info (frequency, architecture, threads per core, cores per socket,
+  sockets, ...)
 
 - #772: extended net_io_counters() metrics.
 
@@ -144,6 +154,18 @@ FEATURES
 - #550: number of threads per core.
 
 - Have psutil.Process().cpu_affinity([]) be an alias for "all CPUs"?
+
+
+BUGFIXES
+========
+
+- #600: windows / open_files(): support network file handles.
+
+
+REJECTED
+========
+
+- #550: threads per core
 
 
 RESOURCES

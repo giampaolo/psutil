@@ -49,7 +49,12 @@ psutil_posix_getpriority(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "l", &pid))
         return NULL;
+
+#if defined(__APPLE__)
+    priority = getpriority(PRIO_PROCESS, (id_t)pid);
+#else
     priority = getpriority(PRIO_PROCESS, pid);
+#endif
     if (errno != 0)
         return PyErr_SetFromErrno(PyExc_OSError);
     return Py_BuildValue("i", priority);
@@ -67,7 +72,12 @@ psutil_posix_setpriority(PyObject *self, PyObject *args) {
 
     if (! PyArg_ParseTuple(args, "li", &pid, &priority))
         return NULL;
+
+#if defined(__APPLE__)
+    retval = setpriority(PRIO_PROCESS, (id_t)pid, priority);
+#else
     retval = setpriority(PRIO_PROCESS, pid, priority);
+#endif
     if (retval == -1)
         return PyErr_SetFromErrno(PyExc_OSError);
     Py_RETURN_NONE;
