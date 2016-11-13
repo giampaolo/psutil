@@ -56,11 +56,6 @@ to 3.5** (users of Python 2.4 and 2.5 may use
 Example applications
 ====================
 
-- https://github.com/nicolargo/glances
-- https://github.com/google/grr
-- https://github.com/Jahaja/psdash
-- https://github.com/giampaolo/psutil/tree/master/scripts
-
 +------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
 | .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/procinfo-small.png     | .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/top-small.png      |
 |    :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/procinfo.png          |     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/top.png          |
@@ -68,6 +63,23 @@ Example applications
 | .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/procsmem-small.png     | .. image:: https://github.com/giampaolo/psutil/blob/master/docs/_static/pmap-small.png     |
 |     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/procsmem.png         |     :target: https://github.com/giampaolo/psutil/blob/master/docs/_static/pmap.png         |
 +------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------+
+
+Also see https://github.com/giampaolo/psutil/tree/master/scripts.
+
+=====================
+Projects using psutil
+=====================
+
+At the time of writing there are currently almost
+`4000 projects <https://libraries.io/pypi/psutil/dependent_repositories?page=1>`__
+on github which depend from psutil.
+Here's some I find particularly interesting:
+
+- https://github.com/facebook/osquery/
+- https://github.com/nicolargo/glances
+- https://github.com/google/grr
+- https://github.com/Jahaja/psdash
+- https://github.com/ajenti/ajenti
 
 ==============
 Example usages
