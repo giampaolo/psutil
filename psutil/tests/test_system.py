@@ -677,7 +677,7 @@ class TestSystemAPIs(unittest.TestCase):
 
     def test_users(self):
         users = psutil.users()
-        if not APPVEYOR:
+        if not APPVEYOR or TRAVIS:
             self.assertNotEqual(users, [])
         for user in users:
             assert user.name, user

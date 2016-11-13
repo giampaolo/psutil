@@ -22,6 +22,7 @@ from psutil import POSIX
 from psutil import SUNOS
 from psutil._compat import callable
 from psutil._compat import PY3
+from psutil.tests import APPVEYOR
 from psutil.tests import get_kernel_version
 from psutil.tests import get_test_subprocess
 from psutil.tests import mock
@@ -268,6 +269,9 @@ class TestSystemAPIs(unittest.TestCase):
                     "couldn't find %s nic in 'ifconfig -a' output\n%s" % (
                         nic, output))
 
+    # can't find users on APPVEYOR or TRAVIS
+    @unittest.skipIf(APPVEYOR or TRAVIS and not psutil.users(),
+                     "unreliable on APPVEYOR or TRAVIS")
     @retry_before_failing()
     def test_users(self):
         out = sh("who")

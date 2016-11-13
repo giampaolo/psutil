@@ -418,8 +418,9 @@ class TestScripts(unittest.TestCase):
     def test_procinfo(self):
         self.assert_stdout('procinfo.py', args=str(os.getpid()))
 
-    # can't find users on APPVEYOR
-    @unittest.skipIf(APPVEYOR, "unreliable on APPVEYOR")
+    # can't find users on APPVEYOR or TRAVIS
+    @unittest.skipIf(APPVEYOR or TRAVIS and not psutil.users(),
+                     "unreliable on APPVEYOR or TRAVIS")
     def test_who(self):
         self.assert_stdout('who.py')
 
