@@ -83,7 +83,7 @@ def main():
     templ = "%-7s %-7s %-30s %7s %7s %7s %7s"
     print(templ % ("PID", "User", "Cmdline", "USS", "PSS", "Swap", "RSS"))
     print("=" * 78)
-    for p in procs[86:]:
+    for p in procs[:86]:
         line = templ % (
             p.pid,
             p._info["username"][:7],
