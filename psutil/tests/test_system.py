@@ -675,10 +675,12 @@ class TestSystemAPIs(unittest.TestCase):
                     key = key[:-1]
                 self.assertNotIn(key, ret.keys())
 
+    # can't find users on APPVEYOR or TRAVIS
+    @unittest.skipIf(APPVEYOR or TRAVIS and not psutil.users(),
+                     "unreliable on APPVEYOR or TRAVIS")
     def test_users(self):
         users = psutil.users()
-        if not APPVEYOR or TRAVIS:
-            self.assertNotEqual(users, [])
+        self.assertNotEqual(users, [])
         for user in users:
             assert user.name, user
             user.terminal

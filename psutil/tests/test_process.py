@@ -299,6 +299,7 @@ class TestProcess(unittest.TestCase):
         time.strftime("%Y %m %d %H:%M:%S", time.localtime(p.create_time()))
 
     @unittest.skipUnless(POSIX, 'POSIX only')
+    @unittest.skipIf(TRAVIS, 'not reliable on TRAVIS')
     def test_terminal(self):
         terminal = psutil.Process().terminal()
         if sys.stdin.isatty():
