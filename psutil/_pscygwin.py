@@ -154,6 +154,8 @@ pmem = namedtuple('pmem', ['rss', 'vms', 'shared', 'text', 'lib', 'data',
 pfullmem = namedtuple('pfullmem', pmem._fields)
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
+pmmap_ext = namedtuple(
+    'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
 
 
 # =====================================================================
@@ -731,10 +733,7 @@ class Process(object):
 
     @wrap_exceptions
     def connections(self, kind='inet'):
-        # Note: Cygwin *does* have a /proc/net but I don't know that it's
-        # equivalent to the /proc/net on Linux
-        raise NotImplementedError("connections not implemented on Cygwin "
-                                  "(yet)")
+        return net_connections(kind, _pid=self.pid)
 
     @wrap_exceptions
     def num_fds(self):
