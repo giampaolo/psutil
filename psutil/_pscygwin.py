@@ -657,7 +657,7 @@ class Process(object):
 
     @wrap_exceptions
     def num_threads(self):
-        return ntpinfo(*cext.proc_info(self.pid)).num_threads
+        return ntpinfo(*cext.proc_info(self._winpid)).num_threads
 
     @wrap_exceptions
     def threads(self):
