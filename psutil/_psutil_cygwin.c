@@ -146,6 +146,28 @@ psutil_win32_QueryDosDevice(PyObject *self, PyObject *args) {
 }
 
 
+/*
+ * Return process cmdline as a Python list of cmdline arguments.
+ */
+static PyObject *
+psutil_proc_environ(PyObject *self, PyObject *args) {
+    long pid;
+    int pid_return;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if ((pid == 0) || (pid == 4))
+        return Py_BuildValue("s", "");
+
+    pid_return = psutil_pid_is_running(pid);
+    if (pid_return == 0)
+        return NoSuchProcess();
+    if (pid_return == -1)
+        return NULL;
+
+    return psutil_get_environ(pid);
+}
+
 
 /* TODO: Copied verbatim from the Linux module; refactor */
 /*
@@ -1316,6 +1338,8 @@ PsutilMethods[] = {
      "Return dict of tuples of networks I/O information."},
     {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
      "Return dict of tuples of disks I/O information."},
+    {"proc_environ", psutil_proc_environ, METH_VARARGS,
+     "Return process environment data"},
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
      "Return process CPU affinity as a bitmask."},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
