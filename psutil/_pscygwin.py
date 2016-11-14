@@ -656,9 +656,8 @@ class Process(object):
         return _common.pctxsw(ctx_switches, 0)
 
     @wrap_exceptions
-    def num_threads(self, _num_threads_re=re.compile(b'Threads:\t(\d+)')):
-        raise NotImplementedError("num_threads not implemented on Cygwin "
-                                  "(yet)")
+    def num_threads(self):
+        return ntpinfo(*cext.proc_info(self.pid)).num_threads
 
     @wrap_exceptions
     def threads(self):
