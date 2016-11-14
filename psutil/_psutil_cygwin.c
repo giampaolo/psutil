@@ -24,6 +24,7 @@
 #include <Python.h>
 
 #include <mntent.h>
+#include <utmpx.h>
 
 #include "arch/windows/process_info.h"
 #include "_psutil_common.h"
@@ -261,6 +262,55 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 
     CloseHandle(hProcess);
     Py_RETURN_NONE;
+}
+
+
+// TODO: This is copied almost verbatim from the Linux module, but on Cygwin
+// it's necessary to use the utmpx APIs in order to access some of the extended
+// utmp fields, such as ut_tv.
+/*
+ * Return currently connected users as a list of tuples.
+ */
+static PyObject *
+psutil_users(PyObject *self, PyObject *args) {
+    struct utmpx *ut;
+    PyObject *py_retlist = PyList_New(0);
+    PyObject *py_tuple = NULL;
+    PyObject *py_user_proc = NULL;
+
+    if (py_retlist == NULL)
+        return NULL;
+    setutxent();
+    while (NULL != (ut = getutxent())) {
+        py_tuple = NULL;
+        py_user_proc = NULL;
+        if (ut->ut_type == USER_PROCESS)
+            py_user_proc = Py_True;
+        else
+            py_user_proc = Py_False;
+        py_tuple = Py_BuildValue(
+            "(sssfO)",
+            ut->ut_user,              // username
+            ut->ut_line,              // tty
+            ut->ut_host,              // hostname
+            (float)ut->ut_tv.tv_sec,  // tstamp
+            py_user_proc              // (bool) user process
+        );
+    if (! py_tuple)
+            goto error;
+        if (PyList_Append(py_retlist, py_tuple))
+            goto error;
+        Py_DECREF(py_tuple);
+    }
+    endutent();
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_XDECREF(py_user_proc);
+    Py_DECREF(py_retlist);
+    endutent();
+    return NULL;
 }
 
 
@@ -1270,6 +1320,8 @@ PsutilMethods[] = {
      "Return process CPU affinity as a bitmask."},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
      "Set process CPU affinity."},
+    {"users", psutil_users, METH_VARARGS,
+     "Return currently connected users as a list of tuples"},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
      "Return a list of process's memory mappings"},
 
