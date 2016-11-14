@@ -157,6 +157,10 @@ svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
 pmmap_ext = namedtuple(
     'pmmap_ext', 'addr perms ' + ' '.join(pmmap_grouped._fields))
+ntpinfo = namedtuple(
+    'ntpinfo', ['num_handles', 'ctx_switches', 'user_time', 'kernel_time',
+                'create_time', 'num_threads', 'io_rcount', 'io_wcount',
+                'io_rbytes', 'io_wbytes'])
 
 
 # =====================================================================
@@ -565,9 +569,17 @@ class Process(object):
         except KeyError:
             return None
 
+    @wrap_exceptions
     def io_counters(self):
-        raise NotImplementedError("io_counters not implemented on Cygwin "
-                                  "(yet)")
+        try:
+            ret = cext.proc_io_counters(self._winpid)
+        except OSError as err:
+            if err.errno in ACCESS_DENIED_SET:
+                nt = ntpinfo(*cext.proc_info(self._winpid))
+                ret = (nt.io_rcount, nt.io_wcount, nt.io_rbytes, nt.io_wbytes)
+            else:
+                raise
+        return _common.pio(*ret)
 
     @wrap_exceptions
     def cpu_times(self):
@@ -638,9 +650,10 @@ class Process(object):
         return os.readlink("%s/%s/cwd" % (self._procfs_path, self.pid))
 
     @wrap_exceptions
-    def num_ctx_switches(self, _ctxsw_re=re.compile(b'ctxt_switches:\t(\d+)')):
-        raise NotImplementedError("num_ctx_switches not implemented on Cygwin "
-                                  "(yet)")
+    def num_ctx_switches(self):
+        ctx_switches = ntpinfo(*cext.proc_info(self._winpid)).ctx_switches
+        # only voluntary ctx switches are supported
+        return _common.pctxsw(ctx_switches, 0)
 
     @wrap_exceptions
     def num_threads(self, _num_threads_re=re.compile(b'Threads:\t(\d+)')):

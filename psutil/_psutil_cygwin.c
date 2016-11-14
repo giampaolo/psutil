@@ -287,6 +287,110 @@ psutil_proc_cpu_affinity_set(PyObject *self, PyObject *args) {
 }
 
 
+// TODO: Copied verbatim from the windows module
+/*
+ * Get various process information by using NtQuerySystemInformation.
+ * We use this as a fallback when faster functions fail with access
+ * denied. This is slower because it iterates over all processes.
+ * Returned tuple includes the following process info:
+ *
+ * - num_threads
+ * - ctx_switches
+ * - num_handles (fallback)
+ * - user/kernel times (fallback)
+ * - create time (fallback)
+ * - io counters (fallback)
+ */
+static PyObject *
+psutil_proc_info(PyObject *self, PyObject *args) {
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    ULONG num_handles;
+    ULONG i;
+    ULONG ctx_switches = 0;
+    double user_time;
+    double kernel_time;
+    long long create_time;
+    int num_threads;
+    LONGLONG io_rcount, io_wcount, io_rbytes, io_wbytes;
+
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (! psutil_get_proc_info(pid, &process, &buffer))
+        return NULL;
+
+    num_handles = process->HandleCount;
+    for (i = 0; i < process->NumberOfThreads; i++)
+        ctx_switches += process->Threads[i].ContextSwitches;
+    user_time = (double)process->UserTime.HighPart * 429.4967296 + \
+                (double)process->UserTime.LowPart * 1e-7;
+    kernel_time = (double)process->KernelTime.HighPart * 429.4967296 + \
+                  (double)process->KernelTime.LowPart * 1e-7;
+    // Convert the LARGE_INTEGER union to a Unix time.
+    // It's the best I could find by googling and borrowing code here
+    // and there. The time returned has a precision of 1 second.
+    if (0 == pid || 4 == pid) {
+        // the python module will translate this into BOOT_TIME later
+        create_time = 0;
+    }
+    else {
+        create_time = ((LONGLONG)process->CreateTime.HighPart) << 32;
+        create_time += process->CreateTime.LowPart - 116444736000000000LL;
+        create_time /= 10000000;
+    }
+    num_threads = (int)process->NumberOfThreads;
+    io_rcount = process->ReadOperationCount.QuadPart;
+    io_wcount = process->WriteOperationCount.QuadPart;
+    io_rbytes = process->ReadTransferCount.QuadPart;
+    io_wbytes = process->WriteTransferCount.QuadPart;
+    free(buffer);
+
+    return Py_BuildValue(
+        "kkdddiKKKK",
+        num_handles,
+        ctx_switches,
+        user_time,
+        kernel_time,
+        (double)create_time,
+        num_threads,
+        io_rcount,
+        io_wcount,
+        io_rbytes,
+        io_wbytes
+    );
+}
+
+
+// TODO: Copied verbatim from windows module
+/*
+ * Return a Python tuple referencing process I/O counters.
+ */
+static PyObject *
+psutil_proc_io_counters(PyObject *self, PyObject *args) {
+    DWORD pid;
+    HANDLE hProcess;
+    IO_COUNTERS IoCounters;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    hProcess = psutil_handle_from_pid(pid);
+    if (NULL == hProcess)
+        return NULL;
+    if (! GetProcessIoCounters(hProcess, &IoCounters)) {
+        CloseHandle(hProcess);
+        return PyErr_SetFromWindowsErr(0);
+    }
+    CloseHandle(hProcess);
+    return Py_BuildValue("(KKKK)",
+                         IoCounters.ReadOperationCount,
+                         IoCounters.WriteOperationCount,
+                         IoCounters.ReadTransferCount,
+                         IoCounters.WriteTransferCount);
+}
+
+
 // TODO: This is copied almost verbatim from the Linux module, but on Cygwin
 // it's necessary to use the utmpx APIs in order to access some of the extended
 // utmp fields, such as ut_tv.
@@ -1344,6 +1448,11 @@ PsutilMethods[] = {
      "Return process CPU affinity as a bitmask."},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
      "Set process CPU affinity."},
+    {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
+     "Get process I/O counters."},
+    // --- alternative pinfo interface
+    {"proc_info", psutil_proc_info, METH_VARARGS,
+     "Various process information"},
     {"users", psutil_users, METH_VARARGS,
      "Return currently connected users as a list of tuples"},
     {"proc_memory_maps", psutil_proc_memory_maps, METH_VARARGS,
