@@ -391,6 +391,9 @@ def net_io_counters():
 # =====================================================================
 
 
+disk_io_counters = cext.disk_io_counters
+
+
 disk_usage = _psposix.disk_usage
 
 

@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <winsock2.h>
+#include <WinIoCtl.h>
 
 /* On Cygwin, mprapi.h is missing a necessary include of wincrypt.h
  * which is needed to define some types, so we include it here since
@@ -43,6 +44,23 @@ static int PSUTIL_CONN_NONE = 128;
     Py_DECREF(_SOCK_STREAM);\
     Py_DECREF(_SOCK_DGRAM);
 
+
+// fix for mingw32, see
+// https://github.com/giampaolo/psutil/issues/351#c2
+typedef struct _DISK_PERFORMANCE_WIN_2008 {
+    LARGE_INTEGER BytesRead;
+    LARGE_INTEGER BytesWritten;
+    LARGE_INTEGER ReadTime;
+    LARGE_INTEGER WriteTime;
+    LARGE_INTEGER IdleTime;
+    DWORD         ReadCount;
+    DWORD         WriteCount;
+    DWORD         QueueDepth;
+    DWORD         SplitCount;
+    LARGE_INTEGER QueryTime;
+    DWORD         StorageDeviceNumber;
+    WCHAR         StorageManagerName[8];
+} DISK_PERFORMANCE_WIN_2008;
 
 /* Python wrappers for Cygwin's cygwin_conv_path API--accepts and returns
  * Python unicode strings.  Always returns absolute paths.
@@ -516,6 +534,79 @@ error:
         free(pAddresses);
     if (pIfRow != NULL)
         free(pIfRow);
+    return NULL;
+}
+
+
+// TODO: Copied verbatim from the windows module, so again the usual admonition
+// about refactoring
+/*
+ * Return a Python dict of tuples for disk I/O information
+ */
+static PyObject *
+psutil_disk_io_counters(PyObject *self, PyObject *args) {
+    DISK_PERFORMANCE_WIN_2008 diskPerformance;
+    DWORD dwSize;
+    HANDLE hDevice = NULL;
+    char szDevice[MAX_PATH];
+    char szDeviceDisplay[MAX_PATH];
+    int devNum;
+    PyObject *py_retdict = PyDict_New();
+    PyObject *py_tuple = NULL;
+
+    if (py_retdict == NULL)
+        return NULL;
+    // Apparently there's no way to figure out how many times we have
+    // to iterate in order to find valid drives.
+    // Let's assume 32, which is higher than 26, the number of letters
+    // in the alphabet (from A:\ to Z:\).
+    for (devNum = 0; devNum <= 32; ++devNum) {
+        py_tuple = NULL;
+        snprintf(szDevice, MAX_PATH, "\\\\.\\PhysicalDrive%d", devNum);
+        hDevice = CreateFile(szDevice, 0, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                             NULL, OPEN_EXISTING, 0, NULL);
+
+        if (hDevice == INVALID_HANDLE_VALUE)
+            continue;
+        if (DeviceIoControl(hDevice, IOCTL_DISK_PERFORMANCE, NULL, 0,
+                            &diskPerformance, sizeof(diskPerformance),
+                            &dwSize, NULL))
+        {
+            snprintf(szDeviceDisplay, MAX_PATH, "PhysicalDrive%d", devNum);
+            py_tuple = Py_BuildValue(
+                "(IILLKK)",
+                diskPerformance.ReadCount,
+                diskPerformance.WriteCount,
+                diskPerformance.BytesRead,
+                diskPerformance.BytesWritten,
+                (unsigned long long)(diskPerformance.ReadTime.QuadPart * 10) / 1000,
+                (unsigned long long)(diskPerformance.WriteTime.QuadPart * 10) / 1000);
+            if (!py_tuple)
+                goto error;
+            if (PyDict_SetItemString(py_retdict, szDeviceDisplay,
+                                     py_tuple))
+            {
+                goto error;
+            }
+            Py_XDECREF(py_tuple);
+        }
+        else {
+            // XXX we might get here with ERROR_INSUFFICIENT_BUFFER when
+            // compiling with mingw32; not sure what to do.
+            // return PyErr_SetFromWindowsErr(0);
+            ;;
+        }
+
+        CloseHandle(hDevice);
+    }
+
+    return py_retdict;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retdict);
+    if (hDevice != NULL)
+        CloseHandle(hDevice);
     return NULL;
 }
 
@@ -1173,6 +1264,8 @@ PsutilMethods[] = {
      "Return NICs stats."},
     {"net_io_counters", psutil_net_io_counters, METH_VARARGS,
      "Return dict of tuples of networks I/O information."},
+    {"disk_io_counters", psutil_disk_io_counters, METH_VARARGS,
+     "Return dict of tuples of disks I/O information."},
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
      "Return process CPU affinity as a bitmask."},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
