@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <winsock2.h>
 #include <WinIoCtl.h>
+#include <tlhelp32.h>
 
 /* On Cygwin, mprapi.h is missing a necessary include of wincrypt.h
  * which is needed to define some types, so we include it here since
@@ -388,6 +389,111 @@ psutil_proc_io_counters(PyObject *self, PyObject *args) {
                          IoCounters.WriteOperationCount,
                          IoCounters.ReadTransferCount,
                          IoCounters.WriteTransferCount);
+}
+
+
+static PyObject *
+psutil_proc_threads(PyObject *self, PyObject *args) {
+    HANDLE hThread;
+    THREADENTRY32 te32 = {0};
+    long pid;
+    int pid_return;
+    int rc;
+    FILETIME ftDummy, ftKernel, ftUser;
+    HANDLE hThreadSnap = NULL;
+    PyObject *py_tuple = NULL;
+    PyObject *py_retlist = PyList_New(0);
+
+    if (py_retlist == NULL)
+        return NULL;
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        goto error;
+    if (pid == 0) {
+        // raise AD instead of returning 0 as procexp is able to
+        // retrieve useful information somehow
+        AccessDenied();
+        goto error;
+    }
+
+    pid_return = psutil_pid_is_running(pid);
+    if (pid_return == 0) {
+        NoSuchProcess();
+        goto error;
+    }
+    if (pid_return == -1)
+        goto error;
+
+    hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+    if (hThreadSnap == INVALID_HANDLE_VALUE) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    // Fill in the size of the structure before using it
+    te32.dwSize = sizeof(THREADENTRY32);
+
+    if (! Thread32First(hThreadSnap, &te32)) {
+        PyErr_SetFromWindowsErr(0);
+        goto error;
+    }
+
+    // Walk the thread snapshot to find all threads of the process.
+    // If the thread belongs to the process, increase the counter.
+    do {
+        if (te32.th32OwnerProcessID == pid) {
+            py_tuple = NULL;
+            hThread = NULL;
+            hThread = OpenThread(THREAD_QUERY_INFORMATION,
+                                 FALSE, te32.th32ThreadID);
+            if (hThread == NULL) {
+                // thread has disappeared on us
+                continue;
+            }
+
+            rc = GetThreadTimes(hThread, &ftDummy, &ftDummy, &ftKernel,
+                                &ftUser);
+            if (rc == 0) {
+                PyErr_SetFromWindowsErr(0);
+                goto error;
+            }
+
+            /*
+             * User and kernel times are represented as a FILETIME structure
+             * wich contains a 64-bit value representing the number of
+             * 100-nanosecond intervals since January 1, 1601 (UTC):
+             * http://msdn.microsoft.com/en-us/library/ms724284(VS.85).aspx
+             * To convert it into a float representing the seconds that the
+             * process has executed in user/kernel mode I borrowed the code
+             * below from Python's Modules/posixmodule.c
+             */
+            py_tuple = Py_BuildValue(
+                "kdd",
+                te32.th32ThreadID,
+                (double)(ftUser.dwHighDateTime * 429.4967296 + \
+                         ftUser.dwLowDateTime * 1e-7),
+                (double)(ftKernel.dwHighDateTime * 429.4967296 + \
+                         ftKernel.dwLowDateTime * 1e-7));
+            if (!py_tuple)
+                goto error;
+            if (PyList_Append(py_retlist, py_tuple))
+                goto error;
+            Py_DECREF(py_tuple);
+
+            CloseHandle(hThread);
+        }
+    } while (Thread32Next(hThreadSnap, &te32));
+
+    CloseHandle(hThreadSnap);
+    return py_retlist;
+
+error:
+    Py_XDECREF(py_tuple);
+    Py_DECREF(py_retlist);
+    if (hThread != NULL)
+        CloseHandle(hThread);
+    if (hThreadSnap != NULL)
+        CloseHandle(hThreadSnap);
+    return NULL;
 }
 
 
@@ -1450,6 +1556,8 @@ PsutilMethods[] = {
      "Set process CPU affinity."},
     {"proc_io_counters", psutil_proc_io_counters, METH_VARARGS,
      "Get process I/O counters."},
+    {"proc_threads", psutil_proc_threads, METH_VARARGS,
+     "Return process threads information as a list of tuple"},
     // --- alternative pinfo interface
     {"proc_info", psutil_proc_info, METH_VARARGS,
      "Various process information"},

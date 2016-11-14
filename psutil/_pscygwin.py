@@ -661,7 +661,12 @@ class Process(object):
 
     @wrap_exceptions
     def threads(self):
-        raise NotImplementedError("threads not implemented on Cygwin (yet)")
+        rawlist = cext.proc_threads(self._winpid)
+        retlist = []
+        for thread_id, utime, stime in rawlist:
+            ntuple = _common.pthread(thread_id, utime, stime)
+            retlist.append(ntuple)
+        return retlist
 
     @wrap_exceptions
     def nice_get(self):
