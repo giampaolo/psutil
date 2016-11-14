@@ -954,7 +954,7 @@ class Process(object):
                             # (self) it means child's PID has been reused
                             if self.create_time() <= p.create_time():
                                 ret.append(p)
-                    except (NoSuchProcess, ZombieProcess):
+                    except (AccessDenied, NoSuchProcess, ZombieProcess):
                         pass
             else:  # pragma: no cover
                 # Windows only (faster)
