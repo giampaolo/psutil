@@ -215,6 +215,16 @@ Process management
     >>> p.cmdline()
     ['/usr/bin/python', 'main.py']
     >>>
+    >>> p.pid
+    7055
+    >>> p.ppid()
+    7054
+    >>> p.parent()
+    <psutil.Process(pid=7054, name='bash') at 140008329539408>
+    >>> p.children()
+    [<psutil.Process(pid=8031, name='python') at 14020832451977>,
+     <psutil.Process(pid=8044, name='python') at 19229444921932>]
+    >>>
     >>> p.status()
     'running'
     >>> p.username()
@@ -242,10 +252,10 @@ Process management
     >>>
     >>> p.memory_info()
     pmem(rss=10915840, vms=67608576, shared=3313664, text=2310144, lib=0, data=7262208, dirty=0)
-    >>>
     >>> p.memory_full_info()  # "real" USS memory usage (Linux, OSX, Win only)
     pfullmem(rss=10199040, vms=52133888, shared=3887104, text=2867200, lib=0, data=5967872, dirty=0, uss=6545408, pss=6872064, swap=0)
-    >>>
+    >>> p.memory_percent()
+    0.7823
     >>> p.memory_maps()
     [pmmap_grouped(path='/lib/x8664-linux-gnu/libutil-2.15.so', rss=32768, size=2125824, pss=32768, shared_clean=0, shared_dirty=0, private_clean=20480, private_dirty=12288, referenced=32768, anonymous=12288, swap=0),
      pmmap_grouped(path='/lib/x8664-linux-gnu/libc-2.15.so', rss=3821568, size=3842048, pss=3821568, shared_clean=0, shared_dirty=0, private_clean=0, private_dirty=3821568, referenced=3575808, anonymous=3821568, swap=0),
@@ -297,6 +307,10 @@ Process management
     'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/usr/share/upstart/xdg:/etc/xdg', 'COLORTERM': 'gnome-terminal',
      ...}
     >>>
+    >>> p.as_dict()
+    {'status': 'running', 'num_ctx_switches': pctxsw(voluntary=63, involuntary=1), 'pid': 5457, ...}
+    >>> p.is_running()
+    True
     >>> p.suspend()
     >>> p.resume()
     >>>
