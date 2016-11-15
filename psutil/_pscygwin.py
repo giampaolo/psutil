@@ -54,7 +54,6 @@ else:
 
 # Number of clock ticks per second
 CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
-PAGESIZE = os.sysconf("SC_PAGE_SIZE")
 BOOT_TIME = None  # set later
 
 
@@ -150,9 +149,12 @@ def convert_dos_path(s):
 scputimes = namedtuple('scputimes', ['user', 'system', 'idle'])
 pmem = namedtuple('pmem', ['rss', 'vms', 'shared', 'text', 'lib', 'data',
                            'dirty'])
-# TODO: Come back to seeing what additional memory info we can provide on
-# Cygwin
-pfullmem = namedtuple('pfullmem', pmem._fields)
+pmem = namedtuple(
+    'pmem', ['rss', 'vms',
+             'num_page_faults', 'peak_wset', 'wset', 'peak_paged_pool',
+             'paged_pool', 'peak_nonpaged_pool', 'nonpaged_pool',
+             'pagefile', 'peak_pagefile', 'private'])
+pfullmem = namedtuple('pfullmem', pmem._fields + ('uss', ))
 svmem = namedtuple('svmem', ['total', 'available', 'percent', 'used', 'free'])
 pmmap_grouped = namedtuple('pmmap_grouped', ['path', 'rss'])
 pmmap_ext = namedtuple(
@@ -608,25 +610,31 @@ class Process(object):
         bt = BOOT_TIME or boot_time()
         return (float(values[21]) / CLOCK_TICKS) + bt
 
+    def _get_raw_meminfo(self):
+        try:
+            return cext.proc_memory_info(self._winpid)
+        except OSError as err:
+            if err.errno in ACCESS_DENIED_SET:
+                # TODO: the C ext can probably be refactored in order
+                # to get this from cext.proc_info()
+                return cext.proc_memory_info_2(self._winpid)
+            raise
+
     @wrap_exceptions
     def memory_info(self):
-        #  ============================================================
-        # | FIELD  | DESCRIPTION                         | AKA  | TOP  |
-        #  ============================================================
-        # | rss    | resident set size                   |      | RES  |
-        # | vms    | total program size                  | size | VIRT |
-        # | shared | shared pages (from shared mappings) |      | SHR  |
-        # | text   | text ('code')                       | trs  | CODE |
-        # | lib    | library (unused in Linux 2.6)       | lrs  |      |
-        # | data   | data + stack                        | drs  | DATA |
-        # | dirty  | dirty pages (unused in Linux 2.6)   | dt   |      |
-        #  ============================================================
-        with open_binary("%s/%s/statm" % (self._procfs_path, self.pid)) as f:
-            vms, rss, shared, text, lib, data, dirty = \
-                [int(x) * PAGESIZE for x in f.readline().split()[:7]]
-        return pmem(rss, vms, shared, text, lib, data, dirty)
+        # on Windows RSS == WorkingSetSize and VMS == PagefileUsage.
+        # Underlying C function returns fields of PROCESS_MEMORY_COUNTERS
+        # struct.
+        t = self._get_raw_meminfo()
+        rss = t[2]  # wset
+        vms = t[7]  # pagefile
+        return pmem(*(rss, vms, ) + t)
 
-    memory_full_info = memory_info
+    @wrap_exceptions
+    def memory_full_info(self):
+        basic_mem = self.memory_info()
+        uss = cext.proc_memory_uss(self._winpid)
+        return pfullmem(*basic_mem + (uss, ))
 
     def memory_maps(self):
         try:

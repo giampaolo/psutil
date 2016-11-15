@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
+#include <Psapi.h>
 #include <winsock2.h>
 #include <WinIoCtl.h>
 #include <tlhelp32.h>
@@ -252,6 +253,213 @@ psutil_proc_cpu_affinity_get(PyObject *self, PyObject *args) {
 #else
     return Py_BuildValue("k", (unsigned long)proc_mask);
 #endif
+}
+
+
+/*
+ * Return process memory information as a Python tuple.
+ */
+static PyObject *
+psutil_proc_memory_info(PyObject *self, PyObject *args) {
+    HANDLE hProcess;
+    DWORD pid;
+#if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
+    PROCESS_MEMORY_COUNTERS_EX cnt;
+#else
+    PROCESS_MEMORY_COUNTERS cnt;
+#endif
+    SIZE_T private = 0;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+    hProcess = psutil_handle_from_pid(pid);
+    if (NULL == hProcess)
+        return NULL;
+
+    if (! GetProcessMemoryInfo(hProcess, (PPROCESS_MEMORY_COUNTERS)&cnt,
+                               sizeof(cnt))) {
+        CloseHandle(hProcess);
+        return PyErr_SetFromWindowsErr(0);
+    }
+
+#if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
+    private = cnt.PrivateUsage;
+#endif
+
+    CloseHandle(hProcess);
+
+    // PROCESS_MEMORY_COUNTERS values are defined as SIZE_T which on 64bits
+    // is an (unsigned long long) and on 32bits is an (unsigned int).
+    // "_WIN64" is defined if we're running a 64bit Python interpreter not
+    // exclusively if the *system* is 64bit.
+#if defined(_WIN64)
+    return Py_BuildValue(
+        "(kKKKKKKKKK)",
+        cnt.PageFaultCount,  // unsigned long
+        (unsigned long long)cnt.PeakWorkingSetSize,
+        (unsigned long long)cnt.WorkingSetSize,
+        (unsigned long long)cnt.QuotaPeakPagedPoolUsage,
+        (unsigned long long)cnt.QuotaPagedPoolUsage,
+        (unsigned long long)cnt.QuotaPeakNonPagedPoolUsage,
+        (unsigned long long)cnt.QuotaNonPagedPoolUsage,
+        (unsigned long long)cnt.PagefileUsage,
+        (unsigned long long)cnt.PeakPagefileUsage,
+        (unsigned long long)private);
+#else
+    return Py_BuildValue(
+        "(kIIIIIIIII)",
+        cnt.PageFaultCount,    // unsigned long
+        (unsigned int)cnt.PeakWorkingSetSize,
+        (unsigned int)cnt.WorkingSetSize,
+        (unsigned int)cnt.QuotaPeakPagedPoolUsage,
+        (unsigned int)cnt.QuotaPagedPoolUsage,
+        (unsigned int)cnt.QuotaPeakNonPagedPoolUsage,
+        (unsigned int)cnt.QuotaNonPagedPoolUsage,
+        (unsigned int)cnt.PagefileUsage,
+        (unsigned int)cnt.PeakPagefileUsage,
+        (unsigned int)private);
+#endif
+}
+
+
+/*
+ * Alternative implementation of the one above but bypasses ACCESS DENIED.
+ */
+static PyObject *
+psutil_proc_memory_info_2(PyObject *self, PyObject *args) {
+    DWORD pid;
+    PSYSTEM_PROCESS_INFORMATION process;
+    PVOID buffer;
+    SIZE_T private;
+    unsigned long pfault_count;
+
+#if defined(_WIN64)
+    unsigned long long m1, m2, m3, m4, m5, m6, m7, m8;
+#else
+    unsigned int m1, m2, m3, m4, m5, m6, m7, m8;
+#endif
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+    if (! psutil_get_proc_info(pid, &process, &buffer))
+        return NULL;
+
+#if (_WIN32_WINNT >= 0x0501)  // Windows XP with SP2
+    private = process->PrivatePageCount;
+#else
+    private = 0;
+#endif
+    pfault_count = process->PageFaultCount;
+
+    m1 = process->PeakWorkingSetSize;
+    m2 = process->WorkingSetSize;
+    m3 = process->QuotaPeakPagedPoolUsage;
+    m4 = process->QuotaPagedPoolUsage;
+    m5 = process->QuotaPeakNonPagedPoolUsage;
+    m6 = process->QuotaNonPagedPoolUsage;
+    m7 = process->PagefileUsage;
+    m8 = process->PeakPagefileUsage;
+
+    free(buffer);
+
+    // SYSTEM_PROCESS_INFORMATION values are defined as SIZE_T which on 64
+    // bits is an (unsigned long long) and on 32bits is an (unsigned int).
+    // "_WIN64" is defined if we're running a 64bit Python interpreter not
+    // exclusively if the *system* is 64bit.
+#if defined(_WIN64)
+    return Py_BuildValue("(kKKKKKKKKK)",
+#else
+    return Py_BuildValue("(kIIIIIIIII)",
+#endif
+        pfault_count, m1, m2, m3, m4, m5, m6, m7, m8, private);
+}
+
+
+/**
+ * Returns the USS of the process.
+ * Reference:
+ * https://dxr.mozilla.org/mozilla-central/source/xpcom/base/
+ *     nsMemoryReporterManager.cpp
+ */
+static PyObject *
+psutil_proc_memory_uss(PyObject *self, PyObject *args)
+{
+    DWORD pid;
+    HANDLE proc;
+    PSAPI_WORKING_SET_INFORMATION tmp;
+    DWORD tmp_size = sizeof(tmp);
+    size_t entries;
+    size_t private_pages;
+    size_t i;
+    DWORD info_array_size;
+    PSAPI_WORKING_SET_INFORMATION* info_array;
+    SYSTEM_INFO system_info;
+    PyObject* py_result = NULL;
+    unsigned long long total = 0;
+
+    if (! PyArg_ParseTuple(args, "l", &pid))
+        return NULL;
+
+    proc = psutil_handle_from_pid(pid);
+    if (proc == NULL)
+        return NULL;
+
+    // Determine how many entries we need.
+    memset(&tmp, 0, tmp_size);
+    if (!QueryWorkingSet(proc, &tmp, tmp_size)) {
+        // NB: QueryWorkingSet is expected to fail here due to the
+        // buffer being too small.
+        if (tmp.NumberOfEntries == 0) {
+            PyErr_SetFromWindowsErr(0);
+            goto done;
+        }
+    }
+
+    // Fudge the size in case new entries are added between calls.
+    entries = tmp.NumberOfEntries * 2;
+
+    if (!entries) {
+        goto done;
+    }
+
+    info_array_size = tmp_size + (entries * sizeof(PSAPI_WORKING_SET_BLOCK));
+    info_array = (PSAPI_WORKING_SET_INFORMATION*)malloc(info_array_size);
+    if (!info_array) {
+        PyErr_NoMemory();
+        goto done;
+    }
+
+    if (!QueryWorkingSet(proc, info_array, info_array_size)) {
+        PyErr_SetFromWindowsErr(0);
+        goto done;
+    }
+
+    entries = (size_t)info_array->NumberOfEntries;
+    private_pages = 0;
+    for (i = 0; i < entries; i++) {
+        // Count shared pages that only one process is using as private.
+        if (!info_array->WorkingSetInfo[i].Shared ||
+                info_array->WorkingSetInfo[i].ShareCount <= 1) {
+            private_pages++;
+        }
+    }
+
+    // GetSystemInfo has no return value.
+    GetSystemInfo(&system_info);
+    total = private_pages * system_info.dwPageSize;
+    py_result = Py_BuildValue("K", total);
+
+done:
+    if (proc) {
+        CloseHandle(proc);
+    }
+
+    if (info_array) {
+        free(info_array);
+    }
+
+    return py_result;
 }
 
 
@@ -1550,6 +1758,12 @@ PsutilMethods[] = {
      "Return dict of tuples of disks I/O information."},
     {"proc_environ", psutil_proc_environ, METH_VARARGS,
      "Return process environment data"},
+    {"proc_memory_info", psutil_proc_memory_info, METH_VARARGS,
+     "Return a tuple of process memory information"},
+    {"proc_memory_info_2", psutil_proc_memory_info_2, METH_VARARGS,
+     "Alternate implementation"},
+    {"proc_memory_uss", psutil_proc_memory_uss, METH_VARARGS,
+     "Return the USS of the process"},
     {"proc_cpu_affinity_get", psutil_proc_cpu_affinity_get, METH_VARARGS,
      "Return process CPU affinity as a bitmask."},
     {"proc_cpu_affinity_set", psutil_proc_cpu_affinity_set, METH_VARARGS,
